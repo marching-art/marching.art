@@ -4,7 +4,7 @@
 // Allows directors to spend CorpsCoin to unlock a class before reaching the XP level
 
 import React, { useState } from 'react';
-import { Coins, ShoppingCart, X, AlertTriangle, Loader2, Unlock } from 'lucide-react';
+import { Coins, ShoppingCart, X, AlertTriangle, Loader2, Calendar } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 
@@ -19,6 +19,8 @@ interface ClassPurchaseModalProps {
   currentBalance: number;
   levelRequired: number;
   currentLevel: number;
+  weeksRemaining: number | null;
+  isRegistrationLocked: boolean;
   onConfirm: () => Promise<void>;
   onClose: () => void;
 }
@@ -39,6 +41,14 @@ const CLASS_BUDGETS: Record<string, string> = {
   world: '150 pts',
 };
 
+// Registration lock thresholds (weeks remaining when class locks)
+const REGISTRATION_LOCK_WEEKS: Record<string, number> = {
+  aClass: 4,
+  open: 5,
+  world: 6,
+  soundSport: 0,
+};
+
 // =============================================================================
 // COMPONENT
 // =============================================================================
@@ -50,6 +60,8 @@ const ClassPurchaseModal: React.FC<ClassPurchaseModalProps> = ({
   currentBalance,
   levelRequired,
   currentLevel,
+  weeksRemaining,
+  isRegistrationLocked,
   onConfirm,
   onClose,
 }) => {
@@ -58,6 +70,7 @@ const ClassPurchaseModal: React.FC<ClassPurchaseModalProps> = ({
 
   const newBalance = currentBalance - coinCost;
   const isEarlyUnlock = currentLevel < levelRequired;
+  const lockWeeks = REGISTRATION_LOCK_WEEKS[classKey] || 0;
 
   useEscapeKey(onClose);
 
@@ -123,8 +136,32 @@ const ClassPurchaseModal: React.FC<ClassPurchaseModalProps> = ({
               </p>
             </div>
 
+            {/* Registration Locked Warning - Most Important */}
+            {isRegistrationLocked && (
+              <div className="bg-red-500/10 border border-red-500/30 p-3 mb-4">
+                <div className="flex items-start gap-2">
+                  <Calendar className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs text-red-400 font-bold uppercase mb-1">
+                      Registration Closed for This Season
+                    </p>
+                    <p className="text-xs text-red-300/80">
+                      {className} registration locks with {lockWeeks} weeks remaining.
+                      {weeksRemaining !== null && (
+                        <> Only {weeksRemaining} week{weeksRemaining !== 1 ? 's' : ''} left this season.</>
+                      )}
+                    </p>
+                    <p className="text-xs text-red-300/80 mt-1">
+                      You can still unlock this class, but you won't be able to register
+                      a corps until next season.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Early Unlock Warning */}
-            {isEarlyUnlock && (
+            {isEarlyUnlock && !isRegistrationLocked && (
               <div className="bg-yellow-500/10 border border-yellow-500/30 p-3 mb-4">
                 <div className="flex items-start gap-2">
                   <AlertTriangle className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
