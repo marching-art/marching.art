@@ -136,7 +136,10 @@ exports.getShowRegistrations = onCall({ cors: true }, async (request) => {
   }
 
   const registrations = [];
-  const q = db.collectionGroup("profile").where("activeSeasonId", "==", activeSeasonId);
+  // Field projection: Only fetch fields needed for registration display
+  const q = db.collectionGroup("profile")
+    .where("activeSeasonId", "==", activeSeasonId)
+    .select("corps", "username");
   const querySnapshot = await q.get();
 
   querySnapshot.forEach((doc) => {
@@ -173,7 +176,10 @@ exports.getUserRankings = onCall({ cors: true }, async (request) => {
   }
   const activeSeasonId = seasonDoc.data().seasonUid;
 
-  const profilesQuery = db.collectionGroup("profile").where("activeSeasonId", "==", activeSeasonId);
+  // Field projection: Only fetch fields needed for ranking calculation
+  const profilesQuery = db.collectionGroup("profile")
+    .where("activeSeasonId", "==", activeSeasonId)
+    .select("corps", "corpsName", "totalSeasonScore");
   const profilesSnapshot = await profilesQuery.get();
 
   if (profilesSnapshot.empty) {
