@@ -21,6 +21,22 @@ const calculateTotalScore = (captions) => {
 };
 
 /**
+ * Get the effective current day for score filtering
+ * Scores are processed at 2 AM, so between midnight and 2 AM
+ * we should still show the previous day's cutoff
+ */
+const getEffectiveDay = (currentDay) => {
+  const now = new Date();
+  const hour = now.getHours();
+  // Between midnight (0) and 2 AM, scores haven't been processed yet
+  // So use currentDay - 1 to avoid showing unprocessed scores
+  if (hour < 2) {
+    return Math.max(1, currentDay - 1);
+  }
+  return currentDay;
+};
+
+/**
  * Hook to fetch live DCI scores for the landing page
  * Returns ranked scores for all selected corps in the current season
  * using actual historical DCI data
@@ -33,6 +49,12 @@ export const useLandingScores = () => {
   const [error, setError] = useState(null);
   const [corpsValues, setCorpsValues] = useState([]);
   const [historicalData, setHistoricalData] = useState({});
+
+  // Calculate effective day accounting for 2 AM score processing
+  const effectiveDay = useMemo(() => {
+    if (!currentDay) return null;
+    return getEffectiveDay(currentDay);
+  }, [currentDay]);
 
   // Fetch season corps and historical scores
   useEffect(() => {
@@ -85,7 +107,7 @@ export const useLandingScores = () => {
 
   // Process scores for landing page display
   const liveScores = useMemo(() => {
-    if (corpsValues.length === 0 || Object.keys(historicalData).length === 0 || !currentDay) {
+    if (corpsValues.length === 0 || Object.keys(historicalData).length === 0 || !effectiveDay) {
       return [];
     }
 
@@ -98,8 +120,9 @@ export const useLandingScores = () => {
       const scores = [];
 
       yearData.forEach(event => {
-        // Only include scores from days before the current day
-        if (event.offSeasonDay >= currentDay) return;
+        // Only include scores from days before the effective day
+        // (accounts for 2 AM score processing time)
+        if (event.offSeasonDay >= effectiveDay) return;
 
         const scoreData = event.scores?.find(s => s.corps === corps.corpsName);
         if (scoreData && scoreData.captions) {
@@ -174,7 +197,7 @@ export const useLandingScores = () => {
     });
 
     return rankedScores;
-  }, [corpsValues, historicalData, currentDay]);
+  }, [corpsValues, historicalData, effectiveDay]);
 
   // Get the display day (most recent day with scores)
   const displayDay = useMemo(() => {
