@@ -110,10 +110,10 @@ const Landing = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex flex-col">
-      {/* TOP BAR - Full width with centered content */}
-      <header className="h-14 bg-[#1a1a1a] border-b border-[#333]">
-        <div className="max-w-7xl mx-auto h-full flex items-center px-4 lg:px-6 xl:px-8">
+    <div className="h-full flex flex-col overflow-hidden bg-[#0A0A0A]">
+      {/* FIXED HEADER */}
+      <header className="flex-shrink-0 h-14 bg-[#1a1a1a] border-b border-[#333]">
+        <div className="h-full flex items-center px-4 lg:px-6">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-sm overflow-hidden">
               <img src="/logo192.svg" alt="marching.art" className="w-full h-full object-cover" />
@@ -172,26 +172,24 @@ const Landing = () => {
         </div>
       </header>
 
-      {/* MAIN CONTENT - Centered container with white space on sides */}
-      <main className="flex-1 overflow-visible">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 bg-[#111] lg:bg-transparent">
+      {/* SCROLLABLE CONTENT */}
+      <main className="flex-1 overflow-y-auto min-h-0 pb-20 md:pb-4">
+        <div className="p-4 lg:p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
           {/* ============================================================= */}
-          {/* MAIN COLUMN - News Feed (Left/Center) */}
+          {/* MAIN COLUMN - News Feed (8 cols) */}
           {/* ============================================================= */}
-          <div className="lg:col-span-7 xl:col-span-8 lg:border-r border-[#333]">
-            <div className="p-4 lg:p-6 xl:p-8">
-              {/* Dynamic News Feed powered by Gemini AI */}
-              <NewsFeed maxItems={5} />
-            </div>
+          <div className="lg:col-span-8">
+            {/* Dynamic News Feed powered by Gemini AI */}
+            <NewsFeed maxItems={5} />
           </div>
 
           {/* ============================================================= */}
-          {/* SIDEBAR - Right Column */}
+          {/* SIDEBAR - Right Column (4 cols, sticky) */}
           {/* ============================================================= */}
-          <div className="lg:col-span-5 xl:col-span-4 bg-[#111]">
-            <div className="p-4 lg:p-5 space-y-5">
+          <div className="lg:col-span-4">
+            <div className="lg:sticky lg:top-4 space-y-5">
 
               {/* ------------------------------------------------------- */}
               {/* AUTH WIDGET - Login or User Dashboard */}
@@ -513,17 +511,6 @@ const Landing = () => {
           </div>
         </div>
       </main>
-
-      {/* ============================================================= */}
-      {/* GLOBAL FOOTER - Full width with centered content */}
-      {/* ============================================================= */}
-      <footer className="bg-[#1a1a1a] border-t border-[#333]">
-        <div className="max-w-7xl mx-auto flex items-center justify-center py-2.5 px-4">
-          <span className="text-xs text-gray-600 text-center">
-            © 2025 marching.art — Fantasy Sports for the Marching Arts
-          </span>
-        </div>
-      </footer>
 
       {/* ============================================================= */}
       {/* FULL STANDINGS MODAL */}
