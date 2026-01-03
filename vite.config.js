@@ -23,6 +23,8 @@ export default defineConfig({
     outDir: 'build',
     sourcemap: true,
     rollupOptions: {
+      // Exclude Storybook files from production build (saves ~750KB)
+      external: (id) => id.includes('/stories/'),
       output: {
         manualChunks: {
           // Split vendor chunks for better caching
