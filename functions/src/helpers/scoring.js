@@ -462,6 +462,7 @@ async function processAndArchiveOffSeasonScoresLogic() {
 
           showResult.results.push({
             uid: uid,
+            displayName: userProfile.username || userProfile.displayName || null,
             corpsClass: corpsClass,
             corpsName: corps.corpsName,
             totalScore: totalShowScore,
@@ -1132,6 +1133,7 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
 
           showResult.results.push({
             uid: uid,
+            displayName: userProfile.username || userProfile.displayName || null,
             corpsClass: corpsClass,
             corpsName: corps.corpsName,
             totalScore: totalShowScore,

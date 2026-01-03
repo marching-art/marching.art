@@ -257,6 +257,8 @@ export const useScoresData = (options = {}) => {
               scores: show.results?.map(result => ({
                 corps: result.corpsName,
                 corpsName: result.corpsName,
+                uid: result.uid,
+                displayName: result.displayName,
                 score: result.totalScore || 0,
                 totalScore: result.totalScore || 0,
                 geScore: result.geScore || 0,
@@ -340,6 +342,8 @@ export const useScoresData = (options = {}) => {
             corps,
             corpsName: corps,
             corpsClass: score.corpsClass,
+            uid: score.uid,
+            displayName: score.displayName,
             scores: [],
             totalScore: 0,
             showCount: 0
