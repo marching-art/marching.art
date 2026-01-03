@@ -475,6 +475,10 @@ async function startNewLiveSeason() {
   // Write schedule to schedules collection (competitions array format)
   await writeScheduleToCollection(dataDocId, schedule);
 
+  // endDate is the first moment of the day AFTER finals, so finals day is fully included
+  // This prevents the scheduler (which runs at 3 AM) from triggering on finals day
+  const seasonEndDate = new Date(finalsDate.getTime() + millisInDay);
+
   const newSeasonData = {
     name: seasonName,
     status: "live-season",
@@ -484,7 +488,7 @@ async function startNewLiveSeason() {
     dataDocId: dataDocId,
     schedule: {
       startDate: Timestamp.fromDate(startDate),
-      endDate: Timestamp.fromDate(finalsDate),
+      endDate: Timestamp.fromDate(seasonEndDate),
       springTrainingDays: 21, // First 21 calendar days are spring training
     },
   };
@@ -1169,8 +1173,10 @@ function getNextOffSeasonWindow() {
   const seasonWindows = [];
 
   for (let i = 0; i < seasonTypes.length; i++) {
-    const seasonEndDate = new Date(liveSeasonStartDate.getTime() - (i * 49 * millisInDay) - (1 * millisInDay));
-    const seasonStartDate = new Date(seasonEndDate.getTime() - 48 * millisInDay);
+    // endDate is the first moment of the day AFTER day 49, so day 49 is fully included
+    // This prevents the scheduler (which runs at 3 AM) from triggering on day 49
+    const seasonEndDate = new Date(liveSeasonStartDate.getTime() - (i * 49 * millisInDay));
+    const seasonStartDate = new Date(seasonEndDate.getTime() - 49 * millisInDay);
     seasonWindows.push({
       startDate: seasonStartDate,
       endDate: seasonEndDate,
