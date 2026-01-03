@@ -340,6 +340,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
   const [draftSuggestions, setDraftSuggestions] = useState({ hot: [], value: [], history: [] });
   const [userHistory, setUserHistory] = useState([]);
   const [hotCorpsData, setHotCorpsData] = useState({}); // Per-caption hot status
+  const [activeLineupKeys, setActiveLineupKeys] = useState(new Set()); // Other users' lineup keys
 
   // Mobile state - whether we're viewing lineup or selection list
   const [mobileView, setMobileView] = useState('lineup'); // 'lineup' or 'selection'
@@ -447,7 +448,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
     loadUserData();
   }, [user?.uid, corpsClass]);
 
-  // Load available corps and hot status (per-caption)
+  // Load available corps, hot status (per-caption), and active lineup keys
   useEffect(() => {
     let cancelled = false;
     const fetchCorps = async () => {
@@ -455,19 +456,25 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
       try {
         setLoading(true);
 
-        // Fetch corps data and hot status in parallel
+        // Fetch corps data, hot status, and active lineup keys in parallel
         const corpsRef = doc(db, 'dci-data', seasonId);
         const getHotCorpsFn = httpsCallable(functions, 'getHotCorps');
+        const getActiveLineupKeysFn = httpsCallable(functions, 'getActiveLineupKeys');
 
-        const [corpsSnap, hotCorpsResult] = await Promise.all([
+        const [corpsSnap, hotCorpsResult, lineupKeysResult] = await Promise.all([
           getDoc(corpsRef),
-          getHotCorpsFn().catch(() => ({ data: { hotCorps: {} } }))
+          getHotCorpsFn().catch(() => ({ data: { hotCorps: {} } })),
+          getActiveLineupKeysFn({ corpsClass }).catch(() => ({ data: { lineupKeys: [] } }))
         ]);
 
         if (!cancelled && corpsSnap.exists()) {
           // Store per-caption hot data for dynamic lookups
           const hotData = hotCorpsResult.data?.hotCorps || {};
           setHotCorpsData(hotData);
+
+          // Store active lineup keys as a Set for O(1) lookup
+          const lineupKeys = lineupKeysResult.data?.lineupKeys || [];
+          setActiveLineupKeys(new Set(lineupKeys));
 
           let corps = corpsSnap.data().corpsValues || [];
 
@@ -487,7 +494,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
     };
     fetchCorps();
     return () => { cancelled = true; };
-  }, [seasonId]);
+  }, [seasonId, corpsClass]);
 
   // Generate suggestions based on the active caption
   const generateSuggestions = useCallback((corps, caption, hotData) => {
@@ -594,64 +601,109 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
     toast.success('Template deleted');
   };
 
-  // Quick Fill - auto-fill empty slots with balanced lineup
+  // Generate a lineup key matching the server format for duplicate checking
+  const generateLineupKey = useCallback((lineup) => {
+    return `${corpsClass}_${Object.values(lineup).filter(Boolean).sort().join("_")}`;
+  }, [corpsClass]);
+
+  // Quick Fill - auto-fill empty slots randomly while targeting 95-100% of point limit
+  // Also ensures the generated lineup doesn't match any existing lineups
   const handleQuickFill = useCallback(() => {
     if (availableCorps.length === 0) return;
 
-    const newSelections = { ...selections };
-    const emptyCaptions = captions.filter(c => !newSelections[c.id]);
+    const emptyCaptions = captions.filter(c => !selections[c.id]);
 
     if (emptyCaptions.length === 0) {
       toast('All positions are already filled!', { icon: '✓' });
       return;
     }
 
-    // Calculate current used points and remaining budget
-    let usedPoints = Object.values(newSelections).reduce(
-      (t, s) => t + (s ? parseInt(s.split('|')[2]) || 0 : 0), 0
-    );
-    let remainingBudget = pointLimit - usedPoints;
+    // Helper to generate a random lineup
+    const generateRandomLineup = () => {
+      const newSelections = { ...selections };
 
-    // Target points per empty slot (balanced distribution)
-    const targetPerSlot = Math.floor(remainingBudget / emptyCaptions.length);
+      // Calculate current used points and remaining budget
+      let usedPoints = Object.values(newSelections).reduce(
+        (t, s) => t + (s ? parseInt(s.split('|')[2]) || 0 : 0), 0
+      );
+      let remainingBudget = pointLimit - usedPoints;
 
-    // Track which corps have been used (to avoid duplicates)
-    const usedCorps = new Set(
-      Object.values(newSelections)
-        .filter(Boolean)
-        .map(s => s.split('|')[0])
-    );
+      // Target range: use at least 95% of point limit
+      const minTargetTotal = Math.floor(pointLimit * 0.95);
+      let remainingMinTarget = Math.max(0, minTargetTotal - usedPoints);
 
-    // Fill each empty caption
-    for (const caption of emptyCaptions) {
-      // Find corps that:
-      // 1. Haven't been used
-      // 2. Fit within remaining budget
-      // 3. Are closest to target per slot (prefer balanced distribution)
-      const availableForSlot = availableCorps
-        .filter(c => !usedCorps.has(c.corpsName) && c.points <= remainingBudget)
-        .map(c => ({
-          ...c,
-          // Score: how close to target (prefer slightly under target)
-          distanceFromTarget: Math.abs(c.points - Math.min(targetPerSlot, remainingBudget))
-        }))
-        .sort((a, b) => a.distanceFromTarget - b.distanceFromTarget);
+      // Track which corps have been used (to avoid duplicates within lineup)
+      const usedCorps = new Set(
+        Object.values(newSelections)
+          .filter(Boolean)
+          .map(s => s.split('|')[0])
+      );
 
-      if (availableForSlot.length > 0) {
-        const selected = availableForSlot[0];
+      // Shuffle empty captions for random ordering
+      const shuffledCaptions = [...emptyCaptions].sort(() => Math.random() - 0.5);
+      let slotsRemaining = shuffledCaptions.length;
+
+      // Fill each empty caption randomly
+      for (const caption of shuffledCaptions) {
+        // Calculate minimum points needed per remaining slot to hit 95% target
+        const minPerSlot = Math.ceil(remainingMinTarget / slotsRemaining);
+
+        // Get valid corps (not already used, fits within budget)
+        const validCorps = availableCorps
+          .filter(c => !usedCorps.has(c.corpsName) && c.points <= remainingBudget);
+
+        if (validCorps.length === 0) {
+          slotsRemaining--;
+          continue;
+        }
+
+        // Prefer corps that help us meet the 95% minimum target
+        let candidates = validCorps.filter(c => c.points >= minPerSlot);
+
+        // If no candidates meet minimum, use all valid corps
+        if (candidates.length === 0) {
+          candidates = validCorps;
+        }
+
+        // Randomly select from candidates
+        const randomIndex = Math.floor(Math.random() * candidates.length);
+        const selected = candidates[randomIndex];
+
         newSelections[caption.id] = `${selected.corpsName}|${selected.sourceYear}|${selected.points}`;
         usedCorps.add(selected.corpsName);
         remainingBudget -= selected.points;
+        remainingMinTarget = Math.max(0, remainingMinTarget - selected.points);
+        slotsRemaining--;
       }
+
+      return newSelections;
+    };
+
+    // Try to generate a unique lineup (retry up to 50 times to avoid duplicates)
+    const maxAttempts = 50;
+    let attempt = 0;
+    let newSelections;
+    let lineupKey;
+
+    do {
+      newSelections = generateRandomLineup();
+      lineupKey = generateLineupKey(newSelections);
+      attempt++;
+    } while (activeLineupKeys.has(lineupKey) && attempt < maxAttempts);
+
+    // Check if we found a unique lineup
+    if (activeLineupKeys.has(lineupKey)) {
+      toast.error('Could not generate a unique lineup. Try adjusting some selections manually.');
+      return;
     }
 
     setSelections(newSelections);
 
-    const filledCount = Object.keys(newSelections).length - Object.keys(selections).length;
+    const filledCount = emptyCaptions.filter(c => newSelections[c.id]).length;
     if (filledCount > 0) {
       toast.success(`Auto-filled ${filledCount} position${filledCount > 1 ? 's' : ''}!`);
     }
-  }, [availableCorps, selections, captions, pointLimit]);
+  }, [availableCorps, selections, captions, pointLimit, activeLineupKeys, generateLineupKey]);
 
   const handleSubmit = async () => {
     if (!isComplete) { toast.error('Please select all 8 captions'); return; }
