@@ -47,6 +47,7 @@ import { Card } from '../components/ui/Card';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { useHaptic } from '../hooks/useHaptic';
 import { useModalQueue, MODAL_PRIORITY } from '../hooks/useModalQueue';
+import { useSeasonStore } from '../store/seasonStore';
 
 // =============================================================================
 // CONSTANTS
@@ -94,6 +95,7 @@ const Dashboard = () => {
   const { aggregatedScores, loading: scoresLoading, refetch: refetchScores } = useScoresData();
   const { data: myLeagues, refetch: refetchLeagues } = useMyLeagues(user?.uid);
   const { trigger: haptic } = useHaptic();
+  const { weeksRemaining, isRegistrationLocked } = useSeasonStore();
 
   // Mobile tab state
   const [activeMobileTab, setActiveMobileTab] = useState('team');
@@ -852,6 +854,8 @@ const Dashboard = () => {
           currentBalance={profile.corpsCoin || 0}
           levelRequired={CLASS_UNLOCK_LEVELS[classToPurchase]}
           currentLevel={profile.xpLevel || 1}
+          weeksRemaining={weeksRemaining}
+          isRegistrationLocked={isRegistrationLocked(classToPurchase)}
           onConfirm={handleConfirmClassPurchase}
           onClose={() => setClassToPurchase(null)}
         />
