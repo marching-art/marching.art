@@ -30,8 +30,12 @@ export default defineConfig({
           // Split vendor chunks for better caching
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/functions', 'firebase/storage', 'firebase/analytics'],
-          'vendor-ui': ['framer-motion', 'lucide-react', 'react-hot-toast'],
+          // UI utilities - lightweight, loaded immediately
+          'vendor-ui': ['lucide-react', 'react-hot-toast'],
           'vendor-query': ['@tanstack/react-query', 'zustand'],
+          // Framer Motion in separate chunk - loaded via LazyMotion dynamic import
+          // Uses domAnimation feature set (~60% smaller than full bundle)
+          'vendor-motion': ['framer-motion'],
           // Lazy-loaded chart library - only loaded when charts are rendered
           'vendor-charts': ['chart.js', 'react-chartjs-2'],
         },

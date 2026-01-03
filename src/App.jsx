@@ -28,6 +28,7 @@ import { useUserStore } from './store/userStore';
 import { useProfileStore } from './store/profileStore';
 import OfflineBanner from './components/OfflineBanner';
 import { SkipToContent } from './components/a11y';
+import { MotionProvider } from './components/ui/MotionProvider';
 
 // Lazy load pages for better performance
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -170,6 +171,7 @@ function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
+          <MotionProvider>
           <AuthContext.Provider value={authContextValue}>
             <Router>
           {/* Skip to Content - Accessibility */}
@@ -371,6 +373,7 @@ function App() {
         </Suspense>
           </Router>
         </AuthContext.Provider>
+          </MotionProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </ErrorBoundary>
