@@ -248,7 +248,7 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
               >
                 W{week}
                 {hasLive && !isSelected && (
-                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-sm animate-pulse" />
                 )}
               </button>
             );

@@ -145,7 +145,7 @@ const Celebration = ({ trigger, message, type = 'default' }) => {
         >
           <div className="relative">
             {/* Glow effect - static on mobile */}
-            <div className={`absolute inset-0 bg-gold-500/30 blur-3xl rounded-full ${shouldReduceMotion ? '' : 'animate-pulse'}`} />
+            <div className={`absolute inset-0 bg-gold-500/30 blur-3xl rounded-sm ${shouldReduceMotion ? '' : 'animate-pulse'}`} />
 
             {/* Message - no wiggle animation on mobile */}
             <motion.div
@@ -158,7 +158,7 @@ const Celebration = ({ trigger, message, type = 'default' }) => {
                 repeat: 2, // Only repeat twice instead of Infinity
                 repeatType: 'reverse'
               }}
-              className="relative bg-gradient-gold rounded-2xl px-12 py-8 border-4 border-gold-300"
+              className="relative bg-gradient-gold rounded-sm px-12 py-8 border-4 border-gold-300"
             >
               <h2 className="text-5xl md:text-6xl font-display font-black text-charcoal-900 text-center">
                 {message}
@@ -184,7 +184,7 @@ const Celebration = ({ trigger, message, type = 'default' }) => {
                 className="absolute top-1/2 left-1/2 w-4 h-4"
                 style={{ transformOrigin: 'center' }}
               >
-                <div className="w-full h-full bg-gold-400 rounded-full blur-sm" />
+                <div className="w-full h-full bg-gold-400 rounded-sm blur-sm" />
               </motion.div>
             ))}
           </div>

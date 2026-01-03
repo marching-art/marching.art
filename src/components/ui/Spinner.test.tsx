@@ -254,17 +254,17 @@ describe('Skeleton', () => {
 
     it('applies medium rounding by default', () => {
       const { container } = render(<Skeleton />);
-      expect(container.firstChild).toHaveClass('rounded-lg');
+      expect(container.firstChild).toHaveClass('rounded-sm');
     });
 
     it('applies large rounding', () => {
       const { container } = render(<Skeleton rounded="lg" />);
-      expect(container.firstChild).toHaveClass('rounded-xl');
+      expect(container.firstChild).toHaveClass('rounded-sm');
     });
 
     it('applies full rounding', () => {
       const { container } = render(<Skeleton rounded="full" />);
-      expect(container.firstChild).toHaveClass('rounded-full');
+      expect(container.firstChild).toHaveClass('rounded-sm');
     });
   });
 

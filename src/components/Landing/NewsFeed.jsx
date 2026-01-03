@@ -224,7 +224,7 @@ function NewsMasthead({ activeCategory, onCategoryChange, storyCount, isLive }) 
           </div>
           {isLive && (
             <div className="flex items-center gap-1.5 px-2 py-1 bg-red-500/20 border border-red-500/30">
-              <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+              <div className="w-1.5 h-1.5 bg-red-500 rounded-sm animate-pulse" />
               <span className="text-[10px] font-bold text-red-400 uppercase">Live</span>
             </div>
           )}

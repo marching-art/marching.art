@@ -68,7 +68,7 @@ const FeedbackItemComponent: React.FC<{ item: FeedbackItem; onComplete: () => vo
       transition={{ duration: 2.5, times: [0, 0.15, 0.7, 1] }}
     >
       <div
-        className={`flex items-center gap-3 px-5 py-3 rounded-lg border ${bgClass} backdrop-blur-sm`}
+        className={`flex items-center gap-3 px-5 py-3 rounded-sm border ${bgClass} backdrop-blur-sm`}
         style={{ boxShadow: `0 0 20px ${glowColor}` }}
       >
         <Icon className={`w-6 h-6 ${colorClass}`} />

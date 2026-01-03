@@ -13,7 +13,7 @@ const AchievementItem = React.memo(({ achievement, idx }) => (
     initial={{ opacity: 0, scale: 0.9 }}
     animate={{ opacity: 1, scale: 1 }}
     transition={{ delay: idx * 0.05 }}
-    className="bg-black/30 border border-yellow-500/20 rounded-xl p-3 md:p-4 shadow-[0_0_15px_rgba(234,179,8,0.1)]"
+    className="bg-black/30 border border-yellow-500/20 rounded-sm p-3 md:p-4 shadow-[0_0_15px_rgba(234,179,8,0.1)]"
   >
     <div className="flex items-start gap-2 md:gap-3">
       <Trophy className="w-4 h-4 md:w-5 md:h-5 text-yellow-400 flex-shrink-0 mt-0.5 drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]" />
@@ -38,12 +38,12 @@ const MilestoneItem = React.memo(({ milestone, idx }) => {
 
   return (
     <div
-      className={`bg-black/30 border rounded-xl p-4 ${
+      className={`bg-black/30 border rounded-sm p-4 ${
         isComplete ? 'border-yellow-500/30 shadow-[0_0_15px_rgba(234,179,8,0.15)]' : 'border-white/5'
       }`}
     >
       <div className="flex items-center gap-4">
-        <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+        <div className={`w-12 h-12 rounded-sm flex items-center justify-center flex-shrink-0 ${
           isComplete ? 'bg-yellow-500/20 text-yellow-400' : 'bg-black/40 text-yellow-50/60'
         }`}>
           {isComplete ? <CheckCircle className="w-6 h-6 drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]" /> : <Icon className="w-6 h-6" />}
@@ -58,9 +58,9 @@ const MilestoneItem = React.memo(({ milestone, idx }) => {
             </p>
           </div>
           <p className="text-sm text-yellow-50/70 mb-2">{milestone.description}</p>
-          <div className="w-full bg-black/50 rounded-full h-2">
+          <div className="w-full bg-black/50 rounded-sm h-2">
             <div
-              className={`h-2 rounded-full transition-all ${isComplete ? 'bg-gradient-to-r from-yellow-500 to-yellow-400 shadow-[0_0_8px_rgba(234,179,8,0.5)]' : 'bg-blue-500'}`}
+              className={`h-2 rounded-sm transition-all ${isComplete ? 'bg-gradient-to-r from-yellow-500 to-yellow-400 shadow-[0_0_8px_rgba(234,179,8,0.5)]' : 'bg-blue-500'}`}
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -81,7 +81,7 @@ const AchievementsTab = ({ profile, milestones }) => {
       className="space-y-6"
     >
       {/* Earned Achievements */}
-      <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-6">
+      <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-sm p-6">
         <h2 className="text-xl font-display font-bold text-yellow-50 mb-4 flex items-center gap-2">
           <Award className="w-6 h-6 text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]" />
           Earned Achievements ({profile.achievements?.length || 0})
@@ -103,23 +103,23 @@ const AchievementsTab = ({ profile, milestones }) => {
 
       {/* Trophy Case */}
       {profile.trophies && (
-        <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-6">
+        <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-sm p-6">
           <h2 className="text-xl font-display font-bold text-yellow-50 mb-4 flex items-center gap-2">
             <Crown className="w-6 h-6 text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]" />
             Trophy Case
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-black/30 border border-yellow-500/20 rounded-xl p-4 text-center shadow-[0_0_20px_rgba(234,179,8,0.1)]">
+            <div className="bg-black/30 border border-yellow-500/20 rounded-sm p-4 text-center shadow-[0_0_20px_rgba(234,179,8,0.1)]">
               <Trophy className="w-10 h-10 text-yellow-400 mx-auto mb-2 drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]" />
               <p className="text-2xl font-display font-bold text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]">{profile.trophies.championships?.length || 0}</p>
               <p className="text-yellow-50/60 text-sm font-display">Championships</p>
             </div>
-            <div className="bg-black/30 border border-blue-500/20 rounded-xl p-4 text-center shadow-[0_0_20px_rgba(59,130,246,0.1)]">
+            <div className="bg-black/30 border border-blue-500/20 rounded-sm p-4 text-center shadow-[0_0_20px_rgba(59,130,246,0.1)]">
               <Medal className="w-10 h-10 text-blue-400 mx-auto mb-2 drop-shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
               <p className="text-2xl font-display font-bold text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]">{profile.trophies.regionals?.length || 0}</p>
               <p className="text-yellow-50/60 text-sm font-display">Regional Wins</p>
             </div>
-            <div className="bg-black/30 border border-purple-500/20 rounded-xl p-4 text-center shadow-[0_0_20px_rgba(168,85,247,0.1)]">
+            <div className="bg-black/30 border border-purple-500/20 rounded-sm p-4 text-center shadow-[0_0_20px_rgba(168,85,247,0.1)]">
               <Star className="w-10 h-10 text-purple-400 mx-auto mb-2 drop-shadow-[0_0_10px_rgba(168,85,247,0.5)]" />
               <p className="text-2xl font-display font-bold text-purple-400 drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]">{profile.trophies.finalistMedals?.length || 0}</p>
               <p className="text-yellow-50/60 text-sm font-display">Finalist Medals</p>
@@ -129,7 +129,7 @@ const AchievementsTab = ({ profile, milestones }) => {
       )}
 
       {/* All Milestones */}
-      <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-6">
+      <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-sm p-6">
         <h2 className="text-xl font-display font-bold text-yellow-50 mb-4 flex items-center gap-2">
           <Target className="w-6 h-6 text-blue-400 drop-shadow-[0_0_6px_rgba(59,130,246,0.5)]" />
           All Milestones

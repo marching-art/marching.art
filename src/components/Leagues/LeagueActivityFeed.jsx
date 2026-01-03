@@ -91,7 +91,7 @@ const ActivityItem = React.memo(({ activity, isNotification = false, onMarkRead,
     >
       {/* Unread indicator */}
       {isNotification && !activity.read && (
-        <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
+        <div className="absolute top-2 right-2 w-2 h-2 rounded-sm bg-yellow-500 animate-pulse" />
       )}
 
       {/* Icon */}
@@ -190,7 +190,7 @@ const FilterTab = React.memo(({ active, onClick, children, count }) => (
     {children}
     {count > 0 && (
       <span className={`
-        absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full text-[10px] flex items-center justify-center
+        absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-sm text-[10px] flex items-center justify-center
         ${active ? 'bg-black text-yellow-500' : 'bg-yellow-500 text-black'}
       `}>
         {count > 99 ? '99+' : count}

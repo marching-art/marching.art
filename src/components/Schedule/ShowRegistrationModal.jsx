@@ -271,7 +271,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
         {!isMobile && (
           <button
             onClick={onClose}
-            className="p-2 -mr-2 -mt-1 text-gray-500 hover:text-white active:text-white rounded-full hover:bg-white/10 min-w-touch min-h-touch flex items-center justify-center"
+            className="p-2 -mr-2 -mt-1 text-gray-500 hover:text-white active:text-white rounded-sm hover:bg-white/10 min-w-touch min-h-touch flex items-center justify-center"
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />
@@ -545,7 +545,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
         >
           {saving ? (
             <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-sm animate-spin" />
               Saving...
             </>
           ) : (

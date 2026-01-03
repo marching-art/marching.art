@@ -243,7 +243,7 @@ const ScoresSpreadsheet = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-gold-500/20 rounded-lg">
+          <div className="p-1.5 bg-gold-500/20 rounded-sm">
             <Table className="w-4 h-4 text-gold-500" />
           </div>
           <div>
@@ -263,7 +263,7 @@ const ScoresSpreadsheet = () => {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex flex-wrap gap-0.5 p-0.5 bg-charcoal-900/50 rounded-lg">
+      <div className="flex flex-wrap gap-0.5 p-0.5 bg-charcoal-900/50 rounded-sm">
         {/* Individual Caption Tabs */}
         {INDIVIDUAL_CAPTIONS.map(caption => (
           <button

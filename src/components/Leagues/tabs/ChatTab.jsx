@@ -91,7 +91,7 @@ const ChatTab = ({ league, messages, userProfile, memberProfiles, isCommissioner
             League Chat
           </h3>
           <span className="text-[10px] text-gray-500 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-sm bg-green-500 animate-pulse" />
             {messages.length} messages
           </span>
         </div>

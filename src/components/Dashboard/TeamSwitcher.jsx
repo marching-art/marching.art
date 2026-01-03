@@ -32,7 +32,7 @@ const TeamSwitcher = React.memo(({
               key={classId}
               onClick={() => { haptic?.('light'); onSwitch(classId); }}
               className={`
-                flex items-center gap-2 px-3 py-2 min-h-[40px] rounded-full
+                flex items-center gap-2 px-3 py-2 min-h-[40px] rounded-sm
                 text-sm font-bold whitespace-nowrap transition-all duration-200 press-feedback
                 ${isActive
                   ? 'bg-gradient-to-r from-yellow-500 to-yellow-400 text-black'

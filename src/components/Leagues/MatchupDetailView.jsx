@@ -183,7 +183,7 @@ const MatchupDetailView = ({
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass rounded-xl p-4"
+        className="glass rounded-sm p-4"
       >
         <button
           onClick={onBack}
@@ -197,7 +197,7 @@ const MatchupDetailView = ({
           <Calendar className="w-4 h-4 text-cream-500/60" />
           <span className="text-sm text-cream-500/60">Week {matchup.week} Matchup</span>
           {rivalry && (
-            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold">
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-sm bg-red-500/20 text-red-400 text-xs font-semibold">
               <Flame className="w-3 h-3" /> Rivalry
             </span>
           )}
@@ -224,12 +224,12 @@ const MatchupDetailView = ({
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.1 }}
-        className="glass rounded-xl p-6"
+        className="glass rounded-sm p-6"
       >
         <div className="flex items-center justify-between">
           {/* User 1 */}
           <div className="flex-1 text-center">
-            <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-2 ${
+            <div className={`w-16 h-16 mx-auto rounded-sm flex items-center justify-center mb-2 ${
               user1Leading
                 ? 'bg-gradient-to-br from-green-500/30 to-green-600/20 border-2 border-green-500/50'
                 : 'bg-charcoal-800 border-2 border-cream-500/20'
@@ -262,7 +262,7 @@ const MatchupDetailView = ({
 
           {/* VS Divider */}
           <div className="px-4 py-2 flex flex-col items-center">
-            <div className="w-14 h-14 rounded-full bg-charcoal-900/50 border border-cream-500/20 flex items-center justify-center">
+            <div className="w-14 h-14 rounded-sm bg-charcoal-900/50 border border-cream-500/20 flex items-center justify-center">
               <Swords className="w-6 h-6 text-purple-400" />
             </div>
             {!loading && scoreDiff > 0 && (
@@ -283,7 +283,7 @@ const MatchupDetailView = ({
 
           {/* User 2 */}
           <div className="flex-1 text-center">
-            <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-2 ${
+            <div className={`w-16 h-16 mx-auto rounded-sm flex items-center justify-center mb-2 ${
               user2Leading
                 ? 'bg-gradient-to-br from-green-500/30 to-green-600/20 border-2 border-green-500/50'
                 : 'bg-charcoal-800 border-2 border-cream-500/20'
@@ -333,7 +333,7 @@ const MatchupDetailView = ({
                 {(100 - winProbability).toFixed(0)}%
               </span>
             </div>
-            <div className="h-2 rounded-full overflow-hidden flex bg-charcoal-800">
+            <div className="h-2 rounded-sm overflow-hidden flex bg-charcoal-800">
               <motion.div
                 initial={{ width: '50%' }}
                 animate={{ width: `${winProbability}%` }}
@@ -365,7 +365,7 @@ const MatchupDetailView = ({
             <button
               key={tab.id}
               onClick={() => setActiveView(tab.id)}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-display font-semibold transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-sm font-display font-semibold transition-all ${
                 activeView === tab.id
                   ? 'bg-gold-500 text-charcoal-900'
                   : 'glass text-cream-300 hover:text-cream-100'
@@ -390,7 +390,7 @@ const MatchupDetailView = ({
           >
             {/* Season Stats Comparison */}
             {user1Stats && user2Stats && (
-              <div className="glass rounded-xl p-4">
+              <div className="glass rounded-sm p-4">
                 <h3 className="text-sm font-display font-bold text-cream-100 mb-4 flex items-center gap-2">
                   <Award className="w-4 h-4 text-gold-400" />
                   Season Stats
@@ -458,7 +458,7 @@ const MatchupDetailView = ({
 
             {/* Quick Caption Comparison */}
             {!loading && (scoreBreakdown.user1?.shows.length > 0 || scoreBreakdown.user2?.shows.length > 0) && (
-              <div className="glass rounded-xl p-4">
+              <div className="glass rounded-sm p-4">
                 <h3 className="text-sm font-display font-bold text-cream-100 mb-4 flex items-center gap-2">
                   <Target className="w-4 h-4 text-gold-500" />
                   Caption Summary
@@ -493,7 +493,7 @@ const MatchupDetailView = ({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="glass rounded-xl overflow-hidden"
+            className="glass rounded-sm overflow-hidden"
           >
             <div className="p-4 border-b border-cream-500/10">
               <h3 className="text-sm font-display font-bold text-cream-100 flex items-center gap-2">
@@ -543,7 +543,7 @@ const MatchupDetailView = ({
                       user1Wins ? 'bg-green-500/10' : ''
                     }`}>
                       <div className="flex items-center gap-2">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                        <div className={`w-8 h-8 rounded-sm flex items-center justify-center ${
                           user1Wins ? 'bg-green-500/20' : 'bg-charcoal-800'
                         }`}>
                           <User className={`w-4 h-4 ${
@@ -566,7 +566,7 @@ const MatchupDetailView = ({
                           </div>
                         </div>
                         {user1Wins && (
-                          <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center">
+                          <div className="w-5 h-5 rounded-sm bg-green-500/20 flex items-center justify-center">
                             <Star className="w-3 h-3 text-green-400" />
                           </div>
                         )}
@@ -575,7 +575,7 @@ const MatchupDetailView = ({
 
                     {/* Position Badge */}
                     <div className="w-24 p-2 flex flex-col items-center justify-center">
-                      <div className="px-2 py-1 rounded-lg bg-charcoal-800/80 border border-cream-500/10">
+                      <div className="px-2 py-1 rounded-sm bg-charcoal-800/80 border border-cream-500/10">
                         <span className="text-xs font-display font-bold text-gold-400">
                           {position.abbrev}
                         </span>
@@ -588,7 +588,7 @@ const MatchupDetailView = ({
                     }`}>
                       <div className="flex items-center gap-2 justify-end">
                         {user2Wins && (
-                          <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center">
+                          <div className="w-5 h-5 rounded-sm bg-green-500/20 flex items-center justify-center">
                             <Star className="w-3 h-3 text-green-400" />
                           </div>
                         )}
@@ -607,7 +607,7 @@ const MatchupDetailView = ({
                             </span>
                           </div>
                         </div>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                        <div className={`w-8 h-8 rounded-sm flex items-center justify-center ${
                           user2Wins ? 'bg-green-500/20' : 'bg-charcoal-800'
                         }`}>
                           <User className={`w-4 h-4 ${
@@ -656,7 +656,7 @@ const MatchupDetailView = ({
           >
             {/* Detailed Caption Breakdown */}
             {!loading && (scoreBreakdown.user1?.shows.length > 0 || scoreBreakdown.user2?.shows.length > 0) && (
-              <div className="glass rounded-xl p-4">
+              <div className="glass rounded-sm p-4">
                 <h3 className="text-sm font-display font-bold text-cream-100 mb-4 flex items-center gap-2">
                   <Target className="w-4 h-4 text-gold-500" />
                   Caption Breakdown
@@ -684,7 +684,7 @@ const MatchupDetailView = ({
             )}
 
             {/* Shows This Week */}
-            <div className="glass rounded-xl overflow-hidden">
+            <div className="glass rounded-sm overflow-hidden">
               <div className="p-4 border-b border-cream-500/10">
                 <h3 className="text-sm font-display font-bold text-cream-100 flex items-center gap-2">
                   <Trophy className="w-4 h-4 text-gold-500" />
@@ -697,7 +697,7 @@ const MatchupDetailView = ({
                 {scoreBreakdown.user1?.shows.map((show, idx) => (
                   <div key={`u1-${idx}`} className="p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-charcoal-800 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-sm bg-charcoal-800 flex items-center justify-center">
                         <span className="text-xs font-bold text-cream-500/60">
                           {getDisplayName(matchup.user1).charAt(0)}
                         </span>
@@ -719,7 +719,7 @@ const MatchupDetailView = ({
                 {scoreBreakdown.user2?.shows.map((show, idx) => (
                   <div key={`u2-${idx}`} className="p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-charcoal-800 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-sm bg-charcoal-800 flex items-center justify-center">
                         <span className="text-xs font-bold text-cream-500/60">
                           {getDisplayName(matchup.user2).charAt(0)}
                         </span>
@@ -780,7 +780,7 @@ const CaptionCompare = ({ label, score1, score2, color }) => {
           {score2.toFixed(1)}
         </span>
       </div>
-      <div className="flex h-2 rounded-full overflow-hidden bg-charcoal-800">
+      <div className="flex h-2 rounded-sm overflow-hidden bg-charcoal-800">
         <motion.div
           initial={{ width: '50%' }}
           animate={{ width: `${percent1}%` }}

@@ -177,7 +177,7 @@ const CircuitStandingsTab = ({ league }) => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-8 text-center"
+        className="bg-black/40 backdrop-blur-md border border-white/10 rounded-sm p-8 text-center"
       >
         <p className="text-yellow-50/60">Loading circuit standings...</p>
       </motion.div>
@@ -189,7 +189,7 @@ const CircuitStandingsTab = ({ league }) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-6"
+      className="bg-black/40 backdrop-blur-md border border-white/10 rounded-sm p-6"
     >
       <h2 className="text-xl md:text-2xl font-display font-bold text-yellow-50 mb-4 md:mb-6 flex items-center gap-2">
         <Trophy className="w-5 h-5 md:w-6 md:h-6 text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]" />
@@ -281,7 +281,7 @@ const CircuitStandingsTab = ({ league }) => {
       </div>
 
       {league.settings?.finalsSize && (
-        <div className="mt-4 p-4 bg-green-500/10 border border-green-500/20 rounded-xl">
+        <div className="mt-4 p-4 bg-green-500/10 border border-green-500/20 rounded-sm">
           <p className="text-sm text-green-400">
             <Star className="w-4 h-4 inline mr-1 drop-shadow-[0_0_4px_rgba(74,222,128,0.5)]" />
             Top {league.settings.finalsSize || 12} directors advance to League Finals
@@ -290,7 +290,7 @@ const CircuitStandingsTab = ({ league }) => {
       )}
 
       {/* Scoring Legend */}
-      <div className="mt-6 p-4 bg-black/30 border border-white/5 rounded-xl">
+      <div className="mt-6 p-4 bg-black/30 border border-white/5 rounded-sm">
         <h4 className="text-sm font-display font-semibold text-yellow-50/70 mb-2">Circuit Points per Tour Stop</h4>
         <div className="flex flex-wrap gap-2 text-xs">
           <span className="px-2 py-1 bg-yellow-500/20 rounded text-yellow-400 font-medium">1st: 15 pts</span>

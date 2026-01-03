@@ -229,8 +229,8 @@ ${userIsWinning ? '(Leading)' : isTied ? '(Tied)' : '(Trailing)'}
         {isLive && (
           <div className="bg-red-500/20 border-b border-red-500/30 px-4 py-2 flex items-center justify-center gap-2">
             <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-sm bg-red-400 opacity-75" />
+              <span className="relative inline-flex rounded-sm h-2.5 w-2.5 bg-red-500" />
             </span>
             <span className="text-sm font-bold text-red-400 uppercase tracking-wider">Live Matchup</span>
           </div>
@@ -266,7 +266,7 @@ ${userIsWinning ? '(Leading)' : isTied ? '(Tied)' : '(Trailing)'}
           <div className="flex items-center justify-between gap-4">
             {/* User Side */}
             <div className="flex-1 text-center">
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-2 border-3 ${
+              <div className={`w-16 h-16 rounded-sm flex items-center justify-center mx-auto mb-2 border-3 ${
                 userWon ? 'bg-green-500/20 border-green-500' :
                 userLost ? 'bg-charcoal-800 border-cream-500/30' :
                 userIsWinning ? 'bg-green-500/10 border-green-500/50' :
@@ -292,7 +292,7 @@ ${userIsWinning ? '(Leading)' : isTied ? '(Tied)' : '(Trailing)'}
             <div className="flex flex-col items-center">
               <span className="text-2xl font-display font-bold text-cream-500/40">VS</span>
               {(isLive || isCompleted) && (
-                <div className={`mt-3 px-3 py-1.5 rounded-lg text-sm font-bold ${
+                <div className={`mt-3 px-3 py-1.5 rounded-sm text-sm font-bold ${
                   userIsWinning ? 'bg-green-500/20 text-green-400' :
                   isTied ? 'bg-cream-500/20 text-cream-400' :
                   'bg-red-500/20 text-red-400'
@@ -305,7 +305,7 @@ ${userIsWinning ? '(Leading)' : isTied ? '(Tied)' : '(Trailing)'}
 
             {/* Opponent Side */}
             <div className="flex-1 text-center">
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-2 border-3 ${
+              <div className={`w-16 h-16 rounded-sm flex items-center justify-center mx-auto mb-2 border-3 ${
                 userLost ? 'bg-green-500/20 border-green-500' :
                 userWon ? 'bg-charcoal-800 border-cream-500/30' :
                 !userIsWinning && !isTied ? 'bg-green-500/10 border-green-500/50' :

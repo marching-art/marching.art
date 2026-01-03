@@ -35,7 +35,7 @@ const PageErrorFallback: React.FC<PageErrorFallbackProps> = ({
     >
       <div className="max-w-md w-full text-center">
         {/* Error Icon */}
-        <div className="bg-red-900/20 p-6 rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+        <div className="bg-red-900/20 p-6 rounded-sm w-24 h-24 mx-auto mb-6 flex items-center justify-center">
           <AlertTriangle className="w-12 h-12 text-red-400" />
         </div>
 
@@ -54,7 +54,7 @@ const PageErrorFallback: React.FC<PageErrorFallbackProps> = ({
             <summary className="text-sm text-cream-500 cursor-pointer hover:text-cream-300 mb-2">
               Technical Details
             </summary>
-            <pre className="p-4 bg-charcoal-900 rounded-lg text-xs text-red-400 overflow-auto max-h-40 whitespace-pre-wrap">
+            <pre className="p-4 bg-charcoal-900 rounded-sm text-xs text-red-400 overflow-auto max-h-40 whitespace-pre-wrap">
               {error.message}
               {error.stack && `\n\nStack trace:\n${error.stack}`}
             </pre>
@@ -66,7 +66,7 @@ const PageErrorFallback: React.FC<PageErrorFallbackProps> = ({
           {onReset && (
             <button
               onClick={onReset}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold bg-gradient-gold text-charcoal-900 hover:shadow-glow transition-all"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-sm font-semibold bg-gradient-gold text-charcoal-900 hover:shadow-glow transition-all"
             >
               <RefreshCw className="w-5 h-5" />
               Try Again
@@ -74,14 +74,14 @@ const PageErrorFallback: React.FC<PageErrorFallbackProps> = ({
           )}
           <button
             onClick={() => startTransition(() => navigate(-1))}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold bg-charcoal-700 text-cream-200 hover:bg-charcoal-600 transition-all"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-sm font-semibold bg-charcoal-700 text-cream-200 hover:bg-charcoal-600 transition-all"
           >
             <ArrowLeft className="w-5 h-5" />
             Go Back
           </button>
           <button
             onClick={() => startTransition(() => navigate('/dashboard'))}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold border border-cream-700 text-cream-300 hover:bg-cream-900/20 transition-all"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-sm font-semibold border border-cream-700 text-cream-300 hover:bg-cream-900/20 transition-all"
           >
             <Home className="w-5 h-5" />
             Dashboard

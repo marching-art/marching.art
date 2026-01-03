@@ -120,7 +120,7 @@ const AwardsTab = ({ league }) => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-8 text-center"
+        className="bg-black/40 backdrop-blur-md border border-white/10 rounded-sm p-8 text-center"
       >
         <p className="text-yellow-50/60">Loading awards...</p>
       </motion.div>
@@ -192,7 +192,7 @@ const AwardsTab = ({ league }) => {
       exit={{ opacity: 0, y: -20 }}
       className="space-y-4"
     >
-      <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-6">
+      <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-sm p-6">
         <h2 className="text-xl md:text-2xl font-display font-bold text-yellow-50 mb-6 flex items-center gap-2">
           <Award className="w-5 h-5 md:w-6 md:h-6 text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]" />
           Season Awards
@@ -205,10 +205,10 @@ const AwardsTab = ({ league }) => {
             return (
               <div
                 key={award.id}
-                className={`p-4 rounded-xl border bg-gradient-to-br ${colors.bg} ${colors.border} shadow-[0_0_15px_rgba(0,0,0,0.2)]`}
+                className={`p-4 rounded-sm border bg-gradient-to-br ${colors.bg} ${colors.border} shadow-[0_0_15px_rgba(0,0,0,0.2)]`}
               >
                 <div className="flex items-start gap-3">
-                  <div className={`p-2 rounded-lg bg-black/30 ${colors.text}`}>
+                  <div className={`p-2 rounded-sm bg-black/30 ${colors.text}`}>
                     <Icon className={`w-5 h-5 ${colors.glow}`} />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -239,7 +239,7 @@ const AwardsTab = ({ league }) => {
       </div>
 
       {/* Info about awards */}
-      <div className="bg-black/30 backdrop-blur-sm border border-white/5 rounded-xl p-4">
+      <div className="bg-black/30 backdrop-blur-sm border border-white/5 rounded-sm p-4">
         <p className="text-sm text-yellow-50/70 flex items-start gap-2">
           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-yellow-400/50" />
           <span>

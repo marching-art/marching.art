@@ -45,7 +45,7 @@ const YourSeasonCard = ({
   // If no corps data, show prompt to create
   if (!corpsName && !isLoading) {
     return (
-      <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-6">
+      <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-sm p-6">
         <h2 className="text-sm font-display font-bold text-cream-400 uppercase tracking-wide mb-3">
           Your Season
         </h2>
@@ -64,7 +64,7 @@ const YourSeasonCard = ({
 
   if (isLoading) {
     return (
-      <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-6 animate-pulse">
+      <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-sm p-6 animate-pulse">
         <div className="h-4 bg-charcoal-800 rounded w-24 mb-4"></div>
         <div className="h-8 bg-charcoal-800 rounded w-full mb-3"></div>
         <div className="h-4 bg-charcoal-800 rounded w-32"></div>
@@ -76,7 +76,7 @@ const YourSeasonCard = ({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-to-br from-charcoal-900/80 to-charcoal-950/80 border border-gold-500/20 rounded-xl p-6"
+      className="bg-gradient-to-br from-charcoal-900/80 to-charcoal-950/80 border border-gold-500/20 rounded-sm p-6"
     >
       <h2 className="text-sm font-display font-bold text-cream-400 uppercase tracking-wide mb-4">
         Your Season
@@ -86,7 +86,7 @@ const YourSeasonCard = ({
       <div className="flex items-center justify-between gap-4">
         {/* Rank display */}
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-lg bg-gold-500/20 border border-gold-500/30 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-sm bg-gold-500/20 border border-gold-500/30 flex items-center justify-center">
             <Trophy className="w-6 h-6 text-gold-400" />
           </div>
           <div>

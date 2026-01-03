@@ -23,7 +23,7 @@ const WelcomeStep = ({
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-        className="w-16 h-16 md:w-24 md:h-24 mx-auto mb-4 md:mb-6 bg-gradient-gold rounded-full flex items-center justify-center"
+        className="w-16 h-16 md:w-24 md:h-24 mx-auto mb-4 md:mb-6 bg-gradient-gold rounded-sm flex items-center justify-center"
       >
         <Rocket className="w-8 h-8 md:w-12 md:h-12 text-charcoal-900" />
       </motion.div>
@@ -53,17 +53,17 @@ const WelcomeStep = ({
         transition={{ delay: 0.5 }}
         className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 md:mb-8"
       >
-        <div className="glass rounded-xl p-3 md:p-4">
+        <div className="glass rounded-sm p-3 md:p-4">
           <Star className="w-6 h-6 md:w-8 md:h-8 text-gold-500 mx-auto mb-1 md:mb-2" />
           <h3 className="font-semibold text-cream-100 text-sm md:text-base">Build Your Lineup</h3>
           <p className="text-xs md:text-sm text-cream-500/60">Select DCI corps for each caption</p>
         </div>
-        <div className="glass rounded-xl p-3 md:p-4">
+        <div className="glass rounded-sm p-3 md:p-4">
           <Calendar className="w-6 h-6 md:w-8 md:h-8 text-blue-500 mx-auto mb-1 md:mb-2" />
           <h3 className="font-semibold text-cream-100 text-sm md:text-base">Pick Your Shows</h3>
           <p className="text-xs md:text-sm text-cream-500/60">Choose events to compete in</p>
         </div>
-        <div className="glass rounded-xl p-3 md:p-4">
+        <div className="glass rounded-sm p-3 md:p-4">
           <Trophy className="w-6 h-6 md:w-8 md:h-8 text-purple-500 mx-auto mb-1 md:mb-2" />
           <h3 className="font-semibold text-cream-100 text-sm md:text-base">Chase Glory</h3>
           <p className="text-xs md:text-sm text-cream-500/60">Climb the leaderboards</p>
@@ -74,7 +74,7 @@ const WelcomeStep = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6 }}
-        className="bg-charcoal-900/50 rounded-xl p-3 md:p-4 mb-6 md:mb-8"
+        className="bg-charcoal-900/50 rounded-sm p-3 md:p-4 mb-6 md:mb-8"
       >
         <h3 className="font-semibold text-cream-100 mb-2 text-sm md:text-base">
           {totalCorps} Corps to Set Up

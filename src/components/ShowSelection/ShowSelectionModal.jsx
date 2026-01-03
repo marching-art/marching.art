@@ -183,7 +183,7 @@ const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, season
           <div className="flex-1 overflow-y-auto p-4">
             {loading ? (
               <div className="text-center py-12">
-                <div className="w-8 h-8 border-2 border-[#0057B8] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                <div className="w-8 h-8 border-2 border-[#0057B8] border-t-transparent rounded-sm animate-spin mx-auto mb-3" />
                 <p className="text-xs text-gray-500 uppercase tracking-wider">Loading shows...</p>
               </div>
             ) : availableShows.length === 0 ? (
@@ -326,7 +326,7 @@ const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, season
             >
               {saving ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-sm animate-spin" />
                   Saving...
                 </>
               ) : (

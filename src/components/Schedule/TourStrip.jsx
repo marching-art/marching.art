@@ -93,15 +93,15 @@ const TourStrip = ({
         {/* Legend */}
         <div className="hidden md:flex items-center gap-4 ml-auto text-xs">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-green-400 animate-pulse" style={{ animationDuration: '2s' }} />
+            <div className="w-3 h-3 rounded-sm bg-green-400 animate-pulse" style={{ animationDuration: '2s' }} />
             <span className="text-cream/50">Open</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-gold-400" />
+            <div className="w-3 h-3 rounded-sm bg-gold-400" />
             <span className="text-cream/50">Registered</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-charcoal-600" />
+            <div className="w-3 h-3 rounded-sm bg-charcoal-600" />
             <span className="text-cream/50">Closed</span>
           </div>
         </div>
@@ -165,7 +165,7 @@ const TourStrip = ({
                       </div>
                       {/* Route Dot */}
                       <div className={`
-                        w-3 h-3 rounded-full border-2 mx-[-6px] z-10
+                        w-3 h-3 rounded-sm border-2 mx-[-6px] z-10
                         ${isLocked
                           ? 'bg-charcoal-800 border-charcoal-600'
                           : isRegistered
@@ -180,7 +180,7 @@ const TourStrip = ({
                   {index === 0 && (
                     <div className="flex items-center mr-2">
                       <div className="flex items-center gap-1 px-2 py-1 bg-gold-500/20 border border-gold-500/30">
-                        <div className="w-2 h-2 rounded-full bg-gold-400" />
+                        <div className="w-2 h-2 rounded-sm bg-gold-400" />
                         <span className="text-[10px] font-display font-bold text-gold-400 uppercase">Start</span>
                       </div>
                       <div className="w-4 h-0.5 bg-gold-500/30" />
@@ -204,7 +204,7 @@ const TourStrip = ({
                       <div className="w-4 h-0.5 bg-gold-500/30" />
                       <div className="flex items-center gap-1 px-2 py-1 bg-gold-500/20 border border-gold-500/30">
                         <span className="text-[10px] font-display font-bold text-gold-400 uppercase">End</span>
-                        <div className="w-2 h-2 rounded-full bg-gold-400" />
+                        <div className="w-2 h-2 rounded-sm bg-gold-400" />
                       </div>
                     </div>
                   )}
@@ -225,9 +225,9 @@ const TourStrip = ({
           Scroll to explore all tour stops
         </span>
         <div className="flex gap-1">
-          <div className="w-1 h-1 rounded-full bg-cream/20" />
-          <div className="w-1 h-1 rounded-full bg-cream/30" />
-          <div className="w-1 h-1 rounded-full bg-cream/20" />
+          <div className="w-1 h-1 rounded-sm bg-cream/20" />
+          <div className="w-1 h-1 rounded-sm bg-cream/30" />
+          <div className="w-1 h-1 rounded-sm bg-cream/20" />
         </div>
       </div>
     </motion.div>

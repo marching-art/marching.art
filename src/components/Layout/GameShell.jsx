@@ -128,7 +128,7 @@ const NavItem = ({ to, icon: Icon, label }) => (
         <span>{label}</span>
         {/* Active indicator - bottom bar */}
         {isActive && (
-          <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-yellow-400 rounded-full" />
+          <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-yellow-400 rounded-sm" />
         )}
       </>
     )}

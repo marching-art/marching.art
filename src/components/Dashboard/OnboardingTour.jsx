@@ -149,13 +149,13 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
         style={tooltipPosition}
-        className="fixed z-50 w-80 bg-charcoal-900 border border-gold-500/30 rounded-xl overflow-hidden"
+        className="fixed z-50 w-80 bg-charcoal-900 border border-gold-500/30 rounded-sm overflow-hidden"
       >
         {/* Header */}
         <div className="p-4 bg-gold-500/10 border-b border-gold-500/20">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gold-500/20 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-sm bg-gold-500/20 flex items-center justify-center">
                 <Icon className="w-5 h-5 text-gold-400" />
               </div>
               <div>
@@ -167,7 +167,7 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
             </div>
             <button
               onClick={handleSkip}
-              className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+              className="p-1.5 hover:bg-white/10 rounded-sm transition-colors"
             >
               <X className="w-4 h-4 text-cream-400" />
             </button>
@@ -187,7 +187,7 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
             {TOUR_STEPS.map((_, idx) => (
               <div
                 key={idx}
-                className={`w-2 h-2 rounded-full transition-colors ${
+                className={`w-2 h-2 rounded-sm transition-colors ${
                   idx === currentStep ? 'bg-gold-400' : idx < currentStep ? 'bg-green-400' : 'bg-charcoal-700'
                 }`}
               />
@@ -206,7 +206,7 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
             )}
             <button
               onClick={handleNext}
-              className="flex items-center gap-1 px-4 py-1.5 bg-gold-500 text-charcoal-900 rounded-lg text-sm font-semibold hover:bg-gold-400 transition-colors"
+              className="flex items-center gap-1 px-4 py-1.5 bg-gold-500 text-charcoal-900 rounded-sm text-sm font-semibold hover:bg-gold-400 transition-colors"
             >
               {currentStep < TOUR_STEPS.length - 1 ? (
                 <>

@@ -119,7 +119,7 @@ const GamingHeader: React.FC = () => {
             {/* Left Section - Logo + Brand */}
             <Link to="/dashboard" className="flex items-center gap-2 group">
               <div className="relative flex-shrink-0">
-                <div className="w-9 h-9 rounded-lg overflow-hidden transition-all duration-300">
+                <div className="w-9 h-9 rounded-sm overflow-hidden transition-all duration-300">
                   <img
                     src="/logo192.svg"
                     alt="marching.art"
@@ -153,7 +153,7 @@ const GamingHeader: React.FC = () => {
                     onMouseEnter={() => prefetchRoute(item.path)}
                     onFocus={() => prefetchRoute(item.path)}
                     className={`
-                      relative flex items-center gap-2 px-4 py-2.5 rounded-lg font-display font-semibold text-sm uppercase tracking-wide
+                      relative flex items-center gap-2 px-4 py-2.5 rounded-sm font-display font-semibold text-sm uppercase tracking-wide
                       transition-all duration-300 group
                       ${active
                         ? 'text-yellow-400'
@@ -167,7 +167,7 @@ const GamingHeader: React.FC = () => {
                     {active && (
                       <motion.div
                         layoutId="activeNav"
-                        className="absolute -bottom-1 left-3 right-3 h-[3px] rounded-full bg-gradient-to-r from-yellow-500/80 via-yellow-400 to-yellow-500/80 shadow-[0_0_12px_rgba(234,179,8,0.6)]"
+                        className="absolute -bottom-1 left-3 right-3 h-[3px] rounded-sm bg-gradient-to-r from-yellow-500/80 via-yellow-400 to-yellow-500/80 shadow-[0_0_12px_rgba(234,179,8,0.6)]"
                         transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                       />
                     )}
@@ -180,7 +180,7 @@ const GamingHeader: React.FC = () => {
                 <Link
                   to="/admin"
                   className={`
-                    relative flex items-center gap-2 px-4 py-2.5 rounded-lg font-display font-semibold text-sm uppercase tracking-wide
+                    relative flex items-center gap-2 px-4 py-2.5 rounded-sm font-display font-semibold text-sm uppercase tracking-wide
                     transition-all duration-300
                     ${isActive('/admin')
                       ? 'text-yellow-400'
@@ -200,7 +200,7 @@ const GamingHeader: React.FC = () => {
               {profile && (
                 <Link
                   to="/profile"
-                  className="hidden sm:flex items-center gap-3 px-3 py-1.5 bg-black/50 backdrop-blur-md border border-white/10 rounded-xl hover:border-yellow-500/30 transition-all duration-300"
+                  className="hidden sm:flex items-center gap-3 px-3 py-1.5 bg-black/50 backdrop-blur-md border border-white/10 rounded-sm hover:border-yellow-500/30 transition-all duration-300"
                 >
                   <div className="flex items-center gap-1.5">
                     <Zap className="w-4 h-4 text-yellow-400" />
@@ -221,7 +221,7 @@ const GamingHeader: React.FC = () => {
               {/* Mobile Menu Toggle */}
               <button
                 onClick={() => setMobileMenuOpen(true)}
-                className="lg:hidden p-2 rounded-lg hover:bg-white/10 transition-all duration-300"
+                className="lg:hidden p-2 rounded-sm hover:bg-white/10 transition-all duration-300"
                 aria-label="Open menu"
               >
                 <Menu className="w-6 h-6 text-yellow-50/80" />
@@ -258,7 +258,7 @@ const GamingHeader: React.FC = () => {
                 <h2 className="text-xl font-display font-bold text-yellow-50">Menu</h2>
                 <button
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-2 rounded-lg hover:bg-white/10 transition-all duration-300"
+                  className="p-2 rounded-sm hover:bg-white/10 transition-all duration-300"
                 >
                   <X className="w-5 h-5 text-yellow-50/80" />
                 </button>
@@ -269,7 +269,7 @@ const GamingHeader: React.FC = () => {
                 <div className="p-4 border-b border-white/10">
                   <div className="flex items-center gap-3">
                     <div className="relative">
-                      <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(234,179,8,0.3)]">
+                      <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-sm flex items-center justify-center shadow-[0_0_15px_rgba(234,179,8,0.3)]">
                         <User className="w-6 h-6 text-slate-900" />
                       </div>
                       {(profile.xpLevel ?? 0) >= 10 && (
@@ -346,7 +346,7 @@ const GamingHeader: React.FC = () => {
               <div className="p-4 border-t border-white/10">
                 <button
                   onClick={handleSignOut}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 text-red-400 hover:text-red-300 hover:bg-red-500/15 transition-all duration-300"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-sm bg-red-500/10 text-red-400 hover:text-red-300 hover:bg-red-500/15 transition-all duration-300"
                 >
                   <LogOut className="w-5 h-5" />
                   <span className="font-medium">Sign Out</span>

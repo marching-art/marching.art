@@ -20,7 +20,7 @@ const SettingsTab = ({ league }) => {
       <div className="space-y-6">
         <div>
           <h3 className="text-lg font-semibold text-cream-100 mb-2">Invite Code</h3>
-          <div className="flex items-center gap-3 p-4 bg-charcoal-900/50 rounded-lg border border-cream-500/20">
+          <div className="flex items-center gap-3 p-4 bg-charcoal-900/50 rounded-sm border border-cream-500/20">
             <code className="text-2xl font-mono font-bold text-gold-500 tracking-wider">
               {league.inviteCode}
             </code>
@@ -39,15 +39,15 @@ const SettingsTab = ({ league }) => {
         <div>
           <h3 className="text-lg font-semibold text-cream-100 mb-4">League Settings</h3>
           <div className="space-y-3">
-            <div className="flex items-center justify-between p-4 bg-charcoal-900/50 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-charcoal-900/50 rounded-sm">
               <span className="text-cream-300">Prize Pool (CorpsCoin)</span>
               <span className="font-bold text-gold-500">{league.settings?.prizePool || 1000}</span>
             </div>
-            <div className="flex items-center justify-between p-4 bg-charcoal-900/50 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-charcoal-900/50 rounded-sm">
               <span className="text-cream-300">Finals Spots</span>
               <span className="font-bold text-cream-100">{league.settings?.finalsSize || 12}</span>
             </div>
-            <div className="flex items-center justify-between p-4 bg-charcoal-900/50 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-charcoal-900/50 rounded-sm">
               <span className="text-cream-300">Staff Trading</span>
               <span className={`font-bold ${league.settings?.enableStaffTrading ? 'text-green-400' : 'text-red-400'}`}>
                 {league.settings?.enableStaffTrading ? 'Enabled' : 'Disabled'}

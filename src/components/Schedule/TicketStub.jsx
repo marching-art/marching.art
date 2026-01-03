@@ -181,7 +181,7 @@ const TicketStub = ({
                   </>
                 ) : (
                   <>
-                    <span className="w-2 h-2 rounded-full bg-green-400 animate-ping" style={{ animationDuration: '2s' }} />
+                    <span className="w-2 h-2 rounded-sm bg-green-400 animate-ping" style={{ animationDuration: '2s' }} />
                     Open
                   </>
                 )}
@@ -255,7 +255,7 @@ const TicketStub = ({
           <div
             key={i}
             className={`
-              w-2 h-2 rounded-full
+              w-2 h-2 rounded-sm
               ${isOpen
                 ? isRegistered
                   ? 'bg-charcoal-950 border border-gold-500/20'
