@@ -1,25 +1,23 @@
 // =============================================================================
-// DASHBOARD - DAILY BRIEFING TERMINAL
+// DASHBOARD - TEAM OVERVIEW (ESPN Fantasy Style)
 // =============================================================================
-// Dense, data-rich "Command Center" layout. ESPN/Bloomberg inspired.
-// Laws: App Shell, widget grid, ticker header, no glow
+// Hero: Active Lineup Roster Table. Sidebar: Season Scorecard + Recent Results.
+// Laws: App Shell, 2/3 + 1/3 grid, data tables over cards, no glow
 
 import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Trophy, Edit, ChevronRight, Users, TrendingUp, TrendingDown,
-  Activity, Medal, FileText, Swords, Radio, Clock, Zap,
-  Calendar, DollarSign, Newspaper, CheckCircle, Circle
+  Trophy, Edit, TrendingUp, TrendingDown, Minus,
+  Calendar, Users, Lock, ChevronRight, Activity
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 
-// Lazy-load large modals
+// Lazy-load modals
 const CaptionSelectionModal = lazy(() => import('../components/CaptionSelection/CaptionSelectionModal'));
 const SeasonSetupWizard = lazy(() => import('../components/SeasonSetupWizard'));
-const NewsSubmissionModal = lazy(() => import('../components/modals/NewsSubmissionModal'));
 
 import {
   ClassUnlockCongratsModal,
@@ -36,9 +34,8 @@ import {
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useScoresData } from '../hooks/useScoresData';
 import { useMyLeagues } from '../hooks/useLeagues';
-import { useTickerData } from '../hooks/useTickerData';
 import { retireCorps } from '../firebase/functions';
-import { submitNewsForApproval, registerCorps, unlockClassWithCorpsCoin, getRecentNews } from '../api/functions';
+import { registerCorps, unlockClassWithCorpsCoin } from '../api/functions';
 import ClassPurchaseModal from '../components/modals/ClassPurchaseModal';
 import { useHaptic } from '../hooks/useHaptic';
 import { useModalQueue, MODAL_PRIORITY } from '../hooks/useModalQueue';
@@ -55,311 +52,381 @@ const CLASS_LABELS = {
   soundSport: 'SoundSport',
 };
 
+const CAPTIONS = [
+  { id: 'GE1', name: 'GE1', fullName: 'General Effect 1', category: 'ge' },
+  { id: 'GE2', name: 'GE2', fullName: 'General Effect 2', category: 'ge' },
+  { id: 'VP', name: 'VP', fullName: 'Visual Proficiency', category: 'vis' },
+  { id: 'VA', name: 'VA', fullName: 'Visual Analysis', category: 'vis' },
+  { id: 'CG', name: 'CG', fullName: 'Color Guard', category: 'vis' },
+  { id: 'B', name: 'Brass', fullName: 'Brass', category: 'mus' },
+  { id: 'MA', name: 'MA', fullName: 'Music Analysis', category: 'mus' },
+  { id: 'P', name: 'Perc', fullName: 'Percussion', category: 'mus' },
+];
+
 const CLASS_UNLOCK_LEVELS = { aClass: 3, open: 5, world: 10 };
 const CLASS_UNLOCK_COSTS = { aClass: 1000, open: 2500, world: 5000 };
 const CLASS_DISPLAY_NAMES = { aClass: 'A Class', open: 'Open Class', world: 'World Class' };
 
 // =============================================================================
-// WIDGET COMPONENTS
+// SKELETON COMPONENTS
 // =============================================================================
 
-// Widget wrapper with standard header
-const Widget = ({ title, icon: Icon, iconColor = 'text-gray-400', action, children }) => (
-  <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
-    <div className="bg-[#222] px-3 py-2 border-b border-[#333] flex items-center justify-between">
-      <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-        <Icon className={`w-3.5 h-3.5 ${iconColor}`} />
-        {title}
-      </h3>
-      {action}
-    </div>
-    {children}
-  </div>
+const SkeletonRow = () => (
+  <tr className="border-b border-[#222]">
+    <td className="py-2.5 px-3"><div className="w-10 h-6 bg-[#333] animate-pulse" /></td>
+    <td className="py-2.5 px-3"><div className="w-32 h-4 bg-[#333] animate-pulse" /></td>
+    <td className="py-2.5 px-2 text-right"><div className="w-14 h-4 bg-[#333] animate-pulse ml-auto" /></td>
+    <td className="py-2.5 px-2 text-center"><div className="w-8 h-4 bg-[#333] animate-pulse mx-auto" /></td>
+    <td className="py-2.5 px-3 text-right"><div className="w-20 h-4 bg-[#333] animate-pulse ml-auto" /></td>
+  </tr>
 );
 
-// Ticker Item - CorpsCoin price display
-const TickerItem = ({ abbr, change, isPositive }) => (
-  <span className="inline-flex items-center gap-1.5 px-2">
-    <span className="text-xs font-bold text-white font-data">{abbr}</span>
-    <span className={`text-xs font-bold font-data tabular-nums ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-      {isPositive ? '+' : ''}{change}
-    </span>
-  </span>
-);
+// =============================================================================
+// ACTIVE LINEUP TABLE (HERO)
+// =============================================================================
 
-// Next Up Widget - Shows next matchup or show
-const NextUpWidget = ({ activeCorps, currentWeek, userMatchup, memberProfiles, userProfile }) => {
-  const thisWeekShows = useMemo(() => {
-    if (!activeCorps?.selectedShows) return [];
-    return (activeCorps.selectedShows[`week${currentWeek}`] || []).slice(0, 2);
-  }, [activeCorps?.selectedShows, currentWeek]);
+const ActiveLineupTable = ({
+  lineup,
+  captionScores,
+  thisWeekShows,
+  loading,
+  onManageLineup,
+  onSlotClick
+}) => {
+  const lineupCount = Object.keys(lineup).length;
 
-  const hasLiveShow = thisWeekShows.length > 0;
-
-  const getDisplayName = (uid) => {
-    if (uid === userProfile?.uid) return 'You';
-    const profile = memberProfiles?.[uid];
-    return profile?.displayName || profile?.username || `Director ${uid?.slice(0, 6)}`;
+  // Get score for a caption
+  const getScore = (captionId) => {
+    return captionScores?.[captionId] ?? null;
   };
 
+  // Get trend for a caption (mock - would come from historical data)
+  const getTrend = (captionId) => {
+    const score = getScore(captionId);
+    if (!score) return null;
+    // Mock trend based on score value
+    if (score > 18) return { direction: 'up', delta: '+0.2' };
+    if (score < 17) return { direction: 'down', delta: '-0.1' };
+    return { direction: 'same', delta: '0.0' };
+  };
+
+  // Get next show info
+  const getNextShow = () => {
+    if (!thisWeekShows || thisWeekShows.length === 0) return null;
+    const show = thisWeekShows[0];
+    return show.eventName || show.name || 'Upcoming';
+  };
+
+  const nextShow = getNextShow();
+
   return (
-    <Widget title="Next Up" icon={Swords} iconColor="text-purple-500">
-      <div className="p-3">
-        {userMatchup ? (
-          <div className="bg-[#222] border border-[#333] p-3">
-            {/* Matchup Header */}
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] uppercase tracking-wider text-gray-500">Week {currentWeek} Matchup</span>
-              {hasLiveShow && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-red-500/20 text-red-500 text-[9px] font-bold">
-                  <Radio className="w-2.5 h-2.5 animate-pulse" />
-                  LIVE
-                </span>
-              )}
-            </div>
-
-            {/* Versus Strip */}
-            <div className="flex items-center gap-3">
-              <div className="flex-1 flex items-center gap-2">
-                <div className="w-8 h-8 bg-purple-500/20 border border-purple-500/50 flex items-center justify-center">
-                  <span className="text-xs font-bold text-purple-400">
-                    {getDisplayName(userMatchup.user1).charAt(0)}
-                  </span>
-                </div>
-                <span className="text-sm font-bold text-white truncate">
-                  {getDisplayName(userMatchup.user1)}
-                </span>
-              </div>
-
-              <div className="px-2 py-1 bg-[#111]">
-                <span className="text-xs text-gray-500">VS</span>
-              </div>
-
-              <div className="flex-1 flex items-center gap-2 justify-end">
-                <span className="text-sm font-bold text-white truncate">
-                  {getDisplayName(userMatchup.user2)}
-                </span>
-                <div className="w-8 h-8 bg-[#333] flex items-center justify-center">
-                  <span className="text-xs font-bold text-gray-400">
-                    {getDisplayName(userMatchup.user2).charAt(0)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : thisWeekShows.length > 0 ? (
-          <div className="space-y-2">
-            {thisWeekShows.map((show, idx) => (
-              <div key={idx} className="flex items-center justify-between p-2 bg-[#222] border border-[#333]">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-3.5 h-3.5 text-yellow-500" />
-                  <span className="text-sm text-white truncate">{show.eventName || show.name}</span>
-                </div>
-                {idx === 0 && hasLiveShow && (
-                  <span className="text-[9px] font-bold text-red-500">TODAY</span>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-4">
-            <Calendar className="w-6 h-6 text-gray-600 mx-auto mb-2" />
-            <p className="text-xs text-gray-500">No shows scheduled</p>
-            <Link to="/schedule" className="text-[10px] text-yellow-500 hover:underline">
-              View Schedule →
-            </Link>
-          </div>
+    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      {/* Header */}
+      <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+            Active Lineup
+          </h2>
+          <span className={`text-xs font-bold px-2 py-0.5 ${
+            lineupCount === 8
+              ? 'bg-green-500/20 text-green-500'
+              : 'bg-yellow-500/20 text-yellow-500'
+          }`}>
+            {lineupCount}/8
+          </span>
+        </div>
+        {nextShow && (
+          <span className="text-[10px] text-gray-500 flex items-center gap-1">
+            <Calendar className="w-3 h-3" />
+            Next: {nextShow}
+          </span>
         )}
       </div>
-    </Widget>
+
+      {/* Roster Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-[#333] bg-[#111]">
+              <th className="text-left py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-16">
+                Slot
+              </th>
+              <th className="text-left py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                Corps
+              </th>
+              <th className="text-right py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-20">
+                Last Score
+              </th>
+              <th className="text-center py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-16">
+                Trend
+              </th>
+              <th className="text-right py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-28">
+                Next Show
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              Array.from({ length: 8 }).map((_, i) => <SkeletonRow key={i} />)
+            ) : (
+              CAPTIONS.map((caption) => {
+                const value = lineup[caption.id];
+                const hasValue = !!value;
+                const [corpsName, sourceYear] = hasValue ? value.split('|') : [null, null];
+                const score = getScore(caption.id);
+                const trend = getTrend(caption.id);
+
+                return (
+                  <tr
+                    key={caption.id}
+                    onClick={() => onSlotClick(caption.id)}
+                    className="border-b border-[#222] hover:bg-[#222] cursor-pointer transition-colors"
+                  >
+                    {/* Slot Badge */}
+                    <td className="py-2.5 px-3">
+                      <span className={`inline-block px-2 py-1 text-[10px] font-bold ${
+                        hasValue
+                          ? 'bg-[#0057B8]/20 text-[#0057B8]'
+                          : 'bg-[#333] text-gray-500'
+                      }`}>
+                        {caption.name}
+                      </span>
+                    </td>
+
+                    {/* Corps Name + Year */}
+                    <td className="py-2.5 px-3">
+                      {hasValue ? (
+                        <div>
+                          <span className="text-sm text-white">{corpsName}</span>
+                          {sourceYear && (
+                            <span className="text-[10px] text-gray-500 ml-1.5">
+                              '{sourceYear.slice(-2)}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-500 italic">Empty slot</span>
+                      )}
+                    </td>
+
+                    {/* Last Score */}
+                    <td className="py-2.5 px-2 text-right">
+                      {score !== null ? (
+                        <span className="text-sm font-bold text-white font-data tabular-nums">
+                          {score.toFixed(3)}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-gray-600">—</span>
+                      )}
+                    </td>
+
+                    {/* Trend */}
+                    <td className="py-2.5 px-2 text-center">
+                      {trend ? (
+                        <span className={`inline-flex items-center gap-0.5 text-xs font-data tabular-nums ${
+                          trend.direction === 'up' ? 'text-green-500' :
+                          trend.direction === 'down' ? 'text-red-500' :
+                          'text-gray-500'
+                        }`}>
+                          {trend.direction === 'up' && <TrendingUp className="w-3 h-3" />}
+                          {trend.direction === 'down' && <TrendingDown className="w-3 h-3" />}
+                          {trend.direction === 'same' && <Minus className="w-3 h-3" />}
+                          {trend.delta}
+                        </span>
+                      ) : (
+                        <span className="text-gray-600">—</span>
+                      )}
+                    </td>
+
+                    {/* Next Show */}
+                    <td className="py-2.5 px-3 text-right">
+                      {hasValue && nextShow ? (
+                        <span className="text-[11px] text-gray-400 truncate block max-w-[100px]">
+                          {nextShow}
+                        </span>
+                      ) : hasValue ? (
+                        <span className="text-[11px] text-gray-600 flex items-center justify-end gap-1">
+                          <Lock className="w-3 h-3" />
+                          No show
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-yellow-500 font-bold">
+                          + Draft
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Manage Lineup Button */}
+      <div className="p-3 border-t border-[#333] bg-[#111]">
+        <button
+          onClick={onManageLineup}
+          className="w-full py-3 bg-[#0057B8] hover:bg-[#0066d6] text-white text-sm font-bold transition-colors flex items-center justify-center gap-2"
+        >
+          <Edit className="w-4 h-4" />
+          Manage Lineup
+        </button>
+      </div>
+    </div>
   );
 };
 
-// League Pulse Widget - User's league ranks
-const LeaguePulseWidget = ({ leagues }) => (
-  <Widget
-    title="League Pulse"
-    icon={Users}
-    iconColor="text-blue-500"
-    action={
-      <Link to="/leagues" className="text-[10px] text-gray-500 hover:text-white flex items-center gap-0.5">
-        All <ChevronRight className="w-3 h-3" />
-      </Link>
-    }
-  >
-    {leagues && leagues.length > 0 ? (
+// =============================================================================
+// SEASON SCORECARD (SIDEBAR)
+// =============================================================================
+
+const SeasonScorecard = ({ score, rank, rankChange, corpsName, corpsClass, loading }) => (
+  <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+    <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
+      <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+        <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+        Season Scorecard
+      </h3>
+    </div>
+
+    <div className="p-4">
+      {/* Corps Identity */}
+      <div className="flex items-center gap-3 mb-4 pb-4 border-b border-[#333]">
+        <div className="w-12 h-12 bg-[#333] border border-[#444] flex items-center justify-center">
+          <Trophy className="w-6 h-6 text-yellow-500" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-base font-bold text-white truncate">{corpsName || 'My Corps'}</p>
+          <p className="text-[10px] uppercase tracking-wider text-gray-500">
+            {CLASS_LABELS[corpsClass] || corpsClass}
+          </p>
+        </div>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* Total Score */}
+        <div className="bg-[#222] p-3">
+          <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Season Score</p>
+          {loading ? (
+            <div className="h-8 w-20 bg-[#333] animate-pulse" />
+          ) : (
+            <p className="text-2xl font-bold text-white font-data tabular-nums">
+              {score?.toFixed(2) || '0.00'}
+            </p>
+          )}
+        </div>
+
+        {/* Rank */}
+        <div className="bg-[#222] p-3">
+          <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Rank</p>
+          {loading ? (
+            <div className="h-8 w-16 bg-[#333] animate-pulse" />
+          ) : (
+            <div className="flex items-center gap-2">
+              <p className="text-2xl font-bold text-white font-data tabular-nums">
+                #{rank || '-'}
+              </p>
+              {rankChange !== null && rankChange !== 0 && (
+                <span className={`text-xs font-bold flex items-center gap-0.5 ${
+                  rankChange > 0 ? 'text-green-500' : 'text-red-500'
+                }`}>
+                  {rankChange > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                  {Math.abs(rankChange)}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+// =============================================================================
+// RECENT RESULTS FEED (SIDEBAR)
+// =============================================================================
+
+const RecentResultsFeed = ({ results, loading }) => (
+  <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+    <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
+      <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+        <Activity className="w-3.5 h-3.5 text-purple-500" />
+        Recent Results
+      </h3>
+    </div>
+
+    {loading ? (
+      <div className="p-4 space-y-3">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="flex items-center justify-between">
+            <div className="w-32 h-4 bg-[#333] animate-pulse" />
+            <div className="w-16 h-4 bg-[#333] animate-pulse" />
+          </div>
+        ))}
+      </div>
+    ) : results && results.length > 0 ? (
       <div className="divide-y divide-[#222]">
-        {leagues.slice(0, 4).map((league, idx) => (
+        {results.slice(0, 5).map((result, idx) => (
+          <div key={idx} className="px-4 py-3 flex items-center justify-between">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-white truncate">{result.eventName}</p>
+              <p className="text-[10px] text-gray-500">{result.date || 'Recent'}</p>
+            </div>
+            <div className="text-right ml-3">
+              <p className="text-sm font-bold text-yellow-500 font-data tabular-nums">
+                {result.score?.toFixed(2)}
+              </p>
+              {result.placement && (
+                <p className="text-[10px] text-gray-500">#{result.placement}</p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div className="p-6 text-center">
+        <Activity className="w-6 h-6 text-gray-600 mx-auto mb-2" />
+        <p className="text-xs text-gray-500">No results yet</p>
+        <p className="text-[10px] text-gray-600 mt-1">Compete in shows to see results</p>
+      </div>
+    )}
+  </div>
+);
+
+// =============================================================================
+// LEAGUE STATUS (SIDEBAR - COMPACT)
+// =============================================================================
+
+const LeagueStatus = ({ leagues }) => {
+  if (!leagues || leagues.length === 0) return null;
+
+  return (
+    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
+        <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+          <Users className="w-3.5 h-3.5 text-blue-500" />
+          Leagues
+        </h3>
+        <Link to="/leagues" className="text-[10px] text-gray-500 hover:text-white">
+          View All →
+        </Link>
+      </div>
+
+      <div className="divide-y divide-[#222]">
+        {leagues.slice(0, 2).map((league, idx) => (
           <Link
             key={league.id || idx}
             to="/leagues"
-            className="flex items-center justify-between px-3 py-2.5 hover:bg-[#222] transition-colors"
+            className="flex items-center justify-between px-4 py-2.5 hover:bg-[#222] transition-colors"
           >
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-6 h-6 bg-[#333] flex items-center justify-center flex-shrink-0">
-                <Trophy className="w-3 h-3 text-yellow-500" />
-              </div>
-              <span className="text-sm text-white truncate">{league.name}</span>
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <span className="text-sm font-bold text-white font-data">#{league.userRank || '-'}</span>
-              {league.rankChange > 0 && (
-                <span className="text-[10px] text-green-500 flex items-center">
-                  <TrendingUp className="w-3 h-3" />
-                </span>
-              )}
-              {league.rankChange < 0 && (
-                <span className="text-[10px] text-red-500 flex items-center">
-                  <TrendingDown className="w-3 h-3" />
-                </span>
-              )}
-            </div>
+            <span className="text-sm text-white truncate">{league.name}</span>
+            <span className="text-sm font-bold text-white font-data">#{league.userRank || '-'}</span>
           </Link>
         ))}
-      </div>
-    ) : (
-      <div className="p-4 text-center">
-        <Users className="w-6 h-6 text-gray-600 mx-auto mb-2" />
-        <p className="text-xs text-gray-500 mb-2">No leagues joined</p>
-        <Link
-          to="/leagues"
-          className="inline-block text-[10px] px-3 py-1.5 bg-[#0057B8] text-white font-bold hover:bg-[#0066d6]"
-        >
-          Join League
-        </Link>
-      </div>
-    )}
-  </Widget>
-);
-
-// Headlines Widget - Text-only news
-const HeadlinesWidget = ({ news, loading }) => (
-  <Widget
-    title="Headlines"
-    icon={Newspaper}
-    iconColor="text-yellow-500"
-    action={
-      <Link to="/news" className="text-[10px] text-gray-500 hover:text-white flex items-center gap-0.5">
-        More <ChevronRight className="w-3 h-3" />
-      </Link>
-    }
-  >
-    {loading ? (
-      <div className="p-4 text-center">
-        <Activity className="w-5 h-5 text-gray-500 mx-auto animate-pulse" />
-      </div>
-    ) : news && news.length > 0 ? (
-      <div className="divide-y divide-[#222]">
-        {news.slice(0, 4).map((story, idx) => (
-          <Link
-            key={story.id || idx}
-            to="/news"
-            className="flex items-start gap-2 px-3 py-2.5 hover:bg-[#222] transition-colors"
-          >
-            <span className={`text-[9px] font-bold px-1 py-0.5 flex-shrink-0 ${
-              story.category === 'dci' ? 'bg-yellow-500/20 text-yellow-500' :
-              story.category === 'fantasy' ? 'bg-purple-500/20 text-purple-500' :
-              'bg-gray-500/20 text-gray-400'
-            }`}>
-              {story.category?.toUpperCase() || 'NEWS'}
-            </span>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-white leading-tight line-clamp-2">{story.headline}</p>
-              <p className="text-[10px] text-gray-500 mt-0.5 flex items-center gap-1">
-                <Clock className="w-2.5 h-2.5" />
-                {story.timeAgo || 'Recently'}
-              </p>
-            </div>
-          </Link>
-        ))}
-      </div>
-    ) : (
-      <div className="p-4 text-center text-xs text-gray-500">
-        No news available
-      </div>
-    )}
-  </Widget>
-);
-
-// Financials Widget - CorpsCoin balance
-const FinancialsWidget = ({ corpsCoin, xp, xpLevel, streak }) => (
-  <Widget title="Director Stats" icon={DollarSign} iconColor="text-green-500">
-    <div className="p-3 grid grid-cols-2 gap-2">
-      <div className="bg-[#222] p-2.5 text-center">
-        <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-0.5">CorpsCoin</p>
-        <p className="text-lg font-bold text-yellow-500 font-data tabular-nums">
-          {(corpsCoin || 0).toLocaleString()}
-        </p>
-      </div>
-      <div className="bg-[#222] p-2.5 text-center">
-        <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-0.5">Level</p>
-        <p className="text-lg font-bold text-purple-500 font-data tabular-nums">
-          {xpLevel || 1}
-        </p>
-      </div>
-      <div className="bg-[#222] p-2.5 text-center">
-        <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-0.5">XP</p>
-        <p className="text-lg font-bold text-blue-500 font-data tabular-nums">
-          {(xp || 0).toLocaleString()}
-        </p>
-      </div>
-      <div className="bg-[#222] p-2.5 text-center">
-        <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-0.5">Streak</p>
-        <p className="text-lg font-bold text-orange-500 font-data tabular-nums flex items-center justify-center gap-1">
-          <Zap className="w-4 h-4" />
-          {streak || 0}
-        </p>
       </div>
     </div>
-  </Widget>
-);
-
-// Season Prep Checklist - Off-season state
-const SeasonPrepWidget = ({ profile, activeCorps, leagues, lineupCount }) => {
-  const tasks = [
-    { id: 'corps', label: 'Register Corps', done: !!activeCorps, link: null },
-    { id: 'lineup', label: 'Draft 8 Captions', done: lineupCount === 8, link: '/draft' },
-    { id: 'league', label: 'Join a League', done: leagues?.length > 0, link: '/leagues' },
-    { id: 'schedule', label: 'Select Shows', done: activeCorps?.selectedShows && Object.keys(activeCorps.selectedShows).length > 0, link: '/schedule' },
-  ];
-
-  const completedCount = tasks.filter(t => t.done).length;
-
-  return (
-    <Widget title="Season Prep" icon={CheckCircle} iconColor="text-green-500">
-      <div className="p-3">
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-xs text-gray-500">{completedCount}/{tasks.length} complete</span>
-          <div className="flex-1 ml-3 h-1.5 bg-[#222] overflow-hidden">
-            <div
-              className="h-full bg-green-500 transition-all"
-              style={{ width: `${(completedCount / tasks.length) * 100}%` }}
-            />
-          </div>
-        </div>
-        <div className="space-y-2">
-          {tasks.map(task => (
-            <div key={task.id} className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {task.done ? (
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                ) : (
-                  <Circle className="w-4 h-4 text-gray-600" />
-                )}
-                <span className={`text-sm ${task.done ? 'text-gray-500 line-through' : 'text-white'}`}>
-                  {task.label}
-                </span>
-              </div>
-              {!task.done && task.link && (
-                <Link to={task.link} className="text-[10px] text-yellow-500 hover:underline">
-                  Go →
-                </Link>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-    </Widget>
   );
 };
 
@@ -370,15 +437,10 @@ const SeasonPrepWidget = ({ profile, activeCorps, leagues, lineupCount }) => {
 const Dashboard = () => {
   const { user } = useAuth();
   const dashboardData = useDashboardData();
-  const { aggregatedScores, loading: scoresLoading, refetch: refetchScores } = useScoresData();
-  const { data: myLeagues, refetch: refetchLeagues } = useMyLeagues(user?.uid);
-  const { tickerData, hasData: hasTickerData } = useTickerData();
+  const { aggregatedScores, loading: scoresLoading } = useScoresData();
+  const { data: myLeagues } = useMyLeagues(user?.uid);
   const { trigger: haptic } = useHaptic();
   const { weeksRemaining, isRegistrationLocked } = useSeasonStore();
-
-  // News state
-  const [news, setNews] = useState([]);
-  const [newsLoading, setNewsLoading] = useState(true);
 
   // Modal states
   const modalQueue = useModalQueue();
@@ -391,9 +453,9 @@ const Dashboard = () => {
   const [showRetireConfirm, setShowRetireConfirm] = useState(false);
   const [retiring, setRetiring] = useState(false);
   const [showQuickStartGuide, setShowQuickStartGuide] = useState(false);
-  const [showNewsSubmission, setShowNewsSubmission] = useState(false);
-  const [submittingNews, setSubmittingNews] = useState(false);
   const [classToPurchase, setClassToPurchase] = useState(null);
+  const [captionScores, setCaptionScores] = useState({});
+  const [recentResults, setRecentResults] = useState([]);
 
   // Destructure dashboard data
   const {
@@ -403,13 +465,10 @@ const Dashboard = () => {
     activeCorpsClass,
     seasonData,
     currentWeek,
-    formatSeasonName,
-    engagementData,
     showSeasonSetupWizard,
     setShowSeasonSetupWizard,
     corpsNeedingSetup,
     handleSeasonSetupComplete,
-    handleCorpsSwitch,
     newlyUnlockedClass,
     clearNewlyUnlockedClass,
     newAchievement,
@@ -421,12 +480,14 @@ const Dashboard = () => {
   // Computed values
   const lineup = useMemo(() => activeCorps?.lineup || {}, [activeCorps?.lineup]);
   const lineupCount = useMemo(() => Object.keys(lineup).length, [lineup]);
+
   const userCorpsScore = useMemo(() => {
     if (!activeCorps) return null;
     const corpsName = activeCorps.corpsName || activeCorps.name;
     const entry = aggregatedScores.find(s => s.corpsName === corpsName);
     return entry?.score ?? null;
   }, [aggregatedScores, activeCorps]);
+
   const userCorpsRank = useMemo(() => {
     if (!activeCorps) return null;
     const corpsName = activeCorps.corpsName || activeCorps.name;
@@ -434,45 +495,78 @@ const Dashboard = () => {
     return entry?.rank ?? null;
   }, [aggregatedScores, activeCorps]);
 
-  // Mock user matchup from leagues (would come from real data)
-  const userMatchup = useMemo(() => {
-    if (!myLeagues?.length || !user?.uid) return null;
-    // This would be populated from actual matchup data
-    return null;
-  }, [myLeagues, user?.uid]);
+  const thisWeekShows = useMemo(() => {
+    if (!activeCorps?.selectedShows) return [];
+    return (activeCorps.selectedShows[`week${currentWeek}`] || []).slice(0, 3);
+  }, [activeCorps?.selectedShows, currentWeek]);
 
-  // Fetch news
+  // Fetch caption scores and recent results
   useEffect(() => {
-    const fetchNews = async () => {
+    const fetchScoresData = async () => {
+      if (!user?.uid || !seasonData?.seasonUid || !activeCorpsClass) return;
+
       try {
-        setNewsLoading(true);
-        const result = await getRecentNews({ limit: 5 });
-        if (result.data?.news) {
-          setNews(result.data.news.map(story => ({
-            ...story,
-            timeAgo: formatTimeAgo(story.publishedAt)
-          })));
+        const recapRef = doc(db, 'fantasy_recaps', seasonData.seasonUid);
+        const recapSnap = await getDoc(recapRef);
+
+        if (recapSnap.exists()) {
+          const data = recapSnap.data();
+          const recaps = data.recaps || [];
+
+          // Sort by day descending
+          const sortedRecaps = [...recaps].sort((a, b) => (b.offSeasonDay || 0) - (a.offSeasonDay || 0));
+
+          // Find user's scores per caption
+          const scores = {};
+          const results = [];
+
+          for (const recap of sortedRecaps) {
+            for (const show of (recap.shows || [])) {
+              const userResult = (show.results || []).find(
+                r => r.uid === user.uid && r.corpsClass === activeCorpsClass
+              );
+
+              if (userResult) {
+                // Collect recent results
+                if (results.length < 5) {
+                  results.push({
+                    eventName: show.eventName || show.name || 'Show',
+                    score: userResult.totalScore,
+                    placement: userResult.placement,
+                    date: recap.date ? new Date(recap.date.seconds * 1000).toLocaleDateString() : null
+                  });
+                }
+
+                // Set caption scores from most recent
+                if (Object.keys(scores).length === 0) {
+                  // Map category scores to individual captions
+                  const geScore = userResult.geScore || 0;
+                  const visScore = userResult.visualScore || 0;
+                  const musScore = userResult.musicScore || 0;
+
+                  scores['GE1'] = geScore / 2;
+                  scores['GE2'] = geScore / 2;
+                  scores['VP'] = visScore / 3;
+                  scores['VA'] = visScore / 3;
+                  scores['CG'] = visScore / 3;
+                  scores['B'] = musScore / 3;
+                  scores['MA'] = musScore / 3;
+                  scores['P'] = musScore / 3;
+                }
+              }
+            }
+          }
+
+          setCaptionScores(scores);
+          setRecentResults(results);
         }
       } catch (error) {
-        console.error('Error fetching news:', error);
-      } finally {
-        setNewsLoading(false);
+        console.error('Error fetching scores:', error);
       }
     };
-    fetchNews();
-  }, []);
 
-  // Format time ago helper
-  const formatTimeAgo = (dateString) => {
-    if (!dateString) return 'Recently';
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMins = Math.floor((now - date) / 60000);
-    if (diffMins < 60) return `${diffMins}m`;
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours}h`;
-    return `${Math.floor(diffHours / 24)}d`;
-  };
+    fetchScoresData();
+  }, [user?.uid, seasonData?.seasonUid, activeCorpsClass]);
 
   // Queue auto-triggered modals
   useEffect(() => {
@@ -628,23 +722,6 @@ const Dashboard = () => {
     }
   }, [seasonData?.seasonUid, clearNewlyUnlockedClass, refreshProfile]);
 
-  const handleNewsSubmission = useCallback(async (formData) => {
-    setSubmittingNews(true);
-    try {
-      const result = await submitNewsForApproval(formData);
-      if (result.data.success) {
-        toast.success('Article submitted for review!');
-        setShowNewsSubmission(false);
-      } else {
-        toast.error(result.data.message || 'Failed to submit article');
-      }
-    } catch (error) {
-      toast.error(error.message || 'Failed to submit article');
-    } finally {
-      setSubmittingNews(false);
-    }
-  }, []);
-
   const handleClassUnlock = useCallback((classKey) => {
     setClassToPurchase(classKey);
   }, []);
@@ -668,22 +745,6 @@ const Dashboard = () => {
     setShowCaptionSelection(true);
   }, []);
 
-  // Get ticker movers for display
-  const tickerMovers = useMemo(() => {
-    if (!hasTickerData) return [];
-    const movers = [];
-    Object.values(tickerData.byClass || {}).forEach(classData => {
-      classData.movers?.slice(0, 3).forEach(mover => {
-        movers.push({
-          abbr: mover.name,
-          change: mover.change,
-          isPositive: mover.direction === 'up'
-        });
-      });
-    });
-    return movers.slice(0, 6);
-  }, [tickerData, hasTickerData]);
-
   // =============================================================================
   // RENDER
   // =============================================================================
@@ -705,127 +766,44 @@ const Dashboard = () => {
         </Suspense>
       )}
 
-      {/* THE TICKER - Fixed Header */}
-      <div className="flex-shrink-0 bg-[#1a1a1a] border-b border-[#333] px-4 py-2">
-        <div className="flex items-center justify-between">
-          {/* Market Status */}
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] uppercase tracking-wider text-gray-500">Season:</span>
-            <span className="px-2 py-0.5 bg-green-500/20 text-green-500 text-[10px] font-bold">
-              {seasonData?.status === 'active' ? 'OPEN' : 'PREP'}
-            </span>
-            {currentWeek && (
-              <span className="text-[10px] text-gray-400">Week {currentWeek}</span>
-            )}
-          </div>
-
-          {/* CorpsCoin Ticker */}
-          <div className="flex items-center gap-1 overflow-hidden">
-            {tickerMovers.length > 0 ? (
-              <div className="flex items-center">
-                {tickerMovers.map((item, idx) => (
-                  <TickerItem key={idx} {...item} />
-                ))}
-              </div>
-            ) : (
-              <span className="text-[10px] text-gray-500 italic">No market data</span>
-            )}
-          </div>
-        </div>
-      </div>
-
       {/* SCROLLABLE CONTENT */}
       <div className="flex-1 overflow-y-auto min-h-0 pb-20 md:pb-4">
         {activeCorps ? (
-          <>
-            {/* Corps Status Strip */}
-            <div className="bg-[#1a1a1a] border-b border-[#333] px-4 py-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-[#333] border border-[#444] flex items-center justify-center">
-                    <Trophy className="w-5 h-5 text-yellow-500" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-base font-bold text-white">
-                        {activeCorps.corpsName || activeCorps.name}
-                      </h2>
-                      <span className="text-[10px] px-1.5 py-0.5 bg-[#222] text-gray-400 uppercase">
-                        {CLASS_LABELS[activeCorpsClass]}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-gray-500">
-                      <span>Rank #{userCorpsRank || '-'}</span>
-                      <span>Score: {userCorpsScore?.toFixed(2) || '-'}</span>
-                      <span>Lineup: {lineupCount}/8</span>
-                    </div>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowEditCorps(true)}
-                  className="p-2 text-gray-500 hover:text-white"
-                >
-                  <Edit className="w-4 h-4" />
-                </button>
+          <div className="p-3 md:p-4">
+            {/* 2/3 + 1/3 Grid Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {/* MAIN CONTENT (2/3) - Active Lineup */}
+              <div className="lg:col-span-2">
+                <ActiveLineupTable
+                  lineup={lineup}
+                  captionScores={captionScores}
+                  thisWeekShows={thisWeekShows}
+                  loading={scoresLoading}
+                  onManageLineup={() => openCaptionSelection()}
+                  onSlotClick={(captionId) => openCaptionSelection(captionId)}
+                />
+              </div>
+
+              {/* SIDEBAR (1/3) - Season Stats */}
+              <div className="space-y-4">
+                <SeasonScorecard
+                  score={userCorpsScore}
+                  rank={userCorpsRank}
+                  rankChange={null}
+                  corpsName={activeCorps.corpsName || activeCorps.name}
+                  corpsClass={activeCorpsClass}
+                  loading={scoresLoading}
+                />
+
+                <RecentResultsFeed
+                  results={recentResults}
+                  loading={scoresLoading}
+                />
+
+                <LeagueStatus leagues={myLeagues} />
               </div>
             </div>
-
-            {/* Widget Grid */}
-            <div className="p-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-              {/* Next Up Widget */}
-              <NextUpWidget
-                activeCorps={activeCorps}
-                currentWeek={currentWeek}
-                userMatchup={userMatchup}
-                memberProfiles={{}}
-                userProfile={profile}
-              />
-
-              {/* League Pulse Widget */}
-              <LeaguePulseWidget leagues={myLeagues} />
-
-              {/* Headlines Widget */}
-              <HeadlinesWidget news={news} loading={newsLoading} />
-
-              {/* Financials Widget */}
-              <FinancialsWidget
-                corpsCoin={profile?.corpsCoin}
-                xp={profile?.xp}
-                xpLevel={profile?.xpLevel}
-                streak={engagementData?.loginStreak}
-              />
-
-              {/* Season Prep (if needed) */}
-              {lineupCount < 8 && (
-                <div className="md:col-span-2">
-                  <SeasonPrepWidget
-                    profile={profile}
-                    activeCorps={activeCorps}
-                    leagues={myLeagues}
-                    lineupCount={lineupCount}
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Quick Actions */}
-            <div className="px-3 pb-3 grid grid-cols-2 gap-2">
-              <button
-                onClick={() => openCaptionSelection()}
-                className="flex items-center justify-center gap-2 p-3 bg-[#1a1a1a] border border-[#333] text-gray-400 hover:text-white hover:border-[#444]"
-              >
-                <Edit className="w-4 h-4" />
-                <span className="text-sm">Edit Lineup</span>
-              </button>
-              <button
-                onClick={() => setShowNewsSubmission(true)}
-                className="flex items-center justify-center gap-2 p-3 bg-[#1a1a1a] border border-[#333] text-gray-400 hover:text-white hover:border-[#444]"
-              >
-                <FileText className="w-4 h-4" />
-                <span className="text-sm">Submit News</span>
-              </button>
-            </div>
-          </>
+          </div>
         ) : (
           /* No Corps State */
           <div className="flex items-center justify-center min-h-[60vh] p-4">
@@ -948,20 +926,10 @@ const Dashboard = () => {
         }}
         completedSteps={[
           ...(lineupCount === 8 ? ['lineup'] : []),
-          ...(activeCorps?.selectedShows && Object.keys(activeCorps.selectedShows).length > 0 ? ['schedule'] : []),
+          ...(thisWeekShows.length > 0 ? ['schedule'] : []),
           ...(myLeagues?.length > 0 ? ['league'] : []),
         ]}
       />
-
-      {showNewsSubmission && (
-        <Suspense fallback={null}>
-          <NewsSubmissionModal
-            onClose={() => setShowNewsSubmission(false)}
-            onSubmit={handleNewsSubmission}
-            isSubmitting={submittingNews}
-          />
-        </Suspense>
-      )}
 
       {classToPurchase && profile && (
         <ClassPurchaseModal
