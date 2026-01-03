@@ -249,6 +249,20 @@
           "order": "DESCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "profile",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "engagement.lastLogin",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "engagement.loginStreak",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": [
