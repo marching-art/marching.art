@@ -35,7 +35,7 @@ import { useDashboardData } from '../hooks/useDashboardData';
 import { useScoresData } from '../hooks/useScoresData';
 import { useMyLeagues } from '../hooks/useLeagues';
 import { retireCorps } from '../firebase/functions';
-import { submitNewsForApproval } from '../api/functions';
+import { submitNewsForApproval, registerCorps } from '../api/functions';
 import { DataTable } from '../components/ui/DataTable';
 import { Card } from '../components/ui/Card';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
@@ -383,27 +383,26 @@ const Dashboard = () => {
         toast.error('Season data not loaded');
         return;
       }
-      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-      await updateDoc(profileRef, {
-        [`corps.${formData.class}`]: {
-          name: formData.name,
-          location: formData.location,
-          showConcept: formData.showConcept,
-          class: formData.class,
-          createdAt: new Date(),
-          seasonId: seasonData.seasonUid,
-          lineup: {},
-          score: 0,
-          rank: null
-        }
+      // Call the Cloud Function with proper field mapping
+      const result = await registerCorps({
+        corpsName: formData.name,
+        location: formData.location,
+        showConcept: formData.showConcept || '',
+        class: formData.class
       });
-      toast.success(`${formData.name} registered!`);
-      setShowRegistration(false);
-      clearNewlyUnlockedClass();
+      if (result.data.success) {
+        toast.success(`${formData.name} registered!`);
+        setShowRegistration(false);
+        clearNewlyUnlockedClass();
+        // Refresh profile to get updated corps data
+        refreshProfile?.();
+      }
     } catch (error) {
-      toast.error('Failed to register corps');
+      // Extract specific error message from Cloud Function
+      const errorMessage = error.message || 'Failed to register corps';
+      toast.error(errorMessage);
     }
-  }, [seasonData?.seasonUid, user, clearNewlyUnlockedClass]);
+  }, [seasonData?.seasonUid, clearNewlyUnlockedClass, refreshProfile]);
 
   // Computed values - memoized to prevent unnecessary recalculations
   const lineup = useMemo(() => activeCorps?.lineup || {}, [activeCorps?.lineup]);
