@@ -548,7 +548,7 @@ const Dashboard = () => {
           {/* Pull to Refresh Wrapper */}
           <PullToRefresh onRefresh={handleRefresh}>
             {/* MAIN GRID - Desktop: 3 columns, Mobile: single panel based on tab */}
-            <div className="lg:grid lg:grid-cols-3 w-full gap-px bg-[#333]">
+            <div className="lg:grid lg:grid-cols-3 w-full gap-px bg-[#333] pb-20 lg:pb-4">
 
             {/* LEFT COLUMN - My Team */}
             <div className={`bg-[#1a1a1a] p-4 pt-3 ${activeMobileTab !== 'team' ? 'hidden lg:block' : ''}`}>
