@@ -572,7 +572,7 @@ const Dashboard = () => {
           <PullToRefresh onRefresh={handleRefresh}>
             {/* Director Status Card - Desktop full version */}
             {profile && (
-              <div className="hidden lg:block p-4 pb-0">
+              <div className="hidden lg:block">
                 <DirectorCard
                   displayName={profile.displayName || 'Director'}
                   xp={profile.xp || 0}

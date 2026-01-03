@@ -1,16 +1,12 @@
 // =============================================================================
-// DIRECTOR CARD - ESPN-style player progression card for dashboard
+// DIRECTOR CARD - ESPN-style player progression display for dashboard
 // =============================================================================
-// Displays user's streak, level, XP progress, and CorpsCoin in a clean card
-// Replaces header clutter with dashboard-integrated display
+// Displays user's streak, level, XP progress, and CorpsCoin
+// Matches site's data-terminal aesthetic: no rounded corners, tight spacing
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Flame, Zap, Coins, ChevronRight, Lock, Unlock,
-  TrendingUp, Award, Star
-} from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Flame, Zap, Coins, Lock, Unlock } from 'lucide-react';
 
 // =============================================================================
 // TYPES
@@ -61,11 +57,11 @@ const CLASS_NAMES: Record<string, string> = {
 
 // Streak tier configuration
 const STREAK_TIERS = [
-  { name: 'Starting', minDays: 0, color: 'text-gray-400', bgColor: 'bg-gray-500/20' },
-  { name: 'Building', minDays: 3, color: 'text-orange-400', bgColor: 'bg-orange-500/20' },
-  { name: 'Hot', minDays: 7, color: 'text-orange-300', bgColor: 'bg-orange-500/30' },
-  { name: 'Fire', minDays: 14, color: 'text-red-400', bgColor: 'bg-red-500/30' },
-  { name: 'Inferno', minDays: 30, color: 'text-yellow-400', bgColor: 'bg-yellow-500/30' },
+  { name: 'STARTING', minDays: 0, color: 'text-gray-400' },
+  { name: 'BUILDING', minDays: 3, color: 'text-orange-400' },
+  { name: 'HOT', minDays: 7, color: 'text-orange-300' },
+  { name: 'FIRE', minDays: 14, color: 'text-red-400' },
+  { name: 'INFERNO', minDays: 30, color: 'text-yellow-400' },
 ];
 
 // =============================================================================
@@ -113,7 +109,7 @@ function getNextClassUnlock(
     }
   }
 
-  return null; // All classes unlocked
+  return null;
 }
 
 // =============================================================================
@@ -171,12 +167,15 @@ export const DirectorCard: React.FC<DirectorCardProps> = ({
       <div className="bg-[#1a1a1a] border-b border-[#333] px-3 py-2">
         <div className="flex items-center justify-between gap-3">
           {/* Streak */}
-          <div className={`flex items-center gap-1.5 px-2 py-1 rounded ${streakTier.bgColor}`}>
+          <div className="flex items-center gap-1.5">
             <Flame className={`w-4 h-4 ${streakTier.color}`} />
             <span className={`text-sm font-bold tabular-nums ${streakTier.color}`}>
               {streak}
             </span>
           </div>
+
+          {/* Divider */}
+          <div className="w-px h-4 bg-[#333]" />
 
           {/* Level + XP Progress */}
           <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -184,15 +183,18 @@ export const DirectorCard: React.FC<DirectorCardProps> = ({
               <Zap className="w-4 h-4 text-blue-400" />
               <span className="text-sm font-bold text-blue-400">Lvl {xpLevel}</span>
             </div>
-            <div className="flex-1 h-1.5 bg-[#333] rounded-full overflow-hidden max-w-[80px]">
+            <div className="flex-1 h-1 bg-[#333] overflow-hidden max-w-[60px]">
               <motion.div
-                className="h-full bg-blue-500 rounded-full"
+                className="h-full bg-blue-500"
                 initial={{ width: 0 }}
                 animate={{ width: `${xpProgress.percent}%` }}
                 transition={{ duration: 0.3 }}
               />
             </div>
           </div>
+
+          {/* Divider */}
+          <div className="w-px h-4 bg-[#333]" />
 
           {/* CorpsCoin */}
           <div className="flex items-center gap-1.5">
@@ -206,172 +208,137 @@ export const DirectorCard: React.FC<DirectorCardProps> = ({
     );
   }
 
-  // Full card version for desktop dashboard
+  // Full version for desktop dashboard - horizontal stats bar
   return (
-    <div className="bg-gradient-to-r from-[#1a1a1a] to-[#222] border border-[#333] rounded-lg overflow-hidden">
-      {/* Header bar with season context */}
-      <div className="flex items-center justify-between px-4 py-2 bg-[#0a0a0a] border-b border-[#333]">
-        <div className="flex items-center gap-2">
-          <Award className="w-4 h-4 text-yellow-500" />
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
-            Director Status
-          </span>
-        </div>
+    <div className="bg-[#1a1a1a] border border-[#333]">
+      {/* Header row */}
+      <div className="flex items-center justify-between px-4 py-2 bg-[#222] border-b border-[#333]">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+          Director Status
+        </span>
         {seasonName && (
-          <span className="text-xs text-gray-500">
+          <span className="text-[10px] text-gray-500">
             {seasonName} {currentWeek ? `• Week ${currentWeek}` : ''}
           </span>
         )}
       </div>
 
-      {/* Main stats row */}
-      <div className="p-4">
-        <div className="flex items-center justify-between gap-4">
-          {/* Left: Streak */}
-          <div className="flex items-center gap-3">
-            <motion.div
-              className={`relative flex items-center justify-center w-12 h-12 rounded-xl ${streakTier.bgColor}`}
-              animate={streak >= 7 ? { scale: [1, 1.05, 1] } : {}}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              <Flame className={`w-6 h-6 ${streakTier.color}`} />
-              {streak >= 14 && (
-                <motion.div
-                  className="absolute inset-0 rounded-xl"
-                  animate={{ opacity: [0.3, 0.6, 0.3] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                  style={{
-                    background: streak >= 30
-                      ? 'radial-gradient(circle, rgba(234,179,8,0.3) 0%, transparent 70%)'
-                      : 'radial-gradient(circle, rgba(239,68,68,0.3) 0%, transparent 70%)'
-                  }}
-                />
-              )}
-            </motion.div>
-            <div>
-              <div className="flex items-baseline gap-1">
-                <span className={`text-2xl font-bold tabular-nums ${streakTier.color}`}>
-                  {streak}
-                </span>
-                <span className="text-xs text-gray-500">day streak</span>
-              </div>
-              <span className={`text-xs font-medium uppercase tracking-wider ${streakTier.color}`}>
-                {streakTier.name}
+      {/* Stats row */}
+      <div className="flex items-center gap-6 px-4 py-3">
+        {/* Streak */}
+        <div className="flex items-center gap-3">
+          <Flame className={`w-5 h-5 ${streakTier.color}`} />
+          <div>
+            <div className="flex items-baseline gap-1">
+              <span className={`text-xl font-bold font-data tabular-nums ${streakTier.color}`}>
+                {streak}
               </span>
+              <span className="text-[10px] text-gray-500">day streak</span>
             </div>
+            <span className={`text-[10px] font-bold uppercase tracking-wider ${streakTier.color}`}>
+              {streakTier.name}
+            </span>
           </div>
+        </div>
 
-          {/* Divider */}
-          <div className="w-px h-10 bg-[#333]" />
+        {/* Divider */}
+        <div className="w-px h-8 bg-[#333]" />
 
-          {/* Center: Level & XP */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <Zap className="w-5 h-5 text-blue-400" />
-              <span className="text-lg font-bold text-blue-400">Level {xpLevel}</span>
-
+        {/* Level & XP */}
+        <div className="flex items-center gap-3">
+          <Zap className="w-5 h-5 text-blue-400" />
+          <div className="relative">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-xl font-bold text-blue-400">Level {xpLevel}</span>
               {/* XP gain animation */}
               <AnimatePresence>
                 {gains.filter((g) => g.type === 'xp').map((gain) => (
                   <motion.span
                     key={gain.id}
-                    className="text-sm font-bold text-blue-300 drop-shadow-[0_0_8px_rgba(59,130,246,0.8)]"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: [0, 1, 1, 0], y: -20 }}
+                    className="text-xs font-bold text-blue-300"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: [0, 1, 1, 0], y: -10 }}
                     exit={{ opacity: 0 }}
-                    transition={{ duration: 2, times: [0, 0.1, 0.7, 1] }}
+                    transition={{ duration: 1.5, times: [0, 0.1, 0.7, 1] }}
                   >
                     +{gain.amount} XP
                   </motion.span>
                 ))}
               </AnimatePresence>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="flex-1 h-2 bg-[#333] rounded-full overflow-hidden">
+            <div className="flex items-center gap-2 mt-0.5">
+              <div className="w-24 h-1 bg-[#333] overflow-hidden">
                 <motion.div
-                  className="h-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-full"
+                  className="h-full bg-blue-500"
                   initial={{ width: 0 }}
                   animate={{ width: `${xpProgress.percent}%` }}
                   transition={{ duration: 0.5 }}
                 />
               </div>
-              <span className="text-xs text-gray-500 tabular-nums">
+              <span className="text-[10px] text-gray-500 tabular-nums font-data">
                 {xpProgress.current}/{xpProgress.max}
               </span>
             </div>
           </div>
+        </div>
 
-          {/* Divider */}
-          <div className="w-px h-10 bg-[#333]" />
+        {/* Divider */}
+        <div className="w-px h-8 bg-[#333]" />
 
-          {/* Right: CorpsCoin */}
-          <div className="relative">
-            <div className="flex items-center gap-2">
-              <Coins className="w-5 h-5 text-yellow-500" />
-              <span className="text-lg font-bold text-yellow-500 tabular-nums">
+        {/* CorpsCoin */}
+        <div className="flex items-center gap-3 relative">
+          <Coins className="w-5 h-5 text-yellow-500" />
+          <div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-xl font-bold text-yellow-500 tabular-nums font-data">
                 {corpsCoin.toLocaleString()}
               </span>
-
               {/* Coin gain animation */}
               <AnimatePresence>
                 {gains.filter((g) => g.type === 'coin').map((gain) => (
                   <motion.span
                     key={gain.id}
-                    className="absolute -top-4 right-0 text-sm font-bold text-yellow-300 drop-shadow-[0_0_8px_rgba(234,179,8,0.8)]"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: [0, 1, 1, 0], y: -20 }}
+                    className="text-xs font-bold text-yellow-300"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: [0, 1, 1, 0], y: -10 }}
                     exit={{ opacity: 0 }}
-                    transition={{ duration: 2, times: [0, 0.1, 0.7, 1] }}
+                    transition={{ duration: 1.5, times: [0, 0.1, 0.7, 1] }}
                   >
                     +{gain.amount}
                   </motion.span>
                 ))}
               </AnimatePresence>
             </div>
-            <span className="text-xs text-gray-500">CorpsCoin</span>
+            <span className="text-[10px] text-gray-500">CorpsCoin</span>
           </div>
         </div>
 
-        {/* Next unlock progress (if applicable) */}
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Next unlock (right aligned) */}
         {nextUnlock && (
-          <div className="mt-4 pt-3 border-t border-[#333]">
-            <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3 pl-4 border-l border-[#333]">
+            {nextUnlock.canUnlock ? (
+              <Unlock className="w-4 h-4 text-green-400" />
+            ) : (
+              <Lock className="w-4 h-4 text-gray-500" />
+            )}
+            <div>
               <div className="flex items-center gap-2">
-                {nextUnlock.canUnlock ? (
-                  <Unlock className="w-4 h-4 text-green-400" />
-                ) : (
-                  <Lock className="w-4 h-4 text-gray-500" />
-                )}
-                <span className="text-sm text-gray-400">
-                  Next: <span className={nextUnlock.canUnlock ? 'text-green-400 font-medium' : 'text-white font-medium'}>{nextUnlock.className}</span>
+                <span className="text-xs text-gray-400">Next:</span>
+                <span className={`text-xs font-bold ${nextUnlock.canUnlock ? 'text-green-400' : 'text-white'}`}>
+                  {nextUnlock.className}
                 </span>
               </div>
-              <div className="flex items-center gap-3 text-xs">
+              <div className="flex items-center gap-2 text-[10px]">
                 <span className={xpLevel >= nextUnlock.levelRequired ? 'text-green-400' : 'text-gray-500'}>
                   Lvl {nextUnlock.levelRequired}
                 </span>
                 <span className={corpsCoin >= nextUnlock.coinCost ? 'text-green-400' : 'text-gray-500'}>
                   {nextUnlock.coinCost.toLocaleString()} CC
                 </span>
-                {nextUnlock.canUnlock && (
-                  <Link
-                    to="/profile"
-                    className="flex items-center gap-1 text-yellow-500 hover:text-yellow-400 font-medium"
-                  >
-                    Unlock <ChevronRight className="w-3 h-3" />
-                  </Link>
-                )}
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* All classes unlocked state */}
-        {!nextUnlock && unlockedClasses.length >= 4 && (
-          <div className="mt-4 pt-3 border-t border-[#333]">
-            <div className="flex items-center gap-2">
-              <Star className="w-4 h-4 text-yellow-400" />
-              <span className="text-sm text-yellow-400 font-medium">All Classes Unlocked!</span>
             </div>
           </div>
         )}
