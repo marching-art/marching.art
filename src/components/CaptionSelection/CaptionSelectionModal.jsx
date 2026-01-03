@@ -594,7 +594,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
     toast.success('Template deleted');
   };
 
-  // Quick Fill - auto-fill empty slots with balanced lineup
+  // Quick Fill - auto-fill empty slots randomly while targeting 95-100% of point limit
   const handleQuickFill = useCallback(() => {
     if (availableCorps.length === 0) return;
 
@@ -612,8 +612,9 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
     );
     let remainingBudget = pointLimit - usedPoints;
 
-    // Target points per empty slot (balanced distribution)
-    const targetPerSlot = Math.floor(remainingBudget / emptyCaptions.length);
+    // Target range: use at least 95% of point limit
+    const minTargetTotal = Math.floor(pointLimit * 0.95);
+    let remainingMinTarget = Math.max(0, minTargetTotal - usedPoints);
 
     // Track which corps have been used (to avoid duplicates)
     const usedCorps = new Set(
@@ -622,32 +623,46 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
         .map(s => s.split('|')[0])
     );
 
-    // Fill each empty caption
-    for (const caption of emptyCaptions) {
-      // Find corps that:
-      // 1. Haven't been used
-      // 2. Fit within remaining budget
-      // 3. Are closest to target per slot (prefer balanced distribution)
-      const availableForSlot = availableCorps
-        .filter(c => !usedCorps.has(c.corpsName) && c.points <= remainingBudget)
-        .map(c => ({
-          ...c,
-          // Score: how close to target (prefer slightly under target)
-          distanceFromTarget: Math.abs(c.points - Math.min(targetPerSlot, remainingBudget))
-        }))
-        .sort((a, b) => a.distanceFromTarget - b.distanceFromTarget);
+    // Shuffle empty captions for random ordering
+    const shuffledCaptions = [...emptyCaptions].sort(() => Math.random() - 0.5);
+    let slotsRemaining = shuffledCaptions.length;
 
-      if (availableForSlot.length > 0) {
-        const selected = availableForSlot[0];
-        newSelections[caption.id] = `${selected.corpsName}|${selected.sourceYear}|${selected.points}`;
-        usedCorps.add(selected.corpsName);
-        remainingBudget -= selected.points;
+    // Fill each empty caption randomly
+    for (const caption of shuffledCaptions) {
+      // Calculate minimum points needed per remaining slot to hit 95% target
+      const minPerSlot = Math.ceil(remainingMinTarget / slotsRemaining);
+
+      // Get valid corps (not already used, fits within budget)
+      const validCorps = availableCorps
+        .filter(c => !usedCorps.has(c.corpsName) && c.points <= remainingBudget);
+
+      if (validCorps.length === 0) {
+        slotsRemaining--;
+        continue;
       }
+
+      // Prefer corps that help us meet the 95% minimum target
+      let candidates = validCorps.filter(c => c.points >= minPerSlot);
+
+      // If no candidates meet minimum, use all valid corps
+      if (candidates.length === 0) {
+        candidates = validCorps;
+      }
+
+      // Randomly select from candidates
+      const randomIndex = Math.floor(Math.random() * candidates.length);
+      const selected = candidates[randomIndex];
+
+      newSelections[caption.id] = `${selected.corpsName}|${selected.sourceYear}|${selected.points}`;
+      usedCorps.add(selected.corpsName);
+      remainingBudget -= selected.points;
+      remainingMinTarget = Math.max(0, remainingMinTarget - selected.points);
+      slotsRemaining--;
     }
 
     setSelections(newSelections);
 
-    const filledCount = Object.keys(newSelections).length - Object.keys(selections).length;
+    const filledCount = emptyCaptions.filter(c => newSelections[c.id]).length;
     if (filledCount > 0) {
       toast.success(`Auto-filled ${filledCount} position${filledCount > 1 ? 's' : ''}!`);
     }
