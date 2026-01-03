@@ -406,6 +406,13 @@ const Dashboard = () => {
   const lineup = useMemo(() => activeCorps?.lineup || {}, [activeCorps?.lineup]);
   const lineupCount = useMemo(() => Object.keys(lineup).length, [lineup]);
   const standingsData = useMemo(() => aggregatedScores.slice(0, 8), [aggregatedScores]);
+  // Get user's corps score from aggregatedScores (same source as standings) to ensure consistency
+  const userCorpsScore = useMemo(() => {
+    if (!activeCorps) return null;
+    const corpsName = activeCorps.corpsName || activeCorps.name;
+    const entry = aggregatedScores.find(s => s.corpsName === corpsName);
+    return entry?.score ?? null;
+  }, [aggregatedScores, activeCorps]);
   const primaryLeague = useMemo(() => myLeagues?.[0], [myLeagues]);
 
   const thisWeekShows = useMemo(() => {
@@ -571,7 +578,7 @@ const Dashboard = () => {
                       Season Rating
                     </div>
                     {(() => {
-                      const rating = getSoundSportRating(activeCorps.totalSeasonScore || 0);
+                      const rating = getSoundSportRating(userCorpsScore || 0);
                       return (
                         <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded ${rating.color}`}>
                           <Medal className={`w-5 h-5 ${rating.textColor}`} />
@@ -586,7 +593,7 @@ const Dashboard = () => {
                       Season Score
                     </div>
                     <div className="text-4xl sm:text-3xl font-bold font-data text-white tabular-nums leading-none">
-                      {activeCorps.totalSeasonScore?.toFixed(3) || '0.000'}
+                      {userCorpsScore?.toFixed(3) || '0.000'}
                     </div>
                   </>
                 )}
