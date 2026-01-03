@@ -142,7 +142,7 @@ const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, season
         onClick={onClose}
       >
         <div
-          className="w-full max-w-4xl max-h-[90vh] bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl flex flex-col"
+          className="w-full max-w-4xl max-h-[90vh] bg-[#1a1a1a] border border-[#333] rounded-sm flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -310,7 +310,7 @@ const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, season
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-3 border-t border-[#333] bg-[#222] flex justify-end gap-2 flex-shrink-0">
+          <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end gap-2 flex-shrink-0">
             <button
               onClick={onClose}
               disabled={saving}

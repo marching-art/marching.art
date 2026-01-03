@@ -158,7 +158,7 @@ const Celebration = ({ trigger, message, type = 'default' }) => {
                 repeat: 2, // Only repeat twice instead of Infinity
                 repeatType: 'reverse'
               }}
-              className="relative bg-gradient-gold rounded-2xl px-12 py-8 shadow-2xl border-4 border-gold-300"
+              className="relative bg-gradient-gold rounded-2xl px-12 py-8 border-4 border-gold-300"
             >
               <h2 className="text-5xl md:text-6xl font-display font-black text-charcoal-900 text-center">
                 {message}

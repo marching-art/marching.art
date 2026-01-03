@@ -50,7 +50,7 @@ const MoveCorpsModal = ({ onClose, onMove, currentClass, corpsName, unlockedClas
         aria-labelledby="modal-title-move-corps"
       >
         <div
-          className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl"
+          className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-sm"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}

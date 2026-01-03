@@ -162,7 +162,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             className={`
               fixed bottom-0 left-0 right-0 z-[101]
               bg-[#1a1a1a] border-t border-[#333]
-              rounded-t-2xl overflow-hidden
+              rounded-t-sm overflow-hidden
               focus:outline-none
               safe-area-bottom
               ${className}
@@ -181,11 +181,11 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
 
             {/* Header */}
             {(title || showCloseButton) && (
-              <div className="flex items-center justify-between px-4 py-3 border-b border-[#333]">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
                 {title && (
                   <h2
                     id="bottom-sheet-title"
-                    className="text-base font-bold text-white"
+                    className="text-sm font-bold text-white uppercase tracking-wider"
                   >
                     {title}
                   </h2>

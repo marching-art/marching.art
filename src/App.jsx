@@ -203,20 +203,20 @@ function App() {
                   background: '#1a1a1a',
                   color: '#fff',
                   border: '1px solid #333',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  padding: '12px 16px',
-                  maxWidth: 'min(400px, calc(100vw - 32px))',
+                  borderRadius: '2px',
+                  fontSize: '12px',
+                  padding: '10px 14px',
+                  maxWidth: 'min(360px, calc(100vw - 32px))',
                 },
                 success: {
                   iconTheme: {
-                    primary: '#00C853',
+                    primary: '#22c55e',
                     secondary: '#1a1a1a',
                   },
                 },
                 error: {
                   iconTheme: {
-                    primary: '#FF5252',
+                    primary: '#ef4444',
                     secondary: '#1a1a1a',
                   },
                 },

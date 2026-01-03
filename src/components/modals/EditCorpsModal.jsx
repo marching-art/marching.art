@@ -32,7 +32,7 @@ const EditCorpsModal = ({ onClose, onSubmit, currentData }) => {
         aria-labelledby="modal-title-edit-corps"
       >
         <div
-          className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl"
+          className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-sm"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -99,7 +99,7 @@ const EditCorpsModal = ({ onClose, onSubmit, currentData }) => {
             </div>
 
             {/* Footer */}
-            <div className="px-4 py-3 border-t border-[#333] bg-[#222] flex justify-end gap-2">
+            <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end gap-2">
               <button
                 type="button"
                 onClick={onClose}

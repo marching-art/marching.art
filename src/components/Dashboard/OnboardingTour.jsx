@@ -149,7 +149,7 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
         style={tooltipPosition}
-        className="fixed z-50 w-80 bg-charcoal-900 border border-gold-500/30 rounded-xl shadow-2xl overflow-hidden"
+        className="fixed z-50 w-80 bg-charcoal-900 border border-gold-500/30 rounded-xl overflow-hidden"
       >
         {/* Header */}
         <div className="p-4 bg-gold-500/10 border-b border-gold-500/20">

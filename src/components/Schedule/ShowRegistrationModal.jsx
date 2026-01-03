@@ -597,7 +597,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
         onClick={onClose}
       >
         <div
-          className="w-full max-w-lg bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl max-h-[90vh] flex flex-col"
+          className="w-full max-w-lg bg-[#1a1a1a] border border-[#333] rounded-sm max-h-[90vh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -612,7 +612,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
 
           {/* Footer */}
           {(isChampionship || userCorpsClasses.length > 0) && (
-            <div className="px-4 py-4 border-t border-[#333] bg-[#222] flex-shrink-0">
+            <div className="px-4 py-4 border-t border-[#333] bg-[#111] flex-shrink-0">
               <FooterContent />
             </div>
           )}
