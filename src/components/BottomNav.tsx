@@ -1,12 +1,12 @@
 // =============================================================================
 // BOTTOM NAV COMPONENT (TypeScript)
 // =============================================================================
-// Mobile bottom navigation bar with 5 direct items
-// News, Dashboard, Scores, Leagues, Profile
+// Mobile bottom navigation bar with 6 items (matching desktop)
+// News, Home, Schedule, Scores, Leagues, Profile
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Trophy, Users, User, Newspaper, LucideIcon } from 'lucide-react';
+import { Home, Trophy, Users, User, Newspaper, Calendar, LucideIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../App';
 import { useLeagueNotificationBadge } from '../hooks/useLeagueNotifications';
@@ -25,12 +25,13 @@ interface NavItem {
 }
 
 // =============================================================================
-// CONSTANTS - 5 navigation items
+// CONSTANTS - 6 navigation items (matching desktop)
 // =============================================================================
 
 const navItems: NavItem[] = [
   { path: '/', label: 'News', icon: Newspaper },
   { path: '/dashboard', label: 'Home', icon: Home },
+  { path: '/schedule', label: 'Schedule', icon: Calendar },
   { path: '/scores', label: 'Scores', icon: Trophy },
   { path: '/leagues', label: 'Leagues', icon: Users, badgeKey: 'leagues' },
   { path: '/profile', label: 'Profile', icon: User },
@@ -56,6 +57,9 @@ const BottomNav: React.FC = () => {
     }
     if (path === '/scores') {
       return location.pathname.startsWith('/scores');
+    }
+    if (path === '/schedule') {
+      return location.pathname.startsWith('/schedule');
     }
     return location.pathname === path;
   };
@@ -85,7 +89,7 @@ const BottomNav: React.FC = () => {
                 onClick={() => triggerHaptic('light')}
                 onMouseEnter={() => prefetchRoute(item.path)}
                 onFocus={() => prefetchRoute(item.path)}
-                className="relative flex flex-col items-center justify-center gap-1 px-4 py-2.5 min-w-[60px] min-h-[52px] press-feedback"
+                className="relative flex flex-col items-center justify-center gap-0.5 px-2 py-2 min-w-[50px] min-h-[48px] press-feedback"
               >
                 {/* Active indicator */}
                 {active && (
@@ -97,9 +101,9 @@ const BottomNav: React.FC = () => {
                 )}
 
                 {/* Icon with badge */}
-                <div className={`relative z-10 p-1.5 rounded-lg transition-all duration-150 ${active ? 'bg-yellow-500/20' : ''}`}>
+                <div className={`relative z-10 p-1 rounded-lg transition-all duration-150 ${active ? 'bg-yellow-500/20' : ''}`}>
                   <Icon
-                    className={`w-6 h-6 transition-all duration-150 ${
+                    className={`w-5 h-5 transition-all duration-150 ${
                       active ? 'text-yellow-400' : 'text-yellow-50/70'
                     }`}
                     aria-hidden="true"
@@ -112,9 +116,9 @@ const BottomNav: React.FC = () => {
                   )}
                 </div>
 
-                {/* Label - increased size for readability */}
+                {/* Label */}
                 <span
-                  className={`relative z-10 text-[11px] font-medium transition-all duration-150 ${
+                  className={`relative z-10 text-[10px] font-medium transition-all duration-150 ${
                     active ? 'text-yellow-400' : 'text-yellow-50/70'
                   }`}
                 >
