@@ -162,7 +162,7 @@ function FantasyValueBadge({ value }) {
   const { label, bgClass, textClass, icon: Icon } = config[value] || config.hold;
 
   return (
-    <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold ${bgClass} ${textClass}`}>
+    <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-bold ${bgClass} ${textClass}`}>
       <Icon className="w-2.5 h-2.5" />
       {label}
     </span>
@@ -193,7 +193,7 @@ function FantasyROIBadge({ metrics }) {
   const isPositive = roiPercent >= 0;
 
   return (
-    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-sm">
+    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/20">
       <DollarSign className="w-4 h-4 text-green-400" />
       <div className="flex flex-col">
         <span className="text-[10px] text-green-400/80 uppercase tracking-wider font-medium">Top ROI</span>
@@ -223,7 +223,7 @@ function NewsMasthead({ activeCategory, onCategoryChange, storyCount, isLive }) 
             </h1>
           </div>
           {isLive && (
-            <div className="flex items-center gap-1.5 px-2 py-1 bg-red-500/20 border border-red-500/30 rounded-sm">
+            <div className="flex items-center gap-1.5 px-2 py-1 bg-red-500/20 border border-red-500/30">
               <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
               <span className="text-[10px] font-bold text-red-400 uppercase">Live</span>
             </div>
@@ -235,7 +235,7 @@ function NewsMasthead({ activeCategory, onCategoryChange, storyCount, isLive }) 
       </div>
 
       {/* Category Tabs - Segmented Control */}
-      <div className="flex items-center gap-1 p-1 bg-[#111] border border-[#333] rounded-sm overflow-x-auto">
+      <div className="flex items-center gap-1 p-1 bg-[#111] border border-[#333] overflow-x-auto">
         {CATEGORIES.map((cat) => {
           const Icon = cat.icon;
           const isActive = activeCategory === cat.id;
@@ -271,7 +271,7 @@ function HeroStory({ story, onClick, storyNumber }) {
 
   return (
     <article
-      className="mb-6 bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden cursor-pointer hover:border-[#444] transition-colors group"
+      className="mb-6 bg-[#1a1a1a] border border-[#333] overflow-hidden cursor-pointer hover:border-[#444] transition-colors group"
       onClick={() => onClick?.(story)}
     >
       {/* Hero Image */}
@@ -344,7 +344,7 @@ function HeroStory({ story, onClick, storyNumber }) {
 
         {/* Fantasy Impact */}
         {story.fantasyImpact && (
-          <div className="p-4 bg-orange-500/10 border border-orange-500/20 rounded-sm mb-5">
+          <div className="p-4 bg-orange-500/10 border border-orange-500/20 mb-5">
             <div className="flex items-center gap-2 mb-2">
               <Flame className="w-4 h-4 text-orange-400" />
               <span className="text-xs font-bold text-orange-400 uppercase tracking-wider">Fantasy Impact</span>
@@ -391,7 +391,7 @@ function NewsCard({ story, onClick, storyNumber }) {
 
   return (
     <article
-      className="bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden hover:border-[#444] transition-colors cursor-pointer group h-full flex flex-col"
+      className="bg-[#1a1a1a] border border-[#333] overflow-hidden hover:border-[#444] transition-colors cursor-pointer group h-full flex flex-col"
       onClick={() => onClick?.(story)}
     >
       {/* Card Header with Category Color Bar */}
@@ -426,7 +426,7 @@ function NewsCard({ story, onClick, storyNumber }) {
 
         {/* Fantasy ROI (compact) */}
         {story.fantasyMetrics?.topROI && (
-          <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-green-500/10 border border-green-500/20 rounded-sm mb-3 self-start">
+          <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-green-500/10 border border-green-500/20 mb-3 self-start">
             <DollarSign className="w-3 h-3 text-green-400" />
             <span className="text-[11px] text-green-400 font-semibold">
               {story.fantasyMetrics.topROI.corps}: +{story.fantasyMetrics.topROI.roiPercent.toFixed(1)}% ROI
@@ -506,7 +506,7 @@ function ErrorState({ onRetry }) {
       <p className="text-sm mb-4">Unable to load news feed</p>
       <button
         onClick={onRetry}
-        className="px-4 py-2 text-sm font-bold text-[#0057B8] border border-[#0057B8] rounded-sm hover:bg-[#0057B8]/10 transition-colors"
+        className="px-4 py-2 text-sm font-bold text-[#0057B8] border border-[#0057B8] hover:bg-[#0057B8]/10 transition-colors"
       >
         Try Again
       </button>
@@ -679,7 +679,7 @@ export default function NewsFeed({ onStoryClick, maxItems = 6 }) {
 
           {/* Additional Stories - Compact List */}
           {listStories.length > 0 && (
-            <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
+            <div className="bg-[#1a1a1a] border border-[#333]">
               <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
                 <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest">
                   More Stories
@@ -737,7 +737,7 @@ export function FantasyImpactWidget({ news }) {
   const metrics = latestWithImpact.fantasyMetrics;
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
+    <div className="bg-[#1a1a1a] border border-[#333]">
       {/* Header */}
       <div className="bg-[#222] px-3 py-2.5 border-b border-[#333] flex items-center justify-between">
         <h3 className="text-xs font-bold text-orange-400 uppercase tracking-wider flex items-center gap-2">
@@ -751,7 +751,7 @@ export function FantasyImpactWidget({ news }) {
       <div className="p-3">
         {/* Top ROI Highlight */}
         {metrics?.topROI && (
-          <div className="mb-3 p-2 bg-green-500/10 border border-green-500/20 rounded-sm">
+          <div className="mb-3 p-2 bg-green-500/10 border border-green-500/20">
             <div className="flex items-center gap-1.5 mb-1">
               <DollarSign className="w-3 h-3 text-green-400" />
               <span className="text-[10px] text-green-400 uppercase font-bold">Top ROI This Week</span>
