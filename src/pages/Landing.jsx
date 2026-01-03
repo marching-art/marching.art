@@ -18,21 +18,7 @@ import { useProfileStore } from '../store/profileStore';
 import NewsFeed from '../components/Landing/NewsFeed';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useTickerData } from '../hooks/useTickerData';
-
-// =============================================================================
-// SIDEBAR DATA (Live Scores & Trending)
-// =============================================================================
-
-const LIVE_SCORES = [
-  { rank: 1, corps: 'Blue Devils', score: 97.850, change: '+0.2' },
-  { rank: 2, corps: 'Bluecoats', score: 96.425, change: '+0.4' },
-  { rank: 3, corps: 'Carolina Crown', score: 95.900, change: '-0.1' },
-  { rank: 4, corps: 'Santa Clara Vanguard', score: 95.275, change: '+0.3' },
-  { rank: 5, corps: 'The Cadets', score: 94.650, change: '—' },
-  { rank: 6, corps: 'Boston Crusaders', score: 93.800, change: '+0.5' },
-  { rank: 7, corps: 'Phantom Regiment', score: 92.150, change: '-0.2' },
-  { rank: 8, corps: 'Blue Knights', score: 91.425, change: '+0.1' },
-];
+import { useLandingScores } from '../hooks/useLandingScores';
 
 
 // =============================================================================
@@ -44,6 +30,7 @@ const Landing = () => {
   const { user, signIn, signOut } = useAuth();
   const profile = useProfileStore((state) => state.profile);
   const { tickerData, loading: tickerLoading, hasData: hasTickerData } = useTickerData();
+  const { liveScores, displayDay, loading: scoresLoading, hasData: hasScoresData } = useLandingScores();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -449,45 +436,74 @@ const Landing = () => {
                     Live Scores
                   </h3>
                   <div className="flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                    <span className="text-xs text-green-500 font-bold uppercase">Live</span>
+                    {hasScoresData && (
+                      <>
+                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                        <span className="text-xs text-gray-500">Day {displayDay}</span>
+                      </>
+                    )}
                   </div>
                 </div>
 
                 {/* Score List */}
                 <div className="divide-y divide-[#333]/50 max-h-80 overflow-y-auto scroll-momentum">
-                  {LIVE_SCORES.map((row) => (
-                    <div
-                      key={row.rank}
-                      className="flex items-center justify-between px-3 py-2 hover:bg-white/[0.02] transition-colors"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <span className="w-5 h-5 flex items-center justify-center bg-[#222] text-xs font-bold text-gray-500 tabular-nums rounded-sm">
-                          {row.rank}
-                        </span>
-                        <span className="text-sm text-white truncate max-w-[140px]">{row.corps}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-white tabular-nums">
-                          {row.score.toFixed(3)}
-                        </span>
-                        <span className={`text-xs font-bold tabular-nums w-10 text-right ${
-                          row.change.startsWith('+') ? 'text-green-500' :
-                          row.change.startsWith('-') ? 'text-red-500' : 'text-gray-500'
-                        }`}>
-                          {row.change}
-                        </span>
-                      </div>
+                  {scoresLoading ? (
+                    <div className="px-3 py-6 text-center">
+                      <div className="inline-block w-5 h-5 border-2 border-[#0057B8]/30 border-t-[#0057B8] rounded-full animate-spin" />
                     </div>
-                  ))}
+                  ) : hasScoresData ? (
+                    liveScores.slice(0, 12).map((row) => {
+                      const changeValue = row.change;
+                      const hasChange = changeValue !== null;
+                      const changeDisplay = hasChange
+                        ? `${changeValue >= 0 ? '+' : ''}${changeValue.toFixed(1)}`
+                        : '—';
+
+                      return (
+                        <div
+                          key={`${row.sourceYear}-${row.corpsName}`}
+                          className="flex items-center justify-between px-3 py-2 hover:bg-white/[0.02] transition-colors"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <span className="w-5 h-5 flex items-center justify-center bg-[#222] text-xs font-bold text-gray-500 tabular-nums rounded-sm">
+                              {row.rank}
+                            </span>
+                            <span className="text-sm text-white truncate max-w-[140px]" title={`${row.sourceYear} ${row.corpsName}`}>
+                              <span className="text-gray-400">{row.sourceYear}</span> {row.corpsName}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-white tabular-nums">
+                              {row.score.toFixed(3)}
+                            </span>
+                            <span className={`flex items-center gap-0.5 text-xs font-bold tabular-nums w-12 justify-end ${
+                              row.direction === 'up' ? 'text-green-500' :
+                              row.direction === 'down' ? 'text-red-500' : 'text-gray-500'
+                            }`}>
+                              {row.direction === 'up' && <TrendingUp className="w-3 h-3" />}
+                              {row.direction === 'down' && <TrendingDown className="w-3 h-3" />}
+                              {changeDisplay}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="px-3 py-4 text-center">
+                      <p className="text-xs text-gray-500">No scores available yet</p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Footer */}
                 <div className="px-3 py-2 border-t border-[#333] bg-[#1a1a1a]/50">
-                  <button className="text-xs text-[#0057B8] hover:text-[#0066d6] font-bold transition-colors flex items-center gap-1">
+                  <Link
+                    to="/scores"
+                    className="text-xs text-[#0057B8] hover:text-[#0066d6] font-bold transition-colors flex items-center gap-1"
+                  >
                     Full Standings
                     <ChevronRight className="w-3 h-3" />
-                  </button>
+                  </Link>
                 </div>
               </div>
 
