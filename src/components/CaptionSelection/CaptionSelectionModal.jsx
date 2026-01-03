@@ -110,7 +110,7 @@ const TemplateModal = ({ isOpen, onClose, templates, onSave, onLoad, onDelete, c
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80" onClick={onClose}>
-      <div className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-sm" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
           <h3 className="text-xs font-bold uppercase tracking-wider text-gray-300">Lineup Templates</h3>
           <button onClick={onClose} className="p-1 text-gray-500 hover:text-white">
@@ -165,7 +165,7 @@ const TemplateModal = ({ isOpen, onClose, templates, onSave, onLoad, onDelete, c
           </div>
         </div>
 
-        <div className="px-4 py-3 border-t border-[#333] bg-[#222] flex justify-end">
+        <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end">
           <button onClick={onClose} className="h-9 px-4 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6]">
             Done
           </button>
@@ -758,7 +758,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
         aria-modal="true"
         aria-labelledby="modal-title-caption-selection"
       >
-        <div className="w-full max-w-5xl max-h-[95vh] bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="w-full max-w-5xl max-h-[95vh] bg-[#1a1a1a] border border-[#333] rounded-sm flex flex-col" onClick={(e) => e.stopPropagation()}>
           {/* Header */}
           <div className="px-4 py-3 border-b border-[#333] bg-[#222] flex-shrink-0">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
@@ -962,7 +962,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-3 border-t border-[#333] bg-[#222] flex justify-end gap-2 flex-shrink-0">
+          <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end gap-2 flex-shrink-0">
             <button onClick={onClose} disabled={saving} className="h-9 px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white disabled:opacity-50">
               Cancel
             </button>

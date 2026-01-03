@@ -90,7 +90,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
         aria-labelledby="modal-title-news-submission"
       >
         <div
-          className="w-full max-w-2xl bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl max-h-[90vh] flex flex-col"
+          className="w-full max-w-2xl bg-[#1a1a1a] border border-[#333] rounded-sm max-h-[90vh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -249,7 +249,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
             </div>
 
             {/* Footer */}
-            <div className="px-4 py-3 border-t border-[#333] bg-[#222] flex justify-end gap-2">
+            <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end gap-2">
               <button
                 type="button"
                 onClick={onClose}

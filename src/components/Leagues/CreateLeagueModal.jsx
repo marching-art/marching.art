@@ -107,7 +107,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
           onClick={(e) => e.stopPropagation()}
         >
           {step === 'create' ? (
-            <div className="bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl">
+            <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
               {/* Header */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
                 <div className="flex items-center gap-2">
@@ -203,7 +203,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
                 </div>
 
                 {/* Footer */}
-                <div className="px-4 py-3 border-t border-[#333] bg-[#222] flex justify-end gap-2">
+                <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end gap-2">
                   <button
                     type="button"
                     onClick={onClose}
@@ -223,7 +223,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
               </form>
             </div>
           ) : (
-            <div className="bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl">
+            <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
               {/* Header */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
                 <h2 className="text-xs font-bold uppercase tracking-wider text-green-400 flex items-center gap-2">
@@ -306,7 +306,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
               </div>
 
               {/* Footer */}
-              <div className="px-4 py-3 border-t border-[#333] bg-[#222] flex justify-end">
+              <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end">
                 <button
                   onClick={onClose}
                   className="h-9 px-4 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6]"
