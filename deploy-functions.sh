@@ -2,15 +2,25 @@
 # Deploy Cloud Functions in batches to avoid quota errors
 # Google Cloud Run has a limit on "Write requests per minute per region"
 # Deploying all ~70 functions at once exceeds this limit
-# This script deploys in batches of 5-8 functions with delays between batches
+# This script deploys in batches of 4-6 functions with delays between batches
+#
+# SCORE PROCESSING TIMELINE (all times Eastern):
+#   1:30 AM - scrapeDciScores (scrapes DCI website)
+#   2:00 AM - processDailyLiveScores / dailyOffSeasonProcessor (calculates user scores)
+#   2:00 AM - processLiveScoreRecap / processDciScores triggers (save to historical_scores)
+#   2:00 AM - onFantasyRecapUpdated trigger → processNewsGeneration
+#   3:00 AM - seasonScheduler, scheduledLifetimeLeaderboardUpdate
+#
+# Score-critical functions are deployed in the first 3 batches to minimize
+# risk if deploying near the 1:30-2:00 AM window.
 
 set -e
 
-DELAY_SECONDS=60  # Delay between batches to avoid quota errors
-BATCH_SIZE=5      # Number of functions per batch
+DELAY_SECONDS=45  # Delay between batches to avoid quota errors
+BATCH_SIZE=5      # Target number of functions per batch
 
 echo "Deploying Cloud Functions to Firebase in batches..."
-echo "Batch size: $BATCH_SIZE functions"
+echo "Batch size: ~$BATCH_SIZE functions"
 echo "Delay between batches: $DELAY_SECONDS seconds"
 echo ""
 
@@ -29,60 +39,63 @@ echo ""
 echo "Installing function dependencies..."
 cd functions && npm install && cd ..
 
-# Define function batches (grouped logically)
-# Batch 1: User management
-BATCH1="checkUsername,setUserRole,getShowRegistrations,getUserRankings,migrateUserProfiles"
+# =============================================================================
+# BATCH ORDERING: Score-critical functions FIRST
+# =============================================================================
 
-# Batch 2: User profile operations
-BATCH2="createUserProfile,dailyXPCheckIn,awardXP,updateProfile,getPublicProfile"
+# Batch 1: CRITICAL - Score scraping and processing (1:30 AM - 2:00 AM window)
+BATCH1="scrapeDciScores,processDailyLiveScores,dailyOffSeasonProcessor,processLiveScoreRecap,processDciScores"
 
-# Batch 3: Lineup functions
-BATCH3="validateAndSaveLineup,saveLineup,selectUserShows,saveShowConcept,getLineupAnalytics,getHotCorps"
+# Batch 2: CRITICAL - Score triggers and news generation
+BATCH2="processPaginationPage,onFantasyRecapUpdated,processNewsGeneration,triggerNewsGeneration,triggerDailyNews"
 
-# Batch 4: Economy functions
-BATCH4="unlockClassWithCorpsCoin,getCorpsCoinHistory,getEarningOpportunities,registerCorps"
+# Batch 3: CRITICAL - Season scheduler and leaderboard (3:00 AM)
+BATCH3="seasonScheduler,updateLifetimeLeaderboard,scheduledLifetimeLeaderboardUpdate,generateWeeklyMatchups"
 
-# Batch 5: Corps functions
-BATCH5="processCorpsDecisions,retireCorps,unretireCorps"
+# Batch 4: News functions
+BATCH4="getDailyNews,getRecentNews,listAllArticles,getArticleForEdit,updateArticle,archiveArticle"
 
-# Batch 6: League functions part 1
-BATCH6="createLeague,joinLeague,leaveLeague,generateMatchups,updateMatchupResults"
+# Batch 5: More news functions
+BATCH5="deleteArticle,submitNewsForApproval"
 
-# Batch 7: League functions part 2
-BATCH7="proposeStaffTrade,respondToStaffTrade,postLeagueMessage"
+# Batch 6: Email scheduled jobs
+BATCH6="streakAtRiskEmailJob,weeklyDigestEmailJob,winBackEmailJob,streakBrokenEmailJob"
 
-# Batch 8: Comments and daily ops
-BATCH8="sendCommentNotification,deleteComment,reportComment,claimDailyLogin,purchaseStreakFreeze,getStreakStatus"
+# Batch 7: Push scheduled jobs and triggers
+BATCH7="streakAtRiskPushJob,showReminderPushJob,weeklyMatchupPushJob"
 
-# Batch 9: Admin functions
-BATCH9="startNewOffSeason,startNewLiveSeason,manualTrigger,sendTestEmail"
+# Batch 8: Push triggers
+BATCH8="onMatchupCompleted,onTradeProposalCreated,onLeagueMemberJoined,onLeagueChatMessage"
 
-# Batch 10: Scheduled functions
-BATCH10="seasonScheduler,dailyOffSeasonProcessor,processDailyLiveScores,generateWeeklyMatchups"
+# Batch 9: Email triggers
+BATCH9="onProfileCreated,onStreakMilestoneReached"
 
-# Batch 11: Leaderboard and email scheduled
-BATCH11="updateLifetimeLeaderboard,scheduledLifetimeLeaderboardUpdate,streakAtRiskEmailJob,weeklyDigestEmailJob"
+# Batch 10: User management
+BATCH10="checkUsername,setUserRole,getShowRegistrations,getUserRankings,migrateUserProfiles"
 
-# Batch 12: More email scheduled
-BATCH12="winBackEmailJob,streakBrokenEmailJob"
+# Batch 11: User profile operations
+BATCH11="createUserProfile,dailyXPCheckIn,awardXP,updateProfile,getPublicProfile"
 
-# Batch 13: Score processing triggers
-BATCH13="processDciScores,processLiveScoreRecap"
+# Batch 12: Lineup functions
+BATCH12="validateAndSaveLineup,saveLineup,selectUserShows,saveShowConcept,getLineupAnalytics,getHotCorps"
 
-# Batch 14: News generation
-BATCH14="processNewsGeneration,onFantasyRecapUpdated,triggerNewsGeneration,triggerDailyNews,getDailyNews,getRecentNews"
+# Batch 13: Economy functions
+BATCH13="unlockClassWithCorpsCoin,getCorpsCoinHistory,getEarningOpportunities,registerCorps"
 
-# Batch 15: Article management
-BATCH15="listAllArticles,getArticleForEdit,updateArticle,archiveArticle,deleteArticle,submitNewsForApproval"
+# Batch 14: Corps functions
+BATCH14="processCorpsDecisions,retireCorps,unretireCorps"
 
-# Batch 16: Email triggers
-BATCH16="onProfileCreated,onStreakMilestoneReached"
+# Batch 15: League functions part 1
+BATCH15="createLeague,joinLeague,leaveLeague,generateMatchups,updateMatchupResults"
 
-# Batch 17: Push scheduled jobs
-BATCH17="streakAtRiskPushJob,showReminderPushJob,weeklyMatchupPushJob"
+# Batch 16: League functions part 2
+BATCH16="proposeStaffTrade,respondToStaffTrade,postLeagueMessage"
 
-# Batch 18: Push triggers and webhooks
-BATCH18="onMatchupCompleted,onTradeProposalCreated,onLeagueMemberJoined,onLeagueChatMessage,stripeWebhook"
+# Batch 17: Comments and daily ops
+BATCH17="sendCommentNotification,deleteComment,reportComment,claimDailyLogin,purchaseStreakFreeze,getStreakStatus"
+
+# Batch 18: Admin functions and webhook
+BATCH18="startNewOffSeason,startNewLiveSeason,manualTrigger,sendTestEmail,stripeWebhook"
 
 # Array of all batches
 BATCHES=(
@@ -110,8 +123,13 @@ TOTAL_BATCHES=${#BATCHES[@]}
 CURRENT_BATCH=0
 FAILED_BATCHES=()
 
+# Calculate estimated time
+ESTIMATED_MINUTES=$(( (TOTAL_BATCHES - 1) * DELAY_SECONDS / 60 ))
 echo ""
 echo "Starting deployment of $TOTAL_BATCHES batches..."
+echo "Estimated time: ~$ESTIMATED_MINUTES minutes"
+echo ""
+echo "NOTE: Score-critical functions are in batches 1-3 (deployed first)"
 echo ""
 
 for batch in "${BATCHES[@]}"; do
