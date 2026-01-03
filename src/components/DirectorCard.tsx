@@ -23,6 +23,7 @@ interface DirectorCardProps {
   seasonName?: string;
   currentWeek?: number;
   compact?: boolean;
+  onUnlockClass?: (classKey: string) => void;
 }
 
 interface CurrencyGain {
@@ -87,24 +88,38 @@ function getStreakTier(streak: number) {
   return STREAK_TIERS[0];
 }
 
+interface NextClassUnlock {
+  className: string;
+  classKey: string;
+  levelRequired: number;
+  coinCost: number;
+  meetsLevel: boolean;
+  canAfford: boolean;
+  canUnlock: boolean; // meetsLevel && canAfford
+}
+
 function getNextClassUnlock(
   unlockedClasses: string[],
   xpLevel: number,
   corpsCoin: number
-): { className: string; classKey: string; levelRequired: number; coinCost: number; canUnlock: boolean } | null {
+): NextClassUnlock | null {
   const classOrder = ['aClass', 'open', 'world'];
 
   for (const classKey of classOrder) {
     if (!unlockedClasses.includes(classKey)) {
       const levelRequired = CLASS_UNLOCK_LEVELS[classKey as keyof typeof CLASS_UNLOCK_LEVELS];
       const coinCost = CLASS_UNLOCK_COSTS[classKey as keyof typeof CLASS_UNLOCK_COSTS];
+      const meetsLevel = xpLevel >= levelRequired;
+      const canAfford = corpsCoin >= coinCost;
 
       return {
         className: CLASS_NAMES[classKey],
         classKey,
         levelRequired,
         coinCost,
-        canUnlock: xpLevel >= levelRequired && corpsCoin >= coinCost,
+        meetsLevel,
+        canAfford,
+        canUnlock: meetsLevel && canAfford,
       };
     }
   }
@@ -127,6 +142,7 @@ export const DirectorCard: React.FC<DirectorCardProps> = ({
   seasonName,
   currentWeek,
   compact = false,
+  onUnlockClass,
 }) => {
   const [gains, setGains] = useState<CurrencyGain[]>([]);
   const prevXpRef = useRef(xp);
@@ -321,25 +337,41 @@ export const DirectorCard: React.FC<DirectorCardProps> = ({
           <div className="flex items-center gap-3 pl-4 border-l border-[#333]">
             {nextUnlock.canUnlock ? (
               <Unlock className="w-4 h-4 text-green-400" />
+            ) : nextUnlock.canAfford ? (
+              <Coins className="w-4 h-4 text-yellow-500" />
             ) : (
               <Lock className="w-4 h-4 text-gray-500" />
             )}
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-gray-400">Next:</span>
-                <span className={`text-xs font-bold ${nextUnlock.canUnlock ? 'text-green-400' : 'text-white'}`}>
+                <span className={`text-xs font-bold ${nextUnlock.canUnlock ? 'text-green-400' : nextUnlock.canAfford ? 'text-yellow-400' : 'text-white'}`}>
                   {nextUnlock.className}
                 </span>
               </div>
               <div className="flex items-center gap-2 text-[10px]">
-                <span className={xpLevel >= nextUnlock.levelRequired ? 'text-green-400' : 'text-gray-500'}>
+                <span className={nextUnlock.meetsLevel ? 'text-green-400' : 'text-gray-500'}>
                   Lvl {nextUnlock.levelRequired}
                 </span>
-                <span className={corpsCoin >= nextUnlock.coinCost ? 'text-green-400' : 'text-gray-500'}>
+                <span className={nextUnlock.canAfford ? 'text-green-400' : 'text-gray-500'}>
                   {nextUnlock.coinCost.toLocaleString()} CC
                 </span>
               </div>
             </div>
+            {/* Buy button - show when user can afford but hasn't unlocked yet */}
+            {nextUnlock.canAfford && onUnlockClass && (
+              <button
+                onClick={() => onUnlockClass(nextUnlock.classKey)}
+                className={`ml-2 h-7 px-3 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors ${
+                  nextUnlock.meetsLevel
+                    ? 'bg-green-600 hover:bg-green-500 text-white'
+                    : 'bg-yellow-600 hover:bg-yellow-500 text-white'
+                }`}
+              >
+                <Coins className="w-3 h-3" />
+                {nextUnlock.meetsLevel ? 'Unlock' : 'Buy'}
+              </button>
+            )}
           </div>
         )}
       </div>
