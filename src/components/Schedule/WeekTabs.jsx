@@ -27,7 +27,7 @@ const WeekTabs = ({
       className="flex-shrink-0"
     >
       {/* Glass panel container */}
-      <div className="bg-charcoal-950/60 backdrop-blur-xl border border-white/5 rounded-2xl p-4 lg:p-6">
+      <div className="bg-charcoal-950/60 backdrop-blur-xl border border-white/5 p-4 lg:p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="text-[10px] text-cream/50 uppercase tracking-widest font-display font-bold">
@@ -73,7 +73,7 @@ const WeekTabs = ({
 
                   {/* Node */}
                   <div className={`
-                    relative z-10 w-10 h-10 lg:w-12 lg:h-12 rounded-xl flex items-center justify-center
+                    relative z-10 w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center
                     font-display font-bold text-lg lg:text-xl
                     transition-all duration-300
                     ${status === 'active'
@@ -113,7 +113,7 @@ const WeekTabs = ({
                   {/* Show Count Badge */}
                   {showCount > 0 && (
                     <div className={`
-                      mt-1 px-2 py-0.5 rounded-full text-[9px] font-bold
+                      mt-1 px-2 py-0.5 text-[9px] font-bold
                       ${status === 'active'
                         ? 'bg-gold-500/20 text-gold-400 border border-gold-500/30'
                         : status === 'complete'
