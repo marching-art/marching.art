@@ -1,9 +1,9 @@
 // MatchupCard - Compact matchup summary card for lists and previews
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Swords, Trophy, Check, Radio, Clock, ChevronRight } from 'lucide-react';
 
-const MatchupCard = ({
+const MatchupCard = React.memo(({
   matchup,
   currentUserId,
   homeUser,
@@ -29,6 +29,11 @@ const MatchupCard = ({
 
   const userWon = isCompleted && matchup.winnerId === currentUserId;
   const userLost = isCompleted && matchup.winnerId && matchup.winnerId !== currentUserId;
+
+  // Memoize click handler
+  const handleClick = useCallback(() => {
+    onClick?.();
+  }, [onClick]);
 
   // Status indicator colors and text
   const getStatusDisplay = () => {
@@ -68,7 +73,7 @@ const MatchupCard = ({
       <motion.div
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        onClick={onClick}
+        onClick={handleClick}
         className={`p-3 rounded-lg cursor-pointer transition-all border ${
           isLive
             ? 'bg-red-500/10 border-red-500/30 hover:border-red-500/50'
@@ -111,7 +116,7 @@ const MatchupCard = ({
     <motion.div
       whileHover={{ scale: 1.01, y: -2 }}
       whileTap={{ scale: 0.99 }}
-      onClick={onClick}
+      onClick={handleClick}
       className={`relative p-4 rounded-xl cursor-pointer transition-all border-2 ${
         isLive
           ? 'bg-gradient-to-br from-red-500/10 to-charcoal-900/50 border-red-500/40 hover:border-red-500/60'
@@ -224,6 +229,7 @@ const MatchupCard = ({
       </div>
     </motion.div>
   );
-};
+});
+MatchupCard.displayName = 'MatchupCard';
 
 export default MatchupCard;
