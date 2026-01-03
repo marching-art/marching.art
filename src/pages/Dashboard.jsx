@@ -52,6 +52,16 @@ const CLASS_LABELS = {
   soundSport: 'SoundSport',
 };
 
+// Ordered list of corps classes for the switcher (highest tier first)
+const CORPS_CLASS_ORDER = ['worldClass', 'openClass', 'aClass', 'soundSport'];
+
+const CLASS_SHORT_LABELS = {
+  worldClass: 'World',
+  openClass: 'Open',
+  aClass: 'Class A',
+  soundSport: 'Sport',
+};
+
 const CAPTIONS = [
   { id: 'GE1', name: 'GE1', fullName: 'General Effect 1', category: 'ge' },
   { id: 'GE2', name: 'GE2', fullName: 'General Effect 2', category: 'ge' },
@@ -172,6 +182,69 @@ const SkeletonRow = () => (
     <td className="py-2.5 px-3 text-right"><div className="w-20 h-4 bg-[#333] animate-pulse ml-auto" /></td>
   </tr>
 );
+
+// =============================================================================
+// CORPS CONTEXT SWITCHER (Pill Tabs)
+// =============================================================================
+
+const CorpsSwitcher = ({
+  corps,
+  activeCorpsClass,
+  unlockedClasses,
+  onSwitch,
+  onCreateCorps
+}) => {
+  // Only show classes user has unlocked
+  const availableClasses = CORPS_CLASS_ORDER.filter(
+    classId => unlockedClasses?.includes(classId)
+  );
+
+  if (availableClasses.length <= 1) return null;
+
+  return (
+    <div className="sticky top-0 z-10 bg-[#0a0a0a] border-b border-[#333]">
+      <div className="flex items-center gap-1 p-1.5 px-3">
+        {availableClasses.map((classId) => {
+          const hasCorps = corps && corps[classId];
+          const isActive = classId === activeCorpsClass;
+          const corpsName = hasCorps ? (corps[classId].corpsName || corps[classId].name) : null;
+
+          if (!hasCorps) {
+            // Show "Create" button for unlocked but empty slots
+            return (
+              <button
+                key={classId}
+                onClick={() => onCreateCorps?.(classId)}
+                className="text-[10px] font-bold uppercase px-3 py-1.5 rounded-sm text-gray-600 hover:text-gray-400 hover:bg-white/5 border border-dashed border-[#333] transition-colors"
+              >
+                + {CLASS_SHORT_LABELS[classId]}
+              </button>
+            );
+          }
+
+          return (
+            <button
+              key={classId}
+              onClick={() => onSwitch(classId)}
+              className={`text-[10px] font-bold uppercase px-3 py-1.5 rounded-sm transition-colors ${
+                isActive
+                  ? 'bg-[#0057B8] text-white'
+                  : 'text-gray-500 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <span>{CLASS_SHORT_LABELS[classId]}</span>
+              {corpsName && (
+                <span className={`ml-1.5 font-normal normal-case ${isActive ? 'text-white/70' : 'text-gray-600'}`}>
+                  · {corpsName.length > 12 ? corpsName.slice(0, 12) + '…' : corpsName}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 
 // =============================================================================
 // ACTIVE LINEUP TABLE (HERO)
@@ -540,7 +613,8 @@ const Dashboard = () => {
     newAchievement,
     clearNewAchievement,
     getCorpsClassName,
-    refreshProfile
+    refreshProfile,
+    handleCorpsSwitch
   } = dashboardData;
 
   // Computed values
@@ -875,6 +949,18 @@ const Dashboard = () => {
 
       {/* SCROLLABLE CONTENT */}
       <div className="flex-1 overflow-y-auto min-h-0 pb-20 md:pb-4">
+        {/* Corps Context Switcher - Sticky Sub-Header */}
+        <CorpsSwitcher
+          corps={corps}
+          activeCorpsClass={activeCorpsClass}
+          unlockedClasses={profile?.unlockedClasses || ['soundSport']}
+          onSwitch={handleCorpsSwitch}
+          onCreateCorps={(classId) => {
+            clearNewlyUnlockedClass();
+            setShowRegistration(true);
+          }}
+        />
+
         {activeCorps ? (
           <div className="p-3 md:p-4">
             {/* 2/3 + 1/3 Grid Layout */}
