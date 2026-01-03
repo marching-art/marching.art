@@ -7,9 +7,10 @@
 import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Trophy, Calendar, Edit, ChevronRight, Coins, Users,
-  Music, TrendingUp, TrendingDown, Activity, Medal, FileText
+  Trophy, Calendar, Edit, ChevronRight, Users,
+  TrendingUp, TrendingDown, Activity, Medal, FileText
 } from 'lucide-react';
+import DirectorCard from '../components/DirectorCard';
 import { useAuth } from '../App';
 import { db } from '../firebase';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
@@ -551,8 +552,41 @@ const Dashboard = () => {
             ))}
           </div>
 
+          {/* Director Status Card - Mobile compact version */}
+          {profile && (
+            <div className="lg:hidden">
+              <DirectorCard
+                displayName={profile.displayName || 'Director'}
+                xp={profile.xp || 0}
+                xpLevel={profile.xpLevel || 1}
+                corpsCoin={profile.corpsCoin || 0}
+                streak={engagementData?.loginStreak || 0}
+                lastLogin={engagementData?.lastLogin}
+                unlockedClasses={profile.unlockedClasses || ['soundSport']}
+                compact
+              />
+            </div>
+          )}
+
           {/* Pull to Refresh Wrapper */}
           <PullToRefresh onRefresh={handleRefresh}>
+            {/* Director Status Card - Desktop full version */}
+            {profile && (
+              <div className="hidden lg:block p-4 pb-0">
+                <DirectorCard
+                  displayName={profile.displayName || 'Director'}
+                  xp={profile.xp || 0}
+                  xpLevel={profile.xpLevel || 1}
+                  corpsCoin={profile.corpsCoin || 0}
+                  streak={engagementData?.loginStreak || 0}
+                  lastLogin={engagementData?.lastLogin}
+                  unlockedClasses={profile.unlockedClasses || ['soundSport']}
+                  seasonName={formatSeasonName(seasonData?.name)}
+                  currentWeek={currentWeek}
+                />
+              </div>
+            )}
+
             {/* MAIN GRID - Desktop: 3 columns, Mobile: single panel based on tab */}
             <div className="lg:grid lg:grid-cols-3 w-full gap-px bg-[#333] pb-20 lg:pb-4">
 
@@ -722,21 +756,10 @@ const Dashboard = () => {
                 </Link>
               )}
 
-              {/* CorpsCoin */}
-              <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#333]">
-                <div className="flex items-center gap-2">
-                  <Coins className="w-5 h-5 sm:w-4 sm:h-4 text-yellow-500" />
-                  <span className="text-sm sm:text-xs text-gray-400">CorpsCoin</span>
-                </div>
-                <span className="text-base sm:text-sm font-bold font-data text-yellow-500 tabular-nums">
-                  {(profile?.corpsCoin || 0).toLocaleString()}
-                </span>
-              </div>
-
               {/* Submit News */}
               <button
                 onClick={() => setShowNewsSubmission(true)}
-                className="w-full mt-4 flex items-center justify-center gap-2 p-3 sm:p-2 border border-dashed border-[#444] text-gray-400 hover:text-white hover:border-[#555] active:bg-[#222] rounded min-h-[48px] sm:min-h-0 transition-colors"
+                className="w-full mt-3 flex items-center justify-center gap-2 p-3 sm:p-2 border border-dashed border-[#444] text-gray-400 hover:text-white hover:border-[#555] active:bg-[#222] rounded min-h-[48px] sm:min-h-0 transition-colors"
               >
                 <FileText className="w-5 h-5 sm:w-4 sm:h-4" />
                 <span className="text-sm sm:text-xs">Submit News Article</span>
@@ -847,10 +870,12 @@ const Dashboard = () => {
                 </span>
               </div>
               <div className="px-4 py-4 sm:py-3 text-sm text-gray-500">
-                {engagementData?.streak > 0 ? (
-                  <span>🔥 {engagementData.streak} day streak! Keep it up.</span>
+                {lineupCount === 8 ? (
+                  <span>Your lineup is set! Check scores after show days.</span>
+                ) : lineupCount > 0 ? (
+                  <span>Complete your lineup to maximize scoring potential.</span>
                 ) : (
-                  <span>No recent activity. Check back after competing!</span>
+                  <span>Start by drafting corps to your lineup!</span>
                 )}
               </div>
             </div>
