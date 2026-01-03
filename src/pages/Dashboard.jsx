@@ -409,7 +409,8 @@ const Dashboard = () => {
   const lineup = useMemo(() => activeCorps?.lineup || {}, [activeCorps?.lineup]);
   const lineupCount = useMemo(() => Object.keys(lineup).length, [lineup]);
   const standingsData = useMemo(() => aggregatedScores.slice(0, 8), [aggregatedScores]);
-  // Get user's corps score from aggregatedScores (same source as standings) to ensure consistency
+  // Get user's corps score from aggregatedScores - reuses data already fetched for standings
+  // Corps names are unique per season, so lookup by name is valid
   const userCorpsScore = useMemo(() => {
     if (!activeCorps) return null;
     const corpsName = activeCorps.corpsName || activeCorps.name;
