@@ -93,7 +93,11 @@ const {
 const {
   processDciScores,
   processLiveScoreRecap,
+  processPaginationPage,
 } = require("./src/triggers/scoreProcessing");
+
+// Live Scraper (1:30 AM - scrapes DCI scores before 2 AM processing)
+const { scrapeDciScores } = require("./src/scheduled/liveScraper");
 const {
   processNewsGeneration,
   onFantasyRecapUpdated,
@@ -184,6 +188,10 @@ module.exports = {
   // Triggers
   processDciScores,
   processLiveScoreRecap,
+  processPaginationPage,
+
+  // Live Scraper (1:30 AM)
+  scrapeDciScores,
 
   // News Generation
   processNewsGeneration,
