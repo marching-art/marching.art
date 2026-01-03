@@ -3,6 +3,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import ShowCard from './ShowCard';
 import { ConsoleEmptyState } from '../ui/CommandConsole';
+import { isEventPast } from '../../utils/scheduleUtils';
 
 const ShowsGrid = ({
   shows,
@@ -33,9 +34,7 @@ const ShowsGrid = ({
         {shows.map((show, index) => {
           const myCorps = getMyCorpsAtShow(show);
           const showDate = getActualDate(show.day);
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          const isPast = showDate && showDate < today;
+          const isPast = isEventPast(showDate);
 
           return (
             <ShowCard

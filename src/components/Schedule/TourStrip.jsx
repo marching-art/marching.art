@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
 import TicketStub from './TicketStub';
 import EmptyState from '../EmptyState';
+import { isEventPast } from '../../utils/scheduleUtils';
 
 const TourStrip = ({
   shows,
@@ -138,9 +139,7 @@ const TourStrip = ({
             {shows.map((show, index) => {
               const myCorps = getMyCorpsAtShow(show);
               const showDate = getActualDate(show.day);
-              const today = new Date();
-              today.setHours(0, 0, 0, 0);
-              const isPast = showDate && showDate < today;
+              const isPast = isEventPast(showDate);
               const isRegistered = myCorps.length > 0;
               const isLocked = show.locked || isPast;
               const weekend = isWeekend(show.day);
