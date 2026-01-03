@@ -496,11 +496,9 @@ const GameShell = ({ children }) => {
         <main
           id="main-content"
           role="main"
-          className="fixed top-[84px] sm:top-20 left-0 right-0 bg-[#0a0a0a] scroll-momentum main-content-bottom"
+          className="fixed top-[84px] sm:top-20 left-0 right-0 bg-[#0a0a0a] overflow-hidden main-content-bottom"
         >
-          <div className="h-full w-full overflow-y-auto scroll-contain">
-            {children}
-          </div>
+          {children}
         </main>
 
         {/* Mobile Bottom Navigation */}
