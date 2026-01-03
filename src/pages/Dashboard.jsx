@@ -417,6 +417,13 @@ const Dashboard = () => {
     const entry = aggregatedScores.find(s => s.corpsName === corpsName);
     return entry?.score ?? null;
   }, [aggregatedScores, activeCorps]);
+  // Get user's corps rank from aggregatedScores
+  const userCorpsRank = useMemo(() => {
+    if (!activeCorps) return null;
+    const corpsName = activeCorps.corpsName || activeCorps.name;
+    const entry = aggregatedScores.find(s => s.corpsName === corpsName);
+    return entry?.rank ?? null;
+  }, [aggregatedScores, activeCorps]);
   const primaryLeague = useMemo(() => myLeagues?.[0], [myLeagues]);
 
   const thisWeekShows = useMemo(() => {
@@ -610,7 +617,7 @@ const Dashboard = () => {
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Rank</span>
                   <span className="text-2xl font-bold text-white font-data">
-                    #{activeCorps.rank || '-'}
+                    #{userCorpsRank || '-'}
                   </span>
                   {rankTrend === 'up' && <TrendingUp className="w-4 h-4 text-green-500" />}
                   {rankTrend === 'down' && <TrendingDown className="w-4 h-4 text-red-500" />}
