@@ -144,23 +144,21 @@ export const generateSparklinePath = (values, width = 60, height = 20) => {
 export const calculateCaptionRanks = (scores) => {
   if (!scores || scores.length === 0) return [];
 
-  // Add aggregates to each score
-  const withAggregates = scores.map(s => ({
-    ...s,
-    ...calculateCaptionAggregates(s)
-  }));
+  // Scores should already have GE_Total, VIS_Total, MUS_Total from prior calculateCaptionAggregates call
+  // Do NOT call calculateCaptionAggregates again here as it would overwrite with zeros
+  // (the entry itself doesn't have geScore/visualScore/musicScore - those are in entry.scores[0])
 
   // Sort by each category (O(n log n) each)
-  const geRanks = [...withAggregates].sort((a, b) => b.GE_Total - a.GE_Total);
-  const visRanks = [...withAggregates].sort((a, b) => b.VIS_Total - a.VIS_Total);
-  const musRanks = [...withAggregates].sort((a, b) => b.MUS_Total - a.MUS_Total);
+  const geRanks = [...scores].sort((a, b) => (b.GE_Total || 0) - (a.GE_Total || 0));
+  const visRanks = [...scores].sort((a, b) => (b.VIS_Total || 0) - (a.VIS_Total || 0));
+  const musRanks = [...scores].sort((a, b) => (b.MUS_Total || 0) - (a.MUS_Total || 0));
 
   // Build rank Maps for O(1) lookup instead of O(n) findIndex
   const geRankMap = new Map(geRanks.map((s, i) => [s.corps || s.corpsName, i + 1]));
   const visRankMap = new Map(visRanks.map((s, i) => [s.corps || s.corpsName, i + 1]));
   const musRankMap = new Map(musRanks.map((s, i) => [s.corps || s.corpsName, i + 1]));
 
-  return withAggregates.map(score => {
+  return scores.map(score => {
     const corps = score.corps || score.corpsName;
     return {
       ...score,
