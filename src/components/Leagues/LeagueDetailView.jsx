@@ -7,7 +7,8 @@ import {
   Trophy, Crown, ChevronLeft, Settings, Swords,
   MessageSquare, BarChart3, History, Medal, Flame,
   TrendingUp, TrendingDown, Minus, Bell, Activity,
-  Share2, Copy, Check, Send, Users, Calendar
+  Share2, Copy, Check, Send, Users, Calendar, LogOut,
+  AlertTriangle, X
 } from 'lucide-react';
 import { collection, query, orderBy, limit as firestoreLimit, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
@@ -155,6 +156,95 @@ const CommissionerBadge = ({ isCommissioner }) => {
   );
 };
 
+// Leave League Confirmation Modal
+const LeaveLeagueModal = ({ leagueName, onClose, onConfirm, isLoading }) => {
+  // Close on Escape key
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title-leave-league"
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="w-full max-w-sm bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
+          <h2 id="modal-title-leave-league" className="text-xs font-bold uppercase tracking-wider text-red-400 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4" />
+            Leave League
+          </h2>
+          <button onClick={onClose} className="p-1 text-gray-500 hover:text-white">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="p-4">
+          {/* Icon */}
+          <div className="w-12 h-12 mx-auto mb-4 bg-red-500/10 border border-red-500/30 rounded-sm flex items-center justify-center">
+            <LogOut className="w-6 h-6 text-red-500" />
+          </div>
+
+          {/* Message */}
+          <div className="text-center mb-4">
+            <p className="text-sm text-gray-300 mb-2">
+              Are you sure you want to leave?
+            </p>
+            <p className="text-lg font-bold text-white">{leagueName}</p>
+          </div>
+
+          {/* Warning */}
+          <div className="bg-red-500/10 border border-red-500/30 rounded-sm p-3">
+            <p className="text-xs text-red-400 text-center">
+              You will lose access to league standings, matchups, and chat history. You can rejoin later if the league is still active.
+            </p>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-4 py-3 border-t border-[#333] bg-[#222] flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            disabled={isLoading}
+            className="h-9 px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isLoading}
+            className="h-9 px-4 bg-red-600 text-white text-sm font-bold uppercase tracking-wider hover:bg-red-500 disabled:opacity-50 flex items-center gap-2"
+          >
+            {isLoading ? (
+              <>Leaving...</>
+            ) : (
+              <>
+                <LogOut className="w-4 h-4" />
+                Leave
+              </>
+            )}
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
   const [activeTab, setActiveTab] = useState('standings');
   const [standings, setStandings] = useState([]);
@@ -165,8 +255,21 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
   const [memberProfiles, setMemberProfiles] = useState({});
   const [loading, setLoading] = useState(true);
   const [selectedMatchup, setSelectedMatchup] = useState(null);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
 
   const isCommissioner = league.creatorId === userProfile?.uid;
+
+  // Handle leave league with confirmation
+  const handleLeaveConfirm = async () => {
+    setIsLeaving(true);
+    try {
+      await onLeave();
+    } finally {
+      setIsLeaving(false);
+      setShowLeaveModal(false);
+    }
+  };
 
   // Calculate rivalries using the hook
   const rivalries = useRivalries(
@@ -485,6 +588,13 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
                 <Settings className="w-5 h-5 text-gray-400" />
               </button>
             )}
+            <button
+              onClick={() => setShowLeaveModal(true)}
+              className="p-2 rounded-sm bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 hover:border-red-500/50 transition-colors"
+              title="Leave League"
+            >
+              <LogOut className="w-5 h-5 text-red-500" />
+            </button>
           </div>
         </div>
 
@@ -794,15 +904,17 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
         />
       </motion.div>
 
-      {/* Leave League Button */}
-      <div className="pt-4">
-        <button
-          onClick={onLeave}
-          className="w-full py-3 text-sm text-red-500 hover:text-red-400 hover:bg-red-500/10 rounded-sm transition-colors"
-        >
-          Leave League
-        </button>
-      </div>
+      {/* Leave League Confirmation Modal */}
+      <AnimatePresence>
+        {showLeaveModal && (
+          <LeaveLeagueModal
+            leagueName={league.name}
+            onClose={() => setShowLeaveModal(false)}
+            onConfirm={handleLeaveConfirm}
+            isLoading={isLeaving}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
