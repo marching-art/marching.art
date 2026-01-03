@@ -1,7 +1,7 @@
 // src/components/Scores/ScoreLedger.jsx
 // High-density "spreadsheet" style score table with heatmap coloring and sparklines
 
-import React, { useMemo } from 'react';
+import React, { useMemo, memo } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Minus, Users } from 'lucide-react';
 import {
@@ -11,14 +11,28 @@ import {
 } from '../../hooks/useScoresData';
 
 // Sparkline component for trend visualization
-const Sparkline = ({ values, trend, width = 60, height = 20 }) => {
-  const path = useMemo(() => generateSparklinePath(values, width, height), [values, width, height]);
+// Memoized to prevent re-renders when parent updates with same props
+const Sparkline = memo(({ values, trend, width = 60, height = 20 }) => {
+  // Memoize all calculations to avoid redundant work on re-renders
+  const { path, endPointY, color } = useMemo(() => {
+    if (!values || values.length < 2) {
+      return { path: '', endPointY: 0, color: '#94a3b8' };
+    }
+
+    const pathData = generateSparklinePath(values, width, height);
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const range = max - min || 1;
+    const lastValue = values[values.length - 1];
+    const endY = height - ((lastValue - min) / range) * height;
+    const trendColor = trend === 'up' ? '#4ade80' : trend === 'down' ? '#f87171' : '#94a3b8';
+
+    return { path: pathData, endPointY: endY, color: trendColor };
+  }, [values, trend, width, height]);
 
   if (!values || values.length < 2) {
     return <div className="w-[60px] h-[20px] flex items-center justify-center text-cream-500/30">--</div>;
   }
-
-  const color = trend === 'up' ? '#4ade80' : trend === 'down' ? '#f87171' : '#94a3b8';
 
   return (
     <svg width={width} height={height} className="overflow-visible">
@@ -33,23 +47,27 @@ const Sparkline = ({ values, trend, width = 60, height = 20 }) => {
       {/* End point indicator */}
       <circle
         cx={width}
-        cy={height - ((values[values.length - 1] - Math.min(...values)) / (Math.max(...values) - Math.min(...values) || 1)) * height}
+        cy={endPointY}
         r="3"
         fill={color}
       />
     </svg>
   );
-};
+});
 
-// Trend icon component
-const TrendIcon = ({ trend }) => {
+Sparkline.displayName = 'Sparkline';
+
+// Trend icon component - memoized to prevent unnecessary re-renders
+const TrendIcon = memo(({ trend }) => {
   if (trend === 'up') {
     return <TrendingUp className="w-3 h-3 text-green-400" />;
   } else if (trend === 'down') {
     return <TrendingDown className="w-3 h-3 text-red-400" />;
   }
   return <Minus className="w-3 h-3 text-cream-500/40" />;
-};
+});
+
+TrendIcon.displayName = 'TrendIcon';
 
 // Format rank ordinal (1st, 2nd, 3rd, etc.)
 const formatRankOrdinal = (rank) => {
