@@ -164,6 +164,15 @@ const Landing = () => {
             )}
             {/* Desktop links */}
             <div className="hidden lg:flex items-center">
+              <a
+                href="https://discord.gg/YvFRJ97A5H"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-[#5865F2] active:text-white transition-colors press-feedback flex items-center gap-1.5"
+              >
+                <MessageCircle className="w-4 h-4" />
+                Discord
+              </a>
               <Link to="/privacy" className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center">
                 Privacy
               </Link>
@@ -492,19 +501,9 @@ const Landing = () => {
       {/* GLOBAL FOOTER - Full width with centered content */}
       {/* ============================================================= */}
       <footer className="bg-[#1a1a1a] border-t border-[#333]">
-        <div className="max-w-7xl mx-auto flex items-center justify-center gap-4 py-2.5 px-4">
-          <a
-            href="https://discord.gg/YvFRJ97A5H"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-[#5865F2] transition-colors"
-          >
-            <MessageCircle className="w-3.5 h-3.5" />
-            <span>Discord</span>
-          </a>
-          <span className="text-gray-700">·</span>
-          <span className="text-xs text-gray-600">
-            © 2025 marching.art
+        <div className="max-w-7xl mx-auto flex items-center justify-center py-2.5 px-4">
+          <span className="text-xs text-gray-600 text-center">
+            © 2025 marching.art — Fantasy Sports for the Marching Arts
           </span>
         </div>
       </footer>
