@@ -500,6 +500,30 @@ async function startNewLiveSeason() {
     if (!profilesSnapshot.empty) {
       logger.info(`Resetting ${profilesSnapshot.size} user profiles from season ${oldSeasonUid}...`);
 
+      // Build class rankings from all profiles before archiving
+      const classRankings = {}; // Map<classKey, Array<{docId, totalSeasonScore}>>
+      for (const doc of profilesSnapshot.docs) {
+        const profileData = doc.data();
+        const corpsData = profileData.corps || {};
+        Object.keys(corpsData).forEach(corpsClass => {
+          const corps = corpsData[corpsClass];
+          if (corps.lineup || corps.totalSeasonScore > 0) {
+            if (!classRankings[corpsClass]) {
+              classRankings[corpsClass] = [];
+            }
+            classRankings[corpsClass].push({
+              docId: doc.id,
+              totalSeasonScore: corps.totalSeasonScore || 0
+            });
+          }
+        });
+      }
+      // Sort each class by score descending to determine rankings
+      Object.keys(classRankings).forEach(classKey => {
+        classRankings[classKey].sort((a, b) => b.totalSeasonScore - a.totalSeasonScore);
+      });
+      logger.info(`Computed rankings for ${Object.keys(classRankings).length} classes`);
+
       let batch = db.batch();
       let batchCount = 0;
 
@@ -529,6 +553,11 @@ async function startNewLiveSeason() {
             const showsAttended = Object.keys(corps.selectedShows || {}).length;
             const highestWeeklyScore = Math.max(...Object.values(corps.weeklyScores || {}), 0);
 
+            // Find placement for this corps in its class
+            const classRanking = classRankings[corpsClass] || [];
+            const rankIndex = classRanking.findIndex(r => r.docId === doc.id);
+            const placement = rankIndex >= 0 ? rankIndex + 1 : null;
+
             // Archive this season's performance
             seasonHistory.push({
               seasonId: oldSeasonUid,
@@ -542,6 +571,7 @@ async function startNewLiveSeason() {
               totalSeasonScore: corps.totalSeasonScore || 0,
               showsAttended,
               highestWeeklyScore,
+              placement,
               archivedAt: new Date()
             });
 
@@ -717,6 +747,30 @@ async function startNewOffSeason() {
     if (!profilesSnapshot.empty) {
       logger.info(`Resetting ${profilesSnapshot.size} user profiles from season ${oldSeasonUid}...`);
 
+      // Build class rankings from all profiles before archiving
+      const classRankings = {}; // Map<classKey, Array<{docId, totalSeasonScore}>>
+      for (const doc of profilesSnapshot.docs) {
+        const profileData = doc.data();
+        const corpsData = profileData.corps || {};
+        Object.keys(corpsData).forEach(corpsClass => {
+          const corps = corpsData[corpsClass];
+          if (corps.lineup || corps.totalSeasonScore > 0) {
+            if (!classRankings[corpsClass]) {
+              classRankings[corpsClass] = [];
+            }
+            classRankings[corpsClass].push({
+              docId: doc.id,
+              totalSeasonScore: corps.totalSeasonScore || 0
+            });
+          }
+        });
+      }
+      // Sort each class by score descending to determine rankings
+      Object.keys(classRankings).forEach(classKey => {
+        classRankings[classKey].sort((a, b) => b.totalSeasonScore - a.totalSeasonScore);
+      });
+      logger.info(`Computed rankings for ${Object.keys(classRankings).length} classes`);
+
       let batch = db.batch();
       let batchCount = 0;
 
@@ -746,6 +800,11 @@ async function startNewOffSeason() {
             const showsAttended = Object.keys(corps.selectedShows || {}).length;
             const highestWeeklyScore = Math.max(...Object.values(corps.weeklyScores || {}), 0);
 
+            // Find placement for this corps in its class
+            const classRanking = classRankings[corpsClass] || [];
+            const rankIndex = classRanking.findIndex(r => r.docId === doc.id);
+            const placement = rankIndex >= 0 ? rankIndex + 1 : null;
+
             // Archive this season's performance
             seasonHistory.push({
               seasonId: oldSeasonUid,
@@ -759,6 +818,7 @@ async function startNewOffSeason() {
               totalSeasonScore: corps.totalSeasonScore || 0,
               showsAttended,
               highestWeeklyScore,
+              placement,
               archivedAt: new Date()
             });
 
