@@ -686,8 +686,8 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
         </AnimatePresence>
       </div>
 
-      {/* FIXED BOTTOM: Smack Talk Input */}
-      <div className="flex-shrink-0 bg-[#1a1a1a] border-t border-[#333] px-4 py-3">
+      {/* FIXED BOTTOM: Smack Talk Input - pb-14 clears mobile nav */}
+      <div className="flex-shrink-0 bg-[#1a1a1a] border-t border-[#333] px-4 py-3 pb-14 md:pb-3 z-40">
         <SmackTalkInput leagueId={league.id} userProfile={userProfile} />
       </div>
 
