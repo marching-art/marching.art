@@ -195,14 +195,14 @@ const ShowCard = ({ show, userProfile, formattedDate, isPast, onRegister, isComp
       `}
     >
       {/* Card Header */}
-      <div className="px-3 py-2 border-b border-[#333]">
+      <div className="px-4 py-3 border-b border-[#333]">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <h3 className="text-sm font-bold text-white truncate leading-tight">
               {show.eventName}
             </h3>
             <div className="flex items-center gap-3 mt-1 text-[10px] text-gray-500">
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1 font-data">
                 <Calendar className="w-3 h-3 text-[#0057B8]" />
                 {formattedDate}
               </span>
@@ -217,24 +217,24 @@ const ShowCard = ({ show, userProfile, formattedDate, isPast, onRegister, isComp
 
           {/* Status Badge */}
           {isPast ? (
-            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#333] text-gray-400 rounded">
+            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#333] text-gray-400 rounded-sm">
               {isCompleted ? 'Scored' : 'Done'}
             </span>
           ) : isRegistered ? (
-            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-green-500/10 text-green-400 rounded flex items-center gap-1">
+            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-green-500/10 text-green-400 rounded-sm flex items-center gap-1">
               <Check className="w-3 h-3" />
               Going
             </span>
           ) : (
-            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] rounded">
+            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] rounded-sm">
               Register
             </span>
           )}
         </div>
       </div>
 
-      {/* Card Body */}
-      <div className="px-3 py-1.5 bg-[#111]">
+      {/* Card Footer */}
+      <div className="px-4 py-2 bg-[#111]">
         <div className="flex items-center justify-between">
           {/* Registration Badges */}
           <RegistrationBadges show={show} userProfile={userProfile} />
@@ -276,16 +276,16 @@ const DayIndicator = ({ date, dayNumber }) => {
   return (
     <div className={`
       flex-shrink-0 w-20 lg:w-24 flex flex-col items-center justify-center
-      py-3 px-2 rounded-lg border
+      py-3 px-2 rounded-sm border
       ${isPast
         ? 'bg-[#1a1a1a] border-[#333] text-gray-500'
         : 'bg-[#0057B8]/10 border-[#0057B8]/30'
       }
     `}>
-      <span className={`text-xs font-bold uppercase ${isPast ? 'text-gray-500' : 'text-[#0057B8]'}`}>
+      <span className={`text-[10px] font-bold uppercase ${isPast ? 'text-gray-500' : 'text-[#0057B8]'}`}>
         {dayOfWeek}
       </span>
-      <span className={`text-sm font-bold ${isPast ? 'text-gray-400' : 'text-white'}`}>
+      <span className={`text-sm font-bold font-data ${isPast ? 'text-gray-400' : 'text-white'}`}>
         {monthDay}
       </span>
     </div>
@@ -411,7 +411,7 @@ const ChampionshipEventCard = ({ event, userProfile, getActualDate, seasonUid })
       `}
     >
       {/* Card Header */}
-      <div className="px-3 py-2.5 border-b border-[#333]">
+      <div className="px-4 py-3 border-b border-[#333]">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-1">
@@ -420,8 +420,8 @@ const ChampionshipEventCard = ({ event, userProfile, getActualDate, seasonUid })
                 {event.eventName}
               </h3>
             </div>
-            <div className="flex items-center gap-3 mt-1 text-[11px] text-gray-500">
-              <span className="flex items-center gap-1">
+            <div className="flex items-center gap-3 mt-1 text-[10px] text-gray-500">
+              <span className="flex items-center gap-1 font-data">
                 <Calendar className="w-3 h-3 text-[#0057B8]" />
                 {formattedDate}
               </span>
@@ -429,30 +429,30 @@ const ChampionshipEventCard = ({ event, userProfile, getActualDate, seasonUid })
                 <MapPin className="w-3 h-3 text-purple-400" />
                 <span className="truncate">{event.location}</span>
               </span>
-              <span className="text-gray-600">Day {event.day}</span>
+              <span className="text-gray-600 font-data">Day {event.day}</span>
             </div>
           </div>
 
           {/* Auto-Enrolled Badge */}
           {hasEligibleCorps && !isPast ? (
-            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] rounded flex items-center gap-1">
+            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] rounded-sm flex items-center gap-1">
               <Check className="w-3 h-3" />
               Auto-Enrolled
             </span>
           ) : isPast ? (
-            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#333] text-gray-400 rounded">
+            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#333] text-gray-400 rounded-sm">
               Completed
             </span>
           ) : (
-            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#333] text-gray-500 rounded">
+            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#333] text-gray-500 rounded-sm">
               No Corps
             </span>
           )}
         </div>
       </div>
 
-      {/* Card Body */}
-      <div className="px-3 py-2 bg-[#111]">
+      {/* Card Footer */}
+      <div className="px-4 py-2 bg-[#111]">
         <div className="flex items-center justify-between">
           {/* Enrolled Corps Badges */}
           {hasEligibleCorps ? (
@@ -555,10 +555,10 @@ const ChampionshipWeekDisplay = ({ userProfile, getActualDate, seasonUid, regula
       )}
 
       {/* Championship Week Header */}
-      <div className="bg-gradient-to-r from-yellow-500/10 to-[#0057B8]/10 border border-yellow-500/20 rounded-sm p-3">
+      <div className="bg-gradient-to-r from-yellow-500/10 to-[#0057B8]/10 border border-yellow-500/20 rounded-sm px-4 py-3">
         <div className="flex items-center gap-2 mb-2">
           <Trophy className="w-5 h-5 text-yellow-500" />
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+          <h3 className="text-[10px] font-bold text-white uppercase tracking-wider">
             Championship Week
           </h3>
         </div>
