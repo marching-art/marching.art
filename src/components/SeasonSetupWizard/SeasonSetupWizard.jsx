@@ -16,6 +16,7 @@ import { useScheduleStore } from '../../store/scheduleStore';
 
 // Import constants
 import { ALL_CLASSES, POINT_LIMITS, getCorpsClassName, formatSeasonName } from './constants';
+import { sortCorpsEntriesByClass } from '../../utils/corps';
 
 // =============================================================================
 // CLASS SELECTION TABLE DATA
@@ -369,10 +370,10 @@ const SeasonSetupWizard = ({
                   Welcome back! Review your corps from last season and decide how to proceed.
                 </p>
 
-                {/* Existing Corps */}
-                {Object.entries(existingCorps)
-                  .filter(([_, corps]) => corps?.corpsName)
-                  .map(([classId, corps]) => {
+                {/* Existing Corps - sorted by class order (World → Open → A → SoundSport) */}
+                {sortCorpsEntriesByClass(
+                  Object.entries(existingCorps).filter(([_, corps]) => corps?.corpsName)
+                ).map(([classId, corps]) => {
                     const decision = corpsDecisions[classId] || 'continue';
                     const classRetired = retiredByClass[classId] || [];
 

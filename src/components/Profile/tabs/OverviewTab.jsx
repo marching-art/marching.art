@@ -2,6 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Users, Target, Zap, CheckCircle } from 'lucide-react';
+import { compareCorpsClasses } from '../../../utils/corps';
 
 const OverviewTab = ({ profile, milestones }) => {
   return (
@@ -21,10 +22,7 @@ const OverviewTab = ({ profile, milestones }) => {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {Object.entries(profile.corps)
-              .sort((a, b) => {
-                const classOrder = { worldClass: 0, openClass: 1, aClass: 2, soundSport: 3 };
-                return (classOrder[a[0]] ?? 99) - (classOrder[b[0]] ?? 99);
-              })
+              .sort((a, b) => compareCorpsClasses(a[0], b[0]))
               .map(([classKey, corps]) => (
               <div key={classKey} className="bg-black/30 border border-white/5 rounded-xl p-4 hover:border-yellow-500/30 hover:shadow-[0_0_15px_rgba(234,179,8,0.1)] transition-all">
                 <div className="flex items-start justify-between mb-2">
