@@ -20,7 +20,7 @@ const CompleteStep = ({
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-        className="w-16 h-16 md:w-24 md:h-24 mx-auto mb-4 md:mb-6 bg-gradient-to-br from-gold-500 to-yellow-400 rounded-full flex items-center justify-center"
+        className="w-16 h-16 md:w-24 md:h-24 mx-auto mb-4 md:mb-6 bg-gradient-to-br from-gold-500 to-yellow-400 rounded-sm flex items-center justify-center"
       >
         <PartyPopper className="w-8 h-8 md:w-12 md:h-12 text-charcoal-900" />
       </motion.div>
@@ -49,11 +49,11 @@ const CompleteStep = ({
         transition={{ delay: 0.5 }}
         className="grid grid-cols-2 gap-3 md:gap-4 mb-6 md:mb-8"
       >
-        <div className="glass rounded-xl p-3 md:p-4">
+        <div className="glass rounded-sm p-3 md:p-4">
           <div className="text-xl md:text-3xl font-bold text-gold-500 mb-1">{totalCorps}</div>
           <div className="text-xs md:text-base text-cream-500/60">Corps Ready</div>
         </div>
-        <div className="glass rounded-xl p-3 md:p-4">
+        <div className="glass rounded-sm p-3 md:p-4">
           <div className="text-xl md:text-3xl font-bold text-blue-500 mb-1">Week {currentWeek}</div>
           <div className="text-xs md:text-base text-cream-500/60">Shows Selected</div>
         </div>
@@ -63,7 +63,7 @@ const CompleteStep = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6 }}
-        className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 md:p-4 mb-6 md:mb-8"
+        className="bg-blue-500/10 border border-blue-500/20 rounded-sm p-3 md:p-4 mb-6 md:mb-8"
       >
         <Info className="w-4 h-4 md:w-5 md:h-5 text-blue-400 mx-auto mb-2" />
         <p className="text-xs md:text-sm text-cream-300">

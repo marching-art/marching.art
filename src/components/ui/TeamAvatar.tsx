@@ -39,7 +39,7 @@ export const TeamAvatar: React.FC<TeamAvatarProps> = ({
   if (logoUrl) {
     return (
       <div
-        className={`${sizeClass} rounded-full overflow-hidden bg-[#333] flex-shrink-0 ${className}`}
+        className={`${sizeClass} rounded-sm overflow-hidden bg-[#333] flex-shrink-0 ${className}`}
       >
         <img
           src={logoUrl}
@@ -55,7 +55,7 @@ export const TeamAvatar: React.FC<TeamAvatarProps> = ({
     <div
       className={`
         ${sizeClass}
-        rounded-full flex-shrink-0
+        rounded-sm flex-shrink-0
         bg-gradient-to-br from-yellow-500/30 to-yellow-600/20
         border border-yellow-500/40
         flex items-center justify-center

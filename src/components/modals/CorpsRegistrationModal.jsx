@@ -131,7 +131,7 @@ const CorpsRegistrationModal = ({ onClose, onSubmit, unlockedClasses = ['soundSp
                         `}
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                          <div className={`w-4 h-4 rounded-sm border-2 flex items-center justify-center ${
                             isSelected ? 'border-[#0057B8] bg-[#0057B8]' : 'border-[#444]'
                           }`}>
                             {isSelected && <Check className="w-2.5 h-2.5 text-white" />}

@@ -41,11 +41,11 @@ const WeekTabs = ({
         {/* Timeline */}
         <div className="relative">
           {/* Background Track */}
-          <div className="absolute top-1/2 left-0 right-0 h-1 bg-charcoal-800 rounded-full -translate-y-1/2" />
+          <div className="absolute top-1/2 left-0 right-0 h-1 bg-charcoal-800 rounded-sm -translate-y-1/2" />
 
           {/* Progress Track */}
           <div
-            className="absolute top-1/2 left-0 h-1 bg-gradient-to-r from-gold-500 to-gold-400 rounded-full -translate-y-1/2 transition-all duration-500"
+            className="absolute top-1/2 left-0 h-1 bg-gradient-to-r from-gold-500 to-gold-400 rounded-sm -translate-y-1/2 transition-all duration-500"
             style={{ width: `${((currentWeek - 0.5) / 7) * 100}%` }}
           />
 
@@ -66,8 +66,8 @@ const WeekTabs = ({
                   {/* Pulsating Glow Ring (Active Week Only) */}
                   {status === 'active' && (
                     <>
-                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-gold-500/20 animate-ping" style={{ animationDuration: '2s' }} />
-                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-gold-500/10 animate-pulse" style={{ animationDuration: '1.5s' }} />
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-sm bg-gold-500/20 animate-ping" style={{ animationDuration: '2s' }} />
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-sm bg-gold-500/10 animate-pulse" style={{ animationDuration: '1.5s' }} />
                     </>
                   )}
 
@@ -127,7 +127,7 @@ const WeekTabs = ({
 
                   {/* Registration Badge */}
                   {regCount > 0 && (
-                    <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-gold-500 text-charcoal-950 text-[10px] font-bold flex items-center justify-center shadow-[0_0_10px_rgba(234,179,8,0.5)]">
+                    <div className="absolute -top-1 -right-1 w-5 h-5 rounded-sm bg-gold-500 text-charcoal-950 text-[10px] font-bold flex items-center justify-center shadow-[0_0_10px_rgba(234,179,8,0.5)]">
                       {regCount}
                     </div>
                   )}

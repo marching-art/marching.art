@@ -25,7 +25,7 @@ const HistoryTab = ({ profile, seasonHistory }) => {
       className="space-y-6"
     >
       {/* Season History Timeline */}
-      <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-6">
+      <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-sm p-6">
         <h2 className="text-xl font-display font-bold text-yellow-50 mb-4 flex items-center gap-2">
           <History className="w-6 h-6 text-purple-400 drop-shadow-[0_0_6px_rgba(168,85,247,0.5)]" />
           Season History
@@ -41,7 +41,7 @@ const HistoryTab = ({ profile, seasonHistory }) => {
                 className="flex items-start gap-4"
               >
                 <div className="flex flex-col items-center">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                  <div className={`w-10 h-10 rounded-sm flex items-center justify-center ${
                     season.placement === 1 ? 'bg-yellow-500/20 text-yellow-400' :
                     season.placement <= 3 ? 'bg-blue-500/20 text-blue-400' :
                     'bg-black/40 text-yellow-50/60'
@@ -53,7 +53,7 @@ const HistoryTab = ({ profile, seasonHistory }) => {
                     <div className="w-0.5 h-12 bg-white/10 mt-2" />
                   )}
                 </div>
-                <div className="flex-1 bg-black/30 border border-white/5 rounded-xl p-4 hover:border-yellow-500/20 transition-all">
+                <div className="flex-1 bg-black/30 border border-white/5 rounded-sm p-4 hover:border-yellow-500/20 transition-all">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="font-display font-semibold text-yellow-50">{season.corpsName || 'Corps'}</p>
@@ -85,7 +85,7 @@ const HistoryTab = ({ profile, seasonHistory }) => {
 
       {/* Retired Corps Hall of Fame */}
       {profile.retiredCorps && profile.retiredCorps.length > 0 && (
-        <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-6">
+        <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-sm p-6">
           <h2 className="text-xl font-display font-bold text-yellow-50 mb-4 flex items-center gap-2">
             <Medal className="w-6 h-6 text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]" />
             Hall of Fame - Retired Corps
@@ -97,7 +97,7 @@ const HistoryTab = ({ profile, seasonHistory }) => {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: idx * 0.1 }}
-                className="bg-black/30 border border-yellow-500/20 rounded-xl p-4 shadow-[0_0_15px_rgba(234,179,8,0.1)]"
+                className="bg-black/30 border border-yellow-500/20 rounded-sm p-4 shadow-[0_0_15px_rgba(234,179,8,0.1)]"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div>
@@ -135,7 +135,7 @@ const HistoryTab = ({ profile, seasonHistory }) => {
       )}
 
       {/* Class Progression */}
-      <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-6">
+      <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-sm p-6">
         <h2 className="text-xl font-display font-bold text-yellow-50 mb-4 flex items-center gap-2">
           <TrendingUp className="w-6 h-6 text-green-400 drop-shadow-[0_0_6px_rgba(74,222,128,0.5)]" />
           Class Progression
@@ -148,14 +148,14 @@ const HistoryTab = ({ profile, seasonHistory }) => {
             return (
               <div
                 key={classKey}
-                className={`flex items-center justify-between p-4 rounded-xl transition-all ${
+                className={`flex items-center justify-between p-4 rounded-sm transition-all ${
                   isUnlocked
                     ? `bg-black/30 border ${colors.border} shadow-[0_0_15px_rgba(234,179,8,0.05)]`
                     : 'bg-black/20 border border-white/5'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                  <div className={`w-10 h-10 rounded-sm flex items-center justify-center ${
                     isUnlocked ? `${colors.bg} ${colors.text}` : 'bg-black/40 text-yellow-50/30'
                   }`}>
                     {isUnlocked ? <CheckCircle className={`w-5 h-5 ${colors.glow}`} /> : <Lock className="w-5 h-5" />}
@@ -170,7 +170,7 @@ const HistoryTab = ({ profile, seasonHistory }) => {
                   </div>
                 </div>
                 {isUnlocked && (
-                  <span className={`text-xs ${colors.bg} ${colors.text} px-2 py-1 rounded-lg font-display font-medium ${colors.glow}`}>
+                  <span className={`text-xs ${colors.bg} ${colors.text} px-2 py-1 rounded-sm font-display font-medium ${colors.glow}`}>
                     Unlocked
                   </span>
                 )}

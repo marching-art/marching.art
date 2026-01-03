@@ -588,7 +588,7 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
                 <Icon className="w-4 h-4" />
                 <span className="hidden sm:inline">{tab.label}</span>
                 {tab.badge && !isActive && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                  <span className="w-1.5 h-1.5 rounded-sm bg-purple-500" />
                 )}
               </button>
             );

@@ -117,7 +117,7 @@ const MobileNav: React.FC<MobileNavProps> = ({ isOpen, setIsOpen }) => {
         <div className="flex items-center justify-between h-full px-4">
           {/* Logo */}
           <Link to="/dashboard" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg overflow-hidden">
+            <div className="w-8 h-8 rounded-sm overflow-hidden">
               <img src="/logo192.svg" alt="marching.art" className="w-full h-full object-cover" />
             </div>
             <h1 className="text-lg font-display font-bold">
@@ -129,7 +129,7 @@ const MobileNav: React.FC<MobileNavProps> = ({ isOpen, setIsOpen }) => {
           {/* Menu Toggle */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+            className="p-2 rounded-sm hover:bg-white/10 transition-colors"
             aria-label="Toggle menu"
           >
             {isOpen ? (
@@ -174,7 +174,7 @@ const MobileNav: React.FC<MobileNavProps> = ({ isOpen, setIsOpen }) => {
                     <h2 className="text-xl font-display font-bold text-yellow-50">Menu</h2>
                     <button
                       onClick={() => setIsOpen(false)}
-                      className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                      className="p-2 rounded-sm hover:bg-white/10 transition-colors"
                     >
                       <X className="w-5 h-5 text-yellow-50/80" />
                     </button>
@@ -186,7 +186,7 @@ const MobileNav: React.FC<MobileNavProps> = ({ isOpen, setIsOpen }) => {
                   <div className="p-4 border-b border-white/10">
                     <div className="flex items-center gap-3">
                       <div className="relative">
-                        <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-xl flex items-center justify-center">
+                        <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-sm flex items-center justify-center">
                           <User className="w-6 h-6 text-slate-900" />
                         </div>
                         {(profile.xpLevel ?? 0) >= 10 && (
@@ -278,7 +278,7 @@ const MobileNav: React.FC<MobileNavProps> = ({ isOpen, setIsOpen }) => {
                   {user ? (
                     <button
                       onClick={signOut}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/15 transition-all"
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-sm bg-red-500/10 text-red-400 hover:bg-red-500/15 transition-all"
                     >
                       <LogOut className="w-5 h-5" />
                       <span className="font-medium">Sign Out</span>
@@ -287,13 +287,13 @@ const MobileNav: React.FC<MobileNavProps> = ({ isOpen, setIsOpen }) => {
                     <div className="space-y-3">
                       <Link
                         to="/login"
-                        className="block w-full text-center px-4 py-3 rounded-xl bg-yellow-500 text-slate-900 font-semibold hover:bg-yellow-400 transition-all"
+                        className="block w-full text-center px-4 py-3 rounded-sm bg-yellow-500 text-slate-900 font-semibold hover:bg-yellow-400 transition-all"
                       >
                         Sign In
                       </Link>
                       <Link
                         to="/register"
-                        className="block w-full text-center px-4 py-3 rounded-xl border border-yellow-500 text-yellow-500 font-semibold hover:bg-yellow-500/10 transition-all"
+                        className="block w-full text-center px-4 py-3 rounded-sm border border-yellow-500 text-yellow-500 font-semibold hover:bg-yellow-500/10 transition-all"
                       >
                         Register
                       </Link>

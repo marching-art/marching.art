@@ -139,7 +139,7 @@ const LeagueHubCard = ({ league, userProfile, onClick, isMember }) => {
               <span>{memberCount} members</span>
               {hasActivity && (
                 <span className="flex items-center gap-1 text-green-400">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                  <span className="w-1.5 h-1.5 rounded-sm bg-green-400 animate-pulse" />
                   Active
                 </span>
               )}
@@ -151,7 +151,7 @@ const LeagueHubCard = ({ league, userProfile, onClick, isMember }) => {
 
       {/* Stats Row - Your Record & Rank */}
       {stats && (
-        <div className="flex items-center gap-4 mb-4 p-3 bg-black/20 rounded-lg">
+        <div className="flex items-center gap-4 mb-4 p-3 bg-black/20 rounded-sm">
           {/* Rank */}
           <div className="flex items-center gap-2">
             {stats.rank <= 3 ? (
@@ -205,7 +205,7 @@ const LeagueHubCard = ({ league, userProfile, onClick, isMember }) => {
       )}
 
       {/* This Week Matchup Preview */}
-      <div className="mb-4 p-3 bg-black/20 rounded-lg border border-cream-500/5">
+      <div className="mb-4 p-3 bg-black/20 rounded-sm border border-cream-500/5">
         <div className="flex items-center gap-2 mb-2">
           <Swords className="w-4 h-4 text-purple-400" />
           <span className="text-xs font-display font-semibold text-cream-400 uppercase tracking-wide">
@@ -214,7 +214,7 @@ const LeagueHubCard = ({ league, userProfile, onClick, isMember }) => {
         </div>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-charcoal-800 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-sm bg-charcoal-800 flex items-center justify-center">
               <span className="text-xs font-bold text-cream-100">
                 {userProfile?.displayName?.charAt(0) || 'Y'}
               </span>
@@ -226,7 +226,7 @@ const LeagueHubCard = ({ league, userProfile, onClick, isMember }) => {
             <span className="text-sm font-display text-cream-100">
               {memberCount > 1 ? `Opponent ${Math.floor(Math.random() * memberCount) + 1}` : 'TBD'}
             </span>
-            <div className="w-8 h-8 rounded-full bg-charcoal-800 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-sm bg-charcoal-800 flex items-center justify-center">
               <span className="text-xs font-bold text-cream-500/60">?</span>
             </div>
           </div>
@@ -287,12 +287,12 @@ const LeagueHubCard = ({ league, userProfile, onClick, isMember }) => {
 const QuickActionButton = ({ icon: Icon, label, hasNotification, onClick }) => (
   <button
     onClick={onClick}
-    className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-charcoal-800/50 border border-cream-500/10 text-cream-400 hover:bg-charcoal-800 hover:border-cream-500/30 hover:text-cream-100 transition-all text-xs font-display font-semibold uppercase tracking-wide relative"
+    className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-sm bg-charcoal-800/50 border border-cream-500/10 text-cream-400 hover:bg-charcoal-800 hover:border-cream-500/30 hover:text-cream-100 transition-all text-xs font-display font-semibold uppercase tracking-wide relative"
   >
     <Icon className="w-3.5 h-3.5" />
     <span className="hidden sm:inline">{label}</span>
     {hasNotification && (
-      <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+      <span className="absolute -top-1 -right-1 w-2 h-2 rounded-sm bg-purple-500 animate-pulse" />
     )}
   </button>
 );

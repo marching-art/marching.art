@@ -304,7 +304,7 @@ const CaptionButton = ({ caption, selected, isActive, onClick, categoryColor }) 
       }`}
     >
       <div className="flex items-center gap-2 min-w-0">
-        <div className={`w-1.5 h-4 rounded-full ${categoryColor}`} />
+        <div className={`w-1.5 h-4 rounded-sm ${categoryColor}`} />
         <div className="text-left min-w-0">
           <div className="text-xs font-bold text-white">{caption.id}</div>
           <div className="text-[10px] text-gray-500 truncate">{caption.name}</div>
@@ -840,7 +840,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
           <div className="flex-1 flex flex-col overflow-hidden min-h-0">
             {loading ? (
               <div className="text-center py-12">
-                <div className="w-8 h-8 border-2 border-[#0057B8] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                <div className="w-8 h-8 border-2 border-[#0057B8] border-t-transparent rounded-sm animate-spin mx-auto mb-3" />
                 <p className="text-xs text-gray-500 uppercase tracking-wider">Loading corps...</p>
               </div>
             ) : (
@@ -904,7 +904,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
                       <div className="px-4 py-3 bg-[#222] border-b border-[#333] flex-shrink-0">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <div className={`w-1.5 h-6 rounded-full ${categoryColors[activeCaptionData.category]}`} />
+                            <div className={`w-1.5 h-6 rounded-sm ${categoryColors[activeCaptionData.category]}`} />
                             <div>
                               <h3 className="text-sm font-bold text-white">{activeCaptionData.name}</h3>
                               <p className="text-[10px] text-gray-500">{activeCaptionData.category}</p>
@@ -973,7 +973,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
             >
               {saving ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-sm animate-spin" />
                   Saving...
                 </>
               ) : (

@@ -115,7 +115,7 @@ const HistoryTab = ({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass rounded-xl p-8 text-center"
+        className="glass rounded-sm p-8 text-center"
       >
         <p className="text-cream-500/60">Loading history...</p>
       </motion.div>
@@ -130,7 +130,7 @@ const HistoryTab = ({
       className="space-y-4"
     >
       {/* Summary Card */}
-      <div className="glass rounded-xl p-4">
+      <div className="glass rounded-sm p-4">
         <h3 className="font-display font-bold text-cream-100 flex items-center gap-2 mb-4">
           <History className="w-5 h-5 text-gold-500" />
           Season History
@@ -138,7 +138,7 @@ const HistoryTab = ({
 
         {/* Your Season Record */}
         {userProfile && (
-          <div className="flex items-center gap-4 p-3 bg-charcoal-900/30 rounded-lg">
+          <div className="flex items-center gap-4 p-3 bg-charcoal-900/30 rounded-sm">
             <div className="flex-1">
               <p className="text-xs text-cream-500/60 mb-1">Your Season</p>
               <div className="flex items-center gap-2">
@@ -148,7 +148,7 @@ const HistoryTab = ({
                     <div
                       key={week}
                       title={`Week ${week}`}
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                      className={`w-6 h-6 rounded-sm flex items-center justify-center text-xs font-bold ${
                         result === 'win'
                           ? 'bg-green-500/20 text-green-400'
                           : result === 'loss'
@@ -185,7 +185,7 @@ const HistoryTab = ({
 
       {/* Week by Week Results */}
       {completedWeeks.length === 0 ? (
-        <div className="glass rounded-xl p-8 text-center">
+        <div className="glass rounded-sm p-8 text-center">
           <Calendar className="w-12 h-12 text-cream-500/20 mx-auto mb-3" />
           <p className="text-cream-500/60 font-display">No completed weeks yet</p>
           <p className="text-xs text-cream-500/40 mt-1">
@@ -202,7 +202,7 @@ const HistoryTab = ({
             return (
               <motion.div
                 key={weekNum}
-                className="glass rounded-xl overflow-hidden"
+                className="glass rounded-sm overflow-hidden"
               >
                 {/* Week Header */}
                 <button
@@ -210,7 +210,7 @@ const HistoryTab = ({
                   className="w-full p-4 flex items-center justify-between hover:bg-cream-500/5 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-charcoal-800 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-sm bg-charcoal-800 flex items-center justify-center">
                       <span className="font-display font-bold text-cream-100">{weekNum}</span>
                     </div>
                     <div className="text-left">
@@ -226,7 +226,7 @@ const HistoryTab = ({
                   <div className="flex items-center gap-3">
                     {/* User's result badge */}
                     {userResult && userResult !== 'pending' && (
-                      <div className={`px-3 py-1 rounded-full text-xs font-display font-bold ${
+                      <div className={`px-3 py-1 rounded-sm text-xs font-display font-bold ${
                         userResult === 'win'
                           ? 'bg-green-500/20 text-green-400'
                           : userResult === 'loss'
@@ -268,7 +268,7 @@ const HistoryTab = ({
                           <div className="flex items-center justify-between">
                             {/* User 1 */}
                             <div className="flex items-center gap-2 flex-1">
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                              <div className={`w-8 h-8 rounded-sm flex items-center justify-center ${
                                 result !== 'pending' && result !== 'tie' && result.winner === matchup.user1
                                   ? 'bg-green-500/20 border border-green-500/50'
                                   : 'bg-charcoal-800'
@@ -312,7 +312,7 @@ const HistoryTab = ({
                                   {weekResults[weekNum]?.[matchup.user2]?.toFixed(1) || '0.0'} pts
                                 </p>
                               </div>
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                              <div className={`w-8 h-8 rounded-sm flex items-center justify-center ${
                                 result !== 'pending' && result !== 'tie' && result.winner === matchup.user2
                                   ? 'bg-green-500/20 border border-green-500/50'
                                   : 'bg-charcoal-800'

@@ -88,7 +88,7 @@ const CaptionCard = ({ caption, score, previousScore, categoryColor }) => {
   };
 
   return (
-    <div className={`p-3 rounded-lg border transition-all ${colorClasses[categoryColor]}`}>
+    <div className={`p-3 rounded-sm border transition-all ${colorClasses[categoryColor]}`}>
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <Check className={`w-4 h-4 flex-shrink-0 ${textColorClasses[categoryColor]}`} />
@@ -126,7 +126,7 @@ const CategorySubtotal = ({ category, total, previousTotal, maxScore }) => {
   };
 
   return (
-    <div className={`mt-2 p-2 rounded-lg border ${bgClasses[color]} flex items-center justify-between`}>
+    <div className={`mt-2 p-2 rounded-sm border ${bgClasses[color]} flex items-center justify-between`}>
       <span className="text-xs text-cream-500/60 uppercase tracking-wide">Subtotal</span>
       <div className="flex items-center gap-2">
         <span className={`font-bold text-sm tabular-nums ${textClasses[color]}`}>
@@ -212,13 +212,13 @@ const ScoreBreakdown = ({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed inset-x-4 top-[5%] md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg bg-charcoal-950 border border-cream-500/10 rounded-xl z-50 max-h-[90vh] overflow-hidden flex flex-col"
+            className="fixed inset-x-4 top-[5%] md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg bg-charcoal-950 border border-cream-500/10 rounded-sm z-50 max-h-[90vh] overflow-hidden flex flex-col"
           >
             {/* Header */}
             <div className="flex-shrink-0 p-4 border-b border-cream-500/10 bg-charcoal-900/50">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-gold-500/20 border border-gold-500/30 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-sm bg-gold-500/20 border border-gold-500/30 flex items-center justify-center">
                     <Trophy className="w-5 h-5 text-gold-400" />
                   </div>
                   <div>
@@ -234,7 +234,7 @@ const ScoreBreakdown = ({
                 </div>
                 <button
                   onClick={onClose}
-                  className="p-2 rounded-lg hover:bg-charcoal-800 transition-colors text-cream-500/60 hover:text-cream-100"
+                  className="p-2 rounded-sm hover:bg-charcoal-800 transition-colors text-cream-500/60 hover:text-cream-100"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -265,7 +265,7 @@ const ScoreBreakdown = ({
               )}
 
               {/* Total Score Card */}
-              <div className="bg-gradient-to-br from-gold-500/10 to-gold-500/5 border border-gold-500/20 rounded-xl p-4">
+              <div className="bg-gradient-to-br from-gold-500/10 to-gold-500/5 border border-gold-500/20 rounded-sm p-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-cream-500/60 uppercase tracking-wide">Total Score</span>
                   {score?.rank && (
@@ -335,7 +335,7 @@ const ScoreBreakdown = ({
 
               {/* Previous show comparison */}
               {previousShowInfo && (
-                <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-lg p-3 mt-4">
+                <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-sm p-3 mt-4">
                   <p className="text-xs text-cream-500/40 mb-1">
                     Compared to previous: <span className="text-cream-500/60">{previousShowInfo.eventName || 'Previous Show'}</span>
                   </p>
@@ -352,7 +352,7 @@ const ScoreBreakdown = ({
             <div className="flex-shrink-0 p-4 border-t border-cream-500/10 bg-charcoal-950">
               <button
                 onClick={onClose}
-                className="w-full py-2.5 bg-charcoal-800 hover:bg-charcoal-700 border border-cream-500/10 rounded-lg text-cream-300 font-medium text-sm transition-colors"
+                className="w-full py-2.5 bg-charcoal-800 hover:bg-charcoal-700 border border-cream-500/10 rounded-sm text-cream-300 font-medium text-sm transition-colors"
               >
                 Close
               </button>

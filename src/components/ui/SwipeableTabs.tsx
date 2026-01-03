@@ -208,7 +208,7 @@ export const TabBar: React.FC<TabBarProps> = ({
 
   if (variant === 'pills') {
     return (
-      <div className={`flex gap-2 p-2 bg-[#1a1a1a] rounded-lg ${className}`}>
+      <div className={`flex gap-2 p-2 bg-[#1a1a1a] rounded-sm ${className}`}>
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = tab.id === activeTab;

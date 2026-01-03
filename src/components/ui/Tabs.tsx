@@ -74,7 +74,7 @@ export const TabsList: React.FC<TabsListProps> = ({ children, className = '' }) 
     <div
       role="tablist"
       className={`
-        flex gap-1 p-1 rounded-xl bg-black/30 border border-white/10
+        flex gap-1 p-1 rounded-sm bg-black/30 border border-white/10
         overflow-x-auto scrollbar-hide
         ${className}
       `}
@@ -117,7 +117,7 @@ export const TabTrigger: React.FC<TabTriggerProps> = ({
       onClick={() => !disabled && setActiveTab(value)}
       className={`
         relative flex items-center gap-2 px-4 py-2.5
-        text-sm font-medium rounded-lg
+        text-sm font-medium rounded-sm
         transition-all duration-300
         focus:outline-none focus:ring-2 focus:ring-gold-500/30
         disabled:opacity-50 disabled:cursor-not-allowed
@@ -131,7 +131,7 @@ export const TabTrigger: React.FC<TabTriggerProps> = ({
       {isActive && (
         <motion.div
           layoutId="activeTab"
-          className="absolute inset-0 bg-gold-500 rounded-lg shadow-[0_0_15px_rgba(234,179,8,0.3)]"
+          className="absolute inset-0 bg-gold-500 rounded-sm shadow-[0_0_15px_rgba(234,179,8,0.3)]"
           initial={false}
           transition={{ type: 'spring', duration: 0.4, bounce: 0.2 }}
         />

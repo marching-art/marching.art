@@ -96,9 +96,9 @@ describe('Badge', () => {
   });
 
   describe('base styling', () => {
-    it('has rounded-full class', () => {
+    it('has rounded-sm class', () => {
       render(<Badge>Badge</Badge>);
-      expect(screen.getByText('Badge')).toHaveClass('rounded-full');
+      expect(screen.getByText('Badge')).toHaveClass('rounded-sm');
     });
 
     it('has border class', () => {

@@ -603,7 +603,7 @@ const SeasonSetupWizard = ({
                 >
                   {processing ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-sm animate-spin mr-2" />
                       Processing...
                     </>
                   ) : (
@@ -713,7 +713,7 @@ const SeasonSetupWizard = ({
                           `}
                         >
                           <td className="px-4 py-2">
-                            <div className={`w-4 h-4 rounded-full border-2 ${
+                            <div className={`w-4 h-4 rounded-sm border-2 ${
                               isSelected ? 'border-[#0057B8] bg-[#0057B8]' : 'border-[#444]'
                             }`}>
                               {isSelected && <Check className="w-3 h-3 text-white" />}
@@ -835,7 +835,7 @@ const SeasonSetupWizard = ({
                 >
                   {processing ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-sm animate-spin mr-2" />
                       Processing...
                     </>
                   ) : (

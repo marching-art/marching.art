@@ -70,7 +70,7 @@ const LatestScoresTab = ({
             <button
               onClick={goToPreviousDay}
               disabled={!canGoBack}
-              className={`p-2 rounded-lg transition-all ${
+              className={`p-2 rounded-sm transition-all ${
                 canGoBack
                   ? 'text-slate-600 dark:text-cream-300 hover:text-slate-900 dark:hover:text-cream-100 hover:bg-stone-100 dark:hover:bg-charcoal-800/50'
                   : 'text-slate-300 dark:text-cream-500/30 cursor-not-allowed'
@@ -89,7 +89,7 @@ const LatestScoresTab = ({
             <button
               onClick={goToNextDay}
               disabled={!canGoForward}
-              className={`p-2 rounded-lg transition-all ${
+              className={`p-2 rounded-sm transition-all ${
                 canGoForward
                   ? 'text-slate-600 dark:text-cream-300 hover:text-slate-900 dark:hover:text-cream-100 hover:bg-stone-100 dark:hover:bg-charcoal-800/50'
                   : 'text-slate-300 dark:text-cream-500/30 cursor-not-allowed'
@@ -105,7 +105,7 @@ const LatestScoresTab = ({
       {hasShows ? (
         <div className="space-y-4">
           {dayShows.map((show, idx) => (
-            <div key={`day-${selectedDay}-${idx}`} className="border-2 border-charcoal-900 dark:border-charcoal-700 rounded-lg overflow-hidden shadow-sm">
+            <div key={`day-${selectedDay}-${idx}`} className="border-2 border-charcoal-900 dark:border-charcoal-700 rounded-sm overflow-hidden shadow-sm">
               <ShowCard show={show} onClick={() => setSelectedShow(show)} userCorpsNames={userCorpsNames} />
             </div>
           ))}

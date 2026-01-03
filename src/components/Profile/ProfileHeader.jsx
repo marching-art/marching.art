@@ -94,7 +94,7 @@ const ProfileHeader = ({
             highestClass.color === 'gold' ? 'bg-gold-500' :
             highestClass.color === 'purple' ? 'bg-purple-500' :
             highestClass.color === 'blue' ? 'bg-blue-500' : 'bg-green-500'
-          } text-white text-xs font-bold px-2 py-1 rounded-full shadow`}>
+          } text-white text-xs font-bold px-2 py-1 rounded-sm shadow`}>
             {highestClass.abbrev}
           </div>
         </div>
@@ -110,7 +110,7 @@ const ProfileHeader = ({
                 {isOwnProfile && (
                   <button
                     onClick={handleEdit}
-                    className="p-2 text-slate-400 dark:text-cream-300 hover:text-amber-600 dark:hover:text-gold-400 hover:bg-stone-100 dark:hover:bg-charcoal-700 rounded-lg transition-colors"
+                    className="p-2 text-slate-400 dark:text-cream-300 hover:text-amber-600 dark:hover:text-gold-400 hover:bg-stone-100 dark:hover:bg-charcoal-700 rounded-sm transition-colors"
                   >
                     <Edit className="w-5 h-5" />
                   </button>
@@ -146,7 +146,7 @@ const ProfileHeader = ({
                       {nextClassProgress.currentXP.toLocaleString()} / {nextClassProgress.requiredXP.toLocaleString()} XP
                     </span>
                   </div>
-                  <div className="w-full bg-stone-200 dark:bg-charcoal-700 rounded-full h-2">
+                  <div className="w-full bg-stone-200 dark:bg-charcoal-700 rounded-sm h-2">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${nextClassProgress.xpProgress}%` }}
@@ -154,12 +154,12 @@ const ProfileHeader = ({
                         nextClassProgress.color === 'gold' ? 'bg-gradient-to-r from-gold-500 to-gold-400' :
                         nextClassProgress.color === 'purple' ? 'bg-gradient-to-r from-purple-500 to-purple-400' :
                         'bg-gradient-to-r from-blue-500 to-blue-400'
-                      } h-2 rounded-full`}
+                      } h-2 rounded-sm`}
                     />
                   </div>
                 </div>
               ) : (
-                <div className="mt-4 px-3 py-2 bg-gold-500/10 border border-gold-500/20 rounded-lg">
+                <div className="mt-4 px-3 py-2 bg-gold-500/10 border border-gold-500/20 rounded-sm">
                   <span className="text-sm font-semibold text-gold-500 dark:text-gold-400">
                     🏆 All Classes Unlocked!
                   </span>
@@ -227,7 +227,7 @@ const ProfileHeader = ({
                 >
                   {saving ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-charcoal-900 border-t-transparent rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-charcoal-900 border-t-transparent rounded-sm animate-spin" />
                       Saving...
                     </>
                   ) : (
@@ -256,9 +256,9 @@ const ProfileHeader = ({
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (
-            <div key={stat.label} className="bg-cream-50 dark:bg-charcoal-800/50 border border-cream-200 dark:border-charcoal-700 rounded-lg p-4">
+            <div key={stat.label} className="bg-cream-50 dark:bg-charcoal-800/50 border border-cream-200 dark:border-charcoal-700 rounded-sm p-4">
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorClasses[stat.color]}`}>
+                <div className={`w-10 h-10 rounded-sm flex items-center justify-center ${colorClasses[stat.color]}`}>
                   <Icon className="w-5 h-5" />
                 </div>
                 <div>
@@ -270,9 +270,9 @@ const ProfileHeader = ({
           );
         })}
         {/* Streak Display */}
-        <div className="bg-cream-50 dark:bg-charcoal-800/50 border border-cream-200 dark:border-charcoal-700 rounded-lg p-4">
+        <div className="bg-cream-50 dark:bg-charcoal-800/50 border border-cream-200 dark:border-charcoal-700 rounded-sm p-4">
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${currentStreak > 0 ? 'bg-orange-500/20 text-orange-500 dark:text-orange-400' : 'bg-stone-200/50 dark:bg-charcoal-600/50 text-stone-400 dark:text-charcoal-400'}`}>
+            <div className={`w-10 h-10 rounded-sm flex items-center justify-center ${currentStreak > 0 ? 'bg-orange-500/20 text-orange-500 dark:text-orange-400' : 'bg-stone-200/50 dark:bg-charcoal-600/50 text-stone-400 dark:text-charcoal-400'}`}>
               <Flame className="w-5 h-5" />
             </div>
             <div>
