@@ -50,8 +50,8 @@ exports.registerCorps = onCall({ cors: true }, async (request) => {
         const weeksRemaining = Math.ceil(millisRemaining / (7 * 24 * 60 * 60 * 1000));
 
         const registrationLocks = {
-          world: 6,
-          open: 5,
+          worldClass: 6,
+          openClass: 5,
           aClass: 4,
           soundSport: 0, // No lock
         };

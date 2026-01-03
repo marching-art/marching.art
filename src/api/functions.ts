@@ -42,7 +42,7 @@ export interface RegisterCorpsData {
   corpsName: string;
   location: string;
   showConcept: string;
-  corpsClass: 'soundSport' | 'aClass' | 'open' | 'world';
+  class: 'soundSport' | 'aClass' | 'openClass' | 'worldClass';
 }
 
 export const registerCorps = createCallable<RegisterCorpsData, { success: boolean }>('registerCorps');
