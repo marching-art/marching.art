@@ -40,15 +40,24 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
 
   const db = getDb();
   const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const seasonSettingsRef = db.doc("game-settings/season");
 
   try {
     const result = await db.runTransaction(async (transaction) => {
-      const profileDoc = await transaction.get(userProfileRef);
+      const [profileDoc, seasonDoc] = await Promise.all([
+        transaction.get(userProfileRef),
+        transaction.get(seasonSettingsRef)
+      ]);
       if (!profileDoc.exists) {
         throw new HttpsError("not-found", "User profile does not exist.");
       }
+      if (!seasonDoc.exists) {
+        throw new HttpsError("not-found", "Season settings do not exist.");
+      }
 
       const profileData = profileDoc.data();
+      const seasonData = seasonDoc.data();
+      const currentSeasonUid = seasonData.seasonUid;
       let updatedCorps = { ...profileData.corps };
       let updatedRetiredCorps = [...(profileData.retiredCorps || [])];
       const corpsNeedingSetup = [];
@@ -168,10 +177,11 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
         }
       }
 
-      // Update profile
+      // Update profile with activeSeasonId to mark user as having acknowledged the new season
       transaction.update(userProfileRef, {
         corps: updatedCorps,
-        retiredCorps: updatedRetiredCorps
+        retiredCorps: updatedRetiredCorps,
+        activeSeasonId: currentSeasonUid
       });
 
       return { corpsNeedingSetup };
