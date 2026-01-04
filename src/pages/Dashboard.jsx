@@ -1546,8 +1546,10 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
-        ) : (
-          /* No Corps State */
+          </PullToRefresh>
+        </>
+      ) : (
+        /* No Corps State */
           <div className="flex items-center justify-center min-h-[60vh] p-4">
             <div className="bg-[#1a1a1a] border border-[#333] max-w-sm w-full">
               <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
@@ -1569,8 +1571,7 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
-        )}
-      </div>
+      )}
 
       {/* MODALS */}
       {modalQueue.isActive('classUnlock') && newlyUnlockedClass && (
