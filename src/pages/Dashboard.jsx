@@ -832,6 +832,16 @@ const Dashboard = () => {
     return entry?.rank ?? null;
   }, [aggregatedScores, activeCorps]);
 
+  const rankTrend = useMemo(() => {
+    if (!activeCorps) return null;
+    const corpsName = activeCorps.corpsName || activeCorps.name;
+    const entry = aggregatedScores.find(s => s.corpsName === corpsName);
+    const change = entry?.rankChange;
+    if (change > 0) return 'up';
+    if (change < 0) return 'down';
+    return null;
+  }, [aggregatedScores, activeCorps]);
+
   const thisWeekShows = useMemo(() => {
     if (!activeCorps?.selectedShows) return [];
     return (activeCorps.selectedShows[`week${currentWeek}`] || []).slice(0, 3);
