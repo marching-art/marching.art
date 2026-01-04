@@ -5,7 +5,7 @@
 // Laws: App Shell, 2/3 + 1/3 grid, data tables over cards, no glow
 
 import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
   Trophy, Edit, TrendingUp, TrendingDown, Minus,
   Calendar, Users, Lock, ChevronRight, Activity, MapPin,
@@ -283,18 +283,44 @@ const SkeletonRow = () => (
 // CONTROL BAR (Split: Class Tabs + Director HUD)
 // =============================================================================
 
+// Helper to get next class unlock info
+const getNextClassUnlock = (unlockedClasses, xpLevel, corpsCoin) => {
+  const classOrder = ['aClass', 'open', 'world'];
+  for (const classKey of classOrder) {
+    if (!unlockedClasses?.includes(classKey)) {
+      const levelRequired = CLASS_UNLOCK_LEVELS[classKey];
+      const coinCost = CLASS_UNLOCK_COSTS[classKey];
+      const meetsLevel = xpLevel >= levelRequired;
+      const canAfford = corpsCoin >= coinCost;
+      return {
+        className: CLASS_DISPLAY_NAMES[classKey],
+        classKey,
+        levelRequired,
+        coinCost,
+        meetsLevel,
+        canAfford,
+      };
+    }
+  }
+  return null;
+};
+
 const ControlBar = ({
   corps,
   activeCorpsClass,
   unlockedClasses,
   profile,
   onSwitch,
-  onCreateCorps
+  onCreateCorps,
+  onUnlockClass
 }) => {
   // Director stats from profile
   const streak = profile?.engagement?.loginStreak || 0;
   const corpsCoin = profile?.corpsCoin || 0;
   const level = profile?.xpLevel || 1;
+
+  // Calculate next class unlock
+  const nextUnlock = getNextClassUnlock(unlockedClasses, level, corpsCoin);
 
   return (
     <div className="sticky top-0 z-10 bg-[#1a1a1a] border-b border-[#333]">
@@ -339,8 +365,8 @@ const ControlBar = ({
           })}
         </div>
 
-        {/* RIGHT: Director HUD */}
-        <div className="flex items-center gap-4">
+        {/* RIGHT: Director HUD - Order: Streak, Level, Coins, Buy */}
+        <div className="flex items-center gap-3">
           {/* Streak */}
           {streak > 0 && (
             <div className="flex items-center gap-1">
@@ -351,6 +377,13 @@ const ControlBar = ({
             </div>
           )}
 
+          {/* Level */}
+          <div className="flex items-center">
+            <span className="text-[10px] font-bold uppercase px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded-sm">
+              Lvl {level}
+            </span>
+          </div>
+
           {/* CorpsCoin Wallet */}
           <div className="flex items-center gap-1">
             <Coins className="w-3.5 h-3.5 text-yellow-500" />
@@ -359,12 +392,21 @@ const ControlBar = ({
             </span>
           </div>
 
-          {/* Level */}
-          <div className="flex items-center">
-            <span className="text-[10px] font-bold uppercase px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded-sm">
-              Lvl {level}
-            </span>
-          </div>
+          {/* Buy Button - show when user can afford next class */}
+          {nextUnlock && nextUnlock.canAfford && onUnlockClass && (
+            <button
+              onClick={() => onUnlockClass(nextUnlock.classKey)}
+              className={`h-7 px-2.5 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-colors ${
+                nextUnlock.meetsLevel
+                  ? 'bg-green-600 hover:bg-green-500 text-white'
+                  : 'bg-yellow-600 hover:bg-yellow-500 text-white'
+              }`}
+              title={`${nextUnlock.meetsLevel ? 'Unlock' : 'Buy'} ${nextUnlock.className} (${nextUnlock.coinCost.toLocaleString()} CC)`}
+            >
+              <Coins className="w-3 h-3" />
+              {nextUnlock.meetsLevel ? 'Unlock' : 'Buy'}
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -756,6 +798,7 @@ const LeagueStatus = ({ leagues }) => {
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const dashboardData = useDashboardData();
   const { aggregatedScores, loading: scoresLoading } = useScoresData({
     // Dashboard should only show current season data, not fall back to archived seasons
@@ -978,6 +1021,15 @@ const Dashboard = () => {
 
     fetchRecentResults();
   }, [user?.uid, seasonData?.seasonUid, activeCorpsClass]);
+
+  // Handle navigation state for class purchase (from header Buy button)
+  useEffect(() => {
+    if (location.state?.purchaseClass) {
+      setClassToPurchase(location.state.purchaseClass);
+      // Clear the state to prevent re-triggering on subsequent renders
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state?.purchaseClass]);
 
   // Queue auto-triggered modals
   useEffect(() => {
@@ -1225,6 +1277,7 @@ const Dashboard = () => {
             clearNewlyUnlockedClass();
             setShowRegistration(true);
           }}
+          onUnlockClass={handleClassUnlock}
         />
 
         {activeCorps ? (
