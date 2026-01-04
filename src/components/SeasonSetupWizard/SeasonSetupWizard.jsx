@@ -19,7 +19,7 @@ import { useAuth } from '../../App';
 
 // Import constants
 import { ALL_CLASSES, POINT_LIMITS, getCorpsClassName, formatSeasonName } from './constants';
-import { sortCorpsEntriesByClass } from '../../utils/corps';
+import { sortCorpsEntriesByClass, compareCorpsClasses } from '../../utils/corps';
 
 // =============================================================================
 // CLASS SELECTION TABLE DATA
@@ -178,7 +178,7 @@ const SeasonSetupWizard = ({
     });
   }, [localUserProfile]);
 
-  // Get registered corps for a show
+  // Get registered corps for a show (sorted by class hierarchy: World → Open → A → SS)
   const getRegisteredCorpsForShow = useCallback((show) => {
     if (!localUserProfile?.corps) return [];
     return Object.entries(localUserProfile.corps)
@@ -188,7 +188,8 @@ const SeasonSetupWizard = ({
         const selectedShows = corpsData.selectedShows?.[weekKey] || [];
         return selectedShows.some(s => s.eventName === show.eventName && s.date === show.date);
       })
-      .map(([corpsClass]) => corpsClass);
+      .map(([corpsClass]) => corpsClass)
+      .sort(compareCorpsClasses);
   }, [localUserProfile]);
 
   // Count total registrations for the week
