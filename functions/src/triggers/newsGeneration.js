@@ -133,6 +133,7 @@ async function handleDailyNewsGeneration(data) {
         content: result.articles[0] || {}, // Primary article for legacy compat
         metadata: result.metadata,
         articles: result.articles, // All 5 articles
+        seasonId, // Use season name for organization
       });
 
       return result.articles[0]; // Return primary for logging
@@ -149,10 +150,12 @@ async function handleDailyNewsGeneration(data) {
 /**
  * Save daily news to the new path structure
  * Saves each of the 5 articles separately for the news feed
- * Path: /news_hub/current_season/day_{reportDay}/articles/{type}
+ * Path: /news_hub/{seasonId}/day_{reportDay}/articles/{type}
  */
-async function saveDailyNews(db, { reportDay, content, metadata, articles }) {
-  const basePath = `news_hub/current_season/day_${reportDay}`;
+async function saveDailyNews(db, { reportDay, content, metadata, articles, seasonId }) {
+  // Use seasonId for organization, fallback to "current_season" for legacy
+  const seasonPath = seasonId || "current_season";
+  const basePath = `news_hub/${seasonPath}/day_${reportDay}`;
 
   // If we have the new 5-article structure, save each separately
   if (articles && articles.length > 0) {
@@ -360,6 +363,7 @@ exports.onFantasyRecapUpdated = onDocumentWritten(
                 content: result.articles[0] || {},
                 metadata: result.metadata,
                 articles: result.articles,
+                seasonId: event.params.seasonId, // Use season name for organization
               });
             }
           } else {
@@ -444,6 +448,7 @@ exports.triggerDailyNews = onCall(
           content: result.articles[0] || {},
           metadata: result.metadata,
           articles: result.articles,
+          seasonId, // Use season name for organization
         });
 
         return {
@@ -471,14 +476,16 @@ exports.getDailyNews = onCall(
   },
   async (request) => {
     const db = getDb();
-    const { day } = request.data || {};
+    const { day, seasonId } = request.data || {};
 
     if (!day) {
       throw new HttpsError("invalid-argument", "Missing required parameter: day");
     }
 
     try {
-      const docPath = `news_hub/current_season/day_${day}`;
+      // Use seasonId if provided, otherwise fall back to "current_season"
+      const seasonPath = seasonId || "current_season";
+      const docPath = `news_hub/${seasonPath}/day_${day}`;
       const doc = await db.doc(docPath).get();
 
       if (!doc.exists) {
@@ -510,18 +517,21 @@ exports.getRecentNews = onCall(
   },
   async (request) => {
     const db = getDb();
-    const { limit = 5, category, fromDay, startAfter } = request.data || {};
+    const { limit = 5, category, fromDay, startAfter, seasonId } = request.data || {};
 
     try {
       // If fromDay is specified, fetch from day-based structure
       if (fromDay) {
+        // Use seasonId if provided, otherwise fall back to "current_season"
+        const seasonPath = seasonId || "current_season";
         const news = [];
         for (let day = fromDay; day > Math.max(0, fromDay - limit); day--) {
-          const doc = await db.doc(`news_hub/current_season/day_${day}`).get();
+          const doc = await db.doc(`news_hub/${seasonPath}/day_${day}`).get();
           if (doc.exists) {
             const data = doc.data();
             news.push({
               id: `day_${day}`,
+              seasonId: seasonPath,
               ...data,
               createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
             });
@@ -867,12 +877,15 @@ exports.listAllArticles = onCall(
     const db = getDb();
     checkAdminAuth(request.auth);
 
+    const { seasonId } = request.data || {};
+
     try {
       const articles = [];
 
-      // Fetch from current_season day-based structure
-      const currentSeasonRef = db.collection("news_hub/current_season");
-      const dayDocs = await currentSeasonRef.listDocuments();
+      // Fetch from season-based structure (use provided seasonId or "current_season")
+      const seasonPath = seasonId || "current_season";
+      const seasonRef = db.collection(`news_hub/${seasonPath}`);
+      const dayDocs = await seasonRef.listDocuments();
 
       for (const docRef of dayDocs) {
         const doc = await docRef.get();
@@ -880,8 +893,8 @@ exports.listAllArticles = onCall(
           const data = doc.data();
           articles.push({
             id: doc.id,
-            path: `news_hub/current_season/${doc.id}`,
-            source: "current_season",
+            path: `news_hub/${seasonPath}/${doc.id}`,
+            source: seasonPath,
             reportDay: data.reportDay,
             headline: data.headline || "Untitled",
             summary: data.summary || "",
