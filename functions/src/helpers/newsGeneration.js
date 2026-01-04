@@ -436,7 +436,9 @@ ${topPerformers.map((r, i) =>
   `${i + 1}. ${r.directorName || 'Director'}'s "${r.corpsName}": ${r.totalScore.toFixed(3)} pts`
 ).join('\n')}
 
-Celebrate the top performers. Analyze what lineup choices led to success.
+Celebrate the top performers. Focus on their overall scores and standings.
+IMPORTANT: Do NOT speculate about or mention specific caption picks or lineup choices.
+Directors' caption selections are confidential strategy. Only discuss total scores and rankings.
 Make it engaging and exciting for fantasy players.
 
 Return JSON: { headline, summary, narrative, topPerformers: [{rank, director, corpsName, score, highlight}] }`;
@@ -526,10 +528,13 @@ STATISTICAL DATA:
 - 7-day trend leaders: ${Object.entries(trendData).sort((a,b) => b[1].trendFromAvg - a[1].trendFromAvg).slice(0,3).map(([c,t]) => `${c}: +${t.trendFromAvg.toFixed(3)}`).join(', ')}
 
 Provide deep statistical insights:
-- Regression analysis
-- Momentum indicators
-- Fantasy ROI calculations
-- Buy/sell recommendations
+- Regression analysis on DCI corps performance
+- Momentum indicators for corps trajectories
+- General fantasy value observations (which DCI corps are trending)
+- Strategic recommendations for fantasy players
+
+IMPORTANT: Do NOT reveal or speculate about any individual director's caption picks or lineup choices.
+Caption selections are confidential. Only discuss overall DCI corps trends and general fantasy value.
 
 Return JSON: { headline, summary, narrative, insights: [{metric, finding, implication}], recommendations: [{corps, action, reasoning}] }`;
 
