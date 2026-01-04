@@ -76,6 +76,11 @@ const CAPTIONS = [
   { id: 'P', name: 'Perc', fullName: 'Percussion', category: 'mus' },
 ];
 
+const MOBILE_TABS = [
+  { id: 'team', label: 'Team' },
+  { id: 'stats', label: 'Stats' },
+];
+
 const CLASS_UNLOCK_LEVELS = { aClass: 3, open: 5, world: 10 };
 const CLASS_UNLOCK_COSTS = { aClass: 1000, open: 2500, world: 5000 };
 const CLASS_DISPLAY_NAMES = { aClass: 'A Class', open: 'Open Class', world: 'World Class' };
@@ -782,6 +787,7 @@ const Dashboard = () => {
   const [lineupScoresLoading, setLineupScoresLoading] = useState(true);
   const [recentResults, setRecentResults] = useState([]);
   const [showUniformDesign, setShowUniformDesign] = useState(false);
+  const [activeMobileTab, setActiveMobileTab] = useState('team');
 
   // Destructure dashboard data
   const {
@@ -1525,7 +1531,7 @@ const Dashboard = () => {
               )}
 
               {/* SIDEBAR (1/3) - Season Stats */}
-              <div className="space-y-4">
+              <div className={`space-y-4 ${activeMobileTab !== 'stats' ? 'hidden lg:block' : ''}`}>
                 <SeasonScorecard
                   score={userCorpsScore}
                   rank={userCorpsRank}
