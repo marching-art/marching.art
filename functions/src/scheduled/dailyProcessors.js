@@ -27,10 +27,15 @@ exports.processDailyLiveScores = onSchedule({
   const seasonData = seasonDoc.data();
   const seasonStartDate = seasonData.schedule.startDate.toDate();
 
-  // Calculate "yesterday" in Eastern timezone to match the 2 AM ET schedule
-  // This ensures manual triggers produce the same result as the scheduled job
+  // Calculate "yesterday" in Eastern timezone with 2 AM game day reset
+  // Game day resets at 2 AM ET, not midnight. Between midnight and 2 AM,
+  // we're still in the previous game day and should process the day before that.
+  // Solution: Subtract 2 hours from current time, then calculate "yesterday"
   const nowET = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
-  const yesterday = new Date(nowET);
+  // Shift by 2 hours to align with 2 AM game day boundary
+  // e.g., 1 AM on Jan 5 becomes 11 PM on Jan 4 (still Jan 4's game day)
+  const gameTimeET = new Date(nowET.getTime() - (2 * 60 * 60 * 1000));
+  const yesterday = new Date(gameTimeET);
   yesterday.setDate(yesterday.getDate() - 1);
   // Normalize to start of day for consistent day calculation
   yesterday.setHours(0, 0, 0, 0);
