@@ -683,9 +683,28 @@ async function saveToNewsHubLegacy(db, { category, date, content, metadata, offS
     category,
   });
 
+  // Safely convert date - handles Firestore Timestamps, Date objects, and strings
+  let safeDate;
+  if (date instanceof Date) {
+    safeDate = date;
+  } else if (date && typeof date.toDate === "function") {
+    // Firestore Timestamp
+    safeDate = date.toDate();
+  } else if (date) {
+    safeDate = new Date(date);
+  } else {
+    safeDate = new Date();
+  }
+
+  // Ensure date is valid
+  if (isNaN(safeDate.getTime())) {
+    logger.warn("Invalid date provided, using current date");
+    safeDate = new Date();
+  }
+
   const newsEntry = {
     category,
-    date: date instanceof Date ? date : new Date(date),
+    date: safeDate,
     createdAt: new Date(),
     headline: content.headline,
     summary: content.summary,
