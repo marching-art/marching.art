@@ -96,7 +96,7 @@ ARTICLE STRUCTURE:
 
     // Configure model with structured JSON output for multi-faceted news
     model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
+      model: "gemini-2.0-flash-lite",  // Free tier friendly, fast
       systemInstruction: systemInstruction,
       generationConfig: {
         responseMimeType: "application/json",
