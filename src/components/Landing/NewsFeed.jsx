@@ -41,6 +41,27 @@ const CATEGORIES = [
 // =============================================================================
 
 /**
+ * Safely converts a value to a string for rendering
+ * Handles cases where AI might return objects instead of strings
+ */
+function safeString(value) {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number') return String(value);
+  // If it's an object, try to extract a meaningful string or return empty
+  if (typeof value === 'object') {
+    // Check for common string-like properties
+    if (value.text) return String(value.text);
+    if (value.content) return String(value.content);
+    if (value.message) return String(value.message);
+    // Don't render objects - return empty string
+    console.warn('NewsFeed: Unexpected object in text field:', value);
+    return '';
+  }
+  return String(value);
+}
+
+/**
  * Formats timestamp in a professional news style
  * Shows relative time for recent, absolute for older
  */
@@ -327,12 +348,12 @@ function HeroStory({ story, onClick, storyNumber }) {
 
         {/* Headline */}
         <h1 className="text-2xl lg:text-3xl xl:text-4xl font-black text-white leading-[1.1] mb-4 group-hover:text-gray-100 transition-colors">
-          {story.headline}
+          {safeString(story.headline)}
         </h1>
 
         {/* Summary */}
         <p className="text-base lg:text-lg text-gray-400 leading-relaxed mb-5">
-          {story.summary}
+          {safeString(story.summary)}
         </p>
 
         {/* Fantasy ROI Badge */}
@@ -343,13 +364,13 @@ function HeroStory({ story, onClick, storyNumber }) {
         )}
 
         {/* Fantasy Impact */}
-        {story.fantasyImpact && (
+        {story.fantasyImpact && typeof story.fantasyImpact === 'string' && (
           <div className="p-4 bg-orange-500/10 border border-orange-500/20 mb-5">
             <div className="flex items-center gap-2 mb-2">
               <Flame className="w-4 h-4 text-orange-400" />
               <span className="text-xs font-bold text-orange-400 uppercase tracking-wider">Fantasy Impact</span>
             </div>
-            <p className="text-sm text-orange-100/80 leading-relaxed">{story.fantasyImpact}</p>
+            <p className="text-sm text-orange-100/80 leading-relaxed">{safeString(story.fantasyImpact)}</p>
           </div>
         )}
 
@@ -416,12 +437,12 @@ function NewsCard({ story, onClick, storyNumber }) {
 
         {/* Headline */}
         <h2 className={`text-base font-bold leading-snug mb-2 flex-1 ${isFantasy ? 'text-orange-50' : 'text-white'} group-hover:text-gray-100 transition-colors line-clamp-3`}>
-          {story.headline}
+          {safeString(story.headline)}
         </h2>
 
         {/* Summary */}
         <p className="text-sm text-gray-500 line-clamp-2 mb-3">
-          {story.summary}
+          {safeString(story.summary)}
         </p>
 
         {/* Fantasy ROI (compact) */}
@@ -481,7 +502,7 @@ function NewsRow({ story, onClick, storyNumber }) {
           <span className="text-[10px] text-gray-600">{formatTimestamp(story.createdAt)}</span>
         </div>
         <h3 className="text-sm font-bold text-white leading-snug group-hover:text-gray-100 transition-colors line-clamp-2">
-          {story.headline}
+          {safeString(story.headline)}
         </h3>
       </div>
 
@@ -766,7 +787,7 @@ export function FantasyImpactWidget({ news }) {
         )}
 
         <p className="text-sm text-gray-300 leading-relaxed mb-3">
-          {latestWithImpact.fantasyImpact}
+          {safeString(latestWithImpact.fantasyImpact)}
         </p>
 
         {/* Buy Low Opportunities */}
