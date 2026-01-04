@@ -1,10 +1,11 @@
 import { create } from 'zustand';
 import { db } from '../firebase';
 import { doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
-import { AUTH_CONFIG, GAME_CONFIG } from '../config';
+import { AUTH_CONFIG } from '../config';
 
 // All corps classes for admin override
-const ALL_CORPS_CLASSES = [...GAME_CONFIG.corpsClasses];
+// Note: Uses 'worldClass'/'openClass' format which matches CORPS_CLASS_ORDER in utils/corps.ts
+const ALL_CORPS_CLASSES = ['worldClass', 'openClass', 'aClass', 'soundSport'];
 
 /**
  * Global Profile Store
