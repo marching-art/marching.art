@@ -154,9 +154,19 @@ async function processAndArchiveOffSeasonScoresLogic() {
   const seasonData = seasonDoc.data();
   const seasonStartDate = seasonData.schedule.startDate.toDate();
 
-  const yesterday = new Date();
+  // Calculate "yesterday" in Eastern timezone to match the 2 AM ET schedule
+  // This ensures manual triggers produce the same result as the scheduled job
+  const nowET = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
+  const yesterday = new Date(nowET);
   yesterday.setDate(yesterday.getDate() - 1);
-  const diffInMillis = yesterday.getTime() - seasonStartDate.getTime();
+  // Normalize to start of day for consistent day calculation
+  yesterday.setHours(0, 0, 0, 0);
+
+  // Also normalize seasonStartDate to start of day for comparison
+  const seasonStartNormalized = new Date(seasonStartDate);
+  seasonStartNormalized.setHours(0, 0, 0, 0);
+
+  const diffInMillis = yesterday.getTime() - seasonStartNormalized.getTime();
   const scoredDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1;
 
   if (scoredDay < 1 || scoredDay > 49) {
