@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Swords, Calendar, Radio, Flame, ChevronLeft, ChevronRight } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../firebase';
+import { GAME_CONFIG } from '../../../config';
 import MatchupDetailView from '../MatchupDetailView';
 
 // Generate matchups for demonstration
@@ -15,7 +16,7 @@ const generateMockMatchups = (league, userProfile, memberProfiles, currentWeek) 
   const members = league.members;
   const matchups = [];
 
-  for (let week = 1; week <= Math.min(currentWeek + 1, 12); week++) {
+  for (let week = 1; week <= Math.min(currentWeek + 1, GAME_CONFIG.season.totalWeeks); week++) {
     const weekMembers = [...members];
     const seed = week * 31;
     weekMembers.sort((a, b) => {
@@ -158,7 +159,7 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
   };
 
   const goToNextWeek = () => {
-    if (selectedWeek < 12) setSelectedWeek(selectedWeek + 1);
+    if (selectedWeek < GAME_CONFIG.season.totalWeeks) setSelectedWeek(selectedWeek + 1);
   };
 
   if (loading) {
@@ -218,7 +219,7 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
               </span>
               <button
                 onClick={goToNextWeek}
-                disabled={selectedWeek >= 12}
+                disabled={selectedWeek >= GAME_CONFIG.season.totalWeeks}
                 className="p-1 text-gray-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 <ChevronRight className="w-4 h-4" />
@@ -229,7 +230,7 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
 
         {/* Week Pills */}
         <div className="p-3 flex gap-1.5 overflow-x-auto scrollbar-hide">
-          {Array.from({ length: 12 }, (_, i) => i + 1).map(week => {
+          {Array.from({ length: GAME_CONFIG.season.totalWeeks }, (_, i) => i + 1).map(week => {
             const hasLive = matchups.some(m => m.week === week && m.status === 'live');
             const isSelected = selectedWeek === week;
             const isCurrent = week === currentWeek;
