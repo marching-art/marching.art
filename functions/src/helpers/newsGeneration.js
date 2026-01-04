@@ -305,6 +305,28 @@ function initializeGemini() {
   return { genAI, textModel };
 }
 
+/**
+ * Generate content with structured JSON output
+ * Uses Gemini's native JSON mode for guaranteed valid JSON
+ */
+async function generateStructuredContent(prompt, schema) {
+  const { genAI: ai } = initializeGemini();
+
+  const model = ai.getGenerativeModel({
+    model: "gemini-2.0-flash-lite",
+    generationConfig: {
+      responseMimeType: "application/json",
+      responseSchema: schema,
+    },
+  });
+
+  const result = await model.generateContent(prompt);
+  const text = result.response.text();
+
+  // Even with structured output, still use parseAiJson for safety
+  return parseAiJson(text);
+}
+
 // =============================================================================
 // IMAGE GENERATION (Free Tier / Imagen)
 // =============================================================================
@@ -330,11 +352,85 @@ function cleanJsonResponse(text) {
 }
 
 /**
- * Safely parse JSON from AI response
+ * Repair common JSON issues from AI responses
+ */
+function repairJson(text) {
+  let repaired = text;
+
+  // Remove any leading/trailing whitespace
+  repaired = repaired.trim();
+
+  // Handle unescaped newlines within strings
+  // This regex finds strings and replaces actual newlines with \n
+  repaired = repaired.replace(/"([^"\\]*(\\.[^"\\]*)*)"/g, (match) => {
+    return match
+      .replace(/\n/g, "\\n")
+      .replace(/\r/g, "\\r")
+      .replace(/\t/g, "\\t");
+  });
+
+  // Remove trailing commas before closing brackets/braces
+  repaired = repaired.replace(/,\s*([\]}])/g, "$1");
+
+  // Remove control characters (except those in escape sequences)
+  repaired = repaired.replace(/[\x00-\x1F\x7F]/g, (char) => {
+    // Keep escaped versions
+    if (char === "\n" || char === "\r" || char === "\t") {
+      return char;
+    }
+    return "";
+  });
+
+  return repaired;
+}
+
+/**
+ * Safely parse JSON from AI response with repair attempts
  */
 function parseAiJson(text) {
   const cleaned = cleanJsonResponse(text);
-  return JSON.parse(cleaned);
+
+  // First try: direct parse
+  try {
+    return JSON.parse(cleaned);
+  } catch (firstError) {
+    // Second try: repair and parse
+    try {
+      const repaired = repairJson(cleaned);
+      return JSON.parse(repaired);
+    } catch (secondError) {
+      // Third try: extract JSON object/array from text
+      try {
+        // Find the first { or [ and last } or ]
+        const firstBrace = cleaned.indexOf("{");
+        const firstBracket = cleaned.indexOf("[");
+        const start = firstBrace >= 0 && (firstBracket < 0 || firstBrace < firstBracket)
+          ? firstBrace
+          : firstBracket;
+
+        if (start >= 0) {
+          const isObject = cleaned[start] === "{";
+          const lastBrace = cleaned.lastIndexOf(isObject ? "}" : "]");
+          if (lastBrace > start) {
+            const extracted = cleaned.slice(start, lastBrace + 1);
+            const repaired = repairJson(extracted);
+            return JSON.parse(repaired);
+          }
+        }
+      } catch (thirdError) {
+        // Log the original text for debugging
+        logger.error("JSON parse failed after all repair attempts. Original text:", {
+          textLength: cleaned.length,
+          textPreview: cleaned.substring(0, 500),
+        });
+      }
+
+      // Re-throw the original error with more context
+      const error = new Error(`JSON parse failed: ${firstError.message}`);
+      error.originalText = cleaned.substring(0, 500);
+      throw error;
+    }
+  }
 }
 
 /**
@@ -1021,8 +1117,6 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
  * Article 1: DCI Standings
  */
 async function generateDciStandingsArticle({ reportDay, dayScores, trendData, activeCorps, showContext }) {
-  const { textModel } = initializeGemini();
-
   const topCorps = dayScores[0];
   const secondCorps = dayScores[1];
   const gap = topCorps && secondCorps ? (topCorps.total - secondCorps.total).toFixed(3) : "0.000";
@@ -1066,19 +1160,36 @@ WRITE A PROFESSIONAL SPORTS ARTICLE covering today's standings. Your article sho
    - Analyzes momentum (which corps are trending hot or cold)
    - Closes with what to watch tomorrow
 
-TONE: Professional sports journalism. Authoritative but accessible. Use specific numbers. Create drama from the competition without being hyperbolic. Reference that these are real historical DCI performances.
+TONE: Professional sports journalism. Authoritative but accessible. Use specific numbers. Create drama from the competition without being hyperbolic. Reference that these are real historical DCI performances.`;
 
-Return ONLY valid JSON with this EXACT structure:
-{
-  "headline": "string",
-  "summary": "string",
-  "narrative": "string",
-  "standings": [{"rank": 1, "corps": "string", "year": 2024, "total": 95.123, "change": 0.123, "momentum": "rising/falling/steady"}]
-}`;
+  // Schema for structured output
+  const schema = {
+    type: SchemaType.OBJECT,
+    properties: {
+      headline: { type: SchemaType.STRING, description: "Attention-grabbing headline" },
+      summary: { type: SchemaType.STRING, description: "2-3 sentence summary" },
+      narrative: { type: SchemaType.STRING, description: "3-4 paragraph article" },
+      standings: {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.OBJECT,
+          properties: {
+            rank: { type: SchemaType.INTEGER },
+            corps: { type: SchemaType.STRING },
+            year: { type: SchemaType.INTEGER },
+            total: { type: SchemaType.NUMBER },
+            change: { type: SchemaType.NUMBER },
+            momentum: { type: SchemaType.STRING, enum: ["rising", "falling", "steady"] },
+          },
+          required: ["rank", "corps", "year", "total", "change", "momentum"],
+        },
+      },
+    },
+    required: ["headline", "summary", "narrative", "standings"],
+  };
 
   try {
-    const result = await textModel.generateContent(prompt);
-    const content = parseAiJson(result.response.text());
+    const content = await generateStructuredContent(prompt, schema);
 
     // Generate image featuring top corps with accurate historical uniform
     const imagePrompt = buildStandingsImagePrompt(
@@ -1108,8 +1219,6 @@ Return ONLY valid JSON with this EXACT structure:
  * Article 2: DCI Caption Analysis
  */
 async function generateDciCaptionsArticle({ reportDay, dayScores, captionLeaders, activeCorps, showContext }) {
-  const { textModel } = initializeGemini();
-
   const prompt = `You are a DCI caption analyst and technical expert writing for marching.art. You specialize in breaking down the scoring categories that determine DCI competition results.
 
 CONTEXT: DCI scoring has three main categories:
@@ -1150,19 +1259,33 @@ WRITE A TECHNICAL ANALYSIS ARTICLE that breaks down today's caption performances
 
 4. CAPTION BREAKDOWN: Provide analysis for each major category with the leader and what makes them stand out.
 
-TONE: Technical but accessible. Like a color commentator who knows the activity inside and out. Use specific scores. Reference real DCI judging criteria.
+TONE: Technical but accessible. Like a color commentator who knows the activity inside and out. Use specific scores. Reference real DCI judging criteria.`;
 
-Return ONLY valid JSON:
-{
-  "headline": "string",
-  "summary": "string",
-  "narrative": "string",
-  "captionBreakdown": [{"category": "General Effect/Visual/Music/Brass/Percussion/Guard", "leader": "Corps Name", "analysis": "2-3 sentence analysis"}]
-}`;
+  // Schema for structured output
+  const schema = {
+    type: SchemaType.OBJECT,
+    properties: {
+      headline: { type: SchemaType.STRING, description: "Caption-focused headline" },
+      summary: { type: SchemaType.STRING, description: "2-3 sentence summary" },
+      narrative: { type: SchemaType.STRING, description: "3-4 paragraph analysis" },
+      captionBreakdown: {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.OBJECT,
+          properties: {
+            category: { type: SchemaType.STRING },
+            leader: { type: SchemaType.STRING },
+            analysis: { type: SchemaType.STRING },
+          },
+          required: ["category", "leader", "analysis"],
+        },
+      },
+    },
+    required: ["headline", "summary", "narrative", "captionBreakdown"],
+  };
 
   try {
-    const result = await textModel.generateContent(prompt);
-    const content = parseAiJson(result.response.text());
+    const content = await generateStructuredContent(prompt, schema);
 
     // Feature the corps excelling in the top caption category
     const featuredCaption = captionLeaders[0];
@@ -1196,8 +1319,6 @@ Return ONLY valid JSON:
  * Article 3: Fantasy Top Performers
  */
 async function generateFantasyPerformersArticle({ reportDay, fantasyData, showContext, db, dataDocId }) {
-  const { textModel } = initializeGemini();
-
   if (!fantasyData?.current) {
     return createFallbackArticle(ARTICLE_TYPES.FANTASY_PERFORMERS, reportDay);
   }
@@ -1257,19 +1378,35 @@ CRITICAL RULES:
 - The "corps names" are creative team names chosen by users, not real DCI corps
 - NEVER mention specific lineup picks or roster choices - these are confidential strategy
 - Focus ONLY on total scores and rankings
-- Write like ESPN fantasy coverage - celebratory, fun, competitive
+- Write like ESPN fantasy coverage - celebratory, fun, competitive`;
 
-Return ONLY valid JSON:
-{
-  "headline": "string",
-  "summary": "string",
-  "narrative": "string",
-  "topPerformers": [{"rank": 1, "director": "Name or Anonymous", "corpsName": "Fantasy Team Name", "score": 95.123, "highlight": "One sentence about their achievement"}]
-}`;
+  // Schema for structured output
+  const schema = {
+    type: SchemaType.OBJECT,
+    properties: {
+      headline: { type: SchemaType.STRING, description: "Exciting fantasy sports headline" },
+      summary: { type: SchemaType.STRING, description: "2-3 sentence summary" },
+      narrative: { type: SchemaType.STRING, description: "3-4 paragraph celebration article" },
+      topPerformers: {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.OBJECT,
+          properties: {
+            rank: { type: SchemaType.INTEGER },
+            director: { type: SchemaType.STRING },
+            corpsName: { type: SchemaType.STRING },
+            score: { type: SchemaType.NUMBER },
+            highlight: { type: SchemaType.STRING },
+          },
+          required: ["rank", "director", "corpsName", "score", "highlight"],
+        },
+      },
+    },
+    required: ["headline", "summary", "narrative", "topPerformers"],
+  };
 
   try {
-    const result = await textModel.generateContent(prompt);
-    const content = parseAiJson(result.response.text());
+    const content = await generateStructuredContent(prompt, schema);
 
     // Generate image for top fantasy corps with themed uniform based on corps name
     const topCorps = topPerformers[0];
@@ -1325,8 +1462,6 @@ Return ONLY valid JSON:
  * Article 4: Fantasy League Recap
  */
 async function generateFantasyLeaguesArticle({ reportDay, fantasyData, showContext }) {
-  const { textModel } = initializeGemini();
-
   // Get show/league data - also format show names for fantasy branding
   const shows = fantasyData?.current?.shows || [];
   const showSummaries = shows.map(show => {
@@ -1384,19 +1519,33 @@ CRITICAL RULES:
 - This is FANTASY SPORTS coverage - NOT RPG/video games
 - Focus on league/show competition, not individual roster decisions
 - NEVER reveal or speculate about specific lineup choices
-- Write like ESPN fantasy league coverage
+- Write like ESPN fantasy league coverage`;
 
-Return ONLY valid JSON:
-{
-  "headline": "string",
-  "summary": "string",
-  "narrative": "string",
-  "leagueHighlights": [{"league": "Show/League Name", "leader": "Top Ensemble Name", "story": "1-2 sentence storyline"}]
-}`;
+  // Schema for structured output
+  const schema = {
+    type: SchemaType.OBJECT,
+    properties: {
+      headline: { type: SchemaType.STRING, description: "League-focused headline" },
+      summary: { type: SchemaType.STRING, description: "2-3 sentence summary" },
+      narrative: { type: SchemaType.STRING, description: "3-4 paragraph article" },
+      leagueHighlights: {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.OBJECT,
+          properties: {
+            league: { type: SchemaType.STRING },
+            leader: { type: SchemaType.STRING },
+            story: { type: SchemaType.STRING },
+          },
+          required: ["league", "leader", "story"],
+        },
+      },
+    },
+    required: ["headline", "summary", "narrative", "leagueHighlights"],
+  };
 
   try {
-    const result = await textModel.generateContent(prompt);
-    const content = parseAiJson(result.response.text());
+    const content = await generateStructuredContent(prompt, schema);
 
     // Use specialized league championship ceremony prompt
     const imagePrompt = buildFantasyLeagueImagePrompt();
@@ -1421,8 +1570,6 @@ Return ONLY valid JSON:
  * Article 5: Deep Analytics
  */
 async function generateDeepAnalyticsArticle({ reportDay, dayScores, trendData, fantasyData, captionLeaders, showContext }) {
-  const { textModel } = initializeGemini();
-
   // Calculate advanced statistics
   const bigGainers = Object.entries(trendData)
     .filter(([, t]) => t.dayChange > 0.1)
@@ -1521,20 +1668,45 @@ CRITICAL RULES:
 - Explain WHY trends matter (e.g., "Crown's +0.35 over 7 days suggests design changes are being absorbed")
 - Fantasy recommendations should focus on which DCI CORPS are valuable, NOT individual director strategies
 - NEVER reveal or speculate about any director's specific caption picks
-- Write like FiveThirtyEight or The Athletic - data-first journalism
+- Write like FiveThirtyEight or The Athletic - data-first journalism`;
 
-Return ONLY valid JSON:
-{
-  "headline": "string",
-  "summary": "string",
-  "narrative": "string",
-  "insights": [{"metric": "What was measured", "finding": "What the data shows", "implication": "What it means for the competition"}],
-  "recommendations": [{"corps": "DCI Corps Name", "action": "buy/hold/sell", "reasoning": "Data-backed reasoning"}]
-}`;
+  // Schema for structured output
+  const schema = {
+    type: SchemaType.OBJECT,
+    properties: {
+      headline: { type: SchemaType.STRING, description: "Statistical insight headline" },
+      summary: { type: SchemaType.STRING, description: "2-3 sentence data-driven summary" },
+      narrative: { type: SchemaType.STRING, description: "4-5 paragraph deep analysis" },
+      insights: {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.OBJECT,
+          properties: {
+            metric: { type: SchemaType.STRING },
+            finding: { type: SchemaType.STRING },
+            implication: { type: SchemaType.STRING },
+          },
+          required: ["metric", "finding", "implication"],
+        },
+      },
+      recommendations: {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.OBJECT,
+          properties: {
+            corps: { type: SchemaType.STRING },
+            action: { type: SchemaType.STRING, enum: ["buy", "hold", "sell"] },
+            reasoning: { type: SchemaType.STRING },
+          },
+          required: ["corps", "action", "reasoning"],
+        },
+      },
+    },
+    required: ["headline", "summary", "narrative", "insights", "recommendations"],
+  };
 
   try {
-    const result = await textModel.generateContent(prompt);
-    const content = parseAiJson(result.response.text());
+    const content = await generateStructuredContent(prompt, schema);
 
     // Feature the top trending corps in an analytical aerial shot
     const topTrending = Object.entries(trendData).sort((a,b) => b[1].trendFromAvg - a[1].trendFromAvg)[0];
@@ -1907,8 +2079,6 @@ async function generateNightlyRecap(scoreData) {
 }
 
 async function generateFantasyRecap(recapData) {
-  const { textModel } = initializeGemini();
-
   try {
     const { shows, offSeasonDay } = recapData;
     const allResults = shows.flatMap(s => s.results || []);
@@ -1929,19 +2099,27 @@ Write like ESPN fantasy sports coverage. Focus on:
 - General strategy tips (without revealing specific lineup picks)
 
 IMPORTANT: Do NOT mention RPGs, video games, or fictional fantasy worlds. This is SPORTS fantasy like fantasy football.
-All "corps" names above are user-created fantasy team names, not real DCI corps.
+All "corps" names above are user-created fantasy team names, not real DCI corps.`;
 
-Return JSON with these EXACT string fields:
-{
-  "headline": "string - exciting sports headline about Day ${offSeasonDay} fantasy results",
-  "summary": "string - 2-3 sentence summary of fantasy sports results",
-  "narrative": "string - full article text about fantasy sports performance",
-  "fantasyImpact": "string - brief tip for fantasy players",
-  "trendingCorps": ["string array of top 3 performing fantasy team names"]
-}`;
+    // Schema for structured output
+    const schema = {
+      type: SchemaType.OBJECT,
+      properties: {
+        headline: { type: SchemaType.STRING, description: "Exciting sports headline" },
+        summary: { type: SchemaType.STRING, description: "2-3 sentence summary" },
+        narrative: { type: SchemaType.STRING, description: "Full article text" },
+        fantasyImpact: { type: SchemaType.STRING, description: "Brief tip for fantasy players" },
+        trendingCorps: {
+          type: SchemaType.ARRAY,
+          items: { type: SchemaType.STRING },
+          description: "Top 3 performing fantasy team names",
+        },
+      },
+      required: ["headline", "summary", "narrative", "fantasyImpact", "trendingCorps"],
+    };
 
-    const result = await textModel.generateContent(prompt);
-    return { success: true, content: parseAiJson(result.response.text()) };
+    const content = await generateStructuredContent(prompt, schema);
+    return { success: true, content };
   } catch (error) {
     logger.error("Fantasy recap failed:", error);
     return { success: false, error: error.message };
