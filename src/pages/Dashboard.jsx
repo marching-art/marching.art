@@ -44,6 +44,7 @@ import { useHaptic } from '../hooks/useHaptic';
 import { useModalQueue, MODAL_PRIORITY } from '../hooks/useModalQueue';
 import { useSeasonStore } from '../store/seasonStore';
 import { CORPS_CLASS_ORDER } from '../utils/corps';
+import { PullToRefresh } from '../components/ui/PullToRefresh';
 
 // =============================================================================
 // CONSTANTS
