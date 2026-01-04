@@ -4,7 +4,7 @@
 // High-density data grid for scores with caption breakdowns (GE, VIS, MUS)
 // Laws: App Shell, Pill Tab Segmented Control, High-Density Tables, no glow
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import {
   Trophy, Calendar, TrendingUp, TrendingDown, Music,
@@ -18,7 +18,6 @@ import { useScoresData } from '../hooks/useScoresData';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { TeamAvatar } from '../components/ui/TeamAvatar';
 import { useHaptic } from '../hooks/useHaptic';
-import ScoreBreakdown from '../components/Scores/ScoreBreakdown';
 
 // =============================================================================
 // CONSTANTS
@@ -123,8 +122,7 @@ const RecapDataGrid = ({
   eventName,
   location,
   date,
-  userCorpsName,
-  onRowClick
+  userCorpsName
 }) => {
   if (!scores || scores.length === 0) return null;
 
@@ -180,8 +178,7 @@ const RecapDataGrid = ({
               return (
                 <tr
                   key={idx}
-                  onClick={() => onRowClick?.(score)}
-                  className={`${rowBg} hover:bg-white/5 cursor-pointer transition-colors`}
+                  className={rowBg}
                 >
                   {/* Rank */}
                   <td className="py-2 px-2">
@@ -433,8 +430,7 @@ const SoundSportMedalList = ({ shows }) => {
 const ClassStandingsGrid = ({
   standings,
   className,
-  userCorpsName,
-  onRowClick
+  userCorpsName
 }) => {
   if (!standings || standings.length === 0) {
     return (
@@ -496,8 +492,7 @@ const ClassStandingsGrid = ({
               return (
                 <tr
                   key={entry.corpsName || idx}
-                  onClick={() => onRowClick?.(entry)}
-                  className={`${rowBg} hover:bg-white/5 cursor-pointer transition-colors`}
+                  className={rowBg}
                 >
                   {/* Rank */}
                   <td className="py-2.5 px-2">
@@ -589,13 +584,6 @@ const Scores = () => {
   const [activeTab, setActiveTab] = useState('latest');
   const [selectedShow, setSelectedShow] = useState(null);
 
-  // Score breakdown modal
-  const [breakdownOpen, setBreakdownOpen] = useState(false);
-  const [selectedScore, setSelectedScore] = useState(null);
-  const [selectedShowInfo, setSelectedShowInfo] = useState({});
-  const [previousScore, setPreviousScore] = useState(null);
-  const [previousShowInfo, setPreviousShowInfo] = useState(null);
-
   const {
     loading,
     error,
@@ -638,25 +626,6 @@ const Scores = () => {
     }
   }, [targetShowName]);
 
-  const handleRowClick = useCallback((entry) => {
-    if (entry.scores && entry.scores.length > 0) {
-      const latestScore = entry.scores[0];
-      const prevScore = entry.scores.length > 1 ? entry.scores[1] : null;
-      setSelectedScore({ ...entry, ...latestScore });
-      setSelectedShowInfo({
-        eventName: latestScore.eventName,
-        date: latestScore.date,
-        location: latestScore.location
-      });
-      setPreviousScore(prevScore);
-      setPreviousShowInfo(prevScore ? {
-        eventName: prevScore.eventName,
-        date: prevScore.date,
-        location: prevScore.location
-      } : null);
-      setBreakdownOpen(true);
-    }
-  }, []);
 
   // Filter standings by class for each tab
   const worldStandings = useMemo(() =>
@@ -749,15 +718,6 @@ const Scores = () => {
                         location={show.location}
                         date={show.date}
                         userCorpsName={userCorpsName}
-                        onRowClick={(score) => {
-                          setSelectedScore(score);
-                          setSelectedShowInfo({
-                            eventName: show.eventName,
-                            date: show.date,
-                            location: show.location
-                          });
-                          setBreakdownOpen(true);
-                        }}
                       />
                     ))
                   ) : (
@@ -775,7 +735,6 @@ const Scores = () => {
                   standings={worldStandings}
                   className="World Class"
                   userCorpsName={userCorpsName}
-                  onRowClick={handleRowClick}
                 />
               )}
 
@@ -785,7 +744,6 @@ const Scores = () => {
                   standings={openStandings}
                   className="Open Class"
                   userCorpsName={userCorpsName}
-                  onRowClick={handleRowClick}
                 />
               )}
 
@@ -795,7 +753,6 @@ const Scores = () => {
                   standings={aClassStandings}
                   className="Class A"
                   userCorpsName={userCorpsName}
-                  onRowClick={handleRowClick}
                 />
               )}
 
@@ -846,15 +803,6 @@ const Scores = () => {
         </div>
       )}
 
-      {/* Score Breakdown Modal */}
-      <ScoreBreakdown
-        isOpen={breakdownOpen}
-        onClose={() => setBreakdownOpen(false)}
-        score={selectedScore}
-        previousScore={previousScore}
-        showInfo={selectedShowInfo}
-        previousShowInfo={previousShowInfo}
-      />
     </div>
   );
 };
