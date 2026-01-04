@@ -150,12 +150,14 @@ async function handleDailyNewsGeneration(data) {
 /**
  * Save daily news to the new path structure
  * Saves each of the 5 articles separately for the news feed
- * Path: /news_hub/{seasonId}/day_{reportDay}/articles/{type}
+ * Path: /news_hub/{seasonId}/days/day_{reportDay}/articles/{type}
  */
 async function saveDailyNews(db, { reportDay, content, metadata, articles, seasonId }) {
   // Use seasonId for organization, fallback to "current_season" for legacy
   const seasonPath = seasonId || "current_season";
-  const basePath = `news_hub/${seasonPath}/day_${reportDay}`;
+  // Path must have even number of components for Firestore document
+  // Structure: news_hub/{seasonId}/days/day_{reportDay} (4 components)
+  const basePath = `news_hub/${seasonPath}/days/day_${reportDay}`;
 
   // If we have the new 5-article structure, save each separately
   if (articles && articles.length > 0) {
@@ -329,25 +331,38 @@ exports.onFantasyRecapUpdated = onDocumentWritten(
           const reportDay = recap.offSeasonDay;
           const currentDay = reportDay + 1; // News runs post-midnight, so currentDay is reportDay + 1
 
-          if (seasonData?.dataDocId) {
-            // Use new 5-article generator with Imagen
-            const result = await generateAllArticles({
-              db,
-              dataDocId: seasonData.dataDocId,
-              seasonId: event.params.seasonId,
-              currentDay,
-            });
+          // Use dataDocId from season, or fall back to seasonId (they are typically the same)
+          const dataDocId = seasonData?.dataDocId || event.params.seasonId;
 
-            if (result.success && result.articles) {
-              await saveDailyNews(db, {
-                reportDay,
-                content: result.articles[0] || {},
-                metadata: result.metadata,
-                articles: result.articles,
-                seasonId: event.params.seasonId, // Use season name for organization
-              });
-            }
+          // Always try to use new 5-article generator with Imagen
+          logger.info("Generating 5 articles for news", {
+            reportDay,
+            currentDay,
+            dataDocId,
+            seasonId: event.params.seasonId,
+          });
+
+          const result = await generateAllArticles({
+            db,
+            dataDocId,
+            seasonId: event.params.seasonId,
+            currentDay,
+          });
+
+          if (result.success && result.articles) {
+            logger.info(`Successfully generated ${result.articles.length} articles`);
+            await saveDailyNews(db, {
+              reportDay,
+              content: result.articles[0] || {},
+              metadata: result.metadata,
+              articles: result.articles,
+              seasonId: event.params.seasonId, // Use season name for organization
+            });
           } else {
+            logger.warn("Article generation failed or returned no articles, falling back to legacy", {
+              error: result.error,
+              articlesCount: result.articles?.length,
+            });
             // Fallback to legacy fantasy-only generation
             const fantasyResult = await generateFantasyRecap(recap);
 
@@ -491,7 +506,7 @@ exports.getDailyNews = onCall(
 
 /**
  * Fetch recent news entries for the frontend
- * Returns articles from the season-based structure: news_hub/{seasonId}/day_{n}/articles/{type}
+ * Returns articles from the hierarchical structure: news_hub/{seasonId}/days/day_{n}/articles/{type}
  */
 exports.getRecentNews = onCall(
   {
@@ -526,7 +541,8 @@ exports.getRecentNews = onCall(
 
       // If we still don't have currentDay, try to find the latest day with articles
       if (!currentDay) {
-        const dayDocs = await db.collection(`news_hub/${activeSeasonId}`)
+        // Query the days subcollection for latest day
+        const dayDocs = await db.collection(`news_hub/${activeSeasonId}/days`)
           .orderBy("reportDay", "desc")
           .limit(1)
           .get();
@@ -542,8 +558,9 @@ exports.getRecentNews = onCall(
       const daysToFetch = Math.ceil(limit / 5) + 1; // 5 articles per day
 
       // Fetch articles from recent days
+      // Path structure: news_hub/{seasonId}/days/day_{n} (4 components - valid document path)
       for (let day = currentDay - 1; day > Math.max(0, currentDay - daysToFetch - 1); day--) {
-        const dayPath = `news_hub/${activeSeasonId}/day_${day}`;
+        const dayPath = `news_hub/${activeSeasonId}/days/day_${day}`;
 
         // Check if day has articles
         const dayDoc = await db.doc(dayPath).get();
