@@ -53,6 +53,10 @@ export interface UserProfile {
   // Retired corps history
   retiredCorps?: RetiredCorps[];
 
+  // Season tracking
+  activeSeasonId?: string;  // Current season the user is participating in
+  initialSetupComplete?: string;  // Season ID when initial setup wizard was completed
+
   // Settings
   settings?: UserSettings;
 }

@@ -37,6 +37,15 @@ export function useSeasonSetup(
   useEffect(() => {
     if (!profile || !seasonData || loading || seasonLoading) return;
 
+    // Skip wizard if initial setup was already completed for this season
+    // This prevents the wizard from showing repeatedly after the user has
+    // already gone through the initial registration/show selection process
+    if (profile.initialSetupComplete === seasonData.seasonUid) {
+      setCorpsNeedingSetup([]);
+      setShowSeasonSetupWizard(false);
+      return;
+    }
+
     const needSetup: CorpsClass[] = [];
     const hasCorps = corps && Object.keys(corps).length > 0;
     const hasRetiredCorps = profile.retiredCorps && profile.retiredCorps.length > 0;

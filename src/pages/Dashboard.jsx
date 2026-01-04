@@ -1030,6 +1030,26 @@ const Dashboard = () => {
     setShowSeasonSetupWizard(false);
   }, [modalQueue, setShowSeasonSetupWizard]);
 
+  // Save initialSetupComplete flag when wizard is completed
+  // This prevents the wizard from showing again on subsequent page loads
+  const handleSeasonSetupFinish = useCallback(async () => {
+    handleSeasonSetupComplete();
+    handleSeasonSetupClose();
+
+    // Save flag to prevent wizard from showing again this season
+    if (user?.uid && seasonData?.seasonUid) {
+      try {
+        const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
+        await updateDoc(profileRef, {
+          initialSetupComplete: seasonData.seasonUid
+        });
+      } catch (error) {
+        console.error('Failed to save initial setup flag:', error);
+        // Don't show error to user - the wizard closed successfully
+      }
+    }
+  }, [handleSeasonSetupComplete, handleSeasonSetupClose, user?.uid, seasonData?.seasonUid]);
+
   const handleEditCorps = useCallback(async (formData) => {
     try {
       const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
@@ -1160,7 +1180,7 @@ const Dashboard = () => {
       {modalQueue.isActive('seasonSetup') && seasonData && (
         <Suspense fallback={null}>
           <SeasonSetupWizard
-            onComplete={() => { handleSeasonSetupComplete(); handleSeasonSetupClose(); }}
+            onComplete={handleSeasonSetupFinish}
             profile={profile}
             seasonData={seasonData}
             corpsNeedingSetup={corpsNeedingSetup}
