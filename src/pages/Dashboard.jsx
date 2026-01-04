@@ -842,6 +842,17 @@ const Dashboard = () => {
     return null;
   }, [aggregatedScores, activeCorps]);
 
+  const corpsStats = useMemo(() => {
+    if (!activeCorps) return { geScore: null, visualScore: null, musicScore: null };
+    const corpsName = activeCorps.corpsName || activeCorps.name;
+    const entry = aggregatedScores.find(s => s.corpsName === corpsName);
+    return {
+      geScore: entry?.geScore ?? null,
+      visualScore: entry?.visualScore ?? null,
+      musicScore: entry?.musicScore ?? null
+    };
+  }, [aggregatedScores, activeCorps]);
+
   const thisWeekShows = useMemo(() => {
     if (!activeCorps?.selectedShows) return [];
     return (activeCorps.selectedShows[`week${currentWeek}`] || []).slice(0, 3);
