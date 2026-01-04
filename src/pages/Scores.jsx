@@ -8,7 +8,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import {
   Trophy, Calendar, TrendingUp, TrendingDown, Music,
-  ChevronRight, MapPin, Medal, Users, Activity
+  ChevronRight, MapPin, Medal, Users, Activity, Archive
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { useUserStore } from '../store/userStore';
@@ -29,6 +29,7 @@ const TABS = [
   { id: 'open', label: 'Open Class' },
   { id: 'aclass', label: 'Class A' },
   { id: 'soundsport', label: 'SoundSport', accent: 'green' },
+  { id: 'archive', label: 'Archive', accent: 'yellow' },
 ];
 
 const RATING_CONFIG = {
@@ -103,6 +104,8 @@ const PillTabControl = ({ tabs, activeTab, onTabChange, haptic }) => (
           activeTab === tab.id
             ? tab.accent === 'green'
               ? 'text-green-400 border-green-500'
+              : tab.accent === 'yellow'
+              ? 'text-yellow-400 border-yellow-500'
               : 'text-white border-[#0057B8]'
             : 'text-gray-500 hover:text-gray-300 border-transparent'
         }`}
@@ -583,6 +586,8 @@ const Scores = () => {
 
   const [activeTab, setActiveTab] = useState('latest');
   const [selectedShow, setSelectedShow] = useState(null);
+  const [selectedArchiveSeason, setSelectedArchiveSeason] = useState(null);
+  const [archiveViewTab, setArchiveViewTab] = useState('latest'); // Sub-tab within archive
 
   const {
     loading,
@@ -596,10 +601,13 @@ const Scores = () => {
     displayedSeasonId,
     archivedSeasons,
     selectSeason,
+    currentSeasonUid,
   } = useScoresData({
     seasonId: targetSeasonId,
     classFilter: 'all',
-    enabledCaptions: { ge: true, vis: true, mus: true }
+    enabledCaptions: { ge: true, vis: true, mus: true },
+    // Disable auto-fallback so Latest tab starts fresh on new season
+    disableArchiveFallback: activeTab !== 'archive'
   });
 
   const handleRefresh = async () => {
@@ -643,6 +651,31 @@ const Scores = () => {
       setActiveTab('latest');
     }
   }, [targetShowName]);
+
+  // Handle switching to/from Archive tab
+  useEffect(() => {
+    if (activeTab === 'archive') {
+      // When entering Archive tab, select the most recent archived season if none selected
+      if (!selectedArchiveSeason && archivedSeasons.length > 0) {
+        const mostRecent = archivedSeasons[0];
+        setSelectedArchiveSeason(mostRecent.id);
+        selectSeason(mostRecent.id);
+      } else if (selectedArchiveSeason) {
+        selectSeason(selectedArchiveSeason);
+      }
+    } else {
+      // When leaving Archive tab, reset to current season
+      if (isArchived && currentSeasonUid) {
+        selectSeason(currentSeasonUid);
+      }
+    }
+  }, [activeTab, archivedSeasons, selectedArchiveSeason, selectSeason, isArchived, currentSeasonUid]);
+
+  // Handle archive season selection change
+  const handleArchiveSeasonChange = (seasonId) => {
+    setSelectedArchiveSeason(seasonId);
+    selectSeason(seasonId);
+  };
 
 
   // Filter standings by class for each tab
@@ -780,6 +813,129 @@ const Scores = () => {
               {/* SOUNDSPORT TAB */}
               {activeTab === 'soundsport' && (
                 <SoundSportMedalList shows={unfilteredShows} />
+              )}
+
+              {/* ARCHIVE TAB */}
+              {activeTab === 'archive' && (
+                <div>
+                  {/* Archive Header with Season Selector */}
+                  <div className="bg-[#1a1a1a] border-b border-[#333] px-4 py-3">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Archive className="w-4 h-4 text-yellow-500" />
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                        Historical Seasons
+                      </span>
+                    </div>
+
+                    {/* Season Selector - Horizontal Scroll Pills */}
+                    {archivedSeasons.length > 0 ? (
+                      <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
+                        {archivedSeasons.map((season) => (
+                          <button
+                            key={season.id}
+                            onClick={() => { haptic('medium'); handleArchiveSeasonChange(season.id); }}
+                            className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wide whitespace-nowrap rounded-sm border transition-all ${
+                              selectedArchiveSeason === season.id
+                                ? 'bg-yellow-500 text-black border-yellow-500'
+                                : 'bg-[#222] text-gray-300 border-[#444] hover:border-yellow-500/50 hover:text-white'
+                            }`}
+                          >
+                            {season.seasonName || season.id.replace(/_/g, ' ')}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-xs">No archived seasons available</p>
+                    )}
+                  </div>
+
+                  {/* Archive Sub-tabs for different views */}
+                  {selectedArchiveSeason && (
+                    <div className="bg-[#111] border-b border-[#333] px-4 py-2">
+                      <div className="flex items-center gap-1">
+                        {[
+                          { id: 'latest', label: 'Recaps' },
+                          { id: 'world', label: 'World' },
+                          { id: 'open', label: 'Open' },
+                          { id: 'aclass', label: 'Class A' },
+                        ].map((tab) => (
+                          <button
+                            key={tab.id}
+                            onClick={() => { haptic('light'); setArchiveViewTab(tab.id); }}
+                            className={`px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all rounded-sm ${
+                              archiveViewTab === tab.id
+                                ? 'bg-[#333] text-white'
+                                : 'text-gray-500 hover:text-gray-300'
+                            }`}
+                          >
+                            {tab.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Archive Content */}
+                  {selectedArchiveSeason && !loading && (
+                    <>
+                      {/* Recaps View */}
+                      {archiveViewTab === 'latest' && (
+                        latestShows.length > 0 ? (
+                          latestShows.map((show, idx) => (
+                            <RecapDataGrid
+                              key={idx}
+                              scores={show.scores}
+                              eventName={show.eventName}
+                              location={show.location}
+                              date={show.date}
+                              userCorpsName={userCorpsName}
+                            />
+                          ))
+                        ) : (
+                          <div className="p-8 text-center">
+                            <Calendar className="w-8 h-8 text-gray-600 mx-auto mb-2" />
+                            <p className="text-gray-500 text-sm">No recaps found for this season</p>
+                          </div>
+                        )
+                      )}
+
+                      {/* World Class View */}
+                      {archiveViewTab === 'world' && (
+                        <ClassStandingsGrid
+                          standings={worldStandings}
+                          className="World Class"
+                          userCorpsName={userCorpsName}
+                        />
+                      )}
+
+                      {/* Open Class View */}
+                      {archiveViewTab === 'open' && (
+                        <ClassStandingsGrid
+                          standings={openStandings}
+                          className="Open Class"
+                          userCorpsName={userCorpsName}
+                        />
+                      )}
+
+                      {/* Class A View */}
+                      {archiveViewTab === 'aclass' && (
+                        <ClassStandingsGrid
+                          standings={aClassStandings}
+                          className="Class A"
+                          userCorpsName={userCorpsName}
+                        />
+                      )}
+                    </>
+                  )}
+
+                  {/* No season selected state */}
+                  {!selectedArchiveSeason && archivedSeasons.length > 0 && (
+                    <div className="p-8 text-center">
+                      <Archive className="w-8 h-8 text-gray-600 mx-auto mb-2" />
+                      <p className="text-gray-500 text-sm">Select a season to view historical scores</p>
+                    </div>
+                  )}
+                </div>
               )}
             </>
           )}
