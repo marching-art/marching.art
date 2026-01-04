@@ -10,10 +10,9 @@ import {
   Calendar, MapPin, Check, ChevronRight, Trophy
 } from 'lucide-react';
 import { useAuth } from '../App';
-import { db } from '../firebase';
-import { doc, getDoc } from 'firebase/firestore';
 import { useSeasonStore } from '../store/seasonStore';
 import { useScheduleStore } from '../store/scheduleStore';
+import { useProfileStore } from '../store/profileStore';
 import { ShowRegistrationModal } from '../components/Schedule';
 import { isEventPast } from '../utils/scheduleUtils';
 
@@ -601,10 +600,13 @@ const ChampionshipWeekDisplay = ({ userProfile, getActualDate, seasonUid, regula
 const Schedule = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [userProfile, setUserProfile] = useState(null);
   const [selectedShow, setSelectedShow] = useState(null);
   const [registrationModal, setRegistrationModal] = useState(false);
   const [selectedWeek, setSelectedWeek] = useState(null);
+
+  // Profile store - uses real-time listener for automatic updates after registration
+  const userProfile = useProfileStore((state) => state.profile);
+  const profileLoading = useProfileStore((state) => state.loading);
 
   // Season store
   const seasonData = useSeasonStore((state) => state.seasonData);
@@ -626,30 +628,12 @@ const Schedule = () => {
     }
   }, [currentWeek, selectedWeek]);
 
-  // Load user profile
+  // Set loading to false when all data sources are ready
   useEffect(() => {
-    if (user) {
-      loadUserProfile();
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (!seasonLoading && !scheduleLoading && (userProfile !== null || !user)) {
+    if (!seasonLoading && !scheduleLoading && (!user || !profileLoading)) {
       setLoading(false);
     }
-  }, [seasonLoading, scheduleLoading, userProfile, user]);
-
-  const loadUserProfile = async () => {
-    try {
-      const profileRef = doc(db, `artifacts/marching-art/users/${user.uid}/profile/data`);
-      const profileSnap = await getDoc(profileRef);
-      if (profileSnap.exists()) {
-        setUserProfile(profileSnap.data());
-      }
-    } catch (error) {
-      console.error('Error loading profile:', error);
-    }
-  };
+  }, [seasonLoading, scheduleLoading, profileLoading, user]);
 
   // Get actual date from day number
   const getActualDate = useCallback((dayNumber) => {
@@ -821,7 +805,8 @@ const Schedule = () => {
           formattedDate={formatDate(selectedShow.day)}
           onClose={() => setRegistrationModal(false)}
           onSuccess={() => {
-            loadUserProfile();
+            // Profile updates automatically via real-time listener in profileStore
+            // No manual reload needed - just close the modal
             setRegistrationModal(false);
           }}
         />
