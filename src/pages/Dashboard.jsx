@@ -113,6 +113,63 @@ const getEffectiveDay = (currentDay) => {
 };
 
 /**
+ * Process historical scores for a corps to get category totals (for SoundSport)
+ * Returns: { geTotal, visTotal, musTotal } from the most recent score
+ */
+const processCategoryTotals = (yearData, corpsName, effectiveDay) => {
+  const scores = [];
+
+  for (const event of yearData) {
+    // Only include scores from days before the effective day (no spoilers)
+    if (event.offSeasonDay >= effectiveDay) continue;
+
+    const scoreData = event.scores?.find(s => s.corps === corpsName);
+    if (scoreData?.captions) {
+      scores.push({
+        day: event.offSeasonDay,
+        captions: scoreData.captions
+      });
+    }
+  }
+
+  if (scores.length === 0) {
+    return { geTotal: null, visTotal: null, musTotal: null };
+  }
+
+  // Sort by day descending (most recent first)
+  scores.sort((a, b) => b.day - a.day);
+  const latestCaptions = scores[0].captions;
+
+  // Calculate category totals
+  const geTotal = (latestCaptions.GE1 || 0) + (latestCaptions.GE2 || 0);
+  const visTotal = (latestCaptions.VP || 0) + (latestCaptions.VA || 0) + (latestCaptions.CG || 0);
+  const musTotal = (latestCaptions.B || 0) + (latestCaptions.MA || 0) + (latestCaptions.P || 0);
+
+  // Calculate trends for each category by comparing to previous score
+  let geTrend = null, visTrend = null, musTrend = null;
+
+  if (scores.length > 1) {
+    const previousCaptions = scores[1].captions;
+    const prevGe = (previousCaptions.GE1 || 0) + (previousCaptions.GE2 || 0);
+    const prevVis = (previousCaptions.VP || 0) + (previousCaptions.VA || 0) + (previousCaptions.CG || 0);
+    const prevMus = (previousCaptions.B || 0) + (previousCaptions.MA || 0) + (previousCaptions.P || 0);
+
+    const calcTrend = (current, previous) => {
+      const delta = current - previous;
+      if (delta > 0.001) return { direction: 'up', delta: `+${delta.toFixed(2)}` };
+      if (delta < -0.001) return { direction: 'down', delta: delta.toFixed(2) };
+      return { direction: 'same', delta: '0.00' };
+    };
+
+    geTrend = calcTrend(geTotal, prevGe);
+    visTrend = calcTrend(visTotal, prevVis);
+    musTrend = calcTrend(musTotal, prevMus);
+  }
+
+  return { geTotal, visTotal, musTotal, geTrend, visTrend, musTrend };
+};
+
+/**
  * Process historical scores for a corps to get caption-specific data
  * Returns: { score, trend, nextShow } for a given caption
  */
@@ -464,68 +521,95 @@ const ActiveLineupTable = ({
 // SEASON SCORECARD (SIDEBAR)
 // =============================================================================
 
-const SeasonScorecard = ({ score, rank, rankChange, corpsName, corpsClass, loading }) => (
-  <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
-    <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-      <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-        <Trophy className="w-3.5 h-3.5 text-yellow-500" />
-        Season Scorecard
-      </h3>
-    </div>
+const SeasonScorecard = ({ score, rank, rankChange, corpsName, corpsClass, loading, recentScore }) => {
+  const isSoundSport = corpsClass === 'soundSport';
 
-    <div className="p-4">
-      {/* Corps Identity */}
-      <div className="flex items-center gap-3 mb-4 pb-4 border-b border-[#333]">
-        <div className="w-12 h-12 bg-[#333] border border-[#444] flex items-center justify-center">
-          <Trophy className="w-6 h-6 text-yellow-500" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-base font-bold text-white truncate">{corpsName || 'My Corps'}</p>
-          <p className="text-[10px] uppercase tracking-wider text-gray-500">
-            {CLASS_LABELS[corpsClass] || corpsClass}
-          </p>
-        </div>
+  // For SoundSport, use recentScore (from recent results) to determine medal
+  const soundSportScore = isSoundSport ? (recentScore ?? score) : null;
+  const rating = isSoundSport && soundSportScore !== null ? getSoundSportRating(soundSportScore) : null;
+
+  return (
+    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
+        <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+          <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+          Season Scorecard
+        </h3>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-3">
-        {/* Total Score */}
-        <div className="bg-[#222] p-3">
-          <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Season Score</p>
-          {loading ? (
-            <div className="h-8 w-20 bg-[#333] animate-pulse" />
-          ) : (
-            <p className="text-2xl font-bold text-white font-data tabular-nums">
-              {score?.toFixed(2) || '0.00'}
+      <div className="p-4">
+        {/* Corps Identity */}
+        <div className="flex items-center gap-3 mb-4 pb-4 border-b border-[#333]">
+          <div className="w-12 h-12 bg-[#333] border border-[#444] flex items-center justify-center">
+            <Trophy className="w-6 h-6 text-yellow-500" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-base font-bold text-white truncate">{corpsName || 'My Corps'}</p>
+            <p className="text-[10px] uppercase tracking-wider text-gray-500">
+              {CLASS_LABELS[corpsClass] || corpsClass}
             </p>
-          )}
+          </div>
         </div>
 
-        {/* Rank */}
-        <div className="bg-[#222] p-3">
-          <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Rank</p>
-          {loading ? (
-            <div className="h-8 w-16 bg-[#333] animate-pulse" />
-          ) : (
-            <div className="flex items-center gap-2">
-              <p className="text-2xl font-bold text-white font-data tabular-nums">
-                #{rank || '-'}
-              </p>
-              {rankChange !== null && rankChange !== 0 && (
-                <span className={`text-xs font-bold flex items-center gap-0.5 ${
-                  rankChange > 0 ? 'text-green-500' : 'text-red-500'
-                }`}>
-                  {rankChange > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                  {Math.abs(rankChange)}
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 gap-3">
+          {/* Total Score / Medal Rating */}
+          <div className="bg-[#222] p-3">
+            <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">
+              {isSoundSport ? 'Season Score' : 'Season Score'}
+            </p>
+            {loading ? (
+              <div className="h-8 w-20 bg-[#333] animate-pulse" />
+            ) : isSoundSport && rating ? (
+              // SoundSport: Display medal badge
+              <div className={`inline-flex items-center gap-1.5 px-2 py-1 ${rating.color} rounded-sm`}>
+                <Medal className={`w-4 h-4 ${rating.textColor}`} />
+                <span className={`text-lg font-bold ${rating.textColor}`}>
+                  {rating.rating}
                 </span>
-              )}
-            </div>
-          )}
+              </div>
+            ) : isSoundSport ? (
+              <p className="text-2xl font-bold text-gray-500 font-data tabular-nums">
+                —
+              </p>
+            ) : (
+              <p className="text-2xl font-bold text-white font-data tabular-nums">
+                {score?.toFixed(2) || '0.00'}
+              </p>
+            )}
+          </div>
+
+          {/* Rank */}
+          <div className="bg-[#222] p-3">
+            <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Rank</p>
+            {loading ? (
+              <div className="h-8 w-16 bg-[#333] animate-pulse" />
+            ) : isSoundSport ? (
+              // SoundSport doesn't have rankings
+              <p className="text-2xl font-bold text-gray-500 font-data tabular-nums">
+                #-
+              </p>
+            ) : (
+              <div className="flex items-center gap-2">
+                <p className="text-2xl font-bold text-white font-data tabular-nums">
+                  #{rank || '-'}
+                </p>
+                {rankChange !== null && rankChange !== 0 && (
+                  <span className={`text-xs font-bold flex items-center gap-0.5 ${
+                    rankChange > 0 ? 'text-green-500' : 'text-red-500'
+                  }`}>
+                    {rankChange > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                    {Math.abs(rankChange)}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 // =============================================================================
 // RECENT RESULTS FEED (SIDEBAR)
@@ -717,6 +801,7 @@ const Dashboard = () => {
       }
 
       setLineupScoresLoading(true);
+      const isSoundSport = activeCorpsClass === 'soundSport';
 
       try {
         // Calculate effective day (accounting for 2AM score processing)
@@ -741,6 +826,21 @@ const Dashboard = () => {
         });
         await Promise.all(yearPromises);
 
+        // For SoundSport, pre-compute category totals for each corps/year combo
+        const categoryTotalsCache = {};
+        if (isSoundSport) {
+          Object.values(lineup).forEach(value => {
+            if (value) {
+              const [corpsName, sourceYear] = value.split('|');
+              const yearData = historicalData[sourceYear];
+              if (yearData) {
+                const cacheKey = `${corpsName}|${sourceYear}`;
+                categoryTotalsCache[cacheKey] = processCategoryTotals(yearData, corpsName, effectiveDay);
+              }
+            }
+          });
+        }
+
         // Process scores for each caption slot
         const scoreData = {};
         CAPTIONS.forEach(caption => {
@@ -758,8 +858,35 @@ const Dashboard = () => {
             return;
           }
 
-          // Process scores for this caption
-          scoreData[caption.id] = processCaptionScores(yearData, corpsName, caption.id, effectiveDay);
+          // For SoundSport, show category totals instead of individual caption scores
+          if (isSoundSport) {
+            const cacheKey = `${corpsName}|${sourceYear}`;
+            const categoryData = categoryTotalsCache[cacheKey] || {};
+            const baseData = processCaptionScores(yearData, corpsName, caption.id, effectiveDay);
+
+            // Map caption category to the appropriate total
+            let categoryScore = null;
+            let categoryTrend = null;
+            if (caption.category === 'ge') {
+              categoryScore = categoryData.geTotal;
+              categoryTrend = categoryData.geTrend;
+            } else if (caption.category === 'vis') {
+              categoryScore = categoryData.visTotal;
+              categoryTrend = categoryData.visTrend;
+            } else if (caption.category === 'mus') {
+              categoryScore = categoryData.musTotal;
+              categoryTrend = categoryData.musTrend;
+            }
+
+            scoreData[caption.id] = {
+              score: categoryScore,
+              trend: categoryTrend,
+              nextShow: baseData.nextShow
+            };
+          } else {
+            // Process scores for this caption (non-SoundSport)
+            scoreData[caption.id] = processCaptionScores(yearData, corpsName, caption.id, effectiveDay);
+          }
         });
 
         setLineupScoreData(scoreData);
@@ -771,7 +898,7 @@ const Dashboard = () => {
     };
 
     fetchLineupScores();
-  }, [lineup, currentDay]);
+  }, [lineup, currentDay, activeCorpsClass]);
 
   // Fetch recent results from fantasy_recaps (for sidebar)
   useEffect(() => {
@@ -1054,6 +1181,7 @@ const Dashboard = () => {
                   corpsName={activeCorps.corpsName || activeCorps.name}
                   corpsClass={activeCorpsClass}
                   loading={scoresLoading}
+                  recentScore={recentResults?.[0]?.score}
                 />
 
                 <RecentResultsFeed
