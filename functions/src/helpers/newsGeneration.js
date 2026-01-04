@@ -870,9 +870,31 @@ async function generateFantasyRecap(recapData) {
     const allResults = shows.flatMap(s => s.results || []);
     const topPerformers = allResults.sort((a, b) => b.totalScore - a.totalScore).slice(0, 10);
 
-    const prompt = `Generate fantasy analysis for Day ${offSeasonDay}:
-${topPerformers.map((r, i) => `${i + 1}. ${r.corpsName}: ${r.totalScore.toFixed(3)}`).join('\n')}
-Return JSON: { headline, summary, narrative, fantasyImpact, trendingCorps: [] }`;
+    const prompt = `You are a sports journalist for marching.art, a FANTASY SPORTS platform for DCI (Drum Corps International) marching band competitions.
+
+This is like fantasy football, but for drum corps. Users create fantasy ensembles by drafting real DCI corps to earn points based on actual competition scores.
+
+Write a Day ${offSeasonDay} fantasy sports recap article for these top-performing user ensembles:
+
+TOP FANTASY ENSEMBLES (user-created teams):
+${topPerformers.map((r, i) => `${i + 1}. "${r.corpsName}" (Director: ${r.directorName || 'Anonymous'}): ${r.totalScore.toFixed(3)} fantasy points`).join('\n')}
+
+Write like ESPN fantasy sports coverage. Focus on:
+- Which fantasy ensembles scored the most points
+- Celebrate the top directors' success
+- General strategy tips (without revealing specific lineup picks)
+
+IMPORTANT: Do NOT mention RPGs, video games, or fictional fantasy worlds. This is SPORTS fantasy like fantasy football.
+All "corps" names above are user-created fantasy team names, not real DCI corps.
+
+Return JSON with these EXACT string fields:
+{
+  "headline": "string - exciting sports headline about Day ${offSeasonDay} fantasy results",
+  "summary": "string - 2-3 sentence summary of fantasy sports results",
+  "narrative": "string - full article text about fantasy sports performance",
+  "fantasyImpact": "string - brief tip for fantasy players",
+  "trendingCorps": ["string array of top 3 performing fantasy team names"]
+}`;
 
     const result = await textModel.generateContent(prompt);
     return { success: true, content: parseAiJson(result.response.text()) };
