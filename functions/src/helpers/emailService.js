@@ -33,18 +33,22 @@ const EMAIL_TYPES = {
   MILESTONE_ACHIEVED: "milestone_achieved",
 };
 
-/**
- * Create and configure Brevo API instance
- */
-function createBrevoClient() {
-  const apiKey = brevoApiKey.value();
-  if (!apiKey) {
-    throw new Error("Brevo API key not configured");
-  }
+// Cached Brevo API instance - reused across requests in same instance
+let cachedBrevoClient = null;
 
-  const apiInstance = new brevo.TransactionalEmailsApi();
-  apiInstance.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, apiKey);
-  return apiInstance;
+/**
+ * Get or create Brevo API instance (cached for performance)
+ */
+function getBrevoClient() {
+  if (!cachedBrevoClient) {
+    const apiKey = brevoApiKey.value();
+    if (!apiKey) {
+      throw new Error("Brevo API key not configured");
+    }
+    cachedBrevoClient = new brevo.TransactionalEmailsApi();
+    cachedBrevoClient.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, apiKey);
+  }
+  return cachedBrevoClient;
 }
 
 /**
@@ -59,7 +63,7 @@ function createBrevoClient() {
  */
 async function sendEmail({ to, subject, html, text, emailType }) {
   try {
-    const apiInstance = createBrevoClient();
+    const apiInstance = getBrevoClient();
 
     const sendSmtpEmail = new brevo.SendSmtpEmail();
     sendSmtpEmail.subject = subject;
