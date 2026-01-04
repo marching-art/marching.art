@@ -121,8 +121,9 @@ const processCategoryTotals = (yearData, corpsName, effectiveDay) => {
   const scores = [];
 
   for (const event of yearData) {
-    // Only include scores from days before the effective day (no spoilers)
-    if (event.offSeasonDay >= effectiveDay) continue;
+    // Only include scores from days up to and including the effective day
+    // effectiveDay represents the day whose scores have been processed (at 2 AM)
+    if (event.offSeasonDay > effectiveDay) continue;
 
     const scoreData = event.scores?.find(s => s.corps === corpsName);
     if (scoreData?.captions) {
@@ -184,16 +185,17 @@ const processCaptionScores = (yearData, corpsName, captionId, effectiveDay) => {
   for (const event of sortedEvents) {
     const scoreData = event.scores?.find(s => s.corps === corpsName);
 
-    // Find next upcoming show (first event with day >= effectiveDay)
-    if (event.offSeasonDay >= effectiveDay && !nextShow && scoreData) {
+    // Find next upcoming show (first event with day > effectiveDay)
+    if (event.offSeasonDay > effectiveDay && !nextShow && scoreData) {
       nextShow = {
         day: event.offSeasonDay,
         location: event.eventName || event.name || 'TBD'
       };
     }
 
-    // Only include scores from days before the effective day (no spoilers)
-    if (event.offSeasonDay >= effectiveDay) continue;
+    // Only include scores from days up to and including the effective day
+    // effectiveDay represents the day whose scores have been processed (at 2 AM)
+    if (event.offSeasonDay > effectiveDay) continue;
 
     if (scoreData?.captions) {
       const captionScore = scoreData.captions[captionId];
