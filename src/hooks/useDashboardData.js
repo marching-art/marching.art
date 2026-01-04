@@ -135,6 +135,29 @@ export const useDashboardData = () => {
   // Detect corps that need season setup
   useEffect(() => {
     if (profile && seasonData && !loading && !seasonLoading) {
+      // Skip wizard if initial setup was already completed for this season
+      if (profile.initialSetupComplete === seasonData.seasonUid) {
+        setCorpsNeedingSetup([]);
+        setShowSeasonSetupWizard(false);
+        return;
+      }
+
+      // Skip if user has any show registrations (means they already completed initial setup)
+      if (corps) {
+        const hasAnyShowRegistrations = Object.values(corps).some((corpsData) => {
+          if (!corpsData?.selectedShows) return false;
+          return Object.values(corpsData.selectedShows).some(
+            (shows) => Array.isArray(shows) && shows.length > 0
+          );
+        });
+
+        if (hasAnyShowRegistrations) {
+          setCorpsNeedingSetup([]);
+          setShowSeasonSetupWizard(false);
+          return;
+        }
+      }
+
       const needSetup = [];
       const hasCorps = corps && Object.keys(corps).length > 0;
       const hasRetiredCorps = profile.retiredCorps && profile.retiredCorps.length > 0;
