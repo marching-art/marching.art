@@ -1,9 +1,9 @@
 // MatchupCard - Compact matchup summary card for lists and previews
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Swords, Trophy, Check, Radio, Clock, ChevronRight } from 'lucide-react';
 
-const MatchupCard = ({
+const MatchupCard = React.memo(({
   matchup,
   currentUserId,
   homeUser,
@@ -29,6 +29,11 @@ const MatchupCard = ({
 
   const userWon = isCompleted && matchup.winnerId === currentUserId;
   const userLost = isCompleted && matchup.winnerId && matchup.winnerId !== currentUserId;
+
+  // Memoize click handler
+  const handleClick = useCallback(() => {
+    onClick?.();
+  }, [onClick]);
 
   // Status indicator colors and text
   const getStatusDisplay = () => {
@@ -68,8 +73,8 @@ const MatchupCard = ({
       <motion.div
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        onClick={onClick}
-        className={`p-3 rounded-lg cursor-pointer transition-all border ${
+        onClick={handleClick}
+        className={`p-3 rounded-sm cursor-pointer transition-all border ${
           isLive
             ? 'bg-red-500/10 border-red-500/30 hover:border-red-500/50'
             : userWon
@@ -97,8 +102,8 @@ const MatchupCard = ({
                 </p>
               </div>
             )}
-            <div className={`px-2 py-1 rounded-full text-xs font-semibold ${status.bgColor} ${status.color}`}>
-              {isLive && <span className="inline-block w-1.5 h-1.5 bg-red-400 rounded-full mr-1 animate-pulse" />}
+            <div className={`px-2 py-1 rounded-sm text-xs font-semibold ${status.bgColor} ${status.color}`}>
+              {isLive && <span className="inline-block w-1.5 h-1.5 bg-red-400 rounded-sm mr-1 animate-pulse" />}
               {status.text}
             </div>
           </div>
@@ -111,8 +116,8 @@ const MatchupCard = ({
     <motion.div
       whileHover={{ scale: 1.01, y: -2 }}
       whileTap={{ scale: 0.99 }}
-      onClick={onClick}
-      className={`relative p-4 rounded-xl cursor-pointer transition-all border-2 ${
+      onClick={handleClick}
+      className={`relative p-4 rounded-sm cursor-pointer transition-all border-2 ${
         isLive
           ? 'bg-gradient-to-br from-red-500/10 to-charcoal-900/50 border-red-500/40 hover:border-red-500/60'
           : userWon
@@ -126,8 +131,8 @@ const MatchupCard = ({
       {isLive && (
         <div className="absolute top-3 right-3 flex items-center gap-1.5">
           <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-sm bg-red-400 opacity-75" />
+            <span className="relative inline-flex rounded-sm h-2.5 w-2.5 bg-red-500" />
           </span>
           <span className="text-xs font-bold text-red-400 uppercase tracking-wide">Live</span>
         </div>
@@ -135,7 +140,7 @@ const MatchupCard = ({
 
       {/* Status badge for completed */}
       {isCompleted && (
-        <div className={`absolute top-3 right-3 flex items-center gap-1.5 px-2 py-1 rounded-full ${status.bgColor}`}>
+        <div className={`absolute top-3 right-3 flex items-center gap-1.5 px-2 py-1 rounded-sm ${status.bgColor}`}>
           <StatusIcon className={`w-3.5 h-3.5 ${status.color}`} />
           <span className={`text-xs font-bold uppercase tracking-wide ${status.color}`}>
             {status.text}
@@ -155,7 +160,7 @@ const MatchupCard = ({
       <div className="flex items-center justify-between gap-4">
         {/* User side */}
         <div className={`flex-1 text-center ${isParticipant && isCurrentUserHome ? '' : 'order-2'}`}>
-          <div className="w-12 h-12 rounded-full bg-charcoal-800 flex items-center justify-center mx-auto mb-2 border-2 border-cream-500/30">
+          <div className="w-12 h-12 rounded-sm bg-charcoal-800 flex items-center justify-center mx-auto mb-2 border-2 border-cream-500/30">
             <span className="text-lg font-bold text-cream-100">
               {(isCurrentUserHome ? user : homeUser)?.displayName?.charAt(0) || 'Y'}
             </span>
@@ -195,7 +200,7 @@ const MatchupCard = ({
 
         {/* Opponent side */}
         <div className={`flex-1 text-center ${isParticipant && isCurrentUserAway ? '' : 'order-3'}`}>
-          <div className="w-12 h-12 rounded-full bg-charcoal-800 flex items-center justify-center mx-auto mb-2 border-2 border-cream-500/30">
+          <div className="w-12 h-12 rounded-sm bg-charcoal-800 flex items-center justify-center mx-auto mb-2 border-2 border-cream-500/30">
             <span className="text-lg font-bold text-cream-500/60">
               {(isCurrentUserAway ? user : awayUser)?.displayName?.charAt(0) || '?'}
             </span>
@@ -224,6 +229,7 @@ const MatchupCard = ({
       </div>
     </motion.div>
   );
-};
+});
+MatchupCard.displayName = 'MatchupCard';
 
 export default MatchupCard;

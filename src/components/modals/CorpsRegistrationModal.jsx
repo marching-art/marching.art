@@ -18,7 +18,7 @@ const CorpsRegistrationModal = ({ onClose, onSubmit, unlockedClasses = ['soundSp
   const [formData, setFormData] = useState({
     name: '',
     location: '',
-    showConcept: '',
+    description: '',
     class: defaultClass || 'soundSport',
   });
 
@@ -45,7 +45,7 @@ const CorpsRegistrationModal = ({ onClose, onSubmit, unlockedClasses = ['soundSp
         aria-labelledby="modal-title-corps-registration"
       >
         <div
-          className="w-full max-w-lg bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl"
+          className="w-full max-w-lg bg-[#1a1a1a] border border-[#333] rounded-sm"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -93,20 +93,20 @@ const CorpsRegistrationModal = ({ onClose, onSubmit, unlockedClasses = ['soundSp
                 />
               </div>
 
-              {/* Show Concept */}
+              {/* Group Description */}
               <div>
                 <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
-                  Show Concept
+                  Group Description
                 </label>
                 <textarea
-                  placeholder="Describe your show concept..."
-                  value={formData.showConcept}
-                  onChange={(e) => setFormData({ ...formData, showConcept: e.target.value })}
+                  placeholder="Describe your corps..."
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   maxLength={500}
                   className="w-full h-20 px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] resize-none"
                 />
                 <p className="text-[10px] text-gray-600 mt-1">
-                  {formData.showConcept.length}/500
+                  {formData.description.length}/500
                 </p>
               </div>
 
@@ -131,7 +131,7 @@ const CorpsRegistrationModal = ({ onClose, onSubmit, unlockedClasses = ['soundSp
                         `}
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                          <div className={`w-4 h-4 rounded-sm border-2 flex items-center justify-center ${
                             isSelected ? 'border-[#0057B8] bg-[#0057B8]' : 'border-[#444]'
                           }`}>
                             {isSelected && <Check className="w-2.5 h-2.5 text-white" />}
@@ -150,7 +150,7 @@ const CorpsRegistrationModal = ({ onClose, onSubmit, unlockedClasses = ['soundSp
             </div>
 
             {/* Footer */}
-            <div className="px-4 py-3 border-t border-[#333] bg-[#222] flex justify-end gap-2">
+            <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end gap-2">
               <button
                 type="button"
                 onClick={onClose}

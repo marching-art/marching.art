@@ -35,8 +35,8 @@ class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-gradient-main flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-charcoal-800 rounded-xl border border-cream-500/20 p-8 text-center">
-            <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="max-w-md w-full bg-charcoal-800 rounded-sm border border-cream-500/20 p-8 text-center">
+            <div className="w-16 h-16 bg-red-500/20 rounded-sm flex items-center justify-center mx-auto mb-6">
               <AlertTriangle className="w-8 h-8 text-red-400" />
             </div>
 
@@ -49,7 +49,7 @@ class ErrorBoundary extends React.Component {
             </p>
 
             {import.meta.env.DEV && this.state.error && (
-              <div className="bg-charcoal-900 rounded-lg p-4 mb-6 text-left">
+              <div className="bg-charcoal-900 rounded-sm p-4 mb-6 text-left">
                 <p className="text-red-400 text-sm font-mono break-all">
                   {this.state.error.toString()}
                 </p>
@@ -59,7 +59,7 @@ class ErrorBoundary extends React.Component {
             <div className="flex gap-3 justify-center">
               <button
                 onClick={this.handleReload}
-                className="flex items-center gap-2 px-4 py-2 bg-gold-500 text-charcoal-900 rounded-lg font-medium hover:bg-gold-400 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-gold-500 text-charcoal-900 rounded-sm font-medium hover:bg-gold-400 transition-colors"
               >
                 <RefreshCw className="w-4 h-4" />
                 Refresh
@@ -67,7 +67,7 @@ class ErrorBoundary extends React.Component {
 
               <button
                 onClick={this.handleGoHome}
-                className="flex items-center gap-2 px-4 py-2 bg-charcoal-700 text-cream-100 rounded-lg font-medium hover:bg-charcoal-600 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-charcoal-700 text-cream-100 rounded-sm font-medium hover:bg-charcoal-600 transition-colors"
               >
                 <Home className="w-4 h-4" />
                 Home

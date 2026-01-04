@@ -142,7 +142,7 @@ const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, season
         onClick={onClose}
       >
         <div
-          className="w-full max-w-4xl max-h-[90vh] bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl flex flex-col"
+          className="w-full max-w-4xl max-h-[90vh] bg-[#1a1a1a] border border-[#333] rounded-sm flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -183,7 +183,7 @@ const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, season
           <div className="flex-1 overflow-y-auto p-4">
             {loading ? (
               <div className="text-center py-12">
-                <div className="w-8 h-8 border-2 border-[#0057B8] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                <div className="w-8 h-8 border-2 border-[#0057B8] border-t-transparent rounded-sm animate-spin mx-auto mb-3" />
                 <p className="text-xs text-gray-500 uppercase tracking-wider">Loading shows...</p>
               </div>
             ) : availableShows.length === 0 ? (
@@ -310,7 +310,7 @@ const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, season
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-3 border-t border-[#333] bg-[#222] flex justify-end gap-2 flex-shrink-0">
+          <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end gap-2 flex-shrink-0">
             <button
               onClick={onClose}
               disabled={saving}
@@ -326,7 +326,7 @@ const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, season
             >
               {saving ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-sm animate-spin" />
                   Saving...
                 </>
               ) : (

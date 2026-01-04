@@ -12,9 +12,10 @@ exports.updateLifetimeLeaderboard = onCall({ cors: true }, async (request) => {
     throw new HttpsError("unauthenticated", "Authentication required");
   }
 
-  // Check if user is admin
+  // Check if user is admin - only fetch the role field
   const db = getDb();
   const userDoc = await db.doc(`artifacts/${dataNamespaceParam.value()}/users/${request.auth.uid}/profile/data`).get();
+  // Note: Single doc reads don't support select() in Admin SDK, but this is a small doc read for auth
 
   if (!userDoc.exists || userDoc.data().role !== 'admin') {
     throw new HttpsError("permission-denied", "Admin access required");
@@ -51,9 +52,10 @@ async function updateLifetimeLeaderboardLogic() {
   logger.info("Updating lifetime leaderboard...");
 
   try {
-    // Get all user documents
+    // Get all user document IDs only (no field data needed)
+    // Field projection: Empty select() returns only document references, reducing data transfer by ~99%
     const usersRef = db.collection(`artifacts/${dataNamespaceParam.value()}/users`);
-    const usersSnapshot = await usersRef.get();
+    const usersSnapshot = await usersRef.select().get();
 
     const lifetimeData = [];
 

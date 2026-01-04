@@ -128,7 +128,7 @@ export const Modal: React.FC<ModalProps> = ({
         ref={modalRef}
         className={`
           bg-[#1a1a1a] border border-[#333] rounded-sm w-full overflow-hidden
-          shadow-2xl transform transition-all duration-150
+          transform transition-all duration-150
           ${sizeStyles[size]}
         `}
         onClick={(e) => e.stopPropagation()}
@@ -167,7 +167,7 @@ export const Modal: React.FC<ModalProps> = ({
 
         {/* Footer */}
         {footer && (
-          <div className="px-4 py-3 border-t border-[#333] bg-[#222] flex justify-end gap-2">
+          <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end gap-2">
             {footer}
           </div>
         )}
@@ -256,7 +256,7 @@ export const ModalFooter: React.FC<ModalFooterProps> = ({
   children,
   className = '',
 }) => (
-  <div className={`px-4 py-3 border-t border-[#333] bg-[#222] flex justify-end gap-2 ${className}`}>
+  <div className={`px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end gap-2 ${className}`}>
     {children}
   </div>
 );
@@ -299,7 +299,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="h-12 px-5 border border-[#333] text-gray-400 text-base font-bold uppercase tracking-wider hover:border-[#444] hover:text-white active:bg-white/5 transition-all press-feedback disabled:opacity-50 rounded-sm"
+            className="h-9 px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white active:bg-white/5 transition-all press-feedback disabled:opacity-50 rounded-sm"
           >
             {cancelText}
           </button>
@@ -307,7 +307,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             onClick={onConfirm}
             disabled={isLoading}
             className={`
-              h-12 px-5 text-base font-bold uppercase tracking-wider transition-all press-feedback-strong disabled:opacity-50 rounded-sm
+              h-9 px-4 text-sm font-bold uppercase tracking-wider transition-all press-feedback-strong disabled:opacity-50 rounded-sm
               ${variant === 'danger'
                 ? 'bg-red-600 text-white hover:bg-red-500 active:bg-red-700'
                 : 'bg-[#0057B8] text-white hover:bg-[#0066d6] active:bg-[#004a9e]'}

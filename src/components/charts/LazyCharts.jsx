@@ -11,7 +11,7 @@ const LazyBarChart = lazy(() => import('./BarChartImpl'));
 // Chart loading skeleton
 const ChartSkeleton = ({ height = '100%' }) => (
   <div
-    className="animate-pulse bg-charcoal-800/50 rounded-lg flex items-center justify-center"
+    className="animate-pulse bg-charcoal-800/50 rounded-sm flex items-center justify-center"
     style={{ height }}
   >
     <div className="text-cream-500/40 text-xs font-mono uppercase tracking-wide">

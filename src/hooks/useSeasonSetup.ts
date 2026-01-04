@@ -37,6 +37,42 @@ export function useSeasonSetup(
   useEffect(() => {
     if (!profile || !seasonData || loading || seasonLoading) return;
 
+    // Skip wizard if initial setup was already completed for this season
+    // This prevents the wizard from showing repeatedly after the user has
+    // already gone through the initial registration/show selection process
+    if (profile.initialSetupComplete === seasonData.seasonUid) {
+      console.log('[useSeasonSetup] Skipping wizard - initialSetupComplete matches');
+      setCorpsNeedingSetup([]);
+      setShowSeasonSetupWizard(false);
+      return;
+    }
+
+    // Also skip if user is already active in this season AND has show registrations
+    // This handles existing users who completed setup before the initialSetupComplete flag existed
+    if (corps) {
+      console.log('[useSeasonSetup] Checking corps for show registrations:', corps);
+      const hasAnyShowRegistrations = Object.values(corps).some((corpsData) => {
+        if (!corpsData?.selectedShows) {
+          console.log('[useSeasonSetup] No selectedShows for corps:', corpsData);
+          return false;
+        }
+        console.log('[useSeasonSetup] selectedShows:', corpsData.selectedShows);
+        // Check if any week has show registrations
+        const hasShows = Object.values(corpsData.selectedShows).some(
+          (shows) => Array.isArray(shows) && shows.length > 0
+        );
+        console.log('[useSeasonSetup] hasShows:', hasShows);
+        return hasShows;
+      });
+
+      console.log('[useSeasonSetup] hasAnyShowRegistrations:', hasAnyShowRegistrations);
+      if (hasAnyShowRegistrations) {
+        setCorpsNeedingSetup([]);
+        setShowSeasonSetupWizard(false);
+        return;
+      }
+    }
+
     const needSetup: CorpsClass[] = [];
     const hasCorps = corps && Object.keys(corps).length > 0;
     const hasRetiredCorps = profile.retiredCorps && profile.retiredCorps.length > 0;

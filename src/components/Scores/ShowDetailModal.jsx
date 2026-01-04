@@ -37,7 +37,7 @@ const ShowDetailModal = ({ show, onClose }) => {
           role="dialog"
           aria-modal="true"
           aria-labelledby="show-detail-title"
-          className="w-full max-w-4xl max-h-[85vh] bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl flex flex-col"
+          className="w-full max-w-4xl max-h-[85vh] bg-[#1a1a1a] border border-[#333] rounded-sm flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -72,7 +72,7 @@ const ShowDetailModal = ({ show, onClose }) => {
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-3 border-t border-[#333] bg-[#222] flex justify-end flex-shrink-0">
+          <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end flex-shrink-0">
             <button
               onClick={onClose}
               className="h-9 px-4 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6]"

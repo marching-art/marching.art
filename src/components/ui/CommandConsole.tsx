@@ -76,24 +76,24 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
       <div className="text-center">
         <div className="flex items-center justify-center gap-2 mb-2">
           {shouldReduceMotion ? (
-            <div className="w-2 h-2 bg-gold-500 rounded-full" />
+            <div className="w-2 h-2 bg-gold-500 rounded-sm" />
           ) : (
             <motion.div
               animate={{ opacity: [1, 0.3, 1] }}
               transition={{ duration: 0.8, repeat: Infinity }}
-              className="w-2 h-2 bg-gold-500 rounded-full"
+              className="w-2 h-2 bg-gold-500 rounded-sm"
             />
           )}
           <span className="font-mono text-[10px] text-gold-500/80 uppercase tracking-[0.3em]">
             System Boot
           </span>
           {shouldReduceMotion ? (
-            <div className="w-2 h-2 bg-gold-500 rounded-full" />
+            <div className="w-2 h-2 bg-gold-500 rounded-sm" />
           ) : (
             <motion.div
               animate={{ opacity: [1, 0.3, 1] }}
               transition={{ duration: 0.8, repeat: Infinity, delay: 0.4 }}
-              className="w-2 h-2 bg-gold-500 rounded-full"
+              className="w-2 h-2 bg-gold-500 rounded-sm"
             />
           )}
         </div>
@@ -423,7 +423,7 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
       <div className={`
         border-2 border-dashed border-warning/30
         bg-warning/5 backdrop-blur-sm
-        rounded-lg p-6 md:p-8
+        rounded-sm p-6 md:p-8
         ${className}
       `}>
         <div className="text-center">
@@ -454,7 +454,7 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
       relative min-h-[320px] flex items-center justify-center
       border-2 border-dashed border-warning/30
       bg-gradient-to-b from-warning/[0.02] to-transparent
-      rounded-lg overflow-hidden
+      rounded-sm overflow-hidden
       ${className}
     `}>
       {/* Background Watermark */}
@@ -486,7 +486,7 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
 
         {/* Status Indicator - static on mobile */}
         <div className="flex items-center justify-center gap-2 mb-4">
-          <div className="w-2 h-2 bg-warning rounded-full" />
+          <div className="w-2 h-2 bg-warning rounded-sm" />
           <span className="font-mono text-[9px] text-warning/60 uppercase tracking-[0.2em]">
             Status: Awaiting Input
           </span>

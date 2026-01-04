@@ -27,7 +27,7 @@ const WeekTabs = ({
       className="flex-shrink-0"
     >
       {/* Glass panel container */}
-      <div className="bg-charcoal-950/60 backdrop-blur-xl border border-white/5 rounded-2xl p-4 lg:p-6">
+      <div className="bg-charcoal-950/60 backdrop-blur-xl border border-white/5 p-4 lg:p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="text-[10px] text-cream/50 uppercase tracking-widest font-display font-bold">
@@ -41,11 +41,11 @@ const WeekTabs = ({
         {/* Timeline */}
         <div className="relative">
           {/* Background Track */}
-          <div className="absolute top-1/2 left-0 right-0 h-1 bg-charcoal-800 rounded-full -translate-y-1/2" />
+          <div className="absolute top-1/2 left-0 right-0 h-1 bg-charcoal-800 rounded-sm -translate-y-1/2" />
 
           {/* Progress Track */}
           <div
-            className="absolute top-1/2 left-0 h-1 bg-gradient-to-r from-gold-500 to-gold-400 rounded-full -translate-y-1/2 transition-all duration-500"
+            className="absolute top-1/2 left-0 h-1 bg-gradient-to-r from-gold-500 to-gold-400 rounded-sm -translate-y-1/2 transition-all duration-500"
             style={{ width: `${((currentWeek - 0.5) / 7) * 100}%` }}
           />
 
@@ -66,14 +66,14 @@ const WeekTabs = ({
                   {/* Pulsating Glow Ring (Active Week Only) */}
                   {status === 'active' && (
                     <>
-                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-gold-500/20 animate-ping" style={{ animationDuration: '2s' }} />
-                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-gold-500/10 animate-pulse" style={{ animationDuration: '1.5s' }} />
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-sm bg-gold-500/20 animate-ping" style={{ animationDuration: '2s' }} />
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-sm bg-gold-500/10 animate-pulse" style={{ animationDuration: '1.5s' }} />
                     </>
                   )}
 
                   {/* Node */}
                   <div className={`
-                    relative z-10 w-10 h-10 lg:w-12 lg:h-12 rounded-xl flex items-center justify-center
+                    relative z-10 w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center
                     font-display font-bold text-lg lg:text-xl
                     transition-all duration-300
                     ${status === 'active'
@@ -113,7 +113,7 @@ const WeekTabs = ({
                   {/* Show Count Badge */}
                   {showCount > 0 && (
                     <div className={`
-                      mt-1 px-2 py-0.5 rounded-full text-[9px] font-bold
+                      mt-1 px-2 py-0.5 text-[9px] font-bold
                       ${status === 'active'
                         ? 'bg-gold-500/20 text-gold-400 border border-gold-500/30'
                         : status === 'complete'
@@ -127,7 +127,7 @@ const WeekTabs = ({
 
                   {/* Registration Badge */}
                   {regCount > 0 && (
-                    <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-gold-500 text-charcoal-950 text-[10px] font-bold flex items-center justify-center shadow-[0_0_10px_rgba(234,179,8,0.5)]">
+                    <div className="absolute -top-1 -right-1 w-5 h-5 rounded-sm bg-gold-500 text-charcoal-950 text-[10px] font-bold flex items-center justify-center shadow-[0_0_10px_rgba(234,179,8,0.5)]">
                       {regCount}
                     </div>
                   )}

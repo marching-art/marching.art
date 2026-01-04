@@ -10,6 +10,7 @@ import {
 import { useAuth } from '../App';
 import BrandLogo from '../components/BrandLogo';
 import { db, dataNamespace } from '../firebase';
+import { compareCorpsClasses } from '../utils/corps';
 import { doc, onSnapshot } from 'firebase/firestore';
 import LoadingScreen from '../components/LoadingScreen';
 import { Line } from '../components/charts';
@@ -208,13 +209,10 @@ const CorpsHistory = () => {
               </div>
             </div>
 
-            {/* Corps Selector Pills */}
+            {/* Corps Selector Pills - sorted by class order (World → Open → A → SoundSport) */}
             <div className="flex gap-2 flex-wrap">
               {Object.entries(corps)
-                .sort((a, b) => {
-                  const classOrder = { worldClass: 0, openClass: 1, aClass: 2, soundSport: 3 };
-                  return (classOrder[a[0]] ?? 99) - (classOrder[b[0]] ?? 99);
-                })
+                .sort((a, b) => compareCorpsClasses(a[0], b[0]))
                 .map(([corpsClass, corpsData]) => (
                   <button
                     key={corpsClass}

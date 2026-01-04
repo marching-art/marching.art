@@ -63,7 +63,7 @@ const ShowSelectionStep = ({
             {getCorpsClassName(currentCorpsClass)}
           </span>
         </div>
-        <div className="h-1.5 md:h-2 bg-charcoal-800 rounded-full overflow-hidden">
+        <div className="h-1.5 md:h-2 bg-charcoal-800 rounded-sm overflow-hidden">
           <motion.div
             animate={{ width: `${((currentCorpsIndex + 0.75) / totalCorps) * 100}%` }}
             className="h-full bg-gradient-gold"
@@ -115,7 +115,7 @@ const ShowSelectionStep = ({
                     </div>
                   </div>
                   {daySelections > 0 && (
-                    <span className={`absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full text-[10px] flex items-center justify-center font-bold ${
+                    <span className={`absolute -top-1.5 -right-1.5 w-5 h-5 rounded-sm text-[10px] flex items-center justify-center font-bold ${
                       isActive ? 'bg-charcoal-900 text-gold-500' : 'bg-gold-500 text-charcoal-900'
                     }`}>
                       {daySelections}
@@ -163,7 +163,7 @@ const ShowSelectionStep = ({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.03 }}
                 onClick={() => onToggleShow(show)}
-                className={`p-3 sm:p-4 rounded-xl border-2 cursor-pointer transition-all active:scale-[0.98] ${
+                className={`p-3 sm:p-4 rounded-sm border-2 cursor-pointer transition-all active:scale-[0.98] ${
                   isSelected
                     ? 'border-gold-500 bg-gold-500/10 shadow-md shadow-gold-500/10'
                     : 'border-cream-500/10 bg-charcoal-900/30 hover:border-cream-500/30 hover:bg-charcoal-900/50'
@@ -181,7 +181,7 @@ const ShowSelectionStep = ({
                       </p>
                     )}
                   </div>
-                  <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                  <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-sm border-2 flex items-center justify-center flex-shrink-0 transition-all ${
                     isSelected
                       ? 'border-gold-500 bg-gold-500 scale-110'
                       : 'border-cream-500/30'
@@ -211,7 +211,7 @@ const ShowSelectionStep = ({
         >
           {saving ? (
             <>
-              <div className="animate-spin w-4 h-4 md:w-5 md:h-5 border-2 border-white border-t-transparent rounded-full mr-2" />
+              <div className="animate-spin w-4 h-4 md:w-5 md:h-5 border-2 border-white border-t-transparent rounded-sm mr-2" />
               Saving...
             </>
           ) : currentCorpsIndex < totalCorps - 1 ? (

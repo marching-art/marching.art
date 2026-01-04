@@ -1,7 +1,7 @@
 // LeagueActivityFeed - Shows recent league events and notifications
 // Keeps users engaged with real-time activity updates
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bell, Swords, TrendingUp, MessageSquare, ArrowLeftRight,
@@ -60,12 +60,21 @@ const colorMap = {
 // ACTIVITY ITEM COMPONENT
 // =============================================================================
 
-const ActivityItem = ({ activity, isNotification = false, onMarkRead, onTap }) => {
+const ActivityItem = React.memo(({ activity, isNotification = false, onMarkRead, onTap }) => {
   const Icon = iconMap[activity.type] || Bell;
   const colors = colorMap[activity.type] || colorMap.matchup_result;
 
   const timestamp = activity.createdAt || activity.timestamp;
   const timeAgo = timestamp ? formatNotificationTime(timestamp) : '';
+
+  const handleClick = useCallback(() => {
+    onTap?.(activity);
+  }, [onTap, activity]);
+
+  const handleMarkRead = useCallback((e) => {
+    e.stopPropagation();
+    onMarkRead(activity.id);
+  }, [onMarkRead, activity.id]);
 
   return (
     <motion.div
@@ -73,7 +82,7 @@ const ActivityItem = ({ activity, isNotification = false, onMarkRead, onTap }) =
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 10 }}
       whileHover={{ scale: 1.01 }}
-      onClick={() => onTap?.(activity)}
+      onClick={handleClick}
       className={`
         relative flex items-start gap-3 p-3 rounded-sm cursor-pointer transition-all
         ${isNotification && !activity.read ? 'bg-[#222] border border-yellow-500/30' : 'bg-[#1a1a1a] border border-[#333]'}
@@ -82,7 +91,7 @@ const ActivityItem = ({ activity, isNotification = false, onMarkRead, onTap }) =
     >
       {/* Unread indicator */}
       {isNotification && !activity.read && (
-        <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
+        <div className="absolute top-2 right-2 w-2 h-2 rounded-sm bg-yellow-500 animate-pulse" />
       )}
 
       {/* Icon */}
@@ -149,10 +158,7 @@ const ActivityItem = ({ activity, isNotification = false, onMarkRead, onTap }) =
       {/* Mark as read button for notifications */}
       {isNotification && !activity.read && onMarkRead && (
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onMarkRead(activity.id);
-          }}
+          onClick={handleMarkRead}
           className="p-1.5 rounded-sm hover:bg-[#333] transition-colors"
           title="Mark as read"
         >
@@ -163,13 +169,14 @@ const ActivityItem = ({ activity, isNotification = false, onMarkRead, onTap }) =
       <ChevronRight className="w-4 h-4 text-gray-600 flex-shrink-0 self-center" />
     </motion.div>
   );
-};
+});
+ActivityItem.displayName = 'ActivityItem';
 
 // =============================================================================
 // FILTER TABS
 // =============================================================================
 
-const FilterTab = ({ active, onClick, children, count }) => (
+const FilterTab = React.memo(({ active, onClick, children, count }) => (
   <button
     onClick={onClick}
     className={`
@@ -183,14 +190,15 @@ const FilterTab = ({ active, onClick, children, count }) => (
     {children}
     {count > 0 && (
       <span className={`
-        absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full text-[10px] flex items-center justify-center
+        absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-sm text-[10px] flex items-center justify-center
         ${active ? 'bg-black text-yellow-500' : 'bg-yellow-500 text-black'}
       `}>
         {count > 99 ? '99+' : count}
       </span>
     )}
   </button>
-);
+));
+FilterTab.displayName = 'FilterTab';
 
 // =============================================================================
 // LEAGUE ACTIVITY FEED COMPONENT

@@ -1,7 +1,7 @@
 // src/components/Scores/Leaderboard.jsx
 // Simple, scannable leaderboard with rank, name, score, and trend indicators
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, TrendingUp, TrendingDown, Minus, ChevronDown, Search, Users } from 'lucide-react';
 
@@ -40,7 +40,7 @@ const RankBadge = ({ rank }) => {
   };
 
   return (
-    <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-display font-bold text-sm ${getStyle()}`}>
+    <div className={`w-8 h-8 rounded-sm flex items-center justify-center font-display font-bold text-sm ${getStyle()}`}>
       {rank}
     </div>
   );
@@ -55,7 +55,7 @@ const FilterDropdown = ({ label, value, options, onChange }) => {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 bg-charcoal-800 border border-cream-500/10 rounded-lg text-sm text-cream-300 hover:bg-charcoal-700 transition-colors"
+        className="flex items-center gap-2 px-3 py-2 bg-charcoal-800 border border-cream-500/10 rounded-sm text-sm text-cream-300 hover:bg-charcoal-700 transition-colors"
       >
         <span className="text-cream-500/60">{label}:</span>
         <span className="font-medium">{selectedOption?.label || value}</span>
@@ -100,19 +100,23 @@ const FilterDropdown = ({ label, value, options, onChange }) => {
   );
 };
 
-// Single leaderboard row
-const LeaderboardRow = ({ entry, isCurrentUser, onClick }) => {
+// Single leaderboard row - memoized to prevent re-renders when other rows change
+const LeaderboardRow = React.memo(({ entry, isCurrentUser, onClick }) => {
   const { rank, corps, corpsName, score, totalScore, trend, rankChange } = entry;
   const displayName = corps || corpsName || 'Unknown';
   const displayScore = score || totalScore || 0;
+
+  const handleClick = useCallback(() => {
+    onClick?.(entry);
+  }, [onClick, entry]);
 
   return (
     <motion.button
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
-      onClick={() => onClick?.(entry)}
+      onClick={handleClick}
       className={`
-        w-full flex items-center gap-4 px-4 py-3 rounded-lg transition-colors text-left
+        w-full flex items-center gap-4 px-4 py-3 rounded-sm transition-colors text-left
         ${isCurrentUser
           ? 'bg-gold-500/10 border border-gold-500/20 hover:bg-gold-500/15'
           : 'hover:bg-charcoal-800/50'
@@ -142,7 +146,9 @@ const LeaderboardRow = ({ entry, isCurrentUser, onClick }) => {
       </div>
     </motion.button>
   );
-};
+});
+
+LeaderboardRow.displayName = 'LeaderboardRow';
 
 const Leaderboard = ({
   entries = [],
@@ -214,7 +220,7 @@ const Leaderboard = ({
 
   if (isLoading) {
     return (
-      <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-6">
+      <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-sm p-6">
         <div className="animate-pulse space-y-4">
           <div className="h-6 bg-charcoal-800 rounded w-32"></div>
           <div className="flex gap-4">
@@ -230,7 +236,7 @@ const Leaderboard = ({
   }
 
   return (
-    <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl overflow-hidden">
+    <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-sm overflow-hidden">
       {/* Header */}
       <div className="p-4 border-b border-cream-500/10">
         <div className="flex items-center justify-between mb-4">
@@ -262,7 +268,7 @@ const Leaderboard = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search corps..."
-              className="w-full pl-10 pr-4 py-2 bg-charcoal-800 border border-cream-500/10 rounded-lg text-sm text-cream-100 placeholder-cream-500/40 focus:outline-none focus:border-gold-500/50"
+              className="w-full pl-10 pr-4 py-2 bg-charcoal-800 border border-cream-500/10 rounded-sm text-sm text-cream-100 placeholder-cream-500/40 focus:outline-none focus:border-gold-500/50"
             />
           </div>
         </div>

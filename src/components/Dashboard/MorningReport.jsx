@@ -41,13 +41,13 @@ const MorningReport = ({
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="glass-premium rounded-2xl w-full max-w-md overflow-hidden"
+          className="glass-premium rounded-sm w-full max-w-md overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header - Compact greeting */}
           <div className="px-6 pt-5 pb-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-gold-500/20">
+              <div className="p-2 rounded-sm bg-gold-500/20">
                 <GreetingIcon className="w-5 h-5 text-gold-500" />
               </div>
               <div>
@@ -64,7 +64,7 @@ const MorningReport = ({
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-lg hover:bg-cream-500/10 transition-colors"
+              className="p-2 rounded-sm hover:bg-cream-500/10 transition-colors"
             >
               <X className="w-5 h-5 text-cream-500/60" />
             </button>
@@ -73,7 +73,7 @@ const MorningReport = ({
           {/* Corps Status */}
           {activeCorps && (
             <div className="px-6 pb-5">
-              <div className="rounded-xl p-4 bg-gold-500/10 ring-1 ring-gold-500/30">
+              <div className="rounded-sm p-4 bg-gold-500/10 ring-1 ring-gold-500/30">
                 <div className="flex items-center justify-between">
                   <div className="min-w-0 flex-1">
                     <h3 className="font-semibold text-cream-100 truncate">
@@ -102,7 +102,7 @@ const MorningReport = ({
           <div className="px-6 pb-5">
             <button
               onClick={onClose}
-              className="w-full py-3 rounded-lg bg-gold-500 hover:bg-gold-400
+              className="w-full py-3 rounded-sm bg-gold-500 hover:bg-gold-400
                 text-charcoal-900 text-sm font-semibold transition-colors"
             >
               Let&apos;s Go!

@@ -418,7 +418,7 @@ exports.getHotCorps = onCall({ cors: true }, async (request) => {
     }
 
     // For each caption, determine which corps are "hot"
-    // Hot = top 3 corps with greatest improvement percentage in that caption
+    // Hot = top 5 corps with greatest improvement percentage in that caption
     const hotCorps = {};
 
     for (const caption of CAPTIONS) {
@@ -428,10 +428,10 @@ exports.getHotCorps = onCall({ cors: true }, async (request) => {
       // Sort by improvement percentage (descending) to find top gainers
       const sortedByImprovement = [...performers].sort((a, b) => b.improvement - a.improvement);
 
-      // Get the top 3 corps IDs for this caption
-      const top3Ids = new Set(
+      // Get the top 5 corps IDs for this caption
+      const top5Ids = new Set(
         sortedByImprovement
-          .slice(0, 3)
+          .slice(0, 5)
           .filter(p => p.improvement > 0) // Only mark as hot if actually improving
           .map(p => `${p.corpsName}|${p.sourceYear}`)
       );
@@ -445,7 +445,7 @@ exports.getHotCorps = onCall({ cors: true }, async (request) => {
         }
 
         hotCorps[corpsId][caption] = {
-          isHot: top3Ids.has(corpsId),
+          isHot: top5Ids.has(corpsId),
           improvement: Math.round(perf.improvement * 10) / 10,
           recentAvg: Math.round(perf.recentAvg * 100) / 100
         };

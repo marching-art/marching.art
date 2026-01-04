@@ -82,11 +82,11 @@ const RankingsTab = ({
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="bg-gradient-to-r from-amber-500/20 dark:from-gold-500/20 to-amber-400/10 dark:to-gold-400/10 border border-amber-500/30 dark:border-gold-500/30 rounded-xl shadow-sm p-4 md:p-6"
+          className="bg-gradient-to-r from-amber-500/20 dark:from-gold-500/20 to-amber-400/10 dark:to-gold-400/10 border border-amber-500/30 dark:border-gold-500/30 rounded-sm shadow-sm p-4 md:p-6"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 md:gap-4">
-              <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-amber-500/20 dark:bg-gold-500/20 flex items-center justify-center">
+              <div className="w-12 h-12 md:w-14 md:h-14 rounded-sm bg-amber-500/20 dark:bg-gold-500/20 flex items-center justify-center">
                 {getRankIcon(userRank)}
               </div>
               <div>
@@ -148,7 +148,7 @@ const RankingsTab = ({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl overflow-hidden"
+        className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-sm overflow-hidden"
       >
         {loading ? (
           <LoadingScreen fullScreen={false} />
@@ -185,7 +185,7 @@ const RankingsTab = ({
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-stone-200 dark:bg-charcoal-800 flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-sm bg-stone-200 dark:bg-charcoal-800 flex items-center justify-center">
                             <Users className="w-5 h-5 text-slate-500 dark:text-cream-400" />
                           </div>
                           <div>
@@ -219,7 +219,7 @@ const RankingsTab = ({
                   key={entry.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`rounded-lg p-3 border transition-all ${
+                  className={`rounded-sm p-3 border transition-all ${
                     getRankBgColor(entry.rank)
                   } ${loggedInProfile?.username === entry.username ? 'ring-2 ring-amber-500 dark:ring-gold-500' : ''}`}
                 >
@@ -272,7 +272,7 @@ const RankingsTab = ({
           <button
             onClick={loadMoreLeaderboard}
             disabled={loadingMore}
-            className="flex items-center gap-2 px-5 py-2.5 bg-stone-100 dark:bg-charcoal-800/50 text-slate-600 dark:text-cream-300 rounded-lg hover:bg-stone-200 dark:hover:bg-charcoal-800 transition-colors text-sm disabled:opacity-50 border border-cream-200 dark:border-cream-500/20"
+            className="flex items-center gap-2 px-5 py-2.5 bg-stone-100 dark:bg-charcoal-800/50 text-slate-600 dark:text-cream-300 rounded-sm hover:bg-stone-200 dark:hover:bg-charcoal-800 transition-colors text-sm disabled:opacity-50 border border-cream-200 dark:border-cream-500/20"
           >
             <ChevronDown className={`w-4 h-4 ${loadingMore ? 'animate-bounce' : ''}`} />
             {loadingMore ? 'Loading...' : 'Load More'}

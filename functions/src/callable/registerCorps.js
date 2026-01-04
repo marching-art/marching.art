@@ -7,7 +7,7 @@ const admin = require("firebase-admin");
 const isProfane = (text) => /fuck|shit|damn/.test(text.toLowerCase());
 
 exports.registerCorps = onCall({ cors: true }, async (request) => {
-  const { corpsName, location, showConcept, class: corpsClass } = request.data;
+  const { corpsName, location, description, class: corpsClass } = request.data;
   const uid = request.auth?.uid;
 
   if (!uid) {
@@ -15,13 +15,13 @@ exports.registerCorps = onCall({ cors: true }, async (request) => {
   }
 
   // --- 1. Validation ---
-  if (!corpsName || !location || !showConcept || !corpsClass) {
+  if (!corpsName || !location || !corpsClass) {
     throw new HttpsError("invalid-argument", "Missing required fields.");
   }
-  if (corpsName.length > 50 || location.length > 50 || showConcept.length > 500) {
+  if (corpsName.length > 50 || location.length > 50 || (description && description.length > 500)) {
     throw new HttpsError("invalid-argument", "Input field exceeds length limit.");
   }
-  if (isProfane(corpsName) || isProfane(location) || isProfane(showConcept)) {
+  if (isProfane(corpsName) || isProfane(location) || (description && isProfane(description))) {
     throw new HttpsError("invalid-argument", "Profane language is not allowed.");
   }
 
@@ -91,7 +91,7 @@ exports.registerCorps = onCall({ cors: true }, async (request) => {
     const newCorpsData = {
       corpsName,
       location,
-      showConcept,
+      description: description || '',
       class: corpsClass,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       lineup: {},

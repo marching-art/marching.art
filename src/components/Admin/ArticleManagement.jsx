@@ -164,7 +164,7 @@ const ArticleManagement = () => {
   return (
     <div className="space-y-4">
       {/* Header with search and refresh */}
-      <div className="bg-[#1a1a1a] border border-[#333] rounded-lg overflow-hidden">
+      <div className="bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden">
         <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
           <div className="flex items-center gap-2">
             <FileText className="w-4 h-4 text-yellow-500" />
@@ -220,7 +220,7 @@ const ArticleManagement = () => {
       {/* Articles list */}
       <div className="space-y-2">
         {filteredArticles.length === 0 ? (
-          <div className="bg-[#1a1a1a] border border-[#333] rounded-lg p-8 text-center">
+          <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-8 text-center">
             <FileText className="w-8 h-8 text-gray-600 mx-auto mb-2" />
             <p className="text-gray-500 text-sm">
               {searchTerm ? `No articles found matching "${searchTerm}"` : 'No articles found'}
@@ -278,7 +278,7 @@ const ArticleRow = ({ article, onEdit, onArchive, onDelete, formatDate, editLoad
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] rounded-lg overflow-hidden">
+    <div className="bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden">
       {/* Main row */}
       <div className="p-4">
         <div className="flex items-start gap-4">
@@ -472,7 +472,7 @@ const ArticleEditorModal = ({ article, onClose, onSave }) => {
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#1a1a1a] border border-[#333] rounded-lg w-full max-w-4xl max-h-[90vh] flex flex-col">
+      <div className="bg-[#1a1a1a] border border-[#333] rounded-sm w-full max-w-4xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2">
@@ -572,12 +572,12 @@ const ArticleEditorModal = ({ article, onClose, onSave }) => {
                   <button
                     type="button"
                     onClick={() => handleChange('isPublished', !formData.isPublished)}
-                    className={`relative w-12 h-6 rounded-full transition-colors ${
+                    className={`relative w-12 h-6 rounded-sm transition-colors ${
                       formData.isPublished ? 'bg-green-600' : 'bg-[#333]'
                     }`}
                   >
                     <span
-                      className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                      className={`absolute top-1 w-4 h-4 bg-white rounded-sm transition-transform ${
                         formData.isPublished ? 'left-7' : 'left-1'
                       }`}
                     />
@@ -714,7 +714,7 @@ const SectionEditor = ({ title, section, color }) => {
   };
 
   return (
-    <div className={`border rounded-lg ${colorClasses[color]}`}>
+    <div className={`border rounded-sm ${colorClasses[color]}`}>
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}

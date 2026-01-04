@@ -35,7 +35,7 @@ const ScoreRow = React.memo(({ score, rank }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-charcoal-900/30 border border-stone-200 dark:border-transparent rounded-lg overflow-hidden shadow-sm dark:shadow-none">
+    <div className="bg-white dark:bg-charcoal-900/30 border border-stone-200 dark:border-transparent rounded-sm overflow-hidden shadow-sm dark:shadow-none">
       <div
         className={`p-3 md:p-4 transition-colors ${
           hasDetailedCaptions ? 'cursor-pointer hover:bg-stone-50 dark:hover:bg-charcoal-900/50' : ''
@@ -106,7 +106,7 @@ const ScoreRow = React.memo(({ score, rank }) => {
           exit={{ height: 0, opacity: 0 }}
           className="px-3 pb-3 md:px-4 md:pb-4"
         >
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 p-3 md:p-4 bg-stone-100 dark:bg-charcoal-900/50 rounded-lg">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 p-3 md:p-4 bg-stone-100 dark:bg-charcoal-900/50 rounded-sm">
             {Object.entries(CAPTION_CATEGORIES).map(([key, caption]) => {
               const value = score.captions[key] || 0;
               const maxValue = caption.weight;
@@ -118,7 +118,7 @@ const ScoreRow = React.memo(({ score, rank }) => {
                     <span className="text-slate-500 dark:text-cream-500/60">{caption.shortName}</span>
                     <span className="text-slate-900 dark:text-cream-100 font-semibold">{value.toFixed(3)}</span>
                   </div>
-                  <div className="h-1.5 md:h-2 bg-stone-200 dark:bg-charcoal-900 rounded-full overflow-hidden">
+                  <div className="h-1.5 md:h-2 bg-stone-200 dark:bg-charcoal-900 rounded-sm overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-r from-gold-500 to-gold-400"
                       style={{ width: `${percentage}%` }}

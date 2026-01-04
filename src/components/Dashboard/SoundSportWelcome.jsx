@@ -58,7 +58,7 @@ const SoundSportWelcome = ({ onDismiss, showCompact = false }) => {
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      className="relative bg-gradient-to-br from-green-900/30 via-[#1a1a1a] to-[#1a1a1a] border border-green-500/30 rounded-lg overflow-hidden mb-4"
+      className="relative bg-gradient-to-br from-green-900/30 via-[#1a1a1a] to-[#1a1a1a] border border-green-500/30 rounded-sm overflow-hidden mb-4"
     >
       {/* Dismiss button */}
       {onDismiss && (
@@ -77,7 +77,7 @@ const SoundSportWelcome = ({ onDismiss, showCompact = false }) => {
         className="w-full text-left p-4 pr-10"
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-green-500/20 rounded-lg border border-green-500/30">
+          <div className="p-2 bg-green-500/20 rounded-sm border border-green-500/30">
             <Music className="w-5 h-5 text-green-500" />
           </div>
           <div className="flex-1 min-w-0">
@@ -187,7 +187,7 @@ const SoundSportWelcome = ({ onDismiss, showCompact = false }) => {
 export const SoundSportBanner = () => (
   <Link
     to="/soundsport"
-    className="flex items-center justify-between p-3 bg-gradient-to-r from-green-900/30 to-transparent border border-green-500/30 rounded-lg hover:border-green-500/50 transition-colors group"
+    className="flex items-center justify-between p-3 bg-gradient-to-r from-green-900/30 to-transparent border border-green-500/30 rounded-sm hover:border-green-500/50 transition-colors group"
   >
     <div className="flex items-center gap-3">
       <div className="p-1.5 bg-green-500/20 rounded">

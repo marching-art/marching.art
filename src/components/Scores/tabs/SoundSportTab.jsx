@@ -18,7 +18,7 @@ import EmptyState from '../../EmptyState';
 // =============================================================================
 
 const RATING_THRESHOLDS = [
-  { rating: 'Gold', min: 90, color: 'bg-primary', textColor: 'text-black', borderColor: 'border-black' },
+  { rating: 'Gold', min: 90, color: 'bg-yellow-500', textColor: 'text-black', borderColor: 'border-black' },
   { rating: 'Silver', min: 75, color: 'bg-stone-300', textColor: 'text-black', borderColor: 'border-black' },
   { rating: 'Bronze', min: 60, color: 'bg-orange-300', textColor: 'text-black', borderColor: 'border-black' },
   { rating: 'Participation', min: 0, color: 'bg-white', textColor: 'text-black', borderColor: 'border-black' },
@@ -169,7 +169,7 @@ const RatingGroup = ({ rating, scores, bestInShowCorps, classWinnerCorps = [] })
         className="w-full flex items-center justify-between p-2 mb-2 bg-[#222] rounded hover:bg-[#2a2a2a] transition-colors"
       >
         <div className="flex items-center gap-2">
-          <div className={`w-3 h-3 rounded-full ${ratingInfo.color} border ${ratingInfo.borderColor}`} />
+          <div className={`w-3 h-3 rounded-sm ${ratingInfo.color} border ${ratingInfo.borderColor}`} />
           <span className="font-bold text-white text-sm">{rating}</span>
           <span className="text-gray-500 text-xs">({scores.length})</span>
         </div>
@@ -213,7 +213,7 @@ const BestInShowCard = ({ score }) => {
   if (!score) return null;
 
   return (
-    <div className="bg-gradient-to-r from-yellow-500/20 to-yellow-600/10 border-2 border-yellow-500/50 rounded-lg p-4 md:p-6 mb-4">
+    <div className="bg-gradient-to-r from-yellow-500/20 to-yellow-600/10 border-2 border-yellow-500/50 rounded-sm p-4 md:p-6 mb-4">
       <div className="flex items-center gap-2 mb-3">
         <Trophy className="w-5 h-5 md:w-6 md:h-6 text-yellow-500" />
         <span className="text-yellow-500 font-bold uppercase text-xs md:text-sm">Best in Show</span>
@@ -276,7 +276,7 @@ const SoundSportTab = ({ loading, allShows }) => {
       <div className="card p-4 md:p-6 border border-green-500/20 bg-gradient-to-br from-green-900/10 to-transparent">
         <div className="flex flex-col md:flex-row md:items-start gap-3 md:gap-4">
           <div className="flex items-center gap-3 md:block">
-            <div className="p-2 bg-green-500/20 rounded-lg border border-green-500/30">
+            <div className="p-2 bg-green-500/20 rounded-sm border border-green-500/30">
               <Music className="w-6 h-6 md:w-8 md:h-8 text-green-500 flex-shrink-0" />
             </div>
             <h3 className="text-base md:text-lg font-semibold text-cream-100 md:hidden">

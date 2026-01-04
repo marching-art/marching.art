@@ -18,6 +18,17 @@ export function formatSeasonName(name: string | null | undefined): string {
   return name.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+/**
+ * Format an event name for display
+ * Replaces 'DCI' with 'marching.art' for branding consistency
+ * @param name - Raw event name (e.g., 'DCI Indianapolis')
+ * @returns Formatted name (e.g., 'marching.art Indianapolis')
+ */
+export function formatEventName(name: string | null | undefined): string {
+  if (!name) return '';
+  return name.replace(/\bDCI\b/g, 'marching.art');
+}
+
 // =============================================================================
 // WEEK CALCULATIONS
 // =============================================================================

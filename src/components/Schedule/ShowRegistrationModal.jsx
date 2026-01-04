@@ -17,6 +17,7 @@ import Portal from '../Portal';
 import { BottomSheet } from '../ui/BottomSheet';
 import { useHaptic } from '../../hooks/useHaptic';
 import { getMaxShowsForWeek } from '../../utils/captionPricing';
+import { compareCorpsClasses } from '../../utils/corps';
 
 const CLASS_CONFIG = {
   worldClass: { name: 'World Class', shortName: 'World', color: 'text-yellow-500', bgColor: 'bg-yellow-500/10' },
@@ -24,8 +25,6 @@ const CLASS_CONFIG = {
   aClass: { name: 'A Class', shortName: 'A Class', color: 'text-[#0057B8]', bgColor: 'bg-[#0057B8]/10' },
   soundSport: { name: 'SoundSport', shortName: 'SS', color: 'text-green-500', bgColor: 'bg-green-500/10' },
 };
-
-const CLASS_ORDER = { worldClass: 0, openClass: 1, aClass: 2, soundSport: 3 };
 
 // =============================================================================
 // CORPS SELECTION ITEM
@@ -64,7 +63,7 @@ const CorpsSelectionItem = ({
     >
       {/* Checkbox */}
       <div className={`
-        w-5 h-5 border-2 flex items-center justify-center flex-shrink-0 rounded-sm
+        w-5 h-5 border-2 flex items-center justify-center flex-shrink-0
         ${isSelected ? 'bg-[#0057B8] border-[#0057B8]' : 'border-[#444]'}
       `}>
         {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
@@ -85,7 +84,7 @@ const CorpsSelectionItem = ({
             {showsThisWeek}/{maxShows} shows this week
           </span>
           {isAtMax && !isAlreadyAtShow && (
-            <span className="text-[10px] text-red-400 font-bold px-1.5 py-0.5 bg-red-400/10 rounded">
+            <span className="text-[10px] text-red-400 font-bold px-1.5 py-0.5 bg-red-400/10">
               MAX
             </span>
           )}
@@ -124,7 +123,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
 
   const userCorpsClasses = useMemo(() =>
     userProfile?.corps
-      ? Object.keys(userProfile.corps).sort((a, b) => (CLASS_ORDER[a] ?? 99) - (CLASS_ORDER[b] ?? 99))
+      ? Object.keys(userProfile.corps).sort(compareCorpsClasses)
       : []
   , [userProfile?.corps]);
 
@@ -272,7 +271,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
         {!isMobile && (
           <button
             onClick={onClose}
-            className="p-2 -mr-2 -mt-1 text-gray-500 hover:text-white active:text-white rounded-full hover:bg-white/10 min-w-touch min-h-touch flex items-center justify-center"
+            className="p-2 -mr-2 -mt-1 text-gray-500 hover:text-white active:text-white rounded-sm hover:bg-white/10 min-w-touch min-h-touch flex items-center justify-center"
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />
@@ -282,7 +281,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
 
       {/* Week Info Badge */}
       <div className="mt-3 flex items-center gap-2">
-        <span className="px-2 py-1 bg-[#0057B8]/10 text-[#0057B8] text-[10px] font-bold uppercase rounded">
+        <span className="px-2 py-1 bg-[#0057B8]/10 text-[#0057B8] text-[10px] font-bold uppercase">
           Week {show.week}
         </span>
         <span className="text-[10px] text-gray-500">
@@ -299,7 +298,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
       {isChampionship ? (
         <div className="px-4 py-6">
           {/* Auto-Enrollment Banner */}
-          <div className="flex items-start gap-3 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded mb-4">
+          <div className="flex items-start gap-3 p-4 bg-yellow-500/10 border border-yellow-500/30 mb-4">
             <Trophy className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-bold text-yellow-400 mb-1">Championship Event</p>
@@ -323,7 +322,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
                   return (
                     <div
                       key={corpsClass}
-                      className="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/30 rounded"
+                      className="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/30"
                     >
                       <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
@@ -334,7 +333,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
                           {config.shortName}
                         </span>
                       </div>
-                      <span className="text-[10px] text-green-400 font-bold px-2 py-1 bg-green-500/20 rounded">
+                      <span className="text-[10px] text-green-400 font-bold px-2 py-1 bg-green-500/20">
                         ENROLLED
                       </span>
                     </div>
@@ -358,7 +357,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
                   return (
                     <div
                       key={corpsClass}
-                      className="flex items-center gap-3 p-3 bg-[#222] border border-[#333] rounded opacity-60"
+                      className="flex items-center gap-3 p-3 bg-[#222] border border-[#333] opacity-60"
                     >
                       <X className="w-4 h-4 text-red-400 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
@@ -387,7 +386,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
               <Link
                 to="/"
                 onClick={onClose}
-                className="inline-block mt-3 px-4 py-2 bg-[#0057B8] text-white text-xs font-bold uppercase rounded"
+                className="inline-block mt-3 px-4 py-2 bg-[#0057B8] text-white text-xs font-bold uppercase"
               >
                 Create a Corps
               </Link>
@@ -395,7 +394,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
           )}
 
           {/* Eligible Classes Info */}
-          <div className="mt-4 p-3 bg-[#111] border border-[#333] rounded">
+          <div className="mt-4 p-3 bg-[#111] border border-[#333]">
             <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
               Eligible Classes for This Event
             </p>
@@ -405,7 +404,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
                 return (
                   <span
                     key={cls}
-                    className={`px-2 py-1 text-xs font-bold rounded ${config?.bgColor || 'bg-gray-500/10'} ${config?.color || 'text-gray-400'}`}
+                    className={`px-2 py-1 text-xs font-bold ${config?.bgColor || 'bg-gray-500/10'} ${config?.color || 'text-gray-400'}`}
                   >
                     {config?.name || cls}
                   </span>
@@ -424,7 +423,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
           <Link
             to="/"
             onClick={onClose}
-            className="inline-block mt-4 px-4 py-2 bg-[#0057B8] text-white text-xs font-bold uppercase rounded hover:bg-[#0066d6] press-feedback"
+            className="inline-block mt-4 px-4 py-2 bg-[#0057B8] text-white text-xs font-bold uppercase hover:bg-[#0066d6] press-feedback"
           >
             Go to Dashboard
           </Link>
@@ -476,7 +475,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
 
           {/* Info Section */}
           <div className="px-4 py-3 bg-[#111] border-t border-[#333]">
-            <div className="flex items-start gap-3 p-3 bg-[#0057B8]/5 border border-[#0057B8]/20 rounded">
+            <div className="flex items-start gap-3 p-3 bg-[#0057B8]/5 border border-[#0057B8]/20">
               <Ticket className="w-4 h-4 text-[#0057B8] flex-shrink-0 mt-0.5" />
               <div className="text-[11px] text-gray-400 leading-relaxed">
                 <p>
@@ -500,7 +499,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
                   return (
                     <span
                       key={corpsClass}
-                      className={`inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium rounded ${config.bgColor} ${config.color}`}
+                      className={`inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium ${config.bgColor} ${config.color}`}
                     >
                       <Check className="w-3 h-3" />
                       {corpsData.corpsName || corpsData.name || config.name}
@@ -522,7 +521,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
       return (
         <button
           onClick={() => { haptic('light'); onClose(); }}
-          className="w-full h-12 bg-[#333] text-white text-sm font-bold uppercase tracking-wider rounded hover:bg-[#444] active:bg-[#222] press-feedback flex items-center justify-center gap-2"
+          className="w-full h-12 bg-[#333] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#444] active:bg-[#222] press-feedback flex items-center justify-center gap-2"
         >
           <X className="w-4 h-4" />
           Close
@@ -535,18 +534,18 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
         <button
           onClick={() => { haptic('light'); onClose(); }}
           disabled={saving}
-          className="flex-1 h-12 border border-[#444] text-gray-300 text-sm font-bold uppercase tracking-wider rounded hover:border-[#555] hover:text-white disabled:opacity-50 active:bg-[#333] press-feedback"
+          className="flex-1 h-12 border border-[#444] text-gray-300 text-sm font-bold uppercase tracking-wider hover:border-[#555] hover:text-white disabled:opacity-50 active:bg-[#333] press-feedback"
         >
           Cancel
         </button>
         <button
           onClick={handleSave}
           disabled={saving || !hasChanges}
-          className="flex-1 h-12 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider rounded hover:bg-[#0066d6] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:bg-[#004494] press-feedback-strong"
+          className="flex-1 h-12 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:bg-[#004494] press-feedback-strong"
         >
           {saving ? (
             <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-sm animate-spin" />
               Saving...
             </>
           ) : (
@@ -597,11 +596,11 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
         onClick={onClose}
       >
         <div
-          className="w-full max-w-lg bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl max-h-[90vh] flex flex-col"
+          className="w-full max-w-lg bg-[#1a1a1a] border border-[#333] rounded-sm max-h-[90vh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="px-4 py-4 border-b border-[#333] bg-[#222] flex-shrink-0 rounded-t-sm">
+          <div className="px-4 py-4 border-b border-[#333] bg-[#222] flex-shrink-0">
             <HeaderContent />
           </div>
 
@@ -612,7 +611,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
 
           {/* Footer */}
           {(isChampionship || userCorpsClasses.length > 0) && (
-            <div className="px-4 py-4 border-t border-[#333] bg-[#222] flex-shrink-0">
+            <div className="px-4 py-4 border-t border-[#333] bg-[#111] flex-shrink-0">
               <FooterContent />
             </div>
           )}

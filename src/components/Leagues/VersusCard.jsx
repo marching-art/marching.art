@@ -89,7 +89,7 @@ const VersusCard = ({
         <div className="flex items-center justify-between">
           {/* User 1 */}
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+            <div className={`w-8 h-8 rounded-sm flex items-center justify-center text-sm font-bold ${
               isUser1 ? 'bg-purple-500/20 text-purple-500' : 'bg-[#333] text-gray-400'
             }`}>
               {user1?.displayName?.charAt(0) || 'T'}
@@ -123,7 +123,7 @@ const VersusCard = ({
             }`}>
               {user2?.displayName || 'TBD'}
             </span>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+            <div className={`w-8 h-8 rounded-sm flex items-center justify-center text-sm font-bold ${
               isUser2 ? 'bg-purple-500/20 text-purple-500' : 'bg-[#333] text-gray-400'
             }`}>
               {user2?.displayName?.charAt(0) || 'T'}
@@ -193,7 +193,7 @@ const VersusCard = ({
           <div className="flex-1 text-center">
             {/* Avatar */}
             <div className={`
-              w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-2 transition-all
+              w-14 h-14 mx-auto rounded-sm flex items-center justify-center mb-2 transition-all
               ${user1Won
                 ? 'bg-green-500/20 border-2 border-green-500/50 ring-2 ring-green-500/30'
                 : user1Leading && isLive
@@ -209,7 +209,7 @@ const VersusCard = ({
                 {user1?.displayName?.charAt(0) || 'T'}
               </span>
               {user1Won && (
-                <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                <div className="absolute -top-1 -right-1 w-5 h-5 rounded-sm bg-green-500 flex items-center justify-center">
                   <Crown className="w-3 h-3 text-black" />
                 </div>
               )}
@@ -247,7 +247,7 @@ const VersusCard = ({
 
           {/* VS Divider */}
           <div className="flex flex-col items-center">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+            <div className={`w-12 h-12 rounded-sm flex items-center justify-center ${
               isRivalry
                 ? 'bg-red-500/20 border border-red-500/30'
                 : 'bg-[#222] border border-[#444]'
@@ -274,7 +274,7 @@ const VersusCard = ({
           <div className="flex-1 text-center">
             {/* Avatar */}
             <div className={`
-              w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-2 relative transition-all
+              w-14 h-14 mx-auto rounded-sm flex items-center justify-center mb-2 relative transition-all
               ${user2Won
                 ? 'bg-green-500/20 border-2 border-green-500/50 ring-2 ring-green-500/30'
                 : user2Leading && isLive
@@ -290,7 +290,7 @@ const VersusCard = ({
                 {user2?.displayName?.charAt(0) || 'T'}
               </span>
               {user2Won && (
-                <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                <div className="absolute -top-1 -right-1 w-5 h-5 rounded-sm bg-green-500 flex items-center justify-center">
                   <Crown className="w-3 h-3 text-black" />
                 </div>
               )}

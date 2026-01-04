@@ -77,7 +77,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
           exit={{ opacity: 0 }}
           className={`
             absolute inset-0 flex items-center justify-center
-            bg-charcoal-900/60 rounded-xl z-10
+            bg-charcoal-900/60 rounded-sm z-10
             ${blur ? 'backdrop-blur-sm' : ''}
           `}
         >
@@ -148,9 +148,9 @@ export interface SkeletonProps {
 const roundedStyles: Record<string, string> = {
   none: 'rounded-none',
   sm: 'rounded',
-  md: 'rounded-lg',
-  lg: 'rounded-xl',
-  full: 'rounded-full',
+  md: 'rounded-sm',
+  lg: 'rounded-sm',
+  full: 'rounded-sm',
 };
 
 export const Skeleton: React.FC<SkeletonProps> = ({

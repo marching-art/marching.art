@@ -36,7 +36,7 @@ const CorpsVerificationStep = ({
     const classRetired = retiredByClass[classId] || [];
 
     return (
-      <div key={classId} className="glass rounded-xl p-4">
+      <div key={classId} className="glass rounded-sm p-4">
         <div className="flex items-center justify-between mb-3">
           <div>
             <span className={`badge ${isExisting ? 'badge-primary' : 'badge-ghost'} text-xs mb-1`}>
@@ -65,7 +65,7 @@ const CorpsVerificationStep = ({
             <>
               <button
                 onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'continue' })}
-                className={`p-2 rounded-lg text-xs font-medium flex flex-col items-center gap-1 transition-all ${
+                className={`p-2 rounded-sm text-xs font-medium flex flex-col items-center gap-1 transition-all ${
                   decision === 'continue'
                     ? 'bg-green-500/20 border-2 border-green-500 text-green-400'
                     : 'bg-charcoal-800 border-2 border-transparent text-cream-300 hover:border-cream-500/30'
@@ -76,7 +76,7 @@ const CorpsVerificationStep = ({
               </button>
               <button
                 onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'retire' })}
-                className={`p-2 rounded-lg text-xs font-medium flex flex-col items-center gap-1 transition-all ${
+                className={`p-2 rounded-sm text-xs font-medium flex flex-col items-center gap-1 transition-all ${
                   decision === 'retire'
                     ? 'bg-orange-500/20 border-2 border-orange-500 text-orange-400'
                     : 'bg-charcoal-800 border-2 border-transparent text-cream-300 hover:border-cream-500/30'
@@ -93,7 +93,7 @@ const CorpsVerificationStep = ({
                 delete updated[classId];
                 setCorpsDecisions(updated);
               }}
-              className={`p-2 rounded-lg text-xs font-medium flex flex-col items-center gap-1 transition-all ${
+              className={`p-2 rounded-sm text-xs font-medium flex flex-col items-center gap-1 transition-all ${
                 !decision
                   ? 'bg-charcoal-700 border-2 border-cream-500/30 text-cream-300'
                   : 'bg-charcoal-800 border-2 border-transparent text-cream-500/60 hover:border-cream-500/30'
@@ -104,7 +104,7 @@ const CorpsVerificationStep = ({
           )}
           <button
             onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'new' })}
-            className={`p-2 rounded-lg text-xs font-medium flex flex-col items-center gap-1 transition-all ${
+            className={`p-2 rounded-sm text-xs font-medium flex flex-col items-center gap-1 transition-all ${
               decision === 'new'
                 ? 'bg-blue-500/20 border-2 border-blue-500 text-blue-400'
                 : 'bg-charcoal-800 border-2 border-transparent text-cream-300 hover:border-cream-500/30'
@@ -116,7 +116,7 @@ const CorpsVerificationStep = ({
           {classRetired.length > 0 && (
             <button
               onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'unretire' })}
-              className={`p-2 rounded-lg text-xs font-medium flex flex-col items-center gap-1 transition-all ${
+              className={`p-2 rounded-sm text-xs font-medium flex flex-col items-center gap-1 transition-all ${
                 decision === 'unretire'
                   ? 'bg-purple-500/20 border-2 border-purple-500 text-purple-400'
                   : 'bg-charcoal-800 border-2 border-transparent text-cream-300 hover:border-cream-500/30'
@@ -240,7 +240,7 @@ const CorpsVerificationStep = ({
         >
           {processing ? (
             <>
-              <div className="animate-spin w-4 h-4 md:w-5 md:h-5 border-2 border-white border-t-transparent rounded-full mr-2" />
+              <div className="animate-spin w-4 h-4 md:w-5 md:h-5 border-2 border-white border-t-transparent rounded-sm mr-2" />
               Processing...
             </>
           ) : (

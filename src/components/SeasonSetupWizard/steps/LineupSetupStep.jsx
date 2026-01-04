@@ -63,7 +63,7 @@ const LineupSetupStep = ({
             {getCorpsClassName(currentCorpsClass)}
           </span>
         </div>
-        <div className="h-1.5 md:h-2 bg-charcoal-800 rounded-full overflow-hidden">
+        <div className="h-1.5 md:h-2 bg-charcoal-800 rounded-sm overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${((currentCorpsIndex + 0.5) / totalCorps) * 100}%` }}
@@ -88,7 +88,7 @@ const LineupSetupStep = ({
       </div>
 
       {/* Point Budget */}
-      <div className="mb-4 md:mb-6 p-3 md:p-4 bg-charcoal-900/50 rounded-xl border border-cream-500/10">
+      <div className="mb-4 md:mb-6 p-3 md:p-4 bg-charcoal-900/50 rounded-sm border border-cream-500/10">
         <div className="flex items-center justify-between mb-2 md:mb-3">
           <div>
             <h3 className="text-sm md:text-lg font-semibold text-cream-100">Point Budget</h3>
@@ -102,7 +102,7 @@ const LineupSetupStep = ({
             {totalPoints} / {pointLimit}
           </div>
         </div>
-        <div className="h-2 md:h-3 bg-charcoal-800 rounded-full overflow-hidden">
+        <div className="h-2 md:h-3 bg-charcoal-800 rounded-sm overflow-hidden">
           <motion.div
             animate={{ width: `${Math.min((totalPoints / pointLimit) * 100, 100)}%` }}
             className={`h-full ${
@@ -151,7 +151,7 @@ const LineupSetupStep = ({
                   return (
                     <div
                       key={caption.id}
-                      className={`p-3 rounded-lg border transition-all ${
+                      className={`p-3 rounded-sm border transition-all ${
                         selected
                           ? 'border-green-500/30 bg-green-500/5'
                           : 'border-cream-500/10 bg-charcoal-900/30'
@@ -162,7 +162,7 @@ const LineupSetupStep = ({
                           {selected ? (
                             <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
                           ) : (
-                            <div className="w-4 h-4 rounded-full border-2 border-cream-500/30 flex-shrink-0" />
+                            <div className="w-4 h-4 rounded-sm border-2 border-cream-500/30 flex-shrink-0" />
                           )}
                           <span className="font-medium text-cream-100 text-sm truncate">{caption.name}</span>
                           <span className="text-xs text-cream-500/60 flex-shrink-0">({caption.id})</span>
@@ -226,7 +226,7 @@ const LineupSetupStep = ({
         >
           {saving ? (
             <>
-              <div className="animate-spin w-4 h-4 md:w-5 md:h-5 border-2 border-white border-t-transparent rounded-full mr-2" />
+              <div className="animate-spin w-4 h-4 md:w-5 md:h-5 border-2 border-white border-t-transparent rounded-sm mr-2" />
               Saving...
             </>
           ) : (

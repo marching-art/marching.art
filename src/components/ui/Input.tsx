@@ -22,9 +22,9 @@ export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElem
 }
 
 const sizeStyles = {
-  sm: 'px-3 py-2 text-sm h-11',
-  md: 'px-3.5 py-2.5 text-base h-12',
-  lg: 'px-4 py-3 text-base h-14',
+  sm: 'px-2.5 py-1.5 text-sm h-8',
+  md: 'px-3 py-2 text-sm h-9',
+  lg: 'px-3.5 py-2.5 text-sm h-10',
 };
 
 const iconSizes = {
@@ -74,8 +74,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             id={id}
             className={`
               w-full rounded-sm
-              bg-[#0a0a0a] border
-              text-white text-base placeholder-gray-600
+              bg-[#111] border
+              text-white text-sm placeholder-gray-600
               transition-colors
               focus:outline-none focus:border-[#0057B8]
               disabled:opacity-50 disabled:cursor-not-allowed
@@ -84,8 +84,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                 : 'border-[#333] hover:border-[#444]'
               }
               ${sizeStyles[inputSize]}
-              ${LeftIcon ? 'pl-9' : ''}
-              ${RightIcon || rightElement ? 'pr-9' : ''}
+              ${LeftIcon ? 'pl-8' : ''}
+              ${RightIcon || rightElement ? 'pr-8' : ''}
               ${className}
             `}
             {...props}
@@ -142,7 +142,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           id={id}
           className={`
             w-full px-3 py-2 rounded-sm min-h-[80px] resize-none
-            bg-[#0a0a0a] border
+            bg-[#111] border
             text-white text-sm placeholder-gray-600
             transition-colors
             focus:outline-none focus:border-[#0057B8]
@@ -223,7 +223,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           id={id}
           className={`
             w-full rounded-sm appearance-none cursor-pointer
-            bg-[#0a0a0a] border
+            bg-[#111] border
             text-white text-sm
             transition-colors
             focus:outline-none focus:border-[#0057B8]

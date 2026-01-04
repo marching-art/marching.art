@@ -179,7 +179,7 @@ export const AvatarImage: React.FC<AvatarImageProps> = ({
   return (
     <div
       className={`
-        relative rounded-full overflow-hidden bg-[#333] flex items-center justify-center
+        relative rounded-sm overflow-hidden bg-[#333] flex items-center justify-center
         ${avatarSizes[size]}
         ${className}
       `}
@@ -210,7 +210,7 @@ export const AvatarImage: React.FC<AvatarImageProps> = ({
 
       {/* Loading skeleton */}
       {!showFallback && !isLoaded && (
-        <div className="absolute inset-0 skeleton-pulse rounded-full" />
+        <div className="absolute inset-0 skeleton-pulse rounded-sm" />
       )}
     </div>
   );

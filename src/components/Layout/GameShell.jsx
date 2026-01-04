@@ -128,7 +128,7 @@ const NavItem = ({ to, icon: Icon, label }) => (
         <span>{label}</span>
         {/* Active indicator - bottom bar */}
         {isActive && (
-          <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-yellow-400 rounded-full" />
+          <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-yellow-400 rounded-sm" />
         )}
       </>
     )}
@@ -496,11 +496,9 @@ const GameShell = ({ children }) => {
         <main
           id="main-content"
           role="main"
-          className="fixed top-[84px] sm:top-20 left-0 right-0 bg-[#0a0a0a] scroll-momentum main-content-bottom"
+          className="fixed top-[84px] sm:top-20 left-0 right-0 bg-[#0a0a0a] overflow-hidden main-content-bottom"
         >
-          <div className="h-full w-full overflow-y-auto scroll-contain">
-            {children}
-          </div>
+          {children}
         </main>
 
         {/* Mobile Bottom Navigation */}

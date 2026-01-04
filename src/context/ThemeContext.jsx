@@ -9,6 +9,16 @@ import React, { createContext, useContext, useEffect } from 'react';
 
 const ThemeContext = createContext(null);
 
+// OPTIMIZATION: Define static value outside component to prevent re-renders
+// Since theme is always dark and never changes, this object is truly constant
+const THEME_VALUE = Object.freeze({
+  theme: 'dark',
+  isDark: true,
+  // These are provided for backwards compatibility but do nothing
+  setTheme: () => {},
+  toggleTheme: () => {},
+});
+
 export const useTheme = () => {
   const context = useContext(ThemeContext);
   if (!context) {
@@ -25,17 +35,8 @@ export const ThemeProvider = ({ children }) => {
     localStorage.removeItem('marching-art-theme');
   }, []);
 
-  // Provide a stable context value - theme is always dark
-  const value = {
-    theme: 'dark',
-    isDark: true,
-    // These are provided for backwards compatibility but do nothing
-    setTheme: () => {},
-    toggleTheme: () => {},
-  };
-
   return (
-    <ThemeContext.Provider value={value}>
+    <ThemeContext.Provider value={THEME_VALUE}>
       {children}
     </ThemeContext.Provider>
   );

@@ -1,13 +1,14 @@
-// LeagueDetailView - Social hub for league competition
-// Features: Logo, Commissioner tag, Share League, Smack Talk, matchups, standings, chat, activity
+// LeagueDetailView - Command Center for league competition
+// Design System: App Shell layout with fixed header, sticky tabs, scrollable content
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Trophy, Crown, ChevronLeft, Settings, Swords,
-  MessageSquare, BarChart3, History, Medal, Flame,
-  TrendingUp, TrendingDown, Minus, Bell, Activity,
-  Share2, Copy, Check, Send, Users, Calendar
+  MessageSquare, BarChart3, Flame,
+  TrendingUp, TrendingDown, Minus, Bell,
+  Share2, Copy, Check, Send, Users, Calendar, LogOut,
+  AlertTriangle, X
 } from 'lucide-react';
 import { collection, query, orderBy, limit as firestoreLimit, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
@@ -17,41 +18,16 @@ import toast from 'react-hot-toast';
 import StandingsTab from './tabs/StandingsTab';
 import MatchupsTab from './tabs/MatchupsTab';
 import ChatTab from './tabs/ChatTab';
-import HistoryTab from './tabs/HistoryTab';
 import MatchupDetailView from './MatchupDetailView';
 import LeagueActivityFeed, { RivalryBadge } from './LeagueActivityFeed';
 import { useRivalries, isRivalry as checkRivalry } from '../../hooks/useLeagueNotifications';
+import { useLeagueStats } from '../../hooks/useLeagueStats';
 import { postLeagueMessage } from '../../firebase/functions';
 
-// marching.art Logo Component
-const MarchingArtLogo = ({ className = '' }) => (
-  <svg
-    viewBox="0 0 40 40"
-    className={className}
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    {/* Background Circle */}
-    <circle cx="20" cy="20" r="18" fill="#1A1A1A" stroke="#333" strokeWidth="1" />
-    {/* M Shape - Stylized marching */}
-    <path
-      d="M10 28V14L16 22L20 16L24 22L30 14V28"
-      stroke="#FFD700"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      fill="none"
-    />
-    {/* Dot accent */}
-    <circle cx="20" cy="12" r="2" fill="#FFD700" />
-  </svg>
-);
-
-// Quick Smack Talk Input Component
+// Quick Smack Talk Input - Compact inline form
 const SmackTalkInput = ({ leagueId, userProfile, disabled = false }) => {
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
-  const inputRef = useRef(null);
 
   const handleSend = async (e) => {
     e?.preventDefault();
@@ -61,7 +37,7 @@ const SmackTalkInput = ({ leagueId, userProfile, disabled = false }) => {
     try {
       await postLeagueMessage({ leagueId, message: message.trim() });
       setMessage('');
-      toast.success('Message sent!');
+      toast.success('Sent!');
     } catch (error) {
       console.error('Error sending message:', error);
       toast.error('Failed to send');
@@ -73,85 +49,95 @@ const SmackTalkInput = ({ leagueId, userProfile, disabled = false }) => {
   return (
     <form onSubmit={handleSend} className="flex gap-2">
       <input
-        ref={inputRef}
         type="text"
         value={message}
         onChange={(e) => setMessage(e.target.value)}
-        placeholder="Talk some trash..."
-        className="flex-1 px-3 py-2 bg-[#1a1a1a] border border-[#333] rounded-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-[#555] transition-all text-sm"
+        placeholder="Talk trash..."
+        className="flex-1 h-9 px-3 bg-[#111] border border-[#333] text-white placeholder:text-gray-600 focus:outline-none focus:border-[#444] text-sm"
         disabled={sending || disabled}
         maxLength={200}
       />
       <button
         type="submit"
         disabled={sending || !message.trim() || disabled}
-        className="px-3 py-2 bg-yellow-500 hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-sm text-black font-bold flex items-center gap-2 transition-colors"
+        className="h-9 px-3 bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold flex items-center gap-1.5 transition-colors text-sm"
       >
-        <Send className="w-4 h-4" />
+        <Send className="w-3.5 h-3.5" />
       </button>
     </form>
   );
 };
 
-// Share League Button Component
-const ShareLeagueButton = ({ league }) => {
-  const [copied, setCopied] = useState(false);
-
-  const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/leagues?join=${league.inviteCode}`;
-    const shareText = `Join my league "${league.name}" on marching.art! Use code: ${league.inviteCode}`;
-
-    try {
-      // Try native share first (mobile)
-      if (navigator.share) {
-        await navigator.share({
-          title: `Join ${league.name}`,
-          text: shareText,
-          url: shareUrl,
-        });
-        return;
-      }
-
-      // Fallback to clipboard
-      await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
-      setCopied(true);
-      toast.success('Invite link copied!');
-      setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      // If clipboard fails, show the code
-      toast.success(`Invite Code: ${league.inviteCode}`);
-    }
-  };
+// Leave League Confirmation Modal
+const LeaveLeagueModal = ({ leagueName, onClose, onConfirm, isLoading }) => {
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
 
   return (
-    <button
-      onClick={handleShare}
-      className="flex items-center gap-2 px-3 py-2 rounded-sm bg-yellow-500/10 border border-yellow-500/30 text-yellow-500 hover:bg-yellow-500/20 transition-all font-bold text-sm"
+    <div
+      className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
     >
-      {copied ? (
-        <>
-          <Check className="w-4 h-4" />
-          Copied!
-        </>
-      ) : (
-        <>
-          <Share2 className="w-4 h-4" />
-          Share League
-        </>
-      )}
-    </button>
-  );
-};
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="w-full max-w-sm bg-[#1a1a1a] border border-[#333]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
+          <h2 className="text-[10px] font-bold uppercase tracking-wider text-red-400 flex items-center gap-2">
+            <AlertTriangle className="w-3.5 h-3.5" />
+            Leave League
+          </h2>
+          <button onClick={onClose} className="p-1 text-gray-500 hover:text-white">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
 
-// Commissioner Badge Component with Gold styling
-const CommissionerBadge = ({ isCommissioner }) => {
-  if (!isCommissioner) return null;
+        {/* Body */}
+        <div className="p-4">
+          <div className="w-10 h-10 mx-auto mb-3 bg-red-500/10 border border-red-500/30 flex items-center justify-center">
+            <LogOut className="w-5 h-5 text-red-500" />
+          </div>
+          <div className="text-center mb-3">
+            <p className="text-sm text-gray-400 mb-1">Are you sure?</p>
+            <p className="text-base font-bold text-white">{leagueName}</p>
+          </div>
+          <div className="bg-red-500/10 border border-red-500/30 p-2.5">
+            <p className="text-[11px] text-red-400 text-center">
+              You'll lose access to standings, matchups, and chat history.
+            </p>
+          </div>
+        </div>
 
-  return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-yellow-500/20 border border-yellow-500/30 text-yellow-500 text-xs font-bold">
-      <Crown className="w-3 h-3" />
-      Commissioner
-    </span>
+        {/* Footer */}
+        <div className="px-4 py-3 border-t border-[#333] bg-[#222] flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            disabled={isLoading}
+            className="h-8 px-3 border border-[#333] text-gray-400 text-xs font-bold uppercase tracking-wider hover:border-[#444] hover:text-white disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isLoading}
+            className="h-8 px-3 bg-red-600 text-white text-xs font-bold uppercase tracking-wider hover:bg-red-500 disabled:opacity-50 flex items-center gap-1.5"
+          >
+            {isLoading ? 'Leaving...' : <><LogOut className="w-3.5 h-3.5" />Leave</>}
+          </button>
+        </div>
+      </motion.div>
+    </div>
   );
 };
 
@@ -159,16 +145,41 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
   const [activeTab, setActiveTab] = useState('standings');
   const [standings, setStandings] = useState([]);
   const [messages, setMessages] = useState([]);
-  const [weeklyMatchups, setWeeklyMatchups] = useState([]);
+  const [weeklyMatchups, setWeeklyMatchups] = useState({});
   const [weeklyResults, setWeeklyResults] = useState({});
   const [currentWeek, setCurrentWeek] = useState(1);
   const [memberProfiles, setMemberProfiles] = useState({});
   const [loading, setLoading] = useState(true);
   const [selectedMatchup, setSelectedMatchup] = useState(null);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
+  const [inviteCopied, setInviteCopied] = useState(false);
+  const [recaps, setRecaps] = useState([]);
 
   const isCommissioner = league.creatorId === userProfile?.uid;
 
-  // Calculate rivalries using the hook
+  const handleLeaveConfirm = async () => {
+    setIsLeaving(true);
+    try {
+      await onLeave();
+    } finally {
+      setIsLeaving(false);
+      setShowLeaveModal(false);
+    }
+  };
+
+  const handleCopyInvite = async () => {
+    try {
+      await navigator.clipboard.writeText(league.inviteCode);
+      setInviteCopied(true);
+      toast.success('Invite code copied!');
+      setTimeout(() => setInviteCopied(false), 2000);
+    } catch {
+      toast.success(`Code: ${league.inviteCode}`);
+    }
+  };
+
+  // Calculate rivalries
   const rivalries = useRivalries(
     userProfile?.uid,
     league?.id,
@@ -176,6 +187,14 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
     weeklyResults,
     memberProfiles
   );
+
+  // Calculate league-wide battle stats
+  const { memberStats: leagueStats } = useLeagueStats({
+    recaps,
+    weeklyMatchups,
+    memberIds: league?.members || [],
+    currentWeek,
+  });
 
   // Fetch all data
   useEffect(() => {
@@ -195,7 +214,7 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
         }));
         setMemberProfiles(profiles);
 
-        // Fetch season data for week calculation
+        // Fetch season data
         const seasonRef = doc(db, 'game-settings/season');
         const seasonDoc = await getDoc(seasonRef);
         let week = 1;
@@ -210,17 +229,18 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
           }
           setCurrentWeek(week);
 
-          // Fetch fantasy recaps for standings calculation
+          // Fetch fantasy recaps
           const recapsRef = doc(db, `fantasy_recaps/${sData.seasonUid}`);
           const recapsDoc = await getDoc(recapsRef);
 
           if (recapsDoc.exists()) {
-            const recaps = recapsDoc.data().recaps || [];
+            const recapsData = recapsDoc.data().recaps || [];
+            setRecaps(recapsData); // Store for useLeagueStats hook
+            const recaps = recapsData;
             const memberUids = new Set(league.members);
             const weeklyResults = {};
             const memberStats = {};
 
-            // Initialize member stats
             league.members.forEach(uid => {
               memberStats[uid] = {
                 uid,
@@ -230,18 +250,13 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
                 weeklyScores: {},
                 streak: 0,
                 streakType: null,
-                lastWeekRank: null,
-                currentRank: null,
                 trend: 'same'
               };
             });
 
-            // Process recaps into weekly results
             recaps.forEach(dayRecap => {
               const weekNum = Math.ceil(dayRecap.offSeasonDay / 7);
-              if (!weeklyResults[weekNum]) {
-                weeklyResults[weekNum] = {};
-              }
+              if (!weeklyResults[weekNum]) weeklyResults[weekNum] = {};
 
               dayRecap.shows?.forEach(show => {
                 show.results?.forEach(result => {
@@ -255,12 +270,10 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
               });
             });
 
-            // Generate matchups for each week
             const matchupsPerWeek = generateMatchups(league.members, week);
             setWeeklyMatchups(matchupsPerWeek);
             setWeeklyResults(weeklyResults);
 
-            // Calculate head-to-head records
             Object.entries(weeklyResults).forEach(([weekNum, scores]) => {
               const weekMatchups = matchupsPerWeek[parseInt(weekNum)] || [];
 
@@ -284,7 +297,6 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
                 }
               });
 
-              // Calculate total points
               Object.entries(scores).forEach(([uid, score]) => {
                 if (memberStats[uid]) {
                   memberStats[uid].totalPoints += score;
@@ -325,14 +337,12 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
               stats.streakType = streakType;
             });
 
-            // Sort standings by wins, then total points
             const sortedStandings = Object.values(memberStats)
               .sort((a, b) => {
                 if (b.wins !== a.wins) return b.wins - a.wins;
                 return b.totalPoints - a.totalPoints;
               });
 
-            // Calculate trend
             sortedStandings.forEach((stats, idx) => {
               stats.currentRank = idx + 1;
               if (stats.wins > 0 && stats.losses === 0) {
@@ -366,9 +376,7 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
       }
     );
 
-    return () => {
-      unsubMessages();
-    };
+    return () => unsubMessages();
   }, [league]);
 
   // Generate round-robin matchups
@@ -383,14 +391,10 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
         const idx1 = (i + offset) % n;
         const idx2 = (n - 1 - i + offset) % n;
         if (idx1 !== idx2 && members[idx1] && members[idx2]) {
-          matchups[week].push({
-            user1: members[idx1],
-            user2: members[idx2]
-          });
+          matchups[week].push({ user1: members[idx1], user2: members[idx2] });
         }
       }
     }
-
     return matchups;
   };
 
@@ -398,40 +402,6 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
   const userStats = useMemo(() => {
     return standings.find(s => s.uid === userProfile?.uid);
   }, [standings, userProfile]);
-
-  // Get this week's matchups
-  const thisWeekMatchups = useMemo(() => {
-    return weeklyMatchups[currentWeek] || [];
-  }, [weeklyMatchups, currentWeek]);
-
-  // Get user's matchup this week
-  const userMatchup = useMemo(() => {
-    return thisWeekMatchups.find(m =>
-      m.user1 === userProfile?.uid || m.user2 === userProfile?.uid
-    );
-  }, [thisWeekMatchups, userProfile]);
-
-  // Helper to get display name
-  const getDisplayName = (uid) => {
-    if (uid === userProfile?.uid) return 'You';
-    const profile = memberProfiles[uid];
-    return profile?.displayName || profile?.username || `Director ${uid?.slice(0, 6)}`;
-  };
-
-  // Get rank badge
-  const getRankBadge = (rank) => {
-    if (rank === 1) return { emoji: '🥇', color: 'text-yellow-500', bg: 'bg-yellow-500/10' };
-    if (rank === 2) return { emoji: '🥈', color: 'text-gray-400', bg: 'bg-gray-500/10' };
-    if (rank === 3) return { emoji: '🥉', color: 'text-orange-500', bg: 'bg-orange-500/10' };
-    return { emoji: `#${rank}`, color: 'text-gray-400', bg: 'bg-[#222]' };
-  };
-
-  const tabs = [
-    { id: 'standings', label: 'Standings', icon: BarChart3 },
-    { id: 'matchups', label: 'Matchups', icon: Swords },
-    { id: 'activity', label: 'Activity', icon: Bell },
-    { id: 'chat', label: 'Chat', icon: MessageSquare, badge: messages.length > 0 },
-  ];
 
   // Get rivalry for selected matchup
   const getMatchupRivalry = (matchup) => {
@@ -442,7 +412,7 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
     return checkRivalry(rivalries, opponentId);
   };
 
-  // If viewing matchup detail, show that instead
+  // If viewing matchup detail
   if (selectedMatchup) {
     return (
       <MatchupDetailView
@@ -458,351 +428,294 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
     );
   }
 
+  const tabs = [
+    { id: 'standings', label: 'Standings', icon: BarChart3 },
+    { id: 'matchups', label: 'Matchups', icon: Swords },
+    { id: 'activity', label: 'Activity', icon: Bell },
+    { id: 'chat', label: 'Chat', icon: MessageSquare, badge: messages.length > 0 },
+  ];
+
   return (
-    <div className="space-y-4">
-      {/* Header with Logo */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4"
-      >
-        <div className="flex items-center justify-between mb-4">
+    <div className="h-full flex flex-col overflow-hidden bg-[#0a0a0a]">
+      {/* FIXED HEADER - League Banner (Director Card Pattern) */}
+      <div className="flex-shrink-0 bg-[#1a1a1a] border-b border-[#333]">
+        {/* Top Bar: Back + Actions */}
+        <div className="flex items-center justify-between px-4 py-2 border-b border-[#222]">
           <button
             onClick={onBack}
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+            className="flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors text-sm"
           >
-            <ChevronLeft className="w-5 h-5" />
-            <span className="text-sm">Back</span>
+            <ChevronLeft className="w-4 h-4" />
+            Back
           </button>
-
           <div className="flex items-center gap-2">
-            <ShareLeagueButton league={league} />
             {isCommissioner && (
               <button
                 onClick={() => setActiveTab('settings')}
-                className="p-2 rounded-sm bg-[#222] hover:bg-[#333] transition-colors"
+                className="p-1.5 bg-[#222] hover:bg-[#333] transition-colors"
               >
-                <Settings className="w-5 h-5 text-gray-400" />
+                <Settings className="w-4 h-4 text-gray-400" />
               </button>
             )}
+            <button
+              onClick={() => setShowLeaveModal(true)}
+              className="p-1.5 bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 transition-colors"
+              title="Leave League"
+            >
+              <LogOut className="w-4 h-4 text-red-500" />
+            </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* Logo */}
-          <div className="w-14 h-14 rounded-sm bg-[#222] border border-[#444] flex items-center justify-center overflow-hidden">
-            <MarchingArtLogo className="w-12 h-12" />
-          </div>
-
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl font-bold text-white truncate">
-                {league.name}
-              </h1>
-              <CommissionerBadge isCommissioner={isCommissioner} />
-            </div>
-            <div className="flex items-center gap-3 text-sm text-gray-500 mt-1">
-              <span className="flex items-center gap-1">
-                <Users className="w-3.5 h-3.5" />
-                {league.members?.length || 0} members
-              </span>
-              <span className="flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5" />
-                Week {currentWeek}
-              </span>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Your Status Card */}
-      {userStats && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4"
-        >
-          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">
-            Your Status
-          </h3>
-          <div className="flex items-center gap-4">
-            {/* Rank Badge */}
-            <div className={`px-4 py-2 rounded-sm ${getRankBadge(userStats.currentRank).bg}`}>
-              <span className="text-2xl">{getRankBadge(userStats.currentRank).emoji}</span>
-              <span className={`ml-2 font-bold ${getRankBadge(userStats.currentRank).color}`}>
-                {userStats.currentRank <= 3 ? '' : 'Place'}
-              </span>
+        {/* League Banner Content */}
+        <div className="px-4 py-3">
+          <div className="flex items-center gap-3">
+            {/* League Avatar */}
+            <div className="w-12 h-12 bg-[#333] border border-[#444] flex-shrink-0 flex items-center justify-center">
+              <Trophy className="w-6 h-6 text-yellow-500" />
             </div>
 
-            <div className="w-px h-10 bg-[#333]" />
-
-            {/* Record */}
-            <div className="text-center">
-              <p className="text-xs text-gray-500">Record</p>
-              <p className="font-bold text-lg">
-                <span className="text-green-500">{userStats.wins}</span>
-                <span className="text-gray-600">-</span>
-                <span className="text-red-500">{userStats.losses}</span>
-              </p>
-            </div>
-
-            <div className="w-px h-10 bg-[#333]" />
-
-            {/* Streak */}
-            <div className="text-center">
-              <p className="text-xs text-gray-500">Streak</p>
-              <p className={`font-bold text-lg flex items-center gap-1 ${
-                userStats.streakType === 'W' ? 'text-green-500' : 'text-red-500'
-              }`}>
-                {userStats.streakType === 'W' && <Flame className="w-4 h-4" />}
-                {userStats.streakType || '—'}{userStats.streak > 0 ? userStats.streak : ''}
-              </p>
-            </div>
-
-            {/* Trend */}
-            <div className="ml-auto">
-              {userStats.trend === 'up' && (
-                <div className="flex items-center gap-1 text-green-500">
-                  <TrendingUp className="w-5 h-5" />
-                </div>
-              )}
-              {userStats.trend === 'down' && (
-                <div className="flex items-center gap-1 text-red-500">
-                  <TrendingDown className="w-5 h-5" />
-                </div>
-              )}
-              {userStats.trend === 'same' && (
-                <div className="flex items-center gap-1 text-gray-600">
-                  <Minus className="w-5 h-5" />
-                </div>
-              )}
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {/* This Week's Matchup Card */}
-      {userMatchup && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-              Your Week {currentWeek} Matchup
-            </h3>
-          </div>
-
-          <div
-            onClick={() => setSelectedMatchup({
-              ...userMatchup,
-              week: currentWeek,
-              isUserMatchup: true
-            })}
-            className={`p-4 rounded-sm cursor-pointer transition-all ${
-              getMatchupRivalry(userMatchup)
-                ? 'bg-red-500/10 border border-red-500/30 hover:border-red-500/50'
-                : 'bg-[#222] border border-[#444] hover:border-[#555]'
-            }`}
-          >
-            {getMatchupRivalry(userMatchup) && (
-              <div className="flex items-center gap-2 mb-2 pb-2 border-b border-red-500/20">
-                <Flame className="w-4 h-4 text-red-500" />
-                <span className="text-xs font-bold text-red-500">
-                  Rivalry Matchup
+            {/* Name + Meta */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg font-bold text-white truncate">{league.name}</h1>
+                {isCommissioner && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-yellow-500/20 border border-yellow-500/30 text-yellow-500 text-[10px] font-bold">
+                    <Crown className="w-2.5 h-2.5" />
+                    Commish
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-3 text-xs text-gray-500 mt-0.5">
+                <span className="flex items-center gap-1">
+                  <Users className="w-3 h-3" />
+                  {league.members?.length || 0}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  Wk {currentWeek}
                 </span>
               </div>
-            )}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#333] flex items-center justify-center border-2 border-purple-500/50">
-                  <span className="font-bold text-white">
-                    {getDisplayName(userMatchup.user1).charAt(0)}
-                  </span>
-                </div>
-                <div>
-                  <p className="font-bold text-white">
-                    {getDisplayName(userMatchup.user1)}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {standings.find(s => s.uid === userMatchup.user1)?.totalPoints.toFixed(1) || '0.0'} pts
-                  </p>
-                </div>
-              </div>
-
-              <div className="px-3 py-1 rounded-full bg-[#1a1a1a]">
-                <Swords className="w-4 h-4 text-purple-500" />
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <p className="font-bold text-white">
-                    {getDisplayName(userMatchup.user2)}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {standings.find(s => s.uid === userMatchup.user2)?.totalPoints.toFixed(1) || '0.0'} pts
-                  </p>
-                </div>
-                <div className="w-10 h-10 rounded-full bg-[#333] flex items-center justify-center border-2 border-[#555]">
-                  <span className="font-bold text-gray-400">
-                    {getDisplayName(userMatchup.user2).charAt(0)}
-                  </span>
-                </div>
-              </div>
             </div>
-            <p className="text-center text-xs text-purple-500 mt-2">
-              Tap to view matchup details →
-            </p>
-          </div>
-        </motion.div>
-      )}
 
-      {/* Tabs */}
-      <div className="flex gap-2">
-        {tabs.map(tab => {
-          const Icon = tab.icon;
-          return (
+            {/* Invite Code Badge */}
             <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-sm font-bold transition-all ${
-                activeTab === tab.id
-                  ? 'bg-yellow-500 text-black'
-                  : 'bg-[#1a1a1a] border border-[#333] text-gray-400 hover:text-white hover:border-[#444]'
-              }`}
+              onClick={handleCopyInvite}
+              className="hidden sm:flex items-center gap-2 px-3 py-2 bg-[#222] border border-[#333] hover:border-[#444] transition-colors"
             >
-              <Icon className="w-4 h-4" />
-              <span className="hidden sm:inline">{tab.label}</span>
-              {tab.badge && (
-                <span className="w-2 h-2 rounded-full bg-purple-500" />
+              <div className="text-right">
+                <p className="text-[10px] uppercase tracking-wider text-gray-500">Invite Code</p>
+                <p className="text-sm font-bold font-mono text-yellow-500">{league.inviteCode}</p>
+              </div>
+              {inviteCopied ? (
+                <Check className="w-4 h-4 text-green-500" />
+              ) : (
+                <Copy className="w-4 h-4 text-gray-500" />
               )}
             </button>
-          );
-        })}
-      </div>
 
-      {/* Tab Content */}
-      <AnimatePresence mode="wait">
-        {activeTab === 'standings' && (
-          <StandingsTab
-            key="standings"
-            standings={standings}
-            memberProfiles={memberProfiles}
-            userProfile={userProfile}
-            loading={loading}
-            league={league}
-          />
-        )}
-        {activeTab === 'matchups' && (
-          <MatchupsTab
-            key="matchups"
-            league={league}
-            userProfile={userProfile}
-            standings={standings}
-            memberProfiles={memberProfiles}
-            rivalries={rivalries}
-          />
-        )}
-        {activeTab === 'activity' && (
-          <motion.div
-            key="activity"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="space-y-4"
-          >
-            {/* Rivalries Section */}
-            {rivalries.length > 0 && (
-              <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Flame className="w-4 h-4 text-red-500" />
-                  <h3 className="text-sm font-bold text-white">
-                    Your Rivalries
-                  </h3>
+            {/* Your Stats - Desktop */}
+            {userStats && (
+              <div className="hidden md:flex items-center gap-1 border-l border-[#333] pl-3">
+                <div className="px-2 py-1 bg-[#222] text-center min-w-[50px]">
+                  <p className="text-[10px] uppercase tracking-wider text-gray-500">Rank</p>
+                  <p className="text-base font-bold text-white font-data tabular-nums">#{userStats.currentRank}</p>
                 </div>
-                <div className="space-y-2">
-                  {rivalries.map(rivalry => (
-                    <RivalryBadge key={rivalry.rivalId} rivalry={rivalry} compact={false} />
-                  ))}
+                <div className="px-2 py-1 bg-[#222] text-center min-w-[60px]">
+                  <p className="text-[10px] uppercase tracking-wider text-gray-500">Record</p>
+                  <p className="text-base font-bold font-data tabular-nums">
+                    <span className="text-green-500">{userStats.wins}</span>
+                    <span className="text-gray-600">-</span>
+                    <span className="text-red-500">{userStats.losses}</span>
+                  </p>
                 </div>
+                {userStats.streak > 0 && (
+                  <div className="px-2 py-1 bg-[#222] text-center min-w-[50px]">
+                    <p className="text-[10px] uppercase tracking-wider text-gray-500">Streak</p>
+                    <p className={`text-base font-bold font-data tabular-nums flex items-center justify-center gap-0.5 ${
+                      userStats.streakType === 'W' ? 'text-green-500' : 'text-red-500'
+                    }`}>
+                      {userStats.streakType === 'W' && <Flame className="w-3.5 h-3.5" />}
+                      {userStats.streakType}{userStats.streak}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
+          </div>
 
-            {/* Activity Feed */}
-            <LeagueActivityFeed
-              leagueId={league?.id}
-              userId={userProfile?.uid}
+          {/* Mobile Stats Strip */}
+          {userStats && (
+            <div className="flex md:hidden items-center gap-2 mt-3 pt-3 border-t border-[#222]">
+              <div className="flex-1 px-2 py-1.5 bg-[#222] text-center">
+                <p className="text-[10px] uppercase tracking-wider text-gray-500">Rank</p>
+                <p className="text-sm font-bold text-white font-data tabular-nums">#{userStats.currentRank}</p>
+              </div>
+              <div className="flex-1 px-2 py-1.5 bg-[#222] text-center">
+                <p className="text-[10px] uppercase tracking-wider text-gray-500">Record</p>
+                <p className="text-sm font-bold font-data tabular-nums">
+                  <span className="text-green-500">{userStats.wins}</span>
+                  <span className="text-gray-600">-</span>
+                  <span className="text-red-500">{userStats.losses}</span>
+                </p>
+              </div>
+              {userStats.streak > 0 && (
+                <div className="flex-1 px-2 py-1.5 bg-[#222] text-center">
+                  <p className="text-[10px] uppercase tracking-wider text-gray-500">Streak</p>
+                  <p className={`text-sm font-bold font-data tabular-nums flex items-center justify-center gap-0.5 ${
+                    userStats.streakType === 'W' ? 'text-green-500' : 'text-red-500'
+                  }`}>
+                    {userStats.streakType === 'W' && <Flame className="w-3 h-3" />}
+                    {userStats.streakType}{userStats.streak}
+                  </p>
+                </div>
+              )}
+              {/* Mobile Invite Code */}
+              <button
+                onClick={handleCopyInvite}
+                className="flex-1 px-2 py-1.5 bg-[#222] text-center"
+              >
+                <p className="text-[10px] uppercase tracking-wider text-gray-500">Code</p>
+                <p className="text-sm font-bold font-mono text-yellow-500">{league.inviteCode}</p>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* STICKY TABS */}
+        <div className="flex border-t border-[#222]">
+          {tabs.map(tab => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 font-bold text-sm transition-all relative ${
+                  isActive
+                    ? 'bg-[#0a0a0a] text-yellow-500 border-t-2 border-yellow-500'
+                    : 'text-gray-500 hover:text-white hover:bg-[#222]'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span className="hidden sm:inline">{tab.label}</span>
+                {tab.badge && !isActive && (
+                  <span className="w-1.5 h-1.5 rounded-sm bg-purple-500" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* SCROLLABLE CONTENT */}
+      <div className="flex-1 overflow-y-auto min-h-0 scroll-smooth">
+        <AnimatePresence mode="wait">
+          {activeTab === 'standings' && (
+            <StandingsTab
+              key="standings"
+              standings={standings}
+              memberProfiles={memberProfiles}
+              userProfile={userProfile}
+              loading={loading}
               league={league}
-              showFilters={true}
-              maxItems={15}
-              onActivityTap={(activity) => {
-                if (activity.type === 'matchup_result' && activity.metadata?.week) {
-                  const matchups = weeklyMatchups[activity.metadata.week];
-                  if (matchups) {
-                    const matchup = matchups.find(m =>
-                      (m.user1 === userProfile?.uid || m.user2 === userProfile?.uid)
-                    );
-                    if (matchup) {
-                      setSelectedMatchup({
-                        ...matchup,
-                        week: activity.metadata.week,
-                        isUserMatchup: true
-                      });
-                    }
-                  }
-                } else if (activity.type === 'new_message') {
-                  setActiveTab('chat');
-                }
-              }}
+              leagueStats={leagueStats}
+              showLeaderboards={true}
             />
-          </motion.div>
-        )}
-        {activeTab === 'chat' && (
-          <ChatTab
-            key="chat"
-            league={league}
-            messages={messages}
-            userProfile={userProfile}
-            memberProfiles={memberProfiles}
-            isCommissioner={isCommissioner}
+          )}
+          {activeTab === 'matchups' && (
+            <MatchupsTab
+              key="matchups"
+              league={league}
+              userProfile={userProfile}
+              standings={standings}
+              memberProfiles={memberProfiles}
+              rivalries={rivalries}
+            />
+          )}
+          {activeTab === 'activity' && (
+            <motion.div
+              key="activity"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="p-4 space-y-4"
+            >
+              {/* Rivalries Section */}
+              {rivalries.length > 0 && (
+                <div className="bg-[#1a1a1a] border border-[#333]">
+                  <div className="px-4 py-3 border-b border-[#333] bg-[#222]">
+                    <h3 className="text-[10px] font-bold uppercase tracking-wider text-red-400 flex items-center gap-2">
+                      <Flame className="w-3.5 h-3.5" />
+                      Your Rivalries
+                    </h3>
+                  </div>
+                  <div className="p-3 space-y-2">
+                    {rivalries.map(rivalry => (
+                      <RivalryBadge key={rivalry.rivalId} rivalry={rivalry} compact={false} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Activity Feed */}
+              <LeagueActivityFeed
+                leagueId={league?.id}
+                userId={userProfile?.uid}
+                league={league}
+                showFilters={true}
+                maxItems={15}
+                onActivityTap={(activity) => {
+                  if (activity.type === 'matchup_result' && activity.metadata?.week) {
+                    const matchups = weeklyMatchups[activity.metadata.week];
+                    if (matchups) {
+                      const matchup = matchups.find(m =>
+                        (m.user1 === userProfile?.uid || m.user2 === userProfile?.uid)
+                      );
+                      if (matchup) {
+                        setSelectedMatchup({
+                          ...matchup,
+                          week: activity.metadata.week,
+                          isUserMatchup: true
+                        });
+                      }
+                    }
+                  } else if (activity.type === 'new_message') {
+                    setActiveTab('chat');
+                  }
+                }}
+              />
+            </motion.div>
+          )}
+          {activeTab === 'chat' && (
+            <ChatTab
+              key="chat"
+              league={league}
+              messages={messages}
+              userProfile={userProfile}
+              memberProfiles={memberProfiles}
+              isCommissioner={isCommissioner}
+            />
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* FIXED BOTTOM: Smack Talk Input - pb-14 clears mobile nav */}
+      <div className="flex-shrink-0 bg-[#1a1a1a] border-t border-[#333] px-4 py-3 pb-14 md:pb-3 z-40">
+        <SmackTalkInput leagueId={league.id} userProfile={userProfile} />
+      </div>
+
+      {/* Leave League Modal */}
+      <AnimatePresence>
+        {showLeaveModal && (
+          <LeaveLeagueModal
+            leagueName={league.name}
+            onClose={() => setShowLeaveModal(false)}
+            onConfirm={handleLeaveConfirm}
+            isLoading={isLeaving}
           />
         )}
       </AnimatePresence>
-
-      {/* Persistent Smack Talk Area */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4"
-      >
-        <div className="flex items-center gap-2 mb-3">
-          <MessageSquare className="w-4 h-4 text-yellow-500" />
-          <h3 className="text-sm font-bold text-white">
-            Smack Talk
-          </h3>
-          <span className="text-xs text-gray-500">
-            Quick message the league
-          </span>
-        </div>
-        <SmackTalkInput
-          leagueId={league.id}
-          userProfile={userProfile}
-        />
-      </motion.div>
-
-      {/* Leave League Button */}
-      <div className="pt-4">
-        <button
-          onClick={onLeave}
-          className="w-full py-3 text-sm text-red-500 hover:text-red-400 hover:bg-red-500/10 rounded-sm transition-colors"
-        >
-          Leave League
-        </button>
-      </div>
     </div>
   );
 };
