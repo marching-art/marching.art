@@ -139,6 +139,15 @@ const ARTICLE_TYPES = {
   DEEP_ANALYTICS: "deep_analytics",
 };
 
+/**
+ * Format event name for fantasy articles - replaces 'DCI' with 'marching.art'
+ * This keeps branding consistent since fantasy competitions are on marching.art platform
+ */
+function formatFantasyEventName(name) {
+  if (!name) return "";
+  return name.replace(/\bDCI\b/g, "marching.art");
+}
+
 // =============================================================================
 // GEMINI INITIALIZATION
 // =============================================================================
@@ -551,16 +560,20 @@ async function generateFantasyPerformersArticle({ reportDay, fantasyData, showCo
     : "0.000";
   const topScore = topPerformers[0]?.totalScore?.toFixed(3) || "0.000";
 
-  const prompt = `You are a fantasy sports analyst writing for marching.art, covering our DCI fantasy competition like ESPN covers fantasy football.
+  // Use marching.art branding for fantasy articles
+  const fantasyShowName = formatFantasyEventName(showContext.showName);
+  const fantasyLocation = formatFantasyEventName(showContext.location);
 
-CONTEXT: marching.art Fantasy is a fantasy sports game where users ("Directors") create their own fantasy ensembles. Directors draft real DCI corps to fill caption positions (Brass, Percussion, Guard, etc.) and earn points based on how those corps perform in actual DCI competitions. Think fantasy football, but for drum corps.
+  const prompt = `You are a fantasy sports analyst writing for marching.art, covering our marching.art fantasy competition like ESPN covers fantasy football.
+
+CONTEXT: marching.art Fantasy is a fantasy sports game where users ("Directors") create their own fantasy ensembles. Directors draft real corps to fill caption positions (Brass, Percussion, Guard, etc.) and earn points based on how those corps perform in actual competitions. Think fantasy football, but for drum corps.
 
 ═══════════════════════════════════════════════════════════════
 DATE & CONTEXT
 ═══════════════════════════════════════════════════════════════
 • Date: ${showContext.date}
 • Season Day: ${reportDay}
-• DCI Show Today: ${showContext.showName} in ${showContext.location}
+• Competition Today: ${fantasyShowName} in ${fantasyLocation}
 ═══════════════════════════════════════════════════════════════
 
 FANTASY LEADERBOARD for ${showContext.date} (Day ${reportDay}):
@@ -635,29 +648,33 @@ Return ONLY valid JSON:
 async function generateFantasyLeaguesArticle({ reportDay, fantasyData, showContext }) {
   const { textModel } = initializeGemini();
 
-  // Get show/league data
+  // Get show/league data - also format show names for fantasy branding
   const shows = fantasyData?.current?.shows || [];
   const showSummaries = shows.map(show => {
     const results = show.results || [];
     const top3 = results.sort((a, b) => b.totalScore - a.totalScore).slice(0, 3);
     return {
-      name: show.showName || show.showId || 'Competition',
+      name: formatFantasyEventName(show.showName || show.showId || 'Competition'),
       entrants: results.length,
       topScorer: top3[0]?.corpsName || 'N/A',
       topScore: top3[0]?.totalScore?.toFixed(3) || '0.000',
     };
   });
 
+  // Use marching.art branding for fantasy articles
+  const fantasyShowName = formatFantasyEventName(showContext.showName);
+  const fantasyLocation = formatFantasyEventName(showContext.location);
+
   const prompt = `You are a fantasy sports league analyst for marching.art, writing league updates like ESPN's fantasy football league coverage.
 
-CONTEXT: marching.art Fantasy organizes competitions into "shows" (like fantasy football leagues). Directors compete in these shows with their fantasy ensembles. Points are earned based on real DCI corps performances.
+CONTEXT: marching.art Fantasy organizes competitions into "shows" (like fantasy football leagues). Directors compete in these shows with their fantasy ensembles. Points are earned based on real corps performances.
 
 ═══════════════════════════════════════════════════════════════
 DATE & CONTEXT
 ═══════════════════════════════════════════════════════════════
 • Date: ${showContext.date}
 • Season Day: ${reportDay}
-• DCI Show Today: ${showContext.showName} in ${showContext.location}
+• Competition Today: ${fantasyShowName} in ${fantasyLocation}
 ═══════════════════════════════════════════════════════════════
 
 LEAGUE/SHOW ACTIVITY for ${showContext.date} (Day ${reportDay}):
