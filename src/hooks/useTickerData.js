@@ -91,13 +91,12 @@ export const useTickerData = () => {
     if (allRecaps.length === 0) return null;
 
     // Calculate effective day (same logic as Dashboard and useLandingScores)
+    // Scores for day N are processed at 2 AM and become available after that.
+    // After 2 AM: previous day's scores were just processed (currentDay - 1)
+    // Before 2 AM: scores only available up to currentDay - 2 (yesterday's processing hasn't run)
     const hour = new Date().getHours();
-    // Between midnight and 2 AM, scores haven't been processed yet
-    // So use currentDay - 1 to avoid showing unprocessed scores
-    // On day 1 before 2 AM, no scores have been processed yet
-    const effectiveDay = hour < 2
-      ? (currentDay <= 1 ? null : currentDay - 1)
-      : currentDay;
+    const calculatedDay = hour < 2 ? currentDay - 2 : currentDay - 1;
+    const effectiveDay = calculatedDay >= 1 ? calculatedDay : null;
 
     // Find the most recent day that has scores up to and including effective day
     const availableDays = allRecaps

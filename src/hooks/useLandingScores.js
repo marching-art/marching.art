@@ -28,14 +28,13 @@ const calculateTotalScore = (captions) => {
 const getEffectiveDay = (currentDay) => {
   const now = new Date();
   const hour = now.getHours();
-  // Between midnight (0) and 2 AM, scores haven't been processed yet
-  // So use currentDay - 1 to avoid showing unprocessed scores
-  if (hour < 2) {
-    // On day 1 before 2 AM, no scores have been processed yet
-    if (currentDay <= 1) return null;
-    return currentDay - 1;
-  }
-  return currentDay;
+  // Scores for day N are processed at 2 AM and become available after that.
+  // After 2 AM: previous day's scores were just processed (currentDay - 1)
+  // Before 2 AM: scores only available up to currentDay - 2 (yesterday's processing hasn't run)
+  const effectiveDay = hour < 2 ? currentDay - 2 : currentDay - 1;
+
+  // Return null if no scores should be available yet (e.g., day 1)
+  return effectiveDay >= 1 ? effectiveDay : null;
 };
 
 /**
