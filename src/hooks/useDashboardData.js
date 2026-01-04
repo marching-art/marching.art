@@ -25,15 +25,17 @@ export const useDashboardData = () => {
   const storeCorps = useProfileStore((state) => state.corps);
   const storeLoading = useProfileStore((state) => state.loading);
   const storeIsAdmin = useProfileStore((state) => state.isAdmin);
-  const getUnlockedClasses = useProfileStore((state) => state.getUnlockedClasses);
 
   // Core state - profile and corps now come from store
   const profile = storeProfile;
   const loading = storeLoading;
   const corps = storeCorps;
   const isAdmin = storeIsAdmin;
-  // Get unlocked classes from store (admins get all classes)
-  const unlockedClasses = getUnlockedClasses();
+  // Compute unlocked classes directly (admins get all classes)
+  // Must compute here rather than using store method so React tracks the isAdmin dependency
+  const unlockedClasses = isAdmin
+    ? ['soundSport', 'aClass', 'open', 'world']
+    : (profile?.unlockedClasses || ['soundSport']);
 
   // Additional local state
   const [availableCorps, setAvailableCorps] = useState([]);
