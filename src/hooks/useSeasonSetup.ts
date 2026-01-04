@@ -46,6 +46,24 @@ export function useSeasonSetup(
       return;
     }
 
+    // Also skip if user is already active in this season AND has show registrations
+    // This handles existing users who completed setup before the initialSetupComplete flag existed
+    if (profile.activeSeasonId === seasonData.seasonUid && corps) {
+      const hasAnyShowRegistrations = Object.values(corps).some((corpsData) => {
+        if (!corpsData?.selectedShows) return false;
+        // Check if any week has show registrations
+        return Object.values(corpsData.selectedShows).some(
+          (shows) => Array.isArray(shows) && shows.length > 0
+        );
+      });
+
+      if (hasAnyShowRegistrations) {
+        setCorpsNeedingSetup([]);
+        setShowSeasonSetupWizard(false);
+        return;
+      }
+    }
+
     const needSetup: CorpsClass[] = [];
     const hasCorps = corps && Object.keys(corps).length > 0;
     const hasRetiredCorps = profile.retiredCorps && profile.retiredCorps.length > 0;
