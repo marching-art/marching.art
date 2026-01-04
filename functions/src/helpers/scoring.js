@@ -194,9 +194,11 @@ async function processAndArchiveOffSeasonScoresLogic() {
   if (profilesSnapshot.empty) return;
 
   const week = Math.ceil(scoredDay / 7);
+  // Calculate the actual date for this off-season day from the season start date
+  const scoredDayDate = new Date(seasonStartDate.getTime() + (scoredDay - 1) * 24 * 60 * 60 * 1000);
   const dailyRecap = {
     offSeasonDay: scoredDay,
-    date: yesterday,  // Use yesterday since scores are for the previous day
+    date: scoredDayDate,  // The actual calendar date for this off-season day
     shows: [],
   };
   const batch = db.batch();

@@ -120,9 +120,9 @@ export const useLandingScores = () => {
       const scores = [];
 
       yearData.forEach(event => {
-        // Only include scores from days before the effective day
-        // (accounts for 2 AM score processing time)
-        if (event.offSeasonDay >= effectiveDay) return;
+        // Only include scores from days up to and including the effective day
+        // effectiveDay represents the day whose scores have been processed (at 2 AM)
+        if (event.offSeasonDay > effectiveDay) return;
 
         const scoreData = event.scores?.find(s => s.corps === corps.corpsName);
         if (scoreData && scoreData.captions) {
