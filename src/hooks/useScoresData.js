@@ -176,7 +176,8 @@ export const useScoresData = (options = {}) => {
   const {
     seasonId = null,
     classFilter = 'all',
-    enabledCaptions = { ge: true, vis: true, mus: true }
+    enabledCaptions = { ge: true, vis: true, mus: true },
+    disableArchiveFallback = false
   } = options;
 
   const currentSeasonUid = useSeasonStore((state) => state.seasonUid);
@@ -280,7 +281,8 @@ export const useScoresData = (options = {}) => {
 
         // If current season has no data and we haven't already tried a fallback,
         // automatically fall back to the most recent archived season
-        if (shows.length === 0 && !seasonId && !fallbackSeasonId && archivedSeasons.length > 0) {
+        // (unless disableArchiveFallback is set, which keeps the view fresh for new seasons)
+        if (shows.length === 0 && !seasonId && !fallbackSeasonId && archivedSeasons.length > 0 && !disableArchiveFallback) {
           const mostRecentArchived = archivedSeasons[0];
           console.log(`Current season has no recaps, falling back to ${mostRecentArchived.id}`);
           setFallbackSeasonId(mostRecentArchived.id);
@@ -319,7 +321,7 @@ export const useScoresData = (options = {}) => {
     };
 
     fetchScoresData();
-  }, [targetSeasonId, archivedSeasons, seasonId, fallbackSeasonId]);
+  }, [targetSeasonId, archivedSeasons, seasonId, fallbackSeasonId, disableArchiveFallback]);
 
   // Filter shows by class
   const filteredShows = useMemo(() => {
