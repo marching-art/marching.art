@@ -644,7 +644,8 @@ const Dashboard = () => {
     clearNewAchievement,
     getCorpsClassName,
     refreshProfile,
-    handleCorpsSwitch
+    handleCorpsSwitch,
+    unlockedClasses  // Includes admin override - admins have all classes
   } = dashboardData;
 
   // Computed values
@@ -972,7 +973,7 @@ const Dashboard = () => {
             corpsNeedingSetup={corpsNeedingSetup}
             existingCorps={corps || {}}
             retiredCorps={profile?.retiredCorps || []}
-            unlockedClasses={profile?.unlockedClasses || ['soundSport']}
+            unlockedClasses={unlockedClasses}
           />
         </Suspense>
       )}
@@ -983,7 +984,7 @@ const Dashboard = () => {
         <ControlBar
           corps={corps}
           activeCorpsClass={activeCorpsClass}
-          unlockedClasses={profile?.unlockedClasses || ['soundSport']}
+          unlockedClasses={unlockedClasses}
           profile={profile}
           onSwitch={handleCorpsSwitch}
           onCreateCorps={(classId) => {
@@ -1066,7 +1067,7 @@ const Dashboard = () => {
         <CorpsRegistrationModal
           onClose={() => { setShowRegistration(false); clearNewlyUnlockedClass(); }}
           onSubmit={handleCorpsRegistration}
-          unlockedClasses={profile?.unlockedClasses || ['soundSport']}
+          unlockedClasses={unlockedClasses}
           defaultClass={newlyUnlockedClass}
         />
       )}
@@ -1122,7 +1123,7 @@ const Dashboard = () => {
           onMove={handleMoveCorps}
           currentClass={activeCorpsClass}
           corpsName={activeCorps.corpsName || activeCorps.name}
-          unlockedClasses={profile?.unlockedClasses || ['soundSport']}
+          unlockedClasses={unlockedClasses}
           existingCorps={corps}
         />
       )}
