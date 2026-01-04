@@ -491,7 +491,7 @@ exports.getDailyNews = onCall(
 
 /**
  * Fetch recent news entries for the frontend
- * Returns articles from the season-based structure: news_hub/{seasonId}/day_{n}/articles/{type}
+ * Returns articles from the news_hub collection (flat structure with auto-generated IDs)
  */
 exports.getRecentNews = onCall(
   {
@@ -502,105 +502,75 @@ exports.getRecentNews = onCall(
     const { limit = 10, category, seasonId } = request.data || {};
 
     try {
-      // Get current season to find seasonId and currentDay if not provided
-      let activeSeasonId = seasonId;
-      let currentDay = null;
+      // Build query for news_hub collection
+      let query = db.collection("news_hub")
+        .where("isPublished", "==", true)
+        .orderBy("createdAt", "desc")
+        .limit(limit + 10); // Fetch extra in case we need to filter
 
-      if (!activeSeasonId) {
-        // Find active season
-        const seasonsSnapshot = await db.collection("seasons")
-          .where("status", "==", "active")
-          .limit(1)
-          .get();
+      // Apply category filter if specified
+      if (category) {
+        query = db.collection("news_hub")
+          .where("isPublished", "==", true)
+          .where("category", "==", category)
+          .orderBy("createdAt", "desc")
+          .limit(limit + 10);
+      }
 
-        if (!seasonsSnapshot.empty) {
-          const seasonDoc = seasonsSnapshot.docs[0];
-          activeSeasonId = seasonDoc.id;
-          currentDay = seasonDoc.data().currentDay || 50;
-        } else {
-          // Fallback: try to find any season with articles
-          activeSeasonId = "current_season";
-          currentDay = 50;
+      // Apply seasonId filter if specified
+      if (seasonId) {
+        query = db.collection("news_hub")
+          .where("isPublished", "==", true)
+          .where("metadata.seasonId", "==", seasonId)
+          .orderBy("createdAt", "desc")
+          .limit(limit + 10);
+
+        // If both category and seasonId, need compound query
+        if (category) {
+          query = db.collection("news_hub")
+            .where("isPublished", "==", true)
+            .where("category", "==", category)
+            .where("metadata.seasonId", "==", seasonId)
+            .orderBy("createdAt", "desc")
+            .limit(limit + 10);
         }
       }
 
-      // If we still don't have currentDay, try to find the latest day with articles
-      if (!currentDay) {
-        const dayDocs = await db.collection(`news_hub/${activeSeasonId}`)
-          .orderBy("reportDay", "desc")
-          .limit(1)
-          .get();
+      const snapshot = await query.get();
 
-        if (!dayDocs.empty) {
-          currentDay = dayDocs.docs[0].data().reportDay + 1;
-        } else {
-          currentDay = 50; // Default fallback
-        }
-      }
+      const articles = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          seasonId: data.metadata?.seasonId || null,
+          reportDay: data.metadata?.offSeasonDay || null,
+          category: data.category,
+          headline: data.headline,
+          summary: data.summary,
+          fullStory: data.fullStory,
+          imageUrl: data.imageUrl,
+          imageIsPlaceholder: data.imageIsPlaceholder,
+          trendingCorps: data.trendingCorps || [],
+          fantasyImpact: data.fantasyImpact,
+          captionBreakdown: data.captionBreakdown,
+          fantasyMetrics: data.fantasyMetrics,
+          fantasySpotlight: data.fantasySpotlight,
+          dciRecap: data.dciRecap,
+          crossOverAnalysis: data.crossOverAnalysis,
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.createdAt?.toDate?.()?.toISOString(),
+          date: data.date?.toDate?.()?.toISOString() || data.date,
+          metadata: data.metadata,
+        };
+      });
 
-      const articles = [];
-      const daysToFetch = Math.ceil(limit / 5) + 1; // 5 articles per day
-
-      // Fetch articles from recent days
-      for (let day = currentDay - 1; day > Math.max(0, currentDay - daysToFetch - 1); day--) {
-        const dayPath = `news_hub/${activeSeasonId}/day_${day}`;
-
-        // Check if day has articles
-        const dayDoc = await db.doc(dayPath).get();
-        if (!dayDoc.exists || !dayDoc.data().isPublished) continue;
-
-        const dayData = dayDoc.data();
-        const articleTypes = dayData.articleTypes || [
-          "dci_standings", "dci_captions", "fantasy_performers", "fantasy_leagues", "deep_analytics"
-        ];
-
-        // Fetch each article for this day
-        for (const articleType of articleTypes) {
-          const articleDoc = await db.doc(`${dayPath}/articles/${articleType}`).get();
-
-          if (articleDoc.exists) {
-            const data = articleDoc.data();
-
-            // Apply category filter if specified
-            if (category) {
-              const articleCategory =
-                articleType.startsWith("dci_") ? "dci" :
-                articleType.startsWith("fantasy_") ? "fantasy" :
-                articleType === "deep_analytics" ? "analysis" : "dci";
-
-              if (articleCategory !== category) continue;
-            }
-
-            articles.push({
-              id: `${activeSeasonId}_day${day}_${articleType}`,
-              seasonId: activeSeasonId,
-              reportDay: day,
-              articleType,
-              category:
-                articleType.startsWith("dci_") ? "dci" :
-                articleType.startsWith("fantasy_") ? "fantasy" :
-                articleType === "deep_analytics" ? "analysis" : "dci",
-              ...data,
-              createdAt: data.createdAt?.toDate?.()?.toISOString() || dayData.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-              updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.createdAt?.toDate?.()?.toISOString(),
-            });
-          }
-        }
-
-        // Stop if we have enough articles
-        if (articles.length >= limit) break;
-      }
-
-      // Sort by createdAt descending and limit
-      articles.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      // Limit to requested amount
       const limitedArticles = articles.slice(0, limit);
 
       return {
         success: true,
         news: limitedArticles,
         hasMore: articles.length > limit,
-        seasonId: activeSeasonId,
-        currentDay,
       };
     } catch (error) {
       logger.error("Error fetching recent news:", error);
