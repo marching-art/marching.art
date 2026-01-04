@@ -8,9 +8,10 @@ import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from
 import { Link } from 'react-router-dom';
 import {
   Trophy, Calendar, Edit, ChevronRight, Users,
-  TrendingUp, TrendingDown, Activity, Medal, FileText
+  TrendingUp, TrendingDown, Activity, Medal, FileText,
+  Flame, Zap, Coins, Lock, Unlock
 } from 'lucide-react';
-import DirectorCard from '../components/DirectorCard';
+// DirectorCard removed - stats now displayed inline in header
 import { useAuth } from '../App';
 import { db } from '../firebase';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
@@ -595,43 +596,73 @@ const Dashboard = () => {
             ))}
           </div>
 
-          {/* Director Status Card - Mobile compact version */}
+          {/* Director Stats Header - Shows class badge, stats, and Buy button */}
           {profile && (
-            <div className="lg:hidden">
-              <DirectorCard
-                displayName={profile.displayName || 'Director'}
-                xp={profile.xp || 0}
-                xpLevel={profile.xpLevel || 1}
-                corpsCoin={profile.corpsCoin || 0}
-                streak={engagementData?.loginStreak || 0}
-                lastLogin={engagementData?.lastLogin}
-                unlockedClasses={profile.unlockedClasses || ['soundSport']}
-                onUnlockClass={handleClassUnlock}
-                compact
-              />
+            <div className="bg-[#1a1a1a] border-b border-[#333] px-3 py-2">
+              <div className="flex items-center justify-between">
+                {/* Left: Class Badge */}
+                <span className="px-3 py-1 bg-[#0057B8] text-white text-xs font-bold uppercase tracking-wider">
+                  {CLASS_LABELS[activeCorpsClass] || activeCorpsClass}
+                </span>
+
+                {/* Right: Stats + Buy Button */}
+                <div className="flex items-center gap-3">
+                  {/* Streak */}
+                  <div className="flex items-center gap-1">
+                    <Flame className="w-4 h-4 text-orange-400" />
+                    <span className="text-sm font-bold text-orange-400 tabular-nums">
+                      {engagementData?.loginStreak || 0}
+                    </span>
+                  </div>
+
+                  {/* CorpsCoin */}
+                  <div className="flex items-center gap-1">
+                    <Coins className="w-4 h-4 text-yellow-500" />
+                    <span className="text-sm font-bold text-yellow-500 tabular-nums">
+                      {(profile.corpsCoin || 0).toLocaleString()}
+                    </span>
+                  </div>
+
+                  {/* Level */}
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs font-bold text-blue-400 uppercase">LVL</span>
+                    <span className="text-sm font-bold text-blue-400 tabular-nums">
+                      {profile.xpLevel || 1}
+                    </span>
+                  </div>
+
+                  {/* Buy Button - Show when user can afford next class */}
+                  {(() => {
+                    const classOrder = ['aClass', 'open', 'world'];
+                    const unlockedClasses = profile.unlockedClasses || ['soundSport'];
+                    const corpsCoin = profile.corpsCoin || 0;
+
+                    for (const classKey of classOrder) {
+                      if (!unlockedClasses.includes(classKey)) {
+                        const coinCost = CLASS_UNLOCK_COSTS[classKey];
+                        if (corpsCoin >= coinCost) {
+                          return (
+                            <button
+                              onClick={() => handleClassUnlock(classKey)}
+                              className="ml-1 px-2 py-1 bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-bold uppercase flex items-center gap-1"
+                            >
+                              <Coins className="w-3 h-3" />
+                              Buy
+                            </button>
+                          );
+                        }
+                        break;
+                      }
+                    }
+                    return null;
+                  })()}
+                </div>
+              </div>
             </div>
           )}
 
           {/* Pull to Refresh Wrapper */}
           <PullToRefresh onRefresh={handleRefresh}>
-            {/* Director Status Card - Desktop full version */}
-            {profile && (
-              <div className="hidden lg:block">
-                <DirectorCard
-                  displayName={profile.displayName || 'Director'}
-                  xp={profile.xp || 0}
-                  xpLevel={profile.xpLevel || 1}
-                  corpsCoin={profile.corpsCoin || 0}
-                  streak={engagementData?.loginStreak || 0}
-                  lastLogin={engagementData?.lastLogin}
-                  unlockedClasses={profile.unlockedClasses || ['soundSport']}
-                  seasonName={formatSeasonName(seasonData?.name)}
-                  currentWeek={currentWeek}
-                  onUnlockClass={handleClassUnlock}
-                />
-              </div>
-            )}
-
             {/* MAIN GRID - Desktop: 3 columns, Mobile: single panel based on tab */}
             <div className="lg:grid lg:grid-cols-3 w-full gap-px bg-[#333] pb-20 lg:pb-4">
 
