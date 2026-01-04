@@ -808,7 +808,8 @@ const Dashboard = () => {
     getCorpsClassName,
     refreshProfile,
     handleCorpsSwitch,
-    unlockedClasses  // Includes admin override - admins have all classes
+    unlockedClasses,  // Includes admin override - admins have all classes
+    engagementData
   } = dashboardData;
 
   // Computed values
