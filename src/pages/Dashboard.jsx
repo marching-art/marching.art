@@ -106,11 +106,13 @@ const getSoundSportRating = (score) => {
 const getEffectiveDay = (currentDay) => {
   const now = new Date();
   const hour = now.getHours();
-  // Between midnight (0) and 2 AM, scores haven't been processed yet
-  if (hour < 2) {
-    return Math.max(1, currentDay - 1);
-  }
-  return currentDay;
+  // Scores for day N are processed at 2 AM and become available after that.
+  // After 2 AM: previous day's scores were just processed (currentDay - 1)
+  // Before 2 AM: scores only available up to currentDay - 2 (yesterday's processing hasn't run)
+  const effectiveDay = hour < 2 ? currentDay - 2 : currentDay - 1;
+
+  // Return null if no scores should be available yet (e.g., day 1)
+  return effectiveDay >= 1 ? effectiveDay : null;
 };
 
 /**
@@ -118,6 +120,11 @@ const getEffectiveDay = (currentDay) => {
  * Returns: { geTotal, visTotal, musTotal } from the most recent score
  */
 const processCategoryTotals = (yearData, corpsName, effectiveDay) => {
+  // If no effective day (e.g., day 1 before scores processed), return no scores
+  if (effectiveDay === null) {
+    return { geTotal: null, visTotal: null, musTotal: null };
+  }
+
   const scores = [];
 
   for (const event of yearData) {
@@ -176,6 +183,19 @@ const processCategoryTotals = (yearData, corpsName, effectiveDay) => {
  * Returns: { score, trend, nextShow } for a given caption
  */
 const processCaptionScores = (yearData, corpsName, captionId, effectiveDay) => {
+  // If no effective day (e.g., day 1 before scores processed), return no scores
+  // but still find the next upcoming show
+  if (effectiveDay === null) {
+    // Find the first show (day 1)
+    const sortedEvents = [...yearData].sort((a, b) => (a.offSeasonDay || 0) - (b.offSeasonDay || 0));
+    const firstShow = sortedEvents.find(e => e.scores?.find(s => s.corps === corpsName));
+    return {
+      score: null,
+      trend: null,
+      nextShow: firstShow ? { day: firstShow.offSeasonDay, location: firstShow.eventName || firstShow.name || 'TBD' } : null
+    };
+  }
+
   const scores = [];
   let nextShow = null;
 
