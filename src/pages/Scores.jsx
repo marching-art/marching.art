@@ -592,6 +592,10 @@ const Scores = () => {
     stats,
     aggregatedScores,
     refetch,
+    isArchived,
+    displayedSeasonId,
+    archivedSeasons,
+    selectSeason,
   } = useScoresData({
     seasonId: targetSeasonId,
     classFilter: 'all',
@@ -604,9 +608,23 @@ const Scores = () => {
     haptic('success');
   };
 
-  const currentSeasonName = useMemo(() => {
+  // Determine displayed season name - could be current or archived
+  const displayedSeasonName = useMemo(() => {
+    if (isArchived && displayedSeasonId) {
+      // Find the archived season name
+      const archivedSeason = archivedSeasons.find(s => s.id === displayedSeasonId);
+      if (archivedSeason?.seasonName) {
+        return archivedSeason.seasonName;
+      }
+      // Fallback: parse from ID (e.g., "adagio_2025-26" -> "Adagio 2025-26")
+      const parts = displayedSeasonId.split('_');
+      if (parts.length === 2) {
+        return `${parts[0].charAt(0).toUpperCase() + parts[0].slice(1)} ${parts[1]}`;
+      }
+      return displayedSeasonId;
+    }
     return formatSeasonName?.() || 'Current Season';
-  }, [formatSeasonName]);
+  }, [formatSeasonName, isArchived, displayedSeasonId, archivedSeasons]);
 
   const userCorpsName = useMemo(() => {
     if (!loggedInProfile?.corps) return null;
@@ -671,7 +689,10 @@ const Scores = () => {
               <h1 className="text-sm font-bold text-white uppercase tracking-wider">
                 Scores & Recaps
               </h1>
-              <p className="text-[10px] text-gray-500">{currentSeasonName}</p>
+              <p className="text-[10px] text-gray-500">
+                {displayedSeasonName}
+                {isArchived && <span className="ml-1 text-yellow-500">(Archived)</span>}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-4 text-xs">
