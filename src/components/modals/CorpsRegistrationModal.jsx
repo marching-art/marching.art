@@ -18,7 +18,7 @@ const CorpsRegistrationModal = ({ onClose, onSubmit, unlockedClasses = ['soundSp
   const [formData, setFormData] = useState({
     name: '',
     location: '',
-    showConcept: '',
+    description: '',
     class: defaultClass || 'soundSport',
   });
 
@@ -93,20 +93,20 @@ const CorpsRegistrationModal = ({ onClose, onSubmit, unlockedClasses = ['soundSp
                 />
               </div>
 
-              {/* Show Concept */}
+              {/* Group Description */}
               <div>
                 <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
-                  Show Concept
+                  Group Description
                 </label>
                 <textarea
-                  placeholder="Describe your show concept..."
-                  value={formData.showConcept}
-                  onChange={(e) => setFormData({ ...formData, showConcept: e.target.value })}
+                  placeholder="Describe your corps..."
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   maxLength={500}
                   className="w-full h-20 px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] resize-none"
                 />
                 <p className="text-[10px] text-gray-600 mt-1">
-                  {formData.showConcept.length}/500
+                  {formData.description.length}/500
                 </p>
               </div>
 

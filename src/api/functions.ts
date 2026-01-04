@@ -41,7 +41,7 @@ export const getPublicProfile = createCallable<{ uid: string }, unknown>('getPub
 export interface RegisterCorpsData {
   corpsName: string;
   location: string;
-  showConcept: string;
+  description: string;
   class: 'soundSport' | 'aClass' | 'openClass' | 'worldClass';
 }
 
