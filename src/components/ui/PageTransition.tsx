@@ -180,7 +180,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   height,
 }) => {
   const baseClass = 'skeleton';
-  const variantClass = variant === 'circular' ? 'rounded-full' : variant === 'text' ? 'rounded' : 'rounded-sm';
+  const variantClass = variant === 'circular' ? 'rounded-sm' : variant === 'text' ? 'rounded' : 'rounded-sm';
 
   const style: React.CSSProperties = {
     width: width || (variant === 'text' ? '100%' : undefined),

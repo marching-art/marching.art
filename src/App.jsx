@@ -1,5 +1,5 @@
 // src/App.jsx
-import React, { useEffect, createContext, useContext, lazy, Suspense } from 'react';
+import React, { useEffect, useMemo, createContext, useContext, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -28,6 +28,7 @@ import { useUserStore } from './store/userStore';
 import { useProfileStore } from './store/profileStore';
 import OfflineBanner from './components/OfflineBanner';
 import { SkipToContent } from './components/a11y';
+import { MotionProvider } from './components/ui/MotionProvider';
 
 // Lazy load pages for better performance
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -150,11 +151,10 @@ function App() {
     };
   }, [initAuthListener]);
 
-  if (loading) {
-    return <LoadingScreen fullScreen />;
-  }
-
-  const authContextValue = {
+  // Memoize auth context value to prevent unnecessary re-renders of all consumers
+  // Only recreates when user, loading, or error actually change
+  // NOTE: This MUST be before any early returns to maintain consistent hook order
+  const authContextValue = useMemo(() => ({
     user,
     loading,
     error,
@@ -162,12 +162,17 @@ function App() {
     signUp: authHelpers.signUpWithEmail,
     signInAnonymously: authHelpers.signInAnon,
     signOut: authHelpers.signOut
-  };
+  }), [user, loading, error]);
+
+  if (loading) {
+    return <LoadingScreen fullScreen />;
+  }
 
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
+          <MotionProvider>
           <AuthContext.Provider value={authContextValue}>
             <Router>
           {/* Skip to Content - Accessibility */}
@@ -198,20 +203,20 @@ function App() {
                   background: '#1a1a1a',
                   color: '#fff',
                   border: '1px solid #333',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  padding: '12px 16px',
-                  maxWidth: 'min(400px, calc(100vw - 32px))',
+                  borderRadius: '2px',
+                  fontSize: '12px',
+                  padding: '10px 14px',
+                  maxWidth: 'min(360px, calc(100vw - 32px))',
                 },
                 success: {
                   iconTheme: {
-                    primary: '#00C853',
+                    primary: '#22c55e',
                     secondary: '#1a1a1a',
                   },
                 },
                 error: {
                   iconTheme: {
-                    primary: '#FF5252',
+                    primary: '#ef4444',
                     secondary: '#1a1a1a',
                   },
                 },
@@ -369,6 +374,7 @@ function App() {
         </Suspense>
           </Router>
         </AuthContext.Provider>
+          </MotionProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </ErrorBoundary>

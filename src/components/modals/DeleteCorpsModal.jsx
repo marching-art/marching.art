@@ -28,7 +28,7 @@ const DeleteCorpsModal = ({ onClose, onConfirm, corpsName, corpsClass }) => {
         aria-labelledby="modal-title-delete-corps"
       >
         <div
-          className="w-full max-w-sm bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl"
+          className="w-full max-w-sm bg-[#1a1a1a] border border-[#333] rounded-sm"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -72,7 +72,7 @@ const DeleteCorpsModal = ({ onClose, onConfirm, corpsName, corpsClass }) => {
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-3 border-t border-[#333] bg-[#222] flex justify-end gap-2">
+          <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end gap-2">
             <button
               onClick={onClose}
               className="h-9 px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white"

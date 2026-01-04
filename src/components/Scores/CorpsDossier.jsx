@@ -71,7 +71,7 @@ const barChartOptions = {
 
 // Stat card component
 const StatCard = ({ label, value, icon: Icon, highlight = false }) => (
-  <div className={`p-3 rounded-lg border ${highlight ? 'bg-gold-500/10 border-gold-500/30' : 'bg-charcoal-900/50 border-cream-500/10'}`}>
+  <div className={`p-3 rounded-sm border ${highlight ? 'bg-gold-500/10 border-gold-500/30' : 'bg-charcoal-900/50 border-cream-500/10'}`}>
     <div className="flex items-center gap-2 mb-1">
       {Icon && <Icon className={`w-3.5 h-3.5 ${highlight ? 'text-gold-400' : 'text-cream-500/60'}`} />}
       <span className="text-[10px] text-cream-500/60 uppercase tracking-wide">{label}</span>
@@ -208,7 +208,7 @@ const CorpsDossier = ({
             <div className="flex-shrink-0 p-4 border-b border-cream-500/10 bg-charcoal-950">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-lg bg-gold-500/20 border border-gold-500/30 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-sm bg-gold-500/20 border border-gold-500/30 flex items-center justify-center">
                     <span className="font-display font-black text-xl text-gold-400">
                       {(corps.corps || corps.corpsName || '?').charAt(0)}
                     </span>
@@ -234,7 +234,7 @@ const CorpsDossier = ({
                 </div>
                 <button
                   onClick={onClose}
-                  className="p-2 rounded-lg hover:bg-charcoal-800 transition-colors text-cream-500/60 hover:text-cream-100"
+                  className="p-2 rounded-sm hover:bg-charcoal-800 transition-colors text-cream-500/60 hover:text-cream-100"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -242,7 +242,7 @@ const CorpsDossier = ({
 
               {/* Archive Badge */}
               {isArchived && (
-                <div className="mt-3 flex items-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                <div className="mt-3 flex items-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/30 rounded-sm">
                   <Calendar className="w-4 h-4 text-amber-400" />
                   <span className="text-xs text-amber-400 font-mono uppercase tracking-wide">
                     Historical Archive - View Only
@@ -285,7 +285,7 @@ const CorpsDossier = ({
                     <BarChart3 className="w-4 h-4 text-gold-400" />
                     Caption Breakdown
                   </h3>
-                  <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-lg p-4">
+                  <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-sm p-4">
                     {(() => {
                       const aggregates = calculateCaptionAggregates(corps);
                       return (
@@ -294,7 +294,7 @@ const CorpsDossier = ({
                             <span className="text-sm text-cream-500/60">General Effect</span>
                             <span className="font-mono font-bold text-gold-400">{aggregates.GE_Total.toFixed(3)}</span>
                           </div>
-                          <div className="h-2 bg-charcoal-800 rounded-full overflow-hidden">
+                          <div className="h-2 bg-charcoal-800 rounded-sm overflow-hidden">
                             <div
                               className="h-full bg-gradient-to-r from-gold-600 to-gold-400"
                               style={{ width: `${(aggregates.GE_Total / 40) * 100}%` }}
@@ -304,7 +304,7 @@ const CorpsDossier = ({
                             <span className="text-sm text-cream-500/60">Visual</span>
                             <span className="font-mono font-bold text-gold-400">{aggregates.VIS_Total.toFixed(3)}</span>
                           </div>
-                          <div className="h-2 bg-charcoal-800 rounded-full overflow-hidden">
+                          <div className="h-2 bg-charcoal-800 rounded-sm overflow-hidden">
                             <div
                               className="h-full bg-gradient-to-r from-purple-600 to-purple-400"
                               style={{ width: `${(aggregates.VIS_Total / 30) * 100}%` }}
@@ -314,7 +314,7 @@ const CorpsDossier = ({
                             <span className="text-sm text-cream-500/60">Music</span>
                             <span className="font-mono font-bold text-gold-400">{aggregates.MUS_Total.toFixed(3)}</span>
                           </div>
-                          <div className="h-2 bg-charcoal-800 rounded-full overflow-hidden">
+                          <div className="h-2 bg-charcoal-800 rounded-sm overflow-hidden">
                             <div
                               className="h-full bg-gradient-to-r from-blue-600 to-blue-400"
                               style={{ width: `${(aggregates.MUS_Total / 30) * 100}%` }}
@@ -333,7 +333,7 @@ const CorpsDossier = ({
                       <TrendingUp className="w-4 h-4 text-gold-400" />
                       Score History
                     </h3>
-                    <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-lg p-4 h-[200px]">
+                    <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-sm p-4 h-[200px]">
                       <Line data={historyChartData} options={chartOptions} />
                     </div>
                   </div>
@@ -346,7 +346,7 @@ const CorpsDossier = ({
                       <Swords className="w-4 h-4 text-purple-400" />
                       Head-to-Head
                     </h3>
-                    <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-lg p-4 h-[180px]">
+                    <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-sm p-4 h-[180px]">
                       <Bar data={h2hChartData} options={barChartOptions} />
                     </div>
                   </div>
@@ -354,7 +354,7 @@ const CorpsDossier = ({
 
                 {/* H2H Disabled Message for Archives */}
                 {isArchived && myCorps && (
-                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4 text-center">
+                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-sm p-4 text-center">
                     <Swords className="w-8 h-8 text-amber-400/50 mx-auto mb-2" />
                     <p className="text-xs text-amber-400/80 font-mono uppercase tracking-wide">
                       Head-to-Head comparison disabled for historical data
@@ -373,7 +373,7 @@ const CorpsDossier = ({
                       {corpsStats.scores.slice(0, 5).map((score, index) => (
                         <div
                           key={index}
-                          className="flex items-center justify-between p-3 bg-charcoal-900/30 border border-cream-500/5 rounded-lg"
+                          className="flex items-center justify-between p-3 bg-charcoal-900/30 border border-cream-500/5 rounded-sm"
                         >
                           <div className="min-w-0 flex-1">
                             <p className="text-sm text-cream-100 truncate">
@@ -400,7 +400,7 @@ const CorpsDossier = ({
             <div className="flex-shrink-0 p-4 border-t border-cream-500/10 bg-charcoal-950">
               <button
                 onClick={onClose}
-                className="w-full py-2.5 bg-charcoal-800 hover:bg-charcoal-700 border border-cream-500/10 rounded-lg text-cream-300 font-display font-bold uppercase tracking-wide text-sm transition-colors"
+                className="w-full py-2.5 bg-charcoal-800 hover:bg-charcoal-700 border border-cream-500/10 rounded-sm text-cream-300 font-display font-bold uppercase tracking-wide text-sm transition-colors"
               >
                 Close Dossier
               </button>

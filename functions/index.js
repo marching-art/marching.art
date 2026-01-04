@@ -93,7 +93,11 @@ const {
 const {
   processDciScores,
   processLiveScoreRecap,
+  processPaginationPage,
 } = require("./src/triggers/scoreProcessing");
+
+// Live Scraper (1:30 AM - scrapes DCI scores before 2 AM processing)
+const { scrapeDciScores } = require("./src/scheduled/liveScraper");
 const {
   processNewsGeneration,
   onFantasyRecapUpdated,
@@ -118,6 +122,11 @@ const {
   onLeagueMemberJoined,
   onLeagueChatMessage,
 } = require("./src/triggers/pushTriggers");
+const {
+  onUniformDesignUpdated,
+  generateCorpsAvatar,
+  regenerateAllAvatars,
+} = require("./src/triggers/avatarGeneration");
 
 // Webhooks
 const { stripeWebhook } = require("./src/webhooks/stripe");
@@ -184,6 +193,10 @@ module.exports = {
   // Triggers
   processDciScores,
   processLiveScoreRecap,
+  processPaginationPage,
+
+  // Live Scraper (1:30 AM)
+  scrapeDciScores,
 
   // News Generation
   processNewsGeneration,
@@ -217,6 +230,11 @@ module.exports = {
   onTradeProposalCreated,
   onLeagueMemberJoined,
   onLeagueChatMessage,
+
+  // Avatar Generation
+  onUniformDesignUpdated,
+  generateCorpsAvatar,
+  regenerateAllAvatars,
 
   // Webhooks
   stripeWebhook,

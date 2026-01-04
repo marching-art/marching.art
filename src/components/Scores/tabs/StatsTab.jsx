@@ -79,7 +79,7 @@ const StatsTab = ({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="bg-charcoal-800/30 rounded-lg overflow-hidden"
+        className="bg-charcoal-800/30 rounded-sm overflow-hidden"
       >
         {loading ? (
           <div className="py-12">
@@ -123,7 +123,7 @@ const StatsTab = ({
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-charcoal-800 flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-sm bg-charcoal-800 flex items-center justify-center">
                             <Users className="w-5 h-5 text-cream-400" />
                           </div>
                           <div>
@@ -163,7 +163,7 @@ const StatsTab = ({
                   key={entry.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`rounded-lg p-3 border transition-all ${
+                  className={`rounded-sm p-3 border transition-all ${
                     getRankBgColor(entry.rank)
                   } ${loggedInProfile?.username === entry.username ? 'ring-2 ring-gold-500' : ''}`}
                 >

@@ -7,7 +7,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { CorpsClass, CorpsData } from '../types';
 import toast from 'react-hot-toast';
-import { getCorpsClassName, getCorpsClassColor } from '../utils/corps';
+import { getCorpsClassName, getCorpsClassColor, getCorpsClassOrderIndex, compareCorpsClasses } from '../utils/corps';
 
 // Re-export for backwards compatibility
 export { getCorpsClassName, getCorpsClassColor };
@@ -38,12 +38,11 @@ export function useCorpsSelection(
 ): UseCorpsSelectionReturn {
   const [selectedCorpsClass, setSelectedCorpsClass] = useState<CorpsClass | null>(null);
 
-  // Derived values - sorted by class order (world, open, a, soundsport)
-  const CLASS_ORDER: Record<string, number> = { worldClass: 0, openClass: 1, aClass: 2, soundSport: 3 };
+  // Derived values - sorted by class order (World → Open → A → SoundSport)
   const corpsEntries = corps
     ? Object.entries(corps)
         .filter(([_, data]) => data)
-        .sort((a, b) => (CLASS_ORDER[a[0]] ?? 99) - (CLASS_ORDER[b[0]] ?? 99))
+        .sort((a, b) => compareCorpsClasses(a[0], b[0]))
     : [];
   const hasMultipleCorps = corpsEntries.length > 1;
   const firstCorpsClass = corpsEntries.length > 0 ? (corpsEntries[0][0] as CorpsClass) : null;
@@ -72,7 +71,7 @@ export function useCorpsSelection(
     if (corps) {
       const corpsClasses = (Object.keys(corps).filter(
         (key) => corps[key as CorpsClass]
-      ) as CorpsClass[]).sort((a, b) => (CLASS_ORDER[a] ?? 99) - (CLASS_ORDER[b] ?? 99));
+      ) as CorpsClass[]).sort(compareCorpsClasses);
 
       if (selectedCorpsClass && !corpsClasses.includes(selectedCorpsClass)) {
         setSelectedCorpsClass(corpsClasses[0] || null);

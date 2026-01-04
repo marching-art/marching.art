@@ -18,7 +18,7 @@ const LatestShowCard = ({
   // No show data
   if (!showName && !isLoading) {
     return (
-      <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-6">
+      <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-sm p-6">
         <h2 className="text-sm font-display font-bold text-cream-400 uppercase tracking-wide mb-3">
           Latest Show
         </h2>
@@ -37,7 +37,7 @@ const LatestShowCard = ({
 
   if (isLoading) {
     return (
-      <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-6 animate-pulse">
+      <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-sm p-6 animate-pulse">
         <div className="h-4 bg-charcoal-800 rounded w-24 mb-4"></div>
         <div className="h-6 bg-charcoal-800 rounded w-full mb-3"></div>
         <div className="h-4 bg-charcoal-800 rounded w-40 mb-4"></div>
@@ -51,7 +51,7 @@ const LatestShowCard = ({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 }}
-      className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-6"
+      className="bg-charcoal-900/50 border border-cream-500/10 rounded-sm p-6"
     >
       <h2 className="text-sm font-display font-bold text-cream-400 uppercase tracking-wide mb-3">
         Latest Show
@@ -80,10 +80,10 @@ const LatestShowCard = ({
 
       {/* User's result */}
       {userScore !== null && (
-        <div className="bg-charcoal-800/50 border border-cream-500/5 rounded-lg p-4 mb-4">
+        <div className="bg-charcoal-800/50 border border-cream-500/5 rounded-sm p-4 mb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gold-500/20 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-sm bg-gold-500/20 flex items-center justify-center">
                 <Trophy className="w-5 h-5 text-gold-400" />
               </div>
               <div>
@@ -112,7 +112,7 @@ const LatestShowCard = ({
       {onViewBreakdown && userScore !== null && (
         <button
           onClick={onViewBreakdown}
-          className="w-full flex items-center justify-center gap-2 py-3 bg-charcoal-800 hover:bg-charcoal-700 border border-cream-500/10 rounded-lg text-cream-300 font-medium text-sm transition-colors"
+          className="w-full flex items-center justify-center gap-2 py-3 bg-charcoal-800 hover:bg-charcoal-700 border border-cream-500/10 rounded-sm text-cream-300 font-medium text-sm transition-colors"
         >
           View Score Breakdown
           <ChevronRight className="w-4 h-4" />

@@ -7,7 +7,8 @@ export {
   DeleteConfirmModal,
   RetireConfirmModal,
   MoveCorpsModal,
-  AchievementModal
+  AchievementModal,
+  UniformDesignModal
 } from './DashboardModals';
 
 // Morning report component
@@ -19,3 +20,9 @@ export { default as QuickStartGuide, QuickStartButton } from './QuickStartGuide'
 
 // SoundSport welcome component
 export { default as SoundSportWelcome, SoundSportBanner } from './SoundSportWelcome';
+
+// Dashboard panel sub-components (extracted for code splitting)
+export { default as TeamSwitcher } from './TeamSwitcher';
+export { default as LineupPanel } from './LineupPanel';
+export { default as StandingsPanel } from './StandingsPanel';
+export { default as SchedulePanel } from './SchedulePanel';

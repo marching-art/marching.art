@@ -14,13 +14,19 @@ const { onMessagePublished } = require("firebase-functions/v2/pubsub");
 const { onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
+const { defineSecret } = require("firebase-functions/params");
 const { getDb } = require("../config");
 const {
+  generateAllArticles,
   generateDailyNews,
   generateNightlyRecap,
   generateFantasyRecap,
   getArticleImage,
+  ARTICLE_TYPES,
 } = require("../helpers/newsGeneration");
+
+// Define Gemini API key secret for triggers that use news generation
+const geminiApiKey = defineSecret("GOOGLE_GENERATIVE_AI_API_KEY");
 
 // Pub/Sub topic for news generation requests
 const NEWS_GENERATION_TOPIC = "news-generation-topic";
@@ -56,6 +62,7 @@ exports.processNewsGeneration = onMessagePublished(
     topic: NEWS_GENERATION_TOPIC,
     timeoutSeconds: 180,
     memory: "1GiB",
+    secrets: [geminiApiKey],
   },
   async (message) => {
     logger.info("Processing news generation request");
@@ -110,24 +117,26 @@ async function handleDailyNewsGeneration(data) {
   }
 
   try {
-    // Generate the multi-faceted news article
-    const result = await generateDailyNews({
+    // Generate the 5 nightly articles with Imagen images
+    const result = await generateAllArticles({
       db,
       dataDocId,
       seasonId,
       currentDay,
     });
 
-    if (result.success && result.content) {
-      // Save to day-based path: /news_hub/current_season/day_{reportDay}
+    if (result.success && result.articles) {
+      // Save all 5 articles to day-based path structure
       const reportDay = currentDay - 1;
       await saveDailyNews(db, {
         reportDay,
-        content: result.content,
+        content: result.articles[0] || {}, // Primary article for legacy compat
         metadata: result.metadata,
+        articles: result.articles, // All 5 articles
+        seasonId, // Use season name for organization
       });
 
-      return result.content;
+      return result.articles[0]; // Return primary for logging
     }
 
     logger.warn("Daily news generation returned unsuccessful result", { error: result.error });
@@ -140,61 +149,126 @@ async function handleDailyNewsGeneration(data) {
 
 /**
  * Save daily news to the new path structure
- * Path: /news_hub/current_season/day_{reportDay}
+ * Saves each of the 5 articles separately for the news feed
+ * Path: /news_hub/{seasonId}/days/day_{reportDay}/articles/{type}
  */
-async function saveDailyNews(db, { reportDay, content, metadata }) {
-  const docPath = `news_hub/current_season/day_${reportDay}`;
+async function saveDailyNews(db, { reportDay, content, metadata, articles, seasonId }) {
+  // Use seasonId for organization, fallback to "current_season" for legacy
+  const seasonPath = seasonId || "current_season";
+  // Path must have even number of components for Firestore document
+  // Structure: news_hub/{seasonId}/days/day_{reportDay} (4 components)
+  const basePath = `news_hub/${seasonPath}/days/day_${reportDay}`;
 
-  // Get optimized article image
+  // If we have the new 5-article structure, save each separately
+  if (articles && articles.length > 0) {
+    logger.info(`Saving ${articles.length} articles for Day ${reportDay}`);
+
+    for (const article of articles) {
+      const articlePath = `${basePath}/articles/${article.type}`;
+
+      const articleEntry = {
+        type: article.type,
+        reportDay,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+
+        // Article content
+        headline: article.headline || `Day ${reportDay} ${article.type}`,
+        summary: article.summary || "",
+        narrative: article.narrative || "",
+
+        // Type-specific data
+        standings: article.standings || null,
+        captionBreakdown: article.captionBreakdown || null,
+        topPerformers: article.topPerformers || null,
+        leagueHighlights: article.leagueHighlights || null,
+        insights: article.insights || null,
+        recommendations: article.recommendations || null,
+
+        // Image (from Imagen)
+        imageUrl: article.imageUrl || null,
+        imageIsPlaceholder: article.isPlaceholder || false,
+        imagePrompt: article.imagePrompt || null,
+
+        // Metadata
+        metadata: {
+          ...metadata,
+          generatedBy: "gemini-2.0-flash-lite",
+          imageGeneratedBy: "gemini-2.0-flash-exp", // Free tier
+        },
+
+        isPublished: true,
+      };
+
+      await db.doc(articlePath).set(articleEntry, { merge: true });
+
+      logger.info("Saved article:", {
+        path: articlePath,
+        type: article.type,
+        headline: article.headline,
+      });
+    }
+
+    // Save day index document with references to all articles
+    const dayIndex = {
+      reportDay,
+      currentDay: metadata.currentDay,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      articleTypes: articles.map(a => a.type),
+      articleCount: articles.length,
+      primaryHeadline: articles[0]?.headline || `Day ${reportDay} Recap`,
+      primaryImageUrl: articles[0]?.imageUrl || null,
+      metadata: {
+        ...metadata,
+        generatedBy: "gemini-2.0-flash-lite",
+      },
+      isPublished: true,
+    };
+
+    await db.doc(basePath).set(dayIndex, { merge: true });
+
+    logger.info(`Successfully saved ${articles.length} articles to ${basePath}`);
+    return basePath;
+  }
+
+  // Legacy single-article save (backward compatibility)
   const imageResult = await getArticleImage({
     headline: content.headline,
     category: NEWS_CATEGORIES.DAILY,
   });
 
   const newsEntry = {
-    // Metadata
     reportDay,
     currentDay: metadata.currentDay,
     createdAt: new Date(),
     updatedAt: new Date(),
-
-    // Main content
     headline: content.headline,
     summary: content.summary,
-
-    // Multi-faceted sections
     dciRecap: content.dciRecap || null,
     fantasySpotlight: content.fantasySpotlight || null,
     crossOverAnalysis: content.crossOverAnalysis || null,
-
-    // Legacy fields (backward compatibility)
     fantasyImpact: content.fantasyImpact || "",
     trendingCorps: content.trendingCorps || [],
-
-    // Image
     imageUrl: imageResult.url,
     imageIsPlaceholder: imageResult.isPlaceholder,
     imagePrompt: content.imagePrompt || null,
-
-    // Generation metadata
     metadata: {
       ...metadata,
-      generatedBy: "gemini-1.5-flash",
+      generatedBy: "gemini-2.0-flash-lite",
       imagePublicId: imageResult.publicId || null,
     },
-
     isPublished: true,
   };
 
-  await db.doc(docPath).set(newsEntry, { merge: true });
+  await db.doc(basePath).set(newsEntry, { merge: true });
 
   logger.info("Saved daily news to path:", {
-    path: docPath,
+    path: basePath,
     headline: content.headline,
     reportDay,
   });
 
-  // Also save to the flat news_hub collection for backward compatibility
   await saveToNewsHubLegacy(db, {
     category: NEWS_CATEGORIES.DCI_RECAP,
     date: new Date(),
@@ -204,7 +278,7 @@ async function saveDailyNews(db, { reportDay, content, metadata }) {
     imageResult,
   });
 
-  return docPath;
+  return basePath;
 }
 
 // =============================================================================
@@ -220,6 +294,7 @@ exports.onFantasyRecapUpdated = onDocumentWritten(
     document: "fantasy_recaps/{seasonId}",
     timeoutSeconds: 180,
     memory: "1GiB",
+    secrets: [geminiApiKey],
   },
   async (event) => {
     const db = getDb();
@@ -256,23 +331,38 @@ exports.onFantasyRecapUpdated = onDocumentWritten(
           const reportDay = recap.offSeasonDay;
           const currentDay = reportDay + 1; // News runs post-midnight, so currentDay is reportDay + 1
 
-          if (seasonData?.dataDocId) {
-            // Use new unified generator
-            const result = await generateDailyNews({
-              db,
-              dataDocId: seasonData.dataDocId,
-              seasonId: event.params.seasonId,
-              currentDay,
-            });
+          // Use dataDocId from season, or fall back to seasonId (they are typically the same)
+          const dataDocId = seasonData?.dataDocId || event.params.seasonId;
 
-            if (result.success && result.content) {
-              await saveDailyNews(db, {
-                reportDay,
-                content: result.content,
-                metadata: result.metadata,
-              });
-            }
+          // Always try to use new 5-article generator with Imagen
+          logger.info("Generating 5 articles for news", {
+            reportDay,
+            currentDay,
+            dataDocId,
+            seasonId: event.params.seasonId,
+          });
+
+          const result = await generateAllArticles({
+            db,
+            dataDocId,
+            seasonId: event.params.seasonId,
+            currentDay,
+          });
+
+          if (result.success && result.articles) {
+            logger.info(`Successfully generated ${result.articles.length} articles`);
+            await saveDailyNews(db, {
+              reportDay,
+              content: result.articles[0] || {},
+              metadata: result.metadata,
+              articles: result.articles,
+              seasonId: event.params.seasonId, // Use season name for organization
+            });
           } else {
+            logger.warn("Article generation failed or returned no articles, falling back to legacy", {
+              error: result.error,
+              articlesCount: result.articles?.length,
+            });
             // Fallback to legacy fantasy-only generation
             const fantasyResult = await generateFantasyRecap(recap);
 
@@ -310,6 +400,7 @@ exports.triggerDailyNews = onCall(
   {
     timeoutSeconds: 180,
     memory: "1GiB",
+    secrets: [geminiApiKey],
   },
   async (request) => {
     if (!request.auth) {
@@ -339,25 +430,28 @@ exports.triggerDailyNews = onCall(
     }
 
     try {
-      const result = await generateDailyNews({
+      const result = await generateAllArticles({
         db,
         dataDocId,
         seasonId,
         currentDay,
       });
 
-      if (result.success && result.content) {
+      if (result.success && result.articles) {
         const reportDay = currentDay - 1;
         await saveDailyNews(db, {
           reportDay,
-          content: result.content,
+          content: result.articles[0] || {},
           metadata: result.metadata,
+          articles: result.articles,
+          seasonId, // Use season name for organization
         });
 
         return {
           success: true,
           reportDay,
-          headline: result.content.headline,
+          articleCount: result.articles.length,
+          headlines: result.articles.map(a => a.headline),
         };
       }
 
@@ -378,14 +472,16 @@ exports.getDailyNews = onCall(
   },
   async (request) => {
     const db = getDb();
-    const { day } = request.data || {};
+    const { day, seasonId } = request.data || {};
 
     if (!day) {
       throw new HttpsError("invalid-argument", "Missing required parameter: day");
     }
 
     try {
-      const docPath = `news_hub/current_season/day_${day}`;
+      // Use seasonId if provided, otherwise fall back to "current_season"
+      const seasonPath = seasonId || "current_season";
+      const docPath = `news_hub/${seasonPath}/day_${day}`;
       const doc = await db.doc(docPath).get();
 
       if (!doc.exists) {
@@ -409,7 +505,8 @@ exports.getDailyNews = onCall(
 );
 
 /**
- * Fetch recent news entries for the frontend (legacy + new format)
+ * Fetch recent news entries for the frontend
+ * Returns articles from the hierarchical structure: news_hub/{seasonId}/days/day_{n}/articles/{type}
  */
 exports.getRecentNews = onCall(
   {
@@ -417,59 +514,111 @@ exports.getRecentNews = onCall(
   },
   async (request) => {
     const db = getDb();
-    const { limit = 5, category, fromDay, startAfter } = request.data || {};
+    const { limit = 10, category, seasonId } = request.data || {};
 
     try {
-      // If fromDay is specified, fetch from day-based structure
-      if (fromDay) {
-        const news = [];
-        for (let day = fromDay; day > Math.max(0, fromDay - limit); day--) {
-          const doc = await db.doc(`news_hub/current_season/day_${day}`).get();
-          if (doc.exists) {
-            const data = doc.data();
-            news.push({
-              id: `day_${day}`,
+      // Get current season to find seasonId and currentDay if not provided
+      let activeSeasonId = seasonId;
+      let currentDay = null;
+
+      if (!activeSeasonId) {
+        // Find active season
+        const seasonsSnapshot = await db.collection("seasons")
+          .where("status", "==", "active")
+          .limit(1)
+          .get();
+
+        if (!seasonsSnapshot.empty) {
+          const seasonDoc = seasonsSnapshot.docs[0];
+          activeSeasonId = seasonDoc.id;
+          currentDay = seasonDoc.data().currentDay || 50;
+        } else {
+          // Fallback: try to find any season with articles
+          activeSeasonId = "current_season";
+          currentDay = 50;
+        }
+      }
+
+      // If we still don't have currentDay, try to find the latest day with articles
+      if (!currentDay) {
+        // Query the days subcollection for latest day
+        const dayDocs = await db.collection(`news_hub/${activeSeasonId}/days`)
+          .orderBy("reportDay", "desc")
+          .limit(1)
+          .get();
+
+        if (!dayDocs.empty) {
+          currentDay = dayDocs.docs[0].data().reportDay + 1;
+        } else {
+          currentDay = 50; // Default fallback
+        }
+      }
+
+      const articles = [];
+      const daysToFetch = Math.ceil(limit / 5) + 1; // 5 articles per day
+
+      // Fetch articles from recent days
+      // Path structure: news_hub/{seasonId}/days/day_{n} (4 components - valid document path)
+      for (let day = currentDay - 1; day > Math.max(0, currentDay - daysToFetch - 1); day--) {
+        const dayPath = `news_hub/${activeSeasonId}/days/day_${day}`;
+
+        // Check if day has articles
+        const dayDoc = await db.doc(dayPath).get();
+        if (!dayDoc.exists || !dayDoc.data().isPublished) continue;
+
+        const dayData = dayDoc.data();
+        const articleTypes = dayData.articleTypes || [
+          "dci_standings", "dci_captions", "fantasy_performers", "fantasy_leagues", "deep_analytics"
+        ];
+
+        // Fetch each article for this day
+        for (const articleType of articleTypes) {
+          const articleDoc = await db.doc(`${dayPath}/articles/${articleType}`).get();
+
+          if (articleDoc.exists) {
+            const data = articleDoc.data();
+
+            // Apply category filter if specified
+            if (category) {
+              const articleCategory =
+                articleType.startsWith("dci_") ? "dci" :
+                articleType.startsWith("fantasy_") ? "fantasy" :
+                articleType === "deep_analytics" ? "analysis" : "dci";
+
+              if (articleCategory !== category) continue;
+            }
+
+            articles.push({
+              id: `${activeSeasonId}_day${day}_${articleType}`,
+              seasonId: activeSeasonId,
+              reportDay: day,
+              articleType,
+              category:
+                articleType.startsWith("dci_") ? "dci" :
+                articleType.startsWith("fantasy_") ? "fantasy" :
+                articleType === "deep_analytics" ? "analysis" : "dci",
               ...data,
-              createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+              createdAt: data.createdAt?.toDate?.()?.toISOString() || dayData.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+              updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.createdAt?.toDate?.()?.toISOString(),
             });
           }
         }
-        return { success: true, news };
+
+        // Stop if we have enough articles
+        if (articles.length >= limit) break;
       }
 
-      // Legacy: Fetch from flat collection with cursor-based pagination
-      let query = db.collection("news_hub")
-        .where("isPublished", "==", true)
-        .orderBy("createdAt", "desc");
+      // Sort by createdAt descending and limit
+      articles.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      const limitedArticles = articles.slice(0, limit);
 
-      if (category) {
-        query = db.collection("news_hub")
-          .where("isPublished", "==", true)
-          .where("category", "==", category)
-          .orderBy("createdAt", "desc");
-      }
-
-      // Apply cursor for pagination if provided
-      if (startAfter) {
-        const cursorDate = new Date(startAfter);
-        query = query.startAfter(cursorDate);
-      }
-
-      query = query.limit(Math.min(limit, 20));
-
-      const snapshot = await query.get();
-
-      const news = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        date: doc.data().date?.toDate?.()?.toISOString() || doc.data().date,
-        createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || doc.data().createdAt,
-      }));
-
-      // Include hasMore flag to indicate if there are more articles
-      const hasMore = snapshot.docs.length === Math.min(limit, 20);
-
-      return { success: true, news, hasMore };
+      return {
+        success: true,
+        news: limitedArticles,
+        hasMore: articles.length > limit,
+        seasonId: activeSeasonId,
+        currentDay,
+      };
     } catch (error) {
       logger.error("Error fetching recent news:", error);
       throw new HttpsError("internal", "Failed to fetch news");
@@ -590,9 +739,28 @@ async function saveToNewsHubLegacy(db, { category, date, content, metadata, offS
     category,
   });
 
+  // Safely convert date - handles Firestore Timestamps, Date objects, and strings
+  let safeDate;
+  if (date instanceof Date) {
+    safeDate = date;
+  } else if (date && typeof date.toDate === "function") {
+    // Firestore Timestamp
+    safeDate = date.toDate();
+  } else if (date) {
+    safeDate = new Date(date);
+  } else {
+    safeDate = new Date();
+  }
+
+  // Ensure date is valid
+  if (isNaN(safeDate.getTime())) {
+    logger.warn("Invalid date provided, using current date");
+    safeDate = new Date();
+  }
+
   const newsEntry = {
     category,
-    date: date instanceof Date ? date : new Date(date),
+    date: safeDate,
     createdAt: new Date(),
     headline: content.headline,
     summary: content.summary,
@@ -620,7 +788,7 @@ async function saveToNewsHubLegacy(db, { category, date, content, metadata, offS
     metadata: {
       ...metadata,
       offSeasonDay,
-      generatedBy: "gemini-1.5-flash",
+      generatedBy: "gemini-2.0-flash-lite",
       imagePublicId: image.publicId || null,
     },
 
@@ -678,6 +846,7 @@ exports.triggerNewsGeneration = onCall(
   {
     timeoutSeconds: 120,
     memory: "512MiB",
+    secrets: [geminiApiKey],
   },
   async (request) => {
     if (!request.auth) {
@@ -754,12 +923,15 @@ exports.listAllArticles = onCall(
     const db = getDb();
     checkAdminAuth(request.auth);
 
+    const { seasonId } = request.data || {};
+
     try {
       const articles = [];
 
-      // Fetch from current_season day-based structure
-      const currentSeasonRef = db.collection("news_hub/current_season");
-      const dayDocs = await currentSeasonRef.listDocuments();
+      // Fetch from season-based structure (use provided seasonId or "current_season")
+      const seasonPath = seasonId || "current_season";
+      const seasonRef = db.collection(`news_hub/${seasonPath}`);
+      const dayDocs = await seasonRef.listDocuments();
 
       for (const docRef of dayDocs) {
         const doc = await docRef.get();
@@ -767,8 +939,8 @@ exports.listAllArticles = onCall(
           const data = doc.data();
           articles.push({
             id: doc.id,
-            path: `news_hub/current_season/${doc.id}`,
-            source: "current_season",
+            path: `news_hub/${seasonPath}/${doc.id}`,
+            source: seasonPath,
             reportDay: data.reportDay,
             headline: data.headline || "Untitled",
             summary: data.summary || "",

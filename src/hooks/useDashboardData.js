@@ -1,5 +1,5 @@
 // src/hooks/useDashboardData.js
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
@@ -24,20 +24,32 @@ export const useDashboardData = () => {
   const storeProfile = useProfileStore((state) => state.profile);
   const storeCorps = useProfileStore((state) => state.corps);
   const storeLoading = useProfileStore((state) => state.loading);
+  const storeIsAdmin = useProfileStore((state) => state.isAdmin);
 
   // Core state - profile and corps now come from store
   const profile = storeProfile;
   const loading = storeLoading;
   const corps = storeCorps;
+  const isAdmin = storeIsAdmin;
+  // Compute unlocked classes directly (admins get all classes)
+  // Must compute here rather than using store method so React tracks the isAdmin dependency
+  // Note: class IDs are 'worldClass', 'openClass', 'aClass', 'soundSport'
+  const unlockedClasses = isAdmin
+    ? ['worldClass', 'openClass', 'aClass', 'soundSport']
+    : (profile?.unlockedClasses || ['soundSport']);
 
   // Additional local state
   const [availableCorps, setAvailableCorps] = useState([]);
   const [recentScores, setRecentScores] = useState([]);
   const [selectedCorpsClass, setSelectedCorpsClass] = useState(null);
 
-  // Class unlock tracking
+  // Class unlock tracking - use ref to avoid re-render loops
   const [newlyUnlockedClass, setNewlyUnlockedClass] = useState(null);
-  const [previousUnlockedClasses, setPreviousUnlockedClasses] = useState([]);
+  const previousUnlockedClassesRef = useRef([]);
+
+  // Guards to prevent duplicate Firestore writes within same session
+  const engagementProcessedRef = useRef(false);
+  const milestonesProcessedRef = useRef(new Map()); // Map<classKey, {rank, score}>
 
   // Engagement data
   const [engagementData, setEngagementData] = useState({
@@ -61,51 +73,61 @@ export const useDashboardData = () => {
   const hasMultipleCorps = corps && Object.keys(corps).length > 1;
   const { currentWeek, currentDay } = seasonData ? getSeasonProgress(seasonData) : { currentWeek: 1, currentDay: 1 };
 
-  // Load selected corps from localStorage on mount
+  // CONSOLIDATED: Corps selection state management
+  // Combines localStorage load/save and corps data sync into single effect
+  // This prevents cascading effect chains when corps data changes
   useEffect(() => {
-    if (user) {
-      const savedCorpsClass = localStorage.getItem(`selectedCorps_${user.uid}`);
-      if (savedCorpsClass) {
+    if (!user) return;
+
+    const corpsClasses = corps ? Object.keys(corps) : [];
+    const storageKey = `selectedCorps_${user.uid}`;
+
+    // On mount or user change: load from localStorage
+    if (selectedCorpsClass === null) {
+      const savedCorpsClass = localStorage.getItem(storageKey);
+      if (savedCorpsClass && corpsClasses.includes(savedCorpsClass)) {
         setSelectedCorpsClass(savedCorpsClass);
+        return;
       }
     }
-  }, [user]);
 
-  // Save selected corps to localStorage when it changes
-  useEffect(() => {
-    if (user && selectedCorpsClass) {
-      localStorage.setItem(`selectedCorps_${user.uid}`, selectedCorpsClass);
-    }
-  }, [user, selectedCorpsClass]);
-
-  // Update selected corps when corps data changes
-  useEffect(() => {
-    if (corps) {
-      const corpsClasses = Object.keys(corps);
+    // Sync selection with available corps
+    if (corpsClasses.length > 0) {
       if (selectedCorpsClass && !corpsClasses.includes(selectedCorpsClass)) {
-        setSelectedCorpsClass(corpsClasses[0] || null);
-      }
-      if (!selectedCorpsClass && corpsClasses.length > 0) {
+        // Current selection no longer valid, reset to first available
         setSelectedCorpsClass(corpsClasses[0]);
+      } else if (!selectedCorpsClass) {
+        // No selection, set to first available
+        setSelectedCorpsClass(corpsClasses[0]);
+      } else {
+        // Valid selection, persist to localStorage
+        localStorage.setItem(storageKey, selectedCorpsClass);
       }
     }
-  }, [corps, selectedCorpsClass]);
+  }, [user, corps, selectedCorpsClass]);
 
   // Detect when a new class is unlocked
+  // Uses ref to track previous value without triggering re-renders
+  // Note: For admins, all classes are always unlocked so this won't trigger
   useEffect(() => {
-    if (profile?.unlockedClasses && previousUnlockedClasses.length > 0) {
-      const currentUnlocked = profile.unlockedClasses;
+    if (!unlockedClasses || unlockedClasses.length === 0) return;
+
+    const currentUnlocked = unlockedClasses;
+    const previousUnlocked = previousUnlockedClassesRef.current;
+
+    // Only check for new unlocks if we have a previous state to compare
+    if (previousUnlocked.length > 0) {
       const newlyUnlocked = currentUnlocked.filter(
-        classId => !previousUnlockedClasses.includes(classId)
+        classId => !previousUnlocked.includes(classId)
       );
       if (newlyUnlocked.length > 0) {
         setNewlyUnlockedClass(newlyUnlocked[0]);
       }
     }
-    if (profile?.unlockedClasses) {
-      setPreviousUnlockedClasses(profile.unlockedClasses);
-    }
-  }, [profile?.unlockedClasses, previousUnlockedClasses]);
+
+    // Update ref for next comparison (doesn't trigger re-render)
+    previousUnlockedClassesRef.current = currentUnlocked;
+  }, [unlockedClasses]);
 
   // NOTE: Profile subscription is now handled by profileStore (initialized in App.jsx)
   // This eliminates duplicate Firestore listeners when multiple components use this hook
@@ -113,10 +135,33 @@ export const useDashboardData = () => {
   // Detect corps that need season setup
   useEffect(() => {
     if (profile && seasonData && !loading && !seasonLoading) {
+      // Skip wizard if initial setup was already completed for this season
+      if (profile.initialSetupComplete === seasonData.seasonUid) {
+        setCorpsNeedingSetup([]);
+        setShowSeasonSetupWizard(false);
+        return;
+      }
+
+      // Skip if user has any show registrations (means they already completed initial setup)
+      if (corps) {
+        const hasAnyShowRegistrations = Object.values(corps).some((corpsData) => {
+          if (!corpsData?.selectedShows) return false;
+          return Object.values(corpsData.selectedShows).some(
+            (shows) => Array.isArray(shows) && shows.length > 0
+          );
+        });
+
+        if (hasAnyShowRegistrations) {
+          setCorpsNeedingSetup([]);
+          setShowSeasonSetupWizard(false);
+          return;
+        }
+      }
+
       const needSetup = [];
       const hasCorps = corps && Object.keys(corps).length > 0;
       const hasRetiredCorps = profile.retiredCorps && profile.retiredCorps.length > 0;
-      const unlockedClasses = profile.unlockedClasses || ['soundSport'];
+      // Use unlockedClasses from store (already computed, handles admin override)
 
       if (corps) {
         Object.entries(corps).forEach(([classId, corpsData]) => {
@@ -147,177 +192,203 @@ export const useDashboardData = () => {
   }, [profile, corps, seasonData, loading, seasonLoading]);
 
   // Track daily login streaks and engagement
+  // Guard prevents duplicate writes if effect re-runs within same session
   useEffect(() => {
-    if (user && profile) {
-      const updateEngagement = async () => {
-        try {
-          const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-          const today = new Date().toDateString();
-          const lastLogin = profile.engagement?.lastLogin;
-          const lastLoginDate = lastLogin
-            ? (lastLogin.toDate ? lastLogin.toDate() : new Date(lastLogin)).toDateString()
-            : null;
+    if (!user || !profile) return;
 
-          if (lastLoginDate !== today) {
-            const yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
-            const yesterdayStr = yesterday.toDateString();
+    // Prevent duplicate processing in same session
+    if (engagementProcessedRef.current) {
+      // Still sync local state if profile has engagement data
+      if (profile.engagement) {
+        setEngagementData(profile.engagement);
+      }
+      return;
+    }
 
-            let newStreak = 1;
-            const currentStreak = profile.engagement?.loginStreak || 0;
+    const updateEngagement = async () => {
+      try {
+        const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
+        const today = new Date().toDateString();
+        const lastLogin = profile.engagement?.lastLogin;
+        const lastLoginDate = lastLogin
+          ? (lastLogin.toDate ? lastLogin.toDate() : new Date(lastLogin)).toDateString()
+          : null;
 
-            if (lastLoginDate === yesterdayStr) {
-              newStreak = currentStreak + 1;
-            }
+        if (lastLoginDate !== today) {
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          const yesterdayStr = yesterday.toDateString();
 
-            const updatedEngagement = {
-              loginStreak: newStreak,
-              lastLogin: new Date().toISOString(),
-              totalLogins: (profile.engagement?.totalLogins || 0) + 1,
-              recentActivity: profile.engagement?.recentActivity || [],
-              weeklyProgress: profile.engagement?.weeklyProgress || []
-            };
+          let newStreak = 1;
+          const currentStreak = profile.engagement?.loginStreak || 0;
 
-            updatedEngagement.recentActivity.unshift({
-              type: 'login',
-              message: `Day ${newStreak} login streak!`,
-              timestamp: new Date().toISOString(),
-              icon: 'flame'
-            });
+          if (lastLoginDate === yesterdayStr) {
+            newStreak = currentStreak + 1;
+          }
 
-            updatedEngagement.recentActivity = updatedEngagement.recentActivity.slice(0, 10);
+          const updatedEngagement = {
+            loginStreak: newStreak,
+            lastLogin: new Date().toISOString(),
+            totalLogins: (profile.engagement?.totalLogins || 0) + 1,
+            recentActivity: profile.engagement?.recentActivity || [],
+            weeklyProgress: profile.engagement?.weeklyProgress || []
+          };
 
-            // Award streak achievements
-            const milestones = [3, 7, 14, 30, 60, 100];
-            if (milestones.includes(newStreak)) {
-              const achievementId = `streak_${newStreak}`;
-              const existingAchievements = profile.achievements || [];
+          updatedEngagement.recentActivity.unshift({
+            type: 'login',
+            message: `Day ${newStreak} login streak!`,
+            timestamp: new Date().toISOString(),
+            icon: 'flame'
+          });
 
-              if (!existingAchievements.find(a => a.id === achievementId)) {
-                const achievement = {
-                  id: achievementId,
-                  title: `${newStreak} Day Streak!`,
-                  description: `Logged in ${newStreak} days in a row`,
-                  icon: 'flame',
-                  earnedAt: new Date().toISOString(),
-                  rarity: newStreak >= 30 ? 'legendary' : newStreak >= 14 ? 'epic' : newStreak >= 7 ? 'rare' : 'common'
-                };
+          updatedEngagement.recentActivity = updatedEngagement.recentActivity.slice(0, 10);
 
-                await updateDoc(profileRef, {
-                  achievements: [...existingAchievements, achievement]
-                });
+          // Award streak achievements
+          const milestones = [3, 7, 14, 30, 60, 100];
+          if (milestones.includes(newStreak)) {
+            const achievementId = `streak_${newStreak}`;
+            const existingAchievements = profile.achievements || [];
 
-                setNewAchievement(achievement);
-              }
-            }
+            if (!existingAchievements.find(a => a.id === achievementId)) {
+              const achievement = {
+                id: achievementId,
+                title: `${newStreak} Day Streak!`,
+                description: `Logged in ${newStreak} days in a row`,
+                icon: 'flame',
+                earnedAt: new Date().toISOString(),
+                rarity: newStreak >= 30 ? 'legendary' : newStreak >= 14 ? 'epic' : newStreak >= 7 ? 'rare' : 'common'
+              };
 
-            await updateDoc(profileRef, {
-              engagement: updatedEngagement
-            });
+              await updateDoc(profileRef, {
+                achievements: [...existingAchievements, achievement]
+              });
 
-            setEngagementData(updatedEngagement);
-          } else {
-            if (profile.engagement) {
-              setEngagementData(profile.engagement);
+              setNewAchievement(achievement);
             }
           }
-        } catch (error) {
-          console.error('Error updating engagement:', error);
-        }
-      };
 
-      updateEngagement();
-    }
+          await updateDoc(profileRef, {
+            engagement: updatedEngagement
+          });
+
+          setEngagementData(updatedEngagement);
+        } else {
+          if (profile.engagement) {
+            setEngagementData(profile.engagement);
+          }
+        }
+
+        // Mark as processed for this session
+        engagementProcessedRef.current = true;
+      } catch (error) {
+        console.error('Error updating engagement:', error);
+      }
+    };
+
+    updateEngagement();
   }, [user, profile?.uid]);
 
   // Track performance milestones and achievements
+  // Guard prevents duplicate writes for same rank/score values
   useEffect(() => {
-    if (user && profile && activeCorps && activeCorpsClass !== 'soundSport') {
-      const trackMilestones = async () => {
-        try {
-          const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-          const milestones = profile.milestones || {};
-          const classKey = activeCorpsClass;
-          const classMilestones = milestones[classKey] || {};
+    if (!user || !profile || !activeCorps || activeCorpsClass === 'soundSport') return;
 
-          let hasNewMilestone = false;
-          const updatedMilestones = { ...milestones, [classKey]: { ...classMilestones } };
-          const newActivities = [];
-          const newAchievements = [];
+    const classKey = activeCorpsClass;
+    const currentRank = activeCorps.rank;
+    const currentScore = activeCorps.totalSeasonScore;
 
-          // Track best rank
-          if (activeCorps.rank) {
-            const bestRank = classMilestones.bestRank || Infinity;
-            if (activeCorps.rank < bestRank) {
-              updatedMilestones[classKey].bestRank = activeCorps.rank;
-              hasNewMilestone = true;
+    // Check if we've already processed these exact values for this class
+    const processed = milestonesProcessedRef.current.get(classKey);
+    if (processed?.rank === currentRank && processed?.score === currentScore) {
+      return; // Skip - already processed this combination
+    }
 
-              newActivities.push({
-                type: 'milestone',
-                message: `New best rank: #${activeCorps.rank} in ${getCorpsClassName(classKey)}!`,
-                timestamp: new Date().toISOString(),
-                icon: 'trophy'
-              });
+    const trackMilestones = async () => {
+      try {
+        const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
+        const milestones = profile.milestones || {};
+        const classMilestones = milestones[classKey] || {};
 
-              if (activeCorps.rank <= 10) {
-                const achievementId = `top_10_${classKey}`;
-                const existingAchievements = profile.achievements || [];
-                if (!existingAchievements.find(a => a.id === achievementId)) {
-                  newAchievements.push({
-                    id: achievementId,
-                    title: 'Top 10 Finish!',
-                    description: `Reached top 10 in ${getCorpsClassName(classKey)}`,
-                    icon: 'trophy',
-                    earnedAt: new Date().toISOString(),
-                    rarity: activeCorps.rank === 1 ? 'legendary' : activeCorps.rank <= 3 ? 'epic' : 'rare'
-                  });
-                }
+        let hasNewMilestone = false;
+        const updatedMilestones = { ...milestones, [classKey]: { ...classMilestones } };
+        const newActivities = [];
+        const newAchievements = [];
+
+        // Track best rank
+        if (currentRank) {
+          const bestRank = classMilestones.bestRank || Infinity;
+          if (currentRank < bestRank) {
+            updatedMilestones[classKey].bestRank = currentRank;
+            hasNewMilestone = true;
+
+            newActivities.push({
+              type: 'milestone',
+              message: `New best rank: #${currentRank} in ${getCorpsClassName(classKey)}!`,
+              timestamp: new Date().toISOString(),
+              icon: 'trophy'
+            });
+
+            if (currentRank <= 10) {
+              const achievementId = `top_10_${classKey}`;
+              const existingAchievements = profile.achievements || [];
+              if (!existingAchievements.find(a => a.id === achievementId)) {
+                newAchievements.push({
+                  id: achievementId,
+                  title: 'Top 10 Finish!',
+                  description: `Reached top 10 in ${getCorpsClassName(classKey)}`,
+                  icon: 'trophy',
+                  earnedAt: new Date().toISOString(),
+                  rarity: currentRank === 1 ? 'legendary' : currentRank <= 3 ? 'epic' : 'rare'
+                });
               }
             }
           }
-
-          // Track best score
-          if (activeCorps.totalSeasonScore) {
-            const bestScore = classMilestones.bestScore || 0;
-            if (activeCorps.totalSeasonScore > bestScore) {
-              updatedMilestones[classKey].bestScore = activeCorps.totalSeasonScore;
-              hasNewMilestone = true;
-
-              newActivities.push({
-                type: 'milestone',
-                message: `New high score: ${activeCorps.totalSeasonScore.toFixed(3)} in ${getCorpsClassName(classKey)}!`,
-                timestamp: new Date().toISOString(),
-                icon: 'star'
-              });
-            }
-          }
-
-          if (hasNewMilestone) {
-            const updateData = {
-              milestones: updatedMilestones
-            };
-
-            if (newActivities.length > 0) {
-              const currentActivities = profile.engagement?.recentActivity || [];
-              updateData['engagement.recentActivity'] = [...newActivities, ...currentActivities].slice(0, 10);
-            }
-
-            if (newAchievements.length > 0) {
-              const currentAchievements = profile.achievements || [];
-              updateData.achievements = [...currentAchievements, ...newAchievements];
-              setNewAchievement(newAchievements[0]);
-            }
-
-            await updateDoc(profileRef, updateData);
-          }
-        } catch (error) {
-          console.error('Error tracking milestones:', error);
         }
-      };
 
-      trackMilestones();
-    }
-  }, [user, profile?.uid, activeCorps?.rank, activeCorps?.totalSeasonScore]);
+        // Track best score
+        if (currentScore) {
+          const bestScore = classMilestones.bestScore || 0;
+          if (currentScore > bestScore) {
+            updatedMilestones[classKey].bestScore = currentScore;
+            hasNewMilestone = true;
+
+            newActivities.push({
+              type: 'milestone',
+              message: `New high score: ${currentScore.toFixed(3)} in ${getCorpsClassName(classKey)}!`,
+              timestamp: new Date().toISOString(),
+              icon: 'star'
+            });
+          }
+        }
+
+        if (hasNewMilestone) {
+          const updateData = {
+            milestones: updatedMilestones
+          };
+
+          if (newActivities.length > 0) {
+            const currentActivities = profile.engagement?.recentActivity || [];
+            updateData['engagement.recentActivity'] = [...newActivities, ...currentActivities].slice(0, 10);
+          }
+
+          if (newAchievements.length > 0) {
+            const currentAchievements = profile.achievements || [];
+            updateData.achievements = [...currentAchievements, ...newAchievements];
+            setNewAchievement(newAchievements[0]);
+          }
+
+          await updateDoc(profileRef, updateData);
+        }
+
+        // Mark as processed for this class/rank/score combination
+        milestonesProcessedRef.current.set(classKey, { rank: currentRank, score: currentScore });
+      } catch (error) {
+        console.error('Error tracking milestones:', error);
+      }
+    };
+
+    trackMilestones();
+  }, [user, profile?.uid, activeCorps?.rank, activeCorps?.totalSeasonScore, activeCorpsClass]);
 
   // Fetch available corps
   const fetchAvailableCorps = useCallback(async () => {
@@ -420,6 +491,10 @@ export const useDashboardData = () => {
     corps,
     availableCorps,
     recentScores,
+
+    // Admin status and unlocked classes (admins have all classes unlocked)
+    isAdmin,
+    unlockedClasses,
 
     // Corps selection
     selectedCorpsClass,

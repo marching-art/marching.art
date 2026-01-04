@@ -224,7 +224,7 @@ const PWAInstallPrompt = () => {
         <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4">
           <button
             onClick={handleDismiss}
-            className="absolute top-3 right-3 p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+            className="absolute top-3 right-3 p-1.5 rounded-sm hover:bg-white/10 transition-colors"
             aria-label="Dismiss"
           >
             <X className="w-4 h-4 text-cream-400" />

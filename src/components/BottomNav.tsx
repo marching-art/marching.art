@@ -95,13 +95,13 @@ const BottomNav: React.FC = () => {
                 {active && (
                   <motion.div
                     layoutId="bottomNavActive"
-                    className="absolute inset-0 bg-yellow-500/10 rounded-xl"
+                    className="absolute inset-0 bg-yellow-500/10 rounded-sm"
                     transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                   />
                 )}
 
                 {/* Icon with badge */}
-                <div className={`relative z-10 p-1 rounded-lg transition-all duration-150 ${active ? 'bg-yellow-500/20' : ''}`}>
+                <div className={`relative z-10 p-1 rounded-sm transition-all duration-150 ${active ? 'bg-yellow-500/20' : ''}`}>
                   <Icon
                     className={`w-5 h-5 transition-all duration-150 ${
                       active ? 'text-yellow-400' : 'text-yellow-50/70'
@@ -110,7 +110,7 @@ const BottomNav: React.FC = () => {
                   />
                   {/* Notification badge - larger for visibility */}
                   {badgeCount > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-[11px] font-bold">
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-sm bg-red-500 text-white text-[11px] font-bold">
                       {badgeCount > 99 ? '99+' : badgeCount}
                     </span>
                   )}
@@ -130,7 +130,7 @@ const BottomNav: React.FC = () => {
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-yellow-400 rounded-full"
+                    className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-yellow-400 rounded-sm"
                   />
                 )}
               </Link>

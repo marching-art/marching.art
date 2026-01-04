@@ -7,6 +7,7 @@
 export * from './useProfile';
 export * from './useLeaderboard';
 export * from './useLeagues';
+export * from './useLeagueStats';
 
 // New modular hooks (from useDashboardData refactor)
 export {

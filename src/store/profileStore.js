@@ -1,6 +1,11 @@
 import { create } from 'zustand';
 import { db } from '../firebase';
 import { doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
+import { AUTH_CONFIG } from '../config';
+
+// All corps classes for admin override
+// Note: Uses 'worldClass'/'openClass' format which matches CORPS_CLASS_ORDER in utils/corps.ts
+const ALL_CORPS_CLASSES = ['worldClass', 'openClass', 'aClass', 'soundSport'];
 
 /**
  * Global Profile Store
@@ -19,6 +24,9 @@ export const useProfileStore = create((set, get) => ({
   corps: null,
   loading: true,
   error: null,
+
+  // Admin status (checked on init)
+  isAdmin: false,
 
   // Current user ID being tracked
   _currentUid: null,
@@ -53,13 +61,17 @@ export const useProfileStore = create((set, get) => ({
         corps: null,
         loading: false,
         error: null,
+        isAdmin: false,
         _currentUid: null,
         _unsubscribe: null,
       });
       return () => {};
     }
 
-    set({ loading: true, _currentUid: uid });
+    // Check admin status synchronously from config
+    const isAdmin = AUTH_CONFIG.isAdminUid(uid);
+
+    set({ loading: true, _currentUid: uid, isAdmin });
 
     const profileRef = doc(db, 'artifacts/marching-art/users', uid, 'profile/data');
 
@@ -137,6 +149,7 @@ export const useProfileStore = create((set, get) => ({
       corps: null,
       loading: false,
       error: null,
+      isAdmin: false,
       _currentUid: null,
       _unsubscribe: null,
     });
@@ -179,18 +192,20 @@ export const useProfileStore = create((set, get) => ({
   },
 
   /**
-   * Get unlocked classes
+   * Get unlocked classes (admins have all classes unlocked)
    */
   getUnlockedClasses: () => {
-    const { profile } = get();
+    const { profile, isAdmin } = get();
+    if (isAdmin) return ALL_CORPS_CLASSES;
     return profile?.unlockedClasses || ['soundSport'];
   },
 
   /**
-   * Check if a class is unlocked
+   * Check if a class is unlocked (admins have all classes unlocked)
    */
   isClassUnlocked: (classId) => {
-    const { profile } = get();
+    const { profile, isAdmin } = get();
+    if (isAdmin) return true;
     return (profile?.unlockedClasses || ['soundSport']).includes(classId);
   },
 }));

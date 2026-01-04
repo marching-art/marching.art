@@ -162,7 +162,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             className={`
               fixed bottom-0 left-0 right-0 z-[101]
               bg-[#1a1a1a] border-t border-[#333]
-              rounded-t-2xl overflow-hidden
+              rounded-t-sm overflow-hidden
               focus:outline-none
               safe-area-bottom
               ${className}
@@ -175,17 +175,17 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
                 className="flex justify-center py-3 cursor-grab active:cursor-grabbing touch-none"
                 onPointerDown={startDrag}
               >
-                <div className="w-10 h-1 bg-gray-600 rounded-full" />
+                <div className="w-10 h-1 bg-gray-600 rounded-sm" />
               </div>
             )}
 
             {/* Header */}
             {(title || showCloseButton) && (
-              <div className="flex items-center justify-between px-4 py-3 border-b border-[#333]">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
                 {title && (
                   <h2
                     id="bottom-sheet-title"
-                    className="text-base font-bold text-white"
+                    className="text-sm font-bold text-white uppercase tracking-wider"
                   >
                     {title}
                   </h2>
@@ -270,7 +270,7 @@ export const ActionSheet: React.FC<ActionSheetProps> = ({
                 }}
                 disabled={action.disabled}
                 className={`
-                  w-full flex items-center gap-3 px-4 py-4 min-h-[52px] rounded-lg
+                  w-full flex items-center gap-3 px-4 py-4 min-h-[52px] rounded-sm
                   text-left text-base font-medium
                   transition-all press-feedback
                   disabled:opacity-50 disabled:cursor-not-allowed
@@ -291,7 +291,7 @@ export const ActionSheet: React.FC<ActionSheetProps> = ({
         {showCancel && (
           <button
             onClick={onClose}
-            className="w-full mt-3 py-4 min-h-[52px] bg-[#222] border border-[#333] rounded-lg text-base font-bold text-gray-400 hover:text-white active:bg-[#333] transition-all press-feedback"
+            className="w-full mt-3 py-4 min-h-[52px] bg-[#222] border border-[#333] rounded-sm text-base font-bold text-gray-400 hover:text-white active:bg-[#333] transition-all press-feedback"
           >
             {cancelLabel}
           </button>
@@ -345,7 +345,7 @@ export const ConfirmationSheet: React.FC<ConfirmationSheetProps> = ({
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="flex-1 py-4 min-h-[52px] bg-[#222] border border-[#333] rounded-lg text-base font-bold text-gray-400 hover:text-white active:bg-[#333] transition-all press-feedback disabled:opacity-50"
+            className="flex-1 py-4 min-h-[52px] bg-[#222] border border-[#333] rounded-sm text-base font-bold text-gray-400 hover:text-white active:bg-[#333] transition-all press-feedback disabled:opacity-50"
           >
             {cancelLabel}
           </button>
@@ -353,7 +353,7 @@ export const ConfirmationSheet: React.FC<ConfirmationSheetProps> = ({
             onClick={onConfirm}
             disabled={isLoading}
             className={`
-              flex-1 py-4 min-h-[52px] rounded-lg text-base font-bold transition-all press-feedback-strong disabled:opacity-50
+              flex-1 py-4 min-h-[52px] rounded-sm text-base font-bold transition-all press-feedback-strong disabled:opacity-50
               ${variant === 'danger'
                 ? 'bg-red-600 text-white hover:bg-red-500 active:bg-red-700'
                 : 'bg-[#0057B8] text-white hover:bg-[#0066d6] active:bg-[#004a9e]'

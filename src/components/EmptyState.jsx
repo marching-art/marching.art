@@ -141,7 +141,7 @@ const EmptyState = ({
   // Minimal variant (original style)
   if (variant === 'minimal') {
     return (
-      <div className={`bg-black/30 backdrop-blur-sm border border-white/10 rounded-2xl p-8 md:p-12 ${className}`}>
+      <div className={`bg-black/30 backdrop-blur-sm border border-white/10 rounded-sm p-8 md:p-12 ${className}`}>
         <div className="text-center">
           <IconComponent className="w-12 h-12 md:w-16 md:h-16 text-cream/30 mx-auto mb-6" />
           <h3 className="text-lg md:text-xl font-display font-bold text-cream/60 uppercase tracking-wide mb-2">
@@ -192,7 +192,7 @@ const EmptyState = ({
 
         {/* Status indicator - static on mobile */}
         <div className="flex items-center justify-center gap-2 mb-4">
-          <div className="w-2 h-2 bg-gold-500/60 rounded-full" />
+          <div className="w-2 h-2 bg-gold-500/60 rounded-sm" />
           <span className="font-mono text-[10px] text-cream/40 uppercase tracking-widest">
             System Status
           </span>

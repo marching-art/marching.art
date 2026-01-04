@@ -164,9 +164,9 @@ export const PlayerStatusBar: React.FC<PlayerStatusBarProps> = ({
             </span>
           </div>
           {/* Mini progress bar */}
-          <div className="w-12 h-1 bg-blue-900/50 rounded-full overflow-hidden">
+          <div className="w-12 h-1 bg-blue-900/50 rounded-sm overflow-hidden">
             <motion.div
-              className="h-full bg-blue-400 rounded-full"
+              className="h-full bg-blue-400 rounded-sm"
               initial={{ width: 0 }}
               animate={{ width: `${xpProgress.percent}%` }}
               transition={{ duration: 0.3 }}
@@ -193,7 +193,7 @@ export const PlayerStatusBar: React.FC<PlayerStatusBarProps> = ({
         </AnimatePresence>
 
         {/* Tooltip on hover */}
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 border border-gray-700 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
           <div className="text-xs text-gray-300">
             <div className="font-semibold text-white mb-1">
               {xp.toLocaleString()} XP (Level {xpLevel})
@@ -239,7 +239,7 @@ export const PlayerStatusBar: React.FC<PlayerStatusBarProps> = ({
         </AnimatePresence>
 
         {/* Tooltip on hover */}
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 border border-gray-700 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
           <div className="text-xs text-gray-300">
             <div className="font-semibold text-white mb-1">
               {corpsCoin.toLocaleString()} CorpsCoin

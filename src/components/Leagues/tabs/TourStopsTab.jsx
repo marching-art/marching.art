@@ -187,7 +187,7 @@ const TourStopsTab = ({ league }) => {
               <button
                 key={week}
                 onClick={() => setSelectedWeek(week)}
-                className={`flex-shrink-0 px-4 py-2 rounded-lg font-semibold transition-all ${
+                className={`flex-shrink-0 px-4 py-2 rounded-sm font-semibold transition-all ${
                   isSelected
                     ? 'bg-gold-500 text-charcoal-900'
                     : hasResults
@@ -230,7 +230,7 @@ const TourStopsTab = ({ league }) => {
                 {selectedStop.rankings.map((ranking) => (
                   <tr key={ranking.uid} className="border-b border-cream-500/10 hover:bg-cream-500/5">
                     <td className="py-3 px-2 md:px-4">
-                      <div className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-bold ${getMedalColor(ranking.placement)}`}>
+                      <div className={`inline-flex items-center justify-center w-8 h-8 rounded-sm font-bold ${getMedalColor(ranking.placement)}`}>
                         {ranking.placement}
                       </div>
                     </td>
@@ -268,7 +268,7 @@ const TourStopsTab = ({ league }) => {
               <h4 className="text-sm font-semibold text-cream-300 mb-3">Shows This Week</h4>
               <div className="space-y-2">
                 {selectedStop.shows.map((show, idx) => (
-                  <div key={idx} className="p-3 bg-charcoal-900/50 rounded-lg">
+                  <div key={idx} className="p-3 bg-charcoal-900/50 rounded-sm">
                     <div className="flex items-start justify-between">
                       <div>
                         <p className="font-semibold text-cream-100 text-sm">{show.eventName}</p>

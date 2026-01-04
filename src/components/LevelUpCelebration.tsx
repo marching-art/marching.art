@@ -148,7 +148,7 @@ const LevelUpModal: React.FC<{
         onClick={(e) => e.stopPropagation()}
       >
         {/* Glow effect */}
-        <div className="absolute inset-0 bg-blue-500/20 blur-3xl rounded-full scale-150" />
+        <div className="absolute inset-0 bg-blue-500/20 blur-3xl rounded-sm scale-150" />
 
         {/* Stars background */}
         {!shouldReduceMotion && (
@@ -223,7 +223,7 @@ const LevelUpModal: React.FC<{
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="flex items-center gap-3 px-6 py-3 bg-green-500/20 border border-green-500/50 rounded-lg"
+            className="flex items-center gap-3 px-6 py-3 bg-green-500/20 border border-green-500/50 rounded-sm"
           >
             <Unlock className="w-6 h-6 text-green-400" />
             <div className="text-left">

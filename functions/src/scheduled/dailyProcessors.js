@@ -27,10 +27,24 @@ exports.processDailyLiveScores = onSchedule({
   const seasonData = seasonDoc.data();
   const seasonStartDate = seasonData.schedule.startDate.toDate();
 
-  // Calculate calendar day (1-70 total season length)
-  const yesterday = new Date();
+  // Calculate "yesterday" in Eastern timezone with 2 AM game day reset
+  // Game day resets at 2 AM ET, not midnight. Between midnight and 2 AM,
+  // we're still in the previous game day and should process the day before that.
+  // Solution: Subtract 2 hours from current time, then calculate "yesterday"
+  const nowET = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
+  // Shift by 2 hours to align with 2 AM game day boundary
+  // e.g., 1 AM on Jan 5 becomes 11 PM on Jan 4 (still Jan 4's game day)
+  const gameTimeET = new Date(nowET.getTime() - (2 * 60 * 60 * 1000));
+  const yesterday = new Date(gameTimeET);
   yesterday.setDate(yesterday.getDate() - 1);
-  const diffInMillis = yesterday.getTime() - seasonStartDate.getTime();
+  // Normalize to start of day for consistent day calculation
+  yesterday.setHours(0, 0, 0, 0);
+
+  // Also normalize seasonStartDate to start of day for comparison
+  const seasonStartNormalized = new Date(seasonStartDate);
+  seasonStartNormalized.setHours(0, 0, 0, 0);
+
+  const diffInMillis = yesterday.getTime() - seasonStartNormalized.getTime();
   const calendarDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1;
 
   // Spring training offset: first 21 days are setup, no scoring

@@ -157,7 +157,7 @@ export const StreakIndicator: React.FC<StreakIndicatorProps> = ({
   // Full version with progress bar
   return (
     <motion.div
-      className={`rounded-lg ${tier.bgColor} ${tier.borderColor} border p-3 ${tier.glowColor ? `shadow-lg ${tier.glowColor}` : ''}`}
+      className={`rounded-sm ${tier.bgColor} ${tier.borderColor} border p-3 ${tier.glowColor ? `shadow-lg ${tier.glowColor}` : ''}`}
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
     >
@@ -221,9 +221,9 @@ export const StreakIndicator: React.FC<StreakIndicatorProps> = ({
               {milestoneProgress.current} / {milestoneProgress.next} days
             </span>
           </div>
-          <div className="w-full h-2 bg-gray-800 rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-gray-800 rounded-sm overflow-hidden">
             <motion.div
-              className={`h-full rounded-full ${tier.bgColor.replace('/20', '')} ${tier.bgColor.replace('/30', '')}`}
+              className={`h-full rounded-sm ${tier.bgColor.replace('/20', '')} ${tier.bgColor.replace('/30', '')}`}
               initial={{ width: 0 }}
               animate={{ width: `${milestoneProgress.progress}%` }}
               transition={{ duration: 0.5, ease: 'easeOut' }}

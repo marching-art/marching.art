@@ -119,7 +119,7 @@ const getDefaultCorpsTags = (corpsName, sourceYear) => {
 const SelectableTile = ({ item, selected, onClick, icon: Icon, iconColor }) => (
   <button
     onClick={onClick}
-    className={`p-2 rounded-lg border text-left transition-all ${
+    className={`p-2 rounded-sm border text-left transition-all ${
       selected
         ? 'border-gold-500 text-gold-400 bg-gold-500/10'
         : 'border-white/10 text-cream/40 hover:border-white/20 hover:text-cream/60'
@@ -415,7 +415,7 @@ const ShowConceptSelector = ({
           whileHover={!saving && isComplete ? { scale: 1.01 } : {}}
           whileTap={!saving && isComplete ? { scale: 0.99 } : {}}
           className={`
-            w-full py-3 rounded-lg font-display font-bold uppercase tracking-wide
+            w-full py-3 rounded-sm font-display font-bold uppercase tracking-wide
             transition-all duration-200
             ${saving || !isComplete
               ? 'bg-white/10 text-cream/40 cursor-not-allowed'
@@ -425,7 +425,7 @@ const ShowConceptSelector = ({
         >
           {saving ? (
             <span className="flex items-center justify-center gap-2">
-              <div className="w-4 h-4 border-2 border-charcoal-900 border-t-transparent rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-charcoal-900 border-t-transparent rounded-sm animate-spin" />
               Saving...
             </span>
           ) : (
