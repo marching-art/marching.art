@@ -474,13 +474,14 @@ async function processAndArchiveOffSeasonScoresLogic() {
     dailyRecap.shows.push(showResult);
   }
 
-  // Action 1: Update user profiles with their most recent score
+  // Action 1: Update user profiles with accumulated season scores
+  // CRITICAL: Use increment to add today's score to the running total, not overwrite it
   for (const [uidAndClass, totalDailyScore] of dailyScores.entries()) {
     if (totalDailyScore > 0) {
       const [uid, corpsClass] = uidAndClass.split("_");
       const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
       batch.update(userProfileRef, {
-        [`corps.${corpsClass}.totalSeasonScore`]: totalDailyScore,
+        [`corps.${corpsClass}.totalSeasonScore`]: admin.firestore.FieldValue.increment(totalDailyScore),
         [`corps.${corpsClass}.lastScoredDay`]: scoredDay,
       });
     }
@@ -1145,13 +1146,14 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
     dailyRecap.shows.push(showResult);
   }
 
-  // Update user profiles with their most recent score
+  // Update user profiles with accumulated season scores
+  // CRITICAL: Use increment to add today's score to the running total, not overwrite it
   for (const [uidAndClass, totalDailyScore] of dailyScores.entries()) {
     if (totalDailyScore > 0) {
       const [uid, corpsClass] = uidAndClass.split("_");
       const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
       batch.update(userProfileRef, {
-        [`corps.${corpsClass}.totalSeasonScore`]: totalDailyScore,
+        [`corps.${corpsClass}.totalSeasonScore`]: admin.firestore.FieldValue.increment(totalDailyScore),
         [`corps.${corpsClass}.lastScoredDay`]: scoredDay,
       });
     }
