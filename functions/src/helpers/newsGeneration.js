@@ -319,24 +319,35 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
     const historicalData = await fetchTimeLockednScores(db, yearsToFetch, reportDay);
     const fantasyData = await fetchFantasyRecaps(db, seasonId, reportDay);
 
+    // Fetch show context (event name, location, date)
+    const showContext = await fetchShowContext(db, seasonId, historicalData, reportDay);
+    logger.info(`Show context for Day ${reportDay}: ${showContext.showName} at ${showContext.location} on ${showContext.date}`);
+
     // Process data
     const dayScores = getScoresForDay(historicalData, reportDay, activeCorps);
     const trendData = calculateTrendData(historicalData, reportDay, activeCorps);
     const captionLeaders = identifyCaptionLeaders(dayScores, trendData);
 
-    // Generate all 5 articles in parallel
+    // Generate all 5 articles in parallel, passing show context to each
     const articles = await Promise.all([
-      generateDciStandingsArticle({ reportDay, dayScores, trendData, activeCorps }),
-      generateDciCaptionsArticle({ reportDay, dayScores, captionLeaders, activeCorps }),
-      generateFantasyPerformersArticle({ reportDay, fantasyData }),
-      generateFantasyLeaguesArticle({ reportDay, fantasyData }),
-      generateDeepAnalyticsArticle({ reportDay, dayScores, trendData, fantasyData, captionLeaders }),
+      generateDciStandingsArticle({ reportDay, dayScores, trendData, activeCorps, showContext }),
+      generateDciCaptionsArticle({ reportDay, dayScores, captionLeaders, activeCorps, showContext }),
+      generateFantasyPerformersArticle({ reportDay, fantasyData, showContext }),
+      generateFantasyLeaguesArticle({ reportDay, fantasyData, showContext }),
+      generateDeepAnalyticsArticle({ reportDay, dayScores, trendData, fantasyData, captionLeaders, showContext }),
     ]);
 
     return {
       success: true,
       articles,
-      metadata: { reportDay, currentDay, corpsCount: dayScores.length },
+      metadata: {
+        reportDay,
+        currentDay,
+        corpsCount: dayScores.length,
+        showName: showContext.showName,
+        location: showContext.location,
+        date: showContext.date,
+      },
     };
   } catch (error) {
     logger.error("Error generating articles:", error);
@@ -347,7 +358,7 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
 /**
  * Article 1: DCI Standings
  */
-async function generateDciStandingsArticle({ reportDay, dayScores, trendData, activeCorps }) {
+async function generateDciStandingsArticle({ reportDay, dayScores, trendData, activeCorps, showContext }) {
   const { textModel } = initializeGemini();
 
   const topCorps = dayScores[0];
@@ -358,7 +369,16 @@ async function generateDciStandingsArticle({ reportDay, dayScores, trendData, ac
 
 CONTEXT: DCI is the premier competitive marching music organization in the world. Corps compete in shows judged on General Effect (GE), Visual, and Music captions. Scores range from 0-100, with top corps typically scoring 85-99. Every 0.001 point matters in these razor-thin competitions.
 
-TODAY'S COMPETITION RESULTS - Day ${reportDay} of the 2024 DCI Season:
+═══════════════════════════════════════════════════════════════
+EVENT INFORMATION
+═══════════════════════════════════════════════════════════════
+• Show Name: ${showContext.showName}
+• Location: ${showContext.location}
+• Date: ${showContext.date}
+• Season Day: ${reportDay}
+═══════════════════════════════════════════════════════════════
+
+TODAY'S COMPETITION RESULTS from ${showContext.showName} in ${showContext.location}:
 
 STANDINGS (Corps Name | Historical Season Year | Total Score | Daily Change):
 ${dayScores.slice(0, 12).map((s, i) => {
@@ -424,7 +444,7 @@ Return ONLY valid JSON with this EXACT structure:
 /**
  * Article 2: DCI Caption Analysis
  */
-async function generateDciCaptionsArticle({ reportDay, dayScores, captionLeaders, activeCorps }) {
+async function generateDciCaptionsArticle({ reportDay, dayScores, captionLeaders, activeCorps, showContext }) {
   const { textModel } = initializeGemini();
 
   const prompt = `You are a DCI caption analyst and technical expert writing for marching.art. You specialize in breaking down the scoring categories that determine DCI competition results.
@@ -434,7 +454,16 @@ CONTEXT: DCI scoring has three main categories:
 - VISUAL: 30% of total - Measures marching technique, body movement, and color guard excellence. Includes Visual Proficiency (VP), Visual Analysis (VA), and Color Guard (CG).
 - MUSIC: 30% of total - Measures musical performance quality. Includes Brass (B), Music Analysis (MA), and Percussion (P).
 
-TODAY'S CAPTION BREAKDOWN - Day ${reportDay}:
+═══════════════════════════════════════════════════════════════
+EVENT INFORMATION
+═══════════════════════════════════════════════════════════════
+• Show Name: ${showContext.showName}
+• Location: ${showContext.location}
+• Date: ${showContext.date}
+• Season Day: ${reportDay}
+═══════════════════════════════════════════════════════════════
+
+CAPTION BREAKDOWN from ${showContext.showName} in ${showContext.location}:
 
 CAPTION LEADERS BY CATEGORY:
 ${captionLeaders.map(c => `${c.caption}: ${c.leader} scores ${c.score.toFixed(2)} [7-day trend: ${c.weeklyTrend}]`).join('\n')}
@@ -505,7 +534,7 @@ Return ONLY valid JSON:
 /**
  * Article 3: Fantasy Top Performers
  */
-async function generateFantasyPerformersArticle({ reportDay, fantasyData }) {
+async function generateFantasyPerformersArticle({ reportDay, fantasyData, showContext }) {
   const { textModel } = initializeGemini();
 
   if (!fantasyData?.current) {
@@ -526,7 +555,15 @@ async function generateFantasyPerformersArticle({ reportDay, fantasyData }) {
 
 CONTEXT: marching.art Fantasy is a fantasy sports game where users ("Directors") create their own fantasy ensembles. Directors draft real DCI corps to fill caption positions (Brass, Percussion, Guard, etc.) and earn points based on how those corps perform in actual DCI competitions. Think fantasy football, but for drum corps.
 
-TODAY'S FANTASY LEADERBOARD - Day ${reportDay}:
+═══════════════════════════════════════════════════════════════
+DATE & CONTEXT
+═══════════════════════════════════════════════════════════════
+• Date: ${showContext.date}
+• Season Day: ${reportDay}
+• DCI Show Today: ${showContext.showName} in ${showContext.location}
+═══════════════════════════════════════════════════════════════
+
+FANTASY LEADERBOARD for ${showContext.date} (Day ${reportDay}):
 
 TOP 10 FANTASY ENSEMBLES:
 ${topPerformers.map((r, i) =>
@@ -595,7 +632,7 @@ Return ONLY valid JSON:
 /**
  * Article 4: Fantasy League Recap
  */
-async function generateFantasyLeaguesArticle({ reportDay, fantasyData }) {
+async function generateFantasyLeaguesArticle({ reportDay, fantasyData, showContext }) {
   const { textModel } = initializeGemini();
 
   // Get show/league data
@@ -615,7 +652,15 @@ async function generateFantasyLeaguesArticle({ reportDay, fantasyData }) {
 
 CONTEXT: marching.art Fantasy organizes competitions into "shows" (like fantasy football leagues). Directors compete in these shows with their fantasy ensembles. Points are earned based on real DCI corps performances.
 
-TODAY'S LEAGUE/SHOW ACTIVITY - Day ${reportDay}:
+═══════════════════════════════════════════════════════════════
+DATE & CONTEXT
+═══════════════════════════════════════════════════════════════
+• Date: ${showContext.date}
+• Season Day: ${reportDay}
+• DCI Show Today: ${showContext.showName} in ${showContext.location}
+═══════════════════════════════════════════════════════════════
+
+LEAGUE/SHOW ACTIVITY for ${showContext.date} (Day ${reportDay}):
 
 ACTIVE COMPETITIONS:
 ${showSummaries.length > 0 ? showSummaries.map((s, i) =>
@@ -681,7 +726,7 @@ Return ONLY valid JSON:
 /**
  * Article 5: Deep Analytics
  */
-async function generateDeepAnalyticsArticle({ reportDay, dayScores, trendData, fantasyData, captionLeaders }) {
+async function generateDeepAnalyticsArticle({ reportDay, dayScores, trendData, fantasyData, captionLeaders, showContext }) {
   const { textModel } = initializeGemini();
 
   // Calculate advanced statistics
@@ -716,7 +761,16 @@ async function generateDeepAnalyticsArticle({ reportDay, dayScores, trendData, f
 
 CONTEXT: DCI scoring uses a 100-point scale. Top corps score 90-99+. Every 0.001 point represents real competitive separation. The season builds toward championships, so trajectory matters as much as current standings.
 
-DAY ${reportDay} STATISTICAL ANALYSIS:
+═══════════════════════════════════════════════════════════════
+EVENT INFORMATION
+═══════════════════════════════════════════════════════════════
+• Show Name: ${showContext.showName}
+• Location: ${showContext.location}
+• Date: ${showContext.date}
+• Season Day: ${reportDay}
+═══════════════════════════════════════════════════════════════
+
+STATISTICAL ANALYSIS from ${showContext.showName} on ${showContext.date}:
 
 ═══════════════════════════════════════════════════════════════
 MOMENTUM INDICATORS (Single-Day Movement)
@@ -915,6 +969,88 @@ async function fetchFantasyRecaps(db, seasonId, reportDay) {
   } catch (error) {
     logger.error("Error fetching fantasy recaps:", error);
     return null;
+  }
+}
+
+/**
+ * Fetch show context (event name, location, actual date) for articles
+ * Pulls from historical_scores and season schedule to get full context
+ */
+async function fetchShowContext(db, seasonId, historicalData, reportDay) {
+  try {
+    // 1. Try to get event info from historical_scores first (most accurate)
+    let showName = null;
+    let location = null;
+    let eventDate = null;
+
+    for (const yearKey of Object.keys(historicalData)) {
+      const yearEvents = historicalData[yearKey] || [];
+      const dayEvent = yearEvents.find(e => e.offSeasonDay === reportDay);
+      if (dayEvent) {
+        showName = dayEvent.eventName || showName;
+        location = dayEvent.location || location;
+        eventDate = dayEvent.date || dayEvent.eventDate || eventDate;
+        if (showName && location) break;
+      }
+    }
+
+    // 2. Try to get from season schedule if not found
+    if (!showName || !location) {
+      try {
+        const scheduleDoc = await db.doc(`seasons/${seasonId}/schedule/day_${reportDay}`).get();
+        if (scheduleDoc.exists) {
+          const scheduleData = scheduleDoc.data();
+          const shows = scheduleData.shows || [];
+          if (shows.length > 0) {
+            showName = showName || shows[0].eventName || shows[0].name;
+            location = location || shows[0].location;
+            eventDate = eventDate || shows[0].date;
+          }
+        }
+      } catch (scheduleError) {
+        logger.warn("Could not fetch schedule:", scheduleError.message);
+      }
+    }
+
+    // 3. Calculate actual date from season start + day number
+    let actualDate = null;
+    try {
+      const seasonDoc = await db.doc(`seasons/${seasonId}`).get();
+      if (seasonDoc.exists) {
+        const seasonData = seasonDoc.data();
+        const startDate = seasonData.startDate?.toDate?.() || seasonData.startDate;
+        if (startDate) {
+          actualDate = new Date(startDate);
+          actualDate.setDate(actualDate.getDate() + reportDay - 1);
+        }
+      }
+    } catch (seasonError) {
+      logger.warn("Could not fetch season for date calculation:", seasonError.message);
+    }
+
+    // Format the actual date nicely
+    const formattedDate = actualDate
+      ? actualDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+      : eventDate
+        ? new Date(eventDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+        : `Day ${reportDay}`;
+
+    return {
+      showName: showName || `Day ${reportDay} Competition`,
+      location: location || "Competition Venue",
+      date: formattedDate,
+      rawDate: actualDate || (eventDate ? new Date(eventDate) : null),
+      reportDay,
+    };
+  } catch (error) {
+    logger.error("Error fetching show context:", error);
+    return {
+      showName: `Day ${reportDay} Competition`,
+      location: "Competition Venue",
+      date: `Day ${reportDay}`,
+      rawDate: null,
+      reportDay,
+    };
   }
 }
 
