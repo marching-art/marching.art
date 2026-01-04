@@ -330,14 +330,6 @@ const ControlBar = ({
   // Calculate next class unlock
   const nextUnlock = getNextClassUnlock(unlockedClasses, level, corpsCoin);
 
-  // Debug: log unlock status (remove after debugging)
-  console.log('[ControlBar Debug]', {
-    unlockedClasses,
-    level,
-    corpsCoin,
-    nextUnlock,
-  });
-
   return (
     <div className="sticky top-0 z-10 bg-[#1a1a1a] border-b border-[#333]">
       <div className="flex items-center justify-between px-4 py-2">
