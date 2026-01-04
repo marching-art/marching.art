@@ -757,7 +757,10 @@ const LeagueStatus = ({ leagues }) => {
 const Dashboard = () => {
   const { user } = useAuth();
   const dashboardData = useDashboardData();
-  const { aggregatedScores, loading: scoresLoading } = useScoresData();
+  const { aggregatedScores, loading: scoresLoading } = useScoresData({
+    // Dashboard should only show current season data, not fall back to archived seasons
+    disableArchiveFallback: true
+  });
   const { data: myLeagues } = useMyLeagues(user?.uid);
   const { trigger: haptic } = useHaptic();
   const { weeksRemaining, isRegistrationLocked, currentDay } = useSeasonStore();
