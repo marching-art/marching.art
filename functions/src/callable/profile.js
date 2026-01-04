@@ -90,7 +90,10 @@ exports.updateProfile = onCall({ cors: true }, async (request) => {
  * @param {Object} data
  * @param {string} data.userId - The user ID to get profile for
  */
-exports.getPublicProfile = onCall({ cors: true }, async (request) => {
+exports.getPublicProfile = onCall({
+  cors: true,
+  minInstances: 1, // Keep warm to reduce cold starts for user-facing requests
+}, async (request) => {
   const { userId } = request.data;
 
   if (!userId) {

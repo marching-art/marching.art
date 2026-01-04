@@ -16,8 +16,8 @@
 
 set -e
 
-DELAY_SECONDS=45  # Delay between batches to avoid quota errors
-BATCH_SIZE=5      # Target number of functions per batch
+DELAY_SECONDS=75  # Delay between batches to avoid quota errors (Cloud Run: 600 writes/min)
+BATCH_SIZE=4      # Target number of functions per batch (each deploy = ~10 write requests)
 
 echo "Deploying Cloud Functions to Firebase in batches..."
 echo "Batch size: ~$BATCH_SIZE functions"

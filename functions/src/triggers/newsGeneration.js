@@ -14,6 +14,7 @@ const { onMessagePublished } = require("firebase-functions/v2/pubsub");
 const { onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
+const { defineSecret } = require("firebase-functions/params");
 const { getDb } = require("../config");
 const {
   generateDailyNews,
@@ -21,6 +22,9 @@ const {
   generateFantasyRecap,
   getArticleImage,
 } = require("../helpers/newsGeneration");
+
+// Define Gemini API key secret for triggers that use news generation
+const geminiApiKey = defineSecret("GOOGLE_GENERATIVE_AI_API_KEY");
 
 // Pub/Sub topic for news generation requests
 const NEWS_GENERATION_TOPIC = "news-generation-topic";
@@ -56,6 +60,7 @@ exports.processNewsGeneration = onMessagePublished(
     topic: NEWS_GENERATION_TOPIC,
     timeoutSeconds: 180,
     memory: "1GiB",
+    secrets: [geminiApiKey],
   },
   async (message) => {
     logger.info("Processing news generation request");
@@ -220,6 +225,7 @@ exports.onFantasyRecapUpdated = onDocumentWritten(
     document: "fantasy_recaps/{seasonId}",
     timeoutSeconds: 180,
     memory: "1GiB",
+    secrets: [geminiApiKey],
   },
   async (event) => {
     const db = getDb();
@@ -310,6 +316,7 @@ exports.triggerDailyNews = onCall(
   {
     timeoutSeconds: 180,
     memory: "1GiB",
+    secrets: [geminiApiKey],
   },
   async (request) => {
     if (!request.auth) {
@@ -375,6 +382,7 @@ exports.triggerDailyNews = onCall(
 exports.getDailyNews = onCall(
   {
     timeoutSeconds: 30,
+    minInstances: 1, // Keep warm to reduce cold starts for user-facing requests
   },
   async (request) => {
     const db = getDb();
@@ -414,6 +422,7 @@ exports.getDailyNews = onCall(
 exports.getRecentNews = onCall(
   {
     timeoutSeconds: 30,
+    minInstances: 1, // Keep warm to reduce cold starts for user-facing requests
   },
   async (request) => {
     const db = getDb();
@@ -678,6 +687,7 @@ exports.triggerNewsGeneration = onCall(
   {
     timeoutSeconds: 120,
     memory: "512MiB",
+    secrets: [geminiApiKey],
   },
   async (request) => {
     if (!request.auth) {

@@ -14,7 +14,11 @@
 
 const { GoogleGenerativeAI, SchemaType } = require("@google/generative-ai");
 const { logger } = require("firebase-functions/v2");
+const { defineSecret } = require("firebase-functions/params");
 const { getContextualPlaceholder, uploadFromUrl } = require("./mediaService");
+
+// Define Gemini API key secret (set via: firebase functions:secrets:set GOOGLE_GENERATIVE_AI_API_KEY)
+const geminiApiKey = defineSecret("GOOGLE_GENERATIVE_AI_API_KEY");
 
 // Initialize Gemini client (lazy loaded)
 let genAI = null;
@@ -51,9 +55,9 @@ const CAPTION_CATEGORIES = {
  */
 function initializeGemini() {
   if (!genAI) {
-    const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+    const apiKey = geminiApiKey.value();
     if (!apiKey) {
-      throw new Error("GOOGLE_GENERATIVE_AI_API_KEY environment variable is not set");
+      throw new Error("GOOGLE_GENERATIVE_AI_API_KEY secret is not set. Run: firebase functions:secrets:set GOOGLE_GENERATIVE_AI_API_KEY");
     }
     genAI = new GoogleGenerativeAI(apiKey);
 
