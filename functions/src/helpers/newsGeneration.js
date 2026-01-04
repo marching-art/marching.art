@@ -994,7 +994,7 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
     const articles = await Promise.all([
       generateDciStandingsArticle({ reportDay, dayScores, trendData, activeCorps, showContext }),
       generateDciCaptionsArticle({ reportDay, dayScores, captionLeaders, activeCorps, showContext }),
-      generateFantasyPerformersArticle({ reportDay, fantasyData, showContext }),
+      generateFantasyPerformersArticle({ reportDay, fantasyData, showContext, db, dataDocId }),
       generateFantasyLeaguesArticle({ reportDay, fantasyData, showContext }),
       generateDeepAnalyticsArticle({ reportDay, dayScores, trendData, fantasyData, captionLeaders, showContext }),
     ]);
@@ -1195,7 +1195,7 @@ Return ONLY valid JSON:
 /**
  * Article 3: Fantasy Top Performers
  */
-async function generateFantasyPerformersArticle({ reportDay, fantasyData, showContext }) {
+async function generateFantasyPerformersArticle({ reportDay, fantasyData, showContext, db, dataDocId }) {
   const { textModel } = initializeGemini();
 
   if (!fantasyData?.current) {
@@ -1232,7 +1232,7 @@ FANTASY LEADERBOARD for ${showContext.date} (Day ${reportDay}):
 
 TOP 10 FANTASY ENSEMBLES:
 ${topPerformers.map((r, i) =>
-  `${i + 1}. "${r.corpsName}" (Director: ${r.directorName || 'Anonymous'}) - ${r.totalScore.toFixed(3)} fantasy points`
+  `${i + 1}. "${r.corpsName}" (Director: ${r.displayName || 'Anonymous'}) - ${r.totalScore.toFixed(3)} fantasy points`
 ).join('\n')}
 
 STATISTICS:
@@ -1273,9 +1273,36 @@ Return ONLY valid JSON:
 
     // Generate image for top fantasy corps with themed uniform based on corps name
     const topCorps = topPerformers[0];
+
+    // Fetch the top performer's uniform design from their profile
+    let uniformDesign = null;
+    let corpsLocation = null;
+    if (topCorps?.uid && topCorps?.corpsClass && db && dataDocId) {
+      try {
+        const profileDoc = await db.doc(`${dataDocId}/users/${topCorps.uid}/profile/data`).get();
+        if (profileDoc.exists) {
+          const profileData = profileDoc.data();
+          const corpsData = profileData?.corps?.[topCorps.corpsClass];
+          uniformDesign = corpsData?.uniformDesign || null;
+          corpsLocation = corpsData?.location || null;
+          if (uniformDesign) {
+            logger.info(`Found uniform design for top performer ${topCorps.corpsName}`, {
+              userId: topCorps.uid,
+              corpsClass: topCorps.corpsClass,
+              primaryColor: uniformDesign.primaryColor,
+            });
+          }
+        }
+      } catch (profileError) {
+        logger.warn("Could not fetch top performer's uniform design:", profileError.message);
+      }
+    }
+
     const imagePrompt = buildFantasyPerformersImagePrompt(
       topCorps?.corpsName || "Champion Corps",
-      "Victory celebration after dominating Day " + reportDay + " competition"
+      "Victory celebration after dominating Day " + reportDay + " competition",
+      corpsLocation,
+      uniformDesign
     );
 
     const imageData = await generateImageWithImagen(imagePrompt);
@@ -1894,7 +1921,7 @@ This is like fantasy football, but for drum corps. Users create fantasy ensemble
 Write a Day ${offSeasonDay} fantasy sports recap article for these top-performing user ensembles:
 
 TOP FANTASY ENSEMBLES (user-created teams):
-${topPerformers.map((r, i) => `${i + 1}. "${r.corpsName}" (Director: ${r.directorName || 'Anonymous'}): ${r.totalScore.toFixed(3)} fantasy points`).join('\n')}
+${topPerformers.map((r, i) => `${i + 1}. "${r.corpsName}" (Director: ${r.displayName || 'Anonymous'}): ${r.totalScore.toFixed(3)} fantasy points`).join('\n')}
 
 Write like ESPN fantasy sports coverage. Focus on:
 - Which fantasy ensembles scored the most points
