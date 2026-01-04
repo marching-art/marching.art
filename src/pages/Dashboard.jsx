@@ -858,6 +858,10 @@ const Dashboard = () => {
     return (activeCorps.selectedShows[`week${currentWeek}`] || []).slice(0, 3);
   }, [activeCorps?.selectedShows, currentWeek]);
 
+  const primaryLeague = useMemo(() => {
+    return myLeagues?.[0] || null;
+  }, [myLeagues]);
+
   // Fetch caption scores from historical_scores
   useEffect(() => {
     const fetchLineupScores = async () => {
