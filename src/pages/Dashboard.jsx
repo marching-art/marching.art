@@ -806,6 +806,7 @@ const Dashboard = () => {
   } = dashboardData;
 
   // Computed values
+  const hasMultipleCorps = corps && Object.keys(corps).length > 1;
   const lineup = useMemo(() => activeCorps?.lineup || {}, [activeCorps?.lineup]);
   const lineupCount = useMemo(() => Object.keys(lineup).length, [lineup]);
 
