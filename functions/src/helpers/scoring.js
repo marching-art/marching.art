@@ -227,15 +227,16 @@ async function processAndArchiveOffSeasonScoresLogic() {
     } else if (scoredDay === 46) {
       // Day 46: Open and A Class Finals - Top 8 Open, Top 4 A Class from Day 45
       const day45Recap = allRecaps.find(r => r.offSeasonDay === 45);
-      if (day45Recap) {
+      const day45Results = day45Recap?.shows?.flatMap(s => s.results) || [];
+
+      // Check if there are actual results, not just if recap exists
+      if (day45Results.length > 0) {
         const openClassResults = [];
         const aClassResults = [];
 
-        day45Recap.shows.forEach(show => {
-          show.results.forEach(r => {
-            if (r.corpsClass === "openClass") openClassResults.push(r);
-            else if (r.corpsClass === "aClass") aClassResults.push(r);
-          });
+        day45Results.forEach(r => {
+          if (r.corpsClass === "openClass") openClassResults.push(r);
+          else if (r.corpsClass === "aClass") aClassResults.push(r);
         });
 
         openClassResults.sort((a, b) => b.totalScore - a.totalScore);
@@ -256,7 +257,7 @@ async function processAndArchiveOffSeasonScoresLogic() {
           },
         };
       } else {
-        // FALLBACK: No Day 45 results (season reset mid-championship)
+        // FALLBACK: No Day 45 results (recap missing OR empty due to maintenance)
         // Auto-enroll all Open/A Class corps to finals
         logger.info("Day 46: No Day 45 results found. Auto-enrolling all Open/A Class corps to Finals.");
         championshipConfig = {
@@ -280,17 +281,19 @@ async function processAndArchiveOffSeasonScoresLogic() {
     } else if (scoredDay === 48) {
       // Day 48: World Championships Semifinals - Top 25 from Day 47
       const prelimsRecap = allRecaps.find(r => r.offSeasonDay === 47);
-      if (prelimsRecap) {
-        const allResults = prelimsRecap.shows.flatMap(s => s.results);
-        allResults.sort((a, b) => b.totalScore - a.totalScore);
+      const prelimsResults = prelimsRecap?.shows?.flatMap(s => s.results) || [];
+
+      // Check if there are actual results, not just if recap exists
+      if (prelimsResults.length > 0) {
+        prelimsResults.sort((a, b) => b.totalScore - a.totalScore);
 
         // Handle tie at 25th place
         let advancingCorps = [];
-        if (allResults.length >= 25) {
-          const twentyFifthPlaceScore = allResults[24].totalScore;
-          advancingCorps = allResults.filter(r => r.totalScore >= twentyFifthPlaceScore);
+        if (prelimsResults.length >= 25) {
+          const twentyFifthPlaceScore = prelimsResults[24].totalScore;
+          advancingCorps = prelimsResults.filter(r => r.totalScore >= twentyFifthPlaceScore);
         } else {
-          advancingCorps = allResults;
+          advancingCorps = prelimsResults;
         }
 
         const participants = advancingCorps.map(r => ({ uid: r.uid, corpsClass: r.corpsClass }));
@@ -303,7 +306,7 @@ async function processAndArchiveOffSeasonScoresLogic() {
           },
         };
       } else {
-        // FALLBACK: No Day 47 results (season reset mid-championship)
+        // FALLBACK: No Day 47 results (recap missing OR empty due to maintenance)
         // Auto-enroll all World/Open/A Class corps to semifinals
         logger.info("Day 48: No Day 47 results found. Auto-enrolling all World/Open/A Class corps to Semifinals.");
         championshipConfig = {
@@ -317,6 +320,7 @@ async function processAndArchiveOffSeasonScoresLogic() {
     } else if (scoredDay === 49) {
       // Day 49: Two shows - World Finals (top 12) and SoundSport Festival (all SoundSport)
       const semisRecap = allRecaps.find(r => r.offSeasonDay === 48);
+      const semisResults = semisRecap?.shows?.flatMap(s => s.results) || [];
 
       championshipConfig = {
         // World Championship Finals - Top 12 from Day 48
@@ -331,17 +335,17 @@ async function processAndArchiveOffSeasonScoresLogic() {
         },
       };
 
-      if (semisRecap) {
-        const allResults = semisRecap.shows.flatMap(s => s.results);
-        allResults.sort((a, b) => b.totalScore - a.totalScore);
+      // Check if there are actual results, not just if recap exists
+      if (semisResults.length > 0) {
+        semisResults.sort((a, b) => b.totalScore - a.totalScore);
 
         // Handle tie at 12th place
         let finalists = [];
-        if (allResults.length >= 12) {
-          const twelfthPlaceScore = allResults[11].totalScore;
-          finalists = allResults.filter(r => r.totalScore >= twelfthPlaceScore);
+        if (semisResults.length >= 12) {
+          const twelfthPlaceScore = semisResults[11].totalScore;
+          finalists = semisResults.filter(r => r.totalScore >= twelfthPlaceScore);
         } else {
-          finalists = allResults;
+          finalists = semisResults;
         }
 
         championshipConfig["marching.art World Championship Finals"].participants =
@@ -349,7 +353,7 @@ async function processAndArchiveOffSeasonScoresLogic() {
 
         logger.info(`Day 49: ${finalists.length} corps advancing to World Championship Finals.`);
       } else {
-        // FALLBACK: No Day 48 results (season reset mid-championship)
+        // FALLBACK: No Day 48 results (recap missing OR empty due to maintenance)
         // Auto-enroll all World/Open/A Class corps to finals
         logger.info("Day 49: No Day 48 results found. Auto-enrolling all World/Open/A Class corps to Finals.");
         // participants is already null, which means all eligible
@@ -884,15 +888,16 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
     } else if (scoredDay === 46) {
       // Day 46: Open and A Class Finals - Top 8 Open, Top 4 A Class from Day 45
       const day45Recap = allRecaps.find(r => r.offSeasonDay === 45);
-      if (day45Recap) {
+      const day45Results = day45Recap?.shows?.flatMap(s => s.results) || [];
+
+      // Check if there are actual results, not just if recap exists
+      if (day45Results.length > 0) {
         const openClassResults = [];
         const aClassResults = [];
 
-        day45Recap.shows.forEach(show => {
-          show.results.forEach(r => {
-            if (r.corpsClass === "openClass") openClassResults.push(r);
-            else if (r.corpsClass === "aClass") aClassResults.push(r);
-          });
+        day45Results.forEach(r => {
+          if (r.corpsClass === "openClass") openClassResults.push(r);
+          else if (r.corpsClass === "aClass") aClassResults.push(r);
         });
 
         openClassResults.sort((a, b) => b.totalScore - a.totalScore);
@@ -910,7 +915,7 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
           },
         };
       } else {
-        // FALLBACK: No Day 45 results (season reset mid-championship)
+        // FALLBACK: No Day 45 results (recap missing OR empty due to maintenance)
         // Auto-enroll all Open/A Class corps to finals
         logger.info("Day 46: No Day 45 results found. Auto-enrolling all Open/A Class corps to Finals.");
         championshipConfig = {
@@ -934,16 +939,18 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
     } else if (scoredDay === 48) {
       // Day 48: World Championships Semifinals - Top 25 from Day 47
       const prelimsRecap = allRecaps.find(r => r.offSeasonDay === 47);
-      if (prelimsRecap) {
-        const allResults = prelimsRecap.shows.flatMap(s => s.results);
-        allResults.sort((a, b) => b.totalScore - a.totalScore);
+      const prelimsResults = prelimsRecap?.shows?.flatMap(s => s.results) || [];
+
+      // Check if there are actual results, not just if recap exists
+      if (prelimsResults.length > 0) {
+        prelimsResults.sort((a, b) => b.totalScore - a.totalScore);
 
         let advancingCorps = [];
-        if (allResults.length >= 25) {
-          const twentyFifthPlaceScore = allResults[24].totalScore;
-          advancingCorps = allResults.filter(r => r.totalScore >= twentyFifthPlaceScore);
+        if (prelimsResults.length >= 25) {
+          const twentyFifthPlaceScore = prelimsResults[24].totalScore;
+          advancingCorps = prelimsResults.filter(r => r.totalScore >= twentyFifthPlaceScore);
         } else {
-          advancingCorps = allResults;
+          advancingCorps = prelimsResults;
         }
 
         const participants = advancingCorps.map(r => ({ uid: r.uid, corpsClass: r.corpsClass }));
@@ -956,7 +963,7 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
           },
         };
       } else {
-        // FALLBACK: No Day 47 results (season reset mid-championship)
+        // FALLBACK: No Day 47 results (recap missing OR empty due to maintenance)
         // Auto-enroll all World/Open/A Class corps to semifinals
         logger.info("Day 48: No Day 47 results found. Auto-enrolling all World/Open/A Class corps to Semifinals.");
         championshipConfig = {
@@ -970,6 +977,7 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
     } else if (scoredDay === 49) {
       // Day 49: Two shows - World Finals (top 12) and SoundSport Festival (all SoundSport)
       const semisRecap = allRecaps.find(r => r.offSeasonDay === 48);
+      const semisResults = semisRecap?.shows?.flatMap(s => s.results) || [];
 
       championshipConfig = {
         "marching.art World Championship Finals": {
@@ -982,23 +990,23 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
         },
       };
 
-      if (semisRecap) {
-        const allResults = semisRecap.shows.flatMap(s => s.results);
-        allResults.sort((a, b) => b.totalScore - a.totalScore);
+      // Check if there are actual results, not just if recap exists
+      if (semisResults.length > 0) {
+        semisResults.sort((a, b) => b.totalScore - a.totalScore);
 
         let finalists = [];
-        if (allResults.length >= 12) {
-          const twelfthPlaceScore = allResults[11].totalScore;
-          finalists = allResults.filter(r => r.totalScore >= twelfthPlaceScore);
+        if (semisResults.length >= 12) {
+          const twelfthPlaceScore = semisResults[11].totalScore;
+          finalists = semisResults.filter(r => r.totalScore >= twelfthPlaceScore);
         } else {
-          finalists = allResults;
+          finalists = semisResults;
         }
 
         championshipConfig["marching.art World Championship Finals"].participants =
           finalists.map(r => ({ uid: r.uid, corpsClass: r.corpsClass }));
         logger.info(`Day 49: ${finalists.length} corps advancing to World Championship Finals.`);
       } else {
-        // FALLBACK: No Day 48 results (season reset mid-championship)
+        // FALLBACK: No Day 48 results (recap missing OR empty due to maintenance)
         // Auto-enroll all World/Open/A Class corps to finals
         logger.info("Day 49: No Day 48 results found. Auto-enrolling all World/Open/A Class corps to Finals.");
         // participants is already null, which means all eligible
