@@ -522,46 +522,36 @@ const ActiveLineupTable = ({
 // SEASON SCORECARD (SIDEBAR)
 // =============================================================================
 
-const SeasonScorecard = ({ score, rank, rankChange, corpsName, corpsClass, loading, avatarUrl, onDesignUniform }) => (
-  <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
-    <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-      <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-        <Trophy className="w-3.5 h-3.5 text-yellow-500" />
-        Season Scorecard
-      </h3>
-    </div>
+const SeasonScorecard = ({ score, rank, rankChange, corpsName, corpsClass, loading, avatarUrl, onDesignUniform }) => {
+  const isSoundSport = corpsClass === 'soundSport';
+  const rating = isSoundSport && score ? getSoundSportRating(score) : null;
 
-    <div className="p-4">
-      {/* Corps Identity */}
-      <div className="flex items-center gap-3 mb-4 pb-4 border-b border-[#333]">
-        <button
-          onClick={onDesignUniform}
-          className="relative w-12 h-12 bg-[#333] border border-[#444] flex items-center justify-center hover:border-[#0057B8] transition-colors group"
-          title="Design Uniform"
-        >
-          {avatarUrl ? (
-            <img src={avatarUrl} alt={corpsName} className="w-full h-full object-cover" />
-          ) : (
-            <Trophy className="w-6 h-6 text-yellow-500" />
-          )}
-          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-            <Palette className="w-4 h-4 text-white" />
-          </div>
-        </button>
-        <div className="flex-1 min-w-0">
-          <p className="text-base font-bold text-white truncate">{corpsName || 'My Corps'}</p>
-          <p className="text-[10px] uppercase tracking-wider text-gray-500">
-            {CLASS_LABELS[corpsClass] || corpsClass}
-          </p>
-        </div>
+  return (
+    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
+        <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+          <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+          Season Scorecard
+        </h3>
       </div>
 
       <div className="p-4">
         {/* Corps Identity */}
         <div className="flex items-center gap-3 mb-4 pb-4 border-b border-[#333]">
-          <div className="w-12 h-12 bg-[#333] border border-[#444] flex items-center justify-center">
-            <Trophy className="w-6 h-6 text-yellow-500" />
-          </div>
+          <button
+            onClick={onDesignUniform}
+            className="relative w-12 h-12 bg-[#333] border border-[#444] flex items-center justify-center hover:border-[#0057B8] transition-colors group"
+            title="Design Uniform"
+          >
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={corpsName} className="w-full h-full object-cover" />
+            ) : (
+              <Trophy className="w-6 h-6 text-yellow-500" />
+            )}
+            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+              <Palette className="w-4 h-4 text-white" />
+            </div>
+          </button>
           <div className="flex-1 min-w-0">
             <p className="text-base font-bold text-white truncate">{corpsName || 'My Corps'}</p>
             <p className="text-[10px] uppercase tracking-wider text-gray-500">
@@ -575,7 +565,7 @@ const SeasonScorecard = ({ score, rank, rankChange, corpsName, corpsClass, loadi
           {/* Total Score / Medal Rating */}
           <div className="bg-[#222] p-3">
             <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">
-              {isSoundSport ? 'Season Score' : 'Season Score'}
+              {isSoundSport ? 'Medal Rating' : 'Season Score'}
             </p>
             {loading ? (
               <div className="h-8 w-20 bg-[#333] animate-pulse" />
