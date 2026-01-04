@@ -13,6 +13,7 @@ import {
 import { useAuth } from '../App';
 import { useUserStore } from '../store/userStore';
 import { useSeasonStore } from '../store/seasonStore';
+import { formatEventName } from '../utils/season';
 import { useScoresData } from '../hooks/useScoresData';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { TeamAvatar } from '../components/ui/TeamAvatar';
@@ -83,9 +84,9 @@ const generateCaptionBreakdown = (totalScore, existingCaptions) => {
   const mus = Math.min(30, Math.max(0, (baseRatio * 30) + (variance() * 30)));
 
   return {
-    ge: Number(ge.toFixed(1)),
-    vis: Number(vis.toFixed(1)),
-    mus: Number(mus.toFixed(1)),
+    ge: Number(ge.toFixed(2)),
+    vis: Number(vis.toFixed(2)),
+    mus: Number(mus.toFixed(2)),
   };
 };
 
@@ -132,7 +133,7 @@ const RecapDataGrid = ({
       {/* Event Header - Super Row integrated with table */}
       <div className="bg-[#222] px-4 py-2.5 flex items-center justify-between">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="font-bold text-white text-sm truncate">{eventName}</span>
+          <span className="font-bold text-white text-sm truncate">{formatEventName(eventName)}</span>
           <span className="text-gray-500 text-xs hidden sm:flex items-center gap-1">
             <MapPin className="w-3 h-3" />
             {location}
@@ -209,21 +210,21 @@ const RecapDataGrid = ({
                   {/* GE */}
                   <td className="py-2 px-2 text-right">
                     <span className="text-gray-400 font-data tabular-nums text-sm">
-                      {captions.ge.toFixed(1)}
+                      {captions.ge.toFixed(2)}
                     </span>
                   </td>
 
                   {/* VIS */}
                   <td className="py-2 px-2 text-right">
                     <span className="text-gray-400 font-data tabular-nums text-sm">
-                      {captions.vis.toFixed(1)}
+                      {captions.vis.toFixed(2)}
                     </span>
                   </td>
 
                   {/* MUS */}
                   <td className="py-2 px-2 text-right">
                     <span className="text-gray-400 font-data tabular-nums text-sm">
-                      {captions.mus.toFixed(1)}
+                      {captions.mus.toFixed(2)}
                     </span>
                   </td>
 
@@ -365,7 +366,7 @@ const SoundSportMedalList = ({ shows }) => {
           {/* Event Header */}
           <div className="bg-[#222] border-y border-[#333] px-4 py-2 flex justify-between items-center">
             <span className="text-xs font-bold uppercase text-white truncate pr-4">
-              {group.eventName}
+              {formatEventName(group.eventName)}
             </span>
             <span className="text-[10px] text-gray-500 flex-shrink-0">
               {group.date} • {group.location}
@@ -525,21 +526,21 @@ const ClassStandingsGrid = ({
                   {/* GE */}
                   <td className="py-2.5 px-2 text-right">
                     <span className="text-gray-400 font-data tabular-nums text-sm">
-                      {captions.ge.toFixed(1)}
+                      {captions.ge.toFixed(2)}
                     </span>
                   </td>
 
                   {/* VIS */}
                   <td className="py-2.5 px-2 text-right">
                     <span className="text-gray-400 font-data tabular-nums text-sm">
-                      {captions.vis.toFixed(1)}
+                      {captions.vis.toFixed(2)}
                     </span>
                   </td>
 
                   {/* MUS */}
                   <td className="py-2.5 px-2 text-right">
                     <span className="text-gray-400 font-data tabular-nums text-sm">
-                      {captions.mus.toFixed(1)}
+                      {captions.mus.toFixed(2)}
                     </span>
                   </td>
 
@@ -818,7 +819,7 @@ const Scores = () => {
             {/* Modal Header */}
             <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between flex-shrink-0">
               <div>
-                <h2 className="text-sm font-bold text-white">{selectedShow.eventName}</h2>
+                <h2 className="text-sm font-bold text-white">{formatEventName(selectedShow.eventName)}</h2>
                 <p className="text-[10px] text-gray-500">
                   {selectedShow.location} • {selectedShow.date}
                 </p>
