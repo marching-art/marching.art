@@ -165,6 +165,31 @@ function initializeGemini() {
 const USE_IMAGEN_4 = false;
 
 /**
+ * Clean JSON response from AI - strips markdown code blocks
+ */
+function cleanJsonResponse(text) {
+  let cleaned = text.trim();
+  // Remove markdown code blocks
+  if (cleaned.startsWith("```json")) {
+    cleaned = cleaned.slice(7);
+  } else if (cleaned.startsWith("```")) {
+    cleaned = cleaned.slice(3);
+  }
+  if (cleaned.endsWith("```")) {
+    cleaned = cleaned.slice(0, -3);
+  }
+  return cleaned.trim();
+}
+
+/**
+ * Safely parse JSON from AI response
+ */
+function parseAiJson(text) {
+  const cleaned = cleanJsonResponse(text);
+  return JSON.parse(cleaned);
+}
+
+/**
  * Generate an image using either free tier (Gemini Flash) or Imagen 4
  * @param {string} prompt - Detailed image prompt
  * @returns {Promise<string>} Base64 image data or URL
@@ -344,7 +369,7 @@ Return JSON: { headline, summary, narrative, standings: [{rank, corps, year, tot
 
   try {
     const result = await textModel.generateContent(prompt);
-    const content = JSON.parse(result.response.text());
+    const content = parseAiJson(result.response.text());
 
     // Generate image featuring top corps
     const imagePrompt = buildDciImagePrompt(
@@ -391,7 +416,7 @@ Return JSON: { headline, summary, narrative, captionBreakdown: [{category, leade
 
   try {
     const result = await textModel.generateContent(prompt);
-    const content = JSON.parse(result.response.text());
+    const content = parseAiJson(result.response.text());
 
     // Feature a corps excelling in a specific caption
     const featuredCaption = captionLeaders[0];
@@ -453,7 +478,7 @@ Return JSON: { headline, summary, narrative, topPerformers: [{rank, director, co
 
   try {
     const result = await textModel.generateContent(prompt);
-    const content = JSON.parse(result.response.text());
+    const content = parseAiJson(result.response.text());
 
     // Generate image for top fantasy corps
     const topCorps = topPerformers[0];
@@ -499,7 +524,7 @@ Return JSON: { headline, summary, narrative, leagueHighlights: [{league, leader,
 
   try {
     const result = await textModel.generateContent(prompt);
-    const content = JSON.parse(result.response.text());
+    const content = parseAiJson(result.response.text());
 
     const imagePrompt = buildFantasyImagePrompt(
       "League Champions",
@@ -548,7 +573,7 @@ Return JSON: { headline, summary, narrative, insights: [{metric, finding, implic
 
   try {
     const result = await textModel.generateContent(prompt);
-    const content = JSON.parse(result.response.text());
+    const content = parseAiJson(result.response.text());
 
     // Analytical/data visualization style image
     const topTrending = Object.entries(trendData).sort((a,b) => b[1].trendFromAvg - a[1].trendFromAvg)[0];
@@ -850,7 +875,7 @@ ${topPerformers.map((r, i) => `${i + 1}. ${r.corpsName}: ${r.totalScore.toFixed(
 Return JSON: { headline, summary, narrative, fantasyImpact, trendingCorps: [] }`;
 
     const result = await textModel.generateContent(prompt);
-    return { success: true, content: JSON.parse(result.response.text()) };
+    return { success: true, content: parseAiJson(result.response.text()) };
   } catch (error) {
     logger.error("Fantasy recap failed:", error);
     return { success: false, error: error.message };
