@@ -24,11 +24,16 @@ export const useDashboardData = () => {
   const storeProfile = useProfileStore((state) => state.profile);
   const storeCorps = useProfileStore((state) => state.corps);
   const storeLoading = useProfileStore((state) => state.loading);
+  const storeIsAdmin = useProfileStore((state) => state.isAdmin);
+  const getUnlockedClasses = useProfileStore((state) => state.getUnlockedClasses);
 
   // Core state - profile and corps now come from store
   const profile = storeProfile;
   const loading = storeLoading;
   const corps = storeCorps;
+  const isAdmin = storeIsAdmin;
+  // Get unlocked classes from store (admins get all classes)
+  const unlockedClasses = getUnlockedClasses();
 
   // Additional local state
   const [availableCorps, setAvailableCorps] = useState([]);
@@ -100,10 +105,11 @@ export const useDashboardData = () => {
 
   // Detect when a new class is unlocked
   // Uses ref to track previous value without triggering re-renders
+  // Note: For admins, all classes are always unlocked so this won't trigger
   useEffect(() => {
-    if (!profile?.unlockedClasses) return;
+    if (!unlockedClasses || unlockedClasses.length === 0) return;
 
-    const currentUnlocked = profile.unlockedClasses;
+    const currentUnlocked = unlockedClasses;
     const previousUnlocked = previousUnlockedClassesRef.current;
 
     // Only check for new unlocks if we have a previous state to compare
@@ -118,7 +124,7 @@ export const useDashboardData = () => {
 
     // Update ref for next comparison (doesn't trigger re-render)
     previousUnlockedClassesRef.current = currentUnlocked;
-  }, [profile?.unlockedClasses]);
+  }, [unlockedClasses]);
 
   // NOTE: Profile subscription is now handled by profileStore (initialized in App.jsx)
   // This eliminates duplicate Firestore listeners when multiple components use this hook
@@ -129,7 +135,7 @@ export const useDashboardData = () => {
       const needSetup = [];
       const hasCorps = corps && Object.keys(corps).length > 0;
       const hasRetiredCorps = profile.retiredCorps && profile.retiredCorps.length > 0;
-      const unlockedClasses = profile.unlockedClasses || ['soundSport'];
+      // Use unlockedClasses from store (already computed, handles admin override)
 
       if (corps) {
         Object.entries(corps).forEach(([classId, corpsData]) => {
@@ -459,6 +465,10 @@ export const useDashboardData = () => {
     corps,
     availableCorps,
     recentScores,
+
+    // Admin status and unlocked classes (admins have all classes unlocked)
+    isAdmin,
+    unlockedClasses,
 
     // Corps selection
     selectedCorpsClass,

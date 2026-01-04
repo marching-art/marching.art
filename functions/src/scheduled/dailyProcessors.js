@@ -27,10 +27,19 @@ exports.processDailyLiveScores = onSchedule({
   const seasonData = seasonDoc.data();
   const seasonStartDate = seasonData.schedule.startDate.toDate();
 
-  // Calculate calendar day (1-70 total season length)
-  const yesterday = new Date();
+  // Calculate "yesterday" in Eastern timezone to match the 2 AM ET schedule
+  // This ensures manual triggers produce the same result as the scheduled job
+  const nowET = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
+  const yesterday = new Date(nowET);
   yesterday.setDate(yesterday.getDate() - 1);
-  const diffInMillis = yesterday.getTime() - seasonStartDate.getTime();
+  // Normalize to start of day for consistent day calculation
+  yesterday.setHours(0, 0, 0, 0);
+
+  // Also normalize seasonStartDate to start of day for comparison
+  const seasonStartNormalized = new Date(seasonStartDate);
+  seasonStartNormalized.setHours(0, 0, 0, 0);
+
+  const diffInMillis = yesterday.getTime() - seasonStartNormalized.getTime();
   const calendarDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1;
 
   // Spring training offset: first 21 days are setup, no scoring
