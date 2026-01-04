@@ -382,7 +382,6 @@ exports.triggerDailyNews = onCall(
 exports.getDailyNews = onCall(
   {
     timeoutSeconds: 30,
-    minInstances: 1, // Keep warm to reduce cold starts for user-facing requests
   },
   async (request) => {
     const db = getDb();
@@ -422,7 +421,6 @@ exports.getDailyNews = onCall(
 exports.getRecentNews = onCall(
   {
     timeoutSeconds: 30,
-    minInstances: 1, // Keep warm to reduce cold starts for user-facing requests
   },
   async (request) => {
     const db = getDb();
