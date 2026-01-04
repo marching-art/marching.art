@@ -5,7 +5,7 @@
 // 5 main items: Dashboard, Schedule, Scores, Leagues, Profile
 
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Home, Calendar, Trophy, Users, User,
   Menu, Coins, Zap, Settings, LogOut,
@@ -17,6 +17,62 @@ import { useSeasonStore } from '../store/seasonStore';
 import { useProfileStore } from '../store/profileStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { prefetchRoute } from '../lib/prefetch';
+
+// Class unlock configuration (shared with DirectorCard)
+const CLASS_UNLOCK_LEVELS = {
+  aClass: 3,
+  open: 5,
+  world: 10,
+};
+
+const CLASS_UNLOCK_COSTS = {
+  aClass: 1000,
+  open: 2500,
+  world: 5000,
+};
+
+const CLASS_NAMES: Record<string, string> = {
+  aClass: 'A Class',
+  open: 'Open Class',
+  world: 'World Class',
+};
+
+interface NextClassUnlock {
+  className: string;
+  classKey: string;
+  levelRequired: number;
+  coinCost: number;
+  meetsLevel: boolean;
+  canAfford: boolean;
+}
+
+function getNextClassUnlock(
+  unlockedClasses: string[],
+  xpLevel: number,
+  corpsCoin: number
+): NextClassUnlock | null {
+  const classOrder = ['aClass', 'open', 'world'];
+
+  for (const classKey of classOrder) {
+    if (!unlockedClasses.includes(classKey)) {
+      const levelRequired = CLASS_UNLOCK_LEVELS[classKey as keyof typeof CLASS_UNLOCK_LEVELS];
+      const coinCost = CLASS_UNLOCK_COSTS[classKey as keyof typeof CLASS_UNLOCK_COSTS];
+      const meetsLevel = xpLevel >= levelRequired;
+      const canAfford = corpsCoin >= coinCost;
+
+      return {
+        className: CLASS_NAMES[classKey],
+        classKey,
+        levelRequired,
+        coinCost,
+        meetsLevel,
+        canAfford,
+      };
+    }
+  }
+
+  return null;
+}
 
 // =============================================================================
 // TYPES
@@ -54,6 +110,7 @@ const mainNavItems: NavItem[] = [
 
 const GamingHeader: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -61,6 +118,22 @@ const GamingHeader: React.FC = () => {
   // Use global stores to prevent duplicate Firestore listeners
   const seasonData = useSeasonStore((state) => state.seasonData);
   const profile = useProfileStore((state) => state.profile) as UserProfile | null;
+  const getUnlockedClasses = useProfileStore((state) => state.getUnlockedClasses);
+
+  // Calculate next class unlock
+  const unlockedClasses = getUnlockedClasses();
+  const nextUnlock = profile ? getNextClassUnlock(
+    unlockedClasses,
+    profile.xpLevel || 1,
+    profile.corpsCoin || 0
+  ) : null;
+
+  // Handle Buy button click - navigate to dashboard with class to purchase
+  const handleBuyClick = () => {
+    if (nextUnlock) {
+      navigate('/dashboard', { state: { purchaseClass: nextUnlock.classKey } });
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -196,26 +269,55 @@ const GamingHeader: React.FC = () => {
 
             {/* Right Section - User Stats */}
             <div className="flex items-center gap-2">
-              {/* Level & Coins (Desktop) */}
+              {/* Stats & Buy Button (Desktop) - Order: Streak, Level, Coins, Buy */}
               {profile && (
-                <Link
-                  to="/profile"
-                  className="hidden sm:flex items-center gap-3 px-3 py-1.5 bg-black/50 backdrop-blur-md border border-white/10 rounded-sm hover:border-yellow-500/30 transition-all duration-300"
-                >
-                  <div className="flex items-center gap-1.5">
-                    <Zap className="w-4 h-4 text-yellow-400" />
-                    <span className="font-data font-bold text-yellow-400 text-sm">
-                      {profile.xpLevel || 1}
-                    </span>
-                  </div>
-                  <div className="w-px h-4 bg-white/20" />
-                  <div className="flex items-center gap-1.5">
-                    <Coins className="w-4 h-4 text-yellow-400" />
-                    <span className="font-data font-bold text-yellow-400 text-sm">
-                      {(profile.corpsCoin || 0).toLocaleString()}
-                    </span>
-                  </div>
-                </Link>
+                <div className="hidden sm:flex items-center gap-2">
+                  <Link
+                    to="/profile"
+                    className="flex items-center gap-3 px-3 py-1.5 bg-black/50 backdrop-blur-md border border-white/10 rounded-sm hover:border-yellow-500/30 transition-all duration-300"
+                  >
+                    {/* Streak (if any) */}
+                    {(profile as any).engagement?.loginStreak > 0 && (
+                      <>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-data font-bold text-orange-400 text-sm">
+                            {(profile as any).engagement.loginStreak}
+                          </span>
+                        </div>
+                        <div className="w-px h-4 bg-white/20" />
+                      </>
+                    )}
+                    {/* Level */}
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded-sm">
+                        Lvl {profile.xpLevel || 1}
+                      </span>
+                    </div>
+                    <div className="w-px h-4 bg-white/20" />
+                    {/* CorpsCoin */}
+                    <div className="flex items-center gap-1.5">
+                      <Coins className="w-4 h-4 text-yellow-400" />
+                      <span className="font-data font-bold text-yellow-400 text-sm">
+                        {(profile.corpsCoin || 0).toLocaleString()}
+                      </span>
+                    </div>
+                  </Link>
+                  {/* Buy Button - show when user can afford next class */}
+                  {nextUnlock && nextUnlock.canAfford && (
+                    <button
+                      onClick={handleBuyClick}
+                      className={`h-8 px-3 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors ${
+                        nextUnlock.meetsLevel
+                          ? 'bg-green-600 hover:bg-green-500 text-white'
+                          : 'bg-yellow-600 hover:bg-yellow-500 text-white'
+                      }`}
+                      title={`${nextUnlock.meetsLevel ? 'Unlock' : 'Buy'} ${nextUnlock.className} (${nextUnlock.coinCost.toLocaleString()} CC)`}
+                    >
+                      <Coins className="w-3 h-3" />
+                      {nextUnlock.meetsLevel ? 'Unlock' : 'Buy'}
+                    </button>
+                  )}
+                </div>
               )}
 
               {/* Mobile Menu Toggle */}
@@ -264,7 +366,7 @@ const GamingHeader: React.FC = () => {
                 </button>
               </div>
 
-              {/* User Info */}
+              {/* User Info - Order: Level, Coins, Buy */}
               {profile && (
                 <div className="p-4 border-b border-white/10">
                   <div className="flex items-center gap-3">
@@ -281,10 +383,11 @@ const GamingHeader: React.FC = () => {
                         {profile.displayName || 'Director'}
                       </p>
                       <div className="flex items-center gap-3 mt-1 text-xs">
-                        <span className="flex items-center gap-1 text-yellow-50/60">
-                          <Zap className="w-3 h-3 text-yellow-400" />
-                          Level {profile.xpLevel || 1}
+                        {/* Level first */}
+                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded-sm">
+                          Lvl {profile.xpLevel || 1}
                         </span>
+                        {/* CorpsCoin second */}
                         <span className="flex items-center gap-1 text-yellow-400 font-data font-bold">
                           <Coins className="w-3 h-3" />
                           {(profile.corpsCoin || 0).toLocaleString()}
@@ -292,6 +395,23 @@ const GamingHeader: React.FC = () => {
                       </div>
                     </div>
                   </div>
+                  {/* Buy Button for mobile */}
+                  {nextUnlock && nextUnlock.canAfford && (
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        handleBuyClick();
+                      }}
+                      className={`mt-3 w-full h-9 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors ${
+                        nextUnlock.meetsLevel
+                          ? 'bg-green-600 hover:bg-green-500 text-white'
+                          : 'bg-yellow-600 hover:bg-yellow-500 text-white'
+                      }`}
+                    >
+                      <Coins className="w-3 h-3" />
+                      {nextUnlock.meetsLevel ? 'Unlock' : 'Buy'} {nextUnlock.className}
+                    </button>
+                  )}
                 </div>
               )}
 

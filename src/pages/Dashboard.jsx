@@ -5,7 +5,7 @@
 // Laws: App Shell, 2/3 + 1/3 grid, data tables over cards, no glow
 
 import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
   Trophy, Edit, TrendingUp, TrendingDown, Minus,
   Calendar, Users, Lock, ChevronRight, Activity, MapPin,
@@ -756,6 +756,7 @@ const LeagueStatus = ({ leagues }) => {
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const dashboardData = useDashboardData();
   const { aggregatedScores, loading: scoresLoading } = useScoresData({
     // Dashboard should only show current season data, not fall back to archived seasons
@@ -978,6 +979,15 @@ const Dashboard = () => {
 
     fetchRecentResults();
   }, [user?.uid, seasonData?.seasonUid, activeCorpsClass]);
+
+  // Handle navigation state for class purchase (from header Buy button)
+  useEffect(() => {
+    if (location.state?.purchaseClass) {
+      setClassToPurchase(location.state.purchaseClass);
+      // Clear the state to prevent re-triggering on subsequent renders
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state?.purchaseClass]);
 
   // Queue auto-triggered modals
   useEffect(() => {
