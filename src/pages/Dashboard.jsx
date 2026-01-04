@@ -7,10 +7,11 @@
 import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Trophy, Edit, TrendingUp, TrendingDown, Minus,
-  Calendar, Users, Lock, ChevronRight, Activity, MapPin,
-  Flame, Coins, Medal, Palette
+  Trophy, Calendar, Edit, ChevronRight, Users,
+  TrendingUp, TrendingDown, Activity, Medal, FileText,
+  Flame, Zap, Coins, Lock, Unlock
 } from 'lucide-react';
+// DirectorCard removed - stats now displayed inline in header
 import { useAuth } from '../App';
 import { db } from '../firebase';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
@@ -1212,35 +1213,308 @@ const Dashboard = () => {
         </Suspense>
       )}
 
-      {/* SCROLLABLE CONTENT */}
-      <div className="flex-1 overflow-y-auto min-h-0 pb-20 md:pb-4">
-        {/* Control Bar - Class Tabs + Director HUD */}
-        <ControlBar
-          corps={corps}
-          activeCorpsClass={activeCorpsClass}
-          unlockedClasses={unlockedClasses}
-          profile={profile}
-          onSwitch={handleCorpsSwitch}
-          onCreateCorps={(classId) => {
-            clearNewlyUnlockedClass();
-            setShowRegistration(true);
-          }}
-        />
+      {activeCorps ? (
+        <>
+          {/* Team Switcher - Horizontal Pill Navigation */}
+          {hasMultipleCorps && (
+            <div className="bg-[#0a0a0a] border-b border-[#333] px-3 py-2 overflow-x-auto scrollbar-hide">
+              <div className="flex items-center gap-2 min-w-max">
+                {Object.entries(corps)
+                  .sort((a, b) => {
+                    const classOrder = { worldClass: 0, openClass: 1, aClass: 2, soundSport: 3 };
+                    return (classOrder[a[0]] ?? 99) - (classOrder[b[0]] ?? 99);
+                  })
+                  .map(([classId, corpsData]) => {
+                    const isActive = activeCorpsClass === classId;
+                    const fullName = corpsData.corpsName || corpsData.name || 'Team';
+                    // Truncate names longer than 20 characters
+                    const displayName = fullName.length > 20
+                      ? fullName.substring(0, 18) + '…'
+                      : fullName;
 
-        {activeCorps ? (
-          <div className="p-3 md:p-4">
-            {/* 2/3 + 1/3 Grid Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {/* MAIN CONTENT (2/3) - Active Lineup */}
-              <div className="lg:col-span-2">
-                <ActiveLineupTable
-                  lineup={lineup}
-                  lineupScoreData={lineupScoreData}
-                  loading={lineupScoresLoading}
-                  onManageLineup={() => openCaptionSelection()}
-                  onSlotClick={(captionId) => openCaptionSelection(captionId)}
-                />
+                    return (
+                      <button
+                        key={classId}
+                        onClick={() => { haptic('light'); handleCorpsSwitch(classId); }}
+                        className={`
+                          flex items-center gap-2 px-3 py-2 min-h-[40px] rounded-full
+                          text-sm font-bold whitespace-nowrap transition-all duration-200 press-feedback
+                          ${isActive
+                            ? 'bg-gradient-to-r from-yellow-500 to-yellow-400 text-black'
+                            : 'bg-[#2a2a2a] text-gray-400 hover:bg-[#333] hover:text-gray-200 active:bg-[#3a3a3a]'
+                          }
+                        `}
+                        title={fullName}
+                      >
+                        <TeamAvatar
+                          name={fullName}
+                          size="xs"
+                          className={isActive ? '!bg-black/20 !border-black/30 !text-black' : ''}
+                        />
+                        <span>{displayName}</span>
+                      </button>
+                    );
+                  })}
               </div>
+            </div>
+          )}
+
+          {/* MOBILE TABS - Premium Pill Style */}
+          <div className="lg:hidden flex gap-1 px-2 py-1.5 border-b border-[#333] bg-[#1a1a1a]">
+            {MOBILE_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => { haptic('medium'); setActiveMobileTab(tab.id); }}
+                className={`relative flex-1 py-2.5 min-h-[44px] text-sm font-bold uppercase tracking-wide transition-all duration-200 ease-out rounded-full press-feedback ${
+                  activeMobileTab === tab.id
+                    ? 'text-[#0057B8] bg-[#0057B8]/15'
+                    : 'text-gray-500 hover:text-gray-300 active:text-white active:bg-white/10'
+                }`}
+              >
+                {tab.label}
+                {/* Active indicator dot */}
+                {activeMobileTab === tab.id && (
+                  <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#0057B8]" />
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Director Stats Header - Shows class badge, stats, and Buy button */}
+          {profile && (
+            <div className="bg-[#1a1a1a] border-b border-[#333] px-3 py-2">
+              <div className="flex items-center justify-between">
+                {/* Left: Class Badge */}
+                <span className="px-3 py-1 bg-[#0057B8] text-white text-xs font-bold uppercase tracking-wider">
+                  {CLASS_LABELS[activeCorpsClass] || activeCorpsClass}
+                </span>
+
+                {/* Right: Stats + Buy Button */}
+                <div className="flex items-center gap-3">
+                  {/* Streak */}
+                  <div className="flex items-center gap-1">
+                    <Flame className="w-4 h-4 text-orange-400" />
+                    <span className="text-sm font-bold text-orange-400 tabular-nums">
+                      {engagementData?.loginStreak || 0}
+                    </span>
+                  </div>
+
+                  {/* CorpsCoin */}
+                  <div className="flex items-center gap-1">
+                    <Coins className="w-4 h-4 text-yellow-500" />
+                    <span className="text-sm font-bold text-yellow-500 tabular-nums">
+                      {(profile.corpsCoin || 0).toLocaleString()}
+                    </span>
+                  </div>
+
+                  {/* Level */}
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs font-bold text-blue-400 uppercase">LVL</span>
+                    <span className="text-sm font-bold text-blue-400 tabular-nums">
+                      {profile.xpLevel || 1}
+                    </span>
+                  </div>
+
+                  {/* Buy Button - Show when user can afford next class */}
+                  {(() => {
+                    const classOrder = ['aClass', 'open', 'world'];
+                    const unlockedClasses = profile.unlockedClasses || ['soundSport'];
+                    const corpsCoin = profile.corpsCoin || 0;
+
+                    for (const classKey of classOrder) {
+                      if (!unlockedClasses.includes(classKey)) {
+                        const coinCost = CLASS_UNLOCK_COSTS[classKey];
+                        if (corpsCoin >= coinCost) {
+                          return (
+                            <button
+                              onClick={() => handleClassUnlock(classKey)}
+                              className="ml-1 px-2 py-1 bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-bold uppercase flex items-center gap-1"
+                            >
+                              <Coins className="w-3 h-3" />
+                              Buy
+                            </button>
+                          );
+                        }
+                        break;
+                      }
+                    }
+                    return null;
+                  })()}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Pull to Refresh Wrapper */}
+          <PullToRefresh onRefresh={handleRefresh}>
+            {/* MAIN GRID - Desktop: 3 columns, Mobile: single panel based on tab */}
+            <div className="lg:grid lg:grid-cols-3 w-full gap-px bg-[#333] pb-20 lg:pb-4">
+
+            {/* LEFT COLUMN - My Team */}
+            <div className={`bg-[#1a1a1a] p-4 pt-3 ${activeMobileTab !== 'team' ? 'hidden lg:block' : ''}`}>
+              {/* Compact Team Header - Class label + Edit */}
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                    {CLASS_LABELS[activeCorpsClass] || activeCorpsClass}
+                  </span>
+                  {!hasMultipleCorps && (
+                    <span className="text-[10px] text-gray-600">•</span>
+                  )}
+                  {!hasMultipleCorps && (
+                    <span className="text-[10px] text-gray-400 truncate max-w-[150px]">
+                      {activeCorps.corpsName || activeCorps.name}
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={() => setShowEditCorps(true)}
+                  className="p-2 -mr-2 text-gray-500 hover:text-white active:text-white"
+                  aria-label="Edit corps"
+                >
+                  <Edit className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Score or Medal Rating based on class */}
+              <div className="mb-3">
+                {activeCorpsClass === 'soundSport' ? (
+                  <>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
+                      Season Rating
+                    </div>
+                    {(() => {
+                      const rating = getSoundSportRating(userCorpsScore || 0);
+                      return (
+                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded ${rating.color}`}>
+                          <Medal className={`w-5 h-5 ${rating.textColor}`} />
+                          <span className={`text-lg font-bold ${rating.textColor}`}>{rating.rating}</span>
+                        </div>
+                      );
+                    })()}
+                  </>
+                ) : (
+                  <>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-0.5">
+                      Season Score
+                    </div>
+                    <div className="text-4xl sm:text-3xl font-bold font-data text-white tabular-nums leading-none">
+                      {userCorpsScore?.toFixed(3) || '0.000'}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Rank and Lineup - Compact inline row */}
+              <div className="flex items-center gap-4 mb-3 pb-3 border-b border-[#333]">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Rank</span>
+                  <span className="text-2xl font-bold text-white font-data">
+                    #{userCorpsRank || '-'}
+                  </span>
+                  {rankTrend === 'up' && <TrendingUp className="w-4 h-4 text-green-500" />}
+                  {rankTrend === 'down' && <TrendingDown className="w-4 h-4 text-red-500" />}
+                </div>
+                <div className="w-px h-6 bg-[#333]" />
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Lineup</span>
+                  <span className={`text-xl font-bold font-data ${lineupCount === 8 ? 'text-green-500' : 'text-yellow-500'}`}>
+                    {lineupCount}/8
+                  </span>
+                  <button
+                    onClick={() => openCaptionSelection()}
+                    className="flex items-center gap-0.5 text-[10px] text-[#F5A623] hover:text-[#FFB84D] transition-colors"
+                  >
+                    <Edit className="w-3 h-3" />
+                    Edit
+                    <ChevronRight className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Lineup List - Clean ESPN-style rows */}
+              <div className="mb-4 border border-[#333] rounded-sm overflow-hidden">
+                {CAPTIONS.map((caption, index) => {
+                  const value = lineup[caption.id];
+                  const hasValue = !!value;
+                  const [corpsName, sourceYear] = hasValue ? value.split('|') : [null, null];
+                  // Get category score from user's fantasy recap (GE/Visual/Music)
+                  let captionScore = null;
+                  if (['GE1', 'GE2'].includes(caption.id)) {
+                    captionScore = corpsStats.geScore ?? null;
+                  } else if (['VP', 'VA', 'CG'].includes(caption.id)) {
+                    captionScore = corpsStats.visualScore ?? null;
+                  } else if (['B', 'MA', 'P'].includes(caption.id)) {
+                    captionScore = corpsStats.musicScore ?? null;
+                  }
+                  return (
+                    <button
+                      key={caption.id}
+                      onClick={() => openCaptionSelection(caption.id)}
+                      className={`w-full flex items-center gap-3 px-3 py-3.5 transition-all cursor-pointer group ${
+                        index !== CAPTIONS.length - 1 ? 'border-b border-[#333]/50' : ''
+                      } ${
+                        hasValue
+                          ? 'bg-[#1a1a1a] hover:bg-[#222] active:bg-[#252525]'
+                          : 'bg-[#1a1a1a] hover:bg-[#222] active:bg-[#252525]'
+                      }`}
+                    >
+                      {/* Position Badge */}
+                      <div className={`w-10 h-8 flex items-center justify-center rounded text-xs font-bold ${
+                        hasValue ? 'bg-[#0057B8]/20 text-[#0057B8]' : 'bg-[#333] text-gray-500'
+                      }`}>
+                        {caption.name}
+                      </div>
+                      {/* Corps Name + Year */}
+                      <div className="flex-1 text-left min-w-0">
+                        {hasValue ? (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm text-white truncate">{corpsName}</span>
+                            {sourceYear && (
+                              <span className="text-[10px] text-gray-500">'{sourceYear?.slice(-2)}</span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-500 italic">Empty slot</span>
+                        )}
+                      </div>
+                      {/* Caption Score / Action */}
+                      <div className="flex items-center gap-2">
+                        {hasValue ? (
+                          <span className="text-xs font-data text-gray-400 tabular-nums">
+                            {captionScore !== null ? captionScore.toFixed(1) : '—'}
+                          </span>
+                        ) : (
+                          <span className="text-xs font-bold text-[#F5A623] group-hover:text-[#FFB84D]">+ Draft</span>
+                        )}
+                        <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-gray-400" />
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* League Link */}
+              {primaryLeague ? (
+                <Link
+                  to="/leagues"
+                  className="flex items-center justify-between p-3 sm:p-2 bg-[#222] border border-[#333] hover:border-[#444] active:bg-[#333] rounded"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Users className="w-5 h-5 sm:w-4 sm:h-4 text-[#0057B8] flex-shrink-0" />
+                    <span className="text-sm text-white truncate">{primaryLeague.name}</span>
+                  </div>
+                  <span className="text-sm sm:text-xs font-bold text-[#0057B8] flex-shrink-0 ml-2">#{primaryLeague.userRank || '-'}</span>
+                </Link>
+              ) : (
+                <Link
+                  to="/leagues"
+                  className="flex items-center justify-center gap-2 p-3 sm:p-2 border border-dashed border-[#444] text-gray-500 hover:text-white hover:border-[#555] active:bg-[#222] rounded min-h-[48px] sm:min-h-0"
+                >
+                  <Users className="w-5 h-5 sm:w-4 sm:h-4" />
+                  <span className="text-sm sm:text-xs">Join a League</span>
+                </Link>
+              )}
 
               {/* SIDEBAR (1/3) - Season Stats */}
               <div className="space-y-4">
