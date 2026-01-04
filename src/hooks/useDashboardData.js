@@ -33,8 +33,9 @@ export const useDashboardData = () => {
   const isAdmin = storeIsAdmin;
   // Compute unlocked classes directly (admins get all classes)
   // Must compute here rather than using store method so React tracks the isAdmin dependency
+  // Note: class IDs are 'worldClass', 'openClass', 'aClass', 'soundSport'
   const unlockedClasses = isAdmin
-    ? ['soundSport', 'aClass', 'open', 'world']
+    ? ['worldClass', 'openClass', 'aClass', 'soundSport']
     : (profile?.unlockedClasses || ['soundSport']);
 
   // Additional local state
