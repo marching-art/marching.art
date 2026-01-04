@@ -1028,6 +1028,12 @@ const Dashboard = () => {
   }, [showRegistration, showCaptionSelection, showEditCorps, showDeleteConfirm, showMoveCorps, showRetireConfirm, modalQueue]);
 
   // Handlers
+  const handleRefresh = useCallback(async () => {
+    haptic('pull');
+    await refreshProfile?.();
+    haptic('success');
+  }, [haptic, refreshProfile]);
+
   const handleTourComplete = useCallback(async () => {
     modalQueue.dequeue();
     if (profile?.isFirstVisit && user) {
