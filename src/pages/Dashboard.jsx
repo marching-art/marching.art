@@ -108,7 +108,9 @@ const getEffectiveDay = (currentDay) => {
   const hour = now.getHours();
   // Between midnight (0) and 2 AM, scores haven't been processed yet
   if (hour < 2) {
-    return Math.max(1, currentDay - 1);
+    // On day 1 before 2 AM, no scores have been processed yet
+    if (currentDay <= 1) return null;
+    return currentDay - 1;
   }
   return currentDay;
 };

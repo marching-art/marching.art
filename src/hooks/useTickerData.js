@@ -94,7 +94,10 @@ export const useTickerData = () => {
     const hour = new Date().getHours();
     // Between midnight and 2 AM, scores haven't been processed yet
     // So use currentDay - 1 to avoid showing unprocessed scores
-    const effectiveDay = hour < 2 ? Math.max(1, currentDay - 1) : currentDay;
+    // On day 1 before 2 AM, no scores have been processed yet
+    const effectiveDay = hour < 2
+      ? (currentDay <= 1 ? null : currentDay - 1)
+      : currentDay;
 
     // Find the most recent day that has scores up to and including effective day
     const availableDays = allRecaps
