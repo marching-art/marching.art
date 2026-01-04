@@ -25,94 +25,233 @@ let textModel = null;
 
 // =============================================================================
 // DCI UNIFORM KNOWLEDGE BASE
-// Accurate uniform descriptions by corps and year for image generation
+// Comprehensive uniform descriptions by corps and year for image generation
+// Includes equipment details, helmet/shako styles, and section-specific elements
 // =============================================================================
 
 const DCI_UNIFORMS = {
   "Blue Devils": {
-    default: "navy blue uniforms with silver trim, white plumes, silver shakos",
-    2018: "deep midnight blue uniforms with metallic silver accents, flowing capes, silver shako with white horsehair plume",
-    2019: "navy blue with geometric silver patterns, asymmetrical chest design, chrome helmet accents",
-    2014: "classic navy blue with white baldric, silver buttons, traditional shako with blue and white plume",
-    2011: "dark blue military-style uniform with silver braiding, white gloves, tall silver shako",
+    default: {
+      uniform: "navy blue military-style uniform with silver trim and white baldric",
+      helmet: "silver shako with tall white horsehair plume",
+      brass: "silver-plated King brass instruments with navy blue valve caps",
+      percussion: "Pearl drums with navy blue shells, silver hardware, Zildjian cymbals",
+      guard: "navy and silver unitards with flowing silver capes",
+    },
+    2018: {
+      uniform: "deep midnight blue uniforms with metallic silver geometric accents, asymmetrical chest design with flowing navy capes",
+      helmet: "chrome-finished helmet with fiber optic lighting elements and white plume",
+      brass: "Dynasty brass with silver finish, illuminated bell covers during ballad",
+      percussion: "Pearl Championship drums, navy shells with LED rim lighting",
+      guard: "midnight blue with silver holographic fabric, 6-foot silk flags in navy and silver",
+    },
+    2019: {
+      uniform: "navy blue with geometric silver angular patterns, modern athletic cut with metallic chest plate",
+      helmet: "streamlined chrome visor helmet with blue LED accents",
+      brass: "polished silver brass, contoured ergonomic grips",
+      percussion: "transparent blue acrylic shells on snares, navy tenors",
+      guard: "geometric silver and blue costumes, angular equipment in chrome",
+    },
+    2014: {
+      uniform: "classic navy blue with white chest baldric, silver braiding, polished brass buttons in double-breasted style",
+      helmet: "traditional tall silver shako with blue and white ostrich plume",
+      brass: "traditional silver brass instruments with white valve guards",
+      percussion: "white Pearl drums with silver hardware, traditional concert bass drums",
+      guard: "classical white and navy gowns, traditional rifle and sabre",
+    },
   },
   "Carolina Crown": {
-    default: "maroon and gold uniforms with gold trim, ornate chest plates",
-    2013: "deep burgundy with elaborate gold filigree, Renaissance-inspired chest armor, golden crown emblems",
-    2019: "maroon base with rose gold metallic overlay, modern athletic cut, illuminated crown logo",
-    2016: "crimson red with gold accents, flowing burgundy sashes, ornate shako with golden plume",
+    default: {
+      uniform: "deep maroon with ornate gold filigree chest plate, burgundy sash",
+      helmet: "gold-trimmed shako with maroon and gold plume featuring crown emblem",
+      brass: "gold-lacquered Yamaha brass with burgundy valve caps",
+      percussion: "Mapex drums with wine-red shells, gold lugs, Sabian cymbals",
+      guard: "flowing burgundy and gold Renaissance-inspired costumes",
+    },
+    2013: {
+      uniform: "deep burgundy with elaborate gold filigree armor-style chest plate, Renaissance royalty aesthetic",
+      helmet: "ornate gold crown-shaped headpiece with burgundy velvet accents",
+      brass: "gold-lacquered brass with etched crown designs on bells",
+      percussion: "burgundy drums with gold crown emblems, matching marimba frames",
+      guard: "Renaissance court costumes in deep burgundy velvet with gold trim, ceremonial flags",
+    },
+    2019: {
+      uniform: "maroon base with rose gold metallic overlay panels, modern athletic silhouette with illuminated crown logo",
+      helmet: "rose gold metallic helmet with built-in LED crown halo",
+      brass: "rose gold-finished brass with modern ergonomic design",
+      percussion: "maroon shells with rose gold hardware, electronic trigger pads",
+      guard: "rose gold and maroon athletic wear with flowing fabric extensions",
+    },
   },
   "The Cadets": {
-    default: "maroon and gold military-style uniforms, traditional design",
-    2005: "classic maroon with cream trim, military brass buttons, tall busby-style shako",
-    2011: "burgundy with gold rope braiding, Revolutionary War inspired, tri-corner influenced shako",
-    2017: "deep maroon with metallic gold chest plate, modern streamlined design",
+    default: {
+      uniform: "classic maroon with cream trim, military precision with brass buttons",
+      helmet: "tall maroon busby-style shako with cream plume",
+      brass: "silver brass instruments with maroon valve guards, Cadets crest on bells",
+      percussion: "Pearl drums with maroon shells, silver hardware",
+      guard: "maroon and cream military-inspired uniforms with traditional equipment",
+    },
+    2011: {
+      uniform: "burgundy with gold rope braiding across chest, Revolutionary War inspired double-breasted design",
+      helmet: "tricorn-influenced shako in burgundy with gold trim and cream cockade",
+      brass: "antiqued brass finish instruments evoking colonial era",
+      percussion: "field drums styled after Revolutionary War with rope tension",
+      guard: "colonial-era costumes with tricorn hats, period-accurate flags",
+    },
   },
   "Santa Clara Vanguard": {
-    default: "red and white uniforms with ornate design, flowing capes",
-    2018: "scarlet red with white and gold trim, dramatic flowing capes, traditional Spanish influence",
-    2014: "crimson with white accents, ballet-inspired elements, red plumes",
-    1989: "classic red and white with gold buttons, traditional military cut, white plumes",
+    default: {
+      uniform: "scarlet red with white and gold trim, dramatic Spanish-influenced design with flowing capes",
+      helmet: "traditional shako with tall red and white plume",
+      brass: "gold-lacquered brass with red bell covers",
+      percussion: "red Pearl drums with gold hardware, red-wrapped mallets",
+      guard: "Spanish-inspired red and white costumes with dramatic capes and fans",
+    },
+    2018: {
+      uniform: "rich scarlet with metallic gold trim, dramatic floor-length red capes with gold lining",
+      helmet: "ornate gold-trimmed headpiece with cascading red plume",
+      brass: "gold brass with red accents, Spanish-style bell decorations",
+      percussion: "red shells with gold flake finish, traditional pit setup",
+      guard: "flowing scarlet gowns with gold embroidery, Spanish fans and dramatic silks",
+    },
   },
   "Bluecoats": {
-    default: "blue and white contemporary uniforms, modern athletic design",
-    2016: "electric blue with silver geometric patterns, futuristic LED-integrated elements, chrome visors",
-    2019: "cobalt blue with white streaks, athletic cut, integrated technology elements",
-    2014: "royal blue with white sash, clean modern lines, blue plumes",
+    default: {
+      uniform: "electric blue with white contemporary design, modern athletic cut",
+      helmet: "chrome-finished modern helmet with blue accents",
+      brass: "silver brass with blue LED accents during evening shows",
+      percussion: "blue Mapex drums with chrome hardware, electronic integration",
+      guard: "contemporary blue and white athletic wear with technology elements",
+    },
+    2016: {
+      uniform: "electric blue with silver geometric circuit-board patterns, futuristic LED-integrated panels",
+      helmet: "chrome visor helmet with programmable LED strip, no traditional plume",
+      brass: "custom silver brass with blue LED rings around bells",
+      percussion: "transparent blue acrylic drums with internal LED lighting",
+      guard: "futuristic silver and blue bodysuits with fiber optic elements, LED props",
+    },
   },
   "Phantom Regiment": {
-    default: "maroon and black uniforms with dramatic capes, theatrical design",
-    2008: "deep burgundy with black trim, flowing opera capes, skull regiment insignia",
-    2011: "maroon with silver accents, Spartan-inspired chest plate, dramatic helmet",
-    2003: "classic maroon and cream, military precision design, traditional shako",
-  },
-  "Blue Stars": {
-    default: "royal blue with silver stars, patriotic design elements",
-    2018: "deep blue with cascading silver stars, flowing sashes, celestial theme",
-    2014: "navy blue with white star patterns, classic American design",
-  },
-  "Boston Crusaders": {
-    default: "red, white, and blue Revolutionary War inspired uniforms",
-    2018: "crimson red with colonial white accents, Revolutionary War era design, tricorn influenced",
-    2019: "modern red with white geometric patterns, athletic streamlined design",
-  },
-  "Madison Scouts": {
-    default: "green and gold uniforms, traditional scout design",
-    2015: "forest green with gold trim, scout-inspired elements, green plumes",
-    1995: "classic kelly green with gold buttons, traditional military style",
-  },
-  "Crossmen": {
-    default: "blue and white with cross emblems, modern design",
-    2018: "royal blue with white cross patterns, contemporary athletic cut",
-  },
-  "Colts": {
-    default: "purple and silver uniforms, horse-inspired elements",
-    2019: "deep purple with silver mane-like plumes, equestrian elegance",
-  },
-  "Mandarins": {
-    default: "red and gold Asian-inspired design, ornate embroidery",
-    2019: "crimson with gold dragon embroidery, flowing Asian-inspired silhouettes",
-  },
-  "Spirit of Atlanta": {
-    default: "red, white, and black Southern design elements",
-    2018: "scarlet red with white accents, phoenix imagery, Southern flair",
-  },
-  "Troopers": {
-    default: "tan and brown cavalry uniforms, Western frontier design",
-    2019: "dusty brown with cavalry yellow trim, cowboy-inspired elements, wide-brimmed influences",
-  },
-  "Pacific Crest": {
-    default: "teal and white with mountain imagery",
-    2019: "ocean teal with white peaks, Pacific Northwest inspired",
-  },
-  "Blue Knights": {
-    default: "royal blue with silver knight armor elements",
-    2018: "deep blue with chrome armor plating, medieval knight influence",
+    default: {
+      uniform: "deep maroon and black with dramatic theatrical design, flowing opera capes",
+      helmet: "black and maroon shako with skull regiment insignia",
+      brass: "dark lacquered brass with phantom skull bell engravings",
+      percussion: "black drums with maroon accents, dramatic cymbal work",
+      guard: "theatrical black and maroon costumes with phantom masks and capes",
+    },
+    2008: {
+      uniform: "deep burgundy with black velvet trim, full-length opera capes with burgundy lining",
+      helmet: "black helmet with Spartan-inspired crest and regiment skull emblem",
+      brass: "dark nickel-finished brass with dramatic bell flares",
+      percussion: "black shells with burgundy flame graphics, orchestral percussion",
+      guard: "operatic burgundy and black costumes with dramatic masks",
+    },
   },
   "Cavaliers": {
-    default: "green and white with cavalier hat elements",
-    2002: "forest green with white plumes, Three Musketeers inspired, classic cavalier hats",
-    2006: "hunter green with gold accents, refined military precision",
+    default: {
+      uniform: "hunter green with white trim, cavalier-inspired design with plumed hats",
+      helmet: "classic cavalier hat with sweeping white plume",
+      brass: "silver brass with green valve guards",
+      percussion: "green Pearl drums with silver hardware",
+      guard: "Three Musketeers inspired green and white costumes with rapiers",
+    },
+    2002: {
+      uniform: "forest green military coat with white lapels and gold buttons, cavalier sash",
+      helmet: "authentic cavalier hat with dramatic white ostrich plumes",
+      brass: "polished silver brass with traditional French horn section",
+      percussion: "traditional green drums with white heads, field drum heritage",
+      guard: "cavalier-era costumes with capes, swords, and period flags",
+    },
+  },
+  "Madison Scouts": {
+    default: {
+      uniform: "kelly green with gold trim, scout-inspired military design",
+      helmet: "green shako with gold trim and green plume",
+      brass: "gold-lacquered brass with scout emblem on bells",
+      percussion: "green drums with gold hardware",
+      guard: "green and gold military-inspired uniforms",
+    },
+  },
+  "Boston Crusaders": {
+    default: {
+      uniform: "crimson red with colonial white and blue accents, Revolutionary War heritage",
+      helmet: "tricorn-influenced design with red, white, and blue",
+      brass: "silver brass with patriotic bell engravings",
+      percussion: "red and white drums with Revolutionary field drum heritage",
+      guard: "colonial-era inspired costumes with American Revolution flags",
+    },
+  },
+  "Blue Stars": {
+    default: {
+      uniform: "royal blue with cascading silver star patterns, patriotic elegance",
+      helmet: "blue shako with silver star emblem and white plume",
+      brass: "silver brass with star engravings on bells",
+      percussion: "blue drums with silver star decals",
+      guard: "celestial blue and silver costumes with star-themed silks",
+    },
+  },
+  "Mandarins": {
+    default: {
+      uniform: "crimson red with gold dragon embroidery, Asian-inspired flowing design",
+      helmet: "ornate gold and red headpiece with dragon motifs",
+      brass: "gold-lacquered brass with dragon engraving on bells",
+      percussion: "red drums with gold dragon graphics, Asian percussion elements",
+      guard: "flowing Asian-inspired crimson and gold costumes with fans and ribbons",
+    },
+  },
+  "Troopers": {
+    default: {
+      uniform: "tan and brown cavalry style, Western frontier with yellow trim",
+      helmet: "cavalry campaign hat with crossed sabers insignia",
+      brass: "traditional brass finish with Western engravings",
+      percussion: "brown drums with cavalry yellow accents",
+      guard: "cavalry uniforms with Western elements, American flags",
+    },
+  },
+  "Colts": {
+    default: {
+      uniform: "deep purple with silver accents, equestrian elegance",
+      helmet: "purple shako with flowing silver mane-like plume",
+      brass: "silver brass with purple valve caps and colt emblems",
+      percussion: "purple drums with silver horse motifs",
+      guard: "purple and silver costumes with flowing horse-mane elements",
+    },
+  },
+  "Spirit of Atlanta": {
+    default: {
+      uniform: "scarlet red with white and black accents, phoenix and Southern heritage",
+      helmet: "red shako with phoenix emblem and white plume",
+      brass: "gold-lacquered brass with phoenix bell art",
+      percussion: "red drums with flame graphics and phoenix imagery",
+      guard: "phoenix-inspired red and orange costumes with flame silks",
+    },
+  },
+  "Blue Knights": {
+    default: {
+      uniform: "royal blue with chrome armor plating, medieval knight aesthetic",
+      helmet: "knight-style helmet with chrome visor and blue plume",
+      brass: "chrome-finished brass with knight crest engravings",
+      percussion: "blue drums with chrome hardware, shield graphics",
+      guard: "medieval knight-inspired blue and silver armor costumes",
+    },
+  },
+  "Crossmen": {
+    default: {
+      uniform: "royal blue with bold white cross patterns, modern design",
+      helmet: "blue and white helmet with cross emblem",
+      brass: "silver brass with blue accents",
+      percussion: "blue and white drums with cross graphics",
+      guard: "contemporary blue and white with cross motifs",
+    },
+  },
+  "Pacific Crest": {
+    default: {
+      uniform: "ocean teal with white mountain peak imagery, Pacific Northwest",
+      helmet: "teal helmet with silver mountain crest",
+      brass: "silver brass with ocean wave engravings",
+      percussion: "teal drums with white evergreen graphics",
+      guard: "teal and white costumes with mountain and wave elements",
+    },
   },
 };
 
@@ -241,68 +380,467 @@ async function generateImageWithImagen(prompt) {
   }
 }
 
+// =============================================================================
+// FANTASY CORPS UNIFORM THEMES
+// Comprehensive theme database for generating creative but realistic uniforms
+// =============================================================================
+
+const FANTASY_THEMES = {
+  // Elemental themes
+  fire: {
+    colors: "deep crimson red with orange flame accents and gold trim",
+    uniform: "athletic modern cut with flame gradient patterns rising from hem, ember-glow metallic thread",
+    helmet: "red and gold helmet with flickering flame-shaped plume in orange and red",
+    brass: "gold-lacquered brass instruments with flame engravings on bells",
+    percussion: "red drums with orange flame graphics wrapping around shells",
+    guard: "flowing orange and red costumes with flame-shaped silk flags, fire poi props",
+  },
+  ice: {
+    colors: "crystalline white with ice blue and silver frost accents",
+    uniform: "sleek white bodysuit with ice crystal patterns, silver geometric frost designs",
+    helmet: "white helmet with icicle-shaped silver plume and frost-etched visor",
+    brass: "chrome-silver brass with ice blue valve accents, frosted bell finish",
+    percussion: "white drums with ice blue frost patterns, crystal-clear cymbal stands",
+    guard: "white and ice blue costumes with crystalline fabric, snowflake-shaped flags",
+  },
+  thunder: {
+    colors: "storm grey with electric blue lightning and silver metallic accents",
+    uniform: "dark charcoal grey with electric blue lightning bolt patterns, silver metallic trim",
+    helmet: "gunmetal grey helmet with electric blue LED accents and storm cloud plume",
+    brass: "silver brass with blue lightning bolt engravings, storm grey valve caps",
+    percussion: "grey drums with electric blue lightning graphics, chrome hardware",
+    guard: "storm grey and electric blue costumes with lightning bolt props, silver flags",
+  },
+  storm: {
+    colors: "deep purple with silver cloud patterns and rain-streak design",
+    uniform: "purple uniform with swirling silver storm patterns, iridescent rain-streak fabric",
+    helmet: "purple helmet with cascading silver plume like falling rain",
+    brass: "silver brass with purple storm cloud engravings on bells",
+    percussion: "purple drums with silver raindrop graphics",
+    guard: "flowing purple and silver costumes with umbrella props and rain silk flags",
+  },
+  // Nature themes
+  phoenix: {
+    colors: "orange, red, and gold gradient with rising flame design",
+    uniform: "warm gradient from red at hem to gold at shoulders, phoenix wing patterns",
+    helmet: "gold helmet with dramatic red-orange-gold feathered plume rising like flames",
+    brass: "gold brass with phoenix engravings, red-tinted bells",
+    percussion: "gold drums with phoenix rising graphics, flame-colored heads",
+    guard: "phoenix-inspired orange and gold costumes with wing-shaped capes, flame flags",
+  },
+  dragon: {
+    colors: "crimson red with gold scale patterns and black accents",
+    uniform: "red uniform with gold scale-patterned chest plate, dragon claw shoulder guards",
+    helmet: "red and gold helmet with dragon horn-shaped plume, reptilian scale texture",
+    brass: "gold brass with dragon scale engravings, serpentine bell decorations",
+    percussion: "red drums with gold dragon scale graphics, dragon head bass drum art",
+    guard: "crimson and gold costumes with dragon wing capes, serpentine flags",
+  },
+  wolf: {
+    colors: "silver grey with black accents and amber highlights",
+    uniform: "grey athletic cut with black wolf silhouette patterns, amber eye accents",
+    helmet: "silver-grey helmet with black fur-textured plume, wolf ear shapes",
+    brass: "silver brass with wolf pack engravings, grey valve caps",
+    percussion: "grey drums with wolf pack graphics, paw print accents",
+    guard: "grey and black costumes with fur-textured capes, moon-shaped props",
+  },
+  eagle: {
+    colors: "brown and gold with white accents, patriotic undertones",
+    uniform: "brown uniform with gold eagle wing patterns across chest, white trim",
+    helmet: "gold helmet with dramatic brown and white feathered plume",
+    brass: "gold brass with eagle engravings, bronze-tinted finish",
+    percussion: "brown drums with gold eagle graphics, feather patterns",
+    guard: "brown and gold costumes with wing-shaped capes, patriotic flags",
+  },
+  // Cosmic themes
+  star: {
+    colors: "midnight blue with silver stars and cosmic purple accents",
+    uniform: "deep blue uniform with scattered silver star patterns, nebula purple accents",
+    helmet: "midnight blue helmet with silver star-topped plume, constellation patterns",
+    brass: "silver brass with star engravings, cosmic blue valve caps",
+    percussion: "dark blue drums with silver star graphics, galaxy patterns",
+    guard: "cosmic blue and silver costumes with star-shaped props, nebula flags",
+  },
+  nova: {
+    colors: "deep purple with explosive white and gold starburst patterns",
+    uniform: "purple uniform with white starburst patterns radiating from center, gold trim",
+    helmet: "purple helmet with exploding star-shaped white and gold plume",
+    brass: "gold brass with nova explosion engravings, purple accents",
+    percussion: "purple drums with gold starburst graphics",
+    guard: "purple and white costumes with starburst props, explosive silk choreography",
+  },
+  comet: {
+    colors: "ice blue with white trail and silver sparkle accents",
+    uniform: "ice blue uniform with white comet trail patterns, silver sparkle fabric",
+    helmet: "ice blue helmet with streaming white plume like a comet tail",
+    brass: "silver brass with comet engravings, ice blue valve caps",
+    percussion: "ice blue drums with white trail graphics",
+    guard: "ice blue and white costumes with streaming ribbon props, comet tail silks",
+  },
+  // Military/Power themes
+  knight: {
+    colors: "silver and royal blue with medieval armor aesthetic",
+    uniform: "silver armor-plated chest design over royal blue, medieval heraldry",
+    helmet: "knight helmet with royal blue plume, chrome face guard accents",
+    brass: "chrome brass with knight crest engravings, blue valve guards",
+    percussion: "silver and blue drums with shield graphics, sword accents",
+    guard: "medieval knight costumes with armor elements, sword and shield props",
+  },
+  titan: {
+    colors: "bronze and black with ancient Greek warrior design",
+    uniform: "bronze armor-inspired chest plate over black, Greek key patterns",
+    helmet: "bronze Spartan-style helmet with tall black horsehair crest",
+    brass: "bronze-finished brass with Titan engravings",
+    percussion: "black drums with bronze Greek patterns, ancient percussion",
+    guard: "Greek warrior costumes with bronze armor, shield and spear props",
+  },
+  shadow: {
+    colors: "matte black with deep purple undertones and silver accents",
+    uniform: "matte black uniform with subtle purple shimmer, silver thread accents",
+    helmet: "black helmet with purple-black gradient plume, mysterious silhouette",
+    brass: "dark nickel brass with shadow engravings, black valve caps",
+    percussion: "matte black drums with purple shadow graphics",
+    guard: "all-black costumes with purple accents, shadow manipulation choreography",
+  },
+  // Color-based themes
+  crimson: {
+    colors: "deep crimson red with black and gold accents",
+    uniform: "rich crimson uniform with black trim and gold embroidery",
+    helmet: "crimson helmet with black and gold plume",
+    brass: "gold brass with crimson valve caps",
+    percussion: "crimson drums with gold hardware",
+    guard: "elegant crimson and black costumes with gold accents",
+  },
+  azure: {
+    colors: "bright azure blue with white and silver accents",
+    uniform: "vibrant azure blue uniform with white and silver trim",
+    helmet: "azure helmet with white plume and silver accents",
+    brass: "silver brass with azure valve caps",
+    percussion: "azure drums with silver hardware",
+    guard: "azure and white costumes with silver accents, sky-themed flags",
+  },
+  emerald: {
+    colors: "rich emerald green with gold and black accents",
+    uniform: "deep emerald green uniform with gold trim and black accents",
+    helmet: "emerald helmet with gold-tipped plume",
+    brass: "gold brass with emerald valve caps",
+    percussion: "emerald drums with gold hardware",
+    guard: "emerald and gold costumes with jewel-like props",
+  },
+};
+
 /**
- * Get uniform description for a corps and year
+ * Get comprehensive uniform description for a corps and year
+ * Returns an object with uniform, helmet, brass, percussion, guard details
  */
-function getUniformDescription(corpsName, year) {
+function getUniformDetails(corpsName, year) {
   const corps = DCI_UNIFORMS[corpsName];
   if (!corps) {
-    return `professional drum corps uniform in distinctive colors, polished brass instruments, precise military styling`;
+    // Generate a believable generic description
+    return {
+      uniform: "professional drum corps uniform with distinctive colors and military-inspired design",
+      helmet: "traditional shako with tall plume in corps colors",
+      brass: "professional-grade brass instruments with polished finish",
+      percussion: "championship-quality drums with corps logo graphics",
+      guard: "coordinated costumes with silk flags and equipment",
+    };
   }
-  return corps[year] || corps.default;
+
+  // Check for year-specific uniform, fall back to default
+  const yearData = corps[year] || corps.default;
+
+  // Handle both old string format and new object format
+  if (typeof yearData === "string") {
+    return {
+      uniform: yearData,
+      helmet: "traditional shako with corps-colored plume",
+      brass: "professional brass instruments",
+      percussion: "championship drums in corps colors",
+      guard: "coordinated costumes with silk equipment",
+    };
+  }
+
+  return yearData;
 }
 
 /**
- * Build image prompt for DCI article
+ * Get fantasy corps uniform based on name analysis
+ * Analyzes the corps name to find matching themes and generates comprehensive description
  */
-function buildDciImagePrompt(corpsName, year, context) {
-  const uniform = getUniformDescription(corpsName, year);
-
-  return `Photorealistic field-side photograph of a drum corps performer from ${corpsName} (${year}).
-The performer is wearing ${uniform}.
-Scene: ${context}
-Style: Professional sports photography, dramatic stadium lighting, shallow depth of field,
-high contrast, action shot frozen in motion.
-The image captures the intensity and precision of competitive drum corps.
-IMPORTANT: Accurate uniform details, professional marching arts equipment,
-realistic brass instruments with authentic valve configurations.`;
-}
-
-/**
- * Build image prompt for fantasy corps article
- */
-function buildFantasyImagePrompt(corpsName, theme) {
-  // Generate creative uniform based on corps name theme
-  const themePrompts = {
-    dragons: "crimson and gold scales pattern, dragon-wing shoulder epaulettes, flame-inspired plumes",
-    knights: "silver armor-plated chest design, royal blue capes, medieval crown emblems",
-    thunder: "electric blue with lightning bolt patterns, storm grey accents, metallic silver trim",
-    phoenix: "orange and red gradient flames, golden feather details, rising bird emblem",
-    storm: "deep purple with silver cloud patterns, rain-streak design elements",
-    wolves: "grey and silver fur-inspired textures, amber accents, wolf pack insignia",
-    stars: "midnight blue with constellation patterns, silver star embroidery, cosmic theme",
-    fire: "orange and red flame gradients, ember-like sparkle accents, heat shimmer effects",
-    ice: "crystalline white with ice blue accents, frost patterns, winter elegance",
-    shadow: "matte black with subtle purple undertones, mysterious silhouette design",
-  };
-
-  // Extract theme from corps name
+function getFantasyUniformDetails(corpsName) {
   const lowerName = corpsName.toLowerCase();
-  let uniformTheme = "distinctive custom design with team colors, modern athletic cut";
 
-  for (const [key, desc] of Object.entries(themePrompts)) {
-    if (lowerName.includes(key)) {
-      uniformTheme = desc;
-      break;
+  // Check for direct theme matches
+  for (const [theme, details] of Object.entries(FANTASY_THEMES)) {
+    if (lowerName.includes(theme)) {
+      return { ...details, matchedTheme: theme };
     }
   }
 
-  return `Photorealistic field-side photograph of a fantasy drum corps performer from "${corpsName}".
-The performer is wearing a custom uniform featuring ${uniformTheme}.
-Scene: ${theme || "performing under dramatic stadium lights, crowd in background"}
-Style: Professional sports photography, dramatic lighting, shallow depth of field.
-The image captures the creativity and spirit of marching arts fantasy competition.
-IMPORTANT: Creative but realistic uniform design, professional marching arts equipment.`;
+  // Check for partial matches and synonyms
+  const synonymMap = {
+    fire: ["flame", "blaze", "inferno", "ember", "burn", "heat", "solar", "sun"],
+    ice: ["frost", "frozen", "glacier", "arctic", "winter", "snow", "cold", "freeze"],
+    thunder: ["lightning", "electric", "shock", "bolt", "voltage", "spark"],
+    storm: ["tempest", "hurricane", "cyclone", "tornado", "wind", "gale"],
+    phoenix: ["reborn", "rise", "ascend"],
+    dragon: ["serpent", "wyvern", "drake", "wyrm"],
+    wolf: ["pack", "howl", "lunar", "moon"],
+    eagle: ["hawk", "falcon", "raptor", "talon", "soar"],
+    star: ["stellar", "astral", "celestial", "galaxy", "cosmic"],
+    nova: ["supernova", "explosion", "burst"],
+    comet: ["meteor", "asteroid", "shooting"],
+    knight: ["armor", "sword", "shield", "crusade", "paladin", "warrior"],
+    titan: ["giant", "colossus", "olymp", "god", "atlas"],
+    shadow: ["dark", "night", "phantom", "specter", "ghost", "void"],
+    crimson: ["red", "scarlet", "blood", "ruby"],
+    azure: ["blue", "sky", "ocean", "sea", "wave"],
+    emerald: ["green", "jade", "forest", "nature"],
+  };
+
+  for (const [theme, synonyms] of Object.entries(synonymMap)) {
+    for (const syn of synonyms) {
+      if (lowerName.includes(syn)) {
+        return { ...FANTASY_THEMES[theme], matchedTheme: theme };
+      }
+    }
+  }
+
+  // No match - generate based on first letter/word
+  const firstWord = corpsName.split(/\s+/)[0].toLowerCase();
+  const defaultColors = [
+    { colors: "royal purple with gold accents", primary: "purple" },
+    { colors: "deep teal with silver accents", primary: "teal" },
+    { colors: "burnt orange with black accents", primary: "orange" },
+    { colors: "forest green with bronze accents", primary: "green" },
+  ];
+
+  // Use first character to pick a color scheme for consistency
+  const colorIndex = firstWord.charCodeAt(0) % defaultColors.length;
+  const colorScheme = defaultColors[colorIndex];
+
+  return {
+    colors: colorScheme.colors,
+    uniform: `modern athletic uniform in ${colorScheme.colors}, contemporary design with team logo`,
+    helmet: `${colorScheme.primary} helmet with contrasting plume and team crest`,
+    brass: `polished brass instruments with ${colorScheme.primary} valve accents`,
+    percussion: `${colorScheme.primary} drums with team logo graphics`,
+    guard: `coordinated ${colorScheme.primary} costumes with team-themed flags`,
+    matchedTheme: "custom",
+  };
+}
+
+/**
+ * Build comprehensive image prompt for DCI standings article
+ * Features the leading corps with accurate historical uniform
+ */
+function buildStandingsImagePrompt(topCorps, year, location, showName) {
+  const details = getUniformDetails(topCorps, year);
+
+  return `Photorealistic field-side action photograph from ${showName || "a DCI competition"} ${location ? `in ${location}` : ""}.
+
+SUBJECT: A brass performer from ${topCorps} (${year} season) executing a powerful sustained note during their show.
+
+UNIFORM ACCURACY (CRITICAL):
+- Uniform: ${details.uniform}
+- Headwear: ${details.helmet}
+- Instrument: ${details.brass}
+
+SCENE DETAILS:
+- Position: Field-side angle, 15 feet from performer, shooting upward slightly
+- Background: Stadium crowd blurred, evening sky with stadium lights creating dramatic rim lighting
+- Moment: Peak of musical phrase, performer's posture showing effort and precision
+
+TECHNICAL REQUIREMENTS:
+- Camera: Canon 1DX Mark III, 70-200mm f/2.8 lens at 135mm
+- Settings: 1/1000 shutter, f/2.8, ISO 3200 for stadium lighting
+- Style: Professional sports photography, shallow depth of field, high contrast
+- Lighting: Dramatic stadium lights from above-left, warm golden hour sun from right
+
+AUTHENTICITY MARKERS:
+- Brass instrument must have realistic valve configurations and tubing
+- Uniform must show proper fit and military-precise alignment
+- White marching gloves, black marching shoes
+- Visible concentration and athletic effort in performer's expression
+
+This is a historic ${year} performance being recreated for the fantasy league - make it feel like an authentic DCI photograph.`;
+}
+
+/**
+ * Build image prompt for DCI caption analysis article
+ * Features the section that excelled in captions
+ */
+function buildCaptionsImagePrompt(featuredCorps, year, captionType, location) {
+  const details = getUniformDetails(featuredCorps, year);
+
+  // Determine which section to feature based on caption
+  let sectionFocus, sectionDetails, sceneDescription;
+
+  if (captionType.includes("Brass") || captionType.includes("B")) {
+    sectionFocus = "hornline";
+    sectionDetails = details.brass;
+    sceneDescription = "the full hornline in a dramatic arc formation, bells raised in unison during a powerful chord";
+  } else if (captionType.includes("Percussion") || captionType.includes("P")) {
+    sectionFocus = "drumline";
+    sectionDetails = details.percussion;
+    sceneDescription = "the snare line in tight formation, sticks frozen mid-stroke in perfect unison";
+  } else if (captionType.includes("Guard") || captionType.includes("CG")) {
+    sectionFocus = "color guard";
+    sectionDetails = details.guard;
+    sceneDescription = "guard members with rifles at peak toss height, silks frozen in dramatic arc";
+  } else if (captionType.includes("Visual") || captionType.includes("V")) {
+    sectionFocus = "full corps";
+    sectionDetails = details.uniform;
+    sceneDescription = "the corps in a complex geometric formation, bodies creating perfect lines and curves";
+  } else {
+    // GE or general - show ensemble moment
+    sectionFocus = "corps";
+    sectionDetails = details.uniform;
+    sceneDescription = "an emotional ensemble moment with all sections unified in the show's climax";
+  }
+
+  return `Photorealistic field-side photograph capturing ${featuredCorps}'s ${sectionFocus} excellence during their ${year} season.
+
+SUBJECT: ${sceneDescription}
+
+UNIFORM ACCURACY (CRITICAL):
+- Primary: ${details.uniform}
+- Headwear: ${details.helmet}
+- Section equipment: ${sectionDetails}
+
+SCENE COMPOSITION:
+- Angle: Low angle from corner of field, emphasizing precision and scale
+- Background: Stadium environment with scoreboard partially visible, crowd in stands
+- Lighting: Stadium lights creating dramatic shadows, emphasizing body positions
+
+TECHNICAL PHOTOGRAPHY:
+- Wide enough to show 6-8 performers while maintaining detail
+- Focus on center performers, edges slightly soft
+- Motion blur on any moving equipment to show action
+- High contrast, vibrant colors true to ${featuredCorps} palette
+
+CAPTION EXCELLENCE MARKERS:
+- Perfect body alignment showing visual precision
+- Equipment positions showing technical mastery
+- Unified expression showing ensemble cohesion
+
+This photograph should capture why ${featuredCorps} excelled in ${captionType} during their historic ${year} campaign.`;
+}
+
+/**
+ * Build image prompt for fantasy performers article
+ * Features the top fantasy corps with creative themed uniform
+ */
+function buildFantasyPerformersImagePrompt(topCorpsName, theme) {
+  const details = getFantasyUniformDetails(topCorpsName);
+
+  return `Photorealistic field-side photograph of a performer from the fantasy marching arts ensemble "${topCorpsName}".
+
+CREATIVE UNIFORM DESIGN:
+- Colors: ${details.colors}
+- Uniform: ${details.uniform}
+- Headwear: ${details.helmet}
+- Brass: ${details.brass}
+- Guard elements: ${details.guard}
+
+SCENE SETTING:
+- Modern indoor arena with dramatic LED lighting systems
+- ${theme || "Victory moment after an award-winning performance"}
+- Professional marching arts competition atmosphere
+- Crowd on their feet in background, celebration energy
+
+PERFORMER DETAILS:
+- Brass performer holding instrument triumphantly
+- Expression of joy and accomplishment
+- Uniform pristine and dramatically lit
+- Stadium spotlights creating dramatic rim lighting
+
+PHOTOGRAPHY STYLE:
+- Sports photography, celebration moment
+- Shallow depth of field isolating performer
+- High contrast, saturated colors matching corps theme
+- Lens flare from stadium lights adding drama
+
+AUTHENTICITY:
+- Instrument must be realistic (baritone, mellophone, or trumpet with correct valve/tubing)
+- Uniform is creative but still clearly a marching arts uniform (not costume)
+- White marching gloves, black marching shoes
+- Professional posture and bearing
+
+This is a fantasy corps created by a user, so the uniform should be distinctive and memorable while remaining authentic to competitive marching arts.`;
+}
+
+/**
+ * Build image prompt for fantasy league recap article
+ * Shows championship/competition atmosphere
+ */
+function buildFantasyLeagueImagePrompt() {
+  return `Photorealistic photograph of a marching arts fantasy league championship ceremony.
+
+SCENE:
+- Indoor arena with dramatic purple and gold lighting
+- Large LED screens showing "MARCHING.ART FANTASY CHAMPIONSHIP"
+- Trophy presentation moment on elevated stage
+- Multiple performers from different fantasy ensembles visible
+
+DETAILS:
+- Professional awards ceremony setup
+- marching.art branding visible on backdrop and screens
+- Confetti or streamers in the air
+- Mixed ensemble uniforms visible showing variety of fantasy corps designs
+
+ATMOSPHERE:
+- Celebration energy
+- Professional sports championship feel
+- Dramatic spotlight on trophy/winners area
+- Crowd visible in background, standing ovation
+
+PHOTOGRAPHY:
+- Wide shot capturing the spectacle
+- Multiple light sources creating depth
+- Sharp focus on center stage, soft background
+- Rich, saturated colors
+
+This should feel like a major esports or fantasy sports championship ceremony, but for marching arts.`;
+}
+
+/**
+ * Build image prompt for deep analytics article
+ * Shows data visualization or strategic analysis moment
+ */
+function buildAnalyticsImagePrompt(featuredCorps, year, analysisType) {
+  const details = getUniformDetails(featuredCorps, year);
+
+  return `Photorealistic aerial/elevated photograph showing ${featuredCorps} (${year}) in a complex drill formation.
+
+FORMATION FOCUS:
+- Corps in geometric formation viewed from press box/tower angle
+- Pattern clearly visible: curved arc, diagonal lines, or company front
+- Individual performers visible but formation structure is the focus
+
+UNIFORM ACCURACY:
+- Uniform: ${details.uniform}
+- Headwear: ${details.helmet}
+- Formation shows military precision and spacing
+
+ANALYTICAL ELEMENTS:
+- Yard lines visible for spatial reference
+- Shadow patterns showing performer positions
+- Formation geometry emphasized through lighting
+
+PHOTOGRAPHY:
+- Elevated angle (45-60 degrees from horizontal)
+- Wide shot capturing 40+ performers
+- Sharp focus throughout formation
+- Stadium lights creating clear shadows
+- Late afternoon/golden hour lighting
+
+MOOD:
+- Analytical, studying excellence
+- Historic performance documentation
+- The kind of image coaches would study
+
+This image should feel like film study material - capturing the precision and design that made ${featuredCorps}'s ${year} performance analytically significant.`;
 }
 
 // =============================================================================
@@ -427,11 +965,12 @@ Return ONLY valid JSON with this EXACT structure:
     const result = await textModel.generateContent(prompt);
     const content = parseAiJson(result.response.text());
 
-    // Generate image featuring top corps
-    const imagePrompt = buildDciImagePrompt(
+    // Generate image featuring top corps with accurate historical uniform
+    const imagePrompt = buildStandingsImagePrompt(
       topCorps.corps,
       topCorps.sourceYear,
-      "brass section performing powerful sustained note, stadium crowd blurred in background, golden hour lighting"
+      showContext.location,
+      showContext.showName
     );
 
     const imageData = await generateImageWithImagen(imagePrompt);
@@ -510,18 +1049,16 @@ Return ONLY valid JSON:
     const result = await textModel.generateContent(prompt);
     const content = parseAiJson(result.response.text());
 
-    // Feature a corps excelling in a specific caption
+    // Feature the corps excelling in the top caption category
     const featuredCaption = captionLeaders[0];
     const featuredCorps = dayScores.find(s => s.corps === featuredCaption?.leader) || dayScores[0];
 
-    const section = featuredCaption?.caption?.toLowerCase().includes("brass") ? "brass section" :
-                    featuredCaption?.caption?.toLowerCase().includes("percussion") ? "drumline" :
-                    featuredCaption?.caption?.toLowerCase().includes("guard") ? "color guard" : "full corps";
-
-    const imagePrompt = buildDciImagePrompt(
+    // Use specialized caption image prompt with section-specific details
+    const imagePrompt = buildCaptionsImagePrompt(
       featuredCorps.corps,
       featuredCorps.sourceYear,
-      `${section} in perfect formation, capturing technical excellence, dramatic side angle`
+      featuredCaption?.caption || "General Effect",
+      showContext.location
     );
 
     const imageData = await generateImageWithImagen(imagePrompt);
@@ -619,11 +1156,11 @@ Return ONLY valid JSON:
     const result = await textModel.generateContent(prompt);
     const content = parseAiJson(result.response.text());
 
-    // Generate image for top fantasy corps
+    // Generate image for top fantasy corps with themed uniform based on corps name
     const topCorps = topPerformers[0];
-    const imagePrompt = buildFantasyImagePrompt(
+    const imagePrompt = buildFantasyPerformersImagePrompt(
       topCorps?.corpsName || "Champion Corps",
-      "celebrating victory, confetti falling, triumphant pose under spotlights"
+      "Victory celebration after dominating Day " + reportDay + " competition"
     );
 
     const imageData = await generateImageWithImagen(imagePrompt);
@@ -719,10 +1256,8 @@ Return ONLY valid JSON:
     const result = await textModel.generateContent(prompt);
     const content = parseAiJson(result.response.text());
 
-    const imagePrompt = buildFantasyImagePrompt(
-      "League Champions",
-      "trophy presentation ceremony, golden confetti, championship moment"
-    );
+    // Use specialized league championship ceremony prompt
+    const imagePrompt = buildFantasyLeagueImagePrompt();
 
     const imageData = await generateImageWithImagen(imagePrompt);
     const imageResult = await processGeneratedImage(imageData, "fantasy_leagues");
@@ -859,14 +1394,15 @@ Return ONLY valid JSON:
     const result = await textModel.generateContent(prompt);
     const content = parseAiJson(result.response.text());
 
-    // Analytical/data visualization style image
+    // Feature the top trending corps in an analytical aerial shot
     const topTrending = Object.entries(trendData).sort((a,b) => b[1].trendFromAvg - a[1].trendFromAvg)[0];
     const featuredCorps = dayScores.find(s => s.corps === topTrending?.[0]) || dayScores[0];
 
-    const imagePrompt = buildDciImagePrompt(
+    // Use specialized analytics prompt showing drill formations from elevated angle
+    const imagePrompt = buildAnalyticsImagePrompt(
       featuredCorps.corps,
       featuredCorps.sourceYear,
-      "wide shot of full corps in complex drill formation, geometric patterns visible from elevated angle, dramatic shadows"
+      "trajectory analysis"
     );
 
     const imageData = await generateImageWithImagen(imagePrompt);
@@ -1290,12 +1826,19 @@ module.exports = {
   generateFantasyLeaguesArticle,
   generateDeepAnalyticsArticle,
 
-  // Imagen utilities
+  // Image generation - specialized prompts for each article type
   generateImageWithImagen,
-  buildDciImagePrompt,
-  buildFantasyImagePrompt,
-  getUniformDescription,
+  buildStandingsImagePrompt,
+  buildCaptionsImagePrompt,
+  buildFantasyPerformersImagePrompt,
+  buildFantasyLeagueImagePrompt,
+  buildAnalyticsImagePrompt,
+
+  // Uniform/theme utilities
+  getUniformDetails,
+  getFantasyUniformDetails,
   DCI_UNIFORMS,
+  FANTASY_THEMES,
 
   // Legacy exports
   generateDailyNews,
