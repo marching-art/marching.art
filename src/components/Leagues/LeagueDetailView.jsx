@@ -21,6 +21,7 @@ import ChatTab from './tabs/ChatTab';
 import MatchupDetailView from './MatchupDetailView';
 import LeagueActivityFeed, { RivalryBadge } from './LeagueActivityFeed';
 import { useRivalries, isRivalry as checkRivalry } from '../../hooks/useLeagueNotifications';
+import { useLeagueStats } from '../../hooks/useLeagueStats';
 import { postLeagueMessage } from '../../firebase/functions';
 
 // Quick Smack Talk Input - Compact inline form
@@ -144,7 +145,7 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
   const [activeTab, setActiveTab] = useState('standings');
   const [standings, setStandings] = useState([]);
   const [messages, setMessages] = useState([]);
-  const [weeklyMatchups, setWeeklyMatchups] = useState([]);
+  const [weeklyMatchups, setWeeklyMatchups] = useState({});
   const [weeklyResults, setWeeklyResults] = useState({});
   const [currentWeek, setCurrentWeek] = useState(1);
   const [memberProfiles, setMemberProfiles] = useState({});
@@ -153,6 +154,7 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
   const [inviteCopied, setInviteCopied] = useState(false);
+  const [recaps, setRecaps] = useState([]);
 
   const isCommissioner = league.creatorId === userProfile?.uid;
 
@@ -185,6 +187,14 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
     weeklyResults,
     memberProfiles
   );
+
+  // Calculate league-wide battle stats
+  const { memberStats: leagueStats } = useLeagueStats({
+    recaps,
+    weeklyMatchups,
+    memberIds: league?.members || [],
+    currentWeek,
+  });
 
   // Fetch all data
   useEffect(() => {
@@ -224,7 +234,9 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
           const recapsDoc = await getDoc(recapsRef);
 
           if (recapsDoc.exists()) {
-            const recaps = recapsDoc.data().recaps || [];
+            const recapsData = recapsDoc.data().recaps || [];
+            setRecaps(recapsData); // Store for useLeagueStats hook
+            const recaps = recapsData;
             const memberUids = new Set(league.members);
             const weeklyResults = {};
             const memberStats = {};
@@ -607,6 +619,8 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
               userProfile={userProfile}
               loading={loading}
               league={league}
+              leagueStats={leagueStats}
+              showLeaderboards={true}
             />
           )}
           {activeTab === 'matchups' && (

@@ -1,9 +1,11 @@
-// StandingsTab - High-Density Data Table
-// Design System: Compact table rows, tabular numbers, trend indicators
+// StandingsTab - High-Density Data Table with Battle Stats
+// Design System: Compact table rows, tabular numbers, trend indicators, expandable stats
 
-import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { Trophy, Flame, TrendingUp, TrendingDown, Minus, Crown } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Trophy, Flame, TrendingUp, TrendingDown, Minus, Crown, ChevronDown, ChevronUp, BarChart3 } from 'lucide-react';
+import SeasonStatsCard from '../SeasonStatsCard';
+import LeagueLeaderboards from '../LeagueLeaderboards';
 
 const StandingsTab = ({
   standings,
@@ -11,8 +13,12 @@ const StandingsTab = ({
   userProfile,
   loading,
   league,
-  playoffSize = 4
+  playoffSize = 4,
+  leagueStats = {}, // Map of userId -> SeasonMatchupStats
+  showLeaderboards = true,
 }) => {
+  const [expandedUser, setExpandedUser] = useState(null);
+  const [showLeaderboardSection, setShowLeaderboardSection] = useState(false);
   // Helper to get display name
   const getDisplayName = (uid) => {
     if (uid === userProfile?.uid) return 'You';
@@ -92,11 +98,14 @@ const StandingsTab = ({
                 const isPlayoffSpot = rank <= playoffSize;
                 const isPlayoffLine = rank === playoffSize;
                 const isCommissioner = stats.uid === league?.creatorId;
+                const isExpanded = expandedUser === stats.uid;
+                const hasStats = leagueStats[stats.uid];
 
                 return (
                   <React.Fragment key={stats.uid}>
                     <tr
-                      className={`border-b transition-colors ${
+                      onClick={() => hasStats && setExpandedUser(isExpanded ? null : stats.uid)}
+                      className={`border-b transition-colors ${hasStats ? 'cursor-pointer' : ''} ${
                         isPlayoffLine ? 'border-b-2 border-green-500/50' : 'border-[#222]'
                       } ${
                         isUser
@@ -174,6 +183,26 @@ const StandingsTab = ({
                       </td>
                     </tr>
 
+                    {/* Expanded Stats Row */}
+                    <AnimatePresence>
+                      {isExpanded && hasStats && (
+                        <motion.tr
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                        >
+                          <td colSpan={6} className="p-0">
+                            <SeasonStatsCard
+                              stats={leagueStats[stats.uid]}
+                              displayName={getDisplayName(stats.uid)}
+                              isCurrentUser={isUser}
+                              compact={true}
+                            />
+                          </td>
+                        </motion.tr>
+                      )}
+                    </AnimatePresence>
+
                     {/* Playoff Line Indicator */}
                     {isPlayoffLine && idx < enhancedStandings.length - 1 && (
                       <tr>
@@ -210,9 +239,51 @@ const StandingsTab = ({
               <div className="w-2.5 h-2.5 bg-green-500/30 border border-green-500/50" />
               <span>Playoff</span>
             </div>
+            {Object.keys(leagueStats).length > 0 && (
+              <span className="text-gray-400">• Click rows to expand stats</span>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Leaderboards Section */}
+      {showLeaderboards && Object.keys(leagueStats).length > 0 && (
+        <div className="mt-4">
+          <button
+            onClick={() => setShowLeaderboardSection(!showLeaderboardSection)}
+            className="w-full bg-[#1a1a1a] border border-[#333] px-4 py-3 flex items-center justify-between hover:bg-[#222] transition-colors mb-3"
+          >
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-yellow-500" />
+              <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
+                Season Leaderboards
+              </span>
+            </div>
+            {showLeaderboardSection ? (
+              <ChevronUp className="w-4 h-4 text-gray-500" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-gray-500" />
+            )}
+          </button>
+
+          <AnimatePresence>
+            {showLeaderboardSection && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <LeagueLeaderboards
+                  leagueStats={leagueStats}
+                  currentUserId={userProfile?.uid}
+                  getDisplayName={getDisplayName}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
     </motion.div>
   );
 };
