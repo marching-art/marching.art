@@ -284,17 +284,25 @@ const SkeletonRow = () => (
 // =============================================================================
 
 // Helper to get next class unlock info
+// Note: unlockedClasses uses 'aClass', 'openClass', 'worldClass' format
+// But CLASS_UNLOCK_* constants use 'aClass', 'open', 'world' format
 const getNextClassUnlock = (unlockedClasses, xpLevel, corpsCoin) => {
-  const classOrder = ['aClass', 'open', 'world'];
-  for (const classKey of classOrder) {
-    if (!unlockedClasses?.includes(classKey)) {
-      const levelRequired = CLASS_UNLOCK_LEVELS[classKey];
-      const coinCost = CLASS_UNLOCK_COSTS[classKey];
+  // Map from unlock key to profile key
+  const classConfig = [
+    { unlockKey: 'aClass', profileKey: 'aClass' },
+    { unlockKey: 'open', profileKey: 'openClass' },
+    { unlockKey: 'world', profileKey: 'worldClass' },
+  ];
+
+  for (const { unlockKey, profileKey } of classConfig) {
+    if (!unlockedClasses?.includes(profileKey)) {
+      const levelRequired = CLASS_UNLOCK_LEVELS[unlockKey];
+      const coinCost = CLASS_UNLOCK_COSTS[unlockKey];
       const meetsLevel = xpLevel >= levelRequired;
       const canAfford = corpsCoin >= coinCost;
       return {
-        className: CLASS_DISPLAY_NAMES[classKey],
-        classKey,
+        className: CLASS_DISPLAY_NAMES[unlockKey],
+        classKey: unlockKey,
         levelRequired,
         coinCost,
         meetsLevel,
