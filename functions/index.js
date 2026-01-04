@@ -122,6 +122,11 @@ const {
   onLeagueMemberJoined,
   onLeagueChatMessage,
 } = require("./src/triggers/pushTriggers");
+const {
+  onUniformDesignUpdated,
+  generateCorpsAvatar,
+  regenerateAllAvatars,
+} = require("./src/triggers/avatarGeneration");
 
 // Webhooks
 const { stripeWebhook } = require("./src/webhooks/stripe");
@@ -225,6 +230,11 @@ module.exports = {
   onTradeProposalCreated,
   onLeagueMemberJoined,
   onLeagueChatMessage,
+
+  // Avatar Generation
+  onUniformDesignUpdated,
+  generateCorpsAvatar,
+  regenerateAllAvatars,
 
   // Webhooks
   stripeWebhook,

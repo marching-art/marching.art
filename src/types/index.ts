@@ -161,6 +161,40 @@ export type PushNotificationType =
 
 export type CorpsClass = 'soundSport' | 'aClass' | 'open' | 'world';
 
+/**
+ * Corps Uniform Design - Director-customizable appearance for fantasy corps
+ * Used by AI to generate accurate images for news articles
+ */
+export interface CorpsUniformDesign {
+  // Core Colors
+  primaryColor: string;        // e.g., "crimson red", "midnight blue", "emerald green"
+  secondaryColor: string;      // e.g., "gold", "silver", "white"
+  accentColor?: string;        // e.g., "black trim", "bronze highlights"
+
+  // Uniform Style
+  style: 'traditional' | 'contemporary' | 'theatrical' | 'athletic' | 'avant-garde';
+
+  // Helmet/Headwear
+  helmetStyle: 'shako' | 'aussie' | 'modern' | 'themed' | 'none';
+  plumeDescription?: string;   // e.g., "tall white horsehair plume", "flame-shaped red and orange"
+
+  // Section-Specific Details (optional - AI will fill in if blank)
+  brassDescription?: string;   // e.g., "gold-lacquered with dragon engravings on bells"
+  percussionDescription?: string; // e.g., "red drums with gold dragon scale graphics"
+  guardDescription?: string;   // e.g., "flowing crimson gowns with wing-shaped capes"
+
+  // Corps Identity
+  mascotOrEmblem?: string;     // e.g., "dragon", "phoenix", "shield with crossed swords"
+  themeKeywords?: string[];    // e.g., ["fire", "power", "ancient"], used for AI matching
+
+  // Performance Context
+  venuePreference?: 'outdoor' | 'indoor' | 'both';
+  performanceStyle?: string;   // e.g., "high-energy explosive", "elegant and refined", "mysterious and dark"
+
+  // Additional Visual Notes (free-form for anything not covered above)
+  additionalNotes?: string;    // e.g., "LED elements in helmet", "capes that detach mid-show"
+}
+
 export interface CorpsData {
   corpsName: string;
   name?: string; // Legacy field
@@ -168,6 +202,13 @@ export interface CorpsData {
   showConcept: string;
   corpsClass: CorpsClass;
   createdAt: Timestamp;
+
+  // Uniform Design (director-customizable)
+  uniformDesign?: CorpsUniformDesign;
+
+  // Corps Avatar (AI-generated based on uniform design)
+  avatarUrl?: string;
+  avatarGeneratedAt?: string; // ISO timestamp of when avatar was generated
 
   // Season stats
   totalSeasonScore: number;
