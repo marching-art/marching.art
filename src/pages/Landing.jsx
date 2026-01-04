@@ -10,7 +10,7 @@ import {
   Trophy, Lock, Mail, AlertCircle, TrendingUp,
   TrendingDown, Flame, ChevronRight, X,
   Activity, LayoutDashboard, Award, User, LogOut,
-  Settings, Zap, UserPlus, MessageCircle
+  Settings, Zap, UserPlus, MessageCircle, Clock, BookOpen, Newspaper
 } from 'lucide-react';
 import { useAuth } from '../App';
 import toast from 'react-hot-toast';
@@ -37,6 +37,7 @@ const Landing = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showStandingsModal, setShowStandingsModal] = useState(false);
+  const [selectedStory, setSelectedStory] = useState(null);
 
   // Compute trending players from movers across all classes
   const trendingPlayers = useMemo(() => {
@@ -182,7 +183,7 @@ const Landing = () => {
           {/* ============================================================= */}
           <div className="lg:col-span-8">
             {/* Dynamic News Feed powered by Gemini AI */}
-            <NewsFeed maxItems={5} />
+            <NewsFeed maxItems={8} onStoryClick={setSelectedStory} />
           </div>
 
           {/* ============================================================= */}
@@ -511,6 +512,236 @@ const Landing = () => {
           </div>
         </div>
       </main>
+
+      {/* ============================================================= */}
+      {/* STORY DETAIL MODAL */}
+      {/* ============================================================= */}
+      {selectedStory && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/90"
+            onClick={() => setSelectedStory(null)}
+          />
+
+          {/* Modal Content */}
+          <div className="relative w-full max-w-3xl bg-[#1a1a1a] border border-[#333] rounded-sm max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                  selectedStory.category === 'dci' ? 'bg-[#0057B8] text-white' :
+                  selectedStory.category === 'fantasy' ? 'bg-orange-500 text-white' :
+                  selectedStory.category === 'analysis' ? 'bg-purple-500 text-white' :
+                  'bg-gray-500 text-white'
+                }`}>
+                  {selectedStory.category === 'dci' ? 'DCI RECAP' :
+                   selectedStory.category === 'fantasy' ? 'FANTASY' :
+                   selectedStory.category === 'analysis' ? 'ANALYSIS' : 'NEWS'}
+                </span>
+                {selectedStory.metadata?.articleType && (
+                  <span className="text-[10px] text-gray-500 uppercase">
+                    {selectedStory.metadata.articleType.replace(/_/g, ' ')}
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={() => setSelectedStory(null)}
+                className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto">
+              {/* Hero Image */}
+              {selectedStory.imageUrl && (
+                <div className="aspect-[21/9] bg-[#0a0a0a] relative overflow-hidden">
+                  <img
+                    src={selectedStory.imageUrl}
+                    alt={selectedStory.headline}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a] via-transparent to-transparent" />
+                </div>
+              )}
+
+              {/* Article Content */}
+              <div className="p-6">
+                {/* Meta */}
+                <div className="flex items-center gap-3 mb-4 text-xs text-gray-500">
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {selectedStory.createdAt ? new Date(selectedStory.createdAt).toLocaleDateString('en-US', {
+                      month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit'
+                    }) : 'Recent'}
+                  </span>
+                  {selectedStory.metadata?.offSeasonDay && (
+                    <span className="flex items-center gap-1">
+                      <Newspaper className="w-3 h-3" />
+                      Day {selectedStory.metadata.offSeasonDay}
+                    </span>
+                  )}
+                </div>
+
+                {/* Headline */}
+                <h1 className="text-2xl lg:text-3xl font-black text-white leading-tight mb-4">
+                  {selectedStory.headline}
+                </h1>
+
+                {/* Summary */}
+                <p className="text-lg text-gray-300 leading-relaxed mb-6 pb-6 border-b border-[#333]">
+                  {selectedStory.summary}
+                </p>
+
+                {/* Full Story */}
+                {selectedStory.fullStory && (
+                  <div className="prose prose-invert prose-sm max-w-none mb-6">
+                    {selectedStory.fullStory.split('\n\n').map((paragraph, idx) => (
+                      <p key={idx} className="text-gray-300 leading-relaxed mb-4">
+                        {paragraph}
+                      </p>
+                    ))}
+                  </div>
+                )}
+
+                {/* Fantasy Impact */}
+                {selectedStory.fantasyImpact && typeof selectedStory.fantasyImpact === 'string' && (
+                  <div className="p-4 bg-orange-500/10 border border-orange-500/20 mb-6">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Flame className="w-4 h-4 text-orange-400" />
+                      <span className="text-xs font-bold text-orange-400 uppercase tracking-wider">Fantasy Impact</span>
+                    </div>
+                    <p className="text-sm text-orange-100/80 leading-relaxed">{selectedStory.fantasyImpact}</p>
+                  </div>
+                )}
+
+                {/* Standings Data */}
+                {selectedStory.standings && selectedStory.standings.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                      <Trophy className="w-4 h-4 text-[#0057B8]" />
+                      Standings
+                    </h3>
+                    <div className="bg-[#111] border border-[#333] divide-y divide-[#333]/50">
+                      {selectedStory.standings.slice(0, 10).map((item, idx) => (
+                        <div key={idx} className="flex items-center justify-between px-4 py-2">
+                          <div className="flex items-center gap-3">
+                            <span className={`w-6 h-6 flex items-center justify-center text-xs font-bold rounded-sm ${
+                              item.rank <= 3 ? 'bg-[#0057B8] text-white' : 'bg-[#222] text-gray-500'
+                            }`}>
+                              {item.rank}
+                            </span>
+                            <span className="text-sm text-white">{item.corps}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold font-data text-white tabular-nums">
+                              {typeof item.total === 'number' ? item.total.toFixed(3) : item.total}
+                            </span>
+                            {item.change !== undefined && (
+                              <span className={`text-xs font-data ${item.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                {item.change >= 0 ? '+' : ''}{typeof item.change === 'number' ? item.change.toFixed(3) : item.change}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Top Performers */}
+                {selectedStory.topPerformers && selectedStory.topPerformers.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-sm font-bold text-orange-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                      <Flame className="w-4 h-4" />
+                      Top Performers
+                    </h3>
+                    <div className="space-y-2">
+                      {selectedStory.topPerformers.slice(0, 5).map((perf, idx) => (
+                        <div key={idx} className="bg-[#111] border border-[#333] p-3">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm font-bold text-white">{perf.corpsName || perf.corps}</span>
+                            <span className="text-sm font-data font-bold text-orange-400">
+                              {typeof perf.score === 'number' ? perf.score.toFixed(3) : perf.score} pts
+                            </span>
+                          </div>
+                          {perf.director && (
+                            <span className="text-xs text-gray-500">Director: {perf.director}</span>
+                          )}
+                          {perf.highlight && (
+                            <p className="text-xs text-gray-400 mt-1">{perf.highlight}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Insights */}
+                {selectedStory.insights && selectedStory.insights.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-sm font-bold text-purple-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                      <BookOpen className="w-4 h-4" />
+                      Key Insights
+                    </h3>
+                    <div className="space-y-3">
+                      {selectedStory.insights.map((insight, idx) => (
+                        <div key={idx} className="bg-purple-500/10 border border-purple-500/20 p-3">
+                          <div className="text-xs font-bold text-purple-400 uppercase mb-1">{insight.metric}</div>
+                          <p className="text-sm text-white mb-1">{insight.finding}</p>
+                          <p className="text-xs text-gray-400">{insight.implication}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Recommendations */}
+                {selectedStory.recommendations && selectedStory.recommendations.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-sm font-bold text-green-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4" />
+                      Fantasy Recommendations
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {selectedStory.recommendations.map((rec, idx) => (
+                        <div key={idx} className="bg-[#111] border border-[#333] p-3">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm font-bold text-white">{rec.corps}</span>
+                            <span className={`px-2 py-0.5 text-[10px] font-bold uppercase ${
+                              rec.action === 'buy' ? 'bg-green-500/20 text-green-400' :
+                              rec.action === 'sell' ? 'bg-red-500/20 text-red-400' :
+                              'bg-yellow-500/20 text-yellow-400'
+                            }`}>
+                              {rec.action}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-400">{rec.reasoning}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex-shrink-0 flex items-center justify-between">
+              <span className="text-[10px] text-gray-500">
+                Generated by marching.art AI
+              </span>
+              <button
+                onClick={() => setSelectedStory(null)}
+                className="px-4 py-2 text-xs font-bold text-gray-400 border border-[#333] hover:border-[#444] hover:text-white transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ============================================================= */}
       {/* FULL STANDINGS MODAL */}

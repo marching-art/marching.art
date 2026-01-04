@@ -226,23 +226,38 @@ async function saveDailyNews(db, { reportDay, content, metadata, articles, seaso
 
     await db.doc(basePath).set(dayIndex, { merge: true });
 
-    // Save primary article to legacy collection for backward compatibility
-    const primaryArticle = articles[0];
-    if (primaryArticle) {
+    // Save ALL 5 articles to legacy collection for the news feed
+    for (const article of articles) {
+      // Map article type to category
+      const categoryMap = {
+        [ARTICLE_TYPES.DCI_STANDINGS]: NEWS_CATEGORIES.DCI_RECAP,
+        [ARTICLE_TYPES.DCI_CAPTIONS]: NEWS_CATEGORIES.DCI_RECAP,
+        [ARTICLE_TYPES.FANTASY_PERFORMERS]: NEWS_CATEGORIES.FANTASY,
+        [ARTICLE_TYPES.FANTASY_LEAGUES]: NEWS_CATEGORIES.FANTASY,
+        [ARTICLE_TYPES.DEEP_ANALYTICS]: NEWS_CATEGORIES.ANALYSIS,
+      };
+
       await saveToNewsHubLegacy(db, {
-        category: NEWS_CATEGORIES.DCI_RECAP,
+        category: categoryMap[article.type] || NEWS_CATEGORIES.DCI_RECAP,
         date: new Date(),
         offSeasonDay: reportDay,
         content: {
-          headline: primaryArticle.headline,
-          summary: primaryArticle.summary,
-          fullStory: primaryArticle.narrative,
-          dciRecap: articles.find(a => a.type === "dci_standings") || null,
-          fantasySpotlight: articles.find(a => a.type === "fantasy_performers") || null,
-          crossOverAnalysis: articles.find(a => a.type === "deep_analytics") || null,
+          headline: article.headline,
+          summary: article.summary,
+          fullStory: article.narrative,
+          // Include type-specific data
+          standings: article.standings || null,
+          captionBreakdown: article.captionBreakdown || null,
+          topPerformers: article.topPerformers || null,
+          leagueHighlights: article.leagueHighlights || null,
+          insights: article.insights || null,
+          recommendations: article.recommendations || null,
         },
-        metadata,
-        imageResult: { url: primaryArticle.imageUrl, isPlaceholder: primaryArticle.isPlaceholder },
+        metadata: {
+          ...metadata,
+          articleType: article.type,
+        },
+        imageResult: { url: article.imageUrl, isPlaceholder: article.isPlaceholder },
       });
     }
 
