@@ -351,21 +351,48 @@ async function generateDciStandingsArticle({ reportDay, dayScores, trendData, ac
   const { textModel } = initializeGemini();
 
   const topCorps = dayScores[0];
-  const prompt = `Write a compelling DCI standings article for Day ${reportDay}.
+  const secondCorps = dayScores[1];
+  const gap = topCorps && secondCorps ? (topCorps.total - secondCorps.total).toFixed(3) : "0.000";
 
-TOP 12 STANDINGS:
+  const prompt = `You are a veteran DCI (Drum Corps International) journalist writing for marching.art, the premier fantasy platform for competitive drum corps.
+
+CONTEXT: DCI is the premier competitive marching music organization in the world. Corps compete in shows judged on General Effect (GE), Visual, and Music captions. Scores range from 0-100, with top corps typically scoring 85-99. Every 0.001 point matters in these razor-thin competitions.
+
+TODAY'S COMPETITION RESULTS - Day ${reportDay} of the 2024 DCI Season:
+
+STANDINGS (Corps Name | Historical Season Year | Total Score | Daily Change):
 ${dayScores.slice(0, 12).map((s, i) => {
   const trend = trendData[s.corps];
-  return `${i + 1}. ${s.corps} (${s.sourceYear}): ${s.total.toFixed(3)} [${trend?.dayChange >= 0 ? '+' : ''}${(trend?.dayChange || 0).toFixed(3)}]`;
+  const change = trend?.dayChange || 0;
+  return `${i + 1}. ${s.corps} (${s.sourceYear} season): ${s.total.toFixed(3)} pts [${change >= 0 ? '+' : ''}${change.toFixed(3)} from yesterday]`;
 }).join('\n')}
 
-Write like a veteran DCI journalist. Focus on:
-- Who is leading and by how much
-- Major position changes
-- Momentum narratives
-- Gap analysis between top corps
+KEY STATISTICS:
+- Lead margin: ${topCorps?.corps || 'N/A'} leads by ${gap} points
+- Biggest gainer today: ${Object.entries(trendData).sort((a,b) => b[1].dayChange - a[1].dayChange)[0]?.[0] || 'N/A'}
+- Corps count: ${dayScores.length} corps competing
 
-Return JSON: { headline, summary, narrative, standings: [{rank, corps, year, total, change, momentum}] }`;
+WRITE A PROFESSIONAL SPORTS ARTICLE covering today's standings. Your article should:
+
+1. HEADLINE: Create an attention-grabbing headline like ESPN or Sports Illustrated would write. Reference the leading corps and the competitive narrative. Examples of good headlines: "Blue Devils Extend Dynasty with 0.425 Surge", "Crown Closes Gap: 0.15 Separates Top Three"
+
+2. SUMMARY: 2-3 punchy sentences capturing the day's biggest story - who's leading, who's surging, who's falling.
+
+3. NARRATIVE: A 3-4 paragraph article that:
+   - Opens with the leader and their margin (make it dramatic)
+   - Discusses position battles (who moved up/down and why it matters)
+   - Analyzes momentum (which corps are trending hot or cold)
+   - Closes with what to watch tomorrow
+
+TONE: Professional sports journalism. Authoritative but accessible. Use specific numbers. Create drama from the competition without being hyperbolic. Reference that these are real historical DCI performances.
+
+Return ONLY valid JSON with this EXACT structure:
+{
+  "headline": "string",
+  "summary": "string",
+  "narrative": "string",
+  "standings": [{"rank": 1, "corps": "string", "year": 2024, "total": 95.123, "change": 0.123, "momentum": "rising/falling/steady"}]
+}`;
 
   try {
     const result = await textModel.generateContent(prompt);
@@ -400,19 +427,46 @@ Return JSON: { headline, summary, narrative, standings: [{rank, corps, year, tot
 async function generateDciCaptionsArticle({ reportDay, dayScores, captionLeaders, activeCorps }) {
   const { textModel } = initializeGemini();
 
-  const prompt = `Write a deep-dive caption analysis for Day ${reportDay}.
+  const prompt = `You are a DCI caption analyst and technical expert writing for marching.art. You specialize in breaking down the scoring categories that determine DCI competition results.
 
-CAPTION LEADERS:
-${captionLeaders.map(c => `${c.caption}: ${c.leader} (${c.score.toFixed(2)}) [trend: ${c.weeklyTrend}]`).join('\n')}
+CONTEXT: DCI scoring has three main categories:
+- GENERAL EFFECT (GE): 40% of total - Measures overall entertainment value, emotional impact, and design excellence. Split into GE1 (Music Effect) and GE2 (Visual Effect).
+- VISUAL: 30% of total - Measures marching technique, body movement, and color guard excellence. Includes Visual Proficiency (VP), Visual Analysis (VA), and Color Guard (CG).
+- MUSIC: 30% of total - Measures musical performance quality. Includes Brass (B), Music Analysis (MA), and Percussion (P).
 
-TOP SCORES BY CATEGORY:
-GE Leaders: ${dayScores.slice(0, 5).map(s => `${s.corps}: ${s.subtotals.ge.toFixed(2)}`).join(', ')}
-Visual Leaders: ${dayScores.slice(0, 5).map(s => `${s.corps}: ${s.subtotals.visual.toFixed(2)}`).join(', ')}
-Music Leaders: ${dayScores.slice(0, 5).map(s => `${s.corps}: ${s.subtotals.music.toFixed(2)}`).join(', ')}
+TODAY'S CAPTION BREAKDOWN - Day ${reportDay}:
 
-Analyze each caption category in depth. Discuss technique, execution, and trends.
+CAPTION LEADERS BY CATEGORY:
+${captionLeaders.map(c => `${c.caption}: ${c.leader} scores ${c.score.toFixed(2)} [7-day trend: ${c.weeklyTrend}]`).join('\n')}
 
-Return JSON: { headline, summary, narrative, captionBreakdown: [{category, leader, analysis}] }`;
+SUBCATEGORY TOTALS (Top 5 Corps):
+General Effect: ${dayScores.slice(0, 5).map(s => `${s.corps}: ${s.subtotals.ge.toFixed(2)}`).join(' | ')}
+Visual Total: ${dayScores.slice(0, 5).map(s => `${s.corps}: ${s.subtotals.visual.toFixed(2)}`).join(' | ')}
+Music Total: ${dayScores.slice(0, 5).map(s => `${s.corps}: ${s.subtotals.music.toFixed(2)}`).join(' | ')}
+
+WRITE A TECHNICAL ANALYSIS ARTICLE that breaks down today's caption performances:
+
+1. HEADLINE: Focus on the most interesting caption story. Examples: "Crown Brass Posts Season-High 19.2: Inside the Hornline's Breakthrough", "Blue Devils GE Dominance: How Design Excellence Creates Separation"
+
+2. SUMMARY: 2-3 sentences highlighting which corps dominated which captions and what it means for the competition.
+
+3. NARRATIVE: A detailed 3-4 paragraph analysis that:
+   - Identifies which corps is winning the "caption battle" in each major area
+   - Explains WHY certain corps excel in specific captions (brass technique, guard excellence, visual clarity)
+   - Discusses any caption trends (corps improving in brass, guard scores rising across the board)
+   - Provides insight into how caption strengths/weaknesses affect total scores
+
+4. CAPTION BREAKDOWN: Provide analysis for each major category with the leader and what makes them stand out.
+
+TONE: Technical but accessible. Like a color commentator who knows the activity inside and out. Use specific scores. Reference real DCI judging criteria.
+
+Return ONLY valid JSON:
+{
+  "headline": "string",
+  "summary": "string",
+  "narrative": "string",
+  "captionBreakdown": [{"category": "General Effect/Visual/Music/Brass/Percussion/Guard", "leader": "Corps Name", "analysis": "2-3 sentence analysis"}]
+}`;
 
   try {
     const result = await textModel.generateContent(prompt);
@@ -462,19 +516,54 @@ async function generateFantasyPerformersArticle({ reportDay, fantasyData }) {
   const allResults = shows.flatMap(s => s.results || []);
   const topPerformers = allResults.sort((a, b) => b.totalScore - a.totalScore).slice(0, 10);
 
-  const prompt = `Write a fantasy drum corps performer spotlight for Day ${reportDay}.
+  // Calculate some stats
+  const avgScore = topPerformers.length > 0
+    ? (topPerformers.reduce((sum, p) => sum + p.totalScore, 0) / topPerformers.length).toFixed(3)
+    : "0.000";
+  const topScore = topPerformers[0]?.totalScore?.toFixed(3) || "0.000";
 
-TOP FANTASY ENSEMBLES:
+  const prompt = `You are a fantasy sports analyst writing for marching.art, covering our DCI fantasy competition like ESPN covers fantasy football.
+
+CONTEXT: marching.art Fantasy is a fantasy sports game where users ("Directors") create their own fantasy ensembles. Directors draft real DCI corps to fill caption positions (Brass, Percussion, Guard, etc.) and earn points based on how those corps perform in actual DCI competitions. Think fantasy football, but for drum corps.
+
+TODAY'S FANTASY LEADERBOARD - Day ${reportDay}:
+
+TOP 10 FANTASY ENSEMBLES:
 ${topPerformers.map((r, i) =>
-  `${i + 1}. ${r.directorName || 'Director'}'s "${r.corpsName}": ${r.totalScore.toFixed(3)} pts`
+  `${i + 1}. "${r.corpsName}" (Director: ${r.directorName || 'Anonymous'}) - ${r.totalScore.toFixed(3)} fantasy points`
 ).join('\n')}
 
-Celebrate the top performers. Focus on their overall scores and standings.
-IMPORTANT: Do NOT speculate about or mention specific caption picks or lineup choices.
-Directors' caption selections are confidential strategy. Only discuss total scores and rankings.
-Make it engaging and exciting for fantasy players.
+STATISTICS:
+- Top Score: ${topScore} points
+- Top 10 Average: ${avgScore} points
+- Total ensembles competing: ${allResults.length}
 
-Return JSON: { headline, summary, narrative, topPerformers: [{rank, director, corpsName, score, highlight}] }`;
+WRITE A FANTASY SPORTS CELEBRATION ARTICLE:
+
+1. HEADLINE: Exciting fantasy sports headline celebrating the top performers. Examples: "The Crimson Guard Dominates Day ${reportDay} with ${topScore}-Point Explosion", "Anonymous Director's 'Blue Thunder' Claims Fantasy Crown"
+
+2. SUMMARY: 2-3 sentences about who dominated today's fantasy competition. Make it exciting!
+
+3. NARRATIVE: A 3-4 paragraph article that:
+   - Celebrates the top Director's achievement with enthusiasm
+   - Highlights impressive performances in the top 5
+   - Notes the competition level (how close were the scores?)
+   - Teases tomorrow's competition
+
+CRITICAL RULES:
+- This is FANTASY SPORTS like fantasy football - NOT a role-playing game or video game
+- The "corps names" are creative team names chosen by users, not real DCI corps
+- NEVER mention specific lineup picks or roster choices - these are confidential strategy
+- Focus ONLY on total scores and rankings
+- Write like ESPN fantasy coverage - celebratory, fun, competitive
+
+Return ONLY valid JSON:
+{
+  "headline": "string",
+  "summary": "string",
+  "narrative": "string",
+  "topPerformers": [{"rank": 1, "director": "Name or Anonymous", "corpsName": "Fantasy Team Name", "score": 95.123, "highlight": "One sentence about their achievement"}]
+}`;
 
   try {
     const result = await textModel.generateContent(prompt);
@@ -509,18 +598,60 @@ Return JSON: { headline, summary, narrative, topPerformers: [{rank, director, co
 async function generateFantasyLeaguesArticle({ reportDay, fantasyData }) {
   const { textModel } = initializeGemini();
 
-  // This would need actual league data - using placeholder structure
-  const prompt = `Write a fantasy league standings update for Day ${reportDay}.
+  // Get show/league data
+  const shows = fantasyData?.current?.shows || [];
+  const showSummaries = shows.map(show => {
+    const results = show.results || [];
+    const top3 = results.sort((a, b) => b.totalScore - a.totalScore).slice(0, 3);
+    return {
+      name: show.showName || show.showId || 'Competition',
+      entrants: results.length,
+      topScorer: top3[0]?.corpsName || 'N/A',
+      topScore: top3[0]?.totalScore?.toFixed(3) || '0.000',
+    };
+  });
 
-Focus on:
-- League standings changes
-- Head-to-head matchup results
-- Playoff implications
-- Waiver wire recommendations
+  const prompt = `You are a fantasy sports league analyst for marching.art, writing league updates like ESPN's fantasy football league coverage.
 
-Make it feel like ESPN fantasy sports coverage.
+CONTEXT: marching.art Fantasy organizes competitions into "shows" (like fantasy football leagues). Directors compete in these shows with their fantasy ensembles. Points are earned based on real DCI corps performances.
 
-Return JSON: { headline, summary, narrative, leagueHighlights: [{league, leader, story}] }`;
+TODAY'S LEAGUE/SHOW ACTIVITY - Day ${reportDay}:
+
+ACTIVE COMPETITIONS:
+${showSummaries.length > 0 ? showSummaries.map((s, i) =>
+  `${i + 1}. "${s.name}" - ${s.entrants} ensembles competing | Leader: "${s.topScorer}" (${s.topScore} pts)`
+).join('\n') : 'No active shows today - check back tomorrow!'}
+
+Total Shows Active: ${shows.length}
+Total Directors Competing: ${shows.reduce((sum, s) => sum + (s.results?.length || 0), 0)}
+
+WRITE A LEAGUE ROUNDUP ARTICLE:
+
+1. HEADLINE: League-focused headline about competition across shows. Examples: "Championship Show Heats Up: Three Directors Within 0.5 Points", "Day ${reportDay} League Roundup: Underdogs Make Their Move"
+
+2. SUMMARY: 2-3 sentences summarizing league activity across all shows.
+
+3. NARRATIVE: A 3-4 paragraph article that:
+   - Provides an overview of competition across shows
+   - Highlights tight races and dominant performances
+   - Discusses what's at stake as the season progresses
+   - Previews upcoming competition days
+
+4. LEAGUE HIGHLIGHTS: Key storylines from each active show/league.
+
+CRITICAL RULES:
+- This is FANTASY SPORTS coverage - NOT RPG/video games
+- Focus on league/show competition, not individual roster decisions
+- NEVER reveal or speculate about specific lineup choices
+- Write like ESPN fantasy league coverage
+
+Return ONLY valid JSON:
+{
+  "headline": "string",
+  "summary": "string",
+  "narrative": "string",
+  "leagueHighlights": [{"league": "Show/League Name", "leader": "Top Ensemble Name", "story": "1-2 sentence storyline"}]
+}`;
 
   try {
     const result = await textModel.generateContent(prompt);
@@ -553,23 +684,105 @@ Return JSON: { headline, summary, narrative, leagueHighlights: [{league, leader,
 async function generateDeepAnalyticsArticle({ reportDay, dayScores, trendData, fantasyData, captionLeaders }) {
   const { textModel } = initializeGemini();
 
-  const prompt = `Write a deep statistical analysis for Day ${reportDay}.
+  // Calculate advanced statistics
+  const bigGainers = Object.entries(trendData)
+    .filter(([, t]) => t.dayChange > 0.1)
+    .sort((a, b) => b[1].dayChange - a[1].dayChange)
+    .slice(0, 5);
 
-STATISTICAL DATA:
-- Corps with biggest gains: ${Object.entries(trendData).filter(([,t]) => t.dayChange > 0.1).map(([c,t]) => `${c}: +${t.dayChange.toFixed(3)}`).join(', ') || 'None significant'}
-- Corps cooling off: ${Object.entries(trendData).filter(([,t]) => t.dayChange < -0.1).map(([c,t]) => `${c}: ${t.dayChange.toFixed(3)}`).join(', ') || 'None significant'}
-- 7-day trend leaders: ${Object.entries(trendData).sort((a,b) => b[1].trendFromAvg - a[1].trendFromAvg).slice(0,3).map(([c,t]) => `${c}: +${t.trendFromAvg.toFixed(3)}`).join(', ')}
+  const bigLosers = Object.entries(trendData)
+    .filter(([, t]) => t.dayChange < -0.1)
+    .sort((a, b) => a[1].dayChange - b[1].dayChange)
+    .slice(0, 5);
 
-Provide deep statistical insights:
-- Regression analysis on DCI corps performance
-- Momentum indicators for corps trajectories
-- General fantasy value observations (which DCI corps are trending)
-- Strategic recommendations for fantasy players
+  const trendLeaders = Object.entries(trendData)
+    .sort((a, b) => b[1].trendFromAvg - a[1].trendFromAvg)
+    .slice(0, 5);
 
-IMPORTANT: Do NOT reveal or speculate about any individual director's caption picks or lineup choices.
-Caption selections are confidential. Only discuss overall DCI corps trends and general fantasy value.
+  const trendLaggers = Object.entries(trendData)
+    .sort((a, b) => a[1].trendFromAvg - b[1].trendFromAvg)
+    .slice(0, 5);
 
-Return JSON: { headline, summary, narrative, insights: [{metric, finding, implication}], recommendations: [{corps, action, reasoning}] }`;
+  // Calculate score distribution
+  const totalScores = dayScores.map(s => s.total);
+  const avgScore = totalScores.length > 0
+    ? (totalScores.reduce((sum, s) => sum + s, 0) / totalScores.length).toFixed(3)
+    : "0.000";
+  const scoreSpread = totalScores.length > 0
+    ? (Math.max(...totalScores) - Math.min(...totalScores)).toFixed(3)
+    : "0.000";
+
+  const prompt = `You are a senior data analyst and statistician for marching.art, writing advanced analytical content like FiveThirtyEight or The Athletic's deep dives.
+
+CONTEXT: DCI scoring uses a 100-point scale. Top corps score 90-99+. Every 0.001 point represents real competitive separation. The season builds toward championships, so trajectory matters as much as current standings.
+
+DAY ${reportDay} STATISTICAL ANALYSIS:
+
+═══════════════════════════════════════════════════════════════
+MOMENTUM INDICATORS (Single-Day Movement)
+═══════════════════════════════════════════════════════════════
+SURGING (>0.1 point gain from yesterday):
+${bigGainers.length > 0 ? bigGainers.map(([c, t]) => `• ${c}: +${t.dayChange.toFixed(3)} (latest: ${t.latestTotal?.toFixed(3) || 'N/A'})`).join('\n') : '• No corps gained >0.1 points today'}
+
+COOLING OFF (>0.1 point drop from yesterday):
+${bigLosers.length > 0 ? bigLosers.map(([c, t]) => `• ${c}: ${t.dayChange.toFixed(3)} (latest: ${t.latestTotal?.toFixed(3) || 'N/A'})`).join('\n') : '• No corps dropped >0.1 points today'}
+
+═══════════════════════════════════════════════════════════════
+7-DAY TREND ANALYSIS (Performance vs. Weekly Average)
+═══════════════════════════════════════════════════════════════
+OUTPERFORMING THEIR AVERAGE:
+${trendLeaders.map(([c, t]) => `• ${c}: +${t.trendFromAvg.toFixed(3)} above 7-day avg (avg: ${t.avgTotal.toFixed(3)})`).join('\n')}
+
+UNDERPERFORMING THEIR AVERAGE:
+${trendLaggers.map(([c, t]) => `• ${c}: ${t.trendFromAvg.toFixed(3)} below 7-day avg (avg: ${t.avgTotal.toFixed(3)})`).join('\n')}
+
+═══════════════════════════════════════════════════════════════
+FIELD STATISTICS
+═══════════════════════════════════════════════════════════════
+• Total corps in standings: ${dayScores.length}
+• Average score: ${avgScore}
+• Score spread (1st to last): ${scoreSpread} points
+• Top score: ${totalScores.length > 0 ? Math.max(...totalScores).toFixed(3) : 'N/A'}
+• Median score: ${totalScores.length > 0 ? totalScores.sort((a, b) => a - b)[Math.floor(totalScores.length / 2)].toFixed(3) : 'N/A'}
+
+═══════════════════════════════════════════════════════════════
+CAPTION EXCELLENCE BY CATEGORY
+═══════════════════════════════════════════════════════════════
+${captionLeaders.slice(0, 6).map(c => `• ${c.caption}: ${c.leader} (${c.score.toFixed(2)}) [trend: ${c.weeklyTrend}]`).join('\n')}
+
+WRITE A DATA-DRIVEN ANALYTICAL ARTICLE:
+
+1. HEADLINE: Statistical insight headline. Examples: "Momentum Math: Crown's 7-Day Trend Points to Finals Surge", "By The Numbers: Score Compression Signals Tighter Championships", "Analytics Deep Dive: Which Corps Are Peaking at the Right Time?"
+
+2. SUMMARY: 2-3 sentences with the most important statistical finding of the day. Lead with data.
+
+3. NARRATIVE: A 4-5 paragraph deep analysis that:
+   - Opens with the key statistical story (momentum shift, trend reversal, or trajectory confirmation)
+   - Provides regression analysis: Are top corps maintaining trajectory? Are mid-pack corps closing the gap?
+   - Analyzes caption-specific trends: Which captions are separating corps? Where are the battles closest?
+   - Discusses fantasy implications: Which DCI corps are trending in ways that affect fantasy value?
+   - Concludes with predictive insights: Based on current trajectories, what should we expect?
+
+4. INSIGHTS: 3-5 specific statistical findings with their implications.
+
+5. RECOMMENDATIONS: Fantasy strategy tips based on corps trends (NOT specific lineup picks - those are confidential).
+
+CRITICAL RULES:
+- This is STATISTICAL ANALYSIS, not opinion - lead with numbers
+- Reference specific corps and their trajectories
+- Explain WHY trends matter (e.g., "Crown's +0.35 over 7 days suggests design changes are being absorbed")
+- Fantasy recommendations should focus on which DCI CORPS are valuable, NOT individual director strategies
+- NEVER reveal or speculate about any director's specific caption picks
+- Write like FiveThirtyEight or The Athletic - data-first journalism
+
+Return ONLY valid JSON:
+{
+  "headline": "string",
+  "summary": "string",
+  "narrative": "string",
+  "insights": [{"metric": "What was measured", "finding": "What the data shows", "implication": "What it means for the competition"}],
+  "recommendations": [{"corps": "DCI Corps Name", "action": "buy/hold/sell", "reasoning": "Data-backed reasoning"}]
+}`;
 
   try {
     const result = await textModel.generateContent(prompt);
@@ -870,9 +1083,31 @@ async function generateFantasyRecap(recapData) {
     const allResults = shows.flatMap(s => s.results || []);
     const topPerformers = allResults.sort((a, b) => b.totalScore - a.totalScore).slice(0, 10);
 
-    const prompt = `Generate fantasy analysis for Day ${offSeasonDay}:
-${topPerformers.map((r, i) => `${i + 1}. ${r.corpsName}: ${r.totalScore.toFixed(3)}`).join('\n')}
-Return JSON: { headline, summary, narrative, fantasyImpact, trendingCorps: [] }`;
+    const prompt = `You are a sports journalist for marching.art, a FANTASY SPORTS platform for DCI (Drum Corps International) marching band competitions.
+
+This is like fantasy football, but for drum corps. Users create fantasy ensembles by drafting real DCI corps to earn points based on actual competition scores.
+
+Write a Day ${offSeasonDay} fantasy sports recap article for these top-performing user ensembles:
+
+TOP FANTASY ENSEMBLES (user-created teams):
+${topPerformers.map((r, i) => `${i + 1}. "${r.corpsName}" (Director: ${r.directorName || 'Anonymous'}): ${r.totalScore.toFixed(3)} fantasy points`).join('\n')}
+
+Write like ESPN fantasy sports coverage. Focus on:
+- Which fantasy ensembles scored the most points
+- Celebrate the top directors' success
+- General strategy tips (without revealing specific lineup picks)
+
+IMPORTANT: Do NOT mention RPGs, video games, or fictional fantasy worlds. This is SPORTS fantasy like fantasy football.
+All "corps" names above are user-created fantasy team names, not real DCI corps.
+
+Return JSON with these EXACT string fields:
+{
+  "headline": "string - exciting sports headline about Day ${offSeasonDay} fantasy results",
+  "summary": "string - 2-3 sentence summary of fantasy sports results",
+  "narrative": "string - full article text about fantasy sports performance",
+  "fantasyImpact": "string - brief tip for fantasy players",
+  "trendingCorps": ["string array of top 3 performing fantasy team names"]
+}`;
 
     const result = await textModel.generateContent(prompt);
     return { success: true, content: parseAiJson(result.response.text()) };
