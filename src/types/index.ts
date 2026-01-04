@@ -203,7 +203,7 @@ export interface CorpsData {
   corpsName: string;
   name?: string; // Legacy field
   location: string;
-  showConcept: string;
+  description: string;
   corpsClass: CorpsClass;
   createdAt: Timestamp;
 
@@ -625,7 +625,7 @@ export interface PaginatedResponse<T> {
 export interface CorpsRegistrationData {
   name: string;
   location: string;
-  showConcept: string;
+  description: string;
   class: CorpsClass;
 }
 
