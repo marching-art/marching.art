@@ -139,6 +139,61 @@ function logarithmicRegression(data) {
   };
 }
 
+/**
+ * Get top N corps from season standings with tie handling at cutoff position.
+ * Used for championship fallback when previous day results are missing.
+ *
+ * @param {Array} allRecaps - All season recaps from fantasy_recaps collection
+ * @param {number} cutoffRank - Number of corps to include (25 for semis, 12 for finals)
+ * @param {Array} eligibleClasses - Array of corps classes to include (e.g., ["worldClass", "openClass", "aClass"])
+ * @returns {Array} Array of { uid, corpsClass } for corps that should advance
+ */
+function getTopCorpsFromSeasonStandings(allRecaps, cutoffRank, eligibleClasses) {
+  // Aggregate best score per corps from all season recaps (excluding championship days 45+)
+  const corpsScores = new Map(); // key: `${uid}_${corpsClass}`, value: { uid, corpsClass, totalScore, day }
+
+  for (const recap of allRecaps) {
+    if (recap.offSeasonDay >= 45) continue; // Skip championship days
+    for (const show of (recap.shows || [])) {
+      for (const result of (show.results || [])) {
+        if (!eligibleClasses.includes(result.corpsClass)) continue;
+
+        const key = `${result.uid}_${result.corpsClass}`;
+        const existing = corpsScores.get(key);
+
+        // Use most recent score (highest day number)
+        if (!existing || recap.offSeasonDay > existing.day) {
+          corpsScores.set(key, {
+            uid: result.uid,
+            corpsClass: result.corpsClass,
+            totalScore: result.totalScore,
+            day: recap.offSeasonDay,
+          });
+        }
+      }
+    }
+  }
+
+  // Convert to array and sort by score descending
+  const sortedCorps = Array.from(corpsScores.values())
+    .sort((a, b) => b.totalScore - a.totalScore);
+
+  if (sortedCorps.length === 0) {
+    return null; // No standings data, fall back to all eligible
+  }
+
+  // Handle ties at cutoff position
+  let advancingCorps = [];
+  if (sortedCorps.length >= cutoffRank) {
+    const cutoffScore = sortedCorps[cutoffRank - 1].totalScore;
+    advancingCorps = sortedCorps.filter(r => r.totalScore >= cutoffScore);
+  } else {
+    advancingCorps = sortedCorps;
+  }
+
+  return advancingCorps.map(r => ({ uid: r.uid, corpsClass: r.corpsClass }));
+}
+
 async function processAndArchiveOffSeasonScoresLogic() {
   const db = getDb();
   logger.info("Running Daily Off-Season Score Processor & Archiver...");
@@ -307,14 +362,29 @@ async function processAndArchiveOffSeasonScoresLogic() {
         };
       } else {
         // FALLBACK: No Day 47 results (recap missing OR empty due to maintenance)
-        // Auto-enroll all World/Open/A Class corps to semifinals
-        logger.info("Day 48: No Day 47 results found. Auto-enrolling all World/Open/A Class corps to Semifinals.");
-        championshipConfig = {
-          "marching.art World Championship Semifinals": {
-            participants: null, // null means all eligible
-            classFilter: ["worldClass", "openClass", "aClass"],
-          },
-        };
+        // Use season standings to get top 25 corps instead of auto-enrolling everyone
+        logger.info("Day 48: No Day 47 results found. Using season standings for top 25 corps.");
+        const eligibleClasses = ["worldClass", "openClass", "aClass"];
+        const top25FromStandings = getTopCorpsFromSeasonStandings(allRecaps, 25, eligibleClasses);
+
+        if (top25FromStandings && top25FromStandings.length > 0) {
+          logger.info(`Day 48: ${top25FromStandings.length} corps advancing to Semifinals from season standings.`);
+          championshipConfig = {
+            "marching.art World Championship Semifinals": {
+              participants: top25FromStandings,
+              classFilter: eligibleClasses,
+            },
+          };
+        } else {
+          // No season standings data at all - fall back to all eligible as last resort
+          logger.info("Day 48: No season standings data. Auto-enrolling all eligible corps.");
+          championshipConfig = {
+            "marching.art World Championship Semifinals": {
+              participants: null,
+              classFilter: eligibleClasses,
+            },
+          };
+        }
       }
 
     } else if (scoredDay === 49) {
@@ -354,9 +424,19 @@ async function processAndArchiveOffSeasonScoresLogic() {
         logger.info(`Day 49: ${finalists.length} corps advancing to World Championship Finals.`);
       } else {
         // FALLBACK: No Day 48 results (recap missing OR empty due to maintenance)
-        // Auto-enroll all World/Open/A Class corps to finals
-        logger.info("Day 49: No Day 48 results found. Auto-enrolling all World/Open/A Class corps to Finals.");
-        // participants is already null, which means all eligible
+        // Use season standings to get top 12 corps instead of auto-enrolling everyone
+        logger.info("Day 49: No Day 48 results found. Using season standings for top 12 corps.");
+        const eligibleClasses = ["worldClass", "openClass", "aClass"];
+        const top12FromStandings = getTopCorpsFromSeasonStandings(allRecaps, 12, eligibleClasses);
+
+        if (top12FromStandings && top12FromStandings.length > 0) {
+          championshipConfig["marching.art World Championship Finals"].participants = top12FromStandings;
+          logger.info(`Day 49: ${top12FromStandings.length} corps advancing to Finals from season standings.`);
+        } else {
+          // No season standings data at all - fall back to all eligible as last resort
+          logger.info("Day 49: No season standings data. Auto-enrolling all eligible corps.");
+          // participants is already null, which means all eligible
+        }
       }
       logger.info("Day 49: All SoundSport corps enrolled in SoundSport Festival.");
     }
@@ -964,14 +1044,29 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
         };
       } else {
         // FALLBACK: No Day 47 results (recap missing OR empty due to maintenance)
-        // Auto-enroll all World/Open/A Class corps to semifinals
-        logger.info("Day 48: No Day 47 results found. Auto-enrolling all World/Open/A Class corps to Semifinals.");
-        championshipConfig = {
-          "marching.art World Championship Semifinals": {
-            participants: null, // null means all eligible
-            classFilter: ["worldClass", "openClass", "aClass"],
-          },
-        };
+        // Use season standings to get top 25 corps instead of auto-enrolling everyone
+        logger.info("Day 48: No Day 47 results found. Using season standings for top 25 corps.");
+        const eligibleClasses = ["worldClass", "openClass", "aClass"];
+        const top25FromStandings = getTopCorpsFromSeasonStandings(allRecaps, 25, eligibleClasses);
+
+        if (top25FromStandings && top25FromStandings.length > 0) {
+          logger.info(`Day 48: ${top25FromStandings.length} corps advancing to Semifinals from season standings.`);
+          championshipConfig = {
+            "marching.art World Championship Semifinals": {
+              participants: top25FromStandings,
+              classFilter: eligibleClasses,
+            },
+          };
+        } else {
+          // No season standings data at all - fall back to all eligible as last resort
+          logger.info("Day 48: No season standings data. Auto-enrolling all eligible corps.");
+          championshipConfig = {
+            "marching.art World Championship Semifinals": {
+              participants: null,
+              classFilter: eligibleClasses,
+            },
+          };
+        }
       }
 
     } else if (scoredDay === 49) {
@@ -1007,9 +1102,19 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
         logger.info(`Day 49: ${finalists.length} corps advancing to World Championship Finals.`);
       } else {
         // FALLBACK: No Day 48 results (recap missing OR empty due to maintenance)
-        // Auto-enroll all World/Open/A Class corps to finals
-        logger.info("Day 49: No Day 48 results found. Auto-enrolling all World/Open/A Class corps to Finals.");
-        // participants is already null, which means all eligible
+        // Use season standings to get top 12 corps instead of auto-enrolling everyone
+        logger.info("Day 49: No Day 48 results found. Using season standings for top 12 corps.");
+        const eligibleClasses = ["worldClass", "openClass", "aClass"];
+        const top12FromStandings = getTopCorpsFromSeasonStandings(allRecaps, 12, eligibleClasses);
+
+        if (top12FromStandings && top12FromStandings.length > 0) {
+          championshipConfig["marching.art World Championship Finals"].participants = top12FromStandings;
+          logger.info(`Day 49: ${top12FromStandings.length} corps advancing to Finals from season standings.`);
+        } else {
+          // No season standings data at all - fall back to all eligible as last resort
+          logger.info("Day 49: No season standings data. Auto-enrolling all eligible corps.");
+          // participants is already null, which means all eligible
+        }
       }
       logger.info("Day 49: All SoundSport corps enrolled in SoundSport Festival.");
     }
