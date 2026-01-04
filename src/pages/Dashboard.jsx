@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom';
 import {
   Trophy, Calendar, Edit, ChevronRight, Users,
   TrendingUp, TrendingDown, Activity, Medal, FileText,
-  Flame, Zap, Coins, Lock, Unlock
+  Flame, Zap, Coins, Lock, Unlock, Palette
 } from 'lucide-react';
 // DirectorCard removed - stats now displayed inline in header
 import { useAuth } from '../App';
