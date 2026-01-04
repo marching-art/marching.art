@@ -564,16 +564,62 @@ function getUniformDetails(corpsName, year) {
 }
 
 /**
- * Get fantasy corps uniform based on name analysis
- * Analyzes the corps name to find matching themes and generates comprehensive description
+ * Get fantasy corps uniform based on director-provided design OR name analysis
+ * Priority: Director's uniformDesign > Name-based theme matching > Default colors
+ *
+ * @param {string} corpsName - The fantasy corps name
+ * @param {string} location - The corps home location (for regional themes)
+ * @param {object} uniformDesign - Director-provided uniform customization (optional)
  */
-function getFantasyUniformDetails(corpsName) {
+function getFantasyUniformDetails(corpsName, location = null, uniformDesign = null) {
+  // PRIORITY 1: Use director-provided uniform design if available
+  if (uniformDesign && uniformDesign.primaryColor) {
+    const styleDescriptions = {
+      traditional: "classic military-style with precise tailoring",
+      contemporary: "modern athletic cut with clean lines",
+      theatrical: "dramatic flowing design with stage presence",
+      athletic: "performance-focused streamlined design",
+      "avant-garde": "bold experimental design pushing boundaries",
+    };
+
+    const helmetDescriptions = {
+      shako: "traditional tall shako",
+      aussie: "aussie-style campaign hat",
+      modern: "contemporary streamlined helmet",
+      themed: "custom themed headpiece",
+      none: "no traditional headwear",
+    };
+
+    const colors = uniformDesign.accentColor
+      ? `${uniformDesign.primaryColor} with ${uniformDesign.secondaryColor} and ${uniformDesign.accentColor}`
+      : `${uniformDesign.primaryColor} with ${uniformDesign.secondaryColor}`;
+
+    const plumeDesc = uniformDesign.plumeDescription
+      ? ` with ${uniformDesign.plumeDescription}`
+      : uniformDesign.helmetStyle !== "none" ? " with matching plume" : "";
+
+    return {
+      colors,
+      uniform: `${styleDescriptions[uniformDesign.style] || "professional"} uniform in ${colors}${uniformDesign.mascotOrEmblem ? `, featuring ${uniformDesign.mascotOrEmblem} emblem` : ""}`,
+      helmet: `${helmetDescriptions[uniformDesign.helmetStyle] || "traditional helmet"} in ${uniformDesign.primaryColor}${plumeDesc}`,
+      brass: uniformDesign.brassDescription || `${uniformDesign.secondaryColor}-accented brass instruments with ${uniformDesign.primaryColor} valve caps`,
+      percussion: uniformDesign.percussionDescription || `${uniformDesign.primaryColor} drums with ${uniformDesign.secondaryColor} hardware and corps graphics`,
+      guard: uniformDesign.guardDescription || `coordinated ${uniformDesign.primaryColor} and ${uniformDesign.secondaryColor} costumes with themed silks`,
+      matchedTheme: "director-custom",
+      performanceStyle: uniformDesign.performanceStyle,
+      venuePreference: uniformDesign.venuePreference,
+      additionalNotes: uniformDesign.additionalNotes,
+      location: location,
+    };
+  }
+
+  // PRIORITY 2: Name-based theme matching
   const lowerName = corpsName.toLowerCase();
 
   // Check for direct theme matches
   for (const [theme, details] of Object.entries(FANTASY_THEMES)) {
     if (lowerName.includes(theme)) {
-      return { ...details, matchedTheme: theme };
+      return { ...details, matchedTheme: theme, location };
     }
   }
 
@@ -601,12 +647,30 @@ function getFantasyUniformDetails(corpsName) {
   for (const [theme, synonyms] of Object.entries(synonymMap)) {
     for (const syn of synonyms) {
       if (lowerName.includes(syn)) {
-        return { ...FANTASY_THEMES[theme], matchedTheme: theme };
+        return { ...FANTASY_THEMES[theme], matchedTheme: theme, location };
       }
     }
   }
 
-  // No match - generate based on first letter/word
+  // PRIORITY 3: Location-based theme hints
+  if (location) {
+    const lowerLocation = location.toLowerCase();
+    // Regional theme hints
+    if (lowerLocation.includes("texas") || lowerLocation.includes("dallas") || lowerLocation.includes("houston")) {
+      return { ...FANTASY_THEMES.star, matchedTheme: "star-regional", location };
+    }
+    if (lowerLocation.includes("colorado") || lowerLocation.includes("denver")) {
+      return { ...FANTASY_THEMES.thunder, matchedTheme: "thunder-regional", location };
+    }
+    if (lowerLocation.includes("phoenix") || lowerLocation.includes("arizona")) {
+      return { ...FANTASY_THEMES.phoenix, matchedTheme: "phoenix-regional", location };
+    }
+    if (lowerLocation.includes("seattle") || lowerLocation.includes("portland")) {
+      return { ...FANTASY_THEMES.storm, matchedTheme: "storm-regional", location };
+    }
+  }
+
+  // PRIORITY 4: Default based on first letter
   const firstWord = corpsName.split(/\s+/)[0].toLowerCase();
   const defaultColors = [
     { colors: "royal purple with gold accents", primary: "purple" },
@@ -615,7 +679,6 @@ function getFantasyUniformDetails(corpsName) {
     { colors: "forest green with bronze accents", primary: "green" },
   ];
 
-  // Use first character to pick a color scheme for consistency
   const colorIndex = firstWord.charCodeAt(0) % defaultColors.length;
   const colorScheme = defaultColors[colorIndex];
 
@@ -627,7 +690,46 @@ function getFantasyUniformDetails(corpsName) {
     percussion: `${colorScheme.primary} drums with team logo graphics`,
     guard: `coordinated ${colorScheme.primary} costumes with team-themed flags`,
     matchedTheme: "custom",
+    location,
   };
+}
+
+/**
+ * Build image prompt for corps avatar/icon generation
+ * Creates a distinctive, recognizable avatar for each fantasy corps
+ *
+ * @param {string} corpsName - The fantasy corps name
+ * @param {string} location - The corps home location
+ * @param {object} uniformDesign - Director-provided uniform customization (optional)
+ */
+function buildCorpsAvatarPrompt(corpsName, location = null, uniformDesign = null) {
+  const details = getFantasyUniformDetails(corpsName, location, uniformDesign);
+
+  return `Create a professional sports team logo/avatar for the fantasy marching arts ensemble "${corpsName}"${location ? ` from ${location}` : ""}.
+
+DESIGN REQUIREMENTS:
+- Style: Clean, bold sports logo suitable for jerseys, merchandise, and app icons
+- Format: Circular or shield-shaped emblem that works at small sizes
+- Colors: ${details.colors}
+
+VISUAL ELEMENTS:
+${uniformDesign?.mascotOrEmblem ? `- Featured mascot/emblem: ${uniformDesign.mascotOrEmblem}` : `- Suggest a mascot or symbol based on the corps name "${corpsName}"`}
+- Include subtle marching arts elements (stylized brass bell, drumstick, or color guard silk)
+- Corps name or initials incorporated into design
+
+COLOR PALETTE:
+- Primary: ${uniformDesign?.primaryColor || details.colors.split(" ")[0]}
+- Secondary: ${uniformDesign?.secondaryColor || details.colors.split(" with ")[1]?.split(" ")[0] || "silver"}
+${uniformDesign?.accentColor ? `- Accent: ${uniformDesign.accentColor}` : ""}
+
+STYLE NOTES:
+- Professional NFL/NBA/esports team quality
+- Bold, recognizable at 64x64 pixels
+- Modern but timeless design
+- NO realistic photographs - stylized vector/illustration aesthetic
+${uniformDesign?.themeKeywords?.length > 0 ? `- Theme keywords: ${uniformDesign.themeKeywords.join(", ")}` : ""}
+
+This avatar will represent a competitive marching arts fantasy team. Make it distinctive, memorable, and worthy of a championship contender.`;
 }
 
 /**
@@ -730,23 +832,36 @@ This photograph should capture why ${featuredCorps} excelled in ${captionType} d
 /**
  * Build image prompt for fantasy performers article
  * Features the top fantasy corps with creative themed uniform
+ *
+ * @param {string} topCorpsName - The fantasy corps name
+ * @param {string} theme - Scene/moment description
+ * @param {string} location - The corps home location (optional)
+ * @param {object} uniformDesign - Director-provided uniform customization (optional)
  */
-function buildFantasyPerformersImagePrompt(topCorpsName, theme) {
-  const details = getFantasyUniformDetails(topCorpsName);
+function buildFantasyPerformersImagePrompt(topCorpsName, theme, location = null, uniformDesign = null) {
+  const details = getFantasyUniformDetails(topCorpsName, location, uniformDesign);
 
-  return `Photorealistic field-side photograph of a performer from the fantasy marching arts ensemble "${topCorpsName}".
+  // Determine venue based on director preference or default
+  const venueDescription = details.venuePreference === "indoor"
+    ? "Modern indoor arena with dramatic LED lighting systems"
+    : details.venuePreference === "outdoor"
+      ? "Outdoor stadium under evening sky with dramatic stadium lighting"
+      : "Professional marching arts competition venue with dramatic lighting";
 
-CREATIVE UNIFORM DESIGN:
+  return `Photorealistic field-side photograph of a performer from the fantasy marching arts ensemble "${topCorpsName}"${location ? ` from ${location}` : ""}.
+
+UNIFORM DESIGN${details.matchedTheme === "director-custom" ? " (Director-Specified)" : ""}:
 - Colors: ${details.colors}
 - Uniform: ${details.uniform}
 - Headwear: ${details.helmet}
 - Brass: ${details.brass}
 - Guard elements: ${details.guard}
+${details.additionalNotes ? `- Special notes: ${details.additionalNotes}` : ""}
 
 SCENE SETTING:
-- Modern indoor arena with dramatic LED lighting systems
+- ${venueDescription}
 - ${theme || "Victory moment after an award-winning performance"}
-- Professional marching arts competition atmosphere
+- ${details.performanceStyle ? `Performance style: ${details.performanceStyle}` : "Professional marching arts competition atmosphere"}
 - Crowd on their feet in background, celebration energy
 
 PERFORMER DETAILS:
@@ -767,7 +882,7 @@ AUTHENTICITY:
 - White marching gloves, black marching shoes
 - Professional posture and bearing
 
-This is a fantasy corps created by a user, so the uniform should be distinctive and memorable while remaining authentic to competitive marching arts.`;
+This is a fantasy corps created by a user${details.matchedTheme === "director-custom" ? " with custom uniform specifications" : ""}. The uniform should be distinctive and memorable while remaining authentic to competitive marching arts.`;
 }
 
 /**
@@ -1833,6 +1948,7 @@ module.exports = {
   buildFantasyPerformersImagePrompt,
   buildFantasyLeagueImagePrompt,
   buildAnalyticsImagePrompt,
+  buildCorpsAvatarPrompt,  // Corps avatar/icon generation
 
   // Uniform/theme utilities
   getUniformDetails,
