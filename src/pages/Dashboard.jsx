@@ -61,7 +61,7 @@ const CLASS_SHORT_LABELS = {
   worldClass: 'World',
   openClass: 'Open',
   aClass: 'Class A',
-  soundSport: 'Sport',
+  soundSport: 'SoundSport',
 };
 
 const CAPTIONS = [
