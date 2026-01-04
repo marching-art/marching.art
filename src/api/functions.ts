@@ -292,3 +292,19 @@ export interface SubmitNewsResult {
 }
 
 export const submitNewsForApproval = createCallable<SubmitNewsData, SubmitNewsResult>('submitNewsForApproval');
+
+// =============================================================================
+// AVATAR GENERATION
+// =============================================================================
+
+export interface GenerateAvatarData {
+  corpsClass: 'soundSport' | 'aClass' | 'open' | 'world';
+}
+
+export interface GenerateAvatarResult {
+  success: boolean;
+  avatarUrl?: string;
+  message: string;
+}
+
+export const generateCorpsAvatar = createCallable<GenerateAvatarData, GenerateAvatarResult>('generateCorpsAvatar');

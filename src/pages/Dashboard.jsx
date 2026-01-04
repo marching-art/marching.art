@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom';
 import {
   Trophy, Edit, TrendingUp, TrendingDown, Minus,
   Calendar, Users, Lock, ChevronRight, Activity, MapPin,
-  Flame, Coins, Medal
+  Flame, Coins, Medal, Palette
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
@@ -30,6 +30,7 @@ import {
   AchievementModal,
   OnboardingTour,
   QuickStartGuide,
+  UniformDesignModal,
 } from '../components/Dashboard';
 
 import { useDashboardData } from '../hooks/useDashboardData';
@@ -464,7 +465,7 @@ const ActiveLineupTable = ({
 // SEASON SCORECARD (SIDEBAR)
 // =============================================================================
 
-const SeasonScorecard = ({ score, rank, rankChange, corpsName, corpsClass, loading }) => (
+const SeasonScorecard = ({ score, rank, rankChange, corpsName, corpsClass, loading, avatarUrl, onDesignUniform }) => (
   <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
     <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
       <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
@@ -476,9 +477,20 @@ const SeasonScorecard = ({ score, rank, rankChange, corpsName, corpsClass, loadi
     <div className="p-4">
       {/* Corps Identity */}
       <div className="flex items-center gap-3 mb-4 pb-4 border-b border-[#333]">
-        <div className="w-12 h-12 bg-[#333] border border-[#444] flex items-center justify-center">
-          <Trophy className="w-6 h-6 text-yellow-500" />
-        </div>
+        <button
+          onClick={onDesignUniform}
+          className="relative w-12 h-12 bg-[#333] border border-[#444] flex items-center justify-center hover:border-[#0057B8] transition-colors group"
+          title="Design Uniform"
+        >
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={corpsName} className="w-full h-full object-cover" />
+          ) : (
+            <Trophy className="w-6 h-6 text-yellow-500" />
+          )}
+          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+            <Palette className="w-4 h-4 text-white" />
+          </div>
+        </button>
         <div className="flex-1 min-w-0">
           <p className="text-base font-bold text-white truncate">{corpsName || 'My Corps'}</p>
           <p className="text-[10px] uppercase tracking-wider text-gray-500">
@@ -662,6 +674,7 @@ const Dashboard = () => {
   const [lineupScoreData, setLineupScoreData] = useState({});
   const [lineupScoresLoading, setLineupScoresLoading] = useState(true);
   const [recentResults, setRecentResults] = useState([]);
+  const [showUniformDesign, setShowUniformDesign] = useState(false);
 
   // Destructure dashboard data
   const {
@@ -994,6 +1007,21 @@ const Dashboard = () => {
     setShowCaptionSelection(true);
   }, []);
 
+  const handleUniformDesign = useCallback(async (design) => {
+    try {
+      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
+      await updateDoc(profileRef, {
+        [`corps.${activeCorpsClass}.uniformDesign`]: design,
+      });
+      toast.success('Uniform design saved! Avatar will be generated soon.');
+      setShowUniformDesign(false);
+      refreshProfile?.();
+    } catch (error) {
+      toast.error('Failed to save uniform design');
+      throw error;
+    }
+  }, [user, activeCorpsClass, refreshProfile]);
+
   // =============================================================================
   // RENDER
   // =============================================================================
@@ -1054,6 +1082,8 @@ const Dashboard = () => {
                   corpsName={activeCorps.corpsName || activeCorps.name}
                   corpsClass={activeCorpsClass}
                   loading={scoresLoading}
+                  avatarUrl={activeCorps.avatarUrl}
+                  onDesignUniform={() => setShowUniformDesign(true)}
                 />
 
                 <RecentResultsFeed
@@ -1163,6 +1193,15 @@ const Dashboard = () => {
           corpsName={activeCorps.corpsName || activeCorps.name}
           unlockedClasses={unlockedClasses}
           existingCorps={corps}
+        />
+      )}
+
+      {showUniformDesign && activeCorps && (
+        <UniformDesignModal
+          onClose={() => setShowUniformDesign(false)}
+          onSubmit={handleUniformDesign}
+          currentDesign={activeCorps.uniformDesign}
+          corpsName={activeCorps.corpsName || activeCorps.name}
         />
       )}
 

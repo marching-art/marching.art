@@ -7,7 +7,8 @@ export {
   DeleteConfirmModal,
   RetireConfirmModal,
   MoveCorpsModal,
-  AchievementModal
+  AchievementModal,
+  UniformDesignModal
 } from './DashboardModals';
 
 // Morning report component
