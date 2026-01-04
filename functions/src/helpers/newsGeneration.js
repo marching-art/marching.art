@@ -158,11 +158,14 @@ function initializeGemini() {
 }
 
 // =============================================================================
-// IMAGEN INTEGRATION
+// IMAGE GENERATION (Free Tier / Imagen)
 // =============================================================================
 
+// Configuration: Set to true to use paid Imagen 4, false for free tier
+const USE_IMAGEN_4 = false;
+
 /**
- * Generate an image using Imagen API
+ * Generate an image using either free tier (Gemini Flash) or Imagen 4
  * @param {string} prompt - Detailed image prompt
  * @returns {Promise<string>} Base64 image data or URL
  */
@@ -170,14 +173,19 @@ async function generateImageWithImagen(prompt) {
   const { genAI: ai } = initializeGemini();
 
   try {
-    const imagenModel = ai.getGenerativeModel({
-      model: "imagen-4.0-fast-generate-001",
+    // Choose model based on configuration
+    const modelName = USE_IMAGEN_4
+      ? "imagen-4.0-fast-generate-001"  // Paid: $0.02/image
+      : "gemini-2.0-flash-exp";          // Free tier: 500/day
+
+    const imageModel = ai.getGenerativeModel({
+      model: modelName,
     });
 
-    const result = await imagenModel.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
+    const result = await imageModel.generateContent({
+      contents: [{ role: "user", parts: [{ text: `Generate an image: ${prompt}` }] }],
       generationConfig: {
-        responseModalities: ["image"],
+        responseModalities: ["image", "text"],
       },
     });
 
@@ -187,14 +195,14 @@ async function generateImageWithImagen(prompt) {
     );
 
     if (imagePart?.inlineData) {
-      // Return base64 data URL
+      logger.info(`Image generated successfully using ${modelName}`);
       return `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
     }
 
     logger.warn("No image generated, using placeholder");
     return null;
   } catch (error) {
-    logger.error("Imagen generation failed:", error);
+    logger.error("Image generation failed:", error);
     return null;
   }
 }

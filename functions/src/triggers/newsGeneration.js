@@ -189,7 +189,7 @@ async function saveDailyNews(db, { reportDay, content, metadata, articles }) {
         metadata: {
           ...metadata,
           generatedBy: "gemini-2.0-flash-lite",
-          imageGeneratedBy: "imagen-4.0-fast-generate-001",
+          imageGeneratedBy: "gemini-2.0-flash-exp", // Free tier
         },
 
         isPublished: true,
