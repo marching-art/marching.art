@@ -187,6 +187,8 @@ export const useScoresData = (options = {}) => {
   const [allShows, setAllShows] = useState([]);
   const [availableDays, setAvailableDays] = useState([]);
   const [archivedSeasons, setArchivedSeasons] = useState([]);
+  const [fallbackSeasonId, setFallbackSeasonId] = useState(null);
+  const [displayedSeasonId, setDisplayedSeasonId] = useState(null);
   const [stats, setStats] = useState({
     recentShows: 0,
     topScore: '-',
@@ -194,9 +196,10 @@ export const useScoresData = (options = {}) => {
     avgScore: 0
   });
 
-  // Determine which season to fetch
-  const targetSeasonId = seasonId || currentSeasonUid;
-  const isArchived = seasonId && seasonId !== currentSeasonUid;
+  // Determine which season to fetch (fallbackSeasonId takes precedence when set)
+  const targetSeasonId = seasonId || fallbackSeasonId || currentSeasonUid;
+  const isArchived = (seasonId && seasonId !== currentSeasonUid) ||
+                     (fallbackSeasonId && fallbackSeasonId !== currentSeasonUid);
 
   // Fetch available archived seasons
   // OPTIMIZATION: Limit to 20 most recent seasons to reduce data transfer
@@ -243,12 +246,15 @@ export const useScoresData = (options = {}) => {
         const recapRef = doc(db, 'fantasy_recaps', targetSeasonId);
         const recapDoc = await getDoc(recapRef);
 
+        let shows = [];
+        let recaps = [];
+
         if (recapDoc.exists()) {
           const data = recapDoc.data();
-          const recaps = data.recaps || [];
+          recaps = data.recaps || [];
 
           // Process all shows and group by day
-          const shows = recaps.flatMap(recap =>
+          shows = recaps.flatMap(recap =>
             recap.shows?.map(show => ({
               eventName: show.eventName,
               location: show.location,
@@ -270,33 +276,39 @@ export const useScoresData = (options = {}) => {
               })).sort((a, b) => b.score - a.score) || []
             })) || []
           ).sort((a, b) => b.offSeasonDay - a.offSeasonDay);
-
-          setAllShows(shows);
-
-          // Get unique days that have shows (sorted descending - most recent first)
-          const days = [...new Set(shows.map(s => s.offSeasonDay))].sort((a, b) => b - a);
-          setAvailableDays(days);
-
-          // Calculate stats
-          const allScores = shows.flatMap(show => show.scores.map(s => s.score));
-          const topScore = allScores.length > 0 ? Math.max(...allScores).toFixed(3) : '-';
-          const avgScore = allScores.length > 0
-            ? (allScores.reduce((sum, s) => sum + s, 0) / allScores.length).toFixed(3)
-            : '0.000';
-          const uniqueCorps = new Set(shows.flatMap(show => show.scores.map(s => s.corps)));
-
-          setStats({
-            recentShows: shows.length,
-            topScore,
-            corpsActive: uniqueCorps.size,
-            avgScore
-          });
-        } else {
-          // No data found for this season
-          setAllShows([]);
-          setAvailableDays([]);
-          setStats({ recentShows: 0, topScore: '-', corpsActive: 0, avgScore: 0 });
         }
+
+        // If current season has no data and we haven't already tried a fallback,
+        // automatically fall back to the most recent archived season
+        if (shows.length === 0 && !seasonId && !fallbackSeasonId && archivedSeasons.length > 0) {
+          const mostRecentArchived = archivedSeasons[0];
+          console.log(`Current season has no recaps, falling back to ${mostRecentArchived.id}`);
+          setFallbackSeasonId(mostRecentArchived.id);
+          // Don't set loading to false - the fallback will trigger another fetch
+          return;
+        }
+
+        setAllShows(shows);
+        setDisplayedSeasonId(targetSeasonId);
+
+        // Get unique days that have shows (sorted descending - most recent first)
+        const days = [...new Set(shows.map(s => s.offSeasonDay))].sort((a, b) => b - a);
+        setAvailableDays(days);
+
+        // Calculate stats
+        const allScores = shows.flatMap(show => show.scores.map(s => s.score));
+        const topScore = allScores.length > 0 ? Math.max(...allScores).toFixed(3) : '-';
+        const avgScore = allScores.length > 0
+          ? (allScores.reduce((sum, s) => sum + s, 0) / allScores.length).toFixed(3)
+          : '0.000';
+        const uniqueCorps = new Set(shows.flatMap(show => show.scores.map(s => s.corps)));
+
+        setStats({
+          recentShows: shows.length,
+          topScore,
+          corpsActive: uniqueCorps.size,
+          avgScore
+        });
 
         setLoading(false);
       } catch (err) {
@@ -307,7 +319,7 @@ export const useScoresData = (options = {}) => {
     };
 
     fetchScoresData();
-  }, [targetSeasonId]);
+  }, [targetSeasonId, archivedSeasons, seasonId, fallbackSeasonId]);
 
   // Filter shows by class
   const filteredShows = useMemo(() => {
@@ -390,6 +402,16 @@ export const useScoresData = (options = {}) => {
     Total_Score: calculateColumnStats(aggregatedScores, 'Total_Score')
   }), [aggregatedScores]);
 
+  // Allow manual season selection
+  const selectSeason = useCallback((newSeasonId) => {
+    if (newSeasonId === currentSeasonUid) {
+      // Clear fallback to return to current season
+      setFallbackSeasonId(null);
+    } else {
+      setFallbackSeasonId(newSeasonId);
+    }
+  }, [currentSeasonUid]);
+
   return {
     loading,
     error,
@@ -402,7 +424,9 @@ export const useScoresData = (options = {}) => {
     columnStats,
     isArchived,
     currentSeasonUid,
-    currentSeasonData
+    currentSeasonData,
+    displayedSeasonId,
+    selectSeason
   };
 };
 

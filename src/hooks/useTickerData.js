@@ -85,14 +85,21 @@ export const useTickerData = () => {
   const [error, setError] = useState(null);
   const [allRecaps, setAllRecaps] = useState([]);
 
-  // The day to show is the most recent day with scores (currentDay - 1, or latest available)
+  // The day to show is the most recent day with processed scores
+  // At 2 AM ET, scores for the current day are processed, so we can show them
   const displayDay = useMemo(() => {
     if (allRecaps.length === 0) return null;
 
-    // Find the most recent day that has scores and is before or equal to current day
+    // Calculate effective day (same logic as Dashboard and useLandingScores)
+    const hour = new Date().getHours();
+    // Between midnight and 2 AM, scores haven't been processed yet
+    // So use currentDay - 1 to avoid showing unprocessed scores
+    const effectiveDay = hour < 2 ? Math.max(1, currentDay - 1) : currentDay;
+
+    // Find the most recent day that has scores up to and including effective day
     const availableDays = allRecaps
       .map(r => r.offSeasonDay)
-      .filter(day => day < currentDay)
+      .filter(day => day <= effectiveDay)
       .sort((a, b) => b - a);
 
     return availableDays[0] || null;
