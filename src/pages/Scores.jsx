@@ -858,14 +858,19 @@ const Scores = () => {
                           { id: 'world', label: 'World' },
                           { id: 'open', label: 'Open' },
                           { id: 'aclass', label: 'Class A' },
+                          { id: 'soundsport', label: 'SoundSport', accent: 'green' },
                         ].map((tab) => (
                           <button
                             key={tab.id}
                             onClick={() => { haptic('light'); setArchiveViewTab(tab.id); }}
                             className={`px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all rounded-sm ${
                               archiveViewTab === tab.id
-                                ? 'bg-[#333] text-white'
-                                : 'text-gray-500 hover:text-gray-300'
+                                ? tab.accent === 'green'
+                                  ? 'bg-green-500/20 text-green-400'
+                                  : 'bg-[#333] text-white'
+                                : tab.accent === 'green'
+                                  ? 'text-green-500/60 hover:text-green-400'
+                                  : 'text-gray-500 hover:text-gray-300'
                             }`}
                           >
                             {tab.label}
@@ -924,6 +929,11 @@ const Scores = () => {
                           className="Class A"
                           userCorpsName={userCorpsName}
                         />
+                      )}
+
+                      {/* SoundSport View */}
+                      {archiveViewTab === 'soundsport' && (
+                        <SoundSportMedalList shows={unfilteredShows} />
                       )}
                     </>
                   )}
