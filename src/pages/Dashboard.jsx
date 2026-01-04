@@ -637,24 +637,31 @@ const Dashboard = () => {
                     const unlockedClasses = profile.unlockedClasses || ['soundSport'];
                     const corpsCoin = profile.corpsCoin || 0;
 
+                    // Find the next class to unlock
                     for (const classKey of classOrder) {
                       if (!unlockedClasses.includes(classKey)) {
                         const coinCost = CLASS_UNLOCK_COSTS[classKey];
-                        if (corpsCoin >= coinCost) {
-                          return (
-                            <button
-                              onClick={() => handleClassUnlock(classKey)}
-                              className="ml-1 px-2 py-1 bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-bold uppercase flex items-center gap-1"
-                            >
-                              <Coins className="w-3 h-3" />
-                              Buy
-                            </button>
-                          );
-                        }
-                        break;
+                        const canAfford = corpsCoin >= coinCost;
+
+                        // Always show the button if there's a class to unlock
+                        return (
+                          <button
+                            onClick={() => canAfford && handleClassUnlock(classKey)}
+                            disabled={!canAfford}
+                            className={`ml-2 px-3 py-1.5 text-xs font-bold uppercase flex items-center gap-1.5 rounded transition-colors ${
+                              canAfford
+                                ? 'bg-yellow-500 hover:bg-yellow-400 text-black cursor-pointer'
+                                : 'bg-gray-700 text-gray-400 cursor-not-allowed opacity-60'
+                            }`}
+                            title={canAfford ? `Unlock ${CLASS_DISPLAY_NAMES[classKey]} for ${coinCost.toLocaleString()} CC` : `Need ${coinCost.toLocaleString()} CC`}
+                          >
+                            {canAfford ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                            {canAfford ? 'Buy' : `${(coinCost / 1000).toFixed(0)}k`}
+                          </button>
+                        );
                       }
                     }
-                    return null;
+                    return null; // All classes unlocked
                   })()}
                 </div>
               </div>
