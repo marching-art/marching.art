@@ -648,7 +648,7 @@ const Dashboard = () => {
                           <button
                             onClick={() => canAfford && handleClassUnlock(classKey)}
                             disabled={!canAfford}
-                            className={`ml-2 px-3 py-1.5 text-xs font-bold uppercase flex items-center gap-1.5 rounded transition-colors ${
+                            className={`ml-2 px-2 py-1 text-xs font-bold uppercase flex items-center gap-1 transition-colors ${
                               canAfford
                                 ? 'bg-yellow-500 hover:bg-yellow-400 text-black cursor-pointer'
                                 : 'bg-gray-700 text-gray-400 cursor-not-allowed opacity-60'
