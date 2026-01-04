@@ -219,6 +219,24 @@ export const DirectorCard: React.FC<DirectorCardProps> = ({
               {corpsCoin >= 1000 ? `${(corpsCoin / 1000).toFixed(1)}k` : corpsCoin}
             </span>
           </div>
+
+          {/* Buy button for mobile - show when user can afford */}
+          {nextUnlock && nextUnlock.canAfford && onUnlockClass && (
+            <>
+              <div className="w-px h-4 bg-[#333]" />
+              <button
+                onClick={() => onUnlockClass(nextUnlock.classKey)}
+                className={`h-7 px-2 text-xs font-bold uppercase tracking-wider flex items-center gap-1 transition-colors ${
+                  nextUnlock.meetsLevel
+                    ? 'bg-green-600 hover:bg-green-500 text-white'
+                    : 'bg-yellow-600 hover:bg-yellow-500 text-white'
+                }`}
+              >
+                <Coins className="w-3 h-3" />
+                {nextUnlock.meetsLevel ? 'Unlock' : 'Buy'}
+              </button>
+            </>
+          )}
         </div>
       </div>
     );
