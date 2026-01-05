@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import ArticleReactions from '../components/Articles/ArticleReactions';
 import ArticleComments from '../components/Articles/ArticleComments';
-import { getArticleEngagement } from '../api/functions';
+import { getArticleEngagement, getRecentNews } from '../api/functions';
 import { useAuth } from '../App';
 import { useProfileStore } from '../store/profileStore';
 import { useBodyScroll } from '../hooks/useBodyScroll';
@@ -109,15 +109,55 @@ const Article = () => {
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState('');
 
-  // Get article from navigation state (passed from NewsFeed)
-  const article = location.state?.article;
+  // Get article from navigation state or fetch it
+  const [article, setArticle] = useState(location.state?.article || null);
   const [engagement, setEngagement] = useState(location.state?.engagement || null);
-  const [loading, setLoading] = useState(!article);
+  const [loading, setLoading] = useState(!location.state?.article);
   const [error, setError] = useState(null);
 
   // Ref for scrolling to comments
   const commentsRef = useRef(null);
   const [expandComments, setExpandComments] = useState(false);
+
+  // Fetch article if not in navigation state (direct link access)
+  useEffect(() => {
+    const fetchArticle = async () => {
+      if (location.state?.article) {
+        // Already have article from navigation
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        // Fetch recent news and find the article by ID
+        const result = await getRecentNews({ limit: 50 });
+        if (result.data?.success && result.data.news) {
+          const foundArticle = result.data.news.find(a => a.id === id);
+          if (foundArticle) {
+            setArticle(foundArticle);
+            // Also fetch engagement
+            const engagementResult = await getArticleEngagement({ articleIds: [id] });
+            if (engagementResult.data?.success && engagementResult.data.engagement?.[id]) {
+              setEngagement(engagementResult.data.engagement[id]);
+            }
+          } else {
+            setError('Article not found');
+          }
+        } else {
+          setError('Failed to load article');
+        }
+      } catch (err) {
+        console.error('Error fetching article:', err);
+        setError('Failed to load article');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchArticle();
+  }, [id, location.state?.article]);
 
   // Compute trending players from movers across all classes
   const trendingPlayers = useMemo(() => {
@@ -168,14 +208,6 @@ const Article = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [id]);
-
-  // If no article in state, show error
-  useEffect(() => {
-    if (!article) {
-      setLoading(false);
-      setError('Article not found');
-    }
-  }, [article]);
 
   const handleSignOut = async () => {
     try {
