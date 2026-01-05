@@ -80,6 +80,24 @@ const BlueRibbonIcon = ({ className = "w-5 h-5" }) => (
   </svg>
 );
 
+// Deterministic shuffle using event name as seed (consistent order per show)
+const seededShuffle = (array, seed) => {
+  const shuffled = [...array];
+  // Simple hash function for seed
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = ((hash << 5) - hash) + seed.charCodeAt(i);
+    hash = hash & hash;
+  }
+  // Fisher-Yates shuffle with seeded random
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    hash = (hash * 1103515245 + 12345) & 0x7fffffff;
+    const j = hash % (i + 1);
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
 /**
  * Generate mocked caption breakdown from total score
  * Uses realistic DCI-style proportions:
@@ -309,18 +327,19 @@ const SoundSportMedalList = ({ shows }) => {
             score.isBestInShow = corpsName === bestInShowCorps;
           });
 
-          // Sort within group by score descending (best first)
-          soundSportScores.sort((a, b) => (b.score || 0) - (a.score || 0));
-
           // Use show eventName or mock one for display
           const eventName = show.eventName || MOCK_EVENT_NAMES[mockNameIndex % MOCK_EVENT_NAMES.length];
+
+          // Shuffle to avoid implied rankings (SoundSport is rating-based, not placement-based)
+          // Use deterministic shuffle so order is consistent on re-renders
+          const shuffledScores = seededShuffle(soundSportScores, eventName);
           mockNameIndex++;
 
           groups.push({
             eventName,
             date: show.date || 'TBD',
             location: show.location || 'Various Locations',
-            scores: soundSportScores,
+            scores: shuffledScores,
           });
         }
       });
