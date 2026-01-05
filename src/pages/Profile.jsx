@@ -9,7 +9,7 @@ import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom'
 import {
   User, Trophy, Settings, Star, TrendingUp, Calendar,
   Crown, Medal, MapPin, Edit, Check, X, LogOut, Coins, Heart,
-  ChevronRight, MessageCircle, Mail, AtSign, AlertCircle
+  ChevronRight, MessageCircle, Mail, AtSign, AlertCircle, Bell, Shield, Eye, EyeOff
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { useProfile, useUpdateProfile } from '../hooks/useProfile';
@@ -163,8 +163,48 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
     milestoneAchieved: true,
     winBack: true,
   });
+
+  // Privacy settings state
+  const [privacySettings, setPrivacySettings] = useState({
+    publicProfile: true,
+    showLocation: true,
+    showStats: true,
+  });
+  const [originalPrivacy, setOriginalPrivacy] = useState({
+    publicProfile: true,
+    showLocation: true,
+    showStats: true,
+  });
+
+  // Push notification state
+  const [pushPrefs, setPushPrefs] = useState({
+    allPush: false,
+    streakAtRisk: true,
+    matchupStart: true,
+    matchupResult: true,
+    scoreUpdate: true,
+    leagueActivity: true,
+    tradeProposal: true,
+    showReminder: true,
+  });
+  const [pushSupported, setPushSupported] = useState(false);
+  const [pushPermission, setPushPermission] = useState('default');
+
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [hasPrivacyChanges, setHasPrivacyChanges] = useState(false);
+
+  // Check push notification support
+  useEffect(() => {
+    const checkPushSupport = async () => {
+      const supported = 'Notification' in window && 'serviceWorker' in navigator;
+      setPushSupported(supported);
+      if (supported) {
+        setPushPermission(Notification.permission);
+      }
+    };
+    checkPushSupport();
+  }, []);
 
   useEffect(() => {
     if (isOpen && user) {
@@ -198,6 +238,29 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
           leagueActivity: prefs.leagueActivity ?? true,
           milestoneAchieved: prefs.milestoneAchieved ?? true,
           winBack: prefs.winBack ?? true,
+        });
+
+        // Load privacy settings
+        const privacy = data.privacy || {};
+        const loadedPrivacy = {
+          publicProfile: privacy.publicProfile ?? true,
+          showLocation: privacy.showLocation ?? true,
+          showStats: privacy.showStats ?? true,
+        };
+        setPrivacySettings(loadedPrivacy);
+        setOriginalPrivacy(loadedPrivacy);
+
+        // Load push preferences
+        const push = data.settings?.pushPreferences || {};
+        setPushPrefs({
+          allPush: push.allPush ?? false,
+          streakAtRisk: push.streakAtRisk ?? true,
+          matchupStart: push.matchupStart ?? true,
+          matchupResult: push.matchupResult ?? true,
+          scoreUpdate: push.scoreUpdate ?? true,
+          leagueActivity: push.leagueActivity ?? true,
+          tradeProposal: push.tradeProposal ?? true,
+          showReminder: push.showReminder ?? true,
         });
       }
     } catch (error) {
@@ -257,20 +320,94 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
     setHasChanges(true);
   };
 
-  const saveEmailPrefs = async () => {
+  const updatePushPref = (key, value) => {
+    setPushPrefs(prev => ({ ...prev, [key]: value }));
+    setHasChanges(true);
+  };
+
+  const updatePrivacy = (key, value) => {
+    setPrivacySettings(prev => ({ ...prev, [key]: value }));
+    setHasPrivacyChanges(true);
+  };
+
+  const saveNotificationPrefs = async () => {
     setSaving(true);
     try {
       const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
       await updateDoc(profileRef, {
         'settings.emailPreferences': emailPrefs,
+        'settings.pushPreferences': pushPrefs,
       });
-      toast.success('Email preferences saved');
+      toast.success('Notification preferences saved');
       setHasChanges(false);
     } catch (error) {
-      console.error('Error saving email prefs:', error);
+      console.error('Error saving notification prefs:', error);
       toast.error('Failed to save preferences');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const savePrivacySettings = async () => {
+    setSaving(true);
+    try {
+      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
+      await updateDoc(profileRef, {
+        'privacy': privacySettings,
+      });
+      setOriginalPrivacy({ ...privacySettings });
+      toast.success('Privacy settings saved');
+      setHasPrivacyChanges(false);
+    } catch (error) {
+      console.error('Error saving privacy settings:', error);
+      toast.error('Failed to save settings');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleEnablePush = async () => {
+    if (!pushSupported) {
+      toast.error('Push notifications are not supported in this browser');
+      return;
+    }
+    try {
+      const permission = await Notification.requestPermission();
+      setPushPermission(permission);
+      if (permission === 'granted') {
+        const { requestPushPermission } = await import('../api/pushNotifications');
+        const token = await requestPushPermission();
+        if (token) {
+          const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
+          await updateDoc(profileRef, {
+            'settings.fcmToken': token,
+            'settings.pushPreferences.allPush': true,
+          });
+          setPushPrefs(prev => ({ ...prev, allPush: true }));
+          toast.success('Push notifications enabled');
+        } else {
+          toast.error('Failed to register for push notifications');
+        }
+      } else if (permission === 'denied') {
+        toast.error('Push notifications were denied. Enable them in browser settings.');
+      }
+    } catch (error) {
+      console.error('Error enabling push:', error);
+      toast.error('Failed to enable push notifications');
+    }
+  };
+
+  const handleDisablePush = async () => {
+    try {
+      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
+      await updateDoc(profileRef, {
+        'settings.pushPreferences.allPush': false,
+      });
+      setPushPrefs(prev => ({ ...prev, allPush: false }));
+      toast.success('Push notifications disabled');
+    } catch (error) {
+      console.error('Error disabling push:', error);
+      toast.error('Failed to disable push notifications');
     }
   };
 
@@ -309,10 +446,10 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-[#333] shrink-0">
+        <div className="flex border-b border-[#333] shrink-0 overflow-x-auto">
           <button
             onClick={() => setActiveTab('account')}
-            className={`flex-1 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors ${
+            className={`flex-1 min-w-0 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-colors ${
               activeTab === 'account'
                 ? 'text-white border-b-2 border-[#0057B8]'
                 : 'text-gray-500 hover:text-gray-300'
@@ -321,14 +458,24 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
             Account
           </button>
           <button
-            onClick={() => setActiveTab('emails')}
-            className={`flex-1 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors ${
-              activeTab === 'emails'
+            onClick={() => setActiveTab('notifications')}
+            className={`flex-1 min-w-0 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-colors ${
+              activeTab === 'notifications'
                 ? 'text-white border-b-2 border-[#0057B8]'
                 : 'text-gray-500 hover:text-gray-300'
             }`}
           >
-            Emails
+            Alerts
+          </button>
+          <button
+            onClick={() => setActiveTab('privacy')}
+            className={`flex-1 min-w-0 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-colors ${
+              activeTab === 'privacy'
+                ? 'text-white border-b-2 border-[#0057B8]'
+                : 'text-gray-500 hover:text-gray-300'
+            }`}
+          >
+            Privacy
           </button>
         </div>
 
@@ -426,91 +573,186 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
             </div>
           )}
 
-          {activeTab === 'emails' && (
-            <div className="p-3">
-              <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-3">
-                Email Preferences
-              </p>
+          {activeTab === 'notifications' && (
+            <div className="p-3 space-y-4">
+              {/* Push Notifications Section */}
+              <div>
+                <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+                  <Bell className="w-3 h-3" />
+                  Push Notifications
+                </p>
 
-              <div className="space-y-0 divide-y divide-[#333] bg-[#111] border border-[#333]">
-                <div className="px-3">
-                  <Toggle
-                    label="All Emails"
-                    description="Master toggle for all communications"
-                    checked={emailPrefs.allEmails}
-                    onChange={(e) => updatePref('allEmails', e.target.checked)}
-                  />
-                </div>
-
-                {emailPrefs.allEmails && (
-                  <>
+                {!pushSupported ? (
+                  <div className="bg-[#111] border border-[#333] p-3 text-center">
+                    <p className="text-xs text-gray-500">Push notifications not supported in this browser</p>
+                  </div>
+                ) : pushPermission === 'denied' ? (
+                  <div className="bg-[#111] border border-[#333] p-3 text-center">
+                    <p className="text-xs text-gray-500">Push notifications blocked. Enable in browser settings.</p>
+                  </div>
+                ) : !pushPrefs.allPush ? (
+                  <button
+                    onClick={handleEnablePush}
+                    className="w-full py-3 min-h-[44px] bg-[#0057B8]/20 border border-[#0057B8]/40 text-[#0057B8] text-sm font-bold hover:bg-[#0057B8]/30 transition-all rounded-sm flex items-center justify-center gap-2"
+                  >
+                    <Bell className="w-4 h-4" />
+                    Enable Push Notifications
+                  </button>
+                ) : (
+                  <div className="space-y-0 divide-y divide-[#333] bg-[#111] border border-[#333]">
+                    <div className="px-3">
+                      <Toggle
+                        label="Push Notifications"
+                        description="Master toggle"
+                        checked={pushPrefs.allPush}
+                        onChange={handleDisablePush}
+                      />
+                    </div>
                     <div className="px-3">
                       <Toggle
                         label="Streak Warnings"
-                        description="Alert when streak is about to expire"
-                        checked={emailPrefs.streakAtRisk}
-                        onChange={(e) => updatePref('streakAtRisk', e.target.checked)}
+                        description="Alert when streak is expiring"
+                        checked={pushPrefs.streakAtRisk}
+                        onChange={(e) => updatePushPref('streakAtRisk', e.target.checked)}
                       />
                     </div>
                     <div className="px-3">
                       <Toggle
-                        label="Streak Reset"
-                        description="When your streak resets"
-                        checked={emailPrefs.streakBroken}
-                        onChange={(e) => updatePref('streakBroken', e.target.checked)}
+                        label="Matchup Start"
+                        description="When matchups begin"
+                        checked={pushPrefs.matchupStart}
+                        onChange={(e) => updatePushPref('matchupStart', e.target.checked)}
                       />
                     </div>
                     <div className="px-3">
                       <Toggle
-                        label="Weekly Digest"
-                        description="Performance summary every Sunday"
-                        checked={emailPrefs.weeklyDigest}
-                        onChange={(e) => updatePref('weeklyDigest', e.target.checked)}
-                      />
-                    </div>
-                    <div className="px-3">
-                      <Toggle
-                        label="Lineup Reminders"
-                        description="Reminder before shows"
-                        checked={emailPrefs.lineupReminder}
-                        onChange={(e) => updatePref('lineupReminder', e.target.checked)}
+                        label="Matchup Results"
+                        description="When results are posted"
+                        checked={pushPrefs.matchupResult}
+                        onChange={(e) => updatePushPref('matchupResult', e.target.checked)}
                       />
                     </div>
                     <div className="px-3">
                       <Toggle
                         label="League Activity"
-                        description="Trades and matchup results"
-                        checked={emailPrefs.leagueActivity}
-                        onChange={(e) => updatePref('leagueActivity', e.target.checked)}
+                        description="Trades and mentions"
+                        checked={pushPrefs.leagueActivity}
+                        onChange={(e) => updatePushPref('leagueActivity', e.target.checked)}
                       />
                     </div>
-                    <div className="px-3">
-                      <Toggle
-                        label="Milestones"
-                        description="Streak achievements"
-                        checked={emailPrefs.milestoneAchieved}
-                        onChange={(e) => updatePref('milestoneAchieved', e.target.checked)}
-                      />
-                    </div>
-                    <div className="px-3">
-                      <Toggle
-                        label="Re-engagement"
-                        description="We miss you emails"
-                        checked={emailPrefs.winBack}
-                        onChange={(e) => updatePref('winBack', e.target.checked)}
-                      />
-                    </div>
-                  </>
+                  </div>
                 )}
+              </div>
+
+              {/* Email Notifications Section */}
+              <div>
+                <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+                  <Mail className="w-3 h-3" />
+                  Email Notifications
+                </p>
+
+                <div className="space-y-0 divide-y divide-[#333] bg-[#111] border border-[#333]">
+                  <div className="px-3">
+                    <Toggle
+                      label="All Emails"
+                      description="Master toggle"
+                      checked={emailPrefs.allEmails}
+                      onChange={(e) => updatePref('allEmails', e.target.checked)}
+                    />
+                  </div>
+
+                  {emailPrefs.allEmails && (
+                    <>
+                      <div className="px-3">
+                        <Toggle
+                          label="Streak Warnings"
+                          description="Alert when streak is expiring"
+                          checked={emailPrefs.streakAtRisk}
+                          onChange={(e) => updatePref('streakAtRisk', e.target.checked)}
+                        />
+                      </div>
+                      <div className="px-3">
+                        <Toggle
+                          label="Weekly Digest"
+                          description="Summary every Sunday"
+                          checked={emailPrefs.weeklyDigest}
+                          onChange={(e) => updatePref('weeklyDigest', e.target.checked)}
+                        />
+                      </div>
+                      <div className="px-3">
+                        <Toggle
+                          label="Lineup Reminders"
+                          description="Before shows"
+                          checked={emailPrefs.lineupReminder}
+                          onChange={(e) => updatePref('lineupReminder', e.target.checked)}
+                        />
+                      </div>
+                      <div className="px-3">
+                        <Toggle
+                          label="League Activity"
+                          description="Trades and results"
+                          checked={emailPrefs.leagueActivity}
+                          onChange={(e) => updatePref('leagueActivity', e.target.checked)}
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
 
               {hasChanges && (
                 <button
-                  onClick={saveEmailPrefs}
+                  onClick={saveNotificationPrefs}
                   disabled={saving}
-                  className="w-full mt-3 py-2.5 bg-[#0057B8] text-white text-sm font-bold rounded-sm hover:bg-[#0066d6] disabled:opacity-50 transition-colors"
+                  className="w-full py-2.5 bg-[#0057B8] text-white text-sm font-bold rounded-sm hover:bg-[#0066d6] disabled:opacity-50 transition-colors"
                 >
                   {saving ? 'Saving...' : 'Save Preferences'}
+                </button>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'privacy' && (
+            <div className="p-3 space-y-3">
+              <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+                <Shield className="w-3 h-3" />
+                Privacy Controls
+              </p>
+
+              <div className="space-y-0 divide-y divide-[#333] bg-[#111] border border-[#333]">
+                <div className="px-3">
+                  <Toggle
+                    label="Public Profile"
+                    description="Allow others to view your profile"
+                    checked={privacySettings.publicProfile}
+                    onChange={(e) => updatePrivacy('publicProfile', e.target.checked)}
+                  />
+                </div>
+                <div className="px-3">
+                  <Toggle
+                    label="Show Location"
+                    description="Display location on profile"
+                    checked={privacySettings.showLocation}
+                    onChange={(e) => updatePrivacy('showLocation', e.target.checked)}
+                  />
+                </div>
+                <div className="px-3">
+                  <Toggle
+                    label="Show Statistics"
+                    description="Display performance stats publicly"
+                    checked={privacySettings.showStats}
+                    onChange={(e) => updatePrivacy('showStats', e.target.checked)}
+                  />
+                </div>
+              </div>
+
+              {hasPrivacyChanges && (
+                <button
+                  onClick={savePrivacySettings}
+                  disabled={saving}
+                  className="w-full py-2.5 bg-[#0057B8] text-white text-sm font-bold rounded-sm hover:bg-[#0066d6] disabled:opacity-50 transition-colors"
+                >
+                  {saving ? 'Saving...' : 'Save Privacy Settings'}
                 </button>
               )}
             </div>
