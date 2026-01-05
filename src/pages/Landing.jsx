@@ -10,7 +10,7 @@ import {
   Trophy, Lock, Mail, AlertCircle, TrendingUp,
   TrendingDown, Flame, ChevronRight, X,
   Activity, LayoutDashboard, Award, User, LogOut,
-  Settings, Zap, UserPlus, MessageCircle, Clock, BookOpen, Newspaper
+  Settings, Zap, UserPlus, MessageCircle, Clock, BookOpen, Newspaper, Coins
 } from 'lucide-react';
 import { useAuth } from '../App';
 import toast from 'react-hot-toast';
@@ -224,9 +224,9 @@ const Landing = () => {
 
                     {/* Quick Stats */}
                     {profile && (
-                      <div className="flex items-center gap-4 mt-3 pt-3 border-t border-[#333]/50">
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-3 pt-3 border-t border-[#333]/50">
                         <div className="flex items-center gap-1.5">
-                          <Zap className="w-3.5 h-3.5 text-yellow-500" />
+                          <Zap className="w-3.5 h-3.5 text-purple-500" />
                           <span className="text-xs text-gray-400">Level</span>
                           <span className="text-sm font-bold text-white">{profile.xpLevel || 1}</span>
                         </div>
@@ -234,6 +234,18 @@ const Landing = () => {
                           <Trophy className="w-3.5 h-3.5 text-[#0057B8]" />
                           <span className="text-xs text-gray-400">XP</span>
                           <span className="text-sm font-bold text-white font-data tabular-nums">{profile.xp?.toLocaleString() || 0}</span>
+                        </div>
+                        {profile.engagement?.loginStreak > 0 && (
+                          <div className="flex items-center gap-1.5">
+                            <Flame className="w-3.5 h-3.5 text-orange-500" />
+                            <span className="text-xs text-gray-400">Streak</span>
+                            <span className="text-sm font-bold text-orange-500 font-data tabular-nums">{profile.engagement.loginStreak}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1.5">
+                          <Coins className="w-3.5 h-3.5 text-yellow-500" />
+                          <span className="text-xs text-gray-400">Coins</span>
+                          <span className="text-sm font-bold text-yellow-500 font-data tabular-nums">{(profile.corpsCoin || 0).toLocaleString()}</span>
                         </div>
                       </div>
                     )}
