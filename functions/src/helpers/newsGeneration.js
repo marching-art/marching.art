@@ -2234,9 +2234,41 @@ function getToneDescriptor(context) {
 // =============================================================================
 
 /**
- * Generate all 7 nightly articles
- * Core articles (always generated): Standings, Captions, Fantasy Performers, Fantasy Leagues, Deep Analytics
- * Rotating articles: Underdog Story, Corps Spotlight
+ * Determine which 5th article to generate based on the day
+ * Rotation schedule for variety:
+ * - Underdog Story: Every 6th day (days 6, 12, 18, 24, 30, 36...)
+ * - Deep Analytics: Even days (not underdog days)
+ * - Corps Spotlight: Odd days (not underdog days)
+ *
+ * This gives readers variety while limiting underdog stories to ~once per week
+ */
+function getFifthArticleType(reportDay) {
+  // Underdog story every 6 days (roughly once a week, but not too predictable)
+  if (reportDay % 6 === 0) {
+    return "underdog_story";
+  }
+
+  // Alternate between deep analytics and corps spotlight on other days
+  if (reportDay % 2 === 0) {
+    return "deep_analytics";
+  }
+
+  return "corps_spotlight";
+}
+
+/**
+ * Generate 5 nightly articles with rotating variety
+ *
+ * Core articles (always generated):
+ * 1. DCI Standings - Daily competition results
+ * 2. DCI Captions - Caption analysis breakdown
+ * 3. Fantasy Performers - Top fantasy ensemble results
+ * 4. Fantasy Leagues - League standings and recaps
+ *
+ * Rotating 5th article (for variety):
+ * - Deep Analytics (even days)
+ * - Corps Spotlight (odd days)
+ * - Underdog Story (every 6th day)
  */
 async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
   const reportDay = currentDay - 1;
@@ -2245,7 +2277,9 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
     return { success: false, error: "Invalid day" };
   }
 
-  logger.info(`Generating 7 articles for Day ${reportDay}`);
+  // Determine which rotating article to generate today
+  const fifthArticleType = getFifthArticleType(reportDay);
+  logger.info(`Generating 5 articles for Day ${reportDay} (5th article: ${fifthArticleType})`);
 
   try {
     // Fetch all data
@@ -2268,18 +2302,37 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
     const toneDescriptor = getToneDescriptor(competitionContext);
     logger.info(`Competition context for Day ${reportDay}: ${toneDescriptor} (${competitionContext.scenario}, ${competitionContext.seasonPhase} season, lead margin: ${competitionContext.leadMargin})`);
 
-    // Generate all 7 articles in parallel, passing show context, competition context, and db to each
-    const articles = await Promise.all([
-      // Core articles (1-5)
+    // Build the list of articles to generate
+    // Core 4 articles always included
+    const articlePromises = [
       generateDciStandingsArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db }),
       generateDciCaptionsArticle({ reportDay, dayScores, captionLeaders, activeCorps, showContext, competitionContext, db }),
       generateFantasyPerformersArticle({ reportDay, fantasyData, showContext, competitionContext, db, dataDocId }),
       generateFantasyLeaguesArticle({ reportDay, fantasyData, showContext, competitionContext }),
-      generateDeepAnalyticsArticle({ reportDay, dayScores, trendData, fantasyData, captionLeaders, showContext, competitionContext, db }),
-      // New article types (6-7)
-      generateUnderdogStoryArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db }),
-      generateCorpsSpotlightArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db }),
-    ]);
+    ];
+
+    // Add the rotating 5th article based on the schedule
+    switch (fifthArticleType) {
+      case "underdog_story":
+        articlePromises.push(
+          generateUnderdogStoryArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db })
+        );
+        break;
+      case "corps_spotlight":
+        articlePromises.push(
+          generateCorpsSpotlightArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db })
+        );
+        break;
+      case "deep_analytics":
+      default:
+        articlePromises.push(
+          generateDeepAnalyticsArticle({ reportDay, dayScores, trendData, fantasyData, captionLeaders, showContext, competitionContext, db })
+        );
+        break;
+    }
+
+    // Generate all 5 articles in parallel
+    const articles = await Promise.all(articlePromises);
 
     return {
       success: true,
@@ -2292,6 +2345,7 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
         location: showContext.location,
         date: showContext.date,
         articleCount: articles.length,
+        fifthArticleType,
         competitionContext: {
           scenario: competitionContext.scenario,
           seasonPhase: competitionContext.seasonPhase,
