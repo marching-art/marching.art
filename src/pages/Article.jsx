@@ -282,14 +282,6 @@ const Article = () => {
             </Link>
           </div>
           <div className="ml-auto flex items-center gap-2">
-            {/* Share button */}
-            <button
-              onClick={handleShare}
-              className="p-2 text-gray-500 hover:text-white transition-colors"
-              title="Share"
-            >
-              <Share2 className="w-4 h-4" />
-            </button>
             {/* Mobile Auth Buttons */}
             {!user && (
               <div className="flex items-center gap-2 lg:hidden">
@@ -392,11 +384,22 @@ const Article = () => {
 
                 {/* Reactions */}
                 <div className="px-5 lg:px-6 py-4 border-b border-[#333] bg-[#111]">
-                  <ArticleReactions
-                    articleId={article.id}
-                    initialCounts={engagement?.reactionCounts}
-                    initialUserReaction={engagement?.userReaction}
-                  />
+                  <div className="flex items-center gap-3">
+                    {/* Share button */}
+                    <button
+                      onClick={handleShare}
+                      className="p-2 text-gray-500 hover:text-white hover:bg-white/10 transition-colors rounded-sm"
+                      title="Share article"
+                      aria-label="Share article"
+                    >
+                      <Share2 className="w-4 h-4" />
+                    </button>
+                    <ArticleReactions
+                      articleId={article.id}
+                      initialCounts={engagement?.reactionCounts}
+                      initialUserReaction={engagement?.userReaction}
+                    />
+                  </div>
                 </div>
 
                 {/* Full Story */}
