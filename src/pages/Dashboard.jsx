@@ -401,19 +401,27 @@ const ControlBar = ({
           </div>
 
           {/* Buy Button - show when user can afford next class */}
-          {nextUnlock && nextUnlock.canAfford && onUnlockClass && (
-            <button
-              onClick={() => onUnlockClass(nextUnlock.classKey)}
-              className={`h-7 px-2.5 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-colors ${
-                nextUnlock.meetsLevel
-                  ? 'bg-green-600 hover:bg-green-500 text-white'
-                  : 'bg-yellow-600 hover:bg-yellow-500 text-white'
-              }`}
-              title={`${nextUnlock.meetsLevel ? 'Unlock' : 'Buy'} ${nextUnlock.className} (${nextUnlock.coinCost.toLocaleString()} CC)`}
-            >
-              <Coins className="w-3 h-3" />
-              {nextUnlock.meetsLevel ? 'Unlock' : 'Buy'}
-            </button>
+          {nextUnlock ? (
+            nextUnlock.canAfford && onUnlockClass ? (
+              <button
+                onClick={() => onUnlockClass(nextUnlock.classKey)}
+                className={`h-7 px-2.5 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-colors ${
+                  nextUnlock.meetsLevel
+                    ? 'bg-green-600 hover:bg-green-500 text-white'
+                    : 'bg-yellow-600 hover:bg-yellow-500 text-white'
+                }`}
+                title={`${nextUnlock.meetsLevel ? 'Unlock' : 'Buy'} ${nextUnlock.className} (${nextUnlock.coinCost.toLocaleString()} CC)`}
+              >
+                <Coins className="w-3 h-3" />
+                {nextUnlock.meetsLevel ? 'Unlock' : 'Buy'}
+              </button>
+            ) : (
+              <span className="text-[10px] text-gray-500">
+                {nextUnlock.className}: {nextUnlock.coinCost}CC needed
+              </span>
+            )
+          ) : (
+            <span className="text-[10px] text-green-500">All unlocked</span>
           )}
         </div>
       </div>
