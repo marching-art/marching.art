@@ -10,7 +10,8 @@ import {
 import { useAuth } from '../App';
 import { db } from '../firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { updateProfile } from '../firebase/functions';
+import { updateProfile, updateUsername, updateEmail } from '../firebase/functions';
+import { AtSign } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 // =============================================================================
@@ -176,10 +177,15 @@ const Settings = () => {
 
   const [profileData, setProfileData] = useState({
     displayName: '',
+    username: '',
+    email: '',
     bio: '',
     location: '',
     avatar: ''
   });
+
+  const [usernameError, setUsernameError] = useState('');
+  const [emailError, setEmailError] = useState('');
 
   const [notificationSettings, setNotificationSettings] = useState({
     // In-app notifications
@@ -246,6 +252,8 @@ const Settings = () => {
         const data = profileSnap.data();
         setProfileData({
           displayName: data.displayName || user.displayName || '',
+          username: data.username || '',
+          email: data.email || user.email || '',
           bio: data.bio || '',
           location: data.location || '',
           avatar: data.avatar || user.photoURL || ''
@@ -295,14 +303,50 @@ const Settings = () => {
 
   const handleSave = async () => {
     setSaving(true);
+    setUsernameError('');
+    setEmailError('');
+
     try {
       if (activeTab === 'profile') {
-        const result = await updateProfile({
-          displayName: profileData.displayName,
-          bio: profileData.bio,
-          location: profileData.location
-        });
-        if (result.data.success) {
+        const promises = [];
+        let hasError = false;
+
+        // Update basic profile info
+        promises.push(
+          updateProfile({
+            displayName: profileData.displayName,
+            bio: profileData.bio,
+            location: profileData.location
+          })
+        );
+
+        // Update username if changed
+        if (profileData.username) {
+          promises.push(
+            updateUsername({ username: profileData.username })
+              .catch(err => {
+                setUsernameError(err.message || 'Failed to update username');
+                hasError = true;
+                throw err;
+              })
+          );
+        }
+
+        // Update email if changed
+        if (profileData.email) {
+          promises.push(
+            updateEmail({ email: profileData.email })
+              .catch(err => {
+                setEmailError(err.message || 'Failed to update email');
+                hasError = true;
+                throw err;
+              })
+          );
+        }
+
+        await Promise.all(promises);
+
+        if (!hasError) {
           toast.success('Profile configuration saved');
         }
       } else if (activeTab === 'notifications') {
@@ -537,14 +581,49 @@ const Settings = () => {
                       maxLength={50}
                     />
 
-                    <TerminalInput
-                      icon={Mail}
-                      label="Email Address"
-                      code="EMAIL"
-                      description="Read-only // Contact administrator to modify"
-                      value={user?.email || 'Anonymous'}
-                      disabled
-                    />
+                    <div className="space-y-1.5">
+                      <TerminalInput
+                        icon={AtSign}
+                        label="Username"
+                        code="UNAME"
+                        description="3-15 characters // Letters, numbers, underscores only"
+                        placeholder="Enter username"
+                        value={profileData.username}
+                        onChange={(e) => {
+                          updateProfile_('username', e.target.value);
+                          setUsernameError('');
+                        }}
+                        maxLength={15}
+                      />
+                      {usernameError && (
+                        <p className="text-[11px] text-red-400 font-mono flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          {usernameError}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <TerminalInput
+                        icon={Mail}
+                        label="Email Address"
+                        code="EMAIL"
+                        description="Used for account recovery and notifications"
+                        placeholder="Enter email address"
+                        type="email"
+                        value={profileData.email}
+                        onChange={(e) => {
+                          updateProfile_('email', e.target.value);
+                          setEmailError('');
+                        }}
+                      />
+                      {emailError && (
+                        <p className="text-[11px] text-red-400 font-mono flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          {emailError}
+                        </p>
+                      )}
+                    </div>
 
                     <TerminalTextarea
                       label="Biography"
