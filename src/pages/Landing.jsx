@@ -228,7 +228,7 @@ const Landing = () => {
                         <div className="flex items-center gap-1.5">
                           <Zap className="w-3.5 h-3.5 text-yellow-500" />
                           <span className="text-xs text-gray-400">Level</span>
-                          <span className="text-sm font-bold text-white">{profile.level || 1}</span>
+                          <span className="text-sm font-bold text-white">{profile.xpLevel || 1}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <Trophy className="w-3.5 h-3.5 text-[#0057B8]" />
