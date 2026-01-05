@@ -398,6 +398,7 @@ exports.onFantasyRecapUpdated = onDocumentWritten(
  */
 exports.triggerDailyNews = onCall(
   {
+    cors: true,
     timeoutSeconds: 180,
     memory: "1GiB",
     secrets: [geminiApiKey],
@@ -468,6 +469,7 @@ exports.triggerDailyNews = onCall(
  */
 exports.getDailyNews = onCall(
   {
+    cors: true,
     timeoutSeconds: 30,
   },
   async (request) => {
@@ -510,6 +512,7 @@ exports.getDailyNews = onCall(
  */
 exports.getRecentNews = onCall(
   {
+    cors: true,
     timeoutSeconds: 30,
   },
   async (request) => {
@@ -844,6 +847,7 @@ async function cleanupOldNewsEntries(db, category) {
 
 exports.triggerNewsGeneration = onCall(
   {
+    cors: true,
     timeoutSeconds: 120,
     memory: "512MiB",
     secrets: [geminiApiKey],
@@ -917,6 +921,7 @@ function checkAdminAuth(auth) {
  */
 exports.listAllArticles = onCall(
   {
+    cors: true,
     timeoutSeconds: 60,
   },
   async (request) => {
@@ -1000,6 +1005,7 @@ exports.listAllArticles = onCall(
  */
 exports.getArticleForEdit = onCall(
   {
+    cors: true,
     timeoutSeconds: 30,
   },
   async (request) => {
@@ -1045,6 +1051,7 @@ exports.getArticleForEdit = onCall(
  */
 exports.updateArticle = onCall(
   {
+    cors: true,
     timeoutSeconds: 30,
   },
   async (request) => {
@@ -1111,6 +1118,7 @@ exports.updateArticle = onCall(
  */
 exports.archiveArticle = onCall(
   {
+    cors: true,
     timeoutSeconds: 30,
   },
   async (request) => {
@@ -1149,6 +1157,7 @@ exports.archiveArticle = onCall(
  */
 exports.deleteArticle = onCall(
   {
+    cors: true,
     timeoutSeconds: 30,
   },
   async (request) => {
