@@ -6,7 +6,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Trophy, Users, User, Newspaper, Calendar, LucideIcon } from 'lucide-react';
+import { LayoutDashboard, Trophy, Users, User, Newspaper, Calendar, LucideIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../App';
 import { useLeagueNotificationBadge } from '../hooks/useLeagueNotifications';
@@ -30,7 +30,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { path: '/', label: 'News', icon: Newspaper },
-  { path: '/dashboard', label: 'Dashboard', icon: Home },
+  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/schedule', label: 'Schedule', icon: Calendar },
   { path: '/scores', label: 'Scores', icon: Trophy },
   { path: '/leagues', label: 'Leagues', icon: Users, badgeKey: 'leagues' },
