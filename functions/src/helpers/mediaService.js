@@ -53,7 +53,7 @@ function initializeCloudinary() {
 
 /**
  * High-quality placeholder images for corps action shots
- * These are stored in Cloudinary's demo account or can be replaced with your own
+ * Using marching band and drum corps related images from Unsplash
  *
  * Categories:
  * - brass: Hornline/brass section shots
@@ -64,28 +64,34 @@ function initializeCloudinary() {
  */
 const PLACEHOLDER_IMAGES = {
   brass: [
-    "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=1200&q=80&auto=format",
-    "https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=1200&q=80&auto=format",
-    "https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=1200&q=80&auto=format",
+    // Marching band brass section images
+    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&q=80&auto=format", // Marching band
+    "https://images.unsplash.com/photo-1598387993441-a364f854c3e1?w=1200&q=80&auto=format", // Brass instruments
+    "https://images.unsplash.com/photo-1576485290814-1c72aa4bbb8e?w=1200&q=80&auto=format", // Marching band on field
   ],
   percussion: [
-    "https://images.unsplash.com/photo-1519892300165-cb5542fb47c7?w=1200&q=80&auto=format",
-    "https://images.unsplash.com/photo-1524230659092-07f99a75c013?w=1200&q=80&auto=format",
+    // Drumline and percussion images
+    "https://images.unsplash.com/photo-1485579149621-3123dd979885?w=1200&q=80&auto=format", // Marching snare drums
+    "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1200&q=80&auto=format", // Drums
   ],
   guard: [
-    "https://images.unsplash.com/photo-1508700929628-666bc8bd84ea?w=1200&q=80&auto=format",
+    // Color guard / flags images
+    "https://images.unsplash.com/photo-1587560699334-cc4ff634909a?w=1200&q=80&auto=format", // Flags/performance
   ],
   full_corps: [
-    "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1200&q=80&auto=format",
-    "https://images.unsplash.com/photo-1506157786151-b8491531f063?w=1200&q=80&auto=format",
-    "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=1200&q=80&auto=format",
+    // Football field / marching ensemble images
+    "https://images.unsplash.com/photo-1566577739112-5180d4bf9390?w=1200&q=80&auto=format", // Football field at night
+    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&q=80&auto=format", // Marching band
+    "https://images.unsplash.com/photo-1576485290814-1c72aa4bbb8e?w=1200&q=80&auto=format", // Marching band formation
   ],
   stadium: [
-    "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=1200&q=80&auto=format",
-    "https://images.unsplash.com/photo-1495555961986-6d4c1ecb7be3?w=1200&q=80&auto=format",
+    // Stadium at night / football field atmosphere
+    "https://images.unsplash.com/photo-1566577739112-5180d4bf9390?w=1200&q=80&auto=format", // Stadium lights at night
+    "https://images.unsplash.com/photo-1544465544-1b71aee9dfa3?w=1200&q=80&auto=format", // Football stadium
   ],
   default: [
-    "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1200&q=80&auto=format",
+    // Default to stadium/field images (NOT concerts)
+    "https://images.unsplash.com/photo-1566577739112-5180d4bf9390?w=1200&q=80&auto=format", // Football field at night
   ],
 };
 

@@ -807,9 +807,11 @@ async function generateImageWithImagen(prompt) {
 
   try {
     // Choose model based on configuration
+    // imagen-3.0-generate-001 is the free tier image generation model
+    // imagen-4.0-fast-generate-001 is the paid tier ($0.02/image)
     const modelName = USE_IMAGEN_4
       ? "imagen-4.0-fast-generate-001"  // Paid: $0.02/image
-      : "gemini-2.0-flash-exp";          // Free tier: 500/day
+      : "imagen-3.0-generate-001";       // Free tier: Imagen 3
 
     const imageModel = ai.getGenerativeModel({
       model: modelName,
@@ -824,21 +826,21 @@ ${prompt}
 
 ${IMAGE_NEGATIVE_PROMPT}`;
 
-    const result = await imageModel.generateContent({
-      contents: [{ role: "user", parts: [{ text: `Generate an image based on this detailed prompt:\n\n${enhancedPrompt}` }] }],
-      generationConfig: {
-        responseModalities: ["image", "text"],
+    // Imagen models use a different API structure than text models
+    const result = await imageModel.generateImages({
+      prompt: enhancedPrompt,
+      config: {
+        numberOfImages: 1,
+        aspectRatio: "16:9",
+        outputMimeType: "image/jpeg",
       },
     });
 
-    const response = result.response;
-    const imagePart = response.candidates?.[0]?.content?.parts?.find(
-      part => part.inlineData?.mimeType?.startsWith("image/")
-    );
-
-    if (imagePart?.inlineData) {
+    // Extract generated image from result
+    const generatedImage = result.generatedImages?.[0];
+    if (generatedImage?.image?.imageBytes) {
       logger.info(`Image generated successfully using ${modelName}`);
-      return `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
+      return `data:image/jpeg;base64,${generatedImage.image.imageBytes}`;
     }
 
     logger.warn("No image generated, using placeholder");
