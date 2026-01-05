@@ -9,13 +9,13 @@ import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom'
 import {
   User, Trophy, Settings, Star, TrendingUp, Calendar,
   Crown, Medal, MapPin, Edit, Check, X, LogOut, Coins, Heart,
-  ChevronRight, MessageCircle, Mail, AtSign, AlertCircle, Bell, Shield, Eye, EyeOff
+  ChevronRight, MessageCircle, Mail, AtSign, AlertCircle, Bell, Shield, Eye, EyeOff, Trash2
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { useProfile, useUpdateProfile } from '../hooks/useProfile';
 import { db } from '../firebase';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
-import { updateUsername, updateEmail } from '../firebase/functions';
+import { updateUsername, updateEmail, deleteAccount } from '../firebase/functions';
 import toast from 'react-hot-toast';
 import { DataTable } from '../components/ui/DataTable';
 import { formatSeasonName } from '../utils/season';
@@ -193,6 +193,11 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [hasPrivacyChanges, setHasPrivacyChanges] = useState(false);
+
+  // Delete account state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Check push notification support
   useEffect(() => {
@@ -421,6 +426,26 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'DELETE') {
+      toast.error('Please type DELETE to confirm');
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await deleteAccount();
+      toast.success('Account deleted successfully');
+      await signOut();
+      onClose();
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      toast.error(error.message || 'Failed to delete account');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -570,6 +595,73 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                 <LogOut className="w-4 h-4" />
                 Sign Out
               </button>
+
+              {/* Delete Account Section */}
+              <div className="pt-4 border-t border-[#333]">
+                {!showDeleteConfirm ? (
+                  <button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="w-full py-3 min-h-[44px] bg-transparent border border-red-500/20 text-red-400/70 text-sm font-bold hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400 active:bg-red-500/20 transition-all press-feedback rounded-sm flex items-center justify-center gap-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete Account
+                  </button>
+                ) : (
+                  <div className="bg-red-500/5 border border-red-500/30 p-4 rounded-sm space-y-3">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-bold text-red-400">Delete Your Account?</p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          This action is permanent and cannot be undone. All your data, corps, and season history will be permanently deleted.
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-gray-500 uppercase tracking-wider block mb-1">
+                        Type DELETE to confirm
+                      </label>
+                      <input
+                        type="text"
+                        value={deleteConfirmText}
+                        onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
+                        placeholder="DELETE"
+                        className="w-full px-3 py-2 bg-[#111] border border-[#333] text-white text-sm font-mono focus:outline-none focus:border-red-500/50"
+                        disabled={isDeleting}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setShowDeleteConfirm(false);
+                          setDeleteConfirmText('');
+                        }}
+                        disabled={isDeleting}
+                        className="flex-1 py-2.5 min-h-[44px] bg-[#333] text-gray-300 text-sm font-bold hover:bg-[#444] disabled:opacity-50 transition-all rounded-sm"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleDeleteAccount}
+                        disabled={isDeleting || deleteConfirmText !== 'DELETE'}
+                        className="flex-1 py-2.5 min-h-[44px] bg-red-600 text-white text-sm font-bold hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all rounded-sm flex items-center justify-center gap-2"
+                      >
+                        {isDeleting ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            Deleting...
+                          </>
+                        ) : (
+                          <>
+                            <Trash2 className="w-4 h-4" />
+                            Delete Forever
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

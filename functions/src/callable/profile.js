@@ -332,3 +332,89 @@ exports.getPublicProfile = onCall({ cors: true }, async (request) => {
     throw new HttpsError("internal", "Failed to fetch profile. Please try again.");
   }
 });
+
+/**
+ * Delete user account and all associated data
+ * This permanently deletes the user's account from Firebase Auth
+ * and removes all their data from Firestore
+ */
+exports.deleteAccount = onCall({ cors: true }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "You must be logged in to delete your account.");
+  }
+
+  const userId = request.auth.uid;
+
+  logger.info(`Deleting account for user ${userId}`);
+
+  try {
+    const admin = require("firebase-admin");
+    const db = getDb();
+
+    // Get user profile to find username for cleanup
+    const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${userId}/profile/data`);
+    const profileDoc = await profileRef.get();
+    const username = profileDoc.exists ? profileDoc.data().username : null;
+
+    // Delete user data from Firestore
+    const batch = db.batch();
+
+    // Delete profile data
+    batch.delete(profileRef);
+
+    // Delete private data
+    const privateRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${userId}/private/data`);
+    batch.delete(privateRef);
+
+    // Delete username reservation if exists
+    if (username) {
+      const usernameRef = db.doc(`usernames/${username.toLowerCase()}`);
+      batch.delete(usernameRef);
+    }
+
+    // Commit Firestore deletions
+    await batch.commit();
+
+    // Delete subcollections (corps, notifications, etc.)
+    const userDocRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${userId}`);
+
+    // Delete corps subcollection
+    const corpsSnapshot = await userDocRef.collection('corps').get();
+    const corpsDeleteBatch = db.batch();
+    corpsSnapshot.docs.forEach(doc => {
+      corpsDeleteBatch.delete(doc.ref);
+    });
+    if (corpsSnapshot.docs.length > 0) {
+      await corpsDeleteBatch.commit();
+    }
+
+    // Delete notifications subcollection
+    const notificationsSnapshot = await userDocRef.collection('notifications').get();
+    const notificationsDeleteBatch = db.batch();
+    notificationsSnapshot.docs.forEach(doc => {
+      notificationsDeleteBatch.delete(doc.ref);
+    });
+    if (notificationsSnapshot.docs.length > 0) {
+      await notificationsDeleteBatch.commit();
+    }
+
+    // Delete the user from Firebase Auth
+    await admin.auth().deleteUser(userId);
+
+    logger.info(`Successfully deleted account for user ${userId}`);
+
+    return {
+      success: true,
+      message: "Account deleted successfully"
+    };
+
+  } catch (error) {
+    logger.error(`Error deleting account for user ${userId}:`, error);
+
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+
+    throw new HttpsError("internal", "Failed to delete account. Please try again.");
+  }
+});

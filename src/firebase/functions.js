@@ -64,6 +64,7 @@ export const updateProfile = httpsCallable(functions, 'updateProfile');
 export const updateUsername = httpsCallable(functions, 'updateUsername');
 export const updateEmail = httpsCallable(functions, 'updateEmail');
 export const getPublicProfile = httpsCallable(functions, 'getPublicProfile');
+export const deleteAccount = httpsCallable(functions, 'deleteAccount');
 export const sendCommentNotification = httpsCallable(functions, 'sendCommentNotification');
 export const deleteComment = httpsCallable(functions, 'deleteComment');
 export const reportComment = httpsCallable(functions, 'reportComment');
