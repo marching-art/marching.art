@@ -1057,7 +1057,7 @@ async function getUniformDetailsFromFirestore(db, corpsName, year = null) {
 
         // If year specified, try to get show title from Firestore
         if (year && corpsEntry.id) {
-          const showsDoc = await db.doc(`dci-reference/shows/${corpsEntry.id}`).get();
+          const showsDoc = await db.doc(`dci-reference/shows-${corpsEntry.id}`).get();
           if (showsDoc.exists) {
             const showData = showsDoc.data().shows?.[year];
             if (showData?.title) {
@@ -1098,7 +1098,7 @@ async function getShowTitleFromFirestore(db, corpsName, year) {
       );
 
       if (corpsEntry?.id) {
-        const showsDoc = await db.doc(`dci-reference/shows/${corpsEntry.id}`).get();
+        const showsDoc = await db.doc(`dci-reference/shows-${corpsEntry.id}`).get();
         if (showsDoc.exists) {
           const showData = showsDoc.data().shows?.[year];
           if (showData?.title) {

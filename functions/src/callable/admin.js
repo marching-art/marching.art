@@ -282,8 +282,8 @@ exports.manualTrigger = onCall({ cors: true }, async (request) => {
           ...corpsMeta,
         };
 
-        // Create shows document for this corps
-        const showsRef = db.doc(`dci-reference/shows/${corpsData.id}`);
+        // Create shows document for this corps (using shows-{id} format for valid doc path)
+        const showsRef = db.doc(`dci-reference/shows-${corpsData.id}`);
         batch.set(showsRef, { shows }, { merge: true });
       }
 

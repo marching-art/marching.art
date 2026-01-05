@@ -675,9 +675,9 @@ async function seedDciReference() {
       ...corpsMeta,
     };
 
-    // Write shows document for this corps
+    // Write shows document for this corps (using shows-{id} format for valid doc path)
     if (shows && Object.keys(shows).length > 0) {
-      const showsRef = db.doc(`dci-reference/shows/${corpsData.id}`);
+      const showsRef = db.doc(`dci-reference/shows-${corpsData.id}`);
       batch.set(showsRef, {
         corpsName,
         shows,
