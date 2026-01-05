@@ -19,6 +19,8 @@ import NewsFeed from '../components/Landing/NewsFeed';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useTickerData } from '../hooks/useTickerData';
 import { useLandingScores } from '../hooks/useLandingScores';
+import ArticleReactions from '../components/Articles/ArticleReactions';
+import ArticleComments from '../components/Articles/ArticleComments';
 
 
 // =============================================================================
@@ -603,9 +605,14 @@ const Landing = () => {
                 </h1>
 
                 {/* Summary */}
-                <p className="text-lg text-gray-300 leading-relaxed mb-6 pb-6 border-b border-[#333]">
+                <p className="text-lg text-gray-300 leading-relaxed mb-6">
                   {selectedStory.summary}
                 </p>
+
+                {/* Reactions */}
+                <div className="mb-6 pb-6 border-b border-[#333]">
+                  <ArticleReactions articleId={selectedStory.id} />
+                </div>
 
                 {/* Full Story / Narrative */}
                 {(selectedStory.fullStory || selectedStory.narrative) && (
@@ -736,6 +743,11 @@ const Landing = () => {
                     </div>
                   </div>
                 )}
+
+                {/* Comments Section */}
+                <div className="mt-8 pt-6 border-t border-[#333]">
+                  <ArticleComments articleId={selectedStory.id} />
+                </div>
               </div>
             </div>
 
