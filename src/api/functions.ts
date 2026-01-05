@@ -294,6 +294,67 @@ export interface SubmitNewsResult {
 export const submitNewsForApproval = createCallable<SubmitNewsData, SubmitNewsResult>('submitNewsForApproval');
 
 // =============================================================================
+// ADMIN ARTICLE MANAGEMENT
+// =============================================================================
+
+export interface NewsSubmission {
+  id: string;
+  headline: string;
+  summary: string;
+  fullStory: string;
+  category: NewsCategory;
+  imageUrl: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  authorUid: string;
+  authorName: string;
+  authorEmail: string | null;
+  createdAt: string;
+  updatedAt: string;
+  rejectionReason?: string;
+  publishedPath?: string;
+  publishedImageUrl?: string;
+}
+
+export interface ListPendingSubmissionsData {
+  status?: 'pending' | 'approved' | 'rejected' | 'all';
+  limit?: number;
+}
+
+export interface ListPendingSubmissionsResult {
+  success: boolean;
+  submissions: NewsSubmission[];
+  count: number;
+}
+
+export const listPendingSubmissions = createCallable<ListPendingSubmissionsData, ListPendingSubmissionsResult>('listPendingSubmissions');
+
+export interface ApproveSubmissionData {
+  submissionId: string;
+  generateImage?: boolean;
+}
+
+export interface ApproveSubmissionResult {
+  success: boolean;
+  message: string;
+  articlePath?: string;
+  imageUrl?: string | null;
+}
+
+export const approveSubmission = createCallable<ApproveSubmissionData, ApproveSubmissionResult>('approveSubmission');
+
+export interface RejectSubmissionData {
+  submissionId: string;
+  reason?: string;
+}
+
+export interface RejectSubmissionResult {
+  success: boolean;
+  message: string;
+}
+
+export const rejectSubmission = createCallable<RejectSubmissionData, RejectSubmissionResult>('rejectSubmission');
+
+// =============================================================================
 // AVATAR GENERATION
 // =============================================================================
 

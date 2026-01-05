@@ -1273,3 +1273,262 @@ exports.submitNewsForApproval = onCall(
     }
   }
 );
+
+// =============================================================================
+// ADMIN ARTICLE MANAGEMENT
+// =============================================================================
+
+/**
+ * List all pending article submissions for admin review
+ */
+exports.listPendingSubmissions = onCall(
+  {
+    timeoutSeconds: 30,
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "You must be logged in");
+    }
+
+    if (!request.auth.token.admin) {
+      throw new HttpsError("permission-denied", "Admin access required");
+    }
+
+    const db = getDb();
+    const { status = "pending", limit = 50 } = request.data || {};
+
+    try {
+      let query = db.collection("news_submissions").orderBy("createdAt", "desc");
+
+      if (status !== "all") {
+        query = query.where("status", "==", status);
+      }
+
+      const snapshot = await query.limit(limit).get();
+
+      const submissions = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || null,
+        updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString() || null,
+      }));
+
+      return {
+        success: true,
+        submissions,
+        count: submissions.length,
+      };
+    } catch (error) {
+      logger.error("Error listing submissions:", error);
+      throw new HttpsError("internal", "Failed to list submissions");
+    }
+  }
+);
+
+/**
+ * Approve an article submission and publish it
+ * Generates an AI image if not already provided
+ */
+exports.approveSubmission = onCall(
+  {
+    timeoutSeconds: 120,
+    memory: "1GiB",
+    secrets: [geminiApiKey],
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "You must be logged in");
+    }
+
+    if (!request.auth.token.admin) {
+      throw new HttpsError("permission-denied", "Admin access required");
+    }
+
+    const db = getDb();
+    const { submissionId, generateImage = true } = request.data || {};
+
+    if (!submissionId) {
+      throw new HttpsError("invalid-argument", "Submission ID is required");
+    }
+
+    try {
+      // Get the submission
+      const submissionRef = db.collection("news_submissions").doc(submissionId);
+      const submissionDoc = await submissionRef.get();
+
+      if (!submissionDoc.exists) {
+        throw new HttpsError("not-found", "Submission not found");
+      }
+
+      const submission = submissionDoc.data();
+
+      if (submission.status === "approved") {
+        throw new HttpsError("failed-precondition", "This submission has already been approved");
+      }
+
+      // Get current season info
+      const seasonDoc = await db.doc("game-settings/season").get();
+      const seasonData = seasonDoc.exists ? seasonDoc.data() : {};
+      const seasonId = seasonData.seasonUid || "current_season";
+      const currentDay = seasonData.currentDay || 1;
+
+      let finalImageUrl = submission.imageUrl;
+
+      // Generate image if requested and not already provided
+      if (generateImage && !finalImageUrl) {
+        logger.info("Generating image for approved article:", { submissionId });
+
+        const { generateImageWithImagen, buildArticleImagePrompt } = require("../helpers/newsGeneration");
+        const { uploadFromUrl } = require("../helpers/mediaService");
+
+        // Build a contextual prompt based on article content
+        const imagePrompt = buildArticleImagePrompt(
+          submission.category,
+          submission.headline,
+          submission.summary
+        );
+
+        // Generate the image
+        const imageData = await generateImageWithImagen(imagePrompt);
+
+        if (imageData) {
+          // Upload to Cloudinary
+          const uploadResult = await uploadFromUrl(imageData, {
+            folder: "marching-art/user-articles",
+            publicId: `article_${submissionId}`,
+            category: submission.category,
+            headline: submission.headline,
+          });
+
+          if (uploadResult.success) {
+            finalImageUrl = uploadResult.url;
+            logger.info("Image generated and uploaded:", { url: finalImageUrl });
+          }
+        }
+      }
+
+      // Create the published article in news_hub
+      // User submissions go to a "community" subcollection
+      const articlePath = `news_hub/${seasonId}/community/article_${submissionId}`;
+
+      const publishedArticle = {
+        type: "community_submission",
+        submissionId,
+        reportDay: currentDay,
+        createdAt: submission.createdAt,
+        publishedAt: new Date(),
+        updatedAt: new Date(),
+
+        // Article content
+        headline: submission.headline,
+        summary: submission.summary,
+        narrative: submission.fullStory,
+        category: submission.category,
+
+        // Image
+        imageUrl: finalImageUrl,
+        imageIsPlaceholder: !finalImageUrl,
+
+        // Author info
+        authorUid: submission.authorUid,
+        authorName: submission.authorName,
+
+        // Metadata
+        metadata: {
+          source: "community_submission",
+          approvedBy: request.auth.uid,
+          approvedAt: new Date(),
+        },
+
+        isPublished: true,
+      };
+
+      await db.doc(articlePath).set(publishedArticle);
+
+      // Update submission status
+      await submissionRef.update({
+        status: "approved",
+        publishedAt: new Date(),
+        updatedAt: new Date(),
+        approvedBy: request.auth.uid,
+        publishedImageUrl: finalImageUrl,
+        publishedPath: articlePath,
+      });
+
+      logger.info("Article approved and published:", {
+        submissionId,
+        articlePath,
+        hasImage: !!finalImageUrl,
+      });
+
+      return {
+        success: true,
+        message: "Article approved and published successfully",
+        articlePath,
+        imageUrl: finalImageUrl,
+      };
+    } catch (error) {
+      logger.error("Error approving submission:", error);
+      if (error instanceof HttpsError) throw error;
+      throw new HttpsError("internal", "Failed to approve submission");
+    }
+  }
+);
+
+/**
+ * Reject an article submission
+ */
+exports.rejectSubmission = onCall(
+  {
+    timeoutSeconds: 30,
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "You must be logged in");
+    }
+
+    if (!request.auth.token.admin) {
+      throw new HttpsError("permission-denied", "Admin access required");
+    }
+
+    const db = getDb();
+    const { submissionId, reason } = request.data || {};
+
+    if (!submissionId) {
+      throw new HttpsError("invalid-argument", "Submission ID is required");
+    }
+
+    try {
+      const submissionRef = db.collection("news_submissions").doc(submissionId);
+      const submissionDoc = await submissionRef.get();
+
+      if (!submissionDoc.exists) {
+        throw new HttpsError("not-found", "Submission not found");
+      }
+
+      const submission = submissionDoc.data();
+
+      if (submission.status !== "pending") {
+        throw new HttpsError("failed-precondition", "This submission has already been processed");
+      }
+
+      await submissionRef.update({
+        status: "rejected",
+        rejectionReason: reason || "Does not meet our content guidelines",
+        rejectedBy: request.auth.uid,
+        updatedAt: new Date(),
+      });
+
+      logger.info("Article rejected:", { submissionId, reason });
+
+      return {
+        success: true,
+        message: "Submission rejected",
+      };
+    } catch (error) {
+      logger.error("Error rejecting submission:", error);
+      if (error instanceof HttpsError) throw error;
+      throw new HttpsError("internal", "Failed to reject submission");
+    }
+  }
+);
