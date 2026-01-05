@@ -117,6 +117,7 @@ const Article = () => {
 
   // Ref for scrolling to comments
   const commentsRef = useRef(null);
+  const [expandComments, setExpandComments] = useState(false);
 
   // Compute trending players from movers across all classes
   const trendingPlayers = useMemo(() => {
@@ -239,6 +240,7 @@ const Article = () => {
   };
 
   const scrollToComments = () => {
+    setExpandComments(true);
     commentsRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
@@ -589,6 +591,7 @@ const Article = () => {
                     articleId={article.id}
                     initialCount={engagement?.commentCount || 0}
                     onCommentCountChange={handleCommentCountChange}
+                    autoExpand={expandComments}
                   />
                 </div>
               </article>
