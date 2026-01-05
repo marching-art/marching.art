@@ -935,7 +935,7 @@ exports.listAllArticles = onCall(
 
       // Fetch from season-based structure (use provided seasonId or "current_season")
       const seasonPath = seasonId || "current_season";
-      const seasonRef = db.collection(`news_hub/${seasonPath}`);
+      const seasonRef = db.collection(`news_hub/${seasonPath}/days`);
       const dayDocs = await seasonRef.listDocuments();
 
       for (const docRef of dayDocs) {
@@ -944,7 +944,7 @@ exports.listAllArticles = onCall(
           const data = doc.data();
           articles.push({
             id: doc.id,
-            path: `news_hub/${seasonPath}/${doc.id}`,
+            path: `news_hub/${seasonPath}/days/${doc.id}`,
             source: seasonPath,
             reportDay: data.reportDay,
             headline: data.headline || "Untitled",
