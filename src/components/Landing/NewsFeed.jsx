@@ -98,7 +98,8 @@ function formatTimestamp(dateString) {
  */
 function getReadingTime(story) {
   const wordsPerMinute = 200;
-  const text = `${story.headline} ${story.summary} ${story.fullStory || ''} ${story.fantasyImpact || ''}`;
+  // Include both fullStory and narrative fields (backend uses narrative, user submissions use fullStory)
+  const text = `${story.headline} ${story.summary} ${story.fullStory || ''} ${story.narrative || ''} ${story.fantasyImpact || ''}`;
   const wordCount = text.split(/\s+/).length;
   const minutes = Math.max(1, Math.ceil(wordCount / wordsPerMinute));
   return `${minutes} min read`;

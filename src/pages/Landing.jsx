@@ -607,10 +607,10 @@ const Landing = () => {
                   {selectedStory.summary}
                 </p>
 
-                {/* Full Story */}
-                {selectedStory.fullStory && (
+                {/* Full Story / Narrative */}
+                {(selectedStory.fullStory || selectedStory.narrative) && (
                   <div className="prose prose-invert prose-sm max-w-none mb-6">
-                    {selectedStory.fullStory.split('\n\n').map((paragraph, idx) => (
+                    {(selectedStory.fullStory || selectedStory.narrative).split('\n\n').map((paragraph, idx) => (
                       <p key={idx} className="text-gray-300 leading-relaxed mb-4">
                         {paragraph}
                       </p>
