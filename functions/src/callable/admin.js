@@ -4,6 +4,7 @@ const { getDb } = require("../config");
 const { startNewOffSeason, startNewLiveSeason, archiveSeasonResultsLogic, refreshLiveSeasonSchedule, updateScheduleDay, generateOffSeasonSchedule } = require("../helpers/season");
 const { processAndArchiveOffSeasonScoresLogic, calculateCorpsStatisticsLogic, processAndScoreLiveSeasonDayLogic } = require("../helpers/scoring");
 const { sendWelcomeEmail, brevoApiKey } = require("../helpers/emailService");
+const { DCI_CORPS_DATA } = require("../scripts/seedDciReference");
 
 exports.startNewOffSeason = onCall({ cors: true }, async (request) => {
   if (!request.auth || !request.auth.token.admin) {
@@ -264,6 +265,39 @@ exports.manualTrigger = onCall({ cors: true }, async (request) => {
       return {
         success: true,
         message: `Schedule regenerated with ${competitions.length} competitions for season ${seasonId}. Cleared schedule selections for ${usersUpdated} users from week ${currentWeek} onward.`
+      };
+    }
+    case "seedDciReference": {
+      // Seed Firestore with DCI corps and show reference data
+      const db = getDb();
+      const batch = db.batch();
+      const corpsRef = db.doc("dci-reference/corps");
+      const corpsIndex = {};
+
+      // Process each corps
+      for (const [corpsName, corpsData] of Object.entries(DCI_CORPS_DATA)) {
+        const { shows, ...corpsMeta } = corpsData;
+        corpsIndex[corpsData.id] = {
+          name: corpsName,
+          ...corpsMeta,
+        };
+
+        // Create shows document for this corps
+        const showsRef = db.doc(`dci-reference/shows/${corpsData.id}`);
+        batch.set(showsRef, { shows }, { merge: true });
+      }
+
+      // Write corps index document
+      batch.set(corpsRef, { corps: corpsIndex }, { merge: true });
+
+      // Commit the batch
+      await batch.commit();
+
+      const corpsCount = Object.keys(DCI_CORPS_DATA).length;
+      logger.info(`Seeded DCI reference data: ${corpsCount} corps`);
+      return {
+        success: true,
+        message: `Successfully seeded DCI reference data with ${corpsCount} corps.`,
       };
     }
     default:
