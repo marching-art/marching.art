@@ -1327,7 +1327,8 @@ exports.listPendingSubmissions = onCall(
 
 /**
  * Approve an article submission and publish it
- * Generates an AI image if not already provided
+ * Admin can choose to use submitted image, generate AI image, or publish without image
+ * imageOption: 'submitted' | 'generate' | 'none'
  */
 exports.approveSubmission = onCall(
   {
@@ -1345,7 +1346,8 @@ exports.approveSubmission = onCall(
     }
 
     const db = getDb();
-    const { submissionId, generateImage = true } = request.data || {};
+    // Support both old 'generateImage' boolean and new 'imageOption' string
+    const { submissionId, generateImage, imageOption } = request.data || {};
 
     if (!submissionId) {
       throw new HttpsError("invalid-argument", "Submission ID is required");
@@ -1372,11 +1374,30 @@ exports.approveSubmission = onCall(
       const seasonId = seasonData.seasonUid || "current_season";
       const currentDay = seasonData.currentDay || 1;
 
-      let finalImageUrl = submission.imageUrl;
+      let finalImageUrl = null;
 
-      // Generate image if requested and not already provided
-      if (generateImage && !finalImageUrl) {
-        logger.info("Generating image for approved article:", { submissionId });
+      // Determine image handling based on imageOption or legacy generateImage flag
+      // imageOption takes precedence if provided
+      let effectiveOption = imageOption;
+      if (!effectiveOption) {
+        // Legacy support: convert boolean generateImage to imageOption
+        if (generateImage === true) {
+          effectiveOption = submission.imageUrl ? "submitted" : "generate";
+        } else if (generateImage === false) {
+          effectiveOption = "none";
+        } else {
+          // Default: use submitted image if available, otherwise generate
+          effectiveOption = submission.imageUrl ? "submitted" : "generate";
+        }
+      }
+
+      if (effectiveOption === "submitted" && submission.imageUrl) {
+        // Use the submitted image
+        finalImageUrl = submission.imageUrl;
+        logger.info("Using submitted image:", { submissionId, imageUrl: finalImageUrl });
+      } else if (effectiveOption === "generate") {
+        // Generate a new AI image
+        logger.info("Generating AI image for approved article:", { submissionId });
 
         const { generateImageWithImagen, buildArticleImagePrompt } = require("../helpers/newsGeneration");
         const { uploadFromUrl } = require("../helpers/mediaService");

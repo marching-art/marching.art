@@ -70,12 +70,12 @@ const SubmissionsManagement = () => {
     toast.success('Submissions refreshed');
   };
 
-  const handleApprove = async (submission, generateImage = true) => {
+  const handleApprove = async (submission, imageOption = 'generate') => {
     setProcessingId(submission.id);
     try {
       const result = await approveSubmission({
         submissionId: submission.id,
-        generateImage
+        imageOption
       });
       if (result.data.success) {
         toast.success('Article approved and published!');
@@ -281,12 +281,13 @@ const SubmissionRow = ({ submission, onPreview, onApprove, onReject, formatDate,
 const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, formatDate }) => {
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectForm, setShowRejectForm] = useState(false);
-  const [generateImage, setGenerateImage] = useState(!submission.imageUrl);
+  // Default: use submitted image if available, otherwise generate
+  const [imageOption, setImageOption] = useState(submission.imageUrl ? 'submitted' : 'generate');
 
   useEscapeKey(onClose);
 
   const handleApprove = () => {
-    onApprove(submission, generateImage);
+    onApprove(submission, imageOption);
   };
 
   const handleReject = () => {
@@ -399,19 +400,57 @@ const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, 
             <div className="px-4 py-3 border-t border-[#333] bg-[#111]">
               {!showRejectForm ? (
                 <div className="space-y-3">
-                  {/* Image generation toggle */}
-                  {!submission.imageUrl && (
-                    <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={generateImage}
-                        onChange={(e) => setGenerateImage(e.target.checked)}
-                        className="rounded border-[#333] bg-[#222] text-[#0057B8] focus:ring-[#0057B8]"
-                      />
-                      <Sparkles className="w-4 h-4 text-yellow-500" />
-                      Generate AI image for this article
+                  {/* Image options */}
+                  <div className="space-y-2">
+                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                      Article Image
                     </label>
-                  )}
+                    <div className="space-y-2">
+                      {/* Option: Use submitted image (only if available) */}
+                      {submission.imageUrl && (
+                        <label className="flex items-center gap-3 text-sm text-gray-300 cursor-pointer p-2 rounded hover:bg-[#222] transition-colors">
+                          <input
+                            type="radio"
+                            name="imageOption"
+                            value="submitted"
+                            checked={imageOption === 'submitted'}
+                            onChange={(e) => setImageOption(e.target.value)}
+                            className="text-[#0057B8] focus:ring-[#0057B8] bg-[#222] border-[#444]"
+                          />
+                          <Image className="w-4 h-4 text-blue-400" />
+                          <span>Use submitted image</span>
+                        </label>
+                      )}
+
+                      {/* Option: Generate AI image */}
+                      <label className="flex items-center gap-3 text-sm text-gray-300 cursor-pointer p-2 rounded hover:bg-[#222] transition-colors">
+                        <input
+                          type="radio"
+                          name="imageOption"
+                          value="generate"
+                          checked={imageOption === 'generate'}
+                          onChange={(e) => setImageOption(e.target.value)}
+                          className="text-[#0057B8] focus:ring-[#0057B8] bg-[#222] border-[#444]"
+                        />
+                        <Sparkles className="w-4 h-4 text-yellow-500" />
+                        <span>Generate AI image</span>
+                      </label>
+
+                      {/* Option: No image */}
+                      <label className="flex items-center gap-3 text-sm text-gray-300 cursor-pointer p-2 rounded hover:bg-[#222] transition-colors">
+                        <input
+                          type="radio"
+                          name="imageOption"
+                          value="none"
+                          checked={imageOption === 'none'}
+                          onChange={(e) => setImageOption(e.target.value)}
+                          className="text-[#0057B8] focus:ring-[#0057B8] bg-[#222] border-[#444]"
+                        />
+                        <X className="w-4 h-4 text-gray-500" />
+                        <span>No image</span>
+                      </label>
+                    </div>
+                  </div>
 
                   {/* Action buttons */}
                   <div className="flex justify-end gap-2">

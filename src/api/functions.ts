@@ -330,7 +330,10 @@ export const listPendingSubmissions = createCallable<ListPendingSubmissionsData,
 
 export interface ApproveSubmissionData {
   submissionId: string;
+  /** @deprecated Use imageOption instead */
   generateImage?: boolean;
+  /** 'submitted' = use submitted image, 'generate' = create AI image, 'none' = no image */
+  imageOption?: 'submitted' | 'generate' | 'none';
 }
 
 export interface ApproveSubmissionResult {
