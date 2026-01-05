@@ -481,9 +481,23 @@ exports.getDailyNews = onCall(
     }
 
     try {
-      // Use seasonId if provided, otherwise fall back to "current_season"
-      const seasonPath = seasonId || "current_season";
-      const docPath = `news_hub/${seasonPath}/day_${day}`;
+      // Find active season if not provided
+      let activeSeasonId = seasonId;
+      if (!activeSeasonId) {
+        const seasonsSnapshot = await db.collection("seasons")
+          .where("status", "==", "active")
+          .limit(1)
+          .get();
+
+        if (!seasonsSnapshot.empty) {
+          activeSeasonId = seasonsSnapshot.docs[0].id;
+        } else {
+          activeSeasonId = "current_season";
+        }
+      }
+
+      // Correct path: news_hub/{seasonId}/days/day_{n}
+      const docPath = `news_hub/${activeSeasonId}/days/day_${day}`;
       const doc = await db.doc(docPath).get();
 
       if (!doc.exists) {
@@ -933,29 +947,66 @@ exports.listAllArticles = onCall(
     try {
       const articles = [];
 
-      // Fetch from season-based structure (use provided seasonId or "current_season")
-      const seasonPath = seasonId || "current_season";
+      // Find the active season if not provided (same logic as getRecentNews)
+      let activeSeasonId = seasonId;
+      if (!activeSeasonId) {
+        const seasonsSnapshot = await db.collection("seasons")
+          .where("status", "==", "active")
+          .limit(1)
+          .get();
+
+        if (!seasonsSnapshot.empty) {
+          activeSeasonId = seasonsSnapshot.docs[0].id;
+        } else {
+          // Fallback to current_season for legacy compatibility
+          activeSeasonId = "current_season";
+        }
+      }
+
+      const seasonPath = activeSeasonId;
       const seasonRef = db.collection(`news_hub/${seasonPath}/days`);
       const dayDocs = await seasonRef.listDocuments();
 
+      // Fetch articles from each day's articles subcollection
       for (const docRef of dayDocs) {
-        const doc = await docRef.get();
-        if (doc.exists) {
-          const data = doc.data();
-          articles.push({
-            id: doc.id,
-            path: `news_hub/${seasonPath}/days/${doc.id}`,
-            source: seasonPath,
-            reportDay: data.reportDay,
-            headline: data.headline || "Untitled",
-            summary: data.summary || "",
-            isPublished: data.isPublished !== false,
-            isArchived: data.isArchived || false,
-            createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
-            updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
-            imageUrl: data.imageUrl,
-            category: data.category || "daily",
-          });
+        const dayDoc = await docRef.get();
+        if (!dayDoc.exists) continue;
+
+        const dayData = dayDoc.data();
+        const dayPath = `news_hub/${seasonPath}/days/${docRef.id}`;
+
+        // Get articles from the articles subcollection
+        const articlesRef = db.collection(`${dayPath}/articles`);
+        const articleDocs = await articlesRef.listDocuments();
+
+        for (const articleRef of articleDocs) {
+          const articleDoc = await articleRef.get();
+          if (articleDoc.exists) {
+            const data = articleDoc.data();
+            const articleType = articleRef.id;
+
+            // Determine category from article type
+            const category =
+              articleType.startsWith("dci_") ? "dci" :
+              articleType.startsWith("fantasy_") ? "fantasy" :
+              articleType === "deep_analytics" ? "analysis" : "dci";
+
+            articles.push({
+              id: `${docRef.id}_${articleType}`,
+              path: `${dayPath}/articles/${articleType}`,
+              source: "current_season",
+              reportDay: data.reportDay || dayData.reportDay,
+              articleType,
+              headline: data.headline || "Untitled",
+              summary: data.summary || "",
+              isPublished: data.isPublished !== false,
+              isArchived: data.isArchived || false,
+              createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+              updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
+              imageUrl: data.imageUrl,
+              category,
+            });
+          }
         }
       }
 
