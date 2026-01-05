@@ -202,6 +202,7 @@ export interface ArticleForEdit {
   headline: string;
   summary: string;
   fullStory?: string;
+  narrative?: string; // Backend stores generated article content in 'narrative' field
   fantasyImpact?: string;
   dciRecap?: {
     title: string;
@@ -246,6 +247,7 @@ export interface UpdateArticleData {
     headline: string;
     summary: string;
     fullStory: string;
+    narrative: string;
     fantasyImpact: string;
     dciRecap: ArticleForEdit['dciRecap'];
     fantasySpotlight: ArticleForEdit['fantasySpotlight'];
@@ -272,6 +274,21 @@ export const getArticleForEdit = createCallable<{ path: string }, GetArticleForE
 export const updateArticle = createCallable<UpdateArticleData, { success: boolean; message: string }>('updateArticle');
 export const archiveArticle = createCallable<ArchiveArticleData, { success: boolean; message: string }>('archiveArticle');
 export const deleteArticle = createCallable<DeleteArticleData, { success: boolean; message: string }>('deleteArticle');
+
+// Regenerate AI image for an article
+export interface RegenerateArticleImageData {
+  path: string;
+  headline: string;
+  category?: string;
+}
+
+export interface RegenerateArticleImageResult {
+  success: boolean;
+  message: string;
+  imageUrl?: string;
+}
+
+export const regenerateArticleImage = createCallable<RegenerateArticleImageData, RegenerateArticleImageResult>('regenerateArticleImage');
 
 // =============================================================================
 // NEWS SUBMISSIONS (User-submitted articles for admin approval)
