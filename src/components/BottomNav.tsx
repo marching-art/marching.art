@@ -2,7 +2,7 @@
 // BOTTOM NAV COMPONENT (TypeScript)
 // =============================================================================
 // Mobile bottom navigation bar with 6 items (matching desktop)
-// News, Home, Schedule, Scores, Leagues, Profile
+// News, Dashboard, Schedule, Scores, Leagues, Profile
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -30,7 +30,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { path: '/', label: 'News', icon: Newspaper },
-  { path: '/dashboard', label: 'Home', icon: Home },
+  { path: '/dashboard', label: 'Dashboard', icon: Home },
   { path: '/schedule', label: 'Schedule', icon: Calendar },
   { path: '/scores', label: 'Scores', icon: Trophy },
   { path: '/leagues', label: 'Leagues', icon: Users, badgeKey: 'leagues' },
