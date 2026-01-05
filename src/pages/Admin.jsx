@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { setUserRole, triggerDailyNews } from '../firebase/functions';
 import { db, adminHelpers } from '../firebase';
-import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, collectionGroup } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import { useAuth } from '../App';
@@ -255,45 +255,50 @@ const UsersTab = () => {
 
   const loadUserStats = async () => {
     try {
-      const usersRef = collection(db, 'artifacts/marching-art/users');
-      const snapshot = await getDocs(usersRef);
+      // Use collectionGroup to query all profile documents directly
+      // This is needed because user documents don't exist at the parent level,
+      // only the nested profile/data documents exist
+      const profilesRef = collectionGroup(db, 'profile');
+      const snapshot = await getDocs(profilesRef);
+
+      let totalUsers = 0;
       let activeCount = 0, corpsCount = 0, totalStreaks = 0, streakCount = 0, loginSum = 0;
 
-      for (const userDoc of snapshot.docs) {
-        const profileRef = doc(db, `artifacts/marching-art/users/${userDoc.id}/profile/data`);
-        const profileSnap = await getDoc(profileRef);
-        if (profileSnap.exists()) {
-          const data = profileSnap.data();
+      for (const profileDoc of snapshot.docs) {
+        // Only count profile docs from the marching-art users collection
+        if (!profileDoc.ref.path.includes('artifacts/marching-art/users')) continue;
 
-          // Check activity using lastLogin (Timestamp) or engagement.lastLogin (string)
-          let lastLoginDate = null;
-          if (data.lastLogin?.toDate) {
-            lastLoginDate = data.lastLogin.toDate();
-          } else if (data.engagement?.lastLogin) {
-            lastLoginDate = new Date(data.engagement.lastLogin);
-          }
+        totalUsers++;
+        const data = profileDoc.data();
 
-          if (lastLoginDate) {
-            const days = (Date.now() - lastLoginDate.getTime()) / (1000 * 60 * 60 * 24);
-            if (days <= 7) activeCount++;
-          }
-
-          // Engagement stats
-          if (data.engagement) {
-            if (data.engagement.loginStreak > 0) {
-              totalStreaks += data.engagement.loginStreak;
-              streakCount++;
-            }
-            loginSum += data.engagement.totalLogins || 0;
-          }
-
-          if (data.corps) corpsCount += Object.keys(data.corps).length;
+        // Check activity using lastLogin (Timestamp) or engagement.lastLogin (string)
+        let lastLoginDate = null;
+        if (data.lastLogin?.toDate) {
+          lastLoginDate = data.lastLogin.toDate();
+        } else if (data.engagement?.lastLogin) {
+          lastLoginDate = new Date(data.engagement.lastLogin);
         }
+
+        if (lastLoginDate) {
+          const days = (Date.now() - lastLoginDate.getTime()) / (1000 * 60 * 60 * 24);
+          if (days <= 7) activeCount++;
+        }
+
+        // Engagement stats
+        if (data.engagement) {
+          if (data.engagement.loginStreak > 0) {
+            totalStreaks += data.engagement.loginStreak;
+            streakCount++;
+          }
+          loginSum += data.engagement.totalLogins || 0;
+        }
+
+        if (data.corps) corpsCount += Object.keys(data.corps).length;
       }
 
       const avgStreak = streakCount > 0 ? Math.round(totalStreaks / streakCount * 10) / 10 : 0;
       setStats({
-        totalUsers: snapshot.size,
+        totalUsers,
         activeUsers: activeCount,
         avgLoginStreak: avgStreak,
         totalCorps: corpsCount,
@@ -307,32 +312,41 @@ const UsersTab = () => {
   const loadAllUsers = async () => {
     setUsersLoading(true);
     try {
-      const snapshot = await getDocs(collection(db, 'artifacts/marching-art/users'));
-      const userList = await Promise.all(snapshot.docs.map(async (userDoc) => {
-        const profileSnap = await getDoc(doc(db, `artifacts/marching-art/users/${userDoc.id}/profile/data`));
-        const data = profileSnap.exists() ? profileSnap.data() : {};
+      // Use collectionGroup to query all profile documents directly
+      const profilesRef = collectionGroup(db, 'profile');
+      const snapshot = await getDocs(profilesRef);
 
-        // Get last login from either lastLogin (Timestamp) or engagement.lastLogin (string)
-        let lastLoginDate = null;
-        if (data.lastLogin?.toDate) {
-          lastLoginDate = data.lastLogin.toDate();
-        } else if (data.engagement?.lastLogin) {
-          lastLoginDate = new Date(data.engagement.lastLogin);
-        }
+      const userList = snapshot.docs
+        .filter(profileDoc => profileDoc.ref.path.includes('artifacts/marching-art/users'))
+        .map(profileDoc => {
+          const data = profileDoc.data();
 
-        return {
-          uid: userDoc.id,
-          username: data.username || 'Unknown',
-          email: data.email || null,
-          lastLogin: lastLoginDate,
-          xpLevel: data.xpLevel || 1,
-          xp: data.xp || 0,
-          loginStreak: data.engagement?.loginStreak || 0,
-          totalLogins: data.engagement?.totalLogins || 0,
-          corps: data.corps ? Object.keys(data.corps) : [],
-          createdAt: data.createdAt?.toDate?.() || null
-        };
-      }));
+          // Extract user ID from the doc path
+          // Path format: artifacts/marching-art/users/{userId}/profile/data
+          const pathParts = profileDoc.ref.path.split('/');
+          const uid = pathParts[3];
+
+          // Get last login from either lastLogin (Timestamp) or engagement.lastLogin (string)
+          let lastLoginDate = null;
+          if (data.lastLogin?.toDate) {
+            lastLoginDate = data.lastLogin.toDate();
+          } else if (data.engagement?.lastLogin) {
+            lastLoginDate = new Date(data.engagement.lastLogin);
+          }
+
+          return {
+            uid,
+            username: data.username || 'Unknown',
+            email: data.email || null,
+            lastLogin: lastLoginDate,
+            xpLevel: data.xpLevel || 1,
+            xp: data.xp || 0,
+            loginStreak: data.engagement?.loginStreak || 0,
+            totalLogins: data.engagement?.totalLogins || 0,
+            corps: data.corps ? Object.keys(data.corps) : [],
+            createdAt: data.createdAt?.toDate?.() || null
+          };
+        });
 
       // Sort by last login (most recent first)
       setUsers(userList.sort((a, b) => (b.lastLogin?.getTime() || 0) - (a.lastLogin?.getTime() || 0)));
@@ -733,31 +747,36 @@ const Admin = () => {
       const seasonDoc = await getDoc(doc(db, 'game-settings/season'));
       if (seasonDoc.exists()) setSeasonData(seasonDoc.data());
 
-      const usersSnapshot = await getDocs(collection(db, 'artifacts/marching-art/users'));
+      // Use collectionGroup to query all profile documents directly
+      const profilesRef = collectionGroup(db, 'profile');
+      const snapshot = await getDocs(profilesRef);
+
+      let totalUsers = 0;
       let activeCount = 0, corpsCount = 0;
 
-      for (const userDoc of usersSnapshot.docs) {
-        const profileSnap = await getDoc(doc(db, `artifacts/marching-art/users/${userDoc.id}/profile/data`));
-        if (profileSnap.exists()) {
-          const data = profileSnap.data();
+      for (const profileDoc of snapshot.docs) {
+        // Only count profile docs from the marching-art users collection
+        if (!profileDoc.ref.path.includes('artifacts/marching-art/users')) continue;
 
-          // Check activity using lastLogin (Timestamp) or engagement.lastLogin (string)
-          let lastLoginDate = null;
-          if (data.lastLogin?.toDate) {
-            lastLoginDate = data.lastLogin.toDate();
-          } else if (data.engagement?.lastLogin) {
-            lastLoginDate = new Date(data.engagement.lastLogin);
-          }
+        totalUsers++;
+        const data = profileDoc.data();
 
-          if (lastLoginDate) {
-            const days = (Date.now() - lastLoginDate.getTime()) / (1000 * 60 * 60 * 24);
-            if (days <= 7) activeCount++;
-          }
-
-          if (data.corps) corpsCount += Object.keys(data.corps).length;
+        // Check activity using lastLogin (Timestamp) or engagement.lastLogin (string)
+        let lastLoginDate = null;
+        if (data.lastLogin?.toDate) {
+          lastLoginDate = data.lastLogin.toDate();
+        } else if (data.engagement?.lastLogin) {
+          lastLoginDate = new Date(data.engagement.lastLogin);
         }
+
+        if (lastLoginDate) {
+          const days = (Date.now() - lastLoginDate.getTime()) / (1000 * 60 * 60 * 24);
+          if (days <= 7) activeCount++;
+        }
+
+        if (data.corps) corpsCount += Object.keys(data.corps).length;
       }
-      setStats({ totalUsers: usersSnapshot.size, activeUsers: activeCount, totalCorps: corpsCount });
+      setStats({ totalUsers, activeUsers: activeCount, totalCorps: corpsCount });
     } catch (error) {
       if (!error.message?.includes('permission')) {
         console.error('Error loading admin data:', error);
