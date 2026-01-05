@@ -118,7 +118,7 @@ const Landing = () => {
             <div className="w-8 h-8 rounded-sm overflow-hidden">
               <img src="/logo192.svg" alt="marching.art" className="w-full h-full object-cover" />
             </div>
-            <span className="text-base font-bold text-white uppercase tracking-wider">
+            <span className="text-base font-bold text-white tracking-wider">
               marching.art
             </span>
           </div>
