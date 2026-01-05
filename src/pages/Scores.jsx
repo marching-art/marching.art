@@ -57,6 +57,29 @@ const getSoundSportRating = (score) => {
   return 'Participation';
 };
 
+// Blue Ribbon icon for Best in Show awards
+const BlueRibbonIcon = ({ className = "w-5 h-5" }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    {/* Ribbon circle/badge */}
+    <circle cx="12" cy="9" r="7" fill="#0057B8" stroke="#003d82" strokeWidth="1" />
+    {/* Inner circle highlight */}
+    <circle cx="12" cy="9" r="4" fill="#0066d6" />
+    {/* Star in center */}
+    <path
+      d="M12 5.5l1.09 2.21 2.44.35-1.77 1.72.42 2.43L12 11.1l-2.18 1.15.42-2.43-1.77-1.72 2.44-.35L12 5.5z"
+      fill="#FFD700"
+    />
+    {/* Ribbon tails */}
+    <path d="M8 15l-2 7 4-2.5V15H8z" fill="#0057B8" stroke="#003d82" strokeWidth="0.5" />
+    <path d="M16 15l2 7-4-2.5V15h2z" fill="#0057B8" stroke="#003d82" strokeWidth="0.5" />
+  </svg>
+);
+
 /**
  * Generate mocked caption breakdown from total score
  * Uses realistic DCI-style proportions:
@@ -258,15 +281,6 @@ const MOCK_EVENT_NAMES = [
   'Summer Music Games SoundSport',
 ];
 
-// Mock special awards - in production these would come from data
-const getSpecialAward = (ensembleName, eventIndex, resultIndex) => {
-  // Simulate awards: first ensemble in each event gets "Best of Show"
-  // Every 3rd ensemble gets "Class Winner"
-  if (resultIndex === 0 && eventIndex % 2 === 0) return 'BEST OF SHOW';
-  if (resultIndex % 3 === 0 && resultIndex !== 0) return 'CLASS WINNER';
-  return null;
-};
-
 const SoundSportMedalList = ({ shows }) => {
   // Group results by event, preserving show context
   const groupedResults = useMemo(() => {
@@ -275,23 +289,28 @@ const SoundSportMedalList = ({ shows }) => {
 
     shows
       .filter(show => show.scores?.some(s => s.corpsClass === 'soundSport'))
-      .forEach((show, showIdx) => {
+      .forEach((show) => {
         const soundSportScores = show.scores
           .filter(s => s.corpsClass === 'soundSport')
-          .map((score, idx) => ({
+          .map((score) => ({
             ...score,
             rating: getSoundSportRating(score.score),
-            specialAward: getSpecialAward(score.corps || score.corpsName, showIdx, idx),
           }));
 
         if (soundSportScores.length > 0) {
-          // Sort within group by rating priority (Gold first) then alphabetically
-          const ratingOrder = { Gold: 0, Silver: 1, Bronze: 2, Participation: 3 };
-          soundSportScores.sort((a, b) => {
-            const orderDiff = ratingOrder[a.rating] - ratingOrder[b.rating];
-            if (orderDiff !== 0) return orderDiff;
-            return (a.corps || '').localeCompare(b.corps || '');
+          // Find best in show (highest score at this event)
+          const maxScore = Math.max(...soundSportScores.map(s => s.score || 0));
+          const bestInShowCorps = soundSportScores.find(s => s.score === maxScore)?.corps ||
+                                  soundSportScores.find(s => s.score === maxScore)?.corpsName;
+
+          // Mark best in show
+          soundSportScores.forEach(score => {
+            const corpsName = score.corps || score.corpsName;
+            score.isBestInShow = corpsName === bestInShowCorps;
           });
+
+          // Sort within group by score descending (best first)
+          soundSportScores.sort((a, b) => (b.score || 0) - (a.score || 0));
 
           // Use show eventName or mock one for display
           const eventName = show.eventName || MOCK_EVENT_NAMES[mockNameIndex % MOCK_EVENT_NAMES.length];
@@ -394,12 +413,10 @@ const SoundSportMedalList = ({ shows }) => {
                     </span>
                   </div>
 
-                  {/* Right: Rating Badge + Special Award */}
+                  {/* Right: Best in Show + Rating Badge */}
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    {result.specialAward && (
-                      <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded-sm bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
-                        {result.specialAward}
-                      </span>
+                    {result.isBestInShow && (
+                      <BlueRibbonIcon className="w-5 h-5" />
                     )}
                     <span className={`text-[10px] font-bold uppercase px-2 py-1 ${config.badge}`}>
                       {result.rating}
