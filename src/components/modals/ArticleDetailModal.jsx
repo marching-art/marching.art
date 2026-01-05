@@ -8,6 +8,7 @@ import {
   X, Clock, Trophy, Flame, BookOpen, Newspaper,
   TrendingUp, TrendingDown, Minus, Share2, ExternalLink
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import ArticleReactions from '../Articles/ArticleReactions';
@@ -97,19 +98,34 @@ const ArticleDetailModal = ({ article, onClose, engagement: initialEngagement })
   const fullContent = article.fullStory || article.narrative || article.summary;
 
   const handleShare = async () => {
+    const shareUrl = window.location.href;
+
+    // Helper function to copy to clipboard
+    const copyToClipboard = async () => {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success('Link copied to clipboard');
+      } catch (err) {
+        toast.error('Failed to copy link');
+      }
+    };
+
     if (navigator.share) {
       try {
         await navigator.share({
           title: article.headline,
           text: article.summary,
-          url: window.location.href,
+          url: shareUrl,
         });
       } catch (err) {
-        // User cancelled or error
+        // If user cancelled (AbortError), do nothing
+        // For other errors (blocked by enterprise, etc.), fall back to clipboard
+        if (err.name !== 'AbortError') {
+          await copyToClipboard();
+        }
       }
     } else {
-      // Fallback: copy to clipboard
-      navigator.clipboard.writeText(window.location.href);
+      await copyToClipboard();
     }
   };
 

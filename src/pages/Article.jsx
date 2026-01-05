@@ -354,6 +354,17 @@ const Article = () => {
 
   const handleShare = async () => {
     const shareUrl = window.location.href;
+
+    // Helper function to copy to clipboard
+    const copyToClipboard = async () => {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success('Link copied to clipboard');
+      } catch (err) {
+        toast.error('Failed to copy link');
+      }
+    };
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -362,11 +373,14 @@ const Article = () => {
           url: shareUrl,
         });
       } catch (err) {
-        // User cancelled or error
+        // If user cancelled (AbortError), do nothing
+        // For other errors (blocked by enterprise, etc.), fall back to clipboard
+        if (err.name !== 'AbortError') {
+          await copyToClipboard();
+        }
       }
     } else {
-      navigator.clipboard.writeText(shareUrl);
-      toast.success('Link copied to clipboard');
+      await copyToClipboard();
     }
   };
 
