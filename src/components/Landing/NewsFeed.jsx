@@ -241,6 +241,16 @@ function ShareButton({ story, className = '' }) {
 
     const shareUrl = `${window.location.origin}/article/${story.id}`;
 
+    // Helper function to copy to clipboard
+    const copyToClipboard = async () => {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success('Link copied to clipboard');
+      } catch (err) {
+        toast.error('Failed to copy link');
+      }
+    };
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -249,11 +259,14 @@ function ShareButton({ story, className = '' }) {
           url: shareUrl,
         });
       } catch (err) {
-        // User cancelled or error - silently ignore
+        // If user cancelled (AbortError), do nothing
+        // For other errors (blocked by enterprise, etc.), fall back to clipboard
+        if (err.name !== 'AbortError') {
+          await copyToClipboard();
+        }
       }
     } else {
-      await navigator.clipboard.writeText(shareUrl);
-      toast.success('Link copied to clipboard');
+      await copyToClipboard();
     }
   };
 
