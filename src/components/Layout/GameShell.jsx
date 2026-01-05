@@ -74,7 +74,8 @@ const TopNav = () => {
   const seasonLabel = getSeasonLabel();
 
   return (
-    <nav className="fixed top-0 w-full h-12 bg-[#1a1a1a] border-b border-[#333] z-50 flex items-center px-2 sm:px-4">
+    <nav className="fixed top-0 w-full h-12 bg-[#1a1a1a] border-b border-[#333] z-50">
+      <div className="max-w-[1920px] mx-auto h-full flex items-center px-2 sm:px-4">
       {/* Logo + Brand */}
       <Link to="/dashboard" className="flex items-center gap-2 mr-4">
         <img
@@ -105,6 +106,7 @@ const TopNav = () => {
         <NavItem to="/leagues" icon={Users} label="Leagues" />
         <NavItem to="/profile" icon={User} label="Profile" />
         {isAdmin && <NavItem to="/admin" icon={Shield} label="Admin" />}
+      </div>
       </div>
     </nav>
   );
@@ -233,9 +235,11 @@ const TickerBar = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="fixed top-12 w-full h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
-        <div className="flex items-center gap-4 px-4 text-xs">
-          <span className="text-gray-500 animate-pulse">Loading scores...</span>
+      <div className="fixed top-12 w-full h-8 bg-black border-b border-[#333] z-40">
+        <div className="max-w-[1920px] mx-auto h-full flex items-center overflow-hidden">
+          <div className="flex items-center gap-4 px-4 text-xs">
+            <span className="text-gray-500 animate-pulse">Loading scores...</span>
+          </div>
         </div>
       </div>
     );
@@ -244,9 +248,11 @@ const TickerBar = () => {
   // No data state
   if (!hasData || tickerSections.length === 0) {
     return (
-      <div className="fixed top-12 w-full h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
-        <div className="flex items-center gap-4 px-4 text-xs">
-          <span className="text-gray-500">No scores available yet</span>
+      <div className="fixed top-12 w-full h-8 bg-black border-b border-[#333] z-40">
+        <div className="max-w-[1920px] mx-auto h-full flex items-center overflow-hidden">
+          <div className="flex items-center gap-4 px-4 text-xs">
+            <span className="text-gray-500">No scores available yet</span>
+          </div>
         </div>
       </div>
     );
@@ -446,13 +452,15 @@ const TickerBar = () => {
   };
 
   return (
-    <div className="fixed top-12 w-full h-9 sm:h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
-      {/* Ticker content */}
-      <div
-        ref={scrollRef}
-        className="flex-1 flex items-center gap-2 sm:gap-3 px-2 sm:px-3 text-xs overflow-x-auto scrollbar-hide"
-      >
-        {renderSectionContent()}
+    <div className="fixed top-12 w-full h-9 sm:h-8 bg-black border-b border-[#333] z-40">
+      <div className="max-w-[1920px] mx-auto h-full flex items-center overflow-hidden">
+        {/* Ticker content */}
+        <div
+          ref={scrollRef}
+          className="flex-1 flex items-center gap-2 sm:gap-3 px-2 sm:px-3 text-xs overflow-x-auto scrollbar-hide"
+        >
+          {renderSectionContent()}
+        </div>
       </div>
     </div>
   );
@@ -498,7 +506,9 @@ const GameShell = ({ children }) => {
           role="main"
           className="fixed top-[84px] sm:top-20 left-0 right-0 bg-[#0a0a0a] overflow-hidden main-content-bottom"
         >
-          {children}
+          <div className="max-w-[1920px] mx-auto h-full">
+            {children}
+          </div>
         </main>
 
         {/* Mobile Bottom Navigation */}
