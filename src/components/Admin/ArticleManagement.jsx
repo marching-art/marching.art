@@ -6,7 +6,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   FileText, Search, RefreshCw, Edit3, Archive, ArchiveRestore,
   Trash2, X, Save, Eye, EyeOff, ChevronDown, ChevronUp,
-  Calendar, Clock, AlertCircle, Check, Image
+  Calendar, Clock, AlertCircle, Check, Image, Sparkles
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
@@ -14,7 +14,8 @@ import {
   getArticleForEdit,
   updateArticle,
   archiveArticle,
-  deleteArticle
+  deleteArticle,
+  regenerateArticleImage
 } from '../../api/functions';
 
 // Filter tabs
@@ -267,6 +268,27 @@ const ArticleManagement = () => {
               toast.error('Failed to update article');
             }
           }}
+          onRegenerateImage={async (path, headline, category) => {
+            try {
+              const result = await regenerateArticleImage({ path, headline, category });
+              if (result.data.success) {
+                toast.success('New image generated!');
+                // Update the editing article's imageUrl
+                setEditingArticle(prev => ({ ...prev, imageUrl: result.data.imageUrl }));
+                // Update the articles list
+                setArticles(prev => prev.map(a =>
+                  a.path === path
+                    ? { ...a, imageUrl: result.data.imageUrl }
+                    : a
+                ));
+                return result.data.imageUrl;
+              }
+            } catch (error) {
+              console.error('Error regenerating image:', error);
+              toast.error('Failed to generate new image');
+            }
+            return null;
+          }}
         />
       )}
     </div>
@@ -427,16 +449,18 @@ const ArticleRow = ({ article, onEdit, onArchive, onDelete, formatDate, editLoad
 };
 
 // Article Editor Modal
-const ArticleEditorModal = ({ article, onClose, onSave }) => {
+const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => {
+  // Use narrative field as fallback for fullStory (backend stores generated articles in 'narrative')
   const [formData, setFormData] = useState({
     headline: article.headline || '',
     summary: article.summary || '',
-    fullStory: article.fullStory || '',
+    fullStory: article.fullStory || article.narrative || '',
     fantasyImpact: article.fantasyImpact || '',
     imageUrl: article.imageUrl || '',
     isPublished: article.isPublished !== false,
   });
   const [saving, setSaving] = useState(false);
+  const [regeneratingImage, setRegeneratingImage] = useState(false);
   const [activeSection, setActiveSection] = useState('basic');
 
   const handleChange = (field, value) => {
@@ -460,14 +484,30 @@ const ArticleEditorModal = ({ article, onClose, onSave }) => {
   };
 
   const hasChanges = () => {
+    const originalFullStory = article.fullStory || article.narrative || '';
     return (
       formData.headline !== (article.headline || '') ||
       formData.summary !== (article.summary || '') ||
-      formData.fullStory !== (article.fullStory || '') ||
+      formData.fullStory !== originalFullStory ||
       formData.fantasyImpact !== (article.fantasyImpact || '') ||
       formData.imageUrl !== (article.imageUrl || '') ||
       formData.isPublished !== (article.isPublished !== false)
     );
+  };
+
+  const handleRegenerateImage = async () => {
+    if (!window.confirm('Generate a new AI image for this article? This will replace the current image.')) {
+      return;
+    }
+    setRegeneratingImage(true);
+    try {
+      const newImageUrl = await onRegenerateImage(article.path, formData.headline, article.category);
+      if (newImageUrl) {
+        handleChange('imageUrl', newImageUrl);
+      }
+    } finally {
+      setRegeneratingImage(false);
+    }
   };
 
   return (
@@ -564,6 +604,25 @@ const ArticleEditorModal = ({ article, onClose, onSave }) => {
                         />
                       </div>
                     )}
+                    <button
+                      type="button"
+                      onClick={handleRegenerateImage}
+                      disabled={regeneratingImage}
+                      className="flex items-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 disabled:opacity-50 text-white text-sm font-medium rounded transition-colors flex-shrink-0"
+                      title="Generate a new AI image for this article"
+                    >
+                      {regeneratingImage ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4" />
+                          New Image
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
 

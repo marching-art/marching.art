@@ -1060,6 +1060,7 @@ exports.updateArticle = onCall(
       "headline",
       "summary",
       "fullStory",
+      "narrative",
       "fantasyImpact",
       "dciRecap",
       "fantasySpotlight",
@@ -1076,6 +1077,15 @@ exports.updateArticle = onCall(
       if (updates[field] !== undefined) {
         sanitizedUpdates[field] = updates[field];
       }
+    }
+
+    // Sync fullStory and narrative fields - when one is updated, update both
+    // This ensures consistency since generated articles use 'narrative' while user submissions use 'fullStory'
+    if (sanitizedUpdates.fullStory !== undefined && sanitizedUpdates.narrative === undefined) {
+      sanitizedUpdates.narrative = sanitizedUpdates.fullStory;
+    }
+    if (sanitizedUpdates.narrative !== undefined && sanitizedUpdates.fullStory === undefined) {
+      sanitizedUpdates.fullStory = sanitizedUpdates.narrative;
     }
 
     if (Object.keys(sanitizedUpdates).length === 0) {
@@ -1170,6 +1180,104 @@ exports.deleteArticle = onCall(
     } catch (error) {
       logger.error("Error deleting article:", error);
       throw new HttpsError("internal", "Failed to delete article");
+    }
+  }
+);
+
+/**
+ * Regenerate AI image for an existing article
+ * Admin-only function to create a new image if the current one is not satisfactory
+ */
+exports.regenerateArticleImage = onCall(
+  {
+    cors: true,
+    timeoutSeconds: 120, // Image generation can take time
+    secrets: [geminiApiKey],
+  },
+  async (request) => {
+    const db = getDb();
+    checkAdminAuth(request.auth);
+
+    const { path, headline, category } = request.data || {};
+
+    if (!path) {
+      throw new HttpsError("invalid-argument", "Article path is required");
+    }
+
+    if (!headline) {
+      throw new HttpsError("invalid-argument", "Headline is required for image generation");
+    }
+
+    try {
+      // Verify article exists
+      const doc = await db.doc(path).get();
+      if (!doc.exists) {
+        throw new HttpsError("not-found", "Article not found");
+      }
+
+      const articleData = doc.data();
+      const effectiveCategory = category || articleData.category || "dci";
+
+      logger.info("Regenerating image for article:", { path, headline, category: effectiveCategory });
+
+      // Generate new AI image
+      const { generateImageWithImagen, buildArticleImagePrompt } = require("../helpers/newsGeneration");
+      const { uploadFromUrl } = require("../helpers/mediaService");
+
+      // Build prompt based on article content
+      const imagePrompt = buildArticleImagePrompt(
+        effectiveCategory,
+        headline,
+        articleData.summary || ""
+      );
+
+      // Generate the image
+      const imageData = await generateImageWithImagen(imagePrompt);
+
+      if (!imageData) {
+        throw new HttpsError("internal", "Failed to generate image. Please try again.");
+      }
+
+      // Extract article ID from path for the public ID
+      const pathParts = path.split("/");
+      const articleId = pathParts[pathParts.length - 1];
+
+      // Upload to Cloudinary
+      const uploadResult = await uploadFromUrl(imageData, {
+        folder: "marching-art/news",
+        publicId: `regenerated_${articleId}_${Date.now()}`,
+        category: effectiveCategory,
+        headline,
+      });
+
+      if (!uploadResult.success) {
+        throw new HttpsError("internal", "Failed to upload generated image");
+      }
+
+      // Update article with new image URL
+      await db.doc(path).update({
+        imageUrl: uploadResult.url,
+        imageIsPlaceholder: false,
+        imageRegeneratedAt: new Date(),
+        imageRegeneratedBy: request.auth.uid,
+        updatedAt: new Date(),
+        lastEditedBy: request.auth.uid,
+      });
+
+      logger.info("Article image regenerated successfully:", {
+        path,
+        newImageUrl: uploadResult.url,
+      });
+
+      return {
+        success: true,
+        message: "Image regenerated successfully",
+        imageUrl: uploadResult.url,
+      };
+    } catch (error) {
+      logger.error("Error regenerating article image:", error);
+      if (error instanceof HttpsError) throw error;
+      throw new HttpsError("internal", "Failed to regenerate image");
     }
   }
 );
