@@ -219,7 +219,7 @@ const Article = () => {
       try {
         await navigator.share({
           title: article?.headline,
-          text: article?.summary,
+          text: article?.headline,
           url: shareUrl,
         });
       } catch (err) {
