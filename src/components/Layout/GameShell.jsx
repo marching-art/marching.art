@@ -235,11 +235,9 @@ const TickerBar = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="fixed top-12 w-full h-8 bg-black border-b border-[#333] z-40">
-        <div className="max-w-[1920px] mx-auto h-full flex items-center overflow-hidden">
-          <div className="flex items-center gap-4 px-4 text-xs">
-            <span className="text-gray-500 animate-pulse">Loading scores...</span>
-          </div>
+      <div className="fixed top-12 w-full h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
+        <div className="flex items-center gap-4 px-4 text-xs">
+          <span className="text-gray-500 animate-pulse">Loading scores...</span>
         </div>
       </div>
     );
@@ -248,11 +246,9 @@ const TickerBar = () => {
   // No data state
   if (!hasData || tickerSections.length === 0) {
     return (
-      <div className="fixed top-12 w-full h-8 bg-black border-b border-[#333] z-40">
-        <div className="max-w-[1920px] mx-auto h-full flex items-center overflow-hidden">
-          <div className="flex items-center gap-4 px-4 text-xs">
-            <span className="text-gray-500">No scores available yet</span>
-          </div>
+      <div className="fixed top-12 w-full h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
+        <div className="flex items-center gap-4 px-4 text-xs">
+          <span className="text-gray-500">No scores available yet</span>
         </div>
       </div>
     );
@@ -452,15 +448,13 @@ const TickerBar = () => {
   };
 
   return (
-    <div className="fixed top-12 w-full h-9 sm:h-8 bg-black border-b border-[#333] z-40">
-      <div className="max-w-[1920px] mx-auto h-full flex items-center overflow-hidden">
-        {/* Ticker content */}
-        <div
-          ref={scrollRef}
-          className="flex-1 flex items-center gap-2 sm:gap-3 px-2 sm:px-3 text-xs overflow-x-auto scrollbar-hide"
-        >
-          {renderSectionContent()}
-        </div>
+    <div className="fixed top-12 w-full h-9 sm:h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
+      {/* Ticker content */}
+      <div
+        ref={scrollRef}
+        className="flex-1 flex items-center gap-2 sm:gap-3 px-2 sm:px-3 text-xs overflow-x-auto scrollbar-hide"
+      >
+        {renderSectionContent()}
       </div>
     </div>
   );
