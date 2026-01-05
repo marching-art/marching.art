@@ -207,6 +207,24 @@ match /news_hub/{newsId} {
   allow write: if false; // Backend only (via Cloud Functions)
 }
 
+// Nested news_hub structure: news_hub/{seasonId}/days/{dayId}/articles/{articleType}
+// Allow public read access for direct article URLs (shared links)
+match /news_hub/{seasonId}/days/{dayId} {
+  allow read: if true;
+  allow write: if false; // Backend only
+
+  match /articles/{articleType} {
+    allow read: if true;
+    allow write: if false; // Backend only
+  }
+}
+
+// Community submissions: news_hub/{seasonId}/community/{articleId}
+match /news_hub/{seasonId}/community/{articleId} {
+  allow read: if true;
+  allow write: if false; // Backend only
+}
+
 // --- NEWS SUBMISSIONS ---
 // User-submitted articles pending admin approval
 match /news_submissions/{submissionId} {
