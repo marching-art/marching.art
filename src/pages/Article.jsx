@@ -17,6 +17,8 @@ import {
 import ArticleReactions from '../components/Articles/ArticleReactions';
 import ArticleComments from '../components/Articles/ArticleComments';
 import { getArticleEngagement, getRecentNews } from '../api/functions';
+import { db } from '../api/client';
+import { doc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { useAuth } from '../App';
 import { useProfileStore } from '../store/profileStore';
 import { useBodyScroll } from '../hooks/useBodyScroll';
@@ -131,29 +133,72 @@ const Article = () => {
       setError(null);
 
       try {
-        // Fetch news articles and search for the one with matching ID
-        // Try multiple batches if needed since the article might be older
         let foundArticle = null;
-        let startAfter = null;
-        let attempts = 0;
-        const maxAttempts = 5; // Search up to 500 articles (5 batches of 100)
 
-        while (!foundArticle && attempts < maxAttempts) {
-          const result = await getRecentNews({ limit: 100, startAfter });
+        // Method 1: Try direct Firestore access with different collection paths
+        const collectionsToTry = [
+          'news',
+          'articles',
+          'news_articles',
+          'current_season/news',
+        ];
 
-          if (!result.data?.success || !result.data.news?.length) {
-            break;
+        for (const collectionPath of collectionsToTry) {
+          try {
+            const docRef = doc(db, collectionPath, id);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+              foundArticle = { id: docSnap.id, ...docSnap.data() };
+              break;
+            }
+          } catch {
+            // Collection doesn't exist or no permission, try next
           }
+        }
 
-          foundArticle = result.data.news.find(a => a.id === id);
+        // Method 2: Try querying by ID field in case the document ID is different
+        if (!foundArticle) {
+          for (const collectionPath of collectionsToTry) {
+            try {
+              const q = query(
+                collection(db, collectionPath),
+                where('id', '==', id),
+                limit(1)
+              );
+              const querySnap = await getDocs(q);
+              if (!querySnap.empty) {
+                const docData = querySnap.docs[0];
+                foundArticle = { id: docData.id, ...docData.data() };
+                break;
+              }
+            } catch {
+              // Query failed, try next
+            }
+          }
+        }
 
-          if (!foundArticle && result.data.hasMore) {
-            // Get the last article's createdAt for pagination
-            const lastArticle = result.data.news[result.data.news.length - 1];
-            startAfter = lastArticle?.createdAt;
-            attempts++;
-          } else {
-            break;
+        // Method 3: Fall back to searching through recent news API
+        if (!foundArticle) {
+          let startAfter = null;
+          let attempts = 0;
+          const maxAttempts = 5;
+
+          while (!foundArticle && attempts < maxAttempts) {
+            const result = await getRecentNews({ limit: 100, startAfter });
+
+            if (!result.data?.success || !result.data.news?.length) {
+              break;
+            }
+
+            foundArticle = result.data.news.find(a => a.id === id);
+
+            if (!foundArticle && result.data.hasMore) {
+              const lastArticle = result.data.news[result.data.news.length - 1];
+              startAfter = lastArticle?.createdAt;
+              attempts++;
+            } else {
+              break;
+            }
           }
         }
 
