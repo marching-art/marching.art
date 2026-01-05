@@ -579,6 +579,9 @@ const ARTICLE_TYPES = {
   FANTASY_PERFORMERS: "fantasy_performers",
   FANTASY_LEAGUES: "fantasy_leagues",
   DEEP_ANALYTICS: "deep_analytics",
+  // New article types for variety
+  UNDERDOG_STORY: "underdog_story",
+  CORPS_SPOTLIGHT: "corps_spotlight",
 };
 
 /**
@@ -1523,6 +1526,103 @@ CONTEXT FROM ARTICLE:
 Generate an image that would work as a professional news article header at 1200x630 pixels.`;
 }
 
+// =============================================================================
+// COMPOSITION VARIETY - Random elements for unique images
+// =============================================================================
+
+/**
+ * Camera angles for variety in image composition
+ */
+const CAMERA_ANGLES = [
+  { angle: "field-side, 15 feet from performer, shooting upward slightly", description: "low angle emphasizing power" },
+  { angle: "press box level, 50 yards back, telephoto compression", description: "classic broadcast perspective" },
+  { angle: "end zone corner, ground level, wide angle", description: "dramatic perspective distortion" },
+  { angle: "sideline at the 40, eye level with performers", description: "intimate connection" },
+  { angle: "tower shot, 30 feet up, looking down at 45 degrees", description: "formation emphasis" },
+  { angle: "behind home plate/backstage area, shooting through the arc", description: "unique backstage angle" },
+  { angle: "pit area looking outward toward hornline", description: "front ensemble perspective" },
+  { angle: "directly beside performer, profile shot", description: "intimate profile" },
+];
+
+/**
+ * Performer moments to capture
+ */
+const PERFORMER_MOMENTS = [
+  { moment: "peak of a sustained high note, body extended, bell high", emotion: "triumph and power" },
+  { moment: "mid-phrase during a technical run, fingers flying", emotion: "intense concentration" },
+  { moment: "dramatic pause before the hit, frozen anticipation", emotion: "tension and focus" },
+  { moment: "recovery breath between phrases, human moment", emotion: "vulnerability and determination" },
+  { moment: "marching at full stride during a company front", emotion: "unified precision" },
+  { moment: "pivot turn with bell swing, athletic move", emotion: "dynamic athleticism" },
+  { moment: "soft ballad moment, intimate expression", emotion: "emotional depth" },
+  { moment: "final chord sustain, everything given", emotion: "exhaustion and satisfaction" },
+];
+
+/**
+ * Lighting variations for different atmospheres
+ */
+const LIGHTING_VARIATIONS = [
+  { lighting: "golden hour sunlight from stadium west side, warm rim lighting on performers", mood: "warm and triumphant" },
+  { lighting: "stadium lights from above creating harsh shadows, night competition feel", mood: "intense competition" },
+  { lighting: "overcast diffused light, even illumination across field", mood: "documentary realism" },
+  { lighting: "dramatic backlighting from scoreboard, silhouette edges", mood: "dramatic and artistic" },
+  { lighting: "mixed stadium lights and sunset, purple-orange sky", mood: "twilight magic" },
+  { lighting: "full night with stadium floods, high contrast pools of light", mood: "nighttime spectacle" },
+  { lighting: "early afternoon harsh sun, strong shadows", mood: "raw and unfiltered" },
+  { lighting: "rain delay clearing, wet field reflecting lights", mood: "atmospheric drama" },
+];
+
+/**
+ * Section formations for group shots
+ */
+const SECTION_FORMATIONS = [
+  { formation: "tight block formation, shoulder to shoulder", visual: "unity and precision" },
+  { formation: "curved arc sweeping across the 35 to 45 yard lines", visual: "graceful power" },
+  { formation: "diagonal line from front sideline to back hash", visual: "dynamic movement" },
+  { formation: "scattered cluster transitioning to form", visual: "organized chaos" },
+  { formation: "company front spanning goal line to goal line", visual: "overwhelming scale" },
+  { formation: "pinwheel rotation mid-transition", visual: "kinetic energy" },
+  { formation: "layered depth with front, mid, and back rows", visual: "dimensional depth" },
+];
+
+/**
+ * Subject focus variations
+ */
+const SUBJECT_FOCUS = [
+  { focus: "single featured performer isolated", framing: "tight crop on individual, background heavily blurred" },
+  { focus: "pair of performers in sync", framing: "two performers perfectly matched, medium shot" },
+  { focus: "small section of 4-6 performers", framing: "mini-ensemble showing unity" },
+  { focus: "full section (12-20 performers)", framing: "wide enough to show section identity" },
+  { focus: "interaction between sections", framing: "brass and guard overlap moment" },
+];
+
+/**
+ * Randomly select an item from an array
+ * Uses article seed for reproducibility within same article
+ */
+function randomSelect(array, seed = null) {
+  if (seed) {
+    // Simple seeded random for reproducibility
+    const hash = seed.split('').reduce((a, b) => ((a << 5) - a + b.charCodeAt(0)) | 0, 0);
+    return array[Math.abs(hash) % array.length];
+  }
+  return array[Math.floor(Math.random() * array.length)];
+}
+
+/**
+ * Get a unique composition set for an image
+ * Returns camera angle, moment, lighting, and formation
+ */
+function getRandomComposition(seed = null) {
+  return {
+    camera: randomSelect(CAMERA_ANGLES, seed),
+    moment: randomSelect(PERFORMER_MOMENTS, seed ? seed + "moment" : null),
+    lighting: randomSelect(LIGHTING_VARIATIONS, seed ? seed + "light" : null),
+    formation: randomSelect(SECTION_FORMATIONS, seed ? seed + "form" : null),
+    focus: randomSelect(SUBJECT_FOCUS, seed ? seed + "focus" : null),
+  };
+}
+
 /**
  * Build comprehensive image prompt for DCI standings article
  * Features the leading corps with accurate historical uniform
@@ -1537,25 +1637,33 @@ function buildStandingsImagePrompt(topCorps, year, location, showName, showTitle
   const details = getUniformDetails(topCorps, year);
   const themeContext = buildShowThemeContext(showTitle);
 
-  return `Photorealistic field-side action photograph from ${showName || "a DCI competition"} ${location ? `in ${location}` : ""}.
+  // Get random composition for variety
+  const seed = `${topCorps}-${year}-standings`;
+  const comp = getRandomComposition(seed);
 
-SUBJECT: A brass performer from ${topCorps} (${year} season) executing a powerful sustained note during their show${showTitle ? ` "${showTitle}"` : ""}.
+  return `Photorealistic action photograph from ${showName || "a DCI competition"} ${location ? `in ${location}` : ""}.
+
+SUBJECT: A brass performer from ${topCorps} (${year} season) - ${comp.moment.moment}${showTitle ? ` during their show "${showTitle}"` : ""}.
 
 UNIFORM ACCURACY (CRITICAL):
 - Uniform: ${details.uniform}
 - Headwear: ${details.helmet}
 - Instrument: ${details.brass}
 ${themeContext}
-SCENE DETAILS:
-- Position: Field-side angle, 15 feet from performer, shooting upward slightly
-- Background: Stadium crowd blurred, evening sky with stadium lights creating dramatic rim lighting
-- Moment: Peak of musical phrase, performer's posture showing effort and precision
+COMPOSITION & CAMERA:
+- Position: ${comp.camera.angle}
+- Focus: ${comp.focus.focus} - ${comp.focus.framing}
+- Capturing: ${comp.moment.emotion}
+
+LIGHTING & ATMOSPHERE:
+- ${comp.lighting.lighting}
+- Mood: ${comp.lighting.mood}
+- Background: Stadium environment, crowd appropriately blurred for depth
 
 TECHNICAL REQUIREMENTS:
-- Camera: Canon 1DX Mark III, 70-200mm f/2.8 lens at 135mm
-- Settings: 1/1000 shutter, f/2.8, ISO 3200 for stadium lighting
-- Style: Professional sports photography, shallow depth of field, high contrast
-- Lighting: Dramatic stadium lights from above-left, warm golden hour sun from right
+- Camera: Professional sports photography setup (Canon 1DX or Sony A1)
+- Style: Editorial sports photography, shallow depth of field where appropriate
+- High dynamic range to capture stadium lighting
 
 AUTHENTICITY MARKERS:
 - Brass instrument must have realistic valve configurations and tubing
@@ -1563,7 +1671,7 @@ AUTHENTICITY MARKERS:
 - White marching gloves, black marching shoes
 - Visible concentration and athletic effort in performer's expression
 
-This is a historic ${year} performance being recreated for the fantasy league - make it feel like an authentic DCI photograph.`;
+This is a historic ${year} performance - make it feel like an authentic DCI photograph capturing ${comp.camera.description}.`;
 }
 
 /**
@@ -1580,33 +1688,37 @@ function buildCaptionsImagePrompt(featuredCorps, year, captionType, location, sh
   const details = getUniformDetails(featuredCorps, year);
   const themeContext = buildShowThemeContext(showTitle);
 
+  // Get random composition for variety
+  const seed = `${featuredCorps}-${year}-${captionType}-captions`;
+  const comp = getRandomComposition(seed);
+
   // Determine which section to feature based on caption
   let sectionFocus, sectionDetails, sceneDescription;
 
   if (captionType.includes("Brass") || captionType.includes("B")) {
     sectionFocus = "hornline";
     sectionDetails = details.brass;
-    sceneDescription = "the full hornline in a dramatic arc formation, bells raised in unison during a powerful chord";
+    sceneDescription = `the hornline in ${comp.formation.formation}, bells raised during a powerful moment`;
   } else if (captionType.includes("Percussion") || captionType.includes("P")) {
     sectionFocus = "drumline";
     sectionDetails = details.percussion;
-    sceneDescription = "the snare line in tight formation, sticks frozen mid-stroke in perfect unison";
+    sceneDescription = `the battery in ${comp.formation.formation}, capturing ${comp.moment.emotion}`;
   } else if (captionType.includes("Guard") || captionType.includes("CG")) {
     sectionFocus = "color guard";
     sectionDetails = details.guard;
-    sceneDescription = "guard members with rifles at peak toss height, silks frozen in dramatic arc";
+    sceneDescription = `guard members in ${comp.formation.formation}, equipment frozen mid-movement`;
   } else if (captionType.includes("Visual") || captionType.includes("V")) {
     sectionFocus = "full corps";
     sectionDetails = details.uniform;
-    sceneDescription = "the corps in a complex geometric formation, bodies creating perfect lines and curves";
+    sceneDescription = `the corps in ${comp.formation.formation}, bodies showing ${comp.formation.visual}`;
   } else {
     // GE or general - show ensemble moment
     sectionFocus = "corps";
     sectionDetails = details.uniform;
-    sceneDescription = "an emotional ensemble moment with all sections unified in the show's climax";
+    sceneDescription = `an emotional ensemble moment - ${comp.moment.moment}`;
   }
 
-  return `Photorealistic field-side photograph capturing ${featuredCorps}'s ${sectionFocus} excellence during their ${year} season${showTitle ? ` performing "${showTitle}"` : ""}.
+  return `Photorealistic photograph capturing ${featuredCorps}'s ${sectionFocus} excellence during their ${year} season${showTitle ? ` performing "${showTitle}"` : ""}.
 
 SUBJECT: ${sceneDescription}
 
@@ -1615,23 +1727,28 @@ UNIFORM ACCURACY (CRITICAL):
 - Headwear: ${details.helmet}
 - Section equipment: ${sectionDetails}
 ${themeContext}
-SCENE COMPOSITION:
-- Angle: Low angle from corner of field, emphasizing precision and scale
-- Background: Stadium environment with scoreboard partially visible, crowd in stands
-- Lighting: Stadium lights creating dramatic shadows, emphasizing body positions
+COMPOSITION & CAMERA:
+- Position: ${comp.camera.angle}
+- Formation: ${comp.formation.formation} - ${comp.formation.visual}
+- Background: Stadium environment with crowd, ${location ? `${location} venue` : "competition atmosphere"}
+
+LIGHTING & ATMOSPHERE:
+- ${comp.lighting.lighting}
+- Mood: ${comp.lighting.mood}
+- Shadows and highlights emphasizing body positions and precision
 
 TECHNICAL PHOTOGRAPHY:
-- Wide enough to show 6-8 performers while maintaining detail
-- Focus on center performers, edges slightly soft
-- Motion blur on any moving equipment to show action
+- ${comp.focus.framing}
+- Motion blur on moving equipment to show action
 - High contrast, vibrant colors true to ${featuredCorps} palette
 
 CAPTION EXCELLENCE MARKERS:
 - Perfect body alignment showing visual precision
 - Equipment positions showing technical mastery
 - Unified expression showing ensemble cohesion
+- ${comp.moment.emotion}
 
-This photograph should capture why ${featuredCorps} excelled in ${captionType} during their historic ${year} campaign.`;
+This photograph should capture why ${featuredCorps} excelled in ${captionType} - showing ${comp.camera.description}.`;
 }
 
 /**
@@ -1646,6 +1763,10 @@ This photograph should capture why ${featuredCorps} excelled in ${captionType} d
 function buildFantasyPerformersImagePrompt(topCorpsName, theme, location = null, uniformDesign = null) {
   const details = getFantasyUniformDetails(topCorpsName, location, uniformDesign);
 
+  // Get random composition for variety
+  const seed = `${topCorpsName}-${location || "fantasy"}-performers`;
+  const comp = getRandomComposition(seed);
+
   // Determine venue based on director preference or default
   const venueDescription = details.venuePreference === "indoor"
     ? "Modern indoor arena with dramatic LED lighting systems"
@@ -1653,7 +1774,7 @@ function buildFantasyPerformersImagePrompt(topCorpsName, theme, location = null,
       ? "Outdoor stadium under evening sky with dramatic stadium lighting"
       : "Professional marching arts competition venue with dramatic lighting";
 
-  return `Photorealistic field-side photograph of a performer from the fantasy marching arts ensemble "${topCorpsName}"${location ? ` from ${location}` : ""}.
+  return `Photorealistic photograph of a performer from the fantasy marching arts ensemble "${topCorpsName}"${location ? ` from ${location}` : ""}.
 
 UNIFORM DESIGN${details.matchedTheme === "director-custom" ? " (Director-Specified)" : ""}:
 - Colors: ${details.colors}
@@ -1663,23 +1784,31 @@ UNIFORM DESIGN${details.matchedTheme === "director-custom" ? " (Director-Specifi
 - Guard elements: ${details.guard}
 ${details.additionalNotes ? `- Special notes: ${details.additionalNotes}` : ""}
 
+COMPOSITION & CAMERA:
+- Position: ${comp.camera.angle}
+- Focus: ${comp.focus.focus} - ${comp.focus.framing}
+- Moment: ${comp.moment.moment}
+- Capturing: ${comp.moment.emotion}
+
 SCENE SETTING:
 - ${venueDescription}
-- ${theme || "Victory moment after an award-winning performance"}
+- ${theme || "Competition performance moment"}
 - ${details.performanceStyle ? `Performance style: ${details.performanceStyle}` : "Professional marching arts competition atmosphere"}
-- Crowd on their feet in background, celebration energy
+
+LIGHTING & ATMOSPHERE:
+- ${comp.lighting.lighting}
+- Mood: ${comp.lighting.mood}
+- Stadium/arena environment enhancing the drama
 
 PERFORMER DETAILS:
-- Brass performer holding instrument triumphantly
-- Expression of joy and accomplishment
+- Expression showing ${comp.moment.emotion}
 - Uniform pristine and dramatically lit
-- Stadium spotlights creating dramatic rim lighting
+- Athletic, professional bearing
 
 PHOTOGRAPHY STYLE:
-- Sports photography, celebration moment
-- Shallow depth of field isolating performer
+- Professional sports photography
+- ${comp.focus.framing}
 - High contrast, saturated colors matching corps theme
-- Lens flare from stadium lights adding drama
 
 AUTHENTICITY:
 - Instrument must be realistic (baritone, mellophone, or trumpet with correct valve/tubing)
@@ -1687,7 +1816,7 @@ AUTHENTICITY:
 - White marching gloves, black marching shoes
 - Professional posture and bearing
 
-This is a fantasy corps created by a user${details.matchedTheme === "director-custom" ? " with custom uniform specifications" : ""}. The uniform should be distinctive and memorable while remaining authentic to competitive marching arts.`;
+This fantasy corps image should show ${comp.camera.description} - distinctive and memorable while authentic to competitive marching arts.`;
 }
 
 /**
@@ -1737,11 +1866,25 @@ function buildAnalyticsImagePrompt(featuredCorps, year, analysisType, showTitle 
   const details = getUniformDetails(featuredCorps, year);
   const themeContext = buildShowThemeContext(showTitle);
 
-  return `Photorealistic aerial/elevated photograph showing ${featuredCorps} (${year}) in a complex drill formation${showTitle ? ` from their show "${showTitle}"` : ""}.
+  // Get random composition for variety
+  const seed = `${featuredCorps}-${year}-${analysisType}-analytics`;
+  const comp = getRandomComposition(seed);
+
+  // Analytics-specific camera angles (elevated views for formation analysis)
+  const analyticsAngles = [
+    "press box level, 50 yards back, wide telephoto showing full formation",
+    "end zone tower, 40 feet up, looking down the length of the field",
+    "corner tower shot, capturing diagonal depth of formation",
+    "sideline scaffold, elevated 25 feet, parallel to company front",
+    "drone-style overhead, 60 feet up, geometric pattern emphasis",
+  ];
+  const selectedAngle = analyticsAngles[Math.abs(seed.split('').reduce((a, b) => ((a << 5) - a + b.charCodeAt(0)) | 0, 0)) % analyticsAngles.length];
+
+  return `Photorealistic elevated photograph showing ${featuredCorps} (${year}) in ${comp.formation.formation}${showTitle ? ` from their show "${showTitle}"` : ""}.
 
 FORMATION FOCUS:
-- Corps in geometric formation viewed from press box/tower angle
-- Pattern clearly visible: curved arc, diagonal lines, or company front
+- Corps displaying ${comp.formation.visual}
+- Pattern clearly visible from elevated position
 - Individual performers visible but formation structure is the focus
 
 UNIFORM ACCURACY:
@@ -1749,24 +1892,341 @@ UNIFORM ACCURACY:
 - Headwear: ${details.helmet}
 - Formation shows military precision and spacing
 ${themeContext}
+COMPOSITION & CAMERA:
+- Position: ${selectedAngle}
+- Formation: ${comp.formation.formation}
+- Wide shot capturing 30-50+ performers
+
+LIGHTING & ATMOSPHERE:
+- ${comp.lighting.lighting}
+- Mood: ${comp.lighting.mood}
+- Shadow patterns showing performer positions clearly
+
 ANALYTICAL ELEMENTS:
 - Yard lines visible for spatial reference
-- Shadow patterns showing performer positions
 - Formation geometry emphasized through lighting
+- Clear sight lines showing drill design precision
 
 PHOTOGRAPHY:
-- Elevated angle (45-60 degrees from horizontal)
-- Wide shot capturing 40+ performers
+- Elevated angle optimized for formation visibility
 - Sharp focus throughout formation
-- Stadium lights creating clear shadows
-- Late afternoon/golden hour lighting
+- Professional documentary style
 
 MOOD:
 - Analytical, studying excellence
 - Historic performance documentation
-- The kind of image coaches would study
+- The kind of image coaches would study for drill design
 
-This image should feel like film study material - capturing the precision and design that made ${featuredCorps}'s ${year} performance analytically significant.`;
+This image should feel like film study material - capturing ${comp.formation.visual} and the precision that made ${featuredCorps}'s ${year} ${analysisType} analytically significant.`;
+}
+
+/**
+ * Build image prompt for underdog story article
+ * Shows determination and breakthrough moment
+ *
+ * @param {string} corps - Corps name
+ * @param {number} year - Historical year
+ * @param {string} location - Competition location
+ * @param {string} showTitle - Corps' production title
+ */
+function buildUnderdogImagePrompt(corps, year, location, showTitle = null) {
+  const details = getUniformDetails(corps, year);
+  const themeContext = buildShowThemeContext(showTitle);
+
+  // Get random composition emphasizing triumph
+  const seed = `${corps}-${year}-underdog`;
+  const comp = getRandomComposition(seed);
+
+  return `Photorealistic photograph capturing a breakthrough moment for ${corps} (${year} season)${showTitle ? ` performing "${showTitle}"` : ""} at ${location || "a DCI competition"}.
+
+SUBJECT: A performer from ${corps} in a moment of triumph and determination - ${comp.moment.moment}
+
+UNIFORM ACCURACY:
+- Uniform: ${details.uniform}
+- Headwear: ${details.helmet}
+- Brass: ${details.brass}
+${themeContext}
+EMOTIONAL NARRATIVE:
+- Capturing the spirit of an underdog rising to the occasion
+- Expression showing fierce determination and joy
+- The moment when hard work pays off
+- ${comp.moment.emotion}
+
+COMPOSITION:
+- ${comp.camera.angle}
+- ${comp.focus.framing}
+- Background suggests the magnitude of the achievement
+
+LIGHTING & ATMOSPHERE:
+- ${comp.lighting.lighting}
+- Mood: ${comp.lighting.mood}
+- Stadium environment enhancing the triumphant moment
+
+PHOTOGRAPHY STYLE:
+- Inspirational sports photography
+- High emotional impact
+- Professional sports documentary feel
+- Colors true to ${corps} palette, vivid and proud
+
+This image should capture the essence of an underdog story - the corps that exceeded expectations and proved the doubters wrong.`;
+}
+
+/**
+ * Build image prompt for corps spotlight article
+ * Shows the corps' identity and character
+ *
+ * @param {string} corps - Corps name
+ * @param {number} year - Historical year
+ * @param {string} showTitle - Corps' production title
+ */
+function buildCorpsSpotlightImagePrompt(corps, year, showTitle = null) {
+  const details = getUniformDetails(corps, year);
+  const themeContext = buildShowThemeContext(showTitle);
+
+  // Get random composition for variety
+  const seed = `${corps}-${year}-spotlight`;
+  const comp = getRandomComposition(seed);
+
+  return `Photorealistic portrait-style photograph showcasing the identity and excellence of ${corps} (${year} season)${showTitle ? ` performing "${showTitle}"` : ""}.
+
+SUBJECT: A group of 3-5 performers from ${corps} in a powerful ensemble moment, showcasing the corps' distinctive identity.
+
+UNIFORM IDENTITY (CRITICAL):
+- Uniform: ${details.uniform}
+- Headwear: ${details.helmet}
+- Brass: ${details.brass}
+- Percussion: ${details.percussion}
+- Guard: ${details.guard}
+${themeContext}
+COMPOSITION:
+- ${comp.formation.formation} arrangement of performers
+- ${comp.camera.angle}
+- Capturing the pride and tradition of ${corps}
+
+LIGHTING & ATMOSPHERE:
+- ${comp.lighting.lighting}
+- Mood: Pride, excellence, tradition
+- Stadium environment suggesting legacy and history
+
+CORPS CHARACTER:
+- Showcasing what makes ${corps} unique
+- Traditional elements meeting modern performance
+- The visual identity that fans recognize instantly
+
+PHOTOGRAPHY STYLE:
+- Magazine cover quality
+- ${comp.focus.framing}
+- Rich, saturated colors emphasizing corps palette
+- Professional editorial sports photography
+
+This should be an iconic image that captures the essence of ${corps} - their tradition, their excellence, and what makes them special in the DCI world.`;
+}
+
+// =============================================================================
+// DYNAMIC TONE SYSTEM - Contextual writing style
+// =============================================================================
+
+/**
+ * Analyze competition context to determine appropriate article tone
+ * @param {Array} dayScores - Current day's scores
+ * @param {Object} trendData - Trend data for all corps
+ * @param {number} reportDay - Current season day
+ * @returns {Object} Competition context analysis
+ */
+function analyzeCompetitionContext(dayScores, trendData, reportDay) {
+  if (!dayScores || dayScores.length === 0) {
+    return { scenario: "standard", intensity: "moderate" };
+  }
+
+  const topCorps = dayScores[0];
+  const secondCorps = dayScores[1];
+  const thirdCorps = dayScores[2];
+
+  // Calculate key metrics
+  const leadMargin = topCorps && secondCorps ? topCorps.total - secondCorps.total : 0;
+  const top3Spread = topCorps && thirdCorps ? topCorps.total - thirdCorps.total : 0;
+
+  // Find biggest daily movers
+  const dailyChanges = Object.entries(trendData).map(([corps, data]) => ({
+    corps,
+    change: data.dayChange || 0,
+    trend: data.trendFromAvg || 0,
+  }));
+  const biggestGainer = dailyChanges.sort((a, b) => b.change - a.change)[0];
+  const biggestLoser = dailyChanges.sort((a, b) => a.change - b.change)[0];
+
+  // Determine season phase
+  let seasonPhase;
+  if (reportDay <= 10) {
+    seasonPhase = "early"; // Opening shows, everything is new
+  } else if (reportDay <= 25) {
+    seasonPhase = "mid"; // Regional competitions, patterns emerging
+  } else if (reportDay <= 35) {
+    seasonPhase = "late"; // Approaching finals, stakes are high
+  } else {
+    seasonPhase = "championship"; // Finals week
+  }
+
+  // Determine competitive scenario
+  let scenario;
+  let intensity;
+
+  if (leadMargin < 0.3) {
+    scenario = "tight_race"; // Less than 0.3 points - anyone's game
+    intensity = "high";
+  } else if (leadMargin < 0.8) {
+    scenario = "competitive"; // Close but leader has edge
+    intensity = "moderate-high";
+  } else if (leadMargin > 2.0) {
+    scenario = "dominant_leader"; // Clear frontrunner
+    intensity = "moderate";
+  } else {
+    scenario = "standard"; // Normal competitive spread
+    intensity = "moderate";
+  }
+
+  // Check for dramatic movements
+  const hasBigMover = biggestGainer && biggestGainer.change > 0.5;
+  const hasBigDrop = biggestLoser && biggestLoser.change < -0.5;
+  const hasShakeup = hasBigMover || hasBigDrop;
+
+  // Check for position battles (corps within 0.2 of each other)
+  const positionBattles = [];
+  for (let i = 0; i < dayScores.length - 1; i++) {
+    const gap = dayScores[i].total - dayScores[i + 1].total;
+    if (gap < 0.2) {
+      positionBattles.push({
+        position: i + 1,
+        corps1: dayScores[i].corps,
+        corps2: dayScores[i + 1].corps,
+        gap: gap.toFixed(3),
+      });
+    }
+  }
+
+  return {
+    scenario,
+    intensity,
+    seasonPhase,
+    leadMargin: leadMargin.toFixed(3),
+    top3Spread: top3Spread.toFixed(3),
+    hasShakeup,
+    biggestGainer: biggestGainer?.corps || null,
+    biggestGainerChange: biggestGainer?.change?.toFixed(3) || "0.000",
+    biggestLoser: biggestLoser?.corps || null,
+    biggestLoserChange: biggestLoser?.change?.toFixed(3) || "0.000",
+    positionBattles,
+    positionBattleCount: positionBattles.length,
+  };
+}
+
+/**
+ * Generate dynamic tone guidance based on competition context
+ * @param {Object} context - Competition context from analyzeCompetitionContext
+ * @param {string} articleType - Type of article being generated
+ * @returns {string} Tone guidance for the AI prompt
+ */
+function getToneGuidance(context, articleType) {
+  const { scenario, seasonPhase, hasShakeup, positionBattleCount, intensity } = context;
+
+  // Base tone elements
+  const toneElements = [];
+
+  // Season phase affects overall framing
+  switch (seasonPhase) {
+    case "early":
+      toneElements.push("Frame as season-opening excitement");
+      toneElements.push("Acknowledge early-season variability");
+      toneElements.push("Emphasize potential and trajectory over final standings");
+      break;
+    case "mid":
+      toneElements.push("Note emerging patterns and trends");
+      toneElements.push("Compare to early-season expectations");
+      toneElements.push("Build narrative momentum toward finals");
+      break;
+    case "late":
+      toneElements.push("Emphasize high stakes as finals approach");
+      toneElements.push("Every tenth matters now");
+      toneElements.push("Championship implications in every score");
+      break;
+    case "championship":
+      toneElements.push("Finals week intensity - this is what they've worked for");
+      toneElements.push("Legacy and history on the line");
+      toneElements.push("Maximum drama and stakes");
+      break;
+  }
+
+  // Competitive scenario affects urgency
+  switch (scenario) {
+    case "tight_race":
+      toneElements.push("URGENT: Race is razor-close, convey tension and uncertainty");
+      toneElements.push("Every performance could decide the outcome");
+      toneElements.push("Use phrases like 'dead heat', 'too close to call', 'margin of error'");
+      break;
+    case "competitive":
+      toneElements.push("Competitive but not desperate");
+      toneElements.push("Leader has work to do to hold off challengers");
+      toneElements.push("Focus on what challengers need to close the gap");
+      break;
+    case "dominant_leader":
+      toneElements.push("Acknowledge dominance without removing drama from other battles");
+      toneElements.push("Focus on battles for 2nd-5th, underdog stories");
+      toneElements.push("Dynasty/legacy narrative for the leader");
+      break;
+    default:
+      toneElements.push("Professional sports journalism tone");
+      toneElements.push("Balanced analysis of the competitive field");
+  }
+
+  // Shakeups add excitement
+  if (hasShakeup) {
+    toneElements.push("BREAKING NEWS energy - something significant happened today");
+    toneElements.push("Lead with the surprise/upset angle");
+    toneElements.push("Use language of shock, breakthrough, or collapse as appropriate");
+  }
+
+  // Position battles add tension
+  if (positionBattleCount > 3) {
+    toneElements.push("Emphasize the chaotic middle of the pack");
+    toneElements.push("Multiple corps are one performance away from moving");
+  } else if (positionBattleCount > 0) {
+    toneElements.push("Highlight specific position battles that could flip tomorrow");
+  }
+
+  // Article-specific tone adjustments
+  if (articleType === "underdog_story") {
+    toneElements.push("Inspirational underdog narrative - the corps that exceeded expectations");
+    toneElements.push("Emotional resonance: determination, breakthrough, proving doubters wrong");
+  } else if (articleType === "corps_spotlight") {
+    toneElements.push("Celebratory profile tone - what makes this corps special");
+    toneElements.push("Historical appreciation and current season analysis");
+  } else if (articleType === "deep_analytics") {
+    toneElements.push("Data-driven but accessible");
+    toneElements.push("Numbers tell a story - find the narrative in the statistics");
+  }
+
+  // Build the tone guidance string
+  return `
+DYNAMIC TONE GUIDANCE (based on current competitive context):
+Competition Scenario: ${scenario.replace(/_/g, " ").toUpperCase()} (${intensity} intensity)
+Season Phase: ${seasonPhase.toUpperCase()} SEASON
+${hasShakeup ? "⚡ SIGNIFICANT MOVEMENT TODAY - lead with this energy\n" : ""}
+Writing Directives:
+${toneElements.map(t => `• ${t}`).join("\n")}
+
+Remember: Match your energy to the stakes. ${intensity === "high" ? "This is a pivotal moment - write like it matters." : intensity === "moderate-high" ? "Competition is heating up - convey the building tension." : "Maintain professional analysis while finding the compelling narratives."}`;
+}
+
+/**
+ * Get a short tone descriptor for logging
+ */
+function getToneDescriptor(context) {
+  const descriptors = [];
+  if (context.scenario === "tight_race") descriptors.push("TENSE");
+  if (context.hasShakeup) descriptors.push("BREAKING");
+  if (context.seasonPhase === "championship") descriptors.push("FINALS");
+  if (context.positionBattleCount > 3) descriptors.push("CHAOTIC");
+  return descriptors.length > 0 ? descriptors.join("/") : "STANDARD";
 }
 
 // =============================================================================
@@ -1774,7 +2234,41 @@ This image should feel like film study material - capturing the precision and de
 // =============================================================================
 
 /**
- * Generate all 5 nightly articles
+ * Determine which 5th article to generate based on the day
+ * Rotation schedule for variety:
+ * - Underdog Story: Every 6th day (days 6, 12, 18, 24, 30, 36...)
+ * - Deep Analytics: Even days (not underdog days)
+ * - Corps Spotlight: Odd days (not underdog days)
+ *
+ * This gives readers variety while limiting underdog stories to ~once per week
+ */
+function getFifthArticleType(reportDay) {
+  // Underdog story every 6 days (roughly once a week, but not too predictable)
+  if (reportDay % 6 === 0) {
+    return "underdog_story";
+  }
+
+  // Alternate between deep analytics and corps spotlight on other days
+  if (reportDay % 2 === 0) {
+    return "deep_analytics";
+  }
+
+  return "corps_spotlight";
+}
+
+/**
+ * Generate 5 nightly articles with rotating variety
+ *
+ * Core articles (always generated):
+ * 1. DCI Standings - Daily competition results
+ * 2. DCI Captions - Caption analysis breakdown
+ * 3. Fantasy Performers - Top fantasy ensemble results
+ * 4. Fantasy Leagues - League standings and recaps
+ *
+ * Rotating 5th article (for variety):
+ * - Deep Analytics (even days)
+ * - Corps Spotlight (odd days)
+ * - Underdog Story (every 6th day)
  */
 async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
   const reportDay = currentDay - 1;
@@ -1783,7 +2277,9 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
     return { success: false, error: "Invalid day" };
   }
 
-  logger.info(`Generating 5 articles for Day ${reportDay}`);
+  // Determine which rotating article to generate today
+  const fifthArticleType = getFifthArticleType(reportDay);
+  logger.info(`Generating 5 articles for Day ${reportDay} (5th article: ${fifthArticleType})`);
 
   try {
     // Fetch all data
@@ -1801,14 +2297,42 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
     const trendData = calculateTrendData(historicalData, reportDay, activeCorps);
     const captionLeaders = identifyCaptionLeaders(dayScores, trendData);
 
-    // Generate all 5 articles in parallel, passing show context and db to each
-    const articles = await Promise.all([
-      generateDciStandingsArticle({ reportDay, dayScores, trendData, activeCorps, showContext, db }),
-      generateDciCaptionsArticle({ reportDay, dayScores, captionLeaders, activeCorps, showContext, db }),
-      generateFantasyPerformersArticle({ reportDay, fantasyData, showContext, db, dataDocId }),
-      generateFantasyLeaguesArticle({ reportDay, fantasyData, showContext }),
-      generateDeepAnalyticsArticle({ reportDay, dayScores, trendData, fantasyData, captionLeaders, showContext, db }),
-    ]);
+    // Analyze competition context for dynamic tone
+    const competitionContext = analyzeCompetitionContext(dayScores, trendData, reportDay);
+    const toneDescriptor = getToneDescriptor(competitionContext);
+    logger.info(`Competition context for Day ${reportDay}: ${toneDescriptor} (${competitionContext.scenario}, ${competitionContext.seasonPhase} season, lead margin: ${competitionContext.leadMargin})`);
+
+    // Build the list of articles to generate
+    // Core 4 articles always included
+    const articlePromises = [
+      generateDciStandingsArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db }),
+      generateDciCaptionsArticle({ reportDay, dayScores, captionLeaders, activeCorps, showContext, competitionContext, trendData, db }),
+      generateFantasyPerformersArticle({ reportDay, fantasyData, showContext, competitionContext, db, dataDocId }),
+      generateFantasyLeaguesArticle({ reportDay, fantasyData, showContext, competitionContext }),
+    ];
+
+    // Add the rotating 5th article based on the schedule
+    switch (fifthArticleType) {
+      case "underdog_story":
+        articlePromises.push(
+          generateUnderdogStoryArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db })
+        );
+        break;
+      case "corps_spotlight":
+        articlePromises.push(
+          generateCorpsSpotlightArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db })
+        );
+        break;
+      case "deep_analytics":
+      default:
+        articlePromises.push(
+          generateDeepAnalyticsArticle({ reportDay, dayScores, trendData, fantasyData, captionLeaders, showContext, competitionContext, db })
+        );
+        break;
+    }
+
+    // Generate all 5 articles in parallel
+    const articles = await Promise.all(articlePromises);
 
     return {
       success: true,
@@ -1820,6 +2344,14 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
         showName: showContext.showName,
         location: showContext.location,
         date: showContext.date,
+        articleCount: articles.length,
+        fifthArticleType,
+        competitionContext: {
+          scenario: competitionContext.scenario,
+          seasonPhase: competitionContext.seasonPhase,
+          intensity: competitionContext.intensity,
+          toneDescriptor,
+        },
       },
     };
   } catch (error) {
@@ -1831,10 +2363,13 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
 /**
  * Article 1: DCI Standings
  */
-async function generateDciStandingsArticle({ reportDay, dayScores, trendData, activeCorps, showContext, db }) {
+async function generateDciStandingsArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db }) {
   const topCorps = dayScores[0];
   const secondCorps = dayScores[1];
   const gap = topCorps && secondCorps ? (topCorps.total - secondCorps.total).toFixed(3) : "0.000";
+
+  // Get dynamic tone guidance based on competition context
+  const toneGuidance = getToneGuidance(competitionContext, "dci_standings");
 
   const prompt = `You are a veteran DCI (Drum Corps International) journalist writing for marching.art, the premier fantasy platform for competitive drum corps.
 
@@ -1851,17 +2386,40 @@ EVENT INFORMATION
 
 TODAY'S COMPETITION RESULTS from ${showContext.showName} in ${showContext.location}:
 
-STANDINGS (Corps Name | Historical Season Year | Total Score | Daily Change):
+STANDINGS WITH MOMENTUM ANALYSIS (Corps | Season | Score | Momentum):
 ${dayScores.slice(0, 12).map((s, i) => {
   const trend = trendData[s.corps];
   const change = trend?.dayChange || 0;
-  return `${i + 1}. ${s.corps} (${s.sourceYear} season): ${s.total.toFixed(3)} pts [${change >= 0 ? '+' : ''}${change.toFixed(3)} from yesterday]`;
+  const narrative = getTrendNarrative(trend, s.corps + reportDay);
+  const momentumDesc = narrative?.full || "maintaining form";
+  const captionNote = trend?.captionTrends ?
+    Object.entries(trend.captionTrends).filter(([_, v]) => v.trending !== "stable").map(([k, v]) => `${k.toUpperCase()} ${v.trending}`).join(", ") : "";
+  return `${i + 1}. ${s.corps} (${s.sourceYear}): ${s.total.toFixed(3)} pts [${change >= 0 ? '+' : ''}${change.toFixed(3)}]
+   → ${momentumDesc}${trend?.streak >= 3 ? ` (${trend.streak}-day streak)` : ""}${captionNote ? ` | ${captionNote}` : ""}`;
 }).join('\n')}
+
+TREND HIGHLIGHTS:
+${(() => {
+  const surging = Object.entries(trendData).filter(([_, t]) => t.momentum === "surging" || t.momentum === "hot");
+  const sliding = Object.entries(trendData).filter(([_, t]) => t.momentum === "sliding" || t.momentum === "cold");
+  const atBest = Object.entries(trendData).filter(([_, t]) => t.atSeasonBest);
+  const atWorst = Object.entries(trendData).filter(([_, t]) => t.atSeasonWorst);
+
+  const highlights = [];
+  if (surging.length > 0) highlights.push(`🔥 HOT: ${surging.map(([c]) => c).join(", ")}`);
+  if (sliding.length > 0) highlights.push(`❄️ COLD: ${sliding.map(([c]) => c).join(", ")}`);
+  if (atBest.length > 0) highlights.push(`📈 SEASON BEST: ${atBest.map(([c]) => c).join(", ")}`);
+  if (atWorst.length > 0) highlights.push(`📉 SEASON LOW: ${atWorst.map(([c]) => c).join(", ")}`);
+  return highlights.length > 0 ? highlights.join('\n') : "No significant trend changes today";
+})()}
 
 KEY STATISTICS:
 - Lead margin: ${topCorps?.corps || 'N/A'} leads by ${gap} points
 - Biggest gainer today: ${Object.entries(trendData).sort((a,b) => b[1].dayChange - a[1].dayChange)[0]?.[0] || 'N/A'}
 - Corps count: ${dayScores.length} corps competing
+${competitionContext.positionBattleCount > 0 ? `- Position battles: ${competitionContext.positionBattleCount} corps within 0.2 points of the position ahead` : ""}
+
+${toneGuidance}
 
 WRITE A PROFESSIONAL SPORTS ARTICLE covering today's standings. Your article should:
 
@@ -1875,7 +2433,7 @@ WRITE A PROFESSIONAL SPORTS ARTICLE covering today's standings. Your article sho
    - Analyzes momentum (which corps are trending hot or cold)
    - Closes with what to watch tomorrow
 
-TONE: Professional sports journalism. Authoritative but accessible. Use specific numbers. Create drama from the competition without being hyperbolic. Reference that these are real historical DCI performances.`;
+Reference that these are real historical DCI performances being relived through the fantasy platform.`;
 
   // Schema for structured output
   const schema = {
@@ -1937,7 +2495,10 @@ TONE: Professional sports journalism. Authoritative but accessible. Use specific
 /**
  * Article 2: DCI Caption Analysis
  */
-async function generateDciCaptionsArticle({ reportDay, dayScores, captionLeaders, activeCorps, showContext, db }) {
+async function generateDciCaptionsArticle({ reportDay, dayScores, captionLeaders, activeCorps, showContext, competitionContext, trendData, db }) {
+  // Get dynamic tone guidance
+  const toneGuidance = getToneGuidance(competitionContext, "dci_captions");
+
   const prompt = `You are a DCI caption analyst and technical expert writing for marching.art. You specialize in breaking down the scoring categories that determine DCI competition results.
 
 CONTEXT: DCI scoring has three main categories:
@@ -1964,6 +2525,30 @@ General Effect: ${dayScores.slice(0, 5).map(s => `${s.corps}: ${s.subtotals.ge.t
 Visual Total: ${dayScores.slice(0, 5).map(s => `${s.corps}: ${s.subtotals.visual.toFixed(2)}`).join(' | ')}
 Music Total: ${dayScores.slice(0, 5).map(s => `${s.corps}: ${s.subtotals.music.toFixed(2)}`).join(' | ')}
 
+CAPTION TREND ANALYSIS (Corps with notable caption movement):
+${(() => {
+  const captionMovers = dayScores.slice(0, 8).map(s => {
+    const trend = trendData[s.corps];
+    const captionTrends = trend?.captionTrends;
+    const narrativeParts = [];
+
+    if (captionTrends) {
+      if (captionTrends.ge.trending === "up") narrativeParts.push("GE climbing");
+      if (captionTrends.ge.trending === "down") narrativeParts.push("GE dipping");
+      if (captionTrends.visual.trending === "up") narrativeParts.push("visual sharpening");
+      if (captionTrends.visual.trending === "down") narrativeParts.push("visual slipping");
+      if (captionTrends.music.trending === "up") narrativeParts.push("music heating up");
+      if (captionTrends.music.trending === "down") narrativeParts.push("music cooling");
+    }
+
+    const trendNote = narrativeParts.length > 0 ? ` → ${narrativeParts.join(", ")}` : " → stable across all captions";
+    return `• ${s.corps}: GE ${s.subtotals.ge.toFixed(2)} | Vis ${s.subtotals.visual.toFixed(2)} | Mus ${s.subtotals.music.toFixed(2)}${trendNote}`;
+  });
+  return captionMovers.join('\n');
+})()}
+
+${toneGuidance}
+
 WRITE A TECHNICAL ANALYSIS ARTICLE that breaks down today's caption performances:
 
 1. HEADLINE: Focus on the most interesting caption story. Examples: "Crown Brass Posts Season-High 19.2: Inside the Hornline's Breakthrough", "Blue Devils GE Dominance: How Design Excellence Creates Separation"
@@ -1978,7 +2563,7 @@ WRITE A TECHNICAL ANALYSIS ARTICLE that breaks down today's caption performances
 
 4. CAPTION BREAKDOWN: Provide analysis for each major category with the leader and what makes them stand out.
 
-TONE: Technical but accessible. Like a color commentator who knows the activity inside and out. Use specific scores. Reference real DCI judging criteria.`;
+Technical but accessible. Like a color commentator who knows the activity inside and out. Use specific scores. Reference real DCI judging criteria.`;
 
   // Schema for structured output
   const schema = {
@@ -2041,10 +2626,13 @@ TONE: Technical but accessible. Like a color commentator who knows the activity 
 /**
  * Article 3: Fantasy Top Performers
  */
-async function generateFantasyPerformersArticle({ reportDay, fantasyData, showContext, db, dataDocId }) {
+async function generateFantasyPerformersArticle({ reportDay, fantasyData, showContext, competitionContext, db, dataDocId }) {
   if (!fantasyData?.current) {
     return createFallbackArticle(ARTICLE_TYPES.FANTASY_PERFORMERS, reportDay);
   }
+
+  // Get dynamic tone guidance
+  const toneGuidance = getToneGuidance(competitionContext, "fantasy_performers");
 
   const shows = fantasyData.current.shows || [];
   const allResults = shows.flatMap(s => s.results || []);
@@ -2188,7 +2776,10 @@ CRITICAL RULES:
 /**
  * Article 4: Fantasy League Recap
  */
-async function generateFantasyLeaguesArticle({ reportDay, fantasyData, showContext }) {
+async function generateFantasyLeaguesArticle({ reportDay, fantasyData, showContext, competitionContext }) {
+  // Get dynamic tone guidance
+  const toneGuidance = getToneGuidance(competitionContext, "fantasy_leagues");
+
   // Get show/league data - also format show names for fantasy branding
   const shows = fantasyData?.current?.shows || [];
   const showSummaries = shows.map(show => {
@@ -2298,7 +2889,10 @@ CRITICAL RULES:
 /**
  * Article 5: Deep Analytics
  */
-async function generateDeepAnalyticsArticle({ reportDay, dayScores, trendData, fantasyData, captionLeaders, showContext, db }) {
+async function generateDeepAnalyticsArticle({ reportDay, dayScores, trendData, fantasyData, captionLeaders, showContext, competitionContext, db }) {
+  // Get dynamic tone guidance
+  const toneGuidance = getToneGuidance(competitionContext, "deep_analytics");
+
   // Calculate advanced statistics
   const bigGainers = Object.entries(trendData)
     .filter(([, t]) => t.dayChange > 0.1)
@@ -2343,13 +2937,95 @@ EVENT INFORMATION
 STATISTICAL ANALYSIS from ${showContext.showName} on ${showContext.date}:
 
 ═══════════════════════════════════════════════════════════════
-MOMENTUM INDICATORS (Single-Day Movement)
+MOMENTUM CLASSIFICATIONS (Extended Analysis)
 ═══════════════════════════════════════════════════════════════
-SURGING (>0.1 point gain from yesterday):
-${bigGainers.length > 0 ? bigGainers.map(([c, t]) => `• ${c}: +${t.dayChange.toFixed(3)} (latest: ${t.latestTotal?.toFixed(3) || 'N/A'})`).join('\n') : '• No corps gained >0.1 points today'}
+${(() => {
+  const classifications = {
+    surging: Object.entries(trendData).filter(([, t]) => t.momentum === "surging"),
+    hot: Object.entries(trendData).filter(([, t]) => t.momentum === "hot"),
+    rising: Object.entries(trendData).filter(([, t]) => t.momentum === "rising"),
+    steady: Object.entries(trendData).filter(([, t]) => t.momentum === "steady" || t.momentum === "consistent"),
+    cooling: Object.entries(trendData).filter(([, t]) => t.momentum === "cooling"),
+    cold: Object.entries(trendData).filter(([, t]) => t.momentum === "cold"),
+    sliding: Object.entries(trendData).filter(([, t]) => t.momentum === "sliding"),
+  };
 
-COOLING OFF (>0.1 point drop from yesterday):
-${bigLosers.length > 0 ? bigLosers.map(([c, t]) => `• ${c}: ${t.dayChange.toFixed(3)} (latest: ${t.latestTotal?.toFixed(3) || 'N/A'})`).join('\n') : '• No corps dropped >0.1 points today'}
+  const output = [];
+  if (classifications.surging.length > 0) {
+    output.push(`🔥 SURGING (3+ day winning streak): ${classifications.surging.map(([c, t]) => {
+      const narrative = getTrendNarrative(t, c);
+      return `${c} (${t.streak}-day streak, ${narrative?.momentum || ""})`;
+    }).join(", ")}`);
+  }
+  if (classifications.hot.length > 0) {
+    output.push(`🌡️ HOT (strong upward momentum): ${classifications.hot.map(([c]) => c).join(", ")}`);
+  }
+  if (classifications.rising.length > 0) {
+    output.push(`📈 RISING (positive trajectory): ${classifications.rising.map(([c]) => c).join(", ")}`);
+  }
+  if (classifications.cooling.length > 0) {
+    output.push(`📉 COOLING (slight regression): ${classifications.cooling.map(([c]) => c).join(", ")}`);
+  }
+  if (classifications.cold.length > 0) {
+    output.push(`❄️ COLD (downward momentum): ${classifications.cold.map(([c]) => c).join(", ")}`);
+  }
+  if (classifications.sliding.length > 0) {
+    output.push(`⬇️ SLIDING (3+ day losing streak): ${classifications.sliding.map(([c, t]) => {
+      return `${c} (${t.streak}-day decline)`;
+    }).join(", ")}`);
+  }
+  return output.length > 0 ? output.join('\n') : "All corps relatively steady today";
+})()}
+
+═══════════════════════════════════════════════════════════════
+SINGLE-DAY MOVEMENT
+═══════════════════════════════════════════════════════════════
+BIGGEST GAINERS (>0.1 point gain):
+${bigGainers.length > 0 ? bigGainers.map(([c, t]) => {
+  const narrative = getTrendNarrative(t, c);
+  return `• ${c}: +${t.dayChange.toFixed(3)} → ${narrative?.full || "improving"}`;
+}).join('\n') : '• No corps gained >0.1 points today'}
+
+BIGGEST DROPS (>0.1 point loss):
+${bigLosers.length > 0 ? bigLosers.map(([c, t]) => {
+  const narrative = getTrendNarrative(t, c);
+  return `• ${c}: ${t.dayChange.toFixed(3)} → ${narrative?.full || "regressing"}`;
+}).join('\n') : '• No corps dropped >0.1 points today'}
+
+═══════════════════════════════════════════════════════════════
+VOLATILITY & CONSISTENCY ANALYSIS
+═══════════════════════════════════════════════════════════════
+${(() => {
+  const byVolatility = Object.entries(trendData).sort((a, b) => b[1].volatility - a[1].volatility);
+  const highVol = byVolatility.slice(0, 3).filter(([, t]) => t.volatility > 0.15);
+  const lowVol = byVolatility.slice(-3).filter(([, t]) => t.volatility < 0.15);
+
+  const output = [];
+  if (highVol.length > 0) {
+    output.push(`HIGH VOLATILITY (unpredictable):\n${highVol.map(([c, t]) => `• ${c}: σ=${t.volatility.toFixed(3)} - inconsistent but capable of big swings`).join('\n')}`);
+  }
+  if (lowVol.length > 0) {
+    output.push(`LOW VOLATILITY (predictable):\n${lowVol.map(([c, t]) => `• ${c}: σ=${t.volatility.toFixed(3)} - consistent, reliable performances`).join('\n')}`);
+  }
+  return output.join('\n\n') || "Volatility data not available";
+})()}
+
+═══════════════════════════════════════════════════════════════
+SEASON PERFORMANCE MARKERS
+═══════════════════════════════════════════════════════════════
+${(() => {
+  const atBest = Object.entries(trendData).filter(([, t]) => t.atSeasonBest);
+  const atWorst = Object.entries(trendData).filter(([, t]) => t.atSeasonWorst);
+
+  const output = [];
+  if (atBest.length > 0) {
+    output.push(`AT SEASON HIGH: ${atBest.map(([c, t]) => `${c} (${t.latestTotal?.toFixed(3)})`).join(", ")}`);
+  }
+  if (atWorst.length > 0) {
+    output.push(`AT SEASON LOW: ${atWorst.map(([c, t]) => `${c} (${t.latestTotal?.toFixed(3)})`).join(", ")}`);
+  }
+  return output.length > 0 ? output.join('\n') : "No corps at season extremes today";
+})()}
 
 ═══════════════════════════════════════════════════════════════
 7-DAY TREND ANALYSIS (Performance vs. Weekly Average)
@@ -2373,6 +3049,8 @@ FIELD STATISTICS
 CAPTION EXCELLENCE BY CATEGORY
 ═══════════════════════════════════════════════════════════════
 ${captionLeaders.slice(0, 6).map(c => `• ${c.caption}: ${c.leader} (${c.score.toFixed(2)}) [trend: ${c.weeklyTrend}]`).join('\n')}
+
+${toneGuidance}
 
 WRITE A DATA-DRIVEN ANALYTICAL ARTICLE:
 
@@ -2465,6 +3143,348 @@ CRITICAL RULES:
   } catch (error) {
     logger.error("Deep Analytics article failed:", error);
     return createFallbackArticle(ARTICLE_TYPES.DEEP_ANALYTICS, reportDay);
+  }
+}
+
+/**
+ * Article 6: Underdog Story
+ * Features a corps that's significantly outperforming expectations
+ */
+async function generateUnderdogStoryArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db }) {
+  // Get dynamic tone guidance
+  const toneGuidance = getToneGuidance(competitionContext, "underdog_story");
+
+  // Find the biggest overperformer relative to their ranking
+  // Look for corps in positions 6-15 that are trending strongly upward
+  const underdogCandidates = dayScores
+    .slice(5, 15) // Focus on mid-pack corps (positions 6-15)
+    .map(s => ({
+      ...s,
+      trend: trendData[s.corps] || { dayChange: 0, trendFromAvg: 0 },
+    }))
+    .filter(s => s.trend.dayChange > 0 || s.trend.trendFromAvg > 0) // Must be trending up
+    .sort((a, b) => {
+      // Score by combination of daily gain and trend from average
+      const aScore = a.trend.dayChange * 2 + a.trend.trendFromAvg;
+      const bScore = b.trend.dayChange * 2 + b.trend.trendFromAvg;
+      return bScore - aScore;
+    });
+
+  if (underdogCandidates.length === 0) {
+    // Fallback to the corps with biggest single-day gain
+    const biggestGainer = Object.entries(trendData)
+      .sort((a, b) => b[1].dayChange - a[1].dayChange)[0];
+    if (biggestGainer) {
+      const gainerCorps = dayScores.find(s => s.corps === biggestGainer[0]);
+      if (gainerCorps) {
+        underdogCandidates.push({
+          ...gainerCorps,
+          trend: biggestGainer[1],
+        });
+      }
+    }
+  }
+
+  const featuredUnderdog = underdogCandidates[0] || dayScores[5]; // Fallback to 6th place
+  const currentRank = dayScores.findIndex(s => s.corps === featuredUnderdog.corps) + 1;
+
+  const prompt = `You are an inspirational sports writer for marching.art, crafting a compelling underdog narrative like ESPN's "30 for 30" or Sports Illustrated's feature stories.
+
+CONTEXT: Every DCI season has breakthrough corps - ensembles that exceed expectations and capture the imagination of fans. Today you're profiling one such corps whose performance is turning heads.
+
+═══════════════════════════════════════════════════════════════
+EVENT INFORMATION
+═══════════════════════════════════════════════════════════════
+• Show Name: ${showContext.showName}
+• Location: ${showContext.location}
+• Date: ${showContext.date}
+• Season Day: ${reportDay}
+═══════════════════════════════════════════════════════════════
+
+FEATURED CORPS: ${featuredUnderdog.corps}
+═══════════════════════════════════════════════════════════════
+• Historical Season: ${featuredUnderdog.sourceYear}
+• Current Standing: ${currentRank}${currentRank === 1 ? 'st' : currentRank === 2 ? 'nd' : currentRank === 3 ? 'rd' : 'th'} place
+• Today's Score: ${featuredUnderdog.total.toFixed(3)}
+• Daily Change: ${featuredUnderdog.trend?.dayChange >= 0 ? '+' : ''}${(featuredUnderdog.trend?.dayChange || 0).toFixed(3)}
+• 7-Day Trend: ${featuredUnderdog.trend?.trendFromAvg >= 0 ? '+' : ''}${(featuredUnderdog.trend?.trendFromAvg || 0).toFixed(3)} vs average
+
+MOMENTUM NARRATIVE:
+${(() => {
+  const narrative = getTrendNarrative(featuredUnderdog.trend, featuredUnderdog.corps + reportDay);
+  const parts = [];
+  if (narrative?.momentum) parts.push(`This corps is ${narrative.momentum}`);
+  if (narrative?.streak) parts.push(`with ${narrative.streak}`);
+  if (narrative?.caption) parts.push(`and ${narrative.caption}`);
+  if (narrative?.performance) parts.push(`— ${narrative.performance}`);
+  if (featuredUnderdog.trend?.streak >= 3) {
+    parts.push(`(${featuredUnderdog.trend.streak}-day winning streak)`);
+  }
+  return parts.length > 0 ? parts.join(" ") : "Building momentum steadily";
+})()}
+
+CAPTION BREAKDOWN:
+• General Effect: ${featuredUnderdog.subtotals?.ge?.toFixed(2) || 'N/A'}${featuredUnderdog.trend?.captionTrends?.ge?.trending === "up" ? " 📈" : featuredUnderdog.trend?.captionTrends?.ge?.trending === "down" ? " 📉" : ""}
+• Visual: ${featuredUnderdog.subtotals?.visual?.toFixed(2) || 'N/A'}${featuredUnderdog.trend?.captionTrends?.visual?.trending === "up" ? " 📈" : featuredUnderdog.trend?.captionTrends?.visual?.trending === "down" ? " 📉" : ""}
+• Music: ${featuredUnderdog.subtotals?.music?.toFixed(2) || 'N/A'}${featuredUnderdog.trend?.captionTrends?.music?.trending === "up" ? " 📈" : featuredUnderdog.trend?.captionTrends?.music?.trending === "down" ? " 📉" : ""}
+${featuredUnderdog.trend?.atSeasonBest ? "★ AT SEASON HIGH - Peaking at the perfect time!" : ""}
+
+COMPETITIVE CONTEXT:
+${dayScores.slice(Math.max(0, currentRank - 3), currentRank + 2).map((s, i) => {
+  const rank = Math.max(0, currentRank - 3) + i + 1;
+  const corpsTrend = trendData[s.corps];
+  const momentum = corpsTrend?.momentum || "steady";
+  return `${rank}. ${s.corps}: ${s.total.toFixed(3)}${s.corps === featuredUnderdog.corps ? ' ← FEATURED' : ''} [${momentum}]`;
+}).join('\n')}
+
+${toneGuidance}
+
+WRITE AN INSPIRATIONAL FEATURE ARTICLE about this corps' rise:
+
+1. HEADLINE: Compelling underdog narrative headline. Examples: "Rising Thunder: How [Corps] Silenced the Doubters", "[Corps] Announces Arrival with Season-Defining Performance", "The Dark Horse Emerges: [Corps]' Stunning Surge"
+
+2. SUMMARY: 2-3 sentences capturing why this corps' performance matters and what makes their story compelling.
+
+3. NARRATIVE: A 600-800 word inspirational feature that:
+   - Opens with a dramatic moment from their performance today
+   - Explores what's driving their improvement (musical excellence, visual precision, design choices)
+   - Puts their achievement in historical context
+   - Includes quotes-style observations about their performance
+   - Builds to an emotional conclusion about what this means for the corps and their fans
+   - Ends with a forward-looking statement about their potential
+
+Inspirational, emotionally resonant, but grounded in real performance data. Think underdog sports movie meets analytical journalism.`;
+
+  const schema = {
+    type: SchemaType.OBJECT,
+    properties: {
+      headline: { type: SchemaType.STRING, description: "Compelling underdog narrative headline" },
+      summary: { type: SchemaType.STRING, description: "2-3 sentence summary of the underdog story" },
+      narrative: { type: SchemaType.STRING, description: "600-800 word inspirational feature" },
+      keyStats: {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.OBJECT,
+          properties: {
+            stat: { type: SchemaType.STRING },
+            value: { type: SchemaType.STRING },
+            significance: { type: SchemaType.STRING },
+          },
+          required: ["stat", "value", "significance"],
+        },
+      },
+    },
+    required: ["headline", "summary", "narrative", "keyStats"],
+  };
+
+  try {
+    const content = await generateStructuredContent(prompt, schema);
+
+    // Look up show title for image
+    const showTitle = db ? await getShowTitleFromFirestore(db, featuredUnderdog.corps, featuredUnderdog.sourceYear) : null;
+
+    const imagePrompt = buildUnderdogImagePrompt(
+      featuredUnderdog.corps,
+      featuredUnderdog.sourceYear,
+      showContext.location,
+      showTitle
+    );
+
+    const imageData = await generateImageWithImagen(imagePrompt);
+    const imageResult = await processGeneratedImage(imageData, "underdog_story");
+
+    return {
+      type: ARTICLE_TYPES.UNDERDOG_STORY,
+      ...content,
+      featuredCorps: featuredUnderdog.corps,
+      featuredYear: featuredUnderdog.sourceYear,
+      imageUrl: imageResult.url,
+      imagePrompt,
+      reportDay,
+    };
+  } catch (error) {
+    logger.error("Underdog Story article failed:", error);
+    return createFallbackArticle(ARTICLE_TYPES.UNDERDOG_STORY, reportDay);
+  }
+}
+
+/**
+ * Article 7: Corps Spotlight
+ * Deep dive into a specific corps' identity and season journey
+ */
+async function generateCorpsSpotlightArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db }) {
+  // Get dynamic tone guidance
+  const toneGuidance = getToneGuidance(competitionContext, "corps_spotlight");
+
+  // Select a corps to spotlight - rotate through the field
+  // Use reportDay to ensure different corps each day
+  const spotlightIndex = (reportDay - 1) % dayScores.length;
+  const spotlightCorps = dayScores[spotlightIndex];
+  const currentRank = spotlightIndex + 1;
+  const corpsTrend = trendData[spotlightCorps.corps] || { dayChange: 0, trendFromAvg: 0, avgTotal: spotlightCorps.total };
+
+  // Get show title for this corps
+  const showTitle = db ? await getShowTitleFromFirestore(db, spotlightCorps.corps, spotlightCorps.sourceYear) : null;
+
+  const prompt = `You are a veteran DCI journalist writing an in-depth corps profile for marching.art, similar to profiles in Drum Corps World or the DCI website's feature content.
+
+CONTEXT: Each DCI corps has a unique identity, history, and culture. Fans connect deeply with "their" corps. This spotlight profile celebrates what makes this corps special while analyzing their current season performance.
+
+═══════════════════════════════════════════════════════════════
+EVENT INFORMATION
+═══════════════════════════════════════════════════════════════
+• Show Name: ${showContext.showName}
+• Location: ${showContext.location}
+• Date: ${showContext.date}
+• Season Day: ${reportDay}
+═══════════════════════════════════════════════════════════════
+
+FEATURED CORPS: ${spotlightCorps.corps}
+═══════════════════════════════════════════════════════════════
+• Historical Season: ${spotlightCorps.sourceYear}
+${showTitle ? `• Show Title: "${showTitle}"` : ''}
+• Current Standing: ${currentRank}${currentRank === 1 ? 'st' : currentRank === 2 ? 'nd' : currentRank === 3 ? 'rd' : 'th'} place
+• Today's Score: ${spotlightCorps.total.toFixed(3)}
+• Daily Movement: ${corpsTrend.dayChange >= 0 ? '+' : ''}${corpsTrend.dayChange.toFixed(3)}
+• 7-Day Average: ${corpsTrend.avgTotal.toFixed(3)}
+• Trend vs Average: ${corpsTrend.trendFromAvg >= 0 ? '+' : ''}${corpsTrend.trendFromAvg.toFixed(3)}
+
+CURRENT MOMENTUM:
+${(() => {
+  const narrative = getTrendNarrative(corpsTrend, spotlightCorps.corps + reportDay);
+  const lines = [];
+  lines.push(`• Status: ${narrative?.momentum || "maintaining steady form"}`);
+  if (corpsTrend.streak >= 2) {
+    lines.push(`• Streak: ${corpsTrend.streak} consecutive days ${corpsTrend.streakDirection === "up" ? "improving" : "declining"}`);
+  }
+  if (narrative?.caption) {
+    lines.push(`• Caption Trend: ${narrative.caption}`);
+  }
+  if (corpsTrend.atSeasonBest) {
+    lines.push(`★ AT SEASON HIGH - This is their best performance yet!`);
+  } else if (corpsTrend.atSeasonWorst) {
+    lines.push(`⚠️ AT SEASON LOW - A challenging night`);
+  }
+  if (corpsTrend.volatility !== undefined) {
+    if (corpsTrend.volatility > 0.2) {
+      lines.push(`• Volatility: High (unpredictable, capable of big swings)`);
+    } else if (corpsTrend.volatility < 0.08) {
+      lines.push(`• Volatility: Low (remarkably consistent performer)`);
+    }
+  }
+  return lines.join('\n');
+})()}
+
+DETAILED CAPTION SCORES:
+• General Effect: ${spotlightCorps.subtotals?.ge?.toFixed(2) || 'N/A'}
+  - GE1 (Music): ${spotlightCorps.captions?.GE1?.toFixed(2) || 'N/A'}
+  - GE2 (Visual): ${spotlightCorps.captions?.GE2?.toFixed(2) || 'N/A'}
+• Visual Total: ${spotlightCorps.subtotals?.visual?.toFixed(2) || 'N/A'}
+  - VP: ${spotlightCorps.captions?.VP?.toFixed(2) || 'N/A'}
+  - VA: ${spotlightCorps.captions?.VA?.toFixed(2) || 'N/A'}
+  - CG: ${spotlightCorps.captions?.CG?.toFixed(2) || 'N/A'}
+• Music Total: ${spotlightCorps.subtotals?.music?.toFixed(2) || 'N/A'}
+  - Brass: ${spotlightCorps.captions?.B?.toFixed(2) || 'N/A'}
+  - MA: ${spotlightCorps.captions?.MA?.toFixed(2) || 'N/A'}
+  - Percussion: ${spotlightCorps.captions?.P?.toFixed(2) || 'N/A'}
+
+SURROUNDING COMPETITION:
+${dayScores.slice(Math.max(0, currentRank - 2), Math.min(dayScores.length, currentRank + 3)).map((s, i) => {
+  const rank = Math.max(0, currentRank - 2) + i + 1;
+  const gap = s.total - spotlightCorps.total;
+  const rivalTrend = trendData[s.corps];
+  const rivalMomentum = rivalTrend?.momentum || "steady";
+  return `${rank}. ${s.corps}: ${s.total.toFixed(3)}${s.corps === spotlightCorps.corps ? ' ← SPOTLIGHT' : ` (${gap >= 0 ? '+' : ''}${gap.toFixed(3)})`} [${rivalMomentum}]`;
+}).join('\n')}
+
+${(() => {
+  // Find the most interesting nearby rivalry based on momentum
+  const nearbyCorps = dayScores.slice(Math.max(0, currentRank - 2), Math.min(dayScores.length, currentRank + 3))
+    .filter(s => s.corps !== spotlightCorps.corps);
+
+  for (const rival of nearbyCorps) {
+    const rivalTrend = trendData[rival.corps];
+    if (rivalTrend && corpsTrend) {
+      const comparison = getComparativeTrendNarrative(spotlightCorps.corps, corpsTrend, rival.corps, rivalTrend);
+      if (comparison) return `RIVALRY WATCH: ${comparison}`;
+    }
+  }
+  return "";
+})()}
+
+${toneGuidance}
+
+WRITE A COMPREHENSIVE CORPS PROFILE:
+
+1. HEADLINE: A headline that captures the corps' identity and current story. Examples: "Blue Devils: The Dynasty Continues", "Carolina Crown: Brass Excellence Meets Design Innovation", "[Corps]: [Defining Characteristic]"
+
+2. SUMMARY: 2-3 sentences introducing this corps and what makes their ${spotlightCorps.sourceYear} season notable.
+
+3. NARRATIVE: A 700-900 word profile that:
+   - Opens with what makes this corps distinctive in the DCI landscape
+   - ${showTitle ? `Explores their ${spotlightCorps.sourceYear} production "${showTitle}" and its design concept` : 'Discusses their performance style and identity'}
+   - Analyzes their competitive position and what's working well
+   - Identifies their strongest captions and areas of excellence
+   - Includes historical context about the corps' traditions
+   - Concludes with their outlook for the rest of the season
+
+Respectful, knowledgeable, like talking to a passionate fan who knows the corps' history. Celebratory but analytical.`;
+
+  const schema = {
+    type: SchemaType.OBJECT,
+    properties: {
+      headline: { type: SchemaType.STRING, description: "Corps identity headline" },
+      summary: { type: SchemaType.STRING, description: "2-3 sentence corps introduction" },
+      narrative: { type: SchemaType.STRING, description: "700-900 word corps profile" },
+      corpsIdentity: {
+        type: SchemaType.OBJECT,
+        properties: {
+          knownFor: { type: SchemaType.STRING, description: "What this corps is known for" },
+          strength: { type: SchemaType.STRING, description: "Primary competitive strength" },
+          fanbase: { type: SchemaType.STRING, description: "Description of fanbase/culture" },
+        },
+        required: ["knownFor", "strength", "fanbase"],
+      },
+      captionHighlights: {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.OBJECT,
+          properties: {
+            caption: { type: SchemaType.STRING },
+            assessment: { type: SchemaType.STRING },
+          },
+          required: ["caption", "assessment"],
+        },
+      },
+    },
+    required: ["headline", "summary", "narrative", "corpsIdentity", "captionHighlights"],
+  };
+
+  try {
+    const content = await generateStructuredContent(prompt, schema);
+
+    const imagePrompt = buildCorpsSpotlightImagePrompt(
+      spotlightCorps.corps,
+      spotlightCorps.sourceYear,
+      showTitle
+    );
+
+    const imageData = await generateImageWithImagen(imagePrompt);
+    const imageResult = await processGeneratedImage(imageData, "corps_spotlight");
+
+    return {
+      type: ARTICLE_TYPES.CORPS_SPOTLIGHT,
+      ...content,
+      featuredCorps: spotlightCorps.corps,
+      featuredYear: spotlightCorps.sourceYear,
+      showTitle,
+      imageUrl: imageResult.url,
+      imagePrompt,
+      reportDay,
+    };
+  } catch (error) {
+    logger.error("Corps Spotlight article failed:", error);
+    return createFallbackArticle(ARTICLE_TYPES.CORPS_SPOTLIGHT, reportDay);
   }
 }
 
@@ -2707,6 +3727,7 @@ function calculateTrendData(historicalData, reportDay, activeCorps) {
     const { corpsName, sourceYear } = corps;
     const yearEvents = historicalData[sourceYear] || [];
 
+    // Collect scores with caption breakdown
     const scores = [];
     for (let day = reportDay - 6; day <= reportDay; day++) {
       const dayEvent = yearEvents.find(e => e.offSeasonDay === day);
@@ -2714,27 +3735,371 @@ function calculateTrendData(historicalData, reportDay, activeCorps) {
         const corpsScore = dayEvent.scores.find(s => s.corps === corpsName);
         if (corpsScore) {
           const total = calculateTotal(corpsScore.captions);
-          if (total > 0) scores.push({ day, total });
+          const subtotals = calculateCaptionSubtotals(corpsScore.captions);
+          if (total > 0) scores.push({ day, total, captions: corpsScore.captions, subtotals });
         }
       }
     }
 
     if (scores.length >= 2) {
+      const sortedScores = [...scores].sort((a, b) => a.day - b.day);
       const avgTotal = scores.reduce((sum, s) => sum + s.total, 0) / scores.length;
-      const latestScore = scores.find(s => s.day === reportDay);
-      const previousScore = scores.find(s => s.day === reportDay - 1);
+      const latestScore = sortedScores.find(s => s.day === reportDay);
+      const previousScore = sortedScores.find(s => s.day === reportDay - 1);
+      const dayChange = latestScore && previousScore ? latestScore.total - previousScore.total : 0;
+      const trendFromAvg = latestScore ? latestScore.total - avgTotal : 0;
+
+      // Calculate streak (consecutive days of improvement/decline)
+      let streak = 0;
+      let streakDirection = null; // "up", "down", or null
+      for (let i = sortedScores.length - 1; i > 0; i--) {
+        const diff = sortedScores[i].total - sortedScores[i - 1].total;
+        if (i === sortedScores.length - 1) {
+          streakDirection = diff > 0.01 ? "up" : diff < -0.01 ? "down" : null;
+          if (streakDirection) streak = 1;
+        } else if (streakDirection === "up" && diff > 0.01) {
+          streak++;
+        } else if (streakDirection === "down" && diff < -0.01) {
+          streak++;
+        } else {
+          break;
+        }
+      }
+
+      // Determine momentum classification
+      let momentum = "steady";
+      if (streak >= 3 && streakDirection === "up") {
+        momentum = "surging";
+      } else if (streak >= 2 && streakDirection === "up" && trendFromAvg > 0.1) {
+        momentum = "hot";
+      } else if (dayChange > 0.15 || trendFromAvg > 0.15) {
+        momentum = "rising";
+      } else if (streak >= 3 && streakDirection === "down") {
+        momentum = "sliding";
+      } else if (streak >= 2 && streakDirection === "down" && trendFromAvg < -0.1) {
+        momentum = "cold";
+      } else if (dayChange < -0.15 || trendFromAvg < -0.15) {
+        momentum = "cooling";
+      } else if (Math.abs(trendFromAvg) < 0.05) {
+        momentum = "consistent";
+      }
+
+      // Find best and worst in window
+      const bestInWindow = Math.max(...scores.map(s => s.total));
+      const worstInWindow = Math.min(...scores.map(s => s.total));
+      const atSeasonBest = latestScore && Math.abs(latestScore.total - bestInWindow) < 0.01;
+      const atSeasonWorst = latestScore && Math.abs(latestScore.total - worstInWindow) < 0.01;
+
+      // Caption-specific trends (compare today to 7-day caption averages)
+      let captionTrends = null;
+      if (latestScore && scores.length >= 3) {
+        const avgGE = scores.reduce((s, d) => s + d.subtotals.ge, 0) / scores.length;
+        const avgVisual = scores.reduce((s, d) => s + d.subtotals.visual, 0) / scores.length;
+        const avgMusic = scores.reduce((s, d) => s + d.subtotals.music, 0) / scores.length;
+
+        captionTrends = {
+          ge: {
+            current: latestScore.subtotals.ge,
+            avg: avgGE,
+            diff: latestScore.subtotals.ge - avgGE,
+            trending: latestScore.subtotals.ge - avgGE > 0.05 ? "up" : latestScore.subtotals.ge - avgGE < -0.05 ? "down" : "stable",
+          },
+          visual: {
+            current: latestScore.subtotals.visual,
+            avg: avgVisual,
+            diff: latestScore.subtotals.visual - avgVisual,
+            trending: latestScore.subtotals.visual - avgVisual > 0.03 ? "up" : latestScore.subtotals.visual - avgVisual < -0.03 ? "down" : "stable",
+          },
+          music: {
+            current: latestScore.subtotals.music,
+            avg: avgMusic,
+            diff: latestScore.subtotals.music - avgMusic,
+            trending: latestScore.subtotals.music - avgMusic > 0.03 ? "up" : latestScore.subtotals.music - avgMusic < -0.03 ? "down" : "stable",
+          },
+        };
+      }
+
+      // Calculate volatility (standard deviation)
+      const volatility = Math.sqrt(
+        scores.reduce((sum, s) => sum + Math.pow(s.total - avgTotal, 2), 0) / scores.length
+      );
 
       trends[corpsName] = {
         sourceYear,
         avgTotal,
         latestTotal: latestScore?.total || null,
-        dayChange: latestScore && previousScore ? latestScore.total - previousScore.total : 0,
-        trendFromAvg: latestScore ? latestScore.total - avgTotal : 0,
+        dayChange,
+        trendFromAvg,
+        // Enhanced trend data
+        streak,
+        streakDirection,
+        momentum,
+        bestInWindow,
+        worstInWindow,
+        atSeasonBest,
+        atSeasonWorst,
+        captionTrends,
+        volatility,
+        dataPoints: scores.length,
       };
     }
   }
 
   return trends;
+}
+
+/**
+ * Generate narrative phrases for trend descriptions
+ * Provides variety in how trends are described across articles
+ */
+const TREND_NARRATIVES = {
+  surging: [
+    "on an absolute tear",
+    "riding a scorching hot streak",
+    "surging with unstoppable momentum",
+    "catching fire at exactly the right moment",
+    "in the midst of a remarkable run",
+  ],
+  hot: [
+    "building serious momentum",
+    "heating up nicely",
+    "showing impressive upward trajectory",
+    "on the rise and showing no signs of slowing",
+    "trending in exactly the right direction",
+  ],
+  rising: [
+    "continuing to climb",
+    "making steady gains",
+    "showing improvement",
+    "moving in the right direction",
+    "picking up steam",
+  ],
+  sliding: [
+    "struggling to find their footing",
+    "in an extended rough patch",
+    "dealing with a concerning downward trend",
+    "fighting against unfavorable momentum",
+    "trying to stop the bleeding",
+  ],
+  cold: [
+    "going through a cold spell",
+    "searching for answers",
+    "hitting some turbulence",
+    "in a frustrating slump",
+    "battling inconsistency",
+  ],
+  cooling: [
+    "cooling off slightly",
+    "seeing some regression",
+    "coming back to earth",
+    "experiencing a minor setback",
+    "taking a small step back",
+  ],
+  steady: [
+    "maintaining their form",
+    "holding steady",
+    "staying the course",
+    "keeping things consistent",
+    "delivering reliable performances",
+  ],
+  consistent: [
+    "rock solid in their consistency",
+    "remarkably stable",
+    "the picture of dependability",
+    "executing with precision night after night",
+    "a model of consistency",
+  ],
+};
+
+const STREAK_NARRATIVES = {
+  up: {
+    3: ["three straight days of improvement", "a three-day winning streak", "improvement for the third consecutive day"],
+    4: ["four days of continuous gains", "an impressive four-day climb", "gains every day this week"],
+    5: ["five straight days trending upward", "a remarkable five-day surge", "an entire week of improvement"],
+  },
+  down: {
+    3: ["three consecutive days of decline", "a three-day skid", "dropping for the third day running"],
+    4: ["four straight days of regression", "a concerning four-day slide", "losses every day this week"],
+    5: ["five days of continuous decline", "a five-day freefall", "struggling all week"],
+  },
+};
+
+const CAPTION_TREND_NARRATIVES = {
+  ge: {
+    up: ["GE scores climbing", "connecting better with judges on effect", "drawing stronger emotional response"],
+    down: ["GE scores dipping", "struggling to land the effect", "effect captions not quite hitting"],
+    stable: ["effect scores holding steady", "consistent GE output"],
+  },
+  visual: {
+    up: ["visual program clicking into place", "drill execution sharpening", "guard and visual coming together"],
+    down: ["visual clarity suffering", "some execution issues on the field", "visual program not quite clean"],
+    stable: ["visual program consistent", "reliable execution on the field"],
+  },
+  music: {
+    up: ["brass and percussion heating up", "musical program elevating", "hornline finding their voice"],
+    down: ["musical scores slipping", "brass not quite as sharp", "some intonation and balance issues"],
+    stable: ["musical program solid", "consistent brass and percussion output"],
+  },
+};
+
+/**
+ * Get a narrative description for a corps' trend
+ * @param {Object} trend - Trend data for a corps
+ * @param {string} seed - Optional seed for consistent randomization
+ * @returns {Object} Narrative components
+ */
+function getTrendNarrative(trend, seed = null) {
+  if (!trend) return null;
+
+  const selectPhrase = (arr) => {
+    if (!arr || arr.length === 0) return "";
+    if (seed) {
+      const hash = seed.split('').reduce((a, b) => ((a << 5) - a + b.charCodeAt(0)) | 0, 0);
+      return arr[Math.abs(hash) % arr.length];
+    }
+    return arr[Math.floor(Math.random() * arr.length)];
+  };
+
+  // Main momentum phrase
+  const momentumPhrase = selectPhrase(TREND_NARRATIVES[trend.momentum] || TREND_NARRATIVES.steady);
+
+  // Streak phrase (if applicable)
+  let streakPhrase = null;
+  if (trend.streak >= 3 && trend.streakDirection) {
+    const streakLevel = Math.min(trend.streak, 5);
+    const options = STREAK_NARRATIVES[trend.streakDirection]?.[streakLevel];
+    if (options) streakPhrase = selectPhrase(options);
+  }
+
+  // Caption highlights (pick the most notable)
+  let captionHighlight = null;
+  if (trend.captionTrends) {
+    const captionChanges = [
+      { caption: "ge", ...trend.captionTrends.ge },
+      { caption: "visual", ...trend.captionTrends.visual },
+      { caption: "music", ...trend.captionTrends.music },
+    ].filter(c => c.trending !== "stable")
+     .sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
+
+    if (captionChanges.length > 0) {
+      const top = captionChanges[0];
+      const phrases = CAPTION_TREND_NARRATIVES[top.caption]?.[top.trending];
+      if (phrases) captionHighlight = selectPhrase(phrases);
+    }
+  }
+
+  // Season best/worst note
+  let performanceNote = null;
+  if (trend.atSeasonBest) {
+    performanceNote = selectPhrase([
+      "hitting their season high",
+      "at their best score of the year",
+      "peaking at the right time",
+    ]);
+  } else if (trend.atSeasonWorst) {
+    performanceNote = selectPhrase([
+      "at their lowest point this season",
+      "hitting a season-low score",
+      "at rock bottom—nowhere to go but up",
+    ]);
+  }
+
+  // Volatility note
+  let stabilityNote = null;
+  if (trend.volatility > 0.3) {
+    stabilityNote = selectPhrase([
+      "highly unpredictable night to night",
+      "volatile performances making them hard to read",
+      "inconsistent but capable of big nights",
+    ]);
+  } else if (trend.volatility < 0.1) {
+    stabilityNote = selectPhrase([
+      "remarkably consistent show to show",
+      "predictable in the best way",
+      "you know exactly what you're going to get",
+    ]);
+  }
+
+  return {
+    momentum: momentumPhrase,
+    streak: streakPhrase,
+    caption: captionHighlight,
+    performance: performanceNote,
+    stability: stabilityNote,
+    // Full narrative combining key elements
+    full: buildFullNarrative(momentumPhrase, streakPhrase, captionHighlight, performanceNote),
+  };
+}
+
+/**
+ * Build a complete narrative sentence from components
+ */
+function buildFullNarrative(momentum, streak, caption, performance) {
+  const parts = [];
+
+  if (streak) {
+    parts.push(streak);
+  }
+
+  if (momentum) {
+    if (parts.length > 0) {
+      parts.push(`and ${momentum}`);
+    } else {
+      parts.push(momentum);
+    }
+  }
+
+  if (caption && parts.length < 2) {
+    if (parts.length > 0) {
+      parts.push(`with ${caption}`);
+    } else {
+      parts.push(caption);
+    }
+  }
+
+  if (performance && parts.length < 2) {
+    parts.push(performance);
+  }
+
+  return parts.join(", ");
+}
+
+/**
+ * Get comparative narrative between two corps' trends
+ * @param {Object} trend1 - First corps trend
+ * @param {Object} trend2 - Second corps trend
+ * @returns {string} Comparative narrative
+ */
+function getComparativeTrendNarrative(corps1Name, trend1, corps2Name, trend2) {
+  if (!trend1 || !trend2) return null;
+
+  const momentum1 = TREND_NARRATIVES[trend1.momentum]?.[0] || "steady";
+  const momentum2 = TREND_NARRATIVES[trend2.momentum]?.[0] || "steady";
+
+  // Corps moving in opposite directions
+  if ((trend1.momentum === "surging" || trend1.momentum === "hot") &&
+      (trend2.momentum === "sliding" || trend2.momentum === "cold")) {
+    return `${corps1Name} and ${corps2Name} are moving in opposite directions—${corps1Name} ${momentum1} while ${corps2Name} is ${momentum2}`;
+  }
+
+  // Both surging (collision course)
+  if ((trend1.momentum === "surging" || trend1.momentum === "hot") &&
+      (trend2.momentum === "surging" || trend2.momentum === "hot")) {
+    return `Both ${corps1Name} and ${corps2Name} are ${momentum1}—a collision course that should produce fireworks`;
+  }
+
+  // Both struggling
+  if ((trend1.momentum === "sliding" || trend1.momentum === "cold") &&
+      (trend2.momentum === "sliding" || trend2.momentum === "cold")) {
+    return `Neither ${corps1Name} nor ${corps2Name} can find momentum right now, both ${momentum1}`;
+  }
+
+  // One steady, one moving
+  if (trend1.momentum === "steady" || trend1.momentum === "consistent") {
+    return `${corps1Name} remains ${momentum1} while ${corps2Name} is ${momentum2}`;
+  }
+
+  return `${corps1Name} is ${momentum1}; ${corps2Name} is ${momentum2}`;
 }
 
 function identifyCaptionLeaders(dayScores, trendData) {
