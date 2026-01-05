@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Transparent background icon for 'any' purpose -->
+  <!-- Centered logo with padding -->
+  <g transform="translate(142, 142) scale(4.56)">
+    <!-- The 9 Dots (Field Grid) - Gray markers -->
+    <circle cx="0" cy="0" r="4" fill="#9CA3AF"/>
+    <circle cx="25" cy="0" r="4" fill="#9CA3AF"/>
+    <circle cx="50" cy="0" r="4" fill="#9CA3AF"/>
+    <circle cx="0" cy="25" r="4" fill="#9CA3AF"/>
+    <circle cx="25" cy="25" r="4" fill="#9CA3AF"/>
+    <circle cx="50" cy="25" r="4" fill="#9CA3AF"/>
+    <circle cx="0" cy="50" r="4" fill="#9CA3AF"/>
+    <circle cx="25" cy="50" r="4" fill="#9CA3AF"/>
+    <circle cx="50" cy="50" r="4" fill="#9CA3AF"/>
+    <!-- The Drill Path - Gold stroke -->
+    <path d="M 0 0 Q 50 0, 50 50" stroke="#EAB308" stroke-width="6" fill="none" stroke-linecap="round"/>
+  </g>
+</svg>
