@@ -81,10 +81,10 @@ const TopNav = () => {
         <img
           src="/logo192.svg"
           alt="marching.art"
-          className="w-7 h-7 rounded"
+          className="w-8 h-8 rounded"
         />
         <div className="flex flex-col">
-          <span className="hidden sm:block font-bold text-sm text-white leading-tight">MARCHING.ART</span>
+          <span className="font-bold text-sm text-white leading-tight">marching.art</span>
           {/* Season badge - subtle, integrated */}
           {seasonLabel && (
             <span className="hidden sm:block text-[9px] text-gray-500 uppercase tracking-wider leading-tight">
