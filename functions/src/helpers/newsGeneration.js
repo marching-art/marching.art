@@ -579,6 +579,9 @@ const ARTICLE_TYPES = {
   FANTASY_PERFORMERS: "fantasy_performers",
   FANTASY_LEAGUES: "fantasy_leagues",
   DEEP_ANALYTICS: "deep_analytics",
+  // New article types for variety
+  UNDERDOG_STORY: "underdog_story",
+  CORPS_SPOTLIGHT: "corps_spotlight",
 };
 
 /**
@@ -1917,12 +1920,116 @@ MOOD:
 This image should feel like film study material - capturing ${comp.formation.visual} and the precision that made ${featuredCorps}'s ${year} ${analysisType} analytically significant.`;
 }
 
+/**
+ * Build image prompt for underdog story article
+ * Shows determination and breakthrough moment
+ *
+ * @param {string} corps - Corps name
+ * @param {number} year - Historical year
+ * @param {string} location - Competition location
+ * @param {string} showTitle - Corps' production title
+ */
+function buildUnderdogImagePrompt(corps, year, location, showTitle = null) {
+  const details = getUniformDetails(corps, year);
+  const themeContext = buildShowThemeContext(showTitle);
+
+  // Get random composition emphasizing triumph
+  const seed = `${corps}-${year}-underdog`;
+  const comp = getRandomComposition(seed);
+
+  return `Photorealistic photograph capturing a breakthrough moment for ${corps} (${year} season)${showTitle ? ` performing "${showTitle}"` : ""} at ${location || "a DCI competition"}.
+
+SUBJECT: A performer from ${corps} in a moment of triumph and determination - ${comp.moment.moment}
+
+UNIFORM ACCURACY:
+- Uniform: ${details.uniform}
+- Headwear: ${details.helmet}
+- Brass: ${details.brass}
+${themeContext}
+EMOTIONAL NARRATIVE:
+- Capturing the spirit of an underdog rising to the occasion
+- Expression showing fierce determination and joy
+- The moment when hard work pays off
+- ${comp.moment.emotion}
+
+COMPOSITION:
+- ${comp.camera.angle}
+- ${comp.focus.framing}
+- Background suggests the magnitude of the achievement
+
+LIGHTING & ATMOSPHERE:
+- ${comp.lighting.lighting}
+- Mood: ${comp.lighting.mood}
+- Stadium environment enhancing the triumphant moment
+
+PHOTOGRAPHY STYLE:
+- Inspirational sports photography
+- High emotional impact
+- Professional sports documentary feel
+- Colors true to ${corps} palette, vivid and proud
+
+This image should capture the essence of an underdog story - the corps that exceeded expectations and proved the doubters wrong.`;
+}
+
+/**
+ * Build image prompt for corps spotlight article
+ * Shows the corps' identity and character
+ *
+ * @param {string} corps - Corps name
+ * @param {number} year - Historical year
+ * @param {string} showTitle - Corps' production title
+ */
+function buildCorpsSpotlightImagePrompt(corps, year, showTitle = null) {
+  const details = getUniformDetails(corps, year);
+  const themeContext = buildShowThemeContext(showTitle);
+
+  // Get random composition for variety
+  const seed = `${corps}-${year}-spotlight`;
+  const comp = getRandomComposition(seed);
+
+  return `Photorealistic portrait-style photograph showcasing the identity and excellence of ${corps} (${year} season)${showTitle ? ` performing "${showTitle}"` : ""}.
+
+SUBJECT: A group of 3-5 performers from ${corps} in a powerful ensemble moment, showcasing the corps' distinctive identity.
+
+UNIFORM IDENTITY (CRITICAL):
+- Uniform: ${details.uniform}
+- Headwear: ${details.helmet}
+- Brass: ${details.brass}
+- Percussion: ${details.percussion}
+- Guard: ${details.guard}
+${themeContext}
+COMPOSITION:
+- ${comp.formation.formation} arrangement of performers
+- ${comp.camera.angle}
+- Capturing the pride and tradition of ${corps}
+
+LIGHTING & ATMOSPHERE:
+- ${comp.lighting.lighting}
+- Mood: Pride, excellence, tradition
+- Stadium environment suggesting legacy and history
+
+CORPS CHARACTER:
+- Showcasing what makes ${corps} unique
+- Traditional elements meeting modern performance
+- The visual identity that fans recognize instantly
+
+PHOTOGRAPHY STYLE:
+- Magazine cover quality
+- ${comp.focus.framing}
+- Rich, saturated colors emphasizing corps palette
+- Professional editorial sports photography
+
+This should be an iconic image that captures the essence of ${corps} - their tradition, their excellence, and what makes them special in the DCI world.`;
+}
+
 // =============================================================================
 // ARTICLE GENERATION
 // =============================================================================
 
 /**
- * Generate all 5 nightly articles
+ * Generate all 7 nightly articles
+ * Core articles (always generated): Standings, Captions, Fantasy Performers, Fantasy Leagues, Deep Analytics
+ * Rotating articles: Underdog Story, Corps Spotlight
  */
 async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
   const reportDay = currentDay - 1;
@@ -1931,7 +2038,7 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
     return { success: false, error: "Invalid day" };
   }
 
-  logger.info(`Generating 5 articles for Day ${reportDay}`);
+  logger.info(`Generating 7 articles for Day ${reportDay}`);
 
   try {
     // Fetch all data
@@ -1949,13 +2056,17 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
     const trendData = calculateTrendData(historicalData, reportDay, activeCorps);
     const captionLeaders = identifyCaptionLeaders(dayScores, trendData);
 
-    // Generate all 5 articles in parallel, passing show context and db to each
+    // Generate all 7 articles in parallel, passing show context and db to each
     const articles = await Promise.all([
+      // Core articles (1-5)
       generateDciStandingsArticle({ reportDay, dayScores, trendData, activeCorps, showContext, db }),
       generateDciCaptionsArticle({ reportDay, dayScores, captionLeaders, activeCorps, showContext, db }),
       generateFantasyPerformersArticle({ reportDay, fantasyData, showContext, db, dataDocId }),
       generateFantasyLeaguesArticle({ reportDay, fantasyData, showContext }),
       generateDeepAnalyticsArticle({ reportDay, dayScores, trendData, fantasyData, captionLeaders, showContext, db }),
+      // New article types (6-7)
+      generateUnderdogStoryArticle({ reportDay, dayScores, trendData, activeCorps, showContext, db }),
+      generateCorpsSpotlightArticle({ reportDay, dayScores, trendData, activeCorps, showContext, db }),
     ]);
 
     return {
@@ -1968,6 +2079,7 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
         showName: showContext.showName,
         location: showContext.location,
         date: showContext.date,
+        articleCount: articles.length,
       },
     };
   } catch (error) {
@@ -2613,6 +2725,278 @@ CRITICAL RULES:
   } catch (error) {
     logger.error("Deep Analytics article failed:", error);
     return createFallbackArticle(ARTICLE_TYPES.DEEP_ANALYTICS, reportDay);
+  }
+}
+
+/**
+ * Article 6: Underdog Story
+ * Features a corps that's significantly outperforming expectations
+ */
+async function generateUnderdogStoryArticle({ reportDay, dayScores, trendData, activeCorps, showContext, db }) {
+  // Find the biggest overperformer relative to their ranking
+  // Look for corps in positions 6-15 that are trending strongly upward
+  const underdogCandidates = dayScores
+    .slice(5, 15) // Focus on mid-pack corps (positions 6-15)
+    .map(s => ({
+      ...s,
+      trend: trendData[s.corps] || { dayChange: 0, trendFromAvg: 0 },
+    }))
+    .filter(s => s.trend.dayChange > 0 || s.trend.trendFromAvg > 0) // Must be trending up
+    .sort((a, b) => {
+      // Score by combination of daily gain and trend from average
+      const aScore = a.trend.dayChange * 2 + a.trend.trendFromAvg;
+      const bScore = b.trend.dayChange * 2 + b.trend.trendFromAvg;
+      return bScore - aScore;
+    });
+
+  if (underdogCandidates.length === 0) {
+    // Fallback to the corps with biggest single-day gain
+    const biggestGainer = Object.entries(trendData)
+      .sort((a, b) => b[1].dayChange - a[1].dayChange)[0];
+    if (biggestGainer) {
+      const gainerCorps = dayScores.find(s => s.corps === biggestGainer[0]);
+      if (gainerCorps) {
+        underdogCandidates.push({
+          ...gainerCorps,
+          trend: biggestGainer[1],
+        });
+      }
+    }
+  }
+
+  const featuredUnderdog = underdogCandidates[0] || dayScores[5]; // Fallback to 6th place
+  const currentRank = dayScores.findIndex(s => s.corps === featuredUnderdog.corps) + 1;
+
+  const prompt = `You are an inspirational sports writer for marching.art, crafting a compelling underdog narrative like ESPN's "30 for 30" or Sports Illustrated's feature stories.
+
+CONTEXT: Every DCI season has breakthrough corps - ensembles that exceed expectations and capture the imagination of fans. Today you're profiling one such corps whose performance is turning heads.
+
+═══════════════════════════════════════════════════════════════
+EVENT INFORMATION
+═══════════════════════════════════════════════════════════════
+• Show Name: ${showContext.showName}
+• Location: ${showContext.location}
+• Date: ${showContext.date}
+• Season Day: ${reportDay}
+═══════════════════════════════════════════════════════════════
+
+FEATURED CORPS: ${featuredUnderdog.corps}
+═══════════════════════════════════════════════════════════════
+• Historical Season: ${featuredUnderdog.sourceYear}
+• Current Standing: ${currentRank}${currentRank === 1 ? 'st' : currentRank === 2 ? 'nd' : currentRank === 3 ? 'rd' : 'th'} place
+• Today's Score: ${featuredUnderdog.total.toFixed(3)}
+• Daily Change: ${featuredUnderdog.trend?.dayChange >= 0 ? '+' : ''}${(featuredUnderdog.trend?.dayChange || 0).toFixed(3)}
+• 7-Day Trend: ${featuredUnderdog.trend?.trendFromAvg >= 0 ? '+' : ''}${(featuredUnderdog.trend?.trendFromAvg || 0).toFixed(3)} vs average
+
+CAPTION BREAKDOWN:
+• General Effect: ${featuredUnderdog.subtotals?.ge?.toFixed(2) || 'N/A'}
+• Visual: ${featuredUnderdog.subtotals?.visual?.toFixed(2) || 'N/A'}
+• Music: ${featuredUnderdog.subtotals?.music?.toFixed(2) || 'N/A'}
+
+COMPETITIVE CONTEXT:
+${dayScores.slice(Math.max(0, currentRank - 3), currentRank + 2).map((s, i) => {
+  const rank = Math.max(0, currentRank - 3) + i + 1;
+  return `${rank}. ${s.corps}: ${s.total.toFixed(3)}${s.corps === featuredUnderdog.corps ? ' ← FEATURED' : ''}`;
+}).join('\n')}
+
+WRITE AN INSPIRATIONAL FEATURE ARTICLE about this corps' rise:
+
+1. HEADLINE: Compelling underdog narrative headline. Examples: "Rising Thunder: How [Corps] Silenced the Doubters", "[Corps] Announces Arrival with Season-Defining Performance", "The Dark Horse Emerges: [Corps]' Stunning Surge"
+
+2. SUMMARY: 2-3 sentences capturing why this corps' performance matters and what makes their story compelling.
+
+3. NARRATIVE: A 600-800 word inspirational feature that:
+   - Opens with a dramatic moment from their performance today
+   - Explores what's driving their improvement (musical excellence, visual precision, design choices)
+   - Puts their achievement in historical context
+   - Includes quotes-style observations about their performance
+   - Builds to an emotional conclusion about what this means for the corps and their fans
+   - Ends with a forward-looking statement about their potential
+
+TONE: Inspirational, emotionally resonant, but grounded in real performance data. Think underdog sports movie meets analytical journalism.`;
+
+  const schema = {
+    type: SchemaType.OBJECT,
+    properties: {
+      headline: { type: SchemaType.STRING, description: "Compelling underdog narrative headline" },
+      summary: { type: SchemaType.STRING, description: "2-3 sentence summary of the underdog story" },
+      narrative: { type: SchemaType.STRING, description: "600-800 word inspirational feature" },
+      keyStats: {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.OBJECT,
+          properties: {
+            stat: { type: SchemaType.STRING },
+            value: { type: SchemaType.STRING },
+            significance: { type: SchemaType.STRING },
+          },
+          required: ["stat", "value", "significance"],
+        },
+      },
+    },
+    required: ["headline", "summary", "narrative", "keyStats"],
+  };
+
+  try {
+    const content = await generateStructuredContent(prompt, schema);
+
+    // Look up show title for image
+    const showTitle = db ? await getShowTitleFromFirestore(db, featuredUnderdog.corps, featuredUnderdog.sourceYear) : null;
+
+    const imagePrompt = buildUnderdogImagePrompt(
+      featuredUnderdog.corps,
+      featuredUnderdog.sourceYear,
+      showContext.location,
+      showTitle
+    );
+
+    const imageData = await generateImageWithImagen(imagePrompt);
+    const imageResult = await processGeneratedImage(imageData, "underdog_story");
+
+    return {
+      type: ARTICLE_TYPES.UNDERDOG_STORY,
+      ...content,
+      featuredCorps: featuredUnderdog.corps,
+      featuredYear: featuredUnderdog.sourceYear,
+      imageUrl: imageResult.url,
+      imagePrompt,
+      reportDay,
+    };
+  } catch (error) {
+    logger.error("Underdog Story article failed:", error);
+    return createFallbackArticle(ARTICLE_TYPES.UNDERDOG_STORY, reportDay);
+  }
+}
+
+/**
+ * Article 7: Corps Spotlight
+ * Deep dive into a specific corps' identity and season journey
+ */
+async function generateCorpsSpotlightArticle({ reportDay, dayScores, trendData, activeCorps, showContext, db }) {
+  // Select a corps to spotlight - rotate through the field
+  // Use reportDay to ensure different corps each day
+  const spotlightIndex = (reportDay - 1) % dayScores.length;
+  const spotlightCorps = dayScores[spotlightIndex];
+  const currentRank = spotlightIndex + 1;
+  const corpsTrend = trendData[spotlightCorps.corps] || { dayChange: 0, trendFromAvg: 0, avgTotal: spotlightCorps.total };
+
+  // Get show title for this corps
+  const showTitle = db ? await getShowTitleFromFirestore(db, spotlightCorps.corps, spotlightCorps.sourceYear) : null;
+
+  const prompt = `You are a veteran DCI journalist writing an in-depth corps profile for marching.art, similar to profiles in Drum Corps World or the DCI website's feature content.
+
+CONTEXT: Each DCI corps has a unique identity, history, and culture. Fans connect deeply with "their" corps. This spotlight profile celebrates what makes this corps special while analyzing their current season performance.
+
+═══════════════════════════════════════════════════════════════
+EVENT INFORMATION
+═══════════════════════════════════════════════════════════════
+• Show Name: ${showContext.showName}
+• Location: ${showContext.location}
+• Date: ${showContext.date}
+• Season Day: ${reportDay}
+═══════════════════════════════════════════════════════════════
+
+FEATURED CORPS: ${spotlightCorps.corps}
+═══════════════════════════════════════════════════════════════
+• Historical Season: ${spotlightCorps.sourceYear}
+${showTitle ? `• Show Title: "${showTitle}"` : ''}
+• Current Standing: ${currentRank}${currentRank === 1 ? 'st' : currentRank === 2 ? 'nd' : currentRank === 3 ? 'rd' : 'th'} place
+• Today's Score: ${spotlightCorps.total.toFixed(3)}
+• Daily Movement: ${corpsTrend.dayChange >= 0 ? '+' : ''}${corpsTrend.dayChange.toFixed(3)}
+• 7-Day Average: ${corpsTrend.avgTotal.toFixed(3)}
+• Trend vs Average: ${corpsTrend.trendFromAvg >= 0 ? '+' : ''}${corpsTrend.trendFromAvg.toFixed(3)}
+
+DETAILED CAPTION SCORES:
+• General Effect: ${spotlightCorps.subtotals?.ge?.toFixed(2) || 'N/A'}
+  - GE1 (Music): ${spotlightCorps.captions?.GE1?.toFixed(2) || 'N/A'}
+  - GE2 (Visual): ${spotlightCorps.captions?.GE2?.toFixed(2) || 'N/A'}
+• Visual Total: ${spotlightCorps.subtotals?.visual?.toFixed(2) || 'N/A'}
+  - VP: ${spotlightCorps.captions?.VP?.toFixed(2) || 'N/A'}
+  - VA: ${spotlightCorps.captions?.VA?.toFixed(2) || 'N/A'}
+  - CG: ${spotlightCorps.captions?.CG?.toFixed(2) || 'N/A'}
+• Music Total: ${spotlightCorps.subtotals?.music?.toFixed(2) || 'N/A'}
+  - Brass: ${spotlightCorps.captions?.B?.toFixed(2) || 'N/A'}
+  - MA: ${spotlightCorps.captions?.MA?.toFixed(2) || 'N/A'}
+  - Percussion: ${spotlightCorps.captions?.P?.toFixed(2) || 'N/A'}
+
+SURROUNDING COMPETITION:
+${dayScores.slice(Math.max(0, currentRank - 2), Math.min(dayScores.length, currentRank + 3)).map((s, i) => {
+  const rank = Math.max(0, currentRank - 2) + i + 1;
+  const gap = s.total - spotlightCorps.total;
+  return `${rank}. ${s.corps}: ${s.total.toFixed(3)}${s.corps === spotlightCorps.corps ? ' ← SPOTLIGHT' : ` (${gap >= 0 ? '+' : ''}${gap.toFixed(3)})`}`;
+}).join('\n')}
+
+WRITE A COMPREHENSIVE CORPS PROFILE:
+
+1. HEADLINE: A headline that captures the corps' identity and current story. Examples: "Blue Devils: The Dynasty Continues", "Carolina Crown: Brass Excellence Meets Design Innovation", "[Corps]: [Defining Characteristic]"
+
+2. SUMMARY: 2-3 sentences introducing this corps and what makes their ${spotlightCorps.sourceYear} season notable.
+
+3. NARRATIVE: A 700-900 word profile that:
+   - Opens with what makes this corps distinctive in the DCI landscape
+   - ${showTitle ? `Explores their ${spotlightCorps.sourceYear} production "${showTitle}" and its design concept` : 'Discusses their performance style and identity'}
+   - Analyzes their competitive position and what's working well
+   - Identifies their strongest captions and areas of excellence
+   - Includes historical context about the corps' traditions
+   - Concludes with their outlook for the rest of the season
+
+TONE: Respectful, knowledgeable, like talking to a passionate fan who knows the corps' history. Celebratory but analytical.`;
+
+  const schema = {
+    type: SchemaType.OBJECT,
+    properties: {
+      headline: { type: SchemaType.STRING, description: "Corps identity headline" },
+      summary: { type: SchemaType.STRING, description: "2-3 sentence corps introduction" },
+      narrative: { type: SchemaType.STRING, description: "700-900 word corps profile" },
+      corpsIdentity: {
+        type: SchemaType.OBJECT,
+        properties: {
+          knownFor: { type: SchemaType.STRING, description: "What this corps is known for" },
+          strength: { type: SchemaType.STRING, description: "Primary competitive strength" },
+          fanbase: { type: SchemaType.STRING, description: "Description of fanbase/culture" },
+        },
+        required: ["knownFor", "strength", "fanbase"],
+      },
+      captionHighlights: {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.OBJECT,
+          properties: {
+            caption: { type: SchemaType.STRING },
+            assessment: { type: SchemaType.STRING },
+          },
+          required: ["caption", "assessment"],
+        },
+      },
+    },
+    required: ["headline", "summary", "narrative", "corpsIdentity", "captionHighlights"],
+  };
+
+  try {
+    const content = await generateStructuredContent(prompt, schema);
+
+    const imagePrompt = buildCorpsSpotlightImagePrompt(
+      spotlightCorps.corps,
+      spotlightCorps.sourceYear,
+      showTitle
+    );
+
+    const imageData = await generateImageWithImagen(imagePrompt);
+    const imageResult = await processGeneratedImage(imageData, "corps_spotlight");
+
+    return {
+      type: ARTICLE_TYPES.CORPS_SPOTLIGHT,
+      ...content,
+      featuredCorps: spotlightCorps.corps,
+      featuredYear: spotlightCorps.sourceYear,
+      showTitle,
+      imageUrl: imageResult.url,
+      imagePrompt,
+      reportDay,
+    };
+  } catch (error) {
+    logger.error("Corps Spotlight article failed:", error);
+    return createFallbackArticle(ARTICLE_TYPES.CORPS_SPOTLIGHT, reportDay);
   }
 }
 
