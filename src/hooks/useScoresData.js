@@ -8,6 +8,25 @@ import { db, dataNamespace } from '../firebase';
 import { useSeasonStore } from '../store/seasonStore';
 
 /**
+ * Get the effective current day for score filtering
+ * Scores are processed at 2 AM, so between midnight and 2 AM
+ * we should still show the previous day's cutoff
+ * Returns null if no scores should be available yet (e.g., day 1)
+ */
+const getEffectiveDay = (currentDay) => {
+  if (!currentDay) return null;
+  const now = new Date();
+  const hour = now.getHours();
+  // Scores for day N are processed at 2 AM and become available after that.
+  // After 2 AM: previous day's scores were just processed (currentDay - 1)
+  // Before 2 AM: scores only available up to currentDay - 2 (yesterday's processing hasn't run)
+  const effectiveDay = hour < 2 ? currentDay - 2 : currentDay - 1;
+
+  // Return null if no scores should be available yet (e.g., day 1)
+  return effectiveDay >= 1 ? effectiveDay : null;
+};
+
+/**
  * Calculate caption aggregates from a score sheet
  * Returns GE_Total, VIS_Total, MUS_Total, and Total_Score
  */
@@ -182,6 +201,7 @@ export const useScoresData = (options = {}) => {
 
   const currentSeasonUid = useSeasonStore((state) => state.seasonUid);
   const currentSeasonData = useSeasonStore((state) => state.seasonData);
+  const currentDay = useSeasonStore((state) => state.currentDay);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -254,9 +274,22 @@ export const useScoresData = (options = {}) => {
           const data = recapDoc.data();
           recaps = data.recaps || [];
 
+          // Calculate effective day for score visibility filtering
+          // For current season: only show scores from days that have been processed (at 2 AM)
+          // For archived seasons: show all data
+          const isCurrentSeason = targetSeasonId === currentSeasonUid;
+          const effectiveDay = isCurrentSeason ? getEffectiveDay(currentDay) : null;
+
           // Process all shows and group by day
-          shows = recaps.flatMap(recap =>
-            recap.shows?.map(show => ({
+          shows = recaps.flatMap(recap => {
+            // For current season, filter out shows from days that haven't been processed yet
+            // effectiveDay is null on day 1 (no scores available), so skip all shows
+            if (isCurrentSeason) {
+              if (effectiveDay === null) return []; // No scores visible yet (day 1)
+              if (recap.offSeasonDay > effectiveDay) return []; // Future day scores not yet processed
+            }
+
+            return recap.shows?.map(show => ({
               eventName: show.eventName,
               location: show.location,
               date: recap.date?.toDate?.().toLocaleDateString() || 'TBD',
@@ -275,8 +308,8 @@ export const useScoresData = (options = {}) => {
                 corpsClass: result.corpsClass,
                 captions: result.captions || {}
               })).sort((a, b) => b.score - a.score) || []
-            })) || []
-          ).sort((a, b) => b.offSeasonDay - a.offSeasonDay);
+            })) || [];
+          }).sort((a, b) => b.offSeasonDay - a.offSeasonDay);
         }
 
         // If current season has no data and we haven't already tried a fallback,
@@ -321,7 +354,7 @@ export const useScoresData = (options = {}) => {
     };
 
     fetchScoresData();
-  }, [targetSeasonId, archivedSeasons, seasonId, fallbackSeasonId, disableArchiveFallback]);
+  }, [targetSeasonId, archivedSeasons, seasonId, fallbackSeasonId, disableArchiveFallback, currentDay, currentSeasonUid]);
 
   // Filter shows by class
   const filteredShows = useMemo(() => {

@@ -997,7 +997,16 @@ const Dashboard = () => {
   // Fetch recent results from fantasy_recaps (for sidebar)
   useEffect(() => {
     const fetchRecentResults = async () => {
-      if (!user?.uid || !seasonData?.seasonUid || !activeCorpsClass) return;
+      if (!user?.uid || !seasonData?.seasonUid || !activeCorpsClass || !currentDay) return;
+
+      // Calculate effective day - only show scores from days that have been processed
+      const effectiveDay = getEffectiveDay(currentDay);
+
+      // If no effective day (e.g., day 1), no results should be visible yet
+      if (effectiveDay === null) {
+        setRecentResults([]);
+        return;
+      }
 
       try {
         const recapRef = doc(db, 'fantasy_recaps', seasonData.seasonUid);
@@ -1008,8 +1017,10 @@ const Dashboard = () => {
           const recaps = data.recaps || [];
           const results = [];
 
-          // Sort by day descending
-          const sortedRecaps = [...recaps].sort((a, b) => (b.offSeasonDay || 0) - (a.offSeasonDay || 0));
+          // Sort by day descending and filter to only include processed days
+          const sortedRecaps = [...recaps]
+            .filter(recap => recap.offSeasonDay <= effectiveDay)
+            .sort((a, b) => (b.offSeasonDay || 0) - (a.offSeasonDay || 0));
 
           for (const recap of sortedRecaps) {
             for (const show of (recap.shows || [])) {
@@ -1036,7 +1047,7 @@ const Dashboard = () => {
     };
 
     fetchRecentResults();
-  }, [user?.uid, seasonData?.seasonUid, activeCorpsClass]);
+  }, [user?.uid, seasonData?.seasonUid, activeCorpsClass, currentDay]);
 
   // Handle navigation state for class purchase (from header Buy button)
   useEffect(() => {
