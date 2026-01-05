@@ -162,11 +162,13 @@ import type { NewsCategory, NewsEntry } from '../types';
 export interface GetRecentNewsParams {
   limit?: number;
   category?: NewsCategory;
+  startAfter?: string;
 }
 
 export interface GetRecentNewsResult {
   success: boolean;
   news: NewsEntry[];
+  hasMore?: boolean;
 }
 
 export const getRecentNews = createCallable<GetRecentNewsParams, GetRecentNewsResult>('getRecentNews');
