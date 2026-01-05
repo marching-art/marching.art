@@ -232,6 +232,7 @@ export default function ArticleComments({
   initialComments = null,
   initialCount = 0,
   onCommentCountChange,
+  autoExpand = false,
 }) {
   const { user, profile } = useAuth();
   const [comments, setComments] = useState(initialComments || []);
@@ -243,7 +244,22 @@ export default function ArticleComments({
   const [submitting, setSubmitting] = useState(false);
   const [editingComment, setEditingComment] = useState(null);
   const [editContent, setEditContent] = useState('');
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(autoExpand);
+  const textareaRef = useRef(null);
+
+  // Auto-expand when prop changes
+  useEffect(() => {
+    if (autoExpand && !isExpanded) {
+      setIsExpanded(true);
+    }
+  }, [autoExpand]);
+
+  // Focus textarea when expanded via autoExpand
+  useEffect(() => {
+    if (isExpanded && autoExpand && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, [isExpanded, autoExpand]);
 
   // Fetch comments on mount
   useEffect(() => {
@@ -475,6 +491,7 @@ export default function ArticleComments({
                   {profile?.username?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || '?'}
                 </div>
                 <textarea
+                  ref={textareaRef}
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   maxLength={MAX_COMMENT_LENGTH}
