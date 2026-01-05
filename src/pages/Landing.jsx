@@ -183,7 +183,7 @@ const Landing = () => {
           {/* ============================================================= */}
           <div className="lg:col-span-8">
             {/* Dynamic News Feed powered by Gemini AI */}
-            <NewsFeed maxItems={8} onStoryClick={setSelectedStory} />
+            <NewsFeed maxItems={5} onStoryClick={setSelectedStory} />
           </div>
 
           {/* ============================================================= */}

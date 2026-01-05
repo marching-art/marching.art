@@ -481,9 +481,23 @@ exports.getDailyNews = onCall(
     }
 
     try {
-      // Use seasonId if provided, otherwise fall back to "current_season"
-      const seasonPath = seasonId || "current_season";
-      const docPath = `news_hub/${seasonPath}/day_${day}`;
+      // Find active season if not provided
+      let activeSeasonId = seasonId;
+      if (!activeSeasonId) {
+        const seasonsSnapshot = await db.collection("seasons")
+          .where("status", "==", "active")
+          .limit(1)
+          .get();
+
+        if (!seasonsSnapshot.empty) {
+          activeSeasonId = seasonsSnapshot.docs[0].id;
+        } else {
+          activeSeasonId = "current_season";
+        }
+      }
+
+      // Correct path: news_hub/{seasonId}/days/day_{n}
+      const docPath = `news_hub/${activeSeasonId}/days/day_${day}`;
       const doc = await db.doc(docPath).get();
 
       if (!doc.exists) {
@@ -508,7 +522,8 @@ exports.getDailyNews = onCall(
 
 /**
  * Fetch recent news entries for the frontend
- * Returns articles from the hierarchical structure: news_hub/{seasonId}/days/day_{n}/articles/{type}
+ * Uses collection group query on 'articles' subcollection for efficient cross-season querying
+ * Returns articles ordered by createdAt (most recent first)
  */
 exports.getRecentNews = onCall(
   {
@@ -517,110 +532,67 @@ exports.getRecentNews = onCall(
   },
   async (request) => {
     const db = getDb();
-    const { limit = 10, category, seasonId } = request.data || {};
+    const { limit = 10, category, startAfter } = request.data || {};
 
     try {
-      // Get current season to find seasonId and currentDay if not provided
-      let activeSeasonId = seasonId;
-      let currentDay = null;
+      // Use collection group query to fetch articles across all seasons
+      // This is more efficient and doesn't depend on knowing the correct season ID
+      let query = db.collectionGroup("articles")
+        .where("isPublished", "==", true)
+        .orderBy("createdAt", "desc");
 
-      if (!activeSeasonId) {
-        // Find active season
-        const seasonsSnapshot = await db.collection("seasons")
-          .where("status", "==", "active")
-          .limit(1)
-          .get();
-
-        if (!seasonsSnapshot.empty) {
-          const seasonDoc = seasonsSnapshot.docs[0];
-          activeSeasonId = seasonDoc.id;
-          currentDay = seasonDoc.data().currentDay || 50;
-        } else {
-          // Fallback: try to find any season with articles
-          activeSeasonId = "current_season";
-          currentDay = 50;
-        }
+      // Handle pagination cursor
+      if (startAfter) {
+        const startDate = new Date(startAfter);
+        query = query.startAfter(startDate);
       }
 
-      // If we still don't have currentDay, try to find the latest day with articles
-      if (!currentDay) {
-        // Query the days subcollection for latest day
-        const dayDocs = await db.collection(`news_hub/${activeSeasonId}/days`)
-          .orderBy("reportDay", "desc")
-          .limit(1)
-          .get();
+      // Fetch more than needed for category filtering
+      const fetchLimit = category ? limit * 3 : limit + 1;
+      query = query.limit(fetchLimit);
 
-        if (!dayDocs.empty) {
-          currentDay = dayDocs.docs[0].data().reportDay + 1;
-        } else {
-          currentDay = 50; // Default fallback
-        }
-      }
+      const snapshot = await query.get();
 
       const articles = [];
-      const daysToFetch = Math.ceil(limit / 5) + 1; // 5 articles per day
+      for (const doc of snapshot.docs) {
+        const data = doc.data();
+        const articleType = doc.id;
 
-      // Fetch articles from recent days
-      // Path structure: news_hub/{seasonId}/days/day_{n} (4 components - valid document path)
-      for (let day = currentDay - 1; day > Math.max(0, currentDay - daysToFetch - 1); day--) {
-        const dayPath = `news_hub/${activeSeasonId}/days/day_${day}`;
+        // Determine category from article type
+        const articleCategory =
+          articleType.startsWith("dci_") ? "dci" :
+          articleType.startsWith("fantasy_") ? "fantasy" :
+          articleType === "deep_analytics" ? "analysis" : "dci";
 
-        // Check if day has articles
-        const dayDoc = await db.doc(dayPath).get();
-        if (!dayDoc.exists || !dayDoc.data().isPublished) continue;
+        // Apply category filter if specified
+        if (category && articleCategory !== category) continue;
 
-        const dayData = dayDoc.data();
-        const articleTypes = dayData.articleTypes || [
-          "dci_standings", "dci_captions", "fantasy_performers", "fantasy_leagues", "deep_analytics"
-        ];
+        // Extract seasonId and reportDay from document path
+        // Path format: news_hub/{seasonId}/days/day_{n}/articles/{type}
+        const pathParts = doc.ref.path.split("/");
+        const seasonId = pathParts[1];
+        const dayId = pathParts[3]; // e.g., "day_49"
+        const reportDay = parseInt(dayId.replace("day_", ""), 10) || data.reportDay;
 
-        // Fetch each article for this day
-        for (const articleType of articleTypes) {
-          const articleDoc = await db.doc(`${dayPath}/articles/${articleType}`).get();
+        articles.push({
+          id: `${seasonId}_${dayId}_${articleType}`,
+          seasonId,
+          reportDay,
+          articleType,
+          category: articleCategory,
+          ...data,
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.createdAt?.toDate?.()?.toISOString(),
+        });
 
-          if (articleDoc.exists) {
-            const data = articleDoc.data();
-
-            // Apply category filter if specified
-            if (category) {
-              const articleCategory =
-                articleType.startsWith("dci_") ? "dci" :
-                articleType.startsWith("fantasy_") ? "fantasy" :
-                articleType === "deep_analytics" ? "analysis" : "dci";
-
-              if (articleCategory !== category) continue;
-            }
-
-            articles.push({
-              id: `${activeSeasonId}_day${day}_${articleType}`,
-              seasonId: activeSeasonId,
-              reportDay: day,
-              articleType,
-              category:
-                articleType.startsWith("dci_") ? "dci" :
-                articleType.startsWith("fantasy_") ? "fantasy" :
-                articleType === "deep_analytics" ? "analysis" : "dci",
-              ...data,
-              createdAt: data.createdAt?.toDate?.()?.toISOString() || dayData.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-              updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.createdAt?.toDate?.()?.toISOString(),
-            });
-          }
-        }
-
-        // Stop if we have enough articles
+        // Stop once we have enough articles
         if (articles.length >= limit) break;
       }
 
-      // Sort by createdAt descending and limit
-      articles.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      const limitedArticles = articles.slice(0, limit);
-
       return {
         success: true,
-        news: limitedArticles,
-        hasMore: articles.length > limit,
-        seasonId: activeSeasonId,
-        currentDay,
+        news: articles.slice(0, limit),
+        hasMore: articles.length > limit || snapshot.docs.length === fetchLimit,
       };
     } catch (error) {
       logger.error("Error fetching recent news:", error);
@@ -917,7 +889,8 @@ function checkAdminAuth(auth) {
 
 /**
  * List all articles for admin management
- * Returns articles from both current_season day structure and legacy collection
+ * Uses collection group query on 'articles' subcollection for efficient cross-season querying
+ * Also includes legacy flat collection articles
  */
 exports.listAllArticles = onCall(
   {
@@ -928,35 +901,49 @@ exports.listAllArticles = onCall(
     const db = getDb();
     checkAdminAuth(request.auth);
 
-    const { seasonId } = request.data || {};
-
     try {
       const articles = [];
 
-      // Fetch from season-based structure (use provided seasonId or "current_season")
-      const seasonPath = seasonId || "current_season";
-      const seasonRef = db.collection(`news_hub/${seasonPath}/days`);
-      const dayDocs = await seasonRef.listDocuments();
+      // Use collection group query to fetch all articles across all seasons
+      // This is more efficient and works regardless of season naming
+      const articlesSnapshot = await db.collectionGroup("articles")
+        .orderBy("createdAt", "desc")
+        .limit(500) // Reasonable limit for admin view
+        .get();
 
-      for (const docRef of dayDocs) {
-        const doc = await docRef.get();
-        if (doc.exists) {
-          const data = doc.data();
-          articles.push({
-            id: doc.id,
-            path: `news_hub/${seasonPath}/days/${doc.id}`,
-            source: seasonPath,
-            reportDay: data.reportDay,
-            headline: data.headline || "Untitled",
-            summary: data.summary || "",
-            isPublished: data.isPublished !== false,
-            isArchived: data.isArchived || false,
-            createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
-            updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
-            imageUrl: data.imageUrl,
-            category: data.category || "daily",
-          });
-        }
+      for (const doc of articlesSnapshot.docs) {
+        const data = doc.data();
+        const articleType = doc.id;
+
+        // Extract seasonId and reportDay from document path
+        // Path format: news_hub/{seasonId}/days/day_{n}/articles/{type}
+        const pathParts = doc.ref.path.split("/");
+        const seasonId = pathParts[1];
+        const dayId = pathParts[3]; // e.g., "day_49"
+        const reportDay = parseInt(dayId.replace("day_", ""), 10) || data.reportDay;
+
+        // Determine category from article type
+        const category =
+          articleType.startsWith("dci_") ? "dci" :
+          articleType.startsWith("fantasy_") ? "fantasy" :
+          articleType === "deep_analytics" ? "analysis" : "dci";
+
+        articles.push({
+          id: `${dayId}_${articleType}`,
+          path: doc.ref.path,
+          source: "current_season",
+          seasonId,
+          reportDay,
+          articleType,
+          headline: data.headline || "Untitled",
+          summary: data.summary || "",
+          isPublished: data.isPublished !== false,
+          isArchived: data.isArchived || false,
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
+          imageUrl: data.imageUrl,
+          category,
+        });
       }
 
       // Fetch from legacy flat collection
@@ -983,7 +970,7 @@ exports.listAllArticles = onCall(
         });
       });
 
-      // Sort by createdAt descending
+      // Sort by createdAt descending (collection group query already sorted, but need to merge with legacy)
       articles.sort((a, b) => {
         const dateA = new Date(a.createdAt || 0);
         const dateB = new Date(b.createdAt || 0);
