@@ -1231,7 +1231,7 @@ WRITE A PROFESSIONAL SPORTS ARTICLE covering today's standings. Your article sho
 
 2. SUMMARY: 2-3 punchy sentences capturing the day's biggest story - who's leading, who's surging, who's falling.
 
-3. NARRATIVE: A 3-4 paragraph article that:
+3. NARRATIVE: A 600-800 word article (3-4 paragraphs) that:
    - Opens with the leader and their margin (make it dramatic)
    - Discusses position battles (who moved up/down and why it matters)
    - Analyzes momentum (which corps are trending hot or cold)
@@ -1245,7 +1245,7 @@ TONE: Professional sports journalism. Authoritative but accessible. Use specific
     properties: {
       headline: { type: SchemaType.STRING, description: "Attention-grabbing headline" },
       summary: { type: SchemaType.STRING, description: "2-3 sentence summary" },
-      narrative: { type: SchemaType.STRING, description: "3-4 paragraph article" },
+      narrative: { type: SchemaType.STRING, description: "600-800 word article" },
       standings: {
         type: SchemaType.ARRAY,
         items: {
@@ -1328,7 +1328,7 @@ WRITE A TECHNICAL ANALYSIS ARTICLE that breaks down today's caption performances
 
 2. SUMMARY: 2-3 sentences highlighting which corps dominated which captions and what it means for the competition.
 
-3. NARRATIVE: A detailed 3-4 paragraph analysis that:
+3. NARRATIVE: A detailed 600-800 word analysis (3-4 paragraphs) that:
    - Identifies which corps is winning the "caption battle" in each major area
    - Explains WHY certain corps excel in specific captions (brass technique, guard excellence, visual clarity)
    - Discusses any caption trends (corps improving in brass, guard scores rising across the board)
@@ -1344,7 +1344,7 @@ TONE: Technical but accessible. Like a color commentator who knows the activity 
     properties: {
       headline: { type: SchemaType.STRING, description: "Caption-focused headline" },
       summary: { type: SchemaType.STRING, description: "2-3 sentence summary" },
-      narrative: { type: SchemaType.STRING, description: "3-4 paragraph analysis" },
+      narrative: { type: SchemaType.STRING, description: "600-800 word analysis" },
       captionBreakdown: {
         type: SchemaType.ARRAY,
         items: {
@@ -1444,7 +1444,7 @@ WRITE A FANTASY SPORTS CELEBRATION ARTICLE:
 
 2. SUMMARY: 2-3 sentences about who dominated today's fantasy competition. Make it exciting!
 
-3. NARRATIVE: A 3-4 paragraph article that:
+3. NARRATIVE: A 600-800 word article (3-4 paragraphs) that:
    - Celebrates the top Director's achievement with enthusiasm
    - Highlights impressive performances in the top 5
    - Notes the competition level (how close were the scores?)
@@ -1463,7 +1463,7 @@ CRITICAL RULES:
     properties: {
       headline: { type: SchemaType.STRING, description: "Exciting fantasy sports headline" },
       summary: { type: SchemaType.STRING, description: "2-3 sentence summary" },
-      narrative: { type: SchemaType.STRING, description: "3-4 paragraph celebration article" },
+      narrative: { type: SchemaType.STRING, description: "600-800 word celebration article" },
       topPerformers: {
         type: SchemaType.ARRAY,
         items: {
@@ -1584,7 +1584,7 @@ WRITE A LEAGUE ROUNDUP ARTICLE:
 
 2. SUMMARY: 2-3 sentences summarizing league activity across all shows.
 
-3. NARRATIVE: A 3-4 paragraph article that:
+3. NARRATIVE: A 600-800 word article (3-4 paragraphs) that:
    - Provides an overview of competition across shows
    - Highlights tight races and dominant performances
    - Discusses what's at stake as the season progresses
@@ -1604,7 +1604,7 @@ CRITICAL RULES:
     properties: {
       headline: { type: SchemaType.STRING, description: "League-focused headline" },
       summary: { type: SchemaType.STRING, description: "2-3 sentence summary" },
-      narrative: { type: SchemaType.STRING, description: "3-4 paragraph article" },
+      narrative: { type: SchemaType.STRING, description: "600-800 word article" },
       leagueHighlights: {
         type: SchemaType.ARRAY,
         items: {
@@ -1728,7 +1728,7 @@ WRITE A DATA-DRIVEN ANALYTICAL ARTICLE:
 
 2. SUMMARY: 2-3 sentences with the most important statistical finding of the day. Lead with data.
 
-3. NARRATIVE: A 4-5 paragraph deep analysis that:
+3. NARRATIVE: An 800-1200 word deep analysis (4-5 paragraphs) that:
    - Opens with the key statistical story (momentum shift, trend reversal, or trajectory confirmation)
    - Provides regression analysis: Are top corps maintaining trajectory? Are mid-pack corps closing the gap?
    - Analyzes caption-specific trends: Which captions are separating corps? Where are the battles closest?
@@ -1753,7 +1753,7 @@ CRITICAL RULES:
     properties: {
       headline: { type: SchemaType.STRING, description: "Statistical insight headline" },
       summary: { type: SchemaType.STRING, description: "2-3 sentence data-driven summary" },
-      narrative: { type: SchemaType.STRING, description: "4-5 paragraph deep analysis" },
+      narrative: { type: SchemaType.STRING, description: "800-1200 word deep analysis" },
       insights: {
         type: SchemaType.ARRAY,
         items: {
