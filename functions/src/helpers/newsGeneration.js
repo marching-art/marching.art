@@ -2023,6 +2023,213 @@ This should be an iconic image that captures the essence of ${corps} - their tra
 }
 
 // =============================================================================
+// DYNAMIC TONE SYSTEM - Contextual writing style
+// =============================================================================
+
+/**
+ * Analyze competition context to determine appropriate article tone
+ * @param {Array} dayScores - Current day's scores
+ * @param {Object} trendData - Trend data for all corps
+ * @param {number} reportDay - Current season day
+ * @returns {Object} Competition context analysis
+ */
+function analyzeCompetitionContext(dayScores, trendData, reportDay) {
+  if (!dayScores || dayScores.length === 0) {
+    return { scenario: "standard", intensity: "moderate" };
+  }
+
+  const topCorps = dayScores[0];
+  const secondCorps = dayScores[1];
+  const thirdCorps = dayScores[2];
+
+  // Calculate key metrics
+  const leadMargin = topCorps && secondCorps ? topCorps.total - secondCorps.total : 0;
+  const top3Spread = topCorps && thirdCorps ? topCorps.total - thirdCorps.total : 0;
+
+  // Find biggest daily movers
+  const dailyChanges = Object.entries(trendData).map(([corps, data]) => ({
+    corps,
+    change: data.dayChange || 0,
+    trend: data.trendFromAvg || 0,
+  }));
+  const biggestGainer = dailyChanges.sort((a, b) => b.change - a.change)[0];
+  const biggestLoser = dailyChanges.sort((a, b) => a.change - b.change)[0];
+
+  // Determine season phase
+  let seasonPhase;
+  if (reportDay <= 10) {
+    seasonPhase = "early"; // Opening shows, everything is new
+  } else if (reportDay <= 25) {
+    seasonPhase = "mid"; // Regional competitions, patterns emerging
+  } else if (reportDay <= 35) {
+    seasonPhase = "late"; // Approaching finals, stakes are high
+  } else {
+    seasonPhase = "championship"; // Finals week
+  }
+
+  // Determine competitive scenario
+  let scenario;
+  let intensity;
+
+  if (leadMargin < 0.3) {
+    scenario = "tight_race"; // Less than 0.3 points - anyone's game
+    intensity = "high";
+  } else if (leadMargin < 0.8) {
+    scenario = "competitive"; // Close but leader has edge
+    intensity = "moderate-high";
+  } else if (leadMargin > 2.0) {
+    scenario = "dominant_leader"; // Clear frontrunner
+    intensity = "moderate";
+  } else {
+    scenario = "standard"; // Normal competitive spread
+    intensity = "moderate";
+  }
+
+  // Check for dramatic movements
+  const hasBigMover = biggestGainer && biggestGainer.change > 0.5;
+  const hasBigDrop = biggestLoser && biggestLoser.change < -0.5;
+  const hasShakeup = hasBigMover || hasBigDrop;
+
+  // Check for position battles (corps within 0.2 of each other)
+  const positionBattles = [];
+  for (let i = 0; i < dayScores.length - 1; i++) {
+    const gap = dayScores[i].total - dayScores[i + 1].total;
+    if (gap < 0.2) {
+      positionBattles.push({
+        position: i + 1,
+        corps1: dayScores[i].corps,
+        corps2: dayScores[i + 1].corps,
+        gap: gap.toFixed(3),
+      });
+    }
+  }
+
+  return {
+    scenario,
+    intensity,
+    seasonPhase,
+    leadMargin: leadMargin.toFixed(3),
+    top3Spread: top3Spread.toFixed(3),
+    hasShakeup,
+    biggestGainer: biggestGainer?.corps || null,
+    biggestGainerChange: biggestGainer?.change?.toFixed(3) || "0.000",
+    biggestLoser: biggestLoser?.corps || null,
+    biggestLoserChange: biggestLoser?.change?.toFixed(3) || "0.000",
+    positionBattles,
+    positionBattleCount: positionBattles.length,
+  };
+}
+
+/**
+ * Generate dynamic tone guidance based on competition context
+ * @param {Object} context - Competition context from analyzeCompetitionContext
+ * @param {string} articleType - Type of article being generated
+ * @returns {string} Tone guidance for the AI prompt
+ */
+function getToneGuidance(context, articleType) {
+  const { scenario, seasonPhase, hasShakeup, positionBattleCount, intensity } = context;
+
+  // Base tone elements
+  const toneElements = [];
+
+  // Season phase affects overall framing
+  switch (seasonPhase) {
+    case "early":
+      toneElements.push("Frame as season-opening excitement");
+      toneElements.push("Acknowledge early-season variability");
+      toneElements.push("Emphasize potential and trajectory over final standings");
+      break;
+    case "mid":
+      toneElements.push("Note emerging patterns and trends");
+      toneElements.push("Compare to early-season expectations");
+      toneElements.push("Build narrative momentum toward finals");
+      break;
+    case "late":
+      toneElements.push("Emphasize high stakes as finals approach");
+      toneElements.push("Every tenth matters now");
+      toneElements.push("Championship implications in every score");
+      break;
+    case "championship":
+      toneElements.push("Finals week intensity - this is what they've worked for");
+      toneElements.push("Legacy and history on the line");
+      toneElements.push("Maximum drama and stakes");
+      break;
+  }
+
+  // Competitive scenario affects urgency
+  switch (scenario) {
+    case "tight_race":
+      toneElements.push("URGENT: Race is razor-close, convey tension and uncertainty");
+      toneElements.push("Every performance could decide the outcome");
+      toneElements.push("Use phrases like 'dead heat', 'too close to call', 'margin of error'");
+      break;
+    case "competitive":
+      toneElements.push("Competitive but not desperate");
+      toneElements.push("Leader has work to do to hold off challengers");
+      toneElements.push("Focus on what challengers need to close the gap");
+      break;
+    case "dominant_leader":
+      toneElements.push("Acknowledge dominance without removing drama from other battles");
+      toneElements.push("Focus on battles for 2nd-5th, underdog stories");
+      toneElements.push("Dynasty/legacy narrative for the leader");
+      break;
+    default:
+      toneElements.push("Professional sports journalism tone");
+      toneElements.push("Balanced analysis of the competitive field");
+  }
+
+  // Shakeups add excitement
+  if (hasShakeup) {
+    toneElements.push("BREAKING NEWS energy - something significant happened today");
+    toneElements.push("Lead with the surprise/upset angle");
+    toneElements.push("Use language of shock, breakthrough, or collapse as appropriate");
+  }
+
+  // Position battles add tension
+  if (positionBattleCount > 3) {
+    toneElements.push("Emphasize the chaotic middle of the pack");
+    toneElements.push("Multiple corps are one performance away from moving");
+  } else if (positionBattleCount > 0) {
+    toneElements.push("Highlight specific position battles that could flip tomorrow");
+  }
+
+  // Article-specific tone adjustments
+  if (articleType === "underdog_story") {
+    toneElements.push("Inspirational underdog narrative - the corps that exceeded expectations");
+    toneElements.push("Emotional resonance: determination, breakthrough, proving doubters wrong");
+  } else if (articleType === "corps_spotlight") {
+    toneElements.push("Celebratory profile tone - what makes this corps special");
+    toneElements.push("Historical appreciation and current season analysis");
+  } else if (articleType === "deep_analytics") {
+    toneElements.push("Data-driven but accessible");
+    toneElements.push("Numbers tell a story - find the narrative in the statistics");
+  }
+
+  // Build the tone guidance string
+  return `
+DYNAMIC TONE GUIDANCE (based on current competitive context):
+Competition Scenario: ${scenario.replace(/_/g, " ").toUpperCase()} (${intensity} intensity)
+Season Phase: ${seasonPhase.toUpperCase()} SEASON
+${hasShakeup ? "⚡ SIGNIFICANT MOVEMENT TODAY - lead with this energy\n" : ""}
+Writing Directives:
+${toneElements.map(t => `• ${t}`).join("\n")}
+
+Remember: Match your energy to the stakes. ${intensity === "high" ? "This is a pivotal moment - write like it matters." : intensity === "moderate-high" ? "Competition is heating up - convey the building tension." : "Maintain professional analysis while finding the compelling narratives."}`;
+}
+
+/**
+ * Get a short tone descriptor for logging
+ */
+function getToneDescriptor(context) {
+  const descriptors = [];
+  if (context.scenario === "tight_race") descriptors.push("TENSE");
+  if (context.hasShakeup) descriptors.push("BREAKING");
+  if (context.seasonPhase === "championship") descriptors.push("FINALS");
+  if (context.positionBattleCount > 3) descriptors.push("CHAOTIC");
+  return descriptors.length > 0 ? descriptors.join("/") : "STANDARD";
+}
+
+// =============================================================================
 // ARTICLE GENERATION
 // =============================================================================
 
@@ -2056,17 +2263,22 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
     const trendData = calculateTrendData(historicalData, reportDay, activeCorps);
     const captionLeaders = identifyCaptionLeaders(dayScores, trendData);
 
-    // Generate all 7 articles in parallel, passing show context and db to each
+    // Analyze competition context for dynamic tone
+    const competitionContext = analyzeCompetitionContext(dayScores, trendData, reportDay);
+    const toneDescriptor = getToneDescriptor(competitionContext);
+    logger.info(`Competition context for Day ${reportDay}: ${toneDescriptor} (${competitionContext.scenario}, ${competitionContext.seasonPhase} season, lead margin: ${competitionContext.leadMargin})`);
+
+    // Generate all 7 articles in parallel, passing show context, competition context, and db to each
     const articles = await Promise.all([
       // Core articles (1-5)
-      generateDciStandingsArticle({ reportDay, dayScores, trendData, activeCorps, showContext, db }),
-      generateDciCaptionsArticle({ reportDay, dayScores, captionLeaders, activeCorps, showContext, db }),
-      generateFantasyPerformersArticle({ reportDay, fantasyData, showContext, db, dataDocId }),
-      generateFantasyLeaguesArticle({ reportDay, fantasyData, showContext }),
-      generateDeepAnalyticsArticle({ reportDay, dayScores, trendData, fantasyData, captionLeaders, showContext, db }),
+      generateDciStandingsArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db }),
+      generateDciCaptionsArticle({ reportDay, dayScores, captionLeaders, activeCorps, showContext, competitionContext, db }),
+      generateFantasyPerformersArticle({ reportDay, fantasyData, showContext, competitionContext, db, dataDocId }),
+      generateFantasyLeaguesArticle({ reportDay, fantasyData, showContext, competitionContext }),
+      generateDeepAnalyticsArticle({ reportDay, dayScores, trendData, fantasyData, captionLeaders, showContext, competitionContext, db }),
       // New article types (6-7)
-      generateUnderdogStoryArticle({ reportDay, dayScores, trendData, activeCorps, showContext, db }),
-      generateCorpsSpotlightArticle({ reportDay, dayScores, trendData, activeCorps, showContext, db }),
+      generateUnderdogStoryArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db }),
+      generateCorpsSpotlightArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db }),
     ]);
 
     return {
@@ -2080,6 +2292,12 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
         location: showContext.location,
         date: showContext.date,
         articleCount: articles.length,
+        competitionContext: {
+          scenario: competitionContext.scenario,
+          seasonPhase: competitionContext.seasonPhase,
+          intensity: competitionContext.intensity,
+          toneDescriptor,
+        },
       },
     };
   } catch (error) {
@@ -2091,10 +2309,13 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
 /**
  * Article 1: DCI Standings
  */
-async function generateDciStandingsArticle({ reportDay, dayScores, trendData, activeCorps, showContext, db }) {
+async function generateDciStandingsArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db }) {
   const topCorps = dayScores[0];
   const secondCorps = dayScores[1];
   const gap = topCorps && secondCorps ? (topCorps.total - secondCorps.total).toFixed(3) : "0.000";
+
+  // Get dynamic tone guidance based on competition context
+  const toneGuidance = getToneGuidance(competitionContext, "dci_standings");
 
   const prompt = `You are a veteran DCI (Drum Corps International) journalist writing for marching.art, the premier fantasy platform for competitive drum corps.
 
@@ -2122,6 +2343,9 @@ KEY STATISTICS:
 - Lead margin: ${topCorps?.corps || 'N/A'} leads by ${gap} points
 - Biggest gainer today: ${Object.entries(trendData).sort((a,b) => b[1].dayChange - a[1].dayChange)[0]?.[0] || 'N/A'}
 - Corps count: ${dayScores.length} corps competing
+${competitionContext.positionBattleCount > 0 ? `- Position battles: ${competitionContext.positionBattleCount} corps within 0.2 points of the position ahead` : ""}
+
+${toneGuidance}
 
 WRITE A PROFESSIONAL SPORTS ARTICLE covering today's standings. Your article should:
 
@@ -2135,7 +2359,7 @@ WRITE A PROFESSIONAL SPORTS ARTICLE covering today's standings. Your article sho
    - Analyzes momentum (which corps are trending hot or cold)
    - Closes with what to watch tomorrow
 
-TONE: Professional sports journalism. Authoritative but accessible. Use specific numbers. Create drama from the competition without being hyperbolic. Reference that these are real historical DCI performances.`;
+Reference that these are real historical DCI performances being relived through the fantasy platform.`;
 
   // Schema for structured output
   const schema = {
@@ -2197,7 +2421,10 @@ TONE: Professional sports journalism. Authoritative but accessible. Use specific
 /**
  * Article 2: DCI Caption Analysis
  */
-async function generateDciCaptionsArticle({ reportDay, dayScores, captionLeaders, activeCorps, showContext, db }) {
+async function generateDciCaptionsArticle({ reportDay, dayScores, captionLeaders, activeCorps, showContext, competitionContext, db }) {
+  // Get dynamic tone guidance
+  const toneGuidance = getToneGuidance(competitionContext, "dci_captions");
+
   const prompt = `You are a DCI caption analyst and technical expert writing for marching.art. You specialize in breaking down the scoring categories that determine DCI competition results.
 
 CONTEXT: DCI scoring has three main categories:
@@ -2224,6 +2451,8 @@ General Effect: ${dayScores.slice(0, 5).map(s => `${s.corps}: ${s.subtotals.ge.t
 Visual Total: ${dayScores.slice(0, 5).map(s => `${s.corps}: ${s.subtotals.visual.toFixed(2)}`).join(' | ')}
 Music Total: ${dayScores.slice(0, 5).map(s => `${s.corps}: ${s.subtotals.music.toFixed(2)}`).join(' | ')}
 
+${toneGuidance}
+
 WRITE A TECHNICAL ANALYSIS ARTICLE that breaks down today's caption performances:
 
 1. HEADLINE: Focus on the most interesting caption story. Examples: "Crown Brass Posts Season-High 19.2: Inside the Hornline's Breakthrough", "Blue Devils GE Dominance: How Design Excellence Creates Separation"
@@ -2238,7 +2467,7 @@ WRITE A TECHNICAL ANALYSIS ARTICLE that breaks down today's caption performances
 
 4. CAPTION BREAKDOWN: Provide analysis for each major category with the leader and what makes them stand out.
 
-TONE: Technical but accessible. Like a color commentator who knows the activity inside and out. Use specific scores. Reference real DCI judging criteria.`;
+Technical but accessible. Like a color commentator who knows the activity inside and out. Use specific scores. Reference real DCI judging criteria.`;
 
   // Schema for structured output
   const schema = {
@@ -2301,10 +2530,13 @@ TONE: Technical but accessible. Like a color commentator who knows the activity 
 /**
  * Article 3: Fantasy Top Performers
  */
-async function generateFantasyPerformersArticle({ reportDay, fantasyData, showContext, db, dataDocId }) {
+async function generateFantasyPerformersArticle({ reportDay, fantasyData, showContext, competitionContext, db, dataDocId }) {
   if (!fantasyData?.current) {
     return createFallbackArticle(ARTICLE_TYPES.FANTASY_PERFORMERS, reportDay);
   }
+
+  // Get dynamic tone guidance
+  const toneGuidance = getToneGuidance(competitionContext, "fantasy_performers");
 
   const shows = fantasyData.current.shows || [];
   const allResults = shows.flatMap(s => s.results || []);
@@ -2448,7 +2680,10 @@ CRITICAL RULES:
 /**
  * Article 4: Fantasy League Recap
  */
-async function generateFantasyLeaguesArticle({ reportDay, fantasyData, showContext }) {
+async function generateFantasyLeaguesArticle({ reportDay, fantasyData, showContext, competitionContext }) {
+  // Get dynamic tone guidance
+  const toneGuidance = getToneGuidance(competitionContext, "fantasy_leagues");
+
   // Get show/league data - also format show names for fantasy branding
   const shows = fantasyData?.current?.shows || [];
   const showSummaries = shows.map(show => {
@@ -2558,7 +2793,10 @@ CRITICAL RULES:
 /**
  * Article 5: Deep Analytics
  */
-async function generateDeepAnalyticsArticle({ reportDay, dayScores, trendData, fantasyData, captionLeaders, showContext, db }) {
+async function generateDeepAnalyticsArticle({ reportDay, dayScores, trendData, fantasyData, captionLeaders, showContext, competitionContext, db }) {
+  // Get dynamic tone guidance
+  const toneGuidance = getToneGuidance(competitionContext, "deep_analytics");
+
   // Calculate advanced statistics
   const bigGainers = Object.entries(trendData)
     .filter(([, t]) => t.dayChange > 0.1)
@@ -2633,6 +2871,8 @@ FIELD STATISTICS
 CAPTION EXCELLENCE BY CATEGORY
 ═══════════════════════════════════════════════════════════════
 ${captionLeaders.slice(0, 6).map(c => `• ${c.caption}: ${c.leader} (${c.score.toFixed(2)}) [trend: ${c.weeklyTrend}]`).join('\n')}
+
+${toneGuidance}
 
 WRITE A DATA-DRIVEN ANALYTICAL ARTICLE:
 
@@ -2732,7 +2972,10 @@ CRITICAL RULES:
  * Article 6: Underdog Story
  * Features a corps that's significantly outperforming expectations
  */
-async function generateUnderdogStoryArticle({ reportDay, dayScores, trendData, activeCorps, showContext, db }) {
+async function generateUnderdogStoryArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db }) {
+  // Get dynamic tone guidance
+  const toneGuidance = getToneGuidance(competitionContext, "underdog_story");
+
   // Find the biggest overperformer relative to their ranking
   // Look for corps in positions 6-15 that are trending strongly upward
   const underdogCandidates = dayScores
@@ -2799,6 +3042,8 @@ ${dayScores.slice(Math.max(0, currentRank - 3), currentRank + 2).map((s, i) => {
   return `${rank}. ${s.corps}: ${s.total.toFixed(3)}${s.corps === featuredUnderdog.corps ? ' ← FEATURED' : ''}`;
 }).join('\n')}
 
+${toneGuidance}
+
 WRITE AN INSPIRATIONAL FEATURE ARTICLE about this corps' rise:
 
 1. HEADLINE: Compelling underdog narrative headline. Examples: "Rising Thunder: How [Corps] Silenced the Doubters", "[Corps] Announces Arrival with Season-Defining Performance", "The Dark Horse Emerges: [Corps]' Stunning Surge"
@@ -2813,7 +3058,7 @@ WRITE AN INSPIRATIONAL FEATURE ARTICLE about this corps' rise:
    - Builds to an emotional conclusion about what this means for the corps and their fans
    - Ends with a forward-looking statement about their potential
 
-TONE: Inspirational, emotionally resonant, but grounded in real performance data. Think underdog sports movie meets analytical journalism.`;
+Inspirational, emotionally resonant, but grounded in real performance data. Think underdog sports movie meets analytical journalism.`;
 
   const schema = {
     type: SchemaType.OBJECT,
@@ -2872,7 +3117,10 @@ TONE: Inspirational, emotionally resonant, but grounded in real performance data
  * Article 7: Corps Spotlight
  * Deep dive into a specific corps' identity and season journey
  */
-async function generateCorpsSpotlightArticle({ reportDay, dayScores, trendData, activeCorps, showContext, db }) {
+async function generateCorpsSpotlightArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db }) {
+  // Get dynamic tone guidance
+  const toneGuidance = getToneGuidance(competitionContext, "corps_spotlight");
+
   // Select a corps to spotlight - rotate through the field
   // Use reportDay to ensure different corps each day
   const spotlightIndex = (reportDay - 1) % dayScores.length;
@@ -2926,6 +3174,8 @@ ${dayScores.slice(Math.max(0, currentRank - 2), Math.min(dayScores.length, curre
   return `${rank}. ${s.corps}: ${s.total.toFixed(3)}${s.corps === spotlightCorps.corps ? ' ← SPOTLIGHT' : ` (${gap >= 0 ? '+' : ''}${gap.toFixed(3)})`}`;
 }).join('\n')}
 
+${toneGuidance}
+
 WRITE A COMPREHENSIVE CORPS PROFILE:
 
 1. HEADLINE: A headline that captures the corps' identity and current story. Examples: "Blue Devils: The Dynasty Continues", "Carolina Crown: Brass Excellence Meets Design Innovation", "[Corps]: [Defining Characteristic]"
@@ -2940,7 +3190,7 @@ WRITE A COMPREHENSIVE CORPS PROFILE:
    - Includes historical context about the corps' traditions
    - Concludes with their outlook for the rest of the season
 
-TONE: Respectful, knowledgeable, like talking to a passionate fan who knows the corps' history. Celebratory but analytical.`;
+Respectful, knowledgeable, like talking to a passionate fan who knows the corps' history. Celebratory but analytical.`;
 
   const schema = {
     type: SchemaType.OBJECT,
