@@ -225,6 +225,13 @@ match /news_hub/{seasonId}/community/{articleId} {
   allow write: if false; // Backend only
 }
 
+// Collection group rule for articles - enables direct URL access and collection group queries
+// This allows reading any document in any 'articles' subcollection regardless of parent path
+match /{path=**}/articles/{articleId} {
+  allow read: if true;
+  allow write: if false; // Backend only
+}
+
 // --- NEWS SUBMISSIONS ---
 // User-submitted articles pending admin approval
 match /news_submissions/{submissionId} {
