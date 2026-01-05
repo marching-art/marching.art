@@ -114,7 +114,7 @@ const Landing = () => {
     <div className="h-full flex flex-col overflow-hidden bg-[#0A0A0A]">
       {/* FIXED HEADER */}
       <header className="flex-shrink-0 h-14 bg-[#1a1a1a] border-b border-[#333]">
-        <div className="h-full flex items-center px-4 lg:px-6">
+        <div className="max-w-[1920px] mx-auto h-full flex items-center px-4 lg:px-6">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-sm overflow-hidden">
               <img src="/logo192.svg" alt="marching.art" className="w-full h-full object-cover" />
@@ -175,7 +175,7 @@ const Landing = () => {
 
       {/* SCROLLABLE CONTENT */}
       <main className="flex-1 overflow-y-auto min-h-0 pb-20 md:pb-4">
-        <div className="p-4 lg:p-6">
+        <div className="max-w-[1920px] mx-auto p-4 lg:p-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
           {/* ============================================================= */}
