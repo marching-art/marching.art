@@ -1121,6 +1121,161 @@ async function getShowTitleFromFirestore(db, corpsName, year) {
 }
 
 /**
+ * Interprets a show title into visual thematic elements for image generation.
+ * Uses keyword analysis to suggest mood, lighting, colors, and atmosphere.
+ *
+ * @param {string} showTitle - The corps' show title (e.g., "Ghostlight", "Kinetic Noise")
+ * @returns {object} Thematic elements for image generation
+ */
+function interpretShowTheme(showTitle) {
+  if (!showTitle) {
+    return null;
+  }
+
+  const titleLower = showTitle.toLowerCase();
+  const theme = {
+    title: showTitle,
+    mood: "dramatic",
+    lighting: "stadium lights",
+    atmosphere: "competitive",
+    visualElements: [],
+  };
+
+  // Theatrical/stage themes
+  if (/ghost|phantom|spirit|haunt|shadow|spectr/i.test(titleLower)) {
+    theme.mood = "ethereal and haunting";
+    theme.lighting = "dramatic backlighting with haze, ghostly spotlight beams";
+    theme.atmosphere = "theatrical, mysterious";
+    theme.visualElements.push("fog/haze effects", "dramatic silhouettes");
+  }
+
+  // Light/illumination themes
+  if (/light|glow|shine|bright|radiant|lumina|aurora/i.test(titleLower)) {
+    theme.mood = "radiant and uplifting";
+    theme.lighting = "warm golden spotlights, lens flares, dynamic light beams";
+    theme.atmosphere = "hopeful, transcendent";
+    theme.visualElements.push("light beam effects", "golden hour warmth");
+  }
+
+  // Dark/night themes
+  if (/dark|night|shadow|eclipse|noir|black/i.test(titleLower)) {
+    theme.mood = "intense and dramatic";
+    theme.lighting = "high contrast, deep shadows with rim lighting";
+    theme.atmosphere = "mysterious, powerful";
+    theme.visualElements.push("dramatic shadows", "silhouette moments");
+  }
+
+  // Fire/heat themes
+  if (/fire|flame|burn|inferno|heat|phoenix|blaze/i.test(titleLower)) {
+    theme.mood = "intense and passionate";
+    theme.lighting = "warm orange and red undertones, flickering quality";
+    theme.atmosphere = "energetic, fierce";
+    theme.visualElements.push("warm color palette", "dynamic motion");
+  }
+
+  // Water/ocean themes
+  if (/water|ocean|sea|wave|tide|storm|rain|aqua/i.test(titleLower)) {
+    theme.mood = "flowing and powerful";
+    theme.lighting = "cool blue undertones, fluid light patterns";
+    theme.atmosphere = "dynamic, elemental";
+    theme.visualElements.push("cool color palette", "flowing movement");
+  }
+
+  // Space/cosmic themes
+  if (/star|space|cosmic|galaxy|planet|universe|infinity|stellar/i.test(titleLower)) {
+    theme.mood = "vast and awe-inspiring";
+    theme.lighting = "deep blue and purple hues, starfield effects";
+    theme.atmosphere = "expansive, otherworldly";
+    theme.visualElements.push("cosmic color palette", "scale and grandeur");
+  }
+
+  // Music/sound themes
+  if (/music|sound|noise|rhythm|melody|symphony|jazz|rock/i.test(titleLower)) {
+    theme.mood = "energetic and rhythmic";
+    theme.lighting = "dynamic concert-style lighting, color washes";
+    theme.atmosphere = "musical, expressive";
+    theme.visualElements.push("musical energy", "rhythmic motion");
+  }
+
+  // Art/creative themes
+  if (/art|paint|canvas|color|cut-out|collage|ink|sketch/i.test(titleLower)) {
+    theme.mood = "creative and artistic";
+    theme.lighting = "gallery-quality, even illumination with dramatic accents";
+    theme.atmosphere = "artistic, refined";
+    theme.visualElements.push("artistic composition", "creative framing");
+  }
+
+  // Nature themes
+  if (/nature|earth|forest|garden|bloom|spring|season/i.test(titleLower)) {
+    theme.mood = "organic and natural";
+    theme.lighting = "natural sunlight quality, golden hour warmth";
+    theme.atmosphere = "serene, grounded";
+    theme.visualElements.push("natural warmth", "organic flow");
+  }
+
+  // Machine/technology themes
+  if (/machine|metal|steel|techno|cyber|kinetic|robot|engine/i.test(titleLower)) {
+    theme.mood = "precise and mechanical";
+    theme.lighting = "industrial lighting, metallic reflections";
+    theme.atmosphere = "powerful, engineered";
+    theme.visualElements.push("mechanical precision", "angular forms");
+  }
+
+  // Revolution/change themes
+  if (/revolution|rebel|rise|break|shatter|transform|evolve/i.test(titleLower)) {
+    theme.mood = "powerful and transformative";
+    theme.lighting = "dynamic, high contrast with movement";
+    theme.atmosphere = "intense, breakthrough moment";
+    theme.visualElements.push("dynamic tension", "pivotal moment");
+  }
+
+  // Classical/mythology themes
+  if (/myth|legend|epic|hero|god|ancient|greek|roman|zeus|atlas/i.test(titleLower)) {
+    theme.mood = "epic and timeless";
+    theme.lighting = "classical painting quality, chiaroscuro";
+    theme.atmosphere = "legendary, monumental";
+    theme.visualElements.push("heroic scale", "classical grandeur");
+  }
+
+  // Dreams/imagination themes
+  if (/dream|imagine|fantasy|vision|wonder|magic|illusion/i.test(titleLower)) {
+    theme.mood = "dreamlike and surreal";
+    theme.lighting = "soft, diffused with ethereal quality";
+    theme.atmosphere = "whimsical, imaginative";
+    theme.visualElements.push("soft focus edges", "dreamlike quality");
+  }
+
+  return theme;
+}
+
+/**
+ * Builds a thematic context string for image prompts based on show title.
+ *
+ * @param {string} showTitle - The corps' show title
+ * @returns {string} Thematic context for the image prompt
+ */
+function buildShowThemeContext(showTitle) {
+  const theme = interpretShowTheme(showTitle);
+
+  if (!theme) {
+    return "";
+  }
+
+  let context = `\nSHOW THEME CONTEXT - "${theme.title}":`;
+  context += `\n- Mood: ${theme.mood}`;
+  context += `\n- Lighting suggestion: ${theme.lighting}`;
+  context += `\n- Atmosphere: ${theme.atmosphere}`;
+
+  if (theme.visualElements.length > 0) {
+    context += `\n- Visual elements: ${theme.visualElements.join(", ")}`;
+  }
+
+  context += `\n\nIncorporate this show's thematic elements naturally into the image while maintaining DCI authenticity.`;
+
+  return context;
+}
+
+/**
  * Get fantasy corps uniform based on director-provided design OR name analysis
  * Priority: Director's uniformDesign > Name-based theme matching > Default colors
  *
@@ -1369,19 +1524,26 @@ Generate an image that would work as a professional news article header at 1200x
 /**
  * Build comprehensive image prompt for DCI standings article
  * Features the leading corps with accurate historical uniform
+ *
+ * @param {string} topCorps - Corps name
+ * @param {number} year - Year of the performance
+ * @param {string} location - Competition location
+ * @param {string} showName - Competition/show name (e.g., "DCI Finals")
+ * @param {string} showTitle - Corps' production title (e.g., "Ghostlight", "Kinetic Noise")
  */
-function buildStandingsImagePrompt(topCorps, year, location, showName) {
+function buildStandingsImagePrompt(topCorps, year, location, showName, showTitle = null) {
   const details = getUniformDetails(topCorps, year);
+  const themeContext = buildShowThemeContext(showTitle);
 
   return `Photorealistic field-side action photograph from ${showName || "a DCI competition"} ${location ? `in ${location}` : ""}.
 
-SUBJECT: A brass performer from ${topCorps} (${year} season) executing a powerful sustained note during their show.
+SUBJECT: A brass performer from ${topCorps} (${year} season) executing a powerful sustained note during their show${showTitle ? ` "${showTitle}"` : ""}.
 
 UNIFORM ACCURACY (CRITICAL):
 - Uniform: ${details.uniform}
 - Headwear: ${details.helmet}
 - Instrument: ${details.brass}
-
+${themeContext}
 SCENE DETAILS:
 - Position: Field-side angle, 15 feet from performer, shooting upward slightly
 - Background: Stadium crowd blurred, evening sky with stadium lights creating dramatic rim lighting
@@ -1405,9 +1567,16 @@ This is a historic ${year} performance being recreated for the fantasy league - 
 /**
  * Build image prompt for DCI caption analysis article
  * Features the section that excelled in captions
+ *
+ * @param {string} featuredCorps - Corps name
+ * @param {number} year - Year of the performance
+ * @param {string} captionType - Caption category (e.g., "Brass", "Percussion")
+ * @param {string} location - Competition location
+ * @param {string} showTitle - Corps' production title (e.g., "Ghostlight")
  */
-function buildCaptionsImagePrompt(featuredCorps, year, captionType, location) {
+function buildCaptionsImagePrompt(featuredCorps, year, captionType, location, showTitle = null) {
   const details = getUniformDetails(featuredCorps, year);
+  const themeContext = buildShowThemeContext(showTitle);
 
   // Determine which section to feature based on caption
   let sectionFocus, sectionDetails, sceneDescription;
@@ -1435,7 +1604,7 @@ function buildCaptionsImagePrompt(featuredCorps, year, captionType, location) {
     sceneDescription = "an emotional ensemble moment with all sections unified in the show's climax";
   }
 
-  return `Photorealistic field-side photograph capturing ${featuredCorps}'s ${sectionFocus} excellence during their ${year} season.
+  return `Photorealistic field-side photograph capturing ${featuredCorps}'s ${sectionFocus} excellence during their ${year} season${showTitle ? ` performing "${showTitle}"` : ""}.
 
 SUBJECT: ${sceneDescription}
 
@@ -1443,7 +1612,7 @@ UNIFORM ACCURACY (CRITICAL):
 - Primary: ${details.uniform}
 - Headwear: ${details.helmet}
 - Section equipment: ${sectionDetails}
-
+${themeContext}
 SCENE COMPOSITION:
 - Angle: Low angle from corner of field, emphasizing precision and scale
 - Background: Stadium environment with scoreboard partially visible, crowd in stands
@@ -1556,11 +1725,17 @@ This should feel like a major esports or fantasy sports championship ceremony, b
 /**
  * Build image prompt for deep analytics article
  * Shows data visualization or strategic analysis moment
+ *
+ * @param {string} featuredCorps - Corps name
+ * @param {number} year - Year of the performance
+ * @param {string} analysisType - Type of analysis (e.g., "trajectory analysis")
+ * @param {string} showTitle - Corps' production title (e.g., "Ghostlight")
  */
-function buildAnalyticsImagePrompt(featuredCorps, year, analysisType) {
+function buildAnalyticsImagePrompt(featuredCorps, year, analysisType, showTitle = null) {
   const details = getUniformDetails(featuredCorps, year);
+  const themeContext = buildShowThemeContext(showTitle);
 
-  return `Photorealistic aerial/elevated photograph showing ${featuredCorps} (${year}) in a complex drill formation.
+  return `Photorealistic aerial/elevated photograph showing ${featuredCorps} (${year}) in a complex drill formation${showTitle ? ` from their show "${showTitle}"` : ""}.
 
 FORMATION FOCUS:
 - Corps in geometric formation viewed from press box/tower angle
@@ -1571,7 +1746,7 @@ UNIFORM ACCURACY:
 - Uniform: ${details.uniform}
 - Headwear: ${details.helmet}
 - Formation shows military precision and spacing
-
+${themeContext}
 ANALYTICAL ELEMENTS:
 - Yard lines visible for spatial reference
 - Shadow patterns showing performer positions
@@ -1624,13 +1799,13 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
     const trendData = calculateTrendData(historicalData, reportDay, activeCorps);
     const captionLeaders = identifyCaptionLeaders(dayScores, trendData);
 
-    // Generate all 5 articles in parallel, passing show context to each
+    // Generate all 5 articles in parallel, passing show context and db to each
     const articles = await Promise.all([
-      generateDciStandingsArticle({ reportDay, dayScores, trendData, activeCorps, showContext }),
-      generateDciCaptionsArticle({ reportDay, dayScores, captionLeaders, activeCorps, showContext }),
+      generateDciStandingsArticle({ reportDay, dayScores, trendData, activeCorps, showContext, db }),
+      generateDciCaptionsArticle({ reportDay, dayScores, captionLeaders, activeCorps, showContext, db }),
       generateFantasyPerformersArticle({ reportDay, fantasyData, showContext, db, dataDocId }),
       generateFantasyLeaguesArticle({ reportDay, fantasyData, showContext }),
-      generateDeepAnalyticsArticle({ reportDay, dayScores, trendData, fantasyData, captionLeaders, showContext }),
+      generateDeepAnalyticsArticle({ reportDay, dayScores, trendData, fantasyData, captionLeaders, showContext, db }),
     ]);
 
     return {
@@ -1654,7 +1829,7 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
 /**
  * Article 1: DCI Standings
  */
-async function generateDciStandingsArticle({ reportDay, dayScores, trendData, activeCorps, showContext }) {
+async function generateDciStandingsArticle({ reportDay, dayScores, trendData, activeCorps, showContext, db }) {
   const topCorps = dayScores[0];
   const secondCorps = dayScores[1];
   const gap = topCorps && secondCorps ? (topCorps.total - secondCorps.total).toFixed(3) : "0.000";
@@ -1729,12 +1904,16 @@ TONE: Professional sports journalism. Authoritative but accessible. Use specific
   try {
     const content = await generateStructuredContent(prompt, schema);
 
+    // Look up the corps' show title for thematic context
+    const showTitle = db ? await getShowTitleFromFirestore(db, topCorps.corps, topCorps.sourceYear) : null;
+
     // Generate image featuring top corps with accurate historical uniform
     const imagePrompt = buildStandingsImagePrompt(
       topCorps.corps,
       topCorps.sourceYear,
       showContext.location,
-      showContext.showName
+      showContext.showName,
+      showTitle
     );
 
     const imageData = await generateImageWithImagen(imagePrompt);
@@ -1756,7 +1935,7 @@ TONE: Professional sports journalism. Authoritative but accessible. Use specific
 /**
  * Article 2: DCI Caption Analysis
  */
-async function generateDciCaptionsArticle({ reportDay, dayScores, captionLeaders, activeCorps, showContext }) {
+async function generateDciCaptionsArticle({ reportDay, dayScores, captionLeaders, activeCorps, showContext, db }) {
   const prompt = `You are a DCI caption analyst and technical expert writing for marching.art. You specialize in breaking down the scoring categories that determine DCI competition results.
 
 CONTEXT: DCI scoring has three main categories:
@@ -1829,12 +2008,16 @@ TONE: Technical but accessible. Like a color commentator who knows the activity 
     const featuredCaption = captionLeaders[0];
     const featuredCorps = dayScores.find(s => s.corps === featuredCaption?.leader) || dayScores[0];
 
+    // Look up the corps' show title for thematic context
+    const showTitle = db ? await getShowTitleFromFirestore(db, featuredCorps.corps, featuredCorps.sourceYear) : null;
+
     // Use specialized caption image prompt with section-specific details
     const imagePrompt = buildCaptionsImagePrompt(
       featuredCorps.corps,
       featuredCorps.sourceYear,
       featuredCaption?.caption || "General Effect",
-      showContext.location
+      showContext.location,
+      showTitle
     );
 
     const imageData = await generateImageWithImagen(imagePrompt);
@@ -2113,7 +2296,7 @@ CRITICAL RULES:
 /**
  * Article 5: Deep Analytics
  */
-async function generateDeepAnalyticsArticle({ reportDay, dayScores, trendData, fantasyData, captionLeaders, showContext }) {
+async function generateDeepAnalyticsArticle({ reportDay, dayScores, trendData, fantasyData, captionLeaders, showContext, db }) {
   // Calculate advanced statistics
   const bigGainers = Object.entries(trendData)
     .filter(([, t]) => t.dayChange > 0.1)
@@ -2256,11 +2439,15 @@ CRITICAL RULES:
     const topTrending = Object.entries(trendData).sort((a,b) => b[1].trendFromAvg - a[1].trendFromAvg)[0];
     const featuredCorps = dayScores.find(s => s.corps === topTrending?.[0]) || dayScores[0];
 
+    // Look up the corps' show title for thematic context
+    const showTitle = db ? await getShowTitleFromFirestore(db, featuredCorps.corps, featuredCorps.sourceYear) : null;
+
     // Use specialized analytics prompt showing drill formations from elevated angle
     const imagePrompt = buildAnalyticsImagePrompt(
       featuredCorps.corps,
       featuredCorps.sourceYear,
-      "trajectory analysis"
+      "trajectory analysis",
+      showTitle
     );
 
     const imageData = await generateImageWithImagen(imagePrompt);
@@ -2705,6 +2892,8 @@ module.exports = {
   getUniformDetailsFromFirestore,
   getShowTitleFromFirestore,
   getFantasyUniformDetails,
+  interpretShowTheme,
+  buildShowThemeContext,
   DCI_UNIFORMS,
   FANTASY_THEMES,
 
