@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import ArticleReactions from '../components/Articles/ArticleReactions';
 import ArticleComments from '../components/Articles/ArticleComments';
-import { getArticleEngagement, getRecentNews } from '../api/functions';
+import { getArticleEngagement, getRecentNews, getArticleForEdit } from '../api/functions';
 import { useAuth } from '../App';
 import { useProfileStore } from '../store/profileStore';
 import { useBodyScroll } from '../hooks/useBodyScroll';
@@ -131,29 +131,50 @@ const Article = () => {
       setError(null);
 
       try {
-        // Fetch news articles and search for the one with matching ID
-        // Try multiple batches if needed since the article might be older
         let foundArticle = null;
-        let startAfter = null;
-        let attempts = 0;
-        const maxAttempts = 5; // Search up to 500 articles (5 batches of 100)
 
-        while (!foundArticle && attempts < maxAttempts) {
-          const result = await getRecentNews({ limit: 100, startAfter });
+        // Method 1: Try to fetch directly by path using getArticleForEdit
+        // Try different path formats that might match the article ID
+        const pathsToTry = [
+          id,
+          `current_season/${id}`,
+          `news/${id}`,
+        ];
 
-          if (!result.data?.success || !result.data.news?.length) {
-            break;
+        for (const path of pathsToTry) {
+          try {
+            const result = await getArticleForEdit({ path });
+            if (result.data?.success && result.data.article) {
+              foundArticle = result.data.article;
+              break;
+            }
+          } catch {
+            // Path didn't work, try next
           }
+        }
 
-          foundArticle = result.data.news.find(a => a.id === id);
+        // Method 2: If direct fetch failed, search through recent news
+        if (!foundArticle) {
+          let startAfter = null;
+          let attempts = 0;
+          const maxAttempts = 5;
 
-          if (!foundArticle && result.data.hasMore) {
-            // Get the last article's createdAt for pagination
-            const lastArticle = result.data.news[result.data.news.length - 1];
-            startAfter = lastArticle?.createdAt;
-            attempts++;
-          } else {
-            break;
+          while (!foundArticle && attempts < maxAttempts) {
+            const result = await getRecentNews({ limit: 100, startAfter });
+
+            if (!result.data?.success || !result.data.news?.length) {
+              break;
+            }
+
+            foundArticle = result.data.news.find(a => a.id === id);
+
+            if (!foundArticle && result.data.hasMore) {
+              const lastArticle = result.data.news[result.data.news.length - 1];
+              startAfter = lastArticle?.createdAt;
+              attempts++;
+            } else {
+              break;
+            }
           }
         }
 
