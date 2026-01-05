@@ -111,6 +111,9 @@ const {
   archiveArticle,
   deleteArticle,
   submitNewsForApproval,
+  listPendingSubmissions,
+  approveSubmission,
+  rejectSubmission,
 } = require("./src/triggers/newsGeneration");
 const {
   onProfileCreated,
@@ -215,6 +218,9 @@ module.exports = {
 
   // User News Submissions
   submitNewsForApproval,
+  listPendingSubmissions,
+  approveSubmission,
+  rejectSubmission,
 
   // Email Triggers
   onProfileCreated,
