@@ -269,12 +269,12 @@ const processCaptionScores = (yearData, corpsName, captionId, effectiveDay) => {
 // SKELETON COMPONENTS
 // =============================================================================
 
-const SkeletonRow = () => (
+const SkeletonRow = ({ scoresAvailable = true }) => (
   <tr className="border-b border-[#222]">
     <td className="py-2.5 px-3"><div className="w-10 h-6 bg-[#333] animate-pulse" /></td>
     <td className="py-2.5 px-3"><div className="w-32 h-4 bg-[#333] animate-pulse" /></td>
-    <td className="py-2.5 px-2 text-right"><div className="w-14 h-4 bg-[#333] animate-pulse ml-auto" /></td>
-    <td className="py-2.5 px-2 text-center"><div className="w-8 h-4 bg-[#333] animate-pulse mx-auto" /></td>
+    {scoresAvailable && <td className="py-2.5 px-2 text-right"><div className="w-14 h-4 bg-[#333] animate-pulse ml-auto" /></td>}
+    {scoresAvailable && <td className="py-2.5 px-2 text-center"><div className="w-8 h-4 bg-[#333] animate-pulse mx-auto" /></td>}
     <td className="py-2.5 px-3 text-right"><div className="w-20 h-4 bg-[#333] animate-pulse ml-auto" /></td>
   </tr>
 );
@@ -438,7 +438,8 @@ const ActiveLineupTable = ({
   lineupScoreData,
   loading,
   onManageLineup,
-  onSlotClick
+  onSlotClick,
+  scoresAvailable = true
 }) => {
   const lineupCount = Object.keys(lineup).length;
 
@@ -471,12 +472,16 @@ const ActiveLineupTable = ({
               <th className="text-left py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">
                 Corps
               </th>
-              <th className="text-right py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-20">
-                Last Score
-              </th>
-              <th className="text-center py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-20">
-                Trend
-              </th>
+              {scoresAvailable && (
+                <th className="text-right py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-20">
+                  Last Score
+                </th>
+              )}
+              {scoresAvailable && (
+                <th className="text-center py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-20">
+                  Trend
+                </th>
+              )}
               <th className="text-right py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-32">
                 Next Show
               </th>
@@ -484,7 +489,7 @@ const ActiveLineupTable = ({
           </thead>
           <tbody>
             {loading ? (
-              Array.from({ length: 8 }).map((_, i) => <SkeletonRow key={i} />)
+              Array.from({ length: 8 }).map((_, i) => <SkeletonRow key={i} scoresAvailable={scoresAvailable} />)
             ) : (
               CAPTIONS.map((caption) => {
                 const value = lineup[caption.id];
@@ -527,33 +532,37 @@ const ActiveLineupTable = ({
                     </td>
 
                     {/* Last Score */}
-                    <td className="py-2.5 px-2 text-right">
-                      {score !== null && score !== undefined ? (
-                        <span className="text-sm font-bold text-white font-data tabular-nums">
-                          {score.toFixed(2)}
-                        </span>
-                      ) : (
-                        <span className="text-sm text-gray-600">—</span>
-                      )}
-                    </td>
+                    {scoresAvailable && (
+                      <td className="py-2.5 px-2 text-right">
+                        {score !== null && score !== undefined ? (
+                          <span className="text-sm font-bold text-white font-data tabular-nums">
+                            {score.toFixed(2)}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-gray-600">—</span>
+                        )}
+                      </td>
+                    )}
 
                     {/* Trend */}
-                    <td className="py-2.5 px-2 text-center">
-                      {trend ? (
-                        <span className={`inline-flex items-center gap-0.5 text-xs font-data tabular-nums ${
-                          trend.direction === 'up' ? 'text-green-500' :
-                          trend.direction === 'down' ? 'text-red-500' :
-                          'text-gray-500'
-                        }`}>
-                          {trend.direction === 'up' && <TrendingUp className="w-3 h-3" />}
-                          {trend.direction === 'down' && <TrendingDown className="w-3 h-3" />}
-                          {trend.direction === 'same' && <Minus className="w-3 h-3" />}
-                          {trend.delta}
-                        </span>
-                      ) : (
-                        <span className="text-gray-600">—</span>
-                      )}
-                    </td>
+                    {scoresAvailable && (
+                      <td className="py-2.5 px-2 text-center">
+                        {trend ? (
+                          <span className={`inline-flex items-center gap-0.5 text-xs font-data tabular-nums ${
+                            trend.direction === 'up' ? 'text-green-500' :
+                            trend.direction === 'down' ? 'text-red-500' :
+                            'text-gray-500'
+                          }`}>
+                            {trend.direction === 'up' && <TrendingUp className="w-3 h-3" />}
+                            {trend.direction === 'down' && <TrendingDown className="w-3 h-3" />}
+                            {trend.direction === 'same' && <Minus className="w-3 h-3" />}
+                            {trend.delta}
+                          </span>
+                        ) : (
+                          <span className="text-gray-600">—</span>
+                        )}
+                      </td>
+                    )}
 
                     {/* Next Show (Day + Location) */}
                     <td className="py-2.5 px-3 text-right">
@@ -823,6 +832,9 @@ const Dashboard = () => {
   const { data: myLeagues } = useMyLeagues(user?.uid);
   const { trigger: haptic } = useHaptic();
   const { weeksRemaining, isRegistrationLocked, currentDay } = useSeasonStore();
+
+  // Calculate if scores are available (for hiding Last Score/Trend columns on Day 1)
+  const scoresAvailable = currentDay ? getEffectiveDay(currentDay) !== null : false;
 
   // Modal states
   const modalQueue = useModalQueue();
@@ -1327,6 +1339,7 @@ const Dashboard = () => {
                   loading={lineupScoresLoading}
                   onManageLineup={() => openCaptionSelection()}
                   onSlotClick={(captionId) => openCaptionSelection(captionId)}
+                  scoresAvailable={scoresAvailable}
                 />
               </div>
 
