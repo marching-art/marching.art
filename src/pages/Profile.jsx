@@ -9,12 +9,13 @@ import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom'
 import {
   User, Trophy, Settings, Star, TrendingUp, Calendar,
   Crown, Medal, MapPin, Edit, Check, X, LogOut, Coins, Heart,
-  ChevronRight, MessageCircle
+  ChevronRight, MessageCircle, Mail, AtSign, AlertCircle
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { useProfile, useUpdateProfile } from '../hooks/useProfile';
 import { db } from '../firebase';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { updateUsername, updateEmail } from '../firebase/functions';
 import toast from 'react-hot-toast';
 import { DataTable } from '../components/ui/DataTable';
 import { formatSeasonName } from '../utils/season';
@@ -139,6 +140,19 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
     }
   }, [isOpen, initialTab]);
 
+  // Account settings state
+  const [accountData, setAccountData] = useState({
+    username: '',
+    email: '',
+  });
+  const [originalData, setOriginalData] = useState({
+    username: '',
+    email: '',
+  });
+  const [usernameError, setUsernameError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [accountSaving, setAccountSaving] = useState(false);
+
   const [emailPrefs, setEmailPrefs] = useState({
     allEmails: true,
     streakAtRisk: true,
@@ -154,16 +168,26 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
 
   useEffect(() => {
     if (isOpen && user) {
-      loadEmailPrefs();
+      loadSettings();
     }
   }, [isOpen, user]);
 
-  const loadEmailPrefs = async () => {
+  const loadSettings = async () => {
     try {
       const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
       const profileSnap = await getDoc(profileRef);
       if (profileSnap.exists()) {
         const data = profileSnap.data();
+
+        // Load account data
+        const loadedAccountData = {
+          username: data.username || '',
+          email: data.email || user.email || '',
+        };
+        setAccountData(loadedAccountData);
+        setOriginalData(loadedAccountData);
+
+        // Load email preferences
         const prefs = data.settings?.emailPreferences || {};
         setEmailPrefs({
           allEmails: prefs.allEmails ?? true,
@@ -177,7 +201,54 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
         });
       }
     } catch (error) {
-      console.error('Error loading email prefs:', error);
+      console.error('Error loading settings:', error);
+    }
+  };
+
+  const hasAccountChanges = accountData.username !== originalData.username ||
+                            accountData.email !== originalData.email;
+
+  const saveAccountSettings = async () => {
+    setAccountSaving(true);
+    setUsernameError('');
+    setEmailError('');
+
+    try {
+      const promises = [];
+
+      // Update username if changed
+      if (accountData.username && accountData.username !== originalData.username) {
+        promises.push(
+          updateUsername({ username: accountData.username })
+            .catch(err => {
+              const message = err.message || 'Failed to update username';
+              setUsernameError(message);
+              throw err;
+            })
+        );
+      }
+
+      // Update email if changed
+      if (accountData.email && accountData.email !== originalData.email) {
+        promises.push(
+          updateEmail({ email: accountData.email })
+            .catch(err => {
+              const message = err.message || 'Failed to update email';
+              setEmailError(message);
+              throw err;
+            })
+        );
+      }
+
+      if (promises.length > 0) {
+        await Promise.all(promises);
+        setOriginalData({ ...accountData });
+        toast.success('Account settings saved');
+      }
+    } catch (error) {
+      console.error('Error saving account settings:', error);
+    } finally {
+      setAccountSaving(false);
     }
   };
 
@@ -265,10 +336,66 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
         <div className="flex-1 overflow-y-auto scroll-momentum">
           {activeTab === 'account' && (
             <div className="p-3 space-y-3">
+              {/* Username Field */}
               <div className="bg-[#111] border border-[#333] p-3">
-                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Email</div>
-                <div className="text-sm text-white font-data">{user?.email || 'Anonymous'}</div>
+                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+                  <AtSign className="w-3 h-3" />
+                  Username
+                </div>
+                <input
+                  type="text"
+                  value={accountData.username}
+                  onChange={(e) => {
+                    setAccountData(prev => ({ ...prev, username: e.target.value }));
+                    setUsernameError('');
+                  }}
+                  placeholder="Enter username"
+                  maxLength={15}
+                  className="w-full bg-transparent text-sm text-white font-data border-none outline-none placeholder:text-gray-600"
+                />
+                <div className="text-[9px] text-gray-600 mt-1">3-15 characters, letters, numbers, underscores</div>
+                {usernameError && (
+                  <div className="text-[10px] text-red-400 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {usernameError}
+                  </div>
+                )}
               </div>
+
+              {/* Email Field */}
+              <div className="bg-[#111] border border-[#333] p-3">
+                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+                  <Mail className="w-3 h-3" />
+                  Email
+                </div>
+                <input
+                  type="email"
+                  value={accountData.email}
+                  onChange={(e) => {
+                    setAccountData(prev => ({ ...prev, email: e.target.value }));
+                    setEmailError('');
+                  }}
+                  placeholder="Enter email address"
+                  className="w-full bg-transparent text-sm text-white font-data border-none outline-none placeholder:text-gray-600"
+                />
+                {emailError && (
+                  <div className="text-[10px] text-red-400 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {emailError}
+                  </div>
+                )}
+              </div>
+
+              {/* Save Account Changes Button */}
+              {hasAccountChanges && (
+                <button
+                  onClick={saveAccountSettings}
+                  disabled={accountSaving}
+                  className="w-full py-3 min-h-[44px] bg-[#0057B8] text-white text-sm font-bold hover:bg-[#0066d6] active:bg-[#004999] disabled:opacity-50 transition-all press-feedback rounded-sm flex items-center justify-center gap-2"
+                >
+                  {accountSaving ? 'Saving...' : 'Save Changes'}
+                </button>
+              )}
 
               <div className="bg-[#111] border border-[#333] p-3">
                 <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Member Since</div>
