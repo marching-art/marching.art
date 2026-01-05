@@ -1033,6 +1033,94 @@ function getUniformDetails(corpsName, year) {
 }
 
 /**
+ * Fetches uniform details from Firestore dci-reference collection.
+ * Falls back to hardcoded DCI_UNIFORMS if Firestore data not available.
+ *
+ * @param {object} db - Firestore database instance
+ * @param {string} corpsName - Name of the corps
+ * @param {number} year - Optional year for show-specific details
+ * @returns {Promise<object>} Uniform details object
+ */
+async function getUniformDetailsFromFirestore(db, corpsName, year = null) {
+  try {
+    // Try to fetch from Firestore first
+    const corpsDoc = await db.doc("dci-reference/corps").get();
+
+    if (corpsDoc.exists) {
+      const corpsData = corpsDoc.data();
+      const corpsEntry = Object.values(corpsData.corps || {}).find(
+        c => c.name === corpsName || c.name.toLowerCase() === corpsName.toLowerCase()
+      );
+
+      if (corpsEntry && corpsEntry.defaultUniform) {
+        const uniform = { ...corpsEntry.defaultUniform };
+
+        // If year specified, try to get show title from Firestore
+        if (year && corpsEntry.id) {
+          const showsDoc = await db.doc(`dci-reference/shows/${corpsEntry.id}`).get();
+          if (showsDoc.exists) {
+            const showData = showsDoc.data().shows?.[year];
+            if (showData?.title) {
+              uniform.showName = showData.title;
+            }
+          }
+        }
+
+        return uniform;
+      }
+    }
+  } catch (error) {
+    logger.warn(`Firestore lookup failed for ${corpsName}, using hardcoded data:`, error.message);
+  }
+
+  // Fall back to hardcoded data
+  return getUniformDetails(corpsName, year);
+}
+
+/**
+ * Gets show title for a corps and year from Firestore.
+ * Falls back to hardcoded DCI_UNIFORMS showName if available.
+ *
+ * @param {object} db - Firestore database instance
+ * @param {string} corpsName - Name of the corps
+ * @param {number} year - Year of the show
+ * @returns {Promise<string|null>} Show title or null
+ */
+async function getShowTitleFromFirestore(db, corpsName, year) {
+  try {
+    // Try to get corps ID first
+    const corpsDoc = await db.doc("dci-reference/corps").get();
+
+    if (corpsDoc.exists) {
+      const corpsData = corpsDoc.data();
+      const corpsEntry = Object.values(corpsData.corps || {}).find(
+        c => c.name === corpsName || c.name.toLowerCase() === corpsName.toLowerCase()
+      );
+
+      if (corpsEntry?.id) {
+        const showsDoc = await db.doc(`dci-reference/shows/${corpsEntry.id}`).get();
+        if (showsDoc.exists) {
+          const showData = showsDoc.data().shows?.[year];
+          if (showData?.title) {
+            return showData.title;
+          }
+        }
+      }
+    }
+  } catch (error) {
+    logger.warn(`Firestore show lookup failed for ${corpsName} ${year}:`, error.message);
+  }
+
+  // Fall back to hardcoded data
+  const corps = DCI_UNIFORMS[corpsName];
+  if (corps?.[year]?.showName) {
+    return corps[year].showName;
+  }
+
+  return null;
+}
+
+/**
  * Get fantasy corps uniform based on director-provided design OR name analysis
  * Priority: Director's uniformDesign > Name-based theme matching > Default colors
  *
@@ -2614,6 +2702,8 @@ module.exports = {
 
   // Uniform/theme utilities
   getUniformDetails,
+  getUniformDetailsFromFirestore,
+  getShowTitleFromFirestore,
   getFantasyUniformDetails,
   DCI_UNIFORMS,
   FANTASY_THEMES,
