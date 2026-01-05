@@ -1188,6 +1188,7 @@ exports.deleteArticle = onCall(
  */
 exports.submitNewsForApproval = onCall(
   {
+    cors: true,
     timeoutSeconds: 30,
   },
   async (request) => {
@@ -1283,6 +1284,7 @@ exports.submitNewsForApproval = onCall(
  */
 exports.listPendingSubmissions = onCall(
   {
+    cors: true,
     timeoutSeconds: 30,
   },
   async (request) => {
@@ -1332,6 +1334,7 @@ exports.listPendingSubmissions = onCall(
  */
 exports.approveSubmission = onCall(
   {
+    cors: true,
     timeoutSeconds: 120,
     memory: "1GiB",
     secrets: [geminiApiKey],
@@ -1501,6 +1504,7 @@ exports.approveSubmission = onCall(
  */
 exports.rejectSubmission = onCall(
   {
+    cors: true,
     timeoutSeconds: 30,
   },
   async (request) => {
