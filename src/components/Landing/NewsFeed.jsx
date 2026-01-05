@@ -7,6 +7,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Trophy, Flame, Clock, ChevronRight, TrendingUp, TrendingDown,
   Minus, AlertCircle, Newspaper, Loader2, DollarSign, ArrowUpRight,
@@ -608,7 +609,8 @@ function EmptyState({ category }) {
 // MAIN COMPONENT
 // =============================================================================
 
-export default function NewsFeed({ onStoryClick, maxItems = 5 }) {
+export default function NewsFeed({ maxItems = 5 }) {
+  const navigate = useNavigate();
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -715,7 +717,13 @@ export default function NewsFeed({ onStoryClick, maxItems = 5 }) {
   }, [news]);
 
   const handleStoryClick = (story) => {
-    onStoryClick?.(story);
+    // Navigate to full article page with article data in state
+    navigate(`/article/${story.id}`, {
+      state: {
+        article: story,
+        engagement: engagement[story.id] || null
+      }
+    });
   };
 
   if (loading && news.length === 0) {

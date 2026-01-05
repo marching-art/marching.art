@@ -49,6 +49,7 @@ const CorpsHistory = lazy(() => import('./pages/CorpsHistory'));
 const SoundSport = lazy(() => import('./pages/SoundSport'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Terms = lazy(() => import('./pages/Terms'));
+const Article = lazy(() => import('./pages/Article'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Helper component to wrap pages with error boundaries
@@ -244,6 +245,7 @@ function App() {
         <Routes>
           {/* Public Routes - Landing page visible to all users */}
           <Route path="/" element={<Suspense fallback={<LoadingScreen fullScreen />}><Landing /></Suspense>} />
+          <Route path="/article/:id" element={<Suspense fallback={<LoadingScreen fullScreen />}><Article /></Suspense>} />
           <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Suspense fallback={<LoadingScreen fullScreen />}><Login /></Suspense>} />
           <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Suspense fallback={<LoadingScreen fullScreen />}><Register /></Suspense>} />
           <Route path="/privacy" element={<Suspense fallback={<LoadingScreen fullScreen />}><Privacy /></Suspense>} />
