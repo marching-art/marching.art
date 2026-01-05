@@ -11,10 +11,10 @@ import { useNavigate } from 'react-router-dom';
 import {
   Trophy, Flame, Clock, ChevronRight, TrendingUp, TrendingDown,
   Minus, AlertCircle, Newspaper, Loader2, DollarSign, ArrowUpRight,
-  ArrowDownRight, Zap, Radio, BookOpen, MessageSquare
+  ArrowDownRight, Zap, Radio, BookOpen
 } from 'lucide-react';
 import { getRecentNews, getArticleEngagement } from '../../api/functions';
-import { ReactionSummary } from '../Articles';
+import { EngagementSummary } from '../Articles';
 
 // =============================================================================
 // LAZY-LOADED FALLBACK DATA
@@ -394,22 +394,13 @@ function HeroStory({ story, onClick, storyNumber, engagement }) {
             ))}
           </div>
           <div className="flex items-center gap-4">
-            {/* Engagement stats */}
+            {/* Engagement stats - Facebook style */}
             {engagement && (
-              <div className="flex items-center gap-3">
-                {engagement.reactionCounts?.total > 0 && (
-                  <ReactionSummary
-                    counts={engagement.reactionCounts}
-                    userReaction={engagement.userReaction}
-                  />
-                )}
-                {engagement.commentCount > 0 && (
-                  <div className="flex items-center gap-1 text-gray-500">
-                    <MessageSquare className="w-3.5 h-3.5" />
-                    <span className="text-[11px] font-data tabular-nums">{engagement.commentCount}</span>
-                  </div>
-                )}
-              </div>
+              <EngagementSummary
+                reactionCounts={engagement.reactionCounts}
+                userReaction={engagement.userReaction}
+                commentCount={engagement.commentCount}
+              />
             )}
             <div className="flex items-center gap-2">
               <span className="text-[10px] text-gray-600 uppercase">marching.art</span>
@@ -486,22 +477,13 @@ function NewsCard({ story, onClick, storyNumber, engagement }) {
             <span>{readingTime}</span>
           </div>
           <div className="flex items-center gap-2">
-            {/* Engagement stats */}
-            {engagement && (engagement.reactionCounts?.total > 0 || engagement.commentCount > 0) && (
-              <div className="flex items-center gap-2">
-                {engagement.reactionCounts?.total > 0 && (
-                  <ReactionSummary
-                    counts={engagement.reactionCounts}
-                    userReaction={engagement.userReaction}
-                  />
-                )}
-                {engagement.commentCount > 0 && (
-                  <div className="flex items-center gap-1 text-gray-500">
-                    <MessageSquare className="w-3 h-3" />
-                    <span className="text-[10px] font-data tabular-nums">{engagement.commentCount}</span>
-                  </div>
-                )}
-              </div>
+            {/* Engagement stats - Facebook style */}
+            {engagement && (
+              <EngagementSummary
+                reactionCounts={engagement.reactionCounts}
+                userReaction={engagement.userReaction}
+                commentCount={engagement.commentCount}
+              />
             )}
             {story.trendingCorps?.[0] && (
               <span className="flex items-center gap-1 text-xs">
@@ -541,21 +523,14 @@ function NewsRow({ story, onClick, storyNumber, engagement }) {
           </span>
           {urgency && <UrgencyBadge urgency={urgency} />}
           <span className="text-[10px] text-gray-600">{formatTimestamp(story.createdAt)}</span>
-          {/* Engagement stats */}
-          {engagement && (engagement.reactionCounts?.total > 0 || engagement.commentCount > 0) && (
-            <div className="flex items-center gap-2 ml-auto">
-              {engagement.reactionCounts?.total > 0 && (
-                <ReactionSummary
-                  counts={engagement.reactionCounts}
-                  userReaction={engagement.userReaction}
-                />
-              )}
-              {engagement.commentCount > 0 && (
-                <div className="flex items-center gap-0.5 text-gray-500">
-                  <MessageSquare className="w-3 h-3" />
-                  <span className="text-[10px] font-data tabular-nums">{engagement.commentCount}</span>
-                </div>
-              )}
+          {/* Engagement stats - Facebook style */}
+          {engagement && (
+            <div className="ml-auto">
+              <EngagementSummary
+                reactionCounts={engagement.reactionCounts}
+                userReaction={engagement.userReaction}
+                commentCount={engagement.commentCount}
+              />
             </div>
           )}
         </div>
