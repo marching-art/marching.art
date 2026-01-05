@@ -829,6 +829,83 @@ This avatar will represent a competitive marching arts fantasy team. Make it dis
 }
 
 /**
+ * Build image prompt for user-submitted articles based on category and content
+ * Used when admin approves community submissions
+ */
+function buildArticleImagePrompt(category, headline, summary) {
+  const categoryPrompts = {
+    dci: `Photorealistic action photograph from a DCI (Drum Corps International) competition.
+
+SCENE: Dramatic field-side moment capturing the essence of: "${headline}"
+
+SUBJECT OPTIONS (choose most appropriate for headline):
+- Brass section in synchronized formation, instruments raised
+- Percussion section executing complex choreography
+- Color guard members mid-toss with rifles or flags
+- Full corps on the field in geometric formation
+- Stadium atmosphere with crowd and dramatic lighting
+
+TECHNICAL REQUIREMENTS:
+- Style: Professional sports photography
+- Camera: 70-200mm telephoto, shallow depth of field
+- Lighting: Stadium lights creating dramatic rim lighting, evening atmosphere
+- Quality: Sharp focus on subjects, artistically blurred background
+- Colors: Rich, saturated, high contrast
+
+AVOID: Close-up faces, identifiable individuals, text overlays, logos`,
+
+    fantasy: `Creative digital illustration for fantasy marching arts sports coverage.
+
+THEME: "${headline}"
+
+VISUAL CONCEPTS:
+- Trophy or championship imagery with marching arts elements
+- Abstract representation of competition and strategy
+- Stylized corps uniforms and equipment as design elements
+- Leaderboard or scoreboard visualization
+- Victory celebration concept
+
+STYLE REQUIREMENTS:
+- Modern sports graphics aesthetic (like ESPN fantasy sports)
+- Bold colors with metallic accents (gold, silver, bronze)
+- Clean, professional design suitable for news article header
+- Dynamic composition suggesting competition and achievement
+- Marching arts equipment subtly incorporated (brass instruments, drums, flags)
+
+AVOID: Cartoon characters, video game imagery, realistic faces`,
+
+    analysis: `Professional infographic-style illustration for marching arts analysis content.
+
+TOPIC: "${headline}"
+
+VISUAL APPROACH:
+- Clean data visualization aesthetic
+- Stadium or field diagram elements
+- Performance metrics and trend representations
+- Caption score breakdown visualization
+- Strategic positioning concepts
+
+STYLE REQUIREMENTS:
+- Modern editorial/magazine quality
+- Muted professional color palette with accent highlights
+- Balanced composition with visual breathing room
+- Sophisticated, analytical feel
+- Subtle marching arts imagery integrated
+
+AVOID: Cluttered visuals, excessive text, cartoon elements`,
+  };
+
+  const basePrompt = categoryPrompts[category] || categoryPrompts.dci;
+
+  return `${basePrompt}
+
+CONTEXT FROM ARTICLE:
+"${summary?.substring(0, 200) || headline}"
+
+Generate an image that would work as a professional news article header at 1200x630 pixels.`;
+}
+
+/**
  * Build comprehensive image prompt for DCI standings article
  * Features the leading corps with accurate historical uniform
  */
@@ -2154,6 +2231,7 @@ module.exports = {
   buildFantasyLeagueImagePrompt,
   buildAnalyticsImagePrompt,
   buildCorpsAvatarPrompt,  // Corps avatar/icon generation
+  buildArticleImagePrompt, // User-submitted article images
 
   // Uniform/theme utilities
   getUniformDetails,
