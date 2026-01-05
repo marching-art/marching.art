@@ -278,16 +278,22 @@ export const useScoresData = (options = {}) => {
           // For current season: only show scores from days that have been processed (at 2 AM)
           // For archived seasons: show all data
           const isCurrentSeason = targetSeasonId === currentSeasonUid;
-          const effectiveDay = isCurrentSeason ? getEffectiveDay(currentDay) : null;
 
-          // Process all shows and group by day
-          shows = recaps.flatMap(recap => {
-            // For current season, filter out shows from days that haven't been processed yet
-            // effectiveDay is null on day 1 (no scores available), so skip all shows
-            if (isCurrentSeason) {
-              if (effectiveDay === null) return []; // No scores visible yet (day 1)
-              if (recap.offSeasonDay > effectiveDay) return []; // Future day scores not yet processed
-            }
+          // Explicit guard: On Day 1 of current season, no scores should ever be visible
+          // (Day 1 scores are processed at 2 AM on Day 2, so they're visible starting Day 2)
+          if (isCurrentSeason && currentDay === 1) {
+            shows = [];
+          } else {
+            const effectiveDay = isCurrentSeason ? getEffectiveDay(currentDay) : null;
+
+            // Process all shows and group by day
+            shows = recaps.flatMap(recap => {
+              // For current season, filter out shows from days that haven't been processed yet
+              // effectiveDay is null on day 1 (no scores available), so skip all shows
+              if (isCurrentSeason) {
+                if (effectiveDay === null) return []; // No scores visible yet (day 1)
+                if (recap.offSeasonDay > effectiveDay) return []; // Future day scores not yet processed
+              }
 
             return recap.shows?.map(show => ({
               eventName: show.eventName,
@@ -309,7 +315,8 @@ export const useScoresData = (options = {}) => {
                 captions: result.captions || {}
               })).sort((a, b) => b.score - a.score) || []
             })) || [];
-          }).sort((a, b) => b.offSeasonDay - a.offSeasonDay);
+            }).sort((a, b) => b.offSeasonDay - a.offSeasonDay);
+          }
         }
 
         // If current season has no data and we haven't already tried a fallback,
