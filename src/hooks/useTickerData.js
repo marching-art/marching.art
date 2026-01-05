@@ -98,6 +98,9 @@ export const useTickerData = () => {
     const calculatedDay = hour < 2 ? currentDay - 2 : currentDay - 1;
     const effectiveDay = calculatedDay >= 1 ? calculatedDay : null;
 
+    // Guard: If effectiveDay is null (Day 1 or Day 2 before 2 AM), no scores should be visible
+    if (!effectiveDay || effectiveDay < 1) return null;
+
     // Find the most recent day that has scores up to and including effective day
     const availableDays = allRecaps
       .map(r => r.offSeasonDay)

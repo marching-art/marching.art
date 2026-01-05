@@ -283,9 +283,9 @@ export const useScoresData = (options = {}) => {
           // Process all shows and group by day
           shows = recaps.flatMap(recap => {
             // For current season, filter out shows from days that haven't been processed yet
-            // effectiveDay is null on day 1 (no scores available), so skip all shows
+            // effectiveDay is null when no scores should be visible (Day 1 or Day 2 before 2 AM)
             if (isCurrentSeason) {
-              if (effectiveDay === null) return []; // No scores visible yet (day 1)
+              if (!effectiveDay || effectiveDay < 1) return []; // No scores visible yet
               if (recap.offSeasonDay > effectiveDay) return []; // Future day scores not yet processed
             }
 
