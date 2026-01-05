@@ -16,7 +16,9 @@ import {
 } from 'lucide-react';
 import ArticleReactions from '../components/Articles/ArticleReactions';
 import ArticleComments from '../components/Articles/ArticleComments';
-import { getArticleEngagement, getRecentNews, getArticleForEdit } from '../api/functions';
+import { getArticleEngagement, getRecentNews } from '../api/functions';
+import { db } from '../api/client';
+import { doc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { useAuth } from '../App';
 import { useProfileStore } from '../store/profileStore';
 import { useBodyScroll } from '../hooks/useBodyScroll';
@@ -133,27 +135,49 @@ const Article = () => {
       try {
         let foundArticle = null;
 
-        // Method 1: Try to fetch directly by path using getArticleForEdit
-        // Try different path formats that might match the article ID
-        const pathsToTry = [
-          id,
-          `current_season/${id}`,
-          `news/${id}`,
+        // Method 1: Try direct Firestore access with different collection paths
+        const collectionsToTry = [
+          'news',
+          'articles',
+          'news_articles',
+          'current_season/news',
         ];
 
-        for (const path of pathsToTry) {
+        for (const collectionPath of collectionsToTry) {
           try {
-            const result = await getArticleForEdit({ path });
-            if (result.data?.success && result.data.article) {
-              foundArticle = result.data.article;
+            const docRef = doc(db, collectionPath, id);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+              foundArticle = { id: docSnap.id, ...docSnap.data() };
               break;
             }
           } catch {
-            // Path didn't work, try next
+            // Collection doesn't exist or no permission, try next
           }
         }
 
-        // Method 2: If direct fetch failed, search through recent news
+        // Method 2: Try querying by ID field in case the document ID is different
+        if (!foundArticle) {
+          for (const collectionPath of collectionsToTry) {
+            try {
+              const q = query(
+                collection(db, collectionPath),
+                where('id', '==', id),
+                limit(1)
+              );
+              const querySnap = await getDocs(q);
+              if (!querySnap.empty) {
+                const docData = querySnap.docs[0];
+                foundArticle = { id: docData.id, ...docData.data() };
+                break;
+              }
+            } catch {
+              // Query failed, try next
+            }
+          }
+        }
+
+        // Method 3: Fall back to searching through recent news API
         if (!foundArticle) {
           let startAfter = null;
           let attempts = 0;
