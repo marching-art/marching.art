@@ -334,6 +334,65 @@ async function generateStructuredContent(prompt, schema) {
 // Configuration: Set to true to use paid Imagen 4, false for free tier
 const USE_IMAGEN_4 = false;
 
+// =============================================================================
+// DRUM CORPS VISUAL IDENTITY - System context for accurate image generation
+// This ensures AI models understand what drum corps looks like vs concerts
+// =============================================================================
+
+/**
+ * Comprehensive visual definition of drum and bugle corps for AI image generation.
+ * This context helps distinguish DCI/drum corps from rock concerts, marching bands, etc.
+ */
+const DRUM_CORPS_VISUAL_CONTEXT = `
+CRITICAL CONTEXT - DRUM AND BUGLE CORPS (NOT A CONCERT):
+
+Drum and bugle corps (DCI - Drum Corps International) is a competitive marching arts activity
+performed by uniformed musicians on American FOOTBALL FIELDS, not concert stages.
+
+VISUAL CHARACTERISTICS THAT DEFINE DRUM CORPS:
+- VENUE: Outdoor football stadium with natural grass or synthetic turf, white yard line markings,
+  end zones, hash marks, and stadium seating. Events occur at dusk/night under stadium lights.
+- PERFORMERS: 150+ young adults (ages 16-22) in MATCHING MILITARY-STYLE UNIFORMS, not concert attire.
+  They march in precise geometric formations while playing brass instruments and drums.
+- UNIFORMS: Athletic military-style uniforms with shakos/plumed helmets, white gloves, and
+  marching shoes. NOT casual clothes, NOT rock band outfits, NOT concert black.
+- INSTRUMENTS: Brass only (no woodwinds): contrabass bugles, mellophones, baritones, trumpets,
+  and French horns. All silver or gold lacquered with corps colors on valve caps.
+- PERCUSSION: Marching snare drums, tenor drums (quints/quads), bass drums worn on harnesses,
+  and a front ensemble (pit) with marimbas/vibraphones on the sideline.
+- COLOR GUARD: Performers with 6-foot tall silk flags, rifles, and sabres doing choreography.
+- FORMATIONS: Performers arranged in geometric shapes (arcs, blocks, spirals, company fronts)
+  on the football field, all facing the press box/audience.
+
+THIS IS NOT:
+- A rock concert with stage lighting and mosh pits
+- An indoor concert hall performance
+- A parade or street marching band
+- A high school marching band at a football game halftime
+- A symphony orchestra
+- Musicians in casual clothes or concert black
+
+The aesthetic is: competitive athletics meets musical performance meets military precision.
+Think Olympic ceremony + marching band + Cirque du Soleil, performed on a football field.
+`;
+
+/**
+ * Negative prompt elements to explicitly exclude concert/rock imagery
+ */
+const IMAGE_NEGATIVE_PROMPT = `
+
+MUST AVOID (these will make the image incorrect):
+- Concert stages, rock concerts, pop concerts, music festivals
+- Mosh pits, crowd surfing, standing concert crowds
+- Stage lighting rigs, concert spotlights pointed at a stage
+- Electric guitars, drum kits on stage, microphone stands
+- Casual clothing, t-shirts, jeans on performers
+- Indoor concert venues, clubs, bars
+- Smoke machines, laser shows (unless specifically requested)
+- Single performers or small bands
+- Orchestra pits, symphony halls
+`;
+
 /**
  * Clean JSON response from AI - strips markdown code blocks
  */
@@ -435,6 +494,8 @@ function parseAiJson(text) {
 
 /**
  * Generate an image using either free tier (Gemini Flash) or Imagen 4
+ * Automatically prepends drum corps visual context to ensure accurate imagery.
+ *
  * @param {string} prompt - Detailed image prompt
  * @returns {Promise<string>} Base64 image data or URL
  */
@@ -451,8 +512,17 @@ async function generateImageWithImagen(prompt) {
       model: modelName,
     });
 
+    // Build enhanced prompt with drum corps context to avoid concert imagery
+    const enhancedPrompt = `${DRUM_CORPS_VISUAL_CONTEXT}
+
+--- IMAGE REQUEST ---
+
+${prompt}
+
+${IMAGE_NEGATIVE_PROMPT}`;
+
     const result = await imageModel.generateContent({
-      contents: [{ role: "user", parts: [{ text: `Generate an image: ${prompt}` }] }],
+      contents: [{ role: "user", parts: [{ text: `Generate an image based on this detailed prompt:\n\n${enhancedPrompt}` }] }],
       generationConfig: {
         responseModalities: ["image", "text"],
       },
