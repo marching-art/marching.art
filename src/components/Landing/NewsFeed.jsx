@@ -245,7 +245,7 @@ function ShareButton({ story, className = '' }) {
       try {
         await navigator.share({
           title: story.headline,
-          text: story.summary,
+          text: story.headline,
           url: shareUrl,
         });
       } catch (err) {
