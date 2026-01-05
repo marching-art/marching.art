@@ -30,6 +30,10 @@ let textModel = null;
 // =============================================================================
 
 const DCI_UNIFORMS = {
+  // ==========================================================================
+  // WORLD CLASS - TOP 12 CORPS
+  // ==========================================================================
+
   "Blue Devils": {
     default: {
       uniform: "navy blue military-style uniform with silver trim and white baldric",
@@ -38,12 +42,29 @@ const DCI_UNIFORMS = {
       percussion: "Pearl drums with navy blue shells, silver hardware, Zildjian cymbals",
       guard: "navy and silver unitards with flowing silver capes",
     },
+    2014: {
+      uniform: "classic navy blue with white chest baldric, silver braiding, polished brass buttons in double-breasted style",
+      helmet: "traditional tall silver shako with blue and white ostrich plume",
+      brass: "traditional silver brass instruments with white valve guards",
+      percussion: "white Pearl drums with silver hardware, traditional concert bass drums",
+      guard: "classical white and navy gowns, traditional rifle and sabre",
+      showName: "Felliniesque",
+    },
+    2017: {
+      uniform: "midnight blue with iridescent butterfly-wing patterns, metamorphosis theme with color-shifting fabric",
+      helmet: "sleek chrome helmet with fiber optic butterfly antennae elements",
+      brass: "silver brass with holographic blue finish on bells",
+      percussion: "navy shells with morphing color graphics, LED-lit pit",
+      guard: "iridescent blue costumes transforming through show, butterfly wing silks",
+      showName: "Metamorph",
+    },
     2018: {
       uniform: "deep midnight blue uniforms with metallic silver geometric accents, asymmetrical chest design with flowing navy capes",
       helmet: "chrome-finished helmet with fiber optic lighting elements and white plume",
       brass: "Dynasty brass with silver finish, illuminated bell covers during ballad",
       percussion: "Pearl Championship drums, navy shells with LED rim lighting",
       guard: "midnight blue with silver holographic fabric, 6-foot silk flags in navy and silver",
+      showName: "Dreams and Nighthawks",
     },
     2019: {
       uniform: "navy blue with geometric silver angular patterns, modern athletic cut with metallic chest plate",
@@ -51,15 +72,18 @@ const DCI_UNIFORMS = {
       brass: "polished silver brass, contoured ergonomic grips",
       percussion: "transparent blue acrylic shells on snares, navy tenors",
       guard: "geometric silver and blue costumes, angular equipment in chrome",
+      showName: "Ghostlight",
     },
-    2014: {
-      uniform: "classic navy blue with white chest baldric, silver braiding, polished brass buttons in double-breasted style",
-      helmet: "traditional tall silver shako with blue and white ostrich plume",
-      brass: "traditional silver brass instruments with white valve guards",
-      percussion: "white Pearl drums with silver hardware, traditional concert bass drums",
-      guard: "classical white and navy gowns, traditional rifle and sabre",
+    2023: {
+      uniform: "deep navy with silver Art Deco geometric patterns, 1920s jazz age elegance",
+      helmet: "chrome helmet with navy plume and Art Deco crest",
+      brass: "silver brass with jazz-era styling, muted brass sections",
+      percussion: "navy shells with silver geometric inlays, vintage-inspired pit setup",
+      guard: "Art Deco navy and silver gowns, fan props and vintage silks",
+      showName: "The Cut-Outs",
     },
   },
+
   "Carolina Crown": {
     default: {
       uniform: "deep maroon with ornate gold filigree chest plate, burgundy sash",
@@ -74,6 +98,15 @@ const DCI_UNIFORMS = {
       brass: "gold-lacquered brass with etched crown designs on bells",
       percussion: "burgundy drums with gold crown emblems, matching marimba frames",
       guard: "Renaissance court costumes in deep burgundy velvet with gold trim, ceremonial flags",
+      showName: "E=MC²",
+    },
+    2015: {
+      uniform: "fiery orange-red with gold flame patterns, inferno theme with heat-shimmer metallic fabric",
+      helmet: "gold helmet with flame-shaped orange plume rising upward",
+      brass: "gold brass with orange-red flame graphics on bells",
+      percussion: "orange-red shells with gold fire graphics, flame-colored mallets",
+      guard: "flame-inspired orange, red, and gold costumes with fire silks",
+      showName: "Inferno",
     },
     2019: {
       uniform: "maroon base with rose gold metallic overlay panels, modern athletic silhouette with illuminated crown logo",
@@ -81,8 +114,18 @@ const DCI_UNIFORMS = {
       brass: "rose gold-finished brass with modern ergonomic design",
       percussion: "maroon shells with rose gold hardware, electronic trigger pads",
       guard: "rose gold and maroon athletic wear with flowing fabric extensions",
+      showName: "Beneath the Surface",
+    },
+    2022: {
+      uniform: "burgundy with cascading gold water-like patterns, reflective metallic threads",
+      helmet: "gold helmet with flowing burgundy plume suggesting movement",
+      brass: "gold brass with wave-pattern engravings",
+      percussion: "burgundy shells with gold ripple graphics",
+      guard: "flowing burgundy and gold costumes with water-themed movement silks",
+      showName: "Right Here Right Now",
     },
   },
+
   "The Cadets": {
     default: {
       uniform: "classic maroon with cream trim, military precision with brass buttons",
@@ -91,14 +134,40 @@ const DCI_UNIFORMS = {
       percussion: "Pearl drums with maroon shells, silver hardware",
       guard: "maroon and cream military-inspired uniforms with traditional equipment",
     },
+    2005: {
+      uniform: "maroon with black and silver geometric zones, avant-garde angular design",
+      helmet: "angular maroon and silver helmet with geometric plume",
+      brass: "silver brass with zone-inspired geometric graphics",
+      percussion: "maroon drums with silver angular patterns",
+      guard: "geometric maroon, black, and silver costumes with angular props",
+      showName: "The Zone",
+    },
     2011: {
       uniform: "burgundy with gold rope braiding across chest, Revolutionary War inspired double-breasted design",
       helmet: "tricorn-influenced shako in burgundy with gold trim and cream cockade",
       brass: "antiqued brass finish instruments evoking colonial era",
       percussion: "field drums styled after Revolutionary War with rope tension",
       guard: "colonial-era costumes with tricorn hats, period-accurate flags",
+      showName: "Between Angels and Demons",
+    },
+    2015: {
+      uniform: "maroon with silver metallic accents, 10-year anniversary design with modern athletic fit",
+      helmet: "chrome and maroon helmet with anniversary crest",
+      brass: "silver brass with commemorative engravings",
+      percussion: "maroon shells with silver anniversary graphics",
+      guard: "maroon and silver contemporary costumes celebrating corps history",
+      showName: "The Power of 10",
+    },
+    2023: {
+      uniform: "deep maroon with copper metallic accents, steampunk-inspired gears and clockwork patterns",
+      helmet: "copper-accented helmet with gear-shaped crest",
+      brass: "copper-tinted brass with clockwork engravings",
+      percussion: "maroon drums with copper gear graphics",
+      guard: "steampunk-inspired maroon and copper costumes with gear props",
+      showName: "Atlas Rising",
     },
   },
+
   "Santa Clara Vanguard": {
     default: {
       uniform: "scarlet red with white and gold trim, dramatic Spanish-influenced design with flowing capes",
@@ -107,14 +176,32 @@ const DCI_UNIFORMS = {
       percussion: "red Pearl drums with gold hardware, red-wrapped mallets",
       guard: "Spanish-inspired red and white costumes with dramatic capes and fans",
     },
+    2014: {
+      uniform: "rich jewel-toned red with gold Arabian patterns, Scheherazade-inspired flowing fabrics",
+      helmet: "ornate gold headpiece with red jewels and flowing red plume",
+      brass: "gold brass with Arabian geometric engravings",
+      percussion: "red drums with gold Arabian patterns, Middle Eastern percussion accents",
+      guard: "Arabian Nights-inspired red and gold costumes with veils and flowing silks",
+      showName: "Scheherazade",
+    },
     2018: {
       uniform: "rich scarlet with metallic gold trim, dramatic floor-length red capes with gold lining",
       helmet: "ornate gold-trimmed headpiece with cascading red plume",
       brass: "gold brass with red accents, Spanish-style bell decorations",
       percussion: "red shells with gold flake finish, traditional pit setup",
       guard: "flowing scarlet gowns with gold embroidery, Spanish fans and dramatic silks",
+      showName: "Babylon",
+    },
+    2019: {
+      uniform: "deep scarlet with revolutionary voice theme, dramatic transformation aesthetic",
+      helmet: "gold and red headpiece with revolutionary imagery",
+      brass: "gold brass with dramatic voice-inspired engravings",
+      percussion: "red and gold drums with revolutionary imagery",
+      guard: "revolutionary-inspired red and gold costumes with dramatic silks",
+      showName: "Vox Eversio",
     },
   },
+
   "Bluecoats": {
     default: {
       uniform: "electric blue with white contemporary design, modern athletic cut",
@@ -123,14 +210,48 @@ const DCI_UNIFORMS = {
       percussion: "blue Mapex drums with chrome hardware, electronic integration",
       guard: "contemporary blue and white athletic wear with technology elements",
     },
+    2014: {
+      uniform: "electric blue with tilted geometric white patterns, asymmetrical modern design",
+      helmet: "white helmet with blue angular accents, no traditional plume",
+      brass: "silver brass with blue geometric patterns on bells",
+      percussion: "blue drums with white tilted stripe graphics",
+      guard: "asymmetrical blue and white athletic costumes with angular silks",
+      showName: "Tilt",
+    },
     2016: {
       uniform: "electric blue with silver geometric circuit-board patterns, futuristic LED-integrated panels",
       helmet: "chrome visor helmet with programmable LED strip, no traditional plume",
       brass: "custom silver brass with blue LED rings around bells",
       percussion: "transparent blue acrylic drums with internal LED lighting",
       guard: "futuristic silver and blue bodysuits with fiber optic elements, LED props",
+      showName: "Down Side Up",
+    },
+    2017: {
+      uniform: "electric blue with white jagged patterns, rock concert-inspired modern athletic design",
+      helmet: "chrome helmet with blue LED strip, concert-style headset mics",
+      brass: "silver brass with blue electric bolt graphics",
+      percussion: "blue drums with white lightning patterns, electronic integration",
+      guard: "rock-inspired blue and white costumes with electric guitar props",
+      showName: "Jagged Line",
+    },
+    2019: {
+      uniform: "deep navy blue with silver thread patterns, vintage jazz club aesthetic",
+      helmet: "vintage-style chrome helmet with blue accents",
+      brass: "silver brass with vintage jazz styling",
+      percussion: "navy drums with silver accents, jazz-era pit setup",
+      guard: "1940s jazz club-inspired navy and silver costumes",
+      showName: "The Bluecoats",
+    },
+    2022: {
+      uniform: "electric blue with yellow warning stripe accents, industrial caution tape aesthetic",
+      helmet: "yellow and blue industrial-style helmet",
+      brass: "silver brass with blue and yellow caution graphics",
+      percussion: "blue drums with yellow warning stripe patterns",
+      guard: "industrial blue and yellow costumes with caution tape props",
+      showName: "Riffs & Revelations",
     },
   },
+
   "Phantom Regiment": {
     default: {
       uniform: "deep maroon and black with dramatic theatrical design, flowing opera capes",
@@ -139,14 +260,40 @@ const DCI_UNIFORMS = {
       percussion: "black drums with maroon accents, dramatic cymbal work",
       guard: "theatrical black and maroon costumes with phantom masks and capes",
     },
+    2003: {
+      uniform: "burgundy with gold harmonic wave patterns, orchestral elegance with flowing capes",
+      helmet: "gold-trimmed black helmet with burgundy plume",
+      brass: "gold brass with musical notation engravings",
+      percussion: "burgundy drums with gold orchestral graphics",
+      guard: "burgundy and gold orchestral costumes with conductor-inspired elements",
+      showName: "Harmonic Journey",
+    },
     2008: {
       uniform: "deep burgundy with black velvet trim, full-length opera capes with burgundy lining",
       helmet: "black helmet with Spartan-inspired crest and regiment skull emblem",
       brass: "dark nickel-finished brass with dramatic bell flares",
       percussion: "black shells with burgundy flame graphics, orchestral percussion",
       guard: "operatic burgundy and black costumes with dramatic masks",
+      showName: "Spartacus",
+    },
+    2010: {
+      uniform: "deep maroon with silver theatrical accents, Into the Light redemption theme",
+      helmet: "silver and maroon helmet with light-ray crest",
+      brass: "silver brass with ray-of-light engravings",
+      percussion: "maroon drums with silver light-beam graphics",
+      guard: "transitioning maroon to silver costumes suggesting emergence into light",
+      showName: "Into the Light",
+    },
+    2023: {
+      uniform: "black and burgundy with silver threads, modern theatrical athletic design",
+      helmet: "black helmet with burgundy plume and silver skull crest",
+      brass: "dark nickel brass with silver accents",
+      percussion: "black drums with burgundy and silver graphics",
+      guard: "contemporary theatrical black and burgundy costumes",
+      showName: "Exogenesis",
     },
   },
+
   "Cavaliers": {
     default: {
       uniform: "hunter green with white trim, cavalier-inspired design with plumed hats",
@@ -161,8 +308,26 @@ const DCI_UNIFORMS = {
       brass: "polished silver brass with traditional French horn section",
       percussion: "traditional green drums with white heads, field drum heritage",
       guard: "cavalier-era costumes with capes, swords, and period flags",
+      showName: "Frameworks",
+    },
+    2006: {
+      uniform: "dark green with silver machine-like geometric patterns, mechanical precision design",
+      helmet: "silver-green mechanical helmet with gear-like plume",
+      brass: "chrome brass with machine-part engravings",
+      percussion: "green drums with silver mechanical graphics, precise visual design",
+      guard: "machine-inspired green and silver costumes with mechanical props",
+      showName: "Machine",
+    },
+    2023: {
+      uniform: "forest green with silver modern accents, updated cavalier-inspired athletic design",
+      helmet: "modern green helmet with white flowing plume",
+      brass: "silver brass with contemporary green accents",
+      percussion: "green drums with silver hardware",
+      guard: "modern cavalier green and white costumes",
+      showName: "...Where You'll Find Me",
     },
   },
+
   "Madison Scouts": {
     default: {
       uniform: "kelly green with gold trim, scout-inspired military design",
@@ -171,7 +336,24 @@ const DCI_UNIFORMS = {
       percussion: "green drums with gold hardware",
       guard: "green and gold military-inspired uniforms",
     },
+    2013: {
+      uniform: "deep green with shadowy black accents, mysterious dancing shadows theme",
+      helmet: "black and green helmet with shadow-like plume",
+      brass: "dark green lacquered brass with shadow graphics",
+      percussion: "green drums with black shadow patterns",
+      guard: "green and black shadow-inspired costumes with mysterious silks",
+      showName: "Dancing Shadows",
+    },
+    2023: {
+      uniform: "kelly green with gold modern accents, refreshed scout tradition design",
+      helmet: "green helmet with gold trim and traditional plume",
+      brass: "gold brass with scout emblem",
+      percussion: "green drums with gold accents",
+      guard: "green and gold contemporary scout costumes",
+      showName: "The Return",
+    },
   },
+
   "Boston Crusaders": {
     default: {
       uniform: "crimson red with colonial white and blue accents, Revolutionary War heritage",
@@ -180,7 +362,40 @@ const DCI_UNIFORMS = {
       percussion: "red and white drums with Revolutionary field drum heritage",
       guard: "colonial-era inspired costumes with American Revolution flags",
     },
+    2017: {
+      uniform: "black with crimson red accents, Wicked Games dark theatrical design",
+      helmet: "black helmet with red plume and wicked styling",
+      brass: "dark lacquered brass with red accents",
+      percussion: "black drums with crimson graphics",
+      guard: "dark theatrical black and red costumes with dramatic props",
+      showName: "Wicked Games",
+    },
+    2018: {
+      uniform: "crimson and white with maritime SOS theme, signal flag inspired patterns",
+      helmet: "white helmet with red signal stripe and plume",
+      brass: "silver brass with maritime signal engravings",
+      percussion: "red and white drums with SOS patterns",
+      guard: "maritime-inspired red and white costumes with signal flag silks",
+      showName: "S.O.S.",
+    },
+    2019: {
+      uniform: "crimson red with gold accents, bold contemporary athletic design",
+      helmet: "gold and red helmet with modern plume",
+      brass: "gold brass with crimson accents",
+      percussion: "red drums with gold hardware",
+      guard: "crimson and gold contemporary athletic costumes",
+      showName: "Goliath",
+    },
+    2022: {
+      uniform: "crimson with purple and gold paradise-inspired patterns, tropical elegance",
+      helmet: "gold helmet with crimson and purple plume",
+      brass: "gold brass with paradise engravings",
+      percussion: "crimson drums with tropical gold and purple graphics",
+      guard: "paradise-inspired crimson, purple, and gold flowing costumes",
+      showName: "Paradise Lost",
+    },
   },
+
   "Blue Stars": {
     default: {
       uniform: "royal blue with cascading silver star patterns, patriotic elegance",
@@ -189,7 +404,24 @@ const DCI_UNIFORMS = {
       percussion: "blue drums with silver star decals",
       guard: "celestial blue and silver costumes with star-themed silks",
     },
+    2019: {
+      uniform: "royal blue with silver celestial Romeo and Juliet star-crossed theme",
+      helmet: "silver helmet with blue star accents and flowing plume",
+      brass: "silver brass with star and moon engravings",
+      percussion: "blue drums with silver star graphics",
+      guard: "romantic blue and silver costumes with celestial silks",
+      showName: "STAR Crossed",
+    },
+    2023: {
+      uniform: "royal blue with silver constellation patterns, updated celestial design",
+      helmet: "blue helmet with silver star crest",
+      brass: "silver brass with constellation engravings",
+      percussion: "blue drums with silver star patterns",
+      guard: "blue and silver celestial costumes",
+      showName: "Beneath the Blue",
+    },
   },
+
   "Mandarins": {
     default: {
       uniform: "crimson red with gold dragon embroidery, Asian-inspired flowing design",
@@ -198,7 +430,24 @@ const DCI_UNIFORMS = {
       percussion: "red drums with gold dragon graphics, Asian percussion elements",
       guard: "flowing Asian-inspired crimson and gold costumes with fans and ribbons",
     },
+    2019: {
+      uniform: "crimson and gold with phoenix rising theme, dramatic transformation design",
+      helmet: "gold phoenix-shaped headpiece with red plume",
+      brass: "gold brass with phoenix engravings",
+      percussion: "red drums with gold phoenix graphics",
+      guard: "phoenix-inspired crimson and gold costumes with fire silks",
+      showName: "Inside the Ink",
+    },
+    2022: {
+      uniform: "crimson red with gold kintsugi-inspired golden crack patterns, beautiful imperfection theme",
+      helmet: "gold and red helmet with kintsugi design",
+      brass: "gold brass with golden crack patterns",
+      percussion: "red drums with gold kintsugi graphics",
+      guard: "crimson costumes with gold kintsugi accents and flowing silks",
+      showName: "Kintsugi",
+    },
   },
+
   "Troopers": {
     default: {
       uniform: "tan and brown cavalry style, Western frontier with yellow trim",
@@ -207,7 +456,16 @@ const DCI_UNIFORMS = {
       percussion: "brown drums with cavalry yellow accents",
       guard: "cavalry uniforms with Western elements, American flags",
     },
+    2023: {
+      uniform: "tan with gold and brown Western accents, modern cavalry athletic design",
+      helmet: "updated cavalry hat with gold trim",
+      brass: "gold brass with cavalry engravings",
+      percussion: "tan drums with gold cavalry graphics",
+      guard: "modern cavalry tan and gold costumes",
+      showName: "The Sky Is Not the Limit",
+    },
   },
+
   "Colts": {
     default: {
       uniform: "deep purple with silver accents, equestrian elegance",
@@ -216,7 +474,16 @@ const DCI_UNIFORMS = {
       percussion: "purple drums with silver horse motifs",
       guard: "purple and silver costumes with flowing horse-mane elements",
     },
+    2023: {
+      uniform: "deep purple with silver modern accents, updated equestrian athletic design",
+      helmet: "purple helmet with silver mane plume",
+      brass: "silver brass with purple accents",
+      percussion: "purple drums with silver horse graphics",
+      guard: "purple and silver flowing costumes",
+      showName: "Heartland",
+    },
   },
+
   "Spirit of Atlanta": {
     default: {
       uniform: "scarlet red with white and black accents, phoenix and Southern heritage",
@@ -225,7 +492,16 @@ const DCI_UNIFORMS = {
       percussion: "red drums with flame graphics and phoenix imagery",
       guard: "phoenix-inspired red and orange costumes with flame silks",
     },
+    2023: {
+      uniform: "scarlet red with gold phoenix patterns, modern Southern pride design",
+      helmet: "gold and red helmet with phoenix crest",
+      brass: "gold brass with phoenix engravings",
+      percussion: "red drums with gold phoenix graphics",
+      guard: "red and gold phoenix costumes with fire silks",
+      showName: "Coming Home",
+    },
   },
+
   "Blue Knights": {
     default: {
       uniform: "royal blue with chrome armor plating, medieval knight aesthetic",
@@ -234,7 +510,16 @@ const DCI_UNIFORMS = {
       percussion: "blue drums with chrome hardware, shield graphics",
       guard: "medieval knight-inspired blue and silver armor costumes",
     },
+    2022: {
+      uniform: "royal blue with silver knight armor accents, modern crusader design",
+      helmet: "chrome knight helmet with blue plume",
+      brass: "chrome brass with shield engravings",
+      percussion: "blue drums with silver shield graphics",
+      guard: "knight-inspired blue and silver athletic costumes",
+      showName: "The Count of Monte Cristo",
+    },
   },
+
   "Crossmen": {
     default: {
       uniform: "royal blue with bold white cross patterns, modern design",
@@ -243,7 +528,16 @@ const DCI_UNIFORMS = {
       percussion: "blue and white drums with cross graphics",
       guard: "contemporary blue and white with cross motifs",
     },
+    2023: {
+      uniform: "royal blue with silver cross patterns, updated modern athletic design",
+      helmet: "blue helmet with white cross crest",
+      brass: "silver brass with cross engravings",
+      percussion: "blue drums with white cross graphics",
+      guard: "blue and white contemporary cross-themed costumes",
+      showName: "The Grass Is Always Greener",
+    },
   },
+
   "Pacific Crest": {
     default: {
       uniform: "ocean teal with white mountain peak imagery, Pacific Northwest",
@@ -252,7 +546,16 @@ const DCI_UNIFORMS = {
       percussion: "teal drums with white evergreen graphics",
       guard: "teal and white costumes with mountain and wave elements",
     },
+    2023: {
+      uniform: "teal with silver mountain and wave patterns, Pacific pride design",
+      helmet: "silver and teal helmet with mountain crest",
+      brass: "silver brass with wave engravings",
+      percussion: "teal drums with silver mountain graphics",
+      guard: "teal and silver Pacific-themed costumes",
+      showName: "Wonder",
+    },
   },
+
 };
 
 // =============================================================================
