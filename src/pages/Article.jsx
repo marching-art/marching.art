@@ -135,49 +135,88 @@ const Article = () => {
       try {
         let foundArticle = null;
 
-        // Method 1: Try direct Firestore access with different collection paths
-        const collectionsToTry = [
-          'news',
-          'articles',
-          'news_articles',
-          'current_season/news',
-        ];
-
-        for (const collectionPath of collectionsToTry) {
+        // Method 1: Parse composite article ID and fetch from correct path
+        // ID format: {seasonId}_{dayId}_{articleType} e.g., "scherzo_2025-26_day_1_deep_analytics"
+        // Path: news_hub/{seasonId}/days/{dayId}/articles/{articleType}
+        const idMatch = id.match(/^(.+)_(day_\d+)_(.+)$/);
+        if (idMatch) {
+          const [, seasonId, dayId, articleType] = idMatch;
+          const articlePath = `news_hub/${seasonId}/days/${dayId}/articles/${articleType}`;
           try {
-            const docRef = doc(db, collectionPath, id);
+            const docRef = doc(db, articlePath);
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
-              foundArticle = { id: docSnap.id, ...docSnap.data() };
-              break;
+              const data = docSnap.data();
+              // Determine category from article type
+              const category =
+                articleType.startsWith('dci_') ? 'dci' :
+                articleType.startsWith('fantasy_') ? 'fantasy' :
+                articleType === 'deep_analytics' ? 'analysis' : 'dci';
+              foundArticle = {
+                id,
+                seasonId,
+                reportDay: parseInt(dayId.replace('day_', ''), 10),
+                articleType,
+                category,
+                ...data,
+                createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+              };
             }
           } catch {
-            // Collection doesn't exist or no permission, try next
+            // Path doesn't exist or no permission, try other methods
           }
         }
 
-        // Method 2: Try querying by ID field in case the document ID is different
+        // Method 2: Try community submissions path
+        // Format: news_hub/{seasonId}/community/article_{submissionId}
+        if (!foundArticle && id.startsWith('article_')) {
+          // Try to find in community submissions - need to know seasonId
+          // Fetch active season from game-settings
+          try {
+            const seasonSettingsRef = doc(db, 'game-settings', 'season');
+            const seasonSettingsSnap = await getDoc(seasonSettingsRef);
+            if (seasonSettingsSnap.exists()) {
+              const seasonId = seasonSettingsSnap.data()?.seasonUid || 'current_season';
+              const communityPath = `news_hub/${seasonId}/community/${id}`;
+              const docRef = doc(db, communityPath);
+              const docSnap = await getDoc(docRef);
+              if (docSnap.exists()) {
+                const data = docSnap.data();
+                foundArticle = {
+                  id,
+                  ...data,
+                  createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+                };
+              }
+            }
+          } catch {
+            // Community path doesn't exist
+          }
+        }
+
+        // Method 3: Try legacy flat collection paths
         if (!foundArticle) {
-          for (const collectionPath of collectionsToTry) {
+          const legacyCollections = ['news_hub', 'news', 'articles'];
+          for (const collectionPath of legacyCollections) {
             try {
-              const q = query(
-                collection(db, collectionPath),
-                where('id', '==', id),
-                limit(1)
-              );
-              const querySnap = await getDocs(q);
-              if (!querySnap.empty) {
-                const docData = querySnap.docs[0];
-                foundArticle = { id: docData.id, ...docData.data() };
+              const docRef = doc(db, collectionPath, id);
+              const docSnap = await getDoc(docRef);
+              if (docSnap.exists()) {
+                const data = docSnap.data();
+                foundArticle = {
+                  id: docSnap.id,
+                  ...data,
+                  createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+                };
                 break;
               }
             } catch {
-              // Query failed, try next
+              // Collection doesn't exist or no permission, try next
             }
           }
         }
 
-        // Method 3: Fall back to searching through recent news API
+        // Method 4: Fall back to searching through recent news API
         if (!foundArticle) {
           let startAfter = null;
           let attempts = 0;
