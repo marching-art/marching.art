@@ -658,7 +658,7 @@ const DCI_CORPS_DATA = {
  * Seeds the Firestore database with DCI reference data.
  * Creates/updates:
  * - dci-reference/corps - All corps metadata
- * - dci-reference/shows/{corpsId} - Shows by corps
+ * - dci-reference/shows-{corpsId} - Shows by corps (hyphenated for valid doc path)
  */
 async function seedDciReference() {
   console.log("Starting DCI reference data seed...\n");
@@ -725,7 +725,7 @@ async function getCorpsData(corpsId) {
  * Reads show data for a specific corps and year.
  */
 async function getShowData(corpsId, year) {
-  const showsDoc = await db.doc(`dci-reference/shows/${corpsId}`).get();
+  const showsDoc = await db.doc(`dci-reference/shows-${corpsId}`).get();
   if (!showsDoc.exists) return null;
 
   const data = showsDoc.data();
@@ -748,7 +748,7 @@ async function getUniformForCorps(corpsName, year = null) {
 
   // If year specified, get show title
   if (year) {
-    const showsDoc = await db.doc(`dci-reference/shows/${corpsEntry.id}`).get();
+    const showsDoc = await db.doc(`dci-reference/shows-${corpsEntry.id}`).get();
     if (showsDoc.exists) {
       const showData = showsDoc.data().shows?.[year];
       if (showData) {
