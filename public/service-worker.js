@@ -1,7 +1,7 @@
 // Service Worker for marching.art Progressive Web App
 // Provides offline support, caching, and improved performance
 
-const APP_VERSION = '2.0.0';
+const APP_VERSION = '2.0.1';
 const CACHE_NAME = `marching-art-v${APP_VERSION}`;
 const RUNTIME_CACHE = `marching-art-runtime-v${APP_VERSION}`;
 const IMAGE_CACHE = `marching-art-images-v${APP_VERSION}`;
@@ -105,11 +105,15 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET requests
-  if (request.method !== 'GET') return;
-
   // Skip Chrome extensions and other non-http(s) requests
   if (!url.protocol.startsWith('http')) return;
+
+  // Skip Firebase Cloud Functions entirely - let browser handle CORS
+  // This includes callable functions which use POST with CORS preflight
+  if (url.hostname.includes('cloudfunctions.net')) return;
+
+  // Skip non-GET requests (POST, OPTIONS for CORS preflight, etc.)
+  if (request.method !== 'GET') return;
 
   // Skip cross-origin requests that aren't in our strategy list
   const isKnownCrossOrigin = ROUTE_STRATEGIES.some(route =>
