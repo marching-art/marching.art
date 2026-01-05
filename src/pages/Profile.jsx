@@ -9,7 +9,7 @@ import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom'
 import {
   User, Trophy, Settings, Star, TrendingUp, Calendar,
   Crown, Medal, MapPin, Edit, Check, X, LogOut, Coins, Heart,
-  ChevronRight, MessageCircle, Mail, AtSign, AlertCircle, Bell, Shield, Eye, EyeOff, Trash2
+  ChevronRight, MessageCircle, Mail, AtSign, AlertCircle, Bell, Trash2
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { useProfile, useUpdateProfile } from '../hooks/useProfile';
@@ -164,18 +164,6 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
     winBack: true,
   });
 
-  // Privacy settings state
-  const [privacySettings, setPrivacySettings] = useState({
-    publicProfile: true,
-    showLocation: true,
-    showStats: true,
-  });
-  const [originalPrivacy, setOriginalPrivacy] = useState({
-    publicProfile: true,
-    showLocation: true,
-    showStats: true,
-  });
-
   // Push notification state
   const [pushPrefs, setPushPrefs] = useState({
     allPush: false,
@@ -192,7 +180,6 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
 
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-  const [hasPrivacyChanges, setHasPrivacyChanges] = useState(false);
 
   // Delete account state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -244,16 +231,6 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
           milestoneAchieved: prefs.milestoneAchieved ?? true,
           winBack: prefs.winBack ?? true,
         });
-
-        // Load privacy settings
-        const privacy = data.privacy || {};
-        const loadedPrivacy = {
-          publicProfile: privacy.publicProfile ?? true,
-          showLocation: privacy.showLocation ?? true,
-          showStats: privacy.showStats ?? true,
-        };
-        setPrivacySettings(loadedPrivacy);
-        setOriginalPrivacy(loadedPrivacy);
 
         // Load push preferences
         const push = data.settings?.pushPreferences || {};
@@ -330,11 +307,6 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
     setHasChanges(true);
   };
 
-  const updatePrivacy = (key, value) => {
-    setPrivacySettings(prev => ({ ...prev, [key]: value }));
-    setHasPrivacyChanges(true);
-  };
-
   const saveNotificationPrefs = async () => {
     setSaving(true);
     try {
@@ -348,24 +320,6 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
     } catch (error) {
       console.error('Error saving notification prefs:', error);
       toast.error('Failed to save preferences');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const savePrivacySettings = async () => {
-    setSaving(true);
-    try {
-      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-      await updateDoc(profileRef, {
-        'privacy': privacySettings,
-      });
-      setOriginalPrivacy({ ...privacySettings });
-      toast.success('Privacy settings saved');
-      setHasPrivacyChanges(false);
-    } catch (error) {
-      console.error('Error saving privacy settings:', error);
-      toast.error('Failed to save settings');
     } finally {
       setSaving(false);
     }
@@ -491,16 +445,6 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
             }`}
           >
             Alerts
-          </button>
-          <button
-            onClick={() => setActiveTab('privacy')}
-            className={`flex-1 min-w-0 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-colors ${
-              activeTab === 'privacy'
-                ? 'text-white border-b-2 border-[#0057B8]'
-                : 'text-gray-500 hover:text-gray-300'
-            }`}
-          >
-            Privacy
           </button>
         </div>
 
@@ -799,52 +743,6 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                   className="w-full py-2.5 bg-[#0057B8] text-white text-sm font-bold rounded-sm hover:bg-[#0066d6] disabled:opacity-50 transition-colors"
                 >
                   {saving ? 'Saving...' : 'Save Preferences'}
-                </button>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'privacy' && (
-            <div className="p-3 space-y-3">
-              <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
-                <Shield className="w-3 h-3" />
-                Privacy Controls
-              </p>
-
-              <div className="space-y-0 divide-y divide-[#333] bg-[#111] border border-[#333]">
-                <div className="px-3">
-                  <Toggle
-                    label="Public Profile"
-                    description="Allow others to view your profile"
-                    checked={privacySettings.publicProfile}
-                    onChange={(e) => updatePrivacy('publicProfile', e.target.checked)}
-                  />
-                </div>
-                <div className="px-3">
-                  <Toggle
-                    label="Show Location"
-                    description="Display location on profile"
-                    checked={privacySettings.showLocation}
-                    onChange={(e) => updatePrivacy('showLocation', e.target.checked)}
-                  />
-                </div>
-                <div className="px-3">
-                  <Toggle
-                    label="Show Statistics"
-                    description="Display performance stats publicly"
-                    checked={privacySettings.showStats}
-                    onChange={(e) => updatePrivacy('showStats', e.target.checked)}
-                  />
-                </div>
-              </div>
-
-              {hasPrivacyChanges && (
-                <button
-                  onClick={savePrivacySettings}
-                  disabled={saving}
-                  className="w-full py-2.5 bg-[#0057B8] text-white text-sm font-bold rounded-sm hover:bg-[#0066d6] disabled:opacity-50 transition-colors"
-                >
-                  {saving ? 'Saving...' : 'Save Privacy Settings'}
                 </button>
               )}
             </div>
