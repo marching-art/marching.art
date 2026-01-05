@@ -52,6 +52,8 @@ const {
 } = require("./src/callable/comments");
 const {
   updateProfile,
+  updateUsername,
+  updateEmail,
   getPublicProfile,
 } = require("./src/callable/profile");
 const {
@@ -159,6 +161,8 @@ module.exports = {
   deleteComment,
   reportComment,
   updateProfile,
+  updateUsername,
+  updateEmail,
   getPublicProfile,
   manualTrigger,
   migrateUserProfiles,
