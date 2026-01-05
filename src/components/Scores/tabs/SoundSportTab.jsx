@@ -7,7 +7,7 @@ import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Music, Medal, Trophy, Award, ChevronRight, ChevronDown,
+  Music, Medal, Award, ChevronRight, ChevronDown,
   Info, Star, Users, Zap, Clock, BookOpen
 } from 'lucide-react';
 import LoadingScreen from '../../LoadingScreen';
@@ -29,6 +29,32 @@ const QUICK_FACTS = [
   { icon: Users, label: '5+', description: 'Minimum members' },
   { icon: Star, label: '3 Judges', description: 'Rate your show' },
 ];
+
+// =============================================================================
+// BLUE RIBBON ICON - Best in Show award indicator
+// =============================================================================
+
+const BlueRibbonIcon = ({ className = "w-5 h-5" }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    {/* Ribbon circle/badge */}
+    <circle cx="12" cy="9" r="7" fill="#0057B8" stroke="#003d82" strokeWidth="1" />
+    {/* Inner circle highlight */}
+    <circle cx="12" cy="9" r="4" fill="#0066d6" />
+    {/* Star in center */}
+    <path
+      d="M12 5.5l1.09 2.21 2.44.35-1.77 1.72.42 2.43L12 11.1l-2.18 1.15.42-2.43-1.77-1.72 2.44-.35L12 5.5z"
+      fill="#FFD700"
+    />
+    {/* Ribbon tails */}
+    <path d="M8 15l-2 7 4-2.5V15H8z" fill="#0057B8" stroke="#003d82" strokeWidth="0.5" />
+    <path d="M16 15l2 7-4-2.5V15h2z" fill="#0057B8" stroke="#003d82" strokeWidth="0.5" />
+  </svg>
+);
 
 // =============================================================================
 // HELPER FUNCTIONS
@@ -125,9 +151,8 @@ const EnsembleCard = ({ score, isBestInShow = false, isClassWinner = false }) =>
     >
       {/* Award badges */}
       {isBestInShow && (
-        <div className="absolute top-0 right-0 bg-black text-primary px-2 py-1 text-[10px] font-bold flex items-center gap-1">
-          <Trophy className="w-3 h-3" />
-          BEST IN SHOW
+        <div className="absolute top-0 right-0 p-1">
+          <BlueRibbonIcon className="w-6 h-6 md:w-7 md:h-7" />
         </div>
       )}
       {isClassWinner && !isBestInShow && (
@@ -212,19 +237,23 @@ const RatingGroup = ({ rating, scores, bestInShowCorps, classWinnerCorps = [] })
 const BestInShowCard = ({ score }) => {
   if (!score) return null;
 
+  const ratingInfo = getSoundSportRating(score.score);
+
   return (
-    <div className="bg-gradient-to-r from-yellow-500/20 to-yellow-600/10 border-2 border-yellow-500/50 rounded-sm p-4 md:p-6 mb-4">
+    <div className="bg-gradient-to-r from-[#0057B8]/20 to-[#0057B8]/5 border-2 border-[#0057B8]/50 rounded-sm p-4 md:p-6 mb-4">
       <div className="flex items-center gap-2 mb-3">
-        <Trophy className="w-5 h-5 md:w-6 md:h-6 text-yellow-500" />
-        <span className="text-yellow-500 font-bold uppercase text-xs md:text-sm">Best in Show</span>
+        <BlueRibbonIcon className="w-6 h-6 md:w-7 md:h-7" />
+        <span className="text-[#0057B8] font-bold uppercase text-xs md:text-sm">Best in Show</span>
       </div>
       <div className="flex items-center gap-3 md:gap-4">
-        <div className="p-2 md:p-3 bg-primary border-2 border-black rounded-sm">
+        <div className={`p-2 md:p-3 ${ratingInfo.color} border-2 border-black rounded-sm`}>
           <Medal className="w-6 h-6 md:w-8 md:h-8 text-black" />
         </div>
         <div>
           <p className="text-lg md:text-xl font-bold text-white uppercase">{score.corps}</p>
-          <p className="text-yellow-400 font-bold text-sm">Gold</p>
+          <p className={`font-bold text-sm ${ratingInfo.rating === 'Gold' ? 'text-yellow-400' : ratingInfo.rating === 'Silver' ? 'text-gray-300' : ratingInfo.rating === 'Bronze' ? 'text-orange-400' : 'text-gray-400'}`}>
+            {ratingInfo.rating}
+          </p>
         </div>
       </div>
     </div>
@@ -370,10 +399,8 @@ const SoundSportTab = ({ loading, allShows }) => {
                 <p className="text-xs md:text-sm text-cream-500/60">{show.location} • {show.date}</p>
               </div>
 
-              {/* Best in Show (only if there are Gold ratings) */}
-              {show.groupedScores.Gold.length > 0 && (
-                <BestInShowCard score={show.bestInShow} />
-              )}
+              {/* Best in Show - highest scoring ensemble at this event */}
+              <BestInShowCard score={show.bestInShow} />
 
               {/* Results by Rating Group */}
               <div className="space-y-2">
