@@ -982,7 +982,7 @@ export interface MatchupLeaderboardEntry {
 /**
  * Available emoji reactions for articles
  */
-export type ArticleReactionType = '👏' | '🔥' | '💯' | '🎺' | '❤️' | '🤔';
+export type ArticleReactionType = '👏' | '🔥' | '💯' | '🎺' | '❤️' | '🤔' | '🏳️' | '🥁';
 
 /**
  * A single user's reaction to an article
@@ -1005,6 +1005,8 @@ export interface ArticleReactionCounts {
   '🎺': number;
   '❤️': number;
   '🤔': number;
+  '🏳️': number;
+  '🥁': number;
   total: number;
 }
 

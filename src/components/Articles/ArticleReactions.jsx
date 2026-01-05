@@ -10,7 +10,7 @@ import { toggleArticleReaction, getArticleReactions } from '../../api/functions'
 import toast from 'react-hot-toast';
 
 // Available emoji reactions
-const REACTIONS = ['👏', '🔥', '💯', '🎺', '❤️', '🤔'];
+const REACTIONS = ['👏', '🔥', '💯', '🎺', '🏳️', '🥁', '❤️', '🤔'];
 
 // Reaction labels for accessibility and tooltips
 const REACTION_LABELS = {
@@ -20,6 +20,8 @@ const REACTION_LABELS = {
   '🎺': 'Brass',
   '❤️': 'Love',
   '🤔': 'Thinking',
+  '🏳️': 'White Flag',
+  '🥁': 'Drum',
 };
 
 /**
@@ -40,7 +42,7 @@ export default function ArticleReactions({
 }) {
   const { user } = useAuth();
   const [counts, setCounts] = useState(initialCounts || {
-    '👏': 0, '🔥': 0, '💯': 0, '🎺': 0, '❤️': 0, '🤔': 0, total: 0
+    '👏': 0, '🔥': 0, '💯': 0, '🎺': 0, '❤️': 0, '🤔': 0, '🏳️': 0, '🥁': 0, total: 0
   });
   const [userReaction, setUserReaction] = useState(initialUserReaction);
   const [loading, setLoading] = useState(!initialCounts);
