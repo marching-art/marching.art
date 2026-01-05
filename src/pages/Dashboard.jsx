@@ -9,7 +9,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   Trophy, Edit, TrendingUp, TrendingDown, Minus,
   Calendar, Users, Lock, ChevronRight, Activity, MapPin,
-  Flame, Coins, Medal, Palette
+  Flame, Coins, Medal, Palette, FileText
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
@@ -37,7 +37,8 @@ import { useDashboardData } from '../hooks/useDashboardData';
 import { useScoresData } from '../hooks/useScoresData';
 import { useMyLeagues } from '../hooks/useLeagues';
 import { retireCorps } from '../firebase/functions';
-import { registerCorps, unlockClassWithCorpsCoin } from '../api/functions';
+import { registerCorps, unlockClassWithCorpsCoin, submitNewsForApproval } from '../api/functions';
+import NewsSubmissionModal from '../components/modals/NewsSubmissionModal';
 import ClassPurchaseModal from '../components/modals/ClassPurchaseModal';
 import { useHaptic } from '../hooks/useHaptic';
 import { useModalQueue, MODAL_PRIORITY } from '../hooks/useModalQueue';
@@ -852,6 +853,8 @@ const Dashboard = () => {
   const [lineupScoresLoading, setLineupScoresLoading] = useState(true);
   const [recentResults, setRecentResults] = useState([]);
   const [showUniformDesign, setShowUniformDesign] = useState(false);
+  const [showNewsSubmission, setShowNewsSubmission] = useState(false);
+  const [submittingNews, setSubmittingNews] = useState(false);
 
   // Destructure dashboard data
   const {
@@ -1108,13 +1111,13 @@ const Dashboard = () => {
 
   useEffect(() => {
     const userModalOpen = showRegistration || showCaptionSelection || showEditCorps ||
-                          showDeleteConfirm || showMoveCorps || showRetireConfirm;
+                          showDeleteConfirm || showMoveCorps || showRetireConfirm || showNewsSubmission;
     if (userModalOpen) {
       modalQueue.pauseQueue();
     } else {
       modalQueue.resumeQueue();
     }
-  }, [showRegistration, showCaptionSelection, showEditCorps, showDeleteConfirm, showMoveCorps, showRetireConfirm, modalQueue]);
+  }, [showRegistration, showCaptionSelection, showEditCorps, showDeleteConfirm, showMoveCorps, showRetireConfirm, showNewsSubmission, modalQueue]);
 
   // Handlers
   const handleTourComplete = useCallback(async () => {
@@ -1275,6 +1278,21 @@ const Dashboard = () => {
     setShowCaptionSelection(true);
   }, []);
 
+  const handleNewsSubmission = useCallback(async (formData) => {
+    setSubmittingNews(true);
+    try {
+      const result = await submitNewsForApproval(formData);
+      if (result.data.success) {
+        toast.success('Article submitted for review!');
+        setShowNewsSubmission(false);
+      }
+    } catch (error) {
+      toast.error(error.message || 'Failed to submit article');
+    } finally {
+      setSubmittingNews(false);
+    }
+  }, []);
+
   const handleUniformDesign = useCallback(async (design) => {
     try {
       const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
@@ -1363,6 +1381,28 @@ const Dashboard = () => {
                 />
 
                 <LeagueStatus leagues={myLeagues} />
+
+                {/* Submit Article */}
+                <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+                  <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
+                    <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+                      <FileText className="w-3.5 h-3.5 text-green-500" />
+                      Community Content
+                    </h3>
+                  </div>
+                  <div className="p-4">
+                    <p className="text-xs text-gray-500 mb-3">
+                      Share your insights, analysis, or news with the community.
+                    </p>
+                    <button
+                      onClick={() => setShowNewsSubmission(true)}
+                      className="w-full py-2.5 bg-[#222] hover:bg-[#333] border border-[#333] text-white text-sm font-bold transition-colors flex items-center justify-center gap-2"
+                    >
+                      <FileText className="w-4 h-4" />
+                      Submit Article
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1472,6 +1512,14 @@ const Dashboard = () => {
           onSubmit={handleUniformDesign}
           currentDesign={activeCorps.uniformDesign}
           corpsName={activeCorps.corpsName || activeCorps.name}
+        />
+      )}
+
+      {showNewsSubmission && (
+        <NewsSubmissionModal
+          onClose={() => setShowNewsSubmission(false)}
+          onSubmit={handleNewsSubmission}
+          isSubmitting={submittingNews}
         />
       )}
 
