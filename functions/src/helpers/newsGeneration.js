@@ -1523,6 +1523,103 @@ CONTEXT FROM ARTICLE:
 Generate an image that would work as a professional news article header at 1200x630 pixels.`;
 }
 
+// =============================================================================
+// COMPOSITION VARIETY - Random elements for unique images
+// =============================================================================
+
+/**
+ * Camera angles for variety in image composition
+ */
+const CAMERA_ANGLES = [
+  { angle: "field-side, 15 feet from performer, shooting upward slightly", description: "low angle emphasizing power" },
+  { angle: "press box level, 50 yards back, telephoto compression", description: "classic broadcast perspective" },
+  { angle: "end zone corner, ground level, wide angle", description: "dramatic perspective distortion" },
+  { angle: "sideline at the 40, eye level with performers", description: "intimate connection" },
+  { angle: "tower shot, 30 feet up, looking down at 45 degrees", description: "formation emphasis" },
+  { angle: "behind home plate/backstage area, shooting through the arc", description: "unique backstage angle" },
+  { angle: "pit area looking outward toward hornline", description: "front ensemble perspective" },
+  { angle: "directly beside performer, profile shot", description: "intimate profile" },
+];
+
+/**
+ * Performer moments to capture
+ */
+const PERFORMER_MOMENTS = [
+  { moment: "peak of a sustained high note, body extended, bell high", emotion: "triumph and power" },
+  { moment: "mid-phrase during a technical run, fingers flying", emotion: "intense concentration" },
+  { moment: "dramatic pause before the hit, frozen anticipation", emotion: "tension and focus" },
+  { moment: "recovery breath between phrases, human moment", emotion: "vulnerability and determination" },
+  { moment: "marching at full stride during a company front", emotion: "unified precision" },
+  { moment: "pivot turn with bell swing, athletic move", emotion: "dynamic athleticism" },
+  { moment: "soft ballad moment, intimate expression", emotion: "emotional depth" },
+  { moment: "final chord sustain, everything given", emotion: "exhaustion and satisfaction" },
+];
+
+/**
+ * Lighting variations for different atmospheres
+ */
+const LIGHTING_VARIATIONS = [
+  { lighting: "golden hour sunlight from stadium west side, warm rim lighting on performers", mood: "warm and triumphant" },
+  { lighting: "stadium lights from above creating harsh shadows, night competition feel", mood: "intense competition" },
+  { lighting: "overcast diffused light, even illumination across field", mood: "documentary realism" },
+  { lighting: "dramatic backlighting from scoreboard, silhouette edges", mood: "dramatic and artistic" },
+  { lighting: "mixed stadium lights and sunset, purple-orange sky", mood: "twilight magic" },
+  { lighting: "full night with stadium floods, high contrast pools of light", mood: "nighttime spectacle" },
+  { lighting: "early afternoon harsh sun, strong shadows", mood: "raw and unfiltered" },
+  { lighting: "rain delay clearing, wet field reflecting lights", mood: "atmospheric drama" },
+];
+
+/**
+ * Section formations for group shots
+ */
+const SECTION_FORMATIONS = [
+  { formation: "tight block formation, shoulder to shoulder", visual: "unity and precision" },
+  { formation: "curved arc sweeping across the 35 to 45 yard lines", visual: "graceful power" },
+  { formation: "diagonal line from front sideline to back hash", visual: "dynamic movement" },
+  { formation: "scattered cluster transitioning to form", visual: "organized chaos" },
+  { formation: "company front spanning goal line to goal line", visual: "overwhelming scale" },
+  { formation: "pinwheel rotation mid-transition", visual: "kinetic energy" },
+  { formation: "layered depth with front, mid, and back rows", visual: "dimensional depth" },
+];
+
+/**
+ * Subject focus variations
+ */
+const SUBJECT_FOCUS = [
+  { focus: "single featured performer isolated", framing: "tight crop on individual, background heavily blurred" },
+  { focus: "pair of performers in sync", framing: "two performers perfectly matched, medium shot" },
+  { focus: "small section of 4-6 performers", framing: "mini-ensemble showing unity" },
+  { focus: "full section (12-20 performers)", framing: "wide enough to show section identity" },
+  { focus: "interaction between sections", framing: "brass and guard overlap moment" },
+];
+
+/**
+ * Randomly select an item from an array
+ * Uses article seed for reproducibility within same article
+ */
+function randomSelect(array, seed = null) {
+  if (seed) {
+    // Simple seeded random for reproducibility
+    const hash = seed.split('').reduce((a, b) => ((a << 5) - a + b.charCodeAt(0)) | 0, 0);
+    return array[Math.abs(hash) % array.length];
+  }
+  return array[Math.floor(Math.random() * array.length)];
+}
+
+/**
+ * Get a unique composition set for an image
+ * Returns camera angle, moment, lighting, and formation
+ */
+function getRandomComposition(seed = null) {
+  return {
+    camera: randomSelect(CAMERA_ANGLES, seed),
+    moment: randomSelect(PERFORMER_MOMENTS, seed ? seed + "moment" : null),
+    lighting: randomSelect(LIGHTING_VARIATIONS, seed ? seed + "light" : null),
+    formation: randomSelect(SECTION_FORMATIONS, seed ? seed + "form" : null),
+    focus: randomSelect(SUBJECT_FOCUS, seed ? seed + "focus" : null),
+  };
+}
+
 /**
  * Build comprehensive image prompt for DCI standings article
  * Features the leading corps with accurate historical uniform
@@ -1537,25 +1634,33 @@ function buildStandingsImagePrompt(topCorps, year, location, showName, showTitle
   const details = getUniformDetails(topCorps, year);
   const themeContext = buildShowThemeContext(showTitle);
 
-  return `Photorealistic field-side action photograph from ${showName || "a DCI competition"} ${location ? `in ${location}` : ""}.
+  // Get random composition for variety
+  const seed = `${topCorps}-${year}-standings`;
+  const comp = getRandomComposition(seed);
 
-SUBJECT: A brass performer from ${topCorps} (${year} season) executing a powerful sustained note during their show${showTitle ? ` "${showTitle}"` : ""}.
+  return `Photorealistic action photograph from ${showName || "a DCI competition"} ${location ? `in ${location}` : ""}.
+
+SUBJECT: A brass performer from ${topCorps} (${year} season) - ${comp.moment.moment}${showTitle ? ` during their show "${showTitle}"` : ""}.
 
 UNIFORM ACCURACY (CRITICAL):
 - Uniform: ${details.uniform}
 - Headwear: ${details.helmet}
 - Instrument: ${details.brass}
 ${themeContext}
-SCENE DETAILS:
-- Position: Field-side angle, 15 feet from performer, shooting upward slightly
-- Background: Stadium crowd blurred, evening sky with stadium lights creating dramatic rim lighting
-- Moment: Peak of musical phrase, performer's posture showing effort and precision
+COMPOSITION & CAMERA:
+- Position: ${comp.camera.angle}
+- Focus: ${comp.focus.focus} - ${comp.focus.framing}
+- Capturing: ${comp.moment.emotion}
+
+LIGHTING & ATMOSPHERE:
+- ${comp.lighting.lighting}
+- Mood: ${comp.lighting.mood}
+- Background: Stadium environment, crowd appropriately blurred for depth
 
 TECHNICAL REQUIREMENTS:
-- Camera: Canon 1DX Mark III, 70-200mm f/2.8 lens at 135mm
-- Settings: 1/1000 shutter, f/2.8, ISO 3200 for stadium lighting
-- Style: Professional sports photography, shallow depth of field, high contrast
-- Lighting: Dramatic stadium lights from above-left, warm golden hour sun from right
+- Camera: Professional sports photography setup (Canon 1DX or Sony A1)
+- Style: Editorial sports photography, shallow depth of field where appropriate
+- High dynamic range to capture stadium lighting
 
 AUTHENTICITY MARKERS:
 - Brass instrument must have realistic valve configurations and tubing
@@ -1563,7 +1668,7 @@ AUTHENTICITY MARKERS:
 - White marching gloves, black marching shoes
 - Visible concentration and athletic effort in performer's expression
 
-This is a historic ${year} performance being recreated for the fantasy league - make it feel like an authentic DCI photograph.`;
+This is a historic ${year} performance - make it feel like an authentic DCI photograph capturing ${comp.camera.description}.`;
 }
 
 /**
@@ -1580,33 +1685,37 @@ function buildCaptionsImagePrompt(featuredCorps, year, captionType, location, sh
   const details = getUniformDetails(featuredCorps, year);
   const themeContext = buildShowThemeContext(showTitle);
 
+  // Get random composition for variety
+  const seed = `${featuredCorps}-${year}-${captionType}-captions`;
+  const comp = getRandomComposition(seed);
+
   // Determine which section to feature based on caption
   let sectionFocus, sectionDetails, sceneDescription;
 
   if (captionType.includes("Brass") || captionType.includes("B")) {
     sectionFocus = "hornline";
     sectionDetails = details.brass;
-    sceneDescription = "the full hornline in a dramatic arc formation, bells raised in unison during a powerful chord";
+    sceneDescription = `the hornline in ${comp.formation.formation}, bells raised during a powerful moment`;
   } else if (captionType.includes("Percussion") || captionType.includes("P")) {
     sectionFocus = "drumline";
     sectionDetails = details.percussion;
-    sceneDescription = "the snare line in tight formation, sticks frozen mid-stroke in perfect unison";
+    sceneDescription = `the battery in ${comp.formation.formation}, capturing ${comp.moment.emotion}`;
   } else if (captionType.includes("Guard") || captionType.includes("CG")) {
     sectionFocus = "color guard";
     sectionDetails = details.guard;
-    sceneDescription = "guard members with rifles at peak toss height, silks frozen in dramatic arc";
+    sceneDescription = `guard members in ${comp.formation.formation}, equipment frozen mid-movement`;
   } else if (captionType.includes("Visual") || captionType.includes("V")) {
     sectionFocus = "full corps";
     sectionDetails = details.uniform;
-    sceneDescription = "the corps in a complex geometric formation, bodies creating perfect lines and curves";
+    sceneDescription = `the corps in ${comp.formation.formation}, bodies showing ${comp.formation.visual}`;
   } else {
     // GE or general - show ensemble moment
     sectionFocus = "corps";
     sectionDetails = details.uniform;
-    sceneDescription = "an emotional ensemble moment with all sections unified in the show's climax";
+    sceneDescription = `an emotional ensemble moment - ${comp.moment.moment}`;
   }
 
-  return `Photorealistic field-side photograph capturing ${featuredCorps}'s ${sectionFocus} excellence during their ${year} season${showTitle ? ` performing "${showTitle}"` : ""}.
+  return `Photorealistic photograph capturing ${featuredCorps}'s ${sectionFocus} excellence during their ${year} season${showTitle ? ` performing "${showTitle}"` : ""}.
 
 SUBJECT: ${sceneDescription}
 
@@ -1615,23 +1724,28 @@ UNIFORM ACCURACY (CRITICAL):
 - Headwear: ${details.helmet}
 - Section equipment: ${sectionDetails}
 ${themeContext}
-SCENE COMPOSITION:
-- Angle: Low angle from corner of field, emphasizing precision and scale
-- Background: Stadium environment with scoreboard partially visible, crowd in stands
-- Lighting: Stadium lights creating dramatic shadows, emphasizing body positions
+COMPOSITION & CAMERA:
+- Position: ${comp.camera.angle}
+- Formation: ${comp.formation.formation} - ${comp.formation.visual}
+- Background: Stadium environment with crowd, ${location ? `${location} venue` : "competition atmosphere"}
+
+LIGHTING & ATMOSPHERE:
+- ${comp.lighting.lighting}
+- Mood: ${comp.lighting.mood}
+- Shadows and highlights emphasizing body positions and precision
 
 TECHNICAL PHOTOGRAPHY:
-- Wide enough to show 6-8 performers while maintaining detail
-- Focus on center performers, edges slightly soft
-- Motion blur on any moving equipment to show action
+- ${comp.focus.framing}
+- Motion blur on moving equipment to show action
 - High contrast, vibrant colors true to ${featuredCorps} palette
 
 CAPTION EXCELLENCE MARKERS:
 - Perfect body alignment showing visual precision
 - Equipment positions showing technical mastery
 - Unified expression showing ensemble cohesion
+- ${comp.moment.emotion}
 
-This photograph should capture why ${featuredCorps} excelled in ${captionType} during their historic ${year} campaign.`;
+This photograph should capture why ${featuredCorps} excelled in ${captionType} - showing ${comp.camera.description}.`;
 }
 
 /**
@@ -1646,6 +1760,10 @@ This photograph should capture why ${featuredCorps} excelled in ${captionType} d
 function buildFantasyPerformersImagePrompt(topCorpsName, theme, location = null, uniformDesign = null) {
   const details = getFantasyUniformDetails(topCorpsName, location, uniformDesign);
 
+  // Get random composition for variety
+  const seed = `${topCorpsName}-${location || "fantasy"}-performers`;
+  const comp = getRandomComposition(seed);
+
   // Determine venue based on director preference or default
   const venueDescription = details.venuePreference === "indoor"
     ? "Modern indoor arena with dramatic LED lighting systems"
@@ -1653,7 +1771,7 @@ function buildFantasyPerformersImagePrompt(topCorpsName, theme, location = null,
       ? "Outdoor stadium under evening sky with dramatic stadium lighting"
       : "Professional marching arts competition venue with dramatic lighting";
 
-  return `Photorealistic field-side photograph of a performer from the fantasy marching arts ensemble "${topCorpsName}"${location ? ` from ${location}` : ""}.
+  return `Photorealistic photograph of a performer from the fantasy marching arts ensemble "${topCorpsName}"${location ? ` from ${location}` : ""}.
 
 UNIFORM DESIGN${details.matchedTheme === "director-custom" ? " (Director-Specified)" : ""}:
 - Colors: ${details.colors}
@@ -1663,23 +1781,31 @@ UNIFORM DESIGN${details.matchedTheme === "director-custom" ? " (Director-Specifi
 - Guard elements: ${details.guard}
 ${details.additionalNotes ? `- Special notes: ${details.additionalNotes}` : ""}
 
+COMPOSITION & CAMERA:
+- Position: ${comp.camera.angle}
+- Focus: ${comp.focus.focus} - ${comp.focus.framing}
+- Moment: ${comp.moment.moment}
+- Capturing: ${comp.moment.emotion}
+
 SCENE SETTING:
 - ${venueDescription}
-- ${theme || "Victory moment after an award-winning performance"}
+- ${theme || "Competition performance moment"}
 - ${details.performanceStyle ? `Performance style: ${details.performanceStyle}` : "Professional marching arts competition atmosphere"}
-- Crowd on their feet in background, celebration energy
+
+LIGHTING & ATMOSPHERE:
+- ${comp.lighting.lighting}
+- Mood: ${comp.lighting.mood}
+- Stadium/arena environment enhancing the drama
 
 PERFORMER DETAILS:
-- Brass performer holding instrument triumphantly
-- Expression of joy and accomplishment
+- Expression showing ${comp.moment.emotion}
 - Uniform pristine and dramatically lit
-- Stadium spotlights creating dramatic rim lighting
+- Athletic, professional bearing
 
 PHOTOGRAPHY STYLE:
-- Sports photography, celebration moment
-- Shallow depth of field isolating performer
+- Professional sports photography
+- ${comp.focus.framing}
 - High contrast, saturated colors matching corps theme
-- Lens flare from stadium lights adding drama
 
 AUTHENTICITY:
 - Instrument must be realistic (baritone, mellophone, or trumpet with correct valve/tubing)
@@ -1687,7 +1813,7 @@ AUTHENTICITY:
 - White marching gloves, black marching shoes
 - Professional posture and bearing
 
-This is a fantasy corps created by a user${details.matchedTheme === "director-custom" ? " with custom uniform specifications" : ""}. The uniform should be distinctive and memorable while remaining authentic to competitive marching arts.`;
+This fantasy corps image should show ${comp.camera.description} - distinctive and memorable while authentic to competitive marching arts.`;
 }
 
 /**
@@ -1737,11 +1863,25 @@ function buildAnalyticsImagePrompt(featuredCorps, year, analysisType, showTitle 
   const details = getUniformDetails(featuredCorps, year);
   const themeContext = buildShowThemeContext(showTitle);
 
-  return `Photorealistic aerial/elevated photograph showing ${featuredCorps} (${year}) in a complex drill formation${showTitle ? ` from their show "${showTitle}"` : ""}.
+  // Get random composition for variety
+  const seed = `${featuredCorps}-${year}-${analysisType}-analytics`;
+  const comp = getRandomComposition(seed);
+
+  // Analytics-specific camera angles (elevated views for formation analysis)
+  const analyticsAngles = [
+    "press box level, 50 yards back, wide telephoto showing full formation",
+    "end zone tower, 40 feet up, looking down the length of the field",
+    "corner tower shot, capturing diagonal depth of formation",
+    "sideline scaffold, elevated 25 feet, parallel to company front",
+    "drone-style overhead, 60 feet up, geometric pattern emphasis",
+  ];
+  const selectedAngle = analyticsAngles[Math.abs(seed.split('').reduce((a, b) => ((a << 5) - a + b.charCodeAt(0)) | 0, 0)) % analyticsAngles.length];
+
+  return `Photorealistic elevated photograph showing ${featuredCorps} (${year}) in ${comp.formation.formation}${showTitle ? ` from their show "${showTitle}"` : ""}.
 
 FORMATION FOCUS:
-- Corps in geometric formation viewed from press box/tower angle
-- Pattern clearly visible: curved arc, diagonal lines, or company front
+- Corps displaying ${comp.formation.visual}
+- Pattern clearly visible from elevated position
 - Individual performers visible but formation structure is the focus
 
 UNIFORM ACCURACY:
@@ -1749,24 +1889,32 @@ UNIFORM ACCURACY:
 - Headwear: ${details.helmet}
 - Formation shows military precision and spacing
 ${themeContext}
+COMPOSITION & CAMERA:
+- Position: ${selectedAngle}
+- Formation: ${comp.formation.formation}
+- Wide shot capturing 30-50+ performers
+
+LIGHTING & ATMOSPHERE:
+- ${comp.lighting.lighting}
+- Mood: ${comp.lighting.mood}
+- Shadow patterns showing performer positions clearly
+
 ANALYTICAL ELEMENTS:
 - Yard lines visible for spatial reference
-- Shadow patterns showing performer positions
 - Formation geometry emphasized through lighting
+- Clear sight lines showing drill design precision
 
 PHOTOGRAPHY:
-- Elevated angle (45-60 degrees from horizontal)
-- Wide shot capturing 40+ performers
+- Elevated angle optimized for formation visibility
 - Sharp focus throughout formation
-- Stadium lights creating clear shadows
-- Late afternoon/golden hour lighting
+- Professional documentary style
 
 MOOD:
 - Analytical, studying excellence
 - Historic performance documentation
-- The kind of image coaches would study
+- The kind of image coaches would study for drill design
 
-This image should feel like film study material - capturing the precision and design that made ${featuredCorps}'s ${year} performance analytically significant.`;
+This image should feel like film study material - capturing ${comp.formation.visual} and the precision that made ${featuredCorps}'s ${year} ${analysisType} analytically significant.`;
 }
 
 // =============================================================================
