@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, Flag, ArrowRight, Check, ArrowLeft,
   Trophy, Target, Users, Star, Zap, Music,
-  ChevronRight, Sparkles, HelpCircle, PartyPopper
+  ChevronRight, Sparkles, HelpCircle, PartyPopper, AtSign, Loader2, CheckCircle2, XCircle
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, functions } from '../firebase';
@@ -206,6 +206,7 @@ const Onboarding = () => {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     displayName: '',
+    username: '',
     corpsName: '',
   });
   const [loading, setLoading] = useState(false);
@@ -214,6 +215,10 @@ const Onboarding = () => {
   const [currentCaptionIndex, setCurrentCaptionIndex] = useState(0);
   const [seasonData, setSeasonData] = useState(null);
   const [showCelebration, setShowCelebration] = useState(false);
+
+  // Username validation state
+  const [usernameStatus, setUsernameStatus] = useState({ checking: false, valid: null, message: '' });
+  const usernameCheckTimeout = React.useRef(null);
 
   // Global stores for schedule data
   const globalCurrentWeek = useSeasonStore((state) => state.currentWeek);
@@ -255,10 +260,75 @@ const Onboarding = () => {
     fetchSeasonData();
   }, []);
 
-  const handleNext = () => {
-    if (step === 1 && !formData.displayName.trim()) {
-      toast.error('Please enter your director name');
+  // Username validation function
+  const validateUsername = async (username) => {
+    // Clear any pending timeout
+    if (usernameCheckTimeout.current) {
+      clearTimeout(usernameCheckTimeout.current);
+    }
+
+    // Reset if empty
+    if (!username.trim()) {
+      setUsernameStatus({ checking: false, valid: null, message: '' });
       return;
+    }
+
+    // Basic format validation (3-15 chars, alphanumeric + underscore)
+    if (username.length < 3) {
+      setUsernameStatus({ checking: false, valid: false, message: 'Username must be at least 3 characters' });
+      return;
+    }
+    if (username.length > 15) {
+      setUsernameStatus({ checking: false, valid: false, message: 'Username must be 15 characters or less' });
+      return;
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      setUsernameStatus({ checking: false, valid: false, message: 'Only letters, numbers, and underscores allowed' });
+      return;
+    }
+
+    // Show checking state
+    setUsernameStatus({ checking: true, valid: null, message: 'Checking availability...' });
+
+    // Debounce the server check
+    usernameCheckTimeout.current = setTimeout(async () => {
+      try {
+        const checkUsername = httpsCallable(functions, 'checkUsername');
+        await checkUsername({ username });
+        setUsernameStatus({ checking: false, valid: true, message: 'Username is available!' });
+      } catch (error) {
+        if (error.code === 'functions/already-exists') {
+          setUsernameStatus({ checking: false, valid: false, message: 'This username is already taken' });
+        } else if (error.code === 'functions/invalid-argument') {
+          setUsernameStatus({ checking: false, valid: false, message: error.message });
+        } else {
+          setUsernameStatus({ checking: false, valid: false, message: 'Could not verify username' });
+        }
+      }
+    }, 500);
+  };
+
+  // Handle username input change
+  const handleUsernameChange = (e) => {
+    const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+    setFormData({ ...formData, username: value });
+    validateUsername(value);
+  };
+
+  const handleNext = () => {
+    if (step === 1) {
+      if (!formData.displayName.trim()) {
+        toast.error('Please enter your director name');
+        return;
+      }
+      if (!formData.username.trim()) {
+        toast.error('Please choose a username');
+        return;
+      }
+      if (usernameStatus.valid !== true) {
+        toast.error('Please choose a valid, available username');
+        return;
+      }
     }
     if (step === 2 && !formData.corpsName.trim()) {
       toast.error('Please enter a name for your corps');
@@ -289,13 +359,21 @@ const Onboarding = () => {
       return;
     }
 
+    // Final username validation before submit
+    if (usernameStatus.valid !== true) {
+      toast.error('Please choose a valid, available username');
+      return;
+    }
+
     setLoading(true);
     try {
       const profileRef = doc(db, `artifacts/marching-art/users/${user.uid}/profile/data`);
+      const usernameRef = doc(db, `usernames/${formData.username.toLowerCase()}`);
 
       const profileData = {
         uid: user.uid,
         email: user.email,
+        username: formData.username.trim().toLowerCase(),
         displayName: formData.displayName.trim(),
         location: '', // Can add later in profile
         bio: '',
@@ -351,6 +429,9 @@ const Onboarding = () => {
       };
 
       await setDoc(profileRef, profileData);
+
+      // Reserve username in usernames collection
+      await setDoc(usernameRef, { uid: user.uid });
 
       // Auto-register for current week's shows
       try {
@@ -540,20 +621,64 @@ const Onboarding = () => {
                       })}
                     </div>
 
-                    <div className="pt-2">
-                      <label className="label flex items-center gap-2">
-                        <User className="w-4 h-4 text-gold-400" />
-                        What's your name, Director?
-                      </label>
-                      <input
-                        type="text"
-                        className="input text-lg"
-                        placeholder="e.g., George Zingali"
-                        value={formData.displayName}
-                        onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-                        maxLength={50}
-                        autoFocus
-                      />
+                    <div className="pt-2 space-y-4">
+                      <div>
+                        <label className="label flex items-center gap-2">
+                          <User className="w-4 h-4 text-gold-400" />
+                          What's your name, Director?
+                        </label>
+                        <input
+                          type="text"
+                          className="input text-lg"
+                          placeholder="e.g., George Zingali"
+                          value={formData.displayName}
+                          onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+                          maxLength={50}
+                          autoFocus
+                        />
+                      </div>
+
+                      <div>
+                        <label className="label flex items-center gap-2">
+                          <AtSign className="w-4 h-4 text-gold-400" />
+                          Choose a username
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            className={`input text-lg pr-10 ${
+                              usernameStatus.valid === true ? 'border-green-500/50 focus:border-green-500' :
+                              usernameStatus.valid === false ? 'border-red-500/50 focus:border-red-500' : ''
+                            }`}
+                            placeholder="e.g., drumcorps_fan"
+                            value={formData.username}
+                            onChange={handleUsernameChange}
+                            maxLength={15}
+                          />
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            {usernameStatus.checking && (
+                              <Loader2 className="w-5 h-5 text-cream-400 animate-spin" />
+                            )}
+                            {!usernameStatus.checking && usernameStatus.valid === true && (
+                              <CheckCircle2 className="w-5 h-5 text-green-400" />
+                            )}
+                            {!usernameStatus.checking && usernameStatus.valid === false && (
+                              <XCircle className="w-5 h-5 text-red-400" />
+                            )}
+                          </div>
+                        </div>
+                        {usernameStatus.message && (
+                          <p className={`text-xs mt-1 ${
+                            usernameStatus.valid === true ? 'text-green-400' :
+                            usernameStatus.valid === false ? 'text-red-400' : 'text-cream-400'
+                          }`}>
+                            {usernameStatus.message}
+                          </p>
+                        )}
+                        <p className="text-xs text-cream-500 mt-1">
+                          3-15 characters, letters, numbers, and underscores only
+                        </p>
+                      </div>
                     </div>
 
                     <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
@@ -701,7 +826,10 @@ const Onboarding = () => {
               {step < steps.length ? (
                 <button
                   onClick={handleNext}
-                  disabled={(step === 1 && !formData.displayName.trim()) || (step === 2 && !formData.corpsName.trim())}
+                  disabled={
+                    (step === 1 && (!formData.displayName.trim() || !formData.username.trim() || usernameStatus.valid !== true)) ||
+                    (step === 2 && !formData.corpsName.trim())
+                  }
                   className="flex-1 px-6 py-3 bg-gold-500 text-charcoal-900 rounded-lg hover:bg-gold-400 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   Continue

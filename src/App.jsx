@@ -16,6 +16,7 @@ import {
 } from './components/Skeleton';
 import GameShell from './components/Layout/GameShell';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
+import UsernamePromptModal from './components/modals/UsernamePromptModal';
 import { CelebrationContainer } from './components/Celebration';
 import { XPFeedbackContainer } from './components/XPFeedback';
 import { LevelUpCelebrationContainer } from './components/LevelUpCelebration';
@@ -226,6 +227,9 @@ function App() {
 
         {/* PWA Install Prompt - shows after user engagement */}
         {user && <PWAInstallPrompt />}
+
+        {/* Username Prompt Modal - shows for existing users without username */}
+        {user && <UsernamePromptModal />}
 
         {/* Celebration System - for achievements and level ups */}
         <CelebrationContainer />
