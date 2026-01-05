@@ -828,7 +828,9 @@ const Dashboard = () => {
   const dashboardData = useDashboardData();
   const { aggregatedScores, loading: scoresLoading } = useScoresData({
     // Dashboard should only show current season data, not fall back to archived seasons
-    disableArchiveFallback: true
+    disableArchiveFallback: true,
+    // Filter to active corps class to include SoundSport scores (excluded by default with 'all')
+    classFilter: dashboardData.activeCorpsClass || 'all'
   });
   const { data: myLeagues } = useMyLeagues(user?.uid);
   const { trigger: haptic } = useHaptic();
