@@ -2306,7 +2306,7 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
     // Core 4 articles always included
     const articlePromises = [
       generateDciStandingsArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db }),
-      generateDciCaptionsArticle({ reportDay, dayScores, captionLeaders, activeCorps, showContext, competitionContext, db }),
+      generateDciCaptionsArticle({ reportDay, dayScores, captionLeaders, activeCorps, showContext, competitionContext, trendData, db }),
       generateFantasyPerformersArticle({ reportDay, fantasyData, showContext, competitionContext, db, dataDocId }),
       generateFantasyLeaguesArticle({ reportDay, fantasyData, showContext, competitionContext }),
     ];
@@ -2386,12 +2386,32 @@ EVENT INFORMATION
 
 TODAY'S COMPETITION RESULTS from ${showContext.showName} in ${showContext.location}:
 
-STANDINGS (Corps Name | Historical Season Year | Total Score | Daily Change):
+STANDINGS WITH MOMENTUM ANALYSIS (Corps | Season | Score | Momentum):
 ${dayScores.slice(0, 12).map((s, i) => {
   const trend = trendData[s.corps];
   const change = trend?.dayChange || 0;
-  return `${i + 1}. ${s.corps} (${s.sourceYear} season): ${s.total.toFixed(3)} pts [${change >= 0 ? '+' : ''}${change.toFixed(3)} from yesterday]`;
+  const narrative = getTrendNarrative(trend, s.corps + reportDay);
+  const momentumDesc = narrative?.full || "maintaining form";
+  const captionNote = trend?.captionTrends ?
+    Object.entries(trend.captionTrends).filter(([_, v]) => v.trending !== "stable").map(([k, v]) => `${k.toUpperCase()} ${v.trending}`).join(", ") : "";
+  return `${i + 1}. ${s.corps} (${s.sourceYear}): ${s.total.toFixed(3)} pts [${change >= 0 ? '+' : ''}${change.toFixed(3)}]
+   → ${momentumDesc}${trend?.streak >= 3 ? ` (${trend.streak}-day streak)` : ""}${captionNote ? ` | ${captionNote}` : ""}`;
 }).join('\n')}
+
+TREND HIGHLIGHTS:
+${(() => {
+  const surging = Object.entries(trendData).filter(([_, t]) => t.momentum === "surging" || t.momentum === "hot");
+  const sliding = Object.entries(trendData).filter(([_, t]) => t.momentum === "sliding" || t.momentum === "cold");
+  const atBest = Object.entries(trendData).filter(([_, t]) => t.atSeasonBest);
+  const atWorst = Object.entries(trendData).filter(([_, t]) => t.atSeasonWorst);
+
+  const highlights = [];
+  if (surging.length > 0) highlights.push(`🔥 HOT: ${surging.map(([c]) => c).join(", ")}`);
+  if (sliding.length > 0) highlights.push(`❄️ COLD: ${sliding.map(([c]) => c).join(", ")}`);
+  if (atBest.length > 0) highlights.push(`📈 SEASON BEST: ${atBest.map(([c]) => c).join(", ")}`);
+  if (atWorst.length > 0) highlights.push(`📉 SEASON LOW: ${atWorst.map(([c]) => c).join(", ")}`);
+  return highlights.length > 0 ? highlights.join('\n') : "No significant trend changes today";
+})()}
 
 KEY STATISTICS:
 - Lead margin: ${topCorps?.corps || 'N/A'} leads by ${gap} points
@@ -2475,7 +2495,7 @@ Reference that these are real historical DCI performances being relived through 
 /**
  * Article 2: DCI Caption Analysis
  */
-async function generateDciCaptionsArticle({ reportDay, dayScores, captionLeaders, activeCorps, showContext, competitionContext, db }) {
+async function generateDciCaptionsArticle({ reportDay, dayScores, captionLeaders, activeCorps, showContext, competitionContext, trendData, db }) {
   // Get dynamic tone guidance
   const toneGuidance = getToneGuidance(competitionContext, "dci_captions");
 
@@ -2504,6 +2524,28 @@ SUBCATEGORY TOTALS (Top 5 Corps):
 General Effect: ${dayScores.slice(0, 5).map(s => `${s.corps}: ${s.subtotals.ge.toFixed(2)}`).join(' | ')}
 Visual Total: ${dayScores.slice(0, 5).map(s => `${s.corps}: ${s.subtotals.visual.toFixed(2)}`).join(' | ')}
 Music Total: ${dayScores.slice(0, 5).map(s => `${s.corps}: ${s.subtotals.music.toFixed(2)}`).join(' | ')}
+
+CAPTION TREND ANALYSIS (Corps with notable caption movement):
+${(() => {
+  const captionMovers = dayScores.slice(0, 8).map(s => {
+    const trend = trendData[s.corps];
+    const captionTrends = trend?.captionTrends;
+    const narrativeParts = [];
+
+    if (captionTrends) {
+      if (captionTrends.ge.trending === "up") narrativeParts.push("GE climbing");
+      if (captionTrends.ge.trending === "down") narrativeParts.push("GE dipping");
+      if (captionTrends.visual.trending === "up") narrativeParts.push("visual sharpening");
+      if (captionTrends.visual.trending === "down") narrativeParts.push("visual slipping");
+      if (captionTrends.music.trending === "up") narrativeParts.push("music heating up");
+      if (captionTrends.music.trending === "down") narrativeParts.push("music cooling");
+    }
+
+    const trendNote = narrativeParts.length > 0 ? ` → ${narrativeParts.join(", ")}` : " → stable across all captions";
+    return `• ${s.corps}: GE ${s.subtotals.ge.toFixed(2)} | Vis ${s.subtotals.visual.toFixed(2)} | Mus ${s.subtotals.music.toFixed(2)}${trendNote}`;
+  });
+  return captionMovers.join('\n');
+})()}
 
 ${toneGuidance}
 
@@ -2895,13 +2937,95 @@ EVENT INFORMATION
 STATISTICAL ANALYSIS from ${showContext.showName} on ${showContext.date}:
 
 ═══════════════════════════════════════════════════════════════
-MOMENTUM INDICATORS (Single-Day Movement)
+MOMENTUM CLASSIFICATIONS (Extended Analysis)
 ═══════════════════════════════════════════════════════════════
-SURGING (>0.1 point gain from yesterday):
-${bigGainers.length > 0 ? bigGainers.map(([c, t]) => `• ${c}: +${t.dayChange.toFixed(3)} (latest: ${t.latestTotal?.toFixed(3) || 'N/A'})`).join('\n') : '• No corps gained >0.1 points today'}
+${(() => {
+  const classifications = {
+    surging: Object.entries(trendData).filter(([, t]) => t.momentum === "surging"),
+    hot: Object.entries(trendData).filter(([, t]) => t.momentum === "hot"),
+    rising: Object.entries(trendData).filter(([, t]) => t.momentum === "rising"),
+    steady: Object.entries(trendData).filter(([, t]) => t.momentum === "steady" || t.momentum === "consistent"),
+    cooling: Object.entries(trendData).filter(([, t]) => t.momentum === "cooling"),
+    cold: Object.entries(trendData).filter(([, t]) => t.momentum === "cold"),
+    sliding: Object.entries(trendData).filter(([, t]) => t.momentum === "sliding"),
+  };
 
-COOLING OFF (>0.1 point drop from yesterday):
-${bigLosers.length > 0 ? bigLosers.map(([c, t]) => `• ${c}: ${t.dayChange.toFixed(3)} (latest: ${t.latestTotal?.toFixed(3) || 'N/A'})`).join('\n') : '• No corps dropped >0.1 points today'}
+  const output = [];
+  if (classifications.surging.length > 0) {
+    output.push(`🔥 SURGING (3+ day winning streak): ${classifications.surging.map(([c, t]) => {
+      const narrative = getTrendNarrative(t, c);
+      return `${c} (${t.streak}-day streak, ${narrative?.momentum || ""})`;
+    }).join(", ")}`);
+  }
+  if (classifications.hot.length > 0) {
+    output.push(`🌡️ HOT (strong upward momentum): ${classifications.hot.map(([c]) => c).join(", ")}`);
+  }
+  if (classifications.rising.length > 0) {
+    output.push(`📈 RISING (positive trajectory): ${classifications.rising.map(([c]) => c).join(", ")}`);
+  }
+  if (classifications.cooling.length > 0) {
+    output.push(`📉 COOLING (slight regression): ${classifications.cooling.map(([c]) => c).join(", ")}`);
+  }
+  if (classifications.cold.length > 0) {
+    output.push(`❄️ COLD (downward momentum): ${classifications.cold.map(([c]) => c).join(", ")}`);
+  }
+  if (classifications.sliding.length > 0) {
+    output.push(`⬇️ SLIDING (3+ day losing streak): ${classifications.sliding.map(([c, t]) => {
+      return `${c} (${t.streak}-day decline)`;
+    }).join(", ")}`);
+  }
+  return output.length > 0 ? output.join('\n') : "All corps relatively steady today";
+})()}
+
+═══════════════════════════════════════════════════════════════
+SINGLE-DAY MOVEMENT
+═══════════════════════════════════════════════════════════════
+BIGGEST GAINERS (>0.1 point gain):
+${bigGainers.length > 0 ? bigGainers.map(([c, t]) => {
+  const narrative = getTrendNarrative(t, c);
+  return `• ${c}: +${t.dayChange.toFixed(3)} → ${narrative?.full || "improving"}`;
+}).join('\n') : '• No corps gained >0.1 points today'}
+
+BIGGEST DROPS (>0.1 point loss):
+${bigLosers.length > 0 ? bigLosers.map(([c, t]) => {
+  const narrative = getTrendNarrative(t, c);
+  return `• ${c}: ${t.dayChange.toFixed(3)} → ${narrative?.full || "regressing"}`;
+}).join('\n') : '• No corps dropped >0.1 points today'}
+
+═══════════════════════════════════════════════════════════════
+VOLATILITY & CONSISTENCY ANALYSIS
+═══════════════════════════════════════════════════════════════
+${(() => {
+  const byVolatility = Object.entries(trendData).sort((a, b) => b[1].volatility - a[1].volatility);
+  const highVol = byVolatility.slice(0, 3).filter(([, t]) => t.volatility > 0.15);
+  const lowVol = byVolatility.slice(-3).filter(([, t]) => t.volatility < 0.15);
+
+  const output = [];
+  if (highVol.length > 0) {
+    output.push(`HIGH VOLATILITY (unpredictable):\n${highVol.map(([c, t]) => `• ${c}: σ=${t.volatility.toFixed(3)} - inconsistent but capable of big swings`).join('\n')}`);
+  }
+  if (lowVol.length > 0) {
+    output.push(`LOW VOLATILITY (predictable):\n${lowVol.map(([c, t]) => `• ${c}: σ=${t.volatility.toFixed(3)} - consistent, reliable performances`).join('\n')}`);
+  }
+  return output.join('\n\n') || "Volatility data not available";
+})()}
+
+═══════════════════════════════════════════════════════════════
+SEASON PERFORMANCE MARKERS
+═══════════════════════════════════════════════════════════════
+${(() => {
+  const atBest = Object.entries(trendData).filter(([, t]) => t.atSeasonBest);
+  const atWorst = Object.entries(trendData).filter(([, t]) => t.atSeasonWorst);
+
+  const output = [];
+  if (atBest.length > 0) {
+    output.push(`AT SEASON HIGH: ${atBest.map(([c, t]) => `${c} (${t.latestTotal?.toFixed(3)})`).join(", ")}`);
+  }
+  if (atWorst.length > 0) {
+    output.push(`AT SEASON LOW: ${atWorst.map(([c, t]) => `${c} (${t.latestTotal?.toFixed(3)})`).join(", ")}`);
+  }
+  return output.length > 0 ? output.join('\n') : "No corps at season extremes today";
+})()}
 
 ═══════════════════════════════════════════════════════════════
 7-DAY TREND ANALYSIS (Performance vs. Weekly Average)
@@ -3085,15 +3209,32 @@ FEATURED CORPS: ${featuredUnderdog.corps}
 • Daily Change: ${featuredUnderdog.trend?.dayChange >= 0 ? '+' : ''}${(featuredUnderdog.trend?.dayChange || 0).toFixed(3)}
 • 7-Day Trend: ${featuredUnderdog.trend?.trendFromAvg >= 0 ? '+' : ''}${(featuredUnderdog.trend?.trendFromAvg || 0).toFixed(3)} vs average
 
+MOMENTUM NARRATIVE:
+${(() => {
+  const narrative = getTrendNarrative(featuredUnderdog.trend, featuredUnderdog.corps + reportDay);
+  const parts = [];
+  if (narrative?.momentum) parts.push(`This corps is ${narrative.momentum}`);
+  if (narrative?.streak) parts.push(`with ${narrative.streak}`);
+  if (narrative?.caption) parts.push(`and ${narrative.caption}`);
+  if (narrative?.performance) parts.push(`— ${narrative.performance}`);
+  if (featuredUnderdog.trend?.streak >= 3) {
+    parts.push(`(${featuredUnderdog.trend.streak}-day winning streak)`);
+  }
+  return parts.length > 0 ? parts.join(" ") : "Building momentum steadily";
+})()}
+
 CAPTION BREAKDOWN:
-• General Effect: ${featuredUnderdog.subtotals?.ge?.toFixed(2) || 'N/A'}
-• Visual: ${featuredUnderdog.subtotals?.visual?.toFixed(2) || 'N/A'}
-• Music: ${featuredUnderdog.subtotals?.music?.toFixed(2) || 'N/A'}
+• General Effect: ${featuredUnderdog.subtotals?.ge?.toFixed(2) || 'N/A'}${featuredUnderdog.trend?.captionTrends?.ge?.trending === "up" ? " 📈" : featuredUnderdog.trend?.captionTrends?.ge?.trending === "down" ? " 📉" : ""}
+• Visual: ${featuredUnderdog.subtotals?.visual?.toFixed(2) || 'N/A'}${featuredUnderdog.trend?.captionTrends?.visual?.trending === "up" ? " 📈" : featuredUnderdog.trend?.captionTrends?.visual?.trending === "down" ? " 📉" : ""}
+• Music: ${featuredUnderdog.subtotals?.music?.toFixed(2) || 'N/A'}${featuredUnderdog.trend?.captionTrends?.music?.trending === "up" ? " 📈" : featuredUnderdog.trend?.captionTrends?.music?.trending === "down" ? " 📉" : ""}
+${featuredUnderdog.trend?.atSeasonBest ? "★ AT SEASON HIGH - Peaking at the perfect time!" : ""}
 
 COMPETITIVE CONTEXT:
 ${dayScores.slice(Math.max(0, currentRank - 3), currentRank + 2).map((s, i) => {
   const rank = Math.max(0, currentRank - 3) + i + 1;
-  return `${rank}. ${s.corps}: ${s.total.toFixed(3)}${s.corps === featuredUnderdog.corps ? ' ← FEATURED' : ''}`;
+  const corpsTrend = trendData[s.corps];
+  const momentum = corpsTrend?.momentum || "steady";
+  return `${rank}. ${s.corps}: ${s.total.toFixed(3)}${s.corps === featuredUnderdog.corps ? ' ← FEATURED' : ''} [${momentum}]`;
 }).join('\n')}
 
 ${toneGuidance}
@@ -3208,6 +3349,32 @@ ${showTitle ? `• Show Title: "${showTitle}"` : ''}
 • 7-Day Average: ${corpsTrend.avgTotal.toFixed(3)}
 • Trend vs Average: ${corpsTrend.trendFromAvg >= 0 ? '+' : ''}${corpsTrend.trendFromAvg.toFixed(3)}
 
+CURRENT MOMENTUM:
+${(() => {
+  const narrative = getTrendNarrative(corpsTrend, spotlightCorps.corps + reportDay);
+  const lines = [];
+  lines.push(`• Status: ${narrative?.momentum || "maintaining steady form"}`);
+  if (corpsTrend.streak >= 2) {
+    lines.push(`• Streak: ${corpsTrend.streak} consecutive days ${corpsTrend.streakDirection === "up" ? "improving" : "declining"}`);
+  }
+  if (narrative?.caption) {
+    lines.push(`• Caption Trend: ${narrative.caption}`);
+  }
+  if (corpsTrend.atSeasonBest) {
+    lines.push(`★ AT SEASON HIGH - This is their best performance yet!`);
+  } else if (corpsTrend.atSeasonWorst) {
+    lines.push(`⚠️ AT SEASON LOW - A challenging night`);
+  }
+  if (corpsTrend.volatility !== undefined) {
+    if (corpsTrend.volatility > 0.2) {
+      lines.push(`• Volatility: High (unpredictable, capable of big swings)`);
+    } else if (corpsTrend.volatility < 0.08) {
+      lines.push(`• Volatility: Low (remarkably consistent performer)`);
+    }
+  }
+  return lines.join('\n');
+})()}
+
 DETAILED CAPTION SCORES:
 • General Effect: ${spotlightCorps.subtotals?.ge?.toFixed(2) || 'N/A'}
   - GE1 (Music): ${spotlightCorps.captions?.GE1?.toFixed(2) || 'N/A'}
@@ -3225,8 +3392,25 @@ SURROUNDING COMPETITION:
 ${dayScores.slice(Math.max(0, currentRank - 2), Math.min(dayScores.length, currentRank + 3)).map((s, i) => {
   const rank = Math.max(0, currentRank - 2) + i + 1;
   const gap = s.total - spotlightCorps.total;
-  return `${rank}. ${s.corps}: ${s.total.toFixed(3)}${s.corps === spotlightCorps.corps ? ' ← SPOTLIGHT' : ` (${gap >= 0 ? '+' : ''}${gap.toFixed(3)})`}`;
+  const rivalTrend = trendData[s.corps];
+  const rivalMomentum = rivalTrend?.momentum || "steady";
+  return `${rank}. ${s.corps}: ${s.total.toFixed(3)}${s.corps === spotlightCorps.corps ? ' ← SPOTLIGHT' : ` (${gap >= 0 ? '+' : ''}${gap.toFixed(3)})`} [${rivalMomentum}]`;
 }).join('\n')}
+
+${(() => {
+  // Find the most interesting nearby rivalry based on momentum
+  const nearbyCorps = dayScores.slice(Math.max(0, currentRank - 2), Math.min(dayScores.length, currentRank + 3))
+    .filter(s => s.corps !== spotlightCorps.corps);
+
+  for (const rival of nearbyCorps) {
+    const rivalTrend = trendData[rival.corps];
+    if (rivalTrend && corpsTrend) {
+      const comparison = getComparativeTrendNarrative(spotlightCorps.corps, corpsTrend, rival.corps, rivalTrend);
+      if (comparison) return `RIVALRY WATCH: ${comparison}`;
+    }
+  }
+  return "";
+})()}
 
 ${toneGuidance}
 
@@ -3543,6 +3727,7 @@ function calculateTrendData(historicalData, reportDay, activeCorps) {
     const { corpsName, sourceYear } = corps;
     const yearEvents = historicalData[sourceYear] || [];
 
+    // Collect scores with caption breakdown
     const scores = [];
     for (let day = reportDay - 6; day <= reportDay; day++) {
       const dayEvent = yearEvents.find(e => e.offSeasonDay === day);
@@ -3550,27 +3735,371 @@ function calculateTrendData(historicalData, reportDay, activeCorps) {
         const corpsScore = dayEvent.scores.find(s => s.corps === corpsName);
         if (corpsScore) {
           const total = calculateTotal(corpsScore.captions);
-          if (total > 0) scores.push({ day, total });
+          const subtotals = calculateCaptionSubtotals(corpsScore.captions);
+          if (total > 0) scores.push({ day, total, captions: corpsScore.captions, subtotals });
         }
       }
     }
 
     if (scores.length >= 2) {
+      const sortedScores = [...scores].sort((a, b) => a.day - b.day);
       const avgTotal = scores.reduce((sum, s) => sum + s.total, 0) / scores.length;
-      const latestScore = scores.find(s => s.day === reportDay);
-      const previousScore = scores.find(s => s.day === reportDay - 1);
+      const latestScore = sortedScores.find(s => s.day === reportDay);
+      const previousScore = sortedScores.find(s => s.day === reportDay - 1);
+      const dayChange = latestScore && previousScore ? latestScore.total - previousScore.total : 0;
+      const trendFromAvg = latestScore ? latestScore.total - avgTotal : 0;
+
+      // Calculate streak (consecutive days of improvement/decline)
+      let streak = 0;
+      let streakDirection = null; // "up", "down", or null
+      for (let i = sortedScores.length - 1; i > 0; i--) {
+        const diff = sortedScores[i].total - sortedScores[i - 1].total;
+        if (i === sortedScores.length - 1) {
+          streakDirection = diff > 0.01 ? "up" : diff < -0.01 ? "down" : null;
+          if (streakDirection) streak = 1;
+        } else if (streakDirection === "up" && diff > 0.01) {
+          streak++;
+        } else if (streakDirection === "down" && diff < -0.01) {
+          streak++;
+        } else {
+          break;
+        }
+      }
+
+      // Determine momentum classification
+      let momentum = "steady";
+      if (streak >= 3 && streakDirection === "up") {
+        momentum = "surging";
+      } else if (streak >= 2 && streakDirection === "up" && trendFromAvg > 0.1) {
+        momentum = "hot";
+      } else if (dayChange > 0.15 || trendFromAvg > 0.15) {
+        momentum = "rising";
+      } else if (streak >= 3 && streakDirection === "down") {
+        momentum = "sliding";
+      } else if (streak >= 2 && streakDirection === "down" && trendFromAvg < -0.1) {
+        momentum = "cold";
+      } else if (dayChange < -0.15 || trendFromAvg < -0.15) {
+        momentum = "cooling";
+      } else if (Math.abs(trendFromAvg) < 0.05) {
+        momentum = "consistent";
+      }
+
+      // Find best and worst in window
+      const bestInWindow = Math.max(...scores.map(s => s.total));
+      const worstInWindow = Math.min(...scores.map(s => s.total));
+      const atSeasonBest = latestScore && Math.abs(latestScore.total - bestInWindow) < 0.01;
+      const atSeasonWorst = latestScore && Math.abs(latestScore.total - worstInWindow) < 0.01;
+
+      // Caption-specific trends (compare today to 7-day caption averages)
+      let captionTrends = null;
+      if (latestScore && scores.length >= 3) {
+        const avgGE = scores.reduce((s, d) => s + d.subtotals.ge, 0) / scores.length;
+        const avgVisual = scores.reduce((s, d) => s + d.subtotals.visual, 0) / scores.length;
+        const avgMusic = scores.reduce((s, d) => s + d.subtotals.music, 0) / scores.length;
+
+        captionTrends = {
+          ge: {
+            current: latestScore.subtotals.ge,
+            avg: avgGE,
+            diff: latestScore.subtotals.ge - avgGE,
+            trending: latestScore.subtotals.ge - avgGE > 0.05 ? "up" : latestScore.subtotals.ge - avgGE < -0.05 ? "down" : "stable",
+          },
+          visual: {
+            current: latestScore.subtotals.visual,
+            avg: avgVisual,
+            diff: latestScore.subtotals.visual - avgVisual,
+            trending: latestScore.subtotals.visual - avgVisual > 0.03 ? "up" : latestScore.subtotals.visual - avgVisual < -0.03 ? "down" : "stable",
+          },
+          music: {
+            current: latestScore.subtotals.music,
+            avg: avgMusic,
+            diff: latestScore.subtotals.music - avgMusic,
+            trending: latestScore.subtotals.music - avgMusic > 0.03 ? "up" : latestScore.subtotals.music - avgMusic < -0.03 ? "down" : "stable",
+          },
+        };
+      }
+
+      // Calculate volatility (standard deviation)
+      const volatility = Math.sqrt(
+        scores.reduce((sum, s) => sum + Math.pow(s.total - avgTotal, 2), 0) / scores.length
+      );
 
       trends[corpsName] = {
         sourceYear,
         avgTotal,
         latestTotal: latestScore?.total || null,
-        dayChange: latestScore && previousScore ? latestScore.total - previousScore.total : 0,
-        trendFromAvg: latestScore ? latestScore.total - avgTotal : 0,
+        dayChange,
+        trendFromAvg,
+        // Enhanced trend data
+        streak,
+        streakDirection,
+        momentum,
+        bestInWindow,
+        worstInWindow,
+        atSeasonBest,
+        atSeasonWorst,
+        captionTrends,
+        volatility,
+        dataPoints: scores.length,
       };
     }
   }
 
   return trends;
+}
+
+/**
+ * Generate narrative phrases for trend descriptions
+ * Provides variety in how trends are described across articles
+ */
+const TREND_NARRATIVES = {
+  surging: [
+    "on an absolute tear",
+    "riding a scorching hot streak",
+    "surging with unstoppable momentum",
+    "catching fire at exactly the right moment",
+    "in the midst of a remarkable run",
+  ],
+  hot: [
+    "building serious momentum",
+    "heating up nicely",
+    "showing impressive upward trajectory",
+    "on the rise and showing no signs of slowing",
+    "trending in exactly the right direction",
+  ],
+  rising: [
+    "continuing to climb",
+    "making steady gains",
+    "showing improvement",
+    "moving in the right direction",
+    "picking up steam",
+  ],
+  sliding: [
+    "struggling to find their footing",
+    "in an extended rough patch",
+    "dealing with a concerning downward trend",
+    "fighting against unfavorable momentum",
+    "trying to stop the bleeding",
+  ],
+  cold: [
+    "going through a cold spell",
+    "searching for answers",
+    "hitting some turbulence",
+    "in a frustrating slump",
+    "battling inconsistency",
+  ],
+  cooling: [
+    "cooling off slightly",
+    "seeing some regression",
+    "coming back to earth",
+    "experiencing a minor setback",
+    "taking a small step back",
+  ],
+  steady: [
+    "maintaining their form",
+    "holding steady",
+    "staying the course",
+    "keeping things consistent",
+    "delivering reliable performances",
+  ],
+  consistent: [
+    "rock solid in their consistency",
+    "remarkably stable",
+    "the picture of dependability",
+    "executing with precision night after night",
+    "a model of consistency",
+  ],
+};
+
+const STREAK_NARRATIVES = {
+  up: {
+    3: ["three straight days of improvement", "a three-day winning streak", "improvement for the third consecutive day"],
+    4: ["four days of continuous gains", "an impressive four-day climb", "gains every day this week"],
+    5: ["five straight days trending upward", "a remarkable five-day surge", "an entire week of improvement"],
+  },
+  down: {
+    3: ["three consecutive days of decline", "a three-day skid", "dropping for the third day running"],
+    4: ["four straight days of regression", "a concerning four-day slide", "losses every day this week"],
+    5: ["five days of continuous decline", "a five-day freefall", "struggling all week"],
+  },
+};
+
+const CAPTION_TREND_NARRATIVES = {
+  ge: {
+    up: ["GE scores climbing", "connecting better with judges on effect", "drawing stronger emotional response"],
+    down: ["GE scores dipping", "struggling to land the effect", "effect captions not quite hitting"],
+    stable: ["effect scores holding steady", "consistent GE output"],
+  },
+  visual: {
+    up: ["visual program clicking into place", "drill execution sharpening", "guard and visual coming together"],
+    down: ["visual clarity suffering", "some execution issues on the field", "visual program not quite clean"],
+    stable: ["visual program consistent", "reliable execution on the field"],
+  },
+  music: {
+    up: ["brass and percussion heating up", "musical program elevating", "hornline finding their voice"],
+    down: ["musical scores slipping", "brass not quite as sharp", "some intonation and balance issues"],
+    stable: ["musical program solid", "consistent brass and percussion output"],
+  },
+};
+
+/**
+ * Get a narrative description for a corps' trend
+ * @param {Object} trend - Trend data for a corps
+ * @param {string} seed - Optional seed for consistent randomization
+ * @returns {Object} Narrative components
+ */
+function getTrendNarrative(trend, seed = null) {
+  if (!trend) return null;
+
+  const selectPhrase = (arr) => {
+    if (!arr || arr.length === 0) return "";
+    if (seed) {
+      const hash = seed.split('').reduce((a, b) => ((a << 5) - a + b.charCodeAt(0)) | 0, 0);
+      return arr[Math.abs(hash) % arr.length];
+    }
+    return arr[Math.floor(Math.random() * arr.length)];
+  };
+
+  // Main momentum phrase
+  const momentumPhrase = selectPhrase(TREND_NARRATIVES[trend.momentum] || TREND_NARRATIVES.steady);
+
+  // Streak phrase (if applicable)
+  let streakPhrase = null;
+  if (trend.streak >= 3 && trend.streakDirection) {
+    const streakLevel = Math.min(trend.streak, 5);
+    const options = STREAK_NARRATIVES[trend.streakDirection]?.[streakLevel];
+    if (options) streakPhrase = selectPhrase(options);
+  }
+
+  // Caption highlights (pick the most notable)
+  let captionHighlight = null;
+  if (trend.captionTrends) {
+    const captionChanges = [
+      { caption: "ge", ...trend.captionTrends.ge },
+      { caption: "visual", ...trend.captionTrends.visual },
+      { caption: "music", ...trend.captionTrends.music },
+    ].filter(c => c.trending !== "stable")
+     .sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
+
+    if (captionChanges.length > 0) {
+      const top = captionChanges[0];
+      const phrases = CAPTION_TREND_NARRATIVES[top.caption]?.[top.trending];
+      if (phrases) captionHighlight = selectPhrase(phrases);
+    }
+  }
+
+  // Season best/worst note
+  let performanceNote = null;
+  if (trend.atSeasonBest) {
+    performanceNote = selectPhrase([
+      "hitting their season high",
+      "at their best score of the year",
+      "peaking at the right time",
+    ]);
+  } else if (trend.atSeasonWorst) {
+    performanceNote = selectPhrase([
+      "at their lowest point this season",
+      "hitting a season-low score",
+      "at rock bottom—nowhere to go but up",
+    ]);
+  }
+
+  // Volatility note
+  let stabilityNote = null;
+  if (trend.volatility > 0.3) {
+    stabilityNote = selectPhrase([
+      "highly unpredictable night to night",
+      "volatile performances making them hard to read",
+      "inconsistent but capable of big nights",
+    ]);
+  } else if (trend.volatility < 0.1) {
+    stabilityNote = selectPhrase([
+      "remarkably consistent show to show",
+      "predictable in the best way",
+      "you know exactly what you're going to get",
+    ]);
+  }
+
+  return {
+    momentum: momentumPhrase,
+    streak: streakPhrase,
+    caption: captionHighlight,
+    performance: performanceNote,
+    stability: stabilityNote,
+    // Full narrative combining key elements
+    full: buildFullNarrative(momentumPhrase, streakPhrase, captionHighlight, performanceNote),
+  };
+}
+
+/**
+ * Build a complete narrative sentence from components
+ */
+function buildFullNarrative(momentum, streak, caption, performance) {
+  const parts = [];
+
+  if (streak) {
+    parts.push(streak);
+  }
+
+  if (momentum) {
+    if (parts.length > 0) {
+      parts.push(`and ${momentum}`);
+    } else {
+      parts.push(momentum);
+    }
+  }
+
+  if (caption && parts.length < 2) {
+    if (parts.length > 0) {
+      parts.push(`with ${caption}`);
+    } else {
+      parts.push(caption);
+    }
+  }
+
+  if (performance && parts.length < 2) {
+    parts.push(performance);
+  }
+
+  return parts.join(", ");
+}
+
+/**
+ * Get comparative narrative between two corps' trends
+ * @param {Object} trend1 - First corps trend
+ * @param {Object} trend2 - Second corps trend
+ * @returns {string} Comparative narrative
+ */
+function getComparativeTrendNarrative(corps1Name, trend1, corps2Name, trend2) {
+  if (!trend1 || !trend2) return null;
+
+  const momentum1 = TREND_NARRATIVES[trend1.momentum]?.[0] || "steady";
+  const momentum2 = TREND_NARRATIVES[trend2.momentum]?.[0] || "steady";
+
+  // Corps moving in opposite directions
+  if ((trend1.momentum === "surging" || trend1.momentum === "hot") &&
+      (trend2.momentum === "sliding" || trend2.momentum === "cold")) {
+    return `${corps1Name} and ${corps2Name} are moving in opposite directions—${corps1Name} ${momentum1} while ${corps2Name} is ${momentum2}`;
+  }
+
+  // Both surging (collision course)
+  if ((trend1.momentum === "surging" || trend1.momentum === "hot") &&
+      (trend2.momentum === "surging" || trend2.momentum === "hot")) {
+    return `Both ${corps1Name} and ${corps2Name} are ${momentum1}—a collision course that should produce fireworks`;
+  }
+
+  // Both struggling
+  if ((trend1.momentum === "sliding" || trend1.momentum === "cold") &&
+      (trend2.momentum === "sliding" || trend2.momentum === "cold")) {
+    return `Neither ${corps1Name} nor ${corps2Name} can find momentum right now, both ${momentum1}`;
+  }
+
+  // One steady, one moving
+  if (trend1.momentum === "steady" || trend1.momentum === "consistent") {
+    return `${corps1Name} remains ${momentum1} while ${corps2Name} is ${momentum2}`;
+  }
+
+  return `${corps1Name} is ${momentum1}; ${corps2Name} is ${momentum2}`;
 }
 
 function identifyCaptionLeaders(dayScores, trendData) {
