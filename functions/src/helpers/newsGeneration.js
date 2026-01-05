@@ -1472,7 +1472,11 @@ async function generateFantasyPerformersArticle({ reportDay, fantasyData, showCo
 
   const shows = fantasyData.current.shows || [];
   const allResults = shows.flatMap(s => s.results || []);
-  const topPerformers = allResults.sort((a, b) => b.totalScore - a.totalScore).slice(0, 10);
+
+  // Filter out SoundSport corps - SoundSport is non-competitive and scores should not be published
+  // per SoundSport rules (celebration of participation, not rankings)
+  const competitiveResults = allResults.filter(r => r.corpsClass !== 'soundSport');
+  const topPerformers = competitiveResults.sort((a, b) => b.totalScore - a.totalScore).slice(0, 10);
 
   // Calculate some stats
   const avgScore = topPerformers.length > 0
@@ -1613,10 +1617,12 @@ async function generateFantasyLeaguesArticle({ reportDay, fantasyData, showConte
   const shows = fantasyData?.current?.shows || [];
   const showSummaries = shows.map(show => {
     const results = show.results || [];
-    const top3 = results.sort((a, b) => b.totalScore - a.totalScore).slice(0, 3);
+    // Filter out SoundSport corps - SoundSport is non-competitive and scores should not be published
+    const competitiveResults = results.filter(r => r.corpsClass !== 'soundSport');
+    const top3 = competitiveResults.sort((a, b) => b.totalScore - a.totalScore).slice(0, 3);
     return {
       name: formatFantasyEventName(show.showName || show.showId || 'Competition'),
-      entrants: results.length,
+      entrants: competitiveResults.length,
       topScorer: top3[0]?.corpsName || 'N/A',
       topScore: top3[0]?.totalScore?.toFixed(3) || '0.000',
     };
