@@ -55,6 +55,7 @@ const {
   updateUsername,
   updateEmail,
   getPublicProfile,
+  deleteAccount,
 } = require("./src/callable/profile");
 const {
   claimDailyLogin,
@@ -164,6 +165,7 @@ module.exports = {
   updateUsername,
   updateEmail,
   getPublicProfile,
+  deleteAccount,
   manualTrigger,
   migrateUserProfiles,
   createUserProfile,
