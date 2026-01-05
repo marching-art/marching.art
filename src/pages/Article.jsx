@@ -5,7 +5,7 @@
 // Uses the same layout as Landing page for consistency
 // Accessed via /article/:id route
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft, Trophy, Flame, BookOpen, Newspaper,
@@ -114,6 +114,9 @@ const Article = () => {
   const [engagement, setEngagement] = useState(location.state?.engagement || null);
   const [loading, setLoading] = useState(!article);
   const [error, setError] = useState(null);
+
+  // Ref for scrolling to comments
+  const commentsRef = useRef(null);
 
   // Compute trending players from movers across all classes
   const trendingPlayers = useMemo(() => {
@@ -233,6 +236,10 @@ const Article = () => {
 
   const handleCommentCountChange = (newCount) => {
     setEngagement(prev => prev ? { ...prev, commentCount: newCount } : { commentCount: newCount });
+  };
+
+  const scrollToComments = () => {
+    commentsRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   if (loading) {
@@ -384,21 +391,35 @@ const Article = () => {
 
                 {/* Reactions */}
                 <div className="px-5 lg:px-6 py-4 border-b border-[#333] bg-[#111]">
-                  <div className="flex items-center gap-3">
-                    {/* Share button */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {/* Share button */}
+                      <button
+                        onClick={handleShare}
+                        className="p-2 text-gray-500 hover:text-white hover:bg-white/10 transition-colors rounded-sm"
+                        title="Share article"
+                        aria-label="Share article"
+                      >
+                        <Share2 className="w-4 h-4" />
+                      </button>
+                      <ArticleReactions
+                        articleId={article.id}
+                        initialCounts={engagement?.reactionCounts}
+                        initialUserReaction={engagement?.userReaction}
+                      />
+                    </div>
+                    {/* Comment count - scrolls to comments */}
                     <button
-                      onClick={handleShare}
-                      className="p-2 text-gray-500 hover:text-white hover:bg-white/10 transition-colors rounded-sm"
-                      title="Share article"
-                      aria-label="Share article"
+                      onClick={scrollToComments}
+                      className="flex items-center gap-1.5 px-2 py-1.5 text-gray-500 hover:text-white hover:bg-white/10 transition-colors rounded-sm"
+                      title="Jump to comments"
+                      aria-label="Jump to comments"
                     >
-                      <Share2 className="w-4 h-4" />
+                      <MessageCircle className="w-4 h-4" />
+                      <span className="text-sm font-medium">
+                        {engagement?.commentCount || 0}
+                      </span>
                     </button>
-                    <ArticleReactions
-                      articleId={article.id}
-                      initialCounts={engagement?.reactionCounts}
-                      initialUserReaction={engagement?.userReaction}
-                    />
                   </div>
                 </div>
 
@@ -563,7 +584,7 @@ const Article = () => {
                 </div>
 
                 {/* Comments Section */}
-                <div className="p-5 lg:p-6 border-t border-[#333]">
+                <div ref={commentsRef} className="p-5 lg:p-6 border-t border-[#333]">
                   <ArticleComments
                     articleId={article.id}
                     initialCount={engagement?.commentCount || 0}
