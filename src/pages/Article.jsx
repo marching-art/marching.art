@@ -112,6 +112,11 @@ const Article = () => {
     fetchEngagement();
   }, [article, engagement]);
 
+  // Scroll to top when article loads
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
+
   // If no article in state, show error
   useEffect(() => {
     if (!article) {
