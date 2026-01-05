@@ -551,7 +551,7 @@ function EmptyState({ category }) {
 // MAIN COMPONENT
 // =============================================================================
 
-export default function NewsFeed({ onStoryClick, maxItems = 6 }) {
+export default function NewsFeed({ onStoryClick, maxItems = 5 }) {
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -564,7 +564,7 @@ export default function NewsFeed({ onStoryClick, maxItems = 6 }) {
     setError(null);
 
     try {
-      const result = await getRecentNews({ limit: maxItems + 2 });
+      const result = await getRecentNews({ limit: maxItems });
 
       if (result.data?.success && result.data.news?.length > 0) {
         setNews(result.data.news);
