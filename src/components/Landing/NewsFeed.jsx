@@ -11,8 +11,9 @@ import { useNavigate } from 'react-router-dom';
 import {
   Trophy, Flame, Clock, ChevronRight, TrendingUp, TrendingDown,
   Minus, AlertCircle, Newspaper, Loader2, DollarSign, ArrowUpRight,
-  ArrowDownRight, Zap, Radio, BookOpen
+  ArrowDownRight, Zap, Radio, BookOpen, Share2
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { getRecentNews, getArticleEngagement } from '../../api/functions';
 import { EngagementSummary } from '../Articles';
 
@@ -232,6 +233,43 @@ function FantasyROIBadge({ metrics }) {
 }
 
 /**
+ * Share Button - Allows sharing article via Web Share API or clipboard
+ */
+function ShareButton({ story, className = '' }) {
+  const handleShare = async (e) => {
+    e.stopPropagation(); // Prevent card click navigation
+
+    const shareUrl = `${window.location.origin}/article/${story.id}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: story.headline,
+          text: story.summary,
+          url: shareUrl,
+        });
+      } catch (err) {
+        // User cancelled or error - silently ignore
+      }
+    } else {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success('Link copied to clipboard');
+    }
+  };
+
+  return (
+    <button
+      onClick={handleShare}
+      className={`p-2 text-gray-500 hover:text-white hover:bg-white/10 transition-colors rounded-sm ${className}`}
+      title="Share article"
+      aria-label="Share article"
+    >
+      <Share2 className="w-4 h-4" />
+    </button>
+  );
+}
+
+/**
  * Professional Masthead - Category tabs and story count
  */
 function NewsMasthead({ activeCategory, onCategoryChange, storyCount, isLive }) {
@@ -402,6 +440,8 @@ function HeroStory({ story, onClick, storyNumber, engagement }) {
                 commentCount={engagement.commentCount}
               />
             )}
+            {/* Share button */}
+            <ShareButton story={story} />
             <div className="flex items-center gap-2">
               <span className="text-[10px] text-gray-600 uppercase">marching.art</span>
               <ChevronRight className="w-4 h-4 text-[#0057B8] group-hover:translate-x-0.5 transition-transform" />
@@ -491,6 +531,8 @@ function NewsCard({ story, onClick, storyNumber, engagement }) {
                 <span className="text-gray-400">{story.trendingCorps[0].corps}</span>
               </span>
             )}
+            {/* Share button */}
+            <ShareButton story={story} className="p-1.5" />
           </div>
         </div>
       </div>
@@ -538,6 +580,9 @@ function NewsRow({ story, onClick, storyNumber, engagement }) {
           {safeString(story.headline)}
         </h3>
       </div>
+
+      {/* Share button */}
+      <ShareButton story={story} className="p-1.5 flex-shrink-0" />
 
       <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-[#0057B8] transition-colors flex-shrink-0 mt-1" />
     </article>
