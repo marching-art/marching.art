@@ -10,9 +10,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   Trophy, Flame, Clock, ChevronRight, TrendingUp, TrendingDown,
   Minus, AlertCircle, Newspaper, Loader2, DollarSign, ArrowUpRight,
-  ArrowDownRight, Zap, Radio, BookOpen
+  ArrowDownRight, Zap, Radio, BookOpen, MessageSquare
 } from 'lucide-react';
-import { getRecentNews } from '../../api/functions';
+import { getRecentNews, getArticleEngagement } from '../../api/functions';
+import { ReactionSummary } from '../Articles';
 
 // =============================================================================
 // LAZY-LOADED FALLBACK DATA
@@ -285,7 +286,7 @@ function NewsMasthead({ activeCategory, onCategoryChange, storyCount, isLive }) 
 /**
  * Hero Story - Featured article with prominent display
  */
-function HeroStory({ story, onClick, storyNumber }) {
+function HeroStory({ story, onClick, storyNumber, engagement }) {
   const config = getCategoryConfig(story.category);
   const Icon = config.icon;
   const urgency = getUrgencyBadge(story.createdAt);
@@ -391,9 +392,28 @@ function HeroStory({ story, onClick, storyNumber }) {
               </span>
             ))}
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] text-gray-600 uppercase">marching.art</span>
-            <ChevronRight className="w-4 h-4 text-[#0057B8] group-hover:translate-x-0.5 transition-transform" />
+          <div className="flex items-center gap-4">
+            {/* Engagement stats */}
+            {engagement && (
+              <div className="flex items-center gap-3">
+                {engagement.reactionCounts?.total > 0 && (
+                  <ReactionSummary
+                    counts={engagement.reactionCounts}
+                    userReaction={engagement.userReaction}
+                  />
+                )}
+                {engagement.commentCount > 0 && (
+                  <div className="flex items-center gap-1 text-gray-500">
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span className="text-[11px] font-data tabular-nums">{engagement.commentCount}</span>
+                  </div>
+                )}
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-gray-600 uppercase">marching.art</span>
+              <ChevronRight className="w-4 h-4 text-[#0057B8] group-hover:translate-x-0.5 transition-transform" />
+            </div>
           </div>
         </div>
       </div>
@@ -404,7 +424,7 @@ function HeroStory({ story, onClick, storyNumber }) {
 /**
  * News Card - Compact card for secondary stories (grid layout)
  */
-function NewsCard({ story, onClick, storyNumber }) {
+function NewsCard({ story, onClick, storyNumber, engagement }) {
   const config = getCategoryConfig(story.category);
   const Icon = config.icon;
   const urgency = getUrgencyBadge(story.createdAt);
@@ -464,12 +484,31 @@ function NewsCard({ story, onClick, storyNumber }) {
             <span className="text-gray-600">·</span>
             <span>{readingTime}</span>
           </div>
-          {story.trendingCorps?.[0] && (
-            <span className="flex items-center gap-1 text-xs">
-              <TrendingBadge direction={story.trendingCorps[0].direction} />
-              <span className="text-gray-400">{story.trendingCorps[0].corps}</span>
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {/* Engagement stats */}
+            {engagement && (engagement.reactionCounts?.total > 0 || engagement.commentCount > 0) && (
+              <div className="flex items-center gap-2">
+                {engagement.reactionCounts?.total > 0 && (
+                  <ReactionSummary
+                    counts={engagement.reactionCounts}
+                    userReaction={engagement.userReaction}
+                  />
+                )}
+                {engagement.commentCount > 0 && (
+                  <div className="flex items-center gap-1 text-gray-500">
+                    <MessageSquare className="w-3 h-3" />
+                    <span className="text-[10px] font-data tabular-nums">{engagement.commentCount}</span>
+                  </div>
+                )}
+              </div>
+            )}
+            {story.trendingCorps?.[0] && (
+              <span className="flex items-center gap-1 text-xs">
+                <TrendingBadge direction={story.trendingCorps[0].direction} />
+                <span className="text-gray-400">{story.trendingCorps[0].corps}</span>
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </article>
@@ -479,7 +518,7 @@ function NewsCard({ story, onClick, storyNumber }) {
 /**
  * Compact News Row - For additional stories in a list format
  */
-function NewsRow({ story, onClick, storyNumber }) {
+function NewsRow({ story, onClick, storyNumber, engagement }) {
   const config = getCategoryConfig(story.category);
   const urgency = getUrgencyBadge(story.createdAt);
 
@@ -495,12 +534,29 @@ function NewsRow({ story, onClick, storyNumber }) {
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
+        <div className="flex items-center gap-2 mb-1 flex-wrap">
           <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase ${config.bgLightClass} ${config.textClass}`}>
             {config.label}
           </span>
           {urgency && <UrgencyBadge urgency={urgency} />}
           <span className="text-[10px] text-gray-600">{formatTimestamp(story.createdAt)}</span>
+          {/* Engagement stats */}
+          {engagement && (engagement.reactionCounts?.total > 0 || engagement.commentCount > 0) && (
+            <div className="flex items-center gap-2 ml-auto">
+              {engagement.reactionCounts?.total > 0 && (
+                <ReactionSummary
+                  counts={engagement.reactionCounts}
+                  userReaction={engagement.userReaction}
+                />
+              )}
+              {engagement.commentCount > 0 && (
+                <div className="flex items-center gap-0.5 text-gray-500">
+                  <MessageSquare className="w-3 h-3" />
+                  <span className="text-[10px] font-data tabular-nums">{engagement.commentCount}</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <h3 className="text-sm font-bold text-white leading-snug group-hover:text-gray-100 transition-colors line-clamp-2">
           {safeString(story.headline)}
@@ -559,6 +615,21 @@ export default function NewsFeed({ onStoryClick, maxItems = 5 }) {
   const [error, setError] = useState(null);
   const [hasMore, setHasMore] = useState(true);
   const [activeCategory, setActiveCategory] = useState('all');
+  const [engagement, setEngagement] = useState({}); // Map of articleId -> engagement data
+
+  // Fetch engagement data for articles
+  const fetchEngagement = async (articleIds) => {
+    if (!articleIds || articleIds.length === 0) return;
+
+    try {
+      const result = await getArticleEngagement({ articleIds });
+      if (result.data?.success) {
+        setEngagement(prev => ({ ...prev, ...result.data.engagement }));
+      }
+    } catch (err) {
+      console.error('Error fetching engagement:', err);
+    }
+  };
 
   const fetchNews = async () => {
     setLoading(true);
@@ -570,6 +641,9 @@ export default function NewsFeed({ onStoryClick, maxItems = 5 }) {
       if (result.data?.success && result.data.news?.length > 0) {
         setNews(result.data.news);
         setHasMore(result.data.hasMore ?? true);
+        // Fetch engagement data for these articles
+        const articleIds = result.data.news.map(n => n.id);
+        fetchEngagement(articleIds);
       } else {
         // Lazy-load fallback data only when API returns no results
         const fallbackNews = await loadFallbackNews();
@@ -609,6 +683,9 @@ export default function NewsFeed({ onStoryClick, maxItems = 5 }) {
       if (result.data?.success && result.data.news?.length > 0) {
         setNews(prev => [...prev, ...result.data.news]);
         setHasMore(result.data.hasMore ?? false);
+        // Fetch engagement for new articles
+        const articleIds = result.data.news.map(n => n.id);
+        fetchEngagement(articleIds);
       } else {
         setHasMore(false);
       }
@@ -673,6 +750,7 @@ export default function NewsFeed({ onStoryClick, maxItems = 5 }) {
               story={heroStory}
               onClick={handleStoryClick}
               storyNumber={1}
+              engagement={engagement[heroStory.id]}
             />
           )}
 
@@ -693,6 +771,7 @@ export default function NewsFeed({ onStoryClick, maxItems = 5 }) {
                     story={story}
                     onClick={handleStoryClick}
                     storyNumber={idx + 2}
+                    engagement={engagement[story.id]}
                   />
                 ))}
               </div>
@@ -714,6 +793,7 @@ export default function NewsFeed({ onStoryClick, maxItems = 5 }) {
                     story={story}
                     onClick={handleStoryClick}
                     storyNumber={gridStories.length + idx + 2}
+                    engagement={engagement[story.id]}
                   />
                 ))}
               </div>

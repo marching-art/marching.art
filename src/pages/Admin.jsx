@@ -10,7 +10,7 @@ import {
   Shield, Database, Users, Award, Calendar,
   Play, RefreshCw, FileText, Terminal,
   X, Search, Mail, UserCheck, UserX, Activity,
-  CheckCircle, AlertTriangle, Send, Newspaper, Flame, Inbox
+  CheckCircle, AlertTriangle, Send, Newspaper, Flame, Inbox, MessageSquare
 } from 'lucide-react';
 import { setUserRole, triggerDailyNews } from '../firebase/functions';
 import { db, adminHelpers } from '../firebase';
@@ -18,7 +18,7 @@ import { doc, getDoc, collection, getDocs, collectionGroup } from 'firebase/fire
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import { useAuth } from '../App';
-import { ScoresSpreadsheet, ArticleManagement, SubmissionsManagement } from '../components/Admin';
+import { ScoresSpreadsheet, ArticleManagement, SubmissionsManagement, CommentsModeration } from '../components/Admin';
 import LoadingScreen from '../components/LoadingScreen';
 
 // =============================================================================
@@ -556,6 +556,14 @@ const ContentTab = () => (
       <SectionHeader title="User Submissions" icon={Inbox} />
       <div className="p-4">
         <SubmissionsManagement />
+      </div>
+    </div>
+
+    {/* Comments Moderation */}
+    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      <SectionHeader title="Comments Moderation" icon={MessageSquare} />
+      <div className="p-4">
+        <CommentsModeration />
       </div>
     </div>
 
