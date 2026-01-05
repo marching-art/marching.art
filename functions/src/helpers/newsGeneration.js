@@ -2080,7 +2080,7 @@ FANTASY LEADERBOARD for ${showContext.date} (Day ${reportDay}):
 
 TOP 10 FANTASY ENSEMBLES:
 ${topPerformers.map((r, i) =>
-  `${i + 1}. "${r.corpsName}" (Director: ${r.displayName || 'Anonymous'}) - ${r.totalScore.toFixed(3)} fantasy points`
+  `${i + 1}. "${r.corpsName}" from ${r.location || 'Unknown'} (Director: ${r.displayName || 'Unknown'}) - ${r.totalScore.toFixed(3)} fantasy points`
 ).join('\n')}
 
 STATISTICS:
@@ -2090,7 +2090,7 @@ STATISTICS:
 
 WRITE A FANTASY SPORTS CELEBRATION ARTICLE:
 
-1. HEADLINE: Exciting fantasy sports headline celebrating the top performers. Examples: "The Crimson Guard Dominates Day ${reportDay} with ${topScore}-Point Explosion", "Anonymous Director's 'Blue Thunder' Claims Fantasy Crown"
+1. HEADLINE: Exciting fantasy sports headline celebrating the top performers. Include the director's name and/or location when relevant. Examples: "The Crimson Guard Dominates Day ${reportDay} with ${topScore}-Point Explosion", "Director Smith's 'Blue Thunder' from Chicago Claims Fantasy Crown"
 
 2. SUMMARY: 2-3 sentences about who dominated today's fantasy competition. Make it exciting!
 
@@ -2824,7 +2824,7 @@ This is like fantasy football, but for drum corps. Users create fantasy ensemble
 Write a Day ${offSeasonDay} fantasy sports recap article for these top-performing user ensembles:
 
 TOP FANTASY ENSEMBLES (user-created teams):
-${topPerformers.map((r, i) => `${i + 1}. "${r.corpsName}" (Director: ${r.displayName || 'Anonymous'}): ${r.totalScore.toFixed(3)} fantasy points`).join('\n')}
+${topPerformers.map((r, i) => `${i + 1}. "${r.corpsName}" from ${r.location || 'Unknown'} (Director: ${r.displayName || 'Unknown'}): ${r.totalScore.toFixed(3)} fantasy points`).join('\n')}
 
 Write like ESPN fantasy sports coverage. Focus on:
 - Which fantasy ensembles scored the most points
