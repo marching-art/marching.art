@@ -74,7 +74,8 @@ const TopNav = () => {
   const seasonLabel = getSeasonLabel();
 
   return (
-    <nav className="fixed top-0 w-full h-12 bg-[#1a1a1a] border-b border-[#333] z-50 flex items-center px-2 sm:px-4">
+    <nav className="fixed top-0 w-full h-12 bg-[#1a1a1a] border-b border-[#333] z-50">
+      <div className="max-w-[1920px] mx-auto h-full flex items-center px-2 sm:px-4">
       {/* Logo + Brand */}
       <Link to="/dashboard" className="flex items-center gap-2 mr-4">
         <img
@@ -105,6 +106,7 @@ const TopNav = () => {
         <NavItem to="/leagues" icon={Users} label="Leagues" />
         <NavItem to="/profile" icon={User} label="Profile" />
         {isAdmin && <NavItem to="/admin" icon={Shield} label="Admin" />}
+      </div>
       </div>
     </nav>
   );
@@ -498,7 +500,9 @@ const GameShell = ({ children }) => {
           role="main"
           className="fixed top-[84px] sm:top-20 left-0 right-0 bg-[#0a0a0a] overflow-hidden main-content-bottom"
         >
-          {children}
+          <div className="max-w-[1920px] mx-auto h-full">
+            {children}
+          </div>
         </main>
 
         {/* Mobile Bottom Navigation */}
