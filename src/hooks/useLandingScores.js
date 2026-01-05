@@ -108,13 +108,9 @@ export const useLandingScores = () => {
 
   // Process scores for landing page display
   const liveScores = useMemo(() => {
-    // Explicit guard: On Day 1, no scores should ever be visible
-    // (Day 1 scores are processed at 2 AM on Day 2, so they're visible starting Day 2)
-    if (currentDay === 1) {
-      return [];
-    }
-
-    if (corpsValues.length === 0 || Object.keys(historicalData).length === 0 || !effectiveDay) {
+    // Guard: If no data or effectiveDay is null/0, no scores should be visible
+    // effectiveDay is null on Day 1 and Day 2 before 2 AM (no processed scores yet)
+    if (corpsValues.length === 0 || Object.keys(historicalData).length === 0 || !effectiveDay || effectiveDay < 1) {
       return [];
     }
 
@@ -204,7 +200,7 @@ export const useLandingScores = () => {
     });
 
     return rankedScores;
-  }, [corpsValues, historicalData, effectiveDay, currentDay]);
+  }, [corpsValues, historicalData, effectiveDay]);
 
   // Get the display day (most recent day with scores)
   const displayDay = useMemo(() => {

@@ -897,17 +897,17 @@ const Dashboard = () => {
       setLineupScoresLoading(true);
       const isSoundSport = activeCorpsClass === 'soundSport';
 
-      // Explicit guard: On Day 1, no scores should ever be visible
-      // (Day 1 scores are processed at 2 AM on Day 2, so they're visible starting Day 2)
-      if (currentDay === 1) {
-        setLineupScoreData({});
-        setLineupScoresLoading(false);
-        return;
-      }
-
       try {
         // Calculate effective day (accounting for 2AM score processing)
         const effectiveDay = getEffectiveDay(currentDay);
+
+        // Guard: If effectiveDay is null or < 1, no scores should be visible
+        // This handles Day 1 (no previous day exists) and Day 2 before 2 AM (Day 1 not processed yet)
+        if (!effectiveDay || effectiveDay < 1) {
+          setLineupScoreData({});
+          setLineupScoresLoading(false);
+          return;
+        }
 
         // Get unique years from lineup
         const yearsNeeded = new Set();

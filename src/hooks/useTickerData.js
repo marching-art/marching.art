@@ -88,10 +88,6 @@ export const useTickerData = () => {
   // The day to show is the most recent day with processed scores
   // At 2 AM ET, scores for the current day are processed, so we can show them
   const displayDay = useMemo(() => {
-    // Explicit guard: On Day 1, no scores should ever be visible
-    // (Day 1 scores are processed at 2 AM on Day 2, so they're visible starting Day 2)
-    if (currentDay === 1) return null;
-
     if (allRecaps.length === 0) return null;
 
     // Calculate effective day (same logic as Dashboard and useLandingScores)
@@ -101,6 +97,9 @@ export const useTickerData = () => {
     const hour = new Date().getHours();
     const calculatedDay = hour < 2 ? currentDay - 2 : currentDay - 1;
     const effectiveDay = calculatedDay >= 1 ? calculatedDay : null;
+
+    // Guard: If effectiveDay is null (Day 1 or Day 2 before 2 AM), no scores should be visible
+    if (!effectiveDay || effectiveDay < 1) return null;
 
     // Find the most recent day that has scores up to and including effective day
     const availableDays = allRecaps
