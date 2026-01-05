@@ -1,0 +1,35 @@
+{
+  "name": "marching-art-functions",
+  "version": "1.0.0",
+  "description": "Cloud Functions for marching.art",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log",
+    "seed:dci": "node src/scripts/seedDciReference.js"
+  },
+  "dependencies": {
+    "@google-cloud/pubsub": "^4.0.0",
+    "@google-cloud/tasks": "^5.0.0",
+    "@getbrevo/brevo": "^2.2.0",
+    "@google/generative-ai": "^0.21.0",
+    "@sparticuz/chromium": "^131.0.0",
+    "axios": "^1.6.0",
+    "cheerio": "^1.1.2",
+    "cloudinary": "^2.5.1",
+    "firebase-admin": "^12.0.0",
+    "firebase-functions": "^6.6.0",
+    "puppeteer-core": "^24.27.0",
+    "stripe": "^17.4.0"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^3.1.0"
+  }
+}
