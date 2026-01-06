@@ -4,7 +4,7 @@
 // Displays user's streak, level, XP progress, and CorpsCoin
 // Matches site's data-terminal aesthetic: no rounded corners, tight spacing
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Flame, Zap, Coins, Lock, Unlock } from 'lucide-react';
 
@@ -397,4 +397,6 @@ export const DirectorCard: React.FC<DirectorCardProps> = ({
   );
 };
 
-export default DirectorCard;
+// OPTIMIZATION #6: Wrap with React.memo to prevent unnecessary re-renders
+// when parent component state changes but props haven't changed
+export default memo(DirectorCard);

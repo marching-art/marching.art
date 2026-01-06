@@ -30,14 +30,37 @@ const DRILL_STYLES = [
     { value: 'dance', label: 'Dance/Movement-Heavy', tags: ['theatrical', 'energetic', 'vibrant'] }
 ];
 
+// OPTIMIZATION #3: Pre-compute corps classification maps for O(1) lookups
+// instead of O(n) Array.some() calls on every synergy calculation
+const MODERN_CORPS = ['Blue Devils', 'Carolina Crown', 'Bluecoats', 'Santa Clara Vanguard'];
+const TRADITIONAL_CORPS = ['Cavaliers', 'Blue Knights', 'Madison Scouts'];
+const ARTISTIC_CORPS = ['Santa Clara Vanguard', 'Phantom Regiment', 'Blue Devils'];
+
+// Cache for corps tag lookups - avoids recomputing for the same corps
+const corpsTagCache = new Map();
+
+/**
+ * Check if a corps name matches any corps in the category list
+ * Uses includes() because historical data may have variations like "Blue Devils A" or "Blue Devils B"
+ */
+function matchesCorpsCategory(corpsName, categoryList) {
+    return categoryList.some(name => corpsName.includes(name));
+}
+
 /**
  * Default corps synergy tags based on historical era and corps characteristics
  * These provide baseline tags when specific corps data isn't available
+ * OPTIMIZATION #3: Uses caching to avoid recomputing tags for the same corps
  */
 const getDefaultCorpsTags = (corpsName, sourceYear) => {
+    const cacheKey = `${corpsName}|${sourceYear}`;
+    if (corpsTagCache.has(cacheKey)) {
+        return corpsTagCache.get(cacheKey);
+    }
+
     const year = parseInt(sourceYear);
     const tags = [];
-    
+
     // Era-based tags
     if (year < 2000) {
         tags.push('traditional', 'classical');
@@ -46,50 +69,54 @@ const getDefaultCorpsTags = (corpsName, sourceYear) => {
     } else {
         tags.push('modern', 'innovative', 'artistic');
     }
-    
-    // Corps-specific characteristics (simplified baseline)
-    const modernCorps = ['Blue Devils', 'Carolina Crown', 'Bluecoats', 'Santa Clara Vanguard'];
-    const traditionalCorps = ['Cavaliers', 'Blue Knights', 'Madison Scouts'];
-    const artisticCorps = ['Santa Clara Vanguard', 'Phantom Regiment', 'Blue Devils'];
-    
-    if (modernCorps.some(name => corpsName.includes(name))) {
+
+    // Corps-specific characteristics using pre-defined arrays
+    if (matchesCorpsCategory(corpsName, MODERN_CORPS)) {
         tags.push('bold', 'energetic');
     }
-    if (traditionalCorps.some(name => corpsName.includes(name))) {
+    if (matchesCorpsCategory(corpsName, TRADITIONAL_CORPS)) {
         tags.push('precise', 'powerful');
     }
-    if (artisticCorps.some(name => corpsName.includes(name))) {
+    if (matchesCorpsCategory(corpsName, ARTISTIC_CORPS)) {
         tags.push('artistic', 'dramatic');
     }
-    
-    return [...new Set(tags)]; // Remove duplicates
+
+    const result = [...new Set(tags)]; // Remove duplicates
+    corpsTagCache.set(cacheKey, result);
+    return result;
 };
+
+// OPTIMIZATION #3: Pre-compute Maps for O(1) lookups instead of O(n) Array.find() calls
+const THEME_MAP = new Map(SHOW_THEMES.map(t => [t.value, t.tags]));
+const MUSIC_SOURCE_MAP = new Map(MUSIC_SOURCES.map(s => [s.value, s.tags]));
+const DRILL_STYLE_MAP = new Map(DRILL_STYLES.map(d => [d.value, d.tags]));
 
 /**
  * Get all tags from a show concept selection
+ * OPTIMIZATION #3: Uses pre-computed Maps for O(1) lookups
  */
 function getShowConceptTags(showConcept) {
     if (!showConcept || typeof showConcept !== 'object') {
         return [];
     }
-    
+
     const tags = [];
-    
+
     if (showConcept.theme) {
-        const theme = SHOW_THEMES.find(t => t.value === showConcept.theme);
-        if (theme) tags.push(...theme.tags);
+        const themeTags = THEME_MAP.get(showConcept.theme);
+        if (themeTags) tags.push(...themeTags);
     }
-    
+
     if (showConcept.musicSource) {
-        const source = MUSIC_SOURCES.find(s => s.value === showConcept.musicSource);
-        if (source) tags.push(...source.tags);
+        const sourceTags = MUSIC_SOURCE_MAP.get(showConcept.musicSource);
+        if (sourceTags) tags.push(...sourceTags);
     }
-    
+
     if (showConcept.drillStyle) {
-        const style = DRILL_STYLES.find(d => d.value === showConcept.drillStyle);
-        if (style) tags.push(...style.tags);
+        const styleTags = DRILL_STYLE_MAP.get(showConcept.drillStyle);
+        if (styleTags) tags.push(...styleTags);
     }
-    
+
     return [...new Set(tags)]; // Return unique tags
 }
 

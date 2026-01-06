@@ -1,13 +1,14 @@
 // MatchupsTab - Real matchups from Firestore, grouped by corps class
 // Design System: Compact strips, inline scores, week navigation
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { Swords, Calendar, Radio, Flame, ChevronLeft, ChevronRight, Trophy, Award, Star, Zap } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../firebase';
 import { GAME_CONFIG } from '../../../config';
-import MatchupDetailView from '../MatchupDetailView';
+// OPTIMIZATION #9: Lazy-load heavy MatchupDetailView component (1058 lines)
+const MatchupDetailView = lazy(() => import('../MatchupDetailView'));
 
 // Corps class display configuration
 const CORPS_CLASS_CONFIG = {
@@ -198,18 +199,20 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
   // Show matchup detail if selected
   if (selectedMatchup) {
     return (
-      <MatchupDetailView
-        matchup={selectedMatchup}
-        league={league}
-        userProfile={userProfile}
-        memberProfiles={memberProfiles}
-        standings={standings}
-        currentWeek={currentWeek}
-        onBack={() => setSelectedMatchup(null)}
-        rivalry={isRivalryMatchup(selectedMatchup) ? rivalries.find(r =>
-          r.rivalId === (selectedMatchup.user1 === userProfile?.uid ? selectedMatchup.user2 : selectedMatchup.user1)
-        ) : null}
-      />
+      <Suspense fallback={<div className="p-4 text-center text-zinc-400">Loading matchup...</div>}>
+        <MatchupDetailView
+          matchup={selectedMatchup}
+          league={league}
+          userProfile={userProfile}
+          memberProfiles={memberProfiles}
+          standings={standings}
+          currentWeek={currentWeek}
+          onBack={() => setSelectedMatchup(null)}
+          rivalry={isRivalryMatchup(selectedMatchup) ? rivalries.find(r =>
+            r.rivalId === (selectedMatchup.user1 === userProfile?.uid ? selectedMatchup.user2 : selectedMatchup.user1)
+          ) : null}
+        />
+      </Suspense>
     );
   }
 

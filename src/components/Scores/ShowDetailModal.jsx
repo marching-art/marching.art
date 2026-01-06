@@ -64,9 +64,10 @@ const ShowDetailModal = ({ show, onClose }) => {
             <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-3">
               Full Results
             </h3>
+            {/* OPTIMIZATION #10: Use stable key based on corps identity */}
             <div className="space-y-1">
               {show.scores?.map((score, idx) => (
-                <ScoreRow key={idx} score={score} rank={idx + 1} />
+                <ScoreRow key={`${score.corps || score.corpsName}-${score.score || score.totalScore}`} score={score} rank={idx + 1} />
               ))}
             </div>
           </div>

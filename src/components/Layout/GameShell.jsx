@@ -273,8 +273,9 @@ const TickerBar = () => {
               <span className={`text-${colors.text}-400 whitespace-nowrap`}>{label} {tickerData.dayLabel}</span>
             </div>
             <div className="w-px h-4 bg-[#333]" />
+            {/* OPTIMIZATION #10: Use stable key based on item identity */}
             {classData?.scores?.slice(0, 8).map((item, idx) => (
-              <div key={idx} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+              <div key={`${item.fullName}-${item.score}`} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                 <span className="text-gray-400 font-medium text-[11px] sm:text-xs whitespace-nowrap">{item.fullName}</span>
                 <span className="text-white tabular-nums font-mono text-[11px] sm:text-xs">{item.score}</span>
                 {idx < Math.min(classData.scores.length, 8) - 1 && (
@@ -295,7 +296,7 @@ const TickerBar = () => {
             </div>
             <div className="w-px h-4 bg-[#333]" />
             {tickerData.soundSportMedals?.map((item, idx) => (
-              <div key={idx} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+              <div key={`${item.medal}-${item.fullName}`} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                 <span className={`text-[9px] sm:text-[10px] font-bold ${MEDAL_COLORS[item.medal] || 'text-gray-400'}`}>
                   {item.medal}
                 </span>
@@ -318,7 +319,7 @@ const TickerBar = () => {
             </div>
             <div className="w-px h-4 bg-[#333]" />
             {classData?.leaders?.slice(0, 8).map((item, idx) => (
-              <div key={idx} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+              <div key={`${item.fullName}-${item.score}`} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                 <span className="text-gray-500 text-[9px] sm:text-[10px] font-mono">#{idx + 1}</span>
                 <span className="text-gray-400 font-medium text-[11px] sm:text-xs whitespace-nowrap">{item.fullName}</span>
                 <span className={`tabular-nums font-mono text-[11px] sm:text-xs ${
@@ -347,7 +348,7 @@ const TickerBar = () => {
             </div>
             <div className="w-px h-4 bg-[#333]" />
             {tickerData.combinedCaptionLeaders?.ge?.map((item, idx) => (
-              <div key={idx} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+              <div key={`ge-${item.fullName}-${item.score}`} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                 <span className="text-gray-500 text-[9px] sm:text-[10px] font-mono">#{idx + 1}</span>
                 <span className="text-gray-400 font-medium text-[11px] sm:text-xs whitespace-nowrap">{item.fullName}</span>
                 <span className="text-amber-300 tabular-nums font-mono text-[11px] sm:text-xs">{item.score}</span>
@@ -369,7 +370,7 @@ const TickerBar = () => {
             </div>
             <div className="w-px h-4 bg-[#333]" />
             {tickerData.combinedCaptionLeaders?.visual?.map((item, idx) => (
-              <div key={idx} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+              <div key={`vis-${item.fullName}-${item.score}`} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                 <span className="text-gray-500 text-[9px] sm:text-[10px] font-mono">#{idx + 1}</span>
                 <span className="text-gray-400 font-medium text-[11px] sm:text-xs whitespace-nowrap">{item.fullName}</span>
                 <span className="text-cyan-300 tabular-nums font-mono text-[11px] sm:text-xs">{item.score}</span>
@@ -391,7 +392,7 @@ const TickerBar = () => {
             </div>
             <div className="w-px h-4 bg-[#333]" />
             {tickerData.combinedCaptionLeaders?.music?.map((item, idx) => (
-              <div key={idx} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+              <div key={`mus-${item.fullName}-${item.score}`} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                 <span className="text-gray-500 text-[9px] sm:text-[10px] font-mono">#{idx + 1}</span>
                 <span className="text-gray-400 font-medium text-[11px] sm:text-xs whitespace-nowrap">{item.fullName}</span>
                 <span className="text-pink-300 tabular-nums font-mono text-[11px] sm:text-xs">{item.score}</span>
@@ -426,7 +427,7 @@ const TickerBar = () => {
             </div>
             <div className="w-px h-4 bg-[#333]" />
             {classData.movers.map((item, idx) => (
-              <div key={idx} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+              <div key={`mover-${item.fullName}-${item.change}`} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                 <span className="text-gray-400 font-medium text-[11px] sm:text-xs whitespace-nowrap">{item.fullName}</span>
                 <span className={`tabular-nums font-mono text-[11px] sm:text-xs ${
                   item.direction === 'up' ? 'text-green-400' : 'text-red-400'
