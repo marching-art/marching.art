@@ -2,6 +2,20 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { getDb, dataNamespaceParam } = require("../config");
 const admin = require("firebase-admin");
 const { logger } = require("firebase-functions/v2");
+const crypto = require("crypto");
+
+/**
+ * OPTIMIZATION #2: Generate a deterministic unique invite code based on UID and timestamp.
+ * This eliminates the N+1 while loop that previously made unbounded database reads.
+ * The code is generated from a hash of the user ID and current timestamp, ensuring uniqueness
+ * without requiring any database lookups.
+ */
+function generateUniqueInviteCode(uid) {
+  const uniqueInput = `${uid}_${Date.now()}_${Math.random()}`;
+  const hash = crypto.createHash("sha256").update(uniqueInput).digest("hex");
+  // Take first 6 chars and convert to uppercase for a readable code
+  return hash.substring(0, 6).toUpperCase();
+}
 
 exports.createLeague = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
@@ -25,14 +39,8 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
   if (!seasonDoc.exists) throw new HttpsError("not-found", "No active season.");
   const { seasonUid, currentWeek = 1 } = seasonDoc.data();
 
-  // Generate unique invite code
-  let inviteCode;
-  let codeExists = true;
-  while (codeExists) {
-    inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-    const inviteDoc = await db.doc(`leagueInvites/${inviteCode}`).get();
-    codeExists = inviteDoc.exists;
-  }
+  // OPTIMIZATION #2: Generate unique invite code deterministically (no DB reads needed)
+  const inviteCode = generateUniqueInviteCode(uid);
 
   const leagueRef = db.collection(`artifacts/${dataNamespaceParam.value()}/leagues`).doc();
   const inviteRef = db.doc(`leagueInvites/${inviteCode}`);

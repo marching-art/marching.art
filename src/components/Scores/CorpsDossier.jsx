@@ -1,7 +1,7 @@
 // src/components/Scores/CorpsDossier.jsx
 // Slide-over panel showing detailed corps analytics, score history, and head-to-head comparison
 
-import React, { useMemo } from 'react';
+import React, { useMemo, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
@@ -412,4 +412,5 @@ const CorpsDossier = ({
   );
 };
 
-export default CorpsDossier;
+// OPTIMIZATION #6: Wrap with React.memo to prevent unnecessary re-renders
+export default memo(CorpsDossier);

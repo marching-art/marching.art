@@ -1,7 +1,7 @@
 // MatchupDetailView - Enhanced head-to-head matchup comparison with battle point system
 // Features: Battle points, caption battles, lineup comparison, detailed breakdown
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronLeft, Swords, Trophy, TrendingUp, TrendingDown,
@@ -1055,4 +1055,5 @@ const CaptionCompare = ({ label, score1, score2, color }) => {
   );
 };
 
-export default MatchupDetailView;
+// OPTIMIZATION #6: Wrap with React.memo to prevent unnecessary re-renders
+export default memo(MatchupDetailView);
