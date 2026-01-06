@@ -636,11 +636,8 @@ async function generateStructuredContent(prompt, schema) {
 }
 
 // =============================================================================
-// IMAGE GENERATION (Free Tier / Imagen)
+// IMAGE GENERATION (Imagen 4)
 // =============================================================================
-
-// Configuration: Set to true to use paid Imagen 4, false for free tier
-const USE_IMAGEN_4 = false;
 
 // =============================================================================
 // DRUM CORPS VISUAL IDENTITY - System context for accurate image generation
@@ -826,12 +823,8 @@ async function generateImageWithImagen(prompt) {
   try {
     const ai = initializeImageGenAI();
 
-    // Choose model based on configuration
-    // imagen-3.0-generate-002 is the free tier image generation model
-    // imagen-4.0-fast-generate-001 is the paid tier ($0.02/image)
-    const modelName = USE_IMAGEN_4
-      ? "imagen-4.0-fast-generate-001"  // Paid: $0.02/image
-      : "imagen-3.0-generate-002";       // Free tier: Imagen 3
+    // Use Imagen 4 Fast - optimized for speed ($0.02/image)
+    const modelName = "imagen-4.0-fast-generate-001";
 
     // Build enhanced prompt with drum corps context to avoid concert imagery
     const enhancedPrompt = `${DRUM_CORPS_VISUAL_CONTEXT}
