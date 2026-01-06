@@ -335,20 +335,20 @@ async function uploadFromUrl(imageUrl, options = {}) {
       isPlaceholder: false,
     };
   } catch (error) {
-    // Log comprehensive error details for debugging
-    logger.error("Cloudinary URL upload failed:", {
-      message: error.message,
-      name: error.name,
-      stack: error.stack,
-      http_code: error.http_code,
-      cloudinaryError: error.error,
+    // Log error details separately for Firebase Functions compatibility
+    logger.error("Cloudinary URL upload failed - Error details:", String(error));
+    logger.error("Cloudinary error properties:", JSON.stringify({
+      message: error?.message || "no message",
+      name: error?.name || "no name",
+      http_code: error?.http_code || "no http_code",
+      cloudinaryError: error?.error || "no error property",
       sourceType: isBase64 ? "base64" : "url",
-      sourceLength: imageUrl?.length,
+      sourceLength: imageUrl?.length || 0,
       folder,
       publicId: publicId || "(auto-generated)",
-      // Stringify the full error object for any nested properties
-      fullError: JSON.stringify(error, Object.getOwnPropertyNames(error)),
-    });
+    }));
+    // Also log the full error object
+    logger.error("Full error object:", JSON.stringify(error, Object.getOwnPropertyNames(error || {})));
 
     return {
       success: false,
