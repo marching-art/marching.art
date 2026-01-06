@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
+    <meta name="theme-color" content="#EAB308" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#EAB308" media="(prefers-color-scheme: light)" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="description" content="marching.art - Build your dream corps, select legendary captions, and compete with directors worldwide." />
+    <meta name="keywords" content="drum corps, DCI, fantasy sports, marching band, music, competition" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://marching.art/" />
+    <meta property="og:title" content="marching.art - Fantasy Drum Corps" />
+    <meta property="og:description" content="Build your dream corps, select legendary captions, and compete with directors worldwide." />
+    <meta property="og:image" content="/og-image.jpg" />
+    <meta property="og:site_name" content="marching.art" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="marching.art - Fantasy Drum Corps" />
+    <meta name="twitter:description" content="Build your dream corps, select legendary captions, and compete with directors worldwide." />
+    <meta name="twitter:image" content="/og-image.jpg" />
+
+    <!-- Apple PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="marching.art" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="marching.art" />
+    <meta name="msapplication-TileColor" content="#0A0A0A" />
+    <meta name="msapplication-config" content="/browserconfig.xml" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="/logo192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/logo192.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/logo192.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="/logo192.png" />
+
+    <!-- Apple Splash Screens -->
+    <link rel="apple-touch-startup-image" href="/logo512.png" />
+
+    <!-- Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Google Fonts - Non-blocking load with optimized weights
+         Moved from CSS @import to <link> for better LCP (non-render-blocking)
+         Reduced from 9 weights to 6 weights (~40KB savings) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+    <title>marching.art</title>
+
+    <!-- Critical CSS for App Loader - Matches React LoadingScreen exactly -->
+    <style>
+      /* =================================================================
+         Dark theme base - prevents white flash on load.
+         Scrolling is controlled per-page via CSS/JS.
+         ================================================================= */
+      html, body {
+        margin: 0;
+        padding: 0;
+        background-color: #0A0A0A;
+        color-scheme: dark;
+      }
+
+      /* Default: allow normal document scrolling for public pages */
+      #root {
+        min-height: 100vh;
+        width: 100%;
+      }
+
+      /* GameShell pages use this class to enable fixed one-screen layout */
+      html.game-shell-active {
+        height: 100%;
+        overflow: hidden;
+      }
+      html.game-shell-active body {
+        height: 100%;
+        overflow: hidden;
+      }
+      html.game-shell-active #root {
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+        position: fixed;
+        top: 0;
+        left: 0;
+      }
+
+      /* App Loader - Official Drill Grid Logo */
+      .app-loader {
+        position: fixed;
+        inset: 0;
+        background-color: #0A0A0A; /* charcoal-950 */
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .app-loader svg {
+        width: 96px;  /* w-24 = 6rem = 96px */
+        height: 96px;
+        color: #EAB308; /* gold-500 */
+      }
+
+      .app-loader-text {
+        margin-top: 24px;
+        font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+        font-size: 12px;
+        color: rgba(234, 179, 8, 0.5); /* text-gold-500/50 */
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      /* Pulse animation matching Tailwind's animate-pulse */
+      .animate-pulse {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+
+      /* Hide loader when app loads */
+      .app-loaded .app-loader {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease-out;
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+
+    <!-- App Loader - Official Drill Grid Logo -->
+    <div id="app-loader" class="app-loader">
+      <div class="animate-pulse">
+        <!-- Official Marching.art Drill Grid Logo -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="-5 -5 65 65">
+          <g>
+            <!-- The 9 Dots (Field Grid) - Gray markers -->
+            <circle cx="0" cy="0" r="4" fill="#a0a0a0"/>
+            <circle cx="25" cy="0" r="4" fill="#a0a0a0"/>
+            <circle cx="50" cy="0" r="4" fill="#a0a0a0"/>
+            <circle cx="0" cy="25" r="4" fill="#a0a0a0"/>
+            <circle cx="25" cy="25" r="4" fill="#a0a0a0"/>
+            <circle cx="50" cy="25" r="4" fill="#a0a0a0"/>
+            <circle cx="0" cy="50" r="4" fill="#a0a0a0"/>
+            <circle cx="25" cy="50" r="4" fill="#a0a0a0"/>
+            <circle cx="50" cy="50" r="4" fill="#a0a0a0"/>
+            <!-- The Drill Path - Gold stroke -->
+            <path d="M 0 0 Q 50 0, 50 50" stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round"/>
+          </g>
+        </svg>
+      </div>
+      <div class="app-loader-text">Initializing...</div>
+    </div>
+
+    <!-- React Root -->
+    <div id="root"></div>
+
+    <!-- Vite entry point -->
+    <script type="module" src="/src/index.jsx"></script>
+
+    <!-- Remove loader once React hydrates -->
+    <script>
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          document.body.classList.add('app-loaded');
+          setTimeout(function() {
+            var loader = document.getElementById('app-loader');
+            if (loader) loader.remove();
+          }, 300);
+        }, 100);
+      });
+    </script>
+  </body>
+</html>

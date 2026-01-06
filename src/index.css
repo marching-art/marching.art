@@ -1,0 +1,296 @@
+/* Google Fonts loaded via index.html <link> for non-blocking performance */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =============================================================================
+   MOBILE-FIRST DESIGN SYSTEM
+   All styles optimized for touch-first, progressive enhancement to desktop
+   ============================================================================= */
+
+:root {
+  --bg-app: #0a0a0a;
+  --bg-panel: #1a1a1a;
+  --border-subtle: #333333;
+  --espn-blue: #0057B8;
+
+  /* Touch & Interaction */
+  --touch-target-min: 44px;
+  --tap-highlight: rgba(0, 87, 184, 0.15);
+
+  /* Safe areas for notched devices */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+/* =============================================================================
+   BASE LAYER - Mobile-First Defaults
+   ============================================================================= */
+@layer base {
+  html {
+    /* Prevent font size inflation on rotation */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+
+    /* Smooth scrolling with momentum */
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body {
+    background-color: var(--bg-app);
+    color: white;
+    font-family: 'Inter', sans-serif;
+
+    /* Prevent overscroll/bounce on iOS */
+    overscroll-behavior-y: none;
+
+    /* Disable tap highlight on mobile (we use custom) */
+    -webkit-tap-highlight-color: transparent;
+
+    /* Optimize text rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Prevent iOS zoom on input focus - minimum 16px font */
+  input, select, textarea {
+    font-size: 16px;
+  }
+
+  /* Improved placeholder contrast for WCAG AA compliance */
+  /* gray-600 (#4B5563) has ~3.2:1 contrast on #0a0a0a - fails AA */
+  /* gray-400 (#9CA3AF) has ~5.4:1 contrast on #0a0a0a - passes AA */
+  ::placeholder {
+    color: #9CA3AF !important;
+    opacity: 1;
+  }
+
+  ::-webkit-input-placeholder {
+    color: #9CA3AF !important;
+    opacity: 1;
+  }
+
+  ::-moz-placeholder {
+    color: #9CA3AF !important;
+    opacity: 1;
+  }
+
+  :-ms-input-placeholder {
+    color: #9CA3AF !important;
+  }
+
+  /* All interactive elements get touch optimization */
+  a, button, [role="button"], input, select, textarea, [tabindex]:not([tabindex="-1"]) {
+    touch-action: manipulation;
+  }
+
+  /* Focus-visible styles for keyboard navigation (WCAG 2.4.7) */
+  /* Only shows focus ring when navigating with keyboard, not mouse */
+  :focus-visible {
+    outline: 2px solid var(--espn-blue);
+    outline-offset: 2px;
+  }
+
+  /* Remove default focus styles (replaced by focus-visible) */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Special handling for inputs - always show focus ring */
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: none;
+    border-color: var(--espn-blue) !important;
+  }
+}
+
+/* =============================================================================
+   COMPONENT LAYER - Reusable Mobile Patterns
+   ============================================================================= */
+@layer components {
+  /* Touch target mixin - 44x44px minimum */
+  .touch-target {
+    min-width: var(--touch-target-min);
+    min-height: var(--touch-target-min);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Safe area utilities */
+  .safe-area-top {
+    padding-top: var(--safe-top);
+  }
+
+  .safe-area-bottom {
+    padding-bottom: var(--safe-bottom);
+  }
+
+  .safe-area-left {
+    padding-left: var(--safe-left);
+  }
+
+  .safe-area-right {
+    padding-right: var(--safe-right);
+  }
+
+  .safe-area-x {
+    padding-left: var(--safe-left);
+    padding-right: var(--safe-right);
+  }
+
+  .safe-area-y {
+    padding-top: var(--safe-top);
+    padding-bottom: var(--safe-bottom);
+  }
+
+  .safe-area-all {
+    padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+  }
+
+  /* Momentum scrolling container */
+  .scroll-momentum {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  /* Prevent rubber-banding on scroll containers */
+  .scroll-contain {
+    overscroll-behavior: contain;
+  }
+
+  /* Main content bottom positioning - accounts for mobile nav + safe area */
+  .main-content-bottom {
+    bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* On desktop (lg breakpoint), no bottom nav so extend to bottom */
+  @media (min-width: 1024px) {
+    .main-content-bottom {
+      bottom: 0;
+    }
+  }
+
+  /* Press feedback - haptic-like visual response */
+  .press-feedback {
+    transition: transform 150ms cubic-bezier(0.25, 0.1, 0.25, 1.0),
+                opacity 150ms cubic-bezier(0.25, 0.1, 0.25, 1.0);
+    will-change: transform;
+  }
+
+  .press-feedback:active {
+    transform: scale(0.97);
+    opacity: 0.9;
+  }
+
+  /* Stronger press feedback for primary actions */
+  .press-feedback-strong {
+    transition: transform 150ms cubic-bezier(0.25, 0.1, 0.25, 1.0),
+                background-color 150ms ease-out;
+    will-change: transform;
+  }
+
+  .press-feedback-strong:active {
+    transform: scale(0.95);
+  }
+
+  /* Skeleton loader for content placeholders */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      #1a1a1a 0%,
+      #2a2a2a 50%,
+      #1a1a1a 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s infinite;
+    border-radius: 4px;
+  }
+
+  @keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* Loading pulse for smaller elements */
+  .skeleton-pulse {
+    animation: skeleton-pulse 1.5s ease-in-out infinite;
+    background-color: #2a2a2a;
+  }
+
+  @keyframes skeleton-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+}
+
+/* =============================================================================
+   UTILITY LAYER - Mobile-First Utilities
+   ============================================================================= */
+@layer utilities {
+  /* The "Data" Font */
+  .font-data {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Hide scrollbars while maintaining scroll functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Aspect ratio containers for media (prevents CLS) */
+  .aspect-score-card {
+    aspect-ratio: 16 / 9;
+  }
+
+  .aspect-avatar {
+    aspect-ratio: 1 / 1;
+  }
+
+  .aspect-corps-logo {
+    aspect-ratio: 3 / 2;
+  }
+
+  /* Text that won't trigger iOS zoom */
+  .text-mobile-safe {
+    font-size: max(16px, 1rem);
+  }
+
+  /* Thumb-zone optimized positioning */
+  .thumb-zone {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding-bottom: var(--safe-bottom);
+  }
+
+  /* GPU-accelerated animations */
+  .gpu-accelerated {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+
+  /* No text selection on UI elements */
+  .no-select {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Prevent text from being too small on mobile */
+  .min-text-mobile {
+    font-size: max(12px, 0.75rem);
+  }
+}
