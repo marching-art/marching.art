@@ -260,6 +260,20 @@ async function uploadFromUrl(imageUrl, options = {}) {
     headline = "",
   } = options;
 
+  // Validate input
+  if (!imageUrl || typeof imageUrl !== "string") {
+    logger.error("Cloudinary upload: Invalid imageUrl provided", {
+      type: typeof imageUrl,
+      hasValue: !!imageUrl,
+    });
+    return {
+      success: false,
+      url: getContextualPlaceholder({ newsCategory: category, headline }),
+      error: "Invalid image URL provided",
+      isPlaceholder: true,
+    };
+  }
+
   // Check if Cloudinary is configured
   if (!initializeCloudinary()) {
     logger.info("Cloudinary not configured, returning placeholder");
@@ -268,6 +282,27 @@ async function uploadFromUrl(imageUrl, options = {}) {
       url: getContextualPlaceholder({ newsCategory: category, headline }),
       isPlaceholder: true,
     };
+  }
+
+  // For base64 data URLs, validate format
+  const isBase64 = imageUrl.startsWith("data:");
+  if (isBase64) {
+    const base64Regex = /^data:image\/(jpeg|jpg|png|gif|webp);base64,/;
+    if (!base64Regex.test(imageUrl)) {
+      logger.error("Cloudinary upload: Invalid base64 data URL format", {
+        prefix: imageUrl.substring(0, 50),
+      });
+      return {
+        success: false,
+        url: getContextualPlaceholder({ newsCategory: category, headline }),
+        error: "Invalid base64 data URL format",
+        isPlaceholder: true,
+      };
+    }
+    logger.info("Uploading base64 image to Cloudinary", {
+      dataLength: imageUrl.length,
+      estimatedSizeKB: Math.round(imageUrl.length * 0.75 / 1024),
+    });
   }
 
   try {
@@ -285,7 +320,7 @@ async function uploadFromUrl(imageUrl, options = {}) {
 
     logger.info("Image uploaded from URL successfully:", {
       publicId: uploadResult.public_id,
-      sourceUrl: imageUrl,
+      sourceType: isBase64 ? "base64" : "url",
     });
 
     return {
@@ -300,11 +335,19 @@ async function uploadFromUrl(imageUrl, options = {}) {
       isPlaceholder: false,
     };
   } catch (error) {
+    // Log comprehensive error details for debugging
     logger.error("Cloudinary URL upload failed:", {
       message: error.message,
       name: error.name,
+      stack: error.stack,
       http_code: error.http_code,
-      error: error.error,
+      cloudinaryError: error.error,
+      sourceType: isBase64 ? "base64" : "url",
+      sourceLength: imageUrl?.length,
+      folder,
+      publicId: publicId || "(auto-generated)",
+      // Stringify the full error object for any nested properties
+      fullError: JSON.stringify(error, Object.getOwnPropertyNames(error)),
     });
 
     return {
