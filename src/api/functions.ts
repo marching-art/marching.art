@@ -193,9 +193,16 @@ export interface ArticleListItem {
   category: string;
 }
 
+export interface ListAllArticlesData {
+  limit?: number;
+  startAfter?: string | null;
+}
+
 export interface ListAllArticlesResult {
   success: boolean;
   articles: ArticleListItem[];
+  hasMore: boolean;
+  lastCreatedAt: string | null;
 }
 
 export interface ArticleForEdit {
@@ -271,7 +278,7 @@ export interface DeleteArticleData {
   confirmDelete: boolean;
 }
 
-export const listAllArticles = createCallable<void, ListAllArticlesResult>('listAllArticles');
+export const listAllArticles = createCallable<ListAllArticlesData | void, ListAllArticlesResult>('listAllArticles');
 export const getArticleForEdit = createCallable<{ path: string }, GetArticleForEditResult>('getArticleForEdit');
 export const updateArticle = createCallable<UpdateArticleData, { success: boolean; message: string }>('updateArticle');
 export const archiveArticle = createCallable<ArchiveArticleData, { success: boolean; message: string }>('archiveArticle');

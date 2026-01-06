@@ -31,37 +31,62 @@ const SOURCE_COLORS = {
   legacy: 'bg-purple-500/20 text-purple-400',
 };
 
+const PAGE_SIZE = 20;
+
 const ArticleManagement = () => {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
   const [editingArticle, setEditingArticle] = useState(null);
   const [editLoading, setEditLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [lastCreatedAt, setLastCreatedAt] = useState(null);
 
   // Load articles on mount
   useEffect(() => {
     loadArticles();
   }, []);
 
-  const loadArticles = async () => {
+  const loadArticles = async (startAfter = null) => {
     try {
-      setLoading(true);
-      const result = await listAllArticles();
+      if (startAfter) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
+      const result = await listAllArticles({ limit: PAGE_SIZE, startAfter });
       if (result.data.success) {
-        setArticles(result.data.articles);
+        if (startAfter) {
+          // Append to existing articles
+          setArticles(prev => [...prev, ...result.data.articles]);
+        } else {
+          // Replace articles (initial load or refresh)
+          setArticles(result.data.articles);
+        }
+        setHasMore(result.data.hasMore);
+        setLastCreatedAt(result.data.lastCreatedAt);
       }
     } catch (error) {
       console.error('Error loading articles:', error);
       toast.error('Failed to load articles');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const handleLoadMore = () => {
+    if (hasMore && lastCreatedAt && !loadingMore) {
+      loadArticles(lastCreatedAt);
     }
   };
 
   const handleRefresh = async () => {
     setRefreshing(true);
+    setLastCreatedAt(null);
     await loadArticles();
     setRefreshing(false);
     toast.success('Articles refreshed');
@@ -239,6 +264,27 @@ const ArticleManagement = () => {
               editLoading={editLoading}
             />
           ))
+        )}
+
+        {/* Load More button */}
+        {hasMore && !searchTerm && activeFilter === 'all' && (
+          <button
+            onClick={handleLoadMore}
+            disabled={loadingMore}
+            className="w-full py-3 bg-[#1a1a1a] border border-[#333] rounded-sm text-gray-400 hover:text-white hover:bg-[#222] transition-colors flex items-center justify-center gap-2"
+          >
+            {loadingMore ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                Loading...
+              </>
+            ) : (
+              <>
+                <ChevronDown className="w-4 h-4" />
+                Load More Articles
+              </>
+            )}
+          </button>
         )}
       </div>
 
