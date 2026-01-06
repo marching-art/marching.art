@@ -1484,25 +1484,28 @@ This avatar will represent a competitive marching arts fantasy team. Make it dis
  */
 function buildArticleImagePrompt(category, headline, summary) {
   const categoryPrompts = {
-    dci: `Photorealistic action photograph from a DCI (Drum Corps International) competition.
+    dci: `CLOSEUP PORTRAIT of a DCI (Drum Corps International) performer.
 
-SCENE: Dramatic field-side moment capturing the essence of: "${headline}"
+HEADLINE CONTEXT: "${headline}"
 
-SUBJECT OPTIONS (choose most appropriate for headline):
-- Brass section in synchronized formation, instruments raised
-- Percussion section executing complex choreography
-- Color guard members mid-toss with rifles or flags
-- Full corps on the field in geometric formation
-- Stadium atmosphere with crowd and dramatic lighting
+SHOT TYPE: Intimate closeup portrait photograph
+- Single performer fills most of the frame
+- Waist-up or chest-up framing
+- Stadium/field is heavily blurred in background
+- 85-200mm telephoto lens, f/2.8, shallow depth of field
 
-TECHNICAL REQUIREMENTS:
-- Style: Professional sports photography
-- Camera: 70-200mm telephoto, shallow depth of field
-- Lighting: Stadium lights creating dramatic rim lighting, evening atmosphere
-- Quality: Sharp focus on subjects, artistically blurred background
-- Colors: Rich, saturated, high contrast
+SUBJECT (choose most appropriate for headline):
+- Brass player with horn raised, bell catching stadium lights
+- Snare drummer mid-stroke, focused expression
+- Guard member with rifle or flag, equipment visible
+- Mellophone or baritone player in powerful moment
 
-AVOID: Close-up faces, identifiable individuals, text overlays, logos`,
+UNIFORM: Military-style marching uniform with shako or plumed helmet, white gloves
+
+LIGHTING: Stadium lights creating dramatic rim lighting, evening atmosphere
+MOOD: Intensity, determination, athletic performance
+
+TECHNICAL: Professional sports portrait photography, performer sharply isolated from blurred background`,
 
     fantasy: `Creative digital illustration for fantasy marching arts sports coverage.
 
@@ -1563,14 +1566,14 @@ Generate an image that would work as a professional news article header at 1200x
  * Camera angles for variety in image composition
  */
 const CAMERA_ANGLES = [
-  { angle: "field-side, 15 feet from performer, shooting upward slightly", description: "low angle emphasizing power" },
-  { angle: "press box level, 50 yards back, telephoto compression", description: "classic broadcast perspective" },
-  { angle: "end zone corner, ground level, wide angle", description: "dramatic perspective distortion" },
-  { angle: "sideline at the 40, eye level with performers", description: "intimate connection" },
-  { angle: "tower shot, 30 feet up, looking down at 45 degrees", description: "formation emphasis" },
-  { angle: "behind home plate/backstage area, shooting through the arc", description: "unique backstage angle" },
-  { angle: "pit area looking outward toward hornline", description: "front ensemble perspective" },
-  { angle: "directly beside performer, profile shot", description: "intimate profile" },
+  { angle: "tight portrait, 6 feet from performer, 85mm lens, shallow depth of field", description: "intimate closeup showing uniform and expression" },
+  { angle: "medium closeup, 10 feet away, shooting slightly upward at performer", description: "heroic low angle emphasizing power" },
+  { angle: "profile closeup, 8 feet beside performer, capturing helmet/shako detail", description: "dramatic side view showing headwear" },
+  { angle: "three-quarter portrait, 12 feet at 45-degree angle, waist-up framing", description: "classic portrait showing uniform colors" },
+  { angle: "tight chest-up shot, 8 feet away, telephoto compression f/2.8", description: "upper body detail with creamy bokeh background" },
+  { angle: "dramatic low angle closeup, 5 feet away shooting upward", description: "powerful hero shot against stadium lights" },
+  { angle: "eye-level intimate portrait, 7 feet from performer", description: "emotional connection showing face and uniform" },
+  { angle: "over-shoulder closeup, 6 feet behind performer, instrument visible", description: "showing instrument and uniform detail" },
 ];
 
 /**
@@ -1618,11 +1621,11 @@ const SECTION_FORMATIONS = [
  * Subject focus variations
  */
 const SUBJECT_FOCUS = [
-  { focus: "single featured performer isolated", framing: "tight crop on individual, background heavily blurred" },
-  { focus: "pair of performers in sync", framing: "two performers perfectly matched, medium shot" },
-  { focus: "small section of 4-6 performers", framing: "mini-ensemble showing unity" },
-  { focus: "full section (12-20 performers)", framing: "wide enough to show section identity" },
-  { focus: "interaction between sections", framing: "brass and guard overlap moment" },
+  { focus: "single performer portrait", framing: "tight crop on one performer, face and upper body, background completely blurred" },
+  { focus: "single performer with instrument detail", framing: "one performer showing instrument and uniform clearly, shallow DOF" },
+  { focus: "single performer profile", framing: "side view of one performer, helmet/shako prominent, blurred field behind" },
+  { focus: "single performer action shot", framing: "one performer mid-movement, uniform colors prominent, isolated from group" },
+  { focus: "pair of performers closeup", framing: "two performers in tight frame, showing uniform detail and synchronization" },
 ];
 
 /**
@@ -1670,37 +1673,37 @@ function buildStandingsImagePrompt(topCorps, year, location, showName, showTitle
   const seed = `${topCorps}-${year}-standings`;
   const comp = getRandomComposition(seed);
 
-  return `Photorealistic action photograph from ${showName || "a DCI competition"} ${location ? `in ${location}` : ""}.
+  return `CLOSEUP PORTRAIT of a ${topCorps} performer (${year} season).
 
-SUBJECT: A brass performer from ${topCorps} (${year} season) - ${comp.moment.moment}${showTitle ? ` during their show "${showTitle}"` : ""}.
+═══════════════════════════════════════════════════════════════
+UNIFORM - THIS IS THE MOST IMPORTANT PART - MUST BE EXACT:
+═══════════════════════════════════════════════════════════════
+Corps: ${topCorps}
+Uniform colors and style: ${details.uniform}
+Headwear (CRITICAL): ${details.helmet}
+Instrument: ${details.brass}
 
-UNIFORM ACCURACY (CRITICAL):
-- Uniform: ${details.uniform}
-- Headwear: ${details.helmet}
-- Instrument: ${details.brass}
+DO NOT USE: generic red plumes, generic white shakos, or any uniform that doesn't match the description above.
+The uniform MUST match ${topCorps}'s distinctive colors and style.
+═══════════════════════════════════════════════════════════════
 ${themeContext}
-COMPOSITION & CAMERA:
-- Position: ${comp.camera.angle}
-- Focus: ${comp.focus.focus} - ${comp.focus.framing}
-- Capturing: ${comp.moment.emotion}
+SHOT TYPE: Intimate closeup portrait photograph
+- ${comp.camera.angle}
+- ${comp.focus.focus} - ${comp.focus.framing}
+- Single performer fills most of the frame
+- Stadium/field is heavily blurred in background
 
-LIGHTING & ATMOSPHERE:
-- ${comp.lighting.lighting}
+PERFORMER: ${comp.moment.moment}
+- Expression showing ${comp.moment.emotion}
+- White marching gloves visible
+- Uniform details clearly visible
+
+LIGHTING: ${comp.lighting.lighting}
 - Mood: ${comp.lighting.mood}
-- Background: Stadium environment, crowd appropriately blurred for depth
 
-TECHNICAL REQUIREMENTS:
-- Camera: Professional sports photography setup (Canon 1DX or Sony A1)
-- Style: Editorial sports photography, shallow depth of field where appropriate
-- High dynamic range to capture stadium lighting
+TECHNICAL: Professional sports portrait, 85-200mm telephoto, f/2.8, shallow depth of field, performer sharply isolated from blurred background.
 
-AUTHENTICITY MARKERS:
-- Brass instrument must have realistic valve configurations and tubing
-- Uniform must show proper fit and military-precise alignment
-- White marching gloves, black marching shoes
-- Visible concentration and athletic effort in performer's expression
-
-This is a historic ${year} performance - make it feel like an authentic DCI photograph capturing ${comp.camera.description}.`;
+This is ${topCorps} from ${showName || "a DCI competition"}${location ? ` in ${location}` : ""}${showTitle ? `, performing "${showTitle}"` : ""}.`;
 }
 
 /**
@@ -1722,62 +1725,61 @@ function buildCaptionsImagePrompt(featuredCorps, year, captionType, location, sh
   const comp = getRandomComposition(seed);
 
   // Determine which section to feature based on caption
-  let sectionFocus, sectionDetails, sceneDescription;
+  let sectionFocus, sectionDetails, performerDescription;
 
   if (captionType.includes("Brass") || captionType.includes("B")) {
-    sectionFocus = "hornline";
+    sectionFocus = "brass";
     sectionDetails = details.brass;
-    sceneDescription = `the hornline in ${comp.formation.formation}, bells raised during a powerful moment`;
+    performerDescription = "a brass player with horn raised, bell catching the light";
   } else if (captionType.includes("Percussion") || captionType.includes("P")) {
-    sectionFocus = "drumline";
+    sectionFocus = "percussion";
     sectionDetails = details.percussion;
-    sceneDescription = `the battery in ${comp.formation.formation}, capturing ${comp.moment.emotion}`;
+    performerDescription = "a snare drummer mid-stroke, sticks blurred with motion";
   } else if (captionType.includes("Guard") || captionType.includes("CG")) {
     sectionFocus = "color guard";
     sectionDetails = details.guard;
-    sceneDescription = `guard members in ${comp.formation.formation}, equipment frozen mid-movement`;
+    performerDescription = "a guard member with rifle or flag, equipment mid-toss";
   } else if (captionType.includes("Visual") || captionType.includes("V")) {
-    sectionFocus = "full corps";
+    sectionFocus = "visual";
     sectionDetails = details.uniform;
-    sceneDescription = `the corps in ${comp.formation.formation}, bodies showing ${comp.formation.visual}`;
+    performerDescription = "a performer showing perfect body technique and form";
   } else {
-    // GE or general - show ensemble moment
-    sectionFocus = "corps";
+    // GE or general
+    sectionFocus = "performer";
     sectionDetails = details.uniform;
-    sceneDescription = `an emotional ensemble moment - ${comp.moment.moment}`;
+    performerDescription = "a performer in an emotional, expressive moment";
   }
 
-  return `Photorealistic photograph capturing ${featuredCorps}'s ${sectionFocus} excellence during their ${year} season${showTitle ? ` performing "${showTitle}"` : ""}.
+  return `CLOSEUP PORTRAIT of a ${featuredCorps} ${sectionFocus} performer (${year} season).
 
-SUBJECT: ${sceneDescription}
+═══════════════════════════════════════════════════════════════
+UNIFORM - THIS IS THE MOST IMPORTANT PART - MUST BE EXACT:
+═══════════════════════════════════════════════════════════════
+Corps: ${featuredCorps}
+Uniform colors and style: ${details.uniform}
+Headwear (CRITICAL): ${details.helmet}
+Section equipment: ${sectionDetails}
 
-UNIFORM ACCURACY (CRITICAL):
-- Primary: ${details.uniform}
-- Headwear: ${details.helmet}
-- Section equipment: ${sectionDetails}
+DO NOT USE: generic red plumes, generic white shakos, or any uniform that doesn't match the description above.
+The uniform MUST match ${featuredCorps}'s distinctive colors and style.
+═══════════════════════════════════════════════════════════════
 ${themeContext}
-COMPOSITION & CAMERA:
-- Position: ${comp.camera.angle}
-- Formation: ${comp.formation.formation} - ${comp.formation.visual}
-- Background: Stadium environment with crowd, ${location ? `${location} venue` : "competition atmosphere"}
+SHOT TYPE: Intimate closeup portrait of ${performerDescription}
+- ${comp.camera.angle}
+- ${comp.focus.focus} - ${comp.focus.framing}
+- Single performer fills most of the frame
+- Stadium/field is heavily blurred in background
 
-LIGHTING & ATMOSPHERE:
-- ${comp.lighting.lighting}
+PERFORMER: ${comp.moment.moment}
+- Expression showing ${comp.moment.emotion}
+- Uniform details clearly visible
+
+LIGHTING: ${comp.lighting.lighting}
 - Mood: ${comp.lighting.mood}
-- Shadows and highlights emphasizing body positions and precision
 
-TECHNICAL PHOTOGRAPHY:
-- ${comp.focus.framing}
-- Motion blur on moving equipment to show action
-- High contrast, vibrant colors true to ${featuredCorps} palette
+TECHNICAL: Professional sports portrait, telephoto lens, f/2.8, shallow depth of field.
 
-CAPTION EXCELLENCE MARKERS:
-- Perfect body alignment showing visual precision
-- Equipment positions showing technical mastery
-- Unified expression showing ensemble cohesion
-- ${comp.moment.emotion}
-
-This photograph should capture why ${featuredCorps} excelled in ${captionType} - showing ${comp.camera.description}.`;
+This is ${featuredCorps} from ${location || "a DCI competition"}${showTitle ? `, performing "${showTitle}"` : ""}, showcasing ${captionType} excellence.`;
 }
 
 /**
