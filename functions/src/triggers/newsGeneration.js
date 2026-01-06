@@ -28,6 +28,11 @@ const {
 // Define Gemini API key secret for triggers that use news generation
 const geminiApiKey = defineSecret("GOOGLE_GENERATIVE_AI_API_KEY");
 
+// Define Cloudinary secrets for image uploads
+const cloudinaryCloudName = defineSecret("CLOUDINARY_CLOUD_NAME");
+const cloudinaryApiKey = defineSecret("CLOUDINARY_API_KEY");
+const cloudinaryApiSecret = defineSecret("CLOUDINARY_API_SECRET");
+
 // Pub/Sub topic for news generation requests
 const NEWS_GENERATION_TOPIC = "news-generation-topic";
 
@@ -1192,7 +1197,7 @@ exports.regenerateArticleImage = onCall(
   {
     cors: true,
     timeoutSeconds: 120, // Image generation can take time
-    secrets: [geminiApiKey],
+    secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret],
   },
   async (request) => {
     const db = getDb();
