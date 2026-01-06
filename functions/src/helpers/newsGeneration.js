@@ -12,6 +12,7 @@
  */
 
 const { GoogleGenerativeAI, SchemaType } = require("@google/generative-ai");
+const { GoogleGenAI } = require("@google/genai");
 const { logger } = require("firebase-functions/v2");
 const { defineSecret } = require("firebase-functions/params");
 const { uploadFromUrl, getContextualPlaceholder } = require("./mediaService");
@@ -22,6 +23,7 @@ const geminiApiKey = defineSecret("GOOGLE_GENERATIVE_AI_API_KEY");
 // Initialize clients (lazy loaded)
 let genAI = null;
 let textModel = null;
+let imageGenAI = null; // New SDK for image generation
 
 // =============================================================================
 // DCI UNIFORM KNOWLEDGE BASE
@@ -799,6 +801,21 @@ function parseAiJson(text) {
 }
 
 /**
+ * Initialize the new Google GenAI SDK for image generation
+ * @returns {GoogleGenAI} The initialized image generation client
+ */
+function initializeImageGenAI() {
+  if (!imageGenAI) {
+    const apiKey = geminiApiKey.value();
+    if (!apiKey) {
+      throw new Error("GOOGLE_GENERATIVE_AI_API_KEY secret is not set");
+    }
+    imageGenAI = new GoogleGenAI({ apiKey });
+  }
+  return imageGenAI;
+}
+
+/**
  * Generate an image using either free tier (Gemini Flash) or Imagen 4
  * Automatically prepends drum corps visual context to ensure accurate imagery.
  *
@@ -806,19 +823,15 @@ function parseAiJson(text) {
  * @returns {Promise<string>} Base64 image data or URL
  */
 async function generateImageWithImagen(prompt) {
-  const { genAI: ai } = initializeGemini();
-
   try {
+    const ai = initializeImageGenAI();
+
     // Choose model based on configuration
     // imagen-3.0-generate-001 is the free tier image generation model
     // imagen-4.0-fast-generate-001 is the paid tier ($0.02/image)
     const modelName = USE_IMAGEN_4
       ? "imagen-4.0-fast-generate-001"  // Paid: $0.02/image
       : "imagen-3.0-generate-001";       // Free tier: Imagen 3
-
-    const imageModel = ai.getGenerativeModel({
-      model: modelName,
-    });
 
     // Build enhanced prompt with drum corps context to avoid concert imagery
     const enhancedPrompt = `${DRUM_CORPS_VISUAL_CONTEXT}
@@ -829,8 +842,9 @@ ${prompt}
 
 ${IMAGE_NEGATIVE_PROMPT}`;
 
-    // Imagen models use a different API structure than text models
-    const result = await imageModel.generateImages({
+    // Use the new SDK's models.generateImages() method
+    const response = await ai.models.generateImages({
+      model: modelName,
       prompt: enhancedPrompt,
       config: {
         numberOfImages: 1,
@@ -840,7 +854,7 @@ ${IMAGE_NEGATIVE_PROMPT}`;
     });
 
     // Extract generated image from result
-    const generatedImage = result.generatedImages?.[0];
+    const generatedImage = response.generatedImages?.[0];
     if (generatedImage?.image?.imageBytes) {
       logger.info(`Image generated successfully using ${modelName}`);
       return `data:image/jpeg;base64,${generatedImage.image.imageBytes}`;

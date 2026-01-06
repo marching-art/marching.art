@@ -20,6 +20,7 @@
     "@google-cloud/tasks": "^5.0.0",
     "@getbrevo/brevo": "^2.2.0",
     "@google/generative-ai": "^0.21.0",
+    "@google/genai": "^1.0.0",
     "@sparticuz/chromium": "^131.0.0",
     "axios": "^1.6.0",
     "cheerio": "^1.1.2",
