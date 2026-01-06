@@ -21,30 +21,14 @@ const calculateTotalScore = (captions) => {
 };
 
 /**
- * Get the current hour in Eastern Time
- * All score processing happens on Eastern Time schedule
- */
-const getEasternHour = () => {
-  const now = new Date();
-  const etString = now.toLocaleString('en-US', {
-    timeZone: 'America/New_York',
-    hour: 'numeric',
-    hour12: false
-  });
-  return parseInt(etString, 10);
-};
-
-/**
  * Get the effective current day for score filtering
- * Scores are processed at 2 AM ET, so between midnight and 2 AM ET
- * we should still show the previous day's cutoff
+ * currentDay from seasonStore already accounts for the 2 AM ET boundary,
+ * so we just need to subtract 1 since scores are always from the previous day
  */
 const getEffectiveDay = (currentDay) => {
-  const hour = getEasternHour();
-  // Scores for day N are processed at 2 AM ET and become available after that.
-  // After 2 AM ET: previous day's scores were just processed (currentDay - 1)
-  // Before 2 AM ET: scores only available up to currentDay - 2 (yesterday's processing hasn't run)
-  const effectiveDay = hour < 2 ? currentDay - 2 : currentDay - 1;
+  // Scores for day N are processed at 2 AM ET on day N+1
+  // currentDay already reflects the 2 AM boundary, so effectiveDay is always currentDay - 1
+  const effectiveDay = currentDay - 1;
 
   // Return null if no scores should be available yet (e.g., day 1)
   return effectiveDay >= 1 ? effectiveDay : null;
