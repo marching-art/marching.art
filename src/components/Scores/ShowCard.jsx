@@ -44,11 +44,12 @@ const ShowCard = React.memo(({ show, onClick, userCorpsNames = [] }) => {
       {/* Corps Results - Recap Sheet Style */}
       {show.scores && show.scores.length > 0 && (
         <div className="bg-white dark:bg-charcoal-900/50">
+          {/* OPTIMIZATION #10: Use stable key based on corps name */}
           {show.scores.slice(0, 5).map((score, idx) => {
             const isMyCorps = isUserCorps(score.corps);
             return (
               <div
-                key={idx}
+                key={`${score.corps}-${score.score}`}
                 className={`flex items-center justify-between px-4 py-3 border-b-2 border-black dark:border-charcoal-600 ${
                   isMyCorps
                     ? 'bg-yellow-50 dark:bg-yellow-500/10'

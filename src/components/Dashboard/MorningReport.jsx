@@ -1,5 +1,5 @@
 // src/components/Dashboard/MorningReport.jsx
-import React from 'react';
+import React, { memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sun, Moon, Coffee, Flame, X } from 'lucide-react';
 
@@ -114,4 +114,5 @@ const MorningReport = ({
   );
 };
 
-export default MorningReport;
+// OPTIMIZATION #6: Wrap with React.memo to prevent unnecessary re-renders
+export default memo(MorningReport);
