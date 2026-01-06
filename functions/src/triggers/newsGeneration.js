@@ -1222,12 +1222,18 @@ exports.regenerateArticleImage = onCall(
       const { generateImageWithImagen, buildArticleImagePrompt } = require("../helpers/newsGeneration");
       const { uploadFromUrl } = require("../helpers/mediaService");
 
-      // Build prompt based on article content
-      const imagePrompt = buildArticleImagePrompt(
+      // Use stored imagePrompt if available (preserves corps-specific details),
+      // otherwise fall back to generic prompt
+      const imagePrompt = articleData.imagePrompt || buildArticleImagePrompt(
         effectiveCategory,
         headline,
         articleData.summary || ""
       );
+
+      logger.info("Using image prompt:", {
+        hasStoredPrompt: !!articleData.imagePrompt,
+        promptLength: imagePrompt?.length
+      });
 
       // Generate the image
       const imageData = await generateImageWithImagen(imagePrompt);
