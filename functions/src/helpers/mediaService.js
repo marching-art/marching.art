@@ -300,7 +300,12 @@ async function uploadFromUrl(imageUrl, options = {}) {
       isPlaceholder: false,
     };
   } catch (error) {
-    logger.error("Cloudinary URL upload failed:", error);
+    logger.error("Cloudinary URL upload failed:", {
+      message: error.message,
+      name: error.name,
+      http_code: error.http_code,
+      error: error.error,
+    });
 
     return {
       success: false,
