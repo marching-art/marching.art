@@ -3527,7 +3527,13 @@ async function processGeneratedImage(imageData, category) {
         folder: "marching-art/news",
         category,
       });
-      return { url: result.url, isPlaceholder: false };
+      // Check if upload actually succeeded
+      if (result.success) {
+        return { url: result.url, isPlaceholder: false };
+      }
+      // Upload returned a placeholder due to failure
+      logger.warn("Image upload returned placeholder:", result.error);
+      return { url: result.url, isPlaceholder: true };
     } catch (error) {
       logger.error("Image upload failed:", error);
     }
