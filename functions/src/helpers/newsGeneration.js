@@ -636,11 +636,11 @@ async function generateStructuredContent(prompt, schema) {
 }
 
 // =============================================================================
-// IMAGE GENERATION (Free Tier / Imagen)
+// IMAGE GENERATION
 // =============================================================================
 
-// Configuration: Set to true to use paid Imagen 4, false for free tier
-const USE_IMAGEN_4 = false;
+// Configuration: Set to true to use paid Imagen 4 ($0.02/image), false for free Gemini Flash
+const USE_PAID_IMAGE_GEN = false;
 
 // =============================================================================
 // DRUM CORPS VISUAL IDENTITY - System context for accurate image generation
@@ -826,13 +826,6 @@ async function generateImageWithImagen(prompt) {
   try {
     const ai = initializeImageGenAI();
 
-    // Choose model based on configuration
-    // imagen-3.0-generate-002 is the free tier image generation model
-    // imagen-4.0-fast-generate-001 is the paid tier ($0.02/image)
-    const modelName = USE_IMAGEN_4
-      ? "imagen-4.0-fast-generate-001"  // Paid: $0.02/image
-      : "imagen-3.0-generate-002";       // Free tier: Imagen 3
-
     // Build enhanced prompt with drum corps context to avoid concert imagery
     const enhancedPrompt = `${DRUM_CORPS_VISUAL_CONTEXT}
 
@@ -842,22 +835,44 @@ ${prompt}
 
 ${IMAGE_NEGATIVE_PROMPT}`;
 
-    // Use the new SDK's models.generateImages() method
-    const response = await ai.models.generateImages({
-      model: modelName,
-      prompt: enhancedPrompt,
-      config: {
-        numberOfImages: 1,
-        aspectRatio: "16:9",
-        outputMimeType: "image/jpeg",
-      },
-    });
+    if (USE_PAID_IMAGE_GEN) {
+      // Paid tier: Imagen 4 Fast ($0.02/image)
+      const modelName = "imagen-4.0-fast-generate-001";
+      const response = await ai.models.generateImages({
+        model: modelName,
+        prompt: enhancedPrompt,
+        config: {
+          numberOfImages: 1,
+          aspectRatio: "16:9",
+          outputMimeType: "image/jpeg",
+        },
+      });
 
-    // Extract generated image from result
-    const generatedImage = response.generatedImages?.[0];
-    if (generatedImage?.image?.imageBytes) {
-      logger.info(`Image generated successfully using ${modelName}`);
-      return `data:image/jpeg;base64,${generatedImage.image.imageBytes}`;
+      const generatedImage = response.generatedImages?.[0];
+      if (generatedImage?.image?.imageBytes) {
+        logger.info(`Image generated successfully using ${modelName}`);
+        return `data:image/jpeg;base64,${generatedImage.image.imageBytes}`;
+      }
+    } else {
+      // Free tier: Gemini 2.5 Flash with native image generation
+      const modelName = "gemini-2.5-flash-preview-image-generation";
+      const response = await ai.models.generateContent({
+        model: modelName,
+        contents: enhancedPrompt,
+        config: {
+          responseModalities: ["image", "text"],
+        },
+      });
+
+      // Extract image from response parts
+      const parts = response.candidates?.[0]?.content?.parts || [];
+      for (const part of parts) {
+        if (part.inlineData?.data) {
+          const mimeType = part.inlineData.mimeType || "image/png";
+          logger.info(`Image generated successfully using ${modelName}`);
+          return `data:${mimeType};base64,${part.inlineData.data}`;
+        }
+      }
     }
 
     logger.warn("No image generated, using placeholder");
