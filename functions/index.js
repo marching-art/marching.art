@@ -51,6 +51,17 @@ const {
   reportComment,
 } = require("./src/callable/comments");
 const {
+  addArticleComment,
+  getArticleComments,
+  editArticleComment,
+  deleteArticleComment,
+  reportArticleComment,
+  listCommentsForModeration,
+  moderateComment,
+  bulkModerateComments,
+  getArticleEngagement,
+} = require("./src/callable/articleComments");
+const {
   updateProfile,
   updateUsername,
   updateEmail,
@@ -113,6 +124,7 @@ const {
   updateArticle,
   archiveArticle,
   deleteArticle,
+  regenerateArticleImage,
   submitNewsForApproval,
   listPendingSubmissions,
   approveSubmission,
@@ -161,6 +173,18 @@ module.exports = {
   sendCommentNotification,
   deleteComment,
   reportComment,
+
+  // Article Comments & Moderation
+  addArticleComment,
+  getArticleComments,
+  editArticleComment,
+  deleteArticleComment,
+  reportArticleComment,
+  listCommentsForModeration,
+  moderateComment,
+  bulkModerateComments,
+  getArticleEngagement,
+
   updateProfile,
   updateUsername,
   updateEmail,
@@ -221,6 +245,7 @@ module.exports = {
   updateArticle,
   archiveArticle,
   deleteArticle,
+  regenerateArticleImage,
 
   // User News Submissions
   submitNewsForApproval,
