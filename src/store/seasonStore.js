@@ -61,16 +61,15 @@ export const useSeasonStore = create((set, get) => ({
 
           if (data.schedule?.startDate) {
             const startDate = data.schedule.startDate.toDate();
-            // Subtract 2 hours so the day changes at 2 AM ET, not midnight
-            // This matches the server-side score processing schedule
-            const gameTime = new Date(Date.now() - 2 * 60 * 60 * 1000);
+            const now = new Date();
 
             // Calculate day difference using Eastern Time dates
+            // This ensures day boundaries align with Eastern Time (midnight ET)
             const startDateET = getEasternDateString(startDate);
-            const gameTimeET = getEasternDateString(gameTime);
+            const nowET = getEasternDateString(now);
             const startDateObj = new Date(startDateET + 'T00:00:00');
-            const gameTimeDateObj = new Date(gameTimeET + 'T00:00:00');
-            const diffInDays = Math.floor((gameTimeDateObj - startDateObj) / (1000 * 60 * 60 * 24));
+            const nowDateObj = new Date(nowET + 'T00:00:00');
+            const diffInDays = Math.floor((nowDateObj - startDateObj) / (1000 * 60 * 60 * 24));
 
             currentDay = Math.max(1, Math.min(diffInDays + 1, 49));
             currentWeek = Math.max(1, Math.ceil(currentDay / 7));
