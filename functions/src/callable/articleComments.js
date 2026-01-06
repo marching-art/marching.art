@@ -471,12 +471,14 @@ exports.listCommentsForModeration = onCall(
     const { status = "pending", limit = 50, startAfter } = request.data || {};
 
     try {
-      let query = db.collection("article_comments")
-        .orderBy("createdAt", "desc");
+      // Build query with where() before orderBy() for Firestore best practices
+      let query = db.collection("article_comments");
 
       if (status !== "all") {
         query = query.where("status", "==", status);
       }
+
+      query = query.orderBy("createdAt", "desc");
 
       if (startAfter) {
         const startDoc = await db.collection("article_comments").doc(startAfter).get();
