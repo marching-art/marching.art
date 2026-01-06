@@ -4,6 +4,14 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { formatSeasonName } from '../utils/season';
 
 /**
+ * Get the current date string in Eastern Time (YYYY-MM-DD format)
+ * Used to ensure day calculations are based on Eastern Time
+ */
+const getEasternDateString = (date) => {
+  return date.toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+};
+
+/**
  * Global Season Store
  *
  * This store maintains a SINGLE Firestore listener for season data,
@@ -54,8 +62,14 @@ export const useSeasonStore = create((set, get) => ({
           if (data.schedule?.startDate) {
             const startDate = data.schedule.startDate.toDate();
             const now = new Date();
-            const diffInMillis = now.getTime() - startDate.getTime();
-            const diffInDays = Math.floor(diffInMillis / (1000 * 60 * 60 * 24));
+
+            // Calculate day difference using Eastern Time dates
+            // This ensures the day changes at midnight Eastern, not local time
+            const startDateET = getEasternDateString(startDate);
+            const nowET = getEasternDateString(now);
+            const startDateObj = new Date(startDateET + 'T00:00:00');
+            const nowDateObj = new Date(nowET + 'T00:00:00');
+            const diffInDays = Math.floor((nowDateObj - startDateObj) / (1000 * 60 * 60 * 24));
 
             currentDay = Math.max(1, Math.min(diffInDays + 1, 49));
             currentWeek = Math.max(1, Math.ceil(currentDay / 7));
