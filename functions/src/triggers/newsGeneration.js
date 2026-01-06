@@ -1222,16 +1222,16 @@ exports.regenerateArticleImage = onCall(
       const { generateImageWithImagen, buildArticleImagePrompt } = require("../helpers/newsGeneration");
       const { uploadFromUrl } = require("../helpers/mediaService");
 
-      // Use stored imagePrompt if available (preserves corps-specific details),
-      // otherwise fall back to generic prompt
-      const imagePrompt = articleData.imagePrompt || buildArticleImagePrompt(
+      // Always generate fresh prompt with latest closeup style
+      // (stored prompts may have old wide-shot formatting)
+      const imagePrompt = buildArticleImagePrompt(
         effectiveCategory,
         headline,
         articleData.summary || ""
       );
 
-      logger.info("Using image prompt:", {
-        hasStoredPrompt: !!articleData.imagePrompt,
+      logger.info("Using fresh image prompt:", {
+        category: effectiveCategory,
         promptLength: imagePrompt?.length
       });
 
