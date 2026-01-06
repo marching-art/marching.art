@@ -901,17 +901,31 @@ exports.listAllArticles = onCall(
     const db = getDb();
     checkAdminAuth(request.auth);
 
+    const { limit = 20, startAfter = null } = request.data || {};
+
     try {
       const articles = [];
 
-      // Use collection group query to fetch all articles across all seasons
-      // This is more efficient and works regardless of season naming
-      const articlesSnapshot = await db.collectionGroup("articles")
+      // Build the query with pagination
+      let query = db.collectionGroup("articles")
         .orderBy("createdAt", "desc")
-        .limit(500) // Reasonable limit for admin view
-        .get();
+        .limit(limit + 1); // Fetch one extra to check if there are more
 
-      for (const doc of articlesSnapshot.docs) {
+      // If we have a startAfter cursor, apply it
+      if (startAfter) {
+        const startAfterDate = new Date(startAfter);
+        query = query.startAfter(startAfterDate);
+      }
+
+      const articlesSnapshot = await query.get();
+
+      // Check if there are more articles beyond the requested limit
+      const hasMore = articlesSnapshot.docs.length > limit;
+      const docsToProcess = hasMore
+        ? articlesSnapshot.docs.slice(0, limit)
+        : articlesSnapshot.docs;
+
+      for (const doc of docsToProcess) {
         const data = doc.data();
         const articleType = doc.id;
 
@@ -946,40 +960,19 @@ exports.listAllArticles = onCall(
         });
       }
 
-      // Fetch from legacy flat collection
-      const legacySnapshot = await db.collection("news_hub")
-        .orderBy("createdAt", "desc")
-        .limit(100)
-        .get();
+      // Get the last article's createdAt for the cursor
+      const lastCreatedAt = articles.length > 0
+        ? articles[articles.length - 1].createdAt
+        : null;
 
-      legacySnapshot.docs.forEach((doc) => {
-        const data = doc.data();
-        articles.push({
-          id: doc.id,
-          path: `news_hub/${doc.id}`,
-          source: "legacy",
-          reportDay: data.metadata?.offSeasonDay,
-          headline: data.headline || "Untitled",
-          summary: data.summary || "",
-          isPublished: data.isPublished !== false,
-          isArchived: data.isArchived || false,
-          createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
-          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
-          imageUrl: data.imageUrl,
-          category: data.category || "dci",
-        });
-      });
+      logger.info(`Listed ${articles.length} articles for admin (hasMore: ${hasMore})`);
 
-      // Sort by createdAt descending (collection group query already sorted, but need to merge with legacy)
-      articles.sort((a, b) => {
-        const dateA = new Date(a.createdAt || 0);
-        const dateB = new Date(b.createdAt || 0);
-        return dateB - dateA;
-      });
-
-      logger.info(`Listed ${articles.length} articles for admin`);
-
-      return { success: true, articles };
+      return {
+        success: true,
+        articles,
+        hasMore,
+        lastCreatedAt,
+      };
     } catch (error) {
       logger.error("Error listing articles:", error);
       throw new HttpsError("internal", "Failed to list articles");
