@@ -1,7 +1,7 @@
 // LeagueDetailView - Command Center for league competition
 // Design System: App Shell layout with fixed header, sticky tabs, scrollable content
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Trophy, Crown, ChevronLeft, Settings, Swords,
@@ -18,7 +18,8 @@ import toast from 'react-hot-toast';
 import StandingsTab from './tabs/StandingsTab';
 import MatchupsTab from './tabs/MatchupsTab';
 import ChatTab from './tabs/ChatTab';
-import MatchupDetailView from './MatchupDetailView';
+// OPTIMIZATION #9: Lazy-load heavy MatchupDetailView component (1058 lines)
+const MatchupDetailView = lazy(() => import('./MatchupDetailView'));
 import LeagueActivityFeed, { RivalryBadge } from './LeagueActivityFeed';
 import { useRivalries, isRivalry as checkRivalry } from '../../hooks/useLeagueNotifications';
 import { useLeagueStats } from '../../hooks/useLeagueStats';
@@ -415,16 +416,18 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
   // If viewing matchup detail
   if (selectedMatchup) {
     return (
-      <MatchupDetailView
-        matchup={selectedMatchup}
-        league={league}
-        userProfile={userProfile}
-        memberProfiles={memberProfiles}
-        standings={standings}
-        currentWeek={currentWeek}
-        onBack={() => setSelectedMatchup(null)}
-        rivalry={getMatchupRivalry(selectedMatchup)}
-      />
+      <Suspense fallback={<div className="p-4 text-center text-zinc-400">Loading matchup...</div>}>
+        <MatchupDetailView
+          matchup={selectedMatchup}
+          league={league}
+          userProfile={userProfile}
+          memberProfiles={memberProfiles}
+          standings={standings}
+          currentWeek={currentWeek}
+          onBack={() => setSelectedMatchup(null)}
+          rivalry={getMatchupRivalry(selectedMatchup)}
+        />
+      </Suspense>
     );
   }
 
