@@ -827,11 +827,11 @@ async function generateImageWithImagen(prompt) {
     const ai = initializeImageGenAI();
 
     // Choose model based on configuration
-    // imagen-3.0-generate-001 is the free tier image generation model
+    // imagen-3.0-generate-002 is the free tier image generation model
     // imagen-4.0-fast-generate-001 is the paid tier ($0.02/image)
     const modelName = USE_IMAGEN_4
       ? "imagen-4.0-fast-generate-001"  // Paid: $0.02/image
-      : "imagen-3.0-generate-001";       // Free tier: Imagen 3
+      : "imagen-3.0-generate-002";       // Free tier: Imagen 3
 
     // Build enhanced prompt with drum corps context to avoid concert imagery
     const enhancedPrompt = `${DRUM_CORPS_VISUAL_CONTEXT}
