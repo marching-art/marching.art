@@ -1,0 +1,32 @@
+name: Deploy Firebase Functions
+
+on:
+  push:
+    branches:
+      - main # Or 'master', depending on your default branch
+    paths:
+      - 'functions/**' # Only trigger if changes happen in the functions folder
+
+jobs:
+  deploy_functions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18' # Match the version in your functions/package.json engines
+
+      - name: Install Dependencies
+        run: npm ci
+        working-directory: ./functions
+
+      - name: Deploy to Firebase
+        uses: w9jds/firebase-action@master
+        with:
+          args: deploy --only functions
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          # PROJECT_ID: your-project-id # Optional: needed if not in .firebaserc
