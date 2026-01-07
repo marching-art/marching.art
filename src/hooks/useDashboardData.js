@@ -120,14 +120,19 @@ export const useDashboardData = () => {
       const newlyUnlocked = currentUnlocked.filter(
         classId => !previousUnlocked.includes(classId)
       );
-      if (newlyUnlocked.length > 0) {
-        setNewlyUnlockedClass(newlyUnlocked[0]);
+      // Filter out classes where user already has a corps (e.g., purchased before XP unlock)
+      // This prevents showing "class unlocked" notification when they already have a corps
+      const newlyUnlockedWithoutCorps = newlyUnlocked.filter(
+        classId => !corps?.[classId]
+      );
+      if (newlyUnlockedWithoutCorps.length > 0) {
+        setNewlyUnlockedClass(newlyUnlockedWithoutCorps[0]);
       }
     }
 
     // Update ref for next comparison (doesn't trigger re-render)
     previousUnlockedClassesRef.current = currentUnlocked;
-  }, [unlockedClasses]);
+  }, [unlockedClasses, corps]);
 
   // NOTE: Profile subscription is now handled by profileStore (initialized in App.jsx)
   // This eliminates duplicate Firestore listeners when multiple components use this hook
