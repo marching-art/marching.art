@@ -2319,9 +2319,9 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
     const historicalData = await fetchTimeLockednScores(db, yearsToFetch, reportDay);
     const fantasyData = await fetchFantasyRecaps(db, seasonId, reportDay);
 
-    // Fetch show context (event name, location, date)
+    // Fetch show context (event name, location, date) - now includes all shows
     const showContext = await fetchShowContext(db, seasonId, historicalData, reportDay);
-    logger.info(`Show context for Day ${reportDay}: ${showContext.showName} at ${showContext.location} on ${showContext.date}`);
+    logger.info(`Show context for Day ${reportDay}: ${showContext.showName} at ${showContext.location} on ${showContext.date}${showContext.allShows?.length > 1 ? ` (${showContext.allShows.length} shows total)` : ''}`);
 
     // Process data
     const dayScores = getScoresForDay(historicalData, reportDay, activeCorps);
@@ -2333,37 +2333,72 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
     const toneDescriptor = getToneDescriptor(competitionContext);
     logger.info(`Competition context for Day ${reportDay}: ${toneDescriptor} (${competitionContext.scenario}, ${competitionContext.seasonPhase} season, lead margin: ${competitionContext.leadMargin})`);
 
-    // Build the list of articles to generate
-    // Core 4 articles always included
-    const articlePromises = [
-      generateDciStandingsArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db }),
-      generateDciCaptionsArticle({ reportDay, dayScores, captionLeaders, activeCorps, showContext, competitionContext, trendData, db }),
-      generateFantasyPerformersArticle({ reportDay, fantasyData, showContext, competitionContext, db, dataDocId }),
-      generateFantasyLeaguesArticle({ reportDay, fantasyData, showContext, competitionContext }),
-    ];
+    // Track which corps have been featured to ensure diversity across articles
+    const featuredCorps = new Set();
+    const featuredFantasyPerformers = new Set();
 
-    // Add the rotating 5th article based on the schedule
+    // Generate articles sequentially to track featured corps and ensure diversity
+    const articles = [];
+
+    // Article 1: DCI Standings - features top corps
+    const standingsArticle = await generateDciStandingsArticle({
+      reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db
+    });
+    articles.push(standingsArticle);
+    if (standingsArticle.featuredCorps) {
+      featuredCorps.add(standingsArticle.featuredCorps);
+    }
+
+    // Article 2: DCI Captions - must feature a DIFFERENT corps than standings
+    const captionsArticle = await generateDciCaptionsArticle({
+      reportDay, dayScores, captionLeaders, activeCorps, showContext, competitionContext, trendData, db,
+      excludeCorps: featuredCorps
+    });
+    articles.push(captionsArticle);
+    if (captionsArticle.featuredCorps) {
+      featuredCorps.add(captionsArticle.featuredCorps);
+    }
+
+    // Article 3: Fantasy Performers - features top fantasy performer
+    const fantasyPerformersArticle = await generateFantasyPerformersArticle({
+      reportDay, fantasyData, showContext, competitionContext, db, dataDocId
+    });
+    articles.push(fantasyPerformersArticle);
+    if (fantasyPerformersArticle.featuredPerformer) {
+      featuredFantasyPerformers.add(fantasyPerformersArticle.featuredPerformer);
+    }
+
+    // Article 4: Fantasy Leagues - must feature DIFFERENT performers than Fantasy Performers
+    const fantasyLeaguesArticle = await generateFantasyLeaguesArticle({
+      reportDay, fantasyData, showContext, competitionContext,
+      excludePerformers: featuredFantasyPerformers
+    });
+    articles.push(fantasyLeaguesArticle);
+
+    // Article 5: Rotating article - must feature a DIFFERENT corps than previous DCI articles
+    let fifthArticle;
     switch (fifthArticleType) {
       case "underdog_story":
-        articlePromises.push(
-          generateUnderdogStoryArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db })
-        );
+        fifthArticle = await generateUnderdogStoryArticle({
+          reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db,
+          excludeCorps: featuredCorps
+        });
         break;
       case "corps_spotlight":
-        articlePromises.push(
-          generateCorpsSpotlightArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db })
-        );
+        fifthArticle = await generateCorpsSpotlightArticle({
+          reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db,
+          excludeCorps: featuredCorps
+        });
         break;
       case "deep_analytics":
       default:
-        articlePromises.push(
-          generateDeepAnalyticsArticle({ reportDay, dayScores, trendData, fantasyData, captionLeaders, showContext, competitionContext, db })
-        );
+        fifthArticle = await generateDeepAnalyticsArticle({
+          reportDay, dayScores, trendData, fantasyData, captionLeaders, showContext, competitionContext, db,
+          excludeCorps: featuredCorps
+        });
         break;
     }
-
-    // Generate all 5 articles in parallel
-    const articles = await Promise.all(articlePromises);
+    articles.push(fifthArticle);
 
     return {
       success: true,
@@ -2375,6 +2410,7 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
         showName: showContext.showName,
         location: showContext.location,
         date: showContext.date,
+        allShows: showContext.allShows,
         articleCount: articles.length,
         fifthArticleType,
         competitionContext: {
@@ -2402,6 +2438,11 @@ async function generateDciStandingsArticle({ reportDay, dayScores, trendData, ac
   // Get dynamic tone guidance based on competition context
   const toneGuidance = getToneGuidance(competitionContext, "dci_standings");
 
+  // Build list of all shows happening today for comprehensive coverage
+  const allShowsText = showContext.allShows?.length > 1
+    ? showContext.allShows.map(s => `• ${s.name}${s.location ? ` (${s.location})` : ''}`).join('\n')
+    : `• ${showContext.showName}${showContext.location ? ` (${showContext.location})` : ''}`;
+
   const prompt = `You are a veteran DCI (Drum Corps International) journalist writing for marching.art, the premier fantasy platform for competitive drum corps.
 
 CONTEXT: DCI is the premier competitive marching music organization in the world. Corps compete in shows judged on General Effect (GE), Visual, and Music captions. Scores range from 0-100, with top corps typically scoring 85-99. Every 0.001 point matters in these razor-thin competitions.
@@ -2409,13 +2450,16 @@ CONTEXT: DCI is the premier competitive marching music organization in the world
 ═══════════════════════════════════════════════════════════════
 EVENT INFORMATION
 ═══════════════════════════════════════════════════════════════
-• Show Name: ${showContext.showName}
-• Location: ${showContext.location}
 • Date: ${showContext.date}
 • Season Day: ${reportDay}
+${showContext.allShows?.length > 1 ? `
+ALL SHOWS TODAY (${showContext.allShows.length} competitions):
+${allShowsText}
+` : `• Show Name: ${showContext.showName}
+• Location: ${showContext.location}`}
 ═══════════════════════════════════════════════════════════════
 
-TODAY'S COMPETITION RESULTS from ${showContext.showName} in ${showContext.location}:
+TODAY'S COMPETITION RESULTS${showContext.allShows?.length > 1 ? ' across all shows' : ` from ${showContext.showName} in ${showContext.location}`}:
 
 STANDINGS WITH MOMENTUM ANALYSIS (Corps | Season | Score | Momentum):
 ${dayScores.slice(0, 12).map((s, i) => {
@@ -2513,6 +2557,7 @@ Reference that these are real historical DCI performances being relived through 
     return {
       type: ARTICLE_TYPES.DCI_STANDINGS,
       ...content,
+      featuredCorps: topCorps.corps, // Track which corps was featured for diversity
       imageUrl: imageResult.url,
       imagePrompt,
       reportDay,
@@ -2526,9 +2571,14 @@ Reference that these are real historical DCI performances being relived through 
 /**
  * Article 2: DCI Caption Analysis
  */
-async function generateDciCaptionsArticle({ reportDay, dayScores, captionLeaders, activeCorps, showContext, competitionContext, trendData, db }) {
+async function generateDciCaptionsArticle({ reportDay, dayScores, captionLeaders, activeCorps, showContext, competitionContext, trendData, db, excludeCorps = new Set() }) {
   // Get dynamic tone guidance
   const toneGuidance = getToneGuidance(competitionContext, "dci_captions");
+
+  // Build list of all shows happening today for comprehensive coverage
+  const allShowsText = showContext.allShows?.length > 1
+    ? showContext.allShows.map(s => `• ${s.name}${s.location ? ` (${s.location})` : ''}`).join('\n')
+    : `• ${showContext.showName}${showContext.location ? ` (${showContext.location})` : ''}`;
 
   const prompt = `You are a DCI caption analyst and technical expert writing for marching.art. You specialize in breaking down the scoring categories that determine DCI competition results.
 
@@ -2540,13 +2590,16 @@ CONTEXT: DCI scoring has three main categories:
 ═══════════════════════════════════════════════════════════════
 EVENT INFORMATION
 ═══════════════════════════════════════════════════════════════
-• Show Name: ${showContext.showName}
-• Location: ${showContext.location}
 • Date: ${showContext.date}
 • Season Day: ${reportDay}
+${showContext.allShows?.length > 1 ? `
+ALL SHOWS TODAY (${showContext.allShows.length} competitions):
+${allShowsText}
+` : `• Show Name: ${showContext.showName}
+• Location: ${showContext.location}`}
 ═══════════════════════════════════════════════════════════════
 
-CAPTION BREAKDOWN from ${showContext.showName} in ${showContext.location}:
+CAPTION BREAKDOWN${showContext.allShows?.length > 1 ? ' across all shows today' : ` from ${showContext.showName} in ${showContext.location}`}:
 
 CAPTION LEADERS BY CATEGORY:
 ${captionLeaders.map(c => `${c.caption}: ${c.leader} scores ${c.score.toFixed(2)} [7-day trend: ${c.weeklyTrend}]`).join('\n')}
@@ -2622,9 +2675,25 @@ Technical but accessible. Like a color commentator who knows the activity inside
   try {
     const content = await generateStructuredContent(prompt, schema);
 
-    // Feature the corps excelling in the top caption category
-    const featuredCaption = captionLeaders[0];
-    const featuredCorps = dayScores.find(s => s.corps === featuredCaption?.leader) || dayScores[0];
+    // Feature a corps excelling in a caption category - but NOT one already featured in another article
+    // Find the first caption leader whose corps hasn't been featured yet
+    let featuredCaption = null;
+    let featuredCorps = null;
+
+    for (const caption of captionLeaders) {
+      if (!excludeCorps.has(caption.leader)) {
+        featuredCaption = caption;
+        featuredCorps = dayScores.find(s => s.corps === caption.leader);
+        break;
+      }
+    }
+
+    // Fallback: if all caption leaders are excluded, find the highest-ranked corps not yet featured
+    if (!featuredCorps) {
+      featuredCorps = dayScores.find(s => !excludeCorps.has(s.corps)) || dayScores[1] || dayScores[0];
+      // Find which caption this corps leads in (if any)
+      featuredCaption = captionLeaders.find(c => c.leader === featuredCorps?.corps) || captionLeaders[1] || captionLeaders[0];
+    }
 
     // Look up the corps' show title for thematic context
     const showTitle = db ? await getShowTitleFromFirestore(db, featuredCorps.corps, featuredCorps.sourceYear) : null;
@@ -2644,6 +2713,7 @@ Technical but accessible. Like a color commentator who knows the activity inside
     return {
       type: ARTICLE_TYPES.DCI_CAPTIONS,
       ...content,
+      featuredCorps: featuredCorps.corps, // Track which corps was featured for diversity
       imageUrl: imageResult.url,
       imagePrompt,
       reportDay,
@@ -2794,6 +2864,7 @@ CRITICAL RULES:
     return {
       type: ARTICLE_TYPES.FANTASY_PERFORMERS,
       ...content,
+      featuredPerformer: topCorps?.corpsName, // Track which performer was featured for diversity
       imageUrl: imageResult.url,
       imagePrompt,
       reportDay,
@@ -2807,7 +2878,7 @@ CRITICAL RULES:
 /**
  * Article 4: Fantasy League Recap
  */
-async function generateFantasyLeaguesArticle({ reportDay, fantasyData, showContext, competitionContext }) {
+async function generateFantasyLeaguesArticle({ reportDay, fantasyData, showContext, competitionContext, excludePerformers = new Set() }) {
   // Get dynamic tone guidance
   const toneGuidance = getToneGuidance(competitionContext, "fantasy_leagues");
 
@@ -2817,12 +2888,25 @@ async function generateFantasyLeaguesArticle({ reportDay, fantasyData, showConte
     const results = show.results || [];
     // Filter out SoundSport corps - SoundSport is non-competitive and scores should not be published
     const competitiveResults = results.filter(r => r.corpsClass !== 'soundSport');
-    const top3 = competitiveResults.sort((a, b) => b.totalScore - a.totalScore).slice(0, 3);
+    const sortedResults = competitiveResults.sort((a, b) => b.totalScore - a.totalScore);
+
+    // For the featured performer in this show, try to pick someone NOT already featured
+    // This ensures Fantasy Leagues highlights different performers than Fantasy Performers article
+    let featuredPerformer = sortedResults[0];
+    for (const performer of sortedResults.slice(0, 5)) {
+      if (!excludePerformers.has(performer.corpsName)) {
+        featuredPerformer = performer;
+        break;
+      }
+    }
+
     return {
       name: formatFantasyEventName(show.showName || show.showId || 'Competition'),
       entrants: competitiveResults.length,
-      topScorer: top3[0]?.corpsName || 'N/A',
-      topScore: top3[0]?.totalScore?.toFixed(3) || '0.000',
+      topScorer: featuredPerformer?.corpsName || 'N/A',
+      topScore: featuredPerformer?.totalScore?.toFixed(3) || '0.000',
+      // Also include actual leader for reference if different
+      actualLeader: sortedResults[0]?.corpsName !== featuredPerformer?.corpsName ? sortedResults[0]?.corpsName : null,
     };
   });
 
@@ -2920,7 +3004,7 @@ CRITICAL RULES:
 /**
  * Article 5: Deep Analytics
  */
-async function generateDeepAnalyticsArticle({ reportDay, dayScores, trendData, fantasyData, captionLeaders, showContext, competitionContext, db }) {
+async function generateDeepAnalyticsArticle({ reportDay, dayScores, trendData, fantasyData, captionLeaders, showContext, competitionContext, db, excludeCorps = new Set() }) {
   // Get dynamic tone guidance
   const toneGuidance = getToneGuidance(competitionContext, "deep_analytics");
 
@@ -2952,6 +3036,11 @@ async function generateDeepAnalyticsArticle({ reportDay, dayScores, trendData, f
     ? (Math.max(...totalScores) - Math.min(...totalScores)).toFixed(3)
     : "0.000";
 
+  // Build list of all shows happening today for comprehensive coverage
+  const allShowsText = showContext.allShows?.length > 1
+    ? showContext.allShows.map(s => `• ${s.name}${s.location ? ` (${s.location})` : ''}`).join('\n')
+    : `• ${showContext.showName}${showContext.location ? ` (${showContext.location})` : ''}`;
+
   const prompt = `You are a senior data analyst and statistician for marching.art, writing advanced analytical content like FiveThirtyEight or The Athletic's deep dives.
 
 CONTEXT: DCI scoring uses a 100-point scale. Top corps score 90-99+. Every 0.001 point represents real competitive separation. The season builds toward championships, so trajectory matters as much as current standings.
@@ -2959,13 +3048,18 @@ CONTEXT: DCI scoring uses a 100-point scale. Top corps score 90-99+. Every 0.001
 ═══════════════════════════════════════════════════════════════
 EVENT INFORMATION
 ═══════════════════════════════════════════════════════════════
-• Show Name: ${showContext.showName}
-• Location: ${showContext.location}
 • Date: ${showContext.date}
 • Season Day: ${reportDay}
+${showContext.allShows?.length > 1 ? `
+ALL SHOWS TODAY (${showContext.allShows.length} competitions):
+${allShowsText}
+
+IMPORTANT: This analysis covers results from ALL ${showContext.allShows.length} shows happening today. Aggregate data represents combined performances across all competitions.
+` : `• Show Name: ${showContext.showName}
+• Location: ${showContext.location}`}
 ═══════════════════════════════════════════════════════════════
 
-STATISTICAL ANALYSIS from ${showContext.showName} on ${showContext.date}:
+STATISTICAL ANALYSIS${showContext.allShows?.length > 1 ? ` across all ${showContext.allShows.length} shows` : ` from ${showContext.showName}`} on ${showContext.date}:
 
 ═══════════════════════════════════════════════════════════════
 MOMENTUM CLASSIFICATIONS (Extended Analysis)
@@ -3146,8 +3240,16 @@ CRITICAL RULES:
   try {
     const content = await generateStructuredContent(prompt, schema);
 
-    // Feature the top trending corps in an analytical aerial shot
-    const topTrending = Object.entries(trendData).sort((a,b) => b[1].trendFromAvg - a[1].trendFromAvg)[0];
+    // Feature a trending corps in an analytical aerial shot - but NOT one already featured
+    // Sort by trend and find the first corps not in excludeCorps
+    const sortedByTrend = Object.entries(trendData).sort((a,b) => b[1].trendFromAvg - a[1].trendFromAvg);
+    let topTrending = sortedByTrend.find(([corps]) => !excludeCorps.has(corps));
+
+    // Fallback to the best trending corps if all are excluded
+    if (!topTrending) {
+      topTrending = sortedByTrend[0];
+    }
+
     const featuredCorps = dayScores.find(s => s.corps === topTrending?.[0]) || dayScores[0];
 
     // Look up the corps' show title for thematic context
@@ -3167,6 +3269,7 @@ CRITICAL RULES:
     return {
       type: ARTICLE_TYPES.DEEP_ANALYTICS,
       ...content,
+      featuredCorps: featuredCorps.corps, // Track which corps was featured for diversity
       imageUrl: imageResult.url,
       imagePrompt,
       reportDay,
@@ -3181,14 +3284,16 @@ CRITICAL RULES:
  * Article 6: Underdog Story
  * Features a corps that's significantly outperforming expectations
  */
-async function generateUnderdogStoryArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db }) {
+async function generateUnderdogStoryArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, excludeCorps = new Set() }) {
   // Get dynamic tone guidance
   const toneGuidance = getToneGuidance(competitionContext, "underdog_story");
 
   // Find the biggest overperformer relative to their ranking
   // Look for corps in positions 6-15 that are trending strongly upward
+  // Also exclude corps that have already been featured in other articles
   const underdogCandidates = dayScores
     .slice(5, 15) // Focus on mid-pack corps (positions 6-15)
+    .filter(s => !excludeCorps.has(s.corps)) // Exclude already-featured corps
     .map(s => ({
       ...s,
       trend: trendData[s.corps] || { dayChange: 0, trendFromAvg: 0 },
@@ -3202,8 +3307,9 @@ async function generateUnderdogStoryArticle({ reportDay, dayScores, trendData, a
     });
 
   if (underdogCandidates.length === 0) {
-    // Fallback to the corps with biggest single-day gain
+    // Fallback to the corps with biggest single-day gain that's not already featured
     const biggestGainer = Object.entries(trendData)
+      .filter(([corps]) => !excludeCorps.has(corps))
       .sort((a, b) => b[1].dayChange - a[1].dayChange)[0];
     if (biggestGainer) {
       const gainerCorps = dayScores.find(s => s.corps === biggestGainer[0]);
@@ -3216,7 +3322,10 @@ async function generateUnderdogStoryArticle({ reportDay, dayScores, trendData, a
     }
   }
 
-  const featuredUnderdog = underdogCandidates[0] || dayScores[5]; // Fallback to 6th place
+  // Find the first unfeatured underdog, or fallback to 6th place
+  const featuredUnderdog = underdogCandidates[0] ||
+    dayScores.find(s => !excludeCorps.has(s.corps)) ||
+    dayScores[5]; // Fallback to 6th place
   const currentRank = dayScores.findIndex(s => s.corps === featuredUnderdog.corps) + 1;
 
   const prompt = `You are an inspirational sports writer for marching.art, crafting a compelling underdog narrative like ESPN's "30 for 30" or Sports Illustrated's feature stories.
@@ -3343,14 +3452,28 @@ Inspirational, emotionally resonant, but grounded in real performance data. Thin
  * Article 7: Corps Spotlight
  * Deep dive into a specific corps' identity and season journey
  */
-async function generateCorpsSpotlightArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db }) {
+async function generateCorpsSpotlightArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, excludeCorps = new Set() }) {
   // Get dynamic tone guidance
   const toneGuidance = getToneGuidance(competitionContext, "corps_spotlight");
 
   // Select a corps to spotlight - rotate through the field
-  // Use reportDay to ensure different corps each day
-  const spotlightIndex = (reportDay - 1) % dayScores.length;
-  const spotlightCorps = dayScores[spotlightIndex];
+  // Use reportDay to ensure different corps each day, but avoid already-featured corps
+  let spotlightIndex = (reportDay - 1) % dayScores.length;
+  let spotlightCorps = dayScores[spotlightIndex];
+
+  // If the rotated corps has already been featured, find the next available corps
+  if (excludeCorps.has(spotlightCorps?.corps)) {
+    // Try subsequent positions until we find one not excluded
+    for (let i = 1; i < dayScores.length; i++) {
+      const nextIndex = (spotlightIndex + i) % dayScores.length;
+      if (!excludeCorps.has(dayScores[nextIndex]?.corps)) {
+        spotlightIndex = nextIndex;
+        spotlightCorps = dayScores[nextIndex];
+        break;
+      }
+    }
+  }
+
   const currentRank = spotlightIndex + 1;
   const corpsTrend = trendData[spotlightCorps.corps] || { dayChange: 0, trendFromAvg: 0, avgTotal: spotlightCorps.total };
 
@@ -3635,6 +3758,10 @@ async function fetchFantasyRecaps(db, seasonId, reportDay) {
  */
 async function fetchShowContext(db, seasonId, historicalData, reportDay) {
   try {
+    // Collect ALL shows from this day for comprehensive coverage
+    const allShows = [];
+    const seenShowNames = new Set();
+
     // 1. Try to get event info from historical_scores first (most accurate)
     let showName = null;
     let location = null;
@@ -3642,31 +3769,54 @@ async function fetchShowContext(db, seasonId, historicalData, reportDay) {
 
     for (const yearKey of Object.keys(historicalData)) {
       const yearEvents = historicalData[yearKey] || [];
-      const dayEvent = yearEvents.find(e => e.offSeasonDay === reportDay);
-      if (dayEvent) {
-        showName = dayEvent.eventName || showName;
-        location = dayEvent.location || location;
-        eventDate = dayEvent.date || dayEvent.eventDate || eventDate;
-        if (showName && location) break;
+      // Find ALL events for this day, not just the first one
+      const dayEvents = yearEvents.filter(e => e.offSeasonDay === reportDay);
+      for (const dayEvent of dayEvents) {
+        const eventName = dayEvent.eventName;
+        const eventLocation = dayEvent.location;
+        if (eventName && !seenShowNames.has(eventName)) {
+          seenShowNames.add(eventName);
+          allShows.push({
+            name: eventName,
+            location: eventLocation,
+            date: dayEvent.date || dayEvent.eventDate,
+          });
+        }
+        // Use first found for primary show context
+        if (!showName) {
+          showName = eventName;
+          location = eventLocation;
+          eventDate = dayEvent.date || dayEvent.eventDate;
+        }
       }
     }
 
-    // 2. Try to get from season schedule if not found
-    if (!showName || !location) {
-      try {
-        const scheduleDoc = await db.doc(`seasons/${seasonId}/schedule/day_${reportDay}`).get();
-        if (scheduleDoc.exists) {
-          const scheduleData = scheduleDoc.data();
-          const shows = scheduleData.shows || [];
-          if (shows.length > 0) {
-            showName = showName || shows[0].eventName || shows[0].name;
-            location = location || shows[0].location;
-            eventDate = eventDate || shows[0].date;
+    // 2. Try to get from season schedule if not found or to add more shows
+    try {
+      const scheduleDoc = await db.doc(`seasons/${seasonId}/schedule/day_${reportDay}`).get();
+      if (scheduleDoc.exists) {
+        const scheduleData = scheduleDoc.data();
+        const shows = scheduleData.shows || [];
+        for (const show of shows) {
+          const scheduleName = show.eventName || show.name;
+          if (scheduleName && !seenShowNames.has(scheduleName)) {
+            seenShowNames.add(scheduleName);
+            allShows.push({
+              name: scheduleName,
+              location: show.location,
+              date: show.date,
+            });
           }
         }
-      } catch (scheduleError) {
-        logger.warn("Could not fetch schedule:", scheduleError.message);
+        // Use first show for primary context if not already set
+        if (!showName && shows.length > 0) {
+          showName = shows[0].eventName || shows[0].name;
+          location = shows[0].location;
+          eventDate = shows[0].date;
+        }
       }
+    } catch (scheduleError) {
+      logger.warn("Could not fetch schedule:", scheduleError.message);
     }
 
     // 3. Calculate actual date from season start + day number
@@ -3698,6 +3848,8 @@ async function fetchShowContext(db, seasonId, historicalData, reportDay) {
       date: formattedDate,
       rawDate: actualDate || (eventDate ? new Date(eventDate) : null),
       reportDay,
+      // Include all shows so articles can reference multiple competitions
+      allShows: allShows.length > 0 ? allShows : [{ name: showName || `Day ${reportDay} Competition`, location: location || "Competition Venue" }],
     };
   } catch (error) {
     logger.error("Error fetching show context:", error);
@@ -3707,6 +3859,7 @@ async function fetchShowContext(db, seasonId, historicalData, reportDay) {
       date: `Day ${reportDay}`,
       rawDate: null,
       reportDay,
+      allShows: [{ name: `Day ${reportDay} Competition`, location: "Competition Venue" }],
     };
   }
 }
