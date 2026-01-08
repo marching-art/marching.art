@@ -5,8 +5,31 @@ const { logger } = require("firebase-functions/v2");
 // Define YouTube API key secret
 const youtubeApiKey = defineSecret("YOUTUBE_API_KEY");
 
+// Words to filter out from video titles (partial performances, warmups, vlogs, etc.)
+const TITLE_BLACKLIST = [
+  "lot",
+  "drumline",
+  "hornline",
+  "brass",
+  "guard",
+  "camp",
+  "vlog",
+  "percussion",
+  "warmup",
+  "warm up",
+  "warm-up"
+];
+
 /**
- * Search YouTube and return the first video result
+ * Check if a video title contains any blacklisted words
+ */
+function shouldFilterVideo(title) {
+  const lowerTitle = title.toLowerCase();
+  return TITLE_BLACKLIST.some(word => lowerTitle.includes(word));
+}
+
+/**
+ * Search YouTube and return the first video result that passes filtering
  * Used to embed corps performance videos
  */
 exports.searchYoutubeVideo = onCall(
@@ -28,11 +51,12 @@ exports.searchYoutubeVideo = onCall(
 
     try {
       // Use YouTube Data API v3 search endpoint
+      // Request more results so we can filter out unwanted videos
       const searchUrl = new URL("https://www.googleapis.com/youtube/v3/search");
       searchUrl.searchParams.set("part", "snippet");
       searchUrl.searchParams.set("q", query);
       searchUrl.searchParams.set("type", "video");
-      searchUrl.searchParams.set("maxResults", "1");
+      searchUrl.searchParams.set("maxResults", "10");
       searchUrl.searchParams.set("videoEmbeddable", "true");
       searchUrl.searchParams.set("key", apiKey);
 
@@ -60,7 +84,23 @@ exports.searchYoutubeVideo = onCall(
         };
       }
 
-      const video = data.items[0];
+      // Find the first video that doesn't contain blacklisted words in the title
+      const video = data.items.find(item => !shouldFilterVideo(item.snippet.title));
+
+      if (!video) {
+        // All results were filtered out, return the first one anyway as fallback
+        logger.info("All results filtered, using first result as fallback");
+        const fallbackVideo = data.items[0];
+        return {
+          success: true,
+          found: true,
+          videoId: fallbackVideo.id.videoId,
+          title: fallbackVideo.snippet.title,
+          thumbnail: fallbackVideo.snippet.thumbnails?.high?.url || fallbackVideo.snippet.thumbnails?.default?.url,
+          channelTitle: fallbackVideo.snippet.channelTitle
+        };
+      }
+
       return {
         success: true,
         found: true,
