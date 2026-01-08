@@ -1,9 +1,13 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { defineSecret } = require("firebase-functions/params");
 const { logger } = require("firebase-functions/v2");
+const { getFirestore } = require("firebase-admin/firestore");
 
 // Define YouTube API key secret
 const youtubeApiKey = defineSecret("YOUTUBE_API_KEY");
+
+// Cache collection name
+const CACHE_COLLECTION = "youtubeCache";
 
 // Words to filter out from video titles (partial performances, warmups, vlogs, etc.)
 const TITLE_BLACKLIST = [
@@ -61,6 +65,30 @@ function isDurationValid(durationSeconds) {
 }
 
 /**
+ * Create a cache key from the search query
+ * Normalizes the query to create consistent keys
+ */
+function getCacheKey(query) {
+  return query.toLowerCase().trim().replace(/[^a-z0-9]/g, "_");
+}
+
+/**
+ * Store result in cache and return it
+ */
+async function cacheAndReturn(db, cacheKey, result) {
+  try {
+    await db.collection(CACHE_COLLECTION).doc(cacheKey).set({
+      ...result,
+      cachedAt: new Date().toISOString()
+    });
+    logger.info("Cached result:", { cacheKey });
+  } catch (cacheError) {
+    logger.warn("Cache write error:", cacheError);
+  }
+  return result;
+}
+
+/**
  * Search YouTube and return the first video result that passes filtering
  * Used to embed corps performance videos
  */
@@ -70,7 +98,7 @@ exports.searchYoutubeVideo = onCall(
     secrets: [youtubeApiKey]
   },
   async (request) => {
-    const { query } = request.data;
+    const { query, skipCache } = request.data;
 
     if (!query || typeof query !== "string") {
       throw new HttpsError("invalid-argument", "Search query is required.");
@@ -84,6 +112,26 @@ exports.searchYoutubeVideo = onCall(
     // Extract year from query (expects format like "2024 Blue Devils corps")
     const yearMatch = query.match(/^\d{4}/);
     const year = yearMatch ? yearMatch[0] : null;
+
+    // Check cache first (unless skipCache is true)
+    const db = getFirestore();
+    const cacheKey = getCacheKey(query);
+
+    if (!skipCache) {
+      try {
+        const cachedDoc = await db.collection(CACHE_COLLECTION).doc(cacheKey).get();
+        if (cachedDoc.exists) {
+          logger.info("Cache hit:", { query, cacheKey });
+          return cachedDoc.data();
+        }
+        logger.info("Cache miss:", { query, cacheKey });
+      } catch (cacheError) {
+        logger.warn("Cache read error:", cacheError);
+        // Continue without cache
+      }
+    } else {
+      logger.info("Skipping cache:", { query, cacheKey });
+    }
 
     try {
       // Use YouTube Data API v3 search endpoint
@@ -122,27 +170,41 @@ exports.searchYoutubeVideo = onCall(
 
       // Filter by title blacklist and require year in title
       const shortYear = year ? year.slice(-2) : null; // e.g., "18" from "2018"
+      logger.info("Year filtering:", { year, shortYear, totalResults: data.items.length });
+
       const titleFilteredVideos = data.items.filter(item => {
         const title = item.snippet.title;
         // Must not contain blacklisted words
-        if (shouldFilterVideo(title)) return false;
+        if (shouldFilterVideo(title)) {
+          logger.info("Filtered by blacklist:", { title });
+          return false;
+        }
         // Must contain the full year or last two digits (e.g., "2018" or "18")
-        if (year && !title.includes(year) && !title.includes(shortYear)) return false;
+        if (year) {
+          const hasFullYear = title.includes(year);
+          const hasShortYear = shortYear && title.includes(shortYear);
+          if (!hasFullYear && !hasShortYear) {
+            logger.info("Filtered by year:", { title, year, shortYear });
+            return false;
+          }
+        }
         return true;
       });
+
+      logger.info("After filtering:", { remaining: titleFilteredVideos.length });
 
       if (titleFilteredVideos.length === 0) {
         // All results were filtered by title, return the first one anyway as fallback
         logger.info("All results filtered by title, using first result as fallback");
         const fallbackVideo = data.items[0];
-        return {
+        return cacheAndReturn(db, cacheKey, {
           success: true,
           found: true,
           videoId: fallbackVideo.id.videoId,
           title: fallbackVideo.snippet.title,
           thumbnail: fallbackVideo.snippet.thumbnails?.high?.url || fallbackVideo.snippet.thumbnails?.default?.url,
           channelTitle: fallbackVideo.snippet.channelTitle
-        };
+        });
       }
 
       // Get video IDs to fetch duration information
@@ -163,14 +225,14 @@ exports.searchYoutubeVideo = onCall(
         });
         // Fall back to first title-filtered video if we can't get duration
         const fallbackVideo = titleFilteredVideos[0];
-        return {
+        return cacheAndReturn(db, cacheKey, {
           success: true,
           found: true,
           videoId: fallbackVideo.id.videoId,
           title: fallbackVideo.snippet.title,
           thumbnail: fallbackVideo.snippet.thumbnails?.high?.url || fallbackVideo.snippet.thumbnails?.default?.url,
           channelTitle: fallbackVideo.snippet.channelTitle
-        };
+        });
       }
 
       const videosData = await videosResponse.json();
@@ -205,24 +267,24 @@ exports.searchYoutubeVideo = onCall(
         // No video passed duration filter, return first title-filtered as fallback
         logger.info("No videos in 8-15 min range, using first title-filtered result as fallback");
         const fallbackVideo = titleFilteredVideos[0];
-        return {
+        return cacheAndReturn(db, cacheKey, {
           success: true,
           found: true,
           videoId: fallbackVideo.id.videoId,
           title: fallbackVideo.snippet.title,
           thumbnail: fallbackVideo.snippet.thumbnails?.high?.url || fallbackVideo.snippet.thumbnails?.default?.url,
           channelTitle: fallbackVideo.snippet.channelTitle
-        };
+        });
       }
 
-      return {
+      return cacheAndReturn(db, cacheKey, {
         success: true,
         found: true,
         videoId: video.id.videoId,
         title: video.snippet.title,
         thumbnail: video.snippet.thumbnails?.high?.url || video.snippet.thumbnails?.default?.url,
         channelTitle: video.snippet.channelTitle
-      };
+      });
     } catch (error) {
       logger.error("YouTube search failed:", error);
       if (error instanceof HttpsError) throw error;
