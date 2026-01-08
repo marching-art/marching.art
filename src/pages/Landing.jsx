@@ -10,7 +10,7 @@ import {
   Trophy, Lock, Mail, AlertCircle, TrendingUp,
   TrendingDown, Flame, ChevronRight, X,
   Activity, LayoutDashboard, Award, User, LogOut,
-  Settings, Zap, UserPlus, MessageCircle, Coins, Youtube
+  Settings, Zap, UserPlus, MessageCircle, Coins, Youtube, Loader2
 } from 'lucide-react';
 import { useAuth } from '../App';
 import toast from 'react-hot-toast';
@@ -19,6 +19,7 @@ import NewsFeed from '../components/Landing/NewsFeed';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useTickerData } from '../hooks/useTickerData';
 import { useLandingScores } from '../hooks/useLandingScores';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 
 // =============================================================================
@@ -37,12 +38,65 @@ const Landing = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showStandingsModal, setShowStandingsModal] = useState(false);
-  const [videoModal, setVideoModal] = useState({ show: false, searchQuery: '', title: '' });
+  const [videoModal, setVideoModal] = useState({
+    show: false,
+    loading: false,
+    videoId: null,
+    title: '',
+    searchQuery: '',
+    error: null
+  });
 
-  // Handle YouTube search for a corps
-  const handleYoutubeSearch = (year, corpsName) => {
+  // Search YouTube and show video in modal
+  const handleYoutubeSearch = async (year, corpsName) => {
     const searchQuery = `${year} ${corpsName}`;
-    setVideoModal({ show: true, searchQuery, title: searchQuery });
+    setVideoModal({
+      show: true,
+      loading: true,
+      videoId: null,
+      title: searchQuery,
+      searchQuery,
+      error: null
+    });
+
+    try {
+      const functions = getFunctions();
+      const searchYoutube = httpsCallable(functions, 'searchYoutubeVideo');
+      const result = await searchYoutube({ query: searchQuery });
+
+      if (result.data.success && result.data.found) {
+        setVideoModal(prev => ({
+          ...prev,
+          loading: false,
+          videoId: result.data.videoId,
+          title: result.data.title || searchQuery
+        }));
+      } else {
+        setVideoModal(prev => ({
+          ...prev,
+          loading: false,
+          error: 'No videos found'
+        }));
+      }
+    } catch (err) {
+      console.error('YouTube search error:', err);
+      setVideoModal(prev => ({
+        ...prev,
+        loading: false,
+        error: 'Failed to search YouTube'
+      }));
+    }
+  };
+
+  const closeVideoModal = () => {
+    setVideoModal({
+      show: false,
+      loading: false,
+      videoId: null,
+      title: '',
+      searchQuery: '',
+      error: null
+    });
   };
 
   // Compute trending players from movers across all classes
@@ -647,22 +701,22 @@ const Landing = () => {
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/90"
-            onClick={() => setVideoModal({ show: false, searchQuery: '', title: '' })}
+            onClick={closeVideoModal}
           />
 
           {/* Modal Content - 720p aspect ratio (1280x720) */}
           <div className="relative w-full max-w-4xl bg-[#0A0A0A] border border-[#333] rounded-sm">
             {/* Header */}
             <div className="bg-[#1a1a1a] px-4 py-3 border-b border-[#333] flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Youtube className="w-5 h-5 text-red-500" />
-                <h2 className="text-sm font-bold text-white truncate max-w-[300px]">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <Youtube className="w-5 h-5 text-red-500 flex-shrink-0" />
+                <h2 className="text-sm font-bold text-white truncate">
                   {videoModal.title}
                 </h2>
               </div>
               <button
-                onClick={() => setVideoModal({ show: false, searchQuery: '', title: '' })}
-                className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors"
+                onClick={closeVideoModal}
+                className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors flex-shrink-0 ml-2"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -670,34 +724,50 @@ const Landing = () => {
 
             {/* Video Container - 16:9 aspect ratio for 720p */}
             <div className="relative w-full bg-black" style={{ paddingBottom: '56.25%' }}>
-              <iframe
-                className="absolute inset-0 w-full h-full"
-                src={`https://www.youtube-nocookie.com/embed?listType=search&list=${encodeURIComponent(videoModal.searchQuery)}&vq=hd720`}
-                title={`YouTube search: ${videoModal.title}`}
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-              />
-              {/* Fallback overlay if embed fails */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0A0A0A] pointer-events-none opacity-0 peer-empty:opacity-100">
-                <Youtube className="w-16 h-16 text-red-500 mb-4" />
-                <p className="text-gray-400 text-sm mb-4">Click below to watch on YouTube</p>
-              </div>
+              {videoModal.loading ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <Loader2 className="w-12 h-12 text-red-500 animate-spin mb-4" />
+                  <p className="text-gray-400 text-sm">Searching YouTube...</p>
+                </div>
+              ) : videoModal.error ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <Youtube className="w-16 h-16 text-gray-600 mb-4" />
+                  <p className="text-gray-400 text-sm mb-4">{videoModal.error}</p>
+                  <a
+                    href={`https://www.youtube.com/results?search_query=${encodeURIComponent(videoModal.searchQuery)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-xs font-bold uppercase tracking-wider rounded transition-colors"
+                  >
+                    <Youtube className="w-4 h-4" />
+                    Search on YouTube
+                  </a>
+                </div>
+              ) : videoModal.videoId ? (
+                <iframe
+                  className="absolute inset-0 w-full h-full"
+                  src={`https://www.youtube-nocookie.com/embed/${videoModal.videoId}?autoplay=1&vq=hd720&rel=0`}
+                  title={videoModal.title}
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
+              ) : null}
             </div>
 
             {/* Footer with YouTube link */}
             <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex items-center justify-between">
-              <p className="text-[10px] text-gray-500">
+              <p className="text-[10px] text-gray-500 truncate flex-1 mr-2">
                 Search: "{videoModal.searchQuery}"
               </p>
               <a
                 href={`https://www.youtube.com/results?search_query=${encodeURIComponent(videoModal.searchQuery)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-xs font-bold uppercase tracking-wider rounded transition-colors"
+                className="text-[10px] text-red-500 hover:text-red-400 font-bold uppercase tracking-wider transition-colors flex items-center gap-1 flex-shrink-0"
               >
-                <Youtube className="w-4 h-4" />
-                Watch on YouTube
+                More Results
+                <ChevronRight className="w-3 h-3" />
               </a>
             </div>
           </div>
