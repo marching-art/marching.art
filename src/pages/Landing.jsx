@@ -49,9 +49,19 @@ const Landing = () => {
 
   // Search YouTube and show video in modal
   const handleYoutubeSearch = async (year, corpsName, skipCache = false) => {
-    // Only add "corps" for generic names that need disambiguation
-    const needsCorpsSuffix = ['cavaliers', 'genesis'].includes(corpsName.toLowerCase());
-    const searchQuery = needsCorpsSuffix ? `${year} ${corpsName} corps` : `${year} ${corpsName}`;
+    // Build search query with special cases
+    let searchQuery = `${year} ${corpsName}`;
+
+    // Add "corps" for generic names that need disambiguation
+    if (['cavaliers', 'genesis'].includes(corpsName.toLowerCase())) {
+      searchQuery += ' corps';
+    }
+
+    // Add show name for specific corps/year combinations
+    if (year === '2018' && corpsName.toLowerCase().includes('santa clara')) {
+      searchQuery += ' babylon';
+    }
+
     setVideoModal({
       show: true,
       loading: true,
