@@ -67,7 +67,7 @@ exports.processNewsGeneration = onMessagePublished(
     topic: NEWS_GENERATION_TOPIC,
     timeoutSeconds: 180,
     memory: "1GiB",
-    secrets: [geminiApiKey],
+    secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret],
   },
   async (message) => {
     logger.info("Processing news generation request");
