@@ -12,7 +12,7 @@ import {
   TrendingUp, TrendingDown, Minus, Share2, Loader2,
   AlertCircle, ChevronRight, Lock, Mail, User, LogOut,
   Settings, Zap, Activity, LayoutDashboard, Award,
-  UserPlus, MessageCircle, Coins
+  UserPlus, MessageCircle, Coins, Youtube, X
 } from 'lucide-react';
 import ArticleReactions from '../components/Articles/ArticleReactions';
 import ArticleComments from '../components/Articles/ArticleComments';
@@ -24,6 +24,7 @@ import { useProfileStore } from '../store/profileStore';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useTickerData } from '../hooks/useTickerData';
 import { useLandingScores } from '../hooks/useLandingScores';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 
 // Category configuration
@@ -120,6 +121,69 @@ const Article = () => {
   // Ref for scrolling to comments
   const commentsRef = useRef(null);
   const [expandComments, setExpandComments] = useState(false);
+
+  // Standings and video modal state
+  const [showStandingsModal, setShowStandingsModal] = useState(false);
+  const [videoModal, setVideoModal] = useState({
+    show: false,
+    loading: false,
+    videoId: null,
+    title: '',
+    searchQuery: '',
+    error: null
+  });
+
+  // Search YouTube and show video in modal
+  const handleYoutubeSearch = async (year, corpsName) => {
+    const searchQuery = `${year} ${corpsName}`;
+    setVideoModal({
+      show: true,
+      loading: true,
+      videoId: null,
+      title: searchQuery,
+      searchQuery,
+      error: null
+    });
+
+    try {
+      const functions = getFunctions();
+      const searchYoutube = httpsCallable(functions, 'searchYoutubeVideo');
+      const result = await searchYoutube({ query: searchQuery });
+
+      if (result.data.success && result.data.found) {
+        setVideoModal(prev => ({
+          ...prev,
+          loading: false,
+          videoId: result.data.videoId,
+          title: result.data.title || searchQuery
+        }));
+      } else {
+        setVideoModal(prev => ({
+          ...prev,
+          loading: false,
+          error: result.data.message || 'No videos found'
+        }));
+      }
+    } catch (err) {
+      console.error('YouTube search error:', err);
+      setVideoModal(prev => ({
+        ...prev,
+        loading: false,
+        error: 'Failed to search YouTube'
+      }));
+    }
+  };
+
+  const closeVideoModal = () => {
+    setVideoModal({
+      show: false,
+      loading: false,
+      videoId: null,
+      title: '',
+      searchQuery: '',
+      error: null
+    });
+  };
 
   // Fetch article if not in navigation state (direct link access)
   useEffect(() => {
@@ -1067,6 +1131,16 @@ const Article = () => {
                                 {row.direction === 'down' && <TrendingDown className="w-3 h-3" />}
                                 {changeDisplay}
                               </span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleYoutubeSearch(row.sourceYear, row.corpsName);
+                                }}
+                                className="p-1 text-gray-500 hover:text-red-500 transition-colors"
+                                title={`Watch ${row.sourceYear} ${row.corpsName} on YouTube`}
+                              >
+                                <Youtube className="w-3.5 h-3.5" />
+                              </button>
                             </div>
                           </div>
                         );
@@ -1080,13 +1154,13 @@ const Article = () => {
 
                   {/* Footer */}
                   <div className="px-4 py-3 border-t border-[#333] bg-[#111]">
-                    <Link
-                      to="/scores"
+                    <button
+                      onClick={() => setShowStandingsModal(true)}
                       className="text-[10px] text-[#0057B8] hover:text-[#0066d6] font-bold uppercase tracking-wider transition-colors flex items-center gap-1"
                     >
                       Full Standings
                       <ChevronRight className="w-3 h-3" />
-                    </Link>
+                    </button>
                   </div>
                 </div>
 
@@ -1095,6 +1169,185 @@ const Article = () => {
           </div>
         </div>
       </main>
+
+      {/* ============================================================= */}
+      {/* FULL STANDINGS MODAL */}
+      {/* ============================================================= */}
+      {showStandingsModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/80"
+            onClick={() => setShowStandingsModal(false)}
+          />
+
+          {/* Modal Content */}
+          <div className="relative w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-sm max-h-[85vh] flex flex-col">
+            {/* Header */}
+            <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between flex-shrink-0">
+              <div>
+                <h2 className="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-[#0057B8]" />
+                  Full Standings
+                </h2>
+                {displayDay && (
+                  <p className="text-[10px] font-data text-gray-500 mt-0.5">Season Day {displayDay}</p>
+                )}
+              </div>
+              <button
+                onClick={() => setShowStandingsModal(false)}
+                className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Standings List */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="divide-y divide-[#333]/50">
+                {liveScores.map((row) => {
+                  const changeValue = row.change;
+                  const hasChange = changeValue !== null;
+                  const changeDisplay = hasChange
+                    ? `${changeValue >= 0 ? '+' : ''}${changeValue.toFixed(1)}`
+                    : '—';
+
+                  return (
+                    <div
+                      key={`modal-${row.sourceYear}-${row.corpsName}`}
+                      className="flex items-center justify-between px-4 py-2.5 hover:bg-white/[0.02] transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className={`w-6 h-6 flex items-center justify-center text-xs font-bold font-data tabular-nums rounded-sm ${
+                          row.rank <= 3 ? 'bg-[#0057B8] text-white' : 'bg-[#222] text-gray-500'
+                        }`}>
+                          {row.rank}
+                        </span>
+                        <div className="min-w-0">
+                          <span className="text-sm text-white block truncate max-w-[180px]" title={`${row.sourceYear} ${row.corpsName}`}>
+                            <span className="text-gray-400 font-data">{row.sourceYear}</span> {row.corpsName}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-bold font-data text-white tabular-nums">
+                          {row.score.toFixed(3)}
+                        </span>
+                        <span className={`flex items-center gap-0.5 text-xs font-bold font-data tabular-nums w-12 justify-end ${
+                          row.direction === 'up' ? 'text-green-500' :
+                          row.direction === 'down' ? 'text-red-500' : 'text-gray-500'
+                        }`}>
+                          {row.direction === 'up' && <TrendingUp className="w-3 h-3" />}
+                          {row.direction === 'down' && <TrendingDown className="w-3 h-3" />}
+                          {changeDisplay}
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleYoutubeSearch(row.sourceYear, row.corpsName);
+                          }}
+                          className="p-1 text-gray-500 hover:text-red-500 transition-colors"
+                          title={`Watch ${row.sourceYear} ${row.corpsName} on YouTube`}
+                        >
+                          <Youtube className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex-shrink-0">
+              <p className="text-[10px] font-data text-gray-500 text-center">
+                {liveScores.length} of 25 corps with scores
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================= */}
+      {/* YOUTUBE VIDEO MODAL */}
+      {/* ============================================================= */}
+      {videoModal.show && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/90"
+            onClick={closeVideoModal}
+          />
+
+          {/* Modal Content - 720p aspect ratio (1280x720) */}
+          <div className="relative w-full max-w-4xl bg-[#0A0A0A] border border-[#333] rounded-sm">
+            {/* Header */}
+            <div className="bg-[#1a1a1a] px-4 py-3 border-b border-[#333] flex items-center justify-between">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <Youtube className="w-5 h-5 text-red-500 flex-shrink-0" />
+                <h2 className="text-sm font-bold text-white truncate">
+                  {videoModal.title}
+                </h2>
+              </div>
+              <button
+                onClick={closeVideoModal}
+                className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors flex-shrink-0 ml-2"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Video Container - 16:9 aspect ratio for 720p */}
+            <div className="relative w-full bg-black" style={{ paddingBottom: '56.25%' }}>
+              {videoModal.loading ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <Loader2 className="w-12 h-12 text-red-500 animate-spin mb-4" />
+                  <p className="text-gray-400 text-sm">Searching YouTube...</p>
+                </div>
+              ) : videoModal.error ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <Youtube className="w-16 h-16 text-gray-600 mb-4" />
+                  <p className="text-gray-400 text-sm mb-4">{videoModal.error}</p>
+                  <a
+                    href={`https://www.youtube.com/results?search_query=${encodeURIComponent(videoModal.searchQuery)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-xs font-bold uppercase tracking-wider rounded transition-colors"
+                  >
+                    <Youtube className="w-4 h-4" />
+                    Search on YouTube
+                  </a>
+                </div>
+              ) : videoModal.videoId ? (
+                <iframe
+                  className="absolute inset-0 w-full h-full"
+                  src={`https://www.youtube-nocookie.com/embed/${videoModal.videoId}?autoplay=1&vq=hd720&rel=0`}
+                  title={videoModal.title}
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
+              ) : null}
+            </div>
+
+            {/* Footer with YouTube link */}
+            <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex items-center justify-between">
+              <p className="text-[10px] text-gray-500 truncate flex-1 mr-2">
+                Search: "{videoModal.searchQuery}"
+              </p>
+              <a
+                href={`https://www.youtube.com/results?search_query=${encodeURIComponent(videoModal.searchQuery)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] text-red-500 hover:text-red-400 font-bold uppercase tracking-wider transition-colors flex items-center gap-1 flex-shrink-0"
+              >
+                More Results
+                <ChevronRight className="w-3 h-3" />
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
