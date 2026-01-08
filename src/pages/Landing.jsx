@@ -49,7 +49,7 @@ const Landing = () => {
 
   // Search YouTube and show video in modal
   const handleYoutubeSearch = async (year, corpsName) => {
-    const searchQuery = `${year} ${corpsName}`;
+    const searchQuery = `${year} ${corpsName} Drum and Bugle Corps`;
     setVideoModal({
       show: true,
       loading: true,
