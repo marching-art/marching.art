@@ -17,7 +17,11 @@ const TITLE_BLACKLIST = [
   "percussion",
   "warmup",
   "warm up",
-  "warm-up"
+  "warm-up",
+  "encore",
+  "headcam",
+  "pit",
+  "snareline"
 ];
 
 /**
