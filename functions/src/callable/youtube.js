@@ -28,7 +28,8 @@ const TITLE_BLACKLIST = [
   "snareline",
   "snare",
   "cam",
-  "battery"
+  "battery",
+  "learn"
 ];
 
 // Duration constraints (in seconds)
