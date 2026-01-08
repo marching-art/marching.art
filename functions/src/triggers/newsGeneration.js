@@ -1219,19 +1219,92 @@ exports.regenerateArticleImage = onCall(
       logger.info("Regenerating image for article:", { path, headline, category: effectiveCategory });
 
       // Generate new AI image
-      const { generateImageWithImagen, buildArticleImagePrompt } = require("../helpers/newsGeneration");
+      const {
+        generateImageWithImagen,
+        buildArticleImagePrompt,
+        buildStandingsImagePrompt,
+        buildCaptionsImagePrompt,
+        buildAnalyticsImagePrompt,
+        buildUnderdogImagePrompt,
+        buildCorpsSpotlightImagePrompt,
+        buildFantasyPerformersImagePrompt,
+        buildFantasyLeagueImagePrompt,
+        ARTICLE_TYPES,
+      } = require("../helpers/newsGeneration");
       const { uploadFromUrl } = require("../helpers/mediaService");
 
-      // Always generate fresh prompt with latest closeup style
-      // (stored prompts may have old wide-shot formatting)
-      const imagePrompt = buildArticleImagePrompt(
-        effectiveCategory,
-        headline,
-        articleData.summary || ""
-      );
+      // Use the stored specialized prompt if available, otherwise build a new one
+      // Stored prompts include corps-specific uniform details from the specialized builders
+      let imagePrompt = articleData.imagePrompt;
 
-      logger.info("Using fresh image prompt:", {
+      // If no stored prompt, try to rebuild based on article type
+      if (!imagePrompt) {
+        const articleType = articleData.type;
+        const metadata = articleData.metadata || {};
+
+        if (articleType === ARTICLE_TYPES.DCI_STANDINGS && articleData.standings?.[0]) {
+          const topCorps = articleData.standings[0];
+          imagePrompt = buildStandingsImagePrompt(
+            topCorps.corps,
+            topCorps.sourceYear || new Date().getFullYear(),
+            metadata.showLocation,
+            metadata.showName,
+            topCorps.showTitle
+          );
+        } else if (articleType === ARTICLE_TYPES.DCI_CAPTIONS && articleData.captionBreakdown) {
+          const featured = articleData.standings?.[0] || { corps: "Blue Devils", sourceYear: 2024 };
+          const topCaption = Object.keys(articleData.captionBreakdown || {})[0] || "General Effect";
+          imagePrompt = buildCaptionsImagePrompt(
+            featured.corps,
+            featured.sourceYear || new Date().getFullYear(),
+            topCaption,
+            metadata.showLocation,
+            featured.showTitle
+          );
+        } else if (articleType === ARTICLE_TYPES.FANTASY_PERFORMERS && articleData.topPerformers?.[0]) {
+          const top = articleData.topPerformers[0];
+          imagePrompt = buildFantasyPerformersImagePrompt(
+            top.corpsName || "Champion Corps",
+            "Victory celebration",
+            top.location,
+            top.uniformDesign
+          );
+        } else if (articleType === ARTICLE_TYPES.FANTASY_LEAGUES) {
+          imagePrompt = buildFantasyLeagueImagePrompt();
+        } else if (articleType === ARTICLE_TYPES.DEEP_ANALYTICS && articleData.featuredCorps) {
+          imagePrompt = buildAnalyticsImagePrompt(
+            articleData.featuredCorps,
+            articleData.featuredYear || new Date().getFullYear(),
+            "trajectory analysis",
+            articleData.showTitle
+          );
+        } else if (articleType === ARTICLE_TYPES.UNDERDOG_STORY && articleData.featuredCorps) {
+          imagePrompt = buildUnderdogImagePrompt(
+            articleData.featuredCorps,
+            articleData.featuredYear || new Date().getFullYear(),
+            metadata.showLocation,
+            articleData.showTitle
+          );
+        } else if (articleType === ARTICLE_TYPES.CORPS_SPOTLIGHT && articleData.featuredCorps) {
+          imagePrompt = buildCorpsSpotlightImagePrompt(
+            articleData.featuredCorps,
+            articleData.featuredYear || new Date().getFullYear(),
+            articleData.showTitle
+          );
+        } else {
+          // Fallback to generic prompt builder
+          imagePrompt = buildArticleImagePrompt(
+            effectiveCategory,
+            headline,
+            articleData.summary || ""
+          );
+        }
+      }
+
+      logger.info("Using image prompt:", {
         category: effectiveCategory,
+        articleType: articleData.type,
+        usedStoredPrompt: !!articleData.imagePrompt,
         promptLength: imagePrompt?.length
       });
 
