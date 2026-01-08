@@ -92,7 +92,7 @@ exports.searchYoutubeVideo = onCall(
       searchUrl.searchParams.set("part", "snippet");
       searchUrl.searchParams.set("q", query);
       searchUrl.searchParams.set("type", "video");
-      searchUrl.searchParams.set("maxResults", "10");
+      searchUrl.searchParams.set("maxResults", "25");
       searchUrl.searchParams.set("videoEmbeddable", "true");
       searchUrl.searchParams.set("key", apiKey);
 
