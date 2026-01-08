@@ -79,6 +79,7 @@ const {
   manualTrigger,
   sendTestEmail,
 } = require("./src/callable/admin");
+const { searchYoutubeVideo } = require("./src/callable/youtube");
 
 // Scheduled Functions
 const { seasonScheduler } = require("./src/scheduled/seasonScheduler");
@@ -275,4 +276,7 @@ module.exports = {
 
   // Webhooks
   stripeWebhook,
+
+  // YouTube Search
+  searchYoutubeVideo,
 };
