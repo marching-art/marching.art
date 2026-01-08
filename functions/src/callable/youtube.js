@@ -21,7 +21,10 @@ const TITLE_BLACKLIST = [
   "encore",
   "headcam",
   "pit",
-  "snareline"
+  "snareline",
+  "snare",
+  "cam",
+  "battery"
 ];
 
 // Duration constraints (in seconds)
@@ -169,12 +172,22 @@ exports.searchYoutubeVideo = onCall(
         }
       }
 
-      // Find first video that passes both title and duration filters
-      const video = titleFilteredVideos.find(item => {
+      // Filter videos that pass duration check
+      const validVideos = titleFilteredVideos.filter(item => {
         const duration = durationMap[item.id.videoId];
         if (duration === undefined) return false;
         return isDurationValid(duration);
       });
+
+      // Prioritize videos with "finals" in the title
+      let video = validVideos.find(item =>
+        item.snippet.title.toLowerCase().includes("finals")
+      );
+
+      // If no finals video, use first valid video
+      if (!video && validVideos.length > 0) {
+        video = validVideos[0];
+      }
 
       if (!video) {
         // No video passed duration filter, return first title-filtered as fallback
