@@ -19,9 +19,7 @@ import NewsFeed from '../components/Landing/NewsFeed';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useTickerData } from '../hooks/useTickerData';
 import { useLandingScores } from '../hooks/useLandingScores';
-
-// YouTube Data API key (public, read-only)
-const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 
 // =============================================================================
@@ -61,44 +59,24 @@ const Landing = () => {
       error: null
     });
 
-    // If no API key, fall back to opening YouTube directly
-    if (!YOUTUBE_API_KEY) {
-      window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(searchQuery)}`, '_blank');
-      setVideoModal(prev => ({ ...prev, show: false, loading: false }));
-      return;
-    }
-
     try {
-      // Call YouTube Data API v3 directly
-      const searchUrl = new URL('https://www.googleapis.com/youtube/v3/search');
-      searchUrl.searchParams.set('part', 'snippet');
-      searchUrl.searchParams.set('q', searchQuery);
-      searchUrl.searchParams.set('type', 'video');
-      searchUrl.searchParams.set('maxResults', '1');
-      searchUrl.searchParams.set('videoEmbeddable', 'true');
-      searchUrl.searchParams.set('key', YOUTUBE_API_KEY);
+      // Call Firebase function to search YouTube
+      const functions = getFunctions();
+      const searchYoutube = httpsCallable(functions, 'searchYoutubeVideo');
+      const result = await searchYoutube({ query: searchQuery });
 
-      const response = await fetch(searchUrl.toString());
-
-      if (!response.ok) {
-        throw new Error('YouTube API error');
-      }
-
-      const data = await response.json();
-
-      if (data.items && data.items.length > 0) {
-        const video = data.items[0];
+      if (result.data.success && result.data.found) {
         setVideoModal(prev => ({
           ...prev,
           loading: false,
-          videoId: video.id.videoId,
-          title: video.snippet.title || searchQuery
+          videoId: result.data.videoId,
+          title: result.data.title || searchQuery
         }));
       } else {
         setVideoModal(prev => ({
           ...prev,
           loading: false,
-          error: 'No videos found'
+          error: result.data.message || 'No videos found'
         }));
       }
     } catch (err) {
