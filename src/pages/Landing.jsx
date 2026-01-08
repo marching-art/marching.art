@@ -22,6 +22,10 @@ import { useLandingScores } from '../hooks/useLandingScores';
 
 // YouTube Data API key (public, read-only)
 const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
+// Debug: log if API key is present (not the actual key)
+if (typeof window !== 'undefined') {
+  console.log('YouTube API key configured:', !!YOUTUBE_API_KEY, 'length:', YOUTUBE_API_KEY?.length || 0);
+}
 
 
 // =============================================================================
