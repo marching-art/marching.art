@@ -2832,7 +2832,7 @@ CRITICAL RULES:
     let corpsLocation = null;
     if (topCorps?.uid && topCorps?.corpsClass && db && dataDocId) {
       try {
-        const profileDoc = await db.doc(`${dataDocId}/users/${topCorps.uid}/profile/data`).get();
+        const profileDoc = await db.doc(`artifacts/${dataDocId}/users/${topCorps.uid}/profile/data`).get();
         if (profileDoc.exists) {
           const profileData = profileDoc.data();
           const corpsData = profileData?.corps?.[topCorps.corpsClass];
