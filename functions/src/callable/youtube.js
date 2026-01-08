@@ -24,12 +24,37 @@ const TITLE_BLACKLIST = [
   "snareline"
 ];
 
+// Duration constraints (in seconds)
+const MIN_DURATION_SECONDS = 8 * 60;  // 8 minutes
+const MAX_DURATION_SECONDS = 15 * 60; // 15 minutes
+
 /**
  * Check if a video title contains any blacklisted words
  */
 function shouldFilterVideo(title) {
   const lowerTitle = title.toLowerCase();
   return TITLE_BLACKLIST.some(word => lowerTitle.includes(word));
+}
+
+/**
+ * Parse ISO 8601 duration format (e.g., "PT11M30S") to seconds
+ */
+function parseDuration(duration) {
+  const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  if (!match) return 0;
+
+  const hours = parseInt(match[1] || 0, 10);
+  const minutes = parseInt(match[2] || 0, 10);
+  const seconds = parseInt(match[3] || 0, 10);
+
+  return hours * 3600 + minutes * 60 + seconds;
+}
+
+/**
+ * Check if duration is within acceptable range (8-15 minutes)
+ */
+function isDurationValid(durationSeconds) {
+  return durationSeconds >= MIN_DURATION_SECONDS && durationSeconds <= MAX_DURATION_SECONDS;
 }
 
 /**
@@ -88,13 +113,73 @@ exports.searchYoutubeVideo = onCall(
         };
       }
 
-      // Find the first video that doesn't contain blacklisted words in the title
-      const video = data.items.find(item => !shouldFilterVideo(item.snippet.title));
+      // First filter by title blacklist
+      const titleFilteredVideos = data.items.filter(item => !shouldFilterVideo(item.snippet.title));
+
+      if (titleFilteredVideos.length === 0) {
+        // All results were filtered by title, return the first one anyway as fallback
+        logger.info("All results filtered by title, using first result as fallback");
+        const fallbackVideo = data.items[0];
+        return {
+          success: true,
+          found: true,
+          videoId: fallbackVideo.id.videoId,
+          title: fallbackVideo.snippet.title,
+          thumbnail: fallbackVideo.snippet.thumbnails?.high?.url || fallbackVideo.snippet.thumbnails?.default?.url,
+          channelTitle: fallbackVideo.snippet.channelTitle
+        };
+      }
+
+      // Get video IDs to fetch duration information
+      const videoIds = titleFilteredVideos.map(item => item.id.videoId).join(",");
+
+      // Fetch video details to get duration
+      const videosUrl = new URL("https://www.googleapis.com/youtube/v3/videos");
+      videosUrl.searchParams.set("part", "contentDetails");
+      videosUrl.searchParams.set("id", videoIds);
+      videosUrl.searchParams.set("key", apiKey);
+
+      const videosResponse = await fetch(videosUrl.toString());
+
+      if (!videosResponse.ok) {
+        logger.error("YouTube videos API error:", {
+          status: videosResponse.status,
+          statusText: videosResponse.statusText
+        });
+        // Fall back to first title-filtered video if we can't get duration
+        const fallbackVideo = titleFilteredVideos[0];
+        return {
+          success: true,
+          found: true,
+          videoId: fallbackVideo.id.videoId,
+          title: fallbackVideo.snippet.title,
+          thumbnail: fallbackVideo.snippet.thumbnails?.high?.url || fallbackVideo.snippet.thumbnails?.default?.url,
+          channelTitle: fallbackVideo.snippet.channelTitle
+        };
+      }
+
+      const videosData = await videosResponse.json();
+
+      // Create a map of video ID to duration
+      const durationMap = {};
+      if (videosData.items) {
+        for (const item of videosData.items) {
+          const durationSeconds = parseDuration(item.contentDetails.duration);
+          durationMap[item.id] = durationSeconds;
+        }
+      }
+
+      // Find first video that passes both title and duration filters
+      const video = titleFilteredVideos.find(item => {
+        const duration = durationMap[item.id.videoId];
+        if (duration === undefined) return false;
+        return isDurationValid(duration);
+      });
 
       if (!video) {
-        // All results were filtered out, return the first one anyway as fallback
-        logger.info("All results filtered, using first result as fallback");
-        const fallbackVideo = data.items[0];
+        // No video passed duration filter, return first title-filtered as fallback
+        logger.info("No videos in 8-15 min range, using first title-filtered result as fallback");
+        const fallbackVideo = titleFilteredVideos[0];
         return {
           success: true,
           found: true,
