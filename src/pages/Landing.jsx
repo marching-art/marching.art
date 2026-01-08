@@ -49,7 +49,9 @@ const Landing = () => {
 
   // Search YouTube and show video in modal
   const handleYoutubeSearch = async (year, corpsName, skipCache = false) => {
-    const searchQuery = `${year} ${corpsName} corps`;
+    // Only add "corps" for generic names that need disambiguation
+    const needsCorpsSuffix = ['cavaliers', 'genesis'].includes(corpsName.toLowerCase());
+    const searchQuery = needsCorpsSuffix ? `${year} ${corpsName} corps` : `${year} ${corpsName}`;
     setVideoModal({
       show: true,
       loading: true,
