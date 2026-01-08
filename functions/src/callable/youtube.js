@@ -81,6 +81,10 @@ exports.searchYoutubeVideo = onCall(
       throw new HttpsError("failed-precondition", "YouTube API key is not configured.");
     }
 
+    // Extract year from query (expects format like "2024 Blue Devils corps")
+    const yearMatch = query.match(/^\d{4}/);
+    const year = yearMatch ? yearMatch[0] : null;
+
     try {
       // Use YouTube Data API v3 search endpoint
       // Request more results so we can filter out unwanted videos
@@ -116,8 +120,15 @@ exports.searchYoutubeVideo = onCall(
         };
       }
 
-      // First filter by title blacklist
-      const titleFilteredVideos = data.items.filter(item => !shouldFilterVideo(item.snippet.title));
+      // Filter by title blacklist and require year in title
+      const titleFilteredVideos = data.items.filter(item => {
+        const title = item.snippet.title;
+        // Must not contain blacklisted words
+        if (shouldFilterVideo(title)) return false;
+        // Must contain the year if we extracted one
+        if (year && !title.includes(year)) return false;
+        return true;
+      });
 
       if (titleFilteredVideos.length === 0) {
         // All results were filtered by title, return the first one anyway as fallback
