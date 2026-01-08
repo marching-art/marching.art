@@ -135,7 +135,7 @@ const Article = () => {
 
   // Search YouTube and show video in modal
   const handleYoutubeSearch = async (year, corpsName) => {
-    const searchQuery = `${year} ${corpsName} Drum and Bugle Corps`;
+    const searchQuery = `${year} ${corpsName} corps`;
     setVideoModal({
       show: true,
       loading: true,
