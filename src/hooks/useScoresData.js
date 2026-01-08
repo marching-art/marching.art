@@ -292,7 +292,7 @@ export const useScoresData = (options = {}) => {
             return recap.shows?.map(show => ({
               eventName: show.eventName,
               location: show.location,
-              date: recap.date?.toDate?.().toLocaleDateString() || 'TBD',
+              date: recap.date?.toDate?.().toLocaleDateString('en-US', { timeZone: 'UTC' }) || 'TBD',
               offSeasonDay: recap.offSeasonDay,
               seasonId: targetSeasonId,
               scores: show.results?.map(result => ({
