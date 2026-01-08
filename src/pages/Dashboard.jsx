@@ -1110,7 +1110,7 @@ const Dashboard = () => {
                   eventName: show.eventName || show.name || 'Show',
                   score: userResult.totalScore,
                   placement: userResult.placement,
-                  date: recap.date ? new Date(recap.date.seconds * 1000).toLocaleDateString() : null
+                  date: recap.date ? new Date(recap.date.seconds * 1000).toLocaleDateString('en-US', { timeZone: 'UTC' }) : null
                 });
               }
             }
