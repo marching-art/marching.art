@@ -1,5 +1,5 @@
 // src/hooks/useTickerData.js
-// Hook for fetching real-time ticker data from previous day's scores
+// Hook for fetching real-time ticker data from all corps' most recent scores across the season
 // Displays data like a sports stats ticker, separated by class
 
 import { useState, useEffect, useMemo } from 'react';
@@ -74,7 +74,7 @@ const getCorpsAbbreviation = (name) => {
 };
 
 /**
- * Hook to fetch ticker data from the previous day's shows
+ * Hook to fetch ticker data showing each corps' most recent score across the season
  */
 export const useTickerData = () => {
   const seasonUid = useSeasonStore((state) => state.seasonUid);
@@ -167,15 +167,60 @@ export const useTickerData = () => {
       return emptyData;
     }
 
-    // Get the recap for the display day
-    const dayRecap = allRecaps.find(r => r.offSeasonDay === displayDay);
-    if (!dayRecap) {
-      return { ...emptyData, dayLabel: `Day ${displayDay}` };
+    // Get all recaps up to and including the display day, sorted by day descending
+    const relevantRecaps = allRecaps
+      .filter(r => r.offSeasonDay <= displayDay)
+      .sort((a, b) => b.offSeasonDay - a.offSeasonDay);
+
+    if (relevantRecaps.length === 0) {
+      return { ...emptyData, dayLabel: `Season` };
     }
 
-    // SINGLE PASS: Classify results, calculate aggregates, and group by class
-    // Previously: flatMap → filter → filter → map → filter×3
+    // Track the most recent score for each corps across all days
+    // Key: corpsName, Value: { result, show, day } with most recent data
+    const mostRecentByCorps = new Map();
     const soundSportMedals = [];
+    let totalShowCount = 0;
+
+    // Process all recaps to find most recent score per corps
+    for (const recap of relevantRecaps) {
+      totalShowCount += recap.shows?.length || 0;
+
+      recap.shows?.forEach(show => {
+        show.results?.forEach(result => {
+          if (result.corpsClass === 'soundSport') {
+            // Process SoundSport medals - only from the most recent day they performed
+            if (!mostRecentByCorps.has(`soundsport_${result.corpsName}`)) {
+              mostRecentByCorps.set(`soundsport_${result.corpsName}`, true);
+              if (result.placement && result.placement <= 3) {
+                soundSportMedals.push({
+                  name: getCorpsAbbreviation(result.corpsName),
+                  fullName: result.corpsName,
+                  medal: result.medal || getMedalFromPlacement(result.placement),
+                  eventName: show.eventName,
+                  _order: result.placement, // For sorting
+                });
+              }
+            }
+          } else if (CLASS_CONFIG[result.corpsClass]) {
+            // For regular corps, keep only the most recent score
+            if (!mostRecentByCorps.has(result.corpsName)) {
+              const aggregates = calculateCaptionAggregates(result);
+              mostRecentByCorps.set(result.corpsName, {
+                ...result,
+                ...aggregates,
+                abbr: getCorpsAbbreviation(result.corpsName),
+                eventName: show.eventName,
+                location: show.location,
+                day: recap.offSeasonDay,
+              });
+            }
+          }
+        });
+      });
+    }
+
+    // Group the most recent scores by class
     const resultsByClass = {
       worldClass: [],
       openClass: [],
@@ -183,35 +228,15 @@ export const useTickerData = () => {
     };
     const allScoredResults = [];
 
-    // Single iteration over shows and results
-    dayRecap.shows?.forEach(show => {
-      show.results?.forEach(result => {
-        if (result.corpsClass === 'soundSport') {
-          // Process SoundSport medals inline
-          if (result.placement && result.placement <= 3) {
-            soundSportMedals.push({
-              name: getCorpsAbbreviation(result.corpsName),
-              fullName: result.corpsName,
-              medal: result.medal || getMedalFromPlacement(result.placement),
-              eventName: show.eventName,
-              _order: result.placement, // For sorting
-            });
-          }
-        } else if (CLASS_CONFIG[result.corpsClass]) {
-          // Calculate aggregates and classify in one pass
-          const aggregates = calculateCaptionAggregates(result);
-          const processed = {
-            ...result,
-            ...aggregates,
-            abbr: getCorpsAbbreviation(result.corpsName),
-            eventName: show.eventName,
-            location: show.location,
-          };
-          resultsByClass[result.corpsClass].push(processed);
-          allScoredResults.push(processed);
-        }
-      });
-    });
+    for (const [corpsName, result] of mostRecentByCorps.entries()) {
+      // Skip soundsport tracking entries
+      if (corpsName.startsWith('soundsport_')) continue;
+
+      if (CLASS_CONFIG[result.corpsClass]) {
+        resultsByClass[result.corpsClass].push(result);
+        allScoredResults.push(result);
+      }
+    }
 
     // Sort medals by placement order
     soundSportMedals.sort((a, b) => a._order - b._order);
@@ -428,17 +453,18 @@ export const useTickerData = () => {
       })),
     };
 
-    // Get show count for the day
-    const showCount = dayRecap.shows?.length || 0;
+    // Get the most recent recap for date display
+    const mostRecentRecap = relevantRecaps[0];
 
     return {
       byClass,
       combinedCaptionLeaders,
       soundSportMedals,
-      dayLabel: `Day ${displayDay}`,
-      showCount,
-      date: dayRecap.date?.toDate?.() || new Date(dayRecap.date),
+      dayLabel: `Season`,
+      showCount: totalShowCount,
+      date: mostRecentRecap?.date?.toDate?.() || (mostRecentRecap?.date ? new Date(mostRecentRecap.date) : new Date()),
       availableClasses,
+      displayDay, // Include for reference if needed
     };
   }, [displayDay, allRecaps]);
 
