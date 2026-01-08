@@ -40,8 +40,14 @@ exports.searchYoutubeVideo = onCall(
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        logger.error("YouTube API error:", errorData);
-        throw new HttpsError("internal", "Failed to search YouTube.");
+        logger.error("YouTube API error:", {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData
+        });
+        // Return detailed error for debugging
+        const errorMessage = errorData?.error?.message || "Failed to search YouTube";
+        throw new HttpsError("internal", errorMessage);
       }
 
       const data = await response.json();
