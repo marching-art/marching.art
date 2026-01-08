@@ -29,7 +29,8 @@ const TITLE_BLACKLIST = [
   "snare",
   "cam",
   "battery",
-  "learn"
+  "learn",
+  "transcription"
 ];
 
 // Duration constraints (in seconds)
