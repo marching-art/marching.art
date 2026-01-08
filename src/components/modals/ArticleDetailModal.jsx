@@ -110,7 +110,10 @@ const ArticleDetailModal = ({ article, onClose, engagement: initialEngagement })
       }
     };
 
-    if (navigator.share) {
+    // Check if we're on a mobile device - Web Share API is only reliable on mobile
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    if (navigator.share && isMobile) {
       try {
         await navigator.share({
           title: article.headline,
