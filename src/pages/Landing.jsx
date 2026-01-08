@@ -10,7 +10,7 @@ import {
   Trophy, Lock, Mail, AlertCircle, TrendingUp,
   TrendingDown, Flame, ChevronRight, X,
   Activity, LayoutDashboard, Award, User, LogOut,
-  Settings, Zap, UserPlus, MessageCircle, Coins, Youtube, Loader2
+  Settings, Zap, UserPlus, MessageCircle, Coins, Youtube, Loader2, RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../App';
 import toast from 'react-hot-toast';
@@ -48,7 +48,7 @@ const Landing = () => {
   });
 
   // Search YouTube and show video in modal
-  const handleYoutubeSearch = async (year, corpsName) => {
+  const handleYoutubeSearch = async (year, corpsName, skipCache = false) => {
     const searchQuery = `${year} ${corpsName} corps`;
     setVideoModal({
       show: true,
@@ -56,14 +56,16 @@ const Landing = () => {
       videoId: null,
       title: searchQuery,
       searchQuery,
-      error: null
+      error: null,
+      year,
+      corpsName
     });
 
     try {
       // Call Firebase function to search YouTube
       const functions = getFunctions();
       const searchYoutube = httpsCallable(functions, 'searchYoutubeVideo');
-      const result = await searchYoutube({ query: searchQuery });
+      const result = await searchYoutube({ query: searchQuery, skipCache });
 
       if (result.data.success && result.data.found) {
         setVideoModal(prev => ({
@@ -86,6 +88,13 @@ const Landing = () => {
         loading: false,
         error: 'Failed to search YouTube'
       }));
+    }
+  };
+
+  // Retry search with fresh results (skip cache)
+  const handleRetrySearch = () => {
+    if (videoModal.year && videoModal.corpsName) {
+      handleYoutubeSearch(videoModal.year, videoModal.corpsName, true);
     }
   };
 
@@ -761,15 +770,26 @@ const Landing = () => {
               <p className="text-[10px] text-gray-500 truncate flex-1 mr-2">
                 Search: "{videoModal.searchQuery}"
               </p>
-              <a
-                href={`https://www.youtube.com/results?search_query=${encodeURIComponent(videoModal.searchQuery)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[10px] text-red-500 hover:text-red-400 font-bold uppercase tracking-wider transition-colors flex items-center gap-1 flex-shrink-0"
-              >
-                More Results
-                <ChevronRight className="w-3 h-3" />
-              </a>
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <button
+                  onClick={handleRetrySearch}
+                  disabled={videoModal.loading}
+                  className="text-[10px] text-gray-400 hover:text-white font-bold uppercase tracking-wider transition-colors flex items-center gap-1 disabled:opacity-50"
+                  title="Search again (skip cache)"
+                >
+                  <RefreshCw className={`w-3 h-3 ${videoModal.loading ? 'animate-spin' : ''}`} />
+                  Refresh
+                </button>
+                <a
+                  href={`https://www.youtube.com/results?search_query=${encodeURIComponent(videoModal.searchQuery)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[10px] text-red-500 hover:text-red-400 font-bold uppercase tracking-wider transition-colors flex items-center gap-1"
+                >
+                  More Results
+                  <ChevronRight className="w-3 h-3" />
+                </a>
+              </div>
             </div>
           </div>
         </div>
