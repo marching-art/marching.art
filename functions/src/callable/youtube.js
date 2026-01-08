@@ -98,7 +98,7 @@ exports.searchYoutubeVideo = onCall(
     secrets: [youtubeApiKey]
   },
   async (request) => {
-    const { query } = request.data;
+    const { query, skipCache } = request.data;
 
     if (!query || typeof query !== "string") {
       throw new HttpsError("invalid-argument", "Search query is required.");
@@ -113,20 +113,24 @@ exports.searchYoutubeVideo = onCall(
     const yearMatch = query.match(/^\d{4}/);
     const year = yearMatch ? yearMatch[0] : null;
 
-    // Check cache first
+    // Check cache first (unless skipCache is true)
     const db = getFirestore();
     const cacheKey = getCacheKey(query);
 
-    try {
-      const cachedDoc = await db.collection(CACHE_COLLECTION).doc(cacheKey).get();
-      if (cachedDoc.exists) {
-        logger.info("Cache hit:", { query, cacheKey });
-        return cachedDoc.data();
+    if (!skipCache) {
+      try {
+        const cachedDoc = await db.collection(CACHE_COLLECTION).doc(cacheKey).get();
+        if (cachedDoc.exists) {
+          logger.info("Cache hit:", { query, cacheKey });
+          return cachedDoc.data();
+        }
+        logger.info("Cache miss:", { query, cacheKey });
+      } catch (cacheError) {
+        logger.warn("Cache read error:", cacheError);
+        // Continue without cache
       }
-      logger.info("Cache miss:", { query, cacheKey });
-    } catch (cacheError) {
-      logger.warn("Cache read error:", cacheError);
-      // Continue without cache
+    } else {
+      logger.info("Skipping cache:", { query, cacheKey });
     }
 
     try {
