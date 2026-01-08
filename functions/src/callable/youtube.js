@@ -121,12 +121,13 @@ exports.searchYoutubeVideo = onCall(
       }
 
       // Filter by title blacklist and require year in title
+      const shortYear = year ? year.slice(-2) : null; // e.g., "18" from "2018"
       const titleFilteredVideos = data.items.filter(item => {
         const title = item.snippet.title;
         // Must not contain blacklisted words
         if (shouldFilterVideo(title)) return false;
-        // Must contain the year if we extracted one
-        if (year && !title.includes(year)) return false;
+        // Must contain the full year or last two digits (e.g., "2018" or "18")
+        if (year && !title.includes(year) && !title.includes(shortYear)) return false;
         return true;
       });
 
