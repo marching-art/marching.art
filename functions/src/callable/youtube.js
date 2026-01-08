@@ -122,14 +122,28 @@ exports.searchYoutubeVideo = onCall(
 
       // Filter by title blacklist and require year in title
       const shortYear = year ? year.slice(-2) : null; // e.g., "18" from "2018"
+      logger.info("Year filtering:", { year, shortYear, totalResults: data.items.length });
+
       const titleFilteredVideos = data.items.filter(item => {
         const title = item.snippet.title;
         // Must not contain blacklisted words
-        if (shouldFilterVideo(title)) return false;
+        if (shouldFilterVideo(title)) {
+          logger.info("Filtered by blacklist:", { title });
+          return false;
+        }
         // Must contain the full year or last two digits (e.g., "2018" or "18")
-        if (year && !title.includes(year) && !title.includes(shortYear)) return false;
+        if (year) {
+          const hasFullYear = title.includes(year);
+          const hasShortYear = shortYear && title.includes(shortYear);
+          if (!hasFullYear && !hasShortYear) {
+            logger.info("Filtered by year:", { title, year, shortYear });
+            return false;
+          }
+        }
         return true;
       });
+
+      logger.info("After filtering:", { remaining: titleFilteredVideos.length });
 
       if (titleFilteredVideos.length === 0) {
         // All results were filtered by title, return the first one anyway as fallback
