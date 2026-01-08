@@ -654,34 +654,28 @@ const USE_PAID_IMAGE_GEN = true;
 const DRUM_CORPS_VISUAL_CONTEXT = `
 CRITICAL CONTEXT - DRUM AND BUGLE CORPS (NOT A CONCERT):
 
-Drum and bugle corps (DCI - Drum Corps International) is a competitive marching arts activity
-performed by uniformed musicians on American FOOTBALL FIELDS, not concert stages.
+This is DCI (Drum Corps International) - competitive marching arts performed on football fields.
 
-VISUAL CHARACTERISTICS THAT DEFINE DRUM CORPS:
-- VENUE: Outdoor football stadium with natural grass or synthetic turf, white yard line markings,
-  end zones, hash marks, and stadium seating. Events occur at dusk/night under stadium lights.
-- PERFORMERS: 150+ young adults (ages 16-22) in MATCHING MILITARY-STYLE UNIFORMS, not concert attire.
-  They march in precise geometric formations while playing brass instruments and drums.
-- UNIFORMS: Athletic military-style uniforms with shakos/plumed helmets, white gloves, and
-  marching shoes. NOT casual clothes, NOT rock band outfits, NOT concert black.
-- INSTRUMENTS: Brass only (no woodwinds): contrabass bugles, mellophones, baritones, trumpets,
-  and French horns. All silver or gold lacquered with corps colors on valve caps.
-- PERCUSSION: Marching snare drums, tenor drums (quints/quads), bass drums worn on harnesses,
-  and a front ensemble (pit) with marimbas/vibraphones on the sideline.
-- COLOR GUARD: Performers with 6-foot tall silk flags, rifles, and sabres doing choreography.
-- FORMATIONS: Performers arranged in geometric shapes (arcs, blocks, spirals, company fronts)
-  on the football field, all facing the press box/audience.
+WHAT DRUM CORPS PERFORMERS LOOK LIKE (for closeup portraits):
+- UNIFORMS: Athletic military-style uniforms specific to each corps (colors vary by corps).
+  Fitted athletic cut with decorative trim, metallic accents, and corps emblems.
+- HEADWEAR: Shakos (tall cylindrical hats) or plumed helmets with corps-specific colors.
+  Some modern corps use contemporary helmets or caps. The headwear is ALWAYS uniform-specific.
+- GLOVES: White marching gloves on all performers.
+- INSTRUMENTS: Brass only - mellophones, baritones, contras, trumpets. Silver or gold lacquered
+  with corps-colored valve caps. NO woodwinds, NO electric guitars.
+- PERCUSSION: Snare drums, tenor drums (quads/quints), bass drums worn on harnesses.
+- COLOR GUARD: Athletic costumes (not uniforms), 6-foot silk flags, rifles, sabres.
+
+SETTING (when visible in background):
+- Football stadium at dusk/night, stadium lights, blurred grass field with yard lines.
+- The background should be HEAVILY BLURRED for closeup portraits.
 
 THIS IS NOT:
-- A rock concert with stage lighting and mosh pits
-- An indoor concert hall performance
-- A parade or street marching band
-- A high school marching band at a football game halftime
-- A symphony orchestra
-- Musicians in casual clothes or concert black
-
-The aesthetic is: competitive athletics meets musical performance meets military precision.
-Think Olympic ceremony + marching band + Cirque du Soleil, performed on a football field.
+- A rock concert, pop concert, or music festival
+- Musicians in casual clothes, t-shirts, or concert black
+- An orchestra or symphony
+- A parade marching band
 `;
 
 /**
@@ -4441,6 +4435,8 @@ module.exports = {
   buildFantasyPerformersImagePrompt,
   buildFantasyLeagueImagePrompt,
   buildAnalyticsImagePrompt,
+  buildUnderdogImagePrompt,
+  buildCorpsSpotlightImagePrompt,
   buildCorpsAvatarPrompt,  // Corps avatar/icon generation
   buildArticleImagePrompt, // User-submitted article images
 
