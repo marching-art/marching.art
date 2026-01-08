@@ -61,10 +61,13 @@ const Landing = () => {
       error: null
     });
 
-    // If no API key, fall back to opening YouTube directly
+    // If no API key, show modal with link to YouTube
     if (!YOUTUBE_API_KEY) {
-      window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(searchQuery)}`, '_blank');
-      setVideoModal(prev => ({ ...prev, show: false, loading: false }));
+      setVideoModal(prev => ({
+        ...prev,
+        loading: false,
+        error: 'YouTube API not configured'
+      }));
       return;
     }
 
