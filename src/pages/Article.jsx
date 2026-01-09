@@ -12,8 +12,9 @@ import {
   TrendingUp, TrendingDown, Minus, Share2, Loader2,
   AlertCircle, ChevronRight, Lock, Mail, User, LogOut,
   Settings, Zap, Activity, LayoutDashboard, Award,
-  UserPlus, MessageCircle, Coins, Youtube, X, RefreshCw
+  UserPlus, MessageCircle, Coins, X, RefreshCw
 } from 'lucide-react';
+import YouTubeIcon from '../components/YouTubeIcon';
 import ArticleReactions from '../components/Articles/ArticleReactions';
 import ArticleComments from '../components/Articles/ArticleComments';
 import { getArticleEngagement, getRecentNews } from '../api/functions';
@@ -1157,10 +1158,10 @@ const Article = () => {
                                   e.stopPropagation();
                                   handleYoutubeSearch(row.sourceYear, row.corpsName);
                                 }}
-                                className="p-1 text-gray-500 hover:text-red-500 transition-colors"
+                                className="p-1 hover:opacity-80 transition-opacity"
                                 title={`Watch ${row.sourceYear} ${row.corpsName} on YouTube`}
                               >
-                                <Youtube className="w-3.5 h-3.5" />
+                                <YouTubeIcon size={14} />
                               </button>
                             </div>
                           </div>
@@ -1267,10 +1268,10 @@ const Article = () => {
                             e.stopPropagation();
                             handleYoutubeSearch(row.sourceYear, row.corpsName);
                           }}
-                          className="p-1 text-gray-500 hover:text-red-500 transition-colors"
+                          className="p-1 hover:opacity-80 transition-opacity"
                           title={`Watch ${row.sourceYear} ${row.corpsName} on YouTube`}
                         >
-                          <Youtube className="w-4 h-4" />
+                          <YouTubeIcon size={16} />
                         </button>
                       </div>
                     </div>
@@ -1305,7 +1306,7 @@ const Article = () => {
             {/* Header */}
             <div className="bg-[#1a1a1a] px-4 py-3 border-b border-[#333] flex items-center justify-between">
               <div className="flex items-center gap-2 min-w-0 flex-1">
-                <Youtube className="w-5 h-5 text-red-500 flex-shrink-0" />
+                <YouTubeIcon size={20} className="flex-shrink-0" />
                 <h2 className="text-sm font-bold text-white truncate">
                   {videoModal.title}
                 </h2>
@@ -1327,15 +1328,15 @@ const Article = () => {
                 </div>
               ) : videoModal.error ? (
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <Youtube className="w-16 h-16 text-gray-600 mb-4" />
+                  <YouTubeIcon size={64} className="mb-4 opacity-40" />
                   <p className="text-gray-400 text-sm mb-4">{videoModal.error}</p>
                   <a
                     href={`https://www.youtube.com/results?search_query=${encodeURIComponent(videoModal.searchQuery)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-xs font-bold uppercase tracking-wider rounded transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-[#FF0000] hover:bg-[#CC0000] text-white text-xs font-bold uppercase tracking-wider rounded transition-colors"
                   >
-                    <Youtube className="w-4 h-4" />
+                    <YouTubeIcon size={16} />
                     Search on YouTube
                   </a>
                 </div>
