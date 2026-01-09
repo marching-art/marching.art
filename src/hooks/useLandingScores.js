@@ -176,8 +176,14 @@ export const useLandingScores = () => {
       const scores = [];
 
       yearData.forEach(event => {
-        // Only include scores from days up to and including maxScoreDay
-        // maxScoreDay is the latest day whose scores have been processed (at 2 AM)
+        // CRITICAL: Never show scores from the current day or future days
+        // Day N scores should only be visible starting at 2 AM on Day N+1
+        // This is a hard cap to prevent showing today's competition results before they happen
+        if (event.offSeasonDay >= currentDay) return;
+
+        // Also respect the 2 AM processing window:
+        // Before 2 AM, yesterday's scores haven't been processed yet, so show up to day-2
+        // After 2 AM, yesterday's scores were just processed, so show up to day-1
         if (event.offSeasonDay > maxScoreDay) return;
 
         const scoreData = event.scores?.find(s => s.corps === corps.corpsName);
@@ -253,7 +259,7 @@ export const useLandingScores = () => {
     });
 
     return rankedScores;
-  }, [corpsValues, historicalData, maxScoreDay]);
+  }, [corpsValues, historicalData, maxScoreDay, currentDay]);
 
   // Get the display day (most recent day with scores)
   const displayDay = useMemo(() => {
