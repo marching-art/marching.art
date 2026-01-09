@@ -24,7 +24,7 @@ const Terms = () => {
           </h1>
 
           <p className="text-cream-400 text-sm mb-6">
-            Last updated: January 2025
+            Last updated: January 2026
           </p>
 
           <div className="space-y-6 text-cream-300">
@@ -32,6 +32,17 @@ const Terms = () => {
               <h2 className="text-xl font-semibold text-cream-100 mb-3">1. Acceptance of Terms</h2>
               <p className="text-sm">
                 By accessing or using marching.art, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the service.
+              </p>
+              <p className="text-sm mt-2">
+                Our service uses the YouTube API Services to display video content. By using marching.art, you are also agreeing to be bound by the{' '}
+                <a
+                  href="https://www.youtube.com/t/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gold-500 hover:text-gold-400 underline"
+                >
+                  YouTube Terms of Service
+                </a>.
               </p>
             </section>
 
@@ -109,7 +120,13 @@ const Terms = () => {
             <section>
               <h2 className="text-xl font-semibold text-cream-100 mb-3">11. Contact</h2>
               <p className="text-sm">
-                If you have questions about these Terms of Service, please contact us through the app.
+                If you have questions about these Terms of Service, please contact us at:{' '}
+                <a
+                  href="mailto:contact@marching.art"
+                  className="text-gold-500 hover:text-gold-400 underline"
+                >
+                  contact@marching.art
+                </a>
               </p>
             </section>
           </div>
