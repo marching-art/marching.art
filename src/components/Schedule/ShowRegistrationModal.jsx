@@ -44,9 +44,8 @@ const CorpsSelectionItem = ({
   const currentShows = corpsData.selectedShows?.[weekKey] || [];
   const showsThisWeek = currentShows.length;
   const isAtMax = showsThisWeek >= maxShows;
-  const isAlreadyAtShow = currentShows.some(
-    s => s.eventName === show.eventName && s.date === show.date
-  );
+  // Match by eventName only - dates can have type mismatches (Timestamp vs string)
+  const isAlreadyAtShow = currentShows.some(s => s.eventName === show.eventName);
 
   return (
     <button
@@ -145,9 +144,8 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
       const corpsData = userProfile.corps[corpsClass];
       const weekKey = `week${show.week}`;
       const selectedShows = corpsData.selectedShows?.[weekKey] || [];
-      const isRegistered = selectedShows.some(
-        s => s.eventName === show.eventName && s.date === show.date
-      );
+      // Match by eventName only - dates can have type mismatches (Timestamp vs string)
+      const isRegistered = selectedShows.some(s => s.eventName === show.eventName);
       if (isRegistered) {
         alreadyRegistered.push(corpsClass);
       }
@@ -163,9 +161,8 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
       const corpsData = userProfile.corps[corpsClass];
       const weekKey = `week${show.week}`;
       const currentShows = corpsData.selectedShows?.[weekKey] || [];
-      const isAlreadyAtShow = currentShows.some(
-        s => s.eventName === show.eventName && s.date === show.date
-      );
+      // Match by eventName only - dates can have type mismatches (Timestamp vs string)
+      const isAlreadyAtShow = currentShows.some(s => s.eventName === show.eventName);
       if (currentShows.length >= maxShows && !isAlreadyAtShow) {
         haptic('error');
         toast.error(`This corps already has ${maxShows} shows registered for week ${show.week}`);
@@ -180,9 +177,8 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
       const corpsData = userProfile.corps[corpsClass];
       const weekKey = `week${show.week}`;
       const currentShows = corpsData.selectedShows?.[weekKey] || [];
-      const isAlreadyAtShow = currentShows.some(
-        s => s.eventName === show.eventName && s.date === show.date
-      );
+      // Match by eventName only - dates can have type mismatches (Timestamp vs string)
+      const isAlreadyAtShow = currentShows.some(s => s.eventName === show.eventName);
       return currentShows.length < maxShows || isAlreadyAtShow || selectedCorps.includes(corpsClass);
     });
     setSelectedCorps(canSelect);
@@ -203,9 +199,8 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
         const corpsData = userProfile.corps[corpsClass];
         const weekKey = `week${show.week}`;
         const currentShows = corpsData.selectedShows?.[weekKey] || [];
-        const filteredShows = currentShows.filter(
-          s => !(s.eventName === show.eventName && s.date === show.date)
-        );
+        // Filter by eventName only - dates can have type mismatches (Timestamp vs string)
+        const filteredShows = currentShows.filter(s => s.eventName !== show.eventName);
         const newShows = selectedCorps.includes(corpsClass)
           ? [...filteredShows, {
               eventName: show.eventName,
@@ -242,7 +237,8 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
       const corpsData = userProfile.corps[corpsClass];
       const weekKey = `week${show.week}`;
       const selectedShows = corpsData.selectedShows?.[weekKey] || [];
-      return selectedShows.some(s => s.eventName === show.eventName && s.date === show.date);
+      // Match by eventName only - dates can have type mismatches (Timestamp vs string)
+      return selectedShows.some(s => s.eventName === show.eventName);
     });
     return JSON.stringify(initialRegistered.sort()) !== JSON.stringify(selectedCorps.sort());
   }, [selectedCorps, userCorpsClasses, userProfile, show]);
