@@ -12,6 +12,18 @@ const getEasternDateString = (date) => {
 };
 
 /**
+ * Get a date string from a Date object using UTC (YYYY-MM-DD format)
+ * Used for Firestore timestamps which are stored in UTC
+ * This avoids timezone conversion issues where UTC midnight becomes previous day in local time
+ */
+const getUTCDateString = (date) => {
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+/**
  * Global Season Store
  *
  * This store maintains a SINGLE Firestore listener for season data,
@@ -63,11 +75,14 @@ export const useSeasonStore = create((set, get) => ({
             const startDate = data.schedule.startDate.toDate();
             const now = new Date();
 
-            // Calculate day difference using Eastern Time dates
-            // This ensures day boundaries align with Eastern Time (midnight ET)
-            const startDateET = getEasternDateString(startDate);
+            // Calculate day difference:
+            // - Use UTC for start date (Firestore stores timestamps in UTC, so we interpret the date as UTC)
+            // - Use Eastern Time for current date (day boundaries should be at midnight ET)
+            // This ensures that if start date was set as "January 4" in the admin UI,
+            // it's interpreted as January 4, not shifted to January 3 due to timezone conversion
+            const startDateUTC = getUTCDateString(startDate);
             const nowET = getEasternDateString(now);
-            const startDateObj = new Date(startDateET + 'T00:00:00');
+            const startDateObj = new Date(startDateUTC + 'T00:00:00');
             const nowDateObj = new Date(nowET + 'T00:00:00');
             const diffInDays = Math.floor((nowDateObj - startDateObj) / (1000 * 60 * 60 * 24));
 
