@@ -7,7 +7,7 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Trophy, Lock, Mail, AlertCircle,
+  Trophy, Lock, Mail, AlertCircle, ChevronRight,
   LayoutDashboard, Award, User, LogOut,
   Settings, Zap, UserPlus, MessageCircle, Coins
 } from 'lucide-react';
