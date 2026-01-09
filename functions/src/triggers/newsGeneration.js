@@ -299,7 +299,7 @@ exports.onFantasyRecapUpdated = onDocumentWritten(
     document: "fantasy_recaps/{seasonId}",
     timeoutSeconds: 180,
     memory: "1GiB",
-    secrets: [geminiApiKey],
+    secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret],
   },
   async (event) => {
     const db = getDb();
@@ -406,7 +406,7 @@ exports.triggerDailyNews = onCall(
     cors: true,
     timeoutSeconds: 180,
     memory: "1GiB",
-    secrets: [geminiApiKey],
+    secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret],
   },
   async (request) => {
     if (!request.auth) {
@@ -827,7 +827,7 @@ exports.triggerNewsGeneration = onCall(
     cors: true,
     timeoutSeconds: 120,
     memory: "512MiB",
-    secrets: [geminiApiKey],
+    secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret],
   },
   async (request) => {
     if (!request.auth) {
