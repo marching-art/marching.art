@@ -145,7 +145,9 @@ const RegistrationBadges = ({ show, userProfile }) => {
       if (!corpsData) return false;
       const weekKey = `week${show.week}`;
       const selectedShows = corpsData.selectedShows?.[weekKey] || [];
-      return selectedShows.some(s => s.eventName === show.eventName && s.date === show.date);
+      // Match by eventName only - dates can have type mismatches (Timestamp vs string)
+      // This matches the scoring.js logic which also only checks eventName
+      return selectedShows.some(s => s.eventName === show.eventName);
     })
     .map(([corpsClass]) => corpsClass);
 
@@ -180,7 +182,8 @@ const ShowCard = ({ show, userProfile, formattedDate, isPast, onRegister, isComp
       if (!corps) return false;
       const weekKey = `week${show.week}`;
       const selectedShows = corps.selectedShows?.[weekKey] || [];
-      return selectedShows.some(s => s.eventName === show.eventName && s.date === show.date);
+      // Match by eventName only - dates can have type mismatches (Timestamp vs string)
+      return selectedShows.some(s => s.eventName === show.eventName);
     });
   }, [show, userProfile]);
 

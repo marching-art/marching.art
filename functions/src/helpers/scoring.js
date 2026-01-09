@@ -486,6 +486,11 @@ async function processAndArchiveOffSeasonScoresLogic() {
     return;
   }
 
+  // Scoring statistics tracking for diagnostics
+  let corpsWithNoShowsSelected = 0;
+  let corpsProcessed = 0;
+  let corpsScored = 0;
+
   for (const show of dayEventData.shows) {
     const showResult = {
       eventName: show.eventName,
@@ -561,9 +566,16 @@ async function processAndArchiveOffSeasonScoresLogic() {
           // Match by eventName only - dates can have type mismatches (Timestamp vs string)
           // and eventName should be unique enough within a week
           attended = userShows.some(s => s.eventName === show.eventName);
+
+          // Track statistics for diagnostics
+          corpsProcessed++;
+          if (userShows.length === 0) {
+            corpsWithNoShowsSelected++;
+          }
         }
 
         if (attended) {
+          corpsScored++;
           let geScore = 0, rawVisualScore = 0, rawMusicScore = 0;
 
           // Calculate synergy bonus for show concept
@@ -614,6 +626,9 @@ async function processAndArchiveOffSeasonScoresLogic() {
     }
     dailyRecap.shows.push(showResult);
   }
+
+  // Log scoring statistics for diagnostics
+  logger.info(`Day ${scoredDay} scoring stats: ${corpsProcessed} corps processed, ${corpsScored} corps scored, ${corpsWithNoShowsSelected} corps with no shows selected for week ${week}`);
 
   // Action 1: Update user profiles with their most recent score
   // Note: Uses latest score (not cumulative) - drum corps rankings are based on most recent performance
