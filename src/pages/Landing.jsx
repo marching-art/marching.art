@@ -47,24 +47,8 @@ const Landing = () => {
     error: null
   });
 
-  // Hardcoded video IDs for specific corps/year combinations
-  const HARDCODED_VIDEOS = {
-    '2018_santa clara vanguard': ['KfC6Xgy4ZL4', 'QWWP5jiGltA']
-  };
-
-  // Get hardcoded video key for a corps/year
-  const getHardcodedKey = (year, corpsName) => {
-    const key = `${year}_${corpsName.toLowerCase()}`;
-    for (const hardcodedKey of Object.keys(HARDCODED_VIDEOS)) {
-      if (key.includes(hardcodedKey.split('_')[1]) && key.startsWith(hardcodedKey.split('_')[0])) {
-        return hardcodedKey;
-      }
-    }
-    return null;
-  };
-
   // Search YouTube and show video in modal
-  const handleYoutubeSearch = async (year, corpsName, skipCache = false, fallbackIndex = 0) => {
+  const handleYoutubeSearch = async (year, corpsName, skipCache = false) => {
     // Build search query with special cases
     let searchQuery = `${year} ${corpsName}`;
 
@@ -78,26 +62,6 @@ const Landing = () => {
       searchQuery += ' babylon';
     }
 
-    // Check for hardcoded video IDs
-    const hardcodedKey = getHardcodedKey(year, corpsName);
-    const hardcodedVideos = hardcodedKey ? HARDCODED_VIDEOS[hardcodedKey] : null;
-
-    // If we have hardcoded videos and haven't exhausted them, use them
-    if (hardcodedVideos && fallbackIndex < hardcodedVideos.length) {
-      setVideoModal({
-        show: true,
-        loading: false,
-        videoId: hardcodedVideos[fallbackIndex],
-        title: `${year} ${corpsName}`,
-        searchQuery,
-        error: null,
-        year,
-        corpsName,
-        fallbackIndex
-      });
-      return;
-    }
-
     setVideoModal({
       show: true,
       loading: true,
@@ -106,8 +70,7 @@ const Landing = () => {
       searchQuery,
       error: null,
       year,
-      corpsName,
-      fallbackIndex: hardcodedVideos ? hardcodedVideos.length : 0
+      corpsName
     });
 
     try {
@@ -140,11 +103,10 @@ const Landing = () => {
     }
   };
 
-  // Retry search with fresh results (skip cache) or try next fallback
+  // Retry search with fresh results (skip cache)
   const handleRetrySearch = () => {
     if (videoModal.year && videoModal.corpsName) {
-      const nextIndex = (videoModal.fallbackIndex ?? 0) + 1;
-      handleYoutubeSearch(videoModal.year, videoModal.corpsName, true, nextIndex);
+      handleYoutubeSearch(videoModal.year, videoModal.corpsName, true);
     }
   };
 
