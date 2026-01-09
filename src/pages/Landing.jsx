@@ -11,6 +11,7 @@ import {
   LayoutDashboard, Award, User, LogOut,
   Settings, Zap, UserPlus, MessageCircle, Coins
 } from 'lucide-react';
+import YouTubeIcon from '../components/YouTubeIcon';
 import { useAuth } from '../App';
 import toast from 'react-hot-toast';
 import { useProfileStore } from '../store/profileStore';
