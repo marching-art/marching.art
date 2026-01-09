@@ -22,13 +22,26 @@ const AGGREGATE_TABS = [
   { id: 'visual_total', label: 'Total Visual', calculate: (c) => ((c.VP || 0) + (c.VA || 0) + (c.CG || 0)) / 2 },
 ];
 
-// Format date for column header
-const formatDateHeader = (date, day) => {
-  if (!date) return `Day ${day}`;
-  const d = new Date(date);
+// Format date for column header using fantasy season date
+const formatDateHeader = (fantasyDate, day) => {
+  if (!fantasyDate) return `Day ${day}`;
+  const d = new Date(fantasyDate);
   const month = d.toLocaleString('en-US', { month: 'short' });
   const dayNum = d.getDate();
   return `${dayNum}-${month}`;
+};
+
+/**
+ * Calculate the fantasy date for a given day number
+ * @param {Date} seasonStartDate - The start date of the fantasy season
+ * @param {number} dayNumber - The day number (1-49)
+ * @returns {Date} The calculated fantasy date
+ */
+const getFantasyDate = (seasonStartDate, dayNumber) => {
+  if (!seasonStartDate || !dayNumber) return null;
+  const date = new Date(seasonStartDate);
+  date.setDate(date.getDate() + dayNumber - 1); // Day 1 = start date
+  return date;
 };
 
 // Get cell background color based on score value (heatmap)
@@ -106,7 +119,13 @@ const ScoresSpreadsheet = () => {
     fetchData();
   }, []);
 
-  // Get all unique dates/days from historical data
+  // Get the fantasy season start date
+  const seasonStartDate = useMemo(() => {
+    if (!seasonData?.schedule?.startDate) return null;
+    return seasonData.schedule.startDate.toDate();
+  }, [seasonData]);
+
+  // Get all unique dates/days from historical data, with fantasy dates calculated
   const allDates = useMemo(() => {
     const datesMap = new Map();
 
@@ -115,7 +134,8 @@ const ScoresSpreadsheet = () => {
         if (event.offSeasonDay && !datesMap.has(event.offSeasonDay)) {
           datesMap.set(event.offSeasonDay, {
             day: event.offSeasonDay,
-            date: event.date,
+            // Calculate the fantasy date based on season start date
+            fantasyDate: getFantasyDate(seasonStartDate, event.offSeasonDay),
             eventName: event.eventName
           });
         }
@@ -124,7 +144,7 @@ const ScoresSpreadsheet = () => {
 
     // Sort by day number
     return Array.from(datesMap.values()).sort((a, b) => a.day - b.day);
-  }, [historicalData]);
+  }, [historicalData, seasonStartDate]);
 
   // Get score for a specific corps on a specific day
   const getScore = (corpsName, sourceYear, day, caption) => {
@@ -191,7 +211,7 @@ const ScoresSpreadsheet = () => {
 
   // Export to CSV
   const handleExportCSV = () => {
-    const headers = ['Corps Name', 'Points', 'Source Year', ...allDates.map(d => formatDateHeader(d.date, d.day))];
+    const headers = ['Corps Name', 'Points', 'Source Year', ...allDates.map(d => formatDateHeader(d.fantasyDate, d.day))];
 
     const rows = corpsValues.map(corps => {
       const scores = allDates.map(dateInfo => {
@@ -348,7 +368,7 @@ const ScoresSpreadsheet = () => {
                   className="px-0 py-1.5 text-center font-mono text-cream-400 w-[38px] border-r border-cream-500/10"
                   title={`${dateInfo.eventName} (Day ${dateInfo.day})`}
                 >
-                  <div className="text-[10px] text-cream-500/70 leading-none">{formatDateHeader(dateInfo.date, dateInfo.day)}</div>
+                  <div className="text-[10px] text-cream-500/70 leading-none">{formatDateHeader(dateInfo.fantasyDate, dateInfo.day)}</div>
                 </th>
               ))}
             </tr>
