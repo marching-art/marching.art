@@ -23,10 +23,14 @@ jobs:
         run: npm ci
         working-directory: ./functions
 
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
       - name: Deploy to Firebase
-        uses: w9jds/firebase-action@master
+        uses: w9jds/firebase-action@v15.2.1
         with:
           args: deploy --only functions
         env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-          # PROJECT_ID: your-project-id # Optional: needed if not in .firebaserc
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
