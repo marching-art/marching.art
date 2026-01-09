@@ -8,7 +8,7 @@ import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Trophy, Lock, Mail, AlertCircle, ChevronRight,
-  LayoutDashboard, Award, User, LogOut,
+  LayoutDashboard, Award, User, LogOut, Flame, Activity,
   Settings, Zap, UserPlus, MessageCircle, Coins
 } from 'lucide-react';
 import YouTubeIcon from '../components/YouTubeIcon';
