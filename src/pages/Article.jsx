@@ -10,7 +10,7 @@ import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft, Trophy, Flame, BookOpen, Newspaper,
   TrendingUp, TrendingDown, Minus, Share2, Loader2,
-  AlertCircle, Lock, Mail, User, LogOut,
+  AlertCircle, ChevronRight, Lock, Mail, User, LogOut,
   Settings, Zap, LayoutDashboard, Award,
   UserPlus, MessageCircle, Coins
 } from 'lucide-react';
