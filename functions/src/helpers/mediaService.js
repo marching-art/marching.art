@@ -2,16 +2,20 @@
  * MediaService - Cloudinary Image Upload & Optimization
  *
  * Handles image uploads to Cloudinary with automatic optimization.
- * Includes fallback to placeholder images when uploads fail.
+ * Falls back to Firebase Storage when Cloudinary is not configured.
+ * Includes fallback to placeholder images when all uploads fail.
  *
- * Environment Variables Required:
+ * Environment Variables Required for Cloudinary:
  * - CLOUDINARY_CLOUD_NAME
  * - CLOUDINARY_API_KEY
  * - CLOUDINARY_API_SECRET
+ *
+ * Firebase Storage is used as fallback (no additional config needed)
  */
 
 const cloudinary = require("cloudinary").v2;
 const { logger } = require("firebase-functions/v2");
+const admin = require("firebase-admin");
 
 // =============================================================================
 // CLOUDINARY CONFIGURATION
@@ -45,6 +49,85 @@ function initializeCloudinary() {
   isConfigured = true;
   logger.info("Cloudinary initialized successfully");
   return true;
+}
+
+// =============================================================================
+// FIREBASE STORAGE FALLBACK
+// =============================================================================
+
+/**
+ * Upload image to Firebase Storage (fallback when Cloudinary is not configured)
+ * @param {string} base64Data - Base64 encoded image data (with or without data URL prefix)
+ * @param {Object} options - Upload options
+ * @param {string} options.folder - Storage folder path
+ * @param {string} options.publicId - Custom file name (optional)
+ * @returns {Promise<Object>} Upload result with public URL
+ */
+async function uploadToFirebaseStorage(base64Data, options = {}) {
+  const {
+    folder = "marching-art/news",
+    publicId,
+  } = options;
+
+  try {
+    const bucket = admin.storage().bucket();
+
+    // Parse base64 data URL
+    let imageBuffer;
+    let mimeType = "image/jpeg";
+
+    if (base64Data.startsWith("data:")) {
+      const matches = base64Data.match(/^data:([^;]+);base64,(.+)$/);
+      if (matches) {
+        mimeType = matches[1];
+        imageBuffer = Buffer.from(matches[2], "base64");
+      } else {
+        throw new Error("Invalid base64 data URL format");
+      }
+    } else {
+      imageBuffer = Buffer.from(base64Data, "base64");
+    }
+
+    // Generate unique file name
+    const extension = mimeType.split("/")[1] || "jpg";
+    const fileName = publicId || `news_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const filePath = `${folder}/${fileName}.${extension}`;
+
+    // Upload to Firebase Storage
+    const file = bucket.file(filePath);
+    await file.save(imageBuffer, {
+      metadata: {
+        contentType: mimeType,
+        cacheControl: "public, max-age=31536000", // Cache for 1 year
+      },
+    });
+
+    // Make the file publicly accessible
+    await file.makePublic();
+
+    // Get the public URL
+    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filePath}`;
+
+    logger.info("Image uploaded to Firebase Storage:", {
+      filePath,
+      url: publicUrl,
+      bytes: imageBuffer.length,
+    });
+
+    return {
+      success: true,
+      url: publicUrl,
+      filePath,
+      bytes: imageBuffer.length,
+      isPlaceholder: false,
+    };
+  } catch (error) {
+    logger.error("Firebase Storage upload failed:", error);
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
 }
 
 // =============================================================================
@@ -186,9 +269,26 @@ async function uploadImage(imageBuffer, options = {}) {
     headline = "",
   } = options;
 
+  // Upload using base64 data URI
+  const base64Data = imageBuffer.toString("base64");
+  const dataUri = `data:image/jpeg;base64,${base64Data}`;
+
   // Check if Cloudinary is configured
   if (!initializeCloudinary()) {
-    logger.info("Cloudinary not configured, returning placeholder");
+    logger.info("Cloudinary not configured, trying Firebase Storage fallback");
+
+    // Try Firebase Storage as fallback
+    const storageResult = await uploadToFirebaseStorage(dataUri, {
+      folder,
+      publicId,
+    });
+
+    if (storageResult.success) {
+      logger.info("Image uploaded to Firebase Storage (Cloudinary fallback)");
+      return storageResult;
+    }
+
+    logger.warn("Firebase Storage fallback also failed:", storageResult.error);
     return {
       success: false,
       url: getContextualPlaceholder({ newsCategory: category, headline }),
@@ -199,10 +299,6 @@ async function uploadImage(imageBuffer, options = {}) {
   try {
     // Generate unique public ID if not provided
     const finalPublicId = publicId || `news_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-    // Upload using base64 data URI
-    const base64Data = imageBuffer.toString("base64");
-    const dataUri = `data:image/jpeg;base64,${base64Data}`;
 
     const uploadResult = await cloudinary.uploader.upload(dataUri, {
       folder,
@@ -274,18 +370,35 @@ async function uploadFromUrl(imageUrl, options = {}) {
     };
   }
 
+  // For base64 data URLs, validate format first
+  const isBase64 = imageUrl.startsWith("data:");
+
   // Check if Cloudinary is configured
   if (!initializeCloudinary()) {
-    logger.info("Cloudinary not configured, returning placeholder");
+    logger.info("Cloudinary not configured, trying Firebase Storage fallback");
+
+    // For base64 images, try Firebase Storage as fallback
+    if (isBase64) {
+      const storageResult = await uploadToFirebaseStorage(imageUrl, {
+        folder,
+        publicId,
+      });
+
+      if (storageResult.success) {
+        logger.info("Image uploaded to Firebase Storage (Cloudinary fallback)");
+        return storageResult;
+      }
+
+      logger.warn("Firebase Storage fallback also failed:", storageResult.error);
+    }
+
+    // Return placeholder if all uploads fail
     return {
       success: false,
       url: getContextualPlaceholder({ newsCategory: category, headline }),
       isPlaceholder: true,
     };
   }
-
-  // For base64 data URLs, validate format
-  const isBase64 = imageUrl.startsWith("data:");
   if (isBase64) {
     const base64Regex = /^data:image\/(jpeg|jpg|png|gif|webp);base64,/;
     if (!base64Regex.test(imageUrl)) {
@@ -413,6 +526,7 @@ module.exports = {
   // Core upload functions
   uploadImage,
   uploadFromUrl,
+  uploadToFirebaseStorage,
   deleteImage,
 
   // URL builders
