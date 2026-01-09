@@ -14,6 +14,7 @@ import {
   Settings, Zap, LayoutDashboard, Award,
   UserPlus, MessageCircle, Coins
 } from 'lucide-react';
+import YouTubeIcon from '../components/YouTubeIcon';
 import ArticleReactions from '../components/Articles/ArticleReactions';
 import ArticleComments from '../components/Articles/ArticleComments';
 import { LiveScoresBox, FantasyTrendingBox, StandingsModal, YouTubeModal } from '../components/Sidebar';
