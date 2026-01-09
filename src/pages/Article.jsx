@@ -11,7 +11,7 @@ import {
   ArrowLeft, Trophy, Flame, BookOpen, Newspaper,
   TrendingUp, TrendingDown, Minus, Share2, Loader2,
   AlertCircle, ChevronRight, Lock, Mail, User, LogOut,
-  Settings, Zap, LayoutDashboard, Award,
+  Settings, Zap, LayoutDashboard, Award, Activity,
   UserPlus, MessageCircle, Coins
 } from 'lucide-react';
 import YouTubeIcon from '../components/YouTubeIcon';
