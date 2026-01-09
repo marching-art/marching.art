@@ -143,9 +143,9 @@ const Article = () => {
       searchQuery += ' corps';
     }
 
-    // Add show name for specific corps/year combinations
+    // Use abbreviated search for specific corps/year combinations
     if (year === '2018' && corpsName.toLowerCase().includes('santa clara')) {
-      searchQuery += ' babylon';
+      searchQuery = '2018 scv';
     }
 
     setVideoModal({
