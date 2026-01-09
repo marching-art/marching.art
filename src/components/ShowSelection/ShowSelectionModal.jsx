@@ -88,14 +88,11 @@ const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, season
       day: show.day,
     };
 
-    const isSelected = selectedShows.some(
-      s => s.eventName === showIdentifier.eventName && s.date === showIdentifier.date
-    );
+    // Match by eventName only - dates can have type mismatches (Timestamp vs string)
+    const isSelected = selectedShows.some(s => s.eventName === showIdentifier.eventName);
 
     if (isSelected) {
-      setSelectedShows(selectedShows.filter(
-        s => !(s.eventName === showIdentifier.eventName && s.date === showIdentifier.date)
-      ));
+      setSelectedShows(selectedShows.filter(s => s.eventName !== showIdentifier.eventName));
     } else {
       const sameDayShow = selectedShows.find(s => s.day === showIdentifier.day);
       if (sameDayShow) {
@@ -222,9 +219,8 @@ const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, season
                       eventName: show.eventName || show.name,
                       date: show.date,
                     };
-                    const isSelected = selectedShows.some(
-                      s => s.eventName === showIdentifier.eventName && s.date === showIdentifier.date
-                    );
+                    // Match by eventName only - dates can have type mismatches (Timestamp vs string)
+                    const isSelected = selectedShows.some(s => s.eventName === showIdentifier.eventName);
 
                     return (
                       <div
