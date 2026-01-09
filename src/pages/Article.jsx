@@ -1095,7 +1095,7 @@ const Article = () => {
                             <span className="w-5 h-5 flex items-center justify-center text-xs font-bold font-data text-gray-500 tabular-nums">
                               {idx + 1}
                             </span>
-                            <span className="text-sm text-white truncate max-w-[160px]">{player.name}</span>
+                            <span className="text-sm text-white">{player.name}</span>
                           </div>
                           <div className={`flex items-center gap-1 text-sm font-bold font-data tabular-nums ${
                             player.direction === 'up' ? 'text-green-500' : 'text-red-500'
@@ -1171,7 +1171,7 @@ const Article = () => {
                               <span className="w-5 h-5 flex items-center justify-center bg-[#222] text-xs font-bold font-data text-gray-500 tabular-nums rounded-sm">
                                 {row.rank}
                               </span>
-                              <span className="text-sm text-white truncate max-w-[140px]" title={`${row.sourceYear} ${row.corpsName}`}>
+                              <span className="text-sm text-white" title={`${row.sourceYear} ${row.corpsName}`}>
                                 <span className="text-gray-400 font-data">{row.sourceYear}</span> {row.corpsName}
                               </span>
                             </div>
@@ -1280,7 +1280,7 @@ const Article = () => {
                           {row.rank}
                         </span>
                         <div className="min-w-0">
-                          <span className="text-sm text-white block truncate max-w-[180px]" title={`${row.sourceYear} ${row.corpsName}`}>
+                          <span className="text-sm text-white block" title={`${row.sourceYear} ${row.corpsName}`}>
                             <span className="text-gray-400 font-data">{row.sourceYear}</span> {row.corpsName}
                           </span>
                         </div>
