@@ -21,7 +21,7 @@ const calculateTotalScore = (captions) => {
 };
 
 /**
- * Get the current hour in Eastern Time
+ * Get the current hour in Eastern Time (0-23)
  */
 const getEasternHour = () => {
   return parseInt(new Date().toLocaleString('en-US', {
@@ -32,19 +32,40 @@ const getEasternHour = () => {
 };
 
 /**
- * Get the effective current day for score filtering
- * Scores are processed at 2 AM ET, so between midnight and 2 AM ET
- * we should still show the previous day's cutoff
+ * Get the maximum day of scores that should be displayed.
+ *
+ * IMPORTANT: Scores for Day N are processed at 2 AM ET on Day N+1.
+ * This means Day N scores should NOT be visible until 2 AM ET on Day N+1.
+ *
+ * Example timeline:
+ * - Day 5 competition happens on Day 5
+ * - Day 5 scores are processed at 2 AM ET on Day 6
+ * - Day 5 scores are visible from 2 AM Day 6 until 2 AM Day 7 (24 hours)
+ * - Day 6 competition happens on Day 6
+ * - Day 6 scores are processed at 2 AM ET on Day 7
+ * - Day 6 scores become visible starting at 2 AM Day 7
+ *
+ * Formula:
+ * - Before 2 AM ET: Show scores up to currentDay - 2 (yesterday's processing hasn't run yet)
+ * - At/After 2 AM ET: Show scores up to currentDay - 1 (today's processing just ran)
+ *
+ * @param {number} currentDay - The current season day (1-49)
+ * @returns {number|null} The maximum day of scores to show, or null if none
  */
-const getEffectiveDay = (currentDay) => {
+const getMaxScoreDay = (currentDay) => {
   const hour = getEasternHour();
-  // Scores for day N are processed at 2 AM ET and become available after that.
-  // After 2 AM ET: previous day's scores were just processed (currentDay - 1)
-  // Before 2 AM ET: scores only available up to currentDay - 2 (yesterday's processing hasn't run)
-  const effectiveDay = hour < 2 ? currentDay - 2 : currentDay - 1;
 
-  // Return null if no scores should be available yet (e.g., day 1)
-  return effectiveDay >= 1 ? effectiveDay : null;
+  // Before 2 AM ET: Today's score processing hasn't run yet.
+  // The most recent processing was at 2 AM yesterday for the day before yesterday's competition.
+  // Example: On Day 7 at 1 AM, Day 6 processing hasn't happened yet, so show Day 5 scores max.
+  //
+  // At/After 2 AM ET: Today's score processing has completed.
+  // It processed yesterday's competition scores.
+  // Example: On Day 7 at 3 AM, Day 6 scores were just processed, so show Day 6 scores max.
+  const maxScoreDay = hour < 2 ? currentDay - 2 : currentDay - 1;
+
+  // Return null if no scores should be available yet (e.g., Day 1 or Day 2 before 2 AM)
+  return maxScoreDay >= 1 ? maxScoreDay : null;
 };
 
 /**
@@ -61,11 +82,33 @@ export const useLandingScores = () => {
   const [corpsValues, setCorpsValues] = useState([]);
   const [historicalData, setHistoricalData] = useState({});
 
-  // Calculate effective day accounting for 2 AM score processing
-  const effectiveDay = useMemo(() => {
+  // Track whether we're past the 2 AM ET score processing time
+  // This state updates every minute to ensure we react to the 2 AM boundary
+  const [isPastProcessingTime, setIsPastProcessingTime] = useState(() => getEasternHour() >= 2);
+
+  // Set up interval to check if we've crossed the 2 AM boundary
+  useEffect(() => {
+    const checkProcessingTime = () => {
+      const nowPastProcessingTime = getEasternHour() >= 2;
+      setIsPastProcessingTime(prev => {
+        // Only update if the value actually changed to avoid unnecessary re-renders
+        return prev !== nowPastProcessingTime ? nowPastProcessingTime : prev;
+      });
+    };
+
+    // Check every minute
+    const interval = setInterval(checkProcessingTime, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Calculate max score day accounting for 2 AM score processing
+  // This recalculates when currentDay changes OR when we cross the 2 AM boundary
+  const maxScoreDay = useMemo(() => {
     if (!currentDay) return null;
-    return getEffectiveDay(currentDay);
-  }, [currentDay]);
+    return getMaxScoreDay(currentDay);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentDay, isPastProcessingTime]);
 
   // Fetch season corps and historical scores
   useEffect(() => {
@@ -118,9 +161,9 @@ export const useLandingScores = () => {
 
   // Process scores for landing page display
   const liveScores = useMemo(() => {
-    // Guard: If no data or effectiveDay is null/0, no scores should be visible
-    // effectiveDay is null on Day 1 and Day 2 before 2 AM (no processed scores yet)
-    if (corpsValues.length === 0 || Object.keys(historicalData).length === 0 || !effectiveDay || effectiveDay < 1) {
+    // Guard: If no data or maxScoreDay is null/0, no scores should be visible
+    // maxScoreDay is null on Day 1 and Day 2 before 2 AM (no processed scores yet)
+    if (corpsValues.length === 0 || Object.keys(historicalData).length === 0 || !maxScoreDay || maxScoreDay < 1) {
       return [];
     }
 
@@ -133,9 +176,9 @@ export const useLandingScores = () => {
       const scores = [];
 
       yearData.forEach(event => {
-        // Only include scores from days up to and including the effective day
-        // effectiveDay represents the day whose scores have been processed (at 2 AM)
-        if (event.offSeasonDay > effectiveDay) return;
+        // Only include scores from days up to and including maxScoreDay
+        // maxScoreDay is the latest day whose scores have been processed (at 2 AM)
+        if (event.offSeasonDay > maxScoreDay) return;
 
         const scoreData = event.scores?.find(s => s.corps === corps.corpsName);
         if (scoreData && scoreData.captions) {
@@ -210,7 +253,7 @@ export const useLandingScores = () => {
     });
 
     return rankedScores;
-  }, [corpsValues, historicalData, effectiveDay]);
+  }, [corpsValues, historicalData, maxScoreDay]);
 
   // Get the display day (most recent day with scores)
   const displayDay = useMemo(() => {
