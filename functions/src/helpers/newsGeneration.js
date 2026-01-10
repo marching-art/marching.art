@@ -656,26 +656,41 @@ CRITICAL CONTEXT - DRUM AND BUGLE CORPS (NOT A CONCERT):
 
 This is DCI (Drum Corps International) - competitive marching arts performed on football fields.
 
-WHAT DRUM CORPS PERFORMERS LOOK LIKE (for closeup portraits):
-- UNIFORMS: Athletic military-style uniforms specific to each corps (colors vary by corps).
-  Fitted athletic cut with decorative trim, metallic accents, and corps emblems.
-- HEADWEAR: Shakos (tall cylindrical hats) or plumed helmets with corps-specific colors.
-  Some modern corps use contemporary helmets or caps. The headwear is ALWAYS uniform-specific.
+CRITICAL RULE - ONE INSTRUMENT PER PERFORMER:
+Each performer carries ONLY ONE type of equipment. A performer is EITHER:
+- A BRASS player (holding a brass instrument like trumpet, mellophone, baritone, or contra) - OR -
+- A PERCUSSIONIST (wearing a drum on a harness - snare, tenors, or bass drum) - OR -
+- A COLOR GUARD member (holding a flag, rifle, or sabre)
+NEVER show a performer with multiple equipment types. A brass player does NOT have drums.
+A drummer does NOT hold a brass instrument. This is physically impossible.
+
+WHAT MODERN DCI PERFORMERS LOOK LIKE:
+- UNIFORMS: Modern athletic uniforms, NOT traditional military style. Contemporary designs with:
+  - Bold colors, geometric patterns, flame designs, sparkles, metallic accents
+  - Fitted athletic cut, often asymmetric or avant-garde styling
+  - Corps-specific colors and design themes matching their show
+- HEADWEAR: Most modern corps have NO headwear or minimal headwear.
+  Traditional shakos with plumes are rare. Some corps use modern caps or helmets.
+  Only include headwear if specifically described in the uniform details.
 - GLOVES: White marching gloves on all performers.
-- INSTRUMENTS: Brass only - mellophones, baritones, contras, trumpets. Silver or gold lacquered
-  with corps-colored valve caps. NO woodwinds, NO electric guitars.
-- PERCUSSION: Snare drums, tenor drums (quads/quints), bass drums worn on harnesses.
+- BRASS PLAYERS: Hold brass instruments (mellophones, baritones, contras, trumpets).
+  Silver instruments are most common. NO woodwinds, NO electric guitars.
+- PERCUSSIONISTS: Wear drums on body harnesses (snare drums, tenor drums/quads, bass drums).
+  Drums often have colorful wraps matching corps colors. They hold drumsticks, NOT brass.
 - COLOR GUARD: Athletic costumes (not uniforms), 6-foot silk flags, rifles, sabres.
 
-SETTING (when visible in background):
-- Football stadium at dusk/night, stadium lights, blurred grass field with yard lines.
-- The background should be HEAVILY BLURRED for closeup portraits.
+PHOTOGRAPHY STYLE:
+- Action shots showing performers marching and playing
+- Groups of 3-8 performers in formation, not isolated single portraits
+- Football stadium setting with grass field and yard lines visible
+- Stadium lighting at dusk or night
+- Captures motion and athletic energy
 
 THIS IS NOT:
 - A rock concert, pop concert, or music festival
 - Musicians in casual clothes, t-shirts, or concert black
 - An orchestra or symphony
-- A parade marching band
+- A parade marching band with traditional military uniforms
 `;
 
 /**
@@ -684,6 +699,11 @@ THIS IS NOT:
 const IMAGE_NEGATIVE_PROMPT = `
 
 MUST AVOID (these will make the image incorrect):
+- Performers holding multiple instruments (a drummer cannot also play trumpet)
+- Brass players with drums attached - this is physically impossible
+- Traditional military band uniforms with brass buttons and epaulettes (unless specified)
+- Tall shakos with feather plumes (unless specifically described in uniform details)
+- Old-fashioned marching band aesthetics
 - Concert stages, rock concerts, pop concerts, music festivals
 - Mosh pits, crowd surfing, standing concert crowds
 - Stage lighting rigs, concert spotlights pointed at a stage
@@ -691,7 +711,6 @@ MUST AVOID (these will make the image incorrect):
 - Casual clothing, t-shirts, jeans on performers
 - Indoor concert venues, clubs, bars
 - Smoke machines, laser shows (unless specifically requested)
-- Single performers or small bands
 - Orchestra pits, symphony halls
 `;
 
@@ -1667,35 +1686,37 @@ function buildStandingsImagePrompt(topCorps, year, location, showName, showTitle
   const seed = `${topCorps}-${year}-standings`;
   const comp = getRandomComposition(seed);
 
-  return `CLOSEUP PORTRAIT of a ${topCorps} performer (${year} season).
+  return `Action photograph of ${topCorps} brass section performing (${year} season).
 
 ═══════════════════════════════════════════════════════════════
 UNIFORM - THIS IS THE MOST IMPORTANT PART - MUST BE EXACT:
 ═══════════════════════════════════════════════════════════════
 Corps: ${topCorps}
 Uniform colors and style: ${details.uniform}
-Headwear (CRITICAL): ${details.helmet}
-Instrument: ${details.brass}
+Headwear: ${details.helmet}
+Instruments: ${details.brass}
 
 DO NOT USE: generic red plumes, generic white shakos, or any uniform that doesn't match the description above.
 The uniform MUST match ${topCorps}'s distinctive colors and style.
+IMPORTANT: Show ONLY brass players with brass instruments. No drums in this shot.
 ═══════════════════════════════════════════════════════════════
 ${themeContext}
-SHOT TYPE: Intimate closeup portrait photograph
-- ${comp.camera.angle}
-- ${comp.focus.focus} - ${comp.focus.framing}
-- Single performer fills most of the frame
-- Stadium/field is heavily blurred in background
+SHOT TYPE: Sports action photograph
+- 4-6 brass players marching in formation, playing their instruments
+- Mid-range shot showing full uniforms and instruments clearly
+- Football field with yard lines visible in background
+- Stadium seating or lights visible but not dominant
 
-PERFORMER: ${comp.moment.moment}
-- Expression showing ${comp.moment.emotion}
+PERFORMERS: ${comp.moment.moment}
+- Athletic, powerful stances while marching and playing
 - White marching gloves visible
 - Uniform details clearly visible
+- All performers holding brass instruments (mellophones, baritones, trumpets)
 
 LIGHTING: ${comp.lighting.lighting}
 - Mood: ${comp.lighting.mood}
 
-TECHNICAL: Professional sports portrait, 85-200mm telephoto, f/2.8, shallow depth of field, performer sharply isolated from blurred background.
+TECHNICAL: Professional sports photography, 70-200mm lens, f/4, action shot with slight motion blur on marching feet, sharp on faces and instruments.
 
 This is ${topCorps} from ${showName || "a DCI competition"}${location ? ` in ${location}` : ""}${showTitle ? `, performing "${showTitle}"` : ""}.`;
 }
@@ -1719,59 +1740,65 @@ function buildCaptionsImagePrompt(featuredCorps, year, captionType, location, sh
   const comp = getRandomComposition(seed);
 
   // Determine which section to feature based on caption
-  let sectionFocus, sectionDetails, performerDescription;
+  let sectionFocus, sectionDetails, groupDescription, instrumentNote;
 
   if (captionType.includes("Brass") || captionType.includes("B")) {
-    sectionFocus = "brass";
+    sectionFocus = "brass section";
     sectionDetails = details.brass;
-    performerDescription = "a brass player with horn raised, bell catching the light";
+    groupDescription = "4-6 brass players marching in formation, horns raised, bells catching the light";
+    instrumentNote = "All performers holding brass instruments (mellophones, baritones, trumpets). NO drums.";
   } else if (captionType.includes("Percussion") || captionType.includes("P")) {
-    sectionFocus = "percussion";
+    sectionFocus = "drumline";
     sectionDetails = details.percussion;
-    performerDescription = "a snare drummer mid-stroke, sticks blurred with motion";
+    groupDescription = "4-6 drummers (snare line or tenor line) marching in tight formation, sticks in motion";
+    instrumentNote = "All performers wearing drums on harnesses (snares or tenors). NO brass instruments.";
   } else if (captionType.includes("Guard") || captionType.includes("CG")) {
     sectionFocus = "color guard";
     sectionDetails = details.guard;
-    performerDescription = "a guard member with rifle or flag, equipment mid-toss";
+    groupDescription = "3-5 guard members in athletic costumes with flags or rifles mid-toss";
+    instrumentNote = "Guard members with silks, rifles, or sabres. NO instruments.";
   } else if (captionType.includes("Visual") || captionType.includes("V")) {
-    sectionFocus = "visual";
+    sectionFocus = "brass section";
     sectionDetails = details.uniform;
-    performerDescription = "a performer showing perfect body technique and form";
+    groupDescription = "4-6 performers showing perfect body technique and marching form";
+    instrumentNote = "All performers holding brass instruments with excellent posture and technique.";
   } else {
     // GE or general
-    sectionFocus = "performer";
+    sectionFocus = "brass section";
     sectionDetails = details.uniform;
-    performerDescription = "a performer in an emotional, expressive moment";
+    groupDescription = "4-6 performers in an emotional, expressive moment";
+    instrumentNote = "All performers holding brass instruments.";
   }
 
-  return `CLOSEUP PORTRAIT of a ${featuredCorps} ${sectionFocus} performer (${year} season).
+  return `Action photograph of ${featuredCorps} ${sectionFocus} performing (${year} season).
 
 ═══════════════════════════════════════════════════════════════
 UNIFORM - THIS IS THE MOST IMPORTANT PART - MUST BE EXACT:
 ═══════════════════════════════════════════════════════════════
 Corps: ${featuredCorps}
 Uniform colors and style: ${details.uniform}
-Headwear (CRITICAL): ${details.helmet}
+Headwear: ${details.helmet}
 Section equipment: ${sectionDetails}
 
 DO NOT USE: generic red plumes, generic white shakos, or any uniform that doesn't match the description above.
 The uniform MUST match ${featuredCorps}'s distinctive colors and style.
+IMPORTANT: ${instrumentNote}
 ═══════════════════════════════════════════════════════════════
 ${themeContext}
-SHOT TYPE: Intimate closeup portrait of ${performerDescription}
-- ${comp.camera.angle}
-- ${comp.focus.focus} - ${comp.focus.framing}
-- Single performer fills most of the frame
-- Stadium/field is heavily blurred in background
+SHOT TYPE: Sports action photograph of ${groupDescription}
+- Mid-range shot showing full uniforms and equipment clearly
+- Football field with yard lines visible in background
+- Stadium seating or lights visible but not dominant
 
-PERFORMER: ${comp.moment.moment}
-- Expression showing ${comp.moment.emotion}
+PERFORMERS: ${comp.moment.moment}
+- Athletic, powerful stances while performing
+- White marching gloves visible
 - Uniform details clearly visible
 
 LIGHTING: ${comp.lighting.lighting}
 - Mood: ${comp.lighting.mood}
 
-TECHNICAL: Professional sports portrait, telephoto lens, f/2.8, shallow depth of field.
+TECHNICAL: Professional sports photography, 70-200mm lens, f/4, action shot capturing motion and energy.
 
 This is ${featuredCorps} from ${location || "a DCI competition"}${showTitle ? `, performing "${showTitle}"` : ""}, showcasing ${captionType} excellence.`;
 }
@@ -1962,24 +1989,25 @@ function buildUnderdogImagePrompt(corps, year, location, showTitle = null) {
   const seed = `${corps}-${year}-underdog`;
   const comp = getRandomComposition(seed);
 
-  return `Photorealistic photograph capturing a breakthrough moment for ${corps} (${year} season)${showTitle ? ` performing "${showTitle}"` : ""} at ${location || "a DCI competition"}.
+  return `Action photograph capturing a breakthrough moment for ${corps} brass section (${year} season)${showTitle ? ` performing "${showTitle}"` : ""} at ${location || "a DCI competition"}.
 
-SUBJECT: A performer from ${corps} in a moment of triumph and determination - ${comp.moment.moment}
+SUBJECT: 4-6 brass players from ${corps} in a moment of triumph and determination - ${comp.moment.moment}
 
 UNIFORM ACCURACY:
 - Uniform: ${details.uniform}
 - Headwear: ${details.helmet}
-- Brass: ${details.brass}
+- Instruments: ${details.brass}
+IMPORTANT: Show ONLY brass players with brass instruments. NO drums in this shot.
 ${themeContext}
 EMOTIONAL NARRATIVE:
 - Capturing the spirit of an underdog rising to the occasion
-- Expression showing fierce determination and joy
+- Expressions showing fierce determination and joy
 - The moment when hard work pays off
 - ${comp.moment.emotion}
 
 COMPOSITION:
-- ${comp.camera.angle}
-- ${comp.focus.framing}
+- Mid-range action shot showing 4-6 brass players marching in formation
+- Football field with yard lines visible in background
 - Background suggests the magnitude of the achievement
 
 LIGHTING & ATMOSPHERE:
@@ -1988,8 +2016,8 @@ LIGHTING & ATMOSPHERE:
 - Stadium environment enhancing the triumphant moment
 
 PHOTOGRAPHY STYLE:
-- Inspirational sports photography
-- High emotional impact
+- Inspirational sports photography, 70-200mm lens
+- High emotional impact action shot
 - Professional sports documentary feel
 - Colors true to ${corps} palette, vivid and proud
 
@@ -2012,20 +2040,20 @@ function buildCorpsSpotlightImagePrompt(corps, year, showTitle = null) {
   const seed = `${corps}-${year}-spotlight`;
   const comp = getRandomComposition(seed);
 
-  return `Photorealistic portrait-style photograph showcasing the identity and excellence of ${corps} (${year} season)${showTitle ? ` performing "${showTitle}"` : ""}.
+  return `Action photograph showcasing the identity and excellence of ${corps} brass section (${year} season)${showTitle ? ` performing "${showTitle}"` : ""}.
 
-SUBJECT: A group of 3-5 performers from ${corps} in a powerful ensemble moment, showcasing the corps' distinctive identity.
+SUBJECT: 4-6 brass players from ${corps} marching in formation, showcasing the corps' distinctive identity.
 
 UNIFORM IDENTITY (CRITICAL):
 - Uniform: ${details.uniform}
 - Headwear: ${details.helmet}
-- Brass: ${details.brass}
-- Percussion: ${details.percussion}
-- Guard: ${details.guard}
+- Instruments: ${details.brass}
+IMPORTANT: Show ONLY brass players with brass instruments. NO drums in this shot.
 ${themeContext}
 COMPOSITION:
-- ${comp.formation.formation} arrangement of performers
-- ${comp.camera.angle}
+- ${comp.formation.formation} arrangement of brass performers
+- Mid-range action shot showing full uniforms and instruments clearly
+- Football field with yard lines visible in background
 - Capturing the pride and tradition of ${corps}
 
 LIGHTING & ATMOSPHERE:
@@ -2035,14 +2063,13 @@ LIGHTING & ATMOSPHERE:
 
 CORPS CHARACTER:
 - Showcasing what makes ${corps} unique
-- Traditional elements meeting modern performance
+- Modern athletic uniforms meeting high-level performance
 - The visual identity that fans recognize instantly
 
 PHOTOGRAPHY STYLE:
-- Magazine cover quality
-- ${comp.focus.framing}
+- Professional sports action photography, 70-200mm lens
 - Rich, saturated colors emphasizing corps palette
-- Professional editorial sports photography
+- Captures motion and athletic energy
 
 This should be an iconic image that captures the essence of ${corps} - their tradition, their excellence, and what makes them special in the DCI world.`;
 }
