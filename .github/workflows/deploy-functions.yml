@@ -3,21 +3,13 @@ name: Deploy Firebase Functions
 on:
   push:
     branches:
-      - main  # Ensure this matches your branch name (e.g., 'master')
+      - main
     paths:
       - 'functions/**'
-
-# Required for google-github-actions/auth to request OIDC tokens
-permissions:
-  contents: read
-  id-token: write
 
 jobs:
   deploy_functions:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -31,19 +23,14 @@ jobs:
         run: npm ci
         working-directory: ./functions
 
-      # --- THIS IS THE PART THAT CHANGED ---
+      # --- AUTHENTICATE (Using the new Secrets) ---
       - name: Authenticate to Google Cloud
-        id: auth
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-          create_credentials_file: true
-          export_environment_variables: true
 
+      # --- DEPLOY (This replaces the w9jds action) ---
       - name: Deploy to Firebase
-        uses: w9jds/firebase-action@v15.2.1
-        with:
-          args: deploy --only functions
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
+        # We run 'npx' directly so it shares the authentication from the step above
+        run: npx firebase-tools deploy --only functions
