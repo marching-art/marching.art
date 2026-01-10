@@ -422,6 +422,14 @@ const DCI_UNIFORMS = {
       guard: "romantic blue and silver costumes with celestial silks",
       showName: "STAR Crossed",
     },
+    2022: {
+      uniform: "dark charcoal grey fitted uniform with purple magenta accents, modern athletic design",
+      helmet: "no traditional helmet, modern minimalist look",
+      brass: "silver brass instruments contrasting against grey and purple uniforms",
+      percussion: "charcoal grey uniforms with purple accents matching brass section",
+      guard: "colorful vibrant costumes with orange, blue, and multi-colored silks",
+      showName: "Of War and Peace",
+    },
     2023: {
       uniform: "royal blue with silver constellation patterns, updated celestial design",
       helmet: "blue helmet with silver star crest",
