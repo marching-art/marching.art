@@ -558,7 +558,7 @@ const DCI_UNIFORMS = {
       brass: "silver brass instruments contrasting against purple striped uniforms",
       percussion: "natural wood tan colored drums, purple and black striped uniforms matching brass section",
       guard: "purple and black costumes with teal accent pieces",
-      showName: "The Sands of Time",
+      showName: "The Fall and Rise",
     },
     2022: {
       uniform: "royal blue with silver knight armor accents, modern crusader design",
@@ -1148,15 +1148,22 @@ async function getUniformDetailsFromFirestore(db, corpsName, year = null) {
       );
 
       if (corpsEntry && corpsEntry.defaultUniform) {
-        const uniform = { ...corpsEntry.defaultUniform };
+        let uniform = { ...corpsEntry.defaultUniform };
 
-        // If year specified, try to get show title from Firestore
+        // If year specified, try to get show data from Firestore
         if (year && corpsEntry.id) {
           const showsDoc = await db.doc(`dci-reference/shows-${corpsEntry.id}`).get();
           if (showsDoc.exists) {
             const showData = showsDoc.data().shows?.[year];
-            if (showData?.title) {
-              uniform.showName = showData.title;
+            if (showData) {
+              // Use year-specific uniform if available, otherwise keep default
+              if (showData.uniform) {
+                uniform = { ...showData.uniform };
+              }
+              // Add show title
+              if (showData.title) {
+                uniform.showName = showData.title;
+              }
             }
           }
         }
