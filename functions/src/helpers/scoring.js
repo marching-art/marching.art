@@ -116,7 +116,12 @@ function getRealisticCaptionScore(corpsName, sourceYear, caption, currentDay, hi
   } else if (allDataPoints.length === 1) {
     return allDataPoints[0][1];
   } else {
-    logger.warn(`No historical scores found for ${corpsName} (${sourceYear}), caption ${caption}. Returning 0.`);
+    // Only warn if we actually fetched data for this year (meaning corps should exist).
+    // If the year isn't in historicalData at all, it's likely a stale lineup from a
+    // previous season - no need to spam logs for expected missing data.
+    if (historicalData[sourceYear] !== undefined) {
+      logger.warn(`No historical scores found for ${corpsName} (${sourceYear}), caption ${caption}. Returning 0.`);
+    }
     return 0;
   }
 }
