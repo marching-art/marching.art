@@ -931,8 +931,8 @@ ${IMAGE_NEGATIVE_PROMPT}`;
         return `data:image/jpeg;base64,${generatedImage.image.imageBytes}`;
       }
     } else {
-      // Free tier: Gemini 2.5 Flash with native image generation
-      const modelName = "gemini-2.5-flash-image";
+      // Free tier: Gemini 3 Pro with native image generation
+      const modelName = "gemini-3-pro-image-preview";
 
       // Build system instruction with drum corps context
       const systemInstruction = `${DRUM_CORPS_VISUAL_CONTEXT}
