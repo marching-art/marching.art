@@ -656,15 +656,24 @@ CRITICAL CONTEXT - DRUM AND BUGLE CORPS (NOT A CONCERT):
 
 This is DCI (Drum Corps International) - competitive marching arts performed on football fields.
 
+CRITICAL RULE - ONE INSTRUMENT PER PERFORMER:
+Each performer carries ONLY ONE type of equipment. A performer is EITHER:
+- A BRASS player (holding a brass instrument like trumpet, mellophone, baritone, or contra) - OR -
+- A PERCUSSIONIST (wearing a drum on a harness - snare, tenors, or bass drum) - OR -
+- A COLOR GUARD member (holding a flag, rifle, or sabre)
+NEVER show a performer with multiple equipment types. A brass player does NOT have drums.
+A drummer does NOT hold a brass instrument. This is physically impossible.
+
 WHAT DRUM CORPS PERFORMERS LOOK LIKE (for closeup portraits):
 - UNIFORMS: Athletic military-style uniforms specific to each corps (colors vary by corps).
   Fitted athletic cut with decorative trim, metallic accents, and corps emblems.
 - HEADWEAR: Shakos (tall cylindrical hats) or plumed helmets with corps-specific colors.
   Some modern corps use contemporary helmets or caps. The headwear is ALWAYS uniform-specific.
 - GLOVES: White marching gloves on all performers.
-- INSTRUMENTS: Brass only - mellophones, baritones, contras, trumpets. Silver or gold lacquered
-  with corps-colored valve caps. NO woodwinds, NO electric guitars.
-- PERCUSSION: Snare drums, tenor drums (quads/quints), bass drums worn on harnesses.
+- BRASS PLAYERS: Hold brass instruments (mellophones, baritones, contras, trumpets).
+  Silver or gold lacquered with corps-colored valve caps. NO woodwinds, NO electric guitars.
+- PERCUSSIONISTS: Wear drums on body harnesses (snare drums, tenor drums/quads, bass drums).
+  They hold drumsticks, NOT brass instruments.
 - COLOR GUARD: Athletic costumes (not uniforms), 6-foot silk flags, rifles, sabres.
 
 SETTING (when visible in background):
@@ -684,6 +693,8 @@ THIS IS NOT:
 const IMAGE_NEGATIVE_PROMPT = `
 
 MUST AVOID (these will make the image incorrect):
+- Performers holding multiple instruments (a drummer cannot also play trumpet)
+- Brass players with drums attached - this is physically impossible
 - Concert stages, rock concerts, pop concerts, music festivals
 - Mosh pits, crowd surfing, standing concert crowds
 - Stage lighting rigs, concert spotlights pointed at a stage
