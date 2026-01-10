@@ -110,6 +110,14 @@ const DCI_UNIFORMS = {
       guard: "flame-inspired orange, red, and gold costumes with fire silks",
       showName: "Inferno",
     },
+    2017: {
+      uniform: "dark navy blue fitted modern uniform with sleek athletic cut, clean contemporary design",
+      helmet: "no traditional shako, modern minimalist look with natural hair",
+      brass: "silver brass instruments with clean contemporary appearance",
+      percussion: "navy blue uniforms matching brass section, silver drum hardware",
+      guard: "silver metallic fitted costumes with flowing elements, additional green costume pieces for visual contrast",
+      showName: "It Is",
+    },
     2019: {
       uniform: "maroon base with rose gold metallic overlay panels, modern athletic silhouette with illuminated crown logo",
       helmet: "rose gold metallic helmet with built-in LED crown halo",
