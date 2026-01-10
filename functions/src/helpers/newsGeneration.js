@@ -932,7 +932,7 @@ ${IMAGE_NEGATIVE_PROMPT}`;
       }
     } else {
       // Free tier: Gemini 2.5 Flash with native image generation
-      const modelName = "gemini-2.5-flash-preview-image-generation";
+      const modelName = "gemini-2.5-flash-image";
       const response = await ai.models.generateContent({
         model: modelName,
         contents: enhancedPrompt,
