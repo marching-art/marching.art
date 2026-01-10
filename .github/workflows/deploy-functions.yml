@@ -3,9 +3,9 @@ name: Deploy Firebase Functions
 on:
   push:
     branches:
-      - main # Or 'master', depending on your default branch
+      - main
     paths:
-      - 'functions/**' # Only trigger if changes happen in the functions folder
+      - 'functions/**'
 
 jobs:
   deploy_functions:
@@ -17,20 +17,21 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Match the version in your functions/package.json engines
+          node-version: '20'
 
       - name: Install Dependencies
         run: npm ci
         working-directory: ./functions
 
+      # --- UPDATED SECTION START ---
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          # This now uses the WIF values we created
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Deploy to Firebase
-        uses: w9jds/firebase-action@v15.2.1
-        with:
-          args: deploy --only functions
-        env:
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+        # We use npx instead of the docker action so it can "see" the credentials above
+        run: npx firebase-tools deploy --only functions
+        # --- UPDATED SECTION END ---
