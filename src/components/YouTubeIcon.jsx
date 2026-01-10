@@ -1,27 +1,38 @@
 // YouTubeIcon - Official YouTube branding compliant icon
-// Uses YouTube's official brand color #FF0000 per branding guidelines
+// Uses official YouTube icon from brand resources with correct aspect ratio
 // https://www.youtube.com/howyoutubeworks/resources/brand-resources/
+// Icon specifications: https://developers.google.com/youtube/terms/branding-guidelines
 
 import React from 'react';
 
-const YouTubeIcon = ({ className = '', size = 16 }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    className={className}
-  >
-    <path
-      d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814z"
-      fill="#FF0000"
-    />
-    <path
-      d="M9.545 15.568V8.432L15.818 12l-6.273 3.568z"
-      fill="#FFFFFF"
-    />
-  </svg>
-);
+// Official YouTube "play button" icon with correct 159:110 aspect ratio
+const YouTubeIcon = ({ className = '', size = 16 }) => {
+  // Maintain official aspect ratio (width:height = 159:110 ≈ 1.445:1)
+  const width = size;
+  const height = Math.round(size / 1.445);
+
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={width}
+      height={height}
+      viewBox="0 0 159 110"
+      className={className}
+      aria-label="YouTube"
+      role="img"
+    >
+      {/* Red rounded rectangle - official YouTube shape */}
+      <path
+        d="M154 17.5c-1.82-6.73-7.07-12-13.8-13.8C128.4 0 79.5 0 79.5 0S30.6 0 18.8 3.7c-6.73 1.8-12 7.07-13.8 13.8C1.3 29.3 1.3 55 1.3 55s0 25.7 3.7 37.5c1.8 6.73 7.07 12 13.8 13.8 11.8 3.7 60.7 3.7 60.7 3.7s48.9 0 60.7-3.7c6.73-1.8 12-7.07 13.8-13.8 3.7-11.8 3.7-37.5 3.7-37.5s0-25.7-3.7-37.5z"
+        fill="#FF0000"
+      />
+      {/* White play triangle - centered */}
+      <path
+        d="M64 79.5L105 55 64 30.5v49z"
+        fill="#FFFFFF"
+      />
+    </svg>
+  );
+};
 
 export default YouTubeIcon;
