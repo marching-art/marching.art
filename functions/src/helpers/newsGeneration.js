@@ -161,11 +161,11 @@ const DCI_UNIFORMS = {
       showName: "Between Angels and Demons",
     },
     2015: {
-      uniform: "maroon with silver metallic accents, 10-year anniversary design with modern athletic fit",
-      helmet: "chrome and maroon helmet with anniversary crest",
-      brass: "silver brass with commemorative engravings",
-      percussion: "maroon shells with silver anniversary graphics",
-      guard: "maroon and silver contemporary costumes celebrating corps history",
+      uniform: "black fitted uniform with white skeletal bone-like patterns, dramatic anatomical design across body",
+      helmet: "no traditional helmet, modern look with natural appearance",
+      brass: "silver brass instruments contrasting against black uniforms",
+      percussion: "black uniforms with white skeletal patterns matching brass section",
+      guard: "black base costumes with colorful flowing silks in yellow, purple, and pink",
       showName: "The Power of 10",
     },
     2023: {
