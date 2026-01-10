@@ -516,6 +516,14 @@ const DCI_UNIFORMS = {
       guard: "purple and silver flowing costumes",
       showName: "Heartland",
     },
+    2025: {
+      uniform: "bold neon yellow lime green with red and black horizontal stripes, surreal dreamlike design",
+      helmet: "no traditional helmet, modern look with colorful aesthetic",
+      brass: "silver brass instruments contrasting against bright neon uniforms",
+      percussion: "black drums, neon yellow and red striped uniforms matching brass section",
+      guard: "pink fitted costumes, dreamlike surreal aesthetic contrasting with corps colors",
+      showName: "In Restless Dreams",
+    },
   },
 
   "Spirit of Atlanta": {
