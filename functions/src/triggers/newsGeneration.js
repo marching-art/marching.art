@@ -1583,15 +1583,69 @@ exports.approveSubmission = onCall(
         // Generate a new AI image
         logger.info("Generating AI image for approved article:", { submissionId });
 
-        const { generateImageWithImagen, buildArticleImagePrompt } = require("../helpers/newsGeneration");
+        const {
+          generateImageWithImagen,
+          buildArticleImagePrompt,
+          buildCorpsSpotlightImagePrompt,
+          buildAnalyticsImagePrompt,
+          buildFantasyLeagueImagePrompt,
+          buildFantasyPerformersImagePrompt,
+          DCI_UNIFORMS,
+        } = require("../helpers/newsGeneration");
         const { uploadFromUrl } = require("../helpers/mediaService");
 
-        // Build a contextual prompt based on article content
-        const imagePrompt = buildArticleImagePrompt(
-          submission.category,
-          submission.headline,
-          submission.summary
+        // Try to extract a corps name from the headline/summary for specialized prompts
+        const knownCorps = Object.keys(DCI_UNIFORMS);
+        const contentToSearch = `${submission.headline} ${submission.summary}`.toLowerCase();
+        const extractedCorps = knownCorps.find(corps =>
+          contentToSearch.includes(corps.toLowerCase())
         );
+        const currentYear = new Date().getFullYear();
+
+        // Build a contextual prompt based on article content
+        // Use specialized prompt builders when possible for better image quality
+        let imagePrompt;
+
+        if (submission.category === "dci" && extractedCorps) {
+          // Use corps spotlight prompt for DCI articles about specific corps
+          imagePrompt = buildCorpsSpotlightImagePrompt(
+            extractedCorps,
+            currentYear,
+            null // showTitle
+          );
+          logger.info("Using specialized corps spotlight prompt:", { extractedCorps });
+        } else if (submission.category === "analysis" && extractedCorps) {
+          // Use analytics prompt for analysis articles about specific corps
+          imagePrompt = buildAnalyticsImagePrompt(
+            extractedCorps,
+            currentYear,
+            "performance analysis",
+            null // showTitle
+          );
+          logger.info("Using specialized analytics prompt:", { extractedCorps });
+        } else if (submission.category === "fantasy") {
+          // Use fantasy league prompt for fantasy articles
+          if (extractedCorps) {
+            imagePrompt = buildFantasyPerformersImagePrompt(
+              extractedCorps,
+              "Championship celebration",
+              null, // location
+              null  // uniformDesign
+            );
+            logger.info("Using specialized fantasy performers prompt:", { extractedCorps });
+          } else {
+            imagePrompt = buildFantasyLeagueImagePrompt();
+            logger.info("Using specialized fantasy league prompt");
+          }
+        } else {
+          // Fallback to generic prompt builder
+          imagePrompt = buildArticleImagePrompt(
+            submission.category,
+            submission.headline,
+            submission.summary
+          );
+          logger.info("Using generic article prompt:", { category: submission.category });
+        }
 
         // Generate the image
         const imageData = await generateImageWithImagen(imagePrompt);
