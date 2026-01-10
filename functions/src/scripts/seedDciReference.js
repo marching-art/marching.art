@@ -515,7 +515,16 @@ const DCI_CORPS_DATA = {
       2016: { title: "Georgia" },
       2017: { title: "CROSSROADS: We Are Here" },
       2018: { title: "Knock" },
-      2019: { title: "Neon Underground" },
+      2019: {
+        title: "Neon Underground",
+        uniform: {
+          uniform: "vibrant magenta pink fitted uniform with orange accents, neon underground aesthetic",
+          helmet: "no traditional helmet, modern athletic look",
+          brass: "silver brass instruments",
+          percussion: "pink magenta drums matching corps uniform colors",
+          guard: "neon pink and orange costumes with underground theme",
+        },
+      },
       2021: { title: "Legend of the Bottle Tree" },
       2023: { title: "Up, Down and All Around" },
       2024: { title: "Creatures" },
