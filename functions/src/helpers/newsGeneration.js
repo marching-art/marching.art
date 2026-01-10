@@ -213,11 +213,11 @@ const DCI_UNIFORMS = {
       guard: "contemporary blue and white athletic wear with technology elements",
     },
     2014: {
-      uniform: "electric blue with tilted geometric white patterns, asymmetrical modern design",
-      helmet: "white helmet with blue angular accents, no traditional plume",
-      brass: "silver brass with blue geometric patterns on bells",
-      percussion: "blue drums with white tilted stripe graphics",
-      guard: "asymmetrical blue and white athletic costumes with angular silks",
+      uniform: "traditional navy blue military-style uniform with white trim and accents, classic formal cut",
+      helmet: "white shako with large fluffy white plume, traditional military style",
+      brass: "silver brass instruments with traditional appearance",
+      percussion: "navy blue uniforms matching brass section, white shako helmets with white plumes",
+      guard: "bright orange fitted costumes, striking contrast against navy blue corps members",
       showName: "Tilt",
     },
     2016: {
