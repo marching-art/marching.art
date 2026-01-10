@@ -301,7 +301,7 @@ const DCI_CORPS_DATA = {
         title: "Mosaic",
         uniform: {
           uniform: "dark forest green fitted uniform with gold yellow accents, modern athletic design with traditional elements",
-          helmet: "white Aussie-style hat, classic Madison Scouts headwear",
+          helmet: "black Aussie-style hat, classic Madison Scouts headwear",
           brass: "silver brass instruments",
           percussion: "green uniforms with gold accents, matching brass section",
           guard: "colorful mosaic-inspired costumes with purple, pink, and multi-colored elements",
