@@ -87,22 +87,29 @@ export const useProfileStore = create((set, get) => ({
             error: null,
           });
         } else {
-          // Create initial profile for new users
+          // Create initial profile for new users with all required fields
           const initialProfile = {
             uid: uid,
-            email: user?.email || null,
             displayName: user?.displayName || 'Director',
             createdAt: new Date(),
+            // XP & Progression
             xp: 0,
             xpLevel: 1,
+            userTitle: 'Rookie',
+            // Currency
             corpsCoin: 1000,
+            // Unlocks
             unlockedClasses: ['soundSport'],
-            achievements: [],
+            // Corps data
+            corps: {},
+            // Stats
             stats: {
               seasonsPlayed: 0,
               championships: 0,
               topTenFinishes: 0,
+              leagueWins: 0,
             },
+            achievements: [],
           };
 
           setDoc(profileRef, initialProfile)

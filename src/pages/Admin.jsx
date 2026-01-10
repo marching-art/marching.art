@@ -10,7 +10,7 @@ import {
   Shield, Database, Users, Award, Calendar,
   Play, RefreshCw, FileText, Terminal,
   X, Search, Mail, UserCheck, UserX, Activity,
-  CheckCircle, AlertTriangle, Send, Newspaper, Flame, Inbox, MessageSquare
+  CheckCircle, AlertTriangle, Send, Newspaper, Flame, Inbox, MessageSquare, Wrench
 } from 'lucide-react';
 import { setUserRole, triggerDailyNews } from '../firebase/functions';
 import { db, adminHelpers } from '../firebase';
@@ -248,6 +248,7 @@ const UsersTab = () => {
   const [roleEmail, setRoleEmail] = useState('');
   const [roleLoading, setRoleLoading] = useState(false);
   const [usersLoading, setUsersLoading] = useState(false);
+  const [fixingProfiles, setFixingProfiles] = useState(false);
 
   useEffect(() => {
     loadUserStats();
@@ -372,6 +373,22 @@ const UsersTab = () => {
     }
   };
 
+  const handleFixProfiles = async () => {
+    if (!window.confirm('Fix missing profile fields for all users? This will add default values for any missing required fields.')) return;
+    setFixingProfiles(true);
+    try {
+      const functions = getFunctions();
+      const fixProfileFields = httpsCallable(functions, 'fixProfileFields');
+      const result = await fixProfileFields();
+      toast.success(result.data.message);
+      loadUserStats(); // Refresh stats after fix
+    } catch (error) {
+      toast.error(error.message || 'Failed to fix profiles');
+    } finally {
+      setFixingProfiles(false);
+    }
+  };
+
   const filteredUsers = users.filter(u =>
     u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.uid.toLowerCase().includes(searchTerm.toLowerCase())
@@ -432,6 +449,13 @@ const UsersTab = () => {
           icon={Shield}
           loading={false}
           onExecute={() => setShowRoleManager(true)}
+        />
+        <ProcessRow
+          name="Fix Profile Fields"
+          description="Add missing required fields to all user profiles"
+          icon={Wrench}
+          loading={fixingProfiles}
+          onExecute={handleFixProfiles}
         />
       </div>
 

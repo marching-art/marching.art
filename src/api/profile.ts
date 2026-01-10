@@ -86,13 +86,25 @@ export async function createProfile(
     const profileRef = doc(db, paths.userProfile(uid));
     await setDoc(profileRef, {
       uid,
+      displayName: 'Director',
       createdAt: new Date(),
+      // XP & Progression
       xp: 0,
       xpLevel: 1,
-      corpsCoin: 1000,
-      unlockedClasses: ['soundSport'],
-      corps: {},
       userTitle: 'Rookie',
+      // Currency
+      corpsCoin: 1000,
+      // Unlocks
+      unlockedClasses: ['soundSport'],
+      // Corps data
+      corps: {},
+      // Stats
+      stats: {
+        seasonsPlayed: 0,
+        championships: 0,
+        topTenFinishes: 0,
+        leagueWins: 0,
+      },
       ...data,
     });
   }, 'Failed to create profile');
