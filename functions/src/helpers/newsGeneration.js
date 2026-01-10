@@ -933,11 +933,20 @@ ${IMAGE_NEGATIVE_PROMPT}`;
     } else {
       // Free tier: Gemini 2.5 Flash with native image generation
       const modelName = "gemini-2.5-flash-image";
+
+      // Build system instruction with drum corps context
+      const systemInstruction = `${DRUM_CORPS_VISUAL_CONTEXT}
+
+${IMAGE_NEGATIVE_PROMPT}
+
+You are an expert drum corps photographer. Generate images that accurately depict DCI drum corps as described above.`;
+
       const response = await ai.models.generateContent({
         model: modelName,
-        contents: enhancedPrompt,
+        contents: prompt,
         config: {
           responseModalities: ["image", "text"],
+          systemInstruction: systemInstruction,
         },
       });
 
@@ -1565,31 +1574,67 @@ This avatar will represent a competitive marching arts fantasy team. Make it dis
 /**
  * Build image prompt for user-submitted articles based on category and content
  * Used when admin approves community submissions
+ * @param {string} category - Article category (dci, fantasy, analysis)
+ * @param {string} headline - Article headline
+ * @param {string} summary - Article summary
+ * @param {object} options - Optional parameters
+ * @param {string} options.corpsName - Name of featured corps
+ * @param {object} options.uniformDetails - Corps uniform details from getUniformDetails
+ * @param {string} options.showTitle - Show title for thematic context
  */
-function buildArticleImagePrompt(category, headline, summary) {
+function buildArticleImagePrompt(category, headline, summary, options = {}) {
+  const { corpsName, uniformDetails, showTitle } = options;
+
+  // Build uniform section if we have corps-specific details
+  let uniformSection = `UNIFORMS: Modern athletic cut uniforms with contemporary designs
+- Bold colors, geometric patterns, metallic accents
+- Fitted athletic styling, often asymmetric or avant-garde
+- NO traditional military shakos or plumed helmets (most modern corps have minimal or no headwear)
+- White marching gloves on all performers`;
+
+  if (uniformDetails && corpsName) {
+    uniformSection = `UNIFORM - ${corpsName.toUpperCase()} - MUST MATCH EXACTLY:
+- BODY: ${uniformDetails.uniform}
+- HEADWEAR: ${uniformDetails.helmet}
+- BRASS INSTRUMENTS: ${uniformDetails.brass}
+- DRUMS: ${uniformDetails.percussion}
+- COLOR GUARD: ${uniformDetails.guard}
+- White marching gloves on all performers
+
+CRITICAL: These uniform details are EXACT. Do not substitute generic uniforms.`;
+  }
+
+  // Build show theme context if available
+  const themeContext = showTitle ? buildShowThemeContext(showTitle) : "";
+
   const categoryPrompts = {
-    dci: `CLOSEUP PORTRAIT of a DCI (Drum Corps International) performer.
+    dci: `DCI (Drum Corps International) action photography on a football field.
 
 HEADLINE CONTEXT: "${headline}"
+${corpsName ? `FEATURED CORPS: ${corpsName}` : ""}
+${showTitle ? `SHOW: "${showTitle}"` : ""}
 
-SHOT TYPE: Intimate closeup portrait photograph
-- Single performer fills most of the frame
-- Waist-up or chest-up framing
-- Stadium/field is heavily blurred in background
-- 85-200mm telephoto lens, f/2.8, shallow depth of field
+SHOT TYPE: Dynamic action photograph
+- Group of 3-6 performers in athletic formation
+- Football field with yard lines visible
+- Stadium setting at dusk or night
+- Wide to medium shot capturing movement and energy
 
 SUBJECT (choose most appropriate for headline):
-- Brass player with horn raised, bell catching stadium lights
-- Snare drummer mid-stroke, focused expression
-- Guard member with rifle or flag, equipment visible
-- Mellophone or baritone player in powerful moment
+- Brass section with horns raised in unison, bells catching stadium lights
+- Drumline in synchronized motion, sticks frozen mid-stroke
+- Color guard with 6-foot silk flags in dramatic poses
+- Mixed section showing the scale of the performance
 
-UNIFORM: Military-style marching uniform with shako or plumed helmet, white gloves
+${uniformSection}
+
+CRITICAL: Each performer holds ONLY ONE type of equipment. Brass players do NOT have drums. Drummers do NOT hold brass.
+${themeContext}
 
 LIGHTING: Stadium lights creating dramatic rim lighting, evening atmosphere
-MOOD: Intensity, determination, athletic performance
+MOOD: Athletic energy, precision, competitive intensity
 
-TECHNICAL: Professional sports portrait photography, performer sharply isolated from blurred background`,
+TECHNICAL: Professional sports action photography, sharp subjects with motion blur suggesting movement`,
 
     fantasy: `Creative digital illustration for fantasy marching arts sports coverage.
 
@@ -1650,14 +1695,14 @@ Generate an image that would work as a professional news article header at 1200x
  * Camera angles for variety in image composition
  */
 const CAMERA_ANGLES = [
-  { angle: "tight portrait, 6 feet from performer, 85mm lens, shallow depth of field", description: "intimate closeup showing uniform and expression" },
-  { angle: "medium closeup, 10 feet away, shooting slightly upward at performer", description: "heroic low angle emphasizing power" },
-  { angle: "profile closeup, 8 feet beside performer, capturing helmet/shako detail", description: "dramatic side view showing headwear" },
-  { angle: "three-quarter portrait, 12 feet at 45-degree angle, waist-up framing", description: "classic portrait showing uniform colors" },
-  { angle: "tight chest-up shot, 8 feet away, telephoto compression f/2.8", description: "upper body detail with creamy bokeh background" },
-  { angle: "dramatic low angle closeup, 5 feet away shooting upward", description: "powerful hero shot against stadium lights" },
-  { angle: "eye-level intimate portrait, 7 feet from performer", description: "emotional connection showing face and uniform" },
-  { angle: "over-shoulder closeup, 6 feet behind performer, instrument visible", description: "showing instrument and uniform detail" },
+  { angle: "wide shot from sideline, 70-200mm lens, capturing 4-6 performers in formation", description: "dynamic group formation on the field" },
+  { angle: "medium shot at field level, low angle shooting upward at brass section", description: "heroic view of horn line with stadium lights behind" },
+  { angle: "diagonal view across yard lines, 3-5 performers in athletic stance", description: "dramatic perspective showing field and formation" },
+  { angle: "behind the drumline, 24-70mm lens, capturing front ensemble beyond", description: "layered depth showing multiple sections" },
+  { angle: "corner endzone view, wide shot of company front approaching", description: "full formation moving toward camera" },
+  { angle: "press box angle, high wide shot showing field pattern and formations", description: "aerial perspective of drill formation" },
+  { angle: "pit-level shot, ground perspective with performers towering above", description: "dramatic low angle emphasizing scale" },
+  { angle: "50 yard line sideline, telephoto compression of brass arc", description: "compressed view showing uniform colors in arc" },
 ];
 
 /**
