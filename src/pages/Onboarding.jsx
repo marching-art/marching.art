@@ -381,14 +381,16 @@ const Onboarding = () => {
         createdAt: new Date(),
         xp: 0,
         xpLevel: 1,
-        corpsCoin: 100, // Starting bonus!
+        userTitle: 'Rookie',
+        corpsCoin: 1000,
         unlockedClasses: ['soundSport'],
         staff: [],
         achievements: [],
         stats: {
           seasonsPlayed: 0,
           championships: 0,
-          topTenFinishes: 0
+          topTenFinishes: 0,
+          leagueWins: 0,
         },
         corps: {
           soundSport: {

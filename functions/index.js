@@ -15,6 +15,7 @@ const {
   createUserProfile,
   dailyXPCheckIn,
   awardXP,
+  fixProfileFields,
 } = require("./src/callable/users");
 const {
   validateAndSaveLineup,
@@ -199,6 +200,7 @@ module.exports = {
   sendTestEmail,
   dailyXPCheckIn,
   awardXP,
+  fixProfileFields,
   unlockClassWithCorpsCoin,
   getCorpsCoinHistory,
   getEarningOpportunities,
