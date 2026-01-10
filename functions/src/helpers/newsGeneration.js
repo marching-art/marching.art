@@ -536,6 +536,14 @@ const DCI_UNIFORMS = {
       percussion: "blue drums with chrome hardware, shield graphics",
       guard: "medieval knight-inspired blue and silver armor costumes",
     },
+    2018: {
+      uniform: "purple and black horizontal striped fitted uniform, bold modern athletic design with teal accents",
+      helmet: "no traditional helmet, modern minimalist look",
+      brass: "silver brass instruments contrasting against purple striped uniforms",
+      percussion: "natural wood tan colored drums, purple and black striped uniforms matching brass section",
+      guard: "purple and black costumes with teal accent pieces",
+      showName: "The Sands of Time",
+    },
     2022: {
       uniform: "royal blue with silver knight armor accents, modern crusader design",
       helmet: "chrome knight helmet with blue plume",
