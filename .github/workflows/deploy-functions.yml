@@ -31,14 +31,16 @@ jobs:
         run: npm ci
         working-directory: ./functions
 
-      # --- AUTHENTICATE (Using the new Secrets) ---
+      # --- AUTHENTICATE (Using Workload Identity Federation) ---
       - name: Authenticate to Google Cloud
+        id: auth
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
-      # --- DEPLOY (This replaces the w9jds action) ---
+      # --- DEPLOY ---
       - name: Deploy to Firebase
-        # We run 'npx' directly so it shares the authentication from the step above
-        run: npx firebase-tools deploy --only functions
+        run: npx firebase-tools deploy --only functions --project marching-art
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
