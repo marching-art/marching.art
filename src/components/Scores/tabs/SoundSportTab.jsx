@@ -168,6 +168,11 @@ const EnsembleCard = ({ score, isBestInShow = false, isClassWinner = false }) =>
           <p className={`font-bold text-sm md:text-base truncate uppercase ${ratingInfo.textColor}`}>
             {score.corps}
           </p>
+          {(score.displayName || score.username) && (
+            <p className={`text-xs truncate ${ratingInfo.textColor} opacity-80`}>
+              {score.displayName || score.username}
+            </p>
+          )}
           <p className={`text-xs md:text-sm font-bold ${ratingInfo.textColor}`}>
             {ratingInfo.rating}
           </p>
@@ -251,6 +256,11 @@ const BestInShowCard = ({ score }) => {
         </div>
         <div>
           <p className="text-lg md:text-xl font-bold text-white uppercase">{score.corps}</p>
+          {(score.displayName || score.username) && (
+            <p className="text-sm text-cream-400">
+              {score.displayName || score.username}
+            </p>
+          )}
           <p className={`font-bold text-sm ${ratingInfo.rating === 'Gold' ? 'text-yellow-400' : ratingInfo.rating === 'Silver' ? 'text-gray-300' : ratingInfo.rating === 'Bronze' ? 'text-orange-400' : 'text-gray-400'}`}>
             {ratingInfo.rating}
           </p>
