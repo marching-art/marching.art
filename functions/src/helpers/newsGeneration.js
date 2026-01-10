@@ -110,6 +110,14 @@ const DCI_UNIFORMS = {
       guard: "flame-inspired orange, red, and gold costumes with fire silks",
       showName: "Inferno",
     },
+    2017: {
+      uniform: "dark navy blue fitted modern uniform with sleek athletic cut, clean contemporary design",
+      helmet: "no traditional shako, modern minimalist look with natural hair",
+      brass: "silver brass instruments with clean contemporary appearance",
+      percussion: "navy blue uniforms matching brass section, silver drum hardware",
+      guard: "silver metallic fitted costumes with flowing elements, additional green costume pieces for visual contrast",
+      showName: "It Is",
+    },
     2019: {
       uniform: "maroon base with rose gold metallic overlay panels, modern athletic silhouette with illuminated crown logo",
       helmet: "rose gold metallic helmet with built-in LED crown halo",
@@ -153,11 +161,11 @@ const DCI_UNIFORMS = {
       showName: "Between Angels and Demons",
     },
     2015: {
-      uniform: "maroon with silver metallic accents, 10-year anniversary design with modern athletic fit",
-      helmet: "chrome and maroon helmet with anniversary crest",
-      brass: "silver brass with commemorative engravings",
-      percussion: "maroon shells with silver anniversary graphics",
-      guard: "maroon and silver contemporary costumes celebrating corps history",
+      uniform: "black fitted uniform with white West Point-style military chest braiding, traditional frogging pattern design, thin white sash with silver buckle",
+      helmet: "no traditional helmet, modern look with natural appearance",
+      brass: "silver brass instruments contrasting against black uniforms",
+      percussion: "black uniforms with white military braiding matching brass section",
+      guard: "black base costumes with colorful flowing silks in yellow, purple, and pink",
       showName: "The Power of 10",
     },
     2023: {
@@ -187,11 +195,11 @@ const DCI_UNIFORMS = {
       showName: "Scheherazade",
     },
     2018: {
-      uniform: "rich scarlet with metallic gold trim, dramatic floor-length red capes with gold lining",
-      helmet: "ornate gold-trimmed headpiece with cascading red plume",
-      brass: "gold brass with red accents, Spanish-style bell decorations",
-      percussion: "red shells with gold flake finish, traditional pit setup",
-      guard: "flowing scarlet gowns with gold embroidery, Spanish fans and dramatic silks",
+      uniform: "cream ivory fitted bodysuit with distinctive V-shaped chest design, sleek modern athletic cut with subtle textured fabric",
+      helmet: "no traditional helmet, clean modern look with natural hair or minimal headwear",
+      brass: "silver brass instruments contrasting against cream uniforms",
+      percussion: "cream ivory uniforms matching brass section, silver Pearl drums with chrome hardware",
+      guard: "contrasting coral red fitted uniforms with modern athletic design, dramatic movement-focused costumes",
       showName: "Babylon",
     },
     2019: {
@@ -213,11 +221,11 @@ const DCI_UNIFORMS = {
       guard: "contemporary blue and white athletic wear with technology elements",
     },
     2014: {
-      uniform: "electric blue with tilted geometric white patterns, asymmetrical modern design",
-      helmet: "white helmet with blue angular accents, no traditional plume",
-      brass: "silver brass with blue geometric patterns on bells",
-      percussion: "blue drums with white tilted stripe graphics",
-      guard: "asymmetrical blue and white athletic costumes with angular silks",
+      uniform: "traditional navy blue military-style uniform with white trim and accents, classic formal cut",
+      helmet: "white shako with large fluffy white plume, traditional military style",
+      brass: "silver brass instruments with traditional appearance",
+      percussion: "navy blue uniforms matching brass section, white shako helmets with white plumes",
+      guard: "bright orange fitted costumes, striking contrast against navy blue corps members",
       showName: "Tilt",
     },
     2016: {
@@ -321,11 +329,11 @@ const DCI_UNIFORMS = {
       showName: "Machine",
     },
     2023: {
-      uniform: "forest green with silver modern accents, updated cavalier-inspired athletic design",
-      helmet: "modern green helmet with white flowing plume",
-      brass: "silver brass with contemporary green accents",
-      percussion: "green drums with silver hardware",
-      guard: "modern cavalier green and white costumes",
+      uniform: "black fitted uniform with bright kelly green accents and panels, modern athletic design",
+      helmet: "white helmet with white flowing plume, classic cavalier style",
+      brass: "silver brass instruments with black and green uniform backdrop",
+      percussion: "natural wood tan colored drums, black and green uniforms matching brass section",
+      guard: "green and black modern costumes with flowing elements",
       showName: "...Where You'll Find Me",
     },
   },
@@ -373,11 +381,11 @@ const DCI_UNIFORMS = {
       showName: "Wicked Games",
     },
     2018: {
-      uniform: "crimson and white with maritime SOS theme, signal flag inspired patterns",
-      helmet: "white helmet with red signal stripe and plume",
-      brass: "silver brass with maritime signal engravings",
-      percussion: "red and white drums with SOS patterns",
-      guard: "maritime-inspired red and white costumes with signal flag silks",
+      uniform: "magenta purple fitted uniform with bright neon green accents, tropical island survival theme",
+      helmet: "no traditional helmet, modern athletic look",
+      brass: "silver brass instruments with magenta and green uniform backdrop",
+      percussion: "magenta purple uniforms with green accents matching brass section",
+      guard: "orange and tan tropical island-inspired costumes, beach survival aesthetic",
       showName: "S.O.S.",
     },
     2019: {
@@ -414,6 +422,14 @@ const DCI_UNIFORMS = {
       guard: "romantic blue and silver costumes with celestial silks",
       showName: "STAR Crossed",
     },
+    2022: {
+      uniform: "dark charcoal grey fitted uniform with purple magenta accents, modern athletic design",
+      helmet: "no traditional helmet, modern minimalist look",
+      brass: "silver brass instruments contrasting against grey and purple uniforms",
+      percussion: "charcoal grey uniforms with purple accents matching brass section",
+      guard: "colorful vibrant costumes with orange, blue, and multi-colored silks",
+      showName: "Of War and Peace",
+    },
     2023: {
       uniform: "royal blue with silver constellation patterns, updated celestial design",
       helmet: "blue helmet with silver star crest",
@@ -448,6 +464,14 @@ const DCI_UNIFORMS = {
       guard: "crimson costumes with gold kintsugi accents and flowing silks",
       showName: "Kintsugi",
     },
+    2023: {
+      uniform: "all-red fitted modern uniform, sleek monochromatic athletic design",
+      helmet: "red beret cap, modern minimalist headwear",
+      brass: "silver brass instruments contrasting against all-red uniforms",
+      percussion: "red drums with black accents, matching red uniforms",
+      guard: "red fitted costumes matching corps aesthetic, dramatic angular props",
+      showName: "Sinnerman",
+    },
   },
 
   "Troopers": {
@@ -466,6 +490,14 @@ const DCI_UNIFORMS = {
       guard: "modern cavalry tan and gold costumes",
       showName: "The Sky Is Not the Limit",
     },
+    2025: {
+      uniform: "rust burnt orange and black Western cavalry uniform, traditional frontier style with modern fit",
+      helmet: "black cavalry cowboy hat with decorative band",
+      brass: "silver brass instruments with rust and black uniform backdrop",
+      percussion: "natural tan wood colored drums, rust orange and black uniforms matching brass section",
+      guard: "yellow gold and white flowing costumes, sunset-inspired color palette",
+      showName: "The Final Sunset",
+    },
   },
 
   "Colts": {
@@ -483,6 +515,14 @@ const DCI_UNIFORMS = {
       percussion: "purple drums with silver horse graphics",
       guard: "purple and silver flowing costumes",
       showName: "Heartland",
+    },
+    2025: {
+      uniform: "bold neon yellow lime green with red and black horizontal stripes, surreal dreamlike design",
+      helmet: "no traditional helmet, modern look with colorful aesthetic",
+      brass: "silver brass instruments contrasting against bright neon uniforms",
+      percussion: "black drums, neon yellow and red striped uniforms matching brass section",
+      guard: "pink fitted costumes, dreamlike surreal aesthetic contrasting with corps colors",
+      showName: "In Restless Dreams",
     },
   },
 
@@ -511,6 +551,14 @@ const DCI_UNIFORMS = {
       brass: "chrome-finished brass with knight crest engravings",
       percussion: "blue drums with chrome hardware, shield graphics",
       guard: "medieval knight-inspired blue and silver armor costumes",
+    },
+    2018: {
+      uniform: "purple and black horizontal striped fitted uniform, bold modern athletic design with teal accents",
+      helmet: "no traditional helmet, modern minimalist look",
+      brass: "silver brass instruments contrasting against purple striped uniforms",
+      percussion: "natural wood tan colored drums, purple and black striped uniforms matching brass section",
+      guard: "purple and black costumes with teal accent pieces",
+      showName: "The Fall and Rise",
     },
     2022: {
       uniform: "royal blue with silver knight armor accents, modern crusader design",
@@ -1100,15 +1148,22 @@ async function getUniformDetailsFromFirestore(db, corpsName, year = null) {
       );
 
       if (corpsEntry && corpsEntry.defaultUniform) {
-        const uniform = { ...corpsEntry.defaultUniform };
+        let uniform = { ...corpsEntry.defaultUniform };
 
-        // If year specified, try to get show title from Firestore
+        // If year specified, try to get show data from Firestore
         if (year && corpsEntry.id) {
           const showsDoc = await db.doc(`dci-reference/shows-${corpsEntry.id}`).get();
           if (showsDoc.exists) {
             const showData = showsDoc.data().shows?.[year];
-            if (showData?.title) {
-              uniform.showName = showData.title;
+            if (showData) {
+              // Use year-specific uniform if available, otherwise keep default
+              if (showData.uniform) {
+                uniform = { ...showData.uniform };
+              }
+              // Add show title
+              if (showData.title) {
+                uniform.showName = showData.title;
+              }
             }
           }
         }
