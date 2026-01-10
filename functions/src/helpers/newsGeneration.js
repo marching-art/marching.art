@@ -490,6 +490,14 @@ const DCI_UNIFORMS = {
       guard: "modern cavalry tan and gold costumes",
       showName: "The Sky Is Not the Limit",
     },
+    2025: {
+      uniform: "rust burnt orange and black Western cavalry uniform, traditional frontier style with modern fit",
+      helmet: "black cavalry cowboy hat with decorative band",
+      brass: "silver brass instruments with rust and black uniform backdrop",
+      percussion: "natural tan wood colored drums, rust orange and black uniforms matching brass section",
+      guard: "yellow gold and white flowing costumes, sunset-inspired color palette",
+      showName: "The Final Sunset",
+    },
   },
 
   "Colts": {
