@@ -1235,16 +1235,15 @@ exports.regenerateArticleImage = onCall(
       } = require("../helpers/newsGeneration");
       const { uploadFromUrl } = require("../helpers/mediaService");
 
-      // Use the stored specialized prompt if available, otherwise build a new one
-      // Stored prompts include corps-specific uniform details from the specialized builders
-      let imagePrompt = articleData.imagePrompt;
+      // Always build a fresh prompt when regenerating
+      // This ensures we use the latest prompt templates and uniform data
+      let imagePrompt = null;
 
-      // If no stored prompt, try to rebuild based on article type
-      if (!imagePrompt) {
-        const articleType = articleData.type;
-        const metadata = articleData.metadata || {};
+      // Build prompt based on article type
+      const articleType = articleData.type;
+      const metadata = articleData.metadata || {};
 
-        if (articleType === ARTICLE_TYPES.DCI_STANDINGS && articleData.standings?.[0]) {
+      if (articleType === ARTICLE_TYPES.DCI_STANDINGS && articleData.standings?.[0]) {
           const topCorps = articleData.standings[0];
           imagePrompt = buildStandingsImagePrompt(
             topCorps.corps,
@@ -1328,12 +1327,10 @@ exports.regenerateArticleImage = onCall(
             { corpsName, uniformDetails, showTitle }
           );
         }
-      }
 
-      logger.info("Using image prompt:", {
+      logger.info("Using freshly built image prompt:", {
         category: effectiveCategory,
         articleType: articleData.type,
-        usedStoredPrompt: !!articleData.imagePrompt,
         promptLength: imagePrompt?.length
       });
 
