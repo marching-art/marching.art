@@ -381,11 +381,11 @@ const DCI_UNIFORMS = {
       showName: "Wicked Games",
     },
     2018: {
-      uniform: "crimson and white with maritime SOS theme, signal flag inspired patterns",
-      helmet: "white helmet with red signal stripe and plume",
-      brass: "silver brass with maritime signal engravings",
-      percussion: "red and white drums with SOS patterns",
-      guard: "maritime-inspired red and white costumes with signal flag silks",
+      uniform: "magenta purple fitted uniform with bright neon green accents, tropical island survival theme",
+      helmet: "no traditional helmet, modern athletic look",
+      brass: "silver brass instruments with magenta and green uniform backdrop",
+      percussion: "magenta purple uniforms with green accents matching brass section",
+      guard: "orange and tan tropical island-inspired costumes, beach survival aesthetic",
       showName: "S.O.S.",
     },
     2019: {
