@@ -187,11 +187,11 @@ const DCI_UNIFORMS = {
       showName: "Scheherazade",
     },
     2018: {
-      uniform: "rich scarlet with metallic gold trim, dramatic floor-length red capes with gold lining",
-      helmet: "ornate gold-trimmed headpiece with cascading red plume",
-      brass: "gold brass with red accents, Spanish-style bell decorations",
-      percussion: "red shells with gold flake finish, traditional pit setup",
-      guard: "flowing scarlet gowns with gold embroidery, Spanish fans and dramatic silks",
+      uniform: "cream ivory fitted bodysuit with distinctive V-shaped chest design, sleek modern athletic cut with subtle textured fabric",
+      helmet: "no traditional helmet, clean modern look with natural hair or minimal headwear",
+      brass: "silver brass instruments contrasting against cream uniforms",
+      percussion: "cream ivory uniforms matching brass section, silver Pearl drums with chrome hardware",
+      guard: "contrasting coral red fitted uniforms with modern athletic design, dramatic movement-focused costumes",
       showName: "Babylon",
     },
     2019: {
