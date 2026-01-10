@@ -456,6 +456,14 @@ const DCI_UNIFORMS = {
       guard: "crimson costumes with gold kintsugi accents and flowing silks",
       showName: "Kintsugi",
     },
+    2023: {
+      uniform: "all-red fitted modern uniform, sleek monochromatic athletic design",
+      helmet: "red beret cap, modern minimalist headwear",
+      brass: "silver brass instruments contrasting against all-red uniforms",
+      percussion: "red drums with black accents, matching red uniforms",
+      guard: "red fitted costumes matching corps aesthetic, dramatic angular props",
+      showName: "Sinnerman",
+    },
   },
 
   "Troopers": {
