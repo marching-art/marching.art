@@ -5,13 +5,18 @@ const { analyzeLineupTrends } = require("../helpers/captionAnalytics");
 
 /**
  * Task 2.7: Saves a user's 8-caption lineup for a specific corps class.
+ *
+ * @param {Object} lineup - The 8-caption lineup object
+ * @param {string} corpsClass - The corps class (worldClass, openClass, aClass, soundSport)
+ * @param {boolean} forceUpdate - If true and lineup needs update due to stale data,
+ *                                bypasses trade limits for this one-time update
  */
 // Add { cors: true } here
 exports.saveLineup = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "You must be logged in to save a lineup.");
   }
-  const { lineup, corpsClass } = request.data;
+  const { lineup, corpsClass, forceUpdate } = request.data;
   const uid = request.auth.uid;
 
   // 1. --- Validate Inputs ---
@@ -54,6 +59,39 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
   const seasonData = seasonDoc.data();
   const activeSeasonId = seasonData.seasonUid;
 
+  // 3b. --- Validate all selections are from current season's corps list ---
+  const dataDocId = seasonData.dataDocId;
+  const corpsDataDoc = await db.doc(`dci-data/${dataDocId}`).get();
+  if (!corpsDataDoc.exists) {
+    throw new HttpsError("failed-precondition", "Season corps data not found.");
+  }
+
+  const validCorps = corpsDataDoc.data().corpsValues || [];
+  const validCorpsSet = new Set(
+    validCorps.map(c => `${c.corpsName}|${c.sourceYear}`)
+  );
+
+  // Check each lineup selection
+  for (const [caption, selection] of Object.entries(lineup)) {
+    if (!selection || typeof selection !== 'string') {
+      throw new HttpsError("invalid-argument", `Invalid selection for caption ${caption}.`);
+    }
+
+    const parts = selection.split("|");
+    if (parts.length < 2) {
+      throw new HttpsError("invalid-argument", `Invalid format for caption ${caption}.`);
+    }
+
+    const corpsName = parts[0];
+    const sourceYear = parts[1];
+    const corpsKey = `${corpsName}|${sourceYear}`;
+
+    if (!validCorpsSet.has(corpsKey)) {
+      throw new HttpsError("invalid-argument",
+        `${corpsName} (${sourceYear}) is not available this season. Please select from current season's corps.`);
+    }
+  }
+
   // 4. --- Create Unique Lineup Key ---
   const lineupKey = `${corpsClass}_${Object.values(lineup).sort().join("_")}`;
 
@@ -89,6 +127,10 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
 
       const profileUpdateData = {};
 
+      // Check if this is a forced update due to stale lineup data
+      const lineupNeedsUpdate = currentCorpsData.lineupNeedsUpdate === true;
+      const isForcedUpdate = forceUpdate === true && lineupNeedsUpdate;
+
       if (newTrades > 0) {
         const now = new Date();
         const seasonStartDate = seasonData.schedule.startDate.toDate();
@@ -102,6 +144,11 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
         if (isInitialSetup) tradeLimit = Infinity;
         if (seasonData.status === "off-season" && currentWeek === 1) tradeLimit = Infinity;
         if (seasonData.status === "live-season" && [1, 2, 3].includes(currentWeek)) tradeLimit = Infinity;
+        // One-time exception: allow unlimited trades when lineup has stale data from previous season
+        if (isForcedUpdate) {
+          tradeLimit = Infinity;
+          logger.info(`User ${uid} using one-time lineup update exception for ${corpsClass} due to stale data.`);
+        }
 
         if (tradeLimit !== Infinity) {
           const weeklyTrades = currentCorpsData.weeklyTrades || { week: 0, used: 0 };
@@ -119,6 +166,11 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
             used: tradesAlreadyUsed + newTrades,
           };
         }
+      }
+
+      // Clear the lineupNeedsUpdate flag if it was set (regardless of forceUpdate)
+      if (lineupNeedsUpdate) {
+        profileUpdateData[`corps.${corpsClass}.lineupNeedsUpdate`] = false;
       }
 
       // 7. --- Commit Changes ---
@@ -544,5 +596,115 @@ exports.getActiveLineupKeys = onCall({ cors: true }, async (request) => {
   } catch (error) {
     logger.error(`Failed to get active lineup keys:`, error);
     throw new HttpsError("internal", "Could not retrieve active lineups.");
+  }
+});
+
+/**
+ * Validate a user's lineup against the current season's available corps.
+ * Returns which selections are invalid (from previous seasons) and whether
+ * the lineup requires a forced update.
+ */
+exports.validateLineup = onCall({ cors: true }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "You must be logged in.");
+  }
+
+  const { corpsClass } = request.data;
+  const uid = request.auth.uid;
+
+  const validClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+  if (!validClasses.includes(corpsClass)) {
+    throw new HttpsError("invalid-argument", "Invalid corps class specified.");
+  }
+
+  const db = getDb();
+
+  try {
+    // Get season data and corps list
+    const seasonDoc = await db.doc("game-settings/season").get();
+    if (!seasonDoc.exists || !seasonDoc.data().seasonUid) {
+      return { success: true, isValid: true, invalidSelections: [] };
+    }
+
+    const seasonData = seasonDoc.data();
+    const dataDocId = seasonData.dataDocId;
+
+    // Get current season's valid corps
+    const corpsDataDoc = await db.doc(`dci-data/${dataDocId}`).get();
+    if (!corpsDataDoc.exists) {
+      return { success: true, isValid: true, invalidSelections: [] };
+    }
+
+    const validCorps = corpsDataDoc.data().corpsValues || [];
+    // Build a Set of valid "corpsName|sourceYear" combinations for O(1) lookup
+    const validCorpsSet = new Set(
+      validCorps.map(c => `${c.corpsName}|${c.sourceYear}`)
+    );
+
+    // Get user's current lineup
+    const profileDoc = await db.doc(
+      `artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`
+    ).get();
+
+    if (!profileDoc.exists) {
+      return { success: true, isValid: true, invalidSelections: [] };
+    }
+
+    const profileData = profileDoc.data();
+    const lineup = profileData.corps?.[corpsClass]?.lineup;
+
+    // No lineup = nothing to validate
+    if (!lineup || Object.keys(lineup).length === 0) {
+      return { success: true, isValid: true, invalidSelections: [] };
+    }
+
+    // Check each lineup selection against valid corps
+    const invalidSelections = [];
+    for (const [caption, selection] of Object.entries(lineup)) {
+      if (!selection || typeof selection !== 'string') continue;
+
+      const parts = selection.split("|");
+      if (parts.length < 2) continue;
+
+      const corpsName = parts[0];
+      const sourceYear = parts[1];
+      const corpsKey = `${corpsName}|${sourceYear}`;
+
+      if (!validCorpsSet.has(corpsKey)) {
+        invalidSelections.push({
+          caption,
+          corpsName,
+          sourceYear,
+          fullSelection: selection
+        });
+      }
+    }
+
+    const isValid = invalidSelections.length === 0;
+
+    // If lineup is invalid, mark it on the profile for UI to show warning
+    if (!isValid) {
+      const needsUpdateField = `corps.${corpsClass}.lineupNeedsUpdate`;
+      const currentNeedsUpdate = profileData.corps?.[corpsClass]?.lineupNeedsUpdate;
+
+      // Only update if not already marked (avoid unnecessary writes)
+      if (!currentNeedsUpdate) {
+        await db.doc(
+          `artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`
+        ).update({
+          [needsUpdateField]: true
+        });
+      }
+    }
+
+    return {
+      success: true,
+      isValid,
+      invalidSelections,
+      requiresUpdate: !isValid
+    };
+  } catch (error) {
+    logger.error(`Failed to validate lineup for user ${uid}:`, error);
+    throw new HttpsError("internal", "Could not validate lineup.");
   }
 });
