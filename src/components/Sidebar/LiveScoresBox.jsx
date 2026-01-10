@@ -1,5 +1,6 @@
 import React from 'react';
-import { Activity, TrendingUp, TrendingDown, ChevronRight, Youtube } from 'lucide-react';
+import { Activity, TrendingUp, TrendingDown, ChevronRight } from 'lucide-react';
+import YouTubeIcon from '../YouTubeIcon';
 
 const LiveScoresBox = ({
   liveScores,
@@ -74,7 +75,7 @@ const LiveScoresBox = ({
                     className="p-1 text-gray-500 hover:text-red-500 transition-colors"
                     title={`Watch ${row.sourceYear} ${row.corpsName} on YouTube`}
                   >
-                    <Youtube className="w-3.5 h-3.5" />
+                    <YouTubeIcon size={14} />
                   </button>
                 </div>
               </div>
