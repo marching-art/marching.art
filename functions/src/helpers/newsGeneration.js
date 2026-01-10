@@ -542,6 +542,14 @@ const DCI_UNIFORMS = {
       percussion: "red drums with flame graphics and phoenix imagery",
       guard: "phoenix-inspired red and orange costumes with flame silks",
     },
+    2019: {
+      uniform: "vibrant magenta pink fitted uniform with orange accents, neon underground aesthetic",
+      helmet: "no traditional helmet, modern athletic look",
+      brass: "silver brass instruments",
+      percussion: "pink magenta drums matching corps uniform colors",
+      guard: "neon pink and orange costumes with underground theme",
+      showName: "Neon Underground",
+    },
     2023: {
       uniform: "scarlet red with gold phoenix patterns, modern Southern pride design",
       helmet: "gold and red helmet with phoenix crest",
