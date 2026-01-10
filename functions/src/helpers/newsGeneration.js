@@ -933,11 +933,20 @@ ${IMAGE_NEGATIVE_PROMPT}`;
     } else {
       // Free tier: Gemini 2.5 Flash with native image generation
       const modelName = "gemini-2.5-flash-image";
+
+      // Build system instruction with drum corps context
+      const systemInstruction = `${DRUM_CORPS_VISUAL_CONTEXT}
+
+${IMAGE_NEGATIVE_PROMPT}
+
+You are an expert drum corps photographer. Generate images that accurately depict DCI drum corps as described above.`;
+
       const response = await ai.models.generateContent({
         model: modelName,
-        contents: enhancedPrompt,
+        contents: prompt,
         config: {
           responseModalities: ["image", "text"],
+          systemInstruction: systemInstruction,
         },
       });
 
