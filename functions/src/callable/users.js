@@ -84,10 +84,23 @@ exports.createUserProfile = onCall({ cors: true }, async (request) => {
     }
 
     batch.set(userProfileRef, {
+      uid: uid,
       username: trimmedUsername,
+      displayName: trimmedUsername,
       createdAt: new Date(),
       lastActive: new Date(),
       bio: `Welcome to my marching.art profile!`,
+      // XP & Progression
+      xp: 0,
+      xpLevel: 1,
+      userTitle: 'Rookie',
+      // Currency
+      corpsCoin: 1000,
+      // Unlocks
+      unlockedClasses: ['soundSport'],
+      // Corps data
+      corps: {},
+      // Uniform customization
       uniform: {
         skinTone: '#d8aa7c',
         headwear: { style: 'shako', colors: { hat: '#1a1a1a', trim: '#ffffff' } },
@@ -96,9 +109,15 @@ exports.createUserProfile = onCall({ cors: true }, async (request) => {
         pants: { style: 'stripe', colors: { base: '#ffffff', stripe: '#000080' } },
         shoes: { style: 'white' },
       },
+      // Stats
+      stats: {
+        seasonsPlayed: 0,
+        championships: 0,
+        topTenFinishes: 0,
+        leagueWins: 0,
+      },
       trophies: { championships: [], regionals: [], finalistMedals: [] },
       seasons: [],
-      corps: {}
     });
 
     batch.set(userPrivateRef, {
@@ -426,5 +445,118 @@ exports.awardXP = onCall({ cors: true }, async (request) => {
     logger.error(`Error awarding XP to user ${uid}:`, error);
     if (error instanceof HttpsError) throw error;
     throw new HttpsError("internal", "Failed to award XP.");
+  }
+});
+
+/**
+ * Fix missing profile fields for existing users
+ * Admin-only function to ensure all profiles have required fields
+ */
+exports.fixProfileFields = onCall({ cors: true }, async (request) => {
+  if (!request.auth || !request.auth.token.admin) {
+    throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
+  }
+
+  const db = getDb();
+  let fixedCount = 0;
+  let skippedCount = 0;
+  let errorCount = 0;
+
+  // Default profile fields that should exist
+  const defaultFields = {
+    xp: 0,
+    xpLevel: 1,
+    userTitle: 'Rookie',
+    corpsCoin: 1000,
+    unlockedClasses: ['soundSport'],
+    corps: {},
+    stats: {
+      seasonsPlayed: 0,
+      championships: 0,
+      topTenFinishes: 0,
+      leagueWins: 0,
+    },
+  };
+
+  try {
+    const profilesQuery = db.collectionGroup("profile");
+    const profilesSnapshot = await profilesQuery.get();
+
+    if (profilesSnapshot.empty) {
+      return { success: true, message: "No profiles found." };
+    }
+
+    let batch = db.batch();
+    let batchCount = 0;
+
+    for (const docSnap of profilesSnapshot.docs) {
+      const profile = docSnap.data();
+      const updates = {};
+
+      // Check each required field and add if missing
+      if (profile.xp === undefined) updates.xp = defaultFields.xp;
+      if (profile.xpLevel === undefined) updates.xpLevel = defaultFields.xpLevel;
+      if (profile.userTitle === undefined) updates.userTitle = defaultFields.userTitle;
+      if (profile.corpsCoin === undefined) updates.corpsCoin = defaultFields.corpsCoin;
+      if (profile.unlockedClasses === undefined) updates.unlockedClasses = defaultFields.unlockedClasses;
+      if (profile.corps === undefined) updates.corps = defaultFields.corps;
+
+      // Fix displayName if missing (use username or 'Director')
+      if (profile.displayName === undefined || profile.displayName === null) {
+        updates.displayName = profile.username || 'Director';
+      }
+
+      // Initialize stats object if missing or not an object
+      if (!profile.stats || typeof profile.stats !== 'object') {
+        updates.stats = defaultFields.stats;
+      } else {
+        // Ensure all stat fields exist
+        const statsUpdates = {};
+        if (profile.stats.seasonsPlayed === undefined) statsUpdates['stats.seasonsPlayed'] = 0;
+        if (profile.stats.championships === undefined) statsUpdates['stats.championships'] = 0;
+        if (profile.stats.topTenFinishes === undefined) statsUpdates['stats.topTenFinishes'] = 0;
+        if (profile.stats.leagueWins === undefined) statsUpdates['stats.leagueWins'] = 0;
+        Object.assign(updates, statsUpdates);
+      }
+
+      // Only update if there are missing fields
+      if (Object.keys(updates).length > 0) {
+        try {
+          batch.update(docSnap.ref, updates);
+          fixedCount++;
+          batchCount++;
+
+          // Commit in batches of 400 to avoid Firestore limits
+          if (batchCount >= 400) {
+            await batch.commit();
+            batch = db.batch();
+            batchCount = 0;
+          }
+        } catch (error) {
+          logger.error(`Error fixing profile ${docSnap.id}:`, error);
+          errorCount++;
+        }
+      } else {
+        skippedCount++;
+      }
+    }
+
+    // Commit any remaining updates
+    if (batchCount > 0) {
+      await batch.commit();
+    }
+
+    logger.info(`Profile fix completed: ${fixedCount} fixed, ${skippedCount} already complete, ${errorCount} errors`);
+
+    return {
+      success: true,
+      message: `Profile fix completed: ${fixedCount} profiles fixed, ${skippedCount} already complete, ${errorCount} errors`,
+      fixedCount,
+      skippedCount,
+      errorCount,
+    };
+  } catch (error) {
+    logger.error("Profile fix failed:", error);
+    throw new HttpsError("internal", "Profile fix failed: " + error.message);
   }
 });
