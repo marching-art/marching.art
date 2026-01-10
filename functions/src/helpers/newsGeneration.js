@@ -161,7 +161,7 @@ const DCI_UNIFORMS = {
       showName: "Between Angels and Demons",
     },
     2015: {
-      uniform: "black fitted uniform with white West Point-style military chest braiding, traditional frogging pattern design",
+      uniform: "black fitted uniform with white West Point-style military chest braiding, traditional frogging pattern design, thin white sash with silver buckle",
       helmet: "no traditional helmet, modern look with natural appearance",
       brass: "silver brass instruments contrasting against black uniforms",
       percussion: "black uniforms with white military braiding matching brass section",
