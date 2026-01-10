@@ -1,5 +1,6 @@
 import React from 'react';
-import { Activity, TrendingUp, TrendingDown, X, Youtube } from 'lucide-react';
+import { Activity, TrendingUp, TrendingDown, X } from 'lucide-react';
+import YouTubeIcon from '../YouTubeIcon';
 
 const StandingsModal = ({
   show,
@@ -86,7 +87,7 @@ const StandingsModal = ({
                       className="p-1 text-gray-500 hover:text-red-500 transition-colors"
                       title={`Watch ${row.sourceYear} ${row.corpsName} on YouTube`}
                     >
-                      <Youtube className="w-4 h-4" />
+                      <YouTubeIcon size={16} />
                     </button>
                   </div>
                 </div>
