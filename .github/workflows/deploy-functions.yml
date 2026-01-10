@@ -3,7 +3,7 @@ name: Deploy Firebase Functions
 on:
   push:
     branches:
-      - main
+      - main  # Ensure this matches your branch name (e.g., 'master')
     paths:
       - 'functions/**'
 
@@ -23,15 +23,15 @@ jobs:
         run: npm ci
         working-directory: ./functions
 
-      # --- UPDATED SECTION START ---
+      # --- THIS IS THE PART THAT CHANGED ---
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          # This now uses the WIF values we created
+          # This connects to the new "Identity Pool" you created
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Deploy to Firebase
-        # We use npx instead of the docker action so it can "see" the credentials above
+        # We use 'npx' here because it can see the authentication from the step above
         run: npx firebase-tools deploy --only functions
-        # --- UPDATED SECTION END ---
+      # -------------------------------------
