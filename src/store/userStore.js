@@ -89,18 +89,29 @@ export const useUserStore = create((set, get) => ({
             };
             set({ loggedInProfile: profileData });
           } else {
-            // Profile doesn't exist, create a basic one
+            // Profile doesn't exist, create a basic one with all required fields
             const newProfile = {
               uid: user.uid,
-              email: user.email,
               username: null,
-              displayName: user.displayName || null,
+              displayName: user.displayName || 'Director',
               createdAt: new Date(),
-              trophies: 0,
-              totalScore: 0,
-              seasonsPlayed: 0,
-              currentCorps: null,
-              userTitle: 'Rookie'
+              // XP & Progression
+              xp: 0,
+              xpLevel: 1,
+              userTitle: 'Rookie',
+              // Currency
+              corpsCoin: 1000,
+              // Unlocks
+              unlockedClasses: ['soundSport'],
+              // Corps data
+              corps: {},
+              // Stats
+              stats: {
+                seasonsPlayed: 0,
+                championships: 0,
+                topTenFinishes: 0,
+                leagueWins: 0,
+              },
             };
             
             await setDoc(profileRef, newProfile);
@@ -172,15 +183,26 @@ export const useUserStore = create((set, get) => ({
       
       const newProfile = {
         uid: user.uid,
-        email: user.email,
         username: username,
         displayName: username,
         createdAt: new Date(),
-        trophies: 0,
-        totalScore: 0,
-        seasonsPlayed: 0,
-        currentCorps: null,
-        userTitle: 'Rookie'
+        // XP & Progression
+        xp: 0,
+        xpLevel: 1,
+        userTitle: 'Rookie',
+        // Currency
+        corpsCoin: 1000,
+        // Unlocks
+        unlockedClasses: ['soundSport'],
+        // Corps data
+        corps: {},
+        // Stats
+        stats: {
+          seasonsPlayed: 0,
+          championships: 0,
+          topTenFinishes: 0,
+          leagueWins: 0,
+        },
       };
       
       await setDoc(profileRef, newProfile);
