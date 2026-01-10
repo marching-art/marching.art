@@ -1574,12 +1574,45 @@ This avatar will represent a competitive marching arts fantasy team. Make it dis
 /**
  * Build image prompt for user-submitted articles based on category and content
  * Used when admin approves community submissions
+ * @param {string} category - Article category (dci, fantasy, analysis)
+ * @param {string} headline - Article headline
+ * @param {string} summary - Article summary
+ * @param {object} options - Optional parameters
+ * @param {string} options.corpsName - Name of featured corps
+ * @param {object} options.uniformDetails - Corps uniform details from getUniformDetails
+ * @param {string} options.showTitle - Show title for thematic context
  */
-function buildArticleImagePrompt(category, headline, summary) {
+function buildArticleImagePrompt(category, headline, summary, options = {}) {
+  const { corpsName, uniformDetails, showTitle } = options;
+
+  // Build uniform section if we have corps-specific details
+  let uniformSection = `UNIFORMS: Modern athletic cut uniforms with contemporary designs
+- Bold colors, geometric patterns, metallic accents
+- Fitted athletic styling, often asymmetric or avant-garde
+- NO traditional military shakos or plumed helmets (most modern corps have minimal or no headwear)
+- White marching gloves on all performers`;
+
+  if (uniformDetails && corpsName) {
+    uniformSection = `UNIFORM - ${corpsName.toUpperCase()} - MUST MATCH EXACTLY:
+- BODY: ${uniformDetails.uniform}
+- HEADWEAR: ${uniformDetails.helmet}
+- BRASS INSTRUMENTS: ${uniformDetails.brass}
+- DRUMS: ${uniformDetails.percussion}
+- COLOR GUARD: ${uniformDetails.guard}
+- White marching gloves on all performers
+
+CRITICAL: These uniform details are EXACT. Do not substitute generic uniforms.`;
+  }
+
+  // Build show theme context if available
+  const themeContext = showTitle ? buildShowThemeContext(showTitle) : "";
+
   const categoryPrompts = {
     dci: `DCI (Drum Corps International) action photography on a football field.
 
 HEADLINE CONTEXT: "${headline}"
+${corpsName ? `FEATURED CORPS: ${corpsName}` : ""}
+${showTitle ? `SHOW: "${showTitle}"` : ""}
 
 SHOT TYPE: Dynamic action photograph
 - Group of 3-6 performers in athletic formation
@@ -1593,13 +1626,10 @@ SUBJECT (choose most appropriate for headline):
 - Color guard with 6-foot silk flags in dramatic poses
 - Mixed section showing the scale of the performance
 
-UNIFORMS: Modern athletic cut uniforms with contemporary designs
-- Bold colors, geometric patterns, metallic accents
-- Fitted athletic styling, often asymmetric or avant-garde
-- NO traditional military shakos or plumed helmets (most modern corps have minimal or no headwear)
-- White marching gloves on all performers
+${uniformSection}
 
 CRITICAL: Each performer holds ONLY ONE type of equipment. Brass players do NOT have drums. Drummers do NOT hold brass.
+${themeContext}
 
 LIGHTING: Stadium lights creating dramatic rim lighting, evening atmosphere
 MOOD: Athletic energy, precision, competitive intensity

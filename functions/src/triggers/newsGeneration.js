@@ -1229,6 +1229,8 @@ exports.regenerateArticleImage = onCall(
         buildCorpsSpotlightImagePrompt,
         buildFantasyPerformersImagePrompt,
         buildFantasyLeagueImagePrompt,
+        getUniformDetailsFromFirestore,
+        getShowTitleFromFirestore,
         ARTICLE_TYPES,
       } = require("../helpers/newsGeneration");
       const { uploadFromUrl } = require("../helpers/mediaService");
@@ -1292,11 +1294,38 @@ exports.regenerateArticleImage = onCall(
             articleData.showTitle
           );
         } else {
-          // Fallback to generic prompt builder
+          // Fallback: try to identify corps from article data and look up uniform details
+          const corpsName = articleData.featuredCorps ||
+            articleData.standings?.[0]?.corps ||
+            articleData.topPerformers?.[0]?.corpsName ||
+            null;
+
+          const year = articleData.featuredYear ||
+            articleData.standings?.[0]?.sourceYear ||
+            new Date().getFullYear();
+
+          let uniformDetails = null;
+          let showTitle = articleData.showTitle || null;
+
+          if (corpsName) {
+            // Look up corps-specific uniform details from Firestore
+            uniformDetails = await getUniformDetailsFromFirestore(db, corpsName, year);
+            if (!showTitle) {
+              showTitle = await getShowTitleFromFirestore(db, corpsName, year);
+            }
+            logger.info("Found corps uniform details for image generation:", {
+              corpsName,
+              year,
+              hasUniformDetails: !!uniformDetails,
+              showTitle
+            });
+          }
+
           imagePrompt = buildArticleImagePrompt(
             effectiveCategory,
             headline,
-            articleData.summary || ""
+            articleData.summary || "",
+            { corpsName, uniformDetails, showTitle }
           );
         }
       }
