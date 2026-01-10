@@ -316,7 +316,8 @@ exports.getPublicProfile = onCall({ cors: true }, async (request) => {
       stats: profileData.stats || {
         seasonsPlayed: 0,
         championships: 0,
-        topTenFinishes: 0
+        topTenFinishes: 0,
+        leagueWins: 0,
       },
       createdAt: profileData.createdAt,
       corps: profileData.corps || {}
