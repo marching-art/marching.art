@@ -166,6 +166,9 @@ const Landing = () => {
                 <MessageCircle className="w-4 h-4" />
                 Discord
               </a>
+              <Link to="/gameplay" className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center">
+                Gameplay
+              </Link>
               <Link to="/privacy" className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center">
                 Privacy
               </Link>

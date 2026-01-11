@@ -49,6 +49,7 @@ const CorpsHistory = lazy(() => import('./pages/CorpsHistory'));
 const SoundSport = lazy(() => import('./pages/SoundSport'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Terms = lazy(() => import('./pages/Terms'));
+const Gameplay = lazy(() => import('./pages/Gameplay'));
 const Article = lazy(() => import('./pages/Article'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
@@ -250,6 +251,7 @@ function App() {
           <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Suspense fallback={<LoadingScreen fullScreen />}><Register /></Suspense>} />
           <Route path="/privacy" element={<Suspense fallback={<LoadingScreen fullScreen />}><Privacy /></Suspense>} />
           <Route path="/terms" element={<Suspense fallback={<LoadingScreen fullScreen />}><Terms /></Suspense>} />
+          <Route path="/gameplay" element={<Suspense fallback={<LoadingScreen fullScreen />}><Gameplay /></Suspense>} />
 
           {/* Onboarding - Protected but minimal layout */}
           <Route path="/onboarding" element={
