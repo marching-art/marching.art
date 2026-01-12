@@ -3,7 +3,8 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 
 // Hardcoded video IDs to try before search (for videos that are hard to find)
 const HARDCODED_VIDEOS = {
-  '2018_santa clara vanguard': ['KfC6Xgy4ZL4', 'QWWP5jiGltA']
+  '2018_santa clara vanguard': ['KfC6Xgy4ZL4', 'QWWP5jiGltA'],
+  '2023_mandarins': ['JRkn1MC2FMs']
 };
 
 // Check if corps/year has hardcoded videos
@@ -11,6 +12,9 @@ const getHardcodedVideos = (year, corpsName) => {
   const lowerName = corpsName.toLowerCase();
   if (year === '2018' && lowerName.includes('santa clara')) {
     return HARDCODED_VIDEOS['2018_santa clara vanguard'];
+  }
+  if (year === '2023' && lowerName.includes('mandarins')) {
+    return HARDCODED_VIDEOS['2023_mandarins'];
   }
   return null;
 };
