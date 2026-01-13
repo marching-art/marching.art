@@ -386,11 +386,40 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
                 return b.totalPoints - a.totalPoints;
               });
 
+            // Calculate trend based on recent matchup performance (last 3 weeks)
             sortedStandings.forEach((stats, idx) => {
               stats.currentRank = idx + 1;
-              if (stats.wins > 0 && stats.losses === 0) {
+
+              // Get last 3 weeks of results for trend calculation
+              const recentWeeks = Object.keys(stats.weeklyScores)
+                .map(Number)
+                .sort((a, b) => b - a)
+                .slice(0, 3);
+
+              let recentWins = 0;
+              let recentLosses = 0;
+
+              for (const weekNum of recentWeeks) {
+                const matchups = matchupsPerWeek[weekNum] || [];
+                const matchup = matchups.find(m => m.user1 === stats.uid || m.user2 === stats.uid);
+
+                if (matchup) {
+                  const myScore = weeklyResults[weekNum]?.[stats.uid] || 0;
+                  const oppUid = matchup.user1 === stats.uid ? matchup.user2 : matchup.user1;
+                  const oppScore = weeklyResults[weekNum]?.[oppUid] || 0;
+
+                  if (myScore > oppScore) {
+                    recentWins++;
+                  } else if (oppScore > myScore) {
+                    recentLosses++;
+                  }
+                }
+              }
+
+              // Determine trend based on recent performance
+              if (recentWins > recentLosses) {
                 stats.trend = 'up';
-              } else if (stats.losses > stats.wins) {
+              } else if (recentLosses > recentWins) {
                 stats.trend = 'down';
               } else {
                 stats.trend = 'same';
