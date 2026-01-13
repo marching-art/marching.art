@@ -49,6 +49,7 @@ const CorpsHistory = lazy(() => import('./pages/CorpsHistory'));
 const SoundSport = lazy(() => import('./pages/SoundSport'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Terms = lazy(() => import('./pages/Terms'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const Article = lazy(() => import('./pages/Article'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
@@ -248,6 +249,7 @@ function App() {
           <Route path="/article/:id" element={<Suspense fallback={<LoadingScreen fullScreen />}><Article /></Suspense>} />
           <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Suspense fallback={<LoadingScreen fullScreen />}><Login /></Suspense>} />
           <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Suspense fallback={<LoadingScreen fullScreen />}><Register /></Suspense>} />
+          <Route path="/forgot-password" element={user ? <Navigate to="/dashboard" /> : <Suspense fallback={<LoadingScreen fullScreen />}><ForgotPassword /></Suspense>} />
           <Route path="/privacy" element={<Suspense fallback={<LoadingScreen fullScreen />}><Privacy /></Suspense>} />
           <Route path="/terms" element={<Suspense fallback={<LoadingScreen fullScreen />}><Terms /></Suspense>} />
 
