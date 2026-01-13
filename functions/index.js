@@ -87,8 +87,13 @@ const { seasonScheduler } = require("./src/scheduled/seasonScheduler");
 const {
   dailyOffSeasonProcessor,
   processDailyLiveScores,
-  generateWeeklyMatchups,
 } = require("./src/scheduled/dailyProcessors");
+const {
+  generateWeeklyMatchups,
+  generateWeeklyRecaps,
+  updateLeagueRivalries,
+  triggerMatchupGeneration,
+} = require("./src/scheduled/leagueAutomation");
 const {
   updateLifetimeLeaderboard,
   scheduledLifetimeLeaderboardUpdate
@@ -216,9 +221,14 @@ module.exports = {
   seasonScheduler,
   dailyOffSeasonProcessor,
   processDailyLiveScores,
-  generateWeeklyMatchups,
   updateLifetimeLeaderboard,
   scheduledLifetimeLeaderboardUpdate,
+
+  // League Automation (scheduled)
+  generateWeeklyMatchups,
+  generateWeeklyRecaps,
+  updateLeagueRivalries,
+  triggerMatchupGeneration,
 
   // Email Scheduled Jobs
   streakAtRiskEmailJob,
