@@ -1,13 +1,16 @@
 // ActivityTab - League insights dashboard with stats, achievements, and activity feed
 // Design System: Card-based dashboard with engaging visualizations
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bell, Flame, Trophy, TrendingUp, TrendingDown, Target,
   Award, Zap, Crown, Star, Medal, BarChart3, Users,
-  Calendar, ChevronRight, Activity, Sparkles
+  Calendar, ChevronRight, Activity, Sparkles, MessageCircle,
+  AlertTriangle, Swords
 } from 'lucide-react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../../firebase';
 import LeagueActivityFeed, { RivalryBadge } from '../LeagueActivityFeed';
 
 // League Stats Overview Card
@@ -449,6 +452,316 @@ const PowerRankingsCard = ({ standings, memberProfiles, userProfile }) => {
   );
 };
 
+// Weekly Recap Card - Displays auto-generated weekly highlights
+const WeeklyRecapCard = ({ leagueId, currentWeek, memberProfiles }) => {
+  const [recap, setRecap] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRecap = async () => {
+      if (!leagueId || currentWeek < 1) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // Try to fetch the most recent recap
+        const recapRef = doc(db, `artifacts/marching-art/leagues/${leagueId}/recaps/week-${currentWeek}`);
+        const recapDoc = await getDoc(recapRef);
+
+        if (recapDoc.exists()) {
+          setRecap(recapDoc.data());
+        } else if (currentWeek > 1) {
+          // Try previous week
+          const prevRecapRef = doc(db, `artifacts/marching-art/leagues/${leagueId}/recaps/week-${currentWeek - 1}`);
+          const prevRecapDoc = await getDoc(prevRecapRef);
+          if (prevRecapDoc.exists()) {
+            setRecap(prevRecapDoc.data());
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching recap:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecap();
+  }, [leagueId, currentWeek]);
+
+  if (loading) {
+    return (
+      <div className="bg-[#1a1a1a] border border-[#333] p-6">
+        <div className="animate-pulse flex flex-col gap-3">
+          <div className="h-4 bg-[#333] rounded w-1/3" />
+          <div className="h-12 bg-[#333] rounded" />
+          <div className="h-12 bg-[#333] rounded" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!recap || !recap.highlights || recap.highlights.length === 0) {
+    return null; // Don't show anything if no recap
+  }
+
+  const getHighlightIcon = (type) => {
+    switch (type) {
+      case 'upset': return AlertTriangle;
+      case 'close_game': return Swords;
+      case 'top_scorer': return Trophy;
+      default: return Star;
+    }
+  };
+
+  const getHighlightColor = (type) => {
+    switch (type) {
+      case 'upset': return 'text-orange-500 bg-orange-500/10 border-orange-500/30';
+      case 'close_game': return 'text-red-500 bg-red-500/10 border-red-500/30';
+      case 'top_scorer': return 'text-yellow-500 bg-yellow-500/10 border-yellow-500/30';
+      default: return 'text-blue-500 bg-blue-500/10 border-blue-500/30';
+    }
+  };
+
+  return (
+    <div className="bg-[#1a1a1a] border border-[#333]">
+      <div className="px-4 py-3 border-b border-[#333] bg-gradient-to-r from-[#222] to-purple-500/10">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <MessageCircle className="w-4 h-4 text-purple-500" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400">
+              Week {recap.week} Recap
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <Swords className="w-3 h-3" />
+            <span>{recap.stats?.totalMatchups || 0} matchups</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-3 space-y-2">
+        {recap.highlights.slice(0, 3).map((highlight, idx) => {
+          const Icon = getHighlightIcon(highlight.type);
+          const colorClasses = getHighlightColor(highlight.type);
+
+          return (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: idx * 0.1 }}
+              className={`p-3 border ${colorClasses}`}
+            >
+              <div className="flex items-start gap-2">
+                <Icon className={`w-4 h-4 flex-shrink-0 mt-0.5 ${colorClasses.split(' ')[0]}`} />
+                <p className="text-sm text-white">{highlight.text}</p>
+              </div>
+            </motion.div>
+          );
+        })}
+
+        {/* Recap Stats Summary */}
+        {recap.stats && (
+          <div className="grid grid-cols-3 gap-2 pt-2">
+            {recap.stats.biggestUpset && (
+              <div className="bg-[#222] p-2 text-center">
+                <AlertTriangle className="w-4 h-4 text-orange-500 mx-auto mb-1" />
+                <p className="text-[9px] text-gray-500 uppercase">Upset</p>
+                <p className="text-xs font-bold text-white truncate">
+                  {recap.stats.biggestUpset.magnitude} ranks
+                </p>
+              </div>
+            )}
+            {recap.stats.closestMatch && (
+              <div className="bg-[#222] p-2 text-center">
+                <Swords className="w-4 h-4 text-red-500 mx-auto mb-1" />
+                <p className="text-[9px] text-gray-500 uppercase">Closest</p>
+                <p className="text-xs font-bold text-white truncate">
+                  {recap.stats.closestMatch.margin?.toFixed(1)} pts
+                </p>
+              </div>
+            )}
+            {recap.stats.highestScorer && (
+              <div className="bg-[#222] p-2 text-center">
+                <Trophy className="w-4 h-4 text-yellow-500 mx-auto mb-1" />
+                <p className="text-[9px] text-gray-500 uppercase">Top Score</p>
+                <p className="text-xs font-bold text-white truncate">
+                  {recap.stats.highestScorer.score?.toFixed(1)}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Enhanced Rivalries Card - Shows rivalries with intensity levels
+const EnhancedRivalriesCard = ({ leagueId, userProfile, memberProfiles }) => {
+  const [rivalries, setRivalries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    const fetchRivalries = async () => {
+      if (!leagueId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const rivalriesRef = doc(db, `artifacts/marching-art/leagues/${leagueId}/meta/rivalries`);
+        const rivalriesDoc = await getDoc(rivalriesRef);
+
+        if (rivalriesDoc.exists()) {
+          const data = rivalriesDoc.data();
+          // Filter to show rivalries involving the current user
+          const userRivalries = (data.rivalries || []).filter(r =>
+            r.player1 === userProfile?.uid || r.player2 === userProfile?.uid
+          );
+          setRivalries(userRivalries);
+        }
+      } catch (error) {
+        console.error('Error fetching rivalries:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRivalries();
+  }, [leagueId, userProfile?.uid]);
+
+  if (loading || rivalries.length === 0) {
+    return null;
+  }
+
+  const getIntensityStyles = (intensity) => {
+    switch (intensity) {
+      case 'intense':
+        return {
+          bg: 'bg-gradient-to-r from-red-500/20 to-orange-500/20',
+          border: 'border-red-500/50',
+          badge: 'bg-red-500',
+          badgeText: 'INTENSE'
+        };
+      case 'established':
+        return {
+          bg: 'bg-gradient-to-r from-purple-500/20 to-pink-500/20',
+          border: 'border-purple-500/50',
+          badge: 'bg-purple-500',
+          badgeText: 'ESTABLISHED'
+        };
+      default:
+        return {
+          bg: 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20',
+          border: 'border-blue-500/50',
+          badge: 'bg-blue-500',
+          badgeText: 'EMERGING'
+        };
+    }
+  };
+
+  const getDisplayName = (uid) => {
+    if (uid === userProfile?.uid) return 'You';
+    const profile = memberProfiles[uid];
+    return profile?.displayName || profile?.username || `User ${uid?.slice(0, 6)}`;
+  };
+
+  const getRivalName = (rivalry) => {
+    const rivalId = rivalry.player1 === userProfile?.uid ? rivalry.player2 : rivalry.player1;
+    return getDisplayName(rivalId);
+  };
+
+  const getUserWins = (rivalry) => {
+    return rivalry.player1 === userProfile?.uid ? rivalry.p1Wins : rivalry.p2Wins;
+  };
+
+  const getRivalWins = (rivalry) => {
+    return rivalry.player1 === userProfile?.uid ? rivalry.p2Wins : rivalry.p1Wins;
+  };
+
+  const displayRivalries = expanded ? rivalries : rivalries.slice(0, 2);
+
+  return (
+    <div className="bg-[#1a1a1a] border border-[#333]">
+      <div className="px-4 py-3 border-b border-[#333] bg-gradient-to-r from-[#222] to-red-500/10">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Flame className="w-4 h-4 text-red-500" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-red-400">
+              Your Rivalries ({rivalries.length})
+            </span>
+          </div>
+          {rivalries.length > 2 && (
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="text-xs text-gray-500 hover:text-white flex items-center gap-1"
+            >
+              {expanded ? 'Show less' : 'Show all'}
+              <ChevronRight className={`w-3 h-3 transition-transform ${expanded ? 'rotate-90' : ''}`} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="p-3 space-y-2">
+        <AnimatePresence>
+          {displayRivalries.map((rivalry, idx) => {
+            const styles = getIntensityStyles(rivalry.intensity);
+            const userWins = getUserWins(rivalry);
+            const rivalWins = getRivalWins(rivalry);
+
+            return (
+              <motion.div
+                key={`${rivalry.player1}_${rivalry.player2}`}
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className={`p-3 border ${styles.bg} ${styles.border}`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Flame className="w-4 h-4 text-red-500" />
+                    <span className="text-sm font-bold text-white">
+                      vs {getRivalName(rivalry)}
+                    </span>
+                  </div>
+                  <span className={`px-1.5 py-0.5 text-[8px] font-bold text-white ${styles.badge}`}>
+                    {styles.badgeText}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="bg-[#222]/50 p-2">
+                    <p className="text-xs text-gray-500">Your Wins</p>
+                    <p className="text-lg font-bold text-green-500 font-data tabular-nums">{userWins}</p>
+                  </div>
+                  <div className="bg-[#222]/50 p-2">
+                    <p className="text-xs text-gray-500">Total</p>
+                    <p className="text-lg font-bold text-white font-data tabular-nums">{rivalry.totalMatches}</p>
+                  </div>
+                  <div className="bg-[#222]/50 p-2">
+                    <p className="text-xs text-gray-500">Their Wins</p>
+                    <p className="text-lg font-bold text-red-500 font-data tabular-nums">{rivalWins}</p>
+                  </div>
+                </div>
+
+                {rivalry.closeMatches > 0 && (
+                  <p className="text-[10px] text-gray-500 mt-2 text-center">
+                    {rivalry.closeMatches} close game{rivalry.closeMatches !== 1 ? 's' : ''} between you
+                  </p>
+                )}
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+};
+
 // Main Activity Tab Component
 const ActivityTab = ({
   league,
@@ -463,8 +776,6 @@ const ActivityTab = ({
   onMatchupClick,
   onChatOpen,
 }) => {
-  const [showAllRivalries, setShowAllRivalries] = useState(false);
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -472,6 +783,13 @@ const ActivityTab = ({
       exit={{ opacity: 0 }}
       className="p-4 space-y-4"
     >
+      {/* Weekly Recap - Shows latest week's highlights */}
+      <WeeklyRecapCard
+        leagueId={league?.id}
+        currentWeek={currentWeek}
+        memberProfiles={memberProfiles}
+      />
+
       {/* League Stats Overview */}
       <LeagueStatsOverview
         standings={standings}
@@ -487,53 +805,19 @@ const ActivityTab = ({
         userProfile={userProfile}
       />
 
+      {/* Enhanced Rivalries - Fetched from auto-generated data */}
+      <EnhancedRivalriesCard
+        leagueId={league?.id}
+        userProfile={userProfile}
+        memberProfiles={memberProfiles}
+      />
+
       {/* Achievements */}
       <AchievementsCard
         standings={standings}
         leagueStats={leagueStats}
         userProfile={userProfile}
       />
-
-      {/* Rivalries Section */}
-      {rivalries && rivalries.length > 0 && (
-        <div className="bg-[#1a1a1a] border border-[#333]">
-          <div className="px-4 py-3 border-b border-[#333] bg-[#222]">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Flame className="w-4 h-4 text-red-500" />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-red-400">
-                  Your Rivalries ({rivalries.length})
-                </span>
-              </div>
-              {rivalries.length > 2 && (
-                <button
-                  onClick={() => setShowAllRivalries(!showAllRivalries)}
-                  className="text-xs text-gray-500 hover:text-white flex items-center gap-1"
-                >
-                  {showAllRivalries ? 'Show less' : 'Show all'}
-                  <ChevronRight className={`w-3 h-3 transition-transform ${
-                    showAllRivalries ? 'rotate-90' : ''
-                  }`} />
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="p-3 space-y-2">
-            <AnimatePresence>
-              {(showAllRivalries ? rivalries : rivalries.slice(0, 2)).map(rivalry => (
-                <motion.div
-                  key={rivalry.rivalId}
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                >
-                  <RivalryBadge rivalry={rivalry} compact={false} />
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
-        </div>
-      )}
 
       {/* Activity Feed */}
       <div className="bg-[#1a1a1a] border border-[#333]">
