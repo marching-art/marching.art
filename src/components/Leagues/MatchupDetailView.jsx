@@ -1,12 +1,12 @@
 // MatchupDetailView - Enhanced head-to-head matchup comparison with battle point system
-// Features: Battle points, caption battles, lineup comparison, detailed breakdown
+// Features: Battle points, caption battles, rivalry history, detailed breakdown
 
 import React, { useState, useEffect, useMemo, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronLeft, Swords, Trophy, TrendingUp, TrendingDown,
-  Flame, Medal, Target, Calendar, Zap, Users, Star, Award,
-  BarChart3, User
+  Flame, Medal, Target, Calendar, Zap, Award,
+  BarChart3
 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
@@ -21,40 +21,6 @@ import {
   CAPTIONS,
 } from '../../utils/matchupScoring';
 
-// Staff position labels for lineup display
-const LINEUP_POSITIONS = [
-  { key: 'brass', label: 'Brass Caption Head', abbrev: 'B' },
-  { key: 'percussion', label: 'Percussion Caption Head', abbrev: 'P' },
-  { key: 'colorGuard', label: 'Color Guard Caption Head', abbrev: 'CG' },
-  { key: 'visualEnsemble', label: 'Visual Ensemble', abbrev: 'VE' },
-  { key: 'visualAnalysis', label: 'Visual Analysis', abbrev: 'VA' },
-  { key: 'musicAnalysis', label: 'Music Analysis', abbrev: 'MA' },
-  { key: 'generalEffect1', label: 'General Effect 1', abbrev: 'GE1' },
-  { key: 'generalEffect2', label: 'General Effect 2', abbrev: 'GE2' },
-];
-
-// Mock staff data generator (would be replaced with real data)
-const generateMockLineup = (userId, seed = 0) => {
-  const staffNames = [
-    'John Smith', 'Jane Doe', 'Michael Johnson', 'Emily Brown',
-    'David Wilson', 'Sarah Davis', 'Chris Martinez', 'Amanda Taylor',
-    'Ryan Anderson', 'Lauren Thomas', 'Kevin Jackson', 'Ashley White',
-    'Brandon Harris', 'Rachel Clark', 'Justin Lewis', 'Megan Robinson'
-  ];
-
-  const lineup = {};
-  LINEUP_POSITIONS.forEach((pos, idx) => {
-    const nameIdx = ((userId?.charCodeAt(0) || 65) + idx + seed) % staffNames.length;
-    lineup[pos.key] = {
-      name: staffNames[nameIdx],
-      rating: 70 + Math.floor((((userId?.charCodeAt(1) || 65) + idx * 7) % 30)),
-      trend: ['up', 'down', 'stable'][((userId?.charCodeAt(2) || 65) + idx) % 3],
-      weekScore: 15 + Math.random() * 5
-    };
-  });
-
-  return lineup;
-};
 
 const MatchupDetailView = ({
   matchup,
@@ -71,9 +37,7 @@ const MatchupDetailView = ({
   const [scoreBreakdown, setScoreBreakdown] = useState({ user1: null, user2: null });
   const [battleBreakdown, setBattleBreakdown] = useState(null);
   const [headToHead, setHeadToHead] = useState(null);
-  const [activeView, setActiveView] = useState('battles'); // 'battles' | 'overview' | 'lineup' | 'captions' | 'rivalry'
-  const [user1Lineup, setUser1Lineup] = useState({});
-  const [user2Lineup, setUser2Lineup] = useState({});
+  const [activeView, setActiveView] = useState('battles'); // 'battles' | 'overview' | 'captions' | 'rivalry'
 
   // Get user stats from standings
   const user1Stats = standings.find(s => s.uid === matchup.user1);
@@ -317,11 +281,6 @@ const MatchupDetailView = ({
             }
           }
         }
-
-        // Generate mock lineups (would be replaced with real data)
-        setUser1Lineup(generateMockLineup(matchup.user1, matchup.week));
-        setUser2Lineup(generateMockLineup(matchup.user2, matchup.week));
-
       } catch (error) {
         console.error('Error fetching weekly scores:', error);
       } finally {
@@ -348,7 +307,6 @@ const MatchupDetailView = ({
     { id: 'battles', label: 'Battles', icon: Swords },
     { id: 'rivalry', label: 'Rivalry', icon: Flame, badge: headToHead?.totalMatchups > 0 },
     { id: 'overview', label: 'Overview', icon: BarChart3 },
-    { id: 'lineup', label: 'Lineups', icon: Users },
     { id: 'captions', label: 'Shows', icon: Trophy },
   ];
 
@@ -741,165 +699,6 @@ const MatchupDetailView = ({
                 />
               </div>
             )}
-          </motion.div>
-        )}
-
-        {activeView === 'lineup' && (
-          <motion.div
-            key="lineup"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="glass rounded-sm overflow-hidden"
-          >
-            <div className="p-4 border-b border-cream-500/10">
-              <h3 className="text-sm font-display font-bold text-cream-100 flex items-center gap-2">
-                <Users className="w-4 h-4 text-gold-400" />
-                8-Slot Lineup Comparison
-              </h3>
-              <p className="text-xs text-cream-500/50 mt-1">
-                Compare staff positions head-to-head
-              </p>
-            </div>
-
-            {/* Lineup Header */}
-            <div className="flex items-center border-b border-cream-500/10 bg-charcoal-900/50">
-              <div className="flex-1 p-3 text-center">
-                <p className="font-display font-semibold text-sm text-cream-100">
-                  {getDisplayName(matchup.user1)}
-                </p>
-              </div>
-              <div className="w-24 p-3 text-center text-xs text-cream-500/60 font-display uppercase">
-                Position
-              </div>
-              <div className="flex-1 p-3 text-center">
-                <p className="font-display font-semibold text-sm text-cream-100">
-                  {getDisplayName(matchup.user2)}
-                </p>
-              </div>
-            </div>
-
-            {/* Lineup Slots */}
-            <div className="divide-y divide-cream-500/5">
-              {LINEUP_POSITIONS.map((position, idx) => {
-                const staff1 = user1Lineup[position.key];
-                const staff2 = user2Lineup[position.key];
-                const user1Wins = (staff1?.weekScore || 0) > (staff2?.weekScore || 0);
-                const user2Wins = (staff2?.weekScore || 0) > (staff1?.weekScore || 0);
-
-                return (
-                  <motion.div
-                    key={position.key}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    className="flex items-center hover:bg-cream-500/5 transition-colors"
-                  >
-                    {/* User 1 Staff */}
-                    <div className={`flex-1 p-3 ${
-                      user1Wins ? 'bg-green-500/10' : ''
-                    }`}>
-                      <div className="flex items-center gap-2">
-                        <div className={`w-8 h-8 rounded-sm flex items-center justify-center ${
-                          user1Wins ? 'bg-green-500/20' : 'bg-charcoal-800'
-                        }`}>
-                          <User className={`w-4 h-4 ${
-                            user1Wins ? 'text-green-400' : 'text-cream-500/50'
-                          }`} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-display text-cream-100 truncate">
-                            {staff1?.name || 'Empty'}
-                          </p>
-                          <div className="flex items-center gap-2">
-                            <span className={`text-xs ${
-                              user1Wins ? 'text-green-400 font-bold' : 'text-cream-500/60'
-                            }`}>
-                              {staff1?.weekScore?.toFixed(1) || '0.0'} pts
-                            </span>
-                            <span className="text-[10px] text-cream-500/40">
-                              OVR {staff1?.rating || 0}
-                            </span>
-                          </div>
-                        </div>
-                        {user1Wins && (
-                          <div className="w-5 h-5 rounded-sm bg-green-500/20 flex items-center justify-center">
-                            <Star className="w-3 h-3 text-green-400" />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Position Badge */}
-                    <div className="w-24 p-2 flex flex-col items-center justify-center">
-                      <div className="px-2 py-1 rounded-sm bg-charcoal-800/80 border border-cream-500/10">
-                        <span className="text-xs font-display font-bold text-gold-400">
-                          {position.abbrev}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* User 2 Staff */}
-                    <div className={`flex-1 p-3 ${
-                      user2Wins ? 'bg-green-500/10' : ''
-                    }`}>
-                      <div className="flex items-center gap-2 justify-end">
-                        {user2Wins && (
-                          <div className="w-5 h-5 rounded-sm bg-green-500/20 flex items-center justify-center">
-                            <Star className="w-3 h-3 text-green-400" />
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0 text-right">
-                          <p className="text-sm font-display text-cream-100 truncate">
-                            {staff2?.name || 'Empty'}
-                          </p>
-                          <div className="flex items-center gap-2 justify-end">
-                            <span className="text-[10px] text-cream-500/40">
-                              OVR {staff2?.rating || 0}
-                            </span>
-                            <span className={`text-xs ${
-                              user2Wins ? 'text-green-400 font-bold' : 'text-cream-500/60'
-                            }`}>
-                              {staff2?.weekScore?.toFixed(1) || '0.0'} pts
-                            </span>
-                          </div>
-                        </div>
-                        <div className={`w-8 h-8 rounded-sm flex items-center justify-center ${
-                          user2Wins ? 'bg-green-500/20' : 'bg-charcoal-800'
-                        }`}>
-                          <User className={`w-4 h-4 ${
-                            user2Wins ? 'text-green-400' : 'text-cream-500/50'
-                          }`} />
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-
-            {/* Lineup Summary */}
-            <div className="p-4 border-t border-cream-500/10 bg-charcoal-900/50">
-              <div className="flex items-center justify-between text-sm">
-                <div className="text-center flex-1">
-                  <p className="text-cream-500/60 text-xs">Positions Won</p>
-                  <p className="font-display font-bold text-green-400">
-                    {LINEUP_POSITIONS.filter(p =>
-                      (user1Lineup[p.key]?.weekScore || 0) > (user2Lineup[p.key]?.weekScore || 0)
-                    ).length}
-                  </p>
-                </div>
-                <div className="w-px h-8 bg-cream-500/20" />
-                <div className="text-center flex-1">
-                  <p className="text-cream-500/60 text-xs">Positions Won</p>
-                  <p className="font-display font-bold text-green-400">
-                    {LINEUP_POSITIONS.filter(p =>
-                      (user2Lineup[p.key]?.weekScore || 0) > (user1Lineup[p.key]?.weekScore || 0)
-                    ).length}
-                  </p>
-                </div>
-              </div>
-            </div>
           </motion.div>
         )}
 
