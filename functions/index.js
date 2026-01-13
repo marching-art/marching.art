@@ -39,11 +39,10 @@ const {
 const {
   createLeague,
   joinLeague,
+  joinLeagueByCode,
   leaveLeague,
   generateMatchups,
   updateMatchupResults,
-  proposeStaffTrade,
-  respondToStaffTrade,
   postLeagueMessage,
 } = require("./src/callable/leagues");
 const {
@@ -87,8 +86,13 @@ const { seasonScheduler } = require("./src/scheduled/seasonScheduler");
 const {
   dailyOffSeasonProcessor,
   processDailyLiveScores,
-  generateWeeklyMatchups,
 } = require("./src/scheduled/dailyProcessors");
+const {
+  generateWeeklyMatchups,
+  generateWeeklyRecaps,
+  updateLeagueRivalries,
+  triggerMatchupGeneration,
+} = require("./src/scheduled/leagueAutomation");
 const {
   updateLifetimeLeaderboard,
   scheduledLifetimeLeaderboardUpdate
@@ -137,8 +141,6 @@ const {
   onStreakMilestoneReached,
 } = require("./src/triggers/emailTriggers");
 const {
-  onMatchupCompleted,
-  onTradeProposalCreated,
   onLeagueMemberJoined,
   onLeagueChatMessage,
 } = require("./src/triggers/pushTriggers");
@@ -166,11 +168,10 @@ module.exports = {
   getHotCorps,
   createLeague,
   joinLeague,
+  joinLeagueByCode,
   leaveLeague,
   generateMatchups,
   updateMatchupResults,
-  proposeStaffTrade,
-  respondToStaffTrade,
   postLeagueMessage,
   sendCommentNotification,
   deleteComment,
@@ -216,9 +217,14 @@ module.exports = {
   seasonScheduler,
   dailyOffSeasonProcessor,
   processDailyLiveScores,
-  generateWeeklyMatchups,
   updateLifetimeLeaderboard,
   scheduledLifetimeLeaderboardUpdate,
+
+  // League Automation (scheduled)
+  generateWeeklyMatchups,
+  generateWeeklyRecaps,
+  updateLeagueRivalries,
+  triggerMatchupGeneration,
 
   // Email Scheduled Jobs
   streakAtRiskEmailJob,
@@ -266,8 +272,6 @@ module.exports = {
   weeklyMatchupPushJob,
 
   // Push Triggers
-  onMatchupCompleted,
-  onTradeProposalCreated,
   onLeagueMemberJoined,
   onLeagueChatMessage,
 

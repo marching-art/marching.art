@@ -19,6 +19,7 @@ import StandingsTab from './tabs/StandingsTab';
 import MatchupsTab from './tabs/MatchupsTab';
 import ChatTab from './tabs/ChatTab';
 import ActivityTab from './tabs/ActivityTab';
+import SettingsTab from './tabs/SettingsTab';
 // OPTIMIZATION #9: Lazy-load heavy MatchupDetailView component (1058 lines)
 const MatchupDetailView = lazy(() => import('./MatchupDetailView'));
 import { useRivalries, isRivalry as checkRivalry } from '../../hooks/useLeagueNotifications';
@@ -688,6 +689,15 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
               userProfile={userProfile}
               memberProfiles={memberProfiles}
               isCommissioner={isCommissioner}
+            />
+          )}
+          {activeTab === 'settings' && isCommissioner && (
+            <SettingsTab
+              key="settings"
+              league={league}
+              userProfile={userProfile}
+              currentWeek={currentWeek}
+              onBack={() => setActiveTab('standings')}
             />
           )}
         </AnimatePresence>
