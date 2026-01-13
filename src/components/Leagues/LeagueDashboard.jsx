@@ -403,6 +403,13 @@ const LeagueDashboard = ({
     };
   }, [currentMatchup, userProfile?.uid, memberProfiles, standings]);
 
+  // Determine if matchup is live (current week and not completed)
+  const isMatchupLive = useMemo(() => {
+    if (!currentMatchup) return false;
+    // Matchup is live if it's for the current week and not marked as completed
+    return !currentMatchup.completed;
+  }, [currentMatchup]);
+
   return (
     <div className="space-y-4">
       {/* Your Position - Hero Card */}
@@ -428,7 +435,7 @@ const LeagueDashboard = ({
         opponent={opponentInfo?.name}
         opponentStats={opponentInfo?.stats}
         currentWeek={currentWeek}
-        isLive={true}
+        isLive={isMatchupLive}
         onClick={() => onViewMatchup?.(currentMatchup)}
       />
 
