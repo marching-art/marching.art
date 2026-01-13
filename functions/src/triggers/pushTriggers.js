@@ -1,6 +1,6 @@
 /**
  * Push Notification Trigger Functions
- * Firestore triggers and scheduled functions for push notifications
+ * Firestore triggers for league-related push notifications
  */
 
 const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/firestore");
@@ -8,105 +8,8 @@ const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { dataNamespaceParam } = require("../config");
 const {
-  sendMatchupResultPush,
-  sendTradeProposalPush,
   sendLeagueActivityPush,
 } = require("../helpers/pushService");
-
-/**
- * Send push notification when a matchup result is posted
- * Triggers when a matchup document is updated with a winner
- */
-exports.onMatchupCompleted = onDocumentUpdated(
-  {
-    document: "artifacts/{namespace}/leagues/{leagueId}/matchups/{matchupId}",
-  },
-  async (event) => {
-    const before = event.data?.before?.data();
-    const after = event.data?.after?.data();
-
-    if (!before || !after) return;
-
-    // Only trigger when winner is first set
-    if (before.winnerId || !after.winnerId) return;
-
-    const { homeUserId, awayUserId, homeScore, awayScore, winnerId } = after;
-
-    logger.info(`Matchup completed: ${event.params.matchupId}, winner: ${winnerId}`);
-
-    // Get league name
-    const namespace = dataNamespaceParam.value();
-    const leagueDoc = await admin
-      .firestore()
-      .doc(`artifacts/${namespace}/leagues/${event.params.leagueId}`)
-      .get();
-    const leagueName = leagueDoc.data()?.name || "League";
-
-    // Get usernames
-    const [homeProfile, awayProfile] = await Promise.all([
-      admin.firestore().doc(`artifacts/${namespace}/users/${homeUserId}/profile/data`).get(),
-      admin.firestore().doc(`artifacts/${namespace}/users/${awayUserId}/profile/data`).get(),
-    ]);
-
-    const homeUsername = homeProfile.data()?.username || "Opponent";
-    const awayUsername = awayProfile.data()?.username || "Opponent";
-
-    // Send push to both users
-    await Promise.all([
-      sendMatchupResultPush(
-        homeUserId,
-        winnerId === homeUserId,
-        awayUsername,
-        homeScore,
-        awayScore
-      ),
-      sendMatchupResultPush(
-        awayUserId,
-        winnerId === awayUserId,
-        homeUsername,
-        awayScore,
-        homeScore
-      ),
-    ]);
-
-    logger.info(`Matchup result push notifications sent for ${event.params.matchupId}`);
-  }
-);
-
-/**
- * Send push notification when a trade proposal is created
- */
-exports.onTradeProposalCreated = onDocumentCreated(
-  {
-    document: "artifacts/{namespace}/leagues/{leagueId}/trades/{tradeId}",
-  },
-  async (event) => {
-    const trade = event.data?.data();
-    if (!trade) return;
-
-    const { toUserId, fromUserId, status } = trade;
-
-    // Only send for pending trades
-    if (status !== "pending") return;
-
-    logger.info(`Trade proposal created: ${event.params.tradeId}`);
-
-    const namespace = dataNamespaceParam.value();
-
-    // Get the sender's username and league name
-    const [fromProfile, leagueDoc] = await Promise.all([
-      admin.firestore().doc(`artifacts/${namespace}/users/${fromUserId}/profile/data`).get(),
-      admin.firestore().doc(`artifacts/${namespace}/leagues/${event.params.leagueId}`).get(),
-    ]);
-
-    const fromUsername = fromProfile.data()?.username || "Someone";
-    const leagueName = leagueDoc.data()?.name || "your league";
-
-    await sendTradeProposalPush(toUserId, fromUsername, leagueName);
-
-    logger.info(`Trade proposal push sent to user ${toUserId}`);
-  }
-);
 
 /**
  * Send push notification when a new member joins a league
