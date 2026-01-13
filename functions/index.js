@@ -39,11 +39,10 @@ const {
 const {
   createLeague,
   joinLeague,
+  joinLeagueByCode,
   leaveLeague,
   generateMatchups,
   updateMatchupResults,
-  proposeStaffTrade,
-  respondToStaffTrade,
   postLeagueMessage,
 } = require("./src/callable/leagues");
 const {
@@ -142,8 +141,6 @@ const {
   onStreakMilestoneReached,
 } = require("./src/triggers/emailTriggers");
 const {
-  onMatchupCompleted,
-  onTradeProposalCreated,
   onLeagueMemberJoined,
   onLeagueChatMessage,
 } = require("./src/triggers/pushTriggers");
@@ -171,11 +168,10 @@ module.exports = {
   getHotCorps,
   createLeague,
   joinLeague,
+  joinLeagueByCode,
   leaveLeague,
   generateMatchups,
   updateMatchupResults,
-  proposeStaffTrade,
-  respondToStaffTrade,
   postLeagueMessage,
   sendCommentNotification,
   deleteComment,
@@ -276,8 +272,6 @@ module.exports = {
   weeklyMatchupPushJob,
 
   // Push Triggers
-  onMatchupCompleted,
-  onTradeProposalCreated,
   onLeagueMemberJoined,
   onLeagueChatMessage,
 

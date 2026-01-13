@@ -165,6 +165,77 @@ exports.joinLeague = onCall({ cors: true }, async (request) => {
   return { success: true, message: "Successfully joined league!" };
 });
 
+exports.joinLeagueByCode = onCall({ cors: true }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "You must be logged in to join a league.");
+  }
+  const { inviteCode } = request.data;
+  const uid = request.auth.uid;
+
+  if (!inviteCode) {
+    throw new HttpsError("invalid-argument", "An invite code is required.");
+  }
+
+  const db = getDb();
+  const namespace = dataNamespaceParam.value();
+
+  // Look up the league by invite code
+  const inviteRef = db.doc(`leagueInvites/${inviteCode.toUpperCase()}`);
+  const inviteDoc = await inviteRef.get();
+
+  if (!inviteDoc.exists) {
+    throw new HttpsError("not-found", "Invalid invite code.");
+  }
+
+  const { leagueId } = inviteDoc.data();
+
+  const leagueRef = db.doc(`artifacts/${namespace}/leagues/${leagueId}`);
+  const userProfileRef = db.doc(`artifacts/${namespace}/users/${uid}/profile/data`);
+  const standingsRef = leagueRef.collection('standings').doc('current');
+
+  await db.runTransaction(async (transaction) => {
+    const leagueDoc = await transaction.get(leagueRef);
+    if (!leagueDoc.exists) {
+      throw new HttpsError("not-found", "This league no longer exists.");
+    }
+
+    const standingsDoc = await transaction.get(standingsRef);
+    const leagueData = leagueDoc.data();
+
+    if (leagueData.members.includes(uid)) {
+      throw new HttpsError("already-exists", "You are already a member of this league.");
+    }
+
+    if (leagueData.members.length >= leagueData.maxMembers) {
+      throw new HttpsError("failed-precondition", "This league is full.");
+    }
+
+    transaction.update(leagueRef, {
+      members: admin.firestore.FieldValue.arrayUnion(uid),
+    });
+
+    transaction.update(userProfileRef, {
+      leagueIds: admin.firestore.FieldValue.arrayUnion(leagueId),
+    });
+
+    if (standingsDoc.exists) {
+      transaction.update(standingsRef, {
+        [`records.${uid}`]: {
+          wins: 0,
+          losses: 0,
+          ties: 0,
+          pointsFor: 0,
+          pointsAgainst: 0,
+          currentStreak: 0,
+          streakType: null
+        }
+      });
+    }
+  });
+
+  return { success: true, message: "Successfully joined league!", leagueId };
+});
+
 exports.leaveLeague = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "You must be logged in to leave a league.");
@@ -215,8 +286,67 @@ exports.leaveLeague = onCall({ cors: true }, async (request) => {
   }
 });
 
+/**
+ * Smart pairing algorithm - pairs players by similar standings
+ * This keeps matchups competitive throughout the season
+ */
+function smartPairMembers(members, standings) {
+  if (members.length < 2) {
+    return members.length === 1
+      ? [{ pair: [members[0], null], winner: members[0], scores: null, completed: true, isBye: true }]
+      : [];
+  }
+
+  // Sort members by their standings (wins, then points)
+  const sortedMembers = [...members].sort((a, b) => {
+    const statsA = standings[a] || { wins: 0, totalPoints: 0 };
+    const statsB = standings[b] || { wins: 0, totalPoints: 0 };
+    if (statsB.wins !== statsA.wins) return statsB.wins - statsA.wins;
+    return statsB.totalPoints - statsA.totalPoints;
+  });
+
+  const matchups = [];
+  const paired = new Set();
+
+  // Pair adjacent players in standings (1v2, 3v4, etc.)
+  for (let i = 0; i < sortedMembers.length - 1; i += 2) {
+    const player1 = sortedMembers[i];
+    const player2 = sortedMembers[i + 1];
+
+    if (!paired.has(player1) && !paired.has(player2)) {
+      // Randomize home/away to keep it fair
+      const isReversed = Math.random() > 0.5;
+      matchups.push({
+        pair: isReversed ? [player2, player1] : [player1, player2],
+        winner: null,
+        scores: null,
+        completed: false,
+        isBye: false
+      });
+      paired.add(player1);
+      paired.add(player2);
+    }
+  }
+
+  // Handle odd player - gets a bye
+  for (const member of sortedMembers) {
+    if (!paired.has(member)) {
+      matchups.push({
+        pair: [member, null],
+        winner: member,
+        scores: null,
+        completed: true,
+        isBye: true
+      });
+    }
+  }
+
+  return matchups;
+}
+
 // Generate weekly matchups for a league
 // Matchups are segregated by corps class so corps only compete against same-class opponents
+// Uses smart pairing based on standings for competitive balance
 exports.generateMatchups = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Authentication required.");
@@ -260,8 +390,15 @@ exports.generateMatchups = onCall({ cors: true }, async (request) => {
   );
   const profileDocs = members.length > 0 ? await db.getAll(...profileRefs) : [];
 
+  // Fetch current standings for smart pairing
+  const standingsDoc = await db.doc(`artifacts/${namespace}/leagues/${leagueId}/standings/current`).get();
+  const standingsData = standingsDoc.exists ? standingsDoc.data()?.standings || [] : [];
+  const standings = {};
+  standingsData.forEach((s, idx) => {
+    standings[s.uid] = { ...s, rank: idx + 1 };
+  });
+
   // Group members by their active corps classes
-  // A member can have corps in multiple classes
   const corpsClasses = ['worldClass', 'openClass', 'aClass', 'soundSport'];
   const membersByClass = {
     worldClass: [],
@@ -276,7 +413,6 @@ exports.generateMatchups = onCall({ cors: true }, async (request) => {
       const profileData = doc.data();
       const corps = profileData.corps || {};
 
-      // Check each class and add member if they have an active corps in that class
       for (const corpsClass of corpsClasses) {
         if (corps[corpsClass] && corps[corpsClass].corpsName) {
           membersByClass[corpsClass].push(memberId);
@@ -285,59 +421,23 @@ exports.generateMatchups = onCall({ cors: true }, async (request) => {
     }
   });
 
-  // Generate matchups for each corps class
+  // Generate matchups for each corps class using smart pairing
   const matchupData = {
     week,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    // Legacy field for backwards compatibility
-    pairs: []
+    generatedBy: uid
   };
 
   for (const corpsClass of corpsClasses) {
     const classMembers = membersByClass[corpsClass];
-    const matchupArrayKey = `${corpsClass}Matchups`;
-    const classMatchups = [];
-
-    if (classMembers.length >= 2) {
-      // Shuffle members for random pairings within this class
-      const shuffled = [...classMembers].sort(() => Math.random() - 0.5);
-
-      for (let i = 0; i < shuffled.length; i += 2) {
-        if (i + 1 < shuffled.length) {
-          classMatchups.push({
-            pair: [shuffled[i], shuffled[i + 1]],
-            winner: null,
-            scores: null,
-            completed: false
-          });
-        } else {
-          // Odd number of players - this player gets a bye
-          classMatchups.push({
-            pair: [shuffled[i], null],
-            winner: shuffled[i],
-            scores: null,
-            completed: true
-          });
-        }
-      }
-    } else if (classMembers.length === 1) {
-      // Only one member in this class - they get a bye
-      classMatchups.push({
-        pair: [classMembers[0], null],
-        winner: classMembers[0],
-        scores: null,
-        completed: true
-      });
-    }
-
-    matchupData[matchupArrayKey] = classMatchups;
+    matchupData[`${corpsClass}Matchups`] = smartPairMembers(classMembers, standings);
   }
 
   await matchupRef.set(matchupData);
 
   return {
     success: true,
-    message: "Matchups generated by corps class!",
+    message: "Matchups generated with smart pairing!",
     matchups: {
       worldClass: matchupData.worldClassMatchups || [],
       openClass: matchupData.openClassMatchups || [],

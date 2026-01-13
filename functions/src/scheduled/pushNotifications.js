@@ -210,7 +210,12 @@ exports.showReminderPushJob = onSchedule(
 
 /**
  * Send matchup starting push notifications
- * Runs at the start of each week to notify users about their matchups
+ * Runs Monday 8:00 AM to notify users about their weekly matchups
+ *
+ * Matchup Schema:
+ * - Documents stored as: leagues/{leagueId}/matchups/week-{N}
+ * - Contains class-specific arrays: worldClassMatchups, openClassMatchups, etc.
+ * - Each matchup has: { pair: [uid1, uid2], completed: boolean, ... }
  */
 exports.weeklyMatchupPushJob = onSchedule(
   {
@@ -223,6 +228,7 @@ exports.weeklyMatchupPushJob = onSchedule(
 
     const db = admin.firestore();
     const namespace = dataNamespaceParam.value();
+    const CORPS_CLASSES = ['worldClass', 'openClass', 'aClass', 'soundSport'];
 
     try {
       // Get current season week
@@ -235,44 +241,65 @@ exports.weeklyMatchupPushJob = onSchedule(
       }
 
       const currentWeek = season.currentWeek;
+      logger.info(`Sending notifications for week ${currentWeek} matchups`);
 
       // Get all active leagues
       const leaguesSnapshot = await db
         .collection(`artifacts/${namespace}/leagues`)
         .get();
 
-      // Step 1: Collect all matchups from all leagues first
+      if (leaguesSnapshot.empty) {
+        logger.info("No leagues found");
+        return;
+      }
+
+      // Collect all matchups from all leagues
       const allMatchups = [];
       const allUserIds = new Set();
 
       for (const leagueDoc of leaguesSnapshot.docs) {
         const league = leagueDoc.data();
 
-        // Get this week's matchups for the league
-        const matchupsSnapshot = await db
-          .collection(`artifacts/${namespace}/leagues/${leagueDoc.id}/matchups`)
-          .where("week", "==", currentWeek)
-          .where("status", "==", "scheduled")
+        // Get this week's matchups document
+        const matchupDoc = await db
+          .doc(`artifacts/${namespace}/leagues/${leagueDoc.id}/matchups/week-${currentWeek}`)
           .get();
 
-        for (const matchupDoc of matchupsSnapshot.docs) {
-          const matchup = matchupDoc.data();
-          allMatchups.push({
-            homeUserId: matchup.homeUserId,
-            awayUserId: matchup.awayUserId,
-            leagueName: league.name,
-          });
-          allUserIds.add(matchup.homeUserId);
-          allUserIds.add(matchup.awayUserId);
+        if (!matchupDoc.exists) continue;
+
+        const matchupData = matchupDoc.data();
+
+        // Extract matchups from each corps class
+        for (const corpsClass of CORPS_CLASSES) {
+          const classMatchups = matchupData[`${corpsClass}Matchups`] || [];
+
+          for (const matchup of classMatchups) {
+            // Skip completed matchups and byes
+            if (matchup.completed || !matchup.pair || !matchup.pair[1]) continue;
+
+            const [player1, player2] = matchup.pair;
+            if (!player1 || !player2) continue;
+
+            allMatchups.push({
+              player1,
+              player2,
+              leagueName: league.name,
+              corpsClass,
+            });
+            allUserIds.add(player1);
+            allUserIds.add(player2);
+          }
         }
       }
 
       if (allMatchups.length === 0) {
-        logger.info("No scheduled matchups found for this week");
+        logger.info("No pending matchups found for this week");
         return;
       }
 
-      // Step 2: OPTIMIZATION - Batch fetch ALL profiles in ONE operation
+      logger.info(`Found ${allMatchups.length} matchups to notify`);
+
+      // Batch fetch all profiles
       const userIdsArray = [...allUserIds];
       const profileRefs = userIdsArray.map((uid) =>
         db.doc(`artifacts/${namespace}/users/${uid}/profile/data`)
@@ -286,23 +313,23 @@ exports.weeklyMatchupPushJob = onSchedule(
         usernameMap.set(userIdsArray[index], username);
       });
 
-      // Step 3: Send notifications in parallel chunks
-      const PARALLEL_LIMIT = 25;
-      let totalSent = 0;
-
-      // Build notification tasks
+      // Build notification tasks (notify both players in each matchup)
       const notificationTasks = allMatchups.flatMap((matchup) => [
         {
-          userId: matchup.homeUserId,
-          opponentName: usernameMap.get(matchup.awayUserId),
+          userId: matchup.player1,
+          opponentName: usernameMap.get(matchup.player2),
           leagueName: matchup.leagueName,
         },
         {
-          userId: matchup.awayUserId,
-          opponentName: usernameMap.get(matchup.homeUserId),
+          userId: matchup.player2,
+          opponentName: usernameMap.get(matchup.player1),
           leagueName: matchup.leagueName,
         },
       ]);
+
+      // Send notifications in parallel chunks
+      const PARALLEL_LIMIT = 25;
+      let totalSent = 0;
 
       for (let i = 0; i < notificationTasks.length; i += PARALLEL_LIMIT) {
         const chunk = notificationTasks.slice(i, i + PARALLEL_LIMIT);
