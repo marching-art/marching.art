@@ -10,7 +10,7 @@ import {
   Share2, Copy, Check, Send, Users, Calendar, LogOut,
   AlertTriangle, X
 } from 'lucide-react';
-import { collection, query, orderBy, limit as firestoreLimit, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, limit as firestoreLimit, onSnapshot, doc, getDoc, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
 import toast from 'react-hot-toast';
 
@@ -272,7 +272,48 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
               });
             });
 
-            const matchupsPerWeek = generateMatchups(league.members, week);
+            // Fetch ACTUAL matchups from Firestore instead of generating client-side
+            const matchupsPerWeek = {};
+            const CORPS_CLASSES = ['worldClass', 'openClass', 'aClass', 'soundSport'];
+
+            // Fetch all matchup documents for this league
+            const matchupsCollectionRef = collection(db, `artifacts/marching-art/leagues/${league.id}/matchups`);
+            const matchupsSnapshot = await getDocs(matchupsCollectionRef);
+
+            matchupsSnapshot.forEach(matchupDoc => {
+              const weekMatch = matchupDoc.id.match(/^week-(\d+)$/);
+              if (!weekMatch) return;
+
+              const weekNum = parseInt(weekMatch[1]);
+              const matchupData = matchupDoc.data();
+
+              // Convert class-based matchups to flat array format for useLeagueStats
+              matchupsPerWeek[weekNum] = [];
+
+              for (const corpsClass of CORPS_CLASSES) {
+                const classMatchups = matchupData[`${corpsClass}Matchups`] || [];
+                classMatchups.forEach(matchup => {
+                  if (matchup.pair && matchup.pair[0] && matchup.pair[1]) {
+                    matchupsPerWeek[weekNum].push({
+                      user1: matchup.pair[0],
+                      user2: matchup.pair[1],
+                      winner: matchup.winner,
+                      completed: matchup.completed,
+                      scores: matchup.scores,
+                      corpsClass
+                    });
+                  }
+                });
+              }
+            });
+
+            // If no matchups exist in Firestore, fall back to client-side generation
+            // (This maintains backwards compatibility for leagues without generated matchups)
+            if (Object.keys(matchupsPerWeek).length === 0) {
+              const fallbackMatchups = generateMatchups(league.members, week);
+              Object.assign(matchupsPerWeek, fallbackMatchups);
+            }
+
             setWeeklyMatchups(matchupsPerWeek);
             setWeeklyResults(weeklyResults);
 
@@ -381,7 +422,8 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
     return () => unsubMessages();
   }, [league]);
 
-  // Generate round-robin matchups
+  // Fallback: Generate round-robin matchups client-side
+  // Only used if no matchups exist in Firestore (backwards compatibility)
   const generateMatchups = (members, maxWeek) => {
     const matchups = {};
     const n = members.length;
