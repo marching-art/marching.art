@@ -18,9 +18,9 @@ import toast from 'react-hot-toast';
 import StandingsTab from './tabs/StandingsTab';
 import MatchupsTab from './tabs/MatchupsTab';
 import ChatTab from './tabs/ChatTab';
+import ActivityTab from './tabs/ActivityTab';
 // OPTIMIZATION #9: Lazy-load heavy MatchupDetailView component (1058 lines)
 const MatchupDetailView = lazy(() => import('./MatchupDetailView'));
-import LeagueActivityFeed, { RivalryBadge } from './LeagueActivityFeed';
 import { useRivalries, isRivalry as checkRivalry } from '../../hooks/useLeagueNotifications';
 import { useLeagueStats } from '../../hooks/useLeagueStats';
 import { postLeagueMessage } from '../../firebase/functions';
@@ -624,6 +624,18 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
               league={league}
               leagueStats={leagueStats}
               showLeaderboards={true}
+              currentWeek={currentWeek}
+              weeklyMatchups={weeklyMatchups}
+              onMatchupClick={(matchup) => {
+                if (matchup) {
+                  setSelectedMatchup({
+                    user1: matchup.user1,
+                    user2: matchup.user2,
+                    week: currentWeek,
+                    isUserMatchup: matchup.user1 === userProfile?.uid || matchup.user2 === userProfile?.uid
+                  });
+                }
+              }}
             />
           )}
           {activeTab === 'matchups' && (
@@ -637,58 +649,36 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
             />
           )}
           {activeTab === 'activity' && (
-            <motion.div
+            <ActivityTab
               key="activity"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="p-4 space-y-4"
-            >
-              {/* Rivalries Section */}
-              {rivalries.length > 0 && (
-                <div className="bg-[#1a1a1a] border border-[#333]">
-                  <div className="px-4 py-3 border-b border-[#333] bg-[#222]">
-                    <h3 className="text-[10px] font-bold uppercase tracking-wider text-red-400 flex items-center gap-2">
-                      <Flame className="w-3.5 h-3.5" />
-                      Your Rivalries
-                    </h3>
-                  </div>
-                  <div className="p-3 space-y-2">
-                    {rivalries.map(rivalry => (
-                      <RivalryBadge key={rivalry.rivalId} rivalry={rivalry} compact={false} />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Activity Feed */}
-              <LeagueActivityFeed
-                leagueId={league?.id}
-                userId={userProfile?.uid}
-                league={league}
-                showFilters={true}
-                maxItems={15}
-                onActivityTap={(activity) => {
-                  if (activity.type === 'matchup_result' && activity.metadata?.week) {
-                    const matchups = weeklyMatchups[activity.metadata.week];
-                    if (matchups) {
-                      const matchup = matchups.find(m =>
-                        (m.user1 === userProfile?.uid || m.user2 === userProfile?.uid)
-                      );
-                      if (matchup) {
-                        setSelectedMatchup({
-                          ...matchup,
-                          week: activity.metadata.week,
-                          isUserMatchup: true
-                        });
-                      }
+              league={league}
+              userProfile={userProfile}
+              standings={standings}
+              memberProfiles={memberProfiles}
+              leagueStats={leagueStats}
+              rivalries={rivalries}
+              weeklyMatchups={weeklyMatchups}
+              weeklyResults={weeklyResults}
+              currentWeek={currentWeek}
+              onMatchupClick={(activity) => {
+                if (activity.type === 'matchup_result' && activity.metadata?.week) {
+                  const matchups = weeklyMatchups[activity.metadata.week];
+                  if (matchups) {
+                    const matchup = matchups.find(m =>
+                      (m.user1 === userProfile?.uid || m.user2 === userProfile?.uid)
+                    );
+                    if (matchup) {
+                      setSelectedMatchup({
+                        ...matchup,
+                        week: activity.metadata.week,
+                        isUserMatchup: true
+                      });
                     }
-                  } else if (activity.type === 'new_message') {
-                    setActiveTab('chat');
                   }
-                }}
-              />
-            </motion.div>
+                }
+              }}
+              onChatOpen={() => setActiveTab('chat')}
+            />
           )}
           {activeTab === 'chat' && (
             <ChatTab

@@ -1,9 +1,13 @@
-// MatchupsTab - Real matchups from Firestore, grouped by corps class
-// Design System: Compact strips, inline scores, week navigation
+// MatchupsTab - Season overview with matchup brackets and history
+// Design System: Week cards, head-to-head tracking, schedule overview
 
 import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
-import { motion } from 'framer-motion';
-import { Swords, Calendar, Radio, Flame, ChevronLeft, ChevronRight, Trophy, Award, Star, Zap } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Swords, Calendar, Radio, Flame, ChevronLeft, ChevronRight,
+  Trophy, Award, Star, Zap, Users, Clock, Target, History,
+  TrendingUp, Crown, LayoutGrid, List
+} from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../firebase';
 import { GAME_CONFIG } from '../../../config';
@@ -44,6 +48,361 @@ const CORPS_CLASS_CONFIG = {
 
 const CORPS_CLASSES = ['worldClass', 'openClass', 'aClass', 'soundSport'];
 
+// Season Schedule Overview - Visual week-by-week calendar
+const SeasonScheduleOverview = ({
+  currentWeek,
+  totalWeeks,
+  weeksWithMatchups,
+  onSelectWeek,
+  selectedWeek
+}) => {
+  return (
+    <div className="bg-[#1a1a1a] border border-[#333] mb-4">
+      <div className="px-4 py-3 border-b border-[#333] bg-[#222]">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-blue-500" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+              Season Schedule
+            </span>
+          </div>
+          <span className="text-xs text-gray-500">
+            Week {currentWeek} of {totalWeeks}
+          </span>
+        </div>
+      </div>
+
+      {/* Visual Week Grid */}
+      <div className="p-3">
+        <div className="grid grid-cols-6 sm:grid-cols-12 gap-1">
+          {Array.from({ length: totalWeeks }, (_, i) => i + 1).map(week => {
+            const hasData = weeksWithMatchups.has(week);
+            const isSelected = selectedWeek === week;
+            const isCurrent = week === currentWeek;
+            const isPast = week < currentWeek;
+            const isFuture = week > currentWeek;
+
+            return (
+              <button
+                key={week}
+                onClick={() => onSelectWeek(week)}
+                className={`relative aspect-square flex items-center justify-center text-xs font-bold transition-all ${
+                  isSelected
+                    ? 'bg-yellow-500 text-black'
+                    : isCurrent
+                    ? 'bg-purple-500/30 border-2 border-purple-500 text-white'
+                    : hasData && isPast
+                    ? 'bg-green-500/20 border border-green-500/30 text-green-500'
+                    : hasData
+                    ? 'bg-blue-500/20 border border-blue-500/30 text-blue-400'
+                    : isPast
+                    ? 'bg-[#222] border border-[#333] text-gray-600'
+                    : 'bg-[#222] border border-[#333] text-gray-500 hover:border-[#444]'
+                }`}
+              >
+                {week}
+                {isCurrent && !isSelected && (
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-purple-500 animate-pulse" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Legend */}
+        <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-[#333] text-[9px] text-gray-500">
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 bg-purple-500/30 border-2 border-purple-500" />
+            <span>Current</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 bg-green-500/20 border border-green-500/30" />
+            <span>Completed</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 bg-blue-500/20 border border-blue-500/30" />
+            <span>Scheduled</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 bg-[#222] border border-[#333]" />
+            <span>No matchups</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Your Season History - Shows user's matchup record by week
+const YourSeasonHistory = ({
+  userMatchupHistory,
+  memberProfiles,
+  userProfile,
+  onMatchupClick
+}) => {
+  if (!userMatchupHistory || userMatchupHistory.length === 0) return null;
+
+  const getDisplayName = (uid) => {
+    if (uid === userProfile?.uid) return 'You';
+    const profile = memberProfiles[uid];
+    return profile?.displayName || profile?.username || `User ${uid?.slice(0, 6)}`;
+  };
+
+  return (
+    <div className="bg-[#1a1a1a] border border-[#333] mb-4">
+      <div className="px-4 py-3 border-b border-[#333] bg-[#222]">
+        <div className="flex items-center gap-2">
+          <History className="w-4 h-4 text-purple-500" />
+          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+            Your Season History
+          </span>
+        </div>
+      </div>
+
+      <div className="p-3">
+        <div className="flex gap-1 overflow-x-auto pb-2">
+          {userMatchupHistory.map((match, idx) => {
+            const opponentId = match.pair[0] === userProfile?.uid ? match.pair[1] : match.pair[0];
+            const isBye = !opponentId;
+            const won = match.winner === userProfile?.uid;
+            const lost = match.winner && match.winner !== userProfile?.uid;
+            const tie = match.completed && !match.winner;
+
+            return (
+              <button
+                key={idx}
+                onClick={() => !isBye && onMatchupClick?.(match)}
+                disabled={isBye}
+                className={`flex-shrink-0 w-16 p-2 text-center transition-colors ${
+                  isBye
+                    ? 'bg-[#222] cursor-default'
+                    : won
+                    ? 'bg-green-500/10 border border-green-500/30 hover:bg-green-500/20'
+                    : lost
+                    ? 'bg-red-500/10 border border-red-500/30 hover:bg-red-500/20'
+                    : tie
+                    ? 'bg-yellow-500/10 border border-yellow-500/30 hover:bg-yellow-500/20'
+                    : 'bg-[#222] border border-[#333] hover:border-[#444]'
+                }`}
+              >
+                <p className="text-[9px] text-gray-500 mb-0.5">Wk {match.week}</p>
+                {isBye ? (
+                  <p className="text-xs text-gray-500">BYE</p>
+                ) : (
+                  <>
+                    <p className={`text-xs font-bold truncate ${
+                      won ? 'text-green-500' :
+                      lost ? 'text-red-500' :
+                      tie ? 'text-yellow-500' : 'text-gray-400'
+                    }`}>
+                      {won ? 'W' : lost ? 'L' : tie ? 'T' : 'vs'}
+                    </p>
+                    <p className="text-[9px] text-gray-500 truncate">
+                      {getDisplayName(opponentId)}
+                    </p>
+                  </>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Head to Head Section - Shows record against each opponent
+const HeadToHeadSection = ({
+  standings,
+  memberProfiles,
+  userProfile,
+  weeklyMatchups,
+  weeklyResults,
+  onSelectOpponent
+}) => {
+  // Calculate head-to-head records
+  const h2hRecords = useMemo(() => {
+    if (!userProfile?.uid || !weeklyMatchups) return [];
+
+    const records = {};
+
+    Object.entries(weeklyMatchups).forEach(([week, matchups]) => {
+      matchups.forEach(matchup => {
+        if (matchup.user1 !== userProfile.uid && matchup.user2 !== userProfile.uid) return;
+
+        const opponentId = matchup.user1 === userProfile.uid ? matchup.user2 : matchup.user1;
+        if (!opponentId) return;
+
+        if (!records[opponentId]) {
+          records[opponentId] = { wins: 0, losses: 0, ties: 0, lastWeek: 0 };
+        }
+
+        const userScore = weeklyResults?.[week]?.[userProfile.uid] || 0;
+        const oppScore = weeklyResults?.[week]?.[opponentId] || 0;
+
+        if (userScore > oppScore) records[opponentId].wins++;
+        else if (oppScore > userScore) records[opponentId].losses++;
+        else if (userScore > 0 || oppScore > 0) records[opponentId].ties++;
+
+        records[opponentId].lastWeek = Math.max(records[opponentId].lastWeek, parseInt(week));
+      });
+    });
+
+    return Object.entries(records)
+      .map(([opponentId, record]) => ({
+        opponentId,
+        ...record,
+        totalGames: record.wins + record.losses + record.ties
+      }))
+      .sort((a, b) => b.totalGames - a.totalGames);
+  }, [userProfile?.uid, weeklyMatchups, weeklyResults]);
+
+  if (h2hRecords.length === 0) return null;
+
+  const getDisplayName = (uid) => {
+    const profile = memberProfiles[uid];
+    return profile?.displayName || profile?.username || `User ${uid?.slice(0, 6)}`;
+  };
+
+  return (
+    <div className="bg-[#1a1a1a] border border-[#333] mb-4">
+      <div className="px-4 py-3 border-b border-[#333] bg-[#222]">
+        <div className="flex items-center gap-2">
+          <Target className="w-4 h-4 text-orange-500" />
+          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+            Head to Head Records
+          </span>
+        </div>
+      </div>
+
+      <div className="divide-y divide-[#222]">
+        {h2hRecords.slice(0, 5).map(record => {
+          const winPct = record.totalGames > 0
+            ? (record.wins / record.totalGames * 100).toFixed(0)
+            : 0;
+          const isWinning = record.wins > record.losses;
+          const isLosing = record.losses > record.wins;
+
+          return (
+            <div
+              key={record.opponentId}
+              className="px-4 py-3 flex items-center justify-between hover:bg-[#222] transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-[#333] flex items-center justify-center">
+                  <span className="text-xs font-bold text-gray-400">
+                    {getDisplayName(record.opponentId).charAt(0)}
+                  </span>
+                </div>
+                <div>
+                  <p className="font-bold text-sm text-white">
+                    {getDisplayName(record.opponentId)}
+                  </p>
+                  <p className="text-[10px] text-gray-500">
+                    {record.totalGames} matchup{record.totalGames !== 1 ? 's' : ''}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm font-bold text-green-500 font-data tabular-nums">
+                      {record.wins}
+                    </span>
+                    <span className="text-gray-600">-</span>
+                    <span className="text-sm font-bold text-red-500 font-data tabular-nums">
+                      {record.losses}
+                    </span>
+                    {record.ties > 0 && (
+                      <>
+                        <span className="text-gray-600">-</span>
+                        <span className="text-sm font-bold text-yellow-500 font-data tabular-nums">
+                          {record.ties}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div className={`w-12 h-6 flex items-center justify-center text-xs font-bold ${
+                  isWinning
+                    ? 'bg-green-500/20 text-green-500'
+                    : isLosing
+                    ? 'bg-red-500/20 text-red-500'
+                    : 'bg-gray-500/20 text-gray-400'
+                }`}>
+                  {winPct}%
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// Empty State Component
+const EmptyMatchupsState = ({ selectedWeek, currentWeek, league, isCommissioner }) => {
+  const isPastWeek = selectedWeek < currentWeek;
+  const isCurrentWeek = selectedWeek === currentWeek;
+  const isFutureWeek = selectedWeek > currentWeek;
+
+  return (
+    <div className="bg-[#1a1a1a] border border-[#333] p-8 text-center">
+      <div className="w-16 h-16 mx-auto mb-4 bg-[#222] border border-[#333] flex items-center justify-center">
+        <Swords className="w-8 h-8 text-gray-500" />
+      </div>
+
+      <h3 className="text-lg font-bold text-white mb-2">
+        {isPastWeek && 'No Matchups Recorded'}
+        {isCurrentWeek && 'Matchups Not Generated Yet'}
+        {isFutureWeek && 'Upcoming Week'}
+      </h3>
+
+      <p className="text-sm text-gray-400 mb-4 max-w-sm mx-auto">
+        {isPastWeek && 'This week had no matchups generated or recorded.'}
+        {isCurrentWeek && (
+          league?.members?.length < 2
+            ? 'Need at least 2 league members to generate matchups.'
+            : isCommissioner
+            ? 'As the commissioner, you can generate matchups from the league settings.'
+            : 'The commissioner needs to generate matchups for this week.'
+        )}
+        {isFutureWeek && 'Matchups for this week will be available as the season progresses.'}
+      </p>
+
+      {isCurrentWeek && (
+        <div className="flex flex-col items-center gap-2">
+          {league?.members?.length >= 2 && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-[#222] border border-[#333]">
+              <Users className="w-4 h-4 text-green-500" />
+              <span className="text-xs text-gray-400">
+                {league.members.length} members ready
+              </span>
+            </div>
+          )}
+          {league?.members?.length < 2 && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-yellow-500/10 border border-yellow-500/30">
+              <Users className="w-4 h-4 text-yellow-500" />
+              <span className="text-xs text-yellow-500">
+                Invite {2 - (league?.members?.length || 0)} more member{2 - (league?.members?.length || 0) !== 1 ? 's' : ''}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {isFutureWeek && (
+        <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+          <Clock className="w-4 h-4" />
+          <span>Week {selectedWeek} starts soon</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {}, rivalries = [] }) => {
   const [matchupsByClass, setMatchupsByClass] = useState({});
   const [loading, setLoading] = useState(true);
@@ -51,6 +410,10 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
   const [selectedMatchup, setSelectedMatchup] = useState(null);
   const [currentWeek, setCurrentWeek] = useState(1);
   const [weeksWithMatchups, setWeeksWithMatchups] = useState(new Set());
+  const [weeklyResults, setWeeklyResults] = useState({});
+  const [viewMode, setViewMode] = useState('week'); // 'week' | 'season'
+
+  const isCommissioner = league?.creatorId === userProfile?.uid;
 
   // Check if matchup is a rivalry
   const isRivalryMatchup = (matchup) => {
@@ -149,6 +512,23 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
     return matches;
   }, [weekMatchups, userProfile?.uid]);
 
+  // Get user's matchup history across all weeks
+  const userMatchupHistory = useMemo(() => {
+    const history = [];
+    for (let w = 1; w <= currentWeek; w++) {
+      const weekData = matchupsByClass[w] || {};
+      for (const corpsClass of CORPS_CLASSES) {
+        const classMatchups = weekData[`${corpsClass}Matchups`] || [];
+        for (const matchup of classMatchups) {
+          if (matchup.pair && (matchup.pair[0] === userProfile?.uid || matchup.pair[1] === userProfile?.uid)) {
+            history.push({ ...matchup, week: w, corpsClass });
+          }
+        }
+      }
+    }
+    return history.sort((a, b) => a.week - b.week);
+  }, [matchupsByClass, userProfile?.uid, currentWeek]);
+
   // Check if any matchups exist for selected week
   const hasMatchups = Object.keys(weekMatchups).length > 0;
 
@@ -221,153 +601,218 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="p-4 space-y-4"
+      className="p-4"
     >
-      {/* Week Navigator */}
-      <div className="bg-[#1a1a1a] border border-[#333]">
-        <div className="px-4 py-3 border-b border-[#333] bg-[#222]">
-          <div className="flex items-center justify-between">
-            <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-              <Calendar className="w-3.5 h-3.5 text-yellow-500" />
-              Week {selectedWeek}
-            </h3>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={goToPrevWeek}
-                disabled={selectedWeek <= 1}
-                className="p-1 text-gray-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <span className="text-xs text-gray-500 min-w-[60px] text-center">
-                {selectedWeek === currentWeek ? 'Current' : selectedWeek < currentWeek ? 'Past' : 'Upcoming'}
-              </span>
-              <button
-                onClick={goToNextWeek}
-                disabled={selectedWeek >= GAME_CONFIG.season.totalWeeks}
-                className="p-1 text-gray-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Week Pills */}
-        <div className="p-3 flex gap-1.5 overflow-x-auto scrollbar-hide">
-          {Array.from({ length: GAME_CONFIG.season.totalWeeks }, (_, i) => i + 1).map(week => {
-            const hasData = weeksWithMatchups.has(week);
-            const isSelected = selectedWeek === week;
-            const isCurrent = week === currentWeek;
-
-            return (
-              <button
-                key={week}
-                onClick={() => setSelectedWeek(week)}
-                className={`flex-shrink-0 px-3 py-1.5 text-xs font-bold transition-all relative ${
-                  isSelected
-                    ? 'bg-yellow-500 text-black'
-                    : isCurrent
-                    ? 'bg-[#222] border border-purple-500/50 text-white'
-                    : hasData
-                    ? 'bg-[#222] border border-[#444] text-white hover:border-[#555]'
-                    : 'bg-[#222] border border-[#333] text-gray-500 hover:text-white hover:border-[#444]'
-                }`}
-              >
-                W{week}
-                {isCurrent && !isSelected && (
-                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-purple-500 rounded-sm animate-pulse" />
-                )}
-              </button>
-            );
-          })}
+      {/* View Toggle */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400">
+          {viewMode === 'week' ? `Week ${selectedWeek} Matchups` : 'Season Overview'}
+        </h2>
+        <div className="flex items-center gap-1 p-1 bg-[#1a1a1a] border border-[#333]">
+          <button
+            onClick={() => setViewMode('week')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold transition-colors ${
+              viewMode === 'week'
+                ? 'bg-yellow-500 text-black'
+                : 'text-gray-500 hover:text-white'
+            }`}
+          >
+            <List className="w-3.5 h-3.5" />
+            Weekly
+          </button>
+          <button
+            onClick={() => setViewMode('season')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold transition-colors ${
+              viewMode === 'season'
+                ? 'bg-yellow-500 text-black'
+                : 'text-gray-500 hover:text-white'
+            }`}
+          >
+            <LayoutGrid className="w-3.5 h-3.5" />
+            Season
+          </button>
         </div>
       </div>
 
-      {/* Your Matchups - Featured */}
-      {userMatchups.length > 0 && (
-        <div className="bg-[#1a1a1a] border border-[#333]">
-          <div className="px-4 py-2 border-b border-[#333] bg-[#222] flex items-center justify-between">
-            <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
-              Your Matchups ({userMatchups.length})
-            </h3>
-            {selectedWeek === currentWeek && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-500/20 text-red-500 text-[10px] font-bold uppercase">
-                <Radio className="w-2.5 h-2.5 animate-pulse" />
-                LIVE
-              </span>
-            )}
-          </div>
+      {/* Season Overview Mode */}
+      {viewMode === 'season' && (
+        <>
+          <SeasonScheduleOverview
+            currentWeek={currentWeek}
+            totalWeeks={GAME_CONFIG.season.totalWeeks}
+            weeksWithMatchups={weeksWithMatchups}
+            selectedWeek={selectedWeek}
+            onSelectWeek={(week) => {
+              setSelectedWeek(week);
+              setViewMode('week');
+            }}
+          />
 
-          <div className="divide-y divide-[#222]">
-            {userMatchups.map(matchup => (
-              <VersusStrip
-                key={matchup.id}
-                matchup={matchup}
-                getDisplayName={getDisplayName}
-                getStanding={getStanding}
-                userProfile={userProfile}
-                isRivalry={isRivalryMatchup(matchup)}
-                onClick={() => handleMatchupClick(matchup)}
-                featured
-                showClass
-              />
-            ))}
-          </div>
-        </div>
+          <YourSeasonHistory
+            userMatchupHistory={userMatchupHistory}
+            memberProfiles={memberProfiles}
+            userProfile={userProfile}
+            onMatchupClick={handleMatchupClick}
+          />
+
+          <HeadToHeadSection
+            standings={standings}
+            memberProfiles={memberProfiles}
+            userProfile={userProfile}
+            weeklyMatchups={matchupsByClass}
+            weeklyResults={weeklyResults}
+          />
+        </>
       )}
 
-      {/* Matchups by Corps Class */}
-      {CORPS_CLASSES.map(corpsClass => {
-        const classMatchups = weekMatchups[corpsClass] || [];
-        // Filter out user's matchups (already shown above)
-        const otherMatchups = classMatchups.filter(m =>
-          !m.pair || (m.pair[0] !== userProfile?.uid && m.pair[1] !== userProfile?.uid)
-        );
-
-        if (otherMatchups.length === 0) return null;
-
-        const config = CORPS_CLASS_CONFIG[corpsClass];
-        const Icon = config.icon;
-
-        return (
-          <div key={corpsClass} className="bg-[#1a1a1a] border border-[#333]">
-            <div className={`px-4 py-2 border-b border-[#333] bg-[#222] flex items-center gap-2`}>
-              <div className={`p-1 ${config.bgColor} border ${config.borderColor}`}>
-                <Icon className={`w-3 h-3 ${config.color}`} />
+      {/* Weekly View Mode */}
+      {viewMode === 'week' && (
+        <>
+          {/* Week Navigator */}
+          <div className="bg-[#1a1a1a] border border-[#333] mb-4">
+            <div className="px-4 py-3 border-b border-[#333] bg-[#222]">
+              <div className="flex items-center justify-between">
+                <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+                  <Calendar className="w-3.5 h-3.5 text-yellow-500" />
+                  Week {selectedWeek}
+                </h3>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={goToPrevWeek}
+                    disabled={selectedWeek <= 1}
+                    className="p-1 text-gray-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <span className="text-xs text-gray-500 min-w-[60px] text-center">
+                    {selectedWeek === currentWeek ? 'Current' : selectedWeek < currentWeek ? 'Past' : 'Upcoming'}
+                  </span>
+                  <button
+                    onClick={goToNextWeek}
+                    disabled={selectedWeek >= GAME_CONFIG.season.totalWeeks}
+                    className="p-1 text-gray-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-              <h3 className={`text-[10px] font-bold uppercase tracking-wider ${config.color}`}>
-                {config.name} ({otherMatchups.length})
-              </h3>
             </div>
 
-            <div className="divide-y divide-[#222]">
-              {otherMatchups.map(matchup => (
-                <VersusStrip
-                  key={matchup.id}
-                  matchup={matchup}
-                  getDisplayName={getDisplayName}
-                  getStanding={getStanding}
-                  userProfile={userProfile}
-                  isRivalry={isRivalryMatchup(matchup)}
-                  onClick={() => handleMatchupClick(matchup)}
-                />
-              ))}
+            {/* Week Pills */}
+            <div className="p-3 flex gap-1.5 overflow-x-auto scrollbar-hide">
+              {Array.from({ length: GAME_CONFIG.season.totalWeeks }, (_, i) => i + 1).map(week => {
+                const hasData = weeksWithMatchups.has(week);
+                const isSelected = selectedWeek === week;
+                const isCurrent = week === currentWeek;
+
+                return (
+                  <button
+                    key={week}
+                    onClick={() => setSelectedWeek(week)}
+                    className={`flex-shrink-0 px-3 py-1.5 text-xs font-bold transition-all relative ${
+                      isSelected
+                        ? 'bg-yellow-500 text-black'
+                        : isCurrent
+                        ? 'bg-[#222] border border-purple-500/50 text-white'
+                        : hasData
+                        ? 'bg-[#222] border border-[#444] text-white hover:border-[#555]'
+                        : 'bg-[#222] border border-[#333] text-gray-500 hover:text-white hover:border-[#444]'
+                    }`}
+                  >
+                    W{week}
+                    {isCurrent && !isSelected && (
+                      <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-purple-500 rounded-sm animate-pulse" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
-        );
-      })}
 
-      {!hasMatchups && (
-        <div className="bg-[#1a1a1a] border border-[#333] p-8 text-center">
-          <Swords className="w-8 h-8 text-gray-500 mx-auto mb-2" />
-          <p className="text-sm text-gray-400 mb-1">No matchups for Week {selectedWeek}</p>
-          <p className="text-xs text-gray-600">
-            {league?.members?.length < 2
-              ? 'Need at least 2 league members to generate matchups'
-              : 'The commissioner needs to generate matchups for this week'}
-          </p>
-        </div>
+          {/* Your Matchups - Featured */}
+          {userMatchups.length > 0 && (
+            <div className="bg-[#1a1a1a] border border-[#333] mb-4">
+              <div className="px-4 py-2 border-b border-[#333] bg-[#222] flex items-center justify-between">
+                <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                  Your Matchups ({userMatchups.length})
+                </h3>
+                {selectedWeek === currentWeek && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-500/20 text-red-500 text-[10px] font-bold uppercase">
+                    <Radio className="w-2.5 h-2.5 animate-pulse" />
+                    LIVE
+                  </span>
+                )}
+              </div>
+
+              <div className="divide-y divide-[#222]">
+                {userMatchups.map(matchup => (
+                  <VersusStrip
+                    key={matchup.id}
+                    matchup={matchup}
+                    getDisplayName={getDisplayName}
+                    getStanding={getStanding}
+                    userProfile={userProfile}
+                    isRivalry={isRivalryMatchup(matchup)}
+                    onClick={() => handleMatchupClick(matchup)}
+                    featured
+                    showClass
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Matchups by Corps Class */}
+          {CORPS_CLASSES.map(corpsClass => {
+            const classMatchups = weekMatchups[corpsClass] || [];
+            // Filter out user's matchups (already shown above)
+            const otherMatchups = classMatchups.filter(m =>
+              !m.pair || (m.pair[0] !== userProfile?.uid && m.pair[1] !== userProfile?.uid)
+            );
+
+            if (otherMatchups.length === 0) return null;
+
+            const config = CORPS_CLASS_CONFIG[corpsClass];
+            const Icon = config.icon;
+
+            return (
+              <div key={corpsClass} className="bg-[#1a1a1a] border border-[#333] mb-4">
+                <div className={`px-4 py-2 border-b border-[#333] bg-[#222] flex items-center gap-2`}>
+                  <div className={`p-1 ${config.bgColor} border ${config.borderColor}`}>
+                    <Icon className={`w-3 h-3 ${config.color}`} />
+                  </div>
+                  <h3 className={`text-[10px] font-bold uppercase tracking-wider ${config.color}`}>
+                    {config.name} ({otherMatchups.length})
+                  </h3>
+                </div>
+
+                <div className="divide-y divide-[#222]">
+                  {otherMatchups.map(matchup => (
+                    <VersusStrip
+                      key={matchup.id}
+                      matchup={matchup}
+                      getDisplayName={getDisplayName}
+                      getStanding={getStanding}
+                      userProfile={userProfile}
+                      isRivalry={isRivalryMatchup(matchup)}
+                      onClick={() => handleMatchupClick(matchup)}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Empty State */}
+          {!hasMatchups && (
+            <EmptyMatchupsState
+              selectedWeek={selectedWeek}
+              currentWeek={currentWeek}
+              league={league}
+              isCommissioner={isCommissioner}
+            />
+          )}
+        </>
       )}
     </motion.div>
   );
