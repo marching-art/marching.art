@@ -641,11 +641,11 @@ const CAPTIONS = {
 
 const ARTICLE_TYPES = {
   // The 5 daily articles - aligned with DCI.org style
-  DCI_SCORES: "dci_scores",           // Article 1: DCI scores analysis from the day
-  DCI_CORPS_FEATURE: "dci_corps_feature",   // Article 2: DCI feature on a single corps and their season progress
-  DCI_WEEKLY_RECAP: "dci_weekly_recap",     // Article 3: DCI recaps with deep dive on GE, Visual, Music trends
-  FANTASY_RESULTS: "fantasy_results",       // Article 4: marching.art results from the day
-  FANTASY_CAPTIONS: "fantasy_captions",     // Article 5: marching.art caption analysis (GE, Visual, Music trends)
+  DCI_DAILY: "dci_daily",             // Article 1: DCI scores analysis from the day (with score breakdown)
+  DCI_FEATURE: "dci_feature",         // Article 2: DCI feature on a single corps and their season progress
+  DCI_RECAP: "dci_recap",             // Article 3: DCI weekly recap with GE, Visual, Music trends + trade recommendations
+  FANTASY_DAILY: "fantasy_daily",     // Article 4: marching.art results from the day (with score breakdown)
+  FANTASY_RECAP: "fantasy_recap",     // Article 5: marching.art weekly caption analysis (GE, Visual, Music trends)
 };
 
 /**
@@ -2445,46 +2445,46 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
     // Generate articles sequentially to track featured corps and ensure diversity
     const articles = [];
 
-    // Article 1: DCI Scores Analysis - Today's competition results
-    const scoresArticle = await generateDciScoresArticle({
+    // Article 1: DCI DAILY - Today's competition results with score breakdown
+    const dciDailyArticle = await generateDciDailyArticle({
       reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db
     });
-    articles.push(scoresArticle);
-    if (scoresArticle.featuredCorps) {
-      featuredCorps.add(scoresArticle.featuredCorps);
+    articles.push(dciDailyArticle);
+    if (dciDailyArticle.featuredCorps) {
+      featuredCorps.add(dciDailyArticle.featuredCorps);
     }
 
-    // Article 2: DCI Corps Feature - Single corps season progress spotlight
-    const corpsFeatureArticle = await generateDciCorpsFeatureArticle({
+    // Article 2: DCI FEATURE - Single corps season progress spotlight
+    const dciFeatureArticle = await generateDciFeatureArticle({
       reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db,
       excludeCorps: featuredCorps
     });
-    articles.push(corpsFeatureArticle);
-    if (corpsFeatureArticle.featuredCorps) {
-      featuredCorps.add(corpsFeatureArticle.featuredCorps);
+    articles.push(dciFeatureArticle);
+    if (dciFeatureArticle.featuredCorps) {
+      featuredCorps.add(dciFeatureArticle.featuredCorps);
     }
 
-    // Article 3: DCI Weekly Recap - Deep dive on GE, Visual, Music trends
-    const weeklyRecapArticle = await generateDciWeeklyRecapArticle({
+    // Article 3: DCI RECAP - Deep dive on GE, Visual, Music trends + trade recommendations
+    const dciRecapArticle = await generateDciRecapArticle({
       reportDay, dayScores, trendData, captionLeaders, activeCorps, showContext, competitionContext, db,
       excludeCorps: featuredCorps
     });
-    articles.push(weeklyRecapArticle);
-    if (weeklyRecapArticle.featuredCorps) {
-      featuredCorps.add(weeklyRecapArticle.featuredCorps);
+    articles.push(dciRecapArticle);
+    if (dciRecapArticle.featuredCorps) {
+      featuredCorps.add(dciRecapArticle.featuredCorps);
     }
 
-    // Article 4: marching.art Results - Fantasy competition results
-    const fantasyResultsArticle = await generateFantasyResultsArticle({
+    // Article 4: FANTASY DAILY - Fantasy competition results with score breakdown
+    const fantasyDailyArticle = await generateFantasyDailyArticle({
       reportDay, fantasyData, showContext, competitionContext, db, dataDocId
     });
-    articles.push(fantasyResultsArticle);
+    articles.push(fantasyDailyArticle);
 
-    // Article 5: marching.art Caption Analysis - Fantasy GE/Visual/Music trends
-    const fantasyCaptionsArticle = await generateFantasyCaptionsArticle({
+    // Article 5: FANTASY RECAP - Fantasy GE/Visual/Music caption trends
+    const fantasyRecapArticle = await generateFantasyRecapArticle({
       reportDay, fantasyData, showContext, competitionContext, db
     });
-    articles.push(fantasyCaptionsArticle);
+    articles.push(fantasyRecapArticle);
 
     return {
       success: true,
@@ -2516,7 +2516,7 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
  * Article 1: DCI Scores Analysis
  * Daily competition results in DCI.org editorial style
  */
-async function generateDciScoresArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db }) {
+async function generateDciDailyArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db }) {
   const topCorps = dayScores[0];
   const secondCorps = dayScores[1];
   const thirdCorps = dayScores[2];
@@ -2655,8 +2655,21 @@ Use precise score language. Reference specific captions. Write like a DCI.org st
           required: ["rank", "corps", "year", "total", "change", "momentum"],
         },
       },
+      scoreBreakdown: {
+        type: SchemaType.OBJECT,
+        description: "Caption score breakdown for top corps",
+        properties: {
+          geWinner: { type: SchemaType.STRING, description: "Corps that won GE caption" },
+          geScore: { type: SchemaType.NUMBER, description: "Winning GE score" },
+          visualWinner: { type: SchemaType.STRING, description: "Corps that won Visual caption" },
+          visualScore: { type: SchemaType.NUMBER, description: "Winning Visual score" },
+          musicWinner: { type: SchemaType.STRING, description: "Corps that won Music caption" },
+          musicScore: { type: SchemaType.NUMBER, description: "Winning Music score" },
+        },
+        required: ["geWinner", "geScore", "visualWinner", "visualScore", "musicWinner", "musicScore"],
+      },
     },
-    required: ["headline", "summary", "narrative", "standings"],
+    required: ["headline", "summary", "narrative", "standings", "scoreBreakdown"],
   };
 
   try {
@@ -2675,10 +2688,10 @@ Use precise score language. Reference specific captions. Write like a DCI.org st
     );
 
     const imageData = await generateImageWithImagen(imagePrompt);
-    const imageResult = await processGeneratedImage(imageData, "dci_scores");
+    const imageResult = await processGeneratedImage(imageData, "dci_daily");
 
     return {
-      type: ARTICLE_TYPES.DCI_SCORES,
+      type: ARTICLE_TYPES.DCI_DAILY,
       ...content,
       featuredCorps: topCorps.corps, // Track which corps was featured for diversity
       imageUrl: imageResult.url,
@@ -2687,7 +2700,7 @@ Use precise score language. Reference specific captions. Write like a DCI.org st
     };
   } catch (error) {
     logger.error("DCI Scores article failed:", error);
-    return createFallbackArticle(ARTICLE_TYPES.DCI_SCORES, reportDay);
+    return createFallbackArticle(ARTICLE_TYPES.DCI_DAILY, reportDay);
   }
 }
 
@@ -2696,7 +2709,7 @@ Use precise score language. Reference specific captions. Write like a DCI.org st
  * In-depth feature on a single corps and their progress across the season
  * Written in DCI.org editorial style
  */
-async function generateDciCorpsFeatureArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, excludeCorps = new Set() }) {
+async function generateDciFeatureArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, excludeCorps = new Set() }) {
   const toneGuidance = getToneGuidance(competitionContext, "dci_corps_feature");
 
   // Select a corps to feature - rotate through the field, excluding already-featured corps
@@ -2838,10 +2851,10 @@ Write like a DCI.org or Drum Corps World feature journalist.`;
     );
 
     const imageData = await generateImageWithImagen(imagePrompt);
-    const imageResult = await processGeneratedImage(imageData, "dci_corps_feature");
+    const imageResult = await processGeneratedImage(imageData, "dci_feature");
 
     return {
-      type: ARTICLE_TYPES.DCI_CORPS_FEATURE,
+      type: ARTICLE_TYPES.DCI_FEATURE,
       ...content,
       featuredCorps: featureCorps.corps,
       featuredYear: featureCorps.sourceYear,
@@ -2852,7 +2865,7 @@ Write like a DCI.org or Drum Corps World feature journalist.`;
     };
   } catch (error) {
     logger.error("DCI Corps Feature article failed:", error);
-    return createFallbackArticle(ARTICLE_TYPES.DCI_CORPS_FEATURE, reportDay);
+    return createFallbackArticle(ARTICLE_TYPES.DCI_FEATURE, reportDay);
   }
 }
 
@@ -2861,7 +2874,7 @@ Write like a DCI.org or Drum Corps World feature journalist.`;
  * Deep dive on General Effect, Visual, and Music trends over the last week
  * Written in DCI.org recap analysis style
  */
-async function generateDciWeeklyRecapArticle({ reportDay, dayScores, trendData, captionLeaders, activeCorps, showContext, competitionContext, db, excludeCorps = new Set() }) {
+async function generateDciRecapArticle({ reportDay, dayScores, trendData, captionLeaders, activeCorps, showContext, competitionContext, db, excludeCorps = new Set() }) {
   const toneGuidance = getToneGuidance(competitionContext, "dci_weekly_recap");
 
   // Build comprehensive caption trend analysis
@@ -2997,6 +3010,12 @@ WRITE A DCI.ORG-STYLE WEEKLY RECAP ANALYSIS:
    - MUSIC section: Break down Brass, MA, and Percussion. Which hornlines are hot?
    - Championship implications: Which caption trends will decide Finals placement?
 
+4. TRADE RECOMMENDATIONS: Fantasy strategy insights based on caption trends:
+   - Which DCI corps are trending UP and worth acquiring in fantasy drafts?
+   - Which corps are trending DOWN and may be overvalued?
+   - Which corps are STEADY and reliable picks?
+   - Focus on which CORPS are valuable based on their caption performance - NOT specific lineup picks
+
 Include specific score comparisons. Use DCI.org recap terminology. Write for fans who want to understand the numbers.`;
 
   const schema = {
@@ -3014,8 +3033,21 @@ Include specific score comparisons. Use DCI.org recap terminology. Write for fan
         },
         required: ["geAnalysis", "visualAnalysis", "musicAnalysis"],
       },
+      recommendations: {
+        type: SchemaType.ARRAY,
+        description: "Fantasy trade recommendations based on corps trends",
+        items: {
+          type: SchemaType.OBJECT,
+          properties: {
+            corps: { type: SchemaType.STRING, description: "Corps name" },
+            action: { type: SchemaType.STRING, enum: ["buy", "hold", "sell"], description: "Recommended action" },
+            reasoning: { type: SchemaType.STRING, description: "Why this corps is trending this way based on caption performance" },
+          },
+          required: ["corps", "action", "reasoning"],
+        },
+      },
     },
-    required: ["headline", "summary", "narrative", "captionBreakdown"],
+    required: ["headline", "summary", "narrative", "captionBreakdown", "recommendations"],
   };
 
   try {
@@ -3034,10 +3066,10 @@ Include specific score comparisons. Use DCI.org recap terminology. Write for fan
     );
 
     const imageData = await generateImageWithImagen(imagePrompt);
-    const imageResult = await processGeneratedImage(imageData, "dci_weekly_recap");
+    const imageResult = await processGeneratedImage(imageData, "dci_recap");
 
     return {
-      type: ARTICLE_TYPES.DCI_WEEKLY_RECAP,
+      type: ARTICLE_TYPES.DCI_RECAP,
       ...content,
       featuredCorps: featuredCorps.corps,
       imageUrl: imageResult.url,
@@ -3046,7 +3078,7 @@ Include specific score comparisons. Use DCI.org recap terminology. Write for fan
     };
   } catch (error) {
     logger.error("DCI Weekly Recap article failed:", error);
-    return createFallbackArticle(ARTICLE_TYPES.DCI_WEEKLY_RECAP, reportDay);
+    return createFallbackArticle(ARTICLE_TYPES.DCI_RECAP, reportDay);
   }
 }
 
@@ -3054,9 +3086,9 @@ Include specific score comparisons. Use DCI.org recap terminology. Write for fan
  * Article 4: marching.art Fantasy Results
  * Daily fantasy competition results
  */
-async function generateFantasyResultsArticle({ reportDay, fantasyData, showContext, competitionContext, db, dataDocId }) {
+async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext, competitionContext, db, dataDocId }) {
   if (!fantasyData?.current) {
-    return createFallbackArticle(ARTICLE_TYPES.FANTASY_RESULTS, reportDay);
+    return createFallbackArticle(ARTICLE_TYPES.FANTASY_DAILY, reportDay);
   }
 
   const toneGuidance = getToneGuidance(competitionContext, "fantasy_results");
@@ -3133,8 +3165,19 @@ This is fantasy sports coverage - fun, competitive, celebratory. NEVER reveal sp
           required: ["rank", "corpsName", "director", "score"],
         },
       },
+      scoreBreakdown: {
+        type: SchemaType.OBJECT,
+        description: "Score breakdown and statistics for today's competition",
+        properties: {
+          winningScore: { type: SchemaType.NUMBER, description: "Top score of the day" },
+          averageScore: { type: SchemaType.NUMBER, description: "Average score among top performers" },
+          spreadTop10: { type: SchemaType.NUMBER, description: "Point spread between 1st and 10th" },
+          totalEnsembles: { type: SchemaType.INTEGER, description: "Number of ensembles competing" },
+        },
+        required: ["winningScore", "averageScore", "totalEnsembles"],
+      },
     },
-    required: ["headline", "summary", "narrative", "topPerformers"],
+    required: ["headline", "summary", "narrative", "topPerformers", "scoreBreakdown"],
   };
 
   try {
@@ -3167,10 +3210,10 @@ This is fantasy sports coverage - fun, competitive, celebratory. NEVER reveal sp
     );
 
     const imageData = await generateImageWithImagen(imagePrompt);
-    const imageResult = await processGeneratedImage(imageData, "fantasy_results");
+    const imageResult = await processGeneratedImage(imageData, "fantasy_daily");
 
     return {
-      type: ARTICLE_TYPES.FANTASY_RESULTS,
+      type: ARTICLE_TYPES.FANTASY_DAILY,
       ...content,
       featuredPerformer: topCorps?.corpsName,
       imageUrl: imageResult.url,
@@ -3179,7 +3222,7 @@ This is fantasy sports coverage - fun, competitive, celebratory. NEVER reveal sp
     };
   } catch (error) {
     logger.error("Fantasy Results article failed:", error);
-    return createFallbackArticle(ARTICLE_TYPES.FANTASY_RESULTS, reportDay);
+    return createFallbackArticle(ARTICLE_TYPES.FANTASY_DAILY, reportDay);
   }
 }
 
@@ -3187,7 +3230,7 @@ This is fantasy sports coverage - fun, competitive, celebratory. NEVER reveal sp
  * Article 5: marching.art Caption Analysis
  * Fantasy caption trends focusing on General Effect, Visual, and Music over the last week
  */
-async function generateFantasyCaptionsArticle({ reportDay, fantasyData, showContext, competitionContext, db }) {
+async function generateFantasyRecapArticle({ reportDay, fantasyData, showContext, competitionContext, db }) {
   const toneGuidance = getToneGuidance(competitionContext, "fantasy_captions");
 
   const shows = fantasyData?.current?.shows || [];
@@ -3316,10 +3359,10 @@ Help directors understand the caption dynamics. Educational but engaging.`;
     const imagePrompt = buildFantasyLeagueImagePrompt();
 
     const imageData = await generateImageWithImagen(imagePrompt);
-    const imageResult = await processGeneratedImage(imageData, "fantasy_captions");
+    const imageResult = await processGeneratedImage(imageData, "fantasy_recap");
 
     return {
-      type: ARTICLE_TYPES.FANTASY_CAPTIONS,
+      type: ARTICLE_TYPES.FANTASY_RECAP,
       ...content,
       imageUrl: imageResult.url,
       imagePrompt,
@@ -3327,7 +3370,7 @@ Help directors understand the caption dynamics. Educational but engaging.`;
     };
   } catch (error) {
     logger.error("Fantasy Captions article failed:", error);
-    return createFallbackArticle(ARTICLE_TYPES.FANTASY_CAPTIONS, reportDay);
+    return createFallbackArticle(ARTICLE_TYPES.FANTASY_RECAP, reportDay);
   }
 }
 
