@@ -17,6 +17,169 @@ const { FieldValue } = require("firebase-admin/firestore");
 // Maximum comment length
 const MAX_COMMENT_LENGTH = 1000;
 
+// Valid emoji reactions
+const VALID_REACTIONS = ['👏', '🔥', '💯', '🎺', '❤️', '🤔', '🏳️', '🥁'];
+
+// =============================================================================
+// ARTICLE REACTIONS
+// =============================================================================
+
+/**
+ * Toggle a reaction on an article
+ * - If user has no reaction: add the reaction
+ * - If user has same reaction: remove it
+ * - If user has different reaction: change to new one
+ */
+exports.toggleArticleReaction = onCall(
+  {
+    cors: true,
+    timeoutSeconds: 30,
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "You must be signed in to react");
+    }
+
+    const db = getDb();
+    const { articleId, emoji } = request.data || {};
+
+    if (!articleId || typeof articleId !== "string") {
+      throw new HttpsError("invalid-argument", "Article ID is required");
+    }
+
+    if (!emoji || !VALID_REACTIONS.includes(emoji)) {
+      throw new HttpsError("invalid-argument", "Invalid reaction emoji");
+    }
+
+    const userId = request.auth.uid;
+    const userReactionId = `${articleId}_${userId}`;
+
+    try {
+      const result = await db.runTransaction(async (transaction) => {
+        // Get the user's current reaction (if any)
+        const userReactionRef = db.collection("article_user_reactions").doc(userReactionId);
+        const userReactionDoc = await transaction.get(userReactionRef);
+
+        // Get the article's aggregate reaction counts
+        const articleReactionsRef = db.collection("article_reactions").doc(articleId);
+        const articleReactionsDoc = await transaction.get(articleReactionsRef);
+
+        // Initialize counts if document doesn't exist
+        let counts = articleReactionsDoc.exists
+          ? articleReactionsDoc.data()
+          : { '👏': 0, '🔥': 0, '💯': 0, '🎺': 0, '❤️': 0, '🤔': 0, '🏳️': 0, '🥁': 0, total: 0 };
+
+        let action;
+        let resultEmoji;
+
+        if (userReactionDoc.exists) {
+          const currentEmoji = userReactionDoc.data().emoji;
+
+          if (currentEmoji === emoji) {
+            // Same emoji - remove the reaction
+            transaction.delete(userReactionRef);
+            counts[currentEmoji] = Math.max(0, (counts[currentEmoji] || 0) - 1);
+            counts.total = Math.max(0, (counts.total || 0) - 1);
+            action = "removed";
+            resultEmoji = null;
+          } else {
+            // Different emoji - change the reaction
+            transaction.update(userReactionRef, {
+              emoji,
+              updatedAt: new Date(),
+            });
+            counts[currentEmoji] = Math.max(0, (counts[currentEmoji] || 0) - 1);
+            counts[emoji] = (counts[emoji] || 0) + 1;
+            action = "changed";
+            resultEmoji = emoji;
+          }
+        } else {
+          // No existing reaction - add new one
+          transaction.set(userReactionRef, {
+            articleId,
+            userId,
+            emoji,
+            createdAt: new Date(),
+          });
+          counts[emoji] = (counts[emoji] || 0) + 1;
+          counts.total = (counts.total || 0) + 1;
+          action = "added";
+          resultEmoji = emoji;
+        }
+
+        // Update the aggregate counts
+        transaction.set(articleReactionsRef, counts);
+
+        return { action, emoji: resultEmoji };
+      });
+
+      logger.info("Article reaction toggled:", {
+        articleId,
+        userId,
+        action: result.action,
+        emoji: result.emoji,
+      });
+
+      return {
+        success: true,
+        action: result.action,
+        emoji: result.emoji,
+      };
+    } catch (error) {
+      logger.error("Error toggling article reaction:", error);
+      throw new HttpsError("internal", "Failed to toggle reaction");
+    }
+  }
+);
+
+/**
+ * Get reactions for an article
+ * Returns counts for each emoji and the user's current reaction (if logged in)
+ */
+exports.getArticleReactions = onCall(
+  {
+    cors: true,
+    timeoutSeconds: 30,
+  },
+  async (request) => {
+    const db = getDb();
+    const { articleId } = request.data || {};
+
+    if (!articleId || typeof articleId !== "string") {
+      throw new HttpsError("invalid-argument", "Article ID is required");
+    }
+
+    try {
+      // Get aggregate counts
+      const articleReactionsRef = db.collection("article_reactions").doc(articleId);
+      const articleReactionsDoc = await articleReactionsRef.get();
+
+      const counts = articleReactionsDoc.exists
+        ? articleReactionsDoc.data()
+        : { '👏': 0, '🔥': 0, '💯': 0, '🎺': 0, '❤️': 0, '🤔': 0, '🏳️': 0, '🥁': 0, total: 0 };
+
+      // Get user's reaction if logged in
+      let userReaction = null;
+      if (request.auth) {
+        const userReactionId = `${articleId}_${request.auth.uid}`;
+        const userReactionDoc = await db.collection("article_user_reactions").doc(userReactionId).get();
+        if (userReactionDoc.exists) {
+          userReaction = userReactionDoc.data().emoji;
+        }
+      }
+
+      return {
+        success: true,
+        counts,
+        userReaction,
+      };
+    } catch (error) {
+      logger.error("Error getting article reactions:", error);
+      throw new HttpsError("internal", "Failed to get reactions");
+    }
+  }
+);
+
 // =============================================================================
 // USER COMMENT FUNCTIONS
 // =============================================================================
