@@ -268,18 +268,18 @@ const TickerBar = () => {
         // Class-specific scores
         return (
           <>
-            <div className={`flex-shrink-0 flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 bg-${colors.bg}-500/20 border border-${colors.bg}-500/30 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider`}>
-              <Trophy className={`w-3 h-3 text-${colors.text}-400`} />
+            <div className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-${colors.bg}-500/20 border border-${colors.bg}-500/30 rounded text-[11px] sm:text-[10px] font-bold uppercase tracking-wider`}>
+              <Trophy className={`w-3.5 h-3.5 sm:w-3 sm:h-3 text-${colors.text}-400`} />
               <span className={`text-${colors.text}-400 whitespace-nowrap`}>{label} {tickerData.dayLabel}</span>
             </div>
             <div className="w-px h-4 bg-[#333]" />
             {/* OPTIMIZATION #10: Use stable key based on item identity */}
             {classData?.scores?.slice(0, 8).map((item, idx) => (
-              <div key={`${item.fullName}-${item.score}`} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                <span className="text-gray-400 font-medium text-[11px] sm:text-xs whitespace-nowrap">{item.fullName}</span>
-                <span className="text-white tabular-nums font-mono text-[11px] sm:text-xs">{item.score}</span>
+              <div key={`${item.fullName}-${item.score}`} className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-gray-400 font-medium text-xs whitespace-nowrap">{item.fullName}</span>
+                <span className="text-white tabular-nums font-mono text-xs">{item.score}</span>
                 {idx < Math.min(classData.scores.length, 8) - 1 && (
-                  <div className="w-px h-3 bg-[#333] ml-0.5 sm:ml-1" />
+                  <div className="w-px h-3 bg-[#333] ml-1" />
                 )}
               </div>
             ))}
@@ -290,19 +290,19 @@ const TickerBar = () => {
         // SoundSport medals
         return (
           <>
-            <div className="flex-shrink-0 flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 bg-purple-500/20 border border-purple-500/30 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">
-              <Trophy className="w-3 h-3 text-purple-400" />
+            <div className="flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-purple-500/20 border border-purple-500/30 rounded text-[11px] sm:text-[10px] font-bold uppercase tracking-wider">
+              <Trophy className="w-3.5 h-3.5 sm:w-3 sm:h-3 text-purple-400" />
               <span className="text-purple-400 whitespace-nowrap">SoundSport Medals</span>
             </div>
             <div className="w-px h-4 bg-[#333]" />
             {tickerData.soundSportMedals?.map((item, idx) => (
-              <div key={`${item.medal}-${item.fullName}`} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                <span className={`text-[9px] sm:text-[10px] font-bold ${MEDAL_COLORS[item.medal] || 'text-gray-400'}`}>
+              <div key={`${item.medal}-${item.fullName}`} className="flex items-center gap-2 flex-shrink-0">
+                <span className={`text-[11px] sm:text-[10px] font-bold ${MEDAL_COLORS[item.medal] || 'text-gray-400'}`}>
                   {item.medal}
                 </span>
-                <span className="text-gray-400 font-medium text-[11px] sm:text-xs whitespace-nowrap">{item.fullName}</span>
+                <span className="text-gray-400 font-medium text-xs whitespace-nowrap">{item.fullName}</span>
                 {idx < tickerData.soundSportMedals.length - 1 && (
-                  <div className="w-px h-3 bg-[#333] ml-0.5 sm:ml-1" />
+                  <div className="w-px h-3 bg-[#333] ml-1" />
                 )}
               </div>
             ))}
@@ -313,16 +313,16 @@ const TickerBar = () => {
         // Class-specific season leaders with trends
         return (
           <>
-            <div className={`flex-shrink-0 flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 bg-${colors.bg}-500/20 border border-${colors.bg}-500/30 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider`}>
-              <TrendingUp className={`w-3 h-3 text-${colors.text}-400`} />
+            <div className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-${colors.bg}-500/20 border border-${colors.bg}-500/30 rounded text-[11px] sm:text-[10px] font-bold uppercase tracking-wider`}>
+              <TrendingUp className={`w-3.5 h-3.5 sm:w-3 sm:h-3 text-${colors.text}-400`} />
               <span className={`text-${colors.text}-400 whitespace-nowrap`}>{label} Leaders</span>
             </div>
             <div className="w-px h-4 bg-[#333]" />
             {classData?.leaders?.slice(0, 8).map((item, idx) => (
-              <div key={`${item.fullName}-${item.score}`} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                <span className="text-gray-500 text-[9px] sm:text-[10px] font-mono">#{idx + 1}</span>
-                <span className="text-gray-400 font-medium text-[11px] sm:text-xs whitespace-nowrap">{item.fullName}</span>
-                <span className={`tabular-nums font-mono text-[11px] sm:text-xs ${
+              <div key={`${item.fullName}-${item.score}`} className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-gray-500 text-[11px] sm:text-[10px] font-mono">#{idx + 1}</span>
+                <span className="text-gray-400 font-medium text-xs whitespace-nowrap">{item.fullName}</span>
+                <span className={`tabular-nums font-mono text-xs ${
                   item.trend === 'up' ? 'text-green-400' :
                   item.trend === 'down' ? 'text-red-400' :
                   'text-white'
@@ -331,7 +331,7 @@ const TickerBar = () => {
                 </span>
                 <TrendIndicator trend={item.trend} />
                 {idx < Math.min(classData.leaders.length, 8) - 1 && (
-                  <div className="w-px h-3 bg-[#333] ml-0.5 sm:ml-1" />
+                  <div className="w-px h-3 bg-[#333] ml-1" />
                 )}
               </div>
             ))}
@@ -342,18 +342,18 @@ const TickerBar = () => {
         // GE Caption Leaders (combined across all classes)
         return (
           <>
-            <div className="flex-shrink-0 flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 bg-amber-500/20 border border-amber-500/30 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">
-              <Sparkles className="w-3 h-3 text-amber-400" />
-              <span className="text-amber-400 whitespace-nowrap">GE Caption Leaders</span>
+            <div className="flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-amber-500/20 border border-amber-500/30 rounded text-[11px] sm:text-[10px] font-bold uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5 sm:w-3 sm:h-3 text-amber-400" />
+              <span className="text-amber-400 whitespace-nowrap">GE Leaders</span>
             </div>
             <div className="w-px h-4 bg-[#333]" />
             {tickerData.combinedCaptionLeaders?.ge?.map((item, idx) => (
-              <div key={`ge-${item.fullName}-${item.score}`} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                <span className="text-gray-500 text-[9px] sm:text-[10px] font-mono">#{idx + 1}</span>
-                <span className="text-gray-400 font-medium text-[11px] sm:text-xs whitespace-nowrap">{item.fullName}</span>
-                <span className="text-amber-300 tabular-nums font-mono text-[11px] sm:text-xs">{item.score}</span>
+              <div key={`ge-${item.fullName}-${item.score}`} className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-gray-500 text-[11px] sm:text-[10px] font-mono">#{idx + 1}</span>
+                <span className="text-gray-400 font-medium text-xs whitespace-nowrap">{item.fullName}</span>
+                <span className="text-amber-300 tabular-nums font-mono text-xs">{item.score}</span>
                 {idx < tickerData.combinedCaptionLeaders.ge.length - 1 && (
-                  <div className="w-px h-3 bg-[#333] ml-0.5 sm:ml-1" />
+                  <div className="w-px h-3 bg-[#333] ml-1" />
                 )}
               </div>
             ))}
@@ -364,18 +364,18 @@ const TickerBar = () => {
         // Visual Caption Leaders (combined across all classes)
         return (
           <>
-            <div className="flex-shrink-0 flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 bg-cyan-500/20 border border-cyan-500/30 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">
-              <Eye className="w-3 h-3 text-cyan-400" />
-              <span className="text-cyan-400 whitespace-nowrap">Visual Caption Leaders</span>
+            <div className="flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-cyan-500/20 border border-cyan-500/30 rounded text-[11px] sm:text-[10px] font-bold uppercase tracking-wider">
+              <Eye className="w-3.5 h-3.5 sm:w-3 sm:h-3 text-cyan-400" />
+              <span className="text-cyan-400 whitespace-nowrap">Visual Leaders</span>
             </div>
             <div className="w-px h-4 bg-[#333]" />
             {tickerData.combinedCaptionLeaders?.visual?.map((item, idx) => (
-              <div key={`vis-${item.fullName}-${item.score}`} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                <span className="text-gray-500 text-[9px] sm:text-[10px] font-mono">#{idx + 1}</span>
-                <span className="text-gray-400 font-medium text-[11px] sm:text-xs whitespace-nowrap">{item.fullName}</span>
-                <span className="text-cyan-300 tabular-nums font-mono text-[11px] sm:text-xs">{item.score}</span>
+              <div key={`vis-${item.fullName}-${item.score}`} className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-gray-500 text-[11px] sm:text-[10px] font-mono">#{idx + 1}</span>
+                <span className="text-gray-400 font-medium text-xs whitespace-nowrap">{item.fullName}</span>
+                <span className="text-cyan-300 tabular-nums font-mono text-xs">{item.score}</span>
                 {idx < tickerData.combinedCaptionLeaders.visual.length - 1 && (
-                  <div className="w-px h-3 bg-[#333] ml-0.5 sm:ml-1" />
+                  <div className="w-px h-3 bg-[#333] ml-1" />
                 )}
               </div>
             ))}
@@ -386,18 +386,18 @@ const TickerBar = () => {
         // Music Caption Leaders (combined across all classes)
         return (
           <>
-            <div className="flex-shrink-0 flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 bg-pink-500/20 border border-pink-500/30 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">
-              <Music className="w-3 h-3 text-pink-400" />
-              <span className="text-pink-400 whitespace-nowrap">Music Caption Leaders</span>
+            <div className="flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-pink-500/20 border border-pink-500/30 rounded text-[11px] sm:text-[10px] font-bold uppercase tracking-wider">
+              <Music className="w-3.5 h-3.5 sm:w-3 sm:h-3 text-pink-400" />
+              <span className="text-pink-400 whitespace-nowrap">Music Leaders</span>
             </div>
             <div className="w-px h-4 bg-[#333]" />
             {tickerData.combinedCaptionLeaders?.music?.map((item, idx) => (
-              <div key={`mus-${item.fullName}-${item.score}`} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                <span className="text-gray-500 text-[9px] sm:text-[10px] font-mono">#{idx + 1}</span>
-                <span className="text-gray-400 font-medium text-[11px] sm:text-xs whitespace-nowrap">{item.fullName}</span>
-                <span className="text-pink-300 tabular-nums font-mono text-[11px] sm:text-xs">{item.score}</span>
+              <div key={`mus-${item.fullName}-${item.score}`} className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-gray-500 text-[11px] sm:text-[10px] font-mono">#{idx + 1}</span>
+                <span className="text-gray-400 font-medium text-xs whitespace-nowrap">{item.fullName}</span>
+                <span className="text-pink-300 tabular-nums font-mono text-xs">{item.score}</span>
                 {idx < tickerData.combinedCaptionLeaders.music.length - 1 && (
-                  <div className="w-px h-3 bg-[#333] ml-0.5 sm:ml-1" />
+                  <div className="w-px h-3 bg-[#333] ml-1" />
                 )}
               </div>
             ))}
@@ -409,34 +409,34 @@ const TickerBar = () => {
         if (!classData?.movers?.length) {
           return (
             <>
-              <div className={`flex-shrink-0 flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 bg-${colors.bg}-500/20 border border-${colors.bg}-500/30 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider`}>
-                <TrendingUp className={`w-3 h-3 text-${colors.text}-400`} />
+              <div className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-${colors.bg}-500/20 border border-${colors.bg}-500/30 rounded text-[11px] sm:text-[10px] font-bold uppercase tracking-wider`}>
+                <TrendingUp className={`w-3.5 h-3.5 sm:w-3 sm:h-3 text-${colors.text}-400`} />
                 <span className={`text-${colors.text}-400 whitespace-nowrap`}>{label} Movers</span>
               </div>
               <div className="w-px h-4 bg-[#333]" />
-              <span className="text-gray-500 text-[11px] sm:text-xs">No significant moves today</span>
+              <span className="text-gray-500 text-xs">No significant moves today</span>
             </>
           );
         }
 
         return (
           <>
-            <div className={`flex-shrink-0 flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 bg-${colors.bg}-500/20 border border-${colors.bg}-500/30 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider`}>
-              <TrendingUp className={`w-3 h-3 text-${colors.text}-400`} />
+            <div className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-${colors.bg}-500/20 border border-${colors.bg}-500/30 rounded text-[11px] sm:text-[10px] font-bold uppercase tracking-wider`}>
+              <TrendingUp className={`w-3.5 h-3.5 sm:w-3 sm:h-3 text-${colors.text}-400`} />
               <span className={`text-${colors.text}-400 whitespace-nowrap`}>{label} Movers</span>
             </div>
             <div className="w-px h-4 bg-[#333]" />
             {classData.movers.map((item, idx) => (
-              <div key={`mover-${item.fullName}-${item.change}`} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                <span className="text-gray-400 font-medium text-[11px] sm:text-xs whitespace-nowrap">{item.fullName}</span>
-                <span className={`tabular-nums font-mono text-[11px] sm:text-xs ${
+              <div key={`mover-${item.fullName}-${item.change}`} className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-gray-400 font-medium text-xs whitespace-nowrap">{item.fullName}</span>
+                <span className={`tabular-nums font-mono text-xs ${
                   item.direction === 'up' ? 'text-green-400' : 'text-red-400'
                 }`}>
                   {item.direction === 'up' ? '+' : ''}{item.change}
                 </span>
                 <TrendIndicator trend={item.direction} />
                 {idx < classData.movers.length - 1 && (
-                  <div className="w-px h-3 bg-[#333] ml-0.5 sm:ml-1" />
+                  <div className="w-px h-3 bg-[#333] ml-1" />
                 )}
               </div>
             ))}
@@ -448,15 +448,62 @@ const TickerBar = () => {
     }
   };
 
+  // Handle touch/swipe navigation
+  const handlePrevSection = () => {
+    setActiveSection(prev => prev === 0 ? tickerSections.length - 1 : prev - 1);
+  };
+
+  const handleNextSection = () => {
+    setActiveSection(prev => (prev + 1) % tickerSections.length);
+  };
+
   return (
-    <div className="fixed top-12 w-full h-9 sm:h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
+    <div className="fixed top-12 w-full h-10 sm:h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
+      {/* Mobile: Section navigation arrows */}
+      <button
+        onClick={handlePrevSection}
+        className="sm:hidden flex-shrink-0 w-8 h-full flex items-center justify-center text-gray-600 active:text-white active:bg-white/5 transition-colors"
+        aria-label="Previous section"
+      >
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+
       {/* Ticker content */}
       <div
         ref={scrollRef}
-        className="flex-1 flex items-center gap-2 sm:gap-3 px-2 sm:px-3 text-xs overflow-x-auto scrollbar-hide"
+        className="flex-1 flex items-center gap-2 sm:gap-3 px-2 sm:px-3 text-xs overflow-x-auto scrollbar-hide scroll-smooth"
       >
         {renderSectionContent()}
       </div>
+
+      {/* Mobile: Section navigation arrows */}
+      <button
+        onClick={handleNextSection}
+        className="sm:hidden flex-shrink-0 w-8 h-full flex items-center justify-center text-gray-600 active:text-white active:bg-white/5 transition-colors"
+        aria-label="Next section"
+      >
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+
+      {/* Section indicator dots - mobile only */}
+      {tickerSections.length > 1 && (
+        <div className="sm:hidden flex-shrink-0 flex items-center gap-1 px-2 border-l border-[#333]">
+          {tickerSections.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setActiveSection(idx)}
+              className={`w-1.5 h-1.5 rounded-full transition-all duration-200 ${
+                idx === activeSection ? 'bg-yellow-400 w-3' : 'bg-gray-600'
+              }`}
+              aria-label={`Go to section ${idx + 1}`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
@@ -495,11 +542,12 @@ const GameShell = ({ children }) => {
         <TickerBar />
 
         {/* Main Content Area - Fixed position fills space between headers and footer */}
-        {/* On mobile, bottom accounts for nav height + safe-area-inset-bottom via CSS class */}
+        {/* On mobile: top-nav (48px) + ticker (40px) = 88px */}
+        {/* On desktop: top-nav (48px) + ticker (32px) = 80px */}
         <main
           id="main-content"
           role="main"
-          className="fixed top-[84px] sm:top-20 left-0 right-0 bg-[#0a0a0a] overflow-hidden main-content-bottom"
+          className="fixed top-[88px] sm:top-20 left-0 right-0 bg-[#0a0a0a] overflow-hidden main-content-bottom"
         >
           <div className="max-w-[1920px] mx-auto h-full">
             {children}

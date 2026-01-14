@@ -31,8 +31,23 @@ const LiveScoresBox = ({
       {/* Score List - Shows top 12 corps */}
       <div className="divide-y divide-[#333]/50">
         {loading ? (
-          <div className="px-3 py-6 text-center">
-            <div className="inline-block w-5 h-5 border-2 border-[#0057B8]/30 border-t-[#0057B8] rounded-full animate-spin" />
+          /* Skeleton loading state - mimics content structure */
+          <div className="divide-y divide-[#333]/50">
+            {[...Array(6)].map((_, idx) => (
+              <div key={idx} className="flex items-center justify-between px-4 py-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-5 h-5 skeleton rounded-sm" />
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-3 w-8 skeleton rounded-sm" />
+                    <div className="h-4 w-20 skeleton rounded-sm" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-14 skeleton rounded-sm" />
+                  <div className="h-4 w-10 skeleton rounded-sm" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : hasData ? (
           liveScores.slice(0, 12).map((row) => {
@@ -72,10 +87,10 @@ const LiveScoresBox = ({
                       e.stopPropagation();
                       onYoutubeClick(row.sourceYear, row.corpsName);
                     }}
-                    className="p-1 text-gray-500 hover:text-red-500 transition-colors"
+                    className="p-2 -mr-1 text-gray-500 hover:text-red-500 active:text-red-600 transition-colors press-feedback touch-target"
                     title={`Watch ${row.sourceYear} ${row.corpsName} on YouTube`}
                   >
-                    <YouTubeIcon size={14} />
+                    <YouTubeIcon size={16} />
                   </button>
                 </div>
               </div>
@@ -88,14 +103,14 @@ const LiveScoresBox = ({
         )}
       </div>
 
-      {/* Footer */}
-      <div className="px-4 py-3 border-t border-[#333] bg-[#111]">
+      {/* Footer - 44px touch target */}
+      <div className="px-2 py-1.5 border-t border-[#333] bg-[#111]">
         <button
           onClick={onShowStandings}
-          className="text-[10px] text-[#0057B8] hover:text-[#0066d6] font-bold uppercase tracking-wider transition-colors flex items-center gap-1"
+          className="min-h-[44px] px-2 text-xs text-[#0057B8] hover:text-[#0066d6] active:text-[#004a9e] font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 press-feedback rounded-sm"
         >
           Full Standings
-          <ChevronRight className="w-3 h-3" />
+          <ChevronRight className="w-4 h-4" />
         </button>
       </div>
     </div>
