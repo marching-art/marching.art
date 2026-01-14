@@ -51,6 +51,8 @@ const {
   reportComment,
 } = require("./src/callable/comments");
 const {
+  toggleArticleReaction,
+  getArticleReactions,
   addArticleComment,
   getArticleComments,
   editArticleComment,
@@ -176,6 +178,10 @@ module.exports = {
   sendCommentNotification,
   deleteComment,
   reportComment,
+
+  // Article Reactions
+  toggleArticleReaction,
+  getArticleReactions,
 
   // Article Comments & Moderation
   addArticleComment,
