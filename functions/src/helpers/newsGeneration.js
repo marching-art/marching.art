@@ -640,14 +640,12 @@ const CAPTIONS = {
 };
 
 const ARTICLE_TYPES = {
-  DCI_STANDINGS: "dci_standings",
-  DCI_CAPTIONS: "dci_captions",
-  FANTASY_PERFORMERS: "fantasy_performers",
-  FANTASY_LEAGUES: "fantasy_leagues",
-  DEEP_ANALYTICS: "deep_analytics",
-  // New article types for variety
-  UNDERDOG_STORY: "underdog_story",
-  CORPS_SPOTLIGHT: "corps_spotlight",
+  // The 5 daily articles - aligned with DCI.org style
+  DCI_SCORES: "dci_scores",           // Article 1: DCI scores analysis from the day
+  DCI_CORPS_FEATURE: "dci_corps_feature",   // Article 2: DCI feature on a single corps and their season progress
+  DCI_WEEKLY_RECAP: "dci_weekly_recap",     // Article 3: DCI recaps with deep dive on GE, Visual, Music trends
+  FANTASY_RESULTS: "fantasy_results",       // Article 4: marching.art results from the day
+  FANTASY_CAPTIONS: "fantasy_captions",     // Article 5: marching.art caption analysis (GE, Visual, Music trends)
 };
 
 /**
@@ -2402,41 +2400,14 @@ function getToneDescriptor(context) {
 // =============================================================================
 
 /**
- * Determine which 5th article to generate based on the day
- * Rotation schedule for variety:
- * - Underdog Story: Every 6th day (days 6, 12, 18, 24, 30, 36...)
- * - Deep Analytics: Even days (not underdog days)
- * - Corps Spotlight: Odd days (not underdog days)
+ * Generate 5 nightly articles aligned with DCI.org editorial style
  *
- * This gives readers variety while limiting underdog stories to ~once per week
- */
-function getFifthArticleType(reportDay) {
-  // Underdog story every 6 days (roughly once a week, but not too predictable)
-  if (reportDay % 6 === 0) {
-    return "underdog_story";
-  }
-
-  // Alternate between deep analytics and corps spotlight on other days
-  if (reportDay % 2 === 0) {
-    return "deep_analytics";
-  }
-
-  return "corps_spotlight";
-}
-
-/**
- * Generate 5 nightly articles with rotating variety
- *
- * Core articles (always generated):
- * 1. DCI Standings - Daily competition results
- * 2. DCI Captions - Caption analysis breakdown
- * 3. Fantasy Performers - Top fantasy ensemble results
- * 4. Fantasy Leagues - League standings and recaps
- *
- * Rotating 5th article (for variety):
- * - Deep Analytics (even days)
- * - Corps Spotlight (odd days)
- * - Underdog Story (every 6th day)
+ * The 5 daily articles:
+ * 1. DCI Scores Analysis - Competition results with DCI.org-style score breakdown
+ * 2. DCI Corps Feature - In-depth feature on one corps' season progress
+ * 3. DCI Weekly Recap - Deep dive on GE, Visual, and Music trends over the last week
+ * 4. marching.art Results - Fantasy competition results from the day
+ * 5. marching.art Caption Analysis - Fantasy caption trends in GE, Visual, Music
  */
 async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
   const reportDay = currentDay - 1;
@@ -2445,9 +2416,7 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
     return { success: false, error: "Invalid day" };
   }
 
-  // Determine which rotating article to generate today
-  const fifthArticleType = getFifthArticleType(reportDay);
-  logger.info(`Generating 5 articles for Day ${reportDay} (5th article: ${fifthArticleType})`);
+  logger.info(`Generating 5 daily articles for Day ${reportDay} (DCI.org style)`);
 
   try {
     // Fetch all data
@@ -2472,70 +2441,50 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
 
     // Track which corps have been featured to ensure diversity across articles
     const featuredCorps = new Set();
-    const featuredFantasyPerformers = new Set();
 
     // Generate articles sequentially to track featured corps and ensure diversity
     const articles = [];
 
-    // Article 1: DCI Standings - features top corps
-    const standingsArticle = await generateDciStandingsArticle({
+    // Article 1: DCI Scores Analysis - Today's competition results
+    const scoresArticle = await generateDciScoresArticle({
       reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db
     });
-    articles.push(standingsArticle);
-    if (standingsArticle.featuredCorps) {
-      featuredCorps.add(standingsArticle.featuredCorps);
+    articles.push(scoresArticle);
+    if (scoresArticle.featuredCorps) {
+      featuredCorps.add(scoresArticle.featuredCorps);
     }
 
-    // Article 2: DCI Captions - must feature a DIFFERENT corps than standings
-    const captionsArticle = await generateDciCaptionsArticle({
-      reportDay, dayScores, captionLeaders, activeCorps, showContext, competitionContext, trendData, db,
+    // Article 2: DCI Corps Feature - Single corps season progress spotlight
+    const corpsFeatureArticle = await generateDciCorpsFeatureArticle({
+      reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db,
       excludeCorps: featuredCorps
     });
-    articles.push(captionsArticle);
-    if (captionsArticle.featuredCorps) {
-      featuredCorps.add(captionsArticle.featuredCorps);
+    articles.push(corpsFeatureArticle);
+    if (corpsFeatureArticle.featuredCorps) {
+      featuredCorps.add(corpsFeatureArticle.featuredCorps);
     }
 
-    // Article 3: Fantasy Performers - features top fantasy performer
-    const fantasyPerformersArticle = await generateFantasyPerformersArticle({
+    // Article 3: DCI Weekly Recap - Deep dive on GE, Visual, Music trends
+    const weeklyRecapArticle = await generateDciWeeklyRecapArticle({
+      reportDay, dayScores, trendData, captionLeaders, activeCorps, showContext, competitionContext, db,
+      excludeCorps: featuredCorps
+    });
+    articles.push(weeklyRecapArticle);
+    if (weeklyRecapArticle.featuredCorps) {
+      featuredCorps.add(weeklyRecapArticle.featuredCorps);
+    }
+
+    // Article 4: marching.art Results - Fantasy competition results
+    const fantasyResultsArticle = await generateFantasyResultsArticle({
       reportDay, fantasyData, showContext, competitionContext, db, dataDocId
     });
-    articles.push(fantasyPerformersArticle);
-    if (fantasyPerformersArticle.featuredPerformer) {
-      featuredFantasyPerformers.add(fantasyPerformersArticle.featuredPerformer);
-    }
+    articles.push(fantasyResultsArticle);
 
-    // Article 4: Fantasy Leagues - must feature DIFFERENT performers than Fantasy Performers
-    const fantasyLeaguesArticle = await generateFantasyLeaguesArticle({
-      reportDay, fantasyData, showContext, competitionContext,
-      excludePerformers: featuredFantasyPerformers
+    // Article 5: marching.art Caption Analysis - Fantasy GE/Visual/Music trends
+    const fantasyCaptionsArticle = await generateFantasyCaptionsArticle({
+      reportDay, fantasyData, showContext, competitionContext, db
     });
-    articles.push(fantasyLeaguesArticle);
-
-    // Article 5: Rotating article - must feature a DIFFERENT corps than previous DCI articles
-    let fifthArticle;
-    switch (fifthArticleType) {
-      case "underdog_story":
-        fifthArticle = await generateUnderdogStoryArticle({
-          reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db,
-          excludeCorps: featuredCorps
-        });
-        break;
-      case "corps_spotlight":
-        fifthArticle = await generateCorpsSpotlightArticle({
-          reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db,
-          excludeCorps: featuredCorps
-        });
-        break;
-      case "deep_analytics":
-      default:
-        fifthArticle = await generateDeepAnalyticsArticle({
-          reportDay, dayScores, trendData, fantasyData, captionLeaders, showContext, competitionContext, db,
-          excludeCorps: featuredCorps
-        });
-        break;
-    }
-    articles.push(fifthArticle);
+    articles.push(fantasyCaptionsArticle);
 
     return {
       success: true,
@@ -2549,7 +2498,6 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
         date: showContext.date,
         allShows: showContext.allShows,
         articleCount: articles.length,
-        fifthArticleType,
         competitionContext: {
           scenario: competitionContext.scenario,
           seasonPhase: competitionContext.seasonPhase,
@@ -2565,24 +2513,55 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
 }
 
 /**
- * Article 1: DCI Standings
+ * Article 1: DCI Scores Analysis
+ * Daily competition results in DCI.org editorial style
  */
-async function generateDciStandingsArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db }) {
+async function generateDciScoresArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db }) {
   const topCorps = dayScores[0];
   const secondCorps = dayScores[1];
+  const thirdCorps = dayScores[2];
   const gap = topCorps && secondCorps ? (topCorps.total - secondCorps.total).toFixed(3) : "0.000";
+  const top3Gap = topCorps && thirdCorps ? (topCorps.total - thirdCorps.total).toFixed(3) : "0.000";
 
   // Get dynamic tone guidance based on competition context
-  const toneGuidance = getToneGuidance(competitionContext, "dci_standings");
+  const toneGuidance = getToneGuidance(competitionContext, "dci_scores");
 
   // Build list of all shows happening today for comprehensive coverage
   const allShowsText = showContext.allShows?.length > 1
     ? showContext.allShows.map(s => `• ${s.name}${s.location ? ` (${s.location})` : ''}`).join('\n')
     : `• ${showContext.showName}${showContext.location ? ` (${showContext.location})` : ''}`;
 
-  const prompt = `You are a veteran DCI (Drum Corps International) journalist writing for marching.art, the premier fantasy platform for competitive drum corps.
+  const prompt = `You are a DCI.org staff writer covering tonight's competition. Write in the authentic DCI.org editorial voice - professional sports journalism with deep knowledge of the marching arts activity.
 
-CONTEXT: DCI is the premier competitive marching music organization in the world. Corps compete in shows judged on General Effect (GE), Visual, and Music captions. Scores range from 0-100, with top corps typically scoring 85-99. Every 0.001 point matters in these razor-thin competitions.
+═══════════════════════════════════════════════════════════════
+DCI.ORG WRITING STYLE GUIDE
+═══════════════════════════════════════════════════════════════
+DCI.org articles follow these conventions:
+
+HEADLINES: Action-oriented, specific score references when dramatic
+- "Bluecoats set new record as streak continues through San Antonio"
+- "Less than a point separates top three as Finals race pulls into focus"
+- "Carolina Crown captures brass caption with 19.45 finish"
+- "Blue Devils top 98 mark for first time this season"
+
+SCORE LANGUAGE: Precise, professional terminology
+- "besting [Corps] by 0.087" / "edging past by three-tenths"
+- "0.45 over Crown in Total Visual"
+- "winning GE by 0.15" / "took first in the General Effect caption"
+- "increased their score by 0.625 from yesterday"
+- "a scant 0.2-point gap" / "razor-thin margin of 0.125"
+
+CAPTION REFERENCES: Use official terminology
+- General Effect (GE) - split into GE1 (Music Effect) and GE2 (Visual Effect)
+- Visual: Visual Proficiency (VP), Visual Analysis (VA), Color Guard (CG)
+- Music: Brass (B), Music Analysis (MA), Percussion (P)
+- "swept every caption except Color Guard" / "took first in three of six captions"
+
+NARRATIVE FRAMING:
+- Lead with the winner and their margin
+- Emphasize battles for position ("the race for fourth remains unsettled")
+- Reference historical context ("their highest score since 2019")
+- Championship implications ("with Finals just days away")
 
 ═══════════════════════════════════════════════════════════════
 EVENT INFORMATION
@@ -2596,56 +2575,63 @@ ${allShowsText}
 • Location: ${showContext.location}`}
 ═══════════════════════════════════════════════════════════════
 
-TODAY'S COMPETITION RESULTS${showContext.allShows?.length > 1 ? ' across all shows' : ` from ${showContext.showName} in ${showContext.location}`}:
+TONIGHT'S OFFICIAL RESULTS${showContext.allShows?.length > 1 ? ' across all shows' : ` from ${showContext.showName}`}:
 
-STANDINGS WITH MOMENTUM ANALYSIS (Corps | Season | Score | Momentum):
+FINAL STANDINGS:
 ${dayScores.slice(0, 12).map((s, i) => {
   const trend = trendData[s.corps];
   const change = trend?.dayChange || 0;
-  const narrative = getTrendNarrative(trend, s.corps + reportDay);
-  const momentumDesc = narrative?.full || "maintaining form";
-  const captionNote = trend?.captionTrends ?
-    Object.entries(trend.captionTrends).filter(([_, v]) => v.trending !== "stable").map(([k, v]) => `${k.toUpperCase()} ${v.trending}`).join(", ") : "";
-  return `${i + 1}. ${s.corps} (${s.sourceYear}): ${s.total.toFixed(3)} pts [${change >= 0 ? '+' : ''}${change.toFixed(3)}]
-   → ${momentumDesc}${trend?.streak >= 3 ? ` (${trend.streak}-day streak)` : ""}${captionNote ? ` | ${captionNote}` : ""}`;
+  const marginToNext = i > 0 ? (dayScores[i-1].total - s.total).toFixed(3) : "-";
+  return `${i + 1}. ${s.corps} - ${s.total.toFixed(3)} (${change >= 0 ? '+' : ''}${change.toFixed(3)} from yesterday)${i > 0 ? ` [${marginToNext} behind ${dayScores[i-1].corps}]` : ' [LEADER]'}
+   GE: ${s.subtotals?.ge?.toFixed(2) || 'N/A'} | Visual: ${s.subtotals?.visual?.toFixed(2) || 'N/A'} | Music: ${s.subtotals?.music?.toFixed(2) || 'N/A'}`;
 }).join('\n')}
 
-TREND HIGHLIGHTS:
+CAPTION WINNERS TONIGHT:
 ${(() => {
-  const surging = Object.entries(trendData).filter(([_, t]) => t.momentum === "surging" || t.momentum === "hot");
-  const sliding = Object.entries(trendData).filter(([_, t]) => t.momentum === "sliding" || t.momentum === "cold");
-  const atBest = Object.entries(trendData).filter(([_, t]) => t.atSeasonBest);
-  const atWorst = Object.entries(trendData).filter(([_, t]) => t.atSeasonWorst);
-
-  const highlights = [];
-  if (surging.length > 0) highlights.push(`🔥 HOT: ${surging.map(([c]) => c).join(", ")}`);
-  if (sliding.length > 0) highlights.push(`❄️ COLD: ${sliding.map(([c]) => c).join(", ")}`);
-  if (atBest.length > 0) highlights.push(`📈 SEASON BEST: ${atBest.map(([c]) => c).join(", ")}`);
-  if (atWorst.length > 0) highlights.push(`📉 SEASON LOW: ${atWorst.map(([c]) => c).join(", ")}`);
-  return highlights.length > 0 ? highlights.join('\n') : "No significant trend changes today";
+  const captionWinners = {};
+  const captions = ['ge', 'visual', 'music'];
+  captions.forEach(cap => {
+    const sorted = [...dayScores].sort((a, b) => (b.subtotals?.[cap] || 0) - (a.subtotals?.[cap] || 0));
+    if (sorted[0]) {
+      const margin = sorted[1] ? (sorted[0].subtotals[cap] - sorted[1].subtotals[cap]).toFixed(2) : "N/A";
+      captionWinners[cap] = { corps: sorted[0].corps, score: sorted[0].subtotals[cap]?.toFixed(2), margin, second: sorted[1]?.corps };
+    }
+  });
+  return Object.entries(captionWinners).map(([cap, data]) =>
+    `• ${cap.toUpperCase()}: ${data.corps} (${data.score}) - ${data.margin} over ${data.second || 'field'}`
+  ).join('\n');
 })()}
 
-KEY STATISTICS:
-- Lead margin: ${topCorps?.corps || 'N/A'} leads by ${gap} points
-- Biggest gainer today: ${Object.entries(trendData).sort((a,b) => b[1].dayChange - a[1].dayChange)[0]?.[0] || 'N/A'}
-- Corps count: ${dayScores.length} corps competing
-${competitionContext.positionBattleCount > 0 ? `- Position battles: ${competitionContext.positionBattleCount} corps within 0.2 points of the position ahead` : ""}
+KEY STORYLINES:
+- Lead margin: ${topCorps?.corps} leads by ${gap} over ${secondCorps?.corps}
+- Top 3 spread: ${top3Gap} points separate first from third
+- ${competitionContext.positionBattleCount > 0 ? `Position battles: ${competitionContext.positionBattleCount} corps within 0.2 of position ahead` : "Clear separation in standings tonight"}
+${(() => {
+  const surging = Object.entries(trendData).filter(([_, t]) => t.dayChange > 0.3);
+  const struggling = Object.entries(trendData).filter(([_, t]) => t.dayChange < -0.3);
+  const lines = [];
+  if (surging.length > 0) lines.push(`- Big gains: ${surging.map(([c, t]) => `${c} (+${t.dayChange.toFixed(3)})`).join(', ')}`);
+  if (struggling.length > 0) lines.push(`- Setbacks: ${struggling.map(([c, t]) => `${c} (${t.dayChange.toFixed(3)})`).join(', ')}`);
+  return lines.join('\n');
+})()}
 
 ${toneGuidance}
 
-WRITE A PROFESSIONAL SPORTS ARTICLE covering today's standings. Your article should:
+WRITE A DCI.ORG-STYLE RECAP ARTICLE:
 
-1. HEADLINE: Create an attention-grabbing headline like ESPN or Sports Illustrated would write. Reference the leading corps and the competitive narrative. Examples of good headlines: "Blue Devils Extend Dynasty with 0.425 Surge", "Crown Closes Gap: 0.15 Separates Top Three"
+1. HEADLINE: DCI.org style - action verb, specific score reference or dramatic narrative
+   Examples: "${topCorps?.corps} tops ${topCorps?.total?.toFixed(2)} mark at ${showContext.showName}", "Less than ${gap} separates top two after ${showContext.showName}"
 
-2. SUMMARY: 2-3 punchy sentences capturing the day's biggest story - who's leading, who's surging, who's falling.
+2. SUMMARY: 2-3 sentences in DCI.org voice - state the winner, the margin, and the night's biggest storyline.
 
-3. NARRATIVE: A 600-800 word article (3-4 paragraphs) that:
-   - Opens with the leader and their margin (make it dramatic)
-   - Discusses position battles (who moved up/down and why it matters)
-   - Analyzes momentum (which corps are trending hot or cold)
-   - Closes with what to watch tomorrow
+3. NARRATIVE: 500-700 word article in authentic DCI.org editorial voice:
+   - Open with the winner, their score, and margin of victory
+   - Detail caption performance ("${topCorps?.corps} won GE by X over ${secondCorps?.corps}")
+   - Discuss the battle for positions behind the leader
+   - Reference score changes from previous competition
+   - Close with championship implications or tomorrow's preview
 
-Reference that these are real historical DCI performances being relived through the fantasy platform.`;
+Use precise score language. Reference specific captions. Write like a DCI.org staff journalist.`;
 
   // Schema for structured output
   const schema = {
@@ -2689,10 +2675,10 @@ Reference that these are real historical DCI performances being relived through 
     );
 
     const imageData = await generateImageWithImagen(imagePrompt);
-    const imageResult = await processGeneratedImage(imageData, "dci_standings");
+    const imageResult = await processGeneratedImage(imageData, "dci_scores");
 
     return {
-      type: ARTICLE_TYPES.DCI_STANDINGS,
+      type: ARTICLE_TYPES.DCI_SCORES,
       ...content,
       featuredCorps: topCorps.corps, // Track which corps was featured for diversity
       imageUrl: imageResult.url,
@@ -2700,110 +2686,333 @@ Reference that these are real historical DCI performances being relived through 
       reportDay,
     };
   } catch (error) {
-    logger.error("DCI Standings article failed:", error);
-    return createFallbackArticle(ARTICLE_TYPES.DCI_STANDINGS, reportDay);
+    logger.error("DCI Scores article failed:", error);
+    return createFallbackArticle(ARTICLE_TYPES.DCI_SCORES, reportDay);
   }
 }
 
 /**
- * Article 2: DCI Caption Analysis
+ * Article 2: DCI Corps Feature
+ * In-depth feature on a single corps and their progress across the season
+ * Written in DCI.org editorial style
  */
-async function generateDciCaptionsArticle({ reportDay, dayScores, captionLeaders, activeCorps, showContext, competitionContext, trendData, db, excludeCorps = new Set() }) {
-  // Get dynamic tone guidance
-  const toneGuidance = getToneGuidance(competitionContext, "dci_captions");
+async function generateDciCorpsFeatureArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, excludeCorps = new Set() }) {
+  const toneGuidance = getToneGuidance(competitionContext, "dci_corps_feature");
 
-  // Build list of all shows happening today for comprehensive coverage
-  const allShowsText = showContext.allShows?.length > 1
-    ? showContext.allShows.map(s => `• ${s.name}${s.location ? ` (${s.location})` : ''}`).join('\n')
-    : `• ${showContext.showName}${showContext.location ? ` (${showContext.location})` : ''}`;
+  // Select a corps to feature - rotate through the field, excluding already-featured corps
+  let featureIndex = (reportDay - 1) % dayScores.length;
+  let featureCorps = dayScores[featureIndex];
 
-  const prompt = `You are a DCI caption analyst and technical expert writing for marching.art. You specialize in breaking down the scoring categories that determine DCI competition results.
-
-CONTEXT: DCI scoring has three main categories:
-- GENERAL EFFECT (GE): 40% of total - Measures overall entertainment value, emotional impact, and design excellence. Split into GE1 (Music Effect) and GE2 (Visual Effect).
-- VISUAL: 30% of total - Measures marching technique, body movement, and color guard excellence. Includes Visual Proficiency (VP), Visual Analysis (VA), and Color Guard (CG).
-- MUSIC: 30% of total - Measures musical performance quality. Includes Brass (B), Music Analysis (MA), and Percussion (P).
-
-═══════════════════════════════════════════════════════════════
-EVENT INFORMATION
-═══════════════════════════════════════════════════════════════
-• Date: ${showContext.date}
-• Season Day: ${reportDay}
-${showContext.allShows?.length > 1 ? `
-ALL SHOWS TODAY (${showContext.allShows.length} competitions):
-${allShowsText}
-` : `• Show Name: ${showContext.showName}
-• Location: ${showContext.location}`}
-═══════════════════════════════════════════════════════════════
-
-CAPTION BREAKDOWN${showContext.allShows?.length > 1 ? ' across all shows today' : ` from ${showContext.showName} in ${showContext.location}`}:
-
-CAPTION LEADERS BY CATEGORY:
-${captionLeaders.map(c => `${c.caption}: ${c.leader} scores ${c.score.toFixed(2)} [7-day trend: ${c.weeklyTrend}]`).join('\n')}
-
-SUBCATEGORY TOTALS (Top 5 Corps):
-General Effect: ${dayScores.slice(0, 5).map(s => `${s.corps}: ${s.subtotals.ge.toFixed(2)}`).join(' | ')}
-Visual Total: ${dayScores.slice(0, 5).map(s => `${s.corps}: ${s.subtotals.visual.toFixed(2)}`).join(' | ')}
-Music Total: ${dayScores.slice(0, 5).map(s => `${s.corps}: ${s.subtotals.music.toFixed(2)}`).join(' | ')}
-
-CAPTION TREND ANALYSIS (Corps with notable caption movement):
-${(() => {
-  const captionMovers = dayScores.slice(0, 8).map(s => {
-    const trend = trendData[s.corps];
-    const captionTrends = trend?.captionTrends;
-    const narrativeParts = [];
-
-    if (captionTrends) {
-      if (captionTrends.ge.trending === "up") narrativeParts.push("GE climbing");
-      if (captionTrends.ge.trending === "down") narrativeParts.push("GE dipping");
-      if (captionTrends.visual.trending === "up") narrativeParts.push("visual sharpening");
-      if (captionTrends.visual.trending === "down") narrativeParts.push("visual slipping");
-      if (captionTrends.music.trending === "up") narrativeParts.push("music heating up");
-      if (captionTrends.music.trending === "down") narrativeParts.push("music cooling");
+  // If the rotated corps has already been featured, find the next available
+  if (excludeCorps.has(featureCorps?.corps)) {
+    for (let i = 1; i < dayScores.length; i++) {
+      const nextIndex = (featureIndex + i) % dayScores.length;
+      if (!excludeCorps.has(dayScores[nextIndex]?.corps)) {
+        featureIndex = nextIndex;
+        featureCorps = dayScores[nextIndex];
+        break;
+      }
     }
+  }
 
-    const trendNote = narrativeParts.length > 0 ? ` → ${narrativeParts.join(", ")}` : " → stable across all captions";
-    return `• ${s.corps}: GE ${s.subtotals.ge.toFixed(2)} | Vis ${s.subtotals.visual.toFixed(2)} | Mus ${s.subtotals.music.toFixed(2)}${trendNote}`;
+  const currentRank = dayScores.findIndex(s => s.corps === featureCorps.corps) + 1;
+  const corpsTrend = trendData[featureCorps.corps] || { dayChange: 0, trendFromAvg: 0, avgTotal: featureCorps.total };
+
+  // Get show title for this corps
+  const showTitle = db ? await getShowTitleFromFirestore(db, featureCorps.corps, featureCorps.sourceYear) : null;
+
+  // Calculate season progress data
+  const seasonHigh = corpsTrend.seasonHigh || featureCorps.total;
+  const seasonLow = corpsTrend.seasonLow || featureCorps.total;
+  const improvement = corpsTrend.totalImprovement || 0;
+
+  const prompt = `You are a DCI.org feature writer profiling a corps' season journey. Write in the authentic DCI.org editorial voice - respectful, knowledgeable, celebrating the corps while providing analytical insight.
+
+═══════════════════════════════════════════════════════════════
+DCI.ORG CORPS FEATURE STYLE GUIDE
+═══════════════════════════════════════════════════════════════
+DCI.org corps features follow these conventions:
+
+HEADLINES: Corps name + season narrative or achievement
+- "Carolina Crown: Brass excellence meets design innovation in 2024"
+- "Blue Devils' journey to 98: Inside the pursuit of perfection"
+- "The Cadets' resurgence: How tradition fuels a comeback season"
+
+NARRATIVE STRUCTURE:
+- Open with what defines this corps' identity and tradition
+- Discuss their current show concept and design choices
+- Analyze their competitive trajectory this season
+- Highlight specific caption strengths with score references
+- Contextualize within their historical legacy
+- Close with season outlook and championship potential
+
+SCORE LANGUAGE:
+- "posting a season-high 96.875" / "their fifth consecutive score above 95"
+- "improved 1.25 points since the season opener"
+- "their brass caption averaging 19.2 over the last four shows"
+- "ranking first in Visual Proficiency for three straight competitions"
+
+TONE: Celebratory but analytical. Like a Drum Corps World feature meets ESPN profile.
+
+═══════════════════════════════════════════════════════════════
+FEATURED CORPS: ${featureCorps.corps}
+═══════════════════════════════════════════════════════════════
+• Historical Season Being Relived: ${featureCorps.sourceYear}
+${showTitle ? `• Show Title: "${showTitle}"` : ''}
+• Current Standing: ${currentRank}${currentRank === 1 ? 'st' : currentRank === 2 ? 'nd' : currentRank === 3 ? 'rd' : 'th'} place
+• Today's Score: ${featureCorps.total.toFixed(3)}
+• Daily Movement: ${corpsTrend.dayChange >= 0 ? '+' : ''}${corpsTrend.dayChange.toFixed(3)}
+
+SEASON TRAJECTORY:
+• Season High: ${seasonHigh.toFixed(3)}
+• Season Low: ${seasonLow.toFixed(3)}
+• 7-Day Average: ${corpsTrend.avgTotal?.toFixed(3) || featureCorps.total.toFixed(3)}
+• Total Improvement: ${improvement >= 0 ? '+' : ''}${improvement.toFixed(3)} since season start
+${corpsTrend.atSeasonBest ? '★ AT SEASON HIGH TODAY - Peaking performance!' : ''}
+
+CAPTION BREAKDOWN (Today):
+• General Effect: ${featureCorps.subtotals?.ge?.toFixed(2) || 'N/A'}${corpsTrend.captionTrends?.ge?.trending === "up" ? " (trending up)" : corpsTrend.captionTrends?.ge?.trending === "down" ? " (trending down)" : ""}
+  - GE1 (Music): ${featureCorps.captions?.GE1?.toFixed(2) || 'N/A'}
+  - GE2 (Visual): ${featureCorps.captions?.GE2?.toFixed(2) || 'N/A'}
+• Visual Total: ${featureCorps.subtotals?.visual?.toFixed(2) || 'N/A'}${corpsTrend.captionTrends?.visual?.trending === "up" ? " (trending up)" : corpsTrend.captionTrends?.visual?.trending === "down" ? " (trending down)" : ""}
+  - VP: ${featureCorps.captions?.VP?.toFixed(2) || 'N/A'}
+  - VA: ${featureCorps.captions?.VA?.toFixed(2) || 'N/A'}
+  - CG: ${featureCorps.captions?.CG?.toFixed(2) || 'N/A'}
+• Music Total: ${featureCorps.subtotals?.music?.toFixed(2) || 'N/A'}${corpsTrend.captionTrends?.music?.trending === "up" ? " (trending up)" : corpsTrend.captionTrends?.music?.trending === "down" ? " (trending down)" : ""}
+  - Brass: ${featureCorps.captions?.B?.toFixed(2) || 'N/A'}
+  - MA: ${featureCorps.captions?.MA?.toFixed(2) || 'N/A'}
+  - Percussion: ${featureCorps.captions?.P?.toFixed(2) || 'N/A'}
+
+COMPETITIVE CONTEXT:
+${dayScores.slice(Math.max(0, currentRank - 2), Math.min(dayScores.length, currentRank + 3)).map((s, i) => {
+  const rank = Math.max(0, currentRank - 2) + i + 1;
+  const gap = s.total - featureCorps.total;
+  return `${rank}. ${s.corps}: ${s.total.toFixed(3)}${s.corps === featureCorps.corps ? ' ← FEATURED' : ` (${gap >= 0 ? '+' : ''}${gap.toFixed(3)})`}`;
+}).join('\n')}
+
+${toneGuidance}
+
+WRITE A DCI.ORG-STYLE CORPS FEATURE:
+
+1. HEADLINE: "${featureCorps.corps}: [Season narrative or defining achievement]"
+   Focus on their journey, improvement, or signature strength.
+
+2. SUMMARY: 2-3 sentences introducing this corps and what makes their ${featureCorps.sourceYear} season compelling.
+
+3. NARRATIVE: 600-800 word feature profile:
+   - Open with what defines ${featureCorps.corps}' identity and tradition
+   ${showTitle ? `- Discuss their show "${showTitle}" and its artistic concept` : '- Analyze their performance style and competitive approach'}
+   - Detail their season trajectory with specific score references
+   - Highlight their strongest captions (use exact scores)
+   - Contextualize within their historical legacy
+   - Close with outlook for the championship stretch
+
+Write like a DCI.org or Drum Corps World feature journalist.`;
+
+  const schema = {
+    type: SchemaType.OBJECT,
+    properties: {
+      headline: { type: SchemaType.STRING, description: "Corps-focused feature headline" },
+      summary: { type: SchemaType.STRING, description: "2-3 sentence introduction" },
+      narrative: { type: SchemaType.STRING, description: "600-800 word corps profile" },
+      corpsIdentity: {
+        type: SchemaType.OBJECT,
+        properties: {
+          tradition: { type: SchemaType.STRING, description: "Corps' historical identity" },
+          strength: { type: SchemaType.STRING, description: "Primary competitive strength" },
+          trajectory: { type: SchemaType.STRING, description: "Season trajectory assessment" },
+        },
+        required: ["tradition", "strength", "trajectory"],
+      },
+    },
+    required: ["headline", "summary", "narrative", "corpsIdentity"],
+  };
+
+  try {
+    const content = await generateStructuredContent(prompt, schema);
+
+    const imagePrompt = buildCorpsSpotlightImagePrompt(
+      featureCorps.corps,
+      featureCorps.sourceYear,
+      showTitle
+    );
+
+    const imageData = await generateImageWithImagen(imagePrompt);
+    const imageResult = await processGeneratedImage(imageData, "dci_corps_feature");
+
+    return {
+      type: ARTICLE_TYPES.DCI_CORPS_FEATURE,
+      ...content,
+      featuredCorps: featureCorps.corps,
+      featuredYear: featureCorps.sourceYear,
+      showTitle,
+      imageUrl: imageResult.url,
+      imagePrompt,
+      reportDay,
+    };
+  } catch (error) {
+    logger.error("DCI Corps Feature article failed:", error);
+    return createFallbackArticle(ARTICLE_TYPES.DCI_CORPS_FEATURE, reportDay);
+  }
+}
+
+/**
+ * Article 3: DCI Weekly Recap
+ * Deep dive on General Effect, Visual, and Music trends over the last week
+ * Written in DCI.org recap analysis style
+ */
+async function generateDciWeeklyRecapArticle({ reportDay, dayScores, trendData, captionLeaders, activeCorps, showContext, competitionContext, db, excludeCorps = new Set() }) {
+  const toneGuidance = getToneGuidance(competitionContext, "dci_weekly_recap");
+
+  // Build comprehensive caption trend analysis
+  const captionTrends = {
+    ge: { leaders: [], trending: [], analysis: "" },
+    visual: { leaders: [], trending: [], analysis: "" },
+    music: { leaders: [], trending: [], analysis: "" },
+  };
+
+  // Analyze each corps' caption trends over the week
+  dayScores.slice(0, 10).forEach(corps => {
+    const trend = trendData[corps.corps];
+    if (trend?.captionTrends) {
+      if (trend.captionTrends.ge?.trending === "up") {
+        captionTrends.ge.trending.push({ corps: corps.corps, change: trend.captionTrends.ge.weekChange || 0 });
+      }
+      if (trend.captionTrends.visual?.trending === "up") {
+        captionTrends.visual.trending.push({ corps: corps.corps, change: trend.captionTrends.visual.weekChange || 0 });
+      }
+      if (trend.captionTrends.music?.trending === "up") {
+        captionTrends.music.trending.push({ corps: corps.corps, change: trend.captionTrends.music.weekChange || 0 });
+      }
+    }
   });
-  return captionMovers.join('\n');
+
+  // Find caption leaders
+  const geSorted = [...dayScores].sort((a, b) => (b.subtotals?.ge || 0) - (a.subtotals?.ge || 0));
+  const visualSorted = [...dayScores].sort((a, b) => (b.subtotals?.visual || 0) - (a.subtotals?.visual || 0));
+  const musicSorted = [...dayScores].sort((a, b) => (b.subtotals?.music || 0) - (a.subtotals?.music || 0));
+
+  const prompt = `You are a DCI.org recap analyst specializing in caption analysis. Write in the authentic DCI.org "Recap Analysis" style - detailed, technical, but accessible to fans who want to understand what's driving the scores.
+
+═══════════════════════════════════════════════════════════════
+DCI.ORG RECAP ANALYSIS STYLE GUIDE
+═══════════════════════════════════════════════════════════════
+DCI.org recap articles (like "Recap Analysis: World Class Finals") follow these conventions:
+
+HEADLINES: Caption-focused with competitive angle
+- "Recap Analysis: General Effect battle tightens heading into Finals"
+- "Visual caption trends: Which corps are peaking at the right time?"
+- "Music Analysis: Brass scores surge as season enters final stretch"
+
+CAPTION BREAKDOWN STRUCTURE:
+1. GENERAL EFFECT (40% of total score)
+   - GE1 (Music Effect): How the music design affects the audience
+   - GE2 (Visual Effect): How the visual design affects the audience
+   - "The corps' spread over [Rival] in GE was 0.15"
+   - "Winning GE by 0.20 accounted for most of the 0.35 total margin"
+
+2. VISUAL (30% of total score)
+   - Visual Proficiency (VP): Marching technique, body movement
+   - Visual Analysis (VA): Design, staging, visual composition
+   - Color Guard (CG): Equipment work, dance, performance quality
+   - "0.45 over Crown in Total Visual" / "took 2nd in Color Guard, just 0.1 down"
+
+3. MUSIC (30% of total score)
+   - Brass (B): Brass section performance quality
+   - Music Analysis (MA): Music design, arrangement
+   - Percussion (P): Battery and pit performance
+   - "Won the Percussion caption by 0.05 over Santa Clara Vanguard"
+
+TREND ANALYSIS LANGUAGE:
+- "improved their GE score by 0.35 over the last week"
+- "Visual has been their growth area, climbing 0.40 since Day 35"
+- "Brass consistency remains a strength - averaging 19.3 over four shows"
+- "The corps that shows the most GE improvement typically has design changes clicking"
+
+═══════════════════════════════════════════════════════════════
+WEEKLY CAPTION ANALYSIS (Last 7 Days)
+═══════════════════════════════════════════════════════════════
+Week: Days ${reportDay - 6} through ${reportDay}
+Current Date: ${showContext.date}
+
+GENERAL EFFECT ANALYSIS:
+Leader: ${geSorted[0]?.corps} (${geSorted[0]?.subtotals?.ge?.toFixed(2)})
+Second: ${geSorted[1]?.corps} (${geSorted[1]?.subtotals?.ge?.toFixed(2)}) - ${((geSorted[0]?.subtotals?.ge || 0) - (geSorted[1]?.subtotals?.ge || 0)).toFixed(2)} behind
+Third: ${geSorted[2]?.corps} (${geSorted[2]?.subtotals?.ge?.toFixed(2)})
+GE Trending Up: ${captionTrends.ge.trending.length > 0 ? captionTrends.ge.trending.map(t => t.corps).join(', ') : 'No significant movers'}
+
+Top 5 GE Scores Today:
+${geSorted.slice(0, 5).map((s, i) => {
+  const trend = trendData[s.corps]?.captionTrends?.ge;
+  return `${i + 1}. ${s.corps}: ${s.subtotals?.ge?.toFixed(2)} [GE1: ${s.captions?.GE1?.toFixed(2)}, GE2: ${s.captions?.GE2?.toFixed(2)}]${trend?.trending === "up" ? " ↑" : trend?.trending === "down" ? " ↓" : ""}`;
+}).join('\n')}
+
+VISUAL ANALYSIS:
+Leader: ${visualSorted[0]?.corps} (${visualSorted[0]?.subtotals?.visual?.toFixed(2)})
+Second: ${visualSorted[1]?.corps} (${visualSorted[1]?.subtotals?.visual?.toFixed(2)}) - ${((visualSorted[0]?.subtotals?.visual || 0) - (visualSorted[1]?.subtotals?.visual || 0)).toFixed(2)} behind
+Third: ${visualSorted[2]?.corps} (${visualSorted[2]?.subtotals?.visual?.toFixed(2)})
+Visual Trending Up: ${captionTrends.visual.trending.length > 0 ? captionTrends.visual.trending.map(t => t.corps).join(', ') : 'No significant movers'}
+
+Top 5 Visual Scores Today:
+${visualSorted.slice(0, 5).map((s, i) => {
+  const trend = trendData[s.corps]?.captionTrends?.visual;
+  return `${i + 1}. ${s.corps}: ${s.subtotals?.visual?.toFixed(2)} [VP: ${s.captions?.VP?.toFixed(2)}, VA: ${s.captions?.VA?.toFixed(2)}, CG: ${s.captions?.CG?.toFixed(2)}]${trend?.trending === "up" ? " ↑" : trend?.trending === "down" ? " ↓" : ""}`;
+}).join('\n')}
+
+MUSIC ANALYSIS:
+Leader: ${musicSorted[0]?.corps} (${musicSorted[0]?.subtotals?.music?.toFixed(2)})
+Second: ${musicSorted[1]?.corps} (${musicSorted[1]?.subtotals?.music?.toFixed(2)}) - ${((musicSorted[0]?.subtotals?.music || 0) - (musicSorted[1]?.subtotals?.music || 0)).toFixed(2)} behind
+Third: ${musicSorted[2]?.corps} (${musicSorted[2]?.subtotals?.music?.toFixed(2)})
+Music Trending Up: ${captionTrends.music.trending.length > 0 ? captionTrends.music.trending.map(t => t.corps).join(', ') : 'No significant movers'}
+
+Top 5 Music Scores Today:
+${musicSorted.slice(0, 5).map((s, i) => {
+  const trend = trendData[s.corps]?.captionTrends?.music;
+  return `${i + 1}. ${s.corps}: ${s.subtotals?.music?.toFixed(2)} [B: ${s.captions?.B?.toFixed(2)}, MA: ${s.captions?.MA?.toFixed(2)}, P: ${s.captions?.P?.toFixed(2)}]${trend?.trending === "up" ? " ↑" : trend?.trending === "down" ? " ↓" : ""}`;
+}).join('\n')}
+
+WEEK-OVER-WEEK NOTABLE MOVEMENTS:
+${(() => {
+  const movements = [];
+  Object.entries(trendData).forEach(([corps, trend]) => {
+    if (trend.weeklyChange && Math.abs(trend.weeklyChange) > 0.3) {
+      movements.push(`• ${corps}: ${trend.weeklyChange >= 0 ? '+' : ''}${trend.weeklyChange.toFixed(3)} over the week`);
+    }
+  });
+  return movements.length > 0 ? movements.slice(0, 5).join('\n') : '• No dramatic week-over-week changes';
 })()}
 
 ${toneGuidance}
 
-WRITE A TECHNICAL ANALYSIS ARTICLE that breaks down today's caption performances:
+WRITE A DCI.ORG-STYLE WEEKLY RECAP ANALYSIS:
 
-1. HEADLINE: Focus on the most interesting caption story. Examples: "Crown Brass Posts Season-High 19.2: Inside the Hornline's Breakthrough", "Blue Devils GE Dominance: How Design Excellence Creates Separation"
+1. HEADLINE: Caption-focused weekly analysis headline
+   Example: "Recap Analysis: GE battle narrows as ${geSorted[0]?.corps} maintains slim lead"
 
-2. SUMMARY: 2-3 sentences highlighting which corps dominated which captions and what it means for the competition.
+2. SUMMARY: 2-3 sentences summarizing the week's most significant caption trends.
 
-3. NARRATIVE: A detailed 600-800 word analysis (3-4 paragraphs) that:
-   - Identifies which corps is winning the "caption battle" in each major area
-   - Explains WHY certain corps excel in specific captions (brass technique, guard excellence, visual clarity)
-   - Discusses any caption trends (corps improving in brass, guard scores rising across the board)
-   - Provides insight into how caption strengths/weaknesses affect total scores
+3. NARRATIVE: 700-900 word deep dive analysis:
+   - GENERAL EFFECT section: Who's winning GE and why? What design elements are connecting?
+   - VISUAL section: Analyze VP, VA, and CG trends. Who's improving? Who's plateauing?
+   - MUSIC section: Break down Brass, MA, and Percussion. Which hornlines are hot?
+   - Championship implications: Which caption trends will decide Finals placement?
 
-4. CAPTION BREAKDOWN: Provide analysis for each major category with the leader and what makes them stand out.
+Include specific score comparisons. Use DCI.org recap terminology. Write for fans who want to understand the numbers.`;
 
-Technical but accessible. Like a color commentator who knows the activity inside and out. Use specific scores. Reference real DCI judging criteria.`;
-
-  // Schema for structured output
   const schema = {
     type: SchemaType.OBJECT,
     properties: {
-      headline: { type: SchemaType.STRING, description: "Caption-focused headline" },
-      summary: { type: SchemaType.STRING, description: "2-3 sentence summary" },
-      narrative: { type: SchemaType.STRING, description: "600-800 word analysis" },
+      headline: { type: SchemaType.STRING, description: "Caption-focused recap headline" },
+      summary: { type: SchemaType.STRING, description: "2-3 sentence summary of weekly trends" },
+      narrative: { type: SchemaType.STRING, description: "700-900 word caption analysis" },
       captionBreakdown: {
-        type: SchemaType.ARRAY,
-        items: {
-          type: SchemaType.OBJECT,
-          properties: {
-            category: { type: SchemaType.STRING },
-            leader: { type: SchemaType.STRING },
-            analysis: { type: SchemaType.STRING },
-          },
-          required: ["category", "leader", "analysis"],
+        type: SchemaType.OBJECT,
+        properties: {
+          geAnalysis: { type: SchemaType.STRING, description: "General Effect analysis" },
+          visualAnalysis: { type: SchemaType.STRING, description: "Visual caption analysis" },
+          musicAnalysis: { type: SchemaType.STRING, description: "Music caption analysis" },
         },
+        required: ["geAnalysis", "visualAnalysis", "musicAnalysis"],
       },
     },
     required: ["headline", "summary", "narrative", "captionBreakdown"],
@@ -2812,146 +3021,116 @@ Technical but accessible. Like a color commentator who knows the activity inside
   try {
     const content = await generateStructuredContent(prompt, schema);
 
-    // Feature a corps excelling in a caption category - but NOT one already featured in another article
-    // Find the first caption leader whose corps hasn't been featured yet
-    let featuredCaption = null;
-    let featuredCorps = null;
-
-    for (const caption of captionLeaders) {
-      if (!excludeCorps.has(caption.leader)) {
-        featuredCaption = caption;
-        featuredCorps = dayScores.find(s => s.corps === caption.leader);
-        break;
-      }
-    }
-
-    // Fallback: if all caption leaders are excluded, find the highest-ranked corps not yet featured
-    if (!featuredCorps) {
-      featuredCorps = dayScores.find(s => !excludeCorps.has(s.corps)) || dayScores[1] || dayScores[0];
-      // Find which caption this corps leads in (if any)
-      featuredCaption = captionLeaders.find(c => c.leader === featuredCorps?.corps) || captionLeaders[1] || captionLeaders[0];
-    }
-
-    // Look up the corps' show title for thematic context
+    // Feature the GE leader for the image (or next available if excluded)
+    let featuredCorps = geSorted.find(s => !excludeCorps.has(s.corps)) || geSorted[0];
     const showTitle = db ? await getShowTitleFromFirestore(db, featuredCorps.corps, featuredCorps.sourceYear) : null;
 
-    // Use specialized caption image prompt with section-specific details
     const imagePrompt = buildCaptionsImagePrompt(
       featuredCorps.corps,
       featuredCorps.sourceYear,
-      featuredCaption?.caption || "General Effect",
+      "General Effect",
       showContext.location,
       showTitle
     );
 
     const imageData = await generateImageWithImagen(imagePrompt);
-    const imageResult = await processGeneratedImage(imageData, "dci_captions");
+    const imageResult = await processGeneratedImage(imageData, "dci_weekly_recap");
 
     return {
-      type: ARTICLE_TYPES.DCI_CAPTIONS,
+      type: ARTICLE_TYPES.DCI_WEEKLY_RECAP,
       ...content,
-      featuredCorps: featuredCorps.corps, // Track which corps was featured for diversity
+      featuredCorps: featuredCorps.corps,
       imageUrl: imageResult.url,
       imagePrompt,
       reportDay,
     };
   } catch (error) {
-    logger.error("DCI Captions article failed:", error);
-    return createFallbackArticle(ARTICLE_TYPES.DCI_CAPTIONS, reportDay);
+    logger.error("DCI Weekly Recap article failed:", error);
+    return createFallbackArticle(ARTICLE_TYPES.DCI_WEEKLY_RECAP, reportDay);
   }
 }
 
 /**
- * Article 3: Fantasy Top Performers
+ * Article 4: marching.art Fantasy Results
+ * Daily fantasy competition results
  */
-async function generateFantasyPerformersArticle({ reportDay, fantasyData, showContext, competitionContext, db, dataDocId }) {
+async function generateFantasyResultsArticle({ reportDay, fantasyData, showContext, competitionContext, db, dataDocId }) {
   if (!fantasyData?.current) {
-    return createFallbackArticle(ARTICLE_TYPES.FANTASY_PERFORMERS, reportDay);
+    return createFallbackArticle(ARTICLE_TYPES.FANTASY_RESULTS, reportDay);
   }
 
-  // Get dynamic tone guidance
-  const toneGuidance = getToneGuidance(competitionContext, "fantasy_performers");
+  const toneGuidance = getToneGuidance(competitionContext, "fantasy_results");
 
   const shows = fantasyData.current.shows || [];
   const allResults = shows.flatMap(s => s.results || []);
 
-  // Filter out SoundSport corps - SoundSport is non-competitive and scores should not be published
-  // per SoundSport rules (celebration of participation, not rankings)
+  // Filter out SoundSport corps
   const competitiveResults = allResults.filter(r => r.corpsClass !== 'soundSport');
   const topPerformers = competitiveResults.sort((a, b) => b.totalScore - a.totalScore).slice(0, 10);
 
-  // Calculate some stats
   const avgScore = topPerformers.length > 0
     ? (topPerformers.reduce((sum, p) => sum + p.totalScore, 0) / topPerformers.length).toFixed(3)
     : "0.000";
   const topScore = topPerformers[0]?.totalScore?.toFixed(3) || "0.000";
 
-  // Use marching.art branding for fantasy articles
   const fantasyShowName = formatFantasyEventName(showContext.showName);
-  const fantasyLocation = formatFantasyEventName(showContext.location);
 
-  const prompt = `You are a fantasy sports analyst writing for marching.art, covering our marching.art fantasy competition like ESPN covers fantasy football.
-
-CONTEXT: marching.art Fantasy is a fantasy sports game where users ("Directors") create their own fantasy ensembles. Directors draft real corps to fill caption positions (Brass, Percussion, Guard, etc.) and earn points based on how those corps perform in actual competitions. Think fantasy football, but for drum corps.
+  const prompt = `You are a marching.art fantasy sports analyst. Write exciting coverage of today's fantasy competition results, celebrating the top directors and their ensembles.
 
 ═══════════════════════════════════════════════════════════════
-DATE & CONTEXT
+MARCHING.ART FANTASY RESULTS
 ═══════════════════════════════════════════════════════════════
-• Date: ${showContext.date}
-• Season Day: ${reportDay}
-• Competition Today: ${fantasyShowName} in ${fantasyLocation}
-═══════════════════════════════════════════════════════════════
+Date: ${showContext.date}
+Season Day: ${reportDay}
+Competition: ${fantasyShowName}
 
-FANTASY LEADERBOARD for ${showContext.date} (Day ${reportDay}):
-
-TOP 10 FANTASY ENSEMBLES:
-${topPerformers.map((r, i) =>
-  `${i + 1}. "${r.corpsName}" from ${r.location || 'Unknown'} (Director: ${r.displayName || 'Unknown'}) - ${r.totalScore.toFixed(3)} fantasy points`
-).join('\n')}
+TOP 10 FANTASY ENSEMBLES TODAY:
+${topPerformers.map((r, i) => {
+  const margin = i > 0 ? (topPerformers[i-1].totalScore - r.totalScore).toFixed(3) : "-";
+  return `${i + 1}. "${r.corpsName}" (Director: ${r.displayName || 'Unknown'}) - ${r.totalScore.toFixed(3)} pts${i > 0 ? ` [${margin} behind]` : ' [WINNER]'}
+   From: ${r.location || 'Unknown location'}`;
+}).join('\n')}
 
 STATISTICS:
-- Top Score: ${topScore} points
-- Top 10 Average: ${avgScore} points
-- Total ensembles competing: ${allResults.length}
+• Winning Score: ${topScore}
+• Top 10 Average: ${avgScore}
+• Total Ensembles: ${competitiveResults.length}
+• Score Spread (1st-10th): ${topPerformers.length >= 10 ? (topPerformers[0].totalScore - topPerformers[9].totalScore).toFixed(3) : 'N/A'}
 
-WRITE A FANTASY SPORTS CELEBRATION ARTICLE:
+${toneGuidance}
 
-1. HEADLINE: Exciting fantasy sports headline celebrating the top performers. Include the director's name and/or location when relevant. Examples: "The Crimson Guard Dominates Day ${reportDay} with ${topScore}-Point Explosion", "Director Smith's 'Blue Thunder' from Chicago Claims Fantasy Crown"
+WRITE A FANTASY SPORTS RESULTS ARTICLE:
 
-2. SUMMARY: 2-3 sentences about who dominated today's fantasy competition. Make it exciting!
+1. HEADLINE: Celebrate the winner with their score and ensemble name
+   Example: "\"${topPerformers[0]?.corpsName}\" dominates Day ${reportDay} with ${topScore}-point performance"
 
-3. NARRATIVE: A 600-800 word article (3-4 paragraphs) that:
-   - Celebrates the top Director's achievement with enthusiasm
-   - Highlights impressive performances in the top 5
-   - Notes the competition level (how close were the scores?)
-   - Teases tomorrow's competition
+2. SUMMARY: 2-3 exciting sentences about who won and the competition level.
 
-CRITICAL RULES:
-- This is FANTASY SPORTS like fantasy football - NOT a role-playing game or video game
-- The "corps names" are creative team names chosen by users, not real DCI corps
-- NEVER mention specific lineup picks or roster choices - these are confidential strategy
-- Focus ONLY on total scores and rankings
-- Write like ESPN fantasy coverage - celebratory, fun, competitive`;
+3. NARRATIVE: 500-700 word celebration article:
+   - Lead with the winner's achievement
+   - Highlight the top 3-5 performers
+   - Discuss the competition intensity
+   - Preview tomorrow's competition
 
-  // Schema for structured output
+This is fantasy sports coverage - fun, competitive, celebratory. NEVER reveal specific roster picks.`;
+
   const schema = {
     type: SchemaType.OBJECT,
     properties: {
-      headline: { type: SchemaType.STRING, description: "Exciting fantasy sports headline" },
+      headline: { type: SchemaType.STRING, description: "Winner-focused headline" },
       summary: { type: SchemaType.STRING, description: "2-3 sentence summary" },
-      narrative: { type: SchemaType.STRING, description: "600-800 word celebration article" },
+      narrative: { type: SchemaType.STRING, description: "500-700 word results article" },
       topPerformers: {
         type: SchemaType.ARRAY,
         items: {
           type: SchemaType.OBJECT,
           properties: {
             rank: { type: SchemaType.INTEGER },
-            director: { type: SchemaType.STRING },
             corpsName: { type: SchemaType.STRING },
+            director: { type: SchemaType.STRING },
             score: { type: SchemaType.NUMBER },
-            highlight: { type: SchemaType.STRING },
           },
-          required: ["rank", "director", "corpsName", "score", "highlight"],
+          required: ["rank", "corpsName", "director", "score"],
         },
       },
     },
@@ -2961,10 +3140,9 @@ CRITICAL RULES:
   try {
     const content = await generateStructuredContent(prompt, schema);
 
-    // Generate image for top fantasy corps with themed uniform based on corps name
     const topCorps = topPerformers[0];
 
-    // Fetch the top performer's uniform design from their profile
+    // Fetch uniform design if available
     let uniformDesign = null;
     let corpsLocation = null;
     if (topCorps?.uid && topCorps?.corpsClass && db && dataDocId) {
@@ -2975,13 +3153,6 @@ CRITICAL RULES:
           const corpsData = profileData?.corps?.[topCorps.corpsClass];
           uniformDesign = corpsData?.uniformDesign || null;
           corpsLocation = corpsData?.location || null;
-          if (uniformDesign) {
-            logger.info(`Found uniform design for top performer ${topCorps.corpsName}`, {
-              userId: topCorps.uid,
-              corpsClass: topCorps.corpsClass,
-              primaryColor: uniformDesign.primaryColor,
-            });
-          }
         }
       } catch (profileError) {
         logger.warn("Could not fetch top performer's uniform design:", profileError.message);
@@ -2990,792 +3161,173 @@ CRITICAL RULES:
 
     const imagePrompt = buildFantasyPerformersImagePrompt(
       topCorps?.corpsName || "Champion Corps",
-      "Victory celebration after dominating Day " + reportDay + " competition",
+      "Victory celebration after dominating Day " + reportDay,
       corpsLocation,
       uniformDesign
     );
 
     const imageData = await generateImageWithImagen(imagePrompt);
-    const imageResult = await processGeneratedImage(imageData, "fantasy_performers");
+    const imageResult = await processGeneratedImage(imageData, "fantasy_results");
 
     return {
-      type: ARTICLE_TYPES.FANTASY_PERFORMERS,
+      type: ARTICLE_TYPES.FANTASY_RESULTS,
       ...content,
-      featuredPerformer: topCorps?.corpsName, // Track which performer was featured for diversity
+      featuredPerformer: topCorps?.corpsName,
       imageUrl: imageResult.url,
       imagePrompt,
       reportDay,
     };
   } catch (error) {
-    logger.error("Fantasy Performers article failed:", error);
-    return createFallbackArticle(ARTICLE_TYPES.FANTASY_PERFORMERS, reportDay);
+    logger.error("Fantasy Results article failed:", error);
+    return createFallbackArticle(ARTICLE_TYPES.FANTASY_RESULTS, reportDay);
   }
 }
 
 /**
- * Article 4: Fantasy League Recap
+ * Article 5: marching.art Caption Analysis
+ * Fantasy caption trends focusing on General Effect, Visual, and Music over the last week
  */
-async function generateFantasyLeaguesArticle({ reportDay, fantasyData, showContext, competitionContext, excludePerformers = new Set() }) {
-  // Get dynamic tone guidance
-  const toneGuidance = getToneGuidance(competitionContext, "fantasy_leagues");
+async function generateFantasyCaptionsArticle({ reportDay, fantasyData, showContext, competitionContext, db }) {
+  const toneGuidance = getToneGuidance(competitionContext, "fantasy_captions");
 
-  // Get show/league data - also format show names for fantasy branding
   const shows = fantasyData?.current?.shows || [];
-  const showSummaries = shows.map(show => {
-    const results = show.results || [];
-    // Filter out SoundSport corps - SoundSport is non-competitive and scores should not be published
-    const competitiveResults = results.filter(r => r.corpsClass !== 'soundSport');
-    const sortedResults = competitiveResults.sort((a, b) => b.totalScore - a.totalScore);
+  const allResults = shows.flatMap(s => s.results || []);
+  const competitiveResults = allResults.filter(r => r.corpsClass !== 'soundSport');
 
-    // For the featured performer in this show, try to pick someone NOT already featured
-    // This ensures Fantasy Leagues highlights different performers than Fantasy Performers article
-    let featuredPerformer = sortedResults[0];
-    for (const performer of sortedResults.slice(0, 5)) {
-      if (!excludePerformers.has(performer.corpsName)) {
-        featuredPerformer = performer;
-        break;
-      }
+  // Get trend data from previous days
+  const trendRecaps = fantasyData?.trends || [];
+
+  // Analyze caption performance across the week
+  const captionPerformance = {
+    ge: [],
+    visual: [],
+    music: [],
+  };
+
+  // Group by caption performance if available
+  competitiveResults.forEach(result => {
+    if (result.captionScores) {
+      captionPerformance.ge.push({ name: result.corpsName, score: result.captionScores.ge || 0 });
+      captionPerformance.visual.push({ name: result.corpsName, score: result.captionScores.visual || 0 });
+      captionPerformance.music.push({ name: result.corpsName, score: result.captionScores.music || 0 });
     }
-
-    return {
-      name: formatFantasyEventName(show.showName || show.showId || 'Competition'),
-      entrants: competitiveResults.length,
-      topScorer: featuredPerformer?.corpsName || 'N/A',
-      topScore: featuredPerformer?.totalScore?.toFixed(3) || '0.000',
-      // Also include actual leader for reference if different
-      actualLeader: sortedResults[0]?.corpsName !== featuredPerformer?.corpsName ? sortedResults[0]?.corpsName : null,
-    };
   });
 
-  // Use marching.art branding for fantasy articles
+  // Sort by caption scores
+  captionPerformance.ge.sort((a, b) => b.score - a.score);
+  captionPerformance.visual.sort((a, b) => b.score - a.score);
+  captionPerformance.music.sort((a, b) => b.score - a.score);
+
   const fantasyShowName = formatFantasyEventName(showContext.showName);
-  const fantasyLocation = formatFantasyEventName(showContext.location);
 
-  const prompt = `You are a fantasy sports league analyst for marching.art, writing league updates like ESPN's fantasy football league coverage.
-
-CONTEXT: marching.art Fantasy organizes competitions into "shows" (like fantasy football leagues). Directors compete in these shows with their fantasy ensembles. Points are earned based on real corps performances.
+  const prompt = `You are a marching.art fantasy analyst specializing in caption performance trends. Help directors understand which captions are driving fantasy success.
 
 ═══════════════════════════════════════════════════════════════
-DATE & CONTEXT
+MARCHING.ART CAPTION ANALYSIS
 ═══════════════════════════════════════════════════════════════
-• Date: ${showContext.date}
-• Season Day: ${reportDay}
-• Competition Today: ${fantasyShowName} in ${fantasyLocation}
-═══════════════════════════════════════════════════════════════
+Date: ${showContext.date}
+Season Day: ${reportDay}
+Analysis Period: Days ${reportDay - 6} through ${reportDay}
 
-LEAGUE/SHOW ACTIVITY for ${showContext.date} (Day ${reportDay}):
+CAPTION SCORING REMINDER:
+In marching.art fantasy, points come from three caption categories:
+• GENERAL EFFECT (GE) - 40% weight: Design excellence, entertainment value
+• VISUAL - 30% weight: Marching technique, color guard, staging
+• MUSIC - 30% weight: Brass, percussion, music design
 
-ACTIVE COMPETITIONS:
-${showSummaries.length > 0 ? showSummaries.map((s, i) =>
-  `${i + 1}. "${s.name}" - ${s.entrants} ensembles competing | Leader: "${s.topScorer}" (${s.topScore} pts)`
-).join('\n') : 'No active shows today - check back tomorrow!'}
+WEEKLY FANTASY TRENDS:
+${(() => {
+  if (trendRecaps.length < 2) return "Insufficient data for weekly trends - early season.";
 
-Total Shows Active: ${shows.length}
-Total Directors Competing: ${shows.reduce((sum, s) => sum + (s.results?.length || 0), 0)}
+  // Calculate average scores across the week
+  const weeklyAvg = trendRecaps.reduce((acc, recap) => {
+    const results = (recap.shows || []).flatMap(s => s.results || []).filter(r => r.corpsClass !== 'soundSport');
+    const avg = results.length > 0
+      ? results.reduce((sum, r) => sum + r.totalScore, 0) / results.length
+      : 0;
+    return acc + avg;
+  }, 0) / trendRecaps.length;
 
-WRITE A LEAGUE ROUNDUP ARTICLE:
+  return `• Average top ensemble score this week: ${weeklyAvg.toFixed(3)}
+• Competitions this week: ${trendRecaps.length}
+• Total fantasy points distributed: ${trendRecaps.reduce((sum, r) => sum + ((r.shows || []).flatMap(s => s.results || []).length), 0)} performances`;
+})()}
 
-1. HEADLINE: League-focused headline about competition across shows. Examples: "Championship Show Heats Up: Three Directors Within 0.5 Points", "Day ${reportDay} League Roundup: Underdogs Make Their Move"
+TODAY'S TOP PERFORMERS BY CATEGORY:
+${(() => {
+  if (captionPerformance.ge.length === 0) {
+    // Fallback to total scores if no caption breakdown
+    const sorted = [...competitiveResults].sort((a, b) => b.totalScore - a.totalScore).slice(0, 5);
+    return `TOP 5 OVERALL:
+${sorted.map((r, i) => `${i + 1}. "${r.corpsName}" - ${r.totalScore.toFixed(3)} total`).join('\n')}`;
+  }
 
-2. SUMMARY: 2-3 sentences summarizing league activity across all shows.
+  return `GENERAL EFFECT LEADERS:
+${captionPerformance.ge.slice(0, 3).map((r, i) => `${i + 1}. "${r.name}" - ${r.score.toFixed(2)}`).join('\n')}
 
-3. NARRATIVE: A 600-800 word article (3-4 paragraphs) that:
-   - Provides an overview of competition across shows
-   - Highlights tight races and dominant performances
-   - Discusses what's at stake as the season progresses
-   - Previews upcoming competition days
+VISUAL LEADERS:
+${captionPerformance.visual.slice(0, 3).map((r, i) => `${i + 1}. "${r.name}" - ${r.score.toFixed(2)}`).join('\n')}
 
-4. LEAGUE HIGHLIGHTS: Key storylines from each active show/league.
+MUSIC LEADERS:
+${captionPerformance.music.slice(0, 3).map((r, i) => `${i + 1}. "${r.name}" - ${r.score.toFixed(2)}`).join('\n')}`;
+})()}
 
-CRITICAL RULES:
-- This is FANTASY SPORTS coverage - NOT RPG/video games
-- Focus on league/show competition, not individual roster decisions
-- NEVER reveal or speculate about specific lineup choices
-- Write like ESPN fantasy league coverage`;
+${toneGuidance}
 
-  // Schema for structured output
+WRITE A MARCHING.ART CAPTION ANALYSIS ARTICLE:
+
+1. HEADLINE: Caption trend focus
+   Example: "Caption Analysis: GE performance drives fantasy success as season heats up"
+
+2. SUMMARY: 2-3 sentences about which captions are making the biggest impact this week.
+
+3. NARRATIVE: 500-700 word analysis:
+   - Analyze General Effect trends and what's driving high GE scores
+   - Break down Visual performance - which ensembles excel in visual captions?
+   - Examine Music trends - brass vs percussion impact
+   - Strategic insights for directors (without revealing specific picks)
+   - Week-over-week trend observations
+
+Help directors understand the caption dynamics. Educational but engaging.`;
+
   const schema = {
     type: SchemaType.OBJECT,
     properties: {
-      headline: { type: SchemaType.STRING, description: "League-focused headline" },
+      headline: { type: SchemaType.STRING, description: "Caption-focused headline" },
       summary: { type: SchemaType.STRING, description: "2-3 sentence summary" },
-      narrative: { type: SchemaType.STRING, description: "600-800 word article" },
-      leagueHighlights: {
-        type: SchemaType.ARRAY,
-        items: {
-          type: SchemaType.OBJECT,
-          properties: {
-            league: { type: SchemaType.STRING },
-            leader: { type: SchemaType.STRING },
-            story: { type: SchemaType.STRING },
-          },
-          required: ["league", "leader", "story"],
+      narrative: { type: SchemaType.STRING, description: "500-700 word caption analysis" },
+      captionInsights: {
+        type: SchemaType.OBJECT,
+        properties: {
+          geInsight: { type: SchemaType.STRING, description: "General Effect insight" },
+          visualInsight: { type: SchemaType.STRING, description: "Visual caption insight" },
+          musicInsight: { type: SchemaType.STRING, description: "Music caption insight" },
         },
+        required: ["geInsight", "visualInsight", "musicInsight"],
       },
     },
-    required: ["headline", "summary", "narrative", "leagueHighlights"],
+    required: ["headline", "summary", "narrative", "captionInsights"],
   };
 
   try {
     const content = await generateStructuredContent(prompt, schema);
 
-    // Use specialized league championship ceremony prompt
+    // Use fantasy league championship image
     const imagePrompt = buildFantasyLeagueImagePrompt();
 
     const imageData = await generateImageWithImagen(imagePrompt);
-    const imageResult = await processGeneratedImage(imageData, "fantasy_leagues");
+    const imageResult = await processGeneratedImage(imageData, "fantasy_captions");
 
     return {
-      type: ARTICLE_TYPES.FANTASY_LEAGUES,
+      type: ARTICLE_TYPES.FANTASY_CAPTIONS,
       ...content,
       imageUrl: imageResult.url,
       imagePrompt,
       reportDay,
     };
   } catch (error) {
-    logger.error("Fantasy Leagues article failed:", error);
-    return createFallbackArticle(ARTICLE_TYPES.FANTASY_LEAGUES, reportDay);
-  }
-}
-
-/**
- * Article 5: Deep Analytics
- */
-async function generateDeepAnalyticsArticle({ reportDay, dayScores, trendData, fantasyData, captionLeaders, showContext, competitionContext, db, excludeCorps = new Set() }) {
-  // Get dynamic tone guidance
-  const toneGuidance = getToneGuidance(competitionContext, "deep_analytics");
-
-  // Calculate advanced statistics
-  const bigGainers = Object.entries(trendData)
-    .filter(([, t]) => t.dayChange > 0.1)
-    .sort((a, b) => b[1].dayChange - a[1].dayChange)
-    .slice(0, 5);
-
-  const bigLosers = Object.entries(trendData)
-    .filter(([, t]) => t.dayChange < -0.1)
-    .sort((a, b) => a[1].dayChange - b[1].dayChange)
-    .slice(0, 5);
-
-  const trendLeaders = Object.entries(trendData)
-    .sort((a, b) => b[1].trendFromAvg - a[1].trendFromAvg)
-    .slice(0, 5);
-
-  const trendLaggers = Object.entries(trendData)
-    .sort((a, b) => a[1].trendFromAvg - b[1].trendFromAvg)
-    .slice(0, 5);
-
-  // Calculate score distribution
-  const totalScores = dayScores.map(s => s.total);
-  const avgScore = totalScores.length > 0
-    ? (totalScores.reduce((sum, s) => sum + s, 0) / totalScores.length).toFixed(3)
-    : "0.000";
-  const scoreSpread = totalScores.length > 0
-    ? (Math.max(...totalScores) - Math.min(...totalScores)).toFixed(3)
-    : "0.000";
-
-  // Build list of all shows happening today for comprehensive coverage
-  const allShowsText = showContext.allShows?.length > 1
-    ? showContext.allShows.map(s => `• ${s.name}${s.location ? ` (${s.location})` : ''}`).join('\n')
-    : `• ${showContext.showName}${showContext.location ? ` (${showContext.location})` : ''}`;
-
-  const prompt = `You are a senior data analyst and statistician for marching.art, writing advanced analytical content like FiveThirtyEight or The Athletic's deep dives.
-
-CONTEXT: DCI scoring uses a 100-point scale. Top corps score 90-99+. Every 0.001 point represents real competitive separation. The season builds toward championships, so trajectory matters as much as current standings.
-
-═══════════════════════════════════════════════════════════════
-EVENT INFORMATION
-═══════════════════════════════════════════════════════════════
-• Date: ${showContext.date}
-• Season Day: ${reportDay}
-${showContext.allShows?.length > 1 ? `
-ALL SHOWS TODAY (${showContext.allShows.length} competitions):
-${allShowsText}
-
-IMPORTANT: This analysis covers results from ALL ${showContext.allShows.length} shows happening today. Aggregate data represents combined performances across all competitions.
-` : `• Show Name: ${showContext.showName}
-• Location: ${showContext.location}`}
-═══════════════════════════════════════════════════════════════
-
-STATISTICAL ANALYSIS${showContext.allShows?.length > 1 ? ` across all ${showContext.allShows.length} shows` : ` from ${showContext.showName}`} on ${showContext.date}:
-
-═══════════════════════════════════════════════════════════════
-MOMENTUM CLASSIFICATIONS (Extended Analysis)
-═══════════════════════════════════════════════════════════════
-${(() => {
-  const classifications = {
-    surging: Object.entries(trendData).filter(([, t]) => t.momentum === "surging"),
-    hot: Object.entries(trendData).filter(([, t]) => t.momentum === "hot"),
-    rising: Object.entries(trendData).filter(([, t]) => t.momentum === "rising"),
-    steady: Object.entries(trendData).filter(([, t]) => t.momentum === "steady" || t.momentum === "consistent"),
-    cooling: Object.entries(trendData).filter(([, t]) => t.momentum === "cooling"),
-    cold: Object.entries(trendData).filter(([, t]) => t.momentum === "cold"),
-    sliding: Object.entries(trendData).filter(([, t]) => t.momentum === "sliding"),
-  };
-
-  const output = [];
-  if (classifications.surging.length > 0) {
-    output.push(`🔥 SURGING (3+ day winning streak): ${classifications.surging.map(([c, t]) => {
-      const narrative = getTrendNarrative(t, c);
-      return `${c} (${t.streak}-day streak, ${narrative?.momentum || ""})`;
-    }).join(", ")}`);
-  }
-  if (classifications.hot.length > 0) {
-    output.push(`🌡️ HOT (strong upward momentum): ${classifications.hot.map(([c]) => c).join(", ")}`);
-  }
-  if (classifications.rising.length > 0) {
-    output.push(`📈 RISING (positive trajectory): ${classifications.rising.map(([c]) => c).join(", ")}`);
-  }
-  if (classifications.cooling.length > 0) {
-    output.push(`📉 COOLING (slight regression): ${classifications.cooling.map(([c]) => c).join(", ")}`);
-  }
-  if (classifications.cold.length > 0) {
-    output.push(`❄️ COLD (downward momentum): ${classifications.cold.map(([c]) => c).join(", ")}`);
-  }
-  if (classifications.sliding.length > 0) {
-    output.push(`⬇️ SLIDING (3+ day losing streak): ${classifications.sliding.map(([c, t]) => {
-      return `${c} (${t.streak}-day decline)`;
-    }).join(", ")}`);
-  }
-  return output.length > 0 ? output.join('\n') : "All corps relatively steady today";
-})()}
-
-═══════════════════════════════════════════════════════════════
-SINGLE-DAY MOVEMENT
-═══════════════════════════════════════════════════════════════
-BIGGEST GAINERS (>0.1 point gain):
-${bigGainers.length > 0 ? bigGainers.map(([c, t]) => {
-  const narrative = getTrendNarrative(t, c);
-  return `• ${c}: +${t.dayChange.toFixed(3)} → ${narrative?.full || "improving"}`;
-}).join('\n') : '• No corps gained >0.1 points today'}
-
-BIGGEST DROPS (>0.1 point loss):
-${bigLosers.length > 0 ? bigLosers.map(([c, t]) => {
-  const narrative = getTrendNarrative(t, c);
-  return `• ${c}: ${t.dayChange.toFixed(3)} → ${narrative?.full || "regressing"}`;
-}).join('\n') : '• No corps dropped >0.1 points today'}
-
-═══════════════════════════════════════════════════════════════
-VOLATILITY & CONSISTENCY ANALYSIS
-═══════════════════════════════════════════════════════════════
-${(() => {
-  const byVolatility = Object.entries(trendData).sort((a, b) => b[1].volatility - a[1].volatility);
-  const highVol = byVolatility.slice(0, 3).filter(([, t]) => t.volatility > 0.15);
-  const lowVol = byVolatility.slice(-3).filter(([, t]) => t.volatility < 0.15);
-
-  const output = [];
-  if (highVol.length > 0) {
-    output.push(`HIGH VOLATILITY (unpredictable):\n${highVol.map(([c, t]) => `• ${c}: σ=${t.volatility.toFixed(3)} - inconsistent but capable of big swings`).join('\n')}`);
-  }
-  if (lowVol.length > 0) {
-    output.push(`LOW VOLATILITY (predictable):\n${lowVol.map(([c, t]) => `• ${c}: σ=${t.volatility.toFixed(3)} - consistent, reliable performances`).join('\n')}`);
-  }
-  return output.join('\n\n') || "Volatility data not available";
-})()}
-
-═══════════════════════════════════════════════════════════════
-SEASON PERFORMANCE MARKERS
-═══════════════════════════════════════════════════════════════
-${(() => {
-  const atBest = Object.entries(trendData).filter(([, t]) => t.atSeasonBest);
-  const atWorst = Object.entries(trendData).filter(([, t]) => t.atSeasonWorst);
-
-  const output = [];
-  if (atBest.length > 0) {
-    output.push(`AT SEASON HIGH: ${atBest.map(([c, t]) => `${c} (${t.latestTotal?.toFixed(3)})`).join(", ")}`);
-  }
-  if (atWorst.length > 0) {
-    output.push(`AT SEASON LOW: ${atWorst.map(([c, t]) => `${c} (${t.latestTotal?.toFixed(3)})`).join(", ")}`);
-  }
-  return output.length > 0 ? output.join('\n') : "No corps at season extremes today";
-})()}
-
-═══════════════════════════════════════════════════════════════
-7-DAY TREND ANALYSIS (Performance vs. Weekly Average)
-═══════════════════════════════════════════════════════════════
-OUTPERFORMING THEIR AVERAGE:
-${trendLeaders.map(([c, t]) => `• ${c}: +${t.trendFromAvg.toFixed(3)} above 7-day avg (avg: ${t.avgTotal.toFixed(3)})`).join('\n')}
-
-UNDERPERFORMING THEIR AVERAGE:
-${trendLaggers.map(([c, t]) => `• ${c}: ${t.trendFromAvg.toFixed(3)} below 7-day avg (avg: ${t.avgTotal.toFixed(3)})`).join('\n')}
-
-═══════════════════════════════════════════════════════════════
-FIELD STATISTICS
-═══════════════════════════════════════════════════════════════
-• Total corps in standings: ${dayScores.length}
-• Average score: ${avgScore}
-• Score spread (1st to last): ${scoreSpread} points
-• Top score: ${totalScores.length > 0 ? Math.max(...totalScores).toFixed(3) : 'N/A'}
-• Median score: ${totalScores.length > 0 ? totalScores.sort((a, b) => a - b)[Math.floor(totalScores.length / 2)].toFixed(3) : 'N/A'}
-
-═══════════════════════════════════════════════════════════════
-CAPTION EXCELLENCE BY CATEGORY
-═══════════════════════════════════════════════════════════════
-${captionLeaders.slice(0, 6).map(c => `• ${c.caption}: ${c.leader} (${c.score.toFixed(2)}) [trend: ${c.weeklyTrend}]`).join('\n')}
-
-${toneGuidance}
-
-WRITE A DATA-DRIVEN ANALYTICAL ARTICLE:
-
-1. HEADLINE: Statistical insight headline. Examples: "Momentum Math: Crown's 7-Day Trend Points to Finals Surge", "By The Numbers: Score Compression Signals Tighter Championships", "Analytics Deep Dive: Which Corps Are Peaking at the Right Time?"
-
-2. SUMMARY: 2-3 sentences with the most important statistical finding of the day. Lead with data.
-
-3. NARRATIVE: An 800-1200 word deep analysis (4-5 paragraphs) that:
-   - Opens with the key statistical story (momentum shift, trend reversal, or trajectory confirmation)
-   - Provides regression analysis: Are top corps maintaining trajectory? Are mid-pack corps closing the gap?
-   - Analyzes caption-specific trends: Which captions are separating corps? Where are the battles closest?
-   - Discusses fantasy implications: Which DCI corps are trending in ways that affect fantasy value?
-   - Concludes with predictive insights: Based on current trajectories, what should we expect?
-
-4. INSIGHTS: 3-5 specific statistical findings with their implications.
-
-5. RECOMMENDATIONS: Fantasy strategy tips based on corps trends (NOT specific lineup picks - those are confidential).
-
-CRITICAL RULES:
-- This is STATISTICAL ANALYSIS, not opinion - lead with numbers
-- Reference specific corps and their trajectories
-- Explain WHY trends matter (e.g., "Crown's +0.35 over 7 days suggests design changes are being absorbed")
-- Fantasy recommendations should focus on which DCI CORPS are valuable, NOT individual director strategies
-- NEVER reveal or speculate about any director's specific caption picks
-- Write like FiveThirtyEight or The Athletic - data-first journalism`;
-
-  // Schema for structured output
-  const schema = {
-    type: SchemaType.OBJECT,
-    properties: {
-      headline: { type: SchemaType.STRING, description: "Statistical insight headline" },
-      summary: { type: SchemaType.STRING, description: "2-3 sentence data-driven summary" },
-      narrative: { type: SchemaType.STRING, description: "800-1200 word deep analysis" },
-      insights: {
-        type: SchemaType.ARRAY,
-        items: {
-          type: SchemaType.OBJECT,
-          properties: {
-            metric: { type: SchemaType.STRING },
-            finding: { type: SchemaType.STRING },
-            implication: { type: SchemaType.STRING },
-          },
-          required: ["metric", "finding", "implication"],
-        },
-      },
-      recommendations: {
-        type: SchemaType.ARRAY,
-        items: {
-          type: SchemaType.OBJECT,
-          properties: {
-            corps: { type: SchemaType.STRING },
-            action: { type: SchemaType.STRING, enum: ["buy", "hold", "sell"] },
-            reasoning: { type: SchemaType.STRING },
-          },
-          required: ["corps", "action", "reasoning"],
-        },
-      },
-    },
-    required: ["headline", "summary", "narrative", "insights", "recommendations"],
-  };
-
-  try {
-    const content = await generateStructuredContent(prompt, schema);
-
-    // Feature a trending corps in an analytical aerial shot - but NOT one already featured
-    // Sort by trend and find the first corps not in excludeCorps
-    const sortedByTrend = Object.entries(trendData).sort((a,b) => b[1].trendFromAvg - a[1].trendFromAvg);
-    let topTrending = sortedByTrend.find(([corps]) => !excludeCorps.has(corps));
-
-    // Fallback to the best trending corps if all are excluded
-    if (!topTrending) {
-      topTrending = sortedByTrend[0];
-    }
-
-    const featuredCorps = dayScores.find(s => s.corps === topTrending?.[0]) || dayScores[0];
-
-    // Look up the corps' show title for thematic context
-    const showTitle = db ? await getShowTitleFromFirestore(db, featuredCorps.corps, featuredCorps.sourceYear) : null;
-
-    // Use specialized analytics prompt showing drill formations from elevated angle
-    const imagePrompt = buildAnalyticsImagePrompt(
-      featuredCorps.corps,
-      featuredCorps.sourceYear,
-      "trajectory analysis",
-      showTitle
-    );
-
-    const imageData = await generateImageWithImagen(imagePrompt);
-    const imageResult = await processGeneratedImage(imageData, "deep_analytics");
-
-    return {
-      type: ARTICLE_TYPES.DEEP_ANALYTICS,
-      ...content,
-      featuredCorps: featuredCorps.corps, // Track which corps was featured for diversity
-      imageUrl: imageResult.url,
-      imagePrompt,
-      reportDay,
-    };
-  } catch (error) {
-    logger.error("Deep Analytics article failed:", error);
-    return createFallbackArticle(ARTICLE_TYPES.DEEP_ANALYTICS, reportDay);
-  }
-}
-
-/**
- * Article 6: Underdog Story
- * Features a corps that's significantly outperforming expectations
- */
-async function generateUnderdogStoryArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, excludeCorps = new Set() }) {
-  // Get dynamic tone guidance
-  const toneGuidance = getToneGuidance(competitionContext, "underdog_story");
-
-  // Find the biggest overperformer relative to their ranking
-  // Look for corps in positions 6-15 that are trending strongly upward
-  // Also exclude corps that have already been featured in other articles
-  const underdogCandidates = dayScores
-    .slice(5, 15) // Focus on mid-pack corps (positions 6-15)
-    .filter(s => !excludeCorps.has(s.corps)) // Exclude already-featured corps
-    .map(s => ({
-      ...s,
-      trend: trendData[s.corps] || { dayChange: 0, trendFromAvg: 0 },
-    }))
-    .filter(s => s.trend.dayChange > 0 || s.trend.trendFromAvg > 0) // Must be trending up
-    .sort((a, b) => {
-      // Score by combination of daily gain and trend from average
-      const aScore = a.trend.dayChange * 2 + a.trend.trendFromAvg;
-      const bScore = b.trend.dayChange * 2 + b.trend.trendFromAvg;
-      return bScore - aScore;
-    });
-
-  if (underdogCandidates.length === 0) {
-    // Fallback to the corps with biggest single-day gain that's not already featured
-    const biggestGainer = Object.entries(trendData)
-      .filter(([corps]) => !excludeCorps.has(corps))
-      .sort((a, b) => b[1].dayChange - a[1].dayChange)[0];
-    if (biggestGainer) {
-      const gainerCorps = dayScores.find(s => s.corps === biggestGainer[0]);
-      if (gainerCorps) {
-        underdogCandidates.push({
-          ...gainerCorps,
-          trend: biggestGainer[1],
-        });
-      }
-    }
-  }
-
-  // Find the first unfeatured underdog, or fallback to 6th place
-  const featuredUnderdog = underdogCandidates[0] ||
-    dayScores.find(s => !excludeCorps.has(s.corps)) ||
-    dayScores[5]; // Fallback to 6th place
-  const currentRank = dayScores.findIndex(s => s.corps === featuredUnderdog.corps) + 1;
-
-  const prompt = `You are an inspirational sports writer for marching.art, crafting a compelling underdog narrative like ESPN's "30 for 30" or Sports Illustrated's feature stories.
-
-CONTEXT: Every DCI season has breakthrough corps - ensembles that exceed expectations and capture the imagination of fans. Today you're profiling one such corps whose performance is turning heads.
-
-═══════════════════════════════════════════════════════════════
-EVENT INFORMATION
-═══════════════════════════════════════════════════════════════
-• Show Name: ${showContext.showName}
-• Location: ${showContext.location}
-• Date: ${showContext.date}
-• Season Day: ${reportDay}
-═══════════════════════════════════════════════════════════════
-
-FEATURED CORPS: ${featuredUnderdog.corps}
-═══════════════════════════════════════════════════════════════
-• Historical Season: ${featuredUnderdog.sourceYear}
-• Current Standing: ${currentRank}${currentRank === 1 ? 'st' : currentRank === 2 ? 'nd' : currentRank === 3 ? 'rd' : 'th'} place
-• Today's Score: ${featuredUnderdog.total.toFixed(3)}
-• Daily Change: ${featuredUnderdog.trend?.dayChange >= 0 ? '+' : ''}${(featuredUnderdog.trend?.dayChange || 0).toFixed(3)}
-• 7-Day Trend: ${featuredUnderdog.trend?.trendFromAvg >= 0 ? '+' : ''}${(featuredUnderdog.trend?.trendFromAvg || 0).toFixed(3)} vs average
-
-MOMENTUM NARRATIVE:
-${(() => {
-  const narrative = getTrendNarrative(featuredUnderdog.trend, featuredUnderdog.corps + reportDay);
-  const parts = [];
-  if (narrative?.momentum) parts.push(`This corps is ${narrative.momentum}`);
-  if (narrative?.streak) parts.push(`with ${narrative.streak}`);
-  if (narrative?.caption) parts.push(`and ${narrative.caption}`);
-  if (narrative?.performance) parts.push(`— ${narrative.performance}`);
-  if (featuredUnderdog.trend?.streak >= 3) {
-    parts.push(`(${featuredUnderdog.trend.streak}-day winning streak)`);
-  }
-  return parts.length > 0 ? parts.join(" ") : "Building momentum steadily";
-})()}
-
-CAPTION BREAKDOWN:
-• General Effect: ${featuredUnderdog.subtotals?.ge?.toFixed(2) || 'N/A'}${featuredUnderdog.trend?.captionTrends?.ge?.trending === "up" ? " 📈" : featuredUnderdog.trend?.captionTrends?.ge?.trending === "down" ? " 📉" : ""}
-• Visual: ${featuredUnderdog.subtotals?.visual?.toFixed(2) || 'N/A'}${featuredUnderdog.trend?.captionTrends?.visual?.trending === "up" ? " 📈" : featuredUnderdog.trend?.captionTrends?.visual?.trending === "down" ? " 📉" : ""}
-• Music: ${featuredUnderdog.subtotals?.music?.toFixed(2) || 'N/A'}${featuredUnderdog.trend?.captionTrends?.music?.trending === "up" ? " 📈" : featuredUnderdog.trend?.captionTrends?.music?.trending === "down" ? " 📉" : ""}
-${featuredUnderdog.trend?.atSeasonBest ? "★ AT SEASON HIGH - Peaking at the perfect time!" : ""}
-
-COMPETITIVE CONTEXT:
-${dayScores.slice(Math.max(0, currentRank - 3), currentRank + 2).map((s, i) => {
-  const rank = Math.max(0, currentRank - 3) + i + 1;
-  const corpsTrend = trendData[s.corps];
-  const momentum = corpsTrend?.momentum || "steady";
-  return `${rank}. ${s.corps}: ${s.total.toFixed(3)}${s.corps === featuredUnderdog.corps ? ' ← FEATURED' : ''} [${momentum}]`;
-}).join('\n')}
-
-${toneGuidance}
-
-WRITE AN INSPIRATIONAL FEATURE ARTICLE about this corps' rise:
-
-1. HEADLINE: Compelling underdog narrative headline. Examples: "Rising Thunder: How [Corps] Silenced the Doubters", "[Corps] Announces Arrival with Season-Defining Performance", "The Dark Horse Emerges: [Corps]' Stunning Surge"
-
-2. SUMMARY: 2-3 sentences capturing why this corps' performance matters and what makes their story compelling.
-
-3. NARRATIVE: A 600-800 word inspirational feature that:
-   - Opens with a dramatic moment from their performance today
-   - Explores what's driving their improvement (musical excellence, visual precision, design choices)
-   - Puts their achievement in historical context
-   - Includes quotes-style observations about their performance
-   - Builds to an emotional conclusion about what this means for the corps and their fans
-   - Ends with a forward-looking statement about their potential
-
-Inspirational, emotionally resonant, but grounded in real performance data. Think underdog sports movie meets analytical journalism.`;
-
-  const schema = {
-    type: SchemaType.OBJECT,
-    properties: {
-      headline: { type: SchemaType.STRING, description: "Compelling underdog narrative headline" },
-      summary: { type: SchemaType.STRING, description: "2-3 sentence summary of the underdog story" },
-      narrative: { type: SchemaType.STRING, description: "600-800 word inspirational feature" },
-      keyStats: {
-        type: SchemaType.ARRAY,
-        items: {
-          type: SchemaType.OBJECT,
-          properties: {
-            stat: { type: SchemaType.STRING },
-            value: { type: SchemaType.STRING },
-            significance: { type: SchemaType.STRING },
-          },
-          required: ["stat", "value", "significance"],
-        },
-      },
-    },
-    required: ["headline", "summary", "narrative", "keyStats"],
-  };
-
-  try {
-    const content = await generateStructuredContent(prompt, schema);
-
-    // Look up show title for image
-    const showTitle = db ? await getShowTitleFromFirestore(db, featuredUnderdog.corps, featuredUnderdog.sourceYear) : null;
-
-    const imagePrompt = buildUnderdogImagePrompt(
-      featuredUnderdog.corps,
-      featuredUnderdog.sourceYear,
-      showContext.location,
-      showTitle
-    );
-
-    const imageData = await generateImageWithImagen(imagePrompt);
-    const imageResult = await processGeneratedImage(imageData, "underdog_story");
-
-    return {
-      type: ARTICLE_TYPES.UNDERDOG_STORY,
-      ...content,
-      featuredCorps: featuredUnderdog.corps,
-      featuredYear: featuredUnderdog.sourceYear,
-      imageUrl: imageResult.url,
-      imagePrompt,
-      reportDay,
-    };
-  } catch (error) {
-    logger.error("Underdog Story article failed:", error);
-    return createFallbackArticle(ARTICLE_TYPES.UNDERDOG_STORY, reportDay);
-  }
-}
-
-/**
- * Article 7: Corps Spotlight
- * Deep dive into a specific corps' identity and season journey
- */
-async function generateCorpsSpotlightArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, excludeCorps = new Set() }) {
-  // Get dynamic tone guidance
-  const toneGuidance = getToneGuidance(competitionContext, "corps_spotlight");
-
-  // Select a corps to spotlight - rotate through the field
-  // Use reportDay to ensure different corps each day, but avoid already-featured corps
-  let spotlightIndex = (reportDay - 1) % dayScores.length;
-  let spotlightCorps = dayScores[spotlightIndex];
-
-  // If the rotated corps has already been featured, find the next available corps
-  if (excludeCorps.has(spotlightCorps?.corps)) {
-    // Try subsequent positions until we find one not excluded
-    for (let i = 1; i < dayScores.length; i++) {
-      const nextIndex = (spotlightIndex + i) % dayScores.length;
-      if (!excludeCorps.has(dayScores[nextIndex]?.corps)) {
-        spotlightIndex = nextIndex;
-        spotlightCorps = dayScores[nextIndex];
-        break;
-      }
-    }
-  }
-
-  const currentRank = spotlightIndex + 1;
-  const corpsTrend = trendData[spotlightCorps.corps] || { dayChange: 0, trendFromAvg: 0, avgTotal: spotlightCorps.total };
-
-  // Get show title for this corps
-  const showTitle = db ? await getShowTitleFromFirestore(db, spotlightCorps.corps, spotlightCorps.sourceYear) : null;
-
-  const prompt = `You are a veteran DCI journalist writing an in-depth corps profile for marching.art, similar to profiles in Drum Corps World or the DCI website's feature content.
-
-CONTEXT: Each DCI corps has a unique identity, history, and culture. Fans connect deeply with "their" corps. This spotlight profile celebrates what makes this corps special while analyzing their current season performance.
-
-═══════════════════════════════════════════════════════════════
-EVENT INFORMATION
-═══════════════════════════════════════════════════════════════
-• Show Name: ${showContext.showName}
-• Location: ${showContext.location}
-• Date: ${showContext.date}
-• Season Day: ${reportDay}
-═══════════════════════════════════════════════════════════════
-
-FEATURED CORPS: ${spotlightCorps.corps}
-═══════════════════════════════════════════════════════════════
-• Historical Season: ${spotlightCorps.sourceYear}
-${showTitle ? `• Show Title: "${showTitle}"` : ''}
-• Current Standing: ${currentRank}${currentRank === 1 ? 'st' : currentRank === 2 ? 'nd' : currentRank === 3 ? 'rd' : 'th'} place
-• Today's Score: ${spotlightCorps.total.toFixed(3)}
-• Daily Movement: ${corpsTrend.dayChange >= 0 ? '+' : ''}${corpsTrend.dayChange.toFixed(3)}
-• 7-Day Average: ${corpsTrend.avgTotal.toFixed(3)}
-• Trend vs Average: ${corpsTrend.trendFromAvg >= 0 ? '+' : ''}${corpsTrend.trendFromAvg.toFixed(3)}
-
-CURRENT MOMENTUM:
-${(() => {
-  const narrative = getTrendNarrative(corpsTrend, spotlightCorps.corps + reportDay);
-  const lines = [];
-  lines.push(`• Status: ${narrative?.momentum || "maintaining steady form"}`);
-  if (corpsTrend.streak >= 2) {
-    lines.push(`• Streak: ${corpsTrend.streak} consecutive days ${corpsTrend.streakDirection === "up" ? "improving" : "declining"}`);
-  }
-  if (narrative?.caption) {
-    lines.push(`• Caption Trend: ${narrative.caption}`);
-  }
-  if (corpsTrend.atSeasonBest) {
-    lines.push(`★ AT SEASON HIGH - This is their best performance yet!`);
-  } else if (corpsTrend.atSeasonWorst) {
-    lines.push(`⚠️ AT SEASON LOW - A challenging night`);
-  }
-  if (corpsTrend.volatility !== undefined) {
-    if (corpsTrend.volatility > 0.2) {
-      lines.push(`• Volatility: High (unpredictable, capable of big swings)`);
-    } else if (corpsTrend.volatility < 0.08) {
-      lines.push(`• Volatility: Low (remarkably consistent performer)`);
-    }
-  }
-  return lines.join('\n');
-})()}
-
-DETAILED CAPTION SCORES:
-• General Effect: ${spotlightCorps.subtotals?.ge?.toFixed(2) || 'N/A'}
-  - GE1 (Music): ${spotlightCorps.captions?.GE1?.toFixed(2) || 'N/A'}
-  - GE2 (Visual): ${spotlightCorps.captions?.GE2?.toFixed(2) || 'N/A'}
-• Visual Total: ${spotlightCorps.subtotals?.visual?.toFixed(2) || 'N/A'}
-  - VP: ${spotlightCorps.captions?.VP?.toFixed(2) || 'N/A'}
-  - VA: ${spotlightCorps.captions?.VA?.toFixed(2) || 'N/A'}
-  - CG: ${spotlightCorps.captions?.CG?.toFixed(2) || 'N/A'}
-• Music Total: ${spotlightCorps.subtotals?.music?.toFixed(2) || 'N/A'}
-  - Brass: ${spotlightCorps.captions?.B?.toFixed(2) || 'N/A'}
-  - MA: ${spotlightCorps.captions?.MA?.toFixed(2) || 'N/A'}
-  - Percussion: ${spotlightCorps.captions?.P?.toFixed(2) || 'N/A'}
-
-SURROUNDING COMPETITION:
-${dayScores.slice(Math.max(0, currentRank - 2), Math.min(dayScores.length, currentRank + 3)).map((s, i) => {
-  const rank = Math.max(0, currentRank - 2) + i + 1;
-  const gap = s.total - spotlightCorps.total;
-  const rivalTrend = trendData[s.corps];
-  const rivalMomentum = rivalTrend?.momentum || "steady";
-  return `${rank}. ${s.corps}: ${s.total.toFixed(3)}${s.corps === spotlightCorps.corps ? ' ← SPOTLIGHT' : ` (${gap >= 0 ? '+' : ''}${gap.toFixed(3)})`} [${rivalMomentum}]`;
-}).join('\n')}
-
-${(() => {
-  // Find the most interesting nearby rivalry based on momentum
-  const nearbyCorps = dayScores.slice(Math.max(0, currentRank - 2), Math.min(dayScores.length, currentRank + 3))
-    .filter(s => s.corps !== spotlightCorps.corps);
-
-  for (const rival of nearbyCorps) {
-    const rivalTrend = trendData[rival.corps];
-    if (rivalTrend && corpsTrend) {
-      const comparison = getComparativeTrendNarrative(spotlightCorps.corps, corpsTrend, rival.corps, rivalTrend);
-      if (comparison) return `RIVALRY WATCH: ${comparison}`;
-    }
-  }
-  return "";
-})()}
-
-${toneGuidance}
-
-WRITE A COMPREHENSIVE CORPS PROFILE:
-
-1. HEADLINE: A headline that captures the corps' identity and current story. Examples: "Blue Devils: The Dynasty Continues", "Carolina Crown: Brass Excellence Meets Design Innovation", "[Corps]: [Defining Characteristic]"
-
-2. SUMMARY: 2-3 sentences introducing this corps and what makes their ${spotlightCorps.sourceYear} season notable.
-
-3. NARRATIVE: A 700-900 word profile that:
-   - Opens with what makes this corps distinctive in the DCI landscape
-   - ${showTitle ? `Explores their ${spotlightCorps.sourceYear} production "${showTitle}" and its design concept` : 'Discusses their performance style and identity'}
-   - Analyzes their competitive position and what's working well
-   - Identifies their strongest captions and areas of excellence
-   - Includes historical context about the corps' traditions
-   - Concludes with their outlook for the rest of the season
-
-Respectful, knowledgeable, like talking to a passionate fan who knows the corps' history. Celebratory but analytical.`;
-
-  const schema = {
-    type: SchemaType.OBJECT,
-    properties: {
-      headline: { type: SchemaType.STRING, description: "Corps identity headline" },
-      summary: { type: SchemaType.STRING, description: "2-3 sentence corps introduction" },
-      narrative: { type: SchemaType.STRING, description: "700-900 word corps profile" },
-      corpsIdentity: {
-        type: SchemaType.OBJECT,
-        properties: {
-          knownFor: { type: SchemaType.STRING, description: "What this corps is known for" },
-          strength: { type: SchemaType.STRING, description: "Primary competitive strength" },
-          fanbase: { type: SchemaType.STRING, description: "Description of fanbase/culture" },
-        },
-        required: ["knownFor", "strength", "fanbase"],
-      },
-      captionHighlights: {
-        type: SchemaType.ARRAY,
-        items: {
-          type: SchemaType.OBJECT,
-          properties: {
-            caption: { type: SchemaType.STRING },
-            assessment: { type: SchemaType.STRING },
-          },
-          required: ["caption", "assessment"],
-        },
-      },
-    },
-    required: ["headline", "summary", "narrative", "corpsIdentity", "captionHighlights"],
-  };
-
-  try {
-    const content = await generateStructuredContent(prompt, schema);
-
-    const imagePrompt = buildCorpsSpotlightImagePrompt(
-      spotlightCorps.corps,
-      spotlightCorps.sourceYear,
-      showTitle
-    );
-
-    const imageData = await generateImageWithImagen(imagePrompt);
-    const imageResult = await processGeneratedImage(imageData, "corps_spotlight");
-
-    return {
-      type: ARTICLE_TYPES.CORPS_SPOTLIGHT,
-      ...content,
-      featuredCorps: spotlightCorps.corps,
-      featuredYear: spotlightCorps.sourceYear,
-      showTitle,
-      imageUrl: imageResult.url,
-      imagePrompt,
-      reportDay,
-    };
-  } catch (error) {
-    logger.error("Corps Spotlight article failed:", error);
-    return createFallbackArticle(ARTICLE_TYPES.CORPS_SPOTLIGHT, reportDay);
+    logger.error("Fantasy Captions article failed:", error);
+    return createFallbackArticle(ARTICLE_TYPES.FANTASY_CAPTIONS, reportDay);
   }
 }
 
