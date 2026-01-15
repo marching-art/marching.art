@@ -72,9 +72,9 @@ const BottomNav: React.FC = () => {
       {/* Accent line at top - solid, no gradient per design laws */}
       <div className="h-px w-full bg-yellow-500/30" />
 
-      {/* Nav container - increased height for better touch targets */}
+      {/* Nav container - optimized for 6 items across all screen sizes */}
       <div className="bg-[#1A1A1A] border-t border-white/10">
-        <div className="flex items-center justify-around px-1 py-2">
+        <div className="flex items-center justify-around px-0.5 xs:px-1 py-1.5">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
@@ -89,7 +89,7 @@ const BottomNav: React.FC = () => {
                 onClick={() => triggerHaptic('light')}
                 onMouseEnter={() => prefetchRoute(item.path)}
                 onFocus={() => prefetchRoute(item.path)}
-                className="relative flex flex-col items-center justify-center gap-0.5 px-2 py-2 min-w-[50px] min-h-[48px] press-feedback"
+                className="relative flex flex-col items-center justify-center gap-0.5 px-1 xs:px-2 py-1.5 min-w-[44px] xs:min-w-[50px] min-h-[48px] press-feedback"
               >
                 {/* Active indicator */}
                 {active && (
@@ -100,26 +100,26 @@ const BottomNav: React.FC = () => {
                   />
                 )}
 
-                {/* Icon with badge */}
-                <div className={`relative z-10 p-1 rounded-sm transition-all duration-150 ${active ? 'bg-yellow-500/20' : ''}`}>
+                {/* Icon with badge - larger on active */}
+                <div className={`relative z-10 p-1.5 rounded-sm transition-all duration-150 ${active ? 'bg-yellow-500/20' : ''}`}>
                   <Icon
-                    className={`w-5 h-5 transition-all duration-150 ${
-                      active ? 'text-yellow-400' : 'text-yellow-50/70'
+                    className={`w-5 h-5 xs:w-[22px] xs:h-[22px] transition-all duration-150 ${
+                      active ? 'text-yellow-400 scale-110' : 'text-yellow-50/70'
                     }`}
                     aria-hidden="true"
                   />
                   {/* Notification badge - larger for visibility */}
                   {badgeCount > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-sm bg-red-500 text-white text-[11px] font-bold">
+                    <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] xs:min-w-[18px] xs:h-[18px] px-0.5 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] xs:text-[11px] font-bold">
                       {badgeCount > 99 ? '99+' : badgeCount}
                     </span>
                   )}
                 </div>
 
-                {/* Label */}
+                {/* Label - hidden on very small screens, visible on xs+ */}
                 <span
-                  className={`relative z-10 text-[10px] font-medium transition-all duration-150 ${
-                    active ? 'text-yellow-400' : 'text-yellow-50/70'
+                  className={`relative z-10 text-[9px] xs:text-[10px] font-medium transition-all duration-150 leading-tight ${
+                    active ? 'text-yellow-400' : 'text-yellow-50/60'
                   }`}
                 >
                   {item.label}
@@ -130,7 +130,7 @@ const BottomNav: React.FC = () => {
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-yellow-400 rounded-sm"
+                    className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-yellow-400 rounded-full"
                   />
                 )}
               </Link>

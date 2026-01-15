@@ -133,13 +133,13 @@ const Landing = () => {
               <div className="flex items-center gap-2 lg:hidden">
                 <Link
                   to="/login"
-                  className="h-9 px-4 bg-yellow-500 text-slate-900 font-display font-semibold text-sm uppercase tracking-wide flex items-center justify-center rounded-lg hover:bg-yellow-400 active:bg-yellow-600 transition-all duration-200"
+                  className="min-h-[44px] px-5 bg-yellow-500 text-slate-900 font-display font-semibold text-sm uppercase tracking-wide flex items-center justify-center rounded-lg hover:bg-yellow-400 active:bg-yellow-600 active:scale-95 transition-all duration-150 press-feedback-strong"
                 >
                   Sign In
                 </Link>
                 <Link
                   to="/register"
-                  className="h-9 px-3 border border-yellow-500/50 text-yellow-500 font-display font-semibold text-sm uppercase tracking-wide flex items-center justify-center gap-1.5 rounded-lg hover:bg-yellow-500/10 hover:border-yellow-500 active:bg-yellow-500/20 transition-all duration-200"
+                  className="min-h-[44px] px-4 border border-yellow-500/50 text-yellow-500 font-display font-semibold text-sm uppercase tracking-wide flex items-center justify-center gap-1.5 rounded-lg hover:bg-yellow-500/10 hover:border-yellow-500 active:bg-yellow-500/20 active:scale-95 transition-all duration-150 press-feedback"
                 >
                   <UserPlus className="w-4 h-4" />
                   <span className="hidden xs:inline">Register</span>
@@ -150,7 +150,7 @@ const Landing = () => {
             {user && (
               <Link
                 to="/dashboard"
-                className="h-9 px-4 bg-yellow-500 text-slate-900 font-display font-semibold text-sm uppercase tracking-wide flex items-center justify-center rounded-lg hover:bg-yellow-400 active:bg-yellow-600 transition-all duration-200 lg:hidden"
+                className="min-h-[44px] px-5 bg-yellow-500 text-slate-900 font-display font-semibold text-sm uppercase tracking-wide flex items-center justify-center rounded-lg hover:bg-yellow-400 active:bg-yellow-600 active:scale-95 transition-all duration-150 press-feedback-strong lg:hidden"
               >
                 Dashboard
               </Link>
@@ -178,23 +178,17 @@ const Landing = () => {
       </header>
 
       {/* SCROLLABLE CONTENT */}
-      <main className="flex-1 overflow-y-auto min-h-0 pb-20 md:pb-4">
+      <main className="flex-1 overflow-y-auto min-h-0 scroll-momentum pb-24 md:pb-4">
         <div className="max-w-[1920px] mx-auto p-4 lg:p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6">
 
           {/* ============================================================= */}
-          {/* MAIN COLUMN - News Feed (8 cols) */}
+          {/* SIDEBAR - Mobile First (shows before news on mobile) */}
+          {/* On desktop: 4 cols on right, sticky */}
+          {/* On mobile: Full width, appears FIRST */}
           {/* ============================================================= */}
-          <div className="lg:col-span-8">
-            {/* Dynamic News Feed powered by Gemini AI */}
-            <NewsFeed maxItems={5} />
-          </div>
-
-          {/* ============================================================= */}
-          {/* SIDEBAR - Right Column (4 cols, sticky) */}
-          {/* ============================================================= */}
-          <div className="lg:col-span-4">
-            <div className="lg:sticky lg:top-4 space-y-5">
+          <div className="order-1 lg:order-2 lg:col-span-4">
+            <div className="lg:sticky lg:top-4 space-y-4 lg:space-y-5">
 
               {/* ------------------------------------------------------- */}
               {/* AUTH WIDGET - Login or User Dashboard */}
@@ -255,49 +249,49 @@ const Landing = () => {
                     )}
                   </div>
 
-                  {/* Quick Links */}
-                  <div className="p-2">
+                  {/* Quick Links - 44px+ touch targets */}
+                  <div className="p-2 space-y-0.5">
                     <Link
                       to="/dashboard"
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-sm hover:bg-white/[0.05] transition-colors group"
+                      className="flex items-center gap-3 px-3 min-h-[44px] rounded-sm hover:bg-white/[0.05] active:bg-white/[0.08] transition-colors group press-feedback"
                     >
-                      <LayoutDashboard className="w-4 h-4 text-[#0057B8]" />
+                      <LayoutDashboard className="w-5 h-5 text-[#0057B8]" />
                       <span className="text-sm text-white font-medium">Dashboard</span>
                       <ChevronRight className="w-4 h-4 text-gray-600 ml-auto group-hover:text-gray-400" />
                     </Link>
                     <Link
                       to="/leagues"
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-sm hover:bg-white/[0.05] transition-colors group"
+                      className="flex items-center gap-3 px-3 min-h-[44px] rounded-sm hover:bg-white/[0.05] active:bg-white/[0.08] transition-colors group press-feedback"
                     >
-                      <Award className="w-4 h-4 text-orange-500" />
+                      <Award className="w-5 h-5 text-orange-500" />
                       <span className="text-sm text-white font-medium">My Leagues</span>
                       <ChevronRight className="w-4 h-4 text-gray-600 ml-auto group-hover:text-gray-400" />
                     </Link>
                     <Link
                       to="/scores"
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-sm hover:bg-white/[0.05] transition-colors group"
+                      className="flex items-center gap-3 px-3 min-h-[44px] rounded-sm hover:bg-white/[0.05] active:bg-white/[0.08] transition-colors group press-feedback"
                     >
-                      <Activity className="w-4 h-4 text-green-500" />
+                      <Activity className="w-5 h-5 text-green-500" />
                       <span className="text-sm text-white font-medium">Live Scores</span>
                       <ChevronRight className="w-4 h-4 text-gray-600 ml-auto group-hover:text-gray-400" />
                     </Link>
                     <Link
                       to="/profile"
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-sm hover:bg-white/[0.05] transition-colors group"
+                      className="flex items-center gap-3 px-3 min-h-[44px] rounded-sm hover:bg-white/[0.05] active:bg-white/[0.08] transition-colors group press-feedback"
                     >
-                      <Settings className="w-4 h-4 text-gray-400" />
+                      <Settings className="w-5 h-5 text-gray-400" />
                       <span className="text-sm text-white font-medium">Profile & Settings</span>
                       <ChevronRight className="w-4 h-4 text-gray-600 ml-auto group-hover:text-gray-400" />
                     </Link>
                   </div>
 
-                  {/* Sign Out */}
-                  <div className="px-4 py-3 border-t border-[#333] bg-[#111]">
+                  {/* Sign Out - 44px touch target */}
+                  <div className="px-2 py-2 border-t border-[#333] bg-[#111]">
                     <button
                       onClick={handleSignOut}
-                      className="flex items-center gap-2 text-xs text-gray-500 hover:text-red-400 transition-colors"
+                      className="flex items-center gap-2 px-2 min-h-[44px] w-full text-sm text-gray-500 hover:text-red-400 active:text-red-500 transition-colors press-feedback rounded-sm"
                     >
-                      <LogOut className="w-3.5 h-3.5" />
+                      <LogOut className="w-4 h-4" />
                       Sign Out
                     </button>
                   </div>
@@ -323,7 +317,7 @@ const Landing = () => {
                       </div>
                     )}
 
-                    {/* Email Input */}
+                    {/* Email Input - 44px+ height for touch targets */}
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                       <input
@@ -333,11 +327,11 @@ const Landing = () => {
                         onChange={(e) => setEmail(e.target.value)}
                         required
                         disabled={loading}
-                        className="w-full h-9 pl-9 pr-3 bg-[#111] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
+                        className="w-full min-h-[44px] h-11 pl-10 pr-3 bg-[#111] border border-[#333] rounded-sm text-base text-white placeholder-gray-500 focus:outline-none focus:border-[#0057B8] disabled:opacity-50 transition-colors"
                       />
                     </div>
 
-                    {/* Password Input */}
+                    {/* Password Input - 44px+ height for touch targets */}
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                       <input
@@ -347,22 +341,22 @@ const Landing = () => {
                         onChange={(e) => setPassword(e.target.value)}
                         required
                         disabled={loading}
-                        className="w-full h-9 pl-9 pr-3 bg-[#111] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
+                        className="w-full min-h-[44px] h-11 pl-10 pr-3 bg-[#111] border border-[#333] rounded-sm text-base text-white placeholder-gray-500 focus:outline-none focus:border-[#0057B8] disabled:opacity-50 transition-colors"
                       />
                     </div>
 
-                    {/* Actions Row */}
+                    {/* Actions Row - 44px+ height for touch targets */}
                     <div className="flex gap-2">
                       <button
                         type="submit"
                         disabled={loading}
-                        className="flex-1 h-10 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:bg-[#0066d6] active:bg-[#004a9e] transition-all duration-150 press-feedback-strong disabled:opacity-50 disabled:cursor-not-allowed rounded-sm"
+                        className="flex-1 min-h-[44px] h-11 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:bg-[#0066d6] active:bg-[#004a9e] active:scale-[0.98] transition-all duration-150 press-feedback-strong disabled:opacity-50 disabled:cursor-not-allowed rounded-sm"
                       >
                         {loading ? '...' : 'Sign In'}
                       </button>
                       <Link
                         to="/register"
-                        className="flex-1 h-10 border border-[#333] text-gray-400 font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:border-[#444] hover:text-white transition-all rounded-sm"
+                        className="flex-1 min-h-[44px] h-11 border border-[#333] text-gray-400 font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:border-[#444] hover:text-white active:scale-[0.98] transition-all duration-150 press-feedback rounded-sm"
                       >
                         Register
                       </Link>
@@ -398,6 +392,22 @@ const Landing = () => {
 
             </div>
           </div>
+
+          {/* ============================================================= */}
+          {/* MAIN COLUMN - News Feed */}
+          {/* On desktop: 8 cols on left */}
+          {/* On mobile: Full width, appears AFTER sidebar widgets */}
+          {/* ============================================================= */}
+          <div className="order-2 lg:order-1 lg:col-span-8">
+            {/* Section header for mobile - helps users understand the content */}
+            <div className="flex items-center gap-2 mb-3 lg:hidden">
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Latest News</span>
+              <div className="flex-1 h-px bg-[#333]" />
+            </div>
+            {/* Dynamic News Feed powered by Gemini AI */}
+            <NewsFeed maxItems={5} />
+          </div>
+
           </div>
         </div>
       </main>

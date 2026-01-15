@@ -21,8 +21,17 @@ const FantasyTrendingBox = ({
       {/* Trending List */}
       <div className="divide-y divide-[#333]/50">
         {loading ? (
-          <div className="px-3 py-6 text-center">
-            <div className="inline-block w-5 h-5 border-2 border-orange-400/30 border-t-orange-400 rounded-full animate-spin" />
+          /* Skeleton loading state - mimics content structure */
+          <div className="divide-y divide-[#333]/50">
+            {[...Array(4)].map((_, idx) => (
+              <div key={idx} className="flex items-center justify-between px-4 py-2.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 skeleton rounded-sm" />
+                  <div className="h-4 w-24 skeleton rounded-sm" />
+                </div>
+                <div className="h-4 w-12 skeleton rounded-sm" />
+              </div>
+            ))}
           </div>
         ) : trendingPlayers.length > 0 ? (
           trendingPlayers.map((player, idx) => (
@@ -52,14 +61,14 @@ const FantasyTrendingBox = ({
         )}
       </div>
 
-      {/* Footer */}
-      <div className="px-4 py-3 border-t border-[#333] bg-[#111]">
+      {/* Footer - 44px touch target */}
+      <div className="px-2 py-1.5 border-t border-[#333] bg-[#111]">
         <Link
           to="/scores"
-          className="text-[10px] text-orange-400 hover:text-orange-300 font-bold uppercase tracking-wider transition-colors flex items-center gap-1"
+          className="min-h-[44px] px-2 text-xs text-orange-400 hover:text-orange-300 active:text-orange-500 font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 press-feedback rounded-sm"
         >
           View All Trends
-          <ChevronRight className="w-3 h-3" />
+          <ChevronRight className="w-4 h-4" />
         </Link>
       </div>
     </div>
