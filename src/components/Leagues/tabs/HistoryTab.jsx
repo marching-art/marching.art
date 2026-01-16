@@ -5,7 +5,7 @@ import {
   History, Calendar, Trophy, CheckCircle, XCircle,
   ChevronDown, ChevronUp, Swords
 } from 'lucide-react';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '../../../firebase';
 
 const HistoryTab = ({
@@ -37,11 +37,12 @@ const HistoryTab = ({
 
         if (seasonDoc.exists()) {
           const sData = seasonDoc.data();
-          const recapsRef = doc(db, `fantasy_recaps/${sData.seasonUid}`);
-          const recapsDoc = await getDoc(recapsRef);
+          // OPTIMIZATION: Read from subcollection instead of single large document
+          const recapsCollectionRef = collection(db, 'fantasy_recaps', sData.seasonUid, 'days');
+          const recapsSnapshot = await getDocs(recapsCollectionRef);
 
-          if (recapsDoc.exists()) {
-            const recaps = recapsDoc.data().recaps || [];
+          if (!recapsSnapshot.empty) {
+            const recaps = recapsSnapshot.docs.map(d => d.data());
             const memberUids = new Set(league.members);
             const results = {};
 
