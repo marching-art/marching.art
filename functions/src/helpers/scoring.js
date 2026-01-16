@@ -309,8 +309,9 @@ async function processAndArchiveOffSeasonScoresLogic() {
   let championshipConfig = null;
 
   if (scoredDay >= 45) {
-    const recapDoc = await db.doc(`fantasy_recaps/${seasonData.seasonUid}`).get();
-    const allRecaps = recapDoc.exists ? recapDoc.data().recaps || [] : [];
+    // OPTIMIZATION: Query subcollection for all recaps instead of reading single document with array
+    const recapsSnapshot = await db.collection(`fantasy_recaps/${seasonData.seasonUid}/days`).get();
+    const allRecaps = recapsSnapshot.docs.map(doc => doc.data());
 
     if (scoredDay === 45) {
       // Day 45: Open and A Class Prelims - All Open and A Class corps auto-enrolled
@@ -648,20 +649,23 @@ async function processAndArchiveOffSeasonScoresLogic() {
     }
   }
 
-  // Action 2: Save the completed recap document
+  // Action 2: Save the completed recap document as subcollection document
+  // OPTIMIZATION: Write directly to subcollection instead of growing array in single document
+  // This reduces I/O from O(n) to O(1) per day and eliminates 1MB document limit risk
   const recapDocRef = db.doc(`fantasy_recaps/${seasonData.seasonUid}`);
+  const dayRecapRef = db.doc(`fantasy_recaps/${seasonData.seasonUid}/days/${scoredDay}`);
+
+  // Ensure parent document exists with season metadata (only on first write)
   const recapDoc = await recapDocRef.get();
   if (!recapDoc.exists) {
     batch.set(recapDocRef, {
       seasonName: seasonData.name,
-      recaps: [dailyRecap],
+      createdAt: new Date(),
     });
-  } else {
-    const existingRecaps = recapDoc.data().recaps || [];
-    const updatedRecaps = existingRecaps.filter((r) => r.offSeasonDay !== scoredDay);
-    updatedRecaps.push(dailyRecap);
-    batch.update(recapDocRef, { recaps: updatedRecaps });
   }
+
+  // Write the day's recap directly - no need to read/filter/push entire array
+  batch.set(dayRecapRef, dailyRecap);
 
   // --- TROPHY AWARDING LOGIC ---
   const regionalTrophyDays = [28, 35, 41, 42];
@@ -1040,8 +1044,9 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
   let championshipConfig = null;
 
   if (scoredDay >= 45) {
-    const recapDoc = await db.doc(`fantasy_recaps/${seasonData.seasonUid}`).get();
-    const allRecaps = recapDoc.exists ? recapDoc.data().recaps || [] : [];
+    // OPTIMIZATION: Query subcollection for all recaps instead of reading single document with array
+    const recapsSnapshot = await db.collection(`fantasy_recaps/${seasonData.seasonUid}/days`).get();
+    const allRecaps = recapsSnapshot.docs.map(doc => doc.data());
 
     if (scoredDay === 45) {
       // Day 45: Open and A Class Prelims - All Open and A Class corps auto-enrolled
@@ -1579,20 +1584,22 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
     logger.info(`Batched ${coinAwards.length} coin awards for ${coinByUser.size} users`);
   }
 
-  // Save the recap document
+  // Save the recap document as subcollection document
+  // OPTIMIZATION: Write directly to subcollection instead of growing array in single document
   const recapDocRef = db.doc(`fantasy_recaps/${seasonData.seasonUid}`);
+  const dayRecapRef = db.doc(`fantasy_recaps/${seasonData.seasonUid}/days/${scoredDay}`);
+
+  // Ensure parent document exists with season metadata (only on first write)
   const recapDoc = await recapDocRef.get();
   if (!recapDoc.exists) {
     batch.set(recapDocRef, {
       seasonName: seasonData.name,
-      recaps: [dailyRecap],
+      createdAt: new Date(),
     });
-  } else {
-    const existingRecaps = recapDoc.data().recaps || [];
-    const updatedRecaps = existingRecaps.filter((r) => r.offSeasonDay !== scoredDay);
-    updatedRecaps.push(dailyRecap);
-    batch.update(recapDocRef, { recaps: updatedRecaps });
   }
+
+  // Write the day's recap directly - no need to read/filter/push entire array
+  batch.set(dayRecapRef, dailyRecap);
 
   await batch.commit();
   logger.info(`Successfully processed and archived scores for live season day ${scoredDay}.`);

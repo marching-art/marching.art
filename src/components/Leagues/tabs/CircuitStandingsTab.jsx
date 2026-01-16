@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Crown, Medal, Star } from 'lucide-react';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '../../../firebase';
 
 // Placement points - DCI/NASCAR style scoring
@@ -71,11 +71,12 @@ const CircuitStandingsTab = ({ league }) => {
 
         if (seasonDoc.exists()) {
           const seasonData = seasonDoc.data();
-          const recapsRef = doc(db, `fantasy_recaps/${seasonData.seasonUid}`);
-          const recapsDoc = await getDoc(recapsRef);
+          // OPTIMIZATION: Read from subcollection instead of single large document
+          const recapsCollectionRef = collection(db, 'fantasy_recaps', seasonData.seasonUid, 'days');
+          const recapsSnapshot = await getDocs(recapsCollectionRef);
 
-          if (recapsDoc.exists()) {
-            const recaps = recapsDoc.data().recaps || [];
+          if (!recapsSnapshot.empty) {
+            const recaps = recapsSnapshot.docs.map(doc => doc.data());
             const memberUids = new Set(league.members);
             const weeklyResults = {};
 

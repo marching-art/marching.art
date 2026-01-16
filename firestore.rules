@@ -93,6 +93,12 @@ match /dci-stats/{docId} {
 match /fantasy_recaps/{docId} {
   allow read: if true;
   allow write: if false; // Backend only
+
+  // Subcollection for daily recaps (OPTIMIZATION: one doc per day instead of array)
+  match /days/{dayId} {
+    allow read: if true;
+    allow write: if false; // Backend only
+  }
 }
 
 match /season_champions/{docId} {

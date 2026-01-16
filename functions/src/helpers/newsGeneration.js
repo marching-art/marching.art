@@ -3468,10 +3468,11 @@ async function fetchTimeLockednScores(db, yearsToFetch, reportDay) {
 
 async function fetchFantasyRecaps(db, seasonId, reportDay) {
   try {
-    const recapDoc = await db.doc(`fantasy_recaps/${seasonId}`).get();
-    if (!recapDoc.exists) return null;
+    // OPTIMIZATION: Read from subcollection instead of single large document
+    const recapsSnapshot = await db.collection(`fantasy_recaps/${seasonId}/days`).get();
+    if (recapsSnapshot.empty) return null;
 
-    const allRecaps = recapDoc.data().recaps || [];
+    const allRecaps = recapsSnapshot.docs.map(doc => doc.data());
     const dayRecap = allRecaps.find(r => r.offSeasonDay === reportDay);
     const trendRecaps = allRecaps.filter(r =>
       r.offSeasonDay >= reportDay - 6 && r.offSeasonDay <= reportDay

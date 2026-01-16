@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { useSeason, getSeasonProgress } from './useSeason';
 import { useProfileStore } from '../store/profileStore';
 import toast from 'react-hot-toast';
@@ -426,18 +426,19 @@ export const useDashboardData = () => {
         return;
       }
 
-      const recapDocRef = doc(db, 'fantasy_recaps', seasonData.seasonUid);
-      const recapDocSnap = await getDoc(recapDocRef);
+      // OPTIMIZATION: Read from subcollection instead of single large document
+      const recapsCollectionRef = collection(db, 'fantasy_recaps', seasonData.seasonUid, 'days');
+      const recapsSnapshot = await getDocs(recapsCollectionRef);
 
-      if (recapDocSnap.exists()) {
-        const allRecaps = recapDocSnap.data().recaps || [];
+      if (!recapsSnapshot.empty) {
+        const allRecaps = recapsSnapshot.docs.map(doc => doc.data());
         const isSoundSport = activeCorpsClass === 'soundSport';
         const sortedRecaps = allRecaps
-          .filter(r => r.showName || r.eventName || r.name)
-          .sort((a, b) => new Date(b.date) - new Date(a.date))
+          .filter(r => r.showName || r.eventName || r.name || r.shows?.length > 0)
+          .sort((a, b) => (b.offSeasonDay || 0) - (a.offSeasonDay || 0))
           .slice(0, 5)
           .map(r => ({
-            showName: r.showName || r.eventName || r.name || 'Show',
+            showName: r.showName || r.eventName || r.name || r.shows?.[0]?.eventName || 'Show',
             date: r.date || '',
             totalScore: isSoundSport ? 'Complete' : (typeof r.totalScore === 'number' ? r.totalScore.toFixed(3) : (r.totalScore || '0.000')),
             rank: isSoundSport ? null : (r.rank ?? '-')
