@@ -1529,22 +1529,40 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
       classes: {}
     };
 
+    // OPTIMIZATION #2: Collect all champion UIDs first, then batch fetch all profiles at once
+    // instead of making N individual reads per class (was 12-48 reads, now 1 batched read)
+    const allChampionsByClass = {};
+    const allChampionUids = new Set();
+
+    // First pass: identify all champions and collect their UIDs
     for (const [corpsClass, classResults] of Object.entries(allResultsByClass)) {
       classResults.sort((a, b) => b.totalScore - a.totalScore);
       const classTop3 = classResults.slice(0, 3);
+      allChampionsByClass[corpsClass] = classTop3;
+      classTop3.forEach(r => allChampionUids.add(r.uid));
+    }
 
-      const championsWithUsernames = await Promise.all(classTop3.map(async (result, index) => {
-        const userProfileDoc = await db.doc(`artifacts/${dataNamespaceParam.value()}/users/${result.uid}/profile/data`).get();
-        const username = userProfileDoc.exists ? userProfileDoc.data().username : 'Unknown';
-        return {
-          rank: index + 1,
-          uid: result.uid,
-          username,
-          corpsName: result.corpsName,
-          score: result.totalScore
-        };
+    // Single batched fetch for all champion profiles
+    const championProfileRefs = [...allChampionUids].map(uid =>
+      db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`)
+    );
+    const championProfileDocs = championProfileRefs.length > 0 ? await db.getAll(...championProfileRefs) : [];
+    const championUsernameMap = new Map();
+    championProfileDocs.forEach(doc => {
+      if (doc.exists) {
+        championUsernameMap.set(doc.ref.parent.parent.id, doc.data().username || 'Unknown');
+      }
+    });
+
+    // Second pass: build champion data using the pre-fetched usernames
+    for (const [corpsClass, classTop3] of Object.entries(allChampionsByClass)) {
+      const championsWithUsernames = classTop3.map((result, index) => ({
+        rank: index + 1,
+        uid: result.uid,
+        username: championUsernameMap.get(result.uid) || 'Unknown',
+        corpsName: result.corpsName,
+        score: result.totalScore
       }));
-
       seasonChampionsData.classes[corpsClass] = championsWithUsernames;
     }
 
