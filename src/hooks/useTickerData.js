@@ -3,7 +3,7 @@
 // Displays data like a sports stats ticker, separated by class
 
 import { useState, useEffect, useMemo } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useSeasonStore } from '../store/seasonStore';
 import { calculateCaptionAggregates, calculateTrend } from './useScoresData';
@@ -114,19 +114,20 @@ export const useTickerData = () => {
     return availableDays[0] || null;
   }, [allRecaps, currentDay]);
 
-  // Fetch all recaps for the season
+  // Fetch all recaps for the season from subcollection
   useEffect(() => {
     const fetchRecaps = async () => {
       if (!seasonUid) return;
 
       try {
         setLoading(true);
-        const recapRef = doc(db, 'fantasy_recaps', seasonUid);
-        const recapDoc = await getDoc(recapRef);
+        // OPTIMIZATION: Read from subcollection instead of single large document
+        const recapsCollectionRef = collection(db, 'fantasy_recaps', seasonUid, 'days');
+        const recapsSnapshot = await getDocs(recapsCollectionRef);
 
-        if (recapDoc.exists()) {
-          const data = recapDoc.data();
-          setAllRecaps(data.recaps || []);
+        if (!recapsSnapshot.empty) {
+          const recaps = recapsSnapshot.docs.map(doc => doc.data());
+          setAllRecaps(recaps);
         } else {
           setAllRecaps([]);
         }

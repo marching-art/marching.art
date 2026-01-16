@@ -8,7 +8,7 @@ import {
   Flame, Medal, Target, Calendar, Zap, Award,
   BarChart3
 } from 'lucide-react';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { GAME_CONFIG } from '../../config';
 import { RivalryBadge } from './LeagueActivityFeed';
@@ -70,11 +70,12 @@ const MatchupDetailView = ({
 
         if (seasonDoc.exists()) {
           const sData = seasonDoc.data();
-          const recapsRef = doc(db, `fantasy_recaps/${sData.seasonUid}`);
-          const recapsDoc = await getDoc(recapsRef);
+          // OPTIMIZATION: Read from subcollection instead of single large document
+          const recapsCollectionRef = collection(db, 'fantasy_recaps', sData.seasonUid, 'days');
+          const recapsSnapshot = await getDocs(recapsCollectionRef);
 
-          if (recapsDoc.exists()) {
-            const recaps = recapsDoc.data().recaps || [];
+          if (!recapsSnapshot.empty) {
+            const recaps = recapsSnapshot.docs.map(d => d.data());
             let score1 = 0, score2 = 0;
             let prevWeekScore1 = 0, prevWeekScore2 = 0;
             const breakdown1 = { shows: [], geTotal: 0, visualTotal: 0, musicTotal: 0 };

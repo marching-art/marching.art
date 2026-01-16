@@ -287,16 +287,17 @@ async function saveDailyNews(db, { reportDay, content, metadata, articles, seaso
 }
 
 // =============================================================================
-// FIRESTORE TRIGGER: Fantasy Recap Updated
+// FIRESTORE TRIGGER: Fantasy Recap Updated (Subcollection)
 // =============================================================================
 
 /**
- * Firestore trigger: Generate news when fantasy_recaps are updated
- * This triggers after the daily scoring processor creates/updates recap data
+ * Firestore trigger: Generate news when fantasy_recaps day documents are created/updated
+ * This triggers after the daily scoring processor creates a day's recap
+ * OPTIMIZATION: Now listens on subcollection (one doc per day) instead of parent document
  */
 exports.onFantasyRecapUpdated = onDocumentWritten(
   {
-    document: "fantasy_recaps/{seasonId}",
+    document: "fantasy_recaps/{seasonId}/days/{dayId}",
     timeoutSeconds: 180,
     memory: "1GiB",
     secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret],
@@ -306,34 +307,29 @@ exports.onFantasyRecapUpdated = onDocumentWritten(
 
     try {
       const afterData = event.data?.after?.data();
-      const beforeData = event.data?.before?.data();
 
-      if (!afterData || !afterData.recaps) {
-        logger.info("No recap data in document, skipping news generation");
+      // Only process if document was created or updated (not deleted)
+      if (!afterData) {
+        logger.info("Document deleted, skipping news generation");
         return;
       }
 
-      // Find newly added recaps
-      const beforeRecaps = beforeData?.recaps || [];
-      const afterRecaps = afterData.recaps || [];
+      // Each day document IS the recap - no longer an array
+      const recap = afterData;
+      const reportDay = recap.offSeasonDay;
 
-      const beforeDays = new Set(beforeRecaps.map(r => r.offSeasonDay));
-      const newRecaps = afterRecaps.filter(r => !beforeDays.has(r.offSeasonDay));
-
-      if (newRecaps.length === 0) {
-        logger.info("No new recaps to process");
+      if (!reportDay) {
+        logger.info("No offSeasonDay in recap, skipping news generation");
         return;
       }
 
-      logger.info(`Processing ${newRecaps.length} new recap(s) for news generation`);
+      logger.info(`Processing recap for day ${reportDay} for news generation`);
 
       // Get the season document to find dataDocId
       const seasonDoc = await db.doc(`seasons/${event.params.seasonId}`).get();
       const seasonData = seasonDoc.exists ? seasonDoc.data() : null;
 
-      for (const recap of newRecaps) {
-        try {
-          const reportDay = recap.offSeasonDay;
+      try {
           const currentDay = reportDay + 1; // News runs post-midnight, so currentDay is reportDay + 1
 
           // Use dataDocId from season, or fall back to seasonId (they are typically the same)
@@ -384,9 +380,8 @@ exports.onFantasyRecapUpdated = onDocumentWritten(
               });
             }
           }
-        } catch (recapError) {
-          logger.error("Error processing individual recap:", recapError);
-        }
+      } catch (recapError) {
+        logger.error("Error processing recap:", recapError);
       }
     } catch (error) {
       logger.error("Error in fantasy recap trigger:", error);
