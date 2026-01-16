@@ -11,8 +11,9 @@
  * Uses historical DCI uniform data for accurate image generation.
  */
 
-const { GoogleGenerativeAI, SchemaType } = require("@google/generative-ai");
-const { GoogleGenAI } = require("@google/genai");
+// Consolidated to single @google/genai SDK (removes duplicate @google/generative-ai)
+// Type replaces SchemaType for JSON schema definitions
+const { GoogleGenAI, Type } = require("@google/genai");
 const { logger } = require("firebase-functions/v2");
 const { defineSecret } = require("firebase-functions/params");
 const { uploadFromUrl, getContextualPlaceholder } = require("./mediaService");
@@ -20,10 +21,8 @@ const { uploadFromUrl, getContextualPlaceholder } = require("./mediaService");
 // Define Gemini API key secret
 const geminiApiKey = defineSecret("GOOGLE_GENERATIVE_AI_API_KEY");
 
-// Initialize clients (lazy loaded)
+// Initialize client (lazy loaded) - single unified SDK for text and image generation
 let genAI = null;
-let textModel = null;
-let imageGenAI = null; // New SDK for image generation
 
 // =============================================================================
 // DCI UNIFORM KNOWLEDGE BASE
@@ -667,12 +666,9 @@ function initializeGemini() {
     if (!apiKey) {
       throw new Error("GOOGLE_GENERATIVE_AI_API_KEY secret is not set");
     }
-    genAI = new GoogleGenerativeAI(apiKey);
-    textModel = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash-lite",
-    });
+    genAI = new GoogleGenAI({ apiKey });
   }
-  return { genAI, textModel };
+  return genAI;
 }
 
 /**
@@ -680,18 +676,18 @@ function initializeGemini() {
  * Uses Gemini's native JSON mode for guaranteed valid JSON
  */
 async function generateStructuredContent(prompt, schema) {
-  const { genAI: ai } = initializeGemini();
+  const ai = initializeGemini();
 
-  const model = ai.getGenerativeModel({
+  const response = await ai.models.generateContent({
     model: "gemini-2.0-flash-lite",
-    generationConfig: {
+    contents: prompt,
+    config: {
       responseMimeType: "application/json",
       responseSchema: schema,
     },
   });
 
-  const result = await model.generateContent(prompt);
-  const text = result.response.text();
+  const text = response.text;
 
   // Even with structured output, still use parseAiJson for safety
   return parseAiJson(text);
@@ -876,21 +872,6 @@ function parseAiJson(text) {
 }
 
 /**
- * Initialize the new Google GenAI SDK for image generation
- * @returns {GoogleGenAI} The initialized image generation client
- */
-function initializeImageGenAI() {
-  if (!imageGenAI) {
-    const apiKey = geminiApiKey.value();
-    if (!apiKey) {
-      throw new Error("GOOGLE_GENERATIVE_AI_API_KEY secret is not set");
-    }
-    imageGenAI = new GoogleGenAI({ apiKey });
-  }
-  return imageGenAI;
-}
-
-/**
  * Generate an image using either free tier (Gemini Flash) or Imagen 4
  * Automatically prepends drum corps visual context to ensure accurate imagery.
  *
@@ -899,7 +880,7 @@ function initializeImageGenAI() {
  */
 async function generateImageWithImagen(prompt) {
   try {
-    const ai = initializeImageGenAI();
+    const ai = initializeGemini();
 
     // Build enhanced prompt with drum corps context to avoid concert imagery
     const enhancedPrompt = `${DRUM_CORPS_VISUAL_CONTEXT}
@@ -2635,36 +2616,36 @@ Use precise score language. Reference specific captions. Write like a DCI.org st
 
   // Schema for structured output
   const schema = {
-    type: SchemaType.OBJECT,
+    type: Type.OBJECT,
     properties: {
-      headline: { type: SchemaType.STRING, description: "Attention-grabbing headline" },
-      summary: { type: SchemaType.STRING, description: "2-3 sentence summary" },
-      narrative: { type: SchemaType.STRING, description: "600-800 word article" },
+      headline: { type: Type.STRING, description: "Attention-grabbing headline" },
+      summary: { type: Type.STRING, description: "2-3 sentence summary" },
+      narrative: { type: Type.STRING, description: "600-800 word article" },
       standings: {
-        type: SchemaType.ARRAY,
+        type: Type.ARRAY,
         items: {
-          type: SchemaType.OBJECT,
+          type: Type.OBJECT,
           properties: {
-            rank: { type: SchemaType.INTEGER },
-            corps: { type: SchemaType.STRING },
-            year: { type: SchemaType.INTEGER },
-            total: { type: SchemaType.NUMBER },
-            change: { type: SchemaType.NUMBER },
-            momentum: { type: SchemaType.STRING, enum: ["rising", "falling", "steady"] },
+            rank: { type: Type.INTEGER },
+            corps: { type: Type.STRING },
+            year: { type: Type.INTEGER },
+            total: { type: Type.NUMBER },
+            change: { type: Type.NUMBER },
+            momentum: { type: Type.STRING, enum: ["rising", "falling", "steady"] },
           },
           required: ["rank", "corps", "year", "total", "change", "momentum"],
         },
       },
       scoreBreakdown: {
-        type: SchemaType.OBJECT,
+        type: Type.OBJECT,
         description: "Caption score breakdown for top corps",
         properties: {
-          geWinner: { type: SchemaType.STRING, description: "Corps that won GE caption" },
-          geScore: { type: SchemaType.NUMBER, description: "Winning GE score" },
-          visualWinner: { type: SchemaType.STRING, description: "Corps that won Visual caption" },
-          visualScore: { type: SchemaType.NUMBER, description: "Winning Visual score" },
-          musicWinner: { type: SchemaType.STRING, description: "Corps that won Music caption" },
-          musicScore: { type: SchemaType.NUMBER, description: "Winning Music score" },
+          geWinner: { type: Type.STRING, description: "Corps that won GE caption" },
+          geScore: { type: Type.NUMBER, description: "Winning GE score" },
+          visualWinner: { type: Type.STRING, description: "Corps that won Visual caption" },
+          visualScore: { type: Type.NUMBER, description: "Winning Visual score" },
+          musicWinner: { type: Type.STRING, description: "Corps that won Music caption" },
+          musicScore: { type: Type.NUMBER, description: "Winning Music score" },
         },
         required: ["geWinner", "geScore", "visualWinner", "visualScore", "musicWinner", "musicScore"],
       },
@@ -2823,17 +2804,17 @@ WRITE A DCI.ORG-STYLE CORPS FEATURE:
 Write like a DCI.org or Drum Corps World feature journalist.`;
 
   const schema = {
-    type: SchemaType.OBJECT,
+    type: Type.OBJECT,
     properties: {
-      headline: { type: SchemaType.STRING, description: "Corps-focused feature headline" },
-      summary: { type: SchemaType.STRING, description: "2-3 sentence introduction" },
-      narrative: { type: SchemaType.STRING, description: "600-800 word corps profile" },
+      headline: { type: Type.STRING, description: "Corps-focused feature headline" },
+      summary: { type: Type.STRING, description: "2-3 sentence introduction" },
+      narrative: { type: Type.STRING, description: "600-800 word corps profile" },
       corpsIdentity: {
-        type: SchemaType.OBJECT,
+        type: Type.OBJECT,
         properties: {
-          tradition: { type: SchemaType.STRING, description: "Corps' historical identity" },
-          strength: { type: SchemaType.STRING, description: "Primary competitive strength" },
-          trajectory: { type: SchemaType.STRING, description: "Season trajectory assessment" },
+          tradition: { type: Type.STRING, description: "Corps' historical identity" },
+          strength: { type: Type.STRING, description: "Primary competitive strength" },
+          trajectory: { type: Type.STRING, description: "Season trajectory assessment" },
         },
         required: ["tradition", "strength", "trajectory"],
       },
@@ -3019,29 +3000,29 @@ WRITE A DCI.ORG-STYLE WEEKLY RECAP ANALYSIS:
 Include specific score comparisons. Use DCI.org recap terminology. Write for fans who want to understand the numbers.`;
 
   const schema = {
-    type: SchemaType.OBJECT,
+    type: Type.OBJECT,
     properties: {
-      headline: { type: SchemaType.STRING, description: "Caption-focused recap headline" },
-      summary: { type: SchemaType.STRING, description: "2-3 sentence summary of weekly trends" },
-      narrative: { type: SchemaType.STRING, description: "700-900 word caption analysis" },
+      headline: { type: Type.STRING, description: "Caption-focused recap headline" },
+      summary: { type: Type.STRING, description: "2-3 sentence summary of weekly trends" },
+      narrative: { type: Type.STRING, description: "700-900 word caption analysis" },
       captionBreakdown: {
-        type: SchemaType.OBJECT,
+        type: Type.OBJECT,
         properties: {
-          geAnalysis: { type: SchemaType.STRING, description: "General Effect analysis" },
-          visualAnalysis: { type: SchemaType.STRING, description: "Visual caption analysis" },
-          musicAnalysis: { type: SchemaType.STRING, description: "Music caption analysis" },
+          geAnalysis: { type: Type.STRING, description: "General Effect analysis" },
+          visualAnalysis: { type: Type.STRING, description: "Visual caption analysis" },
+          musicAnalysis: { type: Type.STRING, description: "Music caption analysis" },
         },
         required: ["geAnalysis", "visualAnalysis", "musicAnalysis"],
       },
       recommendations: {
-        type: SchemaType.ARRAY,
+        type: Type.ARRAY,
         description: "Fantasy trade recommendations based on corps trends",
         items: {
-          type: SchemaType.OBJECT,
+          type: Type.OBJECT,
           properties: {
-            corps: { type: SchemaType.STRING, description: "Corps name" },
-            action: { type: SchemaType.STRING, enum: ["buy", "hold", "sell"], description: "Recommended action" },
-            reasoning: { type: SchemaType.STRING, description: "Why this corps is trending this way based on caption performance" },
+            corps: { type: Type.STRING, description: "Corps name" },
+            action: { type: Type.STRING, enum: ["buy", "hold", "sell"], description: "Recommended action" },
+            reasoning: { type: Type.STRING, description: "Why this corps is trending this way based on caption performance" },
           },
           required: ["corps", "action", "reasoning"],
         },
@@ -3147,32 +3128,32 @@ WRITE A FANTASY SPORTS RESULTS ARTICLE:
 This is fantasy sports coverage - fun, competitive, celebratory. NEVER reveal specific roster picks.`;
 
   const schema = {
-    type: SchemaType.OBJECT,
+    type: Type.OBJECT,
     properties: {
-      headline: { type: SchemaType.STRING, description: "Winner-focused headline" },
-      summary: { type: SchemaType.STRING, description: "2-3 sentence summary" },
-      narrative: { type: SchemaType.STRING, description: "500-700 word results article" },
+      headline: { type: Type.STRING, description: "Winner-focused headline" },
+      summary: { type: Type.STRING, description: "2-3 sentence summary" },
+      narrative: { type: Type.STRING, description: "500-700 word results article" },
       topPerformers: {
-        type: SchemaType.ARRAY,
+        type: Type.ARRAY,
         items: {
-          type: SchemaType.OBJECT,
+          type: Type.OBJECT,
           properties: {
-            rank: { type: SchemaType.INTEGER },
-            corpsName: { type: SchemaType.STRING },
-            director: { type: SchemaType.STRING },
-            score: { type: SchemaType.NUMBER },
+            rank: { type: Type.INTEGER },
+            corpsName: { type: Type.STRING },
+            director: { type: Type.STRING },
+            score: { type: Type.NUMBER },
           },
           required: ["rank", "corpsName", "director", "score"],
         },
       },
       scoreBreakdown: {
-        type: SchemaType.OBJECT,
+        type: Type.OBJECT,
         description: "Score breakdown and statistics for today's competition",
         properties: {
-          winningScore: { type: SchemaType.NUMBER, description: "Top score of the day" },
-          averageScore: { type: SchemaType.NUMBER, description: "Average score among top performers" },
-          spreadTop10: { type: SchemaType.NUMBER, description: "Point spread between 1st and 10th" },
-          totalEnsembles: { type: SchemaType.INTEGER, description: "Number of ensembles competing" },
+          winningScore: { type: Type.NUMBER, description: "Top score of the day" },
+          averageScore: { type: Type.NUMBER, description: "Average score among top performers" },
+          spreadTop10: { type: Type.NUMBER, description: "Point spread between 1st and 10th" },
+          totalEnsembles: { type: Type.INTEGER, description: "Number of ensembles competing" },
         },
         required: ["winningScore", "averageScore", "totalEnsembles"],
       },
@@ -3334,17 +3315,17 @@ WRITE A MARCHING.ART CAPTION ANALYSIS ARTICLE:
 Help directors understand the caption dynamics. Educational but engaging.`;
 
   const schema = {
-    type: SchemaType.OBJECT,
+    type: Type.OBJECT,
     properties: {
-      headline: { type: SchemaType.STRING, description: "Caption-focused headline" },
-      summary: { type: SchemaType.STRING, description: "2-3 sentence summary" },
-      narrative: { type: SchemaType.STRING, description: "500-700 word caption analysis" },
+      headline: { type: Type.STRING, description: "Caption-focused headline" },
+      summary: { type: Type.STRING, description: "2-3 sentence summary" },
+      narrative: { type: Type.STRING, description: "500-700 word caption analysis" },
       captionInsights: {
-        type: SchemaType.OBJECT,
+        type: Type.OBJECT,
         properties: {
-          geInsight: { type: SchemaType.STRING, description: "General Effect insight" },
-          visualInsight: { type: SchemaType.STRING, description: "Visual caption insight" },
-          musicInsight: { type: SchemaType.STRING, description: "Music caption insight" },
+          geInsight: { type: Type.STRING, description: "General Effect insight" },
+          visualInsight: { type: Type.STRING, description: "Visual caption insight" },
+          musicInsight: { type: Type.STRING, description: "Music caption insight" },
         },
         required: ["geInsight", "visualInsight", "musicInsight"],
       },
@@ -4124,15 +4105,15 @@ All "corps" names above are user-created fantasy team names, not real DCI corps.
 
     // Schema for structured output
     const schema = {
-      type: SchemaType.OBJECT,
+      type: Type.OBJECT,
       properties: {
-        headline: { type: SchemaType.STRING, description: "Exciting sports headline" },
-        summary: { type: SchemaType.STRING, description: "2-3 sentence summary" },
-        narrative: { type: SchemaType.STRING, description: "Full article text" },
-        fantasyImpact: { type: SchemaType.STRING, description: "Brief tip for fantasy players" },
+        headline: { type: Type.STRING, description: "Exciting sports headline" },
+        summary: { type: Type.STRING, description: "2-3 sentence summary" },
+        narrative: { type: Type.STRING, description: "Full article text" },
+        fantasyImpact: { type: Type.STRING, description: "Brief tip for fantasy players" },
         trendingCorps: {
-          type: SchemaType.ARRAY,
-          items: { type: SchemaType.STRING },
+          type: Type.ARRAY,
+          items: { type: Type.STRING },
           description: "Top 3 performing fantasy team names",
         },
       },
