@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, MapPin, Calendar, CircleDot } from 'lucide-react';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '../../../firebase';
 
 // Placement points
@@ -54,12 +54,13 @@ const TourStopsTab = ({ league }) => {
             setSelectedWeek(currentWeek);
           }
 
-          // Fetch fantasy recaps
-          const recapsRef = doc(db, `fantasy_recaps/${sData.seasonUid}`);
-          const recapsDoc = await getDoc(recapsRef);
+          // Fetch fantasy recaps from subcollection
+          // OPTIMIZATION: Read from subcollection instead of single large document
+          const recapsCollectionRef = collection(db, 'fantasy_recaps', sData.seasonUid, 'days');
+          const recapsSnapshot = await getDocs(recapsCollectionRef);
 
-          if (recapsDoc.exists()) {
-            const recaps = recapsDoc.data().recaps || [];
+          if (!recapsSnapshot.empty) {
+            const recaps = recapsSnapshot.docs.map(d => d.data());
             const memberUids = new Set(league.members);
 
             // Group by week

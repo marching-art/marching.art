@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, collection, getDocs } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 
 // Lazy-load modals
@@ -1086,12 +1086,12 @@ const Dashboard = () => {
       }
 
       try {
-        const recapRef = doc(db, 'fantasy_recaps', seasonData.seasonUid);
-        const recapSnap = await getDoc(recapRef);
+        // OPTIMIZATION: Read from subcollection instead of single large document
+        const recapsCollectionRef = collection(db, 'fantasy_recaps', seasonData.seasonUid, 'days');
+        const recapsSnapshot = await getDocs(recapsCollectionRef);
 
-        if (recapSnap.exists()) {
-          const data = recapSnap.data();
-          const recaps = data.recaps || [];
+        if (!recapsSnapshot.empty) {
+          const recaps = recapsSnapshot.docs.map(d => d.data());
           const results = [];
 
           // Sort by day descending and filter to only include processed days

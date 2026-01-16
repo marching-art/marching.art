@@ -219,8 +219,11 @@ export const paths = {
   // Season paths
   season: () => `game-settings/season`,
 
-  // Fantasy recaps
+  // Fantasy recaps (parent doc for metadata)
   fantasyRecaps: (seasonUid: string) => `fantasy_recaps/${seasonUid}`,
+  // Fantasy recaps daily subcollection (OPTIMIZATION: one doc per day)
+  fantasyRecapsDays: (seasonUid: string) => `fantasy_recaps/${seasonUid}/days`,
+  fantasyRecapsDay: (seasonUid: string, day: number | string) => `fantasy_recaps/${seasonUid}/days/${day}`,
 
   // Leaderboard paths
   leaderboard: (type: string, corpsClass: string) =>

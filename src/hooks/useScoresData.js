@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { doc, getDoc, collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
-import { db, dataNamespace } from '../firebase';
+import { db } from '../firebase';
 import { useSeasonStore } from '../store/seasonStore';
 
 /**
@@ -263,16 +263,16 @@ export const useScoresData = (options = {}) => {
         setLoading(true);
         setError(null);
 
-        // Try fantasy_recaps first (current or past season recaps)
-        const recapRef = doc(db, 'fantasy_recaps', targetSeasonId);
-        const recapDoc = await getDoc(recapRef);
+        // Fetch recaps from subcollection (OPTIMIZATION: no longer reading single large document)
+        // Each day is stored as a separate document in fantasy_recaps/{seasonId}/days/{dayNumber}
+        const recapsCollectionRef = collection(db, 'fantasy_recaps', targetSeasonId, 'days');
+        const recapsSnapshot = await getDocs(recapsCollectionRef);
 
         let shows = [];
         let recaps = [];
 
-        if (recapDoc.exists()) {
-          const data = recapDoc.data();
-          recaps = data.recaps || [];
+        if (!recapsSnapshot.empty) {
+          recaps = recapsSnapshot.docs.map(doc => doc.data());
 
           // Calculate effective day for score visibility filtering
           // For current season: only show scores from days that have been processed (at 2 AM)
