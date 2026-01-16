@@ -2,7 +2,36 @@ const { logger } = require("firebase-functions/v2");
 const { getDb, dataNamespaceParam } = require("../config");
 const { Timestamp, getDoc } = require("firebase-admin/firestore");
 const admin = require("firebase-admin");
-const { scrapeUpcomingDciEvents } = require("./scraping");
+const { getFunctions, httpsCallable } = require("firebase-admin/functions");
+
+/**
+ * Call the isolated scraper function to get upcoming DCI events
+ * This avoids bundling heavy Puppeteer/Chromium in main functions (~70MB savings)
+ * @param {number} year - The year to scrape events for
+ * @returns {Promise<Array>} Array of event objects
+ */
+async function scrapeUpcomingDciEvents(year) {
+  logger.info(`[Season] Calling isolated scraper for year ${year}...`);
+
+  try {
+    // Call the isolated scraper function via Firebase callable
+    const functions = getFunctions();
+    const scraper = httpsCallable(functions, "scrapeUpcomingDciEvents");
+    const result = await scraper({ year });
+
+    if (result.data && result.data.success) {
+      logger.info(`[Season] Scraper returned ${result.data.count} events.`);
+      return result.data.events || [];
+    } else {
+      logger.error("[Season] Scraper returned unsuccessful response:", result.data);
+      return [];
+    }
+  } catch (error) {
+    logger.error("[Season] Error calling isolated scraper:", error);
+    // Return empty array on failure - schedule generation can proceed without events
+    return [];
+  }
+}
 
 // =============================================================================
 // SCHEDULE HELPERS
