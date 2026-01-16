@@ -61,6 +61,26 @@
       ]
     },
     {
+      "collectionGroup": "leaderboard",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "username",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "leaderboard",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "score",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "users",
       "queryScope": "COLLECTION",
       "fields": [
@@ -293,6 +313,34 @@
       ]
     },
     {
+      "collectionGroup": "profile",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "engagement.loginStreak",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "engagement.lastLogin",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "profile",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "engagement.lastLogin",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "engagement.loginStreak",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "email_log",
       "queryScope": "COLLECTION",
       "fields": [
@@ -405,6 +453,30 @@
     {
       "collectionGroup": "profile",
       "fieldPath": "activeSeasonId",
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "profile",
+      "fieldPath": "engagement.lastLogin",
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "profile",
+      "fieldPath": "engagement.loginStreak",
       "indexes": [
         {
           "order": "ASCENDING",
