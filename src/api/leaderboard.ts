@@ -10,6 +10,8 @@ import {
   orderBy,
   limit,
   startAfter,
+  where,
+  getCountFromServer,
   QueryDocumentSnapshot,
   DocumentData,
 } from 'firebase/firestore';
@@ -139,20 +141,49 @@ export async function getLifetimeLeaderboard(
 
 /**
  * Get a specific user's rank in a leaderboard
+ * OPTIMIZATION #3: Uses targeted query + count instead of fetching 100 entries
+ * Before: 100 document reads to find one user's rank
+ * After: 1 query for user entry + 1 aggregation count = ~2 operations
  */
 export async function getUserRank(
   type: LeaderboardType,
   corpsClass: CorpsClass,
   username: string
 ): Promise<number | null> {
-  const result = await getLeaderboard(type, corpsClass, 100);
+  return withErrorHandling(async () => {
+    // Handle lifetime separately (different structure)
+    if (type === 'lifetime') {
+      const result = await getLifetimeLeaderboard('totalPoints', 100);
+      const userEntry = result.data.find(entry => entry.username === username);
+      return userEntry?.rank || null;
+    }
 
-  const userEntry = result.data.find(entry => entry.username === username);
-  return userEntry?.rank || null;
+    const leaderboardRef = collection(db, 'artifacts', DATA_NAMESPACE, 'leaderboard', type, corpsClass);
+
+    // Step 1: Query for the user's specific entry by username (1 document read)
+    const userQuery = query(leaderboardRef, where('username', '==', username), limit(1));
+    const userSnapshot = await getDocs(userQuery);
+
+    if (userSnapshot.empty) {
+      return null; // User not on leaderboard
+    }
+
+    const userDoc = userSnapshot.docs[0];
+    const userScore = userDoc.data().score || 0;
+
+    // Step 2: Count how many entries have a higher score (aggregation query)
+    const higherScoreQuery = query(leaderboardRef, where('score', '>', userScore));
+    const countSnapshot = await getCountFromServer(higherScoreQuery);
+
+    // Rank = number of entries with higher scores + 1
+    return countSnapshot.data().count + 1;
+  }, `Failed to get user rank for ${username}`);
 }
 
 /**
  * Get a user's position and nearby entries
+ * OPTIMIZATION: Uses targeted queries instead of fetching 100 entries
+ * Fetches only the entries needed for context display
  */
 export async function getUserContext(
   type: LeaderboardType,
@@ -163,22 +194,118 @@ export async function getUserContext(
   userRank: number | null;
   entries: LeaderboardEntry[];
 }> {
-  // Fetch more entries to find user context
-  const result = await getLeaderboard(type, corpsClass, 100);
+  return withErrorHandling(async () => {
+    // Handle lifetime separately (different structure - keep simple approach)
+    if (type === 'lifetime') {
+      const result = await getLifetimeLeaderboard('totalPoints', 50);
+      const userIndex = result.data.findIndex(entry => entry.username === username);
+      if (userIndex === -1) {
+        return { userRank: null, entries: result.data.slice(0, contextSize * 2 + 1) };
+      }
+      const startIndex = Math.max(0, userIndex - contextSize);
+      const endIndex = Math.min(result.data.length, userIndex + contextSize + 1);
+      return { userRank: userIndex + 1, entries: result.data.slice(startIndex, endIndex) };
+    }
 
-  const userIndex = result.data.findIndex(entry => entry.username === username);
+    const leaderboardRef = collection(db, 'artifacts', DATA_NAMESPACE, 'leaderboard', type, corpsClass);
 
-  if (userIndex === -1) {
-    return { userRank: null, entries: result.data.slice(0, contextSize * 2 + 1) };
-  }
+    // Step 1: Find the user's entry and score
+    const userQuery = query(leaderboardRef, where('username', '==', username), limit(1));
+    const userSnapshot = await getDocs(userQuery);
 
-  const startIndex = Math.max(0, userIndex - contextSize);
-  const endIndex = Math.min(result.data.length, userIndex + contextSize + 1);
+    if (userSnapshot.empty) {
+      // User not found - return top entries as fallback
+      const topQuery = query(leaderboardRef, orderBy('score', 'desc'), limit(contextSize * 2 + 1));
+      const topSnapshot = await getDocs(topQuery);
+      const entries = topSnapshot.docs.map((doc, index) => ({
+        id: doc.id,
+        rank: index + 1,
+        uid: doc.data().uid || doc.id,
+        username: doc.data().username || 'Unknown',
+        userTitle: doc.data().userTitle,
+        corpsName: doc.data().corpsName,
+        corpsClass: doc.data().corpsClass,
+        score: doc.data().score || 0,
+        trophies: doc.data().trophies || 0,
+      }));
+      return { userRank: null, entries };
+    }
 
-  return {
-    userRank: userIndex + 1,
-    entries: result.data.slice(startIndex, endIndex),
-  };
+    const userDoc = userSnapshot.docs[0];
+    const userScore = userDoc.data().score || 0;
+
+    // Step 2: Count entries with higher scores to get rank
+    const higherScoreQuery = query(leaderboardRef, where('score', '>', userScore));
+    const countSnapshot = await getCountFromServer(higherScoreQuery);
+    const userRank = countSnapshot.data().count + 1;
+
+    // Step 3: Fetch entries above the user (limited to contextSize)
+    const aboveQuery = query(
+      leaderboardRef,
+      where('score', '>', userScore),
+      orderBy('score', 'asc'),
+      limit(contextSize)
+    );
+    const aboveSnapshot = await getDocs(aboveQuery);
+
+    // Step 4: Fetch entries below the user (limited to contextSize)
+    const belowQuery = query(
+      leaderboardRef,
+      where('score', '<', userScore),
+      orderBy('score', 'desc'),
+      limit(contextSize)
+    );
+    const belowSnapshot = await getDocs(belowQuery);
+
+    // Build the context entries with proper ranks
+    const entries: LeaderboardEntry[] = [];
+
+    // Add entries above (in descending score order)
+    const aboveEntries = aboveSnapshot.docs.reverse();
+    aboveEntries.forEach((doc, index) => {
+      entries.push({
+        id: doc.id,
+        rank: userRank - (aboveEntries.length - index),
+        uid: doc.data().uid || doc.id,
+        username: doc.data().username || 'Unknown',
+        userTitle: doc.data().userTitle,
+        corpsName: doc.data().corpsName,
+        corpsClass: doc.data().corpsClass,
+        score: doc.data().score || 0,
+        trophies: doc.data().trophies || 0,
+      });
+    });
+
+    // Add the user's entry
+    entries.push({
+      id: userDoc.id,
+      rank: userRank,
+      uid: userDoc.data().uid || userDoc.id,
+      username: userDoc.data().username || 'Unknown',
+      userTitle: userDoc.data().userTitle,
+      corpsName: userDoc.data().corpsName,
+      corpsClass: userDoc.data().corpsClass,
+      score: userDoc.data().score || 0,
+      trophies: userDoc.data().trophies || 0,
+    });
+
+    // Add entries below
+    belowSnapshot.docs.forEach((doc, index) => {
+      entries.push({
+        id: doc.id,
+        rank: userRank + index + 1,
+        uid: doc.data().uid || doc.id,
+        username: doc.data().username || 'Unknown',
+        userTitle: doc.data().userTitle,
+        corpsName: doc.data().corpsName,
+        corpsClass: doc.data().corpsClass,
+        score: doc.data().score || 0,
+        trophies: doc.data().trophies || 0,
+      });
+    });
+
+    return { userRank, entries };
+  }, `Failed to get user context for ${username}`);
 }
 
 // =============================================================================
@@ -194,29 +321,59 @@ export interface LeaderboardStats {
 
 /**
  * Get stats for a leaderboard
+ * OPTIMIZATION: Uses count aggregation + targeted top score query
+ * Before: 100 document reads
+ * After: 1 count query + 1 document read for top score
  */
 export async function getLeaderboardStats(
   type: LeaderboardType,
   corpsClass: CorpsClass
 ): Promise<LeaderboardStats> {
   return withErrorHandling(async () => {
-    const result = await getLeaderboard(type, corpsClass, 100);
-
-    if (result.data.length === 0) {
+    // Handle lifetime separately
+    if (type === 'lifetime') {
+      const result = await getLifetimeLeaderboard('totalPoints', 100);
+      if (result.data.length === 0) {
+        return { totalPlayers: 0, topScore: 0, averageScore: 0 };
+      }
+      const scores = result.data.map(e => e.score);
+      const totalScore = scores.reduce((sum, score) => sum + score, 0);
       return {
-        totalPlayers: 0,
-        topScore: 0,
-        averageScore: 0,
+        totalPlayers: result.total || result.data.length,
+        topScore: Math.max(...scores),
+        averageScore: totalScore / scores.length,
       };
     }
 
-    const scores = result.data.map(e => e.score);
-    const totalScore = scores.reduce((sum, score) => sum + score, 0);
+    const leaderboardRef = collection(db, 'artifacts', DATA_NAMESPACE, 'leaderboard', type, corpsClass);
+
+    // Get total count using aggregation (no document reads)
+    const countSnapshot = await getCountFromServer(query(leaderboardRef));
+    const totalPlayers = countSnapshot.data().count;
+
+    if (totalPlayers === 0) {
+      return { totalPlayers: 0, topScore: 0, averageScore: 0 };
+    }
+
+    // Get top score (only 1 document read)
+    const topQuery = query(leaderboardRef, orderBy('score', 'desc'), limit(1));
+    const topSnapshot = await getDocs(topQuery);
+    const topScore = topSnapshot.docs[0]?.data().score || 0;
+
+    // Note: Average score would require reading all documents, so we estimate from top scores
+    // For accurate average, we'd need to maintain this in a stats document during score processing
+    // For now, we'll fetch a sample of top 10 for a reasonable estimate
+    const sampleQuery = query(leaderboardRef, orderBy('score', 'desc'), limit(10));
+    const sampleSnapshot = await getDocs(sampleQuery);
+    const sampleScores = sampleSnapshot.docs.map(doc => doc.data().score || 0);
+    const sampleAverage = sampleScores.length > 0
+      ? sampleScores.reduce((sum, score) => sum + score, 0) / sampleScores.length
+      : 0;
 
     return {
-      totalPlayers: result.data.length + (result.hasMore ? 100 : 0), // Estimate
-      topScore: Math.max(...scores),
-      averageScore: totalScore / scores.length,
+      totalPlayers,
+      topScore,
+      averageScore: sampleAverage, // Approximate from top 10
     };
   }, 'Failed to fetch leaderboard stats');
 }
