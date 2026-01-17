@@ -665,8 +665,10 @@ exports.listCommentsForModeration = onCall(
       // Fetch article headlines (from collection group query)
       const articleHeadlines = {};
       if (articleIds.size > 0) {
+        // Note: orderBy is required to match the composite index (isPublished + createdAt)
         const articlesSnapshot = await db.collectionGroup("articles")
           .where("isPublished", "==", true)
+          .orderBy("createdAt", "desc")
           .limit(500)
           .get();
 
