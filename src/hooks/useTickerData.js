@@ -3,7 +3,7 @@
 // Displays data like a sports stats ticker, separated by class
 
 import { useState, useEffect, useMemo } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useSeasonStore } from '../store/seasonStore';
 import { calculateCaptionAggregates, calculateTrend } from './useScoresData';
@@ -121,16 +121,23 @@ export const useTickerData = () => {
 
       try {
         setLoading(true);
-        // OPTIMIZATION: Read from subcollection instead of single large document
+        // Try new subcollection format first, fallback to legacy single-document format
         const recapsCollectionRef = collection(db, 'fantasy_recaps', seasonUid, 'days');
         const recapsSnapshot = await getDocs(recapsCollectionRef);
 
+        let recaps = [];
         if (!recapsSnapshot.empty) {
-          const recaps = recapsSnapshot.docs.map(doc => doc.data());
-          setAllRecaps(recaps);
+          // New subcollection format
+          recaps = recapsSnapshot.docs.map(d => d.data());
         } else {
-          setAllRecaps([]);
+          // Fallback to legacy single-document format
+          const legacyDocRef = doc(db, 'fantasy_recaps', seasonUid);
+          const legacyDoc = await getDoc(legacyDocRef);
+          if (legacyDoc.exists()) {
+            recaps = legacyDoc.data().recaps || [];
+          }
         }
+        setAllRecaps(recaps);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching ticker data:', err);

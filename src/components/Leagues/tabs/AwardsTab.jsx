@@ -33,12 +33,23 @@ const AwardsTab = ({ league }) => {
 
         if (seasonDoc.exists()) {
           const seasonData = seasonDoc.data();
-          // OPTIMIZATION: Read from subcollection instead of single large document
+          // Try new subcollection format first, fallback to legacy single-document format
           const recapsCollectionRef = collection(db, 'fantasy_recaps', seasonData.seasonUid, 'days');
           const recapsSnapshot = await getDocs(recapsCollectionRef);
 
+          let recaps = [];
           if (!recapsSnapshot.empty) {
-            const recaps = recapsSnapshot.docs.map(d => d.data());
+            recaps = recapsSnapshot.docs.map(d => d.data());
+          } else {
+            // Fallback to legacy single-document format
+            const legacyDocRef = doc(db, 'fantasy_recaps', seasonData.seasonUid);
+            const legacyDoc = await getDoc(legacyDocRef);
+            if (legacyDoc.exists()) {
+              recaps = legacyDoc.data().recaps || [];
+            }
+          }
+
+          if (recaps.length > 0) {
             const memberUids = new Set(league.members);
 
             // Calculate award leaders
