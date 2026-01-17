@@ -21,7 +21,9 @@ export default defineConfig({
   },
   build: {
     outDir: 'build',
-    sourcemap: true,
+    // Source maps disabled in production - no error tracking service configured
+    // Re-enable with 'hidden' if adding Sentry/Bugsnag (generates maps without linking)
+    sourcemap: false,
     rollupOptions: {
       // Exclude Storybook files from production build (saves ~750KB)
       external: (id) => id.includes('/stories/'),
@@ -33,8 +35,9 @@ export default defineConfig({
           // UI utilities - lightweight, loaded immediately
           'vendor-ui': ['lucide-react', 'react-hot-toast'],
           'vendor-query': ['@tanstack/react-query', 'zustand'],
-          // Framer Motion in separate chunk - loaded via LazyMotion dynamic import
-          // Uses domAnimation feature set (~60% smaller than full bundle)
+          // Framer Motion in separate chunk for better caching
+          // NOTE: Uses full bundle (~143KB). To reduce to ~60KB, migrate from
+          // `motion` to `m` components across 50+ files with LazyMotion wrapper
           'vendor-motion': ['framer-motion'],
           // Lazy-loaded chart library - only loaded when charts are rendered
           'vendor-charts': ['chart.js', 'react-chartjs-2'],
