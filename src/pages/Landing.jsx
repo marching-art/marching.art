@@ -115,7 +115,7 @@ const Landing = () => {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-[#0A0A0A]">
+    <div className="min-h-screen flex flex-col bg-[#0A0A0A]">
       {/* FIXED HEADER */}
       <header className="flex-shrink-0 h-14 bg-[#1a1a1a] border-b border-[#333]">
         <div className="max-w-[1920px] mx-auto h-full flex items-center px-4 lg:px-6">
@@ -178,7 +178,7 @@ const Landing = () => {
       </header>
 
       {/* SCROLLABLE CONTENT */}
-      <main className="flex-1 overflow-y-auto min-h-0 scroll-momentum pb-24 md:pb-4">
+      <main className="flex-1 pb-24 md:pb-4">
         <div className="max-w-[1920px] mx-auto p-4 lg:p-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6">
 
