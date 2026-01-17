@@ -156,36 +156,52 @@ export const generateSparklinePath = (values, width = 60, height = 20) => {
 
 /**
  * Calculate rank within a specific caption category
- * Optimized: Uses Map lookups O(1) instead of findIndex O(n) for 99%+ performance gain
- * Previous complexity: O(n²) - with 1000 corps = ~1,000,000 operations
- * New complexity: O(n log n) - dominated by sorting = ~10,000 operations
+ * Optimized: Uses index-based sorting for reduced memory allocation
+ *
+ * Previous approach: 3 full array copies for sorting + 3 Maps + final map
+ * New approach: 3 small [value, index] arrays + direct rank assignment
+ *
+ * Memory improvement: Sorts lightweight tuples instead of full score objects
+ * Speed improvement: Direct index assignment vs Map creation + lookups
  */
 export const calculateCaptionRanks = (scores) => {
   if (!scores || scores.length === 0) return [];
 
-  // Scores should already have GE_Total, VIS_Total, MUS_Total from prior calculateCaptionAggregates call
-  // Do NOT call calculateCaptionAggregates again here as it would overwrite with zeros
-  // (the entry itself doesn't have geScore/visualScore/musicScore - those are in entry.scores[0])
+  const n = scores.length;
 
-  // Sort by each category (O(n log n) each)
-  const geRanks = [...scores].sort((a, b) => (b.GE_Total || 0) - (a.GE_Total || 0));
-  const visRanks = [...scores].sort((a, b) => (b.VIS_Total || 0) - (a.VIS_Total || 0));
-  const musRanks = [...scores].sort((a, b) => (b.MUS_Total || 0) - (a.MUS_Total || 0));
+  // Create lightweight [value, originalIndex] tuples for sorting
+  // Much more memory-efficient than copying full score objects
+  const geIndices = new Array(n);
+  const visIndices = new Array(n);
+  const musIndices = new Array(n);
 
-  // Build rank Maps for O(1) lookup instead of O(n) findIndex
-  const geRankMap = new Map(geRanks.map((s, i) => [s.corps || s.corpsName, i + 1]));
-  const visRankMap = new Map(visRanks.map((s, i) => [s.corps || s.corpsName, i + 1]));
-  const musRankMap = new Map(musRanks.map((s, i) => [s.corps || s.corpsName, i + 1]));
+  // Single pass to extract all caption values with their indices
+  for (let i = 0; i < n; i++) {
+    const s = scores[i];
+    geIndices[i] = [s.GE_Total || 0, i];
+    visIndices[i] = [s.VIS_Total || 0, i];
+    musIndices[i] = [s.MUS_Total || 0, i];
+  }
 
-  return scores.map(score => {
-    const corps = score.corps || score.corpsName;
-    return {
-      ...score,
-      GE_Rank: geRankMap.get(corps),
-      VIS_Rank: visRankMap.get(corps),
-      MUS_Rank: musRankMap.get(corps)
-    };
-  });
+  // Sort by value descending (higher score = better rank)
+  // Sorting small tuples is faster than sorting objects with many properties
+  const compareDesc = (a, b) => b[0] - a[0];
+  geIndices.sort(compareDesc);
+  visIndices.sort(compareDesc);
+  musIndices.sort(compareDesc);
+
+  // Create result array once, then assign all ranks directly
+  // Avoids creating intermediate Maps and doing Map lookups
+  const results = scores.map(s => ({ ...s }));
+
+  // Assign ranks via direct index access (O(1) per assignment)
+  for (let rank = 0; rank < n; rank++) {
+    results[geIndices[rank][1]].GE_Rank = rank + 1;
+    results[visIndices[rank][1]].VIS_Rank = rank + 1;
+    results[musIndices[rank][1]].MUS_Rank = rank + 1;
+  }
+
+  return results;
 };
 
 /**
