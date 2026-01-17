@@ -357,7 +357,16 @@ exports.deleteAccount = onCall({ cors: true }, async (request) => {
     const profileDoc = await profileRef.get();
     const username = profileDoc.exists ? profileDoc.data().username : null;
 
-    // Delete user data from Firestore
+    const userDocRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${userId}`);
+
+    // OPTIMIZATION: Fetch subcollections in parallel instead of sequentially
+    const [corpsSnapshot, notificationsSnapshot] = await Promise.all([
+      userDocRef.collection('corps').get(),
+      userDocRef.collection('notifications').get(),
+    ]);
+
+    // OPTIMIZATION: Single batch for all deletions instead of 3 separate commits
+    // Firestore batches support up to 500 operations - we're well under that limit
     const batch = db.batch();
 
     // Delete profile data
@@ -373,31 +382,18 @@ exports.deleteAccount = onCall({ cors: true }, async (request) => {
       batch.delete(usernameRef);
     }
 
-    // Commit Firestore deletions
-    await batch.commit();
-
-    // Delete subcollections (corps, notifications, etc.)
-    const userDocRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${userId}`);
-
-    // Delete corps subcollection
-    const corpsSnapshot = await userDocRef.collection('corps').get();
-    const corpsDeleteBatch = db.batch();
+    // Delete corps subcollection documents
     corpsSnapshot.docs.forEach(doc => {
-      corpsDeleteBatch.delete(doc.ref);
+      batch.delete(doc.ref);
     });
-    if (corpsSnapshot.docs.length > 0) {
-      await corpsDeleteBatch.commit();
-    }
 
-    // Delete notifications subcollection
-    const notificationsSnapshot = await userDocRef.collection('notifications').get();
-    const notificationsDeleteBatch = db.batch();
+    // Delete notifications subcollection documents
     notificationsSnapshot.docs.forEach(doc => {
-      notificationsDeleteBatch.delete(doc.ref);
+      batch.delete(doc.ref);
     });
-    if (notificationsSnapshot.docs.length > 0) {
-      await notificationsDeleteBatch.commit();
-    }
+
+    // Single atomic commit for all Firestore deletions
+    await batch.commit();
 
     // Delete the user from Firebase Auth
     await admin.auth().deleteUser(userId);
