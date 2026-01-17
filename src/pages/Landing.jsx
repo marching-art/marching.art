@@ -249,8 +249,8 @@ const Landing = () => {
                     )}
                   </div>
 
-                  {/* Quick Links - 44px+ touch targets */}
-                  <div className="p-2 space-y-0.5">
+                  {/* Quick Links - hidden on mobile to save space, show on desktop */}
+                  <div className="hidden lg:block p-2 space-y-0.5">
                     <Link
                       to="/dashboard"
                       className="flex items-center gap-3 px-3 min-h-[44px] rounded-sm hover:bg-white/[0.05] active:bg-white/[0.08] transition-colors group press-feedback"
@@ -285,8 +285,8 @@ const Landing = () => {
                     </Link>
                   </div>
 
-                  {/* Sign Out - 44px touch target */}
-                  <div className="px-2 py-2 border-t border-[#333] bg-[#111]">
+                  {/* Sign Out - hidden on mobile (accessible from Dashboard), show on desktop */}
+                  <div className="hidden lg:block px-2 py-2 border-t border-[#333] bg-[#111]">
                     <button
                       onClick={handleSignOut}
                       className="flex items-center gap-2 px-2 min-h-[44px] w-full text-sm text-gray-500 hover:text-red-400 active:text-red-500 transition-colors press-feedback rounded-sm"
