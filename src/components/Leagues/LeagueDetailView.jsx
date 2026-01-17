@@ -231,13 +231,23 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
           }
           setCurrentWeek(week);
 
-          // Fetch fantasy recaps from subcollection
-          // OPTIMIZATION: Read from subcollection instead of single large document
+          // Try new subcollection format first, fallback to legacy single-document format
           const recapsCollectionRef = collection(db, 'fantasy_recaps', sData.seasonUid, 'days');
           const recapsSnapshot = await getDocs(recapsCollectionRef);
 
+          let recapsData = [];
           if (!recapsSnapshot.empty) {
-            const recapsData = recapsSnapshot.docs.map(d => d.data());
+            recapsData = recapsSnapshot.docs.map(d => d.data());
+          } else {
+            // Fallback to legacy single-document format
+            const legacyDocRef = doc(db, 'fantasy_recaps', sData.seasonUid);
+            const legacyDoc = await getDoc(legacyDocRef);
+            if (legacyDoc.exists()) {
+              recapsData = legacyDoc.data().recaps || [];
+            }
+          }
+
+          if (recapsData.length > 0) {
             setRecaps(recapsData); // Store for useLeagueStats hook
             const recaps = recapsData;
             const memberUids = new Set(league.members);

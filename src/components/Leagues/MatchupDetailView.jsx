@@ -70,12 +70,23 @@ const MatchupDetailView = ({
 
         if (seasonDoc.exists()) {
           const sData = seasonDoc.data();
-          // OPTIMIZATION: Read from subcollection instead of single large document
+          // Try new subcollection format first, fallback to legacy single-document format
           const recapsCollectionRef = collection(db, 'fantasy_recaps', sData.seasonUid, 'days');
           const recapsSnapshot = await getDocs(recapsCollectionRef);
 
+          let recaps = [];
           if (!recapsSnapshot.empty) {
-            const recaps = recapsSnapshot.docs.map(d => d.data());
+            recaps = recapsSnapshot.docs.map(d => d.data());
+          } else {
+            // Fallback to legacy single-document format
+            const legacyDocRef = doc(db, 'fantasy_recaps', sData.seasonUid);
+            const legacyDoc = await getDoc(legacyDocRef);
+            if (legacyDoc.exists()) {
+              recaps = legacyDoc.data().recaps || [];
+            }
+          }
+
+          if (recaps.length > 0) {
             let score1 = 0, score2 = 0;
             let prevWeekScore1 = 0, prevWeekScore2 = 0;
             const breakdown1 = { shows: [], geTotal: 0, visualTotal: 0, musicTotal: 0 };
