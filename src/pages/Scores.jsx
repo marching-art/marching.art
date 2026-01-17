@@ -99,31 +99,13 @@ const seededShuffle = (array, seed) => {
 };
 
 /**
- * Simple hash function for deterministic variance
- * @param {string} str - Input string to hash
- * @returns {number} - Number between 0 and 1
- */
-const simpleHash = (str) => {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  return Math.abs(hash % 1000) / 1000;
-};
-
-/**
- * Generate caption breakdown from total score
- * OPTIMIZED: Now deterministic (uses hash instead of Math.random)
- * This allows proper memoization without flickering values
+ * Get caption breakdown from real data only
+ * Returns null values when caption data is not available (no synthetic values)
  *
- * @param {number} totalScore - The total score
  * @param {Object} existingCaptions - Existing caption data if available
- * @param {string} [corpsName] - Corps name for deterministic variance
  */
-const generateCaptionBreakdown = (totalScore, existingCaptions, corpsName = '') => {
-  // If we already have caption data, use it
+const getCaptionBreakdown = (existingCaptions) => {
+  // Only return real caption data - no synthetic values
   if (existingCaptions?.geScore && existingCaptions?.visualScore && existingCaptions?.musicScore) {
     return {
       ge: existingCaptions.geScore,
@@ -132,25 +114,11 @@ const generateCaptionBreakdown = (totalScore, existingCaptions, corpsName = '') 
     };
   }
 
-  // Generate deterministic breakdown using hash for variance
-  const baseRatio = totalScore / 100;
-  const seed = `${corpsName}-${totalScore}`;
-  const hash1 = simpleHash(seed + '-ge');
-  const hash2 = simpleHash(seed + '-vis');
-  const hash3 = simpleHash(seed + '-mus');
-
-  const variance1 = (hash1 - 0.5) * 0.08;
-  const variance2 = (hash2 - 0.5) * 0.08;
-  const variance3 = (hash3 - 0.5) * 0.08;
-
-  const ge = Math.min(40, Math.max(0, (baseRatio * 40) + (variance1 * 40)));
-  const vis = Math.min(30, Math.max(0, (baseRatio * 30) + (variance2 * 30)));
-  const mus = Math.min(30, Math.max(0, (baseRatio * 30) + (variance3 * 30)));
-
+  // Return null values when no real data available
   return {
-    ge: Number(ge.toFixed(2)),
-    vis: Number(vis.toFixed(2)),
-    mus: Number(mus.toFixed(2)),
+    ge: null,
+    vis: null,
+    mus: null,
   };
 };
 
@@ -191,15 +159,11 @@ const RecapDataGrid = ({
   date,
   userCorpsName
 }) => {
-  // OPTIMIZATION: Pre-compute all caption breakdowns once instead of per-row
-  // Reduces 100+ function calls to 1 memoized computation
+  // Pre-compute all caption breakdowns once (real data only, no synthetic values)
   const captionMap = useMemo(() => {
     if (!scores || scores.length === 0) return new Map();
     return new Map(
-      scores.map((score, idx) => [
-        idx,
-        generateCaptionBreakdown(score.score, score, score.corpsName || score.corps)
-      ])
+      scores.map((score, idx) => [idx, getCaptionBreakdown(score)])
     );
   }, [scores]);
 
@@ -286,21 +250,21 @@ const RecapDataGrid = ({
                   {/* GE */}
                   <td className="py-2 px-2 text-right">
                     <span className="text-gray-400 font-data tabular-nums text-sm">
-                      {captions.ge.toFixed(2)}
+                      {captions.ge !== null ? captions.ge.toFixed(2) : '-'}
                     </span>
                   </td>
 
                   {/* VIS */}
                   <td className="py-2 px-2 text-right">
                     <span className="text-gray-400 font-data tabular-nums text-sm">
-                      {captions.vis.toFixed(2)}
+                      {captions.vis !== null ? captions.vis.toFixed(2) : '-'}
                     </span>
                   </td>
 
                   {/* MUS */}
                   <td className="py-2 px-2 text-right">
                     <span className="text-gray-400 font-data tabular-nums text-sm">
-                      {captions.mus.toFixed(2)}
+                      {captions.mus !== null ? captions.mus.toFixed(2) : '-'}
                     </span>
                   </td>
 
@@ -506,14 +470,11 @@ const ClassStandingsGrid = ({
   className,
   userCorpsName
 }) => {
-  // OPTIMIZATION: Pre-compute all caption breakdowns once instead of per-row
+  // Pre-compute all caption breakdowns once (real data only, no synthetic values)
   const captionMap = useMemo(() => {
     if (!standings || standings.length === 0) return new Map();
     return new Map(
-      standings.map((entry, idx) => [
-        idx,
-        generateCaptionBreakdown(entry.score, entry.scores?.[0] || entry, entry.corpsName)
-      ])
+      standings.map((entry, idx) => [idx, getCaptionBreakdown(entry.scores?.[0] || entry)])
     );
   }, [standings]);
 
@@ -606,21 +567,21 @@ const ClassStandingsGrid = ({
                   {/* GE */}
                   <td className="py-2.5 px-2 text-right">
                     <span className="text-gray-400 font-data tabular-nums text-sm">
-                      {captions.ge.toFixed(2)}
+                      {captions.ge !== null ? captions.ge.toFixed(2) : '-'}
                     </span>
                   </td>
 
                   {/* VIS */}
                   <td className="py-2.5 px-2 text-right">
                     <span className="text-gray-400 font-data tabular-nums text-sm">
-                      {captions.vis.toFixed(2)}
+                      {captions.vis !== null ? captions.vis.toFixed(2) : '-'}
                     </span>
                   </td>
 
                   {/* MUS */}
                   <td className="py-2.5 px-2 text-right">
                     <span className="text-gray-400 font-data tabular-nums text-sm">
-                      {captions.mus.toFixed(2)}
+                      {captions.mus !== null ? captions.mus.toFixed(2) : '-'}
                     </span>
                   </td>
 
