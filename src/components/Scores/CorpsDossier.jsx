@@ -2,7 +2,7 @@
 // Slide-over panel showing detailed corps analytics, score history, and head-to-head comparison
 
 import React, { useMemo, memo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import {
   X,
   TrendingUp,
@@ -183,7 +183,7 @@ const CorpsDossier = ({
       {isOpen && corps && (
         <>
           {/* Backdrop */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -192,7 +192,7 @@ const CorpsDossier = ({
           />
 
           {/* Panel */}
-          <motion.div
+          <m.div
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
@@ -405,7 +405,7 @@ const CorpsDossier = ({
                 Close Dossier
               </button>
             </div>
-          </motion.div>
+          </m.div>
         </>
       )}
     </AnimatePresence>

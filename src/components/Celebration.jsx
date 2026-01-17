@@ -1,6 +1,6 @@
 // src/components/Celebration.jsx
 import React, { useEffect, useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { useShouldReduceMotion } from '../hooks/useReducedMotion';
 
 // Lazy-loaded confetti module (only loaded when celebration triggers)
@@ -131,7 +131,7 @@ const Celebration = ({ trigger, message, type = 'default' }) => {
   return (
     <AnimatePresence>
       {isVisible && message && (
-        <motion.div
+        <m.div
           initial={{ scale: 0, opacity: 0, rotate: -10 }}
           animate={{
             scale: [0, 1.2, 1],
@@ -148,7 +148,7 @@ const Celebration = ({ trigger, message, type = 'default' }) => {
             <div className={`absolute inset-0 bg-gold-500/30 blur-3xl rounded-sm ${shouldReduceMotion ? '' : 'animate-pulse'}`} />
 
             {/* Message - no wiggle animation on mobile */}
-            <motion.div
+            <m.div
               animate={shouldReduceMotion ? {} : {
                 scale: [1, 1.05, 1],
                 rotate: [-2, 2, -2]
@@ -163,11 +163,11 @@ const Celebration = ({ trigger, message, type = 'default' }) => {
               <h2 className="text-5xl md:text-6xl font-display font-black text-charcoal-900 text-center">
                 {message}
               </h2>
-            </motion.div>
+            </m.div>
 
             {/* Sparkles - skip on mobile for performance */}
             {!shouldReduceMotion && [...Array(4)].map((_, i) => ( // Reduced from 8 to 4 sparkles
-              <motion.div
+              <m.div
                 key={i}
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{
@@ -185,10 +185,10 @@ const Celebration = ({ trigger, message, type = 'default' }) => {
                 style={{ transformOrigin: 'center' }}
               >
                 <div className="w-full h-full bg-gold-400 rounded-sm blur-sm" />
-              </motion.div>
+              </m.div>
             ))}
           </div>
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

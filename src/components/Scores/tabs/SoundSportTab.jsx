@@ -5,7 +5,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import {
   Music, Medal, Award, ChevronRight, ChevronDown,
   Info, Star, Users, Zap, Clock, BookOpen
@@ -117,7 +117,7 @@ const RatingBadge = ({ rating, showTooltip = false }) => {
         <span className={`font-bold text-xs md:text-sm ${ratingInfo.textColor}`}>{rating}</span>
       </div>
       {showTooltip && isHovered && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 5 }}
           animate={{ opacity: 1, y: 0 }}
           className="absolute z-10 left-0 top-full mt-2 w-48 p-2 bg-[#1a1a1a] border border-[#333] rounded shadow-lg"
@@ -128,7 +128,7 @@ const RatingBadge = ({ rating, showTooltip = false }) => {
             {rating === 'Bronze' && 'Score of 60-74 points'}
             {rating === 'Participation' && 'Completed performance'}
           </p>
-        </motion.div>
+        </m.div>
       )}
     </div>
   );
@@ -142,7 +142,7 @@ const EnsembleCard = ({ score, isBestInShow = false, isClassWinner = false }) =>
   const ratingInfo = getSoundSportRating(score.score);
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       whileHover={{ scale: 1.02 }}
@@ -178,7 +178,7 @@ const EnsembleCard = ({ score, isBestInShow = false, isClassWinner = false }) =>
           </p>
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 
@@ -203,17 +203,17 @@ const RatingGroup = ({ rating, scores, bestInShowCorps, classWinnerCorps = [] })
           <span className="font-bold text-white text-sm">{rating}</span>
           <span className="text-gray-500 text-xs">({scores.length})</span>
         </div>
-        <motion.div
+        <m.div
           animate={{ rotate: isExpanded ? 180 : 0 }}
           transition={{ duration: 0.2 }}
         >
           <ChevronDown className="w-4 h-4 text-gray-400" />
-        </motion.div>
+        </m.div>
       </button>
 
       <AnimatePresence>
         {isExpanded && (
-          <motion.div
+          <m.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -228,7 +228,7 @@ const RatingGroup = ({ rating, scores, bestInShowCorps, classWinnerCorps = [] })
                 isClassWinner={classWinnerCorps.includes(score.corps)}
               />
             ))}
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>
@@ -367,17 +367,17 @@ const SoundSportTab = ({ loading, allShows }) => {
             >
               <Info className="w-3.5 h-3.5" />
               {showInfo ? 'Hide' : 'Show'} Rating Guide
-              <motion.div
+              <m.div
                 animate={{ rotate: showInfo ? 180 : 0 }}
                 transition={{ duration: 0.2 }}
               >
                 <ChevronDown className="w-3.5 h-3.5" />
-              </motion.div>
+              </m.div>
             </button>
 
             <AnimatePresence>
               {showInfo && (
-                <motion.div
+                <m.div
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
@@ -389,7 +389,7 @@ const SoundSportTab = ({ loading, allShows }) => {
                       <RatingBadge key={threshold.rating} rating={threshold.rating} showTooltip={true} />
                     ))}
                   </div>
-                </motion.div>
+                </m.div>
               )}
             </AnimatePresence>
           </div>

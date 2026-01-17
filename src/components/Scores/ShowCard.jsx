@@ -1,6 +1,6 @@
 // ShowCard - Recap Sheet style display for show results
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
 
 const ShowCard = React.memo(({ show, onClick, userCorpsNames = [] }) => {
@@ -20,7 +20,7 @@ const ShowCard = React.memo(({ show, onClick, userCorpsNames = [] }) => {
   };
 
   return (
-    <motion.div
+    <m.div
       whileHover={{ scale: 1.002 }}
       className="cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-charcoal-900 rounded"
       onClick={onClick}
@@ -85,7 +85,7 @@ const ShowCard = React.memo(({ show, onClick, userCorpsNames = [] }) => {
           )}
         </div>
       )}
-    </motion.div>
+    </m.div>
   );
 });
 

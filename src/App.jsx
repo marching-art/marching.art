@@ -23,6 +23,7 @@ import { LevelUpCelebrationContainer } from './components/LevelUpCelebration';
 import ErrorBoundary from './components/ErrorBoundary';
 import { PageErrorBoundary } from './components/PageErrorBoundary';
 import { ThemeProvider } from './context/ThemeContext';
+import { MotionProvider } from './components/MotionProvider';
 import { useSeasonStore } from './store/seasonStore';
 import { useScheduleStore } from './store/scheduleStore';
 import { useUserStore } from './store/userStore';
@@ -174,6 +175,7 @@ function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
+          <MotionProvider>
           <AuthContext.Provider value={authContextValue}>
             <Router>
           {/* Skip to Content - Accessibility */}
@@ -380,6 +382,7 @@ function App() {
         </Suspense>
           </Router>
         </AuthContext.Provider>
+          </MotionProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </ErrorBoundary>

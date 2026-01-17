@@ -1,6 +1,6 @@
 // StatsTab - Lifetime statistics leaderboard
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Trophy, Crown, Medal, Users } from 'lucide-react';
 import { SystemLoader, ConsoleEmptyState } from '../../ui/CommandConsole';
 
@@ -74,7 +74,7 @@ const StatsTab = ({
       </div>
 
       {/* Lifetime Stats Table/Cards */}
-      <motion.div
+      <m.div
         key={lifetimeView}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -159,7 +159,7 @@ const StatsTab = ({
             {/* Mobile Card View */}
             <div className="md:hidden space-y-3 p-3">
               {lifetimeData.map((entry) => (
-                <motion.div
+                <m.div
                   key={entry.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -203,7 +203,7 @@ const StatsTab = ({
                       </div>
                     </div>
                   </div>
-                </motion.div>
+                </m.div>
               ))}
             </div>
           </>
@@ -214,7 +214,7 @@ const StatsTab = ({
             subtitle="Database query returned empty. Complete seasons to register on the leaderboard."
           />
         )}
-      </motion.div>
+      </m.div>
     </div>
   );
 };

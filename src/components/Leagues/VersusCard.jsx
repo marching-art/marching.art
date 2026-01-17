@@ -2,7 +2,7 @@
 // Features: Side-by-side scores, Win Probability bar, live/projected indicators
 
 import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import {
   Swords, Radio, Trophy, Crown, ChevronRight,
   TrendingUp, TrendingDown, Flame, Zap
@@ -74,7 +74,7 @@ const VersusCard = ({
   if (compact) {
     // Compact version for list views
     return (
-      <motion.div
+      <m.div
         whileHover={{ scale: 1.01 }}
         whileTap={{ scale: 0.99 }}
         onClick={onClick}
@@ -132,13 +132,13 @@ const VersusCard = ({
 
           <ChevronRight className="w-4 h-4 text-gray-600 ml-2" />
         </div>
-      </motion.div>
+      </m.div>
     );
   }
 
   // Full version with win probability bar
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ scale: 1.005 }}
@@ -346,7 +346,7 @@ const VersusCard = ({
               </span>
             </div>
             <div className="h-2 rounded-sm overflow-hidden flex bg-[#222]">
-              <motion.div
+              <m.div
                 initial={{ width: '50%' }}
                 animate={{ width: `${winProbability}%` }}
                 transition={{ type: 'spring', damping: 20 }}
@@ -355,7 +355,7 @@ const VersusCard = ({
                   winProbability >= 50 ? 'bg-green-500' : 'bg-gray-600'
                 }`}
               />
-              <motion.div
+              <m.div
                 initial={{ width: '50%' }}
                 animate={{ width: `${100 - winProbability}%` }}
                 transition={{ type: 'spring', damping: 20 }}
@@ -379,7 +379,7 @@ const VersusCard = ({
           Tap to view matchup details →
         </span>
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 

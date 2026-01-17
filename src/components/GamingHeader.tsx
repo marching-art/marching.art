@@ -15,7 +15,7 @@ import { useAuth } from '../App';
 import { adminHelpers } from '../firebase';
 import { useSeasonStore } from '../store/seasonStore';
 import { useProfileStore } from '../store/profileStore';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { prefetchRoute } from '../lib/prefetch';
 
 // Class unlock configuration (shared with DirectorCard)
@@ -238,7 +238,7 @@ const GamingHeader: React.FC = () => {
                     <span className={active ? 'drop-shadow-[0_0_8px_rgba(234,179,8,0.4)]' : ''}>{item.label}</span>
                     {/* Active indicator */}
                     {active && (
-                      <motion.div
+                      <m.div
                         layoutId="activeNav"
                         className="absolute -bottom-1 left-3 right-3 h-[3px] rounded-sm bg-gradient-to-r from-yellow-500/80 via-yellow-400 to-yellow-500/80 shadow-[0_0_12px_rgba(234,179,8,0.6)]"
                         transition={{ type: 'spring', stiffness: 500, damping: 30 }}
@@ -338,7 +338,7 @@ const GamingHeader: React.FC = () => {
         {mobileMenuOpen && (
           <>
             {/* Backdrop */}
-            <motion.div
+            <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -348,7 +348,7 @@ const GamingHeader: React.FC = () => {
             />
 
             {/* Menu Panel */}
-            <motion.nav
+            <m.nav
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
@@ -484,7 +484,7 @@ const GamingHeader: React.FC = () => {
                   </div>
                 </div>
               )}
-            </motion.nav>
+            </m.nav>
           </>
         )}
       </AnimatePresence>

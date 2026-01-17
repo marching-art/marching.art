@@ -2,7 +2,7 @@
 // Includes matchup generation, league settings, and invite code management
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import {
   Settings, Copy, Check, Swords, Calendar, Users,
   Loader2, AlertCircle, CheckCircle, ChevronLeft, ChevronRight,
@@ -131,7 +131,7 @@ const SettingsTab = ({ league, userProfile, currentWeek = 1, onBack }) => {
   const canGenerate = memberCount >= 2;
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -405,7 +405,7 @@ const SettingsTab = ({ league, userProfile, currentWeek = 1, onBack }) => {
           </div>
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 

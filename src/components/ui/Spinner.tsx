@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import BrandLogo from '../BrandLogo';
 
@@ -71,7 +71,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
     <div className="relative">
       {children}
       {isLoading && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -89,7 +89,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
               <p className="font-mono text-xs text-gold-500/50 tracking-wide">{label}</p>
             )}
           </div>
-        </motion.div>
+        </m.div>
       )}
     </div>
   );
@@ -112,23 +112,23 @@ export const FullPageLoading: React.FC<FullPageLoadingProps> = ({
     <div className="fixed inset-0 flex items-center justify-center bg-charcoal-950 z-50">
       <div className="flex flex-col items-center gap-4">
         {showLogo && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3 }}
             className="glow-pulse"
           >
             <BrandLogo className="w-24 h-24" color="text-gold-500" />
-          </motion.div>
+          </m.div>
         )}
-        <motion.p
+        <m.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
           className="font-mono text-sm text-gold-400/60 tracking-wide"
         >
           {label}
-        </motion.p>
+        </m.p>
       </div>
     </div>
   );

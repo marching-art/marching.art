@@ -35,9 +35,9 @@ export default defineConfig({
           // UI utilities - lightweight, loaded immediately
           'vendor-ui': ['lucide-react', 'react-hot-toast'],
           'vendor-query': ['@tanstack/react-query', 'zustand'],
-          // Framer Motion in separate chunk for better caching
-          // NOTE: Uses full bundle (~143KB). To reduce to ~60KB, migrate from
-          // `motion` to `m` components across 50+ files with LazyMotion wrapper
+          // Framer Motion - now uses LazyMotion with async feature loading
+          // Features are lazy-loaded after initial render via dynamic import
+          // See src/components/MotionProvider.jsx for implementation
           'vendor-motion': ['framer-motion'],
           // Lazy-loaded chart library - only loaded when charts are rendered
           'vendor-charts': ['chart.js', 'react-chartjs-2'],

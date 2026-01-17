@@ -1,11 +1,11 @@
 // StatsTab - Performance summary, scores, and account statistics (Stadium HUD)
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { BarChart3, Target, Clock } from 'lucide-react';
 
 const StatsTab = ({ profile }) => {
   return (
-    <motion.div
+    <m.div
       key="stats"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -112,7 +112,7 @@ const StatsTab = ({ profile }) => {
           )}
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 

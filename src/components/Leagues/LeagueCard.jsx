@@ -1,6 +1,6 @@
 // LeagueCard - Display card for a league in the browse/list view
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Users, Trophy, Lock, Crown, Check, ChevronRight } from 'lucide-react';
 
 const LeagueCard = React.memo(({ league, isMember, onJoin, onClick, userProfile }) => {
@@ -9,7 +9,7 @@ const LeagueCard = React.memo(({ league, isMember, onJoin, onClick, userProfile 
   const isCommissioner = league.creatorId === userProfile?.uid;
 
   return (
-    <motion.div
+    <m.div
       whileHover={{ scale: isMember ? 1.01 : 1.0 }}
       className={`bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm hover:shadow-md transition-all rounded-sm p-6 ${isMember ? 'cursor-pointer hover:border-amber-400 dark:hover:border-gold-500' : ''}`}
       onClick={isMember ? onClick : undefined}
@@ -72,7 +72,7 @@ const LeagueCard = React.memo(({ league, isMember, onJoin, onClick, userProfile 
           {memberCount >= maxMembers ? 'League Full' : 'Join League'}
         </button>
       )}
-    </motion.div>
+    </m.div>
   );
 });
 

@@ -2,7 +2,7 @@
 // Design System: Week cards, head-to-head tracking, schedule overview
 
 import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import {
   Swords, Calendar, Radio, Flame, ChevronLeft, ChevronRight,
   Trophy, Award, Star, Zap, Users, Clock, Target, History,
@@ -597,7 +597,7 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
   }
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -814,7 +814,7 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
           )}
         </>
       )}
-    </motion.div>
+    </m.div>
   );
 };
 

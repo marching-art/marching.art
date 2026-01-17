@@ -1,7 +1,7 @@
 // src/pages/CorpsHistory.jsx
 // Fixed Height Split Layout: Top Stats + Bottom Split (Chart/Timeline)
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import {
   Trophy, Calendar, Star, TrendingUp, Award, Music,
   ChevronRight, MapPin, Target, Activity, AlertTriangle, RefreshCw,
@@ -319,7 +319,7 @@ const CorpsHistory = () => {
             ) : (
               <AnimatePresence mode="wait">
                 {activeView === 'chart' ? (
-                  <motion.div
+                  <m.div
                     key="chart"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -333,9 +333,9 @@ const CorpsHistory = () => {
                     <div className="h-[calc(100%-40px)] bg-charcoal-900/30 border border-cream-500/10 rounded-xl p-4">
                       <Line data={chartData} options={chartOptions} />
                     </div>
-                  </motion.div>
+                  </m.div>
                 ) : (
-                  <motion.div
+                  <m.div
                     key="timeline"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -394,7 +394,7 @@ const CorpsHistory = () => {
                         </button>
                       );
                     })}
-                  </motion.div>
+                  </m.div>
                 )}
               </AnimatePresence>
             )}

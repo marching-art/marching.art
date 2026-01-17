@@ -2,7 +2,7 @@
 // Shows leaders in various stats: caption win rates, clutch wins, blowouts, etc.
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import {
   Trophy, Target, Zap, Flame, TrendingUp, Crown, Award,
   ChevronDown, ChevronUp, Medal
@@ -162,7 +162,7 @@ const LeaderboardCard = ({
       {/* Expanded List */}
       <AnimatePresence>
         {expanded && entries.length > 3 && (
-          <motion.div
+          <m.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -194,7 +194,7 @@ const LeaderboardCard = ({
                 );
               })}
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>
@@ -353,7 +353,7 @@ const LeagueLeaderboards = ({
       {/* Caption Categories */}
       <AnimatePresence>
         {showCaptions && (
-          <motion.div
+          <m.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -372,7 +372,7 @@ const LeagueLeaderboards = ({
                 getDisplayName={getDisplayName}
               />
             ))}
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>

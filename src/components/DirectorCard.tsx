@@ -5,7 +5,7 @@
 // Matches site's data-terminal aesthetic: no rounded corners, tight spacing
 
 import React, { useState, useEffect, useRef, memo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { Flame, Zap, Coins, Lock, Unlock } from 'lucide-react';
 
 // =============================================================================
@@ -200,7 +200,7 @@ export const DirectorCard: React.FC<DirectorCardProps> = ({
               <span className="text-sm font-bold text-blue-400">Lvl {xpLevel}</span>
             </div>
             <div className="flex-1 h-1 bg-[#333] overflow-hidden max-w-[60px]">
-              <motion.div
+              <m.div
                 className="h-full bg-blue-500"
                 initial={{ width: 0 }}
                 animate={{ width: `${xpProgress.percent}%` }}
@@ -287,7 +287,7 @@ export const DirectorCard: React.FC<DirectorCardProps> = ({
               {/* XP gain animation */}
               <AnimatePresence>
                 {gains.filter((g) => g.type === 'xp').map((gain) => (
-                  <motion.span
+                  <m.span
                     key={gain.id}
                     className="text-xs font-bold text-blue-300"
                     initial={{ opacity: 0, y: 5 }}
@@ -296,13 +296,13 @@ export const DirectorCard: React.FC<DirectorCardProps> = ({
                     transition={{ duration: 1.5, times: [0, 0.1, 0.7, 1] }}
                   >
                     +{gain.amount} XP
-                  </motion.span>
+                  </m.span>
                 ))}
               </AnimatePresence>
             </div>
             <div className="flex items-center gap-2 mt-0.5">
               <div className="w-24 h-1 bg-[#333] overflow-hidden">
-                <motion.div
+                <m.div
                   className="h-full bg-blue-500"
                   initial={{ width: 0 }}
                   animate={{ width: `${xpProgress.percent}%` }}
@@ -330,7 +330,7 @@ export const DirectorCard: React.FC<DirectorCardProps> = ({
               {/* Coin gain animation */}
               <AnimatePresence>
                 {gains.filter((g) => g.type === 'coin').map((gain) => (
-                  <motion.span
+                  <m.span
                     key={gain.id}
                     className="text-xs font-bold text-yellow-300"
                     initial={{ opacity: 0, y: 5 }}
@@ -339,7 +339,7 @@ export const DirectorCard: React.FC<DirectorCardProps> = ({
                     transition={{ duration: 1.5, times: [0, 0.1, 0.7, 1] }}
                   >
                     +{gain.amount}
-                  </motion.span>
+                  </m.span>
                 ))}
               </AnimatePresence>
             </div>

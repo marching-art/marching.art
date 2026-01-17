@@ -4,7 +4,7 @@
 // Shows player's progression currencies and streak in header area
 
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { TrendingUp, Coins, Flame, ChevronRight, Lock, Unlock } from 'lucide-react';
 import { StreakIndicator } from './StreakIndicator';
 
@@ -165,7 +165,7 @@ export const PlayerStatusBar: React.FC<PlayerStatusBarProps> = ({
           </div>
           {/* Mini progress bar */}
           <div className="w-12 h-1 bg-blue-900/50 rounded-sm overflow-hidden">
-            <motion.div
+            <m.div
               className="h-full bg-blue-400 rounded-sm"
               initial={{ width: 0 }}
               animate={{ width: `${xpProgress.percent}%` }}
@@ -179,7 +179,7 @@ export const PlayerStatusBar: React.FC<PlayerStatusBarProps> = ({
           {gains
             .filter((g) => g.type === 'xp')
             .map((gain) => (
-              <motion.span
+              <m.span
                 key={gain.id}
                 className="absolute -top-6 left-1/2 text-sm font-bold text-blue-300 pointer-events-none whitespace-nowrap drop-shadow-[0_0_8px_rgba(59,130,246,0.8)]"
                 initial={{ opacity: 0, y: 10, x: '-50%', scale: 0.5 }}
@@ -188,7 +188,7 @@ export const PlayerStatusBar: React.FC<PlayerStatusBarProps> = ({
                 transition={{ duration: 2, times: [0, 0.1, 0.7, 1] }}
               >
                 +{gain.amount} XP
-              </motion.span>
+              </m.span>
             ))}
         </AnimatePresence>
 
@@ -225,7 +225,7 @@ export const PlayerStatusBar: React.FC<PlayerStatusBarProps> = ({
           {gains
             .filter((g) => g.type === 'coin')
             .map((gain) => (
-              <motion.span
+              <m.span
                 key={gain.id}
                 className="absolute -top-6 left-1/2 text-sm font-bold text-gold-300 pointer-events-none whitespace-nowrap drop-shadow-[0_0_8px_rgba(234,179,8,0.8)]"
                 initial={{ opacity: 0, y: 10, x: '-50%', scale: 0.5 }}
@@ -234,7 +234,7 @@ export const PlayerStatusBar: React.FC<PlayerStatusBarProps> = ({
                 transition={{ duration: 2, times: [0, 0.1, 0.7, 1] }}
               >
                 +{gain.amount} CC
-              </motion.span>
+              </m.span>
             ))}
         </AnimatePresence>
 

@@ -1,6 +1,6 @@
 // TourStopsTab - Weekly tour stop results for league members
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Trophy, MapPin, Calendar, CircleDot } from 'lucide-react';
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '../../../firebase';
@@ -164,20 +164,20 @@ const TourStopsTab = ({ league }) => {
 
   if (loading) {
     return (
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="card p-8 text-center"
       >
         <p className="text-cream-500/60">Loading tour stops...</p>
-      </motion.div>
+      </m.div>
     );
   }
 
   const selectedStop = tourStops.find(s => s.week === selectedWeek);
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
@@ -307,7 +307,7 @@ const TourStopsTab = ({ league }) => {
           </p>
         </div>
       )}
-    </motion.div>
+    </m.div>
   );
 };
 

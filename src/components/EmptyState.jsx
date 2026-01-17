@@ -1,7 +1,7 @@
 // EmptyState - Diegetic "System Status" Empty State Component
 // Designed to feel like part of the game world, not a broken website
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { useShouldReduceMotion } from '../hooks/useReducedMotion';
 
@@ -175,7 +175,7 @@ const EmptyState = ({
 
       {/* Scanning line animation - skip on mobile */}
       {!shouldReduceMotion && (
-        <motion.div
+        <m.div
           className="absolute inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-gold-500/30 to-transparent pointer-events-none"
           initial={{ top: '10%' }}
           animate={{ top: ['10%', '90%', '10%'] }}

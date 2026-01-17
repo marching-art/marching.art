@@ -2,7 +2,7 @@
 // Design System: App Shell layout with fixed header, sticky tabs, scrollable content
 
 import React, { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import {
   Trophy, Crown, ChevronLeft, Settings, Swords,
   MessageSquare, BarChart3, Flame,
@@ -87,7 +87,7 @@ const LeaveLeagueModal = ({ leagueName, onClose, onConfirm, isLoading }) => {
       role="dialog"
       aria-modal="true"
     >
-      <motion.div
+      <m.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
@@ -138,7 +138,7 @@ const LeaveLeagueModal = ({ leagueName, onClose, onConfirm, isLoading }) => {
             {isLoading ? 'Leaving...' : <><LogOut className="w-3.5 h-3.5" />Leave</>}
           </button>
         </div>
-      </motion.div>
+      </m.div>
     </div>
   );
 };

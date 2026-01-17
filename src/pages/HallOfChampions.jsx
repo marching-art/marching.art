@@ -1,7 +1,7 @@
 // src/pages/HallOfChampions.jsx
 // Sidebar (Seasons) + Main Stage (Podium) Layout
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { Trophy, Award, Calendar, Crown, Star, ChevronRight, Medal, ArrowLeft } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, getDocs } from 'firebase/firestore';
@@ -268,7 +268,7 @@ const HallOfChampions = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                       {/* 2nd Place - Left */}
                       {currentChampions[1] && (
-                        <motion.div
+                        <m.div
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.2 }}
@@ -293,12 +293,12 @@ const HallOfChampions = () => {
                               <p className="text-[10px] text-cream-500/60 uppercase tracking-wide">Points</p>
                             </div>
                           </div>
-                        </motion.div>
+                        </m.div>
                       )}
 
                       {/* 1st Place - Center (Elevated) */}
                       {currentChampions[0] && (
-                        <motion.div
+                        <m.div
                           initial={{ opacity: 0, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
                           transition={{ delay: 0.1 }}
@@ -328,12 +328,12 @@ const HallOfChampions = () => {
                               <p className="text-xs text-gold-400/60 uppercase tracking-wide">Points</p>
                             </div>
                           </div>
-                        </motion.div>
+                        </m.div>
                       )}
 
                       {/* 3rd Place - Right */}
                       {currentChampions[2] && (
-                        <motion.div
+                        <m.div
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.3 }}
@@ -358,13 +358,13 @@ const HallOfChampions = () => {
                               <p className="text-[10px] text-cream-500/60 uppercase tracking-wide">Points</p>
                             </div>
                           </div>
-                        </motion.div>
+                        </m.div>
                       )}
                     </div>
 
                     {/* Additional Finalists */}
                     {currentChampions.length > 3 && (
-                      <motion.div
+                      <m.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.4 }}
@@ -392,7 +392,7 @@ const HallOfChampions = () => {
                             </div>
                           ))}
                         </div>
-                      </motion.div>
+                      </m.div>
                     )}
                   </div>
                 )}

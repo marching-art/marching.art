@@ -1,6 +1,6 @@
 // MatchupCard - Compact matchup summary card for lists and previews
 import React, { useCallback, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Swords, Trophy, Check, Radio, Clock, ChevronRight } from 'lucide-react';
 
 const MatchupCard = React.memo(({
@@ -70,7 +70,7 @@ const MatchupCard = React.memo(({
 
   if (compact) {
     return (
-      <motion.div
+      <m.div
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         onClick={handleClick}
@@ -108,12 +108,12 @@ const MatchupCard = React.memo(({
             </div>
           </div>
         </div>
-      </motion.div>
+      </m.div>
     );
   }
 
   return (
-    <motion.div
+    <m.div
       whileHover={{ scale: 1.01, y: -2 }}
       whileTap={{ scale: 0.99 }}
       onClick={handleClick}
@@ -227,7 +227,7 @@ const MatchupCard = React.memo(({
         <span className="text-xs text-cream-500/60">View matchup details</span>
         <ChevronRight className="w-4 h-4 text-cream-500/40" />
       </div>
-    </motion.div>
+    </m.div>
   );
 });
 MatchupCard.displayName = 'MatchupCard';

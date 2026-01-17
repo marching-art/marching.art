@@ -2,7 +2,7 @@
 // Pre-configured empty state components for common scenarios
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import {
   Trophy, Users, Calendar, Music, Star, Target,
   Flag, Sparkles, Clock, TrendingUp, Award, Play
@@ -21,7 +21,7 @@ export const NoLeaguesEmpty: React.FC<EmptyStateBaseProps & { onCreateLeague?: (
   className = '',
   onCreateLeague
 }) => (
-  <motion.div
+  <m.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     className={`text-center py-12 px-6 ${className}`}
@@ -54,7 +54,7 @@ export const NoLeaguesEmpty: React.FC<EmptyStateBaseProps & { onCreateLeague?: (
         Browse Public Leagues
       </Link>
     </div>
-  </motion.div>
+  </m.div>
 );
 
 // =============================================================================
@@ -65,7 +65,7 @@ export const NoShowsRegisteredEmpty: React.FC<EmptyStateBaseProps & { weekNumber
   weekNumber,
   onAction
 }) => (
-  <motion.div
+  <m.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     className={`text-center py-12 px-6 ${className}`}
@@ -98,7 +98,7 @@ export const NoShowsRegisteredEmpty: React.FC<EmptyStateBaseProps & { weekNumber
         View Schedule
       </Link>
     )}
-  </motion.div>
+  </m.div>
 );
 
 // =============================================================================
@@ -107,7 +107,7 @@ export const NoShowsRegisteredEmpty: React.FC<EmptyStateBaseProps & { weekNumber
 export const NoScoresYetEmpty: React.FC<EmptyStateBaseProps> = ({
   className = ''
 }) => (
-  <motion.div
+  <m.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     className={`text-center py-12 px-6 ${className}`}
@@ -137,7 +137,7 @@ export const NoScoresYetEmpty: React.FC<EmptyStateBaseProps> = ({
         View Leaderboard
       </Link>
     </div>
-  </motion.div>
+  </m.div>
 );
 
 // =============================================================================
@@ -152,7 +152,7 @@ export const NewSeasonStartingEmpty: React.FC<EmptyStateBaseProps & { seasonName
   const shouldReduceMotion = useShouldReduceMotion();
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       className={`text-center py-12 px-6 bg-gradient-to-br from-gold-500/10 via-charcoal-900/50 to-purple-500/10 border border-gold-500/20 rounded-sm ${className}`}
@@ -162,7 +162,7 @@ export const NewSeasonStartingEmpty: React.FC<EmptyStateBaseProps & { seasonName
         {shouldReduceMotion ? (
           <div className="absolute inset-0 rounded-sm border-2 border-dashed border-gold-500/30" />
         ) : (
-          <motion.div
+          <m.div
             animate={{ rotate: 360 }}
             transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
             className="absolute inset-0 rounded-sm border-2 border-dashed border-gold-500/30"
@@ -193,7 +193,7 @@ export const NewSeasonStartingEmpty: React.FC<EmptyStateBaseProps & { seasonName
           Get Started
         </button>
       )}
-    </motion.div>
+    </m.div>
   );
 };
 
@@ -204,7 +204,7 @@ export const NoCorpsCreatedEmpty: React.FC<EmptyStateBaseProps> = ({
   className = '',
   onAction
 }) => (
-  <motion.div
+  <m.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     className={`text-center py-12 px-6 ${className}`}
@@ -228,7 +228,7 @@ export const NoCorpsCreatedEmpty: React.FC<EmptyStateBaseProps> = ({
         Register Corps
       </button>
     )}
-  </motion.div>
+  </m.div>
 );
 
 // =============================================================================
@@ -238,7 +238,7 @@ export const NoLineupEmpty: React.FC<EmptyStateBaseProps> = ({
   className = '',
   onAction
 }) => (
-  <motion.div
+  <m.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     className={`text-center py-10 px-6 ${className}`}
@@ -259,7 +259,7 @@ export const NoLineupEmpty: React.FC<EmptyStateBaseProps> = ({
         Build Lineup
       </button>
     )}
-  </motion.div>
+  </m.div>
 );
 
 // =============================================================================
@@ -268,7 +268,7 @@ export const NoLineupEmpty: React.FC<EmptyStateBaseProps> = ({
 export const NoAchievementsEmpty: React.FC<EmptyStateBaseProps> = ({
   className = ''
 }) => (
-  <motion.div
+  <m.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     className={`text-center py-10 px-6 ${className}`}
@@ -280,7 +280,7 @@ export const NoAchievementsEmpty: React.FC<EmptyStateBaseProps> = ({
     <p className="text-sm text-cream/60 max-w-xs mx-auto">
       Complete challenges and milestones to earn achievements. Keep playing to unlock them all!
     </p>
-  </motion.div>
+  </m.div>
 );
 
 // =============================================================================
@@ -301,7 +301,7 @@ export const GenericEmpty: React.FC<EmptyStateBaseProps & {
   actionTo,
   onAction
 }) => (
-  <motion.div
+  <m.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     className={`text-center py-10 px-6 ${className}`}
@@ -330,7 +330,7 @@ export const GenericEmpty: React.FC<EmptyStateBaseProps & {
         </button>
       )
     )}
-  </motion.div>
+  </m.div>
 );
 
 export default {

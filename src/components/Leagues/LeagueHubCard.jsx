@@ -1,7 +1,7 @@
 // LeagueHubCard - Enhanced league card for the League Hub
 // Shows: name, your rank, record, next matchup, quick actions, activity indicators
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import {
   Trophy, Users, Crown, ChevronRight, MessageSquare,
   BarChart3, Calendar, Flame, ArrowRightLeft, Medal,
@@ -113,7 +113,7 @@ const LeagueHubCard = ({ league, userProfile, onClick, isMember }) => {
   const style = accentStyles[accent];
 
   return (
-    <motion.div
+    <m.div
       whileHover={{ scale: 1.01, y: -2 }}
       whileTap={{ scale: 0.99 }}
       onClick={onClick}
@@ -279,7 +279,7 @@ const LeagueHubCard = ({ league, userProfile, onClick, isMember }) => {
           )}
         </div>
       )}
-    </motion.div>
+    </m.div>
   );
 };
 

@@ -1,6 +1,6 @@
 // HistoryTab - Season history, retired corps, and class progression (Stadium HUD)
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { History, Trophy, Calendar, Medal, TrendingUp, CheckCircle, Lock } from 'lucide-react';
 import EmptyState from '../../EmptyState';
 
@@ -17,7 +17,7 @@ const CLASS_COLORS = {
 
 const HistoryTab = ({ profile, seasonHistory }) => {
   return (
-    <motion.div
+    <m.div
       key="history"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -33,7 +33,7 @@ const HistoryTab = ({ profile, seasonHistory }) => {
         {seasonHistory.length > 0 ? (
           <div className="space-y-4">
             {seasonHistory.map((season, idx) => (
-              <motion.div
+              <m.div
                 key={idx}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -72,7 +72,7 @@ const HistoryTab = ({ profile, seasonHistory }) => {
                     )}
                   </div>
                 </div>
-              </motion.div>
+              </m.div>
             ))}
           </div>
         ) : (
@@ -92,7 +92,7 @@ const HistoryTab = ({ profile, seasonHistory }) => {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {profile.retiredCorps.map((corps, idx) => (
-              <motion.div
+              <m.div
                 key={idx}
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -128,7 +128,7 @@ const HistoryTab = ({ profile, seasonHistory }) => {
                     Retired {new Date(corps.retiredAt?.toDate?.() || corps.retiredAt).toLocaleDateString()}
                   </p>
                 )}
-              </motion.div>
+              </m.div>
             ))}
           </div>
         </div>
@@ -179,7 +179,7 @@ const HistoryTab = ({ profile, seasonHistory }) => {
           })}
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 

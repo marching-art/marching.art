@@ -6,7 +6,7 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import {
   Music, Medal, ChevronRight, ChevronDown, Star, Clock,
   Users, Target, Sparkles, BookOpen, Play, Trophy, X
@@ -54,7 +54,7 @@ const SoundSportWelcome = ({ onDismiss, showCompact = false }) => {
   if (isDismissed) return null;
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
@@ -88,20 +88,20 @@ const SoundSportWelcome = ({ onDismiss, showCompact = false }) => {
               Your gateway to marching music performance
             </p>
           </div>
-          <motion.div
+          <m.div
             animate={{ rotate: isExpanded ? 180 : 0 }}
             transition={{ duration: 0.2 }}
             className="text-gray-400"
           >
             <ChevronDown className="w-5 h-5" />
-          </motion.div>
+          </m.div>
         </div>
       </button>
 
       {/* Expandable Content */}
       <AnimatePresence>
         {isExpanded && (
-          <motion.div
+          <m.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -159,7 +159,7 @@ const SoundSportWelcome = ({ onDismiss, showCompact = false }) => {
                 </Link>
               </div>
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 
@@ -176,7 +176,7 @@ const SoundSportWelcome = ({ onDismiss, showCompact = false }) => {
           </Link>
         </div>
       )}
-    </motion.div>
+    </m.div>
   );
 };
 
