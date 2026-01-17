@@ -35,7 +35,12 @@ const FantasyTrendingBox = ({
           </div>
         ) : trendingPlayers.length > 0 ? (
           trendingPlayers.map((player, idx) => (
-            <div key={idx} className="flex items-center justify-between px-4 py-2.5 hover:bg-white/[0.02] transition-colors">
+            <div
+              key={idx}
+              className={`flex items-center justify-between px-4 py-2.5 hover:bg-white/[0.02] transition-colors ${
+                idx >= 2 ? 'hidden lg:flex' : ''
+              }`}
+            >
               <div className="flex items-center gap-2">
                 <span className="w-5 h-5 flex items-center justify-center text-xs font-bold font-data text-gray-500 tabular-nums">
                   {idx + 1}

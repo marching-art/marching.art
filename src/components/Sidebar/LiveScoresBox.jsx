@@ -50,7 +50,7 @@ const LiveScoresBox = ({
             ))}
           </div>
         ) : hasData ? (
-          liveScores.slice(0, 12).map((row) => {
+          liveScores.slice(0, 12).map((row, idx) => {
             const changeValue = row.change;
             const hasChange = changeValue !== null;
             const changeDisplay = hasChange
@@ -60,7 +60,9 @@ const LiveScoresBox = ({
             return (
               <div
                 key={`${row.sourceYear}-${row.corpsName}`}
-                className="flex items-center justify-between px-4 py-2 hover:bg-white/[0.02] transition-colors"
+                className={`flex items-center justify-between px-4 py-2 hover:bg-white/[0.02] transition-colors ${
+                  idx >= 4 ? 'hidden lg:flex' : ''
+                }`}
               >
                 <div className="flex items-center gap-2.5">
                   <span className="w-5 h-5 flex items-center justify-center bg-[#222] text-xs font-bold font-data text-gray-500 tabular-nums rounded-sm">
