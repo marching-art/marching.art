@@ -5,7 +5,7 @@
 // =============================================================================
 
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { Plus, AlertTriangle, Radar, Shield, Server, Wifi, WifiOff } from 'lucide-react';
 import { useShouldReduceMotion } from '../../hooks/useReducedMotion';
 
@@ -78,7 +78,7 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
           {shouldReduceMotion ? (
             <div className="w-2 h-2 bg-gold-500 rounded-sm" />
           ) : (
-            <motion.div
+            <m.div
               animate={{ opacity: [1, 0.3, 1] }}
               transition={{ duration: 0.8, repeat: Infinity }}
               className="w-2 h-2 bg-gold-500 rounded-sm"
@@ -90,7 +90,7 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
           {shouldReduceMotion ? (
             <div className="w-2 h-2 bg-gold-500 rounded-sm" />
           ) : (
-            <motion.div
+            <m.div
               animate={{ opacity: [1, 0.3, 1] }}
               transition={{ duration: 0.8, repeat: Infinity, delay: 0.4 }}
               className="w-2 h-2 bg-gold-500 rounded-sm"
@@ -112,7 +112,7 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
             </div>
           ) : (
             <AnimatePresence mode="wait">
-              <motion.div
+              <m.div
                 key={currentMessageIndex}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -121,17 +121,17 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
                 className="flex items-center gap-3"
               >
                 {/* Blinking Cursor */}
-                <motion.span
+                <m.span
                   animate={{ opacity: [1, 0] }}
                   transition={{ duration: 0.5, repeat: Infinity }}
                   className="text-gold-500 font-mono"
                 >
                   &gt;
-                </motion.span>
+                </m.span>
                 <span className="font-mono text-sm text-cream tracking-wide">
                   {messages[currentMessageIndex]}
                 </span>
-              </motion.div>
+              </m.div>
             </AnimatePresence>
           )}
         </div>
@@ -149,7 +149,7 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
           {/* Progress Container */}
           <div className="relative h-1.5 bg-charcoal-800 border border-gold-500/20 overflow-hidden">
             {/* Progress Fill */}
-            <motion.div
+            <m.div
               className="absolute inset-y-0 left-0 bg-gold-500"
               initial={{ width: 0 }}
               animate={{ width: `${displayProgress}%` }}
@@ -157,7 +157,7 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
             />
             {/* Scanline Effect - skip on mobile */}
             {!shouldReduceMotion && (
-              <motion.div
+              <m.div
                 className="absolute inset-y-0 w-8 bg-gradient-to-r from-transparent via-gold-400/50 to-transparent"
                 animate={{ left: ['-10%', '110%'] }}
                 transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
@@ -185,12 +185,12 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
         {shouldReduceMotion ? (
           <span className="opacity-60">STANDBY</span>
         ) : (
-          <motion.span
+          <m.span
             animate={{ opacity: [0.2, 0.6, 0.2] }}
             transition={{ duration: 1.5, repeat: Infinity }}
           >
             STANDBY
-          </motion.span>
+          </m.span>
         )}
       </div>
     </div>
@@ -240,14 +240,14 @@ export const ConsoleLoadingOverlay: React.FC<ConsoleLoadingOverlayProps> = ({
       {children}
       <AnimatePresence>
         {isLoading && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="absolute inset-0 flex items-center justify-center bg-charcoal-950/80 backdrop-blur-sm z-10"
           >
             <SystemLoader messages={messages} showProgress={true} />
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>
@@ -469,7 +469,7 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
 
       {/* Scanning Line Animation - skip on mobile */}
       {!shouldReduceMotion && (
-        <motion.div
+        <m.div
           className="absolute inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-warning/40 to-transparent pointer-events-none"
           initial={{ top: '10%' }}
           animate={{ top: ['10%', '90%', '10%'] }}

@@ -1,6 +1,6 @@
 // CircuitStandingsTab - League standings based on circuit points (Stadium HUD)
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Trophy, Crown, Medal, Star } from 'lucide-react';
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '../../../firebase';
@@ -186,18 +186,18 @@ const CircuitStandingsTab = ({ league }) => {
 
   if (loading) {
     return (
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-black/40 backdrop-blur-md border border-white/10 rounded-sm p-8 text-center"
       >
         <p className="text-yellow-50/60">Loading circuit standings...</p>
-      </motion.div>
+      </m.div>
     );
   }
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
@@ -313,7 +313,7 @@ const CircuitStandingsTab = ({ league }) => {
           <span className="px-2 py-1 bg-white/5 rounded text-yellow-50/60">6th+: 5-1 pts</span>
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 

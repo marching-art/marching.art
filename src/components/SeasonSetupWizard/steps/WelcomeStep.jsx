@@ -1,6 +1,6 @@
 // WelcomeStep - Season setup wizard welcome screen
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Sparkles, ChevronRight, Star, Calendar, Trophy, Rocket } from 'lucide-react';
 import { getCorpsClassName, formatSeasonName } from '../constants';
 
@@ -13,31 +13,31 @@ const WelcomeStep = ({
   const totalCorps = corpsNeedingSetup.length;
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       className="text-center max-w-2xl mx-auto px-2"
     >
-      <motion.div
+      <m.div
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
         className="w-16 h-16 md:w-24 md:h-24 mx-auto mb-4 md:mb-6 bg-gradient-gold rounded-sm flex items-center justify-center"
       >
         <Rocket className="w-8 h-8 md:w-12 md:h-12 text-charcoal-900" />
-      </motion.div>
+      </m.div>
 
-      <motion.h1
+      <m.h1
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
         className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-gradient mb-2 md:mb-4"
       >
         Welcome to {formatSeasonName(seasonData?.name)}!
-      </motion.h1>
+      </m.h1>
 
-      <motion.p
+      <m.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
@@ -45,9 +45,9 @@ const WelcomeStep = ({
       >
         A new season means fresh opportunities for glory!
         Let's get your corps ready to compete.
-      </motion.p>
+      </m.p>
 
-      <motion.div
+      <m.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
@@ -68,9 +68,9 @@ const WelcomeStep = ({
           <h3 className="font-semibold text-cream-100 text-sm md:text-base">Chase Glory</h3>
           <p className="text-xs md:text-sm text-cream-500/60">Climb the leaderboards</p>
         </div>
-      </motion.div>
+      </m.div>
 
-      <motion.div
+      <m.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6 }}
@@ -86,9 +86,9 @@ const WelcomeStep = ({
             </span>
           ))}
         </div>
-      </motion.div>
+      </m.div>
 
-      <motion.button
+      <m.button
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.7 }}
@@ -98,8 +98,8 @@ const WelcomeStep = ({
         <Sparkles className="w-4 h-4 md:w-5 md:h-5 mr-2" />
         Let's Get Started
         <ChevronRight className="w-4 h-4 md:w-5 md:h-5 ml-2" />
-      </motion.button>
-    </motion.div>
+      </m.button>
+    </m.div>
   );
 };
 

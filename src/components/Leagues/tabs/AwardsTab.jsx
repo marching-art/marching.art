@@ -1,6 +1,6 @@
 // AwardsTab - Caption awards and special recognitions for league members (Stadium HUD)
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Award, Star, Eye, Music, Flame, Sparkles, AlertCircle } from 'lucide-react';
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '../../../firebase';
@@ -129,13 +129,13 @@ const AwardsTab = ({ league }) => {
 
   if (loading) {
     return (
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-black/40 backdrop-blur-md border border-white/10 rounded-sm p-8 text-center"
       >
         <p className="text-yellow-50/60">Loading awards...</p>
-      </motion.div>
+      </m.div>
     );
   }
 
@@ -198,7 +198,7 @@ const AwardsTab = ({ league }) => {
   };
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
@@ -260,7 +260,7 @@ const AwardsTab = ({ league }) => {
           </span>
         </p>
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 

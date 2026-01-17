@@ -2,7 +2,7 @@
 // Shows the user's latest show result with option to view breakdown
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Calendar, MapPin, ChevronRight, Trophy } from 'lucide-react';
 
 const LatestShowCard = ({
@@ -47,7 +47,7 @@ const LatestShowCard = ({
   }
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 }}
@@ -118,7 +118,7 @@ const LatestShowCard = ({
           <ChevronRight className="w-4 h-4" />
         </button>
       )}
-    </motion.div>
+    </m.div>
   );
 };
 

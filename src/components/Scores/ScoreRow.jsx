@@ -1,6 +1,6 @@
 // ScoreRow - Individual score row with expandable caption breakdown
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Eye, Music, ChevronDown } from 'lucide-react';
 import { CAPTION_CATEGORIES } from '../../utils/captionPricing';
 
@@ -100,7 +100,7 @@ const ScoreRow = React.memo(({ score, rank }) => {
 
       {/* Only show caption breakdown if we have detailed caption data */}
       {expanded && hasDetailedCaptions && (
-        <motion.div
+        <m.div
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: 'auto', opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
@@ -129,7 +129,7 @@ const ScoreRow = React.memo(({ score, rank }) => {
               );
             })}
           </div>
-        </motion.div>
+        </m.div>
       )}
     </div>
   );

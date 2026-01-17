@@ -5,7 +5,7 @@
 // Usage: <PageErrorBoundary name="Dashboard"><Dashboard /></PageErrorBoundary>
 
 import React, { startTransition } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { AlertTriangle, RefreshCw, Home, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ErrorBoundary as BaseErrorBoundary } from './ui/ErrorBoundary';
@@ -28,7 +28,7 @@ const PageErrorFallback: React.FC<PageErrorFallbackProps> = ({
   const navigate = useNavigate();
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="min-h-[60vh] flex items-center justify-center p-8"
@@ -88,7 +88,7 @@ const PageErrorFallback: React.FC<PageErrorFallbackProps> = ({
           </button>
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 

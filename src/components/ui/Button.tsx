@@ -1,5 +1,5 @@
 import React, { forwardRef } from 'react';
-import { motion, HTMLMotionProps } from 'framer-motion';
+import { m, HTMLMotionProps } from 'framer-motion';
 import { Loader2, LucideIcon } from 'lucide-react';
 
 // =============================================================================
@@ -58,7 +58,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const disabled = isDisabled || isLoading;
 
     return (
-      <motion.button
+      <m.button
         ref={ref}
         whileHover={disabled ? undefined : { scale: 1.02 }}
         whileTap={disabled ? undefined : { scale: 0.98 }}
@@ -87,7 +87,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {!isLoading && RightIcon && (
           <RightIcon className={iconSizes[size]} />
         )}
-      </motion.button>
+      </m.button>
     );
   }
 );

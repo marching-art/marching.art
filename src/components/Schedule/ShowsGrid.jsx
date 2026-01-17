@@ -1,6 +1,6 @@
 // ShowsGrid - Grid display of shows for a selected week (Brutalist Architecture)
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import ShowCard from './ShowCard';
 import { ConsoleEmptyState } from '../ui/CommandConsole';
 import { isEventPast } from '../../utils/scheduleUtils';
@@ -24,7 +24,7 @@ const ShowsGrid = ({
   }
 
   return (
-    <motion.div
+    <m.div
       key={`shows-${selectedWeek}`}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
@@ -49,7 +49,7 @@ const ShowsGrid = ({
           );
         })}
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 

@@ -1,5 +1,5 @@
 import React, { Component, ErrorInfo } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from './Button';
 
@@ -88,7 +88,7 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
   showHomeButton = true,
 }) => {
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="flex flex-col items-center justify-center p-8 rounded-sm bg-charcoal-800/50 border border-red-900/30"
@@ -142,7 +142,7 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
           </Button>
         )}
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 

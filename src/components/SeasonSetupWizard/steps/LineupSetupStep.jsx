@@ -1,6 +1,6 @@
 // LineupSetupStep - Caption/lineup selection for corps
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { ChevronRight, ChevronLeft, Check, AlertCircle } from 'lucide-react';
 import { CAPTIONS, CAPTION_CATEGORIES, POINT_LIMITS, getCorpsClassName } from '../constants';
 import BrandLogo from '../../BrandLogo';
@@ -47,7 +47,7 @@ const LineupSetupStep = ({
   };
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, x: 50 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -50 }}
@@ -64,7 +64,7 @@ const LineupSetupStep = ({
           </span>
         </div>
         <div className="h-1.5 md:h-2 bg-charcoal-800 rounded-sm overflow-hidden">
-          <motion.div
+          <m.div
             initial={{ width: 0 }}
             animate={{ width: `${((currentCorpsIndex + 0.5) / totalCorps) * 100}%` }}
             className="h-full bg-gradient-gold"
@@ -103,7 +103,7 @@ const LineupSetupStep = ({
           </div>
         </div>
         <div className="h-2 md:h-3 bg-charcoal-800 rounded-sm overflow-hidden">
-          <motion.div
+          <m.div
             animate={{ width: `${Math.min((totalPoints / pointLimit) * 100, 100)}%` }}
             className={`h-full ${
               isOverLimit ? 'bg-red-500' :
@@ -238,7 +238,7 @@ const LineupSetupStep = ({
           )}
         </button>
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 

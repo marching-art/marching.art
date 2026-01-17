@@ -2,7 +2,7 @@
 // Design System: Card-based dashboard with engaging visualizations
 
 import React, { useMemo, useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import {
   Bell, Flame, Trophy, TrendingUp, TrendingDown, Target,
   Award, Zap, Crown, Star, Medal, BarChart3, Users,
@@ -163,7 +163,7 @@ const LeagueStatsOverview = ({ standings, memberProfiles, leagueStats, currentWe
               </span>
             </div>
             <div className="h-2 bg-[#333] overflow-hidden">
-              <motion.div
+              <m.div
                 initial={{ width: 0 }}
                 animate={{ width: `${stats.competitiveness}%` }}
                 transition={{ duration: 0.5 }}
@@ -546,7 +546,7 @@ const WeeklyRecapCard = ({ leagueId, currentWeek, memberProfiles }) => {
           const colorClasses = getHighlightColor(highlight.type);
 
           return (
-            <motion.div
+            <m.div
               key={idx}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -557,7 +557,7 @@ const WeeklyRecapCard = ({ leagueId, currentWeek, memberProfiles }) => {
                 <Icon className={`w-4 h-4 flex-shrink-0 mt-0.5 ${colorClasses.split(' ')[0]}`} />
                 <p className="text-sm text-white">{highlight.text}</p>
               </div>
-            </motion.div>
+            </m.div>
           );
         })}
 
@@ -714,7 +714,7 @@ const EnhancedRivalriesCard = ({ leagueId, userProfile, memberProfiles }) => {
             const rivalWins = getRivalWins(rivalry);
 
             return (
-              <motion.div
+              <m.div
                 key={`${rivalry.player1}_${rivalry.player2}`}
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
@@ -753,7 +753,7 @@ const EnhancedRivalriesCard = ({ leagueId, userProfile, memberProfiles }) => {
                     {rivalry.closeMatches} close game{rivalry.closeMatches !== 1 ? 's' : ''} between you
                   </p>
                 )}
-              </motion.div>
+              </m.div>
             );
           })}
         </AnimatePresence>
@@ -777,7 +777,7 @@ const ActivityTab = ({
   onChatOpen,
 }) => {
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -847,7 +847,7 @@ const ActivityTab = ({
           />
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 

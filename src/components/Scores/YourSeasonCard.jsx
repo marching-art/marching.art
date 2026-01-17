@@ -2,7 +2,7 @@
 // Shows user's season status at a glance: rank, score, trend
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Trophy, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 // Simple trend indicator component
@@ -73,7 +73,7 @@ const YourSeasonCard = ({
   }
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="bg-gradient-to-br from-charcoal-900/80 to-charcoal-950/80 border border-gold-500/20 rounded-sm p-6"
@@ -122,7 +122,7 @@ const YourSeasonCard = ({
           </span>
         )}
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 

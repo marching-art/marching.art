@@ -1,12 +1,12 @@
 // OverviewTab - Profile overview with corps, career stats, and milestones (Stadium HUD)
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Users, Target, Zap, CheckCircle } from 'lucide-react';
 import { compareCorpsClasses } from '../../../utils/corps';
 
 const OverviewTab = ({ profile, milestones }) => {
   return (
-    <motion.div
+    <m.div
       key="overview"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -121,7 +121,7 @@ const OverviewTab = ({ profile, milestones }) => {
           })}
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 

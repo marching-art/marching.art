@@ -1,6 +1,6 @@
 // src/components/PWAInstallPrompt.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { Download, X, Smartphone, Monitor, Share2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -214,7 +214,7 @@ const PWAInstallPrompt = () => {
 
   return (
     <AnimatePresence>
-      <motion.div
+      <m.div
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
@@ -274,7 +274,7 @@ const PWAInstallPrompt = () => {
             </div>
           </div>
         </div>
-      </motion.div>
+      </m.div>
     </AnimatePresence>
   );
 };

@@ -2,7 +2,7 @@
 // Simple, scannable leaderboard with rank, name, score, and trend indicators
 
 import React, { useState, useMemo, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { Trophy, TrendingUp, TrendingDown, Minus, ChevronDown, Search, Users } from 'lucide-react';
 
 // Simple trend indicator using arrows
@@ -65,14 +65,14 @@ const FilterDropdown = ({ label, value, options, onChange }) => {
       <AnimatePresence>
         {isOpen && (
           <>
-            <motion.div
+            <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-10"
               onClick={() => setIsOpen(false)}
             />
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
@@ -92,7 +92,7 @@ const FilterDropdown = ({ label, value, options, onChange }) => {
                   {option.label}
                 </button>
               ))}
-            </motion.div>
+            </m.div>
           </>
         )}
       </AnimatePresence>
@@ -111,7 +111,7 @@ const LeaderboardRow = React.memo(({ entry, isCurrentUser, onClick }) => {
   }, [onClick, entry]);
 
   return (
-    <motion.button
+    <m.button
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
       onClick={handleClick}
@@ -144,7 +144,7 @@ const LeaderboardRow = React.memo(({ entry, isCurrentUser, onClick }) => {
       <div className="w-12 flex justify-end">
         <TrendArrow trend={trend?.trend} change={rankChange || trend?.direction} />
       </div>
-    </motion.button>
+    </m.button>
   );
 });
 

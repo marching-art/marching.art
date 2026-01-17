@@ -2,7 +2,7 @@
 // Enhanced 404 Page with tactical/diegetic styling
 import React, { startTransition } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Home, ArrowLeft, Search, AlertTriangle } from 'lucide-react';
 import { useShouldReduceMotion } from '../hooks/useReducedMotion';
 
@@ -41,7 +41,7 @@ const NotFound = () => {
 
       {/* Scanning Line - skip on mobile */}
       {!shouldReduceMotion && (
-        <motion.div
+        <m.div
           className="absolute inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-red-500/40 to-transparent pointer-events-none"
           initial={{ top: '10%' }}
           animate={{ top: ['10%', '90%', '10%'] }}
@@ -56,14 +56,14 @@ const NotFound = () => {
       <div className="absolute bottom-8 right-8 w-16 h-16 border-r-2 border-b-2 border-red-500/30" />
 
       {/* Main Content */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="relative z-10 text-center max-w-lg mx-auto"
       >
         {/* Status Badge */}
-        <motion.div
+        <m.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
@@ -71,30 +71,30 @@ const NotFound = () => {
         >
           <AlertTriangle className="w-4 h-4 text-red-400" />
           <span className="text-xs font-mono text-red-400 uppercase tracking-widest">System Error</span>
-        </motion.div>
+        </m.div>
 
         {/* 404 Number */}
-        <motion.h1
+        <m.h1
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1, type: 'spring', stiffness: 100 }}
           className="text-8xl sm:text-9xl font-display font-black text-transparent bg-clip-text bg-gradient-to-b from-cream via-cream/80 to-cream/20 mb-4"
         >
           404
-        </motion.h1>
+        </m.h1>
 
         {/* Error Title */}
-        <motion.h2
+        <m.h2
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
           className="text-xl sm:text-2xl font-display font-bold text-cream mb-2 uppercase tracking-wide"
         >
           Route Not Found
-        </motion.h2>
+        </m.h2>
 
         {/* Description */}
-        <motion.p
+        <m.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
@@ -103,10 +103,10 @@ const NotFound = () => {
           The requested page doesn't exist or has been moved.
           <br className="hidden sm:block" />
           Let's get you back on track.
-        </motion.p>
+        </m.p>
 
         {/* Action Buttons */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
@@ -126,10 +126,10 @@ const NotFound = () => {
             <Home className="w-4 h-4" />
             Return Home
           </Link>
-        </motion.div>
+        </m.div>
 
         {/* Quick Links */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}
@@ -162,10 +162,10 @@ const NotFound = () => {
               Leagues
             </Link>
           </div>
-        </motion.div>
+        </m.div>
 
         {/* Technical Footer */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7 }}
@@ -176,8 +176,8 @@ const NotFound = () => {
           <span>Route: {window.location.pathname}</span>
           <span className="text-red-500/40">|</span>
           <span>Status: 404</span>
-        </motion.div>
-      </motion.div>
+        </m.div>
+      </m.div>
     </div>
   );
 };

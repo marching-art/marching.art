@@ -6,7 +6,7 @@
 
 import React, { useState, startTransition } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import {
   Mail, Lock, User, Eye, EyeOff, ArrowLeft,
   AlertCircle, Check
@@ -113,7 +113,7 @@ const Register = () => {
       <main className="flex-1 overflow-y-auto scroll-momentum">
         <div className="min-h-full flex flex-col justify-center px-4 py-6">
           <div className="w-full max-w-md mx-auto">
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
@@ -136,7 +136,7 @@ const Register = () => {
 
               {/* Error Alert */}
               {error && (
-                <motion.div
+                <m.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg"
@@ -145,7 +145,7 @@ const Register = () => {
                     <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
                     <p className="text-base text-red-300">{error}</p>
                   </div>
-                </motion.div>
+                </m.div>
               )}
 
               {/* Registration Form */}
@@ -318,7 +318,7 @@ const Register = () => {
                   Sign in
                 </Link>
               </p>
-            </motion.div>
+            </m.div>
           </div>
         </div>
       </main>

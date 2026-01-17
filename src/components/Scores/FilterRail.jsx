@@ -2,7 +2,7 @@
 // Left sidebar filter rail for the Competitive Analytics Terminal
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import {
   Calendar,
   Archive,
@@ -69,7 +69,7 @@ const Checkbox = ({ checked, onChange, label, icon: Icon }) => (
       `}
     >
       {checked && (
-        <motion.svg
+        <m.svg
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           className="w-3 h-3 text-charcoal-900"
@@ -79,7 +79,7 @@ const Checkbox = ({ checked, onChange, label, icon: Icon }) => (
           strokeWidth="3"
         >
           <polyline points="20 6 9 17 4 12" />
-        </motion.svg>
+        </m.svg>
       )}
     </div>
     {Icon && <Icon className={`w-3.5 h-3.5 ${checked ? 'text-gold-400' : 'text-cream-500/60'}`} />}
@@ -151,7 +151,7 @@ const FilterRailContent = ({
         />
         <AnimatePresence>
           {!collapsedSections.season && (
-            <motion.div
+            <m.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
@@ -174,16 +174,16 @@ const FilterRailContent = ({
 
               {/* Archive indicator */}
               {selectedSeason && (
-                <motion.div
+                <m.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="mt-2 flex items-center gap-2 px-2 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded text-xs text-amber-400"
                 >
                   <Archive className="w-3.5 h-3.5" />
                   <span className="font-mono uppercase tracking-wide">Historical Data</span>
-                </motion.div>
+                </m.div>
               )}
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </div>
@@ -198,7 +198,7 @@ const FilterRailContent = ({
         />
         <AnimatePresence>
           {!collapsedSections.class && (
-            <motion.div
+            <m.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
@@ -216,7 +216,7 @@ const FilterRailContent = ({
                   </ToggleButton>
                 ))}
               </div>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </div>
@@ -231,7 +231,7 @@ const FilterRailContent = ({
         />
         <AnimatePresence>
           {!collapsedSections.captions && (
-            <motion.div
+            <m.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
@@ -254,7 +254,7 @@ const FilterRailContent = ({
                 label="Music (MUS)"
                 icon={Music}
               />
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </div>
@@ -309,7 +309,7 @@ const FilterRail = ({
         {/* Mobile: Filter Toggle FAB Button */}
         {!isVisible && (
           <div className="fixed bottom-4 left-4 z-30">
-            <motion.button
+            <m.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onToggleVisibility}
@@ -317,7 +317,7 @@ const FilterRail = ({
             >
               <Filter className="w-4 h-4" />
               Filters
-            </motion.button>
+            </m.button>
           </div>
         )}
 
@@ -326,7 +326,7 @@ const FilterRail = ({
           {isVisible && (
             <>
               {/* Backdrop */}
-              <motion.div
+              <m.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -335,7 +335,7 @@ const FilterRail = ({
               />
 
               {/* Sidebar */}
-              <motion.div
+              <m.div
                 initial={{ x: '-100%' }}
                 animate={{ x: 0 }}
                 exit={{ x: '-100%' }}
@@ -358,7 +358,7 @@ const FilterRail = ({
                   toggleSection={toggleSection}
                   classOptions={classOptions}
                 />
-              </motion.div>
+              </m.div>
             </>
           )}
         </AnimatePresence>

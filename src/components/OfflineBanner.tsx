@@ -1,7 +1,7 @@
 // src/components/OfflineBanner.tsx
 // Offline detection banner with graceful UX
 import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { WifiOff, Wifi, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
@@ -39,7 +39,7 @@ export const OfflineBanner: React.FC<OfflineBannerProps> = ({ className = '' }) 
 
   return (
     <AnimatePresence>
-      <motion.div
+      <m.div
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: -100, opacity: 0 }}
@@ -107,7 +107,7 @@ export const OfflineBanner: React.FC<OfflineBannerProps> = ({ className = '' }) 
             </div>
           </div>
         ) : null}
-      </motion.div>
+      </m.div>
     </AnimatePresence>
   );
 };

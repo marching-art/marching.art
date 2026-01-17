@@ -5,7 +5,7 @@
 // Usage: triggerXPFeedback(100, 'xp') or triggerXPFeedback(50, 'coin')
 
 import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { TrendingUp, Coins } from 'lucide-react';
 
 // =============================================================================
@@ -55,7 +55,7 @@ const FeedbackItemComponent: React.FC<{ item: FeedbackItem; onComplete: () => vo
   const label = isXP ? 'XP' : 'CC';
 
   return (
-    <motion.div
+    <m.div
       className="fixed top-20 left-1/2 z-[200] pointer-events-none"
       initial={{ opacity: 0, y: 20, x: '-50%', scale: 0.8 }}
       animate={{
@@ -81,7 +81,7 @@ const FeedbackItemComponent: React.FC<{ item: FeedbackItem; onComplete: () => vo
           )}
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 

@@ -2,7 +2,7 @@
 // Features: Battle points, caption battles, rivalry history, detailed breakdown
 
 import React, { useState, useEffect, useMemo, memo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import {
   ChevronLeft, Swords, Trophy, TrendingUp, TrendingDown,
   Flame, Medal, Target, Calendar, Zap, Award,
@@ -330,7 +330,7 @@ const MatchupDetailView = ({
   return (
     <div className="space-y-4">
       {/* Header */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="glass rounded-sm p-4"
@@ -356,21 +356,21 @@ const MatchupDetailView = ({
         <h1 className="text-xl font-display font-bold text-cream-100 text-center">
           Head-to-Head Matchup
         </h1>
-      </motion.div>
+      </m.div>
 
       {/* Rivalry Card */}
       {rivalry && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.05 }}
         >
           <RivalryBadge rivalry={rivalry} compact={false} />
-        </motion.div>
+        </m.div>
       )}
 
       {/* Main Score Card */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.1 }}
@@ -531,7 +531,7 @@ const MatchupDetailView = ({
               </span>
             </div>
             <div className="h-2 rounded-sm overflow-hidden flex bg-charcoal-800">
-              <motion.div
+              <m.div
                 initial={{ width: '50%' }}
                 animate={{ width: `${winProbability}%` }}
                 transition={{ type: 'spring', damping: 20 }}
@@ -540,7 +540,7 @@ const MatchupDetailView = ({
                   winProbability >= 50 ? 'bg-green-500' : 'bg-cream-500/30'
                 }`}
               />
-              <motion.div
+              <m.div
                 initial={{ width: '50%' }}
                 animate={{ width: `${100 - winProbability}%` }}
                 transition={{ type: 'spring', damping: 20 }}
@@ -552,7 +552,7 @@ const MatchupDetailView = ({
             </div>
           </div>
         )}
-      </motion.div>
+      </m.div>
 
       {/* View Tabs */}
       <div className="flex gap-2">
@@ -581,7 +581,7 @@ const MatchupDetailView = ({
       {/* Tab Content */}
       <AnimatePresence mode="wait">
         {activeView === 'battles' && (
-          <motion.div
+          <m.div
             key="battles"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -593,11 +593,11 @@ const MatchupDetailView = ({
               awayDisplayName={getDisplayName(matchup.user2)}
               currentUserId={userProfile?.uid}
             />
-          </motion.div>
+          </m.div>
         )}
 
         {activeView === 'rivalry' && (
-          <motion.div
+          <m.div
             key="rivalry"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -609,11 +609,11 @@ const MatchupDetailView = ({
               user2DisplayName={getDisplayName(matchup.user2)}
               currentUserId={userProfile?.uid}
             />
-          </motion.div>
+          </m.div>
         )}
 
         {activeView === 'overview' && (
-          <motion.div
+          <m.div
             key="overview"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -716,11 +716,11 @@ const MatchupDetailView = ({
                 />
               </div>
             )}
-          </motion.div>
+          </m.div>
         )}
 
         {activeView === 'captions' && (
-          <motion.div
+          <m.div
             key="captions"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -817,7 +817,7 @@ const MatchupDetailView = ({
                 )}
               </div>
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>
@@ -854,13 +854,13 @@ const CaptionCompare = ({ label, score1, score2, color }) => {
         </span>
       </div>
       <div className="flex h-2 rounded-sm overflow-hidden bg-charcoal-800">
-        <motion.div
+        <m.div
           initial={{ width: '50%' }}
           animate={{ width: `${percent1}%` }}
           transition={{ type: 'spring', damping: 20 }}
           className={`${colors.bg1} rounded-l-full`}
         />
-        <motion.div
+        <m.div
           initial={{ width: '50%' }}
           animate={{ width: `${percent2}%` }}
           transition={{ type: 'spring', damping: 20 }}
