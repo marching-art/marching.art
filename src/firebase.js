@@ -16,6 +16,7 @@ import {
   db,
   functions,
   storage,
+  getStorageInstance,
   DATA_NAMESPACE,
   authApi
 } from './api/client';
@@ -34,7 +35,8 @@ import { AUTH_CONFIG } from './config';
 import { logError } from './utils/errorMessages';
 
 // Re-export Firebase instances from the API layer
-export { app, auth, db, functions, storage };
+// Note: storage is lazy-loaded, use getStorageInstance() for async access
+export { app, auth, db, functions, storage, getStorageInstance };
 
 // Use centralized data namespace (backwards compatible alias)
 export const dataNamespace = DATA_NAMESPACE;

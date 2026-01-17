@@ -11,7 +11,8 @@ export {
   auth,
   db,
   functions,
-  storage,
+  storage, // Note: null until getStorageInstance() is called
+  getStorageInstance, // Lazy-loads Firebase Storage (~30KB deferred)
   DATA_NAMESPACE,
 
   // Auth API
