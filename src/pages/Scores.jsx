@@ -99,13 +99,30 @@ const seededShuffle = (array, seed) => {
 };
 
 /**
- * Generate mocked caption breakdown from total score
- * Uses realistic DCI-style proportions:
- * - GE: ~40% of total (max 40 points)
- * - VIS: ~30% of total (max 30 points)
- * - MUS: ~30% of total (max 30 points)
+ * Simple hash function for deterministic variance
+ * @param {string} str - Input string to hash
+ * @returns {number} - Number between 0 and 1
  */
-const generateCaptionBreakdown = (totalScore, existingCaptions) => {
+const simpleHash = (str) => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash % 1000) / 1000;
+};
+
+/**
+ * Generate caption breakdown from total score
+ * OPTIMIZED: Now deterministic (uses hash instead of Math.random)
+ * This allows proper memoization without flickering values
+ *
+ * @param {number} totalScore - The total score
+ * @param {Object} existingCaptions - Existing caption data if available
+ * @param {string} [corpsName] - Corps name for deterministic variance
+ */
+const generateCaptionBreakdown = (totalScore, existingCaptions, corpsName = '') => {
   // If we already have caption data, use it
   if (existingCaptions?.geScore && existingCaptions?.visualScore && existingCaptions?.musicScore) {
     return {
@@ -115,14 +132,20 @@ const generateCaptionBreakdown = (totalScore, existingCaptions) => {
     };
   }
 
-  // Generate realistic breakdown based on total
-  // Add slight variance to make each corps unique
+  // Generate deterministic breakdown using hash for variance
   const baseRatio = totalScore / 100;
-  const variance = () => (Math.random() - 0.5) * 0.08;
+  const seed = `${corpsName}-${totalScore}`;
+  const hash1 = simpleHash(seed + '-ge');
+  const hash2 = simpleHash(seed + '-vis');
+  const hash3 = simpleHash(seed + '-mus');
 
-  const ge = Math.min(40, Math.max(0, (baseRatio * 40) + (variance() * 40)));
-  const vis = Math.min(30, Math.max(0, (baseRatio * 30) + (variance() * 30)));
-  const mus = Math.min(30, Math.max(0, (baseRatio * 30) + (variance() * 30)));
+  const variance1 = (hash1 - 0.5) * 0.08;
+  const variance2 = (hash2 - 0.5) * 0.08;
+  const variance3 = (hash3 - 0.5) * 0.08;
+
+  const ge = Math.min(40, Math.max(0, (baseRatio * 40) + (variance1 * 40)));
+  const vis = Math.min(30, Math.max(0, (baseRatio * 30) + (variance2 * 30)));
+  const mus = Math.min(30, Math.max(0, (baseRatio * 30) + (variance3 * 30)));
 
   return {
     ge: Number(ge.toFixed(2)),
@@ -168,6 +191,18 @@ const RecapDataGrid = ({
   date,
   userCorpsName
 }) => {
+  // OPTIMIZATION: Pre-compute all caption breakdowns once instead of per-row
+  // Reduces 100+ function calls to 1 memoized computation
+  const captionMap = useMemo(() => {
+    if (!scores || scores.length === 0) return new Map();
+    return new Map(
+      scores.map((score, idx) => [
+        idx,
+        generateCaptionBreakdown(score.score, score, score.corpsName || score.corps)
+      ])
+    );
+  }, [scores]);
+
   if (!scores || scores.length === 0) return null;
 
   return (
@@ -213,7 +248,7 @@ const RecapDataGrid = ({
           </thead>
           <tbody>
             {scores.map((score, idx) => {
-              const captions = generateCaptionBreakdown(score.score, score);
+              const captions = captionMap.get(idx);
               const isUserCorps = userCorpsName &&
                 (score.corps?.toLowerCase() === userCorpsName.toLowerCase() ||
                  score.corpsName?.toLowerCase() === userCorpsName.toLowerCase());
@@ -471,6 +506,17 @@ const ClassStandingsGrid = ({
   className,
   userCorpsName
 }) => {
+  // OPTIMIZATION: Pre-compute all caption breakdowns once instead of per-row
+  const captionMap = useMemo(() => {
+    if (!standings || standings.length === 0) return new Map();
+    return new Map(
+      standings.map((entry, idx) => [
+        idx,
+        generateCaptionBreakdown(entry.score, entry.scores?.[0] || entry, entry.corpsName)
+      ])
+    );
+  }, [standings]);
+
   if (!standings || standings.length === 0) {
     return (
       <div className="p-8 text-center">
@@ -522,7 +568,7 @@ const ClassStandingsGrid = ({
           </thead>
           <tbody>
             {standings.map((entry, idx) => {
-              const captions = generateCaptionBreakdown(entry.score, entry.scores?.[0] || entry);
+              const captions = captionMap.get(idx);
               const isUserCorps = userCorpsName &&
                 entry.corpsName?.toLowerCase() === userCorpsName.toLowerCase();
               const rowBg = idx % 2 === 0 ? 'bg-[#1a1a1a]' : 'bg-[#111]';
