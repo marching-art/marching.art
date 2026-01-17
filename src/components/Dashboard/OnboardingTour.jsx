@@ -1,7 +1,7 @@
 // src/components/Dashboard/OnboardingTour.jsx
 // Contextual tooltips for first-time dashboard visitors
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { X, ChevronRight, ChevronLeft, Sparkles, Trophy, Calendar, Users, Music, HelpCircle } from 'lucide-react';
 
 const TOUR_STEPS = [
@@ -134,7 +134,7 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
   return (
     <>
       {/* Backdrop */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -143,7 +143,7 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
       />
 
       {/* Tooltip */}
-      <motion.div
+      <m.div
         key={currentStep}
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -219,7 +219,7 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
             </button>
           </div>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* CSS for highlighting */}
       <style>{`

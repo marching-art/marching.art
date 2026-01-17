@@ -1,6 +1,6 @@
 // HistoryTab - Past week matchup results and activity feed
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import {
   History, Calendar, Trophy, CheckCircle, XCircle,
   ChevronDown, ChevronUp, Swords
@@ -124,18 +124,18 @@ const HistoryTab = ({
 
   if (loading) {
     return (
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="glass rounded-sm p-8 text-center"
       >
         <p className="text-cream-500/60">Loading history...</p>
-      </motion.div>
+      </m.div>
     );
   }
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
@@ -212,7 +212,7 @@ const HistoryTab = ({
             const userResult = getUserWeekResult(weekNum);
 
             return (
-              <motion.div
+              <m.div
                 key={weekNum}
                 className="glass rounded-sm overflow-hidden"
               >
@@ -259,7 +259,7 @@ const HistoryTab = ({
 
                 {/* Expanded Matchups */}
                 {isExpanded && (
-                  <motion.div
+                  <m.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
@@ -344,14 +344,14 @@ const HistoryTab = ({
                         </div>
                       );
                     })}
-                  </motion.div>
+                  </m.div>
                 )}
-              </motion.div>
+              </m.div>
             );
           })}
         </div>
       )}
-    </motion.div>
+    </m.div>
   );
 };
 

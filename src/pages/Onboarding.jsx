@@ -2,7 +2,7 @@
 // Streamlined 3-step onboarding: Welcome+Name, Create Corps, Draft Lineup
 import React, { useState, useEffect, startTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import {
   User, Flag, ArrowRight, Check, ArrowLeft,
   Trophy, Target, Users, Star, Zap, Music,
@@ -161,7 +161,7 @@ const GuidedCaptionSelection = ({ availableCorps, lineup, setLineup, currentCapt
             const disabled = isUsed || wouldExceedBudget;
 
             return (
-              <motion.button
+              <m.button
                 key={idx}
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -184,7 +184,7 @@ const GuidedCaptionSelection = ({ availableCorps, lineup, setLineup, currentCapt
                 }`}>
                   {corps.points} pts
                 </div>
-              </motion.button>
+              </m.button>
             );
           })}
         </div>
@@ -536,7 +536,7 @@ const Onboarding = () => {
       </div>
 
       <div className="w-full max-w-lg relative z-10">
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -584,7 +584,7 @@ const Onboarding = () => {
               <AnimatePresence mode="wait">
                 {/* Step 1: Welcome + Director Name */}
                 {step === 1 && (
-                  <motion.div
+                  <m.div
                     key="step1"
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -691,12 +691,12 @@ const Onboarding = () => {
                         </p>
                       </div>
                     </div>
-                  </motion.div>
+                  </m.div>
                 )}
 
                 {/* Step 2: Create Corps */}
                 {step === 2 && (
-                  <motion.div
+                  <m.div
                     key="step2"
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -749,12 +749,12 @@ const Onboarding = () => {
                         Think of it like a fantasy football draft!
                       </p>
                     </div>
-                  </motion.div>
+                  </m.div>
                 )}
 
                 {/* Step 3: Build Lineup (Guided Caption Selection) */}
                 {step === 3 && (
-                  <motion.div
+                  <m.div
                     key="step3"
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -808,7 +808,7 @@ const Onboarding = () => {
                         You can change this anytime from your dashboard
                       </p>
                     </div>
-                  </motion.div>
+                  </m.div>
                 )}
               </AnimatePresence>
             </div>
@@ -890,27 +890,27 @@ const Onboarding = () => {
               </button>
             )}
           </div>
-        </motion.div>
+        </m.div>
       </div>
 
       {/* Celebration Modal */}
       <AnimatePresence>
         {showCelebration && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
             onClick={handleCelebrationComplete}
           >
-            <motion.div
+            <m.div
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.5, opacity: 0 }}
               className="text-center p-8"
               onClick={(e) => e.stopPropagation()}
             >
-              <motion.div
+              <m.div
                 animate={{
                   scale: [1, 1.2, 1],
                   rotate: [0, 10, -10, 0]
@@ -919,36 +919,36 @@ const Onboarding = () => {
                 className="inline-block mb-6"
               >
                 <PartyPopper className="w-24 h-24 text-gold-400" />
-              </motion.div>
+              </m.div>
 
-              <motion.h2
+              <m.h2
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.3 }}
                 className="text-4xl font-display font-black text-gold-400 mb-3"
               >
                 YOU'RE ALL SET!
-              </motion.h2>
+              </m.h2>
 
-              <motion.p
+              <m.p
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5 }}
                 className="text-cream-300 text-lg mb-2"
               >
                 Welcome, {formData.displayName}!
-              </motion.p>
+              </m.p>
 
-              <motion.p
+              <m.p
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.7 }}
                 className="text-cream-400 mb-8"
               >
                 {formData.corpsName} is ready to compete
-              </motion.p>
+              </m.p>
 
-              <motion.button
+              <m.button
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.9 }}
@@ -957,11 +957,11 @@ const Onboarding = () => {
               >
                 Go to Dashboard
                 <ChevronRight className="w-5 h-5" />
-              </motion.button>
+              </m.button>
 
               {/* Confetti particles */}
               {[...Array(20)].map((_, i) => (
-                <motion.div
+                <m.div
                   key={i}
                   className="absolute w-3 h-3 rounded-full"
                   style={{
@@ -983,8 +983,8 @@ const Onboarding = () => {
                   }}
                 />
               ))}
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>

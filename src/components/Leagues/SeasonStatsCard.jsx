@@ -2,7 +2,7 @@
 // Shows detailed stats for a league member including caption win rates, achievements
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import {
   Trophy, Target, Zap, Flame, TrendingUp, TrendingDown, Crown,
   Award, Medal, X, ChevronRight, BarChart3
@@ -60,7 +60,7 @@ const CaptionBar = ({ caption, winRate, avgDiff, isStrength, isWeakness }) => {
         </span>
       </div>
       <div className="h-1.5 bg-[#222] rounded-full overflow-hidden">
-        <motion.div
+        <m.div
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
           transition={{ duration: 0.5, delay: 0.1 }}
@@ -150,7 +150,7 @@ const SeasonStatsCard = ({
   if (compact) {
     // Compact inline view for standings table
     return (
-      <motion.div
+      <m.div
         initial={{ opacity: 0, height: 0 }}
         animate={{ opacity: 1, height: 'auto' }}
         exit={{ opacity: 0, height: 0 }}
@@ -176,13 +176,13 @@ const SeasonStatsCard = ({
             <p className="text-sm font-bold text-orange-400">{clutchWins}</p>
           </div>
         </div>
-      </motion.div>
+      </m.div>
     );
   }
 
   // Full modal/card view
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
@@ -359,7 +359,7 @@ const SeasonStatsCard = ({
           </div>
         )}
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 

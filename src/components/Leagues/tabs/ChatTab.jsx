@@ -2,7 +2,7 @@
 // Design System: #111 received bubbles, #0057B8 sent bubbles, Commissioner badge
 
 import React, { useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { MessageSquare, Clock, Crown } from 'lucide-react';
 
 const ChatTab = ({ league, messages, userProfile, memberProfiles, isCommissioner = false }) => {
@@ -77,7 +77,7 @@ const ChatTab = ({ league, messages, userProfile, memberProfiles, isCommissioner
   const groupedMessages = groupMessagesByDate(messages);
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -127,7 +127,7 @@ const ChatTab = ({ league, messages, userProfile, memberProfiles, isCommissioner
               const isCreator = item.userId === league?.creatorId;
 
               return (
-                <motion.div
+                <m.div
                   key={item.id}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -173,14 +173,14 @@ const ChatTab = ({ league, messages, userProfile, memberProfiles, isCommissioner
                       </div>
                     </div>
                   </div>
-                </motion.div>
+                </m.div>
               );
             })}
           </AnimatePresence>
         )}
         <div ref={messagesEndRef} />
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 

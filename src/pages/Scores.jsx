@@ -99,14 +99,13 @@ const seededShuffle = (array, seed) => {
 };
 
 /**
- * Generate mocked caption breakdown from total score
- * Uses realistic DCI-style proportions:
- * - GE: ~40% of total (max 40 points)
- * - VIS: ~30% of total (max 30 points)
- * - MUS: ~30% of total (max 30 points)
+ * Get caption breakdown from real data only
+ * Returns null values when caption data is not available (no synthetic values)
+ *
+ * @param {Object} existingCaptions - Existing caption data if available
  */
-const generateCaptionBreakdown = (totalScore, existingCaptions) => {
-  // If we already have caption data, use it
+const getCaptionBreakdown = (existingCaptions) => {
+  // Only return real caption data - no synthetic values
   if (existingCaptions?.geScore && existingCaptions?.visualScore && existingCaptions?.musicScore) {
     return {
       ge: existingCaptions.geScore,
@@ -115,19 +114,11 @@ const generateCaptionBreakdown = (totalScore, existingCaptions) => {
     };
   }
 
-  // Generate realistic breakdown based on total
-  // Add slight variance to make each corps unique
-  const baseRatio = totalScore / 100;
-  const variance = () => (Math.random() - 0.5) * 0.08;
-
-  const ge = Math.min(40, Math.max(0, (baseRatio * 40) + (variance() * 40)));
-  const vis = Math.min(30, Math.max(0, (baseRatio * 30) + (variance() * 30)));
-  const mus = Math.min(30, Math.max(0, (baseRatio * 30) + (variance() * 30)));
-
+  // Return null values when no real data available
   return {
-    ge: Number(ge.toFixed(2)),
-    vis: Number(vis.toFixed(2)),
-    mus: Number(mus.toFixed(2)),
+    ge: null,
+    vis: null,
+    mus: null,
   };
 };
 
@@ -168,6 +159,14 @@ const RecapDataGrid = ({
   date,
   userCorpsName
 }) => {
+  // Pre-compute all caption breakdowns once (real data only, no synthetic values)
+  const captionMap = useMemo(() => {
+    if (!scores || scores.length === 0) return new Map();
+    return new Map(
+      scores.map((score, idx) => [idx, getCaptionBreakdown(score)])
+    );
+  }, [scores]);
+
   if (!scores || scores.length === 0) return null;
 
   return (
@@ -213,7 +212,7 @@ const RecapDataGrid = ({
           </thead>
           <tbody>
             {scores.map((score, idx) => {
-              const captions = generateCaptionBreakdown(score.score, score);
+              const captions = captionMap.get(idx);
               const isUserCorps = userCorpsName &&
                 (score.corps?.toLowerCase() === userCorpsName.toLowerCase() ||
                  score.corpsName?.toLowerCase() === userCorpsName.toLowerCase());
@@ -251,21 +250,21 @@ const RecapDataGrid = ({
                   {/* GE */}
                   <td className="py-2 px-2 text-right">
                     <span className="text-gray-400 font-data tabular-nums text-sm">
-                      {captions.ge.toFixed(2)}
+                      {captions.ge !== null ? captions.ge.toFixed(2) : '-'}
                     </span>
                   </td>
 
                   {/* VIS */}
                   <td className="py-2 px-2 text-right">
                     <span className="text-gray-400 font-data tabular-nums text-sm">
-                      {captions.vis.toFixed(2)}
+                      {captions.vis !== null ? captions.vis.toFixed(2) : '-'}
                     </span>
                   </td>
 
                   {/* MUS */}
                   <td className="py-2 px-2 text-right">
                     <span className="text-gray-400 font-data tabular-nums text-sm">
-                      {captions.mus.toFixed(2)}
+                      {captions.mus !== null ? captions.mus.toFixed(2) : '-'}
                     </span>
                   </td>
 
@@ -471,6 +470,14 @@ const ClassStandingsGrid = ({
   className,
   userCorpsName
 }) => {
+  // Pre-compute all caption breakdowns once (real data only, no synthetic values)
+  const captionMap = useMemo(() => {
+    if (!standings || standings.length === 0) return new Map();
+    return new Map(
+      standings.map((entry, idx) => [idx, getCaptionBreakdown(entry.scores?.[0] || entry)])
+    );
+  }, [standings]);
+
   if (!standings || standings.length === 0) {
     return (
       <div className="p-8 text-center">
@@ -522,7 +529,7 @@ const ClassStandingsGrid = ({
           </thead>
           <tbody>
             {standings.map((entry, idx) => {
-              const captions = generateCaptionBreakdown(entry.score, entry.scores?.[0] || entry);
+              const captions = captionMap.get(idx);
               const isUserCorps = userCorpsName &&
                 entry.corpsName?.toLowerCase() === userCorpsName.toLowerCase();
               const rowBg = idx % 2 === 0 ? 'bg-[#1a1a1a]' : 'bg-[#111]';
@@ -560,21 +567,21 @@ const ClassStandingsGrid = ({
                   {/* GE */}
                   <td className="py-2.5 px-2 text-right">
                     <span className="text-gray-400 font-data tabular-nums text-sm">
-                      {captions.ge.toFixed(2)}
+                      {captions.ge !== null ? captions.ge.toFixed(2) : '-'}
                     </span>
                   </td>
 
                   {/* VIS */}
                   <td className="py-2.5 px-2 text-right">
                     <span className="text-gray-400 font-data tabular-nums text-sm">
-                      {captions.vis.toFixed(2)}
+                      {captions.vis !== null ? captions.vis.toFixed(2) : '-'}
                     </span>
                   </td>
 
                   {/* MUS */}
                   <td className="py-2.5 px-2 text-right">
                     <span className="text-gray-400 font-data tabular-nums text-sm">
-                      {captions.mus.toFixed(2)}
+                      {captions.mus !== null ? captions.mus.toFixed(2) : '-'}
                     </span>
                   </td>
 

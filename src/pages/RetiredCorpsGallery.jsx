@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import {
   Trophy, Award, Calendar, MapPin, Star, TrendingUp,
   Crown, Archive, RefreshCw, X, Music, Medal
@@ -101,7 +101,7 @@ const RetiredCorpsGallery = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 p-4 sm:p-6">
       {/* Header */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="max-w-7xl mx-auto mb-8"
@@ -115,10 +115,10 @@ const RetiredCorpsGallery = () => {
         <p className="text-gray-300 text-lg">
           Honor the legacy of your past corps and their achievements
         </p>
-      </motion.div>
+      </m.div>
 
       {/* Filters and Sort */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="max-w-7xl mx-auto mb-6 bg-white/5 backdrop-blur-sm rounded-lg p-4"
@@ -191,11 +191,11 @@ const RetiredCorpsGallery = () => {
             </select>
           </div>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Empty State */}
       {filteredCorps.length === 0 && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="max-w-2xl mx-auto text-center py-16"
@@ -207,14 +207,14 @@ const RetiredCorpsGallery = () => {
           <p className="text-gray-400">
             Retired corps will appear here when you retire them from your active roster.
           </p>
-        </motion.div>
+        </m.div>
       )}
 
       {/* Corps Grid */}
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
         <AnimatePresence>
           {filteredCorps.map((corps, index) => (
-            <motion.div
+            <m.div
               key={`${corps.corpsClass}-${corps.originalIndex}`}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -302,7 +302,7 @@ const RetiredCorpsGallery = () => {
                   Bring Out of Retirement
                 </button>
               </div>
-            </motion.div>
+            </m.div>
           ))}
         </AnimatePresence>
       </div>
@@ -311,14 +311,14 @@ const RetiredCorpsGallery = () => {
       <AnimatePresence>
         {showUnretireModal && selectedCorps && (
           <Portal>
-            <motion.div
+            <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
               onClick={() => !unretiring && setShowUnretireModal(false)}
             >
-            <motion.div
+            <m.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
@@ -395,8 +395,8 @@ const RetiredCorpsGallery = () => {
                   )}
                 </button>
               </div>
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
         </Portal>
         )}
       </AnimatePresence>

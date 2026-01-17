@@ -2,7 +2,7 @@
 // Design System: Visual dashboard cards at top, data table below
 
 import React, { useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import {
   Trophy, Flame, TrendingUp, TrendingDown, Minus, Crown,
   ChevronDown, ChevronUp, BarChart3, LayoutDashboard, Table2
@@ -60,7 +60,7 @@ const StandingsTab = ({
   }
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -99,7 +99,7 @@ const StandingsTab = ({
 
       <AnimatePresence mode="wait">
         {viewMode === 'dashboard' ? (
-          <motion.div
+          <m.div
             key="dashboard"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -186,9 +186,9 @@ const StandingsTab = ({
                 </button>
               )}
             </div>
-          </motion.div>
+          </m.div>
         ) : (
-          <motion.div
+          <m.div
             key="table"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -334,7 +334,7 @@ const StandingsTab = ({
                           {/* Expanded Stats Row */}
                           <AnimatePresence>
                             {isExpanded && hasStats && (
-                              <motion.tr
+                              <m.tr
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
@@ -347,7 +347,7 @@ const StandingsTab = ({
                                     compact={true}
                                   />
                                 </td>
-                              </motion.tr>
+                              </m.tr>
                             )}
                           </AnimatePresence>
 
@@ -416,7 +416,7 @@ const StandingsTab = ({
 
                 <AnimatePresence>
                   {showLeaderboardSection && (
-                    <motion.div
+                    <m.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
@@ -427,15 +427,15 @@ const StandingsTab = ({
                         currentUserId={userProfile?.uid}
                         getDisplayName={getDisplayName}
                       />
-                    </motion.div>
+                    </m.div>
                   )}
                 </AnimatePresence>
               </div>
             )}
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </m.div>
   );
 };
 

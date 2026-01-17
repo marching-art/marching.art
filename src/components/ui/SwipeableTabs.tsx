@@ -5,7 +5,7 @@
 // Uses Framer Motion for smooth gestures and animations
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { motion, AnimatePresence, PanInfo } from 'framer-motion';
+import { m, AnimatePresence, PanInfo } from 'framer-motion';
 import { triggerHaptic } from '../../hooks/useHaptic';
 
 // =============================================================================
@@ -143,7 +143,7 @@ export const SwipeableTabs: React.FC<SwipeableTabsProps> = ({
           })}
 
           {/* Active Indicator */}
-          <motion.div
+          <m.div
             className="absolute bottom-0 h-0.5 bg-[#0057B8]"
             initial={false}
             animate={{
@@ -158,7 +158,7 @@ export const SwipeableTabs: React.FC<SwipeableTabsProps> = ({
       {/* Content Area */}
       <div className={`flex-1 overflow-hidden relative ${contentClassName}`}>
         <AnimatePresence mode="wait" custom={direction}>
-          <motion.div
+          <m.div
             key={activeTab}
             custom={direction}
             variants={variants}
@@ -177,7 +177,7 @@ export const SwipeableTabs: React.FC<SwipeableTabsProps> = ({
             className="absolute inset-0 h-full overflow-y-auto scroll-momentum"
           >
             {activeTabData?.content}
-          </motion.div>
+          </m.div>
         </AnimatePresence>
       </div>
     </div>
@@ -267,7 +267,7 @@ export const TabBar: React.FC<TabBarProps> = ({
       })}
 
       {/* Active Indicator */}
-      <motion.div
+      <m.div
         className="absolute bottom-0 h-0.5 bg-[#0057B8]"
         initial={false}
         animate={{

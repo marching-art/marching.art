@@ -7,7 +7,7 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import {
   Music, Medal, Trophy, Users, Clock, Zap, Volume2, Shield,
   ChevronDown, Star, Award, Target, Sparkles,
@@ -66,16 +66,16 @@ const CollapsibleSection = ({ title, icon: Icon, children, defaultOpen = false }
           <Icon className="w-5 h-5 text-green-500" />
           <span className="font-bold text-white">{title}</span>
         </div>
-        <motion.div
+        <m.div
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{ duration: 0.2 }}
         >
           <ChevronDown className="w-5 h-5 text-gray-400" />
-        </motion.div>
+        </m.div>
       </button>
       <AnimatePresence>
         {isOpen && (
-          <motion.div
+          <m.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -84,7 +84,7 @@ const CollapsibleSection = ({ title, icon: Icon, children, defaultOpen = false }
             <div className="p-4 bg-[#1a1a1a] border-t border-[#333]">
               {children}
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>
@@ -97,7 +97,7 @@ const CollapsibleSection = ({ title, icon: Icon, children, defaultOpen = false }
 
 const RatingCard = ({ rating, isHighlighted = false }) => {
   return (
-    <motion.div
+    <m.div
       whileHover={{ scale: 1.02 }}
       className={`p-4 rounded-sm border-2 ${rating.color} ${rating.borderColor} ${isHighlighted ? 'ring-2 ring-green-500 ring-offset-2 ring-offset-[#0a0a0a]' : ''}`}
     >
@@ -109,7 +109,7 @@ const RatingCard = ({ rating, isHighlighted = false }) => {
         <span className={`text-sm font-mono ${rating.textColor}`}>{rating.min}+ points</span>
       </div>
       <p className={`text-xs ${rating.textColor} opacity-80`}>{rating.description}</p>
-    </motion.div>
+    </m.div>
   );
 };
 
@@ -184,7 +184,7 @@ const SoundSport = () => {
         <AnimatePresence mode="wait">
           {/* OVERVIEW SECTION */}
           {activeSection === 'overview' && (
-            <motion.div
+            <m.div
               key="overview"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -291,12 +291,12 @@ const SoundSport = () => {
                 </p>
               </section>
 
-            </motion.div>
+            </m.div>
           )}
 
           {/* RULES SECTION */}
           {activeSection === 'rules' && (
-            <motion.div
+            <m.div
               key="rules"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -474,7 +474,7 @@ const SoundSport = () => {
                   These are highlights from the official 2025 SoundSport Rulebook.
                 </p>
               </div>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </div>

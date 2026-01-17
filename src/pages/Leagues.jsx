@@ -339,7 +339,13 @@ const Leagues = () => {
   // Hooks
   const { data: userProfile } = useProfile(user?.uid);
   const { data: myLeagues = [], isLoading: loadingMyLeagues, refetch: refetchMyLeagues } = useMyLeagues(user?.uid);
-  const { data: publicLeaguesData, isLoading: loadingPublicLeagues } = usePublicLeagues(20);
+  const {
+    data: publicLeaguesData,
+    isLoading: loadingPublicLeagues,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = usePublicLeagues(12);
 
   // Mutations
   const createLeagueMutation = useCreateLeague();
@@ -544,16 +550,36 @@ const Leagues = () => {
             ) : discoverLeagues.length === 0 ? (
               <EmptyDiscover searchTerm={searchTerm} />
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {discoverLeagues.slice(0, 12).map((league) => (
-                  <DiscoverLeagueCard
-                    key={league.id}
-                    league={league}
-                    onJoin={handleJoinLeague}
-                    isJoining={joiningLeagueId === league.id}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {discoverLeagues.map((league) => (
+                    <DiscoverLeagueCard
+                      key={league.id}
+                      league={league}
+                      onJoin={handleJoinLeague}
+                      isJoining={joiningLeagueId === league.id}
+                    />
+                  ))}
+                </div>
+                {hasNextPage && (
+                  <div className="mt-4 text-center">
+                    <button
+                      onClick={() => fetchNextPage()}
+                      disabled={isFetchingNextPage}
+                      className="px-6 py-2.5 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isFetchingNextPage ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                          Loading...
+                        </span>
+                      ) : (
+                        'Load More Leagues'
+                      )}
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </section>

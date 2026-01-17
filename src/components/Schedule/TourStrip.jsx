@@ -1,7 +1,7 @@
 // TourStrip - Horizontal tour route with connected event "stops"
 // Features: Visual route line connecting events, horizontal scroll, weekend emphasis
 import React, { useRef, useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
 import TicketStub from './TicketStub';
 import EmptyState from '../EmptyState';
@@ -68,7 +68,7 @@ const TourStrip = ({
   }
 
   return (
-    <motion.div
+    <m.div
       key={`tour-${selectedWeek}`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -230,7 +230,7 @@ const TourStrip = ({
           <div className="w-1 h-1 rounded-sm bg-cream/20" />
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 

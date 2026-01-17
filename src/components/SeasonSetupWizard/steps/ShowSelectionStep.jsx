@@ -1,6 +1,6 @@
 // ShowSelectionStep - Select shows for the week
 import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { ChevronRight, ChevronLeft, Check, Calendar, MapPin } from 'lucide-react';
 import { getCorpsClassName } from '../constants';
 import BrandLogo from '../../BrandLogo';
@@ -47,7 +47,7 @@ const ShowSelectionStep = ({
   }, [availableShows, selectedDay, selectedShows]);
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, x: 50 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -50 }}
@@ -64,7 +64,7 @@ const ShowSelectionStep = ({
           </span>
         </div>
         <div className="h-1.5 md:h-2 bg-charcoal-800 rounded-sm overflow-hidden">
-          <motion.div
+          <m.div
             animate={{ width: `${((currentCorpsIndex + 0.75) / totalCorps) * 100}%` }}
             className="h-full bg-gradient-gold"
           />
@@ -157,7 +157,7 @@ const ShowSelectionStep = ({
             );
 
             return (
-              <motion.div
+              <m.div
                 key={index}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -189,7 +189,7 @@ const ShowSelectionStep = ({
                     {isSelected && <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-charcoal-900" />}
                   </div>
                 </div>
-              </motion.div>
+              </m.div>
             );
           })}
         </div>
@@ -227,7 +227,7 @@ const ShowSelectionStep = ({
           )}
         </button>
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 

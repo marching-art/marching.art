@@ -4,7 +4,7 @@
 // Shows streak prominently in header, with tier progression and risk awareness
 
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { Flame, Shield, AlertTriangle } from 'lucide-react';
 
 // =============================================================================
@@ -123,12 +123,12 @@ export const StreakIndicator: React.FC<StreakIndicatorProps> = ({
   // Compact version for header
   if (compact) {
     return (
-      <motion.div
+      <m.div
         className={`flex items-center gap-1.5 px-2 py-1 rounded ${tier.bgColor} ${tier.borderColor} border ${tier.glowColor ? `shadow-lg ${tier.glowColor}` : ''}`}
         animate={showPulse ? { scale: [1, 1.05, 1] } : {}}
         transition={{ duration: 0.3 }}
       >
-        <motion.div
+        <m.div
           animate={tier.animate ? {
             rotate: [-5, 5, -5],
             scale: [1, 1.1, 1]
@@ -140,7 +140,7 @@ export const StreakIndicator: React.FC<StreakIndicatorProps> = ({
           }}
         >
           <Flame className={`w-4 h-4 ${tier.color}`} />
-        </motion.div>
+        </m.div>
         <span className={`text-sm font-bold tabular-nums ${tier.color}`}>
           {streak}
         </span>
@@ -150,13 +150,13 @@ export const StreakIndicator: React.FC<StreakIndicatorProps> = ({
         {hasStreakFreeze && (
           <Shield className="w-3 h-3 text-blue-400" title="Streak protected" />
         )}
-      </motion.div>
+      </m.div>
     );
   }
 
   // Full version with progress bar
   return (
-    <motion.div
+    <m.div
       className={`rounded-sm ${tier.bgColor} ${tier.borderColor} border p-3 ${tier.glowColor ? `shadow-lg ${tier.glowColor}` : ''}`}
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
@@ -164,7 +164,7 @@ export const StreakIndicator: React.FC<StreakIndicatorProps> = ({
       {/* Header row */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <motion.div
+          <m.div
             animate={tier.animate ? {
               rotate: [-5, 5, -5],
               scale: [1, 1.15, 1]
@@ -176,7 +176,7 @@ export const StreakIndicator: React.FC<StreakIndicatorProps> = ({
             }}
           >
             <Flame className={`w-6 h-6 ${tier.color}`} />
-          </motion.div>
+          </m.div>
           <div>
             <div className="flex items-center gap-2">
               <span className={`text-2xl font-bold tabular-nums ${tier.color}`}>
@@ -199,7 +199,7 @@ export const StreakIndicator: React.FC<StreakIndicatorProps> = ({
             </div>
           )}
           {atRisk && !hasStreakFreeze && (
-            <motion.button
+            <m.button
               onClick={onStreakFreezeClick}
               className="flex items-center gap-1 px-2 py-1 rounded bg-yellow-500/20 border border-yellow-500/30 hover:bg-yellow-500/30 transition-colors"
               animate={{ scale: [1, 1.02, 1] }}
@@ -207,7 +207,7 @@ export const StreakIndicator: React.FC<StreakIndicatorProps> = ({
             >
               <AlertTriangle className="w-3 h-3 text-yellow-400" />
               <span className="text-xs text-yellow-400 font-medium">At Risk!</span>
-            </motion.button>
+            </m.button>
           )}
         </div>
       </div>
@@ -222,7 +222,7 @@ export const StreakIndicator: React.FC<StreakIndicatorProps> = ({
             </span>
           </div>
           <div className="w-full h-2 bg-gray-800 rounded-sm overflow-hidden">
-            <motion.div
+            <m.div
               className={`h-full rounded-sm ${tier.bgColor.replace('/20', '')} ${tier.bgColor.replace('/30', '')}`}
               initial={{ width: 0 }}
               animate={{ width: `${milestoneProgress.progress}%` }}
@@ -238,7 +238,7 @@ export const StreakIndicator: React.FC<StreakIndicatorProps> = ({
           </div>
         </div>
       )}
-    </motion.div>
+    </m.div>
   );
 };
 

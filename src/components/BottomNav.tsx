@@ -7,7 +7,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Trophy, Users, User, Newspaper, Calendar, LucideIcon } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { useAuth } from '../App';
 import { useLeagueNotificationBadge } from '../hooks/useLeagueNotifications';
 import { triggerHaptic } from '../hooks/useHaptic';
@@ -93,7 +93,7 @@ const BottomNav: React.FC = () => {
               >
                 {/* Active indicator */}
                 {active && (
-                  <motion.div
+                  <m.div
                     layoutId="bottomNavActive"
                     className="absolute inset-0 bg-yellow-500/10 rounded-sm"
                     transition={{ type: 'spring', stiffness: 500, damping: 30 }}
@@ -127,7 +127,7 @@ const BottomNav: React.FC = () => {
 
                 {/* Active dot indicator - perfectly centered */}
                 {active && (
-                  <motion.div
+                  <m.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-yellow-400 rounded-full"

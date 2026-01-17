@@ -6,7 +6,7 @@
 
 import React, { useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence, useDragControls, PanInfo } from 'framer-motion';
+import { m, AnimatePresence, useDragControls, PanInfo } from 'framer-motion';
 import { X } from 'lucide-react';
 import { triggerHaptic } from '../../hooks/useHaptic';
 
@@ -128,7 +128,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
       {isOpen && (
         <>
           {/* Overlay */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -139,7 +139,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
           />
 
           {/* Sheet Container */}
-          <motion.div
+          <m.div
             ref={sheetRef}
             role="dialog"
             aria-modal="true"
@@ -210,7 +210,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             >
               {children}
             </div>
-          </motion.div>
+          </m.div>
         </>
       )}
     </AnimatePresence>,

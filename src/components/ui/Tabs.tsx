@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 
 // =============================================================================
 // TABS CONTEXT
@@ -129,7 +129,7 @@ export const TabTrigger: React.FC<TabTriggerProps> = ({
       `}
     >
       {isActive && (
-        <motion.div
+        <m.div
           layoutId="activeTab"
           className="absolute inset-0 bg-gold-500 rounded-sm shadow-[0_0_15px_rgba(234,179,8,0.3)]"
           initial={false}
@@ -166,7 +166,7 @@ export const TabContent: React.FC<TabContentProps> = ({
   }
 
   return (
-    <motion.div
+    <m.div
       role="tabpanel"
       id={`tabpanel-${value}`}
       aria-labelledby={`tab-${value}`}
@@ -177,7 +177,7 @@ export const TabContent: React.FC<TabContentProps> = ({
       className={`mt-4 ${className}`}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 };
 

@@ -1,10 +1,10 @@
 // ScheduleHeader - Header component for schedule page (Night Mode Stadium HUD)
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Calendar, Music, ChevronLeft, ChevronRight, Zap } from 'lucide-react';
 
 export const SchedulePageHeader = ({ totalShows, currentWeek }) => (
-  <motion.div
+  <m.div
     initial={{ opacity: 0, y: -10 }}
     animate={{ opacity: 1, y: 0 }}
     className="flex-shrink-0 mb-4"
@@ -26,7 +26,7 @@ export const SchedulePageHeader = ({ totalShows, currentWeek }) => (
         </div>
       </div>
     </div>
-  </motion.div>
+  </m.div>
 );
 
 export const SelectedWeekHeader = ({
@@ -35,7 +35,7 @@ export const SelectedWeekHeader = ({
   onPrevWeek,
   onNextWeek
 }) => (
-  <motion.div
+  <m.div
     key={`header-${selectedWeek}`}
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
@@ -73,7 +73,7 @@ export const SelectedWeekHeader = ({
         <ChevronRight className="w-5 h-5" />
       </button>
     </div>
-  </motion.div>
+  </m.div>
 );
 
 export default SchedulePageHeader;

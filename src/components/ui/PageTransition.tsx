@@ -5,7 +5,7 @@
 // Provides fade + slide animation for page content
 
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 
 // =============================================================================
@@ -56,7 +56,7 @@ export const PageTransition: React.FC<PageTransitionProps> = ({
 
   return (
     <AnimatePresence mode="wait">
-      <motion.div
+      <m.div
         key={location.pathname}
         initial="initial"
         animate="enter"
@@ -65,7 +65,7 @@ export const PageTransition: React.FC<PageTransitionProps> = ({
         className={`h-full w-full ${className}`}
       >
         {children}
-      </motion.div>
+      </m.div>
     </AnimatePresence>
   );
 };
@@ -87,7 +87,7 @@ export const ContentFade: React.FC<ContentFadeProps> = ({
   className = '',
 }) => {
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
@@ -98,7 +98,7 @@ export const ContentFade: React.FC<ContentFadeProps> = ({
       className={className}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 };
 
@@ -139,14 +139,14 @@ export const StaggerContainer: React.FC<StaggerContainerProps> = ({
   className = '',
 }) => {
   return (
-    <motion.div
+    <m.div
       initial="hidden"
       animate="visible"
       variants={staggerContainerVariants}
       className={className}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 };
 
@@ -155,9 +155,9 @@ export const StaggerItem: React.FC<{ children: React.ReactNode; className?: stri
   className = '',
 }) => {
   return (
-    <motion.div variants={staggerItemVariants} className={className}>
+    <m.div variants={staggerItemVariants} className={className}>
       {children}
-    </motion.div>
+    </m.div>
   );
 };
 

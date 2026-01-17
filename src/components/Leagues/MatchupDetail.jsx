@@ -1,7 +1,7 @@
 // MatchupDetail - Full head-to-head matchup view with caption breakdown
 // Screenshot-friendly design with winner celebration and H2H history
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import {
   Swords, Trophy, ChevronLeft, Share2, Radio, Check,
   TrendingUp, TrendingDown, Minus, Crown, Flame,
@@ -183,7 +183,7 @@ ${userIsWinning ? '(Leading)' : isTied ? '(Tied)' : '(Trailing)'}
   };
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -192,24 +192,24 @@ ${userIsWinning ? '(Leading)' : isTied ? '(Tied)' : '(Trailing)'}
       {/* Winner Celebration Overlay */}
       <AnimatePresence>
         {showCelebration && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
             onClick={() => setShowCelebration(false)}
           >
-            <motion.div
+            <m.div
               initial={{ y: 50 }}
               animate={{ y: 0 }}
               className="text-center"
             >
-              <motion.div
+              <m.div
                 animate={{ rotate: [0, -10, 10, -10, 10, 0] }}
                 transition={{ duration: 0.5, delay: 0.3 }}
               >
                 <Trophy className="w-24 h-24 text-gold-500 mx-auto mb-4" />
-              </motion.div>
+              </m.div>
               <h2 className="text-4xl font-display font-bold text-gradient mb-2">VICTORY!</h2>
               <p className="text-xl text-cream-300">
                 You defeated @{opponent?.displayName}
@@ -218,8 +218,8 @@ ${userIsWinning ? '(Leading)' : isTied ? '(Tied)' : '(Trailing)'}
                 {userScore.toFixed(1)} - {opponentScore.toFixed(1)}
               </p>
               <p className="text-sm text-cream-500/60 mt-4">Tap to continue</p>
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
         )}
       </AnimatePresence>
 
@@ -351,7 +351,7 @@ ${userIsWinning ? '(Leading)' : isTied ? '(Tied)' : '(Trailing)'}
 
       {/* Caption Breakdown */}
       {(isLive || isCompleted) && (userCaptions || opponentCaptions) && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="card p-4"
@@ -393,12 +393,12 @@ ${userIsWinning ? '(Leading)' : isTied ? '(Tied)' : '(Trailing)'}
               {opponentScore.toFixed(1)}
             </div>
           </div>
-        </motion.div>
+        </m.div>
       )}
 
       {/* H2H History */}
       {h2hRecord && h2hRecord.totalMatchups > 0 && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
@@ -442,12 +442,12 @@ ${userIsWinning ? '(Leading)' : isTied ? '(Tied)' : '(Trailing)'}
               Series tied {h2hRecord.user1Wins}-{h2hRecord.user2Wins}
             </p>
           )}
-        </motion.div>
+        </m.div>
       )}
 
       {/* Projection (for live matchups) */}
       {isLive && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
@@ -475,7 +475,7 @@ ${userIsWinning ? '(Leading)' : isTied ? '(Tied)' : '(Trailing)'}
               Updates after each show
             </span>
           </div>
-        </motion.div>
+        </m.div>
       )}
 
       {/* Action Buttons */}
@@ -505,7 +505,7 @@ ${userIsWinning ? '(Leading)' : isTied ? '(Tied)' : '(Trailing)'}
           </div>
         </div>
       )}
-    </motion.div>
+    </m.div>
   );
 };
 

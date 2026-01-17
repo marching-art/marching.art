@@ -1,7 +1,7 @@
 // src/components/Dashboard/QuickStartGuide.jsx
 // Accessible quick start guide for new users
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
   X, ChevronRight, Check, Trophy, Calendar, Users, Music,
@@ -79,14 +79,14 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
 
   return (
     <AnimatePresence>
-      <motion.div
+      <m.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
         onClick={onClose}
       >
-        <motion.div
+        <m.div
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
@@ -116,7 +116,7 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
             {/* Progress bar */}
             <div className="flex items-center gap-3">
               <div className="flex-1 h-2 bg-charcoal-800 rounded-sm overflow-hidden">
-                <motion.div
+                <m.div
                   initial={{ width: 0 }}
                   animate={{ width: `${progress}%` }}
                   className="h-full bg-gradient-to-r from-gold-500 to-green-500"
@@ -137,7 +137,7 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
               const isExpanded = expandedStep === step.id;
 
               return (
-                <motion.div
+                <m.div
                   key={step.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -174,7 +174,7 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
                   {/* Expanded content */}
                   <AnimatePresence>
                     {isExpanded && (
-                      <motion.div
+                      <m.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
@@ -218,10 +218,10 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
                             </Link>
                           )}
                         </div>
-                      </motion.div>
+                      </m.div>
                     )}
                   </AnimatePresence>
-                </motion.div>
+                </m.div>
               );
             })}
           </div>
@@ -245,8 +245,8 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
               </button>
             </div>
           </div>
-        </motion.div>
-      </motion.div>
+        </m.div>
+      </m.div>
     </AnimatePresence>
   );
 };
@@ -256,7 +256,7 @@ export const QuickStartButton = ({ onClick, show = true }) => {
   if (!show) return null;
 
   return (
-    <motion.button
+    <m.button
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       whileHover={{ scale: 1.05 }}
@@ -266,7 +266,7 @@ export const QuickStartButton = ({ onClick, show = true }) => {
     >
       <HelpCircle className="w-5 h-5" />
       Quick Start
-    </motion.button>
+    </m.button>
   );
 };
 

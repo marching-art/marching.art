@@ -6,7 +6,7 @@
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { Info, HelpCircle } from 'lucide-react';
 
 // Throttle helper for scroll/resize events
@@ -173,7 +173,7 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
       {createPortal(
         <AnimatePresence>
           {isVisible && (
-            <motion.div
+            <m.div
               ref={tooltipRef}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -194,7 +194,7 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
                 )}
                 <p className="text-cream-300 text-xs leading-relaxed">{content}</p>
               </div>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>,
         document.body

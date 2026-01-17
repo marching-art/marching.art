@@ -1,6 +1,6 @@
 // ProfileHeader - Profile header with avatar, info, and edit functionality
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { User, MapPin, Edit, Save, X, Heart, TrendingUp, DollarSign, Calendar, Flame, Trophy } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getNextClassProgress } from '../../utils/captionPricing';
@@ -81,7 +81,7 @@ const ProfileHeader = ({
   };
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       className="bg-white dark:bg-transparent dark:glass border border-cream-300 dark:border-cream-500/20 shadow-sm dark:shadow-none rounded-sm p-4"
@@ -147,7 +147,7 @@ const ProfileHeader = ({
                     </span>
                   </div>
                   <div className="w-full bg-stone-200 dark:bg-charcoal-700 rounded-sm h-2">
-                    <motion.div
+                    <m.div
                       initial={{ width: 0 }}
                       animate={{ width: `${nextClassProgress.xpProgress}%` }}
                       className={`${
@@ -282,7 +282,7 @@ const ProfileHeader = ({
           </div>
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 
