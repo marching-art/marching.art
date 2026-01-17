@@ -46,6 +46,27 @@ export const getGameDay = () => {
   return estTime.toDateString();
 };
 
+/**
+ * Prune old challenge entries to prevent unbounded document growth
+ * Keeps only the last 30 days of challenge history
+ * @param {Object} challenges - Current challenges object keyed by date string
+ * @returns {Object} - Pruned challenges object
+ */
+const pruneOldChallenges = (challenges) => {
+  if (!challenges || typeof challenges !== 'object') return challenges;
+
+  const entries = Object.entries(challenges);
+  if (entries.length <= 30) return challenges;
+
+  // Sort by date (most recent first) and keep only last 30
+  const sortedEntries = entries
+    .map(([dateStr, data]) => ({ dateStr, data, date: new Date(dateStr) }))
+    .sort((a, b) => b.date - a.date)
+    .slice(0, 30);
+
+  return Object.fromEntries(sortedEntries.map(({ dateStr, data }) => [dateStr, data]));
+};
+
 export const useUserStore = create((set, get) => ({
   // State
   user: null,
@@ -344,10 +365,11 @@ export const useUserStore = create((set, get) => ({
         'data'
       );
 
-      const newChallengesData = {
+      // Prune old entries to prevent unbounded growth (keep last 30 days)
+      const newChallengesData = pruneOldChallenges({
         ...currentChallenges,
         [today]: updatedChallenges
-      };
+      });
 
       await updateDoc(profileRef, { challenges: newChallengesData });
 
@@ -395,10 +417,11 @@ export const useUserStore = create((set, get) => ({
         'data'
       );
 
-      const newChallengesData = {
+      // Prune old entries to prevent unbounded growth (keep last 30 days)
+      const newChallengesData = pruneOldChallenges({
         ...currentChallenges,
         [today]: challenges
-      };
+      });
 
       await updateDoc(profileRef, { challenges: newChallengesData });
 
