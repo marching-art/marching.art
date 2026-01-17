@@ -4140,13 +4140,13 @@ async function getArticleImage({ headline, category }) {
 // =============================================================================
 
 module.exports = {
-  // New 5-article system
+  // Article generation
   generateAllArticles,
-  generateDciStandingsArticle,
-  generateDciCaptionsArticle,
-  generateFantasyPerformersArticle,
-  generateFantasyLeaguesArticle,
-  generateDeepAnalyticsArticle,
+  generateDciDailyArticle,
+  generateDciFeatureArticle,
+  generateDciRecapArticle,
+  generateFantasyDailyArticle,
+  generateFantasyRecapArticle,
 
   // Image generation - specialized prompts for each article type
   generateImageWithImagen,
