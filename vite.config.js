@@ -25,8 +25,6 @@ export default defineConfig({
     // Re-enable with 'hidden' if adding Sentry/Bugsnag (generates maps without linking)
     sourcemap: false,
     rollupOptions: {
-      // Exclude Storybook files from production build (saves ~750KB)
-      external: (id) => id.includes('/stories/'),
       output: {
         manualChunks: {
           // Split vendor chunks for better caching
