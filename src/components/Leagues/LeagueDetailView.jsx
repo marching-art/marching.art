@@ -509,6 +509,7 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
           currentWeek={currentWeek}
           onBack={() => setSelectedMatchup(null)}
           rivalry={getMatchupRivalry(selectedMatchup)}
+          recaps={recaps}
         />
       </Suspense>
     );
