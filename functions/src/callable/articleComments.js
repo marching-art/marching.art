@@ -910,29 +910,48 @@ exports.getArticleEngagement = onCall(
 
     try {
       const engagement = {};
+      const defaultReactionCounts = { fire: 0, heart: 0, mindblown: 0, sad: 0, angry: 0 };
 
+      // OPTIMIZATION: Batch all queries in parallel instead of sequential loop
+      // Before: 100 sequential queries (2 per article × 50 articles)
+      // After: 50 parallel count queries + 1 batched document fetch
+      const [commentCountResults, reactionDocs] = await Promise.all([
+        // Run all comment count queries in parallel
+        Promise.all(
+          articleIds.map(articleId =>
+            db.collection("article_comments")
+              .where("articleId", "==", articleId)
+              .where("status", "==", "approved")
+              .count()
+              .get()
+              .then(result => ({ articleId, count: result.data().count }))
+          )
+        ),
+        // Batch fetch all reaction documents in a single Firestore call
+        db.getAll(
+          ...articleIds.map(articleId =>
+            db.collection("article_reactions").doc(articleId)
+          )
+        ).catch(() => []) // Handle case where collection doesn't exist
+      ]);
+
+      // Build lookup maps for O(1) access
+      const commentCountMap = new Map(
+        commentCountResults.map(({ articleId, count }) => [articleId, count])
+      );
+
+      const reactionCountMap = new Map(
+        reactionDocs.map((doc, index) => [
+          articleIds[index],
+          doc.exists ? (doc.data().counts || defaultReactionCounts) : defaultReactionCounts
+        ])
+      );
+
+      // Assemble final engagement object
       for (const articleId of articleIds) {
-        // Get approved comment count
-        const commentCount = await db.collection("article_comments")
-          .where("articleId", "==", articleId)
-          .where("status", "==", "approved")
-          .count()
-          .get();
-
-        // Get reaction counts (if reactions collection exists)
-        let reactionCounts = { fire: 0, heart: 0, mindblown: 0, sad: 0, angry: 0 };
-        try {
-          const reactionsDoc = await db.collection("article_reactions").doc(articleId).get();
-          if (reactionsDoc.exists) {
-            reactionCounts = reactionsDoc.data().counts || reactionCounts;
-          }
-        } catch {
-          // Reactions collection may not exist yet
-        }
-
         engagement[articleId] = {
-          commentCount: commentCount.data().count,
-          reactionCounts,
+          commentCount: commentCountMap.get(articleId) || 0,
+          reactionCounts: reactionCountMap.get(articleId) || defaultReactionCounts,
         };
       }
 
