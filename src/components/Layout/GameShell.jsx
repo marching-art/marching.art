@@ -489,19 +489,12 @@ const TickerBar = () => {
         </svg>
       </button>
 
-      {/* Section indicator dots - mobile only */}
+      {/* Section indicator - mobile only, max 6 dots */}
       {tickerSections.length > 1 && (
-        <div className="sm:hidden flex-shrink-0 flex items-center gap-1 px-2 border-l border-[#333]">
-          {tickerSections.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => setActiveSection(idx)}
-              className={`w-1.5 h-1.5 rounded-full transition-all duration-200 ${
-                idx === activeSection ? 'bg-yellow-400 w-3' : 'bg-gray-600'
-              }`}
-              aria-label={`Go to section ${idx + 1}`}
-            />
-          ))}
+        <div className="sm:hidden flex-shrink-0 flex items-center gap-0.5 px-1.5 border-l border-[#333]">
+          <span className="text-[9px] text-gray-500 font-mono mr-1">
+            {activeSection + 1}/{tickerSections.length}
+          </span>
         </div>
       )}
     </div>
