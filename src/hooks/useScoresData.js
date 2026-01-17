@@ -263,8 +263,9 @@ export const useScoresData = (options = {}) => {
         setLoading(true);
         setError(null);
 
-        // Fetch recaps from subcollection (OPTIMIZATION: no longer reading single large document)
-        // Each day is stored as a separate document in fantasy_recaps/{seasonId}/days/{dayNumber}
+        // Try new subcollection format first, fallback to legacy single-document format
+        // New format: fantasy_recaps/{seasonId}/days/{dayNumber}
+        // Legacy format: fantasy_recaps/{seasonId} with recaps array
         const recapsCollectionRef = collection(db, 'fantasy_recaps', targetSeasonId, 'days');
         const recapsSnapshot = await getDocs(recapsCollectionRef);
 
@@ -272,7 +273,19 @@ export const useScoresData = (options = {}) => {
         let recaps = [];
 
         if (!recapsSnapshot.empty) {
+          // New subcollection format
           recaps = recapsSnapshot.docs.map(doc => doc.data());
+        } else {
+          // Fallback to legacy single-document format for backward compatibility
+          const legacyDocRef = doc(db, 'fantasy_recaps', targetSeasonId);
+          const legacyDoc = await getDoc(legacyDocRef);
+          if (legacyDoc.exists()) {
+            const legacyData = legacyDoc.data();
+            recaps = legacyData.recaps || [];
+          }
+        }
+
+        if (recaps.length > 0) {
 
           // Calculate effective day for score visibility filtering
           // For current season: only show scores from days that have been processed (at 2 AM)

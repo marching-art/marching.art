@@ -426,12 +426,24 @@ export const useDashboardData = () => {
         return;
       }
 
-      // OPTIMIZATION: Read from subcollection instead of single large document
+      // Try new subcollection format first, fallback to legacy single-document format
       const recapsCollectionRef = collection(db, 'fantasy_recaps', seasonData.seasonUid, 'days');
       const recapsSnapshot = await getDocs(recapsCollectionRef);
 
+      let allRecaps = [];
       if (!recapsSnapshot.empty) {
-        const allRecaps = recapsSnapshot.docs.map(doc => doc.data());
+        // New subcollection format
+        allRecaps = recapsSnapshot.docs.map(d => d.data());
+      } else {
+        // Fallback to legacy single-document format
+        const legacyDocRef = doc(db, 'fantasy_recaps', seasonData.seasonUid);
+        const legacyDoc = await getDoc(legacyDocRef);
+        if (legacyDoc.exists()) {
+          allRecaps = legacyDoc.data().recaps || [];
+        }
+      }
+
+      if (allRecaps.length > 0) {
         const isSoundSport = activeCorpsClass === 'soundSport';
         const sortedRecaps = allRecaps
           .filter(r => r.showName || r.eventName || r.name || r.shows?.length > 0)
