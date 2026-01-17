@@ -29,11 +29,9 @@ import {
   httpsCallable,
   HttpsCallableResult,
 } from 'firebase/functions';
-import {
-  getStorage,
-  FirebaseStorage,
-  connectStorageEmulator,
-} from 'firebase/storage';
+// Storage is lazy-loaded since it's rarely used (only for file uploads)
+// This defers ~30KB from the initial bundle
+import type { FirebaseStorage } from 'firebase/storage';
 
 // Import centralized configuration
 import { FIREBASE_CONFIG, DATA_CONFIG, AUTH_CONFIG, DEV_CONFIG } from '../config';
@@ -56,7 +54,7 @@ let app: FirebaseApp;
 let auth: Auth;
 let db: Firestore;
 let functions: Functions;
-let storage: FirebaseStorage;
+let storage: FirebaseStorage | null = null;
 
 // Initialize Firebase (singleton pattern)
 function initializeFirebase(): void {
@@ -69,7 +67,7 @@ function initializeFirebase(): void {
     localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
   });
   functions = getFunctions(app);
-  storage = getStorage(app);
+  // Note: Storage is lazy-loaded via getStorageInstance() to reduce initial bundle
 
   // Connect to emulators in development (using centralized config)
   if (DEV_CONFIG.useEmulators) {
@@ -77,14 +75,33 @@ function initializeFirebase(): void {
     connectAuthEmulator(auth, `http://localhost:${emulators.auth}`, { disableWarnings: true });
     connectFirestoreEmulator(db, 'localhost', emulators.firestore);
     connectFunctionsEmulator(functions, 'localhost', emulators.functions);
-    connectStorageEmulator(storage, 'localhost', emulators.storage);
+    // Storage emulator connected lazily in getStorageInstance()
   }
+}
+
+/**
+ * Lazy-load Firebase Storage instance
+ * Only initializes storage when first called, reducing initial bundle size by ~30KB
+ */
+export async function getStorageInstance(): Promise<FirebaseStorage> {
+  if (storage) return storage;
+
+  const { getStorage, connectStorageEmulator } = await import('firebase/storage');
+  storage = getStorage(app);
+
+  // Connect to emulator in development
+  if (DEV_CONFIG.useEmulators) {
+    connectStorageEmulator(storage, 'localhost', DEV_CONFIG.emulators.storage);
+  }
+
+  return storage;
 }
 
 // Initialize on module load
 initializeFirebase();
 
 // Export instances
+// Note: storage is null until getStorageInstance() is called (lazy-loaded)
 export { app, auth, db, functions, storage };
 
 // =============================================================================
