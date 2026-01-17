@@ -2,7 +2,7 @@
 // Shows caption battles, total score, high single, and momentum battles
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import {
   Trophy, TrendingUp, Zap, Target, Check, X, Minus,
   Crown, Flame, Award
@@ -111,7 +111,7 @@ const BattleRow = ({
   };
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay }}
@@ -176,7 +176,7 @@ const BattleRow = ({
           {typeof awayValue === 'number' ? awayValue.toFixed(1) : awayValue}
         </span>
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 
@@ -296,7 +296,7 @@ export const BattleSummaryBar = ({
         <span className="text-cream-500/60">{awayBattlePoints} pts</span>
       </div>
       <div className="flex h-3 rounded-sm overflow-hidden bg-charcoal-800">
-        <motion.div
+        <m.div
           initial={{ width: 0 }}
           animate={{ width: `${homePercent}%` }}
           transition={{ type: 'spring', damping: 20, delay: 0.2 }}
@@ -308,7 +308,7 @@ export const BattleSummaryBar = ({
             className="bg-yellow-500/30"
           />
         )}
-        <motion.div
+        <m.div
           initial={{ width: 0 }}
           animate={{ width: `${awayPercent}%` }}
           transition={{ type: 'spring', damping: 20, delay: 0.2 }}
@@ -353,7 +353,7 @@ const BattleBreakdown = ({
   } = battleBreakdown;
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="space-y-4"
@@ -405,7 +405,7 @@ const BattleBreakdown = ({
           Win 6+ battle points to win the matchup. Caption battles (8 pts) + Total Score (1 pt) + High Single (1 pt) + Momentum (1 pt) = 11 max
         </p>
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 

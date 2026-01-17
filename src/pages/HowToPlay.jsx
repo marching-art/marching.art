@@ -1,6 +1,6 @@
 // src/pages/HowToPlay.jsx
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import {
   Trophy, Users, Calendar, Target, TrendingUp, Award,
   Clock, Star, DollarSign, Shield, Zap, Book,
@@ -18,7 +18,7 @@ const HowToPlay = () => {
     const isOpen = openSection === id;
 
     return (
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="card mb-4 overflow-hidden"
@@ -37,16 +37,16 @@ const HowToPlay = () => {
         </button>
 
         {isOpen && (
-          <motion.div
+          <m.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             className="px-6 pb-6 space-y-4 text-cream-300"
           >
             {children}
-          </motion.div>
+          </m.div>
         )}
-      </motion.div>
+      </m.div>
     );
   };
 
@@ -74,7 +74,7 @@ const HowToPlay = () => {
   return (
     <div className="min-h-screen bg-gradient-main py-12">
       <div className="container-responsive">
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+        <m.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className="text-4xl font-display font-bold text-gradient mb-4">How to Play</h1>
           <p className="text-cream-300 text-lg mb-8">
             Master the art of fantasy drum corps management with this comprehensive guide.
@@ -498,7 +498,7 @@ const HowToPlay = () => {
           </div>
 
           {/* Footer CTA */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
@@ -509,8 +509,8 @@ const HowToPlay = () => {
               <Trophy className="w-5 h-5" />
               Go to Dashboard
             </a>
-          </motion.div>
-        </motion.div>
+          </m.div>
+        </m.div>
       </div>
     </div>
   );

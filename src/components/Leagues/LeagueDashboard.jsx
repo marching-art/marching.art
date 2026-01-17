@@ -2,7 +2,7 @@
 // Design System: Card-based dashboard with engaging visualizations
 
 import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import {
   Trophy, Crown, Flame, TrendingUp, TrendingDown, Minus,
   Swords, Target, Zap, Calendar, Users, Award, Star,
@@ -88,7 +88,7 @@ const YourPositionCard = ({ userStats, totalMembers, onViewStandings }) => {
     : 0;
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="bg-gradient-to-br from-purple-500/20 via-purple-500/10 to-[#1a1a1a] border border-purple-500/30 p-4"
@@ -145,7 +145,7 @@ const YourPositionCard = ({ userStats, totalMembers, onViewStandings }) => {
           )}
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 
@@ -154,7 +154,7 @@ const NextMatchupCard = ({ matchup, opponent, opponentStats, currentWeek, isLive
   if (!matchup) return null;
 
   return (
-    <motion.button
+    <m.button
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       onClick={onClick}
@@ -198,7 +198,7 @@ const NextMatchupCard = ({ matchup, opponent, opponentStats, currentWeek, isLive
           <ChevronRight className="w-4 h-4 text-gray-500 ml-auto" />
         </div>
       </div>
-    </motion.button>
+    </m.button>
   );
 };
 
@@ -351,7 +351,7 @@ const SeasonProgressBar = ({ currentWeek, totalWeeks = 12 }) => {
         <span className="text-xs text-gray-500">Week {currentWeek} of {totalWeeks}</span>
       </div>
       <div className="h-2 bg-[#222] overflow-hidden">
-        <motion.div
+        <m.div
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
           transition={{ duration: 0.5, ease: 'easeOut' }}

@@ -2,7 +2,7 @@
 // High-density "spreadsheet" style score table with heatmap coloring and sparklines
 
 import React, { useMemo, memo } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { TrendingUp, TrendingDown, Minus, Users } from 'lucide-react';
 import {
   calculateCaptionAggregates,
@@ -158,7 +158,7 @@ const ScoreLedger = ({
             const musColor = getHeatmapColor(aggregates.MUS_Total, columnStats.MUS_Total);
 
             return (
-              <motion.tr
+              <m.tr
                 key={`${score.corps || score.corpsName}-${index}`}
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -269,7 +269,7 @@ const ScoreLedger = ({
                     <TrendIcon trend={trendData.trend} />
                   </div>
                 </td>
-              </motion.tr>
+              </m.tr>
             );
           })}
         </tbody>

@@ -1,7 +1,7 @@
 // src/components/ShowConcept/ShowConceptSelector.jsx
 // Configuration Terminal style: Compact tiles, synergy output, manual accordion
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import {
   Music, Palette, Target, Sparkles, Check, Info, ChevronRight,
   Zap, Star
@@ -285,7 +285,7 @@ const ShowConceptSelector = ({
   const selectedTags = getSelectedTags();
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1.0] }}
@@ -407,7 +407,7 @@ const ShowConceptSelector = ({
 
       {/* Save Button */}
       {hasChanges && (
-        <motion.button
+        <m.button
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           onClick={handleSave}
@@ -431,7 +431,7 @@ const ShowConceptSelector = ({
           ) : (
             'Save Configuration'
           )}
-        </motion.button>
+        </m.button>
       )}
 
       {/* Manual Accordion - Help Text */}
@@ -446,7 +446,7 @@ const ShowConceptSelector = ({
           </button>
           <AnimatePresence>
             {manualOpen && (
-              <motion.div
+              <m.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
@@ -460,12 +460,12 @@ const ShowConceptSelector = ({
                     </div>
                   </div>
                 </div>
-              </motion.div>
+              </m.div>
             )}
           </AnimatePresence>
         </div>
       )}
-    </motion.div>
+    </m.div>
   );
 };
 

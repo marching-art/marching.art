@@ -100,30 +100,14 @@ function smartPairMembers(members, standings) {
 /**
  * Detect rivalries based on matchup history
  * Returns rivalry data for players who have faced each other multiple times
+ *
+ * OPTIMIZATION: Only create records for pairs that actually played
+ * (previously O(n²) initialization for ALL possible pairs)
  */
-function detectRivalries(matchupHistory, memberIds) {
+function detectRivalries(matchupHistory) {
   const h2hRecords = {};
 
-  // Initialize records for all pairs
-  for (const id1 of memberIds) {
-    for (const id2 of memberIds) {
-      if (id1 < id2) {
-        const key = `${id1}_${id2}`;
-        h2hRecords[key] = {
-          player1: id1,
-          player2: id2,
-          p1Wins: 0,
-          p2Wins: 0,
-          ties: 0,
-          totalMatches: 0,
-          closeMatches: 0, // Decided by < 2 battle points
-          lastMatchWeek: 0
-        };
-      }
-    }
-  }
-
-  // Process matchup history
+  // Process matchup history - only create records for actual matches
   for (const weekData of Object.values(matchupHistory)) {
     for (const corpsClass of CORPS_CLASSES) {
       const matchups = weekData[`${corpsClass}Matchups`] || [];
@@ -134,7 +118,19 @@ function detectRivalries(matchupHistory, memberIds) {
         const [p1, p2] = matchup.pair.sort();
         const key = `${p1}_${p2}`;
 
-        if (!h2hRecords[key]) continue;
+        // Create record on first encounter (lazy initialization)
+        if (!h2hRecords[key]) {
+          h2hRecords[key] = {
+            player1: p1,
+            player2: p2,
+            p1Wins: 0,
+            p2Wins: 0,
+            ties: 0,
+            totalMatches: 0,
+            closeMatches: 0,
+            lastMatchWeek: 0
+          };
+        }
 
         h2hRecords[key].totalMatches++;
         h2hRecords[key].lastMatchWeek = Math.max(h2hRecords[key].lastMatchWeek, weekData.week || 0);
@@ -520,7 +516,7 @@ exports.generateWeeklyRecaps = onSchedule(
           });
 
           // Detect rivalries
-          const rivalries = detectRivalries(matchupHistory, members);
+          const rivalries = detectRivalries(matchupHistory);
           recap.rivalries = rivalries.slice(0, 5); // Top 5 rivalries
 
           // Save recap
@@ -585,7 +581,7 @@ exports.updateLeagueRivalries = onSchedule(
           });
 
           // Detect rivalries
-          const rivalries = detectRivalries(matchupHistory, members);
+          const rivalries = detectRivalries(matchupHistory);
 
           // Store rivalries
           if (rivalries.length > 0) {

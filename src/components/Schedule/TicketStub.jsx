@@ -1,7 +1,7 @@
 // TicketStub - Event card styled as a ticket/pass with perforated edges
 // Features: Stamped effect for registered, dramatic open/closed states
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { MapPin, Lock, Music, Plus, ExternalLink, Zap, Check, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -31,7 +31,7 @@ const TicketStub = ({
                        isWeekend;
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, scale: 0.95, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ delay: index * 0.05, duration: 0.3, ease: 'easeOut' }}
@@ -266,7 +266,7 @@ const TicketStub = ({
           />
         ))}
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 

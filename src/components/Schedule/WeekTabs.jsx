@@ -1,6 +1,6 @@
 // WeekTabs - Tour Timeline with pulsating active week indicator
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Zap, Check, Clock } from 'lucide-react';
 
 const WeekTabs = ({
@@ -21,7 +21,7 @@ const WeekTabs = ({
   };
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="flex-shrink-0"
@@ -162,7 +162,7 @@ const WeekTabs = ({
           </div>
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 

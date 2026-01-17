@@ -2,7 +2,7 @@
 // Keeps users engaged with real-time activity updates
 
 import React, { useState, useMemo, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import {
   Bell, Swords, TrendingUp, MessageSquare, ArrowLeftRight,
   Check, UserPlus, Flame, ChevronRight, Filter, Eye,
@@ -77,7 +77,7 @@ const ActivityItem = React.memo(({ activity, isNotification = false, onMarkRead,
   }, [onMarkRead, activity.id]);
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 10 }}
@@ -167,7 +167,7 @@ const ActivityItem = React.memo(({ activity, isNotification = false, onMarkRead,
       )}
 
       <ChevronRight className="w-4 h-4 text-gray-600 flex-shrink-0 self-center" />
-    </motion.div>
+    </m.div>
   );
 });
 ActivityItem.displayName = 'ActivityItem';
@@ -377,7 +377,7 @@ const LeagueActivityFeed = ({
               />
             ))
           ) : (
-            <motion.div
+            <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="text-center py-8"
@@ -389,7 +389,7 @@ const LeagueActivityFeed = ({
               <p className="text-gray-600 text-xs mt-1">
                 Check back after some matchups!
               </p>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </div>
@@ -430,7 +430,7 @@ export const NotificationDropdown = ({
   onNotificationClick,
 }) => {
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: -10, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -10, scale: 0.95 }}
@@ -481,7 +481,7 @@ export const NotificationDropdown = ({
           </div>
         )}
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 

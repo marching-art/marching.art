@@ -5,7 +5,7 @@
 // Works with any scrollable container
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
+import { m, useMotionValue, useTransform, animate } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
 import { triggerHaptic } from '../../hooks/useHaptic';
 
@@ -136,7 +136,7 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
   return (
     <div className={`relative h-full ${className}`}>
       {/* Pull Indicator */}
-      <motion.div
+      <m.div
         className="absolute left-1/2 -translate-x-1/2 z-10 flex items-center justify-center"
         style={{
           y: indicatorY,
@@ -144,7 +144,7 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
           scale: indicatorScale,
         }}
       >
-        <motion.div
+        <m.div
           className={`
             w-10 h-10 rounded-sm flex items-center justify-center
             ${isRefreshing ? 'bg-[#0057B8]' : canRefresh ? 'bg-[#0057B8]' : 'bg-[#333]'}
@@ -153,11 +153,11 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
           animate={isRefreshing ? { rotate: 360 } : {}}
           transition={isRefreshing ? { duration: 1, repeat: Infinity, ease: 'linear' } : {}}
         >
-          <motion.div style={{ rotate: isRefreshing ? 0 : indicatorRotation }}>
+          <m.div style={{ rotate: isRefreshing ? 0 : indicatorRotation }}>
             <RefreshCw className="w-5 h-5 text-white" />
-          </motion.div>
-        </motion.div>
-      </motion.div>
+          </m.div>
+        </m.div>
+      </m.div>
 
       {/* Content Container */}
       <div
@@ -167,9 +167,9 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <motion.div style={{ y: pullDistance }}>
+        <m.div style={{ y: pullDistance }}>
           {children}
-        </motion.div>
+        </m.div>
       </div>
     </div>
   );
@@ -192,7 +192,7 @@ export const RefreshIndicator: React.FC<RefreshIndicatorProps> = ({
   className = '',
 }) => {
   return (
-    <motion.div
+    <m.div
       className={`flex items-center justify-center py-4 ${className}`}
       initial={{ opacity: 0, height: 0 }}
       animate={{
@@ -201,7 +201,7 @@ export const RefreshIndicator: React.FC<RefreshIndicatorProps> = ({
       }}
       transition={{ duration: 0.2 }}
     >
-      <motion.div
+      <m.div
         className={`
           w-8 h-8 rounded-sm flex items-center justify-center
           ${isRefreshing ? 'bg-[#0057B8]' : 'bg-[#333]'}
@@ -210,8 +210,8 @@ export const RefreshIndicator: React.FC<RefreshIndicatorProps> = ({
         transition={isRefreshing ? { duration: 1, repeat: Infinity, ease: 'linear' } : { duration: 0 }}
       >
         <RefreshCw className="w-4 h-4 text-white" />
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 };
 

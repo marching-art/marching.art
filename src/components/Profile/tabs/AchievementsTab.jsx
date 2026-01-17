@@ -1,6 +1,6 @@
 // AchievementsTab - Achievements, trophies, and milestones (Stadium HUD)
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Award, Trophy, Crown, Medal, Star, Target, CheckCircle } from 'lucide-react';
 import { ConsoleEmptyState } from '../../ui/CommandConsole';
 
@@ -9,7 +9,7 @@ import { ConsoleEmptyState } from '../../ui/CommandConsole';
 // =============================================================================
 
 const AchievementItem = React.memo(({ achievement, idx }) => (
-  <motion.div
+  <m.div
     initial={{ opacity: 0, scale: 0.9 }}
     animate={{ opacity: 1, scale: 1 }}
     transition={{ delay: idx * 0.05 }}
@@ -27,7 +27,7 @@ const AchievementItem = React.memo(({ achievement, idx }) => (
         )}
       </div>
     </div>
-  </motion.div>
+  </m.div>
 ));
 AchievementItem.displayName = 'AchievementItem';
 
@@ -73,7 +73,7 @@ MilestoneItem.displayName = 'MilestoneItem';
 
 const AchievementsTab = ({ profile, milestones }) => {
   return (
-    <motion.div
+    <m.div
       key="achievements"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -140,7 +140,7 @@ const AchievementsTab = ({ profile, milestones }) => {
           ))}
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 

@@ -2,7 +2,7 @@
 // Shows historical matchup data, caption domination, streaks, and all past matchups
 
 import React, { useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import {
   Swords, Trophy, Flame, TrendingUp, TrendingDown, Crown,
   Target, ChevronRight, Users, Award, Zap
@@ -34,7 +34,7 @@ const CaptionDominationBar = ({ caption, user1Wins, user2Wins, user1Name, user2N
         </div>
       </div>
       <div className="h-1.5 bg-[#222] rounded-full overflow-hidden flex">
-        <motion.div
+        <m.div
           initial={{ width: 0 }}
           animate={{ width: `${user1Pct}%` }}
           transition={{ duration: 0.5, delay: 0.1 }}
@@ -42,7 +42,7 @@ const CaptionDominationBar = ({ caption, user1Wins, user2Wins, user1Name, user2N
             tied ? 'bg-gray-500' : user1Pct > 50 ? 'bg-green-500' : 'bg-green-500/30'
           }`}
         />
-        <motion.div
+        <m.div
           initial={{ width: 0 }}
           animate={{ width: `${100 - user1Pct}%` }}
           transition={{ duration: 0.5, delay: 0.1 }}
@@ -179,7 +179,7 @@ const RivalryHistoryCard = ({
   if (compact) {
     // Compact inline view
     return (
-      <motion.div
+      <m.div
         initial={{ opacity: 0, height: 0 }}
         animate={{ opacity: 1, height: 'auto' }}
         exit={{ opacity: 0, height: 0 }}
@@ -219,13 +219,13 @@ const RivalryHistoryCard = ({
             </p>
           </div>
         </div>
-      </motion.div>
+      </m.div>
     );
   }
 
   // Full card view
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="bg-[#1a1a1a] border border-[#333] overflow-hidden"
@@ -280,7 +280,7 @@ const RivalryHistoryCard = ({
 
           {/* Win Percentage Bar */}
           <div className="h-2 bg-[#222] rounded-full overflow-hidden flex">
-            <motion.div
+            <m.div
               initial={{ width: 0 }}
               animate={{ width: `${user1WinPct}%` }}
               transition={{ duration: 0.5 }}
@@ -288,7 +288,7 @@ const RivalryHistoryCard = ({
                 user1Wins === user2Wins ? 'bg-gray-500' : user1Wins > user2Wins ? 'bg-green-500' : 'bg-green-500/30'
               }`}
             />
-            <motion.div
+            <m.div
               initial={{ width: 0 }}
               animate={{ width: `${100 - user1WinPct}%` }}
               transition={{ duration: 0.5 }}
@@ -397,7 +397,7 @@ const RivalryHistoryCard = ({
           </div>
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 

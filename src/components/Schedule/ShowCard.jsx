@@ -1,6 +1,6 @@
 // ShowCard - Individual show card for schedule (Stadium HUD Style)
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { MapPin, Lock, Music, Plus, ExternalLink, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -23,7 +23,7 @@ const ShowCard = React.memo(({
   };
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.03, duration: 0.3 }}
@@ -153,7 +153,7 @@ const ShowCard = React.memo(({
           )}
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 });
 

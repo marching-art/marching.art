@@ -1,6 +1,6 @@
 // RankingsTab - Overall, weekly, and monthly leaderboards
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Trophy, TrendingUp, Star, Crown, Medal, Users, ChevronDown } from 'lucide-react';
 import LoadingScreen from '../../LoadingScreen';
 import EmptyState from '../../EmptyState';
@@ -79,7 +79,7 @@ const RankingsTab = ({
     <div className="space-y-6">
       {/* User Rank Card */}
       {user && userRank && (
-        <motion.div
+        <m.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           className="bg-gradient-to-r from-amber-500/20 dark:from-gold-500/20 to-amber-400/10 dark:to-gold-400/10 border border-amber-500/30 dark:border-gold-500/30 rounded-sm shadow-sm p-4 md:p-6"
@@ -95,7 +95,7 @@ const RankingsTab = ({
               </div>
             </div>
           </div>
-        </motion.div>
+        </m.div>
       )}
 
       {/* Rankings Sub-tabs - Mechanical Segmented Control */}
@@ -143,7 +143,7 @@ const RankingsTab = ({
       </div>
 
       {/* Leaderboard Table/Cards - Wrapped in Card Container */}
-      <motion.div
+      <m.div
         key={`${rankingsTab}-${activeClass}`}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -215,7 +215,7 @@ const RankingsTab = ({
             {/* Mobile Card View */}
             <div className="md:hidden space-y-3 p-3">
               {currentData.map((entry) => (
-                <motion.div
+                <m.div
                   key={entry.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -248,7 +248,7 @@ const RankingsTab = ({
                       <span className="font-semibold">{entry.trophies || 0}</span>
                     </div>
                   </div>
-                </motion.div>
+                </m.div>
               ))}
             </div>
           </>
@@ -264,7 +264,7 @@ const RankingsTab = ({
             }
           />
         )}
-      </motion.div>
+      </m.div>
 
       {/* Load More Button */}
       {!loading && hasMore[rankingsTab] && (

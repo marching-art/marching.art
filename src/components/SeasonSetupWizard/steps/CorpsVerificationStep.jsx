@@ -1,6 +1,6 @@
 // CorpsVerificationStep - Manage existing corps decisions
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import {
   ChevronRight, ChevronLeft, Trophy, Play, Archive,
   Plus, RotateCcw, Unlock
@@ -179,7 +179,7 @@ const CorpsVerificationStep = ({
   };
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, x: 50 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -50 }}
@@ -251,7 +251,7 @@ const CorpsVerificationStep = ({
           )}
         </button>
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 
