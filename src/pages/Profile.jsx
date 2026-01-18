@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { useProfile, useUpdateProfile } from '../hooks/useProfile';
+import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '../lib/queryClient';
 import { db } from '../firebase';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { updateUsername, updateEmail, deleteAccount } from '../firebase/functions';
@@ -687,6 +689,7 @@ const Profile = () => {
   const { userId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({});
   const [showSettings, setShowSettings] = useState(false);
@@ -761,18 +764,39 @@ const Profile = () => {
 
       let successCount = 0;
       let failCount = 0;
+      const avatarUpdates = {};
 
       for (const targetClass of corpsToGenerate) {
         try {
           const result = await generateCorpsAvatar({ corpsClass: targetClass });
           if (result.data.success) {
             successCount++;
+            // Collect the new avatar URL for cache update
+            if (result.data.avatarUrl) {
+              avatarUpdates[targetClass] = result.data.avatarUrl;
+            }
           } else {
             failCount++;
           }
         } catch (err) {
           failCount++;
         }
+      }
+
+      // Immediately update the cache with all new avatar URLs
+      if (Object.keys(avatarUpdates).length > 0) {
+        queryClient.setQueryData(queryKeys.profile(user.uid), (oldData) => {
+          if (!oldData) return oldData;
+          const updatedCorps = { ...oldData.corps };
+          for (const [targetClass, avatarUrl] of Object.entries(avatarUpdates)) {
+            updatedCorps[targetClass] = {
+              ...updatedCorps[targetClass],
+              avatarUrl,
+              avatarGeneratedAt: new Date().toISOString(),
+            };
+          }
+          return { ...oldData, corps: updatedCorps };
+        });
       }
 
       // Show final result
@@ -791,13 +815,11 @@ const Profile = () => {
       } else {
         toast.error('Failed to generate avatars', { id: 'generate-avatars' });
       }
-
-      refetch();
     } catch (err) {
       toast.error('Failed to save uniform design');
       throw err;
     }
-  }, [user, refetch]);
+  }, [user, queryClient]);
 
   // Handle profile avatar corps selection
   const handleSelectAvatarCorps = useCallback(async (corpsClass) => {
@@ -822,8 +844,25 @@ const Profile = () => {
       toast.loading('Generating new avatar...', { id: 'regenerate-avatar' });
       const result = await generateCorpsAvatar({ corpsClass });
       if (result.data.success) {
+        // Immediately update the cache with the new avatar URL
+        const newAvatarUrl = result.data.avatarUrl;
+        if (newAvatarUrl) {
+          queryClient.setQueryData(queryKeys.profile(user.uid), (oldData) => {
+            if (!oldData) return oldData;
+            return {
+              ...oldData,
+              corps: {
+                ...oldData.corps,
+                [corpsClass]: {
+                  ...oldData.corps?.[corpsClass],
+                  avatarUrl: newAvatarUrl,
+                  avatarGeneratedAt: new Date().toISOString(),
+                },
+              },
+            };
+          });
+        }
         toast.success('Avatar regenerated!', { id: 'regenerate-avatar' });
-        refetch();
       } else {
         toast.error(result.data.message || 'Failed to regenerate avatar', { id: 'regenerate-avatar' });
       }
@@ -831,7 +870,7 @@ const Profile = () => {
       toast.error('Failed to regenerate avatar', { id: 'regenerate-avatar' });
       throw err;
     }
-  }, [user, refetch]);
+  }, [user, queryClient]);
 
   // Handlers
   const handleStartEdit = () => {
