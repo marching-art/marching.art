@@ -5,7 +5,7 @@
 // Used by AI to generate accurate images for news articles and avatars
 
 import React, { useState, useEffect } from 'react';
-import { X, Palette, Sparkles, Save, Loader2, Copy, ChevronDown } from 'lucide-react';
+import { X, Palette, Sparkles, Save, Loader2, Copy, ChevronDown, User, RefreshCw } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import type { CorpsUniformDesign, CorpsClass } from '../../types';
@@ -63,6 +63,18 @@ const VENUE_OPTIONS = [
   { value: 'both', label: 'Both' },
 ] as const;
 
+const AVATAR_STYLES = [
+  { value: 'logo', label: 'Team Logo', description: 'Emblem/badge style avatar' },
+  { value: 'performer', label: 'Performer', description: 'Section member portrait' },
+] as const;
+
+const AVATAR_SECTIONS = [
+  { value: 'drumMajor', label: 'Drum Major', description: 'Leader with mace/baton' },
+  { value: 'hornline', label: 'Hornline', description: 'Brass player with horn' },
+  { value: 'drumline', label: 'Drumline', description: 'Percussionist with drums' },
+  { value: 'colorGuard', label: 'Color Guard', description: 'Guard with flag/rifle' },
+] as const;
+
 const COLOR_SUGGESTIONS = [
   'crimson red', 'midnight blue', 'emerald green', 'royal purple', 'burnt orange',
   'deep navy', 'forest green', 'burgundy', 'charcoal gray', 'pearl white',
@@ -116,6 +128,8 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
     venuePreference: selectedDesign?.venuePreference || 'outdoor',
     performanceStyle: selectedDesign?.performanceStyle || '',
     additionalNotes: selectedDesign?.additionalNotes || '',
+    avatarStyle: selectedDesign?.avatarStyle || 'logo',
+    avatarSection: selectedDesign?.avatarSection || 'hornline',
   });
 
   // Update form when selected corps changes
@@ -137,6 +151,8 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
         venuePreference: newDesign.venuePreference || 'outdoor',
         performanceStyle: newDesign.performanceStyle || '',
         additionalNotes: newDesign.additionalNotes || '',
+        avatarStyle: newDesign.avatarStyle || 'logo',
+        avatarSection: newDesign.avatarSection || 'hornline',
       });
     }
     // Reset copy selections when changing corps
@@ -583,6 +599,86 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                     ))}
                   </div>
                 </div>
+              </div>
+
+              {/* SECTION: Avatar Options */}
+              <div className="space-y-4">
+                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-[#333] pb-1 flex items-center gap-2">
+                  <User className="w-3 h-3" />
+                  Profile Avatar Style
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Avatar Style */}
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                      Avatar Type
+                    </label>
+                    <div className="space-y-2">
+                      {AVATAR_STYLES.map((style) => (
+                        <label
+                          key={style.value}
+                          className={`flex items-center gap-3 p-2 border cursor-pointer transition-all ${
+                            formData.avatarStyle === style.value
+                              ? 'bg-[#0057B8]/10 border-[#0057B8]/50'
+                              : 'bg-[#0a0a0a] border-[#333] hover:border-[#444]'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="avatarStyle"
+                            value={style.value}
+                            checked={formData.avatarStyle === style.value}
+                            onChange={(e) => setFormData({ ...formData, avatarStyle: e.target.value as 'logo' | 'performer' })}
+                            className="w-4 h-4 accent-[#0057B8]"
+                          />
+                          <div>
+                            <div className="text-sm text-white font-bold">{style.label}</div>
+                            <div className="text-[10px] text-gray-500">{style.description}</div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Section Selection - Only show for performer style */}
+                  {formData.avatarStyle === 'performer' && (
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                        Featured Section
+                      </label>
+                      <div className="space-y-2">
+                        {AVATAR_SECTIONS.map((section) => (
+                          <label
+                            key={section.value}
+                            className={`flex items-center gap-3 p-2 border cursor-pointer transition-all ${
+                              formData.avatarSection === section.value
+                                ? 'bg-[#0057B8]/10 border-[#0057B8]/50'
+                                : 'bg-[#0a0a0a] border-[#333] hover:border-[#444]'
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="avatarSection"
+                              value={section.value}
+                              checked={formData.avatarSection === section.value}
+                              onChange={(e) => setFormData({ ...formData, avatarSection: e.target.value as 'drumMajor' | 'hornline' | 'drumline' | 'colorGuard' })}
+                              className="w-4 h-4 accent-[#0057B8]"
+                            />
+                            <div>
+                              <div className="text-sm text-white font-bold">{section.label}</div>
+                              <div className="text-[10px] text-gray-500">{section.description}</div>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <p className="text-[10px] text-gray-500">
+                  Your avatar will be automatically generated when you save. Change the style or section to generate a new avatar.
+                </p>
               </div>
 
               {/* SECTION: Additional Notes */}

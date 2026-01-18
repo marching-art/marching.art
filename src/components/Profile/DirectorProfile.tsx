@@ -11,7 +11,7 @@ import {
   User, Trophy, Star, TrendingUp, Calendar, Crown, Medal,
   MapPin, Zap, Flame, Award, ChevronDown, ChevronRight,
   Music, Disc3, Play, Clock, Target, Shield, Swords,
-  ArrowUp, ArrowDown, Minus, X, Palette, ExternalLink,
+  ArrowUp, ArrowDown, Minus, X, Palette, ExternalLink, RefreshCw,
 } from 'lucide-react';
 import type { UserProfile, Achievement, CorpsClass } from '../../types';
 import { formatSeasonName } from '../../utils/season';
@@ -26,6 +26,7 @@ interface DirectorProfileProps {
   onEditProfile?: () => void;
   onDesignUniform?: () => void;
   onSelectAvatarCorps?: (corpsClass: CorpsClass) => Promise<void>;
+  onRegenerateAvatar?: (corpsClass: CorpsClass) => Promise<void>;
 }
 
 interface SeasonHistoryEntry {
@@ -379,8 +380,10 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
   isOwnProfile = false,
   onDesignUniform,
   onSelectAvatarCorps,
+  onRegenerateAvatar,
 }) => {
   const [expandedSeason, setExpandedSeason] = useState<string | null>(null);
+  const [isRegenerating, setIsRegenerating] = useState(false);
   const [showAllTrophies, setShowAllTrophies] = useState(false);
   const [showAvatarSelector, setShowAvatarSelector] = useState(false);
   const [savingAvatar, setSavingAvatar] = useState(false);
@@ -400,6 +403,16 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
       setShowAvatarSelector(false);
     } finally {
       setSavingAvatar(false);
+    }
+  };
+
+  const handleRegenerateAvatar = async () => {
+    if (!onRegenerateAvatar || !avatarData.corpsClass) return;
+    setIsRegenerating(true);
+    try {
+      await onRegenerateAvatar(avatarData.corpsClass);
+    } finally {
+      setIsRegenerating(false);
     }
   };
 
@@ -475,6 +488,18 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                   >
                     <Palette className="w-4 h-4 text-white" />
                     <span className="text-[10px] text-white font-bold uppercase">Design</span>
+                  </button>
+                )}
+                {avatarData.url && onRegenerateAvatar && avatarData.corpsClass && (
+                  <button
+                    onClick={handleRegenerateAvatar}
+                    disabled={isRegenerating}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#333] hover:bg-[#444] transition-colors disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-4 h-4 text-white ${isRegenerating ? 'animate-spin' : ''}`} />
+                    <span className="text-[10px] text-white font-bold uppercase">
+                      {isRegenerating ? 'Generating...' : 'Regenerate'}
+                    </span>
                   </button>
                 )}
                 {corpsWithAvatars.length > 1 && onSelectAvatarCorps && (
