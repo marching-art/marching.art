@@ -197,6 +197,7 @@ const CorpsDossier = ({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            onClick={(e) => e.stopPropagation()}
             className={`
               fixed top-0 right-0 h-full w-full sm:w-[420px] md:w-[480px]
               bg-charcoal-950 border-l-2 border-gold-500/30

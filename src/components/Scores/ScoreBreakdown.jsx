@@ -212,6 +212,7 @@ const ScoreBreakdown = ({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            onClick={(e) => e.stopPropagation()}
             className="fixed inset-x-4 top-[5%] md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg bg-charcoal-950 border border-cream-500/10 rounded-sm z-50 max-h-[90vh] overflow-hidden flex flex-col"
           >
             {/* Header */}
