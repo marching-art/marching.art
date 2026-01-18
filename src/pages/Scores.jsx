@@ -51,9 +51,9 @@ const CLASS_LABELS = {
 // =============================================================================
 
 const getSoundSportRating = (score) => {
-  if (score >= 90) return 'Gold';
+  if (score >= 85) return 'Gold';
   if (score >= 75) return 'Silver';
-  if (score >= 60) return 'Bronze';
+  if (score >= 65) return 'Bronze';
   return 'Participation';
 };
 

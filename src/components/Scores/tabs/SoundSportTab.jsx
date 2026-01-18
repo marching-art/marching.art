@@ -18,9 +18,9 @@ import EmptyState from '../../EmptyState';
 // =============================================================================
 
 const RATING_THRESHOLDS = [
-  { rating: 'Gold', min: 90, color: 'bg-yellow-500', textColor: 'text-black', borderColor: 'border-black' },
+  { rating: 'Gold', min: 85, color: 'bg-yellow-500', textColor: 'text-black', borderColor: 'border-black' },
   { rating: 'Silver', min: 75, color: 'bg-stone-300', textColor: 'text-black', borderColor: 'border-black' },
-  { rating: 'Bronze', min: 60, color: 'bg-orange-300', textColor: 'text-black', borderColor: 'border-black' },
+  { rating: 'Bronze', min: 65, color: 'bg-orange-300', textColor: 'text-black', borderColor: 'border-black' },
   { rating: 'Participation', min: 0, color: 'bg-white', textColor: 'text-black', borderColor: 'border-black' },
 ];
 
@@ -68,9 +68,9 @@ const getSoundSportRating = (score) => {
 };
 
 const getRatingOrder = (score) => {
-  if (score >= 90) return 0;
+  if (score >= 85) return 0;
   if (score >= 75) return 1;
-  if (score >= 60) return 2;
+  if (score >= 65) return 2;
   return 3;
 };
 
@@ -123,9 +123,9 @@ const RatingBadge = ({ rating, showTooltip = false }) => {
           className="absolute z-10 left-0 top-full mt-2 w-48 p-2 bg-[#1a1a1a] border border-[#333] rounded shadow-lg"
         >
           <p className="text-xs text-gray-300">
-            {rating === 'Gold' && 'Score of 90+ points'}
-            {rating === 'Silver' && 'Score of 75-89 points'}
-            {rating === 'Bronze' && 'Score of 60-74 points'}
+            {rating === 'Gold' && 'Score of 85+ points'}
+            {rating === 'Silver' && 'Score of 75-84 points'}
+            {rating === 'Bronze' && 'Score of 65-74 points'}
             {rating === 'Participation' && 'Completed performance'}
           </p>
         </m.div>
