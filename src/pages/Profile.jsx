@@ -797,6 +797,10 @@ const Profile = () => {
           }
           return { ...oldData, corps: updatedCorps };
         });
+      } else if (successCount > 0) {
+        // Fallback: if no avatarUrls returned (function not deployed yet), refetch from server
+        await new Promise(resolve => setTimeout(resolve, 500));
+        refetch();
       }
 
       // Show final result
@@ -819,7 +823,7 @@ const Profile = () => {
       toast.error('Failed to save uniform design');
       throw err;
     }
-  }, [user, queryClient]);
+  }, [user, queryClient, refetch]);
 
   // Handle profile avatar corps selection
   const handleSelectAvatarCorps = useCallback(async (corpsClass) => {
@@ -847,6 +851,7 @@ const Profile = () => {
         // Immediately update the cache with the new avatar URL
         const newAvatarUrl = result.data.avatarUrl;
         if (newAvatarUrl) {
+          // Update cache for current user's profile
           queryClient.setQueryData(queryKeys.profile(user.uid), (oldData) => {
             if (!oldData) return oldData;
             return {
@@ -861,6 +866,11 @@ const Profile = () => {
               },
             };
           });
+        } else {
+          // Fallback: if avatarUrl not returned, refetch from server
+          // This handles cases where the function hasn't been deployed yet
+          await new Promise(resolve => setTimeout(resolve, 500));
+          refetch();
         }
         toast.success('Avatar regenerated!', { id: 'regenerate-avatar' });
       } else {
@@ -870,7 +880,7 @@ const Profile = () => {
       toast.error('Failed to regenerate avatar', { id: 'regenerate-avatar' });
       throw err;
     }
-  }, [user, queryClient]);
+  }, [user, queryClient, refetch]);
 
   // Handlers
   const handleStartEdit = () => {
