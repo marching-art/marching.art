@@ -745,6 +745,8 @@ const Profile = () => {
       // Build update object for primary corps and any copies
       const updateData = {
         [`corps.${corpsClass}.uniformDesign`]: design,
+        // Auto-switch profile avatar to the corps being designed
+        profileAvatarCorps: corpsClass,
       };
 
       // Add copy targets
@@ -783,7 +785,7 @@ const Profile = () => {
         }
       }
 
-      // Immediately update the cache with all new avatar URLs
+      // Immediately update the cache with all new avatar URLs and profileAvatarCorps
       if (Object.keys(avatarUpdates).length > 0) {
         queryClient.setQueryData(queryKeys.profile(user.uid), (oldData) => {
           if (!oldData) return oldData;
@@ -795,7 +797,11 @@ const Profile = () => {
               avatarGeneratedAt: new Date().toISOString(),
             };
           }
-          return { ...oldData, corps: updatedCorps };
+          return {
+            ...oldData,
+            corps: updatedCorps,
+            profileAvatarCorps: corpsClass, // Switch to the designed corps
+          };
         });
       } else if (successCount > 0) {
         // Fallback: if no avatarUrls returned (function not deployed yet), refetch from server
