@@ -876,9 +876,12 @@ function parseAiJson(text) {
  * Automatically prepends drum corps visual context to ensure accurate imagery.
  *
  * @param {string} prompt - Detailed image prompt
+ * @param {Object} options - Optional configuration
+ * @param {string} options.model - Override the default model (e.g., 'gemini-3-flash-preview')
+ * @param {string} options.aspectRatio - Aspect ratio for paid tier (default: '16:9')
  * @returns {Promise<string>} Base64 image data or URL
  */
-async function generateImageWithImagen(prompt) {
+async function generateImageWithImagen(prompt, options = {}) {
   try {
     const ai = initializeGemini();
 
@@ -891,7 +894,7 @@ ${prompt}
 
 ${IMAGE_NEGATIVE_PROMPT}`;
 
-    if (USE_PAID_IMAGE_GEN) {
+    if (USE_PAID_IMAGE_GEN && !options.model) {
       // Paid tier: Imagen 4 Fast ($0.02/image)
       const modelName = "imagen-4.0-fast-generate-001";
       const response = await ai.models.generateImages({
@@ -899,7 +902,7 @@ ${IMAGE_NEGATIVE_PROMPT}`;
         prompt: enhancedPrompt,
         config: {
           numberOfImages: 1,
-          aspectRatio: "16:9",
+          aspectRatio: options.aspectRatio || "16:9",
           outputMimeType: "image/jpeg",
         },
       });
@@ -910,8 +913,8 @@ ${IMAGE_NEGATIVE_PROMPT}`;
         return `data:image/jpeg;base64,${generatedImage.image.imageBytes}`;
       }
     } else {
-      // Free tier: Gemini 3 Pro with native image generation
-      const modelName = "gemini-3-pro-image-preview";
+      // Free tier or custom model: Gemini with native image generation
+      const modelName = options.model || "gemini-3-pro-image-preview";
 
       // Build system instruction with drum corps context
       const systemInstruction = `${DRUM_CORPS_VISUAL_CONTEXT}
