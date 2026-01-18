@@ -272,6 +272,9 @@ export const useScoresData = (options = {}) => {
 
   // Fetch scores data for target season
   useEffect(() => {
+    // Track if this effect is still current to prevent stale data from race conditions
+    let isCurrent = true;
+
     const fetchScoresData = async () => {
       if (!targetSeasonId) return;
 
@@ -348,10 +351,16 @@ export const useScoresData = (options = {}) => {
         if (shows.length === 0 && !seasonId && !fallbackSeasonId && archivedSeasons.length > 0 && !disableArchiveFallback) {
           const mostRecentArchived = archivedSeasons[0];
           console.log(`Current season has no recaps, falling back to ${mostRecentArchived.id}`);
-          setFallbackSeasonId(mostRecentArchived.id);
+          if (isCurrent) {
+            setFallbackSeasonId(mostRecentArchived.id);
+          }
           // Don't set loading to false - the fallback will trigger another fetch
           return;
         }
+
+        // Only update state if this effect is still current (prevents race condition
+        // when user switches tabs quickly between archive and current season)
+        if (!isCurrent) return;
 
         setAllShows(shows);
         setDisplayedSeasonId(targetSeasonId);
@@ -378,12 +387,19 @@ export const useScoresData = (options = {}) => {
         setLoading(false);
       } catch (err) {
         console.error('Error fetching scores:', err);
-        setError(err.message);
-        setLoading(false);
+        if (isCurrent) {
+          setError(err.message);
+          setLoading(false);
+        }
       }
     };
 
     fetchScoresData();
+
+    // Cleanup: mark this effect as stale when dependencies change
+    return () => {
+      isCurrent = false;
+    };
   }, [targetSeasonId, archivedSeasons, seasonId, fallbackSeasonId, disableArchiveFallback, currentDay, currentSeasonUid]);
 
   // Filter shows by class
