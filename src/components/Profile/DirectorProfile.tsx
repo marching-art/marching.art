@@ -1,18 +1,19 @@
 // =============================================================================
-// DIRECTOR PROFILE - Career Portfolio Layout
+// DIRECTOR PROFILE - Career Portfolio Layout (Compact)
 // =============================================================================
-// ESPN-style dense data display with visual engagement
-// Laws: No glow, no shadow, grid layout, expandable sections
+// Side-by-side hero with avatar, deduped awards sections, CTAs for empty state
+// Laws: No glow, no shadow, grid layout, minimal scrolling
 
 import React, { useState, useMemo, memo } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import {
   User, Trophy, Star, TrendingUp, Calendar, Crown, Medal,
   MapPin, Zap, Flame, Award, ChevronDown, ChevronRight,
   Music, Disc3, Play, Clock, Target, Shield, Swords,
-  CircleDot, Hash, ArrowUp, ArrowDown, Minus, X,
+  ArrowUp, ArrowDown, Minus, X, Palette, ExternalLink,
 } from 'lucide-react';
-import type { UserProfile, Achievement, CorpsClass, LifetimeStats } from '../../types';
+import type { UserProfile, Achievement, CorpsClass } from '../../types';
 import { formatSeasonName } from '../../utils/season';
 
 // =============================================================================
@@ -23,6 +24,7 @@ interface DirectorProfileProps {
   profile: UserProfile;
   isOwnProfile?: boolean;
   onEditProfile?: () => void;
+  onDesignUniform?: () => void;
 }
 
 interface SeasonHistoryEntry {
@@ -80,7 +82,6 @@ const STATUS_INDICATORS = {
 // =============================================================================
 
 function getDirectorStatus(profile: UserProfile): keyof typeof STATUS_INDICATORS {
-  // Check if user has any active corps registered
   const hasActiveCorps = profile.corps && Object.values(profile.corps).some(c => c && c.corpsName);
   const hasActiveSeasonId = !!profile.activeSeasonId;
 
@@ -91,29 +92,37 @@ function getDirectorStatus(profile: UserProfile): keyof typeof STATUS_INDICATORS
 }
 
 function calculateInfluenceScore(profile: UserProfile): number {
-  // Gamified XP-based influence score
   const baseXp = profile.xp || 0;
   const levelBonus = (profile.xpLevel || 1) * 100;
   const streakBonus = (profile.engagement?.loginStreak || 0) * 10;
   const champBonus = (profile.stats?.championships || 0) * 500;
   const seasonBonus = (profile.stats?.seasonsPlayed || 0) * 50;
-
   return baseXp + levelBonus + streakBonus + champBonus + seasonBonus;
 }
 
 function calculateDirectorRating(profile: UserProfile): number {
-  // ELO-style rating based on performance
   const baseRating = 1000;
   const championships = profile.stats?.championships || 0;
   const seasons = profile.stats?.seasonsPlayed || 0;
   const topTens = profile.stats?.topTenFinishes || 0;
-
-  // Rating formula: base + (champs * 150) + (top10s * 50) + (seasons * 10)
   const rating = baseRating + (championships * 150) + (topTens * 50) + (seasons * 10);
-  return Math.min(rating, 3000); // Cap at 3000
+  return Math.min(rating, 3000);
 }
 
-function getTrophiesFromProfile(profile: UserProfile): TrophyData[] {
+// Get primary corps avatar URL
+function getCorpsAvatarUrl(profile: UserProfile): string | null {
+  if (!profile.corps) return null;
+  // Priority: world > open > aClass > soundSport
+  const classOrder: CorpsClass[] = ['world', 'open', 'aClass', 'soundSport'];
+  for (const classKey of classOrder) {
+    const corps = profile.corps[classKey];
+    if (corps?.avatarUrl) return corps.avatarUrl;
+  }
+  return null;
+}
+
+// Get trophies (competition-based awards only - NOT achievements)
+function getCompetitionTrophies(profile: UserProfile): TrophyData[] {
   const trophies: TrophyData[] = [];
   const stats = profile.stats;
 
@@ -123,17 +132,17 @@ function getTrophiesFromProfile(profile: UserProfile): TrophyData[] {
       trophies.push({
         id: `champ-${i}`,
         title: 'League Champion',
-        description: `Captured a league championship`,
+        description: 'Captured a league championship',
         tier: 'gold',
         icon: Trophy,
       });
     }
   }
 
-  // Top 10 finishes as silver
+  // Top 10 finishes (excluding championships)
   if (stats?.topTenFinishes && stats.topTenFinishes > (stats?.championships || 0)) {
-    const topTenCount = stats.topTenFinishes - (stats?.championships || 0);
-    for (let i = 0; i < Math.min(topTenCount, 3); i++) {
+    const topTenCount = Math.min(stats.topTenFinishes - (stats?.championships || 0), 3);
+    for (let i = 0; i < topTenCount; i++) {
       trophies.push({
         id: `top10-${i}`,
         title: 'Top 10 Finish',
@@ -144,44 +153,25 @@ function getTrophiesFromProfile(profile: UserProfile): TrophyData[] {
     }
   }
 
-  // Class unlocks as special trophies
+  // Class unlock as special trophy
   if (profile.unlockedClasses?.includes('world')) {
     trophies.push({
       id: 'world-unlock',
-      title: 'World Class Director',
+      title: 'World Class',
       description: 'Achieved World Class status',
       tier: 'special',
       icon: Crown,
     });
   }
 
-  // Veteran badge
+  // Veteran badge (seasons-based)
   if (stats?.seasonsPlayed && stats.seasonsPlayed >= 5) {
     trophies.push({
       id: 'veteran',
-      title: 'Veteran Director',
-      description: `${stats.seasonsPlayed} seasons completed`,
+      title: 'Veteran',
+      description: `${stats.seasonsPlayed} seasons`,
       tier: 'bronze',
       icon: Shield,
-    });
-  }
-
-  // Add achievements as trophies
-  if (profile.achievements) {
-    profile.achievements.forEach(achievement => {
-      const tier = achievement.rarity === 'legendary' ? 'gold'
-        : achievement.rarity === 'epic' ? 'silver'
-        : achievement.rarity === 'rare' ? 'bronze'
-        : 'bronze';
-
-      trophies.push({
-        id: achievement.id,
-        title: achievement.title,
-        description: achievement.description,
-        tier,
-        icon: Award,
-        earnedAt: achievement.earnedAt,
-      });
     });
   }
 
@@ -192,7 +182,6 @@ function getTrophiesFromProfile(profile: UserProfile): TrophyData[] {
 // SUB-COMPONENTS
 // =============================================================================
 
-// Status Indicator Dot
 const StatusIndicator = memo(({ status }: { status: keyof typeof STATUS_INDICATORS }) => {
   const config = STATUS_INDICATORS[status];
   return (
@@ -211,74 +200,55 @@ const StatusIndicator = memo(({ status }: { status: keyof typeof STATUS_INDICATO
 });
 StatusIndicator.displayName = 'StatusIndicator';
 
-// Metric Card - Small stat display
-const MetricCard = memo(({
-  icon: Icon,
-  value,
-  label,
-  color = 'text-white',
-  trend,
-}: {
+// Compact stat pill
+const StatPill = memo(({ icon: Icon, value, label, color = 'text-white' }: {
   icon: React.ElementType;
   value: string | number;
   label: string;
   color?: string;
-  trend?: 'up' | 'down' | 'neutral';
 }) => (
-  <div className="flex items-center gap-2">
-    <div className="w-8 h-8 bg-[#222] border border-[#333] flex items-center justify-center">
-      <Icon className={`w-4 h-4 ${color}`} />
-    </div>
-    <div>
-      <div className="flex items-center gap-1">
-        <span className={`text-sm font-bold font-data tabular-nums ${color}`}>{value}</span>
-        {trend && trend !== 'neutral' && (
-          trend === 'up'
-            ? <ArrowUp className="w-3 h-3 text-green-400" />
-            : <ArrowDown className="w-3 h-3 text-red-400" />
-        )}
-      </div>
-      <span className="text-[10px] text-gray-500 uppercase tracking-wider">{label}</span>
-    </div>
+  <div className="flex items-center gap-1.5 px-2 py-1 bg-[#222] border border-[#333]">
+    <Icon className={`w-3.5 h-3.5 ${color}`} />
+    <span className={`text-xs font-bold font-data tabular-nums ${color}`}>{value}</span>
+    <span className="text-[9px] text-gray-500 uppercase">{label}</span>
   </div>
 ));
-MetricCard.displayName = 'MetricCard';
+StatPill.displayName = 'StatPill';
 
-// Trophy Card - Featured trophy display
-const TrophyCard = memo(({ trophy, featured = false }: { trophy: TrophyData; featured?: boolean }) => {
+// Trophy mini card
+const TrophyMini = memo(({ trophy }: { trophy: TrophyData }) => {
   const styles = TIER_STYLES[trophy.tier];
   const Icon = trophy.icon;
-
   return (
-    <div className={`
-      ${featured ? 'p-4' : 'p-3'}
-      ${styles.bg} border ${styles.border}
-      flex flex-col items-center text-center
-      hover:bg-white/5 transition-colors
-    `}>
-      <div className={`
-        ${featured ? 'w-12 h-12 mb-2' : 'w-8 h-8 mb-1'}
-        flex items-center justify-center
-      `}>
-        <Icon className={`${featured ? 'w-8 h-8' : 'w-5 h-5'} ${styles.icon}`} />
-      </div>
-      <span className={`${featured ? 'text-xs' : 'text-[10px]'} font-bold ${styles.text} truncate w-full`}>
-        {trophy.title}
-      </span>
-      {featured && (
-        <span className="text-[10px] text-gray-500 mt-0.5">{trophy.description}</span>
-      )}
+    <div className={`p-2 ${styles.bg} border ${styles.border} flex flex-col items-center text-center`} title={trophy.description}>
+      <Icon className={`w-5 h-5 ${styles.icon}`} />
+      <span className={`text-[9px] font-bold ${styles.text} mt-1 truncate w-full`}>{trophy.title}</span>
     </div>
   );
 });
-TrophyCard.displayName = 'TrophyCard';
+TrophyMini.displayName = 'TrophyMini';
 
-// Season Card - Expandable season entry
-const SeasonCard = memo(({
-  season,
-  isExpanded,
-  onToggle
-}: {
+// Achievement badge (compact)
+const AchievementMini = memo(({ achievement }: { achievement: Achievement }) => {
+  const rarityColors: Record<string, string> = {
+    legendary: 'bg-purple-500/20 border-purple-500/40 text-purple-400',
+    epic: 'bg-purple-400/15 border-purple-400/30 text-purple-300',
+    rare: 'bg-[#0057B8]/15 border-[#0057B8]/30 text-[#0057B8]',
+    common: 'bg-gray-500/10 border-gray-500/30 text-gray-400',
+  };
+  const colors = rarityColors[achievement.rarity] || rarityColors.common;
+
+  return (
+    <div className={`px-2 py-1.5 border ${colors} flex items-center gap-1.5`} title={achievement.description}>
+      <Award className="w-3.5 h-3.5 flex-shrink-0" />
+      <span className="text-[10px] font-bold truncate">{achievement.title}</span>
+    </div>
+  );
+});
+AchievementMini.displayName = 'AchievementMini';
+
+// Season row (compact)
+const SeasonRow = memo(({ season, isExpanded, onToggle }: {
   season: SeasonHistoryEntry;
   isExpanded: boolean;
   onToggle: () => void;
@@ -287,130 +257,64 @@ const SeasonCard = memo(({
   const score = season.finalScore || season.totalSeasonScore || 0;
   const placement = season.placement;
 
-  // Calculate placement change indicator
-  const placementChange = season.previousPlacement && placement
-    ? season.previousPlacement - placement
-    : null;
-
   return (
-    <div className="bg-[#1a1a1a] border border-[#333]">
-      {/* Main Row - Always Visible */}
+    <div className="border-b border-[#333] last:border-b-0">
       <button
         onClick={onToggle}
-        className="w-full px-3 py-3 flex items-center gap-3 hover:bg-[#222] transition-colors text-left"
+        className="w-full px-3 py-2 flex items-center gap-2 hover:bg-[#222] transition-colors text-left"
       >
-        {/* Placement Badge */}
-        <div className={`
-          w-10 h-10 flex-shrink-0 flex flex-col items-center justify-center
-          ${placement === 1 ? 'bg-yellow-500/20 border-yellow-500/40' :
-            placement && placement <= 3 ? 'bg-gray-400/10 border-gray-500/30' :
-            placement && placement <= 10 ? 'bg-orange-500/10 border-orange-500/30' :
-            'bg-[#222] border-[#333]'}
-          border
-        `}>
-          {placement ? (
-            <>
-              <span className={`text-sm font-bold font-data ${
-                placement === 1 ? 'text-yellow-400' :
-                placement <= 3 ? 'text-gray-300' :
-                placement <= 10 ? 'text-orange-400' : 'text-gray-400'
-              }`}>
-                #{placement}
-              </span>
-              {placementChange !== null && placementChange !== 0 && (
-                <span className={`text-[8px] flex items-center ${placementChange > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {placementChange > 0 ? <ArrowUp className="w-2 h-2" /> : <ArrowDown className="w-2 h-2" />}
-                  {Math.abs(placementChange)}
-                </span>
-              )}
-            </>
-          ) : (
-            <Minus className="w-4 h-4 text-gray-500" />
-          )}
+        {/* Rank */}
+        <div className={`w-8 h-8 flex-shrink-0 flex items-center justify-center border ${
+          placement === 1 ? 'bg-yellow-500/20 border-yellow-500/40 text-yellow-400' :
+          placement && placement <= 3 ? 'bg-gray-400/10 border-gray-500/30 text-gray-300' :
+          placement && placement <= 10 ? 'bg-orange-500/10 border-orange-500/30 text-orange-400' :
+          'bg-[#222] border-[#333] text-gray-500'
+        }`}>
+          {placement ? <span className="text-xs font-bold">#{placement}</span> : <Minus className="w-3 h-3" />}
         </div>
 
-        {/* Corps Info */}
+        {/* Info */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-white truncate">{season.corpsName}</span>
-            <span className={`text-[10px] font-bold px-1.5 py-0.5 ${classConfig.bg} ${classConfig.color}`}>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-bold text-white truncate">{season.corpsName}</span>
+            <span className={`text-[9px] font-bold px-1 ${classConfig.bg} ${classConfig.color}`}>
               {classConfig.short}
             </span>
           </div>
-          <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-[11px] text-gray-500">
-              {formatSeasonName(season.seasonId || season.seasonName || '')}
-            </span>
-            {season.showTitle && (
-              <>
-                <span className="text-gray-600">•</span>
-                <span className="text-[11px] text-gray-400 italic truncate">
-                  "{season.showTitle}"
-                </span>
-              </>
-            )}
-          </div>
+          <span className="text-[10px] text-gray-500">{formatSeasonName(season.seasonId || season.seasonName || '')}</span>
         </div>
 
         {/* Score */}
-        <div className="text-right flex-shrink-0">
-          <div className="text-sm font-bold text-white font-data tabular-nums">
-            {score > 0 ? score.toLocaleString() : '-'}
-          </div>
-          <div className="text-[10px] text-gray-500">points</div>
+        <div className="text-right">
+          <span className="text-xs font-bold text-white font-data">{score > 0 ? score.toLocaleString() : '-'}</span>
         </div>
 
-        {/* Expand Icon */}
-        <div className="flex-shrink-0 pl-2">
-          {isExpanded ? (
-            <ChevronDown className="w-4 h-4 text-gray-500" />
-          ) : (
-            <ChevronRight className="w-4 h-4 text-gray-500" />
-          )}
-        </div>
+        <ChevronRight className={`w-3 h-3 text-gray-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
       </button>
 
-      {/* Expanded Content */}
       <AnimatePresence>
         {isExpanded && (
           <m.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-3 pb-3 pt-0 border-t border-[#333]">
-              {/* Stats Row */}
-              <div className="grid grid-cols-3 gap-2 py-3">
-                <div className="text-center">
-                  <div className="text-xs font-bold text-white font-data">{season.showsAttended || 0}</div>
-                  <div className="text-[10px] text-gray-500">Shows</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xs font-bold text-white font-data">{season.circuitPoints || 0}</div>
-                  <div className="text-[10px] text-gray-500">Circuit Pts</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xs font-bold text-white font-data">
-                    {score > 0 && season.showsAttended ? (score / season.showsAttended).toFixed(1) : '-'}
-                  </div>
-                  <div className="text-[10px] text-gray-500">Avg Score</div>
-                </div>
+            <div className="px-3 pb-2 pt-1 bg-[#0a0a0a] grid grid-cols-3 gap-2 text-center">
+              <div>
+                <div className="text-xs font-bold text-white">{season.showsAttended || 0}</div>
+                <div className="text-[9px] text-gray-500">Shows</div>
               </div>
-
-              {/* Repertoire Section */}
-              {season.repertoire && season.repertoire.length > 0 && (
-                <div className="mt-2">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Music className="w-3 h-3 text-gray-500" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
-                      Repertoire
-                    </span>
-                  </div>
-                  <RepertoireDisplay repertoire={season.repertoire} />
+              <div>
+                <div className="text-xs font-bold text-white">{season.circuitPoints || 0}</div>
+                <div className="text-[9px] text-gray-500">Pts</div>
+              </div>
+              <div>
+                <div className="text-xs font-bold text-white">
+                  {score > 0 && season.showsAttended ? (score / season.showsAttended).toFixed(1) : '-'}
                 </div>
-              )}
+                <div className="text-[9px] text-gray-500">Avg</div>
+              </div>
             </div>
           </m.div>
         )}
@@ -418,115 +322,24 @@ const SeasonCard = memo(({
     </div>
   );
 });
-SeasonCard.displayName = 'SeasonCard';
+SeasonRow.displayName = 'SeasonRow';
 
-// Repertoire Display - Music playlist style
-const RepertoireDisplay = memo(({ repertoire }: { repertoire: string[] }) => (
-  <div className="bg-[#0a0a0a] border border-[#333] divide-y divide-[#333]">
-    {repertoire.map((track, index) => (
-      <div key={index} className="flex items-center gap-3 px-3 py-2 group hover:bg-[#1a1a1a] transition-colors">
-        <div className="w-5 h-5 flex items-center justify-center text-gray-600 group-hover:hidden">
-          <span className="text-xs font-data tabular-nums">{index + 1}</span>
-        </div>
-        <div className="w-5 h-5 hidden group-hover:flex items-center justify-center">
-          <Play className="w-3 h-3 text-[#0057B8]" />
-        </div>
-        <Disc3 className="w-4 h-4 text-gray-600 flex-shrink-0" />
-        <span className="text-xs text-gray-300 flex-1 truncate">{track}</span>
-        <Clock className="w-3 h-3 text-gray-600" />
-      </div>
-    ))}
-  </div>
-));
-RepertoireDisplay.displayName = 'RepertoireDisplay';
-
-// Achievement Badge
-const AchievementBadge = memo(({
-  achievement
-}: {
-  achievement: Achievement
-}) => {
-  const rarityColors = {
-    legendary: 'bg-purple-500/20 border-purple-500/40 text-purple-400',
-    epic: 'bg-purple-400/15 border-purple-400/30 text-purple-300',
-    rare: 'bg-[#0057B8]/15 border-[#0057B8]/30 text-[#0057B8]',
-    common: 'bg-gray-500/10 border-gray-500/30 text-gray-400',
-  };
-
-  const colors = rarityColors[achievement.rarity] || rarityColors.common;
-
-  return (
-    <div className={`p-2 border ${colors} flex items-center gap-2 hover:bg-white/5 transition-colors`}>
-      <Award className="w-4 h-4 flex-shrink-0" />
-      <div className="min-w-0 flex-1">
-        <span className="text-[11px] font-bold truncate block">{achievement.title}</span>
-        <span className="text-[9px] text-gray-500 uppercase tracking-wider">{achievement.rarity}</span>
-      </div>
-    </div>
-  );
-});
-AchievementBadge.displayName = 'AchievementBadge';
-
-// Trophy Case Modal
-const TrophyCaseModal = memo(({
-  trophies,
-  onClose
-}: {
-  trophies: TrophyData[];
-  onClose: () => void;
+// Empty state with CTA
+const EmptyWithCTA = memo(({ icon: Icon, title, cta, to }: {
+  icon: React.ElementType;
+  title: string;
+  cta: string;
+  to: string;
 }) => (
-  <div
-    className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
-    onClick={onClose}
-  >
-    <m.div
-      initial={{ scale: 0.95, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      exit={{ scale: 0.95, opacity: 0 }}
-      className="w-full max-w-2xl max-h-[80vh] bg-[#1a1a1a] border border-[#333] flex flex-col"
-      onClick={e => e.stopPropagation()}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
-        <div className="flex items-center gap-2">
-          <Trophy className="w-5 h-5 text-yellow-500" />
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
-            Trophy Case
-          </span>
-          <span className="text-[10px] text-gray-500">
-            {trophies.length} total
-          </span>
-        </div>
-        <button onClick={onClose} className="p-1 text-gray-500 hover:text-white">
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-
-      {/* Body */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {/* Group by tier */}
-        {(['gold', 'silver', 'bronze', 'special'] as const).map(tier => {
-          const tierTrophies = trophies.filter(t => t.tier === tier);
-          if (tierTrophies.length === 0) return null;
-
-          return (
-            <div key={tier} className="mb-6 last:mb-0">
-              <h3 className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${TIER_STYLES[tier].text}`}>
-                {tier === 'special' ? 'Special Awards' : `${tier} Tier`}
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                {tierTrophies.map(trophy => (
-                  <TrophyCard key={trophy.id} trophy={trophy} featured />
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </m.div>
+  <div className="p-4 text-center">
+    <Icon className="w-6 h-6 text-gray-600 mx-auto mb-1" />
+    <p className="text-[10px] text-gray-500 mb-2">{title}</p>
+    <Link to={to} className="inline-flex items-center gap-1 text-[10px] text-[#0057B8] hover:underline">
+      {cta} <ExternalLink className="w-3 h-3" />
+    </Link>
   </div>
 ));
-TrophyCaseModal.displayName = 'TrophyCaseModal';
+EmptyWithCTA.displayName = 'EmptyWithCTA';
 
 // =============================================================================
 // MAIN COMPONENT
@@ -535,6 +348,7 @@ TrophyCaseModal.displayName = 'TrophyCaseModal';
 export const DirectorProfile: React.FC<DirectorProfileProps> = ({
   profile,
   isOwnProfile = false,
+  onDesignUniform,
 }) => {
   const [expandedSeason, setExpandedSeason] = useState<string | null>(null);
   const [showAllTrophies, setShowAllTrophies] = useState(false);
@@ -543,30 +357,29 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
   const status = useMemo(() => getDirectorStatus(profile), [profile]);
   const influenceScore = useMemo(() => calculateInfluenceScore(profile), [profile]);
   const directorRating = useMemo(() => calculateDirectorRating(profile), [profile]);
-  const trophies = useMemo(() => getTrophiesFromProfile(profile), [profile]);
-  const featuredTrophies = useMemo(() => trophies.slice(0, 5), [trophies]);
+  const avatarUrl = useMemo(() => getCorpsAvatarUrl(profile), [profile]);
 
-  // Build season history from corps data
+  // DEDUPED: Trophies are competition-based, achievements are profile.achievements
+  const trophies = useMemo(() => getCompetitionTrophies(profile), [profile]);
+  const achievements = profile.achievements || [];
+
+  // Season history
   const seasonHistory = useMemo((): SeasonHistoryEntry[] => {
     if (!profile.corps) return [];
-
     const history: SeasonHistoryEntry[] = [];
     const seen = new Set<string>();
 
     Object.entries(profile.corps).forEach(([classKey, corps]) => {
       if (!corps) return;
-
-      // Check if corps has seasonHistory
       const corpsAny = corps as { seasonHistory?: SeasonHistoryEntry[] };
       if (corpsAny.seasonHistory) {
         corpsAny.seasonHistory.forEach(season => {
           const key = `${classKey}-${season.seasonId || season.seasonName}`;
           if (seen.has(key)) return;
           seen.add(key);
-
           history.push({
             ...season,
-            corpsName: season.corpsName || corps.corpsName || corps.name || 'Unknown',
+            corpsName: season.corpsName || corps.corpsName || (corps as { name?: string }).name || 'Unknown',
             classKey: classKey as CorpsClass,
           });
         });
@@ -580,275 +393,222 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
     });
   }, [profile.corps]);
 
-  // Member since
   const memberSince = useMemo(() => {
     if (!profile.createdAt) return 'Unknown';
     const date = profile.createdAt.toDate ? profile.createdAt.toDate() : new Date(profile.createdAt as unknown as string);
     return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
   }, [profile.createdAt]);
 
-  // Achievements list
-  const achievements = profile.achievements || [];
+  // Check if stats are empty
+  const hasStats = (profile.stats?.championships || 0) > 0 ||
+    (profile.stats?.topTenFinishes || 0) > 0 ||
+    (profile.stats?.seasonsPlayed || 0) > 0;
 
   return (
-    <div className="bg-[#0a0a0a] min-h-full">
+    <div className="bg-[#0a0a0a]">
       {/* ================================================================== */}
-      {/* HERO CARD - Director Identity */}
+      {/* HERO SECTION - Avatar Left, Info Right */}
       {/* ================================================================== */}
       <div className="bg-[#1a1a1a] border-b border-[#333]">
-        <div className="px-4 py-4">
-          {/* Top Row: Avatar + Name + Status */}
-          <div className="flex items-start gap-4">
-            {/* Avatar */}
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#222] border border-[#333] flex-shrink-0 flex items-center justify-center">
-              {profile.photoURL ? (
-                <img src={profile.photoURL} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <User className="w-8 h-8 text-gray-500" />
-              )}
-            </div>
+        <div className="flex">
+          {/* LEFT: Avatar/Uniform - Large */}
+          <div className="flex-shrink-0 w-32 sm:w-40 lg:w-48 bg-[#0a0a0a] border-r border-[#333] relative group">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="Corps Uniform" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center aspect-square">
+                <User className="w-12 h-12 text-gray-600" />
+              </div>
+            )}
 
-            {/* Name + Info */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-lg font-bold text-white truncate">
+            {/* Design uniform overlay for own profile */}
+            {isOwnProfile && onDesignUniform && (
+              <button
+                onClick={onDesignUniform}
+                className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity"
+              >
+                <Palette className="w-6 h-6 text-white mb-1" />
+                <span className="text-[10px] text-white font-bold uppercase">Design Uniform</span>
+              </button>
+            )}
+          </div>
+
+          {/* RIGHT: Director Info */}
+          <div className="flex-1 p-3 sm:p-4 flex flex-col justify-between min-w-0">
+            {/* Top: Name + Status */}
+            <div>
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                <h1 className="text-base sm:text-lg font-bold text-white truncate">
                   {profile.displayName || 'Anonymous Director'}
                 </h1>
                 <StatusIndicator status={status} />
               </div>
 
               {profile.userTitle && (
-                <div className="flex items-center gap-1 mt-0.5">
+                <div className="flex items-center gap-1 mb-1">
                   <Shield className="w-3 h-3 text-[#0057B8]" />
-                  <span className="text-xs text-[#0057B8] font-bold">{profile.userTitle}</span>
+                  <span className="text-[11px] text-[#0057B8] font-bold">{profile.userTitle}</span>
                 </div>
               )}
 
-              {profile.location && (
-                <div className="flex items-center gap-1 mt-1">
-                  <MapPin className="w-3 h-3 text-gray-500" />
-                  <span className="text-[11px] text-gray-500">{profile.location}</span>
-                </div>
-              )}
-
-              <div className="flex items-center gap-1 mt-1">
-                <Calendar className="w-3 h-3 text-gray-600" />
-                <span className="text-[11px] text-gray-600">Member since {memberSince}</span>
+              <div className="flex items-center gap-3 text-[10px] text-gray-500">
+                {profile.location && (
+                  <span className="flex items-center gap-1">
+                    <MapPin className="w-3 h-3" /> {profile.location}
+                  </span>
+                )}
+                <span className="flex items-center gap-1">
+                  <Calendar className="w-3 h-3" /> Since {memberSince}
+                </span>
               </div>
             </div>
-          </div>
 
-          {/* Metrics Row */}
-          <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <MetricCard
-              icon={Zap}
-              value={influenceScore.toLocaleString()}
-              label="Influence"
-              color="text-yellow-400"
-            />
-            <MetricCard
-              icon={Target}
-              value={directorRating}
-              label="Rating"
-              color="text-[#0057B8]"
-            />
-            <MetricCard
-              icon={Flame}
-              value={profile.engagement?.loginStreak || 0}
-              label="Streak"
-              color={profile.engagement?.loginStreak && profile.engagement.loginStreak >= 7 ? 'text-orange-400' : 'text-gray-400'}
-            />
-            <MetricCard
-              icon={Calendar}
-              value={profile.stats?.seasonsPlayed || 0}
-              label="Seasons"
-              color="text-green-400"
-            />
+            {/* Bottom: Stats Row */}
+            <div className="flex flex-wrap gap-2 mt-3">
+              <StatPill icon={Zap} value={influenceScore.toLocaleString()} label="Influence" color="text-yellow-400" />
+              <StatPill icon={Target} value={directorRating} label="Rating" color="text-[#0057B8]" />
+              <StatPill icon={Flame} value={profile.engagement?.loginStreak || 0} label="Streak" color={profile.engagement?.loginStreak && profile.engagement.loginStreak >= 7 ? 'text-orange-400' : 'text-gray-400'} />
+              <StatPill icon={Calendar} value={profile.stats?.seasonsPlayed || 0} label="Seasons" color="text-green-400" />
+            </div>
           </div>
         </div>
       </div>
 
       {/* ================================================================== */}
-      {/* MAIN GRID LAYOUT */}
+      {/* CONTENT GRID - Compact 3-column */}
       {/* ================================================================== */}
-      <div className="p-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="p-3 grid grid-cols-1 md:grid-cols-3 gap-3">
 
-        {/* LEFT COLUMN: Trophy Case + Achievements */}
-        <div className="lg:col-span-1 space-y-4">
+        {/* COLUMN 1: Trophy Case */}
+        <div className="bg-[#1a1a1a] border border-[#333]">
+          <div className="px-3 py-2 border-b border-[#333] bg-[#222] flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Trophy Case</span>
+            </div>
+            {trophies.length > 0 && (
+              <span className="text-[9px] text-gray-500">{trophies.length}</span>
+            )}
+          </div>
 
-          {/* TROPHY CASE */}
-          <div className="bg-[#1a1a1a] border border-[#333]">
-            <div className="px-3 py-2 border-b border-[#333] bg-[#222] flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Trophy className="w-4 h-4 text-yellow-500" />
-                <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
-                  Trophy Case
-                </span>
-              </div>
-              {trophies.length > 5 && (
-                <button
-                  onClick={() => setShowAllTrophies(true)}
-                  className="text-[10px] text-[#0057B8] hover:underline"
-                >
-                  View All ({trophies.length})
+          {trophies.length > 0 ? (
+            <div className="p-2 grid grid-cols-3 gap-1.5">
+              {trophies.slice(0, 6).map(trophy => (
+                <TrophyMini key={trophy.id} trophy={trophy} />
+              ))}
+            </div>
+          ) : (
+            <EmptyWithCTA
+              icon={Trophy}
+              title="No trophies yet"
+              cta="Join a league"
+              to="/leagues"
+            />
+          )}
+        </div>
+
+        {/* COLUMN 2: Achievements */}
+        <div className="bg-[#1a1a1a] border border-[#333]">
+          <div className="px-3 py-2 border-b border-[#333] bg-[#222] flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <Star className="w-3.5 h-3.5 text-purple-400" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Achievements</span>
+            </div>
+            {achievements.length > 0 && (
+              <span className="text-[9px] text-gray-500">{achievements.length} earned</span>
+            )}
+          </div>
+
+          {achievements.length > 0 ? (
+            <div className="p-2 space-y-1">
+              {achievements.slice(0, 4).map(achievement => (
+                <AchievementMini key={achievement.id} achievement={achievement} />
+              ))}
+              {achievements.length > 4 && (
+                <button className="w-full text-[9px] text-[#0057B8] hover:underline py-1">
+                  +{achievements.length - 4} more
                 </button>
               )}
             </div>
-
-            {featuredTrophies.length > 0 ? (
-              <div className="p-3">
-                {/* Featured Shelf - Top 3 */}
-                <div className="grid grid-cols-3 gap-2 mb-3">
-                  {featuredTrophies.slice(0, 3).map(trophy => (
-                    <TrophyCard key={trophy.id} trophy={trophy} featured />
-                  ))}
-                </div>
-
-                {/* Secondary Row */}
-                {featuredTrophies.length > 3 && (
-                  <div className="grid grid-cols-2 gap-2">
-                    {featuredTrophies.slice(3, 5).map(trophy => (
-                      <TrophyCard key={trophy.id} trophy={trophy} />
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="p-6 text-center">
-                <Trophy className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-                <p className="text-xs text-gray-500">No trophies yet</p>
-                <p className="text-[10px] text-gray-600">Compete to earn rewards</p>
-              </div>
-            )}
-          </div>
-
-          {/* ACHIEVEMENTS */}
-          <div className="bg-[#1a1a1a] border border-[#333]">
-            <div className="px-3 py-2 border-b border-[#333] bg-[#222] flex items-center gap-2">
-              <Star className="w-4 h-4 text-purple-400" />
-              <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
-                Achievements
-              </span>
-              <span className="text-[10px] text-gray-500 ml-auto">
-                {achievements.length} earned
-              </span>
-            </div>
-
-            {achievements.length > 0 ? (
-              <div className="p-3 grid grid-cols-1 gap-2">
-                {achievements.slice(0, 6).map(achievement => (
-                  <AchievementBadge key={achievement.id} achievement={achievement} />
-                ))}
-                {achievements.length > 6 && (
-                  <button className="text-[10px] text-[#0057B8] hover:underline py-2">
-                    +{achievements.length - 6} more achievements
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className="p-6 text-center">
-                <Award className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-                <p className="text-xs text-gray-500">No achievements yet</p>
-                <p className="text-[10px] text-gray-600">Keep playing to unlock</p>
-              </div>
-            )}
-          </div>
-
-          {/* CAREER STATS */}
-          <div className="bg-[#1a1a1a] border border-[#333]">
-            <div className="px-3 py-2 border-b border-[#333] bg-[#222] flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-green-400" />
-              <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
-                Career Stats
-              </span>
-            </div>
-            <div className="p-3 space-y-2">
-              <div className="flex justify-between items-center py-1 border-b border-[#333]/50">
-                <span className="text-xs text-gray-400">Championships</span>
-                <span className="text-sm font-bold text-yellow-400 font-data">
-                  {profile.stats?.championships || 0}
-                </span>
-              </div>
-              <div className="flex justify-between items-center py-1 border-b border-[#333]/50">
-                <span className="text-xs text-gray-400">Top 10 Finishes</span>
-                <span className="text-sm font-bold text-white font-data">
-                  {profile.stats?.topTenFinishes || 0}
-                </span>
-              </div>
-              <div className="flex justify-between items-center py-1 border-b border-[#333]/50">
-                <span className="text-xs text-gray-400">Seasons Played</span>
-                <span className="text-sm font-bold text-white font-data">
-                  {profile.stats?.seasonsPlayed || 0}
-                </span>
-              </div>
-              <div className="flex justify-between items-center py-1 border-b border-[#333]/50">
-                <span className="text-xs text-gray-400">League Wins</span>
-                <span className="text-sm font-bold text-white font-data">
-                  {profile.stats?.leagueWins || 0}
-                </span>
-              </div>
-              <div className="flex justify-between items-center py-1">
-                <span className="text-xs text-gray-400">Total XP</span>
-                <span className="text-sm font-bold text-blue-400 font-data">
-                  {(profile.xp || 0).toLocaleString()}
-                </span>
-              </div>
-            </div>
-          </div>
+          ) : (
+            <EmptyWithCTA
+              icon={Award}
+              title="No achievements yet"
+              cta="Start playing"
+              to="/schedule"
+            />
+          )}
         </div>
 
-        {/* RIGHT COLUMN: Season History Timeline */}
-        <div className="lg:col-span-2">
-          <div className="bg-[#1a1a1a] border border-[#333]">
-            <div className="px-3 py-2 border-b border-[#333] bg-[#222] flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Swords className="w-4 h-4 text-[#0057B8]" />
-                <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
-                  Season History
-                </span>
-              </div>
-              <span className="text-[10px] text-gray-500">
-                {seasonHistory.length} seasons
-              </span>
-            </div>
-
-            {seasonHistory.length > 0 ? (
-              <div className="divide-y divide-[#333]">
-                {seasonHistory.map(season => (
-                  <SeasonCard
-                    key={`${season.classKey}-${season.seasonId}`}
-                    season={season}
-                    isExpanded={expandedSeason === `${season.classKey}-${season.seasonId}`}
-                    onToggle={() => setExpandedSeason(
-                      expandedSeason === `${season.classKey}-${season.seasonId}`
-                        ? null
-                        : `${season.classKey}-${season.seasonId}`
-                    )}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="p-8 text-center">
-                <Calendar className="w-10 h-10 text-gray-600 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">No season history yet</p>
-                <p className="text-xs text-gray-600 mt-1">
-                  Register for your first season to start building your legacy
-                </p>
-              </div>
-            )}
+        {/* COLUMN 3: Career Stats */}
+        <div className="bg-[#1a1a1a] border border-[#333]">
+          <div className="px-3 py-2 border-b border-[#333] bg-[#222] flex items-center gap-1.5">
+            <TrendingUp className="w-3.5 h-3.5 text-green-400" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Career Stats</span>
           </div>
+
+          {hasStats ? (
+            <div className="p-2 space-y-1">
+              {[
+                { label: 'Championships', value: profile.stats?.championships || 0, color: 'text-yellow-400' },
+                { label: 'Top 10s', value: profile.stats?.topTenFinishes || 0, color: 'text-white' },
+                { label: 'Seasons', value: profile.stats?.seasonsPlayed || 0, color: 'text-white' },
+                { label: 'League Wins', value: profile.stats?.leagueWins || 0, color: 'text-white' },
+                { label: 'Total XP', value: (profile.xp || 0).toLocaleString(), color: 'text-blue-400' },
+              ].map(stat => (
+                <div key={stat.label} className="flex justify-between items-center py-0.5">
+                  <span className="text-[10px] text-gray-400">{stat.label}</span>
+                  <span className={`text-xs font-bold font-data ${stat.color}`}>{stat.value}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyWithCTA
+              icon={TrendingUp}
+              title="No stats yet"
+              cta="Register for shows"
+              to="/schedule"
+            />
+          )}
         </div>
       </div>
 
-      {/* Trophy Case Modal */}
-      <AnimatePresence>
-        {showAllTrophies && (
-          <TrophyCaseModal
-            trophies={trophies}
-            onClose={() => setShowAllTrophies(false)}
-          />
-        )}
-      </AnimatePresence>
+      {/* ================================================================== */}
+      {/* SEASON HISTORY - Full Width */}
+      {/* ================================================================== */}
+      <div className="px-3 pb-3">
+        <div className="bg-[#1a1a1a] border border-[#333]">
+          <div className="px-3 py-2 border-b border-[#333] bg-[#222] flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <Swords className="w-3.5 h-3.5 text-[#0057B8]" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Season History</span>
+            </div>
+            <span className="text-[9px] text-gray-500">{seasonHistory.length} seasons</span>
+          </div>
+
+          {seasonHistory.length > 0 ? (
+            <div className="max-h-64 overflow-y-auto">
+              {seasonHistory.map(season => (
+                <SeasonRow
+                  key={`${season.classKey}-${season.seasonId}`}
+                  season={season}
+                  isExpanded={expandedSeason === `${season.classKey}-${season.seasonId}`}
+                  onToggle={() => setExpandedSeason(
+                    expandedSeason === `${season.classKey}-${season.seasonId}` ? null : `${season.classKey}-${season.seasonId}`
+                  )}
+                />
+              ))}
+            </div>
+          ) : (
+            <EmptyWithCTA
+              icon={Calendar}
+              title="No season history yet"
+              cta="Find your first show"
+              to="/schedule"
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 };
