@@ -143,7 +143,7 @@ const LeaveLeagueModal = ({ leagueName, onClose, onConfirm, isLoading }) => {
   );
 };
 
-const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
+const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
   const [activeTab, setActiveTab] = useState('standings');
   const [standings, setStandings] = useState([]);
   const [messages, setMessages] = useState([]);
@@ -158,7 +158,8 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
   const [inviteCopied, setInviteCopied] = useState(false);
   const [recaps, setRecaps] = useState([]);
 
-  const isCommissioner = league.creatorId === userProfile?.uid;
+  // Use auth userId directly for commissioner check (more reliable than profile.uid)
+  const isCommissioner = league.creatorId === userId;
 
   const handleLeaveConfirm = async () => {
     setIsLeaving(true);
