@@ -18,6 +18,7 @@ import { updateUsername, updateEmail, deleteAccount } from '../firebase/function
 import toast from 'react-hot-toast';
 import { DirectorProfile } from '../components/Profile/DirectorProfile';
 import UniformDesignModal from '../components/modals/UniformDesignModal';
+import { generateCorpsAvatar } from '../api/functions';
 
 // =============================================================================
 // NOTE: Achievement and season history display is now handled by DirectorProfile
@@ -764,6 +765,40 @@ const Profile = () => {
     }
   }, [user, refetch]);
 
+  // Handle profile avatar corps selection
+  const handleSelectAvatarCorps = useCallback(async (corpsClass) => {
+    if (!user) return;
+    try {
+      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
+      await updateDoc(profileRef, {
+        profileAvatarCorps: corpsClass,
+      });
+      toast.success('Profile avatar updated!');
+      refetch();
+    } catch (err) {
+      toast.error('Failed to update avatar');
+      throw err;
+    }
+  }, [user, refetch]);
+
+  // Handle avatar regeneration
+  const handleRegenerateAvatar = useCallback(async (corpsClass) => {
+    if (!user) return;
+    try {
+      toast.loading('Generating new avatar...', { id: 'regenerate-avatar' });
+      const result = await generateCorpsAvatar({ corpsClass });
+      if (result.data.success) {
+        toast.success('Avatar regenerated!', { id: 'regenerate-avatar' });
+        refetch();
+      } else {
+        toast.error(result.data.message || 'Failed to regenerate avatar', { id: 'regenerate-avatar' });
+      }
+    } catch (err) {
+      toast.error('Failed to regenerate avatar', { id: 'regenerate-avatar' });
+      throw err;
+    }
+  }, [user, refetch]);
+
   // Handlers
   const handleStartEdit = () => {
     setEditData({
@@ -847,6 +882,8 @@ const Profile = () => {
           isOwnProfile={isOwnProfile}
           onEditProfile={handleStartEdit}
           onDesignUniform={() => setShowUniformDesign(true)}
+          onSelectAvatarCorps={handleSelectAvatarCorps}
+          onRegenerateAvatar={handleRegenerateAvatar}
         />
 
         {/* QUICK LINKS */}

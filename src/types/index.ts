@@ -67,6 +67,9 @@ export interface UserProfile {
   activeSeasonId?: string;  // Current season the user is participating in
   initialSetupComplete?: string;  // Season ID when initial setup wizard was completed
 
+  // Profile avatar selection - which corps uniform to display
+  profileAvatarCorps?: CorpsClass;
+
   // Settings
   settings?: UserSettings;
 }
@@ -207,6 +210,10 @@ export interface CorpsUniformDesign {
 
   // Additional Visual Notes (free-form for anything not covered above)
   additionalNotes?: string;    // e.g., "LED elements in helmet", "capes that detach mid-show"
+
+  // Avatar Generation Options
+  avatarStyle?: 'logo' | 'performer';  // logo = team emblem, performer = section member image
+  avatarSection?: 'drumMajor' | 'hornline' | 'drumline' | 'colorGuard';  // which section to feature in performer style
 }
 
 export interface CorpsData {
