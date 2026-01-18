@@ -22,6 +22,8 @@ export interface UserProfile {
   email: string;
   createdAt: Timestamp;
   lastLogin: Timestamp;
+  photoURL?: string;
+  location?: string;
 
   // XP & Progression
   xp: number;
@@ -37,7 +39,15 @@ export interface UserProfile {
   // Corps data (keyed by class)
   corps: Record<CorpsClass, CorpsData | undefined>;
 
-  // Stats
+  // Quick stats (aggregated)
+  stats?: {
+    seasonsPlayed?: number;
+    championships?: number;
+    topTenFinishes?: number;
+    leagueWins?: number;
+  };
+
+  // Lifetime stats (detailed)
   lifetimeStats?: LifetimeStats;
 
   // Daily challenges (keyed by date string)
