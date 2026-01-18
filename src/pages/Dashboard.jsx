@@ -653,7 +653,7 @@ const SeasonScorecard = ({ score, rank, rankChange, corpsName, corpsClass, loadi
         <div className="flex items-center gap-3 mb-4 pb-4 border-b border-[#333]">
           <button
             onClick={onDesignUniform}
-            className="relative w-14 h-14 bg-[#222] border-2 border-[#444] rounded-lg overflow-hidden flex items-center justify-center hover:border-[#0057B8] transition-colors group"
+            className="relative w-14 h-14 bg-[#222] border border-[#444] overflow-hidden flex items-center justify-center hover:border-[#0057B8] transition-colors group"
             title="Design Uniform"
           >
             {avatarUrl ? (

@@ -624,6 +624,7 @@ async function processAndArchiveOffSeasonScoresLogic() {
             location: corps.location,
             corpsClass: corpsClass,
             corpsName: corps.corpsName,
+            avatarUrl: corps.avatarUrl || null,
             totalScore: totalShowScore,
             geScore, visualScore, musicScore,
           });
@@ -1363,6 +1364,7 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
             location: corps.location,
             corpsClass: corpsClass,
             corpsName: corps.corpsName,
+            avatarUrl: corps.avatarUrl || null,
             totalScore: totalShowScore,
             geScore, visualScore, musicScore,
           });
