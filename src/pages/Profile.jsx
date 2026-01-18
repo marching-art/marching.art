@@ -4,7 +4,7 @@
 // Redesigned with rich Trophy Case, Season Timeline, and gamification
 // Laws: No glow, no shadow, grid layout, expandable sections
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import {
   User, Settings, Crown, LogOut, Coins, Heart,
@@ -17,6 +17,7 @@ import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { updateUsername, updateEmail, deleteAccount } from '../firebase/functions';
 import toast from 'react-hot-toast';
 import { DirectorProfile } from '../components/Profile/DirectorProfile';
+import { UniformDesignModal } from '../components/modals/UniformDesignModal';
 
 // =============================================================================
 // NOTE: Achievement and season history display is now handled by DirectorProfile
@@ -690,6 +691,7 @@ const Profile = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [settingsTab, setSettingsTab] = useState('account');
   const [saving, setSaving] = useState(false);
+  const [showUniformDesign, setShowUniformDesign] = useState(false);
 
   const isOwnProfile = !userId || userId === user?.uid;
 
@@ -713,6 +715,28 @@ const Profile = () => {
   const updateProfileMutation = useUpdateProfile(profileUserId || '');
 
   // NOTE: Stats, achievements, and season history are now computed in DirectorProfile
+
+  // Get active corps class for uniform design
+  const activeCorpsClass = profile?.corps
+    ? ['world', 'open', 'aClass', 'soundSport'].find(c => profile.corps[c]?.corpsName)
+    : 'soundSport';
+
+  // Handle uniform design save
+  const handleUniformDesign = useCallback(async (design) => {
+    if (!user || !activeCorpsClass) return;
+    try {
+      const profileRef = doc(db, 'users', user.uid);
+      await updateDoc(profileRef, {
+        [`corps.${activeCorpsClass}.uniformDesign`]: design,
+      });
+      toast.success('Uniform design saved! Avatar will be generated soon.');
+      setShowUniformDesign(false);
+      refetch();
+    } catch (err) {
+      toast.error('Failed to save uniform design');
+      throw err;
+    }
+  }, [user, activeCorpsClass, refetch]);
 
   // Handlers
   const handleStartEdit = () => {
@@ -796,6 +820,7 @@ const Profile = () => {
           profile={profile}
           isOwnProfile={isOwnProfile}
           onEditProfile={handleStartEdit}
+          onDesignUniform={() => setShowUniformDesign(true)}
         />
 
         {/* QUICK LINKS */}
@@ -851,6 +876,17 @@ const Profile = () => {
         }}
         initialTab={settingsTab}
       />
+
+      {/* UNIFORM DESIGN MODAL */}
+      {showUniformDesign && activeCorpsClass && (
+        <UniformDesignModal
+          isOpen={showUniformDesign}
+          onClose={() => setShowUniformDesign(false)}
+          onSave={handleUniformDesign}
+          corpsClass={activeCorpsClass}
+          initialDesign={profile?.corps?.[activeCorpsClass]?.uniformDesign}
+        />
+      )}
     </div>
   );
 };
