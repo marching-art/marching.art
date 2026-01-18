@@ -166,6 +166,12 @@ export const AvatarImage: React.FC<AvatarImageProps> = ({
   const [hasError, setHasError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
+  // Reset state when src changes to handle avatar updates
+  useEffect(() => {
+    setHasError(false);
+    setIsLoaded(false);
+  }, [src]);
+
   // Get initials from alt text
   const initials = alt
     .split(' ')
@@ -242,6 +248,12 @@ export const CorpsLogo: React.FC<CorpsLogoProps> = ({
 }) => {
   const [hasError, setHasError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+
+  // Reset state when src changes to handle avatar/logo updates
+  useEffect(() => {
+    setHasError(false);
+    setIsLoaded(false);
+  }, [src]);
 
   // Get initials from corps name
   const initials = corpsName
