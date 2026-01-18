@@ -1,15 +1,14 @@
 // =============================================================================
-// PROFILE - DIRECTOR CARD STYLE (Gold Standard Aligned)
+// PROFILE - DIRECTOR CAREER PORTFOLIO
 // =============================================================================
-// Dense stats, compact header, ESPN aesthetic
-// Laws: No glow, no shadow, tight spacing, tables over cards
+// Redesigned with rich Trophy Case, Season Timeline, and gamification
+// Laws: No glow, no shadow, grid layout, expandable sections
 
-import React, { useState, useMemo, useEffect } from 'react';
-import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import {
-  User, Trophy, Settings, Star, TrendingUp, Calendar,
-  Crown, Medal, MapPin, Edit, Check, X, LogOut, Coins, Heart,
-  ChevronRight, MessageCircle, Mail, AtSign, AlertCircle, Bell, Trash2
+  User, Settings, Crown, LogOut, Coins, Heart,
+  MessageCircle, Mail, AtSign, AlertCircle, Bell, Trash2
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { useProfile, useUpdateProfile } from '../hooks/useProfile';
@@ -17,90 +16,11 @@ import { db } from '../firebase';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { updateUsername, updateEmail, deleteAccount } from '../firebase/functions';
 import toast from 'react-hot-toast';
-import { DataTable } from '../components/ui/DataTable';
-import { formatSeasonName } from '../utils/season';
+import { DirectorProfile } from '../components/Profile/DirectorProfile';
 
 // =============================================================================
-// ACHIEVEMENT DEFINITIONS
+// NOTE: Achievement and season history display is now handled by DirectorProfile
 // =============================================================================
-
-const getMilestoneAchievements = (profile) => {
-  const achievements = [];
-  const stats = profile?.stats || {};
-  const unlockedClasses = profile?.unlockedClasses || [];
-
-  if ((stats.championships || 0) >= 1) {
-    achievements.push({ id: 'champ', icon: Trophy, label: 'Champ' });
-  }
-  if ((stats.championships || 0) >= 3) {
-    achievements.push({ id: 'dynasty', icon: Crown, label: 'Dynasty' });
-  }
-  if ((stats.seasonsPlayed || 0) >= 1) {
-    achievements.push({ id: 'rookie', icon: Star, label: 'Rookie' });
-  }
-  if ((stats.seasonsPlayed || 0) >= 5) {
-    achievements.push({ id: 'veteran', icon: Medal, label: 'Veteran' });
-  }
-  if ((stats.seasonsPlayed || 0) >= 10) {
-    achievements.push({ id: 'legend', icon: Star, label: 'Legend' });
-  }
-  if (unlockedClasses.includes('world') || unlockedClasses.includes('worldClass')) {
-    achievements.push({ id: 'world', icon: TrendingUp, label: 'World' });
-  }
-
-  return achievements;
-};
-
-// =============================================================================
-// SEASON HISTORY TABLE COLUMNS
-// =============================================================================
-
-const seasonHistoryColumns = [
-  {
-    key: 'seasonName',
-    header: 'Season',
-    render: (row) => {
-      const seasonStr = row.seasonId || row.seasonName;
-      return <span className="text-gray-400">{seasonStr ? formatSeasonName(seasonStr) : '-'}</span>;
-    },
-  },
-  {
-    key: 'corpsName',
-    header: 'Corps',
-    render: (row) => <span className="text-white">{row.corpsName || 'Unknown'}</span>,
-  },
-  {
-    key: 'className',
-    header: 'Class',
-    width: '60px',
-    render: (row) => {
-      const names = { worldClass: 'World', openClass: 'Open', aClass: 'A', soundSport: 'SS' };
-      return <span className="text-gray-500">{names[row.classKey] || row.classKey}</span>;
-    },
-  },
-  {
-    key: 'placement',
-    header: 'RK',
-    width: '45px',
-    align: 'center',
-    isRank: true,
-    render: (row) => row.placement ? `#${row.placement}` : '-',
-  },
-  {
-    key: 'totalSeasonScore',
-    header: 'Score',
-    width: '65px',
-    align: 'right',
-    render: (row) => {
-      const score = row.finalScore || row.totalSeasonScore;
-      return (
-        <span className="text-white font-data tabular-nums">
-          {score ? score.toLocaleString() : '-'}
-        </span>
-      );
-    },
-  },
-];
 
 // =============================================================================
 // TOGGLE COMPONENT
@@ -754,15 +674,8 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
 };
 
 // =============================================================================
-// STAT CELL COMPONENT
+// NOTE: StatCell component moved to DirectorProfile
 // =============================================================================
-
-const StatCell = ({ value, label }) => (
-  <div className="text-center px-2">
-    <div className="text-lg font-bold text-white font-data tabular-nums leading-tight">{value}</div>
-    <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500">{label}</div>
-  </div>
-);
 
 // =============================================================================
 // MAIN PROFILE COMPONENT
@@ -800,77 +713,7 @@ const Profile = () => {
   const { data: profile, isLoading, error, isError, refetch } = useProfile(profileUserId);
   const updateProfileMutation = useUpdateProfile(profileUserId || '');
 
-  // Achievements
-  const achievements = useMemo(() => getMilestoneAchievements(profile), [profile]);
-
-  // Team name
-  const teamName = useMemo(() => {
-    if (!profile?.corps) return null;
-    const corps = Object.values(profile.corps)[0];
-    return corps?.corpsName || corps?.name || null;
-  }, [profile?.corps]);
-
-  // Stats
-  const stats = useMemo(() => {
-    if (!profile?.corps) return { starts: 0, avgScore: '-', bestFinish: '-', badges: 0 };
-
-    let totalScore = 0;
-    let scoreCount = 0;
-    let bestRank = null;
-
-    Object.values(profile.corps).forEach((corps) => {
-      if (corps.seasonHistory) {
-        corps.seasonHistory.forEach(season => {
-          if (season.finalScore) {
-            totalScore += season.finalScore;
-            scoreCount++;
-          }
-          if (season.placement && (bestRank === null || season.placement < bestRank)) {
-            bestRank = season.placement;
-          }
-        });
-      }
-      if (corps.totalSeasonScore) {
-        totalScore += corps.totalSeasonScore;
-        scoreCount++;
-      }
-      if (corps.ranking && (bestRank === null || corps.ranking < bestRank)) {
-        bestRank = corps.ranking;
-      }
-    });
-
-    return {
-      starts: profile?.stats?.seasonsPlayed || scoreCount || 0,
-      avgScore: scoreCount > 0 ? (totalScore / scoreCount).toFixed(1) : '-',
-      bestFinish: bestRank ? `#${bestRank}` : '-',
-      badges: achievements.length,
-    };
-  }, [profile, achievements]);
-
-  // Season history
-  const seasonHistory = useMemo(() => {
-    if (!profile?.corps) return [];
-    const history = [];
-    const seen = new Set();
-
-    Object.entries(profile.corps).forEach(([classKey, corps]) => {
-      if (corps.seasonHistory) {
-        corps.seasonHistory.forEach(season => {
-          const uniqueKey = `${classKey}-${season.seasonId || season.seasonName}`;
-          if (seen.has(uniqueKey)) return;
-          seen.add(uniqueKey);
-          const corpsName = season.corpsName || corps.name || corps.corpsName;
-          history.push({ ...season, corpsName, classKey });
-        });
-      }
-    });
-
-    return history.sort((a, b) => {
-      const aId = a.seasonId || a.seasonName || '';
-      const bId = b.seasonId || b.seasonName || '';
-      return bId.localeCompare(aId);
-    });
-  }, [profile]);
+  // NOTE: Stats, achievements, and season history are now computed in DirectorProfile
 
   // Handlers
   const handleStartEdit = () => {
@@ -933,203 +776,69 @@ const Profile = () => {
   }
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-[#0a0a0a]">
-      {/* FIXED HEADER - Director Card Style */}
-      <div className="flex-shrink-0 bg-[#1a1a1a] border-b border-[#333] px-4 py-3">
-        <div className="flex items-center gap-3">
-          {/* Avatar */}
-          <div className="w-14 h-14 bg-[#333] border border-[#444] flex-shrink-0 flex items-center justify-center">
-            {profile.photoURL ? (
-              <img src={profile.photoURL} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <User className="w-6 h-6 text-gray-500" />
-            )}
-          </div>
-
-          {/* Name + Meta */}
-          <div className="flex-1 min-w-0">
-            {isEditing ? (
-              <input
-                type="text"
-                value={editData.displayName}
-                onChange={(e) => setEditData({ ...editData, displayName: e.target.value })}
-                className="w-full px-2 py-1 bg-[#222] border border-[#444] text-white text-sm font-bold focus:outline-none focus:border-[#0057B8]"
-                placeholder="Display Name"
-              />
-            ) : (
-              <h1 className="text-sm font-bold text-white truncate">
-                {profile.displayName || 'Anonymous Director'}
-              </h1>
-            )}
-            {teamName && (
-              <p className="text-[11px] text-gray-500 truncate">{teamName}</p>
-            )}
-            {!isEditing && profile.location && (
-              <p className="text-[10px] text-gray-600 flex items-center gap-1 mt-0.5">
-                <MapPin className="w-2.5 h-2.5" />
-                {profile.location}
-              </p>
-            )}
-          </div>
-
-          {/* Stats Grid - Right Side */}
-          <div className="hidden sm:flex items-center gap-1 border-l border-[#333] pl-3">
-            <StatCell value={stats.starts} label="Starts" />
-            <StatCell value={stats.avgScore} label="Avg" />
-            <StatCell value={stats.bestFinish} label="Best" />
-            <StatCell value={stats.badges} label="Badges" />
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-1">
-            {isOwnProfile && !isEditing && (
-              <button
-                onClick={handleStartEdit}
-                className="p-2 text-gray-500 hover:text-white active:text-white transition-colors press-feedback min-w-touch min-h-touch flex items-center justify-center"
-                aria-label="Edit profile"
-              >
-                <Edit className="w-4 h-4" />
-              </button>
-            )}
-            {isOwnProfile && (
-              <button
-                onClick={() => setShowSettings(true)}
-                className="p-2 text-gray-500 hover:text-white active:text-white transition-colors press-feedback min-w-touch min-h-touch flex items-center justify-center"
-                aria-label="Settings"
-              >
-                <Settings className="w-4 h-4" />
-              </button>
-            )}
-          </div>
+    <div className="h-full flex flex-col overflow-hidden bg-[#0a0a0a] relative">
+      {/* FLOATING SETTINGS BUTTON - Top right corner */}
+      {isOwnProfile && (
+        <div className="absolute top-4 right-4 z-10">
+          <button
+            onClick={() => setShowSettings(true)}
+            className="p-2 bg-[#1a1a1a] border border-[#333] text-gray-400 hover:text-white hover:bg-[#222] transition-colors rounded-sm"
+            aria-label="Settings"
+          >
+            <Settings className="w-5 h-5" />
+          </button>
         </div>
-
-        {/* Edit Location Row */}
-        {isEditing && (
-          <div className="mt-2 flex items-center gap-2">
-            <input
-              type="text"
-              value={editData.location}
-              onChange={(e) => setEditData({ ...editData, location: e.target.value })}
-              placeholder="Location"
-              className="flex-1 px-2 py-1.5 bg-[#222] border border-[#444] text-white text-xs focus:outline-none focus:border-[#0057B8]"
-            />
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="px-3 py-1.5 bg-green-500/20 border border-green-500/30 text-green-400 text-xs font-bold"
-            >
-              <Check className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={() => setIsEditing(false)}
-              className="px-3 py-1.5 bg-[#333] border border-[#444] text-gray-400 text-xs"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* SCROLLABLE CONTENT */}
       <div className="flex-1 overflow-y-auto min-h-0 scroll-momentum">
-        {/* MOBILE STATS STRIP - Only visible on mobile */}
-        <div className="sm:hidden border-b border-[#333] bg-[#1a1a1a] py-3 flex justify-around">
-          <StatCell value={stats.starts} label="Starts" />
-          <StatCell value={stats.avgScore} label="Avg" />
-          <StatCell value={stats.bestFinish} label="Best" />
-          <StatCell value={stats.badges} label="Badges" />
-        </div>
-
-        {/* TROPHY CASE */}
-        <div className="border-b border-[#333]">
-          <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">
-              Trophy Case
-            </h3>
-          </div>
-          {achievements.length > 0 ? (
-            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-px bg-[#333]">
-              {achievements.map((a) => {
-                const Icon = a.icon;
-                return (
-                  <div
-                    key={a.id}
-                    className="bg-[#1a1a1a] p-3 flex flex-col items-center justify-center min-h-[64px]"
-                    title={a.label}
-                  >
-                    <Icon className="w-5 h-5 text-yellow-500" />
-                    <span className="text-[10px] text-gray-500 mt-1">{a.label}</span>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="p-6 text-center bg-[#1a1a1a]">
-              <Medal className="w-6 h-6 text-gray-600 mx-auto mb-1" />
-              <p className="text-xs text-gray-500">No badges yet</p>
-            </div>
-          )}
-        </div>
-
-        {/* SEASON HISTORY */}
-        <div className="border-b border-[#333]">
-          <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">
-              Season History
-            </h3>
-          </div>
-          <DataTable
-            columns={seasonHistoryColumns}
-            data={seasonHistory}
-            getRowKey={(row, idx) => `${row.classKey}-${row.seasonId || idx}-${idx}`}
-            zebraStripes={true}
-            emptyState={
-              <div className="p-4 text-center">
-                <Calendar className="w-5 h-5 text-gray-600 mx-auto mb-1" />
-                <p className="text-xs text-gray-500">No season history</p>
-              </div>
-            }
-          />
-        </div>
+        {/* DIRECTOR PROFILE - New Career Portfolio Layout */}
+        <DirectorProfile
+          profile={profile}
+          isOwnProfile={isOwnProfile}
+          onEditProfile={handleStartEdit}
+        />
 
         {/* QUICK LINKS */}
-        <div className={`grid gap-px bg-[#333] ${isOwnProfile ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'}`}>
-          <a
-            href="https://buymeacoffee.com/marching.art"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="bg-[#1a1a1a] p-4 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
-          >
-            <Heart className="w-5 h-5 text-amber-500 mb-1" />
-            <span className="text-xs text-gray-400">Support</span>
-          </a>
-          <a
-            href="https://discord.gg/YvFRJ97A5H"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="bg-[#1a1a1a] p-4 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
-          >
-            <MessageCircle className="w-5 h-5 text-[#5865F2] mb-1" />
-            <span className="text-xs text-gray-400">Discord</span>
-          </a>
-          <Link
-            to="/leagues"
-            className="bg-[#1a1a1a] p-4 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
-          >
-            <Crown className="w-5 h-5 text-purple-500 mb-1" />
-            <span className="text-xs text-gray-400">Leagues</span>
-          </Link>
-          {isOwnProfile && (
-            <Link
-              to="/dashboard"
-              className="bg-[#1a1a1a] p-4 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
+        <div className="px-4 pb-4">
+          <div className={`grid gap-2 ${isOwnProfile ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'}`}>
+            <a
+              href="https://buymeacoffee.com/marching.art"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-[#1a1a1a] border border-[#333] p-4 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
             >
-              <Coins className="w-5 h-5 text-yellow-500 mb-1" />
-              <span className="text-xs text-gray-400 font-data tabular-nums">
-                {(profile.corpsCoin || 0).toLocaleString()} CC
-              </span>
+              <Heart className="w-5 h-5 text-amber-500 mb-1" />
+              <span className="text-xs text-gray-400">Support</span>
+            </a>
+            <a
+              href="https://discord.gg/YvFRJ97A5H"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-[#1a1a1a] border border-[#333] p-4 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
+            >
+              <MessageCircle className="w-5 h-5 text-[#5865F2] mb-1" />
+              <span className="text-xs text-gray-400">Discord</span>
+            </a>
+            <Link
+              to="/leagues"
+              className="bg-[#1a1a1a] border border-[#333] p-4 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
+            >
+              <Crown className="w-5 h-5 text-purple-500 mb-1" />
+              <span className="text-xs text-gray-400">Leagues</span>
             </Link>
-          )}
+            {isOwnProfile && (
+              <Link
+                to="/dashboard"
+                className="bg-[#1a1a1a] border border-[#333] p-4 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
+              >
+                <Coins className="w-5 h-5 text-yellow-500 mb-1" />
+                <span className="text-xs text-gray-400 font-data tabular-nums">
+                  {(profile.corpsCoin || 0).toLocaleString()} CC
+                </span>
+              </Link>
+            )}
+          </div>
         </div>
       </div>
 
