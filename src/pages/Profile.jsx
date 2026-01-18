@@ -724,14 +724,14 @@ const Profile = () => {
     return corpsClasses
       .filter(c => profile.corps[c]?.corpsName)
       .map(c => ({
-        corpsClass: c,
+        classKey: c,  // Must match CorpsOption interface in UniformDesignModal
         corpsName: profile.corps[c].corpsName,
         uniformDesign: profile.corps[c].uniformDesign,
       }));
   }, [profile?.corps]);
 
   // Get initial corps class for uniform design (first available)
-  const initialCorpsClass = allCorps.length > 0 ? allCorps[0].corpsClass : 'soundSport';
+  const initialCorpsClass = allCorps.length > 0 ? allCorps[0].classKey : 'soundSport';
 
   // Handle uniform design save with copy-to-others support
   const handleUniformDesign = useCallback(async (design, corpsClass, copyToClasses = []) => {
