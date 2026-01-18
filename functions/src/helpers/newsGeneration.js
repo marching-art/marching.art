@@ -1572,10 +1572,21 @@ DESIGN STYLE:
 - Stylized illustration (NOT photorealistic)
 - Must remain readable at small sizes (64x64)
 
+COMPOSITION RULES:
+- Centered or slightly off-center focal point
+- Diagonal energy lines encouraged
+- Asymmetric, dynamic layouts preferred over static symmetry
+
 MASCOT / SYMBOL:
 - Featured mascot/emblem: ${mascotDesc} — large, dominant, and filling the frame
-- Integrate subtle marching arts elements (choose 1-2): brass bell silhouette, drumstick, mallet, guard silk, shako plume, drill chart lines
+- Integrate marching arts elements subtly into the silhouette or negative space (not as separate floating icons)
+- Choose 1-2: brass bell silhouette, drumstick, mallet, guard silk, shako plume, drill chart lines
 - Include corps name or bold initials as part of the composition
+
+TYPOGRAPHY:
+- Bold, blocky esports-style lettering
+- Avoid script fonts
+- Prioritize readability at small sizes
 
 COLOR PALETTE:
 - Primary: ${primaryColor}
@@ -1587,10 +1598,12 @@ THEME & MOOD:
 - Tone: competitive, elite, championship-ready
 - Dynamic angles, strong silhouettes, and full-frame energy
 
-NOTES:
-- Avoid photorealism
-- Avoid soft, pastel, or low-contrast palettes unless specified
-- Prioritize bold shapes, clean readability, and esports-style visual impact`;
+DO NOT INCLUDE:
+- Circular badge frames or medallion shapes
+- Mascots with realistic human faces
+- Soft gradients that reduce contrast
+- Floating/disconnected design elements
+- Photorealistic rendering`;
 }
 
 /**
@@ -1650,11 +1663,17 @@ DESIGN STYLE:
 - Stylized illustration (NOT photorealistic)
 - Must remain readable at small sizes (64x64)
 
+COMPOSITION RULES:
+- Subject centered or slightly off-center
+- Diagonal energy lines in background encouraged
+- Dynamic, action-oriented framing
+
 SUBJECT:
 - Single ${sectionInfo.title} performer, tightly cropped portrait
 - Pose: ${sectionInfo.pose}
 - Equipment: ${sectionInfo.instrument}
 - Details: ${sectionInfo.details}
+- Integrate marching arts identity into the silhouette (not floating icons)
 
 UNIFORM & COLORS:
 - Primary: ${primaryColor}
@@ -1669,10 +1688,12 @@ THEME & MOOD:
 - Tone: competitive, elite, championship-ready
 - Dramatic lighting, dynamic pose, full-frame energy
 
-NOTES:
-- Avoid photorealism
-- Avoid soft, pastel, or low-contrast palettes unless specified
-- Prioritize bold shapes, clean readability, and esports-style visual impact`;
+DO NOT INCLUDE:
+- Realistic human facial features (stylize the face)
+- Soft gradients that reduce contrast
+- Empty space or borders around subject
+- Static, passport-photo style poses
+- Photorealistic rendering`;
 }
 
 /**
