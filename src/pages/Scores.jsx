@@ -721,19 +721,25 @@ const Scores = () => {
   };
 
 
-  // Filter standings by class for each tab
+  // Filter standings by class for each tab and re-rank within each class
   const worldStandings = useMemo(() =>
-    aggregatedScores.filter(s => s.corpsClass === 'worldClass'),
+    aggregatedScores
+      .filter(s => s.corpsClass === 'worldClass')
+      .map((entry, idx) => ({ ...entry, rank: idx + 1 })),
     [aggregatedScores]
   );
 
   const openStandings = useMemo(() =>
-    aggregatedScores.filter(s => s.corpsClass === 'openClass'),
+    aggregatedScores
+      .filter(s => s.corpsClass === 'openClass')
+      .map((entry, idx) => ({ ...entry, rank: idx + 1 })),
     [aggregatedScores]
   );
 
   const aClassStandings = useMemo(() =>
-    aggregatedScores.filter(s => s.corpsClass === 'aClass'),
+    aggregatedScores
+      .filter(s => s.corpsClass === 'aClass')
+      .map((entry, idx) => ({ ...entry, rank: idx + 1 })),
     [aggregatedScores]
   );
 
