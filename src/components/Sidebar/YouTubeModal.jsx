@@ -18,7 +18,10 @@ const YouTubeModal = ({
       />
 
       {/* Modal Content - 720p aspect ratio (1280x720) */}
-      <div className="relative w-full max-w-4xl bg-[#0A0A0A] border border-[#333] rounded-sm">
+      <div
+        className="relative w-full max-w-4xl bg-[#0A0A0A] border border-[#333] rounded-sm"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="bg-[#1a1a1a] px-4 py-3 border-b border-[#333] flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0 flex-1">

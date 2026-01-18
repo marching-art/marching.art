@@ -165,6 +165,7 @@ const MobileNav: React.FC<MobileNavProps> = ({ isOpen, setIsOpen }) => {
               animate="open"
               exit="closed"
               variants={menuVariants}
+              onClick={(e) => e.stopPropagation()}
               className="fixed right-0 top-0 bottom-0 w-80 max-w-[85vw] bg-slate-950/95 backdrop-blur-xl border-l border-white/10 z-50 lg:hidden overflow-y-auto"
             >
               <div className="flex flex-col h-full">
