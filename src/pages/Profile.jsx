@@ -17,7 +17,7 @@ import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { updateUsername, updateEmail, deleteAccount } from '../firebase/functions';
 import toast from 'react-hot-toast';
 import { DirectorProfile } from '../components/Profile/DirectorProfile';
-import { UniformDesignModal } from '../components/modals/UniformDesignModal';
+import UniformDesignModal from '../components/modals/UniformDesignModal';
 
 // =============================================================================
 // NOTE: Achievement and season history display is now handled by DirectorProfile
