@@ -25,6 +25,7 @@ interface DirectorProfileProps {
   isOwnProfile?: boolean;
   onEditProfile?: () => void;
   onDesignUniform?: () => void;
+  onSelectAvatarCorps?: (corpsClass: CorpsClass) => Promise<void>;
 }
 
 interface SeasonHistoryEntry {
@@ -109,16 +110,44 @@ function calculateDirectorRating(profile: UserProfile): number {
   return Math.min(rating, 3000);
 }
 
-// Get primary corps avatar URL
-function getCorpsAvatarUrl(profile: UserProfile): string | null {
-  if (!profile.corps) return null;
-  // Priority: world > open > aClass > soundSport
+// Get primary corps avatar URL - respects profileAvatarCorps selection
+function getCorpsAvatarUrl(profile: UserProfile): { url: string | null; corpsClass: CorpsClass | null } {
+  if (!profile.corps) return { url: null, corpsClass: null };
+
+  // If user has selected a specific corps for their profile avatar, use that
+  if (profile.profileAvatarCorps) {
+    const selectedCorps = profile.corps[profile.profileAvatarCorps];
+    if (selectedCorps?.avatarUrl) {
+      return { url: selectedCorps.avatarUrl, corpsClass: profile.profileAvatarCorps };
+    }
+  }
+
+  // Fallback: Priority order world > open > aClass > soundSport
   const classOrder: CorpsClass[] = ['world', 'open', 'aClass', 'soundSport'];
   for (const classKey of classOrder) {
     const corps = profile.corps[classKey];
-    if (corps?.avatarUrl) return corps.avatarUrl;
+    if (corps?.avatarUrl) return { url: corps.avatarUrl, corpsClass: classKey };
   }
-  return null;
+  return { url: null, corpsClass: null };
+}
+
+// Get all corps with avatars for selection
+function getCorpsWithAvatars(profile: UserProfile): { corpsClass: CorpsClass; corpsName: string; avatarUrl: string }[] {
+  if (!profile.corps) return [];
+  const result: { corpsClass: CorpsClass; corpsName: string; avatarUrl: string }[] = [];
+  const classOrder: CorpsClass[] = ['world', 'open', 'aClass', 'soundSport'];
+
+  for (const classKey of classOrder) {
+    const corps = profile.corps[classKey];
+    if (corps?.avatarUrl && corps?.corpsName) {
+      result.push({
+        corpsClass: classKey,
+        corpsName: corps.corpsName,
+        avatarUrl: corps.avatarUrl,
+      });
+    }
+  }
+  return result;
 }
 
 // Get trophies (competition-based awards only - NOT achievements)
@@ -349,15 +378,30 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
   profile,
   isOwnProfile = false,
   onDesignUniform,
+  onSelectAvatarCorps,
 }) => {
   const [expandedSeason, setExpandedSeason] = useState<string | null>(null);
   const [showAllTrophies, setShowAllTrophies] = useState(false);
+  const [showAvatarSelector, setShowAvatarSelector] = useState(false);
+  const [savingAvatar, setSavingAvatar] = useState(false);
 
   // Computed values
   const status = useMemo(() => getDirectorStatus(profile), [profile]);
   const influenceScore = useMemo(() => calculateInfluenceScore(profile), [profile]);
   const directorRating = useMemo(() => calculateDirectorRating(profile), [profile]);
-  const avatarUrl = useMemo(() => getCorpsAvatarUrl(profile), [profile]);
+  const avatarData = useMemo(() => getCorpsAvatarUrl(profile), [profile]);
+  const corpsWithAvatars = useMemo(() => getCorpsWithAvatars(profile), [profile]);
+
+  const handleSelectAvatar = async (corpsClass: CorpsClass) => {
+    if (!onSelectAvatarCorps) return;
+    setSavingAvatar(true);
+    try {
+      await onSelectAvatarCorps(corpsClass);
+      setShowAvatarSelector(false);
+    } finally {
+      setSavingAvatar(false);
+    }
+  };
 
   // DEDUPED: Trophies are competition-based, achievements are profile.achievements
   const trophies = useMemo(() => getCompetitionTrophies(profile), [profile]);
@@ -413,24 +457,114 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
         <div className="flex">
           {/* LEFT: Avatar/Uniform - Large */}
           <div className="flex-shrink-0 w-32 sm:w-40 lg:w-48 bg-[#0a0a0a] border-r border-[#333] relative group">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="Corps Uniform" className="w-full h-full object-cover" />
+            {avatarData.url ? (
+              <img src={avatarData.url} alt="Corps Uniform" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center aspect-square">
                 <User className="w-12 h-12 text-gray-600" />
               </div>
             )}
 
-            {/* Design uniform overlay for own profile */}
-            {isOwnProfile && onDesignUniform && (
-              <button
-                onClick={onDesignUniform}
-                className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity"
-              >
-                <Palette className="w-6 h-6 text-white mb-1" />
-                <span className="text-[10px] text-white font-bold uppercase">Design Uniform</span>
-              </button>
+            {/* Overlay actions for own profile */}
+            {isOwnProfile && (
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-2 transition-opacity">
+                {onDesignUniform && (
+                  <button
+                    onClick={onDesignUniform}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0057B8] hover:bg-[#0066d6] transition-colors"
+                  >
+                    <Palette className="w-4 h-4 text-white" />
+                    <span className="text-[10px] text-white font-bold uppercase">Design</span>
+                  </button>
+                )}
+                {corpsWithAvatars.length > 1 && onSelectAvatarCorps && (
+                  <button
+                    onClick={() => setShowAvatarSelector(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#333] hover:bg-[#444] transition-colors"
+                  >
+                    <User className="w-4 h-4 text-white" />
+                    <span className="text-[10px] text-white font-bold uppercase">Change</span>
+                  </button>
+                )}
+              </div>
             )}
+
+            {/* Avatar selector modal */}
+            <AnimatePresence>
+              {showAvatarSelector && (
+                <m.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+                  onClick={() => setShowAvatarSelector(false)}
+                >
+                  <m.div
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.9, opacity: 0 }}
+                    className="bg-[#1a1a1a] border border-[#333] w-full max-w-sm"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <div className="px-4 py-3 border-b border-[#333] bg-[#222] flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
+                        Select Profile Avatar
+                      </span>
+                      <button
+                        onClick={() => setShowAvatarSelector(false)}
+                        className="p-1 text-gray-500 hover:text-white"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="p-4 grid grid-cols-2 gap-3">
+                      {corpsWithAvatars.map(corps => {
+                        const isSelected = avatarData.corpsClass === corps.corpsClass;
+                        const classConfig = CLASS_DISPLAY[corps.corpsClass];
+                        return (
+                          <button
+                            key={corps.corpsClass}
+                            onClick={() => handleSelectAvatar(corps.corpsClass)}
+                            disabled={savingAvatar}
+                            className={`relative border-2 p-1 transition-all ${
+                              isSelected
+                                ? 'border-[#0057B8] bg-[#0057B8]/10'
+                                : 'border-[#333] hover:border-[#555]'
+                            } ${savingAvatar ? 'opacity-50' : ''}`}
+                          >
+                            <img
+                              src={corps.avatarUrl}
+                              alt={corps.corpsName}
+                              className="w-full aspect-square object-cover"
+                            />
+                            <div className="absolute bottom-0 left-0 right-0 bg-black/70 px-2 py-1">
+                              <div className="text-[10px] text-white font-bold truncate">
+                                {corps.corpsName}
+                              </div>
+                              <div className={`text-[9px] ${classConfig.color}`}>
+                                {classConfig.short}
+                              </div>
+                            </div>
+                            {isSelected && (
+                              <div className="absolute top-1 right-1 w-5 h-5 bg-[#0057B8] flex items-center justify-center">
+                                <Star className="w-3 h-3 text-white" />
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="px-4 pb-4">
+                      <p className="text-[10px] text-gray-500 text-center">
+                        Choose which corps uniform to display on your profile
+                      </p>
+                    </div>
+                  </m.div>
+                </m.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* RIGHT: Director Info */}

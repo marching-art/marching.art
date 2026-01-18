@@ -67,6 +67,9 @@ export interface UserProfile {
   activeSeasonId?: string;  // Current season the user is participating in
   initialSetupComplete?: string;  // Season ID when initial setup wizard was completed
 
+  // Profile avatar selection - which corps uniform to display
+  profileAvatarCorps?: CorpsClass;
+
   // Settings
   settings?: UserSettings;
 }

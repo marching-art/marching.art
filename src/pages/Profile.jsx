@@ -764,6 +764,22 @@ const Profile = () => {
     }
   }, [user, refetch]);
 
+  // Handle profile avatar corps selection
+  const handleSelectAvatarCorps = useCallback(async (corpsClass) => {
+    if (!user) return;
+    try {
+      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
+      await updateDoc(profileRef, {
+        profileAvatarCorps: corpsClass,
+      });
+      toast.success('Profile avatar updated!');
+      refetch();
+    } catch (err) {
+      toast.error('Failed to update avatar');
+      throw err;
+    }
+  }, [user, refetch]);
+
   // Handlers
   const handleStartEdit = () => {
     setEditData({
@@ -847,6 +863,7 @@ const Profile = () => {
           isOwnProfile={isOwnProfile}
           onEditProfile={handleStartEdit}
           onDesignUniform={() => setShowUniformDesign(true)}
+          onSelectAvatarCorps={handleSelectAvatarCorps}
         />
 
         {/* QUICK LINKS */}
