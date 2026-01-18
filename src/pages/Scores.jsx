@@ -419,16 +419,24 @@ const SoundSportMedalList = ({ shows }) => {
               return (
                 <div
                   key={idx}
-                  className={`${rowBg} px-4 py-2 flex items-center justify-between hover:bg-[#222] transition-colors`}
+                  className={`${rowBg} px-4 py-2.5 flex items-center justify-between hover:bg-[#222] transition-colors`}
                 >
-                  {/* Left: Medal Icon + Ensemble Name */}
+                  {/* Left: Medal Icon + Avatar + Ensemble Name + Director */}
                   <div className="flex items-center gap-3 min-w-0">
                     <div className={`w-6 h-6 ${config.bg} flex items-center justify-center flex-shrink-0`}>
                       <Medal className={`w-4 h-4 ${config.text}`} />
                     </div>
-                    <span className="text-sm text-white truncate">
-                      {result.corps || result.corpsName}
-                    </span>
+                    <TeamAvatar name={result.corps || result.corpsName} logoUrl={result.avatarUrl} size="xs" />
+                    <div className="min-w-0">
+                      <span className="font-bold text-white text-sm block truncate">
+                        {result.corps || result.corpsName}
+                      </span>
+                      {result.displayName && (
+                        <span className="text-[10px] text-gray-500 block truncate">
+                          {result.displayName}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Right: Best in Show + Rating Badge */}
