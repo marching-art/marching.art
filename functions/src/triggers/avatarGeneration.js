@@ -151,8 +151,10 @@ async function generateAndSaveAvatar({ userId, corpsClass, corpsName, location, 
     hasUniformDesign: !!uniformDesign?.primaryColor,
   });
 
-  // Generate image using Gemini
-  const imageData = await generateImageWithImagen(prompt);
+  // Generate image using Gemini Flash for faster avatar generation
+  const imageData = await generateImageWithImagen(prompt, {
+    model: "gemini-3-flash-preview",
+  });
 
   if (!imageData) {
     logger.warn("No image generated for avatar, skipping save");
