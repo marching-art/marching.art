@@ -435,6 +435,12 @@ exports.generateMatchups = onCall({ cors: true }, async (request) => {
 
   await matchupRef.set(matchupData);
 
+  // Update league document to track which week has matchups generated
+  // This allows the UI to show "Matchup in progress" only when matchups actually exist
+  await leagueRef.update({
+    matchupsGeneratedWeek: week
+  });
+
   return {
     success: true,
     message: "Matchups generated with smart pairing!",
