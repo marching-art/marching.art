@@ -749,15 +749,49 @@ const Profile = () => {
         updateData[`corps.${targetClass}.uniformDesign`] = design;
       }
 
+      // Save the uniform design first
       await updateDoc(profileRef, updateData);
-
-      const copyCount = copyToClasses.length;
-      if (copyCount > 0) {
-        toast.success(`Uniform design saved to ${copyCount + 1} ensembles!`);
-      } else {
-        toast.success('Uniform design saved! Avatar will be generated soon.');
-      }
       setShowUniformDesign(false);
+
+      // Generate avatars for all affected corps
+      const corpsToGenerate = [corpsClass, ...copyToClasses];
+      const totalCount = corpsToGenerate.length;
+
+      toast.loading(`Generating avatar${totalCount > 1 ? 's' : ''}...`, { id: 'generate-avatars' });
+
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const targetClass of corpsToGenerate) {
+        try {
+          const result = await generateCorpsAvatar({ corpsClass: targetClass });
+          if (result.data.success) {
+            successCount++;
+          } else {
+            failCount++;
+          }
+        } catch (err) {
+          failCount++;
+        }
+      }
+
+      // Show final result
+      if (failCount === 0) {
+        toast.success(
+          totalCount > 1
+            ? `${successCount} avatar${successCount > 1 ? 's' : ''} generated!`
+            : 'Avatar generated!',
+          { id: 'generate-avatars' }
+        );
+      } else if (successCount > 0) {
+        toast.success(
+          `${successCount} avatar${successCount > 1 ? 's' : ''} generated, ${failCount} failed`,
+          { id: 'generate-avatars' }
+        );
+      } else {
+        toast.error('Failed to generate avatars', { id: 'generate-avatars' });
+      }
+
       refetch();
     } catch (err) {
       toast.error('Failed to save uniform design');
