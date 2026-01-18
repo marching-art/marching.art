@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import LoadingScreen from '../../LoadingScreen';
 import EmptyState from '../../EmptyState';
+import { TeamAvatar } from '../../ui/TeamAvatar';
 
 // =============================================================================
 // CONSTANTS
@@ -135,48 +136,51 @@ const RatingBadge = ({ rating, showTooltip = false }) => {
 };
 
 // =============================================================================
-// ENSEMBLE RESULT CARD
+// ENSEMBLE RESULT ROW
 // =============================================================================
 
-const EnsembleCard = ({ score, isBestInShow = false, isClassWinner = false }) => {
+const EnsembleRow = ({ score, isBestInShow = false, isClassWinner = false, rowBg }) => {
   const ratingInfo = getSoundSportRating(score.score);
 
   return (
     <m.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      whileHover={{ scale: 1.02 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
       transition={{ duration: 0.15 }}
-      className={`relative p-3 md:p-4 rounded-sm border-2 ${ratingInfo.color} ${ratingInfo.borderColor} overflow-hidden`}
+      className={`${rowBg} px-4 py-2.5 flex items-center justify-between hover:bg-[#222] transition-colors`}
     >
-      {/* Award badges */}
-      {isBestInShow && (
-        <div className="absolute top-0 right-0 p-1">
-          <BlueRibbonIcon className="w-6 h-6 md:w-7 md:h-7" />
+      {/* Left: Medal Icon + Avatar + Ensemble Name + Director */}
+      <div className="flex items-center gap-3 min-w-0">
+        <div className={`w-6 h-6 ${ratingInfo.color} border ${ratingInfo.borderColor} flex items-center justify-center flex-shrink-0`}>
+          <Medal className={`w-4 h-4 ${ratingInfo.textColor}`} />
         </div>
-      )}
-      {isClassWinner && !isBestInShow && (
-        <div className="absolute top-0 right-0 bg-black text-white px-2 py-1 text-[10px] font-bold flex items-center gap-1">
-          <Award className="w-3 h-3" />
-          CLASS WINNER
-        </div>
-      )}
-
-      <div className="flex items-center gap-2 md:gap-3">
-        <Medal className={`w-5 h-5 md:w-6 md:h-6 flex-shrink-0 ${ratingInfo.textColor}`} />
-        <div className="min-w-0 flex-1">
-          <p className={`font-bold text-sm md:text-base truncate uppercase ${ratingInfo.textColor}`}>
-            {score.corps}
-          </p>
+        <TeamAvatar name={score.corps || score.corpsName} logoUrl={score.avatarUrl} size="xs" />
+        <div className="min-w-0">
+          <span className="font-bold text-white text-sm block truncate">
+            {score.corps || score.corpsName}
+          </span>
           {(score.displayName || score.username) && (
-            <p className={`text-xs truncate ${ratingInfo.textColor} opacity-80`}>
+            <span className="text-[10px] text-gray-500 block truncate">
               {score.displayName || score.username}
-            </p>
+            </span>
           )}
-          <p className={`text-xs md:text-sm font-bold ${ratingInfo.textColor}`}>
-            {ratingInfo.rating}
-          </p>
         </div>
+      </div>
+
+      {/* Right: Best in Show + Rating Badge */}
+      <div className="flex items-center gap-2 flex-shrink-0">
+        {isBestInShow && (
+          <BlueRibbonIcon className="w-5 h-5" />
+        )}
+        {isClassWinner && !isBestInShow && (
+          <div className="bg-black text-white px-2 py-1 text-[10px] font-bold flex items-center gap-1">
+            <Award className="w-3 h-3" />
+            <span className="hidden sm:inline">CLASS WINNER</span>
+          </div>
+        )}
+        <span className={`text-[10px] font-bold uppercase px-2 py-1 ${ratingInfo.color} ${ratingInfo.textColor}`}>
+          {ratingInfo.rating}
+        </span>
       </div>
     </m.div>
   );
@@ -218,14 +222,15 @@ const RatingGroup = ({ rating, scores, bestInShowCorps, classWinnerCorps = [] })
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3"
+            className="overflow-hidden"
           >
             {scores.map((score, idx) => (
-              <EnsembleCard
+              <EnsembleRow
                 key={idx}
                 score={score}
                 isBestInShow={score.corps === bestInShowCorps}
                 isClassWinner={classWinnerCorps.includes(score.corps)}
+                rowBg={idx % 2 === 0 ? 'bg-[#1a1a1a]' : 'bg-[#111]'}
               />
             ))}
           </m.div>
@@ -245,26 +250,31 @@ const BestInShowCard = ({ score }) => {
   const ratingInfo = getSoundSportRating(score.score);
 
   return (
-    <div className="bg-gradient-to-r from-[#0057B8]/20 to-[#0057B8]/5 border-2 border-[#0057B8]/50 rounded-sm p-4 md:p-6 mb-4">
-      <div className="flex items-center gap-2 mb-3">
-        <BlueRibbonIcon className="w-6 h-6 md:w-7 md:h-7" />
-        <span className="text-[#0057B8] font-bold uppercase text-xs md:text-sm">Best in Show</span>
+    <div className="bg-gradient-to-r from-[#0057B8]/20 to-[#0057B8]/5 border border-[#0057B8]/50 rounded-sm mb-4">
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-[#0057B8]/30">
+        <BlueRibbonIcon className="w-5 h-5" />
+        <span className="text-[#0057B8] font-bold uppercase text-xs">Best in Show</span>
       </div>
-      <div className="flex items-center gap-3 md:gap-4">
-        <div className={`p-2 md:p-3 ${ratingInfo.color} border-2 border-black rounded-sm`}>
-          <Medal className="w-6 h-6 md:w-8 md:h-8 text-black" />
+      <div className="px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className={`w-6 h-6 ${ratingInfo.color} border ${ratingInfo.borderColor} flex items-center justify-center flex-shrink-0`}>
+            <Medal className={`w-4 h-4 ${ratingInfo.textColor}`} />
+          </div>
+          <TeamAvatar name={score.corps || score.corpsName} logoUrl={score.avatarUrl} size="xs" />
+          <div className="min-w-0">
+            <span className="font-bold text-white text-sm block truncate">
+              {score.corps || score.corpsName}
+            </span>
+            {(score.displayName || score.username) && (
+              <span className="text-[10px] text-gray-500 block truncate">
+                {score.displayName || score.username}
+              </span>
+            )}
+          </div>
         </div>
-        <div>
-          <p className="text-lg md:text-xl font-bold text-white uppercase">{score.corps}</p>
-          {(score.displayName || score.username) && (
-            <p className="text-sm text-cream-400">
-              {score.displayName || score.username}
-            </p>
-          )}
-          <p className={`font-bold text-sm ${ratingInfo.rating === 'Gold' ? 'text-yellow-400' : ratingInfo.rating === 'Silver' ? 'text-gray-300' : ratingInfo.rating === 'Bronze' ? 'text-orange-400' : 'text-gray-400'}`}>
-            {ratingInfo.rating}
-          </p>
-        </div>
+        <span className={`text-[10px] font-bold uppercase px-2 py-1 ${ratingInfo.color} ${ratingInfo.textColor} flex-shrink-0`}>
+          {ratingInfo.rating}
+        </span>
       </div>
     </div>
   );
