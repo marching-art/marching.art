@@ -113,14 +113,9 @@ const MyLeagueCard = ({ league, userProfile, onClick }) => {
   const hasNewMessages = league.hasUnreadMessages || false;
   const isLive = league.isMatchupActive || false;
 
-  // Get next matchup info (simplified)
-  const nextMatchup = useMemo(() => {
-    if (!league.members || league.members.length < 2) return null;
-    // Find opponent (simplified - in real app would come from matchup data)
-    const userMember = league.members?.find(m => m.odNumber === userProfile?.odNumber);
-    if (!userMember) return null;
-    return { week: currentWeek, status: 'active' };
-  }, [league, userProfile, currentWeek]);
+  // Check if matchups are actually generated for current week
+  // Only show matchup status if the league has this data from Firestore
+  const hasMatchupsGenerated = league.matchupsGeneratedWeek >= currentWeek;
 
   return (
     <div
@@ -146,10 +141,10 @@ const MyLeagueCard = ({ league, userProfile, onClick }) => {
           <span className="text-gray-600">•</span>
           <span>Week {currentWeek}</span>
         </div>
-        {nextMatchup && (
+        {hasMatchupsGenerated && (
           <div className="flex items-center gap-1 mt-1 text-[10px] text-gray-600">
             <Swords className="w-3 h-3" />
-            <span>Matchup {nextMatchup.status === 'active' ? 'in progress' : 'upcoming'}</span>
+            <span>Matchup in progress</span>
           </div>
         )}
       </div>
