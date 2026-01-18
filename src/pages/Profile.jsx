@@ -683,7 +683,6 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
 
 const Profile = () => {
   const { userId } = useParams();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
