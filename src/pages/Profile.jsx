@@ -716,27 +716,53 @@ const Profile = () => {
 
   // NOTE: Stats, achievements, and season history are now computed in DirectorProfile
 
-  // Get active corps class for uniform design
-  const activeCorpsClass = profile?.corps
-    ? ['world', 'open', 'aClass', 'soundSport'].find(c => profile.corps[c]?.corpsName)
-    : 'soundSport';
+  // Get all corps for uniform design modal
+  const allCorps = React.useMemo(() => {
+    if (!profile?.corps) return [];
+    const corpsClasses = ['world', 'open', 'aClass', 'soundSport'];
+    return corpsClasses
+      .filter(c => profile.corps[c]?.corpsName)
+      .map(c => ({
+        corpsClass: c,
+        corpsName: profile.corps[c].corpsName,
+        uniformDesign: profile.corps[c].uniformDesign,
+      }));
+  }, [profile?.corps]);
 
-  // Handle uniform design save
-  const handleUniformDesign = useCallback(async (design) => {
-    if (!user || !activeCorpsClass) return;
+  // Get initial corps class for uniform design (first available)
+  const initialCorpsClass = allCorps.length > 0 ? allCorps[0].corpsClass : 'soundSport';
+
+  // Handle uniform design save with copy-to-others support
+  const handleUniformDesign = useCallback(async (design, corpsClass, copyToClasses = []) => {
+    if (!user || !corpsClass) return;
     try {
       const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-      await updateDoc(profileRef, {
-        [`corps.${activeCorpsClass}.uniformDesign`]: design,
-      });
-      toast.success('Uniform design saved! Avatar will be generated soon.');
+
+      // Build update object for primary corps and any copies
+      const updateData = {
+        [`corps.${corpsClass}.uniformDesign`]: design,
+      };
+
+      // Add copy targets
+      for (const targetClass of copyToClasses) {
+        updateData[`corps.${targetClass}.uniformDesign`] = design;
+      }
+
+      await updateDoc(profileRef, updateData);
+
+      const copyCount = copyToClasses.length;
+      if (copyCount > 0) {
+        toast.success(`Uniform design saved to ${copyCount + 1} ensembles!`);
+      } else {
+        toast.success('Uniform design saved! Avatar will be generated soon.');
+      }
       setShowUniformDesign(false);
       refetch();
     } catch (err) {
       toast.error('Failed to save uniform design');
       throw err;
     }
-  }, [user, activeCorpsClass, refetch]);
+  }, [user, refetch]);
 
   // Handlers
   const handleStartEdit = () => {
@@ -878,12 +904,14 @@ const Profile = () => {
       />
 
       {/* UNIFORM DESIGN MODAL */}
-      {showUniformDesign && activeCorpsClass && (
+      {showUniformDesign && allCorps.length > 0 && (
         <UniformDesignModal
           onClose={() => setShowUniformDesign(false)}
           onSubmit={handleUniformDesign}
-          corpsName={profile?.corps?.[activeCorpsClass]?.corpsName || 'My Corps'}
-          currentDesign={profile?.corps?.[activeCorpsClass]?.uniformDesign}
+          corpsName={allCorps[0]?.corpsName || 'My Corps'}
+          currentDesign={allCorps[0]?.uniformDesign}
+          allCorps={allCorps}
+          initialCorpsClass={initialCorpsClass}
         />
       )}
     </div>

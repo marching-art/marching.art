@@ -4,26 +4,42 @@
 // Allows directors to design their fantasy corps uniform appearance
 // Used by AI to generate accurate images for news articles and avatars
 
-import React, { useState } from 'react';
-import { X, Palette, Sparkles, Save, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Palette, Sparkles, Save, Loader2, Copy, ChevronDown } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
-import type { CorpsUniformDesign } from '../../types';
+import type { CorpsUniformDesign, CorpsClass } from '../../types';
 
 // =============================================================================
 // TYPES
 // =============================================================================
 
+interface CorpsOption {
+  classKey: CorpsClass;
+  corpsName: string;
+  uniformDesign?: CorpsUniformDesign;
+}
+
 interface UniformDesignModalProps {
   onClose: () => void;
-  onSubmit: (design: CorpsUniformDesign) => Promise<void>;
+  onSubmit: (design: CorpsUniformDesign, corpsClass: CorpsClass, copyToClasses?: CorpsClass[]) => Promise<void>;
   currentDesign?: CorpsUniformDesign;
   corpsName: string;
+  // New props for multi-corps support
+  allCorps?: CorpsOption[];
+  initialCorpsClass?: CorpsClass;
 }
 
 // =============================================================================
 // CONSTANTS
 // =============================================================================
+
+const CLASS_DISPLAY: Record<CorpsClass, { name: string; color: string }> = {
+  world: { name: 'World Class', color: 'text-purple-400' },
+  open: { name: 'Open Class', color: 'text-blue-400' },
+  aClass: { name: 'A Class', color: 'text-green-400' },
+  soundSport: { name: 'SoundSport', color: 'text-orange-400' },
+};
 
 const UNIFORM_STYLES = [
   { value: 'traditional', label: 'Traditional', description: 'Classic military-inspired with structured lines' },
@@ -63,26 +79,69 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
   onSubmit,
   currentDesign,
   corpsName,
+  allCorps,
+  initialCorpsClass,
 }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Selected corps class
+  const [selectedCorpsClass, setSelectedCorpsClass] = useState<CorpsClass>(
+    initialCorpsClass || (allCorps?.[0]?.classKey) || 'soundSport'
+  );
+
+  // Copy to other corps
+  const [copyToClasses, setCopyToClasses] = useState<CorpsClass[]>([]);
+
+  // Get the selected corps data
+  const selectedCorps = allCorps?.find(c => c.classKey === selectedCorpsClass);
+  const selectedDesign = selectedCorps?.uniformDesign || currentDesign;
+  const selectedCorpsName = selectedCorps?.corpsName || corpsName;
+
+  // Other corps available for copying
+  const otherCorps = allCorps?.filter(c => c.classKey !== selectedCorpsClass) || [];
+
   const [formData, setFormData] = useState<CorpsUniformDesign>({
-    primaryColor: currentDesign?.primaryColor || '',
-    secondaryColor: currentDesign?.secondaryColor || '',
-    accentColor: currentDesign?.accentColor || '',
-    style: currentDesign?.style || 'contemporary',
-    helmetStyle: currentDesign?.helmetStyle || 'modern',
-    plumeDescription: currentDesign?.plumeDescription || '',
-    brassDescription: currentDesign?.brassDescription || '',
-    percussionDescription: currentDesign?.percussionDescription || '',
-    guardDescription: currentDesign?.guardDescription || '',
-    mascotOrEmblem: currentDesign?.mascotOrEmblem || '',
-    themeKeywords: currentDesign?.themeKeywords || [],
-    venuePreference: currentDesign?.venuePreference || 'outdoor',
-    performanceStyle: currentDesign?.performanceStyle || '',
-    additionalNotes: currentDesign?.additionalNotes || '',
+    primaryColor: selectedDesign?.primaryColor || '',
+    secondaryColor: selectedDesign?.secondaryColor || '',
+    accentColor: selectedDesign?.accentColor || '',
+    style: selectedDesign?.style || 'contemporary',
+    helmetStyle: selectedDesign?.helmetStyle || 'modern',
+    plumeDescription: selectedDesign?.plumeDescription || '',
+    brassDescription: selectedDesign?.brassDescription || '',
+    percussionDescription: selectedDesign?.percussionDescription || '',
+    guardDescription: selectedDesign?.guardDescription || '',
+    mascotOrEmblem: selectedDesign?.mascotOrEmblem || '',
+    themeKeywords: selectedDesign?.themeKeywords || [],
+    venuePreference: selectedDesign?.venuePreference || 'outdoor',
+    performanceStyle: selectedDesign?.performanceStyle || '',
+    additionalNotes: selectedDesign?.additionalNotes || '',
   });
+
+  // Update form when selected corps changes
+  useEffect(() => {
+    const newDesign = selectedCorps?.uniformDesign;
+    if (newDesign) {
+      setFormData({
+        primaryColor: newDesign.primaryColor || '',
+        secondaryColor: newDesign.secondaryColor || '',
+        accentColor: newDesign.accentColor || '',
+        style: newDesign.style || 'contemporary',
+        helmetStyle: newDesign.helmetStyle || 'modern',
+        plumeDescription: newDesign.plumeDescription || '',
+        brassDescription: newDesign.brassDescription || '',
+        percussionDescription: newDesign.percussionDescription || '',
+        guardDescription: newDesign.guardDescription || '',
+        mascotOrEmblem: newDesign.mascotOrEmblem || '',
+        themeKeywords: newDesign.themeKeywords || [],
+        venuePreference: newDesign.venuePreference || 'outdoor',
+        performanceStyle: newDesign.performanceStyle || '',
+        additionalNotes: newDesign.additionalNotes || '',
+      });
+    }
+    // Reset copy selections when changing corps
+    setCopyToClasses([]);
+  }, [selectedCorpsClass, selectedCorps]);
 
   const [keywordInput, setKeywordInput] = useState('');
 
@@ -105,7 +164,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
     setError(null);
 
     try {
-      await onSubmit(formData);
+      await onSubmit(formData, selectedCorpsClass, copyToClasses.length > 0 ? copyToClasses : undefined);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save uniform design');
       setIsSaving(false);
@@ -137,6 +196,14 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
     }
   };
 
+  const toggleCopyToClass = (classKey: CorpsClass) => {
+    setCopyToClasses(prev =>
+      prev.includes(classKey)
+        ? prev.filter(c => c !== classKey)
+        : [...prev, classKey]
+    );
+  };
+
   return (
     <Portal>
       <div
@@ -157,7 +224,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
               className="text-xs font-bold uppercase tracking-wider text-[#0057B8] flex items-center gap-2"
             >
               <Palette className="w-4 h-4" />
-              Uniform Design — {corpsName}
+              Uniform Design
             </h2>
             <button
               onClick={onClose}
@@ -171,6 +238,37 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
           {/* Body - Scrollable */}
           <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
             <div className="p-4 space-y-6 overflow-y-auto flex-1">
+
+              {/* Corps Selector - Only show if multiple corps */}
+              {allCorps && allCorps.length > 1 && (
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                    Select Ensemble
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={selectedCorpsClass}
+                      onChange={(e) => setSelectedCorpsClass(e.target.value as CorpsClass)}
+                      className="w-full h-11 px-3 pr-10 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white focus:outline-none focus:border-[#0057B8] appearance-none cursor-pointer"
+                    >
+                      {allCorps.map((corps) => (
+                        <option key={corps.classKey} value={corps.classKey}>
+                          {corps.corpsName} ({CLASS_DISPLAY[corps.classKey].name})
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+                  </div>
+                </div>
+              )}
+
+              {/* Single corps display */}
+              {(!allCorps || allCorps.length <= 1) && (
+                <div className="bg-[#222] border border-[#333] px-3 py-2 flex items-center gap-2">
+                  <span className="text-xs text-gray-400">Designing for:</span>
+                  <span className="text-sm font-bold text-white">{selectedCorpsName}</span>
+                </div>
+              )}
 
               {/* AI Generation Notice */}
               <div className="bg-[#0057B8]/10 border border-[#0057B8]/30 p-3 flex items-start gap-2">
@@ -507,6 +605,48 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                 </div>
               </div>
 
+              {/* SECTION: Copy to Other Ensembles */}
+              {otherCorps.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-[#333] pb-1 flex items-center gap-2">
+                    <Copy className="w-3 h-3" />
+                    Copy Design to Other Ensembles
+                  </h3>
+                  <p className="text-[10px] text-gray-500">
+                    Apply this uniform design to your other corps as well.
+                  </p>
+                  <div className="space-y-2">
+                    {otherCorps.map((corps) => (
+                      <label
+                        key={corps.classKey}
+                        className="flex items-center gap-3 p-2 bg-[#0a0a0a] border border-[#333] hover:border-[#444] cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={copyToClasses.includes(corps.classKey)}
+                          onChange={() => toggleCopyToClass(corps.classKey)}
+                          className="w-4 h-4 bg-[#0a0a0a] border border-[#333] rounded-sm accent-[#0057B8]"
+                        />
+                        <div className="flex-1">
+                          <span className="text-sm text-white">{corps.corpsName}</span>
+                          <span className={`ml-2 text-[10px] ${CLASS_DISPLAY[corps.classKey].color}`}>
+                            {CLASS_DISPLAY[corps.classKey].name}
+                          </span>
+                        </div>
+                        {corps.uniformDesign && (
+                          <span className="text-[9px] text-yellow-500 uppercase">Has Design</span>
+                        )}
+                      </label>
+                    ))}
+                  </div>
+                  {copyToClasses.length > 0 && (
+                    <p className="text-[10px] text-yellow-500">
+                      This will overwrite existing designs for {copyToClasses.length} ensemble{copyToClasses.length > 1 ? 's' : ''}.
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* Error Message */}
               {error && (
                 <div className="bg-red-500/10 border border-red-500/30 p-3">
@@ -542,7 +682,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                   ) : (
                     <>
                       <Save className="w-4 h-4" />
-                      Save Design
+                      Save Design{copyToClasses.length > 0 ? ` (${copyToClasses.length + 1})` : ''}
                     </>
                   )}
                 </button>
