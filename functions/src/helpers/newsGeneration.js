@@ -1515,6 +1515,7 @@ function getFantasyUniformDetails(corpsName, location = null, uniformDesign = nu
 /**
  * Build image prompt for corps avatar/icon generation
  * Creates a distinctive, recognizable avatar for each fantasy corps
+ * Supports two styles: 'logo' (team emblem) or 'performer' (section member)
  *
  * @param {string} corpsName - The fantasy corps name
  * @param {string} location - The corps home location
@@ -1522,7 +1523,15 @@ function getFantasyUniformDetails(corpsName, location = null, uniformDesign = nu
  */
 function buildCorpsAvatarPrompt(corpsName, location = null, uniformDesign = null) {
   const details = getFantasyUniformDetails(corpsName, location, uniformDesign);
+  const avatarStyle = uniformDesign?.avatarStyle || "logo";
+  const avatarSection = uniformDesign?.avatarSection || "hornline";
 
+  // If performer style, generate a section member image
+  if (avatarStyle === "performer") {
+    return buildPerformerAvatarPrompt(corpsName, location, uniformDesign, avatarSection, details);
+  }
+
+  // Default: logo style
   return `Create a professional sports team logo/avatar for the fantasy marching arts ensemble "${corpsName}"${location ? ` from ${location}` : ""}.
 
 DESIGN REQUIREMENTS:
@@ -1548,6 +1557,70 @@ STYLE NOTES:
 ${uniformDesign?.themeKeywords?.length > 0 ? `- Theme keywords: ${uniformDesign.themeKeywords.join(", ")}` : ""}
 
 This avatar will represent a competitive marching arts fantasy team. Make it distinctive, memorable, and worthy of a championship contender.`;
+}
+
+/**
+ * Build performer-style avatar prompt featuring a specific section member
+ */
+function buildPerformerAvatarPrompt(corpsName, location, uniformDesign, section, details) {
+  const sectionDescriptions = {
+    drumMajor: {
+      title: "Drum Major",
+      pose: "standing proud with mace/baton raised, commanding presence",
+      instrument: "conducting baton or ceremonial mace",
+      details: "leadership insignia, distinctive headwear, epaulettes",
+    },
+    hornline: {
+      title: "Brass Performer",
+      pose: "in playing position with horn raised, powerful stance",
+      instrument: uniformDesign?.brassDescription || "polished brass horn with bell raised",
+      details: "white gloves, determined expression, athletic posture",
+    },
+    drumline: {
+      title: "Percussion Performer",
+      pose: "with drums mounted, sticks ready, intense focus",
+      instrument: uniformDesign?.percussionDescription || "snare drum with matching carrier",
+      details: "drumsticks in motion, powerful stance, matching hardware",
+    },
+    colorGuard: {
+      title: "Color Guard Performer",
+      pose: "mid-movement with equipment, graceful and dynamic",
+      instrument: "silk flag or rifle",
+      details: uniformDesign?.guardDescription || "flowing costume, expressive movement, athletic grace",
+    },
+  };
+
+  const sectionInfo = sectionDescriptions[section] || sectionDescriptions.hornline;
+  const primaryColor = uniformDesign?.primaryColor || details.colors.split(" ")[0];
+  const secondaryColor = uniformDesign?.secondaryColor || "silver";
+  const helmetDesc = uniformDesign?.helmetStyle === "none" ? "no headwear" :
+    uniformDesign?.plumeDescription || `${uniformDesign?.helmetStyle || "modern"} style headwear`;
+
+  return `Create a stylized portrait avatar of a ${sectionInfo.title} from the marching arts ensemble "${corpsName}"${location ? ` from ${location}` : ""}.
+
+SUBJECT:
+- Single ${sectionInfo.title} performer, waist-up portrait
+- ${sectionInfo.pose}
+- Holding/with: ${sectionInfo.instrument}
+- ${sectionInfo.details}
+
+UNIFORM - EXACT COLORS:
+- Primary color: ${primaryColor}
+- Secondary color: ${secondaryColor}
+${uniformDesign?.accentColor ? `- Accent: ${uniformDesign.accentColor}` : ""}
+- Style: ${uniformDesign?.style || "contemporary"} marching arts uniform
+- Headwear: ${helmetDesc}
+- White marching gloves
+
+STYLE REQUIREMENTS:
+- Stylized illustration/digital art aesthetic (NOT photorealistic)
+- Bold, clean lines suitable for profile pictures and app icons
+- Works well at 256x256 and 64x64 pixels
+- Stadium/field background blurred or gradient
+- Dramatic lighting, professional sports photography composition
+${uniformDesign?.themeKeywords?.length > 0 ? `- Theme inspiration: ${uniformDesign.themeKeywords.join(", ")}` : ""}
+
+This is a profile avatar for a competitive fantasy marching arts team. Make it iconic and recognizable.`;
 }
 
 /**
