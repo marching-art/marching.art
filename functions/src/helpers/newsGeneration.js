@@ -1529,51 +1529,77 @@ function buildCorpsAvatarPrompt(corpsName, location = null, uniformDesign = null
   const avatarStyle = uniformDesign?.avatarStyle || "logo";
   const avatarSection = uniformDesign?.avatarSection || "hornline";
 
+  // Extract colors with fallbacks
+  const primaryColor = uniformDesign?.primaryColor || details.colors.split(" ")[0] || "blue";
+  const secondaryColor = uniformDesign?.secondaryColor || details.colors.split(" with ")[1]?.split(" ")[0] || "silver";
+  const accentColor = uniformDesign?.accentColor || null;
+  const themeKeywords = uniformDesign?.themeKeywords || [];
+
+  // Build mascot description
+  const mascotDesc = uniformDesign?.mascotOrEmblem
+    ? uniformDesign.mascotOrEmblem
+    : `bold mascot or symbol inspired by "${corpsName}"`;
+
+  // Location string
+  const locationStr = location ? ` from ${location}` : "";
+
   // If performer style, generate a section member image
   if (avatarStyle === "performer") {
-    return buildPerformerAvatarPrompt(corpsName, location, uniformDesign, avatarSection, details);
+    return buildPerformerAvatarPrompt(corpsName, locationStr, uniformDesign, avatarSection, {
+      primaryColor,
+      secondaryColor,
+      accentColor,
+      themeKeywords,
+    });
   }
 
-  // Default: logo style
-  return `Create a professional sports team logo/avatar for the fantasy marching arts ensemble "${corpsName}"${location ? ` from ${location}` : ""}.
+  // ==========================================================================
+  // MASTER LOGO AVATAR TEMPLATE - marching.art unified format
+  // ==========================================================================
+  return `Create a professional esports-style team logo/avatar for the fantasy marching arts ensemble "${corpsName}"${locationStr}.
 
 CRITICAL FORMAT REQUIREMENTS:
-- Image must be SQUARE format (1:1 aspect ratio)
-- Design must FILL THE ENTIRE SQUARE - no circular badges with empty corners
-- Use the full canvas edge-to-edge with dynamic composition
-- Background should extend to all edges (gradient, pattern, or solid color)
+- SQUARE format (1:1 aspect ratio)
+- Full-bleed design that fills the entire canvas edge-to-edge
+- NO circular badges with empty corners
+- Background must extend to all edges (gradient, pattern, or textured fill)
+- No empty/white space
 
 DESIGN STYLE:
-- Modern esports/gaming team aesthetic with bold, dynamic composition
-- Full-bleed design that uses the entire square canvas
-- Can use angular shapes, dynamic lines, or mascot that extends to edges
-- Colors: ${details.colors}
+- Modern esports/gaming team aesthetic
+- Bold, dynamic, high-contrast composition
+- Angular shapes, sharp lines, or a mascot that extends to the edges
+- Stylized illustration (NOT photorealistic)
+- Must remain readable at small sizes (64x64)
 
-VISUAL ELEMENTS:
-${uniformDesign?.mascotOrEmblem ? `- Featured mascot/emblem: ${uniformDesign.mascotOrEmblem} - make it large and prominent` : `- Create a bold mascot or symbol based on "${corpsName}" that fills the frame`}
-- Integrate subtle marching arts elements (brass bell silhouette, drumstick, guard silk)
-- Corps name or bold initials as part of the composition
+MASCOT / SYMBOL:
+- Featured mascot/emblem: ${mascotDesc} — large, dominant, and filling the frame
+- Integrate subtle marching arts elements (choose 1-2): brass bell silhouette, drumstick, mallet, guard silk, shako plume, drill chart lines
+- Include corps name or bold initials as part of the composition
 
 COLOR PALETTE:
-- Primary: ${uniformDesign?.primaryColor || details.colors.split(" ")[0]}
-- Secondary: ${uniformDesign?.secondaryColor || details.colors.split(" with ")[1]?.split(" ")[0] || "silver"}
-${uniformDesign?.accentColor ? `- Accent: ${uniformDesign.accentColor}` : ""}
-- Use gradient backgrounds or textured fills - NO empty/white space
+- Primary: ${primaryColor}
+- Secondary: ${secondaryColor}${accentColor ? `\n- Accent: ${accentColor}` : ""}
+- Use gradients or textured fills to avoid flat/empty areas
 
-STYLE NOTES:
-- Think esports team logos, gaming avatars, modern sports branding
-- Bold, recognizable at small sizes (64x64 pixels)
-- Stylized illustration aesthetic - NOT photorealistic
-- Dynamic angles and compositions that fill the square
-${uniformDesign?.themeKeywords?.length > 0 ? `- Theme keywords: ${uniformDesign.themeKeywords.join(", ")}` : ""}
+THEME & MOOD:
+- Keywords: ${themeKeywords.length > 0 ? themeKeywords.join(", ") : "competitive, elite, championship"}
+- Tone: competitive, elite, championship-ready
+- Dynamic angles, strong silhouettes, and full-frame energy
 
-This avatar represents a competitive marching arts fantasy team. Make it bold, edge-to-edge, and championship-worthy.`;
+NOTES:
+- Avoid photorealism
+- Avoid soft, pastel, or low-contrast palettes unless specified
+- Prioritize bold shapes, clean readability, and esports-style visual impact`;
 }
 
 /**
  * Build performer-style avatar prompt featuring a specific section member
+ * Uses the same unified format structure as logo avatars
  */
-function buildPerformerAvatarPrompt(corpsName, location, uniformDesign, section, details) {
+function buildPerformerAvatarPrompt(corpsName, locationStr, uniformDesign, section, colors) {
+  const { primaryColor, secondaryColor, accentColor, themeKeywords } = colors;
+
   const sectionDescriptions = {
     drumMajor: {
       title: "Drum Major",
@@ -1602,42 +1628,51 @@ function buildPerformerAvatarPrompt(corpsName, location, uniformDesign, section,
   };
 
   const sectionInfo = sectionDescriptions[section] || sectionDescriptions.hornline;
-  const primaryColor = uniformDesign?.primaryColor || details.colors.split(" ")[0];
-  const secondaryColor = uniformDesign?.secondaryColor || "silver";
-  const helmetDesc = uniformDesign?.helmetStyle === "none" ? "no headwear" :
-    uniformDesign?.plumeDescription || `${uniformDesign?.helmetStyle || "modern"} style headwear`;
+  const helmetDesc = uniformDesign?.helmetStyle === "none"
+    ? "no headwear"
+    : uniformDesign?.plumeDescription || `${uniformDesign?.helmetStyle || "modern"} style headwear`;
 
-  return `Create a stylized portrait avatar of a ${sectionInfo.title} from the marching arts ensemble "${corpsName}"${location ? ` from ${location}` : ""}.
+  // ==========================================================================
+  // MASTER PERFORMER AVATAR TEMPLATE - marching.art unified format
+  // ==========================================================================
+  return `Create a stylized portrait avatar of a ${sectionInfo.title} from the fantasy marching arts ensemble "${corpsName}"${locationStr}.
 
 CRITICAL FORMAT REQUIREMENTS:
-- Image must be SQUARE format (1:1 aspect ratio)
-- Subject must FILL THE ENTIRE FRAME - tightly cropped, edge-to-edge
-- Background extends to all corners (stadium blur, gradient, or team colors)
-- NO empty space or borders around the subject
+- SQUARE format (1:1 aspect ratio)
+- Full-bleed design that fills the entire canvas edge-to-edge
+- Subject must FILL THE ENTIRE FRAME - tightly cropped, no empty space
+- Background must extend to all edges (stadium blur, gradient, or team colors)
+- No borders or margins around the subject
+
+DESIGN STYLE:
+- Modern esports/gaming avatar aesthetic
+- Bold, dynamic, high-contrast composition
+- Stylized illustration (NOT photorealistic)
+- Must remain readable at small sizes (64x64)
 
 SUBJECT:
-- Single ${sectionInfo.title} performer, tightly cropped portrait filling the square
-- ${sectionInfo.pose}
-- Holding/with: ${sectionInfo.instrument}
-- ${sectionInfo.details}
+- Single ${sectionInfo.title} performer, tightly cropped portrait
+- Pose: ${sectionInfo.pose}
+- Equipment: ${sectionInfo.instrument}
+- Details: ${sectionInfo.details}
 
-UNIFORM - EXACT COLORS:
-- Primary color: ${primaryColor}
-- Secondary color: ${secondaryColor}
-${uniformDesign?.accentColor ? `- Accent: ${uniformDesign.accentColor}` : ""}
+UNIFORM & COLORS:
+- Primary: ${primaryColor}
+- Secondary: ${secondaryColor}${accentColor ? `\n- Accent: ${accentColor}` : ""}
 - Style: ${uniformDesign?.style || "contemporary"} marching arts uniform
 - Headwear: ${helmetDesc}
 - White marching gloves
+- Use team colors in background gradient
 
-STYLE REQUIREMENTS:
-- Stylized illustration/digital art aesthetic (NOT photorealistic)
-- Bold composition that uses the full square canvas
-- Works well at 256x256 and 64x64 pixels
-- Background: gradient or blurred stadium in team colors - fills entire frame
-- Dramatic lighting, dynamic pose
-${uniformDesign?.themeKeywords?.length > 0 ? `- Theme inspiration: ${uniformDesign.themeKeywords.join(", ")}` : ""}
+THEME & MOOD:
+- Keywords: ${themeKeywords.length > 0 ? themeKeywords.join(", ") : "competitive, elite, championship"}
+- Tone: competitive, elite, championship-ready
+- Dramatic lighting, dynamic pose, full-frame energy
 
-This is a profile avatar for a competitive fantasy marching arts team. Make it bold, full-frame, and iconic.`;
+NOTES:
+- Avoid photorealism
+- Avoid soft, pastel, or low-contrast palettes unless specified
+- Prioritize bold shapes, clean readability, and esports-style visual impact`;
 }
 
 /**
