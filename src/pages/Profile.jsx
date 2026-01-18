@@ -725,7 +725,7 @@ const Profile = () => {
   const handleUniformDesign = useCallback(async (design) => {
     if (!user || !activeCorpsClass) return;
     try {
-      const profileRef = doc(db, 'users', user.uid);
+      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
       await updateDoc(profileRef, {
         [`corps.${activeCorpsClass}.uniformDesign`]: design,
       });
