@@ -329,6 +329,7 @@ export const useScoresData = (options = {}) => {
                 corpsName: result.corpsName,
                 uid: result.uid,
                 displayName: result.displayName,
+                avatarUrl: result.avatarUrl || null,
                 score: result.totalScore || 0,
                 totalScore: result.totalScore || 0,
                 geScore: result.geScore || 0,
@@ -421,6 +422,7 @@ export const useScoresData = (options = {}) => {
             corpsClass: score.corpsClass,
             uid: score.uid,
             displayName: score.displayName,
+            avatarUrl: score.avatarUrl || null,
             scores: [],
             totalScore: 0,
             showCount: 0

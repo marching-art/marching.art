@@ -233,7 +233,7 @@ const RecapDataGrid = ({
                   {/* Corps + Location */}
                   <td className="py-2 px-2">
                     <div className="flex items-center gap-2 min-w-0">
-                      <TeamAvatar name={score.corpsName || score.corps} size="xs" />
+                      <TeamAvatar name={score.corpsName || score.corps} logoUrl={score.avatarUrl} size="xs" />
                       <div className="min-w-0">
                         <span className="font-bold text-white text-sm block truncate">
                           {score.corpsName || score.corps}
@@ -550,7 +550,7 @@ const ClassStandingsGrid = ({
                   {/* Corps */}
                   <td className="py-2.5 px-2">
                     <div className="flex items-center gap-2 min-w-0">
-                      <TeamAvatar name={entry.corpsName} size="xs" />
+                      <TeamAvatar name={entry.corpsName} logoUrl={entry.avatarUrl} size="xs" />
                       <div className="min-w-0">
                         <span className="font-bold text-white text-sm block truncate">
                           {entry.corpsName}

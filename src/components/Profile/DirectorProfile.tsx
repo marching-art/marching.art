@@ -470,13 +470,15 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
         <div className="flex">
           {/* LEFT: Avatar/Uniform - Large */}
           <div className="flex-shrink-0 w-32 sm:w-40 lg:w-48 bg-[#0a0a0a] border-r border-[#333] relative group">
-            {avatarData.url ? (
-              <img src={avatarData.url} alt="Corps Uniform" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center aspect-square">
-                <User className="w-12 h-12 text-gray-600" />
-              </div>
-            )}
+            <div className="aspect-square w-full">
+              {avatarData.url ? (
+                <img src={avatarData.url} alt="Corps Uniform" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-[#1a1a1a]">
+                  <User className="w-12 h-12 text-gray-600" />
+                </div>
+              )}
+            </div>
 
             {/* Overlay actions for own profile */}
             {isOwnProfile && (

@@ -152,8 +152,10 @@ async function generateAndSaveAvatar({ userId, corpsClass, corpsName, location, 
   });
 
   // Generate image using Gemini Flash for faster avatar generation
+  // Use 1:1 aspect ratio for square avatars that fill the frame
   const imageData = await generateImageWithImagen(prompt, {
     model: "gemini-2.5-flash-image",
+    aspectRatio: "1:1",
   });
 
   if (!imageData) {
