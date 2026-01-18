@@ -202,6 +202,7 @@ ${userIsWinning ? '(Leading)' : isTied ? '(Tied)' : '(Trailing)'}
             <m.div
               initial={{ y: 50 }}
               animate={{ y: 0 }}
+              onClick={(e) => e.stopPropagation()}
               className="text-center"
             >
               <m.div
