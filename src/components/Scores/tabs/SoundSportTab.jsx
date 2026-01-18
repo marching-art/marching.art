@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
 import {
   Music, Medal, Award, ChevronRight, ChevronDown,
-  Info, Star, Users, Zap, Clock, BookOpen
+  Info, Star, Users, Zap, Clock, BookOpen, MapPin
 } from 'lucide-react';
 import LoadingScreen from '../../LoadingScreen';
 import EmptyState from '../../EmptyState';
@@ -412,12 +412,22 @@ const SoundSportTab = ({ loading, allShows }) => {
       ) : soundSportData.length > 0 ? (
         <div className="space-y-6">
           {soundSportData.map((show, showIdx) => (
-            <div key={showIdx} className="card p-4 md:p-6">
+            <div key={showIdx} className="card overflow-hidden">
               {/* Event Header */}
-              <div className="mb-4 md:mb-5 pb-3 border-b border-[#333]">
-                <h3 className="text-lg md:text-xl font-semibold text-cream-100">{show.eventName}</h3>
-                <p className="text-xs md:text-sm text-cream-500/60">{show.location} • {show.date}</p>
+              <div className="bg-[#222] px-4 py-2.5 flex items-center justify-between">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="font-bold text-white text-sm truncate">{show.eventName}</span>
+                  <span className="text-gray-500 text-xs hidden sm:flex items-center gap-1">
+                    <MapPin className="w-3 h-3" />
+                    {show.location}
+                  </span>
+                </div>
+                <span className="text-[10px] text-gray-500 font-data tabular-nums flex-shrink-0">
+                  {show.date}
+                </span>
               </div>
+
+              <div className="p-4 md:p-6">
 
               {/* Best in Show - highest scoring ensemble at this event */}
               <BestInShowCard score={show.bestInShow} />
@@ -459,6 +469,7 @@ const SoundSportTab = ({ loading, allShows }) => {
                     {show.groupedScores.Bronze.length} Bronze
                   </span>
                 )}
+              </div>
               </div>
             </div>
           ))}
