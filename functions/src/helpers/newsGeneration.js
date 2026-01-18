@@ -1537,29 +1537,37 @@ function buildCorpsAvatarPrompt(corpsName, location = null, uniformDesign = null
   // Default: logo style
   return `Create a professional sports team logo/avatar for the fantasy marching arts ensemble "${corpsName}"${location ? ` from ${location}` : ""}.
 
-DESIGN REQUIREMENTS:
-- Style: Clean, bold sports logo suitable for jerseys, merchandise, and app icons
-- Format: Circular or shield-shaped emblem that works at small sizes
+CRITICAL FORMAT REQUIREMENTS:
+- Image must be SQUARE format (1:1 aspect ratio)
+- Design must FILL THE ENTIRE SQUARE - no circular badges with empty corners
+- Use the full canvas edge-to-edge with dynamic composition
+- Background should extend to all edges (gradient, pattern, or solid color)
+
+DESIGN STYLE:
+- Modern esports/gaming team aesthetic with bold, dynamic composition
+- Full-bleed design that uses the entire square canvas
+- Can use angular shapes, dynamic lines, or mascot that extends to edges
 - Colors: ${details.colors}
 
 VISUAL ELEMENTS:
-${uniformDesign?.mascotOrEmblem ? `- Featured mascot/emblem: ${uniformDesign.mascotOrEmblem}` : `- Suggest a mascot or symbol based on the corps name "${corpsName}"`}
-- Include subtle marching arts elements (stylized brass bell, drumstick, or color guard silk)
-- Corps name or initials incorporated into design
+${uniformDesign?.mascotOrEmblem ? `- Featured mascot/emblem: ${uniformDesign.mascotOrEmblem} - make it large and prominent` : `- Create a bold mascot or symbol based on "${corpsName}" that fills the frame`}
+- Integrate subtle marching arts elements (brass bell silhouette, drumstick, guard silk)
+- Corps name or bold initials as part of the composition
 
 COLOR PALETTE:
 - Primary: ${uniformDesign?.primaryColor || details.colors.split(" ")[0]}
 - Secondary: ${uniformDesign?.secondaryColor || details.colors.split(" with ")[1]?.split(" ")[0] || "silver"}
 ${uniformDesign?.accentColor ? `- Accent: ${uniformDesign.accentColor}` : ""}
+- Use gradient backgrounds or textured fills - NO empty/white space
 
 STYLE NOTES:
-- Professional NFL/NBA/esports team quality
-- Bold, recognizable at 64x64 pixels
-- Modern but timeless design
-- NO realistic photographs - stylized vector/illustration aesthetic
+- Think esports team logos, gaming avatars, modern sports branding
+- Bold, recognizable at small sizes (64x64 pixels)
+- Stylized illustration aesthetic - NOT photorealistic
+- Dynamic angles and compositions that fill the square
 ${uniformDesign?.themeKeywords?.length > 0 ? `- Theme keywords: ${uniformDesign.themeKeywords.join(", ")}` : ""}
 
-This avatar will represent a competitive marching arts fantasy team. Make it distinctive, memorable, and worthy of a championship contender.`;
+This avatar represents a competitive marching arts fantasy team. Make it bold, edge-to-edge, and championship-worthy.`;
 }
 
 /**
@@ -1601,8 +1609,14 @@ function buildPerformerAvatarPrompt(corpsName, location, uniformDesign, section,
 
   return `Create a stylized portrait avatar of a ${sectionInfo.title} from the marching arts ensemble "${corpsName}"${location ? ` from ${location}` : ""}.
 
+CRITICAL FORMAT REQUIREMENTS:
+- Image must be SQUARE format (1:1 aspect ratio)
+- Subject must FILL THE ENTIRE FRAME - tightly cropped, edge-to-edge
+- Background extends to all corners (stadium blur, gradient, or team colors)
+- NO empty space or borders around the subject
+
 SUBJECT:
-- Single ${sectionInfo.title} performer, waist-up portrait
+- Single ${sectionInfo.title} performer, tightly cropped portrait filling the square
 - ${sectionInfo.pose}
 - Holding/with: ${sectionInfo.instrument}
 - ${sectionInfo.details}
@@ -1617,13 +1631,13 @@ ${uniformDesign?.accentColor ? `- Accent: ${uniformDesign.accentColor}` : ""}
 
 STYLE REQUIREMENTS:
 - Stylized illustration/digital art aesthetic (NOT photorealistic)
-- Bold, clean lines suitable for profile pictures and app icons
+- Bold composition that uses the full square canvas
 - Works well at 256x256 and 64x64 pixels
-- Stadium/field background blurred or gradient
-- Dramatic lighting, professional sports photography composition
+- Background: gradient or blurred stadium in team colors - fills entire frame
+- Dramatic lighting, dynamic pose
 ${uniformDesign?.themeKeywords?.length > 0 ? `- Theme inspiration: ${uniformDesign.themeKeywords.join(", ")}` : ""}
 
-This is a profile avatar for a competitive fantasy marching arts team. Make it iconic and recognizable.`;
+This is a profile avatar for a competitive fantasy marching arts team. Make it bold, full-frame, and iconic.`;
 }
 
 /**
