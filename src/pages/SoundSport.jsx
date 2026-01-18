@@ -20,9 +20,9 @@ import { Card } from '../components/ui/Card';
 // =============================================================================
 
 const RATING_THRESHOLDS = [
-  { rating: 'Gold', min: 90, color: 'bg-primary', textColor: 'text-black', borderColor: 'border-black', description: 'Outstanding performance demonstrating excellence in all criteria' },
+  { rating: 'Gold', min: 85, color: 'bg-primary', textColor: 'text-black', borderColor: 'border-black', description: 'Outstanding performance demonstrating excellence in all criteria' },
   { rating: 'Silver', min: 75, color: 'bg-stone-300', textColor: 'text-black', borderColor: 'border-black', description: 'Strong performance with high proficiency' },
-  { rating: 'Bronze', min: 60, color: 'bg-orange-300', textColor: 'text-black', borderColor: 'border-black', description: 'Solid performance meeting core standards' },
+  { rating: 'Bronze', min: 65, color: 'bg-orange-300', textColor: 'text-black', borderColor: 'border-black', description: 'Solid performance meeting core standards' },
   { rating: 'Participation', min: 0, color: 'bg-white', textColor: 'text-black', borderColor: 'border-black', description: 'Completed performance' },
 ];
 
