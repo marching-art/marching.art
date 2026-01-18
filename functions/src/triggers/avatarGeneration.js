@@ -19,8 +19,11 @@ const {
 } = require("../helpers/newsGeneration");
 const { uploadFromUrl } = require("../helpers/mediaService");
 
-// Define Gemini API key secret
+// Define secrets
 const geminiApiKey = defineSecret("GOOGLE_GENERATIVE_AI_API_KEY");
+const cloudinaryCloudName = defineSecret("CLOUDINARY_CLOUD_NAME");
+const cloudinaryApiKey = defineSecret("CLOUDINARY_API_KEY");
+const cloudinaryApiSecret = defineSecret("CLOUDINARY_API_SECRET");
 
 // =============================================================================
 // CONSTANTS
@@ -41,7 +44,7 @@ exports.onUniformDesignUpdated = onDocumentWritten(
     document: "artifacts/marching-art/users/{userId}/profile/data",
     timeoutSeconds: 120,
     memory: "512MiB",
-    secrets: [geminiApiKey],
+    secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret],
   },
   async (event) => {
     const beforeData = event.data?.before?.data();
@@ -156,8 +159,8 @@ async function generateAndSaveAvatar({ userId, corpsClass, corpsName, location, 
     return null;
   }
 
-  // Upload to Cloudinary
-  let avatarUrl = imageData;
+  // Upload to Cloudinary (or Firebase Storage fallback)
+  let avatarUrl = null;
 
   if (imageData.startsWith("data:")) {
     try {
@@ -169,12 +172,35 @@ async function generateAndSaveAvatar({ userId, corpsClass, corpsName, location, 
           { quality: "auto:good", fetch_format: "auto" },
         ],
       });
-      avatarUrl = uploadResult.secure_url;
+
+      // Check if upload was successful
+      if (uploadResult.success && uploadResult.url && !uploadResult.isPlaceholder) {
+        avatarUrl = uploadResult.url;
+        logger.info("Avatar uploaded successfully", {
+          url: avatarUrl,
+          publicId: uploadResult.publicId,
+        });
+      } else {
+        // Upload failed but didn't throw - store base64 as fallback
+        logger.warn("Avatar upload failed, storing base64 data URL as fallback", {
+          isPlaceholder: uploadResult.isPlaceholder,
+          error: uploadResult.error,
+        });
+        avatarUrl = imageData;
+      }
     } catch (uploadError) {
-      logger.error("Failed to upload avatar to Cloudinary:", uploadError);
-      // Use a fallback or skip
-      return null;
+      logger.error("Failed to upload avatar:", uploadError);
+      // Store base64 as fallback rather than failing completely
+      avatarUrl = imageData;
     }
+  } else if (imageData.startsWith("http")) {
+    // Already a URL, use directly
+    avatarUrl = imageData;
+  }
+
+  if (!avatarUrl) {
+    logger.warn("No valid avatar URL, skipping save");
+    return null;
   }
 
   // Save avatar URL back to the user's profile
@@ -207,7 +233,7 @@ exports.generateCorpsAvatar = onCall(
   {
     timeoutSeconds: 60,
     memory: "512MiB",
-    secrets: [geminiApiKey],
+    secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret],
   },
   async (request) => {
     if (!request.auth) {
@@ -272,7 +298,7 @@ exports.regenerateAllAvatars = onCall(
   {
     timeoutSeconds: 300,
     memory: "1GiB",
-    secrets: [geminiApiKey],
+    secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret],
   },
   async (request) => {
     if (!request.auth) {
