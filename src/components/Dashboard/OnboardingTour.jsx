@@ -149,6 +149,7 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
         style={tooltipPosition}
+        onClick={(e) => e.stopPropagation()}
         className="fixed z-50 w-80 bg-charcoal-900 border border-gold-500/30 rounded-sm overflow-hidden"
       >
         {/* Header */}

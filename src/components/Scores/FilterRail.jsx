@@ -340,6 +340,7 @@ const FilterRail = ({
                 animate={{ x: 0 }}
                 exit={{ x: '-100%' }}
                 transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                onClick={(e) => e.stopPropagation()}
                 className="fixed top-0 left-0 h-full w-[280px] bg-charcoal-950 border-r border-cream-500/10 flex flex-col z-50"
               >
                 <FilterRailContent
