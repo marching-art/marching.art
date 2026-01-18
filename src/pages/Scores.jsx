@@ -401,12 +401,16 @@ const SoundSportMedalList = ({ shows }) => {
       {groupedResults.map((group, groupIdx) => (
         <div key={groupIdx}>
           {/* Event Header */}
-          <div className="bg-[#222] border-y border-[#333] px-4 py-2 flex justify-between items-center">
-            <span className="text-xs font-bold uppercase text-white truncate pr-4">
-              {formatEventName(group.eventName)}
-            </span>
-            <span className="text-[10px] text-gray-500 flex-shrink-0">
-              {group.date} • {group.location}
+          <div className="bg-[#222] px-4 py-2.5 flex items-center justify-between">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="font-bold text-white text-sm truncate">{formatEventName(group.eventName)}</span>
+              <span className="text-gray-500 text-xs hidden sm:flex items-center gap-1">
+                <MapPin className="w-3 h-3" />
+                {group.location}
+              </span>
+            </div>
+            <span className="text-[10px] text-gray-500 font-data tabular-nums flex-shrink-0">
+              {group.date}
             </span>
           </div>
 
