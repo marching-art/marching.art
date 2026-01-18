@@ -1662,39 +1662,45 @@ CRITICAL: These uniform details are EXACT. Do not substitute generic uniforms.`;
   // Build show theme context if available
   const themeContext = showTitle ? buildShowThemeContext(showTitle) : "";
 
+  // Get random composition for variety in user-submitted articles
+  const articleComp = getRandomComposition(headline);
+
   const categoryPrompts = {
-    dci: `DCI Finals-style photography capturing the full spectacle of drum corps performance.
+    dci: `Professional DCI action photography on a football field.
 
 HEADLINE CONTEXT: "${headline}"
 ${corpsName ? `FEATURED CORPS: ${corpsName}` : ""}
 ${showTitle ? `SHOW: "${showTitle}"` : ""}
 
-SHOT TYPE: Epic DCI Finals stadium photograph
-- Wide/elevated angle from press box or sideline platform
-- Full corps of 100-150 performers visible in formation across the football field
-- Stadium bowl with 30,000+ crowd visible in background
-- Professional stadium lighting creating dramatic atmosphere
+CAMERA & COMPOSITION:
+- ${articleComp.camera.angle}
+- ${articleComp.camera.description}
 
-COMPOSITION (choose most appropriate for headline):
-- Massive company front of 80+ performers spanning sideline to sideline, bells raised
-- Full corps in geometric formation filling the field, visible from elevated angle
-- Corps-wide impact moment with all sections synchronized in dramatic pose
-- Brass arc of 50+ performers with drumline and guard visible in their positions
+SUBJECT FOCUS:
+- ${articleComp.focus.focus}
+- ${articleComp.focus.framing}
+
+COMPOSITION OPTIONS (choose most appropriate for headline):
+- Wide stadium shot showing full corps in formation
+- Section feature highlighting brass, percussion, or guard
+- Close-up action shot of individual performer emotion
+- Small group in synchronized dramatic moment
 
 ${uniformSection}
 
-CRITICAL: Show the FULL CORPS (100-150 performers), not small groups. This is an epic stadium shot.
+CRITICAL: Each performer holds ONLY ONE type of equipment. Brass players do NOT have drums. Drummers do NOT hold brass.
 ${themeContext}
 
-STADIUM ATMOSPHERE:
-- DCI Finals night atmosphere with massive stadium floods
-- Yard lines clearly visible on field
-- Stadium architecture and lights prominent in frame
-- Crowd visible in stands, scoreboard/LED screens adding to atmosphere
+MOMENT: ${articleComp.moment.moment}
+- Emotion: ${articleComp.moment.emotion}
 
-MOOD: Championship spectacle, epic scale, professional broadcast quality
+LIGHTING & ATMOSPHERE:
+- ${articleComp.lighting.lighting}
+- Mood: ${articleComp.lighting.mood}
+- Stadium/competition environment visible
+- Yard lines on field for context
 
-TECHNICAL: Professional broadcast/sports photography, wide angle from elevated position, capturing the full scale and grandeur of DCI competition. High contrast, vivid colors, sharp across the entire formation.`,
+TECHNICAL: Professional sports/broadcast photography. Sharp focus, vivid colors, appropriate depth of field for the composition scale.`,
 
     fantasy: `Creative digital illustration for fantasy marching arts sports coverage.
 
@@ -1755,67 +1761,112 @@ Generate an image that would work as a professional news article header at 1200x
  * Camera angles for variety in image composition
  */
 const CAMERA_ANGLES = [
-  { angle: "press box level wide shot, 70-200mm lens from 50 yard line, capturing full corps in formation across the field", description: "epic wide view of entire ensemble with stadium lights blazing" },
-  { angle: "elevated sideline platform, 24-70mm wide angle, showing 100+ performers spanning goal line to goal line", description: "sweeping stadium shot showing scale of corps" },
-  { angle: "end zone tower camera, looking down the field at company front of 60+ performers approaching", description: "dramatic frontal view with stadium bowl visible behind" },
-  { angle: "corner press box angle, wide shot capturing diagonal formation across yard lines with packed stands visible", description: "cinematic stadium atmosphere shot" },
-  { angle: "high sideline scaffold, 16-35mm ultra-wide, capturing full field with stadium lights creating starburst effects", description: "epic DCI Finals atmosphere" },
-  { angle: "broadcast camera position behind end zone, elevated 40 feet, showing geometric drill formation across entire field", description: "TV broadcast quality formation shot" },
-  { angle: "50 yard line press level, telephoto compression showing dense brass arc of 40+ performers with crowd behind", description: "powerful wall of sound visual" },
-  { angle: "aerial drone-style perspective, 80 feet up, looking down at symmetrical formation filling the field", description: "geometric precision from above" },
+  // Wide stadium shots - DCI Finals style
+  { angle: "press box level wide shot, 70-200mm lens from 50 yard line, capturing full corps in formation", description: "epic wide view of entire ensemble with stadium lights blazing", scale: "full-corps" },
+  { angle: "elevated end zone tower, looking down the field at company front approaching", description: "dramatic frontal view with stadium bowl behind", scale: "full-corps" },
+  { angle: "broadcast camera behind end zone, elevated 40 feet, geometric drill formation visible", description: "TV broadcast quality formation shot", scale: "full-corps" },
+  { angle: "aerial drone perspective, 80 feet up, symmetrical formation filling the field", description: "geometric precision from above", scale: "full-corps" },
+  // Medium group shots - section features
+  { angle: "sideline 70-200mm telephoto, compressing 8-12 brass performers in tight arc", description: "powerful brass section with bells catching light", scale: "section" },
+  { angle: "low angle from field level shooting upward, 4-6 performers towering heroically against stadium lights", description: "heroic low angle with dramatic backlighting", scale: "section" },
+  { angle: "diagonal across yard lines, 5-8 performers in athletic stance mid-drill", description: "dynamic diagonal showing movement and energy", scale: "section" },
+  { angle: "behind the drumline, 24-70mm, snare line in foreground with brass arc beyond", description: "layered depth showing percussion power", scale: "section" },
+  { angle: "corner sideline, color guard in foreground with corps formation behind", description: "guard feature with full corps context", scale: "section" },
+  // Close-up action shots - individual/small group
+  { angle: "tight 200mm telephoto, single performer portrait with blurred stadium behind", description: "intense close-up capturing emotion and detail", scale: "portrait" },
+  { angle: "field level 85mm, 2-3 performers mid-phrase with shallow depth of field", description: "intimate action moment with bokeh background", scale: "close" },
+  { angle: "low angle close-up shooting up at brass bells, stadium lights creating flare", description: "dramatic instrument detail with light effects", scale: "close" },
+  { angle: "sideline tracking shot style, single performer in motion blur with sharp face", description: "dynamic motion capture showing athletic intensity", scale: "portrait" },
+  { angle: "pit level ground perspective, performers towering above in dramatic scale", description: "ground-up dramatic perspective", scale: "close" },
 ];
 
 /**
  * Performer moments to capture
  */
 const PERFORMER_MOMENTS = [
-  { moment: "entire corps hitting the final chord, brass bells high, everyone frozen in impact pose", emotion: "triumphant climax" },
-  { moment: "corps-wide company front advancing with 80+ performers in perfect step", emotion: "overwhelming power" },
-  { moment: "full ensemble in dramatic pause before the big hit, stadium holding its breath", emotion: "electric anticipation" },
-  { moment: "massive brass arc sustaining a chord while guard rifles spin overhead", emotion: "multi-dimensional spectacle" },
-  { moment: "drumline feature with entire corps framing them in formation", emotion: "focused intensity" },
-  { moment: "corps transition mid-drill, formations morphing across the field", emotion: "kinetic energy" },
-  { moment: "emotional ballad moment with corps in scattered formation under soft lights", emotion: "intimate grandeur" },
-  { moment: "opener impact with full corps exploding across the field", emotion: "explosive energy" },
+  // Full corps moments
+  { moment: "entire corps hitting the final chord, brass bells high, everyone frozen in impact pose", emotion: "triumphant climax", scale: "full-corps" },
+  { moment: "corps-wide company front advancing in perfect step", emotion: "overwhelming power", scale: "full-corps" },
+  { moment: "full ensemble in dramatic pause before the big hit", emotion: "electric anticipation", scale: "full-corps" },
+  { moment: "opener impact with corps exploding across the field in scatter drill", emotion: "explosive energy", scale: "full-corps" },
+  // Section moments
+  { moment: "brass arc sustaining a powerful chord, bells high and gleaming", emotion: "unified power", scale: "section" },
+  { moment: "drumline in synchronized stick tricks, sticks frozen mid-air", emotion: "precision and flash", scale: "section" },
+  { moment: "color guard mid-toss, rifles and flags suspended against sky", emotion: "suspended grace", scale: "section" },
+  { moment: "battery drummers in aggressive forward march, sticks in motion blur", emotion: "raw intensity", scale: "section" },
+  // Individual/small group moments
+  { moment: "peak of a sustained high note, performer's body fully extended", emotion: "triumph and power", scale: "individual" },
+  { moment: "mid-phrase during technical run, fingers flying on valves", emotion: "intense concentration", scale: "individual" },
+  { moment: "dramatic pause before solo entrance, frozen anticipation", emotion: "tension and focus", scale: "individual" },
+  { moment: "pivot turn with aggressive bell swing, athletic power", emotion: "dynamic athleticism", scale: "individual" },
+  { moment: "emotional ballad moment, performer lost in musical expression", emotion: "raw vulnerability", scale: "individual" },
+  { moment: "recovery breath between phrases, human moment of exhaustion", emotion: "determination", scale: "individual" },
 ];
 
 /**
  * Lighting variations for different atmospheres
  */
 const LIGHTING_VARIATIONS = [
-  { lighting: "DCI Finals night atmosphere - massive stadium floods creating brilliant white light across the field, 50,000+ crowd visible in darkness", mood: "championship spectacle" },
-  { lighting: "Lucas Oil Stadium indoor lighting - dramatic spotlights and LED boards illuminating corps with vivid color saturation", mood: "indoor finals intensity" },
-  { lighting: "night competition with stadium lights creating starburst effects, performers brilliantly lit against dark sky", mood: "nighttime drama" },
-  { lighting: "evening semifinals atmosphere - twilight sky fading to purple while stadium lights take over", mood: "magic hour competition" },
-  { lighting: "full stadium floods with rim lighting from multiple angles, every uniform detail visible", mood: "broadcast quality illumination" },
-  { lighting: "dramatic cross-lighting from stadium towers creating long shadows across yard lines", mood: "cinematic depth" },
-  { lighting: "LED field panels and stadium screens adding colored accent lighting to the performance", mood: "modern visual technology" },
-  { lighting: "championship night with pyrotechnic accents, stadium atmosphere electric with light", mood: "finals night energy" },
+  // Night/stadium lighting
+  { lighting: "DCI Finals night - massive stadium floods creating brilliant white light, crowd visible in darkness beyond", mood: "championship spectacle" },
+  { lighting: "Lucas Oil Stadium indoor - dramatic spotlights and LED boards with vivid color saturation", mood: "indoor finals intensity" },
+  { lighting: "night competition with stadium lights creating starburst effects against dark sky", mood: "nighttime drama" },
+  { lighting: "full stadium floods with rim lighting from multiple angles highlighting every detail", mood: "broadcast quality" },
+  // Golden hour/twilight
+  { lighting: "golden hour sunlight from stadium west side, warm rim lighting on performers", mood: "warm and triumphant" },
+  { lighting: "twilight sky fading purple-orange while stadium lights begin to glow", mood: "magic hour" },
+  { lighting: "late afternoon sun backlighting performers, lens flare through brass bells", mood: "cinematic warmth" },
+  { lighting: "sunset silhouette with performers in dramatic outline against orange sky", mood: "artistic drama" },
+  // Daytime/overcast
+  { lighting: "bright afternoon sun creating harsh shadows and vivid uniform colors", mood: "raw intensity" },
+  { lighting: "overcast diffused light, even illumination showing true colors", mood: "documentary realism" },
+  { lighting: "partly cloudy with dramatic cloud shadows moving across field", mood: "dynamic natural" },
+  // Dramatic/artistic
+  { lighting: "dramatic cross-lighting creating long shadows across yard lines", mood: "cinematic depth" },
+  { lighting: "backlighting creating silhouette edges with bright rim highlights", mood: "dramatic artistic" },
+  { lighting: "mixed stadium lights and natural light creating complex shadows", mood: "atmospheric complexity" },
 ];
 
 /**
  * Section formations for group shots
  */
 const SECTION_FORMATIONS = [
-  { formation: "massive company front of 80+ performers spanning sideline to sideline", visual: "overwhelming power and scale" },
-  { formation: "double brass arc formation with 50+ performers creating waves of sound", visual: "dramatic visual impact" },
-  { formation: "full corps in geometric block formation filling the field", visual: "military precision at scale" },
-  { formation: "corps in spiraling drill pattern visible from elevated angle", visual: "artistic complexity" },
-  { formation: "staggered columns of 100+ performers in parade formation", visual: "depth and grandeur" },
-  { formation: "corps-wide scatter formation transitioning into unified shape", visual: "controlled chaos becoming order" },
-  { formation: "brass, percussion, and guard in layered tiers across the field", visual: "full ensemble architecture" },
-  { formation: "symmetrical formation with brass arc, drumline center, guard flanking", visual: "complete DCI spectacle" },
+  // Full corps formations
+  { formation: "massive company front spanning sideline to sideline", visual: "overwhelming power and scale", scale: "full-corps" },
+  { formation: "full corps in geometric block formation filling the field", visual: "military precision at scale", scale: "full-corps" },
+  { formation: "corps in spiraling drill pattern across the field", visual: "artistic complexity", scale: "full-corps" },
+  { formation: "symmetrical formation with all sections in their positions", visual: "complete DCI spectacle", scale: "full-corps" },
+  // Section formations
+  { formation: "brass arc sweeping across the 35 to 45 yard lines", visual: "graceful power", scale: "section" },
+  { formation: "drumline in tight block, shoulder to shoulder", visual: "battery precision", scale: "section" },
+  { formation: "color guard scattered across front sideline with silks flowing", visual: "visual artistry", scale: "section" },
+  { formation: "horn line in diagonal slash across yard lines", visual: "dynamic movement", scale: "section" },
+  // Small group formations
+  { formation: "tight cluster of 4-6 performers in athletic stance", visual: "intimate power", scale: "small" },
+  { formation: "small arc of 3-5 brass players, bells catching light", visual: "focused intensity", scale: "small" },
+  { formation: "pair of performers in synchronized movement", visual: "mirrored precision", scale: "small" },
+  { formation: "single performer isolated against blurred formation behind", visual: "individual spotlight", scale: "individual" },
 ];
 
 /**
  * Subject focus variations
  */
 const SUBJECT_FOCUS = [
-  { focus: "full corps formation", framing: "entire ensemble of 100-150 performers visible across the field, stadium atmosphere prominent" },
-  { focus: "company front spectacle", framing: "60+ performers in horizontal line spanning field, brass bells raised, dramatic stadium lighting" },
-  { focus: "brass arc formation", framing: "40-50 brass performers in sweeping arc formation, instruments gleaming under stadium lights" },
-  { focus: "full field geometric pattern", framing: "corps in complex drill formation creating visual shapes, elevated angle showing precision" },
-  { focus: "ensemble impact moment", framing: "entire corps in synchronized pose, big hit moment, crowd and stadium visible in background" },
+  // Full corps focus
+  { focus: "full corps formation", framing: "entire ensemble visible across the field, stadium atmosphere prominent", scale: "full-corps" },
+  { focus: "company front spectacle", framing: "wide shot of performers spanning field, dramatic stadium lighting", scale: "full-corps" },
+  { focus: "full field geometric pattern", framing: "corps in complex drill formation, elevated angle showing precision", scale: "full-corps" },
+  // Section focus
+  { focus: "brass section feature", framing: "8-15 brass performers in arc, bells gleaming, blurred field behind", scale: "section" },
+  { focus: "drumline feature", framing: "percussion section in tight formation, sticks in motion or frozen", scale: "section" },
+  { focus: "color guard feature", framing: "guard members with equipment, flags or rifles prominent", scale: "section" },
+  { focus: "mixed section action", framing: "5-8 performers from different sections showing ensemble coordination", scale: "section" },
+  // Close-up/portrait focus
+  { focus: "single performer portrait", framing: "tight crop on one performer, face and instrument, blurred background", scale: "portrait" },
+  { focus: "performer emotion capture", framing: "close-up showing facial expression and intensity, shallow DOF", scale: "portrait" },
+  { focus: "instrument detail shot", framing: "brass bell or drum head prominent with performer partially visible", scale: "detail" },
+  { focus: "small group sync", framing: "2-4 performers in synchronized moment, sharp against blurred stadium", scale: "small" },
+  { focus: "action freeze frame", framing: "single performer mid-movement, motion implied through pose", scale: "portrait" },
 ];
 
 /**
@@ -1863,7 +1914,7 @@ function buildStandingsImagePrompt(topCorps, year, location, showName, showTitle
   const seed = `${topCorps}-${year}-standings`;
   const comp = getRandomComposition(seed);
 
-  return `DCI Finals-style action photograph of ${topCorps} full corps performing (${year} season).
+  return `Professional DCI action photograph of ${topCorps} performing (${year} season).
 
 ═══════════════════════════════════════════════════════════════
 UNIFORM - THIS IS THE MOST IMPORTANT PART - MUST BE EXACT:
@@ -1879,31 +1930,29 @@ DO NOT USE: generic red plumes, generic white shakos, or any uniform that doesn'
 The uniform MUST match ${topCorps}'s distinctive colors and style.
 ═══════════════════════════════════════════════════════════════
 ${themeContext}
-SHOT TYPE: Epic DCI Finals stadium photograph
+CAMERA & COMPOSITION:
 - ${comp.camera.angle}
-- ${comp.focus.framing}
-- Full corps of 100-150 performers visible in formation across the football field
-- Stadium bowl with 30,000+ crowd visible in background
-- Professional stadium lighting creating dramatic atmosphere
+- ${comp.camera.description}
 
-FORMATION: ${comp.formation.formation}
+SUBJECT FOCUS:
+- ${comp.focus.focus}
+- ${comp.focus.framing}
+
+FORMATION/ARRANGEMENT: ${comp.formation.formation}
 - ${comp.formation.visual}
 
-ENSEMBLE MOMENT: ${comp.moment.moment}
-- ${comp.moment.emotion}
-- Entire corps synchronized in dramatic pose
-- Brass, percussion, and guard sections all visible in their positions
+MOMENT CAPTURED: ${comp.moment.moment}
+- Emotion: ${comp.moment.emotion}
 
-STADIUM ATMOSPHERE:
+LIGHTING & ATMOSPHERE:
 - ${comp.lighting.lighting}
 - Mood: ${comp.lighting.mood}
-- Yard lines clearly visible on field
-- Stadium architecture and lights prominent in frame
-- Scoreboard or LED screens visible adding to atmosphere
+- Stadium/competition environment visible
+- Yard lines on field for context
 
-TECHNICAL: Professional broadcast/sports photography, wide angle from elevated position, capturing the full scale and spectacle of DCI competition. High contrast, vivid colors, sharp across the entire formation.
+TECHNICAL: Professional sports/broadcast photography. Sharp focus on subject, appropriate depth of field for composition scale. Vivid colors true to ${topCorps} palette.
 
-This is ${topCorps} from ${showName || "DCI Finals"}${location ? ` in ${location}` : ""}${showTitle ? `, performing "${showTitle}"` : ""} - an epic stadium moment showcasing the full corps.`;
+This is ${topCorps} from ${showName || "a DCI competition"}${location ? ` in ${location}` : ""}${showTitle ? `, performing "${showTitle}"` : ""}.`;
 }
 
 /**
@@ -1925,37 +1974,32 @@ function buildCaptionsImagePrompt(featuredCorps, year, captionType, location, sh
   const comp = getRandomComposition(seed);
 
   // Determine which section to feature based on caption
-  let sectionFocus, sectionDetails, formationDescription, sectionNote;
+  let sectionFocus, sectionDetails, sectionNote;
 
   if (captionType.includes("Brass") || captionType.includes("B")) {
     sectionFocus = "brass section";
     sectionDetails = details.brass;
-    formationDescription = "massive brass arc of 50+ performers with bells raised, full corps visible in stadium setting";
-    sectionNote = "Emphasis on the brass section (40-50 performers) in prominent position, with drumline and guard visible in background positions.";
+    sectionNote = "Feature the brass section - bells, valves, and brass performers prominent";
   } else if (captionType.includes("Percussion") || captionType.includes("P")) {
     sectionFocus = "drumline";
     sectionDetails = details.percussion;
-    formationDescription = "drumline feature moment with 20+ percussion performers center stage, brass and guard framing them";
-    sectionNote = "Emphasis on the drumline (snare, tenors, bass drums) in center formation, with brass arc and guard visible around them.";
+    sectionNote = "Feature the percussion section - drums, sticks, drumline performers prominent";
   } else if (captionType.includes("Guard") || captionType.includes("CG")) {
     sectionFocus = "color guard";
     sectionDetails = details.guard;
-    formationDescription = "color guard feature with 15+ performers executing dramatic choreography, corps providing backdrop";
-    sectionNote = "Emphasis on guard members with silks/rifles in foreground, full brass and percussion ensemble visible behind.";
+    sectionNote = "Feature the color guard - flags, rifles, guard performers prominent";
   } else if (captionType.includes("Visual") || captionType.includes("V")) {
-    sectionFocus = "full corps drill";
+    sectionFocus = "visual ensemble";
     sectionDetails = details.uniform;
-    formationDescription = "full corps in geometric drill formation showing precision spacing and body technique";
-    sectionNote = "Emphasis on visual design with 100+ performers in complex formation, showcasing drill precision.";
+    sectionNote = "Emphasize body technique, marching form, and visual precision";
   } else {
     // GE or general
     sectionFocus = "full ensemble";
     sectionDetails = details.uniform;
-    formationDescription = "full corps in emotional performance moment, all sections unified in expression";
-    sectionNote = "Full corps visible showing the emotional and artistic impact of the performance.";
+    sectionNote = "Capture the emotional and artistic expression of the performance";
   }
 
-  return `DCI Finals-style photograph of ${featuredCorps} full corps performing (${year} season), highlighting ${sectionFocus} excellence.
+  return `Professional DCI action photograph of ${featuredCorps} (${year} season), highlighting ${sectionFocus} excellence.
 
 ═══════════════════════════════════════════════════════════════
 UNIFORM - THIS IS THE MOST IMPORTANT PART - MUST BE EXACT:
@@ -1971,28 +2015,29 @@ DO NOT USE: generic red plumes, generic white shakos, or any uniform that doesn'
 The uniform MUST match ${featuredCorps}'s distinctive colors and style.
 ═══════════════════════════════════════════════════════════════
 ${themeContext}
-SHOT TYPE: Epic stadium photograph showing ${formationDescription}
+CAMERA & COMPOSITION:
 - ${comp.camera.angle}
+- ${comp.camera.description}
+
+SUBJECT FOCUS:
+- ${comp.focus.focus}
 - ${comp.focus.framing}
-- Full corps of 100-150 performers visible across the football field
-- Stadium bowl with crowd visible in background
+- ${sectionNote}
 
-SECTION EMPHASIS: ${sectionNote}
-
-FORMATION: ${comp.formation.formation}
+FORMATION/ARRANGEMENT: ${comp.formation.formation}
 - ${comp.formation.visual}
 
-ENSEMBLE MOMENT: ${comp.moment.moment}
-- ${comp.moment.emotion}
+MOMENT CAPTURED: ${comp.moment.moment}
+- Emotion: ${comp.moment.emotion}
 
-STADIUM ATMOSPHERE:
+LIGHTING & ATMOSPHERE:
 - ${comp.lighting.lighting}
 - Mood: ${comp.lighting.mood}
-- Yard lines visible, stadium lights prominent
+- Stadium/competition environment visible
 
-TECHNICAL: Professional broadcast photography capturing the full scale of DCI competition while showcasing ${captionType} excellence.
+TECHNICAL: Professional sports photography showcasing ${captionType} excellence. Sharp focus, vivid colors true to ${featuredCorps} palette.
 
-This is ${featuredCorps} from ${location || "DCI Finals"}${showTitle ? `, performing "${showTitle}"` : ""}, showcasing ${captionType} excellence in an epic stadium setting.`;
+This is ${featuredCorps} from ${location || "a DCI competition"}${showTitle ? `, performing "${showTitle}"` : ""}, showcasing ${captionType} excellence.`;
 }
 
 /**
@@ -2013,12 +2058,12 @@ function buildFantasyPerformersImagePrompt(topCorpsName, theme, location = null,
 
   // Determine venue based on director preference or default
   const venueDescription = details.venuePreference === "indoor"
-    ? "Modern indoor arena (like Lucas Oil Stadium) with dramatic LED lighting systems, 30,000+ crowd visible"
+    ? "Indoor arena with dramatic LED lighting"
     : details.venuePreference === "outdoor"
-      ? "Outdoor stadium under evening sky with dramatic stadium floods, packed stands visible"
-      : "Professional marching arts competition stadium with dramatic lighting and enthusiastic crowd";
+      ? "Outdoor stadium with dramatic lighting"
+      : "Professional marching arts competition venue";
 
-  return `DCI Finals-style photograph of the full fantasy marching arts ensemble "${topCorpsName}"${location ? ` from ${location}` : ""}.
+  return `Professional marching arts photograph of the fantasy ensemble "${topCorpsName}"${location ? ` from ${location}` : ""}.
 
 UNIFORM DESIGN${details.matchedTheme === "director-custom" ? " (Director-Specified)" : ""}:
 - Colors: ${details.colors}
@@ -2028,43 +2073,37 @@ UNIFORM DESIGN${details.matchedTheme === "director-custom" ? " (Director-Specifi
 - Guard elements: ${details.guard}
 ${details.additionalNotes ? `- Special notes: ${details.additionalNotes}` : ""}
 
-SHOT TYPE: Epic stadium photograph showing full ensemble
+CAMERA & COMPOSITION:
 - ${comp.camera.angle}
+- ${comp.camera.description}
+
+SUBJECT FOCUS:
+- ${comp.focus.focus}
 - ${comp.focus.framing}
-- Full corps of 100-150 performers visible in formation across the football field
-- Stadium bowl with enthusiastic crowd visible in background
 
 SCENE SETTING:
 - ${venueDescription}
-- ${theme || "Championship competition performance moment"}
-- ${details.performanceStyle ? `Performance style: ${details.performanceStyle}` : "Professional DCI championship atmosphere"}
+- ${theme || "Competition performance moment"}
+- ${details.performanceStyle ? `Performance style: ${details.performanceStyle}` : "Professional marching arts atmosphere"}
 
-FORMATION: ${comp.formation.formation}
+FORMATION/ARRANGEMENT: ${comp.formation.formation}
 - ${comp.formation.visual}
 
-ENSEMBLE MOMENT: ${comp.moment.moment}
-- ${comp.moment.emotion}
-- Full corps synchronized in dramatic pose
-- Brass, percussion, and guard sections all visible in their positions
+MOMENT CAPTURED: ${comp.moment.moment}
+- Emotion: ${comp.moment.emotion}
 
-STADIUM ATMOSPHERE:
+LIGHTING & ATMOSPHERE:
 - ${comp.lighting.lighting}
 - Mood: ${comp.lighting.mood}
-- Yard lines clearly visible on field
-- Stadium architecture and lights prominent in frame
-
-PHOTOGRAPHY STYLE:
-- Professional DCI broadcast photography, wide angle
-- ${comp.focus.framing}
-- High contrast, saturated colors matching corps theme
+- Competition environment visible
 
 AUTHENTICITY:
-- All 100-150 members visible with realistic instruments
-- Uniform is creative but still clearly a marching arts uniform (not costume)
-- White marching gloves, black marching shoes on all performers
-- Professional posture and bearing across entire ensemble
+- Realistic brass instruments (baritone, mellophone, trumpet with correct valve/tubing)
+- Uniform is creative but clearly a marching arts uniform (not costume)
+- White marching gloves, black marching shoes
+- Professional posture and bearing
 
-This fantasy corps image should show ${comp.camera.description} - the full scale and spectacle of a championship-caliber ensemble.`;
+This fantasy corps image should show ${comp.camera.description}.`;
 }
 
 /**
@@ -2118,23 +2157,7 @@ function buildAnalyticsImagePrompt(featuredCorps, year, analysisType, showTitle 
   const seed = `${featuredCorps}-${year}-${analysisType}-analytics`;
   const comp = getRandomComposition(seed);
 
-  // Analytics-specific camera angles (elevated views for formation analysis)
-  const analyticsAngles = [
-    "press box level, 50 yards back, wide telephoto showing full 150-member corps in formation",
-    "end zone tower, 40 feet up, looking down the length of the field at approaching company front",
-    "corner tower shot, capturing diagonal depth of entire corps across yard lines",
-    "sideline scaffold, elevated 25 feet, showing full corps in parallel formation",
-    "drone-style overhead, 80 feet up, geometric pattern of entire ensemble visible",
-  ];
-  const selectedAngle = analyticsAngles[Math.abs(seed.split('').reduce((a, b) => ((a << 5) - a + b.charCodeAt(0)) | 0, 0)) % analyticsAngles.length];
-
-  return `DCI Finals-style elevated photograph showing ${featuredCorps} full corps (${year}) in ${comp.formation.formation}${showTitle ? ` from their show "${showTitle}"` : ""}.
-
-FORMATION FOCUS:
-- Full corps of 100-150 performers displaying ${comp.formation.visual}
-- Entire ensemble visible from elevated position
-- Brass, percussion, and guard all visible in their formation positions
-- Pattern and drill design clearly visible across the field
+  return `Professional DCI photograph showing ${featuredCorps} (${year})${showTitle ? ` performing "${showTitle}"` : ""} - suitable for ${analysisType}.
 
 UNIFORM ACCURACY:
 - Uniform: ${details.uniform}
@@ -2143,30 +2166,34 @@ UNIFORM ACCURACY:
 - Percussion: ${details.percussion}
 - Guard: ${details.guard}
 ${themeContext}
-COMPOSITION & CAMERA:
-- Position: ${selectedAngle}
-- Formation: ${comp.formation.formation}
-- Wide shot capturing the ENTIRE corps (100-150 performers)
-- Stadium bowl with crowd visible in background
+CAMERA & COMPOSITION:
+- ${comp.camera.angle}
+- ${comp.camera.description}
 
-STADIUM ATMOSPHERE:
+SUBJECT FOCUS:
+- ${comp.focus.focus}
+- ${comp.focus.framing}
+
+FORMATION/ARRANGEMENT: ${comp.formation.formation}
+- ${comp.formation.visual}
+
+MOMENT CAPTURED: ${comp.moment.moment}
+- Emotion: ${comp.moment.emotion}
+
+LIGHTING & ATMOSPHERE:
 - ${comp.lighting.lighting}
 - Mood: ${comp.lighting.mood}
-- Yard lines prominently visible for spatial reference
-- Stadium lights creating dramatic illumination
-- Professional broadcast quality feel
+- Yard lines visible for spatial reference
+- Stadium/competition environment
 
-ANALYTICAL ELEMENTS:
-- Full field visible showing drill design precision
-- Formation geometry emphasized - the kind of image coaches study
-- Clear sight lines showing spacing and coordination
+ANALYTICAL CONTEXT:
+- Image suitable for studying ${analysisType}
+- Shows precision and coordination
+- Professional documentary quality
 
-PHOTOGRAPHY:
-- Elevated angle optimized for full corps visibility
-- Sharp focus across entire formation
-- Professional DCI broadcast documentary style
+TECHNICAL: Sharp focus, vivid colors true to ${featuredCorps} palette. Professional sports photography quality.
 
-This image captures the full scale and precision of ${featuredCorps}'s ${year} ${analysisType} - an epic stadium shot showing why their performance was analytically significant.`;
+This image captures ${featuredCorps}'s ${year} performance - showing the elements that made their ${analysisType} significant.`;
 }
 
 /**
@@ -2186,9 +2213,7 @@ function buildUnderdogImagePrompt(corps, year, location, showTitle = null) {
   const seed = `${corps}-${year}-underdog`;
   const comp = getRandomComposition(seed);
 
-  return `DCI Finals-style photograph capturing a triumphant breakthrough moment for ${corps} full corps (${year} season)${showTitle ? ` performing "${showTitle}"` : ""} at ${location || "DCI Finals"}.
-
-SUBJECT: Full corps of ${corps} (100-150 performers) in ${comp.moment.moment}
+  return `Professional DCI photograph capturing a triumphant moment for ${corps} (${year} season)${showTitle ? ` performing "${showTitle}"` : ""} at ${location || "a DCI competition"}.
 
 UNIFORM ACCURACY:
 - Uniform: ${details.uniform}
@@ -2198,33 +2223,35 @@ UNIFORM ACCURACY:
 - Guard: ${details.guard}
 ${themeContext}
 EMOTIONAL NARRATIVE:
-- Full corps capturing the spirit of an underdog rising to the occasion
-- The triumphant moment when an entire corps proves the doubters wrong
+- Capturing the spirit of determination and breakthrough
 - ${comp.moment.emotion}
+- The moment when hard work pays off
 
-SHOT TYPE: Epic DCI Finals stadium photograph
+CAMERA & COMPOSITION:
 - ${comp.camera.angle}
-- ${comp.focus.framing}
-- Full corps of 100-150 performers visible in triumphant formation
-- Stadium bowl with 30,000+ crowd on their feet in background
-- Championship atmosphere celebrating breakthrough achievement
+- ${comp.camera.description}
 
-FORMATION: ${comp.formation.formation}
+SUBJECT FOCUS:
+- ${comp.focus.focus}
+- ${comp.focus.framing}
+
+FORMATION/ARRANGEMENT: ${comp.formation.formation}
 - ${comp.formation.visual}
 
-STADIUM ATMOSPHERE:
+MOMENT CAPTURED: ${comp.moment.moment}
+- Emotion: ${comp.moment.emotion}
+
+LIGHTING & ATMOSPHERE:
 - ${comp.lighting.lighting}
-- Mood: ${comp.lighting.mood} combined with underdog triumph
-- Yard lines visible, stadium lights creating championship drama
-- Crowd energy visible - the moment everyone recognizes greatness
+- Mood: ${comp.lighting.mood}
+- Stadium/competition environment visible
 
 PHOTOGRAPHY STYLE:
-- Inspirational DCI broadcast photography
-- Wide angle capturing the full scale of the achievement
-- Professional championship moment documentation
+- Inspirational sports photography
+- Professional quality capturing the emotional moment
 - Colors true to ${corps} palette, vivid and triumphant
 
-This epic stadium shot captures the essence of an underdog story - the full corps that exceeded expectations and proved the doubters wrong in front of a packed stadium.`;
+This image captures the essence of an underdog story - ${corps} exceeding expectations.`;
 }
 
 /**
@@ -2243,9 +2270,7 @@ function buildCorpsSpotlightImagePrompt(corps, year, showTitle = null) {
   const seed = `${corps}-${year}-spotlight`;
   const comp = getRandomComposition(seed);
 
-  return `DCI Finals-style photograph showcasing the identity and excellence of ${corps} full corps (${year} season)${showTitle ? ` performing "${showTitle}"` : ""}.
-
-SUBJECT: Full corps of ${corps} (100-150 performers) in iconic formation showcasing the corps' distinctive identity.
+  return `Professional DCI photograph showcasing the identity and excellence of ${corps} (${year} season)${showTitle ? ` performing "${showTitle}"` : ""}.
 
 UNIFORM IDENTITY (CRITICAL):
 - Uniform: ${details.uniform}
@@ -2254,34 +2279,38 @@ UNIFORM IDENTITY (CRITICAL):
 - Percussion: ${details.percussion}
 - Guard: ${details.guard}
 ${themeContext}
-SHOT TYPE: Epic DCI Finals stadium photograph
+CAMERA & COMPOSITION:
 - ${comp.camera.angle}
-- ${comp.focus.framing}
-- Full corps of 100-150 performers visible in formation across the football field
-- Stadium bowl with packed crowd visible in background
-- Professional stadium lighting creating dramatic atmosphere
+- ${comp.camera.description}
 
-FORMATION: ${comp.formation.formation}
+SUBJECT FOCUS:
+- ${comp.focus.focus}
+- ${comp.focus.framing}
+
+FORMATION/ARRANGEMENT: ${comp.formation.formation}
 - ${comp.formation.visual}
-- Capturing the pride, tradition, and iconic visual identity of ${corps}
+- Capturing the pride and iconic visual identity of ${corps}
+
+MOMENT CAPTURED: ${comp.moment.moment}
+- Emotion: ${comp.moment.emotion}
 
 CORPS CHARACTER:
-- Showcasing what makes ${corps} unique at full scale
-- Full ensemble in signature formation or iconic moment
-- The visual identity that fans recognize instantly - now with all 150 members visible
+- Showcasing what makes ${corps} unique
+- The visual identity that fans recognize instantly
+- Excellence and tradition
 
-STADIUM ATMOSPHERE:
+LIGHTING & ATMOSPHERE:
 - ${comp.lighting.lighting}
-- Mood: Pride, excellence, tradition, championship atmosphere
-- Yard lines visible, stadium architecture prominent
-- The environment that creates legends
+- Mood: ${comp.lighting.mood}
+- Stadium/competition environment visible
+- Yard lines on field for context
 
 PHOTOGRAPHY STYLE:
-- Professional DCI broadcast photography, wide angle
+- Professional DCI sports photography
 - Rich, saturated colors emphasizing corps palette
-- Captures the full scale and grandeur of ${corps}
+- Sharp focus, appropriate depth of field for composition
 
-This epic stadium shot captures the essence of ${corps} - their tradition, their excellence, and what makes them special in the DCI world, with the full corps on display.`;
+This image captures the essence of ${corps} - their tradition, their excellence, and what makes them special in the DCI world.`;
 }
 
 // =============================================================================
