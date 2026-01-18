@@ -105,13 +105,15 @@ async function uploadToFirebaseStorage(base64Data, options = {}) {
     // Make the file publicly accessible
     await file.makePublic();
 
-    // Get the public URL
-    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filePath}`;
+    // Get the public URL with cache-busting timestamp
+    const timestamp = Date.now();
+    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filePath}?v=${timestamp}`;
 
     logger.info("Image uploaded to Firebase Storage:", {
       filePath,
       url: publicUrl,
       bytes: imageBuffer.length,
+      version: timestamp,
     });
 
     return {
@@ -119,6 +121,7 @@ async function uploadToFirebaseStorage(base64Data, options = {}) {
       url: publicUrl,
       filePath,
       bytes: imageBuffer.length,
+      version: timestamp,
       isPlaceholder: false,
     };
   } catch (error) {
@@ -238,18 +241,26 @@ const DEFAULT_TRANSFORMATIONS = {
  * Build optimized Cloudinary URL with transformations
  * @param {string} publicId - Cloudinary public ID
  * @param {Object} options - Additional transformation options
+ * @param {string|number} version - Optional Cloudinary version for cache-busting
  * @returns {string} Optimized Cloudinary URL
  */
-function buildOptimizedUrl(publicId, options = {}) {
+function buildOptimizedUrl(publicId, options = {}, version = null) {
   const transformations = {
     ...DEFAULT_TRANSFORMATIONS,
     ...options,
   };
 
-  return cloudinary.url(publicId, {
+  const urlOptions = {
     transformation: [transformations],
     secure: true,
-  });
+  };
+
+  // Include version for cache-busting when provided
+  if (version) {
+    urlOptions.version = version;
+  }
+
+  return cloudinary.url(publicId, urlOptions);
 }
 
 /**
@@ -315,18 +326,20 @@ async function uploadImage(imageBuffer, options = {}) {
       publicId: uploadResult.public_id,
       url: uploadResult.secure_url,
       bytes: uploadResult.bytes,
+      version: uploadResult.version,
     });
 
-    // Return optimized URL
+    // Return optimized URL with version for cache-busting
     return {
       success: true,
-      url: buildOptimizedUrl(uploadResult.public_id),
+      url: buildOptimizedUrl(uploadResult.public_id, {}, uploadResult.version),
       publicId: uploadResult.public_id,
       originalUrl: uploadResult.secure_url,
       width: uploadResult.width,
       height: uploadResult.height,
       format: uploadResult.format,
       bytes: uploadResult.bytes,
+      version: uploadResult.version,
       isPlaceholder: false,
     };
   } catch (error) {
@@ -434,17 +447,20 @@ async function uploadFromUrl(imageUrl, options = {}) {
     logger.info("Image uploaded from URL successfully:", {
       publicId: uploadResult.public_id,
       sourceType: isBase64 ? "base64" : "url",
+      version: uploadResult.version,
     });
 
+    // Return optimized URL with version for cache-busting
     return {
       success: true,
-      url: buildOptimizedUrl(uploadResult.public_id),
+      url: buildOptimizedUrl(uploadResult.public_id, {}, uploadResult.version),
       publicId: uploadResult.public_id,
       originalUrl: uploadResult.secure_url,
       width: uploadResult.width,
       height: uploadResult.height,
       format: uploadResult.format,
       bytes: uploadResult.bytes,
+      version: uploadResult.version,
       isPlaceholder: false,
     };
   } catch (error) {
