@@ -880,11 +880,10 @@ const Profile = () => {
       {/* UNIFORM DESIGN MODAL */}
       {showUniformDesign && activeCorpsClass && (
         <UniformDesignModal
-          isOpen={showUniformDesign}
           onClose={() => setShowUniformDesign(false)}
-          onSave={handleUniformDesign}
-          corpsClass={activeCorpsClass}
-          initialDesign={profile?.corps?.[activeCorpsClass]?.uniformDesign}
+          onSubmit={handleUniformDesign}
+          corpsName={profile?.corps?.[activeCorpsClass]?.corpsName || 'My Corps'}
+          currentDesign={profile?.corps?.[activeCorpsClass]?.uniformDesign}
         />
       )}
     </div>
