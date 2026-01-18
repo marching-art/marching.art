@@ -103,13 +103,15 @@ function hasUniformDesignChanged(before, after) {
   // If before is null/undefined but after has data, it's new
   if (!before && after.primaryColor) return true;
 
-  // Check for changes in key fields
+  // Check for changes in key fields that affect avatar appearance
   const keyFields = [
     "primaryColor",
     "secondaryColor",
     "accentColor",
     "style",
     "mascotOrEmblem",
+    "avatarStyle",    // logo vs performer
+    "avatarSection",  // drumMajor, hornline, drumline, colorGuard
   ];
 
   for (const field of keyFields) {
