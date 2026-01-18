@@ -431,6 +431,7 @@ const Leagues = () => {
       <LeagueDetailView
         league={selectedLeague}
         userProfile={userProfile}
+        userId={user?.uid}
         onBack={() => setSelectedLeague(null)}
         onLeave={() => handleLeaveLeague(selectedLeague.id)}
       />
