@@ -2,9 +2,8 @@
 // Modal to prompt existing users who don't have a username set
 
 import React, { useState, useRef, useEffect } from 'react';
-import { AtSign, Loader2, CheckCircle2, XCircle, X } from 'lucide-react';
+import { AtSign, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import Portal from '../Portal';
-import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { useProfileStore } from '../../store/profileStore';
 import { useAuth } from '../../App';
 import { db, functions } from '../../firebase';
@@ -21,11 +20,10 @@ const UsernamePromptModal = () => {
   const [username, setUsername] = useState('');
   const [usernameStatus, setUsernameStatus] = useState({ checking: false, valid: null, message: '' });
   const [submitting, setSubmitting] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
   const usernameCheckTimeout = useRef(null);
 
-  // Determine if modal should show
-  const shouldShow = !loading && profile && !profile.username && user && !dismissed;
+  // Determine if modal should show - username is mandatory, cannot be dismissed
+  const shouldShow = !loading && profile && !profile.username && user;
 
   // Username validation function
   const validateUsername = async (usernameValue) => {
@@ -98,18 +96,6 @@ const UsernamePromptModal = () => {
     }
   };
 
-  const handleDismiss = () => {
-    setDismissed(true);
-  };
-
-  // Allow escape to dismiss (but show reminder)
-  useEscapeKey(() => {
-    if (shouldShow) {
-      handleDismiss();
-      toast('You can set your username anytime in your profile settings.', { icon: 'ℹ️' });
-    }
-  });
-
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
@@ -134,7 +120,7 @@ const UsernamePromptModal = () => {
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-[#333] bg-[#222]">
+          <div className="flex items-center px-5 py-4 border-b border-[#333] bg-[#222]">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-gold-500/20">
                 <AtSign className="w-5 h-5 text-gold-400" />
@@ -148,19 +134,12 @@ const UsernamePromptModal = () => {
                 </p>
               </div>
             </div>
-            <button
-              onClick={handleDismiss}
-              className="p-1 text-gray-500 hover:text-white transition-colors"
-              aria-label="Dismiss"
-            >
-              <X className="w-4 h-4" />
-            </button>
           </div>
 
           {/* Body */}
           <div className="p-5 space-y-4">
             <p className="text-sm text-cream-300">
-              Welcome back! We've added usernames to help identify players. Please choose a unique username for your account.
+              Welcome back! A username is now required to identify players. Please choose a unique username to continue using your account.
             </p>
 
             <div>
@@ -207,17 +186,11 @@ const UsernamePromptModal = () => {
           </div>
 
           {/* Footer */}
-          <div className="px-5 py-4 border-t border-[#333] bg-[#222] flex gap-3">
-            <button
-              onClick={handleDismiss}
-              className="flex-1 px-4 py-2.5 bg-charcoal-700 text-cream-300 rounded-lg hover:bg-charcoal-600 transition-colors text-sm font-semibold"
-            >
-              Later
-            </button>
+          <div className="px-5 py-4 border-t border-[#333] bg-[#222]">
             <button
               onClick={handleSubmit}
               disabled={usernameStatus.valid !== true || submitting}
-              className="flex-1 px-4 py-2.5 bg-gold-500 text-charcoal-900 rounded-lg hover:bg-gold-400 transition-colors text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full px-4 py-2.5 bg-gold-500 text-charcoal-900 rounded-lg hover:bg-gold-400 transition-colors text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {submitting ? (
                 <>
