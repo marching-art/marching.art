@@ -73,7 +73,7 @@ const getMaxScoreDay = (currentDay) => {
  * Returns ranked scores for all selected corps in the current season
  * using actual historical DCI data
  */
-export const useLandingScores = () => {
+export const useLandingScores = ({ enabled = true } = {}) => {
   const seasonData = useSeasonStore((state) => state.seasonData);
   const currentDay = useSeasonStore((state) => state.currentDay);
 
@@ -113,7 +113,7 @@ export const useLandingScores = () => {
   // Fetch season corps and historical scores
   useEffect(() => {
     const fetchData = async () => {
-      if (!seasonData?.dataDocId) {
+      if (!seasonData?.dataDocId || !enabled) {
         setLoading(false);
         return;
       }
@@ -157,7 +157,7 @@ export const useLandingScores = () => {
     };
 
     fetchData();
-  }, [seasonData?.dataDocId]);
+  }, [seasonData?.dataDocId, enabled]);
 
   // Process scores for landing page display
   const liveScores = useMemo(() => {
