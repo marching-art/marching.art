@@ -534,6 +534,21 @@ exports.getRecentNews = onCall(
     const db = getDb();
     const { limit = 10, category, startAfter } = request.data || {};
 
+    // Helper to calculate reading time from content
+    const calculateReadingTime = (data) => {
+      const wordsPerMinute = 200;
+      const text = [
+        data.headline || "",
+        data.summary || "",
+        data.narrative || "",
+        data.fullStory || "",
+        data.fantasyImpact || "",
+      ].join(" ");
+      const wordCount = text.split(/\s+/).filter(Boolean).length;
+      const minutes = Math.max(1, Math.ceil(wordCount / wordsPerMinute));
+      return `${minutes} min read`;
+    };
+
     try {
       // Use collection group query to fetch articles across all seasons
       // This is more efficient and doesn't depend on knowing the correct season ID
@@ -574,13 +589,25 @@ exports.getRecentNews = onCall(
         const dayId = pathParts[3]; // e.g., "day_49"
         const reportDay = parseInt(dayId.replace("day_", ""), 10) || data.reportDay;
 
+        // Only include fields needed for feed display (field projection)
+        // This significantly reduces payload size by excluding large fields like narrative
         articles.push({
           id: `${seasonId}_${dayId}_${articleType}`,
           seasonId,
           reportDay,
           articleType,
           category: articleCategory,
-          ...data,
+          // Core display fields
+          headline: data.headline || "",
+          summary: data.summary || "",
+          imageUrl: data.imageUrl || null,
+          // Pre-calculated reading time (avoids sending full narrative to client)
+          readingTime: calculateReadingTime(data),
+          // Fantasy-specific fields (small objects)
+          fantasyImpact: data.fantasyImpact || null,
+          fantasyMetrics: data.fantasyMetrics || null,
+          trendingCorps: data.trendingCorps || null,
+          // Timestamps
           createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
           updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.createdAt?.toDate?.()?.toISOString(),
         });

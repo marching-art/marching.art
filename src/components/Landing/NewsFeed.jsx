@@ -97,11 +97,16 @@ function formatTimestamp(dateString) {
 }
 
 /**
- * Calculates estimated reading time based on content
+ * Returns reading time - uses pre-calculated value from backend when available,
+ * otherwise calculates from content (for backward compatibility)
  */
 function getReadingTime(story) {
+  // Use pre-calculated reading time from backend if available (optimized path)
+  if (story.readingTime) {
+    return story.readingTime;
+  }
+  // Fallback calculation for backward compatibility
   const wordsPerMinute = 200;
-  // Include both fullStory and narrative fields (backend uses narrative, user submissions use fullStory)
   const text = `${story.headline} ${story.summary} ${story.fullStory || ''} ${story.narrative || ''} ${story.fantasyImpact || ''}`;
   const wordCount = text.split(/\s+/).length;
   const minutes = Math.max(1, Math.ceil(wordCount / wordsPerMinute));
