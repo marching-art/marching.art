@@ -545,7 +545,7 @@ exports.getRecentNews = onCall(
   },
   async (request) => {
     const db = getDb();
-    const { limit = 10, category, startAfter } = request.data || {};
+    const { limit = 10, category, startAfter, includeEngagement = false } = request.data || {};
 
     // Helper to calculate reading time from content
     const calculateReadingTime = (data) => {
@@ -560,6 +560,56 @@ exports.getRecentNews = onCall(
       const wordCount = text.split(/\s+/).filter(Boolean).length;
       const minutes = Math.max(1, Math.ceil(wordCount / wordsPerMinute));
       return `${minutes} min read`;
+    };
+
+    // Helper to fetch engagement data for articles (parallel with article processing)
+    const fetchEngagementData = async (articleIds) => {
+      if (!articleIds || articleIds.length === 0) return {};
+
+      const defaultReactionCounts = { fire: 0, heart: 0, mindblown: 0, sad: 0, angry: 0 };
+
+      try {
+        const [commentCountResults, reactionDocs] = await Promise.all([
+          // Run all comment count queries in parallel
+          Promise.all(
+            articleIds.map(articleId =>
+              db.collection("article_comments")
+                .where("articleId", "==", articleId)
+                .where("status", "==", "approved")
+                .count()
+                .get()
+                .then(result => ({ articleId, count: result.data().count }))
+                .catch(() => ({ articleId, count: 0 }))
+            )
+          ),
+          // Batch fetch all reaction documents
+          db.getAll(
+            ...articleIds.map(articleId =>
+              db.collection("article_reactions").doc(articleId)
+            )
+          ).catch(() => [])
+        ]);
+
+        const engagement = {};
+        const commentCountMap = new Map(
+          commentCountResults.map(({ articleId, count }) => [articleId, count])
+        );
+
+        articleIds.forEach((articleId, index) => {
+          const reactionDoc = reactionDocs[index];
+          engagement[articleId] = {
+            commentCount: commentCountMap.get(articleId) || 0,
+            reactionCounts: reactionDoc?.exists
+              ? (reactionDoc.data().counts || defaultReactionCounts)
+              : defaultReactionCounts,
+          };
+        });
+
+        return engagement;
+      } catch (error) {
+        logger.warn("Error fetching engagement data:", error);
+        return {};
+      }
     };
 
     try {
@@ -630,10 +680,18 @@ exports.getRecentNews = onCall(
         if (articles.length >= limit) break;
       }
 
+      const resultArticles = articles.slice(0, limit);
+
+      // Fetch engagement data in parallel if requested (eliminates second round trip)
+      const engagement = includeEngagement
+        ? await fetchEngagementData(resultArticles.map(a => a.id))
+        : null;
+
       return {
         success: true,
-        news: articles.slice(0, limit),
+        news: resultArticles,
         hasMore: snapshot.docs.length > limit,
+        ...(engagement && { engagement }),
       };
     } catch (error) {
       logger.error("Error fetching recent news:", error);
