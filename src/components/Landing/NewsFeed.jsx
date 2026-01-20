@@ -660,7 +660,7 @@ export default function NewsFeed({ maxItems = 5 }) {
   const [activeCategory, setActiveCategory] = useState('all');
   const [engagement, setEngagement] = useState({}); // Map of articleId -> engagement data
 
-  // Fetch engagement data for articles
+  // Fetch engagement data for articles (used for load more, where we don't want to re-fetch all)
   const fetchEngagement = async (articleIds) => {
     if (!articleIds || articleIds.length === 0) return;
 
@@ -679,14 +679,16 @@ export default function NewsFeed({ maxItems = 5 }) {
     setError(null);
 
     try {
-      const result = await getRecentNews({ limit: maxItems });
+      // Fetch news with engagement in a single request (eliminates waterfall)
+      const result = await getRecentNews({ limit: maxItems, includeEngagement: true });
 
       if (result.data?.success && result.data.news?.length > 0) {
         setNews(result.data.news);
         setHasMore(result.data.hasMore ?? true);
-        // Fetch engagement data for these articles
-        const articleIds = result.data.news.map(n => n.id);
-        fetchEngagement(articleIds);
+        // Use engagement data from the same response (no second round trip)
+        if (result.data.engagement) {
+          setEngagement(result.data.engagement);
+        }
       } else {
         // Lazy-load fallback data only when API returns no results
         const fallbackNews = await loadFallbackNews();
@@ -718,17 +720,20 @@ export default function NewsFeed({ maxItems = 5 }) {
       const lastArticle = news[news.length - 1];
       const startAfter = lastArticle?.createdAt;
 
+      // Fetch more news with engagement in a single request
       const result = await getRecentNews({
         limit: maxItems,
         startAfter,
+        includeEngagement: true,
       });
 
       if (result.data?.success && result.data.news?.length > 0) {
         setNews(prev => [...prev, ...result.data.news]);
         setHasMore(result.data.hasMore ?? false);
-        // Fetch engagement for new articles
-        const articleIds = result.data.news.map(n => n.id);
-        fetchEngagement(articleIds);
+        // Merge engagement data from the same response
+        if (result.data.engagement) {
+          setEngagement(prev => ({ ...prev, ...result.data.engagement }));
+        }
       } else {
         setHasMore(false);
       }
