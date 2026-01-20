@@ -29,6 +29,42 @@ const loadFallbackNews = async () => {
 };
 
 // =============================================================================
+// NEWS FEED CACHE
+// Simple in-memory cache with 5-minute TTL to avoid redundant API calls
+// when users navigate away and return to the landing page
+// =============================================================================
+
+const NEWS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+const newsCache = {
+  data: null,        // { news, engagement, hasMore }
+  timestamp: 0,      // When cache was set
+  maxItems: 0,       // Cache key - invalidate if different
+
+  isValid(maxItems) {
+    if (!this.data) return false;
+    if (this.maxItems !== maxItems) return false;
+    return Date.now() - this.timestamp < NEWS_CACHE_TTL;
+  },
+
+  set(data, maxItems) {
+    this.data = data;
+    this.timestamp = Date.now();
+    this.maxItems = maxItems;
+  },
+
+  get() {
+    return this.data;
+  },
+
+  clear() {
+    this.data = null;
+    this.timestamp = 0;
+    this.maxItems = 0;
+  },
+};
+
+// =============================================================================
 // CATEGORY CONFIGURATION
 // =============================================================================
 
@@ -97,11 +133,16 @@ function formatTimestamp(dateString) {
 }
 
 /**
- * Calculates estimated reading time based on content
+ * Returns reading time - uses pre-calculated value from backend when available,
+ * otherwise calculates from content (for backward compatibility)
  */
 function getReadingTime(story) {
+  // Use pre-calculated reading time from backend if available (optimized path)
+  if (story.readingTime) {
+    return story.readingTime;
+  }
+  // Fallback calculation for backward compatibility
   const wordsPerMinute = 200;
-  // Include both fullStory and narrative fields (backend uses narrative, user submissions use fullStory)
   const text = `${story.headline} ${story.summary} ${story.fullStory || ''} ${story.narrative || ''} ${story.fantasyImpact || ''}`;
   const wordCount = text.split(/\s+/).length;
   const minutes = Math.max(1, Math.ceil(wordCount / wordsPerMinute));
@@ -655,7 +696,7 @@ export default function NewsFeed({ maxItems = 5 }) {
   const [activeCategory, setActiveCategory] = useState('all');
   const [engagement, setEngagement] = useState({}); // Map of articleId -> engagement data
 
-  // Fetch engagement data for articles
+  // Fetch engagement data for articles (used for load more, where we don't want to re-fetch all)
   const fetchEngagement = async (articleIds) => {
     if (!articleIds || articleIds.length === 0) return;
 
@@ -669,24 +710,41 @@ export default function NewsFeed({ maxItems = 5 }) {
     }
   };
 
-  const fetchNews = async () => {
+  const fetchNews = async (forceRefresh = false) => {
+    // Check cache first (unless force refresh requested)
+    if (!forceRefresh && newsCache.isValid(maxItems)) {
+      const cached = newsCache.get();
+      setNews(cached.news);
+      setHasMore(cached.hasMore);
+      setEngagement(cached.engagement || {});
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
-      const result = await getRecentNews({ limit: maxItems });
+      // Fetch news with engagement in a single request (eliminates waterfall)
+      const result = await getRecentNews({ limit: maxItems, includeEngagement: true });
 
       if (result.data?.success && result.data.news?.length > 0) {
-        setNews(result.data.news);
-        setHasMore(result.data.hasMore ?? true);
-        // Fetch engagement data for these articles
-        const articleIds = result.data.news.map(n => n.id);
-        fetchEngagement(articleIds);
+        const newsData = result.data.news;
+        const hasMoreData = result.data.hasMore ?? true;
+        const engagementData = result.data.engagement || {};
+
+        setNews(newsData);
+        setHasMore(hasMoreData);
+        setEngagement(engagementData);
+
+        // Update cache with fresh data
+        newsCache.set({ news: newsData, hasMore: hasMoreData, engagement: engagementData }, maxItems);
       } else {
         // Lazy-load fallback data only when API returns no results
         const fallbackNews = await loadFallbackNews();
         setNews(fallbackNews);
         setHasMore(false);
+        // Don't cache fallback data
       }
     } catch (err) {
       console.error('Error fetching news:', err);
@@ -695,6 +753,7 @@ export default function NewsFeed({ maxItems = 5 }) {
       setNews(fallbackNews);
       setHasMore(false);
       setError(err.message);
+      // Don't cache error/fallback state
     } finally {
       setLoading(false);
     }
@@ -713,17 +772,24 @@ export default function NewsFeed({ maxItems = 5 }) {
       const lastArticle = news[news.length - 1];
       const startAfter = lastArticle?.createdAt;
 
+      // Fetch more news with engagement in a single request
       const result = await getRecentNews({
         limit: maxItems,
         startAfter,
+        includeEngagement: true,
       });
 
       if (result.data?.success && result.data.news?.length > 0) {
-        setNews(prev => [...prev, ...result.data.news]);
-        setHasMore(result.data.hasMore ?? false);
-        // Fetch engagement for new articles
-        const articleIds = result.data.news.map(n => n.id);
-        fetchEngagement(articleIds);
+        const newNews = [...news, ...result.data.news];
+        const newHasMore = result.data.hasMore ?? false;
+        const newEngagement = { ...engagement, ...result.data.engagement };
+
+        setNews(newNews);
+        setHasMore(newHasMore);
+        setEngagement(newEngagement);
+
+        // Update cache with expanded data so returning users see all loaded articles
+        newsCache.set({ news: newNews, hasMore: newHasMore, engagement: newEngagement }, maxItems);
       } else {
         setHasMore(false);
       }

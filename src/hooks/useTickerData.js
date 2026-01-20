@@ -76,7 +76,7 @@ const getCorpsAbbreviation = (name) => {
 /**
  * Hook to fetch ticker data showing each corps' most recent score across the season
  */
-export const useTickerData = () => {
+export const useTickerData = ({ enabled = true } = {}) => {
   const seasonUid = useSeasonStore((state) => state.seasonUid);
   const currentDay = useSeasonStore((state) => state.currentDay);
   const seasonData = useSeasonStore((state) => state.seasonData);
@@ -117,7 +117,7 @@ export const useTickerData = () => {
   // Fetch all recaps for the season from subcollection
   useEffect(() => {
     const fetchRecaps = async () => {
-      if (!seasonUid) return;
+      if (!seasonUid || !enabled) return;
 
       try {
         setLoading(true);
@@ -147,7 +147,7 @@ export const useTickerData = () => {
     };
 
     fetchRecaps();
-  }, [seasonUid]);
+  }, [seasonUid, enabled]);
 
   // Process the previous day's data - separated by class
   // OPTIMIZED: Single-pass processing to reduce array iterations from O(5n) to O(n)

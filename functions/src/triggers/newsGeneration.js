@@ -46,6 +46,18 @@ const NEWS_CATEGORIES = {
   DAILY: "daily", // New unified category
 };
 
+/**
+ * Derives category from article type for consistent categorization
+ * @param {string} articleType - The article type (e.g., "dci_recap", "fantasy_recap")
+ * @returns {string} The category ("dci", "fantasy", or "analysis")
+ */
+function getCategoryFromType(articleType) {
+  if (articleType.startsWith("dci_")) return NEWS_CATEGORIES.DCI_RECAP;
+  if (articleType.startsWith("fantasy_")) return NEWS_CATEGORIES.FANTASY;
+  if (articleType === "deep_analytics") return NEWS_CATEGORIES.ANALYSIS;
+  return NEWS_CATEGORIES.DCI_RECAP; // Default to dci
+}
+
 // =============================================================================
 // PRIMARY TRIGGER: Daily News Generation
 // =============================================================================
@@ -173,6 +185,7 @@ async function saveDailyNews(db, { reportDay, content, metadata, articles, seaso
 
       const articleEntry = {
         type: article.type,
+        category: getCategoryFromType(article.type), // For efficient filtering
         reportDay,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -532,14 +545,86 @@ exports.getRecentNews = onCall(
   },
   async (request) => {
     const db = getDb();
-    const { limit = 10, category, startAfter } = request.data || {};
+    const { limit = 10, category, startAfter, includeEngagement = false } = request.data || {};
+
+    // Helper to calculate reading time from content
+    const calculateReadingTime = (data) => {
+      const wordsPerMinute = 200;
+      const text = [
+        data.headline || "",
+        data.summary || "",
+        data.narrative || "",
+        data.fullStory || "",
+        data.fantasyImpact || "",
+      ].join(" ");
+      const wordCount = text.split(/\s+/).filter(Boolean).length;
+      const minutes = Math.max(1, Math.ceil(wordCount / wordsPerMinute));
+      return `${minutes} min read`;
+    };
+
+    // Helper to fetch engagement data for articles (parallel with article processing)
+    const fetchEngagementData = async (articleIds) => {
+      if (!articleIds || articleIds.length === 0) return {};
+
+      const defaultReactionCounts = { fire: 0, heart: 0, mindblown: 0, sad: 0, angry: 0 };
+
+      try {
+        const [commentCountResults, reactionDocs] = await Promise.all([
+          // Run all comment count queries in parallel
+          Promise.all(
+            articleIds.map(articleId =>
+              db.collection("article_comments")
+                .where("articleId", "==", articleId)
+                .where("status", "==", "approved")
+                .count()
+                .get()
+                .then(result => ({ articleId, count: result.data().count }))
+                .catch(() => ({ articleId, count: 0 }))
+            )
+          ),
+          // Batch fetch all reaction documents
+          db.getAll(
+            ...articleIds.map(articleId =>
+              db.collection("article_reactions").doc(articleId)
+            )
+          ).catch(() => [])
+        ]);
+
+        const engagement = {};
+        const commentCountMap = new Map(
+          commentCountResults.map(({ articleId, count }) => [articleId, count])
+        );
+
+        articleIds.forEach((articleId, index) => {
+          const reactionDoc = reactionDocs[index];
+          engagement[articleId] = {
+            commentCount: commentCountMap.get(articleId) || 0,
+            reactionCounts: reactionDoc?.exists
+              ? (reactionDoc.data().counts || defaultReactionCounts)
+              : defaultReactionCounts,
+          };
+        });
+
+        return engagement;
+      } catch (error) {
+        logger.warn("Error fetching engagement data:", error);
+        return {};
+      }
+    };
 
     try {
       // Use collection group query to fetch articles across all seasons
       // This is more efficient and doesn't depend on knowing the correct season ID
       let query = db.collectionGroup("articles")
-        .where("isPublished", "==", true)
-        .orderBy("createdAt", "desc");
+        .where("isPublished", "==", true);
+
+      // Apply category filter at database level for efficient filtering
+      // Articles with the 'category' field will be filtered by Firestore directly
+      if (category) {
+        query = query.where("category", "==", category);
+      }
+
+      query = query.orderBy("createdAt", "desc");
 
       // Handle pagination cursor
       if (startAfter) {
@@ -547,8 +632,8 @@ exports.getRecentNews = onCall(
         query = query.startAfter(startDate);
       }
 
-      // Fetch more than needed for category filtering
-      const fetchLimit = category ? limit * 3 : limit + 1;
+      // Fetch exactly what we need - no more 3x over-fetch
+      const fetchLimit = limit + 1;
       query = query.limit(fetchLimit);
 
       const snapshot = await query.get();
@@ -558,14 +643,8 @@ exports.getRecentNews = onCall(
         const data = doc.data();
         const articleType = doc.id;
 
-        // Determine category from article type
-        const articleCategory =
-          articleType.startsWith("dci_") ? "dci" :
-          articleType.startsWith("fantasy_") ? "fantasy" :
-          articleType === "deep_analytics" ? "analysis" : "dci";
-
-        // Apply category filter if specified
-        if (category && articleCategory !== category) continue;
+        // Use stored category if available, otherwise derive from type (backward compatibility)
+        const articleCategory = data.category || getCategoryFromType(articleType);
 
         // Extract seasonId and reportDay from document path
         // Path format: news_hub/{seasonId}/days/day_{n}/articles/{type}
@@ -574,13 +653,25 @@ exports.getRecentNews = onCall(
         const dayId = pathParts[3]; // e.g., "day_49"
         const reportDay = parseInt(dayId.replace("day_", ""), 10) || data.reportDay;
 
+        // Only include fields needed for feed display (field projection)
+        // This significantly reduces payload size by excluding large fields like narrative
         articles.push({
           id: `${seasonId}_${dayId}_${articleType}`,
           seasonId,
           reportDay,
           articleType,
           category: articleCategory,
-          ...data,
+          // Core display fields
+          headline: data.headline || "",
+          summary: data.summary || "",
+          imageUrl: data.imageUrl || null,
+          // Pre-calculated reading time (avoids sending full narrative to client)
+          readingTime: calculateReadingTime(data),
+          // Fantasy-specific fields (small objects)
+          fantasyImpact: data.fantasyImpact || null,
+          fantasyMetrics: data.fantasyMetrics || null,
+          trendingCorps: data.trendingCorps || null,
+          // Timestamps
           createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
           updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.createdAt?.toDate?.()?.toISOString(),
         });
@@ -589,10 +680,18 @@ exports.getRecentNews = onCall(
         if (articles.length >= limit) break;
       }
 
+      const resultArticles = articles.slice(0, limit);
+
+      // Fetch engagement data in parallel if requested (eliminates second round trip)
+      const engagement = includeEngagement
+        ? await fetchEngagementData(resultArticles.map(a => a.id))
+        : null;
+
       return {
         success: true,
-        news: articles.slice(0, limit),
-        hasMore: articles.length > limit || snapshot.docs.length === fetchLimit,
+        news: resultArticles,
+        hasMore: snapshot.docs.length > limit,
+        ...(engagement && { engagement }),
       };
     } catch (error) {
       logger.error("Error fetching recent news:", error);
