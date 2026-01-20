@@ -46,6 +46,18 @@ const NEWS_CATEGORIES = {
   DAILY: "daily", // New unified category
 };
 
+/**
+ * Derives category from article type for consistent categorization
+ * @param {string} articleType - The article type (e.g., "dci_recap", "fantasy_recap")
+ * @returns {string} The category ("dci", "fantasy", or "analysis")
+ */
+function getCategoryFromType(articleType) {
+  if (articleType.startsWith("dci_")) return NEWS_CATEGORIES.DCI_RECAP;
+  if (articleType.startsWith("fantasy_")) return NEWS_CATEGORIES.FANTASY;
+  if (articleType === "deep_analytics") return NEWS_CATEGORIES.ANALYSIS;
+  return NEWS_CATEGORIES.DCI_RECAP; // Default to dci
+}
+
 // =============================================================================
 // PRIMARY TRIGGER: Daily News Generation
 // =============================================================================
@@ -173,6 +185,7 @@ async function saveDailyNews(db, { reportDay, content, metadata, articles, seaso
 
       const articleEntry = {
         type: article.type,
+        category: getCategoryFromType(article.type), // For efficient filtering
         reportDay,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -553,8 +566,15 @@ exports.getRecentNews = onCall(
       // Use collection group query to fetch articles across all seasons
       // This is more efficient and doesn't depend on knowing the correct season ID
       let query = db.collectionGroup("articles")
-        .where("isPublished", "==", true)
-        .orderBy("createdAt", "desc");
+        .where("isPublished", "==", true);
+
+      // Apply category filter at database level for efficient filtering
+      // Articles with the 'category' field will be filtered by Firestore directly
+      if (category) {
+        query = query.where("category", "==", category);
+      }
+
+      query = query.orderBy("createdAt", "desc");
 
       // Handle pagination cursor
       if (startAfter) {
@@ -562,8 +582,8 @@ exports.getRecentNews = onCall(
         query = query.startAfter(startDate);
       }
 
-      // Fetch more than needed for category filtering
-      const fetchLimit = category ? limit * 3 : limit + 1;
+      // Fetch exactly what we need - no more 3x over-fetch
+      const fetchLimit = limit + 1;
       query = query.limit(fetchLimit);
 
       const snapshot = await query.get();
@@ -573,14 +593,8 @@ exports.getRecentNews = onCall(
         const data = doc.data();
         const articleType = doc.id;
 
-        // Determine category from article type
-        const articleCategory =
-          articleType.startsWith("dci_") ? "dci" :
-          articleType.startsWith("fantasy_") ? "fantasy" :
-          articleType === "deep_analytics" ? "analysis" : "dci";
-
-        // Apply category filter if specified
-        if (category && articleCategory !== category) continue;
+        // Use stored category if available, otherwise derive from type (backward compatibility)
+        const articleCategory = data.category || getCategoryFromType(articleType);
 
         // Extract seasonId and reportDay from document path
         // Path format: news_hub/{seasonId}/days/day_{n}/articles/{type}
@@ -619,7 +633,7 @@ exports.getRecentNews = onCall(
       return {
         success: true,
         news: articles.slice(0, limit),
-        hasMore: articles.length > limit || snapshot.docs.length === fetchLimit,
+        hasMore: snapshot.docs.length > limit,
       };
     } catch (error) {
       logger.error("Error fetching recent news:", error);
