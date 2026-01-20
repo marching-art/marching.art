@@ -4,7 +4,7 @@
 // Three-column layout: News Feed | Live Data | Auth Widget
 // Laws: No marketing fluff, no parallax, no testimonials
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Trophy, Lock, Mail, AlertCircle, ChevronRight,
@@ -31,8 +31,27 @@ const Landing = () => {
   useBodyScroll();
   const { user, signIn, signOut } = useAuth();
   const profile = useProfileStore((state) => state.profile);
-  const { tickerData, loading: tickerLoading, hasData: hasTickerData } = useTickerData();
-  const { liveScores, displayDay, loading: scoresLoading, hasData: hasScoresData } = useLandingScores();
+
+  // Stagger secondary data loading to prioritize news feed on initial paint
+  // Ticker and scores data loads after a brief delay to reduce bandwidth contention
+  const [secondaryDataEnabled, setSecondaryDataEnabled] = useState(false);
+
+  useEffect(() => {
+    // Use requestIdleCallback if available, otherwise setTimeout
+    // This ensures news feed renders first before loading sidebar data
+    const enableSecondaryData = () => setSecondaryDataEnabled(true);
+
+    if ('requestIdleCallback' in window) {
+      const id = window.requestIdleCallback(enableSecondaryData, { timeout: 500 });
+      return () => window.cancelIdleCallback(id);
+    } else {
+      const id = setTimeout(enableSecondaryData, 100);
+      return () => clearTimeout(id);
+    }
+  }, []);
+
+  const { tickerData, loading: tickerLoading, hasData: hasTickerData } = useTickerData({ enabled: secondaryDataEnabled });
+  const { liveScores, displayDay, loading: scoresLoading, hasData: hasScoresData } = useLandingScores({ enabled: secondaryDataEnabled });
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
