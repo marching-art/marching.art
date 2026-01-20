@@ -29,6 +29,42 @@ const loadFallbackNews = async () => {
 };
 
 // =============================================================================
+// NEWS FEED CACHE
+// Simple in-memory cache with 5-minute TTL to avoid redundant API calls
+// when users navigate away and return to the landing page
+// =============================================================================
+
+const NEWS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+const newsCache = {
+  data: null,        // { news, engagement, hasMore }
+  timestamp: 0,      // When cache was set
+  maxItems: 0,       // Cache key - invalidate if different
+
+  isValid(maxItems) {
+    if (!this.data) return false;
+    if (this.maxItems !== maxItems) return false;
+    return Date.now() - this.timestamp < NEWS_CACHE_TTL;
+  },
+
+  set(data, maxItems) {
+    this.data = data;
+    this.timestamp = Date.now();
+    this.maxItems = maxItems;
+  },
+
+  get() {
+    return this.data;
+  },
+
+  clear() {
+    this.data = null;
+    this.timestamp = 0;
+    this.maxItems = 0;
+  },
+};
+
+// =============================================================================
 // CATEGORY CONFIGURATION
 // =============================================================================
 
@@ -674,7 +710,17 @@ export default function NewsFeed({ maxItems = 5 }) {
     }
   };
 
-  const fetchNews = async () => {
+  const fetchNews = async (forceRefresh = false) => {
+    // Check cache first (unless force refresh requested)
+    if (!forceRefresh && newsCache.isValid(maxItems)) {
+      const cached = newsCache.get();
+      setNews(cached.news);
+      setHasMore(cached.hasMore);
+      setEngagement(cached.engagement || {});
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -683,17 +729,22 @@ export default function NewsFeed({ maxItems = 5 }) {
       const result = await getRecentNews({ limit: maxItems, includeEngagement: true });
 
       if (result.data?.success && result.data.news?.length > 0) {
-        setNews(result.data.news);
-        setHasMore(result.data.hasMore ?? true);
-        // Use engagement data from the same response (no second round trip)
-        if (result.data.engagement) {
-          setEngagement(result.data.engagement);
-        }
+        const newsData = result.data.news;
+        const hasMoreData = result.data.hasMore ?? true;
+        const engagementData = result.data.engagement || {};
+
+        setNews(newsData);
+        setHasMore(hasMoreData);
+        setEngagement(engagementData);
+
+        // Update cache with fresh data
+        newsCache.set({ news: newsData, hasMore: hasMoreData, engagement: engagementData }, maxItems);
       } else {
         // Lazy-load fallback data only when API returns no results
         const fallbackNews = await loadFallbackNews();
         setNews(fallbackNews);
         setHasMore(false);
+        // Don't cache fallback data
       }
     } catch (err) {
       console.error('Error fetching news:', err);
@@ -702,6 +753,7 @@ export default function NewsFeed({ maxItems = 5 }) {
       setNews(fallbackNews);
       setHasMore(false);
       setError(err.message);
+      // Don't cache error/fallback state
     } finally {
       setLoading(false);
     }
@@ -728,12 +780,16 @@ export default function NewsFeed({ maxItems = 5 }) {
       });
 
       if (result.data?.success && result.data.news?.length > 0) {
-        setNews(prev => [...prev, ...result.data.news]);
-        setHasMore(result.data.hasMore ?? false);
-        // Merge engagement data from the same response
-        if (result.data.engagement) {
-          setEngagement(prev => ({ ...prev, ...result.data.engagement }));
-        }
+        const newNews = [...news, ...result.data.news];
+        const newHasMore = result.data.hasMore ?? false;
+        const newEngagement = { ...engagement, ...result.data.engagement };
+
+        setNews(newNews);
+        setHasMore(newHasMore);
+        setEngagement(newEngagement);
+
+        // Update cache with expanded data so returning users see all loaded articles
+        newsCache.set({ news: newNews, hasMore: newHasMore, engagement: newEngagement }, maxItems);
       } else {
         setHasMore(false);
       }
