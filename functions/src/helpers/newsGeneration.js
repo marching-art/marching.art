@@ -3390,8 +3390,26 @@ async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext
     bestMusic: [...competitiveResults].sort((a, b) => (b.musicScore || 0) - (a.musicScore || 0))[0] || null,
   };
 
-  // SoundSport "Best of Show" (if any SoundSport corps)
-  const soundSportBest = soundSportResults[0] || null;
+  // SoundSport ratings based on scoring guidelines (NOT competitive scores)
+  // SoundSport uses a rating system: Best of Show, Gold, Silver, Bronze
+  // Scores are NEVER revealed - only the rating level
+  const getSoundSportRating = (score) => {
+    if (!score || score <= 0) return null;
+    // Thresholds based on SoundSport adjudication guidelines
+    if (score >= 85) return "Best of Show";
+    if (score >= 75) return "Gold";
+    if (score >= 65) return "Silver";
+    if (score >= 50) return "Bronze";
+    return "Participant";
+  };
+
+  // Categorize SoundSport results by rating (NO SCORES - only ratings)
+  const soundSportByRating = {
+    bestOfShow: soundSportResults.filter(r => getSoundSportRating(r.totalScore) === "Best of Show"),
+    gold: soundSportResults.filter(r => getSoundSportRating(r.totalScore) === "Gold"),
+    silver: soundSportResults.filter(r => getSoundSportRating(r.totalScore) === "Silver"),
+    bronze: soundSportResults.filter(r => getSoundSportRating(r.totalScore) === "Bronze"),
+  };
 
   const fantasyShowName = formatFantasyEventName(showContext.showName);
 
@@ -3430,15 +3448,24 @@ ${topPerformers.map((r, i) => {
 
 ${soundSportResults.length > 0 ? `
 ═══════════════════════════════════════════════════════════════
-🎵 SOUNDSPORT RESULTS
+🎵 SOUNDSPORT RATINGS (Non-competitive adjudication)
 ═══════════════════════════════════════════════════════════════
-🏆 SOUNDSPORT CHAMPION: "${soundSportBest?.corpsName || 'TBD'}" (${soundSportBest?.displayName || 'Unknown'}) - ${soundSportBest?.totalScore?.toFixed(3) || 'N/A'}
+IMPORTANT: SoundSport is NOT a competition - it's a ratings-based showcase.
+Ensembles earn ratings (Best of Show, Gold, Silver, Bronze) based on their
+performance quality, NOT competitive placement. DO NOT reveal scores.
 
-TOP SOUNDSPORT PERFORMERS:
-${soundSportResults.slice(0, 10).map((r, i) => {
-  return `${i + 1}. "${r.corpsName}" (Director: ${r.displayName || 'Unknown'}) - ${r.totalScore.toFixed(3)} pts
-   From: ${r.location || 'Unknown location'}`;
-}).join('\n')}
+${soundSportByRating.bestOfShow.length > 0 ? `⭐ BEST OF SHOW (${soundSportByRating.bestOfShow.length}):
+${soundSportByRating.bestOfShow.map(r => `• "${r.corpsName}" (Director: ${r.displayName || 'Unknown'}) - From ${r.location || 'Unknown'}`).join('\n')}
+` : ''}
+${soundSportByRating.gold.length > 0 ? `🥇 GOLD RATING (${soundSportByRating.gold.length}):
+${soundSportByRating.gold.map(r => `• "${r.corpsName}" (Director: ${r.displayName || 'Unknown'}) - From ${r.location || 'Unknown'}`).join('\n')}
+` : ''}
+${soundSportByRating.silver.length > 0 ? `🥈 SILVER RATING (${soundSportByRating.silver.length}):
+${soundSportByRating.silver.map(r => `• "${r.corpsName}" (Director: ${r.displayName || 'Unknown'}) - From ${r.location || 'Unknown'}`).join('\n')}
+` : ''}
+${soundSportByRating.bronze.length > 0 ? `🥉 BRONZE RATING (${soundSportByRating.bronze.length}):
+${soundSportByRating.bronze.map(r => `• "${r.corpsName}" (Director: ${r.displayName || 'Unknown'}) - From ${r.location || 'Unknown'}`).join('\n')}
+` : ''}
 ` : ''}
 
 ═══════════════════════════════════════════════════════════════
@@ -3450,7 +3477,7 @@ STATISTICS
 • Top 25 Average: ${(topPerformers.reduce((sum, r) => sum + r.totalScore, 0) / topPerformers.length).toFixed(3)}
 • Total Ensembles: ${competitiveResults.length}
 • Score Spread (1st-25th): ${topPerformers.length >= 25 ? (topPerformers[0].totalScore - topPerformers[24].totalScore).toFixed(3) : 'N/A'}
-${soundSportResults.length > 0 ? `• SoundSport Ensembles: ${soundSportResults.length}` : ''}
+${soundSportResults.length > 0 ? `• SoundSport Ensembles: ${soundSportResults.length} (${soundSportByRating.bestOfShow.length} Best of Show, ${soundSportByRating.gold.length} Gold, ${soundSportByRating.silver.length} Silver, ${soundSportByRating.bronze.length} Bronze)` : ''}
 
 ${toneGuidance}
 
@@ -3508,10 +3535,12 @@ ARTICLE REQUIREMENTS
    - Note if one corps swept multiple awards or if different corps won each
    - Create a fictitious quote from an award winner
 
-   ${soundSportResults.length > 0 ? `SOUNDSPORT HIGHLIGHT (~75 words):
-   - Celebrate the SoundSport champion
-   - Mention top SoundSport performers
-   - Include a fictitious quote from a SoundSport director` : ''}
+   ${soundSportResults.length > 0 ? `SOUNDSPORT RATINGS HIGHLIGHT (~75 words):
+   - SoundSport is NOT competitive - it uses a ratings system
+   - Celebrate ensembles who earned "Best of Show" rating
+   - Mention Gold, Silver, Bronze recipients
+   - NEVER mention scores - only rating levels
+   - Include a fictitious quote from a SoundSport director about earning their rating` : ''}
 
    CLOSING (~100 words):
    - Interesting stat or observation
