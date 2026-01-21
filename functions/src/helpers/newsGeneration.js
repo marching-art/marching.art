@@ -3382,9 +3382,6 @@ async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext
     : "0.000";
   const topScore = topPerformers[0]?.totalScore?.toFixed(3) || "0.000";
 
-  // Best of Show = top performer at this competition (no caption-specific awards)
-  const bestOfShow = topPerformers[0] || null;
-
   // SoundSport ratings based on scoring guidelines (NOT competitive scores)
   // SoundSport uses a rating system: Gold, Silver, Bronze, Participation
   // Scores are NEVER revealed - only the rating level
@@ -3438,12 +3435,6 @@ ${topPerformers.map((r, i) => {
   return `${i + 1}. "${r.corpsName}" (Director: ${r.displayName || 'Unknown'}) - ${r.totalScore.toFixed(3)} pts${i > 0 ? ` [${margin} behind]` : ' [WINNER]'}
    From: ${r.location || 'Unknown location'}`;
 }).join('\n')}
-
-═══════════════════════════════════════════════════════════════
-🏆 BEST OF SHOW
-═══════════════════════════════════════════════════════════════
-"${bestOfShow?.corpsName || 'TBD'}" (Director: ${bestOfShow?.displayName || 'Unknown'}) - ${bestOfShow?.totalScore?.toFixed(3) || 'N/A'} pts
-From: ${bestOfShow?.location || 'Unknown location'}
 
 ${soundSportResults.length > 0 ? `
 ═══════════════════════════════════════════════════════════════
