@@ -3725,161 +3725,155 @@ async function generateFantasyRecapArticle({ reportDay, dayScores, trendData, sh
   const trendingDown = captionStocks.filter(s => s.trend === 'down').sort((a, b) => b.score - a.score);
   const steadyPerformers = captionStocks.filter(s => s.trend === 'steady').sort((a, b) => b.score - a.score);
 
-  const prompt = `You are a STOCK MARKET ANALYST for DCI captions. Fantasy directors invest in individual DCI corps' captions (GE1, GE2, VP, VA, CG, B, MA, P) like stocks. Write this article like a day trader's market report.
+  const prompt = `You are a fantasy drum corps analyst helping directors make smart caption picks. Analyze individual DCI caption performance (GE1, GE2, VP, VA, CG, B, MA, P) and give actionable buy/hold/sell recommendations.
 
 ═══════════════════════════════════════════════════════════════
-📈 DCI CAPTION STOCK MARKET REPORT - DAY ${reportDay}
+📊 DCI CAPTION TRACKER - DAY ${reportDay}
 ═══════════════════════════════════════════════════════════════
-Think of each DCI corps' individual caption as a STOCK that fantasy directors can invest in.
-Your job: Tell them which caption stocks are worth buying, holding, or selling.
+Fantasy directors pick individual DCI corps captions for their lineups.
+Your job: Help them find the best caption picks based on recent trends.
 
 ═══════════════════════════════════════════════════════════════
-TODAY'S MARKET DATA - ALL 8 CAPTION CATEGORIES
+CAPTION BREAKDOWN - ALL 8 CATEGORIES
 ═══════════════════════════════════════════════════════════════
 
-📊 GE1 (MUSIC EFFECT) - Weight: ~20% of total
+📊 GE1 (MUSIC EFFECT) - Worth ~20% of total score
 ${stocksByCaption.GE1?.slice(0, 5).map((s, i) =>
   `${i + 1}. ${s.corps}: ${s.score.toFixed(2)} ${s.trend === 'up' ? '↑' : s.trend === 'down' ? '↓' : '→'}`
 ).join('\n') || 'No data'}
 
-📊 GE2 (VISUAL EFFECT) - Weight: ~20% of total
+📊 GE2 (VISUAL EFFECT) - Worth ~20% of total score
 ${stocksByCaption.GE2?.slice(0, 5).map((s, i) =>
   `${i + 1}. ${s.corps}: ${s.score.toFixed(2)} ${s.trend === 'up' ? '↑' : s.trend === 'down' ? '↓' : '→'}`
 ).join('\n') || 'No data'}
 
-📊 VP (VISUAL PROFICIENCY) - Weight: ~10% of total
+📊 VP (VISUAL PROFICIENCY) - Worth ~10% of total score
 ${stocksByCaption.VP?.slice(0, 5).map((s, i) =>
   `${i + 1}. ${s.corps}: ${s.score.toFixed(2)} ${s.trend === 'up' ? '↑' : s.trend === 'down' ? '↓' : '→'}`
 ).join('\n') || 'No data'}
 
-📊 VA (VISUAL ANALYSIS) - Weight: ~10% of total
+📊 VA (VISUAL ANALYSIS) - Worth ~10% of total score
 ${stocksByCaption.VA?.slice(0, 5).map((s, i) =>
   `${i + 1}. ${s.corps}: ${s.score.toFixed(2)} ${s.trend === 'up' ? '↑' : s.trend === 'down' ? '↓' : '→'}`
 ).join('\n') || 'No data'}
 
-📊 CG (COLOR GUARD) - Weight: ~10% of total
+📊 CG (COLOR GUARD) - Worth ~10% of total score
 ${stocksByCaption.CG?.slice(0, 5).map((s, i) =>
   `${i + 1}. ${s.corps}: ${s.score.toFixed(2)} ${s.trend === 'up' ? '↑' : s.trend === 'down' ? '↓' : '→'}`
 ).join('\n') || 'No data'}
 
-📊 B (BRASS) - Weight: ~10% of total
+📊 B (BRASS) - Worth ~10% of total score
 ${stocksByCaption.B?.slice(0, 5).map((s, i) =>
   `${i + 1}. ${s.corps}: ${s.score.toFixed(2)} ${s.trend === 'up' ? '↑' : s.trend === 'down' ? '↓' : '→'}`
 ).join('\n') || 'No data'}
 
-📊 MA (MUSIC ANALYSIS) - Weight: ~10% of total
+📊 MA (MUSIC ANALYSIS) - Worth ~10% of total score
 ${stocksByCaption.MA?.slice(0, 5).map((s, i) =>
   `${i + 1}. ${s.corps}: ${s.score.toFixed(2)} ${s.trend === 'up' ? '↑' : s.trend === 'down' ? '↓' : '→'}`
 ).join('\n') || 'No data'}
 
-📊 P (PERCUSSION) - Weight: ~10% of total
+📊 P (PERCUSSION) - Worth ~10% of total score
 ${stocksByCaption.P?.slice(0, 5).map((s, i) =>
   `${i + 1}. ${s.corps}: ${s.score.toFixed(2)} ${s.trend === 'up' ? '↑' : s.trend === 'down' ? '↓' : '→'}`
 ).join('\n') || 'No data'}
 
 ═══════════════════════════════════════════════════════════════
-📈 TRENDING UP (BUY SIGNALS) - ${trendingUp.length} caption stocks rising
+📈 TRENDING UP - ${trendingUp.length} captions on the rise
 ═══════════════════════════════════════════════════════════════
 ${trendingUp.slice(0, 8).map(s => `↑ ${s.corps} ${s.caption}: ${s.score.toFixed(2)}`).join('\n') || 'None identified'}
 
 ═══════════════════════════════════════════════════════════════
-📉 TRENDING DOWN (SELL SIGNALS) - ${trendingDown.length} caption stocks falling
+📉 TRENDING DOWN - ${trendingDown.length} captions slipping
 ═══════════════════════════════════════════════════════════════
 ${trendingDown.slice(0, 8).map(s => `↓ ${s.corps} ${s.caption}: ${s.score.toFixed(2)}`).join('\n') || 'None identified'}
 
 ═══════════════════════════════════════════════════════════════
-→ STEADY PERFORMERS (HOLD) - ${steadyPerformers.length} caption stocks stable
+→ HOLDING STEADY - ${steadyPerformers.length} reliable picks
 ═══════════════════════════════════════════════════════════════
 ${steadyPerformers.slice(0, 8).map(s => `→ ${s.corps} ${s.caption}: ${s.score.toFixed(2)}`).join('\n') || 'None identified'}
 
 ${toneGuidance}
 
 ═══════════════════════════════════════════════════════════════
-WRITE A STOCK MARKET REPORT FOR FANTASY DIRECTORS
+WRITE A FUN, DATA-DRIVEN CAPTION ANALYSIS
 ═══════════════════════════════════════════════════════════════
-Use financial/trading language throughout:
-- "opening bell" / "market close" / "trading session"
-- "bullish" / "bearish" / "volatile"
-- "portfolio diversification" / "risk management"
-- "undervalued" / "overvalued" / "fair value"
-- "momentum play" / "value pick" / "speculative"
+Keep it engaging for drum corps fans who love diving into the numbers.
+Use ↑↓→ symbols to show trends. Be specific with scores and margins.
 
-1. HEADLINE: Stock market style with ticker symbols
-   ✓ "${stocksByCaption.GE1?.[0]?.corps || 'Bluecoats'} GE1 ↑ hits ${stocksByCaption.GE1?.[0]?.score?.toFixed(2) || '17.50'} - BUY rating"
-   ✓ "Caption Market: ${trendingUp.length} stocks up, ${trendingDown.length} down"
-   ✓ "SELL ALERT: ${trendingDown[0]?.corps || 'Corps'} ${trendingDown[0]?.caption || 'B'} drops to ${trendingDown[0]?.score?.toFixed(2) || '14.00'}"
+1. HEADLINE: Specific caption insight with trend
+   ✓ "${stocksByCaption.GE1?.[0]?.corps || 'Bluecoats'} GE1 ↑ climbs to ${stocksByCaption.GE1?.[0]?.score?.toFixed(2) || '17.50'}"
+   ✓ "Caption Watch: ${trendingUp.length} rising, ${trendingDown.length} falling"
+   ✓ "Brass battle tightens - top 3 separated by 0.40"
 
-2. SUMMARY: 2-3 sentences like a market summary. "Markets opened with... Top performers include..."
+2. SUMMARY: 2-3 sentences highlighting the key caption movements of the day.
 
-3. NARRATIVE: 700-900 word stock market analysis with these sections:
+3. NARRATIVE: 700-900 word analysis with these sections:
 
-   **MARKET OVERVIEW** (~100 words)
-   - Overall market sentiment (bullish/bearish/mixed)
-   - Number of caption stocks rising vs falling
-   - Biggest movers of the day
+   **THE BIG PICTURE** (~100 words)
+   - How many captions trending up vs down?
+   - Any surprising movers?
+   - Overall competitiveness across captions
 
-   **GENERAL EFFECT SECTOR** (~150 words)
-   - GE1 and GE2 analysis like two related stocks
-   - Which corps' GE is worth investing in?
-   - Use ↑↓→ symbols throughout
+   **GENERAL EFFECT BREAKDOWN** (~150 words)
+   - GE1 and GE2 leaders and gaps
+   - Who's gaining ground? Who's losing it?
+   - Use ↑↓→ symbols
 
-   **VISUAL SECTOR** (~150 words)
-   - VP, VA, CG as three related stocks
-   - Which visual captions are undervalued?
-   - Color Guard volatility analysis
+   **VISUAL CAPTIONS** (~150 words)
+   - VP, VA, Color Guard analysis
+   - Which visual caption is the tightest race?
+   - Any corps with standout guard/visual programs?
 
-   **MUSIC SECTOR** (~150 words)
-   - Brass, MA, Percussion analysis
-   - Which music captions have momentum?
-   - Percussion vs Brass spread
+   **MUSIC CAPTIONS** (~150 words)
+   - Brass, Music Analysis, Percussion breakdown
+   - Brass vs Percussion - where's the value?
+   - Which corps have underrated music scores?
 
-   **TODAY'S TRADING RECOMMENDATIONS** (~200 words)
-   Format like a stock pick newsletter:
+   **CAPTION PICKS** (~200 words)
+   Format your recommendations clearly:
 
-   🟢 BUY RATINGS:
-   - [Corps] [Caption] @ [Score] ↑ - [One sentence why]
-   - [Corps] [Caption] @ [Score] ↑ - [One sentence why]
+   🟢 BUY (Add these to your lineup):
+   - [Corps] [Caption] @ [Score] ↑ - [Why it's worth picking]
+   - [Corps] [Caption] @ [Score] ↑ - [Why it's worth picking]
 
-   🟡 HOLD RATINGS:
-   - [Corps] [Caption] @ [Score] → - [One sentence why]
-   - [Corps] [Caption] @ [Score] → - [One sentence why]
+   🟡 HOLD (Keep if you have them):
+   - [Corps] [Caption] @ [Score] → - [Why they're reliable]
 
-   🔴 SELL RATINGS:
-   - [Corps] [Caption] @ [Score] ↓ - [One sentence why]
+   🔴 SELL (Consider dropping):
+   - [Corps] [Caption] @ [Score] ↓ - [Why they're risky]
 
    **SLEEPER PICK** (~50 words)
-   - One undervalued caption stock that could break out
+   - One under-the-radar caption that could pay off
 
 ═══════════════════════════════════════════════════════════════
-STRICT REQUIREMENTS - YOUR ARTICLE WILL BE REJECTED IF:
+STRICT REQUIREMENTS:
 ═══════════════════════════════════════════════════════════════
-1. The narrative is under 600 words (MUST be 700-900 words)
-2. You don't use stock market language (bullish, bearish, portfolio, etc.)
-3. You don't include ↑↓→ trend symbols
-4. You analyze corps overall instead of INDIVIDUAL CAPTIONS
-5. You use ANY banned words: dominant, heating up, intensifies, key area of focus
-6. You repeat the summary as the narrative
+1. The narrative MUST be 700-900 words (not a short summary)
+2. Include ↑↓→ trend symbols throughout
+3. Analyze INDIVIDUAL CAPTIONS (GE1, GE2, VP, VA, CG, B, MA, P), not corps overall
+4. Include specific scores and margins
+5. AVOID: dominant, heating up, intensifies, key area of focus, captivating
 
-The narrative MUST read like a financial market report, not a sports article.`;
+Keep it fun and informative - this is fantasy drum corps, not Wall Street!`;
 
   const schema = {
     type: Type.OBJECT,
     properties: {
-      headline: { type: Type.STRING, description: "Stock market style headline with corps name, caption ticker (GE1/B/CG etc), score, and ↑↓→ trend" },
-      summary: { type: Type.STRING, description: "2-3 sentences in stock market report style: 'Markets opened with... Top performers include...'" },
-      narrative: { type: Type.STRING, description: "FULL 700-900 word stock market analysis with sections: Market Overview, GE Sector, Visual Sector, Music Sector, Trading Recommendations (BUY/HOLD/SELL with ↑↓→), Sleeper Pick. MUST use financial language: bullish, bearish, portfolio, undervalued, momentum." },
+      headline: { type: Type.STRING, description: "Caption-focused headline with corps name, specific caption (GE1/B/CG etc), score, and ↑↓→ trend symbol" },
+      summary: { type: Type.STRING, description: "2-3 sentences highlighting key caption movements and one clear recommendation" },
+      narrative: { type: Type.STRING, description: "FULL 700-900 word analysis covering: Big Picture, GE Breakdown (GE1/GE2), Visual Captions (VP/VA/CG), Music Captions (B/MA/P), Caption Picks (BUY/HOLD/SELL with ↑↓→), Sleeper Pick. Fun but data-driven." },
       captionInsights: {
         type: Type.OBJECT,
         properties: {
-          geInsight: { type: Type.STRING, description: "GE sector analysis (GE1 and GE2 as stocks)" },
-          visualInsight: { type: Type.STRING, description: "Visual sector analysis (VP, VA, CG as stocks)" },
-          musicInsight: { type: Type.STRING, description: "Music sector analysis (B, MA, P as stocks)" },
+          geInsight: { type: Type.STRING, description: "GE1 and GE2 analysis with specific scores" },
+          visualInsight: { type: Type.STRING, description: "VP, VA, CG analysis with specific scores" },
+          musicInsight: { type: Type.STRING, description: "B, MA, P analysis with specific scores" },
         },
         required: ["geInsight", "visualInsight", "musicInsight"],
       },
       recommendations: {
         type: Type.OBJECT,
-        description: "Trading recommendations for individual caption stocks",
+        description: "Caption pick recommendations for fantasy directors",
         properties: {
           buy: {
             type: Type.ARRAY,
@@ -3887,7 +3881,7 @@ The narrative MUST read like a financial market report, not a sports article.`;
               type: Type.OBJECT,
               properties: {
                 corps: { type: Type.STRING },
-                caption: { type: Type.STRING, description: "Caption ticker: GE1, GE2, VP, VA, CG, B, MA, or P" },
+                caption: { type: Type.STRING, description: "Specific caption: GE1, GE2, VP, VA, CG, B, MA, or P" },
                 score: { type: Type.NUMBER },
                 reason: { type: Type.STRING },
               },
@@ -3900,7 +3894,7 @@ The narrative MUST read like a financial market report, not a sports article.`;
               type: Type.OBJECT,
               properties: {
                 corps: { type: Type.STRING },
-                caption: { type: Type.STRING, description: "Caption ticker: GE1, GE2, VP, VA, CG, B, MA, or P" },
+                caption: { type: Type.STRING, description: "Specific caption: GE1, GE2, VP, VA, CG, B, MA, or P" },
                 score: { type: Type.NUMBER },
                 reason: { type: Type.STRING },
               },
@@ -3913,7 +3907,7 @@ The narrative MUST read like a financial market report, not a sports article.`;
               type: Type.OBJECT,
               properties: {
                 corps: { type: Type.STRING },
-                caption: { type: Type.STRING, description: "Caption ticker: GE1, GE2, VP, VA, CG, B, MA, or P" },
+                caption: { type: Type.STRING, description: "Specific caption: GE1, GE2, VP, VA, CG, B, MA, or P" },
                 score: { type: Type.NUMBER },
                 reason: { type: Type.STRING },
               },
