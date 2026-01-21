@@ -43,10 +43,11 @@ This comprehensive audit of the marching.art codebase identified **47 issues** a
 - **File:** `src/config/index.ts:69`
 - **Issue:** Firebase API key exposed as fallback value
 ```typescript
-apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '***REDACTED_API_KEY***',
+apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSy[REDACTED]',
 ```
 - **Risk:** API key visible in browser bundle and source code
 - **Fix:** Remove hardcoded fallback, require environment variable
+- **Status:** FIXED - key removed, now requires env var. Key should be rotated in Firebase Console.
 
 #### 1.2 Auth Token Passed via URL Parameter
 - **File:** `src/App.jsx:85-92`
