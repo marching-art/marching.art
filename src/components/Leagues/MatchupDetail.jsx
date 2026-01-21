@@ -67,36 +67,12 @@ const MatchupDetail = ({
   const userWon = isCompleted && matchup.winnerId === currentUserId;
   const userLost = isCompleted && matchup.winnerId && matchup.winnerId !== currentUserId;
 
-  // Fetch H2H history
+  // H2H history - calculated from matchups data if available, otherwise null
   useEffect(() => {
-    const fetchH2H = async () => {
-      if (!league?.id || !currentUserId || !opponent?.uid) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        // In production, this would fetch from a collection of historical matchups
-        // For now, generate mock H2H data
-        const mockH2H = {
-          user1Id: currentUserId,
-          user2Id: opponent.uid,
-          user1Wins: Math.floor(Math.random() * 5),
-          user2Wins: Math.floor(Math.random() * 4),
-          ties: Math.floor(Math.random() * 2),
-          totalMatchups: 0
-        };
-        mockH2H.totalMatchups = mockH2H.user1Wins + mockH2H.user2Wins + mockH2H.ties;
-
-        setH2hRecord(mockH2H);
-      } catch (error) {
-        console.error('Error fetching H2H:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchH2H();
+    // H2H record would be calculated from historical matchups collection
+    // For now, show null until real H2H tracking is implemented
+    setH2hRecord(null);
+    setLoading(false);
   }, [league?.id, currentUserId, opponent?.uid]);
 
   // Show celebration animation for wins

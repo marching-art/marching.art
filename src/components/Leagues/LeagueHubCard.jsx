@@ -7,25 +7,7 @@ import {
   BarChart3, Calendar, Flame, ArrowRightLeft, Medal,
   TrendingUp, Swords
 } from 'lucide-react';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../firebase';
-
-// Mock data generator for demo (replace with real data in production)
-const generateMockStats = (league, userId) => {
-  // In production, this would come from league standings data
-  const memberCount = league.members?.length || league.memberCount || 1;
-  const randomRank = Math.floor(Math.random() * memberCount) + 1;
-  const wins = Math.floor(Math.random() * 8);
-  const losses = Math.floor(Math.random() * (8 - wins));
-
-  return {
-    rank: randomRank,
-    wins,
-    losses,
-    circuitPoints: wins * 15 + losses * 3,
-    isOnFire: wins >= 3 && losses === 0
-  };
-};
+import { getLeagueStandings } from '../../api/leagues';
 
 const LeagueHubCard = ({ league, userProfile, onClick, isMember }) => {
   const [stats, setStats] = useState(null);
@@ -43,14 +25,24 @@ const LeagueHubCard = ({ league, userProfile, onClick, isMember }) => {
       }
 
       try {
-        // Try to fetch real league standings
-        // For now using mock data until standings API is available
-        const mockStats = generateMockStats(league, userProfile.uid);
-        setStats(mockStats);
+        const standings = await getLeagueStandings(league.id);
+        const userStanding = standings.find(s => s.uid === userProfile.uid);
+
+        if (userStanding) {
+          setStats({
+            rank: userStanding.rank || standings.indexOf(userStanding) + 1,
+            wins: userStanding.wins || 0,
+            losses: userStanding.losses || 0,
+            circuitPoints: userStanding.circuitPoints || userStanding.totalPoints || 0,
+            isOnFire: (userStanding.streakType === 'W' && userStanding.streak >= 3)
+          });
+        } else {
+          // User has no standings data yet
+          setStats(null);
+        }
       } catch (error) {
         console.error('Error fetching league stats:', error);
-        // Fallback to mock stats
-        setStats(generateMockStats(league, userProfile.uid));
+        setStats(null);
       } finally {
         setLoading(false);
       }
@@ -150,7 +142,7 @@ const LeagueHubCard = ({ league, userProfile, onClick, isMember }) => {
       </div>
 
       {/* Stats Row - Your Record & Rank */}
-      {stats && (
+      {stats ? (
         <div className="flex items-center gap-4 mb-4 p-3 bg-black/20 rounded-sm">
           {/* Rank */}
           <div className="flex items-center gap-2">
@@ -202,6 +194,11 @@ const LeagueHubCard = ({ league, userProfile, onClick, isMember }) => {
             <Flame className="w-5 h-5 text-orange-400 ml-auto animate-pulse" title="On a win streak!" />
           )}
         </div>
+      ) : !loading && (
+        <div className="flex items-center gap-2 mb-4 p-3 bg-black/20 rounded-sm text-cream-500/60">
+          <BarChart3 className="w-4 h-4" />
+          <span className="text-xs">No standings data yet</span>
+        </div>
       )}
 
       {/* This Week Matchup Preview */}
@@ -223,8 +220,8 @@ const LeagueHubCard = ({ league, userProfile, onClick, isMember }) => {
           </div>
           <span className="text-xs font-display font-bold text-cream-500/60 uppercase">vs</span>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-display text-cream-100">
-              {memberCount > 1 ? `Opponent ${Math.floor(Math.random() * memberCount) + 1}` : 'TBD'}
+            <span className="text-sm font-display text-cream-400">
+              TBD
             </span>
             <div className="w-8 h-8 rounded-sm bg-charcoal-800 flex items-center justify-center">
               <span className="text-xs font-bold text-cream-500/60">?</span>
