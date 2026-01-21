@@ -186,7 +186,8 @@ exports.getArticleReactions = onCall(
 
 /**
  * Add a new comment to an article
- * Comments start in 'pending' status and require moderation
+ * Comments from users registered for more than 24 hours are auto-approved.
+ * Comments from newer users start in 'pending' status and require moderation.
  */
 exports.addArticleComment = onCall(
   {
@@ -233,15 +234,25 @@ exports.addArticleComment = onCall(
       const userName = userData.displayName || userData.username || "Anonymous";
       const userTitle = userData.title || null;
 
-      // Create the comment
+      // Check if user has been registered for more than 24 hours
       const now = new Date();
+      const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+      let autoApprove = false;
+
+      if (userData.createdAt) {
+        const userCreatedAt = userData.createdAt.toDate ? userData.createdAt.toDate() : new Date(userData.createdAt);
+        const accountAgeMs = now.getTime() - userCreatedAt.getTime();
+        autoApprove = accountAgeMs >= TWENTY_FOUR_HOURS_MS;
+      }
+
+      // Create the comment
       const commentData = {
         articleId,
         userId: request.auth.uid,
         userName,
         userTitle,
         content: trimmedContent,
-        status: "pending", // Requires moderation
+        status: autoApprove ? "approved" : "pending",
         createdAt: now,
         updatedAt: now,
         isEdited: false,
@@ -253,6 +264,7 @@ exports.addArticleComment = onCall(
         commentId: docRef.id,
         articleId,
         userId: request.auth.uid,
+        autoApproved: autoApprove,
       });
 
       return {
@@ -263,7 +275,7 @@ exports.addArticleComment = onCall(
           createdAt: now.toISOString(),
           updatedAt: now.toISOString(),
         },
-        message: "Comment submitted for review",
+        message: autoApprove ? "Comment posted" : "Comment submitted for review",
       };
     } catch (error) {
       logger.error("Error adding comment:", error);
