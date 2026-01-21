@@ -3403,30 +3403,16 @@ async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext
   const shows = fantasyData.current.shows || [];
   const allResults = shows.flatMap(s => s.results || []);
 
-  // Helper to get display-friendly corps name (fallback for unspecified)
-  const getCorpsDisplayName = (r, index) => {
-    if (r.corpsName && r.corpsName !== 'Unspecified' && r.corpsName.trim() !== '') {
-      return r.corpsName;
-    }
-    // Fallback: use director's name or generate a placeholder
-    if (r.displayName) {
-      return `${r.displayName}'s Corps`;
-    }
-    return `Fantasy Corps #${index + 1}`;
-  };
-
   // Separate competitive and SoundSport results
   const competitiveResults = allResults.filter(r => r.corpsClass !== 'soundSport');
   const soundSportResults = allResults
     .filter(r => r.corpsClass === 'soundSport')
-    .sort((a, b) => b.totalScore - a.totalScore)
-    .map((r, i) => ({ ...r, corpsName: getCorpsDisplayName(r, i) }));
+    .sort((a, b) => b.totalScore - a.totalScore);
 
-  // Get TOP 25 performers instead of just 10, with proper corps names
+  // Get TOP 25 performers
   const topPerformers = competitiveResults
     .sort((a, b) => b.totalScore - a.totalScore)
-    .slice(0, 25)
-    .map((r, i) => ({ ...r, corpsName: getCorpsDisplayName(r, i) }));
+    .slice(0, 25);
 
   const avgScore = topPerformers.length > 0
     ? (topPerformers.reduce((sum, p) => sum + p.totalScore, 0) / topPerformers.length).toFixed(3)
