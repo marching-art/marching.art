@@ -162,9 +162,10 @@ const Article = () => {
               const data = docSnap.data();
               // Determine category from article type
               const category =
+                articleType === 'dci_recap' ? 'analysis' :
+                articleType === 'deep_analytics' ? 'analysis' :
                 articleType.startsWith('dci_') ? 'dci' :
-                articleType.startsWith('fantasy_') ? 'fantasy' :
-                articleType === 'deep_analytics' ? 'analysis' : 'dci';
+                articleType.startsWith('fantasy_') ? 'fantasy' : 'dci';
               foundArticle = {
                 id,
                 seasonId,

@@ -52,9 +52,12 @@ const NEWS_CATEGORIES = {
  * @returns {string} The category ("dci", "fantasy", or "analysis")
  */
 function getCategoryFromType(articleType) {
+  // Analysis articles - check specific types before prefix matching
+  if (articleType === "dci_recap") return NEWS_CATEGORIES.ANALYSIS;
+  if (articleType === "deep_analytics") return NEWS_CATEGORIES.ANALYSIS;
+  // DCI and Fantasy articles by prefix
   if (articleType.startsWith("dci_")) return NEWS_CATEGORIES.DCI_RECAP;
   if (articleType.startsWith("fantasy_")) return NEWS_CATEGORIES.FANTASY;
-  if (articleType === "deep_analytics") return NEWS_CATEGORIES.ANALYSIS;
   return NEWS_CATEGORIES.DCI_RECAP; // Default to dci
 }
 
@@ -1014,9 +1017,10 @@ exports.listAllArticles = onCall(
 
         // Determine category from article type
         const category =
+          articleType === "dci_recap" ? "analysis" :
+          articleType === "deep_analytics" ? "analysis" :
           articleType.startsWith("dci_") ? "dci" :
-          articleType.startsWith("fantasy_") ? "fantasy" :
-          articleType === "deep_analytics" ? "analysis" : "dci";
+          articleType.startsWith("fantasy_") ? "fantasy" : "dci";
 
         articles.push({
           id: `${dayId}_${articleType}`,
