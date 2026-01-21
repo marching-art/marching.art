@@ -3386,24 +3386,30 @@ async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext
   const bestOfShow = topPerformers[0] || null;
 
   // SoundSport ratings based on scoring guidelines (NOT competitive scores)
-  // SoundSport uses a rating system: Best of Show, Gold, Silver, Bronze
+  // SoundSport uses a rating system: Gold, Silver, Bronze, Participation
   // Scores are NEVER revealed - only the rating level
+  // "Best in Show" is the highest scoring ensemble, NOT a rating level
   const getSoundSportRating = (score) => {
     if (!score || score <= 0) return null;
-    // Thresholds based on SoundSport adjudication guidelines
-    if (score >= 85) return "Best of Show";
-    if (score >= 75) return "Gold";
-    if (score >= 65) return "Silver";
-    if (score >= 50) return "Bronze";
-    return "Participant";
+    // Thresholds based on SoundSport adjudication guidelines (from SoundSportTab.jsx)
+    if (score >= 85) return "Gold";
+    if (score >= 75) return "Silver";
+    if (score >= 65) return "Bronze";
+    return "Participation";
   };
+
+  // Find "Best in Show" - the highest scoring SoundSport ensemble at this competition
+  const soundSportBestInShow = soundSportResults.length > 0
+    ? soundSportResults.reduce((best, current) =>
+        (current.totalScore > (best?.totalScore || 0)) ? current : best, null)
+    : null;
 
   // Categorize SoundSport results by rating (NO SCORES - only ratings)
   const soundSportByRating = {
-    bestOfShow: soundSportResults.filter(r => getSoundSportRating(r.totalScore) === "Best of Show"),
     gold: soundSportResults.filter(r => getSoundSportRating(r.totalScore) === "Gold"),
     silver: soundSportResults.filter(r => getSoundSportRating(r.totalScore) === "Silver"),
     bronze: soundSportResults.filter(r => getSoundSportRating(r.totalScore) === "Bronze"),
+    participation: soundSportResults.filter(r => getSoundSportRating(r.totalScore) === "Participation"),
   };
 
   const fantasyShowName = formatFantasyEventName(showContext.showName);
@@ -3444,11 +3450,12 @@ ${soundSportResults.length > 0 ? `
 🎵 SOUNDSPORT RATINGS (Non-competitive adjudication)
 ═══════════════════════════════════════════════════════════════
 IMPORTANT: SoundSport is NOT a competition - it's a ratings-based showcase.
-Ensembles earn ratings (Best of Show, Gold, Silver, Bronze) based on their
+Ensembles earn ratings (Gold, Silver, Bronze, Participation) based on their
 performance quality, NOT competitive placement. DO NOT reveal scores.
+"Best in Show" is awarded to the highest-scoring ensemble.
 
-${soundSportByRating.bestOfShow.length > 0 ? `⭐ BEST OF SHOW (${soundSportByRating.bestOfShow.length}):
-${soundSportByRating.bestOfShow.map(r => `• "${r.corpsName}" (Director: ${r.displayName || 'Unknown'}) - From ${r.location || 'Unknown'}`).join('\n')}
+${soundSportBestInShow ? `⭐ BEST IN SHOW:
+• "${soundSportBestInShow.corpsName}" (Director: ${soundSportBestInShow.displayName || 'Unknown'}) - From ${soundSportBestInShow.location || 'Unknown'}
 ` : ''}
 ${soundSportByRating.gold.length > 0 ? `🥇 GOLD RATING (${soundSportByRating.gold.length}):
 ${soundSportByRating.gold.map(r => `• "${r.corpsName}" (Director: ${r.displayName || 'Unknown'}) - From ${r.location || 'Unknown'}`).join('\n')}
@@ -3458,6 +3465,9 @@ ${soundSportByRating.silver.map(r => `• "${r.corpsName}" (Director: ${r.displa
 ` : ''}
 ${soundSportByRating.bronze.length > 0 ? `🥉 BRONZE RATING (${soundSportByRating.bronze.length}):
 ${soundSportByRating.bronze.map(r => `• "${r.corpsName}" (Director: ${r.displayName || 'Unknown'}) - From ${r.location || 'Unknown'}`).join('\n')}
+` : ''}
+${soundSportByRating.participation.length > 0 ? `📋 PARTICIPATION (${soundSportByRating.participation.length}):
+${soundSportByRating.participation.map(r => `• "${r.corpsName}" (Director: ${r.displayName || 'Unknown'}) - From ${r.location || 'Unknown'}`).join('\n')}
 ` : ''}
 ` : ''}
 
@@ -3470,7 +3480,7 @@ STATISTICS
 • Top 25 Average: ${(topPerformers.reduce((sum, r) => sum + r.totalScore, 0) / topPerformers.length).toFixed(3)}
 • Total Ensembles: ${competitiveResults.length}
 • Score Spread (1st-25th): ${topPerformers.length >= 25 ? (topPerformers[0].totalScore - topPerformers[24].totalScore).toFixed(3) : 'N/A'}
-${soundSportResults.length > 0 ? `• SoundSport Ensembles: ${soundSportResults.length} (${soundSportByRating.bestOfShow.length} Best of Show, ${soundSportByRating.gold.length} Gold, ${soundSportByRating.silver.length} Silver, ${soundSportByRating.bronze.length} Bronze)` : ''}
+${soundSportResults.length > 0 ? `• SoundSport Ensembles: ${soundSportResults.length} (${soundSportByRating.gold.length} Gold, ${soundSportByRating.silver.length} Silver, ${soundSportByRating.bronze.length} Bronze, ${soundSportByRating.participation.length} Participation)${soundSportBestInShow ? ` - Best in Show: "${soundSportBestInShow.corpsName}"` : ''}` : ''}
 
 ${toneGuidance}
 
@@ -3525,8 +3535,8 @@ ARTICLE REQUIREMENTS
 
    ${soundSportResults.length > 0 ? `SOUNDSPORT RATINGS HIGHLIGHT (~75 words):
    - SoundSport is NOT competitive - it uses a ratings system
-   - Celebrate ensembles who earned "Best of Show" rating
-   - Mention Gold, Silver, Bronze recipients
+   - "Best in Show" goes to the highest scoring ensemble
+   - Celebrate Gold, Silver, Bronze, and Participation ratings
    - NEVER mention scores - only rating levels
    - Include a fictitious quote from a SoundSport director about earning their rating` : ''}
 
