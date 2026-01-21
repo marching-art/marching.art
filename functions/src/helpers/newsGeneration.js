@@ -4191,10 +4191,17 @@ function getScoresForDay(historicalData, targetDay, activeCorps) {
   for (const corps of activeCorps) {
     const { corpsName, sourceYear } = corps;
     const yearEvents = historicalData[sourceYear] || [];
-    const dayEvent = yearEvents.find(e => e.offSeasonDay === targetDay);
-    if (!dayEvent) continue;
+    // Use filter to get ALL events on this day, not just the first one
+    // Multiple shows can occur on the same day (e.g., DCI Ft. Wayne AND Music On The March)
+    const dayEvents = yearEvents.filter(e => e.offSeasonDay === targetDay);
+    if (dayEvents.length === 0) continue;
 
-    const corpsScore = dayEvent.scores.find(s => s.corps === corpsName);
+    // Search through all events on this day to find the corps's score
+    let corpsScore = null;
+    for (const dayEvent of dayEvents) {
+      corpsScore = dayEvent.scores.find(s => s.corps === corpsName);
+      if (corpsScore) break;
+    }
     if (!corpsScore) continue;
 
     const total = calculateTotal(corpsScore.captions);
@@ -4222,10 +4229,21 @@ function calculateTrendData(historicalData, reportDay, activeCorps) {
     // Collect scores with caption breakdown and show info
     const scores = [];
     for (let day = reportDay - 6; day <= reportDay; day++) {
-      const dayEvent = yearEvents.find(e => e.offSeasonDay === day);
-      if (dayEvent) {
-        const corpsScore = dayEvent.scores.find(s => s.corps === corpsName);
-        if (corpsScore) {
+      // Use filter to get ALL events on this day, not just the first one
+      // Multiple shows can occur on the same day
+      const dayEvents = yearEvents.filter(e => e.offSeasonDay === day);
+      if (dayEvents.length > 0) {
+        // Search through all events on this day to find the corps's score
+        let corpsScore = null;
+        let matchingEvent = null;
+        for (const dayEvent of dayEvents) {
+          corpsScore = dayEvent.scores.find(s => s.corps === corpsName);
+          if (corpsScore) {
+            matchingEvent = dayEvent;
+            break;
+          }
+        }
+        if (corpsScore && matchingEvent) {
           const total = calculateTotal(corpsScore.captions);
           const subtotals = calculateCaptionSubtotals(corpsScore.captions);
           if (total > 0) {
@@ -4235,8 +4253,8 @@ function calculateTrendData(historicalData, reportDay, activeCorps) {
               captions: corpsScore.captions,
               subtotals,
               // Include show context for journey narrative
-              showName: dayEvent.eventName || dayEvent.name || null,
-              location: dayEvent.location || null,
+              showName: matchingEvent.eventName || matchingEvent.name || null,
+              location: matchingEvent.location || null,
             });
           }
         }
