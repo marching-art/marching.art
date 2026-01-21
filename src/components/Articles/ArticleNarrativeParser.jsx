@@ -261,8 +261,8 @@ function RecommendationList({ recs }) {
   );
 }
 
-// Render a single section with proper styling
-function NarrativeSection({ title, content, isFirst }) {
+// Render a single section with proper styling (Fantasy style - colored boxes)
+function FantasyNarrativeSection({ title, content, isFirst }) {
   // Normalize title for config lookup
   const normalizedTitle = title.toUpperCase().trim();
 
@@ -314,6 +314,22 @@ function NarrativeSection({ title, content, isFirst }) {
           {normalizedTitle}
         </h3>
       </div>
+      <div className="text-base text-gray-300 leading-relaxed">
+        {formatContent(content)}
+      </div>
+    </div>
+  );
+}
+
+// Render a single section with editorial style (DCI style - clean headers, flowing text)
+function EditorialNarrativeSection({ title, content, isFirst }) {
+  const normalizedTitle = title.toUpperCase().trim();
+
+  return (
+    <div className={!isFirst ? 'mt-8' : ''}>
+      <h3 className="text-lg font-bold text-white mb-4 pb-2 border-b border-[#333]">
+        {normalizedTitle}
+      </h3>
       <div className="text-base text-gray-300 leading-relaxed">
         {formatContent(content)}
       </div>
@@ -412,6 +428,16 @@ function parseSections(narrative) {
   return sections;
 }
 
+// Check if article type is a DCI article (editorial style)
+function isDCIArticle(articleType) {
+  return ['dci_recap', 'dci_daily', 'dci_feature'].includes(articleType);
+}
+
+// Check if article type is a Fantasy article (colorful box style)
+function isFantasyArticle(articleType) {
+  return ['fantasy_recap', 'fantasy_daily'].includes(articleType);
+}
+
 /**
  * ArticleNarrativeParser - Parses and renders narrative with visual sections
  * @param {string} narrative - The full narrative text
@@ -447,6 +473,10 @@ export default function ArticleNarrativeParser({ narrative, summary, articleType
     );
   }
 
+  // Choose section component based on article type
+  const useEditorialStyle = isDCIArticle(articleType);
+  const SectionComponent = useEditorialStyle ? EditorialNarrativeSection : FantasyNarrativeSection;
+
   return (
     <div className="space-y-0">
       {sections.map((section, idx) => {
@@ -459,7 +489,7 @@ export default function ArticleNarrativeParser({ narrative, summary, articleType
           );
         }
         return (
-          <NarrativeSection
+          <SectionComponent
             key={idx}
             title={section.title}
             content={section.content}
