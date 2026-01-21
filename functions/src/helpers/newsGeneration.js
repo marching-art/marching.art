@@ -3382,13 +3382,8 @@ async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext
     : "0.000";
   const topScore = topPerformers[0]?.totalScore?.toFixed(3) || "0.000";
 
-  // Calculate "Best of Show" awards from scores
-  const bestOfShowAwards = {
-    overall: topPerformers[0] || null,
-    bestGE: [...competitiveResults].sort((a, b) => (b.geScore || 0) - (a.geScore || 0))[0] || null,
-    bestVisual: [...competitiveResults].sort((a, b) => (b.visualScore || 0) - (a.visualScore || 0))[0] || null,
-    bestMusic: [...competitiveResults].sort((a, b) => (b.musicScore || 0) - (a.musicScore || 0))[0] || null,
-  };
+  // Best of Show = top performer at this competition (no caption-specific awards)
+  const bestOfShow = topPerformers[0] || null;
 
   // SoundSport ratings based on scoring guidelines (NOT competitive scores)
   // SoundSport uses a rating system: Best of Show, Gold, Silver, Bronze
@@ -3439,12 +3434,10 @@ ${topPerformers.map((r, i) => {
 }).join('\n')}
 
 ═══════════════════════════════════════════════════════════════
-🏆 BEST OF SHOW AWARDS (Caption Winners)
+🏆 BEST OF SHOW
 ═══════════════════════════════════════════════════════════════
-🥇 OVERALL CHAMPION: "${bestOfShowAwards.overall?.corpsName || 'TBD'}" (${bestOfShowAwards.overall?.displayName || 'Unknown'}) - ${bestOfShowAwards.overall?.totalScore?.toFixed(3) || 'N/A'}
-🎭 BEST GE: "${bestOfShowAwards.bestGE?.corpsName || 'TBD'}" - ${bestOfShowAwards.bestGE?.geScore?.toFixed(3) || 'N/A'} GE points
-👁️ BEST VISUAL: "${bestOfShowAwards.bestVisual?.corpsName || 'TBD'}" - ${bestOfShowAwards.bestVisual?.visualScore?.toFixed(3) || 'N/A'} Visual points
-🎺 BEST MUSIC: "${bestOfShowAwards.bestMusic?.corpsName || 'TBD'}" - ${bestOfShowAwards.bestMusic?.musicScore?.toFixed(3) || 'N/A'} Music points
+"${bestOfShow?.corpsName || 'TBD'}" (Director: ${bestOfShow?.displayName || 'Unknown'}) - ${bestOfShow?.totalScore?.toFixed(3) || 'N/A'} pts
+From: ${bestOfShow?.location || 'Unknown location'}
 
 ${soundSportResults.length > 0 ? `
 ═══════════════════════════════════════════════════════════════
@@ -3529,11 +3522,6 @@ ARTICLE REQUIREMENTS
    POSITIONS 16-25 (~100 words):
    - Don't ignore the rest of the field!
    - Mention notable names and scores
-
-   BEST OF SHOW AWARDS (~100 words):
-   - Celebrate the caption winners (Best GE, Best Visual, Best Music)
-   - Note if one corps swept multiple awards or if different corps won each
-   - Create a fictitious quote from an award winner
 
    ${soundSportResults.length > 0 ? `SOUNDSPORT RATINGS HIGHLIGHT (~75 words):
    - SoundSport is NOT competitive - it uses a ratings system
