@@ -321,21 +321,6 @@ function FantasyNarrativeSection({ title, content, isFirst }) {
   );
 }
 
-// Render a single section with editorial style (DCI style - clean headers, flowing text)
-function EditorialNarrativeSection({ title, content, isFirst }) {
-  const normalizedTitle = title.toUpperCase().trim();
-
-  return (
-    <div className={!isFirst ? 'mt-8' : ''}>
-      <h3 className="text-lg font-bold text-white mb-4 pb-2 border-b border-[#333]">
-        {normalizedTitle}
-      </h3>
-      <div className="text-base text-gray-300 leading-relaxed">
-        {formatContent(content)}
-      </div>
-    </div>
-  );
-}
 
 // Format content - handle paragraphs and clean up markdown artifacts
 function formatContent(content) {
@@ -367,19 +352,43 @@ function formatContent(content) {
 function parseSections(narrative) {
   const sections = [];
 
-  // Build regex pattern for all known section headers
-  const sectionHeaders = Object.keys(SECTION_CONFIG);
+  // Only match section headers that are:
+  // 1. At the start of a line/paragraph
+  // 2. Wrapped in ** markdown (like **GENERAL EFFECT**)
+  // 3. OR are the specific fantasy recap headers in ALL CAPS at start of line
 
-  // Pattern 1: Plain text headers (e.g., "THE BIG PICTURE")
-  // Pattern 2: Markdown bold headers (e.g., "**GENERAL EFFECT**")
-  const headerPatterns = sectionHeaders.map(h => {
+  const dciHeaders = [
+    'GENERAL EFFECT',
+    'VISUAL',
+    'MUSIC',
+    'TRAJECTORY & FUTURE OUTLOOK',
+    'TRAJECTORY',
+    'FUTURE OUTLOOK',
+    'FANTASY RECOMMENDATIONS',
+  ];
+
+  const fantasyHeaders = [
+    'THE BIG PICTURE',
+    'GENERAL EFFECT BREAKDOWN',
+    'VISUAL CAPTIONS',
+    'MUSIC CAPTIONS',
+    'CAPTION PICKS',
+    'SLEEPER PICK',
+  ];
+
+  const allHeaders = [...dciHeaders, ...fantasyHeaders];
+
+  // Build pattern that matches headers at start of line, optionally wrapped in **
+  // Pattern: Start of string or newline, optional whitespace, optional **, HEADER, optional **, optional colon
+  const headerPatterns = allHeaders.map(h => {
     const escaped = h.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return `(?:\\*\\*${escaped}\\*\\*|${escaped})`;
+    return escaped;
   });
 
+  // Match: (start of line)(optional **)(HEADER)(optional **)(optional : or newline)
   const combinedPattern = new RegExp(
-    `(${headerPatterns.join('|')})`,
-    'gi'
+    `(?:^|\\n)\\s*(?:\\*\\*)?\\s*(${headerPatterns.join('|')})\\s*(?:\\*\\*)?\\s*:?\\s*(?=\\n|$|[A-Z])`,
+    'gim'
   );
 
   // Find all matches
@@ -408,8 +417,8 @@ function parseSections(narrative) {
     const headerEnd = match.index + match[0].length;
     const contentEnd = nextMatch ? nextMatch.index : narrative.length;
 
-    // Clean up header (remove ** markdown)
-    let title = match[0].replace(/\*\*/g, '').trim();
+    // Get the actual header name from capture group
+    let title = match[1].trim().toUpperCase();
 
     // Get content between this header and next
     let content = narrative.substring(headerEnd, contentEnd).trim();
@@ -417,15 +426,15 @@ function parseSections(narrative) {
     // Clean up content - remove leading colons, newlines
     content = content.replace(/^[\n\r:]+/, '').trim();
 
-    if (content) {
+    if (content && content.length > 10) {
       sections.push({
-        title: title.toUpperCase(),
+        title,
         content,
       });
     }
   }
 
-  return sections;
+  return sections.length > 0 ? sections : null;
 }
 
 // Check if article type is a DCI article (editorial style)
@@ -433,10 +442,6 @@ function isDCIArticle(articleType) {
   return ['dci_recap', 'dci_daily', 'dci_feature'].includes(articleType);
 }
 
-// Check if article type is a Fantasy article (colorful box style)
-function isFantasyArticle(articleType) {
-  return ['fantasy_recap', 'fantasy_daily'].includes(articleType);
-}
 
 /**
  * ArticleNarrativeParser - Parses and renders narrative with visual sections
@@ -457,7 +462,16 @@ export default function ArticleNarrativeParser({ narrative, summary, articleType
     return null;
   }
 
-  // Try to parse sections
+  // DCI articles use clean editorial style - no section parsing, just clean prose
+  if (isDCIArticle(articleType)) {
+    return (
+      <div className="prose prose-invert prose-lg max-w-none">
+        {formatEditorialContent(narrative)}
+      </div>
+    );
+  }
+
+  // Fantasy articles get section parsing with colorful boxes
   const sections = parseSections(narrative);
 
   if (!sections || sections.length === 0) {
@@ -473,10 +487,6 @@ export default function ArticleNarrativeParser({ narrative, summary, articleType
     );
   }
 
-  // Choose section component based on article type
-  const useEditorialStyle = isDCIArticle(articleType);
-  const SectionComponent = useEditorialStyle ? EditorialNarrativeSection : FantasyNarrativeSection;
-
   return (
     <div className="space-y-0">
       {sections.map((section, idx) => {
@@ -489,7 +499,7 @@ export default function ArticleNarrativeParser({ narrative, summary, articleType
           );
         }
         return (
-          <SectionComponent
+          <FantasyNarrativeSection
             key={idx}
             title={section.title}
             content={section.content}
@@ -499,4 +509,22 @@ export default function ArticleNarrativeParser({ narrative, summary, articleType
       })}
     </div>
   );
+}
+
+// Format editorial content - clean paragraphs with styled inline headers
+function formatEditorialContent(narrative) {
+  // Clean up markdown
+  let cleaned = narrative
+    .replace(/\*\*/g, '')  // Remove bold markdown
+    .replace(/\*/g, '')    // Remove italic markdown
+    .trim();
+
+  // Split into paragraphs
+  const paragraphs = cleaned.split(/\n\n+/).filter(p => p.trim());
+
+  return paragraphs.map((para, idx) => (
+    <p key={idx} className="text-base md:text-lg text-gray-300 leading-relaxed mb-6">
+      {para}
+    </p>
+  ));
 }
