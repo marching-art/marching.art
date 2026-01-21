@@ -23,6 +23,7 @@ const StandingsTab = ({
   currentWeek = 1,
   weeklyMatchups = {},
   onMatchupClick,
+  lastUpdated,
 }) => {
   const [expandedUser, setExpandedUser] = useState(null);
   const [showLeaderboardSection, setShowLeaderboardSection] = useState(false);
@@ -202,6 +203,11 @@ const StandingsTab = ({
                   <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
                     <Trophy className="w-3.5 h-3.5 text-yellow-500" />
                     Standings
+                    {lastUpdated && (
+                      <span className="text-[9px] text-gray-600 font-normal normal-case ml-2">
+                        Updated {lastUpdated.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                      </span>
+                    )}
                   </h3>
                   <span className="text-[10px] text-gray-500">
                     Top {playoffSize} qualify
@@ -373,8 +379,27 @@ const StandingsTab = ({
               </div>
 
               {enhancedStandings.length === 0 && (
-                <div className="p-8 text-center text-gray-500 text-sm">
-                  No standings data yet. Play some shows to see rankings!
+                <div className="p-8">
+                  <div className="w-12 h-12 mx-auto mb-4 bg-blue-500/10 border border-blue-500/30 flex items-center justify-center rounded-sm">
+                    <Trophy className="w-6 h-6 text-blue-400" />
+                  </div>
+                  <h3 className="text-center text-base font-bold text-white mb-2">
+                    No Standings Yet
+                  </h3>
+                  <p className="text-center text-sm text-gray-400 mb-4 max-w-xs mx-auto">
+                    Standings will appear after league members complete their first shows and matchups are resolved.
+                  </p>
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="flex items-center gap-2 px-3 py-2 bg-[#222] border border-[#333] rounded-sm text-xs text-gray-400">
+                      <Calendar className="w-4 h-4 text-blue-400" />
+                      <span>Register for a show to start earning points</span>
+                    </div>
+                    {currentWeek > 0 && (
+                      <div className="text-xs text-gray-500">
+                        Currently Week {currentWeek}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 

@@ -195,9 +195,18 @@ const LeagueHubCard = ({ league, userProfile, onClick, isMember }) => {
           )}
         </div>
       ) : !loading && (
-        <div className="flex items-center gap-2 mb-4 p-3 bg-black/20 rounded-sm text-cream-500/60">
-          <BarChart3 className="w-4 h-4" />
-          <span className="text-xs">No standings data yet</span>
+        <div className="mb-4 p-3 bg-blue-500/5 border border-blue-500/20 rounded-sm">
+          <div className="flex items-start gap-3">
+            <div className="p-1.5 bg-blue-500/10 rounded-sm">
+              <Calendar className="w-4 h-4 text-blue-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-blue-400 mb-0.5">Get Started</p>
+              <p className="text-xs text-cream-500/60 leading-relaxed">
+                Register for a show to start competing! Your standings will appear after your first matchup.
+              </p>
+            </div>
+          </div>
         </div>
       )}
 

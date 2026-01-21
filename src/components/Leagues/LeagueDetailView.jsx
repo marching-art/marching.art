@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { collection, query, orderBy, limit as firestoreLimit, onSnapshot, doc, getDoc, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
+import { subscribeToStandings } from '../../api/leagues';
 import toast from 'react-hot-toast';
 
 // Import tab components
@@ -157,6 +158,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
   const [isLeaving, setIsLeaving] = useState(false);
   const [inviteCopied, setInviteCopied] = useState(false);
   const [recaps, setRecaps] = useState([]);
+  const [standingsLastUpdated, setStandingsLastUpdated] = useState(null);
 
   // Use auth userId directly for commissioner check (more reliable than profile.uid)
   const isCommissioner = league.creatorId === userId;
@@ -460,7 +462,30 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
       }
     );
 
-    return () => unsubMessages();
+    // Real-time standings listener for instant updates
+    const unsubStandings = subscribeToStandings(
+      league.id,
+      (standingsData) => {
+        if (standingsData && standingsData.length > 0) {
+          // Backend standings are already sorted - use them directly
+          setStandings(standingsData.map((s, idx) => ({
+            ...s,
+            currentRank: idx + 1,
+            trend: s.streak > 2 && s.streakType === 'W' ? 'up' :
+                   s.streak > 2 && s.streakType === 'L' ? 'down' : 'same'
+          })));
+          setStandingsLastUpdated(new Date());
+        }
+      },
+      (error) => {
+        console.error('Standings subscription error:', error);
+      }
+    );
+
+    return () => {
+      unsubMessages();
+      unsubStandings();
+    };
   }, [league]);
 
   // Fallback: Generate round-robin matchups client-side
@@ -711,6 +736,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
               showLeaderboards={true}
               currentWeek={currentWeek}
               weeklyMatchups={weeklyMatchups}
+              lastUpdated={standingsLastUpdated}
               onMatchupClick={(matchup) => {
                 if (matchup) {
                   setSelectedMatchup({

@@ -67,19 +67,30 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
       }
     });
 
-    // Initialize standings
+    // Initialize standings with both formats (records object + standings array)
+    const initialRecord = {
+      wins: 0,
+      losses: 0,
+      ties: 0,
+      pointsFor: 0,
+      pointsAgainst: 0,
+      currentStreak: 0,
+      streakType: null // 'W' or 'L'
+    };
     transaction.set(standingsRef, {
       records: {
-        [uid]: {
-          wins: 0,
-          losses: 0,
-          ties: 0,
-          pointsFor: 0,
-          pointsAgainst: 0,
-          currentStreak: 0,
-          streakType: null // 'W' or 'L'
-        }
+        [uid]: initialRecord
       },
+      standings: [{
+        uid,
+        wins: 0,
+        losses: 0,
+        ties: 0,
+        totalPoints: 0,
+        pointsAgainst: 0,
+        streak: 0,
+        streakType: null
+      }],
       lastUpdated: admin.firestore.FieldValue.serverTimestamp()
     });
 
@@ -148,6 +159,10 @@ exports.joinLeague = onCall({ cors: true }, async (request) => {
 
     // Initialize standings for new member
     if (standingsDoc.exists) {
+      const existingData = standingsDoc.data();
+      const existingStandings = existingData.standings || [];
+
+      // Add new member record
       transaction.update(standingsRef, {
         [`records.${uid}`]: {
           wins: 0,
@@ -157,9 +172,34 @@ exports.joinLeague = onCall({ cors: true }, async (request) => {
           pointsAgainst: 0,
           currentStreak: 0,
           streakType: null
-        }
+        },
+        // Also update standings array
+        standings: [...existingStandings, {
+          uid,
+          wins: 0,
+          losses: 0,
+          ties: 0,
+          totalPoints: 0,
+          pointsAgainst: 0,
+          streak: 0,
+          streakType: null
+        }]
       });
     }
+  });
+
+  // Create activity event for member joining
+  const userProfileDoc = await db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`).get();
+  const userDisplayName = userProfileDoc.exists
+    ? (userProfileDoc.data().displayName || userProfileDoc.data().username || 'New Member')
+    : 'New Member';
+
+  await createLeagueActivity(db, leagueId, {
+    type: 'member_joined',
+    title: 'New Member Joined',
+    message: `${userDisplayName} has joined the league!`,
+    userId: uid,
+    metadata: { memberCount: (await leagueRef.get()).data().members?.length || 1 }
   });
 
   return { success: true, message: "Successfully joined league!" };
@@ -219,6 +259,9 @@ exports.joinLeagueByCode = onCall({ cors: true }, async (request) => {
     });
 
     if (standingsDoc.exists) {
+      const existingData = standingsDoc.data();
+      const existingStandings = existingData.standings || [];
+
       transaction.update(standingsRef, {
         [`records.${uid}`]: {
           wins: 0,
@@ -228,9 +271,33 @@ exports.joinLeagueByCode = onCall({ cors: true }, async (request) => {
           pointsAgainst: 0,
           currentStreak: 0,
           streakType: null
-        }
+        },
+        standings: [...existingStandings, {
+          uid,
+          wins: 0,
+          losses: 0,
+          ties: 0,
+          totalPoints: 0,
+          pointsAgainst: 0,
+          streak: 0,
+          streakType: null
+        }]
       });
     }
+  });
+
+  // Create activity event for member joining
+  const userProfileDoc = await db.doc(`artifacts/${namespace}/users/${uid}/profile/data`).get();
+  const userDisplayName = userProfileDoc.exists
+    ? (userProfileDoc.data().displayName || userProfileDoc.data().username || 'New Member')
+    : 'New Member';
+
+  await createLeagueActivity(db, leagueId, {
+    type: 'member_joined',
+    title: 'New Member Joined',
+    message: `${userDisplayName} has joined the league!`,
+    userId: uid,
+    metadata: { memberCount: (await leagueRef.get()).data().members?.length || 1 }
   });
 
   return { success: true, message: "Successfully joined league!", leagueId };
@@ -441,6 +508,30 @@ exports.generateMatchups = onCall({ cors: true }, async (request) => {
     matchupsGeneratedWeek: week
   });
 
+  // Count total matchups generated
+  const totalMatchups =
+    (matchupData.worldClassMatchups?.filter(m => !m.isBye).length || 0) +
+    (matchupData.openClassMatchups?.filter(m => !m.isBye).length || 0) +
+    (matchupData.aClassMatchups?.filter(m => !m.isBye).length || 0) +
+    (matchupData.soundSportMatchups?.filter(m => !m.isBye).length || 0);
+
+  // Create activity event for matchup generation
+  await createLeagueActivity(db, leagueId, {
+    type: 'week_start',
+    title: `Week ${week} Matchups Set`,
+    message: `${totalMatchups} matchups have been generated for week ${week}. Good luck!`,
+    userId: uid,
+    metadata: {
+      week,
+      matchupCounts: {
+        worldClass: matchupData.worldClassMatchups?.length || 0,
+        openClass: matchupData.openClassMatchups?.length || 0,
+        aClass: matchupData.aClassMatchups?.length || 0,
+        soundSport: matchupData.soundSportMatchups?.length || 0
+      }
+    }
+  });
+
   return {
     success: true,
     message: "Matchups generated with smart pairing!",
@@ -580,6 +671,27 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
   // Update standings
   await updateStandings(db, leagueRef, allUpdatedPairs);
 
+  // Create activity events for matchup results
+  const completedMatchups = allUpdatedPairs.filter(p => p.completed && p.player2 !== null);
+  if (completedMatchups.length > 0) {
+    // Create a summary activity event
+    await createLeagueActivity(db, leagueId, {
+      type: 'matchup_result',
+      title: `Week ${week} Results Updated`,
+      message: `${completedMatchups.length} matchup${completedMatchups.length > 1 ? 's' : ''} completed for week ${week}.`,
+      userId: uid,
+      metadata: {
+        week,
+        matchupsCompleted: completedMatchups.length,
+        results: completedMatchups.slice(0, 3).map(p => ({
+          winner: p.winner,
+          player1Score: p.player1Score,
+          player2Score: p.player2Score
+        }))
+      }
+    });
+  }
+
   return {
     success: true,
     message: "Matchup results updated by corps class!",
@@ -655,10 +767,43 @@ async function updateStandings(db, leagueRef, pairs) {
     }
   });
 
+  // Convert records object to sorted standings array (for frontend compatibility)
+  const standings = Object.entries(records)
+    .map(([uid, data]) => ({
+      uid,
+      wins: data.wins || 0,
+      losses: data.losses || 0,
+      ties: data.ties || 0,
+      totalPoints: data.pointsFor || 0,
+      pointsAgainst: data.pointsAgainst || 0,
+      streak: data.currentStreak || 0,
+      streakType: data.streakType || null,
+    }))
+    .sort((a, b) => {
+      // Sort by wins, then by total points
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      return b.totalPoints - a.totalPoints;
+    });
+
   await standingsRef.update({
     records,
+    standings, // Array format for frontend API
     lastUpdated: admin.firestore.FieldValue.serverTimestamp()
   });
+}
+
+// Helper function to create league activity events
+async function createLeagueActivity(db, leagueId, activityData) {
+  const namespace = dataNamespaceParam.value();
+  const activityRef = db.collection(`artifacts/${namespace}/leagues/${leagueId}/activity`).doc();
+
+  await activityRef.set({
+    ...activityData,
+    id: activityRef.id,
+    timestamp: admin.firestore.FieldValue.serverTimestamp()
+  });
+
+  return activityRef.id;
 }
 
 // Post a message to league chat
