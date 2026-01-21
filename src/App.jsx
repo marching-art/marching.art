@@ -277,9 +277,11 @@ function App() {
           {/* Game Guide - accessible to all authenticated users */}
           <Route path="/guide" element={
             <ProtectedRoute>
-              <Suspense fallback={<DashboardSkeleton />}>
-                <Page name="Guide"><HowToPlay /></Page>
-              </Suspense>
+              <GameShell>
+                <Suspense fallback={<DashboardSkeleton />}>
+                  <Page name="Guide"><HowToPlay /></Page>
+                </Suspense>
+              </GameShell>
             </ProtectedRoute>
           } />
           <Route path="/how-to-play" element={<Navigate to="/guide" replace />} />
