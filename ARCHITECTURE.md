@@ -161,8 +161,8 @@ Located in `src/components/ui/`:
 |-------|-------------|-------------------|
 | SoundSport | 90 | Default |
 | A Class | 60 | Level 3 OR 1,000 CorpsCoin |
-| Open Class | 40 | Level 5 OR 2,500 CorpsCoin |
-| World Class | 40 | Level 10 OR 5,000 CorpsCoin |
+| Open Class | 120 | Level 5 OR 2,500 CorpsCoin |
+| World Class | 150 | Level 10 OR 5,000 CorpsCoin |
 
 ## Known Issues
 

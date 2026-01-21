@@ -1,14 +1,17 @@
 // src/pages/HowToPlay.jsx
+// Comprehensive game guide for marching.art
 import React, { useState } from 'react';
 import { m } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import {
   Trophy, Users, Calendar, Target, TrendingUp, Award,
-  Clock, Star, DollarSign, Shield, Zap, Book,
-  ChevronRight, Info
+  Clock, Star, DollarSign, Book, ChevronRight, Info,
+  HelpCircle, Music, Zap, ArrowLeft, Search
 } from 'lucide-react';
 
 const HowToPlay = () => {
   const [openSection, setOpenSection] = useState('getting-started');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const toggleSection = (section) => {
     setOpenSection(openSection === section ? null : section);
@@ -17,23 +20,31 @@ const HowToPlay = () => {
   const Section = ({ id, title, icon: Icon, children }) => {
     const isOpen = openSection === id;
 
+    // Filter sections based on search
+    if (searchQuery && !title.toLowerCase().includes(searchQuery.toLowerCase())) {
+      const childText = typeof children === 'string' ? children : '';
+      if (!childText.toLowerCase().includes(searchQuery.toLowerCase())) {
+        return null;
+      }
+    }
+
     return (
       <m.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="card mb-4 overflow-hidden"
+        className="bg-charcoal-800/50 border border-charcoal-700 rounded-lg mb-4 overflow-hidden"
       >
         <button
           onClick={() => toggleSection(id)}
-          className="w-full p-6 flex items-center justify-between hover:bg-charcoal-700/30 transition-colors text-left"
+          className="w-full p-4 md:p-6 flex items-center justify-between hover:bg-charcoal-700/30 transition-colors text-left"
         >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-gold rounded-lg flex items-center justify-center">
-              <Icon className="w-5 h-5 text-charcoal-900" />
+            <div className="w-10 h-10 bg-gold-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Icon className="w-5 h-5 text-gold-400" />
             </div>
-            <h2 className="text-2xl font-semibold text-cream-100">{title}</h2>
+            <h2 className="text-lg md:text-xl font-semibold text-cream-100">{title}</h2>
           </div>
-          <ChevronRight className={`w-6 h-6 text-cream-400 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+          <ChevronRight className={`w-5 h-5 text-cream-400 transition-transform flex-shrink-0 ${isOpen ? 'rotate-90' : ''}`} />
         </button>
 
         {isOpen && (
@@ -41,7 +52,7 @@ const HowToPlay = () => {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="px-6 pb-6 space-y-4 text-cream-300"
+            className="px-4 md:px-6 pb-4 md:pb-6 space-y-4 text-cream-300"
           >
             {children}
           </m.div>
@@ -61,7 +72,7 @@ const HowToPlay = () => {
     return (
       <div className={`border rounded-lg p-4 ${colors[color]}`}>
         <div className="flex items-start gap-2">
-          <Info className="w-5 h-5 mt-0.5 flex-shrink-0" />
+          <Info className="w-5 h-5 mt-0.5 flex-shrink-0 text-cream-300" />
           <div>
             {title && <p className="font-semibold text-cream-100 mb-1">{title}</p>}
             <div className="text-sm">{children}</div>
@@ -72,443 +83,494 @@ const HowToPlay = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-main py-12">
-      <div className="container-responsive">
-        <m.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-          <h1 className="text-4xl font-display font-bold text-gradient mb-4">How to Play</h1>
-          <p className="text-cream-300 text-lg mb-8">
-            Master the art of fantasy drum corps management with this comprehensive guide.
+    <div className="min-h-screen bg-charcoal-900 py-6 md:py-12">
+      <div className="max-w-4xl mx-auto px-4">
+        {/* Header */}
+        <m.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+          <Link
+            to="/dashboard"
+            className="inline-flex items-center gap-2 text-cream-400 hover:text-cream-200 mb-4 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </Link>
+
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-12 h-12 bg-gold-500/20 rounded-lg flex items-center justify-center">
+              <Book className="w-6 h-6 text-gold-400" />
+            </div>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-display font-bold text-cream-100">Game Guide</h1>
+              <p className="text-cream-400 text-sm">Everything you need to master marching.art</p>
+            </div>
+          </div>
+
+          {/* Search */}
+          <div className="relative mt-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cream-500" />
+            <input
+              type="text"
+              placeholder="Search the guide..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-charcoal-800 border border-charcoal-700 rounded-lg text-cream-100 placeholder-cream-500 focus:outline-none focus:border-gold-500/50"
+            />
+          </div>
+        </m.div>
+
+        {/* Getting Started */}
+        <Section id="getting-started" title="Getting Started" icon={Book}>
+          <p className="text-base">
+            Welcome to <span className="text-gold-400 font-semibold">marching.art</span> -
+            the fantasy game for drum corps fans! Build your dream corps by selecting
+            caption performances from historical DCI shows, compete against other directors,
+            and climb the leaderboards.
           </p>
 
-          {/* Getting Started */}
-          <Section id="getting-started" title="Getting Started" icon={Book}>
-            <p>
-              Welcome to <span className="text-gold-400 font-semibold">marching.art</span>,
-              the ultimate fantasy drum corps game! Build your dream corps by selecting legendary
-              captions from historical DCI performances, compete in seasonal competitions, and
-              rise through the ranks to become a championship director.
-            </p>
-
-            <div className="space-y-3 mt-4">
-              <div>
-                <h4 className="font-semibold text-cream-100 mb-2">Step 1: Create Your Corps</h4>
-                <p>Register your fantasy drum corps with a unique name, location, and show concept.
-                You can manage corps in multiple classes simultaneously!</p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-cream-100 mb-2">Step 2: Select Your Captions</h4>
-                <p>Choose 8 captions from 25 available historical DCI corps performances. Each caption
-                represents a scoring category and has a point cost based on historical success.</p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-cream-100 mb-2">Step 3: Compete & Progress</h4>
-                <p>Your corps will earn scores based on the selected captions. Complete daily rehearsals,
-                earn XP, unlock higher classes, and compete for championships!</p>
-              </div>
+          <div className="space-y-4 mt-4">
+            <div className="bg-charcoal-900/50 rounded-lg p-4">
+              <h4 className="font-semibold text-cream-100 mb-2 flex items-center gap-2">
+                <span className="w-6 h-6 bg-gold-500 text-charcoal-900 rounded-full flex items-center justify-center text-sm font-bold">1</span>
+                Create Your Corps
+              </h4>
+              <p className="text-sm">
+                Register your fantasy drum corps with a unique name and show concept.
+                You start in SoundSport class and can unlock higher classes as you level up.
+              </p>
             </div>
-          </Section>
 
-          {/* Classes & Point Limits */}
-          <Section id="classes" title="Classes & Point Limits" icon={Trophy}>
-            <p>
-              marching.art features four competitive classes, each with different point limits for
-              caption selection. You must unlock higher classes by gaining XP through gameplay.
-            </p>
+            <div className="bg-charcoal-900/50 rounded-lg p-4">
+              <h4 className="font-semibold text-cream-100 mb-2 flex items-center gap-2">
+                <span className="w-6 h-6 bg-gold-500 text-charcoal-900 rounded-full flex items-center justify-center text-sm font-bold">2</span>
+                Draft Your Lineup
+              </h4>
+              <p className="text-sm">
+                Select 8 caption performances from 25 available historical DCI corps.
+                Each caption has a point cost based on how well that corps performed historically.
+                Stay within your class's point budget!
+              </p>
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              <div className="bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-semibold text-cream-100">SoundSport</h4>
-                  <span className="text-green-400 text-sm">Always Available</span>
-                </div>
-                <p className="text-cream-400 text-sm mb-2">Perfect for beginners</p>
-                <div className="flex items-center gap-2">
-                  <Target className="w-4 h-4 text-gold-400" />
-                  <span className="font-bold text-gold-400">90 Point Limit</span>
-                </div>
+            <div className="bg-charcoal-900/50 rounded-lg p-4">
+              <h4 className="font-semibold text-cream-100 mb-2 flex items-center gap-2">
+                <span className="w-6 h-6 bg-gold-500 text-charcoal-900 rounded-full flex items-center justify-center text-sm font-bold">3</span>
+                Compete & Earn
+              </h4>
+              <p className="text-sm">
+                Your corps earns scores based on the historical performance of your selected captions.
+                Check in daily to earn XP, climb the leaderboards, and unlock new classes!
+              </p>
+            </div>
+          </div>
+        </Section>
+
+        {/* Classes & Point Limits */}
+        <Section id="classes" title="Classes & Point Budgets" icon={Trophy}>
+          <p>
+            There are four competitive classes, each with different point budgets for building your lineup.
+            Higher classes have larger budgets, allowing you to select more premium captions.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+            <div className="bg-charcoal-900/50 border border-green-500/30 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-semibold text-cream-100">SoundSport</h4>
+                <span className="text-green-400 text-xs px-2 py-0.5 bg-green-500/20 rounded">Default</span>
               </div>
-
-              <div className="bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-semibold text-cream-100">A Class</h4>
-                  <span className="text-blue-400 text-sm">Unlocks at Level 3</span>
-                </div>
-                <p className="text-cream-400 text-sm mb-2">Intermediate competition</p>
-                <div className="flex items-center gap-2">
-                  <Target className="w-4 h-4 text-gold-400" />
-                  <span className="font-bold text-gold-400">60 Point Limit</span>
-                </div>
-              </div>
-
-              <div className="bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-semibold text-cream-100">Open Class</h4>
-                  <span className="text-purple-400 text-sm">Unlocks at Level 5</span>
-                </div>
-                <p className="text-cream-400 text-sm mb-2">Advanced competition</p>
-                <div className="flex items-center gap-2">
-                  <Target className="w-4 h-4 text-gold-400" />
-                  <span className="font-bold text-gold-400">120 Point Limit</span>
-                </div>
-              </div>
-
-              <div className="bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-semibold text-cream-100">World Class</h4>
-                  <span className="text-gold-400 text-sm">Unlocks at Level 10</span>
-                </div>
-                <p className="text-cream-400 text-sm mb-2">Elite championship level</p>
-                <div className="flex items-center gap-2">
-                  <Target className="w-4 h-4 text-gold-400" />
-                  <span className="font-bold text-gold-400">150 Point Limit</span>
-                </div>
+              <p className="text-cream-400 text-sm mb-3">Entry level - perfect for learning</p>
+              <div className="flex items-center gap-2">
+                <Target className="w-4 h-4 text-gold-400" />
+                <span className="font-bold text-gold-400">90 Point Budget</span>
               </div>
             </div>
 
-            <InfoBox title="Point Limit Strategy" color="blue">
-              Each caption has a point cost (1-25 points) based on historical performance. You must select
-              8 captions within your class's point limit. Higher-cost captions typically score better, but
-              strategic combinations can outperform expensive lineups!
-            </InfoBox>
-          </Section>
-
-          {/* Caption Selection */}
-          <Section id="captions" title="Caption Selection" icon={Target}>
-            <p>
-              Captions are the core of your corps' scoring system. You must select exactly 8 captions,
-              one for each DCI scoring category:
-            </p>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-              <div className="bg-gradient-gold/10 border border-gold-500/30 rounded-lg p-3 text-center">
-                <p className="font-semibold text-cream-100">GE1</p>
-                <p className="text-xs text-cream-400">General Effect 1</p>
+            <div className="bg-charcoal-900/50 border border-blue-500/30 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-semibold text-cream-100">A Class</h4>
+                <span className="text-blue-400 text-xs px-2 py-0.5 bg-blue-500/20 rounded">Level 3</span>
               </div>
-              <div className="bg-gradient-gold/10 border border-gold-500/30 rounded-lg p-3 text-center">
-                <p className="font-semibold text-cream-100">GE2</p>
-                <p className="text-xs text-cream-400">General Effect 2</p>
-              </div>
-              <div className="bg-gradient-gold/10 border border-gold-500/30 rounded-lg p-3 text-center">
-                <p className="font-semibold text-cream-100">VP</p>
-                <p className="text-xs text-cream-400">Visual Proficiency</p>
-              </div>
-              <div className="bg-gradient-gold/10 border border-gold-500/30 rounded-lg p-3 text-center">
-                <p className="font-semibold text-cream-100">VA</p>
-                <p className="text-xs text-cream-400">Visual Analysis</p>
-              </div>
-              <div className="bg-gradient-gold/10 border border-gold-500/30 rounded-lg p-3 text-center">
-                <p className="font-semibold text-cream-100">CG</p>
-                <p className="text-xs text-cream-400">Color Guard</p>
-              </div>
-              <div className="bg-gradient-gold/10 border border-gold-500/30 rounded-lg p-3 text-center">
-                <p className="font-semibold text-cream-100">B</p>
-                <p className="text-xs text-cream-400">Brass</p>
-              </div>
-              <div className="bg-gradient-gold/10 border border-gold-500/30 rounded-lg p-3 text-center">
-                <p className="font-semibold text-cream-100">MA</p>
-                <p className="text-xs text-cream-400">Music Analysis</p>
-              </div>
-              <div className="bg-gradient-gold/10 border border-gold-500/30 rounded-lg p-3 text-center">
-                <p className="font-semibold text-cream-100">P</p>
-                <p className="text-xs text-cream-400">Percussion</p>
+              <p className="text-cream-400 text-sm mb-3">Tighter budget, strategic drafting</p>
+              <div className="flex items-center gap-2">
+                <Target className="w-4 h-4 text-gold-400" />
+                <span className="font-bold text-gold-400">60 Point Budget</span>
               </div>
             </div>
 
-            <div className="mt-4 space-y-3">
-              <h4 className="font-semibold text-cream-100">Caption Change Rules:</h4>
-              <ul className="list-disc list-inside space-y-2">
-                <li><strong>Early Season:</strong> Unlimited changes until 5 weeks remain</li>
-                <li><strong>Mid Season:</strong> 3 changes per week until 1 week remains</li>
-                <li><strong>Finals Week:</strong> 2 changes between quarters/semis, 2 changes between semis/finals</li>
-              </ul>
-            </div>
-
-            <InfoBox title="Pro Tip" color="green">
-              Each caption comes from a different historical DCI corps (e.g., Blue Devils 2014, Carolina Crown 2013).
-              Research which corps excelled in specific captions to build a winning lineup!
-            </InfoBox>
-          </Section>
-
-          {/* Seasons & Competition */}
-          <Section id="seasons" title="Seasons & Competition" icon={Calendar}>
-            <p>
-              marching.art features two distinct season types that alternate throughout the year:
-            </p>
-
-            <div className="space-y-4 mt-4">
-              <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Calendar className="w-5 h-5 text-blue-400" />
-                  <h4 className="font-semibold text-cream-100">Live Season (10 weeks)</h4>
-                </div>
-                <p className="text-sm mb-2">
-                  Follows the real DCI competition schedule. Your corps' scores are based on actual
-                  DCI performances using your selected captions. Ends on the second Saturday of August.
-                </p>
-                <p className="text-xs text-cream-400">
-                  <strong>Strategy:</strong> Pick captions from corps you think will perform well in the current year!
-                </p>
+            <div className="bg-charcoal-900/50 border border-purple-500/30 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-semibold text-cream-100">Open Class</h4>
+                <span className="text-purple-400 text-xs px-2 py-0.5 bg-purple-500/20 rounded">Level 5</span>
               </div>
-
-              <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Clock className="w-5 h-5 text-purple-400" />
-                  <h4 className="font-semibold text-cream-100">Off-Season (42 weeks)</h4>
-                </div>
-                <p className="text-sm mb-2">
-                  Six periods of 7 weeks each using historical and simulated scores. Focuses on
-                  strategic caption selection and corps management without real-time pressure.
-                </p>
-                <p className="text-xs text-cream-400">
-                  <strong>Strategy:</strong> Analyze historical data to find the best-performing caption combinations!
-                </p>
+              <p className="text-cream-400 text-sm mb-3">Expanded options, more competition</p>
+              <div className="flex items-center gap-2">
+                <Target className="w-4 h-4 text-gold-400" />
+                <span className="font-bold text-gold-400">120 Point Budget</span>
               </div>
             </div>
 
-            <InfoBox title="Show Selection" color="purple">
-              You can optionally select which shows your corps will compete in during the season.
-              Strategic show selection can maximize your scoring potential and competitive advantage!
-            </InfoBox>
-          </Section>
-
-          {/* XP & Progression */}
-          <Section id="progression" title="XP & Progression" icon={TrendingUp}>
-            <p>
-              Advance your director career by earning XP (experience points) through daily activities
-              and gameplay. Leveling up unlocks new classes and features!
-            </p>
-
-            <div className="space-y-3 mt-4">
-              <h4 className="font-semibold text-cream-100">Ways to Earn XP:</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Zap className="w-4 h-4 text-gold-400" />
-                    <span className="font-semibold text-cream-100">Daily Rehearsal</span>
-                  </div>
-                  <p className="text-sm text-cream-400">Complete daily rehearsals for consistent XP gains</p>
-                </div>
-
-                <div className="bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Trophy className="w-4 h-4 text-gold-400" />
-                    <span className="font-semibold text-cream-100">Competition Results</span>
-                  </div>
-                  <p className="text-sm text-cream-400">Earn XP based on your corps' performance</p>
-                </div>
-
-                <div className="bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Award className="w-4 h-4 text-gold-400" />
-                    <span className="font-semibold text-cream-100">Achievements</span>
-                  </div>
-                  <p className="text-sm text-cream-400">Complete achievements for bonus XP</p>
-                </div>
-
+            <div className="bg-charcoal-900/50 border border-gold-500/30 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-semibold text-cream-100">World Class</h4>
+                <span className="text-gold-400 text-xs px-2 py-0.5 bg-gold-500/20 rounded">Level 10</span>
               </div>
-            </div>
-
-            <InfoBox title="Level Milestones" color="gold">
-              <ul className="space-y-1 text-sm">
-                <li><strong>Level 3:</strong> Unlock A Class competition</li>
-                <li><strong>Level 5:</strong> Unlock Open Class competition</li>
-                <li><strong>Level 10:</strong> Unlock World Class - the ultimate challenge!</li>
-              </ul>
-            </InfoBox>
-          </Section>
-
-          {/* Execution & Performance */}
-          <Section id="execution" title="Execution & Performance" icon={Zap}>
-            <p>
-              Your corps' final score is affected by an execution multiplier that reflects various
-              factors of your corps management. The multiplier can range from approximately 0.50x to 1.50x.
-            </p>
-
-            <div className="space-y-3 mt-4">
-              <h4 className="font-semibold text-cream-100">Execution Factors:</h4>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-3">
-                  <span className="text-cream-300">Section Readiness</span>
-                  <span className="text-gold-400 font-semibold">±12%</span>
-                </div>
-                <div className="flex items-center justify-between bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-3">
-                  <span className="text-cream-300">Staff Effectiveness</span>
-                  <span className="text-gold-400 font-semibold">±8%</span>
-                </div>
-                <div className="flex items-center justify-between bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-3">
-                  <span className="text-cream-300">Section Morale</span>
-                  <span className="text-gold-400 font-semibold">±8%</span>
-                </div>
-                <div className="flex items-center justify-between bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-3">
-                  <span className="text-cream-300">Equipment Condition</span>
-                  <span className="text-gold-400 font-semibold">±5%</span>
-                </div>
-                <div className="flex items-center justify-between bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-3">
-                  <span className="text-cream-300">Show Difficulty</span>
-                  <span className="text-gold-400 font-semibold">±15%</span>
-                </div>
-                <div className="flex items-center justify-between bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-3">
-                  <span className="text-cream-300">Performance Variance</span>
-                  <span className="text-gold-400 font-semibold">±2%</span>
-                </div>
-              </div>
-            </div>
-
-            <InfoBox title="Improving Execution" color="blue">
-              Complete daily rehearsals to improve section readiness and morale. Hire quality staff from
-              the marketplace and maintain your equipment to maximize your execution multiplier!
-            </InfoBox>
-          </Section>
-
-          {/* CorpsCoin & Economy */}
-          <Section id="economy" title="CorpsCoin & Economy" icon={DollarSign}>
-            <p>
-              CorpsCoin is the in-game currency used to purchase staff, equipment, and other upgrades
-              for your corps.
-            </p>
-
-            <div className="space-y-3 mt-4">
-              <h4 className="font-semibold text-cream-100">Earning CorpsCoin:</h4>
-              <ul className="list-disc list-inside space-y-2">
-                <li>Complete daily rehearsals</li>
-                <li>Achieve high competition scores</li>
-                <li>Complete achievements and challenges</li>
-              </ul>
-
-              <h4 className="font-semibold text-cream-100 mt-4">Spending CorpsCoin:</h4>
-              <ul className="list-disc list-inside space-y-2">
-                <li>Hire staff from the DCI Hall of Fame</li>
-                <li>Purchase and upgrade equipment</li>
-                <li>Unlock cosmetic upgrades</li>
-                <li>Trade with league members</li>
-              </ul>
-            </div>
-
-            <InfoBox title="Economic Strategy" color="green">
-              Balance your spending between staff (long-term performance boost) and equipment
-              (maintenance and reliability). Smart investments pay dividends throughout the season!
-            </InfoBox>
-          </Section>
-
-          {/* Leagues & Social */}
-          <Section id="leagues" title="Leagues & Social Competition" icon={Users}>
-            <p>
-              Join or create leagues to compete with friends and other directors. Leagues add a social
-              dimension to your fantasy drum corps experience!
-            </p>
-
-            <div className="space-y-3 mt-4">
-              <div className="bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-4">
-                <h4 className="font-semibold text-cream-100 mb-2">League Features:</h4>
-                <ul className="list-disc list-inside space-y-2 text-sm">
-                  <li>Public or private leagues</li>
-                  <li>Custom league rules and settings</li>
-                  <li>League-specific leaderboards</li>
-                  <li>League chat and social features (coming soon)</li>
-                </ul>
-              </div>
-
-              <div className="bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-4">
-                <h4 className="font-semibold text-cream-100 mb-2">Global Leaderboards:</h4>
-                <p className="text-sm">
-                  Compete on global leaderboards across all four classes. Track your ranking, see
-                  top performers, and aim for the Hall of Champions!
-                </p>
-              </div>
-            </div>
-          </Section>
-
-          {/* Strategy Tips */}
-          <Section id="strategy" title="Strategy Tips" icon={Star}>
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-semibold text-cream-100 mb-2">🎯 Caption Selection Strategy</h4>
-                <ul className="list-disc list-inside space-y-1 text-sm">
-                  <li>Don't always pick the most expensive captions - balance is key</li>
-                  <li>Research historical performance data for each corps</li>
-                  <li>Consider which corps peaked in different years</li>
-                  <li>Save some points for flexible adjustments mid-season</li>
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-cream-100 mb-2">⚡ Execution Optimization</h4>
-                <ul className="list-disc list-inside space-y-1 text-sm">
-                  <li>Complete daily rehearsals consistently - don't miss days!</li>
-                  <li>Invest in quality staff early for long-term benefits</li>
-                  <li>Monitor equipment condition and repair before it degrades</li>
-                  <li>Balance show difficulty with your corps' readiness level</li>
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-cream-100 mb-2">💰 Economic Management</h4>
-                <ul className="list-disc list-inside space-y-1 text-sm">
-                  <li>Save CorpsCoin early season for strategic staff acquisitions</li>
-                  <li>Don't overspend on equipment - maintain, don't replace constantly</li>
-                  <li>Complete achievements for bonus currency</li>
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-cream-100 mb-2">🏆 Competitive Edge</h4>
-                <ul className="list-disc list-inside space-y-1 text-sm">
-                  <li>Start in SoundSport to learn mechanics without pressure</li>
-                  <li>Join active leagues for collaborative strategy discussions</li>
-                  <li>Watch leaderboards to see what top directors are doing</li>
-                  <li>Experiment with different caption combinations in lower classes</li>
-                </ul>
-              </div>
-            </div>
-          </Section>
-
-          {/* Quick Reference */}
-          <div className="card p-6 mt-6 bg-gradient-gold/5 border-gold-500/30">
-            <h2 className="text-2xl font-bold text-gradient mb-4">Quick Reference</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-              <div>
-                <h4 className="font-semibold text-cream-100 mb-2">Point Limits</h4>
-                <ul className="space-y-1 text-cream-300">
-                  <li>SoundSport: 90</li>
-                  <li>A Class: 60</li>
-                  <li>Open: 120</li>
-                  <li>World: 150</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold text-cream-100 mb-2">Level Unlocks</h4>
-                <ul className="space-y-1 text-cream-300">
-                  <li>Level 3: A Class</li>
-                  <li>Level 5: Open Class</li>
-                  <li>Level 10: World Class</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold text-cream-100 mb-2">Season Length</h4>
-                <ul className="space-y-1 text-cream-300">
-                  <li>Live: 10 weeks</li>
-                  <li>Off: 42 weeks (6 periods)</li>
-                  <li>Reset: 3 AM after finals</li>
-                </ul>
+              <p className="text-cream-400 text-sm mb-3">Elite competition, maximum flexibility</p>
+              <div className="flex items-center gap-2">
+                <Target className="w-4 h-4 text-gold-400" />
+                <span className="font-bold text-gold-400">150 Point Budget</span>
               </div>
             </div>
           </div>
 
-          {/* Footer CTA */}
-          <m.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="text-center mt-8"
+          <InfoBox title="Unlocking Classes" color="blue">
+            You can unlock classes by reaching the required level OR by spending CorpsCoin:
+            A Class (Level 3 or 1,000 CC), Open Class (Level 5 or 2,500 CC), World Class (Level 10 or 5,000 CC).
+          </InfoBox>
+        </Section>
+
+        {/* Caption Selection */}
+        <Section id="captions" title="Captions & Drafting" icon={Music}>
+          <p>
+            Your lineup consists of 8 captions - one for each DCI scoring category.
+            Each caption comes from a historical corps performance (e.g., "Blue Devils 2014 - Brass").
+          </p>
+
+          <h4 className="font-semibold text-cream-100 mt-4 mb-3">The 8 Caption Categories:</h4>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {[
+              { abbr: 'GE1', name: 'General Effect 1' },
+              { abbr: 'GE2', name: 'General Effect 2' },
+              { abbr: 'VP', name: 'Visual Proficiency' },
+              { abbr: 'VA', name: 'Visual Analysis' },
+              { abbr: 'CG', name: 'Color Guard' },
+              { abbr: 'B', name: 'Brass' },
+              { abbr: 'MA', name: 'Music Analysis' },
+              { abbr: 'P', name: 'Percussion' },
+            ].map(cap => (
+              <div key={cap.abbr} className="bg-gold-500/10 border border-gold-500/30 rounded-lg p-3 text-center">
+                <p className="font-bold text-cream-100">{cap.abbr}</p>
+                <p className="text-xs text-cream-400">{cap.name}</p>
+              </div>
+            ))}
+          </div>
+
+          <h4 className="font-semibold text-cream-100 mt-6 mb-2">Caption Point Costs</h4>
+          <p className="text-sm mb-3">
+            Each caption costs 1-25 points based on how well that corps historically performed in that category.
+            Higher-cost captions generally score better, but smart combinations of mid-tier captions can compete!
+          </p>
+
+          <h4 className="font-semibold text-cream-100 mt-6 mb-2">Lineup Change Rules</h4>
+          <ul className="list-disc list-inside space-y-1 text-sm">
+            <li><strong>Early Season (5+ weeks left):</strong> Unlimited changes</li>
+            <li><strong>Mid Season (2-4 weeks left):</strong> 3 changes per week</li>
+            <li><strong>Finals Week:</strong> 2 changes between each round</li>
+          </ul>
+
+          <InfoBox title="Pro Tip" color="green">
+            Research which corps excelled in specific captions across different years.
+            A corps might have legendary brass but average percussion - mix and match!
+          </InfoBox>
+        </Section>
+
+        {/* Seasons */}
+        <Section id="seasons" title="Seasons & Competition" icon={Calendar}>
+          <p>
+            marching.art runs two alternating season types throughout the year:
+          </p>
+
+          <div className="space-y-4 mt-4">
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Calendar className="w-5 h-5 text-blue-400" />
+                <h4 className="font-semibold text-cream-100">Live Season (June - August)</h4>
+              </div>
+              <p className="text-sm mb-2">
+                Runs alongside the real DCI season. Your corps' scores are calculated using
+                actual DCI competition results. Pick captions from corps you think will perform
+                well this year!
+              </p>
+              <p className="text-xs text-cream-400">
+                Duration: ~10 weeks, ending the second Saturday of August (DCI Finals)
+              </p>
+            </div>
+
+            <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Clock className="w-5 h-5 text-purple-400" />
+                <h4 className="font-semibold text-cream-100">Off-Season (August - May)</h4>
+              </div>
+              <p className="text-sm mb-2">
+                Uses historical DCI data to simulate competitions. Broken into six 7-week periods
+                with a 49-show schedule. Perfect for analyzing historical performance patterns.
+              </p>
+              <p className="text-xs text-cream-400">
+                Duration: ~42 weeks total (6 periods of 7 weeks each)
+              </p>
+            </div>
+          </div>
+
+          <InfoBox title="Season Transitions" color="purple">
+            When a season ends, leaderboards reset and a new season begins. Your XP, level,
+            and unlocked classes carry over - only competitive rankings reset.
+          </InfoBox>
+        </Section>
+
+        {/* XP & Progression */}
+        <Section id="progression" title="XP & Leveling Up" icon={TrendingUp}>
+          <p>
+            Earn XP (experience points) to level up your director profile.
+            Higher levels unlock new classes and features!
+          </p>
+
+          <h4 className="font-semibold text-cream-100 mt-4 mb-3">Ways to Earn XP:</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="bg-charcoal-900/50 border border-charcoal-700 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <Zap className="w-4 h-4 text-gold-400" />
+                <span className="font-semibold text-cream-100">Daily Check-in</span>
+              </div>
+              <p className="text-sm text-cream-400">Log in daily to earn XP and maintain your streak</p>
+            </div>
+
+            <div className="bg-charcoal-900/50 border border-charcoal-700 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <Trophy className="w-4 h-4 text-gold-400" />
+                <span className="font-semibold text-cream-100">Competition Scores</span>
+              </div>
+              <p className="text-sm text-cream-400">Earn XP based on your corps' performance</p>
+            </div>
+
+            <div className="bg-charcoal-900/50 border border-charcoal-700 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <Award className="w-4 h-4 text-gold-400" />
+                <span className="font-semibold text-cream-100">Achievements</span>
+              </div>
+              <p className="text-sm text-cream-400">Complete achievements for bonus XP</p>
+            </div>
+
+            <div className="bg-charcoal-900/50 border border-charcoal-700 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <Star className="w-4 h-4 text-gold-400" />
+                <span className="font-semibold text-cream-100">Streak Bonuses</span>
+              </div>
+              <p className="text-sm text-cream-400">Maintain daily streaks for multiplied XP</p>
+            </div>
+          </div>
+
+          <InfoBox title="Level Milestones" color="gold">
+            <ul className="space-y-1">
+              <li><strong>Level 3:</strong> Unlock A Class</li>
+              <li><strong>Level 5:</strong> Unlock Open Class</li>
+              <li><strong>Level 10:</strong> Unlock World Class</li>
+            </ul>
+          </InfoBox>
+        </Section>
+
+        {/* CorpsCoin */}
+        <Section id="economy" title="CorpsCoin Economy" icon={DollarSign}>
+          <p>
+            CorpsCoin (CC) is the in-game currency. Earn it through gameplay and spend it on
+            class unlocks and streak protection.
+          </p>
+
+          <h4 className="font-semibold text-cream-100 mt-4 mb-2">Earning CorpsCoin:</h4>
+          <ul className="list-disc list-inside space-y-1 text-sm mb-4">
+            <li>Daily check-ins and streak bonuses</li>
+            <li>Strong competition performance</li>
+            <li>Completing achievements</li>
+            <li>Leveling up your profile</li>
+          </ul>
+
+          <h4 className="font-semibold text-cream-100 mb-2">Spending CorpsCoin:</h4>
+          <ul className="list-disc list-inside space-y-1 text-sm">
+            <li><strong>Class Unlocks:</strong> Skip level requirements (1,000 - 5,000 CC)</li>
+            <li><strong>Streak Freeze:</strong> Protect your streak if you miss a day (300 CC)</li>
+          </ul>
+
+          <InfoBox title="Tip" color="green">
+            CorpsCoin can't buy better scores or competitive advantages -
+            it's purely for convenience and class access.
+          </InfoBox>
+        </Section>
+
+        {/* Leagues */}
+        <Section id="leagues" title="Leagues & Social" icon={Users}>
+          <p>
+            Compete with friends and other directors in leagues!
+            Create private leagues for your group or join public ones.
+          </p>
+
+          <h4 className="font-semibold text-cream-100 mt-4 mb-3">League Features:</h4>
+          <div className="bg-charcoal-900/50 border border-charcoal-700 rounded-lg p-4">
+            <ul className="space-y-2 text-sm">
+              <li className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 bg-gold-400 rounded-full" />
+                <span><strong>Public or Private:</strong> Open leagues or invite-only with join codes</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 bg-gold-400 rounded-full" />
+                <span><strong>League Standings:</strong> Track rankings within your league</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 bg-gold-400 rounded-full" />
+                <span><strong>Custom Settings:</strong> Configure scoring format and finals size</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 bg-gold-400 rounded-full" />
+                <span><strong>Head-to-Head:</strong> Weekly matchups against league members</span>
+              </li>
+            </ul>
+          </div>
+
+          <h4 className="font-semibold text-cream-100 mt-4 mb-2">Global Leaderboards:</h4>
+          <p className="text-sm">
+            Beyond leagues, compete on global leaderboards for each class.
+            Top performers are featured in the Hall of Champions!
+          </p>
+        </Section>
+
+        {/* Strategy Tips */}
+        <Section id="strategy" title="Strategy Tips" icon={Star}>
+          <div className="space-y-4">
+            <div>
+              <h4 className="font-semibold text-cream-100 mb-2">Caption Selection</h4>
+              <ul className="list-disc list-inside space-y-1 text-sm">
+                <li>Don't always pick the most expensive captions - balance matters</li>
+                <li>Research which corps peaked in different years</li>
+                <li>Some corps excel at specific captions (e.g., SCV percussion, Crown brass)</li>
+                <li>Save some budget flexibility for mid-season adjustments</li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-cream-100 mb-2">Class Strategy</h4>
+              <ul className="list-disc list-inside space-y-1 text-sm">
+                <li>Start in SoundSport to learn the game mechanics</li>
+                <li>A Class's tight 60-point budget rewards strategic thinking</li>
+                <li>Open and World Class let you build more premium lineups</li>
+                <li>You can run corps in multiple classes simultaneously</li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-cream-100 mb-2">Progression</h4>
+              <ul className="list-disc list-inside space-y-1 text-sm">
+                <li>Check in daily - consistent play beats sporadic grinding</li>
+                <li>Maintain your streak for bonus XP multipliers</li>
+                <li>Join active leagues for community and competition</li>
+              </ul>
+            </div>
+          </div>
+        </Section>
+
+        {/* Glossary */}
+        <Section id="glossary" title="DCI Glossary" icon={Book}>
+          <p className="mb-4">New to drum corps? Here are the key terms:</p>
+
+          <div className="space-y-3">
+            {[
+              { term: 'DCI', def: 'Drum Corps International - the governing body for competitive drum corps in North America' },
+              { term: 'Caption', def: 'A scoring category (GE, Visual, Music, etc.) - judges score each caption separately' },
+              { term: 'General Effect (GE)', def: 'How the overall show impacts the audience emotionally and artistically' },
+              { term: 'Visual', def: 'Marching, staging, and choreography quality (VP = proficiency, VA = analysis)' },
+              { term: 'Music', def: 'Musical performance quality (Brass, Percussion, MA = music analysis)' },
+              { term: 'Color Guard', def: 'The flag, rifle, and saber performers who add visual artistry' },
+              { term: 'Finals', def: 'Championship competition held in August - the culmination of the DCI season' },
+              { term: 'World Class', def: 'The top competitive tier in real DCI (and our game!)' },
+              { term: 'Open Class', def: 'Developing corps working toward World Class' },
+            ].map(item => (
+              <div key={item.term} className="bg-charcoal-900/50 rounded-lg p-3">
+                <span className="font-semibold text-gold-400">{item.term}:</span>
+                <span className="text-cream-300 ml-2">{item.def}</span>
+              </div>
+            ))}
+          </div>
+        </Section>
+
+        {/* FAQ */}
+        <Section id="faq" title="Frequently Asked Questions" icon={HelpCircle}>
+          <div className="space-y-4">
+            {[
+              {
+                q: 'How are scores calculated?',
+                a: 'Your corps score is the sum of your 8 caption scores. Each caption score comes from the historical (or live) performance of the corps you selected for that caption.'
+              },
+              {
+                q: 'Can I change my lineup?',
+                a: 'Yes! Early in the season you have unlimited changes. As finals approach, changes become limited to encourage strategic commitment.'
+              },
+              {
+                q: 'What happens when a season ends?',
+                a: 'Leaderboards reset and a new season begins. Your XP, level, unlocked classes, and CorpsCoin carry over.'
+              },
+              {
+                q: 'How do I unlock higher classes?',
+                a: 'Reach the required level (3/5/10) OR spend CorpsCoin to unlock early. Classes remain unlocked permanently.'
+              },
+              {
+                q: 'What\'s the difference between Live and Off-Season?',
+                a: 'Live Season uses real-time DCI scores from actual competitions. Off-Season uses historical data to simulate competitions year-round.'
+              },
+              {
+                q: 'Can I compete in multiple classes?',
+                a: 'Yes! You can have a separate corps in each unlocked class, each with its own lineup and rankings.'
+              },
+            ].map((item, idx) => (
+              <div key={idx} className="bg-charcoal-900/50 border border-charcoal-700 rounded-lg p-4">
+                <h4 className="font-semibold text-cream-100 mb-2">{item.q}</h4>
+                <p className="text-sm text-cream-300">{item.a}</p>
+              </div>
+            ))}
+          </div>
+        </Section>
+
+        {/* Quick Reference */}
+        <div className="bg-gold-500/10 border border-gold-500/30 rounded-lg p-4 md:p-6 mt-6">
+          <h2 className="text-xl font-bold text-cream-100 mb-4">Quick Reference</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+            <div>
+              <h4 className="font-semibold text-cream-100 mb-2">Point Budgets</h4>
+              <ul className="space-y-1 text-cream-300">
+                <li>SoundSport: 90</li>
+                <li>A Class: 60</li>
+                <li>Open Class: 120</li>
+                <li>World Class: 150</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-cream-100 mb-2">Level Unlocks</h4>
+              <ul className="space-y-1 text-cream-300">
+                <li>Level 3: A Class</li>
+                <li>Level 5: Open Class</li>
+                <li>Level 10: World Class</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-cream-100 mb-2">Season Length</h4>
+              <ul className="space-y-1 text-cream-300">
+                <li>Live: ~10 weeks</li>
+                <li>Off-Season: ~42 weeks</li>
+                <li>Off-Season periods: 6 x 7 weeks</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer CTA */}
+        <m.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="text-center mt-8 pb-8"
+        >
+          <p className="text-cream-400 mb-4">Ready to build your championship corps?</p>
+          <Link
+            to="/dashboard"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gold-500 text-charcoal-900 rounded-lg font-bold hover:bg-gold-400 transition-colors"
           >
-            <p className="text-cream-300 mb-4">Ready to build your championship corps?</p>
-            <a href="/dashboard" className="btn-primary inline-flex items-center gap-2">
-              <Trophy className="w-5 h-5" />
-              Go to Dashboard
-            </a>
-          </m.div>
+            <Trophy className="w-5 h-5" />
+            Go to Dashboard
+          </Link>
         </m.div>
       </div>
     </div>

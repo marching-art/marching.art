@@ -44,10 +44,14 @@
   - Add field-level security for sensitive data
 
 ### 2.2 Clean Up False Feature Claims
-- **Issue**: `HowToPlay.jsx` documents non-existent features (equipment maintenance, execution multiplier)
-- **Impact**: User confusion
-- **Action**: Update HowToPlay to reflect actual features only
-- **Status**: Staff trading references removed; equipment/execution multiplier still need review
+- **Status**: **FIXED**
+  - ✅ Complete rewrite of `HowToPlay.jsx` with accurate content
+  - ✅ Removed false features (execution multiplier, staff, equipment)
+  - ✅ Added DCI Glossary and FAQ sections
+  - ✅ Added search functionality to guide
+  - ✅ Added Help icon to TopNav and MobileNav
+  - ✅ Fixed route: `/guide` now shows the Game Guide
+  - ✅ Verified all content against actual code
 
 ---
 
