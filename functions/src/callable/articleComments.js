@@ -910,7 +910,7 @@ exports.getArticleEngagement = onCall(
 
     try {
       const engagement = {};
-      const defaultReactionCounts = { fire: 0, heart: 0, mindblown: 0, sad: 0, angry: 0 };
+      const defaultReactionCounts = { '👏': 0, '🔥': 0, '💯': 0, '🎺': 0, '❤️': 0, '🤔': 0, '🏳️': 0, '🥁': 0, total: 0 };
 
       // OPTIMIZATION: Batch all queries in parallel instead of sequential loop
       // Before: 100 sequential queries (2 per article × 50 articles)
@@ -943,7 +943,7 @@ exports.getArticleEngagement = onCall(
       const reactionCountMap = new Map(
         reactionDocs.map((doc, index) => [
           articleIds[index],
-          doc.exists ? (doc.data().counts || defaultReactionCounts) : defaultReactionCounts
+          doc.exists ? doc.data() : defaultReactionCounts
         ])
       );
 
