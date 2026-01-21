@@ -2828,15 +2828,28 @@ ARTICLE REQUIREMENTS
    MULTI-SHOW REQUIREMENT: You MUST mention all ${showContext.allShows.length} shows by name.
    ` : ''}
 
-Write like a veteran beat reporter - factual, comprehensive, covering the ENTIRE field.`;
+Write like a veteran beat reporter - factual, comprehensive, covering the ENTIRE field.
+
+═══════════════════════════════════════════════════════════════
+STRICT REQUIREMENTS - YOUR ARTICLE WILL BE REJECTED IF:
+═══════════════════════════════════════════════════════════════
+1. The narrative is under 500 words (MUST be 600-800 words)
+2. You only mention 2-3 corps (MUST mention ALL corps by name)
+3. You use ANY of these banned words: dominant, commanding, heating up, besting, stunning, thrilling, incredible, captivating, testament, mettle
+4. You end with generic phrases like "tune in tomorrow" or "stay tuned"
+5. The headline contains exclamation points
+6. You repeat the summary as the narrative
+
+The narrative MUST be a complete 8-paragraph article. Not a summary.`;
+
 
   // Schema for structured output
   const schema = {
     type: Type.OBJECT,
     properties: {
-      headline: { type: Type.STRING, description: "Attention-grabbing headline" },
-      summary: { type: Type.STRING, description: "2-3 sentence summary" },
-      narrative: { type: Type.STRING, description: "600-800 word article" },
+      headline: { type: Type.STRING, description: "Factual headline with winner and score, NO exclamation points, NO 'dominates' or 'stunning'" },
+      summary: { type: Type.STRING, description: "Exactly 2-3 sentences: winner name, exact score, margin over second place" },
+      narrative: { type: Type.STRING, description: "FULL 600-800 word article with 8 paragraphs covering ALL corps. Must include: dateline opener, winner analysis, 2nd place, 3rd-6th place battle, 7th-10th, rest of field, day-over-day changes, tomorrow preview. NEVER use 'dominant', 'commanding', 'heating up', 'besting'" },
       standings: {
         type: Type.ARRAY,
         items: {
@@ -3076,14 +3089,24 @@ WRITE A SEASON JOURNEY ARTICLE
    - Which specific captions should fantasy directors target?
    - DO NOT predict exact future scores - only analyze visible trends
 
-Write like a sports statistician who loves the numbers. Every paragraph needs specific scores.`;
+Write like a sports statistician who loves the numbers. Every paragraph needs specific scores.
+
+═══════════════════════════════════════════════════════════════
+STRICT REQUIREMENTS - YOUR ARTICLE WILL BE REJECTED IF:
+═══════════════════════════════════════════════════════════════
+1. The narrative is under 600 words (MUST be 700-900 words)
+2. You don't include specific scores from their show-by-show journey
+3. You don't analyze at least 3 individual captions with numbers
+4. You use ANY banned words: dominant, commanding, stunning, thrilling, incredible, testament, mettle, captivating
+5. You don't include a clear buy/hold/sell recommendation
+6. You repeat the summary as the narrative`;
 
   const schema = {
     type: Type.OBJECT,
     properties: {
-      headline: { type: Type.STRING, description: "Corps-focused feature headline" },
-      summary: { type: Type.STRING, description: "2-3 sentence introduction" },
-      narrative: { type: Type.STRING, description: "600-800 word corps profile" },
+      headline: { type: Type.STRING, description: "Corps name with specific number and trend direction, NO 'dominates' or exclamation points" },
+      summary: { type: Type.STRING, description: "Exactly 2-3 sentences: corps name, current score, rank, and one specific caption insight" },
+      narrative: { type: Type.STRING, description: "FULL 700-900 word analytical profile with 6 paragraphs: current position, show-by-show journey with SPECIFIC SCORES, caption strengths, caption weaknesses, trajectory, buy/hold/sell recommendation. NEVER use 'dominant', 'commanding', 'stunning'" },
       corpsIdentity: {
         type: Type.OBJECT,
         properties: {
@@ -3290,14 +3313,24 @@ ARTICLE REQUIREMENTS
    - SELL: 1-2 corps with evidence
    - Be specific about WHICH CAPTIONS to pick
 
-Write like the lead DCI score analyst - comprehensive, authoritative, essential reading.`;
+Write like the lead DCI score analyst - comprehensive, authoritative, essential reading.
+
+═══════════════════════════════════════════════════════════════
+STRICT REQUIREMENTS - YOUR ARTICLE WILL BE REJECTED IF:
+═══════════════════════════════════════════════════════════════
+1. The narrative is under 800 words (MUST be 900-1200 words)
+2. You don't cover at least 5 corps in each caption section (GE, Visual, Music)
+3. You don't include specific point gaps and margins
+4. You use ANY banned words: dominant, commanding, stunning, thrilling, heating up, captivating, testament
+5. You don't include clear buy/hold/sell recommendations with evidence
+6. You repeat the summary as the narrative`;
 
   const schema = {
     type: Type.OBJECT,
     properties: {
-      headline: { type: Type.STRING, description: "Caption-focused recap headline" },
-      summary: { type: Type.STRING, description: "2-3 sentence summary of weekly trends" },
-      narrative: { type: Type.STRING, description: "700-900 word caption analysis" },
+      headline: { type: Type.STRING, description: "Technical headline with specific numbers and caption focus, NO 'heats up' or 'battle intensifies'" },
+      summary: { type: Type.STRING, description: "Exactly 2-3 sentences with specific caption gaps and key insight" },
+      narrative: { type: Type.STRING, description: "FULL 900-1200 word comprehensive analysis with 5 sections: GE analysis (250 words, 5+ corps), Visual analysis (250 words, 5+ corps), Music analysis (250 words, 5+ corps), Trajectory outlook (200 words), Fantasy buy/hold/sell (150 words). NEVER use 'dominant', 'heating up', 'captivating'" },
       captionBreakdown: {
         type: Type.OBJECT,
         properties: {
@@ -3372,10 +3405,14 @@ async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext
 
   // Separate competitive and SoundSport results
   const competitiveResults = allResults.filter(r => r.corpsClass !== 'soundSport');
-  const soundSportResults = allResults.filter(r => r.corpsClass === 'soundSport').sort((a, b) => b.totalScore - a.totalScore);
+  const soundSportResults = allResults
+    .filter(r => r.corpsClass === 'soundSport')
+    .sort((a, b) => b.totalScore - a.totalScore);
 
-  // Get TOP 25 performers instead of just 10
-  const topPerformers = competitiveResults.sort((a, b) => b.totalScore - a.totalScore).slice(0, 25);
+  // Get TOP 25 performers
+  const topPerformers = competitiveResults
+    .sort((a, b) => b.totalScore - a.totalScore)
+    .slice(0, 25);
 
   const avgScore = topPerformers.length > 0
     ? (topPerformers.reduce((sum, p) => sum + p.totalScore, 0) / topPerformers.length).toFixed(3)
@@ -3538,14 +3575,26 @@ ARTICLE REQUIREMENTS
 
 Include at least 3 fictitious quotes throughout. Make it feel like ESPN coverage of fantasy sports!
 
-NEVER reveal specific roster/lineup picks.`;
+NEVER reveal specific roster/lineup picks.
+
+═══════════════════════════════════════════════════════════════
+STRICT REQUIREMENTS - YOUR ARTICLE WILL BE REJECTED IF:
+═══════════════════════════════════════════════════════════════
+1. The narrative is under 500 words (MUST be 600-800 words)
+2. You don't include at least 3 fictitious quotes
+3. You only cover top 5 (MUST cover top 25 positions)
+4. You use ANY banned words: dominant, commanding, stunning, heating up, sent shockwaves, proves their mettle
+5. You end with "Can [X] maintain...?" or "tune in tomorrow"
+6. You repeat the summary as the narrative
+
+The narrative MUST include fictitious quotes from directors. This is FANTASY sports journalism!`;
 
   const schema = {
     type: Type.OBJECT,
     properties: {
-      headline: { type: Type.STRING, description: "Winner-focused headline" },
-      summary: { type: Type.STRING, description: "2-3 sentence summary" },
-      narrative: { type: Type.STRING, description: "500-700 word results article" },
+      headline: { type: Type.STRING, description: "Winner name and score, NO exclamation points, NO 'dominates'" },
+      summary: { type: Type.STRING, description: "Exactly 2-3 sentences: winner, score, margin to 2nd, one storyline hook" },
+      narrative: { type: Type.STRING, description: "FULL 600-800 word fantasy sports article with: opening quote from winner's director, top 5 coverage, positions 6-15, positions 16-25, closing stat. MUST include 3+ fictitious quotes. NEVER use 'dominant', 'commanding', 'stunning', 'heating up'" },
       topPerformers: {
         type: Type.ARRAY,
         items: {
@@ -3781,14 +3830,26 @@ ARTICLE REQUIREMENTS
    - If you need Music points, pick [Corps]
    - Sleeper pick of the week: [Corps] because [reason]
 
-Write like a fantasy sports analyst giving draft advice. Be specific, be actionable, help directors WIN.`;
+Write like a fantasy sports analyst giving draft advice. Be specific, be actionable, help directors WIN.
+
+═══════════════════════════════════════════════════════════════
+STRICT REQUIREMENTS - YOUR ARTICLE WILL BE REJECTED IF:
+═══════════════════════════════════════════════════════════════
+1. The narrative is under 600 words (MUST be 700-900 words)
+2. You don't include specific buy/hold/sell recommendations with numbers
+3. You analyze fewer than 3 captions (GE, Visual, Music)
+4. You use ANY banned words: dominant, heating up, intensifies, key area of focus, taken center stage
+5. You use generic phrases without specific data
+6. You repeat the summary as the narrative
+
+The narrative MUST be data-driven with specific score comparisons.`;
 
   const schema = {
     type: Type.OBJECT,
     properties: {
-      headline: { type: Type.STRING, description: "Caption-focused headline with recommendation" },
-      summary: { type: Type.STRING, description: "2-3 sentence summary with key recommendation" },
-      narrative: { type: Type.STRING, description: "700-900 word deep dive caption analysis" },
+      headline: { type: Type.STRING, description: "Specific recommendation with corps name and score, NO 'heats up' or 'intensifies'" },
+      summary: { type: Type.STRING, description: "Exactly 2-3 sentences with ONE clear buy/hold/sell recommendation and specific numbers" },
+      narrative: { type: Type.STRING, description: "FULL 700-900 word analysis with 5 sections: GE analysis (200 words), Visual analysis (200 words), Music analysis (200 words), Buy/Hold/Sell summary (150 words), Caption pick strategy (100 words). NEVER use 'dominant', 'heating up', 'key area of focus'" },
       captionInsights: {
         type: Type.OBJECT,
         properties: {
