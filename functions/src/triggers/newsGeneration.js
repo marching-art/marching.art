@@ -417,25 +417,9 @@ exports.triggerDailyNews = onCall(
     secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret],
   },
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "User must be authenticated");
-    }
+    checkAdminAuth(request.auth);
 
     const db = getDb();
-
-    // Check if user is admin
-    const userDoc = await db
-      .collection("artifacts")
-      .doc(process.env.DATA_NAMESPACE || "production")
-      .collection("users")
-      .doc(request.auth.uid)
-      .collection("profile")
-      .doc("data")
-      .get();
-
-    if (!userDoc.exists || userDoc.data().role !== "admin") {
-      throw new HttpsError("permission-denied", "Only admins can trigger news generation");
-    }
 
     const { currentDay, dataDocId, seasonId } = request.data;
 
@@ -924,23 +908,9 @@ exports.triggerNewsGeneration = onCall(
     secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret],
   },
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "User must be authenticated");
-    }
+    checkAdminAuth(request.auth);
 
     const db = getDb();
-    const userDoc = await db
-      .collection("artifacts")
-      .doc(process.env.DATA_NAMESPACE || "production")
-      .collection("users")
-      .doc(request.auth.uid)
-      .collection("profile")
-      .doc("data")
-      .get();
-
-    if (!userDoc.exists || userDoc.data().role !== "admin") {
-      throw new HttpsError("permission-denied", "Only admins can trigger news generation");
-    }
 
     const { type, data } = request.data;
 
