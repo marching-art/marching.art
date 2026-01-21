@@ -17,6 +17,10 @@ import {
 import YouTubeIcon from '../components/YouTubeIcon';
 import ArticleReactions from '../components/Articles/ArticleReactions';
 import ArticleComments from '../components/Articles/ArticleComments';
+import ArticleNarrativeParser from '../components/Articles/ArticleNarrativeParser';
+import CaptionInsightsCards from '../components/Articles/CaptionInsightsCards';
+import CaptionBreakdownCards from '../components/Articles/CaptionBreakdownCards';
+import RecommendationCards from '../components/Articles/RecommendationCards';
 import { LiveScoresBox, FantasyTrendingBox, StandingsModal, YouTubeModal } from '../components/Sidebar';
 import { getArticleEngagement, getRecentNews } from '../api/functions';
 import { db } from '../api/client';
@@ -588,7 +592,17 @@ const Article = () => {
 
                 {/* Full Story - only show if different from summary */}
                 <div className="p-5 lg:p-6">
-                  {fullContent && fullContent !== article.summary ? (
+                  {/* Articles with structured sections get parsed layout */}
+                  {(['fantasy_recap', 'dci_recap', 'dci_daily', 'dci_feature'].includes(article.type) ||
+                    ['fantasy_recap', 'dci_recap', 'dci_daily', 'dci_feature'].includes(article.articleType)) ? (
+                    <div className="mb-8">
+                      <ArticleNarrativeParser
+                        narrative={article.narrative}
+                        summary={article.summary}
+                        articleType={article.type || article.articleType}
+                      />
+                    </div>
+                  ) : fullContent && fullContent !== article.summary ? (
                     <div className="prose prose-invert prose-lg max-w-none mb-8">
                       {fullContent.split('\n\n').map((paragraph, idx) => (
                         <p key={idx} className="text-base md:text-lg text-gray-300 leading-relaxed mb-6">
@@ -597,6 +611,27 @@ const Article = () => {
                       ))}
                     </div>
                   ) : null}
+
+                  {/* Caption Insights - for fantasy_recap articles */}
+                  {(article.type === 'fantasy_recap' || article.articleType === 'fantasy_recap') &&
+                    article.captionInsights && (
+                      <CaptionInsightsCards captionInsights={article.captionInsights} />
+                    )}
+
+                  {/* Caption Breakdown - for dci_recap articles */}
+                  {(article.type === 'dci_recap' || article.articleType === 'dci_recap') &&
+                    article.captionBreakdown && (
+                      <CaptionBreakdownCards captionBreakdown={article.captionBreakdown} />
+                    )}
+
+                  {/* Structured Recommendations - for fantasy_recap articles (object format) */}
+                  {(article.type === 'fantasy_recap' || article.articleType === 'fantasy_recap') &&
+                    article.recommendations &&
+                    (article.recommendations.buy?.length > 0 ||
+                      article.recommendations.hold?.length > 0 ||
+                      article.recommendations.sell?.length > 0) && (
+                      <RecommendationCards recommendations={article.recommendations} />
+                    )}
 
                   {/* Fantasy Impact */}
                   {article.fantasyImpact && typeof article.fantasyImpact === 'string' && (
