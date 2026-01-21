@@ -653,8 +653,7 @@ exports.getRecentNews = onCall(
         const dayId = pathParts[3]; // e.g., "day_49"
         const reportDay = parseInt(dayId.replace("day_", ""), 10) || data.reportDay;
 
-        // Only include fields needed for feed display (field projection)
-        // This significantly reduces payload size by excluding large fields like narrative
+        // Include fields needed for both feed display and article view
         articles.push({
           id: `${seasonId}_${dayId}_${articleType}`,
           seasonId,
@@ -665,12 +664,20 @@ exports.getRecentNews = onCall(
           headline: data.headline || "",
           summary: data.summary || "",
           imageUrl: data.imageUrl || null,
-          // Pre-calculated reading time (avoids sending full narrative to client)
+          // Full story content - needed when navigating to article view
+          narrative: data.narrative || "",
+          fullStory: data.fullStory || "",
+          // Pre-calculated reading time
           readingTime: calculateReadingTime(data),
-          // Fantasy-specific fields (small objects)
+          // Fantasy-specific fields
           fantasyImpact: data.fantasyImpact || null,
           fantasyMetrics: data.fantasyMetrics || null,
           trendingCorps: data.trendingCorps || null,
+          // Structured data for article display
+          standings: data.standings || null,
+          topPerformers: data.topPerformers || null,
+          recommendations: data.recommendations || null,
+          insights: data.insights || null,
           // Timestamps
           createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
           updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.createdAt?.toDate?.()?.toISOString(),
