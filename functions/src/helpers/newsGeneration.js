@@ -3382,6 +3382,17 @@ async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext
     : "0.000";
   const topScore = topPerformers[0]?.totalScore?.toFixed(3) || "0.000";
 
+  // Calculate "Best of Show" awards from scores
+  const bestOfShowAwards = {
+    overall: topPerformers[0] || null,
+    bestGE: [...competitiveResults].sort((a, b) => (b.geScore || 0) - (a.geScore || 0))[0] || null,
+    bestVisual: [...competitiveResults].sort((a, b) => (b.visualScore || 0) - (a.visualScore || 0))[0] || null,
+    bestMusic: [...competitiveResults].sort((a, b) => (b.musicScore || 0) - (a.musicScore || 0))[0] || null,
+  };
+
+  // SoundSport "Best of Show" (if any SoundSport corps)
+  const soundSportBest = soundSportResults[0] || null;
+
   const fantasyShowName = formatFantasyEventName(showContext.showName);
 
   const prompt = `You are a marching.art fantasy sports journalist. This article is your chance to make fantasy drum corps feel REAL and EXCITING through creative storytelling, fictitious quotes, and engaging narratives.
@@ -3409,10 +3420,21 @@ ${topPerformers.map((r, i) => {
    From: ${r.location || 'Unknown location'}`;
 }).join('\n')}
 
+═══════════════════════════════════════════════════════════════
+🏆 BEST OF SHOW AWARDS (Caption Winners)
+═══════════════════════════════════════════════════════════════
+🥇 OVERALL CHAMPION: "${bestOfShowAwards.overall?.corpsName || 'TBD'}" (${bestOfShowAwards.overall?.displayName || 'Unknown'}) - ${bestOfShowAwards.overall?.totalScore?.toFixed(3) || 'N/A'}
+🎭 BEST GE: "${bestOfShowAwards.bestGE?.corpsName || 'TBD'}" - ${bestOfShowAwards.bestGE?.geScore?.toFixed(3) || 'N/A'} GE points
+👁️ BEST VISUAL: "${bestOfShowAwards.bestVisual?.corpsName || 'TBD'}" - ${bestOfShowAwards.bestVisual?.visualScore?.toFixed(3) || 'N/A'} Visual points
+🎺 BEST MUSIC: "${bestOfShowAwards.bestMusic?.corpsName || 'TBD'}" - ${bestOfShowAwards.bestMusic?.musicScore?.toFixed(3) || 'N/A'} Music points
+
 ${soundSportResults.length > 0 ? `
 ═══════════════════════════════════════════════════════════════
-SOUNDSPORT RESULTS
+🎵 SOUNDSPORT RESULTS
 ═══════════════════════════════════════════════════════════════
+🏆 SOUNDSPORT CHAMPION: "${soundSportBest?.corpsName || 'TBD'}" (${soundSportBest?.displayName || 'Unknown'}) - ${soundSportBest?.totalScore?.toFixed(3) || 'N/A'}
+
+TOP SOUNDSPORT PERFORMERS:
 ${soundSportResults.slice(0, 10).map((r, i) => {
   return `${i + 1}. "${r.corpsName}" (Director: ${r.displayName || 'Unknown'}) - ${r.totalScore.toFixed(3)} pts
    From: ${r.location || 'Unknown location'}`;
@@ -3481,9 +3503,15 @@ ARTICLE REQUIREMENTS
    - Don't ignore the rest of the field!
    - Mention notable names and scores
 
+   BEST OF SHOW AWARDS (~100 words):
+   - Celebrate the caption winners (Best GE, Best Visual, Best Music)
+   - Note if one corps swept multiple awards or if different corps won each
+   - Create a fictitious quote from an award winner
+
    ${soundSportResults.length > 0 ? `SOUNDSPORT HIGHLIGHT (~75 words):
+   - Celebrate the SoundSport champion
    - Mention top SoundSport performers
-   - Celebrate their participation` : ''}
+   - Include a fictitious quote from a SoundSport director` : ''}
 
    CLOSING (~100 words):
    - Interesting stat or observation
