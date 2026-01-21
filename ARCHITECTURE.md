@@ -55,14 +55,13 @@ marching.art/
 
 | System | Status | Notes |
 |--------|--------|-------|
-| **Leagues** | 75% | Core functions work, no staff trading |
-| **CorpsCoin Economy** | 60% | Class unlocks work, no staff/equipment purchases |
+| **Leagues** | 90% | Core functions work, chat coming soon |
+| **CorpsCoin Economy** | 60% | Class unlocks work, cosmetics planned |
 
 ### Not Implemented
 
 These systems have TypeScript types defined but NO backend support:
 
-- Staff marketplace/purchase/assignment
 - Equipment system (condition, repair, upgrades)
 - Execution multiplier (readiness, morale)
 - Daily operations beyond XP check-in
@@ -162,8 +161,8 @@ Located in `src/components/ui/`:
 |-------|-------------|-------------------|
 | SoundSport | 90 | Default |
 | A Class | 60 | Level 3 OR 1,000 CorpsCoin |
-| Open Class | 40 | Level 5 OR 2,500 CorpsCoin |
-| World Class | 40 | Level 10 OR 5,000 CorpsCoin |
+| Open Class | 120 | Level 5 OR 2,500 CorpsCoin |
+| World Class | 150 | Level 10 OR 5,000 CorpsCoin |
 
 ## Known Issues
 

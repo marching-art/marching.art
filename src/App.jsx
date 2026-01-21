@@ -51,6 +51,7 @@ const Privacy = lazy(() => import('./pages/Privacy'));
 const Terms = lazy(() => import('./pages/Terms'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const Article = lazy(() => import('./pages/Article'));
+const HowToPlay = lazy(() => import('./pages/HowToPlay'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Helper component to wrap pages with error boundaries
@@ -273,10 +274,19 @@ function App() {
             </ProtectedRoute>
           } />
 
+          {/* Game Guide - accessible to all authenticated users */}
+          <Route path="/guide" element={
+            <ProtectedRoute>
+              <Suspense fallback={<DashboardSkeleton />}>
+                <Page name="Guide"><HowToPlay /></Page>
+              </Suspense>
+            </ProtectedRoute>
+          } />
+          <Route path="/how-to-play" element={<Navigate to="/guide" replace />} />
+
           {/* Redirect old routes */}
           <Route path="/hub" element={<Navigate to="/leagues" replace />} />
           <Route path="/leaderboard" element={<Navigate to="/scores" replace />} />
-          <Route path="/how-to-play" element={<Navigate to="/dashboard" replace />} />
           <Route path="/hud" element={<Navigate to="/dashboard" replace />} />
 
           <Route path="/schedule" element={

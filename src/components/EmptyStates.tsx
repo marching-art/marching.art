@@ -34,7 +34,7 @@ export const NoLeaguesEmpty: React.FC<EmptyStateBaseProps & { onCreateLeague?: (
     </div>
     <h3 className="text-xl font-display font-bold text-cream mb-2">Join the Competition</h3>
     <p className="text-sm text-cream/60 mb-6 max-w-sm mx-auto">
-      Leagues let you compete against other directors. Track rankings, trade staff, and prove you're the best!
+      Leagues let you compete against other directors. Track rankings and prove you're the best!
     </p>
     <div className="flex flex-col sm:flex-row gap-3 justify-center">
       {onCreateLeague && (

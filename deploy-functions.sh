@@ -89,7 +89,7 @@ BATCH14="processCorpsDecisions,retireCorps,unretireCorps"
 BATCH15="createLeague,joinLeague,leaveLeague,generateMatchups,updateMatchupResults"
 
 # Batch 16: League functions part 2
-BATCH16="proposeStaffTrade,respondToStaffTrade,postLeagueMessage"
+BATCH16="postLeagueMessage"
 
 # Batch 17: Comments and daily ops
 BATCH17="sendCommentNotification,deleteComment,reportComment,claimDailyLogin,purchaseStreakFreeze,getStreakStatus"

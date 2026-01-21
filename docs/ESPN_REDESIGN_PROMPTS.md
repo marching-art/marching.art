@@ -732,7 +732,6 @@ Components to update:
 Remove:
 - Complex glassmorphism cards
 - TradesTab (already removed)
-- Staff trading references
 
 MatchupCard component:
 - Shows two teams, their scores

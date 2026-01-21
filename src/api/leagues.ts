@@ -1,5 +1,5 @@
 // Leagues API - League management and operations
-// Handles league CRUD, membership, trades, and chat
+// Handles league CRUD, membership, and chat
 
 import {
   collection,

@@ -25,7 +25,8 @@ import {
   Eye,
   Sparkles,
   Shield,
-  Newspaper
+  Newspaper,
+  HelpCircle
 } from 'lucide-react';
 
 // =============================================================================
@@ -107,6 +108,15 @@ const TopNav = () => {
         <NavItem to="/profile" icon={User} label="Profile" />
         {isAdmin && <NavItem to="/admin" icon={Shield} label="Admin" />}
       </div>
+
+      {/* Help Icon */}
+      <Link
+        to="/guide"
+        className="ml-2 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-sm transition-colors"
+        title="Game Guide"
+      >
+        <HelpCircle className="w-5 h-5" />
+      </Link>
       </div>
     </nav>
   );

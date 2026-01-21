@@ -390,14 +390,6 @@ const SettingsTab = ({ league, userProfile, currentWeek = 1, onBack }) => {
             </span>
           </div>
           <div className="px-4 py-3 flex items-center justify-between">
-            <span className="text-sm text-gray-400">Staff Trading</span>
-            <span className={`text-sm font-bold ${
-              league.settings?.enableStaffTrading ? 'text-green-500' : 'text-red-500'
-            }`}>
-              {league.settings?.enableStaffTrading ? 'Enabled' : 'Disabled'}
-            </span>
-          </div>
-          <div className="px-4 py-3 flex items-center justify-between">
             <span className="text-sm text-gray-400">Members</span>
             <span className="text-sm font-bold text-white">
               {memberCount} / {league.maxMembers || 20}

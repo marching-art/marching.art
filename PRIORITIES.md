@@ -35,15 +35,7 @@
 
 ## Priority 2: High (Core Functionality)
 
-### 2.1 Complete League System (Currently 75%)
-- **Missing**: Staff trading between league members
-- **Impact**: Key social feature incomplete
-- **Action**:
-  - Implement `proposeStaffTrade()` function
-  - Implement `acceptTrade()` / `rejectTrade()` functions
-  - Add trade UI to league pages
-
-### 2.2 Fix Firestore Security Rules
+### 2.1 Fix Firestore Security Rules
 - **Issue**: Overly permissive read access
 - **Impact**: Data exposure risk
 - **Action**:
@@ -51,10 +43,15 @@
   - Restrict read access to authenticated users where appropriate
   - Add field-level security for sensitive data
 
-### 2.3 Clean Up False Feature Claims
-- **Issue**: `HowToPlay.jsx` documents non-existent features (staff marketplace, equipment maintenance)
-- **Impact**: User confusion
-- **Action**: Update HowToPlay to reflect actual features only
+### 2.2 Clean Up False Feature Claims
+- **Status**: **FIXED**
+  - ✅ Complete rewrite of `HowToPlay.jsx` with accurate content
+  - ✅ Removed false features (execution multiplier, staff, equipment)
+  - ✅ Added DCI Glossary and FAQ sections
+  - ✅ Added search functionality to guide
+  - ✅ Added Help icon to TopNav and MobileNav
+  - ✅ Fixed route: `/guide` now shows the Game Guide
+  - ✅ Verified all content against actual code
 
 ---
 

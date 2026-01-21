@@ -185,9 +185,6 @@ export const GAME_CONFIG = {
 // =============================================================================
 
 export const FEATURE_FLAGS = {
-  /** Enable staff marketplace */
-  staffMarketplace: import.meta.env.VITE_FEATURE_STAFF_MARKETPLACE !== 'false',
-
   /** Enable leagues */
   leagues: import.meta.env.VITE_FEATURE_LEAGUES !== 'false',
 
