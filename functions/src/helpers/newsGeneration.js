@@ -2461,92 +2461,78 @@ function analyzeCompetitionContext(dayScores, trendData, reportDay) {
 function getToneGuidance(context, articleType) {
   const { scenario, seasonPhase, hasShakeup, positionBattleCount, intensity } = context;
 
-  // Base tone elements
-  const toneElements = [];
+  // Base context elements - factual, not dramatic
+  const contextElements = [];
 
-  // Season phase affects overall framing
+  // Season phase affects FACTUAL framing (not emotional)
   switch (seasonPhase) {
     case "early":
-      toneElements.push("Frame as season-opening excitement");
-      toneElements.push("Acknowledge early-season variability");
-      toneElements.push("Emphasize potential and trajectory over final standings");
+      contextElements.push("Early season: scores may change significantly in coming weeks");
+      contextElements.push("Reference how many shows remain");
       break;
     case "mid":
-      toneElements.push("Note emerging patterns and trends");
-      toneElements.push("Compare to early-season expectations");
-      toneElements.push("Build narrative momentum toward finals");
+      contextElements.push("Mid-season: patterns are emerging");
+      contextElements.push("Compare current scores to early-season scores where relevant");
       break;
     case "late":
-      toneElements.push("Emphasize high stakes as finals approach");
-      toneElements.push("Every tenth matters now");
-      toneElements.push("Championship implications in every score");
+      contextElements.push("Late season: fewer shows remaining");
+      contextElements.push("Reference specific point gaps needed to change positions");
       break;
     case "championship":
-      toneElements.push("Finals week intensity - this is what they've worked for");
-      toneElements.push("Legacy and history on the line");
-      toneElements.push("Maximum drama and stakes");
+      contextElements.push("Championship week: final results pending");
+      contextElements.push("Reference specific scores needed for placement changes");
       break;
   }
 
-  // Competitive scenario affects urgency
+  // Competitive scenario - factual descriptions
   switch (scenario) {
     case "tight_race":
-      toneElements.push("URGENT: Race is razor-close, convey tension and uncertainty");
-      toneElements.push("Every performance could decide the outcome");
-      toneElements.push("Use phrases like 'dead heat', 'too close to call', 'margin of error'");
+      contextElements.push(`Top 2 separated by less than 0.3 points`);
+      contextElements.push("Note the specific margin when discussing leaders");
       break;
     case "competitive":
-      toneElements.push("Competitive but not desperate");
-      toneElements.push("Leader has work to do to hold off challengers");
-      toneElements.push("Focus on what challengers need to close the gap");
+      contextElements.push("Multiple corps within striking distance");
+      contextElements.push("Note specific point gaps between positions");
       break;
     case "dominant_leader":
-      toneElements.push("Acknowledge dominance without removing drama from other battles");
-      toneElements.push("Focus on battles for 2nd-5th, underdog stories");
-      toneElements.push("Dynasty/legacy narrative for the leader");
+      contextElements.push("Leader has significant margin");
+      contextElements.push("Focus analysis on battles for other positions");
       break;
     default:
-      toneElements.push("Professional sports journalism tone");
-      toneElements.push("Balanced analysis of the competitive field");
+      contextElements.push("Standard competitive field");
   }
 
-  // Shakeups add excitement
+  // Shakeups - factual
   if (hasShakeup) {
-    toneElements.push("BREAKING NEWS energy - something significant happened today");
-    toneElements.push("Lead with the surprise/upset angle");
-    toneElements.push("Use language of shock, breakthrough, or collapse as appropriate");
+    contextElements.push("Position change(s) occurred today - note who moved and by how much");
   }
 
-  // Position battles add tension
+  // Position battles - factual
   if (positionBattleCount > 3) {
-    toneElements.push("Emphasize the chaotic middle of the pack");
-    toneElements.push("Multiple corps are one performance away from moving");
+    contextElements.push(`${positionBattleCount} corps within 0.2 of the position ahead`);
   } else if (positionBattleCount > 0) {
-    toneElements.push("Highlight specific position battles that could flip tomorrow");
+    contextElements.push(`${positionBattleCount} close position battle(s) in the standings`);
   }
 
-  // Article-specific tone adjustments
+  // Article-specific notes
   if (articleType === "underdog_story") {
-    toneElements.push("Inspirational underdog narrative - the corps that exceeded expectations");
-    toneElements.push("Emotional resonance: determination, breakthrough, proving doubters wrong");
+    contextElements.push("Focus on score improvement and specific caption gains");
   } else if (articleType === "corps_spotlight") {
-    toneElements.push("Celebratory profile tone - what makes this corps special");
-    toneElements.push("Historical appreciation and current season analysis");
+    contextElements.push("Analyze their specific caption scores and trends");
   } else if (articleType === "deep_analytics") {
-    toneElements.push("Data-driven but accessible");
-    toneElements.push("Numbers tell a story - find the narrative in the statistics");
+    contextElements.push("Lead with data, explain what the numbers show");
   }
 
-  // Build the tone guidance string
+  // Build the guidance string - focused on FACTS not FEELINGS
   return `
-DYNAMIC TONE GUIDANCE (based on current competitive context):
-Competition Scenario: ${scenario.replace(/_/g, " ").toUpperCase()} (${intensity} intensity)
-Season Phase: ${seasonPhase.toUpperCase()} SEASON
-${hasShakeup ? "⚡ SIGNIFICANT MOVEMENT TODAY - lead with this energy\n" : ""}
-Writing Directives:
-${toneElements.map(t => `• ${t}`).join("\n")}
+CONTEXT FOR THIS ARTICLE:
+• Season Phase: ${seasonPhase}
+• Competition Status: ${scenario.replace(/_/g, " ")}
+${hasShakeup ? "• Notable: Position changes today\n" : ""}
+Key Points to Address:
+${contextElements.map(t => `• ${t}`).join("\n")}
 
-Remember: Match your energy to the stakes. ${intensity === "high" ? "This is a pivotal moment - write like it matters." : intensity === "moderate-high" ? "Competition is heating up - convey the building tension." : "Maintain professional analysis while finding the compelling narratives."}`;
+TONE REMINDER: Write like a knowledgeable sports reporter, not a hype announcer. State facts clearly. Let the numbers speak.`;
 }
 
 /**
@@ -2702,20 +2688,23 @@ async function generateDciDailyArticle({ reportDay, dayScores, trendData, active
 ═══════════════════════════════════════════════════════════════
 DCI.ORG WRITING STYLE GUIDE
 ═══════════════════════════════════════════════════════════════
-DCI.org articles follow these conventions:
+STUDY THESE REAL DCI.ORG EXAMPLES:
+- "Boom." (punchy one-word opener)
+- "INDIANAPOLIS — A mere 0.175-point gap separates first and second."
+- "After trailing by 0.175 points Thursday, Bluecoats gained a lead of 0.188 points Friday."
+- "Less than half a point separated The Cavaliers, Blue Stars, and Troopers — three corps who have been neck-and-neck throughout the season."
 
-HEADLINES: Action-oriented, specific score references when dramatic
-- "Bluecoats set new record as streak continues through San Antonio"
-- "Less than a point separates top three as Finals race pulls into focus"
-- "Carolina Crown captures brass caption with 19.45 finish"
-- "Blue Devils top 98 mark for first time this season"
+HEADLINES: Specific, action-driven (NOT generic drama)
+✓ "Bluecoats slide into first as Finals race pulls into focus"
+✓ "Boston Crusaders, Bluecoats separated by tenths at Prelims"
+✓ "Record-breaking Boston leads loaded field in San Antonio"
+✗ AVOID: "Dominant Performance!" "Thrilling Competition!" "Setting the Stage!"
 
-SCORE LANGUAGE: Precise, professional terminology
+SCORE LANGUAGE: Precise, clinical when needed
 - "besting [Corps] by 0.087" / "edging past by three-tenths"
 - "0.45 over Crown in Total Visual"
-- "winning GE by 0.15" / "took first in the General Effect caption"
-- "increased their score by 0.625 from yesterday"
-- "a scant 0.2-point gap" / "razor-thin margin of 0.125"
+- "earned top marks in Color Guard, Brass, Percussion and Music Analysis"
+- "a scant 0.2-point gap" NOT "a razor-thin margin"
 
 CAPTION REFERENCES: Use official terminology
 - General Effect (GE) - split into GE1 (Music Effect) and GE2 (Visual Effect)
@@ -2723,11 +2712,33 @@ CAPTION REFERENCES: Use official terminology
 - Music: Brass (B), Music Analysis (MA), Percussion (P)
 - "swept every caption except Color Guard" / "took first in three of six captions"
 
-NARRATIVE FRAMING:
-- Lead with the winner and their margin
-- Emphasize battles for position ("the race for fourth remains unsettled")
-- Reference historical context ("their highest score since 2019")
-- Championship implications ("with Finals just days away")
+CRITICAL - AVOID THESE OVERUSED PHRASES (the AI loves these, but readers hate them):
+- "commanding lead" / "dominant victory" / "stellar performance"
+- "setting the stage" / "the stage is set" / "setting the stage ablaze"
+- "thrilling finish" / "thrilling season" / "thrilling chapter"
+- "tune in tomorrow" / "stay tuned" / "don't miss"
+- "the drama is just beginning" / "dynasty in the making"
+- "echoes still resonate" / "etching their name in history"
+- "proves their mettle" / "proving doubters wrong" / "proving their worth"
+- "all eyes on" / "captivating audiences" / "captivated judges and fans alike"
+- "a force to be reckoned with" / "formidable contender"
+- "testament to" / "testament to the dedication"
+- "heating up" / "heats up" / "as the season heats up"
+- "mounting a serious challenge" / "emerging as a true contender"
+- "within striking distance" / "closing the gap"
+- "showcase of" / "battle of wills" / "arena of high-stakes"
+- "poured their hearts into" / "leaving spectators on edge"
+- "momentum is building" / "final showdown"
+- "absolutely crucial" / "critical juncture"
+- "maintain their dominance" / "maintain their momentum"
+- NEVER start with "BREAKING NEWS" unless someone died
+- NEVER use exclamation points in headlines
+
+NARRATIVE APPROACH:
+- Open with SPECIFIC facts, not generic drama
+- Cover the ENTIRE field, not just top 3 (mention 4th-10th positions too)
+- State what happened clearly before adding color
+- Use varied sentence lengths - mix short punchy sentences with longer analytical ones
 
 ═══════════════════════════════════════════════════════════════
 EVENT INFORMATION
@@ -2785,19 +2796,34 @@ ${toneGuidance}
 
 WRITE A DCI.ORG-STYLE RECAP ARTICLE:
 
-1. HEADLINE: DCI.org style - action verb, specific score reference or dramatic narrative
-   Examples: "${topCorps?.corps} tops ${topCorps?.total?.toFixed(2)} mark at ${showContext.showName}", "Less than ${gap} separates top two after ${showContext.showName}"
+1. HEADLINE: Specific and factual (NOT generic hype)
+   ✓ "${topCorps?.corps} tops ${topCorps?.total?.toFixed(2)} at ${showContext.showName}"
+   ✓ "Less than ${gap} separates top two at ${showContext.showName}"
+   ✗ AVOID: Exclamation points, "dominates", "stunning", "incredible"
 
-2. SUMMARY: 2-3 sentences in DCI.org voice - state the winner, the margin, and the night's biggest storyline.
+2. SUMMARY: 2-3 factual sentences. State the winner, exact margin, and ONE specific storyline.
 
-3. NARRATIVE: 500-700 word article in authentic DCI.org editorial voice:
-   - Open with the winner, their score, and margin of victory
-   - Detail caption performance ("${topCorps?.corps} won GE by X over ${secondCorps?.corps}")
-   - Discuss the battle for positions behind the leader
-   - Reference score changes from previous competition
-   - Close with championship implications or tomorrow's preview
+3. NARRATIVE: 500-700 word article following this structure:
 
-Use precise score language. Reference specific captions. Write like a DCI.org staff journalist.`;
+   OPENING (vary your approach - pick ONE):
+   - Punchy single word/phrase: "Close."
+   - Dateline with key fact: "${showContext.location?.split(',')[0]?.toUpperCase() || 'OMAHA'} — ${topCorps?.corps} leads by ${gap}."
+   - Direct statement of result
+
+   BODY REQUIREMENTS:
+   - Paragraph 2: Winner's score breakdown by caption - which captions did they win?
+   - Paragraph 3: Second place corps - how close? What captions did THEY win?
+   - Paragraph 4: The battle for 3rd through 6th - who's bunched together?
+   - Paragraph 5: Corps in 7th-10th - don't ignore the rest of the field
+   - Paragraph 6: Score changes from yesterday - who improved most? Who dropped?
+   - Final paragraph: What to watch tomorrow (be specific, not "tune in!")
+
+   SENTENCE VARIETY REQUIREMENT:
+   - Include at least 2 sentences under 8 words
+   - Include at least 2 sentences with specific numerical comparisons
+   - Vary paragraph lengths (some 2 sentences, some 4)
+
+Write like a beat reporter covering their 50th show of the summer - knowledgeable, specific, not trying too hard.`;
 
   // Schema for structured output
   const schema = {
@@ -2905,33 +2931,53 @@ async function generateDciFeatureArticle({ reportDay, dayScores, trendData, acti
   const seasonLow = corpsTrend.seasonLow || featureCorps.total;
   const improvement = corpsTrend.totalImprovement || 0;
 
-  const prompt = `You are a DCI.org feature writer profiling a corps' season journey. Write in the authentic DCI.org editorial voice - respectful, knowledgeable, celebrating the corps while providing analytical insight.
+  const prompt = `You are a DCI.org feature writer profiling a corps' season journey. Write analytically with specific data, not generic praise.
 
 ═══════════════════════════════════════════════════════════════
 DCI.ORG CORPS FEATURE STYLE GUIDE
 ═══════════════════════════════════════════════════════════════
-DCI.org corps features follow these conventions:
+REAL DCI.ORG FEATURE CHARACTERISTICS:
+- Lead with SPECIFIC facts about this corps' season, not generic corps history
+- Use exact scores and comparisons throughout
+- Discuss show design concretely (music selections, visual moments, props)
+- Compare this corps to their competition with numbers
 
-HEADLINES: Corps name + season narrative or achievement
-- "Carolina Crown: Brass excellence meets design innovation in 2024"
-- "Blue Devils' journey to 98: Inside the pursuit of perfection"
-- "The Cadets' resurgence: How tradition fuels a comeback season"
+HEADLINES: Specific, not generic
+✓ "Santa Clara Vanguard's Visual caption climbs 1.2 points in three shows"
+✓ "Mandarins hold seventh with 2.1-point cushion over Cavaliers"
+✗ AVOID: "Corps Name: A Journey of Excellence" or "The Quest for Perfection"
 
-NARRATIVE STRUCTURE:
-- Open with what defines this corps' identity and tradition
-- Discuss their current show concept and design choices
-- Analyze their competitive trajectory this season
-- Highlight specific caption strengths with score references
-- Contextualize within their historical legacy
-- Close with season outlook and championship potential
+CRITICAL - AVOID THESE CLICHÉS (they appear in EVERY generated article):
+- "identity forged in" / "legacy of excellence" / "storied history"
+- "tradition of" / "long been celebrated for" / "known for their"
+- "proving doubters wrong" / "silencing critics" / "making a statement"
+- "the heart and soul" / "passion and dedication" / "unwavering dedication"
+- "defining moment" / "pivotal juncture" / "remarkable ascent"
+- "etching their name in history" / "solidify their place among the elite"
+- "a force to be reckoned with" / "formidable contender"
+- "prime example of their artistic vision" / "powerful exploration of"
+- "dynamic blend of" / "seamlessly blending" / "seamlessly integrate"
+- "compelling visual storytelling" / "captivating experience"
+- "nothing short of a breakthrough" / "relentless pursuit of excellence"
+- "testament to the hard work" / "pushing the boundaries"
+- "showing all the signs of" / "capable of going all the way"
+- "source of pride" / "hallmark of their identity"
+- "unfolds with a sense of urgency" / "masterfully arranged"
+- "soundscape that mirrors" / "emotionally resonant"
+- "driving rhythmic foundation" / "propels the show forward"
+- Generic history paragraphs - skip them entirely, focus on THIS season
 
-SCORE LANGUAGE:
-- "posting a season-high 96.875" / "their fifth consecutive score above 95"
-- "improved 1.25 points since the season opener"
+WHAT TO WRITE INSTEAD:
+- Their GE1 score of 16.8 ranks 3rd, but GE2 at 15.9 is only 6th
+- They've gained 0.4 in Visual Proficiency since last week
+- The corps trails 3rd place by 1.2 points with 5 shows remaining
+- Their brass section won the caption on 3 of the last 5 nights
+
+SCORE LANGUAGE - BE SPECIFIC:
+- "posting a season-high 96.875" (include the actual number)
+- "improved 1.25 points since the season opener" (quantify improvement)
 - "their brass caption averaging 19.2 over the last four shows"
 - "ranking first in Visual Proficiency for three straight competitions"
-
-TONE: Celebratory but analytical. Like a Drum Corps World feature meets ESPN profile.
 
 ═══════════════════════════════════════════════════════════════
 FEATURED CORPS: ${featureCorps.corps}
@@ -2971,22 +3017,33 @@ ${dayScores.slice(Math.max(0, currentRank - 2), Math.min(dayScores.length, curre
 
 ${toneGuidance}
 
-WRITE A DCI.ORG-STYLE CORPS FEATURE:
+WRITE A DATA-DRIVEN CORPS FEATURE:
 
-1. HEADLINE: "${featureCorps.corps}: [Season narrative or defining achievement]"
-   Focus on their journey, improvement, or signature strength.
+1. HEADLINE: Include a specific number or fact
+   ✓ "${featureCorps.corps} gains ${Math.abs(improvement).toFixed(2)} points since season start"
+   ✓ "${featureCorps.corps} sits ${currentRank}${currentRank === 1 ? 'st' : currentRank === 2 ? 'nd' : currentRank === 3 ? 'rd' : 'th'} with ${featureCorps.total.toFixed(3)}"
+   ✗ AVOID: "Journey of Excellence" / "Quest for Glory" / generic praise headlines
 
-2. SUMMARY: 2-3 sentences introducing this corps and what makes their ${featureCorps.sourceYear} season compelling.
+2. SUMMARY: 2-3 FACTUAL sentences with numbers. What is their score? Their rank? Their trend?
 
-3. NARRATIVE: 600-800 word feature profile:
-   - Open with what defines ${featureCorps.corps}' identity and tradition
-   ${showTitle ? `- Discuss their show "${showTitle}" and its artistic concept` : '- Analyze their performance style and competitive approach'}
-   - Detail their season trajectory with specific score references
-   - Highlight their strongest captions (use exact scores)
-   - Contextualize within their historical legacy
-   - Close with outlook for the championship stretch
+3. NARRATIVE: 600-800 word analytical profile:
 
-Write like a DCI.org or Drum Corps World feature journalist.`;
+   REQUIRED STRUCTURE:
+   - Opening: Current standing and score (NUMBERS FIRST, not vague praise)
+   ${showTitle ? `- Paragraph 2: Their show "${showTitle}" - what is it about? What music?` : '- Paragraph 2: Their performance approach this season'}
+   - Paragraph 3: Caption-by-caption breakdown (GE, Visual, Music - where do they rank in each?)
+   - Paragraph 4: Week-over-week trajectory - are they improving? Steady? Declining?
+   - Paragraph 5: Competitive context - who are they battling for position?
+   - Final paragraph: Specific challenges ahead (what captions need improvement?)
+
+   EVERY PARAGRAPH MUST CONTAIN AT LEAST ONE SPECIFIC NUMBER.
+
+   ✗ DO NOT write generic history of the corps
+   ✗ DO NOT use phrases like "a corps known for" or "tradition of excellence"
+   ✓ DO analyze their actual ${featureCorps.sourceYear} season data
+   ✓ DO compare them to specific corps above and below them
+
+Write like a sports analyst, not a hype writer.`;
 
   const schema = {
     type: Type.OBJECT,
@@ -3071,42 +3128,60 @@ async function generateDciRecapArticle({ reportDay, dayScores, trendData, captio
   const visualSorted = [...dayScores].sort((a, b) => (b.subtotals?.visual || 0) - (a.subtotals?.visual || 0));
   const musicSorted = [...dayScores].sort((a, b) => (b.subtotals?.music || 0) - (a.subtotals?.music || 0));
 
-  const prompt = `You are a DCI.org recap analyst specializing in caption analysis. Write in the authentic DCI.org "Recap Analysis" style - detailed, technical, but accessible to fans who want to understand what's driving the scores.
+  const prompt = `You are a DCI.org recap analyst writing technical caption analysis. Focus on NUMBERS and DATA, not drama.
 
 ═══════════════════════════════════════════════════════════════
 DCI.ORG RECAP ANALYSIS STYLE GUIDE
 ═══════════════════════════════════════════════════════════════
-DCI.org recap articles (like "Recap Analysis: World Class Finals") follow these conventions:
+STUDY THIS REAL DCI.ORG EXAMPLE:
+"World Class Finals utilized two Visual Effect and two Music Effect judges, with each judge's score (maximum 20 points) in each of the two captions added together and then averaged."
+"Blue Devils achieved a perfect 20.0 in Color Guard and Visual Ensemble. The Cavaliers finished second in every caption except Music Ensemble (fourth place)."
+"There were no dramatic changes in placements, with all finalist corps placing the same in Quarterfinals, Semifinals and Finals."
 
-HEADLINES: Caption-focused with competitive angle
-- "Recap Analysis: General Effect battle tightens heading into Finals"
-- "Visual caption trends: Which corps are peaking at the right time?"
-- "Music Analysis: Brass scores surge as season enters final stretch"
+HEADLINES: Technical, specific
+✓ "Recap Analysis: ${geSorted[0]?.corps} leads GE by ${((geSorted[0]?.subtotals?.ge || 0) - (geSorted[1]?.subtotals?.ge || 0)).toFixed(2)} over ${geSorted[1]?.corps}"
+✓ "Visual caption sees movement: ${visualSorted[0]?.corps} tops field"
+✗ AVOID: "battle tightens" / "heating up" / "intensifies"
 
-CAPTION BREAKDOWN STRUCTURE:
+CRITICAL - AVOID THESE PHRASES (they appear in every AI-generated recap):
+- "battle for supremacy" / "race heats up" / "heating up"
+- "as the season progresses" / "as competition intensifies" / "competition is fierce"
+- "stakes are high" / "every point matters" / "absolutely crucial"
+- "championship implications" / "heading into the next phase"
+- "thrilling" / "exciting" / "dramatic" / "intense"
+- "setting the stage" / "poised to" / "poised for success"
+- "mount a serious challenge" / "mounting pressure" / "serious threat"
+- "tells a similar story" / "signaling the importance"
+- "paying dividends" / "battleground" / "vying for dominance"
+- "continues to be" / "remains a key factor" / "remains crucial"
+- "gaining ground" / "making gains" / "closing the gap"
+- "their grip is loosening" / "not insurmountable"
+- "demonstrates their ability to" / "showcasing their"
+- "tightening heading into" / "separating themselves from"
+- "the corps that can master" / "will have a significant advantage"
+
+WRITE THIS INSTEAD:
+- "${geSorted[0]?.corps} leads GE at ${geSorted[0]?.subtotals?.ge?.toFixed(2)}, ${((geSorted[0]?.subtotals?.ge || 0) - (geSorted[1]?.subtotals?.ge || 0)).toFixed(2)} over ${geSorted[1]?.corps}"
+- "Five corps are within 0.5 in the Visual caption"
+- "GE accounts for 40% of total score; the 0.3 gap in GE explains most of the 0.45 total margin"
+
+CAPTION BREAKDOWN FORMAT:
 1. GENERAL EFFECT (40% of total score)
-   - GE1 (Music Effect): How the music design affects the audience
-   - GE2 (Visual Effect): How the visual design affects the audience
-   - "The corps' spread over [Rival] in GE was 0.15"
-   - "Winning GE by 0.20 accounted for most of the 0.35 total margin"
+   - GE1 (Music Effect): effectiveness of music design
+   - GE2 (Visual Effect): effectiveness of visual design
+   - Example: "The 0.15 GE spread accounts for most of [Corps]'s total margin"
 
 2. VISUAL (30% of total score)
-   - Visual Proficiency (VP): Marching technique, body movement
-   - Visual Analysis (VA): Design, staging, visual composition
-   - Color Guard (CG): Equipment work, dance, performance quality
-   - "0.45 over Crown in Total Visual" / "took 2nd in Color Guard, just 0.1 down"
+   - Visual Proficiency (VP): marching technique
+   - Visual Analysis (VA): design quality
+   - Color Guard (CG): equipment and performance
+   - Example: "${visualSorted[0]?.corps} won Visual by ${((visualSorted[0]?.subtotals?.visual || 0) - (visualSorted[1]?.subtotals?.visual || 0)).toFixed(2)}"
 
 3. MUSIC (30% of total score)
-   - Brass (B): Brass section performance quality
-   - Music Analysis (MA): Music design, arrangement
-   - Percussion (P): Battery and pit performance
-   - "Won the Percussion caption by 0.05 over Santa Clara Vanguard"
-
-TREND ANALYSIS LANGUAGE:
-- "improved their GE score by 0.35 over the last week"
-- "Visual has been their growth area, climbing 0.40 since Day 35"
-- "Brass consistency remains a strength - averaging 19.3 over four shows"
-- "The corps that shows the most GE improvement typically has design changes clicking"
+   - Brass (B): brass performance
+   - Music Analysis (MA): music design
+   - Percussion (P): battery and pit
+   - Example: "Percussion is the closest subcaption with 0.05 separating 1st-3rd"
 
 ═══════════════════════════════════════════════════════════════
 WEEKLY CAPTION ANALYSIS (Last 7 Days)
@@ -3163,26 +3238,44 @@ ${(() => {
 
 ${toneGuidance}
 
-WRITE A DCI.ORG-STYLE WEEKLY RECAP ANALYSIS:
+WRITE A TECHNICAL CAPTION ANALYSIS:
 
-1. HEADLINE: Caption-focused weekly analysis headline
-   Example: "Recap Analysis: GE battle narrows as ${geSorted[0]?.corps} maintains slim lead"
+1. HEADLINE: Include specific numbers
+   ✓ "Recap Analysis: ${geSorted[0]?.corps} leads GE by ${((geSorted[0]?.subtotals?.ge || 0) - (geSorted[1]?.subtotals?.ge || 0)).toFixed(2)}"
+   ✗ AVOID: "battle narrows" / "heats up" / "intensifies"
 
-2. SUMMARY: 2-3 sentences summarizing the week's most significant caption trends.
+2. SUMMARY: 2-3 factual sentences with specific caption scores and gaps.
 
-3. NARRATIVE: 700-900 word deep dive analysis:
-   - GENERAL EFFECT section: Who's winning GE and why? What design elements are connecting?
-   - VISUAL section: Analyze VP, VA, and CG trends. Who's improving? Who's plateauing?
-   - MUSIC section: Break down Brass, MA, and Percussion. Which hornlines are hot?
-   - Championship implications: Which caption trends will decide Finals placement?
+3. NARRATIVE: 700-900 word technical analysis. Structure it with clear headers:
 
-4. TRADE RECOMMENDATIONS: Fantasy strategy insights based on caption trends:
-   - Which DCI corps are trending UP and worth acquiring in fantasy drafts?
-   - Which corps are trending DOWN and may be overvalued?
-   - Which corps are STEADY and reliable picks?
-   - Focus on which CORPS are valuable based on their caption performance - NOT specific lineup picks
+   **GENERAL EFFECT** (one section, ~200 words)
+   - Who leads? By how much?
+   - Break down GE1 vs GE2 - is the gap in music effect or visual effect?
+   - Which corps improved in GE this week? By how much?
 
-Include specific score comparisons. Use DCI.org recap terminology. Write for fans who want to understand the numbers.`;
+   **VISUAL** (one section, ~200 words)
+   - VP leader and margin
+   - VA leader and margin
+   - Color Guard leader and margin
+   - Which subcaption has the tightest competition?
+
+   **MUSIC** (one section, ~200 words)
+   - Brass leader and margin
+   - Music Analysis leader and margin
+   - Percussion leader and margin
+   - Any corps winning multiple music subcaptions?
+
+   **WEEK-OVER-WEEK MOVEMENT** (one section, ~150 words)
+   - Biggest gainers in each caption
+   - Any corps declining in specific captions?
+   - Caption trends that explain total score movement
+
+4. FANTASY RECOMMENDATIONS (corps to watch based on caption trends):
+   - 2-3 corps trending UP with specific caption evidence
+   - 1-2 corps trending DOWN with specific caption evidence
+   - 1-2 STEADY corps that are consistent picks
+
+Every paragraph must contain at least 2 specific numbers. Write like a sports statistician.`;
 
   const schema = {
     type: Type.OBJECT,
@@ -3273,16 +3366,15 @@ async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext
 
   const fantasyShowName = formatFantasyEventName(showContext.showName);
 
-  const prompt = `You are a marching.art fantasy sports analyst. Write exciting coverage of today's fantasy competition results, celebrating the top directors and their ensembles.
+  const prompt = `You are a marching.art fantasy analyst writing daily results coverage. Be informative and fun, but avoid generic sports clichés.
 
 ═══════════════════════════════════════════════════════════════
-MARCHING.ART FANTASY RESULTS
+MARCHING.ART FANTASY RESULTS - DAY ${reportDay}
 ═══════════════════════════════════════════════════════════════
 Date: ${showContext.date}
-Season Day: ${reportDay}
 Competition: ${fantasyShowName}
 
-TOP 10 FANTASY ENSEMBLES TODAY:
+TOP 10 FANTASY ENSEMBLES:
 ${topPerformers.map((r, i) => {
   const margin = i > 0 ? (topPerformers[i-1].totalScore - r.totalScore).toFixed(3) : "-";
   return `${i + 1}. "${r.corpsName}" (Director: ${r.displayName || 'Unknown'}) - ${r.totalScore.toFixed(3)} pts${i > 0 ? ` [${margin} behind]` : ' [WINNER]'}
@@ -3297,20 +3389,50 @@ STATISTICS:
 
 ${toneGuidance}
 
-WRITE A FANTASY SPORTS RESULTS ARTICLE:
+CRITICAL - AVOID THESE OVERUSED PHRASES (they make every article sound identical):
+- "dominates" / "dominant performance" / "commanding victory"
+- "the echoes still resonate" / "etching their name" / "sent shockwaves"
+- "a dynasty in the making" / "can anyone stop them?" / "can they maintain?"
+- "the drama is just beginning" / "tune in tomorrow" / "stay tuned"
+- "proves their mettle" / "showcased their prowess" / "demonstrated exceptional"
+- "thrilling" / "incredible" / "stunning" / "remarkable"
+- "utterly reshaped" / "dramatically altered" / "stormed the field"
+- "hard-fought victory" / "definitive statement" / "marking a statement"
+- "seamlessly blending precision and passion" / "captivated the judges"
+- "a force to be reckoned with" / "firmly in the spotlight"
+- "impressive fight" / "strong command" / "ready to contend for the crown"
+- "razor-thin" / "intense rivalry and strategy"
+- "arena of high-stakes artistry" / "battle of wills"
+- "poured their hearts into" / "leaving spectators on the edge"
+- "momentum is building towards the final showdown"
+- "absolutely crucial" / "the next few days"
+- "promises to be another thrilling chapter" / "exciting and unpredictable"
+- "prove what they are made of" / "competition is only getting hotter"
+- NEVER start articles with "The marching.art fantasy landscape"
+- NEVER end with questions like "Can [X] maintain their dominance?"
 
-1. HEADLINE: Celebrate the winner with their score and ensemble name
-   Example: "\"${topPerformers[0]?.corpsName}\" dominates Day ${reportDay} with ${topScore}-point performance"
+WRITE RESULTS COVERAGE:
 
-2. SUMMARY: 2-3 exciting sentences about who won and the competition level.
+1. HEADLINE: Factual, with the score
+   ✓ "${topPerformers[0]?.corpsName}" wins Day ${reportDay} with ${topScore}
+   ✓ ${topPerformers[0]?.displayName || 'Director'}'s "${topPerformers[0]?.corpsName}" takes first at ${topScore}
+   ✗ AVOID: "dominates!" / "stunning victory!" / exclamation points
 
-3. NARRATIVE: 500-700 word celebration article:
-   - Lead with the winner's achievement
-   - Highlight the top 3-5 performers
-   - Discuss the competition intensity
-   - Preview tomorrow's competition
+2. SUMMARY: 2 factual sentences. Winner, score, margin over second place.
 
-This is fantasy sports coverage - fun, competitive, celebratory. NEVER reveal specific roster picks.`;
+3. NARRATIVE: 400-550 word article (shorter than DCI articles):
+
+   STRUCTURE:
+   - Opening: State the winner, their score, margin over 2nd place (1-2 sentences)
+   - Paragraph 2: Second and third place - who are they? How close?
+   - Paragraph 3: The 4th-10th place spread - is it tight or spread out?
+   - Paragraph 4: Interesting stat from today (highest score of season? Lowest margin?)
+   - Closing: One sentence about what's next (be specific, not "tune in!")
+
+   TONE: Informative like a sports results page, not breathless like a hype video.
+   Fantasy results don't need dramatic narratives - just report who won and by how much.
+
+NEVER reveal specific roster picks. Keep it about the overall results.`;
 
   const schema = {
     type: Type.OBJECT,
@@ -3429,26 +3551,23 @@ async function generateFantasyRecapArticle({ reportDay, fantasyData, showContext
 
   const fantasyShowName = formatFantasyEventName(showContext.showName);
 
-  const prompt = `You are a marching.art fantasy analyst specializing in caption performance trends. Help directors understand which captions are driving fantasy success.
+  const prompt = `You are a marching.art fantasy analyst writing weekly caption analysis. Focus on DATA and PRACTICAL ADVICE, not hype.
 
 ═══════════════════════════════════════════════════════════════
-MARCHING.ART CAPTION ANALYSIS
+MARCHING.ART CAPTION ANALYSIS - WEEK ENDING DAY ${reportDay}
 ═══════════════════════════════════════════════════════════════
 Date: ${showContext.date}
-Season Day: ${reportDay}
 Analysis Period: Days ${reportDay - 6} through ${reportDay}
 
-CAPTION SCORING REMINDER:
-In marching.art fantasy, points come from three caption categories:
-• GENERAL EFFECT (GE) - 40% weight: Design excellence, entertainment value
-• VISUAL - 30% weight: Marching technique, color guard, staging
-• MUSIC - 30% weight: Brass, percussion, music design
+CAPTION WEIGHTS:
+• GENERAL EFFECT (GE): 40% of score
+• VISUAL: 30% of score
+• MUSIC: 30% of score
 
-WEEKLY FANTASY TRENDS:
+WEEKLY DATA:
 ${(() => {
-  if (trendRecaps.length < 2) return "Insufficient data for weekly trends - early season.";
+  if (trendRecaps.length < 2) return "Limited trend data available (early season).";
 
-  // Calculate average scores across the week
   const weeklyAvg = trendRecaps.reduce((acc, recap) => {
     const results = (recap.shows || []).flatMap(s => s.results || []).filter(r => r.corpsClass !== 'soundSport');
     const avg = results.length > 0
@@ -3457,21 +3576,20 @@ ${(() => {
     return acc + avg;
   }, 0) / trendRecaps.length;
 
-  return `• Average top ensemble score this week: ${weeklyAvg.toFixed(3)}
-• Competitions this week: ${trendRecaps.length}
-• Total fantasy points distributed: ${trendRecaps.reduce((sum, r) => sum + ((r.shows || []).flatMap(s => s.results || []).length), 0)} performances`;
+  return `• Week average score: ${weeklyAvg.toFixed(3)}
+• Competitions: ${trendRecaps.length}
+• Total performances: ${trendRecaps.reduce((sum, r) => sum + ((r.shows || []).flatMap(s => s.results || []).length), 0)}`;
 })()}
 
-TODAY'S TOP PERFORMERS BY CATEGORY:
+TODAY'S CAPTION LEADERS:
 ${(() => {
   if (captionPerformance.ge.length === 0) {
-    // Fallback to total scores if no caption breakdown
     const sorted = [...competitiveResults].sort((a, b) => b.totalScore - a.totalScore).slice(0, 5);
-    return `TOP 5 OVERALL:
-${sorted.map((r, i) => `${i + 1}. "${r.corpsName}" - ${r.totalScore.toFixed(3)} total`).join('\n')}`;
+    return `TOP 5 BY TOTAL:
+${sorted.map((r, i) => `${i + 1}. "${r.corpsName}" - ${r.totalScore.toFixed(3)}`).join('\n')}`;
   }
 
-  return `GENERAL EFFECT LEADERS:
+  return `GE LEADERS:
 ${captionPerformance.ge.slice(0, 3).map((r, i) => `${i + 1}. "${r.name}" - ${r.score.toFixed(2)}`).join('\n')}
 
 VISUAL LEADERS:
@@ -3483,21 +3601,59 @@ ${captionPerformance.music.slice(0, 3).map((r, i) => `${i + 1}. "${r.name}" - ${
 
 ${toneGuidance}
 
-WRITE A MARCHING.ART CAPTION ANALYSIS ARTICLE:
+CRITICAL - AVOID THESE CLICHÉS (they appear in EVERY fantasy recap):
+- "as the season heats up" / "competition intensifies" / "mid-season intensity builds"
+- "setting the stage" / "poised for success" / "explosive"
+- "key area of focus" / "taken center stage" / "primary determinant"
+- "ensembles that can elevate" / "boosting their fantasy stock" / "rising"
+- "consistently outperforming" / "translating directly into fantasy points"
+- "strategic insights for directors" (just give the insights, don't announce them)
+- "week-over-week trends highlight" (just state the trends, don't say you're highlighting)
+- "the mid-season phase demands" / "data-driven adjustments"
+- "understanding these caption dynamics is crucial"
+- "resonate with judges" / "resonate with audiences" / "resonant"
+- "captivating show" / "immersive experience" / "cohesive and emotionally"
+- "design excellence" / "entertainment value" / "overall impact"
+- "the ensembles that" / "directors should focus on" / "directors must recognize"
+- "precision and polish" / "disciplined approach" / "meticulous"
+- "strong foundation" / "telling a story" / "the best ensembles"
+- "synergy between" / "complementing their" / "integrate"
+- "BREAKING NEWS" / "delivered a shock to the system"
+- NEVER start with "BREAKING NEWS:" or similar dramatic openings
+- NEVER use subheadings like "GE: The X-Factor" - just write "General Effect:"
 
-1. HEADLINE: Caption trend focus
-   Example: "Caption Analysis: GE performance drives fantasy success as season heats up"
+WRITE A PRACTICAL CAPTION ANALYSIS:
 
-2. SUMMARY: 2-3 sentences about which captions are making the biggest impact this week.
+1. HEADLINE: Specific, with numbers
+   ✓ "Caption Analysis: GE accounts for ${Math.round(40)}% of top scores this week"
+   ✓ "Visual caption shows 0.3 average improvement across field"
+   ✗ AVOID: "heats up" / "drives success" / "takes center stage"
 
-3. NARRATIVE: 500-700 word analysis:
-   - Analyze General Effect trends and what's driving high GE scores
-   - Break down Visual performance - which ensembles excel in visual captions?
-   - Examine Music trends - brass vs percussion impact
-   - Strategic insights for directors (without revealing specific picks)
-   - Week-over-week trend observations
+2. SUMMARY: 2 factual sentences about this week's caption data.
 
-Help directors understand the caption dynamics. Educational but engaging.`;
+3. NARRATIVE: 400-550 words (keep it concise). Structure:
+
+   **General Effect This Week**
+   - Who's winning GE and by how much?
+   - Is GE or another caption driving overall standings?
+   (2-3 sentences with numbers)
+
+   **Visual Trends**
+   - Which ensembles are strong in visual?
+   - Any movement in visual rankings this week?
+   (2-3 sentences with numbers)
+
+   **Music Trends**
+   - Brass vs percussion - which matters more?
+   - Which ensembles excel in music?
+   (2-3 sentences with numbers)
+
+   **Practical Takeaway**
+   - ONE specific, actionable observation
+   - Example: "Ensembles scoring above 78 total have averaged 32+ in GE"
+   (1-2 sentences)
+
+This is an educational analysis piece, not a hype article. Be direct and useful.`;
 
   const schema = {
     type: Type.OBJECT,
