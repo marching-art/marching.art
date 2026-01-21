@@ -126,45 +126,40 @@ const SECTION_CONFIG = {
 function parseRecommendations(content) {
   const recommendations = { buy: [], hold: [], sell: [] };
 
-  // Match patterns for emoji-prefixed recommendations
-  const buyMatch = content.match(/🟢\s*BUY[^:]*:\s*([^🟡🔴]*)/i);
-  const holdMatch = content.match(/🟡\s*HOLD[^:]*:\s*([^🟢🔴]*)/i);
-  const sellMatch = content.match(/🔴\s*SELL[^:]*:\s*([^🟢🟡]*)/i);
-
-  // Also match asterisk-prefixed recommendations (from DCI articles)
-  const buyMatchAlt = content.match(/\*\s*\*?\*?BUY[^:]*:\*?\*?\s*([^*]*?)(?=\*\s*\*?\*?(?:HOLD|SELL)|$)/is);
-  const holdMatchAlt = content.match(/\*\s*\*?\*?HOLD[^:]*:\*?\*?\s*([^*]*?)(?=\*\s*\*?\*?(?:BUY|SELL)|$)/is);
-  const sellMatchAlt = content.match(/\*\s*\*?\*?SELL[^:]*:\*?\*?\s*([^*]*?)(?=\*\s*\*?\*?(?:BUY|HOLD)|$)/is);
+  // Match patterns for emoji-prefixed recommendations (capture until next emoji or end)
+  const buyMatch = content.match(/🟢\s*BUY[^:]*:?\s*([\s\S]*?)(?=🟡|🔴|$)/i);
+  const holdMatch = content.match(/🟡\s*HOLD[^:]*:?\s*([\s\S]*?)(?=🟢|🔴|$)/i);
+  const sellMatch = content.match(/🔴\s*SELL[^:]*:?\s*([\s\S]*?)(?=🟢|🟡|$)/i);
 
   const parseItems = (text) => {
     if (!text) return [];
     const items = [];
-    // Match "- Corps Caption @ Score" or "Corps: reason" patterns
-    const itemPattern = /-\s*([^@:\n]+?)(?:\s+(\w+))?\s*(?:@\s*([\d.]+))?\s*→?\s*-?\s*([^-\n]*)/g;
-    let match;
-    while ((match = itemPattern.exec(text)) !== null) {
-      const corps = match[1].trim();
-      if (corps.length > 2) {  // Filter out noise
-        items.push({
-          corps,
-          caption: match[2] || '',
-          score: parseFloat(match[3]) || 0,
-          reason: match[4]?.trim() || '',
-        });
+
+    // Pattern: "- Corps Caption @ Score ↑/↓/→ - Reason"
+    // Example: "- Music City GE1 @ 14.80 ↑ - Music City has shown..."
+    const lines = text.split(/(?=\s*-\s+[A-Z])/);
+
+    for (const line of lines) {
+      // Match: - Corps Caption @ Score (optional arrow) - Reason
+      const match = line.match(/^-\s*([A-Za-z][A-Za-z\s]+?)(?:\s+([A-Z]{1,3}\d?))\s*@\s*([\d.]+)\s*[↑↓→]?\s*(?:-\s*)?(.*)$/s);
+
+      if (match) {
+        const corps = match[1].trim();
+        const caption = match[2]?.trim() || '';
+        const score = parseFloat(match[3]) || 0;
+        const reason = match[4]?.trim().replace(/^-\s*/, '') || '';
+
+        if (corps.length > 2) {
+          items.push({ corps, caption, score, reason });
+        }
       }
     }
     return items;
   };
 
-  // Try emoji format first, then asterisk format
   if (buyMatch) recommendations.buy = parseItems(buyMatch[1]);
-  else if (buyMatchAlt) recommendations.buy = parseItems(buyMatchAlt[1]);
-
   if (holdMatch) recommendations.hold = parseItems(holdMatch[1]);
-  else if (holdMatchAlt) recommendations.hold = parseItems(holdMatchAlt[1]);
-
   if (sellMatch) recommendations.sell = parseItems(sellMatch[1]);
-  else if (sellMatchAlt) recommendations.sell = parseItems(sellMatchAlt[1]);
 
   return recommendations;
 }
@@ -348,25 +343,11 @@ function formatContent(content) {
   );
 }
 
-// Parse sections from narrative text
+// Parse sections from narrative text - ONLY for fantasy articles
 function parseSections(narrative) {
   const sections = [];
 
-  // Only match section headers that are:
-  // 1. At the start of a line/paragraph
-  // 2. Wrapped in ** markdown (like **GENERAL EFFECT**)
-  // 3. OR are the specific fantasy recap headers in ALL CAPS at start of line
-
-  const dciHeaders = [
-    'GENERAL EFFECT',
-    'VISUAL',
-    'MUSIC',
-    'TRAJECTORY & FUTURE OUTLOOK',
-    'TRAJECTORY',
-    'FUTURE OUTLOOK',
-    'FANTASY RECOMMENDATIONS',
-  ];
-
+  // Only use fantasy-specific headers (DCI articles use editorial style, no parsing)
   const fantasyHeaders = [
     'THE BIG PICTURE',
     'GENERAL EFFECT BREAKDOWN',
@@ -376,18 +357,15 @@ function parseSections(narrative) {
     'SLEEPER PICK',
   ];
 
-  const allHeaders = [...dciHeaders, ...fantasyHeaders];
-
-  // Build pattern that matches headers at start of line, optionally wrapped in **
-  // Pattern: Start of string or newline, optional whitespace, optional **, HEADER, optional **, optional colon
-  const headerPatterns = allHeaders.map(h => {
+  // Build pattern that matches headers at start of line
+  const headerPatterns = fantasyHeaders.map(h => {
     const escaped = h.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     return escaped;
   });
 
-  // Match: (start of line)(optional **)(HEADER)(optional **)(optional : or newline)
+  // Match headers that appear at start of a line (after newline or start of string)
   const combinedPattern = new RegExp(
-    `(?:^|\\n)\\s*(?:\\*\\*)?\\s*(${headerPatterns.join('|')})\\s*(?:\\*\\*)?\\s*:?\\s*(?=\\n|$|[A-Z])`,
+    `(?:^|\\n)\\s*(${headerPatterns.join('|')})\\s*(?:\\n|$)`,
     'gim'
   );
 
@@ -400,7 +378,9 @@ function parseSections(narrative) {
 
   // Check for intro content before first section
   if (matches[0].index > 0) {
-    const introContent = narrative.substring(0, matches[0].index).trim();
+    let introContent = narrative.substring(0, matches[0].index).trim();
+    // Clean up markdown headers like "## Title"
+    introContent = introContent.replace(/^#+\s+.*$/gm, '').trim();
     if (introContent && introContent.length > 20) {
       sections.push({
         title: 'INTRODUCTION',
@@ -491,10 +471,12 @@ export default function ArticleNarrativeParser({ narrative, summary, articleType
     <div className="space-y-0">
       {sections.map((section, idx) => {
         if (section.isIntro) {
-          // Render intro without special styling
+          // Render intro without special styling, clean up any markdown headers
+          const cleanedIntro = section.content.replace(/^#+\s+.*$/gm, '').trim();
+          if (!cleanedIntro) return null;
           return (
             <div key={idx} className="text-base text-gray-300 leading-relaxed mb-6">
-              {formatContent(section.content)}
+              {formatContent(cleanedIntro)}
             </div>
           );
         }
