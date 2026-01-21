@@ -911,11 +911,10 @@ exports.getArticleEngagement = onCall(
     try {
       const engagement = {};
       const defaultReactionCounts = { '👏': 0, '🔥': 0, '💯': 0, '🎺': 0, '❤️': 0, '🤔': 0, '🏳️': 0, '🥁': 0, total: 0 };
+      const userId = request.auth?.uid;
 
-      // OPTIMIZATION: Batch all queries in parallel instead of sequential loop
-      // Before: 100 sequential queries (2 per article × 50 articles)
-      // After: 50 parallel count queries + 1 batched document fetch
-      const [commentCountResults, reactionDocs] = await Promise.all([
+      // Build parallel queries
+      const queries = [
         // Run all comment count queries in parallel
         Promise.all(
           articleIds.map(articleId =>
@@ -933,7 +932,22 @@ exports.getArticleEngagement = onCall(
             db.collection("article_reactions").doc(articleId)
           )
         ).catch(() => []) // Handle case where collection doesn't exist
-      ]);
+      ];
+
+      // If user is authenticated, also fetch their reactions
+      if (userId) {
+        queries.push(
+          db.getAll(
+            ...articleIds.map(articleId =>
+              db.collection("article_user_reactions").doc(`${articleId}_${userId}`)
+            )
+          ).catch(() => [])
+        );
+      }
+
+      const results = await Promise.all(queries);
+      const [commentCountResults, reactionDocs] = results;
+      const userReactionDocs = userId ? results[2] : [];
 
       // Build lookup maps for O(1) access
       const commentCountMap = new Map(
@@ -947,11 +961,19 @@ exports.getArticleEngagement = onCall(
         ])
       );
 
+      const userReactionMap = new Map(
+        userReactionDocs.map((doc, index) => [
+          articleIds[index],
+          doc.exists ? doc.data().emoji : null
+        ])
+      );
+
       // Assemble final engagement object
       for (const articleId of articleIds) {
         engagement[articleId] = {
           commentCount: commentCountMap.get(articleId) || 0,
           reactionCounts: reactionCountMap.get(articleId) || defaultReactionCounts,
+          userReaction: userReactionMap.get(articleId) || null,
         };
       }
 
