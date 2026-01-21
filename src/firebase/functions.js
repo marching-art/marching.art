@@ -77,4 +77,4 @@ export const startNewOffSeason = httpsCallable(functions, 'startNewOffSeason');
 export const startNewLiveSeason = httpsCallable(functions, 'startNewLiveSeason');
 export const manualTrigger = httpsCallable(functions, 'manualTrigger');
 export const sendTestEmail = httpsCallable(functions, 'sendTestEmail');
-export const triggerDailyNews = httpsCallable(functions, 'triggerDailyNews');
+export const triggerDailyNews = httpsCallable(functions, 'triggerDailyNews', { timeout: 180000 }); // 3 min timeout for AI article generation
