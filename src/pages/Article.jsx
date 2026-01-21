@@ -434,7 +434,7 @@ const Article = () => {
   const config = getCategoryConfig(article.category);
   const Icon = config.icon;
   const readingTime = getReadingTime(article);
-  const fullContent = article.fullStory || article.narrative || article.summary;
+  const fullContent = article.fullStory || (article.narrative && article.narrative.trim()) || article.summary;
 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-[#0A0A0A]">
@@ -586,15 +586,17 @@ const Article = () => {
                   </div>
                 </div>
 
-                {/* Full Story */}
+                {/* Full Story - only show if different from summary */}
                 <div className="p-5 lg:p-6">
-                  <div className="prose prose-invert prose-lg max-w-none mb-8">
-                    {fullContent.split('\n\n').map((paragraph, idx) => (
-                      <p key={idx} className="text-base md:text-lg text-gray-300 leading-relaxed mb-6">
-                        {paragraph}
-                      </p>
-                    ))}
-                  </div>
+                  {fullContent && fullContent !== article.summary ? (
+                    <div className="prose prose-invert prose-lg max-w-none mb-8">
+                      {fullContent.split('\n\n').map((paragraph, idx) => (
+                        <p key={idx} className="text-base md:text-lg text-gray-300 leading-relaxed mb-6">
+                          {paragraph}
+                        </p>
+                      ))}
+                    </div>
+                  ) : null}
 
                   {/* Fantasy Impact */}
                   {article.fantasyImpact && typeof article.fantasyImpact === 'string' && (
