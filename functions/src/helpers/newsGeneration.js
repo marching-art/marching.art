@@ -2461,92 +2461,78 @@ function analyzeCompetitionContext(dayScores, trendData, reportDay) {
 function getToneGuidance(context, articleType) {
   const { scenario, seasonPhase, hasShakeup, positionBattleCount, intensity } = context;
 
-  // Base tone elements
-  const toneElements = [];
+  // Base context elements - factual, not dramatic
+  const contextElements = [];
 
-  // Season phase affects overall framing
+  // Season phase affects FACTUAL framing (not emotional)
   switch (seasonPhase) {
     case "early":
-      toneElements.push("Frame as season-opening excitement");
-      toneElements.push("Acknowledge early-season variability");
-      toneElements.push("Emphasize potential and trajectory over final standings");
+      contextElements.push("Early season: scores may change significantly in coming weeks");
+      contextElements.push("Reference how many shows remain");
       break;
     case "mid":
-      toneElements.push("Note emerging patterns and trends");
-      toneElements.push("Compare to early-season expectations");
-      toneElements.push("Build narrative momentum toward finals");
+      contextElements.push("Mid-season: patterns are emerging");
+      contextElements.push("Compare current scores to early-season scores where relevant");
       break;
     case "late":
-      toneElements.push("Emphasize high stakes as finals approach");
-      toneElements.push("Every tenth matters now");
-      toneElements.push("Championship implications in every score");
+      contextElements.push("Late season: fewer shows remaining");
+      contextElements.push("Reference specific point gaps needed to change positions");
       break;
     case "championship":
-      toneElements.push("Finals week intensity - this is what they've worked for");
-      toneElements.push("Legacy and history on the line");
-      toneElements.push("Maximum drama and stakes");
+      contextElements.push("Championship week: final results pending");
+      contextElements.push("Reference specific scores needed for placement changes");
       break;
   }
 
-  // Competitive scenario affects urgency
+  // Competitive scenario - factual descriptions
   switch (scenario) {
     case "tight_race":
-      toneElements.push("URGENT: Race is razor-close, convey tension and uncertainty");
-      toneElements.push("Every performance could decide the outcome");
-      toneElements.push("Use phrases like 'dead heat', 'too close to call', 'margin of error'");
+      contextElements.push(`Top 2 separated by less than 0.3 points`);
+      contextElements.push("Note the specific margin when discussing leaders");
       break;
     case "competitive":
-      toneElements.push("Competitive but not desperate");
-      toneElements.push("Leader has work to do to hold off challengers");
-      toneElements.push("Focus on what challengers need to close the gap");
+      contextElements.push("Multiple corps within striking distance");
+      contextElements.push("Note specific point gaps between positions");
       break;
     case "dominant_leader":
-      toneElements.push("Acknowledge dominance without removing drama from other battles");
-      toneElements.push("Focus on battles for 2nd-5th, underdog stories");
-      toneElements.push("Dynasty/legacy narrative for the leader");
+      contextElements.push("Leader has significant margin");
+      contextElements.push("Focus analysis on battles for other positions");
       break;
     default:
-      toneElements.push("Professional sports journalism tone");
-      toneElements.push("Balanced analysis of the competitive field");
+      contextElements.push("Standard competitive field");
   }
 
-  // Shakeups add excitement
+  // Shakeups - factual
   if (hasShakeup) {
-    toneElements.push("BREAKING NEWS energy - something significant happened today");
-    toneElements.push("Lead with the surprise/upset angle");
-    toneElements.push("Use language of shock, breakthrough, or collapse as appropriate");
+    contextElements.push("Position change(s) occurred today - note who moved and by how much");
   }
 
-  // Position battles add tension
+  // Position battles - factual
   if (positionBattleCount > 3) {
-    toneElements.push("Emphasize the chaotic middle of the pack");
-    toneElements.push("Multiple corps are one performance away from moving");
+    contextElements.push(`${positionBattleCount} corps within 0.2 of the position ahead`);
   } else if (positionBattleCount > 0) {
-    toneElements.push("Highlight specific position battles that could flip tomorrow");
+    contextElements.push(`${positionBattleCount} close position battle(s) in the standings`);
   }
 
-  // Article-specific tone adjustments
+  // Article-specific notes
   if (articleType === "underdog_story") {
-    toneElements.push("Inspirational underdog narrative - the corps that exceeded expectations");
-    toneElements.push("Emotional resonance: determination, breakthrough, proving doubters wrong");
+    contextElements.push("Focus on score improvement and specific caption gains");
   } else if (articleType === "corps_spotlight") {
-    toneElements.push("Celebratory profile tone - what makes this corps special");
-    toneElements.push("Historical appreciation and current season analysis");
+    contextElements.push("Analyze their specific caption scores and trends");
   } else if (articleType === "deep_analytics") {
-    toneElements.push("Data-driven but accessible");
-    toneElements.push("Numbers tell a story - find the narrative in the statistics");
+    contextElements.push("Lead with data, explain what the numbers show");
   }
 
-  // Build the tone guidance string
+  // Build the guidance string - focused on FACTS not FEELINGS
   return `
-DYNAMIC TONE GUIDANCE (based on current competitive context):
-Competition Scenario: ${scenario.replace(/_/g, " ").toUpperCase()} (${intensity} intensity)
-Season Phase: ${seasonPhase.toUpperCase()} SEASON
-${hasShakeup ? "⚡ SIGNIFICANT MOVEMENT TODAY - lead with this energy\n" : ""}
-Writing Directives:
-${toneElements.map(t => `• ${t}`).join("\n")}
+CONTEXT FOR THIS ARTICLE:
+• Season Phase: ${seasonPhase}
+• Competition Status: ${scenario.replace(/_/g, " ")}
+${hasShakeup ? "• Notable: Position changes today\n" : ""}
+Key Points to Address:
+${contextElements.map(t => `• ${t}`).join("\n")}
 
-Remember: Match your energy to the stakes. ${intensity === "high" ? "This is a pivotal moment - write like it matters." : intensity === "moderate-high" ? "Competition is heating up - convey the building tension." : "Maintain professional analysis while finding the compelling narratives."}`;
+TONE REMINDER: Write like a knowledgeable sports reporter, not a hype announcer. State facts clearly. Let the numbers speak.`;
 }
 
 /**
@@ -2697,25 +2683,28 @@ async function generateDciDailyArticle({ reportDay, dayScores, trendData, active
     ? showContext.allShows.map(s => `• ${s.name}${s.location ? ` (${s.location})` : ''}`).join('\n')
     : `• ${showContext.showName}${showContext.location ? ` (${showContext.location})` : ''}`;
 
-  const prompt = `You are a DCI.org staff writer covering tonight's competition. Write in the authentic DCI.org editorial voice - professional sports journalism with deep knowledge of the marching arts activity.
+  const prompt = `You are a DCI.org staff writer covering tonight's competitions. Write in the authentic DCI.org editorial voice - professional sports journalism with deep knowledge of the marching arts activity.
 
 ═══════════════════════════════════════════════════════════════
 DCI.ORG WRITING STYLE GUIDE
 ═══════════════════════════════════════════════════════════════
-DCI.org articles follow these conventions:
+STUDY THESE REAL DCI.ORG EXAMPLES:
+- "Boom." (punchy one-word opener)
+- "INDIANAPOLIS — A mere 0.175-point gap separates first and second."
+- "After trailing by 0.175 points Thursday, Bluecoats gained a lead of 0.188 points Friday."
+- "Less than half a point separated The Cavaliers, Blue Stars, and Troopers — three corps who have been neck-and-neck throughout the season."
 
-HEADLINES: Action-oriented, specific score references when dramatic
-- "Bluecoats set new record as streak continues through San Antonio"
-- "Less than a point separates top three as Finals race pulls into focus"
-- "Carolina Crown captures brass caption with 19.45 finish"
-- "Blue Devils top 98 mark for first time this season"
+HEADLINES: Specific, action-driven (NOT generic drama)
+✓ "Bluecoats slide into first as Finals race pulls into focus"
+✓ "Boston Crusaders, Bluecoats separated by tenths at Prelims"
+✓ "Record-breaking Boston leads loaded field in San Antonio"
+✗ AVOID: "Dominant Performance!" "Thrilling Competition!" "Setting the Stage!"
 
-SCORE LANGUAGE: Precise, professional terminology
+SCORE LANGUAGE: Precise, clinical when needed
 - "besting [Corps] by 0.087" / "edging past by three-tenths"
 - "0.45 over Crown in Total Visual"
-- "winning GE by 0.15" / "took first in the General Effect caption"
-- "increased their score by 0.625 from yesterday"
-- "a scant 0.2-point gap" / "razor-thin margin of 0.125"
+- "earned top marks in Color Guard, Brass, Percussion and Music Analysis"
+- "a scant 0.2-point gap" NOT "a razor-thin margin"
 
 CAPTION REFERENCES: Use official terminology
 - General Effect (GE) - split into GE1 (Music Effect) and GE2 (Visual Effect)
@@ -2723,36 +2712,52 @@ CAPTION REFERENCES: Use official terminology
 - Music: Brass (B), Music Analysis (MA), Percussion (P)
 - "swept every caption except Color Guard" / "took first in three of six captions"
 
-NARRATIVE FRAMING:
-- Lead with the winner and their margin
-- Emphasize battles for position ("the race for fourth remains unsettled")
-- Reference historical context ("their highest score since 2019")
-- Championship implications ("with Finals just days away")
+CRITICAL - AVOID THESE OVERUSED PHRASES (the AI loves these, but readers hate them):
+- "commanding lead" / "dominant victory" / "stellar performance"
+- "setting the stage" / "the stage is set" / "setting the stage ablaze"
+- "thrilling finish" / "thrilling season" / "thrilling chapter"
+- "tune in tomorrow" / "stay tuned" / "don't miss"
+- "the drama is just beginning" / "dynasty in the making"
+- "echoes still resonate" / "etching their name in history"
+- "proves their mettle" / "proving doubters wrong" / "proving their worth"
+- "all eyes on" / "captivating audiences" / "captivated judges and fans alike"
+- "a force to be reckoned with" / "formidable contender"
+- "testament to" / "testament to the dedication"
+- "heating up" / "heats up" / "as the season heats up"
+- "mounting a serious challenge" / "emerging as a true contender"
+- "within striking distance" / "closing the gap"
+- "showcase of" / "battle of wills" / "arena of high-stakes"
+- "poured their hearts into" / "leaving spectators on edge"
+- "momentum is building" / "final showdown"
+- "absolutely crucial" / "critical juncture"
+- "maintain their dominance" / "maintain their momentum"
+- NEVER start with "BREAKING NEWS" unless someone died
+- NEVER use exclamation points in headlines
 
 ═══════════════════════════════════════════════════════════════
-EVENT INFORMATION
+TODAY'S COMPETITIONS - Day ${reportDay}
 ═══════════════════════════════════════════════════════════════
-• Date: ${showContext.date}
-• Season Day: ${reportDay}
+Date: ${showContext.date}
 ${showContext.allShows?.length > 1 ? `
-ALL SHOWS TODAY (${showContext.allShows.length} competitions):
-${allShowsText}
-` : `• Show Name: ${showContext.showName}
-• Location: ${showContext.location}`}
+MULTIPLE SHOWS TODAY (${showContext.allShows.length} competitions):
+${showContext.allShows.map(s => `• ${s.name} - ${s.location || 'Location TBD'}`).join('\n')}
+
+IMPORTANT: Cover ALL shows in your article. Each show deserves mention.
+` : `SINGLE SHOW TODAY:
+• ${showContext.showName} - ${showContext.location}`}
+
 ═══════════════════════════════════════════════════════════════
-
-TONIGHT'S OFFICIAL RESULTS${showContext.allShows?.length > 1 ? ' across all shows' : ` from ${showContext.showName}`}:
-
-FINAL STANDINGS:
-${dayScores.slice(0, 12).map((s, i) => {
+COMPLETE RESULTS FROM ALL CORPS PERFORMING TODAY
+═══════════════════════════════════════════════════════════════
+${dayScores.map((s, i) => {
   const trend = trendData[s.corps];
   const change = trend?.dayChange || 0;
   const marginToNext = i > 0 ? (dayScores[i-1].total - s.total).toFixed(3) : "-";
-  return `${i + 1}. ${s.corps} - ${s.total.toFixed(3)} (${change >= 0 ? '+' : ''}${change.toFixed(3)} from yesterday)${i > 0 ? ` [${marginToNext} behind ${dayScores[i-1].corps}]` : ' [LEADER]'}
+  return `${i + 1}. ${s.corps} - ${s.total.toFixed(3)} (${change >= 0 ? '+' : ''}${change.toFixed(3)} from yesterday)${i > 0 ? ` [${marginToNext} behind]` : ' [LEADER]'}
    GE: ${s.subtotals?.ge?.toFixed(2) || 'N/A'} | Visual: ${s.subtotals?.visual?.toFixed(2) || 'N/A'} | Music: ${s.subtotals?.music?.toFixed(2) || 'N/A'}`;
 }).join('\n')}
 
-CAPTION WINNERS TONIGHT:
+CAPTION WINNERS:
 ${(() => {
   const captionWinners = {};
   const captions = ['ge', 'visual', 'music'];
@@ -2768,36 +2773,62 @@ ${(() => {
   ).join('\n');
 })()}
 
-KEY STORYLINES:
+KEY DATA POINTS:
 - Lead margin: ${topCorps?.corps} leads by ${gap} over ${secondCorps?.corps}
 - Top 3 spread: ${top3Gap} points separate first from third
-- ${competitionContext.positionBattleCount > 0 ? `Position battles: ${competitionContext.positionBattleCount} corps within 0.2 of position ahead` : "Clear separation in standings tonight"}
+- Position battles: ${competitionContext.positionBattleCount} corps within 0.2 of position ahead
 ${(() => {
   const surging = Object.entries(trendData).filter(([_, t]) => t.dayChange > 0.3);
   const struggling = Object.entries(trendData).filter(([_, t]) => t.dayChange < -0.3);
   const lines = [];
-  if (surging.length > 0) lines.push(`- Big gains: ${surging.map(([c, t]) => `${c} (+${t.dayChange.toFixed(3)})`).join(', ')}`);
-  if (struggling.length > 0) lines.push(`- Setbacks: ${struggling.map(([c, t]) => `${c} (${t.dayChange.toFixed(3)})`).join(', ')}`);
+  if (surging.length > 0) lines.push(`- Biggest gains: ${surging.map(([c, t]) => `${c} (+${t.dayChange.toFixed(3)})`).join(', ')}`);
+  if (struggling.length > 0) lines.push(`- Score drops: ${struggling.map(([c, t]) => `${c} (${t.dayChange.toFixed(3)})`).join(', ')}`);
   return lines.join('\n');
 })()}
 
 ${toneGuidance}
 
-WRITE A DCI.ORG-STYLE RECAP ARTICLE:
+═══════════════════════════════════════════════════════════════
+ARTICLE REQUIREMENTS
+═══════════════════════════════════════════════════════════════
+1. HEADLINE: Specific and factual (NOT generic hype)
+   ✓ "${topCorps?.corps} tops ${topCorps?.total?.toFixed(2)} at ${showContext.showName}"
+   ✓ "Less than ${gap} separates top two at ${showContext.showName}"
+   ✗ AVOID: Exclamation points, "dominates", "stunning", "incredible"
 
-1. HEADLINE: DCI.org style - action verb, specific score reference or dramatic narrative
-   Examples: "${topCorps?.corps} tops ${topCorps?.total?.toFixed(2)} mark at ${showContext.showName}", "Less than ${gap} separates top two after ${showContext.showName}"
+2. SUMMARY: 2-3 factual sentences. State the winner, exact margin, and ONE specific storyline.
 
-2. SUMMARY: 2-3 sentences in DCI.org voice - state the winner, the margin, and the night's biggest storyline.
+3. NARRATIVE: 600-900 word article. THIS IS CRITICAL - COVER ALL CORPS:
 
-3. NARRATIVE: 500-700 word article in authentic DCI.org editorial voice:
-   - Open with the winner, their score, and margin of victory
-   - Detail caption performance ("${topCorps?.corps} won GE by X over ${secondCorps?.corps}")
-   - Discuss the battle for positions behind the leader
-   - Reference score changes from previous competition
-   - Close with championship implications or tomorrow's preview
+   OPENING: Punchy fact-based lead
+   - Dateline format: "${showContext.location?.split(',')[0]?.toUpperCase() || 'OMAHA'} — ${topCorps?.corps} leads by ${gap}."
 
-Use precise score language. Reference specific captions. Write like a DCI.org staff journalist.`;
+   PARAGRAPH 2: Winner ${topCorps?.corps}
+   - Their score, which captions they won, margin over 2nd place
+
+   PARAGRAPH 3: Second place ${secondCorps?.corps}
+   - How close are they? Which captions did they win?
+
+   PARAGRAPH 4: Third through sixth place battle
+   - Name each corps, their score, and who they're battling
+
+   PARAGRAPH 5: Seventh through tenth (or lower)
+   - Don't ignore them! Name each corps and their position
+
+   PARAGRAPH 6: Rest of field (if more corps competed)
+   - Brief mention of all remaining corps
+
+   PARAGRAPH 7: Day-over-day changes
+   - Who improved most? Who dropped? Specific numbers.
+
+   PARAGRAPH 8: Tomorrow's preview
+   - Be specific about matchups, not generic "tune in!"
+
+   ${showContext.allShows?.length > 1 ? `
+   MULTI-SHOW REQUIREMENT: You MUST mention all ${showContext.allShows.length} shows by name.
+   ` : ''}
+
+Write like a veteran beat reporter - factual, comprehensive, covering the ENTIRE field.`;
 
   // Schema for structured output
   const schema = {
@@ -2905,88 +2936,147 @@ async function generateDciFeatureArticle({ reportDay, dayScores, trendData, acti
   const seasonLow = corpsTrend.seasonLow || featureCorps.total;
   const improvement = corpsTrend.totalImprovement || 0;
 
-  const prompt = `You are a DCI.org feature writer profiling a corps' season journey. Write in the authentic DCI.org editorial voice - respectful, knowledgeable, celebrating the corps while providing analytical insight.
+  // Build show-by-show history for the last 5 shows
+  const recentShowHistory = corpsTrend.recentScores || [];
+  const showHistoryText = recentShowHistory
+    .filter(s => s.total >= 60) // Ignore scores under 60
+    .slice(-5)
+    .map((s, i, arr) => {
+      const prevScore = i > 0 ? arr[i-1].total : null;
+      const change = prevScore ? (s.total - prevScore) : 0;
+      const changeStr = prevScore ? ` (${change >= 0 ? '+' : ''}${change.toFixed(3)})` : '';
+      return `Day ${s.day}: ${s.total.toFixed(3)}${changeStr}${s.showName ? ` at ${s.showName}` : ''}${s.location ? `, ${s.location}` : ''}
+   GE: ${s.subtotals?.ge?.toFixed(2) || 'N/A'} | Visual: ${s.subtotals?.visual?.toFixed(2) || 'N/A'} | Music: ${s.subtotals?.music?.toFixed(2) || 'N/A'}`;
+    }).join('\n') || 'Limited show history available';
+
+  // Build caption trajectory analysis
+  const captionTrajectory = {
+    ge: corpsTrend.captionHistory?.ge || [],
+    visual: corpsTrend.captionHistory?.visual || [],
+    music: corpsTrend.captionHistory?.music || [],
+  };
+
+  const prompt = `You are a DCI.org feature writer profiling a corps' season journey. Focus on TOTAL SCORES and CAPTION SCORES across the ENTIRE SEASON. Document the show-by-show journey with specific numbers.
 
 ═══════════════════════════════════════════════════════════════
 DCI.ORG CORPS FEATURE STYLE GUIDE
 ═══════════════════════════════════════════════════════════════
-DCI.org corps features follow these conventions:
+THIS ARTICLE IS ABOUT THE NUMBERS. It should be a "must read" for anyone wanting to understand this corps' season.
 
-HEADLINES: Corps name + season narrative or achievement
-- "Carolina Crown: Brass excellence meets design innovation in 2024"
-- "Blue Devils' journey to 98: Inside the pursuit of perfection"
-- "The Cadets' resurgence: How tradition fuels a comeback season"
+YOUR MISSION: Tell the story of ${featureCorps.corps}'s season through their scores.
+- What were their struggles? (score drops, caption weaknesses)
+- What were their triumphs? (score improvements, caption wins)
+- What trajectory are they on? (improving, plateauing, declining)
+- What should a fantasy director know about where they might score next?
 
-NARRATIVE STRUCTURE:
-- Open with what defines this corps' identity and tradition
-- Discuss their current show concept and design choices
-- Analyze their competitive trajectory this season
-- Highlight specific caption strengths with score references
-- Contextualize within their historical legacy
-- Close with season outlook and championship potential
+HEADLINES: Specific, number-focused
+✓ "${featureCorps.corps}'s Visual climbs 1.2 points over last 4 shows"
+✓ "${featureCorps.corps} holds ${currentRank}${currentRank === 1 ? 'st' : currentRank === 2 ? 'nd' : currentRank === 3 ? 'rd' : 'th'} with ${featureCorps.total.toFixed(3)} - GE remains weakness"
+✗ AVOID: "Corps Name: A Journey of Excellence" or generic praise headlines
 
-SCORE LANGUAGE:
-- "posting a season-high 96.875" / "their fifth consecutive score above 95"
-- "improved 1.25 points since the season opener"
-- "their brass caption averaging 19.2 over the last four shows"
-- "ranking first in Visual Proficiency for three straight competitions"
+CRITICAL - AVOID THESE CLICHÉS:
+- "identity forged in" / "legacy of excellence" / "storied history"
+- "tradition of" / "long been celebrated for" / "known for their"
+- "proving doubters wrong" / "making a statement" / "force to be reckoned with"
+- "passion and dedication" / "testament to" / "pushing the boundaries"
+- "compelling visual storytelling" / "captivating experience" / "emotionally resonant"
+- Generic history paragraphs - NO HISTORY, only THIS season's data
 
-TONE: Celebratory but analytical. Like a Drum Corps World feature meets ESPN profile.
+DATA QUALITY RULES:
+- IGNORE total scores under 60 (these are incomplete/invalid)
+- IGNORE caption scores of 0 (missing data)
+- Only analyze valid, complete scores
 
 ═══════════════════════════════════════════════════════════════
 FEATURED CORPS: ${featureCorps.corps}
 ═══════════════════════════════════════════════════════════════
-• Historical Season Being Relived: ${featureCorps.sourceYear}
-${showTitle ? `• Show Title: "${showTitle}"` : ''}
-• Current Standing: ${currentRank}${currentRank === 1 ? 'st' : currentRank === 2 ? 'nd' : currentRank === 3 ? 'rd' : 'th'} place
-• Today's Score: ${featureCorps.total.toFixed(3)}
-• Daily Movement: ${corpsTrend.dayChange >= 0 ? '+' : ''}${corpsTrend.dayChange.toFixed(3)}
+Season: ${featureCorps.sourceYear}
+${showTitle ? `Show Title: "${showTitle}"` : ''}
+Current Standing: ${currentRank}${currentRank === 1 ? 'st' : currentRank === 2 ? 'nd' : currentRank === 3 ? 'rd' : 'th'} place
+Today's Score: ${featureCorps.total.toFixed(3)}
+Daily Change: ${corpsTrend.dayChange >= 0 ? '+' : ''}${corpsTrend.dayChange.toFixed(3)}
 
-SEASON TRAJECTORY:
+═══════════════════════════════════════════════════════════════
+SHOW-BY-SHOW JOURNEY (Last 5 performances with valid scores):
+═══════════════════════════════════════════════════════════════
+${showHistoryText}
+
+═══════════════════════════════════════════════════════════════
+SEASON TOTALS & TRAJECTORY
+═══════════════════════════════════════════════════════════════
 • Season High: ${seasonHigh.toFixed(3)}
-• Season Low: ${seasonLow.toFixed(3)}
+• Season Low: ${seasonLow >= 60 ? seasonLow.toFixed(3) : 'N/A (early season)'}
 • 7-Day Average: ${corpsTrend.avgTotal?.toFixed(3) || featureCorps.total.toFixed(3)}
-• Total Improvement: ${improvement >= 0 ? '+' : ''}${improvement.toFixed(3)} since season start
-${corpsTrend.atSeasonBest ? '★ AT SEASON HIGH TODAY - Peaking performance!' : ''}
+• Total Improvement Since Start: ${improvement >= 0 ? '+' : ''}${improvement.toFixed(3)}
+• Momentum: ${corpsTrend.momentum || 'steady'}
+${corpsTrend.atSeasonBest ? '★ AT SEASON HIGH TODAY' : ''}
 
-CAPTION BREAKDOWN (Today):
-• General Effect: ${featureCorps.subtotals?.ge?.toFixed(2) || 'N/A'}${corpsTrend.captionTrends?.ge?.trending === "up" ? " (trending up)" : corpsTrend.captionTrends?.ge?.trending === "down" ? " (trending down)" : ""}
-  - GE1 (Music): ${featureCorps.captions?.GE1?.toFixed(2) || 'N/A'}
-  - GE2 (Visual): ${featureCorps.captions?.GE2?.toFixed(2) || 'N/A'}
-• Visual Total: ${featureCorps.subtotals?.visual?.toFixed(2) || 'N/A'}${corpsTrend.captionTrends?.visual?.trending === "up" ? " (trending up)" : corpsTrend.captionTrends?.visual?.trending === "down" ? " (trending down)" : ""}
-  - VP: ${featureCorps.captions?.VP?.toFixed(2) || 'N/A'}
-  - VA: ${featureCorps.captions?.VA?.toFixed(2) || 'N/A'}
-  - CG: ${featureCorps.captions?.CG?.toFixed(2) || 'N/A'}
-• Music Total: ${featureCorps.subtotals?.music?.toFixed(2) || 'N/A'}${corpsTrend.captionTrends?.music?.trending === "up" ? " (trending up)" : corpsTrend.captionTrends?.music?.trending === "down" ? " (trending down)" : ""}
+═══════════════════════════════════════════════════════════════
+TODAY'S CAPTION BREAKDOWN (with rankings vs field)
+═══════════════════════════════════════════════════════════════
+GENERAL EFFECT: ${featureCorps.subtotals?.ge?.toFixed(2) || 'N/A'} ${corpsTrend.captionTrends?.ge?.trending === "up" ? "↑" : corpsTrend.captionTrends?.ge?.trending === "down" ? "↓" : "→"}
+  - GE1 (Music Effect): ${featureCorps.captions?.GE1?.toFixed(2) || 'N/A'}
+  - GE2 (Visual Effect): ${featureCorps.captions?.GE2?.toFixed(2) || 'N/A'}
+
+VISUAL: ${featureCorps.subtotals?.visual?.toFixed(2) || 'N/A'} ${corpsTrend.captionTrends?.visual?.trending === "up" ? "↑" : corpsTrend.captionTrends?.visual?.trending === "down" ? "↓" : "→"}
+  - Visual Proficiency: ${featureCorps.captions?.VP?.toFixed(2) || 'N/A'}
+  - Visual Analysis: ${featureCorps.captions?.VA?.toFixed(2) || 'N/A'}
+  - Color Guard: ${featureCorps.captions?.CG?.toFixed(2) || 'N/A'}
+
+MUSIC: ${featureCorps.subtotals?.music?.toFixed(2) || 'N/A'} ${corpsTrend.captionTrends?.music?.trending === "up" ? "↑" : corpsTrend.captionTrends?.music?.trending === "down" ? "↓" : "→"}
   - Brass: ${featureCorps.captions?.B?.toFixed(2) || 'N/A'}
-  - MA: ${featureCorps.captions?.MA?.toFixed(2) || 'N/A'}
+  - Music Analysis: ${featureCorps.captions?.MA?.toFixed(2) || 'N/A'}
   - Percussion: ${featureCorps.captions?.P?.toFixed(2) || 'N/A'}
 
-COMPETITIVE CONTEXT:
-${dayScores.slice(Math.max(0, currentRank - 2), Math.min(dayScores.length, currentRank + 3)).map((s, i) => {
-  const rank = Math.max(0, currentRank - 2) + i + 1;
+═══════════════════════════════════════════════════════════════
+COMPETITIVE CONTEXT (Corps they're battling)
+═══════════════════════════════════════════════════════════════
+${dayScores.slice(Math.max(0, currentRank - 3), Math.min(dayScores.length, currentRank + 4)).map((s, i) => {
+  const rank = Math.max(0, currentRank - 3) + i + 1;
   const gap = s.total - featureCorps.total;
   return `${rank}. ${s.corps}: ${s.total.toFixed(3)}${s.corps === featureCorps.corps ? ' ← FEATURED' : ` (${gap >= 0 ? '+' : ''}${gap.toFixed(3)})`}`;
 }).join('\n')}
 
 ${toneGuidance}
 
-WRITE A DCI.ORG-STYLE CORPS FEATURE:
+═══════════════════════════════════════════════════════════════
+WRITE A SEASON JOURNEY ARTICLE
+═══════════════════════════════════════════════════════════════
+1. HEADLINE: Include a specific number and trend
+   ✓ "${featureCorps.corps} gains ${Math.abs(improvement).toFixed(2)} points - Visual caption leads the climb"
+   ✓ "${featureCorps.corps} at ${currentRank}${currentRank === 1 ? 'st' : currentRank === 2 ? 'nd' : currentRank === 3 ? 'rd' : 'th'}: GE score of ${featureCorps.subtotals?.ge?.toFixed(2) || 'N/A'} keeps them in contention"
 
-1. HEADLINE: "${featureCorps.corps}: [Season narrative or defining achievement]"
-   Focus on their journey, improvement, or signature strength.
+2. SUMMARY: 2-3 factual sentences with their score, rank, and key caption insight.
 
-2. SUMMARY: 2-3 sentences introducing this corps and what makes their ${featureCorps.sourceYear} season compelling.
+3. NARRATIVE: 700-900 word analytical season profile:
 
-3. NARRATIVE: 600-800 word feature profile:
-   - Open with what defines ${featureCorps.corps}' identity and tradition
-   ${showTitle ? `- Discuss their show "${showTitle}" and its artistic concept` : '- Analyze their performance style and competitive approach'}
-   - Detail their season trajectory with specific score references
-   - Highlight their strongest captions (use exact scores)
-   - Contextualize within their historical legacy
-   - Close with outlook for the championship stretch
+   PARAGRAPH 1: Current position and score
+   - Where do they stand? What's their score? How far from the corps above/below?
 
-Write like a DCI.org or Drum Corps World feature journalist.`;
+   PARAGRAPH 2: Show-by-show journey
+   - Walk through their last 4-5 shows with SPECIFIC SCORES at each
+   - Note the locations where they performed
+   - Highlight the biggest jumps or drops
+
+   PARAGRAPH 3: Caption analysis - STRENGTHS
+   - Which captions are they strongest in? Use specific scores.
+   - How do those captions compare to corps around them?
+
+   PARAGRAPH 4: Caption analysis - WEAKNESSES
+   - Which captions are holding them back? Use specific scores.
+   - How much are they losing in those captions vs competitors?
+
+   PARAGRAPH 5: Trajectory analysis
+   - Are they improving, steady, or declining?
+   - What's the trend over the last 3-4 shows?
+
+   PARAGRAPH 6: Fantasy outlook (IMPORTANT for readers)
+   - Based on trends, where might they score in upcoming shows?
+   - Are they a "buy" (improving), "hold" (steady), or "sell" (declining)?
+   - Which specific captions should fantasy directors target?
+   - DO NOT predict exact future scores - only analyze visible trends
+
+Write like a sports statistician who loves the numbers. Every paragraph needs specific scores.`;
 
   const schema = {
     type: Type.OBJECT,
@@ -3071,118 +3161,136 @@ async function generateDciRecapArticle({ reportDay, dayScores, trendData, captio
   const visualSorted = [...dayScores].sort((a, b) => (b.subtotals?.visual || 0) - (a.subtotals?.visual || 0));
   const musicSorted = [...dayScores].sort((a, b) => (b.subtotals?.music || 0) - (a.subtotals?.music || 0));
 
-  const prompt = `You are a DCI.org recap analyst specializing in caption analysis. Write in the authentic DCI.org "Recap Analysis" style - detailed, technical, but accessible to fans who want to understand what's driving the scores.
+  // Build comprehensive corps data for the entire field
+  const allCorpsTrends = dayScores.map(corps => {
+    const trend = trendData[corps.corps] || {};
+    return {
+      corps: corps.corps,
+      total: corps.total,
+      ge: corps.subtotals?.ge,
+      visual: corps.subtotals?.visual,
+      music: corps.subtotals?.music,
+      momentum: trend.momentum || 'steady',
+      dayChange: trend.dayChange || 0,
+      geTrend: trend.captionTrends?.ge?.trending || 'stable',
+      visualTrend: trend.captionTrends?.visual?.trending || 'stable',
+      musicTrend: trend.captionTrends?.music?.trending || 'stable',
+    };
+  });
+
+  const prompt = `You are a DCI.org recap analyst writing the DEFINITIVE weekly caption analysis. This article should be a "must read" for ANYONE wanting to understand DCI scores - not just fantasy players, but any drum corps fan who wants to dive deep into the numbers.
 
 ═══════════════════════════════════════════════════════════════
-DCI.ORG RECAP ANALYSIS STYLE GUIDE
+YOUR MISSION: THE BEST DCI SCORE ANALYSIS AVAILABLE
 ═══════════════════════════════════════════════════════════════
-DCI.org recap articles (like "Recap Analysis: World Class Finals") follow these conventions:
+This article should answer:
+- Who's leading each caption and by how much?
+- Who's improving and who's declining in each caption?
+- What do the numbers tell us about potential future results?
+- Which corps should fantasy directors BUY, HOLD, or SELL?
 
-HEADLINES: Caption-focused with competitive angle
-- "Recap Analysis: General Effect battle tightens heading into Finals"
-- "Visual caption trends: Which corps are peaking at the right time?"
-- "Music Analysis: Brass scores surge as season enters final stretch"
+Cover ALL corps, ALL captions, and provide data-driven insights that help readers understand the competitive landscape.
 
-CAPTION BREAKDOWN STRUCTURE:
-1. GENERAL EFFECT (40% of total score)
-   - GE1 (Music Effect): How the music design affects the audience
-   - GE2 (Visual Effect): How the visual design affects the audience
-   - "The corps' spread over [Rival] in GE was 0.15"
-   - "Winning GE by 0.20 accounted for most of the 0.35 total margin"
-
-2. VISUAL (30% of total score)
-   - Visual Proficiency (VP): Marching technique, body movement
-   - Visual Analysis (VA): Design, staging, visual composition
-   - Color Guard (CG): Equipment work, dance, performance quality
-   - "0.45 over Crown in Total Visual" / "took 2nd in Color Guard, just 0.1 down"
-
-3. MUSIC (30% of total score)
-   - Brass (B): Brass section performance quality
-   - Music Analysis (MA): Music design, arrangement
-   - Percussion (P): Battery and pit performance
-   - "Won the Percussion caption by 0.05 over Santa Clara Vanguard"
-
-TREND ANALYSIS LANGUAGE:
-- "improved their GE score by 0.35 over the last week"
-- "Visual has been their growth area, climbing 0.40 since Day 35"
-- "Brass consistency remains a strength - averaging 19.3 over four shows"
-- "The corps that shows the most GE improvement typically has design changes clicking"
+CRITICAL - AVOID THESE CLICHÉS:
+- "battle for supremacy" / "race heats up" / "heating up"
+- "stakes are high" / "every point matters" / "absolutely crucial"
+- "thrilling" / "exciting" / "dramatic" / "intense"
+- "setting the stage" / "poised to" / "poised for success"
+- "the corps that can master" / "will have a significant advantage"
 
 ═══════════════════════════════════════════════════════════════
-WEEKLY CAPTION ANALYSIS (Last 7 Days)
+COMPLETE CAPTION DATA - ALL ${dayScores.length} CORPS
 ═══════════════════════════════════════════════════════════════
 Week: Days ${reportDay - 6} through ${reportDay}
-Current Date: ${showContext.date}
+Date: ${showContext.date}
 
-GENERAL EFFECT ANALYSIS:
-Leader: ${geSorted[0]?.corps} (${geSorted[0]?.subtotals?.ge?.toFixed(2)})
-Second: ${geSorted[1]?.corps} (${geSorted[1]?.subtotals?.ge?.toFixed(2)}) - ${((geSorted[0]?.subtotals?.ge || 0) - (geSorted[1]?.subtotals?.ge || 0)).toFixed(2)} behind
-Third: ${geSorted[2]?.corps} (${geSorted[2]?.subtotals?.ge?.toFixed(2)})
-GE Trending Up: ${captionTrends.ge.trending.length > 0 ? captionTrends.ge.trending.map(t => t.corps).join(', ') : 'No significant movers'}
-
-Top 5 GE Scores Today:
-${geSorted.slice(0, 5).map((s, i) => {
+GENERAL EFFECT RANKINGS (40% of total score):
+${geSorted.map((s, i) => {
   const trend = trendData[s.corps]?.captionTrends?.ge;
-  return `${i + 1}. ${s.corps}: ${s.subtotals?.ge?.toFixed(2)} [GE1: ${s.captions?.GE1?.toFixed(2)}, GE2: ${s.captions?.GE2?.toFixed(2)}]${trend?.trending === "up" ? " ↑" : trend?.trending === "down" ? " ↓" : ""}`;
+  const margin = i > 0 ? (geSorted[i-1].subtotals?.ge - s.subtotals?.ge).toFixed(2) : '-';
+  return `${i + 1}. ${s.corps}: ${s.subtotals?.ge?.toFixed(2)} [GE1: ${s.captions?.GE1?.toFixed(2)}, GE2: ${s.captions?.GE2?.toFixed(2)}] ${trend?.trending === "up" ? "↑" : trend?.trending === "down" ? "↓" : "→"} (${margin} behind)`;
 }).join('\n')}
 
-VISUAL ANALYSIS:
-Leader: ${visualSorted[0]?.corps} (${visualSorted[0]?.subtotals?.visual?.toFixed(2)})
-Second: ${visualSorted[1]?.corps} (${visualSorted[1]?.subtotals?.visual?.toFixed(2)}) - ${((visualSorted[0]?.subtotals?.visual || 0) - (visualSorted[1]?.subtotals?.visual || 0)).toFixed(2)} behind
-Third: ${visualSorted[2]?.corps} (${visualSorted[2]?.subtotals?.visual?.toFixed(2)})
-Visual Trending Up: ${captionTrends.visual.trending.length > 0 ? captionTrends.visual.trending.map(t => t.corps).join(', ') : 'No significant movers'}
-
-Top 5 Visual Scores Today:
-${visualSorted.slice(0, 5).map((s, i) => {
+VISUAL RANKINGS (30% of total score):
+${visualSorted.map((s, i) => {
   const trend = trendData[s.corps]?.captionTrends?.visual;
-  return `${i + 1}. ${s.corps}: ${s.subtotals?.visual?.toFixed(2)} [VP: ${s.captions?.VP?.toFixed(2)}, VA: ${s.captions?.VA?.toFixed(2)}, CG: ${s.captions?.CG?.toFixed(2)}]${trend?.trending === "up" ? " ↑" : trend?.trending === "down" ? " ↓" : ""}`;
+  const margin = i > 0 ? (visualSorted[i-1].subtotals?.visual - s.subtotals?.visual).toFixed(2) : '-';
+  return `${i + 1}. ${s.corps}: ${s.subtotals?.visual?.toFixed(2)} [VP: ${s.captions?.VP?.toFixed(2)}, VA: ${s.captions?.VA?.toFixed(2)}, CG: ${s.captions?.CG?.toFixed(2)}] ${trend?.trending === "up" ? "↑" : trend?.trending === "down" ? "↓" : "→"} (${margin} behind)`;
 }).join('\n')}
 
-MUSIC ANALYSIS:
-Leader: ${musicSorted[0]?.corps} (${musicSorted[0]?.subtotals?.music?.toFixed(2)})
-Second: ${musicSorted[1]?.corps} (${musicSorted[1]?.subtotals?.music?.toFixed(2)}) - ${((musicSorted[0]?.subtotals?.music || 0) - (musicSorted[1]?.subtotals?.music || 0)).toFixed(2)} behind
-Third: ${musicSorted[2]?.corps} (${musicSorted[2]?.subtotals?.music?.toFixed(2)})
-Music Trending Up: ${captionTrends.music.trending.length > 0 ? captionTrends.music.trending.map(t => t.corps).join(', ') : 'No significant movers'}
-
-Top 5 Music Scores Today:
-${musicSorted.slice(0, 5).map((s, i) => {
+MUSIC RANKINGS (30% of total score):
+${musicSorted.map((s, i) => {
   const trend = trendData[s.corps]?.captionTrends?.music;
-  return `${i + 1}. ${s.corps}: ${s.subtotals?.music?.toFixed(2)} [B: ${s.captions?.B?.toFixed(2)}, MA: ${s.captions?.MA?.toFixed(2)}, P: ${s.captions?.P?.toFixed(2)}]${trend?.trending === "up" ? " ↑" : trend?.trending === "down" ? " ↓" : ""}`;
+  const margin = i > 0 ? (musicSorted[i-1].subtotals?.music - s.subtotals?.music).toFixed(2) : '-';
+  return `${i + 1}. ${s.corps}: ${s.subtotals?.music?.toFixed(2)} [B: ${s.captions?.B?.toFixed(2)}, MA: ${s.captions?.MA?.toFixed(2)}, P: ${s.captions?.P?.toFixed(2)}] ${trend?.trending === "up" ? "↑" : trend?.trending === "down" ? "↓" : "→"} (${margin} behind)`;
 }).join('\n')}
 
-WEEK-OVER-WEEK NOTABLE MOVEMENTS:
-${(() => {
-  const movements = [];
-  Object.entries(trendData).forEach(([corps, trend]) => {
-    if (trend.weeklyChange && Math.abs(trend.weeklyChange) > 0.3) {
-      movements.push(`• ${corps}: ${trend.weeklyChange >= 0 ? '+' : ''}${trend.weeklyChange.toFixed(3)} over the week`);
-    }
-  });
-  return movements.length > 0 ? movements.slice(0, 5).join('\n') : '• No dramatic week-over-week changes';
-})()}
+═══════════════════════════════════════════════════════════════
+TRAJECTORY ANALYSIS - MOMENTUM BY CORPS
+═══════════════════════════════════════════════════════════════
+${Object.entries(trendData).map(([corps, trend]) => {
+  return `${corps}: ${trend.momentum || 'steady'} | Day change: ${trend.dayChange >= 0 ? '+' : ''}${trend.dayChange?.toFixed(3) || 'N/A'} | GE: ${trend.captionTrends?.ge?.trending || 'stable'} | Visual: ${trend.captionTrends?.visual?.trending || 'stable'} | Music: ${trend.captionTrends?.music?.trending || 'stable'}`;
+}).join('\n')}
+
+═══════════════════════════════════════════════════════════════
+SUBCAPTION DEEP DIVE
+═══════════════════════════════════════════════════════════════
+GE1 (Music Effect) Leader: ${[...dayScores].sort((a, b) => (b.captions?.GE1 || 0) - (a.captions?.GE1 || 0))[0]?.corps} (${[...dayScores].sort((a, b) => (b.captions?.GE1 || 0) - (a.captions?.GE1 || 0))[0]?.captions?.GE1?.toFixed(2)})
+GE2 (Visual Effect) Leader: ${[...dayScores].sort((a, b) => (b.captions?.GE2 || 0) - (a.captions?.GE2 || 0))[0]?.corps} (${[...dayScores].sort((a, b) => (b.captions?.GE2 || 0) - (a.captions?.GE2 || 0))[0]?.captions?.GE2?.toFixed(2)})
+Visual Proficiency Leader: ${[...dayScores].sort((a, b) => (b.captions?.VP || 0) - (a.captions?.VP || 0))[0]?.corps} (${[...dayScores].sort((a, b) => (b.captions?.VP || 0) - (a.captions?.VP || 0))[0]?.captions?.VP?.toFixed(2)})
+Visual Analysis Leader: ${[...dayScores].sort((a, b) => (b.captions?.VA || 0) - (a.captions?.VA || 0))[0]?.corps} (${[...dayScores].sort((a, b) => (b.captions?.VA || 0) - (a.captions?.VA || 0))[0]?.captions?.VA?.toFixed(2)})
+Color Guard Leader: ${[...dayScores].sort((a, b) => (b.captions?.CG || 0) - (a.captions?.CG || 0))[0]?.corps} (${[...dayScores].sort((a, b) => (b.captions?.CG || 0) - (a.captions?.CG || 0))[0]?.captions?.CG?.toFixed(2)})
+Brass Leader: ${[...dayScores].sort((a, b) => (b.captions?.B || 0) - (a.captions?.B || 0))[0]?.corps} (${[...dayScores].sort((a, b) => (b.captions?.B || 0) - (a.captions?.B || 0))[0]?.captions?.B?.toFixed(2)})
+Music Analysis Leader: ${[...dayScores].sort((a, b) => (b.captions?.MA || 0) - (a.captions?.MA || 0))[0]?.corps} (${[...dayScores].sort((a, b) => (b.captions?.MA || 0) - (a.captions?.MA || 0))[0]?.captions?.MA?.toFixed(2)})
+Percussion Leader: ${[...dayScores].sort((a, b) => (b.captions?.P || 0) - (a.captions?.P || 0))[0]?.corps} (${[...dayScores].sort((a, b) => (b.captions?.P || 0) - (a.captions?.P || 0))[0]?.captions?.P?.toFixed(2)})
 
 ${toneGuidance}
 
-WRITE A DCI.ORG-STYLE WEEKLY RECAP ANALYSIS:
+═══════════════════════════════════════════════════════════════
+ARTICLE REQUIREMENTS
+═══════════════════════════════════════════════════════════════
+1. HEADLINE: Technical, number-focused
+   ✓ "Recap Analysis: ${geSorted[0]?.corps} leads GE by ${((geSorted[0]?.subtotals?.ge || 0) - (geSorted[1]?.subtotals?.ge || 0)).toFixed(2)} as Visual tightens"
+   ✗ AVOID: "battle narrows" / "heats up" / "intensifies"
 
-1. HEADLINE: Caption-focused weekly analysis headline
-   Example: "Recap Analysis: GE battle narrows as ${geSorted[0]?.corps} maintains slim lead"
+2. SUMMARY: 2-3 factual sentences with key caption insights.
 
-2. SUMMARY: 2-3 sentences summarizing the week's most significant caption trends.
+3. NARRATIVE: 900-1200 word comprehensive analysis (THIS MUST BE THOROUGH):
 
-3. NARRATIVE: 700-900 word deep dive analysis:
-   - GENERAL EFFECT section: Who's winning GE and why? What design elements are connecting?
-   - VISUAL section: Analyze VP, VA, and CG trends. Who's improving? Who's plateauing?
-   - MUSIC section: Break down Brass, MA, and Percussion. Which hornlines are hot?
-   - Championship implications: Which caption trends will decide Finals placement?
+   **GENERAL EFFECT** (~250 words)
+   - Who leads? ${geSorted[0]?.corps} at ${geSorted[0]?.subtotals?.ge?.toFixed(2)}
+   - Gap to second: ${((geSorted[0]?.subtotals?.ge || 0) - (geSorted[1]?.subtotals?.ge || 0)).toFixed(2)}
+   - Analyze GE1 vs GE2 - where is the gap coming from?
+   - Which corps are trending UP in GE? DOWN?
+   - Cover at least 5 corps in this section
 
-4. TRADE RECOMMENDATIONS: Fantasy strategy insights based on caption trends:
-   - Which DCI corps are trending UP and worth acquiring in fantasy drafts?
-   - Which corps are trending DOWN and may be overvalued?
-   - Which corps are STEADY and reliable picks?
-   - Focus on which CORPS are valuable based on their caption performance - NOT specific lineup picks
+   **VISUAL** (~250 words)
+   - Who leads? ${visualSorted[0]?.corps} at ${visualSorted[0]?.subtotals?.visual?.toFixed(2)}
+   - Break down VP, VA, CG leaders
+   - Which subcaption is the tightest race?
+   - Who's improving? Who's struggling?
+   - Cover at least 5 corps in this section
 
-Include specific score comparisons. Use DCI.org recap terminology. Write for fans who want to understand the numbers.`;
+   **MUSIC** (~250 words)
+   - Who leads? ${musicSorted[0]?.corps} at ${musicSorted[0]?.subtotals?.music?.toFixed(2)}
+   - Break down Brass, MA, Percussion leaders
+   - Which corps have the strongest brass? Percussion?
+   - Who's improving? Who's struggling?
+   - Cover at least 5 corps in this section
+
+   **TRAJECTORY & FUTURE OUTLOOK** (~200 words)
+   - Based on trends, who is likely to improve?
+   - Who appears to be plateauing?
+   - What caption improvements could shift standings?
+   - Provide SPECIFIC point gaps that need to close
+
+   **FANTASY RECOMMENDATIONS** (~150 words)
+   - BUY: 2-3 corps with evidence (which captions to target)
+   - HOLD: 2-3 corps with evidence
+   - SELL: 1-2 corps with evidence
+   - Be specific about WHICH CAPTIONS to pick
+
+Write like the lead DCI score analyst - comprehensive, authoritative, essential reading.`;
 
   const schema = {
     type: Type.OBJECT,
@@ -3262,55 +3370,175 @@ async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext
   const shows = fantasyData.current.shows || [];
   const allResults = shows.flatMap(s => s.results || []);
 
-  // Filter out SoundSport corps
+  // Separate competitive and SoundSport results
   const competitiveResults = allResults.filter(r => r.corpsClass !== 'soundSport');
-  const topPerformers = competitiveResults.sort((a, b) => b.totalScore - a.totalScore).slice(0, 10);
+  const soundSportResults = allResults.filter(r => r.corpsClass === 'soundSport').sort((a, b) => b.totalScore - a.totalScore);
+
+  // Get TOP 25 performers instead of just 10
+  const topPerformers = competitiveResults.sort((a, b) => b.totalScore - a.totalScore).slice(0, 25);
 
   const avgScore = topPerformers.length > 0
     ? (topPerformers.reduce((sum, p) => sum + p.totalScore, 0) / topPerformers.length).toFixed(3)
     : "0.000";
   const topScore = topPerformers[0]?.totalScore?.toFixed(3) || "0.000";
 
+  // SoundSport ratings based on scoring guidelines (NOT competitive scores)
+  // SoundSport uses a rating system: Gold, Silver, Bronze, Participation
+  // Scores are NEVER revealed - only the rating level
+  // "Best in Show" is the highest scoring ensemble, NOT a rating level
+  const getSoundSportRating = (score) => {
+    if (!score || score <= 0) return null;
+    // Thresholds based on SoundSport adjudication guidelines (from SoundSportTab.jsx)
+    if (score >= 85) return "Gold";
+    if (score >= 75) return "Silver";
+    if (score >= 65) return "Bronze";
+    return "Participation";
+  };
+
+  // Find "Best in Show" - the highest scoring SoundSport ensemble at this competition
+  const soundSportBestInShow = soundSportResults.length > 0
+    ? soundSportResults.reduce((best, current) =>
+        (current.totalScore > (best?.totalScore || 0)) ? current : best, null)
+    : null;
+
+  // Categorize SoundSport results by rating (NO SCORES - only ratings)
+  const soundSportByRating = {
+    gold: soundSportResults.filter(r => getSoundSportRating(r.totalScore) === "Gold"),
+    silver: soundSportResults.filter(r => getSoundSportRating(r.totalScore) === "Silver"),
+    bronze: soundSportResults.filter(r => getSoundSportRating(r.totalScore) === "Bronze"),
+    participation: soundSportResults.filter(r => getSoundSportRating(r.totalScore) === "Participation"),
+  };
+
   const fantasyShowName = formatFantasyEventName(showContext.showName);
 
-  const prompt = `You are a marching.art fantasy sports analyst. Write exciting coverage of today's fantasy competition results, celebrating the top directors and their ensembles.
+  const prompt = `You are a marching.art fantasy sports journalist. This article is your chance to make fantasy drum corps feel REAL and EXCITING through creative storytelling, fictitious quotes, and engaging narratives.
 
 ═══════════════════════════════════════════════════════════════
-MARCHING.ART FANTASY RESULTS
+FANTASY SPORTS JOURNALISM - DAY ${reportDay}
 ═══════════════════════════════════════════════════════════════
+IMPORTANT: These are FANTASY ensembles with FANTASY directors. Unlike DCI articles which must be factual, you CAN and SHOULD:
+- Create fictitious quotes from fantasy directors
+- Invent storylines and rivalries between fantasy ensembles
+- Give personality to the fantasy competition
+- Make it feel like a real sports broadcast
+
+This is what makes fantasy sports fun - the narrative!
+
 Date: ${showContext.date}
-Season Day: ${reportDay}
 Competition: ${fantasyShowName}
 
-TOP 10 FANTASY ENSEMBLES TODAY:
+═══════════════════════════════════════════════════════════════
+TOP 25 FANTASY ENSEMBLES (complete results)
+═══════════════════════════════════════════════════════════════
 ${topPerformers.map((r, i) => {
   const margin = i > 0 ? (topPerformers[i-1].totalScore - r.totalScore).toFixed(3) : "-";
   return `${i + 1}. "${r.corpsName}" (Director: ${r.displayName || 'Unknown'}) - ${r.totalScore.toFixed(3)} pts${i > 0 ? ` [${margin} behind]` : ' [WINNER]'}
    From: ${r.location || 'Unknown location'}`;
 }).join('\n')}
 
-STATISTICS:
-• Winning Score: ${topScore}
+${soundSportResults.length > 0 ? `
+═══════════════════════════════════════════════════════════════
+🎵 SOUNDSPORT RATINGS (Non-competitive adjudication)
+═══════════════════════════════════════════════════════════════
+IMPORTANT: SoundSport is NOT a competition - it's a ratings-based showcase.
+Ensembles earn ratings (Gold, Silver, Bronze, Participation) based on their
+performance quality, NOT competitive placement. DO NOT reveal scores.
+"Best in Show" is awarded to the highest-scoring ensemble.
+
+${soundSportBestInShow ? `⭐ BEST IN SHOW:
+• "${soundSportBestInShow.corpsName}" (Director: ${soundSportBestInShow.displayName || 'Unknown'}) - From ${soundSportBestInShow.location || 'Unknown'}
+` : ''}
+${soundSportByRating.gold.length > 0 ? `🥇 GOLD RATING (${soundSportByRating.gold.length}):
+${soundSportByRating.gold.map(r => `• "${r.corpsName}" (Director: ${r.displayName || 'Unknown'}) - From ${r.location || 'Unknown'}`).join('\n')}
+` : ''}
+${soundSportByRating.silver.length > 0 ? `🥈 SILVER RATING (${soundSportByRating.silver.length}):
+${soundSportByRating.silver.map(r => `• "${r.corpsName}" (Director: ${r.displayName || 'Unknown'}) - From ${r.location || 'Unknown'}`).join('\n')}
+` : ''}
+${soundSportByRating.bronze.length > 0 ? `🥉 BRONZE RATING (${soundSportByRating.bronze.length}):
+${soundSportByRating.bronze.map(r => `• "${r.corpsName}" (Director: ${r.displayName || 'Unknown'}) - From ${r.location || 'Unknown'}`).join('\n')}
+` : ''}
+${soundSportByRating.participation.length > 0 ? `📋 PARTICIPATION (${soundSportByRating.participation.length}):
+${soundSportByRating.participation.map(r => `• "${r.corpsName}" (Director: ${r.displayName || 'Unknown'}) - From ${r.location || 'Unknown'}`).join('\n')}
+` : ''}
+` : ''}
+
+═══════════════════════════════════════════════════════════════
+STATISTICS
+═══════════════════════════════════════════════════════════════
+• Day ${reportDay} Winner: "${topPerformers[0]?.corpsName}" with ${topScore}
+• Margin of Victory: ${topPerformers.length >= 2 ? (topPerformers[0].totalScore - topPerformers[1].totalScore).toFixed(3) : 'N/A'}
 • Top 10 Average: ${avgScore}
+• Top 25 Average: ${(topPerformers.reduce((sum, r) => sum + r.totalScore, 0) / topPerformers.length).toFixed(3)}
 • Total Ensembles: ${competitiveResults.length}
-• Score Spread (1st-10th): ${topPerformers.length >= 10 ? (topPerformers[0].totalScore - topPerformers[9].totalScore).toFixed(3) : 'N/A'}
+• Score Spread (1st-25th): ${topPerformers.length >= 25 ? (topPerformers[0].totalScore - topPerformers[24].totalScore).toFixed(3) : 'N/A'}
+${soundSportResults.length > 0 ? `• SoundSport Ensembles: ${soundSportResults.length} (${soundSportByRating.gold.length} Gold, ${soundSportByRating.silver.length} Silver, ${soundSportByRating.bronze.length} Bronze, ${soundSportByRating.participation.length} Participation)${soundSportBestInShow ? ` - Best in Show: "${soundSportBestInShow.corpsName}"` : ''}` : ''}
 
 ${toneGuidance}
 
-WRITE A FANTASY SPORTS RESULTS ARTICLE:
+═══════════════════════════════════════════════════════════════
+CREATIVE WRITING GUIDELINES
+═══════════════════════════════════════════════════════════════
+CREATE FICTITIOUS QUOTES! Examples:
+- "${topPerformers[0]?.displayName || 'Director'}, director of '${topPerformers[0]?.corpsName}', said after the victory: 'We've been working on our GE all week, and it paid off tonight.'"
+- "'We knew ${topPerformers[0]?.corpsName} was going to be tough to beat,' admitted ${topPerformers[1]?.displayName || 'Director'} of '${topPerformers[1]?.corpsName}'. 'That 0.${Math.floor(Math.random() * 9)}${Math.floor(Math.random() * 9)} margin is nothing - we'll be back tomorrow.'"
+- "A ${topPerformers[2]?.corpsName} section leader (who wished to remain anonymous) quipped: 'Third place today just means we have more room to climb.'"
 
-1. HEADLINE: Celebrate the winner with their score and ensemble name
-   Example: "\"${topPerformers[0]?.corpsName}\" dominates Day ${reportDay} with ${topScore}-point performance"
+These quotes make the fantasy competition feel ALIVE. Include 2-4 quotes throughout the article.
 
-2. SUMMARY: 2-3 exciting sentences about who won and the competition level.
+CREATE STORYLINES! Examples:
+- Rivalry between two ensembles battling for the same position
+- A comeback story for an ensemble that dropped but recovered
+- The "underdog" rising through the ranks
+- The "dynasty" trying to maintain their lead
 
-3. NARRATIVE: 500-700 word celebration article:
-   - Lead with the winner's achievement
-   - Highlight the top 3-5 performers
-   - Discuss the competition intensity
-   - Preview tomorrow's competition
+AVOID THESE CLICHÉS:
+- "dominates" / "stunning victory" / "sent shockwaves"
+- "proves their mettle" / "showcased their prowess"
+- "the drama is just beginning" / "tune in tomorrow"
+- NEVER end with "Can [X] maintain their dominance?"
 
-This is fantasy sports coverage - fun, competitive, celebratory. NEVER reveal specific roster picks.`;
+═══════════════════════════════════════════════════════════════
+ARTICLE REQUIREMENTS
+═══════════════════════════════════════════════════════════════
+1. HEADLINE: Include the winner and score
+   ✓ "${topPerformers[0]?.corpsName}" wins Day ${reportDay} with ${topScore}
+   ✓ ${topPerformers[0]?.displayName || 'Director'}'s "${topPerformers[0]?.corpsName}" takes first at ${topScore}
+
+2. SUMMARY: 2-3 sentences. Winner, score, and one storyline hook.
+
+3. NARRATIVE: 600-800 word article with PERSONALITY:
+
+   OPENING: State the winner with a fictitious quote from the director
+
+   TOP 5 COVERAGE (~150 words):
+   - Cover positions 1-5 with scores
+   - Include at least 1 fictitious quote
+   - Create a storyline (rivalry? comeback?)
+
+   POSITIONS 6-15 (~150 words):
+   - Cover the mid-pack battle
+   - Who's bunched together? What margins?
+   - Include a quote from someone in this range
+
+   POSITIONS 16-25 (~100 words):
+   - Don't ignore the rest of the field!
+   - Mention notable names and scores
+
+   ${soundSportResults.length > 0 ? `SOUNDSPORT RATINGS HIGHLIGHT (~75 words):
+   - SoundSport is NOT competitive - it uses a ratings system
+   - "Best in Show" goes to the highest scoring ensemble
+   - Celebrate Gold, Silver, Bronze, and Participation ratings
+   - NEVER mention scores - only rating levels
+   - Include a fictitious quote from a SoundSport director about earning their rating` : ''}
+
+   CLOSING (~100 words):
+   - Interesting stat or observation
+   - Set up tomorrow's storyline
+   - End with energy, not a cliché question
+
+Include at least 3 fictitious quotes throughout. Make it feel like ESPN coverage of fantasy sports!
+
+NEVER reveal specific roster/lineup picks.`;
 
   const schema = {
     type: Type.OBJECT,
@@ -3429,26 +3657,23 @@ async function generateFantasyRecapArticle({ reportDay, fantasyData, showContext
 
   const fantasyShowName = formatFantasyEventName(showContext.showName);
 
-  const prompt = `You are a marching.art fantasy analyst specializing in caption performance trends. Help directors understand which captions are driving fantasy success.
+  const prompt = `You are a marching.art fantasy analyst writing weekly caption analysis. Focus on DATA and PRACTICAL ADVICE, not hype.
 
 ═══════════════════════════════════════════════════════════════
-MARCHING.ART CAPTION ANALYSIS
+MARCHING.ART CAPTION ANALYSIS - WEEK ENDING DAY ${reportDay}
 ═══════════════════════════════════════════════════════════════
 Date: ${showContext.date}
-Season Day: ${reportDay}
 Analysis Period: Days ${reportDay - 6} through ${reportDay}
 
-CAPTION SCORING REMINDER:
-In marching.art fantasy, points come from three caption categories:
-• GENERAL EFFECT (GE) - 40% weight: Design excellence, entertainment value
-• VISUAL - 30% weight: Marching technique, color guard, staging
-• MUSIC - 30% weight: Brass, percussion, music design
+CAPTION WEIGHTS:
+• GENERAL EFFECT (GE): 40% of score
+• VISUAL: 30% of score
+• MUSIC: 30% of score
 
-WEEKLY FANTASY TRENDS:
+WEEKLY DATA:
 ${(() => {
-  if (trendRecaps.length < 2) return "Insufficient data for weekly trends - early season.";
+  if (trendRecaps.length < 2) return "Limited trend data available (early season).";
 
-  // Calculate average scores across the week
   const weeklyAvg = trendRecaps.reduce((acc, recap) => {
     const results = (recap.shows || []).flatMap(s => s.results || []).filter(r => r.corpsClass !== 'soundSport');
     const avg = results.length > 0
@@ -3457,21 +3682,20 @@ ${(() => {
     return acc + avg;
   }, 0) / trendRecaps.length;
 
-  return `• Average top ensemble score this week: ${weeklyAvg.toFixed(3)}
-• Competitions this week: ${trendRecaps.length}
-• Total fantasy points distributed: ${trendRecaps.reduce((sum, r) => sum + ((r.shows || []).flatMap(s => s.results || []).length), 0)} performances`;
+  return `• Week average score: ${weeklyAvg.toFixed(3)}
+• Competitions: ${trendRecaps.length}
+• Total performances: ${trendRecaps.reduce((sum, r) => sum + ((r.shows || []).flatMap(s => s.results || []).length), 0)}`;
 })()}
 
-TODAY'S TOP PERFORMERS BY CATEGORY:
+TODAY'S CAPTION LEADERS:
 ${(() => {
   if (captionPerformance.ge.length === 0) {
-    // Fallback to total scores if no caption breakdown
     const sorted = [...competitiveResults].sort((a, b) => b.totalScore - a.totalScore).slice(0, 5);
-    return `TOP 5 OVERALL:
-${sorted.map((r, i) => `${i + 1}. "${r.corpsName}" - ${r.totalScore.toFixed(3)} total`).join('\n')}`;
+    return `TOP 5 BY TOTAL:
+${sorted.map((r, i) => `${i + 1}. "${r.corpsName}" - ${r.totalScore.toFixed(3)}`).join('\n')}`;
   }
 
-  return `GENERAL EFFECT LEADERS:
+  return `GE LEADERS:
 ${captionPerformance.ge.slice(0, 3).map((r, i) => `${i + 1}. "${r.name}" - ${r.score.toFixed(2)}`).join('\n')}
 
 VISUAL LEADERS:
@@ -3483,39 +3707,142 @@ ${captionPerformance.music.slice(0, 3).map((r, i) => `${i + 1}. "${r.name}" - ${
 
 ${toneGuidance}
 
-WRITE A MARCHING.ART CAPTION ANALYSIS ARTICLE:
+═══════════════════════════════════════════════════════════════
+YOUR MISSION: THE FANTASY DIRECTOR'S ULTIMATE GUIDE
+═══════════════════════════════════════════════════════════════
+This article should be the DEFINITIVE resource for fantasy directors making caption selections. Help them understand:
+- Which DCI corps to BUY (improving, undervalued)
+- Which DCI corps to HOLD (consistent, reliable)
+- Which DCI corps to SELL (declining, overvalued)
 
-1. HEADLINE: Caption trend focus
-   Example: "Caption Analysis: GE performance drives fantasy success as season heats up"
+CRITICAL TIMING NOTE:
+Your recommendations should match WHERE WE ARE IN THE SEASON (Day ${reportDay}).
+- If a corps was hot early but has plateaued, say "was a BUY early season, now a HOLD"
+- If a corps started slow but is improving, say "BUY - trending up since Day X"
+- Be specific about WHEN the trend started
 
-2. SUMMARY: 2-3 sentences about which captions are making the biggest impact this week.
+AVOID THESE CLICHÉS:
+- "as the season heats up" / "competition intensifies"
+- "key area of focus" / "taken center stage"
+- "ensembles that can elevate" / "boosting their fantasy stock"
+- "strategic insights for directors" (just give the insights)
+- NEVER use subheadings like "GE: The X-Factor"
 
-3. NARRATIVE: 500-700 word analysis:
-   - Analyze General Effect trends and what's driving high GE scores
-   - Break down Visual performance - which ensembles excel in visual captions?
-   - Examine Music trends - brass vs percussion impact
-   - Strategic insights for directors (without revealing specific picks)
-   - Week-over-week trend observations
+═══════════════════════════════════════════════════════════════
+ARTICLE REQUIREMENTS
+═══════════════════════════════════════════════════════════════
+1. HEADLINE: Include a specific recommendation
+   ✓ "Caption Analysis: ${captionPerformance.ge[0]?.name || 'Top GE corps'} a BUY in GE at ${captionPerformance.ge[0]?.score?.toFixed(2) || 'N/A'}"
+   ✓ "Visual caption tightening - 3 corps within 0.5"
+   ✗ AVOID: "heats up" / "drives success" / "takes center stage"
 
-Help directors understand the caption dynamics. Educational but engaging.`;
+2. SUMMARY: 2-3 sentences with ONE clear recommendation.
+
+3. NARRATIVE: 700-900 word deep dive (THIS MUST BE THOROUGH):
+
+   **GENERAL EFFECT ANALYSIS** (~200 words)
+   - GE Leader: Who? Score? Margin over 2nd?
+   - BUY recommendation: Pick 1-2 specific corps with rising GE
+   - HOLD recommendation: Pick 1 consistent GE performer
+   - SELL recommendation: Pick 1 corps with declining GE (if any)
+   - Explain WHY with specific numbers
+
+   **VISUAL CAPTION ANALYSIS** (~200 words)
+   - Visual Leader: Who? Score?
+   - BUY recommendation: Pick 1-2 corps with improving Visual
+   - HOLD recommendation: Pick 1 consistent Visual performer
+   - SELL recommendation: Pick 1 corps struggling in Visual (if any)
+   - Which Visual subcaption is most competitive?
+
+   **MUSIC CAPTION ANALYSIS** (~200 words)
+   - Music Leader: Who? Score?
+   - BUY recommendation: Pick 1-2 corps with improving Music
+   - HOLD recommendation: Pick 1 consistent Music performer
+   - SELL recommendation: Pick 1 corps struggling in Music (if any)
+   - Brass vs Percussion - which is tighter?
+
+   **WEEKLY SUMMARY: BUY/HOLD/SELL** (~150 words)
+   This is the key section. Format it clearly:
+
+   🟢 BUY (Improving - add to lineup):
+   - [Corps 1]: [Reason with numbers]
+   - [Corps 2]: [Reason with numbers]
+
+   🟡 HOLD (Consistent - keep in lineup):
+   - [Corps 1]: [Reason with numbers]
+   - [Corps 2]: [Reason with numbers]
+
+   🔴 SELL (Declining - consider removing):
+   - [Corps 1]: [Reason with numbers]
+
+   **CAPTION PICK STRATEGY** (~100 words)
+   - If you need GE points, pick [Corps]
+   - If you need Visual points, pick [Corps]
+   - If you need Music points, pick [Corps]
+   - Sleeper pick of the week: [Corps] because [reason]
+
+Write like a fantasy sports analyst giving draft advice. Be specific, be actionable, help directors WIN.`;
 
   const schema = {
     type: Type.OBJECT,
     properties: {
-      headline: { type: Type.STRING, description: "Caption-focused headline" },
-      summary: { type: Type.STRING, description: "2-3 sentence summary" },
-      narrative: { type: Type.STRING, description: "500-700 word caption analysis" },
+      headline: { type: Type.STRING, description: "Caption-focused headline with recommendation" },
+      summary: { type: Type.STRING, description: "2-3 sentence summary with key recommendation" },
+      narrative: { type: Type.STRING, description: "700-900 word deep dive caption analysis" },
       captionInsights: {
         type: Type.OBJECT,
         properties: {
-          geInsight: { type: Type.STRING, description: "General Effect insight" },
-          visualInsight: { type: Type.STRING, description: "Visual caption insight" },
-          musicInsight: { type: Type.STRING, description: "Music caption insight" },
+          geInsight: { type: Type.STRING, description: "General Effect analysis" },
+          visualInsight: { type: Type.STRING, description: "Visual caption analysis" },
+          musicInsight: { type: Type.STRING, description: "Music caption analysis" },
         },
         required: ["geInsight", "visualInsight", "musicInsight"],
       },
+      recommendations: {
+        type: Type.OBJECT,
+        description: "Buy/Hold/Sell recommendations for fantasy directors",
+        properties: {
+          buy: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                corps: { type: Type.STRING },
+                caption: { type: Type.STRING },
+                reason: { type: Type.STRING },
+              },
+              required: ["corps", "caption", "reason"],
+            },
+          },
+          hold: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                corps: { type: Type.STRING },
+                caption: { type: Type.STRING },
+                reason: { type: Type.STRING },
+              },
+              required: ["corps", "caption", "reason"],
+            },
+          },
+          sell: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                corps: { type: Type.STRING },
+                caption: { type: Type.STRING },
+                reason: { type: Type.STRING },
+              },
+              required: ["corps", "caption", "reason"],
+            },
+          },
+        },
+        required: ["buy", "hold", "sell"],
+      },
     },
-    required: ["headline", "summary", "narrative", "captionInsights"],
+    required: ["headline", "summary", "narrative", "captionInsights", "recommendations"],
   };
 
   try {
@@ -3816,7 +4143,7 @@ function calculateTrendData(historicalData, reportDay, activeCorps) {
     const { corpsName, sourceYear } = corps;
     const yearEvents = historicalData[sourceYear] || [];
 
-    // Collect scores with caption breakdown
+    // Collect scores with caption breakdown and show info
     const scores = [];
     for (let day = reportDay - 6; day <= reportDay; day++) {
       const dayEvent = yearEvents.find(e => e.offSeasonDay === day);
@@ -3825,7 +4152,17 @@ function calculateTrendData(historicalData, reportDay, activeCorps) {
         if (corpsScore) {
           const total = calculateTotal(corpsScore.captions);
           const subtotals = calculateCaptionSubtotals(corpsScore.captions);
-          if (total > 0) scores.push({ day, total, captions: corpsScore.captions, subtotals });
+          if (total > 0) {
+            scores.push({
+              day,
+              total,
+              captions: corpsScore.captions,
+              subtotals,
+              // Include show context for journey narrative
+              showName: dayEvent.eventName || dayEvent.name || null,
+              location: dayEvent.location || null,
+            });
+          }
         }
       }
     }
@@ -3930,6 +4267,12 @@ function calculateTrendData(historicalData, reportDay, activeCorps) {
         captionTrends,
         volatility,
         dataPoints: scores.length,
+        // Full recent scores for corps feature show-by-show journey
+        recentScores: sortedScores,
+        // Season high/low for trajectory analysis
+        seasonHigh: bestInWindow,
+        seasonLow: worstInWindow,
+        totalImprovement: sortedScores.length >= 2 ? sortedScores[sortedScores.length - 1].total - sortedScores[0].total : 0,
       };
     }
   }
