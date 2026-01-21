@@ -2632,9 +2632,9 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
     });
     articles.push(fantasyDailyArticle);
 
-    // Article 5: FANTASY RECAP - Fantasy GE/Visual/Music caption trends
+    // Article 5: FANTASY RECAP - DCI Caption Stock Market Analysis for fantasy directors
     const fantasyRecapArticle = await generateFantasyRecapArticle({
-      reportDay, fantasyData, showContext, competitionContext, db
+      reportDay, dayScores, trendData, showContext, competitionContext, db
     });
     articles.push(fantasyRecapArticle);
 
@@ -3670,198 +3670,210 @@ The narrative MUST include fictitious quotes from directors. This is FANTASY spo
 }
 
 /**
- * Article 5: marching.art Caption Analysis
- * Fantasy caption trends focusing on General Effect, Visual, and Music over the last week
+ * Article 5: DCI Caption Stock Market Analysis
+ * Treats individual DCI captions (GE1, GE2, VP, VA, CG, B, MA, P) as stocks for fantasy investment
+ * Written like a day trader's market analysis
  */
-async function generateFantasyRecapArticle({ reportDay, fantasyData, showContext, competitionContext, db }) {
+async function generateFantasyRecapArticle({ reportDay, dayScores, trendData, showContext, competitionContext, db }) {
   const toneGuidance = getToneGuidance(competitionContext, "fantasy_captions");
 
-  const shows = fantasyData?.current?.shows || [];
-  const allResults = shows.flatMap(s => s.results || []);
-  const competitiveResults = allResults.filter(r => r.corpsClass !== 'soundSport');
+  // Build individual caption "stock" data for each corps
+  const captionStocks = [];
 
-  // Get trend data from previous days
-  const trendRecaps = fantasyData?.trends || [];
+  dayScores.forEach(score => {
+    const trend = trendData[score.corps] || {};
+    const captionTrends = trend.captionTrends || {};
 
-  // Analyze caption performance across the week
-  const captionPerformance = {
-    ge: [],
-    visual: [],
-    music: [],
-  };
+    // Individual caption scores with trends
+    const captions = [
+      { name: 'GE1', fullName: 'GE1 (Music Effect)', score: score.captions?.GE1, trend: captionTrends.ge?.trending, weight: '~20%' },
+      { name: 'GE2', fullName: 'GE2 (Visual Effect)', score: score.captions?.GE2, trend: captionTrends.ge?.trending, weight: '~20%' },
+      { name: 'VP', fullName: 'Visual Proficiency', score: score.captions?.VP, trend: captionTrends.visual?.trending, weight: '~10%' },
+      { name: 'VA', fullName: 'Visual Analysis', score: score.captions?.VA, trend: captionTrends.visual?.trending, weight: '~10%' },
+      { name: 'CG', fullName: 'Color Guard', score: score.captions?.CG, trend: captionTrends.visual?.trending, weight: '~10%' },
+      { name: 'B', fullName: 'Brass', score: score.captions?.B, trend: captionTrends.music?.trending, weight: '~10%' },
+      { name: 'MA', fullName: 'Music Analysis', score: score.captions?.MA, trend: captionTrends.music?.trending, weight: '~10%' },
+      { name: 'P', fullName: 'Percussion', score: score.captions?.P, trend: captionTrends.music?.trending, weight: '~10%' },
+    ];
 
-  // Group by caption performance if available
-  competitiveResults.forEach(result => {
-    if (result.captionScores) {
-      captionPerformance.ge.push({ name: result.corpsName, score: result.captionScores.ge || 0 });
-      captionPerformance.visual.push({ name: result.corpsName, score: result.captionScores.visual || 0 });
-      captionPerformance.music.push({ name: result.corpsName, score: result.captionScores.music || 0 });
-    }
+    captions.forEach(cap => {
+      if (cap.score && cap.score > 0) {
+        captionStocks.push({
+          corps: score.corps,
+          caption: cap.name,
+          fullName: cap.fullName,
+          score: cap.score,
+          trend: cap.trend || 'steady',
+          weight: cap.weight,
+          dayChange: trend.dayChange || 0,
+        });
+      }
+    });
   });
 
-  // Sort by caption scores
-  captionPerformance.ge.sort((a, b) => b.score - a.score);
-  captionPerformance.visual.sort((a, b) => b.score - a.score);
-  captionPerformance.music.sort((a, b) => b.score - a.score);
+  // Sort by score within each caption type
+  const captionTypes = ['GE1', 'GE2', 'VP', 'VA', 'CG', 'B', 'MA', 'P'];
+  const stocksByCaption = {};
+  captionTypes.forEach(cap => {
+    stocksByCaption[cap] = captionStocks
+      .filter(s => s.caption === cap)
+      .sort((a, b) => b.score - a.score);
+  });
 
-  const fantasyShowName = formatFantasyEventName(showContext.showName);
+  // Find trending stocks
+  const trendingUp = captionStocks.filter(s => s.trend === 'up').sort((a, b) => b.score - a.score);
+  const trendingDown = captionStocks.filter(s => s.trend === 'down').sort((a, b) => b.score - a.score);
+  const steadyPerformers = captionStocks.filter(s => s.trend === 'steady').sort((a, b) => b.score - a.score);
 
-  const prompt = `You are a marching.art fantasy analyst writing weekly caption analysis. Focus on DATA and PRACTICAL ADVICE, not hype.
+  const prompt = `You are a fantasy drum corps analyst helping directors make smart caption picks. Analyze individual DCI caption performance (GE1, GE2, VP, VA, CG, B, MA, P) and give actionable buy/hold/sell recommendations.
 
 ═══════════════════════════════════════════════════════════════
-MARCHING.ART CAPTION ANALYSIS - WEEK ENDING DAY ${reportDay}
+📊 DCI CAPTION TRACKER - DAY ${reportDay}
 ═══════════════════════════════════════════════════════════════
-Date: ${showContext.date}
-Analysis Period: Days ${reportDay - 6} through ${reportDay}
+Fantasy directors pick individual DCI corps captions for their lineups.
+Your job: Help them find the best caption picks based on recent trends.
 
-CAPTION WEIGHTS:
-• GENERAL EFFECT (GE): 40% of score
-• VISUAL: 30% of score
-• MUSIC: 30% of score
+═══════════════════════════════════════════════════════════════
+CAPTION BREAKDOWN - ALL 8 CATEGORIES
+═══════════════════════════════════════════════════════════════
 
-WEEKLY DATA:
-${(() => {
-  if (trendRecaps.length < 2) return "Limited trend data available (early season).";
+📊 GE1 (MUSIC EFFECT) - Worth ~20% of total score
+${stocksByCaption.GE1?.slice(0, 5).map((s, i) =>
+  `${i + 1}. ${s.corps}: ${s.score.toFixed(2)} ${s.trend === 'up' ? '↑' : s.trend === 'down' ? '↓' : '→'}`
+).join('\n') || 'No data'}
 
-  const weeklyAvg = trendRecaps.reduce((acc, recap) => {
-    const results = (recap.shows || []).flatMap(s => s.results || []).filter(r => r.corpsClass !== 'soundSport');
-    const avg = results.length > 0
-      ? results.reduce((sum, r) => sum + r.totalScore, 0) / results.length
-      : 0;
-    return acc + avg;
-  }, 0) / trendRecaps.length;
+📊 GE2 (VISUAL EFFECT) - Worth ~20% of total score
+${stocksByCaption.GE2?.slice(0, 5).map((s, i) =>
+  `${i + 1}. ${s.corps}: ${s.score.toFixed(2)} ${s.trend === 'up' ? '↑' : s.trend === 'down' ? '↓' : '→'}`
+).join('\n') || 'No data'}
 
-  return `• Week average score: ${weeklyAvg.toFixed(3)}
-• Competitions: ${trendRecaps.length}
-• Total performances: ${trendRecaps.reduce((sum, r) => sum + ((r.shows || []).flatMap(s => s.results || []).length), 0)}`;
-})()}
+📊 VP (VISUAL PROFICIENCY) - Worth ~10% of total score
+${stocksByCaption.VP?.slice(0, 5).map((s, i) =>
+  `${i + 1}. ${s.corps}: ${s.score.toFixed(2)} ${s.trend === 'up' ? '↑' : s.trend === 'down' ? '↓' : '→'}`
+).join('\n') || 'No data'}
 
-TODAY'S CAPTION LEADERS:
-${(() => {
-  if (captionPerformance.ge.length === 0) {
-    const sorted = [...competitiveResults].sort((a, b) => b.totalScore - a.totalScore).slice(0, 5);
-    return `TOP 5 BY TOTAL:
-${sorted.map((r, i) => `${i + 1}. "${r.corpsName}" - ${r.totalScore.toFixed(3)}`).join('\n')}`;
-  }
+📊 VA (VISUAL ANALYSIS) - Worth ~10% of total score
+${stocksByCaption.VA?.slice(0, 5).map((s, i) =>
+  `${i + 1}. ${s.corps}: ${s.score.toFixed(2)} ${s.trend === 'up' ? '↑' : s.trend === 'down' ? '↓' : '→'}`
+).join('\n') || 'No data'}
 
-  return `GE LEADERS:
-${captionPerformance.ge.slice(0, 3).map((r, i) => `${i + 1}. "${r.name}" - ${r.score.toFixed(2)}`).join('\n')}
+📊 CG (COLOR GUARD) - Worth ~10% of total score
+${stocksByCaption.CG?.slice(0, 5).map((s, i) =>
+  `${i + 1}. ${s.corps}: ${s.score.toFixed(2)} ${s.trend === 'up' ? '↑' : s.trend === 'down' ? '↓' : '→'}`
+).join('\n') || 'No data'}
 
-VISUAL LEADERS:
-${captionPerformance.visual.slice(0, 3).map((r, i) => `${i + 1}. "${r.name}" - ${r.score.toFixed(2)}`).join('\n')}
+📊 B (BRASS) - Worth ~10% of total score
+${stocksByCaption.B?.slice(0, 5).map((s, i) =>
+  `${i + 1}. ${s.corps}: ${s.score.toFixed(2)} ${s.trend === 'up' ? '↑' : s.trend === 'down' ? '↓' : '→'}`
+).join('\n') || 'No data'}
 
-MUSIC LEADERS:
-${captionPerformance.music.slice(0, 3).map((r, i) => `${i + 1}. "${r.name}" - ${r.score.toFixed(2)}`).join('\n')}`;
-})()}
+📊 MA (MUSIC ANALYSIS) - Worth ~10% of total score
+${stocksByCaption.MA?.slice(0, 5).map((s, i) =>
+  `${i + 1}. ${s.corps}: ${s.score.toFixed(2)} ${s.trend === 'up' ? '↑' : s.trend === 'down' ? '↓' : '→'}`
+).join('\n') || 'No data'}
+
+📊 P (PERCUSSION) - Worth ~10% of total score
+${stocksByCaption.P?.slice(0, 5).map((s, i) =>
+  `${i + 1}. ${s.corps}: ${s.score.toFixed(2)} ${s.trend === 'up' ? '↑' : s.trend === 'down' ? '↓' : '→'}`
+).join('\n') || 'No data'}
+
+═══════════════════════════════════════════════════════════════
+📈 TRENDING UP - ${trendingUp.length} captions on the rise
+═══════════════════════════════════════════════════════════════
+${trendingUp.slice(0, 8).map(s => `↑ ${s.corps} ${s.caption}: ${s.score.toFixed(2)}`).join('\n') || 'None identified'}
+
+═══════════════════════════════════════════════════════════════
+📉 TRENDING DOWN - ${trendingDown.length} captions slipping
+═══════════════════════════════════════════════════════════════
+${trendingDown.slice(0, 8).map(s => `↓ ${s.corps} ${s.caption}: ${s.score.toFixed(2)}`).join('\n') || 'None identified'}
+
+═══════════════════════════════════════════════════════════════
+→ HOLDING STEADY - ${steadyPerformers.length} reliable picks
+═══════════════════════════════════════════════════════════════
+${steadyPerformers.slice(0, 8).map(s => `→ ${s.corps} ${s.caption}: ${s.score.toFixed(2)}`).join('\n') || 'None identified'}
 
 ${toneGuidance}
 
 ═══════════════════════════════════════════════════════════════
-YOUR MISSION: THE FANTASY DIRECTOR'S ULTIMATE GUIDE
+WRITE A FUN, DATA-DRIVEN CAPTION ANALYSIS
 ═══════════════════════════════════════════════════════════════
-This article should be the DEFINITIVE resource for fantasy directors making caption selections. Help them understand:
-- Which DCI corps to BUY (improving, undervalued)
-- Which DCI corps to HOLD (consistent, reliable)
-- Which DCI corps to SELL (declining, overvalued)
+Keep it engaging for drum corps fans who love diving into the numbers.
+Use ↑↓→ symbols to show trends. Be specific with scores and margins.
 
-CRITICAL TIMING NOTE:
-Your recommendations should match WHERE WE ARE IN THE SEASON (Day ${reportDay}).
-- If a corps was hot early but has plateaued, say "was a BUY early season, now a HOLD"
-- If a corps started slow but is improving, say "BUY - trending up since Day X"
-- Be specific about WHEN the trend started
+1. HEADLINE: Specific caption insight with trend
+   ✓ "${stocksByCaption.GE1?.[0]?.corps || 'Bluecoats'} GE1 ↑ climbs to ${stocksByCaption.GE1?.[0]?.score?.toFixed(2) || '17.50'}"
+   ✓ "Caption Watch: ${trendingUp.length} rising, ${trendingDown.length} falling"
+   ✓ "Brass battle tightens - top 3 separated by 0.40"
 
-AVOID THESE CLICHÉS:
-- "as the season heats up" / "competition intensifies"
-- "key area of focus" / "taken center stage"
-- "ensembles that can elevate" / "boosting their fantasy stock"
-- "strategic insights for directors" (just give the insights)
-- NEVER use subheadings like "GE: The X-Factor"
+2. SUMMARY: 2-3 sentences highlighting the key caption movements of the day.
 
-═══════════════════════════════════════════════════════════════
-ARTICLE REQUIREMENTS
-═══════════════════════════════════════════════════════════════
-1. HEADLINE: Include a specific recommendation
-   ✓ "Caption Analysis: ${captionPerformance.ge[0]?.name || 'Top GE corps'} a BUY in GE at ${captionPerformance.ge[0]?.score?.toFixed(2) || 'N/A'}"
-   ✓ "Visual caption tightening - 3 corps within 0.5"
-   ✗ AVOID: "heats up" / "drives success" / "takes center stage"
+3. NARRATIVE: 700-900 word analysis with these sections:
 
-2. SUMMARY: 2-3 sentences with ONE clear recommendation.
+   **THE BIG PICTURE** (~100 words)
+   - How many captions trending up vs down?
+   - Any surprising movers?
+   - Overall competitiveness across captions
 
-3. NARRATIVE: 700-900 word deep dive (THIS MUST BE THOROUGH):
+   **GENERAL EFFECT BREAKDOWN** (~150 words)
+   - GE1 and GE2 leaders and gaps
+   - Who's gaining ground? Who's losing it?
+   - Use ↑↓→ symbols
 
-   **GENERAL EFFECT ANALYSIS** (~200 words)
-   - GE Leader: Who? Score? Margin over 2nd?
-   - BUY recommendation: Pick 1-2 specific corps with rising GE
-   - HOLD recommendation: Pick 1 consistent GE performer
-   - SELL recommendation: Pick 1 corps with declining GE (if any)
-   - Explain WHY with specific numbers
+   **VISUAL CAPTIONS** (~150 words)
+   - VP, VA, Color Guard analysis
+   - Which visual caption is the tightest race?
+   - Any corps with standout guard/visual programs?
 
-   **VISUAL CAPTION ANALYSIS** (~200 words)
-   - Visual Leader: Who? Score?
-   - BUY recommendation: Pick 1-2 corps with improving Visual
-   - HOLD recommendation: Pick 1 consistent Visual performer
-   - SELL recommendation: Pick 1 corps struggling in Visual (if any)
-   - Which Visual subcaption is most competitive?
+   **MUSIC CAPTIONS** (~150 words)
+   - Brass, Music Analysis, Percussion breakdown
+   - Brass vs Percussion - where's the value?
+   - Which corps have underrated music scores?
 
-   **MUSIC CAPTION ANALYSIS** (~200 words)
-   - Music Leader: Who? Score?
-   - BUY recommendation: Pick 1-2 corps with improving Music
-   - HOLD recommendation: Pick 1 consistent Music performer
-   - SELL recommendation: Pick 1 corps struggling in Music (if any)
-   - Brass vs Percussion - which is tighter?
+   **CAPTION PICKS** (~200 words)
+   Format your recommendations clearly:
 
-   **WEEKLY SUMMARY: BUY/HOLD/SELL** (~150 words)
-   This is the key section. Format it clearly:
+   🟢 BUY (Add these to your lineup):
+   - [Corps] [Caption] @ [Score] ↑ - [Why it's worth picking]
+   - [Corps] [Caption] @ [Score] ↑ - [Why it's worth picking]
 
-   🟢 BUY (Improving - add to lineup):
-   - [Corps 1]: [Reason with numbers]
-   - [Corps 2]: [Reason with numbers]
+   🟡 HOLD (Keep if you have them):
+   - [Corps] [Caption] @ [Score] → - [Why they're reliable]
 
-   🟡 HOLD (Consistent - keep in lineup):
-   - [Corps 1]: [Reason with numbers]
-   - [Corps 2]: [Reason with numbers]
+   🔴 SELL (Consider dropping):
+   - [Corps] [Caption] @ [Score] ↓ - [Why they're risky]
 
-   🔴 SELL (Declining - consider removing):
-   - [Corps 1]: [Reason with numbers]
-
-   **CAPTION PICK STRATEGY** (~100 words)
-   - If you need GE points, pick [Corps]
-   - If you need Visual points, pick [Corps]
-   - If you need Music points, pick [Corps]
-   - Sleeper pick of the week: [Corps] because [reason]
-
-Write like a fantasy sports analyst giving draft advice. Be specific, be actionable, help directors WIN.
+   **SLEEPER PICK** (~50 words)
+   - One under-the-radar caption that could pay off
 
 ═══════════════════════════════════════════════════════════════
-STRICT REQUIREMENTS - YOUR ARTICLE WILL BE REJECTED IF:
+STRICT REQUIREMENTS:
 ═══════════════════════════════════════════════════════════════
-1. The narrative is under 600 words (MUST be 700-900 words)
-2. You don't include specific buy/hold/sell recommendations with numbers
-3. You analyze fewer than 3 captions (GE, Visual, Music)
-4. You use ANY banned words: dominant, heating up, intensifies, key area of focus, taken center stage
-5. You use generic phrases without specific data
-6. You repeat the summary as the narrative
+1. The narrative MUST be 700-900 words (not a short summary)
+2. Include ↑↓→ trend symbols throughout
+3. Analyze INDIVIDUAL CAPTIONS (GE1, GE2, VP, VA, CG, B, MA, P), not corps overall
+4. Include specific scores and margins
+5. AVOID: dominant, heating up, intensifies, key area of focus, captivating
 
-The narrative MUST be data-driven with specific score comparisons.`;
+Keep it fun and informative - this is fantasy drum corps, not Wall Street!`;
 
   const schema = {
     type: Type.OBJECT,
     properties: {
-      headline: { type: Type.STRING, description: "Specific recommendation with corps name and score, NO 'heats up' or 'intensifies'" },
-      summary: { type: Type.STRING, description: "Exactly 2-3 sentences with ONE clear buy/hold/sell recommendation and specific numbers" },
-      narrative: { type: Type.STRING, description: "FULL 700-900 word analysis with 5 sections: GE analysis (200 words), Visual analysis (200 words), Music analysis (200 words), Buy/Hold/Sell summary (150 words), Caption pick strategy (100 words). NEVER use 'dominant', 'heating up', 'key area of focus'" },
+      headline: { type: Type.STRING, description: "Caption-focused headline with corps name, specific caption (GE1/B/CG etc), score, and ↑↓→ trend symbol" },
+      summary: { type: Type.STRING, description: "2-3 sentences highlighting key caption movements and one clear recommendation" },
+      narrative: { type: Type.STRING, description: "FULL 700-900 word analysis covering: Big Picture, GE Breakdown (GE1/GE2), Visual Captions (VP/VA/CG), Music Captions (B/MA/P), Caption Picks (BUY/HOLD/SELL with ↑↓→), Sleeper Pick. Fun but data-driven." },
       captionInsights: {
         type: Type.OBJECT,
         properties: {
-          geInsight: { type: Type.STRING, description: "General Effect analysis" },
-          visualInsight: { type: Type.STRING, description: "Visual caption analysis" },
-          musicInsight: { type: Type.STRING, description: "Music caption analysis" },
+          geInsight: { type: Type.STRING, description: "GE1 and GE2 analysis with specific scores" },
+          visualInsight: { type: Type.STRING, description: "VP, VA, CG analysis with specific scores" },
+          musicInsight: { type: Type.STRING, description: "B, MA, P analysis with specific scores" },
         },
         required: ["geInsight", "visualInsight", "musicInsight"],
       },
       recommendations: {
         type: Type.OBJECT,
-        description: "Buy/Hold/Sell recommendations for fantasy directors",
+        description: "Caption pick recommendations for fantasy directors",
         properties: {
           buy: {
             type: Type.ARRAY,
@@ -3869,10 +3881,11 @@ The narrative MUST be data-driven with specific score comparisons.`;
               type: Type.OBJECT,
               properties: {
                 corps: { type: Type.STRING },
-                caption: { type: Type.STRING },
+                caption: { type: Type.STRING, description: "Specific caption: GE1, GE2, VP, VA, CG, B, MA, or P" },
+                score: { type: Type.NUMBER },
                 reason: { type: Type.STRING },
               },
-              required: ["corps", "caption", "reason"],
+              required: ["corps", "caption", "score", "reason"],
             },
           },
           hold: {
@@ -3881,10 +3894,11 @@ The narrative MUST be data-driven with specific score comparisons.`;
               type: Type.OBJECT,
               properties: {
                 corps: { type: Type.STRING },
-                caption: { type: Type.STRING },
+                caption: { type: Type.STRING, description: "Specific caption: GE1, GE2, VP, VA, CG, B, MA, or P" },
+                score: { type: Type.NUMBER },
                 reason: { type: Type.STRING },
               },
-              required: ["corps", "caption", "reason"],
+              required: ["corps", "caption", "score", "reason"],
             },
           },
           sell: {
@@ -3893,10 +3907,11 @@ The narrative MUST be data-driven with specific score comparisons.`;
               type: Type.OBJECT,
               properties: {
                 corps: { type: Type.STRING },
-                caption: { type: Type.STRING },
+                caption: { type: Type.STRING, description: "Specific caption: GE1, GE2, VP, VA, CG, B, MA, or P" },
+                score: { type: Type.NUMBER },
                 reason: { type: Type.STRING },
               },
-              required: ["corps", "caption", "reason"],
+              required: ["corps", "caption", "score", "reason"],
             },
           },
         },
