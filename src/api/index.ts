@@ -95,13 +95,10 @@ export {
   leaveLeague,
   subscribeToChat,
   postChatMessage,
-  subscribeToTrades,
-  proposeStaffTrade,
-  respondToTrade,
   PLACEMENT_POINTS,
   getPlacementPoints,
 } from './leagues';
-export type { ChatMessage, Trade } from './leagues';
+export type { ChatMessage } from './leagues';
 
 // Re-export leaderboard API
 export {

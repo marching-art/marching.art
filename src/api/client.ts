@@ -196,14 +196,7 @@ type CloudFunctionName =
   | 'createLeague'
   | 'joinLeague'
   | 'leaveLeague'
-  | 'proposeStaffTrade'
-  | 'respondToStaffTrade'
   | 'postLeagueMessage'
-  | 'purchaseEquipment'
-  | 'repairEquipment'
-  | 'hireStaff'
-  | 'fireStaff'
-  | 'bidOnStaff'
   | 'selectShows'
   | 'updateLineup';
 
@@ -265,10 +258,6 @@ export const paths = {
     `artifacts/${DATA_NAMESPACE}/users/${uid}/notifications`,
   userLeagueNotifications: (uid: string) =>
     `artifacts/${DATA_NAMESPACE}/users/${uid}/notifications/leagues`,
-
-  // Staff paths
-  staffMarketplace: () => `artifacts/${DATA_NAMESPACE}/staff_marketplace`,
-  staffAuctions: () => `artifacts/${DATA_NAMESPACE}/staff_auctions`,
 
   // Show paths
   shows: (seasonUid: string) => `seasons/${seasonUid}/shows`,

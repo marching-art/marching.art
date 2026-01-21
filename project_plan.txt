@@ -117,14 +117,7 @@ Phase 4: Gamification & Social Features
 [ ] Task 4.4: UI (Profile): Build the public-facing User Profile page.
 Display user's corps, show concept, and earned achievements/trophies.
 Implement the "Declare Rivalry" button.
-[ ] Task 4.5: UI (Dashboard): Build "Staff Management" portal.
-Renders a "Staff Marketplace" (fetched from staff-market).
-Allows user to "Buy" staff with profile.corpsCoin.
-Allows user to assign staff to their 8 captions.
-[ ] Task 4.6: UI (Dashboard): Build "Equipment & Logistics" portal.
-Allows user to spend CorpsCoin to buy/upgrade buses and trucks.
-[ ] Task 4.7: Backend (Cloud Function): Update runDailyScores to include "Equipment Breakdown" logic (a small % chance of getting a 0 score if corps.equipment.bus.health < 10).
-[ ] Task 4.8: UI (Dashboard): Build "Daily Rehearsal" component.
+[ ] Task 4.5: UI (Dashboard): Build "Daily Rehearsal" component.
 A simple button user can press once every 23 hours.
 Calls a Cloud Function runDailyRehearsal to increment profile.xp.
 Phase 5: The "Wow" Factor (Uniform Builder)

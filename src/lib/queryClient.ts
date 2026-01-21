@@ -89,8 +89,4 @@ export const queryKeys = {
   // Notification queries
   leagueNotifications: (uid: string) => ['leagueNotifications', uid] as const,
   unreadNotificationCount: (uid: string) => ['unreadNotificationCount', uid] as const,
-
-  // Staff queries
-  staffMarketplace: () => ['staffMarketplace'] as const,
-  staffAuctions: () => ['staffAuctions'] as const,
 };

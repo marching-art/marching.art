@@ -19,7 +19,6 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
     isPublic: true,
     maxMembers: 10,
     settings: {
-      enableStaffTrading: true,
       scoringFormat: 'circuit',
       finalsSize: 12,
       prizePool: 1000,

@@ -406,7 +406,6 @@ const HowToPlay = () => {
                   <li>Public or private leagues</li>
                   <li>Custom league rules and settings</li>
                   <li>League-specific leaderboards</li>
-                  <li>Staff trading between members (coming soon)</li>
                   <li>League chat and social features (coming soon)</li>
                 </ul>
               </div>

@@ -368,7 +368,6 @@ export interface League {
 }
 
 export interface LeagueSettings {
-  enableStaffTrading: boolean;
   scoringFormat: 'circuit' | 'weekly' | 'total';
   finalsSize: number;
   prizePool: number;
