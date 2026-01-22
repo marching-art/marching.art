@@ -67,30 +67,49 @@ const MatchupDetail = ({
   const userWon = isCompleted && matchup.winnerId === currentUserId;
   const userLost = isCompleted && matchup.winnerId && matchup.winnerId !== currentUserId;
 
-  // Fetch H2H history
+  // Fetch H2H history from rivalries meta document
   useEffect(() => {
     const fetchH2H = async () => {
       if (!league?.id || !currentUserId || !opponent?.uid) {
+        setH2hRecord(null);
         setLoading(false);
         return;
       }
 
       try {
-        // In production, this would fetch from a collection of historical matchups
-        // For now, generate mock H2H data
-        const mockH2H = {
-          user1Id: currentUserId,
-          user2Id: opponent.uid,
-          user1Wins: Math.floor(Math.random() * 5),
-          user2Wins: Math.floor(Math.random() * 4),
-          ties: Math.floor(Math.random() * 2),
-          totalMatchups: 0
-        };
-        mockH2H.totalMatchups = mockH2H.user1Wins + mockH2H.user2Wins + mockH2H.ties;
+        // Fetch pre-computed rivalries from the meta document
+        const rivalriesRef = doc(db, `artifacts/marching-art/leagues/${league.id}/meta/rivalries`);
+        const rivalriesDoc = await getDoc(rivalriesRef);
 
-        setH2hRecord(mockH2H);
+        if (rivalriesDoc.exists()) {
+          const { rivalries } = rivalriesDoc.data();
+
+          // Find the rivalry record between current user and opponent
+          const h2h = rivalries?.find(r =>
+            (r.player1 === currentUserId && r.player2 === opponent.uid) ||
+            (r.player2 === currentUserId && r.player1 === opponent.uid)
+          );
+
+          if (h2h) {
+            // Determine which player is the current user
+            const isPlayer1 = h2h.player1 === currentUserId;
+            setH2hRecord({
+              user1Wins: isPlayer1 ? h2h.p1Wins : h2h.p2Wins,
+              user2Wins: isPlayer1 ? h2h.p2Wins : h2h.p1Wins,
+              ties: h2h.ties || 0,
+              totalMatchups: h2h.totalMatches || 0,
+              intensity: h2h.intensity || 'emerging'
+            });
+          } else {
+            // No rivalry record means first or second matchup
+            setH2hRecord(null);
+          }
+        } else {
+          setH2hRecord(null);
+        }
       } catch (error) {
-        console.error('Error fetching H2H:', error);
+        console.error('Error fetching H2H data:', error);
+        setH2hRecord(null);
       } finally {
         setLoading(false);
       }
@@ -403,11 +422,25 @@ ${userIsWinning ? '(Leading)' : isTied ? '(Tied)' : '(Trailing)'}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="card p-4"
+          className={`card p-4 ${h2hRecord.intensity === 'intense' ? 'border-2 border-red-500/30' : ''}`}
         >
           <h3 className="text-lg font-bold text-cream-100 mb-3 flex items-center gap-2">
-            <Swords className="w-5 h-5 text-purple-400" />
+            {h2hRecord.intensity === 'intense' ? (
+              <Flame className="w-5 h-5 text-red-400" />
+            ) : (
+              <Swords className="w-5 h-5 text-purple-400" />
+            )}
             Head-to-Head History
+            {h2hRecord.intensity && (
+              <span className={`text-xs px-2 py-0.5 rounded-sm ${
+                h2hRecord.intensity === 'intense' ? 'bg-red-500/20 text-red-400' :
+                h2hRecord.intensity === 'established' ? 'bg-purple-500/20 text-purple-400' :
+                'bg-gray-500/20 text-gray-400'
+              }`}>
+                {h2hRecord.intensity === 'intense' ? '🔥 Rivalry' :
+                 h2hRecord.intensity === 'established' ? 'Rivalry' : 'Emerging'}
+              </span>
+            )}
           </h3>
 
           <div className="flex items-center justify-center gap-4">

@@ -350,8 +350,10 @@ const EmptyMatchupsState = ({ selectedWeek, currentWeek, league, isCommissioner 
 
   return (
     <div className="bg-[#1a1a1a] border border-[#333] p-8 text-center">
-      <div className="w-16 h-16 mx-auto mb-4 bg-[#222] border border-[#333] flex items-center justify-center">
-        <Swords className="w-8 h-8 text-gray-500" />
+      <div className={`w-16 h-16 mx-auto mb-4 flex items-center justify-center ${
+        isCommissioner && isCurrentWeek ? 'bg-yellow-500/10 border-2 border-yellow-500/30' : 'bg-[#222] border border-[#333]'
+      }`}>
+        <Swords className={`w-8 h-8 ${isCommissioner && isCurrentWeek ? 'text-yellow-500' : 'text-gray-500'}`} />
       </div>
 
       <h3 className="text-lg font-bold text-white mb-2">
@@ -366,37 +368,61 @@ const EmptyMatchupsState = ({ selectedWeek, currentWeek, league, isCommissioner 
           league?.members?.length < 2
             ? 'Need at least 2 league members to generate matchups.'
             : isCommissioner
-            ? 'As the commissioner, you can generate matchups from the league settings.'
-            : 'The commissioner needs to generate matchups for this week.'
+            ? 'Generate matchups to start this week\'s competition!'
+            : 'Waiting for the commissioner to generate matchups for this week.'
         )}
-        {isFutureWeek && 'Matchups for this week will be available as the season progresses.'}
+        {isFutureWeek && 'Matchups will be automatically generated each Sunday at midnight ET.'}
       </p>
 
       {isCurrentWeek && (
-        <div className="flex flex-col items-center gap-2">
-          {league?.members?.length >= 2 && (
-            <div className="flex items-center gap-2 px-3 py-2 bg-[#222] border border-[#333]">
-              <Users className="w-4 h-4 text-green-500" />
-              <span className="text-xs text-gray-400">
-                {league.members.length} members ready
-              </span>
-            </div>
-          )}
-          {league?.members?.length < 2 && (
-            <div className="flex items-center gap-2 px-3 py-2 bg-yellow-500/10 border border-yellow-500/30">
-              <Users className="w-4 h-4 text-yellow-500" />
-              <span className="text-xs text-yellow-500">
-                Invite {2 - (league?.members?.length || 0)} more member{2 - (league?.members?.length || 0) !== 1 ? 's' : ''}
-              </span>
+        <div className="flex flex-col items-center gap-3">
+          {league?.members?.length >= 2 ? (
+            <>
+              <div className="flex items-center gap-2 px-3 py-2 bg-green-500/10 border border-green-500/30">
+                <Users className="w-4 h-4 text-green-500" />
+                <span className="text-xs text-green-400">
+                  {league.members.length} members ready to compete
+                </span>
+              </div>
+              {isCommissioner && (
+                <div className="flex flex-col items-center gap-2">
+                  <p className="text-xs text-gray-500">
+                    Go to Settings → Generate Matchups to create this week's schedule
+                  </p>
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/30 text-xs text-yellow-500">
+                    <Zap className="w-3.5 h-3.5" />
+                    Uses smart pairing based on standings
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex items-center gap-2 px-3 py-2 bg-yellow-500/10 border border-yellow-500/30">
+                <Users className="w-4 h-4 text-yellow-500" />
+                <span className="text-xs text-yellow-500">
+                  Invite {2 - (league?.members?.length || 0)} more member{2 - (league?.members?.length || 0) !== 1 ? 's' : ''} to start
+                </span>
+              </div>
+              {league?.inviteCode && (
+                <p className="text-xs text-gray-500">
+                  Share code: <span className="font-mono text-gray-400">{league.inviteCode}</span>
+                </p>
+              )}
             </div>
           )}
         </div>
       )}
 
       {isFutureWeek && (
-        <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
-          <Clock className="w-4 h-4" />
-          <span>Week {selectedWeek} starts soon</span>
+        <div className="flex flex-col items-center gap-2">
+          <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+            <Clock className="w-4 h-4" />
+            <span>Week {selectedWeek} matchups will be set automatically</span>
+          </div>
+          <p className="text-xs text-gray-600">
+            Matchups are generated every Sunday at 11:59 PM ET
+          </p>
         </div>
       )}
     </div>

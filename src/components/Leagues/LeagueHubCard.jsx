@@ -7,25 +7,7 @@ import {
   BarChart3, Calendar, Flame, ArrowRightLeft, Medal,
   TrendingUp, Swords
 } from 'lucide-react';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../firebase';
-
-// Mock data generator for demo (replace with real data in production)
-const generateMockStats = (league, userId) => {
-  // In production, this would come from league standings data
-  const memberCount = league.members?.length || league.memberCount || 1;
-  const randomRank = Math.floor(Math.random() * memberCount) + 1;
-  const wins = Math.floor(Math.random() * 8);
-  const losses = Math.floor(Math.random() * (8 - wins));
-
-  return {
-    rank: randomRank,
-    wins,
-    losses,
-    circuitPoints: wins * 15 + losses * 3,
-    isOnFire: wins >= 3 && losses === 0
-  };
-};
+import { getLeagueStandings } from '../../api/leagues';
 
 const LeagueHubCard = ({ league, userProfile, onClick, isMember }) => {
   const [stats, setStats] = useState(null);
@@ -43,14 +25,24 @@ const LeagueHubCard = ({ league, userProfile, onClick, isMember }) => {
       }
 
       try {
-        // Try to fetch real league standings
-        // For now using mock data until standings API is available
-        const mockStats = generateMockStats(league, userProfile.uid);
-        setStats(mockStats);
+        const standings = await getLeagueStandings(league.id);
+        const userStanding = standings.find(s => s.uid === userProfile.uid);
+
+        if (userStanding) {
+          setStats({
+            rank: userStanding.rank || standings.indexOf(userStanding) + 1,
+            wins: userStanding.wins || 0,
+            losses: userStanding.losses || 0,
+            circuitPoints: userStanding.circuitPoints || userStanding.totalPoints || 0,
+            isOnFire: (userStanding.streakType === 'W' && userStanding.streak >= 3)
+          });
+        } else {
+          // User has no standings data yet
+          setStats(null);
+        }
       } catch (error) {
         console.error('Error fetching league stats:', error);
-        // Fallback to mock stats
-        setStats(generateMockStats(league, userProfile.uid));
+        setStats(null);
       } finally {
         setLoading(false);
       }
@@ -150,7 +142,7 @@ const LeagueHubCard = ({ league, userProfile, onClick, isMember }) => {
       </div>
 
       {/* Stats Row - Your Record & Rank */}
-      {stats && (
+      {stats ? (
         <div className="flex items-center gap-4 mb-4 p-3 bg-black/20 rounded-sm">
           {/* Rank */}
           <div className="flex items-center gap-2">
@@ -202,6 +194,20 @@ const LeagueHubCard = ({ league, userProfile, onClick, isMember }) => {
             <Flame className="w-5 h-5 text-orange-400 ml-auto animate-pulse" title="On a win streak!" />
           )}
         </div>
+      ) : !loading && (
+        <div className="mb-4 p-3 bg-blue-500/5 border border-blue-500/20 rounded-sm">
+          <div className="flex items-start gap-3">
+            <div className="p-1.5 bg-blue-500/10 rounded-sm">
+              <Calendar className="w-4 h-4 text-blue-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-blue-400 mb-0.5">Get Started</p>
+              <p className="text-xs text-cream-500/60 leading-relaxed">
+                Register for a show to start competing! Your standings will appear after your first matchup.
+              </p>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* This Week Matchup Preview */}
@@ -223,8 +229,8 @@ const LeagueHubCard = ({ league, userProfile, onClick, isMember }) => {
           </div>
           <span className="text-xs font-display font-bold text-cream-500/60 uppercase">vs</span>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-display text-cream-100">
-              {memberCount > 1 ? `Opponent ${Math.floor(Math.random() * memberCount) + 1}` : 'TBD'}
+            <span className="text-sm font-display text-cream-400">
+              TBD
             </span>
             <div className="w-8 h-8 rounded-sm bg-charcoal-800 flex items-center justify-center">
               <span className="text-xs font-bold text-cream-500/60">?</span>
