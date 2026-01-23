@@ -21,6 +21,7 @@ import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useTickerData } from '../hooks/useTickerData';
 import { useLandingScores } from '../hooks/useLandingScores';
 import { useYoutubeSearch } from '../hooks/useYoutubeSearch';
+import { useFirstVisit } from '../hooks/useFirstVisit';
 
 
 // =============================================================================
@@ -31,6 +32,10 @@ const Landing = () => {
   useBodyScroll();
   const { user, signIn, signOut } = useAuth();
   const profile = useProfileStore((state) => state.profile);
+
+  // First-visit detection for progressive disclosure
+  // New visitors see educational content; returning visitors get data-focused view
+  const { isFirstVisit, isLoading: isFirstVisitLoading, markAsReturning } = useFirstVisit();
 
   // Stagger secondary data loading to prioritize news feed on initial paint
   // Ticker and scores data loads after a brief delay to reduce bandwidth contention
@@ -109,6 +114,7 @@ const Landing = () => {
 
     try {
       await signIn(email, password);
+      markAsReturning(); // User has engaged - mark as returning visitor
       toast.success('Welcome back!');
     } catch (err) {
       console.error('Login error:', err);
@@ -199,6 +205,20 @@ const Landing = () => {
       {/* SCROLLABLE CONTENT */}
       <main className="flex-1 pb-24 md:pb-4">
         <div className="max-w-[1920px] mx-auto p-4 lg:p-6">
+
+          {/* =============================================================
+              HERO SECTION - First-time visitors only (Step 2)
+              Shows value proposition and quick explanation for new users.
+              Hidden for: authenticated users, returning visitors, or while loading.
+              ============================================================= */}
+          {!user && !isFirstVisitLoading && isFirstVisit && (
+            <div className="mb-6">
+              {/* Hero content will be added in Step 2 */}
+              {/* For now, this placeholder ensures the detection logic works */}
+              {/* The markAsReturning function will be called when user dismisses */}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6">
 
           {/* ============================================================= */}
