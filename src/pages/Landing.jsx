@@ -16,6 +16,7 @@ import { useAuth } from '../App';
 import toast from 'react-hot-toast';
 import { useProfileStore } from '../store/profileStore';
 import NewsFeed from '../components/Landing/NewsFeed';
+import HeroBanner from '../components/Landing/HeroBanner';
 import { LiveScoresBox, FantasyTrendingBox, StandingsModal, YouTubeModal } from '../components/Sidebar';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useTickerData } from '../hooks/useTickerData';
@@ -207,15 +208,13 @@ const Landing = () => {
         <div className="max-w-[1920px] mx-auto p-4 lg:p-6">
 
           {/* =============================================================
-              HERO SECTION - First-time visitors only (Step 2)
+              HERO SECTION - First-time visitors only
               Shows value proposition and quick explanation for new users.
               Hidden for: authenticated users, returning visitors, or while loading.
               ============================================================= */}
           {!user && !isFirstVisitLoading && isFirstVisit && (
             <div className="mb-6">
-              {/* Hero content will be added in Step 2 */}
-              {/* For now, this placeholder ensures the detection logic works */}
-              {/* The markAsReturning function will be called when user dismisses */}
+              <HeroBanner onDismiss={markAsReturning} />
             </div>
           )}
 
