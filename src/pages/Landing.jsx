@@ -17,6 +17,7 @@ import toast from 'react-hot-toast';
 import { useProfileStore } from '../store/profileStore';
 import NewsFeed from '../components/Landing/NewsFeed';
 import HeroBanner from '../components/Landing/HeroBanner';
+import HowItWorks from '../components/Landing/HowItWorks';
 import { LiveScoresBox, FantasyTrendingBox, StandingsModal, YouTubeModal } from '../components/Sidebar';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useTickerData } from '../hooks/useTickerData';
@@ -208,13 +209,14 @@ const Landing = () => {
         <div className="max-w-[1920px] mx-auto p-4 lg:p-6">
 
           {/* =============================================================
-              HERO SECTION - First-time visitors only
-              Shows value proposition and quick explanation for new users.
+              FIRST-TIME VISITOR SECTION - Hero + How It Works
+              Shows value proposition and educational content for new users.
               Hidden for: authenticated users, returning visitors, or while loading.
               ============================================================= */}
           {!user && !isFirstVisitLoading && isFirstVisit && (
-            <div className="mb-6">
+            <div className="space-y-4 mb-6">
               <HeroBanner onDismiss={markAsReturning} />
+              <HowItWorks />
             </div>
           )}
 
