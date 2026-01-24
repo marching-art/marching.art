@@ -24,6 +24,9 @@ const geminiApiKey = defineSecret("GOOGLE_GENERATIVE_AI_API_KEY");
 // Initialize client (lazy loaded) - single unified SDK for text and image generation
 let genAI = null;
 
+// Separate Vertex AI client for image generation (Imagen models require Vertex AI endpoint)
+let genAIVertex = null;
+
 // =============================================================================
 // DCI UNIFORM KNOWLEDGE BASE
 // Comprehensive uniform descriptions by corps and year for image generation
@@ -672,6 +675,21 @@ function initializeGemini() {
 }
 
 /**
+ * Initialize Vertex AI client for image generation
+ * Imagen models require Vertex AI endpoint instead of public Gemini API
+ */
+function initializeVertexAI() {
+  if (!genAIVertex) {
+    genAIVertex = new GoogleGenAI({
+      vertexai: true,
+      project: "marching-art",
+      location: "us-central1",
+    });
+  }
+  return genAIVertex;
+}
+
+/**
  * Generate content with structured JSON output
  * Uses Gemini's native JSON mode for guaranteed valid JSON
  */
@@ -883,8 +901,6 @@ function parseAiJson(text) {
  */
 async function generateImageWithImagen(prompt, options = {}) {
   try {
-    const ai = initializeGemini();
-
     // Build enhanced prompt with drum corps context to avoid concert imagery
     const enhancedPrompt = `${DRUM_CORPS_VISUAL_CONTEXT}
 
@@ -895,9 +911,11 @@ ${prompt}
 ${IMAGE_NEGATIVE_PROMPT}`;
 
     if (USE_PAID_IMAGE_GEN && !options.model) {
-      // Paid tier: Imagen 3 ($0.02/image)
+      // Paid tier: Imagen 3 via Vertex AI ($0.02/image)
+      // Imagen models require Vertex AI endpoint, not public Gemini API
+      const vertexAI = initializeVertexAI();
       const modelName = "imagen-3.0-generate-002";
-      const response = await ai.models.generateImages({
+      const response = await vertexAI.models.generateImages({
         model: modelName,
         prompt: enhancedPrompt,
         config: {
@@ -909,11 +927,12 @@ ${IMAGE_NEGATIVE_PROMPT}`;
 
       const generatedImage = response.generatedImages?.[0];
       if (generatedImage?.image?.imageBytes) {
-        logger.info(`Image generated successfully using ${modelName}`);
+        logger.info(`Image generated successfully using ${modelName} via Vertex AI`);
         return `data:image/jpeg;base64,${generatedImage.image.imageBytes}`;
       }
     } else {
       // Free tier or custom model: Gemini with native image generation
+      const ai = initializeGemini();
       const modelName = options.model || "gemini-3-pro-image-preview";
 
       // Build system instruction with drum corps context
