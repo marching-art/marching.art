@@ -12,6 +12,23 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
+// Type declarations for Navigator APIs not in standard TypeScript definitions
+interface NetworkInformation extends EventTarget {
+  effectiveType?: 'slow-2g' | '2g' | '3g' | '4g';
+  downlink?: number;
+  rtt?: number;
+  saveData?: boolean;
+}
+
+interface NavigatorWithExtensions extends Navigator {
+  connection?: NetworkInformation;
+  mozConnection?: NetworkInformation;
+  webkitConnection?: NetworkInformation;
+  deviceMemory?: number;
+}
+
+declare const navigator: NavigatorWithExtensions;
+
 interface ReducedMotionOptions {
   /** Allow override - force animations on even on mobile */
   forceAnimations?: boolean;
@@ -54,14 +71,14 @@ const checkIsMobile = (): boolean => {
 const checkIsSlowConnection = (): boolean => {
   if (typeof navigator === 'undefined') return false;
 
-  const connection = (navigator as any).connection ||
-                     (navigator as any).mozConnection ||
-                     (navigator as any).webkitConnection;
+  const connection = navigator.connection ||
+                     navigator.mozConnection ||
+                     navigator.webkitConnection;
 
-  if (!connection) return false;
+  if (!connection || !connection.effectiveType) return false;
 
   // effectiveType can be 'slow-2g', '2g', '3g', '4g'
-  const slowTypes = ['slow-2g', '2g', '3g'];
+  const slowTypes: string[] = ['slow-2g', '2g', '3g'];
   return slowTypes.includes(connection.effectiveType);
 };
 
@@ -70,7 +87,7 @@ const checkIsLowMemory = (): boolean => {
   if (typeof navigator === 'undefined') return false;
 
   // deviceMemory is in GB (e.g., 0.5, 1, 2, 4, 8)
-  const deviceMemory = (navigator as any).deviceMemory;
+  const deviceMemory = navigator.deviceMemory;
   if (deviceMemory === undefined) return false;
 
   // Consider < 4GB as low memory for animation purposes
@@ -138,9 +155,9 @@ export const useReducedMotion = (options: ReducedMotionOptions = {}): ReducedMot
   useEffect(() => {
     if (typeof navigator === 'undefined') return;
 
-    const connection = (navigator as any).connection ||
-                       (navigator as any).mozConnection ||
-                       (navigator as any).webkitConnection;
+    const connection = navigator.connection ||
+                       navigator.mozConnection ||
+                       navigator.webkitConnection;
 
     if (!connection) return;
 
