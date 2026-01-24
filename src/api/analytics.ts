@@ -107,6 +107,34 @@ export const analytics = {
    * Log a custom event
    */
   logEvent: safeLogEvent,
+
+  // ==========================================================================
+  // A/B TESTING ANALYTICS
+  // ==========================================================================
+
+  /**
+   * Log experiment exposure (user saw a variant)
+   */
+  logExperimentExposure: (experimentId: string, variantId: string, experimentName?: string, variantName?: string) => {
+    safeLogEvent('experiment_exposure', {
+      experiment_id: experimentId,
+      experiment_name: experimentName || experimentId,
+      variant_id: variantId,
+      variant_name: variantName || variantId,
+    });
+  },
+
+  /**
+   * Log experiment conversion (user completed desired action)
+   */
+  logExperimentConversion: (experimentId: string, variantId: string, conversionType: string, metadata?: Record<string, unknown>) => {
+    safeLogEvent('experiment_conversion', {
+      experiment_id: experimentId,
+      variant_id: variantId,
+      conversion_type: conversionType,
+      ...metadata,
+    });
+  },
 };
 
 export default analytics;
