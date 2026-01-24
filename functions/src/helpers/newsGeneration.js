@@ -697,8 +697,8 @@ async function generateStructuredContent(prompt, schema) {
 // IMAGE GENERATION
 // =============================================================================
 
-// Configuration: Set to true to use paid Imagen 4 ($0.02/image), false for free Gemini Flash
-const USE_PAID_IMAGE_GEN = false;
+// Configuration: Set to true to use paid Imagen 3 ($0.02/image), false for free Gemini Flash
+const USE_PAID_IMAGE_GEN = true;
 
 // =============================================================================
 // DRUM CORPS VISUAL IDENTITY - System context for accurate image generation
@@ -895,8 +895,8 @@ ${prompt}
 ${IMAGE_NEGATIVE_PROMPT}`;
 
     if (USE_PAID_IMAGE_GEN && !options.model) {
-      // Paid tier: Imagen 4 Fast ($0.02/image)
-      const modelName = "imagen-4.0-fast-generate-001";
+      // Paid tier: Imagen 3 ($0.02/image)
+      const modelName = "imagen-3.0-generate-002";
       const response = await ai.models.generateImages({
         model: modelName,
         prompt: enhancedPrompt,
