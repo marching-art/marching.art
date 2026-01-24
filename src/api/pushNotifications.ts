@@ -14,6 +14,34 @@ const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY;
 // Singleton messaging instance
 let messaging: Messaging | null = null;
 
+// Retry configuration for transient errors
+const MAX_RETRIES = 3;
+const INITIAL_RETRY_DELAY = 1000; // 1 second
+
+/**
+ * Helper to delay execution
+ */
+function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Check if an error is a transient push service error that can be retried
+ */
+function isRetryableError(error: unknown): boolean {
+  if (error instanceof Error) {
+    // AbortError from push service failures are often transient
+    if (error.name === 'AbortError') {
+      return true;
+    }
+    // Network-related errors
+    if (error.message.includes('network') || error.message.includes('fetch')) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /**
  * Check if push notifications are supported in this browser
  */
@@ -77,20 +105,65 @@ export async function requestPushPermission(): Promise<string | null> {
     // Get the service worker registration
     const registration = await navigator.serviceWorker.ready;
 
-    // Get the FCM token
-    const token = await getToken(messagingInstance, {
-      vapidKey: VAPID_KEY,
-      serviceWorkerRegistration: registration,
-    });
+    // Try to get FCM token with retry logic for transient errors
+    let lastError: unknown = null;
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        const token = await getToken(messagingInstance, {
+          vapidKey: VAPID_KEY,
+          serviceWorkerRegistration: registration,
+        });
 
-    if (token) {
-      console.log('FCM token obtained');
-      return token;
-    } else {
-      console.warn('No FCM token available');
-      return null;
+        if (token) {
+          console.log('FCM token obtained');
+          return token;
+        } else {
+          console.warn('No FCM token available');
+          return null;
+        }
+      } catch (error) {
+        lastError = error;
+
+        // Check if this is a retryable error
+        if (isRetryableError(error) && attempt < MAX_RETRIES - 1) {
+          const retryDelay = INITIAL_RETRY_DELAY * Math.pow(2, attempt);
+          console.warn(
+            `FCM token request failed (attempt ${attempt + 1}/${MAX_RETRIES}), ` +
+            `retrying in ${retryDelay}ms:`,
+            error instanceof Error ? error.message : error
+          );
+          await delay(retryDelay);
+          continue;
+        }
+
+        // Non-retryable error or max retries reached
+        throw error;
+      }
     }
+
+    // Should not reach here, but handle just in case
+    throw lastError;
   } catch (error) {
+    // Provide more specific error messages for common issues
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        // This typically happens when:
+        // - Browser's push service is temporarily unavailable
+        // - Private/incognito browsing mode
+        // - Push subscription is corrupted
+        console.warn(
+          'Push service unavailable. This can happen in private browsing mode ' +
+          'or when the browser\'s push service is temporarily unavailable.'
+        );
+        return null;
+      }
+
+      if (error.message.includes('messaging/permission-blocked')) {
+        console.warn('Push notifications are blocked by the browser');
+        return null;
+      }
+    }
+
     console.error('Error getting FCM token:', error);
     return null;
   }
