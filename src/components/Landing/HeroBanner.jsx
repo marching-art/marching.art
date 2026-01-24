@@ -10,6 +10,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
 import { Trophy, Users, Zap, ChevronRight, X } from 'lucide-react';
+import JargonTooltip from '../JargonTooltip';
 
 // =============================================================================
 // HERO BANNER COMPONENT
@@ -56,7 +57,7 @@ const HeroBanner = ({ onDismiss }) => {
 
             {/* Subhead */}
             <p className="text-base lg:text-lg text-gray-400 mb-6 max-w-xl">
-              Build your dream corps from 50 years of DCI history. Earn points from real show scores. Climb the leaderboard.
+              Build your dream <JargonTooltip termKey="corps">corps</JargonTooltip> from 50 years of <JargonTooltip termKey="dci">DCI</JargonTooltip> history. Earn points from real show scores. Climb the leaderboard.
             </p>
 
             {/* Feature pills */}

@@ -18,7 +18,9 @@ import { useProfileStore } from '../store/profileStore';
 import NewsFeed from '../components/Landing/NewsFeed';
 import HeroBanner from '../components/Landing/HeroBanner';
 import HowItWorks from '../components/Landing/HowItWorks';
+import JargonTooltip from '../components/JargonTooltip';
 import { LiveScoresBox, FantasyTrendingBox, StandingsModal, YouTubeModal } from '../components/Sidebar';
+import { useTooltipPreference } from '../hooks/useTooltipPreference';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useTickerData } from '../hooks/useTickerData';
 import { useLandingScores } from '../hooks/useLandingScores';
@@ -38,6 +40,10 @@ const Landing = () => {
   // First-visit detection for progressive disclosure
   // New visitors see educational content; returning visitors get data-focused view
   const { isFirstVisit, isLoading: isFirstVisitLoading, markAsReturning } = useFirstVisit();
+
+  // Tooltip preferences for jargon definitions
+  // Enabled by default for new users, auto-disables after 7 days
+  const { tooltipsEnabled } = useTooltipPreference();
 
   // Stagger secondary data loading to prioritize news feed on initial paint
   // Ticker and scores data loads after a brief delay to reduce bandwidth contention
@@ -343,7 +349,7 @@ const Landing = () => {
                   <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
                     <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
                       <Lock className="w-3.5 h-3.5" />
-                      Director Login
+                      <JargonTooltip termKey="director" enabled={tooltipsEnabled}>Director</JargonTooltip> Login
                     </h3>
                   </div>
 
