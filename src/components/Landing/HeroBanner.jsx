@@ -9,7 +9,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
-import { Trophy, Users, Zap, ChevronRight, X } from 'lucide-react';
+import { Trophy, Users, Zap, ChevronRight, X, Play } from 'lucide-react';
 import JargonTooltip from '../JargonTooltip';
 
 // =============================================================================
@@ -84,6 +84,13 @@ const HeroBanner = ({ onDismiss }) => {
               >
                 Create Your Corps
                 <ChevronRight className="w-4 h-4" />
+              </Link>
+              <Link
+                to="/preview"
+                className="inline-flex items-center gap-2 min-h-[48px] px-5 border border-yellow-500/50 text-yellow-500 font-bold text-sm uppercase tracking-wider rounded-sm hover:bg-yellow-500/10 hover:border-yellow-500 active:scale-[0.98] transition-all duration-150 press-feedback"
+              >
+                <Play className="w-4 h-4" />
+                Try Demo
               </Link>
               <button
                 onClick={onDismiss}

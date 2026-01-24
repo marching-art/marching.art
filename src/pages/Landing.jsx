@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom';
 import {
   Trophy, Lock, Mail, AlertCircle, ChevronRight,
   LayoutDashboard, Award, User, LogOut, Flame, Activity,
-  Settings, Zap, UserPlus, MessageCircle, Coins
+  Settings, Zap, UserPlus, MessageCircle, Coins, Play
 } from 'lucide-react';
 import YouTubeIcon from '../components/YouTubeIcon';
 import { useAuth } from '../App';
@@ -415,6 +415,15 @@ const Landing = () => {
                       <Zap className="w-4 h-4 text-green-500" />
                       <span className="text-sm font-semibold text-green-400">100% Free to Play</span>
                     </div>
+
+                    {/* Try Demo Link */}
+                    <Link
+                      to="/preview"
+                      className="flex items-center justify-center gap-2 py-2.5 border border-yellow-500/30 rounded-sm text-yellow-500 hover:bg-yellow-500/10 hover:border-yellow-500/50 transition-colors"
+                    >
+                      <Play className="w-4 h-4" />
+                      <span className="text-sm font-medium">Try Demo First</span>
+                    </Link>
 
                     {/* Footer Links */}
                     <div className="flex items-center justify-center text-xs text-gray-500 pt-1">
