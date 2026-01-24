@@ -1966,9 +1966,11 @@ function getRandomComposition(seed = null) {
  * @param {string} location - Competition location
  * @param {string} showName - Competition/show name (e.g., "DCI Finals")
  * @param {string} showTitle - Corps' production title (e.g., "Ghostlight", "Kinetic Noise")
+ * @param {object} uniformDetails - Pre-fetched uniform details from Firestore (optional)
  */
-function buildStandingsImagePrompt(topCorps, year, location, showName, showTitle = null) {
-  const details = getUniformDetails(topCorps, year);
+function buildStandingsImagePrompt(topCorps, year, location, showName, showTitle = null, uniformDetails = null) {
+  // Use provided uniform details (from Firestore) or fall back to hardcoded
+  const details = uniformDetails || getUniformDetails(topCorps, year);
   const themeContext = buildShowThemeContext(showTitle);
 
   // Get random composition for variety
@@ -2027,9 +2029,11 @@ This is ${topCorps} from ${showName || "DCI Finals"}${location ? ` in ${location
  * @param {string} captionType - Caption category (e.g., "Brass", "Percussion")
  * @param {string} location - Competition location
  * @param {string} showTitle - Corps' production title (e.g., "Ghostlight")
+ * @param {object} uniformDetails - Pre-fetched uniform details from Firestore (optional)
  */
-function buildCaptionsImagePrompt(featuredCorps, year, captionType, location, showTitle = null) {
-  const details = getUniformDetails(featuredCorps, year);
+function buildCaptionsImagePrompt(featuredCorps, year, captionType, location, showTitle = null, uniformDetails = null) {
+  // Use provided uniform details (from Firestore) or fall back to hardcoded
+  const details = uniformDetails || getUniformDetails(featuredCorps, year);
   const themeContext = buildShowThemeContext(showTitle);
 
   // Get random composition for variety
@@ -2221,9 +2225,11 @@ This should feel like a major esports or fantasy sports championship ceremony, b
  * @param {number} year - Year of the performance
  * @param {string} analysisType - Type of analysis (e.g., "trajectory analysis")
  * @param {string} showTitle - Corps' production title (e.g., "Ghostlight")
+ * @param {object} uniformDetails - Pre-fetched uniform details from Firestore (optional)
  */
-function buildAnalyticsImagePrompt(featuredCorps, year, analysisType, showTitle = null) {
-  const details = getUniformDetails(featuredCorps, year);
+function buildAnalyticsImagePrompt(featuredCorps, year, analysisType, showTitle = null, uniformDetails = null) {
+  // Use provided uniform details (from Firestore) or fall back to hardcoded
+  const details = uniformDetails || getUniformDetails(featuredCorps, year);
   const themeContext = buildShowThemeContext(showTitle);
 
   // Get random composition for variety
@@ -2289,9 +2295,11 @@ This image captures the full scale and precision of ${featuredCorps}'s ${year} $
  * @param {number} year - Historical year
  * @param {string} location - Competition location
  * @param {string} showTitle - Corps' production title
+ * @param {object} uniformDetails - Pre-fetched uniform details from Firestore (optional)
  */
-function buildUnderdogImagePrompt(corps, year, location, showTitle = null) {
-  const details = getUniformDetails(corps, year);
+function buildUnderdogImagePrompt(corps, year, location, showTitle = null, uniformDetails = null) {
+  // Use provided uniform details (from Firestore) or fall back to hardcoded
+  const details = uniformDetails || getUniformDetails(corps, year);
   const themeContext = buildShowThemeContext(showTitle);
 
   // Get random composition emphasizing triumph
@@ -2346,9 +2354,11 @@ This epic stadium shot captures the essence of an underdog story - the full corp
  * @param {string} corps - Corps name
  * @param {number} year - Historical year
  * @param {string} showTitle - Corps' production title
+ * @param {object} uniformDetails - Pre-fetched uniform details from Firestore (optional)
  */
-function buildCorpsSpotlightImagePrompt(corps, year, showTitle = null) {
-  const details = getUniformDetails(corps, year);
+function buildCorpsSpotlightImagePrompt(corps, year, showTitle = null, uniformDetails = null) {
+  // Use provided uniform details (from Firestore) or fall back to hardcoded
+  const details = uniformDetails || getUniformDetails(corps, year);
   const themeContext = buildShowThemeContext(showTitle);
 
   // Get random composition for variety
@@ -2927,8 +2937,9 @@ The narrative MUST be a complete 8-paragraph article. Not a summary.`;
   try {
     const content = await generateStructuredContent(prompt, schema);
 
-    // Look up the corps' show title for thematic context
+    // Look up the corps' show title and uniform details from Firestore
     const showTitle = db ? await getShowTitleFromFirestore(db, topCorps.corps, topCorps.sourceYear) : null;
+    const uniformDetails = db ? await getUniformDetailsFromFirestore(db, topCorps.corps, topCorps.sourceYear) : null;
 
     // Generate image featuring top corps with accurate historical uniform
     const imagePrompt = buildStandingsImagePrompt(
@@ -2936,7 +2947,8 @@ The narrative MUST be a complete 8-paragraph article. Not a summary.`;
       topCorps.sourceYear,
       showContext.location,
       showContext.showName,
-      showTitle
+      showTitle,
+      uniformDetails
     );
 
     const imageData = await generateImageWithImagen(imagePrompt);
@@ -2983,8 +2995,9 @@ async function generateDciFeatureArticle({ reportDay, dayScores, trendData, acti
   const currentRank = dayScores.findIndex(s => s.corps === featureCorps.corps) + 1;
   const corpsTrend = trendData[featureCorps.corps] || { dayChange: 0, trendFromAvg: 0, avgTotal: featureCorps.total };
 
-  // Get show title for this corps
+  // Get show title and uniform details for this corps from Firestore
   const showTitle = db ? await getShowTitleFromFirestore(db, featureCorps.corps, featureCorps.sourceYear) : null;
+  const uniformDetails = db ? await getUniformDetailsFromFirestore(db, featureCorps.corps, featureCorps.sourceYear) : null;
 
   // Calculate season progress data
   const seasonHigh = corpsTrend.seasonHigh || featureCorps.total;
@@ -3168,7 +3181,8 @@ STRICT REQUIREMENTS - YOUR ARTICLE WILL BE REJECTED IF:
     const imagePrompt = buildCorpsSpotlightImagePrompt(
       featureCorps.corps,
       featureCorps.sourceYear,
-      showTitle
+      showTitle,
+      uniformDetails
     );
 
     const imageData = await generateImageWithImagen(imagePrompt);
@@ -3405,13 +3419,15 @@ STRICT REQUIREMENTS - YOUR ARTICLE WILL BE REJECTED IF:
     // Feature the GE leader for the image (or next available if excluded)
     let featuredCorps = geSorted.find(s => !excludeCorps.has(s.corps)) || geSorted[0];
     const showTitle = db ? await getShowTitleFromFirestore(db, featuredCorps.corps, featuredCorps.sourceYear) : null;
+    const uniformDetails = db ? await getUniformDetailsFromFirestore(db, featuredCorps.corps, featuredCorps.sourceYear) : null;
 
     const imagePrompt = buildCaptionsImagePrompt(
       featuredCorps.corps,
       featuredCorps.sourceYear,
       "General Effect",
       showContext.location,
-      showTitle
+      showTitle,
+      uniformDetails
     );
 
     const imageData = await generateImageWithImagen(imagePrompt);
