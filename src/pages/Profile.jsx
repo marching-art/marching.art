@@ -21,6 +21,7 @@ import toast from 'react-hot-toast';
 import { DirectorProfile } from '../components/Profile/DirectorProfile';
 import UniformDesignModal from '../components/modals/UniformDesignModal';
 import { generateCorpsAvatar } from '../api/functions';
+import { useTooltipPreference } from '../hooks/useTooltipPreference';
 
 // =============================================================================
 // NOTE: Achievement and season history display is now handled by DirectorProfile
@@ -57,6 +58,9 @@ const Toggle = ({ checked, onChange, label, description }) => (
 const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
   const { signOut } = useAuth();
   const [activeTab, setActiveTab] = useState(initialTab);
+
+  // Tooltip preferences
+  const { tooltipsEnabled, setTooltipsEnabled } = useTooltipPreference();
 
   useEffect(() => {
     if (isOpen) {
@@ -444,6 +448,17 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                     ? new Date(user.metadata.creationTime).toLocaleDateString()
                     : 'Unknown'}
                 </div>
+              </div>
+
+              {/* Help Tooltips Toggle */}
+              <div className="bg-[#111] border border-[#333] p-3">
+                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Gameplay Help</div>
+                <Toggle
+                  checked={tooltipsEnabled}
+                  onChange={(e) => setTooltipsEnabled(e.target.checked)}
+                  label="Show jargon tooltips"
+                  description="Explain terms like Corps, Caption, DCI on hover"
+                />
               </div>
 
               <a

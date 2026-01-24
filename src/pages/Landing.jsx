@@ -9,18 +9,25 @@ import { Link } from 'react-router-dom';
 import {
   Trophy, Lock, Mail, AlertCircle, ChevronRight,
   LayoutDashboard, Award, User, LogOut, Flame, Activity,
-  Settings, Zap, UserPlus, MessageCircle, Coins
+  Settings, Zap, UserPlus, MessageCircle, Coins, Play
 } from 'lucide-react';
 import YouTubeIcon from '../components/YouTubeIcon';
 import { useAuth } from '../App';
 import toast from 'react-hot-toast';
 import { useProfileStore } from '../store/profileStore';
 import NewsFeed from '../components/Landing/NewsFeed';
+import HeroBanner from '../components/Landing/HeroBanner';
+import HowItWorks from '../components/Landing/HowItWorks';
+import SocialProofBar from '../components/Landing/SocialProofBar';
+import UrgencyBanner, { LiveIndicator } from '../components/Landing/UrgencyBanner';
+import JargonTooltip from '../components/JargonTooltip';
 import { LiveScoresBox, FantasyTrendingBox, StandingsModal, YouTubeModal } from '../components/Sidebar';
+import { useTooltipPreference } from '../hooks/useTooltipPreference';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useTickerData } from '../hooks/useTickerData';
 import { useLandingScores } from '../hooks/useLandingScores';
 import { useYoutubeSearch } from '../hooks/useYoutubeSearch';
+import { useFirstVisit } from '../hooks/useFirstVisit';
 
 
 // =============================================================================
@@ -31,6 +38,14 @@ const Landing = () => {
   useBodyScroll();
   const { user, signIn, signOut } = useAuth();
   const profile = useProfileStore((state) => state.profile);
+
+  // First-visit detection for progressive disclosure
+  // New visitors see educational content; returning visitors get data-focused view
+  const { isFirstVisit, isLoading: isFirstVisitLoading, markAsReturning } = useFirstVisit();
+
+  // Tooltip preferences for jargon definitions
+  // Enabled by default for new users, auto-disables after 7 days
+  const { tooltipsEnabled } = useTooltipPreference();
 
   // Stagger secondary data loading to prioritize news feed on initial paint
   // Ticker and scores data loads after a brief delay to reduce bandwidth contention
@@ -109,6 +124,7 @@ const Landing = () => {
 
     try {
       await signIn(email, password);
+      markAsReturning(); // User has engaged - mark as returning visitor
       toast.success('Welcome back!');
     } catch (err) {
       console.error('Login error:', err);
@@ -199,6 +215,20 @@ const Landing = () => {
       {/* SCROLLABLE CONTENT */}
       <main className="flex-1 pb-24 md:pb-4">
         <div className="max-w-[1920px] mx-auto p-4 lg:p-6">
+
+          {/* =============================================================
+              FIRST-TIME VISITOR SECTION - Hero + How It Works
+              Shows value proposition and educational content for new users.
+              Hidden for: authenticated users, returning visitors, or while loading.
+              ============================================================= */}
+          {!user && !isFirstVisitLoading && isFirstVisit && (
+            <div className="space-y-4 mb-6">
+              <HeroBanner onDismiss={markAsReturning} />
+              <SocialProofBar />
+              <HowItWorks />
+            </div>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6">
 
           {/* ============================================================= */}
@@ -321,8 +351,8 @@ const Landing = () => {
                   {/* Card Header */}
                   <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
                     <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                      <Lock className="w-3.5 h-3.5" />
-                      Director Login
+                      <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+                      Play Now
                     </h3>
                   </div>
 
@@ -381,16 +411,33 @@ const Landing = () => {
                       </Link>
                     </div>
 
+                    {/* Free to play badge - prominent placement */}
+                    <div className="flex items-center justify-center gap-2 py-2 bg-green-500/10 border border-green-500/20 rounded-sm">
+                      <Zap className="w-4 h-4 text-green-500" />
+                      <span className="text-sm font-semibold text-green-400">100% Free to Play</span>
+                    </div>
+
+                    {/* Try Demo Link */}
+                    <Link
+                      to="/preview"
+                      className="flex items-center justify-center gap-2 py-2.5 border border-yellow-500/30 rounded-sm text-yellow-500 hover:bg-yellow-500/10 hover:border-yellow-500/50 transition-colors"
+                    >
+                      <Play className="w-4 h-4" />
+                      <span className="text-sm font-medium">Try Demo First</span>
+                    </Link>
+
                     {/* Footer Links */}
-                    <div className="flex items-center justify-between text-xs text-gray-500 pt-1">
+                    <div className="flex items-center justify-center text-xs text-gray-500 pt-1">
                       <Link to="/forgot-password" className="hover:text-[#0057B8] transition-colors">
                         Forgot password?
                       </Link>
-                      <span>Free to play</span>
                     </div>
                   </form>
                 </div>
               )}
+
+              {/* URGENCY BANNER - Show time-sensitive info */}
+              {!user && <UrgencyBanner showCTA={true} maxTriggers={2} />}
 
               {/* FANTASY TRENDING MODULE */}
               <FantasyTrendingBox

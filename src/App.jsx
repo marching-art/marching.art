@@ -53,6 +53,7 @@ const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const Article = lazy(() => import('./pages/Article'));
 const HowToPlay = lazy(() => import('./pages/HowToPlay'));
 const NotFound = lazy(() => import('./pages/NotFound'));
+const GuestDashboard = lazy(() => import('./pages/GuestDashboard'));
 
 // Helper component to wrap pages with error boundaries
 const Page = ({ name, children }) => (
@@ -164,6 +165,7 @@ function App() {
     error,
     signIn: authHelpers.signInWithEmail,
     signUp: authHelpers.signUpWithEmail,
+    signInWithGoogle: authHelpers.signInWithGoogle,
     signInAnonymously: authHelpers.signInAnon,
     signOut: authHelpers.signOut
   }), [user, loading, error]);
@@ -253,6 +255,9 @@ function App() {
           <Route path="/forgot-password" element={user ? <Navigate to="/dashboard" /> : <Suspense fallback={<LoadingScreen fullScreen />}><ForgotPassword /></Suspense>} />
           <Route path="/privacy" element={<Suspense fallback={<LoadingScreen fullScreen />}><Privacy /></Suspense>} />
           <Route path="/terms" element={<Suspense fallback={<LoadingScreen fullScreen />}><Terms /></Suspense>} />
+
+          {/* Guest Preview - Demo dashboard for unauthenticated users */}
+          <Route path="/preview" element={user ? <Navigate to="/dashboard" /> : <Suspense fallback={<DashboardSkeleton />}><GuestDashboard /></Suspense>} />
 
           {/* Onboarding - Protected but minimal layout */}
           <Route path="/onboarding" element={
