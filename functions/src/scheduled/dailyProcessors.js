@@ -63,6 +63,19 @@ exports.processDailyLiveScores = onSchedule({
   }
 
   if (scoredDay > 49) {
+    // Season has ended, but check if Day 49 (championships) was processed
+    // This handles the edge case where the scheduler runs on Day 50 but Day 49
+    // wasn't processed yet (e.g., due to timing issues or missed runs)
+    if (scoredDay <= 52) {
+      // Only check recent post-season days to avoid processing stale data
+      const day49Doc = await db.doc(`fantasy_recaps/${seasonData.seasonUid}/days/49`).get();
+      if (!day49Doc.exists) {
+        logger.info(`Day 49 (championships) not yet processed for season ${seasonData.seasonUid}. Processing now...`);
+        await processAndScoreLiveSeasonDayLogic(49, seasonData);
+        logger.info("Day 49 championship processing complete. Season has now fully ended.");
+        return;
+      }
+    }
     logger.info(`Scored day (${scoredDay}) exceeds competition period (1-49). Season has ended.`);
     return;
   }
