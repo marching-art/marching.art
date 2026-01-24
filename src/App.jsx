@@ -164,6 +164,7 @@ function App() {
     error,
     signIn: authHelpers.signInWithEmail,
     signUp: authHelpers.signUpWithEmail,
+    signInWithGoogle: authHelpers.signInWithGoogle,
     signInAnonymously: authHelpers.signInAnon,
     signOut: authHelpers.signOut
   }), [user, loading, error]);

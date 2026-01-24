@@ -26,7 +26,9 @@ import {
   signInWithCustomToken,
   createUserWithEmailAndPassword,
   signOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'firebase/auth';
 import { getAnalytics, logEvent, isSupported } from 'firebase/analytics';
 
@@ -99,6 +101,22 @@ export const authHelpers = {
       return userCredential;
     } catch (error) {
       logError(error, 'signInAnonymously');
+      throw error;
+    }
+  },
+
+  // Sign in with Google
+  signInWithGoogle: async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({
+        prompt: 'select_account'
+      });
+      const userCredential = await signInWithPopup(auth, provider);
+      safeLogEvent('login', { method: 'google' });
+      return userCredential;
+    } catch (error) {
+      logError(error, 'signInWithGoogle');
       throw error;
     }
   },
