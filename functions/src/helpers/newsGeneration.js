@@ -915,20 +915,41 @@ ${IMAGE_NEGATIVE_PROMPT}`;
       // Imagen models require Vertex AI endpoint, not public Gemini API
       const vertexAI = initializeVertexAI();
       const modelName = "imagen-3.0-generate-002";
-      const response = await vertexAI.models.generateImages({
-        model: modelName,
-        prompt: enhancedPrompt,
-        config: {
-          numberOfImages: 1,
-          aspectRatio: options.aspectRatio || "16:9",
-          outputMimeType: "image/jpeg",
-        },
-      });
 
-      const generatedImage = response.generatedImages?.[0];
-      if (generatedImage?.image?.imageBytes) {
-        logger.info(`Image generated successfully using ${modelName} via Vertex AI`);
-        return `data:image/jpeg;base64,${generatedImage.image.imageBytes}`;
+      // Retry logic for quota limits (429 errors)
+      const MAX_RETRIES = 3;
+      const RETRY_DELAY_MS = 15000; // 15 seconds between retries
+
+      for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        try {
+          const response = await vertexAI.models.generateImages({
+            model: modelName,
+            prompt: enhancedPrompt,
+            config: {
+              numberOfImages: 1,
+              aspectRatio: options.aspectRatio || "16:9",
+              outputMimeType: "image/jpeg",
+            },
+          });
+
+          const generatedImage = response.generatedImages?.[0];
+          if (generatedImage?.image?.imageBytes) {
+            logger.info(`Image generated successfully using ${modelName} via Vertex AI`);
+            return `data:image/jpeg;base64,${generatedImage.image.imageBytes}`;
+          }
+          break; // No image but no error, exit retry loop
+        } catch (error) {
+          // Check if it's a quota error (429 RESOURCE_EXHAUSTED)
+          if (error.status === 429 && attempt < MAX_RETRIES) {
+            logger.warn(
+              `Quota limit hit (429). Waiting ${RETRY_DELAY_MS / 1000}s before retry ${attempt}/${MAX_RETRIES}...`
+            );
+            await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+          } else {
+            // Not a quota error or max retries reached, re-throw
+            throw error;
+          }
+        }
       }
     } else {
       // Free tier or custom model: Gemini with native image generation
