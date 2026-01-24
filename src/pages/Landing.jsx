@@ -18,6 +18,7 @@ import { useProfileStore } from '../store/profileStore';
 import NewsFeed from '../components/Landing/NewsFeed';
 import HeroBanner from '../components/Landing/HeroBanner';
 import HowItWorks from '../components/Landing/HowItWorks';
+import SocialProofBar from '../components/Landing/SocialProofBar';
 import JargonTooltip from '../components/JargonTooltip';
 import { LiveScoresBox, FantasyTrendingBox, StandingsModal, YouTubeModal } from '../components/Sidebar';
 import { useTooltipPreference } from '../hooks/useTooltipPreference';
@@ -222,6 +223,7 @@ const Landing = () => {
           {!user && !isFirstVisitLoading && isFirstVisit && (
             <div className="space-y-4 mb-6">
               <HeroBanner onDismiss={markAsReturning} />
+              <SocialProofBar />
               <HowItWorks />
             </div>
           )}
