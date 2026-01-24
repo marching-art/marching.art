@@ -350,8 +350,8 @@ const Landing = () => {
                   {/* Card Header */}
                   <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
                     <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                      <Lock className="w-3.5 h-3.5" />
-                      <JargonTooltip termKey="director" enabled={tooltipsEnabled}>Director</JargonTooltip> Login
+                      <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+                      Play Now
                     </h3>
                   </div>
 
@@ -410,12 +410,17 @@ const Landing = () => {
                       </Link>
                     </div>
 
+                    {/* Free to play badge - prominent placement */}
+                    <div className="flex items-center justify-center gap-2 py-2 bg-green-500/10 border border-green-500/20 rounded-sm">
+                      <Zap className="w-4 h-4 text-green-500" />
+                      <span className="text-sm font-semibold text-green-400">100% Free to Play</span>
+                    </div>
+
                     {/* Footer Links */}
-                    <div className="flex items-center justify-between text-xs text-gray-500 pt-1">
+                    <div className="flex items-center justify-center text-xs text-gray-500 pt-1">
                       <Link to="/forgot-password" className="hover:text-[#0057B8] transition-colors">
                         Forgot password?
                       </Link>
-                      <span>Free to play</span>
                     </div>
                   </form>
                 </div>
