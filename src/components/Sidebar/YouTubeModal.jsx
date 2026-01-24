@@ -25,7 +25,7 @@ const YouTubeModal = ({
         {/* Header */}
         <div className="bg-[#1a1a1a] px-4 py-3 border-b border-[#333] flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            <YouTubeIcon size={20} className="flex-shrink-0" />
+            <YouTubeIcon size={24} className="flex-shrink-0" />
             <h2 className="text-sm font-bold text-white truncate">
               {videoModal.title}
             </h2>
@@ -55,7 +55,7 @@ const YouTubeModal = ({
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-xs font-bold uppercase tracking-wider rounded transition-colors"
               >
-                <YouTubeIcon size={16} />
+                <YouTubeIcon size={24} />
                 Search on YouTube
               </a>
             </div>
