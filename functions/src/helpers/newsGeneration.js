@@ -901,20 +901,22 @@ function parseAiJson(text) {
  */
 async function generateImageWithImagen(prompt, options = {}) {
   try {
-    // Build enhanced prompt with drum corps context to avoid concert imagery
-    const enhancedPrompt = `${DRUM_CORPS_VISUAL_CONTEXT}
-
---- IMAGE REQUEST ---
-
-${prompt}
-
-${IMAGE_NEGATIVE_PROMPT}`;
-
     if (USE_PAID_IMAGE_GEN && !options.model) {
       // Paid tier: Imagen 3 via Vertex AI ($0.02/image)
       // Imagen models require Vertex AI endpoint, not public Gemini API
       const vertexAI = initializeVertexAI();
       const modelName = "imagen-3.0-generate-002";
+
+      // For Imagen 3: Put specific prompt FIRST, then minimal context
+      // This ensures corps-specific uniform details take priority over generic descriptions
+      const imagen3Prompt = `${prompt}
+
+---
+CRITICAL RULES FOR THIS IMAGE:
+- This is DCI drum corps on a football field, NOT a rock concert or orchestra
+- Each performer holds ONLY ONE instrument type (brass OR drums OR flag - never multiple)
+- Use the EXACT uniform colors and details specified above - do not substitute generic designs
+${IMAGE_NEGATIVE_PROMPT}`;
 
       // Retry logic for quota limits (429 errors)
       const MAX_RETRIES = 3;
@@ -924,7 +926,7 @@ ${IMAGE_NEGATIVE_PROMPT}`;
         try {
           const response = await vertexAI.models.generateImages({
             model: modelName,
-            prompt: enhancedPrompt,
+            prompt: imagen3Prompt,
             config: {
               numberOfImages: 1,
               aspectRatio: options.aspectRatio || "16:9",
