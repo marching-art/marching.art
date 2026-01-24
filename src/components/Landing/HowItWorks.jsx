@@ -12,10 +12,12 @@ import {
   Users, Trophy, TrendingUp, ChevronDown,
   ListChecks, Calendar, Award
 } from 'lucide-react';
+import JargonTooltip from '../JargonTooltip';
 
 // =============================================================================
-// STEP DATA
+// STEP DATA WITH JARGON TOOLTIPS
 // =============================================================================
+// Summary and details can be strings or JSX elements with tooltips
 
 const STEPS = [
   {
@@ -24,11 +26,11 @@ const STEPS = [
     icon: ListChecks,
     iconColor: 'text-[#0057B8]',
     iconBg: 'bg-[#0057B8]/10',
-    summary: 'Pick 8 captions from DCI history',
+    summary: <>Pick 8 <JargonTooltip termKey="caption">captions</JargonTooltip> from <JargonTooltip termKey="dci">DCI</JargonTooltip> history</>,
     details: [
-      'Choose performers from 50+ years of drum corps legends',
+      <>Choose performers from 50+ years of <JargonTooltip termKey="corps">drum corps</JargonTooltip> legends</>,
       'Stay within your point budget based on your class level',
-      'Mix and match from different eras to build your dream corps'
+      <>Mix and match from different eras to build your dream <JargonTooltip termKey="corps">corps</JargonTooltip></>
     ]
   },
   {
@@ -37,10 +39,10 @@ const STEPS = [
     icon: Calendar,
     iconColor: 'text-yellow-500',
     iconBg: 'bg-yellow-500/10',
-    summary: 'Your lineup scores when DCI performs',
+    summary: <>Your lineup scores when <JargonTooltip termKey="dci">DCI</JargonTooltip> performs</>,
     details: [
-      'Points are calculated from actual DCI competition scores',
-      'Watch your corps climb as the season progresses',
+      <>Points are calculated from actual <JargonTooltip termKey="dci">DCI</JargonTooltip> competition scores</>,
+      <>Watch your <JargonTooltip termKey="corps">corps</JargonTooltip> climb as the season progresses</>,
       'Scores update after every show throughout the summer'
     ]
   },
@@ -53,7 +55,7 @@ const STEPS = [
     summary: 'Compete against other fans',
     details: [
       'Join public or private leagues with friends',
-      'Earn XP and level up to unlock higher class divisions',
+      <>Earn <JargonTooltip termKey="xp">XP</JargonTooltip> and level up to unlock higher class divisions</>,
       'Win bragging rights and climb the global rankings'
     ]
   }
