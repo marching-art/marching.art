@@ -92,7 +92,7 @@ const LiveScoresBox = ({
                     className="p-2 -mr-1 text-gray-500 hover:text-red-500 active:text-red-600 transition-colors press-feedback touch-target"
                     title={`Watch ${row.sourceYear} ${row.corpsName} on YouTube`}
                   >
-                    <YouTubeIcon size={16} />
+                    <YouTubeIcon height={100} />
                   </button>
                 </div>
               </div>

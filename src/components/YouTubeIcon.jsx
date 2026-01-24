@@ -2,14 +2,20 @@
 // Uses official YouTube icon from brand resources with correct aspect ratio
 // https://www.youtube.com/howyoutubeworks/resources/brand-resources/
 // Icon specifications: https://developers.google.com/youtube/terms/branding-guidelines
+// Minimum size: 100px HEIGHT per official YouTube brand guidelines (Policy III.F.2a-b)
+// "To ensure our logos are always legible, their height should never be smaller than: Digital: 100px"
 
 import React from 'react';
 
+// Minimum HEIGHT required by YouTube branding guidelines for digital use
+const MIN_YOUTUBE_ICON_HEIGHT = 100;
+
 // Official YouTube "play button" icon with correct 159:110 aspect ratio
-const YouTubeIcon = ({ className = '', size = 16 }) => {
+const YouTubeIcon = ({ className = '', height: requestedHeight = 100 }) => {
+  // Enforce minimum height for YouTube branding compliance (100px per brand guidelines)
+  const height = Math.max(requestedHeight, MIN_YOUTUBE_ICON_HEIGHT);
   // Maintain official aspect ratio (width:height = 159:110 ≈ 1.445:1)
-  const width = size;
-  const height = Math.round(size / 1.445);
+  const width = Math.round(height * 1.445);
 
   return (
     <svg
