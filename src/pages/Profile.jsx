@@ -8,7 +8,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import {
   User, Settings, Crown, LogOut, Coins, Heart,
-  MessageCircle, Mail, AtSign, AlertCircle, Bell, Trash2
+  MessageCircle, Mail, AtSign, AlertCircle, Bell, Trash2, X
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { useProfile, useUpdateProfile } from '../hooks/useProfile';
