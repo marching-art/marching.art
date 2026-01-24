@@ -19,6 +19,7 @@ import NewsFeed from '../components/Landing/NewsFeed';
 import HeroBanner from '../components/Landing/HeroBanner';
 import HowItWorks from '../components/Landing/HowItWorks';
 import SocialProofBar from '../components/Landing/SocialProofBar';
+import UrgencyBanner, { LiveIndicator } from '../components/Landing/UrgencyBanner';
 import JargonTooltip from '../components/JargonTooltip';
 import { LiveScoresBox, FantasyTrendingBox, StandingsModal, YouTubeModal } from '../components/Sidebar';
 import { useTooltipPreference } from '../hooks/useTooltipPreference';
@@ -434,6 +435,9 @@ const Landing = () => {
                   </form>
                 </div>
               )}
+
+              {/* URGENCY BANNER - Show time-sensitive info */}
+              {!user && <UrgencyBanner showCTA={true} maxTriggers={2} />}
 
               {/* FANTASY TRENDING MODULE */}
               <FantasyTrendingBox

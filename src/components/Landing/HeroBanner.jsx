@@ -9,14 +9,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
-import { Trophy, Users, Zap, ChevronRight, X, Play } from 'lucide-react';
+import { Trophy, Users, Zap, ChevronRight, X, Play, Clock } from 'lucide-react';
 import JargonTooltip from '../JargonTooltip';
+import { useUrgencyTriggers } from '../../hooks/useUrgencyTriggers';
 
 // =============================================================================
 // HERO BANNER COMPONENT
 // =============================================================================
 
 const HeroBanner = ({ onDismiss }) => {
+  const { primary, isLiveShowDay, weeksRemaining, seasonType } = useUrgencyTriggers();
+
   return (
     <AnimatePresence>
       <m.div
@@ -41,12 +44,38 @@ const HeroBanner = ({ onDismiss }) => {
         <div className="px-4 py-6 lg:px-8 lg:py-8">
           {/* Main content */}
           <div className="max-w-2xl">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#0057B8]/20 border border-[#0057B8]/30 rounded-sm mb-4">
-              <Trophy className="w-3.5 h-3.5 text-[#0057B8]" />
-              <span className="text-xs font-bold text-[#0057B8] uppercase tracking-wider">
-                Fantasy Drum Corps
-              </span>
+            {/* Badge Row */}
+            <div className="flex flex-wrap items-center gap-3 mb-4">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#0057B8]/20 border border-[#0057B8]/30 rounded-sm">
+                <Trophy className="w-3.5 h-3.5 text-[#0057B8]" />
+                <span className="text-xs font-bold text-[#0057B8] uppercase tracking-wider">
+                  Fantasy Drum Corps
+                </span>
+              </div>
+
+              {/* Urgency Badge - Show live/countdown info */}
+              {primary && (
+                <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm border ${
+                  primary.level === 'high'
+                    ? 'bg-red-500/20 border-red-500/30'
+                    : primary.level === 'medium'
+                    ? 'bg-yellow-500/20 border-yellow-500/30'
+                    : 'bg-gray-500/20 border-gray-500/30'
+                }`}>
+                  {primary.type === 'live' && (
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                    </span>
+                  )}
+                  {primary.type !== 'live' && <Clock className="w-3.5 h-3.5 text-yellow-500" />}
+                  <span className={`text-xs font-bold uppercase tracking-wider ${
+                    primary.level === 'high' ? 'text-red-500' : 'text-yellow-500'
+                  }`}>
+                    {primary.message}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Headline */}
