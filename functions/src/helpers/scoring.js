@@ -905,89 +905,111 @@ async function processAndArchiveOffSeasonScoresLogic() {
     const week = scoredDay / 7;
     logger.info(`End of week ${week}. Determining class-based matchup winners...`);
 
-    const leaguesSnapshot = await db.collection("leagues").get();
+    // OPTIMIZATION: Add limit to prevent unbounded collection fetch
+    const LEAGUE_FETCH_LIMIT = 500;
+    const leaguesSnapshot = await db.collection("leagues").limit(LEAGUE_FETCH_LIMIT).get();
+    if (leaguesSnapshot.size === LEAGUE_FETCH_LIMIT) {
+      logger.warn(`OPTIMIZATION WARNING: League fetch hit limit of ${LEAGUE_FETCH_LIMIT}. Consider implementing pagination.`);
+    }
+
     const winnerBatch = db.batch();
     const corpsClasses = ["worldClass", "openClass", "aClass", "soundSport"];
 
+    // OPTIMIZATION: Batch fetch ALL matchup documents in ONE operation instead of N+1 queries
+    // This reduces N+1 database reads (1 per league) to just 2 batch operations
+    const matchupRefs = leaguesSnapshot.docs.map(leagueDoc =>
+      db.doc(`leagues/${leagueDoc.id}/matchups/week${week}`)
+    );
+    const matchupDocs = matchupRefs.length > 0 ? await db.getAll(...matchupRefs) : [];
+
+    // Build a Map for O(1) lookup by league ID
+    const matchupMap = new Map();
+    matchupDocs.forEach((doc, i) => {
+      if (doc.exists) {
+        matchupMap.set(leaguesSnapshot.docs[i].id, { ref: doc.ref, data: doc.data() });
+      }
+    });
+
+    logger.info(`Batch fetched ${matchupMap.size} matchup documents for ${leaguesSnapshot.size} leagues.`);
+
     for (const leagueDoc of leaguesSnapshot.docs) {
-      const matchupDocRef = db.doc(`leagues/${leagueDoc.id}/matchups/week${week}`);
-      const matchupDoc = await matchupDocRef.get();
+      const matchupEntry = matchupMap.get(leagueDoc.id);
+      if (!matchupEntry) continue;
 
-      if (matchupDoc.exists) {
-        const matchupData = matchupDoc.data();
-        let hasUpdates = false;
+      const matchupData = { ...matchupEntry.data };
+      const matchupDocRef = matchupEntry.ref;
+      let hasUpdates = false;
 
-        for (const corpsClass of corpsClasses) {
-          const matchupArrayKey = `${corpsClass}Matchups`;
-          const matchups = matchupData[matchupArrayKey] || [];
-          if (matchups.length === 0) continue;
+      for (const corpsClass of corpsClasses) {
+        const matchupArrayKey = `${corpsClass}Matchups`;
+        const matchups = matchupData[matchupArrayKey] || [];
+        if (matchups.length === 0) continue;
 
-          const updatedMatchupsForClass = [];
+        const updatedMatchupsForClass = [];
 
-          // OPTIMIZATION: Batch fetch all matchup profiles for this class upfront
-          const matchupsNeedingScores = matchups.filter(m => !m.winner);
-          const allPlayerIds = [...new Set(matchupsNeedingScores.flatMap(m => m.pair))];
+        // OPTIMIZATION: Batch fetch all matchup profiles for this class upfront
+        const matchupsNeedingScores = matchups.filter(m => !m.winner);
+        const allPlayerIds = [...new Set(matchupsNeedingScores.flatMap(m => m.pair))];
 
-          // Batch fetch all profiles in ONE operation
-          const profileRefs = allPlayerIds.map(uid =>
-            db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`)
-          );
-          const profileDocs = allPlayerIds.length > 0 ? await db.getAll(...profileRefs) : [];
-          const profileMap = new Map();
-          profileDocs.forEach((doc, i) => {
-            if (doc.exists) {
-              profileMap.set(allPlayerIds[i], { ref: doc.ref, data: doc.data() });
-            }
-          });
-
-          for (const matchup of matchups) {
-            if (matchup.winner) {
-              updatedMatchupsForClass.push(matchup);
-              continue;
-            }
-
-            const [p1_uid, p2_uid] = matchup.pair;
-            const p1_profile = profileMap.get(p1_uid);
-            const p2_profile = profileMap.get(p2_uid);
-
-            // IMPORTANT: Get score for the SPECIFIC corps class, not total score
-            const p1_score = p1_profile?.data?.corps?.[corpsClass]?.totalSeasonScore || 0;
-            const p2_score = p2_profile?.data?.corps?.[corpsClass]?.totalSeasonScore || 0;
-
-            let winnerUid = null;
-            if (p1_score > p2_score) winnerUid = p1_uid;
-            if (p2_score > p1_score) winnerUid = p2_uid;
-
-            // Path to the new, class-specific record
-            const seasonRecordPath = `seasons.${seasonData.seasonUid}.records.${corpsClass}`;
-            const increment = admin.firestore.FieldValue.increment(1);
-
-            if (p1_profile?.ref && p2_profile?.ref) {
-              if (winnerUid === p1_uid) {
-                winnerBatch.set(p1_profile.ref, { [seasonRecordPath]: { w: increment } }, { merge: true });
-                winnerBatch.set(p2_profile.ref, { [seasonRecordPath]: { l: increment } }, { merge: true });
-              } else if (winnerUid === p2_uid) {
-                winnerBatch.set(p1_profile.ref, { [seasonRecordPath]: { l: increment } }, { merge: true });
-                winnerBatch.set(p2_profile.ref, { [seasonRecordPath]: { w: increment } }, { merge: true });
-              } else { // Tie
-                winnerBatch.set(p1_profile.ref, { [seasonRecordPath]: { t: increment } }, { merge: true });
-                winnerBatch.set(p2_profile.ref, { [seasonRecordPath]: { t: increment } }, { merge: true });
-              }
-            }
-
-            const newMatchup = {
-              ...matchup,
-              scores: { [p1_uid]: p1_score, [p2_uid]: p2_score },
-              winner: winnerUid,
-            };
-            updatedMatchupsForClass.push(newMatchup);
+        // Batch fetch all profiles in ONE operation
+        const profileRefs = allPlayerIds.map(uid =>
+          db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`)
+        );
+        const profileDocs = allPlayerIds.length > 0 ? await db.getAll(...profileRefs) : [];
+        const profileMap = new Map();
+        profileDocs.forEach((doc, i) => {
+          if (doc.exists) {
+            profileMap.set(allPlayerIds[i], { ref: doc.ref, data: doc.data() });
           }
-          matchupData[matchupArrayKey] = updatedMatchupsForClass;
-          hasUpdates = true;
+        });
+
+        for (const matchup of matchups) {
+          if (matchup.winner) {
+            updatedMatchupsForClass.push(matchup);
+            continue;
+          }
+
+          const [p1_uid, p2_uid] = matchup.pair;
+          const p1_profile = profileMap.get(p1_uid);
+          const p2_profile = profileMap.get(p2_uid);
+
+          // IMPORTANT: Get score for the SPECIFIC corps class, not total score
+          const p1_score = p1_profile?.data?.corps?.[corpsClass]?.totalSeasonScore || 0;
+          const p2_score = p2_profile?.data?.corps?.[corpsClass]?.totalSeasonScore || 0;
+
+          let winnerUid = null;
+          if (p1_score > p2_score) winnerUid = p1_uid;
+          if (p2_score > p1_score) winnerUid = p2_uid;
+
+          // Path to the new, class-specific record
+          const seasonRecordPath = `seasons.${seasonData.seasonUid}.records.${corpsClass}`;
+          const increment = admin.firestore.FieldValue.increment(1);
+
+          if (p1_profile?.ref && p2_profile?.ref) {
+            if (winnerUid === p1_uid) {
+              winnerBatch.set(p1_profile.ref, { [seasonRecordPath]: { w: increment } }, { merge: true });
+              winnerBatch.set(p2_profile.ref, { [seasonRecordPath]: { l: increment } }, { merge: true });
+            } else if (winnerUid === p2_uid) {
+              winnerBatch.set(p1_profile.ref, { [seasonRecordPath]: { l: increment } }, { merge: true });
+              winnerBatch.set(p2_profile.ref, { [seasonRecordPath]: { w: increment } }, { merge: true });
+            } else { // Tie
+              winnerBatch.set(p1_profile.ref, { [seasonRecordPath]: { t: increment } }, { merge: true });
+              winnerBatch.set(p2_profile.ref, { [seasonRecordPath]: { t: increment } }, { merge: true });
+            }
+          }
+
+          const newMatchup = {
+            ...matchup,
+            scores: { [p1_uid]: p1_score, [p2_uid]: p2_score },
+            winner: winnerUid,
+          };
+          updatedMatchupsForClass.push(newMatchup);
         }
-        if (hasUpdates) {
-          winnerBatch.update(matchupDocRef, matchupData);
-        }
+        matchupData[matchupArrayKey] = updatedMatchupsForClass;
+        hasUpdates = true;
+      }
+      if (hasUpdates) {
+        winnerBatch.update(matchupDocRef, matchupData);
       }
     }
     await winnerBatch.commit();
@@ -1629,87 +1651,109 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
     const week = scoredDay / 7;
     logger.info(`End of week ${week}. Determining class-based matchup winners...`);
 
-    const leaguesSnapshot = await db.collection("leagues").get();
+    // OPTIMIZATION: Add limit to prevent unbounded collection fetch
+    const LEAGUE_FETCH_LIMIT = 500;
+    const leaguesSnapshot = await db.collection("leagues").limit(LEAGUE_FETCH_LIMIT).get();
+    if (leaguesSnapshot.size === LEAGUE_FETCH_LIMIT) {
+      logger.warn(`OPTIMIZATION WARNING: League fetch hit limit of ${LEAGUE_FETCH_LIMIT}. Consider implementing pagination.`);
+    }
+
     const winnerBatch = db.batch();
     const corpsClasses = ["worldClass", "openClass", "aClass", "soundSport"];
 
+    // OPTIMIZATION: Batch fetch ALL matchup documents in ONE operation instead of N+1 queries
+    // This reduces N+1 database reads (1 per league) to just 2 batch operations
+    const matchupRefs = leaguesSnapshot.docs.map(leagueDoc =>
+      db.doc(`leagues/${leagueDoc.id}/matchups/week${week}`)
+    );
+    const matchupDocs = matchupRefs.length > 0 ? await db.getAll(...matchupRefs) : [];
+
+    // Build a Map for O(1) lookup by league ID
+    const matchupMap = new Map();
+    matchupDocs.forEach((doc, i) => {
+      if (doc.exists) {
+        matchupMap.set(leaguesSnapshot.docs[i].id, { ref: doc.ref, data: doc.data() });
+      }
+    });
+
+    logger.info(`Batch fetched ${matchupMap.size} matchup documents for ${leaguesSnapshot.size} leagues.`);
+
     for (const leagueDoc of leaguesSnapshot.docs) {
-      const matchupDocRef = db.doc(`leagues/${leagueDoc.id}/matchups/week${week}`);
-      const matchupDoc = await matchupDocRef.get();
+      const matchupEntry = matchupMap.get(leagueDoc.id);
+      if (!matchupEntry) continue;
 
-      if (matchupDoc.exists) {
-        const matchupData = matchupDoc.data();
-        let hasUpdates = false;
+      const matchupData = { ...matchupEntry.data };
+      const matchupDocRef = matchupEntry.ref;
+      let hasUpdates = false;
 
-        for (const corpsClass of corpsClasses) {
-          const matchupArrayKey = `${corpsClass}Matchups`;
-          const matchups = matchupData[matchupArrayKey] || [];
-          if (matchups.length === 0) continue;
+      for (const corpsClass of corpsClasses) {
+        const matchupArrayKey = `${corpsClass}Matchups`;
+        const matchups = matchupData[matchupArrayKey] || [];
+        if (matchups.length === 0) continue;
 
-          const updatedMatchupsForClass = [];
+        const updatedMatchupsForClass = [];
 
-          // OPTIMIZATION: Batch fetch all matchup profiles for this class upfront
-          const matchupsNeedingScores = matchups.filter(m => !m.winner);
-          const allPlayerIds = [...new Set(matchupsNeedingScores.flatMap(m => m.pair))];
+        // OPTIMIZATION: Batch fetch all matchup profiles for this class upfront
+        const matchupsNeedingScores = matchups.filter(m => !m.winner);
+        const allPlayerIds = [...new Set(matchupsNeedingScores.flatMap(m => m.pair))];
 
-          // Batch fetch all profiles in ONE operation
-          const profileRefs = allPlayerIds.map(uid =>
-            db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`)
-          );
-          const profileDocs = allPlayerIds.length > 0 ? await db.getAll(...profileRefs) : [];
-          const profileMap = new Map();
-          profileDocs.forEach((doc, i) => {
-            if (doc.exists) {
-              profileMap.set(allPlayerIds[i], { ref: doc.ref, data: doc.data() });
-            }
-          });
-
-          for (const matchup of matchups) {
-            if (matchup.winner) {
-              updatedMatchupsForClass.push(matchup);
-              continue;
-            }
-
-            const [p1_uid, p2_uid] = matchup.pair;
-            const p1_profile = profileMap.get(p1_uid);
-            const p2_profile = profileMap.get(p2_uid);
-
-            const p1_score = p1_profile?.data?.corps?.[corpsClass]?.totalSeasonScore || 0;
-            const p2_score = p2_profile?.data?.corps?.[corpsClass]?.totalSeasonScore || 0;
-
-            let winnerUid = null;
-            if (p1_score > p2_score) winnerUid = p1_uid;
-            if (p2_score > p1_score) winnerUid = p2_uid;
-
-            const seasonRecordPath = `seasons.${seasonData.seasonUid}.records.${corpsClass}`;
-            const increment = admin.firestore.FieldValue.increment(1);
-
-            if (p1_profile?.ref && p2_profile?.ref) {
-              if (winnerUid === p1_uid) {
-                winnerBatch.set(p1_profile.ref, { [seasonRecordPath]: { w: increment } }, { merge: true });
-                winnerBatch.set(p2_profile.ref, { [seasonRecordPath]: { l: increment } }, { merge: true });
-              } else if (winnerUid === p2_uid) {
-                winnerBatch.set(p1_profile.ref, { [seasonRecordPath]: { l: increment } }, { merge: true });
-                winnerBatch.set(p2_profile.ref, { [seasonRecordPath]: { w: increment } }, { merge: true });
-              } else {
-                winnerBatch.set(p1_profile.ref, { [seasonRecordPath]: { t: increment } }, { merge: true });
-                winnerBatch.set(p2_profile.ref, { [seasonRecordPath]: { t: increment } }, { merge: true });
-              }
-            }
-
-            const newMatchup = {
-              ...matchup,
-              scores: { [p1_uid]: p1_score, [p2_uid]: p2_score },
-              winner: winnerUid,
-            };
-            updatedMatchupsForClass.push(newMatchup);
+        // Batch fetch all profiles in ONE operation
+        const profileRefs = allPlayerIds.map(uid =>
+          db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`)
+        );
+        const profileDocs = allPlayerIds.length > 0 ? await db.getAll(...profileRefs) : [];
+        const profileMap = new Map();
+        profileDocs.forEach((doc, i) => {
+          if (doc.exists) {
+            profileMap.set(allPlayerIds[i], { ref: doc.ref, data: doc.data() });
           }
-          matchupData[matchupArrayKey] = updatedMatchupsForClass;
-          hasUpdates = true;
+        });
+
+        for (const matchup of matchups) {
+          if (matchup.winner) {
+            updatedMatchupsForClass.push(matchup);
+            continue;
+          }
+
+          const [p1_uid, p2_uid] = matchup.pair;
+          const p1_profile = profileMap.get(p1_uid);
+          const p2_profile = profileMap.get(p2_uid);
+
+          const p1_score = p1_profile?.data?.corps?.[corpsClass]?.totalSeasonScore || 0;
+          const p2_score = p2_profile?.data?.corps?.[corpsClass]?.totalSeasonScore || 0;
+
+          let winnerUid = null;
+          if (p1_score > p2_score) winnerUid = p1_uid;
+          if (p2_score > p1_score) winnerUid = p2_uid;
+
+          const seasonRecordPath = `seasons.${seasonData.seasonUid}.records.${corpsClass}`;
+          const increment = admin.firestore.FieldValue.increment(1);
+
+          if (p1_profile?.ref && p2_profile?.ref) {
+            if (winnerUid === p1_uid) {
+              winnerBatch.set(p1_profile.ref, { [seasonRecordPath]: { w: increment } }, { merge: true });
+              winnerBatch.set(p2_profile.ref, { [seasonRecordPath]: { l: increment } }, { merge: true });
+            } else if (winnerUid === p2_uid) {
+              winnerBatch.set(p1_profile.ref, { [seasonRecordPath]: { l: increment } }, { merge: true });
+              winnerBatch.set(p2_profile.ref, { [seasonRecordPath]: { w: increment } }, { merge: true });
+            } else {
+              winnerBatch.set(p1_profile.ref, { [seasonRecordPath]: { t: increment } }, { merge: true });
+              winnerBatch.set(p2_profile.ref, { [seasonRecordPath]: { t: increment } }, { merge: true });
+            }
+          }
+
+          const newMatchup = {
+            ...matchup,
+            scores: { [p1_uid]: p1_score, [p2_uid]: p2_score },
+            winner: winnerUid,
+          };
+          updatedMatchupsForClass.push(newMatchup);
         }
-        if (hasUpdates) {
-          winnerBatch.update(matchupDocRef, matchupData);
-        }
+        matchupData[matchupArrayKey] = updatedMatchupsForClass;
+        hasUpdates = true;
+      }
+      if (hasUpdates) {
+        winnerBatch.update(matchupDocRef, matchupData);
       }
     }
     await winnerBatch.commit();
