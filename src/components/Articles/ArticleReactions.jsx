@@ -48,6 +48,21 @@ export default function ArticleReactions({
   const [loading, setLoading] = useState(!initialCounts);
   const [reacting, setReacting] = useState(null);
 
+  // Sync with parent's initialCounts when they become available
+  useEffect(() => {
+    if (initialCounts) {
+      setCounts(initialCounts);
+      setLoading(false);
+    }
+  }, [initialCounts]);
+
+  // Sync with parent's initialUserReaction when it becomes available
+  useEffect(() => {
+    if (initialUserReaction !== undefined) {
+      setUserReaction(initialUserReaction);
+    }
+  }, [initialUserReaction]);
+
   // Fetch reactions on mount if not provided
   useEffect(() => {
     if (!initialCounts && articleId) {
