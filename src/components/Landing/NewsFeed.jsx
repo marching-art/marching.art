@@ -30,22 +30,45 @@ const loadFallbackNews = async () => {
 };
 
 // =============================================================================
-// NEWS FEED CACHE
-// Simple in-memory cache with 5-minute TTL to avoid redundant API calls
-// when users navigate away and return to the landing page
+// NEWS FEED CACHE WITH STALE-WHILE-REVALIDATE
+// Implements SWR pattern for instant perceived load times:
+// 1. Show cached data immediately (even if stale)
+// 2. Fetch fresh data in background
+// 3. Update UI when fresh data arrives
 // =============================================================================
 
-const NEWS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
+const NEWS_CACHE_TTL = 60 * 1000;        // 1 minute - consider fresh
+const NEWS_CACHE_STALE_TTL = 5 * 60 * 1000; // 5 minutes - can use stale data while revalidating
 
 const newsCache = {
   data: null,        // { news, engagement, hasMore }
   timestamp: 0,      // When cache was set
   maxItems: 0,       // Cache key - invalidate if different
 
-  isValid(maxItems) {
+  /**
+   * Check if cache is fresh (no revalidation needed)
+   */
+  isFresh(maxItems) {
     if (!this.data) return false;
     if (this.maxItems !== maxItems) return false;
     return Date.now() - this.timestamp < NEWS_CACHE_TTL;
+  },
+
+  /**
+   * Check if cache is stale but usable (show immediately, revalidate in background)
+   */
+  isStale(maxItems) {
+    if (!this.data) return false;
+    if (this.maxItems !== maxItems) return false;
+    const age = Date.now() - this.timestamp;
+    return age >= NEWS_CACHE_TTL && age < NEWS_CACHE_STALE_TTL;
+  },
+
+  /**
+   * Check if cache has any data for immediate display
+   */
+  hasData(maxItems) {
+    return this.data && this.maxItems === maxItems;
   },
 
   set(data, maxItems) {
@@ -56,6 +79,10 @@ const newsCache = {
 
   get() {
     return this.data;
+  },
+
+  getAge() {
+    return Date.now() - this.timestamp;
   },
 
   clear() {
@@ -713,9 +740,15 @@ export default function NewsFeed({ maxItems = 5 }) {
     }
   };
 
+  /**
+   * Fetch news with stale-while-revalidate pattern
+   * - Fresh cache: Use immediately, no fetch
+   * - Stale cache: Show immediately, fetch in background
+   * - No cache: Show loading, fetch
+   */
   const fetchNews = async (forceRefresh = false) => {
-    // Check cache first (unless force refresh requested)
-    if (!forceRefresh && newsCache.isValid(maxItems)) {
+    // If cache is fresh and not forcing refresh, use it directly
+    if (!forceRefresh && newsCache.isFresh(maxItems)) {
       const cached = newsCache.get();
       setNews(cached.news);
       setHasMore(cached.hasMore);
@@ -724,12 +757,31 @@ export default function NewsFeed({ maxItems = 5 }) {
       return;
     }
 
-    setLoading(true);
+    // If cache is stale, show it immediately while fetching fresh data in background
+    // This is the key to instant perceived load times
+    const isStale = newsCache.isStale(maxItems);
+    if (isStale && !forceRefresh) {
+      const cached = newsCache.get();
+      setNews(cached.news);
+      setHasMore(cached.hasMore);
+      setEngagement(cached.engagement || {});
+      setLoading(false); // Don't show loading - we have data to show
+      // Continue to fetch fresh data in background (don't return)
+    } else if (!newsCache.hasData(maxItems)) {
+      // No cached data at all - show loading state
+      setLoading(true);
+    }
+
     setError(null);
 
     try {
-      // Fetch news with engagement in a single request (eliminates waterfall)
-      const result = await getRecentNews({ limit: maxItems, includeEngagement: true });
+      // Fetch news with engagement in a single request
+      // Use feedOnly=true for optimized payload (no full article content)
+      const result = await getRecentNews({
+        limit: maxItems,
+        includeEngagement: true,
+        feedOnly: true,
+      });
 
       if (result.data?.success && result.data.news?.length > 0) {
         const newsData = result.data.news;
@@ -742,8 +794,8 @@ export default function NewsFeed({ maxItems = 5 }) {
 
         // Update cache with fresh data
         newsCache.set({ news: newsData, hasMore: hasMoreData, engagement: engagementData }, maxItems);
-      } else {
-        // Lazy-load fallback data only when API returns no results
+      } else if (!isStale) {
+        // Only use fallback if we don't already have stale data showing
         const fallbackNews = await loadFallbackNews();
         setNews(fallbackNews);
         setHasMore(false);
@@ -751,11 +803,13 @@ export default function NewsFeed({ maxItems = 5 }) {
       }
     } catch (err) {
       console.error('Error fetching news:', err);
-      // Lazy-load fallback data only when API fails
-      const fallbackNews = await loadFallbackNews();
-      setNews(fallbackNews);
-      setHasMore(false);
-      setError(err.message);
+      // Only show error/fallback if we don't have stale data already showing
+      if (!isStale) {
+        const fallbackNews = await loadFallbackNews();
+        setNews(fallbackNews);
+        setHasMore(false);
+        setError(err.message);
+      }
       // Don't cache error/fallback state
     } finally {
       setLoading(false);
@@ -776,10 +830,12 @@ export default function NewsFeed({ maxItems = 5 }) {
       const startAfter = lastArticle?.createdAt;
 
       // Fetch more news with engagement in a single request
+      // Use feedOnly=true for optimized payload
       const result = await getRecentNews({
         limit: maxItems,
         startAfter,
         includeEngagement: true,
+        feedOnly: true,
       });
 
       if (result.data?.success && result.data.news?.length > 0) {
