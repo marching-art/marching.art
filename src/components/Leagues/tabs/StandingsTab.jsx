@@ -139,43 +139,50 @@ const StandingsTab = ({
 
               {/* Top 5 Quick View */}
               <div className="divide-y divide-[#222]">
-                {enhancedStandings.slice(0, 5).map((stats, idx) => {
-                  const isUser = stats.uid === userProfile?.uid;
-                  const rank = idx + 1;
+                {enhancedStandings.length > 0 ? (
+                  enhancedStandings.slice(0, 5).map((stats, idx) => {
+                    const isUser = stats.uid === userProfile?.uid;
+                    const rank = idx + 1;
 
-                  return (
-                    <div
-                      key={stats.uid}
-                      className={`flex items-center justify-between px-4 py-2 ${
-                        isUser ? 'bg-purple-500/10' : ''
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <RankBadge rank={rank} isPlayoffSpot={rank <= playoffSize} />
-                        <span className={`text-sm font-bold ${isUser ? 'text-purple-400' : 'text-white'}`}>
-                          {getDisplayName(stats.uid)}
-                        </span>
-                        {stats.uid === league?.creatorId && (
-                          <Crown className="w-3 h-3 text-yellow-500" />
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="font-bold font-data tabular-nums text-sm">
-                          <span className="text-green-500">{stats.wins}</span>
-                          <span className="text-gray-600">-</span>
-                          <span className="text-red-500">{stats.losses}</span>
-                        </span>
-                        {stats.streak > 0 && (
-                          <span className={`text-xs font-bold ${
-                            stats.streakType === 'W' ? 'text-green-500' : 'text-red-500'
-                          }`}>
-                            {stats.streakType}{stats.streak}
+                    return (
+                      <div
+                        key={stats.uid}
+                        className={`flex items-center justify-between px-4 py-2 ${
+                          isUser ? 'bg-purple-500/10' : ''
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <RankBadge rank={rank} isPlayoffSpot={rank <= playoffSize} />
+                          <span className={`text-sm font-bold ${isUser ? 'text-purple-400' : 'text-white'}`}>
+                            {getDisplayName(stats.uid)}
                           </span>
-                        )}
+                          {stats.uid === league?.creatorId && (
+                            <Crown className="w-3 h-3 text-yellow-500" />
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="font-bold font-data tabular-nums text-sm">
+                            <span className="text-green-500">{stats.wins}</span>
+                            <span className="text-gray-600">-</span>
+                            <span className="text-red-500">{stats.losses}</span>
+                          </span>
+                          {stats.streak > 0 && (
+                            <span className={`text-xs font-bold ${
+                              stats.streakType === 'W' ? 'text-green-500' : 'text-red-500'
+                            }`}>
+                              {stats.streakType}{stats.streak}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                ) : (
+                  <div className="px-4 py-6 text-center">
+                    <p className="text-sm text-gray-500">No standings yet</p>
+                    <p className="text-xs text-gray-600 mt-1">Standings will appear after matchups are resolved</p>
+                  </div>
+                )}
               </div>
 
               {standings.length > 5 && (
