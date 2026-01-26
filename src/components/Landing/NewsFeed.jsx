@@ -139,12 +139,19 @@ const prefetchCache = {
 // =============================================================================
 // INTERSECTION OBSERVER HOOK FOR INFINITE SCROLL
 // Triggers loading when user scrolls near the bottom (like standard news sites)
+// Limited to a few auto-loads to prevent sidebar "racing" issue where users
+// can never reach the "Full Standings" link at the bottom of the sidebar
 // =============================================================================
 
-function useIntersectionObserver(callback, options = {}) {
+const MAX_AUTO_LOADS = 2; // Only auto-load 2 times, then require manual click
+
+function useIntersectionObserver(callback, enabled, options = {}) {
   const targetRef = useRef(null);
 
   useEffect(() => {
+    // Don't observe if disabled (e.g., max auto-loads reached)
+    if (!enabled) return;
+
     const target = targetRef.current;
     if (!target) return;
 
@@ -159,7 +166,7 @@ function useIntersectionObserver(callback, options = {}) {
 
     observer.observe(target);
     return () => observer.disconnect();
-  }, [callback, options]);
+  }, [callback, enabled, options]);
 
   return targetRef;
 }
@@ -911,6 +918,7 @@ export default function NewsFeed({ maxItems = 5 }) {
   const [hasMore, setHasMore] = useState(true);
   const [activeCategory, setActiveCategory] = useState('all');
   const [engagement, setEngagement] = useState({}); // Map of articleId -> engagement data
+  const [autoLoadCount, setAutoLoadCount] = useState(0); // Track auto-loads to prevent sidebar racing
 
   // Fetch engagement data for articles (used for load more, where we don't want to re-fetch all)
   const fetchEngagement = async (articleIds) => {
@@ -1107,6 +1115,9 @@ export default function NewsFeed({ maxItems = 5 }) {
         setHasMore(newHasMore);
         setEngagement(newEngagement);
 
+        // Track auto-loads for sidebar racing prevention
+        setAutoLoadCount(prev => prev + 1);
+
         // Update cache with expanded data so returning users see all loaded articles
         newsCache.set({ news: newNews, hasMore: newHasMore, engagement: newEngagement }, maxItems);
 
@@ -1125,7 +1136,9 @@ export default function NewsFeed({ maxItems = 5 }) {
   }, [loadingMore, hasMore, news, maxItems, engagement, prefetchNextPage]);
 
   // Intersection observer for infinite scroll (news site style)
-  const loadMoreRef = useIntersectionObserver(loadMore);
+  // Limited to MAX_AUTO_LOADS to prevent sidebar "racing" issue
+  const autoLoadEnabled = autoLoadCount < MAX_AUTO_LOADS;
+  const loadMoreRef = useIntersectionObserver(loadMore, autoLoadEnabled);
 
   useEffect(() => {
     fetchNews();
@@ -1246,11 +1259,13 @@ export default function NewsFeed({ maxItems = 5 }) {
             </div>
           )}
 
-          {/* Infinite Scroll Trigger + Load More Fallback */}
+          {/* Infinite Scroll Trigger + Load More Button */}
           {hasMore && !news[0]?.id?.startsWith('fallback-') && (
             <div className="mt-6 text-center">
-              {/* Intersection observer target for infinite scroll (news site style) */}
-              <div ref={loadMoreRef} className="h-1" aria-hidden="true" />
+              {/* Intersection observer target - only active for first few loads to prevent sidebar racing */}
+              {autoLoadEnabled && (
+                <div ref={loadMoreRef} className="h-1" aria-hidden="true" />
+              )}
 
               {/* Loading indicator - shown during fetch */}
               {loadingMore && (
@@ -1260,8 +1275,8 @@ export default function NewsFeed({ maxItems = 5 }) {
                 </div>
               )}
 
-              {/* Manual load button - fallback if intersection observer doesn't trigger */}
-              {!loadingMore && (
+              {/* Manual load button - shown after auto-loads exhausted or as fallback */}
+              {!loadingMore && !autoLoadEnabled && (
                 <button
                   onClick={loadMore}
                   className="px-6 py-3 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white transition-all press-feedback"
