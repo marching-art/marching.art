@@ -59,8 +59,9 @@ const SeasonScorecard = memo(({
             className="relative w-14 h-14 bg-[#222] border border-[#444] overflow-hidden flex items-center justify-center hover:border-[#0057B8] transition-colors group"
             title="Design Uniform"
           >
+            {/* OPTIMIZATION #7: Added lazy loading for avatar */}
             {avatarUrl ? (
-              <img src={avatarUrl} alt={corpsName} className="w-full h-full object-cover" />
+              <img src={avatarUrl} alt={corpsName} className="w-full h-full object-cover" loading="lazy" decoding="async" />
             ) : (
               <Trophy className="w-7 h-7 text-yellow-500" />
             )}

@@ -16,6 +16,7 @@ import {
 import toast from 'react-hot-toast';
 import { getRecentNews, getArticleEngagement } from '../../api/functions';
 import { EngagementSummary } from '../Articles';
+import { OptimizedImage } from '../ui/OptimizedImage';
 
 // =============================================================================
 // LAZY-LOADED FALLBACK DATA

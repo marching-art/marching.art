@@ -191,12 +191,16 @@ const GamingHeader: React.FC = () => {
           <div className="flex items-center justify-between h-full max-w-[1920px] mx-auto">
             {/* Left Section - Logo + Brand */}
             <Link to="/dashboard" className="flex items-center gap-2 group">
+              {/* OPTIMIZATION #7: Added eager loading for LCP */}
               <div className="relative flex-shrink-0">
                 <div className="w-9 h-9 rounded-sm overflow-hidden transition-all duration-300">
                   <img
                     src="/logo192.svg"
                     alt="marching.art"
                     className="w-full h-full object-cover"
+                    loading="eager"
+                    decoding="async"
+                    fetchPriority="high"
                   />
                 </div>
               </div>

@@ -77,12 +77,15 @@ const TopNav = () => {
   return (
     <nav className="fixed top-0 w-full h-12 bg-[#1a1a1a] border-b border-[#333] z-50">
       <div className="max-w-[1920px] mx-auto h-full flex items-center px-2 sm:px-4">
-      {/* Logo + Brand */}
+      {/* Logo + Brand - OPTIMIZATION #7: Added eager loading for LCP */}
       <Link to="/dashboard" className="flex items-center gap-2 mr-4">
         <img
           src="/logo192.svg"
           alt="marching.art"
           className="w-8 h-8 rounded"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
         />
         <div className="flex flex-col">
           <span className="font-bold text-sm text-white leading-tight">marching.art</span>

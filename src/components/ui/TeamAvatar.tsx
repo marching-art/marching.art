@@ -36,6 +36,7 @@ export const TeamAvatar: React.FC<TeamAvatarProps> = ({
   const sizeClass = sizeClasses[size];
 
   // If we have a custom logo, display it
+  // OPTIMIZATION #7: Added lazy loading for team logos
   if (logoUrl) {
     return (
       <div
@@ -45,6 +46,8 @@ export const TeamAvatar: React.FC<TeamAvatarProps> = ({
           src={logoUrl}
           alt={name || 'Team logo'}
           className="w-full h-full object-cover"
+          loading="lazy"
+          decoding="async"
         />
       </div>
     );
