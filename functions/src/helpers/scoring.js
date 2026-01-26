@@ -313,6 +313,10 @@ async function processAndArchiveOffSeasonScoresLogic() {
     const recapsSnapshot = await db.collection(`fantasy_recaps/${seasonData.seasonUid}/days`).get();
     const allRecaps = recapsSnapshot.docs.map(doc => doc.data());
 
+    // OPTIMIZATION: Build Map index for O(1) recap lookups instead of O(n) .find() calls
+    // Championship week (days 45-49) needs to look up prior days' results multiple times
+    const recapsByDay = new Map(allRecaps.map(r => [r.offSeasonDay, r]));
+
     if (scoredDay === 45) {
       // Day 45: Open and A Class Prelims - All Open and A Class corps auto-enrolled
       championshipConfig = {
@@ -325,7 +329,7 @@ async function processAndArchiveOffSeasonScoresLogic() {
 
     } else if (scoredDay === 46) {
       // Day 46: Open and A Class Finals - Top 8 Open, Top 4 A Class from Day 45
-      const day45Recap = allRecaps.find(r => r.offSeasonDay === 45);
+      const day45Recap = recapsByDay.get(45); // O(1) Map lookup instead of O(n) .find()
       const day45Results = day45Recap?.shows?.flatMap(s => s.results) || [];
 
       // Check if there are actual results, not just if recap exists
@@ -379,7 +383,7 @@ async function processAndArchiveOffSeasonScoresLogic() {
 
     } else if (scoredDay === 48) {
       // Day 48: World Championships Semifinals - Top 25 from Day 47
-      const prelimsRecap = allRecaps.find(r => r.offSeasonDay === 47);
+      const prelimsRecap = recapsByDay.get(47); // O(1) Map lookup instead of O(n) .find()
       const prelimsResults = prelimsRecap?.shows?.flatMap(s => s.results) || [];
 
       // Check if there are actual results, not just if recap exists
@@ -433,7 +437,7 @@ async function processAndArchiveOffSeasonScoresLogic() {
 
     } else if (scoredDay === 49) {
       // Day 49: Two shows - World Finals (top 12) and SoundSport Festival (all SoundSport)
-      const semisRecap = allRecaps.find(r => r.offSeasonDay === 48);
+      const semisRecap = recapsByDay.get(48); // O(1) Map lookup instead of O(n) .find()
       const semisResults = semisRecap?.shows?.flatMap(s => s.results) || [];
 
       championshipConfig = {
@@ -1071,6 +1075,10 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
     const recapsSnapshot = await db.collection(`fantasy_recaps/${seasonData.seasonUid}/days`).get();
     const allRecaps = recapsSnapshot.docs.map(doc => doc.data());
 
+    // OPTIMIZATION: Build Map index for O(1) recap lookups instead of O(n) .find() calls
+    // Championship week (days 45-49) needs to look up prior days' results multiple times
+    const recapsByDay = new Map(allRecaps.map(r => [r.offSeasonDay, r]));
+
     if (scoredDay === 45) {
       // Day 45: Open and A Class Prelims - All Open and A Class corps auto-enrolled
       championshipConfig = {
@@ -1083,7 +1091,7 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
 
     } else if (scoredDay === 46) {
       // Day 46: Open and A Class Finals - Top 8 Open, Top 4 A Class from Day 45
-      const day45Recap = allRecaps.find(r => r.offSeasonDay === 45);
+      const day45Recap = recapsByDay.get(45); // O(1) Map lookup instead of O(n) .find()
       const day45Results = day45Recap?.shows?.flatMap(s => s.results) || [];
 
       // Check if there are actual results, not just if recap exists
@@ -1134,7 +1142,7 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
 
     } else if (scoredDay === 48) {
       // Day 48: World Championships Semifinals - Top 25 from Day 47
-      const prelimsRecap = allRecaps.find(r => r.offSeasonDay === 47);
+      const prelimsRecap = recapsByDay.get(47); // O(1) Map lookup instead of O(n) .find()
       const prelimsResults = prelimsRecap?.shows?.flatMap(s => s.results) || [];
 
       // Check if there are actual results, not just if recap exists
@@ -1187,7 +1195,7 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
 
     } else if (scoredDay === 49) {
       // Day 49: Two shows - World Finals (top 12) and SoundSport Festival (all SoundSport)
-      const semisRecap = allRecaps.find(r => r.offSeasonDay === 48);
+      const semisRecap = recapsByDay.get(48); // O(1) Map lookup instead of O(n) .find()
       const semisResults = semisRecap?.shows?.flatMap(s => s.results) || [];
 
       championshipConfig = {
