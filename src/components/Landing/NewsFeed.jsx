@@ -1007,7 +1007,7 @@ function EmptyState({ category }) {
 // MAIN COMPONENT
 // =============================================================================
 
-export default function NewsFeed({ maxItems = 5 }) {
+export default function NewsFeed({ maxItems = 4 }) {
   const navigate = useNavigate();
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
