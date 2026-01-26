@@ -16,9 +16,14 @@ import { db } from '../firebase';
 import { doc, updateDoc, getDoc, collection, getDocs } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 
-// Lazy-load modals
+// OPTIMIZATION #9: Lazy-load large modal components to reduce initial bundle size
+// Prioritized by file size: CaptionSelectionModal (1007 lines), UniformDesignModal (794 lines),
+// NewsSubmissionModal (283 lines), ClassPurchaseModal (247 lines)
 const CaptionSelectionModal = lazy(() => import('../components/CaptionSelection/CaptionSelectionModal'));
 const SeasonSetupWizard = lazy(() => import('../components/SeasonSetupWizard'));
+const UniformDesignModal = lazy(() => import('../components/modals/UniformDesignModal'));
+const NewsSubmissionModal = lazy(() => import('../components/modals/NewsSubmissionModal'));
+const ClassPurchaseModal = lazy(() => import('../components/modals/ClassPurchaseModal'));
 
 import {
   ClassUnlockCongratsModal,
@@ -30,7 +35,6 @@ import {
   AchievementModal,
   OnboardingTour,
   QuickStartGuide,
-  UniformDesignModal,
   // OPTIMIZATION #4: Import extracted section components
   ControlBar,
   ActiveLineupTable,
@@ -48,8 +52,6 @@ import { useScoresData } from '../hooks/useScoresData';
 import { useMyLeagues } from '../hooks/useLeagues';
 import { retireCorps } from '../firebase/functions';
 import { registerCorps, unlockClassWithCorpsCoin, submitNewsForApproval } from '../api/functions';
-import NewsSubmissionModal from '../components/modals/NewsSubmissionModal';
-import ClassPurchaseModal from '../components/modals/ClassPurchaseModal';
 import { useHaptic } from '../hooks/useHaptic';
 import { useModalQueue, MODAL_PRIORITY } from '../hooks/useModalQueue';
 import { useSeasonStore } from '../store/seasonStore';
@@ -948,21 +950,26 @@ const Dashboard = () => {
         />
       )}
 
+      {/* OPTIMIZATION #9: Lazy-loaded modals wrapped with Suspense */}
       {showUniformDesign && activeCorps && (
-        <UniformDesignModal
-          onClose={() => setShowUniformDesign(false)}
-          onSubmit={handleUniformDesign}
-          currentDesign={activeCorps.uniformDesign}
-          corpsName={activeCorps.corpsName || activeCorps.name}
-        />
+        <Suspense fallback={null}>
+          <UniformDesignModal
+            onClose={() => setShowUniformDesign(false)}
+            onSubmit={handleUniformDesign}
+            currentDesign={activeCorps.uniformDesign}
+            corpsName={activeCorps.corpsName || activeCorps.name}
+          />
+        </Suspense>
       )}
 
       {showNewsSubmission && (
-        <NewsSubmissionModal
-          onClose={() => setShowNewsSubmission(false)}
-          onSubmit={handleNewsSubmission}
-          isSubmitting={submittingNews}
-        />
+        <Suspense fallback={null}>
+          <NewsSubmissionModal
+            onClose={() => setShowNewsSubmission(false)}
+            onSubmit={handleNewsSubmission}
+            isSubmitting={submittingNews}
+          />
+        </Suspense>
       )}
 
       {modalQueue.isActive('achievement') && newAchievement && (
@@ -993,18 +1000,20 @@ const Dashboard = () => {
       />
 
       {classToPurchase && profile && (
-        <ClassPurchaseModal
-          classKey={classToPurchase}
-          className={CLASS_DISPLAY_NAMES[classToPurchase]}
-          coinCost={CLASS_UNLOCK_COSTS[classToPurchase]}
-          currentBalance={profile.corpsCoin || 0}
-          levelRequired={CLASS_UNLOCK_LEVELS[classToPurchase]}
-          currentLevel={profile.xpLevel || 1}
-          weeksRemaining={weeksRemaining}
-          isRegistrationLocked={isRegistrationLocked(classToPurchase)}
-          onConfirm={handleConfirmClassPurchase}
-          onClose={() => setClassToPurchase(null)}
-        />
+        <Suspense fallback={null}>
+          <ClassPurchaseModal
+            classKey={classToPurchase}
+            className={CLASS_DISPLAY_NAMES[classToPurchase]}
+            coinCost={CLASS_UNLOCK_COSTS[classToPurchase]}
+            currentBalance={profile.corpsCoin || 0}
+            levelRequired={CLASS_UNLOCK_LEVELS[classToPurchase]}
+            currentLevel={profile.xpLevel || 1}
+            weeksRemaining={weeksRemaining}
+            isRegistrationLocked={isRegistrationLocked(classToPurchase)}
+            onConfirm={handleConfirmClassPurchase}
+            onClose={() => setClassToPurchase(null)}
+          />
+        </Suspense>
       )}
     </div>
   );
