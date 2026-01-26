@@ -13,6 +13,7 @@ import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import ArticleReactions from '../Articles/ArticleReactions';
 import ArticleComments from '../Articles/ArticleComments';
+import { OptimizedImage } from '../ui/OptimizedImage';
 
 // Category configuration
 function getCategoryConfig(category) {
@@ -176,15 +177,16 @@ const ArticleDetailModal = ({ article, onClose, engagement: initialEngagement })
             </div>
           </div>
 
-          {/* Hero Image */}
+          {/* Hero Image - OPTIMIZATION #7: Uses OptimizedImage for lazy loading */}
           {article.imageUrl && (
-            <div className="aspect-[16/9] bg-[#111] relative">
-              <img
+            <div className="relative">
+              <OptimizedImage
                 src={article.imageUrl}
                 alt={article.headline}
-                className="w-full h-full object-cover"
+                aspectRatio="16/9"
+                priority={true}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent pointer-events-none" />
             </div>
           )}
 

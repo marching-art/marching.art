@@ -4,7 +4,7 @@
 // Redesigned with rich Trophy Case, Season Timeline, and gamification
 // Laws: No glow, no shadow, grid layout, expandable sections
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import {
   User, Settings, Crown, LogOut, Coins, Heart,
@@ -19,8 +19,10 @@ import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { updateUsername, updateEmail, deleteAccount } from '../firebase/functions';
 import toast from 'react-hot-toast';
 import { DirectorProfile } from '../components/Profile/DirectorProfile';
-import UniformDesignModal from '../components/modals/UniformDesignModal';
 import { generateCorpsAvatar } from '../api/functions';
+
+// OPTIMIZATION #9: Lazy-load UniformDesignModal (794 lines) to reduce initial bundle
+const UniformDesignModal = lazy(() => import('../components/modals/UniformDesignModal'));
 import { useTooltipPreference } from '../hooks/useTooltipPreference';
 
 // =============================================================================
@@ -1044,16 +1046,18 @@ const Profile = () => {
         initialTab={settingsTab}
       />
 
-      {/* UNIFORM DESIGN MODAL */}
+      {/* UNIFORM DESIGN MODAL - OPTIMIZATION #9: Lazy-loaded */}
       {showUniformDesign && allCorps.length > 0 && (
-        <UniformDesignModal
-          onClose={() => setShowUniformDesign(false)}
-          onSubmit={handleUniformDesign}
-          corpsName={allCorps[0]?.corpsName || 'My Corps'}
-          currentDesign={allCorps[0]?.uniformDesign}
-          allCorps={allCorps}
-          initialCorpsClass={initialCorpsClass}
-        />
+        <Suspense fallback={null}>
+          <UniformDesignModal
+            onClose={() => setShowUniformDesign(false)}
+            onSubmit={handleUniformDesign}
+            corpsName={allCorps[0]?.corpsName || 'My Corps'}
+            currentDesign={allCorps[0]?.uniformDesign}
+            allCorps={allCorps}
+            initialCorpsClass={initialCorpsClass}
+          />
+        </Suspense>
       )}
     </div>
   );

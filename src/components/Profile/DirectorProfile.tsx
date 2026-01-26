@@ -470,9 +470,10 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
         <div className="flex">
           {/* LEFT: Avatar/Uniform - Large */}
           <div className="flex-shrink-0 w-32 sm:w-40 lg:w-48 bg-[#0a0a0a] border-r border-[#333] relative group">
+            {/* OPTIMIZATION #7: Added lazy loading for profile avatar */}
             <div className="aspect-square w-full">
               {avatarData.url ? (
-                <img src={avatarData.url} alt="Corps Uniform" className="w-full h-full object-cover" />
+                <img src={avatarData.url} alt="Corps Uniform" className="w-full h-full object-cover" loading="lazy" decoding="async" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-[#1a1a1a]">
                   <User className="w-12 h-12 text-gray-600" />
@@ -560,10 +561,13 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                                 : 'border-[#333] hover:border-[#555]'
                             } ${savingAvatar ? 'opacity-50' : ''}`}
                           >
+                            {/* OPTIMIZATION #7: Added lazy loading for corps avatar */}
                             <img
                               src={corps.avatarUrl}
                               alt={corps.corpsName}
                               className="w-full aspect-square object-cover"
+                              loading="lazy"
+                              decoding="async"
                             />
                             <div className="absolute bottom-0 left-0 right-0 bg-black/70 px-2 py-1">
                               <div className="text-[10px] text-white font-bold truncate">

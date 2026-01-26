@@ -7,6 +7,10 @@ import TicketStub from './TicketStub';
 import EmptyState from '../EmptyState';
 import { isEventPast } from '../../utils/scheduleUtils';
 
+// OPTIMIZATION #10: Extract inline styles to constants to prevent object recreation on every render
+const SCROLLBAR_HIDE_STYLE = { scrollbarWidth: 'none', msOverflowStyle: 'none' };
+const ANIMATION_SLOW = { animationDuration: '2s' };
+
 const TourStrip = ({
   shows,
   selectedWeek,
@@ -93,7 +97,7 @@ const TourStrip = ({
         {/* Legend */}
         <div className="hidden md:flex items-center gap-4 ml-auto text-xs">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-sm bg-green-400 animate-pulse" style={{ animationDuration: '2s' }} />
+            <div className="w-3 h-3 rounded-sm bg-green-400 animate-pulse" style={ANIMATION_SLOW} />
             <span className="text-cream/50">Open</span>
           </div>
           <div className="flex items-center gap-2">
@@ -133,7 +137,7 @@ const TourStrip = ({
         <div
           ref={scrollRef}
           className="h-full overflow-x-auto overflow-y-hidden scrollbar-hide scroll-smooth"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          style={SCROLLBAR_HIDE_STYLE}
         >
           <div className="inline-flex items-stretch gap-0 py-4 px-2 min-w-full">
             {shows.map((show, index) => {
@@ -160,7 +164,7 @@ const TourStrip = ({
                       `}>
                         {/* Animated pulse on route if next show is open */}
                         {!isLocked && (
-                          <div className="absolute inset-0 bg-gradient-to-r from-gold-400/0 via-gold-400/60 to-gold-400/0 animate-pulse" style={{ animationDuration: '2s' }} />
+                          <div className="absolute inset-0 bg-gradient-to-r from-gold-400/0 via-gold-400/60 to-gold-400/0 animate-pulse" style={ANIMATION_SLOW} />
                         )}
                       </div>
                       {/* Route Dot */}

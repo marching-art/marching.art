@@ -6,7 +6,7 @@
  * source attribution, and professional typography.
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Trophy, Flame, Clock, ChevronRight, TrendingUp, TrendingDown,
@@ -16,6 +16,7 @@ import {
 import toast from 'react-hot-toast';
 import { getRecentNews, getArticleEngagement } from '../../api/functions';
 import { EngagementSummary } from '../Articles';
+import { OptimizedImage } from '../ui/OptimizedImage';
 
 // =============================================================================
 // LAZY-LOADED FALLBACK DATA
@@ -512,8 +513,9 @@ function HeroStory({ story, onClick, storyNumber, engagement }) {
 
 /**
  * News Card - Compact card for secondary stories (grid layout)
+ * OPTIMIZATION #3: Memoized to prevent re-renders when sibling news items update
  */
-function NewsCard({ story, onClick, storyNumber, engagement }) {
+const NewsCard = memo(({ story, onClick, storyNumber, engagement }) => {
   const config = getCategoryConfig(story.category);
   const Icon = config.icon;
   const urgency = getUrgencyBadge(story.createdAt);
@@ -595,12 +597,13 @@ function NewsCard({ story, onClick, storyNumber, engagement }) {
       </div>
     </article>
   );
-}
+});
 
 /**
  * Compact News Row - For additional stories in a list format
+ * OPTIMIZATION #3: Memoized to prevent re-renders when sibling news items update
  */
-function NewsRow({ story, onClick, storyNumber, engagement }) {
+const NewsRow = memo(({ story, onClick, storyNumber, engagement }) => {
   const config = getCategoryConfig(story.category);
   const urgency = getUrgencyBadge(story.createdAt);
 
@@ -644,7 +647,7 @@ function NewsRow({ story, onClick, storyNumber, engagement }) {
       <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-[#0057B8] transition-colors flex-shrink-0 mt-1" />
     </article>
   );
-}
+});
 
 function LoadingState() {
   return (

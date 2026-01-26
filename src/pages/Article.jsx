@@ -17,6 +17,7 @@ import {
 import YouTubeIcon from '../components/YouTubeIcon';
 import ArticleReactions from '../components/Articles/ArticleReactions';
 import ArticleComments from '../components/Articles/ArticleComments';
+import { OptimizedImage } from '../components/ui/OptimizedImage';
 import ArticleNarrativeParser from '../components/Articles/ArticleNarrativeParser';
 import CaptionInsightsCards from '../components/Articles/CaptionInsightsCards';
 import CaptionBreakdownCards from '../components/Articles/CaptionBreakdownCards';
@@ -508,17 +509,16 @@ const Article = () => {
             {/* MAIN COLUMN - Article Content (8 cols) */}
             {/* ============================================================= */}
             <div className="lg:col-span-8">
-              {/* Hero Image */}
+              {/* Hero Image - OPTIMIZATION #7: Uses OptimizedImage for lazy loading with skeleton */}
               {article.imageUrl && (
-                <div className="w-full bg-[#111] mb-6 border border-[#333]">
-                  <div className="aspect-[21/9] relative">
-                    <img
-                      src={article.imageUrl}
-                      alt={article.headline}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent" />
-                  </div>
+                <div className="w-full mb-6 border border-[#333] relative">
+                  <OptimizedImage
+                    src={article.imageUrl}
+                    alt={article.headline}
+                    aspectRatio="21/9"
+                    priority={true}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent pointer-events-none" />
                 </div>
               )}
 

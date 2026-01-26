@@ -3,6 +3,10 @@ import React from 'react';
 import { m } from 'framer-motion';
 import { Zap, Check, Clock } from 'lucide-react';
 
+// OPTIMIZATION #10: Extract inline styles to constants to prevent object recreation on every render
+const ANIMATION_SLOW = { animationDuration: '2s' };
+const ANIMATION_MEDIUM = { animationDuration: '1.5s' };
+
 const WeekTabs = ({
   selectedWeek,
   currentWeek,
@@ -66,8 +70,8 @@ const WeekTabs = ({
                   {/* Pulsating Glow Ring (Active Week Only) */}
                   {status === 'active' && (
                     <>
-                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-sm bg-gold-500/20 animate-ping" style={{ animationDuration: '2s' }} />
-                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-sm bg-gold-500/10 animate-pulse" style={{ animationDuration: '1.5s' }} />
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-sm bg-gold-500/20 animate-ping" style={ANIMATION_SLOW} />
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-sm bg-gold-500/10 animate-pulse" style={ANIMATION_MEDIUM} />
                     </>
                   )}
 

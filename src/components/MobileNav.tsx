@@ -117,10 +117,10 @@ const MobileNav: React.FC<MobileNavProps> = ({ isOpen, setIsOpen }) => {
       {/* Mobile Header */}
       <header className="fixed top-0 left-0 right-0 h-16 bg-slate-950/90 backdrop-blur-xl border-b border-white/5 z-40 lg:hidden">
         <div className="flex items-center justify-between h-full px-4">
-          {/* Logo */}
+          {/* Logo - OPTIMIZATION #7: Added eager loading for LCP */}
           <Link to="/dashboard" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-sm overflow-hidden">
-              <img src="/logo192.svg" alt="marching.art" className="w-full h-full object-cover" />
+              <img src="/logo192.svg" alt="marching.art" className="w-full h-full object-cover" loading="eager" decoding="async" fetchPriority="high" />
             </div>
             <h1 className="text-lg font-display font-bold">
               <span className="text-yellow-400">marching</span>
