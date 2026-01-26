@@ -1,11 +1,12 @@
 // Service Worker for marching.art Progressive Web App
 // Provides offline support, caching, and improved performance
 
-const APP_VERSION = '2.0.1';
+const APP_VERSION = '2.1.0';
 const CACHE_NAME = `marching-art-v${APP_VERSION}`;
 const RUNTIME_CACHE = `marching-art-runtime-v${APP_VERSION}`;
 const IMAGE_CACHE = `marching-art-images-v${APP_VERSION}`;
 const FONT_CACHE = `marching-art-fonts-v${APP_VERSION}`;
+const NEWS_CACHE = `marching-art-news-v${APP_VERSION}`;
 
 // Core app shell to precache immediately on install
 const PRECACHE_URLS = [
@@ -42,12 +43,19 @@ const ROUTE_STRATEGIES = [
   { pattern: /^https:\/\/fonts\.googleapis\.com/, strategy: CACHE_STRATEGIES.STALE_WHILE_REVALIDATE, cache: FONT_CACHE },
   { pattern: /^https:\/\/fonts\.gstatic\.com/, strategy: CACHE_STRATEGIES.CACHE_FIRST, cache: FONT_CACHE, maxAge: 365 * 24 * 60 * 60 * 1000 },
 
+  // News API - stale-while-revalidate for instant perceived loading (news site style)
+  // Returns cached news immediately while fetching fresh data in background
+  { pattern: /\/api\/news/, strategy: CACHE_STRATEGIES.STALE_WHILE_REVALIDATE, cache: NEWS_CACHE, maxAge: 30 * 60 * 1000 },
+
+  // Cloudinary images (news article images) - cache first with long expiry
+  { pattern: /^https:\/\/res\.cloudinary\.com/, strategy: CACHE_STRATEGIES.CACHE_FIRST, cache: IMAGE_CACHE, maxAge: 7 * 24 * 60 * 60 * 1000 },
+
   // Firebase APIs - network first for data freshness
   { pattern: /^https:\/\/firestore\.googleapis\.com/, strategy: CACHE_STRATEGIES.NETWORK_FIRST, cache: RUNTIME_CACHE, timeout: 5000 },
   { pattern: /^https:\/\/.*\.firebaseapp\.com/, strategy: CACHE_STRATEGIES.NETWORK_FIRST, cache: RUNTIME_CACHE, timeout: 5000 },
   { pattern: /^https:\/\/.*\.firebase\.com/, strategy: CACHE_STRATEGIES.NETWORK_FIRST, cache: RUNTIME_CACHE, timeout: 5000 },
 
-  // API routes - network first
+  // API routes (other than news) - network first
   { pattern: /\/api\//, strategy: CACHE_STRATEGIES.NETWORK_FIRST, cache: RUNTIME_CACHE, timeout: 10000 }
 ];
 
@@ -79,7 +87,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   console.log(`[SW] Activating version ${APP_VERSION}...`);
 
-  const currentCaches = [CACHE_NAME, RUNTIME_CACHE, IMAGE_CACHE, FONT_CACHE];
+  const currentCaches = [CACHE_NAME, RUNTIME_CACHE, IMAGE_CACHE, FONT_CACHE, NEWS_CACHE];
 
   event.waitUntil(
     caches.keys()
