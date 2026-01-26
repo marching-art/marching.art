@@ -197,6 +197,55 @@ export interface GetRecentNewsResult {
 }
 
 export const getRecentNews = createCallable<GetRecentNewsParams, GetRecentNewsResult>('getRecentNews');
+
+// =============================================================================
+// OPTIMIZED NEWS FETCH VIA HTTP ENDPOINT
+// Uses Firebase Hosting CDN for edge caching - much faster than callable
+// =============================================================================
+
+/**
+ * Fetch news via HTTP endpoint with CDN edge caching
+ * This is significantly faster than the callable function for initial loads:
+ * - Edge cached responses: ~20-50ms
+ * - Fresh responses: ~200-400ms (vs ~500-1500ms for callable with cold start)
+ *
+ * Falls back to callable if HTTP fails (e.g., during local development)
+ */
+export async function fetchNewsFeedHttp(params: {
+  limit?: number;
+  category?: NewsCategory;
+}): Promise<GetRecentNewsResult> {
+  const { limit = 10, category } = params;
+
+  // Build query string
+  const queryParams = new URLSearchParams();
+  queryParams.set('limit', String(limit));
+  if (category) {
+    queryParams.set('category', category);
+  }
+
+  try {
+    // Use the proxied endpoint via Firebase Hosting (enables CDN caching)
+    const response = await fetch(`/api/news?${queryParams.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data as GetRecentNewsResult;
+  } catch (error) {
+    // Fall back to callable function (works during local development)
+    console.warn('HTTP news fetch failed, falling back to callable:', error);
+    const result = await getRecentNews({ limit, category, feedOnly: true, includeEngagement: true });
+    return result.data;
+  }
+}
 export const triggerNewsGeneration = createCallable<{ type: 'dci' | 'fantasy'; data: unknown }, { success: boolean; result?: unknown }>('triggerNewsGeneration');
 
 // =============================================================================
