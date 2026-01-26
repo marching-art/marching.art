@@ -5,6 +5,11 @@ import { m } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { useShouldReduceMotion } from '../hooks/useReducedMotion';
 
+// OPTIMIZATION #10: Extract inline styles to constants to prevent object recreation on every render
+const GLITCH_RED_STYLE = { clipPath: 'inset(20% 0 30% 0)', transform: 'translateX(-2px)' };
+const GLITCH_CYAN_STYLE = { clipPath: 'inset(50% 0 20% 0)', transform: 'translateX(2px)' };
+const WATERMARK_FONT_STYLE = { fontSize: 'clamp(6rem, 25vw, 16rem)' };
+
 // =============================================================================
 // TACTICAL SVG ICONS - Technical, in-world graphics
 // =============================================================================
@@ -100,14 +105,14 @@ const GlitchText = ({ children, className = "" }) => (
     {/* Glitch layers */}
     <span
       className="absolute inset-0 text-red-500/30 z-0"
-      style={{ clipPath: 'inset(20% 0 30% 0)', transform: 'translateX(-2px)' }}
+      style={GLITCH_RED_STYLE}
       aria-hidden="true"
     >
       {children}
     </span>
     <span
       className="absolute inset-0 text-cyan-500/30 z-0"
-      style={{ clipPath: 'inset(50% 0 20% 0)', transform: 'translateX(2px)' }}
+      style={GLITCH_CYAN_STYLE}
       aria-hidden="true"
     >
       {children}
@@ -167,7 +172,7 @@ const EmptyState = ({
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
         <span
           className="font-display font-black text-cream/[0.015] uppercase leading-none whitespace-nowrap"
-          style={{ fontSize: 'clamp(6rem, 25vw, 16rem)' }}
+          style={WATERMARK_FONT_STYLE}
         >
           OFFLINE
         </span>

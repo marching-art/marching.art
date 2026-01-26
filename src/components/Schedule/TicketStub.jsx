@@ -5,6 +5,10 @@ import { m } from 'framer-motion';
 import { MapPin, Lock, Music, Plus, ExternalLink, Zap, Check, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+// OPTIMIZATION #10: Extract inline styles to constants to prevent object recreation on every render
+const ANIMATION_VERY_SLOW = { animationDuration: '3s' };
+const ANIMATION_SLOW = { animationDuration: '2s' };
+
 const TicketStub = ({
   show,
   index,
@@ -172,7 +176,7 @@ const TicketStub = ({
                   : 'bg-green-500/20 text-green-400 border border-green-500/30 animate-pulse'
                 }
               `}
-              style={{ animationDuration: '3s' }}
+              style={ANIMATION_VERY_SLOW}
               >
                 {isRegistered ? (
                   <>
@@ -181,7 +185,7 @@ const TicketStub = ({
                   </>
                 ) : (
                   <>
-                    <span className="w-2 h-2 rounded-sm bg-green-400 animate-ping" style={{ animationDuration: '2s' }} />
+                    <span className="w-2 h-2 rounded-sm bg-green-400 animate-ping" style={ANIMATION_SLOW} />
                     Open
                   </>
                 )}

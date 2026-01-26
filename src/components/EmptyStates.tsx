@@ -9,6 +9,9 @@ import {
 } from 'lucide-react';
 import { useShouldReduceMotion } from '../hooks/useReducedMotion';
 
+// OPTIMIZATION #10: Extract inline styles to constants to prevent object recreation on every render
+const ANIMATION_SLOW: React.CSSProperties = { animationDuration: '2s' };
+
 interface EmptyStateBaseProps {
   className?: string;
   onAction?: () => void;
@@ -27,7 +30,7 @@ export const NoLeaguesEmpty: React.FC<EmptyStateBaseProps & { onCreateLeague?: (
     className={`text-center py-12 px-6 ${className}`}
   >
     <div className="relative w-20 h-20 mx-auto mb-6">
-      <div className="absolute inset-0 rounded-sm bg-gold-500/20 animate-ping" style={{ animationDuration: '2s' }} />
+      <div className="absolute inset-0 rounded-sm bg-gold-500/20 animate-ping" style={ANIMATION_SLOW} />
       <div className="relative w-20 h-20 rounded-sm bg-gradient-to-br from-gold-500/20 to-blue-500/20 flex items-center justify-center border-2 border-gold-500/30">
         <Users className="w-10 h-10 text-gold-400" />
       </div>
