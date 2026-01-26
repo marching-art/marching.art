@@ -6,7 +6,7 @@
  * source attribution, and professional typography.
  */
 
-import React, { useState, useEffect, useMemo, memo } from 'react';
+import React, { useState, useEffect, useMemo, memo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Trophy, Flame, Clock, ChevronRight, TrendingUp, TrendingDown,
@@ -31,14 +31,18 @@ const loadFallbackNews = async () => {
 
 // =============================================================================
 // NEWS FEED CACHE WITH STALE-WHILE-REVALIDATE
-// Implements SWR pattern for instant perceived load times:
+// Implements SWR pattern for instant perceived load times (news site style):
 // 1. Show cached data immediately (even if stale)
 // 2. Fetch fresh data in background
 // 3. Update UI when fresh data arrives
+//
+// Cache TTLs are aligned with server-side caching for optimal performance:
+// - Fresh: 2 minutes (matches browser Cache-Control max-age)
+// - Stale: 30 minutes (matches stale-while-revalidate)
 // =============================================================================
 
-const NEWS_CACHE_TTL = 60 * 1000;        // 1 minute - consider fresh
-const NEWS_CACHE_STALE_TTL = 5 * 60 * 1000; // 5 minutes - can use stale data while revalidating
+const NEWS_CACHE_TTL = 2 * 60 * 1000;        // 2 minutes - consider fresh (matches server max-age)
+const NEWS_CACHE_STALE_TTL = 30 * 60 * 1000; // 30 minutes - can use stale data while revalidating
 
 const newsCache = {
   data: null,        // { news, engagement, hasMore }
@@ -98,6 +102,67 @@ const newsCache = {
 // =============================================================================
 
 let pendingRequest = null;
+
+// =============================================================================
+// PREFETCH CACHE
+// Stores prefetched next page data for instant pagination (like news sites)
+// =============================================================================
+
+const prefetchCache = {
+  data: null,
+  cursor: null,
+  timestamp: 0,
+  TTL: 30 * 1000, // 30 seconds
+
+  set(data, cursor) {
+    this.data = data;
+    this.cursor = cursor;
+    this.timestamp = Date.now();
+  },
+
+  get(cursor) {
+    if (!this.data || this.cursor !== cursor) return null;
+    if (Date.now() - this.timestamp > this.TTL) {
+      this.clear();
+      return null;
+    }
+    return this.data;
+  },
+
+  clear() {
+    this.data = null;
+    this.cursor = null;
+    this.timestamp = 0;
+  },
+};
+
+// =============================================================================
+// INTERSECTION OBSERVER HOOK FOR INFINITE SCROLL
+// Triggers loading when user scrolls near the bottom (like standard news sites)
+// =============================================================================
+
+function useIntersectionObserver(callback, options = {}) {
+  const targetRef = useRef(null);
+
+  useEffect(() => {
+    const target = targetRef.current;
+    if (!target) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          callback();
+        }
+      },
+      { rootMargin: '200px', threshold: 0, ...options }
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [callback, options]);
+
+  return targetRef;
+}
 
 // =============================================================================
 // IMAGE PRELOADING
@@ -970,7 +1035,38 @@ export default function NewsFeed({ maxItems = 5 }) {
     }
   };
 
-  const loadMore = async () => {
+  /**
+   * Prefetch next page of news for instant pagination (like standard news sites)
+   * Called when user scrolls near the end of current content
+   */
+  const prefetchNextPage = useCallback(async () => {
+    if (!hasMore || news.length === 0) return;
+    if (news[0]?.id?.startsWith('fallback-')) return;
+
+    const lastArticle = news[news.length - 1];
+    const cursor = lastArticle?.createdAt;
+
+    // Skip if already prefetched for this cursor
+    if (prefetchCache.get(cursor)) return;
+
+    try {
+      const result = await getRecentNews({
+        limit: maxItems,
+        startAfter: cursor,
+        includeEngagement: true,
+        feedOnly: true,
+      });
+
+      if (result.data?.success && result.data.news?.length > 0) {
+        prefetchCache.set(result.data, cursor);
+      }
+    } catch (err) {
+      // Silent fail for prefetch - not critical
+      console.debug('Prefetch failed:', err);
+    }
+  }, [hasMore, news, maxItems]);
+
+  const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore || news.length === 0) return;
 
     // Don't load more if we're showing fallback data
@@ -983,14 +1079,24 @@ export default function NewsFeed({ maxItems = 5 }) {
       const lastArticle = news[news.length - 1];
       const startAfter = lastArticle?.createdAt;
 
-      // Fetch more news with engagement in a single request
-      // Use feedOnly=true for optimized payload
-      const result = await getRecentNews({
-        limit: maxItems,
-        startAfter,
-        includeEngagement: true,
-        feedOnly: true,
-      });
+      // Check prefetch cache first for instant pagination (like news sites)
+      const prefetched = prefetchCache.get(startAfter);
+      let result;
+
+      if (prefetched) {
+        // Use prefetched data for instant response
+        result = { data: prefetched };
+        prefetchCache.clear();
+      } else {
+        // Fetch more news with engagement in a single request
+        // Use feedOnly=true for optimized payload
+        result = await getRecentNews({
+          limit: maxItems,
+          startAfter,
+          includeEngagement: true,
+          feedOnly: true,
+        });
+      }
 
       if (result.data?.success && result.data.news?.length > 0) {
         const newNews = [...news, ...result.data.news];
@@ -1003,6 +1109,11 @@ export default function NewsFeed({ maxItems = 5 }) {
 
         // Update cache with expanded data so returning users see all loaded articles
         newsCache.set({ news: newNews, hasMore: newHasMore, engagement: newEngagement }, maxItems);
+
+        // Start prefetching next page immediately after loading current page
+        if (newHasMore) {
+          setTimeout(() => prefetchNextPage(), 100);
+        }
       } else {
         setHasMore(false);
       }
@@ -1011,11 +1122,23 @@ export default function NewsFeed({ maxItems = 5 }) {
     } finally {
       setLoadingMore(false);
     }
-  };
+  }, [loadingMore, hasMore, news, maxItems, engagement, prefetchNextPage]);
+
+  // Intersection observer for infinite scroll (news site style)
+  const loadMoreRef = useIntersectionObserver(loadMore);
 
   useEffect(() => {
     fetchNews();
   }, [maxItems]);
+
+  // Start prefetching next page once initial news is loaded (for instant pagination)
+  useEffect(() => {
+    if (news.length > 0 && hasMore && !loading) {
+      // Delay prefetch slightly to prioritize initial render
+      const timer = setTimeout(() => prefetchNextPage(), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [news.length, hasMore, loading, prefetchNextPage]);
 
   // Filter news by category
   const filteredNews = useMemo(() => {
@@ -1123,23 +1246,29 @@ export default function NewsFeed({ maxItems = 5 }) {
             </div>
           )}
 
-          {/* Load More */}
+          {/* Infinite Scroll Trigger + Load More Fallback */}
           {hasMore && !news[0]?.id?.startsWith('fallback-') && (
             <div className="mt-6 text-center">
-              <button
-                onClick={loadMore}
-                disabled={loadingMore}
-                className="px-6 py-3 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white transition-all press-feedback disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loadingMore ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Loading...
-                  </span>
-                ) : (
-                  'Load More Stories'
-                )}
-              </button>
+              {/* Intersection observer target for infinite scroll (news site style) */}
+              <div ref={loadMoreRef} className="h-1" aria-hidden="true" />
+
+              {/* Loading indicator - shown during fetch */}
+              {loadingMore && (
+                <div className="flex items-center justify-center gap-2 py-4 text-gray-500">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="text-sm">Loading more stories...</span>
+                </div>
+              )}
+
+              {/* Manual load button - fallback if intersection observer doesn't trigger */}
+              {!loadingMore && (
+                <button
+                  onClick={loadMore}
+                  className="px-6 py-3 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white transition-all press-feedback"
+                >
+                  Load More Stories
+                </button>
+              )}
             </div>
           )}
         </>

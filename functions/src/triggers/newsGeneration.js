@@ -523,9 +523,10 @@ exports.getDailyNews = onCall(
 // =============================================================================
 // SERVER-SIDE CACHE CONFIGURATION
 // Dramatically improves response times by caching news feed in Firestore
+// This works alongside CDN caching for multi-layer performance (news site style)
 // =============================================================================
 
-const NEWS_FEED_CACHE_TTL = 60 * 1000; // 1 minute server-side cache
+const NEWS_FEED_CACHE_TTL = 5 * 60 * 1000; // 5 minutes server-side cache (matches CDN s-maxage/2)
 const NEWS_FEED_CACHE_COLLECTION = "news_feed_cache";
 
 /**
@@ -830,10 +831,16 @@ async function fetchEngagementData(db, articleIds) {
  * - limit: number of articles (default 10)
  * - category: filter by category (optional)
  *
- * Cache behavior:
- * - CDN caches for 5 minutes (s-maxage=300)
- * - Browser caches for 1 minute (max-age=60)
- * - stale-while-revalidate allows serving stale content while fetching fresh
+ * Cache behavior (optimized for news site performance):
+ * - CDN edge caches for 10 minutes (s-maxage=600)
+ * - Browser caches for 2 minutes (max-age=120)
+ * - stale-while-revalidate=1800 allows serving stale content for 30 min while fetching fresh
+ * - stale-if-error=86400 serves cached content for 24h if backend errors occur
+ *
+ * This aggressive caching ensures:
+ * - First-time visitors get edge-cached responses (~20-50ms)
+ * - Returning visitors get browser-cached responses (~5-10ms)
+ * - Even during backend issues, users see content (stale-if-error)
  */
 exports.getNewsFeedHttp = onRequest(
   {
@@ -868,8 +875,12 @@ exports.getNewsFeedHttp = onRequest(
       // Check server-side cache first
       const cached = await getCachedNewsFeed(db, cacheKey);
       if (cached) {
-        // Set CDN and browser caching headers
-        res.set("Cache-Control", "public, max-age=60, s-maxage=300, stale-while-revalidate=600");
+        // Set aggressive CDN and browser caching headers (news site style)
+        // - Browser: 2 min fresh, then revalidate
+        // - CDN edge: 10 min fresh
+        // - Stale-while-revalidate: serve stale for 30 min while fetching fresh in background
+        // - Stale-if-error: serve stale for 24h if backend fails
+        res.set("Cache-Control", "public, max-age=120, s-maxage=600, stale-while-revalidate=1800, stale-if-error=86400");
         res.set("X-Cache-Status", "HIT");
         res.set("X-Cache-Age", String(cached.cacheAge));
 
@@ -942,8 +953,8 @@ exports.getNewsFeedHttp = onRequest(
         engagement,
       });
 
-      // Set CDN and browser caching headers
-      res.set("Cache-Control", "public, max-age=60, s-maxage=300, stale-while-revalidate=600");
+      // Set aggressive CDN and browser caching headers (news site style)
+      res.set("Cache-Control", "public, max-age=120, s-maxage=600, stale-while-revalidate=1800, stale-if-error=86400");
       res.set("X-Cache-Status", "MISS");
 
       return res.json({

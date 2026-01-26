@@ -15,12 +15,28 @@ interface OptimizedImageProps {
   alt: string;
   width?: number;
   height?: number;
-  aspectRatio?: '1/1' | '16/9' | '4/3' | '3/2' | '2/1' | string;
+  aspectRatio?: '1/1' | '16/9' | '4/3' | '3/2' | '2/1' | '21/9' | string;
   className?: string;
   containerClassName?: string;
   priority?: boolean; // Skip lazy loading for LCP images
+  blurPlaceholder?: boolean; // Show blur placeholder while loading (news site style)
+  dominantColor?: string; // Optional dominant color for placeholder
   onLoad?: () => void;
   onError?: () => void;
+}
+
+// =============================================================================
+// BLUR PLACEHOLDER
+// =============================================================================
+// Tiny SVG blur placeholder for instant perceived loading (like news sites)
+// This eliminates the jarring skeleton-to-image transition
+
+const BLUR_PLACEHOLDER_SVG = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 225'%3E%3Cfilter id='b' color-interpolation-filters='sRGB'%3E%3CfeGaussianBlur stdDeviation='20'/%3E%3CfeColorMatrix values='1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 100 -1' result='s'/%3E%3CfeFlood x='0' y='0' width='100%25' height='100%25'/%3E%3CfeComposite operator='out' in='s'/%3E%3CfeComposite in2='SourceGraphic'/%3E%3CfeGaussianBlur stdDeviation='20'/%3E%3C/filter%3E%3Cimage width='100%25' height='100%25' x='0' y='0' preserveAspectRatio='none' filter='url(%23b)' href='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAACCAIAAADwyuo0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAI0lEQVQI12NobGxsa2tra2lpYWZmZmBgYGFhYWRkZGJiYgQAFbwCUhJh0OYAAAAASUVORK5CYII='/%3E%3C/svg%3E`;
+
+// Generate a color-based placeholder
+function getColorPlaceholder(color: string = '#1a1a1a'): string {
+  const encodedColor = encodeURIComponent(color);
+  return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3Crect fill='${encodedColor}' width='1' height='1'/%3E%3C/svg%3E`;
 }
 
 // =============================================================================
@@ -68,6 +84,8 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   className = '',
   containerClassName = '',
   priority = false,
+  blurPlaceholder = false,
+  dominantColor,
   onLoad,
   onError,
 }) => {
@@ -93,6 +111,13 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
     ? aspectRatio
     : undefined;
 
+  // Use blur placeholder or color-based placeholder
+  const placeholderSrc = blurPlaceholder
+    ? BLUR_PLACEHOLDER_SVG
+    : dominantColor
+      ? getColorPlaceholder(dominantColor)
+      : null;
+
   return (
     <div
       ref={containerRef}
@@ -103,8 +128,18 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
         height: height ? `${height}px` : undefined,
       }}
     >
-      {/* Skeleton Placeholder */}
-      {!isLoaded && !hasError && (
+      {/* Blur/Color Placeholder - instant visual feedback like news sites */}
+      {placeholderSrc && !isLoaded && !hasError && (
+        <img
+          src={placeholderSrc}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover scale-110 blur-sm"
+        />
+      )}
+
+      {/* Skeleton Placeholder (fallback when no blur placeholder) */}
+      {!placeholderSrc && !isLoaded && !hasError && (
         <div className="absolute inset-0 skeleton-pulse" />
       )}
 

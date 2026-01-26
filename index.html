@@ -47,9 +47,22 @@
     <!-- Manifest -->
     <link rel="manifest" href="/manifest.json" />
 
-    <!-- Preconnect to external domains -->
+    <!-- Preconnect to external domains for faster resource loading -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Preconnect to Firebase/Cloud Functions for faster API calls -->
+    <link rel="preconnect" href="https://firestore.googleapis.com">
+    <link rel="preconnect" href="https://us-central1-marching-art.cloudfunctions.net">
+    <link rel="dns-prefetch" href="https://us-central1-marching-art.cloudfunctions.net">
+
+    <!-- Preconnect to image CDN for faster news images -->
+    <link rel="preconnect" href="https://res.cloudinary.com">
+    <link rel="dns-prefetch" href="https://res.cloudinary.com">
+
+    <!-- Preconnect to Firebase Storage -->
+    <link rel="preconnect" href="https://firebasestorage.googleapis.com">
+    <link rel="dns-prefetch" href="https://firebasestorage.googleapis.com">
 
     <!-- Google Fonts - Non-blocking load with optimized weights
          Moved from CSS @import to <link> for better LCP (non-render-blocking)
