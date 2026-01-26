@@ -180,12 +180,20 @@ export interface GetRecentNewsParams {
   limit?: number;
   category?: NewsCategory;
   startAfter?: string;
+  includeEngagement?: boolean;  // Fetch engagement data in same request
+  feedOnly?: boolean;           // Return minimal fields for feed display (no full content)
 }
 
 export interface GetRecentNewsResult {
   success: boolean;
   news: NewsEntry[];
   hasMore?: boolean;
+  engagement?: Record<string, {
+    commentCount: number;
+    reactionCounts: Record<string, number>;
+  }>;
+  fromCache?: boolean;  // Indicates if response was served from server cache
+  cacheAge?: number;    // Age of cached data in milliseconds
 }
 
 export const getRecentNews = createCallable<GetRecentNewsParams, GetRecentNewsResult>('getRecentNews');
