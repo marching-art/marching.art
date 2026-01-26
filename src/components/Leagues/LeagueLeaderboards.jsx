@@ -1,7 +1,7 @@
 // LeagueLeaderboards - Category-based stat rankings
 // Shows leaders in various stats: caption win rates, clutch wins, blowouts, etc.
 
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import {
   Trophy, Target, Zap, Flame, TrendingUp, Crown, Award,
@@ -91,8 +91,9 @@ const colorClasses = {
 
 /**
  * Single leaderboard category card
+ * OPTIMIZATION #3: Memoized to prevent re-renders when sibling leaderboard cards update
  */
-const LeaderboardCard = ({
+const LeaderboardCard = memo(({
   category,
   entries,
   expanded,
@@ -199,7 +200,7 @@ const LeaderboardCard = ({
       </AnimatePresence>
     </div>
   );
-};
+});
 
 /**
  * Small rank badge

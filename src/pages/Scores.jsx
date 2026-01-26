@@ -4,7 +4,7 @@
 // High-density data grid for scores with caption breakdowns (GE, VIS, MUS)
 // Laws: App Shell, Pill Tab Segmented Control, High-Density Tables, no glow
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, memo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import {
   Trophy, Calendar, TrendingUp, TrendingDown, Music,
@@ -150,9 +150,10 @@ const PillTabControl = ({ tabs, activeTab, onTabChange, haptic }) => (
 
 // =============================================================================
 // RECAP DATA GRID - HIGH DENSITY TABLE
+// OPTIMIZATION #3: Memoized to prevent re-renders when sibling recap grids update
 // =============================================================================
 
-const RecapDataGrid = ({
+const RecapDataGrid = memo(({
   scores,
   eventName,
   location,
@@ -282,7 +283,7 @@ const RecapDataGrid = ({
       </div>
     </div>
   );
-};
+});
 
 // =============================================================================
 // SOUNDSPORT MEDAL LIST - GROUPED BY EVENT

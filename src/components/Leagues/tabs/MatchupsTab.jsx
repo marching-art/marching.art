@@ -1,7 +1,7 @@
 // MatchupsTab - Season overview with matchup brackets and history
 // Design System: Week cards, head-to-head tracking, schedule overview
 
-import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, memo, lazy, Suspense } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import {
   Swords, Calendar, Radio, Flame, ChevronLeft, ChevronRight,
@@ -845,7 +845,8 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
 };
 
 // Versus Strip Component - Compact matchup display
-const VersusStrip = ({
+// OPTIMIZATION #3: Memoized to prevent re-renders when sibling matchups update
+const VersusStrip = memo(({
   matchup,
   getDisplayName,
   getStanding,
@@ -993,6 +994,6 @@ const VersusStrip = ({
       </div>
     </button>
   );
-};
+});
 
 export default MatchupsTab;
