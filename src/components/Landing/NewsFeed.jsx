@@ -265,24 +265,47 @@ function CardSkeleton() {
   );
 }
 
+function ImageGridCardSkeleton() {
+  return (
+    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden flex flex-col">
+      {/* Image skeleton */}
+      <SkeletonPulse className="aspect-[4/3]" />
+
+      {/* Content */}
+      <div className="p-3 flex-1 flex flex-col">
+        {/* Headline */}
+        <SkeletonPulse className="h-4 w-full mb-1" />
+        <SkeletonPulse className="h-4 w-5/6 mb-1" />
+        <SkeletonPulse className="h-4 w-3/4 mb-2" />
+
+        {/* Footer */}
+        <div className="flex items-center justify-between pt-2 border-t border-[#333]/50 mt-auto">
+          <SkeletonPulse className="w-16 h-3" />
+          <SkeletonPulse className="w-12 h-3" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function NewsFeedSkeleton() {
   return (
     <div>
       {/* Hero Skeleton */}
       <HeroSkeleton />
 
-      {/* Grid Skeletons */}
+      {/* Image Grid Skeletons - 4 column layout */}
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-4">
           <SkeletonPulse className="w-4 h-4" />
           <SkeletonPulse className="w-24 h-4" />
           <div className="flex-1 h-px bg-[#333]" />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <CardSkeleton />
-          <CardSkeleton />
-          <CardSkeleton />
-          <CardSkeleton />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <ImageGridCardSkeleton />
+          <ImageGridCardSkeleton />
+          <ImageGridCardSkeleton />
+          <ImageGridCardSkeleton />
         </div>
       </div>
     </div>
@@ -873,6 +896,81 @@ const NewsRow = memo(({ story, onClick, storyNumber, engagement }) => {
   );
 });
 
+/**
+ * Image Grid Card - Image-focused card for visual browsing (like news sites)
+ * Prominently displays story image with category badge and headline below
+ * OPTIMIZATION: Memoized to prevent re-renders when sibling news items update
+ */
+const ImageGridCard = memo(({ story, onClick, engagement }) => {
+  const config = getCategoryConfig(story.category);
+  const Icon = config.icon;
+  const urgency = getUrgencyBadge(story.createdAt);
+
+  return (
+    <article
+      className="bg-[#1a1a1a] border border-[#333] overflow-hidden hover:border-[#444] transition-colors cursor-pointer group flex flex-col"
+      onClick={() => onClick?.(story)}
+    >
+      {/* Image Container */}
+      <div className="aspect-[4/3] bg-[#0a0a0a] relative overflow-hidden">
+        {story.imageUrl ? (
+          <img
+            src={story.imageUrl}
+            alt={story.headline}
+            className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+            loading="lazy"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#0057B8]/10 to-transparent">
+            <Icon className="w-12 h-12 text-[#0057B8]/30" />
+          </div>
+        )}
+
+        {/* Gradient overlay at bottom */}
+        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/60 to-transparent" />
+
+        {/* Category badge */}
+        <div className="absolute bottom-2 left-2">
+          <span className={`px-2 py-1 ${config.bgClass} text-white text-[10px] font-bold uppercase tracking-wider`}>
+            {config.label}
+          </span>
+        </div>
+
+        {/* Urgency badge */}
+        {urgency && (
+          <div className="absolute top-2 right-2">
+            <UrgencyBadge urgency={urgency} />
+          </div>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="p-3 flex-1 flex flex-col">
+        {/* Headline */}
+        <h2 className="text-sm font-bold text-white leading-snug group-hover:text-gray-100 transition-colors line-clamp-3 mb-2 flex-1">
+          {safeString(story.headline)}
+        </h2>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between pt-2 border-t border-[#333]/50 mt-auto">
+          <span className="text-[10px] text-gray-500">
+            {formatTimestamp(story.createdAt)}
+          </span>
+          <div className="flex items-center gap-2">
+            {engagement && (
+              <EngagementSummary
+                reactionCounts={engagement.reactionCounts}
+                userReaction={engagement.userReaction}
+                commentCount={engagement.commentCount}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+});
+
 function LoadingState() {
   // Use skeleton loading for professional perceived performance
   return <NewsFeedSkeleton />;
@@ -1186,8 +1284,6 @@ export default function NewsFeed({ maxItems = 5 }) {
   }
 
   const [heroStory, ...otherStories] = filteredNews;
-  const gridStories = otherStories.slice(0, 4);
-  const listStories = otherStories.slice(4);
 
   return (
     <div>
@@ -1213,45 +1309,22 @@ export default function NewsFeed({ maxItems = 5 }) {
             />
           )}
 
-          {/* Secondary Stories - 2 Column Grid */}
-          {gridStories.length > 0 && (
+          {/* Image Grid - 4 Column Layout for Visual Browsing */}
+          {otherStories.length > 0 && (
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-4">
                 <Zap className="w-4 h-4 text-[#0057B8]" />
                 <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest">
-                  Top Stories
+                  More Stories
                 </h2>
                 <div className="flex-1 h-px bg-[#333]" />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {gridStories.map((story, idx) => (
-                  <NewsCard
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {otherStories.map((story) => (
+                  <ImageGridCard
                     key={story.id}
                     story={story}
                     onClick={handleStoryClick}
-                    storyNumber={idx + 2}
-                    engagement={engagement[story.id]}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Additional Stories - Compact List */}
-          {listStories.length > 0 && (
-            <div className="bg-[#1a1a1a] border border-[#333]">
-              <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-                <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                  More Stories
-                </h2>
-              </div>
-              <div className="p-3">
-                {listStories.map((story, idx) => (
-                  <NewsRow
-                    key={story.id}
-                    story={story}
-                    onClick={handleStoryClick}
-                    storyNumber={gridStories.length + idx + 2}
                     engagement={engagement[story.id]}
                   />
                 ))}
