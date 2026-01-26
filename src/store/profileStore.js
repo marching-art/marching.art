@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { db } from '../firebase';
 import { doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
 import { AUTH_CONFIG } from '../config';
+import toast from 'react-hot-toast';
 
 // All corps classes for admin override
 // Note: Uses 'worldClass'/'openClass' format which matches CORPS_CLASS_ORDER in utils/corps.ts
@@ -123,6 +124,7 @@ export const useProfileStore = create((set, get) => ({
             })
             .catch((err) => {
               console.error('Error creating initial profile:', err);
+              toast.error('Unable to create your profile. Please refresh the page.');
               set({
                 loading: false,
                 error: err.message,
@@ -132,6 +134,7 @@ export const useProfileStore = create((set, get) => ({
       },
       (err) => {
         console.error('Profile subscription error:', err);
+        toast.error('Unable to load your profile. Please refresh the page.');
         set({
           loading: false,
           error: err.message,
@@ -180,6 +183,7 @@ export const useProfileStore = create((set, get) => ({
       await updateDoc(profileRef, updates);
     } catch (err) {
       console.error('Error updating profile:', err);
+      toast.error('Failed to save changes. Please try again.');
       // Revert on error (the listener will sync correct data)
     }
   },

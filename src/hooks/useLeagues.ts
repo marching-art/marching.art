@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { queryKeys } from '../lib/queryClient';
 import * as leaguesApi from '../api/leagues';
 import type { LeagueCreationData } from '../types';
+import toast from 'react-hot-toast';
 
 /**
  * Hook to fetch leagues the user is a member of
@@ -63,6 +64,7 @@ export function useLeagueSubscription(leagueId: string | undefined) {
       },
       (error) => {
         console.error('League subscription error:', error);
+        toast.error('Lost connection to league updates. Data may be stale.');
       }
     );
 
@@ -93,6 +95,10 @@ export function useCreateLeague() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.publicLeagues() });
     },
+    onError: (error: Error) => {
+      console.error('Create league error:', error);
+      toast.error('Failed to create league. Please try again.');
+    },
   });
 }
 
@@ -110,6 +116,10 @@ export function useJoinLeague(uid: string | undefined) {
       }
       queryClient.invalidateQueries({ queryKey: queryKeys.publicLeagues() });
     },
+    onError: (error: Error) => {
+      console.error('Join league error:', error);
+      toast.error('Failed to join league. You may already be a member.');
+    },
   });
 }
 
@@ -126,6 +136,10 @@ export function useJoinLeagueByCode(uid: string | undefined) {
         queryClient.invalidateQueries({ queryKey: queryKeys.myLeagues(uid) });
       }
       queryClient.invalidateQueries({ queryKey: queryKeys.publicLeagues() });
+    },
+    onError: (error: Error) => {
+      console.error('Join league by code error:', error);
+      toast.error('Invalid invite code or league not found.');
     },
   });
 }

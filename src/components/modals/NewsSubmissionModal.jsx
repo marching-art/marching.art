@@ -105,6 +105,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
               onClick={onClose}
               className="p-1 text-gray-500 hover:text-white transition-colors"
               disabled={isSubmitting}
+              aria-label="Close modal"
             >
               <X className="w-4 h-4" />
             </button>
@@ -158,7 +159,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
                   maxLength={120}
                   className={`
                     w-full h-10 px-3 bg-[#0a0a0a] border rounded-sm text-sm text-white
-                    placeholder-gray-600 focus:outline-none transition-colors
+                    placeholder-gray-400 focus:outline-none transition-colors
                     ${errors.headline ? 'border-red-500 focus:border-red-500' : 'border-[#333] focus:border-[#0057B8]'}
                   `}
                 />
@@ -168,7 +169,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
                   ) : (
                     <span />
                   )}
-                  <p className="text-[10px] text-gray-600">{formData.headline.length}/120</p>
+                  <p className="text-[10px] text-gray-400">{formData.headline.length}/120</p>
                 </div>
               </div>
 
@@ -185,7 +186,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
                   rows={2}
                   className={`
                     w-full px-3 py-2 bg-[#0a0a0a] border rounded-sm text-sm text-white
-                    placeholder-gray-600 focus:outline-none resize-none transition-colors
+                    placeholder-gray-400 focus:outline-none resize-none transition-colors
                     ${errors.summary ? 'border-red-500 focus:border-red-500' : 'border-[#333] focus:border-[#0057B8]'}
                   `}
                 />
@@ -195,7 +196,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
                   ) : (
                     <span />
                   )}
-                  <p className="text-[10px] text-gray-600">{formData.summary.length}/300</p>
+                  <p className="text-[10px] text-gray-400">{formData.summary.length}/300</p>
                 </div>
               </div>
 
@@ -212,7 +213,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
                   rows={6}
                   className={`
                     w-full px-3 py-2 bg-[#0a0a0a] border rounded-sm text-sm text-white
-                    placeholder-gray-600 focus:outline-none resize-none transition-colors
+                    placeholder-gray-400 focus:outline-none resize-none transition-colors
                     ${errors.fullStory ? 'border-red-500 focus:border-red-500' : 'border-[#333] focus:border-[#0057B8]'}
                   `}
                 />
@@ -222,7 +223,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
                   ) : (
                     <span />
                   )}
-                  <p className="text-[10px] text-gray-600">{formData.fullStory.length}/5000</p>
+                  <p className="text-[10px] text-gray-400">{formData.fullStory.length}/5000</p>
                 </div>
               </div>
 
@@ -238,7 +239,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
                   onChange={(e) => handleChange('imageUrl', e.target.value)}
                   className={`
                     w-full h-10 px-3 bg-[#0a0a0a] border rounded-sm text-sm text-white
-                    placeholder-gray-600 focus:outline-none transition-colors
+                    placeholder-gray-400 focus:outline-none transition-colors
                     ${errors.imageUrl ? 'border-red-500 focus:border-red-500' : 'border-[#333] focus:border-[#0057B8]'}
                   `}
                 />

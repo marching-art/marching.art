@@ -75,13 +75,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             className={`
               w-full rounded-sm
               bg-[#111] border
-              text-white text-sm placeholder-gray-600
+              text-white text-sm placeholder-gray-400
               transition-colors
-              focus:outline-none focus:border-[#0057B8]
+              focus:outline-none
               disabled:opacity-50 disabled:cursor-not-allowed
               ${hasError
-                ? 'border-red-500 focus:border-red-500'
-                : 'border-[#333] hover:border-[#444]'
+                ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/30'
+                : 'border-[#333] hover:border-[#444] focus:border-[#0057B8]'
               }
               ${sizeStyles[inputSize]}
               ${LeftIcon ? 'pl-8' : ''}
@@ -143,13 +143,13 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           className={`
             w-full px-3 py-2 rounded-sm min-h-[80px] resize-none
             bg-[#111] border
-            text-white text-sm placeholder-gray-600
+            text-white text-sm placeholder-gray-400
             transition-colors
-            focus:outline-none focus:border-[#0057B8]
+            focus:outline-none
             disabled:opacity-50 disabled:cursor-not-allowed
             ${hasError
-              ? 'border-red-500 focus:border-red-500'
-              : 'border-[#333] hover:border-[#444]'
+              ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/30'
+              : 'border-[#333] hover:border-[#444] focus:border-[#0057B8]'
             }
             ${className}
           `}
@@ -226,11 +226,11 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             bg-[#111] border
             text-white text-sm
             transition-colors
-            focus:outline-none focus:border-[#0057B8]
+            focus:outline-none
             disabled:opacity-50 disabled:cursor-not-allowed
             ${hasError
-              ? 'border-red-500 focus:border-red-500'
-              : 'border-[#333] hover:border-[#444]'
+              ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/30'
+              : 'border-[#333] hover:border-[#444] focus:border-[#0057B8]'
             }
             ${sizeStyles[selectSize]}
             ${className}

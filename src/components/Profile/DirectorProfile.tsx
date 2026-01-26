@@ -541,6 +541,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                       <button
                         onClick={() => setShowAvatarSelector(false)}
                         className="p-1 text-gray-500 hover:text-white"
+                        aria-label="Close modal"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -690,7 +691,10 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                 <AchievementMini key={achievement.id} achievement={achievement} />
               ))}
               {achievements.length > 4 && (
-                <button className="w-full text-[9px] text-[#0057B8] hover:underline py-1">
+                <button
+                  className="w-full text-[9px] text-[#0057B8] hover:underline py-1"
+                  aria-label={`View ${achievements.length - 4} more achievements`}
+                >
                   +{achievements.length - 4} more
                 </button>
               )}
