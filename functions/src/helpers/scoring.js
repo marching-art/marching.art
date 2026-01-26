@@ -899,7 +899,8 @@ async function processAndArchiveOffSeasonScoresLogic() {
     };
 
     // --- DAY 41/42 REGIONAL SPLIT LOGIC ---
-    let day41_42_participants = null;
+    // OPTIMIZATION #6: Use Set for O(1) participant lookups instead of O(n) .includes()
+    let day41_42_participantSet = null;
     if ([41, 42].includes(scoredDay) && show.eventName.includes("Eastern Classic")) {
         const allEnrollees = [];
         for (const userDoc of profilesSnapshot.docs) {
@@ -912,11 +913,13 @@ async function processAndArchiveOffSeasonScoresLogic() {
         allEnrollees.sort(); // Deterministic sort
         const splitIndex = Math.ceil(allEnrollees.length / 2);
         if (scoredDay === 41) {
-            day41_42_participants = allEnrollees.slice(0, splitIndex);
-            logger.info(`Day 41: Scoring first half (${day41_42_participants.length}) of Eastern Classic enrollees.`);
+            const participants = allEnrollees.slice(0, splitIndex);
+            day41_42_participantSet = new Set(participants);
+            logger.info(`Day 41: Scoring first half (${participants.length}) of Eastern Classic enrollees.`);
         } else { // Day 42
-            day41_42_participants = allEnrollees.slice(splitIndex);
-            logger.info(`Day 42: Scoring second half (${day41_42_participants.length}) of Eastern Classic enrollees.`);
+            const participants = allEnrollees.slice(splitIndex);
+            day41_42_participantSet = new Set(participants);
+            logger.info(`Day 42: Scoring second half (${participants.length}) of Eastern Classic enrollees.`);
         }
     }
     // --- END: DAY 41/42 REGIONAL SPLIT LOGIC ---
@@ -924,6 +927,12 @@ async function processAndArchiveOffSeasonScoresLogic() {
     // --- CHAMPIONSHIP SHOW CONFIGURATION ---
     // Get config for this specific show if it's a championship event
     const showConfig = championshipConfig ? championshipConfig[show.eventName] : null;
+    // OPTIMIZATION #6: Build Set for O(1) participant lookups instead of O(n) .some()
+    // Key format: "${uid}_${corpsClass}" for composite lookup
+    let participantSet = null;
+    if (showConfig?.participants) {
+      participantSet = new Set(showConfig.participants.map(p => `${p.uid}_${p.corpsClass}`));
+    }
     // --- END: CHAMPIONSHIP SHOW CONFIGURATION ---
 
     for (const userDoc of profilesSnapshot.docs) {
@@ -931,7 +940,8 @@ async function processAndArchiveOffSeasonScoresLogic() {
       const uid = userDoc.ref.parent.parent.id;
 
       // Filter for regional split
-      if (day41_42_participants && !day41_42_participants.includes(uid)) continue;
+      // OPTIMIZATION #6: O(1) Set lookup instead of O(n) .includes()
+      if (day41_42_participantSet && !day41_42_participantSet.has(uid)) continue;
 
       const userCorps = userProfile.corps || {};
       for (const corpsClass of Object.keys(userCorps)) {
@@ -948,12 +958,9 @@ async function processAndArchiveOffSeasonScoresLogic() {
           }
 
           // Check if this user/class combo is in the participants list (for advancement rounds)
-          if (showConfig.participants !== null) {
-            // participants is an array of { uid, corpsClass } objects
-            const isParticipant = showConfig.participants.some(
-              p => p.uid === uid && p.corpsClass === corpsClass
-            );
-            if (!isParticipant) {
+          // OPTIMIZATION #6: O(1) Set lookup instead of O(n) .some()
+          if (participantSet !== null) {
+            if (!participantSet.has(`${uid}_${corpsClass}`)) {
               continue; // Didn't advance to this round
             }
           }
@@ -1162,7 +1169,8 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
     };
 
     // --- DAY 41/42 REGIONAL SPLIT LOGIC ---
-    let day41_42_participants = null;
+    // OPTIMIZATION #6: Use Set for O(1) participant lookups instead of O(n) .includes()
+    let day41_42_participantSet = null;
     if ([41, 42].includes(scoredDay) && show.eventName.includes("Eastern Classic")) {
       const allEnrollees = [];
       for (const userDoc of profilesSnapshot.docs) {
@@ -1175,22 +1183,30 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
       allEnrollees.sort();
       const splitIndex = Math.ceil(allEnrollees.length / 2);
       if (scoredDay === 41) {
-        day41_42_participants = allEnrollees.slice(0, splitIndex);
-        logger.info(`Day 41: Scoring first half (${day41_42_participants.length}) of Eastern Classic enrollees.`);
+        const participants = allEnrollees.slice(0, splitIndex);
+        day41_42_participantSet = new Set(participants);
+        logger.info(`Day 41: Scoring first half (${participants.length}) of Eastern Classic enrollees.`);
       } else {
-        day41_42_participants = allEnrollees.slice(splitIndex);
-        logger.info(`Day 42: Scoring second half (${day41_42_participants.length}) of Eastern Classic enrollees.`);
+        const participants = allEnrollees.slice(splitIndex);
+        day41_42_participantSet = new Set(participants);
+        logger.info(`Day 42: Scoring second half (${participants.length}) of Eastern Classic enrollees.`);
       }
     }
     // --- END: DAY 41/42 REGIONAL SPLIT LOGIC ---
 
     const showConfig = championshipConfig ? championshipConfig[show.eventName] : null;
+    // OPTIMIZATION #6: Build Set for O(1) participant lookups instead of O(n) .some()
+    let participantSet = null;
+    if (showConfig?.participants) {
+      participantSet = new Set(showConfig.participants.map(p => `${p.uid}_${p.corpsClass}`));
+    }
 
     for (const userDoc of profilesSnapshot.docs) {
       const userProfile = userDoc.data();
       const uid = userDoc.ref.parent.parent.id;
 
-      if (day41_42_participants && !day41_42_participants.includes(uid)) continue;
+      // OPTIMIZATION #6: O(1) Set lookup instead of O(n) .includes()
+      if (day41_42_participantSet && !day41_42_participantSet.has(uid)) continue;
 
       const userCorps = userProfile.corps || {};
       for (const corpsClass of Object.keys(userCorps)) {
@@ -1205,11 +1221,9 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
             continue;
           }
 
-          if (showConfig.participants !== null) {
-            const isParticipant = showConfig.participants.some(
-              p => p.uid === uid && p.corpsClass === corpsClass
-            );
-            if (!isParticipant) {
+          // OPTIMIZATION #6: O(1) Set lookup instead of O(n) .some()
+          if (participantSet !== null) {
+            if (!participantSet.has(`${uid}_${corpsClass}`)) {
               continue;
             }
           }
