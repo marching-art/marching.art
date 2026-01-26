@@ -222,16 +222,9 @@ export const useScoresData = (options = {}) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [allShows, setAllShows] = useState([]);
-  const [availableDays, setAvailableDays] = useState([]);
   const [archivedSeasons, setArchivedSeasons] = useState([]);
   const [fallbackSeasonId, setFallbackSeasonId] = useState(null);
   const [displayedSeasonId, setDisplayedSeasonId] = useState(null);
-  const [stats, setStats] = useState({
-    recentShows: 0,
-    topScore: '-',
-    corpsActive: 0,
-    avgScore: 0
-  });
 
   // Determine which season to fetch (fallbackSeasonId takes precedence when set)
   const targetSeasonId = seasonId || fallbackSeasonId || currentSeasonUid;
@@ -364,26 +357,6 @@ export const useScoresData = (options = {}) => {
 
         setAllShows(shows);
         setDisplayedSeasonId(targetSeasonId);
-
-        // Get unique days that have shows (sorted descending - most recent first)
-        const days = [...new Set(shows.map(s => s.offSeasonDay))].sort((a, b) => b - a);
-        setAvailableDays(days);
-
-        // Calculate stats
-        const allScores = shows.flatMap(show => show.scores.map(s => s.score));
-        const topScore = allScores.length > 0 ? Math.max(...allScores).toFixed(3) : '-';
-        const avgScore = allScores.length > 0
-          ? (allScores.reduce((sum, s) => sum + s, 0) / allScores.length).toFixed(3)
-          : '0.000';
-        const uniqueCorps = new Set(shows.flatMap(show => show.scores.map(s => s.corps)));
-
-        setStats({
-          recentShows: shows.length,
-          topScore,
-          corpsActive: uniqueCorps.size,
-          avgScore
-        });
-
         setLoading(false);
       } catch (err) {
         console.error('Error fetching scores:', err);
@@ -401,6 +374,45 @@ export const useScoresData = (options = {}) => {
       isCurrent = false;
     };
   }, [targetSeasonId, archivedSeasons, seasonId, fallbackSeasonId, disableArchiveFallback, currentDay, currentSeasonUid]);
+
+  // OPTIMIZATION #8: Derive availableDays from allShows with useMemo instead of state
+  // This ensures days are always in sync with shows and removes redundant state updates
+  const availableDays = useMemo(() => {
+    if (allShows.length === 0) return [];
+    // Get unique days sorted descending (most recent first)
+    return [...new Set(allShows.map(s => s.offSeasonDay))].sort((a, b) => b - a);
+  }, [allShows]);
+
+  // OPTIMIZATION #8: Derive stats from allShows with useMemo instead of state
+  // Eliminates redundant state updates and ensures stats stay in sync with data
+  const stats = useMemo(() => {
+    if (allShows.length === 0) {
+      return { recentShows: 0, topScore: '-', corpsActive: 0, avgScore: '0.000' };
+    }
+
+    // Single pass: collect all scores and unique corps
+    const allScores = [];
+    const uniqueCorps = new Set();
+
+    for (const show of allShows) {
+      for (const s of show.scores) {
+        allScores.push(s.score);
+        uniqueCorps.add(s.corps);
+      }
+    }
+
+    const topScore = allScores.length > 0 ? Math.max(...allScores).toFixed(3) : '-';
+    const avgScore = allScores.length > 0
+      ? (allScores.reduce((sum, s) => sum + s, 0) / allScores.length).toFixed(3)
+      : '0.000';
+
+    return {
+      recentShows: allShows.length,
+      topScore,
+      corpsActive: uniqueCorps.size,
+      avgScore
+    };
+  }, [allShows]);
 
   // Filter shows by class
   const filteredShows = useMemo(() => {
