@@ -136,14 +136,25 @@ const Article = () => {
   const { videoModal, handleYoutubeSearch, handleRetrySearch, closeVideoModal } = useYoutubeSearch();
 
   // Fetch article if not in navigation state (direct link access)
+  // OR if article from navigation is missing full content (feedOnly mode)
   useEffect(() => {
     const fetchArticle = async () => {
-      if (location.state?.article) {
-        // Already have article from navigation
+      const navArticle = location.state?.article;
+
+      // Check if we need to fetch full article data
+      // Articles from feed (feedOnly mode) won't have narrative/fullStory
+      const needsFullContent = navArticle && !navArticle.narrative && !navArticle.fullStory;
+
+      if (navArticle && !needsFullContent) {
+        // Already have complete article from navigation
         return;
       }
 
-      setLoading(true);
+      // If we have partial article data, don't show loading spinner
+      // but still fetch full content in background
+      if (!needsFullContent) {
+        setLoading(true);
+      }
       setError(null);
 
       try {
@@ -258,17 +269,24 @@ const Article = () => {
 
         if (foundArticle) {
           setArticle(foundArticle);
-          // Also fetch engagement
-          const engagementResult = await getArticleEngagement({ articleIds: [id] });
-          if (engagementResult.data?.success && engagementResult.data.engagement?.[id]) {
-            setEngagement(engagementResult.data.engagement[id]);
+          // Also fetch engagement if not already loaded
+          if (!engagement) {
+            const engagementResult = await getArticleEngagement({ articleIds: [id] });
+            if (engagementResult.data?.success && engagementResult.data.engagement?.[id]) {
+              setEngagement(engagementResult.data.engagement[id]);
+            }
           }
-        } else {
+        } else if (!needsFullContent) {
+          // Only show error if we don't have any article data
           setError('Article not found');
         }
+        // If needsFullContent but couldn't fetch, we still have partial data to show
       } catch (err) {
         console.error('Error fetching article:', err);
-        setError('Failed to load article');
+        // Only set error if we don't have any article data
+        if (!needsFullContent) {
+          setError('Failed to load article');
+        }
       } finally {
         setLoading(false);
       }
