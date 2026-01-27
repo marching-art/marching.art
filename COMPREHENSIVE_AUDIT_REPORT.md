@@ -490,7 +490,6 @@ Being critical as requested:
 
 | Feature | Reason | Impact | Recommendation |
 |---------|--------|--------|----------------|
-| **Equipment System types** | Dead code — types exist, never implemented | Confusion | Delete types or implement |
 | **Staff System types** | Dead code — types exist, never implemented | Confusion | Delete types or implement |
 | **Storybook** | If not actively maintained | Build speed | Evaluate usage, remove if unused |
 | **Stripe webhook handler** | Placeholder with no real logic | False confidence | Either implement or remove |

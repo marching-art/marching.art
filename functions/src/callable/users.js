@@ -308,8 +308,6 @@ exports.migrateUserProfiles = onCall({ cors: true }, async (request) => {
 
 /**
  * Daily XP Check-in - Earns XP once per 23 hours
- * Note: This is separate from corps section rehearsals in execution.js
- * which affect readiness/morale/equipment
  */
 exports.dailyXPCheckIn = onCall({ cors: true }, async (request) => {
   if (!request.auth) {

@@ -403,12 +403,7 @@ const Onboarding = () => {
             lineup: lineup,
             execution: {
               readiness: 0.75,
-              morale: 0.85,
-              equipment: {
-                instruments: 0.90,
-                uniforms: 0.90,
-                props: 0.85
-              }
+              morale: 0.85
             }
           }
         },

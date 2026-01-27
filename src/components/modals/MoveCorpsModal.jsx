@@ -115,7 +115,7 @@ const MoveCorpsModal = ({ onClose, onMove, currentClass, corpsName, unlockedClas
                 {/* Info */}
                 <div className="bg-[#0057B8]/10 border border-[#0057B8]/30 p-3 mt-4">
                   <p className="text-xs text-[#0057B8]">
-                    <strong>Note:</strong> Moving your corps will preserve all data including lineup, shows, equipment, and staff.
+                    <strong>Note:</strong> Moving your corps will preserve all data including lineup and shows.
                   </p>
                 </div>
 

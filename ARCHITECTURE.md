@@ -62,7 +62,6 @@ marching.art/
 
 These systems have TypeScript types defined but NO backend support:
 
-- Equipment system (condition, repair, upgrades)
 - Execution multiplier (readiness, morale)
 - Daily operations beyond XP check-in
 

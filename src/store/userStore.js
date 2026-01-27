@@ -309,16 +309,6 @@ export const useUserStore = create((set, get) => ({
           reward: '25 XP',
           icon: 'trophy',
           completed: true
-        },
-        maintain_equipment: {
-          id: 'maintain_equipment',
-          title: 'Equipment Care',
-          description: 'Check your equipment status',
-          progress: 1,
-          target: 1,
-          reward: '30 XP',
-          icon: 'wrench',
-          completed: true
         }
       };
 

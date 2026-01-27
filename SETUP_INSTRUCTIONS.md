@@ -75,7 +75,6 @@ firebase functions:config:set \
 # I'll implement:
 # - Execution system (0.70-1.10 multiplier)
 # - Rehearsal mechanics
-# - Equipment management
 # - Beautiful dashboard UI
 
 # Add battle pass later when game is fun

@@ -123,8 +123,6 @@ export type {
   // Corps
   CorpsClass,
   CorpsData,
-  Equipment,
-  EquipmentItem,
   Lineup,
   LineupSlot,
 

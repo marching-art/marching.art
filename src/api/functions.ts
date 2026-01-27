@@ -103,8 +103,6 @@ export interface RehearsalResult {
 }
 
 export const dailyRehearsal = createCallable<RehearsalData, RehearsalResult>('dailyRehearsal');
-export const repairEquipment = createCallable<{ corpsClass: string; equipmentType: string }, { success: boolean }>('repairEquipment');
-export const upgradeEquipment = createCallable<{ corpsClass: string; equipmentType: string }, { success: boolean }>('upgradeEquipment');
 export const setShowDifficulty = createCallable<{ corpsClass: string; difficulty: number }, void>('setShowDifficulty');
 export const boostMorale = createCallable<{ corpsClass: string }, { success: boolean; newMorale: number }>('boostMorale');
 export const getExecutionStatus = createCallable<{ corpsClass: string }, unknown>('getExecutionStatus');
