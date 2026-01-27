@@ -805,7 +805,7 @@ async function fetchEngagementData(db, articleIds) {
       engagement[articleId] = {
         commentCount: commentCountMap.get(articleId) || 0,
         reactionCounts: reactionDoc?.exists
-          ? (reactionDoc.data().counts || defaultReactionCounts)
+          ? reactionDoc.data()
           : defaultReactionCounts,
       };
     });
