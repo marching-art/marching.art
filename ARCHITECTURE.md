@@ -58,13 +58,6 @@ marching.art/
 | **Leagues** | 90% | Core functions work, chat coming soon |
 | **CorpsCoin Economy** | 60% | Class unlocks work, cosmetics planned |
 
-### Not Implemented
-
-These systems have TypeScript types defined but NO backend support:
-
-- Execution multiplier (readiness, morale)
-- Daily operations beyond XP check-in
-
 ## Cloud Functions
 
 Located in `functions/src/callable/`:

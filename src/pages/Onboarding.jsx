@@ -400,11 +400,7 @@ const Onboarding = () => {
             class: 'soundSport',
             createdAt: new Date(),
             seasonId: seasonData?.seasonUid || null,
-            lineup: lineup,
-            execution: {
-              readiness: 0.75,
-              morale: 0.85
-            }
+            lineup: lineup
           }
         },
         engagement: {

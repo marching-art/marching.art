@@ -87,27 +87,6 @@ export const unretireCorps = createCallable<{ corpsClass: string }, { success: b
 export const unlockClassWithCorpsCoin = createCallable<{ classToUnlock: string }, { success: boolean; classUnlocked: string; newBalance: number }>('unlockClassWithCorpsCoin');
 
 // =============================================================================
-// EXECUTION SYSTEM
-// =============================================================================
-
-export interface RehearsalData {
-  corpsClass: string;
-}
-
-export interface RehearsalResult {
-  success: boolean;
-  readinessGain: number;
-  moraleChange: number;
-  newReadiness: number;
-  newMorale: number;
-}
-
-export const dailyRehearsal = createCallable<RehearsalData, RehearsalResult>('dailyRehearsal');
-export const setShowDifficulty = createCallable<{ corpsClass: string; difficulty: number }, void>('setShowDifficulty');
-export const boostMorale = createCallable<{ corpsClass: string }, { success: boolean; newMorale: number }>('boostMorale');
-export const getExecutionStatus = createCallable<{ corpsClass: string }, unknown>('getExecutionStatus');
-
-// =============================================================================
 // DAILY OPERATIONS
 // =============================================================================
 

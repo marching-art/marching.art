@@ -127,7 +127,6 @@ These were intentionally removed/simplified per the redesign plan. Only implemen
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Staff System | Types only | No backend, intentionally cut |
-| Execution Multiplier | Removed | Simplified game design |
 | Daily Operations | Minimal | Only XP check-in remains |
 | Message Reactions | Stubbed | Low priority social feature |
 | Voice Channels | Stubbed | Complex infrastructure needed |

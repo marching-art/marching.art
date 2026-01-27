@@ -73,9 +73,8 @@ firebase functions:config:set \
 ### Option B: Build Core Game First (Recommended)
 ```bash
 # I'll implement:
-# - Execution system (0.70-1.10 multiplier)
-# - Rehearsal mechanics
 # - Beautiful dashboard UI
+# - Enhanced game mechanics
 
 # Add battle pass later when game is fun
 ```
