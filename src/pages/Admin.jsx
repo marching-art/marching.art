@@ -649,21 +649,19 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
   };
 
   const handleTriggerNews = async () => {
-    const reportDay = parseInt(newsDay, 10);
-    if (!reportDay || reportDay < 1 || reportDay > 49) return toast.error('Enter a valid day (1-49)');
+    const day = parseInt(newsDay, 10);
+    if (!day || day < 1 || day > 49) return toast.error('Enter a valid day (1-49)');
     if (!seasonData?.dataDocId || !seasonData?.seasonUid) {
       return toast.error('Season data not available');
     }
     setLoading('newsGen');
     try {
-      // Backend expects currentDay and calculates reportDay = currentDay - 1
-      // So we pass reportDay + 1 to get news for the day user actually entered
       await triggerDailyNews({
-        currentDay: reportDay + 1,
+        currentDay: day,
         dataDocId: seasonData.dataDocId,
         seasonId: seasonData.seasonUid
       });
-      toast.success(`News generated for Day ${reportDay}`);
+      toast.success(`News generated for Day ${day}`);
       setNewsDay('');
     } catch (error) {
       toast.error(error.message || 'Failed to generate news');
@@ -679,14 +677,14 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
         <SectionHeader title="News Generation" icon={Newspaper} />
         <div className="p-3">
           <p className="text-[11px] text-gray-500 mb-2">
-            Generate news articles about a specific competition day (1-49). Enter the day you want coverage for.
+            Generate news articles for a specific day (1-49). Uses current season data.
           </p>
           <div className="flex gap-2">
             <input
               type="number"
               min="1"
               max="49"
-              placeholder="Report Day"
+              placeholder="Day #"
               value={newsDay}
               onChange={(e) => setNewsDay(e.target.value)}
               className="w-20 px-3 py-2 bg-[#111] border border-[#333] text-xs text-white font-data tabular-nums focus:outline-none focus:border-[#0057B8]"
