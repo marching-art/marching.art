@@ -22,7 +22,6 @@ const EMAIL_CONFIG = {
 // Email types for tracking and preferences
 const EMAIL_TYPES = {
   WELCOME: "welcome",
-  STREAK_AT_RISK: "streak_at_risk",
   STREAK_BROKEN: "streak_broken",
   WEEKLY_DIGEST: "weekly_digest",
   WIN_BACK: "win_back",
@@ -288,49 +287,6 @@ function welcomeEmailTemplate({ username, corpsCoinGift = 100 }) {
   `;
 
   return emailWrapper(content, `Welcome to marching.art! Your ${corpsCoinGift} CorpsCoin welcome bonus is waiting.`);
-}
-
-/**
- * Streak at risk email template
- */
-function streakAtRiskEmailTemplate({ username, streakDays, hoursRemaining }) {
-  const content = `
-    <div class="content">
-      <h2>⚠️ Your Streak is at Risk!</h2>
-      <p>
-        Hey ${username}, don't let your ${streakDays}-day streak slip away!
-      </p>
-
-      <div class="stat-box">
-        <div class="stat-number streak-warning">${Math.floor(hoursRemaining)}h</div>
-        <div class="stat-label">Until Streak Resets</div>
-      </div>
-
-      <div class="stat-box">
-        <div class="stat-number streak-fire">🔥 ${streakDays}</div>
-        <div class="stat-label">Current Streak</div>
-      </div>
-
-      <p>
-        A quick login is all it takes to keep your streak alive.
-        Don't lose all that progress!
-      </p>
-
-      <p style="text-align: center;">
-        <a href="${EMAIL_CONFIG.appUrl}/dashboard" class="button">
-          Save My Streak →
-        </a>
-      </p>
-
-      <div class="divider"></div>
-
-      <p style="font-size: 14px; color: #94a3b8;">
-        💡 Consider buying a Streak Freeze (300 CorpsCoin) for protection when you can't log in.
-      </p>
-    </div>
-  `;
-
-  return emailWrapper(content, `Your ${streakDays}-day streak expires in ${Math.floor(hoursRemaining)} hours!`);
 }
 
 /**
@@ -614,19 +570,6 @@ async function sendWelcomeEmail(email, username) {
 }
 
 /**
- * Send streak at risk email
- */
-async function sendStreakAtRiskEmail(email, username, streakDays, hoursRemaining) {
-  const html = streakAtRiskEmailTemplate({ username, streakDays, hoursRemaining });
-  return sendEmail({
-    to: email,
-    subject: `⚠️ Your ${streakDays}-day streak expires in ${Math.floor(hoursRemaining)} hours!`,
-    html,
-    emailType: EMAIL_TYPES.STREAK_AT_RISK,
-  });
-}
-
-/**
  * Send streak broken email
  */
 async function sendStreakBrokenEmail(email, username, previousStreak) {
@@ -719,7 +662,6 @@ module.exports = {
 
   // Email senders
   sendWelcomeEmail,
-  sendStreakAtRiskEmail,
   sendStreakBrokenEmail,
   sendWeeklyDigestEmail,
   sendWinBackEmail,
@@ -729,7 +671,6 @@ module.exports = {
 
   // Templates (for testing)
   welcomeEmailTemplate,
-  streakAtRiskEmailTemplate,
   weeklyDigestEmailTemplate,
   winBackEmailTemplate,
 };

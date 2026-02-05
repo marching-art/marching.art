@@ -85,7 +85,6 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
 
   const [emailPrefs, setEmailPrefs] = useState({
     allEmails: true,
-    streakAtRisk: true,
     streakBroken: true,
     weeklyDigest: true,
     lineupReminder: true,
@@ -97,7 +96,6 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
   // Push notification state
   const [pushPrefs, setPushPrefs] = useState({
     allPush: false,
-    streakAtRisk: true,
     matchupStart: true,
     matchupResult: true,
     scoreUpdate: true,
@@ -153,7 +151,6 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
         const prefs = data.settings?.emailPreferences || {};
         setEmailPrefs({
           allEmails: prefs.allEmails ?? true,
-          streakAtRisk: prefs.streakAtRisk ?? true,
           streakBroken: prefs.streakBroken ?? true,
           weeklyDigest: prefs.weeklyDigest ?? true,
           lineupReminder: prefs.lineupReminder ?? true,
@@ -166,7 +163,6 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
         const push = data.settings?.pushPreferences || {};
         setPushPrefs({
           allPush: push.allPush ?? false,
-          streakAtRisk: push.streakAtRisk ?? true,
           matchupStart: push.matchupStart ?? true,
           matchupResult: push.matchupResult ?? true,
           scoreUpdate: push.scoreUpdate ?? true,
@@ -587,14 +583,6 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                     </div>
                     <div className="px-3">
                       <Toggle
-                        label="Streak Warnings"
-                        description="Alert when streak is expiring"
-                        checked={pushPrefs.streakAtRisk}
-                        onChange={(e) => updatePushPref('streakAtRisk', e.target.checked)}
-                      />
-                    </div>
-                    <div className="px-3">
-                      <Toggle
                         label="Matchup Start"
                         description="When matchups begin"
                         checked={pushPrefs.matchupStart}
@@ -640,14 +628,6 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
 
                   {emailPrefs.allEmails && (
                     <>
-                      <div className="px-3">
-                        <Toggle
-                          label="Streak Warnings"
-                          description="Alert when streak is expiring"
-                          checked={emailPrefs.streakAtRisk}
-                          onChange={(e) => updatePref('streakAtRisk', e.target.checked)}
-                        />
-                      </div>
                       <div className="px-3">
                         <Toggle
                           label="Weekly Digest"
