@@ -100,13 +100,11 @@ const {
   scheduledLifetimeLeaderboardUpdate
 } = require("./src/scheduled/lifetimeLeaderboard");
 const {
-  streakAtRiskEmailJob,
   weeklyDigestEmailJob,
   winBackEmailJob,
   streakBrokenEmailJob,
 } = require("./src/scheduled/emailNotifications");
 const {
-  streakAtRiskPushJob,
   showReminderPushJob,
   weeklyMatchupPushJob,
 } = require("./src/scheduled/pushNotifications");
@@ -233,7 +231,6 @@ module.exports = {
   triggerMatchupGeneration,
 
   // Email Scheduled Jobs
-  streakAtRiskEmailJob,
   weeklyDigestEmailJob,
   winBackEmailJob,
   streakBrokenEmailJob,
@@ -273,7 +270,6 @@ module.exports = {
   onStreakMilestoneReached,
 
   // Push Scheduled Jobs
-  streakAtRiskPushJob,
   showReminderPushJob,
   weeklyMatchupPushJob,
 

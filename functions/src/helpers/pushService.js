@@ -9,7 +9,6 @@ const { dataNamespaceParam } = require("../config");
 
 // Push notification types
 const PUSH_TYPES = {
-  STREAK_AT_RISK: "streak_at_risk",
   MATCHUP_START: "matchup_start",
   MATCHUP_RESULT: "matchup_result",
   SCORE_UPDATE: "score_update",
@@ -20,7 +19,6 @@ const PUSH_TYPES = {
 
 // Preference field mapping
 const PUSH_PREFERENCE_MAP = {
-  [PUSH_TYPES.STREAK_AT_RISK]: "streakAtRisk",
   [PUSH_TYPES.MATCHUP_START]: "matchupStart",
   [PUSH_TYPES.MATCHUP_RESULT]: "matchupResult",
   [PUSH_TYPES.SCORE_UPDATE]: "scoreUpdate",
@@ -199,22 +197,6 @@ async function removeInvalidToken(userId) {
 // =============================================================================
 
 /**
- * Send streak at risk notification
- */
-async function sendStreakAtRiskPush(userId, streakDays, hoursRemaining) {
-  return sendPushNotification(
-    userId,
-    {
-      title: "Your streak is at risk!",
-      body: `Your ${streakDays}-day streak expires in ${Math.floor(hoursRemaining)} hours. Log in to save it!`,
-      url: "/dashboard",
-    },
-    PUSH_TYPES.STREAK_AT_RISK,
-    { streakDays: String(streakDays), hoursRemaining: String(hoursRemaining) }
-  );
-}
-
-/**
  * Send matchup starting notification
  */
 async function sendMatchupStartPush(userId, opponentName, leagueName) {
@@ -328,7 +310,6 @@ module.exports = {
   isPushTypeEnabled,
 
   // Notification senders
-  sendStreakAtRiskPush,
   sendMatchupStartPush,
   sendMatchupResultPush,
   sendScoreUpdatePush,

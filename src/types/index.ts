@@ -131,7 +131,6 @@ export interface EmailPreferences {
   allEmails: boolean;
   // Individual email type preferences
   welcome?: boolean;
-  streakAtRisk?: boolean;
   streakBroken?: boolean;
   weeklyDigest?: boolean;
   winBack?: boolean;
@@ -142,7 +141,6 @@ export interface EmailPreferences {
 
 export type EmailType =
   | 'welcome'
-  | 'streak_at_risk'
   | 'streak_broken'
   | 'weekly_digest'
   | 'win_back'
@@ -154,7 +152,6 @@ export interface PushPreferences {
   // Master toggle - if false, no push notifications are sent
   allPush: boolean;
   // Individual push notification type preferences
-  streakAtRisk?: boolean;
   matchupStart?: boolean;
   matchupResult?: boolean;
   scoreUpdate?: boolean;
@@ -164,7 +161,6 @@ export interface PushPreferences {
 }
 
 export type PushNotificationType =
-  | 'streak_at_risk'
   | 'matchup_start'
   | 'matchup_result'
   | 'score_update'

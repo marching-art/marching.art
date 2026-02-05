@@ -8,7 +8,6 @@ const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb, dataNamespaceParam } = require("../config");
 const {
-  sendStreakAtRiskEmail,
   sendStreakBrokenEmail,
   sendWeeklyDigestEmail,
   sendWinBackEmail,
@@ -31,7 +30,6 @@ function shouldSendEmail(profile, emailType) {
   // Default preferences (opt-in by default for engagement emails)
   const defaults = {
     [EMAIL_TYPES.WELCOME]: true,
-    [EMAIL_TYPES.STREAK_AT_RISK]: true,
     [EMAIL_TYPES.STREAK_BROKEN]: true,
     [EMAIL_TYPES.WEEKLY_DIGEST]: true,
     [EMAIL_TYPES.WIN_BACK]: true,
@@ -92,140 +90,6 @@ async function wasEmailRecentlySent(db, uid, emailType, cooldownHours = 24) {
 
   return !recentEmails.empty;
 }
-
-// =============================================================================
-// STREAK AT RISK EMAIL (Runs hourly)
-// =============================================================================
-
-/**
- * Send emails to users whose streaks are at risk (18-24 hours since last login)
- * Runs every hour to catch users in the 6-hour warning window
- */
-exports.streakAtRiskEmailJob = onSchedule(
-  {
-    schedule: "0 * * * *", // Every hour at :00
-    timeZone: "America/New_York",
-    secrets: [brevoApiKey],
-  },
-  async () => {
-    const db = getDb();
-    const namespace = dataNamespaceParam.value();
-    const now = new Date();
-
-    logger.info("Starting streak at risk email job...");
-
-    // Calculate time window for at-risk users
-    // At risk = last login was 18-24 hours ago
-    const atRiskStart = new Date(now.getTime() - 24 * 60 * 60 * 1000); // 24 hours ago
-    const atRiskEnd = new Date(now.getTime() - 18 * 60 * 60 * 1000); // 18 hours ago
-
-    let processed = 0;
-    let sent = 0;
-    let skipped = 0;
-    let lastDoc = null;
-
-    try {
-      do {
-        // Query users with streaks who logged in during the at-risk window
-        let query = db
-          .collectionGroup("profile")
-          .where("engagement.loginStreak", ">", 0)
-          .where("engagement.lastLogin", ">=", atRiskStart)
-          .where("engagement.lastLogin", "<=", atRiskEnd)
-          .limit(BATCH_SIZE);
-
-        if (lastDoc) {
-          query = query.startAfter(lastDoc);
-        }
-
-        const snapshot = await query.get();
-
-        if (snapshot.empty) {
-          break;
-        }
-
-        lastDoc = snapshot.docs[snapshot.docs.length - 1];
-
-        // OPTIMIZATION: Process users in parallel chunks instead of sequentially
-        const processUser = async (doc) => {
-          const profile = doc.data();
-          const uid = doc.ref.parent.parent.id;
-
-          // Check if user has active streak freeze
-          const freezeUntil = profile.engagement?.streakFreezeUntil?.toDate?.() ||
-            (profile.engagement?.streakFreezeUntil ? new Date(profile.engagement.streakFreezeUntil) : null);
-
-          if (freezeUntil && now < freezeUntil) {
-            return { status: 'skipped', reason: 'freeze' };
-          }
-
-          // Check email preferences
-          if (!shouldSendEmail(profile, EMAIL_TYPES.STREAK_AT_RISK)) {
-            return { status: 'skipped', reason: 'preferences' };
-          }
-
-          // OPTIMIZATION: Parallelize the email check and user email fetch
-          const [recentlySent, email] = await Promise.all([
-            wasEmailRecentlySent(db, uid, EMAIL_TYPES.STREAK_AT_RISK, 12),
-            getUserEmail(uid)
-          ]);
-
-          if (recentlySent) {
-            return { status: 'skipped', reason: 'recently_sent' };
-          }
-
-          if (!email) {
-            return { status: 'skipped', reason: 'no_email' };
-          }
-
-          // Calculate hours remaining
-          const lastLogin = profile.engagement.lastLogin?.toDate?.() ||
-            new Date(profile.engagement.lastLogin);
-          const hoursRemaining = 24 - ((now - lastLogin) / (1000 * 60 * 60));
-
-          // Send email
-          const success = await sendStreakAtRiskEmail(
-            email,
-            profile.username || "Director",
-            profile.engagement.loginStreak,
-            hoursRemaining
-          );
-
-          if (success) {
-            await trackEmailSent(db, uid, EMAIL_TYPES.STREAK_AT_RISK, {
-              streakDays: profile.engagement.loginStreak,
-              hoursRemaining: Math.floor(hoursRemaining),
-            });
-            return { status: 'sent' };
-          }
-
-          return { status: 'failed' };
-        };
-
-        // Process batch in parallel chunks
-        for (let i = 0; i < snapshot.docs.length; i += PARALLEL_LIMIT) {
-          const chunk = snapshot.docs.slice(i, i + PARALLEL_LIMIT);
-          const results = await Promise.allSettled(chunk.map(processUser));
-
-          for (const result of results) {
-            processed++;
-            if (result.status === 'fulfilled') {
-              if (result.value.status === 'sent') sent++;
-              else if (result.value.status === 'skipped') skipped++;
-            } else {
-              skipped++; // Count errors as skipped
-            }
-          }
-        }
-      } while (true);
-
-      logger.info(`Streak at risk job complete: ${processed} processed, ${sent} sent, ${skipped} skipped`);
-    } catch (error) {
-      logger.error("Error in streak at risk email job:", error);
-      throw error;
-    }
-  }
-);
 
 // =============================================================================
 // WEEKLY DIGEST EMAIL (Runs every Sunday at 10 AM)
