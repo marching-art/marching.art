@@ -7,6 +7,8 @@ export { default as ActiveLineupTable } from './ActiveLineupTable';
 export { default as SeasonScorecard } from './SeasonScorecard';
 export { default as RecentResultsFeed } from './RecentResultsFeed';
 export { default as LeagueStatus } from './LeagueStatus';
+export { default as DailyChallenges } from './DailyChallenges';
+export { default as QuickStats } from './QuickStats';
 
 // Re-export constants for convenience
 export * from './constants';

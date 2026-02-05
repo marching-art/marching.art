@@ -36,6 +36,16 @@ const getNextClassUnlock = (unlockedClasses, xpLevel, corpsCoin) => {
   return null;
 };
 
+// Streak milestone labels
+const getStreakMilestone = (streak) => {
+  if (streak >= 100) return 'Legendary streak!';
+  if (streak >= 60) return 'Elite dedication!';
+  if (streak >= 30) return 'Dedicated director!';
+  if (streak >= 14) return '2-week streak!';
+  if (streak >= 7) return '1-week streak!';
+  return null;
+};
+
 const ControlBar = memo(({
   corps,
   activeCorpsClass,
@@ -98,13 +108,22 @@ const ControlBar = memo(({
 
         {/* RIGHT: Director HUD - Order: Streak, Level, Coins, Buy */}
         <div className="flex items-center gap-3">
-          {/* Streak */}
+          {/* Streak with milestone indicator */}
           {streak > 0 && (
-            <div className="flex items-center gap-1">
-              <Flame className="w-3.5 h-3.5 text-orange-500" />
-              <span className="text-xs font-bold text-orange-500 font-data tabular-nums">
+            <div className="flex items-center gap-1" title={`${streak}-day login streak${getStreakMilestone(streak) ? ` — ${getStreakMilestone(streak)}` : ''}`}>
+              <Flame className={`w-3.5 h-3.5 ${streak >= 30 ? 'text-red-500' : streak >= 7 ? 'text-orange-400' : 'text-orange-500'}`} />
+              <span className={`text-xs font-bold font-data tabular-nums ${streak >= 30 ? 'text-red-500' : streak >= 7 ? 'text-orange-400' : 'text-orange-500'}`}>
                 {streak}
               </span>
+              {streak >= 7 && (
+                <span className={`text-[9px] font-bold px-1 py-0.5 rounded-sm ${
+                  streak >= 100 ? 'bg-red-500/20 text-red-400' :
+                  streak >= 30 ? 'bg-orange-500/20 text-orange-400' :
+                  'bg-yellow-500/20 text-yellow-400'
+                }`}>
+                  {streak >= 100 ? 'LEGEND' : streak >= 60 ? 'ELITE' : streak >= 30 ? 'DEDICATED' : 'HOT'}
+                </span>
+              )}
             </div>
           )}
 
