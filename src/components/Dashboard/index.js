@@ -35,6 +35,8 @@ export {
   SeasonScorecard,
   RecentResultsFeed,
   LeagueStatus,
+  DailyChallenges,
+  QuickStats,
   // Constants
   CLASS_LABELS,
   CLASS_SHORT_LABELS,

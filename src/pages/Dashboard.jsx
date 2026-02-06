@@ -41,6 +41,8 @@ import {
   SeasonScorecard,
   RecentResultsFeed,
   LeagueStatus,
+  DailyChallenges,
+  QuickStats,
   CAPTIONS,
   CLASS_LABELS,
   CLASS_DISPLAY_NAMES,
@@ -825,6 +827,18 @@ const Dashboard = () => {
                 />
 
                 <LeagueStatus leagues={myLeagues} />
+
+                {/* Daily Challenges - drives daily return visits */}
+                <DailyChallenges onLineupClick={() => openCaptionSelection()} />
+
+                {/* Quick Stats - rotating fun facts about user performance */}
+                <QuickStats
+                  profile={profile}
+                  corpsClass={activeCorpsClass}
+                  recentResults={recentResults}
+                  lineupScoreData={lineupScoreData}
+                  lineupCount={lineupCount}
+                />
 
                 {/* Submit Article */}
                 <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
