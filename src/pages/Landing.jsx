@@ -217,27 +217,15 @@ const Landing = () => {
       <main className="flex-1 pb-24 md:pb-4">
         <div className="max-w-[1920px] mx-auto p-4 lg:p-6">
 
-          {/* =============================================================
-              FIRST-TIME VISITOR SECTION - Hero + How It Works
-              Shows value proposition and educational content for new users.
-              Hidden for: authenticated users, returning visitors, or while loading.
-              ============================================================= */}
-          {!user && !isFirstVisitLoading && isFirstVisit && (
-            <div className="space-y-4 mb-6">
-              <HeroBanner onDismiss={markAsReturning} />
-              <SocialProofBar />
-              <HowItWorks />
-            </div>
-          )}
-
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6">
 
           {/* ============================================================= */}
-          {/* SIDEBAR - Mobile First (shows before news on mobile) */}
+          {/* SIDEBAR */}
           {/* On desktop: 4 cols on right, sticky */}
-          {/* On mobile: Full width, appears FIRST */}
+          {/* On mobile: Full width. Shows AFTER hero for first-time visitors, */}
+          {/* BEFORE news for returning/authenticated users */}
           {/* ============================================================= */}
-          <div className="order-1 lg:order-2 lg:col-span-4">
+          <div className={`${!user && !isFirstVisitLoading && isFirstVisit ? 'order-2' : 'order-1'} lg:order-2 lg:col-span-4`}>
             <div className="lg:sticky lg:top-4 space-y-4 lg:space-y-5">
 
               {/* ------------------------------------------------------- */}
@@ -464,13 +452,26 @@ const Landing = () => {
           </div>
 
           {/* ============================================================= */}
-          {/* MAIN COLUMN - News Feed */}
+          {/* MAIN COLUMN - Hero (first-time visitors) + News Feed */}
           {/* On desktop: 8 cols on left */}
-          {/* On mobile: Full width, appears AFTER sidebar widgets */}
+          {/* On mobile: First for first-time visitors, after sidebar otherwise */}
           {/* ============================================================= */}
-          <div className="order-2 lg:order-1 lg:col-span-8">
+          <div className={`${!user && !isFirstVisitLoading && isFirstVisit ? 'order-1' : 'order-2'} lg:order-1 lg:col-span-8 space-y-4 lg:space-y-5`}>
+            {/* =============================================================
+                FIRST-TIME VISITOR SECTION - Hero + How It Works
+                Shows value proposition and educational content inline with
+                the articles column for new unauthenticated users.
+                ============================================================= */}
+            {!user && !isFirstVisitLoading && isFirstVisit && (
+              <>
+                <HeroBanner onDismiss={markAsReturning} />
+                <SocialProofBar />
+                <HowItWorks />
+              </>
+            )}
+
             {/* Section header for mobile - helps users understand the content */}
-            <div className="flex items-center gap-2 mb-3 lg:hidden">
+            <div className="flex items-center gap-2 mb-0 lg:hidden">
               <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Latest News</span>
               <div className="flex-1 h-px bg-[#333]" />
             </div>
