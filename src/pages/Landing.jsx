@@ -18,6 +18,7 @@ import { useProfileStore } from '../store/profileStore';
 import NewsFeed from '../components/Landing/NewsFeed';
 import HeroBanner from '../components/Landing/HeroBanner';
 import HowItWorks from '../components/Landing/HowItWorks';
+import GamePreview from '../components/Landing/GamePreview';
 import SocialProofBar from '../components/Landing/SocialProofBar';
 import UrgencyBanner, { LiveIndicator } from '../components/Landing/UrgencyBanner';
 import CommunityPulse from '../components/Landing/CommunityPulse';
@@ -466,7 +467,8 @@ const Landing = () => {
               <>
                 <HeroBanner onDismiss={markAsReturning} />
                 <SocialProofBar />
-                <HowItWorks />
+                <GamePreview />
+                <HowItWorks defaultOpen />
               </>
             )}
 

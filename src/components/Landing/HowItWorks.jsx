@@ -1,9 +1,9 @@
 /**
  * HowItWorks Component - Educational Accordion for New Visitors
  *
- * Explains the core game loop in 3 simple steps. Collapsed by default
- * so users can skip past it. Only shown to first-time visitors.
- * Matches the ESPN-style dark theme.
+ * Explains the core game loop in 3 simple steps. Accepts a defaultOpen
+ * prop to show all steps expanded for first-time visitors, or collapsed
+ * for returning visitors. Matches the ESPN-style dark theme.
  */
 
 import React, { useState } from 'react';
@@ -137,9 +137,12 @@ const AccordionItem = ({ step, isOpen, onToggle, isLast }) => {
 // HOW IT WORKS COMPONENT
 // =============================================================================
 
-const HowItWorks = () => {
-  // All collapsed by default - users can expand if interested
-  const [openSteps, setOpenSteps] = useState(new Set());
+const HowItWorks = ({ defaultOpen = false }) => {
+  // Open all steps by default when defaultOpen is true (first-time visitors)
+  // Otherwise collapsed so returning visitors can skip past
+  const [openSteps, setOpenSteps] = useState(
+    () => defaultOpen ? new Set(STEPS.map(s => s.id)) : new Set()
+  );
 
   const toggleStep = (stepId) => {
     setOpenSteps(prev => {
