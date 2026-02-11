@@ -4,7 +4,7 @@
 // Rigid system modal. Dead-center. High contrast overlay. No glow.
 // Laws: z-[100], bg-black/80 overlay, border-[#333], no backdrop-blur
 
-import React, { useEffect, useCallback, useRef } from 'react';
+import React, { useEffect, useCallback, useRef, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
@@ -52,6 +52,7 @@ export const Modal: React.FC<ModalProps> = ({
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<Element | null>(null);
+  const titleId = useId();
 
   // Handle escape key
   const handleKeyDown = useCallback(
@@ -121,7 +122,7 @@ export const Modal: React.FC<ModalProps> = ({
       onClick={handleOverlayClick}
       role="dialog"
       aria-modal="true"
-      aria-labelledby={title ? 'modal-title' : undefined}
+      aria-labelledby={title ? titleId : undefined}
     >
       {/* Modal Container */}
       <div
@@ -141,7 +142,7 @@ export const Modal: React.FC<ModalProps> = ({
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
             {title && (
               <h2
-                id="modal-title"
+                id={titleId}
                 className="text-xs font-bold uppercase tracking-wider text-gray-300"
               >
                 {title}
