@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import { m } from 'framer-motion';
 
 // =============================================================================
@@ -8,6 +8,7 @@ import { m } from 'framer-motion';
 interface TabsContextValue {
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  tabListRef: React.RefObject<HTMLDivElement | null>;
 }
 
 const TabsContext = createContext<TabsContextValue | null>(null);
@@ -42,6 +43,7 @@ export const Tabs: React.FC<TabsProps> = ({
   className = '',
 }) => {
   const [activeTab, setActiveTabState] = useState(defaultTab);
+  const tabListRef = useRef<HTMLDivElement | null>(null);
 
   const setActiveTab = useCallback(
     (tab: string) => {
@@ -52,7 +54,7 @@ export const Tabs: React.FC<TabsProps> = ({
   );
 
   return (
-    <TabsContext.Provider value={{ activeTab, setActiveTab }}>
+    <TabsContext.Provider value={{ activeTab, setActiveTab, tabListRef }}>
       <div className={className} data-variant={variant}>
         {children}
       </div>
@@ -70,8 +72,10 @@ export interface TabsListProps {
 }
 
 export const TabsList: React.FC<TabsListProps> = ({ children, className = '' }) => {
+  const { tabListRef } = useTabsContext();
   return (
     <div
+      ref={tabListRef}
       role="tablist"
       className={`
         flex gap-1 p-1 rounded-sm bg-black/30 border border-white/10
@@ -103,8 +107,44 @@ export const TabTrigger: React.FC<TabTriggerProps> = ({
   disabled = false,
   className = '',
 }) => {
-  const { activeTab, setActiveTab } = useTabsContext();
+  const { activeTab, setActiveTab, tabListRef } = useTabsContext();
   const isActive = activeTab === value;
+
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    const tabList = tabListRef.current;
+    if (!tabList) return;
+
+    const tabs = Array.from(
+      tabList.querySelectorAll<HTMLButtonElement>('[role="tab"]:not([disabled])')
+    );
+    const currentIndex = tabs.findIndex((tab) => tab === event.currentTarget);
+    if (currentIndex === -1) return;
+
+    let targetIndex: number | null = null;
+
+    switch (event.key) {
+      case 'ArrowRight':
+        targetIndex = (currentIndex + 1) % tabs.length;
+        break;
+      case 'ArrowLeft':
+        targetIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+        break;
+      case 'Home':
+        targetIndex = 0;
+        break;
+      case 'End':
+        targetIndex = tabs.length - 1;
+        break;
+      default:
+        return;
+    }
+
+    event.preventDefault();
+    const targetTab = tabs[targetIndex];
+    targetTab.focus();
+    const targetValue = targetTab.id.replace('tab-', '');
+    setActiveTab(targetValue);
+  };
 
   return (
     <button
@@ -115,6 +155,7 @@ export const TabTrigger: React.FC<TabTriggerProps> = ({
       tabIndex={isActive ? 0 : -1}
       disabled={disabled}
       onClick={() => !disabled && setActiveTab(value)}
+      onKeyDown={handleKeyDown}
       className={`
         relative flex items-center gap-2 px-4 py-2.5
         text-sm font-medium rounded-sm
