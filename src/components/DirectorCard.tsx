@@ -6,7 +6,9 @@
 
 import React, { useState, useEffect, useRef, memo } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
-import { Flame, Zap, Coins, Lock, Unlock } from 'lucide-react';
+import { Flame, Zap, Coins, Lock, Unlock, Clock } from 'lucide-react';
+import { getWeeksUntilUnlock } from '../utils/classUnlockTime';
+import type { Timestamp } from 'firebase/firestore';
 
 // =============================================================================
 // TYPES
@@ -20,6 +22,7 @@ interface DirectorCardProps {
   streak: number;
   lastLogin?: string | null;
   unlockedClasses: string[];
+  createdAt?: Timestamp | Date | string | null;
   seasonName?: string;
   currentWeek?: number;
   compact?: boolean;
@@ -96,12 +99,14 @@ interface NextClassUnlock {
   meetsLevel: boolean;
   canAfford: boolean;
   canUnlock: boolean; // meetsLevel && canAfford
+  weeksUntil: number | null; // weeks until time-based auto-unlock
 }
 
 function getNextClassUnlock(
   unlockedClasses: string[],
   xpLevel: number,
-  corpsCoin: number
+  corpsCoin: number,
+  createdAt?: Timestamp | Date | string | null
 ): NextClassUnlock | null {
   const classOrder = ['aClass', 'open', 'world'];
 
@@ -111,6 +116,7 @@ function getNextClassUnlock(
       const coinCost = CLASS_UNLOCK_COSTS[classKey as keyof typeof CLASS_UNLOCK_COSTS];
       const meetsLevel = xpLevel >= levelRequired;
       const canAfford = corpsCoin >= coinCost;
+      const weeksUntil = createdAt ? getWeeksUntilUnlock(createdAt, classKey) : null;
 
       return {
         className: CLASS_NAMES[classKey],
@@ -120,6 +126,7 @@ function getNextClassUnlock(
         meetsLevel,
         canAfford,
         canUnlock: meetsLevel && canAfford,
+        weeksUntil,
       };
     }
   }
@@ -139,6 +146,7 @@ export const DirectorCard: React.FC<DirectorCardProps> = ({
   streak,
   lastLogin,
   unlockedClasses,
+  createdAt,
   seasonName,
   currentWeek,
   compact = false,
@@ -150,7 +158,7 @@ export const DirectorCard: React.FC<DirectorCardProps> = ({
 
   const xpProgress = getXpProgress(xp, xpLevel);
   const streakTier = getStreakTier(streak);
-  const nextUnlock = getNextClassUnlock(unlockedClasses, xpLevel, corpsCoin);
+  const nextUnlock = getNextClassUnlock(unlockedClasses, xpLevel, corpsCoin, createdAt);
 
   // Animate currency gains
   useEffect(() => {
@@ -374,6 +382,15 @@ export const DirectorCard: React.FC<DirectorCardProps> = ({
                 <span className={nextUnlock.canAfford ? 'text-green-400' : 'text-gray-500'}>
                   {nextUnlock.coinCost.toLocaleString()} CC
                 </span>
+                {nextUnlock.weeksUntil != null && nextUnlock.weeksUntil > 0 && (
+                  <span className="text-cyan-400 flex items-center gap-0.5">
+                    <Clock className="w-2.5 h-2.5" />
+                    {nextUnlock.weeksUntil}w
+                  </span>
+                )}
+                {nextUnlock.weeksUntil === 0 && (
+                  <span className="text-green-400">Auto</span>
+                )}
               </div>
             </div>
             {/* Buy button - show when user can afford but hasn't unlocked yet */}

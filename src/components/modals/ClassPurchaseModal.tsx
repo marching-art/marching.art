@@ -4,7 +4,7 @@
 // Allows directors to spend CorpsCoin to unlock a class before reaching the XP level
 
 import React, { useState } from 'react';
-import { Coins, ShoppingCart, X, AlertTriangle, Loader2, Calendar } from 'lucide-react';
+import { Coins, ShoppingCart, X, AlertTriangle, Loader2, Calendar, Clock } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 
@@ -20,6 +20,7 @@ interface ClassPurchaseModalProps {
   levelRequired: number;
   currentLevel: number;
   weeksRemaining: number | null;
+  weeksUntilAutoUnlock?: number | null;
   isRegistrationLocked: boolean;
   onConfirm: () => Promise<void>;
   onClose: () => void;
@@ -61,6 +62,7 @@ const ClassPurchaseModal: React.FC<ClassPurchaseModalProps> = ({
   levelRequired,
   currentLevel,
   weeksRemaining,
+  weeksUntilAutoUnlock,
   isRegistrationLocked,
   onConfirm,
   onClose,
@@ -171,9 +173,24 @@ const ClassPurchaseModal: React.FC<ClassPurchaseModalProps> = ({
                     </p>
                     <p className="text-xs text-yellow-300/80">
                       You're unlocking this class before reaching Level {levelRequired}.
-                      You can also wait and unlock it for free when you level up.
+                      You can also wait and unlock it for free when you level up
+                      {weeksUntilAutoUnlock != null && weeksUntilAutoUnlock > 0
+                        ? ` or when it auto-unlocks in ${weeksUntilAutoUnlock} week${weeksUntilAutoUnlock !== 1 ? 's' : ''}`
+                        : ''}.
                     </p>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* Time-based auto-unlock info */}
+            {weeksUntilAutoUnlock != null && weeksUntilAutoUnlock > 0 && !isEarlyUnlock && !isRegistrationLocked && (
+              <div className="bg-cyan-500/10 border border-cyan-500/30 p-3 mb-4">
+                <div className="flex items-start gap-2">
+                  <Clock className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-cyan-300/80">
+                    This class will auto-unlock for free in {weeksUntilAutoUnlock} week{weeksUntilAutoUnlock !== 1 ? 's' : ''}.
+                  </p>
                 </div>
               </div>
             )}

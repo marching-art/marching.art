@@ -46,8 +46,12 @@ import {
   CAPTIONS,
   CLASS_LABELS,
   CLASS_DISPLAY_NAMES,
+  CLASS_UNLOCK_LEVELS,
+  CLASS_UNLOCK_COSTS,
   getSoundSportRating,
 } from '../components/Dashboard';
+
+import { getWeeksUntilUnlock } from '../utils/classUnlockTime';
 
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useScoresData } from '../hooks/useScoresData';
@@ -1023,6 +1027,7 @@ const Dashboard = () => {
             levelRequired={CLASS_UNLOCK_LEVELS[classToPurchase]}
             currentLevel={profile.xpLevel || 1}
             weeksRemaining={weeksRemaining}
+            weeksUntilAutoUnlock={profile?.createdAt ? getWeeksUntilUnlock(profile.createdAt, classToPurchase) : null}
             isRegistrationLocked={isRegistrationLocked(classToPurchase)}
             onConfirm={handleConfirmClassPurchase}
             onClose={() => setClassToPurchase(null)}

@@ -5,8 +5,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
-import { TrendingUp, Coins, Flame, ChevronRight, Lock, Unlock } from 'lucide-react';
+import { TrendingUp, Coins, Flame, ChevronRight, Lock, Unlock, Clock } from 'lucide-react';
 import { StreakIndicator } from './StreakIndicator';
+import { getWeeksUntilUnlock } from '../utils/classUnlockTime';
+import type { Timestamp } from 'firebase/firestore';
 
 // =============================================================================
 // TYPES
@@ -19,6 +21,7 @@ interface PlayerStatusBarProps {
   streak: number;
   lastLogin?: string | null;
   unlockedClasses: string[];
+  createdAt?: Timestamp | Date | string | null;
   onXpClick?: () => void;
   onCoinClick?: () => void;
   onStreakClick?: () => void;
@@ -71,8 +74,9 @@ function getXpProgress(xp: number, level: number): { current: number; max: numbe
 function getNextClassUnlock(
   unlockedClasses: string[],
   xp: number,
-  corpsCoin: number
-): { className: string; xpRequired: number; xpProgress: number; coinCost: number; canAfford: boolean } | null {
+  corpsCoin: number,
+  createdAt?: Timestamp | Date | string | null
+): { className: string; xpRequired: number; xpProgress: number; coinCost: number; canAfford: boolean; weeksUntil: number | null } | null {
   const classOrder = ['aClass', 'open', 'world'];
 
   for (const classKey of classOrder) {
@@ -80,6 +84,7 @@ function getNextClassUnlock(
       const levelRequired = CLASS_UNLOCK_LEVELS[classKey as keyof typeof CLASS_UNLOCK_LEVELS];
       const xpRequired = levelRequired * XP_PER_LEVEL;
       const coinCost = CLASS_UNLOCK_COSTS[classKey as keyof typeof CLASS_UNLOCK_COSTS];
+      const weeksUntil = createdAt ? getWeeksUntilUnlock(createdAt, classKey) : null;
 
       return {
         className: CLASS_NAMES[classKey],
@@ -87,6 +92,7 @@ function getNextClassUnlock(
         xpProgress: Math.min((xp / xpRequired) * 100, 100),
         coinCost,
         canAfford: corpsCoin >= coinCost,
+        weeksUntil,
       };
     }
   }
@@ -105,6 +111,7 @@ export const PlayerStatusBar: React.FC<PlayerStatusBarProps> = ({
   streak,
   lastLogin,
   unlockedClasses,
+  createdAt,
   onXpClick,
   onCoinClick,
   onStreakClick,
@@ -114,7 +121,7 @@ export const PlayerStatusBar: React.FC<PlayerStatusBarProps> = ({
   const prevCoinRef = useRef(corpsCoin);
 
   const xpProgress = getXpProgress(xp, xpLevel);
-  const nextUnlock = getNextClassUnlock(unlockedClasses, xp, corpsCoin);
+  const nextUnlock = getNextClassUnlock(unlockedClasses, xp, corpsCoin, createdAt);
 
   // Animate currency gains
   useEffect(() => {
@@ -265,6 +272,12 @@ export const PlayerStatusBar: React.FC<PlayerStatusBarProps> = ({
         <div className="hidden lg:flex items-center gap-2 px-2 py-1 rounded bg-gray-800/50 border border-gray-700/50">
           <span className="text-xs text-gray-400">Next:</span>
           <span className="text-xs font-medium text-gray-300">{nextUnlock.className}</span>
+          {nextUnlock.weeksUntil != null && nextUnlock.weeksUntil > 0 && (
+            <span className="text-[10px] text-cyan-400 flex items-center gap-0.5">
+              <Clock className="w-2.5 h-2.5" />
+              {nextUnlock.weeksUntil}w
+            </span>
+          )}
           <ChevronRight className="w-3 h-3 text-gray-500" />
         </div>
       )}

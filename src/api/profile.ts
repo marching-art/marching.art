@@ -11,6 +11,7 @@ import {
 } from 'firebase/firestore';
 import { db, paths, withErrorHandling } from './client';
 import type { UserProfile, CorpsData, CorpsClass, DeepPartial } from '../types';
+import { getWeeksSinceRegistration, CLASS_UNLOCK_WEEKS } from '../utils/classUnlockTime';
 
 // =============================================================================
 // READ OPERATIONS
@@ -172,19 +173,20 @@ export async function addXp(uid: string, amount: number): Promise<{
     const newLevel = calculateLevel(newXp);
     const leveledUp = newLevel > currentLevel;
 
-    // Check for class unlocks
+    // Check for class unlocks (by XP level OR time since registration)
     let unlockedClass: CorpsClass | undefined;
     const unlockedClasses = [...(profile.unlockedClasses || ['soundSport'])];
+    const weeksSince = getWeeksSinceRegistration(profile.createdAt);
 
-    if (newLevel >= 3 && !unlockedClasses.includes('aClass')) {
+    if ((newLevel >= 3 || weeksSince >= CLASS_UNLOCK_WEEKS.aClass) && !unlockedClasses.includes('aClass')) {
       unlockedClasses.push('aClass');
       unlockedClass = 'aClass';
     }
-    if (newLevel >= 5 && !unlockedClasses.includes('open')) {
+    if ((newLevel >= 5 || weeksSince >= CLASS_UNLOCK_WEEKS.open) && !unlockedClasses.includes('open')) {
       unlockedClasses.push('open');
       unlockedClass = 'open';
     }
-    if (newLevel >= 10 && !unlockedClasses.includes('world')) {
+    if ((newLevel >= 10 || weeksSince >= CLASS_UNLOCK_WEEKS.world) && !unlockedClasses.includes('world')) {
       unlockedClasses.push('world');
       unlockedClass = 'world';
     }

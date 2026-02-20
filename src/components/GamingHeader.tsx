@@ -17,6 +17,7 @@ import { useSeasonStore } from '../store/seasonStore';
 import { useProfileStore } from '../store/profileStore';
 import { m, AnimatePresence } from 'framer-motion';
 import { prefetchRoute } from '../lib/prefetch';
+import { getWeeksUntilUnlock } from '../utils/classUnlockTime';
 
 // Class unlock configuration (shared with DirectorCard)
 const CLASS_UNLOCK_LEVELS = {
@@ -44,12 +45,14 @@ interface NextClassUnlock {
   coinCost: number;
   meetsLevel: boolean;
   canAfford: boolean;
+  weeksUntil: number | null;
 }
 
 function getNextClassUnlock(
   unlockedClasses: string[],
   xpLevel: number,
-  corpsCoin: number
+  corpsCoin: number,
+  createdAt?: unknown
 ): NextClassUnlock | null {
   const classOrder = ['aClass', 'open', 'world'];
 
@@ -59,6 +62,7 @@ function getNextClassUnlock(
       const coinCost = CLASS_UNLOCK_COSTS[classKey as keyof typeof CLASS_UNLOCK_COSTS];
       const meetsLevel = xpLevel >= levelRequired;
       const canAfford = corpsCoin >= coinCost;
+      const weeksUntil = createdAt ? getWeeksUntilUnlock(createdAt as any, classKey) : null;
 
       return {
         className: CLASS_NAMES[classKey],
@@ -67,6 +71,7 @@ function getNextClassUnlock(
         coinCost,
         meetsLevel,
         canAfford,
+        weeksUntil,
       };
     }
   }
@@ -125,7 +130,8 @@ const GamingHeader: React.FC = () => {
   const nextUnlock = profile ? getNextClassUnlock(
     unlockedClasses,
     profile.xpLevel || 1,
-    profile.corpsCoin || 0
+    profile.corpsCoin || 0,
+    (profile as any).createdAt
   ) : null;
 
   // Handle Buy button click - navigate to dashboard with class to purchase
@@ -315,7 +321,7 @@ const GamingHeader: React.FC = () => {
                           ? 'bg-green-600 hover:bg-green-500 text-white'
                           : 'bg-yellow-600 hover:bg-yellow-500 text-white'
                       }`}
-                      title={`${nextUnlock.meetsLevel ? 'Unlock' : 'Buy'} ${nextUnlock.className} (${nextUnlock.coinCost.toLocaleString()} CC)`}
+                      title={`${nextUnlock.meetsLevel ? 'Unlock' : 'Buy'} ${nextUnlock.className} (${nextUnlock.coinCost.toLocaleString()} CC)${nextUnlock.weeksUntil != null && nextUnlock.weeksUntil > 0 ? ` — or auto-unlocks in ${nextUnlock.weeksUntil} week${nextUnlock.weeksUntil !== 1 ? 's' : ''}` : ''}`}
                     >
                       <Coins className="w-3 h-3" />
                       {nextUnlock.meetsLevel ? 'Unlock' : 'Buy'}

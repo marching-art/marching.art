@@ -17,6 +17,12 @@ const XP_CONFIG = {
     aClass: 3,       // Level 3 (3000 XP) unlocks A Class
     open: 5,         // Level 5 (5000 XP) unlocks Open Class
     world: 10        // Level 10 (10000 XP) unlocks World Class
+  },
+  /** Weeks after registration when each class auto-unlocks */
+  classUnlockWeeks: {
+    aClass: 5,       // 5 weeks after registration
+    open: 12,        // 12 weeks after registration
+    world: 19        // 19 weeks after registration
   }
 };
 
@@ -54,6 +60,31 @@ const XP_SOURCES = {
   }
 };
 
+const MILLIS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Calculate full weeks elapsed since user registration.
+ * Handles Firestore Timestamps, JS Dates, and ISO strings.
+ *
+ * @param {Object|Date|string} createdAt - User's registration date
+ * @returns {number} Full weeks since registration (0 if invalid)
+ */
+function getWeeksSinceRegistration(createdAt) {
+  if (!createdAt) return 0;
+  let date;
+  if (createdAt.toDate) {
+    date = createdAt.toDate(); // Firestore Timestamp
+  } else if (createdAt instanceof Date) {
+    date = createdAt;
+  } else if (typeof createdAt === 'string') {
+    date = new Date(createdAt);
+  } else {
+    return 0;
+  }
+  const elapsed = Date.now() - date.getTime();
+  return Math.floor(elapsed / MILLIS_PER_WEEK);
+}
+
 /**
  * Calculate XP updates including level and class unlocks
  *
@@ -71,21 +102,24 @@ function calculateXPUpdates(profileData, xpToAdd) {
     xpLevel: newLevel
   };
 
-  // Check for class unlocks
+  // Check for class unlocks (by XP level OR time since registration)
   const unlockedClasses = [...(profileData.unlockedClasses || ['soundSport'])];
   let classUnlocked = null;
 
-  if (newLevel >= XP_CONFIG.classUnlocks.aClass && !unlockedClasses.includes('aClass')) {
+  // Calculate weeks since registration for time-based unlocks
+  const weeksSinceRegistration = getWeeksSinceRegistration(profileData.createdAt);
+
+  if ((newLevel >= XP_CONFIG.classUnlocks.aClass || weeksSinceRegistration >= XP_CONFIG.classUnlockWeeks.aClass) && !unlockedClasses.includes('aClass')) {
     unlockedClasses.push('aClass');
     updates.unlockedClasses = unlockedClasses;
     classUnlocked = 'A Class';
   }
-  if (newLevel >= XP_CONFIG.classUnlocks.open && !unlockedClasses.includes('open')) {
+  if ((newLevel >= XP_CONFIG.classUnlocks.open || weeksSinceRegistration >= XP_CONFIG.classUnlockWeeks.open) && !unlockedClasses.includes('open')) {
     unlockedClasses.push('open');
     updates.unlockedClasses = unlockedClasses;
     classUnlocked = 'Open Class';
   }
-  if (newLevel >= XP_CONFIG.classUnlocks.world && !unlockedClasses.includes('world')) {
+  if ((newLevel >= XP_CONFIG.classUnlocks.world || weeksSinceRegistration >= XP_CONFIG.classUnlockWeeks.world) && !unlockedClasses.includes('world')) {
     unlockedClasses.push('world');
     updates.unlockedClasses = unlockedClasses;
     classUnlocked = 'World Class';
@@ -130,6 +164,7 @@ module.exports = {
   calculateXPUpdates,
   calculateLevel,
   getSeasonCompletionXP,
+  getWeeksSinceRegistration,
   XP_CONFIG,
   XP_SOURCES
 };
