@@ -297,6 +297,149 @@ exports.retireCorps = onCall({ cors: true }, async (request) => {
 });
 
 /**
+ * Transfer a corps from one class to another within the same season.
+ * Rules:
+ * - A corps can only be transferred once per season.
+ * - The target class must be unlocked and registration must still be open.
+ * - If the target class already has a corps, the user must retire or downgrade it first
+ *   (handled on the frontend by pre-retiring before calling this).
+ * - Preserves corps identity (name, location, history) but resets season-specific data.
+ */
+exports.transferCorps = onCall({ cors: true }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "You must be logged in.");
+  }
+
+  const { fromClass, toClass } = request.data;
+  const uid = request.auth.uid;
+
+  if (!fromClass || !toClass) {
+    throw new HttpsError("invalid-argument", "Both fromClass and toClass are required.");
+  }
+
+  if (fromClass === toClass) {
+    throw new HttpsError("invalid-argument", "Cannot transfer a corps to the same class.");
+  }
+
+  const validClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+  if (!validClasses.includes(fromClass) || !validClasses.includes(toClass)) {
+    throw new HttpsError("invalid-argument", "Invalid corps class specified.");
+  }
+
+  const db = getDb();
+  const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const seasonSettingsRef = db.doc("game-settings/season");
+
+  try {
+    const result = await db.runTransaction(async (transaction) => {
+      const [profileDoc, seasonDoc] = await Promise.all([
+        transaction.get(userProfileRef),
+        transaction.get(seasonSettingsRef),
+      ]);
+
+      if (!profileDoc.exists) {
+        throw new HttpsError("not-found", "User profile does not exist.");
+      }
+      if (!seasonDoc.exists) {
+        throw new HttpsError("not-found", "Season settings do not exist.");
+      }
+
+      const profileData = profileDoc.data();
+      const seasonData = seasonDoc.data();
+      const currentSeasonUid = seasonData.seasonUid;
+
+      // Check registration is open
+      if (!seasonData.registrationOpen) {
+        throw new HttpsError("failed-precondition", "Registration is closed for this season.");
+      }
+
+      // Check the target class is unlocked
+      const unlockedClasses = profileData.unlockedClasses || ["soundSport"];
+      if (!unlockedClasses.includes(toClass)) {
+        throw new HttpsError("failed-precondition", `You haven't unlocked ${toClass} yet.`);
+      }
+
+      // Check source corps exists
+      const sourceCorps = profileData.corps?.[fromClass];
+      if (!sourceCorps || !sourceCorps.corpsName) {
+        throw new HttpsError("not-found", `No active corps found in ${fromClass}.`);
+      }
+
+      // Check target class is empty (frontend should handle retiring/moving the occupant first)
+      const targetCorps = profileData.corps?.[toClass];
+      if (targetCorps && targetCorps.corpsName) {
+        throw new HttpsError("already-exists",
+          `There is already an active corps in ${toClass}. Retire or move it first.`);
+      }
+
+      // Check corps hasn't already been transferred this season
+      const transferHistory = profileData.corpsTransferHistory || {};
+      const seasonTransfers = transferHistory[currentSeasonUid] || [];
+      const alreadyTransferred = seasonTransfers.some(
+        (t) => t.corpsName === sourceCorps.corpsName
+      );
+      if (alreadyTransferred) {
+        throw new HttpsError("failed-precondition",
+          `"${sourceCorps.corpsName}" has already been transferred this season. Each corps can only move once per season.`);
+      }
+
+      // Perform the transfer: move corps data, reset season-specific fields
+      const updatedCorps = { ...profileData.corps };
+      updatedCorps[toClass] = {
+        ...sourceCorps,
+        corpsClass: toClass,
+        // Reset season-specific data for the new class
+        lineup: null,
+        lineupKey: null,
+        selectedShows: {},
+        weeklyScores: {},
+        totalSeasonScore: 0,
+        showsAttended: 0,
+        seasonHighScore: 0,
+      };
+      delete updatedCorps[fromClass];
+
+      // Record the transfer
+      const newTransferRecord = {
+        corpsName: sourceCorps.corpsName,
+        fromClass,
+        toClass,
+        transferredAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+      const updatedSeasonTransfers = [...seasonTransfers, newTransferRecord];
+      const updatedTransferHistory = {
+        ...transferHistory,
+        [currentSeasonUid]: updatedSeasonTransfers,
+      };
+
+      transaction.update(userProfileRef, {
+        corps: updatedCorps,
+        corpsTransferHistory: updatedTransferHistory,
+      });
+
+      return {
+        corpsName: sourceCorps.corpsName,
+        fromClass,
+        toClass,
+        vacatedClass: fromClass,
+      };
+    });
+
+    logger.info(`User ${uid} transferred corps "${result.corpsName}" from ${result.fromClass} to ${result.toClass}`);
+    return {
+      success: true,
+      message: `"${result.corpsName}" has been moved to ${result.toClass}!`,
+      vacatedClass: result.vacatedClass,
+      corpsName: result.corpsName,
+    };
+  } catch (error) {
+    logger.error(`Failed to transfer corps for user ${uid}:`, error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", "An error occurred while transferring the corps.");
+  }
+});
+
+/**
  * Unretire a corps - restore it from retired list to active corps
  */
 exports.unretireCorps = onCall({ cors: true }, async (request) => {
