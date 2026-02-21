@@ -53,7 +53,7 @@ import { useDashboardData } from '../hooks/useDashboardData';
 import { useScoresData } from '../hooks/useScoresData';
 import { useMyLeagues } from '../hooks/useLeagues';
 import { retireCorps } from '../firebase/functions';
-import { registerCorps, unlockClassWithCorpsCoin, submitNewsForApproval } from '../api/functions';
+import { registerCorps, unlockClassWithCorpsCoin, submitNewsForApproval, transferCorps } from '../api/functions';
 import { useHaptic } from '../hooks/useHaptic';
 import { useModalQueue, MODAL_PRIORITY } from '../hooks/useModalQueue';
 import { useSeasonStore } from '../store/seasonStore';
@@ -268,6 +268,7 @@ const Dashboard = () => {
   const [showMoveCorps, setShowMoveCorps] = useState(false);
   const [showRetireConfirm, setShowRetireConfirm] = useState(false);
   const [retiring, setRetiring] = useState(false);
+  const [transferring, setTransferring] = useState(false);
   const [showQuickStartGuide, setShowQuickStartGuide] = useState(false);
   const [classToPurchase, setClassToPurchase] = useState(null);
   const [lineupScoreData, setLineupScoreData] = useState({});
@@ -661,21 +662,17 @@ const Dashboard = () => {
 
   const handleMoveCorps = useCallback(async (targetClass) => {
     try {
-      if (corps[targetClass]) {
-        toast.error(`Already have a corps in ${getCorpsClassName(targetClass)}`);
-        return;
-      }
-      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-      await updateDoc(profileRef, {
-        [`corps.${targetClass}`]: { ...activeCorps, class: targetClass },
-        [`corps.${activeCorpsClass}`]: null
-      });
-      toast.success('Corps moved!');
+      setTransferring(true);
+      const result = await transferCorps({ fromClass: activeCorpsClass, toClass: targetClass });
+      toast.success(result.data.message || 'Corps transferred!');
       setShowMoveCorps(false);
     } catch (error) {
-      toast.error('Failed to move corps');
+      const msg = error?.message || error?.details?.message || 'Failed to transfer corps';
+      toast.error(msg);
+    } finally {
+      setTransferring(false);
     }
-  }, [corps, getCorpsClassName, user, activeCorps, activeCorpsClass]);
+  }, [activeCorpsClass]);
 
   const handleCorpsRegistration = useCallback(async (formData) => {
     try {
@@ -961,6 +958,7 @@ const Dashboard = () => {
           corpsName={activeCorps.corpsName || activeCorps.name}
           unlockedClasses={unlockedClasses}
           existingCorps={corps}
+          transferring={transferring}
         />
       )}
 

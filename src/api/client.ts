@@ -192,7 +192,7 @@ type CloudFunctionName =
   | 'registerCorps'
   | 'retireCorps'
   | 'deleteCorps'
-  | 'moveCorps'
+  | 'transferCorps'
   | 'createLeague'
   | 'joinLeague'
   | 'leaveLeague'

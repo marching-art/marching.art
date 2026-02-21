@@ -80,6 +80,20 @@ export interface RetireCorpsData {
 export const retireCorps = createCallable<RetireCorpsData, { success: boolean }>('retireCorps');
 export const unretireCorps = createCallable<{ corpsClass: string }, { success: boolean }>('unretireCorps');
 
+export interface TransferCorpsData {
+  fromClass: string;
+  toClass: string;
+}
+
+export interface TransferCorpsResult {
+  success: boolean;
+  message: string;
+  vacatedClass: string;
+  corpsName: string;
+}
+
+export const transferCorps = createCallable<TransferCorpsData, TransferCorpsResult>('transferCorps');
+
 // =============================================================================
 // ECONOMY
 // =============================================================================
