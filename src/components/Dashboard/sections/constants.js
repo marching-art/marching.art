@@ -28,6 +28,7 @@ export const CAPTIONS = [
 
 export const CLASS_UNLOCK_LEVELS = { aClass: 3, open: 5, world: 10 };
 export const CLASS_UNLOCK_COSTS = { aClass: 1000, open: 2500, world: 5000 };
+export const CLASS_UNLOCK_WEEKS = { aClass: 5, open: 12, world: 19 };
 export const CLASS_DISPLAY_NAMES = { aClass: 'A Class', open: 'Open Class', world: 'World Class' };
 
 // SoundSport medal rating thresholds

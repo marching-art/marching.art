@@ -2,11 +2,15 @@ import { create } from 'zustand';
 import { db } from '../firebase';
 import { doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
 import { AUTH_CONFIG } from '../config';
+import { mergeTimeUnlockedClasses } from '../utils/classUnlockTime';
 import toast from 'react-hot-toast';
 
 // All corps classes for admin override
 // Note: Uses 'worldClass'/'openClass' format which matches CORPS_CLASS_ORDER in utils/corps.ts
 const ALL_CORPS_CLASSES = ['worldClass', 'openClass', 'aClass', 'soundSport'];
+
+// Guard to prevent duplicate time-based unlock writes per session
+let _timeUnlockProcessed = false;
 
 /**
  * Global Profile Store
@@ -76,6 +80,9 @@ export const useProfileStore = create((set, get) => ({
 
     const profileRef = doc(db, 'artifacts/marching-art/users', uid, 'profile/data');
 
+    // Reset time-unlock guard when initializing a new listener
+    _timeUnlockProcessed = false;
+
     const unsubscribe = onSnapshot(
       profileRef,
       (docSnapshot) => {
@@ -87,6 +94,20 @@ export const useProfileStore = create((set, get) => ({
             loading: false,
             error: null,
           });
+
+          // Check for time-based class unlocks (once per session)
+          if (!_timeUnlockProcessed && !isAdmin && data.createdAt) {
+            const currentUnlocked = data.unlockedClasses || ['soundSport'];
+            const merged = mergeTimeUnlockedClasses(currentUnlocked, data.createdAt);
+            if (merged) {
+              _timeUnlockProcessed = true;
+              updateDoc(profileRef, { unlockedClasses: merged }).catch((err) => {
+                console.error('Error applying time-based class unlocks:', err);
+              });
+            } else {
+              _timeUnlockProcessed = true;
+            }
+          }
         } else {
           // Create initial profile for new users with all required fields
           const initialProfile = {

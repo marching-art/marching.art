@@ -2,14 +2,15 @@
 // OPTIMIZATION #4: Extracted from Dashboard.jsx to reduce file size and isolate renders
 
 import React, { memo } from 'react';
-import { Flame, Coins } from 'lucide-react';
+import { Flame, Coins, Clock } from 'lucide-react';
 import { CORPS_CLASS_ORDER } from '../../../utils/corps';
 import { CLASS_SHORT_LABELS, CLASS_UNLOCK_LEVELS, CLASS_UNLOCK_COSTS, CLASS_DISPLAY_NAMES } from './constants';
+import { getWeeksUntilUnlock } from '../../../utils/classUnlockTime';
 
 // Helper to get next class unlock info
 // Note: unlockedClasses uses 'aClass', 'openClass', 'worldClass' format
 // But CLASS_UNLOCK_* constants use 'aClass', 'open', 'world' format
-const getNextClassUnlock = (unlockedClasses, xpLevel, corpsCoin) => {
+const getNextClassUnlock = (unlockedClasses, xpLevel, corpsCoin, createdAt) => {
   // Map from unlock key to profile key
   const classConfig = [
     { unlockKey: 'aClass', profileKey: 'aClass' },
@@ -23,6 +24,7 @@ const getNextClassUnlock = (unlockedClasses, xpLevel, corpsCoin) => {
       const coinCost = CLASS_UNLOCK_COSTS[unlockKey];
       const meetsLevel = xpLevel >= levelRequired;
       const canAfford = corpsCoin >= coinCost;
+      const weeksUntil = createdAt ? getWeeksUntilUnlock(createdAt, unlockKey) : null;
       return {
         className: CLASS_DISPLAY_NAMES[unlockKey],
         classKey: unlockKey,
@@ -30,6 +32,7 @@ const getNextClassUnlock = (unlockedClasses, xpLevel, corpsCoin) => {
         coinCost,
         meetsLevel,
         canAfford,
+        weeksUntil,
       };
     }
   }
@@ -61,7 +64,7 @@ const ControlBar = memo(({
   const level = profile?.xpLevel || 1;
 
   // Calculate next class unlock
-  const nextUnlock = getNextClassUnlock(unlockedClasses, level, corpsCoin);
+  const nextUnlock = getNextClassUnlock(unlockedClasses, level, corpsCoin, profile?.createdAt);
 
   return (
     <div className="sticky top-0 z-10 bg-[#1a1a1a] border-b border-[#333]">
@@ -158,8 +161,14 @@ const ControlBar = memo(({
                 {nextUnlock.meetsLevel ? 'Unlock' : 'Buy'}
               </button>
             ) : (
-              <span className="text-[10px] text-gray-500">
-                {nextUnlock.className}: {nextUnlock.coinCost}CC needed
+              <span className="text-[10px] text-gray-500 flex items-center gap-1">
+                {nextUnlock.className}: {nextUnlock.coinCost}CC
+                {nextUnlock.weeksUntil != null && nextUnlock.weeksUntil > 0 && (
+                  <span className="text-cyan-400 flex items-center gap-0.5">
+                    <Clock className="w-2.5 h-2.5" />
+                    {nextUnlock.weeksUntil}w
+                  </span>
+                )}
               </span>
             )
           ) : (
