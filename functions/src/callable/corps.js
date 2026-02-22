@@ -5,7 +5,7 @@ const { logger } = require("firebase-functions/v2");
 
 /**
  * Process corps decisions during season reset
- * Handles continue/retire/unretire/new decisions for all classes atomically
+ * Handles continue/retire/unretire/new/skip/move decisions for all classes atomically
  */
 exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
@@ -20,7 +20,7 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
   }
 
   const validClasses = ["worldClass", "openClass", "aClass", "soundSport"];
-  const validActions = ["continue", "retire", "unretire", "new", "skip"];
+  const validActions = ["continue", "retire", "unretire", "new", "skip", "move"];
 
   // Validate all decisions
   for (const decision of decisions) {
@@ -35,6 +35,12 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
     }
     if (decision.action === "unretire" && decision.retiredIndex === undefined) {
       throw new HttpsError("invalid-argument", `Unretire requires retiredIndex for ${decision.corpsClass}`);
+    }
+    if (decision.action === "move" && (!decision.targetClass || !validClasses.includes(decision.targetClass))) {
+      throw new HttpsError("invalid-argument", `Move requires a valid targetClass for ${decision.corpsClass}`);
+    }
+    if (decision.action === "move" && decision.targetClass === decision.corpsClass) {
+      throw new HttpsError("invalid-argument", `Cannot move corps to the same class: ${decision.corpsClass}`);
     }
   }
 
@@ -173,6 +179,41 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
 
           case "skip":
             // Don't participate in this class this season
+            // Reset season-specific data but keep corps identity so stale data doesn't persist
+            if (existingCorps?.corpsName) {
+              updatedCorps[corpsClass] = {
+                ...existingCorps,
+                lineup: null,
+                lineupKey: null,
+                selectedShows: {},
+                weeklyScores: {},
+                totalSeasonScore: 0
+              };
+              // Note: NOT added to corpsNeedingSetup - user chose to sit out
+            }
+            break;
+
+          case "move":
+            // Move corps to a different class, preserving identity
+            if (existingCorps?.corpsName) {
+              const targetClass = decision.targetClass;
+              // Check target class is empty
+              if (updatedCorps[targetClass]?.corpsName) {
+                throw new HttpsError("failed-precondition",
+                  `Cannot move to ${targetClass} - already has an active corps.`);
+              }
+              // Move corps to target class with reset season data
+              updatedCorps[targetClass] = {
+                ...existingCorps,
+                lineup: null,
+                lineupKey: null,
+                selectedShows: {},
+                weeklyScores: {},
+                totalSeasonScore: 0
+              };
+              delete updatedCorps[corpsClass];
+              corpsNeedingSetup.push(targetClass);
+            }
             break;
         }
       }

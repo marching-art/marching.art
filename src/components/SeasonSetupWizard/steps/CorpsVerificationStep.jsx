@@ -3,7 +3,7 @@ import React from 'react';
 import { m } from 'framer-motion';
 import {
   ChevronRight, ChevronLeft, Trophy, Play, Archive,
-  Plus, RotateCcw, Unlock
+  Plus, RotateCcw, Unlock, SkipForward, ArrowRightLeft
 } from 'lucide-react';
 import { ALL_CLASSES, POINT_LIMITS, getCorpsClassName } from '../constants';
 
@@ -31,9 +31,19 @@ const CorpsVerificationStep = ({
     retiredByClass[rc.corpsClass].push({ ...rc, index: idx });
   });
 
+  // Available classes to move an existing corps to (unlocked + no existing corps)
+  const getAvailableMoveTargets = (currentClassId) => {
+    return ALL_CLASSES.filter(c =>
+      c !== currentClassId &&
+      unlockedClasses.includes(c) &&
+      !existingCorps[c]?.corpsName
+    );
+  };
+
   const renderCorpsCard = (classId, corps, isExisting = true) => {
     const decision = corpsDecisions[classId] || (isExisting ? 'continue' : undefined);
     const classRetired = retiredByClass[classId] || [];
+    const moveTargets = isExisting ? getAvailableMoveTargets(classId) : [];
 
     return (
       <div key={classId} className="glass rounded-sm p-4">
@@ -60,7 +70,7 @@ const CorpsVerificationStep = ({
           </div>
         </div>
 
-        <div className={`grid ${isExisting ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'} gap-2`}>
+        <div className={`grid ${isExisting ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-3'} gap-2`}>
           {isExisting ? (
             <>
               <button
@@ -73,6 +83,17 @@ const CorpsVerificationStep = ({
               >
                 <Play className="w-4 h-4" />
                 Continue
+              </button>
+              <button
+                onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'skip' })}
+                className={`p-2 rounded-sm text-xs font-medium flex flex-col items-center gap-1 transition-all ${
+                  decision === 'skip'
+                    ? 'bg-gray-500/20 border-2 border-gray-500 text-cream-300'
+                    : 'bg-charcoal-800 border-2 border-transparent text-cream-300 hover:border-cream-500/30'
+                }`}
+              >
+                <SkipForward className="w-4 h-4" />
+                Skip
               </button>
               <button
                 onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'retire' })}
@@ -113,6 +134,19 @@ const CorpsVerificationStep = ({
             <Plus className="w-4 h-4" />
             {isExisting ? 'Start New' : 'Register'}
           </button>
+          {isExisting && moveTargets.length > 0 && (
+            <button
+              onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'move' })}
+              className={`p-2 rounded-sm text-xs font-medium flex flex-col items-center gap-1 transition-all ${
+                decision === 'move'
+                  ? 'bg-cyan-500/20 border-2 border-cyan-500 text-cyan-400'
+                  : 'bg-charcoal-800 border-2 border-transparent text-cream-300 hover:border-cream-500/30'
+              }`}
+            >
+              <ArrowRightLeft className="w-4 h-4" />
+              Move
+            </button>
+          )}
           {classRetired.length > 0 && (
             <button
               onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'unretire' })}
@@ -127,6 +161,42 @@ const CorpsVerificationStep = ({
             </button>
           )}
         </div>
+
+        {/* Skip info message */}
+        {isExisting && decision === 'skip' && (
+          <div className="mt-3 pt-3 border-t border-cream-500/10">
+            <p className="text-xs text-cream-500/60">
+              This corps will sit out this season. You can re-activate it next season.
+            </p>
+          </div>
+        )}
+
+        {/* Move class selection */}
+        {isExisting && decision === 'move' && moveTargets.length > 0 && (
+          <div className="mt-3 pt-3 border-t border-cream-500/10">
+            <label className="block text-[10px] font-semibold text-cream-500/60 uppercase tracking-wider mb-2">
+              Move to Class
+            </label>
+            <select
+              className="select select-sm w-full"
+              value={newCorpsData[classId]?.targetClass || ''}
+              onChange={(e) => setNewCorpsData({
+                ...newCorpsData,
+                [classId]: { targetClass: e.target.value }
+              })}
+            >
+              <option value="">Select target class...</option>
+              {moveTargets.map((targetClassId) => (
+                <option key={targetClassId} value={targetClassId}>
+                  {getCorpsClassName(targetClassId)}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-cream-500/60 mt-2">
+              Corps identity will be preserved. Season data (lineup, scores) will be reset.
+            </p>
+          </div>
+        )}
 
         {/* New corps form */}
         {decision === 'new' && (
