@@ -10,7 +10,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
-import { ClipboardList, ChevronRight, ChevronLeft, Check, X, Trophy, Play, Plus, RotateCcw, Unlock, Calendar, MapPin } from 'lucide-react';
+import { ClipboardList, ChevronRight, ChevronLeft, Check, X, Trophy, Play, Plus, RotateCcw, Unlock, Calendar, MapPin, SkipForward, ArrowRightLeft } from 'lucide-react';
 import { useSeasonStore } from '../../store/seasonStore';
 import { useScheduleStore } from '../../store/scheduleStore';
 import { ShowRegistrationModal } from '../Schedule';
@@ -106,6 +106,15 @@ const SeasonSetupWizard = ({
     if (!retiredByClass[rc.corpsClass]) retiredByClass[rc.corpsClass] = [];
     retiredByClass[rc.corpsClass].push({ ...rc, index: idx });
   });
+
+  // Compute available move targets for a given class (unlocked classes without active corps)
+  const getAvailableMoveTargets = useCallback((currentClassId) => {
+    return ALL_CLASSES.filter(c =>
+      c !== currentClassId &&
+      unlockedClasses.includes(c) &&
+      !existingCorps[c]?.corpsName
+    );
+  }, [unlockedClasses, existingCorps]);
 
   // Initialize corps decisions
   useEffect(() => {
@@ -265,6 +274,17 @@ const SeasonSetupWizard = ({
           decisions.push({ corpsClass: classId, action: 'continue' });
         } else if (action === 'retire') {
           decisions.push({ corpsClass: classId, action: 'retire' });
+        } else if (action === 'skip') {
+          decisions.push({ corpsClass: classId, action: 'skip' });
+        } else if (action === 'move') {
+          const data = newCorpsData[classId];
+          if (data?.targetClass) {
+            decisions.push({
+              corpsClass: classId,
+              action: 'move',
+              targetClass: data.targetClass,
+            });
+          }
         } else if (action === 'new') {
           const data = newCorpsData[classId];
           if (data?.corpsName) {
@@ -475,7 +495,7 @@ const SeasonSetupWizard = ({
                           <Trophy className="w-5 h-5 text-yellow-500" />
                         </div>
 
-                        <div className={`grid gap-2 ${classRetired.length > 0 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                           <button
                             onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'continue' })}
                             className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
@@ -488,6 +508,17 @@ const SeasonSetupWizard = ({
                             Continue
                           </button>
                           <button
+                            onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'skip' })}
+                            className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
+                              decision === 'skip'
+                                ? 'bg-gray-500/20 border-2 border-gray-500 text-gray-300'
+                                : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
+                            }`}
+                          >
+                            <SkipForward className="w-4 h-4" />
+                            Skip
+                          </button>
+                          <button
                             onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'new' })}
                             className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
                               decision === 'new'
@@ -498,6 +529,19 @@ const SeasonSetupWizard = ({
                             <Plus className="w-4 h-4" />
                             Start New
                           </button>
+                          {getAvailableMoveTargets(classId).length > 0 && (
+                            <button
+                              onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'move' })}
+                              className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
+                                decision === 'move'
+                                  ? 'bg-cyan-500/20 border-2 border-cyan-500 text-cyan-400'
+                                  : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
+                              }`}
+                            >
+                              <ArrowRightLeft className="w-4 h-4" />
+                              Move
+                            </button>
+                          )}
                           {classRetired.length > 0 && (
                             <button
                               onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'unretire' })}
@@ -512,6 +556,42 @@ const SeasonSetupWizard = ({
                             </button>
                           )}
                         </div>
+
+                        {/* Skip info message */}
+                        {decision === 'skip' && (
+                          <div className="mt-3 pt-3 border-t border-[#333]">
+                            <p className="text-xs text-gray-500">
+                              This corps will sit out this season. You can re-activate it next season.
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Move class selection */}
+                        {decision === 'move' && (
+                          <div className="mt-3 pt-3 border-t border-[#333]">
+                            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                              Move to Class
+                            </label>
+                            <select
+                              className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-sm text-sm text-white focus:outline-none focus:border-[#0057B8]"
+                              value={newCorpsData[classId]?.targetClass || ''}
+                              onChange={(e) => setNewCorpsData({
+                                ...newCorpsData,
+                                [classId]: { targetClass: e.target.value }
+                              })}
+                            >
+                              <option value="">Select target class...</option>
+                              {getAvailableMoveTargets(classId).map((targetClassId) => (
+                                <option key={targetClassId} value={targetClassId}>
+                                  {getCorpsClassName(targetClassId)}
+                                </option>
+                              ))}
+                            </select>
+                            <p className="text-xs text-gray-500 mt-2">
+                              Corps identity will be preserved. Season data (lineup, scores) will be reset.
+                            </p>
+                          </div>
+                        )}
 
                         {/* New corps form when "Start New" is selected */}
                         {decision === 'new' && (
