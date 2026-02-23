@@ -107,14 +107,13 @@ const SeasonSetupWizard = ({
     retiredByClass[rc.corpsClass].push({ ...rc, index: idx });
   });
 
-  // Compute available move targets for a given class (unlocked classes without active corps)
+  // Compute available move targets for a given class (any other unlocked class)
   const getAvailableMoveTargets = useCallback((currentClassId) => {
     return ALL_CLASSES.filter(c =>
       c !== currentClassId &&
-      unlockedClasses.includes(c) &&
-      !existingCorps[c]?.corpsName
+      unlockedClasses.includes(c)
     );
-  }, [unlockedClasses, existingCorps]);
+  }, [unlockedClasses]);
 
   // Initialize corps decisions
   useEffect(() => {
@@ -583,12 +582,17 @@ const SeasonSetupWizard = ({
                               <option value="">Select target class...</option>
                               {getAvailableMoveTargets(classId).map((targetClassId) => (
                                 <option key={targetClassId} value={targetClassId}>
-                                  {getCorpsClassName(targetClassId)}
+                                  {getCorpsClassName(targetClassId)}{existingCorps[targetClassId]?.corpsName ? ` (retire ${existingCorps[targetClassId].corpsName})` : ''}
                                 </option>
                               ))}
                             </select>
                             <p className="text-xs text-gray-500 mt-2">
                               Corps identity will be preserved. Season data (lineup, scores) will be reset.
+                              {newCorpsData[classId]?.targetClass && existingCorps[newCorpsData[classId].targetClass]?.corpsName && (
+                                <span className="block text-orange-400 mt-1">
+                                  "{existingCorps[newCorpsData[classId].targetClass].corpsName}" in {getCorpsClassName(newCorpsData[classId].targetClass)} will be retired.
+                                </span>
+                              )}
                             </p>
                           </div>
                         )}

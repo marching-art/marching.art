@@ -31,12 +31,11 @@ const CorpsVerificationStep = ({
     retiredByClass[rc.corpsClass].push({ ...rc, index: idx });
   });
 
-  // Available classes to move an existing corps to (unlocked + no existing corps)
+  // Available classes to move an existing corps to (any other unlocked class)
   const getAvailableMoveTargets = (currentClassId) => {
     return ALL_CLASSES.filter(c =>
       c !== currentClassId &&
-      unlockedClasses.includes(c) &&
-      !existingCorps[c]?.corpsName
+      unlockedClasses.includes(c)
     );
   };
 
@@ -188,12 +187,17 @@ const CorpsVerificationStep = ({
               <option value="">Select target class...</option>
               {moveTargets.map((targetClassId) => (
                 <option key={targetClassId} value={targetClassId}>
-                  {getCorpsClassName(targetClassId)}
+                  {getCorpsClassName(targetClassId)}{existingCorps[targetClassId]?.corpsName ? ` (retire ${existingCorps[targetClassId].corpsName})` : ''}
                 </option>
               ))}
             </select>
             <p className="text-xs text-cream-500/60 mt-2">
               Corps identity will be preserved. Season data (lineup, scores) will be reset.
+              {newCorpsData[classId]?.targetClass && existingCorps[newCorpsData[classId].targetClass]?.corpsName && (
+                <span className="block text-orange-400 mt-1">
+                  "{existingCorps[newCorpsData[classId].targetClass].corpsName}" in {getCorpsClassName(newCorpsData[classId].targetClass)} will be retired.
+                </span>
+              )}
             </p>
           </div>
         )}

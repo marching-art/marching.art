@@ -197,10 +197,21 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
             // Move corps to a different class, preserving identity
             if (existingCorps?.corpsName) {
               const targetClass = decision.targetClass;
-              // Check target class is empty
-              if (updatedCorps[targetClass]?.corpsName) {
-                throw new HttpsError("failed-precondition",
-                  `Cannot move to ${targetClass} - already has an active corps.`);
+              // If target class has an existing corps, retire it first
+              const targetCorps = updatedCorps[targetClass];
+              if (targetCorps?.corpsName) {
+                const targetRetired = {
+                  corpsClass: targetClass,
+                  corpsName: targetCorps.corpsName,
+                  location: targetCorps.location,
+                  seasonHistory: targetCorps.seasonHistory || [],
+                  weeklyTrades: targetCorps.weeklyTrades || null,
+                  totalSeasons: targetCorps.seasonHistory?.length || 0,
+                  bestSeasonScore: Math.max(...(targetCorps.seasonHistory?.map(s => s.totalSeasonScore) || [0])),
+                  totalShows: (targetCorps.seasonHistory || []).reduce((sum, s) => sum + (s.showsAttended || 0), 0),
+                  retiredAt: admin.firestore.FieldValue.serverTimestamp()
+                };
+                updatedRetiredCorps.push(targetRetired);
               }
               // Move corps to target class with reset season data
               updatedCorps[targetClass] = {
