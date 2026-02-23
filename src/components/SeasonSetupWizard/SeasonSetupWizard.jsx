@@ -10,7 +10,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
-import { ClipboardList, ChevronRight, ChevronLeft, Check, X, Trophy, Play, Plus, RotateCcw, Unlock, Calendar, MapPin, SkipForward, ArrowRightLeft } from 'lucide-react';
+import { ClipboardList, ChevronRight, ChevronLeft, Check, X, Trophy, Play, Plus, RotateCcw, Unlock, Calendar, MapPin, SkipForward, ArrowRightLeft, Archive } from 'lucide-react';
 import { useSeasonStore } from '../../store/seasonStore';
 import { useScheduleStore } from '../../store/scheduleStore';
 import { ShowRegistrationModal } from '../Schedule';
@@ -114,6 +114,134 @@ const SeasonSetupWizard = ({
       unlockedClasses.includes(c)
     );
   }, [unlockedClasses]);
+
+  // Compute which classes are being displaced by move chains
+  const getDisplacedClasses = useCallback(() => {
+    const displaced = new Set();
+    const walkChain = (targetClass, displacement) => {
+      if (!targetClass || !existingCorps[targetClass]?.corpsName) return;
+      displaced.add(targetClass);
+      if (displacement?.action === 'move' && displacement.targetClass) {
+        walkChain(displacement.targetClass, displacement.displacement);
+      }
+    };
+    Object.entries(corpsDecisions).forEach(([classId, action]) => {
+      if (action === 'move' && newCorpsData[classId]?.targetClass) {
+        walkChain(newCorpsData[classId].targetClass, newCorpsData[classId].displacement);
+      }
+    });
+    return displaced;
+  }, [corpsDecisions, newCorpsData, existingCorps]);
+
+  const displacedClasses = getDisplacedClasses();
+
+  // Validate that all displacement chains are complete
+  const isChainComplete = useCallback((displacedClass, displacement) => {
+    if (!existingCorps[displacedClass]?.corpsName) return true;
+    if (!displacement || !displacement.action) return false;
+    if (displacement.action === 'retire') return true;
+    if (displacement.action === 'move') {
+      if (!displacement.targetClass) return false;
+      if (existingCorps[displacement.targetClass]?.corpsName) {
+        return isChainComplete(displacement.targetClass, displacement.displacement);
+      }
+      return true;
+    }
+    return false;
+  }, [existingCorps]);
+
+  const allDisplacementsResolved = useMemo(() => {
+    for (const [classId, action] of Object.entries(corpsDecisions)) {
+      if (action === 'move') {
+        const data = newCorpsData[classId];
+        if (!data?.targetClass) continue;
+        if (existingCorps[data.targetClass]?.corpsName) {
+          if (!isChainComplete(data.targetClass, data.displacement)) return false;
+        }
+      }
+    }
+    return true;
+  }, [corpsDecisions, newCorpsData, existingCorps, isChainComplete]);
+
+  // Render a displacement decision panel (recursive for chains)
+  const renderDisplacementPanel = (displacedClassId, displacement, onDisplacementChange, usedClasses, depth = 0) => {
+    const displacedCorps = existingCorps[displacedClassId];
+    if (!displacedCorps?.corpsName) return null;
+
+    const moveTargets = ALL_CLASSES.filter(c =>
+      !usedClasses.has(c) && unlockedClasses.includes(c)
+    );
+
+    return (
+      <div className={`mt-2 p-3 border rounded-sm ${depth === 0 ? 'bg-orange-500/5 border-orange-500/20' : 'bg-orange-500/10 border-orange-500/30'}`}>
+        <div className="flex items-center gap-2 mb-2">
+          <ArrowRightLeft className="w-3 h-3 text-orange-400 flex-shrink-0" />
+          <p className="text-xs font-bold text-orange-400">
+            "{displacedCorps.corpsName}" ({getCorpsClassName(displacedClassId)}) needs a new home
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => onDisplacementChange({ action: 'retire' })}
+            className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
+              displacement?.action === 'retire'
+                ? 'bg-orange-500/20 border-2 border-orange-500 text-orange-400'
+                : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
+            }`}
+          >
+            <Archive className="w-3 h-3" />
+            Retire
+          </button>
+          {moveTargets.length > 0 && (
+            <button
+              type="button"
+              onClick={() => onDisplacementChange({ action: 'move' })}
+              className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
+                displacement?.action === 'move'
+                  ? 'bg-cyan-500/20 border-2 border-cyan-500 text-cyan-400'
+                  : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
+              }`}
+            >
+              <ArrowRightLeft className="w-3 h-3" />
+              Move
+            </button>
+          )}
+        </div>
+
+        {displacement?.action === 'move' && moveTargets.length > 0 && (
+          <div className="mt-2">
+            <select
+              className="w-full h-8 px-2 bg-[#1a1a1a] border border-[#333] rounded-sm text-xs text-white focus:outline-none focus:border-[#0057B8]"
+              value={displacement.targetClass || ''}
+              onChange={(e) => onDisplacementChange({ action: 'move', targetClass: e.target.value })}
+            >
+              <option value="">Select target class...</option>
+              {moveTargets.map((targetId) => (
+                <option key={targetId} value={targetId}>
+                  {getCorpsClassName(targetId)}{existingCorps[targetId]?.corpsName ? ` (has ${existingCorps[targetId].corpsName})` : ''}
+                </option>
+              ))}
+            </select>
+
+            {/* Recursive displacement if target is occupied */}
+            {displacement.targetClass && existingCorps[displacement.targetClass]?.corpsName &&
+              renderDisplacementPanel(
+                displacement.targetClass,
+                displacement.displacement,
+                (nestedDisplacement) => onDisplacementChange({
+                  ...displacement,
+                  displacement: nestedDisplacement
+                }),
+                new Set([...usedClasses, displacement.targetClass]),
+                depth + 1
+              )
+            }
+          </div>
+        )}
+      </div>
+    );
+  };
 
   // Initialize corps decisions
   useEffect(() => {
@@ -266,9 +394,38 @@ const SeasonSetupWizard = ({
     setProcessing(true);
     try {
       const decisions = [];
+      const handledByDisplacement = new Set();
 
-      // Process decisions for existing corps
+      // Helper: build displacement chain decisions (deepest first to vacate slots)
+      const buildChainDecisions = (displacedClass, displacement) => {
+        if (!displacement || !displacement.action) return;
+        if (displacement.action === 'retire') {
+          decisions.push({ corpsClass: displacedClass, action: 'retire' });
+          handledByDisplacement.add(displacedClass);
+        } else if (displacement.action === 'move' && displacement.targetClass) {
+          // Handle nested displacement first (deeper in chain)
+          if (existingCorps[displacement.targetClass]?.corpsName && displacement.displacement) {
+            buildChainDecisions(displacement.targetClass, displacement.displacement);
+          }
+          decisions.push({ corpsClass: displacedClass, action: 'move', targetClass: displacement.targetClass });
+          handledByDisplacement.add(displacedClass);
+        }
+      };
+
+      // First pass: build displacement chain decisions for all moves
       Object.entries(corpsDecisions).forEach(([classId, action]) => {
+        if (action === 'move') {
+          const data = newCorpsData[classId];
+          if (data?.targetClass && existingCorps[data.targetClass]?.corpsName && data.displacement) {
+            buildChainDecisions(data.targetClass, data.displacement);
+          }
+        }
+      });
+
+      // Second pass: build regular decisions (skip classes handled by displacement)
+      Object.entries(corpsDecisions).forEach(([classId, action]) => {
+        if (handledByDisplacement.has(classId)) return;
+
         if (action === 'continue') {
           decisions.push({ corpsClass: classId, action: 'continue' });
         } else if (action === 'retire') {
@@ -482,7 +639,7 @@ const SeasonSetupWizard = ({
                     const classRetired = retiredByClass[classId] || [];
 
                     return (
-                      <div key={classId} className="bg-[#0a0a0a] border border-[#333] p-4 mb-3">
+                      <div key={classId} className={`bg-[#0a0a0a] border p-4 mb-3 ${displacedClasses.has(classId) ? 'border-orange-500/30 opacity-60' : 'border-[#333]'}`}>
                         <div className="flex items-center justify-between mb-3">
                           <div>
                             <span className="text-[10px] font-bold text-[#0057B8] uppercase tracking-wider block mb-1">
@@ -494,6 +651,16 @@ const SeasonSetupWizard = ({
                           <Trophy className="w-5 h-5 text-yellow-500" />
                         </div>
 
+                        {/* Displaced indicator */}
+                        {displacedClasses.has(classId) ? (
+                          <div className="p-2 bg-orange-500/10 border border-orange-500/20 rounded-sm">
+                            <p className="text-xs text-orange-400 flex items-center gap-1.5">
+                              <ArrowRightLeft className="w-3 h-3 flex-shrink-0" />
+                              Being displaced by a move — managed in the move section above
+                            </p>
+                          </div>
+                        ) : (
+                        <>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                           <button
                             onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'continue' })}
@@ -582,18 +749,26 @@ const SeasonSetupWizard = ({
                               <option value="">Select target class...</option>
                               {getAvailableMoveTargets(classId).map((targetClassId) => (
                                 <option key={targetClassId} value={targetClassId}>
-                                  {getCorpsClassName(targetClassId)}{existingCorps[targetClassId]?.corpsName ? ` (retire ${existingCorps[targetClassId].corpsName})` : ''}
+                                  {getCorpsClassName(targetClassId)}{existingCorps[targetClassId]?.corpsName ? ` (has ${existingCorps[targetClassId].corpsName})` : ''}
                                 </option>
                               ))}
                             </select>
                             <p className="text-xs text-gray-500 mt-2">
                               Corps identity will be preserved. Season data (lineup, scores) will be reset.
-                              {newCorpsData[classId]?.targetClass && existingCorps[newCorpsData[classId].targetClass]?.corpsName && (
-                                <span className="block text-orange-400 mt-1">
-                                  "{existingCorps[newCorpsData[classId].targetClass].corpsName}" in {getCorpsClassName(newCorpsData[classId].targetClass)} will be retired.
-                                </span>
-                              )}
                             </p>
+
+                            {/* Displacement chain handling */}
+                            {newCorpsData[classId]?.targetClass && existingCorps[newCorpsData[classId].targetClass]?.corpsName &&
+                              renderDisplacementPanel(
+                                newCorpsData[classId].targetClass,
+                                newCorpsData[classId].displacement,
+                                (displacement) => setNewCorpsData({
+                                  ...newCorpsData,
+                                  [classId]: { ...newCorpsData[classId], displacement }
+                                }),
+                                new Set([classId, newCorpsData[classId].targetClass])
+                              )
+                            }
                           </div>
                         )}
 
@@ -642,6 +817,10 @@ const SeasonSetupWizard = ({
                               ))}
                             </select>
                           </div>
+                        )}
+
+                        {/* End of displaced ternary */}
+                        </>
                         )}
                       </div>
                     );
@@ -764,11 +943,16 @@ const SeasonSetupWizard = ({
                   </div>
                 )}
               </div>
-              <div className="px-4 py-3 border-t border-[#333] flex justify-end">
+              <div className="px-4 py-3 border-t border-[#333] flex items-center justify-between">
+                {!allDisplacementsResolved && (
+                  <p className="text-[10px] text-orange-400">
+                    Resolve all displaced corps before continuing
+                  </p>
+                )}
                 <button
                   onClick={handleCorpsVerificationContinue}
-                  disabled={processing}
-                  className="h-10 px-6 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center disabled:opacity-50 hover:bg-[#0066d6]"
+                  disabled={processing || !allDisplacementsResolved}
+                  className="ml-auto h-10 px-6 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center disabled:opacity-50 hover:bg-[#0066d6]"
                 >
                   {processing ? (
                     <>

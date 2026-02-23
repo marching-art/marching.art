@@ -39,13 +39,142 @@ const CorpsVerificationStep = ({
     );
   };
 
+  // Compute which classes are being displaced by move chains
+  const getDisplacedClasses = () => {
+    const displaced = new Set();
+    const walkChain = (targetClass, displacement) => {
+      if (!targetClass || !existingCorps[targetClass]?.corpsName) return;
+      displaced.add(targetClass);
+      if (displacement?.action === 'move' && displacement.targetClass) {
+        walkChain(displacement.targetClass, displacement.displacement);
+      }
+    };
+    Object.entries(corpsDecisions).forEach(([classId, action]) => {
+      if (action === 'move' && newCorpsData[classId]?.targetClass) {
+        walkChain(newCorpsData[classId].targetClass, newCorpsData[classId].displacement);
+      }
+    });
+    return displaced;
+  };
+
+  const displacedClasses = getDisplacedClasses();
+
+  // Validate that all displacement chains are complete
+  const isChainComplete = (displacedClass, displacement) => {
+    if (!existingCorps[displacedClass]?.corpsName) return true;
+    if (!displacement || !displacement.action) return false;
+    if (displacement.action === 'retire') return true;
+    if (displacement.action === 'move') {
+      if (!displacement.targetClass) return false;
+      if (existingCorps[displacement.targetClass]?.corpsName) {
+        return isChainComplete(displacement.targetClass, displacement.displacement);
+      }
+      return true;
+    }
+    return false;
+  };
+
+  const allDisplacementsResolved = (() => {
+    for (const [classId, action] of Object.entries(corpsDecisions)) {
+      if (action === 'move') {
+        const data = newCorpsData[classId];
+        if (!data?.targetClass) continue;
+        if (existingCorps[data.targetClass]?.corpsName) {
+          if (!isChainComplete(data.targetClass, data.displacement)) return false;
+        }
+      }
+    }
+    return true;
+  })();
+
+  // Render a displacement decision panel (recursive for chains)
+  const renderDisplacementPanel = (displacedClassId, displacement, onDisplacementChange, usedClasses, depth = 0) => {
+    const displacedCorps = existingCorps[displacedClassId];
+    if (!displacedCorps?.corpsName) return null;
+
+    const moveTargets = ALL_CLASSES.filter(c =>
+      !usedClasses.has(c) && unlockedClasses.includes(c)
+    );
+
+    return (
+      <div className={`mt-2 p-3 border rounded-sm ${depth === 0 ? 'bg-orange-500/5 border-orange-500/20' : 'bg-orange-500/10 border-orange-500/30'}`}>
+        <div className="flex items-center gap-2 mb-2">
+          <ArrowRightLeft className="w-3 h-3 text-orange-400 flex-shrink-0" />
+          <p className="text-xs font-bold text-orange-400">
+            "{displacedCorps.corpsName}" ({getCorpsClassName(displacedClassId)}) needs a new home
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => onDisplacementChange({ action: 'retire' })}
+            className={`p-2 rounded-sm text-xs font-medium flex flex-col items-center gap-1 transition-all ${
+              displacement?.action === 'retire'
+                ? 'bg-orange-500/20 border-2 border-orange-500 text-orange-400'
+                : 'bg-charcoal-800 border-2 border-transparent text-cream-300 hover:border-cream-500/30'
+            }`}
+          >
+            <Archive className="w-3 h-3" />
+            Retire
+          </button>
+          {moveTargets.length > 0 && (
+            <button
+              type="button"
+              onClick={() => onDisplacementChange({ action: 'move' })}
+              className={`p-2 rounded-sm text-xs font-medium flex flex-col items-center gap-1 transition-all ${
+                displacement?.action === 'move'
+                  ? 'bg-cyan-500/20 border-2 border-cyan-500 text-cyan-400'
+                  : 'bg-charcoal-800 border-2 border-transparent text-cream-300 hover:border-cream-500/30'
+              }`}
+            >
+              <ArrowRightLeft className="w-3 h-3" />
+              Move
+            </button>
+          )}
+        </div>
+
+        {displacement?.action === 'move' && moveTargets.length > 0 && (
+          <div className="mt-2">
+            <select
+              className="select select-sm w-full"
+              value={displacement.targetClass || ''}
+              onChange={(e) => onDisplacementChange({ action: 'move', targetClass: e.target.value })}
+            >
+              <option value="">Select target class...</option>
+              {moveTargets.map((targetId) => (
+                <option key={targetId} value={targetId}>
+                  {getCorpsClassName(targetId)}{existingCorps[targetId]?.corpsName ? ` (has ${existingCorps[targetId].corpsName})` : ''}
+                </option>
+              ))}
+            </select>
+
+            {/* Recursive displacement if target is occupied */}
+            {displacement.targetClass && existingCorps[displacement.targetClass]?.corpsName &&
+              renderDisplacementPanel(
+                displacement.targetClass,
+                displacement.displacement,
+                (nestedDisplacement) => onDisplacementChange({
+                  ...displacement,
+                  displacement: nestedDisplacement
+                }),
+                new Set([...usedClasses, displacement.targetClass]),
+                depth + 1
+              )
+            }
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderCorpsCard = (classId, corps, isExisting = true) => {
     const decision = corpsDecisions[classId] || (isExisting ? 'continue' : undefined);
     const classRetired = retiredByClass[classId] || [];
     const moveTargets = isExisting ? getAvailableMoveTargets(classId) : [];
+    const isDisplaced = displacedClasses.has(classId);
 
     return (
-      <div key={classId} className="glass rounded-sm p-4">
+      <div key={classId} className={`glass rounded-sm p-4 ${isDisplaced ? 'border-orange-500/30 opacity-60' : ''}`}>
         <div className="flex items-center justify-between mb-3">
           <div>
             <span className={`badge ${isExisting ? 'badge-primary' : 'badge-ghost'} text-xs mb-1`}>
@@ -69,6 +198,16 @@ const CorpsVerificationStep = ({
           </div>
         </div>
 
+        {/* Displaced indicator */}
+        {isExisting && isDisplaced ? (
+          <div className="p-2 bg-orange-500/10 border border-orange-500/20 rounded-sm">
+            <p className="text-xs text-orange-400 flex items-center gap-1.5">
+              <ArrowRightLeft className="w-3 h-3 flex-shrink-0" />
+              Being displaced by a move — managed in the move section above
+            </p>
+          </div>
+        ) : (
+        <>
         <div className={`grid ${isExisting ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-3'} gap-2`}>
           {isExisting ? (
             <>
@@ -170,7 +309,7 @@ const CorpsVerificationStep = ({
           </div>
         )}
 
-        {/* Move class selection */}
+        {/* Move class selection with displacement chain */}
         {isExisting && decision === 'move' && moveTargets.length > 0 && (
           <div className="mt-3 pt-3 border-t border-cream-500/10">
             <label className="block text-[10px] font-semibold text-cream-500/60 uppercase tracking-wider mb-2">
@@ -187,18 +326,26 @@ const CorpsVerificationStep = ({
               <option value="">Select target class...</option>
               {moveTargets.map((targetClassId) => (
                 <option key={targetClassId} value={targetClassId}>
-                  {getCorpsClassName(targetClassId)}{existingCorps[targetClassId]?.corpsName ? ` (retire ${existingCorps[targetClassId].corpsName})` : ''}
+                  {getCorpsClassName(targetClassId)}{existingCorps[targetClassId]?.corpsName ? ` (has ${existingCorps[targetClassId].corpsName})` : ''}
                 </option>
               ))}
             </select>
             <p className="text-xs text-cream-500/60 mt-2">
               Corps identity will be preserved. Season data (lineup, scores) will be reset.
-              {newCorpsData[classId]?.targetClass && existingCorps[newCorpsData[classId].targetClass]?.corpsName && (
-                <span className="block text-orange-400 mt-1">
-                  "{existingCorps[newCorpsData[classId].targetClass].corpsName}" in {getCorpsClassName(newCorpsData[classId].targetClass)} will be retired.
-                </span>
-              )}
             </p>
+
+            {/* Displacement chain handling */}
+            {newCorpsData[classId]?.targetClass && existingCorps[newCorpsData[classId].targetClass]?.corpsName &&
+              renderDisplacementPanel(
+                newCorpsData[classId].targetClass,
+                newCorpsData[classId].displacement,
+                (displacement) => setNewCorpsData({
+                  ...newCorpsData,
+                  [classId]: { ...newCorpsData[classId], displacement }
+                }),
+                new Set([classId, newCorpsData[classId].targetClass])
+              )
+            }
           </div>
         )}
 
@@ -247,6 +394,10 @@ const CorpsVerificationStep = ({
               ))}
             </select>
           </div>
+        )}
+
+        {/* End of displaced ternary */}
+        </>
         )}
       </div>
     );
@@ -299,7 +450,7 @@ const CorpsVerificationStep = ({
       )}
 
       {/* Actions */}
-      <div className="flex gap-2 md:gap-3 mt-6">
+      <div className="flex gap-2 md:gap-3 mt-6 items-center">
         <button
           onClick={onBack}
           className="btn-ghost text-xs md:text-sm px-2 md:px-4"
@@ -307,9 +458,14 @@ const CorpsVerificationStep = ({
           <ChevronLeft className="w-3 h-3 md:w-4 md:h-4 mr-1" />
           Back
         </button>
+        {!allDisplacementsResolved && (
+          <p className="text-[10px] text-orange-400 flex-shrink-0">
+            Resolve displaced corps first
+          </p>
+        )}
         <button
           onClick={onContinue}
-          disabled={processing}
+          disabled={processing || !allDisplacementsResolved}
           className="btn-primary flex-1 text-xs md:text-sm py-2 md:py-3"
         >
           {processing ? (
