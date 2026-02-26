@@ -646,8 +646,8 @@ const ARTICLE_TYPES = {
   DCI_DAILY: "dci_daily",             // Article 1: DCI scores analysis from the day (with score breakdown)
   DCI_FEATURE: "dci_feature",         // Article 2: DCI feature on a single corps and their season progress
   DCI_RECAP: "dci_recap",             // Article 3: DCI weekly recap with GE, Visual, Music trends + trade recommendations
-  FANTASY_DAILY: "fantasy_daily",     // Article 4: marching.art results from the day (with score breakdown)
-  FANTASY_RECAP: "fantasy_recap",     // Article 5: marching.art weekly caption analysis (GE, Visual, Music trends)
+  FANTASY_DAILY: "fantasy_daily",     // Article 5: marching.art results from the day (generated last → top of feed)
+  FANTASY_RECAP: "fantasy_recap",     // Article 4: marching.art weekly caption analysis (GE, Visual, Music trends)
 };
 
 /**
@@ -2191,35 +2191,97 @@ This fantasy corps image should show ${comp.camera.description} - the human inte
 
 /**
  * Build image prompt for fantasy league recap article
- * Shows championship/competition atmosphere
+ * Features the top-performing corps in intimate photojournalistic style
+ *
+ * @param {string} featuredCorps - Corps name to feature
+ * @param {number} year - Year of the performance
+ * @param {string} captionFocus - The caption category to emphasize (e.g., "Brass", "Percussion", "General Effect")
+ * @param {object} uniformDetails - Pre-fetched uniform details from Firestore (optional)
  */
-function buildFantasyLeagueImagePrompt() {
-  return `Intimate close-up photograph of marching arts performers in a championship celebration moment. Photojournalistic editorial style.
+function buildFantasyLeagueImagePrompt(featuredCorps = null, year = null, captionFocus = null, uniformDetails = null) {
+  // If we have a featured corps, generate a corps-specific photojournalistic image
+  if (featuredCorps) {
+    const details = uniformDetails || getUniformDetails(featuredCorps, year || 2024);
+    const seed = `${featuredCorps}-${year || "fantasy"}-league-recap`;
+    const comp = getRandomComposition(seed);
+
+    // Determine section emphasis based on caption focus
+    let sectionHint = "";
+    if (captionFocus) {
+      const captionLower = captionFocus.toLowerCase();
+      if (captionLower.includes("brass") || captionLower.includes("b")) {
+        sectionHint = "Feature brass players: horns raised, bells gleaming, embouchures and intense focus visible.";
+      } else if (captionLower.includes("percussion") || captionLower.includes("p")) {
+        sectionHint = "Feature percussionists: sticks mid-strike, drum heads and harnesses in detail, fierce concentration.";
+      } else if (captionLower.includes("guard") || captionLower.includes("cg")) {
+        sectionHint = "Feature color guard: silk fabric or rifle mid-motion, athletic extension, costume details vivid.";
+      } else if (captionLower.includes("visual") || captionLower.includes("v")) {
+        sectionHint = "Feature performers showing visual technique: synchronized body angles, marching precision, clean lines.";
+      } else {
+        sectionHint = "Feature performers in emotional peak: the expressive, artistic side of the performance.";
+      }
+    }
+
+    return `Intimate field-level close-up of ${featuredCorps} performers (${year || "current"} season) in competition. Photojournalistic editorial style.
+
+UNIFORM - MUST BE EXACT:
+Corps: ${featuredCorps}
+Uniform: ${details.uniform}
+Headwear: ${details.helmet}
+Brass: ${details.brass}
+Percussion: ${details.percussion}
+Guard: ${details.guard}
+
+CAMERA & FRAMING:
+- ${comp.camera.angle}
+- ${comp.focus.framing}
+- CLOSE-UP: Only 2-5 performers visible, filling the entire frame
+- Shallow depth of field: performers sharp, stadium as soft bokeh behind
+${sectionHint ? `\nSECTION EMPHASIS: ${sectionHint}` : ""}
+
+SUBJECT COMPOSITION: ${comp.composition.composition}
+- ${comp.composition.visual}
+
+PERFORMER MOMENT: ${comp.moment.moment}
+- ${comp.moment.emotion}
+- Individual faces, expressions, and uniform details in sharp focus
+
+ATMOSPHERE & LIGHT:
+- ${comp.lighting.lighting}
+- Mood: ${comp.lighting.mood}
+- Stadium lights as soft bokeh, atmosphere in blurred background
+
+TECHNICAL: Editorial photojournalism, shallow depth of field, field-level camera. NOT a wide shot, NOT a ceremony, NOT a trophy presentation.
+
+This intimate photograph captures ${featuredCorps} performers in the intensity of competition - raw emotion and technical mastery up close.`;
+  }
+
+  // Fallback: generic photojournalistic marching arts image (no specific corps data)
+  const comp = getRandomComposition("fantasy-league-recap-generic");
+
+  return `Intimate field-level photograph of marching arts performers during competition. Photojournalistic editorial style.
 
 SUBJECT:
-- 2-4 performers from different fantasy ensembles in tight frame
-- Faces showing pure joy, triumph, and emotion - the moment of victory
-- Mixed creative uniforms visible showing variety of fantasy corps designs
-- One performer may be holding or touching a championship trophy
+- 2-4 performers in modern athletic marching uniforms, captured in tight close-up
+- Faces showing competitive intensity, focus, and passion
+- Instruments, equipment, and uniform details vivid in sharp focus
+- Dynamic performance moment frozen mid-action
 
-DETAILS:
-- Close-up on performers' faces and upper bodies, filling the frame
-- Confetti caught in the air around them, some landing on uniforms
-- Sweat, tears of joy, wide smiles, fists raised in celebration
-- Creative uniform details, metallic accents, and colors vivid in sharp focus
+CAMERA & FRAMING:
+- ${comp.camera.angle}
+- ${comp.focus.framing}
+- CLOSE-UP: Only 2-4 performers filling the frame
+- Shallow depth of field: performers sharp, everything else soft bokeh
 
-ATMOSPHERE:
-- Indoor arena purple and gold lighting rendered as dramatic bokeh behind subjects
-- LED screens with "MARCHING.ART FANTASY CHAMPIONSHIP" visible but soft and blurred in background
-- Celebration energy captured through individual human emotion, not wide spectacle
+PERFORMER MOMENT: ${comp.moment.moment}
+- ${comp.moment.emotion}
 
-PHOTOGRAPHY:
-- Shallow depth of field, field-level or stage-level camera position
-- Performers sharp and filling frame, arena and crowd as soft colorful bokeh
-- Multiple light sources creating rim light and dramatic separation on subjects
-- Rich, saturated colors, editorial quality
+ATMOSPHERE & LIGHT:
+- ${comp.lighting.lighting}
+- Mood: ${comp.lighting.mood}
+- Stadium as atmospheric backdrop only
 
-TECHNICAL: Photojournalistic celebration capture, like a Sports Illustrated championship moment. Close-up, emotional, intimate. NOT a wide ceremony shot.`;
+TECHNICAL: Editorial photojournalism, shallow depth of field, field-level. Intimate close-up of competitive marching arts. NOT a ceremony, NOT a trophy presentation, NOT a wide shot.`;
 }
 
 /**
@@ -2676,17 +2738,17 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
       featuredCorps.add(dciRecapArticle.featuredCorps);
     }
 
-    // Article 4: FANTASY DAILY - Fantasy competition results with score breakdown
-    const fantasyDailyArticle = await generateFantasyDailyArticle({
-      reportDay, fantasyData, showContext, competitionContext, db, dataDocId
-    });
-    articles.push(fantasyDailyArticle);
-
-    // Article 5: FANTASY RECAP - DCI Caption Stock Market Analysis for fantasy directors
+    // Article 4: FANTASY RECAP - DCI Caption Stock Market Analysis for fantasy directors
     const fantasyRecapArticle = await generateFantasyRecapArticle({
       reportDay, dayScores, trendData, showContext, competitionContext, db
     });
     articles.push(fantasyRecapArticle);
+
+    // Article 5: FANTASY DAILY - Fantasy competition results with score breakdown (generated last to appear first in feed)
+    const fantasyDailyArticle = await generateFantasyDailyArticle({
+      reportDay, fantasyData, showContext, competitionContext, db, dataDocId
+    });
+    articles.push(fantasyDailyArticle);
 
     return {
       success: true,
@@ -3980,8 +4042,20 @@ Keep it fun and informative - this is fantasy drum corps, not Wall Street!`;
   try {
     const content = await generateStructuredContent(prompt, schema);
 
-    // Use fantasy league championship image
-    const imagePrompt = buildFantasyLeagueImagePrompt();
+    // Feature the top-scoring corps with photojournalistic image
+    const topCorpsForImage = dayScores[0];
+    let recapUniformDetails = null;
+    if (topCorpsForImage && db) {
+      recapUniformDetails = await getUniformDetailsFromFirestore(db, topCorpsForImage.corps, topCorpsForImage.sourceYear);
+    }
+    // Determine which caption to emphasize based on trending data
+    const topTrendingCaption = trendingUp[0]?.fullName || "General Effect";
+    const imagePrompt = buildFantasyLeagueImagePrompt(
+      topCorpsForImage?.corps,
+      topCorpsForImage?.sourceYear,
+      topTrendingCaption,
+      recapUniformDetails
+    );
 
     const imageData = await generateImageWithImagen(imagePrompt);
     const imageResult = await processGeneratedImage(imageData, "fantasy_recap");
