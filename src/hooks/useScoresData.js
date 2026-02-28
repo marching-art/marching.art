@@ -3,6 +3,7 @@
 // Supports both current season and archived seasons
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { doc, getDoc, collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useSeasonStore } from '../store/seasonStore';
@@ -219,12 +220,9 @@ export const useScoresData = (options = {}) => {
   const currentSeasonData = useSeasonStore((state) => state.seasonData);
   const currentDay = useSeasonStore((state) => state.currentDay);
 
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [allShows, setAllShows] = useState([]);
   const [archivedSeasons, setArchivedSeasons] = useState([]);
   const [fallbackSeasonId, setFallbackSeasonId] = useState(null);
-  const [displayedSeasonId, setDisplayedSeasonId] = useState(null);
 
   // Determine which season to fetch (fallbackSeasonId takes precedence when set)
   const targetSeasonId = seasonId || fallbackSeasonId || currentSeasonUid;
@@ -261,117 +259,90 @@ export const useScoresData = (options = {}) => {
     fetchArchivedSeasons();
   }, []);
 
-  // Fetch scores data for target season
-  useEffect(() => {
-    // Track if this effect is still current to prevent stale data from race conditions
-    let isCurrent = true;
+  // Fetch all recap days for the target season; React Query de-duplicates in-session refetches
+  // so navigating away and back to the Scores page costs zero extra Firestore reads.
+  const {
+    data: rawRecaps,
+    isLoading: loading,
+    error: queryError,
+  } = useQuery({
+    queryKey: ['fantasyRecaps', targetSeasonId],
+    queryFn: async () => {
+      const recapsCollectionRef = collection(db, 'fantasy_recaps', targetSeasonId, 'days');
+      const recapsSnapshot = await getDocs(recapsCollectionRef);
 
-    const fetchScoresData = async () => {
-      if (!targetSeasonId) return;
-
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Try new subcollection format first, fallback to legacy single-document format
-        // New format: fantasy_recaps/{seasonId}/days/{dayNumber}
-        // Legacy format: fantasy_recaps/{seasonId} with recaps array
-        const recapsCollectionRef = collection(db, 'fantasy_recaps', targetSeasonId, 'days');
-        const recapsSnapshot = await getDocs(recapsCollectionRef);
-
-        let shows = [];
-        let recaps = [];
-
-        if (!recapsSnapshot.empty) {
-          // New subcollection format
-          recaps = recapsSnapshot.docs.map(doc => doc.data());
-        } else {
-          // Fallback to legacy single-document format for backward compatibility
-          const legacyDocRef = doc(db, 'fantasy_recaps', targetSeasonId);
-          const legacyDoc = await getDoc(legacyDocRef);
-          if (legacyDoc.exists()) {
-            const legacyData = legacyDoc.data();
-            recaps = legacyData.recaps || [];
-          }
-        }
-
-        if (recaps.length > 0) {
-
-          // Calculate effective day for score visibility filtering
-          // For current season: only show scores from days that have been processed (at 2 AM)
-          // For archived seasons: show all data
-          const isCurrentSeason = targetSeasonId === currentSeasonUid;
-          const effectiveDay = isCurrentSeason ? getEffectiveDay(currentDay) : null;
-
-          // Process all shows and group by day
-          shows = recaps.flatMap(recap => {
-            // For current season, filter out shows from days that haven't been processed yet
-            // effectiveDay is null when no scores should be visible (Day 1 or Day 2 before 2 AM)
-            if (isCurrentSeason) {
-              if (!effectiveDay || effectiveDay < 1) return []; // No scores visible yet
-              if (recap.offSeasonDay > effectiveDay) return []; // Future day scores not yet processed
-            }
-
-            return recap.shows?.map(show => ({
-              eventName: show.eventName,
-              location: show.location,
-              date: recap.date?.toDate?.().toLocaleDateString('en-US', { timeZone: 'UTC' }) || 'TBD',
-              offSeasonDay: recap.offSeasonDay,
-              seasonId: targetSeasonId,
-              scores: show.results?.map(result => ({
-                corps: result.corpsName,
-                corpsName: result.corpsName,
-                uid: result.uid,
-                displayName: result.displayName,
-                avatarUrl: result.avatarUrl || null,
-                score: result.totalScore || 0,
-                totalScore: result.totalScore || 0,
-                geScore: result.geScore || 0,
-                visualScore: result.visualScore || 0,
-                musicScore: result.musicScore || 0,
-                corpsClass: result.corpsClass,
-                captions: result.captions || {}
-              })).sort((a, b) => b.score - a.score) || []
-            })) || [];
-          }).sort((a, b) => b.offSeasonDay - a.offSeasonDay);
-        }
-
-        // If current season has no data and we haven't already tried a fallback,
-        // automatically fall back to the most recent archived season
-        // (unless disableArchiveFallback is set, which keeps the view fresh for new seasons)
-        if (shows.length === 0 && !seasonId && !fallbackSeasonId && archivedSeasons.length > 0 && !disableArchiveFallback) {
-          const mostRecentArchived = archivedSeasons[0];
-          console.log(`Current season has no recaps, falling back to ${mostRecentArchived.id}`);
-          if (isCurrent) {
-            setFallbackSeasonId(mostRecentArchived.id);
-          }
-          // Don't set loading to false - the fallback will trigger another fetch
-          return;
-        }
-
-        // Only update state if this effect is still current (prevents race condition
-        // when user switches tabs quickly between archive and current season)
-        if (!isCurrent) return;
-
-        setAllShows(shows);
-        setDisplayedSeasonId(targetSeasonId);
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching scores:', err);
-        if (isCurrent) {
-          setError(err.message);
-          setLoading(false);
-        }
+      if (!recapsSnapshot.empty) {
+        return recapsSnapshot.docs.map(d => d.data());
       }
-    };
+      // Fallback to legacy single-document format for backward compatibility
+      const legacyDocRef = doc(db, 'fantasy_recaps', targetSeasonId);
+      const legacyDoc = await getDoc(legacyDocRef);
+      return legacyDoc.exists() ? (legacyDoc.data().recaps || []) : [];
+    },
+    enabled: !!targetSeasonId,
+    staleTime: 5 * 60 * 1000,
+  });
 
-    fetchScoresData();
+  // Propagate query errors to the existing error state consumed by callers
+  useEffect(() => {
+    if (queryError) setError(queryError.message);
+  }, [queryError]);
 
-    // Cleanup: mark this effect as stale when dependencies change
-    return () => {
-      isCurrent = false;
-    };
-  }, [targetSeasonId, archivedSeasons, seasonId, fallbackSeasonId, disableArchiveFallback, currentDay, currentSeasonUid]);
+  // If the current season has no data yet, fall back to the most recent archived season
+  useEffect(() => {
+    if (
+      rawRecaps !== undefined &&
+      rawRecaps.length === 0 &&
+      !seasonId &&
+      !fallbackSeasonId &&
+      archivedSeasons.length > 0 &&
+      !disableArchiveFallback
+    ) {
+      const mostRecentArchived = archivedSeasons[0];
+      console.log(`Current season has no recaps, falling back to ${mostRecentArchived.id}`);
+      setFallbackSeasonId(mostRecentArchived.id);
+    }
+  }, [rawRecaps, seasonId, fallbackSeasonId, archivedSeasons, disableArchiveFallback]);
+
+  // Derive allShows from query data (replaces manual setState)
+  const allShows = useMemo(() => {
+    const recaps = rawRecaps || [];
+    if (recaps.length === 0) return [];
+
+    const isCurrentSeason = targetSeasonId === currentSeasonUid;
+    const effectiveDay = isCurrentSeason ? getEffectiveDay(currentDay) : null;
+
+    return recaps.flatMap(recap => {
+      if (isCurrentSeason) {
+        if (!effectiveDay || effectiveDay < 1) return [];
+        if (recap.offSeasonDay > effectiveDay) return [];
+      }
+      return recap.shows?.map(show => ({
+        eventName: show.eventName,
+        location: show.location,
+        date: recap.date?.toDate?.().toLocaleDateString('en-US', { timeZone: 'UTC' }) || 'TBD',
+        offSeasonDay: recap.offSeasonDay,
+        seasonId: targetSeasonId,
+        scores: show.results?.map(result => ({
+          corps: result.corpsName,
+          corpsName: result.corpsName,
+          uid: result.uid,
+          displayName: result.displayName,
+          avatarUrl: result.avatarUrl || null,
+          score: result.totalScore || 0,
+          totalScore: result.totalScore || 0,
+          geScore: result.geScore || 0,
+          visualScore: result.visualScore || 0,
+          musicScore: result.musicScore || 0,
+          corpsClass: result.corpsClass,
+          captions: result.captions || {}
+        })).sort((a, b) => b.score - a.score) || []
+      })) || [];
+    }).sort((a, b) => b.offSeasonDay - a.offSeasonDay);
+  }, [rawRecaps, targetSeasonId, currentSeasonUid, currentDay]);
+
+  // displayedSeasonId: which season's data is currently shown
+  const displayedSeasonId = allShows.length > 0 ? targetSeasonId : null;
 
   // OPTIMIZATION #8: Derive availableDays from allShows with useMemo instead of state
   // This ensures days are always in sync with shows and removes redundant state updates

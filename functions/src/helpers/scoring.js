@@ -1421,12 +1421,24 @@ async function calculateCorpsStatisticsLogic() {
   });
 
   // 3. Process the data for each corps
+  // Pre-index events by corps name per year so each corps lookup is O(1) instead of O(E×S).
+  // Map structure: year -> corpsName -> event[]
+  const corpsByYear = {};
+  for (const [year, events] of Object.entries(historicalData)) {
+    const byCorps = {};
+    for (const event of events) {
+      for (const scoreEntry of (event.scores || [])) {
+        if (!byCorps[scoreEntry.corps]) byCorps[scoreEntry.corps] = [];
+        byCorps[scoreEntry.corps].push(event);
+      }
+    }
+    corpsByYear[year] = byCorps;
+  }
+
   const allCorpsStats = [];
   for (const corps of corpsInSeason) {
     const uniqueId = `${corps.corpsName}|${corps.sourceYear}`;
-    const corpsEvents = (historicalData[corps.sourceYear] || []).filter((event) =>
-      event.scores.some((s) => s.corps === corps.corpsName)
-    );
+    const corpsEvents = corpsByYear[corps.sourceYear]?.[corps.corpsName] || [];
 
     const captionScores = { GE1: [], GE2: [], VP: [], VA: [], CG: [], B: [], MA: [], P: [] };
 
