@@ -355,6 +355,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchLineupScores = async () => {
       if (!lineup || Object.keys(lineup).length === 0 || !currentDay) {
+        setLineupScoreData({});
         setLineupScoresLoading(false);
         return;
       }

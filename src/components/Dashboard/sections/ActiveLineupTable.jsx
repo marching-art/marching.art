@@ -57,7 +57,7 @@ const LineupTableRow = memo(({ caption, value, captionData, onSlotClick, scoresA
       {/* Last Score */}
       {scoresAvailable && (
         <td className="py-2.5 px-2 text-right">
-          {score !== null && score !== undefined ? (
+          {hasValue && score !== null && score !== undefined ? (
             <span className="text-sm font-bold text-white font-data tabular-nums">
               {score.toFixed(2)}
             </span>
@@ -70,7 +70,7 @@ const LineupTableRow = memo(({ caption, value, captionData, onSlotClick, scoresA
       {/* Trend */}
       {scoresAvailable && (
         <td className="py-2.5 px-2 text-center">
-          {trend ? (
+          {hasValue && trend ? (
             <span className={`inline-flex items-center gap-0.5 text-xs font-data tabular-nums ${
               trend.direction === 'up' ? 'text-green-500' :
               trend.direction === 'down' ? 'text-red-500' :
