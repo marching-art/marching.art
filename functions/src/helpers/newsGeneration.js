@@ -1869,101 +1869,122 @@ Generate an image that would work as a professional news article header at 1200x
 }
 
 // =============================================================================
-// COMPOSITION VARIETY - Random elements for unique images
+// COMPOSITION VARIETY - Scene archetypes for visually distinct images
 // =============================================================================
 
 /**
- * Camera angles for variety in image composition
+ * Complete scene archetypes - each defines a fundamentally different image concept.
+ * Every archetype is a self-contained visual vision: subject, camera, lighting, and mood
+ * designed as a cohesive whole rather than random combinations of similar elements.
  */
-const CAMERA_ANGLES = [
-  { angle: "field-level, 135mm portrait lens at eye height, shooting through the brass arc with shallow depth of field", description: "intimate close-up from within the formation, bokeh-filled background" },
-  { angle: "low angle from field level, 85mm lens looking up at performers against stadium lights, dramatic perspective", description: "powerful low-angle hero shot with stadium light bokeh" },
-  { angle: "sideline kneeling position, 200mm telephoto compressing 3-5 performers in tight frame, crowd soft behind", description: "photojournalistic sideline capture with creamy background blur" },
-  { angle: "field-level behind the drumline, 50mm lens, shooting past drum heads toward brass section ahead", description: "immersive perspective from within the ensemble" },
-  { angle: "end zone field level, 135mm lens, performers approaching camera in company front, faces and instruments filling frame", description: "dramatic head-on close-up as performers advance" },
-  { angle: "diagonal field-level, 85mm lens, capturing 2-3 performers in profile with rim lighting from stadium floods", description: "editorial profile shot with dramatic rim light separation" },
-  { angle: "low angle from grass level looking up, 24mm wide angle very close to performers, dramatic perspective distortion", description: "ultra-dynamic ground-level hero perspective" },
-  { angle: "field-level at the 50, 200mm telephoto isolating a small group with extreme background compression and bokeh", description: "cinematic telephoto isolation with painterly depth" },
+const SCENE_ARCHETYPES = [
+  {
+    id: "backlit_silhouette",
+    scene: "performers backlit by stadium floods, dramatic rim light outlining their forms against glowing background. 2-3 performers in partial silhouette with bright edges, lens flare streaking across frame. Shot from field level, 85mm lens. Faces partially visible through the glow. Instruments catching brilliant edge light.",
+    mood: "cinematic, dramatic, mysterious",
+    sectionBias: null, // works for any section
+  },
+  {
+    id: "guard_toss_freeze",
+    scene: "color guard member frozen mid-equipment toss, rifle or sabre spinning 10 feet above, performer's eyes locked upward tracking it. Body in full athletic extension, costume fabric flowing with momentum. Shot from low angle looking up, guard member and spinning equipment both in frame against dark sky or stadium lights. 35mm lens, dramatic perspective.",
+    mood: "athletic, breathtaking, suspended moment",
+    sectionBias: "guard",
+  },
+  {
+    id: "drummer_hands_macro",
+    scene: "extreme close-up on a snare drummer's hands and sticks mid-stroke, frozen at the moment of impact on the drum head. Knuckles white with grip, wrist tape visible, stick blur trails showing speed. The drummer's face partially visible above, jaw clenched in concentration. Shot with 135mm macro-style framing, f/2 aperture, drum harness and uniform visible but secondary to the hands.",
+    mood: "visceral, precise, raw power",
+    sectionBias: "percussion",
+  },
+  {
+    id: "head_on_approach",
+    scene: "3-5 performers marching directly toward the camera in a company front, shot from field level at eye height. The center performer is sharpest, flanking performers fall to progressive bokeh. Instruments up, faces showing fierce determination, feet mid-stride on grass. 135mm lens compressing the depth between performers. The approaching wall of sound and color.",
+    mood: "powerful, confrontational, unstoppable",
+    sectionBias: null,
+  },
+  {
+    id: "emotional_ballad_face",
+    scene: "tight portrait close-up of a single performer during an emotional ballad moment. Instrument lowered or held gently, face showing raw vulnerability - eyes glistening, mouth slightly open, completely lost in the music. Shot at eye level with 200mm telephoto creating painterly background blur. Stadium lights as soft golden bokeh orbs behind. Every pore and bead of sweat visible.",
+    mood: "intimate, vulnerable, deeply human",
+    sectionBias: null,
+  },
+  {
+    id: "low_hero_contra",
+    scene: "shot from grass level looking up at a contra or tuba player, massive silver instrument dominating the upper frame, performer's face visible past the bell. Dramatic perspective distortion making the performer and instrument look monumental. 24mm wide angle very close. Stadium lights starburst behind. Other performers visible as blurred shapes at the edges.",
+    mood: "monumental, powerful, larger than life",
+    sectionBias: "brass",
+  },
+  {
+    id: "behind_performer_pov",
+    scene: "shot from directly behind 2-3 performers, looking past their shoulders and instruments toward the blurred field and stadium ahead. Uniform back details, harness straps, neck muscles, and sweat visible in sharp focus. The audience and far sideline rendered as a wash of color and light ahead of them. 50mm lens, immersive first-person perspective.",
+    mood: "immersive, intimate, you-are-there",
+    sectionBias: null,
+  },
+  {
+    id: "guard_silk_motion",
+    scene: "color guard performer with a 6-foot silk flag in full extension, fabric creating sweeping arc of color across the frame. Performer's body in dance pose, face showing artistic expression. The flowing silk dominates the composition with vibrant color. Shot from field level, 85mm lens, slight motion blur on silk edges while performer's face is sharp. Other performers as soft shapes behind.",
+    mood: "artistic, flowing, vibrant color",
+    sectionBias: "guard",
+  },
+  {
+    id: "brass_bells_skyward",
+    scene: "2-3 brass players from below, horns raised high for a big hit, bells catching stadium light and gleaming. Shot from low kneeling position looking up, 85mm lens. Performers' chins and open mouths visible past the instrument bells. The moment of maximum volume and effort. Dark sky or stadium structure behind with lights as starburst points.",
+    mood: "triumphant, explosive, climactic",
+    sectionBias: "brass",
+  },
+  {
+    id: "section_mates_bond",
+    scene: "two performers side by side in an intimate moment of connection - could be matching breath before an entrance, a shared glance, or synchronized playing. Both in profile or three-quarter view, nearly touching, instruments at matching angles. The pair fills the frame. Shot at eye level, 135mm lens, everything beyond them dissolved to creamy bokeh. The human bond within the ensemble.",
+    mood: "connection, trust, shared purpose",
+    sectionBias: null,
+  },
+  {
+    id: "drumline_depth_row",
+    scene: "the drumline in a tight row shot from the end, closest snare drum and player's hands tack-sharp in the left/right third of frame, the rest of the battery stretching away into progressive bokeh - tenors, then basses becoming soft shapes. Sticks frozen mid-air. Shot from field level kneeling position, 200mm telephoto compressing the line. Harness details and drum wraps vivid on the closest player.",
+    mood: "precision, depth, focused intensity",
+    sectionBias: "percussion",
+  },
+  {
+    id: "golden_hour_profile",
+    scene: "a performer in crisp profile, warm golden sunlight raking across their face and instrument from the side. Every detail of the uniform lit in warm amber - buttons, fabric texture, metallic accents glowing. Long shadow stretching across the grass. Shot at eye level, 135mm lens. The magic hour light turning a performer into a painting. Stadium lights not yet needed, natural warmth.",
+    mood: "warm, golden, timeless",
+    sectionBias: null,
+  },
+  {
+    id: "drum_major_command",
+    scene: "drum major in dramatic conducting pose on the podium or field, arms extended wide, backlit by stadium floods creating strong rim light. Shot from slightly below looking up, their figure commanding the frame. Uniform details sharp - gauntlets, sash, or insignia visible. The corps is implied but unseen - this is about the leader in their moment of total control.",
+    mood: "authority, drama, leadership",
+    sectionBias: null,
+  },
+  {
+    id: "mixed_convergence",
+    scene: "the rare moment when brass, guard, and percussion converge in the same tight frame during a drill transition. A trumpet player, a guard member with flag, and a tenor drummer visible together in close quarters, each holding their equipment. Shot from field level, 50mm lens capturing the diversity of the ensemble in one intimate frame. Their different uniforms and equipment creating visual contrast.",
+    mood: "diverse, dynamic, ensemble unity",
+    sectionBias: null,
+  },
+  {
+    id: "sweat_and_grit",
+    scene: "extreme close-up of a performer in peak physical effort. Sweat drops visible on forehead, veins on neck or arms, jaw clenched, eyes burning with competitive fire. Uniform soaked with exertion. The athletic reality of marching 8-12 minutes under stadium lights. Shot with 200mm telephoto at eye level, f/2, isolating the raw physicality. Only one performer, all emotion and effort.",
+    mood: "raw, athletic, unfiltered reality",
+    sectionBias: null,
+  },
 ];
 
 /**
- * Performer moments to capture
+ * Select a scene archetype for an image.
+ * Uses reportDay + articleIndex to ensure each of the 5 daily articles gets a different archetype,
+ * and the set rotates each day.
+ *
+ * @param {number} reportDay - Current day number (provides daily rotation)
+ * @param {number} articleIndex - Index 0-4 among the daily articles (ensures diversity within a day)
+ * @returns {object} A scene archetype
  */
-const PERFORMER_MOMENTS = [
-  { moment: "brass player in peak effort, horn angled skyward on a sustained high note, cheeks full, eyes intense with focus", emotion: "raw power and dedication" },
-  { moment: "color guard member mid-toss, eyes locked on a spinning rifle against stadium lights, body in athletic extension", emotion: "fearless precision" },
-  { moment: "snare drummer in aggressive playing stance, sticks blurred with speed, face showing fierce concentration", emotion: "percussive intensity" },
-  { moment: "two mellophone players side by side hitting a unison note, horns up, synchronized breath and body angle", emotion: "unity and brotherhood" },
-  { moment: "performer in emotional ballad moment, instrument lowered briefly, face showing vulnerability and passion", emotion: "intimate emotional depth" },
-  { moment: "contra player marching forward with massive instrument, powerful stride, sweat visible, stadium lights catching chrome", emotion: "physical power and grit" },
-  { moment: "guard member catching a rifle toss, split-second of contact, fabric of costume flowing with momentum", emotion: "breathtaking athleticism" },
-  { moment: "drum major in dramatic conducting pose, arms extended, backlit by stadium floods, silhouette and detail mixed", emotion: "leadership and command" },
-];
-
-/**
- * Lighting variations for different atmospheres
- */
-const LIGHTING_VARIATIONS = [
-  { lighting: "golden hour sidelight raking across performers, warm tones on faces and instruments, long shadows on grass, stadium lights just starting to glow", mood: "magic hour warmth" },
-  { lighting: "harsh stadium floods from above creating dramatic rim lighting on performers, bright edges separating them from dark background", mood: "dramatic separation" },
-  { lighting: "backlit by stadium floods, performers silhouetted with bright rim light outlining their forms, lens flare streaking across frame", mood: "cinematic backlight" },
-  { lighting: "night competition under full stadium lights, performers brilliantly lit with cool white light, dark sky and crowd as soft bokeh behind", mood: "nighttime intensity" },
-  { lighting: "cross-lighting from two stadium towers creating dramatic shadows on faces and instruments, high contrast with deep blacks", mood: "chiaroscuro drama" },
-  { lighting: "twilight sky transitioning from purple to deep blue, stadium lights creating warm pools on performers, mixed color temperature", mood: "dusk atmosphere" },
-  { lighting: "indoor arena spotlights creating focused pools of light on performers, surrounding areas falling to shadow, theatrical contrast", mood: "spotlight isolation" },
-  { lighting: "overcast daylight creating soft, even illumination that reveals every uniform texture and detail, subtle and natural", mood: "editorial clarity" },
-];
-
-/**
- * Section formations for group shots
- */
-const SECTION_COMPOSITIONS = [
-  { composition: "tight cluster of 3-4 brass players in a diagonal line, horns raised at matching angles, shallow depth of field blurring the rest", visual: "unified brass intensity" },
-  { composition: "single featured performer in sharp focus with 2-3 others soft in the foreground and background, layered depth", visual: "hero portrait with context" },
-  { composition: "pair of performers face-to-face or side-by-side, instruments up, capturing the bond between section-mates", visual: "connection and partnership" },
-  { composition: "5-6 performers in staggered depth, closest one sharp and filling left/right frame, others progressively softer", visual: "receding depth and scale" },
-  { composition: "guard member center frame with silk flag mid-arc above, brass players visible but soft on either side", visual: "guard athleticism framed by ensemble" },
-  { composition: "drumline in tight row, closest snare drum and player's hands tack-sharp, rest of line falling to bokeh", visual: "percussive precision and detail" },
-  { composition: "2-3 performers from behind/side profile, instruments catching light, audience and field visible but blurred ahead", visual: "over-the-shoulder immersion" },
-  { composition: "mixed section group - brass, guard, and percussion in same tight frame during a convergence moment", visual: "ensemble diversity in one frame" },
-];
-
-/**
- * Subject focus variations
- */
-const SUBJECT_FOCUS = [
-  { focus: "brass close-up", framing: "2-4 brass players filling the frame, instruments gleaming, faces showing intensity, stadium soft behind" },
-  { focus: "percussion feature", framing: "1-3 drummers in tight frame, sticks and drum heads in sharp detail, action frozen mid-stroke" },
-  { focus: "guard spotlight", framing: "1-2 guard members in athletic pose, silk or rifle in motion, costume details vivid, field blurred" },
-  { focus: "performer portrait", framing: "single performer in heroic close-up, instrument and uniform details filling frame, emotional expression" },
-  { focus: "section group", framing: "4-6 performers from same section in tight cluster, shallow depth of field creating layered depth" },
-];
-
-/**
- * Randomly select an item from an array
- * Uses article seed for reproducibility within same article
- */
-function randomSelect(array, seed = null) {
-  if (seed) {
-    // Simple seeded random for reproducibility
-    const hash = seed.split('').reduce((a, b) => ((a << 5) - a + b.charCodeAt(0)) | 0, 0);
-    return array[Math.abs(hash) % array.length];
-  }
-  return array[Math.floor(Math.random() * array.length)];
-}
-
-/**
- * Get a unique composition set for an image
- * Returns camera angle, moment, lighting, and formation
- */
-function getRandomComposition(seed = null) {
-  return {
-    camera: randomSelect(CAMERA_ANGLES, seed),
-    moment: randomSelect(PERFORMER_MOMENTS, seed ? seed + "moment" : null),
-    lighting: randomSelect(LIGHTING_VARIATIONS, seed ? seed + "light" : null),
-    composition: randomSelect(SECTION_COMPOSITIONS, seed ? seed + "form" : null),
-    focus: randomSelect(SUBJECT_FOCUS, seed ? seed + "focus" : null),
-  };
+function selectSceneArchetype(reportDay = 0, articleIndex = 0) {
+  // Use reportDay to rotate which slice of archetypes this day's articles draw from
+  // Each day starts at a different offset, and each article within the day steps forward
+  const dayOffset = ((reportDay || 0) * 7) % SCENE_ARCHETYPES.length; // multiply by prime for better spread
+  const index = (dayOffset + (articleIndex || 0)) % SCENE_ARCHETYPES.length;
+  return SCENE_ARCHETYPES[index];
 }
 
 /**
@@ -1977,14 +1998,11 @@ function getRandomComposition(seed = null) {
  * @param {string} showTitle - Corps' production title (e.g., "Ghostlight", "Kinetic Noise")
  * @param {object} uniformDetails - Pre-fetched uniform details from Firestore (optional)
  */
-function buildStandingsImagePrompt(topCorps, year, location, showName, showTitle = null, uniformDetails = null) {
+function buildStandingsImagePrompt(topCorps, year, location, showName, showTitle = null, uniformDetails = null, reportDay = 0, articleIndex = 0) {
   // Use provided uniform details (from Firestore) or fall back to hardcoded
   const details = uniformDetails || getUniformDetails(topCorps, year);
   const themeContext = buildShowThemeContext(showTitle);
-
-  // Get random composition for variety
-  const seed = `${topCorps}-${year}-standings`;
-  const comp = getRandomComposition(seed);
+  const scene = selectSceneArchetype(reportDay, articleIndex);
 
   return `Intimate field-level photograph of ${topCorps} performers during competition (${year} season). Photojournalistic editorial style.
 
@@ -2002,27 +2020,10 @@ DO NOT USE: generic red plumes, generic white shakos, or any uniform that doesn'
 The uniform MUST match ${topCorps}'s distinctive colors and style.
 ═══════════════════════════════════════════════════════════════
 ${themeContext}
-CAMERA & FRAMING:
-- ${comp.camera.angle}
-- ${comp.focus.framing}
-- CLOSE-UP: Only 2-6 performers visible in frame, filling the entire image
-- Shallow depth of field: performers tack-sharp, everything else soft bokeh
-- Stadium, crowd, and field visible only as blurred background atmosphere
+SCENE CONCEPT: ${scene.scene}
+Mood: ${scene.mood}
 
-SUBJECT COMPOSITION: ${comp.composition.composition}
-- ${comp.composition.visual}
-
-PERFORMER MOMENT: ${comp.moment.moment}
-- ${comp.moment.emotion}
-- Individual faces and expressions clearly visible
-- Uniform details, textures, and instrument finishes in sharp detail
-- Sweat, breath, and physical effort visible up close
-
-ATMOSPHERE & LIGHT:
-- ${comp.lighting.lighting}
-- Mood: ${comp.lighting.mood}
-- Stadium lights rendered as soft bokeh orbs or starburst in background
-- Grass and yard lines may be visible at performer's feet
+Adapt this scene concept to feature ${topCorps} performers wearing the exact uniform described above.
 
 TECHNICAL: Editorial photojournalism, shallow depth of field (f/2.8 or wider), field-level camera position. Like a Sports Illustrated or DCI.org feature photo. Rich color, high detail on subjects, painterly background blur. NOT a wide shot, NOT a broadcast angle, NOT showing the full corps.
 
@@ -2040,44 +2041,30 @@ This is ${topCorps} from ${showName || "DCI Finals"}${location ? ` in ${location
  * @param {string} showTitle - Corps' production title (e.g., "Ghostlight")
  * @param {object} uniformDetails - Pre-fetched uniform details from Firestore (optional)
  */
-function buildCaptionsImagePrompt(featuredCorps, year, captionType, location, showTitle = null, uniformDetails = null) {
+function buildCaptionsImagePrompt(featuredCorps, year, captionType, location, showTitle = null, uniformDetails = null, reportDay = 0, articleIndex = 0) {
   // Use provided uniform details (from Firestore) or fall back to hardcoded
   const details = uniformDetails || getUniformDetails(featuredCorps, year);
   const themeContext = buildShowThemeContext(showTitle);
 
-  // Get random composition for variety
-  const seed = `${featuredCorps}-${year}-${captionType}-captions`;
-  const comp = getRandomComposition(seed);
+  // Select a scene archetype, biased toward the relevant section when possible
+  let scene = selectSceneArchetype(reportDay, articleIndex);
 
-  // Determine which section to feature based on caption
-  let sectionFocus, sectionDetails, formationDescription, sectionNote;
-
+  // If the caption type strongly implies a section, try to find a matching archetype
+  let sectionFocus;
   if (captionType.includes("Brass") || captionType.includes("B")) {
-    sectionFocus = "brass section";
-    sectionDetails = details.brass;
-    formationDescription = "2-4 brass players in tight close-up, bells raised and gleaming, faces showing intense focus";
-    sectionNote = "Close-up on brass players: instrument valves, bell flares, embouchures, and determined expressions in sharp detail. Other performers soft in background.";
+    sectionFocus = "brass";
+    const brassScenes = SCENE_ARCHETYPES.filter(s => s.sectionBias === "brass" || s.sectionBias === null);
+    scene = brassScenes[(reportDay + articleIndex) % brassScenes.length];
   } else if (captionType.includes("Percussion") || captionType.includes("P")) {
-    sectionFocus = "drumline";
-    sectionDetails = details.percussion;
-    formationDescription = "1-3 percussionists in tight frame, sticks mid-strike, drum heads and harnesses in sharp detail";
-    sectionNote = "Close-up on drummers: hands gripping sticks, drum head tension, harness straps, sweat, and fierce concentration. Rest of ensemble as bokeh.";
+    sectionFocus = "percussion";
+    const percScenes = SCENE_ARCHETYPES.filter(s => s.sectionBias === "percussion" || s.sectionBias === null);
+    scene = percScenes[(reportDay + articleIndex) % percScenes.length];
   } else if (captionType.includes("Guard") || captionType.includes("CG")) {
     sectionFocus = "color guard";
-    sectionDetails = details.guard;
-    formationDescription = "1-2 guard members in dramatic athletic pose, silk fabric or rifle caught mid-motion, costume details vivid";
-    sectionNote = "Close-up on guard: flowing silk fabric, spinning equipment frozen in air, athletic extension, costume sequins and textures catching light.";
-  } else if (captionType.includes("Visual") || captionType.includes("V")) {
-    sectionFocus = "marching technique";
-    sectionDetails = details.uniform;
-    formationDescription = "3-5 performers in perfect step captured close-up, body angles and technique visible, uniform lines sharp";
-    sectionNote = "Close-up showing visual precision: synchronized body angles, clean uniform lines, athletic marching posture, feet and legs in unison.";
+    const guardScenes = SCENE_ARCHETYPES.filter(s => s.sectionBias === "guard" || s.sectionBias === null);
+    scene = guardScenes[(reportDay + articleIndex) % guardScenes.length];
   } else {
-    // GE or general
-    sectionFocus = "ensemble expression";
-    sectionDetails = details.uniform;
-    formationDescription = "2-4 performers from mixed sections in emotional performance moment, faces showing artistic expression";
-    sectionNote = "Close-up capturing emotional impact: performer faces showing passion, vulnerability, or triumph. The human element of General Effect.";
+    sectionFocus = captionType.includes("Visual") ? "visual technique" : "ensemble expression";
   }
 
   return `Intimate field-level close-up of ${featuredCorps} performers (${year} season), highlighting ${sectionFocus} excellence. Photojournalistic editorial style.
@@ -2096,24 +2083,10 @@ DO NOT USE: generic red plumes, generic white shakos, or any uniform that doesn'
 The uniform MUST match ${featuredCorps}'s distinctive colors and style.
 ═══════════════════════════════════════════════════════════════
 ${themeContext}
-CAMERA & FRAMING: ${formationDescription}
-- ${comp.camera.angle}
-- ${comp.focus.framing}
-- CLOSE-UP: Only 1-4 performers visible, filling the entire frame
-- Shallow depth of field isolating the featured section performers
+SCENE CONCEPT: ${scene.scene}
+Mood: ${scene.mood}
 
-SECTION EMPHASIS: ${sectionNote}
-
-SUBJECT COMPOSITION: ${comp.composition.composition}
-- ${comp.composition.visual}
-
-PERFORMER MOMENT: ${comp.moment.moment}
-- ${comp.moment.emotion}
-
-ATMOSPHERE & LIGHT:
-- ${comp.lighting.lighting}
-- Mood: ${comp.lighting.mood}
-- Stadium and field as soft atmospheric backdrop only
+Adapt this scene concept to feature ${featuredCorps} performers (${sectionFocus} section) wearing the exact uniform described above.
 
 TECHNICAL: Editorial photojournalism with shallow depth of field, field-level camera. Capturing the human detail and technical mastery of ${captionType} performance in close-up. NOT a wide shot, NOT showing full corps.
 
@@ -2129,19 +2102,9 @@ This is ${featuredCorps} from ${location || "DCI Finals"}${showTitle ? `, perfor
  * @param {string} location - The corps home location (optional)
  * @param {object} uniformDesign - Director-provided uniform customization (optional)
  */
-function buildFantasyPerformersImagePrompt(topCorpsName, theme, location = null, uniformDesign = null) {
+function buildFantasyPerformersImagePrompt(topCorpsName, theme, location = null, uniformDesign = null, reportDay = 0, articleIndex = 0) {
   const details = getFantasyUniformDetails(topCorpsName, location, uniformDesign);
-
-  // Get random composition for variety
-  const seed = `${topCorpsName}-${location || "fantasy"}-performers`;
-  const comp = getRandomComposition(seed);
-
-  // Determine venue based on director preference or default
-  const venueDescription = details.venuePreference === "indoor"
-    ? "Modern indoor arena (like Lucas Oil Stadium) with dramatic LED lighting systems, 30,000+ crowd visible"
-    : details.venuePreference === "outdoor"
-      ? "Outdoor stadium under evening sky with dramatic stadium floods, packed stands visible"
-      : "Professional marching arts competition stadium with dramatic lighting and enthusiastic crowd";
+  const scene = selectSceneArchetype(reportDay, articleIndex);
 
   return `Intimate field-level photograph of fantasy marching arts ensemble "${topCorpsName}"${location ? ` from ${location}` : ""} performers in close-up. Editorial photojournalism style.
 
@@ -2153,30 +2116,12 @@ UNIFORM DESIGN${details.matchedTheme === "director-custom" ? " (Director-Specifi
 - Guard elements: ${details.guard}
 ${details.additionalNotes ? `- Special notes: ${details.additionalNotes}` : ""}
 
-CAMERA & FRAMING:
-- ${comp.camera.angle}
-- ${comp.focus.framing}
-- CLOSE-UP: Only 2-6 performers visible in frame, filling the entire image
-- Shallow depth of field: performers sharp, venue and crowd as soft bokeh
-- Field-level perspective, as if standing among the performers
+SCENE CONCEPT: ${scene.scene}
+Mood: ${scene.mood}
 
-SCENE CONTEXT:
-- ${venueDescription} (rendered as blurred atmospheric background only)
-- ${theme || "Championship competition performance moment"}
-- ${details.performanceStyle ? `Performance style: ${details.performanceStyle}` : "Professional championship atmosphere"}
-
-SUBJECT COMPOSITION: ${comp.composition.composition}
-- ${comp.composition.visual}
-
-PERFORMER MOMENT: ${comp.moment.moment}
-- ${comp.moment.emotion}
-- Individual faces and expressions clearly visible
-- Creative uniform details, textures, and colors in sharp detail
-
-ATMOSPHERE & LIGHT:
-- ${comp.lighting.lighting}
-- Mood: ${comp.lighting.mood}
-- Stadium lights as soft bokeh, venue atmosphere in blurred background
+Adapt this scene concept to feature "${topCorpsName}" performers wearing the exact uniform described above.
+Context: ${theme || "Championship competition performance moment"}
+${details.performanceStyle ? `Performance style: ${details.performanceStyle}` : ""}
 
 AUTHENTICITY:
 - Uniform is creative but still clearly a marching arts uniform (not costume)
@@ -2186,7 +2131,7 @@ AUTHENTICITY:
 
 TECHNICAL: Editorial photojournalism, shallow depth of field, field-level camera. High contrast, saturated colors matching corps theme. NOT a wide shot. NOT showing full ensemble.
 
-This fantasy corps image should show ${comp.camera.description} - the human intensity and creative artistry of a championship-caliber ensemble captured up close.`;
+This fantasy corps image captures the human intensity and creative artistry of a championship-caliber ensemble up close.`;
 }
 
 /**
@@ -2198,29 +2143,12 @@ This fantasy corps image should show ${comp.camera.description} - the human inte
  * @param {string} captionFocus - The caption category to emphasize (e.g., "Brass", "Percussion", "General Effect")
  * @param {object} uniformDetails - Pre-fetched uniform details from Firestore (optional)
  */
-function buildFantasyLeagueImagePrompt(featuredCorps = null, year = null, captionFocus = null, uniformDetails = null) {
+function buildFantasyLeagueImagePrompt(featuredCorps = null, year = null, captionFocus = null, uniformDetails = null, reportDay = 0, articleIndex = 0) {
+  const scene = selectSceneArchetype(reportDay, articleIndex);
+
   // If we have a featured corps, generate a corps-specific photojournalistic image
   if (featuredCorps) {
     const details = uniformDetails || getUniformDetails(featuredCorps, year || 2024);
-    const seed = `${featuredCorps}-${year || "fantasy"}-league-recap`;
-    const comp = getRandomComposition(seed);
-
-    // Determine section emphasis based on caption focus
-    let sectionHint = "";
-    if (captionFocus) {
-      const captionLower = captionFocus.toLowerCase();
-      if (captionLower.includes("brass") || captionLower.includes("b")) {
-        sectionHint = "Feature brass players: horns raised, bells gleaming, embouchures and intense focus visible.";
-      } else if (captionLower.includes("percussion") || captionLower.includes("p")) {
-        sectionHint = "Feature percussionists: sticks mid-strike, drum heads and harnesses in detail, fierce concentration.";
-      } else if (captionLower.includes("guard") || captionLower.includes("cg")) {
-        sectionHint = "Feature color guard: silk fabric or rifle mid-motion, athletic extension, costume details vivid.";
-      } else if (captionLower.includes("visual") || captionLower.includes("v")) {
-        sectionHint = "Feature performers showing visual technique: synchronized body angles, marching precision, clean lines.";
-      } else {
-        sectionHint = "Feature performers in emotional peak: the expressive, artistic side of the performance.";
-      }
-    }
 
     return `Intimate field-level close-up of ${featuredCorps} performers (${year || "current"} season) in competition. Photojournalistic editorial style.
 
@@ -2232,24 +2160,11 @@ Brass: ${details.brass}
 Percussion: ${details.percussion}
 Guard: ${details.guard}
 
-CAMERA & FRAMING:
-- ${comp.camera.angle}
-- ${comp.focus.framing}
-- CLOSE-UP: Only 2-5 performers visible, filling the entire frame
-- Shallow depth of field: performers sharp, stadium as soft bokeh behind
-${sectionHint ? `\nSECTION EMPHASIS: ${sectionHint}` : ""}
+SCENE CONCEPT: ${scene.scene}
+Mood: ${scene.mood}
 
-SUBJECT COMPOSITION: ${comp.composition.composition}
-- ${comp.composition.visual}
-
-PERFORMER MOMENT: ${comp.moment.moment}
-- ${comp.moment.emotion}
-- Individual faces, expressions, and uniform details in sharp focus
-
-ATMOSPHERE & LIGHT:
-- ${comp.lighting.lighting}
-- Mood: ${comp.lighting.mood}
-- Stadium lights as soft bokeh, atmosphere in blurred background
+Adapt this scene concept to feature ${featuredCorps} performers wearing the exact uniform described above.
+${captionFocus ? `Section emphasis: ${captionFocus} performers.` : ""}
 
 TECHNICAL: Editorial photojournalism, shallow depth of field, field-level camera. NOT a wide shot, NOT a ceremony, NOT a trophy presentation.
 
@@ -2257,29 +2172,12 @@ This intimate photograph captures ${featuredCorps} performers in the intensity o
   }
 
   // Fallback: generic photojournalistic marching arts image (no specific corps data)
-  const comp = getRandomComposition("fantasy-league-recap-generic");
-
   return `Intimate field-level photograph of marching arts performers during competition. Photojournalistic editorial style.
 
-SUBJECT:
-- 2-4 performers in modern athletic marching uniforms, captured in tight close-up
-- Faces showing competitive intensity, focus, and passion
-- Instruments, equipment, and uniform details vivid in sharp focus
-- Dynamic performance moment frozen mid-action
+SCENE CONCEPT: ${scene.scene}
+Mood: ${scene.mood}
 
-CAMERA & FRAMING:
-- ${comp.camera.angle}
-- ${comp.focus.framing}
-- CLOSE-UP: Only 2-4 performers filling the frame
-- Shallow depth of field: performers sharp, everything else soft bokeh
-
-PERFORMER MOMENT: ${comp.moment.moment}
-- ${comp.moment.emotion}
-
-ATMOSPHERE & LIGHT:
-- ${comp.lighting.lighting}
-- Mood: ${comp.lighting.mood}
-- Stadium as atmospheric backdrop only
+Show performers in modern athletic marching uniforms with this scene concept.
 
 TECHNICAL: Editorial photojournalism, shallow depth of field, field-level. Intimate close-up of competitive marching arts. NOT a ceremony, NOT a trophy presentation, NOT a wide shot.`;
 }
@@ -2294,32 +2192,13 @@ TECHNICAL: Editorial photojournalism, shallow depth of field, field-level. Intim
  * @param {string} showTitle - Corps' production title (e.g., "Ghostlight")
  * @param {object} uniformDetails - Pre-fetched uniform details from Firestore (optional)
  */
-function buildAnalyticsImagePrompt(featuredCorps, year, analysisType, showTitle = null, uniformDetails = null) {
+function buildAnalyticsImagePrompt(featuredCorps, year, analysisType, showTitle = null, uniformDetails = null, reportDay = 0, articleIndex = 0) {
   // Use provided uniform details (from Firestore) or fall back to hardcoded
   const details = uniformDetails || getUniformDetails(featuredCorps, year);
   const themeContext = buildShowThemeContext(showTitle);
-
-  // Get random composition for variety
-  const seed = `${featuredCorps}-${year}-${analysisType}-analytics`;
-  const comp = getRandomComposition(seed);
-
-  // Analytics-specific camera angles (close-up detail views for analysis)
-  const analyticsAngles = [
-    "field-level, 135mm lens, tight on 2-3 performers showing precise instrument technique and hand positions",
-    "low sideline angle, 200mm telephoto, isolating a performer's embouchure and horn angle in sharp detail",
-    "field-level behind performers, shooting past shoulders and instruments toward blurred field ahead",
-    "kneeling position at yard line, 85mm lens, capturing synchronized body technique of 3-4 adjacent performers",
-    "eye-level close-up, 135mm lens, showing the precise spacing and alignment between 2-3 performers in formation",
-  ];
-  const selectedAngle = analyticsAngles[Math.abs(seed.split('').reduce((a, b) => ((a << 5) - a + b.charCodeAt(0)) | 0, 0)) % analyticsAngles.length];
+  const scene = selectSceneArchetype(reportDay, articleIndex);
 
   return `Intimate close-up of ${featuredCorps} performers (${year}) showing technical precision and analytical detail${showTitle ? ` from their show "${showTitle}"` : ""}. Editorial photojournalism.
-
-ANALYTICAL FOCUS:
-- 2-5 performers in tight close-up showing technique, precision, and craft
-- Sharp detail on instrument handling, body technique, or guard equipment work
-- The kind of intimate detail that reveals WHY a performance scores well
-- Observational, almost documentary quality
 
 UNIFORM ACCURACY:
 - Uniform: ${details.uniform}
@@ -2328,23 +2207,10 @@ UNIFORM ACCURACY:
 - Percussion: ${details.percussion}
 - Guard: ${details.guard}
 ${themeContext}
-CAMERA & FRAMING:
-- ${comp.camera.angle}
-- ${comp.focus.framing}
-- CLOSE-UP: Only 2-5 performers visible, filling the frame
-- Shallow depth of field isolating technical detail
+SCENE CONCEPT: ${scene.scene}
+Mood: ${scene.mood}
 
-ANALYTICAL DETAIL:
-- Hands on instruments, precise finger positions, embouchures visible
-- Body angles showing marching technique and athletic control
-- Synchronized elements visible between 2-3 adjacent performers
-- The craft and precision that defines competitive excellence
-
-ATMOSPHERE & LIGHT:
-- ${comp.lighting.lighting}
-- Mood: ${comp.lighting.mood}
-- Stadium as soft atmospheric backdrop
-- Clean lighting revealing every detail of technique
+Adapt this scene concept to feature ${featuredCorps} performers wearing the exact uniform described above. Emphasize the technical precision and craft visible in close-up.
 
 TECHNICAL: Editorial documentary photography, shallow depth of field, field-level. Sharp focus on technical detail and performer craft. NOT a wide shot, NOT an elevated formation view.
 
@@ -2361,18 +2227,13 @@ This intimate shot reveals the precision and technical mastery of ${featuredCorp
  * @param {string} showTitle - Corps' production title
  * @param {object} uniformDetails - Pre-fetched uniform details from Firestore (optional)
  */
-function buildUnderdogImagePrompt(corps, year, location, showTitle = null, uniformDetails = null) {
+function buildUnderdogImagePrompt(corps, year, location, showTitle = null, uniformDetails = null, reportDay = 0, articleIndex = 0) {
   // Use provided uniform details (from Firestore) or fall back to hardcoded
   const details = uniformDetails || getUniformDetails(corps, year);
   const themeContext = buildShowThemeContext(showTitle);
-
-  // Get random composition emphasizing triumph
-  const seed = `${corps}-${year}-underdog`;
-  const comp = getRandomComposition(seed);
+  const scene = selectSceneArchetype(reportDay, articleIndex);
 
   return `Intimate close-up capturing a triumphant breakthrough moment for ${corps} performers (${year} season)${showTitle ? ` performing "${showTitle}"` : ""} at ${location || "DCI Finals"}. Photojournalistic editorial.
-
-SUBJECT: 2-4 ${corps} performers in emotional close-up during their breakthrough moment
 
 UNIFORM ACCURACY:
 - Uniform: ${details.uniform}
@@ -2381,27 +2242,10 @@ UNIFORM ACCURACY:
 - Percussion: ${details.percussion}
 - Guard: ${details.guard}
 ${themeContext}
-EMOTIONAL NARRATIVE:
-- The raw emotion of an underdog rising to the occasion, visible on individual faces
-- Tears, gritted teeth, fierce determination, or pure joy of exceeding expectations
-- ${comp.moment.emotion}
-- The human story of triumph captured in facial expressions and body language
+SCENE CONCEPT: ${scene.scene}
+Mood: ${scene.mood}
 
-CAMERA & FRAMING:
-- ${comp.camera.angle}
-- ${comp.focus.framing}
-- CLOSE-UP: 2-4 performers filling the frame, faces and emotions visible
-- Shallow depth of field with stadium crowd as electric bokeh behind
-- Field-level, capturing the performers at their most vulnerable and powerful
-
-SUBJECT COMPOSITION: ${comp.composition.composition}
-- ${comp.composition.visual}
-
-ATMOSPHERE & LIGHT:
-- ${comp.lighting.lighting}
-- Mood: ${comp.lighting.mood} combined with underdog triumph
-- Stadium lights creating dramatic rim light and separation on performers
-- Crowd energy visible as soft, glowing backdrop
+Adapt this scene concept to feature ${corps} performers wearing the exact uniform described above. Infuse the scene with the raw emotion of an underdog rising to the occasion - tears, gritted teeth, fierce determination, or pure joy of exceeding expectations.
 
 TECHNICAL: Inspirational editorial photojournalism, shallow depth of field, field-level. The kind of iconic close-up photo that tells the story of a breakthrough. NOT a wide shot, NOT showing full corps.
 
@@ -2417,18 +2261,13 @@ This intimate photograph captures the essence of an underdog story - the faces, 
  * @param {string} showTitle - Corps' production title
  * @param {object} uniformDetails - Pre-fetched uniform details from Firestore (optional)
  */
-function buildCorpsSpotlightImagePrompt(corps, year, showTitle = null, uniformDetails = null) {
+function buildCorpsSpotlightImagePrompt(corps, year, showTitle = null, uniformDetails = null, reportDay = 0, articleIndex = 0) {
   // Use provided uniform details (from Firestore) or fall back to hardcoded
   const details = uniformDetails || getUniformDetails(corps, year);
   const themeContext = buildShowThemeContext(showTitle);
-
-  // Get random composition for variety
-  const seed = `${corps}-${year}-spotlight`;
-  const comp = getRandomComposition(seed);
+  const scene = selectSceneArchetype(reportDay, articleIndex);
 
   return `Intimate editorial portrait of ${corps} performers showcasing corps identity and character (${year} season)${showTitle ? ` performing "${showTitle}"` : ""}. Photojournalistic close-up.
-
-SUBJECT: 2-5 ${corps} performers in close-up, uniform details and corps identity front and center.
 
 UNIFORM IDENTITY (CRITICAL):
 - Uniform: ${details.uniform}
@@ -2437,29 +2276,10 @@ UNIFORM IDENTITY (CRITICAL):
 - Percussion: ${details.percussion}
 - Guard: ${details.guard}
 ${themeContext}
-CAMERA & FRAMING:
-- ${comp.camera.angle}
-- ${comp.focus.framing}
-- CLOSE-UP: Only 2-5 performers in frame, filling the entire image
-- Shallow depth of field showcasing uniform details, fabric textures, instrument finishes
-- Stadium and crowd rendered as soft, atmospheric bokeh behind subjects
+SCENE CONCEPT: ${scene.scene}
+Mood: ${scene.mood}
 
-SUBJECT COMPOSITION: ${comp.composition.composition}
-- ${comp.composition.visual}
-- Capturing the pride and distinctive visual identity of ${corps} through intimate detail
-
-CORPS CHARACTER:
-- What makes ${corps} unique shown through close-up details: uniform patterns, colors, instrument customization
-- Individual performer personality and expression visible
-- The human faces behind the corps identity
-
-PERFORMER MOMENT: ${comp.moment.moment}
-- ${comp.moment.emotion}
-
-ATMOSPHERE & LIGHT:
-- ${comp.lighting.lighting}
-- Mood: Pride, intensity, corps tradition expressed through individual performers
-- Rich, saturated colors emphasizing ${corps} palette visible in uniform details
+Adapt this scene concept to feature ${corps} performers wearing the exact uniform described above. Emphasize the distinctive visual identity of ${corps} - what makes them recognizable and unique as a corps, shown through individual performer detail.
 
 TECHNICAL: Editorial portrait photography, shallow depth of field (f/2 to f/2.8), field-level. Like a DCI.org corps feature or magazine profile photo. Emphasis on uniform detail, performer expression, and corps identity in tight framing. NOT a wide shot, NOT showing full corps.
 
@@ -3008,7 +2828,9 @@ The narrative MUST be a complete 8-paragraph article. Not a summary.`;
       showContext.location,
       showContext.showName,
       showTitle,
-      uniformDetails
+      uniformDetails,
+      reportDay,
+      0 // articleIndex 0: DCI Daily
     );
 
     const imageData = await generateImageWithImagen(imagePrompt);
@@ -3242,7 +3064,9 @@ STRICT REQUIREMENTS - YOUR ARTICLE WILL BE REJECTED IF:
       featureCorps.corps,
       featureCorps.sourceYear,
       showTitle,
-      uniformDetails
+      uniformDetails,
+      reportDay,
+      1 // articleIndex 1: DCI Feature
     );
 
     const imageData = await generateImageWithImagen(imagePrompt);
@@ -3487,7 +3311,9 @@ STRICT REQUIREMENTS - YOUR ARTICLE WILL BE REJECTED IF:
       "General Effect",
       showContext.location,
       showTitle,
-      uniformDetails
+      uniformDetails,
+      reportDay,
+      2 // articleIndex 2: DCI Recap
     );
 
     const imageData = await generateImageWithImagen(imagePrompt);
@@ -3767,7 +3593,9 @@ The narrative MUST include fictitious quotes from directors. This is FANTASY spo
       topCorps?.corpsName || "Champion Corps",
       "Victory celebration after dominating Day " + reportDay,
       corpsLocation,
-      uniformDesign
+      uniformDesign,
+      reportDay,
+      4 // articleIndex 4: Fantasy Daily
     );
 
     const imageData = await generateImageWithImagen(imagePrompt);
@@ -4054,7 +3882,9 @@ Keep it fun and informative - this is fantasy drum corps, not Wall Street!`;
       topCorpsForImage?.corps,
       topCorpsForImage?.sourceYear,
       topTrendingCaption,
-      recapUniformDetails
+      recapUniformDetails,
+      reportDay,
+      3 // articleIndex 3: Fantasy Recap
     );
 
     const imageData = await generateImageWithImagen(imagePrompt);
