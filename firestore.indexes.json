@@ -325,20 +325,6 @@
       ]
     },
     {
-      "collectionGroup": "profile",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        {
-          "fieldPath": "engagement.lastLogin",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "engagement.loginStreak",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
       "collectionGroup": "email_log",
       "queryScope": "COLLECTION",
       "fields": [

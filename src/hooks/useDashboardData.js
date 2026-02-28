@@ -1,8 +1,9 @@
 // src/hooks/useDashboardData.js
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../App';
 import { db } from '../firebase';
-import { doc, updateDoc, getDoc, collection, getDocs } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { useSeason, getSeasonProgress } from './useSeason';
 import { useProfileStore } from '../store/profileStore';
 import toast from 'react-hot-toast';
@@ -40,7 +41,6 @@ export const useDashboardData = () => {
 
   // Additional local state
   const [availableCorps, setAvailableCorps] = useState([]);
-  const [recentScores, setRecentScores] = useState([]);
   const [selectedCorpsClass, setSelectedCorpsClass] = useState(null);
 
   // Class unlock tracking - use ref to avoid re-render loops
@@ -418,58 +418,48 @@ export const useDashboardData = () => {
     }
   }, [seasonData?.seasonUid]);
 
-  // Fetch recent scores
-  const fetchRecentScores = useCallback(async () => {
-    try {
-      if (!seasonData?.seasonUid) {
-        setRecentScores([]);
-        return;
-      }
-
-      // Try new subcollection format first, fallback to legacy single-document format
+  // Fetch the 5 most-recent recap days; React Query caches this for the session so
+  // navigating back to Dashboard won't trigger a second Firestore read.
+  const { data: rawRecentRecaps } = useQuery({
+    queryKey: ['fantasyRecaps-recent', seasonData?.seasonUid],
+    queryFn: async () => {
       const recapsCollectionRef = collection(db, 'fantasy_recaps', seasonData.seasonUid, 'days');
-      const recapsSnapshot = await getDocs(recapsCollectionRef);
+      const recapsQuery = query(recapsCollectionRef, orderBy('offSeasonDay', 'desc'), limit(5));
+      const recapsSnapshot = await getDocs(recapsQuery);
 
-      let allRecaps = [];
       if (!recapsSnapshot.empty) {
-        // New subcollection format
-        allRecaps = recapsSnapshot.docs.map(d => d.data());
-      } else {
-        // Fallback to legacy single-document format
-        const legacyDocRef = doc(db, 'fantasy_recaps', seasonData.seasonUid);
-        const legacyDoc = await getDoc(legacyDocRef);
-        if (legacyDoc.exists()) {
-          allRecaps = legacyDoc.data().recaps || [];
-        }
+        return recapsSnapshot.docs.map(d => d.data());
       }
+      // Fallback to legacy single-document format
+      const legacyDocRef = doc(db, 'fantasy_recaps', seasonData.seasonUid);
+      const legacyDoc = await getDoc(legacyDocRef);
+      return legacyDoc.exists() ? (legacyDoc.data().recaps || []) : [];
+    },
+    enabled: !!seasonData?.seasonUid,
+    staleTime: 5 * 60 * 1000,
+  });
 
-      if (allRecaps.length > 0) {
-        const isSoundSport = activeCorpsClass === 'soundSport';
-        const sortedRecaps = allRecaps
-          .filter(r => r.showName || r.eventName || r.name || r.shows?.length > 0)
-          .sort((a, b) => (b.offSeasonDay || 0) - (a.offSeasonDay || 0))
-          .slice(0, 5)
-          .map(r => ({
-            showName: r.showName || r.eventName || r.name || r.shows?.[0]?.eventName || 'Show',
-            date: r.date || '',
-            totalScore: isSoundSport ? 'Complete' : (typeof r.totalScore === 'number' ? r.totalScore.toFixed(3) : (r.totalScore || '0.000')),
-            rank: isSoundSport ? null : (r.rank ?? '-')
-          }));
-        setRecentScores(sortedRecaps);
-      } else {
-        setRecentScores([]);
-      }
-    } catch (error) {
-      console.error('Error fetching recent scores:', error);
-    }
-  }, [seasonData?.seasonUid, activeCorpsClass]);
+  const recentScores = useMemo(() => {
+    if (!rawRecentRecaps?.length) return [];
+    const isSoundSport = activeCorpsClass === 'soundSport';
+    return rawRecentRecaps
+      .filter(r => r.showName || r.eventName || r.name || r.shows?.length > 0)
+      .sort((a, b) => (b.offSeasonDay || 0) - (a.offSeasonDay || 0))
+      .slice(0, 5)
+      .map(r => ({
+        showName: r.showName || r.eventName || r.name || r.shows?.[0]?.eventName || 'Show',
+        date: r.date || '',
+        totalScore: isSoundSport ? 'Complete' : (typeof r.totalScore === 'number' ? r.totalScore.toFixed(3) : (r.totalScore || '0.000')),
+        rank: isSoundSport ? null : (r.rank ?? '-')
+      }));
+  }, [rawRecentRecaps, activeCorpsClass]);
 
-  // Fetch season-specific data when seasonData is available (parallel)
+  // Fetch season-specific data when seasonData is available
   useEffect(() => {
     if (seasonData?.seasonUid) {
-      Promise.all([fetchAvailableCorps(), fetchRecentScores()]);
+      fetchAvailableCorps();
     }
-  }, [seasonData?.seasonUid, fetchAvailableCorps, fetchRecentScores]);
+  }, [seasonData?.seasonUid, fetchAvailableCorps]);
 
   // Corps switching handler
   const handleCorpsSwitch = (classId) => {

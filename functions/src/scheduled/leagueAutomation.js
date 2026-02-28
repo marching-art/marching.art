@@ -318,6 +318,7 @@ exports.generateWeeklyMatchups = onSchedule(
       // Get all active leagues
       const leaguesSnapshot = await db
         .collection(`artifacts/${namespace}/leagues`)
+        .limit(500)
         .get();
 
       if (leaguesSnapshot.empty) {
@@ -329,7 +330,7 @@ exports.generateWeeklyMatchups = onSchedule(
       let matchupsGenerated = 0;
       let errors = [];
 
-      for (const leagueDoc of leaguesSnapshot.docs) {
+      const leagueResults = await Promise.all(leaguesSnapshot.docs.map(async (leagueDoc) => {
         try {
           const league = leagueDoc.data();
           const leagueId = leagueDoc.id;
@@ -337,7 +338,7 @@ exports.generateWeeklyMatchups = onSchedule(
 
           if (members.length < 2) {
             logger.info(`Skipping league ${leagueId}: less than 2 members`);
-            continue;
+            return { skipped: true };
           }
 
           // Check if matchups already exist for this week
@@ -346,17 +347,17 @@ exports.generateWeeklyMatchups = onSchedule(
 
           if (existingMatchup.exists) {
             logger.info(`Skipping league ${leagueId}: week ${nextWeek} matchups already exist`);
-            continue;
+            return { skipped: true };
           }
 
-          // Fetch member profiles to get corps classes
-          const profileRefs = members.map(memberId =>
-            db.doc(`artifacts/${namespace}/users/${memberId}/profile/data`)
-          );
-          const profileDocs = await db.getAll(...profileRefs);
+          // Fetch member profiles and standings in parallel
+          const [profileDocs, standingsDoc] = await Promise.all([
+            db.getAll(...members.map(memberId =>
+              db.doc(`artifacts/${namespace}/users/${memberId}/profile/data`)
+            )),
+            db.doc(`artifacts/${namespace}/leagues/${leagueId}/standings/current`).get()
+          ]);
 
-          // Build standings from existing data
-          const standingsDoc = await db.doc(`artifacts/${namespace}/leagues/${leagueId}/standings/current`).get();
           const standingsData = standingsDoc.exists ? standingsDoc.data()?.standings || [] : [];
           const standings = {};
           standingsData.forEach((s, idx) => {
@@ -393,17 +394,17 @@ exports.generateWeeklyMatchups = onSchedule(
             pairs: []
           };
 
+          let leagueMatchups = 0;
           for (const corpsClass of CORPS_CLASSES) {
             const classMembers = membersByClass[corpsClass];
             const matchupArrayKey = `${corpsClass}Matchups`;
 
             // Use smart pairing based on standings
             matchupData[matchupArrayKey] = smartPairMembers(classMembers, standings);
-            matchupsGenerated += matchupData[matchupArrayKey].filter(m => !m.isBye).length;
+            leagueMatchups += matchupData[matchupArrayKey].filter(m => !m.isBye).length;
           }
 
           await matchupRef.set(matchupData);
-          leaguesProcessed++;
 
           logger.info(`Generated matchups for league ${leagueId}: ${JSON.stringify({
             worldClass: matchupData.worldClassMatchups?.length || 0,
@@ -412,9 +413,18 @@ exports.generateWeeklyMatchups = onSchedule(
             soundSport: matchupData.soundSportMatchups?.length || 0
           })}`);
 
+          return { processed: 1, matchupsCount: leagueMatchups };
         } catch (leagueError) {
           logger.error(`Error processing league ${leagueDoc.id}:`, leagueError);
-          errors.push({ leagueId: leagueDoc.id, error: leagueError.message });
+          return { error: { leagueId: leagueDoc.id, error: leagueError.message } };
+        }
+      }));
+
+      for (const result of leagueResults) {
+        if (result.error) errors.push(result.error);
+        else if (!result.skipped) {
+          leaguesProcessed++;
+          matchupsGenerated += result.matchupsCount;
         }
       }
 
@@ -460,39 +470,44 @@ exports.generateWeeklyRecaps = onSchedule(
 
       const leaguesSnapshot = await db
         .collection(`artifacts/${namespace}/leagues`)
+        .limit(500)
         .get();
 
       let recapsGenerated = 0;
 
-      for (const leagueDoc of leaguesSnapshot.docs) {
+      const recapResults = await Promise.all(leaguesSnapshot.docs.map(async (leagueDoc) => {
         try {
           const leagueId = leagueDoc.id;
           const league = leagueDoc.data();
           const members = league.members || [];
 
-          // Get week's matchups
+          // Check if matchups exist before fetching the rest
           const matchupRef = db.doc(`artifacts/${namespace}/leagues/${leagueId}/matchups/week-${currentWeek}`);
           const matchupDoc = await matchupRef.get();
 
           if (!matchupDoc.exists) {
-            continue;
+            return { skipped: true };
           }
 
           const matchupData = matchupDoc.data();
 
-          // Get standings
-          const standingsDoc = await db.doc(`artifacts/${namespace}/leagues/${leagueId}/standings/current`).get();
+          // Fetch standings, profiles, and matchup history in parallel
+          const [standingsDoc, profileDocs, matchupHistorySnapshot] = await Promise.all([
+            db.doc(`artifacts/${namespace}/leagues/${leagueId}/standings/current`).get(),
+            members.length > 0
+              ? db.getAll(...members.map(uid =>
+                  db.doc(`artifacts/${namespace}/users/${uid}/profile/data`)
+                ))
+              : Promise.resolve([]),
+            db.collection(`artifacts/${namespace}/leagues/${leagueId}/matchups`).get()
+          ]);
+
           const standingsData = standingsDoc.exists ? standingsDoc.data()?.standings || [] : [];
           const standings = {};
           standingsData.forEach((s, idx) => {
             standings[s.uid] = { ...s, rank: idx + 1 };
           });
 
-          // Get member profiles
-          const profileRefs = members.map(uid =>
-            db.doc(`artifacts/${namespace}/users/${uid}/profile/data`)
-          );
-          const profileDocs = await db.getAll(...profileRefs);
           const memberProfiles = {};
           profileDocs.forEach((doc, idx) => {
             if (doc.exists) {
@@ -505,11 +520,6 @@ exports.generateWeeklyRecaps = onSchedule(
           recap.week = currentWeek;
           recap.generatedAt = admin.firestore.FieldValue.serverTimestamp();
 
-          // Fetch matchup history for rivalry detection
-          const matchupHistorySnapshot = await db
-            .collection(`artifacts/${namespace}/leagues/${leagueId}/matchups`)
-            .get();
-
           const matchupHistory = {};
           matchupHistorySnapshot.forEach(doc => {
             matchupHistory[doc.id] = { ...doc.data(), week: parseInt(doc.id.replace('week-', '')) };
@@ -521,14 +531,16 @@ exports.generateWeeklyRecaps = onSchedule(
 
           // Save recap
           await db.doc(`artifacts/${namespace}/leagues/${leagueId}/recaps/week-${currentWeek}`).set(recap);
-          recapsGenerated++;
 
           logger.info(`Generated recap for league ${leagueId}: ${recap.highlights.length} highlights`);
-
+          return { generated: 1 };
         } catch (leagueError) {
           logger.error(`Error generating recap for league ${leagueDoc.id}:`, leagueError);
+          return { skipped: true };
         }
-      }
+      }));
+
+      recapsGenerated = recapResults.filter(r => r.generated).length;
 
       logger.info(`Weekly recap generation complete: ${recapsGenerated} recaps generated`);
 
@@ -558,17 +570,18 @@ exports.updateLeagueRivalries = onSchedule(
     try {
       const leaguesSnapshot = await db
         .collection(`artifacts/${namespace}/leagues`)
+        .limit(500)
         .get();
 
       let rivalriesUpdated = 0;
 
-      for (const leagueDoc of leaguesSnapshot.docs) {
+      const rivalryResults = await Promise.all(leaguesSnapshot.docs.map(async (leagueDoc) => {
         try {
           const leagueId = leagueDoc.id;
           const league = leagueDoc.data();
           const members = league.members || [];
 
-          if (members.length < 2) continue;
+          if (members.length < 2) return { skipped: true };
 
           // Fetch all matchup history
           const matchupHistorySnapshot = await db
@@ -589,13 +602,17 @@ exports.updateLeagueRivalries = onSchedule(
               rivalries,
               updatedAt: admin.firestore.FieldValue.serverTimestamp()
             });
-            rivalriesUpdated++;
+            return { updated: 1 };
           }
 
+          return { skipped: true };
         } catch (leagueError) {
           logger.error(`Error updating rivalries for league ${leagueDoc.id}:`, leagueError);
+          return { skipped: true };
         }
-      }
+      }));
+
+      rivalriesUpdated = rivalryResults.filter(r => r.updated).length;
 
       logger.info(`Rivalry update complete: ${rivalriesUpdated} leagues updated`);
 

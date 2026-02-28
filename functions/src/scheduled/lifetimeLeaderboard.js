@@ -64,8 +64,13 @@ async function updateLifetimeLeaderboardLogic() {
       userDoc.ref.collection("profile").doc("data")
     );
 
-    // Batch fetch all profiles in a single operation (eliminates N+1 query)
-    const profileDocs = profileRefs.length > 0 ? await db.getAll(...profileRefs) : [];
+    // Batch fetch all profiles in chunks of 500 (Admin SDK getAll limit)
+    const profileDocs = [];
+    for (let i = 0; i < profileRefs.length; i += 500) {
+      const chunk = profileRefs.slice(i, i + 500);
+      const chunkDocs = await db.getAll(...chunk);
+      profileDocs.push(...chunkDocs);
+    }
 
     // Process all profiles
     profileDocs.forEach((profileDoc, index) => {

@@ -32,7 +32,7 @@ export default defineConfig({
           'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/functions', 'firebase/storage', 'firebase/analytics'],
           // UI utilities - lightweight, loaded immediately
           'vendor-ui': ['lucide-react', 'react-hot-toast'],
-          'vendor-query': ['@tanstack/react-query', 'zustand'],
+          'vendor-query': ['@tanstack/react-query', 'zustand', 'date-fns'],
           // Framer Motion - now uses LazyMotion with async feature loading
           // Features are lazy-loaded after initial render via dynamic import
           // See src/components/MotionProvider.jsx for implementation

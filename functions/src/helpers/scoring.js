@@ -89,15 +89,30 @@ function getRealisticCaptionScore(corpsName, sourceYear, caption, currentDay, hi
   }
 
   const allDataPoints = [];
-  // OPTIMIZATION: Use Set for O(1) lookups instead of .some() which is O(n)
-  // This reduces complexity from O(n²) to O(n)
   const seenDays = new Set();
   const yearData = historicalData[sourceYear] || [];
+
+  // Pre-index events by offSeasonDay so each day lookup is O(1) instead of O(n),
+  // avoiding the O(n²) re-scan that getScoreForDay would cause inside this loop.
+  const dayIndex = new Map();
   for (const event of yearData) {
-    // Skip if we've already processed this day
+    if (event.offSeasonDay == null) continue;
+    const bucket = dayIndex.get(event.offSeasonDay);
+    if (bucket) bucket.push(event);
+    else dayIndex.set(event.offSeasonDay, [event]);
+  }
+
+  for (const event of yearData) {
     if (seenDays.has(event.offSeasonDay)) continue;
 
-    const score = getScoreForDay(event.offSeasonDay, corpsName, sourceYear, caption, historicalData);
+    let score = null;
+    for (const ev of (dayIndex.get(event.offSeasonDay) || [])) {
+      const scoreData = ev.scores?.find((s) => s.corps === corpsName);
+      if (scoreData && scoreData.captions[caption] > 0) {
+        score = scoreData.captions[caption];
+        break;
+      }
+    }
     if (score !== null) {
       seenDays.add(event.offSeasonDay);
       allDataPoints.push([event.offSeasonDay, score]);
@@ -1406,12 +1421,24 @@ async function calculateCorpsStatisticsLogic() {
   });
 
   // 3. Process the data for each corps
+  // Pre-index events by corps name per year so each corps lookup is O(1) instead of O(E×S).
+  // Map structure: year -> corpsName -> event[]
+  const corpsByYear = {};
+  for (const [year, events] of Object.entries(historicalData)) {
+    const byCorps = {};
+    for (const event of events) {
+      for (const scoreEntry of (event.scores || [])) {
+        if (!byCorps[scoreEntry.corps]) byCorps[scoreEntry.corps] = [];
+        byCorps[scoreEntry.corps].push(event);
+      }
+    }
+    corpsByYear[year] = byCorps;
+  }
+
   const allCorpsStats = [];
   for (const corps of corpsInSeason) {
     const uniqueId = `${corps.corpsName}|${corps.sourceYear}`;
-    const corpsEvents = (historicalData[corps.sourceYear] || []).filter((event) =>
-      event.scores.some((s) => s.corps === corps.corpsName)
-    );
+    const corpsEvents = corpsByYear[corps.sourceYear]?.[corps.corpsName] || [];
 
     const captionScores = { GE1: [], GE2: [], VP: [], VA: [], CG: [], B: [], MA: [], P: [] };
 
