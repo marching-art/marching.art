@@ -318,6 +318,7 @@ exports.generateWeeklyMatchups = onSchedule(
       // Get all active leagues
       const leaguesSnapshot = await db
         .collection(`artifacts/${namespace}/leagues`)
+        .limit(500)
         .get();
 
       if (leaguesSnapshot.empty) {
@@ -460,6 +461,7 @@ exports.generateWeeklyRecaps = onSchedule(
 
       const leaguesSnapshot = await db
         .collection(`artifacts/${namespace}/leagues`)
+        .limit(500)
         .get();
 
       let recapsGenerated = 0;
@@ -558,6 +560,7 @@ exports.updateLeagueRivalries = onSchedule(
     try {
       const leaguesSnapshot = await db
         .collection(`artifacts/${namespace}/leagues`)
+        .limit(500)
         .get();
 
       let rivalriesUpdated = 0;

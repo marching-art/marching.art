@@ -252,8 +252,6 @@ export const useScoresData = (options = {}) => {
           });
         });
 
-        // Already sorted by query, but keep for safety
-        seasons.sort((a, b) => b.archivedAt - a.archivedAt);
         setArchivedSeasons(seasons);
       } catch (err) {
         console.error('Error fetching archived seasons:', err);

@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
-import { doc, updateDoc, getDoc, collection, getDocs } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { useSeason, getSeasonProgress } from './useSeason';
 import { useProfileStore } from '../store/profileStore';
 import toast from 'react-hot-toast';
@@ -428,7 +428,8 @@ export const useDashboardData = () => {
 
       // Try new subcollection format first, fallback to legacy single-document format
       const recapsCollectionRef = collection(db, 'fantasy_recaps', seasonData.seasonUid, 'days');
-      const recapsSnapshot = await getDocs(recapsCollectionRef);
+      const recapsQuery = query(recapsCollectionRef, orderBy('offSeasonDay', 'desc'), limit(5));
+      const recapsSnapshot = await getDocs(recapsQuery);
 
       let allRecaps = [];
       if (!recapsSnapshot.empty) {
