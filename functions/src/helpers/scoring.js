@@ -4,7 +4,7 @@ const { getDoc } = require("firebase-admin/firestore");
 const admin = require("firebase-admin");
 const { shuffleArray, getScheduleDay } = require("./season");
 const { calculateLineupSynergyBonus } = require('./showConceptSynergy');
-const { SHOW_PARTICIPATION_REWARDS, TRANSACTION_TYPES } = require("../callable/economy");
+const { SHOW_PARTICIPATION_REWARDS, TRANSACTION_TYPES, addCoinHistoryEntryToBatch } = require("../callable/economy");
 
 // OPTIMIZATION #1: Cache for regression calculations to avoid recomputing
 // the same corps/year/caption/day combination multiple times per scoring run.
@@ -451,12 +451,16 @@ function processCoinAwardsBatch(coinAwards, batch, db) {
   }
 
   // Add coin updates to batch (uses increment for concurrency safety)
+  // History entries are written to subcollection instead of arrayUnion on profile
   for (const [uid, data] of coinByUser) {
     const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
     batch.update(userProfileRef, {
       corpsCoin: admin.firestore.FieldValue.increment(data.totalAmount),
-      corpsCoinHistory: admin.firestore.FieldValue.arrayUnion(...data.history),
     });
+
+    for (const entry of data.history) {
+      addCoinHistoryEntryToBatch(batch, db, uid, entry);
+    }
   }
 
   logger.info(`Batched ${coinAwards.length} coin awards for ${coinByUser.size} users`);

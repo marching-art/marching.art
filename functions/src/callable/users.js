@@ -2,6 +2,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb, dataNamespaceParam } = require("../config");
+const { calculateXPUpdates, XP_SOURCES } = require("../helpers/xpCalculations");
 
 exports.setUserRole = onCall({ cors: true }, async (request) => {
   if (!request.auth || !request.auth.token.admin) {
@@ -388,18 +389,33 @@ exports.dailyXPCheckIn = onCall({ cors: true }, async (request) => {
 
 /**
  * Award XP for various actions (comments, chat, etc.)
+ *
+ * SECURITY: Only allows predefined XP sources with server-validated amounts.
+ * The client specifies the action (reason), and the server determines the
+ * correct XP amount from XP_SOURCES. This prevents clients from injecting
+ * arbitrary XP values.
  */
 exports.awardXP = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "You must be logged in.");
   }
 
-  const { amount, reason } = request.data;
+  const { reason } = request.data;
   const uid = request.auth.uid;
 
-  if (!amount || amount <= 0) {
-    throw new HttpsError("invalid-argument", "Invalid XP amount.");
+  // Server-side allowlist of valid XP awards — clients cannot specify amounts
+  const ALLOWED_XP_AWARDS = {
+    dailyLogin: XP_SOURCES.dailyLogin,
+    weeklyParticipation: XP_SOURCES.weeklyParticipation,
+    leagueWin: XP_SOURCES.leagueWin,
+  };
+
+  if (!reason || !ALLOWED_XP_AWARDS[reason]) {
+    throw new HttpsError("invalid-argument",
+      `Invalid XP reason. Allowed: ${Object.keys(ALLOWED_XP_AWARDS).join(', ')}`);
   }
+
+  const amount = ALLOWED_XP_AWARDS[reason];
 
   const db = getDb();
   const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
@@ -412,31 +428,9 @@ exports.awardXP = onCall({ cors: true }, async (request) => {
       }
 
       const profileData = profileDoc.data();
-      const currentXP = profileData.xp || 0;
-      const newXP = currentXP + amount;
-      const newLevel = Math.floor(newXP / 1000) + 1;
+      const { updates } = calculateXPUpdates(profileData, amount);
 
-      const updateData = {
-        xp: newXP,
-        xpLevel: newLevel,
-      };
-
-      // Check for class unlocks
-      const unlockedClasses = profileData.unlockedClasses || ['soundSport'];
-      if (newLevel >= 3 && !unlockedClasses.includes('aClass')) {
-        unlockedClasses.push('aClass');
-        updateData.unlockedClasses = unlockedClasses;
-      }
-      if (newLevel >= 5 && !unlockedClasses.includes('open')) {
-        unlockedClasses.push('open');
-        updateData.unlockedClasses = unlockedClasses;
-      }
-      if (newLevel >= 10 && !unlockedClasses.includes('world')) {
-        unlockedClasses.push('world');
-        updateData.unlockedClasses = unlockedClasses;
-      }
-
-      transaction.update(profileRef, updateData);
+      transaction.update(profileRef, updates);
     });
 
     logger.info(`Awarded ${amount} XP to user ${uid} for: ${reason}`);
