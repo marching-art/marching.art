@@ -37,6 +37,7 @@ export {
   LeagueStatus,
   DailyChallenges,
   QuickStats,
+  LineupSimulatorPanel,
   // Constants
   CLASS_LABELS,
   CLASS_SHORT_LABELS,

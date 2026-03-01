@@ -43,6 +43,7 @@ import {
   LeagueStatus,
   DailyChallenges,
   QuickStats,
+  LineupSimulatorPanel,
   CAPTIONS,
   CLASS_LABELS,
   CLASS_DISPLAY_NAMES,
@@ -840,6 +841,14 @@ const Dashboard = () => {
                   recentResults={recentResults}
                   lineupScoreData={lineupScoreData}
                   lineupCount={lineupCount}
+                />
+
+                {/* Lineup Analyzer - per-caption efficiency and weak-spot identification */}
+                <LineupSimulatorPanel
+                  lineup={lineup}
+                  lineupScoreData={lineupScoreData}
+                  activeCorpsClass={activeCorpsClass}
+                  onSwapCaption={openCaptionSelection}
                 />
 
                 {/* Submit Article */}

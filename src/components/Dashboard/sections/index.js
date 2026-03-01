@@ -9,6 +9,7 @@ export { default as RecentResultsFeed } from './RecentResultsFeed';
 export { default as LeagueStatus } from './LeagueStatus';
 export { default as DailyChallenges } from './DailyChallenges';
 export { default as QuickStats } from './QuickStats';
+export { default as LineupSimulatorPanel } from './LineupSimulatorPanel';
 
 // Re-export constants for convenience
 export * from './constants';
