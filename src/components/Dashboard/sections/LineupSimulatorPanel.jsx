@@ -5,11 +5,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Zap, ChevronRight, AlertTriangle, BarChart2 } from 'lucide-react';
 import { db } from '../../../firebase';
 import { doc, getDoc } from 'firebase/firestore';
-
-// Max possible score per caption slot (matches DCI scoring weights)
-const CAPTION_MAX = { GE1: 20, GE2: 20, VP: 10, VA: 10, CG: 10, B: 10, MA: 10, P: 10 };
-
-const CAPTION_KEYS = ['GE1', 'GE2', 'VP', 'VA', 'CG', 'B', 'MA', 'P'];
+import { REQUIRED_CAPTIONS, CAPTION_CATEGORIES } from '../../../utils/captionPricing';
 
 /**
  * Calculate the season average for one caption across all historical shows.
@@ -25,22 +21,24 @@ const calcSeasonAvg = (yearData, corpsName, captionId) => {
     : null;
 };
 
-const EfficiencyBar = ({ pct }) => {
-  const color =
-    pct >= 80 ? 'bg-green-500' :
-    pct >= 60 ? 'bg-yellow-500' :
-    'bg-red-500';
-  return (
-    <div className="h-1.5 bg-[#333] rounded-full overflow-hidden">
-      <div
-        className={`h-full ${color} rounded-full transition-all duration-500`}
-        style={{ width: `${Math.min(pct, 100)}%` }}
-      />
-    </div>
-  );
-};
+/** Map efficiency percentage to a color tier */
+const effBgColor = (pct) =>
+  pct >= 80 ? 'bg-green-500' : pct >= 60 ? 'bg-yellow-500' : 'bg-red-500';
 
-const LineupSimulatorPanel = ({ lineup, lineupScoreData, activeCorpsClass, onSwapCaption }) => {
+const effTextColor = (pct) =>
+  pct >= 80 ? 'text-green-500' : pct >= 60 ? 'text-yellow-500' : 'text-red-500';
+
+const EfficiencyBar = React.memo(({ pct }) => (
+  <div className="h-1.5 bg-[#333] rounded-full overflow-hidden">
+    <div
+      className={`h-full ${effBgColor(pct)} rounded-full transition-all duration-500`}
+      style={{ width: `${Math.min(pct, 100)}%` }}
+    />
+  </div>
+));
+EfficiencyBar.displayName = 'EfficiencyBar';
+
+const LineupSimulatorPanel = React.memo(({ lineup, lineupScoreData, activeCorpsClass, onSwapCaption }) => {
   const [seasonAvgs, setSeasonAvgs] = useState({});
   const [avgsLoading, setAvgsLoading] = useState(false);
 
@@ -53,6 +51,7 @@ const LineupSimulatorPanel = ({ lineup, lineupScoreData, activeCorpsClass, onSwa
     if (isSoundSport || filledCount < 8 || !lineup) return;
 
     let cancelled = false;
+    setSeasonAvgs({}); // clear stale data from previous lineup
     const fetchAvgs = async () => {
       setAvgsLoading(true);
       try {
@@ -72,7 +71,7 @@ const LineupSimulatorPanel = ({ lineup, lineupScoreData, activeCorpsClass, onSwa
 
         // Compute per-caption season averages
         const avgs = {};
-        CAPTION_KEYS.forEach(captionId => {
+        REQUIRED_CAPTIONS.forEach(captionId => {
           const value = lineup[captionId];
           if (!value) return;
           const [corpsName, year] = value.split('|');
@@ -93,18 +92,22 @@ const LineupSimulatorPanel = ({ lineup, lineupScoreData, activeCorpsClass, onSwa
   }, [lineup, filledCount, isSoundSport]);
 
   // Build row data: prefer season avg over last-show score
-  const rows = useMemo(() => CAPTION_KEYS.map(captionId => {
+  const rows = useMemo(() => REQUIRED_CAPTIONS.map(captionId => {
     const value = lineup?.[captionId];
     const [corpsName, year] = value ? value.split('|') : [];
     const lastScore = lineupScoreData?.[captionId]?.score ?? null;
     const avg = seasonAvgs[captionId] ?? lastScore;
-    const max = CAPTION_MAX[captionId];
+    const max = CAPTION_CATEGORIES[captionId].weight;
     const pct = avg != null ? Math.round((avg / max) * 100) : null;
     // How many points gained by reaching 80% efficiency
     const potentialGain = (pct != null && pct < 80) ? +((0.8 * max) - avg).toFixed(1) : null;
     return { id: captionId, corpsName, year, avg, pct, potentialGain };
   }), [lineup, lineupScoreData, seasonAvgs]);
 
+  // Only render for full, non-SoundSport lineups
+  if (isSoundSport || filledCount < 8) return null;
+
+  // Derived values — only computed when the component will actually render
   const scoredRows = rows.filter(r => r.pct != null);
   const weakSpots = [...scoredRows]
     .filter(r => r.pct < 75)
@@ -113,10 +116,6 @@ const LineupSimulatorPanel = ({ lineup, lineupScoreData, activeCorpsClass, onSwa
   const overallEff = scoredRows.length > 0
     ? Math.round(scoredRows.reduce((s, r) => s + r.pct, 0) / scoredRows.length)
     : null;
-
-  // Only render for full, non-SoundSport lineups
-  if (isSoundSport || filledCount < 8) return null;
-
   const hasScores = scoredRows.length > 0;
   const usingSeasonAvgs = Object.keys(seasonAvgs).length > 0;
 
@@ -191,11 +190,7 @@ const LineupSimulatorPanel = ({ lineup, lineupScoreData, activeCorpsClass, onSwa
                       <div className="text-xs font-bold text-white font-data tabular-nums">
                         {row.avg.toFixed(1)}
                       </div>
-                      <div className={`text-[10px] tabular-nums ${
-                        (row.pct ?? 0) >= 80 ? 'text-green-500' :
-                        (row.pct ?? 0) >= 60 ? 'text-yellow-500' :
-                        'text-red-500'
-                      }`}>
+                      <div className={`text-[10px] tabular-nums ${effTextColor(row.pct ?? 0)}`}>
                         {row.pct}%
                       </div>
                     </>
@@ -243,6 +238,8 @@ const LineupSimulatorPanel = ({ lineup, lineupScoreData, activeCorpsClass, onSwa
       )}
     </div>
   );
-};
+});
+
+LineupSimulatorPanel.displayName = 'LineupSimulatorPanel';
 
 export default LineupSimulatorPanel;
