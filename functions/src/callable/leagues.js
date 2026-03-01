@@ -758,7 +758,7 @@ async function updateStandings(db, leagueRef, pairs) {
       if (records[loser]) {
         records[loser].losses += 1;
         records[loser].pointsFor += (loser === pair.player1 ? pair.player1Score : pair.player2Score) || 0;
-        records[loser].pointsAgainst += (loser === pair.player1 ? pair.player1Score : pair.player2Score) || 0;
+        records[loser].pointsAgainst += (loser === pair.player1 ? pair.player2Score : pair.player1Score) || 0;
         records[loser].currentStreak = records[loser].streakType === 'L'
           ? records[loser].currentStreak + 1
           : 1;

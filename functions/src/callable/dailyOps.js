@@ -3,6 +3,7 @@ const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb, dataNamespaceParam } = require("../config");
 const { calculateXPUpdates, XP_SOURCES } = require("../helpers/xpCalculations");
+const { addCoinHistoryEntryToTransaction } = require("./economy");
 
 // Streak milestone rewards (XP + CC + optional free streak freeze)
 const STREAK_MILESTONES = {
@@ -133,18 +134,18 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
       // Add CorpsCoin if milestone reached
       if (coinAwarded > 0) {
         updates.corpsCoin = admin.firestore.FieldValue.increment(coinAwarded);
-
-        // Add to history
-        const historyEntry = {
-          type: 'streak_milestone',
-          amount: coinAwarded,
-          description: `${newStreak}-day streak milestone!${freeFreeze ? ' +Free Streak Freeze!' : ''}`,
-          timestamp: new Date(),
-        };
-        updates.corpsCoinHistory = admin.firestore.FieldValue.arrayUnion(historyEntry);
       }
 
       transaction.update(profileRef, updates);
+
+      // Write coin history to subcollection (outside profile doc to avoid unbounded growth)
+      if (coinAwarded > 0) {
+        addCoinHistoryEntryToTransaction(transaction, db, uid, {
+          type: 'streak_milestone',
+          amount: coinAwarded,
+          description: `${newStreak}-day streak milestone!${freeFreeze ? ' +Free Streak Freeze!' : ''}`,
+        });
+      }
 
       return {
         alreadyClaimed: false,
@@ -265,19 +266,17 @@ const purchaseStreakFreeze = onCall({ cors: true }, async (request) => {
       const freezeUntil = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
       // Deduct CorpsCoin and activate freeze
-      const historyEntry = {
+      transaction.update(profileRef, {
+        corpsCoin: admin.firestore.FieldValue.increment(-STREAK_FREEZE_COST),
+        'engagement.streakFreezeUntil': freezeUntil,
+        'engagement.lastFreezePurchase': admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      addCoinHistoryEntryToTransaction(transaction, db, uid, {
         type: 'streak_freeze',
         amount: -STREAK_FREEZE_COST,
         balance: currentCoin - STREAK_FREEZE_COST,
         description: 'Streak freeze protection (24h)',
-        timestamp: now,
-      };
-
-      transaction.update(profileRef, {
-        corpsCoin: admin.firestore.FieldValue.increment(-STREAK_FREEZE_COST),
-        corpsCoinHistory: admin.firestore.FieldValue.arrayUnion(historyEntry),
-        'engagement.streakFreezeUntil': freezeUntil,
-        'engagement.lastFreezePurchase': admin.firestore.FieldValue.serverTimestamp(),
       });
 
       return {

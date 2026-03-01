@@ -4,6 +4,77 @@ const admin = require("firebase-admin");
 const { getDb, dataNamespaceParam } = require("../config");
 
 // =============================================================================
+// CORPSCOIN HISTORY SUBCOLLECTION HELPERS
+//
+// History entries are stored in a subcollection instead of an array on the
+// profile document. This prevents hitting Firestore's 1MB document size limit
+// for active users with many transactions.
+//
+// Path: artifacts/{namespace}/users/{uid}/corpsCoinHistory/{txnId}
+// =============================================================================
+
+/**
+ * Get the corpsCoinHistory subcollection reference for a user
+ * @param {Object} db - Firestore instance
+ * @param {string} uid - User ID
+ * @returns {CollectionReference}
+ */
+function getHistoryCollection(db, uid) {
+  return db.collection(`artifacts/${dataNamespaceParam.value()}/users/${uid}/corpsCoinHistory`);
+}
+
+/**
+ * Add a CorpsCoin history entry to the subcollection.
+ * Use this after a transaction has already updated the corpsCoin balance.
+ *
+ * @param {Object} db - Firestore instance
+ * @param {string} uid - User ID
+ * @param {Object} entry - History entry data
+ * @returns {Promise<DocumentReference>}
+ */
+async function addCoinHistoryEntry(db, uid, entry) {
+  const historyRef = getHistoryCollection(db, uid).doc();
+  await historyRef.set({
+    ...entry,
+    timestamp: entry.timestamp || admin.firestore.FieldValue.serverTimestamp(),
+  });
+  return historyRef;
+}
+
+/**
+ * Add a CorpsCoin history entry within a Firestore batch.
+ * Used when coin updates are batched with other writes (e.g., scoring).
+ *
+ * @param {WriteBatch} batch - Firestore batch
+ * @param {Object} db - Firestore instance
+ * @param {string} uid - User ID
+ * @param {Object} entry - History entry data
+ */
+function addCoinHistoryEntryToBatch(batch, db, uid, entry) {
+  const historyRef = getHistoryCollection(db, uid).doc();
+  batch.set(historyRef, {
+    ...entry,
+    timestamp: entry.timestamp || admin.firestore.FieldValue.serverTimestamp(),
+  });
+}
+
+/**
+ * Add a CorpsCoin history entry within a Firestore transaction.
+ *
+ * @param {Transaction} transaction - Firestore transaction
+ * @param {Object} db - Firestore instance
+ * @param {string} uid - User ID
+ * @param {Object} entry - History entry data
+ */
+function addCoinHistoryEntryToTransaction(transaction, db, uid, entry) {
+  const historyRef = getHistoryCollection(db, uid).doc();
+  transaction.set(historyRef, {
+    ...entry,
+    timestamp: entry.timestamp || new Date(),
+  });
+}
+
+// =============================================================================
 // SIMPLIFIED CORPSCOIN ECONOMY
 //
 // EARNING SOURCES:
@@ -78,26 +149,24 @@ const awardCorpsCoin = async (uid, corpsClass, showName, customAmount = null) =>
     const amount = customAmount !== null ? customAmount : (SHOW_PARTICIPATION_REWARDS[corpsClass] || 0);
     if (amount === 0) return;
 
+    let newBalance;
     await db.runTransaction(async (transaction) => {
       const profileDoc = await transaction.get(profileRef);
       if (!profileDoc.exists) return;
 
       const currentBalance = profileDoc.data().corpsCoin || 0;
-      const newBalance = currentBalance + amount;
+      newBalance = currentBalance + amount;
 
-      // Create history entry
-      const historyEntry = {
+      transaction.update(profileRef, {
+        corpsCoin: newBalance,
+      });
+
+      addCoinHistoryEntryToTransaction(transaction, db, uid, {
         type: TRANSACTION_TYPES.SHOW_PARTICIPATION,
         amount: amount,
         balance: newBalance,
         description: `Show performance at ${showName}`,
         corpsClass: corpsClass,
-        timestamp: new Date(),
-      };
-
-      transaction.update(profileRef, {
-        corpsCoin: newBalance,
-        corpsCoinHistory: admin.firestore.FieldValue.arrayUnion(historyEntry),
       });
     });
 
@@ -124,17 +193,15 @@ const awardLeagueWinBonus = async (uid, leagueName, week) => {
       const currentBalance = profileDoc.data().corpsCoin || 0;
       const newBalance = currentBalance + WEEKLY_LEAGUE_WIN_REWARD;
 
-      const historyEntry = {
+      transaction.update(profileRef, {
+        corpsCoin: newBalance,
+      });
+
+      addCoinHistoryEntryToTransaction(transaction, db, uid, {
         type: TRANSACTION_TYPES.LEAGUE_WIN,
         amount: WEEKLY_LEAGUE_WIN_REWARD,
         balance: newBalance,
         description: `Week ${week} win in ${leagueName}`,
-        timestamp: new Date(),
-      };
-
-      transaction.update(profileRef, {
-        corpsCoin: newBalance,
-        corpsCoinHistory: admin.firestore.FieldValue.arrayUnion(historyEntry),
       });
     });
 
@@ -184,19 +251,17 @@ const awardSeasonBonus = async (uid, finalRank, seasonName, corpsClass) => {
       const currentBalance = profileDoc.data().corpsCoin || 0;
       const newBalance = currentBalance + amount;
 
-      const historyEntry = {
+      transaction.update(profileRef, {
+        corpsCoin: newBalance,
+      });
+
+      addCoinHistoryEntryToTransaction(transaction, db, uid, {
         type: TRANSACTION_TYPES.SEASON_BONUS,
         amount: amount,
         balance: newBalance,
         description: `${rankDescription} in ${seasonName} (${corpsClass})`,
         finalRank: finalRank,
         corpsClass: corpsClass,
-        timestamp: new Date(),
-      };
-
-      transaction.update(profileRef, {
-        corpsCoin: newBalance,
-        corpsCoinHistory: admin.firestore.FieldValue.arrayUnion(historyEntry),
       });
     });
 
@@ -253,20 +318,17 @@ const unlockClassWithCorpsCoin = onCall({ cors: true }, async (request) => {
       const newBalance = currentCoin - cost;
       unlockedClasses.push(classToUnlock);
 
-      // Create history entry
-      const historyEntry = {
+      transaction.update(profileRef, {
+        corpsCoin: newBalance,
+        unlockedClasses: unlockedClasses,
+      });
+
+      addCoinHistoryEntryToTransaction(transaction, db, uid, {
         type: TRANSACTION_TYPES.CLASS_UNLOCK,
         amount: -cost,
         balance: newBalance,
         description: `Unlocked ${classToUnlock}`,
         classUnlocked: classToUnlock,
-        timestamp: new Date(),
-      };
-
-      transaction.update(profileRef, {
-        corpsCoin: newBalance,
-        unlockedClasses: unlockedClasses,
-        corpsCoinHistory: admin.firestore.FieldValue.arrayUnion(historyEntry),
       });
 
       return { newBalance, classUnlocked: classToUnlock };
@@ -311,18 +373,16 @@ const payLeagueEntryFee = async (uid, leagueId, leagueName, fee) => {
 
       const newBalance = currentCoin - fee;
 
-      const historyEntry = {
+      transaction.update(profileRef, {
+        corpsCoin: newBalance,
+      });
+
+      addCoinHistoryEntryToTransaction(transaction, db, uid, {
         type: TRANSACTION_TYPES.LEAGUE_ENTRY,
         amount: -fee,
         balance: newBalance,
         description: `Entry fee for ${leagueName}`,
         leagueId: leagueId,
-        timestamp: new Date(),
-      };
-
-      transaction.update(profileRef, {
-        corpsCoin: newBalance,
-        corpsCoinHistory: admin.firestore.FieldValue.arrayUnion(historyEntry),
       });
     });
 
@@ -347,26 +407,27 @@ const getCorpsCoinHistory = onCall({ cors: true }, async (request) => {
   }
 
   const uid = request.auth.uid;
-  const { limit = 50 } = request.data || {};
+  const { limit: queryLimit = 50 } = request.data || {};
 
   const db = getDb();
   const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
 
   try {
-    const profileDoc = await profileRef.get();
+    // Fetch balance and history in parallel
+    const [profileDoc, historySnapshot] = await Promise.all([
+      profileRef.get(),
+      getHistoryCollection(db, uid)
+        .orderBy('timestamp', 'desc')
+        .limit(queryLimit)
+        .get(),
+    ]);
+
     if (!profileDoc.exists) {
       throw new HttpsError("not-found", "User profile not found.");
     }
 
-    const profileData = profileDoc.data();
-    const balance = profileData.corpsCoin || 0;
-    const history = (profileData.corpsCoinHistory || [])
-      .sort((a, b) => {
-        const timeA = a.timestamp?.toDate?.() || new Date(a.timestamp);
-        const timeB = b.timestamp?.toDate?.() || new Date(b.timestamp);
-        return timeB - timeA;
-      })
-      .slice(0, limit);
+    const balance = profileDoc.data().corpsCoin || 0;
+    const history = historySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     return {
       success: true,
@@ -439,6 +500,11 @@ module.exports = {
   // Query functions
   getCorpsCoinHistory,
   getEarningOpportunities,
+
+  // History subcollection helpers (for use in scoring.js, dailyOps.js, etc.)
+  addCoinHistoryEntry,
+  addCoinHistoryEntryToBatch,
+  addCoinHistoryEntryToTransaction,
 
   // Constants (for use in other modules)
   SHOW_PARTICIPATION_REWARDS,
