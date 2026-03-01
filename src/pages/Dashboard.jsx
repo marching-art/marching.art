@@ -44,6 +44,7 @@ import {
   DailyChallenges,
   QuickStats,
   LineupSimulatorPanel,
+  PredictionGamePanel,
   CAPTIONS,
   CLASS_LABELS,
   CLASS_DISPLAY_NAMES,
@@ -833,6 +834,9 @@ const Dashboard = () => {
 
                 {/* Daily Challenges - drives daily return visits */}
                 <DailyChallenges onLineupClick={() => openCaptionSelection()} />
+
+                {/* Daily Predictions - check-back-tomorrow engagement loop */}
+                <PredictionGamePanel recentResults={recentResults} />
 
                 {/* Quick Stats - rotating fun facts about user performance */}
                 <QuickStats

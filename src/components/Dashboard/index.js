@@ -38,6 +38,7 @@ export {
   DailyChallenges,
   QuickStats,
   LineupSimulatorPanel,
+  PredictionGamePanel,
   // Constants
   CLASS_LABELS,
   CLASS_SHORT_LABELS,
