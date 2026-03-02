@@ -45,6 +45,7 @@ import {
   QuickStats,
   LineupSimulatorPanel,
   PredictionGamePanel,
+  AchievementTrackerPanel,
   CAPTIONS,
   CLASS_LABELS,
   CLASS_DISPLAY_NAMES,
@@ -853,6 +854,14 @@ const Dashboard = () => {
                   lineupScoreData={lineupScoreData}
                   activeCorpsClass={activeCorpsClass}
                   onSwapCaption={openCaptionSelection}
+                />
+
+                {/* Achievement Tracker - progress toward next unlockable achievements */}
+                <AchievementTrackerPanel
+                  profile={profile}
+                  lineupCount={lineupCount}
+                  resultCount={recentResults.length}
+                  leagueCount={myLeagues?.length || 0}
                 />
 
                 {/* Submit Article */}

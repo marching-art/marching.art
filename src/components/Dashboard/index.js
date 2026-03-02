@@ -39,6 +39,7 @@ export {
   QuickStats,
   LineupSimulatorPanel,
   PredictionGamePanel,
+  AchievementTrackerPanel,
   // Constants
   CLASS_LABELS,
   CLASS_SHORT_LABELS,
