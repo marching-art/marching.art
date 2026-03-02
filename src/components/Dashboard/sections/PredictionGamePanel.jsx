@@ -1,7 +1,7 @@
 // PredictionGamePanel - Daily prediction questions that resolve when new scores arrive
 // Creates a natural "check back tomorrow" engagement loop between 2 AM scoring cycles
 
-import React, { memo, useState, useEffect, useMemo, useCallback } from 'react';
+import React, { memo, useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Crosshair, Check, X, Trophy } from 'lucide-react';
 import { useHaptic } from '../../../hooks/useHaptic';
 
@@ -32,6 +32,21 @@ const loadStats = () => {
 const saveStats = (stats) => {
   try { localStorage.setItem(STATS_KEY, JSON.stringify(stats)); }
   catch { /* ignore */ }
+};
+
+/** Prune prediction entries older than 30 days to prevent unbounded localStorage growth */
+const pruneOldPredictions = () => {
+  try {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 30);
+    const cutoffStr = cutoff.toLocaleDateString('en-CA');
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (key?.startsWith('pred_') && key < `pred_${cutoffStr}`) {
+        localStorage.removeItem(key);
+      }
+    }
+  } catch { /* ignore */ }
 };
 
 // ---------------------------------------------------------------------------
@@ -82,6 +97,12 @@ const PredictionGamePanel = memo(({ recentResults }) => {
   const today = getToday();
   const [preds, setPreds] = useState(() => loadPredictions(today));
   const [stats, setStats] = useState(() => loadStats());
+
+  // Prune old localStorage entries once per mount
+  const hasPruned = useRef(false);
+  useEffect(() => {
+    if (!hasPruned.current) { hasPruned.current = true; pruneOldPredictions(); }
+  }, []);
 
   // Generate questions from current data
   const questions = useMemo(
