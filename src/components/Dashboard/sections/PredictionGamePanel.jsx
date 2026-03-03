@@ -1,8 +1,8 @@
 // PredictionGamePanel - Daily prediction questions that resolve when new scores arrive
 // Creates a natural "check back tomorrow" engagement loop between 2 AM scoring cycles
 
-import React, { memo, useState, useEffect, useMemo, useCallback } from 'react';
-import { Crosshair, Check, X, ChevronRight, Trophy } from 'lucide-react';
+import React, { memo, useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { Crosshair, Check, X, Trophy } from 'lucide-react';
 import { useHaptic } from '../../../hooks/useHaptic';
 
 // ---------------------------------------------------------------------------
@@ -34,6 +34,21 @@ const saveStats = (stats) => {
   catch { /* ignore */ }
 };
 
+/** Prune prediction entries older than 30 days to prevent unbounded localStorage growth */
+const pruneOldPredictions = () => {
+  try {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 30);
+    const cutoffStr = cutoff.toLocaleDateString('en-CA');
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (key?.startsWith('pred_') && key < `pred_${cutoffStr}`) {
+        localStorage.removeItem(key);
+      }
+    }
+  } catch { /* ignore */ }
+};
+
 // ---------------------------------------------------------------------------
 // Question generation — uses recent results for thresholds
 // ---------------------------------------------------------------------------
@@ -55,7 +70,6 @@ const buildQuestions = (recentResults) => {
       options: ['Over', 'Under'],
       xp: 15,
       threshold: line,
-      resolve: (newScore) => newScore > line ? 'Over' : 'Under',
     },
     {
       id: 'beat-prev',
@@ -63,7 +77,6 @@ const buildQuestions = (recentResults) => {
       options: ['Yes', 'No'],
       xp: 15,
       threshold: lastScore,
-      resolve: (newScore) => newScore > lastScore ? 'Yes' : 'No',
     },
     {
       id: 'podium',
@@ -71,7 +84,6 @@ const buildQuestions = (recentResults) => {
       options: ['Yes', 'No'],
       xp: 15,
       threshold: 3,
-      resolvePlacement: (placement) => placement <= 3 ? 'Yes' : 'No',
     },
   ];
 };
@@ -85,6 +97,12 @@ const PredictionGamePanel = memo(({ recentResults }) => {
   const today = getToday();
   const [preds, setPreds] = useState(() => loadPredictions(today));
   const [stats, setStats] = useState(() => loadStats());
+
+  // Prune old localStorage entries once per mount
+  const hasPruned = useRef(false);
+  useEffect(() => {
+    if (!hasPruned.current) { hasPruned.current = true; pruneOldPredictions(); }
+  }, []);
 
   // Generate questions from current data
   const questions = useMemo(
@@ -109,40 +127,35 @@ const PredictionGamePanel = memo(({ recentResults }) => {
     let correct = 0;
     const storedPicks = preds.picks;
 
-    if (storedPicks['over-under']) {
-      const answer = newScore > storedPicks['over-under'].threshold ? 'Over' : 'Under';
-      const isCorrect = storedPicks['over-under'].pick === answer;
-      results['over-under'] = { answer, isCorrect, newScore };
-      if (isCorrect) correct++;
-    }
+    const resolvers = [
+      { id: 'over-under', answer: () => newScore > storedPicks['over-under']?.threshold ? 'Over' : 'Under', extra: { newScore } },
+      { id: 'beat-prev', answer: () => newScore > storedPicks['beat-prev']?.threshold ? 'Yes' : 'No', extra: { newScore } },
+      { id: 'podium', skip: newPlacement == null, answer: () => newPlacement <= 3 ? 'Yes' : 'No', extra: { placement: newPlacement } },
+    ];
 
-    if (storedPicks['beat-prev']) {
-      const answer = newScore > storedPicks['beat-prev'].threshold ? 'Yes' : 'No';
-      const isCorrect = storedPicks['beat-prev'].pick === answer;
-      results['beat-prev'] = { answer, isCorrect, newScore };
-      if (isCorrect) correct++;
-    }
-
-    if (storedPicks['podium'] && newPlacement != null) {
-      const answer = newPlacement <= 3 ? 'Yes' : 'No';
-      const isCorrect = storedPicks['podium'].pick === answer;
-      results['podium'] = { answer, isCorrect, placement: newPlacement };
+    for (const { id, skip, answer, extra } of resolvers) {
+      if (!storedPicks[id] || skip) continue;
+      const resolved = answer();
+      const isCorrect = storedPicks[id].pick === resolved;
+      results[id] = { answer: resolved, isCorrect, ...extra };
       if (isCorrect) correct++;
     }
 
     if (Object.keys(results).length === 0) return;
 
-    const resolved = { ...preds, resolved: true, results };
-    setPreds(resolved);
-    savePredictions(today, resolved);
+    const resolvedPreds = { ...preds, resolved: true, results };
+    setPreds(resolvedPreds);
+    savePredictions(today, resolvedPreds);
 
-    const newStats = {
-      correct: stats.correct + correct,
-      total: stats.total + Object.keys(results).length,
-    };
-    setStats(newStats);
-    saveStats(newStats);
-  }, [preds, recentResults, today, stats]);
+    setStats(prev => {
+      const next = {
+        correct: prev.correct + correct,
+        total: prev.total + Object.keys(results).length,
+      };
+      saveStats(next);
+      return next;
+    });
+  }, [preds, recentResults, today]);
 
   // Handle user picking an option
   const handlePick = useCallback((questionId, option, threshold) => {

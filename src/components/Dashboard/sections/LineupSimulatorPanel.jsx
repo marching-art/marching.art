@@ -45,10 +45,11 @@ const LineupSimulatorPanel = React.memo(({ lineup, lineupScoreData, activeCorpsC
   // Compute derived values without hooks so we can guard the effect/render
   const filledCount = Object.values(lineup || {}).filter(Boolean).length;
   const isSoundSport = activeCorpsClass === 'soundSport';
+  const isFull = filledCount >= REQUIRED_CAPTIONS.length;
 
   // Fetch season averages for every corps in the current lineup
   useEffect(() => {
-    if (isSoundSport || filledCount < 8 || !lineup) return;
+    if (isSoundSport || !isFull || !lineup) return;
 
     let cancelled = false;
     setSeasonAvgs({}); // clear stale data from previous lineup
@@ -89,7 +90,7 @@ const LineupSimulatorPanel = React.memo(({ lineup, lineupScoreData, activeCorpsC
 
     fetchAvgs();
     return () => { cancelled = true; };
-  }, [lineup, filledCount, isSoundSport]);
+  }, [lineup, isFull, isSoundSport]);
 
   // Build row data: prefer season avg over last-show score
   const rows = useMemo(() => REQUIRED_CAPTIONS.map(captionId => {
@@ -105,7 +106,7 @@ const LineupSimulatorPanel = React.memo(({ lineup, lineupScoreData, activeCorpsC
   }), [lineup, lineupScoreData, seasonAvgs]);
 
   // Only render for full, non-SoundSport lineups
-  if (isSoundSport || filledCount < 8) return null;
+  if (isSoundSport || !isFull) return null;
 
   // Derived values — only computed when the component will actually render
   const scoredRows = rows.filter(r => r.pct != null);
