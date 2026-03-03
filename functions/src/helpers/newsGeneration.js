@@ -697,7 +697,7 @@ async function generateStructuredContent(prompt, schema) {
   const ai = initializeGemini();
 
   const response = await ai.models.generateContent({
-    model: "gemini-2.0-flash",
+    model: "gemini-2.5-flash",
     contents: prompt,
     config: {
       responseMimeType: "application/json",
@@ -715,8 +715,8 @@ async function generateStructuredContent(prompt, schema) {
 // IMAGE GENERATION
 // =============================================================================
 
-// Configuration: Set to true to use paid Imagen 3 ($0.02/image), false for free Gemini Flash
-const USE_PAID_IMAGE_GEN = true;
+// Configuration: Set to true to use paid Imagen 4 Fast ($0.02/image), false for free Gemini 2.5 Flash Image (500 RPD free tier)
+const USE_PAID_IMAGE_GEN = false;
 
 // =============================================================================
 // DRUM CORPS VISUAL IDENTITY - System context for accurate image generation
@@ -911,14 +911,13 @@ function parseAiJson(text) {
 async function generateImageWithImagen(prompt, options = {}) {
   try {
     if (USE_PAID_IMAGE_GEN && !options.model) {
-      // Paid tier: Imagen 3 via Vertex AI ($0.02/image)
-      // Imagen models require Vertex AI endpoint, not public Gemini API
+      // Paid tier: Imagen 4 Fast via Vertex AI ($0.02/image)
+      // Better detail, prompt adherence, and 10x faster than Imagen 3
       const vertexAI = initializeVertexAI();
-      const modelName = "imagen-3.0-generate-002";
+      const modelName = "imagen-4.0-fast-generate-001";
 
-      // For Imagen 3: Put specific prompt FIRST, then minimal context
-      // This ensures corps-specific uniform details take priority over generic descriptions
-      const imagen3Prompt = `${prompt}
+      // Put specific prompt FIRST, then critical constraints
+      const imagenPrompt = `${prompt}
 
 ---
 CRITICAL RULES FOR THIS IMAGE:
@@ -938,7 +937,7 @@ ${IMAGE_NEGATIVE_PROMPT}`;
         try {
           const response = await vertexAI.models.generateImages({
             model: modelName,
-            prompt: imagen3Prompt,
+            prompt: imagenPrompt,
             config: {
               numberOfImages: 1,
               aspectRatio: options.aspectRatio || "16:9",
@@ -966,9 +965,9 @@ ${IMAGE_NEGATIVE_PROMPT}`;
         }
       }
     } else {
-      // Free tier or custom model: Gemini with native image generation
+      // Free tier: Gemini 2.5 Flash Image (500 RPD free, no billing required)
       const ai = initializeGemini();
-      const modelName = options.model || "gemini-3-pro-image-preview";
+      const modelName = options.model || "gemini-2.5-flash-image";
 
       // Build system instruction with drum corps context
       const systemInstruction = `${DRUM_CORPS_VISUAL_CONTEXT}
