@@ -797,10 +797,10 @@ const Dashboard = () => {
 
         {activeCorps ? (
           <div className="p-3 md:p-4">
-            {/* 2/3 + 1/3 Grid Layout */}
+            {/* 2/3 + 1/3 Grid Layout - balanced columns */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {/* MAIN CONTENT (2/3) - Active Lineup */}
-              <div className="lg:col-span-2">
+              {/* MAIN CONTENT (2/3) - Lineup + related analysis */}
+              <div className="lg:col-span-2 space-y-4">
                 <ActiveLineupTable
                   lineup={lineup}
                   lineupScoreData={lineupScoreData}
@@ -809,9 +809,26 @@ const Dashboard = () => {
                   onSlotClick={(captionId) => openCaptionSelection(captionId)}
                   scoresAvailable={scoresAvailable}
                 />
+
+                {/* Lineup Analyzer - per-caption efficiency and weak-spot identification */}
+                <LineupSimulatorPanel
+                  lineup={lineup}
+                  lineupScoreData={lineupScoreData}
+                  activeCorpsClass={activeCorpsClass}
+                  onSwapCaption={openCaptionSelection}
+                />
+
+                <RecentResultsFeed
+                  results={recentResults}
+                  loading={scoresLoading}
+                  corpsClass={activeCorpsClass}
+                />
+
+                {/* Daily Predictions - check-back-tomorrow engagement loop */}
+                <PredictionGamePanel recentResults={recentResults} />
               </div>
 
-              {/* SIDEBAR (1/3) - Season Stats */}
+              {/* SIDEBAR (1/3) - Identity, stats & engagement */}
               <div className="space-y-4">
                 <SeasonScorecard
                   score={userCorpsScore}
@@ -825,19 +842,10 @@ const Dashboard = () => {
                   bestInShowCount={bestInShowCount}
                 />
 
-                <RecentResultsFeed
-                  results={recentResults}
-                  loading={scoresLoading}
-                  corpsClass={activeCorpsClass}
-                />
-
-                <LeagueStatus leagues={myLeagues} />
-
                 {/* Daily Challenges - drives daily return visits */}
                 <DailyChallenges onLineupClick={() => openCaptionSelection()} />
 
-                {/* Daily Predictions - check-back-tomorrow engagement loop */}
-                <PredictionGamePanel recentResults={recentResults} />
+                <LeagueStatus leagues={myLeagues} />
 
                 {/* Quick Stats - rotating fun facts about user performance */}
                 <QuickStats
@@ -846,14 +854,6 @@ const Dashboard = () => {
                   recentResults={recentResults}
                   lineupScoreData={lineupScoreData}
                   lineupCount={lineupCount}
-                />
-
-                {/* Lineup Analyzer - per-caption efficiency and weak-spot identification */}
-                <LineupSimulatorPanel
-                  lineup={lineup}
-                  lineupScoreData={lineupScoreData}
-                  activeCorpsClass={activeCorpsClass}
-                  onSwapCaption={openCaptionSelection}
                 />
 
                 {/* Achievement Tracker - progress toward next unlockable achievements */}
