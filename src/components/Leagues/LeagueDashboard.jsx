@@ -260,7 +260,8 @@ const LeagueLeadersMini = ({ standings, memberProfiles, userId, leagueStats, onV
           {topThree.map((player, idx) => {
             const profile = memberProfiles[player.uid];
             const isUser = player.uid === userId;
-            const displayName = isUser ? 'You' : profile?.displayName || `User ${player.uid?.slice(0, 6)}`;
+            const rawName = profile?.displayName && profile.displayName !== 'Director' ? profile.displayName : profile?.username;
+            const displayName = isUser ? 'You' : rawName || `User ${player.uid?.slice(0, 6)}`;
             const medals = ['text-yellow-500', 'text-gray-400', 'text-orange-500'];
 
             return (
@@ -302,7 +303,7 @@ const LeagueLeadersMini = ({ standings, memberProfiles, userId, leagueStats, onV
                   <div className="min-w-0">
                     <p className="text-[9px] uppercase text-gray-500">Most BP</p>
                     <p className={`text-xs font-bold truncate ${isUser ? 'text-purple-400' : 'text-white'}`}>
-                      {isUser ? 'You' : profile?.displayName || 'Unknown'}
+                      {isUser ? 'You' : (profile?.displayName && profile.displayName !== 'Director' ? profile.displayName : profile?.username) || 'Unknown'}
                     </p>
                   </div>
                 </div>
@@ -324,7 +325,7 @@ const LeagueLeadersMini = ({ standings, memberProfiles, userId, leagueStats, onV
                   <div className="min-w-0">
                     <p className="text-[9px] uppercase text-gray-500">Best Win%</p>
                     <p className={`text-xs font-bold truncate ${isUser ? 'text-purple-400' : 'text-white'}`}>
-                      {isUser ? 'You' : profile?.displayName || 'Unknown'}
+                      {isUser ? 'You' : (profile?.displayName && profile.displayName !== 'Director' ? profile.displayName : profile?.username) || 'Unknown'}
                     </p>
                   </div>
                 </div>
@@ -398,7 +399,7 @@ const LeagueDashboard = ({
     const stats = standings.find(s => s.uid === opponentId);
     return {
       id: opponentId,
-      name: profile?.displayName || profile?.username || `User ${opponentId?.slice(0, 6)}`,
+      name: (profile?.displayName && profile.displayName !== 'Director' ? profile.displayName : profile?.username) || `User ${opponentId?.slice(0, 6)}`,
       stats,
     };
   }, [currentMatchup, userProfile?.uid, memberProfiles, standings]);

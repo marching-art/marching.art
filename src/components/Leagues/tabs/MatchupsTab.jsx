@@ -145,7 +145,9 @@ const YourSeasonHistory = ({
   const getDisplayName = (uid) => {
     if (uid === userProfile?.uid) return 'You';
     const profile = memberProfiles[uid];
-    return profile?.displayName || profile?.username || `User ${uid?.slice(0, 6)}`;
+    const name = profile?.displayName;
+    if (name && name !== 'Director') return name;
+    return profile?.username || name || `User ${uid?.slice(0, 6)}`;
   };
 
   return (
@@ -261,7 +263,9 @@ const HeadToHeadSection = ({
 
   const getDisplayName = (uid) => {
     const profile = memberProfiles[uid];
-    return profile?.displayName || profile?.username || `User ${uid?.slice(0, 6)}`;
+    const name = profile?.displayName;
+    if (name && name !== 'Director') return name;
+    return profile?.username || name || `User ${uid?.slice(0, 6)}`;
   };
 
   return (
@@ -563,7 +567,9 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
     if (!userId) return 'BYE';
     if (userId === userProfile?.uid) return 'You';
     const profile = memberProfiles[userId];
-    return profile?.displayName || profile?.username || `User ${userId?.slice(0, 6)}`;
+    const name = profile?.displayName;
+    if (name && name !== 'Director') return name;
+    return profile?.username || name || `User ${userId?.slice(0, 6)}`;
   };
 
   // Get user standing
