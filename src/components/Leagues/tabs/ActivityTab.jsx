@@ -70,7 +70,9 @@ const LeagueStatsOverview = ({ standings, memberProfiles, leagueStats, currentWe
 
   const getDisplayName = (uid) => {
     const profile = memberProfiles[uid];
-    return profile?.displayName || profile?.username || `User ${uid?.slice(0, 6)}`;
+    const name = profile?.displayName;
+    if (name && name !== 'Director') return name;
+    return profile?.username || name || `User ${uid?.slice(0, 6)}`;
   };
 
   return (
@@ -380,7 +382,9 @@ const PowerRankingsCard = ({ standings, memberProfiles, userProfile }) => {
   const getDisplayName = (uid) => {
     if (uid === userProfile?.uid) return 'You';
     const profile = memberProfiles[uid];
-    return profile?.displayName || profile?.username || `User ${uid?.slice(0, 6)}`;
+    const name = profile?.displayName;
+    if (name && name !== 'Director') return name;
+    return profile?.username || name || `User ${uid?.slice(0, 6)}`;
   };
 
   return (
@@ -666,7 +670,9 @@ const EnhancedRivalriesCard = ({ leagueId, userProfile, memberProfiles }) => {
   const getDisplayName = (uid) => {
     if (uid === userProfile?.uid) return 'You';
     const profile = memberProfiles[uid];
-    return profile?.displayName || profile?.username || `User ${uid?.slice(0, 6)}`;
+    const name = profile?.displayName;
+    if (name && name !== 'Director') return name;
+    return profile?.username || name || `User ${uid?.slice(0, 6)}`;
   };
 
   const getRivalName = (rivalry) => {

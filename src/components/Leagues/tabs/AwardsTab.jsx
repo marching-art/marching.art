@@ -124,7 +124,9 @@ const AwardsTab = ({ league }) => {
   const getDirectorName = (uid) => {
     if (!uid) return '—';
     const profile = memberProfiles[uid];
-    return profile?.displayName || profile?.username || `Director ${uid.slice(0, 6)}`;
+    const name = profile?.displayName;
+    if (name && name !== 'Director') return name;
+    return profile?.username || name || `Director ${uid.slice(0, 6)}`;
   };
 
   if (loading) {

@@ -5,7 +5,8 @@ import React, { useMemo, useState } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import {
   Trophy, Flame, TrendingUp, TrendingDown, Minus, Crown,
-  ChevronDown, ChevronUp, BarChart3, LayoutDashboard, Table2
+  ChevronDown, ChevronUp, BarChart3, LayoutDashboard, Table2,
+  UserX
 } from 'lucide-react';
 import SeasonStatsCard from '../SeasonStatsCard';
 import LeagueLeaderboards from '../LeagueLeaderboards';
@@ -28,12 +29,17 @@ const StandingsTab = ({
   const [expandedUser, setExpandedUser] = useState(null);
   const [showLeaderboardSection, setShowLeaderboardSection] = useState(false);
   const [viewMode, setViewMode] = useState('dashboard'); // 'dashboard' | 'table'
+  const [showInactive, setShowInactive] = useState(false);
 
   // Helper to get display name
   const getDisplayName = (uid) => {
     if (uid === userProfile?.uid) return 'You';
     const profile = memberProfiles[uid];
-    return profile?.displayName || profile?.username || `Director ${uid?.slice(0, 6)}`;
+    // Skip 'Director' as it's the default placeholder, prefer username
+    const name = profile?.displayName;
+    if (name && name !== 'Director') return name;
+    if (profile?.username) return profile.username;
+    return name || `Director ${uid?.slice(0, 6)}`;
   };
 
   // Get user's stats
@@ -41,14 +47,29 @@ const StandingsTab = ({
     return standings.find(s => s.uid === userProfile?.uid);
   }, [standings, userProfile?.uid]);
 
-  // Enhance standings with calculated fields
+  // Separate active vs inactive members
+  const { activeStandings, inactiveStandings } = useMemo(() => {
+    const active = [];
+    const inactive = [];
+    standings.forEach(stats => {
+      const hasActivity = stats.wins > 0 || stats.losses > 0 || stats.totalPoints > 0;
+      if (hasActivity) {
+        active.push(stats);
+      } else {
+        inactive.push(stats);
+      }
+    });
+    return { activeStandings: active, inactiveStandings: inactive };
+  }, [standings]);
+
+  // Enhance standings with calculated fields (active members only get ranks)
   const enhancedStandings = useMemo(() => {
-    return standings.map((stats, idx) => ({
+    return activeStandings.map((stats, idx) => ({
       ...stats,
       rank: idx + 1,
       isPlayoffSpot: idx < playoffSize,
     }));
-  }, [standings, playoffSize]);
+  }, [activeStandings, playoffSize]);
 
   if (loading) {
     return (
@@ -185,13 +206,18 @@ const StandingsTab = ({
                 )}
               </div>
 
-              {standings.length > 5 && (
+              {enhancedStandings.length > 5 && (
                 <button
                   onClick={() => setViewMode('table')}
                   className="w-full px-4 py-2 text-xs text-gray-500 hover:text-white transition-colors border-t border-[#333]"
                 >
-                  +{standings.length - 5} more...
+                  +{enhancedStandings.length - 5} more...
                 </button>
+              )}
+              {inactiveStandings.length > 0 && (
+                <div className="px-4 py-2 text-[10px] text-gray-600 border-t border-[#222]">
+                  {inactiveStandings.length} inactive member{inactiveStandings.length !== 1 ? 's' : ''} not shown
+                </div>
               )}
             </div>
           </m.div>
@@ -425,6 +451,80 @@ const StandingsTab = ({
                 </div>
               </div>
             </div>
+
+            {/* Inactive Members Section */}
+            {inactiveStandings.length > 0 && (
+              <div className="mt-4 bg-[#1a1a1a] border border-[#333] overflow-hidden">
+                <button
+                  onClick={() => setShowInactive(!showInactive)}
+                  className="w-full px-4 py-3 bg-[#222] flex items-center justify-between hover:bg-[#2a2a2a] transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <UserX className="w-3.5 h-3.5 text-gray-500" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                      Inactive Members
+                    </span>
+                    <span className="text-[10px] text-gray-600">
+                      ({inactiveStandings.length})
+                    </span>
+                  </div>
+                  {showInactive ? (
+                    <ChevronUp className="w-3.5 h-3.5 text-gray-500" />
+                  ) : (
+                    <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
+                  )}
+                </button>
+
+                <AnimatePresence>
+                  {showInactive && (
+                    <m.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="px-4 py-2 border-t border-[#222] bg-[#111]">
+                        <p className="text-[10px] text-gray-600">
+                          These members haven't participated in any shows this season.
+                        </p>
+                      </div>
+                      <div className="divide-y divide-[#222]">
+                        {inactiveStandings.map((stats) => {
+                          const isUser = stats.uid === userProfile?.uid;
+                          const isCommissioner = stats.uid === league?.creatorId;
+                          return (
+                            <div
+                              key={stats.uid}
+                              className={`flex items-center gap-3 px-4 py-2 ${
+                                isUser ? 'bg-purple-500/10' : ''
+                              }`}
+                            >
+                              <div className={`w-7 h-7 flex-shrink-0 flex items-center justify-center ${
+                                isUser ? 'bg-purple-500/20 border border-purple-500/50' : 'bg-[#222]'
+                              }`}>
+                                <span className={`text-xs font-bold ${
+                                  isUser ? 'text-purple-400' : 'text-gray-600'
+                                }`}>
+                                  {getDisplayName(stats.uid).charAt(0)}
+                                </span>
+                              </div>
+                              <p className={`text-sm truncate ${
+                                isUser ? 'text-purple-400 font-bold' : 'text-gray-500'
+                              }`}>
+                                {getDisplayName(stats.uid)}
+                              </p>
+                              {isCommissioner && (
+                                <Crown className="w-3 h-3 text-yellow-500 flex-shrink-0" />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </m.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
 
             {/* Leaderboards Section */}
             {showLeaderboards && Object.keys(leagueStats).length > 0 && (

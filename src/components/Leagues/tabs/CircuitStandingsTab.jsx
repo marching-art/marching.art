@@ -51,7 +51,7 @@ const CircuitStandingsTab = ({ league }) => {
 
           return {
             uid,
-            displayName: profile.displayName || profile.username || `Director ${uid.slice(0, 6)}`,
+            displayName: (profile.displayName && profile.displayName !== 'Director' ? profile.displayName : profile.username) || `Director ${uid.slice(0, 6)}`,
             corpsName,
             corpsClass,
             totalSeasonScore: totalScore,
