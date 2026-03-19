@@ -82,8 +82,12 @@ export const useSeasonStore = create((set, get) => ({
             // it's interpreted as January 4, not shifted to January 3 due to timezone conversion
             const startDateUTC = getUTCDateString(startDate);
             const nowET = getEasternDateString(now);
-            const startDateObj = new Date(startDateUTC + 'T00:00:00');
-            const nowDateObj = new Date(nowET + 'T00:00:00');
+            // Parse both dates as UTC to avoid DST-induced off-by-one errors.
+            // Without the 'Z' suffix, dates are parsed in local time, and when
+            // startDate is pre-DST (EST) and now is post-DST (EDT), the 1-hour
+            // difference causes Math.floor to lose a day.
+            const startDateObj = new Date(startDateUTC + 'T00:00:00Z');
+            const nowDateObj = new Date(nowET + 'T00:00:00Z');
             const diffInDays = Math.floor((nowDateObj - startDateObj) / (1000 * 60 * 60 * 24));
 
             currentDay = Math.max(1, Math.min(diffInDays + 1, 49));
