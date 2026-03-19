@@ -14,7 +14,7 @@ import { useSeasonStore } from '../store/seasonStore';
  * we should still show the previous day's cutoff
  * Returns null if no scores should be available yet (e.g., day 1)
  */
-const getEffectiveDay = (currentDay) => {
+export const getEffectiveDay = (currentDay) => {
   if (!currentDay) return null;
   // Get the current hour in Eastern Time (not browser local time),
   // since scores are processed at 2 AM ET regardless of the user's timezone.
