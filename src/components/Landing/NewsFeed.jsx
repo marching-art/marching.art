@@ -17,6 +17,8 @@ import toast from 'react-hot-toast';
 import { fetchNewsFeedHttp, getRecentNews, getArticleEngagement } from '../../api/functions';
 import { EngagementSummary } from '../Articles';
 import { OptimizedImage } from '../ui/OptimizedImage';
+import { useSeasonStore } from '../../store/seasonStore';
+import { getEffectiveDay } from '../../hooks/useScoresData';
 
 // =============================================================================
 // LAZY-LOADED FALLBACK DATA
@@ -1018,6 +1020,10 @@ export default function NewsFeed({ maxItems = 4 }) {
   const [engagement, setEngagement] = useState({}); // Map of articleId -> engagement data
   const [autoLoadCount, setAutoLoadCount] = useState(0); // Track auto-loads to prevent sidebar racing
 
+  // Day-gating: prevent articles from spoiling scores before they appear on the scores page
+  const currentDay = useSeasonStore((state) => state.currentDay);
+  const effectiveDay = getEffectiveDay(currentDay);
+
   // Fetch engagement data for articles (used for load more, where we don't want to re-fetch all)
   const fetchEngagement = async (articleIds) => {
     if (!articleIds || articleIds.length === 0) return;
@@ -1251,11 +1257,21 @@ export default function NewsFeed({ maxItems = 4 }) {
     }
   }, [news.length, hasMore, loading, prefetchNextPage]);
 
-  // Filter news by category
+  // Filter news by category and day-gate to prevent spoiling scores
   const filteredNews = useMemo(() => {
-    if (activeCategory === 'all') return news;
-    return news.filter((story) => story.category === activeCategory);
-  }, [news, activeCategory]);
+    let filtered = news;
+
+    // Day-gate: hide articles for days whose scores aren't visible yet
+    if (effectiveDay) {
+      filtered = filtered.filter((story) => !story.reportDay || story.reportDay <= effectiveDay);
+    }
+
+    if (activeCategory !== 'all') {
+      filtered = filtered.filter((story) => story.category === activeCategory);
+    }
+
+    return filtered;
+  }, [news, activeCategory, effectiveDay]);
 
   // Check if any story is "breaking" (under 1 hour old)
   const hasBreakingNews = useMemo(() => {

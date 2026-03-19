@@ -28,6 +28,8 @@ import { db } from '../api/client';
 import { doc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { useAuth } from '../App';
 import { useProfileStore } from '../store/profileStore';
+import { useSeasonStore } from '../store/seasonStore';
+import { getEffectiveDay } from '../hooks/useScoresData';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useTickerData } from '../hooks/useTickerData';
 import { useLandingScores } from '../hooks/useLandingScores';
@@ -429,6 +431,11 @@ const Article = () => {
     commentsRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Day-gate: prevent viewing articles for days whose scores aren't visible yet
+  const currentDay = useSeasonStore((state) => state.currentDay);
+  const effectiveDay = getEffectiveDay(currentDay);
+  const isDayGated = article && effectiveDay && article.reportDay > effectiveDay;
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
@@ -437,7 +444,7 @@ const Article = () => {
     );
   }
 
-  if (error || !article) {
+  if (isDayGated || error || !article) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center p-4">
         <AlertCircle className="w-12 h-12 text-red-400 mb-4" />
