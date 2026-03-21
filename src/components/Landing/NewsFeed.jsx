@@ -18,7 +18,6 @@ import { fetchNewsFeedHttp, getRecentNews, getArticleEngagement } from '../../ap
 import { EngagementSummary } from '../Articles';
 import { OptimizedImage } from '../ui/OptimizedImage';
 import { useSeasonStore } from '../../store/seasonStore';
-import { getEffectiveDay } from '../../hooks/useScoresData';
 
 // =============================================================================
 // LAZY-LOADED FALLBACK DATA
@@ -1020,9 +1019,21 @@ export default function NewsFeed({ maxItems = 4 }) {
   const [engagement, setEngagement] = useState({}); // Map of articleId -> engagement data
   const [autoLoadCount, setAutoLoadCount] = useState(0); // Track auto-loads to prevent sidebar racing
 
-  // Day-gating: prevent articles from spoiling scores before they appear on the scores page
+  // Day-gating: prevent articles from spoiling scores before they appear on the scores page.
+  // Scores are processed at 2 AM ET. Before 2 AM, only the previous day's scores are available.
   const currentDay = useSeasonStore((state) => state.currentDay);
-  const effectiveDay = getEffectiveDay(currentDay);
+  const effectiveDay = useMemo(() => {
+    if (!currentDay) return null;
+    const etHour = parseInt(
+      new Intl.DateTimeFormat("en-US", {
+        timeZone: "America/New_York",
+        hour: "2-digit",
+        hour12: false,
+      }).format(new Date())
+    );
+    const day = etHour < 2 ? currentDay - 2 : currentDay - 1;
+    return day >= 1 ? day : null;
+  }, [currentDay]);
 
   // Fetch engagement data for articles (used for load more, where we don't want to re-fetch all)
   const fetchEngagement = async (articleIds) => {
