@@ -29,7 +29,6 @@ import { doc, getDoc, collection, query, where, getDocs, limit } from 'firebase/
 import { useAuth } from '../App';
 import { useProfileStore } from '../store/profileStore';
 import { useSeasonStore } from '../store/seasonStore';
-import { getEffectiveDay } from '../hooks/useScoresData';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useTickerData } from '../hooks/useTickerData';
 import { useLandingScores } from '../hooks/useLandingScores';
@@ -433,7 +432,18 @@ const Article = () => {
 
   // Day-gate: prevent viewing articles for days whose scores aren't visible yet
   const currentDay = useSeasonStore((state) => state.currentDay);
-  const effectiveDay = getEffectiveDay(currentDay);
+  const effectiveDay = useMemo(() => {
+    if (!currentDay) return null;
+    const etHour = parseInt(
+      new Intl.DateTimeFormat("en-US", {
+        timeZone: "America/New_York",
+        hour: "2-digit",
+        hour12: false,
+      }).format(new Date())
+    );
+    const day = etHour < 2 ? currentDay - 2 : currentDay - 1;
+    return day >= 1 ? day : null;
+  }, [currentDay]);
   const isDayGated = article && effectiveDay && article.reportDay > effectiveDay;
 
   if (loading) {
