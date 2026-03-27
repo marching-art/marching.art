@@ -1013,6 +1013,8 @@ export default function NewsFeed({ maxItems = 4 }) {
 
   // Day-gating: prevent articles from spoiling scores before they appear on the scores page.
   // Scores are processed at 2 AM ET. Before 2 AM, only the previous day's scores are available.
+  // When currentDay reaches the season maximum (49), the season is over or ending — lift the
+  // gate after 2 AM so all season articles remain visible during the off-season.
   const currentDay = useSeasonStore((state) => state.currentDay);
   const effectiveDay = useMemo(() => {
     if (!currentDay) return null;
@@ -1023,6 +1025,10 @@ export default function NewsFeed({ maxItems = 4 }) {
         hour12: false,
       }).format(new Date())
     );
+    if (currentDay >= 49) {
+      // Season complete: only gate in the midnight window; after 2 AM show everything
+      return etHour < 2 ? Math.max(currentDay - 2, 1) : null;
+    }
     const day = etHour < 2 ? currentDay - 2 : currentDay - 1;
     return day >= 1 ? day : null;
   }, [currentDay]);
