@@ -239,7 +239,7 @@ export const paths = {
   leaderboard: (type: string, corpsClass: string) =>
     `artifacts/${DATA_NAMESPACE}/leaderboard/${type}/${corpsClass}`,
   lifetimeLeaderboard: (view: string) =>
-    `artifacts/${DATA_NAMESPACE}/leaderboard/lifetime_${view}/data`,
+    `artifacts/${DATA_NAMESPACE}/leaderboard/lifetime_${view}`,
 
   // League paths
   leagues: () => `artifacts/${DATA_NAMESPACE}/leagues`,

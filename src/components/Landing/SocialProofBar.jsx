@@ -11,6 +11,7 @@ import { m } from 'framer-motion';
 import { Users, Trophy, Zap } from 'lucide-react';
 import { collection, getCountFromServer, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../api/client';
+import { getAuth } from 'firebase/auth';
 
 // =============================================================================
 // STATS CACHE
@@ -48,20 +49,26 @@ async function fetchCommunityStats() {
   if (cached) return cached;
 
   try {
+    const isAuthenticated = !!getAuth().currentUser;
+
     // Fetch stats in parallel
     const [usersCount, leaguesCount, lifetimeData] = await Promise.all([
-      // Count users collection
-      getCountFromServer(collection(db, 'artifacts', 'fantasy_drum_corps_v1', 'users'))
-        .then(snap => snap.data().count)
-        .catch(() => null),
+      // Count users collection — requires admin, skip if not authenticated
+      isAuthenticated
+        ? getCountFromServer(collection(db, 'artifacts', 'fantasy_drum_corps_v1', 'users'))
+            .then(snap => snap.data().count)
+            .catch(() => null)
+        : Promise.resolve(null),
 
-      // Count leagues collection
-      getCountFromServer(collection(db, 'artifacts', 'fantasy_drum_corps_v1', 'leagues'))
-        .then(snap => snap.data().count)
-        .catch(() => null),
+      // Count leagues collection — requires auth, skip if not authenticated
+      isAuthenticated
+        ? getCountFromServer(collection(db, 'artifacts', 'fantasy_drum_corps_v1', 'leagues'))
+            .then(snap => snap.data().count)
+            .catch(() => null)
+        : Promise.resolve(null),
 
-      // Get lifetime leaderboard for total points (aggregated)
-      getDoc(doc(db, 'artifacts', 'fantasy_drum_corps_v1', 'leaderboard', 'lifetime_totalPoints', 'data'))
+      // Get lifetime leaderboard for total points (aggregated, public)
+      getDoc(doc(db, 'artifacts', 'fantasy_drum_corps_v1', 'leaderboard', 'lifetime_totalPoints'))
         .then(docSnap => docSnap.exists() ? docSnap.data() : null)
         .catch(() => null),
     ]);
