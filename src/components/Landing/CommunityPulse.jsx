@@ -5,6 +5,7 @@ import React, { memo, useState, useEffect } from 'react';
 import { Users, TrendingUp, Award, Activity } from 'lucide-react';
 import { db } from '../../firebase';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 
 // Cache to avoid re-fetching on every render
 let activityCache = null;
@@ -25,8 +26,14 @@ const CommunityPulse = memo(() => {
       }
 
       try {
+        // Requires authentication — leagues list is auth-gated
+        if (!getAuth().currentUser) {
+          setLoading(false);
+          return;
+        }
+
         // Fetch recent league creations as a proxy for community activity
-        const leaguesRef = collection(db, 'leagues');
+        const leaguesRef = collection(db, 'artifacts', 'fantasy_drum_corps_v1', 'leagues');
         const q = query(leaguesRef, orderBy('createdAt', 'desc'), limit(5));
         const snapshot = await getDocs(q);
 
@@ -47,25 +54,6 @@ const CommunityPulse = memo(() => {
           });
         });
 
-        // Also try to get recent corps registrations count
-        const corpsRef = collection(db, 'corps');
-        const corpsQ = query(corpsRef, orderBy('createdAt', 'desc'), limit(3));
-        const corpsSnap = await getDocs(corpsQ);
-
-        corpsSnap.docs.forEach(doc => {
-          const data = doc.data();
-          const createdAt = data.createdAt?.toDate?.() || new Date();
-          const hoursAgo = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60));
-
-          items.push({
-            id: `corps-${doc.id}`,
-            type: 'corps',
-            text: `A new corps joined the competition`,
-            time: hoursAgo < 1 ? 'Just now' : hoursAgo < 24 ? `${hoursAgo}h ago` : `${Math.floor(hoursAgo / 24)}d ago`,
-            icon: 'award',
-          });
-        });
-
         // Sort by recency and take top 4
         const sorted = items.slice(0, 4);
 
@@ -73,7 +61,9 @@ const CommunityPulse = memo(() => {
         cacheTimestamp = Date.now();
         setActivities(sorted);
       } catch (error) {
-        console.error('CommunityPulse: Failed to fetch activity', error);
+        if (error?.code !== 'permission-denied') {
+          console.error('CommunityPulse: Failed to fetch activity', error);
+        }
       } finally {
         setLoading(false);
       }
