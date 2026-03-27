@@ -238,6 +238,12 @@ export async function fetchNewsFeedHttp(params: {
     queryParams.set('category', category);
   }
 
+  // Firebase Hosting rewrites only work in production; skip HTTP path in dev
+  if (!import.meta.env.PROD) {
+    const result = await getRecentNews({ limit, category, feedOnly: true, includeEngagement: true });
+    return result.data;
+  }
+
   try {
     // Use the proxied endpoint via Firebase Hosting (enables CDN caching)
     const response = await fetch(`/api/news?${queryParams.toString()}`, {
@@ -251,11 +257,16 @@ export async function fetchNewsFeedHttp(params: {
       throw new Error(`HTTP error: ${response.status}`);
     }
 
+    // Guard against the SPA catch-all returning index.html instead of JSON
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      throw new Error(`Unexpected content-type: ${contentType}`);
+    }
+
     const data = await response.json();
     return data as GetRecentNewsResult;
   } catch (error) {
-    // Fall back to callable function (works during local development)
-    console.warn('HTTP news fetch failed, falling back to callable:', error);
+    // Fall back to callable function
     const result = await getRecentNews({ limit, category, feedOnly: true, includeEngagement: true });
     return result.data;
   }
