@@ -177,8 +177,10 @@ function useIntersectionObserver(callback, enabled, options = {}) {
 // Preloads hero image for instant display when content renders
 // =============================================================================
 
+const preloadedUrls = new Set();
 function preloadImage(url) {
-  if (!url) return;
+  if (!url || preloadedUrls.has(url)) return;
+  preloadedUrls.add(url);
   const link = document.createElement('link');
   link.rel = 'preload';
   link.as = 'image';
