@@ -430,7 +430,9 @@ const Article = () => {
     commentsRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Day-gate: prevent viewing articles for days whose scores aren't visible yet
+  // Day-gate: prevent viewing articles for days whose scores aren't visible yet.
+  // When currentDay reaches the season maximum (49), the season is over or ending — lift the
+  // gate after 2 AM so all season articles remain accessible during the off-season.
   const currentDay = useSeasonStore((state) => state.currentDay);
   const effectiveDay = useMemo(() => {
     if (!currentDay) return null;
@@ -441,6 +443,9 @@ const Article = () => {
         hour12: false,
       }).format(new Date())
     );
+    if (currentDay >= 49) {
+      return etHour < 2 ? Math.max(currentDay - 2, 1) : null;
+    }
     const day = etHour < 2 ? currentDay - 2 : currentDay - 1;
     return day >= 1 ? day : null;
   }, [currentDay]);
