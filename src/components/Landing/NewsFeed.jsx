@@ -177,17 +177,6 @@ function useIntersectionObserver(callback, enabled, options = {}) {
 // Preloads hero image for instant display when content renders
 // =============================================================================
 
-const preloadedUrls = new Set();
-function preloadImage(url) {
-  if (!url || preloadedUrls.has(url)) return;
-  preloadedUrls.add(url);
-  const link = document.createElement('link');
-  link.rel = 'preload';
-  link.as = 'image';
-  link.href = url;
-  document.head.appendChild(link);
-}
-
 // =============================================================================
 // SKELETON LOADING COMPONENTS
 // Professional skeleton UI for perceived instant loading
@@ -652,6 +641,7 @@ function HeroStory({ story, onClick, storyNumber, engagement }) {
             alt={story.headline}
             className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
             loading="eager"
+            fetchpriority="high"
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#0057B8]/10 to-transparent">
@@ -1060,7 +1050,6 @@ export default function NewsFeed({ maxItems = 4 }) {
    * OPTIMIZATIONS:
    * 1. Uses HTTP endpoint with CDN edge caching for 10x faster initial loads
    * 2. Request deduplication prevents concurrent duplicate fetches
-   * 3. Hero image preloading for instant visual rendering
    */
   const fetchNews = async (forceRefresh = false) => {
     // If cache is fresh and not forcing refresh, use it directly
@@ -1070,10 +1059,6 @@ export default function NewsFeed({ maxItems = 4 }) {
       setHasMore(cached.hasMore);
       setEngagement(cached.engagement || {});
       setLoading(false);
-      // Preload hero image from cache for instant display
-      if (cached.news[0]?.imageUrl) {
-        preloadImage(cached.news[0].imageUrl);
-      }
       return;
     }
 
@@ -1131,10 +1116,6 @@ export default function NewsFeed({ maxItems = 4 }) {
         setEngagement(engagementData);
 
         // Preload hero image for instant display
-        if (newsData[0]?.imageUrl) {
-          preloadImage(newsData[0].imageUrl);
-        }
-
         // Update cache with fresh data
         newsCache.set({ news: newsData, hasMore: hasMoreData, engagement: engagementData }, maxItems);
       } else if (!isStale) {
