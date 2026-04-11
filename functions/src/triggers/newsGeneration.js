@@ -218,7 +218,9 @@ async function saveDailyNews(db, { reportDay, content, metadata, articles, seaso
           imageGeneratedBy: "gemini-2.0-flash-exp", // Free tier
         },
 
-        isPublished: true,
+        // Embargo: hold results for 24 hours so caption changes can finalize
+        isPublished: false,
+        publishAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
       };
 
       await db.doc(articlePath).set(articleEntry, { merge: true });
@@ -244,7 +246,9 @@ async function saveDailyNews(db, { reportDay, content, metadata, articles, seaso
         ...metadata,
         generatedBy: "gemini-2.0-flash-lite",
       },
-      isPublished: true,
+      // Embargo: hold results for 24 hours so caption changes can finalize
+      isPublished: false,
+      publishAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
     };
 
     await db.doc(basePath).set(dayIndex, { merge: true });
@@ -279,7 +283,9 @@ async function saveDailyNews(db, { reportDay, content, metadata, articles, seaso
       generatedBy: "gemini-2.0-flash-lite",
       imagePublicId: imageResult.publicId || null,
     },
-    isPublished: true,
+    // Embargo: hold results for 24 hours so caption changes can finalize
+    isPublished: false,
+    publishAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
   };
 
   await db.doc(basePath).set(newsEntry, { merge: true });
@@ -2118,6 +2124,42 @@ exports.approveSubmission = onCall(
     }
   }
 );
+
+/**
+ * Publish any articles whose 24-hour embargo window has elapsed.
+ * Called by the daily 2 AM scheduler before score processing begins.
+ * Queries for articles with isPublished=false and publishAt <= now,
+ * then flips them to isPublished=true in a single batch write.
+ */
+async function publishEmbargoedArticlesLogic(db) {
+  const now = new Date();
+  const snapshot = await db.collectionGroup("articles")
+    .where("isPublished", "==", false)
+    .where("publishAt", "<=", now)
+    .get();
+
+  if (snapshot.empty) {
+    logger.info("No embargoed articles ready to publish");
+    return 0;
+  }
+
+  // Firestore batches are capped at 500 writes
+  const BATCH_SIZE = 500;
+  let published = 0;
+  for (let i = 0; i < snapshot.docs.length; i += BATCH_SIZE) {
+    const batch = db.batch();
+    const chunk = snapshot.docs.slice(i, i + BATCH_SIZE);
+    for (const doc of chunk) {
+      batch.update(doc.ref, { isPublished: true, updatedAt: now });
+    }
+    await batch.commit();
+    published += chunk.length;
+  }
+
+  logger.info(`Published ${published} embargoed articles`);
+  return published;
+}
+exports.publishEmbargoedArticlesLogic = publishEmbargoedArticlesLogic;
 
 /**
  * Reject an article submission
