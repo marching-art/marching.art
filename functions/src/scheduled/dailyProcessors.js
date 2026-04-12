@@ -2,14 +2,11 @@ const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
 const { getDb, dataNamespaceParam } = require("../config");
 const { processAndArchiveOffSeasonScoresLogic, processAndScoreLiveSeasonDayLogic } = require("../helpers/scoring");
-const { publishEmbargoedArticlesLogic } = require("../triggers/newsGeneration");
 
 exports.dailyOffSeasonProcessor = onSchedule({
   schedule: "every day 02:00",
   timeZone: "America/New_York",
 }, async () => {
-  const db = getDb();
-  await publishEmbargoedArticlesLogic(db);
   await processAndArchiveOffSeasonScoresLogic();
 });
 
@@ -18,7 +15,6 @@ exports.processDailyLiveScores = onSchedule({
   timeZone: "America/New_York",
 }, async () => {
   const db = getDb();
-  await publishEmbargoedArticlesLogic(db);
   logger.info("Running Daily Live Season Score Processor...");
 
   const seasonDoc = await db.doc("game-settings/season").get();
