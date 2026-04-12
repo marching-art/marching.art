@@ -64,20 +64,15 @@ exports.processDailyLiveScores = onSchedule({
   // Normalize to start of day for consistent day calculation
   yesterday.setUTCHours(0, 0, 0, 0);
 
-  // Also normalize seasonStartDate to start of day in ET for comparison.
-  // seasonStartDate is a Firestore Timestamp stored in UTC, so convert it too.
-  const startParts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(seasonStartDate);
-  const startValues = {};
-  for (const part of startParts) startValues[part.type] = part.value;
+  // Normalize seasonStartDate using the UTC calendar date directly.
+  // seasonStartDate is stored at midnight UTC by getNextOffSeasonWindow().
+  // Reading it via ET timezone incorrectly shifts winter UTC-midnight dates back
+  // one day (midnight UTC = previous evening in EST/UTC-5), making calendarDay one
+  // too high and causing e.g. Semifinals (day 48) to be labeled Finals (day 49).
   const seasonStartNormalized = new Date(Date.UTC(
-    parseInt(startValues.year),
-    parseInt(startValues.month) - 1,
-    parseInt(startValues.day),
+    seasonStartDate.getUTCFullYear(),
+    seasonStartDate.getUTCMonth(),
+    seasonStartDate.getUTCDate(),
     0, 0, 0,
   ));
 
