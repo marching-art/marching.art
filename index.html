@@ -71,6 +71,55 @@
 
     <title>marching.art — Fantasy Drum Corps | Draft DCI Lineups &amp; Compete</title>
 
+    <!-- Structured Data (JSON-LD) - Helps search engines understand the app
+         despite the SPA architecture. Covers Organization, WebSite, and
+         WebApplication schemas for rich results eligibility. -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://marching.art/#organization",
+          "name": "marching.art",
+          "url": "https://marching.art/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://marching.art/logo512.png",
+            "width": 512,
+            "height": 512
+          }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://marching.art/#website",
+          "url": "https://marching.art/",
+          "name": "marching.art",
+          "description": "Fantasy drum corps game — draft legendary DCI lineups and compete with directors worldwide.",
+          "publisher": { "@id": "https://marching.art/#organization" },
+          "inLanguage": "en-US"
+        },
+        {
+          "@type": "WebApplication",
+          "@id": "https://marching.art/#webapp",
+          "name": "marching.art",
+          "url": "https://marching.art/",
+          "description": "Build your dream drum corps from 50 years of DCI history. Draft captions across GE, Visual, and Music, then compete on the live scoreboard with directors worldwide.",
+          "applicationCategory": "GameApplication",
+          "applicationSubCategory": "Fantasy Sports",
+          "operatingSystem": "Web",
+          "browserRequirements": "Requires JavaScript",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          },
+          "publisher": { "@id": "https://marching.art/#organization" }
+        }
+      ]
+    }
+    </script>
+
     <!-- Critical CSS for App Loader - Matches React LoadingScreen exactly -->
     <style>
       /* =================================================================
@@ -154,7 +203,37 @@
     </style>
   </head>
   <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <noscript>
+      <div style="max-width: 720px; margin: 48px auto; padding: 24px; font-family: Inter, system-ui, sans-serif; color: #e5e5e5; line-height: 1.6;">
+        <h1 style="color: #EAB308; font-size: 28px; margin-bottom: 12px;">marching.art — Fantasy Drum Corps</h1>
+        <p style="font-size: 18px; margin-bottom: 16px;">
+          Build your dream drum corps from 50 years of DCI history. Draft captions across General Effect,
+          Visual, and Music, then compete on a live scoreboard with directors worldwide.
+        </p>
+        <h2 style="color: #EAB308; font-size: 20px; margin-top: 24px; margin-bottom: 8px;">How it works</h2>
+        <ul style="font-size: 16px; padding-left: 20px;">
+          <li>Draft 8 captions (GE1, GE2, Visual Proficiency, Visual Analysis, Color Guard, Brass, Music Analysis, Percussion) from any year in DCI history.</li>
+          <li>Earn points from real DCI competition results as the season unfolds.</li>
+          <li>Compete in public leaderboards or private leagues with friends.</li>
+          <li>Level up your director profile and unlock higher divisions: SoundSport, Open Class, and World Class.</li>
+        </ul>
+        <h2 style="color: #EAB308; font-size: 20px; margin-top: 24px; margin-bottom: 8px;">Get started</h2>
+        <p style="font-size: 16px;">
+          <strong>This app requires JavaScript.</strong> Please enable JavaScript in your browser to play.
+        </p>
+        <p style="font-size: 16px;">
+          <a href="/register" style="color: #0057B8; text-decoration: underline;">Create a free account</a>
+          &nbsp;·&nbsp;
+          <a href="/login" style="color: #0057B8; text-decoration: underline;">Sign in</a>
+          &nbsp;·&nbsp;
+          <a href="/preview" style="color: #0057B8; text-decoration: underline;">Preview the demo</a>
+          &nbsp;·&nbsp;
+          <a href="/privacy" style="color: #0057B8; text-decoration: underline;">Privacy</a>
+          &nbsp;·&nbsp;
+          <a href="/terms" style="color: #0057B8; text-decoration: underline;">Terms</a>
+        </p>
+      </div>
+    </noscript>
 
     <!-- App Loader - Official Drill Grid Logo -->
     <div id="app-loader" class="app-loader">
