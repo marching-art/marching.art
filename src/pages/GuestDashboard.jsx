@@ -103,22 +103,30 @@ const GuestHeader = () => {
 const LineupRow = ({ caption, value, captionScore, isLast, onGatedClick }) => {
   const hasValue = !!value;
   const [corpsName, sourceYear] = hasValue ? value.split('|') : [null, null];
+  const captionLabel = `${caption.name} — ${caption.fullName}`;
 
   return (
     <button
       onClick={onGatedClick}
+      aria-label={hasValue
+        ? `${captionLabel}: ${corpsName}${sourceYear ? ` ${sourceYear}` : ''}`
+        : `${captionLabel}: empty slot. Tap to draft.`}
       className={`w-full flex items-center gap-3 px-3 py-3.5 transition-all cursor-pointer group ${
         !isLast ? 'border-b border-[#333]/50' : ''
       } bg-[#1a1a1a] hover:bg-[#222] active:bg-[#252525]`}
     >
       {/* Position Badge */}
-      <div className={`w-10 h-8 flex items-center justify-center rounded text-xs font-bold ${
-        hasValue ? 'bg-[#0057B8]/20 text-[#0057B8]' : 'bg-[#333] text-gray-500'
-      }`}>
+      <div
+        title={captionLabel}
+        aria-hidden="true"
+        className={`w-10 h-8 flex items-center justify-center rounded text-xs font-bold flex-shrink-0 ${
+          hasValue ? 'bg-[#0057B8]/20 text-[#0057B8]' : 'bg-[#333] text-gray-500'
+        }`}
+      >
         {caption.name}
       </div>
 
-      {/* Corps Name + Year */}
+      {/* Corps Name + Year, with caption full name as subtitle */}
       <div className="flex-1 text-left min-w-0">
         {hasValue ? (
           <div className="flex items-center gap-1.5">
@@ -130,6 +138,9 @@ const LineupRow = ({ caption, value, captionScore, isLast, onGatedClick }) => {
         ) : (
           <span className="text-sm text-gray-500 italic">Empty slot</span>
         )}
+        <div className="text-[10px] text-gray-500 truncate mt-0.5">
+          {caption.fullName}
+        </div>
       </div>
 
       {/* Caption Score */}

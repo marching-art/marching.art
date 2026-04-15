@@ -1,0 +1,30 @@
+# marching.art robots.txt
+# https://marching.art
+
+User-agent: *
+Allow: /
+
+# Protected routes — redirect to /login for unauthenticated visitors and
+# have no crawlable content. Exclude from indexing to conserve crawl budget.
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /api/
+Disallow: /profile
+Disallow: /settings
+Disallow: /leagues
+Disallow: /schedule
+Disallow: /scores
+Disallow: /guide
+Disallow: /onboarding
+Disallow: /hall-of-champions
+Disallow: /retired-corps
+Disallow: /corps-history
+Disallow: /soundsport
+
+# Legacy redirect routes — duplicates of the canonical paths above.
+Disallow: /hub
+Disallow: /hud
+Disallow: /leaderboard
+Disallow: /how-to-play
+
+Sitemap: https://marching.art/sitemap.xml

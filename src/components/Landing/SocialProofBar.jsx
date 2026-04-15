@@ -141,8 +141,13 @@ const SocialProofBar = ({ className = '' }) => {
     );
   }
 
-  // Don't show if we have no meaningful data
-  if (!stats || (stats.directors === 0 && stats.leagues === 0)) {
+  // Only render when we have at least one real, non-zero metric from a
+  // publicly-readable source. The users/leagues counts are auth-gated
+  // (see Firestore rules) and resolve to 0 for unauthenticated visitors;
+  // totalPoints is public via the lifetime leaderboard. We deliberately
+  // do not substitute static floor values when real data is unavailable —
+  // fabricated counts would mislead visitors evaluating platform activity.
+  if (!stats || (stats.directors === 0 && stats.leagues === 0 && stats.totalPoints === 0)) {
     return null;
   }
 

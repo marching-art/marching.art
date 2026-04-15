@@ -1,5 +1,9 @@
 // CommunityPulse - Landing page sidebar widget showing live community activity
-// Creates social proof and FOMO through real-time activity signals
+// Creates social proof through real-time activity signals.
+// Data source (leagues collection) is auth-gated at the Firestore rule
+// level, so this widget only renders for authenticated users. We do not
+// fabricate activity for unauthenticated visitors — that would create
+// misleading social proof.
 
 import React, { memo, useState, useEffect } from 'react';
 import { Users, TrendingUp, Award, Activity } from 'lucide-react';
@@ -13,10 +17,17 @@ let cacheTimestamp = 0;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 const CommunityPulse = memo(() => {
+  const isAuthenticated = !!getAuth().currentUser;
   const [activities, setActivities] = useState(activityCache || []);
-  const [loading, setLoading] = useState(!activityCache);
+  const [loading, setLoading] = useState(isAuthenticated && !activityCache);
 
   useEffect(() => {
+    // The leagues collection requires authentication to list (see
+    // firestore.rules). Unauthenticated visitors have no public
+    // activity source to read from, so we render nothing rather than
+    // show a perpetually-loading placeholder or fabricated activity.
+    if (!isAuthenticated) return;
+
     const fetchActivity = async () => {
       // Use cache if fresh
       if (activityCache && Date.now() - cacheTimestamp < CACHE_TTL) {
@@ -26,12 +37,6 @@ const CommunityPulse = memo(() => {
       }
 
       try {
-        // Requires authentication — leagues list is auth-gated
-        if (!getAuth().currentUser) {
-          setLoading(false);
-          return;
-        }
-
         // Fetch recent league creations as a proxy for community activity
         const leaguesRef = collection(db, 'artifacts', 'fantasy_drum_corps_v1', 'leagues');
         const q = query(leaguesRef, orderBy('createdAt', 'desc'), limit(5));
@@ -70,7 +75,15 @@ const CommunityPulse = memo(() => {
     };
 
     fetchActivity();
-  }, []);
+  }, [isAuthenticated]);
+
+  // Do not render for unauthenticated visitors — no public data source
+  // exists, and an empty widget would signal a dead platform.
+  if (!isAuthenticated) return null;
+
+  // Once we've loaded and there's genuinely no real activity to show,
+  // also render nothing rather than a misleading "loading" placeholder.
+  if (!loading && activities.length === 0) return null;
 
   const iconMap = {
     users: <Users className="w-3.5 h-3.5 text-blue-500" />,
@@ -103,7 +116,7 @@ const CommunityPulse = memo(() => {
             </div>
           ))}
         </div>
-      ) : activities.length > 0 ? (
+      ) : (
         <div className="divide-y divide-[#222]">
           {activities.map((activity) => (
             <div key={activity.id} className="px-4 py-2.5 flex items-center gap-3">
@@ -116,10 +129,6 @@ const CommunityPulse = memo(() => {
               </div>
             </div>
           ))}
-        </div>
-      ) : (
-        <div className="p-4 text-center">
-          <p className="text-xs text-gray-500">Activity loading...</p>
         </div>
       )}
     </div>
