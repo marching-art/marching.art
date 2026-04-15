@@ -20,17 +20,6 @@ import { OptimizedImage } from '../ui/OptimizedImage';
 import { useSeasonStore } from '../../store/seasonStore';
 
 // =============================================================================
-// LAZY-LOADED FALLBACK DATA
-// Fallback news is loaded dynamically only when API is unavailable
-// This saves ~5KB from initial bundle for users whose API calls succeed
-// =============================================================================
-
-const loadFallbackNews = async () => {
-  const { FALLBACK_NEWS } = await import('./fallbackNewsData');
-  return FALLBACK_NEWS;
-};
-
-// =============================================================================
 // NEWS FEED CACHE WITH STALE-WHILE-REVALIDATE
 // Implements SWR pattern for instant perceived load times (news site style):
 // 1. Show cached data immediately (even if stale)
@@ -988,9 +977,13 @@ function EmptyState({ category }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-gray-500">
       <Newspaper className="w-12 h-12 mb-3 text-gray-600" />
-      <p className="text-sm font-medium mb-1">No stories found</p>
-      <p className="text-xs text-gray-600">
-        {category === 'all' ? 'Check back soon for updates' : `No ${category} stories available`}
+      <p className="text-sm font-medium mb-1">
+        {category === 'all' ? 'No articles yet' : `No ${category} stories available`}
+      </p>
+      <p className="text-xs text-gray-600 text-center max-w-xs">
+        {category === 'all'
+          ? 'New recaps and analysis post after each DCI competition day.'
+          : 'Try another category or check back after the next competition day.'}
       </p>
     </div>
   );
@@ -1125,22 +1118,21 @@ export default function NewsFeed({ maxItems = 4 }) {
         // Update cache with fresh data
         newsCache.set({ news: newsData, hasMore: hasMoreData, engagement: engagementData }, maxItems);
       } else if (!isStale) {
-        // Only use fallback if we don't already have stale data showing
-        const fallbackNews = await loadFallbackNews();
-        setNews(fallbackNews);
+        // API returned no articles and we have no cached data.
+        // Show an honest empty state rather than fabricated content —
+        // inventing scores/corps/ROI in a fallback would mislead visitors.
+        setNews([]);
         setHasMore(false);
-        // Don't cache fallback data
       }
     } catch (err) {
       console.error('Error fetching news:', err);
-      // Only show error/fallback if we don't have stale data already showing
+      // On fetch failure with no cached data, surface a real error state.
+      // Do not backfill with invented articles.
       if (!isStale) {
-        const fallbackNews = await loadFallbackNews();
-        setNews(fallbackNews);
+        setNews([]);
         setHasMore(false);
         setError(err.message);
       }
-      // Don't cache error/fallback state
     } finally {
       pendingRequest = null;
       setLoading(false);
@@ -1153,7 +1145,6 @@ export default function NewsFeed({ maxItems = 4 }) {
    */
   const prefetchNextPage = useCallback(async () => {
     if (!hasMore || news.length === 0) return;
-    if (news[0]?.id?.startsWith('fallback-')) return;
 
     const lastArticle = news[news.length - 1];
     const cursor = lastArticle?.createdAt;
@@ -1180,9 +1171,6 @@ export default function NewsFeed({ maxItems = 4 }) {
 
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore || news.length === 0) return;
-
-    // Don't load more if we're showing fallback data
-    if (news[0]?.id?.startsWith('fallback-')) return;
 
     setLoadingMore(true);
 
@@ -1349,7 +1337,7 @@ export default function NewsFeed({ maxItems = 4 }) {
           )}
 
           {/* Infinite Scroll Trigger + Load More Button */}
-          {hasMore && !news[0]?.id?.startsWith('fallback-') && (
+          {hasMore && (
             <div className="mt-6 text-center">
               {/* Intersection observer target - only active for first few loads to prevent sidebar racing */}
               {autoLoadEnabled && (
