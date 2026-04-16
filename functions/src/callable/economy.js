@@ -114,13 +114,33 @@ const SEASON_FINISH_BONUSES = {
 };
 
 /**
- * Class unlock costs with CorpsCoin
+ * Class unlock costs with CorpsCoin.
+ * Accepts both short ('open') and canonical ('openClass') keys — normalized before lookup.
  */
 const CLASS_UNLOCK_COSTS = {
   aClass: 1000,
   open: 2500,
+  openClass: 2500,
   world: 5000,
+  worldClass: 5000,
 };
+
+/**
+ * Normalize a class key to canonical form stored in `unlockedClasses`.
+ * Historical code wrote short keys ('open', 'world') while the rest of the app
+ * expects canonical keys ('openClass', 'worldClass'). All writes now use canonical.
+ */
+const CANONICAL_CLASS_KEY = {
+  soundSport: 'soundSport',
+  aClass: 'aClass',
+  open: 'openClass',
+  openClass: 'openClass',
+  world: 'worldClass',
+  worldClass: 'worldClass',
+};
+function toCanonicalClass(key) {
+  return CANONICAL_CLASS_KEY[key] || key;
+}
 
 /**
  * Transaction types for history tracking
@@ -288,11 +308,14 @@ const unlockClassWithCorpsCoin = onCall({ cors: true }, async (request) => {
   const { classToUnlock } = request.data;
   const uid = request.auth.uid;
 
-  if (!['aClass', 'open', 'world'].includes(classToUnlock)) {
+  // Accept both short ('open', 'world') and canonical ('openClass', 'worldClass')
+  // keys from clients, then normalize to canonical for storage.
+  const canonicalClass = toCanonicalClass(classToUnlock);
+  if (!['aClass', 'openClass', 'worldClass'].includes(canonicalClass)) {
     throw new HttpsError("invalid-argument", "Invalid class specified.");
   }
 
-  const cost = CLASS_UNLOCK_COSTS[classToUnlock];
+  const cost = CLASS_UNLOCK_COSTS[canonicalClass];
   const db = getDb();
   const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
 
@@ -305,9 +328,14 @@ const unlockClassWithCorpsCoin = onCall({ cors: true }, async (request) => {
 
       const profileData = profileDoc.data();
       const currentCoin = profileData.corpsCoin || 0;
-      const unlockedClasses = profileData.unlockedClasses || ['soundSport'];
+      const rawUnlocked = profileData.unlockedClasses || ['soundSport'];
+      // Normalize stored entries so legacy short keys ('open', 'world') are
+      // treated as already-unlocked for the canonical class.
+      const unlockedClasses = Array.from(
+        new Set(rawUnlocked.map((c) => toCanonicalClass(c)))
+      );
 
-      if (unlockedClasses.includes(classToUnlock)) {
+      if (unlockedClasses.includes(canonicalClass)) {
         throw new HttpsError("already-exists", "Class already unlocked.");
       }
 
@@ -316,7 +344,7 @@ const unlockClassWithCorpsCoin = onCall({ cors: true }, async (request) => {
       }
 
       const newBalance = currentCoin - cost;
-      unlockedClasses.push(classToUnlock);
+      unlockedClasses.push(canonicalClass);
 
       transaction.update(profileRef, {
         corpsCoin: newBalance,
@@ -327,17 +355,17 @@ const unlockClassWithCorpsCoin = onCall({ cors: true }, async (request) => {
         type: TRANSACTION_TYPES.CLASS_UNLOCK,
         amount: -cost,
         balance: newBalance,
-        description: `Unlocked ${classToUnlock}`,
-        classUnlocked: classToUnlock,
+        description: `Unlocked ${canonicalClass}`,
+        classUnlocked: canonicalClass,
       });
 
-      return { newBalance, classUnlocked: classToUnlock };
+      return { newBalance, classUnlocked: canonicalClass };
     });
 
-    logger.info(`User ${uid} unlocked ${classToUnlock} with ${cost} CorpsCoin`);
+    logger.info(`User ${uid} unlocked ${result.classUnlocked} with ${cost} CorpsCoin`);
     return {
       success: true,
-      message: `${classToUnlock} unlocked!`,
+      message: `${result.classUnlocked} unlocked!`,
       classUnlocked: result.classUnlocked,
       newBalance: result.newBalance,
     };
