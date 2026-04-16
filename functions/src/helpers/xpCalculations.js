@@ -102,8 +102,30 @@ function calculateXPUpdates(profileData, xpToAdd) {
     xpLevel: newLevel
   };
 
-  // Check for class unlocks (by XP level OR time since registration)
-  const unlockedClasses = [...(profileData.unlockedClasses || ['soundSport'])];
+  // Check for class unlocks (by XP level OR time since registration).
+  // Canonicalize stored entries — some legacy profiles contain short keys
+  // ('open', 'world') that don't match the canonical format used elsewhere
+  // ('openClass', 'worldClass', 'aClass', 'soundSport').
+  const CANONICAL = {
+    soundSport: 'soundSport',
+    aClass: 'aClass',
+    open: 'openClass',
+    openClass: 'openClass',
+    world: 'worldClass',
+    worldClass: 'worldClass',
+  };
+  const rawUnlocked = profileData.unlockedClasses || ['soundSport'];
+  const unlockedClasses = Array.from(
+    new Set(rawUnlocked.map((c) => CANONICAL[c] || c))
+  );
+  // If canonicalization changed anything, persist the cleaned array.
+  const canonicalizationChanged =
+    unlockedClasses.length !== rawUnlocked.length ||
+    unlockedClasses.some((c, i) => c !== rawUnlocked[i]);
+  if (canonicalizationChanged) {
+    updates.unlockedClasses = unlockedClasses;
+  }
+
   let classUnlocked = null;
 
   // Calculate weeks since registration for time-based unlocks
@@ -114,13 +136,13 @@ function calculateXPUpdates(profileData, xpToAdd) {
     updates.unlockedClasses = unlockedClasses;
     classUnlocked = 'A Class';
   }
-  if ((newLevel >= XP_CONFIG.classUnlocks.open || weeksSinceRegistration >= XP_CONFIG.classUnlockWeeks.open) && !unlockedClasses.includes('open')) {
-    unlockedClasses.push('open');
+  if ((newLevel >= XP_CONFIG.classUnlocks.open || weeksSinceRegistration >= XP_CONFIG.classUnlockWeeks.open) && !unlockedClasses.includes('openClass')) {
+    unlockedClasses.push('openClass');
     updates.unlockedClasses = unlockedClasses;
     classUnlocked = 'Open Class';
   }
-  if ((newLevel >= XP_CONFIG.classUnlocks.world || weeksSinceRegistration >= XP_CONFIG.classUnlockWeeks.world) && !unlockedClasses.includes('world')) {
-    unlockedClasses.push('world');
+  if ((newLevel >= XP_CONFIG.classUnlocks.world || weeksSinceRegistration >= XP_CONFIG.classUnlockWeeks.world) && !unlockedClasses.includes('worldClass')) {
+    unlockedClasses.push('worldClass');
     updates.unlockedClasses = unlockedClasses;
     classUnlocked = 'World Class';
   }

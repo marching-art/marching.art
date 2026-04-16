@@ -14,14 +14,62 @@ import type { Timestamp } from 'firebase/firestore';
 // CONSTANTS
 // =============================================================================
 
-/** Weeks after registration when each class auto-unlocks */
+/** Weeks after registration when each class auto-unlocks.
+ * Accepts both short ('open') and canonical ('openClass') keys so existing
+ * callers (ControlBar, ClassPurchaseModal) that pass short keys keep working.
+ */
 export const CLASS_UNLOCK_WEEKS: Record<string, number> = {
   aClass: 5,
   open: 12,
+  openClass: 12,
   world: 19,
+  worldClass: 19,
 };
 
 const MILLIS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Map legacy/short unlock keys to the canonical profile key used everywhere
+ * else (matches CORPS_CLASS_ORDER). All writes into `unlockedClasses` must
+ * use canonical keys so checks like `unlockedClasses.includes('openClass')`
+ * succeed.
+ */
+const CANONICAL_CLASS_KEY: Record<string, string> = {
+  soundSport: 'soundSport',
+  aClass: 'aClass',
+  open: 'openClass',
+  openClass: 'openClass',
+  world: 'worldClass',
+  worldClass: 'worldClass',
+};
+
+export function toCanonicalClassKey(key: string): string {
+  return CANONICAL_CLASS_KEY[key] || key;
+}
+
+/**
+ * Normalize an `unlockedClasses` array to canonical keys, de-duplicating and
+ * preserving order. Returns the normalized array and a flag indicating whether
+ * any change was made (so callers can decide whether to persist the fix).
+ */
+export function normalizeUnlockedClasses(
+  arr: string[] | undefined | null
+): { normalized: string[]; changed: boolean } {
+  const input = arr || ['soundSport'];
+  const seen = new Set<string>();
+  const normalized: string[] = [];
+  for (const key of input) {
+    const canonical = toCanonicalClassKey(key);
+    if (!seen.has(canonical)) {
+      seen.add(canonical);
+      normalized.push(canonical);
+    }
+  }
+  const changed =
+    normalized.length !== input.length ||
+    normalized.some((c, i) => c !== input[i]);
+  return { normalized, changed };
+}
 
 // =============================================================================
 // HELPERS
@@ -84,27 +132,31 @@ export function getTimeUnlockedClasses(
   const weeksSince = getWeeksSinceRegistration(createdAt);
 
   if (weeksSince >= CLASS_UNLOCK_WEEKS.aClass) unlocked.push('aClass');
-  if (weeksSince >= CLASS_UNLOCK_WEEKS.open) unlocked.push('open');
-  if (weeksSince >= CLASS_UNLOCK_WEEKS.world) unlocked.push('world');
+  if (weeksSince >= CLASS_UNLOCK_WEEKS.open) unlocked.push('openClass');
+  if (weeksSince >= CLASS_UNLOCK_WEEKS.world) unlocked.push('worldClass');
 
   return unlocked;
 }
 
 /**
  * Given a user's current unlockedClasses array and their createdAt date,
- * return the merged array including any classes that should now be
- * time-unlocked. Returns null if no changes are needed.
+ * return the merged+canonicalized array including any classes that should
+ * now be time-unlocked. Returns null if no changes are needed.
+ *
+ * Also normalizes legacy short keys ('open', 'world') to canonical keys so
+ * profiles created before the key-format fix are repaired on next read.
  */
 export function mergeTimeUnlockedClasses(
   currentUnlocked: string[],
   createdAt: Timestamp | Date | string | undefined | null
 ): string[] | null {
+  const { normalized, changed: normalizationChanged } =
+    normalizeUnlockedClasses(currentUnlocked);
+
   const timeEligible = getTimeUnlockedClasses(createdAt);
-  const newClasses = timeEligible.filter(
-    (cls) => !currentUnlocked.includes(cls)
-  );
+  const newClasses = timeEligible.filter((cls) => !normalized.includes(cls));
 
-  if (newClasses.length === 0) return null;
+  if (newClasses.length === 0 && !normalizationChanged) return null;
 
-  return [...currentUnlocked, ...newClasses];
+  return [...normalized, ...newClasses];
 }
