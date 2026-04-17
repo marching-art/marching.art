@@ -689,6 +689,59 @@ async function awardFinalsAndSaveChampions(batch, dailyRecap, seasonData, db) {
 }
 
 /**
+ * Build the participant set for the Eastern Classic Day 41/42 regional split.
+ *
+ * Eastern Classic is a two-day event. Every corps registered for the show competes
+ * on either Friday (Day 41) or Saturday (Day 42). Enrollees are collected across
+ * ALL corps classes (worldClass, openClass, aClass, soundSport) and the split is
+ * balanced per class so each class gets a roughly even (+/-1) distribution across
+ * both days. The sort is deterministic so Day 41 and Day 42 scoring runs agree
+ * on the assignment.
+ *
+ * @param {QuerySnapshot} profilesSnapshot - Snapshot of active user profiles
+ * @param {string} eventName - Eastern Classic show event name
+ * @param {number} week - Week number containing Days 41/42 (week 6)
+ * @param {number} scoredDay - Either 41 (Friday) or 42 (Saturday)
+ * @returns {Set<string>} Set of "${uid}_${corpsClass}" keys competing on this day
+ */
+function buildEasternClassicParticipantSet(profilesSnapshot, eventName, week, scoredDay) {
+  const enrolleesByClass = {};
+  for (const userDoc of profilesSnapshot.docs) {
+    const userProfile = userDoc.data();
+    const uid = userDoc.ref.parent.parent.id;
+    const userCorps = userProfile.corps || {};
+    for (const corpsClass of Object.keys(userCorps)) {
+      const corps = userCorps[corpsClass];
+      if (!corps) continue;
+      const userShows = corps.selectedShows?.[`week${week}`] || [];
+      if (userShows.some((s) => s.eventName === eventName)) {
+        if (!enrolleesByClass[corpsClass]) enrolleesByClass[corpsClass] = [];
+        enrolleesByClass[corpsClass].push(`${uid}_${corpsClass}`);
+      }
+    }
+  }
+
+  const day41Keys = [];
+  const day42Keys = [];
+  for (const corpsClass of Object.keys(enrolleesByClass)) {
+    const keys = enrolleesByClass[corpsClass].sort();
+    const splitIndex = Math.ceil(keys.length / 2);
+    day41Keys.push(...keys.slice(0, splitIndex));
+    day42Keys.push(...keys.slice(splitIndex));
+  }
+
+  const classBreakdown = Object.entries(enrolleesByClass)
+    .map(([cls, arr]) => `${cls}=${arr.length}`)
+    .join(", ") || "none";
+  const selected = scoredDay === 41 ? day41Keys : day42Keys;
+  logger.info(
+    `Eastern Classic Day ${scoredDay}: scoring ${selected.length} corps ` +
+    `(total enrolled by class: ${classBreakdown})`
+  );
+  return new Set(selected);
+}
+
+/**
  * Process weekly matchup determination at end of each week.
  *
  * @param {number} week - The week number (1-7)
@@ -950,28 +1003,15 @@ async function processAndArchiveOffSeasonScoresLogic() {
     };
 
     // --- DAY 41/42 REGIONAL SPLIT LOGIC ---
-    // OPTIMIZATION #6: Use Set for O(1) participant lookups instead of O(n) .includes()
+    // Eastern Classic spans two days. Split enrollees across all corps classes
+    // roughly in half per class, with Day 41 = Friday and Day 42 = Saturday.
+    // Keys are "${uid}_${corpsClass}" composites so per-corps assignment works
+    // even when a user has multiple corps registered for the show.
     let day41_42_participantSet = null;
     if ([41, 42].includes(scoredDay) && show.eventName.includes("Eastern Classic")) {
-        const allEnrollees = [];
-        for (const userDoc of profilesSnapshot.docs) {
-            const userProfile = userDoc.data();
-            const userShows = userProfile.corps?.worldClass?.selectedShows?.[`week${week}`] || [];
-            if (userShows.some(s => s.eventName === show.eventName)) {
-                allEnrollees.push(userDoc.ref.parent.parent.id);
-            }
-        }
-        allEnrollees.sort(); // Deterministic sort
-        const splitIndex = Math.ceil(allEnrollees.length / 2);
-        if (scoredDay === 41) {
-            const participants = allEnrollees.slice(0, splitIndex);
-            day41_42_participantSet = new Set(participants);
-            logger.info(`Day 41: Scoring first half (${participants.length}) of Eastern Classic enrollees.`);
-        } else { // Day 42
-            const participants = allEnrollees.slice(splitIndex);
-            day41_42_participantSet = new Set(participants);
-            logger.info(`Day 42: Scoring second half (${participants.length}) of Eastern Classic enrollees.`);
-        }
+      day41_42_participantSet = buildEasternClassicParticipantSet(
+        profilesSnapshot, show.eventName, week, scoredDay
+      );
     }
     // --- END: DAY 41/42 REGIONAL SPLIT LOGIC ---
 
@@ -990,14 +1030,14 @@ async function processAndArchiveOffSeasonScoresLogic() {
       const userProfile = userDoc.data();
       const uid = userDoc.ref.parent.parent.id;
 
-      // Filter for regional split
-      // OPTIMIZATION #6: O(1) Set lookup instead of O(n) .includes()
-      if (day41_42_participantSet && !day41_42_participantSet.has(uid)) continue;
-
       const userCorps = userProfile.corps || {};
       for (const corpsClass of Object.keys(userCorps)) {
         const corps = userCorps[corpsClass];
         if (!corps || !corps.corpsName || !corps.lineup) continue;
+
+        // Eastern Classic Day 41/42 per-corps filter (keyed by uid+corpsClass
+        // so each registered corps competes on exactly one of the two days).
+        if (day41_42_participantSet && !day41_42_participantSet.has(`${uid}_${corpsClass}`)) continue;
 
         let attended = false;
 
@@ -1220,28 +1260,13 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
     };
 
     // --- DAY 41/42 REGIONAL SPLIT LOGIC ---
-    // OPTIMIZATION #6: Use Set for O(1) participant lookups instead of O(n) .includes()
+    // Eastern Classic spans two days. Split enrollees across all corps classes
+    // roughly in half per class, with Day 41 = Friday and Day 42 = Saturday.
     let day41_42_participantSet = null;
     if ([41, 42].includes(scoredDay) && show.eventName.includes("Eastern Classic")) {
-      const allEnrollees = [];
-      for (const userDoc of profilesSnapshot.docs) {
-        const userProfile = userDoc.data();
-        const userShows = userProfile.corps?.worldClass?.selectedShows?.[`week${week}`] || [];
-        if (userShows.some(s => s.eventName === show.eventName)) {
-          allEnrollees.push(userDoc.ref.parent.parent.id);
-        }
-      }
-      allEnrollees.sort();
-      const splitIndex = Math.ceil(allEnrollees.length / 2);
-      if (scoredDay === 41) {
-        const participants = allEnrollees.slice(0, splitIndex);
-        day41_42_participantSet = new Set(participants);
-        logger.info(`Day 41: Scoring first half (${participants.length}) of Eastern Classic enrollees.`);
-      } else {
-        const participants = allEnrollees.slice(splitIndex);
-        day41_42_participantSet = new Set(participants);
-        logger.info(`Day 42: Scoring second half (${participants.length}) of Eastern Classic enrollees.`);
-      }
+      day41_42_participantSet = buildEasternClassicParticipantSet(
+        profilesSnapshot, show.eventName, week, scoredDay
+      );
     }
     // --- END: DAY 41/42 REGIONAL SPLIT LOGIC ---
 
@@ -1256,13 +1281,14 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
       const userProfile = userDoc.data();
       const uid = userDoc.ref.parent.parent.id;
 
-      // OPTIMIZATION #6: O(1) Set lookup instead of O(n) .includes()
-      if (day41_42_participantSet && !day41_42_participantSet.has(uid)) continue;
-
       const userCorps = userProfile.corps || {};
       for (const corpsClass of Object.keys(userCorps)) {
         const corps = userCorps[corpsClass];
         if (!corps || !corps.corpsName || !corps.lineup) continue;
+
+        // Eastern Classic Day 41/42 per-corps filter (keyed by uid+corpsClass
+        // so each registered corps competes on exactly one of the two days).
+        if (day41_42_participantSet && !day41_42_participantSet.has(`${uid}_${corpsClass}`)) continue;
 
         let attended = false;
 
