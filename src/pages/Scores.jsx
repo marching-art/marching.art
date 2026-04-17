@@ -643,6 +643,7 @@ const Scores = () => {
   const [activeTab, setActiveTab] = useState('latest');
   const [selectedShow, setSelectedShow] = useState(null);
   const [selectedArchiveSeason, setSelectedArchiveSeason] = useState(null);
+  const [selectedArchiveYear, setSelectedArchiveYear] = useState(null);
   const [archiveViewTab, setArchiveViewTab] = useState('latest'); // Sub-tab within archive
 
   const {
@@ -708,6 +709,39 @@ const Scores = () => {
     }
   }, [targetShowName]);
 
+  // Group archived seasons by year (parsed from id suffix like "adagio_2025-26",
+  // falling back to the archivedAt year). Years render newest-first; seasons
+  // within each year keep their archivedAt-desc order.
+  const archivedSeasonsByYear = useMemo(() => {
+    const yearOf = (season) => {
+      const parts = season.id.split('_');
+      const suffix = parts.length > 1 ? parts.slice(1).join('_') : '';
+      if (/^\d{4}/.test(suffix)) return suffix;
+      return season.archivedAt instanceof Date && !isNaN(season.archivedAt)
+        ? String(season.archivedAt.getFullYear())
+        : 'Unknown';
+    };
+    const map = new Map();
+    archivedSeasons.forEach((season) => {
+      const year = yearOf(season);
+      if (!map.has(year)) map.set(year, []);
+      map.get(year).push(season);
+    });
+    return Array.from(map.entries())
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([year, seasons]) => ({ year, seasons }));
+  }, [archivedSeasons]);
+
+  const archivedYears = useMemo(
+    () => archivedSeasonsByYear.map((g) => g.year),
+    [archivedSeasonsByYear]
+  );
+
+  const seasonsForSelectedYear = useMemo(() => {
+    if (!selectedArchiveYear) return [];
+    return archivedSeasonsByYear.find((g) => g.year === selectedArchiveYear)?.seasons || [];
+  }, [archivedSeasonsByYear, selectedArchiveYear]);
+
   // Handle switching to/from Archive tab
   useEffect(() => {
     if (activeTab === 'archive') {
@@ -727,10 +761,36 @@ const Scores = () => {
     }
   }, [activeTab, archivedSeasons, selectedArchiveSeason, selectSeason, isArchived, currentSeasonUid]);
 
+  // Keep the selected year in sync with the selected season (or most-recent year
+  // on first load) so the Year row always highlights the right pill.
+  useEffect(() => {
+    if (archivedSeasonsByYear.length === 0) return;
+    if (selectedArchiveSeason) {
+      const match = archivedSeasonsByYear.find((g) =>
+        g.seasons.some((s) => s.id === selectedArchiveSeason)
+      );
+      if (match && match.year !== selectedArchiveYear) {
+        setSelectedArchiveYear(match.year);
+      }
+    } else if (!selectedArchiveYear) {
+      setSelectedArchiveYear(archivedSeasonsByYear[0].year);
+    }
+  }, [archivedSeasonsByYear, selectedArchiveSeason, selectedArchiveYear]);
+
   // Handle archive season selection change
   const handleArchiveSeasonChange = (seasonId) => {
     setSelectedArchiveSeason(seasonId);
     selectSeason(seasonId);
+  };
+
+  const handleArchiveYearChange = (year) => {
+    setSelectedArchiveYear(year);
+    const group = archivedSeasonsByYear.find((g) => g.year === year);
+    const firstSeason = group?.seasons?.[0];
+    if (firstSeason) {
+      setSelectedArchiveSeason(firstSeason.id);
+      selectSeason(firstSeason.id);
+    }
   };
 
 
@@ -756,8 +816,8 @@ const Scores = () => {
     [aggregatedScores]
   );
 
-  // Latest Recaps - aggregate most recent shows from all classes (excluding SoundSport)
-  const latestShows = useMemo(() => {
+  // Recap Shows - all shows from all classes (excluding SoundSport), used by Archive
+  const recapShows = useMemo(() => {
     return unfilteredShows
       .filter(s => s.scores && s.scores.length > 0)
       .map(show => ({
@@ -765,9 +825,11 @@ const Scores = () => {
         // Filter out SoundSport from the recap view, but keep all other classes
         scores: show.scores.filter(s => s.corpsClass !== 'soundSport')
       }))
-      .filter(show => show.scores.length > 0)
-      .slice(0, 10);
+      .filter(show => show.scores.length > 0);
   }, [unfilteredShows]);
+
+  // Latest Recaps - most recent 10 shows for the live-season "Latest" tab
+  const latestShows = useMemo(() => recapShows.slice(0, 10), [recapShows]);
 
   // =============================================================================
   // RENDER
@@ -880,32 +942,79 @@ const Scores = () => {
               {/* ARCHIVE TAB */}
               {activeTab === 'archive' && (
                 <div>
-                  {/* Archive Header with Season Selector */}
+                  {/* Archive Header with Year → Season Selector */}
                   <div className="bg-[#1a1a1a] border-b border-[#333] px-4 py-3">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Archive className="w-4 h-4 text-yellow-500" />
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                        Historical Seasons
-                      </span>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Archive className="w-4 h-4 text-yellow-500" />
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                          Historical Seasons
+                        </span>
+                      </div>
+                      {archivedSeasons.length > 0 && (
+                        <span className="text-[10px] text-gray-500 tabular-nums">
+                          {archivedSeasons.length} season{archivedSeasons.length === 1 ? '' : 's'} · {archivedYears.length} year{archivedYears.length === 1 ? '' : 's'}
+                        </span>
+                      )}
                     </div>
 
-                    {/* Season Selector - Horizontal Scroll Pills */}
                     {archivedSeasons.length > 0 ? (
-                      <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
-                        {archivedSeasons.map((season) => (
-                          <button
-                            key={season.id}
-                            onClick={() => { haptic('medium'); handleArchiveSeasonChange(season.id); }}
-                            className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wide whitespace-nowrap rounded-sm border transition-all ${
-                              selectedArchiveSeason === season.id
-                                ? 'bg-yellow-500 text-black border-yellow-500'
-                                : 'bg-[#222] text-gray-300 border-[#444] hover:border-yellow-500/50 hover:text-white'
-                            }`}
+                      <>
+                        {/* Year Selector Row */}
+                        <div
+                          role="tablist"
+                          aria-label="Archived season year"
+                          className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2 mb-2 border-b border-[#2a2a2a]"
+                        >
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 pr-1">
+                            Year
+                          </span>
+                          {archivedSeasonsByYear.map(({ year, seasons }) => (
+                            <button
+                              key={year}
+                              role="tab"
+                              aria-selected={selectedArchiveYear === year}
+                              onClick={() => { haptic('medium'); handleArchiveYearChange(year); }}
+                              className={`px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide whitespace-nowrap rounded-sm border transition-all tabular-nums ${
+                                selectedArchiveYear === year
+                                  ? 'bg-yellow-500 text-black border-yellow-500'
+                                  : 'bg-[#222] text-gray-300 border-[#444] hover:border-yellow-500/50 hover:text-white'
+                              }`}
+                            >
+                              {year}
+                              <span className="ml-1.5 text-[9px] opacity-70">({seasons.length})</span>
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Season Selector Row (within selected year) */}
+                        {seasonsForSelectedYear.length > 0 && (
+                          <div
+                            role="tablist"
+                            aria-label="Archived season"
+                            className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1"
                           >
-                            {season.seasonName || season.id.replace(/_/g, ' ')}
-                          </button>
-                        ))}
-                      </div>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 pr-1">
+                              Season
+                            </span>
+                            {seasonsForSelectedYear.map((season) => (
+                              <button
+                                key={season.id}
+                                role="tab"
+                                aria-selected={selectedArchiveSeason === season.id}
+                                onClick={() => { haptic('medium'); handleArchiveSeasonChange(season.id); }}
+                                className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wide whitespace-nowrap rounded-sm border transition-all ${
+                                  selectedArchiveSeason === season.id
+                                    ? 'bg-yellow-500 text-black border-yellow-500'
+                                    : 'bg-[#222] text-gray-300 border-[#444] hover:border-yellow-500/50 hover:text-white'
+                                }`}
+                              >
+                                {season.seasonName || season.id.replace(/_/g, ' ')}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </>
                     ) : (
                       <p className="text-gray-500 text-xs">No archived seasons available</p>
                     )}
@@ -943,8 +1052,8 @@ const Scores = () => {
                     <>
                       {/* Recaps View */}
                       {archiveViewTab === 'latest' && (
-                        latestShows.length > 0 ? (
-                          latestShows.map((show, idx) => (
+                        recapShows.length > 0 ? (
+                          recapShows.map((show, idx) => (
                             <RecapDataGrid
                               key={idx}
                               scores={show.scores}
