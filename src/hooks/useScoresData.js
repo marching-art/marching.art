@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { doc, getDoc, collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useSeasonStore } from '../store/seasonStore';
 
@@ -238,13 +238,11 @@ export const useScoresData = (options = {}) => {
                      (fallbackSeasonId && fallbackSeasonId !== currentSeasonUid);
 
   // Fetch available archived seasons
-  // OPTIMIZATION: Limit to 20 most recent seasons to reduce data transfer
   useEffect(() => {
     const fetchArchivedSeasons = async () => {
       try {
         const championsRef = collection(db, 'season_champions');
-        // Query with ordering and limit - reduces payload for users with many past seasons
-        const championsQuery = query(championsRef, orderBy('archivedAt', 'desc'), limit(20));
+        const championsQuery = query(championsRef, orderBy('archivedAt', 'desc'));
         const championsSnapshot = await getDocs(championsQuery);
 
         const seasons = [];
