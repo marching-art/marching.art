@@ -756,8 +756,8 @@ const Scores = () => {
     [aggregatedScores]
   );
 
-  // Latest Recaps - aggregate most recent shows from all classes (excluding SoundSport)
-  const latestShows = useMemo(() => {
+  // Recap Shows - all shows from all classes (excluding SoundSport), used by Archive
+  const recapShows = useMemo(() => {
     return unfilteredShows
       .filter(s => s.scores && s.scores.length > 0)
       .map(show => ({
@@ -765,9 +765,11 @@ const Scores = () => {
         // Filter out SoundSport from the recap view, but keep all other classes
         scores: show.scores.filter(s => s.corpsClass !== 'soundSport')
       }))
-      .filter(show => show.scores.length > 0)
-      .slice(0, 10);
+      .filter(show => show.scores.length > 0);
   }, [unfilteredShows]);
+
+  // Latest Recaps - most recent 10 shows for the live-season "Latest" tab
+  const latestShows = useMemo(() => recapShows.slice(0, 10), [recapShows]);
 
   // =============================================================================
   // RENDER
@@ -943,8 +945,8 @@ const Scores = () => {
                     <>
                       {/* Recaps View */}
                       {archiveViewTab === 'latest' && (
-                        latestShows.length > 0 ? (
-                          latestShows.map((show, idx) => (
+                        recapShows.length > 0 ? (
+                          recapShows.map((show, idx) => (
                             <RecapDataGrid
                               key={idx}
                               scores={show.scores}
