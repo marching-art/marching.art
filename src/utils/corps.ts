@@ -182,3 +182,53 @@ export function getCorpsClassStyles(classId: CorpsClass | string): CorpsClassSty
 
 // Re-export type for convenience
 export type { CorpsClassStyles };
+
+// =============================================================================
+// SEASON ELIGIBILITY
+// =============================================================================
+
+// Minimal shape of a corps record used for eligibility checks. The Firestore
+// record has many more fields, but eligibility only consults scores, lineup,
+// and selected shows.
+interface CorpsRecord {
+  totalSeasonScore?: number;
+  weeklyScores?: Record<string, unknown> | null;
+  lineup?: Record<string, unknown> | null;
+  selectedShows?: Record<string, unknown> | null;
+}
+
+/**
+ * True when the corps has recorded any score this season. Used as the single
+ * source of truth for whether retire/transfer/unretire are still allowed —
+ * once a corps has competed, its season is locked.
+ */
+export function hasCorpsCompeted(corps: CorpsRecord | null | undefined): boolean {
+  if (!corps) return false;
+  if ((corps.totalSeasonScore || 0) > 0) return true;
+  const weekly = corps.weeklyScores;
+  if (weekly && typeof weekly === 'object' && Object.keys(weekly).length > 0) {
+    return true;
+  }
+  return false;
+}
+
+/** Inverse of `hasCorpsCompeted` — kept as a named helper for readability at call sites. */
+export function canEditCorpsThisSeason(corps: CorpsRecord | null | undefined): boolean {
+  return !hasCorpsCompeted(corps);
+}
+
+/**
+ * True when the corps has work (lineup or show schedule) that would be wiped
+ * by a retire/transfer/unretire. Callers use this to decide whether to
+ * surface the "this will reset your lineup and shows" warning.
+ */
+export function corpsHasPendingWork(corps: CorpsRecord | null | undefined): boolean {
+  if (!corps) return false;
+  const lineup = corps.lineup;
+  const hasLineup =
+    !!lineup && typeof lineup === 'object' && Object.keys(lineup).length > 0;
+  const shows = corps.selectedShows;
+  const hasShows =
+    !!shows && typeof shows === 'object' && Object.keys(shows).length > 0;
+  return hasLineup || hasShows;
+}

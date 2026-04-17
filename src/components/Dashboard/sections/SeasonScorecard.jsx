@@ -1,8 +1,11 @@
 // SeasonScorecard - Sidebar scorecard showing season stats
 // OPTIMIZATION #4: Extracted from Dashboard.jsx to reduce file size and isolate renders
 
-import React, { memo } from 'react';
-import { Trophy, TrendingUp, TrendingDown, Medal, Palette } from 'lucide-react';
+import React, { memo, useState, useRef, useEffect } from 'react';
+import {
+  Trophy, TrendingUp, TrendingDown, Medal, Palette,
+  MoreVertical, ArrowRightLeft, Archive, Lock,
+} from 'lucide-react';
 import { CLASS_LABELS, getSoundSportRating } from './constants';
 
 // Blue Ribbon icon for Best in Show awards
@@ -37,10 +40,40 @@ const SeasonScorecard = memo(({
   loading,
   avatarUrl,
   onDesignUniform,
-  bestInShowCount = 0
+  bestInShowCount = 0,
+  // Corps management: all optional so existing usage keeps rendering unchanged.
+  canManage = false,
+  canMove = false,
+  onMoveCorps,
+  onRetireCorps,
+  lockReason,
 }) => {
   const isSoundSport = corpsClass === 'soundSport';
   const rating = isSoundSport && score ? getSoundSportRating(score) : null;
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpen]);
+
+  const handleMove = () => {
+    setMenuOpen(false);
+    onMoveCorps?.();
+  };
+  const handleRetire = () => {
+    setMenuOpen(false);
+    onRetireCorps?.();
+  };
+
+  const showMenu = !!(onMoveCorps || onRetireCorps);
 
   return (
     <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
@@ -75,6 +108,71 @@ const SeasonScorecard = memo(({
               {CLASS_LABELS[corpsClass] || corpsClass}
             </p>
           </div>
+          {showMenu && (
+            <div className="relative" ref={menuRef}>
+              <button
+                type="button"
+                onClick={() => setMenuOpen((v) => !v)}
+                className="p-1.5 text-gray-500 hover:text-white hover:bg-white/5 transition-colors rounded-sm"
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                aria-label="Manage corps"
+                title="Manage corps"
+              >
+                <MoreVertical className="w-4 h-4" />
+              </button>
+
+              {menuOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 top-full mt-1 w-56 bg-[#1a1a1a] border border-[#333] shadow-xl z-20"
+                >
+                  {!canManage && lockReason && (
+                    <div className="px-3 py-2 text-[10px] text-gray-500 border-b border-[#333] flex items-start gap-2">
+                      <Lock className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                      <span>{lockReason}</span>
+                    </div>
+                  )}
+                  {onMoveCorps && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={handleMove}
+                      disabled={!canManage || !canMove}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left text-gray-300 hover:bg-white/5 hover:text-white disabled:text-gray-600 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-colors"
+                      title={
+                        !canManage
+                          ? (lockReason || 'Locked after your corps competes')
+                          : !canMove
+                            ? 'Unlock another class or free a class slot first'
+                            : 'Move this corps to another class'
+                      }
+                    >
+                      <ArrowRightLeft className="w-3.5 h-3.5" />
+                      Move to another class
+                    </button>
+                  )}
+                  {onRetireCorps && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={handleRetire}
+                      disabled={!canManage}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left text-gray-300 hover:bg-white/5 hover:text-orange-400 disabled:text-gray-600 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-colors border-t border-[#333]"
+                      title={
+                        !canManage
+                          ? (lockReason || 'Locked after your corps competes')
+                          : 'Retire this corps — can be unretired next season'
+                      }
+                    >
+                      <Archive className="w-3.5 h-3.5" />
+                      Retire corps
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Stats Grid */}

@@ -3,7 +3,7 @@
 // =============================================================================
 
 import React from 'react';
-import { Archive, X } from 'lucide-react';
+import { Archive, X, AlertTriangle } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 
@@ -20,6 +20,7 @@ const RetireCorpsModal = ({
   corpsName,
   corpsClass,
   retiring,
+  hasPendingWork = false,
 }) => {
   // Close on Escape key
   useEscapeKey(onClose);
@@ -73,9 +74,27 @@ const RetireCorpsModal = ({
                 <li>• All season history preserved</li>
                 <li>• Lifetime stats maintained</li>
                 <li>• Can be brought out of retirement anytime</li>
-                <li>• Current season data will be reset</li>
               </ul>
             </div>
+
+            {hasPendingWork && (
+              <div className="bg-orange-500/10 border border-orange-500/30 p-3 mb-4">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-orange-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs text-orange-400 font-bold uppercase mb-1">
+                      Your caption lineup and show schedule will be cleared
+                    </p>
+                    <p className="text-xs text-orange-300/80">
+                      You haven't competed yet this season, so retiring is still
+                      allowed — but any captions you've picked and shows you've
+                      scheduled for this corps will be wiped and need to be
+                      reselected.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Footer */}
