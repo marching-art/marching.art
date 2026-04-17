@@ -24,6 +24,7 @@ const SeasonSetupWizard = lazy(() => import('../components/SeasonSetupWizard'));
 const UniformDesignModal = lazy(() => import('../components/modals/UniformDesignModal'));
 const NewsSubmissionModal = lazy(() => import('../components/modals/NewsSubmissionModal'));
 const ClassPurchaseModal = lazy(() => import('../components/modals/ClassPurchaseModal'));
+const NewCorpsSlotModal = lazy(() => import('../components/modals/NewCorpsSlotModal'));
 
 import {
   ClassUnlockCongratsModal,
@@ -60,7 +61,8 @@ import { useDashboardData } from '../hooks/useDashboardData';
 import { useScoresData } from '../hooks/useScoresData';
 import { useMyLeagues } from '../hooks/useLeagues';
 import { retireCorps } from '../firebase/functions';
-import { registerCorps, unlockClassWithCorpsCoin, submitNewsForApproval, transferCorps } from '../api/functions';
+import { registerCorps, unlockClassWithCorpsCoin, submitNewsForApproval, transferCorps, unretireCorps } from '../api/functions';
+import { canEditCorpsThisSeason, corpsHasPendingWork } from '../utils/corps';
 import { useHaptic } from '../hooks/useHaptic';
 import { useModalQueue, MODAL_PRIORITY } from '../hooks/useModalQueue';
 import { useSeasonStore } from '../store/seasonStore';
@@ -268,6 +270,9 @@ const Dashboard = () => {
   // Modal states
   const modalQueue = useModalQueue();
   const [showRegistration, setShowRegistration] = useState(false);
+  const [registrationDefaultClass, setRegistrationDefaultClass] = useState(null);
+  const [slotPickerClass, setSlotPickerClass] = useState(null);
+  const [unretiring, setUnretiring] = useState(false);
   const [showCaptionSelection, setShowCaptionSelection] = useState(false);
   const [selectedCaption, setSelectedCaption] = useState(null);
   const [showEditCorps, setShowEditCorps] = useState(false);
@@ -709,6 +714,27 @@ const Dashboard = () => {
     setClassToPurchase(classKey);
   }, []);
 
+  const handleUnretireCorps = useCallback(async (corpsClass, retiredIndex) => {
+    setUnretiring(true);
+    try {
+      const retiredRecord = profile?.retiredCorps?.[retiredIndex];
+      const result = await unretireCorps({ corpsClass, retiredIndex });
+      if (result.data.success) {
+        toast.success(
+          retiredRecord?.corpsName
+            ? `${retiredRecord.corpsName} is back in action!`
+            : 'Corps brought out of retirement!'
+        );
+        setSlotPickerClass(null);
+        refreshProfile?.();
+      }
+    } catch (error) {
+      toast.error(error.message || 'Failed to unretire corps');
+    } finally {
+      setUnretiring(false);
+    }
+  }, [profile?.retiredCorps, refreshProfile]);
+
   const handleConfirmClassPurchase = useCallback(async () => {
     if (!classToPurchase) return;
     try {
@@ -790,7 +816,18 @@ const Dashboard = () => {
           onSwitch={handleCorpsSwitch}
           onCreateCorps={(classId) => {
             clearNewlyUnlockedClass();
-            setShowRegistration(true);
+            // If the director has retired corps for this class, offer the
+            // choice between starting fresh and bringing one back. Otherwise
+            // jump straight to registration with this class preselected.
+            const retiredForClass = (profile?.retiredCorps || [])
+              .map((record, retiredIndex) => ({ record, retiredIndex }))
+              .filter((entry) => entry.record?.corpsClass === classId);
+            if (retiredForClass.length > 0) {
+              setSlotPickerClass(classId);
+            } else {
+              setRegistrationDefaultClass(classId || null);
+              setShowRegistration(true);
+            }
           }}
           onUnlockClass={handleClassUnlock}
         />
@@ -840,6 +877,15 @@ const Dashboard = () => {
                   avatarUrl={activeCorps.avatarUrl}
                   onDesignUniform={() => setShowUniformDesign(true)}
                   bestInShowCount={bestInShowCount}
+                  canManage={canEditCorpsThisSeason(activeCorps)}
+                  canMove={Object.values(corps || {}).filter(Boolean).length < (unlockedClasses?.length || 0)}
+                  lockReason={
+                    canEditCorpsThisSeason(activeCorps)
+                      ? null
+                      : 'Locked — this corps has already competed this season.'
+                  }
+                  onMoveCorps={() => setShowMoveCorps(true)}
+                  onRetireCorps={() => setShowRetireConfirm(true)}
                 />
 
                 {/* Daily Challenges - drives daily return visits */}
@@ -925,11 +971,35 @@ const Dashboard = () => {
 
       {showRegistration && (
         <CorpsRegistrationModal
-          onClose={() => { setShowRegistration(false); clearNewlyUnlockedClass(); }}
+          onClose={() => {
+            setShowRegistration(false);
+            setRegistrationDefaultClass(null);
+            clearNewlyUnlockedClass();
+          }}
           onSubmit={handleCorpsRegistration}
           unlockedClasses={unlockedClasses}
-          defaultClass={newlyUnlockedClass}
+          defaultClass={registrationDefaultClass || newlyUnlockedClass}
         />
+      )}
+
+      {slotPickerClass && (
+        <Suspense fallback={null}>
+          <NewCorpsSlotModal
+            onClose={() => setSlotPickerClass(null)}
+            onStartNew={() => {
+              const targetClass = slotPickerClass;
+              setSlotPickerClass(null);
+              setRegistrationDefaultClass(targetClass);
+              setShowRegistration(true);
+            }}
+            onUnretire={(retiredIndex) => handleUnretireCorps(slotPickerClass, retiredIndex)}
+            corpsClass={slotPickerClass}
+            retiredCorps={(profile?.retiredCorps || [])
+              .map((record, retiredIndex) => ({ record, retiredIndex }))
+              .filter((entry) => entry.record?.corpsClass === slotPickerClass)}
+            processing={unretiring}
+          />
+        </Suspense>
       )}
 
       {showCaptionSelection && activeCorps && seasonData && (
@@ -974,6 +1044,7 @@ const Dashboard = () => {
           corpsClass={activeCorpsClass}
           retiring={retiring}
           inLeague={false}
+          hasPendingWork={corpsHasPendingWork(activeCorps)}
         />
       )}
 
@@ -986,6 +1057,7 @@ const Dashboard = () => {
           unlockedClasses={unlockedClasses}
           existingCorps={corps}
           transferring={transferring}
+          hasPendingWork={corpsHasPendingWork(activeCorps)}
         />
       )}
 

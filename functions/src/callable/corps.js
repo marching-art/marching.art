@@ -2,6 +2,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { getDb, dataNamespaceParam } = require("../config");
 const admin = require("firebase-admin");
 const { logger } = require("firebase-functions/v2");
+const { hasCorpsCompeted } = require("../helpers/corpsEligibility");
 
 /**
  * Process corps decisions during season reset
@@ -281,10 +282,12 @@ exports.retireCorps = onCall({ cors: true }, async (request) => {
       throw new HttpsError("not-found", `No active ${corpsClass} corps to retire.`);
     }
 
-    // Check if corps has an active lineup - can't retire mid-season
-    if (corps.lineup && profileData.activeSeasonId) {
+    // A corps may be retired as long as it has not competed yet this season.
+    // Any lineup or show selections will be wiped as part of retirement — the
+    // UI is expected to warn the director before they confirm.
+    if (hasCorpsCompeted(corps)) {
       throw new HttpsError("failed-precondition",
-        "Cannot retire a corps during an active season. Please wait until the season ends.");
+        "Cannot retire a corps after it has competed this season. Please wait until the season ends.");
     }
 
     // If checkOnly, just return basic info
@@ -389,11 +392,6 @@ exports.transferCorps = onCall({ cors: true }, async (request) => {
       const seasonData = seasonDoc.data();
       const currentSeasonUid = seasonData.seasonUid;
 
-      // Check registration is open
-      if (!seasonData.registrationOpen) {
-        throw new HttpsError("failed-precondition", "Registration is closed for this season.");
-      }
-
       // Check the target class is unlocked
       const unlockedClasses = profileData.unlockedClasses || ["soundSport"];
       if (!unlockedClasses.includes(toClass)) {
@@ -404,6 +402,14 @@ exports.transferCorps = onCall({ cors: true }, async (request) => {
       const sourceCorps = profileData.corps?.[fromClass];
       if (!sourceCorps || !sourceCorps.corpsName) {
         throw new HttpsError("not-found", `No active corps found in ${fromClass}.`);
+      }
+
+      // A corps can only change class while it hasn't competed yet this
+      // season. Any lineup/show selections will be wiped on transfer — the
+      // UI is expected to warn the director before they confirm.
+      if (hasCorpsCompeted(sourceCorps)) {
+        throw new HttpsError("failed-precondition",
+          `"${sourceCorps.corpsName}" has already competed this season and can't change class until next season.`);
       }
 
       // Check target class is empty (frontend should handle retiring/moving the occupant first)

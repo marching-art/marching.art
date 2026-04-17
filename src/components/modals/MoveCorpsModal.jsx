@@ -3,7 +3,7 @@
 // =============================================================================
 
 import React, { useState } from 'react';
-import { Lock, Check, X } from 'lucide-react';
+import { Lock, Check, X, AlertTriangle } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 
@@ -21,7 +21,7 @@ const AVAILABLE_CLASSES = [
   { id: 'worldClass', name: 'World Class', level: 'Elite' },
 ];
 
-const MoveCorpsModal = ({ onClose, onMove, currentClass, corpsName, unlockedClasses, existingCorps, transferring }) => {
+const MoveCorpsModal = ({ onClose, onMove, currentClass, corpsName, unlockedClasses, existingCorps, transferring, hasPendingWork = false }) => {
   const [selectedClass, setSelectedClass] = useState('');
 
   // Close on Escape key
@@ -118,6 +118,19 @@ const MoveCorpsModal = ({ onClose, onMove, currentClass, corpsName, unlockedClas
                     <strong>Note:</strong> Your corps name and identity will be preserved, but season-specific data (lineup, show selections, scores) will be reset. Each corps can only transfer once per season.
                   </p>
                 </div>
+
+                {hasPendingWork && (
+                  <div className="bg-orange-500/10 border border-orange-500/30 p-3 mt-3">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-orange-400 mt-0.5 flex-shrink-0" />
+                      <p className="text-xs text-orange-300/90">
+                        You've already picked captions or scheduled shows for
+                        this corps. Those selections will be cleared on move
+                        and will need to be reselected in the new class.
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Footer */}
                 <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-[#333]">
