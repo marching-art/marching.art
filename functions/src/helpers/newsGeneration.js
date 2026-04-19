@@ -2742,15 +2742,81 @@ async function generateDciDailyArticle({ reportDay, dayScores, trendData, active
   // Get dynamic tone guidance based on competition context
   const toneGuidance = getToneGuidance(competitionContext, "dci_scores");
 
-  // Build list of all shows happening today for comprehensive coverage
-  const allShowsText = showContext.allShows?.length > 1
-    ? showContext.allShows.map(s => `• ${s.name}${s.location ? ` (${s.location})` : ''}`).join('\n')
-    : `• ${showContext.showName}${showContext.location ? ` (${showContext.location})` : ''}`;
+  // Group today's corps by the show they actually competed at.
+  // Some days have one show; others have multiple, and corps in different shows
+  // did NOT compete head-to-head. The prompt must make that distinction clear.
+  const scoresByShow = (() => {
+    const groups = new Map();
+    for (const s of dayScores) {
+      const key = s.showName || showContext.showName || `Day ${reportDay} Competition`;
+      if (!groups.has(key)) {
+        groups.set(key, {
+          name: key,
+          location: s.location || showContext.location || null,
+          scores: [],
+        });
+      }
+      groups.get(key).scores.push(s);
+    }
+    return Array.from(groups.values()).map(g => ({
+      ...g,
+      scores: g.scores.sort((a, b) => b.total - a.total),
+    }));
+  })();
+
+  const multiShow = scoresByShow.length > 1;
+
+  const showBlocks = scoresByShow.map(group => {
+    const header = `SHOW: ${group.name}${group.location ? ` — ${group.location}` : ''} (${group.scores.length} corps)`;
+    const lines = group.scores.map((s, i) => {
+      const trend = trendData[s.corps];
+      const change = trend?.dayChange || 0;
+      const marginToNext = i > 0 ? (group.scores[i - 1].total - s.total).toFixed(3) : "-";
+      const changeStr = trend && Number.isFinite(change)
+        ? ` (${change >= 0 ? '+' : ''}${change.toFixed(3)} from yesterday)`
+        : '';
+      return `${i + 1}. ${s.corps} - ${s.total.toFixed(3)}${changeStr}${i > 0 ? ` [${marginToNext} behind]` : ' [LEADER]'}
+   GE: ${s.subtotals?.ge?.toFixed(2) || 'N/A'} | Visual: ${s.subtotals?.visual?.toFixed(2) || 'N/A'} | Music: ${s.subtotals?.music?.toFixed(2) || 'N/A'}`;
+    }).join('\n');
+    return `${header}\n${lines}`;
+  }).join('\n\n');
+
+  // Caption winners are computed per-show so we don't imply a head-to-head
+  // caption race across corps that weren't on the same field.
+  const captionWinnersByShow = scoresByShow.map(group => {
+    const captions = ['ge', 'visual', 'music'];
+    const winners = captions.map(cap => {
+      const sorted = [...group.scores].sort((a, b) => (b.subtotals?.[cap] || 0) - (a.subtotals?.[cap] || 0));
+      const top = sorted[0];
+      if (!top) return null;
+      const margin = sorted[1] ? (top.subtotals[cap] - sorted[1].subtotals[cap]).toFixed(2) : "N/A";
+      return `• ${cap.toUpperCase()}: ${top.corps} (${top.subtotals[cap]?.toFixed(2)}) — ${margin} over ${sorted[1]?.corps || 'field'}`;
+    }).filter(Boolean).join('\n');
+    return `${group.name}:\n${winners}`;
+  }).join('\n\n');
+
+  // Day-over-day movers across the whole field (identity by corps name is fine;
+  // a corps only competes at one show on a given day).
+  const surgingLines = Object.entries(trendData).filter(([_, t]) => t.dayChange > 0.3);
+  const strugglingLines = Object.entries(trendData).filter(([_, t]) => t.dayChange < -0.3);
+  const moversBlock = [
+    surgingLines.length > 0 ? `- Biggest gains: ${surgingLines.map(([c, t]) => `${c} (+${t.dayChange.toFixed(3)})`).join(', ')}` : null,
+    strugglingLines.length > 0 ? `- Score drops: ${strugglingLines.map(([c, t]) => `${c} (${t.dayChange.toFixed(3)})`).join(', ')}` : null,
+  ].filter(Boolean).join('\n');
+
+  const corpsRoster = dayScores.map(s => s.corps).join(', ');
 
   // Get today's narrative variety to keep articles from feeling templated
   const variety = getWritingVariety(reportDay, "dci_daily");
 
   const prompt = `You are a DCI.org staff writer covering tonight's competitions. Write a genuine article — not a template with blanks filled in. Every night's story is different because every night's scores tell a different story. Find that story.
+
+ACCURACY RULES (read first — violations ruin the article)
+- Every corps name, score, caption number, show name, and location you write MUST come from the DATA block below. Do not invent corps, venues, cities, dates, or statistics.
+- Only the corps listed in CORPS COMPETING TONIGHT exist in this article. Do not reference any corps not in that list.
+- The field tonight has ${dayScores.length} corps — never state any other count, and never imply corps not listed were present.
+${multiShow ? `- There are ${scoresByShow.length} separate competitions tonight at different venues. Corps at different shows did NOT compete against each other. Never imply a head-to-head result between corps that weren't at the same show. When you cite a score or placement, make the show clear from context.` : `- All corps tonight competed at a single show: ${scoresByShow[0]?.name}${scoresByShow[0]?.location ? ` in ${scoresByShow[0].location}` : ''}.`}
+- If a data point you want to reference isn't in the DATA block, leave it out. Do not fill gaps with plausible-sounding invention.
 
 VOICE & STYLE
 Study how DCI.org actually writes:
@@ -2759,55 +2825,32 @@ Study how DCI.org actually writes:
 - "After trailing by 0.175 points Thursday, Bluecoats gained a lead of 0.188 points Friday."
 - "Less than half a point separated The Cavaliers, Blue Stars, and Troopers — three corps who have been neck-and-neck throughout the season."
 
-Notice what these have in common: they lead with specific facts, they're concise, and they let the numbers carry the weight. No hype words. No exclamation points. The drama is in the data.
+Lead with specific facts, stay concise, let the numbers carry the weight. No hype words. No exclamation points. The drama is in the data.
 
-Score language should be precise: "besting [Corps] by 0.087" / "edging past by three-tenths" / "a scant 0.2-point gap" / "swept every caption except Color Guard"
+Score language should be precise: "edging past by 0.087" / "three-tenths back" / "a scant 0.2-point gap" / "swept every caption except Color Guard"
 Caption terminology: GE (GE1 Music Effect + GE2 Visual Effect), Visual (VP, VA, CG), Music (B, MA, P)
 
-WORDS AND PHRASES THAT ARE BANNED (these make articles sound AI-generated):
-dominant, commanding, stellar, stunning, thrilling, incredible, captivating, testament, mettle, besting, heating up, setting the stage, all eyes on, force to be reckoned with, proves their mettle, tune in tomorrow, stay tuned, momentum is building, final showdown, critical juncture, dynasty in the making, echoes still resonate, poured their hearts into, leaving spectators on edge, within striking distance, absolutely crucial, emerging as a true contender
+BANNED PHRASES (AI tells): dominant, commanding, stellar, stunning, thrilling, incredible, captivating, testament, mettle, besting, heating up, setting the stage, all eyes on, force to be reckoned with, proves their mettle, tune in tomorrow, stay tuned, momentum is building, final showdown, critical juncture, dynasty in the making, echoes still resonate, poured their hearts into, leaving spectators on edge, within striking distance, absolutely crucial, emerging as a true contender
 
-TODAY'S COMPETITIONS - Day ${reportDay}
-Date: ${showContext.date}
-${showContext.allShows?.length > 1 ? `Shows: ${showContext.allShows.map(s => `${s.name} (${s.location || 'TBD'})`).join(', ')}` : `Show: ${showContext.showName} - ${showContext.location}`}
+===== DATA =====
+Day ${reportDay} — ${showContext.date}
 
-RESULTS
-${dayScores.map((s, i) => {
-  const trend = trendData[s.corps];
-  const change = trend?.dayChange || 0;
-  const marginToNext = i > 0 ? (dayScores[i-1].total - s.total).toFixed(3) : "-";
-  return `${i + 1}. ${s.corps} - ${s.total.toFixed(3)} (${change >= 0 ? '+' : ''}${change.toFixed(3)} from yesterday)${i > 0 ? ` [${marginToNext} behind]` : ' [LEADER]'}
-   GE: ${s.subtotals?.ge?.toFixed(2) || 'N/A'} | Visual: ${s.subtotals?.visual?.toFixed(2) || 'N/A'} | Music: ${s.subtotals?.music?.toFixed(2) || 'N/A'}`;
-}).join('\n')}
+CORPS COMPETING TONIGHT (${dayScores.length}): ${corpsRoster}
 
-CAPTION WINNERS:
-${(() => {
-  const captionWinners = {};
-  const captions = ['ge', 'visual', 'music'];
-  captions.forEach(cap => {
-    const sorted = [...dayScores].sort((a, b) => (b.subtotals?.[cap] || 0) - (a.subtotals?.[cap] || 0));
-    if (sorted[0]) {
-      const margin = sorted[1] ? (sorted[0].subtotals[cap] - sorted[1].subtotals[cap]).toFixed(2) : "N/A";
-      captionWinners[cap] = { corps: sorted[0].corps, score: sorted[0].subtotals[cap]?.toFixed(2), margin, second: sorted[1]?.corps };
-    }
-  });
-  return Object.entries(captionWinners).map(([cap, data]) =>
-    `• ${cap.toUpperCase()}: ${data.corps} (${data.score}) - ${data.margin} over ${data.second || 'field'}`
-  ).join('\n');
-})()}
+${multiShow ? `TONIGHT'S SHOWS (${scoresByShow.length}):` : `TONIGHT'S SHOW:`}
+${scoresByShow.map(g => `- ${g.name}${g.location ? ` — ${g.location}` : ''} (${g.scores.length} corps)`).join('\n')}
 
-KEY DATA:
-- Lead margin: ${topCorps?.corps} leads by ${gap} over ${secondCorps?.corps}
-- Top 3 spread: ${top3Gap} points
-- Position battles: ${competitionContext.positionBattleCount} corps within 0.2 of position ahead
-${(() => {
-  const surging = Object.entries(trendData).filter(([_, t]) => t.dayChange > 0.3);
-  const struggling = Object.entries(trendData).filter(([_, t]) => t.dayChange < -0.3);
-  const lines = [];
-  if (surging.length > 0) lines.push(`- Biggest gains: ${surging.map(([c, t]) => `${c} (+${t.dayChange.toFixed(3)})`).join(', ')}`);
-  if (struggling.length > 0) lines.push(`- Score drops: ${struggling.map(([c, t]) => `${c} (${t.dayChange.toFixed(3)})`).join(', ')}`);
-  return lines.join('\n');
-})()}
+RESULTS BY SHOW
+${showBlocks}
+
+CAPTION WINNERS (per show):
+${captionWinnersByShow}
+
+DAY-OVER-DAY MOVERS${moversBlock ? '' : ': none of note'}
+${moversBlock}
+
+POSITION BATTLES: ${competitionContext.positionBattleCount} corps within 0.2 of the position directly ahead of them.
+===== END DATA =====
 
 ${toneGuidance}
 
@@ -2817,23 +2860,23 @@ Angle: ${variety.angle}
 Structure: ${variety.structure}
 
 HOW TO WRITE THIS ARTICLE
-- Headline: Specific and factual. No exclamation points. No "dominates" or "stunning." Reference an actual result or margin.
-- Summary: 2-3 factual sentences — the winner, the margin, and one specific storyline.
-- Narrative: 600-900 words. You MUST mention every corps by name at least once.
-  Cover the winner, the runner-up, the mid-field battles, and the rest of the field — but you decide the emphasis, order, and transitions based on what tonight's scores actually tell you. Don't march through the standings in rank order unless that's genuinely the best way to tell tonight's story. Weave in day-over-day changes and caption details where they're relevant, not as separate obligatory sections.
-  ${showContext.allShows?.length > 1 ? `You MUST mention all ${showContext.allShows.length} shows by name.` : ''}
-  End with a specific, forward-looking observation — not "tune in tomorrow" or any generic sign-off.
+- Headline: Specific and factual. No exclamation points. Reference an actual margin, score, or storyline from the data.
+- Summary: 2-3 factual sentences — key result, the margin, and one specific storyline${multiShow ? '. If the night had multiple shows, make that clear in the summary' : ''}.
+- Narrative: 600-900 words. Every scoring corps should appear by name at least once, but let significance drive the emphasis — don't pad coverage to hit a checklist, and don't march through rank order unless that's genuinely the best frame.
+${multiShow ? `- Cover all ${scoresByShow.length} shows by name. For each score or placement you cite, make the show clear (via dateline, a phrase like "at [Show]", or section framing). Readers should never be confused about which corps competed where.` : `- This is a single-show night — ground the article in ${scoresByShow[0]?.name}${scoresByShow[0]?.location ? ` (${scoresByShow[0].location})` : ''} and treat the standings as one field.`}
+- Weave day-over-day changes and caption details where they're relevant; don't break them out as obligatory sections.
+- Close with a specific, grounded observation — a number, a trend, a question the next show will answer. No "tune in tomorrow" sign-offs.
 
-Write like you've covered this beat for years. You know the corps, you know the judges, and you know what matters in a 0.1-point margin. Let the scores drive the story.`;
+Write like you've covered this beat for years. Let the scores drive the story.`;
 
 
   // Schema for structured output
   const schema = {
     type: Type.OBJECT,
     properties: {
-      headline: { type: Type.STRING, description: "Factual headline with winner and score, NO exclamation points, NO 'dominates' or 'stunning'" },
-      summary: { type: Type.STRING, description: "Exactly 2-3 sentences: winner name, exact score, margin over second place" },
-      narrative: { type: Type.STRING, description: "FULL 600-800 word article with 8 paragraphs covering ALL corps. Must include: dateline opener, winner analysis, 2nd place, 3rd-6th place battle, 7th-10th, rest of field, day-over-day changes, tomorrow preview. NEVER use 'dominant', 'commanding', 'heating up', 'besting'" },
+      headline: { type: Type.STRING, description: "Factual headline grounded in tonight's actual results. No exclamation points, no 'dominates' or 'stunning', no invented facts." },
+      summary: { type: Type.STRING, description: "2-3 factual sentences. When multiple shows occurred, make that clear. Only use corps, scores, and venues from the DATA block." },
+      narrative: { type: Type.STRING, description: "600-900 word article. Every scoring corps appears by name at least once; emphasis follows significance, not checklist. When there are multiple shows, make the venue split clear for every score cited. Never invent corps, venues, or statistics. Never use 'dominant', 'commanding', 'heating up', 'besting'." },
       standings: {
         type: Type.ARRAY,
         items: {
@@ -2961,34 +3004,45 @@ async function generateDciFeatureArticle({ reportDay, dayScores, trendData, acti
   // Get today's narrative variety
   const variety = getWritingVariety(reportDay, "dci_feature");
 
+  const tonightShow = featureCorps.showName || showContext.showName;
+  const tonightLocation = featureCorps.location || showContext.location;
+
   const prompt = `You are a DCI.org feature writer profiling ${featureCorps.corps}'s season. This is a numbers-driven piece — the kind of article a knowledgeable fan reads to understand what the scores actually say about this corps. Not a puff piece. Not a history lesson. A season audit.
 
-VOICE: Write like a sports analyst who respects the reader's intelligence. Specific scores, real comparisons, honest assessments. No filler paragraphs about tradition or history — only this season's data matters.
+ACCURACY RULES (read first)
+- Every score, caption number, show name, and location you write MUST come from the DATA block below. Do not invent venues, cities, dates, or scores.
+- The featured corps is ${featureCorps.corps} competing with ${featureCorps.sourceYear} material. Do not reference seasons or material other than ${featureCorps.sourceYear} unless it appears in the data.
+- If a fact isn't in the data, leave it out — do not fill gaps with plausible-sounding invention.
 
-BANNED PHRASES (these sound AI-generated):
-dominant, commanding, stunning, thrilling, incredible, captivating, testament, mettle, identity forged in, legacy of excellence, storied history, tradition of, proving doubters wrong, making a statement, force to be reckoned with, passion and dedication, pushing the boundaries, compelling visual storytelling, emotionally resonant
+VOICE: Sports analyst who respects the reader's intelligence. Specific scores, real comparisons, honest assessments. No filler about tradition or history — only this season's data matters.
+
+BANNED PHRASES: dominant, commanding, stunning, thrilling, incredible, captivating, testament, mettle, identity forged in, legacy of excellence, storied history, tradition of, proving doubters wrong, making a statement, force to be reckoned with, passion and dedication, pushing the boundaries, compelling visual storytelling, emotionally resonant
 
 DATA RULES: Ignore total scores under 60 (incomplete). Ignore caption scores of 0 (missing).
 
+===== DATA =====
 FEATURED CORPS: ${featureCorps.corps}
-Season: ${featureCorps.sourceYear}${showTitle ? ` | Show: "${showTitle}"` : ''}
-Current: ${currentRank}${currentRank === 1 ? 'st' : currentRank === 2 ? 'nd' : currentRank === 3 ? 'rd' : 'th'} place, ${featureCorps.total.toFixed(3)} (${corpsTrend.dayChange >= 0 ? '+' : ''}${corpsTrend.dayChange.toFixed(3)} today)
-Season High: ${seasonHigh.toFixed(3)} | Season Low: ${seasonLow >= 60 ? seasonLow.toFixed(3) : 'N/A'} | Improvement: ${improvement >= 0 ? '+' : ''}${improvement.toFixed(3)} | Momentum: ${corpsTrend.momentum || 'steady'}${corpsTrend.atSeasonBest ? ' | ★ AT SEASON HIGH' : ''}
+Season material: ${featureCorps.sourceYear}${showTitle ? ` | Show title: "${showTitle}"` : ''}
+Tonight's competition: ${tonightShow || 'N/A'}${tonightLocation ? ` — ${tonightLocation}` : ''}
+Tonight's placement: ${currentRank}${currentRank === 1 ? 'st' : currentRank === 2 ? 'nd' : currentRank === 3 ? 'rd' : 'th'} of ${dayScores.length} at that show, ${featureCorps.total.toFixed(3)} (${corpsTrend.dayChange >= 0 ? '+' : ''}${corpsTrend.dayChange.toFixed(3)} from yesterday)
+Season High: ${seasonHigh.toFixed(3)} | Season Low: ${seasonLow >= 60 ? seasonLow.toFixed(3) : 'N/A'} | Net improvement: ${improvement >= 0 ? '+' : ''}${improvement.toFixed(3)} | Momentum: ${corpsTrend.momentum || 'steady'}${corpsTrend.atSeasonBest ? ' | ★ AT SEASON HIGH' : ''}
 
-SHOW-BY-SHOW (last 5 valid):
+SHOW-BY-SHOW (last 5 valid — use these exact show names and locations):
 ${showHistoryText}
 
-CAPTIONS TODAY:
+CAPTIONS TONIGHT:
 GE: ${featureCorps.subtotals?.ge?.toFixed(2) || 'N/A'} ${corpsTrend.captionTrends?.ge?.trending === "up" ? "↑" : corpsTrend.captionTrends?.ge?.trending === "down" ? "↓" : "→"} (GE1: ${featureCorps.captions?.GE1?.toFixed(2) || 'N/A'}, GE2: ${featureCorps.captions?.GE2?.toFixed(2) || 'N/A'})
 Visual: ${featureCorps.subtotals?.visual?.toFixed(2) || 'N/A'} ${corpsTrend.captionTrends?.visual?.trending === "up" ? "↑" : corpsTrend.captionTrends?.visual?.trending === "down" ? "↓" : "→"} (VP: ${featureCorps.captions?.VP?.toFixed(2) || 'N/A'}, VA: ${featureCorps.captions?.VA?.toFixed(2) || 'N/A'}, CG: ${featureCorps.captions?.CG?.toFixed(2) || 'N/A'})
 Music: ${featureCorps.subtotals?.music?.toFixed(2) || 'N/A'} ${corpsTrend.captionTrends?.music?.trending === "up" ? "↑" : corpsTrend.captionTrends?.music?.trending === "down" ? "↓" : "→"} (B: ${featureCorps.captions?.B?.toFixed(2) || 'N/A'}, MA: ${featureCorps.captions?.MA?.toFixed(2) || 'N/A'}, P: ${featureCorps.captions?.P?.toFixed(2) || 'N/A'})
 
-COMPETITIVE NEIGHBORHOOD:
+COMPETITIVE NEIGHBORHOOD (corps ranked within a few spots of the feature at today's show):
 ${dayScores.slice(Math.max(0, currentRank - 3), Math.min(dayScores.length, currentRank + 4)).map((s, i) => {
   const rank = Math.max(0, currentRank - 3) + i + 1;
   const gap = s.total - featureCorps.total;
-  return `${rank}. ${s.corps}: ${s.total.toFixed(3)}${s.corps === featureCorps.corps ? ' ← FEATURED' : ` (${gap >= 0 ? '+' : ''}${gap.toFixed(3)})`}`;
+  const venueTag = s.showName && s.showName !== tonightShow ? ` @ ${s.showName}` : '';
+  return `${rank}. ${s.corps}: ${s.total.toFixed(3)}${venueTag}${s.corps === featureCorps.corps ? ' ← FEATURED' : ` (${gap >= 0 ? '+' : ''}${gap.toFixed(3)})`}`;
 }).join('\n')}
+===== END DATA =====
 
 ${toneGuidance}
 
@@ -2999,18 +3053,18 @@ Closing angle: ${variety.closingAngle}
 
 ARTICLE REQUIREMENTS
 - Headline: Include a real number (score, margin, trend). No exclamation points. No generic praise.
-- Summary: 2-3 sentences — rank, score, and a specific caption insight.
-- Narrative: 700-900 words. This is a season profile built on scores.
-  You must include: specific scores from their recent shows, analysis of at least 3 individual captions with numbers, comparison to the corps around them in the standings, and a clear buy/hold/sell fantasy recommendation with evidence.
-  But HOW you structure and sequence these elements is up to you. Use today's approach as your lens. Let the data guide what deserves the most attention — if their GE is the story, lead with GE. If their trajectory is the story, lead with the arc. Don't walk through a checklist.
+- Summary: 2-3 sentences — rank, score, and a specific caption insight. Reference the actual show name when natural.
+- Narrative: 700-900 words. A season profile built on scores.
+  Include: specific scores from their recent shows (use the exact show names from the data), analysis of at least 3 individual captions with numbers, a comparison to the corps around them tonight, and a clear buy/hold/sell fantasy recommendation with evidence.
+  Sequence and emphasis are your call — if GE is the story, lead with GE; if trajectory is the story, lead with the arc. Don't walk through a checklist.
   Do NOT predict exact future scores — only analyze visible trends.`;
 
   const schema = {
     type: Type.OBJECT,
     properties: {
-      headline: { type: Type.STRING, description: "Corps name with specific number and trend direction, NO 'dominates' or exclamation points" },
-      summary: { type: Type.STRING, description: "Exactly 2-3 sentences: corps name, current score, rank, and one specific caption insight" },
-      narrative: { type: Type.STRING, description: "FULL 700-900 word analytical profile with 6 paragraphs: current position, show-by-show journey with SPECIFIC SCORES, caption strengths, caption weaknesses, trajectory, buy/hold/sell recommendation. NEVER use 'dominant', 'commanding', 'stunning'" },
+      headline: { type: Type.STRING, description: "Corps name with a real number/trend from tonight. No 'dominates', no exclamation points, no invented facts." },
+      summary: { type: Type.STRING, description: "2-3 sentences: corps name, current score, rank, and one specific caption insight grounded in the data." },
+      narrative: { type: Type.STRING, description: "700-900 word analytical profile. Uses the exact show names and scores from the data block — no invented venues, dates, or statistics. Covers current position, show-by-show journey with specific scores, caption strengths, caption weaknesses, trajectory, and a buy/hold/sell recommendation. Structure follows what the data emphasizes, not a fixed checklist. Never uses 'dominant', 'commanding', 'stunning'." },
       corpsIdentity: {
         type: Type.OBJECT,
         properties: {
@@ -3111,14 +3165,25 @@ async function generateDciRecapArticle({ reportDay, dayScores, trendData, captio
   // Get today's narrative variety
   const variety = getWritingVariety(reportDay, "dci_recap");
 
+  // Distinct shows represented in today's field (for venue-aware phrasing)
+  const uniqueShows = Array.from(new Set(dayScores.map(s => s.showName).filter(Boolean)));
+  const multiShowToday = uniqueShows.length > 1;
+
   const prompt = `You are a DCI score analyst writing the weekly caption deep-dive. This is the piece a serious drum corps fan bookmarks — the one that explains what the judges are actually rewarding and where the real races are hiding inside the overall standings.
 
-VOICE: Authoritative but readable. You're not dumbing it down, but you're not writing for judges either. A knowledgeable fan should come away understanding the caption landscape better than they did before.
+ACCURACY RULES (read first)
+- Every corps name, score, caption number, and trend direction you write MUST come from the DATA block below. Do not invent corps, scores, or statistics.
+- The field being analyzed is ${dayScores.length} corps (listed below). Never state any other count, and never reference corps not in this list.
+${multiShowToday ? `- Tonight's caption numbers come from ${uniqueShows.length} different shows: ${uniqueShows.join(', ')}. Corps at different shows did NOT judge against each other tonight, so the caption rankings below are a composite across venues — frame cross-venue comparisons as such, not as a head-to-head caption duel.` : `- Tonight's caption numbers come from a single show, so the caption rankings below are a true head-to-head.`}
+- If a fact isn't in the data, leave it out.
+
+VOICE: Authoritative but readable. Not dumbed down, not written for judges. A knowledgeable fan should come away understanding the caption landscape better than they did before.
 
 BANNED PHRASES: dominant, commanding, stunning, thrilling, heating up, captivating, testament, battle for supremacy, stakes are high, every point matters, absolutely crucial, setting the stage, poised to, poised for success, will have a significant advantage
 
-CAPTION DATA - ${dayScores.length} CORPS
-Week: Days ${reportDay - 6} through ${reportDay} | Date: ${showContext.date}
+===== DATA =====
+${dayScores.length} CORPS | Week: Days ${reportDay - 6} through ${reportDay} | Date: ${showContext.date}
+CORPS IN TONIGHT'S FIELD: ${dayScores.map(s => s.corps).join(', ')}
 
 GENERAL EFFECT (40% of total):
 ${geSorted.map((s, i) => {
@@ -3150,6 +3215,7 @@ SUBCAPTION LEADERS:
 GE1: ${[...dayScores].sort((a, b) => (b.captions?.GE1 || 0) - (a.captions?.GE1 || 0))[0]?.corps} (${[...dayScores].sort((a, b) => (b.captions?.GE1 || 0) - (a.captions?.GE1 || 0))[0]?.captions?.GE1?.toFixed(2)}) | GE2: ${[...dayScores].sort((a, b) => (b.captions?.GE2 || 0) - (a.captions?.GE2 || 0))[0]?.corps} (${[...dayScores].sort((a, b) => (b.captions?.GE2 || 0) - (a.captions?.GE2 || 0))[0]?.captions?.GE2?.toFixed(2)})
 VP: ${[...dayScores].sort((a, b) => (b.captions?.VP || 0) - (a.captions?.VP || 0))[0]?.corps} (${[...dayScores].sort((a, b) => (b.captions?.VP || 0) - (a.captions?.VP || 0))[0]?.captions?.VP?.toFixed(2)}) | VA: ${[...dayScores].sort((a, b) => (b.captions?.VA || 0) - (a.captions?.VA || 0))[0]?.corps} (${[...dayScores].sort((a, b) => (b.captions?.VA || 0) - (a.captions?.VA || 0))[0]?.captions?.VA?.toFixed(2)}) | CG: ${[...dayScores].sort((a, b) => (b.captions?.CG || 0) - (a.captions?.CG || 0))[0]?.corps} (${[...dayScores].sort((a, b) => (b.captions?.CG || 0) - (a.captions?.CG || 0))[0]?.captions?.CG?.toFixed(2)})
 B: ${[...dayScores].sort((a, b) => (b.captions?.B || 0) - (a.captions?.B || 0))[0]?.corps} (${[...dayScores].sort((a, b) => (b.captions?.B || 0) - (a.captions?.B || 0))[0]?.captions?.B?.toFixed(2)}) | MA: ${[...dayScores].sort((a, b) => (b.captions?.MA || 0) - (a.captions?.MA || 0))[0]?.corps} (${[...dayScores].sort((a, b) => (b.captions?.MA || 0) - (a.captions?.MA || 0))[0]?.captions?.MA?.toFixed(2)}) | P: ${[...dayScores].sort((a, b) => (b.captions?.P || 0) - (a.captions?.P || 0))[0]?.corps} (${[...dayScores].sort((a, b) => (b.captions?.P || 0) - (a.captions?.P || 0))[0]?.captions?.P?.toFixed(2)})
+===== END DATA =====
 
 ${toneGuidance}
 
@@ -3160,24 +3226,18 @@ Fantasy angle: ${variety.fantasyAngle}
 
 ARTICLE REQUIREMENTS
 - Headline: Technical, number-focused. Reference a specific caption gap or trend. No hype words.
-- Summary: 2-3 factual sentences with key caption insights.
-- Narrative: 900-1200 words. A comprehensive caption analysis that covers:
-  * GE analysis (leaders, GE1 vs GE2 dynamics, who's trending)
-  * Visual analysis (VP, VA, CG leaders and tightest races)
-  * Music analysis (B, MA, P leaders and trends)
-  * Trajectory outlook (who's likely to move, what gaps need closing)
-  * Fantasy buy/hold/sell recommendations with specific corps and captions
-
-  You must reference at least 5 corps in each caption family (GE, Visual, Music) and include specific point gaps. But how you organize and weight these sections should follow today's analytical approach above. If the Visual race is the tightest, it deserves more ink than a GE race that's already decided. Let the data tell you where to spend your words.
-
-  End the buy/hold/sell recommendations with specific caption picks, not just corps names.`;
+- Summary: 2-3 factual sentences with key caption insights from tonight's data.
+- Narrative: 900-1200 words of caption analysis covering GE, Visual, Music, trajectory outlook, and fantasy buy/hold/sell with specific corps+caption picks.
+  Reference a meaningful cross-section of the field in each caption family — aim for ${Math.min(5, dayScores.length)} or more corps per family, but never pad by inventing. Cite specific point gaps from the data.
+  Weight the sections by where the real story is tonight. If the Visual race is tight and GE is decided, Visual gets more ink.
+  End buy/hold/sell recs with specific caption picks (e.g., "buy Crown's GE1"), not just corps names.`;
 
   const schema = {
     type: Type.OBJECT,
     properties: {
-      headline: { type: Type.STRING, description: "Technical headline with specific numbers and caption focus, NO 'heats up' or 'battle intensifies'" },
-      summary: { type: Type.STRING, description: "Exactly 2-3 sentences with specific caption gaps and key insight" },
-      narrative: { type: Type.STRING, description: "FULL 900-1200 word comprehensive analysis with 5 sections: GE analysis (250 words, 5+ corps), Visual analysis (250 words, 5+ corps), Music analysis (250 words, 5+ corps), Trajectory outlook (200 words), Fantasy buy/hold/sell (150 words). NEVER use 'dominant', 'heating up', 'captivating'" },
+      headline: { type: Type.STRING, description: "Technical headline grounded in a real caption gap or trend from tonight. No 'heats up', 'battle intensifies', or invented facts." },
+      summary: { type: Type.STRING, description: "2-3 sentences with specific caption gaps and a key insight from the data." },
+      narrative: { type: Type.STRING, description: "900-1200 word caption analysis covering GE, Visual, Music, trajectory, and fantasy buy/hold/sell. Every corps, score, and trend must come from the data block. Section emphasis follows where the real story is. Never uses 'dominant', 'heating up', 'captivating'." },
       captionBreakdown: {
         type: Type.OBJECT,
         properties: {
@@ -3252,7 +3312,13 @@ async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext
   const toneGuidance = getToneGuidance(competitionContext, "fantasy_results");
 
   const shows = fantasyData.current.shows || [];
-  const allResults = shows.flatMap(s => s.results || []);
+  // Flatten while preserving which show each result came from — the article must
+  // be able to attribute each ensemble to the correct competition.
+  const allResults = shows.flatMap(s => (s.results || []).map(r => ({
+    ...r,
+    showEventName: r.showEventName || s.eventName || s.name || null,
+    showLocation: r.showLocation || s.location || null,
+  })));
 
   // Separate competitive and SoundSport results
   const competitiveResults = allResults.filter(r => r.corpsClass !== 'soundSport');
@@ -3260,15 +3326,44 @@ async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext
     .filter(r => r.corpsClass === 'soundSport')
     .sort((a, b) => b.totalScore - a.totalScore);
 
-  // Get TOP 25 performers
-  const topPerformers = competitiveResults
-    .sort((a, b) => b.totalScore - a.totalScore)
-    .slice(0, 25);
+  // Rank everyone who competed — no arbitrary 25-cap, so the article reflects the real field.
+  const topPerformers = [...competitiveResults].sort((a, b) => b.totalScore - a.totalScore);
+  const totalCompetitors = topPerformers.length;
+
+  // Dynamic tiering so the prompt doesn't lie about how much of the field to cover.
+  const detailCount = Math.min(5, totalCompetitors);
+  const midTierEnd = Math.min(Math.max(detailCount + 5, Math.ceil(totalCompetitors / 2)), totalCompetitors);
+  const tierDescription = totalCompetitors <= 5
+    ? `all ${totalCompetitors} in detail`
+    : totalCompetitors <= 10
+      ? `top ${detailCount} in detail, the remaining ${totalCompetitors - detailCount} briefly`
+      : `top ${detailCount} in detail, positions ${detailCount + 1}-${midTierEnd} as a group, and positions ${midTierEnd + 1}-${totalCompetitors} briefly`;
 
   const avgScore = topPerformers.length > 0
     ? (topPerformers.reduce((sum, p) => sum + p.totalScore, 0) / topPerformers.length).toFixed(3)
     : "0.000";
   const topScore = topPerformers[0]?.totalScore?.toFixed(3) || "0.000";
+
+  // Group competitive results by fantasy show for venue-aware writing
+  const competitiveByShow = (() => {
+    const groups = new Map();
+    for (const r of topPerformers) {
+      const key = r.showEventName || 'Unspecified Competition';
+      if (!groups.has(key)) {
+        groups.set(key, {
+          name: key,
+          location: r.showLocation || null,
+          results: [],
+        });
+      }
+      groups.get(key).results.push(r);
+    }
+    return Array.from(groups.values()).map(g => ({
+      ...g,
+      results: g.results.sort((a, b) => b.totalScore - a.totalScore),
+    }));
+  })();
+  const multiShow = competitiveByShow.length > 1;
 
   // SoundSport ratings based on scoring guidelines (NOT competitive scores)
   // SoundSport uses a rating system: Gold, Silver, Bronze, Participation
@@ -3302,47 +3397,70 @@ async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext
   // Get today's narrative variety
   const variety = getWritingVariety(reportDay, "fantasy_daily");
 
-  const prompt = `You are a marching.art fantasy sports journalist. These are FANTASY ensembles with FANTASY directors — you can and should invent quotes, storylines, and rivalries to make the competition feel alive. This is what makes fantasy sports fun.
+  const resultsByShowBlock = competitiveByShow.map(group => {
+    const header = `${group.name}${group.location ? ` — ${group.location}` : ''} (${group.results.length} ensemble${group.results.length === 1 ? '' : 's'})`;
+    const lines = group.results.map((r, i) => {
+      const margin = i > 0 ? (group.results[i - 1].totalScore - r.totalScore).toFixed(3) : "-";
+      const director = r.displayName || 'Unknown';
+      const hometown = r.location ? ` from ${r.location}` : '';
+      return `  ${i + 1}. "${r.corpsName}"${hometown} (Director: ${director}) - ${r.totalScore.toFixed(3)}${i > 0 ? ` [${margin} behind]` : ' [SHOW WINNER]'}`;
+    }).join('\n');
+    return `SHOW: ${header}\n${lines}`;
+  }).join('\n\n');
 
-Date: ${showContext.date} | Competition: ${fantasyShowName} | Day ${reportDay}
+  const overallRankingBlock = topPerformers.map((r, i) => {
+    const margin = i > 0 ? (topPerformers[i - 1].totalScore - r.totalScore).toFixed(3) : "-";
+    const director = r.displayName || 'Unknown';
+    const showTag = r.showEventName ? ` @ ${r.showEventName}` : '';
+    return `${i + 1}. "${r.corpsName}" (${director}) - ${r.totalScore.toFixed(3)}${i > 0 ? ` [${margin} behind]` : ' [OVERALL HIGH]'}${showTag}`;
+  }).join('\n');
+
+  const prompt = `You are a marching.art fantasy sports journalist. These are FANTASY ensembles with FANTASY directors created by real users — the ONLY invented content allowed is personality, quotes, and storyline color for those directors and their ensembles. Everything factual — ensemble names, director names, scores, competition names, locations, counts — must match the DATA block exactly.
+
+ACCURACY RULES (read first)
+- The field is ${totalCompetitors} competitive ensemble${totalCompetitors === 1 ? '' : 's'} tonight${soundSportResults.length > 0 ? ` plus ${soundSportResults.length} SoundSport participant${soundSportResults.length === 1 ? '' : 's'}` : ''}. Never claim any other count — do not say "25 corps" or any number other than ${totalCompetitors}.
+- Only reference ensembles, directors, scores, and venues that appear in the DATA block. Do not invent ensembles, directors, venues, or scores.
+${multiShow ? `- There are ${competitiveByShow.length} separate fantasy shows tonight at different venues. Ensembles at different shows did NOT compete head-to-head. When you cite a placement or margin, make the show clear.` : `- All ensembles tonight competed at the same fantasy show: ${competitiveByShow[0]?.name || fantasyShowName}${competitiveByShow[0]?.location ? ` (${competitiveByShow[0].location})` : ''}.`}
+- Invented content is limited to: director personalities, fictional quotes, fictional rivalries/backstory. Never invent competition results, scores, locations, or ensembles.
+- Never reveal specific roster/lineup picks.
+
+Date: ${showContext.date} | Day ${reportDay}
 
 ${variety.voice}
 Quote style: ${variety.quoteStyle}
 Story engine: ${variety.storyEngine}
 
-TOP 25 RESULTS:
-${topPerformers.map((r, i) => {
-  const margin = i > 0 ? (topPerformers[i-1].totalScore - r.totalScore).toFixed(3) : "-";
-  return `${i + 1}. "${r.corpsName}" (Director: ${r.displayName || 'Unknown'}) - ${r.totalScore.toFixed(3)}${i > 0 ? ` [${margin} behind]` : ' [WINNER]'} - ${r.location || 'Unknown'}`;
-}).join('\n')}
+===== DATA =====
+TOTAL COMPETITIVE ENSEMBLES: ${totalCompetitors}
+${multiShow ? `\nRESULTS BY SHOW\n${resultsByShowBlock}\n\nOVERALL RANKING (across all shows tonight — reference carefully; these ensembles did NOT all face each other):\n${overallRankingBlock}` : `\nRESULTS\n${resultsByShowBlock}`}
 
-${soundSportResults.length > 0 ? `SOUNDSPORT RATINGS (non-competitive, ratings-based showcase — NEVER reveal scores, only rating levels):
+${soundSportResults.length > 0 ? `SOUNDSPORT RATINGS (non-competitive, ratings-only showcase — NEVER reveal SoundSport scores, only rating levels):
 ${soundSportBestInShow ? `Best in Show: "${soundSportBestInShow.corpsName}" (${soundSportBestInShow.displayName || 'Unknown'})` : ''}
 ${soundSportByRating.gold.length > 0 ? `Gold (${soundSportByRating.gold.length}): ${soundSportByRating.gold.map(r => `"${r.corpsName}"`).join(', ')}` : ''}
 ${soundSportByRating.silver.length > 0 ? `Silver (${soundSportByRating.silver.length}): ${soundSportByRating.silver.map(r => `"${r.corpsName}"`).join(', ')}` : ''}
 ${soundSportByRating.bronze.length > 0 ? `Bronze (${soundSportByRating.bronze.length}): ${soundSportByRating.bronze.map(r => `"${r.corpsName}"`).join(', ')}` : ''}
 ${soundSportByRating.participation.length > 0 ? `Participation (${soundSportByRating.participation.length}): ${soundSportByRating.participation.map(r => `"${r.corpsName}"`).join(', ')}` : ''}` : ''}
 
-STATS: Winner: "${topPerformers[0]?.corpsName}" at ${topScore} | Margin: ${topPerformers.length >= 2 ? (topPerformers[0].totalScore - topPerformers[1].totalScore).toFixed(3) : 'N/A'} | Ensembles: ${competitiveResults.length} | Top 10 Avg: ${avgScore}${soundSportResults.length > 0 ? ` | SoundSport: ${soundSportResults.length}` : ''}
+STATS: Top ensemble: "${topPerformers[0]?.corpsName}" at ${topScore}${topPerformers[0]?.showEventName ? ` (${topPerformers[0].showEventName})` : ''} | 1st-to-2nd margin: ${topPerformers.length >= 2 ? (topPerformers[0].totalScore - topPerformers[1].totalScore).toFixed(3) : 'N/A'} | Competitive ensembles: ${totalCompetitors} | Field avg: ${avgScore}${soundSportResults.length > 0 ? ` | SoundSport: ${soundSportResults.length}` : ''}
+===== END DATA =====
 
 ${toneGuidance}
 
 BANNED PHRASES: dominant, commanding, stunning, heating up, sent shockwaves, proves their mettle, showcased their prowess, the drama is just beginning, tune in tomorrow, Can [X] maintain their dominance?
 
 ARTICLE REQUIREMENTS
-- Headline: Include the winner's name and score. No exclamation points.
-- Summary: 2-3 sentences — winner, score, and one storyline hook.
-- Narrative: 600-800 words. Must include at least 3 fictitious quotes from directors/ensemble members. Must cover all 25 positions (top 5 in detail, 6-15 as a group, 16-25 briefly).${soundSportResults.length > 0 ? ` Include a SoundSport highlight — celebrate the ratings without revealing scores.` : ''}
-  The quotes should feel natural for the voice you're writing in — not generic "we worked hard" boilerplate. Give directors personality. Let them be funny, frustrated, confident, or self-deprecating.
-  End with a specific observation or stat, not a cliché question or generic send-off.
-  Never reveal specific roster/lineup picks.`;
+- Headline: Include the actual top ensemble's name and score. No exclamation points. No invented numbers.
+- Summary: 2-3 sentences — top result, score, and one storyline hook${multiShow ? '. Make the multi-show night clear' : ''}.
+- Narrative: 600-800 words. Cover ${tierDescription}. Include at least ${Math.min(3, Math.max(1, Math.floor(totalCompetitors / 3)))} fictitious director/ensemble quotes with real personality — funny, frustrated, confident, self-deprecating — not "we worked hard" boilerplate.
+${multiShow ? `- Cover all ${competitiveByShow.length} fantasy shows by name. When you cite a placement or score, make the show clear so readers know which ensembles actually faced each other.` : ''}${soundSportResults.length > 0 ? `\n- Include a SoundSport highlight — celebrate the ratings without ever revealing SoundSport scores.` : ''}
+- End with a specific observation or stat from the data, not a rhetorical question or generic send-off.`;
 
   const schema = {
     type: Type.OBJECT,
     properties: {
-      headline: { type: Type.STRING, description: "Winner name and score, NO exclamation points, NO 'dominates'" },
-      summary: { type: Type.STRING, description: "Exactly 2-3 sentences: winner, score, margin to 2nd, one storyline hook" },
-      narrative: { type: Type.STRING, description: "FULL 600-800 word fantasy sports article with: opening quote from winner's director, top 5 coverage, positions 6-15, positions 16-25, closing stat. MUST include 3+ fictitious quotes. NEVER use 'dominant', 'commanding', 'stunning', 'heating up'" },
+      headline: { type: Type.STRING, description: "Top ensemble name and score from the data. No exclamation points, no 'dominates', no invented numbers." },
+      summary: { type: Type.STRING, description: "2-3 sentences grounded in tonight's real results: top ensemble, score, margin, one storyline hook. If multiple shows occurred, make that clear." },
+      narrative: { type: Type.STRING, description: "600-800 word fantasy article. Uses the exact ensemble names, director names, scores, and show/location values from the DATA block — no invented facts. Coverage depth matches the field size (detail for the top tier, grouped coverage for the rest). Director personalities and quotes may be invented; results may not. Never uses 'dominant', 'commanding', 'stunning', 'heating up'." },
       topPerformers: {
         type: Type.ARRAY,
         items: {
@@ -3395,7 +3513,7 @@ ARTICLE REQUIREMENTS
 
     const imagePrompt = buildFantasyPerformersImagePrompt(
       topCorps?.corpsName || "Champion Corps",
-      "Victory celebration after dominating Day " + reportDay,
+      `Performance finale on Day ${reportDay}`,
       corpsLocation,
       uniformDesign,
       reportDay,
@@ -3478,39 +3596,53 @@ async function generateFantasyRecapArticle({ reportDay, dayScores, trendData, sh
   // Get today's narrative variety
   const variety = getWritingVariety(reportDay, "fantasy_recap");
 
+  const fieldCorpsList = dayScores.map(s => s.corps).join(', ');
+  const uniqueCaptionShows = Array.from(new Set(dayScores.map(s => s.showName).filter(Boolean)));
+  const multiShowCaption = uniqueCaptionShows.length > 1;
+
   const prompt = `You are a fantasy drum corps analyst writing a caption-level breakdown for fantasy directors who pick individual DCI captions (GE1, GE2, VP, VA, CG, B, MA, P) for their lineups.
+
+ACCURACY RULES (read first)
+- Every corps name, caption score, and trend arrow you cite MUST come from the DATA block below. Do not invent corps, captions, scores, or trend directions.
+- The field tonight has ${dayScores.length} corps (listed below). Do not reference any corps not in this list.
+${multiShowCaption ? `- The caption numbers below come from ${uniqueCaptionShows.length} separate shows tonight: ${uniqueCaptionShows.join(', ')}. Corps at different shows did NOT caption-judge against each other — the rankings are a composite across venues. Frame cross-venue picks as such.` : `- All caption numbers tonight come from a single show, so the rankings are a true head-to-head.`}
+- If a caption shows "No data" in the DATA block, do not reference it. If a specific number isn't in the data, don't cite a number.
 
 ${variety.framing}
 Depth: ${variety.depthArea}
 Pick style: ${variety.pickStyle}
 
-CAPTION DATA - DAY ${reportDay}
+===== DATA =====
+DAY ${reportDay} | FIELD (${dayScores.length}): ${fieldCorpsList}
+
+CAPTION RANKINGS (top ${Math.min(5, dayScores.length)} per caption):
 ${captionTypes.map(cap => {
-  const top5 = stocksByCaption[cap]?.slice(0, 5) || [];
-  const capInfo = top5.length > 0 ? top5.map((s, i) => `${i+1}. ${s.corps}: ${s.score.toFixed(2)} ${s.trend === 'up' ? '↑' : s.trend === 'down' ? '↓' : '→'}`).join(' | ') : 'No data';
+  const topN = stocksByCaption[cap]?.slice(0, 5) || [];
+  const capInfo = topN.length > 0 ? topN.map((s, i) => `${i+1}. ${s.corps}: ${s.score.toFixed(2)} ${s.trend === 'up' ? '↑' : s.trend === 'down' ? '↓' : '→'}`).join(' | ') : 'No data';
   return `${cap}: ${capInfo}`;
 }).join('\n')}
 
 TRENDING: ↑ ${trendingUp.length} rising${trendingUp.length > 0 ? ` (${trendingUp.slice(0, 5).map(s => `${s.corps} ${s.caption} ${s.score.toFixed(2)}`).join(', ')})` : ''} | ↓ ${trendingDown.length} falling${trendingDown.length > 0 ? ` (${trendingDown.slice(0, 5).map(s => `${s.corps} ${s.caption} ${s.score.toFixed(2)}`).join(', ')})` : ''} | → ${steadyPerformers.length} steady
+===== END DATA =====
 
 ${toneGuidance}
 
 BANNED PHRASES: dominant, heating up, intensifies, key area of focus, captivating, absolutely crucial
 
 ARTICLE REQUIREMENTS
-- Headline: Reference a specific caption, corps, score, and trend (use ↑↓→). No hype words.
-- Summary: 2-3 sentences on the key caption movements.
-- Narrative: 700-900 words. Analyze INDIVIDUAL CAPTIONS (not corps overall). Use ↑↓→ throughout. Include specific scores and margins.
+- Headline: Reference a specific caption, real corps, real score, and trend (use ↑↓→). No hype words, no invented numbers.
+- Summary: 2-3 sentences on the key caption movements from tonight's data.
+- Narrative: 700-900 words. Analyze INDIVIDUAL CAPTIONS (not corps overall). Use ↑↓→ throughout. Include specific scores and margins drawn only from the data.
   Cover: GE (GE1/GE2 leaders and dynamics), Visual (VP/VA/CG), Music (B/MA/P), and clear BUY/HOLD/SELL picks with specific corps+caption combos and reasoning. End with a sleeper pick — one under-the-radar caption worth a look.
-  How you weight and sequence these sections should follow today's framing above. If GE is the story, lead with GE. If there's a contrarian angle, lead with that.
+  Weight the sections by where the real story is tonight. If GE is the story, lead with GE; if there's a contrarian angle, lead with that.
   Keep it fun and accessible — this is fantasy drum corps, not a dry spreadsheet.`;
 
   const schema = {
     type: Type.OBJECT,
     properties: {
-      headline: { type: Type.STRING, description: "Caption-focused headline with corps name, specific caption (GE1/B/CG etc), score, and ↑↓→ trend symbol" },
-      summary: { type: Type.STRING, description: "2-3 sentences highlighting key caption movements and one clear recommendation" },
-      narrative: { type: Type.STRING, description: "FULL 700-900 word analysis covering: Big Picture, GE Breakdown (GE1/GE2), Visual Captions (VP/VA/CG), Music Captions (B/MA/P), Caption Picks (BUY/HOLD/SELL with ↑↓→), Sleeper Pick. Fun but data-driven." },
+      headline: { type: Type.STRING, description: "Caption-focused headline with a real corps, specific caption (GE1/B/CG etc), real score from the data, and ↑↓→ trend. No hype words, no invented numbers." },
+      summary: { type: Type.STRING, description: "2-3 sentences highlighting tonight's actual caption movements and one clear recommendation drawn from the data." },
+      narrative: { type: Type.STRING, description: "700-900 word caption-by-caption analysis. Every corps, caption score, and trend arrow must come from the data block. Section emphasis follows where the real story is. Fun but data-driven." },
       captionInsights: {
         type: Type.OBJECT,
         properties: {
@@ -3854,18 +3986,21 @@ function getScoresForDay(historicalData, targetDay, activeCorps) {
   for (const corps of activeCorps) {
     const { corpsName, sourceYear } = corps;
     const yearEvents = historicalData[sourceYear] || [];
-    // Use filter to get ALL events on this day, not just the first one
-    // Multiple shows can occur on the same day (e.g., DCI Ft. Wayne AND Music On The March)
+    // Multiple shows can occur on the same day (e.g., DCI Ft. Wayne AND Music On The March),
+    // so search across all events and remember which event the corps actually competed at.
     const dayEvents = yearEvents.filter(e => e.offSeasonDay === targetDay);
     if (dayEvents.length === 0) continue;
 
-    // Search through all events on this day to find the corps's score
     let corpsScore = null;
+    let matchingEvent = null;
     for (const dayEvent of dayEvents) {
       corpsScore = dayEvent.scores.find(s => s.corps === corpsName);
-      if (corpsScore) break;
+      if (corpsScore) {
+        matchingEvent = dayEvent;
+        break;
+      }
     }
-    if (!corpsScore) continue;
+    if (!corpsScore || !matchingEvent) continue;
 
     const total = calculateTotal(corpsScore.captions);
     if (total <= 0) continue;
@@ -3876,6 +4011,8 @@ function getScoresForDay(historicalData, targetDay, activeCorps) {
       captions: corpsScore.captions,
       total,
       subtotals: calculateCaptionSubtotals(corpsScore.captions),
+      showName: matchingEvent.eventName || matchingEvent.name || null,
+      location: matchingEvent.location || null,
     });
   }
 
