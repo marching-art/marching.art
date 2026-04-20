@@ -565,12 +565,12 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
         showCloseButton={true}
       >
         {/* Header */}
-        <div className="px-4 pb-3 border-b border-[#333]">
+        <div className="px-4 pb-3 border-b border-[#333] flex-shrink-0">
           <HeaderContent />
         </div>
 
         {/* Body - Scrollable */}
-        <div className="flex-1 overflow-y-auto scroll-momentum">
+        <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum">
           <BodyContent />
         </div>
 

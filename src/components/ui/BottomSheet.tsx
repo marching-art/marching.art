@@ -165,6 +165,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
               rounded-t-sm overflow-hidden
               focus:outline-none
               safe-area-bottom
+              flex flex-col
               ${className}
             `}
             style={{ maxHeight }}
@@ -172,7 +173,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             {/* Drag Handle */}
             {showHandle && (
               <div
-                className="flex justify-center py-3 cursor-grab active:cursor-grabbing touch-none"
+                className="flex justify-center py-3 cursor-grab active:cursor-grabbing touch-none flex-shrink-0"
                 onPointerDown={startDrag}
               >
                 <div className="w-10 h-1 bg-gray-600 rounded-sm" />
@@ -181,7 +182,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
 
             {/* Header */}
             {(title || showCloseButton) && (
-              <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222] flex-shrink-0">
                 {title && (
                   <h2
                     id="bottom-sheet-title"
@@ -204,10 +205,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             )}
 
             {/* Content */}
-            <div
-              className="overflow-y-auto scroll-momentum"
-              style={{ maxHeight: `calc(${maxHeight} - 120px)` }}
-            >
+            <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
               {children}
             </div>
           </m.div>
