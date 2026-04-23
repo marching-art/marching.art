@@ -791,20 +791,24 @@ async function generateStructuredContent(prompt, schema) {
 }
 
 // =============================================================================
-// BANNED-PHRASE POST-GEN VALIDATOR
+// POST-GEN FACT CHECK & STYLE GUARD
 // -----------------------------------------------------------------------------
-// Each article's prompt already carries a BANNED PHRASES block, but Gemini
-// treats those as a soft constraint and slips recurring AI-speak ("mid-season
-// phase", "upward trend", "heating up", "captivating", etc.) into the output
-// anyway. The validator runs AFTER generation, scans user-visible text for a
-// strict pattern list, and forces one retry with an intensified constraint
-// block on leak. After the retry it ships whatever came back — the cost of a
-// second retry isn't worth the marginal quality lift.
+// After generation, scan the article for two categories of issues and retry
+// once if any appear:
 //
-// Keep this list tight: only phrases that are unambiguously clichéd
-// sportswriter AI-speak and that never improve an article. Single common
-// words ("dominant", "commanding") can appear legitimately in drum corps
-// discourse and are left to the per-prompt soft lists.
+//   1. BANNED PHRASES — clichéd AI-sportswriter idioms ("mid-season phase",
+//      "upward trend", "heating up", "captivating", "testament"...) that
+//      Gemini produces despite soft prompt-level banned-phrase lists.
+//
+//   2. UNSOURCED NUMBERS — every decimal number in the article must appear
+//      (within ±0.005) in the prompt's DATA block. Catches hallucinated
+//      scores, invented margins, and bogus averages.
+//
+// Both checks feed into one combined retry with an intensified constraint
+// block; after the retry the article ships regardless — the cost of a second
+// retry doesn't beat the marginal quality lift, and a flagged article is
+// still better than a fallback. Failures log at warn level so they're
+// visible in the function logs without crashing the batch.
 // =============================================================================
 
 const HARD_BANNED_PATTERNS = [
@@ -825,13 +829,19 @@ const HARD_BANNED_PATTERNS = [
   /\bproves their mettle\b/i,
 ];
 
+// Tolerance for number matching. 0.005 means "77.850" in the DATA block
+// satisfies "77.85" in the article (typical 2-decimal rounding). Anything
+// looser and hallucinated scores slip through; anything tighter and
+// legitimate rounded citations get flagged.
+const NUMBER_MATCH_TOLERANCE = 0.005;
+
 /**
- * Collect every user-visible text field from a generated article and scan
- * them as a single corpus. Returns the set of matched source phrases (not
- * the patterns) so the retry prompt can quote them back at Gemini verbatim.
+ * Collect every user-visible text field from a generated article into a
+ * single corpus string. Shared by both validators so they see the same view
+ * of the article.
  */
-function detectBannedPhrases(content) {
-  if (!content || typeof content !== "object") return [];
+function collectArticleText(content) {
+  if (!content || typeof content !== "object") return "";
 
   const fields = [
     content.headline,
@@ -853,7 +863,13 @@ function detectBannedPhrases(content) {
     ...(content.recommendations?.sell?.map?.(r => r?.reason) || []),
   ];
 
-  const corpus = fields.filter(Boolean).join("\n\n");
+  return fields.filter(Boolean).join("\n\n");
+}
+
+function detectBannedPhrases(content) {
+  const corpus = collectArticleText(content);
+  if (!corpus) return [];
+
   const hits = new Set();
   for (const pattern of HARD_BANNED_PATTERNS) {
     const match = corpus.match(pattern);
@@ -863,29 +879,91 @@ function detectBannedPhrases(content) {
 }
 
 /**
- * Wraps generateStructuredContent with a single retry on banned-phrase leak.
- * Ships the best-available article after the retry; never throws on validator
- * failure since a leaked cliché is not worse than a fallback article.
+ * Extract every decimal number inside the prompt's DATA block. Returns a Set
+ * of numeric values. If no DATA markers are present (e.g., legacy prompts),
+ * returns null, which the number validator reads as "skip this check".
  */
-async function generateWithBannedPhraseGuard(prompt, schema, options = {}) {
+function extractDataBlockNumbers(prompt) {
+  const dataMatch = prompt.match(/=====\s*DATA\s*=====([\s\S]*?)=====\s*END DATA\s*=====/);
+  if (!dataMatch) return null;
+
+  const decimals = dataMatch[1].match(/-?\d+\.\d+/g) || [];
+  const nums = new Set();
+  for (const raw of decimals) {
+    const n = parseFloat(raw);
+    if (Number.isFinite(n)) nums.add(n);
+  }
+  return nums;
+}
+
+/**
+ * Flag decimal numbers in the generated article that don't have a
+ * corresponding value (within NUMBER_MATCH_TOLERANCE) in the DATA block.
+ * Returns an array of unique unsourced number strings (as they appeared in
+ * the article) so the retry prompt can quote them back verbatim.
+ */
+function detectUnsourcedNumbers(content, dataNumbers) {
+  if (!dataNumbers) return [];
+  const corpus = collectArticleText(content);
+  if (!corpus) return [];
+
+  const matches = corpus.match(/-?\d+\.\d+/g) || [];
+  const dataArr = Array.from(dataNumbers);
+  const unsourced = new Set();
+  for (const raw of matches) {
+    const n = parseFloat(raw);
+    if (!Number.isFinite(n)) continue;
+    const found = dataArr.some(d => Math.abs(d - n) <= NUMBER_MATCH_TOLERANCE);
+    if (!found) unsourced.add(raw);
+  }
+  return Array.from(unsourced);
+}
+
+/**
+ * Wraps generateStructuredContent with banned-phrase + number-source checks
+ * and a single combined retry on any issue. Ships after the retry regardless;
+ * never throws on validator failure.
+ */
+async function generateWithFactCheckGuard(prompt, schema, options = {}) {
   const { articleType = "unknown" } = options;
+  const dataNumbers = extractDataBlockNumbers(prompt);
 
   const firstAttempt = await generateStructuredContent(prompt, schema);
-  const firstHits = detectBannedPhrases(firstAttempt);
-  if (firstHits.length === 0) return firstAttempt;
+  const firstBanned = detectBannedPhrases(firstAttempt);
+  const firstUnsourced = detectUnsourcedNumbers(firstAttempt, dataNumbers);
 
-  logger.warn(`[${articleType}] banned phrase leak on first attempt: ${firstHits.join(", ")} — retrying once`);
+  if (firstBanned.length === 0 && firstUnsourced.length === 0) return firstAttempt;
+
+  const issues = [];
+  if (firstBanned.length > 0) issues.push(`banned phrases: ${firstBanned.join(", ")}`);
+  if (firstUnsourced.length > 0) issues.push(`unsourced numbers: ${firstUnsourced.join(", ")}`);
+  logger.warn(`[${articleType}] fact-check issues on first attempt — ${issues.join(" | ")} — retrying once`);
+
+  const retryInstructions = [
+    firstBanned.length > 0
+      ? `BANNED PHRASES that appeared in your previous draft: ${firstBanned.map(h => `"${h}"`).join(", ")}. Rewrite without any of those phrases or their obvious synonyms.`
+      : null,
+    firstUnsourced.length > 0
+      ? `UNSOURCED NUMBERS that appeared in your previous draft: ${firstUnsourced.map(n => `"${n}"`).join(", ")}. These numbers do not appear in the DATA block. Every decimal number you cite MUST come from the DATA block, either verbatim or as a rounding of a value that's there (e.g., DATA shows 77.850 — you may cite 77.85 or 77.9 but not 78.2). Do NOT compute averages. Do NOT invent scores, margins, or deltas. Do NOT cite a number you cannot point to in the DATA block.`
+      : null,
+  ].filter(Boolean).join("\n\n");
 
   const stricterPrompt = `${prompt}
 
-YOUR PREVIOUS DRAFT USED BANNED PHRASES AND MUST BE REWRITTEN.
-Banned phrases that appeared: ${firstHits.map(h => `"${h}"`).join(", ")}.
-Rewrite the article entirely. Do NOT use any of those phrases or obvious synonyms for them. This is a hard constraint — the article will be rejected if any of these phrases appear in the output. Every other requirement in this prompt still applies.`;
+YOUR PREVIOUS DRAFT HAS ISSUES AND MUST BE REWRITTEN.
+
+${retryInstructions}
+
+Rewrite the entire article. Every other requirement in this prompt still applies.`;
 
   const secondAttempt = await generateStructuredContent(stricterPrompt, schema);
-  const secondHits = detectBannedPhrases(secondAttempt);
-  if (secondHits.length > 0) {
-    logger.warn(`[${articleType}] banned phrases leaked through retry: ${secondHits.join(", ")} — shipping anyway`);
+  const secondBanned = detectBannedPhrases(secondAttempt);
+  const secondUnsourced = detectUnsourcedNumbers(secondAttempt, dataNumbers);
+  if (secondBanned.length > 0 || secondUnsourced.length > 0) {
+    const remaining = [];
+    if (secondBanned.length > 0) remaining.push(`banned phrases: ${secondBanned.join(", ")}`);
+    if (secondUnsourced.length > 0) remaining.push(`unsourced numbers: ${secondUnsourced.join(", ")}`);
+    logger.warn(`[${articleType}] issues leaked through retry — ${remaining.join(" | ")} — shipping anyway`);
   }
   return secondAttempt;
 }
@@ -3091,7 +3169,7 @@ Write like you've covered this beat for years. Let the scores drive the story.`;
   };
 
   try {
-    const content = await generateWithBannedPhraseGuard(prompt, schema, { articleType: "dci_daily" });
+    const content = await generateWithFactCheckGuard(prompt, schema, { articleType: "dci_daily" });
 
     // Look up the corps' show title and uniform details from Firestore
     const showTitle = db ? await getShowTitleFromFirestore(db, topCorps.corps, topCorps.sourceYear) : null;
@@ -3281,7 +3359,7 @@ ARTICLE REQUIREMENTS
   };
 
   try {
-    const content = await generateWithBannedPhraseGuard(prompt, schema, { articleType: "dci_feature" });
+    const content = await generateWithFactCheckGuard(prompt, schema, { articleType: "dci_feature" });
 
     const imagePrompt = buildCorpsSpotlightImagePrompt(
       featureCorps.corps,
@@ -3462,7 +3540,7 @@ ARTICLE REQUIREMENTS
   };
 
   try {
-    const content = await generateWithBannedPhraseGuard(prompt, schema, { articleType: "dci_recap" });
+    const content = await generateWithFactCheckGuard(prompt, schema, { articleType: "dci_recap" });
 
     // Feature the GE leader for the image (or next available if excluded)
     let featuredCorps = geSorted.find(s => !excludeCorps.has(s.corps)) || geSorted[0];
@@ -3682,6 +3760,7 @@ ACCURACY RULES (read first)
 ${fieldMode === 'soundsport' ? `- No competitive ensembles tonight; SoundSport is non-competitive, so do NOT describe anyone as "winning" against anyone else. Performances are appraised by rating level, not rank.` : multiShow ? `- There are ${competitiveByShow.length} separate fantasy shows tonight at different venues. Ensembles at different shows did NOT compete head-to-head. When you cite a placement or margin, make the show clear.` : fieldMode === 'solo' ? `- Only one competitive ensemble performed tonight: "${topPerformers[0].corpsName}" at ${competitiveByShow[0]?.name || fantasyShowName}${competitiveByShow[0]?.location ? ` (${competitiveByShow[0].location})` : ''}. There are no opponents to frame against — do not invent rivals, runners-up, or head-to-head narratives.` : `- All ensembles tonight competed at the same fantasy show: ${competitiveByShow[0]?.name || fantasyShowName}${competitiveByShow[0]?.location ? ` (${competitiveByShow[0].location})` : ''}.`}
 - Invented content is limited to: director personalities, fictional quotes, fictional rivalries/backstory. Never invent competition results, scores, locations, or ensembles.
 - Never reveal specific roster/lineup picks.
+- Director names in the DATA block are whatever the user set as their displayName — some are real names ("Sarah Jones"), some are usernames ("elithecreature", "mike_42", "BluecoatsFan"). When attributing a quote or paraphrase, ALWAYS prefer an ensemble-based reference ("Mendota DBC's director said…", "the director behind Stellar Vista paused before…"). Only use the bare displayName as a noun if it reads like a real name with a capital letter and a space. Never write a bare-noun attribution that reads as awkward at a glance (e.g., do not produce "elithecreature said…" — write "Mendota DBC's director said…" instead). When you do quote the displayName verbatim, wrap it in the role ("director elithecreature") so the reader sees it as a screen name rather than a first name.
 
 Date: ${showContext.date} | Day ${reportDay}
 Field mode: ${fieldMode} (${totalCompetitors} competitive ensemble${totalCompetitors === 1 ? '' : 's'}${soundSportResults.length > 0 ? `, ${soundSportResults.length} SoundSport` : ''})
@@ -3752,7 +3831,7 @@ ${mode.bodyNote ? `${mode.bodyNote}\n` : ''}${multiShow ? `- Cover all ${competi
   };
 
   try {
-    const content = await generateWithBannedPhraseGuard(prompt, schema, { articleType: "fantasy_daily" });
+    const content = await generateWithFactCheckGuard(prompt, schema, { articleType: "fantasy_daily" });
 
     // Image subject: the top competitive ensemble when there is one; otherwise
     // the SoundSport Best in Show for soundsport-only nights so the image still
@@ -3972,7 +4051,7 @@ ARTICLE REQUIREMENTS
   };
 
   try {
-    const content = await generateWithBannedPhraseGuard(prompt, schema, { articleType: "fantasy_recap" });
+    const content = await generateWithFactCheckGuard(prompt, schema, { articleType: "fantasy_recap" });
 
     // Feature the top-scoring corps with photojournalistic image
     const topCorpsForImage = dayScores[0];
@@ -4954,7 +5033,7 @@ All "corps" names above are user-created fantasy team names, not real DCI corps.
       required: ["headline", "summary", "narrative", "fantasyImpact", "trendingCorps"],
     };
 
-    const content = await generateWithBannedPhraseGuard(prompt, schema, { articleType: "fantasy_recap_legacy" });
+    const content = await generateWithFactCheckGuard(prompt, schema, { articleType: "fantasy_recap_legacy" });
     return { success: true, content };
   } catch (error) {
     logger.error("Fantasy recap failed:", error);
