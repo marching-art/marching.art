@@ -3409,6 +3409,22 @@ async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext
   const topPerformers = [...competitiveResults].sort((a, b) => b.totalScore - a.totalScore);
   const totalCompetitors = topPerformers.length;
 
+  // Return a fallback if there is genuinely no content to write about tonight.
+  // Only fire the fallback when BOTH the competitive field and the SoundSport
+  // field are empty — a SoundSport-only evening still deserves its own piece.
+  if (totalCompetitors === 0 && soundSportResults.length === 0) {
+    return createFallbackArticle(ARTICLE_TYPES.FANTASY_DAILY, reportDay);
+  }
+
+  // Field-size mode drives voice, length, quote count, and framing so the
+  // article matches the reality of tonight's field instead of padding a 1-
+  // ensemble night into the same 5-paragraph shape as a 10-ensemble night.
+  const fieldMode =
+    totalCompetitors >= 6 ? 'full' :
+    totalCompetitors >= 2 ? 'small' :
+    totalCompetitors === 1 ? 'solo' :
+    'soundsport';
+
   // Dynamic tiering so the prompt doesn't lie about how much of the field to cover.
   const detailCount = Math.min(5, totalCompetitors);
   const midTierEnd = Math.min(Math.max(detailCount + 5, Math.ceil(totalCompetitors / 2)), totalCompetitors);
@@ -3473,8 +3489,54 @@ async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext
 
   const fantasyShowName = formatFantasyEventName(showContext.showName);
 
-  // Get today's narrative variety
+  // Get today's narrative variety. Full and small fields use the voice rotation;
+  // solo and soundsport modes override it with mode-specific framing because the
+  // rotation is built for competitive rivalries that don't exist in those modes.
   const variety = getWritingVariety(reportDay, "fantasy_daily");
+
+  const modeConfig = {
+    full: {
+      words: '600-800',
+      minQuotes: Math.min(3, Math.max(1, Math.floor(totalCompetitors / 3))),
+      voice: variety.voice,
+      quoteStyle: variety.quoteStyle,
+      storyEngine: variety.storyEngine,
+      coverage: `Tiered coverage: ${tierDescription}.`,
+      headlineGuidance: `Include the actual top ensemble's name and score. No exclamation points. No invented numbers.`,
+      bodyNote: '',
+    },
+    small: {
+      words: '450-600',
+      minQuotes: totalCompetitors >= 3 ? 2 : 1,
+      voice: `Intimate small-field night — ${totalCompetitors} competitive ensembles. Every ensemble gets real air time; no filler, no pad-to-length paragraphs.`,
+      quoteStyle: `Up to ${totalCompetitors >= 3 ? 'two' : 'one'} short quote${totalCompetitors >= 3 ? 's' : ''}, only where they add character. A one-quote piece beats a three-quote piece that stretches to hit a quota.`,
+      storyEngine: `Frame the night as a head-to-head (or three-way) among the ${totalCompetitors} competitors. The margins between them ARE the story.`,
+      coverage: `Cover all ${totalCompetitors} competitive ensembles in detail.`,
+      headlineGuidance: `Include the top ensemble's name and score. A margin-forward headline (e.g., "X Edges Y by 0.156") is welcome when the gap is tight. No exclamation points.`,
+      bodyNote: `- Do not pad. If a paragraph has no real material, cut it.`,
+    },
+    solo: {
+      words: '300-400',
+      minQuotes: 0,
+      voice: `Local beat reporter covering a quieter night. One ensemble in competition, performing solo. Honest, grounded, undramatic. Do NOT invent rivalries or opponents — there aren't any tonight.`,
+      quoteStyle: `At most one short director/ensemble quote, and only if it genuinely adds character. A no-quote piece is the correct default.`,
+      storyEngine: `Tonight is a solo showcase, not a competition. The story is this one ensemble's performance in context — their score, what their script suggests about the program, and where they sit in the arc of their season. SoundSport participants (if present) are the evening's surrounding ecosystem, not opponents.`,
+      coverage: `Cover the one competitive ensemble as the sole feature. Reference SoundSport participants only for evening texture — never imply they competed against the featured ensemble.`,
+      headlineGuidance: `Name the ensemble and their score plainly. Do NOT invent competitive framing. Factual phrasing like "Mendota DBC Posts 68.198 in Solo Competition" is correct; "Dominates Field" or "Claims Victory" is not.`,
+      bodyNote: `- This is a small night. Short and honest beats padded and dramatic. If the data does not support another paragraph, stop writing. 300-400 words is the target, not a floor.`,
+    },
+    soundsport: {
+      words: '250-350',
+      minQuotes: 0,
+      voice: `Feature writer covering a SoundSport-only showcase. Celebrate the participants and ratings; the focus is ensemble quality and growth, not standings.`,
+      quoteStyle: `No invented quotes. Speak about the ensembles, not for them.`,
+      storyEngine: `SoundSport is the whole story tonight. Lead with the Best in Show ensemble (if any), then group the remaining participants by rating level. Do NOT reveal SoundSport scores — SoundSport is a ratings-only format.`,
+      coverage: `Feature the SoundSport participants by rating. Make the ratings-only nature of SoundSport clear so readers understand scores are intentionally not published.`,
+      headlineGuidance: `Lead with a SoundSport ensemble name and rating, or frame as a showcase evening. No invented scores. No exclamation points.`,
+      bodyNote: `- No competitive scores are reported tonight — this is a SoundSport-only evening. Do not invent or imply a competitive outcome.`,
+    },
+  };
+  const mode = modeConfig[fieldMode];
 
   const resultsByShowBlock = competitiveByShow.map(group => {
     const header = `${group.name}${group.location ? ` — ${group.location}` : ''} (${group.results.length} ensemble${group.results.length === 1 ? '' : 's'})`;
@@ -3499,19 +3561,20 @@ async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext
 ACCURACY RULES (read first)
 - The field is ${totalCompetitors} competitive ensemble${totalCompetitors === 1 ? '' : 's'} tonight${soundSportResults.length > 0 ? ` plus ${soundSportResults.length} SoundSport participant${soundSportResults.length === 1 ? '' : 's'}` : ''}. Never claim any other count — do not say "25 corps" or any number other than ${totalCompetitors}.
 - Only reference ensembles, directors, scores, and venues that appear in the DATA block. Do not invent ensembles, directors, venues, or scores.
-${multiShow ? `- There are ${competitiveByShow.length} separate fantasy shows tonight at different venues. Ensembles at different shows did NOT compete head-to-head. When you cite a placement or margin, make the show clear.` : `- All ensembles tonight competed at the same fantasy show: ${competitiveByShow[0]?.name || fantasyShowName}${competitiveByShow[0]?.location ? ` (${competitiveByShow[0].location})` : ''}.`}
+${fieldMode === 'soundsport' ? `- No competitive ensembles tonight; SoundSport is non-competitive, so do NOT describe anyone as "winning" against anyone else. Performances are appraised by rating level, not rank.` : multiShow ? `- There are ${competitiveByShow.length} separate fantasy shows tonight at different venues. Ensembles at different shows did NOT compete head-to-head. When you cite a placement or margin, make the show clear.` : fieldMode === 'solo' ? `- Only one competitive ensemble performed tonight: "${topPerformers[0].corpsName}" at ${competitiveByShow[0]?.name || fantasyShowName}${competitiveByShow[0]?.location ? ` (${competitiveByShow[0].location})` : ''}. There are no opponents to frame against — do not invent rivals, runners-up, or head-to-head narratives.` : `- All ensembles tonight competed at the same fantasy show: ${competitiveByShow[0]?.name || fantasyShowName}${competitiveByShow[0]?.location ? ` (${competitiveByShow[0].location})` : ''}.`}
 - Invented content is limited to: director personalities, fictional quotes, fictional rivalries/backstory. Never invent competition results, scores, locations, or ensembles.
 - Never reveal specific roster/lineup picks.
 
 Date: ${showContext.date} | Day ${reportDay}
+Field mode: ${fieldMode} (${totalCompetitors} competitive ensemble${totalCompetitors === 1 ? '' : 's'}${soundSportResults.length > 0 ? `, ${soundSportResults.length} SoundSport` : ''})
 
-${variety.voice}
-Quote style: ${variety.quoteStyle}
-Story engine: ${variety.storyEngine}
+Voice: ${mode.voice}
+Quote style: ${mode.quoteStyle}
+Story engine: ${mode.storyEngine}
 
 ===== DATA =====
 TOTAL COMPETITIVE ENSEMBLES: ${totalCompetitors}
-${multiShow ? `\nRESULTS BY SHOW\n${resultsByShowBlock}\n\nOVERALL RANKING (across all shows tonight — reference carefully; these ensembles did NOT all face each other):\n${overallRankingBlock}` : `\nRESULTS\n${resultsByShowBlock}`}
+${totalCompetitors === 0 ? 'No competitive ensembles tonight — this is a SoundSport-only evening.' : multiShow ? `\nRESULTS BY SHOW\n${resultsByShowBlock}\n\nOVERALL RANKING (across all shows tonight — reference carefully; these ensembles did NOT all face each other):\n${overallRankingBlock}` : `\nRESULTS\n${resultsByShowBlock}`}
 
 ${soundSportResults.length > 0 ? `SOUNDSPORT RATINGS (non-competitive, ratings-only showcase — NEVER reveal SoundSport scores, only rating levels):
 ${soundSportBestInShow ? `Best in Show: "${soundSportBestInShow.corpsName}" (${soundSportBestInShow.displayName || 'Unknown'})` : ''}
@@ -3520,7 +3583,10 @@ ${soundSportByRating.silver.length > 0 ? `Silver (${soundSportByRating.silver.le
 ${soundSportByRating.bronze.length > 0 ? `Bronze (${soundSportByRating.bronze.length}): ${soundSportByRating.bronze.map(r => `"${r.corpsName}"`).join(', ')}` : ''}
 ${soundSportByRating.participation.length > 0 ? `Participation (${soundSportByRating.participation.length}): ${soundSportByRating.participation.map(r => `"${r.corpsName}"`).join(', ')}` : ''}` : ''}
 
-STATS: Top ensemble: "${topPerformers[0]?.corpsName}" at ${topScore}${topPerformers[0]?.showEventName ? ` (${topPerformers[0].showEventName})` : ''} | 1st-to-2nd margin: ${topPerformers.length >= 2 ? (topPerformers[0].totalScore - topPerformers[1].totalScore).toFixed(3) : 'N/A'} | Competitive ensembles: ${totalCompetitors} | Field avg: ${avgScore}${soundSportResults.length > 0 ? ` | SoundSport: ${soundSportResults.length}` : ''}
+STATS: ${totalCompetitors === 0
+  ? `No competitive ensembles | SoundSport participants: ${soundSportResults.length}`
+  : `Top ensemble: "${topPerformers[0].corpsName}" at ${topScore}${topPerformers[0].showEventName ? ` (${topPerformers[0].showEventName})` : ''} | ${totalCompetitors >= 2 ? `1st-to-2nd margin: ${(topPerformers[0].totalScore - topPerformers[1].totalScore).toFixed(3)}` : 'Solo competitor'} | Competitive ensembles: ${totalCompetitors} | Field avg: ${avgScore}${soundSportResults.length > 0 ? ` | SoundSport: ${soundSportResults.length}` : ''}`
+}
 ===== END DATA =====
 
 ${toneGuidance}
@@ -3528,11 +3594,10 @@ ${formatNegativeSpace(ledger)}
 BANNED PHRASES: dominant, commanding, stunning, heating up, sent shockwaves, proves their mettle, showcased their prowess, the drama is just beginning, tune in tomorrow, Can [X] maintain their dominance?
 
 ARTICLE REQUIREMENTS
-- Headline: Include the actual top ensemble's name and score. No exclamation points. No invented numbers.
+- Headline: ${mode.headlineGuidance}
 - Summary: 2-3 sentences — top result, score, and one storyline hook${multiShow ? '. Make the multi-show night clear' : ''}.
-- Narrative: 600-800 words. Cover ${tierDescription}. Include at least ${Math.min(3, Math.max(1, Math.floor(totalCompetitors / 3)))} fictitious director/ensemble quotes with real personality — funny, frustrated, confident, self-deprecating — not "we worked hard" boilerplate.
-${multiShow ? `- Cover all ${competitiveByShow.length} fantasy shows by name. When you cite a placement or score, make the show clear so readers know which ensembles actually faced each other.` : ''}${soundSportResults.length > 0 ? `\n- Include a SoundSport highlight — celebrate the ratings without ever revealing SoundSport scores.` : ''}
-- End with a specific observation or stat from the data, not a rhetorical question or generic send-off.`;
+- Narrative: ${mode.words} words. ${mode.coverage}${mode.minQuotes > 0 ? ` Include at least ${mode.minQuotes} fictitious director/ensemble quote${mode.minQuotes === 1 ? '' : 's'} with real personality — funny, frustrated, confident, self-deprecating — not "we worked hard" boilerplate.` : ''}
+${mode.bodyNote ? `${mode.bodyNote}\n` : ''}${multiShow ? `- Cover all ${competitiveByShow.length} fantasy shows by name. When you cite a placement or score, make the show clear so readers know which ensembles actually faced each other.\n` : ''}${soundSportResults.length > 0 && fieldMode !== 'soundsport' ? `- Include a SoundSport highlight — celebrate the ratings without ever revealing SoundSport scores.\n` : ''}- End with a specific observation or stat from the data, not a rhetorical question or generic send-off.`;
 
   const schema = {
     type: Type.OBJECT,
@@ -3571,7 +3636,10 @@ ${multiShow ? `- Cover all ${competitiveByShow.length} fantasy shows by name. Wh
   try {
     const content = await generateStructuredContent(prompt, schema);
 
-    const topCorps = topPerformers[0];
+    // Image subject: the top competitive ensemble when there is one; otherwise
+    // the SoundSport Best in Show for soundsport-only nights so the image still
+    // reflects the actual subject of the article rather than a generic placeholder.
+    const topCorps = topPerformers[0] || soundSportBestInShow || null;
 
     // Fetch uniform design if available
     let uniformDesign = null;
@@ -3592,7 +3660,7 @@ ${multiShow ? `- Cover all ${competitiveByShow.length} fantasy shows by name. Wh
 
     const imagePrompt = buildFantasyPerformersImagePrompt(
       topCorps?.corpsName || "Champion Corps",
-      `Performance finale on Day ${reportDay}`,
+      fieldMode === 'soundsport' ? `SoundSport showcase on Day ${reportDay}` : `Performance finale on Day ${reportDay}`,
       corpsLocation,
       uniformDesign,
       reportDay,
