@@ -645,9 +645,9 @@ const ARTICLE_TYPES = {
   // The 5 daily articles - aligned with DCI.org style
   DCI_DAILY: "dci_daily",             // Article 1: DCI scores analysis from the day (with score breakdown)
   DCI_FEATURE: "dci_feature",         // Article 2: DCI feature on a single corps and their season progress
-  DCI_RECAP: "dci_recap",             // Article 3: DCI weekly recap with GE, Visual, Music trends + trade recommendations
+  DCI_RECAP: "dci_recap",             // Article 3: DCI caption deep-dive (GE, Visual, Music) — descriptive, not prescriptive
   FANTASY_DAILY: "fantasy_daily",     // Article 5: marching.art results from the day (generated last → top of feed)
-  FANTASY_RECAP: "fantasy_recap",     // Article 4: marching.art weekly caption analysis (GE, Visual, Music trends)
+  FANTASY_RECAP: "fantasy_recap",     // Article 4: Fantasy Market Report — owns buy/hold/sell picks exclusively
 };
 
 /**
@@ -2538,26 +2538,29 @@ function getWritingVariety(reportDay, articleType) {
     {
       lens: "The momentum read. Is this corps accelerating, coasting, or fading? Use recent scores to make the case.",
       focus: "Look at their last 3 performances as a micro-trend. Are gains consistent across captions or concentrated in one area?",
-      closingAngle: "Connect the momentum story to a buy/hold/sell verdict with clear reasoning.",
+      closingAngle: "Close with what the momentum suggests is next — the show on the schedule most likely to test or confirm the trend, and the specific caption to watch there. Describe the outlook; leave fantasy picks to the Fantasy Market Report.",
     },
   ];
 
   // DCI Recap: rotate analytical emphasis
+  // This is a pure caption deep-dive. It does NOT give fantasy buy/hold/sell picks —
+  // that's the Fantasy Market Report's job. Keep the lens on what the judges rewarded
+  // and where the real races inside the overall standings are hiding.
   const recapApproaches = [
     {
       emphasis: "Lead with the caption where the race is tightest. Which scoring category has the smallest gap between 1st and 5th?",
       thread: "Build the analysis around competitive density — where are the closest races in each caption?",
-      fantasyAngle: "Recommendations based on volatility — which captions are most likely to shift next week?",
+      closingAngle: "Close with which caption race is most likely to shift next week, and which corps sit right on the edge of moving. Describe the dynamics — do not prescribe fantasy actions.",
     },
     {
       emphasis: "Lead with the biggest mover in any caption — the corps that gained or lost the most ground this week.",
       thread: "Frame the week as a story of change. What shifted, what held, and what's quietly building?",
-      fantasyAngle: "Recommendations based on trending — buy the risers, sell the fallers, hold the rocks.",
+      closingAngle: "Close by identifying what the movement says about each corps' program identity — is the rise in GE about new effect moments, or execution catching up to design?",
     },
     {
       emphasis: "Lead with the overall standings implications. How did this week's caption performances reshape the race?",
       thread: "Connect caption-level details back to total score impact. A 0.3 GE gain matters more than a 0.3 Percussion gain — explain the math.",
-      fantasyAngle: "Recommendations based on scoring weight — which caption improvements translate to the biggest total score gains?",
+      closingAngle: "Close by mapping where each corps' caption profile leaves them positioned for the rest of the season — strengths, gaps, and the captions that still have headroom.",
     },
   ];
 
@@ -2581,21 +2584,25 @@ function getWritingVariety(reportDay, articleType) {
   ];
 
   // Fantasy Recap: rotate analytical framing
+  // This is the FANTASY MARKET REPORT. It owns buy/hold/sell exclusively — the DCI
+  // Recap is the pure caption deep-dive and will have already done the descriptive
+  // analysis of what happened. Assume the reader has read it. Get to the picks fast
+  // and lean into lineup mechanics, caption weighting, and scarcity.
   const fantasyRecapApproaches = [
     {
-      framing: "Morning market report. Brisk, opinionated, and actionable. Get to the picks fast.",
-      depthArea: "Go deepest on the GE captions since they're worth the most. Only surface-level on others.",
-      pickStyle: "Confident and decisive. Strong opinions, loosely held.",
+      framing: "Morning market report. Brisk, opinionated, actionable. Open with the single highest-conviction pick of the night and build out from there. Treat this as lineup advice, not caption analysis.",
+      depthArea: "Go deepest on the GE captions since they drive ~40% of the score — those picks move lineups the most. Brief on the lower-weight captions.",
+      pickStyle: "Confident and decisive. Strong opinions, loosely held. Name specific corps+caption combos; skip corps-only picks.",
     },
     {
-      framing: "Deep dive research note. Thorough and methodical. Walk through each caption family with care.",
-      depthArea: "Balance coverage across all 8 captions. Find something interesting in each.",
-      pickStyle: "Analytical and hedged. Explain the reasoning, acknowledge uncertainty.",
+      framing: "Research note with portfolio logic. Walk through the picks as a constructed lineup — how the GE, Visual, and Music holes fit together. Caption scarcity and substitution matter more than raw scores.",
+      depthArea: "Balance the buys across caption families so a reader building a lineup from scratch has coverage across GE/Visual/Music. Explain the reasoning for each slot.",
+      pickStyle: "Analytical and hedged. Explain the reasoning, acknowledge uncertainty, note which picks are robust vs. fragile.",
     },
     {
-      framing: "Contrarian take. What is the conventional wisdom missing? Which consensus picks are overvalued?",
-      depthArea: "Focus on the captions where consensus and trend data disagree. Where are people sleeping?",
-      pickStyle: "Bold and counterintuitive. Challenge the obvious picks. Find the edges.",
+      framing: "Contrarian take. What is the consensus getting wrong? Which crowded picks are overvalued, and which overlooked captions offer the best value per point?",
+      depthArea: "Focus on the captions where surface-level ranking and trend data disagree, and the corps whose recent momentum is under-priced by casual fantasy directors.",
+      pickStyle: "Bold and counterintuitive. Challenge the obvious picks. Find the edges. Name specific corps+caption combos you'd fade.",
     },
   ];
 
@@ -2680,7 +2687,7 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
       featuredCorps.add(dciFeatureArticle.featuredCorps);
     }
 
-    // Article 3: DCI RECAP - Deep dive on GE, Visual, Music trends + trade recommendations
+    // Article 3: DCI RECAP - Pure caption deep-dive (GE, Visual, Music). Descriptive, not prescriptive.
     const dciRecapArticle = await generateDciRecapArticle({
       reportDay, dayScores, trendData, captionLeaders, activeCorps, showContext, competitionContext, db,
       excludeCorps: featuredCorps
@@ -2690,7 +2697,7 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
       featuredCorps.add(dciRecapArticle.featuredCorps);
     }
 
-    // Article 4: FANTASY RECAP - DCI Caption Stock Market Analysis for fantasy directors
+    // Article 4: FANTASY MARKET REPORT - Owns buy/hold/sell picks for the day (descriptive caption analysis already done in Article 3).
     const fantasyRecapArticle = await generateFantasyRecapArticle({
       reportDay, dayScores, trendData, showContext, competitionContext, db
     });
@@ -3169,9 +3176,14 @@ async function generateDciRecapArticle({ reportDay, dayScores, trendData, captio
   const uniqueShows = Array.from(new Set(dayScores.map(s => s.showName).filter(Boolean)));
   const multiShowToday = uniqueShows.length > 1;
 
-  const prompt = `You are a DCI score analyst writing the weekly caption deep-dive. This is the piece a serious drum corps fan bookmarks — the one that explains what the judges are actually rewarding and where the real races are hiding inside the overall standings.
+  const prompt = `You are a DCI score analyst writing tonight's caption deep-dive. This is the piece a serious drum corps fan bookmarks — the one that explains what the judges are actually rewarding and where the real races are hiding inside the overall standings. It is PURE caption analysis and description — it is not a fantasy column.
 
-ACCURACY RULES (read first)
+SCOPE (read carefully)
+- This article DESCRIBES the caption landscape. It does NOT give fantasy buy/hold/sell picks, lineup advice, or "which caption to pick tomorrow" recommendations — a separate Fantasy Market Report article covers that.
+- You may describe trajectory, momentum, and what a corps' caption profile suggests about their program identity and direction. You may NOT frame any observation as a pick, trade, buy, sell, hold, target, fade, or fantasy action.
+- Readers who want actionable picks will read the Fantasy Market Report. Your job is to leave them understanding the night, not telling them what to do with their lineup.
+
+ACCURACY RULES
 - Every corps name, score, caption number, and trend direction you write MUST come from the DATA block below. Do not invent corps, scores, or statistics.
 - The field being analyzed is ${dayScores.length} corps (listed below). Never state any other count, and never reference corps not in this list.
 ${multiShowToday ? `- Tonight's caption numbers come from ${uniqueShows.length} different shows: ${uniqueShows.join(', ')}. Corps at different shows did NOT judge against each other tonight, so the caption rankings below are a composite across venues — frame cross-venue comparisons as such, not as a head-to-head caption duel.` : `- Tonight's caption numbers come from a single show, so the caption rankings below are a true head-to-head.`}
@@ -3179,7 +3191,7 @@ ${multiShowToday ? `- Tonight's caption numbers come from ${uniqueShows.length} 
 
 VOICE: Authoritative but readable. Not dumbed down, not written for judges. A knowledgeable fan should come away understanding the caption landscape better than they did before.
 
-BANNED PHRASES: dominant, commanding, stunning, thrilling, heating up, captivating, testament, battle for supremacy, stakes are high, every point matters, absolutely crucial, setting the stage, poised to, poised for success, will have a significant advantage
+BANNED PHRASES: dominant, commanding, stunning, thrilling, heating up, captivating, testament, battle for supremacy, stakes are high, every point matters, absolutely crucial, setting the stage, poised to, poised for success, will have a significant advantage, buy, sell, hold, trade, pick up, drop, fade, target, stash, fantasy directors should, for fantasy purposes, in your lineup
 
 ===== DATA =====
 ${dayScores.length} CORPS | Week: Days ${reportDay - 6} through ${reportDay} | Date: ${showContext.date}
@@ -3222,22 +3234,22 @@ ${toneGuidance}
 TODAY'S ANALYTICAL APPROACH
 Lead with: ${variety.emphasis}
 Thread: ${variety.thread}
-Fantasy angle: ${variety.fantasyAngle}
+Closing angle: ${variety.closingAngle}
 
 ARTICLE REQUIREMENTS
-- Headline: Technical, number-focused. Reference a specific caption gap or trend. No hype words.
+- Headline: Technical, number-focused. Reference a specific caption gap or trend. No hype words, no "buy/sell" framing.
 - Summary: 2-3 factual sentences with key caption insights from tonight's data.
-- Narrative: 900-1200 words of caption analysis covering GE, Visual, Music, trajectory outlook, and fantasy buy/hold/sell with specific corps+caption picks.
+- Narrative: 900-1200 words of caption analysis covering GE, Visual, and Music. Describe what the judges rewarded, where the races are tight, how the sub-caption picture differs from the composite picture, and how the week's trajectory reshapes each corps' caption profile. Close per the closing angle above.
   Reference a meaningful cross-section of the field in each caption family — aim for ${Math.min(5, dayScores.length)} or more corps per family, but never pad by inventing. Cite specific point gaps from the data.
   Weight the sections by where the real story is tonight. If the Visual race is tight and GE is decided, Visual gets more ink.
-  End buy/hold/sell recs with specific caption picks (e.g., "buy Crown's GE1"), not just corps names.`;
+  Do NOT end with buy/hold/sell, fantasy picks, or "who to target" — the Fantasy Market Report handles that. Your ending belongs to the closing angle above.`;
 
   const schema = {
     type: Type.OBJECT,
     properties: {
-      headline: { type: Type.STRING, description: "Technical headline grounded in a real caption gap or trend from tonight. No 'heats up', 'battle intensifies', or invented facts." },
-      summary: { type: Type.STRING, description: "2-3 sentences with specific caption gaps and a key insight from the data." },
-      narrative: { type: Type.STRING, description: "900-1200 word caption analysis covering GE, Visual, Music, trajectory, and fantasy buy/hold/sell. Every corps, score, and trend must come from the data block. Section emphasis follows where the real story is. Never uses 'dominant', 'heating up', 'captivating'." },
+      headline: { type: Type.STRING, description: "Technical headline grounded in a real caption gap or trend from tonight. No 'heats up', 'battle intensifies', 'buy/sell' framing, or invented facts." },
+      summary: { type: Type.STRING, description: "2-3 sentences with specific caption gaps and a key insight from the data. Descriptive, not prescriptive — no fantasy picks." },
+      narrative: { type: Type.STRING, description: "900-1200 word caption analysis covering GE, Visual, and Music: what the judges rewarded, where the tightest races are, and how the week's trajectory reshapes each corps' caption profile. Every corps, score, and trend must come from the data block. No fantasy buy/hold/sell picks — that is the Fantasy Market Report's job. Never uses 'dominant', 'heating up', 'captivating'." },
       captionBreakdown: {
         type: Type.OBJECT,
         properties: {
@@ -3247,21 +3259,8 @@ ARTICLE REQUIREMENTS
         },
         required: ["geAnalysis", "visualAnalysis", "musicAnalysis"],
       },
-      recommendations: {
-        type: Type.ARRAY,
-        description: "Fantasy trade recommendations based on corps trends",
-        items: {
-          type: Type.OBJECT,
-          properties: {
-            corps: { type: Type.STRING, description: "Corps name" },
-            action: { type: Type.STRING, enum: ["buy", "hold", "sell"], description: "Recommended action" },
-            reasoning: { type: Type.STRING, description: "Why this corps is trending this way based on caption performance" },
-          },
-          required: ["corps", "action", "reasoning"],
-        },
-      },
     },
-    required: ["headline", "summary", "narrative", "captionBreakdown", "recommendations"],
+    required: ["headline", "summary", "narrative", "captionBreakdown"],
   };
 
   try {
@@ -3538,9 +3537,10 @@ ${multiShow ? `- Cover all ${competitiveByShow.length} fantasy shows by name. Wh
 }
 
 /**
- * Article 5: DCI Caption Stock Market Analysis
- * Treats individual DCI captions (GE1, GE2, VP, VA, CG, B, MA, P) as stocks for fantasy investment
- * Written like a day trader's market analysis
+ * Article 4: Fantasy Market Report
+ * Owns buy/hold/sell picks exclusively for the day. The DCI Recap (Article 3)
+ * describes the caption landscape; this article translates it into actionable
+ * lineup moves on individual DCI captions (GE1, GE2, VP, VA, CG, B, MA, P).
  */
 async function generateFantasyRecapArticle({ reportDay, dayScores, trendData, showContext, competitionContext, db }) {
   const toneGuidance = getToneGuidance(competitionContext, "fantasy_captions");
@@ -3600,7 +3600,7 @@ async function generateFantasyRecapArticle({ reportDay, dayScores, trendData, sh
   const uniqueCaptionShows = Array.from(new Set(dayScores.map(s => s.showName).filter(Boolean)));
   const multiShowCaption = uniqueCaptionShows.length > 1;
 
-  const prompt = `You are a fantasy drum corps analyst writing a caption-level breakdown for fantasy directors who pick individual DCI captions (GE1, GE2, VP, VA, CG, B, MA, P) for their lineups.
+  const prompt = `You are the Fantasy Market Report analyst for marching.art. Fantasy directors pick individual DCI captions (GE1, GE2, VP, VA, CG, B, MA, P) for their lineups — you tell them what to do about it. This is THE picks column; it is the only article in tonight's five that gives buy/hold/sell recommendations. Earlier in the batch a separate DCI Recap already described tonight's caption landscape in depth. Assume the reader has read it. Your job is to translate that landscape into action, not to redo the description.
 
 ACCURACY RULES (read first)
 - Every corps name, caption score, and trend arrow you cite MUST come from the DATA block below. Do not invent corps, captions, scores, or trend directions.
@@ -3627,15 +3627,18 @@ TRENDING: ↑ ${trendingUp.length} rising${trendingUp.length > 0 ? ` (${trending
 
 ${toneGuidance}
 
-BANNED PHRASES: dominant, heating up, intensifies, key area of focus, captivating, absolutely crucial
+BANNED PHRASES: dominant, heating up, intensifies, key area of focus, captivating, absolutely crucial, mid-season phase, upward trend (as a standalone phrase), trajectory (cap at 1 use)
 
 ARTICLE REQUIREMENTS
-- Headline: Reference a specific caption, real corps, real score, and trend (use ↑↓→). No hype words, no invented numbers.
-- Summary: 2-3 sentences on the key caption movements from tonight's data.
-- Narrative: 700-900 words. Analyze INDIVIDUAL CAPTIONS (not corps overall). Use ↑↓→ throughout. Include specific scores and margins drawn only from the data.
-  Cover: GE (GE1/GE2 leaders and dynamics), Visual (VP/VA/CG), Music (B/MA/P), and clear BUY/HOLD/SELL picks with specific corps+caption combos and reasoning. End with a sleeper pick — one under-the-radar caption worth a look.
-  Weight the sections by where the real story is tonight. If GE is the story, lead with GE; if there's a contrarian angle, lead with that.
-  Keep it fun and accessible — this is fantasy drum corps, not a dry spreadsheet.`;
+- Headline: A pick-oriented thesis. Name a specific corps+caption and what to DO with it (e.g., a buy, hold, sell, or fade framing). Use ↑↓→ if it fits. No hype words, no invented numbers.
+- Summary: 2-3 sentences that lead with tonight's single highest-conviction pick and one line of reasoning. Every other piece in tonight's batch is descriptive — this one is directive.
+- Narrative: 600-800 words, weighted heavily toward the picks. Structure:
+  1. Lead with the top BUY (specific corps+caption, the thesis, the score/trend that supports it, who it displaces in a typical lineup).
+  2. Cover the remaining BUYs, then HOLDs, then SELLs — each named at the corps+caption level with brief reasoning.
+  3. Include one or two lines on caption WEIGHT or SCARCITY where it matters (e.g., a 0.30 swing in a ~20%-weight caption like GE1 is worth roughly 2x the same swing in a ~10% caption like Percussion).
+  4. Close with a SLEEPER — one under-the-radar corps+caption most fantasy directors will miss, with the reason it's mispriced.
+  Cite specific scores and margins drawn only from the data. Do NOT re-narrate what the DCI Recap already covered — no paragraph-length caption-by-caption play-by-play. Every paragraph should end with a picks-actionable takeaway or be cut.
+  Pick style (confident / analytical / contrarian) follows the framing above.`;
 
   const schema = {
     type: Type.OBJECT,
