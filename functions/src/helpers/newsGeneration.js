@@ -660,6 +660,85 @@ function formatFantasyEventName(name) {
 }
 
 // =============================================================================
+// COVERAGE LEDGER
+// -----------------------------------------------------------------------------
+// Tracks what subjects, numbers, and hooks have already been used across tonight's
+// five-article batch so later articles can be given "negative space" — an explicit
+// instruction to find a different angle from what's already been published that
+// evening. Without this, every article tends to lead with the same top corps and
+// the same highlighted numbers, making the batch feel like five framings of one
+// story rather than five distinct stories.
+// =============================================================================
+
+/**
+ * Create an empty ledger. Pass this into each generator, then call record() after
+ * each article is generated so subsequent articles see what came before.
+ */
+function createCoverageLedger() {
+  return {
+    spotlitSubjects: new Set(),  // Corps and fantasy-ensemble names that headlined prior articles
+    dciCorps: new Set(),         // Subset of spotlitSubjects limited to real DCI corps (used for image-selection fallback)
+    featuredNumbers: new Set(),  // Numeric strings (e.g., "77.850", "1.900") extracted from prior headlines + summaries
+    priorHeadlines: [],          // [{ type, headline, featuredCorps }]
+
+    record(article) {
+      if (!article) return;
+      const subject = article.featuredCorps || article.featuredPerformer || null;
+      if (subject) {
+        this.spotlitSubjects.add(subject);
+        if (article.featuredCorps) this.dciCorps.add(article.featuredCorps);
+      }
+      const text = `${article.headline || ""} ${article.summary || ""}`;
+      const numMatches = text.match(/-?\d+\.\d{2,3}/g) || [];
+      numMatches.forEach(n => this.featuredNumbers.add(n));
+      this.priorHeadlines.push({
+        type: article.type,
+        headline: article.headline || "",
+        featuredCorps: subject,
+      });
+    },
+  };
+}
+
+/**
+ * Render the ledger into a prompt-ready "negative space" block. Callers inject the
+ * returned string into the Gemini prompt for each article after the first. Returns
+ * empty string on an empty ledger so Article 1 gets no special instruction.
+ *
+ * The phrasing is a strong recommendation, not a hard rule: on small-field days
+ * a later article may legitimately need to reference a corps already spotlit, in
+ * which case it should find a genuinely different facet rather than re-pitching
+ * the same hook.
+ */
+function formatNegativeSpace(ledger) {
+  if (!ledger || ledger.priorHeadlines.length === 0) return "";
+
+  const subjects = Array.from(ledger.spotlitSubjects);
+  const numbers = Array.from(ledger.featuredNumbers);
+  const headlinesList = ledger.priorHeadlines
+    .map(h => `  • [${h.type}] "${h.headline}"`)
+    .join("\n");
+
+  return `
+NEGATIVE SPACE — already covered earlier in tonight's 5-article batch
+The articles listed below have already been published tonight. Your piece is part
+of the same batch, so readers will see all of them together. Your job is to add a
+NEW story, not a new framing of an existing one.
+
+Subjects already headlined: ${subjects.length > 0 ? subjects.join(", ") : "(none)"}
+Numbers already featured in prior headlines or summaries: ${numbers.length > 0 ? numbers.join(", ") : "(none)"}
+Prior headlines tonight:
+${headlinesList}
+
+RULES
+- Your headline and summary must not be about the same subject, number, or hook as any prior article. Pick a different angle.
+- You may reference the subjects or numbers above in the body where it serves the analysis, but they must not be your lead.
+- If the field is so small that you must discuss a subject already spotlit, find a genuinely different facet of them — a sub-caption detail, a week-over-week trajectory, a supporting role in a different corps' story — not the same moment that already ran.
+- The five articles together should feel like five distinct stories about tonight, not five retellings of one story.
+`;
+}
+
+// =============================================================================
 // GEMINI INITIALIZATION
 // =============================================================================
 
@@ -2662,52 +2741,47 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
     const toneDescriptor = getToneDescriptor(competitionContext);
     logger.info(`Competition context for Day ${reportDay}: ${toneDescriptor} (${competitionContext.scenario}, ${competitionContext.seasonPhase} season, lead margin: ${competitionContext.leadMargin})`);
 
-    // Track which corps have been featured to ensure diversity across articles
-    const featuredCorps = new Set();
+    // Coverage ledger: records what earlier articles have already used so later
+    // articles can be given explicit "negative space" instructions. Replaces the
+    // previous Set-based exclusion that only covered articles 1–3.
+    const ledger = createCoverageLedger();
 
-    // Generate articles sequentially to track featured corps and ensure diversity
     const articles = [];
 
     // Article 1: DCI DAILY - Today's competition results with score breakdown
     const dciDailyArticle = await generateDciDailyArticle({
-      reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db
+      reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, ledger
     });
     articles.push(dciDailyArticle);
-    if (dciDailyArticle.featuredCorps) {
-      featuredCorps.add(dciDailyArticle.featuredCorps);
-    }
+    ledger.record(dciDailyArticle);
 
     // Article 2: DCI FEATURE - Single corps season progress spotlight
     const dciFeatureArticle = await generateDciFeatureArticle({
-      reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db,
-      excludeCorps: featuredCorps
+      reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, ledger
     });
     articles.push(dciFeatureArticle);
-    if (dciFeatureArticle.featuredCorps) {
-      featuredCorps.add(dciFeatureArticle.featuredCorps);
-    }
+    ledger.record(dciFeatureArticle);
 
     // Article 3: DCI RECAP - Pure caption deep-dive (GE, Visual, Music). Descriptive, not prescriptive.
     const dciRecapArticle = await generateDciRecapArticle({
-      reportDay, dayScores, trendData, captionLeaders, activeCorps, showContext, competitionContext, db,
-      excludeCorps: featuredCorps
+      reportDay, dayScores, trendData, captionLeaders, activeCorps, showContext, competitionContext, db, ledger
     });
     articles.push(dciRecapArticle);
-    if (dciRecapArticle.featuredCorps) {
-      featuredCorps.add(dciRecapArticle.featuredCorps);
-    }
+    ledger.record(dciRecapArticle);
 
     // Article 4: FANTASY MARKET REPORT - Owns buy/hold/sell picks for the day (descriptive caption analysis already done in Article 3).
     const fantasyRecapArticle = await generateFantasyRecapArticle({
-      reportDay, dayScores, trendData, showContext, competitionContext, db
+      reportDay, dayScores, trendData, showContext, competitionContext, db, ledger
     });
     articles.push(fantasyRecapArticle);
+    ledger.record(fantasyRecapArticle);
 
     // Article 5: FANTASY DAILY - Fantasy competition results with score breakdown (generated last to appear first in feed)
     const fantasyDailyArticle = await generateFantasyDailyArticle({
-      reportDay, fantasyData, showContext, competitionContext, db, dataDocId
+      reportDay, fantasyData, showContext, competitionContext, db, dataDocId, ledger
     });
     articles.push(fantasyDailyArticle);
+    ledger.record(fantasyDailyArticle);
 
     return {
       success: true,
@@ -2739,7 +2813,7 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
  * Article 1: DCI Scores Analysis
  * Daily competition results in DCI.org editorial style
  */
-async function generateDciDailyArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db }) {
+async function generateDciDailyArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, ledger }) {
   const topCorps = dayScores[0];
   const secondCorps = dayScores[1];
   const thirdCorps = dayScores[2];
@@ -2860,7 +2934,7 @@ POSITION BATTLES: ${competitionContext.positionBattleCount} corps within 0.2 of 
 ===== END DATA =====
 
 ${toneGuidance}
-
+${formatNegativeSpace(ledger)}
 TONIGHT'S NARRATIVE APPROACH
 Opening: ${variety.opening}
 Angle: ${variety.angle}
@@ -2957,7 +3031,10 @@ Write like you've covered this beat for years. Let the scores drive the story.`;
  * In-depth feature on a single corps and their progress across the season
  * Written in DCI.org editorial style
  */
-async function generateDciFeatureArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, excludeCorps = new Set() }) {
+async function generateDciFeatureArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, ledger }) {
+  // Derive the corps exclusion set from the coverage ledger so this article
+  // doesn't repeat a spotlight subject from earlier in the batch.
+  const excludeCorps = ledger?.dciCorps || new Set();
   const toneGuidance = getToneGuidance(competitionContext, "dci_corps_feature");
 
   // Select a corps to feature - rotate through the field, excluding already-featured corps
@@ -3052,7 +3129,7 @@ ${dayScores.slice(Math.max(0, currentRank - 3), Math.min(dayScores.length, curre
 ===== END DATA =====
 
 ${toneGuidance}
-
+${formatNegativeSpace(ledger)}
 TODAY'S APPROACH
 Lens: ${variety.lens}
 Focus: ${variety.focus}
@@ -3062,16 +3139,16 @@ ARTICLE REQUIREMENTS
 - Headline: Include a real number (score, margin, trend). No exclamation points. No generic praise.
 - Summary: 2-3 sentences — rank, score, and a specific caption insight. Reference the actual show name when natural.
 - Narrative: 700-900 words. A season profile built on scores.
-  Include: specific scores from their recent shows (use the exact show names from the data), analysis of at least 3 individual captions with numbers, a comparison to the corps around them tonight, and a clear buy/hold/sell fantasy recommendation with evidence.
+  Include: specific scores from their recent shows (use the exact show names from the data), analysis of at least 3 individual captions with numbers, a comparison to the corps around them tonight, and a reasoned outlook that follows the closing angle above.
   Sequence and emphasis are your call — if GE is the story, lead with GE; if trajectory is the story, lead with the arc. Don't walk through a checklist.
-  Do NOT predict exact future scores — only analyze visible trends.`;
+  Do NOT end with fantasy buy/hold/sell or lineup picks — that belongs to the Fantasy Market Report. Do NOT predict exact future scores — only analyze visible trends.`;
 
   const schema = {
     type: Type.OBJECT,
     properties: {
       headline: { type: Type.STRING, description: "Corps name with a real number/trend from tonight. No 'dominates', no exclamation points, no invented facts." },
       summary: { type: Type.STRING, description: "2-3 sentences: corps name, current score, rank, and one specific caption insight grounded in the data." },
-      narrative: { type: Type.STRING, description: "700-900 word analytical profile. Uses the exact show names and scores from the data block — no invented venues, dates, or statistics. Covers current position, show-by-show journey with specific scores, caption strengths, caption weaknesses, trajectory, and a buy/hold/sell recommendation. Structure follows what the data emphasizes, not a fixed checklist. Never uses 'dominant', 'commanding', 'stunning'." },
+      narrative: { type: Type.STRING, description: "700-900 word analytical profile. Uses the exact show names and scores from the data block — no invented venues, dates, or statistics. Covers current position, show-by-show journey with specific scores, caption strengths, caption weaknesses, and trajectory, ending per the closing angle above. No fantasy buy/hold/sell picks — that belongs to the Fantasy Market Report. Structure follows what the data emphasizes, not a fixed checklist. Never uses 'dominant', 'commanding', 'stunning'." },
       corpsIdentity: {
         type: Type.OBJECT,
         properties: {
@@ -3121,7 +3198,10 @@ ARTICLE REQUIREMENTS
  * Deep dive on General Effect, Visual, and Music trends over the last week
  * Written in DCI.org recap analysis style
  */
-async function generateDciRecapArticle({ reportDay, dayScores, trendData, captionLeaders, activeCorps, showContext, competitionContext, db, excludeCorps = new Set() }) {
+async function generateDciRecapArticle({ reportDay, dayScores, trendData, captionLeaders, activeCorps, showContext, competitionContext, db, ledger }) {
+  // Derive the corps exclusion set from the coverage ledger so the image subject
+  // picker below doesn't land on a corps already spotlit in an earlier article.
+  const excludeCorps = ledger?.dciCorps || new Set();
   const toneGuidance = getToneGuidance(competitionContext, "dci_weekly_recap");
 
   // Build comprehensive caption trend analysis
@@ -3230,7 +3310,7 @@ B: ${[...dayScores].sort((a, b) => (b.captions?.B || 0) - (a.captions?.B || 0))[
 ===== END DATA =====
 
 ${toneGuidance}
-
+${formatNegativeSpace(ledger)}
 TODAY'S ANALYTICAL APPROACH
 Lead with: ${variety.emphasis}
 Thread: ${variety.thread}
@@ -3303,7 +3383,7 @@ ARTICLE REQUIREMENTS
  * Article 4: marching.art Fantasy Results
  * Daily fantasy competition results
  */
-async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext, competitionContext, db, dataDocId }) {
+async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext, competitionContext, db, dataDocId, ledger }) {
   if (!fantasyData?.current) {
     return createFallbackArticle(ARTICLE_TYPES.FANTASY_DAILY, reportDay);
   }
@@ -3444,7 +3524,7 @@ STATS: Top ensemble: "${topPerformers[0]?.corpsName}" at ${topScore}${topPerform
 ===== END DATA =====
 
 ${toneGuidance}
-
+${formatNegativeSpace(ledger)}
 BANNED PHRASES: dominant, commanding, stunning, heating up, sent shockwaves, proves their mettle, showcased their prowess, the drama is just beginning, tune in tomorrow, Can [X] maintain their dominance?
 
 ARTICLE REQUIREMENTS
@@ -3542,7 +3622,7 @@ ${multiShow ? `- Cover all ${competitiveByShow.length} fantasy shows by name. Wh
  * describes the caption landscape; this article translates it into actionable
  * lineup moves on individual DCI captions (GE1, GE2, VP, VA, CG, B, MA, P).
  */
-async function generateFantasyRecapArticle({ reportDay, dayScores, trendData, showContext, competitionContext, db }) {
+async function generateFantasyRecapArticle({ reportDay, dayScores, trendData, showContext, competitionContext, db, ledger }) {
   const toneGuidance = getToneGuidance(competitionContext, "fantasy_captions");
 
   // Build individual caption "stock" data for each corps
@@ -3626,7 +3706,7 @@ TRENDING: ↑ ${trendingUp.length} rising${trendingUp.length > 0 ? ` (${trending
 ===== END DATA =====
 
 ${toneGuidance}
-
+${formatNegativeSpace(ledger)}
 BANNED PHRASES: dominant, heating up, intensifies, key area of focus, captivating, absolutely crucial, mid-season phase, upward trend (as a standalone phrase), trajectory (cap at 1 use)
 
 ARTICLE REQUIREMENTS
@@ -3728,9 +3808,15 @@ ARTICLE REQUIREMENTS
     const imageData = await generateImageWithImagen(imagePrompt);
     const imageResult = await processGeneratedImage(imageData, "fantasy_recap");
 
+    // Headline subject for the coverage ledger. Prefer the corps named in the
+    // top BUY recommendation since that's what the headline pitch is built on;
+    // fall back to the top-scoring corps used for the image.
+    const featuredCorps = content?.recommendations?.buy?.[0]?.corps || topCorpsForImage?.corps || null;
+
     return {
       type: ARTICLE_TYPES.FANTASY_RECAP,
       ...content,
+      featuredCorps,
       imageUrl: imageResult.url,
       imagePrompt,
       reportDay,
