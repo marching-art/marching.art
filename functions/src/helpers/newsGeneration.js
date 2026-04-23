@@ -791,6 +791,106 @@ async function generateStructuredContent(prompt, schema) {
 }
 
 // =============================================================================
+// BANNED-PHRASE POST-GEN VALIDATOR
+// -----------------------------------------------------------------------------
+// Each article's prompt already carries a BANNED PHRASES block, but Gemini
+// treats those as a soft constraint and slips recurring AI-speak ("mid-season
+// phase", "upward trend", "heating up", "captivating", etc.) into the output
+// anyway. The validator runs AFTER generation, scans user-visible text for a
+// strict pattern list, and forces one retry with an intensified constraint
+// block on leak. After the retry it ships whatever came back — the cost of a
+// second retry isn't worth the marginal quality lift.
+//
+// Keep this list tight: only phrases that are unambiguously clichéd
+// sportswriter AI-speak and that never improve an article. Single common
+// words ("dominant", "commanding") can appear legitimately in drum corps
+// discourse and are left to the per-prompt soft lists.
+// =============================================================================
+
+const HARD_BANNED_PATTERNS = [
+  /\bmid-season phase\b/i,
+  /\bupward trend\b/i,
+  /\bdownward trend\b/i,
+  /\bheating up\b/i,
+  /\bcaptivating\b/i,
+  /\btestament\b/i,
+  /\bsetting the stage\b/i,
+  /\babsolutely crucial\b/i,
+  /\bforce to be reckoned with\b/i,
+  /\bdynasty in the making\b/i,
+  /\bstakes are high\b/i,
+  /\bevery point matters\b/i,
+  /\btune in tomorrow\b/i,
+  /\bemerging as a true contender\b/i,
+  /\bproves their mettle\b/i,
+];
+
+/**
+ * Collect every user-visible text field from a generated article and scan
+ * them as a single corpus. Returns the set of matched source phrases (not
+ * the patterns) so the retry prompt can quote them back at Gemini verbatim.
+ */
+function detectBannedPhrases(content) {
+  if (!content || typeof content !== "object") return [];
+
+  const fields = [
+    content.headline,
+    content.summary,
+    content.narrative,
+    content.fantasyImpact,
+    content.captionInsights?.geInsight,
+    content.captionInsights?.visualInsight,
+    content.captionInsights?.musicInsight,
+    content.captionBreakdown?.geAnalysis,
+    content.captionBreakdown?.visualAnalysis,
+    content.captionBreakdown?.musicAnalysis,
+    content.corpsIdentity?.tradition,
+    content.corpsIdentity?.strength,
+    content.corpsIdentity?.trajectory,
+    ...(Array.isArray(content.recommendations) ? content.recommendations.map(r => r?.reasoning) : []),
+    ...(content.recommendations?.buy?.map?.(r => r?.reason) || []),
+    ...(content.recommendations?.hold?.map?.(r => r?.reason) || []),
+    ...(content.recommendations?.sell?.map?.(r => r?.reason) || []),
+  ];
+
+  const corpus = fields.filter(Boolean).join("\n\n");
+  const hits = new Set();
+  for (const pattern of HARD_BANNED_PATTERNS) {
+    const match = corpus.match(pattern);
+    if (match) hits.add(match[0]);
+  }
+  return Array.from(hits);
+}
+
+/**
+ * Wraps generateStructuredContent with a single retry on banned-phrase leak.
+ * Ships the best-available article after the retry; never throws on validator
+ * failure since a leaked cliché is not worse than a fallback article.
+ */
+async function generateWithBannedPhraseGuard(prompt, schema, options = {}) {
+  const { articleType = "unknown" } = options;
+
+  const firstAttempt = await generateStructuredContent(prompt, schema);
+  const firstHits = detectBannedPhrases(firstAttempt);
+  if (firstHits.length === 0) return firstAttempt;
+
+  logger.warn(`[${articleType}] banned phrase leak on first attempt: ${firstHits.join(", ")} — retrying once`);
+
+  const stricterPrompt = `${prompt}
+
+YOUR PREVIOUS DRAFT USED BANNED PHRASES AND MUST BE REWRITTEN.
+Banned phrases that appeared: ${firstHits.map(h => `"${h}"`).join(", ")}.
+Rewrite the article entirely. Do NOT use any of those phrases or obvious synonyms for them. This is a hard constraint — the article will be rejected if any of these phrases appear in the output. Every other requirement in this prompt still applies.`;
+
+  const secondAttempt = await generateStructuredContent(stricterPrompt, schema);
+  const secondHits = detectBannedPhrases(secondAttempt);
+  if (secondHits.length > 0) {
+    logger.warn(`[${articleType}] banned phrases leaked through retry: ${secondHits.join(", ")} — shipping anyway`);
+  }
+  return secondAttempt;
+}
+
+// =============================================================================
 // IMAGE GENERATION
 // =============================================================================
 
@@ -2991,7 +3091,7 @@ Write like you've covered this beat for years. Let the scores drive the story.`;
   };
 
   try {
-    const content = await generateStructuredContent(prompt, schema);
+    const content = await generateWithBannedPhraseGuard(prompt, schema, { articleType: "dci_daily" });
 
     // Look up the corps' show title and uniform details from Firestore
     const showTitle = db ? await getShowTitleFromFirestore(db, topCorps.corps, topCorps.sourceYear) : null;
@@ -3088,6 +3188,21 @@ async function generateDciFeatureArticle({ reportDay, dayScores, trendData, acti
   // Get today's narrative variety
   const variety = getWritingVariety(reportDay, "dci_feature");
 
+  // Pre-compute seeded narrative hints so the featured corps gets deterministic
+  // per-(corps, day) phrasing for their momentum, streak, and caption story.
+  // Seeded by corps+day+articleType so the same corps on the same day produces
+  // one set of hints inside DCI Feature, but a different set if the same corps
+  // shows up as a pick in the Fantasy Market Report later in the batch.
+  const narrativeSeed = `${featureCorps.corps}:${reportDay}:dci_feature`;
+  const narrative = getTrendNarrative(corpsTrend, narrativeSeed);
+  const narrativeHintsBlock = narrative ? [
+    narrative.momentum ? `- Momentum framing: "${narrative.momentum}"` : null,
+    narrative.streak ? `- Streak framing: "${narrative.streak}"` : null,
+    narrative.caption ? `- Caption framing: "${narrative.caption}"` : null,
+    narrative.performance ? `- Season-context framing: "${narrative.performance}"` : null,
+    narrative.stability ? `- Stability framing: "${narrative.stability}"` : null,
+  ].filter(Boolean).join('\n') : '';
+
   const tonightShow = featureCorps.showName || showContext.showName;
   const tonightLocation = featureCorps.location || showContext.location;
 
@@ -3126,6 +3241,9 @@ ${dayScores.slice(Math.max(0, currentRank - 3), Math.min(dayScores.length, curre
   const venueTag = s.showName && s.showName !== tonightShow ? ` @ ${s.showName}` : '';
   return `${rank}. ${s.corps}: ${s.total.toFixed(3)}${venueTag}${s.corps === featureCorps.corps ? ' ← FEATURED' : ` (${gap >= 0 ? '+' : ''}${gap.toFixed(3)})`}`;
 }).join('\n')}
+${narrativeHintsBlock ? `
+NARRATIVE HINTS (you may use, paraphrase, or ignore these — do NOT use more than one verbatim in the same article, and do not daisy-chain them):
+${narrativeHintsBlock}` : ''}
 ===== END DATA =====
 
 ${toneGuidance}
@@ -3163,7 +3281,7 @@ ARTICLE REQUIREMENTS
   };
 
   try {
-    const content = await generateStructuredContent(prompt, schema);
+    const content = await generateWithBannedPhraseGuard(prompt, schema, { articleType: "dci_feature" });
 
     const imagePrompt = buildCorpsSpotlightImagePrompt(
       featureCorps.corps,
@@ -3344,7 +3462,7 @@ ARTICLE REQUIREMENTS
   };
 
   try {
-    const content = await generateStructuredContent(prompt, schema);
+    const content = await generateWithBannedPhraseGuard(prompt, schema, { articleType: "dci_recap" });
 
     // Feature the GE leader for the image (or next available if excluded)
     let featuredCorps = geSorted.find(s => !excludeCorps.has(s.corps)) || geSorted[0];
@@ -3634,7 +3752,7 @@ ${mode.bodyNote ? `${mode.bodyNote}\n` : ''}${multiShow ? `- Cover all ${competi
   };
 
   try {
-    const content = await generateStructuredContent(prompt, schema);
+    const content = await generateWithBannedPhraseGuard(prompt, schema, { articleType: "fantasy_daily" });
 
     // Image subject: the top competitive ensemble when there is one; otherwise
     // the SoundSport Best in Show for soundsport-only nights so the image still
@@ -3854,7 +3972,7 @@ ARTICLE REQUIREMENTS
   };
 
   try {
-    const content = await generateStructuredContent(prompt, schema);
+    const content = await generateWithBannedPhraseGuard(prompt, schema, { articleType: "fantasy_recap" });
 
     // Feature the top-scoring corps with photojournalistic image
     const topCorpsForImage = dayScores[0];
@@ -4335,93 +4453,230 @@ function calculateTrendData(historicalData, reportDay, activeCorps) {
  * Generate narrative phrases for trend descriptions
  * Provides variety in how trends are described across articles
  */
+// Phrase banks used by getTrendNarrative() to pre-compute seeded narrative hints
+// per corps. Each list is ~10 variants so a given (corps, day, article) seed has
+// meaningful variety across consecutive uses. Any phrase that appears on the
+// HARD_BANNED_PATTERNS list must not appear here.
 const TREND_NARRATIVES = {
   surging: [
     "on an absolute tear",
     "riding a scorching hot streak",
-    "surging with unstoppable momentum",
     "catching fire at exactly the right moment",
-    "in the midst of a remarkable run",
+    "in the best run of their season",
+    "stringing together nightly gains",
+    "accelerating faster than the field",
+    "compiling a run that reshuffles the power rankings",
+    "posting one of the biggest weekly improvements in the field",
+    "ahead of their season's trendline by a wide margin",
+    "moving up the sheet every time they perform",
   ],
   hot: [
-    "building serious momentum",
-    "heating up nicely",
-    "showing impressive upward trajectory",
-    "on the rise and showing no signs of slowing",
-    "trending in exactly the right direction",
+    "building real momentum",
+    "on the rise with no sign of slowing",
+    "trending upward on the weekly sheets",
+    "landing night after night",
+    "improving every show they perform",
+    "gaining ground on the corps above them",
+    "sharper than they were a week ago",
+    "hitting form at the right point in the season",
+    "carving a clear upward line in recent scores",
+    "showing meaningful week-over-week progress",
   ],
   rising: [
     "continuing to climb",
     "making steady gains",
-    "showing improvement",
-    "moving in the right direction",
-    "picking up steam",
+    "showing modest but real improvement",
+    "picking up ground show by show",
+    "inching upward on the scoresheet",
+    "walking their scores up week by week",
+    "showing a slow but clear upward pattern",
+    "improving at the pace they need to",
+    "beginning to close the gap on the tier above",
+    "on a gentle incline through the recent slate",
   ],
   sliding: [
     "struggling to find their footing",
     "in an extended rough patch",
-    "dealing with a concerning downward trend",
-    "fighting against unfavorable momentum",
+    "dealing with a concerning decline",
     "trying to stop the bleeding",
+    "losing ground night after night",
+    "on the wrong side of the week-over-week picture",
+    "falling behind the pace they set earlier in the season",
+    "hunting for answers on the field",
+    "giving back points they earned in earlier weeks",
+    "unable to arrest a multi-day drop",
   ],
   cold: [
     "going through a cold spell",
     "searching for answers",
-    "hitting some turbulence",
     "in a frustrating slump",
     "battling inconsistency",
+    "off the pace they established earlier",
+    "struggling to replicate earlier results",
+    "shaking off a bad stretch",
+    "down from their recent high-water mark",
+    "working through a visibly rough week",
+    "below the line they had been tracking toward",
   ],
   cooling: [
     "cooling off slightly",
     "seeing some regression",
     "coming back to earth",
     "experiencing a minor setback",
-    "taking a small step back",
+    "off their recent pace",
+    "showing small signs of slowing",
+    "taking a modest step back from last week's peak",
+    "slightly below their ceiling",
+    "losing a little edge night over night",
+    "moving sideways after a stronger stretch",
   ],
   steady: [
     "maintaining their form",
-    "holding steady",
+    "holding the line",
     "staying the course",
-    "keeping things consistent",
     "delivering reliable performances",
+    "turning in the kind of numbers the field expects",
+    "landing squarely where the pattern predicts",
+    "keeping within their established range",
+    "producing performances in the same neighborhood as last week",
+    "neither climbing nor slipping",
+    "giving the standings no reason to move",
   ],
   consistent: [
-    "rock solid in their consistency",
-    "remarkably stable",
+    "rock solid show to show",
+    "remarkably stable on the sheets",
     "the picture of dependability",
     "executing with precision night after night",
-    "a model of consistency",
+    "a model of reliability",
+    "landing within a tight score range week over week",
+    "unshakeable in their output",
+    "the kind of corps you can almost set a watch by",
+    "repeating their performance with near-identical numbers",
+    "a flat, reliable signal in a noisy field",
   ],
 };
 
 const STREAK_NARRATIVES = {
   up: {
-    3: ["three straight days of improvement", "a three-day winning streak", "improvement for the third consecutive day"],
-    4: ["four days of continuous gains", "an impressive four-day climb", "gains every day this week"],
-    5: ["five straight days trending upward", "a remarkable five-day surge", "an entire week of improvement"],
+    3: [
+      "three straight days of improvement",
+      "a three-day winning streak",
+      "improvement for the third consecutive day",
+      "gains three nights running",
+      "a three-show climb",
+    ],
+    4: [
+      "four days of continuous gains",
+      "an impressive four-day climb",
+      "gains every day this week",
+      "four consecutive nights in the green",
+      "a four-show upward arc",
+    ],
+    5: [
+      "five straight days trending upward",
+      "a remarkable five-day surge",
+      "an entire week of improvement",
+      "five shows of uninterrupted gains",
+      "a full week's climb on the sheets",
+    ],
   },
   down: {
-    3: ["three consecutive days of decline", "a three-day skid", "dropping for the third day running"],
-    4: ["four straight days of regression", "a concerning four-day slide", "losses every day this week"],
-    5: ["five days of continuous decline", "a five-day freefall", "struggling all week"],
+    3: [
+      "three consecutive days of decline",
+      "a three-day skid",
+      "dropping for the third day running",
+      "losses three nights in a row",
+      "three shows of regression",
+    ],
+    4: [
+      "four straight days of regression",
+      "a concerning four-day slide",
+      "losses every day this week",
+      "four consecutive nights in the red",
+      "a four-show descent",
+    ],
+    5: [
+      "five days of continuous decline",
+      "a five-day freefall",
+      "struggling all week",
+      "five shows of uninterrupted losses",
+      "a full week's slide on the sheets",
+    ],
   },
 };
 
 const CAPTION_TREND_NARRATIVES = {
   ge: {
-    up: ["GE scores climbing", "connecting better with judges on effect", "drawing stronger emotional response"],
-    down: ["GE scores dipping", "struggling to land the effect", "effect captions not quite hitting"],
-    stable: ["effect scores holding steady", "consistent GE output"],
+    up: [
+      "GE scores climbing",
+      "connecting better with judges on effect",
+      "drawing a stronger emotional response",
+      "general effect moments landing harder",
+      "effect captions trending the right way",
+      "adjudicators rewarding the effect package",
+    ],
+    down: [
+      "GE scores dipping",
+      "struggling to land the effect",
+      "effect captions not quite hitting",
+      "losing points where the book demands them",
+      "GE not returning what it used to",
+      "effect moments not cashing in on the sheets",
+    ],
+    stable: [
+      "effect scores holding steady",
+      "consistent GE output",
+      "reliable effect numbers",
+      "GE sitting right where it has been",
+    ],
   },
   visual: {
-    up: ["visual program clicking into place", "drill execution sharpening", "guard and visual coming together"],
-    down: ["visual clarity suffering", "some execution issues on the field", "visual program not quite clean"],
-    stable: ["visual program consistent", "reliable execution on the field"],
+    up: [
+      "visual program clicking into place",
+      "drill execution sharpening",
+      "guard and visual coming together",
+      "visual caption gaining traction",
+      "field product reading cleaner",
+      "visual performance matching the design",
+    ],
+    down: [
+      "visual clarity suffering",
+      "execution issues on the field",
+      "visual program not quite clean",
+      "drill losing its edge",
+      "guard and visual not in sync",
+      "visual captions giving back points",
+    ],
+    stable: [
+      "visual program consistent",
+      "reliable execution on the field",
+      "drill holding its level",
+      "visual numbers steady",
+    ],
   },
   music: {
-    up: ["brass and percussion heating up", "musical program elevating", "hornline finding their voice"],
-    down: ["musical scores slipping", "brass not quite as sharp", "some intonation and balance issues"],
-    stable: ["musical program solid", "consistent brass and percussion output"],
+    up: [
+      "brass and percussion sharpening",
+      "musical program elevating",
+      "hornline finding their voice",
+      "ensemble sound gaining definition",
+      "music captions trending upward",
+      "audio product catching up to the book",
+    ],
+    down: [
+      "musical scores slipping",
+      "brass not quite as sharp",
+      "intonation and balance issues",
+      "hornline losing some of its edge",
+      "ensemble sound not as tight",
+      "music captions giving up ground",
+    ],
+    stable: [
+      "musical program solid",
+      "consistent brass and percussion output",
+      "hornline holding its level",
+      "music numbers stable",
+    ],
   },
 };
 
@@ -4699,7 +4954,7 @@ All "corps" names above are user-created fantasy team names, not real DCI corps.
       required: ["headline", "summary", "narrative", "fantasyImpact", "trendingCorps"],
     };
 
-    const content = await generateStructuredContent(prompt, schema);
+    const content = await generateWithBannedPhraseGuard(prompt, schema, { articleType: "fantasy_recap_legacy" });
     return { success: true, content };
   } catch (error) {
     logger.error("Fantasy recap failed:", error);
