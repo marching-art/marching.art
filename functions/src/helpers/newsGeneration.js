@@ -1037,7 +1037,7 @@ Rewrite the entire article. Every other requirement in this prompt still applies
 // =============================================================================
 
 // Configuration: Set to true to use paid Imagen 4 Fast ($0.02/image), false for free Gemini 2.5 Flash Image (500 RPD free tier)
-const USE_PAID_IMAGE_GEN = false;
+const USE_PAID_IMAGE_GEN = true;
 
 // =============================================================================
 // DRUM CORPS VISUAL IDENTITY - System context for accurate image generation
