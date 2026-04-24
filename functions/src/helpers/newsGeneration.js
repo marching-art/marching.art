@@ -835,6 +835,38 @@ const HARD_BANNED_PATTERNS = [
 // legitimate rounded citations get flagged.
 const NUMBER_MATCH_TOLERANCE = 0.005;
 
+// Canon of DCI World/Open Class corps that appear in historical data. Used
+// to catch hallucinations: if an article names a corps from this list that
+// isn't in tonight's dayScores, Gemini likely invented its inclusion from
+// general DCI knowledge rather than the prompt's data block. Restricted to
+// multi-word names to avoid false positives on common words ("colts", "gold"
+// etc. could match innocuous text; "Jersey Surf" is unambiguous).
+const DCI_CORPS_CANON = [
+  "Blue Devils",
+  "Blue Knights",
+  "Blue Stars",
+  "Bluecoats",
+  "Boston Crusaders",
+  "The Cadets",
+  "The Cavaliers",
+  "Carolina Crown",
+  "Crossmen",
+  "Jersey Surf",
+  "Madison Scouts",
+  "Music City",
+  "Pacific Crest",
+  "Phantom Regiment",
+  "Santa Clara Vanguard",
+  "Seattle Cascades",
+  "Spirit of Atlanta",
+  "The Academy",
+  "Genesis",
+  "Les Stentors",
+  "Louisiana Stars",
+  "River City Rhythm",
+  "Vanguard Cadets",
+];
+
 /**
  * Collect every user-visible text field from a generated article into a
  * single corpus string. Shared by both validators so they see the same view
@@ -897,6 +929,29 @@ function extractDataBlockNumbers(prompt) {
 }
 
 /**
+ * Flag any DCI_CORPS_CANON corps name that appears in the article but NOT
+ * in tonight's field. Returns unique matched names. Case-insensitive match
+ * but returns canonical casing. Skips the check when fieldCorpsNames isn't
+ * provided (e.g., legacy callers).
+ */
+function detectHallucinatedCorps(content, fieldCorpsNames) {
+  if (!fieldCorpsNames) return [];
+  const corpus = collectArticleText(content);
+  if (!corpus) return [];
+
+  const fieldSet = new Set(fieldCorpsNames);
+  const hallucinated = new Set();
+  for (const canonCorps of DCI_CORPS_CANON) {
+    if (fieldSet.has(canonCorps)) continue;
+    // Whole-word / phrase match, case-insensitive, whitespace-flexible
+    const escaped = canonCorps.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
+    const pattern = new RegExp(`\\b${escaped}\\b`, "i");
+    if (pattern.test(corpus)) hallucinated.add(canonCorps);
+  }
+  return Array.from(hallucinated);
+}
+
+/**
  * Flag decimal numbers in the generated article that don't have a
  * corresponding value (within NUMBER_MATCH_TOLERANCE) in the DATA block.
  * Returns an array of unique unsourced number strings (as they appeared in
@@ -925,18 +980,22 @@ function detectUnsourcedNumbers(content, dataNumbers) {
  * never throws on validator failure.
  */
 async function generateWithFactCheckGuard(prompt, schema, options = {}) {
-  const { articleType = "unknown" } = options;
+  const { articleType = "unknown", fieldCorpsNames = null } = options;
   const dataNumbers = extractDataBlockNumbers(prompt);
 
   const firstAttempt = await generateStructuredContent(prompt, schema);
   const firstBanned = detectBannedPhrases(firstAttempt);
   const firstUnsourced = detectUnsourcedNumbers(firstAttempt, dataNumbers);
+  const firstHallucinated = detectHallucinatedCorps(firstAttempt, fieldCorpsNames);
 
-  if (firstBanned.length === 0 && firstUnsourced.length === 0) return firstAttempt;
+  if (firstBanned.length === 0 && firstUnsourced.length === 0 && firstHallucinated.length === 0) {
+    return firstAttempt;
+  }
 
   const issues = [];
   if (firstBanned.length > 0) issues.push(`banned phrases: ${firstBanned.join(", ")}`);
   if (firstUnsourced.length > 0) issues.push(`unsourced numbers: ${firstUnsourced.join(", ")}`);
+  if (firstHallucinated.length > 0) issues.push(`hallucinated corps: ${firstHallucinated.join(", ")}`);
   logger.warn(`[${articleType}] fact-check issues on first attempt — ${issues.join(" | ")} — retrying once`);
 
   const retryInstructions = [
@@ -945,6 +1004,9 @@ async function generateWithFactCheckGuard(prompt, schema, options = {}) {
       : null,
     firstUnsourced.length > 0
       ? `UNSOURCED NUMBERS that appeared in your previous draft: ${firstUnsourced.map(n => `"${n}"`).join(", ")}. These numbers do not appear in the DATA block. Every decimal number you cite MUST come from the DATA block, either verbatim or as a rounding of a value that's there (e.g., DATA shows 77.850 — you may cite 77.85 or 77.9 but not 78.2). Do NOT compute averages. Do NOT invent scores, margins, or deltas. Do NOT cite a number you cannot point to in the DATA block.`
+      : null,
+    firstHallucinated.length > 0
+      ? `HALLUCINATED CORPS that appeared in your previous draft: ${firstHallucinated.map(c => `"${c}"`).join(", ")}. These corps are not in tonight's field. Only reference corps that appear in the DATA block for this article; never pull in corps from general DCI knowledge that aren't competing tonight.`
       : null,
   ].filter(Boolean).join("\n\n");
 
@@ -959,10 +1021,12 @@ Rewrite the entire article. Every other requirement in this prompt still applies
   const secondAttempt = await generateStructuredContent(stricterPrompt, schema);
   const secondBanned = detectBannedPhrases(secondAttempt);
   const secondUnsourced = detectUnsourcedNumbers(secondAttempt, dataNumbers);
-  if (secondBanned.length > 0 || secondUnsourced.length > 0) {
+  const secondHallucinated = detectHallucinatedCorps(secondAttempt, fieldCorpsNames);
+  if (secondBanned.length > 0 || secondUnsourced.length > 0 || secondHallucinated.length > 0) {
     const remaining = [];
     if (secondBanned.length > 0) remaining.push(`banned phrases: ${secondBanned.join(", ")}`);
     if (secondUnsourced.length > 0) remaining.push(`unsourced numbers: ${secondUnsourced.join(", ")}`);
+    if (secondHallucinated.length > 0) remaining.push(`hallucinated corps: ${secondHallucinated.join(", ")}`);
     logger.warn(`[${articleType}] issues leaked through retry — ${remaining.join(" | ")} — shipping anyway`);
   }
   return secondAttempt;
@@ -3261,7 +3325,8 @@ async function generateDciDailyArticle({ reportDay, dayScores, trendData, active
       const changeStr = trend && Number.isFinite(change)
         ? ` (${change >= 0 ? '+' : ''}${change.toFixed(3)} from yesterday)`
         : '';
-      return `${i + 1}. ${s.corps} - ${s.total.toFixed(3)}${changeStr}${i > 0 ? ` [${marginToNext} behind]` : ' [LEADER]'}
+      const yearTag = s.sourceYear ? ` [${s.sourceYear}]` : '';
+      return `${i + 1}. ${s.corps}${yearTag} - ${s.total.toFixed(3)}${changeStr}${i > 0 ? ` [${marginToNext} behind]` : ' [LEADER]'}
    GE: ${s.subtotals?.ge?.toFixed(2) || 'N/A'} | Visual: ${s.subtotals?.visual?.toFixed(2) || 'N/A'} | Music: ${s.subtotals?.music?.toFixed(2) || 'N/A'}`;
     }).join('\n');
     return `${header}\n${lines}`;
@@ -3302,6 +3367,7 @@ ACCURACY RULES (read first — violations ruin the article)
 - Only the corps listed in CORPS COMPETING TONIGHT exist in this article. Do not reference any corps not in that list.
 - The field tonight has ${dayScores.length} corps — never state any other count, and never imply corps not listed were present.
 ${multiShow ? `- There are ${scoresByShow.length} separate competitions tonight at different venues. Corps at different shows did NOT compete against each other. Never imply a head-to-head result between corps that weren't at the same show. When you cite a score or placement, make the show clear from context.` : `- All corps tonight competed at a single show: ${scoresByShow[0]?.name}${scoresByShow[0]?.location ? ` in ${scoresByShow[0].location}` : ''}.`}
+- Source-year disclosure: on each corps' FIRST mention in the narrative, include their source-year in parentheses — e.g., "Blue Stars (2019)" — so fantasy readers know which season's program material the corps is performing. Every corps in the DATA block has a listed sourceYear; use it. After the first mention, the year can be omitted.
 - If a data point you want to reference isn't in the DATA block, leave it out. Do not fill gaps with plausible-sounding invention.
 
 VOICE & STYLE
@@ -3397,7 +3463,10 @@ Write like you've covered this beat for years. Let the scores drive the story.`;
   };
 
   try {
-    const content = await generateWithFactCheckGuard(prompt, schema, { articleType: "dci_daily" });
+    const content = await generateWithFactCheckGuard(prompt, schema, {
+      articleType: "dci_daily",
+      fieldCorpsNames: dayScores.map(s => s.corps),
+    });
 
     // Look up the corps' show title and uniform details from Firestore
     const showTitle = db ? await getShowTitleFromFirestore(db, topCorps.corps, topCorps.sourceYear) : null;
@@ -3527,6 +3596,7 @@ async function generateDciFeatureArticle({ reportDay, dayScores, trendData, acti
 ACCURACY RULES (read first)
 - Every score, caption number, show name, and location you write MUST come from the DATA block below. Do not invent venues, cities, dates, or scores.
 - The featured corps is ${featureCorps.corps} competing with ${featureCorps.sourceYear} material. Do not reference seasons or material other than ${featureCorps.sourceYear} unless it appears in the data.
+- Source-year disclosure: on the corps' FIRST mention in the narrative, render as "${featureCorps.corps} (${featureCorps.sourceYear})" so fantasy readers know which season's program they're reading about. After the first mention, omit the year unless you're explicitly contrasting seasons.
 - If a fact isn't in the data, leave it out — do not fill gaps with plausible-sounding invention.
 
 VOICE: Sports analyst who respects the reader's intelligence. Specific scores, real comparisons, honest assessments. No filler about tradition or history — only this season's data matters.
@@ -3598,7 +3668,10 @@ ARTICLE REQUIREMENTS
   };
 
   try {
-    const content = await generateWithFactCheckGuard(prompt, schema, { articleType: "dci_feature" });
+    const content = await generateWithFactCheckGuard(prompt, schema, {
+      articleType: "dci_feature",
+      fieldCorpsNames: dayScores.map(s => s.corps),
+    });
 
     const imagePrompt = buildCorpsSpotlightImagePrompt(
       featureCorps.corps,
@@ -3702,6 +3775,7 @@ ACCURACY RULES
 - Every corps name, score, caption number, and trend direction you write MUST come from the DATA block below. Do not invent corps, scores, or statistics.
 - The field being analyzed is ${dayScores.length} corps (listed below). Never state any other count, and never reference corps not in this list.
 ${multiShowToday ? `- Tonight's caption numbers come from ${uniqueShows.length} different shows: ${uniqueShows.join(', ')}. Corps at different shows did NOT judge against each other tonight, so the caption rankings below are a composite across venues — frame cross-venue comparisons as such, not as a head-to-head caption duel.` : `- Tonight's caption numbers come from a single show, so the caption rankings below are a true head-to-head.`}
+- Source-year disclosure: on each corps' FIRST mention in the narrative, include their source-year in parentheses — e.g., "Blue Stars (2019)" — so fantasy readers know which season's book is driving the caption scores. Every corps' year is listed in CORPS SOURCE YEARS below. After the first mention, the year can be omitted.
 - If a fact isn't in the data, leave it out.
 
 VOICE: Authoritative but readable. Not dumbed down, not written for judges. A knowledgeable fan should come away understanding the caption landscape better than they did before.
@@ -3711,6 +3785,7 @@ BANNED PHRASES: dominant, commanding, stunning, thrilling, heating up, captivati
 ===== DATA =====
 ${dayScores.length} CORPS | Week: Days ${reportDay - 6} through ${reportDay} | Date: ${showContext.date}
 CORPS IN TONIGHT'S FIELD: ${dayScores.map(s => s.corps).join(', ')}
+CORPS SOURCE YEARS: ${dayScores.map(s => `${s.corps} (${s.sourceYear || 'unknown'})`).join(', ')}
 
 GENERAL EFFECT (40% of total):
 ${geSorted.map((s, i) => {
@@ -3780,7 +3855,10 @@ ARTICLE REQUIREMENTS
   };
 
   try {
-    const content = await generateWithFactCheckGuard(prompt, schema, { articleType: "dci_recap" });
+    const content = await generateWithFactCheckGuard(prompt, schema, {
+      articleType: "dci_recap",
+      fieldCorpsNames: dayScores.map(s => s.corps),
+    });
 
     // Feature the GE leader for the image (or next available if excluded)
     let featuredCorps = geSorted.find(s => !excludeCorps.has(s.corps)) || geSorted[0];
@@ -3974,6 +4052,27 @@ async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext
   };
   const mode = modeConfig[fieldMode];
 
+  // Classify each director's displayName as either a "real-looking name" or a
+  // "username-style handle" so the writer knows which attribution pattern to
+  // use. A displayName reads as a handle if it's lowercase with no internal
+  // space, or contains digits/underscores/dots — typical of web signups like
+  // "elithecreature" or "snare_guy_22". When that's the case, attributing via
+  // the ensemble ("Mendota DBC's director said...") reads better than "said
+  // elithecreature," which is what today's published articles actually do.
+  const looksLikeHandle = (name) => {
+    if (!name || typeof name !== "string") return true;
+    const trimmed = name.trim();
+    if (trimmed.length === 0) return true;
+    if (/[0-9_\.]/.test(trimmed)) return true;
+    if (!trimmed.includes(" ") && trimmed === trimmed.toLowerCase()) return true;
+    return false;
+  };
+  const directorClassBlock = competitiveResults.length > 0
+    ? competitiveResults
+        .map(r => `  • "${r.corpsName}" → director "${r.displayName || "Unknown"}" [${looksLikeHandle(r.displayName) ? "HANDLE — attribute via ensemble, not via name" : "NAME — direct attribution OK"}]`)
+        .join("\n")
+    : "";
+
   const resultsByShowBlock = competitiveByShow.map(group => {
     const header = `${group.name}${group.location ? ` — ${group.location}` : ''} (${group.results.length} ensemble${group.results.length === 1 ? '' : 's'})`;
     const lines = group.results.map((r, i) => {
@@ -4011,7 +4110,7 @@ Story engine: ${mode.storyEngine}
 
 ===== DATA =====
 TOTAL COMPETITIVE ENSEMBLES: ${totalCompetitors}
-${totalCompetitors === 0 ? 'No competitive ensembles tonight — this is a SoundSport-only evening.' : multiShow ? `\nRESULTS BY SHOW\n${resultsByShowBlock}\n\nOVERALL RANKING (across all shows tonight — reference carefully; these ensembles did NOT all face each other):\n${overallRankingBlock}` : `\nRESULTS\n${resultsByShowBlock}`}
+${directorClassBlock ? `\nDIRECTOR ATTRIBUTION GUIDE (check this before writing any quote or paraphrase — "HANDLE" names should NEVER be used as bare-noun attribution):\n${directorClassBlock}\n` : ''}${totalCompetitors === 0 ? 'No competitive ensembles tonight — this is a SoundSport-only evening.' : multiShow ? `\nRESULTS BY SHOW\n${resultsByShowBlock}\n\nOVERALL RANKING (across all shows tonight — reference carefully; these ensembles did NOT all face each other):\n${overallRankingBlock}` : `\nRESULTS\n${resultsByShowBlock}`}
 
 ${soundSportResults.length > 0 ? `SOUNDSPORT RATINGS (non-competitive, ratings-only showcase — NEVER reveal SoundSport scores, only rating levels):
 ${soundSportBestInShow ? `Best in Show: "${soundSportBestInShow.corpsName}" (${soundSportBestInShow.displayName || 'Unknown'})` : ''}
@@ -4191,6 +4290,7 @@ ACCURACY RULES (read first)
 - Every corps name, caption score, and trend arrow you cite MUST come from the DATA block below. Do not invent corps, captions, scores, or trend directions.
 - The field tonight has ${dayScores.length} corps (listed below). Do not reference any corps not in this list.
 ${multiShowCaption ? `- The caption numbers below come from ${uniqueCaptionShows.length} separate shows tonight: ${uniqueCaptionShows.join(', ')}. Corps at different shows did NOT caption-judge against each other — the rankings are a composite across venues. Frame cross-venue picks as such.` : `- All caption numbers tonight come from a single show, so the rankings are a true head-to-head.`}
+- Source-year disclosure: on each corps' first mention in the narrative, include their source-year in parentheses — e.g., "Blue Stars (2019)" — so fantasy directors know which season's book they're picking against. Every corps' year is listed in CORPS SOURCE YEARS below.
 - If a caption shows "No data" in the DATA block, do not reference it. If a specific number isn't in the data, don't cite a number.
 
 ${variety.framing}
@@ -4199,6 +4299,7 @@ Pick style: ${variety.pickStyle}
 
 ===== DATA =====
 DAY ${reportDay} | FIELD (${dayScores.length}): ${fieldCorpsList}
+CORPS SOURCE YEARS: ${dayScores.map(s => `${s.corps} (${s.sourceYear || 'unknown'})`).join(', ')}
 
 CAPTION RANKINGS (top ${Math.min(5, dayScores.length)} per caption):
 ${captionTypes.map(cap => {
@@ -4292,7 +4393,10 @@ ARTICLE REQUIREMENTS
   };
 
   try {
-    const content = await generateWithFactCheckGuard(prompt, schema, { articleType: "fantasy_recap" });
+    const content = await generateWithFactCheckGuard(prompt, schema, {
+      articleType: "fantasy_recap",
+      fieldCorpsNames: dayScores.map(s => s.corps),
+    });
 
     // Feature the top-scoring corps with photojournalistic image
     const topCorpsForImage = dayScores[0];
