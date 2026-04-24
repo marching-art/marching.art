@@ -2876,6 +2876,227 @@ function getWritingVariety(reportDay, articleType) {
 }
 
 // =============================================================================
+// EDITORIAL BRIEF
+// -----------------------------------------------------------------------------
+// Deterministic pre-pass: before any article is generated, compute per-article
+// angle assignments so each of the five articles goes in knowing what story it
+// owns. Complements the CoverageLedger — the brief proactively assigns hooks,
+// the ledger reactively tracks what's been used. Together they force angle
+// diversity without relying on Gemini to pick different stories on its own.
+//
+// Kept fully deterministic (no LLM call): the cost of another model round-trip
+// doesn't beat the value of predictable, auditable assignments, and the pick
+// logic is simple enough that a rule-based approach matches or beats an LLM's
+// judgment at a fraction of the latency.
+// =============================================================================
+
+/**
+ * Build the nightly editorial brief from today's data.
+ *
+ * Fields on the returned brief:
+ *   lead         — DCI Daily's hook: biggest mover / tight race / field leader
+ *   trajectory   — DCI Feature's subject: corps with clearest 7-day arc
+ *                  (excluding the lead's subject, to diversify coverage)
+ *   caption      — DCI Recap's angle: caption family with the tightest race
+ *   market       — Fantasy Market Report's seed BUY: corps+caption with
+ *                  highest upward-trending score
+ *   fantasy      — Fantasy Daily's top ensemble and field context
+ *
+ * All assignments are optional — if the data doesn't support a clean pick,
+ * that field is omitted and the generator falls back to its existing logic.
+ */
+function buildEditorialBrief({ dayScores, trendData, fantasyData, reportDay }) {
+  const brief = { reportDay };
+
+  if (!dayScores || dayScores.length === 0) return brief;
+
+  // --- Lead story: what's the biggest news tonight? --------------------------
+  // Priority: (1) a day-over-day swing ≥ 0.3, (2) a tight top margin < 0.2,
+  // (3) the field leader as default.
+  const changeCandidates = Object.entries(trendData || {})
+    .filter(([name]) => dayScores.some(s => s.corps === name))
+    .map(([name, t]) => ({ corps: name, change: t?.dayChange ?? 0 }))
+    .filter(x => Number.isFinite(x.change))
+    .sort((a, b) => Math.abs(b.change) - Math.abs(a.change));
+
+  if (changeCandidates[0] && Math.abs(changeCandidates[0].change) >= 0.3) {
+    const top = changeCandidates[0];
+    brief.lead = {
+      angle: top.change >= 0 ? "biggest gain of the night" : "biggest score drop of the night",
+      subject: top.corps,
+      metric: `${top.change >= 0 ? "+" : ""}${top.change.toFixed(3)} from yesterday`,
+    };
+  } else if (dayScores[1] && (dayScores[0].total - dayScores[1].total) < 0.2) {
+    brief.lead = {
+      angle: "tight race at the top",
+      subject: `${dayScores[0].corps} over ${dayScores[1].corps}`,
+      metric: `${(dayScores[0].total - dayScores[1].total).toFixed(3)}-point margin`,
+    };
+  } else {
+    brief.lead = {
+      angle: "field leader on the night",
+      subject: dayScores[0].corps,
+      metric: `top score ${dayScores[0].total.toFixed(3)}`,
+    };
+  }
+
+  // --- Trajectory story: best arc to profile --------------------------------
+  // Corps with the largest net improvement over the recent window that is NOT
+  // the lead story's subject (since DCI Daily will already own that corps).
+  const leadCorpsNames = new Set(
+    (brief.lead?.subject || "").split(/\s+over\s+|\s+vs\s+/).map(s => s.trim()).filter(Boolean)
+  );
+  const improvementCandidates = Object.entries(trendData || {})
+    .filter(([name]) =>
+      !leadCorpsNames.has(name) &&
+      dayScores.some(s => s.corps === name) &&
+      Number.isFinite(trendData[name]?.totalImprovement)
+    )
+    .map(([name, t]) => ({ corps: name, improvement: t.totalImprovement, momentum: t.momentum }))
+    .sort((a, b) => Math.abs(b.improvement) - Math.abs(a.improvement));
+
+  if (improvementCandidates[0] && Math.abs(improvementCandidates[0].improvement) >= 0.5) {
+    const top = improvementCandidates[0];
+    brief.trajectory = {
+      corps: top.corps,
+      metric: `${top.improvement >= 0 ? "+" : ""}${top.improvement.toFixed(3)} net across the recent window`,
+      momentum: top.momentum || "steady",
+    };
+  } else {
+    // Fall back to the first corps not already claimed by the lead
+    const fallback = dayScores.find(s => !leadCorpsNames.has(s.corps));
+    if (fallback) {
+      brief.trajectory = {
+        corps: fallback.corps,
+        metric: `field position ${dayScores.findIndex(s => s.corps === fallback.corps) + 1}, ${fallback.total.toFixed(3)} tonight`,
+        momentum: trendData?.[fallback.corps]?.momentum || "steady",
+      };
+    }
+  }
+
+  // --- Caption story: tightest race or biggest mover in a caption family ----
+  const captionFamilies = [
+    { key: "ge", label: "General Effect" },
+    { key: "visual", label: "Visual" },
+    { key: "music", label: "Music" },
+  ];
+  const captionPicks = captionFamilies
+    .map(({ key, label }) => {
+      const sorted = [...dayScores]
+        .filter(s => Number.isFinite(s.subtotals?.[key]))
+        .sort((a, b) => (b.subtotals[key] || 0) - (a.subtotals[key] || 0));
+      if (sorted.length < 2) return null;
+      const n = Math.min(5, sorted.length);
+      const gap = sorted[0].subtotals[key] - sorted[n - 1].subtotals[key];
+      return { key, label, leader: sorted[0].corps, gap, depth: n };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.gap - b.gap);
+
+  if (captionPicks[0]) {
+    const tightest = captionPicks[0];
+    brief.caption = {
+      family: tightest.label,
+      leader: tightest.leader,
+      metric: `${tightest.gap.toFixed(2)}-point spread from 1st through ${tightest.depth === dayScores.length ? "last" : tightest.depth + "th"}`,
+    };
+  }
+
+  // --- Market story: highest upward-trending caption to anchor the top BUY --
+  const marketCandidates = [];
+  for (const s of dayScores) {
+    const trend = trendData?.[s.corps];
+    if (!trend?.captionTrends) continue;
+    const pairs = [
+      ["ge", "GE"],
+      ["visual", "Visual"],
+      ["music", "Music"],
+    ];
+    for (const [k, label] of pairs) {
+      if (trend.captionTrends[k]?.trending === "up") {
+        marketCandidates.push({
+          corps: s.corps,
+          family: label,
+          score: s.subtotals?.[k] ?? 0,
+        });
+      }
+    }
+  }
+  marketCandidates.sort((a, b) => b.score - a.score);
+  if (marketCandidates[0]) {
+    brief.market = {
+      topBuy: `${marketCandidates[0].corps}'s ${marketCandidates[0].family}`,
+      metric: `${marketCandidates[0].score.toFixed(2)}, trending upward`,
+    };
+  }
+
+  // --- Fantasy story: top competitive ensemble ------------------------------
+  const shows = fantasyData?.current?.shows || [];
+  const competitive = shows.flatMap(s => (s.results || []).filter(r => r.corpsClass !== "soundSport"));
+  if (competitive.length > 0) {
+    const top = competitive.sort((a, b) => b.totalScore - a.totalScore)[0];
+    brief.fantasy = {
+      ensemble: top.corpsName,
+      director: top.displayName || "Unknown",
+      score: Number.isFinite(top.totalScore) ? top.totalScore.toFixed(3) : null,
+      fieldSize: competitive.length,
+    };
+  }
+
+  return brief;
+}
+
+/**
+ * Render the brief into a prompt-ready "YOUR ASSIGNED ANGLE" block for a
+ * given article type. Returns empty string when there's nothing to assign so
+ * the prompt degrades cleanly instead of printing "undefined".
+ */
+function formatBriefForArticle(brief, articleType) {
+  if (!brief) return "";
+
+  switch (articleType) {
+    case "dci_daily": {
+      if (!brief.lead) return "";
+      return `
+YOUR ASSIGNED ANGLE (editorial brief — build your hook around this, not a different obvious story)
+Lead story of the night: ${brief.lead.angle}
+Subject: ${brief.lead.subject}
+Why it's the lead: ${brief.lead.metric}
+`;
+    }
+    case "dci_feature": {
+      if (!brief.trajectory) return "";
+      return `
+YOUR ASSIGNED ANGLE (editorial brief — this is the corps to profile tonight)
+Featured corps: ${brief.trajectory.corps}
+Why them: ${brief.trajectory.metric}; momentum reading: ${brief.trajectory.momentum}
+This corps was picked because DCI Daily is covering a different story tonight — your job is to make the case for this corps' trajectory, not to fight for the lead headline.
+`;
+    }
+    case "dci_recap": {
+      if (!brief.caption) return "";
+      return `
+YOUR ASSIGNED ANGLE (editorial brief — lead with this caption family)
+Caption to lead with: ${brief.caption.family}
+Why it's the story: ${brief.caption.metric} — ${brief.caption.leader} leads tonight
+The other two caption families still get coverage in the body, but your opening paragraphs belong to ${brief.caption.family}.
+`;
+    }
+    case "fantasy_recap": {
+      if (!brief.market) return "";
+      return `
+YOUR ASSIGNED ANGLE (editorial brief — anchor your top BUY around this)
+Seed BUY thesis: ${brief.market.topBuy}
+Supporting metric: ${brief.market.metric}
+You may adjust if the data supports a stronger pick, but this is the pre-computed top candidate — build around it unless you have a clearly better alternative.
+`;
+    }
+    default:
+      return "";
+  }
+}
+
+// =============================================================================
 // ARTICLE GENERATION
 // =============================================================================
 
@@ -2924,32 +3145,38 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
     // previous Set-based exclusion that only covered articles 1–3.
     const ledger = createCoverageLedger();
 
+    // Editorial brief: deterministic pre-pass that assigns each article a
+    // pre-computed angle (lead / trajectory / caption / market / fantasy) so
+    // the five articles don't all fight over the obvious hook.
+    const brief = buildEditorialBrief({ dayScores, trendData, fantasyData, reportDay });
+    logger.info(`Editorial brief for Day ${reportDay}: lead=${brief.lead?.subject || 'n/a'} | trajectory=${brief.trajectory?.corps || 'n/a'} | caption=${brief.caption?.family || 'n/a'} | market=${brief.market?.topBuy || 'n/a'}`);
+
     const articles = [];
 
     // Article 1: DCI DAILY - Today's competition results with score breakdown
     const dciDailyArticle = await generateDciDailyArticle({
-      reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, ledger
+      reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, ledger, brief
     });
     articles.push(dciDailyArticle);
     ledger.record(dciDailyArticle);
 
     // Article 2: DCI FEATURE - Single corps season progress spotlight
     const dciFeatureArticle = await generateDciFeatureArticle({
-      reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, ledger
+      reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, ledger, brief
     });
     articles.push(dciFeatureArticle);
     ledger.record(dciFeatureArticle);
 
     // Article 3: DCI RECAP - Pure caption deep-dive (GE, Visual, Music). Descriptive, not prescriptive.
     const dciRecapArticle = await generateDciRecapArticle({
-      reportDay, dayScores, trendData, captionLeaders, activeCorps, showContext, competitionContext, db, ledger
+      reportDay, dayScores, trendData, captionLeaders, activeCorps, showContext, competitionContext, db, ledger, brief
     });
     articles.push(dciRecapArticle);
     ledger.record(dciRecapArticle);
 
     // Article 4: FANTASY MARKET REPORT - Owns buy/hold/sell picks for the day (descriptive caption analysis already done in Article 3).
     const fantasyRecapArticle = await generateFantasyRecapArticle({
-      reportDay, dayScores, trendData, showContext, competitionContext, db, ledger
+      reportDay, dayScores, trendData, showContext, competitionContext, db, ledger, brief
     });
     articles.push(fantasyRecapArticle);
     ledger.record(fantasyRecapArticle);
@@ -2991,7 +3218,7 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
  * Article 1: DCI Scores Analysis
  * Daily competition results in DCI.org editorial style
  */
-async function generateDciDailyArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, ledger }) {
+async function generateDciDailyArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, ledger, brief }) {
   const topCorps = dayScores[0];
   const secondCorps = dayScores[1];
   const thirdCorps = dayScores[2];
@@ -3113,6 +3340,7 @@ POSITION BATTLES: ${competitionContext.positionBattleCount} corps within 0.2 of 
 
 ${toneGuidance}
 ${formatNegativeSpace(ledger)}
+${formatBriefForArticle(brief, 'dci_daily')}
 TONIGHT'S NARRATIVE APPROACH
 Opening: ${variety.opening}
 Angle: ${variety.angle}
@@ -3209,24 +3437,34 @@ Write like you've covered this beat for years. Let the scores drive the story.`;
  * In-depth feature on a single corps and their progress across the season
  * Written in DCI.org editorial style
  */
-async function generateDciFeatureArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, ledger }) {
+async function generateDciFeatureArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, ledger, brief }) {
   // Derive the corps exclusion set from the coverage ledger so this article
   // doesn't repeat a spotlight subject from earlier in the batch.
   const excludeCorps = ledger?.dciCorps || new Set();
   const toneGuidance = getToneGuidance(competitionContext, "dci_corps_feature");
 
-  // Select a corps to feature - rotate through the field, excluding already-featured corps
-  let featureIndex = (reportDay - 1) % dayScores.length;
-  let featureCorps = dayScores[featureIndex];
-
-  // If the rotated corps has already been featured, find the next available
-  if (excludeCorps.has(featureCorps?.corps)) {
-    for (let i = 1; i < dayScores.length; i++) {
-      const nextIndex = (featureIndex + i) % dayScores.length;
-      if (!excludeCorps.has(dayScores[nextIndex]?.corps)) {
-        featureIndex = nextIndex;
-        featureCorps = dayScores[nextIndex];
-        break;
+  // Corps selection priority:
+  //   1. The editorial brief's trajectory pick (if it resolves to a corps in
+  //      tonight's field and isn't already spotlit).
+  //   2. Day-based rotation through the field (falls back if the brief either
+  //      didn't produce a pick or picked a corps that's been excluded).
+  let featureCorps = null;
+  if (brief?.trajectory?.corps) {
+    const briefPick = dayScores.find(s => s.corps === brief.trajectory.corps);
+    if (briefPick && !excludeCorps.has(briefPick.corps)) {
+      featureCorps = briefPick;
+    }
+  }
+  if (!featureCorps) {
+    let featureIndex = (reportDay - 1) % dayScores.length;
+    featureCorps = dayScores[featureIndex];
+    if (excludeCorps.has(featureCorps?.corps)) {
+      for (let i = 1; i < dayScores.length; i++) {
+        const nextIndex = (featureIndex + i) % dayScores.length;
+        if (!excludeCorps.has(dayScores[nextIndex]?.corps)) {
+          featureCorps = dayScores[nextIndex];
+          break;
+        }
       }
     }
   }
@@ -3326,6 +3564,7 @@ ${narrativeHintsBlock}` : ''}
 
 ${toneGuidance}
 ${formatNegativeSpace(ledger)}
+${formatBriefForArticle(brief, 'dci_feature')}
 TODAY'S APPROACH
 Lens: ${variety.lens}
 Focus: ${variety.focus}
@@ -3394,7 +3633,7 @@ ARTICLE REQUIREMENTS
  * Deep dive on General Effect, Visual, and Music trends over the last week
  * Written in DCI.org recap analysis style
  */
-async function generateDciRecapArticle({ reportDay, dayScores, trendData, captionLeaders, activeCorps, showContext, competitionContext, db, ledger }) {
+async function generateDciRecapArticle({ reportDay, dayScores, trendData, captionLeaders, activeCorps, showContext, competitionContext, db, ledger, brief }) {
   // Derive the corps exclusion set from the coverage ledger so the image subject
   // picker below doesn't land on a corps already spotlit in an earlier article.
   const excludeCorps = ledger?.dciCorps || new Set();
@@ -3507,6 +3746,7 @@ B: ${[...dayScores].sort((a, b) => (b.captions?.B || 0) - (a.captions?.B || 0))[
 
 ${toneGuidance}
 ${formatNegativeSpace(ledger)}
+${formatBriefForArticle(brief, 'dci_recap')}
 TODAY'S ANALYTICAL APPROACH
 Lead with: ${variety.emphasis}
 Thread: ${variety.thread}
@@ -3887,7 +4127,7 @@ ${mode.bodyNote ? `${mode.bodyNote}\n` : ''}${multiShow ? `- Cover all ${competi
  * describes the caption landscape; this article translates it into actionable
  * lineup moves on individual DCI captions (GE1, GE2, VP, VA, CG, B, MA, P).
  */
-async function generateFantasyRecapArticle({ reportDay, dayScores, trendData, showContext, competitionContext, db, ledger }) {
+async function generateFantasyRecapArticle({ reportDay, dayScores, trendData, showContext, competitionContext, db, ledger, brief }) {
   const toneGuidance = getToneGuidance(competitionContext, "fantasy_captions");
 
   // Build individual caption "stock" data for each corps
@@ -3972,6 +4212,7 @@ TRENDING: ↑ ${trendingUp.length} rising${trendingUp.length > 0 ? ` (${trending
 
 ${toneGuidance}
 ${formatNegativeSpace(ledger)}
+${formatBriefForArticle(brief, 'fantasy_recap')}
 BANNED PHRASES: dominant, heating up, intensifies, key area of focus, captivating, absolutely crucial, mid-season phase, upward trend (as a standalone phrase), trajectory (cap at 1 use)
 
 ARTICLE REQUIREMENTS
