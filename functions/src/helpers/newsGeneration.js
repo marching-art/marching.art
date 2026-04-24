@@ -1036,7 +1036,7 @@ Rewrite the entire article. Every other requirement in this prompt still applies
 // IMAGE GENERATION
 // =============================================================================
 
-// Configuration: Set to true to use paid Imagen 4 Fast ($0.02/image), false for free Gemini 2.5 Flash Image (500 RPD free tier)
+// Configuration: Set to true to use paid Imagen 4 Ultra ($0.06/image), false for free Gemini 2.5 Flash Image (500 RPD free tier)
 const USE_PAID_IMAGE_GEN = true;
 
 // =============================================================================
@@ -1232,10 +1232,10 @@ function parseAiJson(text) {
 async function generateImageWithImagen(prompt, options = {}) {
   try {
     if (USE_PAID_IMAGE_GEN && !options.model) {
-      // Paid tier: Imagen 4 Fast via Vertex AI ($0.02/image)
-      // Better detail, prompt adherence, and 10x faster than Imagen 3
+      // Paid tier: Imagen 4 Ultra via Vertex AI ($0.06/image)
+      // Highest-fidelity Imagen model — best for fine detail (valve clusters, drum hardware, harness straps, uniform textures)
       const vertexAI = initializeVertexAI();
-      const modelName = "imagen-4.0-fast-generate-001";
+      const modelName = "imagen-4.0-ultra-generate-001";
 
       // Put specific prompt FIRST, then critical constraints
       const imagenPrompt = `${prompt}
