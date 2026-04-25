@@ -168,6 +168,18 @@ match /leagueInvites/{code} {
   allow write: if false; // Backend only
 }
 
+// Per-director league invitations. Invitee can read/list their own invitations;
+// inviter can read invitations they sent. Writes go through callables.
+match /artifacts/{appId}/leagueInvitations/{invitationId} {
+  allow read: if isAuthenticated() && (
+    request.auth.uid == resource.data.inviteeUid ||
+    request.auth.uid == resource.data.inviterUid ||
+    isAdmin()
+  );
+  allow list: if isAuthenticated();
+  allow write: if false; // Backend only
+}
+
 // --- MISC & ADMIN ---
 match /activeLineups/{lineupKey} {
   allow read, write: if false; // Backend only

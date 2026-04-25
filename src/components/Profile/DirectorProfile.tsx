@@ -13,7 +13,7 @@ import {
   Music, Disc3, Play, Clock, Target, Shield, Swords,
   ArrowUp, ArrowDown, Minus, X, Palette, ExternalLink, RefreshCw,
   Edit3, Globe, Twitter, Instagram, Youtube, Facebook, MessageCircle,
-  BookOpen, Flag, Quote,
+  BookOpen, Flag, Quote, Share2, UserPlus,
 } from 'lucide-react';
 import type { UserProfile, Achievement, CorpsClass, EnsembleProfileInfo, DirectorSocialLinks } from '../../types';
 import { formatSeasonName } from '../../utils/season';
@@ -29,6 +29,9 @@ interface DirectorProfileProps {
   onDesignUniform?: () => void;
   onSelectAvatarCorps?: (corpsClass: CorpsClass) => Promise<void>;
   onRegenerateAvatar?: (corpsClass: CorpsClass) => Promise<void>;
+  onShare?: () => void;
+  onInviteToLeague?: () => void;
+  canInviteToLeague?: boolean;
 }
 
 interface SeasonHistoryEntry {
@@ -635,6 +638,9 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
   onDesignUniform,
   onSelectAvatarCorps,
   onRegenerateAvatar,
+  onShare,
+  onInviteToLeague,
+  canInviteToLeague = false,
 }) => {
   const [expandedSeason, setExpandedSeason] = useState<string | null>(null);
   const [isRegenerating, setIsRegenerating] = useState(false);
@@ -862,17 +868,47 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                   {profile.displayName || 'Anonymous Director'}
                 </h1>
                 <StatusIndicator status={status} />
-                {isOwnProfile && onEditProfile && (
-                  <button
-                    onClick={onEditProfile}
-                    className="ml-auto flex items-center gap-1 px-2 py-1 border border-[#333] text-gray-400 hover:text-white hover:border-[#555] transition-colors"
-                    aria-label="Edit profile"
-                  >
-                    <Edit3 className="w-3 h-3" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider">Edit</span>
-                  </button>
-                )}
+
+                <div className="ml-auto flex items-center gap-1">
+                  {onShare && (
+                    <button
+                      onClick={onShare}
+                      className="flex items-center gap-1 px-2 py-1 border border-[#333] text-gray-400 hover:text-white hover:border-[#555] transition-colors"
+                      aria-label="Share profile"
+                    >
+                      <Share2 className="w-3 h-3" />
+                      <span className="text-[10px] font-bold uppercase tracking-wider hidden sm:inline">Share</span>
+                    </button>
+                  )}
+                  {!isOwnProfile && canInviteToLeague && onInviteToLeague && (
+                    <button
+                      onClick={onInviteToLeague}
+                      className="flex items-center gap-1 px-2 py-1 border border-[#0057B8]/40 bg-[#0057B8]/10 text-[#0057B8] hover:bg-[#0057B8]/20 transition-colors"
+                      aria-label="Invite to league"
+                    >
+                      <UserPlus className="w-3 h-3" />
+                      <span className="text-[10px] font-bold uppercase tracking-wider">Invite</span>
+                    </button>
+                  )}
+                  {isOwnProfile && onEditProfile && (
+                    <button
+                      onClick={onEditProfile}
+                      className="flex items-center gap-1 px-2 py-1 border border-[#333] text-gray-400 hover:text-white hover:border-[#555] transition-colors"
+                      aria-label="Edit profile"
+                    >
+                      <Edit3 className="w-3 h-3" />
+                      <span className="text-[10px] font-bold uppercase tracking-wider">Edit</span>
+                    </button>
+                  )}
+                </div>
               </div>
+
+              {/* Username handle */}
+              {profile.username && (
+                <div className="text-[10px] text-gray-500 font-data mb-1">
+                  @{profile.username}
+                </div>
+              )}
 
               <div className="flex items-center gap-2 mb-1">
                 <div className="flex items-center gap-1">

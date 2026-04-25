@@ -15,15 +15,17 @@ import { useProfile } from '../hooks/useProfile';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../lib/queryClient';
 import { db } from '../firebase';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { updateUsername, updateEmail, deleteAccount } from '../firebase/functions';
 import toast from 'react-hot-toast';
 import { DirectorProfile } from '../components/Profile/DirectorProfile';
+import PendingLeagueInvitations from '../components/Profile/PendingLeagueInvitations';
 import { generateCorpsAvatar } from '../api/functions';
 
 // OPTIMIZATION #9: Lazy-load UniformDesignModal (794 lines) to reduce initial bundle
 const UniformDesignModal = lazy(() => import('../components/modals/UniformDesignModal'));
 const ProfileEditModal = lazy(() => import('../components/modals/ProfileEditModal'));
+const LeagueInviteModal = lazy(() => import('../components/modals/LeagueInviteModal'));
 import { useTooltipPreference } from '../hooks/useTooltipPreference';
 
 // =============================================================================
@@ -692,8 +694,45 @@ const Profile = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [settingsTab, setSettingsTab] = useState('account');
   const [showUniformDesign, setShowUniformDesign] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [visitorCommissionsLeagues, setVisitorCommissionsLeagues] = useState(false);
 
-  const isOwnProfile = !userId || userId === user?.uid;
+  // Resolve @username → uid. The usernames/{lower} doc holds { uid } and is
+  // publicly readable. If the param doesn't start with @, treat it as a uid.
+  const rawParam = userId || '';
+  const isUsernameParam = rawParam.startsWith('@');
+  const usernameKey = isUsernameParam ? rawParam.slice(1).toLowerCase() : null;
+  const [resolvedUid, setResolvedUid] = useState(isUsernameParam ? null : (userId || null));
+  const [usernameResolveError, setUsernameResolveError] = useState(null);
+
+  useEffect(() => {
+    if (!isUsernameParam) {
+      setResolvedUid(userId || null);
+      setUsernameResolveError(null);
+      return;
+    }
+    let cancelled = false;
+    setResolvedUid(null);
+    setUsernameResolveError(null);
+    (async () => {
+      try {
+        const snap = await getDoc(doc(db, 'usernames', usernameKey));
+        if (cancelled) return;
+        if (!snap.exists()) {
+          setUsernameResolveError('Username not found');
+          return;
+        }
+        setResolvedUid(snap.data().uid || null);
+      } catch (err) {
+        if (!cancelled) setUsernameResolveError(err.message || 'Failed to resolve username');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isUsernameParam, usernameKey, userId]);
+
+  const isOwnProfile = !userId || resolvedUid === user?.uid || userId === user?.uid;
 
   // Handle URL parameters for deep linking to settings
   useEffect(() => {
@@ -710,8 +749,39 @@ const Profile = () => {
     }
   }, [searchParams, isOwnProfile, setSearchParams]);
 
-  const profileUserId = userId || user?.uid;
+  const profileUserId = isUsernameParam ? resolvedUid : (userId || user?.uid);
   const { data: profile, isLoading, error, isError, refetch } = useProfile(profileUserId);
+
+  // When viewing someone else's profile, check whether the current user
+  // commissions any league so we know whether to show the Invite button.
+  useEffect(() => {
+    if (!user || isOwnProfile) {
+      setVisitorCommissionsLeagues(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const leaguesRef = collection(db, 'artifacts/marching-art/leagues');
+        const q = query(leaguesRef, where('creatorId', '==', user.uid));
+        const snapshot = await getDocs(q);
+        if (!cancelled) setVisitorCommissionsLeagues(!snapshot.empty);
+      } catch {
+        if (!cancelled) setVisitorCommissionsLeagues(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, isOwnProfile, profileUserId]);
+
+  // The invite button should appear when: viewing someone else's profile,
+  // the visitor commissions at least one league, and the target director
+  // hasn't opted out of league invites.
+  const canInviteToLeague =
+    !isOwnProfile &&
+    visitorCommissionsLeagues &&
+    (profile?.directorInfo?.acceptingLeagueInvites !== false);
 
   // NOTE: Stats, achievements, and season history are now computed in DirectorProfile
 
@@ -888,6 +958,34 @@ const Profile = () => {
     setShowEditModal(true);
   };
 
+  const handleShareProfile = useCallback(async () => {
+    if (!profile) return;
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const handle = profile.username ? `@${profile.username}` : profile.uid;
+    const url = `${origin}/profile/${handle}`;
+    const title = profile.displayName || 'marching.art director';
+    const shareText = `Check out ${title} on marching.art`;
+    try {
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        await navigator.share({ title, text: shareText, url });
+        return;
+      }
+    } catch (err) {
+      // User canceled share sheet — fall through to clipboard copy
+      if (err?.name === 'AbortError') return;
+    }
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(url);
+        toast.success('Profile link copied');
+        return;
+      }
+    } catch {
+      // Ignore — fall through
+    }
+    toast(url);
+  }, [profile]);
+
   const handleSaveProfile = useCallback(async ({ displayName, location, directorInfo, ensembleInfo }) => {
     if (!user) return;
     try {
@@ -913,8 +1011,20 @@ const Profile = () => {
     }
   }, [user, refetch]);
 
-  // Loading state
-  if (isLoading) {
+  // Username resolution error
+  if (usernameResolveError) {
+    return (
+      <div className="h-full flex items-center justify-center bg-[#0a0a0a]">
+        <div className="text-center">
+          <User className="w-10 h-10 text-gray-600 mx-auto mb-2" />
+          <p className="text-sm text-gray-500">{usernameResolveError}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Loading state (username lookup or profile fetch)
+  if (isLoading || (isUsernameParam && !resolvedUid)) {
     return (
       <div className="h-full flex items-center justify-center bg-[#0a0a0a]">
         <div className="text-center">
@@ -976,7 +1086,15 @@ const Profile = () => {
           onDesignUniform={() => setShowUniformDesign(true)}
           onSelectAvatarCorps={handleSelectAvatarCorps}
           onRegenerateAvatar={handleRegenerateAvatar}
+          onShare={handleShareProfile}
+          onInviteToLeague={() => setShowInviteModal(true)}
+          canInviteToLeague={canInviteToLeague}
         />
+
+        {/* PENDING LEAGUE INVITATIONS (own profile only) */}
+        {isOwnProfile && user && (
+          <PendingLeagueInvitations userId={user.uid} />
+        )}
 
         {/* QUICK LINKS */}
         <div className="px-4 pb-4">
@@ -1060,6 +1178,18 @@ const Profile = () => {
             profile={profile}
             onClose={() => setShowEditModal(false)}
             onSave={handleSaveProfile}
+          />
+        </Suspense>
+      )}
+
+      {/* LEAGUE INVITE MODAL */}
+      {showInviteModal && !isOwnProfile && profile && user && (
+        <Suspense fallback={null}>
+          <LeagueInviteModal
+            inviterUid={user.uid}
+            inviteeUid={profile.uid || profileUserId}
+            inviteeName={profile.displayName || profile.username}
+            onClose={() => setShowInviteModal(false)}
           />
         </Suspense>
       )}
