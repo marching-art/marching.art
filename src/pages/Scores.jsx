@@ -4,7 +4,7 @@
 // High-density data grid for scores with caption breakdowns (GE, VIS, MUS)
 // Laws: App Shell, Pill Tab Segmented Control, High-Density Tables, no glow
 
-import React, { useState, useMemo, useEffect, memo } from 'react';
+import React, { useState, useMemo, useEffect, memo, lazy, Suspense } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import {
   Trophy, Calendar, TrendingUp, TrendingDown, Music,
@@ -19,6 +19,9 @@ import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { TeamAvatar } from '../components/ui/TeamAvatar';
 import { useHaptic } from '../hooks/useHaptic';
 
+// Lazy-load Hall of Champions — only loaded if the user opens that tab
+const HallOfChampions = lazy(() => import('./HallOfChampions'));
+
 // =============================================================================
 // CONSTANTS
 // =============================================================================
@@ -30,6 +33,7 @@ const TABS = [
   { id: 'aclass', label: 'Class A' },
   { id: 'soundsport', label: 'SoundSport', accent: 'green' },
   { id: 'archive', label: 'Archive', accent: 'yellow' },
+  { id: 'champions', label: 'Hall of Champions', accent: 'yellow' },
 ];
 
 const RATING_CONFIG = {
@@ -240,9 +244,18 @@ const RecapDataGrid = memo(({
                           {score.corpsName || score.corps}
                         </span>
                         {score.displayName && (
-                          <span className="text-[10px] text-gray-500 block truncate">
-                            {score.displayName}
-                          </span>
+                          score.uid ? (
+                            <Link
+                              to={`/profile/${score.uid}`}
+                              className="text-[10px] text-gray-500 hover:text-[#0057B8] block truncate"
+                            >
+                              {score.displayName}
+                            </Link>
+                          ) : (
+                            <span className="text-[10px] text-gray-500 block truncate">
+                              {score.displayName}
+                            </span>
+                          )
                         )}
                       </div>
                     </div>
@@ -437,9 +450,18 @@ const SoundSportMedalList = ({ shows }) => {
                         {result.corps || result.corpsName}
                       </span>
                       {result.displayName && (
-                        <span className="text-[10px] text-gray-500 block truncate">
-                          {result.displayName}
-                        </span>
+                        result.uid ? (
+                          <Link
+                            to={`/profile/${result.uid}`}
+                            className="text-[10px] text-gray-500 hover:text-[#0057B8] block truncate"
+                          >
+                            {result.displayName}
+                          </Link>
+                        ) : (
+                          <span className="text-[10px] text-gray-500 block truncate">
+                            {result.displayName}
+                          </span>
+                        )
                       )}
                     </div>
                   </div>
@@ -569,9 +591,18 @@ const ClassStandingsGrid = ({
                           {entry.corpsName}
                         </span>
                         {entry.displayName && (
-                          <span className="text-[10px] text-gray-500 block truncate">
-                            {entry.displayName}
-                          </span>
+                          entry.uid ? (
+                            <Link
+                              to={`/profile/${entry.uid}`}
+                              className="text-[10px] text-gray-500 hover:text-[#0057B8] block truncate"
+                            >
+                              {entry.displayName}
+                            </Link>
+                          ) : (
+                            <span className="text-[10px] text-gray-500 block truncate">
+                              {entry.displayName}
+                            </span>
+                          )
                         )}
                       </div>
                     </div>
@@ -639,8 +670,19 @@ const Scores = () => {
 
   const targetShowName = searchParams.get('show');
   const targetSeasonId = searchParams.get('season');
+  const targetTab = searchParams.get('tab');
 
-  const [activeTab, setActiveTab] = useState('latest');
+  const validTabIds = useMemo(() => TABS.map(t => t.id), []);
+  const [activeTab, setActiveTab] = useState(() =>
+    validTabIds.includes(targetTab) ? targetTab : 'latest'
+  );
+
+  // React to ?tab= changes when navigating within the app
+  useEffect(() => {
+    if (targetTab && validTabIds.includes(targetTab) && targetTab !== activeTab) {
+      setActiveTab(targetTab);
+    }
+  }, [targetTab, validTabIds]);
   const [selectedShow, setSelectedShow] = useState(null);
   const [selectedArchiveSeason, setSelectedArchiveSeason] = useState(null);
   const [selectedArchiveYear, setSelectedArchiveYear] = useState(null);
@@ -1112,6 +1154,15 @@ const Scores = () => {
                       <p className="text-gray-500 text-sm">Select a season to view historical scores</p>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* HALL OF CHAMPIONS TAB */}
+              {activeTab === 'champions' && (
+                <div className="min-h-[calc(100vh-180px)] flex flex-col">
+                  <Suspense fallback={<div className="p-8 text-center text-gray-500 text-sm">Loading Hall of Champions...</div>}>
+                    <HallOfChampions />
+                  </Suspense>
                 </div>
               )}
             </>

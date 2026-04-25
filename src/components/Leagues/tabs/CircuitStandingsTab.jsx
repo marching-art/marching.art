@@ -1,5 +1,6 @@
 // CircuitStandingsTab - League standings based on circuit points (Stadium HUD)
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { m } from 'framer-motion';
 import { Trophy, Crown, Medal, Star } from 'lucide-react';
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
@@ -244,7 +245,12 @@ const CircuitStandingsTab = ({ league }) => {
                   </td>
                   <td className="py-3 px-2 md:px-4">
                     <div>
-                      <span className="font-display font-semibold text-yellow-50 text-sm md:text-base">{member.displayName}</span>
+                      <Link
+                        to={`/profile/${member.uid}`}
+                        className="font-display font-semibold text-yellow-50 hover:text-yellow-400 text-sm md:text-base transition-colors"
+                      >
+                        {member.displayName}
+                      </Link>
                       <p className="text-xs text-yellow-50/70 hidden md:block">{member.corpsName}</p>
                     </div>
                   </td>
