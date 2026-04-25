@@ -61,21 +61,14 @@ const formatDelta = (delta) => {
   return `${sign}${delta.toFixed(3)}`;
 };
 
-const cleanCorpsName = (raw) => {
-  if (!raw) return 'Unnamed Corps';
-  const v = String(raw).trim();
-  if (!v || v.toLowerCase() === 'unspecified' || v.toLowerCase() === 'unknown') return 'Unnamed Corps';
-  return v;
-};
-
 // =============================================================================
 // SUB-COMPONENTS
 // =============================================================================
 
 const SeasonRow = ({ season, isSelected, classKey, onSelect }) => {
   const champ = season.classes?.[classKey]?.[0];
+  if (!champ) return null;
   const { type, year } = parseSeasonName(season.seasonName);
-  const corpsName = champ ? cleanCorpsName(champ.corpsName) : null;
 
   return (
     <button
@@ -91,20 +84,13 @@ const SeasonRow = ({ season, isSelected, classKey, onSelect }) => {
         </span>
         <span className="text-[10px] text-gray-500 font-data tabular-nums">{year}</span>
       </div>
-      {champ ? (
-        <div className="flex items-center gap-2 min-w-0">
-          <Crown className="w-3 h-3 text-yellow-500 flex-shrink-0" />
-          <span className="text-xs text-white truncate min-w-0 flex-1">{corpsName}</span>
-          <span className="text-[10px] text-gray-400 font-data tabular-nums flex-shrink-0">
-            {formatScore(champ.score)}
-          </span>
-        </div>
-      ) : (
-        <div className="flex items-center gap-2">
-          <span className="w-3 h-3 inline-block border border-gray-600" />
-          <span className="text-[10px] text-gray-500 uppercase tracking-wider">Awaiting champion</span>
-        </div>
-      )}
+      <div className="flex items-center gap-2 min-w-0">
+        <Crown className="w-3 h-3 text-yellow-500 flex-shrink-0" />
+        <span className="text-xs text-white truncate min-w-0 flex-1">{champ.corpsName || champ.username || '—'}</span>
+        <span className="text-[10px] text-gray-400 font-data tabular-nums flex-shrink-0">
+          {formatScore(champ.score)}
+        </span>
+      </div>
       <div className="flex items-center gap-1.5 mt-1.5">
         <Calendar className="w-2.5 h-2.5 text-gray-600" />
         <span className="text-[10px] text-gray-500 font-data tabular-nums">
@@ -119,7 +105,7 @@ const SeasonRow = ({ season, isSelected, classKey, onSelect }) => {
 const ChampionPlaque = ({ champion, season, classKey, fieldStats }) => {
   const { type, year } = parseSeasonName(season.seasonName);
   const ClassIcon = CLASS_CONFIG[classKey]?.icon || Trophy;
-  const corpsName = cleanCorpsName(champion.corpsName);
+  const corpsName = champion.corpsName || champion.username || '—';
 
   return (
     <m.div
@@ -223,7 +209,7 @@ const FinalistsTable = ({ champions }) => {
           {champions.map((c, idx) => {
             const meta = RANK_META[c.rank] || {};
             const rowBg = idx % 2 === 0 ? 'bg-[#1a1a1a]' : 'bg-[#111]';
-            const corpsName = cleanCorpsName(c.corpsName);
+            const corpsName = c.corpsName || c.username || '—';
 
             return (
               <tr key={`${c.uid}-${c.rank}-${idx}`} className={`${rowBg} border-b border-[#333] last:border-b-0`}>
@@ -280,52 +266,16 @@ const FinalistsTable = ({ champions }) => {
   );
 };
 
-const AwaitingPanel = ({ season, classKey }) => {
-  const { type, year } = parseSeasonName(season.seasonName);
-  return (
-    <div className="bg-[#1a1a1a] border border-[#333]">
-      <div className="bg-[#222] px-4 py-2.5 flex items-center justify-between border-b border-[#333]">
-        <div className="flex items-center gap-2">
-          <Crown className="w-3.5 h-3.5 text-gray-500" />
-          <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
-            Championship Pending
-          </span>
-        </div>
-        <span className="text-[10px] text-gray-500 font-data tabular-nums uppercase tracking-wider">
-          {type} {year}
-        </span>
-      </div>
-      <div className="px-6 py-10 text-center">
-        <div className="w-12 h-12 mx-auto mb-4 border border-[#333] flex items-center justify-center">
-          <Crown className="w-6 h-6 text-gray-600" />
-        </div>
-        <h3 className="text-base font-bold text-white uppercase tracking-wider mb-2">
-          No {CLASS_CONFIG[classKey]?.name} Champion Yet
-        </h3>
-        <p className="text-sm text-gray-400 max-w-md mx-auto leading-relaxed">
-          Champions are crowned at the conclusion of the season.
-          When this season ends, the top three corps will be enshrined here.
-        </p>
-      </div>
-      <div className="bg-[#111] px-4 py-2 border-t border-[#333] flex items-center justify-between text-[10px] uppercase tracking-wider">
-        <span className="text-gray-500">Status</span>
-        <span className="text-yellow-500 font-bold">Season In Progress</span>
-      </div>
-    </div>
-  );
-};
-
-const NoSeasonsPanel = () => (
+const NoChampionsPanel = ({ classKey }) => (
   <div className="bg-[#1a1a1a] border border-[#333] p-10 text-center max-w-md mx-auto my-8">
     <div className="w-14 h-14 mx-auto mb-4 border border-[#333] flex items-center justify-center">
       <Trophy className="w-7 h-7 text-gray-600" />
     </div>
     <h3 className="text-base font-bold text-white uppercase tracking-wider mb-2">
-      The Hall Awaits
+      No {CLASS_CONFIG[classKey]?.name} Champions Yet
     </h3>
     <p className="text-sm text-gray-400 leading-relaxed">
-      No seasons have been completed yet. Once the first season concludes,
-      its champions will be inducted here for posterity.
+      Once a season concludes, its champions will be inducted here.
     </p>
   </div>
 );
@@ -364,9 +314,6 @@ const HallOfChampions = () => {
 
         if (cancelled) return;
         setSeasons(seasonsData);
-        if (seasonsData.length > 0) {
-          setSelectedSeason(seasonsData[0]);
-        }
       } catch (error) {
         console.error('Error fetching season champions:', error);
       } finally {
@@ -377,15 +324,30 @@ const HallOfChampions = () => {
     return () => { cancelled = true; };
   }, []);
 
+  // Only seasons that actually have a crowned champion in the active class
+  const crownedSeasons = useMemo(() => {
+    return seasons.filter((s) => (s.classes?.[selectedClass]?.length || 0) > 0);
+  }, [seasons, selectedClass]);
+
+  // Default to the most recent crowned season for the active class.
+  // When the class changes (or a stale season is selected), snap to the newest crowned one.
+  useEffect(() => {
+    if (crownedSeasons.length === 0) {
+      if (selectedSeason) setSelectedSeason(null);
+      return;
+    }
+    const stillValid = selectedSeason && crownedSeasons.some((s) => s.id === selectedSeason.id);
+    if (!stillValid) {
+      setSelectedSeason(crownedSeasons[0]);
+    }
+  }, [crownedSeasons, selectedSeason]);
+
   const currentChampions = useMemo(() => {
     if (!selectedSeason) return [];
     return selectedSeason.classes?.[selectedClass] || [];
   }, [selectedSeason, selectedClass]);
 
-  // Stats summary across all seasons (for header chip)
-  const totalCrowns = useMemo(() => {
-    return seasons.reduce((sum, s) => sum + (s.classes?.[selectedClass]?.length > 0 ? 1 : 0), 0);
-  }, [seasons, selectedClass]);
+  const totalCrowns = crownedSeasons.length;
 
   // Margin / spread stats for the champion plaque
   const fieldStats = useMemo(() => {
@@ -424,13 +386,9 @@ const HallOfChampions = () => {
             </div>
             <div className="flex items-center gap-3 text-[10px] uppercase tracking-wider">
               <span className="flex items-center gap-1 text-gray-500">
-                <Calendar className="w-3 h-3" />
-                <span className="font-data tabular-nums text-gray-300">{seasons.length}</span> Seasons
-              </span>
-              <span className="text-gray-700">|</span>
-              <span className="flex items-center gap-1 text-gray-500">
                 <Crown className="w-3 h-3 text-yellow-500" />
-                <span className="font-data tabular-nums text-gray-300">{totalCrowns}</span> Crowns
+                <span className="font-data tabular-nums text-gray-300">{totalCrowns}</span>
+                {' '}Crowned {totalCrowns === 1 ? 'Season' : 'Seasons'}
               </span>
             </div>
           </div>
@@ -463,19 +421,19 @@ const HallOfChampions = () => {
           {/* Section label */}
           <div className="flex-shrink-0 bg-[#0a0a0a] border-b border-[#333] px-4 py-1.5">
             <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
-              Seasons · Most Recent First
+              Champions · Most Recent First
             </span>
           </div>
 
           {/* Season list */}
           <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum">
-            {seasons.length === 0 ? (
+            {crownedSeasons.length === 0 ? (
               <div className="px-4 py-12 text-center">
                 <Trophy className="w-8 h-8 text-gray-700 mx-auto mb-2" />
-                <p className="text-xs text-gray-500 uppercase tracking-wider">No seasons recorded</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wider">No champions recorded</p>
               </div>
             ) : (
-              seasons.map((season) => (
+              crownedSeasons.map((season) => (
                 <SeasonRow
                   key={season.id}
                   season={season}
@@ -493,20 +451,9 @@ const HallOfChampions = () => {
             ======================================================== */}
         <div className={`flex-1 flex flex-col min-h-0 ${showSidebarOnly ? 'hidden lg:flex' : 'flex'}`}>
           {!selectedSeason ? (
-            seasons.length === 0 ? (
-              <div className="flex-1 flex items-center justify-center px-4">
-                <NoSeasonsPanel />
-              </div>
-            ) : (
-              <div className="flex-1 flex items-center justify-center px-4">
-                <div className="text-center max-w-sm">
-                  <Trophy className="w-10 h-10 text-gray-700 mx-auto mb-3" />
-                  <p className="text-sm text-gray-400 uppercase tracking-wider">
-                    Select a season from the sidebar
-                  </p>
-                </div>
-              </div>
-            )
+            <div className="flex-1 flex items-center justify-center px-4">
+              <NoChampionsPanel classKey={selectedClass} />
+            </div>
           ) : (
             <>
               {/* Mobile back bar */}
@@ -549,21 +496,15 @@ const HallOfChampions = () => {
               {/* Body */}
               <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum">
                 <div className="max-w-3xl mx-auto px-4 sm:px-6 py-5">
-                  {currentChampions.length === 0 ? (
-                    <AwaitingPanel season={selectedSeason} classKey={selectedClass} />
-                  ) : (
-                    <>
-                      {champion && (
-                        <ChampionPlaque
-                          champion={champion}
-                          season={selectedSeason}
-                          classKey={selectedClass}
-                          fieldStats={fieldStats}
-                        />
-                      )}
-                      <FinalistsTable champions={currentChampions} />
-                    </>
+                  {champion && (
+                    <ChampionPlaque
+                      champion={champion}
+                      season={selectedSeason}
+                      classKey={selectedClass}
+                      fieldStats={fieldStats}
+                    />
                   )}
+                  <FinalistsTable champions={currentChampions} />
                 </div>
               </div>
             </>
