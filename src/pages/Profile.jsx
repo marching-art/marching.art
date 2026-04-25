@@ -8,10 +8,10 @@ import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import {
   User, Settings, Crown, LogOut, Coins, Heart,
-  MessageCircle, Mail, AtSign, AlertCircle, Bell, Trash2, X
+  MessageCircle, Mail, AtSign, AlertCircle, Bell, Trash2, X,
 } from 'lucide-react';
 import { useAuth } from '../App';
-import { useProfile, useUpdateProfile } from '../hooks/useProfile';
+import { useProfile } from '../hooks/useProfile';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../lib/queryClient';
 import { db } from '../firebase';
@@ -23,6 +23,7 @@ import { generateCorpsAvatar } from '../api/functions';
 
 // OPTIMIZATION #9: Lazy-load UniformDesignModal (794 lines) to reduce initial bundle
 const UniformDesignModal = lazy(() => import('../components/modals/UniformDesignModal'));
+const ProfileEditModal = lazy(() => import('../components/modals/ProfileEditModal'));
 import { useTooltipPreference } from '../hooks/useTooltipPreference';
 
 // =============================================================================
@@ -687,11 +688,9 @@ const Profile = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState({});
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [settingsTab, setSettingsTab] = useState('account');
-  const [saving, setSaving] = useState(false);
   const [showUniformDesign, setShowUniformDesign] = useState(false);
 
   const isOwnProfile = !userId || userId === user?.uid;
@@ -713,7 +712,6 @@ const Profile = () => {
 
   const profileUserId = userId || user?.uid;
   const { data: profile, isLoading, error, isError, refetch } = useProfile(profileUserId);
-  const updateProfileMutation = useUpdateProfile(profileUserId || '');
 
   // NOTE: Stats, achievements, and season history are now computed in DirectorProfile
 
@@ -887,25 +885,33 @@ const Profile = () => {
 
   // Handlers
   const handleStartEdit = () => {
-    setEditData({
-      displayName: profile?.displayName || '',
-      location: profile?.location || '',
-    });
-    setIsEditing(true);
+    setShowEditModal(true);
   };
 
-  const handleSave = async () => {
-    setSaving(true);
+  const handleSaveProfile = useCallback(async ({ displayName, location, directorInfo, ensembleInfo }) => {
+    if (!user) return;
     try {
-      await updateProfileMutation.mutateAsync(editData);
+      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
+      const updateData = {
+        displayName,
+        location,
+        directorInfo,
+      };
+      // Write per-corps ensembleInfo using dotted paths so other corps fields are untouched
+      if (ensembleInfo) {
+        for (const [classKey, info] of Object.entries(ensembleInfo)) {
+          updateData[`corps.${classKey}.ensembleInfo`] = info;
+        }
+      }
+      await updateDoc(profileRef, updateData);
+      await refetch();
       toast.success('Profile updated');
-      setIsEditing(false);
     } catch (error) {
-      toast.error('Failed to update');
-    } finally {
-      setSaving(false);
+      console.error('Failed to update profile:', error);
+      toast.error('Failed to update profile');
+      throw error;
     }
-  };
+  }, [user, refetch]);
 
   // Loading state
   if (isLoading) {
@@ -974,7 +980,14 @@ const Profile = () => {
 
         {/* QUICK LINKS */}
         <div className="px-4 pb-4">
-          <div className={`grid gap-2 ${isOwnProfile ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'}`}>
+          <div className={`grid gap-2 ${isOwnProfile ? 'grid-cols-2 sm:grid-cols-5' : 'grid-cols-4'}`}>
+            <Link
+              to="/hall-of-champions"
+              className="bg-[#1a1a1a] border border-[#333] p-4 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
+            >
+              <Crown className="w-5 h-5 text-yellow-400 mb-1" />
+              <span className="text-xs text-gray-400">Champions</span>
+            </Link>
             <a
               href="https://buymeacoffee.com/marching.art"
               target="_blank"
@@ -1036,6 +1049,17 @@ const Profile = () => {
             currentDesign={allCorps[0]?.uniformDesign}
             allCorps={allCorps}
             initialCorpsClass={initialCorpsClass}
+          />
+        </Suspense>
+      )}
+
+      {/* PROFILE EDIT MODAL */}
+      {showEditModal && isOwnProfile && profile && (
+        <Suspense fallback={null}>
+          <ProfileEditModal
+            profile={profile}
+            onClose={() => setShowEditModal(false)}
+            onSave={handleSaveProfile}
           />
         </Suspense>
       )}

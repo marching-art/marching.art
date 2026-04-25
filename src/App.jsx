@@ -5,6 +5,7 @@ import { Toaster } from 'react-hot-toast';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { auth, authHelpers } from './firebase';
+import { claimDailyLogin } from './firebase/functions';
 import { queryClient } from './lib/queryClient';
 import LoadingScreen from './components/LoadingScreen';
 import {
@@ -126,6 +127,26 @@ function App() {
       // Only cleanup on unmount, not on user change (handled above)
     };
   }, [user, initProfileListener, cleanupProfileListener]);
+
+  // Claim daily login once per calendar day to award XP, update streak, and
+  // update userTitle. The backend is idempotent (returns alreadyClaimed:true
+  // on subsequent calls within the same day); the localStorage guard just
+  // avoids redundant network calls per session.
+  useEffect(() => {
+    if (!user) return;
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const storageKey = `dailyLoginClaimed:${user.uid}`;
+    if (typeof window === 'undefined') return;
+    const lastClaimed = window.localStorage.getItem(storageKey);
+    if (lastClaimed === todayKey) return;
+    claimDailyLogin()
+      .then(() => {
+        window.localStorage.setItem(storageKey, todayKey);
+      })
+      .catch((err) => {
+        console.warn('Daily login claim skipped:', err?.message || err);
+      });
+  }, [user]);
 
   // Initialize push notifications when user is authenticated
   // Only attempts to get token if user has previously granted permission

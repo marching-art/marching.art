@@ -27,6 +27,32 @@ const XP_CONFIG = {
 };
 
 /**
+ * Title mapping - must stay in sync with client getLevelTitle() in src/api/profile.ts
+ */
+const LEVEL_TITLES = {
+  1: 'Rookie',
+  2: 'Trainee',
+  3: 'Assistant',
+  4: 'Coordinator',
+  5: 'Instructor',
+  6: 'Caption Head',
+  7: 'Program Director',
+  8: 'Director',
+  9: 'Executive Director',
+  10: 'Legend',
+};
+
+/**
+ * Get the director title for a given level (1+).
+ * Levels 10 and above all return "Legend".
+ */
+function getLevelTitle(level) {
+  const lvl = Math.max(1, Math.floor(Number(level) || 1));
+  if (lvl >= 10) return LEVEL_TITLES[10];
+  return LEVEL_TITLES[lvl] || 'Rookie';
+}
+
+/**
  * XP Sources - Balanced for meaningful progression
  * Active player (~4-5 months to World Class via XP)
  * Target: ~500 XP/week for consistent players
@@ -99,7 +125,8 @@ function calculateXPUpdates(profileData, xpToAdd) {
 
   const updates = {
     xp: newXP,
-    xpLevel: newLevel
+    xpLevel: newLevel,
+    userTitle: getLevelTitle(newLevel)
   };
 
   // Check for class unlocks (by XP level OR time since registration).
@@ -185,8 +212,10 @@ function getSeasonCompletionXP(rank, totalParticipants) {
 module.exports = {
   calculateXPUpdates,
   calculateLevel,
+  getLevelTitle,
   getSeasonCompletionXP,
   getWeeksSinceRegistration,
   XP_CONFIG,
-  XP_SOURCES
+  XP_SOURCES,
+  LEVEL_TITLES,
 };

@@ -240,9 +240,18 @@ const RecapDataGrid = memo(({
                           {score.corpsName || score.corps}
                         </span>
                         {score.displayName && (
-                          <span className="text-[10px] text-gray-500 block truncate">
-                            {score.displayName}
-                          </span>
+                          score.uid ? (
+                            <Link
+                              to={`/profile/${score.uid}`}
+                              className="text-[10px] text-gray-500 hover:text-[#0057B8] block truncate"
+                            >
+                              {score.displayName}
+                            </Link>
+                          ) : (
+                            <span className="text-[10px] text-gray-500 block truncate">
+                              {score.displayName}
+                            </span>
+                          )
                         )}
                       </div>
                     </div>
@@ -437,9 +446,18 @@ const SoundSportMedalList = ({ shows }) => {
                         {result.corps || result.corpsName}
                       </span>
                       {result.displayName && (
-                        <span className="text-[10px] text-gray-500 block truncate">
-                          {result.displayName}
-                        </span>
+                        result.uid ? (
+                          <Link
+                            to={`/profile/${result.uid}`}
+                            className="text-[10px] text-gray-500 hover:text-[#0057B8] block truncate"
+                          >
+                            {result.displayName}
+                          </Link>
+                        ) : (
+                          <span className="text-[10px] text-gray-500 block truncate">
+                            {result.displayName}
+                          </span>
+                        )
                       )}
                     </div>
                   </div>
@@ -569,9 +587,18 @@ const ClassStandingsGrid = ({
                           {entry.corpsName}
                         </span>
                         {entry.displayName && (
-                          <span className="text-[10px] text-gray-500 block truncate">
-                            {entry.displayName}
-                          </span>
+                          entry.uid ? (
+                            <Link
+                              to={`/profile/${entry.uid}`}
+                              className="text-[10px] text-gray-500 hover:text-[#0057B8] block truncate"
+                            >
+                              {entry.displayName}
+                            </Link>
+                          ) : (
+                            <span className="text-[10px] text-gray-500 block truncate">
+                              {entry.displayName}
+                            </span>
+                          )
                         )}
                       </div>
                     </div>

@@ -15,6 +15,44 @@ export interface User {
   emailVerified: boolean;
 }
 
+export interface DirectorSocialLinks {
+  website?: string;
+  twitter?: string;
+  instagram?: string;
+  youtube?: string;
+  tiktok?: string;
+  facebook?: string;
+  discord?: string;
+}
+
+export interface DirectorProfileInfo {
+  // Director bio - about the person directing
+  bio?: string;                    // Short bio / directing philosophy
+  yearsDirecting?: number;         // Real-world years as a director/instructor
+  specialties?: string[];          // e.g., ["General Effect", "Visual", "Music", "Color Guard"]
+  credentials?: string;            // Education, certifications, background
+
+  // Public contact / social
+  socialLinks?: DirectorSocialLinks;
+
+  // Community settings
+  acceptingLeagueInvites?: boolean; // Open to league invitations
+  profileVisibility?: 'public' | 'members';
+}
+
+export interface EnsembleProfileInfo {
+  // Ensemble identity (per-corps, preserved across seasons)
+  tagline?: string;                // Short one-liner
+  mission?: string;                // Mission statement / purpose
+  history?: string;                // Ensemble history / backstory
+  foundedYear?: number;            // Year the fantasy ensemble was founded
+  homeVenue?: string;              // Home field / rehearsal site
+  motto?: string;                  // Motto or tagline
+
+  // Notable past shows and achievements (director-authored)
+  notableShows?: string[];         // e.g., ["Metamorphosis (2024)", "Rebirth (2023)"]
+}
+
 export interface UserProfile {
   uid: string;
   username: string;
@@ -24,6 +62,9 @@ export interface UserProfile {
   lastLogin: Timestamp;
   photoURL?: string;
   location?: string;
+
+  // Director-level profile info (community-facing)
+  directorInfo?: DirectorProfileInfo;
 
   // XP & Progression
   xp: number;
@@ -220,10 +261,13 @@ export interface CorpsData {
   corpsClass: CorpsClass;
   createdAt: Timestamp;
 
-  // Uniform Design (director-customizable)
+  // Ensemble profile info (preserved across seasons)
+  ensembleInfo?: EnsembleProfileInfo;
+
+  // Uniform Design (director-customizable, preserved across seasons)
   uniformDesign?: CorpsUniformDesign;
 
-  // Corps Avatar (AI-generated based on uniform design)
+  // Corps Avatar (AI-generated based on uniform design, preserved across seasons)
   avatarUrl?: string;
   avatarGeneratedAt?: string; // ISO timestamp of when avatar was generated
 

@@ -621,6 +621,11 @@ async function startNewLiveSeason() {
             corpsName: corps.corpsName || null,
             location: corps.location || null,
             seasonHistory,
+            // PRESERVE: Director-designed branding and ensemble identity across seasons
+            uniformDesign: corps.uniformDesign || null,
+            avatarUrl: corps.avatarUrl || null,
+            avatarGeneratedAt: corps.avatarGeneratedAt || null,
+            ensembleInfo: corps.ensembleInfo || null,
             // RESET: Season-specific data (including weeklyTrades so users can set up corps)
             weeklyTrades: null,
             lineup: null,
@@ -870,6 +875,11 @@ async function startNewOffSeason() {
             corpsName: corps.corpsName || null,
             location: corps.location || null,
             seasonHistory,
+            // PRESERVE: Director-designed branding and ensemble identity across seasons
+            uniformDesign: corps.uniformDesign || null,
+            avatarUrl: corps.avatarUrl || null,
+            avatarGeneratedAt: corps.avatarGeneratedAt || null,
+            ensembleInfo: corps.ensembleInfo || null,
             // RESET: Season-specific data (including weeklyTrades so users can set up corps)
             weeklyTrades: null,
             lineup: null,

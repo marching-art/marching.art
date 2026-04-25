@@ -2,7 +2,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb, dataNamespaceParam } = require("../config");
-const { calculateXPUpdates, XP_SOURCES } = require("../helpers/xpCalculations");
+const { calculateXPUpdates, calculateLevel, getLevelTitle, XP_SOURCES } = require("../helpers/xpCalculations");
 
 exports.setUserRole = onCall({ cors: true }, async (request) => {
   if (!request.auth || !request.auth.token.admin) {
@@ -338,47 +338,24 @@ exports.dailyXPCheckIn = onCall({ cors: true }, async (request) => {
     }
 
     const XP_PER_REHEARSAL = 10;
-    const currentXP = profileData.xp || 0;
-    const newXP = currentXP + XP_PER_REHEARSAL;
-    const newLevel = Math.floor(newXP / 1000) + 1;
+    const xpResult = calculateXPUpdates(profileData, XP_PER_REHEARSAL);
 
     const updateData = {
-      xp: newXP,
-      xpLevel: newLevel,
+      ...xpResult.updates,
       lastRehearsal: admin.firestore.FieldValue.serverTimestamp(),
     };
 
-    // Check for class unlocks
-    const unlockedClasses = profileData.unlockedClasses || ['soundSport'];
-    let classUnlocked = null;
-
-    if (newLevel >= 3 && !unlockedClasses.includes('aClass')) {
-      unlockedClasses.push('aClass');
-      updateData.unlockedClasses = unlockedClasses;
-      classUnlocked = 'A Class';
-    }
-    if (newLevel >= 5 && !unlockedClasses.includes('open')) {
-      unlockedClasses.push('open');
-      updateData.unlockedClasses = unlockedClasses;
-      classUnlocked = 'Open Class';
-    }
-    if (newLevel >= 10 && !unlockedClasses.includes('world')) {
-      unlockedClasses.push('world');
-      updateData.unlockedClasses = unlockedClasses;
-      classUnlocked = 'World Class';
-    }
-
     await profileRef.update(updateData);
 
-    logger.info(`User ${uid} completed daily rehearsal. Earned ${XP_PER_REHEARSAL} XP. New total: ${newXP} (Level ${newLevel})`);
+    logger.info(`User ${uid} completed daily rehearsal. Earned ${XP_PER_REHEARSAL} XP. New total: ${xpResult.newXP} (Level ${xpResult.newLevel})`);
 
     return {
       success: true,
       xpEarned: XP_PER_REHEARSAL,
-      totalXP: newXP,
-      level: newLevel,
-      classUnlocked: classUnlocked,
-      message: classUnlocked ? `🎉 Unlocked ${classUnlocked}!` : `Great practice! +${XP_PER_REHEARSAL} XP`,
+      totalXP: xpResult.newXP,
+      level: xpResult.newLevel,
+      classUnlocked: xpResult.classUnlocked,
+      message: xpResult.classUnlocked ? `🎉 Unlocked ${xpResult.classUnlocked}!` : `Great practice! +${XP_PER_REHEARSAL} XP`,
     };
   } catch (error) {
     logger.error(`Error in dailyRehearsal for user ${uid}:`, error);
@@ -494,6 +471,15 @@ exports.fixProfileFields = onCall({ cors: true }, async (request) => {
       if (profile.corpsCoin === undefined) updates.corpsCoin = defaultFields.corpsCoin;
       if (profile.unlockedClasses === undefined) updates.unlockedClasses = defaultFields.unlockedClasses;
       if (profile.corps === undefined) updates.corps = defaultFields.corps;
+
+      // Reconcile level + title from XP in case earlier code paths left them stale
+      const effectiveXp = updates.xp !== undefined ? updates.xp : (profile.xp || 0);
+      const computedLevel = calculateLevel(effectiveXp);
+      const computedTitle = getLevelTitle(computedLevel);
+      const currentLevel = updates.xpLevel !== undefined ? updates.xpLevel : profile.xpLevel;
+      const currentTitle = updates.userTitle !== undefined ? updates.userTitle : profile.userTitle;
+      if (currentLevel !== computedLevel) updates.xpLevel = computedLevel;
+      if (currentTitle !== computedTitle) updates.userTitle = computedTitle;
 
       // Fix displayName if missing (use username or 'Director')
       if (profile.displayName === undefined || profile.displayName === null) {
