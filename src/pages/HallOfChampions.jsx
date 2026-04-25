@@ -1,19 +1,338 @@
 // src/pages/HallOfChampions.jsx
-// Sidebar (Seasons) + Main Stage (Podium) Layout
+// Championship record book — ESPN-style data terminal layout
+// Sidebar (Seasons) + Main Stage (Champion plaque + finalists table)
 import React, { useState, useEffect, useMemo } from 'react';
-import { m, AnimatePresence } from 'framer-motion';
-import { Trophy, Award, Calendar, Crown, Star, ChevronRight, Medal, ArrowLeft } from 'lucide-react';
+import { m } from 'framer-motion';
+import { Trophy, Award, Calendar, Crown, Medal, ChevronRight, ArrowLeft, Hash, Users } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
-import EmptyState from '../components/EmptyState';
 import LoadingScreen from '../components/LoadingScreen';
+import { TeamAvatar } from '../components/ui/TeamAvatar';
+
+// =============================================================================
+// CONSTANTS
+// =============================================================================
 
 const CLASS_CONFIG = {
-  worldClass: { name: 'World Class', color: 'gold', icon: Crown },
-  openClass: { name: 'Open Class', color: 'purple', icon: Trophy },
-  aClass: { name: 'A Class', color: 'blue', icon: Award }
+  worldClass: { name: 'World Class', short: 'World', icon: Crown },
+  openClass:  { name: 'Open Class',  short: 'Open',  icon: Trophy },
+  aClass:     { name: 'Class A',     short: 'Class A', icon: Award },
 };
+
+const RANK_META = {
+  1: { label: 'CHAMPION',  badge: 'bg-yellow-500 text-black',     accent: 'text-yellow-500',  border: 'border-yellow-500/60', medalColor: 'text-yellow-500' },
+  2: { label: 'RUNNER-UP', badge: 'bg-gray-300 text-black',       accent: 'text-gray-300',    border: 'border-gray-400/40',   medalColor: 'text-gray-300' },
+  3: { label: 'THIRD',     badge: 'bg-orange-400 text-black',     accent: 'text-orange-400',  border: 'border-orange-500/40', medalColor: 'text-orange-400' },
+};
+
+// =============================================================================
+// HELPERS
+// =============================================================================
+
+const parseSeasonName = (name) => {
+  if (!name) return { type: 'Unknown', year: '' };
+  const parts = name.split('_');
+  if (parts.length < 2) return { type: name, year: '' };
+  const type = parts[0].charAt(0).toUpperCase() + parts[0].slice(1).toLowerCase();
+  const yearParts = parts.slice(1);
+  // "2025-26" — collapse trailing 4-digit year to 2-digit suffix
+  let year = yearParts.join('-');
+  if (yearParts.length === 2 && /^\d{4}$/.test(yearParts[0]) && /^\d{4}$/.test(yearParts[1])) {
+    year = `${yearParts[0]}-${yearParts[1].slice(2)}`;
+  }
+  return { type, year };
+};
+
+const formatDate = (date) => {
+  if (!date) return '—';
+  try {
+    return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  } catch {
+    return '—';
+  }
+};
+
+const formatScore = (score) => (typeof score === 'number' ? score.toFixed(3) : '—');
+
+const formatDelta = (delta) => {
+  if (typeof delta !== 'number' || Number.isNaN(delta)) return '—';
+  const sign = delta > 0 ? '+' : '';
+  return `${sign}${delta.toFixed(3)}`;
+};
+
+const cleanCorpsName = (raw) => {
+  if (!raw) return 'Unnamed Corps';
+  const v = String(raw).trim();
+  if (!v || v.toLowerCase() === 'unspecified' || v.toLowerCase() === 'unknown') return 'Unnamed Corps';
+  return v;
+};
+
+// =============================================================================
+// SUB-COMPONENTS
+// =============================================================================
+
+const SeasonRow = ({ season, isSelected, classKey, onSelect }) => {
+  const champ = season.classes?.[classKey]?.[0];
+  const { type, year } = parseSeasonName(season.seasonName);
+  const corpsName = champ ? cleanCorpsName(champ.corpsName) : null;
+
+  return (
+    <button
+      onClick={() => onSelect(season)}
+      className={`
+        w-full text-left px-4 py-3 border-b border-[#333] transition-colors
+        ${isSelected ? 'bg-[#0057B8]/15 border-l-2 border-l-[#0057B8]' : 'border-l-2 border-l-transparent hover:bg-[#1f1f1f]'}
+      `}
+    >
+      <div className="flex items-center justify-between gap-2 mb-1">
+        <span className={`text-[11px] font-bold uppercase tracking-wider ${isSelected ? 'text-white' : 'text-gray-300'}`}>
+          {type}
+        </span>
+        <span className="text-[10px] text-gray-500 font-data tabular-nums">{year}</span>
+      </div>
+      {champ ? (
+        <div className="flex items-center gap-2 min-w-0">
+          <Crown className="w-3 h-3 text-yellow-500 flex-shrink-0" />
+          <span className="text-xs text-white truncate min-w-0 flex-1">{corpsName}</span>
+          <span className="text-[10px] text-gray-400 font-data tabular-nums flex-shrink-0">
+            {formatScore(champ.score)}
+          </span>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <span className="w-3 h-3 inline-block border border-gray-600" />
+          <span className="text-[10px] text-gray-500 uppercase tracking-wider">Awaiting champion</span>
+        </div>
+      )}
+      <div className="flex items-center gap-1.5 mt-1.5">
+        <Calendar className="w-2.5 h-2.5 text-gray-600" />
+        <span className="text-[10px] text-gray-500 font-data tabular-nums">
+          {formatDate(season.archivedAt)}
+        </span>
+        {isSelected && <ChevronRight className="w-3 h-3 text-[#0057B8] ml-auto" />}
+      </div>
+    </button>
+  );
+};
+
+const ChampionPlaque = ({ champion, season, classKey, fieldStats }) => {
+  const { type, year } = parseSeasonName(season.seasonName);
+  const ClassIcon = CLASS_CONFIG[classKey]?.icon || Trophy;
+  const corpsName = cleanCorpsName(champion.corpsName);
+
+  return (
+    <m.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+      className="bg-[#1a1a1a] border border-[#333] mb-4"
+    >
+      {/* Top banner */}
+      <div className="bg-yellow-500 text-black px-4 py-2 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Crown className="w-4 h-4" />
+          <span className="text-[11px] font-bold uppercase tracking-widest">
+            {type} {year} Champion
+          </span>
+        </div>
+        <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">
+          {CLASS_CONFIG[classKey]?.name}
+        </span>
+      </div>
+
+      {/* Champion identity */}
+      <div className="px-4 sm:px-6 py-5 flex items-center gap-4">
+        <TeamAvatar name={corpsName} size="lg" className="!w-14 !h-14 sm:!w-16 sm:!h-16 text-xl" />
+        <div className="min-w-0 flex-1">
+          <div className="text-xl sm:text-2xl font-bold text-white truncate">
+            {corpsName}
+          </div>
+          {champion.uid ? (
+            <Link
+              to={`/profile/${champion.uid}`}
+              className="text-xs text-gray-400 hover:text-[#0057B8] transition-colors block truncate"
+            >
+              Director: {champion.username || 'Unknown'}
+            </Link>
+          ) : (
+            <span className="text-xs text-gray-400 block truncate">
+              Director: {champion.username || 'Unknown'}
+            </span>
+          )}
+        </div>
+        <div className="text-right flex-shrink-0">
+          <div className="text-[10px] text-gray-500 uppercase tracking-wider">Final Score</div>
+          <div className="text-3xl sm:text-4xl font-bold text-yellow-500 font-data tabular-nums leading-none">
+            {formatScore(champion.score)}
+          </div>
+        </div>
+      </div>
+
+      {/* Stats strip */}
+      <div className="grid grid-cols-3 border-t border-[#333] divide-x divide-[#333]">
+        <div className="px-3 py-2.5">
+          <div className="text-[10px] text-gray-500 uppercase tracking-wider">Crowned</div>
+          <div className="text-xs text-white font-data tabular-nums truncate">{formatDate(season.archivedAt)}</div>
+        </div>
+        <div className="px-3 py-2.5">
+          <div className="text-[10px] text-gray-500 uppercase tracking-wider">Margin</div>
+          <div className={`text-xs font-data tabular-nums truncate ${fieldStats.margin > 0 ? 'text-green-500' : 'text-gray-400'}`}>
+            {formatDelta(fieldStats.margin)}
+          </div>
+        </div>
+        <div className="px-3 py-2.5">
+          <div className="text-[10px] text-gray-500 uppercase tracking-wider">Division</div>
+          <div className="text-xs text-white truncate flex items-center gap-1">
+            <ClassIcon className="w-3 h-3 text-yellow-500" />
+            {CLASS_CONFIG[classKey]?.short}
+          </div>
+        </div>
+      </div>
+    </m.div>
+  );
+};
+
+const FinalistsTable = ({ champions }) => {
+  if (!champions || champions.length === 0) return null;
+
+  return (
+    <div className="bg-[#1a1a1a] border border-[#333]">
+      <div className="bg-[#222] px-4 py-2.5 flex items-center justify-between border-b border-[#333]">
+        <div className="flex items-center gap-2">
+          <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+          <span className="text-[11px] font-bold uppercase tracking-wider text-gray-300">
+            Final Standings
+          </span>
+        </div>
+        <span className="text-[10px] text-gray-500 font-data tabular-nums">
+          {champions.length} Finalist{champions.length !== 1 ? 's' : ''}
+        </span>
+      </div>
+
+      <table className="w-full">
+        <thead>
+          <tr className="bg-[#111] border-b border-[#333]">
+            <th className="text-left py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-10">#</th>
+            <th className="text-left py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500">Corps</th>
+            <th className="text-left py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 hidden sm:table-cell">Director</th>
+            <th className="text-right py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-20">Score</th>
+          </tr>
+        </thead>
+        <tbody>
+          {champions.map((c, idx) => {
+            const meta = RANK_META[c.rank] || {};
+            const rowBg = idx % 2 === 0 ? 'bg-[#1a1a1a]' : 'bg-[#111]';
+            const corpsName = cleanCorpsName(c.corpsName);
+
+            return (
+              <tr key={`${c.uid}-${c.rank}-${idx}`} className={`${rowBg} border-b border-[#333] last:border-b-0`}>
+                <td className="py-2.5 px-3">
+                  <div className="flex items-center gap-1.5">
+                    {meta.label ? (
+                      <Medal className={`w-3.5 h-3.5 ${meta.medalColor}`} />
+                    ) : (
+                      <Hash className="w-3 h-3 text-gray-600" />
+                    )}
+                    <span className="text-xs font-bold text-gray-300 font-data tabular-nums">
+                      {c.rank}
+                    </span>
+                  </div>
+                </td>
+                <td className="py-2.5 px-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <TeamAvatar name={corpsName} size="xs" />
+                    <div className="min-w-0">
+                      <span className={`text-sm font-bold block truncate ${c.rank === 1 ? 'text-yellow-500' : 'text-white'}`}>
+                        {corpsName}
+                      </span>
+                      {meta.label && (
+                        <span className={`text-[10px] uppercase tracking-wider ${meta.accent}`}>
+                          {meta.label}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </td>
+                <td className="py-2.5 px-2 hidden sm:table-cell">
+                  {c.uid ? (
+                    <Link
+                      to={`/profile/${c.uid}`}
+                      className="text-xs text-gray-400 hover:text-[#0057B8] transition-colors truncate block"
+                    >
+                      {c.username || '—'}
+                    </Link>
+                  ) : (
+                    <span className="text-xs text-gray-400 truncate block">{c.username || '—'}</span>
+                  )}
+                </td>
+                <td className="py-2.5 px-3 text-right">
+                  <span className={`text-sm font-bold font-data tabular-nums ${c.rank === 1 ? 'text-yellow-500' : 'text-white'}`}>
+                    {formatScore(c.score)}
+                  </span>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+const AwaitingPanel = ({ season, classKey }) => {
+  const { type, year } = parseSeasonName(season.seasonName);
+  return (
+    <div className="bg-[#1a1a1a] border border-[#333]">
+      <div className="bg-[#222] px-4 py-2.5 flex items-center justify-between border-b border-[#333]">
+        <div className="flex items-center gap-2">
+          <Crown className="w-3.5 h-3.5 text-gray-500" />
+          <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+            Championship Pending
+          </span>
+        </div>
+        <span className="text-[10px] text-gray-500 font-data tabular-nums uppercase tracking-wider">
+          {type} {year}
+        </span>
+      </div>
+      <div className="px-6 py-10 text-center">
+        <div className="w-12 h-12 mx-auto mb-4 border border-[#333] flex items-center justify-center">
+          <Crown className="w-6 h-6 text-gray-600" />
+        </div>
+        <h3 className="text-base font-bold text-white uppercase tracking-wider mb-2">
+          No {CLASS_CONFIG[classKey]?.name} Champion Yet
+        </h3>
+        <p className="text-sm text-gray-400 max-w-md mx-auto leading-relaxed">
+          Champions are crowned at the conclusion of the season.
+          When this season ends, the top three corps will be enshrined here.
+        </p>
+      </div>
+      <div className="bg-[#111] px-4 py-2 border-t border-[#333] flex items-center justify-between text-[10px] uppercase tracking-wider">
+        <span className="text-gray-500">Status</span>
+        <span className="text-yellow-500 font-bold">Season In Progress</span>
+      </div>
+    </div>
+  );
+};
+
+const NoSeasonsPanel = () => (
+  <div className="bg-[#1a1a1a] border border-[#333] p-10 text-center max-w-md mx-auto my-8">
+    <div className="w-14 h-14 mx-auto mb-4 border border-[#333] flex items-center justify-center">
+      <Trophy className="w-7 h-7 text-gray-600" />
+    </div>
+    <h3 className="text-base font-bold text-white uppercase tracking-wider mb-2">
+      The Hall Awaits
+    </h3>
+    <p className="text-sm text-gray-400 leading-relaxed">
+      No seasons have been completed yet. Once the first season concludes,
+      its champions will be inducted here for posterity.
+    </p>
+  </div>
+);
+
+// =============================================================================
+// MAIN COMPONENT
+// =============================================================================
 
 const HallOfChampions = () => {
   const [loading, setLoading] = useState(true);
@@ -22,391 +341,232 @@ const HallOfChampions = () => {
   const [selectedSeason, setSelectedSeason] = useState(null);
 
   useEffect(() => {
+    let cancelled = false;
+    const fetchSeasonChampions = async () => {
+      try {
+        setLoading(true);
+        const championsRef = collection(db, 'season_champions');
+        const championsSnapshot = await getDocs(championsRef);
+
+        const seasonsData = [];
+        championsSnapshot.forEach((doc) => {
+          const data = doc.data();
+          seasonsData.push({
+            id: doc.id,
+            seasonName: data.seasonName,
+            seasonType: data.seasonType,
+            archivedAt: data.archivedAt?.toDate?.() || (data.archivedAt ? new Date(data.archivedAt) : null),
+            classes: data.classes || {},
+          });
+        });
+
+        seasonsData.sort((a, b) => (b.archivedAt?.getTime?.() || 0) - (a.archivedAt?.getTime?.() || 0));
+
+        if (cancelled) return;
+        setSeasons(seasonsData);
+        if (seasonsData.length > 0) {
+          setSelectedSeason(seasonsData[0]);
+        }
+      } catch (error) {
+        console.error('Error fetching season champions:', error);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
     fetchSeasonChampions();
+    return () => { cancelled = true; };
   }, []);
 
-  const fetchSeasonChampions = async () => {
-    try {
-      setLoading(true);
-      const championsRef = collection(db, 'season_champions');
-      const championsSnapshot = await getDocs(championsRef);
-
-      const seasonsData = [];
-      championsSnapshot.forEach(doc => {
-        const data = doc.data();
-        seasonsData.push({
-          id: doc.id,
-          seasonName: data.seasonName,
-          seasonType: data.seasonType,
-          archivedAt: data.archivedAt?.toDate?.() || new Date(data.archivedAt),
-          classes: data.classes || {}
-        });
-      });
-
-      // Sort by archived date descending (most recent first)
-      seasonsData.sort((a, b) => b.archivedAt - a.archivedAt);
-      setSeasons(seasonsData);
-
-      // Auto-select first season
-      if (seasonsData.length > 0) {
-        setSelectedSeason(seasonsData[0]);
-      }
-    } catch (error) {
-      console.error('Error fetching season champions:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const formatSeasonName = (name) => {
-    if (!name) return 'Unknown Season';
-    const parts = name.split('_');
-    if (parts.length >= 2) {
-      const type = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
-      const year = parts.slice(1).join('-');
-      if (type === 'Live') {
-        return `Live Season ${year}`;
-      }
-      return `${type} ${year}`;
-    }
-    return name;
-  };
-
-  const formatSeasonShort = (name) => {
-    if (!name) return 'Unknown';
-    const parts = name.split('_');
-    if (parts.length >= 2) {
-      return parts.slice(1).join('-');
-    }
-    return name;
-  };
-
-  const getChampionsForClass = (season, corpsClass) => {
-    return season?.classes[corpsClass] || [];
-  };
-
-  // Get current champions
   const currentChampions = useMemo(() => {
-    return selectedSeason ? getChampionsForClass(selectedSeason, selectedClass) : [];
+    if (!selectedSeason) return [];
+    return selectedSeason.classes?.[selectedClass] || [];
   }, [selectedSeason, selectedClass]);
 
-  if (loading) {
-    return <LoadingScreen fullScreen={false} />;
-  }
+  // Stats summary across all seasons (for header chip)
+  const totalCrowns = useMemo(() => {
+    return seasons.reduce((sum, s) => sum + (s.classes?.[selectedClass]?.length > 0 ? 1 : 0), 0);
+  }, [seasons, selectedClass]);
 
-  const ClassIcon = CLASS_CONFIG[selectedClass]?.icon || Trophy;
+  // Margin / spread stats for the champion plaque
+  const fieldStats = useMemo(() => {
+    if (currentChampions.length === 0) return { margin: null, gap: null };
+    const top = currentChampions[0]?.score;
+    const second = currentChampions[1]?.score;
+    const last = currentChampions[currentChampions.length - 1]?.score;
+    return {
+      margin: typeof top === 'number' && typeof last === 'number' ? top - last : null,
+      gap: typeof top === 'number' && typeof second === 'number' ? top - second : null,
+    };
+  }, [currentChampions]);
+
+  if (loading) return <LoadingScreen fullScreen={false} />;
+
+  const showSidebarOnly = !selectedSeason;
+  const champion = currentChampions[0];
 
   return (
-    <div className="flex flex-col h-full min-h-0">
-      {/* ================================================================
-          SIDEBAR + MAIN STAGE LAYOUT
-          ================================================================ */}
+    <div className="flex flex-col h-full min-h-0 bg-[#0a0a0a]">
       <div className="flex-1 flex min-h-0">
 
-        {/* ============================================================
-            LEFT SIDEBAR: Seasons List
-            ============================================================ */}
-        <div className={`flex flex-col min-h-0 border-r border-cream-500/10 bg-charcoal-950/50 ${
+        {/* ========================================================
+            SIDEBAR — Season list
+            ======================================================== */}
+        <div className={`flex flex-col min-h-0 border-r border-[#333] bg-[#111] ${
           selectedSeason ? 'hidden lg:flex lg:w-72 xl:w-80' : 'w-full lg:w-72 xl:w-80'
         }`}>
-
-          {/* Sidebar Header */}
-          <div className="flex-shrink-0 p-4 border-b border-cream-500/10">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gold-500/20 border border-gold-500/30 flex items-center justify-center">
-                <Trophy className="w-5 h-5 text-gold-400" />
-              </div>
-              <div>
-                <h1 className="text-xl font-display font-bold text-cream uppercase tracking-wide">
-                  Hall of Champions
-                </h1>
-                <p className="text-xs text-cream-500/60">
-                  {seasons.length} Season{seasons.length !== 1 ? 's' : ''}
-                </p>
-              </div>
+          {/* Header */}
+          <div className="flex-shrink-0 px-4 py-3 border-b border-[#333] bg-[#1a1a1a]">
+            <div className="flex items-center gap-2 mb-3">
+              <Trophy className="w-4 h-4 text-yellow-500" />
+              <h1 className="text-sm font-bold text-white uppercase tracking-widest">
+                Hall of Champions
+              </h1>
             </div>
+            <div className="flex items-center gap-3 text-[10px] uppercase tracking-wider">
+              <span className="flex items-center gap-1 text-gray-500">
+                <Calendar className="w-3 h-3" />
+                <span className="font-data tabular-nums text-gray-300">{seasons.length}</span> Seasons
+              </span>
+              <span className="text-gray-700">|</span>
+              <span className="flex items-center gap-1 text-gray-500">
+                <Crown className="w-3 h-3 text-yellow-500" />
+                <span className="font-data tabular-nums text-gray-300">{totalCrowns}</span> Crowns
+              </span>
+            </div>
+          </div>
 
-            {/* Class Filter */}
-            <div className="flex gap-1 p-1 bg-charcoal-900/50 rounded-lg">
+          {/* Division switcher */}
+          <div className="flex-shrink-0 border-b border-[#333] bg-[#0a0a0a]">
+            <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+              Division
+            </div>
+            <div className="flex border-t border-[#333]">
               {Object.entries(CLASS_CONFIG).map(([classKey, config]) => {
-                const Icon = config.icon;
                 const isSelected = selectedClass === classKey;
-                const colorClasses = {
-                  gold: isSelected ? 'bg-gold-500 text-charcoal-900' : 'text-gold-400',
-                  purple: isSelected ? 'bg-purple-500 text-white' : 'text-purple-400',
-                  blue: isSelected ? 'bg-blue-500 text-white' : 'text-blue-400'
-                };
-
                 return (
                   <button
                     key={classKey}
                     onClick={() => setSelectedClass(classKey)}
-                    className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-[10px] font-display font-bold uppercase tracking-wide transition-all ${
+                    className={`flex-1 px-2 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-colors border-r border-[#333] last:border-r-0 ${
                       isSelected
-                        ? colorClasses[config.color]
-                        : `${colorClasses[config.color]} hover:bg-charcoal-800`
+                        ? 'bg-[#0057B8] text-white'
+                        : 'text-gray-400 hover:bg-[#1a1a1a] hover:text-white'
                     }`}
                   >
-                    <Icon className="w-3 h-3" />
-                    <span className="hidden sm:inline">{config.name.split(' ')[0]}</span>
+                    {config.short}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Seasons List */}
-          <div className="flex-1 min-h-0 overflow-y-auto hud-scroll p-3 space-y-2">
+          {/* Section label */}
+          <div className="flex-shrink-0 bg-[#0a0a0a] border-b border-[#333] px-4 py-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+              Seasons · Most Recent First
+            </span>
+          </div>
+
+          {/* Season list */}
+          <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum">
             {seasons.length === 0 ? (
-              <div className="text-center py-12">
-                <Trophy className="w-10 h-10 text-cream-500/20 mx-auto mb-3" />
-                <p className="text-sm text-cream-500/60">No seasons recorded</p>
+              <div className="px-4 py-12 text-center">
+                <Trophy className="w-8 h-8 text-gray-700 mx-auto mb-2" />
+                <p className="text-xs text-gray-500 uppercase tracking-wider">No seasons recorded</p>
               </div>
             ) : (
-              seasons.map((season) => {
-                const champions = getChampionsForClass(season, selectedClass);
-                const isSelected = selectedSeason?.id === season.id;
-                const hasChampions = champions.length > 0;
-
-                return (
-                  <button
-                    key={season.id}
-                    onClick={() => setSelectedSeason(season)}
-                    className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
-                      isSelected
-                        ? 'bg-gold-500/20 border-gold-500/50 shadow-[0_0_12px_rgba(234,179,8,0.2)]'
-                        : hasChampions
-                        ? 'bg-charcoal-900/30 border-cream-500/10 hover:border-cream-500/30'
-                        : 'bg-charcoal-900/20 border-cream-500/5 opacity-50 hover:opacity-70'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                        isSelected ? 'bg-gold-500/30' : hasChampions ? 'bg-charcoal-800' : 'bg-charcoal-900'
-                      }`}>
-                        <Calendar className={`w-5 h-5 ${
-                          isSelected ? 'text-gold-400' : hasChampions ? 'text-cream-400' : 'text-cream-500/40'
-                        }`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className={`font-display font-bold text-sm truncate ${
-                          isSelected ? 'text-gold-400' : 'text-cream-100'
-                        }`}>
-                          {formatSeasonShort(season.seasonName)}
-                        </h4>
-                        <div className="flex items-center gap-2 text-xs text-cream-500/60">
-                          {hasChampions ? (
-                            <>
-                              <Crown className="w-3 h-3 text-gold-400" />
-                              <span>{champions[0]?.corpsName || 'Champion'}</span>
-                            </>
-                          ) : (
-                            <span className="italic">No champions</span>
-                          )}
-                        </div>
-                      </div>
-                      <ChevronRight className={`w-4 h-4 ${isSelected ? 'text-gold-400' : 'text-cream-500/40'}`} />
-                    </div>
-                  </button>
-                );
-              })
+              seasons.map((season) => (
+                <SeasonRow
+                  key={season.id}
+                  season={season}
+                  isSelected={selectedSeason?.id === season.id}
+                  classKey={selectedClass}
+                  onSelect={setSelectedSeason}
+                />
+              ))
             )}
           </div>
         </div>
 
-        {/* ============================================================
-            MAIN STAGE: Podium Display
-            ============================================================ */}
-        <div className={`flex-1 flex flex-col min-h-0 ${!selectedSeason ? 'hidden lg:flex' : 'flex'}`}>
-          {selectedSeason ? (
-            <div className="flex-1 flex flex-col min-h-0">
-              {/* Mobile Back Button */}
-              <div className="lg:hidden flex-shrink-0 p-3 border-b border-cream-500/10 bg-charcoal-950/50">
+        {/* ========================================================
+            MAIN STAGE — Champion plaque + finalists table
+            ======================================================== */}
+        <div className={`flex-1 flex flex-col min-h-0 ${showSidebarOnly ? 'hidden lg:flex' : 'flex'}`}>
+          {!selectedSeason ? (
+            seasons.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center px-4">
+                <NoSeasonsPanel />
+              </div>
+            ) : (
+              <div className="flex-1 flex items-center justify-center px-4">
+                <div className="text-center max-w-sm">
+                  <Trophy className="w-10 h-10 text-gray-700 mx-auto mb-3" />
+                  <p className="text-sm text-gray-400 uppercase tracking-wider">
+                    Select a season from the sidebar
+                  </p>
+                </div>
+              </div>
+            )
+          ) : (
+            <>
+              {/* Mobile back bar */}
+              <div className="lg:hidden flex-shrink-0 px-4 py-2.5 border-b border-[#333] bg-[#1a1a1a]">
                 <button
                   onClick={() => setSelectedSeason(null)}
-                  className="flex items-center gap-2 text-cream-400 hover:text-cream-100 transition-colors"
+                  className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  <span className="text-sm font-display">Back to Seasons</span>
+                  <span className="text-xs font-bold uppercase tracking-wider">Seasons</span>
                 </button>
               </div>
 
-              {/* Season Header */}
-              <div className="flex-shrink-0 p-4 lg:p-6 border-b border-cream-500/10 bg-charcoal-950/30">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-gold-500/30 to-amber-500/30 border-2 border-gold-500/50 flex items-center justify-center">
-                      <ClassIcon className="w-7 h-7 text-gold-400" />
+              {/* Season header strip */}
+              <div className="flex-shrink-0 bg-[#1a1a1a] border-b border-[#333]">
+                <div className="px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-gray-500 mb-0.5">
+                      <span>Championship Record</span>
                     </div>
-                    <div>
-                      <h2 className="text-xl lg:text-2xl font-display font-bold text-cream-100 uppercase tracking-wide">
-                        {formatSeasonName(selectedSeason.seasonName)}
-                      </h2>
-                      <p className="text-sm text-cream-500/60 flex items-center gap-2">
-                        <span>{CLASS_CONFIG[selectedClass]?.name} Division</span>
-                        <span className="text-cream-500/30">•</span>
-                        <span>{selectedSeason.archivedAt?.toLocaleDateString?.() || 'Unknown date'}</span>
-                      </p>
-                    </div>
+                    <h2 className="text-base sm:text-lg font-bold text-white uppercase tracking-wider truncate">
+                      {parseSeasonName(selectedSeason.seasonName).type}{' '}
+                      <span className="text-gray-400 font-data tabular-nums">
+                        {parseSeasonName(selectedSeason.seasonName).year}
+                      </span>
+                    </h2>
+                  </div>
+                  <div className="flex-shrink-0 flex items-center gap-2 text-[10px] uppercase tracking-wider">
+                    <span className="hidden sm:inline-flex items-center gap-1 px-2 py-1 bg-[#0a0a0a] border border-[#333] text-gray-300">
+                      <Users className="w-3 h-3" />
+                      {currentChampions.length} Finalists
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-500 text-black font-bold">
+                      {CLASS_CONFIG[selectedClass]?.name}
+                    </span>
                   </div>
                 </div>
               </div>
 
-              {/* Podium Content */}
-              <div className="flex-1 min-h-0 overflow-y-auto hud-scroll p-4 lg:p-8">
-                {currentChampions.length === 0 ? (
-                  <div className="h-full flex items-center justify-center">
-                    <EmptyState
-                      variant="awaiting"
-                      title="No Champions Recorded"
-                      subtitle={`No ${CLASS_CONFIG[selectedClass]?.name} champions for this season`}
-                    />
-                  </div>
-                ) : (
-                  <div className="max-w-4xl mx-auto">
-                    {/* Podium Layout - 3 Column with center elevated */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                      {/* 2nd Place - Left */}
-                      {currentChampions[1] && (
-                        <m.div
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.2 }}
-                          className="md:order-1"
-                        >
-                          <div className="bg-gradient-to-b from-gray-500/10 to-gray-500/5 border-2 border-gray-400/30 rounded-2xl p-6 text-center">
-                            <div className="w-20 h-20 bg-gray-500/20 border-4 border-gray-400 rounded-full mx-auto mb-4 flex items-center justify-center relative">
-                              <Medal className="w-10 h-10 text-gray-400" />
-                              <div className="absolute -bottom-2 px-2 py-0.5 rounded-full bg-gray-500 text-white text-[10px] font-bold">
-                                2ND
-                              </div>
-                            </div>
-                            <Link
-                              to={`/profile/${currentChampions[1].uid}`}
-                              className="text-xl font-display font-bold text-cream-100 mb-1 hover:text-gray-300 transition-colors block"
-                            >
-                              {currentChampions[1].username}
-                            </Link>
-                            <p className="text-sm text-cream-400 mb-3">{currentChampions[1].corpsName}</p>
-                            <div className="bg-gray-500/10 rounded-xl p-3">
-                              <p className="text-2xl font-mono font-bold text-gray-300">{currentChampions[1].score?.toFixed(3)}</p>
-                              <p className="text-[10px] text-cream-500/60 uppercase tracking-wide">Points</p>
-                            </div>
-                          </div>
-                        </m.div>
+              {/* Body */}
+              <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum">
+                <div className="max-w-3xl mx-auto px-4 sm:px-6 py-5">
+                  {currentChampions.length === 0 ? (
+                    <AwaitingPanel season={selectedSeason} classKey={selectedClass} />
+                  ) : (
+                    <>
+                      {champion && (
+                        <ChampionPlaque
+                          champion={champion}
+                          season={selectedSeason}
+                          classKey={selectedClass}
+                          fieldStats={fieldStats}
+                        />
                       )}
-
-                      {/* 1st Place - Center (Elevated) */}
-                      {currentChampions[0] && (
-                        <m.div
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: 0.1 }}
-                          className="md:order-2 md:-mt-8"
-                        >
-                          <div className="bg-gradient-to-b from-gold-500/20 to-amber-500/10 border-2 border-gold-500/50 rounded-2xl p-8 text-center shadow-[0_0_30px_rgba(234,179,8,0.2)] relative overflow-hidden">
-                            {/* Crown decoration */}
-                            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                              <Crown className="w-8 h-8 text-gold-400" />
-                            </div>
-
-                            <div className="w-24 h-24 bg-gradient-to-br from-gold-500 to-amber-400 rounded-full mx-auto mb-4 flex items-center justify-center relative shadow-[0_0_20px_rgba(234,179,8,0.4)]">
-                              <ClassIcon className="w-12 h-12 text-charcoal-900" />
-                              <div className="absolute -bottom-2 px-3 py-1 rounded-full bg-gold-500 text-charcoal-900 text-xs font-black">
-                                CHAMPION
-                              </div>
-                            </div>
-                            <Link
-                              to={`/profile/${currentChampions[0].uid}`}
-                              className="text-2xl font-display font-bold text-gold-400 mb-1 hover:text-gold-300 transition-colors block"
-                            >
-                              {currentChampions[0].username}
-                            </Link>
-                            <p className="text-lg text-cream-300 mb-4">{currentChampions[0].corpsName}</p>
-                            <div className="bg-gold-500/20 rounded-xl p-4">
-                              <p className="text-3xl font-mono font-bold text-gold-400">{currentChampions[0].score?.toFixed(3)}</p>
-                              <p className="text-xs text-gold-400/60 uppercase tracking-wide">Points</p>
-                            </div>
-                          </div>
-                        </m.div>
-                      )}
-
-                      {/* 3rd Place - Right */}
-                      {currentChampions[2] && (
-                        <m.div
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.3 }}
-                          className="md:order-3"
-                        >
-                          <div className="bg-gradient-to-b from-amber-600/10 to-amber-700/5 border-2 border-amber-600/30 rounded-2xl p-6 text-center">
-                            <div className="w-20 h-20 bg-amber-600/20 border-4 border-amber-600 rounded-full mx-auto mb-4 flex items-center justify-center relative">
-                              <Award className="w-10 h-10 text-amber-600" />
-                              <div className="absolute -bottom-2 px-2 py-0.5 rounded-full bg-amber-600 text-white text-[10px] font-bold">
-                                3RD
-                              </div>
-                            </div>
-                            <Link
-                              to={`/profile/${currentChampions[2].uid}`}
-                              className="text-xl font-display font-bold text-cream-100 mb-1 hover:text-amber-400 transition-colors block"
-                            >
-                              {currentChampions[2].username}
-                            </Link>
-                            <p className="text-sm text-cream-400 mb-3">{currentChampions[2].corpsName}</p>
-                            <div className="bg-amber-600/10 rounded-xl p-3">
-                              <p className="text-2xl font-mono font-bold text-amber-500">{currentChampions[2].score?.toFixed(3)}</p>
-                              <p className="text-[10px] text-cream-500/60 uppercase tracking-wide">Points</p>
-                            </div>
-                          </div>
-                        </m.div>
-                      )}
-                    </div>
-
-                    {/* Additional Finalists */}
-                    {currentChampions.length > 3 && (
-                      <m.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.4 }}
-                        className="mt-8"
-                      >
-                        <h3 className="text-sm font-display font-bold text-cream-400 uppercase tracking-wide mb-4 flex items-center gap-2">
-                          <Star className="w-4 h-4 text-purple-400" />
-                          Additional Finalists
-                        </h3>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                          {currentChampions.slice(3).map((finalist, index) => (
-                            <div
-                              key={finalist.uid}
-                              className="bg-charcoal-900/30 border border-cream-500/10 rounded-xl p-4 text-center"
-                            >
-                              <p className="text-xs text-cream-500/60 mb-1">#{index + 4}</p>
-                              <Link
-                                to={`/profile/${finalist.uid}`}
-                                className="font-display font-bold text-cream-100 hover:text-cream-300 transition-colors block truncate"
-                              >
-                                {finalist.username}
-                              </Link>
-                              <p className="text-xs text-cream-500/60">{finalist.corpsName}</p>
-                              <p className="text-lg font-mono font-bold text-cream-300 mt-2">{finalist.score?.toFixed(3)}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </m.div>
-                    )}
-                  </div>
-                )}
+                      <FinalistsTable champions={currentChampions} />
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-          ) : (
-            /* Empty State - No Season Selected */
-            <div className="flex-1 flex items-center justify-center bg-charcoal-950/30">
-              <EmptyState
-                variant="signal"
-                title="Select a Season"
-                subtitle="Choose a season from the sidebar to view its champions."
-              />
-            </div>
+            </>
           )}
         </div>
       </div>
