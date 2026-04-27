@@ -68,7 +68,6 @@ import { canEditCorpsThisSeason, corpsHasPendingWork } from '../utils/corps';
 import { useHaptic } from '../hooks/useHaptic';
 import { useModalQueue, MODAL_PRIORITY } from '../hooks/useModalQueue';
 import { useSeasonStore } from '../store/seasonStore';
-import { CORPS_CLASS_ORDER } from '../utils/corps';
 
 // OPTIMIZATION #4: Constants moved to src/components/Dashboard/sections/constants.js
 // Imported via: CLASS_LABELS, CAPTIONS, CLASS_DISPLAY_NAMES, getSoundSportRating
