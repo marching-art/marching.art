@@ -45,12 +45,28 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
     }
   }
 
+  // Reject duplicate "new" corps names within the same submission so two
+  // simultaneous decisions can't sneak the same name past the uniqueness check.
+  const newNamesInBatch = new Set();
+  for (const decision of decisions) {
+    if (decision.action !== "new") continue;
+    const normalized = decision.corpsName.toLowerCase().trim();
+    if (newNamesInBatch.has(normalized)) {
+      throw new HttpsError("invalid-argument",
+        `Cannot create two corps with the same name "${decision.corpsName}" in a single submission.`);
+    }
+    newNamesInBatch.add(normalized);
+  }
+
   const db = getDb();
   const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
   const seasonSettingsRef = db.doc("game-settings/season");
 
   try {
     const result = await db.runTransaction(async (transaction) => {
+      // Firestore transactions require all reads before any writes. We must
+      // read the corpsnames reservations for any "new" decisions up front so
+      // we can enforce global name uniqueness atomically.
       const [profileDoc, seasonDoc] = await Promise.all([
         transaction.get(userProfileRef),
         transaction.get(seasonSettingsRef)
@@ -65,6 +81,44 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
       const profileData = profileDoc.data();
       const seasonData = seasonDoc.data();
       const currentSeasonUid = seasonData.seasonUid;
+      const corpsNamesSeasonId = seasonData?.seasonUid || "default";
+
+      // Pre-read every corpsnames doc we may touch (one per "new" or "move").
+      const corpsNameRefForName = (name) =>
+        db.doc(`corpsnames/${corpsNamesSeasonId}_${name.toLowerCase().trim()}`);
+
+      const newDecisionRefs = decisions
+        .filter((d) => d.action === "new")
+        .map((d) => ({ decision: d, ref: corpsNameRefForName(d.corpsName) }));
+
+      const moveDecisionRefs = decisions
+        .filter((d) => d.action === "move")
+        .map((d) => {
+          const existing = profileData.corps?.[d.corpsClass];
+          return existing?.corpsName
+            ? { decision: d, ref: corpsNameRefForName(existing.corpsName) }
+            : null;
+        })
+        .filter(Boolean);
+
+      const newDocsArr = await Promise.all(
+        newDecisionRefs.map(({ ref }) => transaction.get(ref))
+      );
+      const moveDocsArr = await Promise.all(
+        moveDecisionRefs.map(({ ref }) => transaction.get(ref))
+      );
+
+      // Enforce global uniqueness for "new" decisions. Match the strict
+      // behavior of registerCorps: any existing reservation (including this
+      // user's own retired or stale entries) blocks reuse of the name.
+      newDecisionRefs.forEach(({ decision }, i) => {
+        const snap = newDocsArr[i];
+        if (snap.exists) {
+          throw new HttpsError("already-exists",
+            `The corps name "${decision.corpsName}" is already taken. Please choose a different name.`);
+        }
+      });
+
       let updatedCorps = { ...profileData.corps };
       let updatedRetiredCorps = [...(profileData.retiredCorps || [])];
       const corpsNeedingSetup = [];
@@ -219,11 +273,48 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
         }
       }
 
+      // Final-state guard: within this user's active corps, no two classes
+      // may share the same name. This catches scenarios like "move soundSport
+      // → openClass" combined with "new soundSport" using the moved name.
+      const finalNames = [];
+      for (const cls of validClasses) {
+        const name = updatedCorps[cls]?.corpsName;
+        if (name) finalNames.push(name.toLowerCase().trim());
+      }
+      const seen = new Set();
+      for (const name of finalNames) {
+        if (seen.has(name)) {
+          throw new HttpsError("invalid-argument",
+            `Cannot have two active corps with the same name. Each corps name must be unique.`);
+        }
+        seen.add(name);
+      }
+
       // Update profile with activeSeasonId to mark user as having acknowledged the new season
       transaction.update(userProfileRef, {
         corps: updatedCorps,
         retiredCorps: updatedRetiredCorps,
         activeSeasonId: currentSeasonUid
+      });
+
+      // Reserve corpsnames for "new" decisions so the global uniqueness check
+      // in registerCorps (and future processCorpsDecisions calls) sees them.
+      newDecisionRefs.forEach(({ decision, ref }) => {
+        transaction.set(ref, {
+          uid,
+          corpsName: decision.corpsName,
+          corpsClass: decision.corpsClass,
+          seasonId: corpsNamesSeasonId,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      });
+
+      // Keep the corpsClass metadata accurate when corps move between classes.
+      moveDecisionRefs.forEach(({ decision, ref }, i) => {
+        const snap = moveDocsArr[i];
+        if (snap.exists) {
+          transaction.update(ref, { corpsClass: decision.targetClass });
+        }
       });
 
       return { corpsNeedingSetup };
@@ -376,6 +467,9 @@ exports.transferCorps = onCall({ cors: true }, async (request) => {
 
   try {
     const result = await db.runTransaction(async (transaction) => {
+      // Read profile and season first so we can derive the corpsnames key,
+      // then read the corpsnames doc — Firestore requires all reads before
+      // any writes within a transaction.
       const [profileDoc, seasonDoc] = await Promise.all([
         transaction.get(userProfileRef),
         transaction.get(seasonSettingsRef),
@@ -430,6 +524,14 @@ exports.transferCorps = onCall({ cors: true }, async (request) => {
           `"${sourceCorps.corpsName}" has already been transferred this season. Each corps can only move once per season.`);
       }
 
+      // Read the corpsnames reservation so we can keep its class metadata in
+      // sync once the move commits.
+      const corpsNamesSeasonId = seasonData?.seasonUid || "default";
+      const corpsNameRef = db.doc(
+        `corpsnames/${corpsNamesSeasonId}_${sourceCorps.corpsName.toLowerCase().trim()}`
+      );
+      const corpsNameDoc = await transaction.get(corpsNameRef);
+
       // Perform the transfer: move corps data, reset season-specific fields
       const updatedCorps = { ...profileData.corps };
       updatedCorps[toClass] = {
@@ -463,6 +565,22 @@ exports.transferCorps = onCall({ cors: true }, async (request) => {
         corps: updatedCorps,
         corpsTransferHistory: updatedTransferHistory,
       });
+
+      // Keep the corpsnames reservation's class metadata accurate. If no
+      // reservation exists yet (legacy data, or a corps created via the season
+      // setup wizard before reservations were written for "new" decisions),
+      // create one now so the name is properly reserved going forward.
+      if (corpsNameDoc.exists) {
+        transaction.update(corpsNameRef, { corpsClass: toClass });
+      } else {
+        transaction.set(corpsNameRef, {
+          uid,
+          corpsName: sourceCorps.corpsName,
+          corpsClass: toClass,
+          seasonId: corpsNamesSeasonId,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      }
 
       return {
         corpsName: sourceCorps.corpsName,
