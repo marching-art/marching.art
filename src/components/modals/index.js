@@ -5,5 +5,6 @@ export { default as EditCorpsModal } from './EditCorpsModal';
 export { default as DeleteCorpsModal } from './DeleteCorpsModal';
 export { default as RetireCorpsModal } from './RetireCorpsModal';
 export { default as MoveCorpsModal } from './MoveCorpsModal';
+export { default as RenameDuplicateCorpsModal } from './RenameDuplicateCorpsModal';
 export { default as AchievementModal } from './AchievementModal';
 export { default as UniformDesignModal } from './UniformDesignModal';

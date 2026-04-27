@@ -617,6 +617,7 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
   const [loading, setLoading] = useState(null);
   const [testEmail, setTestEmail] = useState('');
   const [newsDay, setNewsDay] = useState('');
+  const [sweepResult, setSweepResult] = useState(null);
 
   const jobs = [
     { id: 'calculateCorpsStatistics', name: 'Calculate Corps Statistics', description: 'Recalculate all corps stats from historical data', icon: Database },
@@ -643,6 +644,20 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
     try {
       await callAdminFunction('sendTestEmail', { email: testEmail.trim() });
       setTestEmail('');
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleSweepDuplicates = async () => {
+    if (!window.confirm(
+      'Run duplicate corps sweep?\n\nThis scans every active corps, flags any that share a name with a higher-priority corps, and forces those directors into a rename modal on next dashboard load.'
+    )) return;
+    setLoading('sweepDuplicates');
+    setSweepResult(null);
+    try {
+      const data = await callAdminFunction('sweepDuplicateCorps', {});
+      setSweepResult(data);
     } finally {
       setLoading(null);
     }
@@ -729,6 +744,81 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
               )}
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* Duplicate Corps Sweep */}
+      <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+        <SectionHeader title="Duplicate Corps Sweep" icon={AlertTriangle} />
+        <div className="p-3 space-y-3">
+          <p className="text-[11px] text-gray-500 leading-relaxed">
+            Scan every active corps for name collisions. The higher-tier corps wins
+            (World &gt; Open &gt; A &gt; SoundSport, ties broken by oldest createdAt). Each
+            loser is flagged so the director sees a rename modal on next dashboard
+            load and is hard-blocked from other corps actions until they pick a unique
+            name. Idempotent — safe to re-run.
+          </p>
+          <button
+            onClick={handleSweepDuplicates}
+            disabled={loading === 'sweepDuplicates'}
+            className="flex items-center gap-1.5 h-9 px-3 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] border border-[#0057B8]/20 hover:bg-[#0057B8] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {loading === 'sweepDuplicates' ? (
+              <RefreshCw className="w-3 h-3 animate-spin" />
+            ) : (
+              <Search className="w-3 h-3" />
+            )}
+            {loading === 'sweepDuplicates' ? 'Scanning…' : 'Run Sweep'}
+          </button>
+          {sweepResult && (
+            <div className="bg-[#111] border border-[#333] p-3 space-y-2">
+              <div className="grid grid-cols-4 gap-2 text-[10px] uppercase tracking-wider">
+                <div>
+                  <div className="text-gray-500">Scanned</div>
+                  <div className="text-sm text-white font-data tabular-nums">{sweepResult.scanned}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500">Flagged</div>
+                  <div className="text-sm text-red-400 font-data tabular-nums">{sweepResult.flagged}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500">Cleared</div>
+                  <div className="text-sm text-green-400 font-data tabular-nums">{sweepResult.cleared}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500">Directors</div>
+                  <div className="text-sm text-white font-data tabular-nums">{sweepResult.directorsAffected}</div>
+                </div>
+              </div>
+              {sweepResult.losers?.length > 0 && (
+                <div className="border-t border-[#333] pt-2 max-h-64 overflow-y-auto">
+                  <div className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">
+                    Flagged Corps
+                  </div>
+                  <table className="w-full text-[11px]">
+                    <thead>
+                      <tr className="text-gray-500 text-left">
+                        <th className="font-normal pb-1">Corps</th>
+                        <th className="font-normal pb-1">Class</th>
+                        <th className="font-normal pb-1">Loses To</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-gray-300">
+                      {sweepResult.losers.map((l, idx) => (
+                        <tr key={`${l.uid}-${l.corpsClass}-${idx}`} className="border-t border-[#222]">
+                          <td className="py-1 pr-2">{l.corpsName}</td>
+                          <td className="py-1 pr-2 text-gray-500">{l.corpsClass}</td>
+                          <td className="py-1 text-gray-500">
+                            {l.winner.corpsName} ({l.winner.corpsClass})
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
