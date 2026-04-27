@@ -110,6 +110,13 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
         throw new HttpsError("not-found", `You must register a ${corpsClass} corps before saving a lineup.`);
       }
 
+      // Hard-block lineup saves while a duplicate-name conflict is unresolved.
+      // The director must rename the corps in the dashboard rename modal first.
+      if (currentCorpsData.mustRename) {
+        throw new HttpsError("failed-precondition",
+          "This corps name conflicts with another director's corps and must be renamed before any further actions.");
+      }
+
       // 5. --- Check Lineup Uniqueness ---
       const newActiveLineupRef = db.collection("activeLineups").doc(lineupKey);
       const existingLineupDoc = await transaction.get(newActiveLineupRef);

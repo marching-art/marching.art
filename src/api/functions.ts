@@ -94,6 +94,41 @@ export interface TransferCorpsResult {
 
 export const transferCorps = createCallable<TransferCorpsData, TransferCorpsResult>('transferCorps');
 
+export interface DuplicateCorpsConflict {
+  winnerUid: string;
+  winnerCorpsClass: string;
+  winnerCorpsName: string;
+}
+
+export interface DuplicateCorpsEntry {
+  corpsClass: string;
+  corpsName: string;
+  conflictsWith: DuplicateCorpsConflict | null;
+}
+
+export const detectMyDuplicateCorps = createCallable<void, { duplicates: DuplicateCorpsEntry[] }>('detectMyDuplicateCorps');
+
+export const renameCorps = createCallable<
+  { corpsClass: string; newName: string },
+  { success: boolean; oldName: string; newName: string }
+>('renameCorps');
+
+export interface SweepDuplicateCorpsResult {
+  success: boolean;
+  scanned: number;
+  flagged: number;
+  cleared: number;
+  directorsAffected: number;
+  losers: Array<{
+    uid: string;
+    corpsClass: string;
+    corpsName: string;
+    winner: { uid: string; corpsClass: string; corpsName: string };
+  }>;
+}
+
+export const sweepDuplicateCorps = createCallable<void, SweepDuplicateCorpsResult>('sweepDuplicateCorps');
+
 // =============================================================================
 // ECONOMY
 // =============================================================================

@@ -35,6 +35,10 @@ const {
   processCorpsDecisions,
   retireCorps,
   unretireCorps,
+  transferCorps,
+  detectMyDuplicateCorps,
+  renameCorps,
+  sweepDuplicateCorps,
 } = require("./src/callable/corps");
 const {
   createLeague,
@@ -219,6 +223,10 @@ module.exports = {
   processCorpsDecisions,
   retireCorps,
   unretireCorps,
+  transferCorps,
+  detectMyDuplicateCorps,
+  renameCorps,
+  sweepDuplicateCorps,
   claimDailyLogin,
   purchaseStreakFreeze,
   getStreakStatus,

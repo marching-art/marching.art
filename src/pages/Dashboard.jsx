@@ -25,6 +25,7 @@ const UniformDesignModal = lazy(() => import('../components/modals/UniformDesign
 const NewsSubmissionModal = lazy(() => import('../components/modals/NewsSubmissionModal'));
 const ClassPurchaseModal = lazy(() => import('../components/modals/ClassPurchaseModal'));
 const NewCorpsSlotModal = lazy(() => import('../components/modals/NewCorpsSlotModal'));
+const RenameDuplicateCorpsModal = lazy(() => import('../components/modals/RenameDuplicateCorpsModal'));
 
 import {
   ClassUnlockCongratsModal,
@@ -62,6 +63,7 @@ import { useScoresData } from '../hooks/useScoresData';
 import { useMyLeagues } from '../hooks/useLeagues';
 import { retireCorps } from '../firebase/functions';
 import { registerCorps, unlockClassWithCorpsCoin, submitNewsForApproval, transferCorps, unretireCorps } from '../api/functions';
+import { CORPS_CLASS_ORDER } from '../utils/corps';
 import { canEditCorpsThisSeason, corpsHasPendingWork } from '../utils/corps';
 import { useHaptic } from '../hooks/useHaptic';
 import { useModalQueue, MODAL_PRIORITY } from '../hooks/useModalQueue';
@@ -315,6 +317,23 @@ const Dashboard = () => {
   // Computed values
   const lineup = useMemo(() => activeCorps?.lineup || {}, [activeCorps?.lineup]);
   const lineupCount = useMemo(() => Object.keys(lineup).length, [lineup]);
+
+  // Surface every corps the admin sweep flagged for rename. The dashboard
+  // hard-blocks all other actions until each one is resolved.
+  const duplicateCorps = useMemo(() => {
+    if (!corps) return [];
+    return CORPS_CLASS_ORDER
+      .map((cls) => {
+        const c = corps[cls];
+        if (!c?.mustRename || !c.corpsName) return null;
+        return {
+          corpsClass: cls,
+          corpsName: c.corpsName,
+          conflictsWith: c.duplicateConflict || null,
+        };
+      })
+      .filter(Boolean);
+  }, [corps]);
 
   const userCorpsScore = useMemo(() => {
     if (!activeCorps) return null;
@@ -790,6 +809,17 @@ const Dashboard = () => {
 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-[#0a0a0a]">
+      {/* Rename-required modal: hard-blocks all dashboard actions until every
+          duplicate-name conflict surfaced by the admin sweep is resolved. */}
+      {duplicateCorps.length > 0 && (
+        <Suspense fallback={null}>
+          <RenameDuplicateCorpsModal
+            duplicates={duplicateCorps}
+            onResolved={refreshProfile}
+          />
+        </Suspense>
+      )}
+
       {/* Season Setup Wizard */}
       {modalQueue.isActive('seasonSetup') && seasonData && (
         <Suspense fallback={null}>
