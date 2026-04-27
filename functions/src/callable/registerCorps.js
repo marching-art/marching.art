@@ -77,9 +77,24 @@ exports.registerCorps = onCall({ cors: true }, async (request) => {
       throw new HttpsError("already-exists", `You already have a corps in the ${corpsClass} class.`);
     }
 
+    // --- 4a. Check the director isn't reusing a name from one of their own
+    // active corps in a different class. The corpsnames reservation below
+    // also covers this, but a missing reservation (legacy data) shouldn't
+    // let the same director slip a duplicate name across classes.
+    const normalizedNewName = corpsName.toLowerCase().trim();
+    if (profileData.corps) {
+      for (const [otherClass, otherCorps] of Object.entries(profileData.corps)) {
+        if (otherClass === corpsClass) continue;
+        if (otherCorps?.corpsName?.toLowerCase().trim() === normalizedNewName) {
+          throw new HttpsError("already-exists",
+            `You already have a corps named "${otherCorps.corpsName}" in ${otherClass}. Each corps name must be unique.`);
+        }
+      }
+    }
+
     // --- 4b. Check if corps name is already taken this season ---
     const seasonId = seasonData?.seasonUid || 'default';
-    const corpsNameKey = `${seasonId}_${corpsName.toLowerCase().trim()}`;
+    const corpsNameKey = `${seasonId}_${normalizedNewName}`;
     const corpsNameRef = db.doc(`corpsnames/${corpsNameKey}`);
     const corpsNameDoc = await corpsNameRef.get();
 
