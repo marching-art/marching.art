@@ -1046,6 +1046,7 @@ exports.sweepDuplicateCorps = onCall({ cors: true, timeoutSeconds: 540 }, async 
 
     return {
       success: true,
+      message: `Sweep complete: ${flagged} flagged, ${cleared} cleared, ${uidsTouched.size} directors affected (scanned ${allCorps.length} corps).`,
       scanned: allCorps.length,
       flagged,
       cleared,
