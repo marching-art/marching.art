@@ -610,6 +610,36 @@ const EnsembleCard = memo(({
 });
 EnsembleCard.displayName = 'EnsembleCard';
 
+// Placeholder card for an unlocked-but-unregistered class
+const UnregisteredEnsembleCard = memo(({ classKey }: { classKey: CorpsClass }) => {
+  const classConfig = CLASS_DISPLAY[classKey] || CLASS_DISPLAY.soundSport;
+  return (
+    <div className="bg-[#0a0a0a] border border-dashed border-[#333]">
+      <div className="px-3 py-2 border-b border-[#333] bg-[#111] flex items-center gap-2">
+        <div className="w-7 h-7 border border-dashed border-[#333] flex items-center justify-center">
+          <Music className="w-3.5 h-3.5 text-gray-600" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-xs font-bold text-gray-400 truncate">Not yet registered</div>
+          <div className={`text-[9px] font-bold ${classConfig.color}`}>{classConfig.name}</div>
+        </div>
+      </div>
+      <div className="px-3 py-3 text-center space-y-2">
+        <p className="text-[10px] text-gray-500">
+          You&apos;ve unlocked {classConfig.name}. Register a corps to start competing.
+        </p>
+        <Link
+          to="/dashboard"
+          className="inline-flex items-center gap-1 text-[10px] text-[#0057B8] hover:underline"
+        >
+          Register on dashboard <ExternalLink className="w-3 h-3" />
+        </Link>
+      </div>
+    </div>
+  );
+});
+UnregisteredEnsembleCard.displayName = 'UnregisteredEnsembleCard';
+
 // Empty state with CTA
 const EmptyWithCTA = memo(({ icon: Icon, title, cta, to }: {
   icon: React.ElementType;
@@ -1038,13 +1068,21 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
       {/* ENSEMBLES */}
       {/* ================================================================== */}
       {(() => {
-        const corpsEntries = profile.corps
-          ? (['world', 'open', 'aClass', 'soundSport'] as CorpsClass[])
-              .map((cls) => ({ classKey: cls, corps: profile.corps![cls] }))
-              .filter(({ corps }) => corps && corps.corpsName)
-          : [];
+        const CLASS_ORDER: CorpsClass[] = ['world', 'open', 'aClass', 'soundSport'];
+        const unlockedClasses = profile.unlockedClasses?.length
+          ? profile.unlockedClasses
+          : (['soundSport'] as CorpsClass[]);
 
-        if (corpsEntries.length === 0) return null;
+        const entries = CLASS_ORDER
+          .filter((cls) => unlockedClasses.includes(cls))
+          .map((cls) => ({ classKey: cls, corps: profile.corps?.[cls] }));
+
+        // On public profiles, hide unregistered classes (no useful info to share).
+        const visibleEntries = isOwnProfile
+          ? entries
+          : entries.filter(({ corps }) => corps && corps.corpsName);
+
+        if (visibleEntries.length === 0) return null;
 
         return (
           <div className="px-3 pt-3">
@@ -1064,16 +1102,20 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
               }
             >
               <div className="p-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {corpsEntries.map(({ classKey, corps }) => (
-                  <EnsembleCard
-                    key={classKey}
-                    corpsName={corps!.corpsName}
-                    classKey={classKey}
-                    location={corps!.location}
-                    avatarUrl={corps!.avatarUrl}
-                    info={corps!.ensembleInfo || {}}
-                  />
-                ))}
+                {visibleEntries.map(({ classKey, corps }) =>
+                  corps && corps.corpsName ? (
+                    <EnsembleCard
+                      key={classKey}
+                      corpsName={corps.corpsName}
+                      classKey={classKey}
+                      location={corps.location}
+                      avatarUrl={corps.avatarUrl}
+                      info={corps.ensembleInfo || {}}
+                    />
+                  ) : (
+                    <UnregisteredEnsembleCard key={classKey} classKey={classKey} />
+                  )
+                )}
               </div>
             </Section>
           </div>
