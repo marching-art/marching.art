@@ -79,15 +79,26 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
   useEscapeKey(onClose);
 
   const availableCorps = useMemo(() => {
-    if (!profile?.corps) return [];
+    const unlocked = profile?.unlockedClasses?.length
+      ? profile.unlockedClasses
+      : ['soundSport'];
     return CLASS_ORDER
-      .filter((cls) => profile.corps[cls]?.corpsName)
-      .map((cls) => ({ classKey: cls, ...profile.corps[cls] }));
-  }, [profile?.corps]);
+      .filter((cls) => unlocked.includes(cls))
+      .map((cls) => {
+        const corps = profile?.corps?.[cls] || {};
+        return {
+          ...corps,
+          classKey: cls,
+          isRegistered: !!corps.corpsName,
+        };
+      });
+  }, [profile?.corps, profile?.unlockedClasses]);
 
   const [activeTab, setActiveTab] = useState('director');
   const [activeEnsembleClass, setActiveEnsembleClass] = useState(
-    availableCorps[0]?.classKey || null
+    availableCorps.find((c) => c.isRegistered)?.classKey ||
+      availableCorps[0]?.classKey ||
+      null
   );
   const [saving, setSaving] = useState(false);
 
@@ -170,9 +181,13 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
         socialLinks: trimmedSocials,
       };
 
-      // Build ensembleInfo payloads per corps
+      // Build ensembleInfo payloads per corps (only for registered ones)
+      const registeredKeys = new Set(
+        availableCorps.filter((c) => c.isRegistered).map((c) => c.classKey)
+      );
       const ensemblePayloads = {};
       Object.entries(ensembles).forEach(([classKey, data]) => {
+        if (!registeredKeys.has(classKey)) return;
         ensemblePayloads[classKey] = {
           tagline: data.tagline.trim(),
           mission: data.mission.trim(),
@@ -203,6 +218,9 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
   };
 
   const currentEnsemble = activeEnsembleClass ? ensembles[activeEnsembleClass] : null;
+  const currentCorps = activeEnsembleClass
+    ? availableCorps.find((c) => c.classKey === activeEnsembleClass)
+    : null;
 
   return (
     <Portal>
@@ -462,18 +480,39 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
                             className={`px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider border ${
                               activeEnsembleClass === corps.classKey
                                 ? 'bg-[#0057B8]/15 border-[#0057B8]/40 text-[#0057B8]'
-                                : 'bg-[#0a0a0a] border-[#333] text-gray-500 hover:text-gray-300'
+                                : corps.isRegistered
+                                ? 'bg-[#0a0a0a] border-[#333] text-gray-500 hover:text-gray-300'
+                                : 'bg-[#0a0a0a] border-dashed border-[#333] text-gray-600 hover:text-gray-400'
                             }`}
                           >
-                            {corps.corpsName}
-                            <span className="ml-1.5 opacity-60">
-                              {CLASS_LABELS[corps.classKey]}
-                            </span>
+                            {corps.isRegistered ? (
+                              <>
+                                {corps.corpsName}
+                                <span className="ml-1.5 opacity-60">
+                                  {CLASS_LABELS[corps.classKey]}
+                                </span>
+                              </>
+                            ) : (
+                              <span>{CLASS_LABELS[corps.classKey]}</span>
+                            )}
                           </button>
                         ))}
                       </div>
 
-                      {currentEnsemble && (
+                      {currentCorps && !currentCorps.isRegistered && (
+                        <div className="pt-3 border-t border-[#333] text-center space-y-2">
+                          <p className="text-sm text-gray-400">
+                            You&apos;ve unlocked {CLASS_LABELS[currentCorps.classKey]}, but
+                            haven&apos;t registered a corps in this class yet.
+                          </p>
+                          <p className="text-[11px] text-gray-500">
+                            Visit your dashboard to register a corps. Once registered, you can
+                            edit ensemble details here.
+                          </p>
+                        </div>
+                      )}
+
+                      {currentEnsemble && currentCorps?.isRegistered && (
                         <div className="space-y-4 pt-2 border-t border-[#333]">
                           <Field label="Tagline" count={`${currentEnsemble.tagline.length}/80`}>
                             <TextInput
