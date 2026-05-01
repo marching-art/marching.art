@@ -15,7 +15,7 @@ import {
   Edit3, Globe, Twitter, Instagram, Youtube, Facebook, MessageCircle,
   BookOpen, Flag, Quote, Share2, UserPlus,
 } from 'lucide-react';
-import type { UserProfile, Achievement, CorpsClass, EnsembleProfileInfo, DirectorSocialLinks } from '../../types';
+import type { UserProfile, Achievement, CorpsClass, CorpsData, EnsembleProfileInfo, DirectorSocialLinks } from '../../types';
 import { formatSeasonName } from '../../utils/season';
 
 // =============================================================================
@@ -1069,18 +1069,39 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
       {/* ================================================================== */}
       {(() => {
         const CLASS_ORDER: CorpsClass[] = ['world', 'open', 'aClass', 'soundSport'];
+        // Some corps are stored under legacy keys ('worldClass', 'openClass')
+        // alongside the canonical ones. Resolve from either.
+        const LEGACY_ALIAS: Record<CorpsClass, string | null> = {
+          world: 'worldClass',
+          open: 'openClass',
+          aClass: null,
+          soundSport: null,
+        };
         const unlockedClasses = profile.unlockedClasses?.length
           ? profile.unlockedClasses
           : (['soundSport'] as CorpsClass[]);
 
+        const resolveCorps = (cls: CorpsClass) => {
+          const corpsMap = (profile.corps || {}) as Record<string, CorpsData | undefined>;
+          const direct = corpsMap[cls];
+          const legacyKey = LEGACY_ALIAS[cls];
+          const legacy = legacyKey ? corpsMap[legacyKey] : undefined;
+          return direct || legacy;
+        };
+        const corpsName = (corps: CorpsData | undefined): string | undefined =>
+          corps?.corpsName || (corps as { name?: string } | undefined)?.name || undefined;
+
         const entries = CLASS_ORDER
           .filter((cls) => unlockedClasses.includes(cls))
-          .map((cls) => ({ classKey: cls, corps: profile.corps?.[cls] }));
+          .map((cls) => {
+            const corps = resolveCorps(cls);
+            return { classKey: cls, corps, name: corpsName(corps) };
+          });
 
         // On public profiles, hide unregistered classes (no useful info to share).
         const visibleEntries = isOwnProfile
           ? entries
-          : entries.filter(({ corps }) => corps && corps.corpsName);
+          : entries.filter(({ name }) => !!name);
 
         if (visibleEntries.length === 0) return null;
 
@@ -1102,11 +1123,11 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
               }
             >
               <div className="p-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {visibleEntries.map(({ classKey, corps }) =>
-                  corps && corps.corpsName ? (
+                {visibleEntries.map(({ classKey, corps, name }) =>
+                  corps && name ? (
                     <EnsembleCard
                       key={classKey}
-                      corpsName={corps.corpsName}
+                      corpsName={name}
                       classKey={classKey}
                       location={corps.location}
                       avatarUrl={corps.avatarUrl}

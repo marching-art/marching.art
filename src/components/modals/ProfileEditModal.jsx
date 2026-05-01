@@ -18,6 +18,26 @@ const CLASS_LABELS = {
 
 const CLASS_ORDER = ['world', 'open', 'aClass', 'soundSport'];
 
+// Some corps are stored under legacy keys alongside the canonical ones.
+const LEGACY_CLASS_ALIAS = {
+  world: 'worldClass',
+  open: 'openClass',
+  aClass: null,
+  soundSport: null,
+};
+
+// Resolve a corps record by canonical class key, falling back to legacy key.
+const resolveCorpsRecord = (corpsMap, classKey) => {
+  if (!corpsMap) return null;
+  const direct = corpsMap[classKey];
+  const legacyKey = LEGACY_CLASS_ALIAS[classKey];
+  const legacy = legacyKey ? corpsMap[legacyKey] : null;
+  return direct || legacy || null;
+};
+
+// Read the display name from either the modern or legacy field.
+const readCorpsName = (corps) => corps?.corpsName || corps?.name || '';
+
 const SPECIALTY_OPTIONS = [
   'General Effect',
   'Visual',
@@ -82,14 +102,23 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
     const unlocked = profile?.unlockedClasses?.length
       ? profile.unlockedClasses
       : ['soundSport'];
+    const corpsMap = profile?.corps || {};
     return CLASS_ORDER
       .filter((cls) => unlocked.includes(cls))
       .map((cls) => {
-        const corps = profile?.corps?.[cls] || {};
+        const direct = corpsMap[cls];
+        const legacyKey = LEGACY_CLASS_ALIAS[cls];
+        const legacy = legacyKey ? corpsMap[legacyKey] : null;
+        const corps = direct || legacy || {};
+        // The Firestore key the corps actually lives under (preserve when writing).
+        const storageKey = direct ? cls : legacy ? legacyKey : cls;
+        const name = readCorpsName(corps);
         return {
           ...corps,
+          corpsName: name,
           classKey: cls,
-          isRegistered: !!corps.corpsName,
+          storageKey,
+          isRegistered: !!name,
         };
       });
   }, [profile?.corps, profile?.unlockedClasses]);
@@ -181,14 +210,18 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
         socialLinks: trimmedSocials,
       };
 
-      // Build ensembleInfo payloads per corps (only for registered ones)
-      const registeredKeys = new Set(
-        availableCorps.filter((c) => c.isRegistered).map((c) => c.classKey)
-      );
+      // Build ensembleInfo payloads per corps (only for registered ones).
+      // Write under the storage key the corps actually lives at so legacy
+      // entries (e.g. corps.openClass) are updated in place.
+      const storageKeyByClass = {};
+      availableCorps.forEach((c) => {
+        if (c.isRegistered) storageKeyByClass[c.classKey] = c.storageKey;
+      });
       const ensemblePayloads = {};
       Object.entries(ensembles).forEach(([classKey, data]) => {
-        if (!registeredKeys.has(classKey)) return;
-        ensemblePayloads[classKey] = {
+        const storageKey = storageKeyByClass[classKey];
+        if (!storageKey) return;
+        ensemblePayloads[storageKey] = {
           tagline: data.tagline.trim(),
           mission: data.mission.trim(),
           history: data.history.trim(),
