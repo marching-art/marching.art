@@ -313,7 +313,7 @@ function App() {
           <Route path="/how-to-play" element={<Navigate to="/guide" replace />} />
 
           {/* Redirect old routes */}
-          <Route path="/hub" element={<Navigate to="/leagues" replace />} />
+          <Route path="/hub" element={<Navigate to="/dashboard" replace />} />
           <Route path="/leaderboard" element={<Navigate to="/scores" replace />} />
           <Route path="/hud" element={<Navigate to="/dashboard" replace />} />
 

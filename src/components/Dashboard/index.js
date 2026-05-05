@@ -35,6 +35,7 @@ export {
   SeasonScorecard,
   RecentResultsFeed,
   LeagueStatus,
+  RivalsPanel,
   DailyChallenges,
   QuickStats,
   LineupSimulatorPanel,

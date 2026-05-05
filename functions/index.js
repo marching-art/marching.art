@@ -107,6 +107,10 @@ const {
   scheduledLifetimeLeaderboardUpdate
 } = require("./src/scheduled/lifetimeLeaderboard");
 const {
+  scheduledRivalsUpdate,
+  updateRivalsNow,
+} = require("./src/scheduled/rivalsComputation");
+const {
   weeklyDigestEmailJob,
   winBackEmailJob,
   streakBrokenEmailJob,
@@ -237,6 +241,10 @@ module.exports = {
   processDailyLiveScores,
   updateLifetimeLeaderboard,
   scheduledLifetimeLeaderboardUpdate,
+
+  // Rivals
+  scheduledRivalsUpdate,
+  updateRivalsNow,
 
   // League Automation (scheduled)
   generateWeeklyMatchups,

@@ -16,7 +16,6 @@ import {
   LayoutDashboard,
   Calendar,
   Trophy,
-  Users,
   User,
   TrendingUp,
   TrendingDown,
@@ -107,7 +106,6 @@ const TopNav = () => {
         <NavItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
         <NavItem to="/schedule" icon={Calendar} label="Schedule" />
         <NavItem to="/scores" icon={Trophy} label="Scores" />
-        <NavItem to="/leagues" icon={Users} label="Leagues" />
         <NavItem to="/profile" icon={User} label="Profile" />
         {isAdmin && <NavItem to="/admin" icon={Shield} label="Admin" />}
       </div>

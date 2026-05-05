@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
-  X, ChevronRight, Check, Trophy, Calendar, Users, Music,
+  X, ChevronRight, Check, Trophy, Calendar, Music,
   HelpCircle, BookOpen, Zap, Target, Star, ArrowRight
 } from 'lucide-react';
 
@@ -33,19 +33,6 @@ const QUICK_START_STEPS = [
       'Weekend shows often have more participants',
       'Register early to secure your spots',
       'Points are based on real DCI scores'
-    ]
-  },
-  {
-    id: 'league',
-    title: 'Join a League',
-    description: 'Compete with friends or join a public league. Track standings and compete for bragging rights!',
-    icon: Users,
-    color: 'blue',
-    action: { label: 'Browse Leagues', target: '/leagues' },
-    tips: [
-      'Create a private league for your friends',
-      'Public leagues are open to everyone',
-      'League standings update after each show'
     ]
   },
   {

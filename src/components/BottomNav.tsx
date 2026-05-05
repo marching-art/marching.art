@@ -1,15 +1,14 @@
 // =============================================================================
 // BOTTOM NAV COMPONENT (TypeScript)
 // =============================================================================
-// Mobile bottom navigation bar with 6 items (matching desktop)
-// News, Dashboard, Schedule, Scores, Leagues, Profile
+// Mobile bottom navigation bar matching desktop nav
+// News, Dashboard, Schedule, Scores, Profile
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Trophy, Users, User, Newspaper, Calendar, LucideIcon } from 'lucide-react';
+import { LayoutDashboard, Trophy, User, Newspaper, Calendar, LucideIcon } from 'lucide-react';
 import { m } from 'framer-motion';
 import { useAuth } from '../App';
-import { useLeagueNotificationBadge } from '../hooks/useLeagueNotifications';
 import { triggerHaptic } from '../hooks/useHaptic';
 import { prefetchRoute } from '../lib/prefetch';
 
@@ -21,11 +20,10 @@ interface NavItem {
   path: string;
   label: string;
   icon: LucideIcon;
-  badgeKey?: 'leagues'; // Used to show notification badges
 }
 
 // =============================================================================
-// CONSTANTS - 6 navigation items (matching desktop)
+// CONSTANTS - 5 navigation items (matching desktop)
 // =============================================================================
 
 const navItems: NavItem[] = [
@@ -33,7 +31,6 @@ const navItems: NavItem[] = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/schedule', label: 'Schedule', icon: Calendar },
   { path: '/scores', label: 'Scores', icon: Trophy },
-  { path: '/leagues', label: 'Leagues', icon: Users, badgeKey: 'leagues' },
   { path: '/profile', label: 'Profile', icon: User },
 ];
 
@@ -43,10 +40,7 @@ const navItems: NavItem[] = [
 
 const BottomNav: React.FC = () => {
   const location = useLocation();
-  const { user } = useAuth();
-
-  // Get notification badge count for leagues
-  const leagueBadge = useLeagueNotificationBadge(user?.uid);
+  const { user: _user } = useAuth();
 
   const isActive = (path: string) => {
     if (path === '/') {
@@ -78,7 +72,6 @@ const BottomNav: React.FC = () => {
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
-            const badgeCount = item.badgeKey === 'leagues' ? leagueBadge.count : 0;
 
             return (
               <Link
@@ -100,7 +93,7 @@ const BottomNav: React.FC = () => {
                   />
                 )}
 
-                {/* Icon with badge - larger on active */}
+                {/* Icon - larger on active */}
                 <div className={`relative z-10 p-1.5 rounded-sm transition-all duration-150 ${active ? 'bg-yellow-500/20' : ''}`}>
                   <Icon
                     className={`w-5 h-5 xs:w-[22px] xs:h-[22px] transition-all duration-150 ${
@@ -108,12 +101,6 @@ const BottomNav: React.FC = () => {
                     }`}
                     aria-hidden="true"
                   />
-                  {/* Notification badge - larger for visibility */}
-                  {badgeCount > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] xs:min-w-[18px] xs:h-[18px] px-0.5 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] xs:text-[11px] font-bold">
-                      {badgeCount > 99 ? '99+' : badgeCount}
-                    </span>
-                  )}
                 </div>
 
                 {/* Label - hidden on very small screens, visible on xs+ */}

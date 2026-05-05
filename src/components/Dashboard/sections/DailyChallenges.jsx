@@ -11,7 +11,6 @@ const CHALLENGE_POOL = [
   { id: 'check-lineup', label: 'Review your lineup', link: null, action: 'lineup', xp: 10 },
   { id: 'visit-scores', label: 'Check the leaderboard', link: '/scores', xp: 10 },
   { id: 'visit-schedule', label: 'View upcoming shows', link: '/schedule', xp: 10 },
-  { id: 'visit-leagues', label: 'Check league standings', link: '/leagues', xp: 10 },
   { id: 'visit-profile', label: 'Visit your profile', link: '/profile', xp: 5 },
   { id: 'read-news', label: 'Read the latest news', link: '/', xp: 5 },
   { id: 'visit-guide', label: 'Review game rules', link: '/guide', xp: 5 },

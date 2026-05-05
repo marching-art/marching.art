@@ -8,7 +8,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { m, AnimatePresence, Variants } from 'framer-motion';
 import {
   Home, Trophy, Calendar, User, Settings, LogOut,
-  Users, X, Menu, Star, Shield, HelpCircle, LucideIcon
+  X, Menu, Star, Shield, HelpCircle, LucideIcon
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { adminHelpers } from '../firebase';
@@ -43,7 +43,6 @@ const navItems: NavItem[] = [
   { path: '/dashboard', label: 'Dashboard', icon: Home },
   { path: '/schedule', label: 'Schedule', icon: Calendar },
   { path: '/scores', label: 'Scores', icon: Trophy },
-  { path: '/leagues', label: 'Leagues', icon: Users },
   { path: '/profile', label: 'Profile', icon: User },
 ];
 
