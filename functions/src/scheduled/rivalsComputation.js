@@ -22,6 +22,22 @@ const SOUNDSPORT_BUCKET = new Set(["soundSport"]);
 const COMPETITIVE_BUCKET = new Set(["worldClass", "openClass", "aClass"]);
 const RIVAL_TARGET = 3;
 
+// SoundSport scores are never revealed to users — only medal designations.
+// Thresholds mirror src/components/Dashboard/sections/constants.js.
+const SOUNDSPORT_MEDAL_TIERS = [
+  { medal: "Gold", min: 90, rank: 3 },
+  { medal: "Silver", min: 75, rank: 2 },
+  { medal: "Bronze", min: 60, rank: 1 },
+  { medal: "Participation", min: 0, rank: 0 },
+];
+
+function medalForScore(score) {
+  for (const tier of SOUNDSPORT_MEDAL_TIERS) {
+    if (score >= tier.min) return tier;
+  }
+  return SOUNDSPORT_MEDAL_TIERS[SOUNDSPORT_MEDAL_TIERS.length - 1];
+}
+
 function bucketFor(corpsClass) {
   if (SOUNDSPORT_BUCKET.has(corpsClass)) return "soundSport";
   if (COMPETITIVE_BUCKET.has(corpsClass)) return "competitive";
@@ -101,17 +117,38 @@ function pickRivalsForEntry(entry, bucketEntries) {
   bucketEntries.forEach((e, i) => bucketRankByUid.set(`${e.uid}:${e.corpsClass}`, i + 1));
   const userRank = bucketRankByUid.get(`${entry.uid}:${entry.corpsClass}`) || null;
 
-  return picks.map((rival) => ({
-    uid: rival.uid,
-    username: rival.username,
-    corpsName: rival.corpsName,
-    corpsClass: rival.corpsClass,
-    score: rival.score,
-    scoreDelta: Number((rival.score - entry.score).toFixed(3)),
-    avatarUrl: rival.avatarUrl,
-    bucketRank: bucketRankByUid.get(`${rival.uid}:${rival.corpsClass}`) || null,
-    userBucketRank: userRank,
-  }));
+  return picks.map((rival) => {
+    const base = {
+      uid: rival.uid,
+      username: rival.username,
+      corpsName: rival.corpsName,
+      corpsClass: rival.corpsClass,
+      avatarUrl: rival.avatarUrl,
+      bucketRank: bucketRankByUid.get(`${rival.uid}:${rival.corpsClass}`) || null,
+      userBucketRank: userRank,
+    };
+
+    // SoundSport never reveals raw scores. Surface medal tier and the user's
+    // own medal so the dashboard / email can render a relative comparison
+    // without leaking numeric scores.
+    if (rival.corpsClass === "soundSport" || entry.corpsClass === "soundSport") {
+      const rivalMedal = medalForScore(rival.score);
+      const userMedal = medalForScore(entry.score);
+      return {
+        ...base,
+        medal: rivalMedal.medal,
+        medalRank: rivalMedal.rank,
+        userMedal: userMedal.medal,
+        userMedalRank: userMedal.rank,
+      };
+    }
+
+    return {
+      ...base,
+      score: rival.score,
+      scoreDelta: Number((rival.score - entry.score).toFixed(3)),
+    };
+  });
 }
 
 async function updateRivalsLogic() {

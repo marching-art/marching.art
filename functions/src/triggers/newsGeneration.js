@@ -33,6 +33,9 @@ const cloudinaryCloudName = defineSecret("CLOUDINARY_CLOUD_NAME");
 const cloudinaryApiKey = defineSecret("CLOUDINARY_API_KEY");
 const cloudinaryApiSecret = defineSecret("CLOUDINARY_API_SECRET");
 
+// Brevo secret needed when this file fans admin notifications out via the email service.
+const { brevoApiKey } = require("../helpers/emailService");
+
 // Pub/Sub topic for news generation requests
 const NEWS_GENERATION_TOPIC = "news-generation-topic";
 
@@ -1756,6 +1759,7 @@ exports.submitNewsForApproval = onCall(
   {
     cors: true,
     timeoutSeconds: 30,
+    secrets: [brevoApiKey],
   },
   async (request) => {
     if (!request.auth) {
@@ -1828,6 +1832,21 @@ exports.submitNewsForApproval = onCall(
         authorUid: request.auth.uid,
         headline: headline.substring(0, 50),
       });
+
+      // Notify admins. Wrapped so an email failure never breaks the user's submission.
+      try {
+        const { fanOutToAdmins, sendAdminArticleSubmissionEmail } =
+          require("../helpers/emailService");
+        await fanOutToAdmins(sendAdminArticleSubmissionEmail, {
+          submissionId: docRef.id,
+          headline: submission.headline,
+          summary: submission.summary,
+          authorName: submission.authorName,
+          category: submission.category,
+        });
+      } catch (notifyErr) {
+        logger.warn("Failed to notify admins of new submission:", notifyErr.message);
+      }
 
       return {
         success: true,

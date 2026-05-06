@@ -13,6 +13,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { FieldValue } = require("firebase-admin/firestore");
+const { brevoApiKey } = require("../helpers/emailService");
 
 // Maximum comment length
 const MAX_COMMENT_LENGTH = 1000;
@@ -534,6 +535,7 @@ exports.reportArticleComment = onCall(
   {
     cors: true,
     timeoutSeconds: 30,
+    secrets: [brevoApiKey],
   },
   async (request) => {
     if (!request.auth) {
@@ -581,7 +583,7 @@ exports.reportArticleComment = onCall(
       }
 
       // Create report
-      await db.collection("article_comments_reports").add({
+      const reportRef = await db.collection("article_comments_reports").add({
         commentId,
         articleId: commentData.articleId,
         commentAuthorId: commentData.userId,
@@ -600,6 +602,30 @@ exports.reportArticleComment = onCall(
         commentId,
         reporterId: request.auth.uid,
       });
+
+      // Notify admins. Best-effort: never bubble up email failures to the reporter.
+      try {
+        const { fanOutToAdmins, sendAdminCommentReportEmail } =
+          require("../helpers/emailService");
+        const reporterRecord = await require("firebase-admin")
+          .auth()
+          .getUser(request.auth.uid)
+          .catch(() => null);
+        const commentExcerpt = (commentData.content || commentData.text || "")
+          .toString()
+          .slice(0, 240);
+
+        await fanOutToAdmins(sendAdminCommentReportEmail, {
+          reportId: reportRef.id,
+          reason: reason.trim(),
+          commentExcerpt,
+          commentAuthor: commentData.username || commentData.displayName || null,
+          reporterName: reporterRecord?.displayName || reporterRecord?.email || null,
+          articleId: commentData.articleId || null,
+        });
+      } catch (notifyErr) {
+        logger.warn("Failed to notify admins of comment report:", notifyErr.message);
+      }
 
       return {
         success: true,
