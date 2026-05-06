@@ -9,7 +9,7 @@ const admin = require("firebase-admin");
 const { getDb, dataNamespaceParam } = require("../config");
 const {
   sendStreakBrokenEmail,
-  sendWeeklyDigestEmail,
+  sendRivalContextEmail,
   sendWinBackEmail,
   brevoApiKey,
   EMAIL_TYPES,
@@ -92,11 +92,169 @@ async function wasEmailRecentlySent(db, uid, emailType, cooldownHours = 24) {
 }
 
 // =============================================================================
-// WEEKLY DIGEST EMAIL (Runs every Sunday at 10 AM)
+// WEEKLY RIVAL-CONTEXT EMAIL (Runs every Sunday at 10 AM)
 // =============================================================================
+//
+// Replaces the legacy "weekly digest" with a personalized rival-context email.
+// We diff each user's current rivals (written daily by scheduledRivalsUpdate)
+// against the snapshot we stored the last time we emailed them. Only users with
+// at least one meaningful change event get an email — quiet weeks send nothing.
+//
+// SoundSport never reveals raw scores; medal-tier transitions are surfaced
+// instead. Rival data shape comes from functions/src/scheduled/rivalsComputation.js.
+
+const MAX_EVENTS_PER_EMAIL = 5;
+
+function computeRivalEvents(currentRivals, priorRivals) {
+  const events = [];
+  if (!currentRivals || typeof currentRivals !== "object") return events;
+  const prior = priorRivals && typeof priorRivals === "object" ? priorRivals : {};
+  const hasPriorAtAll = Object.values(prior).some(
+    (list) => Array.isArray(list) && list.length > 0,
+  );
+
+  for (const classKey of Object.keys(currentRivals)) {
+    const currentList = currentRivals[classKey] || [];
+    const priorList = prior[classKey] || [];
+    if (currentList.length === 0) continue;
+
+    const priorByUid = new Map();
+    priorList.forEach((r) => priorByUid.set(r.uid, r));
+
+    const currentSample = currentList[0];
+    const priorSample = priorList[0];
+    const isSoundSport = classKey === "soundSport";
+
+    // User-level: medal tier change (SoundSport) or class rank change (competitive).
+    if (isSoundSport) {
+      if (
+        currentSample?.userMedal &&
+        priorSample?.userMedal &&
+        currentSample.userMedal !== priorSample.userMedal
+      ) {
+        const movedUp =
+          (currentSample.userMedalRank || 0) > (priorSample.userMedalRank || 0);
+        events.push({
+          priority: 90,
+          color: movedUp ? "#22c55e" : "#ef4444",
+          icon: movedUp ? "🥇" : "🎖️",
+          title: movedUp
+            ? `You moved up to ${currentSample.userMedal}`
+            : `Your medal slipped to ${currentSample.userMedal}`,
+          detail: `Was ${priorSample.userMedal} last week.`,
+        });
+      }
+    } else if (
+      currentSample?.userBucketRank != null &&
+      priorSample?.userBucketRank != null &&
+      currentSample.userBucketRank !== priorSample.userBucketRank
+    ) {
+      const movedUp = currentSample.userBucketRank < priorSample.userBucketRank;
+      events.push({
+        priority: 80,
+        color: movedUp ? "#22c55e" : "#ef4444",
+        icon: movedUp ? "⬆️" : "⬇️",
+        title: movedUp
+          ? `Climbed to #${currentSample.userBucketRank} in your class`
+          : `Dropped to #${currentSample.userBucketRank} in your class`,
+        detail: `Was #${priorSample.userBucketRank} last week.`,
+      });
+    }
+
+    // Per-rival events (passes, medal transitions, new rivals).
+    for (const rival of currentList) {
+      const prev = priorByUid.get(rival.uid);
+      const rivalIsSoundSport =
+        isSoundSport || rival.corpsClass === "soundSport";
+
+      if (!prev) {
+        // Suppress "new rival" noise on the first ever run — only flag once
+        // we've actually emailed before.
+        if (hasPriorAtAll) {
+          events.push({
+            priority: 30,
+            color: "#0057B8",
+            icon: "🆕",
+            title: `New rival: ${rival.corpsName}`,
+            detail: rivalIsSoundSport
+              ? `Closest competitor on the medal ladder.`
+              : `Now one of your closest scores.`,
+          });
+        }
+        continue;
+      }
+
+      if (rivalIsSoundSport) {
+        // Medal transition for the rival.
+        if (rival.medal && prev.medal && rival.medal !== prev.medal) {
+          const movedUp = (rival.medalRank || 0) > (prev.medalRank || 0);
+          events.push({
+            priority: movedUp ? 60 : 55,
+            color: movedUp ? "#eab308" : "#94a3b8",
+            icon: "🎖️",
+            title: movedUp
+              ? `${rival.corpsName} earned ${rival.medal}`
+              : `${rival.corpsName} dropped to ${rival.medal}`,
+            detail: `Was ${prev.medal}.`,
+          });
+        }
+        // Cross above/below the user's medal tier.
+        const prevAhead = (prev.medalRank || 0) > (prev.userMedalRank || 0);
+        const nowAhead = (rival.medalRank || 0) > (rival.userMedalRank || 0);
+        if (prevAhead !== nowAhead) {
+          if (nowAhead) {
+            events.push({
+              priority: 95,
+              color: "#ef4444",
+              icon: "⚠️",
+              title: `${rival.corpsName} jumped above you`,
+              detail: `Their tier (${rival.medal}) is now above yours (${rival.userMedal}).`,
+            });
+          } else {
+            events.push({
+              priority: 95,
+              color: "#22c55e",
+              icon: "🏁",
+              title: `You overtook ${rival.corpsName}`,
+              detail: `Your tier (${rival.userMedal}) is now above theirs (${rival.medal}).`,
+            });
+          }
+        }
+      } else {
+        // Competitive: detect a pass via scoreDelta sign flip.
+        const prevAhead = (prev.scoreDelta || 0) > 0;
+        const nowAhead = (rival.scoreDelta || 0) > 0;
+        if (prevAhead !== nowAhead) {
+          const margin = Math.abs(rival.scoreDelta || 0);
+          if (nowAhead) {
+            events.push({
+              priority: 95,
+              color: "#ef4444",
+              icon: "⚠️",
+              title: `${rival.corpsName} passed you`,
+              detail: `Now ahead by ${margin.toFixed(2)} pts.`,
+            });
+          } else {
+            events.push({
+              priority: 95,
+              color: "#22c55e",
+              icon: "🏁",
+              title: `You passed ${rival.corpsName}`,
+              detail: `Now ahead by ${margin.toFixed(2)} pts.`,
+            });
+          }
+        }
+      }
+    }
+  }
+
+  events.sort((a, b) => (b.priority || 0) - (a.priority || 0));
+  return events.slice(0, MAX_EVENTS_PER_EMAIL);
+}
 
 /**
- * Send weekly digest emails summarizing user performance
+ * Send rival-context emails. Skips users with no rivals data and users whose
+ * rivals haven't meaningfully shifted since last week.
  */
 exports.weeklyDigestEmailJob = onSchedule(
   {
@@ -106,18 +264,13 @@ exports.weeklyDigestEmailJob = onSchedule(
   },
   async () => {
     const db = getDb();
-    const namespace = dataNamespaceParam.value();
 
-    logger.info("Starting weekly digest email job...");
-
-    // Get current season info
-    const seasonDoc = await db.doc("game-settings/season").get();
-    const seasonData = seasonDoc.exists ? seasonDoc.data() : null;
-    const currentWeek = seasonData?.currentWeek || 1;
+    logger.info("Starting weekly rival-context email job...");
 
     let processed = 0;
     let sent = 0;
     let skipped = 0;
+    let noEvents = 0;
     let lastDoc = null;
 
     try {
@@ -142,93 +295,82 @@ exports.weeklyDigestEmailJob = onSchedule(
 
         lastDoc = snapshot.docs[snapshot.docs.length - 1];
 
-        // OPTIMIZATION: Process users in parallel chunks instead of sequentially
         const processUser = async (doc) => {
           const profile = doc.data();
           const uid = doc.ref.parent.parent.id;
 
-          // Check email preferences
           if (!shouldSendEmail(profile, EMAIL_TYPES.WEEKLY_DIGEST)) {
-            return { status: 'skipped', reason: 'preferences' };
+            return { status: "skipped", reason: "preferences" };
           }
 
-          // Get user email
+          const events = computeRivalEvents(
+            profile.rivals,
+            profile.rivalsSnapshotForEmail,
+          );
+          if (events.length === 0) {
+            return { status: "no_events" };
+          }
+
           const email = await getUserEmail(uid);
           if (!email) {
-            return { status: 'skipped', reason: 'no_email' };
+            return { status: "skipped", reason: "no_email" };
           }
 
-          // Calculate weekly stats
-          const corps = profile.corps || {};
-          const totalScore = Object.values(corps).reduce(
-            (sum, c) => sum + (c?.totalSeasonScore || 0),
-            0
-          );
-
-          // Find top performer (simplified - could be enhanced)
-          let topPerformer = null;
-          for (const [, corpsData] of Object.entries(corps)) {
-            if (corpsData?.lineup) {
-              for (const [caption, slot] of Object.entries(corpsData.lineup)) {
-                if (slot?.rating && (!topPerformer || slot.rating > topPerformer.score)) {
-                  topPerformer = {
-                    captionName: slot.staffName || caption,
-                    score: slot.rating,
-                  };
-                }
-              }
-            }
-          }
-
-          // Build digest data
-          const digestData = {
+          const headline = events[0].title;
+          const success = await sendRivalContextEmail(email, {
             username: profile.username || "Director",
-            weekNumber: currentWeek,
-            rankChange: profile.weeklyRankChange || 0,
-            currentRank: profile.globalRank || 0,
-            totalScore,
-            topPerformer,
-            streakDays: profile.engagement?.loginStreak || 0,
-            upcomingMatchup: null, // Could be enhanced to fetch matchup data
-          };
+            headline,
+            events,
+          });
 
-          // Send email
-          const success = await sendWeeklyDigestEmail(email, digestData);
+          if (!success) return { status: "failed" };
 
-          if (success) {
-            await trackEmailSent(db, uid, EMAIL_TYPES.WEEKLY_DIGEST, {
-              week: currentWeek,
-            });
-            return { status: 'sent' };
-          }
+          // Persist current rivals as the new baseline so next week diffs
+          // against what we just emailed.
+          await doc.ref.set(
+            {
+              rivalsSnapshotForEmail: profile.rivals,
+              rivalsSnapshotEmailedAt: admin.firestore.FieldValue.serverTimestamp(),
+            },
+            { merge: true },
+          );
+          await trackEmailSent(db, uid, EMAIL_TYPES.WEEKLY_DIGEST, {
+            eventCount: events.length,
+            headline,
+          });
 
-          return { status: 'failed' };
+          return { status: "sent" };
         };
 
-        // Process batch in parallel chunks
         for (let i = 0; i < snapshot.docs.length; i += PARALLEL_LIMIT) {
           const chunk = snapshot.docs.slice(i, i + PARALLEL_LIMIT);
           const results = await Promise.allSettled(chunk.map(processUser));
 
           for (const result of results) {
             processed++;
-            if (result.status === 'fulfilled') {
-              if (result.value.status === 'sent') sent++;
-              else if (result.value.status === 'skipped') skipped++;
+            if (result.status === "fulfilled") {
+              if (result.value.status === "sent") sent++;
+              else if (result.value.status === "no_events") noEvents++;
+              else skipped++;
             } else {
-              skipped++; // Count errors as skipped
+              skipped++;
             }
           }
         }
       } while (true);
 
-      logger.info(`Weekly digest job complete: ${processed} processed, ${sent} sent, ${skipped} skipped`);
+      logger.info(
+        `Rival-context email job complete: ${processed} processed, ${sent} sent, ${noEvents} quiet weeks, ${skipped} skipped`,
+      );
     } catch (error) {
-      logger.error("Error in weekly digest email job:", error);
+      logger.error("Error in rival-context email job:", error);
       throw error;
     }
-  }
+  },
 );
+
+// Exported for unit-testing the diff logic without spinning up the scheduler.
+exports._computeRivalEvents = computeRivalEvents;
 
 // =============================================================================
 // WIN-BACK CAMPAIGN (Runs daily at 9 AM)

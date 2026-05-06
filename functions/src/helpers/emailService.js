@@ -3,9 +3,11 @@
  * Handles all outbound email communications via Brevo (formerly Sendinblue)
  */
 
+const admin = require("firebase-admin");
 const brevo = require("@getbrevo/brevo");
 const { defineSecret } = require("firebase-functions/params");
 const { logger } = require("firebase-functions/v2");
+const { getDb, dataNamespaceParam } = require("../config");
 
 // Define secrets for Brevo (set via `firebase functions:secrets:set`)
 const brevoApiKey = defineSecret("BREVO_API_KEY");
@@ -30,6 +32,8 @@ const EMAIL_TYPES = {
   LEAGUE_ACTIVITY: "league_activity",
   MATCHUP_RESULT: "matchup_result",
   MILESTONE_ACHIEVED: "milestone_achieved",
+  ADMIN_ARTICLE_SUBMISSION: "admin_article_submission",
+  ADMIN_COMMENT_REPORT: "admin_comment_report",
 };
 
 // Cached Brevo API instance - reused across requests in same instance
@@ -322,77 +326,130 @@ function streakBrokenEmailTemplate({ username, previousStreak }) {
 }
 
 /**
- * Weekly digest email template
+ * Rival-context email template (replaces the legacy weekly digest)
+ *
+ * Renders only meaningful changes vs. the user's last-emailed rivals snapshot:
+ * passes, medal-tier shifts (SoundSport), and class-rank movement. The
+ * scheduler is responsible for skipping the email entirely when events is empty.
+ *
+ * SoundSport entries never reveal raw scores — only medal designations.
  */
-function weeklyDigestEmailTemplate({
-  username,
-  weekNumber,
-  rankChange,
-  currentRank,
-  totalScore,
-  topPerformer,
-  upcomingMatchup,
-  streakDays,
-}) {
-  const rankChangeText = rankChange > 0
-    ? `<span style="color: #22c55e;">↑ ${rankChange}</span>`
-    : rankChange < 0
-      ? `<span style="color: #ef4444;">↓ ${Math.abs(rankChange)}</span>`
-      : `<span style="color: #94a3b8;">—</span>`;
+function rivalContextEmailTemplate({ username, headline, events }) {
+  const safeUsername = username || "Director";
+  const eventList = (events || [])
+    .map((event) => {
+      const detail = event.detail
+        ? `<div style="font-size: 13px; color: #94a3b8; margin-top: 4px;">${event.detail}</div>`
+        : "";
+      return `
+        <li style="margin: 12px 0; padding: 12px 14px; background-color: #0f172a; border-left: 3px solid ${event.color || "#0057B8"}; border-radius: 4px;">
+          <div style="font-weight: 600; color: #f1f5f9;">${event.icon ? event.icon + " " : ""}${event.title}</div>
+          ${detail}
+        </li>
+      `;
+    })
+    .join("");
 
   const content = `
     <div class="content">
-      <h2>Your Week ${weekNumber} Recap 📊</h2>
-      <p>
-        Hey ${username}, here's how you performed this week:
+      <h2 style="color: #ffffff; margin-bottom: 8px;">${headline}</h2>
+      <p style="color: #cbd5e1;">
+        Here's what shifted in your class this week, ${safeUsername}.
       </p>
 
-      <div style="display: flex; gap: 16px; flex-wrap: wrap;">
-        <div class="stat-box" style="flex: 1; min-width: 120px;">
-          <div class="stat-number">#${currentRank}</div>
-          <div class="stat-label">Overall Rank ${rankChangeText}</div>
-        </div>
-
-        <div class="stat-box" style="flex: 1; min-width: 120px;">
-          <div class="stat-number">${totalScore.toFixed(1)}</div>
-          <div class="stat-label">Season Points</div>
-        </div>
-      </div>
-
-      ${topPerformer ? `
-      <div class="stat-box">
-        <p style="margin: 0; color: #94a3b8;">🏆 Top Performer</p>
-        <p style="margin: 8px 0 0; font-size: 18px; font-weight: 600; color: #ffffff;">
-          ${topPerformer.captionName}: ${topPerformer.score.toFixed(2)} pts
-        </p>
-      </div>
-      ` : ''}
-
-      ${streakDays > 0 ? `
-      <p style="text-align: center;">
-        <span style="font-size: 24px;">🔥</span>
-        <span style="color: #f97316; font-weight: 600;">${streakDays}-day streak</span>
-      </p>
-      ` : ''}
-
-      ${upcomingMatchup ? `
-      <div class="divider"></div>
-      <h3 style="color: #ffffff; margin-bottom: 12px;">Next Week Preview</h3>
-      <p>
-        <strong>Matchup:</strong> vs ${upcomingMatchup.opponentName}
-        ${upcomingMatchup.isRival ? '<span style="color: #f97316;"> ⚔️ Rivalry</span>' : ''}
-      </p>
-      ` : ''}
+      <ul style="list-style: none; padding: 0; margin: 16px 0;">
+        ${eventList}
+      </ul>
 
       <p style="text-align: center;">
         <a href="${EMAIL_CONFIG.appUrl}/dashboard" class="button">
-          View Full Stats →
+          See the standings →
         </a>
+      </p>
+
+      <div class="divider"></div>
+      <p style="font-size: 12px; color: #64748b;">
+        You only get this email when something actually changes in your class.
+        Adjust frequency in <a href="${EMAIL_CONFIG.unsubscribeUrl}" style="color: #94a3b8;">Email Preferences</a>.
       </p>
     </div>
   `;
 
-  return emailWrapper(content, `Week ${weekNumber} Recap: Rank #${currentRank} ${rankChange > 0 ? '(↑' + rankChange + ')' : ''}`);
+  return emailWrapper(content, headline);
+}
+
+/**
+ * Admin notification template — new article submitted for approval
+ */
+function adminArticleSubmissionEmailTemplate({ headline, summary, authorName, category, submissionId }) {
+  const reviewUrl = `${EMAIL_CONFIG.appUrl}/admin?tab=submissions&id=${encodeURIComponent(submissionId || "")}`;
+  const content = `
+    <div class="content">
+      <h2 style="color: #ffffff; margin-bottom: 8px;">New article needs review</h2>
+      <p style="color: #cbd5e1;">
+        <strong>${authorName || "A user"}</strong> submitted an article for approval.
+      </p>
+
+      <div style="margin: 16px 0; padding: 14px; background-color: #0f172a; border-radius: 4px;">
+        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 6px;">
+          ${category || "uncategorized"}
+        </div>
+        <div style="font-weight: 600; color: #f1f5f9; margin-bottom: 8px;">${headline || "(no headline)"}</div>
+        <div style="font-size: 13px; color: #94a3b8;">${summary || ""}</div>
+      </div>
+
+      <p style="text-align: center;">
+        <a href="${reviewUrl}" class="button">Review submission →</a>
+      </p>
+    </div>
+  `;
+  return emailWrapper(content, `New submission: ${headline || "(no headline)"}`);
+}
+
+/**
+ * Admin notification template — comment reported / pending moderation
+ */
+function adminCommentReportEmailTemplate({
+  reason,
+  commentExcerpt,
+  commentAuthor,
+  reporterName,
+  articleId,
+  reportId,
+}) {
+  const queueUrl = `${EMAIL_CONFIG.appUrl}/admin?tab=moderation`;
+  const articleUrl = articleId ? `${EMAIL_CONFIG.appUrl}/article/${encodeURIComponent(articleId)}` : null;
+  const content = `
+    <div class="content">
+      <h2 style="color: #ffffff; margin-bottom: 8px;">Comment flagged for review</h2>
+      <p style="color: #cbd5e1;">
+        <strong>${reporterName || "A user"}</strong> reported a comment by
+        <strong>${commentAuthor || "an unknown user"}</strong>.
+      </p>
+
+      ${reason ? `
+      <div style="margin: 16px 0; padding: 12px 14px; background-color: #0f172a; border-left: 3px solid #ef4444; border-radius: 4px;">
+        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 6px;">Reason</div>
+        <div style="color: #f1f5f9;">${reason}</div>
+      </div>
+      ` : ""}
+
+      ${commentExcerpt ? `
+      <div style="margin: 16px 0; padding: 12px 14px; background-color: #0f172a; border-radius: 4px;">
+        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 6px;">Comment</div>
+        <div style="color: #cbd5e1; font-style: italic;">"${commentExcerpt}"</div>
+      </div>
+      ` : ""}
+
+      <p style="text-align: center;">
+        <a href="${queueUrl}" class="button">Open moderation queue →</a>
+      </p>
+      ${articleUrl ? `<p style="font-size: 13px; text-align: center;"><a href="${articleUrl}" style="color: #94a3b8;">View the article in context</a></p>` : ""}
+
+      ${reportId ? `<p style="font-size: 11px; color: #64748b; margin-top: 16px;">Report ID: ${reportId}</p>` : ""}
+    </div>
+  `;
+  return emailWrapper(content, `Comment reported: ${reason || "see admin queue"}`);
 }
 
 /**
@@ -583,15 +640,42 @@ async function sendStreakBrokenEmail(email, username, previousStreak) {
 }
 
 /**
- * Send weekly digest email
+ * Send the rival-context weekly email. Caller is responsible for ensuring
+ * `data.events.length > 0` — this function does not gate on its own.
  */
-async function sendWeeklyDigestEmail(email, digestData) {
-  const html = weeklyDigestEmailTemplate(digestData);
+async function sendRivalContextEmail(email, data) {
+  const html = rivalContextEmailTemplate(data);
   return sendEmail({
     to: email,
-    subject: `📊 Your Week ${digestData.weekNumber} Recap`,
+    subject: data.headline || "Your class moved this week",
     html,
     emailType: EMAIL_TYPES.WEEKLY_DIGEST,
+  });
+}
+
+/**
+ * Notify a single admin about a new article submission.
+ */
+async function sendAdminArticleSubmissionEmail(email, data) {
+  const html = adminArticleSubmissionEmailTemplate(data);
+  return sendEmail({
+    to: email,
+    subject: `[Admin] New article submission: ${data.headline || "(untitled)"}`,
+    html,
+    emailType: EMAIL_TYPES.ADMIN_ARTICLE_SUBMISSION,
+  });
+}
+
+/**
+ * Notify a single admin about a reported / pending comment.
+ */
+async function sendAdminCommentReportEmail(email, data) {
+  const html = adminCommentReportEmailTemplate(data);
+  return sendEmail({
+    to: email,
+    subject: `[Admin] Comment flagged for review`,
+    html,
+    emailType: EMAIL_TYPES.ADMIN_COMMENT_REPORT,
   });
 }
 
@@ -648,6 +732,67 @@ async function sendMilestoneEmail(email, username, milestoneType, milestoneValue
 }
 
 // =============================================================================
+// ADMIN HELPERS
+// =============================================================================
+
+/**
+ * Resolve the email addresses of all admins. Used to fan out notifications
+ * (article submissions, reported comments). Returns [{ uid, email }].
+ *
+ * Admins are identified by `profile.role === "admin"` in the per-user profile
+ * doc at `artifacts/<namespace>/users/<uid>/profile/data`. Email addresses are
+ * pulled from Firebase Auth so we don't have to keep them duplicated in
+ * Firestore.
+ */
+async function getAdminEmails() {
+  const db = getDb();
+  const namespace = dataNamespaceParam.value();
+  const snapshot = await db
+    .collectionGroup("profile")
+    .where("role", "==", "admin")
+    .get();
+
+  if (snapshot.empty) return [];
+
+  const recipients = [];
+  for (const doc of snapshot.docs) {
+    // Profile docs live at artifacts/<ns>/users/<uid>/profile/data.
+    const userPath = doc.ref.parent.parent;
+    if (!userPath) continue;
+    if (!userPath.path.startsWith(`artifacts/${namespace}/users/`)) continue;
+    const uid = userPath.id;
+    try {
+      const userRecord = await admin.auth().getUser(uid);
+      if (userRecord.email) {
+        recipients.push({ uid, email: userRecord.email });
+      }
+    } catch (err) {
+      logger.warn(`Could not resolve admin email for uid ${uid}: ${err.message}`);
+    }
+  }
+  return recipients;
+}
+
+/**
+ * Best-effort fan-out helper: delivers a per-recipient send and swallows errors.
+ * Returns the number of successful deliveries.
+ */
+async function fanOutToAdmins(senderFn, payload) {
+  const recipients = await getAdminEmails();
+  if (recipients.length === 0) {
+    logger.info("No admins configured; skipping admin notification.");
+    return 0;
+  }
+  const results = await Promise.all(
+    recipients.map((r) => senderFn(r.email, payload).catch((err) => {
+      logger.warn(`Admin email send failed to ${r.email}: ${err.message}`);
+      return false;
+    })),
+  );
+  return results.filter(Boolean).length;
+}
+
+// =============================================================================
 // EXPORTS
 // =============================================================================
 
@@ -663,14 +808,22 @@ module.exports = {
   // Email senders
   sendWelcomeEmail,
   sendStreakBrokenEmail,
-  sendWeeklyDigestEmail,
+  sendRivalContextEmail,
   sendWinBackEmail,
   sendLineupReminderEmail,
   sendLeagueActivityEmail,
   sendMilestoneEmail,
+  sendAdminArticleSubmissionEmail,
+  sendAdminCommentReportEmail,
+
+  // Admin fan-out helpers
+  getAdminEmails,
+  fanOutToAdmins,
 
   // Templates (for testing)
   welcomeEmailTemplate,
-  weeklyDigestEmailTemplate,
+  rivalContextEmailTemplate,
   winBackEmailTemplate,
+  adminArticleSubmissionEmailTemplate,
+  adminCommentReportEmailTemplate,
 };
