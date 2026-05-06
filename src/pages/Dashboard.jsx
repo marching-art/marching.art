@@ -42,7 +42,7 @@ import {
   ActiveLineupTable,
   SeasonScorecard,
   RecentResultsFeed,
-  LeagueStatus,
+  RivalsPanel,
   DailyChallenges,
   QuickStats,
   LineupSimulatorPanel,
@@ -316,6 +316,13 @@ const Dashboard = () => {
   // Computed values
   const lineup = useMemo(() => activeCorps?.lineup || {}, [activeCorps?.lineup]);
   const lineupCount = useMemo(() => Object.keys(lineup).length, [lineup]);
+
+  // Rivals are precomputed daily by scheduledRivalsUpdate and stored on the
+  // profile under rivals[<corpsClass>]. Pull the slice for the active corps.
+  const activeCorpsRivals = useMemo(() => {
+    if (!profile?.rivals || !activeCorpsClass) return [];
+    return profile.rivals[activeCorpsClass] || [];
+  }, [profile?.rivals, activeCorpsClass]);
 
   // Surface every corps the admin sweep flagged for rename. The dashboard
   // hard-blocks all other actions until each one is resolved.
@@ -920,7 +927,8 @@ const Dashboard = () => {
                 {/* Daily Challenges - drives daily return visits */}
                 <DailyChallenges onLineupClick={() => openCaptionSelection()} />
 
-                <LeagueStatus leagues={myLeagues} />
+                {/* Rivals - closest competitors in the active corps's class */}
+                <RivalsPanel rivals={activeCorpsRivals} corpsClass={activeCorpsClass} />
 
                 {/* Quick Stats - rotating fun facts about user performance */}
                 <QuickStats

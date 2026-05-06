@@ -7,7 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  Home, Calendar, Trophy, Users, User,
+  Home, Calendar, Trophy, User,
   Menu, Coins, Zap, Settings, LogOut,
   Shield, X, Star
 } from 'lucide-react';
@@ -105,7 +105,6 @@ const mainNavItems: NavItem[] = [
   { path: '/dashboard', label: 'Dashboard', icon: Home },
   { path: '/schedule', label: 'Schedule', icon: Calendar },
   { path: '/scores', label: 'Scores', icon: Trophy },
-  { path: '/leagues', label: 'Leagues', icon: Users },
   { path: '/profile', label: 'Profile', icon: User },
 ];
 
