@@ -477,6 +477,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
           setActiveLineupKeys(new Set(lineupKeys));
 
           let corps = corpsSnap.data().corpsValues || [];
+          corps = corps.filter(c => (c.points || 0) <= 50);
 
           corps = corps.map(c => ({
             ...c,

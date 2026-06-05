@@ -248,7 +248,8 @@ const Onboarding = () => {
 
             if (corpsDataSnap.exists()) {
               const data = corpsDataSnap.data();
-              setAvailableCorps(data.corpsValues || []);
+              const corps = (data.corpsValues || []).filter(c => (c.points || 0) <= 50);
+              setAvailableCorps(corps);
             }
           }
         }
