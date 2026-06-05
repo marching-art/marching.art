@@ -8,10 +8,17 @@
  */
 
 const admin = require("firebase-admin");
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
+const { defineSecret } = require("firebase-functions/params");
 
 admin.initializeApp();
+
+// Shared secret used to authenticate server-to-server calls from the main
+// functions codebase (e.g. startNewLiveSeason / refreshLiveSeasonSchedule)
+// into the HTTP scraper endpoint below. Set via:
+//   firebase functions:secrets:set SCRAPER_INVOKE_KEY
+const scraperInvokeKey = defineSecret("SCRAPER_INVOKE_KEY");
 
 // Puppeteer and Chromium loaded at module level since this codebase only contains scraper
 const puppeteer = require("puppeteer-core");
@@ -241,6 +248,47 @@ const scrapeUpcomingDciEvents = onCall({
   }
 });
 
+/**
+ * HTTP variant of the scraper for server-to-server invocation from the main
+ * functions codebase. Authenticated via the SCRAPER_INVOKE_KEY shared secret.
+ * onCall above remains in place for direct admin invocation from the web UI.
+ */
+const scrapeUpcomingDciEventsHttp = onRequest({
+  cors: false,
+  memory: "1GiB",
+  timeoutSeconds: 300,
+  region: "us-central1",
+  secrets: [scraperInvokeKey],
+}, async (req, res) => {
+  if (req.method !== "POST") {
+    res.status(405).json({ success: false, error: "Method not allowed" });
+    return;
+  }
+
+  const providedKey = req.get("x-invoke-key") || "";
+  const expectedKey = scraperInvokeKey.value();
+  if (!expectedKey) {
+    logger.error("SCRAPER_INVOKE_KEY is not configured. Run: firebase functions:secrets:set SCRAPER_INVOKE_KEY");
+    res.status(500).json({ success: false, error: "Scraper invoke key not configured" });
+    return;
+  }
+  if (providedKey !== expectedKey) {
+    logger.warn("scrapeUpcomingDciEventsHttp called with invalid invoke key");
+    res.status(401).json({ success: false, error: "Unauthorized" });
+    return;
+  }
+
+  const year = Number(req.body?.year) || new Date().getFullYear();
+  try {
+    const events = await scrapeUpcomingDciEventsLogic(year);
+    res.status(200).json({ success: true, events, count: events.length });
+  } catch (error) {
+    logger.error("scrapeUpcomingDciEventsHttp failed:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 module.exports = {
   scrapeUpcomingDciEvents,
+  scrapeUpcomingDciEventsHttp,
 };

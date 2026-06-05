@@ -2,32 +2,69 @@ const { logger } = require("firebase-functions/v2");
 const { getDb, dataNamespaceParam } = require("../config");
 const { Timestamp, getDoc } = require("firebase-admin/firestore");
 const admin = require("firebase-admin");
-const { getFunctions, httpsCallable } = require("firebase-admin/functions");
+const { defineSecret } = require("firebase-functions/params");
+const axios = require("axios");
+
+// Shared secret authenticating calls to the scraper codebase's HTTP endpoint.
+// Set via: firebase functions:secrets:set SCRAPER_INVOKE_KEY
+// Any function that calls scrapeUpcomingDciEvents() must declare this secret
+// in its `secrets: [scraperInvokeKey]` option so it can read the value.
+const scraperInvokeKey = defineSecret("SCRAPER_INVOKE_KEY");
 
 /**
- * Call the isolated scraper function to get upcoming DCI events
- * This avoids bundling heavy Puppeteer/Chromium in main functions (~70MB savings)
+ * Call the isolated scraper function to get upcoming DCI events.
+ * The Puppeteer-based scraper lives in the separate `functions-scraper`
+ * codebase to keep cold starts fast for the main codebase. We invoke it
+ * server-to-server via its HTTP endpoint, authenticated by SCRAPER_INVOKE_KEY.
  * @param {number} year - The year to scrape events for
- * @returns {Promise<Array>} Array of event objects
+ * @returns {Promise<Array>} Array of event objects (empty on failure)
  */
 async function scrapeUpcomingDciEvents(year) {
   logger.info(`[Season] Calling isolated scraper for year ${year}...`);
 
-  try {
-    // Call the isolated scraper function via Firebase callable
-    const functions = getFunctions();
-    const scraper = httpsCallable(functions, "scrapeUpcomingDciEvents");
-    const result = await scraper({ year });
+  const project = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT;
+  if (!project) {
+    logger.error("[Season] GCLOUD_PROJECT env var not set; cannot call scraper.");
+    return [];
+  }
 
-    if (result.data && result.data.success) {
-      logger.info(`[Season] Scraper returned ${result.data.count} events.`);
-      return result.data.events || [];
-    } else {
-      logger.error("[Season] Scraper returned unsuccessful response:", result.data);
-      return [];
+  let invokeKey;
+  try {
+    invokeKey = scraperInvokeKey.value();
+  } catch (e) {
+    logger.error(
+      "[Season] SCRAPER_INVOKE_KEY secret not bound to this function. " +
+      "Add `secrets: [scraperInvokeKey]` to the calling function's options and " +
+      "run `firebase functions:secrets:set SCRAPER_INVOKE_KEY`."
+    );
+    return [];
+  }
+  if (!invokeKey) {
+    logger.error("[Season] SCRAPER_INVOKE_KEY is empty. Run `firebase functions:secrets:set SCRAPER_INVOKE_KEY`.");
+    return [];
+  }
+
+  const url = `https://us-central1-${project}.cloudfunctions.net/scrapeUpcomingDciEventsHttp`;
+
+  try {
+    const response = await axios.post(
+      url,
+      { year },
+      {
+        headers: { "x-invoke-key": invokeKey, "Content-Type": "application/json" },
+        timeout: 290000,
+      }
+    );
+
+    if (response.data && response.data.success) {
+      logger.info(`[Season] Scraper returned ${response.data.count} events.`);
+      return response.data.events || [];
     }
+    logger.error("[Season] Scraper returned unsuccessful response:", response.data);
+    return [];
   } catch (error) {
-    logger.error("[Season] Error calling isolated scraper:", error);
+    const detail = error.response ? `${error.response.status} ${JSON.stringify(error.response.data)}` : error.message;
+    logger.error(`[Season] Error calling isolated scraper: ${detail}`);
     // Return empty array on failure - schedule generation can proceed without events
     return [];
   }
@@ -1439,4 +1476,6 @@ module.exports = {
   getAllScheduleDays,
   updateScheduleDay,
   addShowToDay,
+  // Secrets
+  scraperInvokeKey,
 };

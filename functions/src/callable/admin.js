@@ -1,7 +1,15 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
-const { startNewOffSeason, startNewLiveSeason, archiveSeasonResultsLogic, refreshLiveSeasonSchedule, updateScheduleDay, generateOffSeasonSchedule } = require("../helpers/season");
+const {
+  startNewOffSeason,
+  startNewLiveSeason,
+  archiveSeasonResultsLogic,
+  refreshLiveSeasonSchedule,
+  updateScheduleDay,
+  generateOffSeasonSchedule,
+  scraperInvokeKey,
+} = require("../helpers/season");
 const { processAndArchiveOffSeasonScoresLogic, calculateCorpsStatisticsLogic, processAndScoreLiveSeasonDayLogic } = require("../helpers/scoring");
 const { sendWelcomeEmail, brevoApiKey } = require("../helpers/emailService");
 const { DCI_CORPS_DATA } = require("../scripts/seedDciReference");
@@ -20,7 +28,12 @@ exports.startNewOffSeason = onCall({ cors: true }, async (request) => {
   }
 });
 
-exports.startNewLiveSeason = onCall({ cors: true }, async (request) => {
+exports.startNewLiveSeason = onCall({
+  cors: true,
+  secrets: [scraperInvokeKey],
+  timeoutSeconds: 540,
+  memory: "512MiB",
+}, async (request) => {
   if (!request.auth || !request.auth.token.admin) {
     throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
   }
@@ -34,7 +47,12 @@ exports.startNewLiveSeason = onCall({ cors: true }, async (request) => {
   }
 });
 
-exports.manualTrigger = onCall({ cors: true }, async (request) => {
+exports.manualTrigger = onCall({
+  cors: true,
+  secrets: [scraperInvokeKey],
+  timeoutSeconds: 540,
+  memory: "512MiB",
+}, async (request) => {
   if (!request.auth || !request.auth.token.admin) {
     throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
   }
