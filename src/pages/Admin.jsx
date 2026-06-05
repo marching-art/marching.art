@@ -18,7 +18,7 @@ import { doc, getDoc, collection, getDocs, collectionGroup } from 'firebase/fire
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import { useAuth } from '../App';
-import { ScoresSpreadsheet, ArticleManagement, SubmissionsManagement, CommentsModeration } from '../components/Admin';
+import { ScoresSpreadsheet, ArticleManagement, SubmissionsManagement, CommentsModeration, CorpsValuesEditor } from '../components/Admin';
 import LoadingScreen from '../components/LoadingScreen';
 
 // =============================================================================
@@ -596,6 +596,14 @@ const ContentTab = () => (
       <SectionHeader title="Article Management" icon={FileText} />
       <div className="p-4">
         <ArticleManagement />
+      </div>
+    </div>
+
+    {/* Corps Point Values Editor */}
+    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      <SectionHeader title="Corps Point Values" icon={Database} />
+      <div className="p-4">
+        <CorpsValuesEditor />
       </div>
     </div>
 
