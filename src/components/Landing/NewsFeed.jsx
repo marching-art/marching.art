@@ -1009,6 +1009,10 @@ export default function NewsFeed({ maxItems = 4 }) {
   // When currentDay reaches the season maximum (49), the season is over or ending — lift the
   // gate after 2 AM so all season articles remain visible during the off-season.
   const currentDay = useSeasonStore((state) => state.currentDay);
+  // The active season's UID matches the `seasonId` on its articles. Articles from
+  // prior seasons carry a different seasonId and should never be day-gated, since
+  // their scores are already fully revealed (e.g. last season's finals results).
+  const seasonUid = useSeasonStore((state) => state.seasonUid);
   const effectiveDay = useMemo(() => {
     if (!currentDay) return null;
     const etHour = parseInt(
@@ -1249,9 +1253,17 @@ export default function NewsFeed({ maxItems = 4 }) {
   const filteredNews = useMemo(() => {
     let filtered = news;
 
-    // Day-gate: hide articles for days whose scores aren't visible yet
+    // Day-gate: hide articles for days whose scores aren't visible yet.
+    // Only the active season's articles can spoil scores; once we know the active
+    // season's UID, articles from any other season are left untouched so previous
+    // seasons' recaps (finals winners, etc.) stay readable the moment a new season
+    // resets the day counter to 1.
     if (effectiveDay) {
-      filtered = filtered.filter((story) => !story.reportDay || story.reportDay <= effectiveDay);
+      filtered = filtered.filter((story) => {
+        const isPriorSeason = seasonUid && story.seasonId && story.seasonId !== seasonUid;
+        if (isPriorSeason) return true;
+        return !story.reportDay || story.reportDay <= effectiveDay;
+      });
     }
 
     if (activeCategory !== 'all') {
@@ -1259,7 +1271,7 @@ export default function NewsFeed({ maxItems = 4 }) {
     }
 
     return filtered;
-  }, [news, activeCategory, effectiveDay]);
+  }, [news, activeCategory, effectiveDay, seasonUid]);
 
   // Check if any story is "breaking" (under 1 hour old)
   const hasBreakingNews = useMemo(() => {
