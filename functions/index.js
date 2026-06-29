@@ -18,7 +18,8 @@ const {
   fixProfileFields,
 } = require("./src/callable/users");
 const {
-  validateAndSaveLineup,
+  validateLineup,
+  getActiveLineupKeys,
   saveLineup,
   selectUserShows,
   saveShowConcept,
@@ -171,7 +172,8 @@ module.exports = {
   setUserRole,
   getShowRegistrations,
   getUserRankings,
-  validateAndSaveLineup,
+  validateLineup,
+  getActiveLineupKeys,
   saveLineup,
   selectUserShows,
   saveShowConcept,
