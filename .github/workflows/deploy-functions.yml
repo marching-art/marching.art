@@ -107,6 +107,18 @@ jobs:
             fi
           done
 
+          # Deploy the isolated scraper codebase. It lives in a separate codebase
+          # (functions-scraper) and is NOT covered by the batches above, so a normal
+          # "all" deploy would otherwise leave it stale.
+          echo "::group::Deploying scraper codebase"
+          if firebase deploy --only functions:scraper --force --project marching-art; then
+            echo "Scraper codebase deployed successfully"
+          else
+            echo "::error::Scraper codebase deployment failed"
+            FAILED_BATCHES+=("scraper-codebase")
+          fi
+          echo "::endgroup::"
+
           # Cleanup
           rm -f /tmp/sa-key.json
 

@@ -323,7 +323,7 @@ exports.manualTrigger = onCall({
     }
   } catch (error) {
     logger.error(`Manual trigger for job '${jobName}' failed:`, error);
-    throw new HttpsError("internal", `An error occurred while running ${jobName}.`);
+    throw new HttpsError("internal", `An error occurred while running ${jobName}: ${error.message}`);
   }
 });
 
