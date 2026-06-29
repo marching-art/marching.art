@@ -29,32 +29,34 @@ const SPRING_TRAINING_DAYS = 21;
 async function scrapeUpcomingDciEvents(year) {
   logger.info(`[Season] Calling isolated scraper for year ${year}...`);
 
+  // NOTE: This throws on infrastructure failures (missing config, unbound/empty
+  // secret, transport error, non-2xx, or an unsuccessful scraper response) rather
+  // than silently returning []. A genuine successful response with zero events
+  // still returns []. Callers decide how to react: startNewLiveSeason degrades
+  // gracefully (empty schedule) while the admin refresh surfaces the message.
   const project = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT;
   if (!project) {
-    logger.error("[Season] GCLOUD_PROJECT env var not set; cannot call scraper.");
-    return [];
+    throw new Error("GCLOUD_PROJECT env var not set; cannot locate the scraper endpoint.");
   }
 
   let invokeKey;
   try {
     invokeKey = scraperInvokeKey.value();
   } catch (e) {
-    logger.error(
-      "[Season] SCRAPER_INVOKE_KEY secret not bound to this function. " +
-      "Add `secrets: [scraperInvokeKey]` to the calling function's options and " +
-      "run `firebase functions:secrets:set SCRAPER_INVOKE_KEY`."
+    throw new Error(
+      "SCRAPER_INVOKE_KEY secret not bound to this function. Add `secrets: [scraperInvokeKey]` " +
+      "to the calling function's options and run `firebase functions:secrets:set SCRAPER_INVOKE_KEY`."
     );
-    return [];
   }
   if (!invokeKey) {
-    logger.error("[Season] SCRAPER_INVOKE_KEY is empty. Run `firebase functions:secrets:set SCRAPER_INVOKE_KEY`.");
-    return [];
+    throw new Error("SCRAPER_INVOKE_KEY is empty. Run `firebase functions:secrets:set SCRAPER_INVOKE_KEY`.");
   }
 
   const url = `https://us-central1-${project}.cloudfunctions.net/scrapeUpcomingDciEventsHttp`;
 
+  let response;
   try {
-    const response = await axios.post(
+    response = await axios.post(
       url,
       { year },
       {
@@ -62,19 +64,19 @@ async function scrapeUpcomingDciEvents(year) {
         timeout: 290000,
       }
     );
-
-    if (response.data && response.data.success) {
-      logger.info(`[Season] Scraper returned ${response.data.count} events.`);
-      return response.data.events || [];
-    }
-    logger.error("[Season] Scraper returned unsuccessful response:", response.data);
-    return [];
   } catch (error) {
     const detail = error.response ? `${error.response.status} ${JSON.stringify(error.response.data)}` : error.message;
     logger.error(`[Season] Error calling isolated scraper: ${detail}`);
-    // Return empty array on failure - schedule generation can proceed without events
-    return [];
+    throw new Error(`Scraper request failed: ${detail}`);
   }
+
+  if (!response.data || !response.data.success) {
+    logger.error("[Season] Scraper returned unsuccessful response:", response.data);
+    throw new Error(`Scraper returned an unsuccessful response: ${JSON.stringify(response.data)}`);
+  }
+
+  logger.info(`[Season] Scraper returned ${response.data.count} events.`);
+  return response.data.events || [];
 }
 
 // =============================================================================
