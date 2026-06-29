@@ -40,107 +40,38 @@ jobs:
           cd functions && npm ci
           cd ../functions-scraper && npm ci
 
-      - name: Deploy functions in batches
+      - name: Deploy all functions
         env:
           GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
           # Write service account key to temp file
           echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa-key.json
           export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
+          trap 'rm -f /tmp/sa-key.json' EXIT
 
-          DELAY_SECONDS=75
-          FAILED_BATCHES=()
+          # Single-pass deploy of every codebase (default + scraper). firebase-tools
+          # already deploys functions in parallel waves, skips unchanged functions,
+          # and retries on quota (429) with backoff internally — so the old 24-batch
+          # + fixed-sleep approach was just adding ~30 min of unnecessary waiting.
+          # We add a small outer retry loop to ride out any quota errors that
+          # exhaust the CLI's internal retries; re-runs are cheap because already
+          # deployed functions are skipped.
+          MAX_ATTEMPTS=3
+          ATTEMPT=1
+          DELAY=30
 
-          # Batch ordering: score-critical functions first
-          BATCHES=(
-            "scrapeDciScores,processDailyLiveScores,dailyOffSeasonProcessor,processLiveScoreRecap,processDciScores"
-            "processPaginationPage,onFantasyRecapUpdated,processNewsGeneration,triggerNewsGeneration,triggerDailyNews"
-            "seasonScheduler,updateLifetimeLeaderboard,scheduledLifetimeLeaderboardUpdate,generateWeeklyMatchups"
-            "generateWeeklyRecaps,updateLeagueRivalries,triggerMatchupGeneration"
-            "getDailyNews,getRecentNews,listAllArticles,getArticleForEdit,updateArticle,archiveArticle"
-            "deleteArticle,regenerateArticleImage,submitNewsForApproval,listPendingSubmissions,approveSubmission,rejectSubmission"
-            "weeklyDigestEmailJob,winBackEmailJob,streakBrokenEmailJob"
-            "showReminderPushJob,weeklyMatchupPushJob"
-            "onLeagueMemberJoined,onLeagueChatMessage,onProfileCreated,onStreakMilestoneReached"
-            "onUniformDesignUpdated,generateCorpsAvatar,regenerateAllAvatars"
-            "checkUsername,setUserRole,getShowRegistrations,getUserRankings,migrateUserProfiles"
-            "createUserProfile,dailyXPCheckIn,awardXP,fixProfileFields,updateProfile,getPublicProfile"
-            "updateUsername,updateEmail,deleteAccount"
-            "validateLineup,getActiveLineupKeys,saveLineup,selectUserShows,saveShowConcept,getLineupAnalytics,getHotCorps"
-            "unlockClassWithCorpsCoin,getCorpsCoinHistory,getEarningOpportunities,registerCorps"
-            "processCorpsDecisions,retireCorps,unretireCorps"
-            "createLeague,joinLeague,joinLeagueByCode,leaveLeague,generateMatchups,updateMatchupResults"
-            "postLeagueMessage"
-            "sendCommentNotification,deleteComment,reportComment,claimDailyLogin,purchaseStreakFreeze,getStreakStatus"
-            "toggleArticleReaction,getArticleReactions,getArticleEngagement"
-            "addArticleComment,getArticleComments,editArticleComment,deleteArticleComment,reportArticleComment"
-            "listCommentsForModeration,moderateComment,bulkModerateComments"
-            "startNewOffSeason,startNewLiveSeason,manualTrigger,sendTestEmail,stripeWebhook"
-            "searchYoutubeVideo"
-          )
-
-          TOTAL_BATCHES=${#BATCHES[@]}
-          CURRENT_BATCH=0
-
-          echo "Deploying $TOTAL_BATCHES batches of Cloud Functions..."
-          echo ""
-
-          for batch in "${BATCHES[@]}"; do
-            CURRENT_BATCH=$((CURRENT_BATCH + 1))
-            FUNCTIONS_TO_DEPLOY=$(echo "$batch" | sed 's/,/,functions:/g' | sed 's/^/functions:/')
-
-            echo "::group::[$CURRENT_BATCH/$TOTAL_BATCHES] Deploying: $batch"
-
-            if firebase deploy --only "$FUNCTIONS_TO_DEPLOY" --force --project marching-art; then
-              echo "Batch $CURRENT_BATCH completed successfully"
-            else
-              echo "::error::Batch $CURRENT_BATCH failed: $batch"
-              FAILED_BATCHES+=("$batch")
+          until firebase deploy --only functions --force --project marching-art; do
+            if [ "$ATTEMPT" -ge "$MAX_ATTEMPTS" ]; then
+              echo "::error::Function deployment failed after $MAX_ATTEMPTS attempts."
+              exit 1
             fi
-
-            echo "::endgroup::"
-
-            # Delay between batches (except last)
-            if [ $CURRENT_BATCH -lt $TOTAL_BATCHES ]; then
-              echo "Waiting $DELAY_SECONDS seconds before next batch..."
-              sleep $DELAY_SECONDS
-            fi
+            echo "Deploy attempt $ATTEMPT failed (likely transient/quota). Retrying in ${DELAY}s..."
+            sleep "$DELAY"
+            ATTEMPT=$((ATTEMPT + 1))
+            DELAY=$((DELAY * 2))
           done
 
-          # Deploy the isolated scraper codebase. It lives in a separate codebase
-          # (functions-scraper) and is NOT covered by the batches above, so a normal
-          # "all" deploy would otherwise leave it stale.
-          echo "::group::Deploying scraper codebase"
-          if firebase deploy --only functions:scraper --force --project marching-art; then
-            echo "Scraper codebase deployed successfully"
-          else
-            echo "::error::Scraper codebase deployment failed"
-            FAILED_BATCHES+=("scraper-codebase")
-          fi
-          echo "::endgroup::"
-
-          # Cleanup
-          rm -f /tmp/sa-key.json
-
-          # Summary
-          echo ""
-          echo "=========================================="
-          echo "Deployment Summary"
-          echo "=========================================="
-          echo "Total batches: $TOTAL_BATCHES"
-          echo "Successful: $((TOTAL_BATCHES - ${#FAILED_BATCHES[@]}))"
-          echo "Failed: ${#FAILED_BATCHES[@]}"
-
-          if [ ${#FAILED_BATCHES[@]} -gt 0 ]; then
-            echo ""
-            echo "Failed batches:"
-            for failed in "${FAILED_BATCHES[@]}"; do
-              echo "  - $failed"
-            done
-            exit 1
-          else
-            echo "All functions deployed successfully!"
-          fi
+          echo "All functions deployed successfully!"
 
   deploy-single:
     if: inputs.deploy_target == 'single' && inputs.function_names != ''
