@@ -52,113 +52,95 @@ async function scrapeUpcomingDciEventsLogic(year) {
     logger.info(`[EventScraper] Navigating to ${eventsUrl}`);
     await page.goto(eventsUrl, { waitUntil: "networkidle2", timeout: 60000 });
 
-    await page.waitForSelector("a[href*='/events/']", { timeout: 30000 });
+    // The events list (#event_results) is server-rendered for page 1; subsequent
+    // pages load via AJAX when a pagination link is clicked.
+    await page.waitForSelector(".upcoming-events-box", { timeout: 30000 });
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
-    let currentPage = 1;
-    let hasMorePages = true;
+    // Extracts every event card currently rendered in the list. Each card lives in
+    // a `.upcoming-events-box`; the detail link (with the year-prefixed slug) holds
+    // the name, and the `.upcoming-events-contact` list holds the date and location.
+    const extractCurrentPage = (targetYear) => page.evaluate((yr) => {
+      const events = [];
+      document.querySelectorAll(".upcoming-events-box").forEach((box) => {
+        const nameLink = box.querySelector(".upcoming-events-info-holder p.h4 a") ||
+          box.querySelector(".upcoming-events-info a[href*='/events/']");
 
-    while (hasMorePages) {
-      logger.info(`[EventScraper] Processing page ${currentPage}...`);
+        let url = nameLink ? (nameLink.getAttribute("href") || "") : "";
+        let eventName = nameLink ? nameLink.textContent.trim() : "";
 
-      const eventsOnPage = await page.evaluate((targetYear) => {
-        const events = [];
-        const eventLinks = document.querySelectorAll("a[href*='/events/']");
-        const processedUrls = new Set();
+        if (!eventName) {
+          const img = box.querySelector("img[alt^='Image of']");
+          if (img) eventName = img.alt.replace(/^Image of /, "").trim();
+        }
 
-        eventLinks.forEach((link) => {
-          const href = link.getAttribute("href");
-          if (!href || processedUrls.has(href)) return;
+        // Only keep events for the target year (slug looks like /events/2026-...).
+        const yearMatch = url.match(/\/events\/(\d{4})-/);
+        if (!yearMatch || parseInt(yearMatch[1], 10) !== yr) return;
 
-          const yearMatch = href.match(/\/events\/(\d{4})-/);
-          if (!yearMatch || parseInt(yearMatch[1]) !== targetYear) return;
-
-          processedUrls.add(href);
-
-          const card = link.closest("article") || link.closest("div[class*='event']") || link.parentElement;
-          if (!card) return;
-
-          let eventName = "";
-          const img = card.querySelector("img[alt*='Image of']");
-          if (img) {
-            eventName = img.alt.replace("Image of ", "").trim();
-          } else {
-            const heading = card.querySelector("h1, h2, h3, h4");
-            eventName = heading ? heading.textContent.trim() : link.textContent.trim();
-          }
-
-          let dateStr = "";
-          const dateElements = card.querySelectorAll("span, p, div");
-          for (const el of dateElements) {
-            const text = el.textContent.trim();
-            if (/^\d{1,2}\s+[A-Za-z]{3}$/.test(text) || /^[A-Za-z]{3}\s+\d{1,2}$/.test(text)) {
-              dateStr = text;
-              break;
-            }
-          }
-
-          let location = "";
-          for (const el of dateElements) {
-            const text = el.textContent.trim();
-            if (/^[A-Za-z\s]+,\s*[A-Z]{2}$/.test(text)) {
-              location = text;
-              break;
-            }
-          }
-
-          if (eventName) {
-            events.push({ eventName, dateStr, location, url: href });
+        let dateStr = "";
+        let location = "";
+        box.querySelectorAll(".upcoming-events-contact li span").forEach((span) => {
+          const text = span.textContent.trim();
+          if (!dateStr && (/^\d{1,2}\s+[A-Za-z]{3}$/.test(text) || /^[A-Za-z]{3}\s+\d{1,2}$/.test(text))) {
+            dateStr = text;
+          } else if (!location && /^[A-Za-z.\s]+,\s*[A-Z]{2}$/.test(text)) {
+            location = text;
           }
         });
 
-        return events;
-      }, year);
+        if (eventName && url) {
+          events.push({ eventName, dateStr, location, url });
+        }
+      });
+      return events;
+    }, targetYear);
 
-      logger.info(`[EventScraper] Found ${eventsOnPage.length} events on page ${currentPage}`);
-      allEvents.push(...eventsOnPage);
+    // Read total page count from the "<current> from <total>" pagination indicator.
+    const totalPages = await page.evaluate(() => {
+      const total = document.querySelector("#pagination .total, .pagination .total");
+      return total ? (parseInt(total.textContent.trim(), 10) || 1) : 1;
+    });
+    logger.info(`[EventScraper] Pagination reports ${totalPages} page(s).`);
 
-      const hasNextButton = await page.evaluate(() => {
-        const paginationText = document.body.innerText;
-        const match = paginationText.match(/(\d+)\s+from\s+(\d+)/);
-        if (match) {
-          const current = parseInt(match[1]);
-          const total = parseInt(match[2]);
-          return current < total;
+    const PAGE_LIMIT = 30;
+    let currentPage = 1;
+    allEvents.push(...await extractCurrentPage(year));
+    logger.info(`[EventScraper] Found ${allEvents.length} events on page 1`);
+
+    while (currentPage < totalPages && currentPage < PAGE_LIMIT) {
+      const nextPage = currentPage + 1;
+
+      const clicked = await page.evaluate((np) => {
+        const link = document.querySelector(`.pagination-link[data-page="${np}"]`);
+        if (link) {
+          link.click();
+          return true;
         }
         return false;
-      });
+      }, nextPage);
 
-      if (hasNextButton) {
-        const nextClicked = await page.evaluate(() => {
-          const nextBtn = document.querySelector("a.next, button.next, [aria-label='Next'], .pagination-next");
-          if (nextBtn) {
-            nextBtn.click();
-            return true;
-          }
-          const paginationLinks = document.querySelectorAll(".pagination a, nav[aria-label*='pagination'] a");
-          for (const link of paginationLinks) {
-            if (link.textContent.trim() === String(parseInt(document.querySelector(".current, .active")?.textContent || "1") + 1)) {
-              link.click();
-              return true;
-            }
-          }
-          return false;
-        });
-
-        if (nextClicked) {
-          currentPage++;
-          await new Promise((resolve) => setTimeout(resolve, 3000));
-        } else {
-          hasMorePages = false;
-        }
-      } else {
-        hasMorePages = false;
+      if (!clicked) {
+        logger.warn(`[EventScraper] Could not find pagination link for page ${nextPage}. Stopping.`);
+        break;
       }
 
-      if (currentPage > 20) {
-        logger.warn("[EventScraper] Reached page limit (20), stopping pagination.");
-        hasMorePages = false;
+      // Wait for the AJAX swap to complete: the ".current" indicator updates to the
+      // new page number once #event_results has been re-rendered.
+      try {
+        await page.waitForFunction((np) => {
+          const cur = document.querySelector("#pagination .current, .pagination .current");
+          return cur && parseInt(cur.textContent.trim(), 10) === np;
+        }, { timeout: 30000 }, nextPage);
+      } catch (e) {
+        logger.warn(`[EventScraper] Timed out waiting for page ${nextPage} to load; falling back to fixed delay.`);
+        await new Promise((resolve) => setTimeout(resolve, 3000));
       }
+
+      currentPage = nextPage;
+      const eventsOnPage = await extractCurrentPage(year);
+      logger.info(`[EventScraper] Found ${eventsOnPage.length} events on page ${currentPage}`);
+      allEvents.push(...eventsOnPage);
     }
 
     // Parse date strings into proper dates

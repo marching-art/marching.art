@@ -11,6 +11,13 @@ const axios = require("axios");
 // in its `secrets: [scraperInvokeKey]` option so it can read the value.
 const scraperInvokeKey = defineSecret("SCRAPER_INVOKE_KEY");
 
+// The live season opens with a spring-training period before competition day 1.
+// startDate (stored in game-settings/season) is calendar day 1; competition day
+// (offSeasonDay) 1 falls SPRING_TRAINING_DAYS calendar days later. This must match
+// the offset used when scoring in scheduled/dailyProcessors.js, otherwise scraped
+// events land on the wrong schedule day.
+const SPRING_TRAINING_DAYS = 21;
+
 /**
  * Call the isolated scraper function to get upcoming DCI events.
  * The Puppeteer-based scraper lives in the separate `functions-scraper`
@@ -368,7 +375,7 @@ async function generateLiveSeasonSchedule(seasonLength, startDay, finalsYear, st
     const upcomingEvents = await scrapeUpcomingDciEvents(finalsYear);
     logger.info(`Found ${upcomingEvents.length} upcoming events to map to schedule.`);
 
-    // Map each event to its corresponding offSeasonDay
+    // Map each event to its corresponding offSeasonDay (competition day)
     const millisInDay = 24 * 60 * 60 * 1000;
 
     for (const event of upcomingEvents) {
@@ -376,10 +383,12 @@ async function generateLiveSeasonSchedule(seasonLength, startDay, finalsYear, st
 
       const eventDate = new Date(event.date);
 
-      // Calculate which offSeasonDay this event falls on
-      // offSeasonDay 1 = startDate, offSeasonDay 49 = finalsDate
+      // startDate is calendar day 1. The first SPRING_TRAINING_DAYS calendar days
+      // are spring training, so competition day (offSeasonDay) = calendarDay - 21.
+      // offSeasonDay 1 = startDate + 21 days, offSeasonDay 49 = finalsDate.
       const diffFromStart = eventDate.getTime() - startDate.getTime();
-      const dayNumber = Math.floor(diffFromStart / millisInDay) + 1;
+      const calendarDay = Math.floor(diffFromStart / millisInDay) + 1;
+      const dayNumber = calendarDay - SPRING_TRAINING_DAYS;
 
       // Only include events within days 1-44 (non-championship days)
       if (dayNumber >= 1 && dayNumber <= 44) {
@@ -1408,6 +1417,7 @@ async function refreshLiveSeasonSchedule() {
   const startDate = seasonData.schedule.startDate.toDate();
   const finalsDate = seasonData.schedule.endDate.toDate();
   const year = finalsDate.getFullYear();
+  const springTrainingDays = seasonData.schedule.springTrainingDays || SPRING_TRAINING_DAYS;
 
   try {
     logger.info(`Scraping upcoming DCI events for ${year}...`);
@@ -1421,8 +1431,10 @@ async function refreshLiveSeasonSchedule() {
       if (!event.date) continue;
 
       const eventDate = new Date(event.date);
+      // startDate is calendar day 1; competition day = calendarDay - springTrainingDays.
       const diffFromStart = eventDate.getTime() - startDate.getTime();
-      const dayNumber = Math.floor(diffFromStart / millisInDay) + 1;
+      const calendarDay = Math.floor(diffFromStart / millisInDay) + 1;
+      const dayNumber = calendarDay - springTrainingDays;
 
       // Only include events within days 1-44 (non-championship days)
       if (dayNumber >= 1 && dayNumber <= 44) {
