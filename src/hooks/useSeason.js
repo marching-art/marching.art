@@ -37,7 +37,11 @@ export const getSeasonProgress = (seasonData) => {
   const startDate = seasonData.schedule.startDate.toDate();
   const now = new Date();
   const diffInMillis = now.getTime() - startDate.getTime();
-  const currentDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1;
+  // Subtract the live-season spring-training period so Competition Day 1 begins
+  // after spring training (off-seasons have no spring training -> 0). Matches the
+  // backend day mapping in scheduled/dailyProcessors.js.
+  const springTrainingDays = seasonData.schedule.springTrainingDays || 0;
+  const currentDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1 - springTrainingDays;
   const currentWeek = Math.ceil(currentDay / 7);
 
   return {
