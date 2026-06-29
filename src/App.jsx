@@ -1,5 +1,5 @@
 // src/App.jsx
-import React, { useEffect, useMemo, createContext, useContext, lazy, Suspense } from 'react';
+import React, { useEffect, useMemo, createContext, useContext, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -31,30 +31,33 @@ import { useUserStore } from './store/userStore';
 import { useProfileStore } from './store/profileStore';
 import OfflineBanner from './components/OfflineBanner';
 import { SkipToContent } from './components/a11y';
+import { lazyWithRetry } from './utils/lazyWithRetry';
 
-// Lazy load pages for better performance
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Schedule = lazy(() => import('./pages/Schedule'));
-const Scores = lazy(() => import('./pages/Scores'));
-const Profile = lazy(() => import('./pages/Profile'));
+// Lazy load pages for better performance.
+// lazyWithRetry auto-reloads once on stale-chunk errors after a new deploy
+// (old hashed chunks 404 -> "Failed to fetch dynamically imported module").
+const Dashboard = lazyWithRetry(() => import('./pages/Dashboard'), 'Dashboard');
+const Schedule = lazyWithRetry(() => import('./pages/Schedule'), 'Schedule');
+const Scores = lazyWithRetry(() => import('./pages/Scores'), 'Scores');
+const Profile = lazyWithRetry(() => import('./pages/Profile'), 'Profile');
 // Settings is now integrated into Profile page
-const HallOfChampions = lazy(() => import('./pages/HallOfChampions'));
-const Admin = lazy(() => import('./pages/Admin'));
-const Leagues = lazy(() => import('./pages/Leagues'));
-const Onboarding = lazy(() => import('./pages/Onboarding'));
-const Login = lazy(() => import('./pages/Login'));
-const Register = lazy(() => import('./pages/Register'));
-const Landing = lazy(() => import('./pages/Landing'));
-const RetiredCorpsGallery = lazy(() => import('./pages/RetiredCorpsGallery'));
-const CorpsHistory = lazy(() => import('./pages/CorpsHistory'));
-const SoundSport = lazy(() => import('./pages/SoundSport'));
-const Privacy = lazy(() => import('./pages/Privacy'));
-const Terms = lazy(() => import('./pages/Terms'));
-const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
-const Article = lazy(() => import('./pages/Article'));
-const HowToPlay = lazy(() => import('./pages/HowToPlay'));
-const NotFound = lazy(() => import('./pages/NotFound'));
-const GuestDashboard = lazy(() => import('./pages/GuestDashboard'));
+const HallOfChampions = lazyWithRetry(() => import('./pages/HallOfChampions'), 'HallOfChampions');
+const Admin = lazyWithRetry(() => import('./pages/Admin'), 'Admin');
+const Leagues = lazyWithRetry(() => import('./pages/Leagues'), 'Leagues');
+const Onboarding = lazyWithRetry(() => import('./pages/Onboarding'), 'Onboarding');
+const Login = lazyWithRetry(() => import('./pages/Login'), 'Login');
+const Register = lazyWithRetry(() => import('./pages/Register'), 'Register');
+const Landing = lazyWithRetry(() => import('./pages/Landing'), 'Landing');
+const RetiredCorpsGallery = lazyWithRetry(() => import('./pages/RetiredCorpsGallery'), 'RetiredCorpsGallery');
+const CorpsHistory = lazyWithRetry(() => import('./pages/CorpsHistory'), 'CorpsHistory');
+const SoundSport = lazyWithRetry(() => import('./pages/SoundSport'), 'SoundSport');
+const Privacy = lazyWithRetry(() => import('./pages/Privacy'), 'Privacy');
+const Terms = lazyWithRetry(() => import('./pages/Terms'), 'Terms');
+const ForgotPassword = lazyWithRetry(() => import('./pages/ForgotPassword'), 'ForgotPassword');
+const Article = lazyWithRetry(() => import('./pages/Article'), 'Article');
+const HowToPlay = lazyWithRetry(() => import('./pages/HowToPlay'), 'HowToPlay');
+const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'NotFound');
+const GuestDashboard = lazyWithRetry(() => import('./pages/GuestDashboard'), 'GuestDashboard');
 
 // Helper component to wrap pages with error boundaries
 const Page = ({ name, children }) => (
