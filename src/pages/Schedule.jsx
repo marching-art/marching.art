@@ -642,8 +642,12 @@ const Schedule = () => {
   const getActualDate = useCallback((dayNumber) => {
     if (!seasonData?.schedule?.startDate) return null;
     const startDate = seasonData.schedule.startDate.toDate();
+    // Competition Day N falls on the Nth competition day, which starts after the
+    // spring-training period: startDate + springTrainingDays + (N - 1).
+    // Off-seasons have no spring training (field absent -> 0).
+    const springTrainingDays = seasonData.schedule.springTrainingDays || 0;
     const actualDate = new Date(startDate);
-    actualDate.setDate(startDate.getDate() + dayNumber);
+    actualDate.setDate(startDate.getDate() + springTrainingDays + dayNumber - 1);
     return actualDate;
   }, [seasonData]);
 

@@ -90,7 +90,14 @@ export const useSeasonStore = create((set, get) => ({
             const nowDateObj = new Date(nowET + 'T00:00:00Z');
             const diffInDays = Math.floor((nowDateObj - startDateObj) / (1000 * 60 * 60 * 24));
 
-            currentDay = Math.max(1, Math.min(diffInDays + 1, 49));
+            // Live seasons begin with a spring-training period (schedule.springTrainingDays)
+            // before competition starts; Competition Day 1 is the first day AFTER spring
+            // training, matching the backend (scheduled/dailyProcessors.js). Off-seasons
+            // have no spring training (field absent -> 0).
+            const springTrainingDays = data.schedule.springTrainingDays || 0;
+            const competitionDay = diffInDays + 1 - springTrainingDays;
+
+            currentDay = Math.max(1, Math.min(competitionDay, 49));
             currentWeek = Math.max(1, Math.ceil(currentDay / 7));
           }
 
