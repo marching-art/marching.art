@@ -434,6 +434,10 @@ const Article = () => {
   // When currentDay reaches the season maximum (49), the season is over or ending — lift the
   // gate after 2 AM so all season articles remain accessible during the off-season.
   const currentDay = useSeasonStore((state) => state.currentDay);
+  // The active season's UID matches the `seasonId` on its articles. A prior
+  // season's article carries a different seasonId and is never day-gated, so a
+  // direct link to last season's finals recap stays readable after a reset.
+  const seasonUid = useSeasonStore((state) => state.seasonUid);
   const effectiveDay = useMemo(() => {
     if (!currentDay) return null;
     const etHour = parseInt(
@@ -449,7 +453,8 @@ const Article = () => {
     const day = etHour < 2 ? currentDay - 2 : currentDay - 1;
     return day >= 1 ? day : null;
   }, [currentDay]);
-  const isDayGated = article && effectiveDay && article.reportDay > effectiveDay;
+  const isPriorSeasonArticle = seasonUid && article?.seasonId && article.seasonId !== seasonUid;
+  const isDayGated = article && effectiveDay && !isPriorSeasonArticle && article.reportDay > effectiveDay;
 
   if (loading) {
     return (
