@@ -48,7 +48,6 @@ export interface RegisterCorpsData {
 export const registerCorps = createCallable<RegisterCorpsData, { success: boolean }>('registerCorps');
 export const saveLineup = createCallable<{ corpsClass: string; lineup: Record<string, string>; forceUpdate?: boolean }, void>('saveLineup');
 export const selectUserShows = createCallable<{ corpsClass: string; showIds: string[] }, void>('selectUserShows');
-export const validateAndSaveLineup = createCallable<{ corpsClass: string; lineup: unknown }, { valid: boolean }>('validateAndSaveLineup');
 export const saveShowConcept = createCallable<{ corpsClass: string; showConcept: string }, void>('saveShowConcept');
 
 // Lineup validation

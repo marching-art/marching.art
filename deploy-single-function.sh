@@ -17,7 +17,7 @@ if [ $# -eq 0 ]; then
     echo ""
     echo "  User: checkUsername, setUserRole, getShowRegistrations, getUserRankings, migrateUserProfiles"
     echo "  Profile: createUserProfile, dailyXPCheckIn, awardXP, updateProfile, getPublicProfile"
-    echo "  Lineups: validateAndSaveLineup, saveLineup, selectUserShows, saveShowConcept, getLineupAnalytics, getHotCorps"
+    echo "  Lineups: validateLineup, getActiveLineupKeys, saveLineup, selectUserShows, saveShowConcept, getLineupAnalytics, getHotCorps"
     echo "  Economy: unlockClassWithCorpsCoin, getCorpsCoinHistory, getEarningOpportunities, registerCorps"
     echo "  Corps: processCorpsDecisions, retireCorps, unretireCorps"
     echo "  Leagues: createLeague, joinLeague, leaveLeague, generateMatchups, updateMatchupResults, postLeagueMessage"

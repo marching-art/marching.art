@@ -18,7 +18,6 @@ export const getUserRankings = httpsCallable(functions, 'getUserRankings');
 export const registerCorps = httpsCallable(functions, 'registerCorps');
 export const saveLineup = httpsCallable(functions, 'saveLineup');
 export const selectUserShows = httpsCallable(functions, 'selectUserShows');
-export const validateAndSaveLineup = httpsCallable(functions, 'validateAndSaveLineup');
 export const saveShowConcept = httpsCallable(functions, 'saveShowConcept');
 
 // ========================================

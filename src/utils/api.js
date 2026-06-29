@@ -10,7 +10,6 @@ export const getShowRegistrations = (data) => httpsCallable(functions, 'getShowR
 export const getUserRankings = (data) => httpsCallable(functions, 'getUserRankings')(data);
 
 // Lineup & Corps Functions
-export const validateAndSaveLineup = (data) => httpsCallable(functions, 'validateAndSaveLineup')(data);
 export const selectUserShows = (data) => httpsCallable(functions, 'selectUserShows')(data);
 
 // League Functions

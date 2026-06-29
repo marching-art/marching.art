@@ -77,7 +77,7 @@ BATCH10="checkUsername,setUserRole,getShowRegistrations,getUserRankings,migrateU
 BATCH11="createUserProfile,dailyXPCheckIn,awardXP,updateProfile,getPublicProfile"
 
 # Batch 12: Lineup functions
-BATCH12="validateAndSaveLineup,saveLineup,selectUserShows,saveShowConcept,getLineupAnalytics,getHotCorps"
+BATCH12="validateLineup,getActiveLineupKeys,saveLineup,selectUserShows,saveShowConcept,getLineupAnalytics,getHotCorps"
 
 # Batch 13: Economy functions
 BATCH13="unlockClassWithCorpsCoin,getCorpsCoinHistory,getEarningOpportunities,registerCorps"
