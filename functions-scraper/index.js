@@ -3,7 +3,7 @@
  *
  * This codebase is separate from the main functions to:
  * - Reduce cold start time for all other functions (~800ms-1.2s savings)
- * - Allow independent memory allocation (1GB for scraper vs 256MB default)
+ * - Allow independent memory allocation (2GB for scraper vs 256MB default)
  * - Keep heavy Chromium/Puppeteer dependencies isolated
  */
 
@@ -205,12 +205,12 @@ async function scrapeUpcomingDciEventsLogic(year) {
 /**
  * Callable function to scrape upcoming DCI events
  * Requires admin authentication
- * Memory: 1GB (required for Chromium)
+ * Memory: 2GB (required for Chromium paging through all event pages)
  * Timeout: 300s (scraping can take time)
  */
 const scrapeUpcomingDciEvents = onCall({
   cors: true,
-  memory: "1GiB",
+  memory: "2GiB",
   timeoutSeconds: 300,
   region: "us-central1",
 }, async (request) => {
@@ -237,7 +237,7 @@ const scrapeUpcomingDciEvents = onCall({
  */
 const scrapeUpcomingDciEventsHttp = onRequest({
   cors: false,
-  memory: "1GiB",
+  memory: "2GiB",
   timeoutSeconds: 300,
   region: "us-central1",
   secrets: [scraperInvokeKey],
