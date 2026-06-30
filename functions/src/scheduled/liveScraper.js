@@ -81,7 +81,13 @@ async function scrapeLatestLiveScores({ force = false } = {}) {
 
   // Check if we've already scraped today to avoid duplicate processing.
   // A forced (manual) run bypasses this guard.
-  const today = new Date().toISOString().split("T")[0];
+  //
+  // Key the guard on the EASTERN calendar date, not UTC. The scheduled scrape
+  // runs at 1:30 AM ET; a UTC date flips at 8 PM ET (EDT) / 7 PM ET (EST), so a
+  // manual/forced scrape run during the prior evening would otherwise stamp
+  // lastScrapedDate with the NEXT UTC day and silently skip the 1:30 AM run.
+  // en-CA formats as YYYY-MM-DD.
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date());
   const lastScrapedDate = seasonData.lastScrapedDate;
   if (!force && lastScrapedDate === today) {
     logger.info(`Scraper skipped: Already scraped today (${today}).`);
