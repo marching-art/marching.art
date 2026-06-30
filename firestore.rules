@@ -116,11 +116,6 @@ match /historical_scores/{docId} {
   allow write: if false; // Backend only
 }
 
-match /live_scores/{seasonId}/scores/{docId} {
-  allow read: if true;
-  allow write: if false; // Backend only
-}
-
 match /schedules/{docId} {
   allow read: if true;
   allow write: if isAdmin();

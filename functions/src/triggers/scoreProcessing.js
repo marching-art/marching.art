@@ -1,29 +1,11 @@
 const { onMessagePublished } = require("firebase-functions/v2/pubsub");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
-const { queueRecapUrlForScraping } = require("../helpers/scraping");
-const axios = require("axios");
-const cheerio = require("cheerio");
-const { PubSub } = require("@google-cloud/pubsub");
+const { scrapeDciScoresLogic } = require("../helpers/scraping");
 const { calculateOffSeasonDay } = require("../helpers/season");
 
-// Lazy-loaded heavy dependencies (puppeteer ~200MB, chromium ~100MB)
-// Only load when actually needed to reduce cold start time by 800ms-1.2s
-let puppeteer = null;
-let chromium = null;
-
-function getPuppeteerAndChromium() {
-  if (!puppeteer) {
-    puppeteer = require("puppeteer-core");
-    chromium = require("@sparticuz/chromium");
-  }
-  return { puppeteer, chromium };
-}
-
-let pubsubClient; // Declare globally, initialize lazily
-
-const PAGINATION_TOPIC = "dci-pagination-topic";
 const LIVE_SCORES_TOPIC = "live-scores-topic";
+const DCI_RECAP_TOPIC = "dci-recap-topic";
 
 exports.processDciScores = onMessagePublished("dci-scores-topic", async (message) => {
   logger.info("Received new historical scores to process.");
@@ -211,71 +193,42 @@ exports.processLiveScoreRecap = onMessagePublished(LIVE_SCORES_TOPIC, async (mes
   }
 });
 
-exports.processPaginationPage = onMessagePublished({
-  topic: PAGINATION_TOPIC,
-  memory: "2GiB",
-  timeoutSeconds: 540,
+/**
+ * Deep-scrape recap worker. Consumes one recap URL per message from
+ * dci-recap-topic (fanned out by discoverAndQueueUrls) and scrapes it into the
+ * standard dci-scores-topic pipeline, which merges into historical_scores/{year}
+ * (appending missing corps and filling only blank/zero captions).
+ *
+ * maxInstances is capped so a full-history deep scrape doesn't hammer dci.org or
+ * stampede the per-year Firestore document with too many concurrent transactions.
+ */
+exports.processDciRecap = onMessagePublished({
+  topic: DCI_RECAP_TOPIC,
+  maxInstances: 3,
+  timeoutSeconds: 120,
+  memory: "512MiB",
 }, async (message) => {
-  // Lazy initialize the client
-  if (!pubsubClient) {
-    pubsubClient = new PubSub();
+  let url;
+  try {
+    const payload = Buffer.from(message.data.message.data, "base64").toString("utf-8");
+    ({ url } = JSON.parse(payload));
+  } catch (parseError) {
+    logger.error("[RecapWorker] Failed to parse message payload:", parseError);
+    return;
   }
 
-  // Lazy load puppeteer and chromium only when this function is called
-  const { puppeteer: pptr, chromium: chr } = getPuppeteerAndChromium();
+  if (!url) {
+    logger.warn("[RecapWorker] Received a message with no URL. Skipping.");
+    return;
+  }
 
-  const payloadBuffer = Buffer.from(message.data.message.data, "base64").toString("utf-8");
-  const { pageno } = JSON.parse(payloadBuffer);
-  const baseUrl = "https://www.dci.org";
-  const currentUrl = `${baseUrl}/scores?pageno=${pageno}`;
-  logger.info(`[Paginator] Processing page: ${currentUrl}`);
-
-  let browser = null;
   try {
-    browser = await pptr.launch({
-      args: chr.args,
-      defaultViewport: chr.defaultViewport,
-      executablePath: await chr.executablePath(),
-      headless: chr.headless,
-      ignoreHTTPSErrors: true,
-    });
-    const page = await browser.newPage();
-    await page.goto(currentUrl, { waitUntil: "domcontentloaded", timeout: 60000 });
-
-    const finalScoresSelector = "a.arrow-btn[href*=\"/scores/final-scores/\"]";
-    const linksOnPage = await page.$$eval(finalScoresSelector, (anchors) => anchors.map((a) => a.href));
-
-    if (linksOnPage.length === 0) {
-      logger.info(`[Paginator] Found no more 'final-scores' links on pageno=${pageno}. Ending discovery chain.`);
-      return;
-    }
-
-    logger.info(`[Paginator] Found ${linksOnPage.length} 'final-scores' links. Queueing them for recap search.`);
-
-    for (const finalScoresUrl of linksOnPage) {
-      try {
-        const { data } = await axios.get(finalScoresUrl, { timeout: 15000 });
-        const $ = cheerio.load(data);
-
-        $("a.arrow-btn[href*=\"/scores/recap/\"]").each((_idx, el) => {
-          const recapLink = $(el).attr("href");
-          if (recapLink) {
-            const fullUrl = new URL(recapLink, baseUrl).href;
-            queueRecapUrlForScraping(fullUrl);
-          }
-        });
-      } catch (error) {
-        logger.warn(`[Paginator] Could not process ${finalScoresUrl}. Skipping. Message: ${error.message}`);
-      }
-    }
-    
-    const nextDataBuffer = Buffer.from(JSON.stringify({ pageno: pageno + 1 }));
-    await pubsubClient.topic(PAGINATION_TOPIC).publishMessage({ data: nextDataBuffer });
+    // Default topic (dci-scores-topic) -> processDciScores -> historical_scores/{year}.
+    await scrapeDciScoresLogic(url);
+    logger.info(`[RecapWorker] Processed recap: ${url}`);
   } catch (error) {
-    logger.error(`[Paginator] Failed to process page ${pageno}:`, error);
-  } finally {
-    if (browser) {
-      await browser.close();
-    }
+    // Swallow so a single bad recap doesn't trigger pubsub redelivery storms.
+    // The deep scrape is idempotent and can be re-run to pick up any misses.
+    logger.error(`[RecapWorker] Failed to process recap ${url}: ${error.message}`);
   }
 });

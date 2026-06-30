@@ -11,8 +11,67 @@ const {
   scraperInvokeKey,
 } = require("../helpers/season");
 const { processAndArchiveOffSeasonScoresLogic, calculateCorpsStatisticsLogic, processAndScoreLiveSeasonDayLogic } = require("../helpers/scoring");
+const { scrapeLatestLiveScores } = require("../scheduled/liveScraper");
 const { sendWelcomeEmail, brevoApiKey } = require("../helpers/emailService");
 const { DCI_CORPS_DATA } = require("../scripts/seedDciReference");
+
+// Spring training period (calendar days) before competition day 1 in a live season.
+// Kept in sync with dailyProcessors.js / season helper defaults.
+const SPRING_TRAINING_DAYS = 21;
+
+/**
+ * Compute the current live-season competition day (1-49) the same way the
+ * nightly processor does: convert "yesterday" in Eastern time (with the 2 AM
+ * game-day boundary) into a calendar day from the season start, then subtract
+ * the spring-training offset. Returns a value that may be <1 (spring training)
+ * or >49 (season over); callers validate the range.
+ *
+ * @param {object} seasonData - The game-settings/season document data.
+ * @returns {number} The competition day (scoredDay).
+ */
+function getCurrentLiveScoredDay(seasonData) {
+  const seasonStartDate = seasonData.schedule.startDate.toDate();
+  const springTrainingDays = seasonData.schedule.springTrainingDays || SPRING_TRAINING_DAYS;
+
+  // Determine "yesterday" in Eastern time with a 2 AM game-day reset, matching
+  // processDailyLiveScores so manual runs target the same day the scheduler would.
+  const nowUtc = new Date();
+  const etParts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(nowUtc);
+  const etValues = {};
+  for (const part of etParts) etValues[part.type] = part.value;
+  const nowET = new Date(Date.UTC(
+    parseInt(etValues.year),
+    parseInt(etValues.month) - 1,
+    parseInt(etValues.day),
+    parseInt(etValues.hour === "24" ? "0" : etValues.hour),
+    parseInt(etValues.minute),
+    parseInt(etValues.second),
+  ));
+  const gameTimeET = new Date(nowET.getTime() - (2 * 60 * 60 * 1000));
+  const yesterday = new Date(gameTimeET);
+  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+  yesterday.setUTCHours(0, 0, 0, 0);
+
+  const seasonStartNormalized = new Date(Date.UTC(
+    seasonStartDate.getUTCFullYear(),
+    seasonStartDate.getUTCMonth(),
+    seasonStartDate.getUTCDate(),
+    0, 0, 0,
+  ));
+
+  const diffInMillis = yesterday.getTime() - seasonStartNormalized.getTime();
+  const calendarDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1;
+  return calendarDay - springTrainingDays;
+}
 
 exports.startNewOffSeason = onCall({ cors: true }, async (request) => {
   if (!request.auth || !request.auth.token.admin) {
@@ -78,14 +137,15 @@ exports.manualTrigger = onCall({
         throw new HttpsError("failed-precondition", "No active live season found.");
       }
       const seasonData = seasonDoc.data();
-      const seasonStartDate = seasonData.schedule.startDate.toDate();
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const diffInMillis = yesterday.getTime() - seasonStartDate.getTime();
-      // processAndScoreLiveSeasonDayLogic expects a competition day (1-49); subtract
-      // spring training to match the scheduled processor (scheduled/dailyProcessors.js).
-      const springTrainingDays = seasonData.schedule.springTrainingDays || 0;
-      const scoredDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1 - springTrainingDays;
+      // Use the same day calculation as the nightly processor, including the
+      // spring-training offset, so manual runs score the correct competition day.
+      const scoredDay = getCurrentLiveScoredDay(seasonData);
+      if (scoredDay < 1) {
+        throw new HttpsError("failed-precondition", `Season is in spring training (competition day ${scoredDay}). No scoring yet.`);
+      }
+      if (scoredDay > 49) {
+        throw new HttpsError("failed-precondition", `Competition day ${scoredDay} is past the 49-day season. Nothing to score.`);
+      }
       await processAndScoreLiveSeasonDayLogic(scoredDay, seasonData);
       return { success: true, message: `Live Season scores processed for day ${scoredDay}.` };
     }
@@ -330,6 +390,55 @@ exports.manualTrigger = onCall({
   } catch (error) {
     logger.error(`Manual trigger for job '${jobName}' failed:`, error);
     throw new HttpsError("internal", `An error occurred while running ${jobName}: ${error.message}`);
+  }
+});
+
+/**
+ * Manually scrape the latest DCI scores recap on demand (admin only).
+ *
+ * Runs the same routine as the nightly scheduled scraper but forces a re-run,
+ * bypassing the once-per-day guard. The parsed scores are published to the
+ * live-scores pubsub topic and archived into historical_scores/{year} by
+ * processLiveScoreRecap. Used by the admin "Scrape DCI Scores Now" button so
+ * admins can verify the active DCI season's scraped scores in near real-time.
+ */
+exports.scrapeLiveScoresNow = onCall({
+  cors: true,
+  timeoutSeconds: 120,
+  memory: "512MiB",
+}, async (request) => {
+  if (!request.auth || !request.auth.token.admin) {
+    throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
+  }
+
+  logger.info(`Admin ${request.auth.uid} manually triggered a live DCI score scrape.`);
+
+  try {
+    const result = await scrapeLatestLiveScores({ force: true });
+
+    if (!result.scraped) {
+      const reasonMessages = {
+        "no-live-season": "No active live season — scraping only runs during a live DCI season.",
+        "no-recap-found": "No recap link was found on the DCI scores page.",
+        "already-scraped-today": "Already scraped today (this shouldn't happen on a forced run).",
+      };
+      return {
+        success: false,
+        message: reasonMessages[result.reason] || `Scrape did not run (${result.reason}).`,
+        ...result,
+      };
+    }
+
+    return {
+      success: true,
+      message: result.count > 0 ?
+        `Scraped ${result.count} corps from "${result.eventName}". Scores are being archived now.` :
+        `Found "${result.eventName}" but no corps scores were parsed.`,
+      ...result,
+    };
+  } catch (error) {
+    logger.error("Manual live score scrape failed:", error);
+    throw new HttpsError("internal", `Live score scrape failed: ${error.message}`);
   }
 });
 

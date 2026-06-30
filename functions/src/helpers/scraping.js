@@ -1,7 +1,6 @@
-const { onCall, HttpsError, onRequest } = require("firebase-functions/v2/https");
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { PubSub } = require("@google-cloud/pubsub");
-const { CloudTasksClient } = require("@google-cloud/tasks");
 const axios = require("axios");
 const cheerio = require("cheerio");
 
@@ -11,9 +10,36 @@ const cheerio = require("cheerio");
 
 // Declare clients in the global scope but do not initialize them.
 let pubsubClient;
-let tasksClient;
 
-const PAGINATION_TOPIC = "dci-pagination-topic";
+const DCI_RECAP_TOPIC = "dci-recap-topic";
+const DCI_BASE_URL = "https://www.dci.org";
+const SITEMAP_INDEX_URL = `${DCI_BASE_URL}/sitemap_index.xml`;
+const SCRAPER_USER_AGENT = "Mozilla/5.0 (compatible; MarchingArtBot/1.0)";
+
+/**
+ * Derive a recap URL from a "final scores" URL. dci.org serves the per-caption
+ * recap at the same slug under /scores/recap/ as the /scores/final-scores/ page.
+ * e.g. https://www.dci.org/scores/final-scores/2024-dci-pittsburgh/
+ *   ->  https://www.dci.org/scores/recap/2024-dci-pittsburgh/
+ * @param {string} finalScoresUrl
+ * @returns {string}
+ */
+function finalScoresToRecapUrl(finalScoresUrl) {
+  return finalScoresUrl.replace("/scores/final-scores/", "/scores/recap/");
+}
+
+/**
+ * Extract all <loc> values from a sitemap XML string.
+ * @param {string} xml
+ * @returns {string[]}
+ */
+function extractSitemapLocs(xml) {
+  const locs = [];
+  for (const match of xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)) {
+    locs.push(match[1]);
+  }
+  return locs;
+}
 
 async function scrapeDciScoresLogic(urlToScrape, topic = "dci-scores-topic") {
   // Lazy initialize the client if it hasn't been already
@@ -117,44 +143,17 @@ async function scrapeDciScoresLogic(urlToScrape, topic = "dci-scores-topic") {
 
     if (scoresData.length === 0) {
       logger.warn(`No scores found on ${urlToScrape}.`);
-      return;
+      return { eventName, eventLocation, eventDate: eventDate.toISOString(), year, count: 0 };
     }
 
     const payload = { scores: scoresData, eventName, eventLocation, eventDate: eventDate.toISOString(), year };
     const dataBuffer = Buffer.from(JSON.stringify(payload));
     await pubsubClient.topic(topic).publishMessage({ data: dataBuffer });
     logger.info(`Successfully published ${scoresData.length} corps scores from ${eventName}.`);
+    return { eventName, eventLocation, eventDate: eventDate.toISOString(), year, count: scoresData.length };
   } catch (error) {
     logger.error(`[scrapeDciScoresLogic] CRITICAL ERROR for URL ${urlToScrape}:`, error);
-  }
-}
-
-async function queueRecapUrlForScraping(url) {
-  // Lazy initialize the client
-  if (!tasksClient) {
-    tasksClient = new CloudTasksClient();
-  }
-
-  try {
-    const project = process.env.GCLOUD_PROJECT;
-    const location = "us-central1";
-    const queue = "recap-scraper-queue";
-    const workerUrl = `https://us-central1-${project}.cloudfunctions.net/scrapeSingleRecap`;
-    const queuePath = tasksClient.queuePath(project, location, queue);
-
-    const task = {
-      httpRequest: {
-        httpMethod: "POST",
-        url: workerUrl,
-        body: Buffer.from(JSON.stringify({ url })).toString("base64"),
-        headers: { "Content-Type": "application/json" },
-      },
-    };
-
-    await tasksClient.createTask({ parent: queuePath, task: task });
-    logger.info(`[Queuer] Successfully queued task for URL: ${url}`);
-  } catch (error) {
-    logger.error(`[Queuer] Failed to queue task for URL: ${url}`, error);
+    throw error;
   }
 }
 
@@ -177,7 +176,66 @@ const testScraper = onCall({ cors: true }, async (request) => {
   }
 });
 
-const discoverAndQueueUrls = onCall({ cors: true }, async (request) => {
+/**
+ * Discover every event URL across all years from dci.org's Yoast "competition"
+ * sitemaps. Returns the derived recap URLs (deduped).
+ *
+ * This replaces the old HTML-pagination crawl: dci.org's scores listing now
+ * paginates via an authenticated admin-ajax POST, but the sitemaps expose every
+ * /scores/final-scores/{year}-{slug}/ URL (2013-present) over plain GET, which
+ * is far more robust and complete.
+ *
+ * @returns {Promise<string[]>} Array of unique recap URLs.
+ */
+async function discoverAllRecapUrls() {
+  const headers = { "User-Agent": SCRAPER_USER_AGENT };
+
+  const { data: indexXml } = await axios.get(SITEMAP_INDEX_URL, { timeout: 30000, headers });
+  const competitionSitemaps = extractSitemapLocs(indexXml)
+    .filter((u) => /competition-sitemap\d*\.xml/.test(u));
+
+  if (competitionSitemaps.length === 0) {
+    logger.warn("[DeepScrape] No competition sitemaps found in sitemap index.");
+    return [];
+  }
+  logger.info(`[DeepScrape] Found ${competitionSitemaps.length} competition sitemap(s).`);
+
+  const recapUrls = new Set();
+  for (const sitemapUrl of competitionSitemaps) {
+    try {
+      const { data: xml } = await axios.get(sitemapUrl, { timeout: 30000, headers });
+      for (const loc of extractSitemapLocs(xml)) {
+        if (loc.includes("/scores/final-scores/")) {
+          recapUrls.add(finalScoresToRecapUrl(loc));
+        }
+      }
+    } catch (error) {
+      logger.warn(`[DeepScrape] Failed to read sitemap ${sitemapUrl}: ${error.message}`);
+    }
+  }
+
+  return [...recapUrls];
+}
+
+/**
+ * Admin-only "deep scrape": discover every event across all years on dci.org and
+ * archive each recap into historical_scores/{year}.
+ *
+ * Pipeline:
+ *   discoverAndQueueUrls (this) -- reads the competition sitemaps, derives every
+ *     recap URL, and fans them out to dci-recap-topic
+ *   -> processDciRecap (throttled) -> scrapeDciScoresLogic
+ *   -> dci-scores-topic (processDciScores) -> merge into historical_scores/{year}
+ *
+ * processDciScores merges by event (name+date), appending missing corps and
+ * filling only blank/zero captions, so re-running is safe and idempotent: it
+ * backfills missing scores without overwriting existing values.
+ */
+const discoverAndQueueUrls = onCall({
+  cors: true,
+  timeoutSeconds: 300,
+  memory: "512MiB",
+}, async (request) => {
   if (!request.auth || !request.auth.token.admin) {
     throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
   }
@@ -186,35 +244,53 @@ const discoverAndQueueUrls = onCall({ cors: true }, async (request) => {
     pubsubClient = new PubSub();
   }
 
-  logger.info("Kicking off asynchronous discovery process...");
+  logger.info(`Admin ${request.auth.uid} kicked off a full DCI history deep scrape.`);
 
-  const dataBuffer = Buffer.from(JSON.stringify({ pageno: 1 }));
-  await pubsubClient.topic(PAGINATION_TOPIC).publishMessage({ data: dataBuffer });
-
-  return { success: true, message: "Asynchronous scraper process initiated. See logs for progress." };
-});
-
-const scrapeSingleRecap = onRequest({ cors: true }, async (req, res) => {
-  try {
-    const { url } = req.body;
-    if (!url) {
-      logger.error("Worker received a task with no URL.");
-      res.status(400).send("Bad Request: Missing URL in payload.");
-      return;
-    }
-
-    await scrapeDciScoresLogic(url);
-    res.status(200).send("Successfully processed recap URL.");
-  } catch (error) {
-    logger.error(`Worker failed to process URL: ${req.body.url}`, error);
-    res.status(500).send("Internal Server Error");
+  const recapUrls = await discoverAllRecapUrls();
+  if (recapUrls.length === 0) {
+    return {
+      success: false,
+      message: "Deep scrape found no event URLs in the dci.org sitemaps. Nothing was queued.",
+      discovered: 0,
+      published: 0,
+    };
   }
+
+  // Fan out to the recap topic in parallel chunks (keeps publish latency low
+  // while bounding concurrency). processDciRecap throttles the actual scraping.
+  const topic = pubsubClient.topic(DCI_RECAP_TOPIC);
+  const CHUNK_SIZE = 50;
+  let published = 0;
+  for (let i = 0; i < recapUrls.length; i += CHUNK_SIZE) {
+    const chunk = recapUrls.slice(i, i + CHUNK_SIZE);
+    const results = await Promise.allSettled(
+      chunk.map((url) =>
+        topic.publishMessage({ data: Buffer.from(JSON.stringify({ url })) })
+      )
+    );
+    for (const r of results) {
+      if (r.status === "fulfilled") published++;
+      else logger.error(`[DeepScrape] Failed to publish a recap URL: ${r.reason?.message}`);
+    }
+  }
+
+  logger.info(`[DeepScrape] Queued ${published}/${recapUrls.length} recap URLs for archiving.`);
+
+  return {
+    success: true,
+    message: `Deep scrape started: queued ${published} event recaps spanning all years on ` +
+      "dci.org for archiving in the background. Missing corps/caption scores will be filled in; " +
+      "existing values are never overwritten. This runs over the next several minutes — watch the " +
+      "function logs and refresh the Live Scores view to see data populate.",
+    discovered: recapUrls.length,
+    published,
+  };
 });
 
 module.exports = {
   scrapeDciScoresLogic,
-  queueRecapUrlForScraping,
+  finalScoresToRecapUrl,
+  discoverAllRecapUrls,
   testScraper,
   discoverAndQueueUrls,
-  scrapeSingleRecap,
 };

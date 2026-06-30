@@ -82,7 +82,7 @@ const CorpsOptionRow = ({ corps, isSelected, onSelect, disabled, captionHotStatu
           {isSelected && <Check className="w-3 h-3 text-white" />}
         </div>
         <span className="font-medium text-white text-sm truncate">{corps.corpsName}</span>
-        <span className="text-[10px] text-gray-500">'{corps.sourceYear?.slice(-2)}</span>
+        <span className="text-[10px] text-gray-500">'{corps.sourceYear != null ? String(corps.sourceYear).slice(-2) : ''}</span>
         {captionHotStatus?.isHot && (
           <span
             className="flex items-center gap-0.5 px-1 py-0.5 bg-orange-500/20 text-orange-400 text-[10px] rounded"

@@ -47,7 +47,7 @@ cd functions && npm install && cd ..
 BATCH1="scrapeDciScores,processDailyLiveScores,dailyOffSeasonProcessor,processLiveScoreRecap,processDciScores"
 
 # Batch 2: CRITICAL - Score triggers and news generation
-BATCH2="processPaginationPage,onFantasyRecapUpdated,processNewsGeneration,triggerNewsGeneration,triggerDailyNews"
+BATCH2="processDciRecap,onFantasyRecapUpdated,processNewsGeneration,triggerNewsGeneration,triggerDailyNews"
 
 # Batch 3: CRITICAL - Season scheduler and leaderboard (3:00 AM)
 BATCH3="seasonScheduler,updateLifetimeLeaderboard,scheduledLifetimeLeaderboardUpdate,generateWeeklyMatchups"
@@ -97,6 +97,9 @@ BATCH17="sendCommentNotification,deleteComment,reportComment,claimDailyLogin,pur
 # Batch 18: Admin functions and webhook
 BATCH18="startNewOffSeason,startNewLiveSeason,manualTrigger,sendTestEmail,stripeWebhook"
 
+# Batch 19: Admin DCI score scraping (manual + deep-scrape backfill)
+BATCH19="scrapeLiveScoresNow,discoverAndQueueUrls"
+
 # Array of all batches
 BATCHES=(
     "$BATCH1"
@@ -117,6 +120,7 @@ BATCHES=(
     "$BATCH16"
     "$BATCH17"
     "$BATCH18"
+    "$BATCH19"
 )
 
 TOTAL_BATCHES=${#BATCHES[@]}
