@@ -213,7 +213,17 @@ export type PushNotificationType =
 // CORPS TYPES
 // =============================================================================
 
-export type CorpsClass = 'soundSport' | 'aClass' | 'open' | 'world';
+// Canonical keys ('worldClass'/'openClass') are what the data layer actually
+// stores (registration, store normalization, season archives). The short keys
+// ('world'/'open') are accepted for backward compatibility with older data and
+// UI. Helpers in utils/corps.ts normalize between the two.
+export type CorpsClass =
+  | 'soundSport'
+  | 'aClass'
+  | 'open'
+  | 'world'
+  | 'openClass'
+  | 'worldClass';
 
 /**
  * Corps Uniform Design - Director-customizable appearance for fantasy corps

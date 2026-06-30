@@ -34,9 +34,13 @@ interface UniformDesignModalProps {
 // CONSTANTS
 // =============================================================================
 
+// Covers both canonical ('worldClass'/'openClass') and legacy short
+// ('world'/'open') class keys so corps resolve regardless of spelling.
 const CLASS_DISPLAY: Record<CorpsClass, { name: string; color: string }> = {
   world: { name: 'World Class', color: 'text-purple-400' },
   open: { name: 'Open Class', color: 'text-blue-400' },
+  worldClass: { name: 'World Class', color: 'text-purple-400' },
+  openClass: { name: 'Open Class', color: 'text-blue-400' },
   aClass: { name: 'A Class', color: 'text-green-400' },
   soundSport: { name: 'SoundSport', color: 'text-orange-400' },
 };

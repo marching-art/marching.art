@@ -15,6 +15,48 @@ import type { CorpsClass } from '../types';
 export const CORPS_CLASS_ORDER = ['worldClass', 'openClass', 'aClass', 'soundSport'] as const;
 
 /**
+ * Equivalence groups for corps class keys. The data layer (registration, store
+ * normalization, season archives) uses the canonical keys ('worldClass',
+ * 'openClass'), but some older UI used the short keys ('world', 'open'). When
+ * matching a class against stored data we must accept either spelling.
+ */
+export const CORPS_CLASS_ALIASES: Record<string, string[]> = {
+  worldClass: ['worldClass', 'world'],
+  openClass: ['openClass', 'open'],
+  aClass: ['aClass'],
+  soundSport: ['soundSport'],
+};
+
+/**
+ * Resolve the corps entry for a canonical class key, tolerating profiles whose
+ * `corps` map was written with legacy short keys ('world'/'open').
+ */
+export function resolveCorpsForClass<T>(
+  corps: Record<string, T> | undefined | null,
+  canonicalKey: string
+): T | undefined {
+  if (!corps) return undefined;
+  const aliases = CORPS_CLASS_ALIASES[canonicalKey] || [canonicalKey];
+  for (const key of aliases) {
+    if (corps[key] != null) return corps[key];
+  }
+  return undefined;
+}
+
+/**
+ * True when `unlockedClasses` contains the given canonical class key under any
+ * accepted spelling (canonical or legacy short key).
+ */
+export function isCorpsClassUnlocked(
+  unlockedClasses: string[] | undefined | null,
+  canonicalKey: string
+): boolean {
+  if (!unlockedClasses) return false;
+  const aliases = CORPS_CLASS_ALIASES[canonicalKey] || [canonicalKey];
+  return aliases.some((key) => unlockedClasses.includes(key));
+}
+
+/**
  * Map of corps class to sort index for efficient sorting.
  * Lower index = higher tier class.
  */

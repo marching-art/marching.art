@@ -17,6 +17,12 @@ import {
 } from 'lucide-react';
 import type { UserProfile, Achievement, CorpsClass, EnsembleProfileInfo, DirectorSocialLinks } from '../../types';
 import { formatSeasonName } from '../../utils/season';
+import {
+  CORPS_CLASS_ORDER,
+  resolveCorpsForClass,
+  isCorpsClassUnlocked,
+} from '../../utils/corps';
+import { toCanonicalClassKey } from '../../utils/classUnlockTime';
 
 // =============================================================================
 // TYPES
@@ -63,12 +69,22 @@ interface TrophyData {
 // CONSTANTS
 // =============================================================================
 
+// Keyed by canonical class keys ('worldClass'/'openClass'), which is what the
+// data layer stores. Look up via getClassDisplay() so legacy short keys
+// ('world'/'open') still resolve.
 const CLASS_DISPLAY = {
-  world: { name: 'World Class', short: 'WC', color: 'text-purple-400', bg: 'bg-purple-500/10' },
-  open: { name: 'Open Class', short: 'OC', color: 'text-blue-400', bg: 'bg-blue-500/10' },
+  worldClass: { name: 'World Class', short: 'WC', color: 'text-purple-400', bg: 'bg-purple-500/10' },
+  openClass: { name: 'Open Class', short: 'OC', color: 'text-blue-400', bg: 'bg-blue-500/10' },
   aClass: { name: 'A Class', short: 'A', color: 'text-green-400', bg: 'bg-green-500/10' },
   soundSport: { name: 'SoundSport', short: 'SS', color: 'text-orange-400', bg: 'bg-orange-500/10' },
-};
+} as const;
+
+type ClassDisplayConfig = (typeof CLASS_DISPLAY)[keyof typeof CLASS_DISPLAY];
+
+function getClassDisplay(classKey: string): ClassDisplayConfig {
+  const canonical = toCanonicalClassKey(classKey) as keyof typeof CLASS_DISPLAY;
+  return CLASS_DISPLAY[canonical] || CLASS_DISPLAY.soundSport;
+}
 
 const TIER_STYLES = {
   gold: { bg: 'bg-yellow-500/15', border: 'border-yellow-500/40', text: 'text-yellow-400', icon: 'text-yellow-500' },
@@ -154,17 +170,16 @@ function getCorpsAvatarUrl(profile: UserProfile): { url: string | null; corpsCla
 
   // If user has selected a specific corps for their profile avatar, use that
   if (profile.profileAvatarCorps) {
-    const selectedCorps = profile.corps[profile.profileAvatarCorps];
+    const selectedCorps = resolveCorpsForClass(profile.corps, profile.profileAvatarCorps);
     if (selectedCorps?.avatarUrl) {
       return { url: selectedCorps.avatarUrl, corpsClass: profile.profileAvatarCorps };
     }
   }
 
   // Fallback: Priority order world > open > aClass > soundSport
-  const classOrder: CorpsClass[] = ['world', 'open', 'aClass', 'soundSport'];
-  for (const classKey of classOrder) {
-    const corps = profile.corps[classKey];
-    if (corps?.avatarUrl) return { url: corps.avatarUrl, corpsClass: classKey };
+  for (const classKey of CORPS_CLASS_ORDER) {
+    const corps = resolveCorpsForClass(profile.corps, classKey);
+    if (corps?.avatarUrl) return { url: corps.avatarUrl, corpsClass: classKey as CorpsClass };
   }
   return { url: null, corpsClass: null };
 }
@@ -173,13 +188,12 @@ function getCorpsAvatarUrl(profile: UserProfile): { url: string | null; corpsCla
 function getCorpsWithAvatars(profile: UserProfile): { corpsClass: CorpsClass; corpsName: string; avatarUrl: string }[] {
   if (!profile.corps) return [];
   const result: { corpsClass: CorpsClass; corpsName: string; avatarUrl: string }[] = [];
-  const classOrder: CorpsClass[] = ['world', 'open', 'aClass', 'soundSport'];
 
-  for (const classKey of classOrder) {
-    const corps = profile.corps[classKey];
+  for (const classKey of CORPS_CLASS_ORDER) {
+    const corps = resolveCorpsForClass(profile.corps, classKey);
     if (corps?.avatarUrl && corps?.corpsName) {
       result.push({
-        corpsClass: classKey,
+        corpsClass: classKey as CorpsClass,
         corpsName: corps.corpsName,
         avatarUrl: corps.avatarUrl,
       });
@@ -221,7 +235,7 @@ function getCompetitionTrophies(profile: UserProfile): TrophyData[] {
   }
 
   // Class unlock as special trophy
-  if (profile.unlockedClasses?.includes('world')) {
+  if (isCorpsClassUnlocked(profile.unlockedClasses, 'worldClass')) {
     trophies.push({
       id: 'world-unlock',
       title: 'World Class',
@@ -320,7 +334,7 @@ const SeasonRow = memo(({ season, isExpanded, onToggle }: {
   isExpanded: boolean;
   onToggle: () => void;
 }) => {
-  const classConfig = CLASS_DISPLAY[season.classKey] || CLASS_DISPLAY.soundSport;
+  const classConfig = getClassDisplay(season.classKey);
   const score = season.finalScore || season.totalSeasonScore || 0;
   const placement = season.placement;
 
@@ -512,7 +526,7 @@ const EnsembleCard = memo(({
   avatarUrl?: string;
   location?: string;
 }) => {
-  const classConfig = CLASS_DISPLAY[classKey] || CLASS_DISPLAY.soundSport;
+  const classConfig = getClassDisplay(classKey);
   const hasAnyInfo = !!(
     info.tagline || info.mission || info.history || info.motto ||
     info.foundedYear || info.homeVenue || (info.notableShows && info.notableShows.length > 0)
@@ -612,7 +626,7 @@ EnsembleCard.displayName = 'EnsembleCard';
 
 // Placeholder card for an unlocked-but-unregistered class
 const UnregisteredEnsembleCard = memo(({ classKey }: { classKey: CorpsClass }) => {
-  const classConfig = CLASS_DISPLAY[classKey] || CLASS_DISPLAY.soundSport;
+  const classConfig = getClassDisplay(classKey);
   return (
     <div className="bg-[#0a0a0a] border border-dashed border-[#333]">
       <div className="px-3 py-2 border-b border-[#333] bg-[#111] flex items-center gap-2">
@@ -840,7 +854,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                     <div className="p-4 grid grid-cols-2 gap-3">
                       {corpsWithAvatars.map(corps => {
                         const isSelected = avatarData.corpsClass === corps.corpsClass;
-                        const classConfig = CLASS_DISPLAY[corps.corpsClass];
+                        const classConfig = getClassDisplay(corps.corpsClass);
                         return (
                           <button
                             key={corps.corpsClass}
@@ -1068,14 +1082,18 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
       {/* ENSEMBLES */}
       {/* ================================================================== */}
       {(() => {
-        const CLASS_ORDER: CorpsClass[] = ['world', 'open', 'aClass', 'soundSport'];
         const unlockedClasses = profile.unlockedClasses?.length
           ? profile.unlockedClasses
           : (['soundSport'] as CorpsClass[]);
 
-        const entries = CLASS_ORDER
-          .filter((cls) => unlockedClasses.includes(cls))
-          .map((cls) => ({ classKey: cls, corps: profile.corps?.[cls] }));
+        // Iterate canonical class order and resolve both unlock status and the
+        // corps record tolerating legacy short keys ('world'/'open').
+        const entries = CORPS_CLASS_ORDER
+          .filter((cls) => isCorpsClassUnlocked(unlockedClasses, cls))
+          .map((cls) => ({
+            classKey: cls as CorpsClass,
+            corps: resolveCorpsForClass(profile.corps, cls),
+          }));
 
         // On public profiles, hide unregistered classes (no useful info to share).
         const visibleEntries = isOwnProfile

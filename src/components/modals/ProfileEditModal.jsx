@@ -8,15 +8,21 @@ import React, { useState, useMemo } from 'react';
 import { X, User, Music, Link as LinkIcon, MapPin } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import {
+  CORPS_CLASS_ORDER,
+  resolveCorpsForClass,
+  isCorpsClassUnlocked,
+} from '../../utils/corps';
 
+// Keyed by canonical class keys, matching what the data layer stores.
 const CLASS_LABELS = {
-  world: 'World Class',
-  open: 'Open Class',
+  worldClass: 'World Class',
+  openClass: 'Open Class',
   aClass: 'Class A',
   soundSport: 'SoundSport',
 };
 
-const CLASS_ORDER = ['world', 'open', 'aClass', 'soundSport'];
+const CLASS_ORDER = CORPS_CLASS_ORDER;
 
 const SPECIALTY_OPTIONS = [
   'General Effect',
@@ -83,9 +89,9 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
       ? profile.unlockedClasses
       : ['soundSport'];
     return CLASS_ORDER
-      .filter((cls) => unlocked.includes(cls))
+      .filter((cls) => isCorpsClassUnlocked(unlocked, cls))
       .map((cls) => {
-        const corps = profile?.corps?.[cls] || {};
+        const corps = resolveCorpsForClass(profile?.corps, cls) || {};
         return {
           ...corps,
           classKey: cls,

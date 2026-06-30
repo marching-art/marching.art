@@ -38,6 +38,47 @@ function pickDuplicateWinner(group) {
   })[0];
 }
 
+// Director-designed branding and ensemble identity that must persist with a
+// corps across seasons and through retire/unretire — it is NEVER season data.
+const PERSISTENT_IDENTITY_FIELDS = [
+  "uniformDesign",
+  "avatarUrl",
+  "avatarGeneratedAt",
+  "ensembleInfo",
+  "description",
+  "biography",
+  "showConcept",
+];
+
+/** Copy persistent identity fields from a corps object (omitting undefined). */
+function pickPersistentIdentity(corps) {
+  const out = {};
+  if (!corps) return out;
+  for (const field of PERSISTENT_IDENTITY_FIELDS) {
+    if (corps[field] !== undefined) out[field] = corps[field];
+  }
+  return out;
+}
+
+/**
+ * Build a retired-corps record, preserving the director's branding and
+ * ensemble identity so a future unretire restores the corps unchanged.
+ */
+function buildRetiredRecord(corpsClass, corps) {
+  return {
+    corpsClass,
+    corpsName: corps.corpsName,
+    location: corps.location,
+    seasonHistory: corps.seasonHistory || [],
+    weeklyTrades: corps.weeklyTrades || null,
+    totalSeasons: corps.seasonHistory?.length || 0,
+    bestSeasonScore: Math.max(...(corps.seasonHistory?.map((s) => s.totalSeasonScore) || [0])),
+    totalShows: (corps.seasonHistory || []).reduce((sum, s) => sum + (s.showsAttended || 0), 0),
+    ...pickPersistentIdentity(corps),
+    retiredAt: admin.firestore.FieldValue.serverTimestamp(),
+  };
+}
+
 /**
  * Process corps decisions during season reset
  * Handles continue/retire/unretire/new/skip/move decisions for all classes atomically
@@ -192,18 +233,7 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
           case "retire":
             // Move corps to retired list
             if (existingCorps?.corpsName) {
-              const retiredRecord = {
-                corpsClass,
-                corpsName: existingCorps.corpsName,
-                location: existingCorps.location,
-                seasonHistory: existingCorps.seasonHistory || [],
-                weeklyTrades: existingCorps.weeklyTrades || null,
-                totalSeasons: existingCorps.seasonHistory?.length || 0,
-                bestSeasonScore: Math.max(...(existingCorps.seasonHistory?.map(s => s.totalSeasonScore) || [0])),
-                totalShows: (existingCorps.seasonHistory || []).reduce((sum, s) => sum + (s.showsAttended || 0), 0),
-                retiredAt: admin.firestore.FieldValue.serverTimestamp()
-              };
-              updatedRetiredCorps.push(retiredRecord);
+              updatedRetiredCorps.push(buildRetiredRecord(corpsClass, existingCorps));
               delete updatedCorps[corpsClass];
             }
             break;
@@ -217,18 +247,7 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
 
             // If there's an existing corps, retire it first
             if (existingCorps?.corpsName) {
-              const existingRetired = {
-                corpsClass,
-                corpsName: existingCorps.corpsName,
-                location: existingCorps.location,
-                seasonHistory: existingCorps.seasonHistory || [],
-                weeklyTrades: existingCorps.weeklyTrades || null,
-                totalSeasons: existingCorps.seasonHistory?.length || 0,
-                bestSeasonScore: Math.max(...(existingCorps.seasonHistory?.map(s => s.totalSeasonScore) || [0])),
-                totalShows: (existingCorps.seasonHistory || []).reduce((sum, s) => sum + (s.showsAttended || 0), 0),
-                retiredAt: admin.firestore.FieldValue.serverTimestamp()
-              };
-              updatedRetiredCorps.push(existingRetired);
+              updatedRetiredCorps.push(buildRetiredRecord(corpsClass, existingCorps));
             }
 
             updatedCorps[corpsClass] = {
@@ -236,6 +255,8 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
               location: retiredRecord.location,
               seasonHistory: retiredRecord.seasonHistory || [],
               weeklyTrades: retiredRecord.weeklyTrades || null,
+              // Restore the director's branding and ensemble identity
+              ...pickPersistentIdentity(retiredRecord),
               lineup: null,
               lineupKey: null,
               selectedShows: {},
@@ -249,18 +270,7 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
           case "new":
             // Retire existing if present, create new corps
             if (existingCorps?.corpsName) {
-              const existingRetired = {
-                corpsClass,
-                corpsName: existingCorps.corpsName,
-                location: existingCorps.location,
-                seasonHistory: existingCorps.seasonHistory || [],
-                weeklyTrades: existingCorps.weeklyTrades || null,
-                totalSeasons: existingCorps.seasonHistory?.length || 0,
-                bestSeasonScore: Math.max(...(existingCorps.seasonHistory?.map(s => s.totalSeasonScore) || [0])),
-                totalShows: (existingCorps.seasonHistory || []).reduce((sum, s) => sum + (s.showsAttended || 0), 0),
-                retiredAt: admin.firestore.FieldValue.serverTimestamp()
-              };
-              updatedRetiredCorps.push(existingRetired);
+              updatedRetiredCorps.push(buildRetiredRecord(corpsClass, existingCorps));
             }
 
             updatedCorps[corpsClass] = {
@@ -449,22 +459,10 @@ exports.retireCorps = onCall({ cors: true }, async (request) => {
       const currentData = profileDoc.data();
       const currentCorps = currentData.corps || {};
 
-      // Create retired corps record
+      // Create retired corps record, preserving branding and ensemble identity
       const retiredCorps = currentData.retiredCorps || [];
       const currentCorpsData = currentCorps[corpsClass];
-      const retiredRecord = {
-        corpsClass,
-        corpsName: currentCorpsData.corpsName,
-        location: currentCorpsData.location,
-        seasonHistory: currentCorpsData.seasonHistory || [],
-        weeklyTrades: currentCorpsData.weeklyTrades || null,
-        totalSeasons: currentCorpsData.seasonHistory?.length || 0,
-        bestSeasonScore: Math.max(...(currentCorpsData.seasonHistory?.map(s => s.totalSeasonScore) || [0])),
-        totalShows: (currentCorpsData.seasonHistory || []).reduce((sum, s) => sum + (s.showsAttended || 0), 0),
-        retiredAt: admin.firestore.FieldValue.serverTimestamp()
-      };
-
-      retiredCorps.push(retiredRecord);
+      retiredCorps.push(buildRetiredRecord(corpsClass, currentCorpsData));
 
       // Remove from active corps
       const updatedCorps = { ...currentCorps };
@@ -714,13 +712,15 @@ exports.unretireCorps = onCall({ cors: true }, async (request) => {
           `You already have an active ${corpsClass} corps. Retire it first before unretiring another.`);
       }
 
-      // Restore the corps
+      // Restore the corps, including the director's branding and ensemble
+      // identity so it comes back exactly as it was retired.
       const updatedCorps = { ...profileData.corps };
       updatedCorps[corpsClass] = {
         corpsName: retiredRecord.corpsName,
         location: retiredRecord.location,
         seasonHistory: retiredRecord.seasonHistory || [],
         weeklyTrades: retiredRecord.weeklyTrades || null,
+        ...pickPersistentIdentity(retiredRecord),
         // Reset season-specific data
         lineup: null,
         lineupKey: null,
