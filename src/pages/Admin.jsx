@@ -591,7 +591,12 @@ const DeepScrapeCard = () => {
       const functions = getFunctions();
       const discoverAndQueueUrls = httpsCallable(functions, 'discoverAndQueueUrls');
       const result = await discoverAndQueueUrls();
-      toast.success(result.data?.message || 'Deep scrape started.');
+      const data = result.data || {};
+      if (data.success === false) {
+        toast.error(data.message || 'Deep scrape found nothing to queue.');
+      } else {
+        toast.success(data.message || 'Deep scrape started.');
+      }
     } catch (error) {
       toast.error(error.message || 'Failed to start deep scrape');
     } finally {

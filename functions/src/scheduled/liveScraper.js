@@ -3,7 +3,7 @@ const { logger } = require("firebase-functions/v2");
 const { getDb, dataNamespaceParam } = require("../config");
 const axios = require("axios");
 const cheerio = require("cheerio");
-const { scrapeDciScoresLogic } = require("../helpers/scraping");
+const { scrapeDciScoresLogic, finalScoresToRecapUrl } = require("../helpers/scraping");
 
 const LIVE_SCORES_TOPIC = "live-scores-topic";
 
@@ -52,9 +52,14 @@ async function fetchWithRetry(url, maxRetries = 3) {
  * Core live-score scrape routine, shared by the nightly scheduler and the
  * admin "Scrape DCI Scores Now" button.
  *
- * Fetches the first page of dci.org/scores, locates the most recent recap link,
- * scrapes it, and publishes the parsed scores to the live-scores pubsub topic
- * (which `processLiveScoreRecap` archives into historical_scores/{year}).
+ * Fetches dci.org/scores, takes the most recent event's "final scores" link,
+ * derives the matching recap URL, scrapes it, and publishes the parsed scores to
+ * the live-scores pubsub topic (which `processLiveScoreRecap` archives into
+ * historical_scores/{year}).
+ *
+ * NOTE: dci.org's scores listing links to /scores/final-scores/{slug}/ pages,
+ * not recap pages directly. The detailed per-caption recap lives at the same
+ * slug under /scores/recap/{slug}/, so we derive it from the final-scores link.
  *
  * @param {object} [options]
  * @param {boolean} [options.force=false] - When true, bypass the "already
@@ -83,19 +88,21 @@ async function scrapeLatestLiveScores({ force = false } = {}) {
     return { scraped: false, reason: "already-scraped-today", lastScrapedDate };
   }
 
-  const urlToScrape = "https://www.dci.org/scores?pageno=1";
-  const data = await fetchWithRetry(urlToScrape);
+  const listUrl = "https://www.dci.org/scores/";
+  const data = await fetchWithRetry(listUrl);
   const $ = cheerio.load(data);
-  const recapLinkSelector = "a.arrow-btn[href*=\"/scores/recap/\"]";
-  const latestRecapLink = $(recapLinkSelector).first().attr("href");
+  // The listing is sorted most-recent-first; the first final-scores link is the
+  // latest event. Derive its recap URL (same slug under /scores/recap/).
+  const finalScoresHref = $("a[href*=\"/scores/final-scores/\"]").first().attr("href");
 
-  if (!latestRecapLink) {
-    logger.info("No new recap links found on scores page 1.");
+  if (!finalScoresHref) {
+    logger.info("No final-scores links found on the dci.org scores page.");
     return { scraped: false, reason: "no-recap-found" };
   }
 
-  const fullUrl = new URL(latestRecapLink, "https://www.dci.org").href;
-  const summary = await scrapeDciScoresLogic(fullUrl, LIVE_SCORES_TOPIC);
+  const finalScoresUrl = new URL(finalScoresHref, "https://www.dci.org").href;
+  const recapUrl = finalScoresToRecapUrl(finalScoresUrl);
+  const summary = await scrapeDciScoresLogic(recapUrl, LIVE_SCORES_TOPIC);
 
   // Update last scraped date on success
   await db.doc("game-settings/season").update({
@@ -105,7 +112,7 @@ async function scrapeLatestLiveScores({ force = false } = {}) {
 
   return {
     scraped: true,
-    recapUrl: fullUrl,
+    recapUrl,
     eventName: summary?.eventName || null,
     eventDate: summary?.eventDate || null,
     eventLocation: summary?.eventLocation || null,
