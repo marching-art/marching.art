@@ -3181,11 +3181,33 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
     return { success: false, error: "Invalid day" };
   }
 
-  logger.info(`Generating 5 daily articles for Day ${reportDay} (DCI.org style)`);
+  // LIVE vs OFF-SEASON sourcing.
+  // Off-season corps are drawn from many different prior years (each carries its
+  // own sourceYear), so articles disclose that program material and read scores
+  // from historical_scores/{sourceYear}.
+  // A LIVE season is different: the roster is seeded from last year's final
+  // rankings (every corps therefore carries sourceYear = previousYear), but the
+  // actual competition is the REAL, current-year DCI season — scraped nightly
+  // into historical_scores/{currentYear}. Articles must report those
+  // current-year events and scores, not the prior year the roster was picked
+  // from, so we resolve every corps against the current competition year.
+  // Live season ids are minted as `live_YYYY-YY` (see startNewLiveSeason);
+  // off-season ids use thematic names (e.g. `spring_2025-26`).
+  const isLiveSeason = typeof seasonId === "string" && seasonId.startsWith("live_");
+  const currentSeasonYear = String(new Date().getFullYear());
+
+  logger.info(`Generating 5 daily articles for Day ${reportDay} (DCI.org style)${isLiveSeason ? ` [LIVE — sourcing ${currentSeasonYear} scores]` : ""}`);
 
   try {
     // Fetch all data
-    const activeCorps = await fetchActiveCorps(db, dataDocId);
+    const rawActiveCorps = await fetchActiveCorps(db, dataDocId);
+    // In a live season every roster corps competes with current-year material,
+    // so override their prior-year sourceYear to the current year. This makes the
+    // downstream score/trend/caption/show-context lookups read the scraped
+    // current-year data instead of the prior season the roster was selected from.
+    const activeCorps = isLiveSeason
+      ? rawActiveCorps.map(c => ({ ...c, sourceYear: currentSeasonYear }))
+      : rawActiveCorps;
     const yearsToFetch = [...new Set(activeCorps.map(c => c.sourceYear))];
     const historicalData = await fetchTimeLockednScores(db, yearsToFetch, reportDay);
     const fantasyData = await fetchFantasyRecaps(db, seasonId, reportDay);
@@ -3219,28 +3241,28 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
 
     // Article 1: DCI DAILY - Today's competition results with score breakdown
     const dciDailyArticle = await generateDciDailyArticle({
-      reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, ledger, brief
+      reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, ledger, brief, isLiveSeason
     });
     articles.push(dciDailyArticle);
     ledger.record(dciDailyArticle);
 
     // Article 2: DCI FEATURE - Single corps season progress spotlight
     const dciFeatureArticle = await generateDciFeatureArticle({
-      reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, ledger, brief
+      reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, ledger, brief, isLiveSeason
     });
     articles.push(dciFeatureArticle);
     ledger.record(dciFeatureArticle);
 
     // Article 3: DCI RECAP - Pure caption deep-dive (GE, Visual, Music). Descriptive, not prescriptive.
     const dciRecapArticle = await generateDciRecapArticle({
-      reportDay, dayScores, trendData, captionLeaders, activeCorps, showContext, competitionContext, db, ledger, brief
+      reportDay, dayScores, trendData, captionLeaders, activeCorps, showContext, competitionContext, db, ledger, brief, isLiveSeason
     });
     articles.push(dciRecapArticle);
     ledger.record(dciRecapArticle);
 
     // Article 4: FANTASY MARKET REPORT - Owns buy/hold/sell picks for the day (descriptive caption analysis already done in Article 3).
     const fantasyRecapArticle = await generateFantasyRecapArticle({
-      reportDay, dayScores, trendData, showContext, competitionContext, db, ledger, brief
+      reportDay, dayScores, trendData, showContext, competitionContext, db, ledger, brief, isLiveSeason
     });
     articles.push(fantasyRecapArticle);
     ledger.record(fantasyRecapArticle);
@@ -3282,7 +3304,7 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
  * Article 1: DCI Scores Analysis
  * Daily competition results in DCI.org editorial style
  */
-async function generateDciDailyArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, ledger, brief }) {
+async function generateDciDailyArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, ledger, brief, isLiveSeason }) {
   const topCorps = dayScores[0];
   const secondCorps = dayScores[1];
   const thirdCorps = dayScores[2];
@@ -3325,7 +3347,9 @@ async function generateDciDailyArticle({ reportDay, dayScores, trendData, active
       const changeStr = trend && Number.isFinite(change)
         ? ` (${change >= 0 ? '+' : ''}${change.toFixed(3)} from yesterday)`
         : '';
-      const yearTag = s.sourceYear ? ` [${s.sourceYear}]` : '';
+      // In a live season every corps performs current-year material, so the
+      // source-year tag is meaningless noise — only annotate the year off-season.
+      const yearTag = !isLiveSeason && s.sourceYear ? ` [${s.sourceYear}]` : '';
       return `${i + 1}. ${s.corps}${yearTag} - ${s.total.toFixed(3)}${changeStr}${i > 0 ? ` [${marginToNext} behind]` : ' [LEADER]'}
    GE: ${s.subtotals?.ge?.toFixed(2) || 'N/A'} | Visual: ${s.subtotals?.visual?.toFixed(2) || 'N/A'} | Music: ${s.subtotals?.music?.toFixed(2) || 'N/A'}`;
     }).join('\n');
@@ -3360,6 +3384,12 @@ async function generateDciDailyArticle({ reportDay, dayScores, trendData, active
   // Get today's narrative variety to keep articles from feeling templated
   const variety = getWritingVariety(reportDay, "dci_daily");
 
+  // In a live season every corps' sourceYear has been resolved to the current
+  // competition year upstream, so it doubles as the season label for the prompt.
+  const liveSeasonYear = isLiveSeason
+    ? (dayScores.find(s => s.sourceYear)?.sourceYear || String(new Date().getFullYear()))
+    : null;
+
   const prompt = `You are a DCI.org staff writer covering tonight's competitions. Write a genuine article — not a template with blanks filled in. Every night's story is different because every night's scores tell a different story. Find that story.
 
 ACCURACY RULES (read first — violations ruin the article)
@@ -3367,7 +3397,9 @@ ACCURACY RULES (read first — violations ruin the article)
 - Only the corps listed in CORPS COMPETING TONIGHT exist in this article. Do not reference any corps not in that list.
 - The field tonight has ${dayScores.length} corps — never state any other count, and never imply corps not listed were present.
 ${multiShow ? `- There are ${scoresByShow.length} separate competitions tonight at different venues. Corps at different shows did NOT compete against each other. Never imply a head-to-head result between corps that weren't at the same show. When you cite a score or placement, make the show clear from context.` : `- All corps tonight competed at a single show: ${scoresByShow[0]?.name}${scoresByShow[0]?.location ? ` in ${scoresByShow[0].location}` : ''}.`}
-- Source-year disclosure: on each corps' FIRST mention in the narrative, include their source-year in parentheses — e.g., "Blue Stars (2019)" — so fantasy readers know which season's program material the corps is performing. Every corps in the DATA block has a listed sourceYear; use it. After the first mention, the year can be omitted.
+${isLiveSeason
+  ? `- This is the ${liveSeasonYear} live DCI season. Write about THIS season's competitions and scores as they happen now — do NOT reference a prior year's program material or tag corps with a past season year.`
+  : `- Source-year disclosure: on each corps' FIRST mention in the narrative, include their source-year in parentheses — e.g., "Blue Stars (2019)" — so fantasy readers know which season's program material the corps is performing. Every corps in the DATA block has a listed sourceYear; use it. After the first mention, the year can be omitted.`}
 - If a data point you want to reference isn't in the DATA block, leave it out. Do not fill gaps with plausible-sounding invention.
 
 VOICE & STYLE
@@ -3506,7 +3538,7 @@ Write like you've covered this beat for years. Let the scores drive the story.`;
  * In-depth feature on a single corps and their progress across the season
  * Written in DCI.org editorial style
  */
-async function generateDciFeatureArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, ledger, brief }) {
+async function generateDciFeatureArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, ledger, brief, isLiveSeason }) {
   // Derive the corps exclusion set from the coverage ledger so this article
   // doesn't repeat a spotlight subject from earlier in the batch.
   const excludeCorps = ledger?.dciCorps || new Set();
@@ -3595,8 +3627,10 @@ async function generateDciFeatureArticle({ reportDay, dayScores, trendData, acti
 
 ACCURACY RULES (read first)
 - Every score, caption number, show name, and location you write MUST come from the DATA block below. Do not invent venues, cities, dates, or scores.
-- The featured corps is ${featureCorps.corps} competing with ${featureCorps.sourceYear} material. Do not reference seasons or material other than ${featureCorps.sourceYear} unless it appears in the data.
-- Source-year disclosure: on the corps' FIRST mention in the narrative, render as "${featureCorps.corps} (${featureCorps.sourceYear})" so fantasy readers know which season's program they're reading about. After the first mention, omit the year unless you're explicitly contrasting seasons.
+${isLiveSeason
+  ? `- This is the ${featureCorps.sourceYear} live DCI season. ${featureCorps.corps} is competing with their current ${featureCorps.sourceYear} program — write about this season's performances and scores, and do NOT reference or tag a prior year's program material.`
+  : `- The featured corps is ${featureCorps.corps} competing with ${featureCorps.sourceYear} material. Do not reference seasons or material other than ${featureCorps.sourceYear} unless it appears in the data.
+- Source-year disclosure: on the corps' FIRST mention in the narrative, render as "${featureCorps.corps} (${featureCorps.sourceYear})" so fantasy readers know which season's program they're reading about. After the first mention, omit the year unless you're explicitly contrasting seasons.`}
 - If a fact isn't in the data, leave it out — do not fill gaps with plausible-sounding invention.
 
 VOICE: Sports analyst who respects the reader's intelligence. Specific scores, real comparisons, honest assessments. No filler about tradition or history — only this season's data matters.
@@ -3607,7 +3641,7 @@ DATA RULES: Ignore total scores under 60 (incomplete). Ignore caption scores of 
 
 ===== DATA =====
 FEATURED CORPS: ${featureCorps.corps}
-Season material: ${featureCorps.sourceYear}${showTitle ? ` | Show title: "${showTitle}"` : ''}
+${isLiveSeason ? 'Live season' : 'Season material'}: ${featureCorps.sourceYear}${showTitle ? ` | Show title: "${showTitle}"` : ''}
 Tonight's competition: ${tonightShow || 'N/A'}${tonightLocation ? ` — ${tonightLocation}` : ''}
 Tonight's placement: ${currentRank}${currentRank === 1 ? 'st' : currentRank === 2 ? 'nd' : currentRank === 3 ? 'rd' : 'th'} of ${dayScores.length} at that show, ${featureCorps.total.toFixed(3)} (${corpsTrend.dayChange >= 0 ? '+' : ''}${corpsTrend.dayChange.toFixed(3)} from yesterday)
 Season High: ${seasonHigh.toFixed(3)} | Season Low: ${seasonLow >= 60 ? seasonLow.toFixed(3) : 'N/A'} | Net improvement: ${improvement >= 0 ? '+' : ''}${improvement.toFixed(3)} | Momentum: ${corpsTrend.momentum || 'steady'}${corpsTrend.atSeasonBest ? ' | ★ AT SEASON HIGH' : ''}
@@ -3706,7 +3740,7 @@ ARTICLE REQUIREMENTS
  * Deep dive on General Effect, Visual, and Music trends over the last week
  * Written in DCI.org recap analysis style
  */
-async function generateDciRecapArticle({ reportDay, dayScores, trendData, captionLeaders, activeCorps, showContext, competitionContext, db, ledger, brief }) {
+async function generateDciRecapArticle({ reportDay, dayScores, trendData, captionLeaders, activeCorps, showContext, competitionContext, db, ledger, brief, isLiveSeason }) {
   // Derive the corps exclusion set from the coverage ledger so the image subject
   // picker below doesn't land on a corps already spotlit in an earlier article.
   const excludeCorps = ledger?.dciCorps || new Set();
@@ -3775,7 +3809,9 @@ ACCURACY RULES
 - Every corps name, score, caption number, and trend direction you write MUST come from the DATA block below. Do not invent corps, scores, or statistics.
 - The field being analyzed is ${dayScores.length} corps (listed below). Never state any other count, and never reference corps not in this list.
 ${multiShowToday ? `- Tonight's caption numbers come from ${uniqueShows.length} different shows: ${uniqueShows.join(', ')}. Corps at different shows did NOT judge against each other tonight, so the caption rankings below are a composite across venues — frame cross-venue comparisons as such, not as a head-to-head caption duel.` : `- Tonight's caption numbers come from a single show, so the caption rankings below are a true head-to-head.`}
-- Source-year disclosure: on each corps' FIRST mention in the narrative, include their source-year in parentheses — e.g., "Blue Stars (2019)" — so fantasy readers know which season's book is driving the caption scores. Every corps' year is listed in CORPS SOURCE YEARS below. After the first mention, the year can be omitted.
+${isLiveSeason
+  ? `- This is the ${dayScores.find(s => s.sourceYear)?.sourceYear || String(new Date().getFullYear())} live DCI season — the caption scores below are from this season's competitions. Do NOT reference a prior year's book or tag corps with a past season year.`
+  : `- Source-year disclosure: on each corps' FIRST mention in the narrative, include their source-year in parentheses — e.g., "Blue Stars (2019)" — so fantasy readers know which season's book is driving the caption scores. Every corps' year is listed in CORPS SOURCE YEARS below. After the first mention, the year can be omitted.`}
 - If a fact isn't in the data, leave it out.
 
 VOICE: Authoritative but readable. Not dumbed down, not written for judges. A knowledgeable fan should come away understanding the caption landscape better than they did before.
@@ -3785,8 +3821,8 @@ BANNED PHRASES: dominant, commanding, stunning, thrilling, heating up, captivati
 ===== DATA =====
 ${dayScores.length} CORPS | Week: Days ${reportDay - 6} through ${reportDay} | Date: ${showContext.date}
 CORPS IN TONIGHT'S FIELD: ${dayScores.map(s => s.corps).join(', ')}
-CORPS SOURCE YEARS: ${dayScores.map(s => `${s.corps} (${s.sourceYear || 'unknown'})`).join(', ')}
-
+${isLiveSeason ? '' : `CORPS SOURCE YEARS: ${dayScores.map(s => `${s.corps} (${s.sourceYear || 'unknown'})`).join(', ')}
+`}
 GENERAL EFFECT (40% of total):
 ${geSorted.map((s, i) => {
   const trend = trendData[s.corps]?.captionTrends?.ge;
@@ -4226,7 +4262,7 @@ ${mode.bodyNote ? `${mode.bodyNote}\n` : ''}${multiShow ? `- Cover all ${competi
  * describes the caption landscape; this article translates it into actionable
  * lineup moves on individual DCI captions (GE1, GE2, VP, VA, CG, B, MA, P).
  */
-async function generateFantasyRecapArticle({ reportDay, dayScores, trendData, showContext, competitionContext, db, ledger, brief }) {
+async function generateFantasyRecapArticle({ reportDay, dayScores, trendData, showContext, competitionContext, db, ledger, brief, isLiveSeason }) {
   const toneGuidance = getToneGuidance(competitionContext, "fantasy_captions");
 
   // Build individual caption "stock" data for each corps
@@ -4290,7 +4326,9 @@ ACCURACY RULES (read first)
 - Every corps name, caption score, and trend arrow you cite MUST come from the DATA block below. Do not invent corps, captions, scores, or trend directions.
 - The field tonight has ${dayScores.length} corps (listed below). Do not reference any corps not in this list.
 ${multiShowCaption ? `- The caption numbers below come from ${uniqueCaptionShows.length} separate shows tonight: ${uniqueCaptionShows.join(', ')}. Corps at different shows did NOT caption-judge against each other — the rankings are a composite across venues. Frame cross-venue picks as such.` : `- All caption numbers tonight come from a single show, so the rankings are a true head-to-head.`}
-- Source-year disclosure: on each corps' first mention in the narrative, include their source-year in parentheses — e.g., "Blue Stars (2019)" — so fantasy directors know which season's book they're picking against. Every corps' year is listed in CORPS SOURCE YEARS below.
+${isLiveSeason
+  ? `- This is the ${dayScores.find(s => s.sourceYear)?.sourceYear || String(new Date().getFullYear())} live DCI season — the caption scores below come from this season's real competitions. Do NOT reference a prior year's book or tag corps with a past season year.`
+  : `- Source-year disclosure: on each corps' first mention in the narrative, include their source-year in parentheses — e.g., "Blue Stars (2019)" — so fantasy directors know which season's book they're picking against. Every corps' year is listed in CORPS SOURCE YEARS below.`}
 - If a caption shows "No data" in the DATA block, do not reference it. If a specific number isn't in the data, don't cite a number.
 
 ${variety.framing}
@@ -4299,8 +4337,8 @@ Pick style: ${variety.pickStyle}
 
 ===== DATA =====
 DAY ${reportDay} | FIELD (${dayScores.length}): ${fieldCorpsList}
-CORPS SOURCE YEARS: ${dayScores.map(s => `${s.corps} (${s.sourceYear || 'unknown'})`).join(', ')}
-
+${isLiveSeason ? '' : `CORPS SOURCE YEARS: ${dayScores.map(s => `${s.corps} (${s.sourceYear || 'unknown'})`).join(', ')}
+`}
 CAPTION RANKINGS (top ${Math.min(5, dayScores.length)} per caption):
 ${captionTypes.map(cap => {
   const topN = stocksByCaption[cap]?.slice(0, 5) || [];
