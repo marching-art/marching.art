@@ -146,18 +146,51 @@ const LiveScoresVerification = () => {
     }
   };
 
-  // Columns = scraped events, with their derived display metadata.
-  const columns = useMemo(() => events.map((event, idx) => {
-    const day = event.offSeasonDay;
-    const scored = typeof day === 'number' && scoredDays.has(day);
-    return {
-      key: `${event.eventName}-${event.date}-${idx}`,
-      event,
-      dateLabel: formatEventDate(event.date),
-      day,
-      scored,
-    };
-  }), [events, scoredDays]);
+  // Columns = one per competition day (offSeasonDay), merging all events that
+  // share a day into a single column. A corps performs in at most one event per
+  // day, so scores never collide. Pre-season events (null day, outside the
+  // 49-day window) have no competition day, so they group by calendar date.
+  const columns = useMemo(() => {
+    const groups = new Map(); // key -> column accumulator
+    for (const event of events) {
+      const day = event.offSeasonDay;
+      const dateKey = (event.date || '').slice(0, 10);
+      const key = (day != null) ? `day:${day}` : `pre:${dateKey}`;
+
+      let col = groups.get(key);
+      if (!col) {
+        col = {
+          key,
+          day: (day != null) ? day : null,
+          date: event.date,
+          dateLabel: formatEventDate(event.date),
+          eventNames: [],
+          locations: new Set(),
+          scoresByCorps: new Map(), // corps -> scoreData
+          scored: (day != null) && scoredDays.has(day),
+        };
+        groups.set(key, col);
+      }
+      if (event.eventName && !col.eventNames.includes(event.eventName)) col.eventNames.push(event.eventName);
+      if (event.location) col.locations.add(event.location);
+      for (const s of (event.scores || [])) {
+        if (!s.corps) continue;
+        const existing = col.scoresByCorps.get(s.corps);
+        // Defensive: if a corps somehow appears twice in one day, keep the higher total.
+        if (!existing || (s.score || 0) > (existing.score || 0)) {
+          col.scoresByCorps.set(s.corps, s);
+        }
+      }
+    }
+
+    // Sort by competition day ascending; pre-season columns (null day) last, by date.
+    return Array.from(groups.values()).sort((a, b) => {
+      const dayA = a.day ?? Infinity;
+      const dayB = b.day ?? Infinity;
+      if (dayA !== dayB) return dayA - dayB;
+      return new Date(a.date || 0) - new Date(b.date || 0);
+    });
+  }, [events, scoredDays]);
 
   // Rows = unique corps across all events, ranked by their most recent
   // (highest competition day) DCI total so the strongest corps surface first.
@@ -178,9 +211,9 @@ const LiveScoresVerification = () => {
       .sort((a, b) => b.latestTotal - a.latestTotal);
   }, [events]);
 
-  // Cell value for a corps/event under the active tab.
-  const getCellValue = (corps, event) => {
-    const scoreData = (event.scores || []).find((s) => s.corps === corps);
+  // Cell value for a corps in a (day-merged) column under the active tab.
+  const getCellValue = (corps, column) => {
+    const scoreData = column.scoresByCorps.get(corps);
     if (!scoreData) return null;
     if (activeTab === 'total') {
       return typeof scoreData.score === 'number' && !isNaN(scoreData.score) ? scoreData.score : null;
@@ -217,7 +250,7 @@ const LiveScoresVerification = () => {
     const headers = ['Corps', ...columns.map((c) => `${c.dateLabel} (D${c.day ?? '-'})`)];
     const rows = corpsRows.map(({ corps }) => {
       const cells = columns.map((c) => {
-        const v = getCellValue(corps, c.event);
+        const v = getCellValue(corps, c);
         return v !== null ? v.toFixed(3) : '';
       });
       return [corps, ...cells];
@@ -264,7 +297,7 @@ const LiveScoresVerification = () => {
           <div>
             <h2 className="text-lg font-bold text-cream-100">Live DCI Scores — {currentYear}</h2>
             <p className="text-xs text-cream-500">
-              {seasonData?.name} • {corpsRows.length} corps • {events.length} events • {totalScores} score rows
+              {seasonData?.name} • {corpsRows.length} corps • {events.length} events across {columns.length} days • {totalScores} score rows
               {seasonData?.lastScrapedDate ? ` • last scraped ${seasonData.lastScrapedDate}` : ''}
             </p>
           </div>
@@ -347,7 +380,7 @@ const LiveScoresVerification = () => {
               <ChevronLeft className="w-4 h-4" />
             </button>
             <span className="text-[10px] text-cream-500 font-mono">
-              Showing events {columns.length === 0 ? 0 : scrollPosition + 1}-
+              Showing days {columns.length === 0 ? 0 : scrollPosition + 1}-
               {Math.min(scrollPosition + VISIBLE_COLUMNS, columns.length)} of {columns.length}
             </span>
             <button
@@ -375,7 +408,7 @@ const LiveScoresVerification = () => {
                     <th
                       key={col.key}
                       className="px-0 py-1.5 text-center font-mono text-cream-400 w-[38px] border-r border-cream-500/10"
-                      title={`${col.event.eventName}\n${col.event.location || ''}\nDay ${col.day ?? 'pre-season'}\nFantasy recap: ${col.scored ? 'scored' : 'not yet scored'}`}
+                      title={`${col.eventNames.join(' + ')}\n${[...col.locations].join(' • ')}\nDay ${col.day ?? 'pre-season'}\nFantasy recap: ${col.scored ? 'scored' : 'not yet scored'}`}
                     >
                       <div className="text-[10px] text-cream-500/70 leading-none">{col.dateLabel}</div>
                       <div className={`text-[8px] leading-tight mt-0.5 ${col.scored ? 'text-green-400/70' : 'text-cream-500/40'}`}>
@@ -405,7 +438,7 @@ const LiveScoresVerification = () => {
 
                     {/* Score Cells */}
                     {visibleColumns.map((col) => {
-                      const value = getCellValue(corps, col.event);
+                      const value = getCellValue(corps, col);
                       const maxScore = getMaxScore();
                       const bgColor = getCellBgColor(value, maxScore);
                       return (
@@ -436,8 +469,8 @@ const LiveScoresVerification = () => {
             <span className="flex items-center gap-0.5"><span className="w-2.5 h-2.5 rounded-sm bg-green-900/20" /> 80-90%</span>
             <span className="flex items-center gap-0.5"><span className="w-2.5 h-2.5 rounded-sm bg-yellow-900/20" /> 70-80%</span>
             <span className="flex items-center gap-0.5"><span className="w-2.5 h-2.5 rounded-sm bg-red-900/20" /> &lt;50%</span>
-            <span className="font-mono ml-2">Column = scraped event;</span>
-            <span>D# is the mapped competition day (green = recap scored). Hover a column for event details.</span>
+            <span className="font-mono ml-2">Column = competition day (same-day events merged);</span>
+            <span>D# is the competition day (green = recap scored). Hover a column for event details.</span>
           </div>
         </>
       )}
