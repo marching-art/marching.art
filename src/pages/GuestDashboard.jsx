@@ -132,7 +132,7 @@ const LineupRow = ({ caption, value, captionScore, isLast, onGatedClick }) => {
           <div className="flex items-center gap-1.5">
             <span className="text-sm text-white truncate">{corpsName}</span>
             {sourceYear && (
-              <span className="text-[10px] text-gray-500">'{sourceYear?.slice(-2)}</span>
+              <span className="text-[10px] text-gray-500">'{String(sourceYear).slice(-2)}</span>
             )}
           </div>
         ) : (

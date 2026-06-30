@@ -176,7 +176,7 @@ const LineupSimulatorPanel = React.memo(({ lineup, lineupScoreData, activeCorpsC
                     <span className="text-xs text-white truncate">{row.corpsName ?? '—'}</span>
                     {row.year && (
                       <span className="text-[10px] text-gray-500 flex-shrink-0">
-                        '{row.year.slice(-2)}
+                        '{String(row.year).slice(-2)}
                       </span>
                     )}
                     {isWeak && <AlertTriangle className="w-3 h-3 text-red-400 flex-shrink-0" />}

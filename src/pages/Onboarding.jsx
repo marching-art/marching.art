@@ -137,7 +137,7 @@ const GuidedCaptionSelection = ({ availableCorps, lineup, setLineup, currentCapt
             <div className="flex items-center gap-2">
               <Check className="w-4 h-4 text-green-400" />
               <span className="text-sm text-cream-100 font-semibold">{selectedCorps.name}</span>
-              <span className="text-xs text-cream-500">'{selectedCorps.year?.slice(-2)}</span>
+              <span className="text-xs text-cream-500">'{selectedCorps.year != null ? String(selectedCorps.year).slice(-2) : ''}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm font-bold text-gold-400">{selectedCorps.points} pts</span>
@@ -176,7 +176,7 @@ const GuidedCaptionSelection = ({ availableCorps, lineup, setLineup, currentCapt
               >
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-cream-100 text-sm">{corps.corpsName}</span>
-                  <span className="text-xs text-cream-500">'{corps.sourceYear?.slice(-2)}</span>
+                  <span className="text-xs text-cream-500">'{corps.sourceYear != null ? String(corps.sourceYear).slice(-2) : ''}</span>
                   {isUsed && <span className="text-xs text-cream-500/60">(already used)</span>}
                 </div>
                 <div className={`px-2 py-1 rounded text-xs font-bold ${
