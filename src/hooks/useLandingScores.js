@@ -1,7 +1,9 @@
 // src/hooks/useLandingScores.js
-// Hook for fetching live DCI scores for the landing page
-// Shows real historical DCI scores for the selected corps in the current season
-// Similar to how ESPN Fantasy shows actual game results
+// Hook for fetching the "Live Scores" ranking shown on the landing/news pages.
+// - Live season: ranks the real current-year DCI corps as they compete, using the
+//   live-scraped scores in historical_scores/{seasonYear}.
+// - Off-season: ranks the fantasy lineup corps using their historical DCI scores,
+//   similar to how ESPN Fantasy shows actual game results.
 
 import { useState, useEffect, useMemo } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
@@ -77,6 +79,12 @@ export const useLandingScores = ({ enabled = true } = {}) => {
   const seasonData = useSeasonStore((state) => state.seasonData);
   const currentDay = useSeasonStore((state) => state.currentDay);
 
+  // During a live season, the Live Scores box should rank the ACTUAL current-year
+  // DCI corps competing right now (scraped into historical_scores/{seasonYear}),
+  // not the previous-year corps that fantasy lineup point values are based on.
+  const isLiveSeason = seasonData?.status === 'live-season';
+  const liveSeasonYear = seasonData?.seasonYear != null ? String(seasonData.seasonYear) : null;
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [corpsValues, setCorpsValues] = useState([]);
@@ -121,6 +129,43 @@ export const useLandingScores = ({ enabled = true } = {}) => {
       try {
         setLoading(true);
 
+        // LIVE SEASON: rank the real current-year DCI corps from the live-scraped
+        // data in historical_scores/{seasonYear}. Only include corps that are
+        // selectable as caption options (matched by corps name against the fantasy
+        // pool in dci-data/{dataDocId}). So the 2026 Blue Devils show because the
+        // 2025 Blue Devils are a caption option, but a 2026 corps whose name isn't
+        // in the pool is omitted.
+        if (isLiveSeason && liveSeasonYear) {
+          const [liveDataDoc, poolDoc] = await Promise.all([
+            getDoc(doc(db, `historical_scores/${liveSeasonYear}`)),
+            getDoc(doc(db, `dci-data/${seasonData.dataDocId}`)),
+          ]);
+
+          const yearData = liveDataDoc.exists() ? (liveDataDoc.data().data || []) : [];
+          const selectableNames = new Set(
+            (poolDoc.exists() ? (poolDoc.data().corpsValues || []) : []).map((c) => c.corpsName)
+          );
+
+          const uniqueCorps = new Map();
+          yearData.forEach((event) => {
+            event.scores?.forEach((s) => {
+              if (s.corps && selectableNames.has(s.corps) && !uniqueCorps.has(s.corps)) {
+                uniqueCorps.set(s.corps, {
+                  corpsName: s.corps,
+                  sourceYear: liveSeasonYear,
+                  points: null,
+                });
+              }
+            });
+          });
+
+          setCorpsValues([...uniqueCorps.values()]);
+          setHistoricalData({ [liveSeasonYear]: yearData });
+          setLoading(false);
+          return;
+        }
+
+        // OFF-SEASON: rank the fantasy lineup corps using their historical scores.
         // 1. Get corps values (selected corps for each point value)
         const corpsDataDoc = await getDoc(doc(db, `dci-data/${seasonData.dataDocId}`));
         if (!corpsDataDoc.exists()) {
@@ -157,7 +202,7 @@ export const useLandingScores = ({ enabled = true } = {}) => {
     };
 
     fetchData();
-  }, [seasonData?.dataDocId, enabled]);
+  }, [seasonData?.dataDocId, enabled, isLiveSeason, liveSeasonYear]);
 
   // Process scores for landing page display
   const liveScores = useMemo(() => {
