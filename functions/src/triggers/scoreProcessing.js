@@ -1,7 +1,7 @@
 const { onMessagePublished } = require("firebase-functions/v2/pubsub");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
-const { queueRecapUrlForScraping } = require("../helpers/scraping");
+const { scrapeDciScoresLogic } = require("../helpers/scraping");
 const axios = require("axios");
 const cheerio = require("cheerio");
 const { PubSub } = require("@google-cloud/pubsub");
@@ -24,6 +24,7 @@ let pubsubClient; // Declare globally, initialize lazily
 
 const PAGINATION_TOPIC = "dci-pagination-topic";
 const LIVE_SCORES_TOPIC = "live-scores-topic";
+const DCI_RECAP_TOPIC = "dci-recap-topic";
 
 exports.processDciScores = onMessagePublished("dci-scores-topic", async (message) => {
   logger.info("Received new historical scores to process.");
@@ -257,18 +258,24 @@ exports.processPaginationPage = onMessagePublished({
         const { data } = await axios.get(finalScoresUrl, { timeout: 15000 });
         const $ = cheerio.load(data);
 
+        // Collect every recap link on this event's final-scores page, then hand
+        // each off to the dci-recap-topic for archiving (one recap per message).
+        const recapUrls = [];
         $("a.arrow-btn[href*=\"/scores/recap/\"]").each((_idx, el) => {
           const recapLink = $(el).attr("href");
-          if (recapLink) {
-            const fullUrl = new URL(recapLink, baseUrl).href;
-            queueRecapUrlForScraping(fullUrl);
-          }
+          if (recapLink) recapUrls.push(new URL(recapLink, baseUrl).href);
         });
+
+        for (const recapUrl of recapUrls) {
+          await pubsubClient.topic(DCI_RECAP_TOPIC).publishMessage({
+            data: Buffer.from(JSON.stringify({ url: recapUrl })),
+          });
+        }
       } catch (error) {
         logger.warn(`[Paginator] Could not process ${finalScoresUrl}. Skipping. Message: ${error.message}`);
       }
     }
-    
+
     const nextDataBuffer = Buffer.from(JSON.stringify({ pageno: pageno + 1 }));
     await pubsubClient.topic(PAGINATION_TOPIC).publishMessage({ data: nextDataBuffer });
   } catch (error) {
@@ -277,5 +284,45 @@ exports.processPaginationPage = onMessagePublished({
     if (browser) {
       await browser.close();
     }
+  }
+});
+
+/**
+ * Deep-scrape recap worker. Consumes one recap URL per message from
+ * dci-recap-topic (fanned out by processPaginationPage) and scrapes it into the
+ * standard dci-scores-topic pipeline, which merges into historical_scores/{year}
+ * (appending missing corps and filling only blank/zero captions).
+ *
+ * maxInstances is capped so a full-history deep scrape doesn't hammer dci.org or
+ * stampede the per-year Firestore document with too many concurrent transactions.
+ */
+exports.processDciRecap = onMessagePublished({
+  topic: DCI_RECAP_TOPIC,
+  maxInstances: 3,
+  timeoutSeconds: 120,
+  memory: "512MiB",
+}, async (message) => {
+  let url;
+  try {
+    const payload = Buffer.from(message.data.message.data, "base64").toString("utf-8");
+    ({ url } = JSON.parse(payload));
+  } catch (parseError) {
+    logger.error("[RecapWorker] Failed to parse message payload:", parseError);
+    return;
+  }
+
+  if (!url) {
+    logger.warn("[RecapWorker] Received a message with no URL. Skipping.");
+    return;
+  }
+
+  try {
+    // Default topic (dci-scores-topic) -> processDciScores -> historical_scores/{year}.
+    await scrapeDciScoresLogic(url);
+    logger.info(`[RecapWorker] Processed recap: ${url}`);
+  } catch (error) {
+    // Swallow so a single bad recap doesn't trigger pubsub redelivery storms.
+    // The deep scrape is idempotent and can be re-run to pick up any misses.
+    logger.error(`[RecapWorker] Failed to process recap ${url}: ${error.message}`);
   }
 });

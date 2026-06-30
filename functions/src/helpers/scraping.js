@@ -1,7 +1,6 @@
-const { onCall, HttpsError, onRequest } = require("firebase-functions/v2/https");
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { PubSub } = require("@google-cloud/pubsub");
-const { CloudTasksClient } = require("@google-cloud/tasks");
 const axios = require("axios");
 const cheerio = require("cheerio");
 
@@ -11,7 +10,6 @@ const cheerio = require("cheerio");
 
 // Declare clients in the global scope but do not initialize them.
 let pubsubClient;
-let tasksClient;
 
 const PAGINATION_TOPIC = "dci-pagination-topic";
 
@@ -131,35 +129,6 @@ async function scrapeDciScoresLogic(urlToScrape, topic = "dci-scores-topic") {
   }
 }
 
-async function queueRecapUrlForScraping(url) {
-  // Lazy initialize the client
-  if (!tasksClient) {
-    tasksClient = new CloudTasksClient();
-  }
-
-  try {
-    const project = process.env.GCLOUD_PROJECT;
-    const location = "us-central1";
-    const queue = "recap-scraper-queue";
-    const workerUrl = `https://us-central1-${project}.cloudfunctions.net/scrapeSingleRecap`;
-    const queuePath = tasksClient.queuePath(project, location, queue);
-
-    const task = {
-      httpRequest: {
-        httpMethod: "POST",
-        url: workerUrl,
-        body: Buffer.from(JSON.stringify({ url })).toString("base64"),
-        headers: { "Content-Type": "application/json" },
-      },
-    };
-
-    await tasksClient.createTask({ parent: queuePath, task: task });
-    logger.info(`[Queuer] Successfully queued task for URL: ${url}`);
-  } catch (error) {
-    logger.error(`[Queuer] Failed to queue task for URL: ${url}`, error);
-  }
-}
-
 const testScraper = onCall({ cors: true }, async (request) => {
   if (!request.auth || !request.auth.token.admin) {
     throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
@@ -179,6 +148,20 @@ const testScraper = onCall({ cors: true }, async (request) => {
   }
 });
 
+/**
+ * Admin-only "deep scrape": walk every page of dci.org/scores (all events, all
+ * years) and archive each recap into historical_scores/{year}.
+ *
+ * Kicks off an asynchronous, self-chaining pubsub pipeline:
+ *   discoverAndQueueUrls -> dci-pagination-topic (processPaginationPage)
+ *     -> for each recap found -> dci-recap-topic (processDciRecap)
+ *       -> scrapeDciScoresLogic -> dci-scores-topic (processDciScores)
+ *         -> merge into historical_scores/{year}
+ *
+ * processDciScores merges by event (name+date), appending missing corps and
+ * filling only blank/zero captions, so re-running is safe and idempotent: it
+ * backfills missing scores without overwriting existing values.
+ */
 const discoverAndQueueUrls = onCall({ cors: true }, async (request) => {
   if (!request.auth || !request.auth.token.admin) {
     throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
@@ -188,35 +171,21 @@ const discoverAndQueueUrls = onCall({ cors: true }, async (request) => {
     pubsubClient = new PubSub();
   }
 
-  logger.info("Kicking off asynchronous discovery process...");
+  logger.info(`Admin ${request.auth.uid} kicked off a full DCI history deep scrape.`);
 
   const dataBuffer = Buffer.from(JSON.stringify({ pageno: 1 }));
   await pubsubClient.topic(PAGINATION_TOPIC).publishMessage({ data: dataBuffer });
 
-  return { success: true, message: "Asynchronous scraper process initiated. See logs for progress." };
-});
-
-const scrapeSingleRecap = onRequest({ cors: true }, async (req, res) => {
-  try {
-    const { url } = req.body;
-    if (!url) {
-      logger.error("Worker received a task with no URL.");
-      res.status(400).send("Bad Request: Missing URL in payload.");
-      return;
-    }
-
-    await scrapeDciScoresLogic(url);
-    res.status(200).send("Successfully processed recap URL.");
-  } catch (error) {
-    logger.error(`Worker failed to process URL: ${req.body.url}`, error);
-    res.status(500).send("Internal Server Error");
-  }
+  return {
+    success: true,
+    message: "Deep scrape started. All events across all years on dci.org will be " +
+      "discovered and archived in the background (fills missing scores; existing " +
+      "values are preserved). This can take a while — watch the function logs for progress.",
+  };
 });
 
 module.exports = {
   scrapeDciScoresLogic,
-  queueRecapUrlForScraping,
   testScraper,
   discoverAndQueueUrls,
-  scrapeSingleRecap,
 };
