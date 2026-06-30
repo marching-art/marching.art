@@ -586,6 +586,27 @@ async function cacheNewsFeed(db, cacheKey, data) {
 }
 
 /**
+ * Invalidate every entry of the server-side news feed cache.
+ * Called after admin writes (delete/archive/update) so the public feed
+ * stops serving the stale article. CDN/browser caches still expire on
+ * their own TTLs; this just removes the server-origin cache layer.
+ */
+async function invalidateNewsCache(db) {
+  try {
+    const snapshot = await db.collection(NEWS_FEED_CACHE_COLLECTION).get();
+    if (snapshot.empty) return;
+
+    const batch = db.batch();
+    snapshot.docs.forEach((doc) => batch.delete(doc.ref));
+    await batch.commit();
+    logger.info(`News feed cache invalidated (${snapshot.size} entries)`);
+  } catch (error) {
+    logger.warn("Error invalidating news cache:", error);
+    // Swallow - cache invalidation failure must not break the admin action
+  }
+}
+
+/**
  * Fetch recent news entries for the frontend
  * Uses collection group query on 'articles' subcollection for efficient cross-season querying
  * Returns articles ordered by createdAt (most recent first)
@@ -1458,6 +1479,7 @@ exports.updateArticle = onCall(
       sanitizedUpdates.lastEditedBy = request.auth.uid;
 
       await db.doc(path).update(sanitizedUpdates);
+      await invalidateNewsCache(db);
 
       logger.info("Article updated:", { path, fields: Object.keys(sanitizedUpdates) });
 
@@ -1495,6 +1517,7 @@ exports.archiveArticle = onCall(
         updatedAt: new Date(),
         lastEditedBy: request.auth.uid,
       });
+      await invalidateNewsCache(db);
 
       logger.info(`Article ${archive ? "archived" : "unarchived"}:`, { path });
 
@@ -1533,6 +1556,7 @@ exports.deleteArticle = onCall(
 
     try {
       await db.doc(path).delete();
+      await invalidateNewsCache(db);
 
       logger.info("Article deleted:", { path });
 
