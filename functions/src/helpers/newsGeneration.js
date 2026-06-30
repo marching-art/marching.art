@@ -24,9 +24,6 @@ const geminiApiKey = defineSecret("GOOGLE_GENERATIVE_AI_API_KEY");
 // Initialize client (lazy loaded) - single unified SDK for text and image generation
 let genAI = null;
 
-// Separate Vertex AI client for image generation (Imagen models require Vertex AI endpoint)
-let genAIVertex = null;
-
 // =============================================================================
 // DCI UNIFORM KNOWLEDGE BASE
 // Comprehensive uniform descriptions by corps and year for image generation
@@ -754,21 +751,6 @@ function initializeGemini() {
 }
 
 /**
- * Initialize Vertex AI client for image generation
- * Imagen models require Vertex AI endpoint instead of public Gemini API
- */
-function initializeVertexAI() {
-  if (!genAIVertex) {
-    genAIVertex = new GoogleGenAI({
-      vertexai: true,
-      project: "marching-art",
-      location: "us-central1",
-    });
-  }
-  return genAIVertex;
-}
-
-/**
  * Generate content with structured JSON output
  * Uses Gemini's native JSON mode for guaranteed valid JSON
  */
@@ -1036,8 +1018,17 @@ Rewrite the entire article. Every other requirement in this prompt still applies
 // IMAGE GENERATION
 // =============================================================================
 
-// Configuration: Set to true to use paid Imagen 4 Ultra ($0.06/image), false for free Gemini 2.5 Flash Image (500 RPD free tier)
+// Configuration: when true use the paid, highest-fidelity image model; when
+// false fall back to the free Gemini 2.5 Flash Image model (500 RPD free tier).
 const USE_PAID_IMAGE_GEN = true;
+
+// Image model ids (both are Gemini image models driven through generateContent).
+// PAID: Gemini 3 Pro Image ("Nano Banana Pro") — Google's SOTA image model
+//   (~$0.134/image). Unlike Imagen it accepts reference images as input, which we
+//   will use to ground corps uniforms/instrumentation in real photos.
+// FREE: Gemini 2.5 Flash Image ("Nano Banana") — free-tier fallback.
+const PAID_IMAGE_MODEL = "gemini-3-pro-image";
+const FREE_IMAGE_MODEL = "gemini-2.5-flash-image";
 
 // =============================================================================
 // DRUM CORPS VISUAL IDENTITY - System context for accurate image generation
@@ -1220,25 +1211,38 @@ function parseAiJson(text) {
 }
 
 /**
- * Generate an image using either free tier (Gemini Flash) or Imagen 4
- * Automatically prepends drum corps visual context to ensure accurate imagery.
+ * Generate an image using the Gemini image models (Nano Banana family).
+ * Paid tier uses Gemini 3 Pro Image (Nano Banana Pro); free tier uses
+ * Gemini 2.5 Flash Image. Automatically prepends drum corps visual context to
+ * ensure accurate imagery, and can ground the result in real reference photos.
  *
  * @param {string} prompt - Detailed image prompt
  * @param {Object} options - Optional configuration
- * @param {string} options.model - Override the default model (e.g., 'gemini-3-flash-preview')
- * @param {string} options.aspectRatio - Aspect ratio for paid tier (default: '16:9')
- * @returns {Promise<string>} Base64 image data or URL
+ * @param {string} options.model - Override the default model id
+ * @param {string} options.aspectRatio - Output aspect ratio (default: '16:9')
+ * @param {Array<{data: string, mimeType: string}>} options.referenceImages -
+ *   Optional reference images (base64 data without the data: prefix) used to
+ *   ground uniform/instrumentation in real photos.
+ * @returns {Promise<string>} Base64 data URL of the generated image, or null
  */
 async function generateImageWithImagen(prompt, options = {}) {
   try {
-    if (USE_PAID_IMAGE_GEN && !options.model) {
-      // Paid tier: Imagen 4 Ultra via Vertex AI ($0.06/image)
-      // Highest-fidelity Imagen model — best for fine detail (valve clusters, drum hardware, harness straps, uniform textures)
-      const vertexAI = initializeVertexAI();
-      const modelName = "imagen-4.0-ultra-generate-001";
+    // Both tiers now run through the Gemini image models (Nano Banana family) via
+    // generateContent. Unlike the previous Imagen/Vertex path, these models accept
+    // reference images as input — pass options.referenceImages (array of
+    // { data: <base64 without data: prefix>, mimeType }) to ground the uniform and
+    // instrumentation in real photos. Caller can still override the model id via
+    // options.model.
+    const ai = initializeGemini();
+    const modelName = options.model || (USE_PAID_IMAGE_GEN ? PAID_IMAGE_MODEL : FREE_IMAGE_MODEL);
 
-      // Put specific prompt FIRST, then critical constraints
-      const imagenPrompt = `${prompt}
+    const referenceImages = (options.referenceImages || []).filter(
+      (ref) => ref && ref.data && ref.mimeType
+    );
+
+    // Critical per-image constraints, appended after the specific prompt. Retained
+    // from the prior Imagen path so the model still gets the hard rules up front.
+    const fullPrompt = `${prompt}
 
 ---
 CRITICAL RULES FOR THIS IMAGE:
@@ -1248,71 +1252,60 @@ CRITICAL RULES FOR THIS IMAGE:
 - CLOSE-UP ONLY: Show 2-6 performers maximum, filling the frame. Do NOT show the full corps or wide formation.
 - FIELD-LEVEL CAMERA: Shoot from eye level on the field, NOT from elevated, aerial, or press box positions.
 - SHALLOW DEPTH OF FIELD: Performers in sharp focus, background (stadium, crowd, field) as soft bokeh.
+${referenceImages.length > 0 ? "- REFERENCE IMAGES: The attached photo(s) show this corps' actual uniform, colors, and instrumentation. Match the uniform design, helmet/plume, and instrument types in the reference exactly — the references define ground truth, not your priors." : ""}
 ${IMAGE_NEGATIVE_PROMPT}`;
 
-      // Retry logic for quota limits (429 errors)
-      const MAX_RETRIES = 3;
-      const RETRY_DELAY_MS = 15000; // 15 seconds between retries
-
-      for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-        try {
-          const response = await vertexAI.models.generateImages({
-            model: modelName,
-            prompt: imagenPrompt,
-            config: {
-              numberOfImages: 1,
-              aspectRatio: options.aspectRatio || "16:9",
-              outputMimeType: "image/jpeg",
-            },
-          });
-
-          const generatedImage = response.generatedImages?.[0];
-          if (generatedImage?.image?.imageBytes) {
-            logger.info(`Image generated successfully using ${modelName} via Vertex AI`);
-            return `data:image/jpeg;base64,${generatedImage.image.imageBytes}`;
-          }
-          break; // No image but no error, exit retry loop
-        } catch (error) {
-          // Check if it's a quota error (429 RESOURCE_EXHAUSTED)
-          if (error.status === 429 && attempt < MAX_RETRIES) {
-            logger.warn(
-              `Quota limit hit (429). Waiting ${RETRY_DELAY_MS / 1000}s before retry ${attempt}/${MAX_RETRIES}...`
-            );
-            await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
-          } else {
-            // Not a quota error or max retries reached, re-throw
-            throw error;
-          }
-        }
-      }
-    } else {
-      // Free tier: Gemini 2.5 Flash Image (500 RPD free, no billing required)
-      const ai = initializeGemini();
-      const modelName = options.model || "gemini-2.5-flash-image";
-
-      // Build system instruction with drum corps context
-      const systemInstruction = `${DRUM_CORPS_VISUAL_CONTEXT}
+    // Build system instruction with drum corps context
+    const systemInstruction = `${DRUM_CORPS_VISUAL_CONTEXT}
 
 ${IMAGE_NEGATIVE_PROMPT}
 
 You are an expert drum corps photojournalist. Generate intimate, close-up, field-level photographs of DCI drum corps performers as described above. Always use shallow depth of field, show only 2-6 performers filling the frame, and capture raw emotion and detail.`;
 
-      const response = await ai.models.generateContent({
-        model: modelName,
-        contents: prompt,
-        config: {
-          responseModalities: ["image", "text"],
-          systemInstruction: systemInstruction,
-        },
-      });
+    // Multimodal request: prompt text plus any reference images.
+    const parts = [{ text: fullPrompt }];
+    for (const ref of referenceImages) {
+      parts.push({ inlineData: { mimeType: ref.mimeType, data: ref.data } });
+    }
 
-      // Extract image from response parts
-      const parts = response.candidates?.[0]?.content?.parts || [];
-      for (const part of parts) {
-        if (part.inlineData?.data) {
-          const mimeType = part.inlineData.mimeType || "image/png";
-          logger.info(`Image generated successfully using ${modelName}`);
-          return `data:${mimeType};base64,${part.inlineData.data}`;
+    // Retry logic for quota limits (429 errors)
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY_MS = 15000; // 15 seconds between retries
+
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const response = await ai.models.generateContent({
+          model: modelName,
+          contents: [{ role: "user", parts }],
+          config: {
+            responseModalities: ["image", "text"],
+            systemInstruction,
+            imageConfig: {
+              aspectRatio: options.aspectRatio || "16:9",
+            },
+          },
+        });
+
+        // Extract image from response parts
+        const responseParts = response.candidates?.[0]?.content?.parts || [];
+        for (const part of responseParts) {
+          if (part.inlineData?.data) {
+            const mimeType = part.inlineData.mimeType || "image/png";
+            logger.info(`Image generated successfully using ${modelName}${referenceImages.length > 0 ? ` (${referenceImages.length} reference image(s))` : ""}`);
+            return `data:${mimeType};base64,${part.inlineData.data}`;
+          }
+        }
+        break; // No image but no error, exit retry loop
+      } catch (error) {
+        // Check if it's a quota error (429 RESOURCE_EXHAUSTED)
+        if (error.status === 429 && attempt < MAX_RETRIES) {
+          logger.warn(
+            `Quota limit hit (429). Waiting ${RETRY_DELAY_MS / 1000}s before retry ${attempt}/${MAX_RETRIES}...`
+          );
+          await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+        } else {
+          // Not a quota error or max retries reached, re-throw
+          throw error;
         }
       }
     }

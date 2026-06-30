@@ -218,7 +218,7 @@ async function saveDailyNews(db, { reportDay, content, metadata, articles, seaso
         metadata: {
           ...metadata,
           generatedBy: "gemini-2.0-flash-lite",
-          imageGeneratedBy: "gemini-2.0-flash-exp", // Free tier
+          imageGeneratedBy: "gemini-3-pro-image", // Nano Banana Pro (paid tier)
         },
 
         isPublished: true,
