@@ -18,7 +18,7 @@ import { doc, getDoc, collection, getDocs, collectionGroup } from 'firebase/fire
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import { useAuth } from '../App';
-import { ScoresSpreadsheet, ArticleManagement, SubmissionsManagement, CommentsModeration, CorpsValuesEditor } from '../components/Admin';
+import { ScoresSpreadsheet, ArticleManagement, SubmissionsManagement, CommentsModeration, CorpsValuesEditor, LiveScoresVerification } from '../components/Admin';
 import LoadingScreen from '../components/LoadingScreen';
 
 // =============================================================================
@@ -28,6 +28,7 @@ import LoadingScreen from '../components/LoadingScreen';
 const ADMIN_TABS = [
   { id: 'overview', label: 'Overview' },
   { id: 'season', label: 'Season Ops' },
+  { id: 'livescores', label: 'Live Scores' },
   { id: 'users', label: 'Users' },
   { id: 'content', label: 'Content' },
   { id: 'jobs', label: 'Jobs' },
@@ -570,6 +571,87 @@ const UsersTab = () => {
 };
 
 // =============================================================================
+// LIVE SCORES TAB
+// =============================================================================
+
+const DeepScrapeCard = () => {
+  const [loading, setLoading] = useState(false);
+
+  const handleDeepScrape = async () => {
+    if (!window.confirm(
+      'Start a DEEP SCRAPE of all DCI scores?\n\n' +
+      'This walks every page of dci.org/scores (all events, all years) and ' +
+      'archives each recap into historical_scores. It runs in the background and ' +
+      'can take a long time.\n\n' +
+      'It is safe and idempotent: missing corps/caption scores are filled in, but ' +
+      'existing values are NEVER overwritten.'
+    )) return;
+    setLoading(true);
+    try {
+      const functions = getFunctions();
+      const discoverAndQueueUrls = httpsCallable(functions, 'discoverAndQueueUrls');
+      const result = await discoverAndQueueUrls();
+      toast.success(result.data?.message || 'Deep scrape started.');
+    } catch (error) {
+      toast.error(error.message || 'Failed to start deep scrape');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      <SectionHeader title="Deep Scrape — Full DCI History" icon={Database} />
+      <div className="p-4 space-y-3">
+        <p className="text-[11px] text-gray-500 leading-relaxed">
+          Backfill the entire scores database from dci.org — <span className="text-gray-300">all events
+          across all years</span>. Use this to fill in missing caption scores and events. The scrape runs
+          asynchronously in the background (watch the function logs for progress) and is{' '}
+          <span className="text-gray-300">100% format-compatible</span> with the existing database: it
+          appends missing corps and fills only blank/zero captions — it never overwrites existing values.
+        </p>
+        <div className="flex items-start gap-2 px-3 py-2 bg-[#111] border border-[#333]">
+          <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
+          <p className="text-[11px] text-yellow-500/80">
+            Heavy, long-running job. It paginates all of dci.org's score history, so it may take a while
+            and generate many background invocations. Safe to re-run; runs are idempotent.
+          </p>
+        </div>
+        <button
+          onClick={handleDeepScrape}
+          disabled={loading}
+          className="flex items-center gap-1.5 h-9 px-3 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] border border-[#0057B8]/30 hover:bg-[#0057B8] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {loading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Database className="w-3.5 h-3.5" />}
+          {loading ? 'Starting…' : 'Start Deep Scrape (All Years)'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const LiveScoresTab = () => (
+  <div className="space-y-4">
+    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      <SectionHeader title="Live Season Score Verification" icon={Activity} />
+      <div className="px-4 py-3 border-b border-[#333] bg-[#111]">
+        <p className="text-[11px] text-gray-500 leading-relaxed">
+          The Scores Reference (Content tab) shows the prior-year selectable corps. This view shows the
+          <span className="text-gray-300"> current DCI season's scraped scores</span> — the data the game
+          actually scores live lineups against — so you can confirm the daily scrape is correct, each event
+          maps to the right competition day, and recaps are generated.
+        </p>
+      </div>
+      <div className="p-4">
+        <LiveScoresVerification />
+      </div>
+    </div>
+
+    <DeepScrapeCard />
+  </div>
+);
+
+// =============================================================================
 // CONTENT TAB
 // =============================================================================
 
@@ -969,6 +1051,7 @@ const Admin = () => {
         <div className="p-3 md:p-4">
           {activeTab === 'overview' && <OverviewTab seasonData={seasonData} />}
           {activeTab === 'season' && <SeasonOpsTab callAdminFunction={callAdminFunction} />}
+          {activeTab === 'livescores' && <LiveScoresTab />}
           {activeTab === 'users' && <UsersTab />}
           {activeTab === 'content' && <ContentTab />}
           {activeTab === 'jobs' && <JobsTab callAdminFunction={callAdminFunction} seasonData={seasonData} />}

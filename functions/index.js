@@ -88,6 +88,7 @@ const {
   startNewLiveSeason,
   manualTrigger,
   sendTestEmail,
+  scrapeLiveScoresNow,
 } = require("./src/callable/admin");
 const { searchYoutubeVideo } = require("./src/callable/youtube");
 
@@ -126,7 +127,9 @@ const {
   processDciScores,
   processLiveScoreRecap,
   processPaginationPage,
+  processDciRecap,
 } = require("./src/triggers/scoreProcessing");
+const { discoverAndQueueUrls } = require("./src/helpers/scraping");
 
 // Live Scraper (1:30 AM - scrapes DCI scores before 2 AM processing)
 const { scrapeDciScores } = require("./src/scheduled/liveScraper");
@@ -219,6 +222,7 @@ module.exports = {
   startNewOffSeason,
   startNewLiveSeason,
   sendTestEmail,
+  scrapeLiveScoresNow,
   dailyXPCheckIn,
   awardXP,
   fixProfileFields,
@@ -263,6 +267,10 @@ module.exports = {
   processDciScores,
   processLiveScoreRecap,
   processPaginationPage,
+  processDciRecap,
+
+  // Deep scrape (admin: all events / all years)
+  discoverAndQueueUrls,
 
   // Live Scraper (1:30 AM)
   scrapeDciScores,
