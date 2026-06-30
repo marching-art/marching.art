@@ -91,32 +91,84 @@ async function scrapeLatestLiveScores({ force = false } = {}) {
   const listUrl = "https://www.dci.org/scores/";
   const data = await fetchWithRetry(listUrl);
   const $ = cheerio.load(data);
-  // The listing is sorted most-recent-first; the first final-scores link is the
-  // latest event. Derive its recap URL (same slug under /scores/recap/).
-  const finalScoresHref = $("a[href*=\"/scores/final-scores/\"]").first().attr("href");
 
-  if (!finalScoresHref) {
-    logger.info("No final-scores links found on the dci.org scores page.");
+  // dci.org renders one ".tbl-row" per event, each containing the event date in
+  // an "M/D/YYYY" cell and a "final scores" link. The slug does NOT carry the
+  // date (e.g. "2026-corps-encore"), so we read the date cell directly. A single
+  // competition night frequently has 2-3 events, so we scrape EVERY event sharing
+  // the most-recent date rather than just the latest single link.
+  const listedEvents = [];
+  $("a[href*=\"/scores/final-scores/\"]").each((_i, el) => {
+    const href = $(el).attr("href");
+    if (!href) return;
+    // Read the date from this anchor's surrounding row. Match "M/D/YYYY" anywhere
+    // in the row text so we don't depend on exact column class names.
+    const row = $(el).closest(".tbl-row");
+    const rowText = row.length ? row.text() : "";
+    const dateMatch = rowText.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (!dateMatch) return;
+    const [, mm, dd, yyyy] = dateMatch;
+    const dateKey = `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
+    const finalScoresUrl = new URL(href, "https://www.dci.org").href;
+    listedEvents.push({ recapUrl: finalScoresToRecapUrl(finalScoresUrl), dateKey });
+  });
+
+  if (listedEvents.length === 0) {
+    logger.info("No dated final-scores rows found on the dci.org scores page.");
     return { scraped: false, reason: "no-recap-found" };
   }
 
-  const finalScoresUrl = new URL(finalScoresHref, "https://www.dci.org").href;
-  const recapUrl = finalScoresToRecapUrl(finalScoresUrl);
-  const summary = await scrapeDciScoresLogic(recapUrl, LIVE_SCORES_TOPIC);
+  // All events sharing the most-recent date belong to the latest competition
+  // night. Compute the max date explicitly rather than trusting listing order,
+  // then de-dupe recap URLs in case a link is repeated.
+  const latestDateKey = listedEvents.reduce(
+    (max, e) => (e.dateKey > max ? e.dateKey : max),
+    listedEvents[0].dateKey
+  );
+  const recapUrls = [
+    ...new Set(listedEvents.filter((e) => e.dateKey === latestDateKey).map((e) => e.recapUrl)),
+  ];
 
-  // Update last scraped date on success
+  logger.info(`Latest competition date ${latestDateKey}: scraping ${recapUrls.length} event(s).`);
+
+  const results = [];
+  let totalCount = 0;
+  for (const recapUrl of recapUrls) {
+    try {
+      const summary = await scrapeDciScoresLogic(recapUrl, LIVE_SCORES_TOPIC);
+      totalCount += summary?.count ?? 0;
+      results.push({
+        recapUrl,
+        eventName: summary?.eventName || null,
+        eventDate: summary?.eventDate || null,
+        eventLocation: summary?.eventLocation || null,
+        count: summary?.count ?? 0,
+      });
+      logger.info(`Scraped "${summary?.eventName || recapUrl}" (${summary?.count ?? 0} corps).`);
+    } catch (error) {
+      // One unpublished/broken recap shouldn't abort the rest of the night's
+      // events. processLiveScoreRecap archiving is idempotent, so a later manual
+      // re-run (force) can backfill any event that failed here.
+      logger.error(`Failed to scrape recap ${recapUrl}: ${error.message}`);
+      results.push({ recapUrl, error: error.message, count: 0 });
+    }
+  }
+
+  // Stamp last scraped date once the night's events have been attempted.
   await db.doc("game-settings/season").update({
     lastScrapedDate: today,
   });
-  logger.info(`Scraping completed successfully for ${today}.`);
+  logger.info(
+    `Scraping completed for ${today}: ${recapUrls.length} event(s) on ` +
+    `${latestDateKey}, ${totalCount} total corps scores.`
+  );
 
   return {
     scraped: true,
-    recapUrl,
-    eventName: summary?.eventName || null,
-    eventDate: summary?.eventDate || null,
-    eventLocation: summary?.eventLocation || null,
-    count: summary?.count ?? 0,
+    latestDate: latestDateKey,
+    eventCount: recapUrls.length,
+    count: totalCount,
+    events: results,
     scrapedDate: today,
   };
 }
