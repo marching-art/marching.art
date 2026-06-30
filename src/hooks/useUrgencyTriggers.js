@@ -30,25 +30,28 @@ export const URGENCY_LEVELS = {
 // HELPER FUNCTIONS
 // =============================================================================
 
-/**
- * Check if a date is today (comparing date strings)
- */
-function isToday(date) {
+// Show dates are stored at UTC midnight, so read their UTC calendar
+// components when comparing against the user's local calendar date —
+// otherwise every show shifts one day earlier in negative-UTC-offset
+// timezones (Schedule.jsx does the same when projecting day numbers).
+function matchesCalendarDay(date, target) {
   if (!date) return false;
-  const today = new Date();
   const compareDate = date instanceof Date ? date : date.toDate?.() || new Date(date);
-  return today.toDateString() === compareDate.toDateString();
+  return (
+    target.getFullYear() === compareDate.getUTCFullYear() &&
+    target.getMonth() === compareDate.getUTCMonth() &&
+    target.getDate() === compareDate.getUTCDate()
+  );
 }
 
-/**
- * Check if a date is tomorrow
- */
+function isToday(date) {
+  return matchesCalendarDay(date, new Date());
+}
+
 function isTomorrow(date) {
-  if (!date) return false;
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
-  const compareDate = date instanceof Date ? date : date.toDate?.() || new Date(date);
-  return tomorrow.toDateString() === compareDate.toDateString();
+  return matchesCalendarDay(date, tomorrow);
 }
 
 /**
