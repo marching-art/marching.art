@@ -126,7 +126,6 @@ const {
 const {
   processDciScores,
   processLiveScoreRecap,
-  processPaginationPage,
   processDciRecap,
 } = require("./src/triggers/scoreProcessing");
 const { discoverAndQueueUrls } = require("./src/helpers/scraping");
@@ -266,7 +265,6 @@ module.exports = {
   // Triggers
   processDciScores,
   processLiveScoreRecap,
-  processPaginationPage,
   processDciRecap,
 
   // Deep scrape (admin: all events / all years)
