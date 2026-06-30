@@ -32,7 +32,10 @@ async function getCurrentWeek(db) {
 
   const now = new Date();
   const diffInDays = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
-  return Math.max(1, Math.ceil((diffInDays + 1) / 7));
+  // Subtract spring training so competition Day 1 starts after it (live season).
+  // Off-seasons have no spring training (field absent -> 0).
+  const springTrainingDays = season.schedule?.springTrainingDays || 0;
+  return Math.max(1, Math.ceil((diffInDays + 1 - springTrainingDays) / 7));
 }
 
 /**

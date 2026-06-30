@@ -142,8 +142,11 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
         const now = new Date();
         const seasonStartDate = seasonData.schedule.startDate.toDate();
         const diffInMillis = now.getTime() - seasonStartDate.getTime();
-        const currentDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1;
-        const currentWeek = Math.ceil(currentDay / 7);
+        // Subtract spring training so competition Day 1 starts after it (live season).
+        // Off-seasons have no spring training (field absent -> 0).
+        const springTrainingDays = seasonData.schedule.springTrainingDays || 0;
+        const currentDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1 - springTrainingDays;
+        const currentWeek = Math.max(1, Math.ceil(currentDay / 7));
 
         let tradeLimit = 3; // Default
         // Allow unlimited trades for initial lineup setup (no existing lineup)
@@ -272,7 +275,10 @@ exports.selectUserShows = onCall({ cors: true }, async (request) => {
     const now = new Date();
     const diffInMillis = now.getTime() - startDate.getTime();
     const diffInDays = Math.floor(diffInMillis / (1000 * 60 * 60 * 24));
-    const currentWeek = Math.max(1, Math.ceil((diffInDays + 1) / 7));
+    // Subtract spring training so competition Day 1 starts after it (live season).
+    // Off-seasons have no spring training (field absent -> 0).
+    const springTrainingDays = seasonData.schedule.springTrainingDays || 0;
+    const currentWeek = Math.max(1, Math.ceil((diffInDays + 1 - springTrainingDays) / 7));
 
     if (week < currentWeek) {
       throw new HttpsError("failed-precondition",
@@ -367,7 +373,10 @@ exports.getHotCorps = onCall({ cors: true }, async (request) => {
       const now = new Date();
       const startDate = seasonData.schedule.startDate.toDate();
       const diffInMillis = now.getTime() - startDate.getTime();
-      currentDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1;
+      // Recaps are keyed by competition day; subtract spring training so the
+      // lookback window aligns (live season). Off-seasons have none (-> 0).
+      const springTrainingDays = seasonData.schedule.springTrainingDays || 0;
+      currentDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1 - springTrainingDays;
     }
 
     // Define the lookback window (7 days = 1 week)

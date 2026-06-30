@@ -82,7 +82,10 @@ exports.manualTrigger = onCall({
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
       const diffInMillis = yesterday.getTime() - seasonStartDate.getTime();
-      const scoredDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1;
+      // processAndScoreLiveSeasonDayLogic expects a competition day (1-49); subtract
+      // spring training to match the scheduled processor (scheduled/dailyProcessors.js).
+      const springTrainingDays = seasonData.schedule.springTrainingDays || 0;
+      const scoredDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1 - springTrainingDays;
       await processAndScoreLiveSeasonDayLogic(scoredDay, seasonData);
       return { success: true, message: `Live Season scores processed for day ${scoredDay}.` };
     }
@@ -224,7 +227,10 @@ exports.manualTrigger = onCall({
         const now = new Date();
         const diffInMillis = now.getTime() - startDate.getTime();
         const diffInDays = Math.floor(diffInMillis / (1000 * 60 * 60 * 24));
-        currentWeek = Math.max(1, Math.ceil((diffInDays + 1) / 7));
+        // Subtract spring training so competition Day 1 starts after it (live season).
+        // Off-seasons have no spring training (field absent -> 0).
+        const springTrainingDays = seasonData.schedule.springTrainingDays || 0;
+        currentWeek = Math.max(1, Math.ceil((diffInDays + 1 - springTrainingDays) / 7));
       }
 
       logger.info(`Clearing schedule selections for week ${currentWeek} and beyond for season ${seasonId}`);
