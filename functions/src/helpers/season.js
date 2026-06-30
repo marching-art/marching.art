@@ -365,6 +365,14 @@ function shuffleArray(array) {
   return array;
 }
 
+/**
+ * Replaces "DCI" with "marching.art" in an event name for in-game branding.
+ * Applied automatically wherever schedules are imported from scraped DCI data.
+ */
+function brandEventName(name) {
+  return typeof name === "string" ? name.replace(/DCI/g, "marching.art") : name;
+}
+
 async function generateLiveSeasonSchedule(seasonLength, startDay, finalsYear, startDate, finalsDate) {
   logger.info(`Generating live season schedule for ${seasonLength} days, starting on day ${startDay}.`);
 
@@ -374,7 +382,10 @@ async function generateLiveSeasonSchedule(seasonLength, startDay, finalsYear, st
   // Scrape upcoming DCI events and populate days 1-44
   try {
     logger.info(`Scraping upcoming DCI events for ${finalsYear}...`);
-    const upcomingEvents = await scrapeUpcomingDciEvents(finalsYear);
+    const upcomingEvents = (await scrapeUpcomingDciEvents(finalsYear)).map((e) => ({
+      ...e,
+      eventName: brandEventName(e.eventName),
+    }));
     logger.info(`Found ${upcomingEvents.length} upcoming events to map to schedule.`);
 
     // Map each event to its corresponding offSeasonDay (competition day)
@@ -1199,7 +1210,7 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
   schedule.forEach((day) => {
     day.shows.forEach((show) => {
       if (!show.isChampionship) {
-        show.eventName = show.eventName.replace(/DCI/g, "marching.art");
+        show.eventName = brandEventName(show.eventName);
       }
     });
   });
@@ -1424,7 +1435,10 @@ async function refreshLiveSeasonSchedule() {
 
   try {
     logger.info(`Scraping upcoming DCI events for ${year}...`);
-    const upcomingEvents = await scrapeUpcomingDciEvents(year);
+    const upcomingEvents = (await scrapeUpcomingDciEvents(year)).map((e) => ({
+      ...e,
+      eventName: brandEventName(e.eventName),
+    }));
     logger.info(`Found ${upcomingEvents.length} events to process.`);
 
     const millisInDay = 24 * 60 * 60 * 1000;
