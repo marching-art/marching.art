@@ -45,7 +45,7 @@ const LineupTableRow = memo(({ caption, value, captionData, onSlotClick, scoresA
             <span className="text-sm text-white">{corpsName}</span>
             {sourceYear && (
               <span className="text-[10px] text-gray-500 ml-1.5">
-                '{sourceYear.slice(-2)}
+                '{String(sourceYear).slice(-2)}
               </span>
             )}
           </div>
