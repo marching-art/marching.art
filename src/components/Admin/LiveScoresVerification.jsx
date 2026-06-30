@@ -10,12 +10,16 @@
 //   - see which competition days have been scored into fantasy_recaps
 //   - manually trigger a scrape on demand
 //
-// It mirrors the layout of ScoresSpreadsheet (caption tabs + heatmap) but reads
-// the live current-year data instead of the prior-year reference corps.
+// It uses the SAME spreadsheet format as ScoresSpreadsheet (caption/aggregate
+// tabs, horizontal scroll, sticky corps column, heatmap, cream/gold theme), but
+// reads the live current-year scraped data instead of the prior-year reference
+// corps. Columns are scraped events (left = earliest competition day); the
+// event -> competition-day mapping and recap-scored status live in the column
+// header tooltips.
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
-  RefreshCw, AlertCircle, Download, Radio, CheckCircle, XCircle, Clock
+  Table, RefreshCw, AlertCircle, Download, ChevronLeft, ChevronRight, Radio
 } from 'lucide-react';
 import { db } from '../../firebase';
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
@@ -25,11 +29,12 @@ import { getCaptionLabel } from '../../utils/captionUtils';
 
 const INDIVIDUAL_CAPTIONS = ['GE1', 'GE2', 'VP', 'VA', 'CG', 'B', 'MA', 'P'];
 
-// Aggregate tabs. NOTE: "Total" uses the real scraped DCI total (event.scores[].score)
-// so it can be eyeballed directly against dci.org. The aggregates are derived from
-// the individual captions using the game's scoring formula (visual/music halved).
+// Aggregate tabs. NOTE: "Total Score" uses the real scraped DCI total
+// (event.scores[].score) so it can be eyeballed directly against dci.org. The
+// other aggregates are derived from the individual captions using the game's
+// scoring formula (visual/music halved), matching ScoresSpreadsheet.
 const AGGREGATE_TABS = [
-  { id: 'total', label: 'DCI Total', max: 100 },
+  { id: 'total', label: 'Total Score', max: 100 },
   { id: 'ge_total', label: 'Total GE', max: 40, calculate: (c) => (c.GE1 || 0) + (c.GE2 || 0) },
   { id: 'music_total', label: 'Total Music', max: 30, calculate: (c) => ((c.B || 0) + (c.MA || 0) + (c.P || 0)) / 2 },
   { id: 'visual_total', label: 'Total Visual', max: 30, calculate: (c) => ((c.VP || 0) + (c.VA || 0) + (c.CG || 0)) / 2 },
@@ -54,6 +59,8 @@ const formatEventDate = (isoDate) => {
   return `${d.getUTCDate()}-${monthStr}`;
 };
 
+const VISIBLE_COLUMNS = 36;
+
 const LiveScoresVerification = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -61,6 +68,7 @@ const LiveScoresVerification = () => {
   const [events, setEvents] = useState([]); // current-year scraped events
   const [scoredDays, setScoredDays] = useState(new Set()); // competition days with a fantasy recap
   const [activeTab, setActiveTab] = useState('total');
+  const [scrollPosition, setScrollPosition] = useState(0);
   const [scraping, setScraping] = useState(false);
 
   const currentYear = new Date().getFullYear();
@@ -138,9 +146,22 @@ const LiveScoresVerification = () => {
     }
   };
 
-  // Build the ordered list of unique corps across all events, ranked by their most
-  // recent (highest competition day) DCI total so the strongest corps surface first.
-  const corpsList = useMemo(() => {
+  // Columns = scraped events, with their derived display metadata.
+  const columns = useMemo(() => events.map((event, idx) => {
+    const day = event.offSeasonDay;
+    const scored = typeof day === 'number' && scoredDays.has(day);
+    return {
+      key: `${event.eventName}-${event.date}-${idx}`,
+      event,
+      dateLabel: formatEventDate(event.date),
+      day,
+      scored,
+    };
+  }), [events, scoredDays]);
+
+  // Rows = unique corps across all events, ranked by their most recent
+  // (highest competition day) DCI total so the strongest corps surface first.
+  const corpsRows = useMemo(() => {
     const best = new Map(); // corps -> { latestDay, latestTotal }
     for (const event of events) {
       const day = event.offSeasonDay ?? -1;
@@ -153,8 +174,8 @@ const LiveScoresVerification = () => {
       }
     }
     return Array.from(best.entries())
-      .sort((a, b) => b[1].latestTotal - a[1].latestTotal)
-      .map(([corps]) => corps);
+      .map(([corps, info]) => ({ corps, latestTotal: info.latestTotal }))
+      .sort((a, b) => b.latestTotal - a.latestTotal);
   }, [events]);
 
   // Cell value for a corps/event under the active tab.
@@ -178,17 +199,25 @@ const LiveScoresVerification = () => {
     return AGGREGATE_TABS.find((t) => t.id === activeTab)?.max || 100;
   };
 
-  const totalCorps = corpsList.length;
-  const totalScores = useMemo(
-    () => events.reduce((sum, e) => sum + (e.scores?.length || 0), 0),
-    [events]
+  const visibleColumns = useMemo(
+    () => columns.slice(scrollPosition, scrollPosition + VISIBLE_COLUMNS),
+    [columns, scrollPosition]
   );
+  const canScrollLeft = scrollPosition > 0;
+  const canScrollRight = scrollPosition + VISIBLE_COLUMNS < columns.length;
+  const handleScrollLeft = () => setScrollPosition(Math.max(0, scrollPosition - 18));
+  const handleScrollRight = () =>
+    setScrollPosition(Math.min(Math.max(0, columns.length - VISIBLE_COLUMNS), scrollPosition + 18));
+
+  const activeLabel = INDIVIDUAL_CAPTIONS.includes(activeTab)
+    ? getCaptionLabel(activeTab)
+    : AGGREGATE_TABS.find((t) => t.id === activeTab)?.label || activeTab;
 
   const handleExportCSV = () => {
-    const headers = ['Corps', ...events.map((e) => `${formatEventDate(e.date)} (D${e.offSeasonDay ?? '-'})`)];
-    const rows = corpsList.map((corps) => {
-      const cells = events.map((event) => {
-        const v = getCellValue(corps, event);
+    const headers = ['Corps', ...columns.map((c) => `${c.dateLabel} (D${c.day ?? '-'})`)];
+    const rows = corpsRows.map(({ corps }) => {
+      const cells = columns.map((c) => {
+        const v = getCellValue(corps, c.event);
         return v !== null ? v.toFixed(3) : '';
       });
       return [corps, ...cells];
@@ -205,38 +234,38 @@ const LiveScoresVerification = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-48">
-        <RefreshCw className="w-6 h-6 text-[#0057B8] animate-spin" />
-        <span className="ml-3 text-gray-400 text-sm">Loading live DCI scores…</span>
+      <div className="flex items-center justify-center h-64">
+        <RefreshCw className="w-8 h-8 text-gold-500 animate-spin" />
+        <span className="ml-3 text-cream-300">Loading live DCI scores…</span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-48 text-red-400">
-        <AlertCircle className="w-6 h-6 mr-3" />
-        <span className="text-sm">{error}</span>
+      <div className="flex items-center justify-center h-64 text-red-400">
+        <AlertCircle className="w-8 h-8 mr-3" />
+        <span>{error}</span>
       </div>
     );
   }
 
   const isLiveSeason = seasonData?.status === 'live-season';
+  const totalScores = events.reduce((sum, e) => sum + (e.scores?.length || 0), 0);
 
   return (
-    <div className="space-y-3">
-      {/* Summary + actions */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-2">
+      {/* Header (mirrors ScoresSpreadsheet) */}
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-[#0057B8]/20 rounded-sm">
-            <Radio className="w-4 h-4 text-[#0057B8]" />
+          <div className="p-1.5 bg-gold-500/20 rounded-sm">
+            <Table className="w-4 h-4 text-gold-500" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-              Active DCI Season Scores — {currentYear}
-            </h2>
-            <p className="text-[11px] text-gray-500">
-              {seasonData?.name} · {events.length} events · {totalCorps} corps · {totalScores} score rows
+            <h2 className="text-lg font-bold text-cream-100">Live DCI Scores — {currentYear}</h2>
+            <p className="text-xs text-cream-500">
+              {seasonData?.name} • {corpsRows.length} corps • {events.length} events • {totalScores} score rows
+              {seasonData?.lastScrapedDate ? ` • last scraped ${seasonData.lastScrapedDate}` : ''}
             </p>
           </div>
         </div>
@@ -244,15 +273,15 @@ const LiveScoresVerification = () => {
           <button
             onClick={handleExportCSV}
             disabled={events.length === 0}
-            className="flex items-center gap-1.5 h-8 px-3 text-[10px] font-bold uppercase bg-white/5 text-gray-300 border border-[#333] hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="btn-outline flex items-center gap-1.5 text-xs px-2 py-1 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Download className="w-3.5 h-3.5" />
-            CSV
+            Export CSV
           </button>
           <button
             onClick={handleScrape}
             disabled={scraping}
-            className="flex items-center gap-1.5 h-8 px-3 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] border border-[#0057B8]/30 hover:bg-[#0057B8] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-sm bg-amber-400 text-neutral-900 font-bold hover:bg-amber-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {scraping ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Radio className="w-3.5 h-3.5" />}
             {scraping ? 'Scraping…' : 'Scrape DCI Scores Now'}
@@ -260,124 +289,136 @@ const LiveScoresVerification = () => {
         </div>
       </div>
 
-      {/* Status strip */}
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-1 px-3 py-2 bg-[#111] border border-[#333] text-[11px]">
-        <span className="flex items-center gap-1.5">
-          <span className="text-gray-500 uppercase tracking-wider">Status:</span>
-          <span className={isLiveSeason ? 'text-green-400 font-bold' : 'text-yellow-400 font-bold'}>
-            {seasonData?.status?.toUpperCase() || 'UNKNOWN'}
-          </span>
-        </span>
-        <span className="flex items-center gap-1.5">
-          <Clock className="w-3 h-3 text-gray-500" />
-          <span className="text-gray-500 uppercase tracking-wider">Last scraped:</span>
-          <span className="text-gray-300 font-data">{seasonData?.lastScrapedDate || 'never'}</span>
-        </span>
-        {!isLiveSeason && (
-          <span className="text-yellow-500/80">
-            Not a live season — scraping is a no-op until a live DCI season is active.
-          </span>
-        )}
-      </div>
+      {!isLiveSeason && (
+        <div className="text-[11px] text-yellow-500/80 px-1">
+          Status: {seasonData?.status?.toUpperCase() || 'UNKNOWN'} — scraping is a no-op until a live DCI season is active.
+        </div>
+      )}
 
       {events.length === 0 ? (
-        <div className="px-3 py-8 text-center text-sm text-gray-500 border border-[#333] bg-[#111]">
+        <div className="px-3 py-8 text-center text-sm text-cream-500 border border-cream-500/20 rounded">
           No scraped scores found for {currentYear}.{' '}
           {isLiveSeason ? 'Use "Scrape DCI Scores Now" to pull the latest recap.' : ''}
         </div>
       ) : (
         <>
-          {/* Caption / aggregate tabs */}
-          <div className="flex flex-wrap gap-0.5 p-0.5 bg-[#111] border border-[#333] rounded-sm">
-            {AGGREGATE_TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-2 py-1 text-[10px] font-mono rounded transition-all ${
-                  activeTab === tab.id ? 'bg-[#0057B8] text-white font-bold' : 'text-gray-400 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-            <div className="w-px bg-[#333] mx-0.5" />
+          {/* Tab Navigation (individual captions, then aggregates) */}
+          <div className="flex flex-wrap gap-0.5 p-0.5 bg-charcoal-900/50 rounded-sm">
             {INDIVIDUAL_CAPTIONS.map((caption) => (
               <button
                 key={caption}
                 onClick={() => setActiveTab(caption)}
                 className={`px-2 py-1 text-[10px] font-mono rounded transition-all ${
-                  activeTab === caption ? 'bg-amber-400 text-neutral-900 font-bold' : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  activeTab === caption
+                    ? 'bg-amber-400 text-neutral-900 font-bold'
+                    : 'text-cream-400 hover:text-cream-100 hover:bg-charcoal-800'
                 }`}
-                title={getCaptionLabel(caption)}
               >
                 {caption}
               </button>
             ))}
+            <div className="w-px bg-cream-500/20 mx-0.5" />
+            {AGGREGATE_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-2 py-1 text-[10px] font-mono rounded transition-all ${
+                  activeTab === tab.id
+                    ? 'bg-amber-400 text-neutral-900 font-bold'
+                    : 'text-cream-400 hover:text-cream-100 hover:bg-charcoal-800'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
 
-          {/* Spreadsheet */}
-          <div className="overflow-x-auto border border-[#333] rounded">
+          {/* Scroll Controls */}
+          <div className="flex items-center justify-between">
+            <button
+              onClick={handleScrollLeft}
+              disabled={!canScrollLeft}
+              className={`p-1 rounded transition-all ${
+                canScrollLeft
+                  ? 'bg-charcoal-800 text-cream-300 hover:bg-charcoal-700'
+                  : 'bg-charcoal-900/50 text-cream-500/30 cursor-not-allowed'
+              }`}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="text-[10px] text-cream-500 font-mono">
+              Showing events {columns.length === 0 ? 0 : scrollPosition + 1}-
+              {Math.min(scrollPosition + VISIBLE_COLUMNS, columns.length)} of {columns.length}
+            </span>
+            <button
+              onClick={handleScrollRight}
+              disabled={!canScrollRight}
+              className={`p-1 rounded transition-all ${
+                canScrollRight
+                  ? 'bg-charcoal-800 text-cream-300 hover:bg-charcoal-700'
+                  : 'bg-charcoal-900/50 text-cream-500/30 cursor-not-allowed'
+              }`}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Spreadsheet Table */}
+          <div className="overflow-x-auto border border-cream-500/20 rounded">
             <table className="w-full border-collapse text-[10px]">
               <thead>
-                <tr className="bg-[#1a1a1a] border-b border-[#333]">
-                  <th className="sticky left-0 z-10 bg-[#1a1a1a] px-2 py-1.5 text-left font-mono text-[#0057B8] border-r border-[#333] w-[110px]">
-                    {INDIVIDUAL_CAPTIONS.includes(activeTab)
-                      ? getCaptionLabel(activeTab)
-                      : AGGREGATE_TABS.find((t) => t.id === activeTab)?.label}
+                <tr className="bg-charcoal-900/80 border-b border-cream-500/20">
+                  <th className="sticky left-0 z-10 bg-charcoal-900 px-1 py-1 text-left font-mono text-gold-400 border-r border-cream-500/20 w-[90px]">
+                    {activeLabel}
                   </th>
-                  {events.map((event, idx) => {
-                    const day = event.offSeasonDay;
-                    const isScored = typeof day === 'number' && scoredDays.has(day);
-                    return (
-                      <th
-                        key={`${event.eventName}-${event.date}-${idx}`}
-                        className="px-0.5 py-1.5 text-center font-mono text-gray-400 w-[44px] border-r border-[#222]"
-                        title={`${event.eventName}\n${event.location || ''}\nDay ${day ?? 'pre-season'}\nFantasy recap: ${isScored ? 'scored' : 'not yet scored'}`}
-                      >
-                        <div className="text-[10px] text-gray-300 leading-none">{formatEventDate(event.date)}</div>
-                        <div className="text-[8px] text-gray-500 leading-tight mt-0.5">
-                          {day != null ? `D${day}` : 'pre'}
-                        </div>
-                        <div className="flex justify-center mt-0.5">
-                          {day == null ? (
-                            <span className="w-2 h-2" />
-                          ) : isScored ? (
-                            <CheckCircle className="w-2.5 h-2.5 text-green-500" />
-                          ) : (
-                            <XCircle className="w-2.5 h-2.5 text-gray-600" />
-                          )}
-                        </div>
-                      </th>
-                    );
-                  })}
+                  {visibleColumns.map((col) => (
+                    <th
+                      key={col.key}
+                      className="px-0 py-1.5 text-center font-mono text-cream-400 w-[38px] border-r border-cream-500/10"
+                      title={`${col.event.eventName}\n${col.event.location || ''}\nDay ${col.day ?? 'pre-season'}\nFantasy recap: ${col.scored ? 'scored' : 'not yet scored'}`}
+                    >
+                      <div className="text-[10px] text-cream-500/70 leading-none">{col.dateLabel}</div>
+                      <div className={`text-[8px] leading-tight mt-0.5 ${col.scored ? 'text-green-400/70' : 'text-cream-500/40'}`}>
+                        {col.day != null ? `D${col.day}` : 'pre'}
+                      </div>
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {corpsList.map((corps, rowIdx) => (
+                {corpsRows.map(({ corps, latestTotal }, rowIdx) => (
                   <tr
                     key={corps}
-                    className={`border-b border-[#222] ${rowIdx % 2 === 0 ? 'bg-[#0d0d0d]' : 'bg-[#111]'} hover:bg-[#1a1a1a]`}
+                    className={`border-b border-cream-500/10 ${
+                      rowIdx % 2 === 0 ? 'bg-charcoal-950/30' : 'bg-charcoal-900/20'
+                    } hover:bg-charcoal-800/40`}
                   >
-                    <td className="sticky left-0 z-10 bg-[#111] px-2 py-1.5 border-r border-[#333] w-[110px] max-w-[110px]">
-                      <div className="font-medium text-white text-[11px] truncate leading-tight" title={corps}>
+                    {/* Corps Name - Sticky */}
+                    <td className="sticky left-0 z-10 bg-charcoal-900/95 px-1 py-1.5 border-r border-cream-500/20 w-[90px] max-w-[90px]">
+                      <div className="font-medium text-cream-100 text-[11px] truncate leading-tight" title={corps}>
                         {corps}
                       </div>
+                      <div className="text-[9px] text-cream-500/50 leading-none font-mono">
+                        {latestTotal ? latestTotal.toFixed(3) : '—'}
+                      </div>
                     </td>
-                    {events.map((event, idx) => {
-                      const value = getCellValue(corps, event);
+
+                    {/* Score Cells */}
+                    {visibleColumns.map((col) => {
+                      const value = getCellValue(corps, col.event);
                       const maxScore = getMaxScore();
                       const bgColor = getCellBgColor(value, maxScore);
                       return (
                         <td
-                          key={`${corps}-${idx}`}
-                          className={`px-0 py-1.5 text-center font-mono text-[11px] w-[44px] border-r border-[#1a1a1a] ${bgColor}`}
+                          key={`${corps}-${col.key}`}
+                          className={`px-0 py-1.5 text-center font-mono text-[11px] w-[38px] border-r border-cream-500/5 ${bgColor}`}
                         >
                           {value !== null ? (
-                            <span className={value >= maxScore * 0.85 ? 'text-green-400' : 'text-gray-300'}>
+                            <span className={value >= maxScore * 0.85 ? 'text-green-400' : 'text-cream-300'}>
                               {value.toFixed(3)}
                             </span>
                           ) : (
-                            <span className="text-gray-700">-</span>
+                            <span className="text-cream-500/20">-</span>
                           )}
                         </td>
                       );
@@ -389,15 +430,14 @@ const LiveScoresVerification = () => {
           </div>
 
           {/* Legend */}
-          <div className="flex flex-wrap items-center gap-3 text-[9px] text-gray-500">
-            <span className="font-mono">Day badge:</span>
-            <span className="flex items-center gap-1"><CheckCircle className="w-2.5 h-2.5 text-green-500" /> recap scored</span>
-            <span className="flex items-center gap-1"><XCircle className="w-2.5 h-2.5 text-gray-600" /> not yet scored</span>
-            <span className="ml-2 font-mono">Heatmap:</span>
+          <div className="flex flex-wrap items-center gap-3 text-[9px] text-cream-500/60">
+            <span className="font-mono">Heatmap:</span>
             <span className="flex items-center gap-0.5"><span className="w-2.5 h-2.5 rounded-sm bg-green-900/30" /> 90%+</span>
-            <span className="flex items-center gap-0.5"><span className="w-2.5 h-2.5 rounded-sm bg-green-900/20" /> 80%+</span>
-            <span className="flex items-center gap-0.5"><span className="w-2.5 h-2.5 rounded-sm bg-yellow-900/20" /> 70%+</span>
+            <span className="flex items-center gap-0.5"><span className="w-2.5 h-2.5 rounded-sm bg-green-900/20" /> 80-90%</span>
+            <span className="flex items-center gap-0.5"><span className="w-2.5 h-2.5 rounded-sm bg-yellow-900/20" /> 70-80%</span>
             <span className="flex items-center gap-0.5"><span className="w-2.5 h-2.5 rounded-sm bg-red-900/20" /> &lt;50%</span>
+            <span className="font-mono ml-2">Column = scraped event;</span>
+            <span>D# is the mapped competition day (green = recap scored). Hover a column for event details.</span>
           </div>
         </>
       )}
