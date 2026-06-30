@@ -1397,9 +1397,10 @@ async function archiveSeasonResultsLogic() {
 }
 
 /**
- * Refreshes the live season schedule with newly scraped DCI events
- * Only updates days 1-44 (non-championship days), preserving championship week
- * Can be called mid-season to add new events that were announced after season start
+ * Refreshes the live season schedule with newly scraped DCI events.
+ * Replaces all regular-season events (days 1-44) with the freshly scraped set,
+ * preserving championship week (days 45-49), which is generated at season creation.
+ * Safe to re-run: the regular-season schedule always reflects the latest scrape.
  */
 async function refreshLiveSeasonSchedule() {
   logger.info("Refreshing live season schedule with scraped events...");
@@ -1427,41 +1428,65 @@ async function refreshLiveSeasonSchedule() {
     logger.info(`Found ${upcomingEvents.length} events to process.`);
 
     const millisInDay = 24 * 60 * 60 * 1000;
-    let addedCount = 0;
 
+    // Group scraped events by competition day (1-44), de-duplicating by name within a day.
+    const showsByDay = new Map();
     for (const event of upcomingEvents) {
       if (!event.date) continue;
 
       const eventDate = new Date(event.date);
       // startDate is calendar day 1; competition day = calendarDay - springTrainingDays.
-      const diffFromStart = eventDate.getTime() - startDate.getTime();
-      const calendarDay = Math.floor(diffFromStart / millisInDay) + 1;
+      const calendarDay = Math.floor((eventDate.getTime() - startDate.getTime()) / millisInDay) + 1;
       const dayNumber = calendarDay - springTrainingDays;
 
       // Only include events within days 1-44 (non-championship days)
-      if (dayNumber >= 1 && dayNumber <= 44) {
-        const show = {
-          eventName: event.eventName,
-          location: event.location,
-          date: event.date,
-          isChampionship: false,
-        };
+      if (dayNumber < 1 || dayNumber > 44) continue;
 
-        // Use helper function to add show to day (handles deduplication)
-        const wasAdded = await addShowToDay(seasonId, dayNumber, show);
-        if (wasAdded) {
-          addedCount++;
-          logger.info(`Added "${event.eventName}" to day ${dayNumber}`);
-        }
-      }
+      if (!showsByDay.has(dayNumber)) showsByDay.set(dayNumber, []);
+      const dayShows = showsByDay.get(dayNumber);
+      if (dayShows.some((s) => s.eventName === event.eventName)) continue;
+      dayShows.push({ eventName: event.eventName, location: event.location, date: event.date });
     }
+
+    // Replace all regular-season events (days 1-44) while preserving championship
+    // week (days 45-49), which is generated at season creation, not scraped.
+    const scheduleRef = db.doc(`schedules/${seasonId}`);
+    const scheduleDoc = await scheduleRef.get();
+    const existing = scheduleDoc.exists ? (scheduleDoc.data().competitions || []) : [];
+    const preserved = existing.filter(
+      (comp) => comp.day >= 45 || comp.type === "championship" || comp.mandatory
+    );
+
+    const newRegular = [];
+    for (const [dayNumber, dayShows] of showsByDay) {
+      const week = Math.ceil(dayNumber / 7);
+      dayShows.forEach((show, idx) => {
+        newRegular.push({
+          id: `${seasonId}_day${dayNumber}_${idx}`,
+          name: show.eventName,
+          location: show.location || "",
+          date: show.date || null,
+          day: dayNumber,
+          week,
+          type: "regular",
+          allowedClasses: ["World Class", "Open Class", "A Class", "SoundSport"],
+          mandatory: false,
+        });
+      });
+    }
+
+    const competitions = [...preserved, ...newRegular].sort((a, b) => a.day - b.day);
+    await scheduleRef.set({ competitions }, { merge: true });
 
     // Update the season document with refresh timestamp
     await db.doc("game-settings/season").update({
       lastScheduleRefresh: new Date().toISOString(),
     });
 
-    logger.info(`Schedule refresh complete. Added ${addedCount} new events.`);
+    const addedCount = newRegular.length;
+    logger.info(
+      `Schedule refresh complete. Replaced regular-season events with ${addedCount} shows across ${showsByDay.size} days.`
+    );
     return { addedCount, totalEvents: upcomingEvents.length };
 
   } catch (error) {

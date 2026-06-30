@@ -646,9 +646,17 @@ const Schedule = () => {
     // spring-training period: startDate + springTrainingDays + (N - 1).
     // Off-seasons have no spring training (field absent -> 0).
     const springTrainingDays = seasonData.schedule.springTrainingDays || 0;
-    const actualDate = new Date(startDate);
-    actualDate.setDate(startDate.getDate() + springTrainingDays + dayNumber - 1);
-    return actualDate;
+    // startDate is stored at UTC midnight. Read its UTC calendar date and build a
+    // LOCAL-midnight date for the target day so weekday/day formatting (which uses
+    // local time) reflects the intended calendar date in every timezone. Using
+    // getDate()/setDate() here would read UTC-midnight as the previous evening in
+    // any negative-UTC-offset (e.g. North American) timezone, shifting every show
+    // one day early and making weeks appear to start on Saturday instead of Sunday.
+    return new Date(
+      startDate.getUTCFullYear(),
+      startDate.getUTCMonth(),
+      startDate.getUTCDate() + springTrainingDays + dayNumber - 1
+    );
   }, [seasonData]);
 
   // Format date
