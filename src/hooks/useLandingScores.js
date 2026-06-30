@@ -130,17 +130,26 @@ export const useLandingScores = ({ enabled = true } = {}) => {
         setLoading(true);
 
         // LIVE SEASON: rank the real current-year DCI corps from the live-scraped
-        // data in historical_scores/{seasonYear}. We synthesize a corps list from
-        // every corps that appears in that year's events so the ranking covers the
-        // whole field, not just the fantasy lineup pool.
+        // data in historical_scores/{seasonYear}. Only include corps that are
+        // selectable as caption options (matched by corps name against the fantasy
+        // pool in dci-data/{dataDocId}). So the 2026 Blue Devils show because the
+        // 2025 Blue Devils are a caption option, but a 2026 corps whose name isn't
+        // in the pool is omitted.
         if (isLiveSeason && liveSeasonYear) {
-          const yearDoc = await getDoc(doc(db, `historical_scores/${liveSeasonYear}`));
-          const yearData = yearDoc.exists() ? (yearDoc.data().data || []) : [];
+          const [liveDataDoc, poolDoc] = await Promise.all([
+            getDoc(doc(db, `historical_scores/${liveSeasonYear}`)),
+            getDoc(doc(db, `dci-data/${seasonData.dataDocId}`)),
+          ]);
+
+          const yearData = liveDataDoc.exists() ? (liveDataDoc.data().data || []) : [];
+          const selectableNames = new Set(
+            (poolDoc.exists() ? (poolDoc.data().corpsValues || []) : []).map((c) => c.corpsName)
+          );
 
           const uniqueCorps = new Map();
           yearData.forEach((event) => {
             event.scores?.forEach((s) => {
-              if (s.corps && !uniqueCorps.has(s.corps)) {
+              if (s.corps && selectableNames.has(s.corps) && !uniqueCorps.has(s.corps)) {
                 uniqueCorps.set(s.corps, {
                   corpsName: s.corps,
                   sourceYear: liveSeasonYear,
