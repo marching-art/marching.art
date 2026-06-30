@@ -3196,6 +3196,16 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
 
     // Process data
     const dayScores = getScoresForDay(historicalData, reportDay, activeCorps);
+
+    // No DCI scores for this day (e.g. a dark night, or scraping hasn't run/landed
+    // yet). The DCI-style articles are built entirely from this day's scores, so
+    // there's nothing to write — bail cleanly and let the caller fall back to
+    // legacy generation instead of crashing on an undefined top/feature corps.
+    if (!dayScores || dayScores.length === 0) {
+      logger.warn(`No DCI scores found for Day ${reportDay}; skipping DCI-style articles and falling back to legacy.`);
+      return { success: false, error: `No DCI scores for day ${reportDay}` };
+    }
+
     const trendData = calculateTrendData(historicalData, reportDay, activeCorps);
     const captionLeaders = identifyCaptionLeaders(dayScores, trendData);
 
