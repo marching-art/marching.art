@@ -287,7 +287,10 @@ exports.manualTrigger = onCall({
         const now = new Date();
         const diffInMillis = now.getTime() - startDate.getTime();
         const diffInDays = Math.floor(diffInMillis / (1000 * 60 * 60 * 24));
-        currentWeek = Math.max(1, Math.ceil((diffInDays + 1) / 7));
+        // Subtract spring training so competition Day 1 starts after it (live season).
+        // Off-seasons have no spring training (field absent -> 0).
+        const springTrainingDays = seasonData.schedule.springTrainingDays || 0;
+        currentWeek = Math.max(1, Math.ceil((diffInDays + 1 - springTrainingDays) / 7));
       }
 
       logger.info(`Clearing schedule selections for week ${currentWeek} and beyond for season ${seasonId}`);
