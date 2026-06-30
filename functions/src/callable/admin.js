@@ -432,8 +432,10 @@ exports.scrapeLiveScoresNow = onCall({
     return {
       success: true,
       message: result.count > 0 ?
-        `Scraped ${result.count} corps from "${result.eventName}". Scores are being archived now.` :
-        `Found "${result.eventName}" but no corps scores were parsed.`,
+        `Scraped ${result.count} corps across ${result.eventCount} event(s) for ` +
+          `${result.latestDate}. Scores are being archived now.` :
+        `Found ${result.eventCount} event(s) for ${result.latestDate} but no corps ` +
+          "scores were parsed (recaps may not be published yet).",
       ...result,
     };
   } catch (error) {
