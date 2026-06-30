@@ -117,15 +117,17 @@ async function scrapeDciScoresLogic(urlToScrape, topic = "dci-scores-topic") {
 
     if (scoresData.length === 0) {
       logger.warn(`No scores found on ${urlToScrape}.`);
-      return;
+      return { eventName, eventLocation, eventDate: eventDate.toISOString(), year, count: 0 };
     }
 
     const payload = { scores: scoresData, eventName, eventLocation, eventDate: eventDate.toISOString(), year };
     const dataBuffer = Buffer.from(JSON.stringify(payload));
     await pubsubClient.topic(topic).publishMessage({ data: dataBuffer });
     logger.info(`Successfully published ${scoresData.length} corps scores from ${eventName}.`);
+    return { eventName, eventLocation, eventDate: eventDate.toISOString(), year, count: scoresData.length };
   } catch (error) {
     logger.error(`[scrapeDciScoresLogic] CRITICAL ERROR for URL ${urlToScrape}:`, error);
+    throw error;
   }
 }
 

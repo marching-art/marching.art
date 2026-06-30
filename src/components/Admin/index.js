@@ -4,3 +4,4 @@ export { default as ArticleManagement } from './ArticleManagement';
 export { default as SubmissionsManagement } from './SubmissionsManagement';
 export { default as CommentsModeration } from './CommentsModeration';
 export { default as CorpsValuesEditor } from './CorpsValuesEditor';
+export { default as LiveScoresVerification } from './LiveScoresVerification';

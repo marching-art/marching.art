@@ -18,7 +18,7 @@ import { doc, getDoc, collection, getDocs, collectionGroup } from 'firebase/fire
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import { useAuth } from '../App';
-import { ScoresSpreadsheet, ArticleManagement, SubmissionsManagement, CommentsModeration, CorpsValuesEditor } from '../components/Admin';
+import { ScoresSpreadsheet, ArticleManagement, SubmissionsManagement, CommentsModeration, CorpsValuesEditor, LiveScoresVerification } from '../components/Admin';
 import LoadingScreen from '../components/LoadingScreen';
 
 // =============================================================================
@@ -28,6 +28,7 @@ import LoadingScreen from '../components/LoadingScreen';
 const ADMIN_TABS = [
   { id: 'overview', label: 'Overview' },
   { id: 'season', label: 'Season Ops' },
+  { id: 'livescores', label: 'Live Scores' },
   { id: 'users', label: 'Users' },
   { id: 'content', label: 'Content' },
   { id: 'jobs', label: 'Jobs' },
@@ -570,6 +571,29 @@ const UsersTab = () => {
 };
 
 // =============================================================================
+// LIVE SCORES TAB
+// =============================================================================
+
+const LiveScoresTab = () => (
+  <div className="space-y-4">
+    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      <SectionHeader title="Live Season Score Verification" icon={Activity} />
+      <div className="px-4 py-3 border-b border-[#333] bg-[#111]">
+        <p className="text-[11px] text-gray-500 leading-relaxed">
+          The Scores Reference (Content tab) shows the prior-year selectable corps. This view shows the
+          <span className="text-gray-300"> current DCI season's scraped scores</span> — the data the game
+          actually scores live lineups against — so you can confirm the daily scrape is correct, each event
+          maps to the right competition day, and recaps are generated.
+        </p>
+      </div>
+      <div className="p-4">
+        <LiveScoresVerification />
+      </div>
+    </div>
+  </div>
+);
+
+// =============================================================================
 // CONTENT TAB
 // =============================================================================
 
@@ -969,6 +993,7 @@ const Admin = () => {
         <div className="p-3 md:p-4">
           {activeTab === 'overview' && <OverviewTab seasonData={seasonData} />}
           {activeTab === 'season' && <SeasonOpsTab callAdminFunction={callAdminFunction} />}
+          {activeTab === 'livescores' && <LiveScoresTab />}
           {activeTab === 'users' && <UsersTab />}
           {activeTab === 'content' && <ContentTab />}
           {activeTab === 'jobs' && <JobsTab callAdminFunction={callAdminFunction} seasonData={seasonData} />}

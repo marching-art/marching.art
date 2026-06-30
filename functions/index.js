@@ -88,6 +88,7 @@ const {
   startNewLiveSeason,
   manualTrigger,
   sendTestEmail,
+  scrapeLiveScoresNow,
 } = require("./src/callable/admin");
 const { searchYoutubeVideo } = require("./src/callable/youtube");
 
@@ -219,6 +220,7 @@ module.exports = {
   startNewOffSeason,
   startNewLiveSeason,
   sendTestEmail,
+  scrapeLiveScoresNow,
   dailyXPCheckIn,
   awardXP,
   fixProfileFields,
