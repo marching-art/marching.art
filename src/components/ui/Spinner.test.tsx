@@ -185,12 +185,12 @@ describe('FullPageLoading', () => {
 
     it('shows logo by default', () => {
       render(<FullPageLoading />);
-      expect(screen.getByText('marching.art')).toBeInTheDocument();
+      expect(screen.getByRole('img', { name: 'marching.art' })).toBeInTheDocument();
     });
 
     it('hides logo when showLogo is false', () => {
       render(<FullPageLoading showLogo={false} />);
-      expect(screen.queryByText('marching.art')).not.toBeInTheDocument();
+      expect(screen.queryByRole('img')).not.toBeInTheDocument();
     });
 
     it('is fixed position', () => {

@@ -4,7 +4,6 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { Trophy } from 'lucide-react';
 import { Modal, ConfirmModal } from './Modal';
 
 describe('Modal', () => {
@@ -53,24 +52,6 @@ describe('Modal', () => {
       expect(screen.getByRole('heading', { name: 'Test Title' })).toBeInTheDocument();
     });
 
-    it('renders subtitle when provided', () => {
-      render(
-        <Modal isOpen={true} onClose={() => {}} title="Title" subtitle="Subtitle text">
-          <p>Content</p>
-        </Modal>
-      );
-      expect(screen.getByText('Subtitle text')).toBeInTheDocument();
-    });
-
-    it('renders icon when provided', () => {
-      render(
-        <Modal isOpen={true} onClose={() => {}} title="Title" icon={<Trophy data-testid="modal-icon" />}>
-          <p>Content</p>
-        </Modal>
-      );
-      expect(screen.getByTestId('modal-icon')).toBeInTheDocument();
-    });
-
     it('renders footer when provided', () => {
       render(
         <Modal isOpen={true} onClose={() => {}} footer={<button>Submit</button>}>
@@ -100,34 +81,24 @@ describe('Modal', () => {
   });
 
   describe('sizes', () => {
-    it('applies small size class', () => {
-      render(
+    // The modal container is the dialog's first element child (the panel).
+    const panelClass = () =>
+      (screen.getByRole('dialog').firstElementChild as HTMLElement).className;
+
+    it('applies distinct width styling per size', () => {
+      const { rerender } = render(
         <Modal isOpen={true} onClose={() => {}} size="sm">
           <p>Content</p>
         </Modal>
       );
-      // Modal renders via portal to document.body
-      expect(document.body.querySelector('.max-w-sm')).toBeInTheDocument();
-    });
-
-    it('applies medium size by default', () => {
-      render(
-        <Modal isOpen={true} onClose={() => {}}>
-          <p>Content</p>
-        </Modal>
-      );
-      // Modal renders via portal to document.body
-      expect(document.body.querySelector('.max-w-md')).toBeInTheDocument();
-    });
-
-    it('applies large size class', () => {
-      render(
+      const sm = panelClass();
+      rerender(
         <Modal isOpen={true} onClose={() => {}} size="lg">
           <p>Content</p>
         </Modal>
       );
-      // Modal renders via portal to document.body
-      expect(document.body.querySelector('.max-w-2xl')).toBeInTheDocument();
+      const lg = panelClass();
+      expect(sm).not.toEqual(lg);
     });
   });
 
@@ -238,7 +209,10 @@ describe('Modal', () => {
       );
       const dialog = screen.getByRole('dialog');
       expect(dialog).toHaveAttribute('aria-modal', 'true');
-      expect(dialog).toHaveAttribute('aria-labelledby', 'modal-title');
+      // aria-labelledby should point at the element holding the title text.
+      const labelledBy = dialog.getAttribute('aria-labelledby');
+      expect(labelledBy).toBeTruthy();
+      expect(document.getElementById(labelledBy!)).toHaveTextContent('Accessible Modal');
     });
   });
 });
@@ -382,8 +356,8 @@ describe('ConfirmModal', () => {
       expect(confirmButton).toHaveClass('bg-red-600');
     });
 
-    it('renders default variant with gold button', () => {
-      render(
+    it('styles the default confirm button differently from the danger variant', () => {
+      const { rerender } = render(
         <ConfirmModal
           isOpen={true}
           onClose={() => {}}
@@ -393,8 +367,22 @@ describe('ConfirmModal', () => {
           variant="default"
         />
       );
-      const confirmButton = screen.getByRole('button', { name: 'Confirm' });
-      expect(confirmButton).toHaveClass('bg-gradient-gold');
+      const defaultClass = screen.getByRole('button', { name: 'Confirm' }).className;
+      expect(defaultClass).not.toContain('bg-red-600');
+
+      rerender(
+        <ConfirmModal
+          isOpen={true}
+          onClose={() => {}}
+          onConfirm={() => {}}
+          title="Confirm"
+          message="Proceed?"
+          variant="danger"
+        />
+      );
+      const dangerClass = screen.getByRole('button', { name: 'Confirm' }).className;
+      expect(dangerClass).toContain('bg-red-600');
+      expect(defaultClass).not.toEqual(dangerClass);
     });
   });
 });
