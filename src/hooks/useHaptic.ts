@@ -63,7 +63,9 @@ export const triggerHaptic = (
       ? hapticPatterns[pattern]
       : pattern;
 
-    return navigator.vibrate(vibrationPattern);
+    // hapticPatterns is `as const`, so array values are readonly tuples;
+    // navigator.vibrate does not mutate its argument, so the cast is safe.
+    return navigator.vibrate(vibrationPattern as number | number[]);
   } catch (error) {
     console.warn('Haptic feedback failed:', error);
     return false;

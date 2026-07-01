@@ -4,11 +4,11 @@ name: CI
 # merge gate: at minimum the app must still build. `test` and `typecheck`
 # also run here so their status is visible on every PR.
 #
-# NOTE ON REQUIRED CHECKS: `build`, `test`, and `functions` are green and are
-# safe to mark as required status checks in branch protection. `typecheck` and
-# `lint` still report pre-existing issues (TypeScript errors, stale Storybook
-# stories, missing @types, legacy style violations); keep them non-required
-# until that backlog is cleared, then promote them too.
+# NOTE ON REQUIRED CHECKS: all five jobs — build, test, typecheck, lint, and
+# functions — are green, so every one is safe to mark as a required status check
+# in branch protection. (ESLint reports 0 errors; remaining items are non-fatal
+# warnings. Storybook *.stories.tsx are excluded from tsc and still need updating
+# to the current component APIs — separate, non-blocking work.)
 
 on:
   pull_request:
