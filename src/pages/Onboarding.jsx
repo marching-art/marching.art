@@ -368,31 +368,25 @@ const Onboarding = () => {
 
     setLoading(true);
     try {
-      const profileRef = doc(db, `artifacts/marching-art/users/${user.uid}/profile/data`);
-      const usernameRef = doc(db, `usernames/${formData.username.toLowerCase()}`);
-
-      const profileData = {
-        uid: user.uid,
-        email: user.email,
+      // Create the base profile + reserve the username atomically on the server.
+      // The `usernames/` collection is backend-only per security rules, so this
+      // MUST go through the callable rather than a client write. The callable is
+      // idempotent, so a retry after a partial failure is safe.
+      const createUserProfile = httpsCallable(functions, 'createUserProfile');
+      await createUserProfile({
         username: formData.username.trim().toLowerCase(),
         displayName: formData.displayName.trim(),
+      });
+
+      // Layer on the onboarding-specific data. Writing to the owner's own
+      // profile doc is permitted by security rules; merge so we don't clobber
+      // the fields the callable just set (uniform, trophies, currency, etc.).
+      const profileRef = doc(db, `artifacts/marching-art/users/${user.uid}/profile/data`);
+      await setDoc(profileRef, {
         location: '', // Can add later in profile
         bio: '',
         favoriteCorps: '',
-        createdAt: new Date(),
-        xp: 0,
-        xpLevel: 1,
-        userTitle: 'Rookie',
-        corpsCoin: 1000,
-        unlockedClasses: ['soundSport'],
         staff: [],
-        achievements: [],
-        stats: {
-          seasonsPlayed: 0,
-          championships: 0,
-          topTenFinishes: 0,
-          leagueWins: 0,
-        },
         corps: {
           soundSport: {
             name: formData.corpsName.trim(),
@@ -413,28 +407,12 @@ const Onboarding = () => {
             }
           }
         },
-        engagement: {
-          loginStreak: 1,
-          lastLogin: new Date().toISOString(),
-          totalLogins: 1,
-          recentActivity: [{
-            type: 'welcome',
-            message: 'Welcome to marching.art!',
-            timestamp: new Date().toISOString(),
-            icon: 'star'
-          }]
-        },
         dailyOps: {},
         lastRehearsal: null,
         // Mark as first visit for dashboard tooltips
         isFirstVisit: true,
         onboardingCompletedAt: new Date().toISOString()
-      };
-
-      await setDoc(profileRef, profileData);
-
-      // Reserve username in usernames collection
-      await setDoc(usernameRef, { uid: user.uid });
+      }, { merge: true });
 
       // Auto-register for current week's shows
       try {
@@ -449,7 +427,14 @@ const Onboarding = () => {
 
     } catch (error) {
       console.error('Error creating profile:', error);
-      toast.error('Failed to create profile. Please try again.');
+      if (error?.code === 'functions/already-exists') {
+        // Username was claimed between the availability check and submit.
+        toast.error('That username was just taken. Please choose another.');
+        setUsernameStatus({ checking: false, valid: false, message: 'This username is already taken' });
+        setStep(1);
+      } else {
+        toast.error('Failed to create profile. Please try again.');
+      }
       setLoading(false);
     }
   };

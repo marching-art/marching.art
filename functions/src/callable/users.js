@@ -57,37 +57,50 @@ exports.createUserProfile = onCall({ cors: true }, async (request) => {
     throw new HttpsError("unauthenticated", "You must be logged in to create a profile.");
   }
 
-  const { username } = request.data;
+  const { username, displayName } = request.data;
   const { uid, email } = request.auth.token;
 
   if (!username) {
     throw new HttpsError("invalid-argument", "Username is required for profile creation.");
   }
   const trimmedUsername = username.trim();
+  if (trimmedUsername.length < 3 || trimmedUsername.length > 15 || !/^[a-zA-Z0-9_]+$/.test(trimmedUsername)) {
+    throw new HttpsError("invalid-argument",
+      "Username must be 3-15 characters and contain only letters, numbers, and underscores.");
+  }
+  // Optional display name (falls back to the username).
+  const cleanDisplayName = (typeof displayName === "string" && displayName.trim())
+    ? displayName.trim().slice(0, 50)
+    : trimmedUsername;
 
   try {
     const db = getDb();
-    const batch = db.batch();
+
+    const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+    const userPrivateRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/private/data`);
+
+    // Idempotent: if this user already has a profile, treat as success so the
+    // onboarding/guard flow can safely retry without erroring out.
+    const existingProfile = await userProfileRef.get();
+    if (existingProfile.exists) {
+      logger.info(`createUserProfile: profile already exists for ${uid}, treating as no-op.`);
+      return { success: true, message: "User profile already exists.", alreadyExists: true };
+    }
 
     const usernameRef = db.doc(`usernames/${trimmedUsername.toLowerCase()}`);
     const usernameDoc = await usernameRef.get();
 
-    if (usernameDoc.exists) {
+    // Allow the reservation only if it's free or already owned by this user.
+    if (usernameDoc.exists && usernameDoc.data().uid !== uid) {
       throw new HttpsError("already-exists", "This username is already taken.");
     }
 
-    const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
-    const userPrivateRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/private/data`);
-    const existingProfile = await userProfileRef.get();
-
-    if (existingProfile.exists) {
-      throw new HttpsError("already-exists", "User profile already exists.");
-    }
+    const batch = db.batch();
 
     batch.set(userProfileRef, {
       uid: uid,
       username: trimmedUsername,
-      displayName: trimmedUsername,
+      displayName: cleanDisplayName,
       createdAt: new Date(),
       lastActive: new Date(),
       bio: `Welcome to my marching.art profile!`,

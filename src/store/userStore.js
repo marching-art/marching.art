@@ -110,33 +110,13 @@ export const useUserStore = create((set, get) => ({
             };
             set({ loggedInProfile: profileData });
           } else {
-            // Profile doesn't exist, create a basic one with all required fields
-            const newProfile = {
-              uid: user.uid,
-              username: null,
-              displayName: user.displayName || 'Director',
-              createdAt: new Date(),
-              // XP & Progression
-              xp: 0,
-              xpLevel: 1,
-              userTitle: 'Rookie',
-              // Currency
-              corpsCoin: 1000,
-              // Unlocks
-              unlockedClasses: ['soundSport'],
-              // Corps data
-              corps: {},
-              // Stats
-              stats: {
-                seasonsPlayed: 0,
-                championships: 0,
-                topTenFinishes: 0,
-                leagueWins: 0,
-              },
-            };
-            
-            await setDoc(profileRef, newProfile);
-            set({ loggedInProfile: newProfile });
+            // No profile yet. Do NOT auto-create one here — profile creation is
+            // owned by the onboarding flow via the `createUserProfile` callable
+            // (which atomically reserves the username). This listener previously
+            // wrote a username-less profile that raced onboarding and left users
+            // in a broken state. Leave the profile null; the routing guard sends
+            // profile-less users to onboarding.
+            set({ loggedInProfile: null });
           }
         } catch (error) {
           console.error('Error fetching user profile:', error);
