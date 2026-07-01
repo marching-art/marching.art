@@ -132,7 +132,7 @@ async function scrapeUpcomingDciEventsLogic(year) {
           const cur = document.querySelector("#pagination .current, .pagination .current");
           return cur && parseInt(cur.textContent.trim(), 10) === np;
         }, { timeout: 30000 }, nextPage);
-      } catch (e) {
+      } catch {
         logger.warn(`[EventScraper] Timed out waiting for page ${nextPage} to load; falling back to fixed delay.`);
         await new Promise((resolve) => setTimeout(resolve, 3000));
       }

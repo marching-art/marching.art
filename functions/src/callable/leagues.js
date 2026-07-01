@@ -37,7 +37,7 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
   const db = getDb();
   const seasonDoc = await db.doc("game-settings/season").get();
   if (!seasonDoc.exists) throw new HttpsError("not-found", "No active season.");
-  const { seasonUid, currentWeek = 1 } = seasonDoc.data();
+  const { seasonUid } = seasonDoc.data();
 
   // OPTIMIZATION #2: Generate unique invite code deterministically (no DB reads needed)
   const inviteCode = generateUniqueInviteCode(uid);

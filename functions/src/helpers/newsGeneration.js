@@ -2451,7 +2451,7 @@ function analyzeCompetitionContext(dayScores, trendData, reportDay) {
  * @returns {string} Tone guidance for the AI prompt
  */
 function getToneGuidance(context, articleType) {
-  const { scenario, seasonPhase, hasShakeup, positionBattleCount, intensity } = context;
+  const { scenario, seasonPhase, hasShakeup, positionBattleCount } = context;
 
   // Base context elements - factual, not dramatic
   const contextElements = [];
@@ -3068,7 +3068,7 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay, onArti
  * Article 1: DCI Scores Analysis
  * Daily competition results in DCI.org editorial style
  */
-async function generateDciDailyArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, ledger, brief, isLiveSeason }) {
+async function generateDciDailyArticle({ reportDay, dayScores, trendData, showContext, competitionContext, db, ledger, brief, isLiveSeason }) {
   const topCorps = dayScores[0];
   const secondCorps = dayScores[1];
   const thirdCorps = dayScores[2];
@@ -3302,7 +3302,7 @@ Write like you've covered this beat for years. Let the scores drive the story.`;
  * In-depth feature on a single corps and their progress across the season
  * Written in DCI.org editorial style
  */
-async function generateDciFeatureArticle({ reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, ledger, brief, isLiveSeason }) {
+async function generateDciFeatureArticle({ reportDay, dayScores, trendData, showContext, competitionContext, db, ledger, brief, isLiveSeason }) {
   // Derive the corps exclusion set from the coverage ledger so this article
   // doesn't repeat a spotlight subject from earlier in the batch.
   const excludeCorps = ledger?.dciCorps || new Set();
@@ -3504,7 +3504,7 @@ ARTICLE REQUIREMENTS
  * Deep dive on General Effect, Visual, and Music trends over the last week
  * Written in DCI.org recap analysis style
  */
-async function generateDciRecapArticle({ reportDay, dayScores, trendData, captionLeaders, activeCorps, showContext, competitionContext, db, ledger, brief, isLiveSeason }) {
+async function generateDciRecapArticle({ reportDay, dayScores, trendData, captionLeaders, showContext, competitionContext, db, ledger, brief, isLiveSeason }) {
   // Derive the corps exclusion set from the coverage ledger so the image subject
   // picker below doesn't land on a corps already spotlit in an earlier article.
   const excludeCorps = ledger?.dciCorps || new Set();

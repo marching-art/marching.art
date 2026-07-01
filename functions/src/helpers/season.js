@@ -42,7 +42,7 @@ async function scrapeUpcomingDciEvents(year) {
   let invokeKey;
   try {
     invokeKey = scraperInvokeKey.value();
-  } catch (e) {
+  } catch {
     throw new Error(
       "SCRAPER_INVOKE_KEY secret not bound to this function. Add `secrets: [scraperInvokeKey]` " +
       "to the calling function's options and run `firebase functions:secrets:set SCRAPER_INVOKE_KEY`."
