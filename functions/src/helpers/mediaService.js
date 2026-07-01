@@ -199,7 +199,7 @@ function getPlaceholderImage(category = "default") {
  * @param {string} options.headline - Article headline for context
  * @returns {string} Appropriate placeholder image URL
  */
-function getContextualPlaceholder({ newsCategory, headline = "" }) {
+function getContextualPlaceholder({ headline = "" }) {
   const headlineLower = headline.toLowerCase();
 
   // Match headline keywords to image categories

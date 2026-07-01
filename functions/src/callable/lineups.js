@@ -353,7 +353,7 @@ exports.saveShowConcept = onCall({ cors: true }, async (request) => {
  *
  * Returns: { hotCorps: { "CorpsName|Year": { GE1: {isHot, improvement}, GE2: {...}, ... } } }
  */
-exports.getHotCorps = onCall({ cors: true }, async (request) => {
+exports.getHotCorps = onCall({ cors: true }, async (_request) => {
   const db = getDb();
   const CAPTIONS = ['GE1', 'GE2', 'VP', 'VA', 'CG', 'B', 'MA', 'P'];
 
