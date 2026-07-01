@@ -5,7 +5,7 @@
 // Usage: const { engagementData, loginStreak } = useEngagement(uid, profile);
 
 import { useState, useEffect } from 'react';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../api';
 import type { UserProfile, Achievement } from '../types';
 
@@ -79,12 +79,14 @@ export function useEngagement(
         const profileRef = doc(db, `artifacts/marching-art/users/${uid}/profile/data`);
         const today = new Date().toDateString();
         const lastLogin = profile.engagement?.lastLogin;
-        const lastLoginDate = lastLogin
+        // engagement.lastLogin is persisted as a Firestore Timestamp; tolerate an
+        // ISO string too for any legacy data written by older client builds.
+        const lastLoginDateObj = lastLogin
           ? (typeof lastLogin === 'object' && 'toDate' in lastLogin
               ? (lastLogin as { toDate: () => Date }).toDate()
-              : new Date(lastLogin as string)
-            ).toDateString()
+              : new Date(lastLogin as string))
           : null;
+        const lastLoginDate = lastLoginDateObj ? lastLoginDateObj.toDateString() : null;
 
         // Already logged in today
         if (lastLoginDate === today) {
@@ -93,7 +95,8 @@ export function useEngagement(
             const storedEngagement = profile.engagement;
             setEngagementData({
               loginStreak: storedEngagement.loginStreak,
-              lastLogin: storedEngagement.lastLogin,
+              // Normalize the persisted Timestamp (or legacy string) to an ISO string for local state
+              lastLogin: lastLoginDateObj ? lastLoginDateObj.toISOString() : null,
               totalLogins: storedEngagement.totalLogins,
               recentActivity: (storedEngagement.recentActivity || []).map((a) => ({
                 type: a.type as ActivityItem['type'],
@@ -169,9 +172,14 @@ export function useEngagement(
           }
         }
 
-        // Update profile with engagement data
+        // Update profile with engagement data. Persist lastLogin as a Firestore
+        // Timestamp so it matches what the backend (dailyOps) writes; local state
+        // keeps the ISO string in updatedEngagement.
         await updateDoc(profileRef, {
-          engagement: updatedEngagement,
+          engagement: {
+            ...updatedEngagement,
+            lastLogin: serverTimestamp(),
+          },
         });
 
         setEngagementData(updatedEngagement);
