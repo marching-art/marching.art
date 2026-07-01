@@ -30,7 +30,7 @@ const CAPTIONS = [
 ];
 
 const CATEGORY_COLORS = {
-  ge: { bg: 'bg-gold-500/20', border: 'border-gold-500/30', text: 'text-gold-400', label: 'General Effect' },
+  ge: { bg: 'bg-yellow-500/20', border: 'border-yellow-500/30', text: 'text-yellow-400', label: 'General Effect' },
   vis: { bg: 'bg-blue-500/20', border: 'border-blue-500/30', text: 'text-blue-400', label: 'Visual' },
   mus: { bg: 'bg-purple-500/20', border: 'border-purple-500/30', text: 'text-purple-400', label: 'Music' },
 };
@@ -89,7 +89,7 @@ const GuidedCaptionSelection = ({ availableCorps, lineup, setLineup, currentCapt
     <div className="space-y-4">
       {/* Progress indicator */}
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm text-cream-400">Caption {currentCaptionIndex + 1} of 8</span>
+        <span className="text-sm text-gray-400">Caption {currentCaptionIndex + 1} of 8</span>
         <span className={`text-sm font-bold ${remainingPoints < 10 ? 'text-yellow-400' : 'text-green-400'}`}>
           {remainingPoints} pts remaining
         </span>
@@ -106,12 +106,12 @@ const GuidedCaptionSelection = ({ availableCorps, lineup, setLineup, currentCapt
             <button
               key={cap.id}
               onClick={() => setCurrentCaptionIndex(idx)}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold transition-all ${
+              className={`w-8 h-8 rounded-sm flex items-center justify-center text-xs font-bold transition-all ${
                 isCurrent
                   ? `${catColors.bg} ${catColors.border} border-2 ${catColors.text}`
                   : isSelected
                     ? 'bg-green-500/20 border border-green-500/30 text-green-400'
-                    : 'bg-charcoal-800 border border-charcoal-700 text-cream-500'
+                    : 'bg-charcoal-800 border border-charcoal-700 text-gray-500'
               }`}
             >
               {isSelected && !isCurrent ? <Check className="w-4 h-4" /> : cap.id}
@@ -121,26 +121,26 @@ const GuidedCaptionSelection = ({ availableCorps, lineup, setLineup, currentCapt
       </div>
 
       {/* Current caption info */}
-      <div className={`p-4 rounded-xl ${categoryInfo.bg} ${categoryInfo.border} border`}>
+      <div className={`p-4 rounded-sm ${categoryInfo.bg} ${categoryInfo.border} border`}>
         <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${categoryInfo.bg}`}>
+          <div className={`w-10 h-10 rounded-sm flex items-center justify-center ${categoryInfo.bg}`}>
             <span className={`font-bold ${categoryInfo.text}`}>{currentCaption.id}</span>
           </div>
           <div>
             <h4 className={`font-bold ${categoryInfo.text}`}>{currentCaption.fullName}</h4>
-            <p className="text-xs text-cream-400">{currentCaption.description}</p>
+            <p className="text-xs text-gray-400">{currentCaption.description}</p>
           </div>
         </div>
 
         {selectedCorps && (
-          <div className="mt-3 flex items-center justify-between p-2 bg-charcoal-900/50 rounded-lg">
+          <div className="mt-3 flex items-center justify-between p-2 bg-charcoal-900/50 rounded-sm">
             <div className="flex items-center gap-2">
               <Check className="w-4 h-4 text-green-400" />
-              <span className="text-sm text-cream-100 font-semibold">{selectedCorps.name}</span>
-              <span className="text-xs text-cream-500">'{selectedCorps.year != null ? String(selectedCorps.year).slice(-2) : ''}</span>
+              <span className="text-sm text-white font-semibold">{selectedCorps.name}</span>
+              <span className="text-xs text-gray-500">'{selectedCorps.year != null ? String(selectedCorps.year).slice(-2) : ''}</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-gold-400">{selectedCorps.points} pts</span>
+              <span className="text-sm font-bold text-yellow-400">{selectedCorps.points} pts</span>
               <button
                 onClick={handleDeselect}
                 className="text-xs text-red-400 hover:text-red-300"
@@ -168,19 +168,19 @@ const GuidedCaptionSelection = ({ availableCorps, lineup, setLineup, currentCapt
                 transition={{ delay: idx * 0.03 }}
                 onClick={() => !disabled && handleSelect(corps)}
                 disabled={disabled}
-                className={`w-full flex items-center justify-between p-3 rounded-lg transition-all ${
+                className={`w-full flex items-center justify-between p-3 rounded-sm transition-all ${
                   disabled
                     ? 'bg-charcoal-900/30 border border-charcoal-800 opacity-50 cursor-not-allowed'
-                    : `bg-charcoal-800 border border-charcoal-700 hover:border-gold-500/50 cursor-pointer`
+                    : `bg-charcoal-800 border border-charcoal-700 hover:border-[#0057B8]/50 cursor-pointer`
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-cream-100 text-sm">{corps.corpsName}</span>
-                  <span className="text-xs text-cream-500">'{corps.sourceYear != null ? String(corps.sourceYear).slice(-2) : ''}</span>
-                  {isUsed && <span className="text-xs text-cream-500/60">(already used)</span>}
+                  <span className="font-semibold text-white text-sm">{corps.corpsName}</span>
+                  <span className="text-xs text-gray-500">'{corps.sourceYear != null ? String(corps.sourceYear).slice(-2) : ''}</span>
+                  {isUsed && <span className="text-xs text-gray-500/60">(already used)</span>}
                 </div>
                 <div className={`px-2 py-1 rounded text-xs font-bold ${
-                  wouldExceedBudget ? 'bg-red-500/20 text-red-400' : 'bg-gold-500/20 text-gold-400'
+                  wouldExceedBudget ? 'bg-red-500/20 text-red-400' : 'bg-yellow-500/20 text-yellow-400'
                 }`}>
                   {corps.points} pts
                 </div>
@@ -191,7 +191,7 @@ const GuidedCaptionSelection = ({ availableCorps, lineup, setLineup, currentCapt
       )}
 
       {/* Hint text */}
-      <p className="text-xs text-cream-500 text-center">
+      <p className="text-xs text-gray-500 text-center">
         <HelpCircle className="w-3 h-3 inline mr-1" />
         Pick the historical corps you think will score best in this caption
       </p>
@@ -228,33 +228,33 @@ const Onboarding = () => {
   useEffect(() => {
     const fetchSeasonData = async () => {
       try {
-        // Get current season
-        const currentSeasonRef = doc(db, 'system', 'currentSeason');
-        const currentSeasonSnap = await getDoc(currentSeasonRef);
+        // The active season lives at game-settings/season (public read), the
+        // same source the rest of the app uses (seasonStore, SeasonSetupWizard).
+        // NOTE: the old `system/currentSeason` doc has no security rule, so
+        // reading it always failed with permission-denied and corps never loaded.
+        const seasonSnap = await getDoc(doc(db, 'game-settings/season'));
+        if (!seasonSnap.exists() || !seasonSnap.data().seasonUid) {
+          console.error('[Onboarding] No active season found in game-settings/season');
+          toast.error('No active season found. Please try again later.');
+          return;
+        }
 
-        if (currentSeasonSnap.exists()) {
-          const seasonId = currentSeasonSnap.data().seasonId;
+        const season = seasonSnap.data();
+        setSeasonData({ ...season, seasonUid: season.seasonUid });
 
-          // Get season document
-          const seasonRef = doc(db, 'seasons', seasonId);
-          const seasonSnap = await getDoc(seasonRef);
-
-          if (seasonSnap.exists()) {
-            setSeasonData({ ...seasonSnap.data(), seasonUid: seasonId });
-
-            // Get corps values for lineup selection
-            const corpsDataRef = doc(db, 'dci-data', seasonId);
-            const corpsDataSnap = await getDoc(corpsDataRef);
-
-            if (corpsDataSnap.exists()) {
-              const data = corpsDataSnap.data();
-              const corps = (data.corpsValues || []).filter(c => (c.points || 0) <= 50);
-              setAvailableCorps(corps);
-            }
-          }
+        // Corps values for lineup selection live in dci-data/{seasonUid}.
+        const corpsDataSnap = await getDoc(doc(db, 'dci-data', season.seasonUid));
+        if (corpsDataSnap.exists()) {
+          const data = corpsDataSnap.data();
+          const corps = (data.corpsValues || []).filter(c => (c.points || 0) <= 50);
+          setAvailableCorps(corps);
+        } else {
+          console.error(`[Onboarding] dci-data/${season.seasonUid} not found`);
+          toast.error('Corps data is unavailable. Please try again later.');
         }
       } catch (error) {
         console.error('Error fetching season data:', error);
+        toast.error('Could not load season data. Please refresh the page.');
       }
     };
 
@@ -513,21 +513,14 @@ const Onboarding = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-main flex items-center justify-center p-4">
-      {/* Background Effects */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-gold-500/10 rounded-full blur-3xl animate-float" />
-        <div className="absolute bottom-1/3 left-1/4 w-96 h-96 bg-cream-500/10 rounded-full blur-3xl animate-float"
-             style={{ animationDelay: '2s' }} />
-      </div>
-
-      <div className="w-full max-w-lg relative z-10">
+    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
+      <div className="w-full max-w-lg">
         <m.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="glass-dark rounded-2xl p-8">
+          <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-6 sm:p-8">
             {/* Progress Bar */}
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
@@ -536,15 +529,15 @@ const Onboarding = () => {
                     <div className={`flex items-center gap-2 ${idx > 0 ? 'flex-1' : ''}`}>
                       {idx > 0 && (
                         <div className={`flex-1 h-1 mx-2 rounded-full ${
-                          step > idx ? 'bg-gold-500' : 'bg-charcoal-700'
+                          step > idx ? 'bg-[#0057B8]' : 'bg-charcoal-700'
                         }`} />
                       )}
                       <div className={`flex items-center justify-center w-10 h-10 rounded-full transition-all ${
                         step === s.number
-                          ? 'bg-gold-500 text-charcoal-900'
+                          ? 'bg-[#0057B8] text-white'
                           : step > s.number
                           ? 'bg-green-500 text-white'
-                          : 'bg-charcoal-700 text-cream-400'
+                          : 'bg-charcoal-700 text-gray-400'
                       }`}>
                         {step > s.number ? (
                           <Check className="w-5 h-5" />
@@ -556,9 +549,9 @@ const Onboarding = () => {
                   </React.Fragment>
                 ))}
               </div>
-              <div className="flex justify-between text-xs text-cream-500">
+              <div className="flex justify-between text-xs text-gray-500">
                 {steps.map((s) => (
-                  <span key={s.number} className={step === s.number ? 'text-gold-400 font-semibold' : ''}>
+                  <span key={s.number} className={step === s.number ? 'text-[#0057B8] font-semibold' : ''}>
                     {s.title}
                   </span>
                 ))}
@@ -578,13 +571,13 @@ const Onboarding = () => {
                     className="space-y-5"
                   >
                     <div className="text-center mb-4">
-                      <div className="inline-flex items-center justify-center w-16 h-16 bg-gold-500/20 rounded-2xl mb-4">
-                        <Star className="w-8 h-8 text-gold-400" />
+                      <div className="inline-flex items-center justify-center w-16 h-16 bg-[#0057B8]/20 rounded-sm mb-4">
+                        <Star className="w-8 h-8 text-[#0057B8]" />
                       </div>
-                      <h2 className="text-2xl font-display font-bold text-cream-100 mb-2">
+                      <h2 className="text-2xl font-bold text-white mb-2">
                         Welcome to marching.art!
                       </h2>
-                      <p className="text-cream-400 text-sm">
+                      <p className="text-gray-400 text-sm">
                         Fantasy drum corps gaming
                       </p>
                     </div>
@@ -595,14 +588,14 @@ const Onboarding = () => {
                         return (
                           <div
                             key={idx}
-                            className="flex items-start gap-3 p-3 rounded-lg bg-charcoal-800/50"
+                            className="flex items-start gap-3 p-3 rounded-sm bg-charcoal-800/50"
                           >
-                            <div className="p-2 rounded-lg bg-gold-500/20 flex-shrink-0">
-                              <Icon className="w-4 h-4 text-gold-400" />
+                            <div className="p-2 rounded-sm bg-[#0057B8]/20 flex-shrink-0">
+                              <Icon className="w-4 h-4 text-[#0057B8]" />
                             </div>
                             <div>
-                              <h4 className="text-sm font-semibold text-cream-100">{feature.title}</h4>
-                              <p className="text-xs text-cream-500">{feature.description}</p>
+                              <h4 className="text-sm font-semibold text-white">{feature.title}</h4>
+                              <p className="text-xs text-gray-500">{feature.description}</p>
                             </div>
                           </div>
                         );
@@ -611,13 +604,15 @@ const Onboarding = () => {
 
                     <div className="pt-2 space-y-4">
                       <div>
-                        <label className="label flex items-center gap-2">
-                          <User className="w-4 h-4 text-gold-400" />
+                        <label className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                          <User className="w-4 h-4 text-[#0057B8]" />
                           What's your name, Director?
                         </label>
                         <input
                           type="text"
-                          className="input text-lg"
+                          className="w-full h-12 px-4 bg-[#0a0a0a] border border-[#333] rounded-sm text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                          name="name"
+                          autoComplete="name"
                           placeholder="e.g., George Zingali"
                           value={formData.displayName}
                           onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
@@ -627,17 +622,19 @@ const Onboarding = () => {
                       </div>
 
                       <div>
-                        <label className="label flex items-center gap-2">
-                          <AtSign className="w-4 h-4 text-gold-400" />
+                        <label className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                          <AtSign className="w-4 h-4 text-[#0057B8]" />
                           Choose a username
                         </label>
                         <div className="relative">
                           <input
                             type="text"
-                            className={`input text-lg pr-10 ${
+                            className={`w-full h-12 px-4 bg-[#0a0a0a] border border-[#333] rounded-sm text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] pr-10 ${
                               usernameStatus.valid === true ? 'border-green-500/50 focus:border-green-500' :
                               usernameStatus.valid === false ? 'border-red-500/50 focus:border-red-500' : ''
                             }`}
+                            name="username"
+                            autoComplete="username"
                             placeholder="e.g., drumcorps_fan"
                             value={formData.username}
                             onChange={handleUsernameChange}
@@ -645,7 +642,7 @@ const Onboarding = () => {
                           />
                           <div className="absolute right-3 top-1/2 -translate-y-1/2">
                             {usernameStatus.checking && (
-                              <Loader2 className="w-5 h-5 text-cream-400 animate-spin" />
+                              <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
                             )}
                             {!usernameStatus.checking && usernameStatus.valid === true && (
                               <CheckCircle2 className="w-5 h-5 text-green-400" />
@@ -658,18 +655,18 @@ const Onboarding = () => {
                         {usernameStatus.message && (
                           <p className={`text-xs mt-1 ${
                             usernameStatus.valid === true ? 'text-green-400' :
-                            usernameStatus.valid === false ? 'text-red-400' : 'text-cream-400'
+                            usernameStatus.valid === false ? 'text-red-400' : 'text-gray-400'
                           }`}>
                             {usernameStatus.message}
                           </p>
                         )}
-                        <p className="text-xs text-cream-500 mt-1">
+                        <p className="text-xs text-gray-500 mt-1">
                           3-15 characters, letters, numbers, and underscores only
                         </p>
                       </div>
                     </div>
 
-                    <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                    <div className="p-3 rounded-sm bg-green-500/10 border border-green-500/20">
                       <div className="flex items-center gap-2">
                         <Zap className="w-4 h-4 text-green-400" />
                         <p className="text-sm text-green-300">
@@ -690,22 +687,24 @@ const Onboarding = () => {
                     className="space-y-6"
                   >
                     <div className="text-center mb-6">
-                      <div className="inline-flex items-center justify-center w-16 h-16 bg-gold-500/20 rounded-2xl mb-4">
-                        <Flag className="w-8 h-8 text-gold-400" />
+                      <div className="inline-flex items-center justify-center w-16 h-16 bg-[#0057B8]/20 rounded-sm mb-4">
+                        <Flag className="w-8 h-8 text-[#0057B8]" />
                       </div>
-                      <h2 className="text-2xl font-display font-bold text-cream-100 mb-2">
+                      <h2 className="text-2xl font-bold text-white mb-2">
                         Create Your Corps
                       </h2>
-                      <p className="text-cream-400 text-sm">
+                      <p className="text-gray-400 text-sm">
                         Name your first fantasy drum corps
                       </p>
                     </div>
 
                     <div>
-                      <label className="label">Corps Name *</label>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Corps Name *</label>
                       <input
                         type="text"
-                        className="input text-lg"
+                        className="w-full h-12 px-4 bg-[#0a0a0a] border border-[#333] rounded-sm text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                        name="corpsName"
+                        autoComplete="off"
                         placeholder="e.g., The Cavaliers"
                         value={formData.corpsName}
                         onChange={(e) => setFormData({ ...formData, corpsName: e.target.value })}
@@ -714,9 +713,9 @@ const Onboarding = () => {
                       />
                     </div>
 
-                    <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+                    <div className="p-4 rounded-sm bg-green-500/10 border border-green-500/20">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-green-500/20">
+                        <div className="p-2 rounded-sm bg-green-500/20">
                           <Sparkles className="w-5 h-5 text-green-400" />
                         </div>
                         <div>
@@ -728,9 +727,9 @@ const Onboarding = () => {
                       </div>
                     </div>
 
-                    <div className="p-4 bg-charcoal-800/50 rounded-lg">
-                      <h4 className="font-semibold text-cream-200 mb-2">Next: Build Your Lineup</h4>
-                      <p className="text-xs text-cream-500">
+                    <div className="p-4 bg-charcoal-800/50 rounded-sm">
+                      <h4 className="font-semibold text-gray-200 mb-2">Next: Build Your Lineup</h4>
+                      <p className="text-xs text-gray-500">
                         You'll pick historical corps performances to compete in 8 scoring captions.
                         Think of it like a fantasy football draft!
                       </p>
@@ -748,13 +747,13 @@ const Onboarding = () => {
                     className="space-y-4"
                   >
                     <div className="text-center mb-2">
-                      <div className="inline-flex items-center justify-center w-14 h-14 bg-gold-500/20 rounded-2xl mb-3">
-                        <Music className="w-7 h-7 text-gold-400" />
+                      <div className="inline-flex items-center justify-center w-14 h-14 bg-[#0057B8]/20 rounded-sm mb-3">
+                        <Music className="w-7 h-7 text-[#0057B8]" />
                       </div>
-                      <h2 className="text-xl font-display font-bold text-cream-100 mb-1">
+                      <h2 className="text-xl font-bold text-white mb-1">
                         Build Your Lineup
                       </h2>
-                      <p className="text-cream-400 text-xs">
+                      <p className="text-gray-400 text-xs">
                         Draft a corps for each caption • Budget: {SOUNDSPORT_POINT_LIMIT} points
                       </p>
                     </div>
@@ -770,27 +769,27 @@ const Onboarding = () => {
                     ) : (
                       <div className="text-center py-8">
                         <div className="animate-pulse mb-4">
-                          <div className="w-12 h-12 rounded-full bg-gold-500/20 mx-auto" />
+                          <div className="w-12 h-12 rounded-full bg-[#0057B8]/20 mx-auto" />
                         </div>
-                        <p className="text-cream-400 text-sm">Loading available corps...</p>
+                        <p className="text-gray-400 text-sm">Loading available corps...</p>
                       </div>
                     )}
 
                     {/* Lineup summary */}
-                    <div className="p-3 rounded-lg bg-charcoal-800/70 border border-charcoal-700">
+                    <div className="p-3 rounded-sm bg-charcoal-800/70 border border-charcoal-700">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-cream-400">Lineup Progress</span>
-                        <span className={`text-sm font-bold ${isLineupComplete ? 'text-green-400' : 'text-gold-400'}`}>
+                        <span className="text-sm text-gray-400">Lineup Progress</span>
+                        <span className={`text-sm font-bold ${isLineupComplete ? 'text-green-400' : 'text-yellow-400'}`}>
                           {Object.keys(lineup).length}/8 selected
                         </span>
                       </div>
                       <div className="h-2 bg-charcoal-900 rounded-full mt-2 overflow-hidden">
                         <div
-                          className={`h-full transition-all ${isLineupValid ? 'bg-green-500' : 'bg-gold-500'}`}
+                          className={`h-full transition-all ${isLineupValid ? 'bg-green-500' : 'bg-yellow-500'}`}
                           style={{ width: `${(Object.keys(lineup).length / 8) * 100}%` }}
                         />
                       </div>
-                      <p className="text-xs text-cream-500 mt-2 text-center">
+                      <p className="text-xs text-gray-500 mt-2 text-center">
                         You can change this anytime from your dashboard
                       </p>
                     </div>
@@ -804,7 +803,7 @@ const Onboarding = () => {
               {step > 1 && (
                 <button
                   onClick={handleBack}
-                  className="flex items-center gap-2 px-5 py-3 bg-charcoal-700 text-cream-100 rounded-lg hover:bg-charcoal-600 transition-colors font-semibold"
+                  className="flex items-center gap-2 px-5 py-3 bg-[#2a2a2a] border border-[#333] text-white rounded-sm hover:bg-[#333] transition-colors font-semibold"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   Back
@@ -818,7 +817,7 @@ const Onboarding = () => {
                     (step === 1 && (!formData.displayName.trim() || !formData.username.trim() || usernameStatus.valid !== true)) ||
                     (step === 2 && !formData.corpsName.trim())
                   }
-                  className="flex-1 px-6 py-3 bg-gold-500 text-charcoal-900 rounded-lg hover:bg-gold-400 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 px-6 py-3 bg-[#0057B8] text-white rounded-sm hover:bg-[#0066d6] transition-colors font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   Continue
                   <ArrowRight className="w-5 h-5" />
@@ -827,11 +826,11 @@ const Onboarding = () => {
                 <button
                   onClick={handleSubmit}
                   disabled={loading || !isLineupValid}
-                  className="flex-1 px-6 py-3 bg-gold-500 text-charcoal-900 rounded-lg hover:bg-gold-400 transition-colors font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-6 py-3 bg-[#0057B8] text-white rounded-sm hover:bg-[#0066d6] transition-colors font-bold uppercase tracking-wider flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <>
-                      <div className="w-5 h-5 border-2 border-charcoal-900 border-t-transparent rounded-full animate-spin" />
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       Creating...
                     </>
                   ) : (
@@ -869,7 +868,7 @@ const Onboarding = () => {
                   setLineup(newLineup);
                   toast.success('Auto-filled remaining lineup slots!');
                 }}
-                className="w-full mt-3 text-cream-400 hover:text-cream-200 text-sm transition-colors"
+                className="w-full mt-3 text-gray-400 hover:text-gray-200 text-sm transition-colors"
                 disabled={loading}
               >
                 Auto-fill remaining slots
@@ -904,14 +903,14 @@ const Onboarding = () => {
                 transition={{ duration: 0.5, repeat: 2 }}
                 className="inline-block mb-6"
               >
-                <PartyPopper className="w-24 h-24 text-gold-400" />
+                <PartyPopper className="w-24 h-24 text-[#0057B8]" />
               </m.div>
 
               <m.h2
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.3 }}
-                className="text-4xl font-display font-black text-gold-400 mb-3"
+                className="text-4xl font-black text-[#0057B8] mb-3"
               >
                 YOU'RE ALL SET!
               </m.h2>
@@ -920,7 +919,7 @@ const Onboarding = () => {
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="text-cream-300 text-lg mb-2"
+                className="text-gray-300 text-lg mb-2"
               >
                 Welcome, {formData.displayName}!
               </m.p>
@@ -929,7 +928,7 @@ const Onboarding = () => {
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.7 }}
-                className="text-cream-400 mb-8"
+                className="text-gray-400 mb-8"
               >
                 {formData.corpsName} is ready to compete
               </m.p>
@@ -939,7 +938,7 @@ const Onboarding = () => {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.9 }}
                 onClick={handleCelebrationComplete}
-                className="px-8 py-4 bg-gold-500 text-charcoal-900 rounded-xl font-display font-bold uppercase tracking-wide hover:bg-gold-400 transition-colors flex items-center gap-2 mx-auto"
+                className="px-8 py-4 bg-[#0057B8] text-white rounded-sm font-bold uppercase tracking-wide hover:bg-[#0066d6] transition-colors flex items-center gap-2 mx-auto"
               >
                 Go to Dashboard
                 <ChevronRight className="w-5 h-5" />
