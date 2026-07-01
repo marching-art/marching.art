@@ -267,7 +267,7 @@ exports.migrateUserProfiles = onCall({ cors: true }, async (request) => {
       return { success: true, message: "No profiles need migration." };
     }
 
-    const batch = db.batch();
+    let batch = db.batch();
     let batchCount = 0;
 
     for (const doc of profilesSnapshot.docs) {

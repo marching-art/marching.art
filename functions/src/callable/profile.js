@@ -237,18 +237,20 @@ exports.updateEmail = onCall({ cors: true }, async (request) => {
     // Update email in Firebase Auth
     await admin.auth().updateUser(userId, { email: trimmedEmail });
 
-    // Update email in Firestore profile
+    // Persist the email ONLY to the owner-private document. The public
+    // `profile/data` doc is world-readable (leaderboards / public profiles),
+    // so email addresses must never be written there.
     const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${userId}/profile/data`);
     const privateRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${userId}/private/data`);
 
     const batch = db.batch();
+    // Touch the public profile's updatedAt only (no email field).
     batch.update(profileRef, {
-      email: trimmedEmail,
       updatedAt: FieldValue.serverTimestamp()
     });
-    batch.update(privateRef, {
+    batch.set(privateRef, {
       email: trimmedEmail
-    });
+    }, { merge: true });
 
     await batch.commit();
 

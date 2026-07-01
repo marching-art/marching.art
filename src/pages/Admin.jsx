@@ -316,9 +316,24 @@ const UsersTab = () => {
   const loadAllUsers = async () => {
     setUsersLoading(true);
     try {
-      // Use collectionGroup to query all profile documents directly
+      // Use collectionGroup to query all profile documents directly.
+      // Emails live in the owner-private `private/data` doc (never the public
+      // profile doc), so fetch those separately and join by uid. This query is
+      // admin-only per Firestore rules.
       const profilesRef = collectionGroup(db, 'profile');
-      const snapshot = await getDocs(profilesRef);
+      const privateRef = collectionGroup(db, 'private');
+      const [snapshot, privateSnapshot] = await Promise.all([
+        getDocs(profilesRef),
+        getDocs(privateRef).catch(() => ({ docs: [] })),
+      ]);
+
+      const emailByUid = {};
+      privateSnapshot.docs.forEach(privateDoc => {
+        if (!privateDoc.ref.path.includes('artifacts/marching-art/users')) return;
+        const uid = privateDoc.ref.path.split('/')[3];
+        const email = privateDoc.data()?.email;
+        if (uid && email) emailByUid[uid] = email;
+      });
 
       const userList = snapshot.docs
         .filter(profileDoc => profileDoc.ref.path.includes('artifacts/marching-art/users'))
@@ -343,7 +358,7 @@ const UsersTab = () => {
           return {
             uid,
             username: data.username || 'Unknown',
-            email: data.email || null,
+            email: emailByUid[uid] || data.email || null,
             lastLogin: lastLoginDate,
             xpLevel: data.xpLevel || 1,
             xp: data.xp || 0,
