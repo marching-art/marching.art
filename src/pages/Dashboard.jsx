@@ -678,6 +678,7 @@ const Dashboard = () => {
       {/* SCROLLABLE CONTENT */}
       <div className="flex-1 overflow-y-auto min-h-0 pb-20 md:pb-4">
         {/* Control Bar - Class Tabs + Director HUD */}
+        <div data-tour="control-bar">
         <ControlBar
           corps={corps}
           activeCorpsClass={activeCorpsClass}
@@ -701,6 +702,7 @@ const Dashboard = () => {
           }}
           onUnlockClass={handleClassUnlock}
         />
+        </div>
 
         {activeCorps ? (
           <div className="p-3 md:p-4">
@@ -708,6 +710,7 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {/* MAIN CONTENT (2/3) - Lineup + related analysis */}
               <div className="lg:col-span-2 space-y-4">
+                <div data-tour="lineup">
                 <ActiveLineupTable
                   lineup={lineup}
                   lineupScoreData={lineupScoreData}
@@ -716,6 +719,7 @@ const Dashboard = () => {
                   onSlotClick={(captionId) => openCaptionSelection(captionId)}
                   scoresAvailable={scoresAvailable}
                 />
+                </div>
 
                 {/* Lineup Analyzer - per-caption efficiency and weak-spot identification */}
                 <LineupSimulatorPanel
@@ -725,11 +729,13 @@ const Dashboard = () => {
                   onSwapCaption={openCaptionSelection}
                 />
 
+                <div data-tour="recent-results">
                 <RecentResultsFeed
                   results={recentResults}
                   loading={scoresLoading}
                   corpsClass={activeCorpsClass}
                 />
+                </div>
 
                 {/* Daily Predictions - check-back-tomorrow engagement loop */}
                 <PredictionGamePanel recentResults={recentResults} />
@@ -737,6 +743,7 @@ const Dashboard = () => {
 
               {/* SIDEBAR (1/3) - Identity, stats & engagement */}
               <div className="space-y-4">
+                <div data-tour="scorecard">
                 <SeasonScorecard
                   score={userCorpsScore}
                   rank={userCorpsRank}
@@ -757,6 +764,7 @@ const Dashboard = () => {
                   onMoveCorps={() => setShowMoveCorps(true)}
                   onRetireCorps={() => setShowRetireConfirm(true)}
                 />
+                </div>
 
                 {/* Daily Challenges - drives daily return visits */}
                 <DailyChallenges onLineupClick={() => openCaptionSelection()} />
