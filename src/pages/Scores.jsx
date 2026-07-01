@@ -21,6 +21,13 @@ import { useHaptic } from '../hooks/useHaptic';
 
 // Lazy-load Hall of Champions — only loaded if the user opens that tab
 const HallOfChampions = lazy(() => import('./HallOfChampions'));
+import {
+  RATING_CONFIG,
+  CLASS_LABELS,
+  getSoundSportRating,
+  seededShuffle,
+  getCaptionBreakdown,
+} from '../utils/scoresUtils';
 
 // =============================================================================
 // CONSTANTS
@@ -36,30 +43,9 @@ const TABS = [
   { id: 'champions', label: 'Hall of Champions', accent: 'yellow' },
 ];
 
-const RATING_CONFIG = {
-  Gold: { bg: 'bg-yellow-500', text: 'text-black', badge: 'bg-yellow-500/20 text-yellow-500' },
-  Silver: { bg: 'bg-gray-300', text: 'text-black', badge: 'bg-gray-300/20 text-gray-300' },
-  Bronze: { bg: 'bg-orange-400', text: 'text-black', badge: 'bg-orange-400/20 text-orange-400' },
-  Participation: { bg: 'bg-gray-600', text: 'text-white', badge: 'bg-gray-600/20 text-gray-400' },
-};
-
-const CLASS_LABELS = {
-  worldClass: 'World Class',
-  openClass: 'Open Class',
-  aClass: 'Class A',
-  soundSport: 'SoundSport',
-};
-
 // =============================================================================
 // HELPER FUNCTIONS
 // =============================================================================
-
-const getSoundSportRating = (score) => {
-  if (score >= 85) return 'Gold';
-  if (score >= 75) return 'Silver';
-  if (score >= 65) return 'Bronze';
-  return 'Participation';
-};
 
 // Blue Ribbon icon for Best in Show awards
 const BlueRibbonIcon = ({ className = "w-5 h-5" }) => (
@@ -83,48 +69,6 @@ const BlueRibbonIcon = ({ className = "w-5 h-5" }) => (
     <path d="M16 15l2 7-4-2.5V15h2z" fill="#0057B8" stroke="#003d82" strokeWidth="0.5" />
   </svg>
 );
-
-// Deterministic shuffle using event name as seed (consistent order per show)
-const seededShuffle = (array, seed) => {
-  const shuffled = [...array];
-  // Simple hash function for seed
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) {
-    hash = ((hash << 5) - hash) + seed.charCodeAt(i);
-    hash = hash & hash;
-  }
-  // Fisher-Yates shuffle with seeded random
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    hash = (hash * 1103515245 + 12345) & 0x7fffffff;
-    const j = hash % (i + 1);
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-};
-
-/**
- * Get caption breakdown from real data only
- * Returns null values when caption data is not available (no synthetic values)
- *
- * @param {Object} existingCaptions - Existing caption data if available
- */
-const getCaptionBreakdown = (existingCaptions) => {
-  // Only return real caption data - no synthetic values
-  if (existingCaptions?.geScore && existingCaptions?.visualScore && existingCaptions?.musicScore) {
-    return {
-      ge: existingCaptions.geScore,
-      vis: existingCaptions.visualScore,
-      mus: existingCaptions.musicScore,
-    };
-  }
-
-  // Return null values when no real data available
-  return {
-    ge: null,
-    vis: null,
-    mus: null,
-  };
-};
 
 // =============================================================================
 // PILL TAB CONTROL (Design System)
