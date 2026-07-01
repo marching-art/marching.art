@@ -164,6 +164,47 @@ Located in `src/components/ui/`:
 | Open Class | 120 | Level 5 OR 2,500 CorpsCoin |
 | World Class | 150 | Level 10 OR 5,000 CorpsCoin |
 
+## Code Conventions
+
+These conventions keep the codebase maintainable as it grows. They are enforced
+softly (ESLint warnings + CI visibility) rather than as hard gates, so they guide
+without blocking.
+
+### File size / "god-files"
+
+- **Target: keep files under ~700 lines.** ESLint's `max-lines` rule warns past
+  that threshold (blank lines and comments excluded). The warning is intentional
+  tech-debt signal, not a build failure.
+- **When a file trips the warning, split it** rather than growing it further:
+  - Extract **pure logic** (data transforms, formatting, calculations) into a
+    module under `src/utils/` (or co-located `*Utils.ts`) — and add unit tests.
+    Pure functions are the easiest thing to test and the riskiest thing to leave
+    untested.
+  - Extract **self-contained sub-components** (modals, panels, rows) into their
+    own files.
+  - Extract **stateful logic** into custom hooks under `src/hooks/`.
+- Examples of this pattern already in the tree: `src/utils/dashboardScoring.ts`,
+  `src/utils/scoresUtils.ts`, `src/components/Landing/newsFeedUtils.ts`,
+  `src/components/Profile/SettingsModal.jsx`.
+
+### TypeScript migration
+
+The codebase is migrating from JS/JSX to TS/TSX incrementally (`allowJs` is on,
+so the two coexist).
+
+- **Write new files in TypeScript** (`.ts` / `.tsx`).
+- **When you extract logic out of a `.jsx` file, put the extracted module in
+  `.ts`** — this advances the migration for free on code that's already being
+  touched and reviewed.
+- Prefer explicit types on exported functions and module boundaries.
+
+### Testing extracted logic
+
+Anything extracted into a `utils`/`*Utils` module should ship with Vitest unit
+tests (frontend) or `node:test` tests (Cloud Functions). Make time-dependent
+helpers testable by accepting an injectable clock (e.g. `now: Date = new Date()`)
+instead of reading the wall clock internally.
+
 ## Known Issues
 
 See `CODE_AUDIT_REPORT.md` for current issues:

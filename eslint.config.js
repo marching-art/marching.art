@@ -72,14 +72,21 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-empty-object-type': 'warn',
       'no-empty': ['warn', { allowEmptyCatch: true }],
+      // Guardrail: keep files from growing back into "god-files". A warning
+      // (not an error) so it flags tech debt without blocking work. When a file
+      // trips this, extract logic into hooks/utils or split sub-components.
+      'max-lines': ['warn', { max: 700, skipBlankLines: true, skipComments: true }],
     },
   },
 
-  // --- Test files: add Vitest globals ---
+  // --- Test files: add Vitest globals; tests are allowed to be long ---
   {
     files: ['src/**/*.{test,spec}.{js,jsx,ts,tsx}', 'src/setupTests.jsx'],
     languageOptions: {
       globals: { ...globals.node, ...vitestGlobals },
+    },
+    rules: {
+      'max-lines': 'off',
     },
   },
 
@@ -95,6 +102,7 @@ export default tseslint.config(
     rules: {
       'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
       'no-empty': ['warn', { allowEmptyCatch: true }],
+      'max-lines': ['warn', { max: 700, skipBlankLines: true, skipComments: true }],
     },
   },
 

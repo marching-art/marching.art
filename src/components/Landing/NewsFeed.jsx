@@ -6,17 +6,12 @@
  * source attribution, and professional typography.
  */
 
-import React, { useState, useEffect, useMemo, memo, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Trophy, Flame, Clock, ChevronRight, TrendingUp, TrendingDown,
-  Minus, AlertCircle, Newspaper, Loader2, DollarSign, ArrowUpRight,
-  ArrowDownRight, Zap, Radio, BookOpen, Share2
+  Flame, Loader2, DollarSign, ArrowUpRight, ArrowDownRight, Zap,
 } from 'lucide-react';
-import toast from 'react-hot-toast';
 import { fetchNewsFeedHttp, getRecentNews, getArticleEngagement } from '../../api/functions';
-import { EngagementSummary } from '../Articles';
-import { OptimizedImage } from '../ui/OptimizedImage';
 import { useSeasonStore } from '../../store/seasonStore';
 
 // =============================================================================
@@ -31,60 +26,20 @@ import { useSeasonStore } from '../../store/seasonStore';
 // - Stale: 30 minutes (matches stale-while-revalidate)
 // =============================================================================
 
-const NEWS_CACHE_TTL = 2 * 60 * 1000;        // 2 minutes - consider fresh (matches server max-age)
-const NEWS_CACHE_STALE_TTL = 30 * 60 * 1000; // 30 minutes - can use stale data while revalidating
+import { safeString, getUrgencyBadge } from './newsFeedUtils';
+import { newsCache, prefetchCache } from './newsFeedCache';
+import {
+  NewsMasthead,
+  HeroStory,
+  ImageGridCard,
+  LoadingState,
+  ErrorState,
+  EmptyState,
+} from './NewsFeedCards';
+import { TrendingBadge, FantasyValueBadge } from './NewsFeedBadges';
 
-const newsCache = {
-  data: null,        // { news, engagement, hasMore }
-  timestamp: 0,      // When cache was set
-  maxItems: 0,       // Cache key - invalidate if different
 
-  /**
-   * Check if cache is fresh (no revalidation needed)
-   */
-  isFresh(maxItems) {
-    if (!this.data) return false;
-    if (this.maxItems !== maxItems) return false;
-    return Date.now() - this.timestamp < NEWS_CACHE_TTL;
-  },
 
-  /**
-   * Check if cache is stale but usable (show immediately, revalidate in background)
-   */
-  isStale(maxItems) {
-    if (!this.data) return false;
-    if (this.maxItems !== maxItems) return false;
-    const age = Date.now() - this.timestamp;
-    return age >= NEWS_CACHE_TTL && age < NEWS_CACHE_STALE_TTL;
-  },
-
-  /**
-   * Check if cache has any data for immediate display
-   */
-  hasData(maxItems) {
-    return this.data && this.maxItems === maxItems;
-  },
-
-  set(data, maxItems) {
-    this.data = data;
-    this.timestamp = Date.now();
-    this.maxItems = maxItems;
-  },
-
-  get() {
-    return this.data;
-  },
-
-  getAge() {
-    return Date.now() - this.timestamp;
-  },
-
-  clear() {
-    this.data = null;
-    this.timestamp = 0;
-    this.maxItems = 0;
-  },
-};
 
 // =============================================================================
 // REQUEST DEDUPLICATION
@@ -98,33 +53,7 @@ let pendingRequest = null;
 // Stores prefetched next page data for instant pagination (like news sites)
 // =============================================================================
 
-const prefetchCache = {
-  data: null,
-  cursor: null,
-  timestamp: 0,
-  TTL: 30 * 1000, // 30 seconds
 
-  set(data, cursor) {
-    this.data = data;
-    this.cursor = cursor;
-    this.timestamp = Date.now();
-  },
-
-  get(cursor) {
-    if (!this.data || this.cursor !== cursor) return null;
-    if (Date.now() - this.timestamp > this.TTL) {
-      this.clear();
-      return null;
-    }
-    return this.data;
-  },
-
-  clear() {
-    this.data = null;
-    this.cursor = null;
-    this.timestamp = 0;
-  },
-};
 
 // =============================================================================
 // INTERSECTION OBSERVER HOOK FOR INFINITE SCROLL
@@ -171,823 +100,71 @@ function useIntersectionObserver(callback, enabled, options = {}) {
 // Professional skeleton UI for perceived instant loading
 // =============================================================================
 
-function SkeletonPulse({ className }) {
-  return (
-    <div className={`animate-pulse bg-[#2a2a2a] ${className}`} />
-  );
-}
 
-function HeroSkeleton() {
-  return (
-    <div className="mb-6 bg-[#1a1a1a] border border-[#333] overflow-hidden">
-      {/* Hero Image Skeleton */}
-      <SkeletonPulse className="aspect-[21/9]" />
 
-      {/* Hero Content Skeleton */}
-      <div className="p-5 lg:p-6">
-        {/* Meta row */}
-        <div className="flex items-center gap-3 mb-3">
-          <SkeletonPulse className="w-20 h-6" />
-          <SkeletonPulse className="w-24 h-4" />
-        </div>
 
-        {/* Headline */}
-        <SkeletonPulse className="h-10 lg:h-12 w-full mb-2" />
-        <SkeletonPulse className="h-10 lg:h-12 w-3/4 mb-4" />
 
-        {/* Summary */}
-        <SkeletonPulse className="h-5 w-full mb-2" />
-        <SkeletonPulse className="h-5 w-5/6 mb-5" />
 
-        {/* Footer */}
-        <div className="flex items-center justify-between pt-4 border-t border-[#333]/50">
-          <div className="flex items-center gap-3">
-            <SkeletonPulse className="w-16 h-4" />
-            <SkeletonPulse className="w-16 h-4" />
-          </div>
-          <SkeletonPulse className="w-8 h-8" />
-        </div>
-      </div>
-    </div>
-  );
-}
 
-function CardSkeleton() {
-  return (
-    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden h-full flex flex-col">
-      <SkeletonPulse className="h-1" />
-      <div className="p-4 flex-1 flex flex-col">
-        {/* Meta row */}
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <SkeletonPulse className="w-5 h-5" />
-            <SkeletonPulse className="w-16 h-4" />
-          </div>
-          <SkeletonPulse className="w-4 h-4" />
-        </div>
 
-        {/* Headline */}
-        <SkeletonPulse className="h-5 w-full mb-1" />
-        <SkeletonPulse className="h-5 w-4/5 mb-2" />
 
-        {/* Summary */}
-        <SkeletonPulse className="h-4 w-full mb-1" />
-        <SkeletonPulse className="h-4 w-3/4 mb-3" />
 
-        {/* Footer */}
-        <div className="flex items-center justify-between pt-3 border-t border-[#333]/50 mt-auto">
-          <div className="flex items-center gap-2">
-            <SkeletonPulse className="w-20 h-3" />
-          </div>
-          <SkeletonPulse className="w-16 h-3" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ImageGridCardSkeleton() {
-  return (
-    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden flex flex-col">
-      {/* Image skeleton */}
-      <SkeletonPulse className="aspect-[4/3]" />
-
-      {/* Content */}
-      <div className="p-3 flex-1 flex flex-col">
-        {/* Headline */}
-        <SkeletonPulse className="h-4 w-full mb-1" />
-        <SkeletonPulse className="h-4 w-5/6 mb-1" />
-        <SkeletonPulse className="h-4 w-3/4 mb-2" />
-
-        {/* Footer */}
-        <div className="flex items-center justify-between pt-2 border-t border-[#333]/50 mt-auto">
-          <SkeletonPulse className="w-16 h-3" />
-          <SkeletonPulse className="w-12 h-3" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function NewsFeedSkeleton() {
-  return (
-    <div>
-      {/* Hero Skeleton */}
-      <HeroSkeleton />
-
-      {/* Image Grid Skeletons - 4 column layout */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-4">
-          <SkeletonPulse className="w-4 h-4" />
-          <SkeletonPulse className="w-24 h-4" />
-          <div className="flex-1 h-px bg-[#333]" />
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <ImageGridCardSkeleton />
-          <ImageGridCardSkeleton />
-          <ImageGridCardSkeleton />
-          <ImageGridCardSkeleton />
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // =============================================================================
 // CATEGORY CONFIGURATION
 // =============================================================================
 
-const CATEGORIES = [
-  { id: 'all', label: 'All Stories', icon: Newspaper },
-  { id: 'dci', label: 'DCI Recaps', icon: Trophy },
-  { id: 'fantasy', label: 'Fantasy', icon: Flame },
-  { id: 'analysis', label: 'Analysis', icon: BookOpen },
-];
-
-// =============================================================================
-// HELPER FUNCTIONS
-// =============================================================================
-
-/**
- * Safely converts a value to a string for rendering
- * Handles cases where AI might return objects instead of strings
- */
-function safeString(value) {
-  if (value === null || value === undefined) return '';
-  if (typeof value === 'string') return value;
-  if (typeof value === 'number') return String(value);
-  // If it's an object, try to extract a meaningful string or return empty
-  if (typeof value === 'object') {
-    // Check for common string-like properties
-    if (value.text) return String(value.text);
-    if (value.content) return String(value.content);
-    if (value.message) return String(value.message);
-    // Don't render objects - return empty string
-    console.warn('NewsFeed: Unexpected object in text field:', value);
-    return '';
-  }
-  return String(value);
-}
-
-/**
- * Formats timestamp in a professional news style
- * Shows relative time for recent, absolute for older
- */
-function formatTimestamp(dateString) {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInMs = now - date;
-  const diffInMins = Math.floor(diffInMs / (1000 * 60));
-  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-
-  // Less than 1 hour - show minutes
-  if (diffInMins < 60) {
-    return `${diffInMins}m ago`;
-  }
-
-  // Same day - show time
-  if (date.toDateString() === now.toDateString()) {
-    return `Today, ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
-  }
-
-  // Yesterday
-  const yesterday = new Date(now);
-  yesterday.setDate(yesterday.getDate() - 1);
-  if (date.toDateString() === yesterday.toDateString()) {
-    return `Yesterday, ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
-  }
-
-  // Older - show date
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-}
-
-/**
- * Returns reading time - uses pre-calculated value from backend when available,
- * otherwise calculates from content (for backward compatibility)
- */
-function getReadingTime(story) {
-  // Use pre-calculated reading time from backend if available (optimized path)
-  if (story.readingTime) {
-    return story.readingTime;
-  }
-  // Fallback calculation for backward compatibility
-  const wordsPerMinute = 200;
-  const text = `${story.headline} ${story.summary} ${story.fullStory || ''} ${story.narrative || ''} ${story.fantasyImpact || ''}`;
-  const wordCount = text.split(/\s+/).length;
-  const minutes = Math.max(1, Math.ceil(wordCount / wordsPerMinute));
-  return `${minutes} min read`;
-}
-
-/**
- * Determines if story should show "Breaking" or "Just In" badge
- */
-function getUrgencyBadge(dateString) {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInMs = now - date;
-  const diffInMins = Math.floor(diffInMs / (1000 * 60));
-  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-
-  if (diffInMins < 60) {
-    return { label: 'BREAKING', type: 'breaking' };
-  }
-  if (diffInHours < 6) {
-    return { label: 'JUST IN', type: 'new' };
-  }
-  return null;
-}
-
-function getCategoryConfig(category) {
-  switch (category) {
-    case 'dci':
-      return {
-        label: 'DCI RECAP',
-        bgClass: 'bg-[#0057B8]',
-        textClass: 'text-[#0057B8]',
-        bgLightClass: 'bg-[#0057B8]/20',
-        icon: Trophy,
-      };
-    case 'fantasy':
-      return {
-        label: 'FANTASY',
-        bgClass: 'bg-orange-500',
-        textClass: 'text-orange-400',
-        bgLightClass: 'bg-orange-500/20',
-        icon: Flame,
-      };
-    case 'analysis':
-      return {
-        label: 'ANALYSIS',
-        bgClass: 'bg-purple-500',
-        textClass: 'text-purple-400',
-        bgLightClass: 'bg-purple-500/20',
-        icon: BookOpen,
-      };
-    default:
-      return {
-        label: 'NEWS',
-        bgClass: 'bg-gray-500',
-        textClass: 'text-gray-400',
-        bgLightClass: 'bg-gray-500/20',
-        icon: Newspaper,
-      };
-  }
-}
-
 // =============================================================================
 // SUB-COMPONENTS
 // =============================================================================
 
-function TrendingBadge({ direction }) {
-  if (direction === 'up') {
-    return <TrendingUp className="w-3 h-3 text-green-500" />;
-  }
-  if (direction === 'down') {
-    return <TrendingDown className="w-3 h-3 text-red-500" />;
-  }
-  return <Minus className="w-3 h-3 text-gray-500" />;
-}
 
-function FantasyValueBadge({ value }) {
-  const config = {
-    buy: { label: 'BUY', bgClass: 'bg-green-500/20', textClass: 'text-green-400', icon: ArrowUpRight },
-    sell: { label: 'SELL', bgClass: 'bg-red-500/20', textClass: 'text-red-400', icon: ArrowDownRight },
-    hold: { label: 'HOLD', bgClass: 'bg-yellow-500/20', textClass: 'text-yellow-400', icon: Minus },
-  };
-  const { label, bgClass, textClass, icon: Icon } = config[value] || config.hold;
 
-  return (
-    <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-bold ${bgClass} ${textClass}`}>
-      <Icon className="w-2.5 h-2.5" />
-      {label}
-    </span>
-  );
-}
 
-function UrgencyBadge({ urgency }) {
-  if (!urgency) return null;
 
-  const isBreaking = urgency.type === 'breaking';
 
-  return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${
-      isBreaking
-        ? 'bg-red-500 text-white animate-pulse'
-        : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
-    }`}>
-      {isBreaking && <Radio className="w-2.5 h-2.5" />}
-      {urgency.label}
-    </span>
-  );
-}
 
-function FantasyROIBadge({ metrics }) {
-  if (!metrics?.topROI) return null;
 
-  const { corps, caption, pointsGained, roiPercent } = metrics.topROI;
-  const isPositive = roiPercent >= 0;
-
-  return (
-    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/20">
-      <DollarSign className="w-4 h-4 text-green-400" />
-      <div className="flex flex-col">
-        <span className="text-[10px] text-green-400/80 uppercase tracking-wider font-medium">Top ROI</span>
-        <span className="text-xs text-white font-bold">
-          {corps} {caption}: <span className={`font-data tabular-nums ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
-            {isPositive ? '+' : ''}{pointsGained.toFixed(1)} pts ({roiPercent.toFixed(1)}%)
-          </span>
-        </span>
-      </div>
-    </div>
-  );
-}
 
 /**
  * Share Button - Allows sharing article via Web Share API or clipboard
  */
-function ShareButton({ story, className = '' }) {
-  const handleShare = async (e) => {
-    e.stopPropagation(); // Prevent card click navigation
 
-    const shareUrl = `${window.location.origin}/article/${story.id}`;
-
-    // Helper function to copy to clipboard
-    const copyToClipboard = async () => {
-      try {
-        await navigator.clipboard.writeText(shareUrl);
-        toast.success('Link copied to clipboard');
-      } catch (err) {
-        toast.error('Failed to copy link');
-      }
-    };
-
-    // Check if we're on a mobile device - Web Share API is only reliable on mobile
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-    if (navigator.share && isMobile) {
-      try {
-        await navigator.share({
-          title: story.headline,
-          text: story.headline,
-          url: shareUrl,
-        });
-      } catch (err) {
-        // If user cancelled (AbortError), do nothing
-        // For other errors (blocked by enterprise, etc.), fall back to clipboard
-        if (err.name !== 'AbortError') {
-          await copyToClipboard();
-        }
-      }
-    } else {
-      await copyToClipboard();
-    }
-  };
-
-  return (
-    <button
-      onClick={handleShare}
-      className={`p-2 text-gray-500 hover:text-white hover:bg-white/10 transition-colors rounded-sm ${className}`}
-      title="Share article"
-      aria-label="Share article"
-    >
-      <Share2 className="w-4 h-4" />
-    </button>
-  );
-}
 
 /**
  * Professional Masthead - Category tabs and story count
  */
-function NewsMasthead({ activeCategory, onCategoryChange, storyCount, isLive }) {
-  return (
-    <div className="mb-6">
-      {/* Masthead Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Newspaper className="w-6 h-6 text-[#0057B8]" />
-            <h1 className="text-lg font-black text-white uppercase tracking-wide">
-              News Hub
-            </h1>
-          </div>
-          {isLive && (
-            <div className="flex items-center gap-1.5 px-2 py-1 bg-red-500/20 border border-red-500/30">
-              <div className="w-1.5 h-1.5 bg-red-500 rounded-sm animate-pulse" />
-              <span className="text-[10px] font-bold text-red-400 uppercase">Live</span>
-            </div>
-          )}
-        </div>
-        <span className="text-[10px] text-gray-500 font-data tabular-nums uppercase">
-          {storyCount} {storyCount === 1 ? 'story' : 'stories'}
-        </span>
-      </div>
 
-      {/* Category Tabs - Segmented Control */}
-      <div className="flex items-center gap-1 p-1 bg-[#111] border border-[#333] overflow-x-auto">
-        {CATEGORIES.map((cat) => {
-          const Icon = cat.icon;
-          const isActive = activeCategory === cat.id;
-          return (
-            <button
-              key={cat.id}
-              onClick={() => onCategoryChange(cat.id)}
-              className={`flex items-center gap-1.5 px-3 py-2 text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
-                isActive
-                  ? 'bg-[#0057B8] text-white'
-                  : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
-              }`}
-            >
-              <Icon className="w-3 h-3" />
-              <span className="hidden sm:inline">{cat.label}</span>
-              <span className="sm:hidden">{cat.id === 'all' ? 'All' : cat.label.split(' ')[0]}</span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 /**
  * Hero Story - Featured article with prominent display
  */
-function HeroStory({ story, onClick, storyNumber, engagement }) {
-  const config = getCategoryConfig(story.category);
-  const Icon = config.icon;
-  const urgency = getUrgencyBadge(story.createdAt);
-  const readingTime = getReadingTime(story);
 
-  return (
-    <article
-      className="mb-6 bg-[#1a1a1a] border border-[#333] overflow-hidden cursor-pointer hover:border-[#444] transition-colors group"
-      onClick={() => onClick?.(story)}
-    >
-      {/* Hero Image */}
-      <div className="aspect-[21/9] bg-[#0a0a0a] relative overflow-hidden">
-        {story.imageUrl ? (
-          <img
-            src={story.imageUrl}
-            alt={story.headline}
-            className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
-            loading="eager"
-            fetchpriority="high"
-          />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#0057B8]/10 to-transparent">
-            <Icon className="w-20 h-20 text-[#0057B8]/30" />
-          </div>
-        )}
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a] via-[#1a1a1a]/20 to-transparent" />
-
-        {/* Story number badge */}
-        {storyNumber && (
-          <div className="absolute top-4 left-4 w-8 h-8 bg-[#0057B8] flex items-center justify-center">
-            <span className="text-sm font-black text-white">{storyNumber}</span>
-          </div>
-        )}
-
-        {/* Urgency badge */}
-        {urgency && (
-          <div className="absolute top-4 right-4">
-            <UrgencyBadge urgency={urgency} />
-          </div>
-        )}
-      </div>
-
-      {/* Hero Content */}
-      <div className="p-5 lg:p-6">
-        {/* Meta row */}
-        <div className="flex items-center gap-3 mb-3 flex-wrap">
-          <span className={`px-2 py-1 ${config.bgClass} text-white text-[10px] font-bold uppercase tracking-wider`}>
-            {config.label}
-          </span>
-          <div className="flex items-center gap-3 text-xs text-gray-500">
-            <span className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              {formatTimestamp(story.createdAt)}
-            </span>
-            <span className="hidden sm:flex items-center gap-1">
-              <BookOpen className="w-3 h-3" />
-              {readingTime}
-            </span>
-          </div>
-        </div>
-
-        {/* Headline */}
-        <h1 className="text-2xl lg:text-3xl xl:text-4xl font-black text-white leading-[1.1] mb-4 group-hover:text-gray-100 transition-colors">
-          {safeString(story.headline)}
-        </h1>
-
-        {/* Summary */}
-        <p className="text-base lg:text-lg text-gray-400 leading-relaxed mb-5">
-          {safeString(story.summary)}
-        </p>
-
-        {/* Fantasy ROI Badge */}
-        {story.fantasyMetrics && (
-          <div className="mb-5">
-            <FantasyROIBadge metrics={story.fantasyMetrics} />
-          </div>
-        )}
-
-        {/* Fantasy Impact */}
-        {story.fantasyImpact && typeof story.fantasyImpact === 'string' && (
-          <div className="p-4 bg-orange-500/10 border border-orange-500/20 mb-5">
-            <div className="flex items-center gap-2 mb-2">
-              <Flame className="w-4 h-4 text-orange-400" />
-              <span className="text-xs font-bold text-orange-400 uppercase tracking-wider">Fantasy Impact</span>
-            </div>
-            <p className="text-sm text-orange-100/80 leading-relaxed">{safeString(story.fantasyImpact)}</p>
-          </div>
-        )}
-
-        {/* Footer */}
-        <div className="flex items-center justify-between pt-4 border-t border-[#333]/50">
-          <div className="flex items-center gap-3 flex-wrap">
-            {story.trendingCorps?.slice(0, 2).map((corp, idx) => (
-              <span key={idx} className="flex items-center gap-1.5 text-xs text-gray-400">
-                <TrendingBadge direction={corp.direction} />
-                <span className="text-white font-medium">{corp.corps}</span>
-                {corp.weeklyChange !== undefined && (
-                  <span className={corp.weeklyChange >= 0 ? 'text-green-400' : 'text-red-400'}>
-                    {corp.weeklyChange >= 0 ? '+' : ''}{corp.weeklyChange.toFixed(2)}
-                  </span>
-                )}
-                {corp.fantasyValue && <FantasyValueBadge value={corp.fantasyValue} />}
-              </span>
-            ))}
-          </div>
-          <div className="flex items-center gap-4">
-            {/* Engagement stats - Facebook style */}
-            {engagement && (
-              <EngagementSummary
-                reactionCounts={engagement.reactionCounts}
-                userReaction={engagement.userReaction}
-                commentCount={engagement.commentCount}
-              />
-            )}
-            {/* Share button */}
-            <ShareButton story={story} />
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-gray-600 uppercase">marching.art</span>
-              <ChevronRight className="w-4 h-4 text-[#0057B8] group-hover:translate-x-0.5 transition-transform" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </article>
-  );
-}
 
 /**
  * News Card - Compact card for secondary stories (grid layout)
  * OPTIMIZATION #3: Memoized to prevent re-renders when sibling news items update
  */
-const NewsCard = memo(({ story, onClick, storyNumber, engagement }) => {
-  const config = getCategoryConfig(story.category);
-  const Icon = config.icon;
-  const urgency = getUrgencyBadge(story.createdAt);
-  const readingTime = getReadingTime(story);
-  const isFantasy = story.category === 'fantasy';
 
-  return (
-    <article
-      className="bg-[#1a1a1a] border border-[#333] overflow-hidden hover:border-[#444] transition-colors cursor-pointer group h-full flex flex-col"
-      onClick={() => onClick?.(story)}
-    >
-      {/* Card Header with Category Color Bar */}
-      <div className={`h-1 ${config.bgClass}`} />
-
-      <div className="p-4 flex-1 flex flex-col">
-        {/* Meta row */}
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            {storyNumber && (
-              <span className="w-5 h-5 bg-[#222] border border-[#333] flex items-center justify-center text-[10px] font-bold text-gray-400 tabular-nums">
-                {storyNumber}
-              </span>
-            )}
-            <span className={`px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${config.bgLightClass} ${config.textClass}`}>
-              {config.label}
-            </span>
-            {urgency && <UrgencyBadge urgency={urgency} />}
-          </div>
-          <Icon className={`w-4 h-4 ${isFantasy ? 'text-orange-500/40' : 'text-[#0057B8]/40'}`} />
-        </div>
-
-        {/* Headline */}
-        <h2 className={`text-base font-bold leading-snug mb-2 flex-1 ${isFantasy ? 'text-orange-50' : 'text-white'} group-hover:text-gray-100 transition-colors line-clamp-3`}>
-          {safeString(story.headline)}
-        </h2>
-
-        {/* Summary */}
-        <p className="text-sm text-gray-500 line-clamp-2 mb-3">
-          {safeString(story.summary)}
-        </p>
-
-        {/* Fantasy ROI (compact) */}
-        {story.fantasyMetrics?.topROI && (
-          <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-green-500/10 border border-green-500/20 mb-3 self-start">
-            <DollarSign className="w-3 h-3 text-green-400" />
-            <span className="text-[11px] text-green-400 font-semibold">
-              {story.fantasyMetrics.topROI.corps}: +{story.fantasyMetrics.topROI.roiPercent.toFixed(1)}% ROI
-            </span>
-          </div>
-        )}
-
-        {/* Footer */}
-        <div className="flex items-center justify-between pt-3 border-t border-[#333]/50 mt-auto">
-          <div className="flex items-center gap-2 text-[11px] text-gray-500">
-            <Clock className="w-3 h-3" />
-            <span>{formatTimestamp(story.createdAt)}</span>
-            <span className="text-gray-600">·</span>
-            <span>{readingTime}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            {/* Engagement stats - Facebook style */}
-            {engagement && (
-              <EngagementSummary
-                reactionCounts={engagement.reactionCounts}
-                userReaction={engagement.userReaction}
-                commentCount={engagement.commentCount}
-              />
-            )}
-            {story.trendingCorps?.[0] && (
-              <span className="flex items-center gap-1 text-xs">
-                <TrendingBadge direction={story.trendingCorps[0].direction} />
-                <span className="text-gray-400">{story.trendingCorps[0].corps}</span>
-              </span>
-            )}
-            {/* Share button */}
-            <ShareButton story={story} className="p-1.5" />
-          </div>
-        </div>
-      </div>
-    </article>
-  );
-});
 
 /**
  * Compact News Row - For additional stories in a list format
  * OPTIMIZATION #3: Memoized to prevent re-renders when sibling news items update
  */
-const NewsRow = memo(({ story, onClick, storyNumber, engagement }) => {
-  const config = getCategoryConfig(story.category);
-  const urgency = getUrgencyBadge(story.createdAt);
 
-  return (
-    <article
-      className="flex items-start gap-3 py-3 border-b border-[#333]/50 last:border-b-0 cursor-pointer hover:bg-white/[0.02] transition-colors group px-1"
-      onClick={() => onClick?.(story)}
-    >
-      {/* Story number */}
-      <span className="w-6 h-6 bg-[#222] border border-[#333] flex items-center justify-center text-xs font-bold text-gray-500 tabular-nums flex-shrink-0 mt-0.5">
-        {storyNumber}
-      </span>
-
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1 flex-wrap">
-          <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase ${config.bgLightClass} ${config.textClass}`}>
-            {config.label}
-          </span>
-          {urgency && <UrgencyBadge urgency={urgency} />}
-          <span className="text-[10px] text-gray-600">{formatTimestamp(story.createdAt)}</span>
-          {/* Engagement stats - Facebook style */}
-          {engagement && (
-            <div className="ml-auto">
-              <EngagementSummary
-                reactionCounts={engagement.reactionCounts}
-                userReaction={engagement.userReaction}
-                commentCount={engagement.commentCount}
-              />
-            </div>
-          )}
-        </div>
-        <h3 className="text-sm font-bold text-white leading-snug group-hover:text-gray-100 transition-colors line-clamp-2">
-          {safeString(story.headline)}
-        </h3>
-      </div>
-
-      {/* Share button */}
-      <ShareButton story={story} className="p-1.5 flex-shrink-0" />
-
-      <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-[#0057B8] transition-colors flex-shrink-0 mt-1" />
-    </article>
-  );
-});
 
 /**
  * Image Grid Card - Image-focused card for visual browsing (like news sites)
  * Prominently displays story image with category badge and headline below
  * OPTIMIZATION: Memoized to prevent re-renders when sibling news items update
  */
-const ImageGridCard = memo(({ story, onClick, engagement }) => {
-  const config = getCategoryConfig(story.category);
-  const Icon = config.icon;
-  const urgency = getUrgencyBadge(story.createdAt);
 
-  return (
-    <article
-      className="bg-[#1a1a1a] border border-[#333] overflow-hidden hover:border-[#444] transition-colors cursor-pointer group flex flex-col"
-      onClick={() => onClick?.(story)}
-    >
-      {/* Image Container */}
-      <div className="aspect-[4/3] bg-[#0a0a0a] relative overflow-hidden">
-        {story.imageUrl ? (
-          <img
-            src={story.imageUrl}
-            alt={story.headline}
-            className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
-            loading="lazy"
-          />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#0057B8]/10 to-transparent">
-            <Icon className="w-12 h-12 text-[#0057B8]/30" />
-          </div>
-        )}
 
-        {/* Gradient overlay at bottom */}
-        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/60 to-transparent" />
 
-        {/* Category badge */}
-        <div className="absolute bottom-2 left-2">
-          <span className={`px-2 py-1 ${config.bgClass} text-white text-[10px] font-bold uppercase tracking-wider`}>
-            {config.label}
-          </span>
-        </div>
 
-        {/* Urgency badge */}
-        {urgency && (
-          <div className="absolute top-2 right-2">
-            <UrgencyBadge urgency={urgency} />
-          </div>
-        )}
-      </div>
 
-      {/* Content */}
-      <div className="p-3 flex-1 flex flex-col">
-        {/* Headline */}
-        <h2 className="text-sm font-bold text-white leading-snug group-hover:text-gray-100 transition-colors line-clamp-3 mb-2 flex-1">
-          {safeString(story.headline)}
-        </h2>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between pt-2 border-t border-[#333]/50 mt-auto">
-          <span className="text-[10px] text-gray-500">
-            {formatTimestamp(story.createdAt)}
-          </span>
-          <div className="flex items-center gap-2">
-            {engagement && (
-              <EngagementSummary
-                reactionCounts={engagement.reactionCounts}
-                userReaction={engagement.userReaction}
-                commentCount={engagement.commentCount}
-              />
-            )}
-          </div>
-        </div>
-      </div>
-    </article>
-  );
-});
 
-function LoadingState() {
-  // Use skeleton loading for professional perceived performance
-  return <NewsFeedSkeleton />;
-}
-
-function ErrorState({ onRetry }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-16 text-gray-500">
-      <AlertCircle className="w-8 h-8 mb-3 text-red-400" />
-      <p className="text-sm mb-4">Unable to load news feed</p>
-      <button
-        onClick={onRetry}
-        className="px-4 py-2 text-sm font-bold text-[#0057B8] border border-[#0057B8] hover:bg-[#0057B8]/10 transition-colors"
-      >
-        Try Again
-      </button>
-    </div>
-  );
-}
-
-function EmptyState({ category }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-16 text-gray-500">
-      <Newspaper className="w-12 h-12 mb-3 text-gray-600" />
-      <p className="text-sm font-medium mb-1">
-        {category === 'all' ? 'No articles yet' : `No ${category} stories available`}
-      </p>
-      <p className="text-xs text-gray-600 text-center max-w-xs">
-        {category === 'all'
-          ? 'New recaps and analysis post after each DCI competition day.'
-          : 'Try another category or check back after the next competition day.'}
-      </p>
-    </div>
-  );
-}
 
 // =============================================================================
 // MAIN COMPONENT
