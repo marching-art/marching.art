@@ -37,10 +37,12 @@ const {
   retireCorps,
   unretireCorps,
   transferCorps,
-  detectMyDuplicateCorps,
   renameCorps,
-  sweepDuplicateCorps,
 } = require("./src/callable/corps");
+const {
+  detectMyDuplicateCorps,
+  sweepDuplicateCorps,
+} = require("./src/callable/corpsDuplicates");
 const {
   createLeague,
   joinLeague,
@@ -49,10 +51,12 @@ const {
   generateMatchups,
   updateMatchupResults,
   postLeagueMessage,
+} = require("./src/callable/leagues");
+const {
   inviteDirectorToLeague,
   respondToLeagueInvitation,
   rescindLeagueInvitation,
-} = require("./src/callable/leagues");
+} = require("./src/callable/leagueInvitations");
 const {
   sendCommentNotification,
   deleteComment,
@@ -66,11 +70,13 @@ const {
   editArticleComment,
   deleteArticleComment,
   reportArticleComment,
+  getArticleEngagement,
+} = require("./src/callable/articleComments");
+const {
   listCommentsForModeration,
   moderateComment,
   bulkModerateComments,
-  getArticleEngagement,
-} = require("./src/callable/articleComments");
+} = require("./src/callable/commentModeration");
 const {
   updateProfile,
   updateUsername,

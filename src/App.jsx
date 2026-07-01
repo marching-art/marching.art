@@ -132,7 +132,7 @@ function App() {
   // Initialize global season listener ONCE at app startup
   // This prevents duplicate Firestore listeners across components
   useEffect(() => {
-    const unsubscribe = initSeasonListener();
+    initSeasonListener();
     return () => {
       cleanupSeasonListener();
     };
