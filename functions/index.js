@@ -49,10 +49,12 @@ const {
   generateMatchups,
   updateMatchupResults,
   postLeagueMessage,
+} = require("./src/callable/leagues");
+const {
   inviteDirectorToLeague,
   respondToLeagueInvitation,
   rescindLeagueInvitation,
-} = require("./src/callable/leagues");
+} = require("./src/callable/leagueInvitations");
 const {
   sendCommentNotification,
   deleteComment,
