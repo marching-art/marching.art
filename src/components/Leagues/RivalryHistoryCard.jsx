@@ -132,6 +132,25 @@ const RivalryHistoryCard = ({
   currentUserId,
   compact = false,
 }) => {
+  // Hooks must run on every render, before any early return (rules-of-hooks).
+  // Guard against a null/empty headToHead since this runs before the check below.
+  const captionDominationCounts = useMemo(() => {
+    let user1Dominant = 0;
+    let user2Dominant = 0;
+    let tied = 0;
+
+    const domination = headToHead?.captionDomination;
+    if (domination) {
+      Object.values(domination).forEach(dom => {
+        if (dom.dominantUserId === headToHead.user1Id) user1Dominant++;
+        else if (dom.dominantUserId === headToHead.user2Id) user2Dominant++;
+        else tied++;
+      });
+    }
+
+    return { user1Dominant, user2Dominant, tied };
+  }, [headToHead]);
+
   if (!headToHead || headToHead.totalMatchups === 0) {
     return (
       <div className="bg-[#1a1a1a] border border-[#333] p-6 text-center">
@@ -160,21 +179,6 @@ const RivalryHistoryCard = ({
   const isUser1CurrentUser = currentUserId === user1Id;
   const overallLeader = user1Wins > user2Wins ? user1Id : user2Wins > user1Wins ? user2Id : null;
   const user1WinPct = totalMatchups > 0 ? (user1Wins / totalMatchups) * 100 : 0;
-
-  // Count caption domination
-  const captionDominationCounts = useMemo(() => {
-    let user1Dominant = 0;
-    let user2Dominant = 0;
-    let tied = 0;
-
-    Object.values(captionDomination).forEach(dom => {
-      if (dom.dominantUserId === user1Id) user1Dominant++;
-      else if (dom.dominantUserId === user2Id) user2Dominant++;
-      else tied++;
-    });
-
-    return { user1Dominant, user2Dominant, tied };
-  }, [captionDomination, user1Id, user2Id]);
 
   if (compact) {
     // Compact inline view
