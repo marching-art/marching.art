@@ -16,6 +16,7 @@ import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import { useSeasonStore } from '../store/seasonStore';
 import { useScheduleStore } from '../store/scheduleStore';
+import { autoFillLineup } from '../utils/lineupAutoFill';
 
 // Caption definitions for the guided selection
 const CAPTIONS = [
@@ -847,29 +848,28 @@ const Onboarding = () => {
             {step === 3 && !isLineupComplete && (
               <button
                 onClick={() => {
-                  // Fill remaining slots with random selections
-                  const remaining = CAPTIONS.filter(cap => !lineup[cap.id]);
-                  const usedCorps = new Set(Object.values(lineup).map(v => v?.split('|')[0]).filter(Boolean));
-                  let currentPoints = getLineupPoints();
-
-                  const newLineup = { ...lineup };
-                  for (const cap of remaining) {
-                    const available = availableCorps
-                      .filter(c => !usedCorps.has(c.corpsName) && (currentPoints + c.points <= SOUNDSPORT_POINT_LIMIT))
-                      .sort((a, b) => b.points - a.points);
-
-                    if (available.length > 0) {
-                      const corps = available[0];
-                      newLineup[cap.id] = `${corps.corpsName}|${corps.sourceYear}|${corps.points}`;
-                      usedCorps.add(corps.corpsName);
-                      currentPoints += corps.points;
-                    }
+                  // Exact fill: all remaining captions with distinct corps,
+                  // maximizing points within the budget (hits the full budget
+                  // whenever the available point values allow it).
+                  const result = autoFillLineup(
+                    availableCorps,
+                    lineup,
+                    CAPTIONS.map((cap) => cap.id),
+                    SOUNDSPORT_POINT_LIMIT
+                  );
+                  setLineup(result.lineup);
+                  if (result.filledAll) {
+                    toast.success(
+                      `Lineup complete — ${result.totalPoints}/${SOUNDSPORT_POINT_LIMIT} points used!`
+                    );
+                  } else {
+                    toast.error(
+                      'Could not fill every caption within the point budget. Try changing a pick and auto-filling again.'
+                    );
                   }
-                  setLineup(newLineup);
-                  toast.success('Auto-filled remaining lineup slots!');
                 }}
                 className="w-full mt-3 text-gray-400 hover:text-gray-200 text-sm transition-colors"
-                disabled={loading}
+                disabled={loading || availableCorps.length === 0}
               >
                 Auto-fill remaining slots
               </button>
