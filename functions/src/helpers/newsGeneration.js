@@ -3167,7 +3167,7 @@ You may adjust if the data supports a stronger pick, but this is the pre-compute
  * 4. marching.art Results - Fantasy competition results from the day
  * 5. marching.art Caption Analysis - Fantasy caption trends in GE, Visual, Music
  */
-async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
+async function generateAllArticles({ db, dataDocId, seasonId, currentDay, onArticleGenerated }) {
   const reportDay = currentDay - 1;
 
   if (reportDay < 1) {
@@ -3240,61 +3240,75 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay }) {
     const brief = buildEditorialBrief({ dayScores, trendData, fantasyData, reportDay });
     logger.info(`Editorial brief for Day ${reportDay}: lead=${brief.lead?.subject || 'n/a'} | trajectory=${brief.trajectory?.corps || 'n/a'} | caption=${brief.caption?.family || 'n/a'} | market=${brief.market?.topBuy || 'n/a'}`);
 
+    // Build metadata up front so each article can be persisted the moment it is
+    // generated. Image generation is slow (Gemini 3 Pro Image can take minutes per
+    // article), so producing all five before saving risks the caller's function
+    // timing out with nothing written. Persisting incrementally guarantees that
+    // whatever finished before a timeout is still visible on the news feed/admin.
+    const metadata = {
+      reportDay,
+      currentDay,
+      corpsCount: dayScores.length,
+      showName: showContext.showName,
+      location: showContext.location,
+      date: showContext.date,
+      allShows: showContext.allShows,
+      articleCount: 5,
+      competitionContext: {
+        scenario: competitionContext.scenario,
+        seasonPhase: competitionContext.seasonPhase,
+        intensity: competitionContext.intensity,
+        toneDescriptor,
+      },
+    };
+
     const articles = [];
 
+    // Persist an article as soon as it is generated. A save failure is logged but
+    // never aborts generation of the remaining articles.
+    const persist = async (article) => {
+      articles.push(article);
+      ledger.record(article);
+      if (typeof onArticleGenerated === "function") {
+        try {
+          await onArticleGenerated(article, { reportDay, currentDay, metadata });
+        } catch (saveError) {
+          logger.error(`Failed to persist article ${article?.type} for Day ${reportDay}:`, saveError);
+        }
+      }
+    };
+
     // Article 1: DCI DAILY - Today's competition results with score breakdown
-    const dciDailyArticle = await generateDciDailyArticle({
+    await persist(await generateDciDailyArticle({
       reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, ledger, brief, isLiveSeason
-    });
-    articles.push(dciDailyArticle);
-    ledger.record(dciDailyArticle);
+    }));
 
     // Article 2: DCI FEATURE - Single corps season progress spotlight
-    const dciFeatureArticle = await generateDciFeatureArticle({
+    await persist(await generateDciFeatureArticle({
       reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, ledger, brief, isLiveSeason
-    });
-    articles.push(dciFeatureArticle);
-    ledger.record(dciFeatureArticle);
+    }));
 
     // Article 3: DCI RECAP - Pure caption deep-dive (GE, Visual, Music). Descriptive, not prescriptive.
-    const dciRecapArticle = await generateDciRecapArticle({
+    await persist(await generateDciRecapArticle({
       reportDay, dayScores, trendData, captionLeaders, activeCorps, showContext, competitionContext, db, ledger, brief, isLiveSeason
-    });
-    articles.push(dciRecapArticle);
-    ledger.record(dciRecapArticle);
+    }));
 
     // Article 4: FANTASY MARKET REPORT - Owns buy/hold/sell picks for the day (descriptive caption analysis already done in Article 3).
-    const fantasyRecapArticle = await generateFantasyRecapArticle({
+    await persist(await generateFantasyRecapArticle({
       reportDay, dayScores, trendData, showContext, competitionContext, db, ledger, brief, isLiveSeason
-    });
-    articles.push(fantasyRecapArticle);
-    ledger.record(fantasyRecapArticle);
+    }));
 
     // Article 5: FANTASY DAILY - Fantasy competition results with score breakdown (generated last to appear first in feed)
-    const fantasyDailyArticle = await generateFantasyDailyArticle({
+    await persist(await generateFantasyDailyArticle({
       reportDay, fantasyData, showContext, competitionContext, db, dataDocId, ledger
-    });
-    articles.push(fantasyDailyArticle);
-    ledger.record(fantasyDailyArticle);
+    }));
 
     return {
       success: true,
       articles,
       metadata: {
-        reportDay,
-        currentDay,
-        corpsCount: dayScores.length,
-        showName: showContext.showName,
-        location: showContext.location,
-        date: showContext.date,
-        allShows: showContext.allShows,
+        ...metadata,
         articleCount: articles.length,
-        competitionContext: {
-          scenario: competitionContext.scenario,
-          seasonPhase: competitionContext.seasonPhase,
-          intensity: competitionContext.intensity,
-          toneDescriptor,
-        },
       },
     };
   } catch (error) {
