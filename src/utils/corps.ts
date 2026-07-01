@@ -20,9 +20,13 @@ export const CORPS_CLASS_ORDER = ['worldClass', 'openClass', 'aClass', 'soundSpo
  * 'openClass'), but some older UI used the short keys ('world', 'open'). When
  * matching a class against stored data we must accept either spelling.
  */
+// Keyed by every accepted spelling so callers can pass either the canonical
+// key ('worldClass') or the legacy short key ('world') and still match.
 export const CORPS_CLASS_ALIASES: Record<string, string[]> = {
   worldClass: ['worldClass', 'world'],
+  world: ['worldClass', 'world'],
   openClass: ['openClass', 'open'],
+  open: ['openClass', 'open'],
   aClass: ['aClass'],
   soundSport: ['soundSport'],
 };

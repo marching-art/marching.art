@@ -8,6 +8,7 @@ import { m, AnimatePresence } from 'framer-motion';
 import { TrendingUp, Coins, Flame, ChevronRight, Lock, Unlock, Clock } from 'lucide-react';
 import { StreakIndicator } from './StreakIndicator';
 import { getWeeksUntilUnlock } from '../utils/classUnlockTime';
+import { isCorpsClassUnlocked } from '../utils/corps';
 import type { Timestamp } from 'firebase/firestore';
 
 // =============================================================================
@@ -80,7 +81,9 @@ function getNextClassUnlock(
   const classOrder = ['aClass', 'open', 'world'];
 
   for (const classKey of classOrder) {
-    if (!unlockedClasses.includes(classKey)) {
+    // unlockedClasses stores canonical keys ('openClass'/'worldClass'); match
+    // either spelling so already-unlocked classes are correctly skipped.
+    if (!isCorpsClassUnlocked(unlockedClasses, classKey)) {
       const levelRequired = CLASS_UNLOCK_LEVELS[classKey as keyof typeof CLASS_UNLOCK_LEVELS];
       const xpRequired = levelRequired * XP_PER_LEVEL;
       const coinCost = CLASS_UNLOCK_COSTS[classKey as keyof typeof CLASS_UNLOCK_COSTS];
