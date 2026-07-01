@@ -95,6 +95,8 @@ const ProtectedRoute = ({ children, requireProfile = true }) => {
   const location = useLocation();
   const profile = useProfileStore((state) => state.profile);
   const profileLoading = useProfileStore((state) => state.loading);
+  const profileUid = useProfileStore((state) => state._currentUid);
+  const profileError = useProfileStore((state) => state.error);
 
   if (loading) {
     return <LoadingScreen />;
@@ -105,10 +107,21 @@ const ProtectedRoute = ({ children, requireProfile = true }) => {
   }
 
   if (requireProfile) {
-    if (profileLoading) {
+    // Only trust "no profile" once the profile listener is bound to THIS user
+    // and has finished loading. On a hard refresh the listener effect runs
+    // AFTER this render — until then the store still holds the cleared state
+    // (profile: null, loading: false) from before auth resolved, and
+    // redirecting on that would bounce fully-onboarded users to /onboarding.
+    if (profileLoading || profileUid !== user.uid) {
       return <LoadingScreen />;
     }
     if (!profile) {
+      // A subscription error also leaves profile null — hold on the loading
+      // screen (the store already surfaced a toast) rather than shunting a
+      // possibly-onboarded user into onboarding.
+      if (profileError) {
+        return <LoadingScreen />;
+      }
       return <Navigate to="/onboarding" replace />;
     }
   }

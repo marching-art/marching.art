@@ -97,11 +97,11 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
         <AlertTriangle className="w-8 h-8 text-red-400" />
       </div>
 
-      <h3 className="text-xl font-display font-bold text-cream-100 mb-2">
+      <h3 className="text-xl font-bold text-white mb-2">
         {featureName ? `${featureName} Error` : 'Something went wrong'}
       </h3>
 
-      <p className="text-cream-400 text-center mb-4 max-w-md">
+      <p className="text-gray-400 text-center mb-4 max-w-md">
         {featureName
           ? `We encountered an error loading ${featureName.toLowerCase()}. Please try again.`
           : 'An unexpected error occurred. Please try again or contact support if the problem persists.'}
@@ -109,7 +109,7 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
 
       {error && process.env.NODE_ENV === 'development' && (
         <details className="mb-4 w-full max-w-md">
-          <summary className="text-sm text-cream-500 cursor-pointer hover:text-cream-300">
+          <summary className="text-sm text-gray-500 cursor-pointer hover:text-gray-300">
             Error details (dev only)
           </summary>
           <pre className="mt-2 p-3 bg-charcoal-900 rounded-sm text-xs text-red-400 overflow-auto max-h-40">

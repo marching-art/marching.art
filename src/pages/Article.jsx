@@ -508,7 +508,7 @@ const Article = () => {
               <div className="flex items-center gap-2 lg:hidden">
                 <Link
                   to="/login"
-                  className="h-9 px-4 bg-yellow-500 text-slate-900 font-display font-semibold text-sm uppercase tracking-wide flex items-center justify-center rounded-lg hover:bg-yellow-400 active:bg-yellow-600 transition-all duration-200"
+                  className="h-9 px-4 bg-yellow-500 text-slate-900 font-semibold text-sm uppercase tracking-wide flex items-center justify-center rounded-lg hover:bg-yellow-400 active:bg-yellow-600 transition-all duration-200"
                 >
                   Sign In
                 </Link>
@@ -518,7 +518,7 @@ const Article = () => {
             {user && (
               <Link
                 to="/dashboard"
-                className="h-9 px-4 bg-yellow-500 text-slate-900 font-display font-semibold text-sm uppercase tracking-wide flex items-center justify-center rounded-lg hover:bg-yellow-400 active:bg-yellow-600 transition-all duration-200 lg:hidden"
+                className="h-9 px-4 bg-yellow-500 text-slate-900 font-semibold text-sm uppercase tracking-wide flex items-center justify-center rounded-lg hover:bg-yellow-400 active:bg-yellow-600 transition-all duration-200 lg:hidden"
               >
                 Dashboard
               </Link>

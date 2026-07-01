@@ -32,7 +32,7 @@ const NotFound = () => {
       {/* Giant Watermark */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
         <span
-          className="font-display font-black text-cream/[0.02] uppercase leading-none whitespace-nowrap"
+          className="font-black text-cream/[0.02] uppercase leading-none whitespace-nowrap"
           style={{ fontSize: 'clamp(8rem, 30vw, 20rem)' }}
         >
           404
@@ -78,7 +78,7 @@ const NotFound = () => {
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1, type: 'spring', stiffness: 100 }}
-          className="text-8xl sm:text-9xl font-display font-black text-transparent bg-clip-text bg-gradient-to-b from-cream via-cream/80 to-cream/20 mb-4"
+          className="text-8xl sm:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-b from-cream via-cream/80 to-cream/20 mb-4"
         >
           404
         </m.h1>
@@ -88,7 +88,7 @@ const NotFound = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="text-xl sm:text-2xl font-display font-bold text-cream mb-2 uppercase tracking-wide"
+          className="text-xl sm:text-2xl font-bold text-cream mb-2 uppercase tracking-wide"
         >
           Route Not Found
         </m.h2>
@@ -114,14 +114,14 @@ const NotFound = () => {
         >
           <button
             onClick={() => startTransition(() => navigate(-1))}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-charcoal-800 border border-cream/20 rounded-lg text-cream font-display font-semibold hover:bg-charcoal-700 hover:border-cream/30 transition-all"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-charcoal-800 border border-cream/20 rounded-lg text-cream font-semibold hover:bg-charcoal-700 hover:border-cream/30 transition-all"
           >
             <ArrowLeft className="w-4 h-4" />
             Go Back
           </button>
           <Link
             to="/"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gold-500 text-charcoal-900 rounded-lg font-display font-bold uppercase hover:bg-gold-400 transition-colors shadow-[0_0_15px_rgba(234,179,8,0.2)]"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-yellow-500 text-charcoal-900 rounded-lg font-bold uppercase hover:bg-yellow-400 transition-colors shadow-[0_0_15px_rgba(234,179,8,0.2)]"
           >
             <Home className="w-4 h-4" />
             Return Home

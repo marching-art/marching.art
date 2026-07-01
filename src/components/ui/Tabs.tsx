@@ -160,7 +160,7 @@ export const TabTrigger: React.FC<TabTriggerProps> = ({
         relative flex items-center gap-2 px-4 py-2.5
         text-sm font-medium rounded-sm
         transition-all duration-300
-        focus:outline-none focus:ring-2 focus:ring-gold-500/30
+        focus:outline-none focus:ring-2 focus:ring-yellow-500/30
         disabled:opacity-50 disabled:cursor-not-allowed
         ${isActive
           ? 'text-charcoal-950'
@@ -172,7 +172,7 @@ export const TabTrigger: React.FC<TabTriggerProps> = ({
       {isActive && (
         <m.div
           layoutId="activeTab"
-          className="absolute inset-0 bg-gold-500 rounded-sm shadow-[0_0_15px_rgba(234,179,8,0.3)]"
+          className="absolute inset-0 bg-yellow-500 rounded-sm shadow-[0_0_15px_rgba(234,179,8,0.3)]"
           initial={false}
           transition={{ type: 'spring', duration: 0.4, bounce: 0.2 }}
         />

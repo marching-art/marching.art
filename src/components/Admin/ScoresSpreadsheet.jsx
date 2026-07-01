@@ -247,8 +247,8 @@ const ScoresSpreadsheet = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 text-gold-500 animate-spin" />
-        <span className="ml-3 text-cream-300">Loading scores data...</span>
+        <RefreshCw className="w-8 h-8 text-yellow-500 animate-spin" />
+        <span className="ml-3 text-gray-300">Loading scores data...</span>
       </div>
     );
   }
@@ -267,12 +267,12 @@ const ScoresSpreadsheet = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-gold-500/20 rounded-sm">
-            <Table className="w-4 h-4 text-gold-500" />
+          <div className="p-1.5 bg-yellow-500/20 rounded-sm">
+            <Table className="w-4 h-4 text-yellow-500" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-cream-100">Scores Reference Spreadsheet</h2>
-            <p className="text-xs text-cream-500">
+            <h2 className="text-lg font-bold text-white">Scores Reference Spreadsheet</h2>
+            <p className="text-xs text-gray-500">
               {seasonData?.name} • {corpsValues.length} corps • {allDates.length} days
             </p>
           </div>
@@ -296,7 +296,7 @@ const ScoresSpreadsheet = () => {
             className={`px-2 py-1 text-[10px] font-mono rounded transition-all ${
               activeTab === caption
                 ? 'bg-amber-400 text-neutral-900 font-bold'
-                : 'text-cream-400 hover:text-cream-100 hover:bg-charcoal-800'
+                : 'text-gray-400 hover:text-white hover:bg-charcoal-800'
             }`}
           >
             {caption}
@@ -304,7 +304,7 @@ const ScoresSpreadsheet = () => {
         ))}
 
         {/* Separator */}
-        <div className="w-px bg-cream-500/20 mx-0.5" />
+        <div className="w-px bg-white/20 mx-0.5" />
 
         {/* Aggregate Tabs */}
         {AGGREGATE_TABS.map(tab => (
@@ -314,7 +314,7 @@ const ScoresSpreadsheet = () => {
             className={`px-2 py-1 text-[10px] font-mono rounded transition-all ${
               activeTab === tab.id
                 ? 'bg-amber-400 text-neutral-900 font-bold'
-                : 'text-cream-400 hover:text-cream-100 hover:bg-charcoal-800'
+                : 'text-gray-400 hover:text-white hover:bg-charcoal-800'
             }`}
           >
             {tab.label}
@@ -329,13 +329,13 @@ const ScoresSpreadsheet = () => {
           disabled={!canScrollLeft}
           className={`p-1 rounded transition-all ${
             canScrollLeft
-              ? 'bg-charcoal-800 text-cream-300 hover:bg-charcoal-700'
-              : 'bg-charcoal-900/50 text-cream-500/30 cursor-not-allowed'
+              ? 'bg-charcoal-800 text-gray-300 hover:bg-charcoal-700'
+              : 'bg-charcoal-900/50 text-gray-500/30 cursor-not-allowed'
           }`}
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
-        <span className="text-[10px] text-cream-500 font-mono">
+        <span className="text-[10px] text-gray-500 font-mono">
           Showing days {scrollPosition + 1}-{Math.min(scrollPosition + VISIBLE_COLUMNS, allDates.length)} of {allDates.length}
         </span>
         <button
@@ -343,8 +343,8 @@ const ScoresSpreadsheet = () => {
           disabled={!canScrollRight}
           className={`p-1 rounded transition-all ${
             canScrollRight
-              ? 'bg-charcoal-800 text-cream-300 hover:bg-charcoal-700'
-              : 'bg-charcoal-900/50 text-cream-500/30 cursor-not-allowed'
+              ? 'bg-charcoal-800 text-gray-300 hover:bg-charcoal-700'
+              : 'bg-charcoal-900/50 text-gray-500/30 cursor-not-allowed'
           }`}
         >
           <ChevronRight className="w-4 h-4" />
@@ -352,27 +352,27 @@ const ScoresSpreadsheet = () => {
       </div>
 
       {/* Spreadsheet Table */}
-      <div className="overflow-x-auto border border-cream-500/20 rounded">
+      <div className="overflow-x-auto border border-white/20 rounded">
         <table className="w-full border-collapse text-[10px]">
           {/* Header Row */}
           <thead>
-            <tr className="bg-charcoal-900/80 border-b border-cream-500/20">
-              <th className="sticky left-0 z-10 bg-charcoal-900 px-1 py-1 text-left font-mono text-gold-400 border-r border-cream-500/20 w-[90px]">
+            <tr className="bg-charcoal-900/80 border-b border-white/20">
+              <th className="sticky left-0 z-10 bg-charcoal-900 px-1 py-1 text-left font-mono text-yellow-400 border-r border-white/20 w-[90px]">
                 {INDIVIDUAL_CAPTIONS.includes(activeTab)
                   ? getCaptionLabel(activeTab)
                   : AGGREGATE_TABS.find(t => t.id === activeTab)?.label || activeTab
                 }
               </th>
-              <th className="sticky left-[90px] z-10 bg-charcoal-900 px-0.5 py-1 text-center font-mono text-gold-400 border-r border-cream-500/20 w-6">
+              <th className="sticky left-[90px] z-10 bg-charcoal-900 px-0.5 py-1 text-center font-mono text-yellow-400 border-r border-white/20 w-6">
                 Pts
               </th>
               {visibleDates.map((dateInfo, idx) => (
                 <th
                   key={dateInfo.day}
-                  className="px-0 py-1.5 text-center font-mono text-cream-400 w-[38px] border-r border-cream-500/10"
+                  className="px-0 py-1.5 text-center font-mono text-gray-400 w-[38px] border-r border-white/10"
                   title={`${dateInfo.eventName} (Day ${dateInfo.day})`}
                 >
-                  <div className="text-[10px] text-cream-500/70 leading-none">{dateInfo.dateLabel}</div>
+                  <div className="text-[10px] text-gray-500/70 leading-none">{dateInfo.dateLabel}</div>
                 </th>
               ))}
             </tr>
@@ -383,27 +383,27 @@ const ScoresSpreadsheet = () => {
             {corpsValues.map((corps, rowIdx) => (
               <tr
                 key={`${corps.corpsName}-${corps.sourceYear}`}
-                className={`border-b border-cream-500/10 ${
+                className={`border-b border-white/10 ${
                   rowIdx % 2 === 0 ? 'bg-charcoal-950/30' : 'bg-charcoal-900/20'
                 } hover:bg-charcoal-800/40`}
               >
                 {/* Corps Name - Sticky */}
-                <td className="sticky left-0 z-10 bg-charcoal-900/95 px-1 py-1.5 border-r border-cream-500/20 w-[90px] max-w-[90px]">
-                  <div className="font-medium text-cream-100 text-[11px] truncate leading-tight" title={`${corps.corpsName} (${corps.sourceYear})`}>
+                <td className="sticky left-0 z-10 bg-charcoal-900/95 px-1 py-1.5 border-r border-white/20 w-[90px] max-w-[90px]">
+                  <div className="font-medium text-white text-[11px] truncate leading-tight" title={`${corps.corpsName} (${corps.sourceYear})`}>
                     {corps.corpsName}
                   </div>
-                  <div className="text-[9px] text-cream-500/50 leading-none">
+                  <div className="text-[9px] text-gray-500/50 leading-none">
                     {corps.sourceYear}
                   </div>
                 </td>
 
                 {/* Points - Sticky */}
-                <td className="sticky left-[90px] z-10 bg-charcoal-900/95 px-0.5 py-1.5 text-center border-r border-cream-500/20 w-6">
+                <td className="sticky left-[90px] z-10 bg-charcoal-900/95 px-0.5 py-1.5 text-center border-r border-white/20 w-6">
                   <span className={`font-mono text-[11px] font-bold ${
-                    corps.points >= 20 ? 'text-gold-400' :
-                    corps.points >= 15 ? 'text-cream-200' :
-                    corps.points >= 10 ? 'text-cream-400' :
-                    'text-cream-500'
+                    corps.points >= 20 ? 'text-yellow-400' :
+                    corps.points >= 15 ? 'text-gray-200' :
+                    corps.points >= 10 ? 'text-gray-400' :
+                    'text-gray-500'
                   }`}>
                     {corps.points}
                   </span>
@@ -427,14 +427,14 @@ const ScoresSpreadsheet = () => {
                   return (
                     <td
                       key={dateInfo.day}
-                      className={`px-0 py-1.5 text-center font-mono text-[11px] w-[38px] border-r border-cream-500/5 ${bgColor}`}
+                      className={`px-0 py-1.5 text-center font-mono text-[11px] w-[38px] border-r border-white/5 ${bgColor}`}
                     >
                       {score !== null ? (
-                        <span className={`${score >= maxScore * 0.85 ? 'text-green-400' : 'text-cream-300'}`}>
+                        <span className={`${score >= maxScore * 0.85 ? 'text-green-400' : 'text-gray-300'}`}>
                           {score.toFixed(3)}
                         </span>
                       ) : (
-                        <span className="text-cream-500/20">-</span>
+                        <span className="text-gray-500/20">-</span>
                       )}
                     </td>
                   );
@@ -446,7 +446,7 @@ const ScoresSpreadsheet = () => {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-3 text-[9px] text-cream-500/60">
+      <div className="flex items-center gap-3 text-[9px] text-gray-500/60">
         <span className="font-mono">Legend:</span>
         <span className="flex items-center gap-0.5">
           <span className="w-2.5 h-2.5 rounded-sm bg-green-900/30" /> 90%+

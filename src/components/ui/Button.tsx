@@ -23,7 +23,7 @@ export interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'size'> {
 // Button variant styles
 const variantStyles: Record<ButtonVariant, string> = {
   primary: 'bg-primary text-white border border-primary hover:bg-primary/90',
-  secondary: 'bg-transparent border border-cream-500/30 text-cream hover:bg-white/5 hover:border-cream-500/50',
+  secondary: 'bg-transparent border border-white/30 text-cream hover:bg-white/5 hover:border-white/50',
   ghost: 'bg-transparent text-cream/80 border border-transparent hover:bg-white/10 hover:text-cream',
 };
 

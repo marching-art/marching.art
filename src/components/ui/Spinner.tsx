@@ -26,8 +26,8 @@ const sizeStyles: Record<SpinnerSize, string> = {
 };
 
 const variantStyles: Record<SpinnerVariant, string> = {
-  default: 'text-cream-500',
-  gold: 'text-gold-500',
+  default: 'text-gray-500',
+  gold: 'text-[#0057B8]',
   white: 'text-white',
 };
 
@@ -43,7 +43,7 @@ export const Spinner: React.FC<SpinnerProps> = ({
         className={`animate-spin ${sizeStyles[size]} ${variantStyles[variant]}`}
       />
       {label && (
-        <span className="text-sm text-cream-400">{label}</span>
+        <span className="text-sm text-gray-400">{label}</span>
       )}
       <span className="sr-only">{label || 'Loading...'}</span>
     </div>
@@ -83,10 +83,10 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
         >
           <div className="flex flex-col items-center gap-3">
             <div className="animate-pulse">
-              <BrandLogo className="w-12 h-12" color="text-gold-500" />
+              <BrandLogo className="w-12 h-12" color="text-[#0057B8]" />
             </div>
             {label && (
-              <p className="font-mono text-xs text-gold-500/50 tracking-wide">{label}</p>
+              <p className="font-mono text-xs text-[#0057B8]/60 tracking-wide">{label}</p>
             )}
           </div>
         </m.div>
@@ -118,14 +118,14 @@ export const FullPageLoading: React.FC<FullPageLoadingProps> = ({
             transition={{ duration: 0.3 }}
             className="glow-pulse"
           >
-            <BrandLogo className="w-24 h-24" color="text-gold-500" />
+            <BrandLogo className="w-24 h-24" color="text-[#0057B8]" />
           </m.div>
         )}
         <m.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="font-mono text-sm text-gold-400/60 tracking-wide"
+          className="font-mono text-sm text-[#0057B8]/60 tracking-wide"
         >
           {label}
         </m.p>

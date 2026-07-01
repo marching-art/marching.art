@@ -25,10 +25,10 @@ export const SkipToContent: React.FC<SkipToContentProps> = ({
         sr-only focus:not-sr-only
         fixed top-2 left-2 z-[200]
         px-4 py-2
-        bg-gold-500 text-charcoal-900
-        font-display font-bold text-sm
+        bg-yellow-500 text-charcoal-900
+        font-bold text-sm
         rounded-sm
-        focus:outline-none focus:ring-2 focus:ring-gold-400 focus:ring-offset-2 focus:ring-offset-charcoal-950
+        focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-charcoal-950
         transition-all
       "
     >

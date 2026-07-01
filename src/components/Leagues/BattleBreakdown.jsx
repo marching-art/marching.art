@@ -43,21 +43,21 @@ export const BattleScoreHeader = ({
       {/* Battle Points Display */}
       <div className="flex items-center justify-center gap-4 mb-2">
         <div className="text-right flex-1">
-          <span className={`text-3xl font-display font-bold tabular-nums ${
-            homeWins ? 'text-green-400' : isTie ? 'text-yellow-400' : 'text-cream-100'
+          <span className={`text-3xl font-bold tabular-nums ${
+            homeWins ? 'text-green-400' : isTie ? 'text-yellow-400' : 'text-white'
           }`}>
             {homeBattlePoints}
           </span>
         </div>
 
         <div className="flex flex-col items-center">
-          <span className="text-xs text-cream-500/40 uppercase tracking-wider">Battle</span>
-          <span className="text-xs text-cream-500/40 uppercase tracking-wider">Points</span>
+          <span className="text-xs text-gray-500/40 uppercase tracking-wider">Battle</span>
+          <span className="text-xs text-gray-500/40 uppercase tracking-wider">Points</span>
         </div>
 
         <div className="text-left flex-1">
-          <span className={`text-3xl font-display font-bold tabular-nums ${
-            awayWins ? 'text-green-400' : isTie ? 'text-yellow-400' : 'text-cream-100'
+          <span className={`text-3xl font-bold tabular-nums ${
+            awayWins ? 'text-green-400' : isTie ? 'text-yellow-400' : 'text-white'
           }`}>
             {awayBattlePoints}
           </span>
@@ -68,13 +68,13 @@ export const BattleScoreHeader = ({
       {(isClutch || isBlowout) && (
         <div className="flex justify-center">
           {isClutch && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-yellow-500/20 text-yellow-400 text-xs font-display font-bold">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-yellow-500/20 text-yellow-400 text-xs font-bold">
               <Flame className="w-3 h-3" />
               CLUTCH
             </span>
           )}
           {isBlowout && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-red-500/20 text-red-400 text-xs font-display font-bold">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-red-500/20 text-red-400 text-xs font-bold">
               <Zap className="w-3 h-3" />
               BLOWOUT
             </span>
@@ -103,11 +103,11 @@ const BattleRow = ({
   const diff = Math.abs(homeValue - awayValue);
 
   const colorClasses = {
-    gold: 'text-gold-400',
+    gold: 'text-yellow-400',
     purple: 'text-purple-400',
     blue: 'text-blue-400',
     green: 'text-green-400',
-    cream: 'text-cream-300',
+    cream: 'text-gray-300',
   };
 
   return (
@@ -115,14 +115,14 @@ const BattleRow = ({
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay }}
-      className="flex items-center py-2 border-b border-cream-500/5 last:border-0"
+      className="flex items-center py-2 border-b border-white/5 last:border-0"
     >
       {/* Home Side */}
       <div className={`flex-1 flex items-center justify-end gap-2 pr-3 ${
         homeWins ? 'opacity-100' : 'opacity-50'
       }`}>
-        <span className={`text-sm font-display tabular-nums ${
-          homeWins ? 'text-green-400 font-bold' : 'text-cream-300'
+        <span className={`text-sm tabular-nums ${
+          homeWins ? 'text-green-400 font-bold' : 'text-gray-300'
         }`}>
           {typeof homeValue === 'number' ? homeValue.toFixed(1) : homeValue}
         </span>
@@ -146,7 +146,7 @@ const BattleRow = ({
       {/* Center Label */}
       <div className="w-28 flex items-center justify-center gap-1.5 px-2">
         {Icon && <Icon className={`w-3.5 h-3.5 ${colorClasses[color]}`} />}
-        <span className={`text-xs font-display font-semibold ${colorClasses[color]}`}>
+        <span className={`text-xs font-semibold ${colorClasses[color]}`}>
           {label}
         </span>
       </div>
@@ -170,8 +170,8 @@ const BattleRow = ({
             <Minus className="w-3 h-3 text-yellow-400/50" />
           </div>
         )}
-        <span className={`text-sm font-display tabular-nums ${
-          awayWins ? 'text-green-400 font-bold' : 'text-cream-300'
+        <span className={`text-sm tabular-nums ${
+          awayWins ? 'text-green-400 font-bold' : 'text-gray-300'
         }`}>
           {typeof awayValue === 'number' ? awayValue.toFixed(1) : awayValue}
         </span>
@@ -191,21 +191,21 @@ export const CaptionBattlesSection = ({
 }) => {
   return (
     <div className="glass rounded-sm overflow-hidden">
-      <div className="p-3 border-b border-cream-500/10 bg-charcoal-900/50">
+      <div className="p-3 border-b border-white/10 bg-charcoal-900/50">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-display font-bold text-cream-100 flex items-center gap-2">
-            <Target className="w-3.5 h-3.5 text-gold-400" />
+          <h3 className="text-xs font-bold text-white flex items-center gap-2">
+            <Target className="w-3.5 h-3.5 text-yellow-400" />
             Caption Battles
           </h3>
           <div className="flex items-center gap-2">
-            <span className={`text-sm font-display font-bold ${
-              captionBattlesWon.home > captionBattlesWon.away ? 'text-green-400' : 'text-cream-300'
+            <span className={`text-sm font-bold ${
+              captionBattlesWon.home > captionBattlesWon.away ? 'text-green-400' : 'text-gray-300'
             }`}>
               {captionBattlesWon.home}
             </span>
-            <span className="text-xs text-cream-500/40">-</span>
-            <span className={`text-sm font-display font-bold ${
-              captionBattlesWon.away > captionBattlesWon.home ? 'text-green-400' : 'text-cream-300'
+            <span className="text-xs text-gray-500/40">-</span>
+            <span className={`text-sm font-bold ${
+              captionBattlesWon.away > captionBattlesWon.home ? 'text-green-400' : 'text-gray-300'
             }`}>
               {captionBattlesWon.away}
             </span>
@@ -248,9 +248,9 @@ export const SpecialBattlesSection = ({
 
   return (
     <div className="glass rounded-sm overflow-hidden">
-      <div className="p-3 border-b border-cream-500/10 bg-charcoal-900/50">
-        <h3 className="text-xs font-display font-bold text-cream-100 flex items-center gap-2">
-          <Award className="w-3.5 h-3.5 text-gold-400" />
+      <div className="p-3 border-b border-white/10 bg-charcoal-900/50">
+        <h3 className="text-xs font-bold text-white flex items-center gap-2">
+          <Award className="w-3.5 h-3.5 text-yellow-400" />
           Bonus Battles
         </h3>
       </div>
@@ -291,9 +291,9 @@ export const BattleSummaryBar = ({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between text-xs">
-        <span className="text-cream-500/60">{homeBattlePoints} pts</span>
-        <span className="text-cream-500/40">of {maxPoints} possible</span>
-        <span className="text-cream-500/60">{awayBattlePoints} pts</span>
+        <span className="text-gray-500/60">{homeBattlePoints} pts</span>
+        <span className="text-gray-500/40">of {maxPoints} possible</span>
+        <span className="text-gray-500/60">{awayBattlePoints} pts</span>
       </div>
       <div className="flex h-3 rounded-sm overflow-hidden bg-charcoal-800">
         <m.div
@@ -312,7 +312,7 @@ export const BattleSummaryBar = ({
           initial={{ width: 0 }}
           animate={{ width: `${awayPercent}%` }}
           transition={{ type: 'spring', damping: 20, delay: 0.2 }}
-          className="bg-cream-500/50"
+          className="bg-white/50"
         />
       </div>
     </div>
@@ -331,8 +331,8 @@ const BattleBreakdown = ({
   if (!battleBreakdown) {
     return (
       <div className="glass rounded-sm p-8 text-center">
-        <Target className="w-8 h-8 text-cream-500/30 mx-auto mb-2" />
-        <p className="text-sm text-cream-500/40">Battle data not available</p>
+        <Target className="w-8 h-8 text-gray-500/30 mx-auto mb-2" />
+        <p className="text-sm text-gray-500/40">Battle data not available</p>
       </div>
     );
   }
@@ -373,7 +373,7 @@ const BattleBreakdown = ({
           winnerId={winnerId}
         />
 
-        <div className="mt-4 pt-3 border-t border-cream-500/10">
+        <div className="mt-4 pt-3 border-t border-white/10">
           <BattleSummaryBar
             homeBattlePoints={homeBattlePoints}
             awayBattlePoints={awayBattlePoints}
@@ -401,7 +401,7 @@ const BattleBreakdown = ({
 
       {/* Legend */}
       <div className="glass rounded-sm p-3">
-        <p className="text-[10px] text-cream-500/40 text-center">
+        <p className="text-[10px] text-gray-500/40 text-center">
           Win 6+ battle points to win the matchup. Caption battles (8 pts) + Total Score (1 pt) + High Single (1 pt) + Momentum (1 pt) = 11 max
         </p>
       </div>

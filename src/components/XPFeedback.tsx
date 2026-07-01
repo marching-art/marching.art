@@ -49,8 +49,8 @@ const FeedbackItemComponent: React.FC<{ item: FeedbackItem; onComplete: () => vo
 
   const isXP = item.type === 'xp';
   const Icon = isXP ? TrendingUp : Coins;
-  const colorClass = isXP ? 'text-blue-400' : 'text-gold-400';
-  const bgClass = isXP ? 'bg-blue-500/20 border-blue-500/40' : 'bg-gold-500/20 border-gold-500/40';
+  const colorClass = isXP ? 'text-blue-400' : 'text-yellow-400';
+  const bgClass = isXP ? 'bg-blue-500/20 border-blue-500/40' : 'bg-yellow-500/20 border-yellow-500/40';
   const glowColor = isXP ? 'rgba(59,130,246,0.6)' : 'rgba(234,179,8,0.6)';
   const label = isXP ? 'XP' : 'CC';
 

@@ -35,7 +35,7 @@ describe('Spinner', () => {
       render(<Spinner label="Loading data" />);
       // There are two elements with this text - visible and sr-only
       const labels = screen.getAllByText('Loading data');
-      const visibleLabel = labels.find(el => el.classList.contains('text-cream-400'));
+      const visibleLabel = labels.find(el => !el.classList.contains('sr-only'));
       expect(visibleLabel).toBeInTheDocument();
     });
   });
@@ -73,16 +73,21 @@ describe('Spinner', () => {
   });
 
   describe('variants', () => {
-    it('applies gold variant by default', () => {
-      const { container } = render(<Spinner />);
-      const icon = container.querySelector('.animate-spin');
-      expect(icon).toHaveClass('text-gold-500');
-    });
-
-    it('applies default variant', () => {
-      const { container } = render(<Spinner variant="default" />);
-      const icon = container.querySelector('.animate-spin');
-      expect(icon).toHaveClass('text-cream-500');
+    it('applies visually distinct styling per variant', () => {
+      const classFor = (variant?: 'default' | 'gold' | 'white') => {
+        const { container, unmount } = render(<Spinner variant={variant} />);
+        // The icon is an SVG, so read the class attribute (className would be
+        // an SVGAnimatedString object).
+        const className = container.querySelector('.animate-spin')?.getAttribute('class') ?? '';
+        unmount();
+        return className;
+      };
+      const gold = classFor(); // default variant is 'gold'
+      const def = classFor('default');
+      const white = classFor('white');
+      expect(gold).not.toEqual(def);
+      expect(def).not.toEqual(white);
+      expect(gold).not.toEqual(white);
     });
 
     it('applies white variant', () => {

@@ -169,13 +169,13 @@ const Landing = () => {
               <div className="flex items-center gap-2 lg:hidden">
                 <Link
                   to="/login"
-                  className="min-h-[44px] px-5 bg-yellow-500 text-slate-900 font-display font-semibold text-sm uppercase tracking-wide flex items-center justify-center rounded-lg hover:bg-yellow-400 active:bg-yellow-600 active:scale-95 transition-all duration-150 press-feedback-strong"
+                  className="min-h-[44px] px-5 bg-yellow-500 text-slate-900 font-semibold text-sm uppercase tracking-wide flex items-center justify-center rounded-lg hover:bg-yellow-400 active:bg-yellow-600 active:scale-95 transition-all duration-150 press-feedback-strong"
                 >
                   Sign In
                 </Link>
                 <Link
                   to="/register"
-                  className="min-h-[44px] px-4 border border-yellow-500/50 text-yellow-500 font-display font-semibold text-sm uppercase tracking-wide flex items-center justify-center gap-1.5 rounded-lg hover:bg-yellow-500/10 hover:border-yellow-500 active:bg-yellow-500/20 active:scale-95 transition-all duration-150 press-feedback"
+                  className="min-h-[44px] px-4 border border-yellow-500/50 text-yellow-500 font-semibold text-sm uppercase tracking-wide flex items-center justify-center gap-1.5 rounded-lg hover:bg-yellow-500/10 hover:border-yellow-500 active:bg-yellow-500/20 active:scale-95 transition-all duration-150 press-feedback"
                 >
                   <UserPlus className="w-4 h-4" />
                   <span className="hidden xs:inline">Register</span>
@@ -186,7 +186,7 @@ const Landing = () => {
             {user && (
               <Link
                 to="/dashboard"
-                className="min-h-[44px] px-5 bg-yellow-500 text-slate-900 font-display font-semibold text-sm uppercase tracking-wide flex items-center justify-center rounded-lg hover:bg-yellow-400 active:bg-yellow-600 active:scale-95 transition-all duration-150 press-feedback-strong lg:hidden"
+                className="min-h-[44px] px-5 bg-yellow-500 text-slate-900 font-semibold text-sm uppercase tracking-wide flex items-center justify-center rounded-lg hover:bg-yellow-400 active:bg-yellow-600 active:scale-95 transition-all duration-150 press-feedback-strong lg:hidden"
               >
                 Dashboard
               </Link>

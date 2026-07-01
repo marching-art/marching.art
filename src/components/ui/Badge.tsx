@@ -17,7 +17,7 @@ export interface BadgeProps {
 // Premium refined: Subtle backgrounds, soft borders, no shadows
 const variantStyles: Record<BadgeVariant, string> = {
   default: 'bg-white/10 text-cream border border-white/20',
-  gold: 'bg-gold-500/15 text-gold-400 border border-gold-500/30',
+  gold: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
   success: 'bg-green-500/15 text-green-400 border border-green-500/30',
   danger: 'bg-red-500/15 text-red-400 border border-red-500/30',
   warning: 'bg-yellow-500/15 text-yellow-400 border border-yellow-500/30',

@@ -11,8 +11,6 @@ export {
   UniformDesignModal
 } from './DashboardModals';
 
-// Morning report component
-export { default as MorningReport } from './MorningReport';
 
 // Onboarding and quick start components
 export { default as OnboardingTour } from './OnboardingTour';
