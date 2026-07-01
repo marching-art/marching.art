@@ -6,7 +6,7 @@
 
 import React from 'react';
 
-const BrandLogo = ({ className = "w-16 h-16", color = "text-gold-500", label = "marching.art" }) => (
+const BrandLogo = ({ className = "w-16 h-16", color = "text-[#0057B8]", label = "marching.art" }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="-5 -5 65 65"

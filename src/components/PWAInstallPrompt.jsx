@@ -139,15 +139,15 @@ const PWAInstallPrompt = () => {
           title: 'Add to Home Screen',
           description: 'Install marching.art for the best experience',
           instructions: (
-            <div className="flex flex-col gap-2 text-sm text-cream-400">
+            <div className="flex flex-col gap-2 text-sm text-gray-400">
               <div className="flex items-center gap-2">
-                <span className="text-cream-500">1.</span>
+                <span className="text-gray-500">1.</span>
                 <span>Tap the</span>
                 <Share2 className="w-4 h-4 text-yellow-400" />
                 <span>Share button below</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-cream-500">2.</span>
+                <span className="text-gray-500">2.</span>
                 <span>Scroll down and tap</span>
                 <span className="text-yellow-400 font-medium">"Add to Home Screen"</span>
               </div>
@@ -161,15 +161,15 @@ const PWAInstallPrompt = () => {
           title: 'Add to Home Screen',
           description: 'Get the full app experience on your iPad',
           instructions: (
-            <div className="flex flex-col gap-2 text-sm text-cream-400">
+            <div className="flex flex-col gap-2 text-sm text-gray-400">
               <div className="flex items-center gap-2">
-                <span className="text-cream-500">1.</span>
+                <span className="text-gray-500">1.</span>
                 <span>Tap the</span>
                 <Share2 className="w-4 h-4 text-yellow-400" />
                 <span>Share button in Safari</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-cream-500">2.</span>
+                <span className="text-gray-500">2.</span>
                 <span>Tap</span>
                 <span className="text-yellow-400 font-medium">"Add to Home Screen"</span>
               </div>
@@ -227,7 +227,7 @@ const PWAInstallPrompt = () => {
             className="absolute top-3 right-3 p-1.5 rounded-sm hover:bg-white/10 transition-colors"
             aria-label="Dismiss"
           >
-            <X className="w-4 h-4 text-cream-400" />
+            <X className="w-4 h-4 text-gray-400" />
           </button>
 
           <div className="flex items-start gap-4">
@@ -236,10 +236,10 @@ const PWAInstallPrompt = () => {
             </div>
 
             <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-display font-bold text-cream-100 mb-1 pr-6">
+              <h3 className="text-lg font-bold text-white mb-1 pr-6">
                 {content.title}
               </h3>
-              <p className="text-sm text-cream-400 mb-4">
+              <p className="text-sm text-gray-400 mb-4">
                 {content.description}
               </p>
 

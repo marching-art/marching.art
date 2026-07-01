@@ -52,7 +52,7 @@ export const OfflineBanner: React.FC<OfflineBannerProps> = ({ className = '' }) 
             <div className="container-responsive py-2 px-4">
               <div className="flex items-center justify-center gap-3">
                 <WifiOff className="w-4 h-4 text-white animate-pulse" />
-                <span className="text-sm font-display font-semibold text-white">
+                <span className="text-sm font-semibold text-white">
                   You're offline
                 </span>
                 <span className="text-xs text-white/80 hidden sm:inline">
@@ -74,7 +74,7 @@ export const OfflineBanner: React.FC<OfflineBannerProps> = ({ className = '' }) 
             <div className="container-responsive py-2 px-4">
               <div className="flex items-center justify-center gap-3">
                 <Wifi className="w-4 h-4 text-white" />
-                <span className="text-sm font-display font-semibold text-white">
+                <span className="text-sm font-semibold text-white">
                   Back online
                 </span>
                 <span className="text-xs text-white/80 hidden sm:inline">
@@ -90,7 +90,7 @@ export const OfflineBanner: React.FC<OfflineBannerProps> = ({ className = '' }) 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <AlertTriangle className="w-4 h-4 text-white" />
-                  <span className="text-sm font-display font-semibold text-white">
+                  <span className="text-sm font-semibold text-white">
                     Slow connection detected
                   </span>
                   <span className="text-xs text-white/80 hidden sm:inline">

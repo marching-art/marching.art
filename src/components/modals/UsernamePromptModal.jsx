@@ -123,14 +123,14 @@ const UsernamePromptModal = () => {
           {/* Header */}
           <div className="flex items-center px-5 py-4 border-b border-[#333] bg-[#222]">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-gold-500/20">
-                <AtSign className="w-5 h-5 text-gold-400" />
+              <div className="p-2 rounded-lg bg-yellow-500/20">
+                <AtSign className="w-5 h-5 text-yellow-400" />
               </div>
               <div>
-                <h2 id="username-prompt-title" className="text-sm font-bold text-cream-100">
+                <h2 id="username-prompt-title" className="text-sm font-bold text-white">
                   Choose Your Username
                 </h2>
-                <p className="text-xs text-cream-500">
+                <p className="text-xs text-gray-500">
                   This will be your unique identifier
                 </p>
               </div>
@@ -139,18 +139,18 @@ const UsernamePromptModal = () => {
 
           {/* Body */}
           <div className="p-5 space-y-4">
-            <p className="text-sm text-cream-300">
+            <p className="text-sm text-gray-300">
               Welcome back! A username is now required to identify players. Please choose a unique username to continue using your account.
             </p>
 
             <div>
-              <label className="block text-xs font-semibold text-cream-400 mb-2 uppercase tracking-wider">
+              <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">
                 Username
               </label>
               <div className="relative">
                 <input
                   type="text"
-                  className={`w-full px-4 py-3 bg-charcoal-900 border rounded-lg text-cream-100 placeholder-cream-600 focus:outline-none focus:ring-2 focus:ring-gold-500/50 pr-10 ${
+                  className={`w-full px-4 py-3 bg-charcoal-900 border rounded-lg text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 pr-10 ${
                     usernameStatus.valid === true ? 'border-green-500/50' :
                     usernameStatus.valid === false ? 'border-red-500/50' : 'border-charcoal-700'
                   }`}
@@ -162,7 +162,7 @@ const UsernamePromptModal = () => {
                 />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
                   {usernameStatus.checking && (
-                    <Loader2 className="w-5 h-5 text-cream-400 animate-spin" />
+                    <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
                   )}
                   {!usernameStatus.checking && usernameStatus.valid === true && (
                     <CheckCircle2 className="w-5 h-5 text-green-400" />
@@ -175,12 +175,12 @@ const UsernamePromptModal = () => {
               {usernameStatus.message && (
                 <p className={`text-xs mt-2 ${
                   usernameStatus.valid === true ? 'text-green-400' :
-                  usernameStatus.valid === false ? 'text-red-400' : 'text-cream-400'
+                  usernameStatus.valid === false ? 'text-red-400' : 'text-gray-400'
                 }`}>
                   {usernameStatus.message}
                 </p>
               )}
-              <p className="text-xs text-cream-500 mt-2">
+              <p className="text-xs text-gray-500 mt-2">
                 3-15 characters, letters, numbers, and underscores only
               </p>
             </div>
@@ -191,7 +191,7 @@ const UsernamePromptModal = () => {
             <button
               onClick={handleSubmit}
               disabled={usernameStatus.valid !== true || submitting}
-              className="w-full px-4 py-2.5 bg-gold-500 text-charcoal-900 rounded-lg hover:bg-gold-400 transition-colors text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full px-4 py-2.5 bg-yellow-500 text-charcoal-900 rounded-lg hover:bg-yellow-400 transition-colors text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {submitting ? (
                 <>

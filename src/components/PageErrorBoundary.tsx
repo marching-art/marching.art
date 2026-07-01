@@ -40,10 +40,10 @@ const PageErrorFallback: React.FC<PageErrorFallbackProps> = ({
         </div>
 
         {/* Error Message */}
-        <h2 className="text-2xl font-display font-bold text-cream-100 mb-3">
+        <h2 className="text-2xl font-bold text-white mb-3">
           {pageName} Error
         </h2>
-        <p className="text-cream-400 mb-6">
+        <p className="text-gray-400 mb-6">
           We encountered an issue loading this page. This might be a temporary
           problem - please try again.
         </p>
@@ -51,7 +51,7 @@ const PageErrorFallback: React.FC<PageErrorFallbackProps> = ({
         {/* Error Details (dev only) */}
         {error && process.env.NODE_ENV === 'development' && (
           <details className="mb-6 text-left">
-            <summary className="text-sm text-cream-500 cursor-pointer hover:text-cream-300 mb-2">
+            <summary className="text-sm text-gray-500 cursor-pointer hover:text-gray-300 mb-2">
               Technical Details
             </summary>
             <pre className="p-4 bg-charcoal-900 rounded-sm text-xs text-red-400 overflow-auto max-h-40 whitespace-pre-wrap">
@@ -74,14 +74,14 @@ const PageErrorFallback: React.FC<PageErrorFallbackProps> = ({
           )}
           <button
             onClick={() => startTransition(() => navigate(-1))}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-sm font-semibold bg-charcoal-700 text-cream-200 hover:bg-charcoal-600 transition-all"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-sm font-semibold bg-charcoal-700 text-gray-200 hover:bg-charcoal-600 transition-all"
           >
             <ArrowLeft className="w-5 h-5" />
             Go Back
           </button>
           <button
             onClick={() => startTransition(() => navigate('/dashboard'))}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-sm font-semibold border border-cream-700 text-cream-300 hover:bg-cream-900/20 transition-all"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-sm font-semibold border border-[#333] text-gray-300 hover:bg-white/10 transition-all"
           >
             <Home className="w-5 h-5" />
             Dashboard

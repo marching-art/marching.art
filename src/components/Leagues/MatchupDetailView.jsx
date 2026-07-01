@@ -339,15 +339,15 @@ const MatchupDetailView = ({
       >
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-cream-300 hover:text-cream-100 transition-colors mb-4"
+          className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors mb-4"
         >
           <ChevronLeft className="w-5 h-5" />
           <span className="text-sm">Back to Matchups</span>
         </button>
 
         <div className="flex items-center justify-center gap-2 mb-2">
-          <Calendar className="w-4 h-4 text-cream-500/60" />
-          <span className="text-sm text-cream-500/60">Week {matchup.week} Matchup</span>
+          <Calendar className="w-4 h-4 text-gray-500/60" />
+          <span className="text-sm text-gray-500/60">Week {matchup.week} Matchup</span>
           {rivalry && (
             <span className="flex items-center gap-1 px-2 py-0.5 rounded-sm bg-red-500/20 text-red-400 text-xs font-semibold">
               <Flame className="w-3 h-3" /> Rivalry
@@ -355,7 +355,7 @@ const MatchupDetailView = ({
           )}
         </div>
 
-        <h1 className="text-xl font-display font-bold text-cream-100 text-center">
+        <h1 className="text-xl font-bold text-white text-center">
           Head-to-Head Matchup
         </h1>
       </m.div>
@@ -380,7 +380,7 @@ const MatchupDetailView = ({
       >
         {/* Battle Points Display (when available) */}
         {battleBreakdown && (
-          <div className="mb-4 pb-4 border-b border-cream-500/10">
+          <div className="mb-4 pb-4 border-b border-white/10">
             <BattleScoreHeader
               homeBattlePoints={battleBreakdown.homeBattlePoints}
               awayBattlePoints={battleBreakdown.awayBattlePoints}
@@ -403,37 +403,37 @@ const MatchupDetailView = ({
               battleBreakdown
                 ? battleBreakdown.winnerId === matchup.user1
                   ? 'bg-gradient-to-br from-green-500/30 to-green-600/20 border-2 border-green-500/50'
-                  : 'bg-charcoal-800 border-2 border-cream-500/20'
+                  : 'bg-charcoal-800 border-2 border-white/20'
                 : user1Leading
                   ? 'bg-gradient-to-br from-green-500/30 to-green-600/20 border-2 border-green-500/50'
-                  : 'bg-charcoal-800 border-2 border-cream-500/20'
+                  : 'bg-charcoal-800 border-2 border-white/20'
             }`}>
-              <span className="text-2xl font-display font-bold text-cream-100">
+              <span className="text-2xl font-bold text-white">
                 {getDisplayName(matchup.user1).charAt(0)}
               </span>
             </div>
-            <p className={`font-display font-bold ${
-              matchup.user1 === userProfile?.uid ? 'text-purple-400' : 'text-cream-100'
+            <p className={`font-bold ${
+              matchup.user1 === userProfile?.uid ? 'text-purple-400' : 'text-white'
             }`}>
               {getDisplayName(matchup.user1)}
             </p>
-            <p className="text-xs text-cream-500/40 mb-3">
+            <p className="text-xs text-gray-500/40 mb-3">
               {getCorpsName(matchup.user1) || 'Unknown Corps'}
             </p>
 
-            <div className={`text-2xl font-display font-bold tabular-nums ${
+            <div className={`text-2xl font-bold tabular-nums ${
               battleBreakdown
                 ? battleBreakdown.winnerId === matchup.user1
                   ? 'text-green-400'
-                  : battleBreakdown.isTie ? 'text-yellow-400' : 'text-cream-100'
-                : user1Leading ? 'text-green-400' : tied ? 'text-yellow-400' : 'text-cream-100'
+                  : battleBreakdown.isTie ? 'text-yellow-400' : 'text-white'
+                : user1Leading ? 'text-green-400' : tied ? 'text-yellow-400' : 'text-white'
             }`}>
               {loading ? '—' : weeklyScores.user1.toFixed(1)}
             </div>
-            <p className="text-[10px] text-cream-500/40 mt-1">Total Score</p>
+            <p className="text-[10px] text-gray-500/40 mt-1">Total Score</p>
 
             {user1Stats && (
-              <p className="text-sm text-cream-500/60 mt-2">
+              <p className="text-sm text-gray-500/60 mt-2">
                 {user1Stats.wins}-{user1Stats.losses} Record
               </p>
             )}
@@ -441,12 +441,12 @@ const MatchupDetailView = ({
 
           {/* VS Divider */}
           <div className="px-4 py-2 flex flex-col items-center">
-            <div className="w-14 h-14 rounded-sm bg-charcoal-900/50 border border-cream-500/20 flex items-center justify-center">
+            <div className="w-14 h-14 rounded-sm bg-charcoal-900/50 border border-white/20 flex items-center justify-center">
               <Swords className="w-6 h-6 text-purple-400" />
             </div>
             {!loading && scoreDiff > 0 && (
               <div className="mt-2 text-center">
-                <span className={`text-xs font-display font-bold ${
+                <span className={`text-xs font-bold ${
                   user1Leading ? 'text-green-400' : 'text-red-400'
                 }`}>
                   {user1Leading ? '+' : '-'}{scoreDiff.toFixed(1)}
@@ -454,7 +454,7 @@ const MatchupDetailView = ({
               </div>
             )}
             {tied && !loading && (
-              <span className="mt-2 text-xs font-display font-bold text-yellow-400">
+              <span className="mt-2 text-xs font-bold text-yellow-400">
                 TIE
               </span>
             )}
@@ -466,37 +466,37 @@ const MatchupDetailView = ({
               battleBreakdown
                 ? battleBreakdown.winnerId === matchup.user2
                   ? 'bg-gradient-to-br from-green-500/30 to-green-600/20 border-2 border-green-500/50'
-                  : 'bg-charcoal-800 border-2 border-cream-500/20'
+                  : 'bg-charcoal-800 border-2 border-white/20'
                 : user2Leading
                   ? 'bg-gradient-to-br from-green-500/30 to-green-600/20 border-2 border-green-500/50'
-                  : 'bg-charcoal-800 border-2 border-cream-500/20'
+                  : 'bg-charcoal-800 border-2 border-white/20'
             }`}>
-              <span className="text-2xl font-display font-bold text-cream-100">
+              <span className="text-2xl font-bold text-white">
                 {getDisplayName(matchup.user2).charAt(0)}
               </span>
             </div>
-            <p className={`font-display font-bold ${
-              matchup.user2 === userProfile?.uid ? 'text-purple-400' : 'text-cream-100'
+            <p className={`font-bold ${
+              matchup.user2 === userProfile?.uid ? 'text-purple-400' : 'text-white'
             }`}>
               {getDisplayName(matchup.user2)}
             </p>
-            <p className="text-xs text-cream-500/40 mb-3">
+            <p className="text-xs text-gray-500/40 mb-3">
               {getCorpsName(matchup.user2) || 'Unknown Corps'}
             </p>
 
-            <div className={`text-2xl font-display font-bold tabular-nums ${
+            <div className={`text-2xl font-bold tabular-nums ${
               battleBreakdown
                 ? battleBreakdown.winnerId === matchup.user2
                   ? 'text-green-400'
-                  : battleBreakdown.isTie ? 'text-yellow-400' : 'text-cream-100'
-                : user2Leading ? 'text-green-400' : tied ? 'text-yellow-400' : 'text-cream-100'
+                  : battleBreakdown.isTie ? 'text-yellow-400' : 'text-white'
+                : user2Leading ? 'text-green-400' : tied ? 'text-yellow-400' : 'text-white'
             }`}>
               {loading ? '—' : weeklyScores.user2.toFixed(1)}
             </div>
-            <p className="text-[10px] text-cream-500/40 mt-1">Total Score</p>
+            <p className="text-[10px] text-gray-500/40 mt-1">Total Score</p>
 
             {user2Stats && (
-              <p className="text-sm text-cream-500/60 mt-2">
+              <p className="text-sm text-gray-500/60 mt-2">
                 {user2Stats.wins}-{user2Stats.losses} Record
               </p>
             )}
@@ -505,7 +505,7 @@ const MatchupDetailView = ({
 
         {/* Battle Summary Bar (when available) */}
         {battleBreakdown && (
-          <div className="mt-4 pt-3 border-t border-cream-500/10">
+          <div className="mt-4 pt-3 border-t border-white/10">
             <BattleSummaryBar
               homeBattlePoints={battleBreakdown.homeBattlePoints}
               awayBattlePoints={battleBreakdown.awayBattlePoints}
@@ -516,18 +516,18 @@ const MatchupDetailView = ({
 
         {/* Win Probability Bar (fallback when no battle data) */}
         {!battleBreakdown && !loading && (weeklyScores.user1 > 0 || weeklyScores.user2 > 0) && (
-          <div className="mt-4 pt-3 border-t border-cream-500/10">
+          <div className="mt-4 pt-3 border-t border-white/10">
             <div className="flex items-center justify-between text-xs mb-2">
-              <span className={`font-display font-semibold ${
-                winProbability >= 50 ? 'text-green-400' : 'text-cream-500/60'
+              <span className={`font-semibold ${
+                winProbability >= 50 ? 'text-green-400' : 'text-gray-500/60'
               }`}>
                 {winProbability.toFixed(0)}%
               </span>
-              <span className="text-cream-500/40 uppercase tracking-wide text-[10px]">
+              <span className="text-gray-500/40 uppercase tracking-wide text-[10px]">
                 Win Probability
               </span>
-              <span className={`font-display font-semibold ${
-                winProbability < 50 ? 'text-green-400' : 'text-cream-500/60'
+              <span className={`font-semibold ${
+                winProbability < 50 ? 'text-green-400' : 'text-gray-500/60'
               }`}>
                 {(100 - winProbability).toFixed(0)}%
               </span>
@@ -539,7 +539,7 @@ const MatchupDetailView = ({
                 transition={{ type: 'spring', damping: 20 }}
                 className={`h-full rounded-l-full ${
                   matchup.user1 === userProfile?.uid ? 'bg-purple-500' :
-                  winProbability >= 50 ? 'bg-green-500' : 'bg-cream-500/30'
+                  winProbability >= 50 ? 'bg-green-500' : 'bg-white/30'
                 }`}
               />
               <m.div
@@ -548,7 +548,7 @@ const MatchupDetailView = ({
                 transition={{ type: 'spring', damping: 20 }}
                 className={`h-full rounded-r-full ${
                   matchup.user2 === userProfile?.uid ? 'bg-purple-500' :
-                  winProbability < 50 ? 'bg-green-500' : 'bg-cream-500/30'
+                  winProbability < 50 ? 'bg-green-500' : 'bg-white/30'
                 }`}
               />
             </div>
@@ -564,10 +564,10 @@ const MatchupDetailView = ({
             <button
               key={tab.id}
               onClick={() => setActiveView(tab.id)}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-sm font-display font-semibold transition-all relative ${
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-sm font-semibold transition-all relative ${
                 activeView === tab.id
-                  ? 'bg-gold-500 text-charcoal-900'
-                  : 'glass text-cream-300 hover:text-cream-100'
+                  ? 'bg-yellow-500 text-charcoal-900'
+                  : 'glass text-gray-300 hover:text-white'
               }`}
             >
               <Icon className={`w-4 h-4 ${tab.id === 'rivalry' && tab.badge ? 'text-red-400' : ''}`} />
@@ -625,24 +625,24 @@ const MatchupDetailView = ({
             {/* Season Stats Comparison */}
             {user1Stats && user2Stats && (
               <div className="glass rounded-sm p-4">
-                <h3 className="text-sm font-display font-bold text-cream-100 mb-4 flex items-center gap-2">
-                  <Award className="w-4 h-4 text-gold-400" />
+                <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                  <Award className="w-4 h-4 text-yellow-400" />
                   Season Stats
                 </h3>
 
                 <div className="grid grid-cols-3 gap-4">
                   {/* Wins */}
                   <div className="text-center">
-                    <p className="text-xs text-cream-500/60 mb-1">Wins</p>
+                    <p className="text-xs text-gray-500/60 mb-1">Wins</p>
                     <div className="flex items-center justify-center gap-4">
-                      <span className={`font-display font-bold text-lg ${
-                        user1Stats.wins > user2Stats.wins ? 'text-green-400' : 'text-cream-100'
+                      <span className={`font-bold text-lg ${
+                        user1Stats.wins > user2Stats.wins ? 'text-green-400' : 'text-white'
                       }`}>
                         {user1Stats.wins}
                       </span>
-                      <span className="text-cream-500/20">|</span>
-                      <span className={`font-display font-bold text-lg ${
-                        user2Stats.wins > user1Stats.wins ? 'text-green-400' : 'text-cream-100'
+                      <span className="text-gray-500/20">|</span>
+                      <span className={`font-bold text-lg ${
+                        user2Stats.wins > user1Stats.wins ? 'text-green-400' : 'text-white'
                       }`}>
                         {user2Stats.wins}
                       </span>
@@ -651,16 +651,16 @@ const MatchupDetailView = ({
 
                   {/* Total Points */}
                   <div className="text-center">
-                    <p className="text-xs text-cream-500/60 mb-1">Total Pts</p>
+                    <p className="text-xs text-gray-500/60 mb-1">Total Pts</p>
                     <div className="flex items-center justify-center gap-4">
-                      <span className={`font-display font-bold text-lg ${
-                        user1Stats.totalPoints > user2Stats.totalPoints ? 'text-gold-400' : 'text-cream-100'
+                      <span className={`font-bold text-lg ${
+                        user1Stats.totalPoints > user2Stats.totalPoints ? 'text-yellow-400' : 'text-white'
                       }`}>
                         {user1Stats.totalPoints.toFixed(0)}
                       </span>
-                      <span className="text-cream-500/20">|</span>
-                      <span className={`font-display font-bold text-lg ${
-                        user2Stats.totalPoints > user1Stats.totalPoints ? 'text-gold-400' : 'text-cream-100'
+                      <span className="text-gray-500/20">|</span>
+                      <span className={`font-bold text-lg ${
+                        user2Stats.totalPoints > user1Stats.totalPoints ? 'text-yellow-400' : 'text-white'
                       }`}>
                         {user2Stats.totalPoints.toFixed(0)}
                       </span>
@@ -669,16 +669,16 @@ const MatchupDetailView = ({
 
                   {/* Streak */}
                   <div className="text-center">
-                    <p className="text-xs text-cream-500/60 mb-1">Streak</p>
+                    <p className="text-xs text-gray-500/60 mb-1">Streak</p>
                     <div className="flex items-center justify-center gap-4">
-                      <span className={`font-display font-bold text-lg flex items-center gap-0.5 ${
+                      <span className={`font-bold text-lg flex items-center gap-0.5 ${
                         user1Stats.streakType === 'W' ? 'text-green-400' : 'text-red-400'
                       }`}>
                         {user1Stats.streakType === 'W' && <Flame className="w-3 h-3" />}
                         {user1Stats.streakType || '—'}{user1Stats.streak || ''}
                       </span>
-                      <span className="text-cream-500/20">|</span>
-                      <span className={`font-display font-bold text-lg flex items-center gap-0.5 ${
+                      <span className="text-gray-500/20">|</span>
+                      <span className={`font-bold text-lg flex items-center gap-0.5 ${
                         user2Stats.streakType === 'W' ? 'text-green-400' : 'text-red-400'
                       }`}>
                         {user2Stats.streakType === 'W' && <Flame className="w-3 h-3" />}
@@ -693,8 +693,8 @@ const MatchupDetailView = ({
             {/* Quick Caption Comparison */}
             {!loading && (scoreBreakdown.user1?.shows.length > 0 || scoreBreakdown.user2?.shows.length > 0) && (
               <div className="glass rounded-sm p-4">
-                <h3 className="text-sm font-display font-bold text-cream-100 mb-4 flex items-center gap-2">
-                  <Target className="w-4 h-4 text-gold-500" />
+                <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                  <Target className="w-4 h-4 text-yellow-500" />
                   Caption Summary
                 </h3>
 
@@ -732,8 +732,8 @@ const MatchupDetailView = ({
             {/* Detailed Caption Breakdown */}
             {!loading && (scoreBreakdown.user1?.shows.length > 0 || scoreBreakdown.user2?.shows.length > 0) && (
               <div className="glass rounded-sm p-4">
-                <h3 className="text-sm font-display font-bold text-cream-100 mb-4 flex items-center gap-2">
-                  <Target className="w-4 h-4 text-gold-500" />
+                <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                  <Target className="w-4 h-4 text-yellow-500" />
                   Caption Breakdown
                 </h3>
 
@@ -760,31 +760,31 @@ const MatchupDetailView = ({
 
             {/* Shows This Week */}
             <div className="glass rounded-sm overflow-hidden">
-              <div className="p-4 border-b border-cream-500/10">
-                <h3 className="text-sm font-display font-bold text-cream-100 flex items-center gap-2">
-                  <Trophy className="w-4 h-4 text-gold-500" />
+              <div className="p-4 border-b border-white/10">
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Trophy className="w-4 h-4 text-yellow-500" />
                   Shows This Week
                 </h3>
               </div>
 
-              <div className="divide-y divide-cream-500/5">
+              <div className="divide-y divide-white/5">
                 {/* User 1 Shows */}
                 {scoreBreakdown.user1?.shows.map((show, idx) => (
                   <div key={`u1-${idx}`} className="p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-sm bg-charcoal-800 flex items-center justify-center">
-                        <span className="text-xs font-bold text-cream-500/60">
+                        <span className="text-xs font-bold text-gray-500/60">
                           {getDisplayName(matchup.user1).charAt(0)}
                         </span>
                       </div>
                       <div>
-                        <p className="text-sm font-display text-cream-100">{show.eventName}</p>
-                        <p className="text-xs text-cream-500/40">
+                        <p className="text-sm text-white">{show.eventName}</p>
+                        <p className="text-xs text-gray-500/40">
                           {getDisplayName(matchup.user1)}
                         </p>
                       </div>
                     </div>
-                    <span className="font-display font-bold text-gold-500">
+                    <span className="font-bold text-yellow-500">
                       {show.score.toFixed(1)}
                     </span>
                   </div>
@@ -795,25 +795,25 @@ const MatchupDetailView = ({
                   <div key={`u2-${idx}`} className="p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-sm bg-charcoal-800 flex items-center justify-center">
-                        <span className="text-xs font-bold text-cream-500/60">
+                        <span className="text-xs font-bold text-gray-500/60">
                           {getDisplayName(matchup.user2).charAt(0)}
                         </span>
                       </div>
                       <div>
-                        <p className="text-sm font-display text-cream-100">{show.eventName}</p>
-                        <p className="text-xs text-cream-500/40">
+                        <p className="text-sm text-white">{show.eventName}</p>
+                        <p className="text-xs text-gray-500/40">
                           {getDisplayName(matchup.user2)}
                         </p>
                       </div>
                     </div>
-                    <span className="font-display font-bold text-gold-500">
+                    <span className="font-bold text-yellow-500">
                       {show.score.toFixed(1)}
                     </span>
                   </div>
                 ))}
 
                 {scoreBreakdown.user1?.shows.length === 0 && scoreBreakdown.user2?.shows.length === 0 && (
-                  <div className="p-8 text-center text-cream-500/40">
+                  <div className="p-8 text-center text-gray-500/40">
                     No shows scored yet this week
                   </div>
                 )}
@@ -843,13 +843,13 @@ const CaptionCompare = ({ label, score1, score2, color }) => {
   return (
     <div className="mb-4 last:mb-0">
       <div className="flex items-center justify-between text-xs mb-1">
-        <span className={`text-cream-500/60 font-display font-semibold ${
+        <span className={`text-gray-500/60 font-semibold ${
           score1 > score2 ? 'text-green-400' : ''
         }`}>
           {score1.toFixed(1)}
         </span>
-        <span className="font-display font-semibold text-cream-300">{label}</span>
-        <span className={`text-cream-500/60 font-display font-semibold ${
+        <span className="font-semibold text-gray-300">{label}</span>
+        <span className={`text-gray-500/60 font-semibold ${
           score2 > score1 ? 'text-green-400' : ''
         }`}>
           {score2.toFixed(1)}
