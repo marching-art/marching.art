@@ -83,7 +83,10 @@ function getCategoryFromType(articleType) {
 exports.processNewsGeneration = onMessagePublished(
   {
     topic: NEWS_GENERATION_TOPIC,
-    timeoutSeconds: 180,
+    // Generating 5 articles with Gemini image generation can take many minutes.
+    // 540s is the max for gen2 event-driven functions; articles are also saved
+    // incrementally so partial progress survives even if we still hit the ceiling.
+    timeoutSeconds: 540,
     memory: "1GiB",
     secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret],
   },
@@ -140,12 +143,16 @@ async function handleDailyNewsGeneration(data) {
   }
 
   try {
-    // Generate the 5 nightly articles with Imagen images
+    // Generate the 5 nightly articles with Imagen images. Persist each article the
+    // moment it is generated so a slow image step / function timeout can't leave the
+    // day with zero saved (and therefore invisible) articles.
     const result = await generateAllArticles({
       db,
       dataDocId,
       seasonId,
       currentDay,
+      onArticleGenerated: (article, ctx) =>
+        saveArticleDoc(db, { reportDay: ctx.reportDay, article, metadata: ctx.metadata, seasonId }),
     });
 
     if (result.success && result.articles) {
@@ -171,9 +178,72 @@ async function handleDailyNewsGeneration(data) {
 }
 
 /**
+ * Persist a single generated article to Firestore.
+ * Path: /news_hub/{seasonId}/days/day_{reportDay}/articles/{type}
+ *
+ * Extracted so articles can be saved incrementally (one at a time, as each is
+ * generated) rather than only in a final batch. Image generation is slow enough
+ * that generating all five before the first write risks the caller's function
+ * timing out with nothing persisted — leaving articles invisible on both the news
+ * feed and the admin panel. Writing each article as it lands guarantees whatever
+ * finished is durable and queryable regardless of a later timeout.
+ */
+async function saveArticleDoc(db, { reportDay, article, metadata, seasonId }) {
+  const seasonPath = seasonId || "current_season";
+  const articlePath = `news_hub/${seasonPath}/days/day_${reportDay}/articles/${article.type}`;
+
+  const articleEntry = {
+    type: article.type,
+    category: getCategoryFromType(article.type), // For efficient filtering
+    reportDay,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+
+    // Article content
+    headline: article.headline || `Day ${reportDay} ${article.type}`,
+    summary: article.summary || "",
+    narrative: article.narrative || "",
+
+    // Type-specific data
+    standings: article.standings || null,
+    captionBreakdown: article.captionBreakdown || null,
+    topPerformers: article.topPerformers || null,
+    leagueHighlights: article.leagueHighlights || null,
+    insights: article.insights || null,
+    recommendations: article.recommendations || null,
+
+    // Image (from Imagen)
+    imageUrl: article.imageUrl || null,
+    imageIsPlaceholder: article.isPlaceholder || false,
+    imagePrompt: article.imagePrompt || null,
+
+    // Metadata
+    metadata: {
+      ...metadata,
+      generatedBy: "gemini-2.0-flash-lite",
+      imageGeneratedBy: "gemini-3-pro-image", // Nano Banana Pro (paid tier)
+    },
+
+    isPublished: true,
+  };
+
+  await db.doc(articlePath).set(articleEntry, { merge: true });
+
+  logger.info("Saved article:", {
+    path: articlePath,
+    type: article.type,
+    headline: article.headline,
+  });
+}
+
+/**
  * Save daily news to the new path structure
  * Saves each of the 5 articles separately for the news feed
  * Path: /news_hub/{seasonId}/days/day_{reportDay}/articles/{type}
+ *
+ * Note: when generateAllArticles streams articles via an onArticleGenerated
+ * callback, each article is already persisted by the time this runs. Re-saving
+ * here is idempotent (merge) and additionally writes the day-index document.
  */
 async function saveDailyNews(db, { reportDay, content, metadata, articles, seasonId }) {
   // Use seasonId for organization, fallback to "current_season" for legacy
@@ -187,50 +257,7 @@ async function saveDailyNews(db, { reportDay, content, metadata, articles, seaso
     logger.info(`Saving ${articles.length} articles for Day ${reportDay}`);
 
     for (const article of articles) {
-      const articlePath = `${basePath}/articles/${article.type}`;
-
-      const articleEntry = {
-        type: article.type,
-        category: getCategoryFromType(article.type), // For efficient filtering
-        reportDay,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-
-        // Article content
-        headline: article.headline || `Day ${reportDay} ${article.type}`,
-        summary: article.summary || "",
-        narrative: article.narrative || "",
-
-        // Type-specific data
-        standings: article.standings || null,
-        captionBreakdown: article.captionBreakdown || null,
-        topPerformers: article.topPerformers || null,
-        leagueHighlights: article.leagueHighlights || null,
-        insights: article.insights || null,
-        recommendations: article.recommendations || null,
-
-        // Image (from Imagen)
-        imageUrl: article.imageUrl || null,
-        imageIsPlaceholder: article.isPlaceholder || false,
-        imagePrompt: article.imagePrompt || null,
-
-        // Metadata
-        metadata: {
-          ...metadata,
-          generatedBy: "gemini-2.0-flash-lite",
-          imageGeneratedBy: "gemini-3-pro-image", // Nano Banana Pro (paid tier)
-        },
-
-        isPublished: true,
-      };
-
-      await db.doc(articlePath).set(articleEntry, { merge: true });
-
-      logger.info("Saved article:", {
-        path: articlePath,
-        type: article.type,
-        headline: article.headline,
-      });
+      await saveArticleDoc(db, { reportDay, article, metadata, seasonId });
     }
 
     // Save day index document with references to all articles
@@ -317,7 +344,10 @@ async function saveDailyNews(db, { reportDay, content, metadata, articles, seaso
 exports.onFantasyRecapUpdated = onDocumentWritten(
   {
     document: "fantasy_recaps/{seasonId}/days/{dayId}",
-    timeoutSeconds: 180,
+    // Generating 5 articles with Gemini image generation can take many minutes.
+    // 540s is the max for gen2 event-driven functions; articles are also saved
+    // incrementally so partial progress survives even if we still hit the ceiling.
+    timeoutSeconds: 540,
     memory: "1GiB",
     secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret],
   },
@@ -367,6 +397,16 @@ exports.onFantasyRecapUpdated = onDocumentWritten(
             dataDocId,
             seasonId: event.params.seasonId,
             currentDay,
+            // Persist each article as it is generated. Image generation can take
+            // several minutes per article, so waiting to save all five at the end
+            // risks this trigger timing out with nothing written to Firestore.
+            onArticleGenerated: (article, ctx) =>
+              saveArticleDoc(db, {
+                reportDay: ctx.reportDay,
+                article,
+                metadata: ctx.metadata,
+                seasonId: event.params.seasonId,
+              }),
           });
 
           if (result.success && result.articles) {
@@ -418,7 +458,10 @@ exports.onFantasyRecapUpdated = onDocumentWritten(
 exports.triggerDailyNews = onCall(
   {
     cors: true,
-    timeoutSeconds: 180,
+    // Full 5-article generation with Gemini image generation can take many minutes.
+    // Articles are persisted incrementally as they generate, so even a timeout
+    // leaves completed articles visible on the feed/admin.
+    timeoutSeconds: 540,
     memory: "1GiB",
     secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret],
   },
@@ -439,6 +482,8 @@ exports.triggerDailyNews = onCall(
         dataDocId,
         seasonId,
         currentDay,
+        onArticleGenerated: (article, ctx) =>
+          saveArticleDoc(db, { reportDay: ctx.reportDay, article, metadata: ctx.metadata, seasonId }),
       });
 
       if (result.success && result.articles) {
