@@ -2,7 +2,7 @@ const { getDb, dataNamespaceParam } = require("../config");
 const { logger } = require("firebase-functions/v2");
 const { getDoc } = require("firebase-admin/firestore");
 const admin = require("firebase-admin");
-const { shuffleArray, getScheduleDay } = require("./season");
+const { getScheduleDay } = require("./season");
 const { calculateLineupSynergyBonus } = require('./showConceptSynergy');
 const { SHOW_PARTICIPATION_REWARDS, TRANSACTION_TYPES, addCoinHistoryEntryToBatch } = require("../callable/economy");
 
@@ -1083,7 +1083,7 @@ async function processAndArchiveOffSeasonScoresLogic() {
           );
 
           for (const caption in corps.lineup) {
-            const [corpsName, sourceYear, points] = corps.lineup[caption].split("|");
+            const [corpsName, sourceYear] = corps.lineup[caption].split("|");
             // OPTIMIZATION #1: Use cached regression score to avoid recomputing
             const baseCaptionScore = getCachedRegressionScore(corpsName, sourceYear, caption, scoredDay, historicalData);
 

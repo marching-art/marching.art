@@ -5,7 +5,6 @@
  * Ensures consistent XP and level calculation throughout the application.
  */
 
-const admin = require('firebase-admin');
 
 /**
  * XP Configuration

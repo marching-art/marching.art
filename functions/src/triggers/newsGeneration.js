@@ -18,11 +18,9 @@ const { defineSecret } = require("firebase-functions/params");
 const { getDb } = require("../config");
 const {
   generateAllArticles,
-  generateDailyNews,
   generateNightlyRecap,
   generateFantasyRecap,
   getArticleImage,
-  ARTICLE_TYPES,
 } = require("../helpers/newsGeneration");
 
 // Define Gemini API key secret for triggers that use news generation
@@ -1272,8 +1270,6 @@ exports.triggerNewsGeneration = onCall(
   },
   async (request) => {
     checkAdminAuth(request.auth);
-
-    const db = getDb();
 
     const { type, data } = request.data;
 

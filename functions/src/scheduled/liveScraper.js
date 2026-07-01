@@ -1,6 +1,6 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
-const { getDb, dataNamespaceParam } = require("../config");
+const { getDb } = require("../config");
 const axios = require("axios");
 const cheerio = require("cheerio");
 const { scrapeDciScoresLogic, finalScoresToRecapUrl } = require("../helpers/scraping");
