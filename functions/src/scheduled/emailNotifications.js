@@ -387,7 +387,6 @@ exports.winBackEmailJob = onSchedule(
   },
   async () => {
     const db = getDb();
-    const namespace = dataNamespaceParam.value();
     const now = new Date();
 
     logger.info("Starting win-back email job...");
@@ -515,7 +514,6 @@ exports.streakBrokenEmailJob = onSchedule(
   },
   async () => {
     const db = getDb();
-    const namespace = dataNamespaceParam.value();
     const now = new Date();
 
     logger.info("Starting streak broken email job...");

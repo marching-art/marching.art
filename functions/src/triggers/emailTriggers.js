@@ -15,7 +15,6 @@ const {
 } = require("../helpers/emailService");
 
 // Streak milestones that trigger celebration emails
-const STREAK_MILESTONES = [7, 14, 30, 60, 100];
 
 /**
  * Get user email from Firebase Auth

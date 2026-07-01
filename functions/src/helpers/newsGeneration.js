@@ -3070,10 +3070,6 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay, onArti
  */
 async function generateDciDailyArticle({ reportDay, dayScores, trendData, showContext, competitionContext, db, ledger, brief, isLiveSeason }) {
   const topCorps = dayScores[0];
-  const secondCorps = dayScores[1];
-  const thirdCorps = dayScores[2];
-  const gap = topCorps && secondCorps ? (topCorps.total - secondCorps.total).toFixed(3) : "0.000";
-  const top3Gap = topCorps && thirdCorps ? (topCorps.total - thirdCorps.total).toFixed(3) : "0.000";
 
   // Get dynamic tone guidance based on competition context
   const toneGuidance = getToneGuidance(competitionContext, "dci_scores");
@@ -3360,7 +3356,7 @@ async function generateDciFeatureArticle({ reportDay, dayScores, trendData, show
     }).join('\n') || 'Limited show history available';
 
   // Build caption trajectory analysis
-  const captionTrajectory = {
+  const _captionTrajectory = {
     ge: corpsTrend.captionHistory?.ge || [],
     visual: corpsTrend.captionHistory?.visual || [],
     music: corpsTrend.captionHistory?.music || [],
@@ -3504,7 +3500,7 @@ ARTICLE REQUIREMENTS
  * Deep dive on General Effect, Visual, and Music trends over the last week
  * Written in DCI.org recap analysis style
  */
-async function generateDciRecapArticle({ reportDay, dayScores, trendData, captionLeaders, showContext, competitionContext, db, ledger, brief, isLiveSeason }) {
+async function generateDciRecapArticle({ reportDay, dayScores, trendData, showContext, competitionContext, db, ledger, brief, isLiveSeason }) {
   // Derive the corps exclusion set from the coverage ledger so the image subject
   // picker below doesn't land on a corps already spotlit in an earlier article.
   const excludeCorps = ledger?.dciCorps || new Set();
@@ -3539,7 +3535,7 @@ async function generateDciRecapArticle({ reportDay, dayScores, trendData, captio
   const musicSorted = [...dayScores].sort((a, b) => (b.subtotals?.music || 0) - (a.subtotals?.music || 0));
 
   // Build comprehensive corps data for the entire field
-  const allCorpsTrends = dayScores.map(corps => {
+  const _allCorpsTrends = dayScores.map(corps => {
     const trend = trendData[corps.corps] || {};
     return {
       corps: corps.corps,
@@ -4026,7 +4022,7 @@ ${mode.bodyNote ? `${mode.bodyNote}\n` : ''}${multiShow ? `- Cover all ${competi
  * describes the caption landscape; this article translates it into actionable
  * lineup moves on individual DCI captions (GE1, GE2, VP, VA, CG, B, MA, P).
  */
-async function generateFantasyRecapArticle({ reportDay, dayScores, trendData, showContext, competitionContext, db, ledger, brief, isLiveSeason }) {
+async function generateFantasyRecapArticle({ reportDay, dayScores, trendData, competitionContext, db, ledger, brief, isLiveSeason }) {
   const toneGuidance = getToneGuidance(competitionContext, "fantasy_captions");
 
   // Build individual caption "stock" data for each corps
@@ -5034,37 +5030,7 @@ function buildFullNarrative(momentum, streak, caption, performance) {
  * @param {Object} trend2 - Second corps trend
  * @returns {string} Comparative narrative
  */
-function getComparativeTrendNarrative(corps1Name, trend1, corps2Name, trend2) {
-  if (!trend1 || !trend2) return null;
 
-  const momentum1 = TREND_NARRATIVES[trend1.momentum]?.[0] || "steady";
-  const momentum2 = TREND_NARRATIVES[trend2.momentum]?.[0] || "steady";
-
-  // Corps moving in opposite directions
-  if ((trend1.momentum === "surging" || trend1.momentum === "hot") &&
-      (trend2.momentum === "sliding" || trend2.momentum === "cold")) {
-    return `${corps1Name} and ${corps2Name} are moving in opposite directions—${corps1Name} ${momentum1} while ${corps2Name} is ${momentum2}`;
-  }
-
-  // Both surging (collision course)
-  if ((trend1.momentum === "surging" || trend1.momentum === "hot") &&
-      (trend2.momentum === "surging" || trend2.momentum === "hot")) {
-    return `Both ${corps1Name} and ${corps2Name} are ${momentum1}—a collision course that should produce fireworks`;
-  }
-
-  // Both struggling
-  if ((trend1.momentum === "sliding" || trend1.momentum === "cold") &&
-      (trend2.momentum === "sliding" || trend2.momentum === "cold")) {
-    return `Neither ${corps1Name} nor ${corps2Name} can find momentum right now, both ${momentum1}`;
-  }
-
-  // One steady, one moving
-  if (trend1.momentum === "steady" || trend1.momentum === "consistent") {
-    return `${corps1Name} remains ${momentum1} while ${corps2Name} is ${momentum2}`;
-  }
-
-  return `${corps1Name} is ${momentum1}; ${corps2Name} is ${momentum2}`;
-}
 
 function identifyCaptionLeaders(dayScores, trendData) {
   const leaders = [];
@@ -5105,7 +5071,7 @@ async function generateDailyNews(options) {
   if (!result.success) return result;
 
   // Combine into legacy format
-  const [standings, captions, performers, leagues, analytics] = result.articles;
+  const [standings, captions, performers, , analytics] = result.articles;
 
   return {
     success: true,

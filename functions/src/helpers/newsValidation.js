@@ -236,7 +236,7 @@ function parseAiJson(text) {
     try {
       const repaired = repairJson(cleaned);
       return JSON.parse(repaired);
-    } catch (secondError) {
+    } catch {
       // Third try: extract JSON object/array from text
       try {
         // Find the first { or [ and last } or ]
@@ -255,7 +255,7 @@ function parseAiJson(text) {
             return JSON.parse(repaired);
           }
         }
-      } catch (thirdError) {
+      } catch {
         // Log the original text for debugging
         logger.error("JSON parse failed after all repair attempts. Original text:", {
           textLength: cleaned.length,

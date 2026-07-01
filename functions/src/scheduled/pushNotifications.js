@@ -25,7 +25,6 @@ exports.showReminderPushJob = onSchedule(
   async () => {
     logger.info("Running show reminder push notification job");
 
-    const namespace = dataNamespaceParam.value();
     const now = new Date();
 
     // Look for shows starting in 1-2 hours

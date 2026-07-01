@@ -1,6 +1,6 @@
 const { logger } = require("firebase-functions/v2");
 const { getDb, dataNamespaceParam } = require("../config");
-const { Timestamp, getDoc } = require("firebase-admin/firestore");
+const { Timestamp } = require("firebase-admin/firestore");
 const admin = require("firebase-admin");
 const { defineSecret } = require("firebase-functions/params");
 const axios = require("axios");
@@ -373,7 +373,7 @@ function brandEventName(name) {
   return typeof name === "string" ? name.replace(/DCI/g, "marching.art") : name;
 }
 
-async function generateLiveSeasonSchedule(seasonLength, startDay, finalsYear, startDate, finalsDate) {
+async function generateLiveSeasonSchedule(seasonLength, startDay, finalsYear, startDate, _finalsDate) {
   logger.info(`Generating live season schedule for ${seasonLength} days, starting on day ${startDay}.`);
 
   // Create schedule structure matching off-season format

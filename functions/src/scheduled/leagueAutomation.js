@@ -161,7 +161,7 @@ function detectRivalries(matchupHistory) {
 
   // Identify rivalries: 3+ matches with close record or multiple close games
   const rivalries = [];
-  for (const [key, record] of Object.entries(h2hRecords)) {
+  for (const [, record] of Object.entries(h2hRecords)) {
     if (record.totalMatches >= 3) {
       const winDiff = Math.abs(record.p1Wins - record.p2Wins);
       const isCloseRecord = winDiff <= 2;
@@ -199,7 +199,6 @@ function generateWeeklyRecap(weekMatchups, standings, memberProfiles) {
   let closestMargin = Infinity;
   let biggestUpsetMargin = 0;
   let highestScore = 0;
-  let mostWins = 0;
 
   for (const corpsClass of CORPS_CLASSES) {
     const matchups = weekMatchups[`${corpsClass}Matchups`] || [];

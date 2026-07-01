@@ -1,6 +1,6 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
-const { getDb, dataNamespaceParam } = require("../config");
+const { getDb } = require("../config");
 const { startNewOffSeason, startNewLiveSeason, scraperInvokeKey } = require("../helpers/season");
 
 exports.seasonScheduler = onSchedule({
