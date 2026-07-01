@@ -7,7 +7,7 @@
 import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import {
-  User, Settings, Crown, Coins, Heart, MessageCircle,
+  User, Crown, Coins, Heart, MessageCircle,
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { useProfile } from '../hooks/useProfile';
@@ -419,19 +419,6 @@ const Profile = () => {
 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-[#0a0a0a] relative">
-      {/* FLOATING SETTINGS BUTTON - Top right corner */}
-      {isOwnProfile && (
-        <div className="absolute top-4 right-4 z-10">
-          <button
-            onClick={() => setShowSettings(true)}
-            className="p-2 bg-[#1a1a1a] border border-[#333] text-gray-400 hover:text-white hover:bg-[#222] transition-colors rounded-sm"
-            aria-label="Settings"
-          >
-            <Settings className="w-5 h-5" />
-          </button>
-        </div>
-      )}
-
       {/* SCROLLABLE CONTENT */}
       <div className="flex-1 overflow-y-auto min-h-0 scroll-momentum">
         {/* DIRECTOR PROFILE - New Career Portfolio Layout */}
@@ -443,6 +430,7 @@ const Profile = () => {
           onSelectAvatarCorps={handleSelectAvatarCorps}
           onRegenerateAvatar={handleRegenerateAvatar}
           onShare={handleShareProfile}
+          onSettings={() => setShowSettings(true)}
           onInviteToLeague={() => setShowInviteModal(true)}
           canInviteToLeague={canInviteToLeague}
         />

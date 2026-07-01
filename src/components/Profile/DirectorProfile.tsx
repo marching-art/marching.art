@@ -13,7 +13,7 @@ import {
   Music, Disc3, Play, Clock, Target, Shield, Swords,
   ArrowUp, ArrowDown, Minus, X, Palette, ExternalLink, RefreshCw,
   Edit3, Globe, Twitter, Instagram, Youtube, Facebook, MessageCircle,
-  BookOpen, Flag, Quote, Share2, UserPlus,
+  BookOpen, Flag, Quote, Share2, UserPlus, Settings,
 } from 'lucide-react';
 import type { UserProfile, Achievement, CorpsClass, EnsembleProfileInfo, DirectorSocialLinks } from '../../types';
 import { formatSeasonName } from '../../utils/season';
@@ -36,6 +36,7 @@ interface DirectorProfileProps {
   onSelectAvatarCorps?: (corpsClass: CorpsClass) => Promise<void>;
   onRegenerateAvatar?: (corpsClass: CorpsClass) => Promise<void>;
   onShare?: () => void;
+  onSettings?: () => void;
   onInviteToLeague?: () => void;
   canInviteToLeague?: boolean;
 }
@@ -683,6 +684,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
   onSelectAvatarCorps,
   onRegenerateAvatar,
   onShare,
+  onSettings,
   onInviteToLeague,
   canInviteToLeague = false,
 }) => {
@@ -942,6 +944,15 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                     >
                       <Edit3 className="w-3 h-3" />
                       <span className="text-[10px] font-bold uppercase tracking-wider">Edit</span>
+                    </button>
+                  )}
+                  {isOwnProfile && onSettings && (
+                    <button
+                      onClick={onSettings}
+                      className="flex items-center gap-1 px-2 py-1 border border-[#333] text-gray-400 hover:text-white hover:border-[#555] transition-colors"
+                      aria-label="Settings"
+                    >
+                      <Settings className="w-3 h-3" />
                     </button>
                   )}
                 </div>

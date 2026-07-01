@@ -75,7 +75,7 @@ const TopNav = () => {
 
   return (
     <nav className="fixed top-0 w-full h-12 bg-[#1a1a1a] border-b border-[#333] z-50">
-      <div className="max-w-[1920px] mx-auto h-full flex items-center px-2 sm:px-4">
+      <div className="w-full h-full flex items-center px-2 sm:px-4">
       {/* Logo + Brand - OPTIMIZATION #7: Added eager loading for LCP */}
       <Link to="/dashboard" className="flex items-center gap-2 mr-4">
         <img
@@ -553,7 +553,10 @@ const GameShell = ({ children }) => {
           role="main"
           className="fixed top-[88px] sm:top-20 left-0 right-0 bg-[#0a0a0a] overflow-hidden main-content-bottom"
         >
-          <div className="max-w-[1920px] mx-auto h-full">
+          {/* Full-width wrapper so each page's own scroll container spans the
+              viewport — this keeps scrollbars flush against the right edge of
+              the screen instead of inset from a centered max-width column. */}
+          <div className="w-full h-full">
             {children}
           </div>
         </main>
