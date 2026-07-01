@@ -3863,7 +3863,7 @@ async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext
     if (!name || typeof name !== "string") return true;
     const trimmed = name.trim();
     if (trimmed.length === 0) return true;
-    if (/[0-9_\.]/.test(trimmed)) return true;
+    if (/[0-9_.]/.test(trimmed)) return true;
     if (!trimmed.includes(" ") && trimmed === trimmed.toLowerCase()) return true;
     return false;
   };

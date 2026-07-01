@@ -23,6 +23,13 @@
 
 import React, { Children, isValidElement, useMemo } from 'react';
 import { useExperiment } from '../hooks/useExperiment';
+import {
+  getCurrentAssignments,
+  getActiveExperiments,
+  resetExperiments,
+  forceVariant,
+  EXPERIMENTS,
+} from '../lib/experiments';
 
 // =============================================================================
 // ABTEST COMPONENT
@@ -164,14 +171,6 @@ export function withExperiment(experimentId) {
  * Only render in development
  */
 export const ExperimentDebugPanel = () => {
-  const {
-    getCurrentAssignments,
-    getActiveExperiments,
-    resetExperiments,
-    forceVariant,
-    EXPERIMENTS,
-  } = require('../lib/experiments');
-
   const assignments = useMemo(() => getCurrentAssignments(), []);
   const activeExperiments = useMemo(() => getActiveExperiments(), []);
 

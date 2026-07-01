@@ -142,7 +142,7 @@ const CorpsValuesEditor = () => {
   const handleCreateSeason = async () => {
     const id = newSeasonId.trim();
     if (!id) return toast.error('Enter a season doc ID');
-    if (!/^[A-Za-z0-9_\-]+$/.test(id)) {
+    if (!/^[A-Za-z0-9_-]+$/.test(id)) {
       return toast.error('Use letters, numbers, _ or - only');
     }
     if (seasonDocIds.includes(id)) {

@@ -208,7 +208,9 @@ function repairJson(text) {
   // Remove trailing commas before closing brackets/braces
   repaired = repaired.replace(/,\s*([\]}])/g, "$1");
 
-  // Remove control characters (except those in escape sequences)
+  // Remove control characters (except those in escape sequences). The control
+  // chars in this class are intentional — we are sanitizing raw AI output.
+  // eslint-disable-next-line no-control-regex
   repaired = repaired.replace(/[\x00-\x1F\x7F]/g, (char) => {
     // Keep escaped versions
     if (char === "\n" || char === "\r" || char === "\t") {

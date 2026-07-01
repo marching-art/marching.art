@@ -103,6 +103,9 @@ export default tseslint.config(
       'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
       'no-empty': ['warn', { allowEmptyCatch: true }],
       'max-lines': ['warn', { max: 700, skipBlankLines: true, skipComments: true }],
+      // Intentional `do { ... } while (true)` batch loops (with internal breaks)
+      // are idiomatic here; keep the rule for `if (true)`-style typos only.
+      'no-constant-condition': ['error', { checkLoops: false }],
     },
   },
 

@@ -20,7 +20,7 @@ export const useOnlineStatus = (): OnlineStatus => {
   }));
 
   const updateConnectionInfo = useCallback(() => {
-    // @ts-ignore - navigator.connection is not in all browsers
+    // @ts-expect-error - navigator.connection is not in all browsers
     const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
 
     if (connection) {
@@ -58,7 +58,7 @@ export const useOnlineStatus = (): OnlineStatus => {
     window.addEventListener('offline', handleOffline);
 
     // Listen for connection changes
-    // @ts-ignore
+    // @ts-expect-error - navigator.connection is not in all browsers
     const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
     if (connection) {
       connection.addEventListener('change', updateConnectionInfo);

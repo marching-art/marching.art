@@ -276,7 +276,7 @@ export const useUserStore = create((set, get) => ({
     try {
       const today = getGameDay(); // Uses 2 AM EST reset time
       const currentChallenges = loggedInProfile.challenges || {};
-      let todayChallenges = currentChallenges[today] || [];
+      const todayChallenges = currentChallenges[today] || [];
 
       // Challenge definitions for creating if not exists
       const challengeDefinitions = {
