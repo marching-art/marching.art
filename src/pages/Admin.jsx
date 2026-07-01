@@ -273,12 +273,14 @@ const UsersTab = () => {
         totalUsers++;
         const data = profileDoc.data();
 
-        // Check activity using lastLogin (Timestamp) or engagement.lastLogin (string)
+        // Check activity using lastLogin (Timestamp) or engagement.lastLogin (Timestamp or string)
         let lastLoginDate = null;
         if (data.lastLogin?.toDate) {
           lastLoginDate = data.lastLogin.toDate();
         } else if (data.engagement?.lastLogin) {
-          lastLoginDate = new Date(data.engagement.lastLogin);
+          // engagement.lastLogin may be a Firestore Timestamp (backend) or ISO string (client)
+          const el = data.engagement.lastLogin;
+          lastLoginDate = el.toDate ? el.toDate() : new Date(el);
         }
 
         if (lastLoginDate) {
@@ -328,12 +330,14 @@ const UsersTab = () => {
           const pathParts = profileDoc.ref.path.split('/');
           const uid = pathParts[3];
 
-          // Get last login from either lastLogin (Timestamp) or engagement.lastLogin (string)
+          // Get last login from either lastLogin (Timestamp) or engagement.lastLogin (Timestamp or string)
           let lastLoginDate = null;
           if (data.lastLogin?.toDate) {
             lastLoginDate = data.lastLogin.toDate();
           } else if (data.engagement?.lastLogin) {
-            lastLoginDate = new Date(data.engagement.lastLogin);
+            // engagement.lastLogin may be a Firestore Timestamp (backend) or ISO string (client)
+            const el = data.engagement.lastLogin;
+            lastLoginDate = el.toDate ? el.toDate() : new Date(el);
           }
 
           return {
@@ -512,7 +516,7 @@ const UsersTab = () => {
                       <td className="px-4 py-2.5 text-sm text-gray-400 font-data">{user.totalLogins || 0}</td>
                       <td className="px-4 py-2.5 text-sm text-gray-400">{user.corps.length}</td>
                       <td className="px-4 py-2.5 text-xs text-gray-400">
-                        {user.lastLogin ? user.lastLogin.toLocaleDateString() : '—'}
+                        {user.lastLogin && !isNaN(user.lastLogin.getTime()) ? user.lastLogin.toLocaleDateString() : '—'}
                       </td>
                     </tr>
                   ))}
@@ -978,12 +982,14 @@ const Admin = () => {
         totalUsers++;
         const data = profileDoc.data();
 
-        // Check activity using lastLogin (Timestamp) or engagement.lastLogin (string)
+        // Check activity using lastLogin (Timestamp) or engagement.lastLogin (Timestamp or string)
         let lastLoginDate = null;
         if (data.lastLogin?.toDate) {
           lastLoginDate = data.lastLogin.toDate();
         } else if (data.engagement?.lastLogin) {
-          lastLoginDate = new Date(data.engagement.lastLogin);
+          // engagement.lastLogin may be a Firestore Timestamp (backend) or ISO string (client)
+          const el = data.engagement.lastLogin;
+          lastLoginDate = el.toDate ? el.toDate() : new Date(el);
         }
 
         if (lastLoginDate) {
