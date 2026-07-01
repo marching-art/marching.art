@@ -29,7 +29,9 @@ const cloudinaryApiSecret = defineSecret("CLOUDINARY_API_SECRET");
 // CONSTANTS
 // =============================================================================
 
-const CORPS_CLASSES = ["soundSport", "aClass", "open", "world"];
+// Canonical class keys, matching how corps are stored in the profile's
+// `corps` map (registration writes 'worldClass'/'openClass', not 'world'/'open').
+const CORPS_CLASSES = ["soundSport", "aClass", "openClass", "worldClass"];
 
 // =============================================================================
 // FIRESTORE TRIGGER: Corps Uniform Design Updated

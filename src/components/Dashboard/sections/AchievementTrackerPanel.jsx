@@ -5,6 +5,7 @@ import React, { memo, useMemo } from 'react';
 import { Award, Trophy, Target, Users, Flame, Zap, Star, Crown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { REQUIRED_CAPTIONS } from '../../../utils/captionPricing';
+import { isCorpsClassUnlocked } from '../../../utils/corps';
 
 const ROSTER_SIZE = REQUIRED_CAPTIONS.length;
 
@@ -45,11 +46,11 @@ const ACHIEVEMENTS = [
 
   // Class unlocks
   { id: 'unlock-a', title: 'A Class Access', desc: 'Unlock A Class', icon: Trophy, category: 'unlock',
-    eval: (d) => ({ current: d.unlockedClasses.includes('aClass') ? 1 : 0, goal: 1 }) },
+    eval: (d) => ({ current: isCorpsClassUnlocked(d.unlockedClasses, 'aClass') ? 1 : 0, goal: 1 }) },
   { id: 'unlock-open', title: 'Open Class Access', desc: 'Unlock Open Class', icon: Trophy, category: 'unlock',
-    eval: (d) => ({ current: d.unlockedClasses.includes('open') ? 1 : 0, goal: 1 }) },
+    eval: (d) => ({ current: isCorpsClassUnlocked(d.unlockedClasses, 'open') ? 1 : 0, goal: 1 }) },
   { id: 'unlock-world', title: 'World Class Access', desc: 'Unlock World Class', icon: Trophy, category: 'unlock',
-    eval: (d) => ({ current: d.unlockedClasses.includes('world') ? 1 : 0, goal: 1 }) },
+    eval: (d) => ({ current: isCorpsClassUnlocked(d.unlockedClasses, 'world') ? 1 : 0, goal: 1 }) },
 
   // League / Social
   { id: 'league-join', title: 'League Player', desc: 'Join a league', icon: Users, category: 'social',

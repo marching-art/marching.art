@@ -21,6 +21,7 @@ import toast from 'react-hot-toast';
 import { DirectorProfile } from '../components/Profile/DirectorProfile';
 import PendingLeagueInvitations from '../components/Profile/PendingLeagueInvitations';
 import { generateCorpsAvatar } from '../api/functions';
+import { CORPS_CLASS_ORDER, resolveCorpsForClass } from '../utils/corps';
 
 // OPTIMIZATION #9: Lazy-load UniformDesignModal (794 lines) to reduce initial bundle
 const UniformDesignModal = lazy(() => import('../components/modals/UniformDesignModal'));
@@ -785,16 +786,17 @@ const Profile = () => {
 
   // NOTE: Stats, achievements, and season history are now computed in DirectorProfile
 
-  // Get all corps for uniform design modal
+  // Get all corps for uniform design modal. Iterate canonical class keys and
+  // resolve corps tolerating legacy short keys ('world'/'open').
   const allCorps = React.useMemo(() => {
     if (!profile?.corps) return [];
-    const corpsClasses = ['world', 'open', 'aClass', 'soundSport'];
-    return corpsClasses
-      .filter(c => profile.corps[c]?.corpsName)
-      .map(c => ({
-        classKey: c,  // Must match CorpsOption interface in UniformDesignModal
-        corpsName: profile.corps[c].corpsName,
-        uniformDesign: profile.corps[c].uniformDesign,
+    return CORPS_CLASS_ORDER
+      .map(c => ({ classKey: c, corps: resolveCorpsForClass(profile.corps, c) }))
+      .filter(({ corps }) => corps?.corpsName)
+      .map(({ classKey, corps }) => ({
+        classKey,  // Must match CorpsOption interface in UniformDesignModal
+        corpsName: corps.corpsName,
+        uniformDesign: corps.uniformDesign,
       }));
   }, [profile?.corps]);
 

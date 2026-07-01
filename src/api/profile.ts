@@ -12,6 +12,7 @@ import {
 import { db, paths, withErrorHandling } from './client';
 import type { UserProfile, CorpsData, CorpsClass, DeepPartial } from '../types';
 import { getWeeksSinceRegistration, CLASS_UNLOCK_WEEKS } from '../utils/classUnlockTime';
+import { isCorpsClassUnlocked } from '../utils/corps';
 
 // =============================================================================
 // READ OPERATIONS
@@ -178,17 +179,20 @@ export async function addXp(uid: string, amount: number): Promise<{
     const unlockedClasses = [...(profile.unlockedClasses || ['soundSport'])];
     const weeksSince = getWeeksSinceRegistration(profile.createdAt);
 
-    if ((newLevel >= 3 || weeksSince >= CLASS_UNLOCK_WEEKS.aClass) && !unlockedClasses.includes('aClass')) {
+    // Write canonical keys ('openClass'/'worldClass') so unlockedClasses stays
+    // consistent with the rest of the data layer; match either spelling when
+    // checking whether a class is already unlocked.
+    if ((newLevel >= 3 || weeksSince >= CLASS_UNLOCK_WEEKS.aClass) && !isCorpsClassUnlocked(unlockedClasses, 'aClass')) {
       unlockedClasses.push('aClass');
       unlockedClass = 'aClass';
     }
-    if ((newLevel >= 5 || weeksSince >= CLASS_UNLOCK_WEEKS.open) && !unlockedClasses.includes('open')) {
-      unlockedClasses.push('open');
-      unlockedClass = 'open';
+    if ((newLevel >= 5 || weeksSince >= CLASS_UNLOCK_WEEKS.open) && !isCorpsClassUnlocked(unlockedClasses, 'openClass')) {
+      unlockedClasses.push('openClass');
+      unlockedClass = 'openClass';
     }
-    if ((newLevel >= 10 || weeksSince >= CLASS_UNLOCK_WEEKS.world) && !unlockedClasses.includes('world')) {
-      unlockedClasses.push('world');
-      unlockedClass = 'world';
+    if ((newLevel >= 10 || weeksSince >= CLASS_UNLOCK_WEEKS.world) && !isCorpsClassUnlocked(unlockedClasses, 'worldClass')) {
+      unlockedClasses.push('worldClass');
+      unlockedClass = 'worldClass';
     }
 
     // Update profile
