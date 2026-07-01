@@ -71,9 +71,15 @@ const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
 
 // Protected Route Component
-const ProtectedRoute = ({ children }) => {
+// requireProfile: when true (default), an authenticated user who has no profile
+// yet is redirected to onboarding. This prevents profile-less users from reaching
+// the dashboard and hammering backend callables (registerCorps, claimDailyLogin,
+// etc.) that 404 with "profile not found". The onboarding route itself opts out.
+const ProtectedRoute = ({ children, requireProfile = true }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
+  const profile = useProfileStore((state) => state.profile);
+  const profileLoading = useProfileStore((state) => state.loading);
 
   if (loading) {
     return <LoadingScreen />;
@@ -81,6 +87,15 @@ const ProtectedRoute = ({ children }) => {
 
   if (!user) {
     return <Navigate to="/" state={{ from: location }} replace />;
+  }
+
+  if (requireProfile) {
+    if (profileLoading) {
+      return <LoadingScreen />;
+    }
+    if (!profile) {
+      return <Navigate to="/onboarding" replace />;
+    }
   }
 
   return children;
@@ -97,6 +112,7 @@ function App() {
   const initAuthListener = useUserStore((state) => state.initAuthListener);
   const initProfileListener = useProfileStore((state) => state.initProfileListener);
   const cleanupProfileListener = useProfileStore((state) => state.cleanup);
+  const profile = useProfileStore((state) => state.profile);
 
   // Initialize global season listener ONCE at app startup
   // This prevents duplicate Firestore listeners across components
@@ -135,8 +151,11 @@ function App() {
   // update userTitle. The backend is idempotent (returns alreadyClaimed:true
   // on subsequent calls within the same day); the localStorage guard just
   // avoids redundant network calls per session.
+  // Gate on `profile` as well as `user`: a freshly-authenticated user going
+  // through onboarding has no profile yet, and claimDailyLogin would 404 with
+  // "profile not found". Waiting for the profile to exist avoids that race.
   useEffect(() => {
-    if (!user) return;
+    if (!user || !profile) return;
     const todayKey = new Date().toISOString().slice(0, 10);
     const storageKey = `dailyLoginClaimed:${user.uid}`;
     if (typeof window === 'undefined') return;
@@ -149,7 +168,7 @@ function App() {
       .catch((err) => {
         console.warn('Daily login claim skipped:', err?.message || err);
       });
-  }, [user]);
+  }, [user, profile]);
 
   // Initialize push notifications when user is authenticated
   // Only attempts to get token if user has previously granted permission
@@ -283,9 +302,12 @@ function App() {
           {/* Guest Preview - Demo dashboard for unauthenticated users */}
           <Route path="/preview" element={user ? <Navigate to="/dashboard" /> : <Suspense fallback={<DashboardSkeleton />}><GuestDashboard /></Suspense>} />
 
-          {/* Onboarding - Protected but minimal layout */}
+          {/* Onboarding - Protected but minimal layout.
+              requireProfile={false}: this is where the profile gets created, so
+              a profile-less user must be allowed in (otherwise the guard would
+              loop them back here forever). */}
           <Route path="/onboarding" element={
-            <ProtectedRoute>
+            <ProtectedRoute requireProfile={false}>
               <Suspense fallback={<LoadingScreen fullScreen />}>
                 <Onboarding />
               </Suspense>

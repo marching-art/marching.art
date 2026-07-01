@@ -44,7 +44,10 @@ let cachedBrevoClient = null;
  */
 function getBrevoClient() {
   if (!cachedBrevoClient) {
-    const apiKey = brevoApiKey.value();
+    // Trim the secret: when BREVO_API_KEY is set from a file or piped input it
+    // commonly picks up a trailing newline/whitespace, which corrupts the
+    // Authorization header and makes Brevo reject every request with 401.
+    const apiKey = (brevoApiKey.value() || "").trim();
     if (!apiKey) {
       throw new Error("Brevo API key not configured");
     }
@@ -84,9 +87,27 @@ async function sendEmail({ to, subject, html, text, emailType }) {
     logger.info(`Email sent successfully: ${emailType} to ${to}`);
     return true;
   } catch (error) {
-    logger.error(`Failed to send email: ${emailType} to ${to}`, error);
-    if (error.body) {
-      logger.error("Brevo error body:", error.body);
+    // Brevo's HttpError carries the useful detail on error.response, not on the
+    // top-level message. Surface the status code and parsed body so failures
+    // (e.g. a 401 from a bad/disabled BREVO_API_KEY) are diagnosable from logs.
+    const statusCode = error.response?.statusCode || error.statusCode;
+    const responseBody = error.response?.body || error.body;
+    logger.error(`Failed to send email: ${emailType} to ${to}`, {
+      statusCode,
+      responseBody,
+      message: error.message,
+    });
+
+    if (statusCode === 401) {
+      // The cached client holds the rejected key for the life of this instance.
+      // Drop it so a corrected/rotated secret can be picked up on the next
+      // cold start, and log an actionable hint.
+      cachedBrevoClient = null;
+      logger.error(
+        "Brevo rejected the API key (401 Unauthorized). Verify the " +
+          "BREVO_API_KEY secret is set, enabled, and has no stray whitespace: " +
+          "firebase functions:secrets:set BREVO_API_KEY",
+      );
     }
     return false;
   }

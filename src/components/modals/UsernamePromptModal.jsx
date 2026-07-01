@@ -6,8 +6,7 @@ import { AtSign, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import Portal from '../Portal';
 import { useProfileStore } from '../../store/profileStore';
 import { useAuth } from '../../App';
-import { db, functions } from '../../firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { functions } from '../../firebase';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 
@@ -15,7 +14,6 @@ const UsernamePromptModal = () => {
   const { user } = useAuth();
   const profile = useProfileStore((state) => state.profile);
   const loading = useProfileStore((state) => state.loading);
-  const updateProfile = useProfileStore((state) => state.updateProfile);
 
   const [username, setUsername] = useState('');
   const [usernameStatus, setUsernameStatus] = useState({ checking: false, valid: null, message: '' });
@@ -79,18 +77,21 @@ const UsernamePromptModal = () => {
 
     setSubmitting(true);
     try {
-      const usernameRef = doc(db, `usernames/${username.toLowerCase()}`);
-
-      // Update profile with username
-      await updateProfile({ username: username.trim().toLowerCase() });
-
-      // Reserve username in usernames collection
-      await setDoc(usernameRef, { uid: user.uid });
+      // Reserve the username + update the profile atomically on the server.
+      // The `usernames/` collection is backend-only per security rules, so a
+      // client write there is denied — this MUST go through the callable.
+      const updateUsername = httpsCallable(functions, 'updateUsername');
+      await updateUsername({ username: username.trim().toLowerCase() });
 
       toast.success('Username set successfully!');
     } catch (error) {
       console.error('Error setting username:', error);
-      toast.error('Failed to set username. Please try again.');
+      if (error?.code === 'functions/already-exists') {
+        setUsernameStatus({ checking: false, valid: false, message: 'This username is already taken' });
+        toast.error('That username was just taken. Please choose another.');
+      } else {
+        toast.error('Failed to set username. Please try again.');
+      }
     } finally {
       setSubmitting(false);
     }

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { db } from '../firebase';
-import { doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { AUTH_CONFIG } from '../config';
 import { mergeTimeUnlockedClasses } from '../utils/classUnlockTime';
 import toast from 'react-hot-toast';
@@ -109,48 +109,18 @@ export const useProfileStore = create((set, get) => ({
             }
           }
         } else {
-          // Create initial profile for new users with all required fields
-          const initialProfile = {
-            uid: uid,
-            displayName: user?.displayName || 'Director',
-            createdAt: new Date(),
-            // XP & Progression
-            xp: 0,
-            xpLevel: 1,
-            userTitle: 'Rookie',
-            // Currency
-            corpsCoin: 1000,
-            // Unlocks
-            unlockedClasses: ['soundSport'],
-            // Corps data
-            corps: {},
-            // Stats
-            stats: {
-              seasonsPlayed: 0,
-              championships: 0,
-              topTenFinishes: 0,
-              leagueWins: 0,
-            },
-            achievements: [],
-          };
-
-          setDoc(profileRef, initialProfile)
-            .then(() => {
-              set({
-                profile: initialProfile,
-                corps: null,
-                loading: false,
-                error: null,
-              });
-            })
-            .catch((err) => {
-              console.error('Error creating initial profile:', err);
-              toast.error('Unable to create your profile. Please refresh the page.');
-              set({
-                loading: false,
-                error: err.message,
-              });
-            });
+          // No profile yet. Do NOT auto-create one here — profile creation is
+          // owned by the onboarding flow via the `createUserProfile` callable,
+          // which atomically reserves the username. Auto-creating a minimal,
+          // username-less doc here used to race that flow and leave users with
+          // broken profiles. The routing guard sends profile-less users to
+          // onboarding.
+          set({
+            profile: null,
+            corps: null,
+            loading: false,
+            error: null,
+          });
         }
       },
       (err) => {
