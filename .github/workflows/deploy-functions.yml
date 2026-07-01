@@ -17,6 +17,11 @@ on:
         description: 'Function names (comma-separated, only for "single" target)'
         required: false
         type: string
+      run_email_cleanup:
+        description: 'One-off: strip leaked emails from public profile docs (idempotent; leave unchecked after running once)'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   deploy-all:
@@ -40,7 +45,7 @@ jobs:
           cd functions && npm ci
           cd ../functions-scraper && npm ci
 
-      - name: Deploy all functions
+      - name: Deploy all functions + Firestore rules
         env:
           GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
@@ -49,20 +54,25 @@ jobs:
           export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
           trap 'rm -f /tmp/sa-key.json' EXIT
 
-          # Single-pass deploy of every codebase (default + scraper). firebase-tools
-          # already deploys functions in parallel waves, skips unchanged functions,
-          # and retries on quota (429) with backoff internally — so the old 24-batch
-          # + fixed-sleep approach was just adding ~30 min of unnecessary waiting.
-          # We add a small outer retry loop to ride out any quota errors that
-          # exhaust the CLI's internal retries; re-runs are cheap because already
-          # deployed functions are skipped.
+          # Deploy functions AND firestore:rules together. Rules are deployed
+          # from firestore.rules (wired in firebase.json) so security-rule
+          # changes actually ship — deploying functions alone would leave the
+          # rules stale. Note: firestore:indexes is intentionally NOT included,
+          # since `--force` would delete any console-managed indexes missing
+          # from firestore.indexes.json.
+          #
+          # firebase-tools already deploys functions in parallel waves, skips
+          # unchanged functions, and retries on quota (429) with backoff
+          # internally. We add a small outer retry loop to ride out any quota
+          # errors that exhaust the CLI's internal retries; re-runs are cheap
+          # because already-deployed functions/rules are skipped.
           MAX_ATTEMPTS=3
           ATTEMPT=1
           DELAY=30
 
-          until firebase deploy --only functions --force --project marching-art; do
+          until firebase deploy --only functions,firestore:rules --force --project marching-art; do
             if [ "$ATTEMPT" -ge "$MAX_ATTEMPTS" ]; then
-              echo "::error::Function deployment failed after $MAX_ATTEMPTS attempts."
+              echo "::error::Deployment failed after $MAX_ATTEMPTS attempts."
               exit 1
             fi
             echo "Deploy attempt $ATTEMPT failed (likely transient/quota). Retrying in ${DELAY}s..."
@@ -71,7 +81,7 @@ jobs:
             DELAY=$((DELAY * 2))
           done
 
-          echo "All functions deployed successfully!"
+          echo "All functions and Firestore rules deployed successfully!"
 
   deploy-single:
     if: inputs.deploy_target == 'single' && inputs.function_names != ''
@@ -138,3 +148,36 @@ jobs:
 
           rm -f /tmp/sa-key.json
           echo "Scraper functions deployed successfully!"
+
+  # One-off data migration: remove email fields that were historically written
+  # into the world-readable profile/data doc. Runs whenever the
+  # "run_email_cleanup" box is checked, independent of the deploy target. The
+  # script is idempotent (docs without an email field are skipped), so leaving
+  # the box unchecked on future runs is safe. Uses the Admin SDK, so it bypasses
+  # security rules and does not depend on the functions/rules deploy above.
+  email-cleanup:
+    if: ${{ inputs.run_email_cleanup }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install function dependencies
+        run: cd functions && npm ci
+
+      - name: Strip leaked emails from public profile docs
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          DATA_NAMESPACE: marching-art
+        run: |
+          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
+          trap 'rm -f /tmp/sa-key.json' EXIT
+
+          node functions/src/scripts/cleanupLeakedProfileEmails.js
