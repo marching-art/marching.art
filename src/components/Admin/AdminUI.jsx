@@ -2,6 +2,15 @@
 
 import { CheckCircle, RefreshCw, Terminal, Users } from 'lucide-react';
 
+const ADMIN_TABS = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'season', label: 'Season Ops' },
+  { id: 'livescores', label: 'Live Scores' },
+  { id: 'users', label: 'Users' },
+  { id: 'content', label: 'Content' },
+  { id: 'jobs', label: 'Jobs' },
+];
+
 const TelemetryStrip = ({ stats }) => (
   <div className="bg-[#1a1a1a] border-b border-[#333]">
     <div className="flex items-center divide-x divide-[#333]">

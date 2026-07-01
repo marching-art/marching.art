@@ -22,19 +22,6 @@ import UsersTab from '../components/Admin/UsersTab';
 import JobsTab from '../components/Admin/JobsTab';
 
 // =============================================================================
-// CONSTANTS
-// =============================================================================
-
-const ADMIN_TABS = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'season', label: 'Season Ops' },
-  { id: 'livescores', label: 'Live Scores' },
-  { id: 'users', label: 'Users' },
-  { id: 'content', label: 'Content' },
-  { id: 'jobs', label: 'Jobs' },
-];
-
-// =============================================================================
 // TELEMETRY STRIP
 // =============================================================================
 

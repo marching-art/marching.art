@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { collection, collectionGroup, getDocs, doc, getDoc } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../../firebase';
 import { setUserRole } from '../../firebase/functions';
 import toast from 'react-hot-toast';
