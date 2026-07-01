@@ -14,36 +14,36 @@ const TOUR_STEPS = [
     position: 'center'
   },
   {
-    id: 'corps-card',
-    title: 'Your Corps',
-    description: 'This shows your corps info, rank, and season score. Click the edit button to customize your corps details.',
-    icon: Trophy,
-    target: '[data-tour="corps-card"]',
+    id: 'control-bar',
+    title: 'Corps Command Bar',
+    description: 'Switch between your corps and competition classes here, and keep an eye on your CorpsCoin and XP as you play.',
+    icon: Users,
+    target: '[data-tour="control-bar"]',
     position: 'bottom'
   },
   {
     id: 'lineup',
-    title: 'Your Lineup',
-    description: 'Your fantasy lineup is shown here. Click "Edit" to change your corps selections for each caption.',
+    title: 'Your Active Lineup',
+    description: 'These are your eight caption picks. Tap any caption row (or Manage) to change a selection — your score comes from how these corps perform.',
     icon: Music,
     target: '[data-tour="lineup"]',
-    position: 'top'
+    position: 'bottom'
   },
   {
-    id: 'schedule',
-    title: 'This Week\'s Shows',
-    description: 'See which shows you\'re registered for. Click "View Schedule" to manage your show registrations.',
+    id: 'recent-results',
+    title: 'Recent Results',
+    description: 'After each show is scored, your results land here so you can see how your lineup performed night to night.',
     icon: Calendar,
-    target: '[data-tour="schedule"]',
-    position: 'left'
+    target: '[data-tour="recent-results"]',
+    position: 'top'
   },
   {
-    id: 'league',
-    title: 'Join a League!',
-    description: 'Compete with friends! Create or join a league to track scores together and climb the leaderboards.',
-    icon: Users,
-    target: '[data-tour="league"]',
-    position: 'top'
+    id: 'scorecard',
+    title: 'Season Scorecard',
+    description: 'Track your season score and rank here. Daily challenges and rivals live in this sidebar too — check back every day!',
+    icon: Trophy,
+    target: '[data-tour="scorecard"]',
+    position: 'left'
   }
 ];
 
@@ -57,22 +57,19 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
   useEffect(() => {
     if (!isOpen) return;
 
-    // Position tooltip based on target element
-    if (step.target) {
-      const target = document.querySelector(step.target);
-      if (target) {
-        const rect = target.getBoundingClientRect();
-        const pos = calculatePosition(rect, step.position);
-        setTooltipPosition(pos);
+    // Position tooltip based on target element; fall back to a centered
+    // card whenever the anchor is missing so the tour never points at nothing.
+    const target = step.target ? document.querySelector(step.target) : null;
+    if (target) {
+      target.scrollIntoView({ block: 'center' });
+      const rect = target.getBoundingClientRect();
+      setTooltipPosition(calculatePosition(rect, step.position));
 
-        // Add highlight to target
-        target.classList.add('tour-highlight');
-        return () => target.classList.remove('tour-highlight');
-      }
-    } else {
-      // Center for welcome step
-      setTooltipPosition({ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' });
+      // Add highlight to target
+      target.classList.add('tour-highlight');
+      return () => target.classList.remove('tour-highlight');
     }
+    setTooltipPosition({ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' });
   }, [currentStep, isOpen, step]);
 
   const calculatePosition = (rect, position) => {
@@ -80,27 +77,28 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
     const tooltipWidth = 320;
     const tooltipHeight = 200;
 
+    const clamp = (pos) => {
+      if (!('top' in pos) || typeof pos.top !== 'string' || pos.top.endsWith('%')) return pos;
+      const top = Math.min(
+        Math.max(padding, parseFloat(pos.top)),
+        window.innerHeight - tooltipHeight - padding
+      );
+      const left = Math.min(
+        Math.max(padding, parseFloat(pos.left)),
+        window.innerWidth - tooltipWidth - padding
+      );
+      return { top: `${top}px`, left: `${left}px` };
+    };
+
     switch (position) {
       case 'bottom':
-        return {
-          top: `${rect.bottom + padding}px`,
-          left: `${Math.min(rect.left, window.innerWidth - tooltipWidth - padding)}px`
-        };
+        return clamp({ top: `${rect.bottom + padding}px`, left: `${rect.left}px` });
       case 'top':
-        return {
-          top: `${rect.top - tooltipHeight - padding}px`,
-          left: `${Math.min(rect.left, window.innerWidth - tooltipWidth - padding)}px`
-        };
+        return clamp({ top: `${rect.top - tooltipHeight - padding}px`, left: `${rect.left}px` });
       case 'left':
-        return {
-          top: `${rect.top}px`,
-          left: `${Math.max(padding, rect.left - tooltipWidth - padding)}px`
-        };
+        return clamp({ top: `${rect.top}px`, left: `${rect.left - tooltipWidth - padding}px` });
       case 'right':
-        return {
-          top: `${rect.top}px`,
-          left: `${rect.right + padding}px`
-        };
+        return clamp({ top: `${rect.top}px`, left: `${rect.right + padding}px` });
       default:
         return { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
     }
@@ -150,18 +148,18 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
         exit={{ opacity: 0, scale: 0.9 }}
         style={tooltipPosition}
         onClick={(e) => e.stopPropagation()}
-        className="fixed z-50 w-80 bg-charcoal-900 border border-gold-500/30 rounded-sm overflow-hidden"
+        className="fixed z-50 w-80 bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden"
       >
         {/* Header */}
-        <div className="p-4 bg-gold-500/10 border-b border-gold-500/20">
+        <div className="p-4 bg-[#222] border-b border-[#333]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-sm bg-gold-500/20 flex items-center justify-center">
-                <Icon className="w-5 h-5 text-gold-400" />
+              <div className="w-10 h-10 rounded-sm bg-[#0057B8]/20 flex items-center justify-center">
+                <Icon className="w-5 h-5 text-[#0057B8]" />
               </div>
               <div>
-                <h3 className="font-display font-bold text-cream-100">{step.title}</h3>
-                <p className="text-xs text-cream-500">
+                <h3 className="font-bold text-white">{step.title}</h3>
+                <p className="text-xs text-gray-500">
                   Step {currentStep + 1} of {TOUR_STEPS.length}
                 </p>
               </div>
@@ -170,26 +168,26 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
               onClick={handleSkip}
               className="p-1.5 hover:bg-white/10 rounded-sm transition-colors"
             >
-              <X className="w-4 h-4 text-cream-400" />
+              <X className="w-4 h-4 text-gray-400" />
             </button>
           </div>
         </div>
 
         {/* Content */}
         <div className="p-4">
-          <p className="text-sm text-cream-300 leading-relaxed">
+          <p className="text-sm text-gray-300 leading-relaxed">
             {step.description}
           </p>
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-charcoal-950/50 border-t border-white/5 flex items-center justify-between">
+        <div className="p-4 bg-[#111] border-t border-[#333] flex items-center justify-between">
           <div className="flex gap-1.5">
             {TOUR_STEPS.map((_, idx) => (
               <div
                 key={idx}
                 className={`w-2 h-2 rounded-sm transition-colors ${
-                  idx === currentStep ? 'bg-gold-400' : idx < currentStep ? 'bg-green-400' : 'bg-charcoal-700'
+                  idx === currentStep ? 'bg-[#0057B8]' : idx < currentStep ? 'bg-green-400' : 'bg-[#333]'
                 }`}
               />
             ))}
@@ -199,7 +197,7 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
             {currentStep > 0 && (
               <button
                 onClick={handleBack}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm text-cream-400 hover:text-cream-200 transition-colors"
+                className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-400 hover:text-white transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
                 Back
@@ -207,7 +205,7 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
             )}
             <button
               onClick={handleNext}
-              className="flex items-center gap-1 px-4 py-1.5 bg-gold-500 text-charcoal-900 rounded-sm text-sm font-semibold hover:bg-gold-400 transition-colors"
+              className="flex items-center gap-1 px-4 py-1.5 bg-[#0057B8] text-white rounded-sm text-sm font-bold hover:bg-[#0066d6] transition-colors"
             >
               {currentStep < TOUR_STEPS.length - 1 ? (
                 <>
@@ -227,8 +225,8 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
         .tour-highlight {
           position: relative;
           z-index: 45;
-          box-shadow: 0 0 0 4px rgba(234, 179, 8, 0.3), 0 0 20px rgba(234, 179, 8, 0.2);
-          border-radius: 12px;
+          box-shadow: 0 0 0 3px rgba(0, 87, 184, 0.6);
+          border-radius: 2px;
         }
       `}</style>
     </>

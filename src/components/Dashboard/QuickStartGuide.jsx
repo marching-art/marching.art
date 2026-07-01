@@ -14,7 +14,7 @@ const QUICK_START_STEPS = [
     title: 'Build Your Lineup',
     description: 'Pick historical corps performances for each of the 8 scoring captions. Stay within your point budget!',
     icon: Music,
-    color: 'gold',
+    color: 'blue',
     action: { label: 'Edit Lineup', target: 'lineup' },
     tips: [
       'Each caption needs one corps selection',
@@ -51,9 +51,8 @@ const QUICK_START_STEPS = [
 ];
 
 const colorClasses = {
-  gold: { bg: 'bg-gold-500/20', border: 'border-gold-500/30', text: 'text-gold-400', button: 'bg-gold-500 hover:bg-gold-400' },
   purple: { bg: 'bg-purple-500/20', border: 'border-purple-500/30', text: 'text-purple-400', button: 'bg-purple-500 hover:bg-purple-400' },
-  blue: { bg: 'bg-blue-500/20', border: 'border-blue-500/30', text: 'text-blue-400', button: 'bg-blue-500 hover:bg-blue-400' },
+  blue: { bg: 'bg-[#0057B8]/15', border: 'border-[#0057B8]/40', text: 'text-[#0057B8]', button: 'bg-[#0057B8] hover:bg-[#0066d6]' },
   green: { bg: 'bg-green-500/20', border: 'border-green-500/30', text: 'text-green-400', button: 'bg-green-500 hover:bg-green-400' }
 };
 
@@ -78,25 +77,25 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-2xl max-h-[85vh] bg-charcoal-900 border border-white/10 rounded-sm overflow-hidden flex flex-col"
+          className="w-full max-w-2xl max-h-[85vh] bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden flex flex-col"
         >
           {/* Header */}
-          <div className="p-6 border-b border-white/10 bg-gradient-to-r from-gold-500/10 to-purple-500/10">
+          <div className="p-6 border-b border-[#333] bg-[#222]">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-sm bg-gold-500/20 flex items-center justify-center">
-                  <BookOpen className="w-6 h-6 text-gold-400" />
+                <div className="w-12 h-12 rounded-sm bg-[#0057B8]/20 flex items-center justify-center">
+                  <BookOpen className="w-6 h-6 text-[#0057B8]" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-display font-bold text-cream-100">Quick Start Guide</h2>
-                  <p className="text-sm text-cream-400">Get the most out of marching.art</p>
+                  <h2 className="text-xl font-bold text-white">Quick Start Guide</h2>
+                  <p className="text-sm text-gray-400">Get the most out of marching.art</p>
                 </div>
               </div>
               <button
                 onClick={onClose}
                 className="p-2 hover:bg-white/10 rounded-sm transition-colors"
               >
-                <X className="w-5 h-5 text-cream-400" />
+                <X className="w-5 h-5 text-gray-400" />
               </button>
             </div>
 
@@ -106,10 +105,10 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
                 <m.div
                   initial={{ width: 0 }}
                   animate={{ width: `${progress}%` }}
-                  className="h-full bg-gradient-to-r from-gold-500 to-green-500"
+                  className="h-full bg-[#0057B8]"
                 />
               </div>
-              <span className="text-sm font-bold text-cream-400">
+              <span className="text-sm font-bold text-gray-400">
                 {completedSteps.length}/{QUICK_START_STEPS.length}
               </span>
             </div>
@@ -150,12 +149,12 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className={`font-display font-bold ${isCompleted ? 'text-green-300' : 'text-cream-100'}`}>
+                      <h3 className={`font-bold ${isCompleted ? 'text-green-300' : 'text-white'}`}>
                         {step.title}
                       </h3>
-                      <p className="text-sm text-cream-400 truncate">{step.description}</p>
+                      <p className="text-sm text-gray-400 truncate">{step.description}</p>
                     </div>
-                    <ChevronRight className={`w-5 h-5 text-cream-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                    <ChevronRight className={`w-5 h-5 text-gray-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
                   </button>
 
                   {/* Expanded content */}
@@ -168,15 +167,15 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
                         className="overflow-hidden"
                       >
                         <div className="px-4 pb-4 pt-0">
-                          <div className="p-4 bg-charcoal-950/50 rounded-sm mb-3">
-                            <h4 className="text-sm font-semibold text-cream-200 mb-2 flex items-center gap-2">
-                              <Zap className="w-4 h-4 text-gold-400" />
+                          <div className="p-4 bg-[#111] rounded-sm mb-3">
+                            <h4 className="text-sm font-semibold text-gray-200 mb-2 flex items-center gap-2">
+                              <Zap className="w-4 h-4 text-[#0057B8]" />
                               Pro Tips
                             </h4>
                             <ul className="space-y-1.5">
                               {step.tips.map((tip, tipIdx) => (
-                                <li key={tipIdx} className="flex items-start gap-2 text-sm text-cream-400">
-                                  <Star className="w-3 h-3 text-gold-400 mt-1 flex-shrink-0" />
+                                <li key={tipIdx} className="flex items-start gap-2 text-sm text-gray-400">
+                                  <Star className="w-3 h-3 text-[#0057B8] mt-1 flex-shrink-0" />
                                   {tip}
                                 </li>
                               ))}
@@ -189,7 +188,7 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
                                 onAction?.(step.action.target);
                                 onClose();
                               }}
-                              className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-sm text-charcoal-900 font-semibold ${colors.button} transition-colors`}
+                              className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-sm text-white font-semibold ${colors.button} transition-colors`}
                             >
                               {step.action.label}
                               <ArrowRight className="w-4 h-4" />
@@ -198,7 +197,7 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
                             <Link
                               to={step.action.target}
                               onClick={onClose}
-                              className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-sm text-charcoal-900 font-semibold ${colors.button} transition-colors`}
+                              className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-sm text-white font-semibold ${colors.button} transition-colors`}
                             >
                               {step.action.label}
                               <ArrowRight className="w-4 h-4" />
@@ -214,19 +213,19 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
           </div>
 
           {/* Footer */}
-          <div className="p-4 border-t border-white/10 bg-charcoal-950/50">
+          <div className="p-4 border-t border-[#333] bg-[#111]">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-cream-500">
+              <p className="text-sm text-gray-500">
                 <HelpCircle className="w-4 h-4 inline mr-1" />
                 Need more help? Check out the{' '}
-                <Link to="/how-to-play" onClick={onClose} className="text-gold-400 hover:underline">
+                <Link to="/how-to-play" onClick={onClose} className="text-[#0057B8] hover:underline">
                   How to Play
                 </Link>
                 {' '}guide.
               </p>
               <button
                 onClick={onClose}
-                className="px-4 py-2 text-sm font-semibold text-cream-400 hover:text-cream-200 transition-colors"
+                className="px-4 py-2 text-sm font-semibold text-gray-400 hover:text-white transition-colors"
               >
                 Close Guide
               </button>
