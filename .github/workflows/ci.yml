@@ -5,10 +5,11 @@ name: CI
 # also run here so their status is visible on every PR.
 #
 # NOTE ON REQUIRED CHECKS: the repo currently carries pre-existing test
-# failures and TypeScript errors (component/test drift, stale Storybook
-# stories, missing @types). Until those are cleared, mark ONLY the `build`
-# job as a required status check in branch protection. Once `test` and
-# `typecheck` are green, promote them to required as well.
+# failures, TypeScript errors, and lint violations (component/test drift,
+# stale Storybook stories, missing @types, legacy style issues). Until those
+# are cleared, mark ONLY the `build` job as a required status check in branch
+# protection. Once `test`, `typecheck`, and `lint` are green, promote them to
+# required as well.
 
 on:
   pull_request:
@@ -78,6 +79,29 @@ jobs:
 
       - name: Type check
         run: npx tsc --noEmit
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: ESLint
+        run: npm run lint
+      # Prettier is intentionally not enforced here yet: the existing codebase
+      # has not been run through it. After a one-time `npm run format` pass
+      # (its own dedicated PR), add `npm run format:check` as a step and
+      # promote it to a required check.
 
   functions:
     name: Functions install check

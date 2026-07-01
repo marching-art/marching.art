@@ -1,0 +1,11 @@
+build
+coverage
+storybook-static
+playwright-report
+playwright/.cache
+node_modules
+**/node_modules
+package-lock.json
+*.min.js
+*.min.css
+public
