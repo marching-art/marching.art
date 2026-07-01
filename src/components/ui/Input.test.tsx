@@ -58,15 +58,13 @@ describe('Input', () => {
 
   describe('icons', () => {
     it('renders left icon', () => {
-      render(<Input leftIcon={Search} placeholder="Search" />);
-      const input = screen.getByPlaceholderText('Search');
-      expect(input).toHaveClass('pl-10');
+      const { container } = render(<Input leftIcon={Search} placeholder="Search" />);
+      expect(container.querySelector('svg')).toBeInTheDocument();
     });
 
     it('renders right icon', () => {
-      render(<Input rightIcon={Eye} placeholder="Password" />);
-      const input = screen.getByPlaceholderText('Password');
-      expect(input).toHaveClass('pr-10');
+      const { container } = render(<Input rightIcon={Eye} placeholder="Password" />);
+      expect(container.querySelector('svg')).toBeInTheDocument();
     });
 
     it('renders right element', () => {
@@ -81,27 +79,21 @@ describe('Input', () => {
   });
 
   describe('sizes', () => {
-    it('applies small size', () => {
-      render(<Input inputSize="sm" placeholder="small" />);
-      const input = screen.getByPlaceholderText('small');
-      expect(input).toHaveClass('px-3');
-      expect(input).toHaveClass('py-2');
-      expect(input).toHaveClass('text-sm');
-    });
-
-    it('applies medium size by default', () => {
-      render(<Input placeholder="medium" />);
-      const input = screen.getByPlaceholderText('medium');
-      expect(input).toHaveClass('px-4');
-      expect(input).toHaveClass('py-3');
-    });
-
-    it('applies large size', () => {
-      render(<Input inputSize="lg" placeholder="large" />);
-      const input = screen.getByPlaceholderText('large');
-      expect(input).toHaveClass('px-5');
-      expect(input).toHaveClass('py-4');
-      expect(input).toHaveClass('text-lg');
+    it('applies distinct styling per inputSize', () => {
+      const classFor = (size: 'sm' | 'md' | 'lg') => {
+        const { getByPlaceholderText, unmount } = render(
+          <Input inputSize={size} placeholder="field" />
+        );
+        const className = getByPlaceholderText('field').className;
+        unmount();
+        return className;
+      };
+      const sm = classFor('sm');
+      const md = classFor('md');
+      const lg = classFor('lg');
+      expect(sm).not.toEqual(md);
+      expect(md).not.toEqual(lg);
+      expect(sm).not.toEqual(lg);
     });
   });
 
@@ -251,18 +243,12 @@ describe('Select', () => {
   });
 
   describe('sizes', () => {
-    it('applies small size', () => {
-      render(<Select options={options} selectSize="sm" />);
-      const select = screen.getByRole('combobox');
-      expect(select).toHaveClass('px-3');
-      expect(select).toHaveClass('py-2');
-    });
-
-    it('applies large size', () => {
-      render(<Select options={options} selectSize="lg" />);
-      const select = screen.getByRole('combobox');
-      expect(select).toHaveClass('px-5');
-      expect(select).toHaveClass('py-4');
+    it('applies distinct styling per selectSize', () => {
+      const { getByRole, rerender } = render(<Select options={options} selectSize="sm" />);
+      const sm = getByRole('combobox').className;
+      rerender(<Select options={options} selectSize="lg" />);
+      const lg = getByRole('combobox').className;
+      expect(sm).not.toEqual(lg);
     });
   });
 

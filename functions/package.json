@@ -13,7 +13,8 @@
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
-    "seed:dci": "node src/scripts/seedDciReference.js"
+    "seed:dci": "node src/scripts/seedDciReference.js",
+    "test": "node --test"
   },
   "dependencies": {
     "@google-cloud/pubsub": "^4.0.0",

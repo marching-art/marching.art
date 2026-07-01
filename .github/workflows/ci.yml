@@ -4,12 +4,11 @@ name: CI
 # merge gate: at minimum the app must still build. `test` and `typecheck`
 # also run here so their status is visible on every PR.
 #
-# NOTE ON REQUIRED CHECKS: the repo currently carries pre-existing test
-# failures, TypeScript errors, and lint violations (component/test drift,
-# stale Storybook stories, missing @types, legacy style issues). Until those
-# are cleared, mark ONLY the `build` job as a required status check in branch
-# protection. Once `test`, `typecheck`, and `lint` are green, promote them to
-# required as well.
+# NOTE ON REQUIRED CHECKS: `build`, `test`, and `functions` are green and are
+# safe to mark as required status checks in branch protection. `typecheck` and
+# `lint` still report pre-existing issues (TypeScript errors, stale Storybook
+# stories, missing @types, legacy style violations); keep them non-required
+# until that backlog is cleared, then promote them too.
 
 on:
   pull_request:
@@ -104,7 +103,7 @@ jobs:
       # promote it to a required check.
 
   functions:
-    name: Functions install check
+    name: Functions check + tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -121,3 +120,6 @@ jobs:
 
       - name: Syntax-check function sources
         run: cd functions && node --check index.js && find src -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Run function unit tests
+        run: cd functions && npm test

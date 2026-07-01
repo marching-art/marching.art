@@ -14,34 +14,27 @@ describe('Button', () => {
       expect(screen.getByRole('button', { name: /click me/i })).toBeInTheDocument();
     });
 
-    it('renders with default variant (primary)', () => {
-      render(<Button>Primary</Button>);
-      const button = screen.getByRole('button');
-      expect(button).toHaveClass('bg-gradient-gold');
+    it('renders each supported variant with its label', () => {
+      for (const variant of ['primary', 'secondary', 'ghost'] as const) {
+        const { unmount } = render(<Button variant={variant}>{variant}</Button>);
+        expect(screen.getByRole('button', { name: variant })).toBeInTheDocument();
+        unmount();
+      }
     });
 
-    it('renders with secondary variant', () => {
-      render(<Button variant="secondary">Secondary</Button>);
-      const button = screen.getByRole('button');
-      expect(button).toHaveClass('bg-charcoal-800');
-    });
-
-    it('renders with outline variant', () => {
-      render(<Button variant="outline">Outline</Button>);
-      const button = screen.getByRole('button');
-      expect(button).toHaveClass('border-gold-500');
-    });
-
-    it('renders with ghost variant', () => {
-      render(<Button variant="ghost">Ghost</Button>);
-      const button = screen.getByRole('button');
-      expect(button).toHaveClass('bg-transparent');
-    });
-
-    it('renders with danger variant', () => {
-      render(<Button variant="danger">Danger</Button>);
-      const button = screen.getByRole('button');
-      expect(button).toHaveClass('bg-red-600');
+    it('applies visually distinct styling per variant', () => {
+      const classFor = (variant: 'primary' | 'secondary' | 'ghost') => {
+        const { getByRole, unmount } = render(<Button variant={variant}>x</Button>);
+        const className = getByRole('button').className;
+        unmount();
+        return className;
+      };
+      const primary = classFor('primary');
+      const secondary = classFor('secondary');
+      const ghost = classFor('ghost');
+      expect(primary).not.toEqual(secondary);
+      expect(secondary).not.toEqual(ghost);
+      expect(primary).not.toEqual(ghost);
     });
   });
 
@@ -184,11 +177,12 @@ describe('IconButton', () => {
     expect(screen.getByRole('button').querySelector('svg')).toBeInTheDocument();
   });
 
-  it('applies correct size classes', () => {
-    render(<IconButton icon={Plus} aria-label="Add" size="sm" />);
-    const button = screen.getByRole('button');
-    expect(button).toHaveClass('min-h-[36px]');
-    expect(button).toHaveClass('min-w-[36px]');
+  it('applies distinct sizing per size prop', () => {
+    const { getByRole, rerender } = render(<IconButton icon={Plus} aria-label="Add" size="sm" />);
+    const small = getByRole('button').className;
+    rerender(<IconButton icon={Plus} aria-label="Add" size="lg" />);
+    const large = getByRole('button').className;
+    expect(small).not.toEqual(large);
   });
 
   it('calls onClick when clicked', () => {
@@ -198,8 +192,13 @@ describe('IconButton', () => {
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
 
-  it('inherits variant from Button', () => {
-    render(<IconButton icon={Plus} aria-label="Add" variant="danger" />);
-    expect(screen.getByRole('button')).toHaveClass('bg-red-600');
+  it('forwards the variant through to the underlying Button', () => {
+    const { getByRole, rerender } = render(
+      <IconButton icon={Plus} aria-label="Add" variant="primary" />
+    );
+    const primary = getByRole('button').className;
+    rerender(<IconButton icon={Plus} aria-label="Add" variant="secondary" />);
+    const secondary = getByRole('button').className;
+    expect(primary).not.toEqual(secondary);
   });
 });

@@ -6,11 +6,13 @@
 
 import React from 'react';
 
-const BrandLogo = ({ className = "w-16 h-16", color = "text-gold-500" }) => (
+const BrandLogo = ({ className = "w-16 h-16", color = "text-gold-500", label = "marching.art" }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="-5 -5 65 65"
     className={`${className} ${color}`}
+    role="img"
+    aria-label={label}
   >
     <g>
       {/* The 9 Dots (Field Grid) - Gray markers */}
