@@ -9,7 +9,7 @@
 import React, { useState, useEffect, useMemo, memo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Trophy, Flame, Clock, ChevronRight, TrendingUp, TrendingDown,
+  Flame, Clock, ChevronRight, TrendingUp, TrendingDown,
   Minus, AlertCircle, Newspaper, Loader2, DollarSign, ArrowUpRight,
   ArrowDownRight, Zap, Radio, BookOpen, Share2
 } from 'lucide-react';
@@ -30,6 +30,15 @@ import { useSeasonStore } from '../../store/seasonStore';
 // - Fresh: 2 minutes (matches browser Cache-Control max-age)
 // - Stale: 30 minutes (matches stale-while-revalidate)
 // =============================================================================
+
+import {
+  CATEGORIES,
+  safeString,
+  formatTimestamp,
+  getReadingTime,
+  getUrgencyBadge,
+  getCategoryConfig,
+} from './newsFeedUtils';
 
 const NEWS_CACHE_TTL = 2 * 60 * 1000;        // 2 minutes - consider fresh (matches server max-age)
 const NEWS_CACHE_STALE_TTL = 30 * 60 * 1000; // 30 minutes - can use stale data while revalidating
@@ -296,143 +305,6 @@ function NewsFeedSkeleton() {
 // =============================================================================
 // CATEGORY CONFIGURATION
 // =============================================================================
-
-const CATEGORIES = [
-  { id: 'all', label: 'All Stories', icon: Newspaper },
-  { id: 'dci', label: 'DCI Recaps', icon: Trophy },
-  { id: 'fantasy', label: 'Fantasy', icon: Flame },
-  { id: 'analysis', label: 'Analysis', icon: BookOpen },
-];
-
-// =============================================================================
-// HELPER FUNCTIONS
-// =============================================================================
-
-/**
- * Safely converts a value to a string for rendering
- * Handles cases where AI might return objects instead of strings
- */
-function safeString(value) {
-  if (value === null || value === undefined) return '';
-  if (typeof value === 'string') return value;
-  if (typeof value === 'number') return String(value);
-  // If it's an object, try to extract a meaningful string or return empty
-  if (typeof value === 'object') {
-    // Check for common string-like properties
-    if (value.text) return String(value.text);
-    if (value.content) return String(value.content);
-    if (value.message) return String(value.message);
-    // Don't render objects - return empty string
-    console.warn('NewsFeed: Unexpected object in text field:', value);
-    return '';
-  }
-  return String(value);
-}
-
-/**
- * Formats timestamp in a professional news style
- * Shows relative time for recent, absolute for older
- */
-function formatTimestamp(dateString) {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInMs = now - date;
-  const diffInMins = Math.floor(diffInMs / (1000 * 60));
-  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-
-  // Less than 1 hour - show minutes
-  if (diffInMins < 60) {
-    return `${diffInMins}m ago`;
-  }
-
-  // Same day - show time
-  if (date.toDateString() === now.toDateString()) {
-    return `Today, ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
-  }
-
-  // Yesterday
-  const yesterday = new Date(now);
-  yesterday.setDate(yesterday.getDate() - 1);
-  if (date.toDateString() === yesterday.toDateString()) {
-    return `Yesterday, ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
-  }
-
-  // Older - show date
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-}
-
-/**
- * Returns reading time - uses pre-calculated value from backend when available,
- * otherwise calculates from content (for backward compatibility)
- */
-function getReadingTime(story) {
-  // Use pre-calculated reading time from backend if available (optimized path)
-  if (story.readingTime) {
-    return story.readingTime;
-  }
-  // Fallback calculation for backward compatibility
-  const wordsPerMinute = 200;
-  const text = `${story.headline} ${story.summary} ${story.fullStory || ''} ${story.narrative || ''} ${story.fantasyImpact || ''}`;
-  const wordCount = text.split(/\s+/).length;
-  const minutes = Math.max(1, Math.ceil(wordCount / wordsPerMinute));
-  return `${minutes} min read`;
-}
-
-/**
- * Determines if story should show "Breaking" or "Just In" badge
- */
-function getUrgencyBadge(dateString) {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInMs = now - date;
-  const diffInMins = Math.floor(diffInMs / (1000 * 60));
-  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-
-  if (diffInMins < 60) {
-    return { label: 'BREAKING', type: 'breaking' };
-  }
-  if (diffInHours < 6) {
-    return { label: 'JUST IN', type: 'new' };
-  }
-  return null;
-}
-
-function getCategoryConfig(category) {
-  switch (category) {
-    case 'dci':
-      return {
-        label: 'DCI RECAP',
-        bgClass: 'bg-[#0057B8]',
-        textClass: 'text-[#0057B8]',
-        bgLightClass: 'bg-[#0057B8]/20',
-        icon: Trophy,
-      };
-    case 'fantasy':
-      return {
-        label: 'FANTASY',
-        bgClass: 'bg-orange-500',
-        textClass: 'text-orange-400',
-        bgLightClass: 'bg-orange-500/20',
-        icon: Flame,
-      };
-    case 'analysis':
-      return {
-        label: 'ANALYSIS',
-        bgClass: 'bg-purple-500',
-        textClass: 'text-purple-400',
-        bgLightClass: 'bg-purple-500/20',
-        icon: BookOpen,
-      };
-    default:
-      return {
-        label: 'NEWS',
-        bgClass: 'bg-gray-500',
-        textClass: 'text-gray-400',
-        bgLightClass: 'bg-gray-500/20',
-        icon: Newspaper,
-      };
-  }
-}
 
 // =============================================================================
 // SUB-COMPONENTS
