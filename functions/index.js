@@ -37,10 +37,12 @@ const {
   retireCorps,
   unretireCorps,
   transferCorps,
-  detectMyDuplicateCorps,
   renameCorps,
-  sweepDuplicateCorps,
 } = require("./src/callable/corps");
+const {
+  detectMyDuplicateCorps,
+  sweepDuplicateCorps,
+} = require("./src/callable/corpsDuplicates");
 const {
   createLeague,
   joinLeague,
