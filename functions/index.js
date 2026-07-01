@@ -70,11 +70,13 @@ const {
   editArticleComment,
   deleteArticleComment,
   reportArticleComment,
+  getArticleEngagement,
+} = require("./src/callable/articleComments");
+const {
   listCommentsForModeration,
   moderateComment,
   bulkModerateComments,
-  getArticleEngagement,
-} = require("./src/callable/articleComments");
+} = require("./src/callable/commentModeration");
 const {
   updateProfile,
   updateUsername,
