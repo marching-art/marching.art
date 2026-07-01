@@ -322,7 +322,7 @@ function formatContent(content) {
   if (!content) return null;
 
   // Clean up markdown artifacts
-  let cleaned = content
+  const cleaned = content
     .replace(/\*\*/g, '')  // Remove bold markdown
     .replace(/\*/g, '')    // Remove italic markdown
     .trim();
@@ -398,7 +398,7 @@ function parseSections(narrative) {
     const contentEnd = nextMatch ? nextMatch.index : narrative.length;
 
     // Get the actual header name from capture group
-    let title = match[1].trim().toUpperCase();
+    const title = match[1].trim().toUpperCase();
 
     // Get content between this header and next
     let content = narrative.substring(headerEnd, contentEnd).trim();
@@ -496,7 +496,7 @@ export default function ArticleNarrativeParser({ narrative, summary, articleType
 // Format editorial content - clean paragraphs with styled inline headers
 function formatEditorialContent(narrative) {
   // Clean up markdown
-  let cleaned = narrative
+  const cleaned = narrative
     .replace(/\*\*/g, '')  // Remove bold markdown
     .replace(/\*/g, '')    // Remove italic markdown
     .trim();

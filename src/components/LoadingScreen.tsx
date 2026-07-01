@@ -66,7 +66,7 @@ export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
     switch (type) {
       case 'card':
         return (
-          <Card variant="default" padding="md">
+          <Card>
             <Skeleton width="75%" height={16} rounded="sm" className="mb-4" />
             <SkeletonText lines={2} lastLineWidth="85%" />
           </Card>
@@ -129,7 +129,7 @@ export const ContentSkeleton: React.FC<ContentSkeletonProps> = ({
   );
 
   if (inCard) {
-    return <Card variant="default" padding="md">{content}</Card>;
+    return <Card>{content}</Card>;
   }
 
   return content;
@@ -143,7 +143,7 @@ export const StatsSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {Array.from({ length: count }).map((_, index) => (
-        <Card key={index} variant="glass" padding="sm">
+        <Card key={index}>
           <Skeleton width="50%" height={12} rounded="sm" className="mb-2" />
           <Skeleton width="70%" height={28} rounded="sm" />
         </Card>

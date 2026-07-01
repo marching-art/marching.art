@@ -44,7 +44,7 @@ function getColorPlaceholder(color: string = '#1a1a1a'): string {
 // =============================================================================
 
 const useIntersectionObserver = (
-  ref: React.RefObject<HTMLElement>,
+  ref: React.RefObject<HTMLElement | null>,
   options: IntersectionObserverInit = {}
 ): boolean => {
   const [isIntersecting, setIsIntersecting] = useState(false);

@@ -67,7 +67,22 @@ const Page = ({ name, children }) => (
 );
 
 // Auth Context
+/**
+ * @typedef {Object} AuthContextValue
+ * @property {import('firebase/auth').User | null | undefined} user
+ * @property {boolean} loading
+ * @property {Error | undefined} [error]
+ * @property {(email: string, password: string) => Promise<unknown>} signIn
+ * @property {(email: string, password: string) => Promise<unknown>} signUp
+ * @property {() => Promise<unknown>} signInWithGoogle
+ * @property {() => Promise<unknown>} signInAnonymously
+ * @property {() => Promise<unknown>} signOut
+ */
+
+/** @type {import('react').Context<AuthContextValue | null>} */
 const AuthContext = createContext(null);
+
+/** @returns {AuthContextValue} */
 export const useAuth = () => useContext(AuthContext);
 
 // Protected Route Component

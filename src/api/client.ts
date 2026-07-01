@@ -198,6 +198,7 @@ type CloudFunctionName =
   | 'sweepDuplicateCorps'
   | 'createLeague'
   | 'joinLeague'
+  | 'joinLeagueByCode'
   | 'leaveLeague'
   | 'postLeagueMessage'
   | 'selectShows'

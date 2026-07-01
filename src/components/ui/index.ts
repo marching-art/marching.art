@@ -24,7 +24,6 @@ export {
   type CardProps,
   type CardHeaderProps,
   type CardBodyProps,
-  type CardContentProps,
   type CardFooterProps,
 } from './Card';
 

@@ -123,15 +123,11 @@ export type {
   // Corps
   CorpsClass,
   CorpsData,
-  Equipment,
-  EquipmentItem,
   Lineup,
   LineupSlot,
 
   // Staff
   Caption,
-  Staff,
-  StaffSeasonStats,
 
   // Season
   SeasonType,

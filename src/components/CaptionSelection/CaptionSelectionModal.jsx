@@ -648,7 +648,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
           .map(s => s.split('|')[0])
       );
 
-      let usedPoints = Object.values(newSelections).reduce(
+      const usedPoints = Object.values(newSelections).reduce(
         (t, s) => t + (s ? parseInt(s.split('|')[2]) || 0 : 0), 0
       );
       let remainingBudget = pointLimit - usedPoints;

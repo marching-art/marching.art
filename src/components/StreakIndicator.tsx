@@ -148,7 +148,9 @@ export const StreakIndicator: React.FC<StreakIndicatorProps> = ({
           <AlertTriangle className="w-3 h-3 text-yellow-400 animate-pulse" />
         )}
         {hasStreakFreeze && (
-          <Shield className="w-3 h-3 text-blue-400" title="Streak protected" />
+          <span title="Streak protected" className="inline-flex">
+            <Shield className="w-3 h-3 text-blue-400" aria-label="Streak protected" />
+          </span>
         )}
       </m.div>
     );

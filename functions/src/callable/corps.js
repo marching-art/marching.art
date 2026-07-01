@@ -238,7 +238,7 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
             }
             break;
 
-          case "unretire":
+          case "unretire": {
             // Restore from retired list
             const retiredRecord = updatedRetiredCorps[decision.retiredIndex];
             if (!retiredRecord || retiredRecord.corpsClass !== corpsClass) {
@@ -266,6 +266,7 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
             updatedRetiredCorps = updatedRetiredCorps.filter((_, idx) => idx !== decision.retiredIndex);
             corpsNeedingSetup.push(corpsClass);
             break;
+          }
 
           case "new":
             // Retire existing if present, create new corps
