@@ -7,6 +7,15 @@ import { db } from '../../../firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { REQUIRED_CAPTIONS, CAPTION_CATEGORIES } from '../../../utils/captionPricing';
 
+// Every caption is judged on a 0-20 scale in historical_scores. The game then
+// counts GE1/GE2 at full value and halves Visual/Music captions (see
+// functions/src/helpers/scoring.js), which is what CAPTION_CATEGORIES.weight
+// encodes (GE = 20 max points, others = 10). Efficiency therefore compares the
+// raw score against the 20-point judge scale, while point gains are scaled by
+// weight/20 so they reflect real impact on the 100-point total.
+const SCORE_SCALE = 20;
+const TARGET_EFF = 0.8;
+
 /**
  * Calculate the season average for one caption across all historical shows.
  * Returns null if no scored shows found for this corps/caption.
@@ -99,10 +108,13 @@ const LineupSimulatorPanel = React.memo(({ lineup, lineupScoreData, activeCorpsC
     const lastScore = lineupScoreData?.[captionId]?.score ?? null;
     const avg = seasonAvgs[captionId] ?? lastScore;
     const max = CAPTION_CATEGORIES[captionId].weight;
-    const pct = avg != null ? Math.round((avg / max) * 100) : null;
-    // How many points gained by reaching 80% efficiency
-    const potentialGain = (pct != null && pct < 80) ? +((0.8 * max) - avg).toFixed(1) : null;
-    return { id: captionId, corpsName, year, avg, pct, potentialGain };
+    const pct = avg != null ? Math.round((avg / SCORE_SCALE) * 100) : null;
+    // Points added to the 100-point total by reaching the target efficiency,
+    // scaled by this caption's real contribution (full for GE, half otherwise)
+    const potentialGain = (pct != null && pct < TARGET_EFF * 100)
+      ? +(((TARGET_EFF * SCORE_SCALE) - avg) * (max / SCORE_SCALE)).toFixed(1)
+      : null;
+    return { id: captionId, corpsName, year, avg, max, pct, potentialGain };
   }), [lineup, lineupScoreData, seasonAvgs]);
 
   // Only render for full, non-SoundSport lineups
@@ -114,8 +126,13 @@ const LineupSimulatorPanel = React.memo(({ lineup, lineupScoreData, activeCorpsC
     .filter(r => r.pct < 75)
     .sort((a, b) => a.pct - b.pct)
     .slice(0, 2);
+  // Weight each caption by its share of the 100-point total (GE counts double)
+  // so the badge tracks projected score / max possible, not a flat average
   const overallEff = scoredRows.length > 0
-    ? Math.round(scoredRows.reduce((s, r) => s + r.pct, 0) / scoredRows.length)
+    ? Math.round(
+        (scoredRows.reduce((s, r) => s + r.avg * (r.max / SCORE_SCALE), 0) /
+          scoredRows.reduce((s, r) => s + r.max, 0)) * 100
+      )
     : null;
   const hasScores = scoredRows.length > 0;
   const usingSeasonAvgs = Object.keys(seasonAvgs).length > 0;
