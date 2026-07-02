@@ -91,6 +91,19 @@ export function formatTimestamp(dateString: string | number | Date, now: Date = 
   });
 }
 
+/** Long-form date for the full-article view (e.g. "Monday, June 1, 2026, 7:30 PM"). */
+export function formatArticleDate(dateString: string | number | Date): string {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
 /**
  * Returns reading time — the backend-provided value when present, otherwise a
  * ~200 wpm estimate from the story text.
