@@ -7,9 +7,8 @@
 
 import React, { memo, useState, useEffect } from 'react';
 import { Users, TrendingUp, Award, Activity } from 'lucide-react';
-import { db } from '../../api';
-import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { getRecentLeagueActivity } from '../../api/community';
+import { auth } from '../../api';
 
 // Cache to avoid re-fetching on every render
 let activityCache = null;
@@ -17,7 +16,7 @@ let cacheTimestamp = 0;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 const CommunityPulse = memo(() => {
-  const isAuthenticated = !!getAuth().currentUser;
+  const isAuthenticated = !!auth.currentUser;
   const [activities, setActivities] = useState(activityCache || []);
   const [loading, setLoading] = useState(isAuthenticated && !activityCache);
 
@@ -38,29 +37,7 @@ const CommunityPulse = memo(() => {
 
       try {
         // Fetch recent league creations as a proxy for community activity
-        const leaguesRef = collection(db, 'artifacts', 'fantasy_drum_corps_v1', 'leagues');
-        const q = query(leaguesRef, orderBy('createdAt', 'desc'), limit(5));
-        const snapshot = await getDocs(q);
-
-        const items = [];
-
-        snapshot.docs.forEach(doc => {
-          const data = doc.data();
-          const memberCount = data.members?.length || data.memberCount || 1;
-          const createdAt = data.createdAt?.toDate?.() || new Date();
-          const hoursAgo = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60));
-
-          items.push({
-            id: doc.id,
-            type: 'league',
-            text: `New league created with ${memberCount} director${memberCount !== 1 ? 's' : ''}`,
-            time: hoursAgo < 1 ? 'Just now' : hoursAgo < 24 ? `${hoursAgo}h ago` : `${Math.floor(hoursAgo / 24)}d ago`,
-            icon: 'users',
-          });
-        });
-
-        // Sort by recency and take top 4
-        const sorted = items.slice(0, 4);
+        const sorted = await getRecentLeagueActivity();
 
         activityCache = sorted;
         cacheTimestamp = Date.now();

@@ -21,9 +21,8 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Table, RefreshCw, AlertCircle, Download, ChevronLeft, ChevronRight, Radio
 } from 'lucide-react';
-import { db } from '../../api';
-import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { getSeasonSettings, getHistoricalScoresForYear, getScoredRecapDays } from '../../api/admin';
+import { scrapeLiveScoresNow } from '../../api/functions';
 import toast from 'react-hot-toast';
 import { getCaptionLabel } from '../../utils/captionUtils';
 
@@ -79,14 +78,12 @@ const LiveScoresVerification = () => {
       setError(null);
 
       // 1. Current season settings
-      const seasonDoc = await getDoc(doc(db, 'game-settings/season'));
-      if (!seasonDoc.exists()) throw new Error('No active season found');
-      const season = seasonDoc.data();
+      const season = await getSeasonSettings();
+      if (!season) throw new Error('No active season found');
       setSeasonData(season);
 
       // 2. Current DCI year scraped scores
-      const scoresDoc = await getDoc(doc(db, `historical_scores/${currentYear}`));
-      const yearEvents = scoresDoc.exists() ? (scoresDoc.data().data || []) : [];
+      const yearEvents = await getHistoricalScoresForYear(currentYear);
       // Sort by competition day, then by date. Pre-season events (null day) go last.
       const sorted = [...yearEvents].sort((a, b) => {
         const dayA = a.offSeasonDay ?? Infinity;
@@ -99,12 +96,7 @@ const LiveScoresVerification = () => {
       // 3. Which competition days have been scored into fantasy_recaps
       if (season.seasonUid) {
         try {
-          const daysSnap = await getDocs(collection(db, `fantasy_recaps/${season.seasonUid}/days`));
-          const days = new Set();
-          daysSnap.forEach((d) => {
-            const data = d.data();
-            if (typeof data.offSeasonDay === 'number') days.add(data.offSeasonDay);
-          });
+          const days = await getScoredRecapDays(season.seasonUid);
           setScoredDays(days);
         } catch (recapErr) {
           // Non-fatal: recap subcollection may not exist yet early in a season
@@ -128,8 +120,6 @@ const LiveScoresVerification = () => {
   const handleScrape = async () => {
     setScraping(true);
     try {
-      const functions = getFunctions();
-      const scrapeLiveScoresNow = httpsCallable(functions, 'scrapeLiveScoresNow');
       const result = await scrapeLiveScoresNow();
       const data = result.data || {};
       if (data.success) {

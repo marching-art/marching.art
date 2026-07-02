@@ -7,8 +7,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { X, Users, Check, AlertCircle } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
-import { db } from '../../api';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { getLeaguesByCreator } from '../../api/leagues';
 import { inviteDirectorToLeague } from '../../api/functions';
 import toast from 'react-hot-toast';
 
@@ -28,16 +27,14 @@ const LeagueInviteModal = ({ inviterUid, inviteeUid, inviteeName, onClose }) => 
       setLoadingLeagues(true);
       setError(null);
       try {
-        const leaguesRef = collection(db, 'artifacts/marching-art/leagues');
-        const q = query(leaguesRef, where('creatorId', '==', inviterUid));
-        const snapshot = await getDocs(q);
+        const createdLeagues = await getLeaguesByCreator(inviterUid);
         if (cancelled) return;
-        const rows = snapshot.docs
+        const rows = createdLeagues
           .map((d) => ({
             id: d.id,
-            name: d.data().name || 'Unnamed League',
-            members: d.data().members || [],
-            maxMembers: d.data().maxMembers || 20,
+            name: d.name || 'Unnamed League',
+            members: d.members || [],
+            maxMembers: d.maxMembers || 20,
           }))
           .map((l) => ({
             ...l,

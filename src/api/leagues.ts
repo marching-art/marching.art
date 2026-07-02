@@ -314,6 +314,112 @@ export async function postChatMessage(
 }
 
 // =============================================================================
+// MEMBER PROFILES, MATCHUPS & RECAPS (read helpers for the league detail views)
+//
+// These return raw Firestore document data and let errors propagate to the
+// caller unchanged, so the existing component try/catch and fallback logic
+// keep behaving identically. They intentionally do not use withErrorHandling.
+// =============================================================================
+
+/**
+ * Fetch the profile documents for a set of league members, keyed by uid.
+ * Members without a profile document are omitted.
+ */
+export async function getMemberProfiles(
+  memberUids: string[]
+): Promise<Record<string, DocumentData>> {
+  const profiles: Record<string, DocumentData> = {};
+  await Promise.all(
+    memberUids.map(async (uid) => {
+      const profileDoc = await getDoc(doc(db, paths.userProfile(uid)));
+      if (profileDoc.exists()) {
+        profiles[uid] = profileDoc.data();
+      }
+    })
+  );
+  return profiles;
+}
+
+/**
+ * Fetch all matchup week documents for a league, as `{ id, ...data }`.
+ */
+export async function getLeagueMatchups(
+  leagueId: string
+): Promise<Array<{ id: string } & DocumentData>> {
+  const snapshot = await getDocs(collection(db, paths.leagueMatchups(leagueId)));
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+/**
+ * Fetch a single week's matchup document for a league, or null if absent.
+ */
+export async function getLeagueMatchupWeek(
+  leagueId: string,
+  week: number
+): Promise<DocumentData | null> {
+  const snap = await getDoc(doc(db, paths.leagueMatchupWeek(leagueId, week)));
+  return snap.exists() ? snap.data() : null;
+}
+
+/**
+ * Fetch a single week's league recap document, or null if absent.
+ */
+export async function getLeagueWeekRecap(
+  leagueId: string,
+  week: number
+): Promise<DocumentData | null> {
+  const snap = await getDoc(doc(db, paths.leagueWeekRecap(leagueId, week)));
+  return snap.exists() ? snap.data() : null;
+}
+
+/**
+ * Fetch the precomputed rivalries metadata document for a league, or null.
+ */
+export async function getLeagueRivalries(
+  leagueId: string
+): Promise<DocumentData | null> {
+  const snap = await getDoc(doc(db, paths.leagueMeta(leagueId, 'rivalries')));
+  return snap.exists() ? snap.data() : null;
+}
+
+/**
+ * Fetch leagues created by a given user.
+ */
+export async function getLeaguesByCreator(
+  uid: string
+): Promise<Array<{ id: string } & DocumentData>> {
+  const q = query(collection(db, paths.leagues()), where('creatorId', '==', uid));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+/**
+ * Fetch a user's pending league invitations, newest first.
+ *
+ * Uses a simple equality query and sorts client-side to avoid requiring a
+ * composite Firestore index.
+ */
+export async function getPendingInvitations(
+  userId: string
+): Promise<Array<{ id: string } & DocumentData>> {
+  const q = query(
+    collection(db, paths.leagueInvitations()),
+    where('inviteeUid', '==', userId),
+    where('status', '==', 'pending')
+  );
+  const snapshot = await getDocs(q);
+  const rows: Array<{ id: string } & DocumentData> = snapshot.docs.map((d) => ({
+    id: d.id,
+    ...d.data(),
+  }));
+  return rows.sort((a, b) => {
+    const aTime = a.invitedAt?.toMillis?.() || 0;
+    const bTime = b.invitedAt?.toMillis?.() || 0;
+    return bTime - aTime;
+  });
+}
+
+// =============================================================================
 // SCORING UTILITIES
 // =============================================================================
 

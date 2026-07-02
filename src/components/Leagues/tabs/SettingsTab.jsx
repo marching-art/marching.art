@@ -8,8 +8,7 @@ import {
   Loader2, AlertCircle, CheckCircle, ChevronLeft, ChevronRight,
   Zap, Trophy, Award, Star
 } from 'lucide-react';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../../api';
+import { getLeagueMatchupWeek } from '../../../api/leagues';
 import { generateMatchups } from '../../../api/functions';
 import { GAME_CONFIG } from '../../../config';
 import toast from 'react-hot-toast';
@@ -39,10 +38,9 @@ const SettingsTab = ({ league, userProfile, currentWeek = 1, onBack }) => {
       try {
         const matchupsFound = {};
         for (let w = 1; w <= GAME_CONFIG.season.totalWeeks; w++) {
-          const matchupRef = doc(db, `artifacts/marching-art/leagues/${league.id}/matchups/week-${w}`);
-          const matchupDoc = await getDoc(matchupRef);
-          if (matchupDoc.exists()) {
-            matchupsFound[w] = matchupDoc.data();
+          const data = await getLeagueMatchupWeek(league.id, w);
+          if (data) {
+            matchupsFound[w] = data;
           }
         }
         setExistingMatchups(matchupsFound);

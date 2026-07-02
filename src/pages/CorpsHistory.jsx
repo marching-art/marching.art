@@ -9,9 +9,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import BrandLogo from '../components/BrandLogo';
-import { db, dataNamespace } from '../api';
+import { subscribeToProfile } from '../api/profile';
 import { compareCorpsClasses } from '../utils/corps';
-import { doc, onSnapshot } from 'firebase/firestore';
 import LoadingScreen from '../components/LoadingScreen';
 import { Line } from '../components/charts';
 
@@ -27,12 +26,10 @@ const CorpsHistory = () => {
   useEffect(() => {
     if (!user?.uid) return;
 
-    const profileRef = doc(db, 'artifacts', dataNamespace, 'users', user.uid, 'profile', 'data');
-    const unsubscribe = onSnapshot(
-      profileRef,
-      (snapshot) => {
-        if (snapshot.exists()) {
-          const profileData = snapshot.data();
+    const unsubscribe = subscribeToProfile(
+      user.uid,
+      (profileData) => {
+        if (profileData) {
           setCorps(profileData.corps || {});
 
           // Auto-select first corps with history

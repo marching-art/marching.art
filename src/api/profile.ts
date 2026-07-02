@@ -5,6 +5,7 @@ import {
   doc,
   getDoc,
   updateDoc,
+  setDoc,
   onSnapshot,
   Unsubscribe,
 } from 'firebase/firestore';
@@ -14,6 +15,22 @@ import type { UserProfile, CorpsData, CorpsClass, DeepPartial } from '../types';
 // =============================================================================
 // READ OPERATIONS
 // =============================================================================
+
+/**
+ * Resolve a username via the public `usernames/{username}` lookup collection.
+ * Returns `{ found: false }` when the username is unclaimed, or
+ * `{ found: true, uid }` when it exists (uid may be null for a malformed
+ * record). Errors propagate unchanged so callers can surface their own message.
+ */
+export async function resolveUsername(
+  username: string
+): Promise<{ found: boolean; uid: string | null }> {
+  const snap = await getDoc(doc(db, 'usernames', username));
+  if (!snap.exists()) {
+    return { found: false, uid: null };
+  }
+  return { found: true, uid: snap.data().uid || null };
+}
 
 /**
  * Get a user's profile by UID
@@ -92,6 +109,22 @@ export async function updateProfile(
     const profileRef = doc(db, paths.userProfile(uid));
     await updateDoc(profileRef, updates as Record<string, unknown>);
   }, 'Failed to update profile');
+}
+
+/**
+ * Merge fields into a user's profile, creating the fields that don't exist
+ * (setDoc with merge). Used by onboarding to layer its data on top of the
+ * base profile created by the createUserProfile callable without clobbering
+ * the fields that callable set. Only cosmetic/preference fields may be
+ * written from the client — economy/progression fields are server-only.
+ * Errors propagate unchanged.
+ */
+export async function mergeProfile(
+  uid: string,
+  data: Record<string, unknown>
+): Promise<void> {
+  const profileRef = doc(db, paths.userProfile(uid));
+  await setDoc(profileRef, data, { merge: true });
 }
 
 /**

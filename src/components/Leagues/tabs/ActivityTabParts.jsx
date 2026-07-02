@@ -8,8 +8,7 @@ import {
   Zap, Crown, Star, Medal, BarChart3, ChevronRight, Sparkles,
   MessageCircle, AlertTriangle, Swords,
 } from 'lucide-react';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../../api';
+import { getLeagueWeekRecap, getLeagueRivalries } from '../../../api/leagues';
 
 const LeagueStatsOverview = ({ standings, memberProfiles, leagueStats, currentWeek }) => {
   // Calculate league-wide stats
@@ -467,17 +466,15 @@ const WeeklyRecapCard = ({ leagueId, currentWeek, memberProfiles }) => {
 
       try {
         // Try to fetch the most recent recap
-        const recapRef = doc(db, `artifacts/marching-art/leagues/${leagueId}/recaps/week-${currentWeek}`);
-        const recapDoc = await getDoc(recapRef);
+        const recapData = await getLeagueWeekRecap(leagueId, currentWeek);
 
-        if (recapDoc.exists()) {
-          setRecap(recapDoc.data());
+        if (recapData) {
+          setRecap(recapData);
         } else if (currentWeek > 1) {
           // Try previous week
-          const prevRecapRef = doc(db, `artifacts/marching-art/leagues/${leagueId}/recaps/week-${currentWeek - 1}`);
-          const prevRecapDoc = await getDoc(prevRecapRef);
-          if (prevRecapDoc.exists()) {
-            setRecap(prevRecapDoc.data());
+          const prevRecapData = await getLeagueWeekRecap(leagueId, currentWeek - 1);
+          if (prevRecapData) {
+            setRecap(prevRecapData);
           }
         }
       } catch (error) {
@@ -613,11 +610,9 @@ const EnhancedRivalriesCard = ({ leagueId, userProfile, memberProfiles }) => {
       }
 
       try {
-        const rivalriesRef = doc(db, `artifacts/marching-art/leagues/${leagueId}/meta/rivalries`);
-        const rivalriesDoc = await getDoc(rivalriesRef);
+        const data = await getLeagueRivalries(leagueId);
 
-        if (rivalriesDoc.exists()) {
-          const data = rivalriesDoc.data();
+        if (data) {
           // Filter to show rivalries involving the current user
           const userRivalries = (data.rivalries || []).filter(r =>
             r.player1 === userProfile?.uid || r.player2 === userProfile?.uid

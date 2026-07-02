@@ -4,7 +4,10 @@
 import {
   doc,
   getDoc,
+  getDocs,
+  collection,
   onSnapshot,
+  DocumentData,
   Unsubscribe,
 } from 'firebase/firestore';
 import { db, paths, withErrorHandling } from './client';
@@ -86,6 +89,99 @@ export async function getFantasyRecaps(seasonUid: string): Promise<DayRecap[]> {
     const data = recapsDoc.data();
     return (data.recaps || []) as DayRecap[];
   }, 'Failed to fetch fantasy recaps');
+}
+
+/**
+ * Get all daily recap documents for a season.
+ *
+ * Reads the per-day subcollection first (the current format) and falls back
+ * to the legacy single-document `recaps` array when the subcollection is
+ * empty. Errors propagate to the caller unchanged (callers own their own
+ * try/catch and fallback behavior), so this intentionally does not use
+ * withErrorHandling.
+ */
+export async function getSeasonRecaps(seasonUid: string): Promise<DayRecap[]> {
+  const recapsCollectionRef = collection(db, paths.fantasyRecapsDays(seasonUid));
+  const recapsSnapshot = await getDocs(recapsCollectionRef);
+
+  if (!recapsSnapshot.empty) {
+    return recapsSnapshot.docs.map((d) => d.data() as DayRecap);
+  }
+
+  // Fallback to legacy single-document format
+  const legacyDocRef = doc(db, paths.fantasyRecaps(seasonUid));
+  const legacyDoc = await getDoc(legacyDocRef);
+  if (legacyDoc.exists()) {
+    return (legacyDoc.data().recaps || []) as DayRecap[];
+  }
+  return [];
+}
+
+// =============================================================================
+// REFERENCE GAME DATA (public read)
+//
+// Corps point values (dci-data) and scraped DCI results (historical_scores)
+// are public reference data used across gameplay and the admin panel. These
+// readers are the single source for both; errors propagate unchanged.
+// =============================================================================
+
+/**
+ * Get the corpsValues array from a dci-data season doc.
+ * Returns [] if the doc or array does not exist.
+ */
+export async function getCorpsValues(docId: string): Promise<DocumentData[]> {
+  const snap = await getDoc(doc(db, `dci-data/${docId}`));
+  return snap.exists() ? (snap.data().corpsValues || []) : [];
+}
+
+/**
+ * Get the full dci-data season doc, or null if it does not exist.
+ */
+export async function getDciDataDoc(docId: string): Promise<DocumentData | null> {
+  const snap = await getDoc(doc(db, `dci-data/${docId}`));
+  return snap.exists() ? snap.data() : null;
+}
+
+/**
+ * Fetch the scraped event array for a single year from historical_scores.
+ * Returns [] if the doc or array does not exist.
+ */
+export async function getHistoricalScoresForYear(
+  year: string | number
+): Promise<DocumentData[]> {
+  const scoresDoc = await getDoc(doc(db, `historical_scores/${year}`));
+  return scoresDoc.exists() ? (scoresDoc.data().data || []) : [];
+}
+
+/**
+ * Fetch historical_scores docs for a set of years, keyed by year (doc ID).
+ * Years with no doc are omitted from the map; each value is the doc's `data`
+ * event array (or [] if missing).
+ */
+export async function getHistoricalScoresMap(
+  years: Array<string | number>
+): Promise<Record<string, DocumentData[]>> {
+  const historicalDocs = await Promise.all(
+    years.map((year) => getDoc(doc(db, `historical_scores/${year}`)))
+  );
+  const historical: Record<string, DocumentData[]> = {};
+  historicalDocs.forEach((docSnap) => {
+    if (docSnap.exists()) {
+      historical[docSnap.id] = docSnap.data().data || [];
+    }
+  });
+  return historical;
+}
+
+/**
+ * Get all season champion archive docs as `{ id, ...data }` (raw; callers own
+ * date conversion and sorting). Errors propagate unchanged.
+ */
+export async function getSeasonChampionDocs(): Promise<
+  Array<{ id: string } & Record<string, unknown>>
+> {
+  const snapshot = await getDocs(collection(db, 'season_champions'));
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 
 /**
@@ -236,4 +332,52 @@ export function getGameDayDate(season: SeasonData, day: number): string {
   targetDate.setDate(targetDate.getDate() + day - 1);
 
   return targetDate.toISOString().split('T')[0];
+}
+
+// =============================================================================
+// SEASON CHAMPIONS (Hall of Champions)
+// =============================================================================
+
+/** A single finalist entry within an archived season's class standings. */
+export interface SeasonChampionEntry {
+  uid?: string;
+  username?: string;
+  corpsName?: string;
+  score?: number;
+  rank?: number;
+}
+
+/** An archived season's championship record. */
+export interface SeasonChampions {
+  id: string;
+  seasonName?: string;
+  seasonType?: string;
+  archivedAt: Date | null;
+  classes: Record<string, SeasonChampionEntry[]>;
+}
+
+/**
+ * Get all archived season championship records, most recently archived first.
+ * Errors propagate unchanged to the caller (intentionally not wrapped with
+ * withErrorHandling — consumers rely on the original error semantics).
+ */
+export async function getSeasonChampions(): Promise<SeasonChampions[]> {
+  const championsRef = collection(db, 'season_champions');
+  const championsSnapshot = await getDocs(championsRef);
+
+  const seasonsData: SeasonChampions[] = [];
+  championsSnapshot.forEach((doc) => {
+    const data = doc.data();
+    seasonsData.push({
+      id: doc.id,
+      seasonName: data.seasonName,
+      seasonType: data.seasonType,
+      archivedAt: data.archivedAt?.toDate?.() || (data.archivedAt ? new Date(data.archivedAt) : null),
+      classes: data.classes || {},
+    });
+  });
+
+  seasonsData.sort((a, b) => (b.archivedAt?.getTime?.() || 0) - (a.archivedAt?.getTime?.() || 0));
+
+  return seasonsData;
 }

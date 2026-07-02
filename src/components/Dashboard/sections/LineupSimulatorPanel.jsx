@@ -3,8 +3,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Zap, ChevronRight, AlertTriangle, BarChart2 } from 'lucide-react';
-import { db } from '../../../api';
-import { doc, getDoc } from 'firebase/firestore';
+import { getHistoricalScoresForYear } from '../../../api/season';
 import { REQUIRED_CAPTIONS, CAPTION_CATEGORIES } from '../../../utils/captionPricing';
 
 // Every caption is judged on a 0-20 scale in historical_scores. The game then
@@ -73,8 +72,8 @@ const LineupSimulatorPanel = React.memo(({ lineup, lineupScoreData, activeCorpsC
         // Fetch historical_scores documents in parallel (same pattern as Dashboard.jsx)
         const historicalData = {};
         await Promise.all([...yearsNeeded].map(async year => {
-          const snap = await getDoc(doc(db, `historical_scores/${year}`));
-          if (snap.exists()) historicalData[year] = snap.data().data || [];
+          const data = await getHistoricalScoresForYear(year);
+          if (data.length) historicalData[year] = data;
         }));
 
         if (cancelled) return;

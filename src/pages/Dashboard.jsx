@@ -8,8 +8,7 @@ import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from
 import { useLocation } from 'react-router-dom';
 import { Trophy, FileText } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { db } from '../api';
-import { doc, updateDoc } from 'firebase/firestore';
+import { updateProfile } from '../api/profile';
 import toast from 'react-hot-toast';
 
 // OPTIMIZATION #9: Lazy-load large modal components to reduce initial bundle size
@@ -241,8 +240,7 @@ const Dashboard = () => {
     modalQueue.dequeue();
     if (profile?.isFirstVisit && user) {
       try {
-        const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-        await updateDoc(profileRef, { isFirstVisit: false });
+        await updateProfile(user.uid, { isFirstVisit: false });
       } catch (error) {
         console.error('Error updating first visit flag:', error);
       }
@@ -279,8 +277,7 @@ const Dashboard = () => {
     // Save flag to prevent wizard from showing again this season
     if (user?.uid && seasonData?.seasonUid) {
       try {
-        const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-        await updateDoc(profileRef, {
+        await updateProfile(user.uid, {
           initialSetupComplete: seasonData.seasonUid
         });
       } catch (error) {
@@ -292,8 +289,7 @@ const Dashboard = () => {
 
   const handleEditCorps = useCallback(async (formData) => {
     try {
-      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-      await updateDoc(profileRef, {
+      await updateProfile(user.uid, {
         [`corps.${activeCorpsClass}.corpsName`]: formData.name,
         [`corps.${activeCorpsClass}.location`]: formData.location,
         [`corps.${activeCorpsClass}.showConcept`]: formData.showConcept,
@@ -307,8 +303,7 @@ const Dashboard = () => {
 
   const handleDeleteCorps = useCallback(async () => {
     try {
-      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-      await updateDoc(profileRef, { [`corps.${activeCorpsClass}`]: null });
+      await updateProfile(user.uid, { [`corps.${activeCorpsClass}`]: null });
       toast.success('Corps deleted');
       setShowDeleteConfirm(false);
     } catch (error) {
@@ -429,8 +424,7 @@ const Dashboard = () => {
 
   const handleUniformDesign = useCallback(async (design) => {
     try {
-      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-      await updateDoc(profileRef, {
+      await updateProfile(user.uid, {
         [`corps.${activeCorpsClass}.uniformDesign`]: design,
       });
       toast.success('Uniform design saved! Avatar will be generated soon.');

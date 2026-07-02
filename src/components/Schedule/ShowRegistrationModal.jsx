@@ -10,8 +10,7 @@ import {
   Calendar, MapPin, Check, X, AlertTriangle, Users,
   Trophy, ChevronRight, Clock, Info, Ticket
 } from 'lucide-react';
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '../../api';
+import { selectUserShows } from '../../api/functions';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
 import { BottomSheet } from '../ui/BottomSheet';
@@ -193,8 +192,6 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
     haptic('medium');
     setSaving(true);
     try {
-      const selectUserShows = httpsCallable(functions, 'selectUserShows');
-
       // Prepare all updates first, then execute in parallel to avoid race conditions
       const updatePromises = userCorpsClasses.map(corpsClass => {
         const corpsData = userProfile.corps[corpsClass];

@@ -13,8 +13,8 @@ import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../hooks/useProfile';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../lib/queryClient';
-import { db } from '../api';
-import { doc, updateDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { resolveUsername, updateProfile } from '../api/profile';
+import { getLeaguesByCreator } from '../api/leagues';
 import toast from 'react-hot-toast';
 import { DirectorProfile } from '../components/Profile/DirectorProfile';
 import PendingLeagueInvitations from '../components/Profile/PendingLeagueInvitations';
@@ -71,13 +71,13 @@ const Profile = () => {
     setUsernameResolveError(null);
     (async () => {
       try {
-        const snap = await getDoc(doc(db, 'usernames', usernameKey));
+        const result = await resolveUsername(usernameKey);
         if (cancelled) return;
-        if (!snap.exists()) {
+        if (!result.found) {
           setUsernameResolveError('Username not found');
           return;
         }
-        setResolvedUid(snap.data().uid || null);
+        setResolvedUid(result.uid);
       } catch (err) {
         if (!cancelled) setUsernameResolveError(err.message || 'Failed to resolve username');
       }
@@ -117,10 +117,8 @@ const Profile = () => {
     let cancelled = false;
     (async () => {
       try {
-        const leaguesRef = collection(db, 'artifacts/marching-art/leagues');
-        const q = query(leaguesRef, where('creatorId', '==', user.uid));
-        const snapshot = await getDocs(q);
-        if (!cancelled) setVisitorCommissionsLeagues(!snapshot.empty);
+        const createdLeagues = await getLeaguesByCreator(user.uid);
+        if (!cancelled) setVisitorCommissionsLeagues(createdLeagues.length > 0);
       } catch {
         if (!cancelled) setVisitorCommissionsLeagues(false);
       }
@@ -161,8 +159,6 @@ const Profile = () => {
   const handleUniformDesign = useCallback(async (design, corpsClass, copyToClasses = []) => {
     if (!user || !corpsClass) return;
     try {
-      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-
       // Build update object for primary corps and any copies
       const updateData = {
         [`corps.${corpsClass}.uniformDesign`]: design,
@@ -176,7 +172,7 @@ const Profile = () => {
       }
 
       // Save the uniform design first
-      await updateDoc(profileRef, updateData);
+      await updateProfile(user.uid, updateData);
       setShowUniformDesign(false);
 
       // Generate avatars for all affected corps
@@ -256,8 +252,7 @@ const Profile = () => {
   const handleSelectAvatarCorps = useCallback(async (corpsClass) => {
     if (!user) return;
     try {
-      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-      await updateDoc(profileRef, {
+      await updateProfile(user.uid, {
         profileAvatarCorps: corpsClass,
       });
       toast.success('Profile avatar updated!');
@@ -345,7 +340,6 @@ const Profile = () => {
   const handleSaveProfile = useCallback(async ({ displayName, location, directorInfo, ensembleInfo }) => {
     if (!user) return;
     try {
-      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
       const updateData = {
         displayName,
         location,
@@ -357,7 +351,7 @@ const Profile = () => {
           updateData[`corps.${classKey}.ensembleInfo`] = info;
         }
       }
-      await updateDoc(profileRef, updateData);
+      await updateProfile(user.uid, updateData);
       await refetch();
       toast.success('Profile updated');
     } catch (error) {

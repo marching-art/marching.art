@@ -9,9 +9,7 @@
 import React, { useState, useEffect } from 'react';
 import { m } from 'framer-motion';
 import { Users, Trophy, Zap } from 'lucide-react';
-import { collection, getCountFromServer, doc, getDoc } from 'firebase/firestore';
-import { db } from '../../api/client';
-import { getAuth } from 'firebase/auth';
+import { getCommunityStats } from '../../api/community';
 
 // =============================================================================
 // STATS CACHE
@@ -48,51 +46,11 @@ async function fetchCommunityStats() {
   const cached = statsCache.get();
   if (cached) return cached;
 
-  try {
-    const isAuthenticated = !!getAuth().currentUser;
-
-    // Fetch stats in parallel
-    const [usersCount, leaguesCount, lifetimeData] = await Promise.all([
-      // Count users collection — requires admin, skip if not authenticated
-      isAuthenticated
-        ? getCountFromServer(collection(db, 'artifacts', 'fantasy_drum_corps_v1', 'users'))
-            .then(snap => snap.data().count)
-            .catch(() => null)
-        : Promise.resolve(null),
-
-      // Count leagues collection — requires auth, skip if not authenticated
-      isAuthenticated
-        ? getCountFromServer(collection(db, 'artifacts', 'fantasy_drum_corps_v1', 'leagues'))
-            .then(snap => snap.data().count)
-            .catch(() => null)
-        : Promise.resolve(null),
-
-      // Get lifetime leaderboard for total points (aggregated, public)
-      getDoc(doc(db, 'artifacts', 'fantasy_drum_corps_v1', 'leaderboard', 'lifetime_totalPoints'))
-        .then(docSnap => docSnap.exists() ? docSnap.data() : null)
-        .catch(() => null),
-    ]);
-
-    // Calculate total points from lifetime leaderboard entries
-    let totalPoints = 0;
-    if (lifetimeData?.entries) {
-      totalPoints = lifetimeData.entries.reduce((sum, entry) => {
-        return sum + (entry.lifetimeStats?.totalPoints || 0);
-      }, 0);
-    }
-
-    const stats = {
-      directors: usersCount || 0,
-      leagues: leaguesCount || 0,
-      totalPoints: totalPoints,
-    };
-
+  const stats = await getCommunityStats();
+  if (stats) {
     statsCache.set(stats);
-    return stats;
-  } catch (error) {
-    console.error('Failed to fetch community stats:', error);
-    return null;
   }
+  return stats;
 }
 
 // =============================================================================

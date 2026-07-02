@@ -7,8 +7,8 @@ import {
   Swords, Calendar, Radio, ChevronLeft, ChevronRight,
   LayoutGrid, List
 } from 'lucide-react';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../../api';
+import { getLeagueMatchupWeek } from '../../../api/leagues';
+import { getSeasonData } from '../../../api/season';
 import { GAME_CONFIG } from '../../../config';
 import {
   SeasonScheduleOverview,
@@ -55,12 +55,10 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
 
       try {
         // Get current week from season data
-        const seasonRef = doc(db, 'game-settings/season');
-        const seasonDoc = await getDoc(seasonRef);
+        const sData = await getSeasonData();
 
         let week = 1;
-        if (seasonDoc.exists()) {
-          const sData = seasonDoc.data();
+        if (sData) {
           const startDate = sData.schedule?.startDate?.toDate();
           if (startDate) {
             const now = new Date();
@@ -76,11 +74,9 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
         const weeksFound = new Set();
 
         for (let w = 1; w <= Math.min(week + 1, GAME_CONFIG.season.totalWeeks); w++) {
-          const matchupRef = doc(db, `artifacts/marching-art/leagues/${league.id}/matchups/week-${w}`);
-          const matchupDoc = await getDoc(matchupRef);
+          const data = await getLeagueMatchupWeek(league.id, w);
 
-          if (matchupDoc.exists()) {
-            const data = matchupDoc.data();
+          if (data) {
             matchupsData[w] = data;
             weeksFound.add(w);
           }
