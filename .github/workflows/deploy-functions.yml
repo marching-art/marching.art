@@ -27,10 +27,15 @@ on:
         required: false
         default: false
         type: boolean
-      historical_import_args:
-        description: 'Args for pressboxImporter/import.js (e.g. "--dry-run", "--years 2000,2001", "--merge"). Empty = real add-only import of all years.'
+      historical_import_dry_run:
+        description: 'Historical import: preview only (uncheck to actually write to Firestore)'
         required: false
-        default: '--dry-run'
+        default: true
+        type: boolean
+      historical_import_args:
+        description: 'Extra args for pressboxImporter/import.js (e.g. "--years 2000,2001", "--merge")'
+        required: false
+        default: ''
         type: string
 
 jobs:
@@ -197,9 +202,11 @@ jobs:
   # data committed under functions/pressboxImporter/output/. Runs whenever
   # "run_historical_import" is checked, independent of the deploy target.
   # import.js is add-only by default (years that already have documents are
-  # skipped), so re-running is safe; the default "--dry-run" arg previews the
-  # writes without touching Firestore. Uses the Admin SDK directly, so it
-  # does not depend on the functions deploy above.
+  # skipped), so re-running is safe. The dry-run checkbox (default ON)
+  # previews the writes without touching Firestore; it is a boolean input
+  # because emptying a text input in the run-workflow UI silently restores
+  # its default, which made a "--dry-run" text default impossible to clear.
+  # Uses the Admin SDK directly, so it does not depend on the deploy above.
   import-historical-recaps:
     if: ${{ inputs.run_historical_import }}
     runs-on: ubuntu-latest
@@ -224,4 +231,4 @@ jobs:
           export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
           trap 'rm -f /tmp/sa-key.json' EXIT
 
-          node functions/pressboxImporter/import.js ${{ inputs.historical_import_args }}
+          node functions/pressboxImporter/import.js ${{ inputs.historical_import_dry_run && '--dry-run' || '' }} ${{ inputs.historical_import_args }}

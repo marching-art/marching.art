@@ -32,9 +32,10 @@ The **Deploy Cloud Functions** workflow (`deploy-functions.yml`) has a
 1. Actions -> Deploy Cloud Functions -> Run workflow.
 2. To run the import *without* deploying, set "What to deploy" to `single`
    and leave the function names empty (the deploy jobs skip themselves).
-3. Check `run_historical_import`. The args box defaults to `--dry-run`;
-   inspect the job log, then re-run with the box empty for the real
-   add-only import (or e.g. `--years 2000,2001`, `--merge`).
+3. Check `run_historical_import`. The "preview only" checkbox is on by
+   default and maps to `--dry-run`; inspect the job log, then re-run with
+   it **unchecked** for the real add-only import. The extra-args box takes
+   e.g. `--years 2000,2001` or `--merge`.
 
 Because harvest/parse output is committed, CI only ever runs `import.js`;
 re-run `harvest.js`/`parse.js` locally and commit the new output if the
