@@ -3,9 +3,15 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useBodyScroll } from '../hooks/useBodyScroll';
+import { useSEO } from '../hooks/useSEO';
 
 const Terms = () => {
   useBodyScroll();
+  useSEO({
+    title: 'Terms of Service | marching.art',
+    description: 'Terms of service for marching.art, the free fantasy drum corps game.',
+    path: '/terms',
+  });
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">

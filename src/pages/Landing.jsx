@@ -29,6 +29,7 @@ import { useTickerData } from '../hooks/useTickerData';
 import { useLandingScores } from '../hooks/useLandingScores';
 import { useYoutubeSearch } from '../hooks/useYoutubeSearch';
 import { useFirstVisit } from '../hooks/useFirstVisit';
+import { useSEO } from '../hooks/useSEO';
 
 
 // =============================================================================
@@ -37,6 +38,9 @@ import { useFirstVisit } from '../hooks/useFirstVisit';
 
 const Landing = () => {
   useBodyScroll();
+  // Homepage keeps the site-default title/description; the hook pins the
+  // canonical URL so client-side navigation back home never leaks stale meta.
+  useSEO({ path: '/' });
   const { user, signIn, signOut } = useAuth();
   const profile = useProfileStore((state) => state.profile);
 

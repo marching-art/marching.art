@@ -57,6 +57,7 @@ const Terms = lazyWithRetry(() => import('./pages/Terms'), 'Terms');
 const ForgotPassword = lazyWithRetry(() => import('./pages/ForgotPassword'), 'ForgotPassword');
 const Article = lazyWithRetry(() => import('./pages/Article'), 'Article');
 const HowToPlay = lazyWithRetry(() => import('./pages/HowToPlay'), 'HowToPlay');
+const HowToPlayPublic = lazyWithRetry(() => import('./pages/HowToPlayPublic'), 'HowToPlayPublic');
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'NotFound');
 const GuestDashboard = lazyWithRetry(() => import('./pages/GuestDashboard'), 'GuestDashboard');
 
@@ -348,7 +349,9 @@ function App() {
               </GameShell>
             </ProtectedRoute>
           } />
-          <Route path="/how-to-play" element={<Navigate to="/guide" replace />} />
+          {/* Public, crawlable guide — the SEO landing page for "fantasy drum
+              corps" searches. Authenticated users get the in-app /guide. */}
+          <Route path="/how-to-play" element={<Suspense fallback={<LoadingScreen fullScreen />}><HowToPlayPublic /></Suspense>} />
 
           {/* Redirect old routes */}
           <Route path="/hub" element={<Navigate to="/dashboard" replace />} />

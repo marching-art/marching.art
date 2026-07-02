@@ -5,8 +5,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { m } from 'framer-motion';
 import { Home, ArrowLeft, Search, AlertTriangle } from 'lucide-react';
 import { useShouldReduceMotion } from '../hooks/useReducedMotion';
+import { useSEO } from '../hooks/useSEO';
 
 const NotFound = () => {
+  useSEO({ title: 'Page Not Found | marching.art', noindex: true });
   const navigate = useNavigate();
   const shouldReduceMotion = useShouldReduceMotion();
 

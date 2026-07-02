@@ -3,9 +3,15 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useBodyScroll } from '../hooks/useBodyScroll';
+import { useSEO } from '../hooks/useSEO';
 
 const Privacy = () => {
   useBodyScroll();
+  useSEO({
+    title: 'Privacy Policy | marching.art',
+    description: 'Privacy policy for marching.art, the free fantasy drum corps game.',
+    path: '/privacy',
+  });
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
