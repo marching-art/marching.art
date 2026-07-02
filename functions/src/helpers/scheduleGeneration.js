@@ -168,7 +168,13 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
   scoresSnapshot.forEach((yearDoc) => {
     const yearData = yearDoc.data().data || [];
     yearData.forEach((event) => {
-      if (event.eventName && event.offSeasonDay && !event.eventName.toLowerCase().includes("open class")) {
+      // "DCI Competition - {location}" is the placeholder name given to
+      // events the From The Pressbox import (2000-2012) had no title for.
+      // Their scores still feed regression/stats, but they make poor
+      // schedule entries, so keep them out of the generated season.
+      if (event.eventName && event.offSeasonDay &&
+          !event.eventName.toLowerCase().includes("open class") &&
+          !event.eventName.startsWith("DCI Competition - ")) {
         const showData = {
           eventName: event.eventName,
           date: event.date,

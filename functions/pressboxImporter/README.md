@@ -53,7 +53,11 @@ Each event block in the workbooks becomes one event object identical to what
                       // "DCI Competition - {location}" when untitled
   date,               // ISO string (UTC midnight)
   location,
-  offSeasonDay,       // same calculateOffSeasonDay math as the live pipeline
+  offSeasonDay,       // same calculateOffSeasonDay math as the live pipeline;
+                      // kept even for untitled events so their scores feed
+                      // the regression, but generateOffSeasonSchedule
+                      // excludes "DCI Competition - ..." placeholder names
+                      // from generated schedules
   headerMap: {},
   scores: [{ corps, score, captions: { GE1, GE2, VP, VA, CG, B, MA, P } }],
 }
