@@ -5,7 +5,6 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
-const { FieldValue } = require("firebase-admin/firestore");
 
 // =============================================================================
 // ADMIN MODERATION FUNCTIONS

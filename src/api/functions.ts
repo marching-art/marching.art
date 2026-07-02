@@ -299,7 +299,7 @@ export async function fetchNewsFeedHttp(params: {
 
     const data = await response.json();
     return data as GetRecentNewsResult;
-  } catch (error) {
+  } catch {
     // Fall back to callable function
     const result = await getRecentNews({ limit, category, feedOnly: true, includeEngagement: true });
     return result.data;

@@ -3,10 +3,7 @@
 // Follows Admin panel dark theme: bg-[#0a0a0a], bg-[#1a1a1a], bg-[#222]
 
 import React, { useState, useEffect } from 'react';
-import {
-  MessageSquare, RefreshCw, Check, X, Eye, Clock, User,
-  AlertTriangle, Flag, EyeOff, CheckCircle, Trash2
-} from 'lucide-react';
+import { MessageSquare, RefreshCw, Check, X, Eye, Flag, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
