@@ -4,6 +4,7 @@ const { Timestamp } = require("firebase-admin/firestore");
 const admin = require("firebase-admin");
 const {
   applyEnrichment,
+  brandEventName,
   scraperInvokeKey,
   writeScheduleToSubcollection,
   writeScheduleToCollection,
