@@ -6,7 +6,7 @@ import { m, AnimatePresence } from 'framer-motion';
 import {
   Trophy, Flame, TrendingUp, TrendingDown, Minus, Crown,
   ChevronDown, ChevronUp, BarChart3, LayoutDashboard, Table2,
-  UserX
+  UserX, Calendar
 } from 'lucide-react';
 import SeasonStatsCard from '../SeasonStatsCard';
 import LeagueLeaderboards from '../LeagueLeaderboards';

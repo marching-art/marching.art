@@ -11,6 +11,7 @@
 
 import js from '@eslint/js';
 import globals from 'globals';
+import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
@@ -76,6 +77,23 @@ export default tseslint.config(
       // (not an error) so it flags tech debt without blocking work. When a file
       // trips this, extract logic into hooks/utils or split sub-components.
       'max-lines': ['warn', { max: 700, skipBlankLines: true, skipComments: true }],
+    },
+  },
+
+  // --- Plain JS/JSX: catch undefined identifiers as errors ---
+  // tseslint's recommended config turns no-undef off (the type-checker is
+  // supposed to catch it), but .js/.jsx files are NOT type-checked (allowJs
+  // without checkJs) and esbuild doesn't resolve free identifiers — so an
+  // unimported identifier ships and throws ReferenceError at runtime (see:
+  // the ADMIN_TABS incident). Re-enable no-undef for plain JS/JSX, plus
+  // react/jsx-no-undef so undefined JSX component tags are errors too.
+  {
+    files: ['src/**/*.{js,jsx}'],
+    plugins: { react },
+    settings: { react: { version: 'detect' } },
+    rules: {
+      'no-undef': 'error',
+      'react/jsx-no-undef': 'error',
     },
   },
 
