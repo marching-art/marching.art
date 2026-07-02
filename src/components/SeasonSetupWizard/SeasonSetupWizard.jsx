@@ -4,22 +4,19 @@
 // A rigid registration form, not a game tutorial.
 // Laws: No slider animations, tabbed layout, utilitarian design
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { db, functions } from '../../firebase';
-import { doc, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
-import { ClipboardList, ChevronRight, ChevronLeft, Check, X, Trophy, Play, Plus, RotateCcw, Unlock, Calendar, MapPin, SkipForward, ArrowRightLeft } from 'lucide-react';
+import { ClipboardList, ChevronRight, ChevronLeft, Check, X } from 'lucide-react';
 import { useSeasonStore } from '../../store/seasonStore';
-import { useScheduleStore } from '../../store/scheduleStore';
-import { ShowRegistrationModal } from '../Schedule';
-import { isEventPast } from '../../utils/scheduleUtils';
+import CorpsVerificationStep from './CorpsVerificationStep';
+import ShowSelectionStep from './ShowSelectionStep';
 import { useAuth } from '../../App';
 
 // Import constants
 import { ALL_CLASSES, POINT_LIMITS, getCorpsClassName, formatSeasonName } from './constants';
-import { sortCorpsEntriesByClass, compareCorpsClasses } from '../../utils/corps';
 
 // =============================================================================
 // CLASS SELECTION TABLE DATA
@@ -48,8 +45,6 @@ const SeasonSetupWizard = ({
   // Auth and global store data
   const { user } = useAuth();
   const globalCurrentWeek = useSeasonStore((state) => state.currentWeek);
-  const getWeekShows = useScheduleStore((state) => state.getWeekShows);
-  const scheduleLoading = useScheduleStore((state) => state.loading);
 
   // Check if user has existing corps that need decisions (computed early for initial step)
   const hasExistingCorps = Object.keys(existingCorps).some(c => existingCorps[c]?.corpsName);
@@ -81,24 +76,16 @@ const SeasonSetupWizard = ({
   // Corps management state
   const [corpsDecisions, setCorpsDecisions] = useState({});
   const [newCorpsData, setNewCorpsData] = useState({});
-  const [currentCorpsIndex, setCurrentCorpsIndex] = useState(0);
   const [finalCorpsNeedingSetup, setFinalCorpsNeedingSetup] = useState(corpsNeedingSetup);
 
   // Lineup and shows state
-  const [selections, setSelections] = useState({});
-  const [availableCorps, setAvailableCorps] = useState([]);
-  const [loadingCorps, setLoadingCorps] = useState(true);
-  const [selectedShows, setSelectedShows] = useState([]);
 
   // Show registration modal state
-  const [showModal, setShowModal] = useState(false);
-  const [selectedShow, setSelectedShow] = useState(null);
   const [localUserProfile, setLocalUserProfile] = useState(profile);
 
   // Use global week from season store
   const currentWeek = globalCurrentWeek || 1;
 
-  const currentCorpsClass = finalCorpsNeedingSetup[currentCorpsIndex];
 
   // Group retired corps by class
   const retiredByClass = {};
@@ -127,140 +114,15 @@ const SeasonSetupWizard = ({
     setCorpsDecisions(initialDecisions);
   }, [existingCorps]);
 
-  // Fetch corps data for lineup
-  useEffect(() => {
-    if (step === 3 && seasonData?.seasonUid) {
-      fetchAvailableCorps();
-    }
-  }, [step, seasonData?.seasonUid]);
-
   // Get available shows from store when on step 4
-  const availableShows = step === 4 ? getWeekShows(currentWeek) : [];
 
   // Sync local profile with prop changes
   useEffect(() => {
     setLocalUserProfile(profile);
   }, [profile]);
 
-  // Helper to get actual date from day number
-  const getActualDate = useCallback((dayNumber) => {
-    if (!seasonData?.schedule?.startDate) return null;
-    const startDate = seasonData.schedule.startDate.toDate();
-    const actualDate = new Date(startDate);
-    actualDate.setDate(startDate.getDate() + dayNumber);
-    return actualDate;
-  }, [seasonData]);
-
-  // Format date for display
-  const formatDate = useCallback((dayNumber) => {
-    const date = getActualDate(dayNumber);
-    if (!date) return `Day ${dayNumber}`;
-    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-  }, [getActualDate]);
-
-  // Group shows by day
-  const showsByDay = useMemo(() => {
-    if (!availableShows || availableShows.length === 0) return {};
-    const grouped = {};
-    availableShows
-      .filter(show => show.type !== 'championship')
-      .forEach(show => {
-        const day = show.day;
-        if (!grouped[day]) grouped[day] = [];
-        grouped[day].push(show);
-      });
-    return grouped;
-  }, [availableShows]);
-
-  const sortedDays = useMemo(() => {
-    return Object.keys(showsByDay).map(Number).sort((a, b) => a - b);
-  }, [showsByDay]);
-
-  // Check if a corps is registered for a show
-  const isCorpsRegisteredForShow = useCallback((show) => {
-    if (!localUserProfile?.corps) return false;
-    return Object.values(localUserProfile.corps).some(corps => {
-      if (!corps) return false;
-      const weekKey = `week${show.week}`;
-      const selectedShows = corps.selectedShows?.[weekKey] || [];
-      return selectedShows.some(s => s.eventName === show.eventName && s.date === show.date);
-    });
-  }, [localUserProfile]);
-
-  // Get registered corps for a show (sorted by class hierarchy: World → Open → A → SS)
-  const getRegisteredCorpsForShow = useCallback((show) => {
-    if (!localUserProfile?.corps) return [];
-    return Object.entries(localUserProfile.corps)
-      .filter(([corpsClass, corpsData]) => {
-        if (!corpsData) return false;
-        const weekKey = `week${show.week}`;
-        const selectedShows = corpsData.selectedShows?.[weekKey] || [];
-        return selectedShows.some(s => s.eventName === show.eventName && s.date === show.date);
-      })
-      .map(([corpsClass]) => corpsClass)
-      .sort(compareCorpsClasses);
-  }, [localUserProfile]);
-
-  // Count total registrations for the week
-  const totalWeekRegistrations = useMemo(() => {
-    if (!localUserProfile?.corps) return 0;
-    let count = 0;
-    Object.values(localUserProfile.corps).forEach(corps => {
-      if (!corps) return;
-      const weekKey = `week${currentWeek}`;
-      const selectedShows = corps.selectedShows?.[weekKey] || [];
-      count += selectedShows.length;
-    });
-    return count;
-  }, [localUserProfile, currentWeek]);
-
-  // Handle show click to open modal
-  const handleShowClick = useCallback((show) => {
-    setSelectedShow(show);
-    setShowModal(true);
-  }, []);
-
-  // Handle modal success - refresh local profile
-  const handleModalSuccess = useCallback(async () => {
-    try {
-      if (user?.uid) {
-        const profileRef = doc(db, `artifacts/marching-art/users/${user.uid}/profile/data`);
-        const profileSnap = await getDoc(profileRef);
-        if (profileSnap.exists()) {
-          setLocalUserProfile(profileSnap.data());
-        }
-      }
-    } catch (error) {
-      console.error('Error refreshing profile:', error);
-    }
-    setShowModal(false);
-  }, [user?.uid]);
 
   // Class config for badges
-  const CLASS_CONFIG = {
-    worldClass: { name: 'World', color: 'text-yellow-500', bgColor: 'bg-yellow-500/10' },
-    openClass: { name: 'Open', color: 'text-purple-400', bgColor: 'bg-purple-400/10' },
-    aClass: { name: 'A Class', color: 'text-[#0057B8]', bgColor: 'bg-[#0057B8]/10' },
-    soundSport: { name: 'SS', color: 'text-green-500', bgColor: 'bg-green-500/10' },
-  };
-
-  const fetchAvailableCorps = async () => {
-    try {
-      setLoadingCorps(true);
-      const corpsDataRef = doc(db, 'dci-data', seasonData.seasonUid);
-      const corpsDataSnap = await getDoc(corpsDataRef);
-      if (corpsDataSnap.exists()) {
-        const data = corpsDataSnap.data();
-        const corps = data.corpsValues || [];
-        corps.sort((a, b) => b.points - a.points);
-        setAvailableCorps(corps);
-      }
-    } catch (error) {
-      console.error('Error fetching corps:', error);
-    } finally {
-      setLoadingCorps(false);
-    }
-  };
 
   // Process corps verification decisions (step 0)
   const handleCorpsVerificationContinue = async () => {
@@ -370,20 +232,6 @@ const SeasonSetupWizard = ({
   };
 
   // Save lineup
-  const saveLineup = async () => {
-    try {
-      setProcessing(true);
-      const saveLineupFn = httpsCallable(functions, 'saveLineup');
-      await saveLineupFn({ lineup: selections, corpsClass: currentCorpsClass });
-      toast.success('Lineup saved');
-      setStep(4);
-    } catch (error) {
-      toast.error(error.message || 'Failed to save lineup');
-    } finally {
-      setProcessing(false);
-    }
-  };
-
   return (
     <Portal>
       <div className="fixed inset-0 bg-[#0a0a0a] z-50 overflow-y-auto">
@@ -464,322 +312,18 @@ const SeasonSetupWizard = ({
 
           {/* STEP 0: Corps Verification (Returning Users) */}
           {step === 0 && (
-            <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
-              <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-                <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Step 1: Manage Your Corps
-                </h2>
-              </div>
-              <div className="p-4">
-                <p className="text-sm text-gray-400 mb-4">
-                  Welcome back! Review your corps from last season and decide how to proceed.
-                </p>
-
-                {/* Existing Corps - sorted by class order (World → Open → A → SoundSport) */}
-                {sortCorpsEntriesByClass(
-                  Object.entries(existingCorps).filter(([_, corps]) => corps?.corpsName)
-                ).map(([classId, corps]) => {
-                    const decision = corpsDecisions[classId] || 'continue';
-                    const classRetired = retiredByClass[classId] || [];
-
-                    return (
-                      <div key={classId} className="bg-[#0a0a0a] border border-[#333] p-4 mb-3">
-                        <div className="flex items-center justify-between mb-3">
-                          <div>
-                            <span className="text-[10px] font-bold text-[#0057B8] uppercase tracking-wider block mb-1">
-                              {getCorpsClassName(classId)}
-                            </span>
-                            <h4 className="text-sm font-bold text-white">{corps.corpsName}</h4>
-                            <p className="text-xs text-gray-500">{corps.location}</p>
-                          </div>
-                          <Trophy className="w-5 h-5 text-yellow-500" />
-                        </div>
-
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                          <button
-                            onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'continue' })}
-                            className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
-                              decision === 'continue'
-                                ? 'bg-green-500/20 border-2 border-green-500 text-green-400'
-                                : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
-                            }`}
-                          >
-                            <Play className="w-4 h-4" />
-                            Continue
-                          </button>
-                          <button
-                            onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'skip' })}
-                            className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
-                              decision === 'skip'
-                                ? 'bg-gray-500/20 border-2 border-gray-500 text-gray-300'
-                                : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
-                            }`}
-                          >
-                            <SkipForward className="w-4 h-4" />
-                            Skip
-                          </button>
-                          <button
-                            onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'new' })}
-                            className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
-                              decision === 'new'
-                                ? 'bg-blue-500/20 border-2 border-blue-500 text-blue-400'
-                                : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
-                            }`}
-                          >
-                            <Plus className="w-4 h-4" />
-                            Start New
-                          </button>
-                          {getAvailableMoveTargets(classId).length > 0 && (
-                            <button
-                              onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'move' })}
-                              className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
-                                decision === 'move'
-                                  ? 'bg-cyan-500/20 border-2 border-cyan-500 text-cyan-400'
-                                  : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
-                              }`}
-                            >
-                              <ArrowRightLeft className="w-4 h-4" />
-                              Move
-                            </button>
-                          )}
-                          {classRetired.length > 0 && (
-                            <button
-                              onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'unretire' })}
-                              className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
-                                decision === 'unretire'
-                                  ? 'bg-purple-500/20 border-2 border-purple-500 text-purple-400'
-                                  : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
-                              }`}
-                            >
-                              <RotateCcw className="w-4 h-4" />
-                              Revive
-                            </button>
-                          )}
-                        </div>
-
-                        {/* Skip info message */}
-                        {decision === 'skip' && (
-                          <div className="mt-3 pt-3 border-t border-[#333]">
-                            <p className="text-xs text-gray-500">
-                              This corps will sit out this season. You can re-activate it next season.
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Move class selection */}
-                        {decision === 'move' && (
-                          <div className="mt-3 pt-3 border-t border-[#333]">
-                            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
-                              Move to Class
-                            </label>
-                            <select
-                              className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-sm text-sm text-white focus:outline-none focus:border-[#0057B8]"
-                              value={newCorpsData[classId]?.targetClass || ''}
-                              onChange={(e) => setNewCorpsData({
-                                ...newCorpsData,
-                                [classId]: { targetClass: e.target.value }
-                              })}
-                            >
-                              <option value="">Select target class...</option>
-                              {getAvailableMoveTargets(classId).map((targetClassId) => (
-                                <option key={targetClassId} value={targetClassId}>
-                                  {getCorpsClassName(targetClassId)}
-                                </option>
-                              ))}
-                            </select>
-                            <p className="text-xs text-gray-500 mt-2">
-                              Corps identity will be preserved. Season data (lineup, scores) will be reset.
-                            </p>
-                          </div>
-                        )}
-
-                        {/* New corps form when "Start New" is selected */}
-                        {decision === 'new' && (
-                          <div className="mt-3 pt-3 border-t border-[#333] space-y-2">
-                            <input
-                              type="text"
-                              placeholder="New Corps Name"
-                              value={newCorpsData[classId]?.corpsName || ''}
-                              onChange={(e) => setNewCorpsData({
-                                ...newCorpsData,
-                                [classId]: { ...newCorpsData[classId], corpsName: e.target.value }
-                              })}
-                              className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
-                            />
-                            <input
-                              type="text"
-                              placeholder="Location"
-                              value={newCorpsData[classId]?.location || ''}
-                              onChange={(e) => setNewCorpsData({
-                                ...newCorpsData,
-                                [classId]: { ...newCorpsData[classId], location: e.target.value }
-                              })}
-                              className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
-                            />
-                          </div>
-                        )}
-
-                        {/* Unretire selection */}
-                        {decision === 'unretire' && classRetired.length > 0 && (
-                          <div className="mt-3 pt-3 border-t border-[#333]">
-                            <select
-                              className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-sm text-sm text-white focus:outline-none focus:border-[#0057B8]"
-                              value={newCorpsData[classId]?.retiredIndex ?? ''}
-                              onChange={(e) => setNewCorpsData({
-                                ...newCorpsData,
-                                [classId]: { retiredIndex: parseInt(e.target.value) }
-                              })}
-                            >
-                              <option value="">Select corps to unretire...</option>
-                              {classRetired.map((rc) => (
-                                <option key={rc.index} value={rc.index}>
-                                  {rc.corpsName} ({rc.totalSeasons} seasons)
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-
-                {/* Eligible new classes (optional expansion) */}
-                {eligibleNewClasses.length > 0 && (
-                  <div className="mt-6">
-                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                      <Unlock className="w-4 h-4 text-blue-500" />
-                      Expand to New Classes (Optional)
-                    </h3>
-                    {eligibleNewClasses.map(classId => {
-                      const decision = corpsDecisions[classId];
-                      const classRetired = retiredByClass[classId] || [];
-
-                      return (
-                        <div key={classId} className="bg-[#0a0a0a] border border-[#333] p-4 mb-3">
-                          <div className="flex items-center justify-between mb-3">
-                            <div>
-                              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
-                                {getCorpsClassName(classId)}
-                              </span>
-                              <p className="text-xs text-gray-500">
-                                {POINT_LIMITS[classId]} point budget
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-3 gap-2">
-                            <button
-                              onClick={() => {
-                                const updated = { ...corpsDecisions };
-                                delete updated[classId];
-                                setCorpsDecisions(updated);
-                              }}
-                              className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
-                                !decision
-                                  ? 'bg-[#1a1a1a] border-2 border-gray-500 text-gray-300'
-                                  : 'bg-[#1a1a1a] border-2 border-transparent text-gray-500 hover:border-gray-500'
-                              }`}
-                            >
-                              Skip
-                            </button>
-                            <button
-                              onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'new' })}
-                              className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
-                                decision === 'new'
-                                  ? 'bg-blue-500/20 border-2 border-blue-500 text-blue-400'
-                                  : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
-                              }`}
-                            >
-                              <Plus className="w-4 h-4" />
-                              Register
-                            </button>
-                            {classRetired.length > 0 && (
-                              <button
-                                onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'unretire' })}
-                                className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
-                                  decision === 'unretire'
-                                    ? 'bg-purple-500/20 border-2 border-purple-500 text-purple-400'
-                                    : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
-                                }`}
-                              >
-                                <RotateCcw className="w-4 h-4" />
-                                Revive
-                              </button>
-                            )}
-                          </div>
-
-                          {/* New corps form */}
-                          {decision === 'new' && (
-                            <div className="mt-3 pt-3 border-t border-[#333] space-y-2">
-                              <input
-                                type="text"
-                                placeholder="Corps Name"
-                                value={newCorpsData[classId]?.corpsName || ''}
-                                onChange={(e) => setNewCorpsData({
-                                  ...newCorpsData,
-                                  [classId]: { ...newCorpsData[classId], corpsName: e.target.value }
-                                })}
-                                className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
-                              />
-                              <input
-                                type="text"
-                                placeholder="Location"
-                                value={newCorpsData[classId]?.location || ''}
-                                onChange={(e) => setNewCorpsData({
-                                  ...newCorpsData,
-                                  [classId]: { ...newCorpsData[classId], location: e.target.value }
-                                })}
-                                className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
-                              />
-                            </div>
-                          )}
-
-                          {/* Unretire selection */}
-                          {decision === 'unretire' && classRetired.length > 0 && (
-                            <div className="mt-3 pt-3 border-t border-[#333]">
-                              <select
-                                className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-sm text-sm text-white focus:outline-none focus:border-[#0057B8]"
-                                value={newCorpsData[classId]?.retiredIndex ?? ''}
-                                onChange={(e) => setNewCorpsData({
-                                  ...newCorpsData,
-                                  [classId]: { retiredIndex: parseInt(e.target.value) }
-                                })}
-                              >
-                                <option value="">Select corps to unretire...</option>
-                                {classRetired.map((rc) => (
-                                  <option key={rc.index} value={rc.index}>
-                                    {rc.corpsName} ({rc.totalSeasons} seasons)
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-              <div className="px-4 py-3 border-t border-[#333] flex justify-end">
-                <button
-                  onClick={handleCorpsVerificationContinue}
-                  disabled={processing}
-                  className="h-10 px-6 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center disabled:opacity-50 hover:bg-[#0066d6]"
-                >
-                  {processing ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-sm animate-spin mr-2" />
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      Continue
-                      <ChevronRight className="w-4 h-4 ml-1" />
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
+            <CorpsVerificationStep
+              existingCorps={existingCorps}
+              corpsDecisions={corpsDecisions}
+              setCorpsDecisions={setCorpsDecisions}
+              newCorpsData={newCorpsData}
+              setNewCorpsData={setNewCorpsData}
+              retiredByClass={retiredByClass}
+              eligibleNewClasses={eligibleNewClasses}
+              getAvailableMoveTargets={getAvailableMoveTargets}
+              processing={processing}
+              handleCorpsVerificationContinue={handleCorpsVerificationContinue}
+            />
           )}
 
           {/* STEP 1: Identity */}
@@ -1016,220 +560,17 @@ const SeasonSetupWizard = ({
 
           {/* STEP 4: Show Selection (after registration) */}
           {step === 4 && (
-            <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
-              {/* Header with week info and registration count */}
-              <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-[#0057B8]" />
-                    <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                      {currentWeek === 7 ? 'Championship Week' : `Week ${currentWeek} Schedule`}
-                    </h2>
-                  </div>
-                  {currentWeek !== 7 && (
-                    <div className="flex items-center gap-1 text-xs">
-                      <span className="text-gray-500">Registrations:</span>
-                      <span className="font-bold text-[#0057B8] tabular-nums">{totalWeekRegistrations}</span>
-                    </div>
-                  )}
-                </div>
-                <p className="text-[10px] text-gray-500 mt-1">
-                  Tap a show to register your corps
-                </p>
-              </div>
-
-              <div className="p-3">
-                {/* Championship Week (Week 7) - Auto-enrollment message */}
-                {currentWeek === 7 ? (
-                  <div className="text-center py-6">
-                    <div className="w-16 h-16 mx-auto mb-4 bg-[#0057B8]/20 rounded-sm flex items-center justify-center">
-                      <Trophy className="w-8 h-8 text-[#0057B8]" />
-                    </div>
-                    <h3 className="text-lg font-bold text-white mb-2">
-                      Championship Week - Auto Enrollment
-                    </h3>
-                    <p className="text-sm text-gray-400 mb-4 max-w-md mx-auto">
-                      All championship events (Days 45-49) have automatic enrollment based on your corps class and advancement results.
-                    </p>
-                    <div className="bg-[#0a0a0a] border border-[#333] p-4 text-left max-w-md mx-auto">
-                      <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-3">
-                        Championship Schedule
-                      </div>
-                      <div className="space-y-2 text-xs">
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Day 45</span>
-                          <span className="text-white">Open & A Class Prelims</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Day 46</span>
-                          <span className="text-white">Open & A Class Finals (Top 8/4)</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Day 47</span>
-                          <span className="text-white">World Championship Prelims</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Day 48</span>
-                          <span className="text-white">World Championship Semifinals (Top 25)</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Day 49</span>
-                          <span className="text-white">World Championship Finals (Top 12)</span>
-                        </div>
-                        <div className="flex justify-between border-t border-[#333] pt-2 mt-2">
-                          <span className="text-gray-400">Day 49</span>
-                          <span className="text-white">SoundSport Festival (All SoundSport)</span>
-                        </div>
-                      </div>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-4">
-                      Your corps will automatically compete based on class eligibility and prior day results.
-                    </p>
-                  </div>
-                ) : scheduleLoading ? (
-                  <div className="text-center py-8">
-                    <div className="w-6 h-6 border-2 border-[#0057B8] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                    <p className="text-xs text-gray-500">Loading schedule...</p>
-                  </div>
-                ) : sortedDays.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Calendar className="w-10 h-10 text-gray-600 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500">No shows available this week</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {sortedDays.map(day => {
-                      const date = getActualDate(day);
-                      const isPast = isEventPast(date);
-                      const dayOfWeek = date ? date.toLocaleDateString('en-US', { weekday: 'short' }) : '';
-                      const monthDay = date ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : `Day ${day}`;
-
-                      return (
-                        <div key={day} className="flex gap-2">
-                          {/* Condensed Day Indicator */}
-                          <div className={`
-                            flex-shrink-0 w-14 flex flex-col items-center justify-center
-                            py-2 px-1 rounded-sm border
-                            ${isPast
-                              ? 'bg-[#1a1a1a] border-[#333] text-gray-500'
-                              : 'bg-[#0057B8]/10 border-[#0057B8]/30'
-                            }
-                          `}>
-                            <span className={`text-[9px] font-bold uppercase ${isPast ? 'text-gray-500' : 'text-[#0057B8]'}`}>
-                              {dayOfWeek}
-                            </span>
-                            <span className={`text-xs font-bold ${isPast ? 'text-gray-400' : 'text-white'}`}>
-                              {monthDay}
-                            </span>
-                          </div>
-
-                          {/* Shows for this day */}
-                          <div className="flex-1 space-y-2">
-                            {showsByDay[day].map((show, idx) => {
-                              const isRegistered = isCorpsRegisteredForShow(show);
-                              const registeredCorps = getRegisteredCorpsForShow(show);
-
-                              return (
-                                <div
-                                  key={`${show.eventName}-${idx}`}
-                                  onClick={() => !isPast && handleShowClick(show)}
-                                  className={`
-                                    bg-[#111] border rounded-sm overflow-hidden
-                                    ${isPast ? 'opacity-60 border-[#333]' : 'hover:border-[#444] cursor-pointer active:bg-[#1a1a1a] border-[#333]'}
-                                    ${isRegistered && !isPast ? 'border-l-2 border-l-green-500' : ''}
-                                  `}
-                                >
-                                  <div className="px-3 py-2">
-                                    <div className="flex items-start justify-between gap-2">
-                                      <div className="min-w-0 flex-1">
-                                        <h3 className="text-sm font-bold text-white truncate leading-tight">
-                                          {show.eventName}
-                                        </h3>
-                                        {show.location && (
-                                          <div className="flex items-center gap-1 mt-0.5 text-[10px] text-gray-500">
-                                            <MapPin className="w-3 h-3 text-purple-400 flex-shrink-0" />
-                                            <span className="truncate">{show.location}</span>
-                                          </div>
-                                        )}
-                                      </div>
-
-                                      {/* Status Badge */}
-                                      {isPast ? (
-                                        <span className="flex-shrink-0 px-1.5 py-0.5 text-[9px] font-bold uppercase bg-[#333] text-gray-400 rounded-sm">
-                                          Done
-                                        </span>
-                                      ) : isRegistered ? (
-                                        <span className="flex-shrink-0 px-1.5 py-0.5 text-[9px] font-bold uppercase bg-green-500/10 text-green-400 rounded-sm flex items-center gap-0.5">
-                                          <Check className="w-2.5 h-2.5" />
-                                          Going
-                                        </span>
-                                      ) : (
-                                        <span className="flex-shrink-0 px-1.5 py-0.5 text-[9px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] rounded-sm">
-                                          Register
-                                        </span>
-                                      )}
-                                    </div>
-
-                                    {/* Registered Corps Badges */}
-                                    {registeredCorps.length > 0 && (
-                                      <div className="flex items-center gap-1 mt-2 flex-wrap">
-                                        {registeredCorps.map((corpsClass) => {
-                                          const config = CLASS_CONFIG[corpsClass] || { name: corpsClass, color: 'text-gray-400', bgColor: 'bg-gray-500/10' };
-                                          return (
-                                            <span
-                                              key={corpsClass}
-                                              className={`inline-flex items-center gap-0.5 px-1 py-0.5 text-[9px] font-bold uppercase rounded ${config.bgColor} ${config.color}`}
-                                            >
-                                              <Check className="w-2 h-2" />
-                                              {config.name}
-                                            </span>
-                                          );
-                                        })}
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Footer */}
-              <div className="px-4 py-3 border-t border-[#333] flex justify-between items-center">
-                {currentWeek !== 7 && totalWeekRegistrations === 0 && (
-                  <p className="text-[10px] text-gray-500">
-                    Register at least one corps to continue
-                  </p>
-                )}
-                <div className="ml-auto">
-                  <button
-                    onClick={() => setStep(5)}
-                    disabled={currentWeek !== 7 && totalWeekRegistrations === 0}
-                    className="h-10 px-6 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center disabled:opacity-50 hover:bg-[#0066d6]"
-                  >
-                    {currentWeek === 7 ? 'Continue' : 'Complete Setup'}
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </button>
-                </div>
-              </div>
-            </div>
+            <ShowSelectionStep
+              seasonData={seasonData}
+              currentWeek={currentWeek}
+              user={user}
+              localUserProfile={localUserProfile}
+              setLocalUserProfile={setLocalUserProfile}
+              setStep={setStep}
+            />
           )}
 
           {/* Show Registration Modal */}
-          {showModal && selectedShow && (
-            <ShowRegistrationModal
-              show={selectedShow}
-              userProfile={localUserProfile}
-              formattedDate={formatDate(selectedShow.day)}
-              onClose={() => setShowModal(false)}
-              onSuccess={handleModalSuccess}
-            />
-          )}
 
           {/* STEP 5: Complete */}
           {step === 5 && (
