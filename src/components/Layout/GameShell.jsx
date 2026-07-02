@@ -7,7 +7,7 @@
 import React, { useEffect, useState, createContext, useContext, useRef, useMemo } from 'react';
 import { Link, useLocation, NavLink } from 'react-router-dom';
 import { analyticsHelpers, adminHelpers } from '../../firebase';
-import { useAuth } from '../../App';
+import { useAuth } from '../../context/AuthContext';
 import BottomNav from '../BottomNav';
 import { useSeasonStore } from '../../store/seasonStore';
 import { formatSeasonName } from '../../utils/season';

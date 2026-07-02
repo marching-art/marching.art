@@ -8,7 +8,7 @@ import {
   MessageSquare, Send, Loader2, MoreVertical, Edit2, Trash2,
   Flag, Clock, CheckCircle, AlertTriangle, ChevronDown, X
 } from 'lucide-react';
-import { useAuth } from '../../App';
+import { useAuth } from '../../context/AuthContext';
 import {
   getArticleComments,
   addArticleComment,

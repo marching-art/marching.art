@@ -14,7 +14,7 @@ import { db, adminHelpers } from '../firebase';
 import { doc, getDoc, getDocs, collectionGroup } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
-import { useAuth } from '../App';
+import { useAuth } from '../context/AuthContext';
 import { ScoresSpreadsheet, ArticleManagement, SubmissionsManagement, CommentsModeration, CorpsValuesEditor, LiveScoresVerification } from '../components/Admin';
 import LoadingScreen from '../components/LoadingScreen';
 import { TelemetryStrip, NavTabs, ProcessRow, SectionHeader, InfoRow } from '../components/Admin/AdminUI';

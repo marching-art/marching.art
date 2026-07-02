@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Loader2, MessageSquare, Plus, SmilePlus } from 'lucide-react';
-import { useAuth } from '../../App';
+import { useAuth } from '../../context/AuthContext';
 import { toggleArticleReaction, getArticleReactions } from '../../api/functions';
 import toast from 'react-hot-toast';
 

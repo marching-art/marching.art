@@ -9,7 +9,7 @@ import { useParams, Link, useSearchParams } from 'react-router-dom';
 import {
   User, Crown, Coins, Heart, MessageCircle,
 } from 'lucide-react';
-import { useAuth } from '../App';
+import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../hooks/useProfile';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../lib/queryClient';

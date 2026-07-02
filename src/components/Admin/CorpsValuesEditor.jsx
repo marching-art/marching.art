@@ -3,7 +3,7 @@
 // Lets an admin pick any season doc, edit/add/delete corps entries, change point
 // values, save the whole array back, or create a brand new season doc.
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Database, Plus, Trash2, Save, RefreshCw, AlertCircle, X, FilePlus } from 'lucide-react';
 import { db } from '../../firebase';
 import { doc, getDoc, setDoc, collection, getDocs } from 'firebase/firestore';
@@ -27,18 +27,20 @@ const CorpsValuesEditor = () => {
   const isDirty = useMemo(() => JSON.stringify(rows) !== originalJson, [rows, originalJson]);
 
   // Load list of dci-data docs
-  const loadSeasonDocs = async () => {
+  const loadSeasonDocs = useCallback(async () => {
     setLoadingList(true);
     setError(null);
     try {
       const snap = await getDocs(collection(db, 'dci-data'));
       const ids = snap.docs.map(d => d.id).sort();
       setSeasonDocIds(ids);
-      if (ids.length > 0 && !selectedDocId) {
-        // Default to the active season if we can read it; otherwise first id
+      if (ids.length > 0) {
+        // Default to the active season if we can read it; otherwise first id.
+        // A functional update keeps any existing selection, so this callback
+        // doesn't need to depend on selectedDocId.
         const activeDoc = await getDoc(doc(db, 'game-settings/season'));
         const activeId = activeDoc.exists() ? activeDoc.data().dataDocId : null;
-        setSelectedDocId(activeId && ids.includes(activeId) ? activeId : ids[0]);
+        setSelectedDocId(prev => prev || (activeId && ids.includes(activeId) ? activeId : ids[0]));
       }
     } catch (err) {
       console.error(err);
@@ -46,11 +48,11 @@ const CorpsValuesEditor = () => {
     } finally {
       setLoadingList(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadSeasonDocs();
-  }, []);
+  }, [loadSeasonDocs]);
 
   // Load corps values for the selected doc
   useEffect(() => {

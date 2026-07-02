@@ -2,7 +2,7 @@
 // Admin interface for moderating article comments
 // Follows Admin panel dark theme: bg-[#0a0a0a], bg-[#1a1a1a], bg-[#222]
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { MessageSquare, RefreshCw, Check, X, Eye, Flag, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
@@ -49,11 +49,7 @@ const CommentsModeration = () => {
   const [bulkProcessing, setBulkProcessing] = useState(false);
   const [counts, setCounts] = useState({ pending: 0, approved: 0, rejected: 0, hidden: 0, total: 0 });
 
-  useEffect(() => {
-    loadComments();
-  }, [statusFilter]);
-
-  const loadComments = async () => {
+  const loadComments = useCallback(async () => {
     try {
       setLoading(true);
       const result = await listCommentsForModeration({ status: statusFilter, limit: 50 });
@@ -68,7 +64,11 @@ const CommentsModeration = () => {
       setLoading(false);
       setSelectedComments(new Set());
     }
-  };
+  }, [statusFilter]);
+
+  useEffect(() => {
+    loadComments();
+  }, [loadComments]);
 
   const handleRefresh = async () => {
     setRefreshing(true);

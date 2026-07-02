@@ -7,7 +7,7 @@ import {
   ChevronRight, MapPin, Target, Activity, AlertTriangle, RefreshCw,
   BarChart3, Clock, Medal, Crown, History
 } from 'lucide-react';
-import { useAuth } from '../App';
+import { useAuth } from '../context/AuthContext';
 import BrandLogo from '../components/BrandLogo';
 import { db, dataNamespace } from '../firebase';
 import { compareCorpsClasses } from '../utils/corps';

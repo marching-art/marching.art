@@ -22,7 +22,7 @@ import CaptionBreakdownCards from '../components/Articles/CaptionBreakdownCards'
 import RecommendationCards from '../components/Articles/RecommendationCards';
 import { LiveScoresBox, FantasyTrendingBox, StandingsModal, YouTubeModal } from '../components/Sidebar';
 import { getArticleEngagement } from '../api/functions';
-import { useAuth } from '../App';
+import { useAuth } from '../context/AuthContext';
 import { useProfileStore } from '../store/profileStore';
 import { useSeasonStore } from '../store/seasonStore';
 import { useBodyScroll } from '../hooks/useBodyScroll';

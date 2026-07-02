@@ -11,7 +11,7 @@ import {
   Mail, Lock, User, Eye, EyeOff, ArrowLeft,
   AlertCircle
 } from 'lucide-react';
-import { useAuth } from '../App';
+import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useFirstVisit } from '../hooks/useFirstVisit';

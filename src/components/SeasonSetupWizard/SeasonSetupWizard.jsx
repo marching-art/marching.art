@@ -13,7 +13,7 @@ import { ClipboardList, ChevronRight, ChevronLeft, Check, X } from 'lucide-react
 import { useSeasonStore } from '../../store/seasonStore';
 import CorpsVerificationStep from './CorpsVerificationStep';
 import ShowSelectionStep from './ShowSelectionStep';
-import { useAuth } from '../../App';
+import { useAuth } from '../../context/AuthContext';
 
 // Import constants
 import { ALL_CLASSES, POINT_LIMITS, getCorpsClassName, formatSeasonName } from './constants';

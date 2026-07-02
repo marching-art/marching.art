@@ -10,7 +10,7 @@ import {
   Users, Trophy, Plus, Search, Crown, X, Zap,
   ChevronRight, TrendingUp, Swords, MessageCircle
 } from 'lucide-react';
-import { useAuth } from '../App';
+import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import {
   useMyLeagues,

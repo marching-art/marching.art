@@ -11,7 +11,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
-import { useAuth } from '../../App';
+import { useAuth } from '../../context/AuthContext';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import {
   LineupCelebration,

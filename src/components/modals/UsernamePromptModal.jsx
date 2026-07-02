@@ -5,7 +5,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { AtSign, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import Portal from '../Portal';
 import { useProfileStore } from '../../store/profileStore';
-import { useAuth } from '../../App';
+import { useAuth } from '../../context/AuthContext';
 import { functions } from '../../firebase';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';

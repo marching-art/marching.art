@@ -3,11 +3,10 @@
 // Shows selected corps by point value (25-1) with scores across dates
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { m } from 'framer-motion';
 import { Table, RefreshCw, AlertCircle, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { db } from '../../firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { getCaptionLabel, getCaptionColor } from '../../utils/captionUtils';
+import { getCaptionLabel } from '../../utils/captionUtils';
 
 // Caption definitions for tabs
 const INDIVIDUAL_CAPTIONS = ['GE1', 'GE2', 'VP', 'VA', 'CG', 'B', 'MA', 'P'];
@@ -366,7 +365,7 @@ const ScoresSpreadsheet = () => {
               <th className="sticky left-[90px] z-10 bg-charcoal-900 px-0.5 py-1 text-center font-mono text-yellow-400 border-r border-white/20 w-6">
                 Pts
               </th>
-              {visibleDates.map((dateInfo, idx) => (
+              {visibleDates.map((dateInfo) => (
                 <th
                   key={dateInfo.day}
                   className="px-0 py-1.5 text-center font-mono text-gray-400 w-[38px] border-r border-white/10"

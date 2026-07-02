@@ -12,7 +12,7 @@ import {
   Settings, Zap, UserPlus, MessageCircle, Coins, Play
 } from 'lucide-react';
 import YouTubeIcon from '../components/YouTubeIcon';
-import { useAuth } from '../App';
+import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import { useProfileStore } from '../store/profileStore';
 import NewsFeed from '../components/Landing/NewsFeed';
