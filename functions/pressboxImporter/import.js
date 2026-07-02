@@ -12,7 +12,10 @@
 //                      processDciScores) instead of skipping the year
 //   --replace          overwrite existing year documents entirely
 //
-// Requires functions/serviceAccountKey.json (same as masterParser.js).
+// Credentials: uses functions/serviceAccountKey.json when present (local runs,
+// same as masterParser.js), otherwise falls back to application-default
+// credentials (GOOGLE_APPLICATION_CREDENTIALS), which is how the
+// deploy-functions.yml GitHub Actions job provides them.
 //
 // Usage: node import.js --dry-run   (then without the flag once it looks right)
 
@@ -34,8 +37,12 @@ function loadJson(file) {
 
 async function main() {
   const admin = require("firebase-admin");
-  const serviceAccount = require("../serviceAccountKey.json");
-  admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+  const keyPath = path.join(__dirname, "..", "serviceAccountKey.json");
+  if (fs.existsSync(keyPath)) {
+    admin.initializeApp({ credential: admin.credential.cert(require(keyPath)) });
+  } else {
+    admin.initializeApp();
+  }
   const db = admin.firestore();
 
   for (const year of yearFilter) {

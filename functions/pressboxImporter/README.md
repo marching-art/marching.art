@@ -23,6 +23,23 @@ events (matched on eventName + date, same rule as `processDciScores`);
 The parsed `output/*.json` files are committed, so you can review the data or
 run `import.js` without re-harvesting.
 
+### Running from GitHub Actions
+
+The **Deploy Cloud Functions** workflow (`deploy-functions.yml`) has a
+`run_historical_import` checkbox that runs `import.js` with the
+`FIREBASE_SERVICE_ACCOUNT` secret — no local service-account key needed:
+
+1. Actions -> Deploy Cloud Functions -> Run workflow.
+2. To run the import *without* deploying, set "What to deploy" to `single`
+   and leave the function names empty (the deploy jobs skip themselves).
+3. Check `run_historical_import`. The args box defaults to `--dry-run`;
+   inspect the job log, then re-run with the box empty for the real
+   add-only import (or e.g. `--years 2000,2001`, `--merge`).
+
+Because harvest/parse output is committed, CI only ever runs `import.js`;
+re-run `harvest.js`/`parse.js` locally and commit the new output if the
+source site ever fixes the 2008/2011 links.
+
 ## How the source maps to the game's schema
 
 Each event block in the workbooks becomes one event object identical to what
