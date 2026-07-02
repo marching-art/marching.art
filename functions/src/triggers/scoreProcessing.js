@@ -3,6 +3,7 @@ const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { scrapeDciScoresLogic } = require("../helpers/scraping");
 const { calculateOffSeasonDay } = require("../helpers/season");
+const { mergeEventIntoHistoricalScores } = require("../helpers/historicalScores");
 
 const LIVE_SCORES_TOPIC = "live-scores-topic";
 const DCI_RECAP_TOPIC = "dci-recap-topic";
@@ -19,8 +20,6 @@ exports.processDciScores = onMessagePublished("dci-scores-topic", async (message
     }
 
     const docId = year.toString();
-    const yearDocRef = getDb().collection("historical_scores").doc(docId); // This will now work
-
     const parsedEventDate = new Date(eventDate);
     const offSeasonDay = calculateOffSeasonDay(parsedEventDate, year);
 
@@ -33,62 +32,7 @@ exports.processDciScores = onMessagePublished("dci-scores-topic", async (message
       offSeasonDay: offSeasonDay,
     };
 
-    await getDb().runTransaction(async (transaction) => { // This will now work
-      const yearDoc = await transaction.get(yearDocRef);
-
-      if (!yearDoc.exists) {
-        logger.info(`Creating new document for year ${year}.`);
-        transaction.set(yearDocRef, { data: [newEventData] });
-      } else {
-        let existingData = yearDoc.data().data || [];
-        const eventIndex = existingData.findIndex((event) =>
-          event.eventName === newEventData.eventName &&
-          new Date(event.date).getTime() === new Date(newEventData.date).getTime()
-        );
-
-        if (eventIndex > -1) {
-          logger.info(`Event "${newEventData.eventName}" already exists. Checking for missing scores to merge.`);
-          let eventToUpdate = existingData[eventIndex];
-          let hasBeenUpdated = false;
-
-          for (const newScore of newEventData.scores) {
-            const existingScoreIndex = eventToUpdate.scores.findIndex((s) => s.corps === newScore.corps);
-
-            if (existingScoreIndex === -1) {
-              eventToUpdate.scores.push(newScore);
-              hasBeenUpdated = true;
-              logger.info(`Adding missing corps entry for ${newScore.corps}.`);
-            } else {
-              let existingScore = eventToUpdate.scores[existingScoreIndex];
-              let captionsUpdated = false;
-              for (const caption in newScore.captions) {
-                if (newScore.captions[caption] > 0 &&
-                  (!existingScore.captions[caption] || existingScore.captions[caption] === 0)) {
-                  existingScore.captions[caption] = newScore.captions[caption];
-                  captionsUpdated = true;
-                }
-              }
-              if (captionsUpdated) {
-                hasBeenUpdated = true;
-                logger.info(`Updated captions for ${newScore.corps}.`);
-              }
-            }
-          }
-
-          if (hasBeenUpdated) {
-            existingData[eventIndex] = eventToUpdate;
-            transaction.update(yearDocRef, { data: existingData });
-            logger.info(`Successfully merged new scores into event: ${newEventData.eventName}`);
-          } else {
-            logger.info(`No new scores to merge for event: ${newEventData.eventName}. Skipping.`);
-          }
-        } else {
-          const updatedData = [...existingData, newEventData];
-          logger.info(`Appending new event to document for year ${year}. Total events: ${updatedData.length}`);
-          transaction.update(yearDocRef, { data: updatedData });
-        }
-      }
-    });
+    await mergeEventIntoHistoricalScores(getDb(), year, newEventData);
 
     logger.info(`Successfully processed and archived scores to historical_scores/${docId} with offSeasonDay: ${offSeasonDay}`);
   } catch (error) {
@@ -113,7 +57,6 @@ exports.processLiveScoreRecap = onMessagePublished(LIVE_SCORES_TOPIC, async (mes
     const parsedEventDate = new Date(eventDate);
     const year = parsedEventDate.getFullYear();
     const docId = year.toString();
-    const yearDocRef = db.collection("historical_scores").doc(docId);
 
     // Calculate offSeasonDay using the same logic as historical scores
     // Returns null if event is outside the 49-day competition window (e.g., spring training)
@@ -128,63 +71,7 @@ exports.processLiveScoreRecap = onMessagePublished(LIVE_SCORES_TOPIC, async (mes
       offSeasonDay: offSeasonDay,
     };
 
-    // Use the same transaction pattern as processDciScores for consistency
-    await db.runTransaction(async (transaction) => {
-      const yearDoc = await transaction.get(yearDocRef);
-
-      if (!yearDoc.exists) {
-        logger.info(`Creating new historical_scores document for year ${year}.`);
-        transaction.set(yearDocRef, { data: [newEventData] });
-      } else {
-        let existingData = yearDoc.data().data || [];
-        const eventIndex = existingData.findIndex((event) =>
-          event.eventName === newEventData.eventName &&
-          new Date(event.date).getTime() === new Date(newEventData.date).getTime()
-        );
-
-        if (eventIndex > -1) {
-          logger.info(`Event "${newEventData.eventName}" already exists. Checking for missing scores to merge.`);
-          let eventToUpdate = existingData[eventIndex];
-          let hasBeenUpdated = false;
-
-          for (const newScore of newEventData.scores) {
-            const existingScoreIndex = eventToUpdate.scores.findIndex((s) => s.corps === newScore.corps);
-
-            if (existingScoreIndex === -1) {
-              eventToUpdate.scores.push(newScore);
-              hasBeenUpdated = true;
-              logger.info(`Adding missing corps entry for ${newScore.corps}.`);
-            } else {
-              let existingScore = eventToUpdate.scores[existingScoreIndex];
-              let captionsUpdated = false;
-              for (const caption in newScore.captions) {
-                if (newScore.captions[caption] > 0 &&
-                  (!existingScore.captions[caption] || existingScore.captions[caption] === 0)) {
-                  existingScore.captions[caption] = newScore.captions[caption];
-                  captionsUpdated = true;
-                }
-              }
-              if (captionsUpdated) {
-                hasBeenUpdated = true;
-                logger.info(`Updated captions for ${newScore.corps}.`);
-              }
-            }
-          }
-
-          if (hasBeenUpdated) {
-            existingData[eventIndex] = eventToUpdate;
-            transaction.update(yearDocRef, { data: existingData });
-            logger.info(`Successfully merged new scores into event: ${newEventData.eventName}`);
-          } else {
-            logger.info(`No new scores to merge for event: ${newEventData.eventName}. Skipping.`);
-          }
-        } else {
-          const updatedData = [...existingData, newEventData];
-          logger.info(`Appending new event to historical_scores/${year}. Total events: ${updatedData.length}`);
-          transaction.update(yearDocRef, { data: updatedData });
-        }
-      }
-    });
+    await mergeEventIntoHistoricalScores(db, year, newEventData);
 
     const offSeasonDayMsg = offSeasonDay !== null ? `offSeasonDay: ${offSeasonDay}` : "offSeasonDay: null (pre-season event)";
     logger.info(`Successfully archived live scores to historical_scores/${docId}. ${offSeasonDayMsg}`);
