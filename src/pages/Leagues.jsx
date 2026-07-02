@@ -20,7 +20,7 @@ import {
   useJoinLeagueByCode,
   useLeaveLeague
 } from '../hooks/useLeagues';
-import { useProfile } from '../hooks/useProfile';
+import { useProfileStore } from '../store/profileStore';
 import { CreateLeagueModal, LeagueDetailView } from '../components/Leagues';
 
 // =============================================================================
@@ -332,7 +332,9 @@ const Leagues = () => {
   const [joiningLeagueId, setJoiningLeagueId] = useState(null);
 
   // Hooks
-  const { data: userProfile } = useProfile(user?.uid);
+  // Current user's profile comes from the global realtime store — no need for
+  // a second one-shot read of the same document through react-query.
+  const userProfile = useProfileStore((state) => state.profile);
   const { data: myLeagues = [], isLoading: loadingMyLeagues, refetch: refetchMyLeagues } = useMyLeagues(user?.uid);
   const {
     data: publicLeaguesData,

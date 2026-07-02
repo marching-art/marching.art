@@ -28,7 +28,6 @@ import { AuthContext, useAuth } from './context/AuthContext';
 import { MotionProvider } from './components/MotionProvider';
 import { useSeasonStore } from './store/seasonStore';
 import { useScheduleStore } from './store/scheduleStore';
-import { useUserStore } from './store/userStore';
 import { useProfileStore } from './store/profileStore';
 import OfflineBanner from './components/OfflineBanner';
 import { SkipToContent } from './components/a11y';
@@ -123,7 +122,6 @@ function App() {
   const seasonUid = useSeasonStore((state) => state.seasonUid);
   const initScheduleListener = useScheduleStore((state) => state.initScheduleListener);
   const cleanupScheduleListener = useScheduleStore((state) => state.cleanup);
-  const initAuthListener = useUserStore((state) => state.initAuthListener);
   const initProfileListener = useProfileStore((state) => state.initProfileListener);
   const cleanupProfileListener = useProfileStore((state) => state.cleanup);
   const profile = useProfileStore((state) => state.profile);
@@ -152,9 +150,13 @@ function App() {
   // This prevents duplicate Firestore listeners for profile data across components
   useEffect(() => {
     if (user) {
-      initProfileListener(user.uid, user);
+      initProfileListener(user.uid);
     } else {
       cleanupProfileListener();
+      // Evict cached per-user react-query data (profiles, leagues, etc.) so a
+      // subsequent sign-in with a different account can't briefly see the
+      // previous account's cached reads.
+      queryClient.clear();
     }
     return () => {
       // Only cleanup on unmount, not on user change (handled above)
@@ -203,15 +205,6 @@ function App() {
 
     initPushNotifications();
   }, [user]);
-
-  // Initialize user profile listener to sync profile data with auth state
-  // This ensures loggedInProfile is available for components like Scores
-  useEffect(() => {
-    const unsubscribe = initAuthListener();
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
-  }, [initAuthListener]);
 
   // Memoize auth context value to prevent unnecessary re-renders of all consumers
   // Only recreates when user, loading, or error actually change

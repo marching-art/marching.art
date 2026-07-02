@@ -4,6 +4,7 @@ import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { AUTH_CONFIG } from '../config';
 import { mergeTimeUnlockedClasses } from '../utils/classUnlockTime';
+import { getGameDay, pruneOldChallenges, CHALLENGE_DEFINITIONS } from '../utils/dailyChallenges';
 import toast from 'react-hot-toast';
 
 // All corps classes for admin override
@@ -46,9 +47,8 @@ export const useProfileStore = create((set, get) => ({
    * Returns unsubscribe function for cleanup
    *
    * @param {string} uid - User ID to track
-   * @param {Object} user - Firebase user object (for initial profile creation)
    */
-  initProfileListener: (uid, user) => {
+  initProfileListener: (uid) => {
     const { _unsubscribe, _currentUid } = get();
 
     // If already listening to this user, return existing unsubscribe
@@ -178,6 +178,69 @@ export const useProfileStore = create((set, get) => ({
       console.error('Error updating profile:', err);
       toast.error('Failed to save changes. Please try again.');
       // Revert on error (the listener will sync correct data)
+    }
+  },
+
+  /**
+   * Mark a daily challenge as complete for the current game day.
+   *
+   * Writes only the client-owned `challenges` field; the onSnapshot listener
+   * syncs the store afterwards, so no optimistic set is needed. Returns true
+   * when a challenge was newly completed, false otherwise.
+   *
+   * @param {string} challengeId - Challenge key (see CHALLENGE_DEFINITIONS)
+   */
+  completeDailyChallenge: async (challengeId) => {
+    const { _currentUid, profile } = get();
+    if (!_currentUid || !profile) return false;
+
+    try {
+      const today = getGameDay(); // 2 AM ET reset, matches score processing
+      const currentChallenges = profile.challenges || {};
+      const todayChallenges = currentChallenges[today] || [];
+
+      const existingChallenge = todayChallenges.find((c) => c.id === challengeId);
+
+      let updatedChallenges;
+      let challengeTitle;
+      let challengeReward;
+
+      if (existingChallenge) {
+        if (existingChallenge.completed) {
+          return false; // Already completed
+        }
+        updatedChallenges = todayChallenges.map((challenge) =>
+          challenge.id === challengeId
+            ? { ...challenge, progress: challenge.target, completed: true }
+            : challenge
+        );
+        challengeTitle = existingChallenge.title;
+        challengeReward = existingChallenge.reward;
+      } else if (CHALLENGE_DEFINITIONS[challengeId]) {
+        // Challenge wasn't seeded for today yet - create it completed
+        const newChallenge = CHALLENGE_DEFINITIONS[challengeId];
+        updatedChallenges = [...todayChallenges, newChallenge];
+        challengeTitle = newChallenge.title;
+        challengeReward = newChallenge.reward;
+      } else {
+        return false; // Unknown challenge
+      }
+
+      // Prune old entries to prevent unbounded document growth (keep last 30 days)
+      const newChallengesData = pruneOldChallenges({
+        ...currentChallenges,
+        [today]: updatedChallenges,
+      });
+
+      const profileRef = doc(db, 'artifacts/marching-art/users', _currentUid, 'profile/data');
+      await updateDoc(profileRef, { challenges: newChallengesData });
+
+      const rewardText = challengeReward ? ` +${challengeReward}` : '';
+      toast.success(`${challengeTitle} complete!${rewardText}`);
+      return true;
+    } catch (error) {
+      console.error('Error completing challenge:', error);
+      return false;
     }
   },
 

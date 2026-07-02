@@ -8,7 +8,7 @@ import React, { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Calendar, Activity, Archive } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { useUserStore } from '../store/userStore';
+import { useProfileStore } from '../store/profileStore';
 import { useSeasonStore } from '../store/seasonStore';
 import { formatEventName } from '../utils/season';
 import { useScoresData } from '../hooks/useScoresData';
@@ -50,8 +50,8 @@ const TABS = [
 
 const Scores = () => {
   const { user } = useAuth();
-  const loggedInProfile = useUserStore((state) => state.loggedInProfile);
-  const completeDailyChallenge = useUserStore((state) => state.completeDailyChallenge);
+  const profile = useProfileStore((state) => state.profile);
+  const completeDailyChallenge = useProfileStore((state) => state.completeDailyChallenge);
   const formatSeasonName = useSeasonStore((state) => state.formatSeasonName);
   const [searchParams] = useSearchParams();
   const { trigger: haptic } = useHaptic();
@@ -122,16 +122,16 @@ const Scores = () => {
   }, [formatSeasonName, isArchived, displayedSeasonId, archivedSeasons]);
 
   const userCorpsName = useMemo(() => {
-    if (!loggedInProfile?.corps) return null;
-    const activeCorps = Object.values(loggedInProfile.corps).find(c => c?.lineup);
+    if (!profile?.corps) return null;
+    const activeCorps = Object.values(profile.corps).find(c => c?.lineup);
     return activeCorps?.corpsName || null;
-  }, [loggedInProfile?.corps]);
+  }, [profile?.corps]);
 
   useEffect(() => {
-    if (user && loggedInProfile && completeDailyChallenge) {
+    if (user && profile && completeDailyChallenge) {
       completeDailyChallenge('check_leaderboard');
     }
-  }, [user, loggedInProfile, completeDailyChallenge]);
+  }, [user, profile, completeDailyChallenge]);
 
   useEffect(() => {
     if (targetShowName) {
