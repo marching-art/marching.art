@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import { db } from '../firebase';
+import { db, functions } from '../firebase';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
 import { AUTH_CONFIG } from '../config';
 import { mergeTimeUnlockedClasses } from '../utils/classUnlockTime';
 import toast from 'react-hot-toast';
@@ -95,17 +96,18 @@ export const useProfileStore = create((set, get) => ({
             error: null,
           });
 
-          // Check for time-based class unlocks (once per session)
+          // Check for time-based class unlocks (once per session).
+          // The local check is only a cheap eligibility test — security rules
+          // make unlockedClasses read-only for clients, so the actual unlock
+          // is computed and written server-side by the syncClassUnlocks
+          // callable. The listener picks up the resulting profile update.
           if (!_timeUnlockProcessed && !isAdmin && data.createdAt) {
+            _timeUnlockProcessed = true;
             const currentUnlocked = data.unlockedClasses || ['soundSport'];
-            const merged = mergeTimeUnlockedClasses(currentUnlocked, data.createdAt);
-            if (merged) {
-              _timeUnlockProcessed = true;
-              updateDoc(profileRef, { unlockedClasses: merged }).catch((err) => {
-                console.error('Error applying time-based class unlocks:', err);
+            if (mergeTimeUnlockedClasses(currentUnlocked, data.createdAt)) {
+              httpsCallable(functions, 'syncClassUnlocks')().catch((err) => {
+                console.error('Error syncing time-based class unlocks:', err);
               });
-            } else {
-              _timeUnlockProcessed = true;
             }
           }
         } else {

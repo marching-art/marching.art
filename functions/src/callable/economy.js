@@ -2,6 +2,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb, dataNamespaceParam } = require("../config");
+const { calculateXPUpdates } = require("../helpers/xpCalculations");
 
 // =============================================================================
 // CORPSCOIN HISTORY SUBCOLLECTION HELPERS
@@ -377,6 +378,59 @@ const unlockClassWithCorpsCoin = onCall({ cors: true }, async (request) => {
 });
 
 /**
+ * Sync time-based class unlocks.
+ *
+ * Classes unlock by XP level OR account age (weeks since registration).
+ * XP-based unlocks are applied whenever the server awards XP, but an idle
+ * user can become eligible for a time-based unlock without any XP event.
+ * Clients call this on session start; the server recomputes eligibility and
+ * persists any newly unlocked classes. This replaces the old client-side
+ * unlockedClasses write, which security rules no longer permit.
+ */
+const syncClassUnlocks = onCall({ cors: true }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "You must be logged in.");
+  }
+
+  const uid = request.auth.uid;
+  const db = getDb();
+  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+
+  try {
+    const result = await db.runTransaction(async (transaction) => {
+      const profileDoc = await transaction.get(profileRef);
+      if (!profileDoc.exists) {
+        throw new HttpsError("not-found", "User profile not found.");
+      }
+
+      const profileData = profileDoc.data();
+      // calculateXPUpdates with 0 XP recomputes unlock eligibility (level- or
+      // time-based) and canonicalizes legacy class keys without changing XP.
+      const { updates, classUnlocked } = calculateXPUpdates(profileData, 0);
+
+      if (!updates.unlockedClasses) {
+        return {
+          unlockedClasses: profileData.unlockedClasses || ["soundSport"],
+          classUnlocked: null,
+        };
+      }
+
+      transaction.update(profileRef, { unlockedClasses: updates.unlockedClasses });
+      return { unlockedClasses: updates.unlockedClasses, classUnlocked };
+    });
+
+    if (result.classUnlocked) {
+      logger.info(`User ${uid} unlocked ${result.classUnlocked} via time-based sync`);
+    }
+    return { success: true, ...result };
+  } catch (error) {
+    logger.error(`Error syncing class unlocks for user ${uid}:`, error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", "Failed to sync class unlocks.");
+  }
+});
+
+/**
  * Pay league entry fee (for commissioner-set league fees)
  */
 const payLeagueEntryFee = async (uid, leagueId, leagueName, fee) => {
@@ -524,6 +578,9 @@ module.exports = {
   // Spending functions
   unlockClassWithCorpsCoin,
   payLeagueEntryFee,
+
+  // Progression sync
+  syncClassUnlocks,
 
   // Query functions
   getCorpsCoinHistory,

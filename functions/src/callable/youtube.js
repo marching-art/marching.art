@@ -100,7 +100,14 @@ exports.searchYoutubeVideo = onCall(
     secrets: [youtubeApiKey]
   },
   async (request) => {
-    const { query, skipCache } = request.data;
+    const { query } = request.data;
+
+    // Each uncached call spends billed YouTube Data API quota, so anonymous
+    // clients are limited to cache hits: they can view already-found videos
+    // (public Landing/Article pages) but cannot trigger API searches or
+    // bypass the cache.
+    const isAuthenticated = !!request.auth;
+    const skipCache = isAuthenticated && !!request.data.skipCache;
 
     if (!query || typeof query !== "string") {
       throw new HttpsError("invalid-argument", "Search query is required.");
@@ -133,6 +140,16 @@ exports.searchYoutubeVideo = onCall(
       }
     } else {
       logger.info("Skipping cache:", { query, cacheKey });
+    }
+
+    // Cache miss from here on — only signed-in users may spend API quota.
+    if (!isAuthenticated) {
+      logger.info("Unauthenticated cache miss, not searching:", { query, cacheKey });
+      return {
+        success: true,
+        found: false,
+        message: "Sign in to search for this performance video.",
+      };
     }
 
     try {

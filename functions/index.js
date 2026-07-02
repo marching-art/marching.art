@@ -30,6 +30,7 @@ const {
   unlockClassWithCorpsCoin,
   getCorpsCoinHistory,
   getEarningOpportunities,
+  syncClassUnlocks,
 } = require("./src/callable/economy");
 const { registerCorps } = require("./src/callable/registerCorps");
 const {
@@ -234,6 +235,7 @@ module.exports = {
   unlockClassWithCorpsCoin,
   getCorpsCoinHistory,
   getEarningOpportunities,
+  syncClassUnlocks,
   registerCorps,
   processCorpsDecisions,
   retireCorps,

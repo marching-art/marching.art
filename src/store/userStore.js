@@ -1,22 +1,15 @@
 import { create } from 'zustand';
 import { auth, db, dataNamespace } from '../firebase';
-import { 
-  onAuthStateChanged, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword,
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
   signOut,
-  sendPasswordResetEmail,
-  updateProfile
+  sendPasswordResetEmail
 } from 'firebase/auth';
-import { 
-  doc, 
-  getDoc, 
-  setDoc, 
-  updateDoc,
-  collection,
-  query,
-  where,
-  getDocs
+import {
+  doc,
+  getDoc,
+  updateDoc
 } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 
@@ -149,90 +142,11 @@ export const useUserStore = create((set, get) => ({
     }
   },
 
-  // Sign up
-  signUp: async (email, password, username) => {
-    set({ isLoadingAuth: true, error: null });
-    try {
-      // Check if username is available
-      const usernameQuery = query(
-        collection(db, 'artifacts', dataNamespace, 'usernames'),
-        where('username', '==', username.toLowerCase())
-      );
-      const usernameSnapshot = await getDocs(usernameQuery);
-      
-      if (!usernameSnapshot.empty) {
-        throw new Error('Username already taken');
-      }
-
-      // Create user account
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      // Update display name
-      await updateProfile(user, { displayName: username });
-
-      // Create user profile
-      const profileRef = doc(
-        db, 
-        'artifacts', 
-        dataNamespace, 
-        'users', 
-        user.uid, 
-        'profile', 
-        'data'
-      );
-      
-      const newProfile = {
-        uid: user.uid,
-        username: username,
-        displayName: username,
-        createdAt: new Date(),
-        // XP & Progression
-        xp: 0,
-        xpLevel: 1,
-        userTitle: 'Rookie',
-        // Currency
-        corpsCoin: 1000,
-        // Unlocks
-        unlockedClasses: ['soundSport'],
-        // Corps data
-        corps: {},
-        // Stats
-        stats: {
-          seasonsPlayed: 0,
-          championships: 0,
-          topTenFinishes: 0,
-          leagueWins: 0,
-        },
-      };
-      
-      await setDoc(profileRef, newProfile);
-
-      // Reserve username
-      const usernameRef = doc(
-        db,
-        'artifacts',
-        dataNamespace,
-        'usernames',
-        username.toLowerCase()
-      );
-      await setDoc(usernameRef, {
-        uid: user.uid,
-        username: username.toLowerCase(),
-        createdAt: new Date()
-      });
-
-      set({ loggedInProfile: newProfile });
-      toast.success('Account created successfully!');
-      return user;
-    } catch (error) {
-      set({ error: error.message });
-      toast.error(error.message);
-      throw error;
-    } finally {
-      set({ isLoadingAuth: false });
-    }
-  },
+  // NOTE: There is intentionally no client-side sign-up here. Account
+  // creation happens via Firebase Auth (authHelpers.signUpWithEmail) and the
+  // profile document + username reservation are created server-side by the
+  // createUserProfile callable during onboarding — security rules block
+  // clients from creating profile docs or writing to usernames/.
 
   // Sign out
   signOutUser: async () => {

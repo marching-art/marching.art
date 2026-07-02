@@ -4,15 +4,12 @@
 import {
   doc,
   getDoc,
-  setDoc,
   updateDoc,
   onSnapshot,
   Unsubscribe,
 } from 'firebase/firestore';
 import { db, paths, withErrorHandling } from './client';
 import type { UserProfile, CorpsData, CorpsClass, DeepPartial } from '../types';
-import { getWeeksSinceRegistration, CLASS_UNLOCK_WEEKS } from '../utils/classUnlockTime';
-import { isCorpsClassUnlocked } from '../utils/corps';
 
 // =============================================================================
 // READ OPERATIONS
@@ -75,42 +72,14 @@ export async function getCorps(
 
 // =============================================================================
 // WRITE OPERATIONS
+//
+// NOTE: Profile creation and all economy/progression mutations (XP, level,
+// CorpsCoin, class unlocks, stats, trophies) are server-only. They happen in
+// Cloud Functions callables (createUserProfile, awardXP, syncClassUnlocks,
+// unlockClassWithCorpsCoin, ...) and are blocked for clients by Firestore
+// security rules. The helpers below may only touch cosmetic/preference
+// fields.
 // =============================================================================
-
-/**
- * Create a new user profile
- */
-export async function createProfile(
-  uid: string,
-  data: Partial<UserProfile>
-): Promise<void> {
-  return withErrorHandling(async () => {
-    const profileRef = doc(db, paths.userProfile(uid));
-    await setDoc(profileRef, {
-      uid,
-      displayName: 'Director',
-      createdAt: new Date(),
-      // XP & Progression
-      xp: 0,
-      xpLevel: 1,
-      userTitle: 'Rookie',
-      // Currency
-      corpsCoin: 1000,
-      // Unlocks
-      unlockedClasses: ['soundSport'],
-      // Corps data
-      corps: {},
-      // Stats
-      stats: {
-        seasonsPlayed: 0,
-        championships: 0,
-        topTenFinishes: 0,
-        leagueWins: 0,
-      },
-      ...data,
-    });
-  }, 'Failed to create profile');
-}
 
 /**
  * Update a user's profile
@@ -148,148 +117,8 @@ export async function updateCorps(
 }
 
 // =============================================================================
-// XP & PROGRESSION
-// =============================================================================
-
-/**
- * Add XP to a user and handle level ups
- */
-export async function addXp(uid: string, amount: number): Promise<{
-  newXp: number;
-  newLevel: number;
-  leveledUp: boolean;
-  unlockedClass?: CorpsClass;
-}> {
-  return withErrorHandling(async () => {
-    const profile = await getProfile(uid);
-    if (!profile) {
-      throw new Error('Profile not found');
-    }
-
-    const currentXp = profile.xp || 0;
-    const currentLevel = profile.xpLevel || 1;
-    const newXp = currentXp + amount;
-
-    // Calculate new level based on XP thresholds
-    const newLevel = calculateLevel(newXp);
-    const leveledUp = newLevel > currentLevel;
-
-    // Check for class unlocks (by XP level OR time since registration)
-    let unlockedClass: CorpsClass | undefined;
-    const unlockedClasses = [...(profile.unlockedClasses || ['soundSport'])];
-    const weeksSince = getWeeksSinceRegistration(profile.createdAt);
-
-    // Write canonical keys ('openClass'/'worldClass') so unlockedClasses stays
-    // consistent with the rest of the data layer; match either spelling when
-    // checking whether a class is already unlocked.
-    if ((newLevel >= 3 || weeksSince >= CLASS_UNLOCK_WEEKS.aClass) && !isCorpsClassUnlocked(unlockedClasses, 'aClass')) {
-      unlockedClasses.push('aClass');
-      unlockedClass = 'aClass';
-    }
-    if ((newLevel >= 5 || weeksSince >= CLASS_UNLOCK_WEEKS.open) && !isCorpsClassUnlocked(unlockedClasses, 'openClass')) {
-      unlockedClasses.push('openClass');
-      unlockedClass = 'openClass';
-    }
-    if ((newLevel >= 10 || weeksSince >= CLASS_UNLOCK_WEEKS.world) && !isCorpsClassUnlocked(unlockedClasses, 'worldClass')) {
-      unlockedClasses.push('worldClass');
-      unlockedClass = 'worldClass';
-    }
-
-    // Update profile
-    await updateProfile(uid, {
-      xp: newXp,
-      xpLevel: newLevel,
-      unlockedClasses,
-      userTitle: getLevelTitle(newLevel),
-    });
-
-    return { newXp, newLevel, leveledUp, unlockedClass };
-  }, 'Failed to add XP');
-}
-
-/**
- * Calculate level from XP
- */
-function calculateLevel(xp: number): number {
-  // XP thresholds for each level
-  const thresholds = [
-    0,      // Level 1
-    100,    // Level 2
-    300,    // Level 3 (unlocks A Class)
-    600,    // Level 4
-    1000,   // Level 5 (unlocks Open Class)
-    1500,   // Level 6
-    2100,   // Level 7
-    2800,   // Level 8
-    3600,   // Level 9
-    4500,   // Level 10 (unlocks World Class)
-    5500,   // Level 11+
-  ];
-
-  let level = 1;
-  for (let i = 0; i < thresholds.length; i++) {
-    if (xp >= thresholds[i]) {
-      level = i + 1;
-    } else {
-      break;
-    }
-  }
-
-  // Beyond level 11, each level requires 1000 more XP
-  if (xp >= thresholds[thresholds.length - 1]) {
-    const extraXp = xp - thresholds[thresholds.length - 1];
-    level = thresholds.length + Math.floor(extraXp / 1000);
-  }
-
-  return level;
-}
-
-/**
- * Get title for a given level
- */
-function getLevelTitle(level: number): string {
-  const titles: Record<number, string> = {
-    1: 'Rookie',
-    2: 'Trainee',
-    3: 'Assistant',
-    4: 'Coordinator',
-    5: 'Instructor',
-    6: 'Caption Head',
-    7: 'Program Director',
-    8: 'Director',
-    9: 'Executive Director',
-    10: 'Legend',
-  };
-
-  if (level >= 10) return titles[10];
-  return titles[level] || 'Rookie';
-}
-
-// =============================================================================
 // CURRENCY
 // =============================================================================
-
-/**
- * Add or subtract CorpsCoin
- */
-export async function updateCorpsCoin(
-  uid: string,
-  amount: number
-): Promise<number> {
-  return withErrorHandling(async () => {
-    const profile = await getProfile(uid);
-    if (!profile) {
-      throw new Error('Profile not found');
-    }
-
-    const currentCoin = profile.corpsCoin || 0;
-    const newCoin = Math.max(0, currentCoin + amount);
-
-    await updateProfile(uid, { corpsCoin: newCoin });
-
-    return newCoin;
-  }, 'Failed to update CorpsCoin');
-}
 
 /**
  * Check if user can afford a purchase

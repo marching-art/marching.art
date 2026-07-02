@@ -67,30 +67,3 @@ export function useUpdateCorps(uid: string) {
   });
 }
 
-/**
- * Hook to add XP to a user
- */
-export function useAddXp(uid: string) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (amount: number) => profileApi.addXp(uid, amount),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.profile(uid) });
-    },
-  });
-}
-
-/**
- * Hook to update CorpsCoin
- */
-export function useUpdateCorpsCoin(uid: string) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (amount: number) => profileApi.updateCorpsCoin(uid, amount),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.profile(uid) });
-    },
-  });
-}

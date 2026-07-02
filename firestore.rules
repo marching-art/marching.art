@@ -12,6 +12,17 @@ function isOwner(userId) {
   return isAuthenticated() && request.auth.uid == userId;
 }
 
+// Profile fields that only backend code (Admin SDK bypasses rules) may set.
+// Guards the game economy: currency, XP/level, class unlocks, career stats,
+// and trophies must never be client-writable, and createdAt/username/uid are
+// protected because unlock timing and username reservation depend on them.
+function touchesProtectedProfileFields() {
+  return request.resource.data.diff(resource.data).affectedKeys().hasAny([
+    'corpsCoin', 'xp', 'xpLevel', 'userTitle', 'unlockedClasses',
+    'stats', 'trophies', 'username', 'createdAt', 'uid'
+  ]);
+}
+
 // --- USER DATA ---
 // This path now uses {appId} to match our React code and guidelines
 
@@ -19,11 +30,17 @@ function isOwner(userId) {
 match /artifacts/{appId}/users/{userId} {
   allow list: if isAdmin();
 
-  // Profile data is public to read, owner or admin can write
-  // This is correct for leaderboards and public profiles.
+  // Profile data is public to read (leaderboards and public profiles).
+  // Owners may update cosmetic/preference fields (corps details, settings,
+  // display name, challenges, engagement, etc.) but NOT the protected
+  // economy/progression fields — those change only via Cloud Functions.
+  // Creation is owned by the createUserProfile callable, which atomically
+  // reserves the username server-side.
   match /profile/data {
-    allow read: if true; 
-    allow write: if isOwner(userId) || isAdmin();
+    allow read: if true;
+    allow create, delete: if isAdmin();
+    allow update: if isAdmin() ||
+      (isOwner(userId) && !touchesProtectedProfileFields());
   }
   
   // Comments are public to read. Logged-in users can create.
@@ -54,10 +71,13 @@ match /artifacts/{appId}/users/{userId} {
   // but only written to by the owner or an admin.
   // NOTE: `private` is explicitly excluded here — additive rule semantics mean
   // a stricter rule elsewhere cannot "override" a permissive match, so the
-  // exclusion has to live on the permissive rule itself.
+  // exclusion has to live on the permissive rule itself. Likewise
+  // `corpsCoinHistory` is excluded from owner writes: it is the economy audit
+  // trail and is written exclusively by Cloud Functions.
   match /{subcollection}/{document=**} {
     allow read: if isAuthenticated() && subcollection != 'private';
-    allow write: if isOwner(userId) || isAdmin();
+    allow write: if isAdmin() ||
+      (isOwner(userId) && subcollection != 'corpsCoinHistory');
   }
 }
 

@@ -54,15 +54,14 @@ export {
 } from '../config';
 
 // Re-export profile API
+// NOTE: XP, CorpsCoin, and profile creation are server-only operations
+// (see Cloud Functions callables); they are intentionally not exposed here.
 export {
   getProfile,
   subscribeToProfile,
   getCorps,
-  createProfile,
   updateProfile,
   updateCorps,
-  addXp,
-  updateCorpsCoin,
   canAfford,
 } from './profile';
 
