@@ -7,9 +7,22 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Trophy, Users, Calendar, Target, TrendingUp, Award,
-  Clock, Star, DollarSign, Book, ChevronDown, ChevronRight,
-  HelpCircle, Music, Zap, Search
+  Trophy,
+  Users,
+  Calendar,
+  Target,
+  TrendingUp,
+  Award,
+  Clock,
+  Star,
+  DollarSign,
+  Book,
+  ChevronDown,
+  ChevronRight,
+  HelpCircle,
+  Music,
+  Zap,
+  Search,
 } from 'lucide-react';
 import { CAPTIONS, CLASSES, GLOSSARY, FAQ } from './howToPlayData';
 
@@ -64,11 +77,7 @@ const SectionCard = ({ title, icon: Icon, children, defaultOpen = false }) => {
           <ChevronRight className="w-4 h-4 text-gray-500" />
         )}
       </button>
-      {isOpen && (
-        <div className="px-4 pb-4 text-sm text-gray-300">
-          {children}
-        </div>
-      )}
+      {isOpen && <div className="px-4 pb-4 text-sm text-gray-300">{children}</div>}
     </div>
   );
 };
@@ -88,27 +97,41 @@ const BasicsTab = () => (
   <div className="space-y-4">
     {/* Quick Start */}
     <div className="bg-[#0057B8]/10 border border-[#0057B8]/30 rounded-sm p-4">
-      <h3 className="text-xs font-bold uppercase tracking-wider text-[#0057B8] mb-3">Quick Start</h3>
+      <h3 className="text-xs font-bold uppercase tracking-wider text-[#0057B8] mb-3">
+        Quick Start
+      </h3>
       <div className="space-y-3">
         <div className="flex items-start gap-3">
-          <div className="w-6 h-6 bg-[#0057B8] text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">1</div>
+          <div className="w-6 h-6 bg-[#0057B8] text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
+            1
+          </div>
           <div>
             <p className="text-sm font-semibold text-white">Create Your Corps</p>
-            <p className="text-xs text-gray-400">Register with a unique name. Start in SoundSport class.</p>
+            <p className="text-xs text-gray-400">
+              Register with a unique name. Start in SoundSport class.
+            </p>
           </div>
         </div>
         <div className="flex items-start gap-3">
-          <div className="w-6 h-6 bg-[#0057B8] text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">2</div>
+          <div className="w-6 h-6 bg-[#0057B8] text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
+            2
+          </div>
           <div>
             <p className="text-sm font-semibold text-white">Draft Your Lineup</p>
-            <p className="text-xs text-gray-400">Select 8 captions from historical DCI corps. Stay within budget.</p>
+            <p className="text-xs text-gray-400">
+              Select 8 captions from historical DCI corps. Stay within budget.
+            </p>
           </div>
         </div>
         <div className="flex items-start gap-3">
-          <div className="w-6 h-6 bg-[#0057B8] text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">3</div>
+          <div className="w-6 h-6 bg-[#0057B8] text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
+            3
+          </div>
           <div>
             <p className="text-sm font-semibold text-white">Compete & Level Up</p>
-            <p className="text-xs text-gray-400">Earn scores, gain XP, unlock higher classes, climb leaderboards.</p>
+            <p className="text-xs text-gray-400">
+              Earn scores, gain XP, unlock higher classes, climb leaderboards.
+            </p>
           </div>
         </div>
       </div>
@@ -116,7 +139,9 @@ const BasicsTab = () => (
 
     {/* How Scoring Works */}
     <SectionCard title="How Scoring Works" icon={Trophy} defaultOpen>
-      <p className="mb-3">Your corps score = sum of 8 caption scores from your selected historical performances.</p>
+      <p className="mb-3">
+        Your corps score = sum of 8 caption scores from your selected historical performances.
+      </p>
       <div className="bg-black/30 rounded-sm p-3">
         <DataRow label="Live Season" value="Real DCI scores" />
         <DataRow label="Off-Season" value="Historical data" />
@@ -149,7 +174,9 @@ const BasicsTab = () => (
 
     {/* CorpsCoin */}
     <SectionCard title="CorpsCoin Economy" icon={DollarSign}>
-      <p className="mb-3">Earn CorpsCoin (CC) through gameplay. Spend on class unlocks and streak protection.</p>
+      <p className="mb-3">
+        Earn CorpsCoin (CC) through gameplay. Spend on class unlocks and streak protection.
+      </p>
       <div className="bg-black/30 rounded-sm p-3">
         <DataRow label="A Class unlock" value="1,000 CC" />
         <DataRow label="Open Class unlock" value="2,500 CC" />
@@ -182,7 +209,8 @@ const BasicsTab = () => (
 const ClassesTab = () => (
   <div className="space-y-4">
     <p className="text-sm text-gray-300 mb-4">
-      Four competitive classes with different point budgets. Higher classes = more points to spend on premium captions.
+      Four competitive classes with different point budgets. Higher classes = more points to spend
+      on premium captions.
     </p>
 
     <div className="grid gap-3">
@@ -190,28 +218,41 @@ const ClassesTab = () => (
         <div
           key={cls.id}
           className={`bg-[#111] border rounded-sm p-4 ${
-            cls.color === 'green' ? 'border-green-500/30' :
-            cls.color === 'blue' ? 'border-[#0057B8]/30' :
-            cls.color === 'purple' ? 'border-purple-500/30' :
-            'border-yellow-500/30'
+            cls.color === 'green'
+              ? 'border-green-500/30'
+              : cls.color === 'blue'
+                ? 'border-[#0057B8]/30'
+                : cls.color === 'purple'
+                  ? 'border-purple-500/30'
+                  : 'border-yellow-500/30'
           }`}
         >
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <Trophy className={`w-4 h-4 ${
-                cls.color === 'green' ? 'text-green-500' :
-                cls.color === 'blue' ? 'text-[#0057B8]' :
-                cls.color === 'purple' ? 'text-purple-500' :
-                'text-yellow-500'
-              }`} />
+              <Trophy
+                className={`w-4 h-4 ${
+                  cls.color === 'green'
+                    ? 'text-green-500'
+                    : cls.color === 'blue'
+                      ? 'text-[#0057B8]'
+                      : cls.color === 'purple'
+                        ? 'text-purple-500'
+                        : 'text-yellow-500'
+                }`}
+              />
               <span className="text-sm font-bold text-white">{cls.name}</span>
             </div>
-            <span className={`text-xs px-2 py-0.5 rounded-sm ${
-              cls.color === 'green' ? 'bg-green-500/20 text-green-400' :
-              cls.color === 'blue' ? 'bg-[#0057B8]/20 text-[#0057B8]' :
-              cls.color === 'purple' ? 'bg-purple-500/20 text-purple-400' :
-              'bg-yellow-500/20 text-yellow-400'
-            }`}>
+            <span
+              className={`text-xs px-2 py-0.5 rounded-sm ${
+                cls.color === 'green'
+                  ? 'bg-green-500/20 text-green-400'
+                  : cls.color === 'blue'
+                    ? 'bg-[#0057B8]/20 text-[#0057B8]'
+                    : cls.color === 'purple'
+                      ? 'bg-purple-500/20 text-purple-400'
+                      : 'bg-yellow-500/20 text-yellow-400'
+              }`}
+            >
               {cls.unlock}
             </span>
           </div>
@@ -226,8 +267,8 @@ const ClassesTab = () => (
 
     <div className="bg-[#0057B8]/10 border border-[#0057B8]/30 rounded-sm p-3">
       <p className="text-xs text-gray-300">
-        <strong className="text-white">Tip:</strong> Unlock via level OR CorpsCoin.
-        A Class = Lvl 3 or 1,000 CC. Open = Lvl 5 or 2,500 CC. World = Lvl 10 or 5,000 CC.
+        <strong className="text-white">Tip:</strong> Unlock via level OR CorpsCoin. A Class = Lvl 3
+        or 1,000 CC. Open = Lvl 5 or 2,500 CC. World = Lvl 10 or 5,000 CC.
       </p>
     </div>
   </div>
@@ -236,7 +277,8 @@ const ClassesTab = () => (
 const CaptionsTab = () => (
   <div className="space-y-4">
     <p className="text-sm text-gray-300 mb-4">
-      Your lineup = 8 captions, one from each DCI scoring category. Each comes from a historical corps performance.
+      Your lineup = 8 captions, one from each DCI scoring category. Each comes from a historical
+      corps performance.
     </p>
 
     {/* Caption Grid */}
@@ -254,7 +296,10 @@ const CaptionsTab = () => (
 
     {/* Point Costs */}
     <SectionCard title="Point Costs" icon={Target} defaultOpen>
-      <p className="mb-3">Each caption costs 1-25 points based on historical performance. Stay within your class budget!</p>
+      <p className="mb-3">
+        Each caption costs 1-25 points based on historical performance. Stay within your class
+        budget!
+      </p>
       <div className="bg-black/30 rounded-sm p-3">
         <DataRow label="Min caption cost" value="1 pt" />
         <DataRow label="Max caption cost" value="25 pts" />
@@ -313,7 +358,8 @@ const SeasonsTab = () => (
 
     <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-sm p-3">
       <p className="text-xs text-gray-300">
-        <strong className="text-white">Season End:</strong> Leaderboards reset, XP/level/classes carry over.
+        <strong className="text-white">Season End:</strong> Leaderboards reset, XP/level/classes
+        carry over.
       </p>
     </div>
   </div>
@@ -351,13 +397,20 @@ const HowToPlay = () => {
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'basics': return <BasicsTab />;
-      case 'classes': return <ClassesTab />;
-      case 'captions': return <CaptionsTab />;
-      case 'seasons': return <SeasonsTab />;
-      case 'glossary': return <GlossaryTab />;
-      case 'faq': return <FAQTab />;
-      default: return <BasicsTab />;
+      case 'basics':
+        return <BasicsTab />;
+      case 'classes':
+        return <ClassesTab />;
+      case 'captions':
+        return <CaptionsTab />;
+      case 'seasons':
+        return <SeasonsTab />;
+      case 'glossary':
+        return <GlossaryTab />;
+      case 'faq':
+        return <FAQTab />;
+      default:
+        return <BasicsTab />;
     }
   };
 
@@ -403,9 +456,7 @@ const HowToPlay = () => {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {renderTabContent()}
-      </div>
+      <div className="flex-1 overflow-y-auto p-4">{renderTabContent()}</div>
 
       {/* Quick Reference Footer */}
       <div className="flex-shrink-0 px-4 py-3 border-t border-white/10 bg-black/30">

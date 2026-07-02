@@ -19,7 +19,8 @@ const PWAInstallPrompt = () => {
   useEffect(() => {
     const detectPlatform = () => {
       const ua = navigator.userAgent || navigator.vendor || window.opera;
-      const isIPad = /iPad/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const isIPad =
+        /iPad/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
       const isIPhone = /iPhone/.test(ua);
       const isAndroid = /android/i.test(ua);
       const isMac = /Macintosh|MacIntel/.test(ua) && !isIPad;
@@ -71,7 +72,7 @@ const PWAInstallPrompt = () => {
     // Check if user has dismissed the prompt before
     const dismissed = localStorage.getItem('pwa-install-dismissed');
     const dismissedDate = dismissed ? parseInt(dismissed) : 0;
-    const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
 
     // Don't show if dismissed within last 7 days
     if (dismissedDate > sevenDaysAgo) return;
@@ -153,7 +154,7 @@ const PWAInstallPrompt = () => {
               </div>
             </div>
           ),
-          showInstallButton: false
+          showInstallButton: false,
         };
       case 'ipados':
         return {
@@ -175,7 +176,7 @@ const PWAInstallPrompt = () => {
               </div>
             </div>
           ),
-          showInstallButton: false
+          showInstallButton: false,
         };
       case 'android':
         return {
@@ -183,16 +184,17 @@ const PWAInstallPrompt = () => {
           title: 'Install App',
           description: 'Add marching.art to your home screen for quick access and offline support',
           instructions: null,
-          showInstallButton: true
+          showInstallButton: true,
         };
       case 'windows':
       case 'macos':
         return {
           icon: Monitor,
           title: 'Install Desktop App',
-          description: 'Install marching.art as a desktop app for faster access and better performance',
+          description:
+            'Install marching.art as a desktop app for faster access and better performance',
           instructions: null,
-          showInstallButton: true
+          showInstallButton: true,
         };
       default:
         return {
@@ -200,7 +202,7 @@ const PWAInstallPrompt = () => {
           title: 'Install App',
           description: 'Install marching.art for offline access and better performance',
           instructions: null,
-          showInstallButton: !!deferredPrompt
+          showInstallButton: !!deferredPrompt,
         };
     }
   };
@@ -236,12 +238,8 @@ const PWAInstallPrompt = () => {
             </div>
 
             <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-bold text-white mb-1 pr-6">
-                {content.title}
-              </h3>
-              <p className="text-sm text-gray-400 mb-4">
-                {content.description}
-              </p>
+              <h3 className="text-lg font-bold text-white mb-1 pr-6">{content.title}</h3>
+              <p className="text-sm text-gray-400 mb-4">{content.description}</p>
 
               {content.instructions}
 

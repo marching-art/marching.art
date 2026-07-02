@@ -64,7 +64,7 @@ function initializeFirebase(): void {
   auth = getAuth(app);
   db = initializeFirestore(app, {
     ignoreUndefinedProperties: true,
-    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
   });
   functions = getFunctions(app);
   // Note: Storage is lazy-loaded via getStorageInstance() to reduce initial bundle
@@ -237,27 +237,23 @@ export const paths = {
   fantasyRecaps: (seasonUid: string) => `fantasy_recaps/${seasonUid}`,
   // Fantasy recaps daily subcollection (OPTIMIZATION: one doc per day)
   fantasyRecapsDays: (seasonUid: string) => `fantasy_recaps/${seasonUid}/days`,
-  fantasyRecapsDay: (seasonUid: string, day: number | string) => `fantasy_recaps/${seasonUid}/days/${day}`,
+  fantasyRecapsDay: (seasonUid: string, day: number | string) =>
+    `fantasy_recaps/${seasonUid}/days/${day}`,
 
   // Leaderboard paths
   leaderboard: (type: string, corpsClass: string) =>
     `artifacts/${DATA_NAMESPACE}/leaderboard/${type}/${corpsClass}`,
-  lifetimeLeaderboard: (view: string) =>
-    `artifacts/${DATA_NAMESPACE}/leaderboard/lifetime_${view}`,
+  lifetimeLeaderboard: (view: string) => `artifacts/${DATA_NAMESPACE}/leaderboard/lifetime_${view}`,
 
   // League paths
   leagues: () => `artifacts/${DATA_NAMESPACE}/leagues`,
   league: (leagueId: string) => `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}`,
   leagueStandings: (leagueId: string) =>
     `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}/standings/current`,
-  leagueTrades: (leagueId: string) =>
-    `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}/trades`,
-  leagueChat: (leagueId: string) =>
-    `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}/chat`,
-  leagueActivity: (leagueId: string) =>
-    `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}/activity`,
-  leagueMatchups: (leagueId: string) =>
-    `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}/matchups`,
+  leagueTrades: (leagueId: string) => `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}/trades`,
+  leagueChat: (leagueId: string) => `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}/chat`,
+  leagueActivity: (leagueId: string) => `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}/activity`,
+  leagueMatchups: (leagueId: string) => `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}/matchups`,
   leagueMatchupWeek: (leagueId: string, week: number | string) =>
     `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}/matchups/week-${week}`,
   leagueWeekRecap: (leagueId: string, week: number | string) =>
@@ -267,8 +263,7 @@ export const paths = {
   leagueInvitations: () => `artifacts/${DATA_NAMESPACE}/leagueInvitations`,
 
   // User notification paths
-  userNotifications: (uid: string) =>
-    `artifacts/${DATA_NAMESPACE}/users/${uid}/notifications`,
+  userNotifications: (uid: string) => `artifacts/${DATA_NAMESPACE}/users/${uid}/notifications`,
   userLeagueNotifications: (uid: string) =>
     `artifacts/${DATA_NAMESPACE}/users/${uid}/notifications/leagues`,
 
@@ -303,11 +298,7 @@ export async function withErrorHandling<T>(
     return await operation();
   } catch (error) {
     if (error instanceof Error) {
-      throw new ApiError(
-        error.message || errorMessage,
-        (error as { code?: string }).code,
-        error
-      );
+      throw new ApiError(error.message || errorMessage, (error as { code?: string }).code, error);
     }
     throw new ApiError(errorMessage, undefined, error);
   }

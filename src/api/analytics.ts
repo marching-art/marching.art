@@ -115,7 +115,12 @@ export const analytics = {
   /**
    * Log experiment exposure (user saw a variant)
    */
-  logExperimentExposure: (experimentId: string, variantId: string, experimentName?: string, variantName?: string) => {
+  logExperimentExposure: (
+    experimentId: string,
+    variantId: string,
+    experimentName?: string,
+    variantName?: string
+  ) => {
     safeLogEvent('experiment_exposure', {
       experiment_id: experimentId,
       experiment_name: experimentName || experimentId,
@@ -127,7 +132,12 @@ export const analytics = {
   /**
    * Log experiment conversion (user completed desired action)
    */
-  logExperimentConversion: (experimentId: string, variantId: string, conversionType: string, metadata?: Record<string, unknown>) => {
+  logExperimentConversion: (
+    experimentId: string,
+    variantId: string,
+    conversionType: string,
+    metadata?: Record<string, unknown>
+  ) => {
     safeLogEvent('experiment_conversion', {
       experiment_id: experimentId,
       variant_id: variantId,

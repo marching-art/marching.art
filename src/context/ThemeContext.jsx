@@ -35,11 +35,7 @@ export const ThemeProvider = ({ children }) => {
     localStorage.removeItem('marching-art-theme');
   }, []);
 
-  return (
-    <ThemeContext.Provider value={THEME_VALUE}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={THEME_VALUE}>{children}</ThemeContext.Provider>;
 };
 
 export default ThemeContext;

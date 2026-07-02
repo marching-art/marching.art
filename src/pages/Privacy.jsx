@@ -25,13 +25,9 @@ const Privacy = () => {
         </Link>
 
         <div className="bg-[#1a1a1a] border border-[#333] rounded-2xl p-6 sm:p-8">
-          <h1 className="text-3xl font-bold text-gradient mb-6">
-            Privacy Policy
-          </h1>
+          <h1 className="text-3xl font-bold text-gradient mb-6">Privacy Policy</h1>
 
-          <p className="text-gray-400 text-sm mb-6">
-            Last updated: January 2026
-          </p>
+          <p className="text-gray-400 text-sm mb-6">Last updated: January 2026</p>
 
           <div className="space-y-6 text-gray-300">
             <section>
@@ -50,7 +46,9 @@ const Privacy = () => {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white mb-3">2. How We Use Your Information</h2>
+              <h2 className="text-xl font-semibold text-white mb-3">
+                2. How We Use Your Information
+              </h2>
               <ul className="list-disc list-inside space-y-1 text-sm ml-2">
                 <li>To provide and maintain the game service</li>
                 <li>To personalize your experience</li>
@@ -63,7 +61,8 @@ const Privacy = () => {
             <section>
               <h2 className="text-xl font-semibold text-white mb-3">3. YouTube API Services</h2>
               <p className="text-sm mb-2">
-                Our service uses the YouTube API Services to display video content related to drum corps performances. By using marching.art, you are also agreeing to be bound by the{' '}
+                Our service uses the YouTube API Services to display video content related to drum
+                corps performances. By using marching.art, you are also agreeing to be bound by the{' '}
                 <a
                   href="https://www.youtube.com/t/terms"
                   target="_blank"
@@ -71,7 +70,8 @@ const Privacy = () => {
                   className="text-yellow-500 hover:text-yellow-400 underline"
                 >
                   YouTube Terms of Service
-                </a>.
+                </a>
+                .
               </p>
               <p className="text-sm mb-2">
                 When you use YouTube features within our service, your use is also governed by{' '}
@@ -82,10 +82,13 @@ const Privacy = () => {
                   className="text-yellow-500 hover:text-yellow-400 underline"
                 >
                   Google's Privacy Policy
-                </a>.
+                </a>
+                .
               </p>
               <p className="text-sm">
-                We store limited metadata about YouTube videos (video ID, title, thumbnail URL, channel name) to improve search performance. We do not store any YouTube user data, access tokens, or personal information from YouTube.
+                We store limited metadata about YouTube videos (video ID, title, thumbnail URL,
+                channel name) to improve search performance. We do not store any YouTube user data,
+                access tokens, or personal information from YouTube.
               </p>
             </section>
 
@@ -102,13 +105,15 @@ const Privacy = () => {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white mb-3">5. Cookies and Tracking Technologies</h2>
+              <h2 className="text-xl font-semibold text-white mb-3">
+                5. Cookies and Tracking Technologies
+              </h2>
               <p className="text-sm mb-2">
-                We and our service providers (including Google/YouTube) may store, access, or collect information directly or indirectly on or from your device by placing, accessing, or recognizing cookies or similar technologies on your device or browser.
+                We and our service providers (including Google/YouTube) may store, access, or
+                collect information directly or indirectly on or from your device by placing,
+                accessing, or recognizing cookies or similar technologies on your device or browser.
               </p>
-              <p className="text-sm mb-2">
-                Cookies are used to:
-              </p>
+              <p className="text-sm mb-2">Cookies are used to:</p>
               <ul className="list-disc list-inside space-y-1 text-sm ml-2">
                 <li>Maintain your session and authentication state</li>
                 <li>Remember your preferences</li>
@@ -116,14 +121,17 @@ const Privacy = () => {
                 <li>Enable YouTube video playback functionality</li>
               </ul>
               <p className="text-sm mt-2">
-                When you watch YouTube videos embedded in our service, YouTube may set cookies on your device. You can manage cookie preferences through your browser settings.
+                When you watch YouTube videos embedded in our service, YouTube may set cookies on
+                your device. You can manage cookie preferences through your browser settings.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-semibold text-white mb-3">6. Data Security</h2>
               <p className="text-sm">
-                We implement reasonable security measures to protect your information. However, no method of transmission over the Internet is 100% secure, and we cannot guarantee absolute security.
+                We implement reasonable security measures to protect your information. However, no
+                method of transmission over the Internet is 100% secure, and we cannot guarantee
+                absolute security.
               </p>
             </section>
 
@@ -140,14 +148,16 @@ const Privacy = () => {
             <section>
               <h2 className="text-xl font-semibold text-white mb-3">8. Children's Privacy</h2>
               <p className="text-sm">
-                Our service is not intended for children under 13. We do not knowingly collect information from children under 13.
+                Our service is not intended for children under 13. We do not knowingly collect
+                information from children under 13.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-semibold text-white mb-3">9. Changes to This Policy</h2>
               <p className="text-sm">
-                We may update this policy from time to time. We will notify you of significant changes by posting the new policy on this page.
+                We may update this policy from time to time. We will notify you of significant
+                changes by posting the new policy on this page.
               </p>
             </section>
 

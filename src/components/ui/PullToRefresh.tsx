@@ -41,7 +41,11 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
   // Motion values for smooth animation
   const pullDistance = useMotionValue(0);
   const indicatorY = useTransform(pullDistance, [0, maxPull], [-60, 60]);
-  const indicatorOpacity = useTransform(pullDistance, [0, pullThreshold / 2, pullThreshold], [0, 0.5, 1]);
+  const indicatorOpacity = useTransform(
+    pullDistance,
+    [0, pullThreshold / 2, pullThreshold],
+    [0, 0.5, 1]
+  );
   const indicatorScale = useTransform(pullDistance, [0, pullThreshold], [0.5, 1]);
   const indicatorRotation = useTransform(pullDistance, [0, maxPull], [0, 180]);
 
@@ -167,9 +171,7 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <m.div style={{ y: pullDistance }}>
-          {children}
-        </m.div>
+        <m.div style={{ y: pullDistance }}>{children}</m.div>
       </div>
     </div>
   );
@@ -207,7 +209,9 @@ export const RefreshIndicator: React.FC<RefreshIndicatorProps> = ({
           ${isRefreshing ? 'bg-[#0057B8]' : 'bg-[#333]'}
         `}
         animate={isRefreshing ? { rotate: 360 } : { rotate: progress * 180 }}
-        transition={isRefreshing ? { duration: 1, repeat: Infinity, ease: 'linear' } : { duration: 0 }}
+        transition={
+          isRefreshing ? { duration: 1, repeat: Infinity, ease: 'linear' } : { duration: 0 }
+        }
       >
         <RefreshCw className="w-4 h-4 text-white" />
       </m.div>

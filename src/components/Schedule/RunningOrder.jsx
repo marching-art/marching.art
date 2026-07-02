@@ -19,7 +19,11 @@ import { getRunningOrderStatus } from '../../utils/scheduleUtils';
  * @param {Set<string>} [props.highlightCorps] - Normalized corps names to star.
  * @param {boolean} [props.compact] - Tighter layout for dashboard panels.
  */
-const normalize = (name) => String(name || '').toLowerCase().replace(/\s+/g, ' ').trim();
+const normalize = (name) =>
+  String(name || '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
 
 const RunningOrder = ({ show, highlightCorps, compact = false }) => {
   // Tick every 60s so the performing-now marker stays current without a reload.
@@ -43,9 +47,7 @@ const RunningOrder = ({ show, highlightCorps, compact = false }) => {
           <Clock className="w-3.5 h-3.5 text-[#0057B8]" />
           Running Order
         </h3>
-        <span className="text-[10px] font-data text-gray-500">
-          {lineup.length} corps
-        </span>
+        <span className="text-[10px] font-data text-gray-500">{lineup.length} corps</span>
       </div>
 
       <div className="divide-y divide-[#333]/50">
@@ -66,7 +68,9 @@ const RunningOrder = ({ show, highlightCorps, compact = false }) => {
                   {entry.performanceTime}
                 </span>
                 <span className="text-sm text-white truncate flex items-center gap-1.5">
-                  {isMine && <Star className="w-3 h-3 text-[#F5A623] fill-[#F5A623] flex-shrink-0" />}
+                  {isMine && (
+                    <Star className="w-3 h-3 text-[#F5A623] fill-[#F5A623] flex-shrink-0" />
+                  )}
                   <span className="truncate">{entry.corps}</span>
                 </span>
               </div>

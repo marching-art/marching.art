@@ -226,10 +226,7 @@ export const DataTable = <T extends Record<string, unknown>>({
     };
   }, [data, columns]);
 
-  const skeletonRowsArray = useMemo(
-    () => Array.from({ length: skeletonRows }),
-    [skeletonRows]
-  );
+  const skeletonRowsArray = useMemo(() => Array.from({ length: skeletonRows }), [skeletonRows]);
 
   // Loading state
   if (isLoading) {
@@ -254,7 +251,9 @@ export const DataTable = <T extends Record<string, unknown>>({
                       ${column.sticky ? 'sticky left-0 z-30' : ''}
                       ${column.headerClassName || ''}
                     `.trim()}
-                    style={column.width ? { width: column.width, minWidth: column.width } : undefined}
+                    style={
+                      column.width ? { width: column.width, minWidth: column.width } : undefined
+                    }
                   >
                     {column.header}
                   </th>
@@ -306,7 +305,9 @@ export const DataTable = <T extends Record<string, unknown>>({
                       ${column.sticky ? 'sticky left-0 z-30' : ''}
                       ${column.headerClassName || ''}
                     `.trim()}
-                    style={column.width ? { width: column.width, minWidth: column.width } : undefined}
+                    style={
+                      column.width ? { width: column.width, minWidth: column.width } : undefined
+                    }
                   >
                     {column.header}
                   </th>

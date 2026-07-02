@@ -4,7 +4,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 // Hardcoded video IDs to try before search (for videos that are hard to find)
 const HARDCODED_VIDEOS = {
   '2018_santa clara vanguard': ['KfC6Xgy4ZL4', 'QWWP5jiGltA'],
-  '2023_mandarins': ['JRkn1MC2FMs']
+  '2023_mandarins': ['JRkn1MC2FMs'],
 };
 
 // Check if corps/year has hardcoded videos
@@ -26,7 +26,7 @@ export const useYoutubeSearch = () => {
     videoId: null,
     title: '',
     searchQuery: '',
-    error: null
+    error: null,
   });
 
   // Search YouTube and show video in modal
@@ -53,7 +53,7 @@ export const useYoutubeSearch = () => {
         error: null,
         year,
         corpsName,
-        fallbackIndex
+        fallbackIndex,
       });
       return;
     }
@@ -72,7 +72,7 @@ export const useYoutubeSearch = () => {
       error: null,
       year,
       corpsName,
-      fallbackIndex: hardcodedVideos ? hardcodedVideos.length : 0
+      fallbackIndex: hardcodedVideos ? hardcodedVideos.length : 0,
     });
 
     try {
@@ -82,25 +82,25 @@ export const useYoutubeSearch = () => {
       const result = await searchYoutube({ query: searchQuery, skipCache });
 
       if (result.data.success && result.data.found) {
-        setVideoModal(prev => ({
+        setVideoModal((prev) => ({
           ...prev,
           loading: false,
           videoId: result.data.videoId,
-          title: result.data.title || searchQuery
+          title: result.data.title || searchQuery,
         }));
       } else {
-        setVideoModal(prev => ({
+        setVideoModal((prev) => ({
           ...prev,
           loading: false,
-          error: result.data.message || 'No videos found'
+          error: result.data.message || 'No videos found',
         }));
       }
     } catch (err) {
       console.error('YouTube search error:', err);
-      setVideoModal(prev => ({
+      setVideoModal((prev) => ({
         ...prev,
         loading: false,
-        error: 'Failed to search YouTube'
+        error: 'Failed to search YouTube',
       }));
     }
   };
@@ -120,7 +120,7 @@ export const useYoutubeSearch = () => {
       videoId: null,
       title: '',
       searchQuery: '',
-      error: null
+      error: null,
     });
   };
 
@@ -128,6 +128,6 @@ export const useYoutubeSearch = () => {
     videoModal,
     handleYoutubeSearch,
     handleRetrySearch,
-    closeVideoModal
+    closeVideoModal,
   };
 };

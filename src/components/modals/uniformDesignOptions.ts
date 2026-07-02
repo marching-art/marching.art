@@ -15,7 +15,11 @@ export interface CorpsOption {
 
 export interface UniformDesignModalProps {
   onClose: () => void;
-  onSubmit: (design: CorpsUniformDesign, corpsClass: CorpsClass, copyToClasses?: CorpsClass[]) => Promise<void>;
+  onSubmit: (
+    design: CorpsUniformDesign,
+    corpsClass: CorpsClass,
+    copyToClasses?: CorpsClass[]
+  ) => Promise<void>;
   currentDesign?: CorpsUniformDesign;
   corpsName: string;
   // New props for multi-corps support
@@ -39,9 +43,21 @@ export const CLASS_DISPLAY: Record<CorpsClass, { name: string; color: string }> 
 };
 
 export const UNIFORM_STYLES = [
-  { value: 'traditional', label: 'Traditional', description: 'Classic military-inspired with structured lines' },
-  { value: 'contemporary', label: 'Contemporary', description: 'Modern design with clean aesthetics' },
-  { value: 'theatrical', label: 'Theatrical', description: 'Dramatic costumes with show-themed elements' },
+  {
+    value: 'traditional',
+    label: 'Traditional',
+    description: 'Classic military-inspired with structured lines',
+  },
+  {
+    value: 'contemporary',
+    label: 'Contemporary',
+    description: 'Modern design with clean aesthetics',
+  },
+  {
+    value: 'theatrical',
+    label: 'Theatrical',
+    description: 'Dramatic costumes with show-themed elements',
+  },
   { value: 'athletic', label: 'Athletic', description: 'Streamlined performance wear' },
   { value: 'avant-garde', label: 'Avant-Garde', description: 'Experimental and boundary-pushing' },
 ] as const;
@@ -73,9 +89,24 @@ export const AVATAR_SECTIONS = [
 ] as const;
 
 export const COLOR_SUGGESTIONS = [
-  'crimson red', 'midnight blue', 'emerald green', 'royal purple', 'burnt orange',
-  'deep navy', 'forest green', 'burgundy', 'charcoal gray', 'pearl white',
-  'gold', 'silver', 'bronze', 'copper', 'platinum',
-  'obsidian black', 'arctic white', 'sunset orange', 'ocean teal', 'storm gray',
+  'crimson red',
+  'midnight blue',
+  'emerald green',
+  'royal purple',
+  'burnt orange',
+  'deep navy',
+  'forest green',
+  'burgundy',
+  'charcoal gray',
+  'pearl white',
+  'gold',
+  'silver',
+  'bronze',
+  'copper',
+  'platinum',
+  'obsidian black',
+  'arctic white',
+  'sunset orange',
+  'ocean teal',
+  'storm gray',
 ];
-

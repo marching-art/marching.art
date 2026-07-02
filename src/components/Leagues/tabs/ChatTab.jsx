@@ -47,7 +47,7 @@ const ChatTab = ({ league, messages, userProfile, memberProfiles, isCommissioner
     const groups = [];
     let currentDate = null;
 
-    msgs.forEach(msg => {
+    msgs.forEach((msg) => {
       const msgDate = msg.createdAt?.toDate ? msg.createdAt.toDate() : new Date(msg.createdAt);
       const dateStr = msgDate.toDateString();
 
@@ -72,7 +72,7 @@ const ChatTab = ({ league, messages, userProfile, memberProfiles, isCommissioner
     return date.toLocaleDateString('en-US', {
       weekday: 'short',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     });
   };
 
@@ -114,10 +114,7 @@ const ChatTab = ({ league, messages, userProfile, memberProfiles, isCommissioner
             {groupedMessages.map((item, idx) => {
               if (item.type === 'date') {
                 return (
-                  <div
-                    key={`date-${idx}`}
-                    className="flex items-center justify-center my-3"
-                  >
+                  <div key={`date-${idx}`} className="flex items-center justify-center my-3">
                     <div className="px-2.5 py-1 bg-[#222] text-[10px] text-gray-500 uppercase tracking-wider font-bold">
                       {formatDateSeparator(item.date)}
                     </div>
@@ -147,9 +144,11 @@ const ChatTab = ({ league, messages, userProfile, memberProfiles, isCommissioner
                       {/* Sender name (for received messages) */}
                       {!isOwn && (
                         <div className="flex items-center gap-1.5 mb-1">
-                          <p className={`text-[11px] font-bold ${
-                            isCreator ? 'text-yellow-500' : 'text-gray-400'
-                          }`}>
+                          <p
+                            className={`text-[11px] font-bold ${
+                              isCreator ? 'text-yellow-500' : 'text-gray-400'
+                            }`}
+                          >
                             @{getDisplayName(item.userId)}
                           </p>
                           {isCreator && (
@@ -162,14 +161,16 @@ const ChatTab = ({ league, messages, userProfile, memberProfiles, isCommissioner
                       )}
 
                       {/* Message text */}
-                      <p className="text-sm break-words leading-relaxed">
-                        {item.message}
-                      </p>
+                      <p className="text-sm break-words leading-relaxed">{item.message}</p>
 
                       {/* Timestamp */}
                       <div className={`flex items-center gap-1 mt-1 ${isOwn ? 'justify-end' : ''}`}>
-                        <Clock className={`w-2.5 h-2.5 ${isOwn ? 'text-white/50' : 'text-gray-600'}`} />
-                        <span className={`text-[10px] ${isOwn ? 'text-white/50' : 'text-gray-600'}`}>
+                        <Clock
+                          className={`w-2.5 h-2.5 ${isOwn ? 'text-white/50' : 'text-gray-600'}`}
+                        />
+                        <span
+                          className={`text-[10px] ${isOwn ? 'text-white/50' : 'text-gray-600'}`}
+                        >
                           {formatTime(item.createdAt)}
                         </span>
                       </div>

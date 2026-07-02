@@ -42,7 +42,7 @@ export function useLineupScores(lineup, currentDay, activeCorpsClass) {
 
         // Get unique years from lineup
         const yearsNeeded = new Set();
-        Object.values(lineup).forEach(value => {
+        Object.values(lineup).forEach((value) => {
           if (value) {
             const [, sourceYear] = value.split('|');
             if (sourceYear) yearsNeeded.add(sourceYear);
@@ -62,13 +62,17 @@ export function useLineupScores(lineup, currentDay, activeCorpsClass) {
         // For SoundSport, pre-compute category totals for each corps/year combo
         const categoryTotalsCache = {};
         if (isSoundSport) {
-          Object.values(lineup).forEach(value => {
+          Object.values(lineup).forEach((value) => {
             if (value) {
               const [corpsName, sourceYear] = value.split('|');
               const yearData = historicalData[sourceYear];
               if (yearData) {
                 const cacheKey = `${corpsName}|${sourceYear}`;
-                categoryTotalsCache[cacheKey] = processCategoryTotals(yearData, corpsName, effectiveDay);
+                categoryTotalsCache[cacheKey] = processCategoryTotals(
+                  yearData,
+                  corpsName,
+                  effectiveDay
+                );
               }
             }
           });
@@ -76,7 +80,7 @@ export function useLineupScores(lineup, currentDay, activeCorpsClass) {
 
         // Process scores for each caption slot
         const scoreData = {};
-        CAPTIONS.forEach(caption => {
+        CAPTIONS.forEach((caption) => {
           const value = lineup[caption.id];
           if (!value) {
             scoreData[caption.id] = { score: null, trend: null, nextShow: null };
@@ -114,11 +118,16 @@ export function useLineupScores(lineup, currentDay, activeCorpsClass) {
             scoreData[caption.id] = {
               score: categoryScore,
               trend: categoryTrend,
-              nextShow: baseData.nextShow
+              nextShow: baseData.nextShow,
             };
           } else {
             // Process scores for this caption (non-SoundSport)
-            scoreData[caption.id] = processCaptionScores(yearData, corpsName, caption.id, effectiveDay);
+            scoreData[caption.id] = processCaptionScores(
+              yearData,
+              corpsName,
+              caption.id,
+              effectiveDay
+            );
           }
         });
 
@@ -159,18 +168,18 @@ export function useRecentResults(user, seasonData, activeCorpsClass, currentDay)
         const recapsSnapshot = await getDocs(recapsCollectionRef);
 
         if (!recapsSnapshot.empty) {
-          const recaps = recapsSnapshot.docs.map(d => d.data());
+          const recaps = recapsSnapshot.docs.map((d) => d.data());
           const results = [];
 
           // Sort by day descending and filter to only include processed days
           const sortedRecaps = [...recaps]
-            .filter(recap => recap.offSeasonDay <= effectiveDay)
+            .filter((recap) => recap.offSeasonDay <= effectiveDay)
             .sort((a, b) => (b.offSeasonDay || 0) - (a.offSeasonDay || 0));
 
           for (const recap of sortedRecaps) {
-            for (const show of (recap.shows || [])) {
+            for (const show of recap.shows || []) {
               const userResult = (show.results || []).find(
-                r => r.uid === user.uid && r.corpsClass === activeCorpsClass
+                (r) => r.uid === user.uid && r.corpsClass === activeCorpsClass
               );
 
               if (userResult && results.length < 5) {
@@ -178,7 +187,11 @@ export function useRecentResults(user, seasonData, activeCorpsClass, currentDay)
                   eventName: show.eventName || show.name || 'Show',
                   score: userResult.totalScore,
                   placement: userResult.placement,
-                  date: recap.date ? new Date(recap.date.seconds * 1000).toLocaleDateString('en-US', { timeZone: 'UTC' }) : null
+                  date: recap.date
+                    ? new Date(recap.date.seconds * 1000).toLocaleDateString('en-US', {
+                        timeZone: 'UTC',
+                      })
+                    : null,
                 });
               }
             }
@@ -205,15 +218,15 @@ export function useBestInShowCount(activeCorps, activeCorpsClass, allShows) {
     const corpsName = activeCorps.corpsName || activeCorps.name;
     let count = 0;
 
-    allShows.forEach(show => {
+    allShows.forEach((show) => {
       if (!show.scores?.length) return;
 
       // Find the highest score in this show
-      const maxScore = Math.max(...show.scores.map(s => s.score || 0));
+      const maxScore = Math.max(...show.scores.map((s) => s.score || 0));
       if (maxScore <= 0) return;
 
       // Check if user's corps has the highest score
-      const userScore = show.scores.find(s => s.corpsName === corpsName || s.corps === corpsName);
+      const userScore = show.scores.find((s) => s.corpsName === corpsName || s.corps === corpsName);
       if (userScore && userScore.score === maxScore) {
         count++;
       }

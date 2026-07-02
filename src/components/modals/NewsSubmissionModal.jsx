@@ -97,7 +97,10 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
             <div className="flex items-center gap-2">
               <FileText className="w-4 h-4 text-[#0057B8]" />
-              <h2 id="modal-title-news-submission" className="text-xs font-bold uppercase tracking-wider text-gray-300">
+              <h2
+                id="modal-title-news-submission"
+                className="text-xs font-bold uppercase tracking-wider text-gray-300"
+              >
                 Submit News Article
               </h2>
             </div>
@@ -117,7 +120,8 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
               {/* Info Banner */}
               <div className="bg-[#0057B8]/10 border border-[#0057B8]/30 rounded-sm px-3 py-2">
                 <p className="text-xs text-gray-300">
-                  Your article will be reviewed by admins before publishing. Quality submissions help our community!
+                  Your article will be reviewed by admins before publishing. Quality submissions
+                  help our community!
                 </p>
               </div>
 
@@ -134,13 +138,17 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
                       onClick={() => handleChange('category', cat.id)}
                       className={`
                         px-3 py-2 text-left rounded-sm border transition-all
-                        ${formData.category === cat.id
-                          ? 'bg-[#0057B8]/20 border-[#0057B8] text-white'
-                          : 'bg-[#0a0a0a] border-[#333] text-gray-400 hover:border-[#444]'}
+                        ${
+                          formData.category === cat.id
+                            ? 'bg-[#0057B8]/20 border-[#0057B8] text-white'
+                            : 'bg-[#0a0a0a] border-[#333] text-gray-400 hover:border-[#444]'
+                        }
                       `}
                     >
                       <div className="text-xs font-bold">{cat.name}</div>
-                      <div className="text-[10px] text-gray-500 mt-0.5 hidden sm:block">{cat.description}</div>
+                      <div className="text-[10px] text-gray-500 mt-0.5 hidden sm:block">
+                        {cat.description}
+                      </div>
                     </button>
                   ))}
                 </div>

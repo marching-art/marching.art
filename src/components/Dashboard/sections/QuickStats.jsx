@@ -18,7 +18,10 @@ const QuickStats = memo(({ profile, corpsClass, recentResults, lineupScoreData, 
         icon: <BarChart3 className="w-4 h-4 text-blue-500" />,
         label: 'Lineup Strength',
         value: `${lineupCount}/8 captions`,
-        detail: pct === 100 ? 'Full roster' : `${8 - lineupCount} slot${8 - lineupCount !== 1 ? 's' : ''} open`,
+        detail:
+          pct === 100
+            ? 'Full roster'
+            : `${8 - lineupCount} slot${8 - lineupCount !== 1 ? 's' : ''} open`,
         color: pct === 100 ? 'text-green-400' : 'text-yellow-400',
       });
     }
@@ -48,9 +51,9 @@ const QuickStats = memo(({ profile, corpsClass, recentResults, lineupScoreData, 
 
     // Stat: Trending captions
     if (lineupScoreData && Object.keys(lineupScoreData).length > 0) {
-      const trending = Object.entries(lineupScoreData)
-        .filter(([, data]) => data.trend?.direction === 'up')
-        .length;
+      const trending = Object.entries(lineupScoreData).filter(
+        ([, data]) => data.trend?.direction === 'up'
+      ).length;
       if (trending > 0) {
         items.push({
           icon: <TrendingUp className="w-4 h-4 text-green-500" />,
@@ -93,7 +96,7 @@ const QuickStats = memo(({ profile, corpsClass, recentResults, lineupScoreData, 
   useEffect(() => {
     if (stats.length <= 1) return;
     const interval = setInterval(() => {
-      setActiveIndex(prev => (prev + 1) % stats.length);
+      setActiveIndex((prev) => (prev + 1) % stats.length);
     }, 5000);
     return () => clearInterval(interval);
   }, [stats.length]);

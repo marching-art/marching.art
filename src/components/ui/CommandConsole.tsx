@@ -49,21 +49,27 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
 
   // Cycle through messages - slower interval on mobile
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentMessageIndex((prev) => (prev + 1) % messages.length);
-    }, shouldReduceMotion ? 3000 : 1800); // Slower on mobile
+    const interval = setInterval(
+      () => {
+        setCurrentMessageIndex((prev) => (prev + 1) % messages.length);
+      },
+      shouldReduceMotion ? 3000 : 1800
+    ); // Slower on mobile
     return () => clearInterval(interval);
   }, [messages.length, shouldReduceMotion]);
 
   // Animate internal progress if no external progress provided
   useEffect(() => {
     if (progress === undefined) {
-      const interval = setInterval(() => {
-        setInternalProgress((prev) => {
-          if (prev >= 95) return 15; // Loop back
-          return prev + Math.random() * 8 + 2;
-        });
-      }, shouldReduceMotion ? 800 : 400); // Slower on mobile
+      const interval = setInterval(
+        () => {
+          setInternalProgress((prev) => {
+            if (prev >= 95) return 15; // Loop back
+            return prev + Math.random() * 8 + 2;
+          });
+        },
+        shouldReduceMotion ? 800 : 400
+      ); // Slower on mobile
       return () => clearInterval(interval);
     }
   }, [progress, shouldReduceMotion]);
@@ -264,14 +270,36 @@ const RadarGridIcon = ({ className = 'w-32 h-32' }: { className?: string }) => (
     {/* Grid Background */}
     <defs>
       <pattern id="radarGrid" width="20" height="20" patternUnits="userSpaceOnUse">
-        <path d="M 20 0 L 0 0 0 20" stroke="currentColor" strokeWidth="0.3" fill="none" opacity="0.15" />
+        <path
+          d="M 20 0 L 0 0 0 20"
+          stroke="currentColor"
+          strokeWidth="0.3"
+          fill="none"
+          opacity="0.15"
+        />
       </pattern>
     </defs>
     <rect width="120" height="120" fill="url(#radarGrid)" />
 
     {/* Concentric Circles */}
-    <circle cx="60" cy="60" r="50" stroke="currentColor" strokeWidth="0.5" strokeDasharray="4 2" opacity="0.3" />
-    <circle cx="60" cy="60" r="35" stroke="currentColor" strokeWidth="0.5" strokeDasharray="3 2" opacity="0.25" />
+    <circle
+      cx="60"
+      cy="60"
+      r="50"
+      stroke="currentColor"
+      strokeWidth="0.5"
+      strokeDasharray="4 2"
+      opacity="0.3"
+    />
+    <circle
+      cx="60"
+      cy="60"
+      r="35"
+      stroke="currentColor"
+      strokeWidth="0.5"
+      strokeDasharray="3 2"
+      opacity="0.25"
+    />
     <circle cx="60" cy="60" r="20" stroke="currentColor" strokeWidth="0.5" opacity="0.2" />
 
     {/* Crosshairs */}
@@ -287,9 +315,27 @@ const RadarGridIcon = ({ className = 'w-32 h-32' }: { className?: string }) => (
 
     {/* Corner Brackets */}
     <path d="M8 25 L8 8 L25 8" stroke="currentColor" strokeWidth="1.5" fill="none" opacity="0.4" />
-    <path d="M95 8 L112 8 L112 25" stroke="currentColor" strokeWidth="1.5" fill="none" opacity="0.4" />
-    <path d="M112 95 L112 112 L95 112" stroke="currentColor" strokeWidth="1.5" fill="none" opacity="0.4" />
-    <path d="M25 112 L8 112 L8 95" stroke="currentColor" strokeWidth="1.5" fill="none" opacity="0.4" />
+    <path
+      d="M95 8 L112 8 L112 25"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      fill="none"
+      opacity="0.4"
+    />
+    <path
+      d="M112 95 L112 112 L95 112"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      fill="none"
+      opacity="0.4"
+    />
+    <path
+      d="M25 112 L8 112 L8 95"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      fill="none"
+      opacity="0.4"
+    />
 
     {/* Tick Marks */}
     <line x1="60" y1="10" x2="60" y2="15" stroke="currentColor" strokeWidth="1" opacity="0.3" />
@@ -335,8 +381,26 @@ const WireframeShieldIcon = ({ className = 'w-32 h-32' }: { className?: string }
     <line x1="54" y1="58" x2="66" y2="58" stroke="currentColor" strokeWidth="1.5" opacity="0.5" />
 
     {/* Grid Lines */}
-    <line x1="60" y1="10" x2="60" y2="110" stroke="currentColor" strokeWidth="0.3" strokeDasharray="2 4" opacity="0.15" />
-    <line x1="20" y1="60" x2="100" y2="60" stroke="currentColor" strokeWidth="0.3" strokeDasharray="2 4" opacity="0.15" />
+    <line
+      x1="60"
+      y1="10"
+      x2="60"
+      y2="110"
+      stroke="currentColor"
+      strokeWidth="0.3"
+      strokeDasharray="2 4"
+      opacity="0.15"
+    />
+    <line
+      x1="20"
+      y1="60"
+      x2="100"
+      y2="60"
+      stroke="currentColor"
+      strokeWidth="0.3"
+      strokeDasharray="2 4"
+      opacity="0.15"
+    />
 
     {/* Corner Indicators */}
     <circle cx="20" cy="25" r="2" fill="currentColor" opacity="0.3" />
@@ -370,11 +434,14 @@ export interface ConsoleEmptyStateProps {
   className?: string;
 }
 
-const variantConfig: Record<EmptyStateVariant, {
-  icon: React.ComponentType<{ className?: string }>;
-  defaultTitle: string;
-  defaultSubtitle: string;
-}> = {
+const variantConfig: Record<
+  EmptyStateVariant,
+  {
+    icon: React.ComponentType<{ className?: string }>;
+    defaultTitle: string;
+    defaultSubtitle: string;
+  }
+> = {
   radar: {
     icon: RadarGridIcon,
     defaultTitle: 'NO ACTIVE SIGNALS DETECTED',
@@ -420,20 +487,20 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
   // Minimal variant - compact version
   if (variant === 'minimal') {
     return (
-      <div className={`
+      <div
+        className={`
         border-2 border-dashed border-warning/30
         bg-warning/5 backdrop-blur-sm
         rounded-sm p-6 md:p-8
         ${className}
-      `}>
+      `}
+      >
         <div className="text-center">
           <IconComponent className="w-10 h-10 text-warning/50 mx-auto mb-4" />
           <h3 className="font-mono text-sm text-cream/70 uppercase tracking-wider mb-2">
             {displayTitle}
           </h3>
-          <p className="font-mono text-xs text-cream/40 mb-4">
-            {displaySubtitle}
-          </p>
+          <p className="font-mono text-xs text-cream/40 mb-4">{displaySubtitle}</p>
           {actionLabel && onAction && (
             <button
               onClick={onAction}
@@ -450,13 +517,15 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
 
   // Full tactical display
   return (
-    <div className={`
+    <div
+      className={`
       relative min-h-[320px] flex items-center justify-center
       border-2 border-dashed border-warning/30
       bg-gradient-to-b from-warning/[0.02] to-transparent
       rounded-sm overflow-hidden
       ${className}
-    `}>
+    `}
+    >
       {/* Background Watermark */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
         <span
@@ -534,7 +603,9 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
       {/* Warning Icon */}
       <div className="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-2 py-1 bg-warning/10 border border-warning/20 rounded">
         <AlertTriangle className="w-3 h-3 text-warning/60" />
-        <span className="font-mono text-[8px] text-warning/60 uppercase tracking-wider">No Data</span>
+        <span className="font-mono text-[8px] text-warning/60 uppercase tracking-wider">
+          No Data
+        </span>
       </div>
     </div>
   );

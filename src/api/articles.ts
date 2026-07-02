@@ -46,10 +46,15 @@ export async function resolveArticleById(
         const data = docSnap.data();
         // Determine category from article type
         const category =
-          articleType === 'dci_recap' ? 'analysis' :
-          articleType === 'deep_analytics' ? 'analysis' :
-          articleType.startsWith('dci_') ? 'dci' :
-          articleType.startsWith('fantasy_') ? 'fantasy' : 'dci';
+          articleType === 'dci_recap'
+            ? 'analysis'
+            : articleType === 'deep_analytics'
+              ? 'analysis'
+              : articleType.startsWith('dci_')
+                ? 'dci'
+                : articleType.startsWith('fantasy_')
+                  ? 'fantasy'
+                  : 'dci';
         foundArticle = {
           id,
           seasonId,
@@ -130,7 +135,7 @@ export async function resolveArticleById(
         break;
       }
 
-      foundArticle = result.data.news.find(a => a.id === id);
+      foundArticle = result.data.news.find((a) => a.id === id);
 
       if (!foundArticle && result.data.hasMore) {
         const lastArticle = result.data.news[result.data.news.length - 1];

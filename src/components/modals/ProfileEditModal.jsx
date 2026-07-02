@@ -8,11 +8,7 @@ import React, { useState, useMemo } from 'react';
 import { X, User, Music, Link as LinkIcon, MapPin } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
-import {
-  CORPS_CLASS_ORDER,
-  resolveCorpsForClass,
-  isCorpsClassUnlocked,
-} from '../../utils/corps';
+import { CORPS_CLASS_ORDER, resolveCorpsForClass, isCorpsClassUnlocked } from '../../utils/corps';
 
 // Keyed by canonical class keys, matching what the data layer stores.
 const CLASS_LABELS = {
@@ -85,26 +81,20 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
   useEscapeKey(onClose);
 
   const availableCorps = useMemo(() => {
-    const unlocked = profile?.unlockedClasses?.length
-      ? profile.unlockedClasses
-      : ['soundSport'];
-    return CLASS_ORDER
-      .filter((cls) => isCorpsClassUnlocked(unlocked, cls))
-      .map((cls) => {
-        const corps = resolveCorpsForClass(profile?.corps, cls) || {};
-        return {
-          ...corps,
-          classKey: cls,
-          isRegistered: !!corps.corpsName,
-        };
-      });
+    const unlocked = profile?.unlockedClasses?.length ? profile.unlockedClasses : ['soundSport'];
+    return CLASS_ORDER.filter((cls) => isCorpsClassUnlocked(unlocked, cls)).map((cls) => {
+      const corps = resolveCorpsForClass(profile?.corps, cls) || {};
+      return {
+        ...corps,
+        classKey: cls,
+        isRegistered: !!corps.corpsName,
+      };
+    });
   }, [profile?.corps, profile?.unlockedClasses]);
 
   const [activeTab, setActiveTab] = useState('director');
   const [activeEnsembleClass, setActiveEnsembleClass] = useState(
-    availableCorps.find((c) => c.isRegistered)?.classKey ||
-      availableCorps[0]?.classKey ||
-      null
+    availableCorps.find((c) => c.isRegistered)?.classKey || availableCorps[0]?.classKey || null
   );
   const [saving, setSaving] = useState(false);
 
@@ -178,9 +168,8 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
 
       const directorInfo = {
         bio: director.bio.trim(),
-        yearsDirecting: director.yearsDirecting === ''
-          ? null
-          : Number(director.yearsDirecting) || 0,
+        yearsDirecting:
+          director.yearsDirecting === '' ? null : Number(director.yearsDirecting) || 0,
         specialties: director.specialties,
         credentials: director.credentials.trim(),
         acceptingLeagueInvites: !!director.acceptingLeagueInvites,
@@ -198,9 +187,7 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
           tagline: data.tagline.trim(),
           mission: data.mission.trim(),
           history: data.history.trim(),
-          foundedYear: data.foundedYear === ''
-            ? null
-            : Number(data.foundedYear) || null,
+          foundedYear: data.foundedYear === '' ? null : Number(data.foundedYear) || null,
           homeVenue: data.homeVenue.trim(),
           motto: data.motto.trim(),
           notableShows: data.notableShows
@@ -291,9 +278,7 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
                     <TextInput
                       type="text"
                       value={director.displayName}
-                      onChange={(e) =>
-                        setDirector({ ...director, displayName: e.target.value })
-                      }
+                      onChange={(e) => setDirector({ ...director, displayName: e.target.value })}
                       maxLength={50}
                       placeholder="Your name"
                     />
@@ -303,9 +288,7 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
                     <TextInput
                       type="text"
                       value={director.location}
-                      onChange={(e) =>
-                        setDirector({ ...director, location: e.target.value })
-                      }
+                      onChange={(e) => setDirector({ ...director, location: e.target.value })}
                       maxLength={80}
                       placeholder="City, State"
                     />
@@ -425,9 +408,7 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
                     <TextInput
                       type="text"
                       value={socials.instagram}
-                      onChange={(e) =>
-                        setSocials({ ...socials, instagram: e.target.value })
-                      }
+                      onChange={(e) => setSocials({ ...socials, instagram: e.target.value })}
                       placeholder="@handle or URL"
                     />
                   </Field>
@@ -451,9 +432,7 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
                     <TextInput
                       type="text"
                       value={socials.facebook}
-                      onChange={(e) =>
-                        setSocials({ ...socials, facebook: e.target.value })
-                      }
+                      onChange={(e) => setSocials({ ...socials, facebook: e.target.value })}
                       placeholder="Page URL"
                     />
                   </Field>
@@ -487,8 +466,8 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
                               activeEnsembleClass === corps.classKey
                                 ? 'bg-[#0057B8]/15 border-[#0057B8]/40 text-[#0057B8]'
                                 : corps.isRegistered
-                                ? 'bg-[#0a0a0a] border-[#333] text-gray-500 hover:text-gray-300'
-                                : 'bg-[#0a0a0a] border-dashed border-[#333] text-gray-600 hover:text-gray-400'
+                                  ? 'bg-[#0a0a0a] border-[#333] text-gray-500 hover:text-gray-300'
+                                  : 'bg-[#0a0a0a] border-dashed border-[#333] text-gray-600 hover:text-gray-400'
                             }`}
                           >
                             {corps.isRegistered ? (
@@ -512,8 +491,8 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
                             haven&apos;t registered a corps in this class yet.
                           </p>
                           <p className="text-[11px] text-gray-500">
-                            Visit your dashboard to register a corps. Once registered, you can
-                            edit ensemble details here.
+                            Visit your dashboard to register a corps. Once registered, you can edit
+                            ensemble details here.
                           </p>
                         </div>
                       )}

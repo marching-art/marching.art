@@ -5,8 +5,18 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  MessageSquare, Send, Loader2, MoreVertical, Edit2, Trash2,
-  Flag, Clock, CheckCircle, AlertTriangle, ChevronDown, X
+  MessageSquare,
+  Send,
+  Loader2,
+  MoreVertical,
+  Edit2,
+  Trash2,
+  Flag,
+  Clock,
+  CheckCircle,
+  AlertTriangle,
+  ChevronDown,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -14,7 +24,7 @@ import {
   addArticleComment,
   editArticleComment,
   deleteArticleComment,
-  reportArticleComment
+  reportArticleComment,
 } from '../../api/functions';
 import toast from 'react-hot-toast';
 
@@ -97,9 +107,7 @@ function Comment({ comment, currentUserId, onEdit, onDelete, onReport }) {
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-bold text-white truncate">
-                {comment.userName}
-              </span>
+              <span className="text-sm font-bold text-white truncate">{comment.userName}</span>
               {comment.userTitle && (
                 <span className="text-[10px] px-1.5 py-0.5 bg-[#0057B8]/20 text-[#0057B8] font-medium">
                   {comment.userTitle}
@@ -113,9 +121,7 @@ function Comment({ comment, currentUserId, onEdit, onDelete, onReport }) {
             </div>
             <div className="flex items-center gap-2 text-[10px] text-gray-500">
               <span>{formatRelativeTime(comment.createdAt)}</span>
-              {comment.isEdited && (
-                <span className="text-gray-600">(edited)</span>
-              )}
+              {comment.isEdited && <span className="text-gray-600">(edited)</span>}
               {isPending && (
                 <span className="flex items-center gap-1 text-yellow-500">
                   <Clock className="w-3 h-3" />
@@ -147,14 +153,20 @@ function Comment({ comment, currentUserId, onEdit, onDelete, onReport }) {
                 {isOwner && !isHidden && (
                   <>
                     <button
-                      onClick={() => { onEdit(comment); setShowMenu(false); }}
+                      onClick={() => {
+                        onEdit(comment);
+                        setShowMenu(false);
+                      }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-300 hover:bg-[#333] transition-colors"
                     >
                       <Edit2 className="w-3 h-3" />
                       Edit
                     </button>
                     <button
-                      onClick={() => { onDelete(comment.id); setShowMenu(false); }}
+                      onClick={() => {
+                        onDelete(comment.id);
+                        setShowMenu(false);
+                      }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-400 hover:bg-[#333] transition-colors"
                     >
                       <Trash2 className="w-3 h-3" />
@@ -164,7 +176,10 @@ function Comment({ comment, currentUserId, onEdit, onDelete, onReport }) {
                 )}
                 {!isOwner && (
                   <button
-                    onClick={() => { setShowReportModal(true); setShowMenu(false); }}
+                    onClick={() => {
+                      setShowReportModal(true);
+                      setShowMenu(false);
+                    }}
                     className="w-full flex items-center gap-2 px-3 py-2 text-xs text-yellow-500 hover:bg-[#333] transition-colors"
                   >
                     <Flag className="w-3 h-3" />
@@ -184,11 +199,20 @@ function Comment({ comment, currentUserId, onEdit, onDelete, onReport }) {
 
       {/* Report modal */}
       {showReportModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setShowReportModal(false)}>
-          <div className="bg-[#1a1a1a] border border-[#333] w-full max-w-sm" onClick={e => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setShowReportModal(false)}
+        >
+          <div
+            className="bg-[#1a1a1a] border border-[#333] w-full max-w-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
               <h3 className="text-xs font-bold uppercase text-gray-400">Report Comment</h3>
-              <button onClick={() => setShowReportModal(false)} className="text-gray-500 hover:text-white">
+              <button
+                onClick={() => setShowReportModal(false)}
+                className="text-gray-500 hover:text-white"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -327,7 +351,7 @@ export default function ArticleComments({
       if (result.data?.success) {
         // Add the new comment to the list (show even if pending)
         setComments([result.data.comment, ...comments]);
-        setCommentCount(prev => prev + 1);
+        setCommentCount((prev) => prev + 1);
         setNewComment('');
         onCommentCountChange?.(commentCount + 1);
 
@@ -359,9 +383,7 @@ export default function ArticleComments({
     try {
       const result = await editArticleComment({ commentId: editingComment.id, content });
       if (result.data?.success) {
-        setComments(comments.map(c =>
-          c.id === editingComment.id ? result.data.comment : c
-        ));
+        setComments(comments.map((c) => (c.id === editingComment.id ? result.data.comment : c)));
         setEditingComment(null);
         setEditContent('');
         toast.success('Comment updated');
@@ -379,8 +401,8 @@ export default function ArticleComments({
     try {
       const result = await deleteArticleComment({ commentId });
       if (result.data?.success) {
-        setComments(comments.filter(c => c.id !== commentId));
-        setCommentCount(prev => Math.max(0, prev - 1));
+        setComments(comments.filter((c) => c.id !== commentId));
+        setCommentCount((prev) => Math.max(0, prev - 1));
         onCommentCountChange?.(Math.max(0, commentCount - 1));
         toast.success('Comment deleted');
       }
@@ -427,17 +449,10 @@ export default function ArticleComments({
       <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
         <div className="flex items-center gap-2">
           <MessageSquare className="w-4 h-4 text-gray-500" />
-          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">
-            Comments
-          </h3>
-          <span className="text-xs text-gray-500 font-data tabular-nums">
-            ({commentCount})
-          </span>
+          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">Comments</h3>
+          <span className="text-xs text-gray-500 font-data tabular-nums">({commentCount})</span>
         </div>
-        <button
-          onClick={() => setIsExpanded(false)}
-          className="text-gray-500 hover:text-white"
-        >
+        <button onClick={() => setIsExpanded(false)} className="text-gray-500 hover:text-white">
           <X className="w-4 h-4" />
         </button>
       </div>
@@ -488,7 +503,9 @@ export default function ArticleComments({
             <div className="space-y-3">
               <div className="flex items-start gap-3">
                 <div className="w-7 h-7 bg-[#333] rounded-full flex items-center justify-center text-xs font-bold text-gray-400 flex-shrink-0">
-                  {profile?.username?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || '?'}
+                  {profile?.username?.charAt(0)?.toUpperCase() ||
+                    user.email?.charAt(0)?.toUpperCase() ||
+                    '?'}
                 </div>
                 <textarea
                   ref={textareaRef}

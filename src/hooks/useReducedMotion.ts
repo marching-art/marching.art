@@ -71,9 +71,7 @@ const checkIsMobile = (): boolean => {
 const checkIsSlowConnection = (): boolean => {
   if (typeof navigator === 'undefined') return false;
 
-  const connection = navigator.connection ||
-                     navigator.mozConnection ||
-                     navigator.webkitConnection;
+  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
 
   if (!connection || !connection.effectiveType) return false;
 
@@ -155,9 +153,8 @@ export const useReducedMotion = (options: ReducedMotionOptions = {}): ReducedMot
   useEffect(() => {
     if (typeof navigator === 'undefined') return;
 
-    const connection = navigator.connection ||
-                       navigator.mozConnection ||
-                       navigator.webkitConnection;
+    const connection =
+      navigator.connection || navigator.mozConnection || navigator.webkitConnection;
 
     if (!connection) return;
 

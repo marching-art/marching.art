@@ -4,8 +4,18 @@
 import React from 'react';
 import { m } from 'framer-motion';
 import {
-  Trophy, Target, Zap, Flame, TrendingUp, TrendingDown, Crown,
-  Award, Medal, X, ChevronRight, BarChart3
+  Trophy,
+  Target,
+  Zap,
+  Flame,
+  TrendingUp,
+  TrendingDown,
+  Crown,
+  Award,
+  Medal,
+  X,
+  ChevronRight,
+  BarChart3,
 } from 'lucide-react';
 import { GAME_CONFIG } from '../../config';
 
@@ -30,9 +40,7 @@ const StatRow = ({ label, value, subValue, icon: Icon, color = 'cream' }) => {
       </div>
       <div className="text-right">
         <span className={`text-sm font-bold ${colorClasses[color]}`}>{value}</span>
-        {subValue && (
-          <span className="text-[10px] text-gray-500 ml-1">({subValue})</span>
-        )}
+        {subValue && <span className="text-[10px] text-gray-500 ml-1">({subValue})</span>}
       </div>
     </div>
   );
@@ -52,10 +60,15 @@ const CaptionBar = ({ caption, winRate, avgDiff, isStrength, isWeakness }) => {
           {isStrength && <Crown className="w-3 h-3 text-yellow-500" />}
           {isWeakness && <TrendingDown className="w-3 h-3 text-red-400" />}
         </div>
-        <span className={`text-[10px] font-bold ${
-          percentage >= 60 ? 'text-green-400' :
-          percentage >= 40 ? 'text-gray-400' : 'text-red-400'
-        }`}>
+        <span
+          className={`text-[10px] font-bold ${
+            percentage >= 60
+              ? 'text-green-400'
+              : percentage >= 40
+                ? 'text-gray-400'
+                : 'text-red-400'
+          }`}
+        >
           {percentage.toFixed(0)}%
         </span>
       </div>
@@ -65,8 +78,7 @@ const CaptionBar = ({ caption, winRate, avgDiff, isStrength, isWeakness }) => {
           animate={{ width: `${percentage}%` }}
           transition={{ duration: 0.5, delay: 0.1 }}
           className={`h-full rounded-full ${
-            percentage >= 60 ? 'bg-green-500' :
-            percentage >= 40 ? 'bg-gray-500' : 'bg-red-500'
+            percentage >= 60 ? 'bg-green-500' : percentage >= 40 ? 'bg-gray-500' : 'bg-red-500'
           }`}
         />
       </div>
@@ -163,8 +175,11 @@ const SeasonStatsCard = ({
           </div>
           <div>
             <p className="text-[10px] text-gray-500 uppercase">BP Avg</p>
-            <p className={`text-sm font-bold ${pointDiff >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {pointDiff >= 0 ? '+' : ''}{pointDiff.toFixed(1)}
+            <p
+              className={`text-sm font-bold ${pointDiff >= 0 ? 'text-green-400' : 'text-red-400'}`}
+            >
+              {pointDiff >= 0 ? '+' : ''}
+              {pointDiff.toFixed(1)}
             </p>
           </div>
           <div>
@@ -191,10 +206,14 @@ const SeasonStatsCard = ({
       {/* Header */}
       <div className="px-4 py-3 border-b border-[#333] bg-[#222] flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className={`w-8 h-8 flex items-center justify-center ${
-            isCurrentUser ? 'bg-purple-500/20 border border-purple-500/50' : 'bg-[#333]'
-          }`}>
-            <span className={`text-sm font-bold ${isCurrentUser ? 'text-purple-400' : 'text-gray-400'}`}>
+          <div
+            className={`w-8 h-8 flex items-center justify-center ${
+              isCurrentUser ? 'bg-purple-500/20 border border-purple-500/50' : 'bg-[#333]'
+            }`}
+          >
+            <span
+              className={`text-sm font-bold ${isCurrentUser ? 'text-purple-400' : 'text-gray-400'}`}
+            >
               {displayName.charAt(0)}
             </span>
           </div>
@@ -227,7 +246,9 @@ const SeasonStatsCard = ({
               <p className="text-[10px] text-gray-500 uppercase mt-1">Record</p>
             </div>
             <div>
-              <p className={`text-2xl font-bold ${winPercentage >= 0.5 ? 'text-green-400' : 'text-red-400'}`}>
+              <p
+                className={`text-2xl font-bold ${winPercentage >= 0.5 ? 'text-green-400' : 'text-red-400'}`}
+              >
                 {(winPercentage * 100).toFixed(0)}%
               </p>
               <p className="text-[10px] text-gray-500 uppercase mt-1">Win Rate</p>
@@ -290,7 +311,7 @@ const SeasonStatsCard = ({
             Caption Performance
           </h3>
           <div className="bg-[#111] p-3">
-            {GAME_CONFIG.captions.map(caption => {
+            {GAME_CONFIG.captions.map((caption) => {
               const rate = captionWinRates[caption];
               return (
                 <CaptionBar
@@ -313,18 +334,8 @@ const SeasonStatsCard = ({
             Achievements
           </h3>
           <div className="flex flex-wrap gap-2">
-            <AchievementBadge
-              label="Clutch"
-              value={clutchWins}
-              icon={Flame}
-              color="orange"
-            />
-            <AchievementBadge
-              label="Blowout"
-              value={blowoutWins}
-              icon={Zap}
-              color="red"
-            />
+            <AchievementBadge label="Clutch" value={clutchWins} icon={Flame} color="orange" />
+            <AchievementBadge label="Blowout" value={blowoutWins} icon={Zap} color="red" />
             <AchievementBadge
               label="Comeback"
               value={comebackWins}
@@ -344,16 +355,23 @@ const SeasonStatsCard = ({
 
         {/* Current Streak */}
         {currentStreak > 0 && currentStreakType && (
-          <div className={`p-3 ${
-            currentStreakType === 'W' ? 'bg-green-500/10 border border-green-500/30' : 'bg-red-500/10 border border-red-500/30'
-          }`}>
+          <div
+            className={`p-3 ${
+              currentStreakType === 'W'
+                ? 'bg-green-500/10 border border-green-500/30'
+                : 'bg-red-500/10 border border-red-500/30'
+            }`}
+          >
             <div className="flex items-center justify-between">
               <span className="text-xs text-gray-400">Current Streak</span>
-              <span className={`text-lg font-bold flex items-center gap-1 ${
-                currentStreakType === 'W' ? 'text-green-400' : 'text-red-400'
-              }`}>
+              <span
+                className={`text-lg font-bold flex items-center gap-1 ${
+                  currentStreakType === 'W' ? 'text-green-400' : 'text-red-400'
+                }`}
+              >
                 {currentStreakType === 'W' && <Flame className="w-4 h-4" />}
-                {currentStreakType}{currentStreak}
+                {currentStreakType}
+                {currentStreak}
               </span>
             </div>
           </div>

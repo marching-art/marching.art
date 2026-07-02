@@ -20,9 +20,9 @@ const getEffectiveDay = (currentDay) => {
   // since scores are processed at 2 AM ET regardless of the user's timezone.
   const now = new Date();
   const etHour = parseInt(
-    new Intl.DateTimeFormat("en-US", {
-      timeZone: "America/New_York",
-      hour: "2-digit",
+    new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/New_York',
+      hour: '2-digit',
       hour12: false,
     }).format(now)
   );
@@ -58,7 +58,8 @@ export const calculateCaptionAggregates = (scoreSheet) => {
     const MUS_Total = (captions.B || 0) + (captions.MA || 0) + (captions.P || 0);
 
     // Total score
-    const Total_Score = scoreSheet.score || scoreSheet.totalScore || (GE_Total + VIS_Total + MUS_Total);
+    const Total_Score =
+      scoreSheet.score || scoreSheet.totalScore || GE_Total + VIS_Total + MUS_Total;
 
     return { GE_Total, VIS_Total, MUS_Total, Total_Score };
   }
@@ -68,7 +69,7 @@ export const calculateCaptionAggregates = (scoreSheet) => {
     GE_Total: scoreSheet.geScore || 0,
     VIS_Total: scoreSheet.visualScore || 0,
     MUS_Total: scoreSheet.musicScore || 0,
-    Total_Score: scoreSheet.score || scoreSheet.totalScore || 0
+    Total_Score: scoreSheet.score || scoreSheet.totalScore || 0,
   };
 };
 
@@ -81,10 +82,12 @@ export const calculateColumnStats = (scores, key) => {
     return { avg: 0, top10: 0, bottom10: 0 };
   }
 
-  const values = scores.map(s => {
-    const aggregates = calculateCaptionAggregates(s);
-    return aggregates[key] || 0;
-  }).filter(v => v > 0);
+  const values = scores
+    .map((s) => {
+      const aggregates = calculateCaptionAggregates(s);
+      return aggregates[key] || 0;
+    })
+    .filter((v) => v > 0);
 
   if (values.length === 0) {
     return { avg: 0, top10: 0, bottom10: 0 };
@@ -98,7 +101,7 @@ export const calculateColumnStats = (scores, key) => {
   return {
     avg,
     top10: sorted[top10Index] || sorted[sorted.length - 1],
-    bottom10: sorted[bottom10Index] || sorted[0]
+    bottom10: sorted[bottom10Index] || sorted[0],
   };
 };
 
@@ -127,7 +130,7 @@ export const calculateTrend = (scoreHistory, count = 5) => {
 
   // Get the most recent N scores (first N elements since array is newest-first)
   const recent = scoreHistory.slice(0, count);
-  const values = recent.map(s => s.score || s.totalScore || 0);
+  const values = recent.map((s) => s.score || s.totalScore || 0);
 
   // values[0] = most recent, values[length-1] = oldest in this window
   const newest = values[0];
@@ -201,7 +204,7 @@ export const calculateCaptionRanks = (scores) => {
 
   // Create result array once, then assign all ranks directly
   // Avoids creating intermediate Maps and doing Map lookups
-  const results = scores.map(s => ({ ...s }));
+  const results = scores.map((s) => ({ ...s }));
 
   // Assign ranks via direct index access (O(1) per assignment)
   for (let rank = 0; rank < n; rank++) {
@@ -221,7 +224,7 @@ export const useScoresData = (options = {}) => {
     seasonId = null,
     classFilter = 'all',
     enabledCaptions = { ge: true, vis: true, mus: true },
-    disableArchiveFallback = false
+    disableArchiveFallback = false,
   } = options;
 
   const currentSeasonUid = useSeasonStore((state) => state.seasonUid);
@@ -234,8 +237,9 @@ export const useScoresData = (options = {}) => {
 
   // Determine which season to fetch (fallbackSeasonId takes precedence when set)
   const targetSeasonId = seasonId || fallbackSeasonId || currentSeasonUid;
-  const isArchived = (seasonId && seasonId !== currentSeasonUid) ||
-                     (fallbackSeasonId && fallbackSeasonId !== currentSeasonUid);
+  const isArchived =
+    (seasonId && seasonId !== currentSeasonUid) ||
+    (fallbackSeasonId && fallbackSeasonId !== currentSeasonUid);
 
   // Fetch available archived seasons
   useEffect(() => {
@@ -246,13 +250,13 @@ export const useScoresData = (options = {}) => {
         const championsSnapshot = await getDocs(championsQuery);
 
         const seasons = [];
-        championsSnapshot.forEach(doc => {
+        championsSnapshot.forEach((doc) => {
           const data = doc.data();
           seasons.push({
             id: doc.id,
             seasonName: data.seasonName,
             seasonType: data.seasonType,
-            archivedAt: data.archivedAt?.toDate?.() || new Date(data.archivedAt)
+            archivedAt: data.archivedAt?.toDate?.() || new Date(data.archivedAt),
           });
         });
 
@@ -278,12 +282,12 @@ export const useScoresData = (options = {}) => {
       const recapsSnapshot = await getDocs(recapsCollectionRef);
 
       if (!recapsSnapshot.empty) {
-        return recapsSnapshot.docs.map(d => d.data());
+        return recapsSnapshot.docs.map((d) => d.data());
       }
       // Fallback to legacy single-document format for backward compatibility
       const legacyDocRef = doc(db, 'fantasy_recaps', targetSeasonId);
       const legacyDoc = await getDoc(legacyDocRef);
-      return legacyDoc.exists() ? (legacyDoc.data().recaps || []) : [];
+      return legacyDoc.exists() ? legacyDoc.data().recaps || [] : [];
     },
     enabled: !!targetSeasonId,
     staleTime: 5 * 60 * 1000,
@@ -318,33 +322,40 @@ export const useScoresData = (options = {}) => {
     const isCurrentSeason = targetSeasonId === currentSeasonUid;
     const effectiveDay = isCurrentSeason ? getEffectiveDay(currentDay) : null;
 
-    return recaps.flatMap(recap => {
-      if (isCurrentSeason) {
-        if (!effectiveDay || effectiveDay < 1) return [];
-        if (recap.offSeasonDay > effectiveDay) return [];
-      }
-      return recap.shows?.map(show => ({
-        eventName: show.eventName,
-        location: show.location,
-        date: recap.date?.toDate?.().toLocaleDateString('en-US', { timeZone: 'UTC' }) || 'TBD',
-        offSeasonDay: recap.offSeasonDay,
-        seasonId: targetSeasonId,
-        scores: show.results?.map(result => ({
-          corps: result.corpsName,
-          corpsName: result.corpsName,
-          uid: result.uid,
-          displayName: result.displayName,
-          avatarUrl: result.avatarUrl || null,
-          score: result.totalScore || 0,
-          totalScore: result.totalScore || 0,
-          geScore: result.geScore || 0,
-          visualScore: result.visualScore || 0,
-          musicScore: result.musicScore || 0,
-          corpsClass: result.corpsClass,
-          captions: result.captions || {}
-        })).sort((a, b) => b.score - a.score) || []
-      })) || [];
-    }).sort((a, b) => b.offSeasonDay - a.offSeasonDay);
+    return recaps
+      .flatMap((recap) => {
+        if (isCurrentSeason) {
+          if (!effectiveDay || effectiveDay < 1) return [];
+          if (recap.offSeasonDay > effectiveDay) return [];
+        }
+        return (
+          recap.shows?.map((show) => ({
+            eventName: show.eventName,
+            location: show.location,
+            date: recap.date?.toDate?.().toLocaleDateString('en-US', { timeZone: 'UTC' }) || 'TBD',
+            offSeasonDay: recap.offSeasonDay,
+            seasonId: targetSeasonId,
+            scores:
+              show.results
+                ?.map((result) => ({
+                  corps: result.corpsName,
+                  corpsName: result.corpsName,
+                  uid: result.uid,
+                  displayName: result.displayName,
+                  avatarUrl: result.avatarUrl || null,
+                  score: result.totalScore || 0,
+                  totalScore: result.totalScore || 0,
+                  geScore: result.geScore || 0,
+                  visualScore: result.visualScore || 0,
+                  musicScore: result.musicScore || 0,
+                  corpsClass: result.corpsClass,
+                  captions: result.captions || {},
+                }))
+                .sort((a, b) => b.score - a.score) || [],
+          })) || []
+        );
+      })
+      .sort((a, b) => b.offSeasonDay - a.offSeasonDay);
   }, [rawRecaps, targetSeasonId, currentSeasonUid, currentDay]);
 
   // displayedSeasonId: which season's data is currently shown
@@ -355,7 +366,7 @@ export const useScoresData = (options = {}) => {
   const availableDays = useMemo(() => {
     if (allShows.length === 0) return [];
     // Get unique days sorted descending (most recent first)
-    return [...new Set(allShows.map(s => s.offSeasonDay))].sort((a, b) => b - a);
+    return [...new Set(allShows.map((s) => s.offSeasonDay))].sort((a, b) => b - a);
   }, [allShows]);
 
   // OPTIMIZATION #8: Derive stats from allShows with useMemo instead of state
@@ -377,46 +388,51 @@ export const useScoresData = (options = {}) => {
     }
 
     const topScore = allScores.length > 0 ? Math.max(...allScores).toFixed(3) : '-';
-    const avgScore = allScores.length > 0
-      ? (allScores.reduce((sum, s) => sum + s, 0) / allScores.length).toFixed(3)
-      : '0.000';
+    const avgScore =
+      allScores.length > 0
+        ? (allScores.reduce((sum, s) => sum + s, 0) / allScores.length).toFixed(3)
+        : '0.000';
 
     return {
       recentShows: allShows.length,
       topScore,
       corpsActive: uniqueCorps.size,
-      avgScore
+      avgScore,
     };
   }, [allShows]);
 
   // Filter shows by class
   const filteredShows = useMemo(() => {
     if (classFilter === 'all') {
-      return allShows.map(show => ({
-        ...show,
-        scores: show.scores.filter(s => s.corpsClass !== 'soundSport')
-      })).filter(show => show.scores.length > 0);
+      return allShows
+        .map((show) => ({
+          ...show,
+          scores: show.scores.filter((s) => s.corpsClass !== 'soundSport'),
+        }))
+        .filter((show) => show.scores.length > 0);
     }
 
     const classMap = {
       world: 'worldClass',
       open: 'openClass',
-      a: 'aClass'
+      a: 'aClass',
     };
     const targetClass = classMap[classFilter] || classFilter;
 
-    return allShows.map(show => ({
-      ...show,
-      scores: show.scores.filter(s => s.corpsClass === targetClass)
-    })).filter(show => show.scores.length > 0);
+    return allShows
+      .map((show) => ({
+        ...show,
+        scores: show.scores.filter((s) => s.corpsClass === targetClass),
+      }))
+      .filter((show) => show.scores.length > 0);
   }, [allShows, classFilter]);
 
   // Aggregate all scores for leaderboard view
   const aggregatedScores = useMemo(() => {
     const corpsScores = new Map();
 
-    filteredShows.forEach(show => {
-      show.scores.forEach(score => {
+    filteredShows.forEach((show) => {
+      show.scores.forEach((score) => {
         const corps = score.corps || score.corpsName;
         if (!corpsScores.has(corps)) {
           corpsScores.set(corps, {
@@ -428,7 +444,7 @@ export const useScoresData = (options = {}) => {
             avatarUrl: score.avatarUrl || null,
             scores: [],
             totalScore: 0,
-            showCount: 0
+            showCount: 0,
           });
         }
 
@@ -437,7 +453,7 @@ export const useScoresData = (options = {}) => {
           ...score,
           eventName: show.eventName,
           date: show.date,
-          offSeasonDay: show.offSeasonDay
+          offSeasonDay: show.offSeasonDay,
         });
         // Use most recent score (first encountered since shows are sorted by offSeasonDay descending)
         if (entry.scores.length === 1) {
@@ -456,7 +472,7 @@ export const useScoresData = (options = {}) => {
         score: entry.totalScore,
         // scores[0] is the most recent since shows are sorted by offSeasonDay descending
         ...calculateCaptionAggregates(entry.scores[0]),
-        trend: calculateTrend(entry.scores)
+        trend: calculateTrend(entry.scores),
       }));
 
     // Add caption ranks
@@ -464,22 +480,28 @@ export const useScoresData = (options = {}) => {
   }, [filteredShows]);
 
   // Calculate column statistics for heatmap
-  const columnStats = useMemo(() => ({
-    GE_Total: calculateColumnStats(aggregatedScores, 'GE_Total'),
-    VIS_Total: calculateColumnStats(aggregatedScores, 'VIS_Total'),
-    MUS_Total: calculateColumnStats(aggregatedScores, 'MUS_Total'),
-    Total_Score: calculateColumnStats(aggregatedScores, 'Total_Score')
-  }), [aggregatedScores]);
+  const columnStats = useMemo(
+    () => ({
+      GE_Total: calculateColumnStats(aggregatedScores, 'GE_Total'),
+      VIS_Total: calculateColumnStats(aggregatedScores, 'VIS_Total'),
+      MUS_Total: calculateColumnStats(aggregatedScores, 'MUS_Total'),
+      Total_Score: calculateColumnStats(aggregatedScores, 'Total_Score'),
+    }),
+    [aggregatedScores]
+  );
 
   // Allow manual season selection
-  const selectSeason = useCallback((newSeasonId) => {
-    if (newSeasonId === currentSeasonUid) {
-      // Clear fallback to return to current season
-      setFallbackSeasonId(null);
-    } else {
-      setFallbackSeasonId(newSeasonId);
-    }
-  }, [currentSeasonUid]);
+  const selectSeason = useCallback(
+    (newSeasonId) => {
+      if (newSeasonId === currentSeasonUid) {
+        // Clear fallback to return to current season
+        setFallbackSeasonId(null);
+      } else {
+        setFallbackSeasonId(newSeasonId);
+      }
+    },
+    [currentSeasonUid]
+  );
 
   return {
     loading,
@@ -495,7 +517,7 @@ export const useScoresData = (options = {}) => {
     currentSeasonUid,
     currentSeasonData,
     displayedSeasonId,
-    selectSeason
+    selectSeason,
   };
 };
 

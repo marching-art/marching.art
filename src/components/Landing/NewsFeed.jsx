@@ -8,9 +8,7 @@
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Flame, Loader2, DollarSign, ArrowUpRight, ArrowDownRight, Zap,
-} from 'lucide-react';
+import { Flame, Loader2, DollarSign, ArrowUpRight, ArrowDownRight, Zap } from 'lucide-react';
 import { fetchNewsFeedHttp, getRecentNews, getArticleEngagement } from '../../api/functions';
 import { useSeasonStore } from '../../store/seasonStore';
 
@@ -38,9 +36,6 @@ import {
 } from './NewsFeedCards';
 import { TrendingBadge, FantasyValueBadge } from './NewsFeedBadges';
 
-
-
-
 // =============================================================================
 // REQUEST DEDUPLICATION
 // Prevents multiple concurrent fetches for the same data
@@ -52,8 +47,6 @@ let pendingRequest = null;
 // PREFETCH CACHE
 // Stores prefetched next page data for instant pagination (like news sites)
 // =============================================================================
-
-
 
 // =============================================================================
 // INTERSECTION OBSERVER HOOK FOR INFINITE SCROLL
@@ -100,16 +93,6 @@ function useIntersectionObserver(callback, enabled, options = {}) {
 // Professional skeleton UI for perceived instant loading
 // =============================================================================
 
-
-
-
-
-
-
-
-
-
-
 // =============================================================================
 // CATEGORY CONFIGURATION
 // =============================================================================
@@ -118,53 +101,33 @@ function useIntersectionObserver(callback, enabled, options = {}) {
 // SUB-COMPONENTS
 // =============================================================================
 
-
-
-
-
-
-
-
-
 /**
  * Share Button - Allows sharing article via Web Share API or clipboard
  */
-
 
 /**
  * Professional Masthead - Category tabs and story count
  */
 
-
 /**
  * Hero Story - Featured article with prominent display
  */
-
 
 /**
  * News Card - Compact card for secondary stories (grid layout)
  * OPTIMIZATION #3: Memoized to prevent re-renders when sibling news items update
  */
 
-
 /**
  * Compact News Row - For additional stories in a list format
  * OPTIMIZATION #3: Memoized to prevent re-renders when sibling news items update
  */
-
 
 /**
  * Text Story Row - Headline + summary only, no thumbnail (classic newspaper style)
  * Only the hero story carries an image; everything below is text-only
  * OPTIMIZATION: Memoized to prevent re-renders when sibling news items update
  */
-
-
-
-
-
-
-
 
 // =============================================================================
 // MAIN COMPONENT
@@ -193,9 +156,9 @@ export default function NewsFeed({ maxItems = 4 }) {
   const effectiveDay = useMemo(() => {
     if (!currentDay) return null;
     const etHour = parseInt(
-      new Intl.DateTimeFormat("en-US", {
-        timeZone: "America/New_York",
-        hour: "2-digit",
+      new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/New_York',
+        hour: '2-digit',
         hour12: false,
       }).format(new Date())
     );
@@ -214,7 +177,7 @@ export default function NewsFeed({ maxItems = 4 }) {
     try {
       const result = await getArticleEngagement({ articleIds });
       if (result.data?.success) {
-        setEngagement(prev => ({ ...prev, ...result.data.engagement }));
+        setEngagement((prev) => ({ ...prev, ...result.data.engagement }));
       }
     } catch (err) {
       console.error('Error fetching engagement:', err);
@@ -267,7 +230,14 @@ export default function NewsFeed({ maxItems = 4 }) {
           setNews(result.news);
           setHasMore(result.hasMore ?? true);
           setEngagement(result.engagement || {});
-          newsCache.set({ news: result.news, hasMore: result.hasMore ?? true, engagement: result.engagement || {} }, maxItems);
+          newsCache.set(
+            {
+              news: result.news,
+              hasMore: result.hasMore ?? true,
+              engagement: result.engagement || {},
+            },
+            maxItems
+          );
         }
       } catch (err) {
         // Error already handled by original request
@@ -297,7 +267,10 @@ export default function NewsFeed({ maxItems = 4 }) {
 
         // Preload hero image for instant display
         // Update cache with fresh data
-        newsCache.set({ news: newsData, hasMore: hasMoreData, engagement: engagementData }, maxItems);
+        newsCache.set(
+          { news: newsData, hasMore: hasMoreData, engagement: engagementData },
+          maxItems
+        );
       } else if (!isStale) {
         // API returned no articles and we have no cached data.
         // Show an honest empty state rather than fabricated content —
@@ -389,7 +362,7 @@ export default function NewsFeed({ maxItems = 4 }) {
         setEngagement(newEngagement);
 
         // Track auto-loads for sidebar racing prevention
-        setAutoLoadCount(prev => prev + 1);
+        setAutoLoadCount((prev) => prev + 1);
 
         // Update cache with expanded data so returning users see all loaded articles
         newsCache.set({ news: newNews, hasMore: newHasMore, engagement: newEngagement }, maxItems);
@@ -463,8 +436,8 @@ export default function NewsFeed({ maxItems = 4 }) {
     navigate(`/article/${story.id}`, {
       state: {
         article: story,
-        engagement: engagement[story.id] || null
-      }
+        engagement: engagement[story.id] || null,
+      },
     });
   };
 
@@ -529,9 +502,7 @@ export default function NewsFeed({ maxItems = 4 }) {
           {hasMore && (
             <div className="mt-6 text-center">
               {/* Intersection observer target - only active for first few loads to prevent sidebar racing */}
-              {autoLoadEnabled && (
-                <div ref={loadMoreRef} className="h-1" aria-hidden="true" />
-              )}
+              {autoLoadEnabled && <div ref={loadMoreRef} className="h-1" aria-hidden="true" />}
 
               {/* Loading indicator - shown during fetch */}
               {loadingMore && (
@@ -563,7 +534,7 @@ export default function NewsFeed({ maxItems = 4 }) {
 // =============================================================================
 
 export function FantasyImpactWidget({ news }) {
-  const latestWithImpact = news?.find(n => n.fantasyImpact);
+  const latestWithImpact = news?.find((n) => n.fantasyImpact);
 
   if (!latestWithImpact) {
     return null;
@@ -589,13 +560,16 @@ export function FantasyImpactWidget({ news }) {
           <div className="mb-3 p-2 bg-green-500/10 border border-green-500/20">
             <div className="flex items-center gap-1.5 mb-1">
               <DollarSign className="w-3 h-3 text-green-400" />
-              <span className="text-[10px] text-green-400 uppercase font-bold">Top ROI This Week</span>
+              <span className="text-[10px] text-green-400 uppercase font-bold">
+                Top ROI This Week
+              </span>
             </div>
             <div className="text-sm text-white font-semibold">
               {metrics.topROI.corps} {metrics.topROI.caption}
             </div>
             <div className="text-xs text-green-400">
-              +{metrics.topROI.pointsGained.toFixed(1)} pts ({metrics.topROI.roiPercent.toFixed(1)}% ROI)
+              +{metrics.topROI.pointsGained.toFixed(1)} pts ({metrics.topROI.roiPercent.toFixed(1)}%
+              ROI)
             </div>
           </div>
         )}
@@ -630,10 +604,15 @@ export function FantasyImpactWidget({ news }) {
             {metrics.sellHigh.slice(0, 2).map((item, idx) => (
               <div key={idx} className="flex items-center justify-between text-xs mb-1">
                 <span className="text-white">{item.corps}</span>
-                <span className={`${
-                  item.riskLevel === 'high' ? 'text-red-400' :
-                  item.riskLevel === 'medium' ? 'text-yellow-400' : 'text-gray-400'
-                }`}>
+                <span
+                  className={`${
+                    item.riskLevel === 'high'
+                      ? 'text-red-400'
+                      : item.riskLevel === 'medium'
+                        ? 'text-yellow-400'
+                        : 'text-gray-400'
+                  }`}
+                >
                   {item.riskLevel} risk
                 </span>
               </div>
@@ -652,13 +631,21 @@ export function FantasyImpactWidget({ news }) {
                     <span className="text-sm text-white">{corp.corps}</span>
                     {corp.fantasyValue && <FantasyValueBadge value={corp.fantasyValue} />}
                   </div>
-                  <span className={`flex items-center gap-1 text-xs ${
-                    corp.direction === 'up' ? 'text-green-500' :
-                    corp.direction === 'down' ? 'text-red-500' : 'text-gray-500'
-                  }`}>
+                  <span
+                    className={`flex items-center gap-1 text-xs ${
+                      corp.direction === 'up'
+                        ? 'text-green-500'
+                        : corp.direction === 'down'
+                          ? 'text-red-500'
+                          : 'text-gray-500'
+                    }`}
+                  >
                     <TrendingBadge direction={corp.direction} />
                     {corp.weeklyChange !== undefined && (
-                      <span>{corp.weeklyChange >= 0 ? '+' : ''}{corp.weeklyChange.toFixed(2)}</span>
+                      <span>
+                        {corp.weeklyChange >= 0 ? '+' : ''}
+                        {corp.weeklyChange.toFixed(2)}
+                      </span>
                     )}
                   </span>
                 </div>

@@ -20,7 +20,7 @@ export const useSeason = () => {
     seasonData,
     loading,
     error,
-    weeksRemaining
+    weeksRemaining,
   };
 };
 
@@ -46,7 +46,7 @@ export const getSeasonProgress = (seasonData) => {
 
   return {
     currentDay: Math.max(1, Math.min(currentDay, 49)),
-    currentWeek: Math.max(1, Math.min(currentWeek, 7))
+    currentWeek: Math.max(1, Math.min(currentWeek, 7)),
   };
 };
 
@@ -61,7 +61,7 @@ export const isRegistrationLocked = (corpsClass, weeksRemaining) => {
     world: 6,
     open: 5,
     aClass: 4,
-    soundSport: 0
+    soundSport: 0,
   };
 
   const lockWeeks = locks[corpsClass] || 0;
@@ -79,7 +79,7 @@ export const getSeasonTypeInfo = (status) => {
       label: 'Live Season',
       color: 'text-red-500',
       bgColor: 'bg-red-500/20',
-      description: 'Follow real DCI scores as they happen!'
+      description: 'Follow real DCI scores as they happen!',
     };
   }
 
@@ -87,7 +87,7 @@ export const getSeasonTypeInfo = (status) => {
     label: 'Off-Season',
     color: 'text-gold-500',
     bgColor: 'bg-gold-500/20',
-    description: 'Fantasy competition with historical data'
+    description: 'Fantasy competition with historical data',
   };
 };
 

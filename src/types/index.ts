@@ -27,10 +27,10 @@ export interface DirectorSocialLinks {
 
 export interface DirectorProfileInfo {
   // Director bio - about the person directing
-  bio?: string;                    // Short bio / directing philosophy
-  yearsDirecting?: number;         // Real-world years as a director/instructor
-  specialties?: string[];          // e.g., ["General Effect", "Visual", "Music", "Color Guard"]
-  credentials?: string;            // Education, certifications, background
+  bio?: string; // Short bio / directing philosophy
+  yearsDirecting?: number; // Real-world years as a director/instructor
+  specialties?: string[]; // e.g., ["General Effect", "Visual", "Music", "Color Guard"]
+  credentials?: string; // Education, certifications, background
 
   // Public contact / social
   socialLinks?: DirectorSocialLinks;
@@ -42,15 +42,15 @@ export interface DirectorProfileInfo {
 
 export interface EnsembleProfileInfo {
   // Ensemble identity (per-corps, preserved across seasons)
-  tagline?: string;                // Short one-liner
-  mission?: string;                // Mission statement / purpose
-  history?: string;                // Ensemble history / backstory
-  foundedYear?: number;            // Year the fantasy ensemble was founded
-  homeVenue?: string;              // Home field / rehearsal site
-  motto?: string;                  // Motto or tagline
+  tagline?: string; // Short one-liner
+  mission?: string; // Mission statement / purpose
+  history?: string; // Ensemble history / backstory
+  foundedYear?: number; // Year the fantasy ensemble was founded
+  homeVenue?: string; // Home field / rehearsal site
+  motto?: string; // Motto or tagline
 
   // Notable past shows and achievements (director-authored)
-  notableShows?: string[];         // e.g., ["Metamorphosis (2024)", "Rebirth (2023)"]
+  notableShows?: string[]; // e.g., ["Metamorphosis (2024)", "Rebirth (2023)"]
 }
 
 export interface UserProfile {
@@ -105,8 +105,8 @@ export interface UserProfile {
   retiredCorps?: RetiredCorps[];
 
   // Season tracking
-  activeSeasonId?: string;  // Current season the user is participating in
-  initialSetupComplete?: string;  // Season ID when initial setup wizard was completed
+  activeSeasonId?: string; // Current season the user is participating in
+  initialSetupComplete?: string; // Season ID when initial setup wizard was completed
 
   // Profile avatar selection - which corps uniform to display
   profileAvatarCorps?: CorpsClass;
@@ -217,13 +217,7 @@ export type PushNotificationType =
 // stores (registration, store normalization, season archives). The short keys
 // ('world'/'open') are accepted for backward compatibility with older data and
 // UI. Helpers in utils/corps.ts normalize between the two.
-export type CorpsClass =
-  | 'soundSport'
-  | 'aClass'
-  | 'open'
-  | 'world'
-  | 'openClass'
-  | 'worldClass';
+export type CorpsClass = 'soundSport' | 'aClass' | 'open' | 'world' | 'openClass' | 'worldClass';
 
 /**
  * Corps Uniform Design - Director-customizable appearance for fantasy corps
@@ -231,36 +225,36 @@ export type CorpsClass =
  */
 export interface CorpsUniformDesign {
   // Core Colors
-  primaryColor: string;        // e.g., "crimson red", "midnight blue", "emerald green"
-  secondaryColor: string;      // e.g., "gold", "silver", "white"
-  accentColor?: string;        // e.g., "black trim", "bronze highlights"
+  primaryColor: string; // e.g., "crimson red", "midnight blue", "emerald green"
+  secondaryColor: string; // e.g., "gold", "silver", "white"
+  accentColor?: string; // e.g., "black trim", "bronze highlights"
 
   // Uniform Style
   style: 'traditional' | 'contemporary' | 'theatrical' | 'athletic' | 'avant-garde';
 
   // Helmet/Headwear
   helmetStyle: 'shako' | 'aussie' | 'modern' | 'themed' | 'none';
-  plumeDescription?: string;   // e.g., "tall white horsehair plume", "flame-shaped red and orange"
+  plumeDescription?: string; // e.g., "tall white horsehair plume", "flame-shaped red and orange"
 
   // Section-Specific Details (optional - AI will fill in if blank)
-  brassDescription?: string;   // e.g., "gold-lacquered with dragon engravings on bells"
+  brassDescription?: string; // e.g., "gold-lacquered with dragon engravings on bells"
   percussionDescription?: string; // e.g., "red drums with gold dragon scale graphics"
-  guardDescription?: string;   // e.g., "flowing crimson gowns with wing-shaped capes"
+  guardDescription?: string; // e.g., "flowing crimson gowns with wing-shaped capes"
 
   // Corps Identity
-  mascotOrEmblem?: string;     // e.g., "dragon", "phoenix", "shield with crossed swords"
-  themeKeywords?: string[];    // e.g., ["fire", "power", "ancient"], used for AI matching
+  mascotOrEmblem?: string; // e.g., "dragon", "phoenix", "shield with crossed swords"
+  themeKeywords?: string[]; // e.g., ["fire", "power", "ancient"], used for AI matching
 
   // Performance Context
   venuePreference?: 'outdoor' | 'indoor' | 'both';
-  performanceStyle?: string;   // e.g., "high-energy explosive", "elegant and refined", "mysterious and dark"
+  performanceStyle?: string; // e.g., "high-energy explosive", "elegant and refined", "mysterious and dark"
 
   // Additional Visual Notes (free-form for anything not covered above)
-  additionalNotes?: string;    // e.g., "LED elements in helmet", "capes that detach mid-show"
+  additionalNotes?: string; // e.g., "LED elements in helmet", "capes that detach mid-show"
 
   // Avatar Generation Options
-  avatarStyle?: 'logo' | 'performer';  // logo = team emblem, performer = section member image
-  avatarSection?: 'drumMajor' | 'hornline' | 'drumline' | 'colorGuard';  // which section to feature in performer style
+  avatarStyle?: 'logo' | 'performer'; // logo = team emblem, performer = section member image
+  avatarSection?: 'drumMajor' | 'hornline' | 'drumline' | 'colorGuard'; // which section to feature in performer style
 }
 
 export interface CorpsData {
@@ -311,10 +305,7 @@ export interface LineupSlot {
 // CAPTION TYPE
 // =============================================================================
 
-export type Caption =
-  | 'GE1' | 'GE2'
-  | 'VP' | 'VA' | 'CG'
-  | 'B' | 'MA' | 'P';
+export type Caption = 'GE1' | 'GE2' | 'VP' | 'VA' | 'CG' | 'B' | 'MA' | 'P';
 
 // =============================================================================
 // SEASON TYPES
@@ -539,13 +530,13 @@ export interface MatchupNotification {
 // =============================================================================
 
 export type LeagueNotificationType =
-  | 'matchup_result'      // Matchup results posted
-  | 'standings_change'    // Someone passed you in standings
-  | 'new_message'         // New message in league chat
-  | 'trade_proposal'      // Trade proposal received
-  | 'trade_response'      // Trade accepted/rejected
-  | 'member_joined'       // New member joined league
-  | 'rivalry_matchup';    // Matchup with a rival
+  | 'matchup_result' // Matchup results posted
+  | 'standings_change' // Someone passed you in standings
+  | 'new_message' // New message in league chat
+  | 'trade_proposal' // Trade proposal received
+  | 'trade_response' // Trade accepted/rejected
+  | 'member_joined' // New member joined league
+  | 'rivalry_matchup'; // Matchup with a rival
 
 export interface LeagueNotification {
   id: string;
@@ -980,11 +971,14 @@ export interface ExtendedHeadToHead {
   user2TotalBattlePoints: number;
 
   // Caption domination map (which user wins each caption more often)
-  captionDomination: Record<Caption, {
-    user1Wins: number;
-    user2Wins: number;
-    dominantUserId: string | null;
-  }>;
+  captionDomination: Record<
+    Caption,
+    {
+      user1Wins: number;
+      user2Wins: number;
+      dominantUserId: string | null;
+    }
+  >;
 
   // Average margin
   avgMargin: number;

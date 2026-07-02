@@ -9,3 +9,9 @@ package-lock.json
 *.min.js
 *.min.css
 public
+
+# The Cloud Functions codebases have their own ESLint style (CommonJS,
+# double quotes per functions/eslint.config.js) which conflicts with this
+# repo's single-quote Prettier config. They are linted, not Prettier-managed.
+functions
+functions-scraper

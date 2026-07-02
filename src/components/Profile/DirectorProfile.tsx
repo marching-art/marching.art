@@ -7,16 +7,31 @@
 import React, { useState, useMemo, memo } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import {
-  User, Trophy, Star, TrendingUp, Calendar, MapPin, Zap, Flame, Award, Music, Clock, Target, Shield, Swords,
-  X, Palette, RefreshCw,
-  Edit3, BookOpen, Share2, UserPlus, Settings,
+  User,
+  Trophy,
+  Star,
+  TrendingUp,
+  Calendar,
+  MapPin,
+  Zap,
+  Flame,
+  Award,
+  Music,
+  Clock,
+  Target,
+  Shield,
+  Swords,
+  X,
+  Palette,
+  RefreshCw,
+  Edit3,
+  BookOpen,
+  Share2,
+  UserPlus,
+  Settings,
 } from 'lucide-react';
 import type { UserProfile, CorpsClass } from '../../types';
-import {
-  CORPS_CLASS_ORDER,
-  resolveCorpsForClass,
-  isCorpsClassUnlocked,
-} from '../../utils/corps';
+import { CORPS_CLASS_ORDER, resolveCorpsForClass, isCorpsClassUnlocked } from '../../utils/corps';
 import {
   getClassDisplay,
   getDirectorStatus,
@@ -119,13 +134,14 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
       if (!corps) return;
       const corpsAny = corps as { seasonHistory?: SeasonHistoryEntry[] };
       if (corpsAny.seasonHistory) {
-        corpsAny.seasonHistory.forEach(season => {
+        corpsAny.seasonHistory.forEach((season) => {
           const key = `${classKey}-${season.seasonId || season.seasonName}`;
           if (seen.has(key)) return;
           seen.add(key);
           history.push({
             ...season,
-            corpsName: season.corpsName || corps.corpsName || (corps as { name?: string }).name || 'Unknown',
+            corpsName:
+              season.corpsName || corps.corpsName || (corps as { name?: string }).name || 'Unknown',
             classKey: classKey as CorpsClass,
           });
         });
@@ -141,12 +157,15 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
 
   const memberSince = useMemo(() => {
     if (!profile.createdAt) return 'Unknown';
-    const date = profile.createdAt.toDate ? profile.createdAt.toDate() : new Date(profile.createdAt as unknown as string);
+    const date = profile.createdAt.toDate
+      ? profile.createdAt.toDate()
+      : new Date(profile.createdAt as unknown as string);
     return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
   }, [profile.createdAt]);
 
   // Check if stats are empty
-  const hasStats = (profile.stats?.championships || 0) > 0 ||
+  const hasStats =
+    (profile.stats?.championships || 0) > 0 ||
     (profile.stats?.topTenFinishes || 0) > 0 ||
     (profile.stats?.seasonsPlayed || 0) > 0;
 
@@ -162,7 +181,13 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
             {/* OPTIMIZATION #7: Added lazy loading for profile avatar */}
             <div className="aspect-square w-full">
               {avatarData.url ? (
-                <img src={avatarData.url} alt="Corps Uniform" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                <img
+                  src={avatarData.url}
+                  alt="Corps Uniform"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-[#1a1a1a]">
                   <User className="w-12 h-12 text-gray-600" />
@@ -188,7 +213,9 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                     disabled={isRegenerating}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-[#333] hover:bg-[#444] transition-colors disabled:opacity-50"
                   >
-                    <RefreshCw className={`w-4 h-4 text-white ${isRegenerating ? 'animate-spin' : ''}`} />
+                    <RefreshCw
+                      className={`w-4 h-4 text-white ${isRegenerating ? 'animate-spin' : ''}`}
+                    />
                     <span className="text-[10px] text-white font-bold uppercase">
                       {isRegenerating ? 'Generating...' : 'Regenerate'}
                     </span>
@@ -221,7 +248,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.9, opacity: 0 }}
                     className="bg-[#1a1a1a] border border-[#333] w-full max-w-sm"
-                    onClick={e => e.stopPropagation()}
+                    onClick={(e) => e.stopPropagation()}
                   >
                     <div className="px-4 py-3 border-b border-[#333] bg-[#222] flex items-center justify-between">
                       <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
@@ -237,7 +264,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                     </div>
 
                     <div className="p-4 grid grid-cols-2 gap-3">
-                      {corpsWithAvatars.map(corps => {
+                      {corpsWithAvatars.map((corps) => {
                         const isSelected = avatarData.corpsClass === corps.corpsClass;
                         const classConfig = getClassDisplay(corps.corpsClass);
                         return (
@@ -306,7 +333,9 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                       aria-label="Share profile"
                     >
                       <Share2 className="w-3 h-3" />
-                      <span className="text-[10px] font-bold uppercase tracking-wider hidden sm:inline">Share</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider hidden sm:inline">
+                        Share
+                      </span>
                     </button>
                   )}
                   {!isOwnProfile && canInviteToLeague && onInviteToLeague && (
@@ -343,18 +372,21 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
 
               {/* Username handle */}
               {profile.username && (
-                <div className="text-[10px] text-gray-500 font-data mb-1">
-                  @{profile.username}
-                </div>
+                <div className="text-[10px] text-gray-500 font-data mb-1">@{profile.username}</div>
               )}
 
               <div className="flex items-center gap-2 mb-1">
                 <div className="flex items-center gap-1">
                   <Shield className="w-3 h-3 text-[#0057B8]" />
-                  <span className="text-[11px] text-[#0057B8] font-bold">{getDisplayTitle(profile)}</span>
+                  <span className="text-[11px] text-[#0057B8] font-bold">
+                    {getDisplayTitle(profile)}
+                  </span>
                 </div>
                 <span className="text-[10px] text-gray-500">
-                  Lv <span className="font-bold text-gray-300 font-data tabular-nums">{profile.xpLevel || 1}</span>
+                  Lv{' '}
+                  <span className="font-bold text-gray-300 font-data tabular-nums">
+                    {profile.xpLevel || 1}
+                  </span>
                 </span>
               </div>
 
@@ -372,10 +404,34 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
 
             {/* Bottom: Stats Row */}
             <div className="flex flex-wrap gap-2 mt-3">
-              <StatPill icon={Zap} value={influenceScore.toLocaleString()} label="Influence" color="text-yellow-400" />
-              <StatPill icon={Target} value={directorRating} label="Rating" color="text-[#0057B8]" />
-              <StatPill icon={Flame} value={profile.engagement?.loginStreak || 0} label="Streak" color={profile.engagement?.loginStreak && profile.engagement.loginStreak >= 7 ? 'text-orange-400' : 'text-gray-400'} />
-              <StatPill icon={Calendar} value={profile.stats?.seasonsPlayed || 0} label="Seasons" color="text-green-400" />
+              <StatPill
+                icon={Zap}
+                value={influenceScore.toLocaleString()}
+                label="Influence"
+                color="text-yellow-400"
+              />
+              <StatPill
+                icon={Target}
+                value={directorRating}
+                label="Rating"
+                color="text-[#0057B8]"
+              />
+              <StatPill
+                icon={Flame}
+                value={profile.engagement?.loginStreak || 0}
+                label="Streak"
+                color={
+                  profile.engagement?.loginStreak && profile.engagement.loginStreak >= 7
+                    ? 'text-orange-400'
+                    : 'text-gray-400'
+                }
+              />
+              <StatPill
+                icon={Calendar}
+                value={profile.stats?.seasonsPlayed || 0}
+                label="Seasons"
+                color="text-green-400"
+              />
             </div>
           </div>
         </div>
@@ -390,9 +446,10 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
         const hasCreds = !!(info?.credentials && info.credentials.trim());
         const hasSpecialties = !!(info?.specialties && info.specialties.length > 0);
         const hasYears = typeof info?.yearsDirecting === 'number' && info.yearsDirecting > 0;
-        const hasSocials = !!(info?.socialLinks && Object.values(info.socialLinks).some(
-          (v) => typeof v === 'string' && v.trim()
-        ));
+        const hasSocials = !!(
+          info?.socialLinks &&
+          Object.values(info.socialLinks).some((v) => typeof v === 'string' && v.trim())
+        );
         const hasAnything = hasBio || hasCreds || hasSpecialties || hasYears || hasSocials;
 
         if (!hasAnything) {
@@ -434,18 +491,21 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                     {hasYears && (
                       <span className="flex items-center gap-1 px-2 py-1 bg-[#0a0a0a] border border-[#333] text-[10px] text-gray-300">
                         <Clock className="w-3 h-3 text-green-400" />
-                        <span className="font-bold font-data tabular-nums">{info!.yearsDirecting}</span>
+                        <span className="font-bold font-data tabular-nums">
+                          {info!.yearsDirecting}
+                        </span>
                         <span className="text-gray-500">yrs directing</span>
                       </span>
                     )}
-                    {hasSpecialties && info!.specialties!.map((s) => (
-                      <span
-                        key={s}
-                        className="px-2 py-1 bg-[#0057B8]/10 border border-[#0057B8]/30 text-[10px] text-[#0057B8] font-bold"
-                      >
-                        {s}
-                      </span>
-                    ))}
+                    {hasSpecialties &&
+                      info!.specialties!.map((s) => (
+                        <span
+                          key={s}
+                          className="px-2 py-1 bg-[#0057B8]/10 border border-[#0057B8]/30 text-[10px] text-[#0057B8] font-bold"
+                        >
+                          {s}
+                        </span>
+                      ))}
                   </div>
                 )}
 
@@ -454,7 +514,9 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                     <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">
                       Background
                     </div>
-                    <p className="text-[11px] text-gray-300 whitespace-pre-wrap">{info!.credentials}</p>
+                    <p className="text-[11px] text-gray-300 whitespace-pre-wrap">
+                      {info!.credentials}
+                    </p>
                   </div>
                 )}
 
@@ -482,12 +544,12 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
 
         // Iterate canonical class order and resolve both unlock status and the
         // corps record tolerating legacy short keys ('world'/'open').
-        const entries = CORPS_CLASS_ORDER
-          .filter((cls) => isCorpsClassUnlocked(unlockedClasses, cls))
-          .map((cls) => ({
-            classKey: cls as CorpsClass,
-            corps: resolveCorpsForClass(profile.corps, cls),
-          }));
+        const entries = CORPS_CLASS_ORDER.filter((cls) =>
+          isCorpsClassUnlocked(unlockedClasses, cls)
+        ).map((cls) => ({
+          classKey: cls as CorpsClass,
+          corps: resolveCorpsForClass(profile.corps, cls),
+        }));
 
         // On public profiles, hide unregistered classes (no useful info to share).
         const visibleEntries = isOwnProfile
@@ -538,13 +600,14 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
       {/* CONTENT GRID - Compact 3-column */}
       {/* ================================================================== */}
       <div className="p-3 grid grid-cols-1 md:grid-cols-3 gap-3">
-
         {/* COLUMN 1: Trophy Case */}
         <div className="bg-[#1a1a1a] border border-[#333]">
           <div className="px-3 py-2 border-b border-[#333] bg-[#222] flex items-center justify-between">
             <div className="flex items-center gap-1.5">
               <Trophy className="w-3.5 h-3.5 text-yellow-500" />
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Trophy Case</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                Trophy Case
+              </span>
             </div>
             {trophies.length > 0 && (
               <span className="text-[9px] text-gray-500">{trophies.length}</span>
@@ -553,17 +616,12 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
 
           {trophies.length > 0 ? (
             <div className="p-2 grid grid-cols-3 gap-1.5">
-              {trophies.slice(0, 6).map(trophy => (
+              {trophies.slice(0, 6).map((trophy) => (
                 <TrophyMini key={trophy.id} trophy={trophy} />
               ))}
             </div>
           ) : (
-            <EmptyWithCTA
-              icon={Trophy}
-              title="No trophies yet"
-              cta="Join a league"
-              to="/leagues"
-            />
+            <EmptyWithCTA icon={Trophy} title="No trophies yet" cta="Join a league" to="/leagues" />
           )}
         </div>
 
@@ -572,7 +630,9 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
           <div className="px-3 py-2 border-b border-[#333] bg-[#222] flex items-center justify-between">
             <div className="flex items-center gap-1.5">
               <Star className="w-3.5 h-3.5 text-purple-400" />
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Achievements</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                Achievements
+              </span>
             </div>
             {achievements.length > 0 && (
               <span className="text-[9px] text-gray-500">{achievements.length} earned</span>
@@ -581,7 +641,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
 
           {achievements.length > 0 ? (
             <div className="p-2 space-y-1">
-              {achievements.slice(0, 4).map(achievement => (
+              {achievements.slice(0, 4).map((achievement) => (
                 <AchievementMini key={achievement.id} achievement={achievement} />
               ))}
               {achievements.length > 4 && (
@@ -607,18 +667,36 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
         <div className="bg-[#1a1a1a] border border-[#333]">
           <div className="px-3 py-2 border-b border-[#333] bg-[#222] flex items-center gap-1.5">
             <TrendingUp className="w-3.5 h-3.5 text-green-400" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Career Stats</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+              Career Stats
+            </span>
           </div>
 
           {hasStats ? (
             <div className="p-2 space-y-1">
               {[
-                { label: 'Championships', value: profile.stats?.championships || 0, color: 'text-yellow-400' },
-                { label: 'Top 10s', value: profile.stats?.topTenFinishes || 0, color: 'text-white' },
+                {
+                  label: 'Championships',
+                  value: profile.stats?.championships || 0,
+                  color: 'text-yellow-400',
+                },
+                {
+                  label: 'Top 10s',
+                  value: profile.stats?.topTenFinishes || 0,
+                  color: 'text-white',
+                },
                 { label: 'Seasons', value: profile.stats?.seasonsPlayed || 0, color: 'text-white' },
-                { label: 'League Wins', value: profile.stats?.leagueWins || 0, color: 'text-white' },
-                { label: 'Total XP', value: (profile.xp || 0).toLocaleString(), color: 'text-blue-400' },
-              ].map(stat => (
+                {
+                  label: 'League Wins',
+                  value: profile.stats?.leagueWins || 0,
+                  color: 'text-white',
+                },
+                {
+                  label: 'Total XP',
+                  value: (profile.xp || 0).toLocaleString(),
+                  color: 'text-blue-400',
+                },
+              ].map((stat) => (
                 <div key={stat.label} className="flex justify-between items-center py-0.5">
                   <span className="text-[10px] text-gray-400">{stat.label}</span>
                   <span className={`text-xs font-bold font-data ${stat.color}`}>{stat.value}</span>
@@ -644,21 +722,27 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
           <div className="px-3 py-2 border-b border-[#333] bg-[#222] flex items-center justify-between">
             <div className="flex items-center gap-1.5">
               <Swords className="w-3.5 h-3.5 text-[#0057B8]" />
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Season History</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                Season History
+              </span>
             </div>
             <span className="text-[9px] text-gray-500">{seasonHistory.length} seasons</span>
           </div>
 
           {seasonHistory.length > 0 ? (
             <div className="max-h-64 overflow-y-auto">
-              {seasonHistory.map(season => (
+              {seasonHistory.map((season) => (
                 <SeasonRow
                   key={`${season.classKey}-${season.seasonId}`}
                   season={season}
                   isExpanded={expandedSeason === `${season.classKey}-${season.seasonId}`}
-                  onToggle={() => setExpandedSeason(
-                    expandedSeason === `${season.classKey}-${season.seasonId}` ? null : `${season.classKey}-${season.seasonId}`
-                  )}
+                  onToggle={() =>
+                    setExpandedSeason(
+                      expandedSeason === `${season.classKey}-${season.seasonId}`
+                        ? null
+                        : `${season.classKey}-${season.seasonId}`
+                    )
+                  }
                 />
               ))}
             </div>

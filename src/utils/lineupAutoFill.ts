@@ -43,10 +43,7 @@ export function autoFillLineup(
 ): AutoFillResult {
   const existing = Object.entries(currentLineup).filter(([, v]) => v) as [string, string][];
   const usedNames = new Set(existing.map(([, v]) => v.split('|')[0]));
-  const usedPoints = existing.reduce(
-    (sum, [, v]) => sum + (parseFloat(v.split('|')[2]) || 0),
-    0
-  );
+  const usedPoints = existing.reduce((sum, [, v]) => sum + (parseFloat(v.split('|')[2]) || 0), 0);
 
   const remainingCaps = captionIds.filter((id) => !currentLineup[id]);
   const target = remainingCaps.length;
@@ -71,10 +68,7 @@ export function autoFillLineup(
 
   // dp[s] maps an achievable point sum (using exactly s picks) to one set of
   // picks producing it. Map keys keep this exact even for non-integer points.
-  const dp: Array<Map<number, CorpsOption[]>> = Array.from(
-    { length: target + 1 },
-    () => new Map()
-  );
+  const dp: Array<Map<number, CorpsOption[]>> = Array.from({ length: target + 1 }, () => new Map());
   dp[0].set(0, []);
 
   for (const options of groups.values()) {

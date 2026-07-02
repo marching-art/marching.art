@@ -11,6 +11,7 @@ The game's schedule system creates realistic drum corps competition schedules ba
 **Collection:** `historical_scores`
 
 Each document represents a year and contains:
+
 ```javascript
 {
   data: [
@@ -33,6 +34,7 @@ Each document represents a year and contains:
 **Function:** `generateOffSeasonSchedule()` in `functions/src/helpers/season.js`
 
 **Process:**
+
 1. Fetches all documents from `historical_scores` collection
 2. Groups shows by their `offSeasonDay` property
 3. Creates a 49-day schedule array:
@@ -41,7 +43,7 @@ Each document represents a year and contains:
      { offSeasonDay: 1, shows: [show1, show2, show3] },
      { offSeasonDay: 2, shows: [show4, show5, show6] },
      // ... up to day 49
-   ]
+   ];
    ```
 4. Places key championship shows on specific days:
    - Day 49: World Championship Finals (mandatory, auto-enrollment for top 12 from Day 48)
@@ -56,6 +58,7 @@ Each document represents a year and contains:
 6. Avoids duplicate event names and locations
 
 **Output Structure:**
+
 ```javascript
 {
   offSeasonDay: 1-49,
@@ -77,6 +80,7 @@ Each document represents a year and contains:
 **Document:** `game-settings/season`
 
 The generated schedule is saved as the `events` array:
+
 ```javascript
 {
   name: "adagio_2025-26",
@@ -96,6 +100,7 @@ The generated schedule is saved as the `events` array:
 **Component:** `ShowSelectionModal.jsx`
 
 **Process:**
+
 1. Fetches season document from `game-settings/season`
 2. Extracts the `events` array
 3. Calculates current week:
@@ -124,6 +129,7 @@ The generated schedule is saved as the `events` array:
 **Saves to:** `artifacts/marching-art/users/{uid}/profile/data`
 
 **Structure:**
+
 ```javascript
 corps: {
   worldClass: {
@@ -148,6 +154,7 @@ corps: {
 ### Why `offSeasonDay`?
 
 The `offSeasonDay` property (1-49) maps historical show dates to the game's 49-day off-season calendar. This allows:
+
 - Consistent schedule structure across different years
 - Easy week calculation (week = ceil(day / 7))
 - Preservation of realistic show timing and championship placement
@@ -155,6 +162,7 @@ The `offSeasonDay` property (1-49) maps historical show dates to the game's 49-d
 ### Schedule Structure
 
 The backend uses a **nested structure** (days containing shows) rather than a flat array because:
+
 1. Multiple shows can occur on the same day
 2. Days can have 0 shows (rest days, especially days 45-46 before championships)
 3. Easier to place mandatory championship shows
@@ -179,36 +187,43 @@ const weekEnd = currentWeek * 7;
 Championship events have **automatic enrollment** based on corps class and advancement rules:
 
 ### Day 45 - Open and A Class Prelims (Marion, IN)
+
 - **Eligible:** All Open Class and A Class corps
 - **Auto-enrolled:** Yes, all eligible corps compete automatically
 - **Location:** Marion, IN
 
 ### Day 46 - Open and A Class Finals (Marion, IN)
+
 - **Eligible:** Top 8 Open Class + Top 4 A Class from Day 45
 - **Auto-enrolled:** Yes, based on Day 45 results
 - **Awards:** Champion trophies (gold/silver/bronze) per class, finalist ribbons
 
 ### Day 47 - World Championship Prelims (Indianapolis, IN)
+
 - **Eligible:** All World Class, Open Class, and A Class corps
 - **Auto-enrolled:** Yes, all eligible corps compete
 - **Note:** Recaps do not indicate class, all corps ranked together
 
 ### Day 48 - World Championship Semifinals (Indianapolis, IN)
+
 - **Eligible:** Top 25 corps from Day 47 (ties at 25th place all advance)
 - **Auto-enrolled:** Yes, based on Day 47 results
 - **Note:** Recaps do not indicate class, all corps ranked together
 
 ### Day 49 - World Championship Finals (Indianapolis, IN)
+
 - **Eligible:** Top 12 corps from Day 48 (ties at 12th place all advance)
 - **Auto-enrolled:** Yes, based on Day 48 results
 - **Awards:** Champion trophies (gold/silver/bronze), finalist medals
 
 ### Day 49 - SoundSport International Music & Food Festival (Indianapolis, IN)
+
 - **Eligible:** All SoundSport corps
 - **Auto-enrolled:** Yes, all SoundSport corps compete
 - **Awards:** SoundSport champion trophies (gold/silver/bronze)
 
 ### Class Restrictions
+
 - **World Class, Open Class, A Class** cannot participate in SoundSport Festival
 - **SoundSport** cannot participate in World Championship events (Days 47-49) or Open/A Class events (Days 45-46)
 

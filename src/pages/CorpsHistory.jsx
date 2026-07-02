@@ -3,9 +3,23 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import {
-  Trophy, Calendar, Star, TrendingUp, Award, Music,
-  ChevronRight, MapPin, Target, Activity, AlertTriangle, RefreshCw,
-  BarChart3, Clock, Medal, Crown, History
+  Trophy,
+  Calendar,
+  Star,
+  TrendingUp,
+  Award,
+  Music,
+  ChevronRight,
+  MapPin,
+  Target,
+  Activity,
+  AlertTriangle,
+  RefreshCw,
+  BarChart3,
+  Clock,
+  Medal,
+  Crown,
+  History,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import BrandLogo from '../components/BrandLogo';
@@ -34,8 +48,9 @@ const CorpsHistory = () => {
 
           // Auto-select first corps with history
           if (!selectedCorpsClass && profileData.corps) {
-            const corpsWithHistory = Object.entries(profileData.corps)
-              .find(([_, corpsData]) => corpsData?.seasonHistory?.length > 0);
+            const corpsWithHistory = Object.entries(profileData.corps).find(
+              ([_, corpsData]) => corpsData?.seasonHistory?.length > 0
+            );
             if (corpsWithHistory) {
               setSelectedCorpsClass(corpsWithHistory[0]);
             } else {
@@ -61,7 +76,7 @@ const CorpsHistory = () => {
       worldClass: 'World Class',
       openClass: 'Open Class',
       aClass: 'A Class',
-      soundSport: 'SoundSport'
+      soundSport: 'SoundSport',
     };
     return classNames[corpsClass] || corpsClass;
   };
@@ -71,50 +86,58 @@ const CorpsHistory = () => {
       worldClass: 'text-yellow-400 bg-yellow-500/20 border-yellow-500/30',
       openClass: 'text-purple-400 bg-purple-500/20 border-purple-500/30',
       aClass: 'text-blue-400 bg-blue-500/20 border-blue-500/30',
-      soundSport: 'text-green-400 bg-green-500/20 border-green-500/30'
+      soundSport: 'text-green-400 bg-green-500/20 border-green-500/30',
     };
     return colors[corpsClass] || 'text-gray-400 bg-white/20 border-white/30';
   };
 
   const activeCorps = selectedCorpsClass ? corps?.[selectedCorpsClass] : null;
   const seasonHistory = useMemo(() => {
-    return (activeCorps?.seasonHistory || []).sort((a, b) =>
-      (b.archivedAt?.seconds || 0) - (a.archivedAt?.seconds || 0)
+    return (activeCorps?.seasonHistory || []).sort(
+      (a, b) => (b.archivedAt?.seconds || 0) - (a.archivedAt?.seconds || 0)
     );
   }, [activeCorps]);
   const hasHistory = seasonHistory.length > 0;
 
   // Calculate career stats
-  const careerStats = useMemo(() => ({
-    totalSeasons: seasonHistory.length,
-    totalShows: seasonHistory.reduce((sum, season) => sum + (season.showsAttended || 0), 0),
-    totalPoints: seasonHistory.reduce((sum, season) => sum + (season.totalSeasonScore || 0), 0),
-    bestSeasonScore: Math.max(...seasonHistory.map(s => s.totalSeasonScore || 0), 0),
-    bestWeeklyScore: Math.max(...seasonHistory.map(s => s.highestWeeklyScore || 0), 0),
-    averageSeasonScore: seasonHistory.length > 0
-      ? seasonHistory.reduce((sum, s) => sum + (s.totalSeasonScore || 0), 0) / seasonHistory.length
-      : 0
-  }), [seasonHistory]);
+  const careerStats = useMemo(
+    () => ({
+      totalSeasons: seasonHistory.length,
+      totalShows: seasonHistory.reduce((sum, season) => sum + (season.showsAttended || 0), 0),
+      totalPoints: seasonHistory.reduce((sum, season) => sum + (season.totalSeasonScore || 0), 0),
+      bestSeasonScore: Math.max(...seasonHistory.map((s) => s.totalSeasonScore || 0), 0),
+      bestWeeklyScore: Math.max(...seasonHistory.map((s) => s.highestWeeklyScore || 0), 0),
+      averageSeasonScore:
+        seasonHistory.length > 0
+          ? seasonHistory.reduce((sum, s) => sum + (s.totalSeasonScore || 0), 0) /
+            seasonHistory.length
+          : 0,
+    }),
+    [seasonHistory]
+  );
 
   // Prepare chart data
-  const chartData = useMemo(() => ({
-    labels: [...seasonHistory].reverse().map(s => s.seasonName || 'Unknown'),
-    datasets: [
-      {
-        label: 'Season Score',
-        data: [...seasonHistory].reverse().map(s => s.totalSeasonScore || 0),
-        borderColor: 'rgb(250, 204, 21)',
-        backgroundColor: 'rgba(250, 204, 21, 0.1)',
-        fill: true,
-        tension: 0.4,
-        pointBackgroundColor: 'rgb(250, 204, 21)',
-        pointBorderColor: '#0A0A0A',
-        pointBorderWidth: 2,
-        pointRadius: 5,
-        pointHoverRadius: 7
-      }
-    ]
-  }), [seasonHistory]);
+  const chartData = useMemo(
+    () => ({
+      labels: [...seasonHistory].reverse().map((s) => s.seasonName || 'Unknown'),
+      datasets: [
+        {
+          label: 'Season Score',
+          data: [...seasonHistory].reverse().map((s) => s.totalSeasonScore || 0),
+          borderColor: 'rgb(250, 204, 21)',
+          backgroundColor: 'rgba(250, 204, 21, 0.1)',
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: 'rgb(250, 204, 21)',
+          pointBorderColor: '#0A0A0A',
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+        },
+      ],
+    }),
+    [seasonHistory]
+  );
 
   const chartOptions = {
     responsive: true,
@@ -128,20 +151,24 @@ const CorpsHistory = () => {
         borderColor: 'rgb(250, 204, 21)',
         borderWidth: 1,
         padding: 12,
-        cornerRadius: 8
-      }
+        cornerRadius: 8,
+      },
     },
     scales: {
       y: {
         beginAtZero: true,
         grid: { color: 'rgba(245, 245, 220, 0.05)' },
-        ticks: { color: 'rgba(245, 245, 220, 0.6)', font: { family: 'JetBrains Mono' } }
+        ticks: { color: 'rgba(245, 245, 220, 0.6)', font: { family: 'JetBrains Mono' } },
       },
       x: {
         grid: { color: 'rgba(245, 245, 220, 0.05)' },
-        ticks: { color: 'rgba(245, 245, 220, 0.6)', maxRotation: 45, font: { family: 'JetBrains Mono', size: 10 } }
-      }
-    }
+        ticks: {
+          color: 'rgba(245, 245, 220, 0.6)',
+          maxRotation: 45,
+          font: { family: 'JetBrains Mono', size: 10 },
+        },
+      },
+    },
   };
 
   if (loading) {
@@ -200,9 +227,7 @@ const CorpsHistory = () => {
                 <h1 className="text-xl font-bold text-white uppercase tracking-wide">
                   Corps History
                 </h1>
-                <p className="text-xs text-gray-500/60">
-                  Track performance and growth over time
-                </p>
+                <p className="text-xs text-gray-500/60">Track performance and growth over time</p>
               </div>
             </div>
 
@@ -226,7 +251,9 @@ const CorpsHistory = () => {
                     <Music className="w-4 h-4" />
                     <div className="text-left">
                       <div className="text-sm font-bold">{corpsData.corpsName}</div>
-                      <div className="text-[10px] opacity-75">{getClassDisplayName(corpsClass)}</div>
+                      <div className="text-[10px] opacity-75">
+                        {getClassDisplayName(corpsClass)}
+                      </div>
                     </div>
                   </button>
                 ))}
@@ -245,20 +272,36 @@ const CorpsHistory = () => {
                 <p className="text-xl font-mono font-bold text-white">{careerStats.totalShows}</p>
               </div>
               <div className="bg-charcoal-900/50 border border-white/10 rounded-xl p-3 text-center">
-                <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">Total Pts</p>
-                <p className="text-xl font-mono font-bold text-white">{careerStats.totalPoints.toFixed(3)}</p>
+                <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">
+                  Total Pts
+                </p>
+                <p className="text-xl font-mono font-bold text-white">
+                  {careerStats.totalPoints.toFixed(3)}
+                </p>
               </div>
               <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3 text-center">
-                <p className="text-[10px] text-yellow-400 uppercase tracking-wide mb-1">Best Season</p>
-                <p className="text-xl font-mono font-bold text-yellow-400">{careerStats.bestSeasonScore.toFixed(3)}</p>
+                <p className="text-[10px] text-yellow-400 uppercase tracking-wide mb-1">
+                  Best Season
+                </p>
+                <p className="text-xl font-mono font-bold text-yellow-400">
+                  {careerStats.bestSeasonScore.toFixed(3)}
+                </p>
               </div>
               <div className="bg-charcoal-900/50 border border-white/10 rounded-xl p-3 text-center">
-                <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">Best Week</p>
-                <p className="text-xl font-mono font-bold text-white">{careerStats.bestWeeklyScore.toFixed(3)}</p>
+                <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">
+                  Best Week
+                </p>
+                <p className="text-xl font-mono font-bold text-white">
+                  {careerStats.bestWeeklyScore.toFixed(3)}
+                </p>
               </div>
               <div className="bg-charcoal-900/50 border border-white/10 rounded-xl p-3 text-center">
-                <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">Avg Season</p>
-                <p className="text-xl font-mono font-bold text-white">{careerStats.averageSeasonScore.toFixed(3)}</p>
+                <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">
+                  Avg Season
+                </p>
+                <p className="text-xl font-mono font-bold text-white">
+                  {careerStats.averageSeasonScore.toFixed(3)}
+                </p>
               </div>
             </div>
           )}
@@ -269,7 +312,6 @@ const CorpsHistory = () => {
           BOTTOM: Split View (Chart/Timeline on Left, Season Detail on Right)
           ============================================================ */}
       <div className="flex-1 flex flex-col lg:flex-row min-h-0">
-
         {/* LEFT: Chart or Timeline View */}
         <div className="flex-1 flex flex-col min-h-0 lg:border-r border-white/10">
           {/* View Toggle */}
@@ -355,17 +397,25 @@ const CorpsHistory = () => {
                           }`}
                         >
                           <div className="flex items-center gap-4">
-                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                              isSelected ? 'bg-yellow-500/30' : 'bg-charcoal-800'
-                            }`}>
-                              <Trophy className={`w-5 h-5 ${isSelected ? 'text-yellow-400' : 'text-gray-400'}`} />
+                            <div
+                              className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                                isSelected ? 'bg-yellow-500/30' : 'bg-charcoal-800'
+                              }`}
+                            >
+                              <Trophy
+                                className={`w-5 h-5 ${isSelected ? 'text-yellow-400' : 'text-gray-400'}`}
+                              />
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
-                                <h4 className={`font-bold truncate ${isSelected ? 'text-yellow-400' : 'text-white'}`}>
+                                <h4
+                                  className={`font-bold truncate ${isSelected ? 'text-yellow-400' : 'text-white'}`}
+                                >
                                   {season.seasonName || 'Unknown Season'}
                                 </h4>
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${getClassColor(season.corpsClass)}`}>
+                                <span
+                                  className={`px-2 py-0.5 rounded text-[10px] font-bold ${getClassColor(season.corpsClass)}`}
+                                >
                                   {getClassDisplayName(season.corpsClass)}
                                 </span>
                               </div>
@@ -384,9 +434,11 @@ const CorpsHistory = () => {
                                 </span>
                               </div>
                             </div>
-                            <ChevronRight className={`w-5 h-5 transition-transform ${
-                              isSelected ? 'text-yellow-400 rotate-90' : 'text-gray-500/40'
-                            }`} />
+                            <ChevronRight
+                              className={`w-5 h-5 transition-transform ${
+                                isSelected ? 'text-yellow-400 rotate-90' : 'text-gray-500/40'
+                              }`}
+                            />
                           </div>
                         </button>
                       );
@@ -429,7 +481,9 @@ const CorpsHistory = () => {
                   <div className="flex-1 min-h-0 overflow-y-auto hud-scroll p-4 space-y-4">
                     {/* Final Score */}
                     <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 text-center">
-                      <p className="text-xs text-yellow-400 uppercase tracking-wide mb-1">Final Score</p>
+                      <p className="text-xs text-yellow-400 uppercase tracking-wide mb-1">
+                        Final Score
+                      </p>
                       <p className="text-3xl font-mono font-bold text-yellow-400">
                         {(season.totalSeasonScore || 0).toFixed(3)}
                       </p>
@@ -438,12 +492,20 @@ const CorpsHistory = () => {
                     {/* Stats Grid */}
                     <div className="grid grid-cols-2 gap-3">
                       <div className="bg-charcoal-900/50 border border-white/10 rounded-xl p-3 text-center">
-                        <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">Best Week</p>
-                        <p className="text-xl font-mono font-bold text-white">{(season.highestWeeklyScore || 0).toFixed(3)}</p>
+                        <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">
+                          Best Week
+                        </p>
+                        <p className="text-xl font-mono font-bold text-white">
+                          {(season.highestWeeklyScore || 0).toFixed(3)}
+                        </p>
                       </div>
                       <div className="bg-charcoal-900/50 border border-white/10 rounded-xl p-3 text-center">
-                        <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">Shows</p>
-                        <p className="text-xl font-mono font-bold text-white">{season.showsAttended || 0}</p>
+                        <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">
+                          Shows
+                        </p>
+                        <p className="text-xl font-mono font-bold text-white">
+                          {season.showsAttended || 0}
+                        </p>
                       </div>
                     </div>
 
@@ -455,8 +517,11 @@ const CorpsHistory = () => {
                           Weekly Breakdown
                         </h4>
                         <div className="grid grid-cols-2 gap-2">
-                          {weeks.map(week => (
-                            <div key={week} className="bg-charcoal-800/50 rounded-lg p-2 flex items-center justify-between">
+                          {weeks.map((week) => (
+                            <div
+                              key={week}
+                              className="bg-charcoal-800/50 rounded-lg p-2 flex items-center justify-between"
+                            >
                               <span className="text-xs text-gray-500/60">{week}</span>
                               <span className="text-xs font-mono font-bold text-white">
                                 {(weeklyScores[week] || 0).toFixed(3)}
@@ -479,7 +544,9 @@ const CorpsHistory = () => {
                             const [corpsName, year] = (value || '').split('|');
                             return (
                               <div key={caption} className="bg-charcoal-800/50 rounded-lg p-2">
-                                <div className="text-[10px] text-gray-500/60 uppercase">{caption}</div>
+                                <div className="text-[10px] text-gray-500/60 uppercase">
+                                  {caption}
+                                </div>
                                 <div className="text-sm font-semibold text-white truncate">
                                   {corpsName || 'Not Set'}
                                 </div>

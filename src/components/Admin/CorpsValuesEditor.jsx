@@ -44,7 +44,9 @@ const CorpsValuesEditor = () => {
         // doesn't need to depend on selectedDocId.
         const season = await getSeasonSettings();
         const activeId = season ? season.dataDocId : null;
-        setSelectedDocId(prev => prev || (activeId && ids.includes(activeId) ? activeId : ids[0]));
+        setSelectedDocId(
+          (prev) => prev || (activeId && ids.includes(activeId) ? activeId : ids[0])
+        );
       }
     } catch (err) {
       console.error(err);
@@ -80,19 +82,21 @@ const CorpsValuesEditor = () => {
   }, [selectedDocId]);
 
   const updateRow = (idx, field, value) => {
-    setRows(prev => prev.map((r, i) => {
-      if (i !== idx) return r;
-      if (field === 'points' || field === 'sourceYear') {
-        const n = value === '' ? '' : Number(value);
-        return { ...r, [field]: n };
-      }
-      return { ...r, [field]: value };
-    }));
+    setRows((prev) =>
+      prev.map((r, i) => {
+        if (i !== idx) return r;
+        if (field === 'points' || field === 'sourceYear') {
+          const n = value === '' ? '' : Number(value);
+          return { ...r, [field]: n };
+        }
+        return { ...r, [field]: value };
+      })
+    );
   };
 
-  const addRow = () => setRows(prev => [...prev, emptyRow()]);
+  const addRow = () => setRows((prev) => [...prev, emptyRow()]);
 
-  const deleteRow = (idx) => setRows(prev => prev.filter((_, i) => i !== idx));
+  const deleteRow = (idx) => setRows((prev) => prev.filter((_, i) => i !== idx));
 
   const discardChanges = () => {
     setRows(JSON.parse(originalJson));
@@ -116,13 +120,16 @@ const CorpsValuesEditor = () => {
       }
     }
 
-    if (!window.confirm(
-      `Save ${rows.length} corps entries to dci-data/${selectedDocId}?\n\nThis overwrites the corpsValues array for that season.`
-    )) return;
+    if (
+      !window.confirm(
+        `Save ${rows.length} corps entries to dci-data/${selectedDocId}?\n\nThis overwrites the corpsValues array for that season.`
+      )
+    )
+      return;
 
     setSaving(true);
     try {
-      const normalized = rows.map(r => ({
+      const normalized = rows.map((r) => ({
         corpsName: r.corpsName.trim(),
         sourceYear: Number(r.sourceYear),
         points: Number(r.points),
@@ -182,8 +189,10 @@ const CorpsValuesEditor = () => {
             className="flex-1 max-w-xs px-2 py-1.5 bg-[#111] border border-[#333] text-xs text-white font-data focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
           >
             {seasonDocIds.length === 0 && <option value="">(none)</option>}
-            {seasonDocIds.map(id => (
-              <option key={id} value={id}>{id}</option>
+            {seasonDocIds.map((id) => (
+              <option key={id} value={id}>
+                {id}
+              </option>
             ))}
           </select>
         </div>
@@ -218,9 +227,7 @@ const CorpsValuesEditor = () => {
             {selectedDocId ? `${selectedDocId} — ${rows.length} corps` : 'Select a season'}
           </span>
           {isDirty && (
-            <span className="text-[10px] font-bold uppercase text-yellow-500">
-              Unsaved changes
-            </span>
+            <span className="text-[10px] font-bold uppercase text-yellow-500">Unsaved changes</span>
           )}
         </div>
 
@@ -234,11 +241,21 @@ const CorpsValuesEditor = () => {
             <table className="w-full text-xs">
               <thead className="bg-[#1a1a1a] sticky top-0">
                 <tr>
-                  <th className="text-left px-3 py-2 text-[10px] uppercase tracking-wider text-gray-500 font-bold">#</th>
-                  <th className="text-left px-3 py-2 text-[10px] uppercase tracking-wider text-gray-500 font-bold">Corps Name</th>
-                  <th className="text-left px-3 py-2 text-[10px] uppercase tracking-wider text-gray-500 font-bold w-28">Source Year</th>
-                  <th className="text-left px-3 py-2 text-[10px] uppercase tracking-wider text-gray-500 font-bold w-24">Points</th>
-                  <th className="text-right px-3 py-2 text-[10px] uppercase tracking-wider text-gray-500 font-bold w-16">Actions</th>
+                  <th className="text-left px-3 py-2 text-[10px] uppercase tracking-wider text-gray-500 font-bold">
+                    #
+                  </th>
+                  <th className="text-left px-3 py-2 text-[10px] uppercase tracking-wider text-gray-500 font-bold">
+                    Corps Name
+                  </th>
+                  <th className="text-left px-3 py-2 text-[10px] uppercase tracking-wider text-gray-500 font-bold w-28">
+                    Source Year
+                  </th>
+                  <th className="text-left px-3 py-2 text-[10px] uppercase tracking-wider text-gray-500 font-bold w-24">
+                    Points
+                  </th>
+                  <th className="text-right px-3 py-2 text-[10px] uppercase tracking-wider text-gray-500 font-bold w-16">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#222]">
@@ -359,7 +376,11 @@ const CorpsValuesEditor = () => {
                 disabled={creatingSeason || !newSeasonId.trim()}
                 className="w-full flex items-center justify-center gap-1.5 py-2 bg-[#0057B8] text-white text-xs font-bold hover:bg-[#0066d6] disabled:opacity-50"
               >
-                {creatingSeason ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <FilePlus className="w-3.5 h-3.5" />}
+                {creatingSeason ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <FilePlus className="w-3.5 h-3.5" />
+                )}
                 {creatingSeason ? 'Creating...' : 'Create'}
               </button>
             </div>

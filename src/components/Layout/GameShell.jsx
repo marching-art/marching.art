@@ -25,7 +25,7 @@ import {
   Sparkles,
   Shield,
   Newspaper,
-  HelpCircle
+  HelpCircle,
 } from 'lucide-react';
 
 // =============================================================================
@@ -76,48 +76,48 @@ const TopNav = () => {
   return (
     <nav className="fixed top-0 w-full h-12 bg-[#1a1a1a] border-b border-[#333] z-50">
       <div className="w-full h-full flex items-center px-2 sm:px-4">
-      {/* Logo + Brand - OPTIMIZATION #7: Added eager loading for LCP */}
-      <Link to="/dashboard" className="flex items-center gap-2 mr-4">
-        <img
-          src="/logo192.svg"
-          alt="marching.art"
-          className="w-8 h-8 rounded"
-          loading="eager"
-          decoding="async"
-          fetchPriority="high"
-        />
-        <div className="flex flex-col">
-          <span className="font-bold text-sm text-white leading-tight">marching.art</span>
-          {/* Season badge - subtle, integrated */}
-          {seasonLabel && (
-            <span className="hidden sm:block text-[9px] text-gray-500 uppercase tracking-wider leading-tight">
-              {seasonLabel}
-            </span>
-          )}
+        {/* Logo + Brand - OPTIMIZATION #7: Added eager loading for LCP */}
+        <Link to="/dashboard" className="flex items-center gap-2 mr-4">
+          <img
+            src="/logo192.svg"
+            alt="marching.art"
+            className="w-8 h-8 rounded"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
+          />
+          <div className="flex flex-col">
+            <span className="font-bold text-sm text-white leading-tight">marching.art</span>
+            {/* Season badge - subtle, integrated */}
+            {seasonLabel && (
+              <span className="hidden sm:block text-[9px] text-gray-500 uppercase tracking-wider leading-tight">
+                {seasonLabel}
+              </span>
+            )}
+          </div>
+        </Link>
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Desktop Nav Links - centered feel */}
+        <div className="hidden lg:flex items-center gap-1">
+          <NavItem to="/" icon={Newspaper} label="News" />
+          <NavItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
+          <NavItem to="/schedule" icon={Calendar} label="Schedule" />
+          <NavItem to="/scores" icon={Trophy} label="Scores" />
+          <NavItem to="/profile" icon={User} label="Profile" />
+          {isAdmin && <NavItem to="/admin" icon={Shield} label="Admin" />}
         </div>
-      </Link>
 
-      {/* Spacer */}
-      <div className="flex-1" />
-
-      {/* Desktop Nav Links - centered feel */}
-      <div className="hidden lg:flex items-center gap-1">
-        <NavItem to="/" icon={Newspaper} label="News" />
-        <NavItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
-        <NavItem to="/schedule" icon={Calendar} label="Schedule" />
-        <NavItem to="/scores" icon={Trophy} label="Scores" />
-        <NavItem to="/profile" icon={User} label="Profile" />
-        {isAdmin && <NavItem to="/admin" icon={Shield} label="Admin" />}
-      </div>
-
-      {/* Help Icon */}
-      <Link
-        to="/guide"
-        className="ml-2 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-sm transition-colors"
-        title="Game Guide"
-      >
-        <HelpCircle className="w-5 h-5" />
-      </Link>
+        {/* Help Icon */}
+        <Link
+          to="/guide"
+          className="ml-2 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-sm transition-colors"
+          title="Game Guide"
+        >
+          <HelpCircle className="w-5 h-5" />
+        </Link>
       </div>
     </nav>
   );
@@ -129,15 +129,15 @@ const NavItem = ({ to, icon: Icon, label }) => (
     to={to}
     className={({ isActive }) =>
       `relative flex items-center gap-2 px-3 py-2.5 min-h-touch text-sm font-medium transition-all duration-150 press-feedback ${
-        isActive
-          ? 'text-white'
-          : 'text-gray-400 hover:text-white'
+        isActive ? 'text-white' : 'text-gray-400 hover:text-white'
       }`
     }
   >
     {({ isActive }) => (
       <>
-        <Icon className={`w-5 h-5 transition-colors duration-150 ${isActive ? 'text-yellow-400' : ''}`} />
+        <Icon
+          className={`w-5 h-5 transition-colors duration-150 ${isActive ? 'text-yellow-400' : ''}`}
+        />
         <span>{label}</span>
         {/* Active indicator - bottom bar */}
         {isActive && (
@@ -223,7 +223,7 @@ const TickerBar = () => {
     if (!hasData || tickerSections.length === 0) return;
 
     const interval = setInterval(() => {
-      setActiveSection(prev => (prev + 1) % tickerSections.length);
+      setActiveSection((prev) => (prev + 1) % tickerSections.length);
     }, 8000);
 
     return () => clearInterval(interval);
@@ -279,15 +279,24 @@ const TickerBar = () => {
         // Class-specific scores
         return (
           <>
-            <div className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-${colors.bg}-500/20 border border-${colors.bg}-500/30 rounded text-[11px] sm:text-[10px] font-bold uppercase tracking-wider`}>
+            <div
+              className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-${colors.bg}-500/20 border border-${colors.bg}-500/30 rounded text-[11px] sm:text-[10px] font-bold uppercase tracking-wider`}
+            >
               <Trophy className={`w-3.5 h-3.5 sm:w-3 sm:h-3 text-${colors.text}-400`} />
-              <span className={`text-${colors.text}-400 whitespace-nowrap`}>{label} {tickerData.dayLabel}</span>
+              <span className={`text-${colors.text}-400 whitespace-nowrap`}>
+                {label} {tickerData.dayLabel}
+              </span>
             </div>
             <div className="w-px h-4 bg-[#333]" />
             {/* OPTIMIZATION #10: Use stable key based on item identity */}
             {classData?.scores?.slice(0, 8).map((item, idx) => (
-              <div key={`${item.fullName}-${item.score}`} className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-gray-400 font-medium text-xs whitespace-nowrap">{item.fullName}</span>
+              <div
+                key={`${item.fullName}-${item.score}`}
+                className="flex items-center gap-2 flex-shrink-0"
+              >
+                <span className="text-gray-400 font-medium text-xs whitespace-nowrap">
+                  {item.fullName}
+                </span>
                 <span className="text-white tabular-nums font-mono text-xs">{item.score}</span>
                 {idx < Math.min(classData.scores.length, 8) - 1 && (
                   <div className="w-px h-3 bg-[#333] ml-1" />
@@ -307,11 +316,18 @@ const TickerBar = () => {
             </div>
             <div className="w-px h-4 bg-[#333]" />
             {tickerData.soundSportMedals?.map((item, idx) => (
-              <div key={`${item.medal}-${item.fullName}`} className="flex items-center gap-2 flex-shrink-0">
-                <span className={`text-[11px] sm:text-[10px] font-bold ${MEDAL_COLORS[item.medal] || 'text-gray-400'}`}>
+              <div
+                key={`${item.medal}-${item.fullName}`}
+                className="flex items-center gap-2 flex-shrink-0"
+              >
+                <span
+                  className={`text-[11px] sm:text-[10px] font-bold ${MEDAL_COLORS[item.medal] || 'text-gray-400'}`}
+                >
                   {item.medal}
                 </span>
-                <span className="text-gray-400 font-medium text-xs whitespace-nowrap">{item.fullName}</span>
+                <span className="text-gray-400 font-medium text-xs whitespace-nowrap">
+                  {item.fullName}
+                </span>
                 {idx < tickerData.soundSportMedals.length - 1 && (
                   <div className="w-px h-3 bg-[#333] ml-1" />
                 )}
@@ -324,20 +340,33 @@ const TickerBar = () => {
         // Class-specific season leaders with trends
         return (
           <>
-            <div className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-${colors.bg}-500/20 border border-${colors.bg}-500/30 rounded text-[11px] sm:text-[10px] font-bold uppercase tracking-wider`}>
+            <div
+              className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-${colors.bg}-500/20 border border-${colors.bg}-500/30 rounded text-[11px] sm:text-[10px] font-bold uppercase tracking-wider`}
+            >
               <TrendingUp className={`w-3.5 h-3.5 sm:w-3 sm:h-3 text-${colors.text}-400`} />
               <span className={`text-${colors.text}-400 whitespace-nowrap`}>{label} Leaders</span>
             </div>
             <div className="w-px h-4 bg-[#333]" />
             {classData?.leaders?.slice(0, 8).map((item, idx) => (
-              <div key={`${item.fullName}-${item.score}`} className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-gray-500 text-[11px] sm:text-[10px] font-mono">#{idx + 1}</span>
-                <span className="text-gray-400 font-medium text-xs whitespace-nowrap">{item.fullName}</span>
-                <span className={`tabular-nums font-mono text-xs ${
-                  item.trend === 'up' ? 'text-green-400' :
-                  item.trend === 'down' ? 'text-red-400' :
-                  'text-white'
-                }`}>
+              <div
+                key={`${item.fullName}-${item.score}`}
+                className="flex items-center gap-2 flex-shrink-0"
+              >
+                <span className="text-gray-500 text-[11px] sm:text-[10px] font-mono">
+                  #{idx + 1}
+                </span>
+                <span className="text-gray-400 font-medium text-xs whitespace-nowrap">
+                  {item.fullName}
+                </span>
+                <span
+                  className={`tabular-nums font-mono text-xs ${
+                    item.trend === 'up'
+                      ? 'text-green-400'
+                      : item.trend === 'down'
+                        ? 'text-red-400'
+                        : 'text-white'
+                  }`}
+                >
                   {item.score}
                 </span>
                 <TrendIndicator trend={item.trend} />
@@ -359,9 +388,16 @@ const TickerBar = () => {
             </div>
             <div className="w-px h-4 bg-[#333]" />
             {tickerData.combinedCaptionLeaders?.ge?.map((item, idx) => (
-              <div key={`ge-${item.fullName}-${item.score}`} className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-gray-500 text-[11px] sm:text-[10px] font-mono">#{idx + 1}</span>
-                <span className="text-gray-400 font-medium text-xs whitespace-nowrap">{item.fullName}</span>
+              <div
+                key={`ge-${item.fullName}-${item.score}`}
+                className="flex items-center gap-2 flex-shrink-0"
+              >
+                <span className="text-gray-500 text-[11px] sm:text-[10px] font-mono">
+                  #{idx + 1}
+                </span>
+                <span className="text-gray-400 font-medium text-xs whitespace-nowrap">
+                  {item.fullName}
+                </span>
                 <span className="text-amber-300 tabular-nums font-mono text-xs">{item.score}</span>
                 {idx < tickerData.combinedCaptionLeaders.ge.length - 1 && (
                   <div className="w-px h-3 bg-[#333] ml-1" />
@@ -381,9 +417,16 @@ const TickerBar = () => {
             </div>
             <div className="w-px h-4 bg-[#333]" />
             {tickerData.combinedCaptionLeaders?.visual?.map((item, idx) => (
-              <div key={`vis-${item.fullName}-${item.score}`} className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-gray-500 text-[11px] sm:text-[10px] font-mono">#{idx + 1}</span>
-                <span className="text-gray-400 font-medium text-xs whitespace-nowrap">{item.fullName}</span>
+              <div
+                key={`vis-${item.fullName}-${item.score}`}
+                className="flex items-center gap-2 flex-shrink-0"
+              >
+                <span className="text-gray-500 text-[11px] sm:text-[10px] font-mono">
+                  #{idx + 1}
+                </span>
+                <span className="text-gray-400 font-medium text-xs whitespace-nowrap">
+                  {item.fullName}
+                </span>
                 <span className="text-cyan-300 tabular-nums font-mono text-xs">{item.score}</span>
                 {idx < tickerData.combinedCaptionLeaders.visual.length - 1 && (
                   <div className="w-px h-3 bg-[#333] ml-1" />
@@ -403,9 +446,16 @@ const TickerBar = () => {
             </div>
             <div className="w-px h-4 bg-[#333]" />
             {tickerData.combinedCaptionLeaders?.music?.map((item, idx) => (
-              <div key={`mus-${item.fullName}-${item.score}`} className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-gray-500 text-[11px] sm:text-[10px] font-mono">#{idx + 1}</span>
-                <span className="text-gray-400 font-medium text-xs whitespace-nowrap">{item.fullName}</span>
+              <div
+                key={`mus-${item.fullName}-${item.score}`}
+                className="flex items-center gap-2 flex-shrink-0"
+              >
+                <span className="text-gray-500 text-[11px] sm:text-[10px] font-mono">
+                  #{idx + 1}
+                </span>
+                <span className="text-gray-400 font-medium text-xs whitespace-nowrap">
+                  {item.fullName}
+                </span>
                 <span className="text-pink-300 tabular-nums font-mono text-xs">{item.score}</span>
                 {idx < tickerData.combinedCaptionLeaders.music.length - 1 && (
                   <div className="w-px h-3 bg-[#333] ml-1" />
@@ -420,7 +470,9 @@ const TickerBar = () => {
         if (!classData?.movers?.length) {
           return (
             <>
-              <div className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-${colors.bg}-500/20 border border-${colors.bg}-500/30 rounded text-[11px] sm:text-[10px] font-bold uppercase tracking-wider`}>
+              <div
+                className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-${colors.bg}-500/20 border border-${colors.bg}-500/30 rounded text-[11px] sm:text-[10px] font-bold uppercase tracking-wider`}
+              >
                 <TrendingUp className={`w-3.5 h-3.5 sm:w-3 sm:h-3 text-${colors.text}-400`} />
                 <span className={`text-${colors.text}-400 whitespace-nowrap`}>{label} Movers</span>
               </div>
@@ -432,23 +484,31 @@ const TickerBar = () => {
 
         return (
           <>
-            <div className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-${colors.bg}-500/20 border border-${colors.bg}-500/30 rounded text-[11px] sm:text-[10px] font-bold uppercase tracking-wider`}>
+            <div
+              className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-${colors.bg}-500/20 border border-${colors.bg}-500/30 rounded text-[11px] sm:text-[10px] font-bold uppercase tracking-wider`}
+            >
               <TrendingUp className={`w-3.5 h-3.5 sm:w-3 sm:h-3 text-${colors.text}-400`} />
               <span className={`text-${colors.text}-400 whitespace-nowrap`}>{label} Movers</span>
             </div>
             <div className="w-px h-4 bg-[#333]" />
             {classData.movers.map((item, idx) => (
-              <div key={`mover-${item.fullName}-${item.change}`} className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-gray-400 font-medium text-xs whitespace-nowrap">{item.fullName}</span>
-                <span className={`tabular-nums font-mono text-xs ${
-                  item.direction === 'up' ? 'text-green-400' : 'text-red-400'
-                }`}>
-                  {item.direction === 'up' ? '+' : ''}{item.change}
+              <div
+                key={`mover-${item.fullName}-${item.change}`}
+                className="flex items-center gap-2 flex-shrink-0"
+              >
+                <span className="text-gray-400 font-medium text-xs whitespace-nowrap">
+                  {item.fullName}
+                </span>
+                <span
+                  className={`tabular-nums font-mono text-xs ${
+                    item.direction === 'up' ? 'text-green-400' : 'text-red-400'
+                  }`}
+                >
+                  {item.direction === 'up' ? '+' : ''}
+                  {item.change}
                 </span>
                 <TrendIndicator trend={item.direction} />
-                {idx < classData.movers.length - 1 && (
-                  <div className="w-px h-3 bg-[#333] ml-1" />
-                )}
+                {idx < classData.movers.length - 1 && <div className="w-px h-3 bg-[#333] ml-1" />}
               </div>
             ))}
           </>
@@ -461,11 +521,11 @@ const TickerBar = () => {
 
   // Handle touch/swipe navigation
   const handlePrevSection = () => {
-    setActiveSection(prev => prev === 0 ? tickerSections.length - 1 : prev - 1);
+    setActiveSection((prev) => (prev === 0 ? tickerSections.length - 1 : prev - 1));
   };
 
   const handleNextSection = () => {
-    setActiveSection(prev => (prev + 1) % tickerSections.length);
+    setActiveSection((prev) => (prev + 1) % tickerSections.length);
   };
 
   return (
@@ -556,9 +616,7 @@ const GameShell = ({ children }) => {
           {/* Full-width wrapper so each page's own scroll container spans the
               viewport — this keeps scrollbars flush against the right edge of
               the screen instead of inset from a centered max-width column. */}
-          <div className="w-full h-full">
-            {children}
-          </div>
+          <div className="w-full h-full">{children}</div>
         </main>
 
         {/* Mobile Bottom Navigation */}

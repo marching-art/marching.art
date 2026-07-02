@@ -12,24 +12,38 @@ import RunningOrder from '../Schedule/RunningOrder';
 
 // Caption code -> human label, mirroring CaptionSelectionModal.
 const CAPTION_LABELS = {
-  GE1: 'General Effect 1', GE2: 'General Effect 2',
-  VP: 'Visual Proficiency', VA: 'Visual Analysis', CG: 'Color Guard',
-  B: 'Brass', MA: 'Music Analysis', P: 'Percussion',
+  GE1: 'General Effect 1',
+  GE2: 'General Effect 2',
+  VP: 'Visual Proficiency',
+  VA: 'Visual Analysis',
+  CG: 'Color Guard',
+  B: 'Brass',
+  MA: 'Music Analysis',
+  P: 'Percussion',
 };
 
-const normalize = (name) => String(name || '').toLowerCase().replace(/\s+/g, ' ').trim();
+const normalize = (name) =>
+  String(name || '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
 
 function formatStart(show) {
   const start = showStartsAtDate(show);
   if (!start) return null;
   try {
     return new Intl.DateTimeFormat('en-US', {
-      weekday: 'short', hour: 'numeric', minute: '2-digit',
-      timeZone: show.timezone || undefined, timeZoneName: 'short',
+      weekday: 'short',
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZone: show.timezone || undefined,
+      timeZoneName: 'short',
     }).format(start);
   } catch {
     return new Intl.DateTimeFormat('en-US', {
-      weekday: 'short', hour: 'numeric', minute: '2-digit',
+      weekday: 'short',
+      hour: 'numeric',
+      minute: '2-digit',
     }).format(start);
   }
 }
@@ -39,7 +53,9 @@ function formatPerformTime(entry, timezone) {
   if (!entry.performsAt) return '';
   try {
     return new Intl.DateTimeFormat('en-US', {
-      hour: 'numeric', minute: '2-digit', timeZone: timezone || undefined,
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZone: timezone || undefined,
     }).format(new Date(entry.performsAt));
   } catch {
     return '';
@@ -111,9 +127,11 @@ const NextPerformancePanel = ({ competitions = [], selectedShows = {}, lineup = 
     // Prefer a show live right now, else the soonest still upcoming.
     const live = joined.find((s) => isShowLive(s, now));
     if (live) return live;
-    return joined
-      .filter((s) => showStartsAtDate(s) > now)
-      .sort((a, b) => showStartsAtDate(a) - showStartsAtDate(b))[0] || null;
+    return (
+      joined
+        .filter((s) => showStartsAtDate(s) > now)
+        .sort((a, b) => showStartsAtDate(a) - showStartsAtDate(b))[0] || null
+    );
   }, [selectedShows, compByKey, now]);
 
   // "Your picks are live": scan TODAY's shows for performers in the director's roster.
@@ -171,7 +189,10 @@ const NextPerformancePanel = ({ competitions = [], selectedShows = {}, lineup = 
           </div>
           <ul className="space-y-1.5">
             {spotlight.map((s, idx) => (
-              <li key={`${s.corps}-${idx}`} className="text-sm text-gray-300 flex items-baseline justify-between gap-2">
+              <li
+                key={`${s.corps}-${idx}`}
+                className="text-sm text-gray-300 flex items-baseline justify-between gap-2"
+              >
                 <span className="truncate">
                   <span className="text-white font-medium">{s.corps}</span>
                   <span className="text-gray-500"> — your {s.captions.join(' & ')} pick</span>

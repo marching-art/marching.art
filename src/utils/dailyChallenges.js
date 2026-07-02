@@ -25,12 +25,14 @@ export const getGameDay = () => {
   for (const part of parts) v[part.type] = part.value;
 
   // Anchor the ET calendar date in UTC for safe day arithmetic
-  const et = new Date(Date.UTC(
-    parseInt(v.year, 10),
-    parseInt(v.month, 10) - 1,
-    parseInt(v.day, 10),
-    parseInt(v.hour === '24' ? '0' : v.hour, 10)
-  ));
+  const et = new Date(
+    Date.UTC(
+      parseInt(v.year, 10),
+      parseInt(v.month, 10) - 1,
+      parseInt(v.day, 10),
+      parseInt(v.hour === '24' ? '0' : v.hour, 10)
+    )
+  );
 
   // Before 2 AM Eastern, the previous game day is still in progress
   if (et.getUTCHours() < 2) {

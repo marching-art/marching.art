@@ -3,8 +3,21 @@
 import { memo } from 'react';
 import { Newspaper, Clock, BookOpen, Flame, ChevronRight, AlertCircle } from 'lucide-react';
 import { EngagementSummary } from '../Articles';
-import { CATEGORIES, getCategoryConfig, getUrgencyBadge, getReadingTime, formatTimestamp, safeString } from './newsFeedUtils';
-import { UrgencyBadge, FantasyROIBadge, TrendingBadge, FantasyValueBadge, ShareButton } from './NewsFeedBadges';
+import {
+  CATEGORIES,
+  getCategoryConfig,
+  getUrgencyBadge,
+  getReadingTime,
+  formatTimestamp,
+  safeString,
+} from './newsFeedUtils';
+import {
+  UrgencyBadge,
+  FantasyROIBadge,
+  TrendingBadge,
+  FantasyValueBadge,
+  ShareButton,
+} from './NewsFeedBadges';
 import { NewsFeedSkeleton } from './NewsFeedSkeletons';
 
 function NewsMasthead({ activeCategory, onCategoryChange, storyCount, isLive }) {
@@ -15,9 +28,7 @@ function NewsMasthead({ activeCategory, onCategoryChange, storyCount, isLive }) 
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <Newspaper className="w-6 h-6 text-[#0057B8]" />
-            <h1 className="text-lg font-black text-white uppercase tracking-wide">
-              News Hub
-            </h1>
+            <h1 className="text-lg font-black text-white uppercase tracking-wide">News Hub</h1>
           </div>
           {isLive && (
             <div className="flex items-center gap-1.5 px-2 py-1 bg-red-500/20 border border-red-500/30">
@@ -48,7 +59,9 @@ function NewsMasthead({ activeCategory, onCategoryChange, storyCount, isLive }) 
             >
               <Icon className="w-3 h-3" />
               <span className="hidden sm:inline">{cat.label}</span>
-              <span className="sm:hidden">{cat.id === 'all' ? 'All' : cat.label.split(' ')[0]}</span>
+              <span className="sm:hidden">
+                {cat.id === 'all' ? 'All' : cat.label.split(' ')[0]}
+              </span>
             </button>
           );
         })}
@@ -105,7 +118,9 @@ function HeroStory({ story, onClick, storyNumber, engagement }) {
       <div className="p-5 lg:p-6">
         {/* Meta row */}
         <div className="flex items-center gap-3 mb-3 flex-wrap">
-          <span className={`px-2 py-1 ${config.bgClass} text-white text-[10px] font-bold uppercase tracking-wider`}>
+          <span
+            className={`px-2 py-1 ${config.bgClass} text-white text-[10px] font-bold uppercase tracking-wider`}
+          >
             {config.label}
           </span>
           <div className="flex items-center gap-3 text-xs text-gray-500">
@@ -142,9 +157,13 @@ function HeroStory({ story, onClick, storyNumber, engagement }) {
           <div className="p-4 bg-orange-500/10 border border-orange-500/20 mb-5">
             <div className="flex items-center gap-2 mb-2">
               <Flame className="w-4 h-4 text-orange-400" />
-              <span className="text-xs font-bold text-orange-400 uppercase tracking-wider">Fantasy Impact</span>
+              <span className="text-xs font-bold text-orange-400 uppercase tracking-wider">
+                Fantasy Impact
+              </span>
             </div>
-            <p className="text-sm text-orange-100/80 leading-relaxed">{safeString(story.fantasyImpact)}</p>
+            <p className="text-sm text-orange-100/80 leading-relaxed">
+              {safeString(story.fantasyImpact)}
+            </p>
           </div>
         )}
 
@@ -157,7 +176,8 @@ function HeroStory({ story, onClick, storyNumber, engagement }) {
                 <span className="text-white font-medium">{corp.corps}</span>
                 {corp.weeklyChange !== undefined && (
                   <span className={corp.weeklyChange >= 0 ? 'text-green-400' : 'text-red-400'}>
-                    {corp.weeklyChange >= 0 ? '+' : ''}{corp.weeklyChange.toFixed(2)}
+                    {corp.weeklyChange >= 0 ? '+' : ''}
+                    {corp.weeklyChange.toFixed(2)}
                   </span>
                 )}
                 {corp.fantasyValue && <FantasyValueBadge value={corp.fantasyValue} />}

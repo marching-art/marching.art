@@ -4,14 +4,14 @@ const admin = require('firebase-admin');
 const serviceAccount = require('./serviceAccountKey.json');
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
+  credential: admin.credential.cert(serviceAccount),
 });
 
 const db = admin.firestore();
 
 async function deepInspect() {
   console.log('🔬 DEEP DIVE: Historical Scores & Caption Data\n');
-  console.log('=' .repeat(80));
+  console.log('='.repeat(80));
 
   try {
     // Get a recent year with full data
@@ -41,7 +41,7 @@ async function deepInspect() {
       });
 
       // Find Finals event
-      const finalsEvent = data.data.find(e => e.eventName.includes('Finals'));
+      const finalsEvent = data.data.find((e) => e.eventName.includes('Finals'));
       if (finalsEvent) {
         console.log('\n\n🏆 2024 FINALS BREAKDOWN');
         console.log('-'.repeat(80));
@@ -52,8 +52,12 @@ async function deepInspect() {
 
         finalsEvent.scores.slice(0, 5).forEach((corps, idx) => {
           console.log(`\n${idx + 1}. ${corps.corps} - ${corps.score}`);
-          console.log(`   GE: ${corps.captions.GE1} + ${corps.captions.GE2} = ${corps.captions.GE1 + corps.captions.GE2}`);
-          console.log(`   Visual: ${corps.captions.VP} + ${corps.captions.VA} + ${corps.captions.CG}`);
+          console.log(
+            `   GE: ${corps.captions.GE1} + ${corps.captions.GE2} = ${corps.captions.GE1 + corps.captions.GE2}`
+          );
+          console.log(
+            `   Visual: ${corps.captions.VP} + ${corps.captions.VA} + ${corps.captions.CG}`
+          );
           console.log(`   Music: ${corps.captions.B} + ${corps.captions.MA} + ${corps.captions.P}`);
         });
       }
@@ -62,8 +66,8 @@ async function deepInspect() {
       console.log('\n\n📈 BLUECOATS 2024 SEASON PROGRESSION');
       console.log('-'.repeat(80));
       const bluecoatsScores = [];
-      data.data.forEach(event => {
-        const bluecoatsScore = event.scores.find(s => s.corps === 'Bluecoats');
+      data.data.forEach((event) => {
+        const bluecoatsScore = event.scores.find((s) => s.corps === 'Bluecoats');
         if (bluecoatsScore) {
           bluecoatsScores.push({
             date: new Date(event.date).toLocaleDateString(),
@@ -72,7 +76,7 @@ async function deepInspect() {
             total: bluecoatsScore.score,
             brass: bluecoatsScore.captions.B,
             ge1: bluecoatsScore.captions.GE1,
-            guard: bluecoatsScore.captions.CG
+            guard: bluecoatsScore.captions.CG,
           });
         }
       });
@@ -80,7 +84,9 @@ async function deepInspect() {
       console.log('Shows:', bluecoatsScores.length);
       console.log('\nProgression (first 10 shows):');
       bluecoatsScores.slice(0, 10).forEach((show, idx) => {
-        console.log(`${idx + 1}. ${show.date} - Total: ${show.total} | B: ${show.brass} | GE1: ${show.ge1} | CG: ${show.guard}`);
+        console.log(
+          `${idx + 1}. ${show.date} - Total: ${show.total} | B: ${show.brass} | GE1: ${show.ge1} | CG: ${show.guard}`
+        );
       });
     }
 
@@ -95,7 +101,9 @@ async function deepInspect() {
 
       console.log('\nTop 10 Corps by Value:');
       data.corps.slice(0, 10).forEach((corps, idx) => {
-        console.log(`${idx + 1}. ${corps.corpsName} (${corps.sourceYear}) - Value: ${corps.value} - Finals Score: ${corps.finalScore}`);
+        console.log(
+          `${idx + 1}. ${corps.corpsName} (${corps.sourceYear}) - Value: ${corps.value} - Finals Score: ${corps.finalScore}`
+        );
       });
 
       // Check if corps have caption-level data
@@ -126,17 +134,17 @@ async function deepInspect() {
     const userProfiles = await db.collectionGroup('profile').limit(3).get();
     let foundLineup = false;
 
-    userProfiles.forEach(doc => {
+    userProfiles.forEach((doc) => {
       const data = doc.data();
       if (data.corps && !foundLineup) {
-        Object.keys(data.corps).forEach(corpsClass => {
+        Object.keys(data.corps).forEach((corpsClass) => {
           const corps = data.corps[corpsClass];
           if (corps.lineup) {
             console.log(`\nUser: ${data.displayName || 'Unknown'}`);
             console.log(`Class: ${corpsClass}`);
             console.log(`Corps Name: ${corps.corpsName}`);
             console.log(`Lineup:`);
-            Object.keys(corps.lineup).forEach(caption => {
+            Object.keys(corps.lineup).forEach((caption) => {
               console.log(`  ${caption}: ${corps.lineup[caption]}`);
             });
             foundLineup = true;
@@ -148,7 +156,6 @@ async function deepInspect() {
     if (!foundLineup) {
       console.log('No user lineups found in sample.');
     }
-
   } catch (error) {
     console.error('❌ Error:', error);
     console.error(error.stack);

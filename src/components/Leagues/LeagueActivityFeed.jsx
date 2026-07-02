@@ -4,11 +4,28 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import {
-  Bell, Swords, TrendingUp, MessageSquare, ArrowLeftRight,
-  Check, UserPlus, Flame, ChevronRight, Filter, Eye,
-  Trophy, Calendar, Clock, X, CheckCircle
+  Bell,
+  Swords,
+  TrendingUp,
+  MessageSquare,
+  ArrowLeftRight,
+  Check,
+  UserPlus,
+  Flame,
+  ChevronRight,
+  Filter,
+  Eye,
+  Trophy,
+  Calendar,
+  Clock,
+  X,
+  CheckCircle,
 } from 'lucide-react';
-import { useLeagueActivity, useLeagueNotifications, formatNotificationTime } from '../../hooks/useLeagueNotifications';
+import {
+  useLeagueActivity,
+  useLeagueNotifications,
+  formatNotificationTime,
+} from '../../hooks/useLeagueNotifications';
 
 // =============================================================================
 // ICON MAPPING - Enhanced Transaction Log Style
@@ -37,10 +54,18 @@ const iconMap = {
 };
 
 const colorMap = {
-  matchup_result: { text: 'text-purple-500', bg: 'bg-purple-500/10', border: 'border-purple-500/30' },
+  matchup_result: {
+    text: 'text-purple-500',
+    bg: 'bg-purple-500/10',
+    border: 'border-purple-500/30',
+  },
   standings_change: { text: 'text-blue-500', bg: 'bg-blue-500/10', border: 'border-blue-500/30' },
   new_message: { text: 'text-green-500', bg: 'bg-green-500/10', border: 'border-green-500/30' },
-  trade_proposal: { text: 'text-orange-500', bg: 'bg-orange-500/10', border: 'border-orange-500/30' },
+  trade_proposal: {
+    text: 'text-orange-500',
+    bg: 'bg-orange-500/10',
+    border: 'border-orange-500/30',
+  },
   trade_response: { text: 'text-teal-500', bg: 'bg-teal-500/10', border: 'border-teal-500/30' },
   member_joined: { text: 'text-cyan-500', bg: 'bg-cyan-500/10', border: 'border-cyan-500/30' },
   rivalry_matchup: { text: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/30' },
@@ -48,10 +73,22 @@ const colorMap = {
   week_start: { text: 'text-indigo-500', bg: 'bg-indigo-500/10', border: 'border-indigo-500/30' },
   week_end: { text: 'text-pink-500', bg: 'bg-pink-500/10', border: 'border-pink-500/30' },
   // New transaction log event types
-  lineup_update: { text: 'text-yellow-500', bg: 'bg-yellow-500/10', border: 'border-yellow-500/30' },
+  lineup_update: {
+    text: 'text-yellow-500',
+    bg: 'bg-yellow-500/10',
+    border: 'border-yellow-500/30',
+  },
   season_high: { text: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/30' },
-  commissioner_action: { text: 'text-yellow-500', bg: 'bg-yellow-500/10', border: 'border-yellow-500/30' },
-  achievement_unlocked: { text: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30' },
+  commissioner_action: {
+    text: 'text-yellow-500',
+    bg: 'bg-yellow-500/10',
+    border: 'border-yellow-500/30',
+  },
+  achievement_unlocked: {
+    text: 'text-emerald-500',
+    bg: 'bg-emerald-500/10',
+    border: 'border-emerald-500/30',
+  },
   score_update: { text: 'text-lime-500', bg: 'bg-lime-500/10', border: 'border-lime-500/30' },
   live_matchup: { text: 'text-rose-500', bg: 'bg-rose-500/10', border: 'border-rose-500/30' },
 };
@@ -71,10 +108,13 @@ const ActivityItem = React.memo(({ activity, isNotification = false, onMarkRead,
     onTap?.(activity);
   }, [onTap, activity]);
 
-  const handleMarkRead = useCallback((e) => {
-    e.stopPropagation();
-    onMarkRead(activity.id);
-  }, [onMarkRead, activity.id]);
+  const handleMarkRead = useCallback(
+    (e) => {
+      e.stopPropagation();
+      onMarkRead(activity.id);
+    },
+    [onMarkRead, activity.id]
+  );
 
   return (
     <m.div
@@ -102,12 +142,8 @@ const ActivityItem = React.memo(({ activity, isNotification = false, onMarkRead,
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
-          <h4 className="font-bold text-sm text-white truncate">
-            {activity.title}
-          </h4>
-          <span className="text-xs text-gray-500 whitespace-nowrap">
-            {timeAgo}
-          </span>
+          <h4 className="font-bold text-sm text-white truncate">{activity.title}</h4>
+          <span className="text-xs text-gray-500 whitespace-nowrap">{timeAgo}</span>
         </div>
         <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">
           {activity.message || activity.description}
@@ -117,9 +153,13 @@ const ActivityItem = React.memo(({ activity, isNotification = false, onMarkRead,
         {activity.metadata && (
           <div className="flex flex-wrap gap-1 mt-2">
             {activity.metadata.won !== undefined && (
-              <span className={`text-xs px-2 py-0.5 rounded-sm ${
-                activity.metadata.won ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
-              }`}>
+              <span
+                className={`text-xs px-2 py-0.5 rounded-sm ${
+                  activity.metadata.won
+                    ? 'bg-green-500/10 text-green-500'
+                    : 'bg-red-500/10 text-red-500'
+                }`}
+              >
                 {activity.metadata.won ? 'Victory' : 'Defeat'}
               </span>
             )}
@@ -141,8 +181,7 @@ const ActivityItem = React.memo(({ activity, isNotification = false, onMarkRead,
             )}
             {activity.metadata.newRank && (
               <span className="text-xs px-2 py-0.5 rounded-sm bg-blue-500/10 text-blue-500 flex items-center gap-1">
-                <TrendingUp className="w-3 h-3" />
-                #{activity.metadata.newRank}
+                <TrendingUp className="w-3 h-3" />#{activity.metadata.newRank}
               </span>
             )}
             {activity.metadata.seasonHigh && (
@@ -181,18 +220,17 @@ const FilterTab = React.memo(({ active, onClick, children, count }) => (
     onClick={onClick}
     className={`
       relative px-3 py-1.5 rounded-sm text-xs font-bold transition-all
-      ${active
-        ? 'bg-yellow-500 text-black'
-        : 'bg-[#222] text-gray-400 hover:bg-[#333]'
-      }
+      ${active ? 'bg-yellow-500 text-black' : 'bg-[#222] text-gray-400 hover:bg-[#333]'}
     `}
   >
     {children}
     {count > 0 && (
-      <span className={`
+      <span
+        className={`
         absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-sm text-[10px] flex items-center justify-center
         ${active ? 'bg-black text-yellow-500' : 'bg-yellow-500 text-black'}
-      `}>
+      `}
+      >
         {count > 99 ? '99+' : count}
       </span>
     )}
@@ -236,11 +274,11 @@ const LeagueActivityFeed = ({
 
   // Filter notifications for this league
   const leagueNotifications = useMemo(() => {
-    return notifications.filter(n => n.leagueId === leagueId);
+    return notifications.filter((n) => n.leagueId === leagueId);
   }, [notifications, leagueId]);
 
   const leagueUnreadCount = useMemo(() => {
-    return leagueNotifications.filter(n => !n.read).length;
+    return leagueNotifications.filter((n) => !n.read).length;
   }, [leagueNotifications]);
 
   // Combine and filter items
@@ -248,11 +286,11 @@ const LeagueActivityFeed = ({
     let items = [];
 
     if (activeFilter === 'all' || activeFilter === 'activity') {
-      items = [...items, ...activities.map(a => ({ ...a, isActivity: true }))];
+      items = [...items, ...activities.map((a) => ({ ...a, isActivity: true }))];
     }
 
     if (activeFilter === 'all' || activeFilter === 'notifications') {
-      items = [...items, ...leagueNotifications.map(n => ({ ...n, isNotification: true }))];
+      items = [...items, ...leagueNotifications.map((n) => ({ ...n, isNotification: true }))];
     }
 
     // Sort by timestamp
@@ -264,11 +302,11 @@ const LeagueActivityFeed = ({
 
     // Apply type filter
     if (activeFilter === 'matchups') {
-      items = items.filter(i => i.type === 'matchup_result' || i.type === 'rivalry_matchup');
+      items = items.filter((i) => i.type === 'matchup_result' || i.type === 'rivalry_matchup');
     } else if (activeFilter === 'chat') {
-      items = items.filter(i => i.type === 'new_message');
+      items = items.filter((i) => i.type === 'new_message');
     } else if (activeFilter === 'trades') {
-      items = items.filter(i => i.type === 'trade_proposal' || i.type === 'trade_response');
+      items = items.filter((i) => i.type === 'trade_proposal' || i.type === 'trade_response');
     }
 
     return showAll ? items : items.slice(0, maxItems);
@@ -301,9 +339,7 @@ const LeagueActivityFeed = ({
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Bell className="w-4 h-4 text-yellow-500" />
-          <h3 className="text-sm font-bold text-white">
-            Activity Feed
-          </h3>
+          <h3 className="text-sm font-bold text-white">Activity Feed</h3>
           {leagueUnreadCount > 0 && (
             <span className="px-2 py-0.5 rounded-sm bg-yellow-500/10 text-yellow-500 text-xs font-bold">
               {leagueUnreadCount} new
@@ -377,18 +413,10 @@ const LeagueActivityFeed = ({
               />
             ))
           ) : (
-            <m.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center py-8"
-            >
+            <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-8">
               <Bell className="w-8 h-8 mx-auto text-gray-600 mb-2" />
-              <p className="text-gray-500 text-sm">
-                No activity yet
-              </p>
-              <p className="text-gray-600 text-xs mt-1">
-                Check back after some matchups!
-              </p>
+              <p className="text-gray-500 text-sm">No activity yet</p>
+              <p className="text-gray-600 text-xs mt-1">Check back after some matchups!</p>
             </m.div>
           )}
         </AnimatePresence>
@@ -449,10 +477,7 @@ export const NotificationDropdown = ({
         </div>
         <div className="flex items-center gap-2">
           {unreadCount > 0 && (
-            <button
-              onClick={onMarkAllRead}
-              className="text-xs text-gray-500 hover:text-gray-300"
-            >
+            <button onClick={onMarkAllRead} className="text-xs text-gray-500 hover:text-gray-300">
               Mark all read
             </button>
           )}
@@ -465,15 +490,17 @@ export const NotificationDropdown = ({
       {/* Notification List */}
       <div className="p-2 space-y-1">
         {notifications.length > 0 ? (
-          notifications.slice(0, 20).map((notification) => (
-            <ActivityItem
-              key={notification.id}
-              activity={notification}
-              isNotification={true}
-              onMarkRead={onMarkRead}
-              onTap={onNotificationClick}
-            />
-          ))
+          notifications
+            .slice(0, 20)
+            .map((notification) => (
+              <ActivityItem
+                key={notification.id}
+                activity={notification}
+                isNotification={true}
+                onMarkRead={onMarkRead}
+                onTap={onNotificationClick}
+              />
+            ))
         ) : (
           <div className="text-center py-8">
             <Bell className="w-8 h-8 mx-auto text-gray-600 mb-2" />
@@ -521,10 +548,13 @@ export const RivalryBadge = ({ rivalry, compact = false }) => {
         <div className="text-right">
           <p className="text-xs text-gray-500">{rivalry.matchupCount} matchups</p>
           {rivalry.streak && (
-            <p className={`text-xs font-bold ${
-              rivalry.streak.type === 'W' ? 'text-green-500' : 'text-red-500'
-            }`}>
-              {rivalry.streak.type}{rivalry.streak.count} streak
+            <p
+              className={`text-xs font-bold ${
+                rivalry.streak.type === 'W' ? 'text-green-500' : 'text-red-500'
+              }`}
+            >
+              {rivalry.streak.type}
+              {rivalry.streak.count} streak
             </p>
           )}
         </div>
@@ -536,7 +566,7 @@ export const RivalryBadge = ({ rivalry, compact = false }) => {
             userLeading ? 'bg-green-500' : tied ? 'bg-gray-500' : 'bg-red-500'
           }`}
           style={{
-            width: `${(rivalry.userWins / (rivalry.userWins + rivalry.rivalWins + rivalry.ties)) * 100}%`
+            width: `${(rivalry.userWins / (rivalry.userWins + rivalry.rivalWins + rivalry.ties)) * 100}%`,
           }}
         />
       </div>

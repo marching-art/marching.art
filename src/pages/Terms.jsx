@@ -25,22 +25,20 @@ const Terms = () => {
         </Link>
 
         <div className="bg-[#1a1a1a] border border-[#333] rounded-2xl p-6 sm:p-8">
-          <h1 className="text-3xl font-bold text-gradient mb-6">
-            Terms of Service
-          </h1>
+          <h1 className="text-3xl font-bold text-gradient mb-6">Terms of Service</h1>
 
-          <p className="text-gray-400 text-sm mb-6">
-            Last updated: January 2026
-          </p>
+          <p className="text-gray-400 text-sm mb-6">Last updated: January 2026</p>
 
           <div className="space-y-6 text-gray-300">
             <section>
               <h2 className="text-xl font-semibold text-white mb-3">1. Acceptance of Terms</h2>
               <p className="text-sm">
-                By accessing or using marching.art, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the service.
+                By accessing or using marching.art, you agree to be bound by these Terms of Service.
+                If you do not agree to these terms, please do not use the service.
               </p>
               <p className="text-sm mt-2">
-                Our service uses the YouTube API Services to display video content. By using marching.art, you are also agreeing to be bound by the{' '}
+                Our service uses the YouTube API Services to display video content. By using
+                marching.art, you are also agreeing to be bound by the{' '}
                 <a
                   href="https://www.youtube.com/t/terms"
                   target="_blank"
@@ -48,14 +46,17 @@ const Terms = () => {
                   className="text-yellow-500 hover:text-yellow-400 underline"
                 >
                   YouTube Terms of Service
-                </a>.
+                </a>
+                .
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-semibold text-white mb-3">2. Description of Service</h2>
               <p className="text-sm">
-                marching.art is a fantasy drum corps game that allows users to create virtual corps, compete in leagues, and track scores based on real DCI performances. The service is provided for entertainment purposes.
+                marching.art is a fantasy drum corps game that allows users to create virtual corps,
+                compete in leagues, and track scores based on real DCI performances. The service is
+                provided for entertainment purposes.
               </p>
             </section>
 
@@ -84,42 +85,53 @@ const Terms = () => {
             <section>
               <h2 className="text-xl font-semibold text-white mb-3">5. Intellectual Property</h2>
               <p className="text-sm">
-                The service and its original content, features, and functionality are owned by marching.art and are protected by copyright and other intellectual property laws. DCI and corps names are trademarks of their respective owners.
+                The service and its original content, features, and functionality are owned by
+                marching.art and are protected by copyright and other intellectual property laws.
+                DCI and corps names are trademarks of their respective owners.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-semibold text-white mb-3">6. User Content</h2>
               <p className="text-sm">
-                You retain ownership of content you create (corps names, show concepts). By posting content, you grant us a license to display it within the service. We may remove content that violates these terms.
+                You retain ownership of content you create (corps names, show concepts). By posting
+                content, you grant us a license to display it within the service. We may remove
+                content that violates these terms.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-semibold text-white mb-3">7. Disclaimer of Warranties</h2>
               <p className="text-sm">
-                The service is provided "as is" without warranties of any kind. We do not guarantee the service will be uninterrupted, secure, or error-free. Game scores and rankings are for entertainment only.
+                The service is provided "as is" without warranties of any kind. We do not guarantee
+                the service will be uninterrupted, secure, or error-free. Game scores and rankings
+                are for entertainment only.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-semibold text-white mb-3">8. Limitation of Liability</h2>
               <p className="text-sm">
-                To the maximum extent permitted by law, marching.art shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of the service.
+                To the maximum extent permitted by law, marching.art shall not be liable for any
+                indirect, incidental, special, or consequential damages arising from your use of the
+                service.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-semibold text-white mb-3">9. Termination</h2>
               <p className="text-sm">
-                We reserve the right to suspend or terminate your account at our discretion, with or without notice, for conduct that violates these terms or is harmful to other users or the service.
+                We reserve the right to suspend or terminate your account at our discretion, with or
+                without notice, for conduct that violates these terms or is harmful to other users
+                or the service.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-semibold text-white mb-3">10. Changes to Terms</h2>
               <p className="text-sm">
-                We may modify these terms at any time. Continued use of the service after changes constitutes acceptance of the new terms.
+                We may modify these terms at any time. Continued use of the service after changes
+                constitutes acceptance of the new terms.
               </p>
             </section>
 

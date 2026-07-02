@@ -128,10 +128,10 @@ const LeagueInviteModal = ({ inviterUid, inviteeUid, inviteeName, onClose }) => 
               ) : leagues.length === 0 ? (
                 <div className="text-center py-6">
                   <Users className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-                  <p className="text-sm text-gray-400 mb-1">You don&apos;t commission any leagues yet</p>
-                  <p className="text-[11px] text-gray-600">
-                    Create a league to send invites.
+                  <p className="text-sm text-gray-400 mb-1">
+                    You don&apos;t commission any leagues yet
                   </p>
+                  <p className="text-[11px] text-gray-600">Create a league to send invites.</p>
                 </div>
               ) : availableLeagues.length === 0 ? (
                 <div className="text-center py-6">

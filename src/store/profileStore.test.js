@@ -69,7 +69,14 @@ describe('profileStore.completeDailyChallenge', () => {
     seedStore({
       challenges: {
         [today]: [
-          { id: 'check_leaderboard', title: 'Scout', reward: '25 XP', progress: 0, target: 1, completed: false },
+          {
+            id: 'check_leaderboard',
+            title: 'Scout',
+            reward: '25 XP',
+            progress: 0,
+            target: 1,
+            completed: false,
+          },
         ],
       },
     });
@@ -91,7 +98,9 @@ describe('profileStore.completeDailyChallenge', () => {
     const today = getGameDay();
     seedStore({
       challenges: {
-        [today]: [{ id: 'check_leaderboard', title: 'Scout', progress: 1, target: 1, completed: true }],
+        [today]: [
+          { id: 'check_leaderboard', title: 'Scout', progress: 1, target: 1, completed: true },
+        ],
       },
     });
 

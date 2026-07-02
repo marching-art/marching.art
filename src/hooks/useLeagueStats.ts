@@ -76,12 +76,12 @@ function calculateWeeklyPerformances(
       captions?: CaptionScores;
     }[] = [];
 
-    recaps.forEach(dayRecap => {
+    recaps.forEach((dayRecap) => {
       const weekNum = Math.ceil(dayRecap.offSeasonDay / 7);
       if (weekNum !== week) return;
 
-      dayRecap.shows?.forEach(show => {
-        show.results?.forEach(result => {
+      dayRecap.shows?.forEach((show) => {
+        show.results?.forEach((result) => {
           if (result.uid !== userId) return;
 
           shows.push({
@@ -97,12 +97,7 @@ function calculateWeeklyPerformances(
 
     if (shows.length > 0) {
       const prevWeekPerf = performances[week - 1];
-      performances[week] = createWeeklyPerformance(
-        userId,
-        week,
-        shows,
-        prevWeekPerf?.totalScore
-      );
+      performances[week] = createWeeklyPerformance(userId, week, shows, prevWeekPerf?.totalScore);
     }
   }
 
@@ -154,7 +149,7 @@ export function useLeagueStats({
 
     // Calculate weekly performances for all members
     const memberPerformances: Record<string, Record<number, WeeklyUserPerformance>> = {};
-    memberIds.forEach(userId => {
+    memberIds.forEach((userId) => {
       memberPerformances[userId] = calculateWeeklyPerformances(userId, recaps, currentWeek);
     });
 
@@ -162,7 +157,7 @@ export function useLeagueStats({
     const weeklyBreakdowns: Record<number, MatchupBattleBreakdown[]> = {};
     const allBreakdownsByUser: Record<string, MatchupBattleBreakdown[]> = {};
 
-    memberIds.forEach(uid => {
+    memberIds.forEach((uid) => {
       allBreakdownsByUser[uid] = [];
     });
 
@@ -170,7 +165,7 @@ export function useLeagueStats({
       const matchups = weeklyMatchups[week] || [];
       weeklyBreakdowns[week] = [];
 
-      matchups.forEach(matchup => {
+      matchups.forEach((matchup) => {
         const homePerf = memberPerformances[matchup.user1]?.[week];
         const awayPerf = memberPerformances[matchup.user2]?.[week];
 
@@ -212,7 +207,7 @@ export function useLeagueStats({
     // Calculate season stats for each member
     const memberStats: Record<string, SeasonMatchupStats> = {};
 
-    memberIds.forEach(userId => {
+    memberIds.forEach((userId) => {
       const breakdowns = allBreakdownsByUser[userId] || [];
       if (breakdowns.length > 0) {
         memberStats[userId] = calculateSeasonStats(userId, seasonId, breakdowns);

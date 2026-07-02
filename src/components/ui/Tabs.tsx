@@ -162,10 +162,7 @@ export const TabTrigger: React.FC<TabTriggerProps> = ({
         transition-all duration-300
         focus:outline-none focus:ring-2 focus:ring-yellow-500/30
         disabled:opacity-50 disabled:cursor-not-allowed
-        ${isActive
-          ? 'text-charcoal-950'
-          : 'text-cream/60 hover:text-cream hover:bg-white/5'
-        }
+        ${isActive ? 'text-charcoal-950' : 'text-cream/60 hover:text-cream hover:bg-white/5'}
         ${className}
       `}
     >
@@ -195,11 +192,7 @@ export interface TabContentProps {
   className?: string;
 }
 
-export const TabContent: React.FC<TabContentProps> = ({
-  value,
-  children,
-  className = '',
-}) => {
+export const TabContent: React.FC<TabContentProps> = ({ value, children, className = '' }) => {
   const { activeTab } = useTabsContext();
 
   if (activeTab !== value) {

@@ -122,12 +122,7 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
 
       <div className="flex gap-3">
         {onReset && (
-          <Button
-            variant="primary"
-            size="sm"
-            leftIcon={RefreshCw}
-            onClick={onReset}
-          >
+          <Button variant="primary" size="sm" leftIcon={RefreshCw} onClick={onReset}>
             Try Again
           </Button>
         )}

@@ -1,6 +1,7 @@
 # ESPN Fantasy Sports Redesign - Implementation Prompts
 
 ## Overview
+
 This document contains a series of sequential prompts to transform marching.art from its current "Stadium HUD" glassmorphism design to an ESPN Fantasy Sports-inspired data-rich, professional sports presentation.
 
 **Total Prompts: 15**

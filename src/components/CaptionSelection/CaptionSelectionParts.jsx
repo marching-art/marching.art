@@ -2,7 +2,20 @@
 // Extracted from CaptionSelectionModal.jsx.
 
 import { useState, useEffect } from 'react';
-import { Check, Flame, Zap, Save, Download, Trash2, ChevronDown, ChevronUp, History, X, PartyPopper, RefreshCw } from 'lucide-react';
+import {
+  Check,
+  Flame,
+  Zap,
+  Save,
+  Download,
+  Trash2,
+  ChevronDown,
+  ChevronUp,
+  History,
+  X,
+  PartyPopper,
+  RefreshCw,
+} from 'lucide-react';
 
 // -----------------------------------------------------------------------------
 // LINEUP CELEBRATION
@@ -43,25 +56,33 @@ const CorpsOptionRow = ({ corps, isSelected, onSelect, disabled, captionHotStatu
       }`}
     >
       <div className="flex items-center gap-2 min-w-0 flex-1">
-        <div className={`w-5 h-5 border-2 flex items-center justify-center flex-shrink-0 rounded-sm ${
-          isSelected ? 'bg-[#0057B8] border-[#0057B8]' : 'border-[#444]'
-        }`}>
+        <div
+          className={`w-5 h-5 border-2 flex items-center justify-center flex-shrink-0 rounded-sm ${
+            isSelected ? 'bg-[#0057B8] border-[#0057B8]' : 'border-[#444]'
+          }`}
+        >
           {isSelected && <Check className="w-3 h-3 text-white" />}
         </div>
         <span className="font-medium text-white text-sm truncate">{corps.corpsName}</span>
-        <span className="text-[10px] text-gray-500">'{corps.sourceYear != null ? String(corps.sourceYear).slice(-2) : ''}</span>
+        <span className="text-[10px] text-gray-500">
+          '{corps.sourceYear != null ? String(corps.sourceYear).slice(-2) : ''}
+        </span>
         {captionHotStatus?.isHot && (
           <span
             className="flex items-center gap-0.5 px-1 py-0.5 bg-orange-500/20 text-orange-400 text-[10px] rounded"
-            title={captionHotStatus.improvement > 0
-              ? `Up ${captionHotStatus.improvement}% in this caption recently`
-              : 'Top performer in this caption recently'}
+            title={
+              captionHotStatus.improvement > 0
+                ? `Up ${captionHotStatus.improvement}% in this caption recently`
+                : 'Top performer in this caption recently'
+            }
           >
             <Flame className="w-2.5 h-2.5" /> Hot
           </span>
         )}
       </div>
-      <div className={`text-xs font-data font-bold ${isSelected ? 'text-[#0057B8]' : 'text-gray-400'}`}>
+      <div
+        className={`text-xs font-data font-bold ${isSelected ? 'text-[#0057B8]' : 'text-gray-400'}`}
+      >
         {corps.points} pts
       </div>
     </button>
@@ -76,10 +97,18 @@ const TemplateModal = ({ isOpen, onClose, templates, onSave, onLoad, onDelete, c
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80" onClick={onClose}>
-      <div className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-sm" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-sm"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-300">Lineup Templates</h3>
+          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-300">
+            Lineup Templates
+          </h3>
           <button onClick={onClose} className="p-1 text-gray-500 hover:text-white">
             <X className="w-4 h-4" />
           </button>
@@ -88,7 +117,9 @@ const TemplateModal = ({ isOpen, onClose, templates, onSave, onLoad, onDelete, c
         <div className="p-4">
           {/* Save current */}
           <div className="mb-4 p-3 bg-[#0a0a0a] border border-[#333]">
-            <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Save Current</h4>
+            <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+              Save Current
+            </h4>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -98,7 +129,12 @@ const TemplateModal = ({ isOpen, onClose, templates, onSave, onLoad, onDelete, c
                 className="flex-1 px-3 py-2 bg-[#1a1a1a] border border-[#333] text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
               />
               <button
-                onClick={() => { if (newTemplateName.trim()) { onSave(newTemplateName.trim()); setNewTemplateName(''); }}}
+                onClick={() => {
+                  if (newTemplateName.trim()) {
+                    onSave(newTemplateName.trim());
+                    setNewTemplateName('');
+                  }
+                }}
                 disabled={!newTemplateName.trim() || Object.keys(currentLineup).length === 0}
                 className="px-3 py-2 bg-[#0057B8] text-white text-sm font-bold hover:bg-[#0066d6] disabled:opacity-50"
               >
@@ -113,16 +149,27 @@ const TemplateModal = ({ isOpen, onClose, templates, onSave, onLoad, onDelete, c
               <p className="text-center text-gray-500 py-4 text-sm">No saved templates</p>
             ) : (
               templates.map((template, idx) => (
-                <div key={idx} className="flex items-center justify-between p-2 bg-[#0a0a0a] border border-[#333]">
+                <div
+                  key={idx}
+                  className="flex items-center justify-between p-2 bg-[#0a0a0a] border border-[#333]"
+                >
                   <div>
                     <div className="font-bold text-white text-sm">{template.name}</div>
-                    <div className="text-[10px] text-gray-500">{Object.keys(template.lineup).length} selections • {template.totalPoints} pts</div>
+                    <div className="text-[10px] text-gray-500">
+                      {Object.keys(template.lineup).length} selections • {template.totalPoints} pts
+                    </div>
                   </div>
                   <div className="flex items-center gap-1">
-                    <button onClick={() => onLoad(template)} className="p-1.5 hover:bg-[#0057B8]/20 text-[#0057B8]">
+                    <button
+                      onClick={() => onLoad(template)}
+                      className="p-1.5 hover:bg-[#0057B8]/20 text-[#0057B8]"
+                    >
                       <Download className="w-4 h-4" />
                     </button>
-                    <button onClick={() => onDelete(idx)} className="p-1.5 hover:bg-red-500/20 text-red-400">
+                    <button
+                      onClick={() => onDelete(idx)}
+                      className="p-1.5 hover:bg-red-500/20 text-red-400"
+                    >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -133,7 +180,10 @@ const TemplateModal = ({ isOpen, onClose, templates, onSave, onLoad, onDelete, c
         </div>
 
         <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end">
-          <button onClick={onClose} className="h-9 px-4 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6]">
+          <button
+            onClick={onClose}
+            className="h-9 px-4 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6]"
+          >
             Done
           </button>
         </div>
@@ -163,8 +213,14 @@ const DraftHelper = ({ suggestions, onSelectSuggestion, selections, activeCaptio
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center justify-between p-3 hover:bg-white/5"
       >
-        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Draft Helper</span>
-        {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
+        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+          Draft Helper
+        </span>
+        {isExpanded ? (
+          <ChevronUp className="w-4 h-4 text-gray-500" />
+        ) : (
+          <ChevronDown className="w-4 h-4 text-gray-500" />
+        )}
       </button>
 
       {isExpanded && (
@@ -177,7 +233,9 @@ const DraftHelper = ({ suggestions, onSelectSuggestion, selections, activeCaptio
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex-1 flex items-center justify-center gap-1 px-2 py-2 text-[10px] font-bold uppercase transition-colors ${
-                    activeTab === tab.id ? `${tab.color} bg-white/5 border-b-2 border-current` : 'text-gray-600 hover:text-gray-400'
+                    activeTab === tab.id
+                      ? `${tab.color} bg-white/5 border-b-2 border-current`
+                      : 'text-gray-600 hover:text-gray-400'
                   }`}
                 >
                   <Icon className="w-3 h-3" />
@@ -191,11 +249,17 @@ const DraftHelper = ({ suggestions, onSelectSuggestion, selections, activeCaptio
               <p className="text-center text-gray-600 py-2 text-xs">No suggestions</p>
             ) : (
               currentSuggestions.slice(0, 4).map((corps, idx) => {
-                const isAlreadySelected = Object.values(selections).some(s => s && s.split('|')[0] === corps.corpsName);
+                const isAlreadySelected = Object.values(selections).some(
+                  (s) => s && s.split('|')[0] === corps.corpsName
+                );
                 return (
                   <button
                     key={idx}
-                    onClick={() => !isAlreadySelected && activeCaption && onSelectSuggestion(corps, activeCaption)}
+                    onClick={() =>
+                      !isAlreadySelected &&
+                      activeCaption &&
+                      onSelectSuggestion(corps, activeCaption)
+                    }
                     disabled={isAlreadySelected || !activeCaption}
                     className={`w-full flex items-center justify-between p-2 text-xs ${
                       isAlreadySelected || !activeCaption ? 'opacity-50' : 'hover:bg-white/5'
@@ -241,7 +305,9 @@ const TradesRemainingIndicator = ({ tradesRemaining, isUnlimited, isInitialSetup
   }
 
   const isLow = tradesRemaining <= 1;
-  const colorClass = isLow ? 'text-yellow-400 border-yellow-500/30 bg-yellow-500/10' : 'text-gray-400 border-[#333] bg-[#222]';
+  const colorClass = isLow
+    ? 'text-yellow-400 border-yellow-500/30 bg-yellow-500/10'
+    : 'text-gray-400 border-[#333] bg-[#222]';
 
   return (
     <div className={`flex items-center gap-1.5 px-2 py-1 border rounded ${colorClass}`}>
@@ -296,4 +362,11 @@ const CaptionButton = ({ caption, selected, isActive, onClick, categoryColor }) 
 // MAIN MODAL
 // -----------------------------------------------------------------------------
 
-export { LineupCelebration, CorpsOptionRow, TemplateModal, DraftHelper, TradesRemainingIndicator, CaptionButton };
+export {
+  LineupCelebration,
+  CorpsOptionRow,
+  TemplateModal,
+  DraftHelper,
+  TradesRemainingIndicator,
+  CaptionButton,
+};

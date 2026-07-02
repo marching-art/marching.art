@@ -8,10 +8,7 @@
 
 import React, { useState } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
-import {
-  Users, Trophy, TrendingUp, ChevronDown,
-  ListChecks, Calendar, Award
-} from 'lucide-react';
+import { Users, Trophy, TrendingUp, ChevronDown, ListChecks, Calendar, Award } from 'lucide-react';
 import JargonTooltip from '../JargonTooltip';
 
 // =============================================================================
@@ -26,12 +23,23 @@ const STEPS = [
     icon: ListChecks,
     iconColor: 'text-[#0057B8]',
     iconBg: 'bg-[#0057B8]/10',
-    summary: <>Pick 8 <JargonTooltip termKey="caption">captions</JargonTooltip> from <JargonTooltip termKey="dci">DCI</JargonTooltip> history</>,
+    summary: (
+      <>
+        Pick 8 <JargonTooltip termKey="caption">captions</JargonTooltip> from{' '}
+        <JargonTooltip termKey="dci">DCI</JargonTooltip> history
+      </>
+    ),
     details: [
-      <>Choose performers from 50+ years of <JargonTooltip termKey="corps">drum corps</JargonTooltip> legends</>,
+      <>
+        Choose performers from 50+ years of{' '}
+        <JargonTooltip termKey="corps">drum corps</JargonTooltip> legends
+      </>,
       'Stay within your point budget based on your class level',
-      <>Mix and match from different eras to build your dream <JargonTooltip termKey="corps">corps</JargonTooltip></>
-    ]
+      <>
+        Mix and match from different eras to build your dream{' '}
+        <JargonTooltip termKey="corps">corps</JargonTooltip>
+      </>,
+    ],
   },
   {
     id: 2,
@@ -39,12 +47,22 @@ const STEPS = [
     icon: Calendar,
     iconColor: 'text-yellow-500',
     iconBg: 'bg-yellow-500/10',
-    summary: <>Your lineup scores when <JargonTooltip termKey="dci">DCI</JargonTooltip> performs</>,
+    summary: (
+      <>
+        Your lineup scores when <JargonTooltip termKey="dci">DCI</JargonTooltip> performs
+      </>
+    ),
     details: [
-      <>Points are calculated from actual <JargonTooltip termKey="dci">DCI</JargonTooltip> competition scores</>,
-      <>Watch your <JargonTooltip termKey="corps">corps</JargonTooltip> climb as the season progresses</>,
-      'Scores update after every show throughout the summer'
-    ]
+      <>
+        Points are calculated from actual <JargonTooltip termKey="dci">DCI</JargonTooltip>{' '}
+        competition scores
+      </>,
+      <>
+        Watch your <JargonTooltip termKey="corps">corps</JargonTooltip> climb as the season
+        progresses
+      </>,
+      'Scores update after every show throughout the summer',
+    ],
   },
   {
     id: 3,
@@ -55,10 +73,13 @@ const STEPS = [
     summary: 'Compete against other fans',
     details: [
       'Join public or private leagues with friends',
-      <>Earn <JargonTooltip termKey="xp">XP</JargonTooltip> and level up to unlock higher class divisions</>,
-      'Win bragging rights and climb the global rankings'
-    ]
-  }
+      <>
+        Earn <JargonTooltip termKey="xp">XP</JargonTooltip> and level up to unlock higher class
+        divisions
+      </>,
+      'Win bragging rights and climb the global rankings',
+    ],
+  },
 ];
 
 // =============================================================================
@@ -77,7 +98,9 @@ const AccordionItem = ({ step, isOpen, onToggle, isLast }) => {
         aria-expanded={isOpen}
       >
         {/* Step number + icon */}
-        <div className={`flex-shrink-0 w-10 h-10 rounded-sm ${step.iconBg} flex items-center justify-center`}>
+        <div
+          className={`flex-shrink-0 w-10 h-10 rounded-sm ${step.iconBg} flex items-center justify-center`}
+        >
           <Icon className={`w-5 h-5 ${step.iconColor}`} />
         </div>
 
@@ -88,12 +111,8 @@ const AccordionItem = ({ step, isOpen, onToggle, isLast }) => {
               Step {step.id}
             </span>
           </div>
-          <h3 className="text-sm font-bold text-white mt-0.5">
-            {step.title}
-          </h3>
-          <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">
-            {step.summary}
-          </p>
+          <h3 className="text-sm font-bold text-white mt-0.5">{step.title}</h3>
+          <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">{step.summary}</p>
         </div>
 
         {/* Expand/collapse indicator */}
@@ -142,7 +161,7 @@ const HowItWorks = () => {
   const [openSteps, setOpenSteps] = useState(new Set());
 
   const toggleStep = (stepId) => {
-    setOpenSteps(prev => {
+    setOpenSteps((prev) => {
       const next = new Set(prev);
       if (next.has(stepId)) {
         next.delete(stepId);
@@ -154,7 +173,7 @@ const HowItWorks = () => {
   };
 
   const expandAll = () => {
-    setOpenSteps(new Set(STEPS.map(s => s.id)));
+    setOpenSteps(new Set(STEPS.map((s) => s.id)));
   };
 
   const collapseAll = () => {

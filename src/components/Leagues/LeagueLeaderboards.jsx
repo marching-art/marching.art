@@ -4,8 +4,16 @@
 import React, { useState, memo } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import {
-  Trophy, Target, Zap, Flame, TrendingUp, Crown, Award,
-  ChevronDown, ChevronUp, Medal
+  Trophy,
+  Target,
+  Zap,
+  Flame,
+  TrendingUp,
+  Crown,
+  Award,
+  ChevronDown,
+  ChevronUp,
+  Medal,
 } from 'lucide-react';
 import { GAME_CONFIG } from '../../config';
 
@@ -36,7 +44,7 @@ const LEADERBOARD_CATEGORIES = [
     icon: TrendingUp,
     color: 'green',
     description: 'Average battle point margin',
-    format: (v) => v > 0 ? `+${v.toFixed(1)}` : v.toFixed(1),
+    format: (v) => (v > 0 ? `+${v.toFixed(1)}` : v.toFixed(1)),
   },
   {
     id: 'clutchWins',
@@ -68,7 +76,7 @@ const LEADERBOARD_CATEGORIES = [
 ];
 
 // Caption-specific leaderboards
-const CAPTION_CATEGORIES = GAME_CONFIG.captions.map(caption => ({
+const CAPTION_CATEGORIES = GAME_CONFIG.captions.map((caption) => ({
   id: `bestCaption_${caption}`,
   label: GAME_CONFIG.captionNames[caption],
   shortLabel: caption,
@@ -93,114 +101,112 @@ const colorClasses = {
  * Single leaderboard category card
  * OPTIMIZATION #3: Memoized to prevent re-renders when sibling leaderboard cards update
  */
-const LeaderboardCard = memo(({
-  category,
-  entries,
-  expanded,
-  onToggle,
-  currentUserId,
-  getDisplayName,
-}) => {
-  const Icon = category.icon;
-  const colors = colorClasses[category.color];
-  const topThree = entries.slice(0, 3);
-  const hasMore = entries.length > 3;
+const LeaderboardCard = memo(
+  ({ category, entries, expanded, onToggle, currentUserId, getDisplayName }) => {
+    const Icon = category.icon;
+    const colors = colorClasses[category.color];
+    const topThree = entries.slice(0, 3);
+    const hasMore = entries.length > 3;
 
-  return (
-    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
-      {/* Header - clickable to expand */}
-      <button
-        onClick={onToggle}
-        className="w-full px-3 py-2 flex items-center justify-between hover:bg-[#222] transition-colors"
-      >
-        <div className="flex items-center gap-2">
-          <div className={`w-6 h-6 flex items-center justify-center border ${colors}`}>
-            <Icon className="w-3.5 h-3.5" />
+    return (
+      <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+        {/* Header - clickable to expand */}
+        <button
+          onClick={onToggle}
+          className="w-full px-3 py-2 flex items-center justify-between hover:bg-[#222] transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <div className={`w-6 h-6 flex items-center justify-center border ${colors}`}>
+              <Icon className="w-3.5 h-3.5" />
+            </div>
+            <span className="text-xs font-bold text-white">{category.label}</span>
           </div>
-          <span className="text-xs font-bold text-white">{category.label}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          {topThree[0] && (
-            <span className={`text-xs font-bold ${colors.split(' ')[0]}`}>
-              {category.format(topThree[0].value)}
-            </span>
-          )}
-          {hasMore && (
-            expanded
-              ? <ChevronUp className="w-3.5 h-3.5 text-gray-500" />
-              : <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
-          )}
-        </div>
-      </button>
+          <div className="flex items-center gap-2">
+            {topThree[0] && (
+              <span className={`text-xs font-bold ${colors.split(' ')[0]}`}>
+                {category.format(topThree[0].value)}
+              </span>
+            )}
+            {hasMore &&
+              (expanded ? (
+                <ChevronUp className="w-3.5 h-3.5 text-gray-500" />
+              ) : (
+                <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
+              ))}
+          </div>
+        </button>
 
-      {/* Top 3 Preview */}
-      <div className="px-3 pb-2">
-        <div className="flex items-center gap-1">
-          {topThree.map((entry, idx) => {
-            const isUser = entry.userId === currentUserId;
-            return (
-              <div
-                key={entry.userId}
-                className={`flex-1 px-2 py-1.5 text-center ${
-                  isUser ? 'bg-purple-500/10 border border-purple-500/30' : 'bg-[#222]'
-                }`}
-              >
-                <div className="flex items-center justify-center gap-1 mb-0.5">
-                  <RankBadge rank={idx + 1} size="sm" />
-                </div>
-                <p className={`text-[10px] truncate ${isUser ? 'text-purple-400' : 'text-gray-400'}`}>
-                  {getDisplayName(entry.userId)}
-                </p>
-                <p className={`text-xs font-bold ${colors.split(' ')[0]}`}>
-                  {category.format(entry.value)}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Expanded List */}
-      <AnimatePresence>
-        {expanded && entries.length > 3 && (
-          <m.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="border-t border-[#333] overflow-hidden"
-          >
-            <div className="divide-y divide-[#222]">
-              {entries.slice(3).map((entry, idx) => {
-                const rank = idx + 4;
-                const isUser = entry.userId === currentUserId;
-                return (
-                  <div
-                    key={entry.userId}
-                    className={`px-3 py-2 flex items-center justify-between ${
-                      isUser ? 'bg-purple-500/5' : ''
-                    }`}
+        {/* Top 3 Preview */}
+        <div className="px-3 pb-2">
+          <div className="flex items-center gap-1">
+            {topThree.map((entry, idx) => {
+              const isUser = entry.userId === currentUserId;
+              return (
+                <div
+                  key={entry.userId}
+                  className={`flex-1 px-2 py-1.5 text-center ${
+                    isUser ? 'bg-purple-500/10 border border-purple-500/30' : 'bg-[#222]'
+                  }`}
+                >
+                  <div className="flex items-center justify-center gap-1 mb-0.5">
+                    <RankBadge rank={idx + 1} size="sm" />
+                  </div>
+                  <p
+                    className={`text-[10px] truncate ${isUser ? 'text-purple-400' : 'text-gray-400'}`}
                   >
-                    <div className="flex items-center gap-2">
-                      <span className="w-5 text-center text-xs text-gray-500 font-bold">
-                        {rank}
-                      </span>
-                      <span className={`text-sm ${isUser ? 'text-purple-400' : 'text-gray-300'}`}>
-                        {getDisplayName(entry.userId)}
+                    {getDisplayName(entry.userId)}
+                  </p>
+                  <p className={`text-xs font-bold ${colors.split(' ')[0]}`}>
+                    {category.format(entry.value)}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Expanded List */}
+        <AnimatePresence>
+          {expanded && entries.length > 3 && (
+            <m.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="border-t border-[#333] overflow-hidden"
+            >
+              <div className="divide-y divide-[#222]">
+                {entries.slice(3).map((entry, idx) => {
+                  const rank = idx + 4;
+                  const isUser = entry.userId === currentUserId;
+                  return (
+                    <div
+                      key={entry.userId}
+                      className={`px-3 py-2 flex items-center justify-between ${
+                        isUser ? 'bg-purple-500/5' : ''
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="w-5 text-center text-xs text-gray-500 font-bold">
+                          {rank}
+                        </span>
+                        <span className={`text-sm ${isUser ? 'text-purple-400' : 'text-gray-300'}`}>
+                          {getDisplayName(entry.userId)}
+                        </span>
+                      </div>
+                      <span className={`text-sm font-bold ${colors.split(' ')[0]}`}>
+                        {category.format(entry.value)}
                       </span>
                     </div>
-                    <span className={`text-sm font-bold ${colors.split(' ')[0]}`}>
-                      {category.format(entry.value)}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </m.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-});
+                  );
+                })}
+              </div>
+            </m.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }
+);
 
 /**
  * Small rank badge
@@ -210,27 +216,35 @@ const RankBadge = ({ rank, size = 'md' }) => {
 
   if (rank === 1) {
     return (
-      <div className={`${sizeClasses} flex items-center justify-center bg-yellow-500/20 text-yellow-500 font-bold`}>
+      <div
+        className={`${sizeClasses} flex items-center justify-center bg-yellow-500/20 text-yellow-500 font-bold`}
+      >
         1
       </div>
     );
   }
   if (rank === 2) {
     return (
-      <div className={`${sizeClasses} flex items-center justify-center bg-gray-500/20 text-gray-400 font-bold`}>
+      <div
+        className={`${sizeClasses} flex items-center justify-center bg-gray-500/20 text-gray-400 font-bold`}
+      >
         2
       </div>
     );
   }
   if (rank === 3) {
     return (
-      <div className={`${sizeClasses} flex items-center justify-center bg-orange-500/20 text-orange-500 font-bold`}>
+      <div
+        className={`${sizeClasses} flex items-center justify-center bg-orange-500/20 text-orange-500 font-bold`}
+      >
         3
       </div>
     );
   }
   return (
-    <div className={`${sizeClasses} flex items-center justify-center bg-[#333] text-gray-500 font-bold`}>
+    <div
+      className={`${sizeClasses} flex items-center justify-center bg-[#333] text-gray-500 font-bold`}
+    >
       {rank}
     </div>
   );
@@ -256,14 +270,17 @@ const LeagueLeaderboards = ({
 
     // Battle Points
     boards.battlePoints = stats
-      .map(s => ({ userId: s.userId, value: s.totalBattlePointsFor }))
+      .map((s) => ({ userId: s.userId, value: s.totalBattlePointsFor }))
       .sort((a, b) => b.value - a.value);
 
     // Caption Win Rate (overall)
     boards.captionWinRate = stats
-      .map(s => {
+      .map((s) => {
         const totalWins = Object.values(s.captionWinRates).reduce((sum, c) => sum + c.wins, 0);
-        const totalMatchups = Object.values(s.captionWinRates).reduce((sum, c) => sum + c.totalMatchups, 0);
+        const totalMatchups = Object.values(s.captionWinRates).reduce(
+          (sum, c) => sum + c.totalMatchups,
+          0
+        );
         return {
           userId: s.userId,
           value: totalMatchups > 0 ? totalWins / totalMatchups : 0,
@@ -273,7 +290,7 @@ const LeagueLeaderboards = ({
 
     // Avg Margin
     boards.avgMargin = stats
-      .map(s => ({
+      .map((s) => ({
         userId: s.userId,
         value: s.avgBattlePointsFor - s.avgBattlePointsAgainst,
       }))
@@ -281,23 +298,23 @@ const LeagueLeaderboards = ({
 
     // Clutch Wins
     boards.clutchWins = stats
-      .map(s => ({ userId: s.userId, value: s.clutchWins }))
+      .map((s) => ({ userId: s.userId, value: s.clutchWins }))
       .sort((a, b) => b.value - a.value);
 
     // Blowout Wins
     boards.blowoutWins = stats
-      .map(s => ({ userId: s.userId, value: s.blowoutWins }))
+      .map((s) => ({ userId: s.userId, value: s.blowoutWins }))
       .sort((a, b) => b.value - a.value);
 
     // Longest Streak
     boards.longestStreak = stats
-      .map(s => ({ userId: s.userId, value: s.longestWinStreak }))
+      .map((s) => ({ userId: s.userId, value: s.longestWinStreak }))
       .sort((a, b) => b.value - a.value);
 
     // Caption-specific
-    GAME_CONFIG.captions.forEach(caption => {
+    GAME_CONFIG.captions.forEach((caption) => {
       boards[`bestCaption_${caption}`] = stats
-        .map(s => ({
+        .map((s) => ({
           userId: s.userId,
           value: s.captionWinRates[caption]?.winRate || 0,
         }))
@@ -321,15 +338,15 @@ const LeagueLeaderboards = ({
     <div className="space-y-3">
       {/* Main Categories */}
       <div className="space-y-2">
-        {LEADERBOARD_CATEGORIES.map(category => (
+        {LEADERBOARD_CATEGORIES.map((category) => (
           <LeaderboardCard
             key={category.id}
             category={category}
             entries={leaderboards[category.id] || []}
             expanded={expandedCategory === category.id}
-            onToggle={() => setExpandedCategory(
-              expandedCategory === category.id ? null : category.id
-            )}
+            onToggle={() =>
+              setExpandedCategory(expandedCategory === category.id ? null : category.id)
+            }
             currentUserId={currentUserId}
             getDisplayName={getDisplayName}
           />
@@ -345,10 +362,11 @@ const LeagueLeaderboards = ({
           <Target className="w-4 h-4 text-blue-400" />
           <span className="text-xs font-bold text-white">Caption Leaders</span>
         </div>
-        {showCaptions
-          ? <ChevronUp className="w-4 h-4 text-gray-500" />
-          : <ChevronDown className="w-4 h-4 text-gray-500" />
-        }
+        {showCaptions ? (
+          <ChevronUp className="w-4 h-4 text-gray-500" />
+        ) : (
+          <ChevronDown className="w-4 h-4 text-gray-500" />
+        )}
       </button>
 
       {/* Caption Categories */}
@@ -360,15 +378,15 @@ const LeagueLeaderboards = ({
             exit={{ height: 0, opacity: 0 }}
             className="space-y-2 overflow-hidden"
           >
-            {CAPTION_CATEGORIES.map(category => (
+            {CAPTION_CATEGORIES.map((category) => (
               <LeaderboardCard
                 key={category.id}
                 category={category}
                 entries={leaderboards[category.id] || []}
                 expanded={expandedCategory === category.id}
-                onToggle={() => setExpandedCategory(
-                  expandedCategory === category.id ? null : category.id
-                )}
+                onToggle={() =>
+                  setExpandedCategory(expandedCategory === category.id ? null : category.id)
+                }
                 currentUserId={currentUserId}
                 getDisplayName={getDisplayName}
               />

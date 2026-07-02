@@ -3,7 +3,18 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { triggerDailyNews } from '../../api/functions';
-import { AlertTriangle, Award, Calendar, Database, Mail, Newspaper, RefreshCw, Search, Send, Terminal } from 'lucide-react';
+import {
+  AlertTriangle,
+  Award,
+  Calendar,
+  Database,
+  Mail,
+  Newspaper,
+  RefreshCw,
+  Search,
+  Send,
+  Terminal,
+} from 'lucide-react';
 import { SectionHeader, ProcessRow } from './AdminUI';
 
 const JobsTab = ({ callAdminFunction, seasonData }) => {
@@ -13,14 +24,56 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
   const [sweepResult, setSweepResult] = useState(null);
 
   const jobs = [
-    { id: 'calculateCorpsStatistics', name: 'Calculate Corps Statistics', description: 'Recalculate all corps stats from historical data', icon: Database },
-    { id: 'archiveSeasonResults', name: 'Archive Season Results', description: 'Archive results and determine champions', icon: Award },
-    { id: 'processAndArchiveOffSeasonScores', name: 'Process Off-Season Scores', description: 'Trigger daily off-season score processing', icon: RefreshCw },
-    { id: 'processLiveSeasonScores', name: 'Process Live Season Scores', description: 'Trigger daily live season score processing', icon: RefreshCw },
-    { id: 'refreshLiveSeasonSchedule', name: 'Refresh Live Schedule', description: 'Scrape DCI events and update schedule', icon: Calendar },
-    { id: 'regenerateOffSeasonSchedule', name: 'Regenerate Off-Season Schedule', description: 'Regenerate schedule for current off-season', icon: Calendar },
-    { id: 'auditShowSelections', name: 'Audit Show Selections (Dry Run)', description: 'Report directors\' selections that no longer match the schedule — changes nothing', icon: Search },
-    { id: 'repairShowSelections', name: 'Repair Show Selections', description: 'Re-match selections to the schedule: rename/move stale entries, remove dead ones to free slots', icon: RefreshCw },
+    {
+      id: 'calculateCorpsStatistics',
+      name: 'Calculate Corps Statistics',
+      description: 'Recalculate all corps stats from historical data',
+      icon: Database,
+    },
+    {
+      id: 'archiveSeasonResults',
+      name: 'Archive Season Results',
+      description: 'Archive results and determine champions',
+      icon: Award,
+    },
+    {
+      id: 'processAndArchiveOffSeasonScores',
+      name: 'Process Off-Season Scores',
+      description: 'Trigger daily off-season score processing',
+      icon: RefreshCw,
+    },
+    {
+      id: 'processLiveSeasonScores',
+      name: 'Process Live Season Scores',
+      description: 'Trigger daily live season score processing',
+      icon: RefreshCw,
+    },
+    {
+      id: 'refreshLiveSeasonSchedule',
+      name: 'Refresh Live Schedule',
+      description: 'Scrape DCI events and update schedule',
+      icon: Calendar,
+    },
+    {
+      id: 'regenerateOffSeasonSchedule',
+      name: 'Regenerate Off-Season Schedule',
+      description: 'Regenerate schedule for current off-season',
+      icon: Calendar,
+    },
+    {
+      id: 'auditShowSelections',
+      name: 'Audit Show Selections (Dry Run)',
+      description:
+        "Report directors' selections that no longer match the schedule — changes nothing",
+      icon: Search,
+    },
+    {
+      id: 'repairShowSelections',
+      name: 'Repair Show Selections',
+      description:
+        'Re-match selections to the schedule: rename/move stale entries, remove dead ones to free slots',
+      icon: RefreshCw,
+    },
   ];
 
   const handleRunJob = async (jobId, jobName) => {
@@ -45,9 +98,12 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
   };
 
   const handleSweepDuplicates = async () => {
-    if (!window.confirm(
-      'Run duplicate corps sweep?\n\nThis scans every active corps, flags any that share a name with a higher-priority corps, and forces those directors into a rename modal on next dashboard load.'
-    )) return;
+    if (
+      !window.confirm(
+        'Run duplicate corps sweep?\n\nThis scans every active corps, flags any that share a name with a higher-priority corps, and forces those directors into a rename modal on next dashboard load.'
+      )
+    )
+      return;
     setLoading('sweepDuplicates');
     setSweepResult(null);
     try {
@@ -69,7 +125,7 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
       await triggerDailyNews({
         currentDay: day,
         dataDocId: seasonData.dataDocId,
-        seasonId: seasonData.seasonUid
+        seasonId: seasonData.seasonUid,
       });
       toast.success(`News generated for Day ${day}`);
       setNewsDay('');
@@ -147,11 +203,10 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
         <SectionHeader title="Duplicate Corps Sweep" icon={AlertTriangle} />
         <div className="p-3 space-y-3">
           <p className="text-[11px] text-gray-500 leading-relaxed">
-            Scan every active corps for name collisions. The higher-tier corps wins
-            (World &gt; Open &gt; A &gt; SoundSport, ties broken by oldest createdAt). Each
-            loser is flagged so the director sees a rename modal on next dashboard
-            load and is hard-blocked from other corps actions until they pick a unique
-            name. Idempotent — safe to re-run.
+            Scan every active corps for name collisions. The higher-tier corps wins (World &gt; Open
+            &gt; A &gt; SoundSport, ties broken by oldest createdAt). Each loser is flagged so the
+            director sees a rename modal on next dashboard load and is hard-blocked from other corps
+            actions until they pick a unique name. Idempotent — safe to re-run.
           </p>
           <button
             onClick={handleSweepDuplicates}
@@ -170,19 +225,27 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
               <div className="grid grid-cols-4 gap-2 text-[10px] uppercase tracking-wider">
                 <div>
                   <div className="text-gray-500">Scanned</div>
-                  <div className="text-sm text-white font-data tabular-nums">{sweepResult.scanned}</div>
+                  <div className="text-sm text-white font-data tabular-nums">
+                    {sweepResult.scanned}
+                  </div>
                 </div>
                 <div>
                   <div className="text-gray-500">Flagged</div>
-                  <div className="text-sm text-red-400 font-data tabular-nums">{sweepResult.flagged}</div>
+                  <div className="text-sm text-red-400 font-data tabular-nums">
+                    {sweepResult.flagged}
+                  </div>
                 </div>
                 <div>
                   <div className="text-gray-500">Cleared</div>
-                  <div className="text-sm text-green-400 font-data tabular-nums">{sweepResult.cleared}</div>
+                  <div className="text-sm text-green-400 font-data tabular-nums">
+                    {sweepResult.cleared}
+                  </div>
                 </div>
                 <div>
                   <div className="text-gray-500">Directors</div>
-                  <div className="text-sm text-white font-data tabular-nums">{sweepResult.directorsAffected}</div>
+                  <div className="text-sm text-white font-data tabular-nums">
+                    {sweepResult.directorsAffected}
+                  </div>
                 </div>
               </div>
               {sweepResult.losers?.length > 0 && (
@@ -200,7 +263,10 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
                     </thead>
                     <tbody className="text-gray-300">
                       {sweepResult.losers.map((l, idx) => (
-                        <tr key={`${l.uid}-${l.corpsClass}-${idx}`} className="border-t border-[#222]">
+                        <tr
+                          key={`${l.uid}-${l.corpsClass}-${idx}`}
+                          className="border-t border-[#222]"
+                        >
                           <td className="py-1 pr-2">{l.corpsName}</td>
                           <td className="py-1 pr-2 text-gray-500">{l.corpsClass}</td>
                           <td className="py-1 text-gray-500">

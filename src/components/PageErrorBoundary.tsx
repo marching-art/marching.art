@@ -20,11 +20,7 @@ interface PageErrorFallbackProps {
   onReset?: () => void;
 }
 
-const PageErrorFallback: React.FC<PageErrorFallbackProps> = ({
-  error,
-  pageName,
-  onReset,
-}) => {
+const PageErrorFallback: React.FC<PageErrorFallbackProps> = ({ error, pageName, onReset }) => {
   const navigate = useNavigate();
 
   return (
@@ -40,12 +36,10 @@ const PageErrorFallback: React.FC<PageErrorFallbackProps> = ({
         </div>
 
         {/* Error Message */}
-        <h2 className="text-2xl font-bold text-white mb-3">
-          {pageName} Error
-        </h2>
+        <h2 className="text-2xl font-bold text-white mb-3">{pageName} Error</h2>
         <p className="text-gray-400 mb-6">
-          We encountered an issue loading this page. This might be a temporary
-          problem - please try again.
+          We encountered an issue loading this page. This might be a temporary problem - please try
+          again.
         </p>
 
         {/* Error Details (dev only) */}

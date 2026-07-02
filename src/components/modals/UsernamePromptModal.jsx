@@ -15,7 +15,11 @@ const UsernamePromptModal = () => {
   const loading = useProfileStore((state) => state.loading);
 
   const [username, setUsername] = useState('');
-  const [usernameStatus, setUsernameStatus] = useState({ checking: false, valid: null, message: '' });
+  const [usernameStatus, setUsernameStatus] = useState({
+    checking: false,
+    valid: null,
+    message: '',
+  });
   const [submitting, setSubmitting] = useState(false);
   const usernameCheckTimeout = useRef(null);
 
@@ -34,15 +38,27 @@ const UsernamePromptModal = () => {
     }
 
     if (usernameValue.length < 3) {
-      setUsernameStatus({ checking: false, valid: false, message: 'Username must be at least 3 characters' });
+      setUsernameStatus({
+        checking: false,
+        valid: false,
+        message: 'Username must be at least 3 characters',
+      });
       return;
     }
     if (usernameValue.length > 15) {
-      setUsernameStatus({ checking: false, valid: false, message: 'Username must be 15 characters or less' });
+      setUsernameStatus({
+        checking: false,
+        valid: false,
+        message: 'Username must be 15 characters or less',
+      });
       return;
     }
     if (!/^[a-zA-Z0-9_]+$/.test(usernameValue)) {
-      setUsernameStatus({ checking: false, valid: false, message: 'Only letters, numbers, and underscores allowed' });
+      setUsernameStatus({
+        checking: false,
+        valid: false,
+        message: 'Only letters, numbers, and underscores allowed',
+      });
       return;
     }
 
@@ -54,11 +70,19 @@ const UsernamePromptModal = () => {
         setUsernameStatus({ checking: false, valid: true, message: 'Username is available!' });
       } catch (error) {
         if (error.code === 'functions/already-exists') {
-          setUsernameStatus({ checking: false, valid: false, message: 'This username is already taken' });
+          setUsernameStatus({
+            checking: false,
+            valid: false,
+            message: 'This username is already taken',
+          });
         } else if (error.code === 'functions/invalid-argument') {
           setUsernameStatus({ checking: false, valid: false, message: error.message });
         } else {
-          setUsernameStatus({ checking: false, valid: false, message: 'Could not verify username' });
+          setUsernameStatus({
+            checking: false,
+            valid: false,
+            message: 'Could not verify username',
+          });
         }
       }
     }, 500);
@@ -84,7 +108,11 @@ const UsernamePromptModal = () => {
     } catch (error) {
       console.error('Error setting username:', error);
       if (error?.code === 'functions/already-exists') {
-        setUsernameStatus({ checking: false, valid: false, message: 'This username is already taken' });
+        setUsernameStatus({
+          checking: false,
+          valid: false,
+          message: 'This username is already taken',
+        });
         toast.error('That username was just taken. Please choose another.');
       } else {
         toast.error('Failed to set username. Please try again.');
@@ -127,9 +155,7 @@ const UsernamePromptModal = () => {
                 <h2 id="username-prompt-title" className="text-sm font-bold text-white">
                   Choose Your Username
                 </h2>
-                <p className="text-xs text-gray-500">
-                  This will be your unique identifier
-                </p>
+                <p className="text-xs text-gray-500">This will be your unique identifier</p>
               </div>
             </div>
           </div>
@@ -137,7 +163,8 @@ const UsernamePromptModal = () => {
           {/* Body */}
           <div className="p-5 space-y-4">
             <p className="text-sm text-gray-300">
-              Welcome back! A username is now required to identify players. Please choose a unique username to continue using your account.
+              Welcome back! A username is now required to identify players. Please choose a unique
+              username to continue using your account.
             </p>
 
             <div>
@@ -148,8 +175,11 @@ const UsernamePromptModal = () => {
                 <input
                   type="text"
                   className={`w-full px-4 py-3 bg-charcoal-900 border rounded-lg text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 pr-10 ${
-                    usernameStatus.valid === true ? 'border-green-500/50' :
-                    usernameStatus.valid === false ? 'border-red-500/50' : 'border-charcoal-700'
+                    usernameStatus.valid === true
+                      ? 'border-green-500/50'
+                      : usernameStatus.valid === false
+                        ? 'border-red-500/50'
+                        : 'border-charcoal-700'
                   }`}
                   placeholder="e.g., drumcorps_fan"
                   value={username}
@@ -170,10 +200,15 @@ const UsernamePromptModal = () => {
                 </div>
               </div>
               {usernameStatus.message && (
-                <p className={`text-xs mt-2 ${
-                  usernameStatus.valid === true ? 'text-green-400' :
-                  usernameStatus.valid === false ? 'text-red-400' : 'text-gray-400'
-                }`}>
+                <p
+                  className={`text-xs mt-2 ${
+                    usernameStatus.valid === true
+                      ? 'text-green-400'
+                      : usernameStatus.valid === false
+                        ? 'text-red-400'
+                        : 'text-gray-400'
+                  }`}
+                >
                   {usernameStatus.message}
                 </p>
               )}

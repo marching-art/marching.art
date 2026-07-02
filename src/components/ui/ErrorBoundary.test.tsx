@@ -4,11 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import {
-  ErrorBoundary,
-  ErrorFallback,
-  FeatureErrorBoundary,
-} from './ErrorBoundary';
+import { ErrorBoundary, ErrorFallback, FeatureErrorBoundary } from './ErrorBoundary';
 
 // Component that throws an error
 const ThrowError = ({ shouldThrow = true }: { shouldThrow?: boolean }) => {
@@ -175,9 +171,7 @@ describe('ErrorFallback', () => {
     it('renders feature-specific error message', () => {
       render(<ErrorFallback error={null} featureName="Profile" />);
       expect(screen.getByText('Profile Error')).toBeInTheDocument();
-      expect(
-        screen.getByText(/we encountered an error loading profile/i)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/we encountered an error loading profile/i)).toBeInTheDocument();
     });
 
     it('shows alert icon', () => {

@@ -15,23 +15,35 @@ const PRED_KEY = (date) => `pred_${date}`;
 const STATS_KEY = 'predStats';
 
 const loadPredictions = (date) => {
-  try { return JSON.parse(localStorage.getItem(PRED_KEY(date)) || '{}'); }
-  catch { return {}; }
+  try {
+    return JSON.parse(localStorage.getItem(PRED_KEY(date)) || '{}');
+  } catch {
+    return {};
+  }
 };
 
 const savePredictions = (date, data) => {
-  try { localStorage.setItem(PRED_KEY(date), JSON.stringify(data)); }
-  catch { /* ignore */ }
+  try {
+    localStorage.setItem(PRED_KEY(date), JSON.stringify(data));
+  } catch {
+    /* ignore */
+  }
 };
 
 const loadStats = () => {
-  try { return JSON.parse(localStorage.getItem(STATS_KEY) || '{"correct":0,"total":0}'); }
-  catch { return { correct: 0, total: 0 }; }
+  try {
+    return JSON.parse(localStorage.getItem(STATS_KEY) || '{"correct":0,"total":0}');
+  } catch {
+    return { correct: 0, total: 0 };
+  }
 };
 
 const saveStats = (stats) => {
-  try { localStorage.setItem(STATS_KEY, JSON.stringify(stats)); }
-  catch { /* ignore */ }
+  try {
+    localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+  } catch {
+    /* ignore */
+  }
 };
 
 /** Prune prediction entries older than 30 days to prevent unbounded localStorage growth */
@@ -46,7 +58,9 @@ const pruneOldPredictions = () => {
         localStorage.removeItem(key);
       }
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 };
 
 // ---------------------------------------------------------------------------
@@ -56,7 +70,7 @@ const pruneOldPredictions = () => {
 const buildQuestions = (recentResults) => {
   if (!recentResults || recentResults.length < 2) return [];
 
-  const scores = recentResults.map(r => r.score).filter(Boolean);
+  const scores = recentResults.map((r) => r.score).filter(Boolean);
   if (scores.length < 2) return [];
 
   const avg = scores.slice(0, 3).reduce((s, v) => s + v, 0) / Math.min(scores.length, 3);
@@ -101,14 +115,14 @@ const PredictionGamePanel = memo(({ recentResults }) => {
   // Prune old localStorage entries once per mount
   const hasPruned = useRef(false);
   useEffect(() => {
-    if (!hasPruned.current) { hasPruned.current = true; pruneOldPredictions(); }
+    if (!hasPruned.current) {
+      hasPruned.current = true;
+      pruneOldPredictions();
+    }
   }, []);
 
   // Generate questions from current data
-  const questions = useMemo(
-    () => buildQuestions(recentResults),
-    [recentResults]
-  );
+  const questions = useMemo(() => buildQuestions(recentResults), [recentResults]);
 
   // Resolve predictions when new results arrive
   useEffect(() => {
@@ -128,9 +142,22 @@ const PredictionGamePanel = memo(({ recentResults }) => {
     const storedPicks = preds.picks;
 
     const resolvers = [
-      { id: 'over-under', answer: () => newScore > storedPicks['over-under']?.threshold ? 'Over' : 'Under', extra: { newScore } },
-      { id: 'beat-prev', answer: () => newScore > storedPicks['beat-prev']?.threshold ? 'Yes' : 'No', extra: { newScore } },
-      { id: 'podium', skip: newPlacement == null, answer: () => newPlacement <= 3 ? 'Yes' : 'No', extra: { placement: newPlacement } },
+      {
+        id: 'over-under',
+        answer: () => (newScore > storedPicks['over-under']?.threshold ? 'Over' : 'Under'),
+        extra: { newScore },
+      },
+      {
+        id: 'beat-prev',
+        answer: () => (newScore > storedPicks['beat-prev']?.threshold ? 'Yes' : 'No'),
+        extra: { newScore },
+      },
+      {
+        id: 'podium',
+        skip: newPlacement == null,
+        answer: () => (newPlacement <= 3 ? 'Yes' : 'No'),
+        extra: { placement: newPlacement },
+      },
     ];
 
     for (const { id, skip, answer, extra } of resolvers) {
@@ -147,7 +174,7 @@ const PredictionGamePanel = memo(({ recentResults }) => {
     setPreds(resolvedPreds);
     savePredictions(today, resolvedPreds);
 
-    setStats(prev => {
+    setStats((prev) => {
       const next = {
         correct: prev.correct + correct,
         total: prev.total + Object.keys(results).length,
@@ -158,21 +185,24 @@ const PredictionGamePanel = memo(({ recentResults }) => {
   }, [preds, recentResults, today]);
 
   // Handle user picking an option
-  const handlePick = useCallback((questionId, option, threshold) => {
-    haptic?.();
-    setPreds(prev => {
-      const next = {
-        ...prev,
-        picks: {
-          ...(prev.picks || {}),
-          [questionId]: { pick: option, threshold },
-        },
-        snapshotEvent: recentResults?.[0]?.eventName ?? null,
-      };
-      savePredictions(today, next);
-      return next;
-    });
-  }, [today, recentResults, haptic]);
+  const handlePick = useCallback(
+    (questionId, option, threshold) => {
+      haptic?.();
+      setPreds((prev) => {
+        const next = {
+          ...prev,
+          picks: {
+            ...(prev.picks || {}),
+            [questionId]: { pick: option, threshold },
+          },
+          snapshotEvent: recentResults?.[0]?.eventName ?? null,
+        };
+        savePredictions(today, next);
+        return next;
+      });
+    },
+    [today, recentResults, haptic]
+  );
 
   // Don't render if not enough data to generate questions
   if (questions.length === 0) return null;
@@ -182,12 +212,8 @@ const PredictionGamePanel = memo(({ recentResults }) => {
   const isResolved = preds.resolved;
   const pickedCount = Object.keys(picks).length;
   const totalQ = questions.length;
-  const correctCount = isResolved
-    ? Object.values(results).filter(r => r.isCorrect).length
-    : 0;
-  const accuracy = stats.total > 0
-    ? Math.round((stats.correct / stats.total) * 100)
-    : null;
+  const correctCount = isResolved ? Object.values(results).filter((r) => r.isCorrect).length : 0;
+  const accuracy = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : null;
 
   return (
     <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
@@ -212,7 +238,7 @@ const PredictionGamePanel = memo(({ recentResults }) => {
 
       {/* Questions */}
       <div className="divide-y divide-[#222]">
-        {questions.map(q => {
+        {questions.map((q) => {
           const pick = picks[q.id];
           const result = results[q.id];
 
@@ -220,15 +246,21 @@ const PredictionGamePanel = memo(({ recentResults }) => {
           if (isResolved && result) {
             return (
               <div key={q.id} className="px-4 py-3 flex items-center gap-3">
-                <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  result.isCorrect ? 'bg-green-500' : 'bg-red-500'
-                }`}>
-                  {result.isCorrect
-                    ? <Check className="w-3 h-3 text-white" />
-                    : <X className="w-3 h-3 text-white" />}
+                <div
+                  className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    result.isCorrect ? 'bg-green-500' : 'bg-red-500'
+                  }`}
+                >
+                  {result.isCorrect ? (
+                    <Check className="w-3 h-3 text-white" />
+                  ) : (
+                    <X className="w-3 h-3 text-white" />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <span className={`text-sm ${result.isCorrect ? 'text-green-400' : 'text-red-400'}`}>
+                  <span
+                    className={`text-sm ${result.isCorrect ? 'text-green-400' : 'text-red-400'}`}
+                  >
                     {q.text.split('?')[0]}?
                   </span>
                   <p className="text-[10px] text-gray-500 mt-0.5">
@@ -262,7 +294,7 @@ const PredictionGamePanel = memo(({ recentResults }) => {
             <div key={q.id} className="px-4 py-3">
               <p className="text-sm text-white mb-2">{q.text}</p>
               <div className="flex items-center gap-2">
-                {q.options.map(opt => (
+                {q.options.map((opt) => (
                   <button
                     key={opt}
                     onClick={() => handlePick(q.id, opt, q.threshold)}
@@ -296,9 +328,7 @@ const PredictionGamePanel = memo(({ recentResults }) => {
         </div>
       ) : !isResolved && pickedCount === totalQ ? (
         <div className="px-3 py-1.5 border-t border-[#333] bg-[#111]">
-          <p className="text-[10px] text-gray-600">
-            Predictions locked — results after next show
-          </p>
+          <p className="text-[10px] text-gray-600">Predictions locked — results after next show</p>
         </div>
       ) : null}
     </div>

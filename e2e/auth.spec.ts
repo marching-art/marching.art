@@ -42,7 +42,9 @@ test.describe('Authentication Pages', () => {
       await expect(page.getByLabel(/password/i).first()).toBeVisible();
 
       // Check for submit button
-      await expect(page.getByRole('button', { name: /register|sign up|create|submit/i })).toBeVisible();
+      await expect(
+        page.getByRole('button', { name: /register|sign up|create|submit/i })
+      ).toBeVisible();
     });
 
     test('should have link to login page', async ({ page }) => {

@@ -3,19 +3,21 @@
 
 import React, { memo, useState, useRef, useEffect } from 'react';
 import {
-  Trophy, TrendingUp, TrendingDown, Medal, Palette,
-  MoreVertical, ArrowRightLeft, Archive, Lock,
+  Trophy,
+  TrendingUp,
+  TrendingDown,
+  Medal,
+  Palette,
+  MoreVertical,
+  ArrowRightLeft,
+  Archive,
+  Lock,
 } from 'lucide-react';
 import { CLASS_LABELS, getSoundSportRating } from './constants';
 
 // Blue Ribbon icon for Best in Show awards
-const BlueRibbonIcon = ({ className = "w-5 h-5" }) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    className={className}
-    xmlns="http://www.w3.org/2000/svg"
-  >
+const BlueRibbonIcon = ({ className = 'w-5 h-5' }) => (
+  <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
     {/* Ribbon circle/badge */}
     <circle cx="12" cy="9" r="7" fill="#0057B8" stroke="#003d82" strokeWidth="1" />
     {/* Inner circle highlight */}
@@ -31,213 +33,225 @@ const BlueRibbonIcon = ({ className = "w-5 h-5" }) => (
   </svg>
 );
 
-const SeasonScorecard = memo(({
-  score,
-  rank,
-  rankChange,
-  corpsName,
-  corpsClass,
-  loading,
-  avatarUrl,
-  onDesignUniform,
-  bestInShowCount = 0,
-  // Corps management: all optional so existing usage keeps rendering unchanged.
-  canManage = false,
-  canMove = false,
-  onMoveCorps,
-  onRetireCorps,
-  lockReason,
-}) => {
-  const isSoundSport = corpsClass === 'soundSport';
-  const rating = isSoundSport && score ? getSoundSportRating(score) : null;
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef(null);
+const SeasonScorecard = memo(
+  ({
+    score,
+    rank,
+    rankChange,
+    corpsName,
+    corpsClass,
+    loading,
+    avatarUrl,
+    onDesignUniform,
+    bestInShowCount = 0,
+    // Corps management: all optional so existing usage keeps rendering unchanged.
+    canManage = false,
+    canMove = false,
+    onMoveCorps,
+    onRetireCorps,
+    lockReason,
+  }) => {
+    const isSoundSport = corpsClass === 'soundSport';
+    const rating = isSoundSport && score ? getSoundSportRating(score) : null;
+    const [menuOpen, setMenuOpen] = useState(false);
+    const menuRef = useRef(null);
 
-  useEffect(() => {
-    if (!menuOpen) return;
-    const handleClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setMenuOpen(false);
-      }
+    useEffect(() => {
+      if (!menuOpen) return;
+      const handleClickOutside = (e) => {
+        if (menuRef.current && !menuRef.current.contains(e.target)) {
+          setMenuOpen(false);
+        }
+      };
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [menuOpen]);
+
+    const handleMove = () => {
+      setMenuOpen(false);
+      onMoveCorps?.();
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [menuOpen]);
+    const handleRetire = () => {
+      setMenuOpen(false);
+      onRetireCorps?.();
+    };
 
-  const handleMove = () => {
-    setMenuOpen(false);
-    onMoveCorps?.();
-  };
-  const handleRetire = () => {
-    setMenuOpen(false);
-    onRetireCorps?.();
-  };
+    const showMenu = !!(onMoveCorps || onRetireCorps);
 
-  const showMenu = !!(onMoveCorps || onRetireCorps);
-
-  return (
-    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
-      <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-        <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-          <Trophy className="w-3.5 h-3.5 text-yellow-500" />
-          Season Scorecard
-        </h3>
-      </div>
-
-      <div className="p-4">
-        {/* Corps Identity */}
-        <div className="flex items-center gap-3 mb-4 pb-4 border-b border-[#333]">
-          <button
-            onClick={onDesignUniform}
-            className="relative w-14 h-14 bg-[#222] border border-[#444] overflow-hidden flex items-center justify-center hover:border-[#0057B8] transition-colors group"
-            title="Design Uniform"
-          >
-            {/* OPTIMIZATION #7: Added lazy loading for avatar */}
-            {avatarUrl ? (
-              <img src={avatarUrl} alt={corpsName} className="w-full h-full object-cover" loading="lazy" decoding="async" />
-            ) : (
-              <Trophy className="w-7 h-7 text-yellow-500" />
-            )}
-            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-              <Palette className="w-4 h-4 text-white" />
-            </div>
-          </button>
-          <div className="flex-1 min-w-0">
-            <p className="text-base font-bold text-white truncate">{corpsName || 'My Corps'}</p>
-            <p className="text-[10px] uppercase tracking-wider text-gray-500">
-              {CLASS_LABELS[corpsClass] || corpsClass}
-            </p>
-          </div>
-          {showMenu && (
-            <div className="relative" ref={menuRef}>
-              <button
-                type="button"
-                onClick={() => setMenuOpen((v) => !v)}
-                className="p-1.5 text-gray-500 hover:text-white hover:bg-white/5 transition-colors rounded-sm"
-                aria-haspopup="menu"
-                aria-expanded={menuOpen}
-                aria-label="Manage corps"
-                title="Manage corps"
-              >
-                <MoreVertical className="w-4 h-4" />
-              </button>
-
-              {menuOpen && (
-                <div
-                  role="menu"
-                  className="absolute right-0 top-full mt-1 w-56 bg-[#1a1a1a] border border-[#333] shadow-xl z-20"
-                >
-                  {!canManage && lockReason && (
-                    <div className="px-3 py-2 text-[10px] text-gray-500 border-b border-[#333] flex items-start gap-2">
-                      <Lock className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                      <span>{lockReason}</span>
-                    </div>
-                  )}
-                  {onMoveCorps && (
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={handleMove}
-                      disabled={!canManage || !canMove}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left text-gray-300 hover:bg-white/5 hover:text-white disabled:text-gray-600 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-colors"
-                      title={
-                        !canManage
-                          ? (lockReason || 'Locked after your corps competes')
-                          : !canMove
-                            ? 'Unlock another class or free a class slot first'
-                            : 'Move this corps to another class'
-                      }
-                    >
-                      <ArrowRightLeft className="w-3.5 h-3.5" />
-                      Move to another class
-                    </button>
-                  )}
-                  {onRetireCorps && (
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={handleRetire}
-                      disabled={!canManage}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left text-gray-300 hover:bg-white/5 hover:text-orange-400 disabled:text-gray-600 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-colors border-t border-[#333]"
-                      title={
-                        !canManage
-                          ? (lockReason || 'Locked after your corps competes')
-                          : 'Retire this corps — can be unretired next season'
-                      }
-                    >
-                      <Archive className="w-3.5 h-3.5" />
-                      Retire corps
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+    return (
+      <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+        <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
+          <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+            <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+            Season Scorecard
+          </h3>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-3">
-          {/* Total Score / Medal Rating */}
-          <div className="bg-[#222] p-3">
-            <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">
-              {isSoundSport ? 'Medal Rating' : 'Season Score'}
-            </p>
-            {loading ? (
-              <div className="h-8 w-20 bg-[#333] animate-pulse" />
-            ) : isSoundSport && rating ? (
-              // SoundSport: Display medal badge
-              <div className={`inline-flex items-center gap-1.5 px-2 py-1 ${rating.color} rounded-sm`}>
-                <Medal className={`w-4 h-4 ${rating.textColor}`} />
-                <span className={`text-lg font-bold ${rating.textColor}`}>
-                  {rating.rating}
-                </span>
+        <div className="p-4">
+          {/* Corps Identity */}
+          <div className="flex items-center gap-3 mb-4 pb-4 border-b border-[#333]">
+            <button
+              onClick={onDesignUniform}
+              className="relative w-14 h-14 bg-[#222] border border-[#444] overflow-hidden flex items-center justify-center hover:border-[#0057B8] transition-colors group"
+              title="Design Uniform"
+            >
+              {/* OPTIMIZATION #7: Added lazy loading for avatar */}
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={corpsName}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                />
+              ) : (
+                <Trophy className="w-7 h-7 text-yellow-500" />
+              )}
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                <Palette className="w-4 h-4 text-white" />
               </div>
-            ) : isSoundSport ? (
-              <p className="text-2xl font-bold text-gray-500 font-data tabular-nums">
-                —
+            </button>
+            <div className="flex-1 min-w-0">
+              <p className="text-base font-bold text-white truncate">{corpsName || 'My Corps'}</p>
+              <p className="text-[10px] uppercase tracking-wider text-gray-500">
+                {CLASS_LABELS[corpsClass] || corpsClass}
               </p>
-            ) : (
-              <p className="text-2xl font-bold text-white font-data tabular-nums">
-                {score?.toFixed(2) || '0.00'}
-              </p>
-            )}
-          </div>
+            </div>
+            {showMenu && (
+              <div className="relative" ref={menuRef}>
+                <button
+                  type="button"
+                  onClick={() => setMenuOpen((v) => !v)}
+                  className="p-1.5 text-gray-500 hover:text-white hover:bg-white/5 transition-colors rounded-sm"
+                  aria-haspopup="menu"
+                  aria-expanded={menuOpen}
+                  aria-label="Manage corps"
+                  title="Manage corps"
+                >
+                  <MoreVertical className="w-4 h-4" />
+                </button>
 
-          {/* Rank / Best in Show */}
-          <div className="bg-[#222] p-3">
-            <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">
-              {isSoundSport ? 'Best in Show' : 'Rank'}
-            </p>
-            {loading ? (
-              <div className="h-8 w-16 bg-[#333] animate-pulse" />
-            ) : isSoundSport ? (
-              // SoundSport: Display Best in Show count with blue ribbon
-              <div className="flex items-center gap-2">
-                <BlueRibbonIcon className="w-6 h-6" />
-                <span className="text-2xl font-bold text-[#0057B8] font-data tabular-nums">
-                  {bestInShowCount}
-                </span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <p className="text-2xl font-bold text-white font-data tabular-nums">
-                  #{rank || '-'}
-                </p>
-                {rankChange !== null && rankChange !== 0 && (
-                  <span className={`text-xs font-bold flex items-center gap-0.5 ${
-                    rankChange > 0 ? 'text-green-500' : 'text-red-500'
-                  }`}>
-                    {rankChange > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                    {Math.abs(rankChange)}
-                  </span>
+                {menuOpen && (
+                  <div
+                    role="menu"
+                    className="absolute right-0 top-full mt-1 w-56 bg-[#1a1a1a] border border-[#333] shadow-xl z-20"
+                  >
+                    {!canManage && lockReason && (
+                      <div className="px-3 py-2 text-[10px] text-gray-500 border-b border-[#333] flex items-start gap-2">
+                        <Lock className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                        <span>{lockReason}</span>
+                      </div>
+                    )}
+                    {onMoveCorps && (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={handleMove}
+                        disabled={!canManage || !canMove}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left text-gray-300 hover:bg-white/5 hover:text-white disabled:text-gray-600 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-colors"
+                        title={
+                          !canManage
+                            ? lockReason || 'Locked after your corps competes'
+                            : !canMove
+                              ? 'Unlock another class or free a class slot first'
+                              : 'Move this corps to another class'
+                        }
+                      >
+                        <ArrowRightLeft className="w-3.5 h-3.5" />
+                        Move to another class
+                      </button>
+                    )}
+                    {onRetireCorps && (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={handleRetire}
+                        disabled={!canManage}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left text-gray-300 hover:bg-white/5 hover:text-orange-400 disabled:text-gray-600 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-colors border-t border-[#333]"
+                        title={
+                          !canManage
+                            ? lockReason || 'Locked after your corps competes'
+                            : 'Retire this corps — can be unretired next season'
+                        }
+                      >
+                        <Archive className="w-3.5 h-3.5" />
+                        Retire corps
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             )}
           </div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 gap-3">
+            {/* Total Score / Medal Rating */}
+            <div className="bg-[#222] p-3">
+              <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">
+                {isSoundSport ? 'Medal Rating' : 'Season Score'}
+              </p>
+              {loading ? (
+                <div className="h-8 w-20 bg-[#333] animate-pulse" />
+              ) : isSoundSport && rating ? (
+                // SoundSport: Display medal badge
+                <div
+                  className={`inline-flex items-center gap-1.5 px-2 py-1 ${rating.color} rounded-sm`}
+                >
+                  <Medal className={`w-4 h-4 ${rating.textColor}`} />
+                  <span className={`text-lg font-bold ${rating.textColor}`}>{rating.rating}</span>
+                </div>
+              ) : isSoundSport ? (
+                <p className="text-2xl font-bold text-gray-500 font-data tabular-nums">—</p>
+              ) : (
+                <p className="text-2xl font-bold text-white font-data tabular-nums">
+                  {score?.toFixed(2) || '0.00'}
+                </p>
+              )}
+            </div>
+
+            {/* Rank / Best in Show */}
+            <div className="bg-[#222] p-3">
+              <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">
+                {isSoundSport ? 'Best in Show' : 'Rank'}
+              </p>
+              {loading ? (
+                <div className="h-8 w-16 bg-[#333] animate-pulse" />
+              ) : isSoundSport ? (
+                // SoundSport: Display Best in Show count with blue ribbon
+                <div className="flex items-center gap-2">
+                  <BlueRibbonIcon className="w-6 h-6" />
+                  <span className="text-2xl font-bold text-[#0057B8] font-data tabular-nums">
+                    {bestInShowCount}
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <p className="text-2xl font-bold text-white font-data tabular-nums">
+                    #{rank || '-'}
+                  </p>
+                  {rankChange !== null && rankChange !== 0 && (
+                    <span
+                      className={`text-xs font-bold flex items-center gap-0.5 ${
+                        rankChange > 0 ? 'text-green-500' : 'text-red-500'
+                      }`}
+                    >
+                      {rankChange > 0 ? (
+                        <TrendingUp className="w-3 h-3" />
+                      ) : (
+                        <TrendingDown className="w-3 h-3" />
+                      )}
+                      {Math.abs(rankChange)}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  );
-});
+    );
+  }
+);
 
 export default SeasonScorecard;

@@ -7,7 +7,11 @@ import {
 } from './dashboardScoring';
 
 // A small helper to build score events.
-function event(day: number, corpsCaptions: Record<string, Record<string, number>>, name = 'Show'): ScoreEvent {
+function event(
+  day: number,
+  corpsCaptions: Record<string, Record<string, number>>,
+  name = 'Show'
+): ScoreEvent {
   return {
     offSeasonDay: day,
     eventName: name,

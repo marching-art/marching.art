@@ -52,9 +52,10 @@ export function toCanonicalClassKey(key: string): string {
  * preserving order. Returns the normalized array and a flag indicating whether
  * any change was made (so callers can decide whether to persist the fix).
  */
-export function normalizeUnlockedClasses(
-  arr: string[] | undefined | null
-): { normalized: string[]; changed: boolean } {
+export function normalizeUnlockedClasses(arr: string[] | undefined | null): {
+  normalized: string[];
+  changed: boolean;
+} {
   const input = arr || ['soundSport'];
   const seen = new Set<string>();
   const normalized: string[] = [];
@@ -65,9 +66,7 @@ export function normalizeUnlockedClasses(
       normalized.push(canonical);
     }
   }
-  const changed =
-    normalized.length !== input.length ||
-    normalized.some((c, i) => c !== input[i]);
+  const changed = normalized.length !== input.length || normalized.some((c, i) => c !== input[i]);
   return { normalized, changed };
 }
 
@@ -150,8 +149,7 @@ export function mergeTimeUnlockedClasses(
   currentUnlocked: string[],
   createdAt: Timestamp | Date | string | undefined | null
 ): string[] | null {
-  const { normalized, changed: normalizationChanged } =
-    normalizeUnlockedClasses(currentUnlocked);
+  const { normalized, changed: normalizationChanged } = normalizeUnlockedClasses(currentUnlocked);
 
   const timeEligible = getTimeUnlockedClasses(createdAt);
   const newClasses = timeEligible.filter((cls) => !normalized.includes(cls));

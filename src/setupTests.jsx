@@ -9,17 +9,25 @@ vi.mock('framer-motion', async () => {
     ...actual,
     motion: {
       button: ({ children, ...props }) => {
-         
-        const { whileHover, whileTap, initial, animate, exit, variants, transition, ...htmlProps } = props;
+        const { whileHover, whileTap, initial, animate, exit, variants, transition, ...htmlProps } =
+          props;
         return <button {...htmlProps}>{children}</button>;
       },
       div: ({ children, ...props }) => {
-         
-        const { whileHover, whileTap, initial, animate, exit, variants, transition, layoutId, ...htmlProps } = props;
+        const {
+          whileHover,
+          whileTap,
+          initial,
+          animate,
+          exit,
+          variants,
+          transition,
+          layoutId,
+          ...htmlProps
+        } = props;
         return <div {...htmlProps}>{children}</div>;
       },
       p: ({ children, ...props }) => {
-         
         const { initial, animate, exit, variants, transition, ...htmlProps } = props;
         return <p {...htmlProps}>{children}</p>;
       },

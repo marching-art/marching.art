@@ -4,56 +4,84 @@ import React, { useState } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
-  X, ChevronRight, Check, Trophy, Calendar, Music,
-  HelpCircle, BookOpen, Zap, Target, Star, ArrowRight
+  X,
+  ChevronRight,
+  Check,
+  Trophy,
+  Calendar,
+  Music,
+  HelpCircle,
+  BookOpen,
+  Zap,
+  Target,
+  Star,
+  ArrowRight,
 } from 'lucide-react';
 
 const QUICK_START_STEPS = [
   {
     id: 'lineup',
     title: 'Build Your Lineup',
-    description: 'Pick historical corps performances for each of the 8 scoring captions. Stay within your point budget!',
+    description:
+      'Pick historical corps performances for each of the 8 scoring captions. Stay within your point budget!',
     icon: Music,
     color: 'blue',
     action: { label: 'Edit Lineup', target: 'lineup' },
     tips: [
       'Each caption needs one corps selection',
       'Higher-scoring corps cost more points',
-      'You can change your lineup anytime'
-    ]
+      'You can change your lineup anytime',
+    ],
   },
   {
     id: 'schedule',
     title: 'Register for Shows',
-    description: 'Sign up for shows each week to earn points. You can register for up to 4 shows per week.',
+    description:
+      'Sign up for shows each week to earn points. You can register for up to 4 shows per week.',
     icon: Calendar,
     color: 'purple',
     action: { label: 'View Schedule', target: '/schedule' },
     tips: [
       'Weekend shows often have more participants',
       'Register early to secure your spots',
-      'Points are based on real DCI scores'
-    ]
+      'Points are based on real DCI scores',
+    ],
   },
   {
     id: 'scores',
     title: 'Check Your Scores',
-    description: 'After shows complete, check how your lineup performed. See detailed breakdowns by caption.',
+    description:
+      'After shows complete, check how your lineup performed. See detailed breakdowns by caption.',
     icon: Trophy,
     color: 'green',
     action: { label: 'View Scores', target: '/scores' },
     tips: [
       'Scores are calculated from real DCI data',
       'Track your season total over time',
-      'Compare your scores with others'
-    ]
-  }
+      'Compare your scores with others',
+    ],
+  },
 ];
 
 const colorClasses = {
-  purple: { bg: 'bg-purple-500/20', border: 'border-purple-500/30', text: 'text-purple-400', button: 'bg-purple-500 hover:bg-purple-400' },
-  blue: { bg: 'bg-[#0057B8]/15', border: 'border-[#0057B8]/40', text: 'text-[#0057B8]', button: 'bg-[#0057B8] hover:bg-[#0066d6]' },
-  green: { bg: 'bg-green-500/20', border: 'border-green-500/30', text: 'text-green-400', button: 'bg-green-500 hover:bg-green-400' }
+  purple: {
+    bg: 'bg-purple-500/20',
+    border: 'border-purple-500/30',
+    text: 'text-purple-400',
+    button: 'bg-purple-500 hover:bg-purple-400',
+  },
+  blue: {
+    bg: 'bg-[#0057B8]/15',
+    border: 'border-[#0057B8]/40',
+    text: 'text-[#0057B8]',
+    button: 'bg-[#0057B8] hover:bg-[#0066d6]',
+  },
+  green: {
+    bg: 'bg-green-500/20',
+    border: 'border-green-500/30',
+    text: 'text-green-400',
+    button: 'bg-green-500 hover:bg-green-400',
+  },
 };
 
 const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => {
@@ -139,9 +167,11 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
                     onClick={() => setExpandedStep(isExpanded ? null : step.id)}
                     className="w-full p-4 flex items-center gap-4 text-left"
                   >
-                    <div className={`w-10 h-10 rounded-sm flex items-center justify-center flex-shrink-0 ${
-                      isCompleted ? 'bg-green-500/20' : colors.bg
-                    }`}>
+                    <div
+                      className={`w-10 h-10 rounded-sm flex items-center justify-center flex-shrink-0 ${
+                        isCompleted ? 'bg-green-500/20' : colors.bg
+                      }`}
+                    >
                       {isCompleted ? (
                         <Check className="w-5 h-5 text-green-400" />
                       ) : (
@@ -154,7 +184,9 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
                       </h3>
                       <p className="text-sm text-gray-400 truncate">{step.description}</p>
                     </div>
-                    <ChevronRight className={`w-5 h-5 text-gray-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                    <ChevronRight
+                      className={`w-5 h-5 text-gray-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                    />
                   </button>
 
                   {/* Expanded content */}
@@ -174,7 +206,10 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
                             </h4>
                             <ul className="space-y-1.5">
                               {step.tips.map((tip, tipIdx) => (
-                                <li key={tipIdx} className="flex items-start gap-2 text-sm text-gray-400">
+                                <li
+                                  key={tipIdx}
+                                  className="flex items-start gap-2 text-sm text-gray-400"
+                                >
                                   <Star className="w-3 h-3 text-[#0057B8] mt-1 flex-shrink-0" />
                                   {tip}
                                 </li>
@@ -218,10 +253,14 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
               <p className="text-sm text-gray-500">
                 <HelpCircle className="w-4 h-4 inline mr-1" />
                 Need more help? Check out the{' '}
-                <Link to="/how-to-play" onClick={onClose} className="text-[#0057B8] hover:underline">
+                <Link
+                  to="/how-to-play"
+                  onClick={onClose}
+                  className="text-[#0057B8] hover:underline"
+                >
                   How to Play
-                </Link>
-                {' '}guide.
+                </Link>{' '}
+                guide.
               </p>
               <button
                 onClick={onClose}

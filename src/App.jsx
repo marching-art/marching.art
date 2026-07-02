@@ -48,7 +48,10 @@ const Onboarding = lazyWithRetry(() => import('./pages/Onboarding'), 'Onboarding
 const Login = lazyWithRetry(() => import('./pages/Login'), 'Login');
 const Register = lazyWithRetry(() => import('./pages/Register'), 'Register');
 const Landing = lazyWithRetry(() => import('./pages/Landing'), 'Landing');
-const RetiredCorpsGallery = lazyWithRetry(() => import('./pages/RetiredCorpsGallery'), 'RetiredCorpsGallery');
+const RetiredCorpsGallery = lazyWithRetry(
+  () => import('./pages/RetiredCorpsGallery'),
+  'RetiredCorpsGallery'
+);
 const CorpsHistory = lazyWithRetry(() => import('./pages/CorpsHistory'), 'CorpsHistory');
 const SoundSport = lazyWithRetry(() => import('./pages/SoundSport'), 'SoundSport');
 const Privacy = lazyWithRetry(() => import('./pages/Privacy'), 'Privacy');
@@ -61,11 +64,7 @@ const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'NotFound');
 const GuestDashboard = lazyWithRetry(() => import('./pages/GuestDashboard'), 'GuestDashboard');
 
 // Helper component to wrap pages with error boundaries
-const Page = ({ name, children }) => (
-  <PageErrorBoundary name={name}>
-    {children}
-  </PageErrorBoundary>
-);
+const Page = ({ name, children }) => <PageErrorBoundary name={name}>{children}</PageErrorBoundary>;
 
 // Auth context + useAuth hook live in ./context/AuthContext so this file only
 // exports components (keeps Vite fast refresh working).
@@ -209,31 +208,34 @@ function App() {
   // Memoize auth context value to prevent unnecessary re-renders of all consumers
   // Only recreates when user, loading, or error actually change
   // NOTE: This MUST be before any early returns to maintain consistent hook order
-  const authContextValue = useMemo(() => ({
-    user,
-    loading,
-    error,
-    // Analytics funnel events fire here so every auth entry point is counted
-    signIn: async (email, password) => {
-      const result = await authHelpers.signInWithEmail(email, password);
-      analytics.logLogin('email');
-      return result;
-    },
-    signUp: async (email, password) => {
-      const result = await authHelpers.signUpWithEmail(email, password);
-      analytics.logSignUp('email');
-      return result;
-    },
-    signInAnonymously: async () => {
-      const result = await authHelpers.signInAnon();
-      analytics.logLogin('anonymous');
-      return result;
-    },
-    signOut: async () => {
-      analytics.logLogout();
-      return authHelpers.signOut();
-    }
-  }), [user, loading, error]);
+  const authContextValue = useMemo(
+    () => ({
+      user,
+      loading,
+      error,
+      // Analytics funnel events fire here so every auth entry point is counted
+      signIn: async (email, password) => {
+        const result = await authHelpers.signInWithEmail(email, password);
+        analytics.logLogin('email');
+        return result;
+      },
+      signUp: async (email, password) => {
+        const result = await authHelpers.signUpWithEmail(email, password);
+        analytics.logSignUp('email');
+        return result;
+      },
+      signInAnonymously: async () => {
+        const result = await authHelpers.signInAnon();
+        analytics.logLogin('anonymous');
+        return result;
+      },
+      signOut: async () => {
+        analytics.logLogout();
+        return authHelpers.signOut();
+      },
+    }),
+    [user, loading, error]
+  );
 
   if (loading) {
     return <LoadingScreen fullScreen />;
@@ -244,231 +246,371 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
           <MotionProvider>
-          <AuthContext.Provider value={authContextValue}>
-            <Router>
-          {/* Skip to Content - Accessibility */}
-          <SkipToContent />
+            <AuthContext.Provider value={authContextValue}>
+              <Router>
+                {/* Skip to Content - Accessibility */}
+                <SkipToContent />
 
-          {/* Offline Banner - Shows when network is unavailable */}
-          <OfflineBanner />
+                {/* Offline Banner - Shows when network is unavailable */}
+                <OfflineBanner />
 
-          {/* Global Toast Notifications - Mobile aware positioning */}
-          {/* ARIA live region for screen reader accessibility (WCAG 4.1.3) */}
-          <div
-            role="region"
-            aria-live="polite"
-            aria-atomic="true"
-            aria-label="Notifications"
-          >
-            <Toaster
-              position="top-right"
-              containerStyle={{
-                // Safe area + header offset, with right padding to prevent overflow
-                top: 'max(env(safe-area-inset-top, 0px) + 16px, 16px)',
-                right: 'max(env(safe-area-inset-right, 0px) + 16px, 16px)',
-              }}
-              toastOptions={{
-                duration: 4000,
-                className: 'press-feedback',
-                style: {
-                  background: '#1a1a1a',
-                  color: '#fff',
-                  border: '1px solid #333',
-                  borderRadius: '2px',
-                  fontSize: '12px',
-                  padding: '10px 14px',
-                  maxWidth: 'min(360px, calc(100vw - 32px))',
-                },
-                success: {
-                  iconTheme: {
-                    primary: '#22c55e',
-                    secondary: '#1a1a1a',
-                  },
-                },
-                error: {
-                  iconTheme: {
-                    primary: '#ef4444',
-                    secondary: '#1a1a1a',
-                  },
-                },
-              }}
-            />
-          </div>
+                {/* Global Toast Notifications - Mobile aware positioning */}
+                {/* ARIA live region for screen reader accessibility (WCAG 4.1.3) */}
+                <div role="region" aria-live="polite" aria-atomic="true" aria-label="Notifications">
+                  <Toaster
+                    position="top-right"
+                    containerStyle={{
+                      // Safe area + header offset, with right padding to prevent overflow
+                      top: 'max(env(safe-area-inset-top, 0px) + 16px, 16px)',
+                      right: 'max(env(safe-area-inset-right, 0px) + 16px, 16px)',
+                    }}
+                    toastOptions={{
+                      duration: 4000,
+                      className: 'press-feedback',
+                      style: {
+                        background: '#1a1a1a',
+                        color: '#fff',
+                        border: '1px solid #333',
+                        borderRadius: '2px',
+                        fontSize: '12px',
+                        padding: '10px 14px',
+                        maxWidth: 'min(360px, calc(100vw - 32px))',
+                      },
+                      success: {
+                        iconTheme: {
+                          primary: '#22c55e',
+                          secondary: '#1a1a1a',
+                        },
+                      },
+                      error: {
+                        iconTheme: {
+                          primary: '#ef4444',
+                          secondary: '#1a1a1a',
+                        },
+                      },
+                    }}
+                  />
+                </div>
 
-        {/* PWA Install Prompt - shows after user engagement */}
-        {user && <PWAInstallPrompt />}
+                {/* PWA Install Prompt - shows after user engagement */}
+                {user && <PWAInstallPrompt />}
 
-        {/* Username Prompt Modal - shows for existing users without username */}
-        {user && <UsernamePromptModal />}
+                {/* Username Prompt Modal - shows for existing users without username */}
+                {user && <UsernamePromptModal />}
 
-        {/* Celebration System - for achievements and level ups */}
-        <CelebrationContainer />
+                {/* Celebration System - for achievements and level ups */}
+                <CelebrationContainer />
 
-        {/* XP/CC Floating Feedback - for gains throughout the app */}
-        <XPFeedbackContainer />
+                {/* XP/CC Floating Feedback - for gains throughout the app */}
+                <XPFeedbackContainer />
 
-        {/* Level Up Celebration - full-screen animation on level up */}
-        <LevelUpCelebrationContainer />
+                {/* Level Up Celebration - full-screen animation on level up */}
+                <LevelUpCelebrationContainer />
 
-        <Suspense fallback={<LoadingScreen fullScreen />}>
-        <Routes>
-          {/* Public Routes - Landing page visible to all users */}
-          <Route path="/" element={<Suspense fallback={<LoadingScreen fullScreen />}><Landing /></Suspense>} />
-          <Route path="/article/:id" element={<Suspense fallback={<LoadingScreen fullScreen />}><Article /></Suspense>} />
-          <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Suspense fallback={<LoadingScreen fullScreen />}><Login /></Suspense>} />
-          <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Suspense fallback={<LoadingScreen fullScreen />}><Register /></Suspense>} />
-          <Route path="/forgot-password" element={user ? <Navigate to="/dashboard" /> : <Suspense fallback={<LoadingScreen fullScreen />}><ForgotPassword /></Suspense>} />
-          <Route path="/privacy" element={<Suspense fallback={<LoadingScreen fullScreen />}><Privacy /></Suspense>} />
-          <Route path="/terms" element={<Suspense fallback={<LoadingScreen fullScreen />}><Terms /></Suspense>} />
+                <Suspense fallback={<LoadingScreen fullScreen />}>
+                  <Routes>
+                    {/* Public Routes - Landing page visible to all users */}
+                    <Route
+                      path="/"
+                      element={
+                        <Suspense fallback={<LoadingScreen fullScreen />}>
+                          <Landing />
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      path="/article/:id"
+                      element={
+                        <Suspense fallback={<LoadingScreen fullScreen />}>
+                          <Article />
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      path="/login"
+                      element={
+                        user ? (
+                          <Navigate to="/dashboard" />
+                        ) : (
+                          <Suspense fallback={<LoadingScreen fullScreen />}>
+                            <Login />
+                          </Suspense>
+                        )
+                      }
+                    />
+                    <Route
+                      path="/register"
+                      element={
+                        user ? (
+                          <Navigate to="/dashboard" />
+                        ) : (
+                          <Suspense fallback={<LoadingScreen fullScreen />}>
+                            <Register />
+                          </Suspense>
+                        )
+                      }
+                    />
+                    <Route
+                      path="/forgot-password"
+                      element={
+                        user ? (
+                          <Navigate to="/dashboard" />
+                        ) : (
+                          <Suspense fallback={<LoadingScreen fullScreen />}>
+                            <ForgotPassword />
+                          </Suspense>
+                        )
+                      }
+                    />
+                    <Route
+                      path="/privacy"
+                      element={
+                        <Suspense fallback={<LoadingScreen fullScreen />}>
+                          <Privacy />
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      path="/terms"
+                      element={
+                        <Suspense fallback={<LoadingScreen fullScreen />}>
+                          <Terms />
+                        </Suspense>
+                      }
+                    />
 
-          {/* Guest Preview - Demo dashboard for unauthenticated users */}
-          <Route path="/preview" element={user ? <Navigate to="/dashboard" /> : <Suspense fallback={<DashboardSkeleton />}><GuestDashboard /></Suspense>} />
+                    {/* Guest Preview - Demo dashboard for unauthenticated users */}
+                    <Route
+                      path="/preview"
+                      element={
+                        user ? (
+                          <Navigate to="/dashboard" />
+                        ) : (
+                          <Suspense fallback={<DashboardSkeleton />}>
+                            <GuestDashboard />
+                          </Suspense>
+                        )
+                      }
+                    />
 
-          {/* Onboarding - Protected but minimal layout.
+                    {/* Onboarding - Protected but minimal layout.
               requireProfile={false}: this is where the profile gets created, so
               a profile-less user must be allowed in (otherwise the guard would
               loop them back here forever). */}
-          <Route path="/onboarding" element={
-            <ProtectedRoute requireProfile={false}>
-              <Suspense fallback={<LoadingScreen fullScreen />}>
-                <Onboarding />
-              </Suspense>
-            </ProtectedRoute>
-          } />
+                    <Route
+                      path="/onboarding"
+                      element={
+                        <ProtectedRoute requireProfile={false}>
+                          <Suspense fallback={<LoadingScreen fullScreen />}>
+                            <Onboarding />
+                          </Suspense>
+                        </ProtectedRoute>
+                      }
+                    />
 
-          {/* Protected Routes - Each page wrapped with error boundary */}
-          <Route path="/dashboard" element={
-            <ProtectedRoute>
-              <GameShell>
-                <Suspense fallback={<DashboardSkeleton />}>
-                  <Page name="Dashboard"><Dashboard /></Page>
-                </Suspense>
-              </GameShell>
-            </ProtectedRoute>
-          } />
+                    {/* Protected Routes - Each page wrapped with error boundary */}
+                    <Route
+                      path="/dashboard"
+                      element={
+                        <ProtectedRoute>
+                          <GameShell>
+                            <Suspense fallback={<DashboardSkeleton />}>
+                              <Page name="Dashboard">
+                                <Dashboard />
+                              </Page>
+                            </Suspense>
+                          </GameShell>
+                        </ProtectedRoute>
+                      }
+                    />
 
-          {/* Game Guide - accessible to all authenticated users */}
-          <Route path="/guide" element={
-            <ProtectedRoute>
-              <GameShell>
-                <Suspense fallback={<DashboardSkeleton />}>
-                  <Page name="Guide"><HowToPlay /></Page>
-                </Suspense>
-              </GameShell>
-            </ProtectedRoute>
-          } />
-          {/* Public, crawlable guide — the SEO landing page for "fantasy drum
+                    {/* Game Guide - accessible to all authenticated users */}
+                    <Route
+                      path="/guide"
+                      element={
+                        <ProtectedRoute>
+                          <GameShell>
+                            <Suspense fallback={<DashboardSkeleton />}>
+                              <Page name="Guide">
+                                <HowToPlay />
+                              </Page>
+                            </Suspense>
+                          </GameShell>
+                        </ProtectedRoute>
+                      }
+                    />
+                    {/* Public, crawlable guide — the SEO landing page for "fantasy drum
               corps" searches. Authenticated users get the in-app /guide. */}
-          <Route path="/how-to-play" element={<Suspense fallback={<LoadingScreen fullScreen />}><HowToPlayPublic /></Suspense>} />
+                    <Route
+                      path="/how-to-play"
+                      element={
+                        <Suspense fallback={<LoadingScreen fullScreen />}>
+                          <HowToPlayPublic />
+                        </Suspense>
+                      }
+                    />
 
-          {/* Redirect old routes */}
-          <Route path="/hub" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/leaderboard" element={<Navigate to="/scores" replace />} />
-          <Route path="/hud" element={<Navigate to="/dashboard" replace />} />
+                    {/* Redirect old routes */}
+                    <Route path="/hub" element={<Navigate to="/dashboard" replace />} />
+                    <Route path="/leaderboard" element={<Navigate to="/scores" replace />} />
+                    <Route path="/hud" element={<Navigate to="/dashboard" replace />} />
 
-          <Route path="/schedule" element={
-            <ProtectedRoute>
-              <GameShell>
-                <Suspense fallback={<SchedulePageSkeleton />}>
-                  <Page name="Schedule"><Schedule /></Page>
+                    <Route
+                      path="/schedule"
+                      element={
+                        <ProtectedRoute>
+                          <GameShell>
+                            <Suspense fallback={<SchedulePageSkeleton />}>
+                              <Page name="Schedule">
+                                <Schedule />
+                              </Page>
+                            </Suspense>
+                          </GameShell>
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    <Route
+                      path="/scores"
+                      element={
+                        <ProtectedRoute>
+                          <GameShell>
+                            <Suspense fallback={<ScoresPageSkeleton />}>
+                              <Page name="Scores">
+                                <Scores />
+                              </Page>
+                            </Suspense>
+                          </GameShell>
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    <Route
+                      path="/scores/:date"
+                      element={
+                        <ProtectedRoute>
+                          <GameShell>
+                            <Suspense fallback={<ScoresPageSkeleton />}>
+                              <Page name="Scores">
+                                <Scores />
+                              </Page>
+                            </Suspense>
+                          </GameShell>
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    <Route
+                      path="/profile/:userId?"
+                      element={
+                        <ProtectedRoute>
+                          <GameShell>
+                            <Suspense fallback={<ProfilePageSkeleton />}>
+                              <Page name="Profile">
+                                <Profile />
+                              </Page>
+                            </Suspense>
+                          </GameShell>
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* Settings is now integrated into Profile - redirect for backwards compatibility */}
+                    <Route path="/settings" element={<Navigate to="/profile" replace />} />
+
+                    <Route
+                      path="/hall-of-champions"
+                      element={
+                        <Suspense fallback={<LoadingScreen fullScreen />}>
+                          <GameShell>
+                            <Page name="Hall of Champions">
+                              <HallOfChampions />
+                            </Page>
+                          </GameShell>
+                        </Suspense>
+                      }
+                    />
+
+                    <Route
+                      path="/admin"
+                      element={
+                        <ProtectedRoute>
+                          <GameShell>
+                            <Page name="Admin">
+                              <Admin />
+                            </Page>
+                          </GameShell>
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    <Route
+                      path="/leagues"
+                      element={
+                        <ProtectedRoute>
+                          <GameShell>
+                            <Suspense fallback={<LeaguesPageSkeleton />}>
+                              <Page name="Leagues">
+                                <Leagues />
+                              </Page>
+                            </Suspense>
+                          </GameShell>
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    <Route
+                      path="/retired-corps"
+                      element={
+                        <ProtectedRoute>
+                          <GameShell>
+                            <Page name="Retired Corps">
+                              <RetiredCorpsGallery />
+                            </Page>
+                          </GameShell>
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    <Route
+                      path="/corps-history"
+                      element={
+                        <ProtectedRoute>
+                          <GameShell>
+                            <Page name="Corps History">
+                              <CorpsHistory />
+                            </Page>
+                          </GameShell>
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    <Route
+                      path="/soundsport"
+                      element={
+                        <ProtectedRoute>
+                          <GameShell>
+                            <Page name="SoundSport">
+                              <SoundSport />
+                            </Page>
+                          </GameShell>
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* 404 Route */}
+                    <Route
+                      path="*"
+                      element={
+                        <Suspense fallback={<LoadingScreen fullScreen />}>
+                          <NotFound />
+                        </Suspense>
+                      }
+                    />
+                  </Routes>
                 </Suspense>
-              </GameShell>
-            </ProtectedRoute>
-          } />
-
-          <Route path="/scores" element={
-            <ProtectedRoute>
-              <GameShell>
-                <Suspense fallback={<ScoresPageSkeleton />}>
-                  <Page name="Scores"><Scores /></Page>
-                </Suspense>
-              </GameShell>
-            </ProtectedRoute>
-          } />
-
-          <Route path="/scores/:date" element={
-            <ProtectedRoute>
-              <GameShell>
-                <Suspense fallback={<ScoresPageSkeleton />}>
-                  <Page name="Scores"><Scores /></Page>
-                </Suspense>
-              </GameShell>
-            </ProtectedRoute>
-          } />
-
-          <Route path="/profile/:userId?" element={
-            <ProtectedRoute>
-              <GameShell>
-                <Suspense fallback={<ProfilePageSkeleton />}>
-                  <Page name="Profile"><Profile /></Page>
-                </Suspense>
-              </GameShell>
-            </ProtectedRoute>
-          } />
-
-          {/* Settings is now integrated into Profile - redirect for backwards compatibility */}
-          <Route path="/settings" element={<Navigate to="/profile" replace />} />
-
-          <Route path="/hall-of-champions" element={
-            <Suspense fallback={<LoadingScreen fullScreen />}>
-              <GameShell>
-                <Page name="Hall of Champions"><HallOfChampions /></Page>
-              </GameShell>
-            </Suspense>
-          } />
-
-          <Route path="/admin" element={
-            <ProtectedRoute>
-              <GameShell>
-                <Page name="Admin"><Admin /></Page>
-              </GameShell>
-            </ProtectedRoute>
-          } />
-
-          <Route path="/leagues" element={
-            <ProtectedRoute>
-              <GameShell>
-                <Suspense fallback={<LeaguesPageSkeleton />}>
-                  <Page name="Leagues"><Leagues /></Page>
-                </Suspense>
-              </GameShell>
-            </ProtectedRoute>
-          } />
-
-          <Route path="/retired-corps" element={
-            <ProtectedRoute>
-              <GameShell>
-                <Page name="Retired Corps"><RetiredCorpsGallery /></Page>
-              </GameShell>
-            </ProtectedRoute>
-          } />
-
-          <Route path="/corps-history" element={
-            <ProtectedRoute>
-              <GameShell>
-                <Page name="Corps History"><CorpsHistory /></Page>
-              </GameShell>
-            </ProtectedRoute>
-          } />
-
-          <Route path="/soundsport" element={
-            <ProtectedRoute>
-              <GameShell>
-                <Page name="SoundSport"><SoundSport /></Page>
-              </GameShell>
-            </ProtectedRoute>
-          } />
-
-          {/* 404 Route */}
-          <Route path="*" element={
-            <Suspense fallback={<LoadingScreen fullScreen />}>
-              <NotFound />
-            </Suspense>
-          } />
-          </Routes>
-        </Suspense>
-          </Router>
-        </AuthContext.Provider>
+              </Router>
+            </AuthContext.Provider>
           </MotionProvider>
         </ThemeProvider>
       </QueryClientProvider>

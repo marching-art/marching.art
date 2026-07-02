@@ -7,8 +7,17 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Calendar, MapPin, Check, X, AlertTriangle, Users,
-  Trophy, ChevronRight, Clock, Info, Ticket
+  Calendar,
+  MapPin,
+  Check,
+  X,
+  AlertTriangle,
+  Users,
+  Trophy,
+  ChevronRight,
+  Clock,
+  Info,
+  Ticket,
 } from 'lucide-react';
 import { selectUserShows } from '../../api/functions';
 import toast from 'react-hot-toast';
@@ -20,10 +29,30 @@ import { compareCorpsClasses } from '../../utils/corps';
 import RunningOrder from './RunningOrder';
 
 const CLASS_CONFIG = {
-  worldClass: { name: 'World Class', shortName: 'World', color: 'text-yellow-500', bgColor: 'bg-yellow-500/10' },
-  openClass: { name: 'Open Class', shortName: 'Open', color: 'text-purple-400', bgColor: 'bg-purple-400/10' },
-  aClass: { name: 'A Class', shortName: 'A Class', color: 'text-[#0057B8]', bgColor: 'bg-[#0057B8]/10' },
-  soundSport: { name: 'SoundSport', shortName: 'SS', color: 'text-green-500', bgColor: 'bg-green-500/10' },
+  worldClass: {
+    name: 'World Class',
+    shortName: 'World',
+    color: 'text-yellow-500',
+    bgColor: 'bg-yellow-500/10',
+  },
+  openClass: {
+    name: 'Open Class',
+    shortName: 'Open',
+    color: 'text-purple-400',
+    bgColor: 'bg-purple-400/10',
+  },
+  aClass: {
+    name: 'A Class',
+    shortName: 'A Class',
+    color: 'text-[#0057B8]',
+    bgColor: 'bg-[#0057B8]/10',
+  },
+  soundSport: {
+    name: 'SoundSport',
+    shortName: 'SS',
+    color: 'text-green-500',
+    bgColor: 'bg-green-500/10',
+  },
 };
 
 // =============================================================================
@@ -37,7 +66,7 @@ const CorpsSelectionItem = ({
   onToggle,
   show,
   isDisabled,
-  maxShows
+  maxShows,
 }) => {
   const config = CLASS_CONFIG[corpsClass] || { name: corpsClass, color: 'text-gray-400' };
   const weekKey = `week${show.week}`;
@@ -45,7 +74,7 @@ const CorpsSelectionItem = ({
   const showsThisWeek = currentShows.length;
   const isAtMax = showsThisWeek >= maxShows;
   // Match by eventName only - dates can have type mismatches (Timestamp vs string)
-  const isAlreadyAtShow = currentShows.some(s => s.eventName === show.eventName);
+  const isAlreadyAtShow = currentShows.some((s) => s.eventName === show.eventName);
 
   return (
     <button
@@ -53,18 +82,21 @@ const CorpsSelectionItem = ({
       disabled={isDisabled}
       className={`
         flex items-center gap-3 p-4 w-full text-left transition-colors min-h-[60px]
-        ${isSelected
-          ? 'bg-[#0057B8]/10 border-l-2 border-l-[#0057B8]'
-          : 'hover:bg-white/5 active:bg-white/10'
+        ${
+          isSelected
+            ? 'bg-[#0057B8]/10 border-l-2 border-l-[#0057B8]'
+            : 'hover:bg-white/5 active:bg-white/10'
         }
         ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
       `}
     >
       {/* Checkbox */}
-      <div className={`
+      <div
+        className={`
         w-5 h-5 border-2 flex items-center justify-center flex-shrink-0
         ${isSelected ? 'bg-[#0057B8] border-[#0057B8]' : 'border-[#444]'}
-      `}>
+      `}
+      >
         {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
       </div>
 
@@ -79,7 +111,9 @@ const CorpsSelectionItem = ({
           </span>
         </div>
         <div className="flex items-center gap-2 mt-0.5">
-          <span className={`text-[11px] ${isAtMax && !isAlreadyAtShow ? 'text-red-400' : 'text-gray-500'}`}>
+          <span
+            className={`text-[11px] ${isAtMax && !isAlreadyAtShow ? 'text-red-400' : 'text-gray-500'}`}
+          >
             {showsThisWeek}/{maxShows} shows this week
           </span>
           {isAtMax && !isAlreadyAtShow && (
@@ -120,32 +154,31 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const userCorpsClasses = useMemo(() =>
-    userProfile?.corps
-      ? Object.keys(userProfile.corps).sort(compareCorpsClasses)
-      : []
-  , [userProfile?.corps]);
+  const userCorpsClasses = useMemo(
+    () => (userProfile?.corps ? Object.keys(userProfile.corps).sort(compareCorpsClasses) : []),
+    [userProfile?.corps]
+  );
 
   // For championship shows, determine which corps are enrolled/eligible
   const enrolledCorps = useMemo(() => {
     if (!isChampionship) return [];
-    return userCorpsClasses.filter(corpsClass => eligibleClasses.includes(corpsClass));
+    return userCorpsClasses.filter((corpsClass) => eligibleClasses.includes(corpsClass));
   }, [isChampionship, userCorpsClasses, eligibleClasses]);
 
   const ineligibleCorps = useMemo(() => {
     if (!isChampionship) return [];
-    return userCorpsClasses.filter(corpsClass => !eligibleClasses.includes(corpsClass));
+    return userCorpsClasses.filter((corpsClass) => !eligibleClasses.includes(corpsClass));
   }, [isChampionship, userCorpsClasses, eligibleClasses]);
 
   // Initialize with already registered corps
   useEffect(() => {
     const alreadyRegistered = [];
-    userCorpsClasses.forEach(corpsClass => {
+    userCorpsClasses.forEach((corpsClass) => {
       const corpsData = userProfile.corps[corpsClass];
       const weekKey = `week${show.week}`;
       const selectedShows = corpsData.selectedShows?.[weekKey] || [];
       // Match by eventName only - dates can have type mismatches (Timestamp vs string)
-      const isRegistered = selectedShows.some(s => s.eventName === show.eventName);
+      const isRegistered = selectedShows.some((s) => s.eventName === show.eventName);
       if (isRegistered) {
         alreadyRegistered.push(corpsClass);
       }
@@ -156,13 +189,13 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
   const toggleCorps = (corpsClass) => {
     haptic('light');
     if (selectedCorps.includes(corpsClass)) {
-      setSelectedCorps(selectedCorps.filter(c => c !== corpsClass));
+      setSelectedCorps(selectedCorps.filter((c) => c !== corpsClass));
     } else {
       const corpsData = userProfile.corps[corpsClass];
       const weekKey = `week${show.week}`;
       const currentShows = corpsData.selectedShows?.[weekKey] || [];
       // Match by eventName only - dates can have type mismatches (Timestamp vs string)
-      const isAlreadyAtShow = currentShows.some(s => s.eventName === show.eventName);
+      const isAlreadyAtShow = currentShows.some((s) => s.eventName === show.eventName);
       if (currentShows.length >= maxShows && !isAlreadyAtShow) {
         haptic('error');
         toast.error(`This corps already has ${maxShows} shows registered for week ${show.week}`);
@@ -173,13 +206,15 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
   };
 
   const selectAll = () => {
-    const canSelect = userCorpsClasses.filter(corpsClass => {
+    const canSelect = userCorpsClasses.filter((corpsClass) => {
       const corpsData = userProfile.corps[corpsClass];
       const weekKey = `week${show.week}`;
       const currentShows = corpsData.selectedShows?.[weekKey] || [];
       // Match by eventName only - dates can have type mismatches (Timestamp vs string)
-      const isAlreadyAtShow = currentShows.some(s => s.eventName === show.eventName);
-      return currentShows.length < maxShows || isAlreadyAtShow || selectedCorps.includes(corpsClass);
+      const isAlreadyAtShow = currentShows.some((s) => s.eventName === show.eventName);
+      return (
+        currentShows.length < maxShows || isAlreadyAtShow || selectedCorps.includes(corpsClass)
+      );
     });
     setSelectedCorps(canSelect);
   };
@@ -193,19 +228,22 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
     setSaving(true);
     try {
       // Prepare all updates first, then execute in parallel to avoid race conditions
-      const updatePromises = userCorpsClasses.map(corpsClass => {
+      const updatePromises = userCorpsClasses.map((corpsClass) => {
         const corpsData = userProfile.corps[corpsClass];
         const weekKey = `week${show.week}`;
         const currentShows = corpsData.selectedShows?.[weekKey] || [];
         // Filter by eventName only - dates can have type mismatches (Timestamp vs string)
-        const filteredShows = currentShows.filter(s => s.eventName !== show.eventName);
+        const filteredShows = currentShows.filter((s) => s.eventName !== show.eventName);
         const newShows = selectedCorps.includes(corpsClass)
-          ? [...filteredShows, {
-              eventName: show.eventName,
-              date: show.date,
-              location: show.location,
-              day: show.day,
-            }]
+          ? [
+              ...filteredShows,
+              {
+                eventName: show.eventName,
+                date: show.date,
+                location: show.location,
+                day: show.day,
+              },
+            ]
           : filteredShows;
         return selectUserShows({
           week: show.week,
@@ -231,12 +269,12 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
 
   // Check if any corps registered
   const hasChanges = useMemo(() => {
-    const initialRegistered = userCorpsClasses.filter(corpsClass => {
+    const initialRegistered = userCorpsClasses.filter((corpsClass) => {
       const corpsData = userProfile.corps[corpsClass];
       const weekKey = `week${show.week}`;
       const selectedShows = corpsData.selectedShows?.[weekKey] || [];
       // Match by eventName only - dates can have type mismatches (Timestamp vs string)
-      return selectedShows.some(s => s.eventName === show.eventName);
+      return selectedShows.some((s) => s.eventName === show.eventName);
     });
     return JSON.stringify(initialRegistered.sort()) !== JSON.stringify(selectedCorps.sort());
   }, [selectedCorps, userCorpsClasses, userProfile, show]);
@@ -246,9 +284,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
     <>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <h2 className="text-base font-bold text-white leading-tight">
-            {show.eventName}
-          </h2>
+          <h2 className="text-base font-bold text-white leading-tight">{show.eventName}</h2>
           <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-400">
             <span className="flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5 text-[#0057B8]" />
@@ -278,9 +314,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
         <span className="px-2 py-1 bg-[#0057B8]/10 text-[#0057B8] text-[10px] font-bold uppercase">
           Week {show.week}
         </span>
-        <span className="text-[10px] text-gray-500">
-          Max {maxShows} shows per corps
-        </span>
+        <span className="text-[10px] text-gray-500">Max {maxShows} shows per corps</span>
       </div>
     </>
   );
@@ -317,7 +351,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
                 Automatically Enrolled
               </div>
               <div className="space-y-2">
-                {enrolledCorps.map(corpsClass => {
+                {enrolledCorps.map((corpsClass) => {
                   const corpsData = userProfile.corps[corpsClass];
                   const config = CLASS_CONFIG[corpsClass];
                   return (
@@ -352,7 +386,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
                 Not Eligible
               </div>
               <div className="space-y-2">
-                {ineligibleCorps.map(corpsClass => {
+                {ineligibleCorps.map((corpsClass) => {
                   const corpsData = userProfile.corps[corpsClass];
                   const config = CLASS_CONFIG[corpsClass];
                   return (
@@ -400,7 +434,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
               Eligible Classes for This Event
             </p>
             <div className="flex flex-wrap gap-2">
-              {eligibleClasses.map(cls => {
+              {eligibleClasses.map((cls) => {
                 const config = CLASS_CONFIG[cls];
                 return (
                   <span
@@ -438,14 +472,20 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
             </span>
             <div className="flex items-center gap-3 text-xs">
               <button
-                onClick={() => { haptic('light'); selectAll(); }}
+                onClick={() => {
+                  haptic('light');
+                  selectAll();
+                }}
                 className="text-[#0057B8] hover:text-[#0066d6] font-bold py-2 px-2 -mx-2 rounded hover:bg-[#0057B8]/10 min-h-touch press-feedback"
               >
                 Select All
               </button>
               <span className="text-gray-700">|</span>
               <button
-                onClick={() => { haptic('light'); clearAll(); }}
+                onClick={() => {
+                  haptic('light');
+                  clearAll();
+                }}
                 className="text-gray-500 hover:text-white font-bold py-2 px-2 -mx-2 rounded hover:bg-white/5 min-h-touch press-feedback"
               >
                 Clear
@@ -455,7 +495,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
 
           {/* Corps List */}
           <div className="divide-y divide-[#333]">
-            {userCorpsClasses.map(corpsClass => {
+            {userCorpsClasses.map((corpsClass) => {
               const corpsData = userProfile.corps[corpsClass];
               const isSelected = selectedCorps.includes(corpsClass);
 
@@ -480,7 +520,8 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
               <Ticket className="w-4 h-4 text-[#0057B8] flex-shrink-0 mt-0.5" />
               <div className="text-[11px] text-gray-400 leading-relaxed">
                 <p>
-                  Each corps can attend up to <span className="text-[#0057B8] font-bold">{maxShows} shows per week</span>.
+                  Each corps can attend up to{' '}
+                  <span className="text-[#0057B8] font-bold">{maxShows} shows per week</span>.
                   Scores from attended shows contribute to your season standings.
                 </p>
               </div>
@@ -494,7 +535,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
                 Registering
               </div>
               <div className="flex flex-wrap gap-2">
-                {selectedCorps.map(corpsClass => {
+                {selectedCorps.map((corpsClass) => {
                   const corpsData = userProfile.corps[corpsClass];
                   const config = CLASS_CONFIG[corpsClass];
                   return (
@@ -521,7 +562,10 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
     if (isChampionship) {
       return (
         <button
-          onClick={() => { haptic('light'); onClose(); }}
+          onClick={() => {
+            haptic('light');
+            onClose();
+          }}
           className="w-full h-12 bg-[#333] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#444] active:bg-[#222] press-feedback flex items-center justify-center gap-2"
         >
           <X className="w-4 h-4" />
@@ -533,7 +577,10 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
     return userCorpsClasses.length > 0 ? (
       <div className="flex gap-3">
         <button
-          onClick={() => { haptic('light'); onClose(); }}
+          onClick={() => {
+            haptic('light');
+            onClose();
+          }}
           disabled={saving}
           className="flex-1 h-12 border border-[#444] text-gray-300 text-sm font-bold uppercase tracking-wider hover:border-[#555] hover:text-white disabled:opacity-50 active:bg-[#333] press-feedback"
         >
@@ -563,12 +610,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
   // Mobile: Use BottomSheet with native swipe-to-dismiss
   if (isMobile) {
     return (
-      <BottomSheet
-        isOpen={true}
-        onClose={onClose}
-        snapPoints={[85]}
-        showCloseButton={true}
-      >
+      <BottomSheet isOpen={true} onClose={onClose} snapPoints={[85]} showCloseButton={true}>
         {/* Header */}
         <div className="px-4 pb-3 border-b border-[#333] flex-shrink-0">
           <HeaderContent />

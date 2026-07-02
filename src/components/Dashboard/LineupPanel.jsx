@@ -22,9 +22,11 @@ const LineupRow = React.memo(({ caption, value, captionScore, isLast, onSelect }
   return (
     <button
       onClick={() => onSelect(caption.id)}
-      aria-label={hasValue
-        ? `${captionLabel}: ${corpsName}${sourceYear ? ` ${sourceYear}` : ''}`
-        : `${captionLabel}: empty slot`}
+      aria-label={
+        hasValue
+          ? `${captionLabel}: ${corpsName}${sourceYear ? ` ${sourceYear}` : ''}`
+          : `${captionLabel}: empty slot`
+      }
       className={`w-full flex items-center gap-3 px-3 py-3.5 transition-all cursor-pointer group ${
         !isLast ? 'border-b border-[#333]/50' : ''
       } bg-[#1a1a1a] hover:bg-[#222] active:bg-[#252525]`}
@@ -59,7 +61,9 @@ const LineupRow = React.memo(({ caption, value, captionScore, isLast, onSelect }
             {captionScore !== null ? captionScore.toFixed(1) : '—'}
           </span>
         ) : (
-          <span className="text-xs font-bold text-[#F5A623] group-hover:text-[#FFB84D]">+ Draft</span>
+          <span className="text-xs font-bold text-[#F5A623] group-hover:text-[#FFB84D]">
+            + Draft
+          </span>
         )}
         <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-gray-400" />
       </div>

@@ -15,8 +15,16 @@ const TelemetryStrip = ({ stats }) => (
   <div className="bg-[#1a1a1a] border-b border-[#333]">
     <div className="flex items-center divide-x divide-[#333]">
       <TelemetryStat label="Users" value={stats.totalUsers.toLocaleString()} />
-      <TelemetryStat label="Active (7d)" value={stats.activeUsers.toLocaleString()} color="text-green-500" />
-      <TelemetryStat label="Corps" value={stats.totalCorps.toLocaleString()} color="text-[#0057B8]" />
+      <TelemetryStat
+        label="Active (7d)"
+        value={stats.activeUsers.toLocaleString()}
+        color="text-green-500"
+      />
+      <TelemetryStat
+        label="Corps"
+        value={stats.totalCorps.toLocaleString()}
+        color="text-[#0057B8]"
+      />
       <TelemetryStat label="System" value="ONLINE" color="text-green-500" icon={CheckCircle} />
     </div>
   </div>
@@ -74,11 +82,7 @@ const ProcessRow = ({ name, description, icon: Icon, loading, onExecute }) => (
       disabled={loading}
       className="flex items-center gap-1.5 h-7 px-3 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] border border-[#0057B8]/20 hover:bg-[#0057B8] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
     >
-      {loading ? (
-        <RefreshCw className="w-3 h-3 animate-spin" />
-      ) : (
-        <Terminal className="w-3 h-3" />
-      )}
+      {loading ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Terminal className="w-3 h-3" />}
       {loading ? 'Running' : 'Execute'}
     </button>
   </div>

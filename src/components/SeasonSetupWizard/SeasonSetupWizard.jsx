@@ -39,16 +39,16 @@ const SeasonSetupWizard = ({
   corpsNeedingSetup,
   existingCorps = {},
   retiredCorps = [],
-  unlockedClasses = ['soundSport']
+  unlockedClasses = ['soundSport'],
 }) => {
   // Auth and global store data
   const { user } = useAuth();
   const globalCurrentWeek = useSeasonStore((state) => state.currentWeek);
 
   // Check if user has existing corps that need decisions (computed early for initial step)
-  const hasExistingCorps = Object.keys(existingCorps).some(c => existingCorps[c]?.corpsName);
-  const eligibleNewClasses = ALL_CLASSES.filter(c =>
-    unlockedClasses.includes(c) && !existingCorps[c]?.corpsName
+  const hasExistingCorps = Object.keys(existingCorps).some((c) => existingCorps[c]?.corpsName);
+  const eligibleNewClasses = ALL_CLASSES.filter(
+    (c) => unlockedClasses.includes(c) && !existingCorps[c]?.corpsName
   );
 
   // Check if corps are already active in the current season (auto-continued)
@@ -85,7 +85,6 @@ const SeasonSetupWizard = ({
   // Use global week from season store
   const currentWeek = globalCurrentWeek || 1;
 
-
   // Group retired corps by class
   const retiredByClass = {};
   retiredCorps.forEach((rc, idx) => {
@@ -94,18 +93,19 @@ const SeasonSetupWizard = ({
   });
 
   // Compute available move targets for a given class (unlocked classes without active corps)
-  const getAvailableMoveTargets = useCallback((currentClassId) => {
-    return ALL_CLASSES.filter(c =>
-      c !== currentClassId &&
-      unlockedClasses.includes(c) &&
-      !existingCorps[c]?.corpsName
-    );
-  }, [unlockedClasses, existingCorps]);
+  const getAvailableMoveTargets = useCallback(
+    (currentClassId) => {
+      return ALL_CLASSES.filter(
+        (c) => c !== currentClassId && unlockedClasses.includes(c) && !existingCorps[c]?.corpsName
+      );
+    },
+    [unlockedClasses, existingCorps]
+  );
 
   // Initialize corps decisions
   useEffect(() => {
     const initialDecisions = {};
-    ALL_CLASSES.forEach(classId => {
+    ALL_CLASSES.forEach((classId) => {
       if (existingCorps[classId]?.corpsName) {
         initialDecisions[classId] = 'continue';
       }
@@ -119,7 +119,6 @@ const SeasonSetupWizard = ({
   useEffect(() => {
     setLocalUserProfile(profile);
   }, [profile]);
-
 
   // Class config for badges
 
@@ -238,13 +237,8 @@ const SeasonSetupWizard = ({
           <span className="text-sm font-bold text-white uppercase tracking-wider">
             Corps Registration
           </span>
-          <span className="ml-2 text-xs text-gray-500">
-            {formatSeasonName(seasonData?.name)}
-          </span>
-          <button
-            onClick={onComplete}
-            className="ml-auto p-2 text-gray-500 hover:text-white"
-          >
+          <span className="ml-2 text-xs text-gray-500">{formatSeasonName(seasonData?.name)}</span>
+          <button onClick={onComplete} className="ml-auto p-2 text-gray-500 hover:text-white">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -253,60 +247,61 @@ const SeasonSetupWizard = ({
         <div className="bg-[#1a1a1a] border-b border-[#333]">
           <div className="max-w-3xl mx-auto px-4">
             <div className="flex">
-              {hasExistingCorps ? (
-                // Returning user tabs: Corps Management -> Shows -> Complete
-                ['Manage Corps', 'Shows'].map((label, idx) => {
-                  // Map to actual steps: 0, 4
-                  const stepMapping = [0, 4];
-                  const stepNum = stepMapping[idx];
-                  const isActive = step === stepNum;
-                  const isComplete = step > stepNum;
-                  return (
-                    <div
-                      key={label}
-                      className={`flex-1 py-3 text-center border-b-2 ${
-                        isActive ? 'border-[#0057B8] text-white' :
-                        isComplete ? 'border-green-500 text-green-500' :
-                        'border-transparent text-gray-500'
-                      }`}
-                    >
-                      <span className="text-xs font-bold uppercase tracking-wider">
-                        {isComplete && <Check className="w-3 h-3 inline mr-1" />}
-                        {idx + 1}. {label}
-                      </span>
-                    </div>
-                  );
-                })
-              ) : (
-                // New user tabs: Identity -> Class -> Summary
-                ['Identity', 'Class', 'Summary'].map((label, idx) => {
-                  const stepNum = idx + 1;
-                  const isActive = step === stepNum;
-                  const isComplete = step > stepNum;
-                  return (
-                    <div
-                      key={label}
-                      className={`flex-1 py-3 text-center border-b-2 ${
-                        isActive ? 'border-[#0057B8] text-white' :
-                        isComplete ? 'border-green-500 text-green-500' :
-                        'border-transparent text-gray-500'
-                      }`}
-                    >
-                      <span className="text-xs font-bold uppercase tracking-wider">
-                        {isComplete && <Check className="w-3 h-3 inline mr-1" />}
-                        {stepNum}. {label}
-                      </span>
-                    </div>
-                  );
-                })
-              )}
+              {hasExistingCorps
+                ? // Returning user tabs: Corps Management -> Shows -> Complete
+                  ['Manage Corps', 'Shows'].map((label, idx) => {
+                    // Map to actual steps: 0, 4
+                    const stepMapping = [0, 4];
+                    const stepNum = stepMapping[idx];
+                    const isActive = step === stepNum;
+                    const isComplete = step > stepNum;
+                    return (
+                      <div
+                        key={label}
+                        className={`flex-1 py-3 text-center border-b-2 ${
+                          isActive
+                            ? 'border-[#0057B8] text-white'
+                            : isComplete
+                              ? 'border-green-500 text-green-500'
+                              : 'border-transparent text-gray-500'
+                        }`}
+                      >
+                        <span className="text-xs font-bold uppercase tracking-wider">
+                          {isComplete && <Check className="w-3 h-3 inline mr-1" />}
+                          {idx + 1}. {label}
+                        </span>
+                      </div>
+                    );
+                  })
+                : // New user tabs: Identity -> Class -> Summary
+                  ['Identity', 'Class', 'Summary'].map((label, idx) => {
+                    const stepNum = idx + 1;
+                    const isActive = step === stepNum;
+                    const isComplete = step > stepNum;
+                    return (
+                      <div
+                        key={label}
+                        className={`flex-1 py-3 text-center border-b-2 ${
+                          isActive
+                            ? 'border-[#0057B8] text-white'
+                            : isComplete
+                              ? 'border-green-500 text-green-500'
+                              : 'border-transparent text-gray-500'
+                        }`}
+                      >
+                        <span className="text-xs font-bold uppercase tracking-wider">
+                          {isComplete && <Check className="w-3 h-3 inline mr-1" />}
+                          {stepNum}. {label}
+                        </span>
+                      </div>
+                    );
+                  })}
             </div>
           </div>
         </div>
 
         {/* Content */}
         <div className="max-w-3xl mx-auto p-4 md:p-6">
-
           {/* STEP 0: Corps Verification (Returning Users) */}
           {step === 0 && (
             <CorpsVerificationStep
@@ -395,10 +390,18 @@ const SeasonSetupWizard = ({
                   <thead>
                     <tr className="bg-[#1a1a1a] border-b border-[#333]">
                       <th className="px-4 py-2 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider w-8"></th>
-                      <th className="px-4 py-2 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">Class</th>
-                      <th className="px-4 py-2 text-right text-[10px] font-bold text-gray-500 uppercase tracking-wider">Budget</th>
-                      <th className="px-4 py-2 text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider">Difficulty</th>
-                      <th className="px-4 py-2 text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                      <th className="px-4 py-2 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                        Class
+                      </th>
+                      <th className="px-4 py-2 text-right text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                        Budget
+                      </th>
+                      <th className="px-4 py-2 text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                        Difficulty
+                      </th>
+                      <th className="px-4 py-2 text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -410,7 +413,11 @@ const SeasonSetupWizard = ({
                       return (
                         <tr
                           key={cls.id}
-                          onClick={() => isUnlocked && !hasExisting && setFormData({ ...formData, selectedClass: cls.id })}
+                          onClick={() =>
+                            isUnlocked &&
+                            !hasExisting &&
+                            setFormData({ ...formData, selectedClass: cls.id })
+                          }
                           className={`
                             border-b border-[#333]/50 h-12
                             ${idx % 2 === 1 ? 'bg-white/[0.02]' : ''}
@@ -419,9 +426,11 @@ const SeasonSetupWizard = ({
                           `}
                         >
                           <td className="px-4 py-2">
-                            <div className={`w-4 h-4 rounded-sm border-2 ${
-                              isSelected ? 'border-[#0057B8] bg-[#0057B8]' : 'border-[#444]'
-                            }`}>
+                            <div
+                              className={`w-4 h-4 rounded-sm border-2 ${
+                                isSelected ? 'border-[#0057B8] bg-[#0057B8]' : 'border-[#444]'
+                              }`}
+                            >
                               {isSelected && <Check className="w-3 h-3 text-white" />}
                             </div>
                           </td>
@@ -429,15 +438,22 @@ const SeasonSetupWizard = ({
                             <span className="text-sm font-bold text-white">{cls.name}</span>
                           </td>
                           <td className="px-4 py-2 text-right">
-                            <span className="text-sm text-gray-400 tabular-nums">{cls.budget} pts</span>
+                            <span className="text-sm text-gray-400 tabular-nums">
+                              {cls.budget} pts
+                            </span>
                           </td>
                           <td className="px-4 py-2 text-center">
-                            <span className={`text-xs px-2 py-0.5 ${
-                              cls.difficulty === 'Elite' ? 'bg-purple-500/20 text-purple-400' :
-                              cls.difficulty === 'Advanced' ? 'bg-blue-500/20 text-blue-400' :
-                              cls.difficulty === 'Intermediate' ? 'bg-yellow-500/20 text-yellow-400' :
-                              'bg-green-500/20 text-green-400'
-                            }`}>
+                            <span
+                              className={`text-xs px-2 py-0.5 ${
+                                cls.difficulty === 'Elite'
+                                  ? 'bg-purple-500/20 text-purple-400'
+                                  : cls.difficulty === 'Advanced'
+                                    ? 'bg-blue-500/20 text-blue-400'
+                                    : cls.difficulty === 'Intermediate'
+                                      ? 'bg-yellow-500/20 text-yellow-400'
+                                      : 'bg-green-500/20 text-green-400'
+                              }`}
+                            >
                               {cls.difficulty}
                             </span>
                           </td>
@@ -447,7 +463,9 @@ const SeasonSetupWizard = ({
                             ) : isUnlocked ? (
                               <span className="text-xs text-green-500">Available</span>
                             ) : (
-                              <span className="text-xs text-gray-500">Locked (Lvl {cls.reqLevel})</span>
+                              <span className="text-xs text-gray-500">
+                                Locked (Lvl {cls.reqLevel})
+                              </span>
                             )}
                           </td>
                         </tr>
@@ -522,8 +540,8 @@ const SeasonSetupWizard = ({
 
                 {/* Terms */}
                 <p className="text-xs text-gray-500 mb-4">
-                  By submitting, you confirm this entry for the {formatSeasonName(seasonData?.name)} season.
-                  You can modify your lineup and show selections after registration.
+                  By submitting, you confirm this entry for the {formatSeasonName(seasonData?.name)}{' '}
+                  season. You can modify your lineup and show selections after registration.
                 </p>
               </div>
               <div className="px-4 py-3 border-t border-[#333] flex justify-between">
@@ -582,12 +600,10 @@ const SeasonSetupWizard = ({
                 <div className="w-16 h-16 mx-auto mb-4 bg-green-500/20 rounded-sm flex items-center justify-center">
                   <Check className="w-8 h-8 text-green-500" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">
-                  Entry Confirmed
-                </h3>
+                <h3 className="text-lg font-bold text-white mb-2">Entry Confirmed</h3>
                 <p className="text-sm text-gray-400 mb-6">
-                  Your corps is registered for {formatSeasonName(seasonData?.name)}.
-                  Head to your dashboard to manage lineups and view upcoming shows.
+                  Your corps is registered for {formatSeasonName(seasonData?.name)}. Head to your
+                  dashboard to manage lineups and view upcoming shows.
                 </p>
                 <button
                   onClick={onComplete}
@@ -598,7 +614,6 @@ const SeasonSetupWizard = ({
               </div>
             </div>
           )}
-
         </div>
       </div>
     </Portal>

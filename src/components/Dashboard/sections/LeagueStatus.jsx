@@ -28,7 +28,9 @@ const LeagueStatus = memo(({ leagues }) => {
             className="flex items-center justify-between px-4 py-2.5 hover:bg-[#222] transition-colors"
           >
             <span className="text-sm text-white truncate">{league.name}</span>
-            <span className="text-sm font-bold text-white font-data">#{league.userRank || '-'}</span>
+            <span className="text-sm font-bold text-white font-data">
+              #{league.userRank || '-'}
+            </span>
           </Link>
         ))}
       </div>

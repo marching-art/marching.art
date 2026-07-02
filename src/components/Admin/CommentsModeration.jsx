@@ -10,7 +10,7 @@ import { useEscapeKey } from '../../hooks/useEscapeKey';
 import {
   listCommentsForModeration,
   moderateComment,
-  bulkModerateComments
+  bulkModerateComments,
 } from '../../api/functions';
 
 // Status badge colors
@@ -47,7 +47,13 @@ const CommentsModeration = () => {
   const [previewComment, setPreviewComment] = useState(null);
   const [processingId, setProcessingId] = useState(null);
   const [bulkProcessing, setBulkProcessing] = useState(false);
-  const [counts, setCounts] = useState({ pending: 0, approved: 0, rejected: 0, hidden: 0, total: 0 });
+  const [counts, setCounts] = useState({
+    pending: 0,
+    approved: 0,
+    rejected: 0,
+    hidden: 0,
+    total: 0,
+  });
 
   const loadComments = useCallback(async () => {
     try {
@@ -82,15 +88,19 @@ const CommentsModeration = () => {
     try {
       const result = await moderateComment({ commentId, action, reason });
       if (result.data.success) {
-        toast.success(`Comment ${action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'hidden'}`);
+        toast.success(
+          `Comment ${action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'hidden'}`
+        );
         // Remove from list if status doesn't match filter
-        setComments(prev => prev.filter(c => c.id !== commentId));
+        setComments((prev) => prev.filter((c) => c.id !== commentId));
         setPreviewComment(null);
         // Update counts
-        setCounts(prev => ({
+        setCounts((prev) => ({
           ...prev,
           [statusFilter === 'all' ? result.data.comment.status : statusFilter]:
-            statusFilter === 'all' ? prev[result.data.comment.status] : Math.max(0, prev[statusFilter] - 1),
+            statusFilter === 'all'
+              ? prev[result.data.comment.status]
+              : Math.max(0, prev[statusFilter] - 1),
         }));
       }
     } catch (error) {
@@ -108,12 +118,14 @@ const CommentsModeration = () => {
     try {
       const result = await bulkModerateComments({
         commentIds: Array.from(selectedComments),
-        action
+        action,
       });
       if (result.data.success) {
-        toast.success(`${result.data.moderated} comment${result.data.moderated > 1 ? 's' : ''} ${action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'hidden'}`);
+        toast.success(
+          `${result.data.moderated} comment${result.data.moderated > 1 ? 's' : ''} ${action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'hidden'}`
+        );
         // Remove moderated comments from list
-        setComments(prev => prev.filter(c => !selectedComments.has(c.id)));
+        setComments((prev) => prev.filter((c) => !selectedComments.has(c.id)));
         setSelectedComments(new Set());
         // Refresh counts
         await loadComments();
@@ -130,7 +142,7 @@ const CommentsModeration = () => {
     if (selectedComments.size === comments.length) {
       setSelectedComments(new Set());
     } else {
-      setSelectedComments(new Set(comments.map(c => c.id)));
+      setSelectedComments(new Set(comments.map((c) => c.id)));
     }
   };
 
@@ -169,9 +181,11 @@ const CommentsModeration = () => {
             >
               {status.charAt(0).toUpperCase() + status.slice(1)}
               {counts[status] > 0 && status !== 'all' && (
-                <span className={`ml-1.5 px-1.5 py-0.5 text-[10px] font-bold rounded-full ${
-                  status === 'pending' ? 'bg-yellow-500 text-black' : 'bg-[#333] text-gray-300'
-                }`}>
+                <span
+                  className={`ml-1.5 px-1.5 py-0.5 text-[10px] font-bold rounded-full ${
+                    status === 'pending' ? 'bg-yellow-500 text-black' : 'bg-[#333] text-gray-300'
+                  }`}
+                >
                   {counts[status]}
                 </span>
               )}
@@ -293,14 +307,16 @@ const CommentRow = ({
   onApprove,
   onReject,
   onHide,
-  isProcessing
+  isProcessing,
 }) => {
   const hasReports = comment.reportCount > 0;
 
   return (
-    <div className={`flex items-center gap-4 px-4 py-3 border-b border-[#222] last:border-b-0 ${
-      hasReports ? 'bg-red-500/5' : 'hover:bg-[#1f1f1f]'
-    } transition-colors`}>
+    <div
+      className={`flex items-center gap-4 px-4 py-3 border-b border-[#222] last:border-b-0 ${
+        hasReports ? 'bg-red-500/5' : 'hover:bg-[#1f1f1f]'
+      } transition-colors`}
+    >
       <input
         type="checkbox"
         checked={isSelected}
@@ -310,17 +326,13 @@ const CommentRow = ({
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <span className="text-sm font-bold text-white">
-            {comment.userName}
-          </span>
+          <span className="text-sm font-bold text-white">{comment.userName}</span>
           {comment.userTitle && (
             <span className="text-[10px] px-1.5 py-0.5 bg-[#0057B8]/20 text-[#0057B8] font-medium">
               {comment.userTitle}
             </span>
           )}
-          <span className="text-[10px] text-gray-500">
-            {formatRelativeTime(comment.createdAt)}
-          </span>
+          <span className="text-[10px] text-gray-500">{formatRelativeTime(comment.createdAt)}</span>
           {hasReports && (
             <span className="flex items-center gap-1 text-[10px] text-red-400">
               <Flag className="w-3 h-3" />
@@ -328,17 +340,15 @@ const CommentRow = ({
             </span>
           )}
         </div>
-        <p className="text-sm text-gray-400 line-clamp-2">
-          {comment.content}
-        </p>
+        <p className="text-sm text-gray-400 line-clamp-2">{comment.content}</p>
         {comment.articleHeadline && (
-          <p className="text-[10px] text-gray-600 mt-1 truncate">
-            On: {comment.articleHeadline}
-          </p>
+          <p className="text-[10px] text-gray-600 mt-1 truncate">On: {comment.articleHeadline}</p>
         )}
       </div>
 
-      <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded w-20 text-center ${STATUS_COLORS[comment.status]}`}>
+      <span
+        className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded w-20 text-center ${STATUS_COLORS[comment.status]}`}
+      >
         {comment.status}
       </span>
 
@@ -431,12 +441,12 @@ const CommentPreviewModal = ({ comment, onClose, onApprove, onReject, onHide, is
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {/* Status and meta */}
             <div className="flex items-center gap-3 flex-wrap">
-              <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded ${STATUS_COLORS[comment.status]}`}>
+              <span
+                className={`px-2 py-1 text-[10px] font-bold uppercase rounded ${STATUS_COLORS[comment.status]}`}
+              >
                 {comment.status}
               </span>
-              <span className="text-xs text-gray-500">
-                {formatRelativeTime(comment.createdAt)}
-              </span>
+              <span className="text-xs text-gray-500">{formatRelativeTime(comment.createdAt)}</span>
               {comment.reportCount > 0 && (
                 <span className="flex items-center gap-1 text-xs text-red-400">
                   <Flag className="w-3 h-3" />
@@ -460,9 +470,7 @@ const CommentPreviewModal = ({ comment, onClose, onApprove, onReject, onHide, is
 
             {/* Comment content */}
             <div className="bg-[#0a0a0a] border border-[#333] rounded p-3">
-              <p className="text-sm text-gray-300 whitespace-pre-wrap">
-                {comment.content}
-              </p>
+              <p className="text-sm text-gray-300 whitespace-pre-wrap">{comment.content}</p>
             </div>
 
             {/* Article reference */}

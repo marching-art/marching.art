@@ -14,13 +14,17 @@ import toast from 'react-hot-toast';
 // OPTIMIZATION #9: Lazy-load large modal components to reduce initial bundle size
 // Prioritized by file size: CaptionSelectionModal (1007 lines), UniformDesignModal (794 lines),
 // NewsSubmissionModal (283 lines), ClassPurchaseModal (247 lines)
-const CaptionSelectionModal = lazy(() => import('../components/CaptionSelection/CaptionSelectionModal'));
+const CaptionSelectionModal = lazy(
+  () => import('../components/CaptionSelection/CaptionSelectionModal')
+);
 const SeasonSetupWizard = lazy(() => import('../components/SeasonSetupWizard'));
 const UniformDesignModal = lazy(() => import('../components/modals/UniformDesignModal'));
 const NewsSubmissionModal = lazy(() => import('../components/modals/NewsSubmissionModal'));
 const ClassPurchaseModal = lazy(() => import('../components/modals/ClassPurchaseModal'));
 const NewCorpsSlotModal = lazy(() => import('../components/modals/NewCorpsSlotModal'));
-const RenameDuplicateCorpsModal = lazy(() => import('../components/modals/RenameDuplicateCorpsModal'));
+const RenameDuplicateCorpsModal = lazy(
+  () => import('../components/modals/RenameDuplicateCorpsModal')
+);
 
 import {
   ClassUnlockCongratsModal,
@@ -55,7 +59,14 @@ import { useScheduleStore } from '../store/scheduleStore';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useScoresData } from '../hooks/useScoresData';
 import { useMyLeagues } from '../hooks/useLeagues';
-import { registerCorps, retireCorps, unlockClassWithCorpsCoin, submitNewsForApproval, transferCorps, unretireCorps } from '../api/functions';
+import {
+  registerCorps,
+  retireCorps,
+  unlockClassWithCorpsCoin,
+  submitNewsForApproval,
+  transferCorps,
+  unretireCorps,
+} from '../api/functions';
 import { CORPS_CLASS_ORDER } from '../utils/corps';
 import { canEditCorpsThisSeason, corpsHasPendingWork } from '../utils/corps';
 import { useModalQueue, MODAL_PRIORITY } from '../hooks/useModalQueue';
@@ -78,11 +89,15 @@ const Dashboard = () => {
   const { user } = useAuth();
   const location = useLocation();
   const dashboardData = useDashboardData();
-  const { aggregatedScores, allShows, loading: scoresLoading } = useScoresData({
+  const {
+    aggregatedScores,
+    allShows,
+    loading: scoresLoading,
+  } = useScoresData({
     // Dashboard should only show current season data, not fall back to archived seasons
     disableArchiveFallback: true,
     // Filter to active corps class to include SoundSport scores (excluded by default with 'all')
-    classFilter: dashboardData.activeCorpsClass || 'all'
+    classFilter: dashboardData.activeCorpsClass || 'all',
   });
   const { data: myLeagues } = useMyLeagues(user?.uid);
   const { weeksRemaining, isRegistrationLocked, currentDay } = useSeasonStore();
@@ -128,7 +143,7 @@ const Dashboard = () => {
     clearNewAchievement,
     refreshProfile,
     handleCorpsSwitch,
-    unlockedClasses  // Includes admin override - admins have all classes
+    unlockedClasses, // Includes admin override - admins have all classes
   } = dashboardData;
 
   // Computed values
@@ -150,30 +165,28 @@ const Dashboard = () => {
   // hard-blocks all other actions until each one is resolved.
   const duplicateCorps = useMemo(() => {
     if (!corps) return [];
-    return CORPS_CLASS_ORDER
-      .map((cls) => {
-        const c = corps[cls];
-        if (!c?.mustRename || !c.corpsName) return null;
-        return {
-          corpsClass: cls,
-          corpsName: c.corpsName,
-          conflictsWith: c.duplicateConflict || null,
-        };
-      })
-      .filter(Boolean);
+    return CORPS_CLASS_ORDER.map((cls) => {
+      const c = corps[cls];
+      if (!c?.mustRename || !c.corpsName) return null;
+      return {
+        corpsClass: cls,
+        corpsName: c.corpsName,
+        conflictsWith: c.duplicateConflict || null,
+      };
+    }).filter(Boolean);
   }, [corps]);
 
   const userCorpsScore = useMemo(() => {
     if (!activeCorps) return null;
     const corpsName = activeCorps.corpsName || activeCorps.name;
-    const entry = aggregatedScores.find(s => s.corpsName === corpsName);
+    const entry = aggregatedScores.find((s) => s.corpsName === corpsName);
     return entry?.score ?? null;
   }, [aggregatedScores, activeCorps]);
 
   const userCorpsRank = useMemo(() => {
     if (!activeCorps) return null;
     const corpsName = activeCorps.corpsName || activeCorps.name;
-    const entry = aggregatedScores.find(s => s.corpsName === corpsName);
+    const entry = aggregatedScores.find((s) => s.corpsName === corpsName);
     return entry?.rank ?? null;
   }, [aggregatedScores, activeCorps]);
 
@@ -184,9 +197,12 @@ const Dashboard = () => {
     return (activeCorps.selectedShows[`week${currentWeek}`] || []).slice(0, 3);
   }, [activeCorps?.selectedShows, currentWeek]);
 
-  const { lineupScoreData, lineupScoresLoading } = useLineupScores(lineup, currentDay, activeCorpsClass);
+  const { lineupScoreData, lineupScoresLoading } = useLineupScores(
+    lineup,
+    currentDay,
+    activeCorpsClass
+  );
   const recentResults = useRecentResults(user, seasonData, activeCorpsClass, currentDay);
-
 
   // Handle navigation state for class purchase (from header Buy button)
   useEffect(() => {
@@ -215,25 +231,44 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (newlyUnlockedClass) {
-      modalQueue.enqueue('classUnlock', MODAL_PRIORITY.CLASS_UNLOCK, { unlockedClass: newlyUnlockedClass });
+      modalQueue.enqueue('classUnlock', MODAL_PRIORITY.CLASS_UNLOCK, {
+        unlockedClass: newlyUnlockedClass,
+      });
     }
   }, [newlyUnlockedClass, modalQueue.enqueue]);
 
   useEffect(() => {
     if (newAchievement) {
-      modalQueue.enqueue('achievement', MODAL_PRIORITY.ACHIEVEMENT, { achievement: newAchievement });
+      modalQueue.enqueue('achievement', MODAL_PRIORITY.ACHIEVEMENT, {
+        achievement: newAchievement,
+      });
     }
   }, [newAchievement, modalQueue.enqueue]);
 
   useEffect(() => {
-    const userModalOpen = showRegistration || showCaptionSelection || showEditCorps ||
-                          showDeleteConfirm || showMoveCorps || showRetireConfirm || showNewsSubmission;
+    const userModalOpen =
+      showRegistration ||
+      showCaptionSelection ||
+      showEditCorps ||
+      showDeleteConfirm ||
+      showMoveCorps ||
+      showRetireConfirm ||
+      showNewsSubmission;
     if (userModalOpen) {
       modalQueue.pauseQueue();
     } else {
       modalQueue.resumeQueue();
     }
-  }, [showRegistration, showCaptionSelection, showEditCorps, showDeleteConfirm, showMoveCorps, showRetireConfirm, showNewsSubmission, modalQueue]);
+  }, [
+    showRegistration,
+    showCaptionSelection,
+    showEditCorps,
+    showDeleteConfirm,
+    showMoveCorps,
+    showRetireConfirm,
+    showNewsSubmission,
+    modalQueue,
+  ]);
 
   // Handlers
   const handleTourComplete = useCallback(async () => {
@@ -278,7 +313,7 @@ const Dashboard = () => {
     if (user?.uid && seasonData?.seasonUid) {
       try {
         await updateProfile(user.uid, {
-          initialSetupComplete: seasonData.seasonUid
+          initialSetupComplete: seasonData.seasonUid,
         });
       } catch (error) {
         console.error('Failed to save initial setup flag:', error);
@@ -287,19 +322,22 @@ const Dashboard = () => {
     }
   }, [handleSeasonSetupComplete, handleSeasonSetupClose, user?.uid, seasonData?.seasonUid]);
 
-  const handleEditCorps = useCallback(async (formData) => {
-    try {
-      await updateProfile(user.uid, {
-        [`corps.${activeCorpsClass}.corpsName`]: formData.name,
-        [`corps.${activeCorpsClass}.location`]: formData.location,
-        [`corps.${activeCorpsClass}.showConcept`]: formData.showConcept,
-      });
-      toast.success('Corps updated!');
-      setShowEditCorps(false);
-    } catch (error) {
-      toast.error('Failed to update corps');
-    }
-  }, [user, activeCorpsClass]);
+  const handleEditCorps = useCallback(
+    async (formData) => {
+      try {
+        await updateProfile(user.uid, {
+          [`corps.${activeCorpsClass}.corpsName`]: formData.name,
+          [`corps.${activeCorpsClass}.location`]: formData.location,
+          [`corps.${activeCorpsClass}.showConcept`]: formData.showConcept,
+        });
+        toast.success('Corps updated!');
+        setShowEditCorps(false);
+      } catch (error) {
+        toast.error('Failed to update corps');
+      }
+    },
+    [user, activeCorpsClass]
+  );
 
   const handleDeleteCorps = useCallback(async () => {
     try {
@@ -326,67 +364,76 @@ const Dashboard = () => {
     }
   }, [activeCorpsClass]);
 
-  const handleMoveCorps = useCallback(async (targetClass) => {
-    try {
-      setTransferring(true);
-      const result = await transferCorps({ fromClass: activeCorpsClass, toClass: targetClass });
-      toast.success(result.data.message || 'Corps transferred!');
-      setShowMoveCorps(false);
-    } catch (error) {
-      const msg = error?.message || error?.details?.message || 'Failed to transfer corps';
-      toast.error(msg);
-    } finally {
-      setTransferring(false);
-    }
-  }, [activeCorpsClass]);
+  const handleMoveCorps = useCallback(
+    async (targetClass) => {
+      try {
+        setTransferring(true);
+        const result = await transferCorps({ fromClass: activeCorpsClass, toClass: targetClass });
+        toast.success(result.data.message || 'Corps transferred!');
+        setShowMoveCorps(false);
+      } catch (error) {
+        const msg = error?.message || error?.details?.message || 'Failed to transfer corps';
+        toast.error(msg);
+      } finally {
+        setTransferring(false);
+      }
+    },
+    [activeCorpsClass]
+  );
 
-  const handleCorpsRegistration = useCallback(async (formData) => {
-    try {
-      if (!seasonData?.seasonUid) {
-        toast.error('Season data not loaded');
-        return;
+  const handleCorpsRegistration = useCallback(
+    async (formData) => {
+      try {
+        if (!seasonData?.seasonUid) {
+          toast.error('Season data not loaded');
+          return;
+        }
+        const result = await registerCorps({
+          corpsName: formData.name,
+          location: formData.location,
+          showConcept: formData.showConcept || '',
+          class: formData.class,
+        });
+        if (result.data.success) {
+          toast.success(`${formData.name} registered!`);
+          setShowRegistration(false);
+          clearNewlyUnlockedClass();
+          refreshProfile?.();
+        }
+      } catch (error) {
+        toast.error(error.message || 'Failed to register corps');
       }
-      const result = await registerCorps({
-        corpsName: formData.name,
-        location: formData.location,
-        showConcept: formData.showConcept || '',
-        class: formData.class
-      });
-      if (result.data.success) {
-        toast.success(`${formData.name} registered!`);
-        setShowRegistration(false);
-        clearNewlyUnlockedClass();
-        refreshProfile?.();
-      }
-    } catch (error) {
-      toast.error(error.message || 'Failed to register corps');
-    }
-  }, [seasonData?.seasonUid, clearNewlyUnlockedClass, refreshProfile]);
+    },
+    [seasonData?.seasonUid, clearNewlyUnlockedClass, refreshProfile]
+  );
 
   const handleClassUnlock = useCallback((classKey) => {
     setClassToPurchase(classKey);
   }, []);
 
-  const handleUnretireCorps = useCallback(async (corpsClass, retiredIndex) => {
-    setUnretiring(true);
-    try {
-      const retiredRecord = profile?.retiredCorps?.[retiredIndex];
-      const result = await unretireCorps({ corpsClass, retiredIndex });
-      if (result.data.success) {
-        toast.success(
-          retiredRecord?.corpsName
-            ? `${retiredRecord.corpsName} is back in action!`
-            : 'Corps brought out of retirement!'
-        );
-        setSlotPickerClass(null);
-        refreshProfile?.();
+  const handleUnretireCorps = useCallback(
+    async (corpsClass, retiredIndex) => {
+      setUnretiring(true);
+      try {
+        const retiredRecord = profile?.retiredCorps?.[retiredIndex];
+        const result = await unretireCorps({ corpsClass, retiredIndex });
+        if (result.data.success) {
+          toast.success(
+            retiredRecord?.corpsName
+              ? `${retiredRecord.corpsName} is back in action!`
+              : 'Corps brought out of retirement!'
+          );
+          setSlotPickerClass(null);
+          refreshProfile?.();
+        }
+      } catch (error) {
+        toast.error(error.message || 'Failed to unretire corps');
+      } finally {
+        setUnretiring(false);
       }
-    } catch (error) {
-      toast.error(error.message || 'Failed to unretire corps');
-    } finally {
-      setUnretiring(false);
-    }
-  }, [profile?.retiredCorps, refreshProfile]);
+    },
+    [profile?.retiredCorps, refreshProfile]
+  );
 
   const handleConfirmClassPurchase = useCallback(async () => {
     if (!classToPurchase) return;
@@ -422,19 +469,22 @@ const Dashboard = () => {
     }
   }, []);
 
-  const handleUniformDesign = useCallback(async (design) => {
-    try {
-      await updateProfile(user.uid, {
-        [`corps.${activeCorpsClass}.uniformDesign`]: design,
-      });
-      toast.success('Uniform design saved! Avatar will be generated soon.');
-      setShowUniformDesign(false);
-      refreshProfile?.();
-    } catch (error) {
-      toast.error('Failed to save uniform design');
-      throw error;
-    }
-  }, [user, activeCorpsClass, refreshProfile]);
+  const handleUniformDesign = useCallback(
+    async (design) => {
+      try {
+        await updateProfile(user.uid, {
+          [`corps.${activeCorpsClass}.uniformDesign`]: design,
+        });
+        toast.success('Uniform design saved! Avatar will be generated soon.');
+        setShowUniformDesign(false);
+        refreshProfile?.();
+      } catch (error) {
+        toast.error('Failed to save uniform design');
+        throw error;
+      }
+    },
+    [user, activeCorpsClass, refreshProfile]
+  );
 
   // =============================================================================
   // RENDER
@@ -446,10 +496,7 @@ const Dashboard = () => {
           duplicate-name conflict surfaced by the admin sweep is resolved. */}
       {duplicateCorps.length > 0 && (
         <Suspense fallback={null}>
-          <RenameDuplicateCorpsModal
-            duplicates={duplicateCorps}
-            onResolved={refreshProfile}
-          />
+          <RenameDuplicateCorpsModal duplicates={duplicateCorps} onResolved={refreshProfile} />
         </Suspense>
       )}
 
@@ -472,29 +519,29 @@ const Dashboard = () => {
       <div className="flex-1 overflow-y-auto min-h-0 pb-20 md:pb-4">
         {/* Control Bar - Class Tabs + Director HUD */}
         <div data-tour="control-bar">
-        <ControlBar
-          corps={corps}
-          activeCorpsClass={activeCorpsClass}
-          unlockedClasses={unlockedClasses}
-          profile={profile}
-          onSwitch={handleCorpsSwitch}
-          onCreateCorps={(classId) => {
-            clearNewlyUnlockedClass();
-            // If the director has retired corps for this class, offer the
-            // choice between starting fresh and bringing one back. Otherwise
-            // jump straight to registration with this class preselected.
-            const retiredForClass = (profile?.retiredCorps || [])
-              .map((record, retiredIndex) => ({ record, retiredIndex }))
-              .filter((entry) => entry.record?.corpsClass === classId);
-            if (retiredForClass.length > 0) {
-              setSlotPickerClass(classId);
-            } else {
-              setRegistrationDefaultClass(classId || null);
-              setShowRegistration(true);
-            }
-          }}
-          onUnlockClass={handleClassUnlock}
-        />
+          <ControlBar
+            corps={corps}
+            activeCorpsClass={activeCorpsClass}
+            unlockedClasses={unlockedClasses}
+            profile={profile}
+            onSwitch={handleCorpsSwitch}
+            onCreateCorps={(classId) => {
+              clearNewlyUnlockedClass();
+              // If the director has retired corps for this class, offer the
+              // choice between starting fresh and bringing one back. Otherwise
+              // jump straight to registration with this class preselected.
+              const retiredForClass = (profile?.retiredCorps || [])
+                .map((record, retiredIndex) => ({ record, retiredIndex }))
+                .filter((entry) => entry.record?.corpsClass === classId);
+              if (retiredForClass.length > 0) {
+                setSlotPickerClass(classId);
+              } else {
+                setRegistrationDefaultClass(classId || null);
+                setShowRegistration(true);
+              }
+            }}
+            onUnlockClass={handleClassUnlock}
+          />
         </div>
 
         {activeCorps ? (
@@ -504,14 +551,14 @@ const Dashboard = () => {
               {/* MAIN CONTENT (2/3) - Lineup + related analysis */}
               <div className="lg:col-span-2 space-y-4">
                 <div data-tour="lineup">
-                <ActiveLineupTable
-                  lineup={lineup}
-                  lineupScoreData={lineupScoreData}
-                  loading={lineupScoresLoading}
-                  onManageLineup={() => openCaptionSelection()}
-                  onSlotClick={(captionId) => openCaptionSelection(captionId)}
-                  scoresAvailable={scoresAvailable}
-                />
+                  <ActiveLineupTable
+                    lineup={lineup}
+                    lineupScoreData={lineupScoreData}
+                    loading={lineupScoresLoading}
+                    onManageLineup={() => openCaptionSelection()}
+                    onSlotClick={(captionId) => openCaptionSelection(captionId)}
+                    scoresAvailable={scoresAvailable}
+                  />
                 </div>
 
                 {/* Lineup Analyzer - per-caption efficiency and weak-spot identification */}
@@ -523,11 +570,11 @@ const Dashboard = () => {
                 />
 
                 <div data-tour="recent-results">
-                <RecentResultsFeed
-                  results={recentResults}
-                  loading={scoresLoading}
-                  corpsClass={activeCorpsClass}
-                />
+                  <RecentResultsFeed
+                    results={recentResults}
+                    loading={scoresLoading}
+                    corpsClass={activeCorpsClass}
+                  />
                 </div>
 
                 {/* Daily Predictions - check-back-tomorrow engagement loop */}
@@ -537,26 +584,29 @@ const Dashboard = () => {
               {/* SIDEBAR (1/3) - Identity, stats & engagement */}
               <div className="space-y-4">
                 <div data-tour="scorecard">
-                <SeasonScorecard
-                  score={userCorpsScore}
-                  rank={userCorpsRank}
-                  rankChange={null}
-                  corpsName={activeCorps.corpsName || activeCorps.name}
-                  corpsClass={activeCorpsClass}
-                  loading={scoresLoading}
-                  avatarUrl={activeCorps.avatarUrl}
-                  onDesignUniform={() => setShowUniformDesign(true)}
-                  bestInShowCount={bestInShowCount}
-                  canManage={canEditCorpsThisSeason(activeCorps)}
-                  canMove={Object.values(corps || {}).filter(Boolean).length < (unlockedClasses?.length || 0)}
-                  lockReason={
-                    canEditCorpsThisSeason(activeCorps)
-                      ? null
-                      : 'Locked — this corps has already competed this season.'
-                  }
-                  onMoveCorps={() => setShowMoveCorps(true)}
-                  onRetireCorps={() => setShowRetireConfirm(true)}
-                />
+                  <SeasonScorecard
+                    score={userCorpsScore}
+                    rank={userCorpsRank}
+                    rankChange={null}
+                    corpsName={activeCorps.corpsName || activeCorps.name}
+                    corpsClass={activeCorpsClass}
+                    loading={scoresLoading}
+                    avatarUrl={activeCorps.avatarUrl}
+                    onDesignUniform={() => setShowUniformDesign(true)}
+                    bestInShowCount={bestInShowCount}
+                    canManage={canEditCorpsThisSeason(activeCorps)}
+                    canMove={
+                      Object.values(corps || {}).filter(Boolean).length <
+                      (unlockedClasses?.length || 0)
+                    }
+                    lockReason={
+                      canEditCorpsThisSeason(activeCorps)
+                        ? null
+                        : 'Locked — this corps has already competed this season.'
+                    }
+                    onMoveCorps={() => setShowMoveCorps(true)}
+                    onRetireCorps={() => setShowRetireConfirm(true)}
+                  />
                 </div>
 
                 {/* Daily Challenges - drives daily return visits */}
@@ -684,8 +734,14 @@ const Dashboard = () => {
       {showCaptionSelection && activeCorps && seasonData && (
         <Suspense fallback={null}>
           <CaptionSelectionModal
-            onClose={() => { setShowCaptionSelection(false); setSelectedCaption(null); }}
-            onSubmit={() => { setShowCaptionSelection(false); setSelectedCaption(null); }}
+            onClose={() => {
+              setShowCaptionSelection(false);
+              setSelectedCaption(null);
+            }}
+            onSubmit={() => {
+              setShowCaptionSelection(false);
+              setSelectedCaption(null);
+            }}
             corpsClass={activeCorpsClass}
             currentLineup={activeCorps.lineup || {}}
             seasonId={seasonData.seasonUid}
@@ -701,7 +757,7 @@ const Dashboard = () => {
           currentData={{
             name: activeCorps.corpsName || activeCorps.name,
             location: activeCorps.location,
-            showConcept: activeCorps.showConcept
+            showConcept: activeCorps.showConcept,
           }}
         />
       )}
@@ -799,7 +855,9 @@ const Dashboard = () => {
             levelRequired={CLASS_UNLOCK_LEVELS[classToPurchase]}
             currentLevel={profile.xpLevel || 1}
             weeksRemaining={weeksRemaining}
-            weeksUntilAutoUnlock={profile?.createdAt ? getWeeksUntilUnlock(profile.createdAt, classToPurchase) : null}
+            weeksUntilAutoUnlock={
+              profile?.createdAt ? getWeeksUntilUnlock(profile.createdAt, classToPurchase) : null
+            }
             isRegistrationLocked={isRegistrationLocked(classToPurchase)}
             onConfirm={handleConfirmClassPurchase}
             onClose={() => setClassToPurchase(null)}

@@ -8,9 +8,8 @@ export {
   RetireConfirmModal,
   MoveCorpsModal,
   AchievementModal,
-  UniformDesignModal
+  UniformDesignModal,
 } from './DashboardModals';
-
 
 // Onboarding and quick start components
 export { default as OnboardingTour } from './OnboardingTour';

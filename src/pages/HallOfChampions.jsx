@@ -3,7 +3,17 @@
 // Sidebar (Seasons) + Main Stage (Champion plaque + finalists table)
 import React, { useState, useEffect, useMemo } from 'react';
 import { m } from 'framer-motion';
-import { Trophy, Award, Calendar, Crown, Medal, ChevronRight, ArrowLeft, Hash, Users } from 'lucide-react';
+import {
+  Trophy,
+  Award,
+  Calendar,
+  Crown,
+  Medal,
+  ChevronRight,
+  ArrowLeft,
+  Hash,
+  Users,
+} from 'lucide-react';
 import { getSeasonChampionDocs } from '../api/season';
 import { Link } from 'react-router-dom';
 import LoadingScreen from '../components/LoadingScreen';
@@ -15,14 +25,32 @@ import { TeamAvatar } from '../components/ui/TeamAvatar';
 
 const CLASS_CONFIG = {
   worldClass: { name: 'World Class', short: 'World', icon: Crown },
-  openClass:  { name: 'Open Class',  short: 'Open',  icon: Trophy },
-  aClass:     { name: 'Class A',     short: 'Class A', icon: Award },
+  openClass: { name: 'Open Class', short: 'Open', icon: Trophy },
+  aClass: { name: 'Class A', short: 'Class A', icon: Award },
 };
 
 const RANK_META = {
-  1: { label: 'CHAMPION',  badge: 'bg-yellow-500 text-black',     accent: 'text-yellow-500',  border: 'border-yellow-500/60', medalColor: 'text-yellow-500' },
-  2: { label: 'RUNNER-UP', badge: 'bg-gray-300 text-black',       accent: 'text-gray-300',    border: 'border-gray-400/40',   medalColor: 'text-gray-300' },
-  3: { label: 'THIRD',     badge: 'bg-orange-400 text-black',     accent: 'text-orange-400',  border: 'border-orange-500/40', medalColor: 'text-orange-400' },
+  1: {
+    label: 'CHAMPION',
+    badge: 'bg-yellow-500 text-black',
+    accent: 'text-yellow-500',
+    border: 'border-yellow-500/60',
+    medalColor: 'text-yellow-500',
+  },
+  2: {
+    label: 'RUNNER-UP',
+    badge: 'bg-gray-300 text-black',
+    accent: 'text-gray-300',
+    border: 'border-gray-400/40',
+    medalColor: 'text-gray-300',
+  },
+  3: {
+    label: 'THIRD',
+    badge: 'bg-orange-400 text-black',
+    accent: 'text-orange-400',
+    border: 'border-orange-500/40',
+    medalColor: 'text-orange-400',
+  },
 };
 
 // =============================================================================
@@ -78,14 +106,18 @@ const SeasonRow = ({ season, isSelected, classKey, onSelect }) => {
       `}
     >
       <div className="flex items-center justify-between gap-2 mb-1">
-        <span className={`text-[11px] font-bold uppercase tracking-wider ${isSelected ? 'text-white' : 'text-gray-300'}`}>
+        <span
+          className={`text-[11px] font-bold uppercase tracking-wider ${isSelected ? 'text-white' : 'text-gray-300'}`}
+        >
           {type}
         </span>
         <span className="text-[10px] text-gray-500 font-data tabular-nums">{year}</span>
       </div>
       <div className="flex items-center gap-2 min-w-0">
         <Crown className="w-3 h-3 text-yellow-500 flex-shrink-0" />
-        <span className="text-xs text-white truncate min-w-0 flex-1">{champ.corpsName || champ.username || '—'}</span>
+        <span className="text-xs text-white truncate min-w-0 flex-1">
+          {champ.corpsName || champ.username || '—'}
+        </span>
         <span className="text-[10px] text-gray-400 font-data tabular-nums flex-shrink-0">
           {formatScore(champ.score)}
         </span>
@@ -130,9 +162,7 @@ const ChampionPlaque = ({ champion, season, classKey, fieldStats }) => {
       <div className="px-4 sm:px-6 py-5 flex items-center gap-4">
         <TeamAvatar name={corpsName} size="lg" className="!w-14 !h-14 sm:!w-16 sm:!h-16 text-xl" />
         <div className="min-w-0 flex-1">
-          <div className="text-xl sm:text-2xl font-bold text-white truncate">
-            {corpsName}
-          </div>
+          <div className="text-xl sm:text-2xl font-bold text-white truncate">{corpsName}</div>
           {champion.uid ? (
             <Link
               to={`/profile/${champion.uid}`}
@@ -158,11 +188,15 @@ const ChampionPlaque = ({ champion, season, classKey, fieldStats }) => {
       <div className="grid grid-cols-3 border-t border-[#333] divide-x divide-[#333]">
         <div className="px-3 py-2.5">
           <div className="text-[10px] text-gray-500 uppercase tracking-wider">Crowned</div>
-          <div className="text-xs text-white font-data tabular-nums truncate">{formatDate(season.archivedAt)}</div>
+          <div className="text-xs text-white font-data tabular-nums truncate">
+            {formatDate(season.archivedAt)}
+          </div>
         </div>
         <div className="px-3 py-2.5">
           <div className="text-[10px] text-gray-500 uppercase tracking-wider">Margin</div>
-          <div className={`text-xs font-data tabular-nums truncate ${fieldStats.margin > 0 ? 'text-green-500' : 'text-gray-400'}`}>
+          <div
+            className={`text-xs font-data tabular-nums truncate ${fieldStats.margin > 0 ? 'text-green-500' : 'text-gray-400'}`}
+          >
             {formatDelta(fieldStats.margin)}
           </div>
         </div>
@@ -198,10 +232,18 @@ const FinalistsTable = ({ champions }) => {
       <table className="w-full">
         <thead>
           <tr className="bg-[#111] border-b border-[#333]">
-            <th className="text-left py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-10">#</th>
-            <th className="text-left py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500">Corps</th>
-            <th className="text-left py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 hidden sm:table-cell">Director</th>
-            <th className="text-right py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-20">Score</th>
+            <th className="text-left py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-10">
+              #
+            </th>
+            <th className="text-left py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500">
+              Corps
+            </th>
+            <th className="text-left py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 hidden sm:table-cell">
+              Director
+            </th>
+            <th className="text-right py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-20">
+              Score
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -211,7 +253,10 @@ const FinalistsTable = ({ champions }) => {
             const corpsName = c.corpsName || c.username || '—';
 
             return (
-              <tr key={`${c.uid}-${c.rank}-${idx}`} className={`${rowBg} border-b border-[#333] last:border-b-0`}>
+              <tr
+                key={`${c.uid}-${c.rank}-${idx}`}
+                className={`${rowBg} border-b border-[#333] last:border-b-0`}
+              >
                 <td className="py-2.5 px-3">
                   <div className="flex items-center gap-1.5">
                     {meta.label ? (
@@ -228,7 +273,9 @@ const FinalistsTable = ({ champions }) => {
                   <div className="flex items-center gap-2 min-w-0">
                     <TeamAvatar name={corpsName} size="xs" />
                     <div className="min-w-0">
-                      <span className={`text-sm font-bold block truncate ${c.rank === 1 ? 'text-yellow-500' : 'text-white'}`}>
+                      <span
+                        className={`text-sm font-bold block truncate ${c.rank === 1 ? 'text-yellow-500' : 'text-white'}`}
+                      >
                         {corpsName}
                       </span>
                       {meta.label && (
@@ -248,11 +295,15 @@ const FinalistsTable = ({ champions }) => {
                       {c.username || '—'}
                     </Link>
                   ) : (
-                    <span className="text-xs text-gray-400 truncate block">{c.username || '—'}</span>
+                    <span className="text-xs text-gray-400 truncate block">
+                      {c.username || '—'}
+                    </span>
                   )}
                 </td>
                 <td className="py-2.5 px-3 text-right">
-                  <span className={`text-sm font-bold font-data tabular-nums ${c.rank === 1 ? 'text-yellow-500' : 'text-white'}`}>
+                  <span
+                    className={`text-sm font-bold font-data tabular-nums ${c.rank === 1 ? 'text-yellow-500' : 'text-white'}`}
+                  >
                     {formatScore(c.score)}
                   </span>
                 </td>
@@ -302,12 +353,15 @@ const HallOfChampions = () => {
             id: data.id,
             seasonName: data.seasonName,
             seasonType: data.seasonType,
-            archivedAt: data.archivedAt?.toDate?.() || (data.archivedAt ? new Date(data.archivedAt) : null),
+            archivedAt:
+              data.archivedAt?.toDate?.() || (data.archivedAt ? new Date(data.archivedAt) : null),
             classes: data.classes || {},
           });
         });
 
-        seasonsData.sort((a, b) => (b.archivedAt?.getTime?.() || 0) - (a.archivedAt?.getTime?.() || 0));
+        seasonsData.sort(
+          (a, b) => (b.archivedAt?.getTime?.() || 0) - (a.archivedAt?.getTime?.() || 0)
+        );
 
         if (cancelled) return;
         setSeasons(seasonsData);
@@ -318,7 +372,9 @@ const HallOfChampions = () => {
       }
     };
     fetchSeasonChampions();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Only seasons that actually have a crowned champion in the active class
@@ -366,13 +422,14 @@ const HallOfChampions = () => {
   return (
     <div className="flex flex-col h-full min-h-0 bg-[#0a0a0a]">
       <div className="flex-1 flex min-h-0">
-
         {/* ========================================================
             SIDEBAR — Season list
             ======================================================== */}
-        <div className={`flex flex-col min-h-0 border-r border-[#333] bg-[#111] ${
-          selectedSeason ? 'hidden lg:flex lg:w-72 xl:w-80' : 'w-full lg:w-72 xl:w-80'
-        }`}>
+        <div
+          className={`flex flex-col min-h-0 border-r border-[#333] bg-[#111] ${
+            selectedSeason ? 'hidden lg:flex lg:w-72 xl:w-80' : 'w-full lg:w-72 xl:w-80'
+          }`}
+        >
           {/* Header */}
           <div className="flex-shrink-0 px-4 py-3 border-b border-[#333] bg-[#1a1a1a]">
             <div className="flex items-center gap-2 mb-3">
@@ -384,8 +441,9 @@ const HallOfChampions = () => {
             <div className="flex items-center gap-3 text-[10px] uppercase tracking-wider">
               <span className="flex items-center gap-1 text-gray-500">
                 <Crown className="w-3 h-3 text-yellow-500" />
-                <span className="font-data tabular-nums text-gray-300">{totalCrowns}</span>
-                {' '}Crowned {totalCrowns === 1 ? 'Season' : 'Seasons'}
+                <span className="font-data tabular-nums text-gray-300">
+                  {totalCrowns}
+                </span> Crowned {totalCrowns === 1 ? 'Season' : 'Seasons'}
               </span>
             </div>
           </div>
@@ -427,7 +485,9 @@ const HallOfChampions = () => {
             {crownedSeasons.length === 0 ? (
               <div className="px-4 py-12 text-center">
                 <Trophy className="w-8 h-8 text-gray-700 mx-auto mb-2" />
-                <p className="text-xs text-gray-500 uppercase tracking-wider">No champions recorded</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wider">
+                  No champions recorded
+                </p>
               </div>
             ) : (
               crownedSeasons.map((season) => (
@@ -446,7 +506,9 @@ const HallOfChampions = () => {
         {/* ========================================================
             MAIN STAGE — Champion plaque + finalists table
             ======================================================== */}
-        <div className={`flex-1 flex flex-col min-h-0 ${showSidebarOnly ? 'hidden lg:flex' : 'flex'}`}>
+        <div
+          className={`flex-1 flex flex-col min-h-0 ${showSidebarOnly ? 'hidden lg:flex' : 'flex'}`}
+        >
           {!selectedSeason ? (
             <div className="flex-1 flex items-center justify-center px-4">
               <NoChampionsPanel classKey={selectedClass} />

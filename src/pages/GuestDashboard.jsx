@@ -10,9 +10,24 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { m } from 'framer-motion';
 import {
-  Trophy, Star, Calendar, TrendingUp, ChevronRight, Users,
-  Award, Zap, MapPin, User, LogIn, UserPlus, ArrowLeft,
-  Info, Flame, Target, Clock, Lock
+  Trophy,
+  Star,
+  Calendar,
+  TrendingUp,
+  ChevronRight,
+  Users,
+  Award,
+  Zap,
+  MapPin,
+  User,
+  LogIn,
+  UserPlus,
+  ArrowLeft,
+  Info,
+  Flame,
+  Target,
+  Clock,
+  Lock,
 } from 'lucide-react';
 import { useGuestPreview } from '../hooks/useGuestPreview';
 import { RegistrationGate } from '../components/GuestPreview';
@@ -63,9 +78,7 @@ const GuestHeader = () => {
           <div className="w-8 h-8 rounded-sm overflow-hidden">
             <img src="/logo192.svg" alt="marching.art" className="w-full h-full object-cover" />
           </div>
-          <span className="text-base font-bold text-white tracking-wider">
-            marching.art
-          </span>
+          <span className="text-base font-bold text-white tracking-wider">marching.art</span>
         </div>
 
         {/* Preview Badge */}
@@ -109,9 +122,11 @@ const LineupRow = ({ caption, value, captionScore, isLast, onGatedClick }) => {
   return (
     <button
       onClick={onGatedClick}
-      aria-label={hasValue
-        ? `${captionLabel}: ${corpsName}${sourceYear ? ` ${sourceYear}` : ''}`
-        : `${captionLabel}: empty slot. Tap to draft.`}
+      aria-label={
+        hasValue
+          ? `${captionLabel}: ${corpsName}${sourceYear ? ` ${sourceYear}` : ''}`
+          : `${captionLabel}: empty slot. Tap to draft.`
+      }
       className={`w-full flex items-center gap-3 px-3 py-3.5 transition-all cursor-pointer group ${
         !isLast ? 'border-b border-[#333]/50' : ''
       } bg-[#1a1a1a] hover:bg-[#222] active:bg-[#252525]`}
@@ -139,9 +154,7 @@ const LineupRow = ({ caption, value, captionScore, isLast, onGatedClick }) => {
         ) : (
           <span className="text-sm text-gray-500 italic">Empty slot</span>
         )}
-        <div className="text-[10px] text-gray-500 truncate mt-0.5">
-          {caption.fullName}
-        </div>
+        <div className="text-[10px] text-gray-500 truncate mt-0.5">{caption.fullName}</div>
       </div>
 
       {/* Caption Score */}
@@ -151,7 +164,9 @@ const LineupRow = ({ caption, value, captionScore, isLast, onGatedClick }) => {
             {captionScore !== null ? captionScore.toFixed(1) : '—'}
           </span>
         ) : (
-          <span className="text-xs font-bold text-[#F5A623] group-hover:text-[#FFB84D]">+ Draft</span>
+          <span className="text-xs font-bold text-[#F5A623] group-hover:text-[#FFB84D]">
+            + Draft
+          </span>
         )}
         <Lock className="w-3.5 h-3.5 text-gray-600 group-hover:text-gray-400" />
       </div>
@@ -182,7 +197,8 @@ const GuestDashboard = () => {
   useBodyScroll();
   useSEO({
     title: 'Live Demo | marching.art — Fantasy Drum Corps',
-    description: 'Preview the marching.art fantasy drum corps dashboard — live scores, lineups, and leaderboards — before creating your free corps.',
+    description:
+      'Preview the marching.art fantasy drum corps dashboard — live scores, lineups, and leaderboards — before creating your free corps.',
     path: '/preview',
   });
   const navigate = useNavigate();
@@ -242,7 +258,6 @@ const GuestDashboard = () => {
       {/* Main Content */}
       <main className="flex-1 pb-24 md:pb-4">
         <div className="max-w-[1920px] mx-auto p-4 lg:p-6">
-
           {/* Preview Notice Banner */}
           <m.div
             initial={{ opacity: 0, y: -10 }}
@@ -253,9 +268,7 @@ const GuestDashboard = () => {
               <div className="flex items-center gap-3 flex-1">
                 <Info className="w-5 h-5 text-[#0057B8] flex-shrink-0" />
                 <div>
-                  <p className="text-sm text-white font-medium">
-                    You're viewing a demo dashboard
-                  </p>
+                  <p className="text-sm text-white font-medium">You're viewing a demo dashboard</p>
                   <p className="text-xs text-gray-400 mt-0.5">
                     Create a free account to build your own corps and compete
                   </p>
@@ -273,10 +286,8 @@ const GuestDashboard = () => {
 
           {/* Grid Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
-
             {/* LEFT COLUMN - Corps Info & Lineup */}
             <div className="lg:col-span-8 space-y-4">
-
               {/* Corps Header Card */}
               <div className="bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden">
                 {/* Accent Line */}
@@ -319,19 +330,27 @@ const GuestDashboard = () => {
                   {/* Quick Stats Row */}
                   <div className="grid grid-cols-4 gap-3 mt-4 pt-4 border-t border-[#333]/50">
                     <div className="text-center">
-                      <div className="text-lg font-bold text-white font-data">{demoCorps.showsAttended}</div>
+                      <div className="text-lg font-bold text-white font-data">
+                        {demoCorps.showsAttended}
+                      </div>
                       <div className="text-xs text-gray-500">Shows</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-lg font-bold text-green-500 font-data">{demoCorps.seasonHighScore}</div>
+                      <div className="text-lg font-bold text-green-500 font-data">
+                        {demoCorps.seasonHighScore}
+                      </div>
                       <div className="text-xs text-gray-500">High Score</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-lg font-bold text-yellow-500 font-data">#{demoLeaderboardPosition.rank}</div>
+                      <div className="text-lg font-bold text-yellow-500 font-data">
+                        #{demoLeaderboardPosition.rank}
+                      </div>
                       <div className="text-xs text-gray-500">Global Rank</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-lg font-bold text-[#0057B8] font-data">{demoLeaderboardPosition.percentile}%</div>
+                      <div className="text-lg font-bold text-[#0057B8] font-data">
+                        {demoLeaderboardPosition.percentile}%
+                      </div>
                       <div className="text-xs text-gray-500">Percentile</div>
                     </div>
                   </div>
@@ -385,7 +404,10 @@ const GuestDashboard = () => {
                           {show.showName}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {new Date(show.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          {new Date(show.date).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                          })}
                         </div>
                       </div>
                       <div className="text-right">
@@ -393,7 +415,14 @@ const GuestDashboard = () => {
                           {show.score.toFixed(2)}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {show.placement === 1 ? '1st' : show.placement === 2 ? '2nd' : show.placement === 3 ? '3rd' : `${show.placement}th`} place
+                          {show.placement === 1
+                            ? '1st'
+                            : show.placement === 2
+                              ? '2nd'
+                              : show.placement === 3
+                                ? '3rd'
+                                : `${show.placement}th`}{' '}
+                          place
                         </div>
                       </div>
                     </div>
@@ -404,7 +433,6 @@ const GuestDashboard = () => {
 
             {/* RIGHT COLUMN - Stats & Actions */}
             <div className="lg:col-span-4 space-y-4">
-
               {/* Director Card */}
               <div className="bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden">
                 <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
@@ -437,7 +465,9 @@ const GuestDashboard = () => {
                       <div className="flex items-center justify-center gap-1 mb-1">
                         <Flame className="w-3.5 h-3.5 text-orange-500" />
                       </div>
-                      <div className="text-lg font-bold text-orange-500">{demoProfile.engagement.loginStreak}</div>
+                      <div className="text-lg font-bold text-orange-500">
+                        {demoProfile.engagement.loginStreak}
+                      </div>
                       <div className="text-xs text-gray-500">Streak</div>
                     </div>
                   </div>
@@ -487,7 +517,9 @@ const GuestDashboard = () => {
                     >
                       <div className="w-10 h-10 rounded-sm bg-[#111] flex flex-col items-center justify-center flex-shrink-0">
                         <span className="text-xs text-gray-500">
-                          {new Date(show.date).toLocaleDateString('en-US', { month: 'short' }).toUpperCase()}
+                          {new Date(show.date)
+                            .toLocaleDateString('en-US', { month: 'short' })
+                            .toUpperCase()}
                         </span>
                         <span className="text-sm font-bold text-white">
                           {new Date(show.date).getDate()}
@@ -520,9 +552,7 @@ const GuestDashboard = () => {
                     <div className="text-sm font-bold text-white group-hover:text-yellow-500 transition-colors">
                       Join a League
                     </div>
-                    <div className="text-xs text-gray-500">
-                      Compete against friends
-                    </div>
+                    <div className="text-xs text-gray-500">Compete against friends</div>
                   </div>
                   <Lock className="w-4 h-4 text-gray-500 group-hover:text-yellow-500 transition-colors" />
                 </div>
@@ -532,7 +562,8 @@ const GuestDashboard = () => {
               <div className="bg-gradient-to-br from-[#0057B8]/20 to-[#0057B8]/5 border border-[#0057B8]/30 rounded-sm p-4">
                 <h3 className="text-sm font-bold text-white mb-2">Ready to compete?</h3>
                 <p className="text-xs text-gray-400 mb-4">
-                  Create your free account to build your own corps, join leagues, and climb the leaderboard.
+                  Create your free account to build your own corps, join leagues, and climb the
+                  leaderboard.
                 </p>
                 <Link
                   to="/register"

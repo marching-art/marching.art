@@ -45,12 +45,7 @@ const standingsColumns = [
   },
 ];
 
-const StandingsPanel = React.memo(({
-  data,
-  isLoading,
-  activeCorpsName,
-  isMobile = false
-}) => {
+const StandingsPanel = React.memo(({ data, isLoading, activeCorpsName, isMobile = false }) => {
   return (
     <div className="bg-[#0a0a0a]">
       {/* Header - hidden on mobile since we have tabs */}
@@ -58,7 +53,10 @@ const StandingsPanel = React.memo(({
         <span className="text-[11px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-500">
           Standings
         </span>
-        <Link to="/scores" className="text-[11px] sm:text-[10px] text-[#F5A623] hover:text-[#FFB84D] transition-colors flex items-center gap-0.5 py-1">
+        <Link
+          to="/scores"
+          className="text-[11px] sm:text-[10px] text-[#F5A623] hover:text-[#FFB84D] transition-colors flex items-center gap-0.5 py-1"
+        >
           Results <ChevronRight className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
         </Link>
       </div>
@@ -72,11 +70,7 @@ const StandingsPanel = React.memo(({
           getRowKey={(row) => row.corpsName || row.corps}
           zebraStripes={true}
           highlightRow={(row) => row.corpsName === activeCorpsName}
-          emptyState={
-            <div className="p-4 text-center text-gray-500 text-sm">
-              No standings yet
-            </div>
-          }
+          emptyState={<div className="p-4 text-center text-gray-500 text-sm">No standings yet</div>}
         />
       )}
 

@@ -1,7 +1,16 @@
 // News feed inline badges (trend, fantasy value, urgency, ROI, share).
 // Extracted from NewsFeed.jsx.
 
-import { TrendingUp, TrendingDown, Minus, ArrowUpRight, ArrowDownRight, Radio, DollarSign, Share2 } from 'lucide-react';
+import {
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  ArrowUpRight,
+  ArrowDownRight,
+  Radio,
+  DollarSign,
+  Share2,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 
 function TrendingBadge({ direction, className = 'w-3 h-3' }) {
@@ -16,14 +25,26 @@ function TrendingBadge({ direction, className = 'w-3 h-3' }) {
 
 function FantasyValueBadge({ value }) {
   const config = {
-    buy: { label: 'BUY', bgClass: 'bg-green-500/20', textClass: 'text-green-400', icon: ArrowUpRight },
-    sell: { label: 'SELL', bgClass: 'bg-red-500/20', textClass: 'text-red-400', icon: ArrowDownRight },
+    buy: {
+      label: 'BUY',
+      bgClass: 'bg-green-500/20',
+      textClass: 'text-green-400',
+      icon: ArrowUpRight,
+    },
+    sell: {
+      label: 'SELL',
+      bgClass: 'bg-red-500/20',
+      textClass: 'text-red-400',
+      icon: ArrowDownRight,
+    },
     hold: { label: 'HOLD', bgClass: 'bg-yellow-500/20', textClass: 'text-yellow-400', icon: Minus },
   };
   const { label, bgClass, textClass, icon: Icon } = config[value] || config.hold;
 
   return (
-    <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-bold ${bgClass} ${textClass}`}>
+    <span
+      className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-bold ${bgClass} ${textClass}`}
+    >
       <Icon className="w-2.5 h-2.5" />
       {label}
     </span>
@@ -36,11 +57,13 @@ function UrgencyBadge({ urgency }) {
   const isBreaking = urgency.type === 'breaking';
 
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${
-      isBreaking
-        ? 'bg-red-500 text-white animate-pulse'
-        : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
-    }`}>
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+        isBreaking
+          ? 'bg-red-500 text-white animate-pulse'
+          : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+      }`}
+    >
       {isBreaking && <Radio className="w-2.5 h-2.5" />}
       {urgency.label}
     </span>
@@ -57,10 +80,16 @@ function FantasyROIBadge({ metrics }) {
     <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/20">
       <DollarSign className="w-4 h-4 text-green-400" />
       <div className="flex flex-col">
-        <span className="text-[10px] text-green-400/80 uppercase tracking-wider font-medium">Top ROI</span>
+        <span className="text-[10px] text-green-400/80 uppercase tracking-wider font-medium">
+          Top ROI
+        </span>
         <span className="text-xs text-white font-bold">
-          {corps} {caption}: <span className={`font-data tabular-nums ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
-            {isPositive ? '+' : ''}{pointsGained.toFixed(1)} pts ({roiPercent.toFixed(1)}%)
+          {corps} {caption}:{' '}
+          <span
+            className={`font-data tabular-nums ${isPositive ? 'text-green-400' : 'text-red-400'}`}
+          >
+            {isPositive ? '+' : ''}
+            {pointsGained.toFixed(1)} pts ({roiPercent.toFixed(1)}%)
           </span>
         </span>
       </div>
@@ -85,7 +114,9 @@ function ShareButton({ story, className = '' }) {
     };
 
     // Check if we're on a mobile device - Web Share API is only reliable on mobile
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
 
     if (navigator.share && isMobile) {
       try {

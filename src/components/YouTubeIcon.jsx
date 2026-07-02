@@ -33,10 +33,7 @@ const YouTubeIcon = ({ className = '', height: requestedHeight = 100 }) => {
         fill="#FF0000"
       />
       {/* White play triangle - centered */}
-      <path
-        d="M64 79.5L105 55 64 30.5v49z"
-        fill="#FFFFFF"
-      />
+      <path d="M64 79.5L105 55 64 30.5v49z" fill="#FFFFFF" />
     </svg>
   );
 };

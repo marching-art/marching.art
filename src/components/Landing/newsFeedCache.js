@@ -1,13 +1,13 @@
 // News feed SWR cache + prefetch cache. Extracted from NewsFeed.jsx.
 // Module-level singletons that persist across mounts for instant perceived loads.
 
-export const NEWS_CACHE_TTL = 2 * 60 * 1000;        // 2 min - considered fresh
+export const NEWS_CACHE_TTL = 2 * 60 * 1000; // 2 min - considered fresh
 export const NEWS_CACHE_STALE_TTL = 30 * 60 * 1000; // 30 min - usable while revalidating
 
 export const newsCache = {
-  data: null,        // { news, engagement, hasMore }
-  timestamp: 0,      // When cache was set
-  maxItems: 0,       // Cache key - invalidate if different
+  data: null, // { news, engagement, hasMore }
+  timestamp: 0, // When cache was set
+  maxItems: 0, // Cache key - invalidate if different
 
   /**
    * Check if cache is fresh (no revalidation needed)

@@ -60,7 +60,7 @@ const Scores = () => {
   const targetSeasonId = searchParams.get('season');
   const targetTab = searchParams.get('tab');
 
-  const validTabIds = useMemo(() => TABS.map(t => t.id), []);
+  const validTabIds = useMemo(() => TABS.map((t) => t.id), []);
   const [activeTab, setActiveTab] = useState(() =>
     validTabIds.includes(targetTab) ? targetTab : 'latest'
   );
@@ -94,7 +94,7 @@ const Scores = () => {
     classFilter: 'all',
     enabledCaptions: { ge: true, vis: true, mus: true },
     // Disable auto-fallback so Latest tab starts fresh on new season
-    disableArchiveFallback: activeTab !== 'archive'
+    disableArchiveFallback: activeTab !== 'archive',
   });
 
   const handleRefresh = async () => {
@@ -107,7 +107,7 @@ const Scores = () => {
   const displayedSeasonName = useMemo(() => {
     if (isArchived && displayedSeasonId) {
       // Find the archived season name
-      const archivedSeason = archivedSeasons.find(s => s.id === displayedSeasonId);
+      const archivedSeason = archivedSeasons.find((s) => s.id === displayedSeasonId);
       if (archivedSeason?.seasonName) {
         return archivedSeason.seasonName;
       }
@@ -123,7 +123,7 @@ const Scores = () => {
 
   const userCorpsName = useMemo(() => {
     if (!profile?.corps) return null;
-    const activeCorps = Object.values(profile.corps).find(c => c?.lineup);
+    const activeCorps = Object.values(profile.corps).find((c) => c?.lineup);
     return activeCorps?.corpsName || null;
   }, [profile?.corps]);
 
@@ -189,7 +189,14 @@ const Scores = () => {
         selectSeason(currentSeasonUid);
       }
     }
-  }, [activeTab, archivedSeasons, selectedArchiveSeason, selectSeason, isArchived, currentSeasonUid]);
+  }, [
+    activeTab,
+    archivedSeasons,
+    selectedArchiveSeason,
+    selectSeason,
+    isArchived,
+    currentSeasonUid,
+  ]);
 
   // Keep the selected year in sync with the selected season (or most-recent year
   // on first load) so the Year row always highlights the right pill.
@@ -223,39 +230,41 @@ const Scores = () => {
     }
   };
 
-
   // Filter standings by class for each tab and re-rank within each class
-  const worldStandings = useMemo(() =>
-    aggregatedScores
-      .filter(s => s.corpsClass === 'worldClass')
-      .map((entry, idx) => ({ ...entry, rank: idx + 1 })),
+  const worldStandings = useMemo(
+    () =>
+      aggregatedScores
+        .filter((s) => s.corpsClass === 'worldClass')
+        .map((entry, idx) => ({ ...entry, rank: idx + 1 })),
     [aggregatedScores]
   );
 
-  const openStandings = useMemo(() =>
-    aggregatedScores
-      .filter(s => s.corpsClass === 'openClass')
-      .map((entry, idx) => ({ ...entry, rank: idx + 1 })),
+  const openStandings = useMemo(
+    () =>
+      aggregatedScores
+        .filter((s) => s.corpsClass === 'openClass')
+        .map((entry, idx) => ({ ...entry, rank: idx + 1 })),
     [aggregatedScores]
   );
 
-  const aClassStandings = useMemo(() =>
-    aggregatedScores
-      .filter(s => s.corpsClass === 'aClass')
-      .map((entry, idx) => ({ ...entry, rank: idx + 1 })),
+  const aClassStandings = useMemo(
+    () =>
+      aggregatedScores
+        .filter((s) => s.corpsClass === 'aClass')
+        .map((entry, idx) => ({ ...entry, rank: idx + 1 })),
     [aggregatedScores]
   );
 
   // Recap Shows - all shows from all classes (excluding SoundSport), used by Archive
   const recapShows = useMemo(() => {
     return unfilteredShows
-      .filter(s => s.scores && s.scores.length > 0)
-      .map(show => ({
+      .filter((s) => s.scores && s.scores.length > 0)
+      .map((show) => ({
         ...show,
         // Filter out SoundSport from the recap view, but keep all other classes
-        scores: show.scores.filter(s => s.corpsClass !== 'soundSport')
+        scores: show.scores.filter((s) => s.corpsClass !== 'soundSport'),
       }))
-      .filter(show => show.scores.length > 0);
+      .filter((show) => show.scores.length > 0);
   }, [unfilteredShows]);
 
   // Latest Recaps - most recent 10 shows for the live-season "Latest" tab
@@ -365,9 +374,7 @@ const Scores = () => {
               )}
 
               {/* SOUNDSPORT TAB */}
-              {activeTab === 'soundsport' && (
-                <SoundSportMedalList shows={unfilteredShows} />
-              )}
+              {activeTab === 'soundsport' && <SoundSportMedalList shows={unfilteredShows} />}
 
               {/* ARCHIVE TAB */}
               {activeTab === 'archive' && (
@@ -383,7 +390,8 @@ const Scores = () => {
                       </div>
                       {archivedSeasons.length > 0 && (
                         <span className="text-[10px] text-gray-500 tabular-nums">
-                          {archivedSeasons.length} season{archivedSeasons.length === 1 ? '' : 's'} · {archivedYears.length} year{archivedYears.length === 1 ? '' : 's'}
+                          {archivedSeasons.length} season{archivedSeasons.length === 1 ? '' : 's'} ·{' '}
+                          {archivedYears.length} year{archivedYears.length === 1 ? '' : 's'}
                         </span>
                       )}
                     </div>
@@ -404,7 +412,10 @@ const Scores = () => {
                               key={year}
                               role="tab"
                               aria-selected={selectedArchiveYear === year}
-                              onClick={() => { haptic('medium'); handleArchiveYearChange(year); }}
+                              onClick={() => {
+                                haptic('medium');
+                                handleArchiveYearChange(year);
+                              }}
                               className={`px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide whitespace-nowrap rounded-sm border transition-all tabular-nums ${
                                 selectedArchiveYear === year
                                   ? 'bg-yellow-500 text-black border-yellow-500'
@@ -412,7 +423,9 @@ const Scores = () => {
                               }`}
                             >
                               {year}
-                              <span className="ml-1.5 text-[9px] opacity-70">({seasons.length})</span>
+                              <span className="ml-1.5 text-[9px] opacity-70">
+                                ({seasons.length})
+                              </span>
                             </button>
                           ))}
                         </div>
@@ -432,7 +445,10 @@ const Scores = () => {
                                 key={season.id}
                                 role="tab"
                                 aria-selected={selectedArchiveSeason === season.id}
-                                onClick={() => { haptic('medium'); handleArchiveSeasonChange(season.id); }}
+                                onClick={() => {
+                                  haptic('medium');
+                                  handleArchiveSeasonChange(season.id);
+                                }}
                                 className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wide whitespace-nowrap rounded-sm border transition-all ${
                                   selectedArchiveSeason === season.id
                                     ? 'bg-yellow-500 text-black border-yellow-500'
@@ -463,7 +479,10 @@ const Scores = () => {
                         ].map((tab) => (
                           <button
                             key={tab.id}
-                            onClick={() => { haptic('light'); setArchiveViewTab(tab.id); }}
+                            onClick={() => {
+                              haptic('light');
+                              setArchiveViewTab(tab.id);
+                            }}
                             className={`px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all rounded-sm ${
                               archiveViewTab === tab.id
                                 ? 'bg-[#333] text-white'
@@ -481,8 +500,8 @@ const Scores = () => {
                   {selectedArchiveSeason && !loading && (
                     <>
                       {/* Recaps View */}
-                      {archiveViewTab === 'latest' && (
-                        recapShows.length > 0 ? (
+                      {archiveViewTab === 'latest' &&
+                        (recapShows.length > 0 ? (
                           recapShows.map((show, idx) => (
                             <RecapDataGrid
                               key={idx}
@@ -498,8 +517,7 @@ const Scores = () => {
                             <Calendar className="w-8 h-8 text-gray-600 mx-auto mb-2" />
                             <p className="text-gray-500 text-sm">No recaps found for this season</p>
                           </div>
-                        )
-                      )}
+                        ))}
 
                       {/* World Class View */}
                       {archiveViewTab === 'world' && (
@@ -539,7 +557,9 @@ const Scores = () => {
                   {!selectedArchiveSeason && archivedSeasons.length > 0 && (
                     <div className="p-8 text-center">
                       <Archive className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-                      <p className="text-gray-500 text-sm">Select a season to view historical scores</p>
+                      <p className="text-gray-500 text-sm">
+                        Select a season to view historical scores
+                      </p>
                     </div>
                   )}
                 </div>
@@ -548,7 +568,13 @@ const Scores = () => {
               {/* HALL OF CHAMPIONS TAB */}
               {activeTab === 'champions' && (
                 <div className="min-h-[calc(100vh-180px)] flex flex-col">
-                  <Suspense fallback={<div className="p-8 text-center text-gray-500 text-sm">Loading Hall of Champions...</div>}>
+                  <Suspense
+                    fallback={
+                      <div className="p-8 text-center text-gray-500 text-sm">
+                        Loading Hall of Champions...
+                      </div>
+                    }
+                  >
                     <HallOfChampions />
                   </Suspense>
                 </div>
@@ -561,15 +587,14 @@ const Scores = () => {
       {/* SELECTED SHOW MODAL (Full Recap) */}
       {selectedShow && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/80"
-            onClick={() => setSelectedShow(null)}
-          />
+          <div className="absolute inset-0 bg-black/80" onClick={() => setSelectedShow(null)} />
           <div className="relative w-full max-w-lg max-h-[80vh] bg-[#1a1a1a] border border-[#333] sm:rounded-sm overflow-hidden flex flex-col">
             {/* Modal Header */}
             <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between flex-shrink-0">
               <div>
-                <h2 className="text-sm font-bold text-white">{formatEventName(selectedShow.eventName)}</h2>
+                <h2 className="text-sm font-bold text-white">
+                  {formatEventName(selectedShow.eventName)}
+                </h2>
                 <p className="text-[10px] text-gray-500">
                   {selectedShow.location} • {selectedShow.date}
                 </p>
@@ -595,7 +620,6 @@ const Scores = () => {
           </div>
         </div>
       )}
-
     </div>
   );
 };

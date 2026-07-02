@@ -70,11 +70,7 @@ export const LeagueRecapsProvider = ({ children, seasonUid }) => {
     hasRecaps: recaps.length > 0,
   };
 
-  return (
-    <LeagueRecapsContext.Provider value={value}>
-      {children}
-    </LeagueRecapsContext.Provider>
-  );
+  return <LeagueRecapsContext.Provider value={value}>{children}</LeagueRecapsContext.Provider>;
 };
 
 /**

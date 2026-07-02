@@ -60,10 +60,10 @@ const FIREBASE_ERROR_MESSAGES: Record<string, ErrorInfo> = {
   },
   'permission-denied': {
     title: 'Access Denied',
-    message: 'You don\'t have permission to access this resource.',
+    message: "You don't have permission to access this resource.",
     recoverable: false,
   },
-  'unavailable': {
+  unavailable: {
     title: 'Service Unavailable',
     message: 'The service is temporarily unavailable. Please try again later.',
     recoverable: true,
@@ -86,26 +86,26 @@ const FIREBASE_ERROR_MESSAGES: Record<string, ErrorInfo> = {
   },
   'resource-exhausted': {
     title: 'Limit Reached',
-    message: 'You\'ve reached the limit for this action. Please try again later.',
+    message: "You've reached the limit for this action. Please try again later.",
     recoverable: true,
   },
 };
 
 // Generic network errors
 const NETWORK_ERROR_MESSAGES: Record<string, ErrorInfo> = {
-  'NetworkError': {
+  NetworkError: {
     title: 'Network Error',
     message: 'Unable to connect to the server. Please check your internet connection.',
     actionLabel: 'Retry',
     recoverable: true,
   },
-  'TimeoutError': {
+  TimeoutError: {
     title: 'Request Timeout',
     message: 'The request took too long to complete. Please try again.',
     actionLabel: 'Retry',
     recoverable: true,
   },
-  'AbortError': {
+  AbortError: {
     title: 'Request Cancelled',
     message: 'The request was cancelled. Please try again.',
     recoverable: true,
@@ -115,7 +115,8 @@ const NETWORK_ERROR_MESSAGES: Record<string, ErrorInfo> = {
 // Default error for unknown cases
 const DEFAULT_ERROR: ErrorInfo = {
   title: 'Something Went Wrong',
-  message: 'An unexpected error occurred. Please try again or contact support if the problem persists.',
+  message:
+    'An unexpected error occurred. Please try again or contact support if the problem persists.',
   actionLabel: 'Try Again',
   recoverable: true,
 };

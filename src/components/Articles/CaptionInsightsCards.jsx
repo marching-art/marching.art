@@ -53,16 +53,10 @@ function InsightCard({ type, content }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-2 mb-2">
-            <h4 className={`text-sm font-bold ${config.titleClass}`}>
-              {config.title}
-            </h4>
-            <span className="text-xs text-gray-500">
-              {config.subtitle}
-            </span>
+            <h4 className={`text-sm font-bold ${config.titleClass}`}>{config.title}</h4>
+            <span className="text-xs text-gray-500">{config.subtitle}</span>
           </div>
-          <p className="text-sm text-gray-300 leading-relaxed">
-            {content}
-          </p>
+          <p className="text-sm text-gray-300 leading-relaxed">{content}</p>
         </div>
       </div>
     </div>

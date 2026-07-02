@@ -52,9 +52,7 @@ export const OfflineBanner: React.FC<OfflineBannerProps> = ({ className = '' }) 
             <div className="container-responsive py-2 px-4">
               <div className="flex items-center justify-center gap-3">
                 <WifiOff className="w-4 h-4 text-white animate-pulse" />
-                <span className="text-sm font-semibold text-white">
-                  You're offline
-                </span>
+                <span className="text-sm font-semibold text-white">You're offline</span>
                 <span className="text-xs text-white/80 hidden sm:inline">
                   — Changes will sync when you reconnect
                 </span>
@@ -74,9 +72,7 @@ export const OfflineBanner: React.FC<OfflineBannerProps> = ({ className = '' }) 
             <div className="container-responsive py-2 px-4">
               <div className="flex items-center justify-center gap-3">
                 <Wifi className="w-4 h-4 text-white" />
-                <span className="text-sm font-semibold text-white">
-                  Back online
-                </span>
+                <span className="text-sm font-semibold text-white">Back online</span>
                 <span className="text-xs text-white/80 hidden sm:inline">
                   — Your data is syncing
                 </span>
@@ -90,9 +86,7 @@ export const OfflineBanner: React.FC<OfflineBannerProps> = ({ className = '' }) 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <AlertTriangle className="w-4 h-4 text-white" />
-                  <span className="text-sm font-semibold text-white">
-                    Slow connection detected
-                  </span>
+                  <span className="text-sm font-semibold text-white">Slow connection detected</span>
                   <span className="text-xs text-white/80 hidden sm:inline">
                     — Some features may be delayed
                   </span>
@@ -119,7 +113,9 @@ export const OfflineIndicator: React.FC<{ className?: string }> = ({ className =
   if (isOnline) return null;
 
   return (
-    <div className={`flex items-center gap-2 px-3 py-1.5 bg-red-500/20 border border-red-500/30 rounded-sm ${className}`}>
+    <div
+      className={`flex items-center gap-2 px-3 py-1.5 bg-red-500/20 border border-red-500/30 rounded-sm ${className}`}
+    >
       <WifiOff className="w-3 h-3 text-red-400" />
       <span className="text-xs text-red-400 font-mono uppercase tracking-wide">Offline</span>
     </div>

@@ -31,8 +31,10 @@ export const triggerXPFeedback = (amount: number, type: 'xp' | 'coin' = 'xp', me
 };
 
 // Convenience helpers
-export const showXPGain = (amount: number, message?: string) => triggerXPFeedback(amount, 'xp', message);
-export const showCoinGain = (amount: number, message?: string) => triggerXPFeedback(amount, 'coin', message);
+export const showXPGain = (amount: number, message?: string) =>
+  triggerXPFeedback(amount, 'xp', message);
+export const showCoinGain = (amount: number, message?: string) =>
+  triggerXPFeedback(amount, 'coin', message);
 
 // =============================================================================
 // FEEDBACK ITEM COMPONENT
@@ -50,7 +52,9 @@ const FeedbackItemComponent: React.FC<{ item: FeedbackItem; onComplete: () => vo
   const isXP = item.type === 'xp';
   const Icon = isXP ? TrendingUp : Coins;
   const colorClass = isXP ? 'text-blue-400' : 'text-yellow-400';
-  const bgClass = isXP ? 'bg-blue-500/20 border-blue-500/40' : 'bg-yellow-500/20 border-yellow-500/40';
+  const bgClass = isXP
+    ? 'bg-blue-500/20 border-blue-500/40'
+    : 'bg-yellow-500/20 border-yellow-500/40';
   const glowColor = isXP ? 'rgba(59,130,246,0.6)' : 'rgba(234,179,8,0.6)';
   const label = isXP ? 'XP' : 'CC';
 
@@ -76,9 +80,7 @@ const FeedbackItemComponent: React.FC<{ item: FeedbackItem; onComplete: () => vo
           <span className={`text-2xl font-bold ${colorClass} tabular-nums`}>
             +{item.amount.toLocaleString()} {label}
           </span>
-          {item.message && (
-            <span className="text-xs text-gray-400">{item.message}</span>
-          )}
+          {item.message && <span className="text-xs text-gray-400">{item.message}</span>}
         </div>
       </div>
     </m.div>
@@ -93,7 +95,9 @@ export const XPFeedbackContainer: React.FC = () => {
   const [items, setItems] = useState<FeedbackItem[]>([]);
 
   useEffect(() => {
-    const handleFeedback = (event: CustomEvent<{ amount: number; type: 'xp' | 'coin'; message?: string }>) => {
+    const handleFeedback = (
+      event: CustomEvent<{ amount: number; type: 'xp' | 'coin'; message?: string }>
+    ) => {
       const { amount, type, message } = event.detail;
       const newItem: FeedbackItem = {
         id: `${type}-${Date.now()}-${Math.random()}`,
@@ -115,11 +119,7 @@ export const XPFeedbackContainer: React.FC = () => {
   return (
     <AnimatePresence>
       {items.map((item) => (
-        <FeedbackItemComponent
-          key={item.id}
-          item={item}
-          onComplete={() => removeItem(item.id)}
-        />
+        <FeedbackItemComponent key={item.id} item={item} onComplete={() => removeItem(item.id)} />
       ))}
     </AnimatePresence>
   );

@@ -29,7 +29,14 @@ export default defineConfig({
         manualChunks: {
           // Split vendor chunks for better caching
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/functions', 'firebase/storage', 'firebase/analytics'],
+          'vendor-firebase': [
+            'firebase/app',
+            'firebase/auth',
+            'firebase/firestore',
+            'firebase/functions',
+            'firebase/storage',
+            'firebase/analytics',
+          ],
           // UI utilities - lightweight, loaded immediately
           'vendor-ui': ['lucide-react', 'react-hot-toast'],
           'vendor-query': ['@tanstack/react-query', 'zustand', 'date-fns'],

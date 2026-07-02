@@ -8,14 +8,14 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 
 // Modal priorities (lower number = higher priority)
 export const MODAL_PRIORITY = {
-  SEASON_SETUP: 1,      // Critical - needed to play
-  ONBOARDING: 2,        // High - first visit experience
-  CLASS_UNLOCK: 3,      // Medium - celebration
-  ACHIEVEMENT: 4,       // Medium - celebration
+  SEASON_SETUP: 1, // Critical - needed to play
+  ONBOARDING: 2, // High - first visit experience
+  CLASS_UNLOCK: 3, // Medium - celebration
+  ACHIEVEMENT: 4, // Medium - celebration
   SOUNDSPORT_WELCOME: 5, // Low - informational
 } as const;
 
-export type ModalPriority = typeof MODAL_PRIORITY[keyof typeof MODAL_PRIORITY];
+export type ModalPriority = (typeof MODAL_PRIORITY)[keyof typeof MODAL_PRIORITY];
 
 interface QueuedModal {
   id: string;
@@ -90,9 +90,12 @@ export function useModalQueue(): UseModalQueueReturn {
     setCurrentModal(null);
   }, [currentModal]);
 
-  const isActive = useCallback((id: string): boolean => {
-    return currentModal?.id === id;
-  }, [currentModal]);
+  const isActive = useCallback(
+    (id: string): boolean => {
+      return currentModal?.id === id;
+    },
+    [currentModal]
+  );
 
   const clearQueue = useCallback(() => {
     setQueue([]);

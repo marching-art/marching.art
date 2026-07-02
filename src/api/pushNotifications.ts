@@ -22,7 +22,7 @@ const INITIAL_RETRY_DELAY = 1000; // 1 second
  * Helper to delay execution
  */
 function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -46,11 +46,7 @@ function isRetryableError(error: unknown): boolean {
  * Check if push notifications are supported in this browser
  */
 export function isPushSupported(): boolean {
-  return (
-    'Notification' in window &&
-    'serviceWorker' in navigator &&
-    'PushManager' in window
-  );
+  return 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
 }
 
 /**
@@ -129,7 +125,7 @@ export async function requestPushPermission(): Promise<string | null> {
           const retryDelay = INITIAL_RETRY_DELAY * Math.pow(2, attempt);
           console.warn(
             `FCM token request failed (attempt ${attempt + 1}/${MAX_RETRIES}), ` +
-            `retrying in ${retryDelay}ms:`,
+              `retrying in ${retryDelay}ms:`,
             error instanceof Error ? error.message : error
           );
           await delay(retryDelay);
@@ -153,7 +149,7 @@ export async function requestPushPermission(): Promise<string | null> {
         // - Push subscription is corrupted
         console.warn(
           'Push service unavailable. This can happen in private browsing mode ' +
-          'or when the browser\'s push service is temporarily unavailable.'
+            "or when the browser's push service is temporarily unavailable."
         );
         return null;
       }
@@ -211,11 +207,7 @@ export async function removeFcmToken(userId: string): Promise<boolean> {
  * @param callback - Function to call when a message is received
  */
 export function onForegroundMessage(
-  callback: (payload: {
-    title?: string;
-    body?: string;
-    data?: Record<string, string>;
-  }) => void
+  callback: (payload: { title?: string; body?: string; data?: Record<string, string> }) => void
 ): (() => void) | null {
   const messagingInstance = getMessagingInstance();
   if (!messagingInstance) {

@@ -10,8 +10,13 @@ import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import type { CorpsUniformDesign, CorpsClass } from '../../types';
 import {
-  CLASS_DISPLAY, UNIFORM_STYLES, HELMET_STYLES, VENUE_OPTIONS,
-  AVATAR_STYLES, AVATAR_SECTIONS, COLOR_SUGGESTIONS,
+  CLASS_DISPLAY,
+  UNIFORM_STYLES,
+  HELMET_STYLES,
+  VENUE_OPTIONS,
+  AVATAR_STYLES,
+  AVATAR_SECTIONS,
+  COLOR_SUGGESTIONS,
   type UniformDesignModalProps,
 } from './uniformDesignOptions';
 
@@ -32,19 +37,19 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
 
   // Selected corps class
   const [selectedCorpsClass, setSelectedCorpsClass] = useState<CorpsClass>(
-    initialCorpsClass || (allCorps?.[0]?.classKey) || 'soundSport'
+    initialCorpsClass || allCorps?.[0]?.classKey || 'soundSport'
   );
 
   // Copy to other corps
   const [copyToClasses, setCopyToClasses] = useState<CorpsClass[]>([]);
 
   // Get the selected corps data
-  const selectedCorps = allCorps?.find(c => c.classKey === selectedCorpsClass);
+  const selectedCorps = allCorps?.find((c) => c.classKey === selectedCorpsClass);
   const selectedDesign = selectedCorps?.uniformDesign || currentDesign;
   const selectedCorpsName = selectedCorps?.corpsName || corpsName;
 
   // Other corps available for copying
-  const otherCorps = allCorps?.filter(c => c.classKey !== selectedCorpsClass) || [];
+  const otherCorps = allCorps?.filter((c) => c.classKey !== selectedCorpsClass) || [];
 
   const [formData, setFormData] = useState<CorpsUniformDesign>({
     primaryColor: selectedDesign?.primaryColor || '',
@@ -113,7 +118,11 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
     setError(null);
 
     try {
-      await onSubmit(formData, selectedCorpsClass, copyToClasses.length > 0 ? copyToClasses : undefined);
+      await onSubmit(
+        formData,
+        selectedCorpsClass,
+        copyToClasses.length > 0 ? copyToClasses : undefined
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save uniform design');
       setIsSaving(false);
@@ -134,7 +143,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
   const removeKeyword = (keyword: string) => {
     setFormData({
       ...formData,
-      themeKeywords: formData.themeKeywords?.filter(k => k !== keyword) || [],
+      themeKeywords: formData.themeKeywords?.filter((k) => k !== keyword) || [],
     });
   };
 
@@ -146,10 +155,8 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
   };
 
   const toggleCopyToClass = (classKey: CorpsClass) => {
-    setCopyToClasses(prev =>
-      prev.includes(classKey)
-        ? prev.filter(c => c !== classKey)
-        : [...prev, classKey]
+    setCopyToClasses((prev) =>
+      prev.includes(classKey) ? prev.filter((c) => c !== classKey) : [...prev, classKey]
     );
   };
 
@@ -187,7 +194,6 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
           {/* Body - Scrollable */}
           <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
             <div className="p-4 space-y-6 overflow-y-auto flex-1">
-
               {/* Corps Selector - Only show if multiple corps */}
               {allCorps && allCorps.length > 1 && (
                 <div className="space-y-2">
@@ -227,8 +233,8 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                     AI-Powered Imagery
                   </p>
                   <p className="text-xs text-gray-400">
-                    Your uniform design will be used by AI to generate authentic images
-                    of your corps for news articles and create a unique avatar icon.
+                    Your uniform design will be used by AI to generate authentic images of your
+                    corps for news articles and create a unique avatar icon.
                   </p>
                 </div>
               </div>
@@ -323,7 +329,12 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                     </label>
                     <select
                       value={formData.style}
-                      onChange={(e) => setFormData({ ...formData, style: e.target.value as CorpsUniformDesign['style'] })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          style: e.target.value as CorpsUniformDesign['style'],
+                        })
+                      }
                       className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white focus:outline-none focus:border-[#0057B8]"
                     >
                       {UNIFORM_STYLES.map((style) => (
@@ -341,7 +352,12 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                     </label>
                     <select
                       value={formData.helmetStyle}
-                      onChange={(e) => setFormData({ ...formData, helmetStyle: e.target.value as CorpsUniformDesign['helmetStyle'] })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          helmetStyle: e.target.value as CorpsUniformDesign['helmetStyle'],
+                        })
+                      }
                       className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white focus:outline-none focus:border-[#0057B8]"
                     >
                       {HELMET_STYLES.map((style) => (
@@ -363,7 +379,9 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                       type="text"
                       placeholder="e.g., tall white horsehair plume, flame-shaped red feathers"
                       value={formData.plumeDescription || ''}
-                      onChange={(e) => setFormData({ ...formData, plumeDescription: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, plumeDescription: e.target.value })
+                      }
                       maxLength={100}
                       className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
                     />
@@ -374,7 +392,10 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
               {/* SECTION: Section Details */}
               <div className="space-y-4">
                 <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-[#333] pb-1">
-                  Section Details <span className="text-gray-600 font-normal">(Optional - AI will generate if blank)</span>
+                  Section Details{' '}
+                  <span className="text-gray-600 font-normal">
+                    (Optional - AI will generate if blank)
+                  </span>
                 </h3>
 
                 {/* Brass */}
@@ -401,7 +422,9 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                     type="text"
                     placeholder="e.g., red drums with gold tribal graphics, black hardware"
                     value={formData.percussionDescription || ''}
-                    onChange={(e) => setFormData({ ...formData, percussionDescription: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, percussionDescription: e.target.value })
+                    }
                     maxLength={150}
                     className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
                   />
@@ -454,7 +477,9 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                       type="text"
                       placeholder="e.g., high-energy explosive, elegant and refined"
                       value={formData.performanceStyle || ''}
-                      onChange={(e) => setFormData({ ...formData, performanceStyle: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, performanceStyle: e.target.value })
+                      }
                       maxLength={50}
                       className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
                     />
@@ -504,7 +529,8 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                     </div>
                   )}
                   <p className="text-[10px] text-gray-600 mt-1">
-                    Keywords help AI match your corps to appropriate imagery (e.g., fire, ice, power, ancient)
+                    Keywords help AI match your corps to appropriate imagery (e.g., fire, ice,
+                    power, ancient)
                   </p>
                 </div>
 
@@ -521,9 +547,10 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                         onClick={() => setFormData({ ...formData, venuePreference: option.value })}
                         className={`
                           px-4 py-2 text-xs font-bold uppercase tracking-wider border rounded-sm
-                          ${formData.venuePreference === option.value
-                            ? 'bg-[#0057B8] border-[#0057B8] text-white'
-                            : 'bg-[#0a0a0a] border-[#333] text-gray-400 hover:border-[#0057B8] hover:text-white'
+                          ${
+                            formData.venuePreference === option.value
+                              ? 'bg-[#0057B8] border-[#0057B8] text-white'
+                              : 'bg-[#0a0a0a] border-[#333] text-gray-400 hover:border-[#0057B8] hover:text-white'
                           }
                         `}
                       >
@@ -562,7 +589,12 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                             name="avatarStyle"
                             value={style.value}
                             checked={formData.avatarStyle === style.value}
-                            onChange={(e) => setFormData({ ...formData, avatarStyle: e.target.value as 'logo' | 'performer' })}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                avatarStyle: e.target.value as 'logo' | 'performer',
+                              })
+                            }
                             className="w-4 h-4 accent-[#0057B8]"
                           />
                           <div>
@@ -595,7 +627,13 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                               name="avatarSection"
                               value={section.value}
                               checked={formData.avatarSection === section.value}
-                              onChange={(e) => setFormData({ ...formData, avatarSection: e.target.value as 'drumMajor' | 'hornline' | 'drumline' | 'colorGuard' })}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  avatarSection: e.target.value as
+                                    'drumMajor' | 'hornline' | 'drumline' | 'colorGuard',
+                                })
+                              }
                               className="w-4 h-4 accent-[#0057B8]"
                             />
                             <div>
@@ -610,7 +648,8 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                 </div>
 
                 <p className="text-[10px] text-gray-500">
-                  Your avatar will be automatically generated when you save. Change the style or section to generate a new avatar.
+                  Your avatar will be automatically generated when you save. Change the style or
+                  section to generate a new avatar.
                 </p>
               </div>
 
@@ -658,7 +697,9 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                         />
                         <div className="flex-1">
                           <span className="text-sm text-white">{corps.corpsName}</span>
-                          <span className={`ml-2 text-[10px] ${CLASS_DISPLAY[corps.classKey].color}`}>
+                          <span
+                            className={`ml-2 text-[10px] ${CLASS_DISPLAY[corps.classKey].color}`}
+                          >
                             {CLASS_DISPLAY[corps.classKey].name}
                           </span>
                         </div>
@@ -670,7 +711,8 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                   </div>
                   {copyToClasses.length > 0 && (
                     <p className="text-[10px] text-yellow-500">
-                      This will overwrite existing designs for {copyToClasses.length} ensemble{copyToClasses.length > 1 ? 's' : ''}.
+                      This will overwrite existing designs for {copyToClasses.length} ensemble
+                      {copyToClasses.length > 1 ? 's' : ''}.
                     </p>
                   )}
                 </div>
@@ -686,9 +728,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
 
             {/* Footer */}
             <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-between gap-2 flex-shrink-0">
-              <p className="text-[10px] text-gray-600 self-center">
-                * Required fields
-              </p>
+              <p className="text-[10px] text-gray-600 self-center">* Required fields</p>
               <div className="flex gap-2">
                 <button
                   type="button"

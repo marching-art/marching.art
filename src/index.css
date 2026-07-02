@@ -12,7 +12,7 @@
   --bg-app: #0a0a0a;
   --bg-panel: #1a1a1a;
   --border-subtle: #333333;
-  --espn-blue: #0057B8;
+  --espn-blue: #0057b8;
 
   /* Touch & Interaction */
   --touch-target-min: 44px;
@@ -57,7 +57,9 @@
   }
 
   /* Prevent iOS zoom on input focus - minimum 16px font */
-  input, select, textarea {
+  input,
+  select,
+  textarea {
     font-size: 16px;
   }
 
@@ -65,26 +67,32 @@
   /* gray-600 (#4B5563) has ~3.2:1 contrast on #0a0a0a - fails AA */
   /* gray-400 (#9CA3AF) has ~5.4:1 contrast on #0a0a0a - passes AA */
   ::placeholder {
-    color: #9CA3AF !important;
+    color: #9ca3af !important;
     opacity: 1;
   }
 
   ::-webkit-input-placeholder {
-    color: #9CA3AF !important;
+    color: #9ca3af !important;
     opacity: 1;
   }
 
   ::-moz-placeholder {
-    color: #9CA3AF !important;
+    color: #9ca3af !important;
     opacity: 1;
   }
 
   :-ms-input-placeholder {
-    color: #9CA3AF !important;
+    color: #9ca3af !important;
   }
 
   /* All interactive elements get touch optimization */
-  a, button, [role="button"], input, select, textarea, [tabindex]:not([tabindex="-1"]) {
+  a,
+  button,
+  [role='button'],
+  input,
+  select,
+  textarea,
+  [tabindex]:not([tabindex='-1']) {
     touch-action: manipulation;
   }
 
@@ -179,8 +187,9 @@
 
   /* Press feedback - haptic-like visual response */
   .press-feedback {
-    transition: transform 150ms cubic-bezier(0.25, 0.1, 0.25, 1.0),
-                opacity 150ms cubic-bezier(0.25, 0.1, 0.25, 1.0);
+    transition:
+      transform 150ms cubic-bezier(0.25, 0.1, 0.25, 1),
+      opacity 150ms cubic-bezier(0.25, 0.1, 0.25, 1);
     will-change: transform;
   }
 
@@ -191,8 +200,9 @@
 
   /* Stronger press feedback for primary actions */
   .press-feedback-strong {
-    transition: transform 150ms cubic-bezier(0.25, 0.1, 0.25, 1.0),
-                background-color 150ms ease-out;
+    transition:
+      transform 150ms cubic-bezier(0.25, 0.1, 0.25, 1),
+      background-color 150ms ease-out;
     will-change: transform;
   }
 
@@ -202,20 +212,19 @@
 
   /* Skeleton loader for content placeholders */
   .skeleton {
-    background: linear-gradient(
-      90deg,
-      #1a1a1a 0%,
-      #2a2a2a 50%,
-      #1a1a1a 100%
-    );
+    background: linear-gradient(90deg, #1a1a1a 0%, #2a2a2a 50%, #1a1a1a 100%);
     background-size: 200% 100%;
     animation: skeleton-shimmer 1.5s infinite;
     border-radius: 4px;
   }
 
   @keyframes skeleton-shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
   }
 
   /* Loading pulse for smaller elements */
@@ -225,8 +234,13 @@
   }
 
   @keyframes skeleton-pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
   }
 }
 

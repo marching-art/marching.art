@@ -11,13 +11,27 @@ import { getCaptionLabel } from '../../utils/captionUtils';
 const INDIVIDUAL_CAPTIONS = ['GE1', 'GE2', 'VP', 'VA', 'CG', 'B', 'MA', 'P'];
 
 const AGGREGATE_TABS = [
-  { id: 'total', label: 'Total Score', calculate: (c) =>
-    // GE contributes directly, Visual and Music are divided by 2
-    (c.GE1 || 0) + (c.GE2 || 0) + ((c.VP || 0) + (c.VA || 0) + (c.CG || 0)) / 2 + ((c.B || 0) + (c.MA || 0) + (c.P || 0)) / 2
+  {
+    id: 'total',
+    label: 'Total Score',
+    calculate: (c) =>
+      // GE contributes directly, Visual and Music are divided by 2
+      (c.GE1 || 0) +
+      (c.GE2 || 0) +
+      ((c.VP || 0) + (c.VA || 0) + (c.CG || 0)) / 2 +
+      ((c.B || 0) + (c.MA || 0) + (c.P || 0)) / 2,
   },
   { id: 'ge_total', label: 'Total GE', calculate: (c) => (c.GE1 || 0) + (c.GE2 || 0) },
-  { id: 'music_total', label: 'Total Music', calculate: (c) => ((c.B || 0) + (c.MA || 0) + (c.P || 0)) / 2 },
-  { id: 'visual_total', label: 'Total Visual', calculate: (c) => ((c.VP || 0) + (c.VA || 0) + (c.CG || 0)) / 2 },
+  {
+    id: 'music_total',
+    label: 'Total Music',
+    calculate: (c) => ((c.B || 0) + (c.MA || 0) + (c.P || 0)) / 2,
+  },
+  {
+    id: 'visual_total',
+    label: 'Total Visual',
+    calculate: (c) => ((c.VP || 0) + (c.VA || 0) + (c.CG || 0)) / 2,
+  },
 ];
 
 /**
@@ -92,7 +106,7 @@ const ScoresSpreadsheet = () => {
         setCorpsValues(sortedCorps);
 
         // 3. Get unique years to fetch
-        const yearsToFetch = [...new Set(corps.map(c => c.sourceYear))];
+        const yearsToFetch = [...new Set(corps.map((c) => c.sourceYear))];
 
         // 4. Fetch historical scores for each year
         const historical = await getHistoricalScoresMap(yearsToFetch);
@@ -119,14 +133,14 @@ const ScoresSpreadsheet = () => {
   const allDates = useMemo(() => {
     const datesMap = new Map();
 
-    Object.values(historicalData).forEach(yearData => {
-      yearData.forEach(event => {
+    Object.values(historicalData).forEach((yearData) => {
+      yearData.forEach((event) => {
         if (event.offSeasonDay && !datesMap.has(event.offSeasonDay)) {
           datesMap.set(event.offSeasonDay, {
             day: event.offSeasonDay,
             // Calculate the formatted fantasy date based on season start date
             dateLabel: getFantasyDateFormatted(seasonStartDate, event.offSeasonDay),
-            eventName: event.eventName
+            eventName: event.eventName,
           });
         }
       });
@@ -141,7 +155,7 @@ const ScoresSpreadsheet = () => {
     const yearData = historicalData[sourceYear] || [];
     for (const event of yearData) {
       if (event.offSeasonDay === day) {
-        const scoreData = event.scores?.find(s => s.corps === corpsName);
+        const scoreData = event.scores?.find((s) => s.corps === corpsName);
         if (scoreData && scoreData.captions) {
           return scoreData.captions[caption] || null;
         }
@@ -155,7 +169,7 @@ const ScoresSpreadsheet = () => {
     const yearData = historicalData[sourceYear] || [];
     for (const event of yearData) {
       if (event.offSeasonDay === day) {
-        const scoreData = event.scores?.find(s => s.corps === corpsName);
+        const scoreData = event.scores?.find((s) => s.corps === corpsName);
         if (scoreData && scoreData.captions) {
           return calculateFn(scoreData.captions);
         }
@@ -169,14 +183,19 @@ const ScoresSpreadsheet = () => {
     if (INDIVIDUAL_CAPTIONS.includes(activeTab)) {
       return 20; // Individual captions max at 20
     }
-    const aggTab = AGGREGATE_TABS.find(t => t.id === activeTab);
+    const aggTab = AGGREGATE_TABS.find((t) => t.id === activeTab);
     if (aggTab) {
       switch (aggTab.id) {
-        case 'total': return 100; // GE(40) + Visual(30)/2 + Music(30)/2 = 100
-        case 'ge_total': return 40; // 2 captions * 20
-        case 'music_total': return 30; // (3 captions * 20) / 2
-        case 'visual_total': return 30; // (3 captions * 20) / 2
-        default: return 20;
+        case 'total':
+          return 100; // GE(40) + Visual(30)/2 + Music(30)/2 = 100
+        case 'ge_total':
+          return 40; // 2 captions * 20
+        case 'music_total':
+          return 30; // (3 captions * 20) / 2
+        case 'visual_total':
+          return 30; // (3 captions * 20) / 2
+        default:
+          return 20;
       }
     }
     return 20;
@@ -201,17 +220,22 @@ const ScoresSpreadsheet = () => {
 
   // Export to CSV
   const handleExportCSV = () => {
-    const headers = ['Corps Name', 'Points', 'Source Year', ...allDates.map(d => d.dateLabel)];
+    const headers = ['Corps Name', 'Points', 'Source Year', ...allDates.map((d) => d.dateLabel)];
 
-    const rows = corpsValues.map(corps => {
-      const scores = allDates.map(dateInfo => {
+    const rows = corpsValues.map((corps) => {
+      const scores = allDates.map((dateInfo) => {
         if (INDIVIDUAL_CAPTIONS.includes(activeTab)) {
           const score = getScore(corps.corpsName, corps.sourceYear, dateInfo.day, activeTab);
           return score !== null ? score.toFixed(3) : '';
         } else {
-          const aggTab = AGGREGATE_TABS.find(t => t.id === activeTab);
+          const aggTab = AGGREGATE_TABS.find((t) => t.id === activeTab);
           if (aggTab) {
-            const score = getAggregateScore(corps.corpsName, corps.sourceYear, dateInfo.day, aggTab.calculate);
+            const score = getAggregateScore(
+              corps.corpsName,
+              corps.sourceYear,
+              dateInfo.day,
+              aggTab.calculate
+            );
             return score !== null ? score.toFixed(3) : '';
           }
         }
@@ -220,7 +244,7 @@ const ScoresSpreadsheet = () => {
       return [corps.corpsName, corps.points, corps.sourceYear, ...scores];
     });
 
-    const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n');
+    const csvContent = [headers, ...rows].map((row) => row.join(',')).join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -275,7 +299,7 @@ const ScoresSpreadsheet = () => {
       {/* Tab Navigation */}
       <div className="flex flex-wrap gap-0.5 p-0.5 bg-charcoal-900/50 rounded-sm">
         {/* Individual Caption Tabs */}
-        {INDIVIDUAL_CAPTIONS.map(caption => (
+        {INDIVIDUAL_CAPTIONS.map((caption) => (
           <button
             key={caption}
             onClick={() => setActiveTab(caption)}
@@ -293,7 +317,7 @@ const ScoresSpreadsheet = () => {
         <div className="w-px bg-white/20 mx-0.5" />
 
         {/* Aggregate Tabs */}
-        {AGGREGATE_TABS.map(tab => (
+        {AGGREGATE_TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
@@ -322,7 +346,8 @@ const ScoresSpreadsheet = () => {
           <ChevronLeft className="w-4 h-4" />
         </button>
         <span className="text-[10px] text-gray-500 font-mono">
-          Showing days {scrollPosition + 1}-{Math.min(scrollPosition + VISIBLE_COLUMNS, allDates.length)} of {allDates.length}
+          Showing days {scrollPosition + 1}-
+          {Math.min(scrollPosition + VISIBLE_COLUMNS, allDates.length)} of {allDates.length}
         </span>
         <button
           onClick={handleScrollRight}
@@ -346,8 +371,7 @@ const ScoresSpreadsheet = () => {
               <th className="sticky left-0 z-10 bg-charcoal-900 px-1 py-1 text-left font-mono text-yellow-400 border-r border-white/20 w-[90px]">
                 {INDIVIDUAL_CAPTIONS.includes(activeTab)
                   ? getCaptionLabel(activeTab)
-                  : AGGREGATE_TABS.find(t => t.id === activeTab)?.label || activeTab
-                }
+                  : AGGREGATE_TABS.find((t) => t.id === activeTab)?.label || activeTab}
               </th>
               <th className="sticky left-[90px] z-10 bg-charcoal-900 px-0.5 py-1 text-center font-mono text-yellow-400 border-r border-white/20 w-6">
                 Pts
@@ -358,7 +382,9 @@ const ScoresSpreadsheet = () => {
                   className="px-0 py-1.5 text-center font-mono text-gray-400 w-[38px] border-r border-white/10"
                   title={`${dateInfo.eventName} (Day ${dateInfo.day})`}
                 >
-                  <div className="text-[10px] text-gray-500/70 leading-none">{dateInfo.dateLabel}</div>
+                  <div className="text-[10px] text-gray-500/70 leading-none">
+                    {dateInfo.dateLabel}
+                  </div>
                 </th>
               ))}
             </tr>
@@ -375,22 +401,28 @@ const ScoresSpreadsheet = () => {
               >
                 {/* Corps Name - Sticky */}
                 <td className="sticky left-0 z-10 bg-charcoal-900/95 px-1 py-1.5 border-r border-white/20 w-[90px] max-w-[90px]">
-                  <div className="font-medium text-white text-[11px] truncate leading-tight" title={`${corps.corpsName} (${corps.sourceYear})`}>
+                  <div
+                    className="font-medium text-white text-[11px] truncate leading-tight"
+                    title={`${corps.corpsName} (${corps.sourceYear})`}
+                  >
                     {corps.corpsName}
                   </div>
-                  <div className="text-[9px] text-gray-500/50 leading-none">
-                    {corps.sourceYear}
-                  </div>
+                  <div className="text-[9px] text-gray-500/50 leading-none">{corps.sourceYear}</div>
                 </td>
 
                 {/* Points - Sticky */}
                 <td className="sticky left-[90px] z-10 bg-charcoal-900/95 px-0.5 py-1.5 text-center border-r border-white/20 w-6">
-                  <span className={`font-mono text-[11px] font-bold ${
-                    corps.points >= 20 ? 'text-yellow-400' :
-                    corps.points >= 15 ? 'text-gray-200' :
-                    corps.points >= 10 ? 'text-gray-400' :
-                    'text-gray-500'
-                  }`}>
+                  <span
+                    className={`font-mono text-[11px] font-bold ${
+                      corps.points >= 20
+                        ? 'text-yellow-400'
+                        : corps.points >= 15
+                          ? 'text-gray-200'
+                          : corps.points >= 10
+                            ? 'text-gray-400'
+                            : 'text-gray-500'
+                    }`}
+                  >
                     {corps.points}
                   </span>
                 </td>
@@ -401,9 +433,14 @@ const ScoresSpreadsheet = () => {
                   if (INDIVIDUAL_CAPTIONS.includes(activeTab)) {
                     score = getScore(corps.corpsName, corps.sourceYear, dateInfo.day, activeTab);
                   } else {
-                    const aggTab = AGGREGATE_TABS.find(t => t.id === activeTab);
+                    const aggTab = AGGREGATE_TABS.find((t) => t.id === activeTab);
                     if (aggTab) {
-                      score = getAggregateScore(corps.corpsName, corps.sourceYear, dateInfo.day, aggTab.calculate);
+                      score = getAggregateScore(
+                        corps.corpsName,
+                        corps.sourceYear,
+                        dateInfo.day,
+                        aggTab.calculate
+                      );
                     }
                   }
 
@@ -416,7 +453,9 @@ const ScoresSpreadsheet = () => {
                       className={`px-0 py-1.5 text-center font-mono text-[11px] w-[38px] border-r border-white/5 ${bgColor}`}
                     >
                       {score !== null ? (
-                        <span className={`${score >= maxScore * 0.85 ? 'text-green-400' : 'text-gray-300'}`}>
+                        <span
+                          className={`${score >= maxScore * 0.85 ? 'text-green-400' : 'text-gray-300'}`}
+                        >
                           {score.toFixed(3)}
                         </span>
                       ) : (

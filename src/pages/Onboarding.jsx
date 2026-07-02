@@ -4,9 +4,21 @@ import React, { useState, useEffect, startTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
 import {
-  User, Flag, ArrowRight, Check, ArrowLeft,
-  Star, Zap, Music, ChevronRight, Sparkles,
-  PartyPopper, AtSign, Loader2, CheckCircle2, XCircle
+  User,
+  Flag,
+  ArrowRight,
+  Check,
+  ArrowLeft,
+  Star,
+  Zap,
+  Music,
+  ChevronRight,
+  Sparkles,
+  PartyPopper,
+  AtSign,
+  Loader2,
+  CheckCircle2,
+  XCircle,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useBodyScroll } from '../hooks/useBodyScroll';
@@ -19,7 +31,6 @@ import { useScheduleStore } from '../store/scheduleStore';
 import { autoFillLineup } from '../utils/lineupAutoFill';
 import { CAPTIONS, SOUNDSPORT_POINT_LIMIT, STEPS, GAME_FEATURES } from './onboardingConstants';
 import { GuidedCaptionSelection } from './OnboardingParts';
-
 
 const Onboarding = () => {
   useBodyScroll();
@@ -39,7 +50,11 @@ const Onboarding = () => {
   const [showCelebration, setShowCelebration] = useState(false);
 
   // Username validation state
-  const [usernameStatus, setUsernameStatus] = useState({ checking: false, valid: null, message: '' });
+  const [usernameStatus, setUsernameStatus] = useState({
+    checking: false,
+    valid: null,
+    message: '',
+  });
   const usernameCheckTimeout = React.useRef(null);
 
   // Global stores for schedule data
@@ -66,7 +81,7 @@ const Onboarding = () => {
         // Corps values for lineup selection live in dci-data/{seasonUid}.
         const corpsValues = await getCorpsValues(season.seasonUid);
         if (corpsValues.length) {
-          const corps = corpsValues.filter(c => (c.points || 0) <= 50);
+          const corps = corpsValues.filter((c) => (c.points || 0) <= 50);
           setAvailableCorps(corps);
         } else {
           console.error(`[Onboarding] dci-data/${season.seasonUid} not found or empty`);
@@ -96,15 +111,27 @@ const Onboarding = () => {
 
     // Basic format validation (3-15 chars, alphanumeric + underscore)
     if (username.length < 3) {
-      setUsernameStatus({ checking: false, valid: false, message: 'Username must be at least 3 characters' });
+      setUsernameStatus({
+        checking: false,
+        valid: false,
+        message: 'Username must be at least 3 characters',
+      });
       return;
     }
     if (username.length > 15) {
-      setUsernameStatus({ checking: false, valid: false, message: 'Username must be 15 characters or less' });
+      setUsernameStatus({
+        checking: false,
+        valid: false,
+        message: 'Username must be 15 characters or less',
+      });
       return;
     }
     if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      setUsernameStatus({ checking: false, valid: false, message: 'Only letters, numbers, and underscores allowed' });
+      setUsernameStatus({
+        checking: false,
+        valid: false,
+        message: 'Only letters, numbers, and underscores allowed',
+      });
       return;
     }
 
@@ -118,11 +145,19 @@ const Onboarding = () => {
         setUsernameStatus({ checking: false, valid: true, message: 'Username is available!' });
       } catch (error) {
         if (error.code === 'functions/already-exists') {
-          setUsernameStatus({ checking: false, valid: false, message: 'This username is already taken' });
+          setUsernameStatus({
+            checking: false,
+            valid: false,
+            message: 'This username is already taken',
+          });
         } else if (error.code === 'functions/invalid-argument') {
           setUsernameStatus({ checking: false, valid: false, message: error.message });
         } else {
-          setUsernameStatus({ checking: false, valid: false, message: 'Could not verify username' });
+          setUsernameStatus({
+            checking: false,
+            valid: false,
+            message: 'Could not verify username',
+          });
         }
       }
     }, 500);
@@ -217,18 +252,18 @@ const Onboarding = () => {
               readiness: 0.75,
               morale: 0.85,
               equipment: {
-                instruments: 0.90,
-                uniforms: 0.90,
-                props: 0.85
-              }
-            }
-          }
+                instruments: 0.9,
+                uniforms: 0.9,
+                props: 0.85,
+              },
+            },
+          },
         },
         dailyOps: {},
         lastRehearsal: null,
         // Mark as first visit for dashboard tooltips
         isFirstVisit: true,
-        onboardingCompletedAt: new Date().toISOString()
+        onboardingCompletedAt: new Date().toISOString(),
       });
 
       // Auto-register for current week's shows
@@ -241,13 +276,16 @@ const Onboarding = () => {
 
       // Show celebration before navigating
       setShowCelebration(true);
-
     } catch (error) {
       console.error('Error creating profile:', error);
       if (error?.code === 'functions/already-exists') {
         // Username was claimed between the availability check and submit.
         toast.error('That username was just taken. Please choose another.');
-        setUsernameStatus({ checking: false, valid: false, message: 'This username is already taken' });
+        setUsernameStatus({
+          checking: false,
+          valid: false,
+          message: 'This username is already taken',
+        });
         setStep(1);
       } else {
         toast.error('Failed to create profile. Please try again.');
@@ -273,11 +311,11 @@ const Onboarding = () => {
       }
 
       // Map to the format expected by the backend
-      const currentWeekShows = weekShows.map(show => ({
+      const currentWeekShows = weekShows.map((show) => ({
         eventName: show.eventName,
         date: show.date,
         location: show.location,
-        day: show.day
+        day: show.day,
       }));
 
       // Register for up to 4 shows
@@ -287,7 +325,7 @@ const Onboarding = () => {
         await selectUserShows({
           week: currentWeek,
           shows: showsToRegister,
-          corpsClass: corpsClass
+          corpsClass: corpsClass,
         });
       }
     } catch (error) {
@@ -319,17 +357,21 @@ const Onboarding = () => {
                   <React.Fragment key={s.number}>
                     <div className={`flex items-center gap-2 ${idx > 0 ? 'flex-1' : ''}`}>
                       {idx > 0 && (
-                        <div className={`flex-1 h-1 mx-2 rounded-full ${
-                          step > idx ? 'bg-[#0057B8]' : 'bg-charcoal-700'
-                        }`} />
+                        <div
+                          className={`flex-1 h-1 mx-2 rounded-full ${
+                            step > idx ? 'bg-[#0057B8]' : 'bg-charcoal-700'
+                          }`}
+                        />
                       )}
-                      <div className={`flex items-center justify-center w-10 h-10 rounded-full transition-all ${
-                        step === s.number
-                          ? 'bg-[#0057B8] text-white'
-                          : step > s.number
-                          ? 'bg-green-500 text-white'
-                          : 'bg-charcoal-700 text-gray-400'
-                      }`}>
+                      <div
+                        className={`flex items-center justify-center w-10 h-10 rounded-full transition-all ${
+                          step === s.number
+                            ? 'bg-[#0057B8] text-white'
+                            : step > s.number
+                              ? 'bg-green-500 text-white'
+                              : 'bg-charcoal-700 text-gray-400'
+                        }`}
+                      >
                         {step > s.number ? (
                           <Check className="w-5 h-5" />
                         ) : (
@@ -342,7 +384,10 @@ const Onboarding = () => {
               </div>
               <div className="flex justify-between text-xs text-gray-500">
                 {STEPS.map((s) => (
-                  <span key={s.number} className={step === s.number ? 'text-[#0057B8] font-semibold' : ''}>
+                  <span
+                    key={s.number}
+                    className={step === s.number ? 'text-[#0057B8] font-semibold' : ''}
+                  >
                     {s.title}
                   </span>
                 ))}
@@ -368,9 +413,7 @@ const Onboarding = () => {
                       <h2 className="text-2xl font-bold text-white mb-2">
                         Welcome to marching.art!
                       </h2>
-                      <p className="text-gray-400 text-sm">
-                        Fantasy drum corps gaming
-                      </p>
+                      <p className="text-gray-400 text-sm">Fantasy drum corps gaming</p>
                     </div>
 
                     <div className="space-y-2">
@@ -406,7 +449,9 @@ const Onboarding = () => {
                           autoComplete="name"
                           placeholder="e.g., George Zingali"
                           value={formData.displayName}
-                          onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+                          onChange={(e) =>
+                            setFormData({ ...formData, displayName: e.target.value })
+                          }
                           maxLength={50}
                           autoFocus
                         />
@@ -421,8 +466,11 @@ const Onboarding = () => {
                           <input
                             type="text"
                             className={`w-full h-12 px-4 bg-[#0a0a0a] border border-[#333] rounded-sm text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] pr-10 ${
-                              usernameStatus.valid === true ? 'border-green-500/50 focus:border-green-500' :
-                              usernameStatus.valid === false ? 'border-red-500/50 focus:border-red-500' : ''
+                              usernameStatus.valid === true
+                                ? 'border-green-500/50 focus:border-green-500'
+                                : usernameStatus.valid === false
+                                  ? 'border-red-500/50 focus:border-red-500'
+                                  : ''
                             }`}
                             name="username"
                             autoComplete="username"
@@ -444,10 +492,15 @@ const Onboarding = () => {
                           </div>
                         </div>
                         {usernameStatus.message && (
-                          <p className={`text-xs mt-1 ${
-                            usernameStatus.valid === true ? 'text-green-400' :
-                            usernameStatus.valid === false ? 'text-red-400' : 'text-gray-400'
-                          }`}>
+                          <p
+                            className={`text-xs mt-1 ${
+                              usernameStatus.valid === true
+                                ? 'text-green-400'
+                                : usernameStatus.valid === false
+                                  ? 'text-red-400'
+                                  : 'text-gray-400'
+                            }`}
+                          >
                             {usernameStatus.message}
                           </p>
                         )}
@@ -481,16 +534,14 @@ const Onboarding = () => {
                       <div className="inline-flex items-center justify-center w-16 h-16 bg-[#0057B8]/20 rounded-sm mb-4">
                         <Flag className="w-8 h-8 text-[#0057B8]" />
                       </div>
-                      <h2 className="text-2xl font-bold text-white mb-2">
-                        Create Your Corps
-                      </h2>
-                      <p className="text-gray-400 text-sm">
-                        Name your first fantasy drum corps
-                      </p>
+                      <h2 className="text-2xl font-bold text-white mb-2">Create Your Corps</h2>
+                      <p className="text-gray-400 text-sm">Name your first fantasy drum corps</p>
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Corps Name *</label>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                        Corps Name *
+                      </label>
                       <input
                         type="text"
                         className="w-full h-12 px-4 bg-[#0a0a0a] border border-[#333] rounded-sm text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
@@ -541,9 +592,7 @@ const Onboarding = () => {
                       <div className="inline-flex items-center justify-center w-14 h-14 bg-[#0057B8]/20 rounded-sm mb-3">
                         <Music className="w-7 h-7 text-[#0057B8]" />
                       </div>
-                      <h2 className="text-xl font-bold text-white mb-1">
-                        Build Your Lineup
-                      </h2>
+                      <h2 className="text-xl font-bold text-white mb-1">Build Your Lineup</h2>
                       <p className="text-gray-400 text-xs">
                         Draft a corps for each caption • Budget: {SOUNDSPORT_POINT_LIMIT} points
                       </p>
@@ -570,7 +619,9 @@ const Onboarding = () => {
                     <div className="p-3 rounded-sm bg-charcoal-800/70 border border-charcoal-700">
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-400">Lineup Progress</span>
-                        <span className={`text-sm font-bold ${isLineupComplete ? 'text-green-400' : 'text-yellow-400'}`}>
+                        <span
+                          className={`text-sm font-bold ${isLineupComplete ? 'text-green-400' : 'text-yellow-400'}`}
+                        >
                           {Object.keys(lineup).length}/8 selected
                         </span>
                       </div>
@@ -605,7 +656,10 @@ const Onboarding = () => {
                 <button
                   onClick={handleNext}
                   disabled={
-                    (step === 1 && (!formData.displayName.trim() || !formData.username.trim() || usernameStatus.valid !== true)) ||
+                    (step === 1 &&
+                      (!formData.displayName.trim() ||
+                        !formData.username.trim() ||
+                        usernameStatus.valid !== true)) ||
                     (step === 2 && !formData.corpsName.trim())
                   }
                   className="flex-1 px-6 py-3 bg-[#0057B8] text-white rounded-sm hover:bg-[#0066d6] transition-colors font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
@@ -688,7 +742,7 @@ const Onboarding = () => {
               <m.div
                 animate={{
                   scale: [1, 1.2, 1],
-                  rotate: [0, 10, -10, 0]
+                  rotate: [0, 10, -10, 0],
                 }}
                 transition={{ duration: 0.5, repeat: 2 }}
                 className="inline-block mb-6"
@@ -742,19 +796,19 @@ const Onboarding = () => {
                   style={{
                     background: ['#FACC15', '#22C55E', '#3B82F6', '#A855F7', '#EF4444'][i % 5],
                     left: `${Math.random() * 100}%`,
-                    top: '-20px'
+                    top: '-20px',
                   }}
                   initial={{ y: -20, opacity: 1, rotate: 0 }}
                   animate={{
                     y: typeof window !== 'undefined' ? window.innerHeight + 100 : 800,
                     opacity: 0,
                     rotate: Math.random() * 720 - 360,
-                    x: (Math.random() - 0.5) * 200
+                    x: (Math.random() - 0.5) * 200,
                   }}
                   transition={{
                     duration: 2 + Math.random() * 2,
                     delay: Math.random() * 0.5,
-                    ease: "easeOut"
+                    ease: 'easeOut',
                   }}
                 />
               ))}

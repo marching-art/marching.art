@@ -4,9 +4,22 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import {
-  Flame, Trophy, TrendingUp, TrendingDown, Target, Award,
-  Zap, Crown, Star, Medal, BarChart3, ChevronRight, Sparkles,
-  MessageCircle, AlertTriangle, Swords,
+  Flame,
+  Trophy,
+  TrendingUp,
+  TrendingDown,
+  Target,
+  Award,
+  Zap,
+  Crown,
+  Star,
+  Medal,
+  BarChart3,
+  ChevronRight,
+  Sparkles,
+  MessageCircle,
+  AlertTriangle,
+  Swords,
 } from 'lucide-react';
 import { getLeagueWeekRecap, getLeagueRivalries } from '../../../api/leagues';
 
@@ -16,32 +29,38 @@ const LeagueStatsOverview = ({ standings, memberProfiles, leagueStats, currentWe
     if (!standings || standings.length === 0) return null;
 
     const totalGames = standings.reduce((sum, s) => sum + s.wins + s.losses, 0) / 2;
-    const avgWins = standings.length > 0
-      ? (standings.reduce((sum, s) => sum + s.wins, 0) / standings.length).toFixed(1)
-      : 0;
-    const avgPoints = standings.length > 0
-      ? (standings.reduce((sum, s) => sum + (s.totalPoints || 0), 0) / standings.length).toFixed(1)
-      : 0;
+    const avgWins =
+      standings.length > 0
+        ? (standings.reduce((sum, s) => sum + s.wins, 0) / standings.length).toFixed(1)
+        : 0;
+    const avgPoints =
+      standings.length > 0
+        ? (standings.reduce((sum, s) => sum + (s.totalPoints || 0), 0) / standings.length).toFixed(
+            1
+          )
+        : 0;
 
     // Find highest scorer
-    const highestScorer = standings.reduce((prev, curr) =>
-      (curr.totalPoints || 0) > (prev.totalPoints || 0) ? curr : prev
-    , standings[0]);
+    const highestScorer = standings.reduce(
+      (prev, curr) => ((curr.totalPoints || 0) > (prev.totalPoints || 0) ? curr : prev),
+      standings[0]
+    );
 
     // Find longest streak
     let longestStreak = { player: null, count: 0, type: null };
-    standings.forEach(s => {
+    standings.forEach((s) => {
       if (s.streak > longestStreak.count) {
         longestStreak = { player: s.uid, count: s.streak, type: s.streakType };
       }
     });
 
     // Calculate competitiveness (how close are standings)
-    const winRates = standings.map(s =>
+    const winRates = standings.map((s) =>
       s.wins + s.losses > 0 ? s.wins / (s.wins + s.losses) : 0
     );
     const avgWinRate = winRates.reduce((a, b) => a + b, 0) / winRates.length;
-    const variance = winRates.reduce((sum, r) => sum + Math.pow(r - avgWinRate, 2), 0) / winRates.length;
+    const variance =
+      winRates.reduce((sum, r) => sum + Math.pow(r - avgWinRate, 2), 0) / winRates.length;
     const competitiveness = Math.max(0, Math.min(100, (1 - Math.sqrt(variance) * 2) * 100));
 
     return {
@@ -129,9 +148,11 @@ const LeagueStatsOverview = ({ standings, memberProfiles, leagueStats, currentWe
           {stats.longestStreak.count > 0 && (
             <div className="flex items-center justify-between p-3 bg-[#222]">
               <div className="flex items-center gap-2">
-                <Flame className={`w-4 h-4 ${
-                  stats.longestStreak.type === 'W' ? 'text-green-500' : 'text-red-500'
-                }`} />
+                <Flame
+                  className={`w-4 h-4 ${
+                    stats.longestStreak.type === 'W' ? 'text-green-500' : 'text-red-500'
+                  }`}
+                />
                 <span className="text-xs text-gray-400">
                   {stats.longestStreak.type === 'W' ? 'Hot Streak' : 'Cold Streak'}
                 </span>
@@ -140,10 +161,13 @@ const LeagueStatsOverview = ({ standings, memberProfiles, leagueStats, currentWe
                 <span className="text-sm font-bold text-white">
                   {getDisplayName(stats.longestStreak.player)}
                 </span>
-                <span className={`text-sm font-bold font-data tabular-nums ${
-                  stats.longestStreak.type === 'W' ? 'text-green-500' : 'text-red-500'
-                }`}>
-                  {stats.longestStreak.type}{stats.longestStreak.count}
+                <span
+                  className={`text-sm font-bold font-data tabular-nums ${
+                    stats.longestStreak.type === 'W' ? 'text-green-500' : 'text-red-500'
+                  }`}
+                >
+                  {stats.longestStreak.type}
+                  {stats.longestStreak.count}
                 </span>
               </div>
             </div>
@@ -169,9 +193,11 @@ const LeagueStatsOverview = ({ standings, memberProfiles, leagueStats, currentWe
               />
             </div>
             <p className="text-[9px] text-gray-500 mt-1">
-              {stats.competitiveness > 70 ? 'Very competitive league!' :
-               stats.competitiveness > 40 ? 'Balanced competition' :
-               'Some dominant players'}
+              {stats.competitiveness > 70
+                ? 'Very competitive league!'
+                : stats.competitiveness > 40
+                  ? 'Balanced competition'
+                  : 'Some dominant players'}
             </p>
           </div>
         </div>
@@ -188,7 +214,7 @@ const AchievementsCard = ({ standings, leagueStats, userProfile }) => {
 
     if (!standings || standings.length === 0) return list;
 
-    const userStanding = standings.find(s => s.uid === userProfile?.uid);
+    const userStanding = standings.find((s) => s.uid === userProfile?.uid);
     const userLeagueStats = leagueStats?.[userProfile?.uid];
 
     if (userStanding) {
@@ -217,7 +243,7 @@ const AchievementsCard = ({ standings, leagueStats, userProfile }) => {
       }
 
       // Top 3
-      const rank = standings.findIndex(s => s.uid === userProfile?.uid) + 1;
+      const rank = standings.findIndex((s) => s.uid === userProfile?.uid) + 1;
       if (rank === 1) {
         list.push({
           id: 'first_place',
@@ -268,9 +294,30 @@ const AchievementsCard = ({ standings, leagueStats, userProfile }) => {
     // Add locked achievements if few earned
     if (list.length < 3) {
       const locked = [
-        { id: 'locked_1', title: 'Season Champion', description: 'Win the league', icon: Crown, color: 'gray', earned: false },
-        { id: 'locked_2', title: 'Perfect Week', description: 'Win all matchups in a week', icon: Star, color: 'gray', earned: false },
-        { id: 'locked_3', title: 'Rivalry Master', description: 'Win 5 rivalry matchups', icon: Flame, color: 'gray', earned: false },
+        {
+          id: 'locked_1',
+          title: 'Season Champion',
+          description: 'Win the league',
+          icon: Crown,
+          color: 'gray',
+          earned: false,
+        },
+        {
+          id: 'locked_2',
+          title: 'Perfect Week',
+          description: 'Win all matchups in a week',
+          icon: Star,
+          color: 'gray',
+          earned: false,
+        },
+        {
+          id: 'locked_3',
+          title: 'Rivalry Master',
+          description: 'Win 5 rivalry matchups',
+          icon: Flame,
+          color: 'gray',
+          earned: false,
+        },
       ];
       list.push(...locked.slice(0, 3 - list.length));
     }
@@ -299,7 +346,7 @@ const AchievementsCard = ({ standings, leagueStats, userProfile }) => {
       </div>
 
       <div className="p-3 grid grid-cols-3 gap-2">
-        {achievements.slice(0, 6).map(achievement => {
+        {achievements.slice(0, 6).map((achievement) => {
           const Icon = achievement.icon;
           const colors = colorClasses[achievement.color];
 
@@ -307,26 +354,28 @@ const AchievementsCard = ({ standings, leagueStats, userProfile }) => {
             <div
               key={achievement.id}
               className={`p-3 text-center border ${
-                achievement.earned
-                  ? colors
-                  : 'border-[#333] bg-[#222] opacity-50'
+                achievement.earned ? colors : 'border-[#333] bg-[#222] opacity-50'
               }`}
             >
-              <div className={`w-8 h-8 mx-auto mb-2 flex items-center justify-center ${
-                achievement.earned ? colors.split(' ')[1] : 'bg-[#333]'
-              }`}>
-                <Icon className={`w-4 h-4 ${
-                  achievement.earned ? colors.split(' ')[0] : 'text-gray-600'
-                }`} />
+              <div
+                className={`w-8 h-8 mx-auto mb-2 flex items-center justify-center ${
+                  achievement.earned ? colors.split(' ')[1] : 'bg-[#333]'
+                }`}
+              >
+                <Icon
+                  className={`w-4 h-4 ${
+                    achievement.earned ? colors.split(' ')[0] : 'text-gray-600'
+                  }`}
+                />
               </div>
-              <p className={`text-xs font-bold truncate ${
-                achievement.earned ? 'text-white' : 'text-gray-600'
-              }`}>
+              <p
+                className={`text-xs font-bold truncate ${
+                  achievement.earned ? 'text-white' : 'text-gray-600'
+                }`}
+              >
                 {achievement.title}
               </p>
-              <p className="text-[9px] text-gray-500 mt-0.5 truncate">
-                {achievement.description}
-              </p>
+              <p className="text-[9px] text-gray-500 mt-0.5 truncate">{achievement.description}</p>
             </div>
           );
         })}
@@ -341,38 +390,39 @@ const PowerRankingsCard = ({ standings, memberProfiles, userProfile }) => {
   const powerRankings = useMemo(() => {
     if (!standings || standings.length === 0) return [];
 
-    return standings.map((s, idx) => {
-      let powerScore = 0;
+    return standings
+      .map((s, idx) => {
+        let powerScore = 0;
 
-      // Base score from wins
-      powerScore += s.wins * 10;
+        // Base score from wins
+        powerScore += s.wins * 10;
 
-      // Bonus for streak
-      if (s.streakType === 'W') {
-        powerScore += s.streak * 5;
-      } else if (s.streakType === 'L') {
-        powerScore -= s.streak * 3;
-      }
+        // Bonus for streak
+        if (s.streakType === 'W') {
+          powerScore += s.streak * 5;
+        } else if (s.streakType === 'L') {
+          powerScore -= s.streak * 3;
+        }
 
-      // Points bonus
-      powerScore += (s.totalPoints || 0) * 0.1;
+        // Points bonus
+        powerScore += (s.totalPoints || 0) * 0.1;
 
-      // Momentum bonus
-      if (s.trend === 'up') powerScore += 5;
-      if (s.trend === 'down') powerScore -= 5;
+        // Momentum bonus
+        if (s.trend === 'up') powerScore += 5;
+        if (s.trend === 'down') powerScore -= 5;
 
-      return {
+        return {
+          ...s,
+          powerScore,
+          currentRank: idx + 1,
+        };
+      })
+      .sort((a, b) => b.powerScore - a.powerScore)
+      .map((s, idx) => ({
         ...s,
-        powerScore,
-        currentRank: idx + 1,
-      };
-    })
-    .sort((a, b) => b.powerScore - a.powerScore)
-    .map((s, idx) => ({
-      ...s,
-      powerRank: idx + 1,
-      movement: s.currentRank - (idx + 1), // Positive = moving up
-    }));
+        powerRank: idx + 1,
+        movement: s.currentRank - (idx + 1), // Positive = moving up
+      }));
   }, [standings]);
 
   const getDisplayName = (uid) => {
@@ -411,12 +461,17 @@ const PowerRankingsCard = ({ standings, memberProfiles, userProfile }) => {
               }`}
             >
               <div className="flex items-center gap-3">
-                <div className={`w-6 h-6 flex items-center justify-center text-xs font-bold ${
-                  idx === 0 ? 'bg-yellow-500/20 text-yellow-500' :
-                  idx === 1 ? 'bg-gray-500/20 text-gray-400' :
-                  idx === 2 ? 'bg-orange-500/20 text-orange-500' :
-                  'bg-[#333] text-gray-500'
-                }`}>
+                <div
+                  className={`w-6 h-6 flex items-center justify-center text-xs font-bold ${
+                    idx === 0
+                      ? 'bg-yellow-500/20 text-yellow-500'
+                      : idx === 1
+                        ? 'bg-gray-500/20 text-gray-400'
+                        : idx === 2
+                          ? 'bg-orange-500/20 text-orange-500'
+                          : 'bg-[#333] text-gray-500'
+                  }`}
+                >
                   {idx + 1}
                 </div>
                 <span className={`text-sm font-bold ${isUser ? 'text-purple-400' : 'text-white'}`}>
@@ -426,9 +481,11 @@ const PowerRankingsCard = ({ standings, memberProfiles, userProfile }) => {
 
               <div className="flex items-center gap-2">
                 {player.movement !== 0 && (
-                  <div className={`flex items-center gap-0.5 text-xs ${
-                    isMovingUp ? 'text-green-500' : 'text-red-500'
-                  }`}>
+                  <div
+                    className={`flex items-center gap-0.5 text-xs ${
+                      isMovingUp ? 'text-green-500' : 'text-red-500'
+                    }`}
+                  >
                     {isMovingUp ? (
                       <TrendingUp className="w-3 h-3" />
                     ) : (
@@ -505,19 +562,27 @@ const WeeklyRecapCard = ({ leagueId, currentWeek, memberProfiles }) => {
 
   const getHighlightIcon = (type) => {
     switch (type) {
-      case 'upset': return AlertTriangle;
-      case 'close_game': return Swords;
-      case 'top_scorer': return Trophy;
-      default: return Star;
+      case 'upset':
+        return AlertTriangle;
+      case 'close_game':
+        return Swords;
+      case 'top_scorer':
+        return Trophy;
+      default:
+        return Star;
     }
   };
 
   const getHighlightColor = (type) => {
     switch (type) {
-      case 'upset': return 'text-orange-500 bg-orange-500/10 border-orange-500/30';
-      case 'close_game': return 'text-red-500 bg-red-500/10 border-red-500/30';
-      case 'top_scorer': return 'text-yellow-500 bg-yellow-500/10 border-yellow-500/30';
-      default: return 'text-blue-500 bg-blue-500/10 border-blue-500/30';
+      case 'upset':
+        return 'text-orange-500 bg-orange-500/10 border-orange-500/30';
+      case 'close_game':
+        return 'text-red-500 bg-red-500/10 border-red-500/30';
+      case 'top_scorer':
+        return 'text-yellow-500 bg-yellow-500/10 border-yellow-500/30';
+      default:
+        return 'text-blue-500 bg-blue-500/10 border-blue-500/30';
     }
   };
 
@@ -614,8 +679,8 @@ const EnhancedRivalriesCard = ({ leagueId, userProfile, memberProfiles }) => {
 
         if (data) {
           // Filter to show rivalries involving the current user
-          const userRivalries = (data.rivalries || []).filter(r =>
-            r.player1 === userProfile?.uid || r.player2 === userProfile?.uid
+          const userRivalries = (data.rivalries || []).filter(
+            (r) => r.player1 === userProfile?.uid || r.player2 === userProfile?.uid
           );
           setRivalries(userRivalries);
         }
@@ -640,21 +705,21 @@ const EnhancedRivalriesCard = ({ leagueId, userProfile, memberProfiles }) => {
           bg: 'bg-gradient-to-r from-red-500/20 to-orange-500/20',
           border: 'border-red-500/50',
           badge: 'bg-red-500',
-          badgeText: 'INTENSE'
+          badgeText: 'INTENSE',
         };
       case 'established':
         return {
           bg: 'bg-gradient-to-r from-purple-500/20 to-pink-500/20',
           border: 'border-purple-500/50',
           badge: 'bg-purple-500',
-          badgeText: 'ESTABLISHED'
+          badgeText: 'ESTABLISHED',
         };
       default:
         return {
           bg: 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20',
           border: 'border-blue-500/50',
           badge: 'bg-blue-500',
-          badgeText: 'EMERGING'
+          badgeText: 'EMERGING',
         };
     }
   };
@@ -698,7 +763,9 @@ const EnhancedRivalriesCard = ({ leagueId, userProfile, memberProfiles }) => {
               className="text-xs text-gray-500 hover:text-white flex items-center gap-1"
             >
               {expanded ? 'Show less' : 'Show all'}
-              <ChevronRight className={`w-3 h-3 transition-transform ${expanded ? 'rotate-90' : ''}`} />
+              <ChevronRight
+                className={`w-3 h-3 transition-transform ${expanded ? 'rotate-90' : ''}`}
+              />
             </button>
           )}
         </div>
@@ -722,9 +789,7 @@ const EnhancedRivalriesCard = ({ leagueId, userProfile, memberProfiles }) => {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <Flame className="w-4 h-4 text-red-500" />
-                    <span className="text-sm font-bold text-white">
-                      vs {getRivalName(rivalry)}
-                    </span>
+                    <span className="text-sm font-bold text-white">vs {getRivalName(rivalry)}</span>
                   </div>
                   <span className={`px-1.5 py-0.5 text-[8px] font-bold text-white ${styles.badge}`}>
                     {styles.badgeText}
@@ -734,21 +799,28 @@ const EnhancedRivalriesCard = ({ leagueId, userProfile, memberProfiles }) => {
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div className="bg-[#222]/50 p-2">
                     <p className="text-xs text-gray-500">Your Wins</p>
-                    <p className="text-lg font-bold text-green-500 font-data tabular-nums">{userWins}</p>
+                    <p className="text-lg font-bold text-green-500 font-data tabular-nums">
+                      {userWins}
+                    </p>
                   </div>
                   <div className="bg-[#222]/50 p-2">
                     <p className="text-xs text-gray-500">Total</p>
-                    <p className="text-lg font-bold text-white font-data tabular-nums">{rivalry.totalMatches}</p>
+                    <p className="text-lg font-bold text-white font-data tabular-nums">
+                      {rivalry.totalMatches}
+                    </p>
                   </div>
                   <div className="bg-[#222]/50 p-2">
                     <p className="text-xs text-gray-500">Their Wins</p>
-                    <p className="text-lg font-bold text-red-500 font-data tabular-nums">{rivalWins}</p>
+                    <p className="text-lg font-bold text-red-500 font-data tabular-nums">
+                      {rivalWins}
+                    </p>
                   </div>
                 </div>
 
                 {rivalry.closeMatches > 0 && (
                   <p className="text-[10px] text-gray-500 mt-2 text-center">
-                    {rivalry.closeMatches} close game{rivalry.closeMatches !== 1 ? 's' : ''} between you
+                    {rivalry.closeMatches} close game{rivalry.closeMatches !== 1 ? 's' : ''} between
+                    you
                   </p>
                 )}
               </m.div>

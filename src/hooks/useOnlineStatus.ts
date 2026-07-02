@@ -10,6 +10,25 @@ export interface OnlineStatus {
   wasOffline: boolean;
 }
 
+// The Network Information API is non-standard and not in the DOM lib types,
+// so read it through a narrow typed accessor instead of a @ts-expect-error
+// (which is brittle: line-wrapping moves it off the line it suppresses).
+interface NetworkInformation {
+  effectiveType?: string;
+  addEventListener?: (type: 'change', listener: () => void) => void;
+  removeEventListener?: (type: 'change', listener: () => void) => void;
+}
+
+function getNetworkConnection(): NetworkInformation | undefined {
+  if (typeof navigator === 'undefined') return undefined;
+  const nav = navigator as Navigator & {
+    connection?: NetworkInformation;
+    mozConnection?: NetworkInformation;
+    webkitConnection?: NetworkInformation;
+  };
+  return nav.connection || nav.mozConnection || nav.webkitConnection;
+}
+
 export const useOnlineStatus = (): OnlineStatus => {
   const [status, setStatus] = useState<OnlineStatus>(() => ({
     isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
@@ -20,16 +39,15 @@ export const useOnlineStatus = (): OnlineStatus => {
   }));
 
   const updateConnectionInfo = useCallback(() => {
-    // @ts-expect-error - navigator.connection is not in all browsers
-    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    const connection = getNetworkConnection();
 
     if (connection) {
       const effectiveType = connection.effectiveType;
       const isSlowConnection = effectiveType === 'slow-2g' || effectiveType === '2g';
 
-      setStatus(prev => ({
+      setStatus((prev) => ({
         ...prev,
-        connectionType: effectiveType,
+        connectionType: effectiveType ?? null,
         isSlowConnection,
       }));
     }
@@ -37,7 +55,7 @@ export const useOnlineStatus = (): OnlineStatus => {
 
   useEffect(() => {
     const handleOnline = () => {
-      setStatus(prev => ({
+      setStatus((prev) => ({
         ...prev,
         isOnline: true,
         lastOnline: new Date(),
@@ -46,7 +64,7 @@ export const useOnlineStatus = (): OnlineStatus => {
     };
 
     const handleOffline = () => {
-      setStatus(prev => ({
+      setStatus((prev) => ({
         ...prev,
         isOnline: false,
         lastOnline: prev.isOnline ? new Date() : prev.lastOnline,
@@ -58,10 +76,9 @@ export const useOnlineStatus = (): OnlineStatus => {
     window.addEventListener('offline', handleOffline);
 
     // Listen for connection changes
-    // @ts-expect-error - navigator.connection is not in all browsers
-    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    const connection = getNetworkConnection();
     if (connection) {
-      connection.addEventListener('change', updateConnectionInfo);
+      connection.addEventListener?.('change', updateConnectionInfo);
       updateConnectionInfo();
     }
 
@@ -69,7 +86,7 @@ export const useOnlineStatus = (): OnlineStatus => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
       if (connection) {
-        connection.removeEventListener('change', updateConnectionInfo);
+        connection.removeEventListener?.('change', updateConnectionInfo);
       }
     };
   }, [updateConnectionInfo]);

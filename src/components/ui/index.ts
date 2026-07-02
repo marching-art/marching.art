@@ -28,11 +28,7 @@ export {
 } from './Card';
 
 // StatCard Components
-export {
-  StatCard,
-  type StatCardProps,
-  type TrendDirection,
-} from './StatCard';
+export { StatCard, type StatCardProps, type TrendDirection } from './StatCard';
 
 // Modal Components
 export {

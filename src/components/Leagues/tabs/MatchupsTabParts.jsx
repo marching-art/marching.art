@@ -4,7 +4,17 @@
 
 import React, { useMemo, memo } from 'react';
 import {
-  Calendar, History, Target, Clock, Swords, Users, Zap, Flame, Trophy, Award, Star,
+  Calendar,
+  History,
+  Target,
+  Clock,
+  Swords,
+  Users,
+  Zap,
+  Flame,
+  Trophy,
+  Award,
+  Star,
 } from 'lucide-react';
 
 // Corps class display configuration
@@ -44,7 +54,7 @@ const SeasonScheduleOverview = ({
   totalWeeks,
   weeksWithMatchups,
   onSelectWeek,
-  selectedWeek
+  selectedWeek,
 }) => {
   return (
     <div className="bg-[#1a1a1a] border border-[#333] mb-4">
@@ -65,7 +75,7 @@ const SeasonScheduleOverview = ({
       {/* Visual Week Grid */}
       <div className="p-3">
         <div className="grid grid-cols-6 sm:grid-cols-12 gap-1">
-          {Array.from({ length: totalWeeks }, (_, i) => i + 1).map(week => {
+          {Array.from({ length: totalWeeks }, (_, i) => i + 1).map((week) => {
             const hasData = weeksWithMatchups.has(week);
             const isSelected = selectedWeek === week;
             const isCurrent = week === currentWeek;
@@ -80,14 +90,14 @@ const SeasonScheduleOverview = ({
                   isSelected
                     ? 'bg-yellow-500 text-black'
                     : isCurrent
-                    ? 'bg-purple-500/30 border-2 border-purple-500 text-white'
-                    : hasData && isPast
-                    ? 'bg-green-500/20 border border-green-500/30 text-green-500'
-                    : hasData
-                    ? 'bg-blue-500/20 border border-blue-500/30 text-blue-400'
-                    : isPast
-                    ? 'bg-[#222] border border-[#333] text-gray-600'
-                    : 'bg-[#222] border border-[#333] text-gray-500 hover:border-[#444]'
+                      ? 'bg-purple-500/30 border-2 border-purple-500 text-white'
+                      : hasData && isPast
+                        ? 'bg-green-500/20 border border-green-500/30 text-green-500'
+                        : hasData
+                          ? 'bg-blue-500/20 border border-blue-500/30 text-blue-400'
+                          : isPast
+                            ? 'bg-[#222] border border-[#333] text-gray-600'
+                            : 'bg-[#222] border border-[#333] text-gray-500 hover:border-[#444]'
                 }`}
               >
                 {week}
@@ -124,12 +134,7 @@ const SeasonScheduleOverview = ({
 };
 
 // Your Season History - Shows user's matchup record by week
-const YourSeasonHistory = ({
-  userMatchupHistory,
-  memberProfiles,
-  userProfile,
-  onMatchupClick
-}) => {
+const YourSeasonHistory = ({ userMatchupHistory, memberProfiles, userProfile, onMatchupClick }) => {
   if (!userMatchupHistory || userMatchupHistory.length === 0) return null;
 
   const getDisplayName = (uid) => {
@@ -169,12 +174,12 @@ const YourSeasonHistory = ({
                   isBye
                     ? 'bg-[#222] cursor-default'
                     : won
-                    ? 'bg-green-500/10 border border-green-500/30 hover:bg-green-500/20'
-                    : lost
-                    ? 'bg-red-500/10 border border-red-500/30 hover:bg-red-500/20'
-                    : tie
-                    ? 'bg-yellow-500/10 border border-yellow-500/30 hover:bg-yellow-500/20'
-                    : 'bg-[#222] border border-[#333] hover:border-[#444]'
+                      ? 'bg-green-500/10 border border-green-500/30 hover:bg-green-500/20'
+                      : lost
+                        ? 'bg-red-500/10 border border-red-500/30 hover:bg-red-500/20'
+                        : tie
+                          ? 'bg-yellow-500/10 border border-yellow-500/30 hover:bg-yellow-500/20'
+                          : 'bg-[#222] border border-[#333] hover:border-[#444]'
                 }`}
               >
                 <p className="text-[9px] text-gray-500 mb-0.5">Wk {match.week}</p>
@@ -182,11 +187,17 @@ const YourSeasonHistory = ({
                   <p className="text-xs text-gray-500">BYE</p>
                 ) : (
                   <>
-                    <p className={`text-xs font-bold truncate ${
-                      won ? 'text-green-500' :
-                      lost ? 'text-red-500' :
-                      tie ? 'text-yellow-500' : 'text-gray-400'
-                    }`}>
+                    <p
+                      className={`text-xs font-bold truncate ${
+                        won
+                          ? 'text-green-500'
+                          : lost
+                            ? 'text-red-500'
+                            : tie
+                              ? 'text-yellow-500'
+                              : 'text-gray-400'
+                      }`}
+                    >
                       {won ? 'W' : lost ? 'L' : tie ? 'T' : 'vs'}
                     </p>
                     <p className="text-[9px] text-gray-500 truncate">
@@ -210,7 +221,7 @@ const HeadToHeadSection = ({
   userProfile,
   weeklyMatchups,
   weeklyResults,
-  onSelectOpponent
+  onSelectOpponent,
 }) => {
   // Calculate head-to-head records
   const h2hRecords = useMemo(() => {
@@ -219,7 +230,7 @@ const HeadToHeadSection = ({
     const records = {};
 
     Object.entries(weeklyMatchups).forEach(([week, matchups]) => {
-      matchups.forEach(matchup => {
+      matchups.forEach((matchup) => {
         if (matchup.user1 !== userProfile.uid && matchup.user2 !== userProfile.uid) return;
 
         const opponentId = matchup.user1 === userProfile.uid ? matchup.user2 : matchup.user1;
@@ -244,7 +255,7 @@ const HeadToHeadSection = ({
       .map(([opponentId, record]) => ({
         opponentId,
         ...record,
-        totalGames: record.wins + record.losses + record.ties
+        totalGames: record.wins + record.losses + record.ties,
       }))
       .sort((a, b) => b.totalGames - a.totalGames);
   }, [userProfile?.uid, weeklyMatchups, weeklyResults]);
@@ -270,10 +281,9 @@ const HeadToHeadSection = ({
       </div>
 
       <div className="divide-y divide-[#222]">
-        {h2hRecords.slice(0, 5).map(record => {
-          const winPct = record.totalGames > 0
-            ? (record.wins / record.totalGames * 100).toFixed(0)
-            : 0;
+        {h2hRecords.slice(0, 5).map((record) => {
+          const winPct =
+            record.totalGames > 0 ? ((record.wins / record.totalGames) * 100).toFixed(0) : 0;
           const isWinning = record.wins > record.losses;
           const isLosing = record.losses > record.wins;
 
@@ -318,13 +328,15 @@ const HeadToHeadSection = ({
                     )}
                   </div>
                 </div>
-                <div className={`w-12 h-6 flex items-center justify-center text-xs font-bold ${
-                  isWinning
-                    ? 'bg-green-500/20 text-green-500'
-                    : isLosing
-                    ? 'bg-red-500/20 text-red-500'
-                    : 'bg-gray-500/20 text-gray-400'
-                }`}>
+                <div
+                  className={`w-12 h-6 flex items-center justify-center text-xs font-bold ${
+                    isWinning
+                      ? 'bg-green-500/20 text-green-500'
+                      : isLosing
+                        ? 'bg-red-500/20 text-red-500'
+                        : 'bg-gray-500/20 text-gray-400'
+                  }`}
+                >
                   {winPct}%
                 </div>
               </div>
@@ -344,10 +356,16 @@ const EmptyMatchupsState = ({ selectedWeek, currentWeek, league, isCommissioner 
 
   return (
     <div className="bg-[#1a1a1a] border border-[#333] p-8 text-center">
-      <div className={`w-16 h-16 mx-auto mb-4 flex items-center justify-center ${
-        isCommissioner && isCurrentWeek ? 'bg-yellow-500/10 border-2 border-yellow-500/30' : 'bg-[#222] border border-[#333]'
-      }`}>
-        <Swords className={`w-8 h-8 ${isCommissioner && isCurrentWeek ? 'text-yellow-500' : 'text-gray-500'}`} />
+      <div
+        className={`w-16 h-16 mx-auto mb-4 flex items-center justify-center ${
+          isCommissioner && isCurrentWeek
+            ? 'bg-yellow-500/10 border-2 border-yellow-500/30'
+            : 'bg-[#222] border border-[#333]'
+        }`}
+      >
+        <Swords
+          className={`w-8 h-8 ${isCommissioner && isCurrentWeek ? 'text-yellow-500' : 'text-gray-500'}`}
+        />
       </div>
 
       <h3 className="text-lg font-bold text-white mb-2">
@@ -358,13 +376,12 @@ const EmptyMatchupsState = ({ selectedWeek, currentWeek, league, isCommissioner 
 
       <p className="text-sm text-gray-400 mb-4 max-w-sm mx-auto">
         {isPastWeek && 'This week had no matchups generated or recorded.'}
-        {isCurrentWeek && (
-          league?.members?.length < 2
+        {isCurrentWeek &&
+          (league?.members?.length < 2
             ? 'Need at least 2 league members to generate matchups.'
             : isCommissioner
-            ? 'Generate matchups to start this week\'s competition!'
-            : 'Waiting for the commissioner to generate matchups for this week.'
-        )}
+              ? "Generate matchups to start this week's competition!"
+              : 'Waiting for the commissioner to generate matchups for this week.')}
         {isFutureWeek && 'Matchups will be automatically generated each Sunday at midnight ET.'}
       </p>
 
@@ -395,7 +412,8 @@ const EmptyMatchupsState = ({ selectedWeek, currentWeek, league, isCommissioner 
               <div className="flex items-center gap-2 px-3 py-2 bg-yellow-500/10 border border-yellow-500/30">
                 <Users className="w-4 h-4 text-yellow-500" />
                 <span className="text-xs text-yellow-500">
-                  Invite {2 - (league?.members?.length || 0)} more member{2 - (league?.members?.length || 0) !== 1 ? 's' : ''} to start
+                  Invite {2 - (league?.members?.length || 0)} more member
+                  {2 - (league?.members?.length || 0) !== 1 ? 's' : ''} to start
                 </span>
               </div>
               {league?.inviteCode && (
@@ -423,157 +441,173 @@ const EmptyMatchupsState = ({ selectedWeek, currentWeek, league, isCommissioner 
   );
 };
 
+const VersusStrip = memo(
+  ({
+    matchup,
+    getDisplayName,
+    getStanding,
+    userProfile,
+    isRivalry = false,
+    onClick,
+    featured = false,
+    showClass = false,
+  }) => {
+    const [p1_uid, p2_uid] = matchup.pair || [null, null];
+    const isBye = !p2_uid;
 
-const VersusStrip = memo(({
-  matchup,
-  getDisplayName,
-  getStanding,
-  userProfile,
-  isRivalry = false,
-  onClick,
-  featured = false,
-  showClass = false
-}) => {
-  const [p1_uid, p2_uid] = matchup.pair || [null, null];
-  const isBye = !p2_uid;
+    const home = {
+      name: getDisplayName(p1_uid),
+      standing: getStanding(p1_uid),
+      isUser: p1_uid === userProfile?.uid,
+      score: matchup.scores?.[p1_uid] || 0,
+    };
 
-  const home = {
-    name: getDisplayName(p1_uid),
-    standing: getStanding(p1_uid),
-    isUser: p1_uid === userProfile?.uid,
-    score: matchup.scores?.[p1_uid] || 0,
-  };
+    const away = {
+      name: getDisplayName(p2_uid),
+      standing: p2_uid ? getStanding(p2_uid) : null,
+      isUser: p2_uid === userProfile?.uid,
+      score: matchup.scores?.[p2_uid] || 0,
+    };
 
-  const away = {
-    name: getDisplayName(p2_uid),
-    standing: p2_uid ? getStanding(p2_uid) : null,
-    isUser: p2_uid === userProfile?.uid,
-    score: matchup.scores?.[p2_uid] || 0,
-  };
+    const homeWon = matchup.completed && matchup.winner === p1_uid;
+    const awayWon = matchup.completed && matchup.winner === p2_uid;
+    const isTie = matchup.completed && matchup.winner === 'tie';
 
-  const homeWon = matchup.completed && matchup.winner === p1_uid;
-  const awayWon = matchup.completed && matchup.winner === p2_uid;
-  const isTie = matchup.completed && matchup.winner === 'tie';
+    const classConfig = CORPS_CLASS_CONFIG[matchup.corpsClass];
 
-  const classConfig = CORPS_CLASS_CONFIG[matchup.corpsClass];
-
-  return (
-    <button
-      onClick={onClick}
-      disabled={isBye}
-      className={`w-full text-left transition-colors ${
-        isBye
-          ? 'opacity-50 cursor-default'
-          : isRivalry
-            ? 'bg-red-500/5 hover:bg-red-500/10'
-            : featured
-              ? 'bg-purple-500/5 hover:bg-purple-500/10'
-              : 'hover:bg-[#222]'
-      }`}
-    >
-      <div className={`px-4 py-3 ${featured ? 'py-4' : ''}`}>
-        {/* Class + Rivalry indicators */}
-        <div className="flex items-center gap-2 mb-2">
-          {showClass && classConfig && (
-            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold uppercase ${classConfig.bgColor} ${classConfig.color} border ${classConfig.borderColor}`}>
-              {classConfig.name}
-            </span>
-          )}
-          {isRivalry && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase text-red-500">
-              <Flame className="w-3 h-3" />
-              Rivalry
-            </span>
-          )}
-          {isBye && (
-            <span className="text-[10px] font-bold uppercase text-gray-500">BYE WEEK</span>
-          )}
-        </div>
-
-        <div className="flex items-center gap-3">
-          {/* Home */}
-          <div className="flex-1 flex items-center gap-2">
-            <div className={`w-8 h-8 flex-shrink-0 flex items-center justify-center ${
-              home.isUser ? 'bg-purple-500/20 border border-purple-500/50' : 'bg-[#333]'
-            }`}>
-              <span className={`text-xs font-bold ${home.isUser ? 'text-purple-400' : 'text-gray-400'}`}>
-                {home.name.charAt(0)}
+    return (
+      <button
+        onClick={onClick}
+        disabled={isBye}
+        className={`w-full text-left transition-colors ${
+          isBye
+            ? 'opacity-50 cursor-default'
+            : isRivalry
+              ? 'bg-red-500/5 hover:bg-red-500/10'
+              : featured
+                ? 'bg-purple-500/5 hover:bg-purple-500/10'
+                : 'hover:bg-[#222]'
+        }`}
+      >
+        <div className={`px-4 py-3 ${featured ? 'py-4' : ''}`}>
+          {/* Class + Rivalry indicators */}
+          <div className="flex items-center gap-2 mb-2">
+            {showClass && classConfig && (
+              <span
+                className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold uppercase ${classConfig.bgColor} ${classConfig.color} border ${classConfig.borderColor}`}
+              >
+                {classConfig.name}
               </span>
-            </div>
-            <div className="min-w-0">
-              <p className={`text-sm font-bold truncate ${
-                homeWon ? 'text-green-400' : home.isUser ? 'text-purple-400' : 'text-white'
-              }`}>
-                {home.name}
-              </p>
-              {home.standing && (
-                <p className="text-[10px] text-gray-500">
-                  {home.standing.wins}-{home.standing.losses}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Score / VS */}
-          <div className="flex-shrink-0 text-center min-w-[70px]">
-            {isBye ? (
-              <div className="px-2 py-1 bg-[#222] text-gray-500 text-xs">
-                WIN
-              </div>
-            ) : matchup.completed || matchup.status === 'live' ? (
-              <div className="flex items-center justify-center gap-1">
-                <span className={`text-sm font-bold font-data tabular-nums ${
-                  homeWon ? 'text-green-400' : isTie ? 'text-yellow-400' : 'text-gray-400'
-                }`}>
-                  {home.score.toFixed(0)}
-                </span>
-                <span className="text-gray-600">-</span>
-                <span className={`text-sm font-bold font-data tabular-nums ${
-                  awayWon ? 'text-green-400' : isTie ? 'text-yellow-400' : 'text-gray-400'
-                }`}>
-                  {away.score.toFixed(0)}
-                </span>
-              </div>
-            ) : (
-              <div className="px-2 py-1 bg-[#222]">
-                <Swords className="w-3.5 h-3.5 text-gray-500 mx-auto" />
-              </div>
             )}
-            {matchup.status === 'live' && !featured && (
-              <span className="text-[9px] text-red-500 font-bold">LIVE</span>
+            {isRivalry && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase text-red-500">
+                <Flame className="w-3 h-3" />
+                Rivalry
+              </span>
+            )}
+            {isBye && (
+              <span className="text-[10px] font-bold uppercase text-gray-500">BYE WEEK</span>
             )}
           </div>
 
-          {/* Away */}
-          {!isBye && (
-            <div className="flex-1 flex items-center gap-2 justify-end">
-              <div className="min-w-0 text-right">
-                <p className={`text-sm font-bold truncate ${
-                  awayWon ? 'text-green-400' : away.isUser ? 'text-purple-400' : 'text-white'
-                }`}>
-                  {away.name}
+          <div className="flex items-center gap-3">
+            {/* Home */}
+            <div className="flex-1 flex items-center gap-2">
+              <div
+                className={`w-8 h-8 flex-shrink-0 flex items-center justify-center ${
+                  home.isUser ? 'bg-purple-500/20 border border-purple-500/50' : 'bg-[#333]'
+                }`}
+              >
+                <span
+                  className={`text-xs font-bold ${home.isUser ? 'text-purple-400' : 'text-gray-400'}`}
+                >
+                  {home.name.charAt(0)}
+                </span>
+              </div>
+              <div className="min-w-0">
+                <p
+                  className={`text-sm font-bold truncate ${
+                    homeWon ? 'text-green-400' : home.isUser ? 'text-purple-400' : 'text-white'
+                  }`}
+                >
+                  {home.name}
                 </p>
-                {away.standing && (
+                {home.standing && (
                   <p className="text-[10px] text-gray-500">
-                    {away.standing.wins}-{away.standing.losses}
+                    {home.standing.wins}-{home.standing.losses}
                   </p>
                 )}
               </div>
-              <div className={`w-8 h-8 flex-shrink-0 flex items-center justify-center ${
-                away.isUser ? 'bg-purple-500/20 border border-purple-500/50' : 'bg-[#333]'
-              }`}>
-                <span className={`text-xs font-bold ${away.isUser ? 'text-purple-400' : 'text-gray-400'}`}>
-                  {away.name.charAt(0)}
-                </span>
-              </div>
             </div>
-          )}
-        </div>
-      </div>
-    </button>
-  );
-});
 
+            {/* Score / VS */}
+            <div className="flex-shrink-0 text-center min-w-[70px]">
+              {isBye ? (
+                <div className="px-2 py-1 bg-[#222] text-gray-500 text-xs">WIN</div>
+              ) : matchup.completed || matchup.status === 'live' ? (
+                <div className="flex items-center justify-center gap-1">
+                  <span
+                    className={`text-sm font-bold font-data tabular-nums ${
+                      homeWon ? 'text-green-400' : isTie ? 'text-yellow-400' : 'text-gray-400'
+                    }`}
+                  >
+                    {home.score.toFixed(0)}
+                  </span>
+                  <span className="text-gray-600">-</span>
+                  <span
+                    className={`text-sm font-bold font-data tabular-nums ${
+                      awayWon ? 'text-green-400' : isTie ? 'text-yellow-400' : 'text-gray-400'
+                    }`}
+                  >
+                    {away.score.toFixed(0)}
+                  </span>
+                </div>
+              ) : (
+                <div className="px-2 py-1 bg-[#222]">
+                  <Swords className="w-3.5 h-3.5 text-gray-500 mx-auto" />
+                </div>
+              )}
+              {matchup.status === 'live' && !featured && (
+                <span className="text-[9px] text-red-500 font-bold">LIVE</span>
+              )}
+            </div>
+
+            {/* Away */}
+            {!isBye && (
+              <div className="flex-1 flex items-center gap-2 justify-end">
+                <div className="min-w-0 text-right">
+                  <p
+                    className={`text-sm font-bold truncate ${
+                      awayWon ? 'text-green-400' : away.isUser ? 'text-purple-400' : 'text-white'
+                    }`}
+                  >
+                    {away.name}
+                  </p>
+                  {away.standing && (
+                    <p className="text-[10px] text-gray-500">
+                      {away.standing.wins}-{away.standing.losses}
+                    </p>
+                  )}
+                </div>
+                <div
+                  className={`w-8 h-8 flex-shrink-0 flex items-center justify-center ${
+                    away.isUser ? 'bg-purple-500/20 border border-purple-500/50' : 'bg-[#333]'
+                  }`}
+                >
+                  <span
+                    className={`text-xs font-bold ${away.isUser ? 'text-purple-400' : 'text-gray-400'}`}
+                  >
+                    {away.name.charAt(0)}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </button>
+    );
+  }
+);
 
 export {
   CORPS_CLASS_CONFIG,

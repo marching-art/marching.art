@@ -48,10 +48,7 @@ const pageVariants = {
 // PAGE TRANSITION COMPONENT
 // =============================================================================
 
-export const PageTransition: React.FC<PageTransitionProps> = ({
-  children,
-  className = '',
-}) => {
+export const PageTransition: React.FC<PageTransitionProps> = ({ children, className = '' }) => {
   const location = useLocation();
 
   return (
@@ -134,10 +131,7 @@ const staggerItemVariants = {
   },
 };
 
-export const StaggerContainer: React.FC<StaggerContainerProps> = ({
-  children,
-  className = '',
-}) => {
+export const StaggerContainer: React.FC<StaggerContainerProps> = ({ children, className = '' }) => {
   return (
     <m.div
       initial="hidden"
@@ -180,7 +174,8 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   height,
 }) => {
   const baseClass = 'skeleton';
-  const variantClass = variant === 'circular' ? 'rounded-sm' : variant === 'text' ? 'rounded' : 'rounded-sm';
+  const variantClass =
+    variant === 'circular' ? 'rounded-sm' : variant === 'text' ? 'rounded' : 'rounded-sm';
 
   const style: React.CSSProperties = {
     width: width || (variant === 'text' ? '100%' : undefined),
@@ -188,11 +183,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   };
 
   return (
-    <div
-      className={`${baseClass} ${variantClass} ${className}`}
-      style={style}
-      aria-hidden="true"
-    />
+    <div className={`${baseClass} ${variantClass} ${className}`} style={style} aria-hidden="true" />
   );
 };
 
@@ -205,10 +196,7 @@ interface SkeletonGroupProps {
   count?: number;
 }
 
-export const SkeletonGroup: React.FC<SkeletonGroupProps> = ({
-  type,
-  count = 1,
-}) => {
+export const SkeletonGroup: React.FC<SkeletonGroupProps> = ({ type, count = 1 }) => {
   const items = Array.from({ length: count }, (_, i) => i);
 
   switch (type) {

@@ -40,7 +40,10 @@ test.describe('Navigation', () => {
 
       // Either redirected to login or on a page with login prompt
       const url = page.url();
-      const hasLoginPrompt = await page.locator('text=/sign in|login/i').isVisible().catch(() => false);
+      const hasLoginPrompt = await page
+        .locator('text=/sign in|login/i')
+        .isVisible()
+        .catch(() => false);
 
       expect(url.includes('/login') || hasLoginPrompt).toBeTruthy();
     });
@@ -51,7 +54,10 @@ test.describe('Navigation', () => {
       await page.waitForTimeout(1000);
 
       const url = page.url();
-      const hasLoginPrompt = await page.locator('text=/sign in|login/i').isVisible().catch(() => false);
+      const hasLoginPrompt = await page
+        .locator('text=/sign in|login/i')
+        .isVisible()
+        .catch(() => false);
 
       expect(url.includes('/login') || hasLoginPrompt).toBeTruthy();
     });
@@ -65,7 +71,10 @@ test.describe('Navigation', () => {
       await page.waitForTimeout(500);
 
       // Either shows 404 content or redirects to home/login
-      const is404 = await page.locator('text=/not found|404|page doesn\'t exist/i').isVisible().catch(() => false);
+      const is404 = await page
+        .locator("text=/not found|404|page doesn't exist/i")
+        .isVisible()
+        .catch(() => false);
       const isRedirected = page.url().includes('/login') || page.url() === 'http://localhost:3000/';
 
       expect(is404 || isRedirected).toBeTruthy();

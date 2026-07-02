@@ -17,7 +17,8 @@ const Login = () => {
   useBodyScroll();
   useSEO({
     title: 'Sign In | marching.art — Fantasy Drum Corps',
-    description: 'Sign in to marching.art to manage your fantasy drum corps lineup, check scores, and climb the leaderboards.',
+    description:
+      'Sign in to marching.art to manage your fantasy drum corps lineup, check scores, and climb the leaderboards.',
     path: '/login',
   });
   const { signIn } = useAuth();
@@ -93,9 +94,7 @@ const Login = () => {
                   />
                 </div>
                 <h1 className="text-2xl font-bold text-white">Welcome Back</h1>
-                <p className="text-base text-gray-500 mt-2">
-                  Your corps is waiting.
-                </p>
+                <p className="text-base text-gray-500 mt-2">Your corps is waiting.</p>
               </div>
 
               {/* Error Alert */}
@@ -157,11 +156,7 @@ const Login = () => {
                       onClick={() => setShowPassword(!showPassword)}
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
-                      {showPassword ? (
-                        <EyeOff className="w-5 h-5" />
-                      ) : (
-                        <Eye className="w-5 h-5" />
-                      )}
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
                 </div>

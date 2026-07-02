@@ -10,7 +10,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Trophy, Users, Calendar, Target, TrendingUp, Clock, Book, ChevronRight, Play,
+  Trophy,
+  Users,
+  Calendar,
+  Target,
+  TrendingUp,
+  Clock,
+  Book,
+  ChevronRight,
+  Play,
 } from 'lucide-react';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useSEO } from '../hooks/useSEO';
@@ -66,11 +74,16 @@ const HowToPlayPublic = () => {
       {/* Top bar */}
       <header className="border-b border-white/10">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="text-sm font-bold text-white hover:text-yellow-500 transition-colors">
+          <Link
+            to="/"
+            className="text-sm font-bold text-white hover:text-yellow-500 transition-colors"
+          >
             marching<span className="text-yellow-500">.art</span>
           </Link>
           <nav className="flex items-center gap-4 text-sm">
-            <Link to="/login" className="text-gray-400 hover:text-white transition-colors">Sign In</Link>
+            <Link to="/login" className="text-gray-400 hover:text-white transition-colors">
+              Sign In
+            </Link>
             <Link
               to="/register"
               className="px-3 py-1.5 bg-[#0057B8] text-white font-bold text-xs uppercase tracking-wider rounded-sm hover:bg-[#0066d6] transition-colors"
@@ -91,10 +104,11 @@ const HowToPlayPublic = () => {
         </h1>
         <p className="text-lg text-gray-300 mb-4">
           Fantasy drum corps works like fantasy football for the marching arts. Instead of drafting
-          quarterbacks and running backs, you draft <strong className="text-white">caption
-          performances</strong> — General Effect, Visual, Color Guard, Brass, Percussion, and more —
-          from 50 years of Drum Corps International (DCI) history. Your fantasy corps earns points
-          from real competition scores, and you climb leaderboards against directors worldwide.
+          quarterbacks and running backs, you draft{' '}
+          <strong className="text-white">caption performances</strong> — General Effect, Visual,
+          Color Guard, Brass, Percussion, and more — from 50 years of Drum Corps International (DCI)
+          history. Your fantasy corps earns points from real competition scores, and you climb
+          leaderboards against directors worldwide.
         </p>
         <p className="text-gray-400 mb-8">
           marching.art is free to play, runs year-round, and takes about two minutes to get started.
@@ -105,9 +119,18 @@ const HowToPlayPublic = () => {
           <SectionHeading icon={Trophy}>Quick Start</SectionHeading>
           <ol className="space-y-4">
             {[
-              ['Create your corps', 'Register free and give your corps a unique name. Every director starts in SoundSport class.'],
-              ['Draft your lineup', 'Select 8 captions from historical DCI corps performances. Each caption has a point cost — stay within your class budget.'],
-              ['Compete and level up', 'Earn scores from real DCI results, gain XP, unlock higher classes, and climb the leaderboards.'],
+              [
+                'Create your corps',
+                'Register free and give your corps a unique name. Every director starts in SoundSport class.',
+              ],
+              [
+                'Draft your lineup',
+                'Select 8 captions from historical DCI corps performances. Each caption has a point cost — stay within your class budget.',
+              ],
+              [
+                'Compete and level up',
+                'Earn scores from real DCI results, gain XP, unlock higher classes, and climb the leaderboards.',
+              ],
             ].map(([title, desc], i) => (
               <li key={title} className="flex items-start gap-3">
                 <span className="w-6 h-6 bg-[#0057B8] text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
@@ -152,7 +175,10 @@ const HowToPlayPublic = () => {
           </p>
           <div className="space-y-2">
             {CLASSES.map((cls) => (
-              <div key={cls.id} className="bg-[#111] border border-white/10 rounded-sm p-3 flex items-center justify-between gap-3">
+              <div
+                key={cls.id}
+                className="bg-[#111] border border-white/10 rounded-sm p-3 flex items-center justify-between gap-3"
+              >
                 <div>
                   <p className="text-sm font-bold text-white">{cls.name}</p>
                   <p className="text-xs text-gray-500">{cls.desc}</p>
@@ -172,7 +198,8 @@ const HowToPlayPublic = () => {
           <div className="space-y-3">
             <div className="bg-[#111] border border-[#0057B8]/30 rounded-sm p-4">
               <p className="text-sm font-bold text-white mb-1">
-                Live Season <span className="text-xs font-normal text-gray-500 ml-2">June – August</span>
+                Live Season{' '}
+                <span className="text-xs font-normal text-gray-500 ml-2">June – August</span>
               </p>
               <p className="text-sm text-gray-400">
                 Runs alongside the real DCI summer tour. Your fantasy scores track actual
@@ -181,12 +208,12 @@ const HowToPlayPublic = () => {
             </div>
             <div className="bg-[#111] border border-purple-500/30 rounded-sm p-4">
               <p className="text-sm font-bold text-white mb-1">
-                Off-Season <span className="text-xs font-normal text-gray-500 ml-2">August – May</span>
+                Off-Season{' '}
+                <span className="text-xs font-normal text-gray-500 ml-2">August – May</span>
               </p>
               <p className="text-sm text-gray-400">
-                Six 7-week seasons scored with historical DCI data, so there is always a
-                leaderboard to climb. XP, levels, unlocked classes, and CorpsCoin carry over
-                between seasons.
+                Six 7-week seasons scored with historical DCI data, so there is always a leaderboard
+                to climb. XP, levels, unlocked classes, and CorpsCoin carry over between seasons.
               </p>
             </div>
           </div>
@@ -198,8 +225,8 @@ const HowToPlayPublic = () => {
           <p className="text-sm text-gray-300 mb-3">
             Your corps score is the sum of your 8 caption scores, taken from the real (or
             historical) performances you drafted. Lineup changes are unlimited early in a season,
-            then tighten as finals approach — 3 per week mid-season, 2 per round during finals —
-            so timing your moves is part of the strategy.
+            then tighten as finals approach — 3 per week mid-season, 2 per round during finals — so
+            timing your moves is part of the strategy.
           </p>
           <p className="text-sm text-gray-300">
             Along the way you earn XP and CorpsCoin from daily check-ins, competition results,
@@ -213,7 +240,8 @@ const HowToPlayPublic = () => {
           <ul className="space-y-2 text-sm text-gray-300">
             <li className="flex items-start gap-2">
               <ChevronRight className="w-4 h-4 text-[#0057B8] flex-shrink-0 mt-0.5" />
-              Create public or private leagues with join codes and compete head-to-head with friends.
+              Create public or private leagues with join codes and compete head-to-head with
+              friends.
             </li>
             <li className="flex items-start gap-2">
               <ChevronRight className="w-4 h-4 text-[#0057B8] flex-shrink-0 mt-0.5" />
@@ -221,7 +249,8 @@ const HowToPlayPublic = () => {
             </li>
             <li className="flex items-start gap-2">
               <ChevronRight className="w-4 h-4 text-[#0057B8] flex-shrink-0 mt-0.5" />
-              Field a separate corps in each class you have unlocked, each with its own lineup and ranking.
+              Field a separate corps in each class you have unlocked, each with its own lineup and
+              ranking.
             </li>
           </ul>
         </section>
@@ -280,12 +309,24 @@ const HowToPlayPublic = () => {
       {/* Footer */}
       <footer className="border-t border-white/10 mt-4">
         <div className="max-w-3xl mx-auto px-4 py-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-gray-500">
-          <Link to="/" className="hover:text-white transition-colors">Home</Link>
-          <Link to="/preview" className="hover:text-white transition-colors">Demo</Link>
-          <Link to="/register" className="hover:text-white transition-colors">Register</Link>
-          <Link to="/login" className="hover:text-white transition-colors">Sign In</Link>
-          <Link to="/privacy" className="hover:text-white transition-colors">Privacy</Link>
-          <Link to="/terms" className="hover:text-white transition-colors">Terms</Link>
+          <Link to="/" className="hover:text-white transition-colors">
+            Home
+          </Link>
+          <Link to="/preview" className="hover:text-white transition-colors">
+            Demo
+          </Link>
+          <Link to="/register" className="hover:text-white transition-colors">
+            Register
+          </Link>
+          <Link to="/login" className="hover:text-white transition-colors">
+            Sign In
+          </Link>
+          <Link to="/privacy" className="hover:text-white transition-colors">
+            Privacy
+          </Link>
+          <Link to="/terms" className="hover:text-white transition-colors">
+            Terms
+          </Link>
         </div>
       </footer>
     </div>

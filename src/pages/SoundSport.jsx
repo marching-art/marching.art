@@ -9,9 +9,25 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
 import {
-  Music, Medal, Trophy, Users, Clock, Zap, Volume2, Shield,
-  ChevronDown, Star, Award, Target, Sparkles,
-  Play, Info, BookOpen, CheckCircle, AlertCircle, Mic2
+  Music,
+  Medal,
+  Trophy,
+  Users,
+  Clock,
+  Zap,
+  Volume2,
+  Shield,
+  ChevronDown,
+  Star,
+  Award,
+  Target,
+  Sparkles,
+  Play,
+  Info,
+  BookOpen,
+  CheckCircle,
+  AlertCircle,
+  Mic2,
 } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 
@@ -20,33 +36,117 @@ import { Card } from '../components/ui/Card';
 // =============================================================================
 
 const RATING_THRESHOLDS = [
-  { rating: 'Gold', min: 85, color: 'bg-primary', textColor: 'text-black', borderColor: 'border-black', description: 'Outstanding performance demonstrating excellence in all criteria' },
-  { rating: 'Silver', min: 75, color: 'bg-stone-300', textColor: 'text-black', borderColor: 'border-black', description: 'Strong performance with high proficiency' },
-  { rating: 'Bronze', min: 65, color: 'bg-orange-300', textColor: 'text-black', borderColor: 'border-black', description: 'Solid performance meeting core standards' },
-  { rating: 'Participation', min: 0, color: 'bg-white', textColor: 'text-black', borderColor: 'border-black', description: 'Completed performance' },
+  {
+    rating: 'Gold',
+    min: 85,
+    color: 'bg-primary',
+    textColor: 'text-black',
+    borderColor: 'border-black',
+    description: 'Outstanding performance demonstrating excellence in all criteria',
+  },
+  {
+    rating: 'Silver',
+    min: 75,
+    color: 'bg-stone-300',
+    textColor: 'text-black',
+    borderColor: 'border-black',
+    description: 'Strong performance with high proficiency',
+  },
+  {
+    rating: 'Bronze',
+    min: 65,
+    color: 'bg-orange-300',
+    textColor: 'text-black',
+    borderColor: 'border-black',
+    description: 'Solid performance meeting core standards',
+  },
+  {
+    rating: 'Participation',
+    min: 0,
+    color: 'bg-white',
+    textColor: 'text-black',
+    borderColor: 'border-black',
+    description: 'Completed performance',
+  },
 ];
 
 const AGE_CLASSES = [
   { id: 'cadet', name: 'Cadet', description: 'All performers under 13 years old', icon: Star },
   { id: 'youth', name: 'Youth', description: 'All performers under 22 years old', icon: Users },
-  { id: 'allAge', name: 'All-Age', description: 'Mixed ages with one or more over 21', icon: Award },
+  {
+    id: 'allAge',
+    name: 'All-Age',
+    description: 'Mixed ages with one or more over 21',
+    icon: Award,
+  },
 ];
 
 const ADJUDICATION_CRITERIA = [
-  { id: 'engagement', title: 'Audience Engagement', description: 'The ensemble engages the audience throughout the performance', icon: Users },
-  { id: 'entertainment', title: 'Entertainment Value', description: 'The ensemble is effective and entertaining', icon: Sparkles },
-  { id: 'concept', title: 'Developed Concept', description: 'The ensemble has a clearly developed and coordinated concept', icon: Target },
-  { id: 'proficiency', title: 'Technical & Artistic Proficiency', description: 'The ensemble demonstrates technical and artistic proficiency', icon: CheckCircle },
-  { id: 'creativity', title: 'Creativity & Innovation', description: 'The program demonstrates creativity and innovation', icon: Zap },
+  {
+    id: 'engagement',
+    title: 'Audience Engagement',
+    description: 'The ensemble engages the audience throughout the performance',
+    icon: Users,
+  },
+  {
+    id: 'entertainment',
+    title: 'Entertainment Value',
+    description: 'The ensemble is effective and entertaining',
+    icon: Sparkles,
+  },
+  {
+    id: 'concept',
+    title: 'Developed Concept',
+    description: 'The ensemble has a clearly developed and coordinated concept',
+    icon: Target,
+  },
+  {
+    id: 'proficiency',
+    title: 'Technical & Artistic Proficiency',
+    description: 'The ensemble demonstrates technical and artistic proficiency',
+    icon: CheckCircle,
+  },
+  {
+    id: 'creativity',
+    title: 'Creativity & Innovation',
+    description: 'The program demonstrates creativity and innovation',
+    icon: Zap,
+  },
 ];
 
 const PERFORMANCE_RULES = [
-  { title: 'Performance Time', content: '5-7 minutes of performance time. All playing and movement must cease at 7 minutes.', icon: Clock },
-  { title: 'Minimum Members', content: '5 or more members must be in the performance area at any time during the performance.', icon: Users },
-  { title: 'Entry & Setup', content: '3 minutes allowed for entry and setup before performance timing begins.', icon: Play },
-  { title: 'Amplification', content: 'Self-contained amplification systems are permitted. Venues provide 110V outlet.', icon: Volume2 },
-  { title: 'Live Music Only', content: 'All music must be performed live in real-time. Sequenced music and loops are prohibited.', icon: Mic2 },
-  { title: 'Safety', content: 'No pyrotechnics, hazardous materials, or powders. Keep the performance area safe.', icon: Shield },
+  {
+    title: 'Performance Time',
+    content: '5-7 minutes of performance time. All playing and movement must cease at 7 minutes.',
+    icon: Clock,
+  },
+  {
+    title: 'Minimum Members',
+    content:
+      '5 or more members must be in the performance area at any time during the performance.',
+    icon: Users,
+  },
+  {
+    title: 'Entry & Setup',
+    content: '3 minutes allowed for entry and setup before performance timing begins.',
+    icon: Play,
+  },
+  {
+    title: 'Amplification',
+    content: 'Self-contained amplification systems are permitted. Venues provide 110V outlet.',
+    icon: Volume2,
+  },
+  {
+    title: 'Live Music Only',
+    content:
+      'All music must be performed live in real-time. Sequenced music and loops are prohibited.',
+    icon: Mic2,
+  },
+  {
+    title: 'Safety',
+    content: 'No pyrotechnics, hazardous materials, or powders. Keep the performance area safe.',
+    icon: Shield,
+  },
 ];
 
 // =============================================================================
@@ -66,10 +166,7 @@ const CollapsibleSection = ({ title, icon: Icon, children, defaultOpen = false }
           <Icon className="w-5 h-5 text-green-500" />
           <span className="font-bold text-white">{title}</span>
         </div>
-        <m.div
-          animate={{ rotate: isOpen ? 180 : 0 }}
-          transition={{ duration: 0.2 }}
-        >
+        <m.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
           <ChevronDown className="w-5 h-5 text-gray-400" />
         </m.div>
       </button>
@@ -81,9 +178,7 @@ const CollapsibleSection = ({ title, icon: Icon, children, defaultOpen = false }
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
-            <div className="p-4 bg-[#1a1a1a] border-t border-[#333]">
-              {children}
-            </div>
+            <div className="p-4 bg-[#1a1a1a] border-t border-[#333]">{children}</div>
           </m.div>
         )}
       </AnimatePresence>
@@ -140,9 +235,9 @@ const SoundSport = () => {
             </div>
           </div>
           <p className="text-gray-300 text-sm md:text-base max-w-2xl">
-            SoundSport provides exciting performance opportunities for community-based musical ensembles
-            of all types, all ages, and all instruments. Receive ratings (Gold, Silver, Bronze) based on
-            your performance - no rankings, just recognition of excellence.
+            SoundSport provides exciting performance opportunities for community-based musical
+            ensembles of all types, all ages, and all instruments. Receive ratings (Gold, Silver,
+            Bronze) based on your performance - no rankings, just recognition of excellence.
           </p>
         </div>
       </div>
@@ -160,9 +255,10 @@ const SoundSport = () => {
                   className={`
                     relative flex items-center gap-2 px-4 py-2.5 min-h-[44px] text-sm font-bold uppercase tracking-wider
                     whitespace-nowrap rounded-full transition-all duration-200 ease-out
-                    ${activeSection === tab.id
-                      ? 'text-green-400 bg-green-500/15'
-                      : 'text-gray-500 hover:text-gray-300 hover:bg-white/5 active:text-white active:bg-white/10'
+                    ${
+                      activeSection === tab.id
+                        ? 'text-green-400 bg-green-500/15'
+                        : 'text-gray-500 hover:text-gray-300 hover:bg-white/5 active:text-white active:bg-white/10'
                     }
                   `}
                 >
@@ -218,12 +314,15 @@ const SoundSport = () => {
                   <Card.Body className="p-4">
                     <div className="space-y-4">
                       <p className="text-gray-300 text-sm">
-                        Three judges each evaluate your performance using the Overall Impression criteria.
-                        Each judge scores out of 100 points, and your final score is the average.
+                        Three judges each evaluate your performance using the Overall Impression
+                        criteria. Each judge scores out of 100 points, and your final score is the
+                        average.
                       </p>
                       <div className="bg-[#222] p-4 rounded-sm border border-[#333]">
                         <div className="text-center">
-                          <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Formula</div>
+                          <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+                            Formula
+                          </div>
                           <div className="text-lg font-mono text-green-400">
                             (Judge 1 + Judge 2 + Judge 3) ÷ 3 = Final Score
                           </div>
@@ -286,11 +385,10 @@ const SoundSport = () => {
                   })}
                 </div>
                 <p className="text-gray-500 text-xs mt-3">
-                  Class winners may be awarded within each age classification, along with "Best in Show"
-                  for the highest scoring ensemble regardless of class.
+                  Class winners may be awarded within each age classification, along with "Best in
+                  Show" for the highest scoring ensemble regardless of class.
                 </p>
               </section>
-
             </m.div>
           )}
 
@@ -331,11 +429,7 @@ const SoundSport = () => {
               </div>
 
               {/* Performance Rules */}
-              <CollapsibleSection
-                title="Performance Requirements"
-                icon={Play}
-                defaultOpen={true}
-              >
+              <CollapsibleSection title="Performance Requirements" icon={Play} defaultOpen={true}>
                 <div className="space-y-3">
                   {PERFORMANCE_RULES.map((rule) => {
                     const Icon = rule.icon;
@@ -360,8 +454,8 @@ const SoundSport = () => {
                   <div className="p-3 bg-[#222] rounded border-l-2 border-green-500">
                     <h4 className="font-bold text-white mb-1">Musical Instruments</h4>
                     <p className="text-gray-400 text-xs">
-                      Any instrument or implement that is played or struck to create sound in real time,
-                      including the human voice.
+                      Any instrument or implement that is played or struck to create sound in real
+                      time, including the human voice.
                     </p>
                   </div>
                   <div className="p-3 bg-[#222] rounded border-l-2 border-green-500">
@@ -380,8 +474,8 @@ const SoundSport = () => {
                   <div className="p-3 bg-[#222] rounded border-l-2 border-red-500">
                     <h4 className="font-bold text-red-400 mb-1">Prohibited</h4>
                     <p className="text-gray-400 text-xs">
-                      Motorized carts, pyrotechnics, hazardous materials, powders, glitter, confetti,
-                      and anything leaving residue.
+                      Motorized carts, pyrotechnics, hazardous materials, powders, glitter,
+                      confetti, and anything leaving residue.
                     </p>
                   </div>
                 </div>
@@ -427,7 +521,9 @@ const SoundSport = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div className="p-3 bg-green-500/10 border border-green-500/30 rounded">
                       <h4 className="font-bold text-green-400 text-xs mb-1">Stage Dimensions</h4>
-                      <p className="text-gray-400 text-xs">30 yards wide × 20 yards deep (minimum)</p>
+                      <p className="text-gray-400 text-xs">
+                        30 yards wide × 20 yards deep (minimum)
+                      </p>
                     </div>
                     <div className="p-3 bg-green-500/10 border border-green-500/30 rounded">
                       <h4 className="font-bold text-green-400 text-xs mb-1">Corner Markers</h4>
@@ -454,7 +550,9 @@ const SoundSport = () => {
                   </div>
                   <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded">
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-300 text-sm">Late to ready line (per 1.5 min)</span>
+                      <span className="text-gray-300 text-sm">
+                        Late to ready line (per 1.5 min)
+                      </span>
                       <span className="text-yellow-400 font-bold">-0.1 pts</span>
                     </div>
                   </div>

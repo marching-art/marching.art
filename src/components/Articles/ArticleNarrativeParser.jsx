@@ -12,8 +12,17 @@
 
 import React from 'react';
 import {
-  Eye, Target, Music2, Palette, TrendingUp, Compass,
-  ShoppingCart, Pause, TrendingDown, Sparkles, BarChart3
+  Eye,
+  Target,
+  Music2,
+  Palette,
+  TrendingUp,
+  Compass,
+  ShoppingCart,
+  Pause,
+  TrendingDown,
+  Sparkles,
+  BarChart3,
 } from 'lucide-react';
 
 // Section configuration with icons and styling
@@ -70,14 +79,14 @@ const SECTION_CONFIG = {
     iconClass: 'text-purple-400',
     titleClass: 'text-purple-400',
   },
-  'VISUAL': {
+  VISUAL: {
     icon: Palette,
     bgClass: 'bg-cyan-500/10',
     borderClass: 'border-cyan-500/30',
     iconClass: 'text-cyan-400',
     titleClass: 'text-cyan-400',
   },
-  'MUSIC': {
+  MUSIC: {
     icon: Music2,
     bgClass: 'bg-amber-500/10',
     borderClass: 'border-amber-500/30',
@@ -91,7 +100,7 @@ const SECTION_CONFIG = {
     iconClass: 'text-indigo-400',
     titleClass: 'text-indigo-400',
   },
-  'TRAJECTORY': {
+  TRAJECTORY: {
     icon: Compass,
     bgClass: 'bg-indigo-500/10',
     borderClass: 'border-indigo-500/30',
@@ -113,7 +122,7 @@ const SECTION_CONFIG = {
     titleClass: 'text-green-400',
   },
   // Analytics sections
-  'ANALYSIS': {
+  ANALYSIS: {
     icon: BarChart3,
     bgClass: 'bg-blue-500/10',
     borderClass: 'border-blue-500/30',
@@ -141,7 +150,9 @@ function parseRecommendations(content) {
 
     for (const line of lines) {
       // Match: - Corps Caption @ Score (optional arrow) - Reason
-      const match = line.match(/^-\s*([A-Za-z][A-Za-z\s]+?)(?:\s+([A-Z]{1,3}\d?))\s*@\s*([\d.]+)\s*[↑↓→]?\s*(?:-\s*)?(.*)$/s);
+      const match = line.match(
+        /^-\s*([A-Za-z][A-Za-z\s]+?)(?:\s+([A-Z]{1,3}\d?))\s*@\s*([\d.]+)\s*[↑↓→]?\s*(?:-\s*)?(.*)$/s
+      );
 
       if (match) {
         const corps = match[1].trim();
@@ -177,9 +188,7 @@ function RecommendationList({ recs }) {
         <div>
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="w-4 h-4 text-green-500" />
-            <span className="text-xs font-bold text-green-500 uppercase">
-              BUY - Add to lineup
-            </span>
+            <span className="text-xs font-bold text-green-500 uppercase">BUY - Add to lineup</span>
           </div>
           <div className="space-y-2">
             {recs.buy.map((rec, idx) => (
@@ -188,7 +197,8 @@ function RecommendationList({ recs }) {
                   <span className="text-sm font-bold text-white">{rec.corps}</span>
                   {rec.score > 0 && (
                     <span className="text-xs font-data font-bold text-green-400 tabular-nums">
-                      {rec.caption && `${rec.caption} @ `}{rec.score.toFixed(2)}
+                      {rec.caption && `${rec.caption} @ `}
+                      {rec.score.toFixed(2)}
                     </span>
                   )}
                 </div>
@@ -210,12 +220,16 @@ function RecommendationList({ recs }) {
           </div>
           <div className="space-y-2">
             {recs.hold.map((rec, idx) => (
-              <div key={idx} className="bg-yellow-500/10 border border-yellow-500/20 p-3 rounded-sm">
+              <div
+                key={idx}
+                className="bg-yellow-500/10 border border-yellow-500/20 p-3 rounded-sm"
+              >
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-bold text-white">{rec.corps}</span>
                   {rec.score > 0 && (
                     <span className="text-xs font-data font-bold text-yellow-400 tabular-nums">
-                      {rec.caption && `${rec.caption} @ `}{rec.score.toFixed(2)}
+                      {rec.caption && `${rec.caption} @ `}
+                      {rec.score.toFixed(2)}
                     </span>
                   )}
                 </div>
@@ -242,7 +256,8 @@ function RecommendationList({ recs }) {
                   <span className="text-sm font-bold text-white">{rec.corps}</span>
                   {rec.score > 0 && (
                     <span className="text-xs font-data font-bold text-red-400 tabular-nums">
-                      {rec.caption && `${rec.caption} @ `}{rec.score.toFixed(2)}
+                      {rec.caption && `${rec.caption} @ `}
+                      {rec.score.toFixed(2)}
                     </span>
                   )}
                 </div>
@@ -273,15 +288,16 @@ function FantasyNarrativeSection({ title, content, isFirst }) {
 
   // Check if this is a recommendations section
   const isRecommendationsSection =
-    normalizedTitle === 'CAPTION PICKS' ||
-    normalizedTitle === 'FANTASY RECOMMENDATIONS';
+    normalizedTitle === 'CAPTION PICKS' || normalizedTitle === 'FANTASY RECOMMENDATIONS';
 
   if (isRecommendationsSection) {
     const recs = parseRecommendations(content);
     const hasStructuredRecs = recs.buy.length > 0 || recs.hold.length > 0 || recs.sell.length > 0;
 
     return (
-      <div className={`${config.bgClass} border ${config.borderClass} p-5 ${!isFirst ? 'mt-6' : ''}`}>
+      <div
+        className={`${config.bgClass} border ${config.borderClass} p-5 ${!isFirst ? 'mt-6' : ''}`}
+      >
         <div className="flex items-center gap-2 mb-4">
           <Icon className={`w-5 h-5 ${config.iconClass}`} />
           <h3 className={`text-sm font-bold uppercase tracking-wider ${config.titleClass}`}>
@@ -293,9 +309,7 @@ function FantasyNarrativeSection({ title, content, isFirst }) {
           <RecommendationList recs={recs} />
         ) : (
           // Fallback to formatted text if parsing fails
-          <div className="text-base text-gray-300 leading-relaxed">
-            {formatContent(content)}
-          </div>
+          <div className="text-base text-gray-300 leading-relaxed">{formatContent(content)}</div>
         )}
       </div>
     );
@@ -309,13 +323,10 @@ function FantasyNarrativeSection({ title, content, isFirst }) {
           {normalizedTitle}
         </h3>
       </div>
-      <div className="text-base text-gray-300 leading-relaxed">
-        {formatContent(content)}
-      </div>
+      <div className="text-base text-gray-300 leading-relaxed">{formatContent(content)}</div>
     </div>
   );
 }
-
 
 // Format content - handle paragraphs and clean up markdown artifacts
 function formatContent(content) {
@@ -323,12 +334,12 @@ function formatContent(content) {
 
   // Clean up markdown artifacts
   const cleaned = content
-    .replace(/\*\*/g, '')  // Remove bold markdown
-    .replace(/\*/g, '')    // Remove italic markdown
+    .replace(/\*\*/g, '') // Remove bold markdown
+    .replace(/\*/g, '') // Remove italic markdown
     .trim();
 
   // Split into paragraphs and render
-  const paragraphs = cleaned.split(/\n\n+/).filter(p => p.trim());
+  const paragraphs = cleaned.split(/\n\n+/).filter((p) => p.trim());
 
   if (paragraphs.length === 1) {
     return <p>{paragraphs[0]}</p>;
@@ -358,7 +369,7 @@ function parseSections(narrative) {
   ];
 
   // Build pattern that matches headers at start of line
-  const headerPatterns = fantasyHeaders.map(h => {
+  const headerPatterns = fantasyHeaders.map((h) => {
     const escaped = h.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     return escaped;
   });
@@ -422,7 +433,6 @@ function isDCIArticle(articleType) {
   return ['dci_recap', 'dci_daily', 'dci_feature'].includes(articleType);
 }
 
-
 /**
  * ArticleNarrativeParser - Parses and renders narrative with visual sections
  * @param {string} narrative - The full narrative text
@@ -433,11 +443,7 @@ export default function ArticleNarrativeParser({ narrative, summary, articleType
   if (!narrative || typeof narrative !== 'string') {
     // Fallback to summary if no narrative
     if (summary) {
-      return (
-        <div className="text-base md:text-lg text-gray-300 leading-relaxed">
-          {summary}
-        </div>
-      );
+      return <div className="text-base md:text-lg text-gray-300 leading-relaxed">{summary}</div>;
     }
     return null;
   }
@@ -497,12 +503,12 @@ export default function ArticleNarrativeParser({ narrative, summary, articleType
 function formatEditorialContent(narrative) {
   // Clean up markdown
   const cleaned = narrative
-    .replace(/\*\*/g, '')  // Remove bold markdown
-    .replace(/\*/g, '')    // Remove italic markdown
+    .replace(/\*\*/g, '') // Remove bold markdown
+    .replace(/\*/g, '') // Remove italic markdown
     .trim();
 
   // Split into paragraphs
-  const paragraphs = cleaned.split(/\n\n+/).filter(p => p.trim());
+  const paragraphs = cleaned.split(/\n\n+/).filter((p) => p.trim());
 
   return paragraphs.map((para, idx) => (
     <p key={idx} className="text-base md:text-lg text-gray-300 leading-relaxed mb-6">

@@ -23,14 +23,13 @@ const Toggle = ({ checked, onChange, label, description }) => (
       {description && <p className="text-[10px] text-gray-500 mt-0.5">{description}</p>}
     </div>
     <div className="relative">
-      <input
-        type="checkbox"
-        className="sr-only peer"
-        checked={checked}
-        onChange={onChange}
-      />
-      <div className={`w-10 h-5 rounded-full transition-colors ${checked ? 'bg-[#0057B8]' : 'bg-[#333]'}`}>
-        <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${checked ? 'left-[22px]' : 'left-0.5'}`} />
+      <input type="checkbox" className="sr-only peer" checked={checked} onChange={onChange} />
+      <div
+        className={`w-10 h-5 rounded-full transition-colors ${checked ? 'bg-[#0057B8]' : 'bg-[#333]'}`}
+      >
+        <div
+          className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${checked ? 'left-[22px]' : 'left-0.5'}`}
+        />
       </div>
     </div>
   </label>
@@ -119,7 +118,6 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
     try {
       const data = await getProfile(user.uid);
       if (data) {
-
         // Load account data
         const loadedAccountData = {
           username: data.username || '',
@@ -157,8 +155,8 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
     }
   };
 
-  const hasAccountChanges = accountData.username !== originalData.username ||
-                            accountData.email !== originalData.email;
+  const hasAccountChanges =
+    accountData.username !== originalData.username || accountData.email !== originalData.email;
 
   const saveAccountSettings = async () => {
     setAccountSaving(true);
@@ -171,24 +169,22 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
       // Update username if changed
       if (accountData.username && accountData.username !== originalData.username) {
         promises.push(
-          updateUsername({ username: accountData.username })
-            .catch(err => {
-              const message = err.message || 'Failed to update username';
-              setUsernameError(message);
-              throw err;
-            })
+          updateUsername({ username: accountData.username }).catch((err) => {
+            const message = err.message || 'Failed to update username';
+            setUsernameError(message);
+            throw err;
+          })
         );
       }
 
       // Update email if changed
       if (accountData.email && accountData.email !== originalData.email) {
         promises.push(
-          updateEmail({ email: accountData.email })
-            .catch(err => {
-              const message = err.message || 'Failed to update email';
-              setEmailError(message);
-              throw err;
-            })
+          updateEmail({ email: accountData.email }).catch((err) => {
+            const message = err.message || 'Failed to update email';
+            setEmailError(message);
+            throw err;
+          })
         );
       }
 
@@ -205,12 +201,12 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
   };
 
   const updatePref = (key, value) => {
-    setEmailPrefs(prev => ({ ...prev, [key]: value }));
+    setEmailPrefs((prev) => ({ ...prev, [key]: value }));
     setHasChanges(true);
   };
 
   const updatePushPref = (key, value) => {
-    setPushPrefs(prev => ({ ...prev, [key]: value }));
+    setPushPrefs((prev) => ({ ...prev, [key]: value }));
     setHasChanges(true);
   };
 
@@ -247,7 +243,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
             'settings.fcmToken': token,
             'settings.pushPreferences.allPush': true,
           });
-          setPushPrefs(prev => ({ ...prev, allPush: true }));
+          setPushPrefs((prev) => ({ ...prev, allPush: true }));
           toast.success('Push notifications enabled');
         } else {
           toast.error('Failed to register for push notifications');
@@ -266,7 +262,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
       await updateProfile(user.uid, {
         'settings.pushPreferences.allPush': false,
       });
-      setPushPrefs(prev => ({ ...prev, allPush: false }));
+      setPushPrefs((prev) => ({ ...prev, allPush: false }));
       toast.success('Push notifications disabled');
     } catch (error) {
       console.error('Error disabling push:', error);
@@ -307,7 +303,10 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 flex items-end sm:items-center justify-center" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 bg-black/80 flex items-end sm:items-center justify-center"
+      onClick={onClose}
+    >
       <div
         className="w-full sm:max-w-md bg-[#1a1a1a] border-t sm:border border-[#333] rounded-t-xl sm:rounded-sm safe-area-bottom max-h-[85vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
@@ -366,14 +365,16 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                   type="text"
                   value={accountData.username}
                   onChange={(e) => {
-                    setAccountData(prev => ({ ...prev, username: e.target.value }));
+                    setAccountData((prev) => ({ ...prev, username: e.target.value }));
                     setUsernameError('');
                   }}
                   placeholder="Enter username"
                   maxLength={15}
                   className="w-full bg-transparent text-sm text-white font-data border-none outline-none placeholder:text-gray-600"
                 />
-                <div className="text-[9px] text-gray-600 mt-1">3-15 characters, letters, numbers, underscores</div>
+                <div className="text-[9px] text-gray-600 mt-1">
+                  3-15 characters, letters, numbers, underscores
+                </div>
                 {usernameError && (
                   <div className="text-[10px] text-red-400 mt-1 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" />
@@ -392,7 +393,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                   type="email"
                   value={accountData.email}
                   onChange={(e) => {
-                    setAccountData(prev => ({ ...prev, email: e.target.value }));
+                    setAccountData((prev) => ({ ...prev, email: e.target.value }));
                     setEmailError('');
                   }}
                   placeholder="Enter email address"
@@ -418,7 +419,9 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
               )}
 
               <div className="bg-[#111] border border-[#333] p-3">
-                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Member Since</div>
+                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  Member Since
+                </div>
                 <div className="text-sm text-white">
                   {user?.metadata?.creationTime
                     ? new Date(user.metadata.creationTime).toLocaleDateString()
@@ -428,7 +431,9 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
 
               {/* Help Tooltips Toggle */}
               <div className="bg-[#111] border border-[#333] p-3">
-                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Gameplay Help</div>
+                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                  Gameplay Help
+                </div>
                 <Toggle
                   checked={tooltipsEnabled}
                   onChange={(e) => setTooltipsEnabled(e.target.checked)}
@@ -472,7 +477,8 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                       <div>
                         <p className="text-sm font-bold text-red-400">Delete Your Account?</p>
                         <p className="text-xs text-gray-400 mt-1">
-                          This action is permanent and cannot be undone. All your data, corps, and season history will be permanently deleted.
+                          This action is permanent and cannot be undone. All your data, corps, and
+                          season history will be permanently deleted.
                         </p>
                       </div>
                     </div>
@@ -535,11 +541,15 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
 
                 {!pushSupported ? (
                   <div className="bg-[#111] border border-[#333] p-3 text-center">
-                    <p className="text-xs text-gray-500">Push notifications not supported in this browser</p>
+                    <p className="text-xs text-gray-500">
+                      Push notifications not supported in this browser
+                    </p>
                   </div>
                 ) : pushPermission === 'denied' ? (
                   <div className="bg-[#111] border border-[#333] p-3 text-center">
-                    <p className="text-xs text-gray-500">Push notifications blocked. Enable in browser settings.</p>
+                    <p className="text-xs text-gray-500">
+                      Push notifications blocked. Enable in browser settings.
+                    </p>
                   </div>
                 ) : !pushPrefs.allPush ? (
                   <button

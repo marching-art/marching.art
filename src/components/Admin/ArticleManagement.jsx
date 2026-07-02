@@ -11,7 +11,7 @@ import {
   updateArticle,
   archiveArticle,
   deleteArticle,
-  regenerateArticleImage
+  regenerateArticleImage,
 } from '../../api/functions';
 import { ArticleRow, ArticleEditorModal } from './ArticleManagementParts';
 
@@ -21,7 +21,6 @@ const FILTER_TABS = [
   { id: 'published', label: 'Published' },
   { id: 'archived', label: 'Archived' },
 ];
-
 
 const PAGE_SIZE = 20;
 
@@ -53,7 +52,7 @@ const ArticleManagement = () => {
       if (result.data.success) {
         if (startAfter) {
           // Append to existing articles
-          setArticles(prev => [...prev, ...result.data.articles]);
+          setArticles((prev) => [...prev, ...result.data.articles]);
         } else {
           // Replace articles (initial load or refresh)
           setArticles(result.data.articles);
@@ -104,16 +103,18 @@ const ArticleManagement = () => {
     try {
       const result = await archiveArticle({
         path: article.path,
-        archive: isArchiving
+        archive: isArchiving,
       });
       if (result.data.success) {
         toast.success(result.data.message);
         // Update local state
-        setArticles(prev => prev.map(a =>
-          a.path === article.path
-            ? { ...a, isArchived: isArchiving, isPublished: !isArchiving }
-            : a
-        ));
+        setArticles((prev) =>
+          prev.map((a) =>
+            a.path === article.path
+              ? { ...a, isArchived: isArchiving, isPublished: !isArchiving }
+              : a
+          )
+        );
       }
     } catch (error) {
       console.error('Error toggling archive:', error);
@@ -122,18 +123,20 @@ const ArticleManagement = () => {
   };
 
   const handleDelete = async (article) => {
-    if (!window.confirm(`Permanently delete "${article.headline}"?\n\nThis action cannot be undone.`)) {
+    if (
+      !window.confirm(`Permanently delete "${article.headline}"?\n\nThis action cannot be undone.`)
+    ) {
       return;
     }
 
     try {
       const result = await deleteArticle({
         path: article.path,
-        confirmDelete: true
+        confirmDelete: true,
       });
       if (result.data.success) {
         toast.success('Article deleted');
-        setArticles(prev => prev.filter(a => a.path !== article.path));
+        setArticles((prev) => prev.filter((a) => a.path !== article.path));
       }
     } catch (error) {
       console.error('Error deleting article:', error);
@@ -142,9 +145,10 @@ const ArticleManagement = () => {
   };
 
   // Filter articles based on search and filter tab
-  const filteredArticles = articles.filter(article => {
+  const filteredArticles = articles.filter((article) => {
     // Search filter
-    const matchesSearch = searchTerm === '' ||
+    const matchesSearch =
+      searchTerm === '' ||
       article.headline.toLowerCase().includes(searchTerm.toLowerCase()) ||
       article.summary.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -167,7 +171,7 @@ const ArticleManagement = () => {
       day: 'numeric',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
@@ -189,9 +193,7 @@ const ArticleManagement = () => {
             <h2 className="text-sm font-bold text-white uppercase tracking-wider">
               Article Management
             </h2>
-            <span className="text-xs text-gray-500">
-              ({articles.length} total)
-            </span>
+            <span className="text-xs text-gray-500">({articles.length} total)</span>
           </div>
           <button
             onClick={handleRefresh}
@@ -289,16 +291,14 @@ const ArticleManagement = () => {
             try {
               const result = await updateArticle({
                 path: editingArticle.path,
-                updates
+                updates,
               });
               if (result.data.success) {
                 toast.success('Article updated');
                 // Update local state
-                setArticles(prev => prev.map(a =>
-                  a.path === editingArticle.path
-                    ? { ...a, ...updates }
-                    : a
-                ));
+                setArticles((prev) =>
+                  prev.map((a) => (a.path === editingArticle.path ? { ...a, ...updates } : a))
+                );
                 setEditingArticle(null);
               }
             } catch (error) {
@@ -312,13 +312,11 @@ const ArticleManagement = () => {
               if (result.data.success) {
                 toast.success('New image generated!');
                 // Update the editing article's imageUrl
-                setEditingArticle(prev => ({ ...prev, imageUrl: result.data.imageUrl }));
+                setEditingArticle((prev) => ({ ...prev, imageUrl: result.data.imageUrl }));
                 // Update the articles list
-                setArticles(prev => prev.map(a =>
-                  a.path === path
-                    ? { ...a, imageUrl: result.data.imageUrl }
-                    : a
-                ));
+                setArticles((prev) =>
+                  prev.map((a) => (a.path === path ? { ...a, imageUrl: result.data.imageUrl } : a))
+                );
                 return result.data.imageUrl;
               }
             } catch (error) {

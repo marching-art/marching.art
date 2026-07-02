@@ -141,10 +141,7 @@ export const Modal: React.FC<ModalProps> = ({
         {(title || showCloseButton) && (
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
             {title && (
-              <h2
-                id={titleId}
-                className="text-xs font-bold uppercase tracking-wider text-gray-300"
-              >
+              <h2 id={titleId} className="text-xs font-bold uppercase tracking-wider text-gray-300">
                 {title}
               </h2>
             )}
@@ -162,9 +159,7 @@ export const Modal: React.FC<ModalProps> = ({
         )}
 
         {/* Body - Let children define padding */}
-        <div className="max-h-[70vh] overflow-y-auto">
-          {children}
-        </div>
+        <div className="max-h-[70vh] overflow-y-auto">{children}</div>
 
         {/* Footer */}
         {footer && (
@@ -209,9 +204,7 @@ export const ModalHeader: React.FC<ModalHeaderProps> = ({
   showCloseButton = true,
 }) => (
   <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
-    <div className="text-sm font-bold uppercase tracking-wider text-gray-300">
-      {children}
-    </div>
+    <div className="text-sm font-bold uppercase tracking-wider text-gray-300">{children}</div>
     {showCloseButton && onClose && (
       <button
         onClick={onClose}
@@ -238,11 +231,7 @@ export const ModalBody: React.FC<ModalBodyProps> = ({
   children,
   className = '',
   noPadding = false,
-}) => (
-  <div className={`${noPadding ? '' : 'p-4'} ${className}`}>
-    {children}
-  </div>
-);
+}) => <div className={`${noPadding ? '' : 'p-4'} ${className}`}>{children}</div>;
 
 // =============================================================================
 // MODAL FOOTER COMPONENT
@@ -253,10 +242,7 @@ export interface ModalFooterProps {
   className?: string;
 }
 
-export const ModalFooter: React.FC<ModalFooterProps> = ({
-  children,
-  className = '',
-}) => (
+export const ModalFooter: React.FC<ModalFooterProps> = ({ children, className = '' }) => (
   <div className={`px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end gap-2 ${className}`}>
     {children}
   </div>
@@ -309,9 +295,11 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             disabled={isLoading}
             className={`
               h-9 px-4 text-sm font-bold uppercase tracking-wider transition-all press-feedback-strong disabled:opacity-50 rounded-sm
-              ${variant === 'danger'
-                ? 'bg-red-600 text-white hover:bg-red-500 active:bg-red-700'
-                : 'bg-[#0057B8] text-white hover:bg-[#0066d6] active:bg-[#004a9e]'}
+              ${
+                variant === 'danger'
+                  ? 'bg-red-600 text-white hover:bg-red-500 active:bg-red-700'
+                  : 'bg-[#0057B8] text-white hover:bg-[#0066d6] active:bg-[#004a9e]'
+              }
             `}
           >
             {isLoading ? 'Loading...' : confirmText}

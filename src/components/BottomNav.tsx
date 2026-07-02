@@ -94,7 +94,9 @@ const BottomNav: React.FC = () => {
                 )}
 
                 {/* Icon - larger on active */}
-                <div className={`relative z-10 p-1.5 rounded-sm transition-all duration-150 ${active ? 'bg-yellow-500/20' : ''}`}>
+                <div
+                  className={`relative z-10 p-1.5 rounded-sm transition-all duration-150 ${active ? 'bg-yellow-500/20' : ''}`}
+                >
                   <Icon
                     className={`w-5 h-5 xs:w-[22px] xs:h-[22px] transition-all duration-150 ${
                       active ? 'text-yellow-400 scale-110' : 'text-yellow-50/70'

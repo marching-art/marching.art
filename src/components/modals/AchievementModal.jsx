@@ -17,18 +17,38 @@ const ICON_MAP = {
 };
 
 const RARITY_STYLES = {
-  legendary: { bg: 'bg-purple-500/10', border: 'border-purple-500/30', text: 'text-purple-400', badge: 'bg-purple-500/20 text-purple-400' },
-  epic: { bg: 'bg-purple-400/10', border: 'border-purple-400/30', text: 'text-purple-300', badge: 'bg-purple-400/20 text-purple-300' },
-  rare: { bg: 'bg-[#0057B8]/10', border: 'border-[#0057B8]/30', text: 'text-[#0057B8]', badge: 'bg-[#0057B8]/20 text-[#0057B8]' },
-  common: { bg: 'bg-gray-500/10', border: 'border-gray-500/30', text: 'text-gray-400', badge: 'bg-gray-500/20 text-gray-400' },
+  legendary: {
+    bg: 'bg-purple-500/10',
+    border: 'border-purple-500/30',
+    text: 'text-purple-400',
+    badge: 'bg-purple-500/20 text-purple-400',
+  },
+  epic: {
+    bg: 'bg-purple-400/10',
+    border: 'border-purple-400/30',
+    text: 'text-purple-300',
+    badge: 'bg-purple-400/20 text-purple-300',
+  },
+  rare: {
+    bg: 'bg-[#0057B8]/10',
+    border: 'border-[#0057B8]/30',
+    text: 'text-[#0057B8]',
+    badge: 'bg-[#0057B8]/20 text-[#0057B8]',
+  },
+  common: {
+    bg: 'bg-gray-500/10',
+    border: 'border-gray-500/30',
+    text: 'text-gray-400',
+    badge: 'bg-gray-500/20 text-gray-400',
+  },
 };
 
 const AchievementModal = ({ onClose, achievements, newAchievement }) => {
   // Close on Escape key
   useEscapeKey(onClose);
 
-  const sortedAchievements = [...achievements].sort((a, b) =>
-    new Date(b.earnedAt) - new Date(a.earnedAt)
+  const sortedAchievements = [...achievements].sort(
+    (a, b) => new Date(b.earnedAt) - new Date(a.earnedAt)
   );
 
   const getIcon = (iconName) => ICON_MAP[iconName] || Award;
@@ -51,7 +71,12 @@ const AchievementModal = ({ onClose, achievements, newAchievement }) => {
             <div className="flex items-center gap-3">
               <Trophy className="w-5 h-5 text-yellow-500" />
               <div>
-                <h2 id="modal-title-achievement" className="text-xs font-bold uppercase tracking-wider text-gray-300">Your Achievements</h2>
+                <h2
+                  id="modal-title-achievement"
+                  className="text-xs font-bold uppercase tracking-wider text-gray-300"
+                >
+                  Your Achievements
+                </h2>
                 <p className="text-[10px] text-gray-500">
                   {achievements.length} achievement{achievements.length !== 1 ? 's' : ''} unlocked
                 </p>
@@ -74,8 +99,12 @@ const AchievementModal = ({ onClose, achievements, newAchievement }) => {
                   </p>
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className={`w-10 h-10 flex items-center justify-center ${RARITY_STYLES[newAchievement.rarity]?.bg || 'bg-gray-500/10'} border ${RARITY_STYLES[newAchievement.rarity]?.border || 'border-gray-500/30'}`}>
-                    {React.createElement(getIcon(newAchievement.icon), { className: `w-5 h-5 ${RARITY_STYLES[newAchievement.rarity]?.text || 'text-gray-400'}` })}
+                  <div
+                    className={`w-10 h-10 flex items-center justify-center ${RARITY_STYLES[newAchievement.rarity]?.bg || 'bg-gray-500/10'} border ${RARITY_STYLES[newAchievement.rarity]?.border || 'border-gray-500/30'}`}
+                  >
+                    {React.createElement(getIcon(newAchievement.icon), {
+                      className: `w-5 h-5 ${RARITY_STYLES[newAchievement.rarity]?.text || 'text-gray-400'}`,
+                    })}
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-white">{newAchievement.title}</h3>
@@ -97,13 +126,19 @@ const AchievementModal = ({ onClose, achievements, newAchievement }) => {
                       className={`p-3 bg-[#0a0a0a] border ${styles.border} hover:bg-white/5 transition-colors`}
                     >
                       <div className="flex items-start gap-3">
-                        <div className={`w-8 h-8 flex items-center justify-center ${styles.bg} border ${styles.border} flex-shrink-0`}>
+                        <div
+                          className={`w-8 h-8 flex items-center justify-center ${styles.bg} border ${styles.border} flex-shrink-0`}
+                        >
                           <IconComponent className={`w-4 h-4 ${styles.text}`} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-bold text-white text-sm truncate">{achievement.title}</h4>
-                            <span className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 ${styles.badge}`}>
+                            <h4 className="font-bold text-white text-sm truncate">
+                              {achievement.title}
+                            </h4>
+                            <span
+                              className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 ${styles.badge}`}
+                            >
                               {achievement.rarity}
                             </span>
                           </div>

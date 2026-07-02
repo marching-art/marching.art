@@ -112,9 +112,7 @@ export const SwipeableTabs: React.FC<SwipeableTabsProps> = ({
   return (
     <div className="flex flex-col h-full">
       {/* Tab Bar */}
-      <div
-        className={`flex-shrink-0 border-b border-[#333] bg-[#1a1a1a] ${tabBarClassName}`}
-      >
+      <div className={`flex-shrink-0 border-b border-[#333] bg-[#1a1a1a] ${tabBarClassName}`}>
         <div className="flex relative">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -128,10 +126,7 @@ export const SwipeableTabs: React.FC<SwipeableTabsProps> = ({
                   flex-1 flex items-center justify-center gap-2
                   py-3.5 min-h-[48px] text-sm font-bold uppercase tracking-wide
                   transition-colors duration-150 press-feedback
-                  ${isActive
-                    ? 'text-[#0057B8]'
-                    : 'text-gray-500 active:text-white'
-                  }
+                  ${isActive ? 'text-[#0057B8]' : 'text-gray-500 active:text-white'}
                 `}
                 aria-selected={isActive}
                 role="tab"
@@ -221,9 +216,10 @@ export const TabBar: React.FC<TabBarProps> = ({
                 flex-1 flex items-center justify-center gap-2
                 py-2.5 min-h-[44px] text-sm font-bold uppercase tracking-wide
                 rounded-md transition-all duration-150 press-feedback
-                ${isActive
-                  ? 'bg-[#0057B8] text-white'
-                  : 'text-gray-500 hover:text-white active:bg-white/5'
+                ${
+                  isActive
+                    ? 'bg-[#0057B8] text-white'
+                    : 'text-gray-500 hover:text-white active:bg-white/5'
                 }
               `}
               aria-selected={isActive}
@@ -252,10 +248,7 @@ export const TabBar: React.FC<TabBarProps> = ({
               flex-1 flex items-center justify-center gap-2
               py-3.5 min-h-[48px] text-sm font-bold uppercase tracking-wide
               transition-colors duration-150 press-feedback
-              ${isActive
-                ? 'text-[#0057B8]'
-                : 'text-gray-500 active:text-white'
-              }
+              ${isActive ? 'text-[#0057B8]' : 'text-gray-500 active:text-white'}
             `}
             aria-selected={isActive}
             role="tab"

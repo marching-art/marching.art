@@ -2,20 +2,13 @@ import React from 'react';
 import { X, Loader2, RefreshCw, ChevronRight } from 'lucide-react';
 import YouTubeIcon from '../YouTubeIcon';
 
-const YouTubeModal = ({
-  videoModal,
-  onClose,
-  onRetry
-}) => {
+const YouTubeModal = ({ videoModal, onClose, onRetry }) => {
   if (!videoModal.show) return null;
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/90"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/90" onClick={onClose} />
 
       {/* Modal Content - 720p aspect ratio (1280x720) */}
       <div

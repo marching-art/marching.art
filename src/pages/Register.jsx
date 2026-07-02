@@ -7,10 +7,7 @@
 import React, { useState, startTransition } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { m } from 'framer-motion';
-import {
-  Mail, Lock, User, Eye, EyeOff, ArrowLeft,
-  AlertCircle
-} from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, ArrowLeft, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import { useBodyScroll } from '../hooks/useBodyScroll';
@@ -21,7 +18,8 @@ const Register = () => {
   useBodyScroll();
   useSEO({
     title: 'Create Your Corps | marching.art — Fantasy Drum Corps',
-    description: 'Create a free marching.art account, name your fantasy drum corps, and start drafting legendary DCI captions today.',
+    description:
+      'Create a free marching.art account, name your fantasy drum corps, and start drafting legendary DCI captions today.',
     path: '/register',
   });
   const navigate = useNavigate();
@@ -32,7 +30,7 @@ const Register = () => {
     email: '',
     password: '',
     displayName: '',
-    acceptTerms: false
+    acceptTerms: false,
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -97,7 +95,8 @@ const Register = () => {
   };
 
   // Password strength indicator
-  const passwordStrength = formData.password.length >= 8 ? 'strong' : formData.password.length >= 4 ? 'medium' : 'weak';
+  const passwordStrength =
+    formData.password.length >= 8 ? 'strong' : formData.password.length >= 4 ? 'medium' : 'weak';
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex flex-col">
@@ -225,17 +224,28 @@ const Register = () => {
                       <div className="flex-1 h-1 bg-[#333] rounded-full overflow-hidden">
                         <div
                           className={`h-full transition-all duration-300 ${
-                            passwordStrength === 'strong' ? 'w-full bg-green-500' :
-                            passwordStrength === 'medium' ? 'w-1/2 bg-yellow-500' : 'w-1/4 bg-red-500'
+                            passwordStrength === 'strong'
+                              ? 'w-full bg-green-500'
+                              : passwordStrength === 'medium'
+                                ? 'w-1/2 bg-yellow-500'
+                                : 'w-1/4 bg-red-500'
                           }`}
                         />
                       </div>
-                      <span className={`text-xs ${
-                        passwordStrength === 'strong' ? 'text-green-500' :
-                        passwordStrength === 'medium' ? 'text-yellow-500' : 'text-red-500'
-                      }`}>
-                        {passwordStrength === 'strong' ? 'Strong' :
-                         passwordStrength === 'medium' ? 'Medium' : 'Weak'}
+                      <span
+                        className={`text-xs ${
+                          passwordStrength === 'strong'
+                            ? 'text-green-500'
+                            : passwordStrength === 'medium'
+                              ? 'text-yellow-500'
+                              : 'text-red-500'
+                        }`}
+                      >
+                        {passwordStrength === 'strong'
+                          ? 'Strong'
+                          : passwordStrength === 'medium'
+                            ? 'Medium'
+                            : 'Weak'}
                       </span>
                     </div>
                   )}
@@ -250,7 +260,10 @@ const Register = () => {
                     checked={formData.acceptTerms}
                     onChange={(e) => setFormData({ ...formData, acceptTerms: e.target.checked })}
                   />
-                  <label htmlFor="terms" className="text-base text-gray-400 cursor-pointer leading-relaxed">
+                  <label
+                    htmlFor="terms"
+                    className="text-base text-gray-400 cursor-pointer leading-relaxed"
+                  >
                     I accept the{' '}
                     <Link to="/terms" className="text-[#0057B8] hover:underline">
                       Terms and Conditions
