@@ -1,0 +1,148 @@
+{
+ "data": [
+  {
+   "rank": 1,
+   "corps": "The Cadets",
+   "points": 25,
+   "originalScore": 97.65
+  },
+  {
+   "rank": 2,
+   "corps": "The Cavaliers",
+   "points": 24,
+   "originalScore": 97.65
+  },
+  {
+   "rank": 3,
+   "corps": "Blue Devils",
+   "points": 23,
+   "originalScore": 96.9
+  },
+  {
+   "rank": 4,
+   "corps": "Santa Clara Vanguard",
+   "points": 22,
+   "originalScore": 94.7
+  },
+  {
+   "rank": 5,
+   "corps": "Boston Crusaders",
+   "points": 21,
+   "originalScore": 92.35
+  },
+  {
+   "rank": 6,
+   "corps": "Blue Knights",
+   "points": 20,
+   "originalScore": 92
+  },
+  {
+   "rank": 7,
+   "corps": "Phantom Regiment",
+   "points": 19,
+   "originalScore": 90.65
+  },
+  {
+   "rank": 8,
+   "corps": "Glassmen",
+   "points": 18,
+   "originalScore": 90.35
+  },
+  {
+   "rank": 9,
+   "corps": "Crossmen",
+   "points": 17,
+   "originalScore": 88.55
+  },
+  {
+   "rank": 10,
+   "corps": "Madison Scouts",
+   "points": 16,
+   "originalScore": 85.5
+  },
+  {
+   "rank": 11,
+   "corps": "Carolina Crown",
+   "points": 15,
+   "originalScore": 85.15
+  },
+  {
+   "rank": 12,
+   "corps": "Southwind",
+   "points": 14,
+   "originalScore": 84.95
+  },
+  {
+   "rank": 13,
+   "corps": "Bluecoats",
+   "points": 13,
+   "originalScore": 84.4
+  },
+  {
+   "rank": 14,
+   "corps": "Colts",
+   "points": 12,
+   "originalScore": 82.3
+  },
+  {
+   "rank": 15,
+   "corps": "Spirit of Atlanta",
+   "points": 11,
+   "originalScore": 80.65
+  },
+  {
+   "rank": 16,
+   "corps": "Pioneer",
+   "points": 10,
+   "originalScore": 77.6
+  },
+  {
+   "rank": 17,
+   "corps": "Vanguard Cadets",
+   "points": 9,
+   "originalScore": 74.7
+  },
+  {
+   "rank": 18,
+   "corps": "Mandarins",
+   "points": 8,
+   "originalScore": 74.35
+  },
+  {
+   "rank": 19,
+   "corps": "Troopers",
+   "points": 7,
+   "originalScore": 73.65
+  },
+  {
+   "rank": 20,
+   "corps": "Kiwanis Kavaliers",
+   "points": 6,
+   "originalScore": 71.7
+  },
+  {
+   "rank": 21,
+   "corps": "Jersey Surf",
+   "points": 5,
+   "originalScore": 71.4
+  },
+  {
+   "rank": 22,
+   "corps": "Patriots",
+   "points": 4,
+   "originalScore": 69.05
+  },
+  {
+   "rank": 23,
+   "corps": "Seattle Cascades",
+   "points": 3,
+   "originalScore": 67.5
+  },
+  {
+   "rank": 24,
+   "corps": "Tarheel Sun",
+   "points": 2,
+   "originalScore": 66.85
+  }
+ ]
+}

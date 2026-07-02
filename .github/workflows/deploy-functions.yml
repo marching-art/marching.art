@@ -22,6 +22,16 @@ on:
         required: false
         default: false
         type: boolean
+      run_historical_import:
+        description: 'One-off: import 2000-2012 historical recaps from functions/pressboxImporter/output (add-only; skips years that already exist)'
+        required: false
+        default: false
+        type: boolean
+      historical_import_args:
+        description: 'Args for pressboxImporter/import.js (e.g. "--dry-run", "--years 2000,2001", "--merge"). Empty = real add-only import of all years.'
+        required: false
+        default: '--dry-run'
+        type: string
 
 jobs:
   deploy-all:
@@ -181,3 +191,37 @@ jobs:
           trap 'rm -f /tmp/sa-key.json' EXIT
 
           node functions/src/scripts/cleanupLeakedProfileEmails.js
+
+  # One-off data import: backfill historical_scores/{year} and
+  # final_rankings/{year} for 2000-2012 from the parsed From The Pressbox
+  # data committed under functions/pressboxImporter/output/. Runs whenever
+  # "run_historical_import" is checked, independent of the deploy target.
+  # import.js is add-only by default (years that already have documents are
+  # skipped), so re-running is safe; the default "--dry-run" arg previews the
+  # writes without touching Firestore. Uses the Admin SDK directly, so it
+  # does not depend on the functions deploy above.
+  import-historical-recaps:
+    if: ${{ inputs.run_historical_import }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install function dependencies
+        run: cd functions && npm ci
+
+      - name: Import 2000-2012 historical recaps
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
+          trap 'rm -f /tmp/sa-key.json' EXIT
+
+          node functions/pressboxImporter/import.js ${{ inputs.historical_import_args }}

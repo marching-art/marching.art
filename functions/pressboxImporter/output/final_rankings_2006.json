@@ -1,0 +1,142 @@
+{
+ "data": [
+  {
+   "rank": 1,
+   "corps": "The Cavaliers",
+   "points": 25,
+   "originalScore": 97.2
+  },
+  {
+   "rank": 2,
+   "corps": "Phantom Regiment",
+   "points": 24,
+   "originalScore": 96.85
+  },
+  {
+   "rank": 3,
+   "corps": "Blue Devils",
+   "points": 23,
+   "originalScore": 96.55
+  },
+  {
+   "rank": 4,
+   "corps": "Bluecoats",
+   "points": 22,
+   "originalScore": 93.175
+  },
+  {
+   "rank": 5,
+   "corps": "The Cadets",
+   "points": 21,
+   "originalScore": 93.075
+  },
+  {
+   "rank": 6,
+   "corps": "Santa Clara Vanguard",
+   "points": 20,
+   "originalScore": 92.35
+  },
+  {
+   "rank": 7,
+   "corps": "Blue Knights",
+   "points": 19,
+   "originalScore": 90.125
+  },
+  {
+   "rank": 8,
+   "corps": "Carolina Crown",
+   "points": 18,
+   "originalScore": 89.975
+  },
+  {
+   "rank": 9,
+   "corps": "Madison Scouts",
+   "points": 17,
+   "originalScore": 87.7
+  },
+  {
+   "rank": 10,
+   "corps": "Boston Crusaders",
+   "points": 16,
+   "originalScore": 87.325
+  },
+  {
+   "rank": 11,
+   "corps": "Glassmen",
+   "points": 15,
+   "originalScore": 86
+  },
+  {
+   "rank": 12,
+   "corps": "Spirit of Atlanta",
+   "points": 14,
+   "originalScore": 84.825
+  },
+  {
+   "rank": 13,
+   "corps": "Colts",
+   "points": 13,
+   "originalScore": 83.05
+  },
+  {
+   "rank": 14,
+   "corps": "Blue Stars",
+   "points": 12,
+   "originalScore": 81.525
+  },
+  {
+   "rank": 15,
+   "corps": "Crossmen",
+   "points": 11,
+   "originalScore": 81.25
+  },
+  {
+   "rank": 16,
+   "corps": "Capital Regiment",
+   "points": 10,
+   "originalScore": 80.825
+  },
+  {
+   "rank": 17,
+   "corps": "Southwind",
+   "points": 9,
+   "originalScore": 77.95
+  },
+  {
+   "rank": 18,
+   "corps": "Mandarins",
+   "points": 8,
+   "originalScore": 77.875
+  },
+  {
+   "rank": 19,
+   "corps": "Seattle Cascades",
+   "points": 7,
+   "originalScore": 75.525
+  },
+  {
+   "rank": 20,
+   "corps": "Magic of Orlando",
+   "points": 6,
+   "originalScore": 75.225
+  },
+  {
+   "rank": 21,
+   "corps": "Pacific Crest",
+   "points": 5,
+   "originalScore": 74.9
+  },
+  {
+   "rank": 22,
+   "corps": "Esperanza",
+   "points": 4,
+   "originalScore": 72.8
+  },
+  {
+   "rank": 23,
+   "corps": "Pioneer",
+   "points": 3,
+   "originalScore": 71.55
+  }
+ ]
+}

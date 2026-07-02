@@ -1,0 +1,136 @@
+{
+ "data": [
+  {
+   "rank": 1,
+   "corps": "Blue Devils",
+   "points": 25,
+   "originalScore": 99.05
+  },
+  {
+   "rank": 2,
+   "corps": "Carolina Crown",
+   "points": 24,
+   "originalScore": 97.5
+  },
+  {
+   "rank": 3,
+   "corps": "The Cadets",
+   "points": 23,
+   "originalScore": 97.2
+  },
+  {
+   "rank": 4,
+   "corps": "The Cavaliers",
+   "points": 22,
+   "originalScore": 96.15
+  },
+  {
+   "rank": 5,
+   "corps": "Santa Clara Vanguard",
+   "points": 21,
+   "originalScore": 95.65
+  },
+  {
+   "rank": 6,
+   "corps": "Bluecoats",
+   "points": 20,
+   "originalScore": 93.15
+  },
+  {
+   "rank": 7,
+   "corps": "Boston Crusaders",
+   "points": 19,
+   "originalScore": 90.7
+  },
+  {
+   "rank": 8,
+   "corps": "Blue Stars",
+   "points": 18,
+   "originalScore": 90.05
+  },
+  {
+   "rank": 9,
+   "corps": "Phantom Regiment",
+   "points": 17,
+   "originalScore": 89.9
+  },
+  {
+   "rank": 10,
+   "corps": "Glassmen",
+   "points": 16,
+   "originalScore": 87.75
+  },
+  {
+   "rank": 11,
+   "corps": "Blue Knights",
+   "points": 15,
+   "originalScore": 86.45
+  },
+  {
+   "rank": 12,
+   "corps": "Colts",
+   "points": 14,
+   "originalScore": 85.6
+  },
+  {
+   "rank": 13,
+   "corps": "Troopers",
+   "points": 13,
+   "originalScore": 85.1
+  },
+  {
+   "rank": 14,
+   "corps": "The Academy",
+   "points": 12,
+   "originalScore": 83.75
+  },
+  {
+   "rank": 15,
+   "corps": "Madison Scouts",
+   "points": 11,
+   "originalScore": 82.4
+  },
+  {
+   "rank": 16,
+   "corps": "Crossmen",
+   "points": 10,
+   "originalScore": 81.65
+  },
+  {
+   "rank": 17,
+   "corps": "Spirit of Atlanta",
+   "points": 9,
+   "originalScore": 80.45
+  },
+  {
+   "rank": 18,
+   "corps": "Mandarins",
+   "points": 8,
+   "originalScore": 79.65
+  },
+  {
+   "rank": 19,
+   "corps": "Pacific Crest",
+   "points": 7,
+   "originalScore": 79.05
+  },
+  {
+   "rank": 20,
+   "corps": "Jersey Surf",
+   "points": 6,
+   "originalScore": 78.55
+  },
+  {
+   "rank": 21,
+   "corps": "Pioneer",
+   "points": 5,
+   "originalScore": 75.75
+  },
+  {
+   "rank": 22,
+   "corps": "Seattle Cascades",
+   "points": 4,
+   "originalScore": 74.95
+  }
+ ]
+}
