@@ -212,7 +212,7 @@ export const createLeagueCF = createCallable<CreateLeagueData, { leagueId: strin
 export const joinLeagueCF = createCallable<{ leagueId: string } | { inviteCode: string }, { success: boolean }>('joinLeague');
 export const leaveLeagueCF = createCallable<{ leagueId: string }, { success: boolean }>('leaveLeague');
 export const generateMatchups = createCallable<
-  { leagueId: string; week?: number },
+  { leagueId: string; week: number },
   { success: boolean; matchups?: unknown[]; message?: string }
 >('generateMatchups');
 export const updateMatchupResults = createCallable<{ matchupId: string; results: unknown }, void>('updateMatchupResults');

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { db, functions } from '../api';
+import { db, functions, paths } from '../api';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { AUTH_CONFIG } from '../config';
@@ -79,7 +79,7 @@ export const useProfileStore = create((set, get) => ({
 
     set({ loading: true, _currentUid: uid, isAdmin });
 
-    const profileRef = doc(db, 'artifacts/marching-art/users', uid, 'profile/data');
+    const profileRef = doc(db, paths.userProfile(uid));
 
     // Reset time-unlock guard when initializing a new listener
     _timeUnlockProcessed = false;
@@ -172,7 +172,7 @@ export const useProfileStore = create((set, get) => ({
     });
 
     try {
-      const profileRef = doc(db, 'artifacts/marching-art/users', _currentUid, 'profile/data');
+      const profileRef = doc(db, paths.userProfile(_currentUid));
       await updateDoc(profileRef, updates);
     } catch (err) {
       console.error('Error updating profile:', err);
@@ -232,7 +232,7 @@ export const useProfileStore = create((set, get) => ({
         [today]: updatedChallenges,
       });
 
-      const profileRef = doc(db, 'artifacts/marching-art/users', _currentUid, 'profile/data');
+      const profileRef = doc(db, paths.userProfile(_currentUid));
       await updateDoc(profileRef, { challenges: newChallengesData });
 
       const rewardText = challengeReward ? ` +${challengeReward}` : '';

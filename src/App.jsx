@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { Toaster } from 'react-hot-toast';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { auth, authHelpers } from './api';
+import { auth, authHelpers, analytics } from './api';
 import { claimDailyLogin } from './api/functions';
 import { queryClient } from './lib/queryClient';
 import LoadingScreen from './components/LoadingScreen';
@@ -213,10 +213,26 @@ function App() {
     user,
     loading,
     error,
-    signIn: authHelpers.signInWithEmail,
-    signUp: authHelpers.signUpWithEmail,
-    signInAnonymously: authHelpers.signInAnon,
-    signOut: authHelpers.signOut
+    // Analytics funnel events fire here so every auth entry point is counted
+    signIn: async (email, password) => {
+      const result = await authHelpers.signInWithEmail(email, password);
+      analytics.logLogin('email');
+      return result;
+    },
+    signUp: async (email, password) => {
+      const result = await authHelpers.signUpWithEmail(email, password);
+      analytics.logSignUp('email');
+      return result;
+    },
+    signInAnonymously: async () => {
+      const result = await authHelpers.signInAnon();
+      analytics.logLogin('anonymous');
+      return result;
+    },
+    signOut: async () => {
+      analytics.logLogout();
+      return authHelpers.signOut();
+    }
   }), [user, loading, error]);
 
   if (loading) {
