@@ -233,11 +233,15 @@ exports.manualTrigger = onCall({
       return { success: true, message: `Successfully patched ${patched} championship days with isChampionship flag.` };
     }
     case "refreshLiveSeasonSchedule": {
-      // Scrape DCI events and refresh the live season schedule
+      // Scrape DCI events and refresh the live season schedule (additive: existing
+      // shows are enriched in place with real timing + running order, new events
+      // appended, nothing deleted).
       const result = await refreshLiveSeasonSchedule();
       return {
         success: true,
-        message: `Schedule refreshed. Added ${result.addedCount} new events from ${result.totalEvents} scraped.`,
+        message: `Schedule refreshed from ${result.totalEvents} scraped events: ` +
+          `${result.addedCount} added, ${result.enrichedCount} enriched with times/lineup, ` +
+          `${result.unchangedCount} unchanged.`,
       };
     }
     case "regenerateOffSeasonSchedule": {
