@@ -17,14 +17,14 @@
     "test": "node --test"
   },
   "dependencies": {
+    "@getbrevo/brevo": "^2.2.0",
     "@google-cloud/pubsub": "^4.0.0",
     "@google-cloud/tasks": "^5.0.0",
-    "@getbrevo/brevo": "^2.2.0",
     "@google/genai": "^1.0.0",
     "axios": "^1.6.0",
     "cheerio": "^1.1.2",
     "cloudinary": "^2.5.1",
-    "firebase-admin": "^12.0.0",
+    "firebase-admin": "^13.10.0",
     "firebase-functions": "^6.6.0",
     "stripe": "^17.4.0"
   },
