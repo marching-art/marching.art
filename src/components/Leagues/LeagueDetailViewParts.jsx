@@ -6,7 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { m } from 'framer-motion';
 import { Send, LogOut, AlertTriangle, X } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { postLeagueMessage } from '../../firebase/functions';
+import { postLeagueMessageCF as postLeagueMessage } from '../../api/functions';
 
 // Quick Smack Talk Input - Compact inline form
 export const SmackTalkInput = ({ leagueId, userProfile, disabled = false }) => {

@@ -9,7 +9,7 @@ import { Mail, AtSign, AlertCircle, Bell, Trash2, Heart, LogOut, X } from 'lucid
 import { useAuth } from '../../context/AuthContext';
 import { db } from '../../firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { updateUsername, updateEmail, deleteAccount } from '../../firebase/functions';
+import { updateUsername, updateEmail, deleteAccount } from '../../api/functions';
 import toast from 'react-hot-toast';
 import { useTooltipPreference } from '../../hooks/useTooltipPreference';
 

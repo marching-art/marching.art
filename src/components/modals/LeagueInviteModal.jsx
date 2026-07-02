@@ -9,7 +9,7 @@ import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { db } from '../../firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { inviteDirectorToLeague } from '../../firebase/functions';
+import { inviteDirectorToLeague } from '../../api/functions';
 import toast from 'react-hot-toast';
 
 const LeagueInviteModal = ({ inviterUid, inviteeUid, inviteeName, onClose }) => {

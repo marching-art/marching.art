@@ -7,7 +7,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { db, dataNamespace } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
-import { unretireCorps } from '../firebase/functions';
+import { unretireCorps } from '../api/functions';
 import toast from 'react-hot-toast';
 import LoadingScreen from '../components/LoadingScreen';
 import Portal from '../components/Portal';

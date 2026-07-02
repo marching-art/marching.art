@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { triggerDailyNews } from '../../firebase/functions';
+import { triggerDailyNews } from '../../api/functions';
 import { AlertTriangle, Award, Calendar, Database, Mail, Newspaper, RefreshCw, Search, Send, Terminal } from 'lucide-react';
 import { SectionHeader, ProcessRow } from './AdminUI';
 
