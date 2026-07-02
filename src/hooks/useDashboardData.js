@@ -1,7 +1,7 @@
 // src/hooks/useDashboardData.js
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '../App';
+import { useAuth } from '../context/AuthContext';
 import { db } from '../firebase';
 import { doc, updateDoc, getDoc, collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { useSeason, getSeasonProgress } from './useSeason';

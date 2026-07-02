@@ -7,7 +7,7 @@
 import React, { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Calendar, Activity, Archive } from 'lucide-react';
-import { useAuth } from '../App';
+import { useAuth } from '../context/AuthContext';
 import { useUserStore } from '../store/userStore';
 import { useSeasonStore } from '../store/seasonStore';
 import { formatEventName } from '../utils/season';

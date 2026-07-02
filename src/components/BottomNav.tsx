@@ -8,7 +8,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Trophy, User, Newspaper, Calendar, LucideIcon } from 'lucide-react';
 import { m } from 'framer-motion';
-import { useAuth } from '../App';
+import { useAuth } from '../context/AuthContext';
 import { triggerHaptic } from '../hooks/useHaptic';
 import { prefetchRoute } from '../lib/prefetch';
 

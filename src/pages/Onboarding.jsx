@@ -8,7 +8,7 @@ import {
   Star, Zap, Music, ChevronRight, Sparkles,
   PartyPopper, AtSign, Loader2, CheckCircle2, XCircle
 } from 'lucide-react';
-import { useAuth } from '../App';
+import { useAuth } from '../context/AuthContext';
 import { db, functions } from '../firebase';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { doc, setDoc, getDoc } from 'firebase/firestore';

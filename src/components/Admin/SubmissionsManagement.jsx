@@ -5,7 +5,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   FileText, RefreshCw, Check, X, Eye, Clock, User,
-  Image, AlertCircle, ChevronDown, ChevronUp, Sparkles
+  Image, AlertCircle, Sparkles
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
@@ -44,11 +44,7 @@ const SubmissionsManagement = () => {
   const [previewSubmission, setPreviewSubmission] = useState(null);
   const [processingId, setProcessingId] = useState(null);
 
-  useEffect(() => {
-    loadSubmissions();
-  }, [statusFilter]);
-
-  const loadSubmissions = async () => {
+  const loadSubmissions = useCallback(async () => {
     try {
       setLoading(true);
       const result = await listPendingSubmissions({ status: statusFilter });
@@ -61,7 +57,11 @@ const SubmissionsManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter]);
+
+  useEffect(() => {
+    loadSubmissions();
+  }, [loadSubmissions]);
 
   const handleRefresh = async () => {
     setRefreshing(true);

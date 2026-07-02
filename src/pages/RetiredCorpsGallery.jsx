@@ -4,7 +4,7 @@ import {
   Trophy, Award, Calendar, MapPin, Star, TrendingUp,
   Crown, Archive, RefreshCw, X, Music, Medal
 } from 'lucide-react';
-import { useAuth } from '../App';
+import { useAuth } from '../context/AuthContext';
 import { db, dataNamespace } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { unretireCorps } from '../firebase/functions';

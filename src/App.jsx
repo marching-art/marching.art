@@ -1,5 +1,5 @@
 // src/App.jsx
-import React, { useEffect, useMemo, createContext, useContext, Suspense } from 'react';
+import React, { useEffect, useMemo, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -24,6 +24,7 @@ import { LevelUpCelebrationContainer } from './components/LevelUpCelebration';
 import ErrorBoundary from './components/ErrorBoundary';
 import { PageErrorBoundary } from './components/PageErrorBoundary';
 import { ThemeProvider } from './context/ThemeContext';
+import { AuthContext, useAuth } from './context/AuthContext';
 import { MotionProvider } from './components/MotionProvider';
 import { useSeasonStore } from './store/seasonStore';
 import { useScheduleStore } from './store/scheduleStore';
@@ -66,24 +67,8 @@ const Page = ({ name, children }) => (
   </PageErrorBoundary>
 );
 
-// Auth Context
-/**
- * @typedef {Object} AuthContextValue
- * @property {import('firebase/auth').User | null | undefined} user
- * @property {boolean} loading
- * @property {Error | undefined} [error]
- * @property {(email: string, password: string) => Promise<unknown>} signIn
- * @property {(email: string, password: string) => Promise<unknown>} signUp
- * @property {() => Promise<unknown>} signInWithGoogle
- * @property {() => Promise<unknown>} signInAnonymously
- * @property {() => Promise<unknown>} signOut
- */
-
-/** @type {import('react').Context<AuthContextValue | null>} */
-const AuthContext = createContext(null);
-
-/** @returns {AuthContextValue} */
-export const useAuth = () => useContext(AuthContext);
+// Auth context + useAuth hook live in ./context/AuthContext so this file only
+// exports components (keeps Vite fast refresh working).
 
 // Protected Route Component
 // requireProfile: when true (default), an authenticated user who has no profile

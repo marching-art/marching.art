@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom';
 import {
   Calendar, MapPin, Check, ChevronRight, Trophy
 } from 'lucide-react';
-import { useAuth } from '../App';
+import { useAuth } from '../context/AuthContext';
 import { useSeasonStore } from '../store/seasonStore';
 import { useScheduleStore } from '../store/scheduleStore';
 import { useProfileStore } from '../store/profileStore';
