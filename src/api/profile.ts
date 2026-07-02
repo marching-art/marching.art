@@ -16,6 +16,22 @@ import type { UserProfile, CorpsData, CorpsClass, DeepPartial } from '../types';
 // =============================================================================
 
 /**
+ * Resolve a username via the public `usernames/{username}` lookup collection.
+ * Returns `{ found: false }` when the username is unclaimed, or
+ * `{ found: true, uid }` when it exists (uid may be null for a malformed
+ * record). Errors propagate unchanged so callers can surface their own message.
+ */
+export async function resolveUsername(
+  username: string
+): Promise<{ found: boolean; uid: string | null }> {
+  const snap = await getDoc(doc(db, 'usernames', username));
+  if (!snap.exists()) {
+    return { found: false, uid: null };
+  }
+  return { found: true, uid: snap.data().uid || null };
+}
+
+/**
  * Get a user's profile by UID
  */
 export async function getProfile(uid: string): Promise<UserProfile | null> {

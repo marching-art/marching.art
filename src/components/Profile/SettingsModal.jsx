@@ -7,8 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, AtSign, AlertCircle, Bell, Trash2, Heart, LogOut, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { db } from '../../api';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { getProfile, updateProfile } from '../../api/profile';
 import { updateUsername, updateEmail, deleteAccount } from '../../api/functions';
 import toast from 'react-hot-toast';
 import { useTooltipPreference } from '../../hooks/useTooltipPreference';
@@ -118,10 +117,8 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
 
   const loadSettings = async () => {
     try {
-      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-      const profileSnap = await getDoc(profileRef);
-      if (profileSnap.exists()) {
-        const data = profileSnap.data();
+      const data = await getProfile(user.uid);
+      if (data) {
 
         // Load account data
         const loadedAccountData = {
@@ -220,8 +217,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
   const saveNotificationPrefs = async () => {
     setSaving(true);
     try {
-      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-      await updateDoc(profileRef, {
+      await updateProfile(user.uid, {
         'settings.emailPreferences': emailPrefs,
         'settings.pushPreferences': pushPrefs,
       });
@@ -247,8 +243,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
         const { requestPushPermission } = await import('../../api/pushNotifications');
         const token = await requestPushPermission();
         if (token) {
-          const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-          await updateDoc(profileRef, {
+          await updateProfile(user.uid, {
             'settings.fcmToken': token,
             'settings.pushPreferences.allPush': true,
           });
@@ -268,8 +263,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
 
   const handleDisablePush = async () => {
     try {
-      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-      await updateDoc(profileRef, {
+      await updateProfile(user.uid, {
         'settings.pushPreferences.allPush': false,
       });
       setPushPrefs(prev => ({ ...prev, allPush: false }));

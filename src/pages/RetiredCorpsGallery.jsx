@@ -5,8 +5,7 @@ import {
   Crown, Archive, RefreshCw, X, Music, Medal
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { db, dataNamespace } from '../api';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { subscribeToProfile } from '../api/profile';
 import { unretireCorps } from '../api/functions';
 import toast from 'react-hot-toast';
 import LoadingScreen from '../components/LoadingScreen';
@@ -25,10 +24,8 @@ const RetiredCorpsGallery = () => {
   useEffect(() => {
     if (!user?.uid) return;
 
-    const profileRef = doc(db, 'artifacts', dataNamespace, 'users', user.uid, 'profile', 'data');
-    const unsubscribe = onSnapshot(profileRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const profileData = snapshot.data();
+    const unsubscribe = subscribeToProfile(user.uid, (profileData) => {
+      if (profileData) {
         setRetiredCorps(profileData.retiredCorps || []);
       }
       setLoading(false);
