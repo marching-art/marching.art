@@ -4,8 +4,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { m } from 'framer-motion';
 import { Trophy, Award, Calendar, Crown, Medal, ChevronRight, ArrowLeft, Hash, Users } from 'lucide-react';
-import { db } from '../api';
-import { collection, getDocs } from 'firebase/firestore';
+import { getSeasonChampionDocs } from '../api/season';
 import { Link } from 'react-router-dom';
 import LoadingScreen from '../components/LoadingScreen';
 import { TeamAvatar } from '../components/ui/TeamAvatar';
@@ -295,14 +294,12 @@ const HallOfChampions = () => {
     const fetchSeasonChampions = async () => {
       try {
         setLoading(true);
-        const championsRef = collection(db, 'season_champions');
-        const championsSnapshot = await getDocs(championsRef);
+        const championDocs = await getSeasonChampionDocs();
 
         const seasonsData = [];
-        championsSnapshot.forEach((doc) => {
-          const data = doc.data();
+        championDocs.forEach((data) => {
           seasonsData.push({
-            id: doc.id,
+            id: data.id,
             seasonName: data.seasonName,
             seasonType: data.seasonType,
             archivedAt: data.archivedAt?.toDate?.() || (data.archivedAt ? new Date(data.archivedAt) : null),

@@ -117,6 +117,17 @@ export async function getSeasonRecaps(seasonUid: string): Promise<DayRecap[]> {
 }
 
 /**
+ * Get all season champion archive docs as `{ id, ...data }` (raw; callers own
+ * date conversion and sorting). Errors propagate unchanged.
+ */
+export async function getSeasonChampionDocs(): Promise<
+  Array<{ id: string } & Record<string, unknown>>
+> {
+  const snapshot = await getDocs(collection(db, 'season_champions'));
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+/**
  * Get shows grouped by day for a season
  */
 export async function getShowsByDay(seasonUid: string): Promise<Map<number, Show[]>> {

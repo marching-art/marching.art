@@ -28,7 +28,7 @@ import { useSeasonStore } from '../store/seasonStore';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { getCategoryConfig, formatArticleDate } from '../components/Landing/newsFeedUtils';
 import ArticleDataSections from '../components/Articles/ArticleDataSections';
-import { resolveArticleById } from '../components/Articles/articleLoader';
+import { resolveArticleById } from '../api/articles';
 import { useTickerData } from '../hooks/useTickerData';
 import { useLandingScores } from '../hooks/useLandingScores';
 import { useYoutubeSearch } from '../hooks/useYoutubeSearch';
