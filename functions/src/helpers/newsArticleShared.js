@@ -150,7 +150,34 @@ function createFallbackArticle(type, reportDay) {
   };
 }
 
+/**
+ * NewsHub Categories
+ */
+const NEWS_CATEGORIES = {
+  DCI_RECAP: "dci",
+  FANTASY: "fantasy",
+  ANALYSIS: "analysis",
+  DAILY: "daily", // New unified category
+};
+
+/**
+ * Derives category from article type for consistent categorization
+ * @param {string} articleType - The article type (e.g., "dci_recap", "fantasy_recap")
+ * @returns {string} The category ("dci", "fantasy", or "analysis")
+ */
+function getCategoryFromType(articleType) {
+  // Analysis articles - check specific types before prefix matching
+  if (articleType === "dci_recap") return NEWS_CATEGORIES.ANALYSIS;
+  if (articleType === "deep_analytics") return NEWS_CATEGORIES.ANALYSIS;
+  // DCI and Fantasy articles by prefix
+  if (articleType.startsWith("dci_")) return NEWS_CATEGORIES.DCI_RECAP;
+  if (articleType.startsWith("fantasy_")) return NEWS_CATEGORIES.FANTASY;
+  return NEWS_CATEGORIES.DCI_RECAP; // Default to dci
+}
+
 module.exports = {
+  NEWS_CATEGORIES,
+  getCategoryFromType,
   ARTICLE_TYPES,
   formatFantasyEventName,
   createCoverageLedger,
