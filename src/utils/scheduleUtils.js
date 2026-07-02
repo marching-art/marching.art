@@ -206,6 +206,46 @@ export function getShowCountsByWeek(competitions) {
 }
 
 /**
+ * Format a date's calendar day as "YYYY-MM-DD" in a timezone (viewer-local when omitted).
+ * @param {Date} date
+ * @param {string} [timeZone]
+ * @returns {string}
+ */
+export function formatDayKey(date, timeZone) {
+  try {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: timeZone || undefined, year: 'numeric', month: '2-digit', day: '2-digit',
+    }).format(date);
+  } catch {
+    return new Intl.DateTimeFormat('en-CA', {
+      year: 'numeric', month: '2-digit', day: '2-digit',
+    }).format(date);
+  }
+}
+
+/**
+ * The calendar day a competition/show takes place, as "YYYY-MM-DD".
+ * `date` stores the event's calendar date at UTC midnight (list scraper), so
+ * its UTC components ARE the show's calendar day. `startsAt` is a true UTC
+ * instant of an (often evening) local showtime, so it must be read in the
+ * show's own timezone — reading it with UTC getters rolls evening shows onto
+ * the next calendar day.
+ * @param {Object} comp - Competition or transformed show ({ date, startsAt, timezone }).
+ * @returns {string|null}
+ */
+export function showCalendarDay(comp) {
+  if (comp.date) {
+    const d = comp.date instanceof Date ? comp.date : new Date(comp.date);
+    if (!Number.isNaN(d.getTime())) return formatDayKey(d, 'UTC');
+  }
+  if (comp.startsAt) {
+    const d = new Date(comp.startsAt);
+    if (!Number.isNaN(d.getTime())) return formatDayKey(d, comp.timezone);
+  }
+  return null;
+}
+
+/**
  * Check if an event date is considered "past" for display purposes.
  * Events are considered past only after 2 AM the following day,
  * which is when scores are processed.

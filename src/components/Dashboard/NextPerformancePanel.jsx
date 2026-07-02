@@ -5,6 +5,8 @@ import {
   isShowLive,
   showStartsAtDate,
   transformCompetitionToShow,
+  formatDayKey,
+  showCalendarDay,
 } from '../../utils/scheduleUtils';
 import RunningOrder from '../Schedule/RunningOrder';
 
@@ -16,17 +18,6 @@ const CAPTION_LABELS = {
 };
 
 const normalize = (name) => String(name || '').toLowerCase().replace(/\s+/g, ' ').trim();
-
-function matchesCalendarDay(dateInput, target) {
-  if (!dateInput) return false;
-  const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
-  if (Number.isNaN(d.getTime())) return false;
-  return (
-    target.getFullYear() === d.getUTCFullYear() &&
-    target.getMonth() === d.getUTCMonth() &&
-    target.getDate() === d.getUTCDate()
-  );
-}
 
 function formatStart(show) {
   const start = showStartsAtDate(show);
@@ -128,11 +119,11 @@ const NextPerformancePanel = ({ competitions = [], selectedShows = {}, lineup = 
   // "Your picks are live": scan TODAY's shows for performers in the director's roster.
   const spotlight = useMemo(() => {
     if (picksByCorps.size === 0) return [];
+    const todayKey = formatDayKey(now);
     const entries = [];
     for (const comp of competitions) {
       if (!Array.isArray(comp.lineup) || comp.lineup.length === 0) continue;
-      const dateForDay = comp.startsAt || comp.date;
-      if (!matchesCalendarDay(dateForDay, now)) continue;
+      if (showCalendarDay(comp) !== todayKey) continue;
       for (const performer of comp.lineup) {
         const pick = picksByCorps.get(normalize(performer.corps));
         if (!pick) continue;
