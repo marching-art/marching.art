@@ -16,6 +16,12 @@ import {
   QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { db, paths } from './client';
+import {
+  getCorpsValues as getCorpsValuesRef,
+  getDciDataDoc as getDciDataDocRef,
+  getHistoricalScoresForYear as getHistoricalScoresForYearRef,
+  getHistoricalScoresMap as getHistoricalScoresMapRef,
+} from './season';
 
 // Non-namespaced Firestore paths used only by the admin panel (not in `paths`).
 // - dci-data/{docId}: per-season corps point values (corpsValues array)
@@ -247,10 +253,10 @@ export async function listDciDataDocIds(): Promise<string[]> {
 
 /**
  * Get a dci-data season doc's raw data, or null if it does not exist.
+ * Delegates to the canonical reference reader in api/season.
  */
 export async function getDciDataDoc(docId: string): Promise<DocumentData | null> {
-  const snap = await getDoc(doc(db, `dci-data/${docId}`));
-  return snap.exists() ? snap.data() : null;
+  return getDciDataDocRef(docId);
 }
 
 /**
@@ -258,8 +264,7 @@ export async function getDciDataDoc(docId: string): Promise<DocumentData | null>
  * Returns [] if the doc or array does not exist.
  */
 export async function getCorpsValues(docId: string): Promise<CorpsValue[]> {
-  const snap = await getDoc(doc(db, `dci-data/${docId}`));
-  return snap.exists() ? (snap.data().corpsValues || []) : [];
+  return (await getCorpsValuesRef(docId)) as CorpsValue[];
 }
 
 /**
@@ -287,35 +292,22 @@ export async function createDciDataDoc(docId: string): Promise<void> {
 
 /**
  * Fetch historical_scores docs for a set of years, keyed by year (doc ID).
- * Years with no doc are omitted from the map; each value is the doc's `data`
- * event array (or [] if missing).
+ * Delegates to the canonical reference reader in api/season.
  */
 export async function getHistoricalScoresMap(
   years: Array<string | number>
 ): Promise<Record<string, DocumentData[]>> {
-  const historicalPromises = years.map(year =>
-    getDoc(doc(db, `historical_scores/${year}`))
-  );
-  const historicalDocs = await Promise.all(historicalPromises);
-
-  const historical: Record<string, DocumentData[]> = {};
-  historicalDocs.forEach((docSnap) => {
-    if (docSnap.exists()) {
-      historical[docSnap.id] = docSnap.data().data || [];
-    }
-  });
-  return historical;
+  return getHistoricalScoresMapRef(years);
 }
 
 /**
  * Fetch the scraped event array for a single year from historical_scores.
- * Returns [] if the doc or array does not exist.
+ * Delegates to the canonical reference reader in api/season.
  */
 export async function getHistoricalScoresForYear(
   year: string | number
 ): Promise<DocumentData[]> {
-  const scoresDoc = await getDoc(doc(db, `historical_scores/${year}`));
-  return scoresDoc.exists() ? (scoresDoc.data().data || []) : [];
+  return getHistoricalScoresForYearRef(year);
 }
 
 // =============================================================================

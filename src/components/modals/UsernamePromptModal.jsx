@@ -6,8 +6,7 @@ import { AtSign, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import Portal from '../Portal';
 import { useProfileStore } from '../../store/profileStore';
 import { useAuth } from '../../context/AuthContext';
-import { functions } from '../../api';
-import { httpsCallable } from 'firebase/functions';
+import { checkUsername, updateUsername } from '../../api/functions';
 import toast from 'react-hot-toast';
 
 const UsernamePromptModal = () => {
@@ -51,7 +50,6 @@ const UsernamePromptModal = () => {
 
     usernameCheckTimeout.current = setTimeout(async () => {
       try {
-        const checkUsername = httpsCallable(functions, 'checkUsername');
         await checkUsername({ username: usernameValue });
         setUsernameStatus({ checking: false, valid: true, message: 'Username is available!' });
       } catch (error) {
@@ -80,7 +78,6 @@ const UsernamePromptModal = () => {
       // Reserve the username + update the profile atomically on the server.
       // The `usernames/` collection is backend-only per security rules, so a
       // client write there is denied — this MUST go through the callable.
-      const updateUsername = httpsCallable(functions, 'updateUsername');
       await updateUsername({ username: username.trim().toLowerCase() });
 
       toast.success('Username set successfully!');

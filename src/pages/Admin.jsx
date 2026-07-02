@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { adminHelpers } from '../api';
 import { getSeasonSettings, getAdminOverviewStats } from '../api/admin';
+import { discoverAndQueueUrls } from '../api/functions';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
@@ -128,8 +129,6 @@ const DeepScrapeCard = () => {
     )) return;
     setLoading(true);
     try {
-      const functions = getFunctions();
-      const discoverAndQueueUrls = httpsCallable(functions, 'discoverAndQueueUrls');
       const result = await discoverAndQueueUrls();
       const data = result.data || {};
       if (data.success === false) {
@@ -285,6 +284,8 @@ const Admin = () => {
 
   const callAdminFunction = async (functionName, data = {}) => {
     try {
+      // Generic admin job runner: the function name is chosen at runtime, so
+      // this stays on a raw callable rather than a static api/functions export.
       const functions = getFunctions();
       const callable = httpsCallable(functions, functionName);
       const result = await callable(data);

@@ -5,6 +5,7 @@ import {
   doc,
   getDoc,
   updateDoc,
+  setDoc,
   onSnapshot,
   Unsubscribe,
 } from 'firebase/firestore';
@@ -108,6 +109,22 @@ export async function updateProfile(
     const profileRef = doc(db, paths.userProfile(uid));
     await updateDoc(profileRef, updates as Record<string, unknown>);
   }, 'Failed to update profile');
+}
+
+/**
+ * Merge fields into a user's profile, creating the fields that don't exist
+ * (setDoc with merge). Used by onboarding to layer its data on top of the
+ * base profile created by the createUserProfile callable without clobbering
+ * the fields that callable set. Only cosmetic/preference fields may be
+ * written from the client — economy/progression fields are server-only.
+ * Errors propagate unchanged.
+ */
+export async function mergeProfile(
+  uid: string,
+  data: Record<string, unknown>
+): Promise<void> {
+  const profileRef = doc(db, paths.userProfile(uid));
+  await setDoc(profileRef, data, { merge: true });
 }
 
 /**

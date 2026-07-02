@@ -9,10 +9,10 @@ import {
   PartyPopper, AtSign, Loader2, CheckCircle2, XCircle
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { db, functions } from '../api';
 import { useBodyScroll } from '../hooks/useBodyScroll';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { httpsCallable } from 'firebase/functions';
+import { getSeasonData, getCorpsValues } from '../api/season';
+import { mergeProfile } from '../api/profile';
+import { checkUsername, createUserProfile, selectUserShows } from '../api/functions';
 import toast from 'react-hot-toast';
 import { useSeasonStore } from '../store/seasonStore';
 import { useScheduleStore } from '../store/scheduleStore';
@@ -54,24 +54,22 @@ const Onboarding = () => {
         // same source the rest of the app uses (seasonStore, SeasonSetupWizard).
         // NOTE: the old `system/currentSeason` doc has no security rule, so
         // reading it always failed with permission-denied and corps never loaded.
-        const seasonSnap = await getDoc(doc(db, 'game-settings/season'));
-        if (!seasonSnap.exists() || !seasonSnap.data().seasonUid) {
+        const season = await getSeasonData();
+        if (!season || !season.seasonUid) {
           console.error('[Onboarding] No active season found in game-settings/season');
           toast.error('No active season found. Please try again later.');
           return;
         }
 
-        const season = seasonSnap.data();
         setSeasonData({ ...season, seasonUid: season.seasonUid });
 
         // Corps values for lineup selection live in dci-data/{seasonUid}.
-        const corpsDataSnap = await getDoc(doc(db, 'dci-data', season.seasonUid));
-        if (corpsDataSnap.exists()) {
-          const data = corpsDataSnap.data();
-          const corps = (data.corpsValues || []).filter(c => (c.points || 0) <= 50);
+        const corpsValues = await getCorpsValues(season.seasonUid);
+        if (corpsValues.length) {
+          const corps = corpsValues.filter(c => (c.points || 0) <= 50);
           setAvailableCorps(corps);
         } else {
-          console.error(`[Onboarding] dci-data/${season.seasonUid} not found`);
+          console.error(`[Onboarding] dci-data/${season.seasonUid} not found or empty`);
           toast.error('Corps data is unavailable. Please try again later.');
         }
       } catch (error) {
@@ -116,7 +114,6 @@ const Onboarding = () => {
     // Debounce the server check
     usernameCheckTimeout.current = setTimeout(async () => {
       try {
-        const checkUsername = httpsCallable(functions, 'checkUsername');
         await checkUsername({ username });
         setUsernameStatus({ checking: false, valid: true, message: 'Username is available!' });
       } catch (error) {
@@ -194,7 +191,6 @@ const Onboarding = () => {
       // The `usernames/` collection is backend-only per security rules, so this
       // MUST go through the callable rather than a client write. The callable is
       // idempotent, so a retry after a partial failure is safe.
-      const createUserProfile = httpsCallable(functions, 'createUserProfile');
       await createUserProfile({
         username: formData.username.trim().toLowerCase(),
         displayName: formData.displayName.trim(),
@@ -203,8 +199,7 @@ const Onboarding = () => {
       // Layer on the onboarding-specific data. Writing to the owner's own
       // profile doc is permitted by security rules; merge so we don't clobber
       // the fields the callable just set (uniform, trophies, currency, etc.).
-      const profileRef = doc(db, `artifacts/marching-art/users/${user.uid}/profile/data`);
-      await setDoc(profileRef, {
+      await mergeProfile(user.uid, {
         location: '', // Can add later in profile
         bio: '',
         favoriteCorps: '',
@@ -234,7 +229,7 @@ const Onboarding = () => {
         // Mark as first visit for dashboard tooltips
         isFirstVisit: true,
         onboardingCompletedAt: new Date().toISOString()
-      }, { merge: true });
+      });
 
       // Auto-register for current week's shows
       try {
@@ -289,7 +284,6 @@ const Onboarding = () => {
       if (currentWeekShows.length > 0) {
         const showsToRegister = currentWeekShows.slice(0, 4);
 
-        const selectUserShows = httpsCallable(functions, 'selectUserShows');
         await selectUserShows({
           week: currentWeek,
           shows: showsToRegister,

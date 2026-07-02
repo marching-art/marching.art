@@ -5,8 +5,7 @@
 // Laws: No slider animations, tabbed layout, utilitarian design
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { db, functions } from '../../api';
-import { httpsCallable } from 'firebase/functions';
+import { processCorpsDecisions } from '../../api/functions';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
 import { ClipboardList, ChevronRight, ChevronLeft, Check, X } from 'lucide-react';
@@ -170,8 +169,7 @@ const SeasonSetupWizard = ({
       });
 
       if (decisions.length > 0) {
-        const processCorpsDecisionsFn = httpsCallable(functions, 'processCorpsDecisions');
-        const result = await processCorpsDecisionsFn({ decisions });
+        const result = await processCorpsDecisions({ decisions });
 
         if (result.data.corpsNeedingSetup?.length > 0) {
           setFinalCorpsNeedingSetup(result.data.corpsNeedingSetup);
@@ -209,8 +207,7 @@ const SeasonSetupWizard = ({
       }
 
       if (decisions.length > 0) {
-        const processCorpsDecisionsFn = httpsCallable(functions, 'processCorpsDecisions');
-        const result = await processCorpsDecisionsFn({ decisions });
+        const result = await processCorpsDecisions({ decisions });
 
         if (result.data.corpsNeedingSetup?.length > 0) {
           setFinalCorpsNeedingSetup(result.data.corpsNeedingSetup);

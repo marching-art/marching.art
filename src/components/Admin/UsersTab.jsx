@@ -1,8 +1,8 @@
 // Admin > Users tab. Extracted from pages/Admin.jsx.
 
 import { useState, useEffect } from 'react';
-import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getUserEngagementStats, getAllUserProfiles } from '../../api/admin';
+import { fixProfileFields } from '../../api/functions';
 import { setUserRole } from '../../api/functions';
 import toast from 'react-hot-toast';
 import { Flame, Search, Shield, Terminal, UserCheck, UserX, Users, Wrench, X } from 'lucide-react';
@@ -72,8 +72,6 @@ const UsersTab = () => {
     if (!window.confirm('Fix missing profile fields for all users? This will add default values for any missing required fields.')) return;
     setFixingProfiles(true);
     try {
-      const functions = getFunctions();
-      const fixProfileFields = httpsCallable(functions, 'fixProfileFields');
       const result = await fixProfileFields();
       toast.success(result.data.message);
       loadUserStats(); // Refresh stats after fix

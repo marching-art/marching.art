@@ -6,9 +6,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Check, AlertCircle, Trophy, Save, Target, Award, X, ArrowLeft, Wand2
 } from 'lucide-react';
-import { db, functions } from '../../api';
-import { doc, getDoc } from 'firebase/firestore';
-import { httpsCallable } from 'firebase/functions';
+import { getProfile } from '../../api/profile';
+import { getSeasonData, getCorpsValues } from '../../api/season';
+import { getHotCorps, getActiveLineupKeys, saveLineup } from '../../api/functions';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
 import { useAuth } from '../../context/AuthContext';
@@ -83,10 +83,8 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
     const loadUserData = async () => {
       if (!user?.uid) return;
       try {
-        const ref = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-        const snap = await getDoc(ref);
-        if (snap.exists()) {
-          const data = snap.data();
+        const data = await getProfile(user.uid);
+        if (data) {
           const history = new Set();
           if (data.corps) {
             Object.values(data.corps).forEach(c => {
@@ -105,10 +103,8 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
           const weeklyTrades = currentCorpsData?.weeklyTrades;
 
           // Load season data to check trade limits
-          const seasonRef = doc(db, 'game-settings/season');
-          const seasonSnap = await getDoc(seasonRef);
-          if (seasonSnap.exists()) {
-            const seasonData = seasonSnap.data();
+          const seasonData = await getSeasonData();
+          if (seasonData) {
             const now = new Date();
             const seasonStartDate = seasonData.schedule?.startDate?.toDate();
 
@@ -151,17 +147,13 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
         setLoading(true);
 
         // Fetch corps data, hot status, and active lineup keys in parallel
-        const corpsRef = doc(db, 'dci-data', seasonId);
-        const getHotCorpsFn = httpsCallable(functions, 'getHotCorps');
-        const getActiveLineupKeysFn = httpsCallable(functions, 'getActiveLineupKeys');
-
-        const [corpsSnap, hotCorpsResult, lineupKeysResult] = await Promise.all([
-          getDoc(corpsRef),
-          getHotCorpsFn().catch(() => ({ data: { hotCorps: {} } })),
-          getActiveLineupKeysFn({ corpsClass }).catch(() => ({ data: { lineupKeys: [] } }))
+        const [corpsValues, hotCorpsResult, lineupKeysResult] = await Promise.all([
+          getCorpsValues(seasonId),
+          getHotCorps().catch(() => ({ data: { hotCorps: {} } })),
+          getActiveLineupKeys({ corpsClass }).catch(() => ({ data: { lineupKeys: [] } }))
         ]);
 
-        if (!cancelled && corpsSnap.exists()) {
+        if (!cancelled) {
           // Store per-caption hot data for dynamic lookups
           const hotData = hotCorpsResult.data?.hotCorps || {};
           setHotCorpsData(hotData);
@@ -170,7 +162,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
           const lineupKeys = lineupKeysResult.data?.lineupKeys || [];
           setActiveLineupKeys(new Set(lineupKeys));
 
-          let corps = corpsSnap.data().corpsValues || [];
+          let corps = corpsValues;
           corps = corps.filter(c => (c.points || 0) <= 50);
 
           corps = corps.map(c => ({
@@ -424,8 +416,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
     if (isOverLimit) { toast.error(`Lineup exceeds ${pointLimit} point limit`); return; }
     try {
       setSaving(true);
-      const fn = httpsCallable(functions, 'saveLineup');
-      await fn({ lineup: selections, corpsClass });
+      await saveLineup({ lineup: selections, corpsClass });
       setShowCelebration(true);
     } catch (e) {
       toast.error(e.message || 'Failed to save lineup');

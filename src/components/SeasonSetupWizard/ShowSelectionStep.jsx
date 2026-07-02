@@ -3,8 +3,7 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { Calendar, Check, ChevronRight, MapPin, Trophy } from 'lucide-react';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../api';
+import { getProfile } from '../../api/profile';
 import { ShowRegistrationModal } from '../Schedule';
 import { useScheduleStore } from '../../store/scheduleStore';
 import { compareCorpsClasses } from '../../utils/corps';
@@ -114,10 +113,9 @@ const ShowSelectionStep = ({
   const handleModalSuccess = useCallback(async () => {
     try {
       if (user?.uid) {
-        const profileRef = doc(db, `artifacts/marching-art/users/${user.uid}/profile/data`);
-        const profileSnap = await getDoc(profileRef);
-        if (profileSnap.exists()) {
-          setLocalUserProfile(profileSnap.data());
+        const profileData = await getProfile(user.uid);
+        if (profileData) {
+          setLocalUserProfile(profileData);
         }
       }
     } catch (error) {

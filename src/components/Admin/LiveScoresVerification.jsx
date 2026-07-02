@@ -22,7 +22,7 @@ import {
   Table, RefreshCw, AlertCircle, Download, ChevronLeft, ChevronRight, Radio
 } from 'lucide-react';
 import { getSeasonSettings, getHistoricalScoresForYear, getScoredRecapDays } from '../../api/admin';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { scrapeLiveScoresNow } from '../../api/functions';
 import toast from 'react-hot-toast';
 import { getCaptionLabel } from '../../utils/captionUtils';
 
@@ -120,8 +120,6 @@ const LiveScoresVerification = () => {
   const handleScrape = async () => {
     setScraping(true);
     try {
-      const functions = getFunctions();
-      const scrapeLiveScoresNow = httpsCallable(functions, 'scrapeLiveScoresNow');
       const result = await scrapeLiveScoresNow();
       const data = result.data || {};
       if (data.success) {

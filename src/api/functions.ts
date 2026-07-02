@@ -55,8 +55,14 @@ export interface RegisterCorpsData {
 
 export const registerCorps = createCallable<RegisterCorpsData, { success: boolean }>('registerCorps');
 export const saveLineup = createCallable<{ corpsClass: string; lineup: Record<string, string>; forceUpdate?: boolean }, void>('saveLineup');
-export const selectUserShows = createCallable<{ corpsClass: string; showIds: string[] }, void>('selectUserShows');
+export const selectUserShows = createCallable<{ week: number; shows: unknown[]; corpsClass: string }, void>('selectUserShows');
 export const saveShowConcept = createCallable<{ corpsClass: string; showConcept: string }, void>('saveShowConcept');
+export const getHotCorps = createCallable<void, { hotCorps: Record<string, unknown> }>('getHotCorps');
+export const getActiveLineupKeys = createCallable<{ corpsClass: string }, { lineupKeys: string[] }>('getActiveLineupKeys');
+export const processCorpsDecisions = createCallable<
+  { decisions: unknown[] },
+  { corpsNeedingSetup?: unknown[] }
+>('processCorpsDecisions');
 
 // Lineup validation
 export interface InvalidLineupSelection {
@@ -325,6 +331,9 @@ export async function fetchNewsFeedHttp(params: {
   }
 }
 export const triggerNewsGeneration = createCallable<{ type: 'dci' | 'fantasy'; data: unknown }, { success: boolean; result?: unknown }>('triggerNewsGeneration');
+export const fixProfileFields = createCallable<void, { message: string }>('fixProfileFields');
+export const scrapeLiveScoresNow = createCallable<void, { success?: boolean; message?: string }>('scrapeLiveScoresNow');
+export const discoverAndQueueUrls = createCallable<void, { success?: boolean; message?: string }>('discoverAndQueueUrls');
 // 3 min timeout: generates the full day's AI articles in one call
 export const triggerDailyNews = createCallable<
   { currentDay?: number; dataDocId?: string; seasonId?: string },
