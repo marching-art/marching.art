@@ -15,9 +15,15 @@ import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useFirstVisit } from '../hooks/useFirstVisit';
+import { useSEO } from '../hooks/useSEO';
 
 const Register = () => {
   useBodyScroll();
+  useSEO({
+    title: 'Create Your Corps | marching.art — Fantasy Drum Corps',
+    description: 'Create a free marching.art account, name your fantasy drum corps, and start drafting legendary DCI captions today.',
+    path: '/register',
+  });
   const navigate = useNavigate();
   const { signUp } = useAuth();
   const { markAsReturning } = useFirstVisit();

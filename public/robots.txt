@@ -22,9 +22,10 @@ Disallow: /corps-history
 Disallow: /soundsport
 
 # Legacy redirect routes — duplicates of the canonical paths above.
+# Note: /how-to-play is intentionally crawlable — it is the public
+# fantasy drum corps guide.
 Disallow: /hub
 Disallow: /hud
 Disallow: /leaderboard
-Disallow: /how-to-play
 
 Sitemap: https://marching.art/sitemap.xml

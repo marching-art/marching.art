@@ -11,9 +11,15 @@ import { Mail, Lock, Eye, EyeOff, ArrowLeft, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import { useBodyScroll } from '../hooks/useBodyScroll';
+import { useSEO } from '../hooks/useSEO';
 
 const Login = () => {
   useBodyScroll();
+  useSEO({
+    title: 'Sign In | marching.art — Fantasy Drum Corps',
+    description: 'Sign in to marching.art to manage your fantasy drum corps lineup, check scores, and climb the leaderboards.',
+    path: '/login',
+  });
   const { signIn } = useAuth();
 
   const [email, setEmail] = useState('');

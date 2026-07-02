@@ -17,6 +17,7 @@ import {
 import { useGuestPreview } from '../hooks/useGuestPreview';
 import { RegistrationGate } from '../components/GuestPreview';
 import { useBodyScroll } from '../hooks/useBodyScroll';
+import { useSEO } from '../hooks/useSEO';
 
 // =============================================================================
 // CAPTION DISPLAY DATA
@@ -179,6 +180,11 @@ const StatsCard = ({ icon: Icon, iconColor, label, value, sublabel }) => (
 
 const GuestDashboard = () => {
   useBodyScroll();
+  useSEO({
+    title: 'Live Demo | marching.art — Fantasy Drum Corps',
+    description: 'Preview the marching.art fantasy drum corps dashboard — live scores, lineups, and leaderboards — before creating your free corps.',
+    path: '/preview',
+  });
   const navigate = useNavigate();
 
   const {

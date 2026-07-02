@@ -80,8 +80,8 @@ const HeroBanner = ({ onDismiss }) => {
 
             {/* Headline */}
             <h1 className="text-2xl lg:text-3xl font-bold text-white leading-tight mb-3">
-              Draft legendary performers.
-              <span className="text-gray-400"> Compete with fans worldwide.</span>
+              The fantasy drum corps game.
+              <span className="text-gray-400"> Draft legendary performers. Compete with fans worldwide.</span>
             </h1>
 
             {/* Subhead */}
@@ -120,6 +120,13 @@ const HeroBanner = ({ onDismiss }) => {
               >
                 <Play className="w-4 h-4" />
                 Try Demo
+              </Link>
+              <Link
+                to="/how-to-play"
+                className="inline-flex items-center gap-1 min-h-[48px] px-4 text-gray-400 font-medium text-sm hover:text-white transition-colors press-feedback"
+              >
+                How to play
+                <ChevronRight className="w-4 h-4" />
               </Link>
               <button
                 onClick={onDismiss}
