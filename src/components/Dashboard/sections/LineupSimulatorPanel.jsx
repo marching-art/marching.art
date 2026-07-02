@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Zap, ChevronRight, AlertTriangle, BarChart2 } from 'lucide-react';
-import { db } from '../../../firebase';
+import { db } from '../../../api';
 import { doc, getDoc } from 'firebase/firestore';
 import { REQUIRED_CAPTIONS, CAPTION_CATEGORIES } from '../../../utils/captionPricing';
 

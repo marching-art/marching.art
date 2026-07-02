@@ -7,7 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, AtSign, AlertCircle, Bell, Trash2, Heart, LogOut, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { db } from '../../firebase';
+import { db } from '../../api';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { updateUsername, updateEmail, deleteAccount } from '../../api/functions';
 import toast from 'react-hot-toast';

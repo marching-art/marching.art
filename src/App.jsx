@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { Toaster } from 'react-hot-toast';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { auth, authHelpers } from './firebase';
+import { auth, authHelpers } from './api';
 import { claimDailyLogin } from './api/functions';
 import { queryClient } from './lib/queryClient';
 import LoadingScreen from './components/LoadingScreen';
@@ -215,7 +215,6 @@ function App() {
     error,
     signIn: authHelpers.signInWithEmail,
     signUp: authHelpers.signUpWithEmail,
-    signInWithGoogle: authHelpers.signInWithGoogle,
     signInAnonymously: authHelpers.signInAnon,
     signOut: authHelpers.signOut
   }), [user, loading, error]);

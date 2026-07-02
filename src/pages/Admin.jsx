@@ -10,7 +10,7 @@ import {
   Shield, Database, Calendar, Play, RefreshCw, FileText,
   Activity, AlertTriangle, Inbox, MessageSquare,
 } from 'lucide-react';
-import { db, adminHelpers } from '../firebase';
+import { db, adminHelpers } from '../api';
 import { doc, getDoc, getDocs, collectionGroup } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';

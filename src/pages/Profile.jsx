@@ -13,7 +13,7 @@ import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../hooks/useProfile';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../lib/queryClient';
-import { db } from '../firebase';
+import { db } from '../api';
 import { doc, updateDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 import { DirectorProfile } from '../components/Profile/DirectorProfile';

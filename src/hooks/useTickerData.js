@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db } from '../api';
 import { useSeasonStore } from '../store/seasonStore';
 import { calculateCaptionAggregates, calculateTrend } from './useScoresData';
 

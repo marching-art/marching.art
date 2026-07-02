@@ -8,7 +8,7 @@ import {
   LayoutGrid, List
 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../../firebase';
+import { db } from '../../../api';
 import { GAME_CONFIG } from '../../../config';
 import {
   SeasonScheduleOverview,

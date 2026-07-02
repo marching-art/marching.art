@@ -4,7 +4,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Table, RefreshCw, AlertCircle, Download, ChevronLeft, ChevronRight } from 'lucide-react';
-import { db } from '../../firebase';
+import { db } from '../../api';
 import { doc, getDoc } from 'firebase/firestore';
 import { getCaptionLabel } from '../../utils/captionUtils';
 

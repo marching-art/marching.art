@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { db, functions } from '../firebase';
+import { db, functions } from '../api';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { AUTH_CONFIG } from '../config';

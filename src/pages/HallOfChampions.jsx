@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { m } from 'framer-motion';
 import { Trophy, Award, Calendar, Crown, Medal, ChevronRight, ArrowLeft, Hash, Users } from 'lucide-react';
-import { db } from '../firebase';
+import { db } from '../api';
 import { collection, getDocs } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
 import LoadingScreen from '../components/LoadingScreen';

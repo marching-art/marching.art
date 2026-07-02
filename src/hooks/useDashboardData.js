@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
-import { db } from '../firebase';
+import { db } from '../api';
 import { doc, updateDoc, getDoc, collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { useSeason, getSeasonProgress } from './useSeason';
 import { useProfileStore } from '../store/profileStore';

@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import BrandLogo from '../components/BrandLogo';
-import { db, dataNamespace } from '../firebase';
+import { db, dataNamespace } from '../api';
 import { compareCorpsClasses } from '../utils/corps';
 import { doc, onSnapshot } from 'firebase/firestore';
 import LoadingScreen from '../components/LoadingScreen';

@@ -9,7 +9,7 @@ import {
   Zap, Trophy, Award, Star
 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../../firebase';
+import { db } from '../../../api';
 import { generateMatchups } from '../../../api/functions';
 import { GAME_CONFIG } from '../../../config';
 import toast from 'react-hot-toast';

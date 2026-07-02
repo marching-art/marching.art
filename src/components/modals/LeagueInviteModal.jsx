@@ -7,7 +7,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { X, Users, Check, AlertCircle } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
-import { db } from '../../firebase';
+import { db } from '../../api';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { inviteDirectorToLeague } from '../../api/functions';
 import toast from 'react-hot-toast';

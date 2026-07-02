@@ -6,7 +6,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Users, Check, X, Calendar } from 'lucide-react';
-import { db } from '../../firebase';
+import { db } from '../../api';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { respondToLeagueInvitation } from '../../api/functions';
 import toast from 'react-hot-toast';

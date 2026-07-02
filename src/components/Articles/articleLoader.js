@@ -7,7 +7,7 @@
 //   3. Legacy flat collections (news_hub, news, articles).
 //   4. Paging through the recent-news API as a last resort.
 
-import { db } from '../../firebase';
+import { db } from '../../api';
 import { doc, getDoc } from 'firebase/firestore';
 import { getRecentNews } from '../../api/functions';
 

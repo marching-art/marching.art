@@ -6,7 +6,7 @@
 
 import React, { useEffect, useState, createContext, useContext, useRef, useMemo } from 'react';
 import { Link, useLocation, NavLink } from 'react-router-dom';
-import { analyticsHelpers, adminHelpers } from '../../firebase';
+import { analyticsHelpers, adminHelpers } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import BottomNav from '../BottomNav';
 import { useSeasonStore } from '../../store/seasonStore';
