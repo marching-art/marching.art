@@ -1,5 +1,6 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { getDb, dataNamespaceParam } = require("../config");
+const { assertAuth } = require("../helpers/callableGuards");
 const { logger } = require("firebase-functions/v2");
 const { analyzeLineupTrends } = require("../helpers/captionAnalytics");
 
@@ -353,7 +354,10 @@ exports.saveShowConcept = onCall({ cors: true }, async (request) => {
  *
  * Returns: { hotCorps: { "CorpsName|Year": { GE1: {isHot, improvement}, GE2: {...}, ... } } }
  */
-exports.getHotCorps = onCall({ cors: true }, async (_request) => {
+exports.getHotCorps = onCall({ cors: true }, async (request) => {
+  // Auth required: this endpoint runs several Firestore aggregate reads per
+  // call and is only used from authenticated lineup-selection UI.
+  assertAuth(request);
   const db = getDb();
   const CAPTIONS = ['GE1', 'GE2', 'VP', 'VA', 'CG', 'B', 'MA', 'P'];
 

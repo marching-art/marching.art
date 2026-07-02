@@ -3,6 +3,7 @@ const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb, dataNamespaceParam } = require("../config");
 const { calculateXPUpdates } = require("../helpers/xpCalculations");
+const { assertAuth } = require("../helpers/callableGuards");
 
 // =============================================================================
 // CORPSCOIN HISTORY SUBCOLLECTION HELPERS
@@ -302,12 +303,8 @@ const awardSeasonBonus = async (uid, finalRank, seasonName, corpsClass) => {
  * Unlock a class with CorpsCoin
  */
 const unlockClassWithCorpsCoin = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in.");
-  }
-
+  const uid = assertAuth(request);
   const { classToUnlock } = request.data;
-  const uid = request.auth.uid;
 
   // Accept both short ('open', 'world') and canonical ('openClass', 'worldClass')
   // keys from clients, then normalize to canonical for storage.
@@ -388,11 +385,7 @@ const unlockClassWithCorpsCoin = onCall({ cors: true }, async (request) => {
  * unlockedClasses write, which security rules no longer permit.
  */
 const syncClassUnlocks = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in.");
-  }
-
-  const uid = request.auth.uid;
+  const uid = assertAuth(request);
   const db = getDb();
   const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
 
@@ -484,11 +477,7 @@ const payLeagueEntryFee = async (uid, leagueId, leagueName, fee) => {
  * Get CorpsCoin balance and history
  */
 const getCorpsCoinHistory = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in.");
-  }
-
-  const uid = request.auth.uid;
+  const uid = assertAuth(request);
   const { limit: queryLimit = 50 } = request.data || {};
 
   const db = getDb();
@@ -527,9 +516,7 @@ const getCorpsCoinHistory = onCall({ cors: true }, async (request) => {
  * Get earning opportunities summary
  */
 const getEarningOpportunities = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in.");
-  }
+  assertAuth(request);
 
   return {
     success: true,

@@ -1,7 +1,7 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { defineSecret } = require("firebase-functions/params");
 const { logger } = require("firebase-functions/v2");
-const { getFirestore } = require("firebase-admin/firestore");
+const { getDb } = require("../config");
 
 // Define YouTube API key secret
 const youtubeApiKey = defineSecret("YOUTUBE_API_KEY");
@@ -123,7 +123,7 @@ exports.searchYoutubeVideo = onCall(
     const year = yearMatch ? yearMatch[0] : null;
 
     // Check cache first (unless skipCache is true)
-    const db = getFirestore();
+    const db = getDb();
     const cacheKey = getCacheKey(query);
 
     if (!skipCache) {
