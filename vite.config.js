@@ -57,5 +57,19 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/setupTests.jsx'],
     include: ['src/**/*.{test,spec}.{js,jsx,ts,tsx}'],
+    coverage: {
+      provider: 'v8',
+      // Measure the whole src tree, not just files touched by tests, so the
+      // coverage report shows the real gap rather than a flattering subset.
+      all: true,
+      include: ['src/**/*.{js,jsx,ts,tsx}'],
+      exclude: [
+        'src/**/*.{test,spec}.{js,jsx,ts,tsx}',
+        'src/**/*.stories.*',
+        'src/setupTests.jsx',
+        'src/types/**',
+      ],
+      reporter: ['text-summary', 'lcov'],
+    },
   },
 });

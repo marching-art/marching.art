@@ -57,8 +57,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: npm test
+      # Coverage runs the same vitest suite; the text summary in the job log
+      # keeps the coverage gap visible on every PR without gating on it.
+      - name: Run tests with coverage
+        run: npm run test:coverage
 
   typecheck:
     name: Type check

@@ -5,29 +5,41 @@
  * Get the "game day" string — resets at 2 AM Eastern (after nightly score
  * processing) so challenges roll over together with posted scores rather
  * than at local midnight.
+ *
+ * Uses Intl with the America/New_York zone (same approach as the backend
+ * scoring scheduler) so DST is handled correctly and the result does not
+ * depend on the viewer's local timezone. The previous hand-rolled offset
+ * math had an inverted sign and rolled the day over ~10 hours late.
  */
 export const getGameDay = () => {
-  const now = new Date();
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    hour12: false,
+  }).formatToParts(new Date());
 
-  // Convert to EST (UTC-5) or EDT (UTC-4)
-  const estOffset = -5 * 60; // EST is UTC-5
-  const edtOffset = -4 * 60; // EDT is UTC-4
+  const v = {};
+  for (const part of parts) v[part.type] = part.value;
 
-  // Determine if we're in EDT (roughly March-November)
-  const jan = new Date(now.getFullYear(), 0, 1);
-  const jul = new Date(now.getFullYear(), 6, 1);
-  const isDST = now.getTimezoneOffset() < Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+  // Anchor the ET calendar date in UTC for safe day arithmetic
+  const et = new Date(Date.UTC(
+    parseInt(v.year, 10),
+    parseInt(v.month, 10) - 1,
+    parseInt(v.day, 10),
+    parseInt(v.hour === '24' ? '0' : v.hour, 10)
+  ));
 
-  const offset = isDST ? edtOffset : estOffset;
-  const localOffset = now.getTimezoneOffset();
-  const estTime = new Date(now.getTime() + (localOffset - offset) * 60 * 1000);
-
-  // If before 2 AM EST, use previous day
-  if (estTime.getHours() < 2) {
-    estTime.setDate(estTime.getDate() - 1);
+  // Before 2 AM Eastern, the previous game day is still in progress
+  if (et.getUTCHours() < 2) {
+    et.setUTCDate(et.getUTCDate() - 1);
   }
 
-  return estTime.toDateString();
+  // Emit the same Date.toDateString() format the stored challenge buckets
+  // have always used (e.g. "Wed Jan 14 2026")
+  return new Date(et.getUTCFullYear(), et.getUTCMonth(), et.getUTCDate()).toDateString();
 };
 
 /**
