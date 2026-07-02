@@ -23,6 +23,7 @@ const {
   buildEasternClassicParticipantSet,
   processWeeklyMatchups,
 } = require("./scoringAwards");
+const { ChunkedWriter } = require("./chunkedWriter");
 
 
 
@@ -134,7 +135,10 @@ async function processAndArchiveOffSeasonScoresLogic() {
     date: scoredDayDate,  // The actual calendar date for this off-season day
     shows: [],
   };
-  const batch = db.batch();
+  // ChunkedWriter: one write per scored corps plus coin/trophy/recap writes
+  // scales with the player base, so a single WriteBatch (capped per request)
+  // would eventually fail outright on a busy scoring night.
+  const batch = new ChunkedWriter(db);
   const dailyScores = new Map();
   // OPTIMIZATION: Collect coin awards to process in batch instead of individual transactions
   const coinAwards = []; // Array of { uid, corpsClass, showName, amount }
@@ -342,9 +346,9 @@ async function processAndArchiveOffSeasonScoresLogic() {
   // OPTIMIZATION #5: Uses shared processCoinAwardsBatch helper
   processCoinAwardsBatch(coinAwards, batch, db);
 
-  // Commit all database writes at once
-  await batch.commit();
-  logger.info(`Successfully processed and archived scores for day ${scoredDay}.`);
+  // Commit all database writes (chunked into multiple batches as needed)
+  const { opCount, batchCount } = await batch.commit();
+  logger.info(`Successfully processed and archived scores for day ${scoredDay} (${opCount} writes in ${batchCount} batches).`);
 
   // OPTIMIZATION #5: Uses shared processWeeklyMatchups helper
   if (scoredDay % 7 === 0) {
@@ -393,7 +397,10 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
     date: scoreDate,
     shows: [],
   };
-  const batch = db.batch();
+  // ChunkedWriter: one write per scored corps plus coin/trophy/recap writes
+  // scales with the player base, so a single WriteBatch (capped per request)
+  // would eventually fail outright on a busy scoring night.
+  const batch = new ChunkedWriter(db);
   const dailyScores = new Map();
   // OPTIMIZATION: Collect coin awards to process in batch instead of individual transactions
   const coinAwards = []; // Array of { uid, corpsClass, showName, amount }
@@ -608,8 +615,8 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
   // Write the day's recap directly - no need to read/filter/push entire array
   batch.set(dayRecapRef, dailyRecap);
 
-  await batch.commit();
-  logger.info(`Successfully processed and archived scores for live season day ${scoredDay}.`);
+  const { opCount, batchCount } = await batch.commit();
+  logger.info(`Successfully processed and archived scores for live season day ${scoredDay} (${opCount} writes in ${batchCount} batches).`);
 
   // OPTIMIZATION #5: Uses shared processWeeklyMatchups helper
   if (scoredDay % 7 === 0) {

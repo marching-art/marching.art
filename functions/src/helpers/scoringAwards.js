@@ -7,6 +7,7 @@ const { dataNamespaceParam } = require("../config");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { TRANSACTION_TYPES, addCoinHistoryEntryToBatch } = require("../callable/economy");
+const { ChunkedWriter } = require("./chunkedWriter");
 
 /**
  * Get top N corps from season standings with tie handling at cutoff position.
@@ -250,7 +251,7 @@ function buildChampionshipConfig(scoredDay, recapsByDay, allRecaps) {
  * Aggregates by uid to minimize writes.
  *
  * @param {Array} coinAwards - Array of { uid, corpsClass, showName, amount }
- * @param {WriteBatch} batch - Firestore batch to add updates to
+ * @param {WriteBatch|ChunkedWriter} batch - Firestore batch (or ChunkedWriter) to add updates to
  * @param {Firestore} db - Firestore database instance
  */
 function processCoinAwardsBatch(coinAwards, batch, db) {
@@ -290,7 +291,7 @@ function processCoinAwardsBatch(coinAwards, batch, db) {
 /**
  * Award regional trophies for specified trophy days.
  *
- * @param {WriteBatch} batch - Firestore batch to add updates to
+ * @param {WriteBatch|ChunkedWriter} batch - Firestore batch (or ChunkedWriter) to add updates to
  * @param {Object} dailyRecap - The day's recap with shows and results
  * @param {number} scoredDay - The day being scored
  * @param {Object} seasonData - Season configuration data
@@ -327,7 +328,7 @@ function awardRegionalTrophies(batch, dailyRecap, scoredDay, seasonData, db) {
 /**
  * Award Day 46 Open and A Class Finals trophies.
  *
- * @param {WriteBatch} batch - Firestore batch to add updates to
+ * @param {WriteBatch|ChunkedWriter} batch - Firestore batch (or ChunkedWriter) to add updates to
  * @param {Object} dailyRecap - The day's recap with shows and results
  * @param {Object} seasonData - Season configuration data
  * @param {Firestore} db - Firestore database instance
@@ -398,7 +399,7 @@ function awardClassChampionshipTrophies(batch, dailyRecap, seasonData, db) {
 /**
  * Award Day 49 Finals trophies and save season champions.
  *
- * @param {WriteBatch} batch - Firestore batch to add updates to
+ * @param {WriteBatch|ChunkedWriter} batch - Firestore batch (or ChunkedWriter) to add updates to
  * @param {Object} dailyRecap - The day's recap with shows and results
  * @param {Object} seasonData - Season configuration data
  * @param {Firestore} db - Firestore database instance
@@ -578,7 +579,9 @@ async function processWeeklyMatchups(week, seasonData, db) {
     logger.warn(`OPTIMIZATION WARNING: League fetch hit limit of ${LEAGUE_FETCH_LIMIT}. Consider implementing pagination.`);
   }
 
-  const winnerBatch = db.batch();
+  // ChunkedWriter: two record writes per matchup across up to 500 leagues
+  // plus coin awards can exceed a single WriteBatch's per-request cap.
+  const winnerBatch = new ChunkedWriter(db);
   const corpsClasses = ["worldClass", "openClass", "aClass", "soundSport"];
 
   // Batch fetch ALL matchup documents in ONE operation
