@@ -4,14 +4,14 @@
 import { TrendingUp, TrendingDown, Minus, ArrowUpRight, ArrowDownRight, Radio, DollarSign, Share2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-function TrendingBadge({ direction }) {
+function TrendingBadge({ direction, className = 'w-3 h-3' }) {
   if (direction === 'up') {
-    return <TrendingUp className="w-3 h-3 text-green-500" />;
+    return <TrendingUp className={`${className} text-green-500`} />;
   }
   if (direction === 'down') {
-    return <TrendingDown className="w-3 h-3 text-red-500" />;
+    return <TrendingDown className={`${className} text-red-500`} />;
   }
-  return <Minus className="w-3 h-3 text-gray-500" />;
+  return <Minus className={`${className} text-gray-500`} />;
 }
 
 function FantasyValueBadge({ value }) {

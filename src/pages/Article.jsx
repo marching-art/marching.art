@@ -6,15 +6,13 @@
 // Accessed via /article/:id route
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
+import { useParams, useLocation, Link } from 'react-router-dom';
 import {
-  ArrowLeft, Trophy, Flame, BookOpen, Newspaper,
-  TrendingUp, TrendingDown, Minus, Share2, Loader2,
+  ArrowLeft, Trophy, Flame, Share2, Loader2,
   AlertCircle, ChevronRight, Lock, Mail, User, LogOut,
   Settings, Zap, LayoutDashboard, Award, Activity,
-  UserPlus, MessageCircle, Coins
+  MessageCircle, Coins
 } from 'lucide-react';
-import YouTubeIcon from '../components/YouTubeIcon';
 import ArticleReactions from '../components/Articles/ArticleReactions';
 import ArticleComments from '../components/Articles/ArticleComments';
 import { OptimizedImage } from '../components/ui/OptimizedImage';
@@ -23,83 +21,19 @@ import CaptionInsightsCards from '../components/Articles/CaptionInsightsCards';
 import CaptionBreakdownCards from '../components/Articles/CaptionBreakdownCards';
 import RecommendationCards from '../components/Articles/RecommendationCards';
 import { LiveScoresBox, FantasyTrendingBox, StandingsModal, YouTubeModal } from '../components/Sidebar';
-import { getArticleEngagement, getRecentNews } from '../api/functions';
-import { db } from '../api/client';
-import { doc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { getArticleEngagement } from '../api/functions';
 import { useAuth } from '../App';
 import { useProfileStore } from '../store/profileStore';
 import { useSeasonStore } from '../store/seasonStore';
 import { useBodyScroll } from '../hooks/useBodyScroll';
+import { getCategoryConfig, formatArticleDate } from '../components/Landing/newsFeedUtils';
+import ArticleDataSections from '../components/Articles/ArticleDataSections';
+import { resolveArticleById } from '../components/Articles/articleLoader';
 import { useTickerData } from '../hooks/useTickerData';
 import { useLandingScores } from '../hooks/useLandingScores';
 import { useYoutubeSearch } from '../hooks/useYoutubeSearch';
 import toast from 'react-hot-toast';
 
-// Category configuration
-function getCategoryConfig(category) {
-  switch (category) {
-    case 'dci':
-      return {
-        label: 'DCI RECAP',
-        bgClass: 'bg-[#0057B8]',
-        textClass: 'text-[#0057B8]',
-        icon: Trophy,
-      };
-    case 'fantasy':
-      return {
-        label: 'FANTASY',
-        bgClass: 'bg-orange-500',
-        textClass: 'text-orange-400',
-        icon: Flame,
-      };
-    case 'analysis':
-      return {
-        label: 'ANALYSIS',
-        bgClass: 'bg-purple-500',
-        textClass: 'text-purple-400',
-        icon: BookOpen,
-      };
-    default:
-      return {
-        label: 'NEWS',
-        bgClass: 'bg-gray-500',
-        textClass: 'text-gray-400',
-        icon: Newspaper,
-      };
-  }
-}
-
-// Format date for display
-function formatDate(dateString) {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-}
-
-// Calculate reading time
-function getReadingTime(story) {
-  const text = `${story.headline} ${story.summary} ${story.fullStory || ''} ${story.narrative || ''} ${story.fantasyImpact || ''}`;
-  const wordCount = text.split(/\s+/).length;
-  const minutes = Math.max(1, Math.ceil(wordCount / 200));
-  return `${minutes} min read`;
-}
-
-// Trending badge component
-function TrendingBadge({ direction }) {
-  if (direction === 'up') {
-    return <TrendingUp className="w-4 h-4 text-green-500" />;
-  }
-  if (direction === 'down') {
-    return <TrendingDown className="w-4 h-4 text-red-500" />;
-  }
-  return <Minus className="w-4 h-4 text-gray-500" />;
-}
 
 /**
  * Article Page - Full article view with site layout
@@ -108,7 +42,6 @@ const Article = () => {
   useBodyScroll();
   const { id } = useParams();
   const location = useLocation();
-  const navigate = useNavigate();
   const { user, signIn, signOut } = useAuth();
   const profile = useProfileStore((state) => state.profile);
   const { tickerData, loading: tickerLoading } = useTickerData();
@@ -159,114 +92,7 @@ const Article = () => {
       setError(null);
 
       try {
-        let foundArticle = null;
-
-        // Method 1: Parse composite article ID and fetch from correct path
-        // ID format: {seasonId}_{dayId}_{articleType} e.g., "scherzo_2025-26_day_1_deep_analytics"
-        // Path: news_hub/{seasonId}/days/{dayId}/articles/{articleType}
-        const idMatch = id.match(/^(.+)_(day_\d+)_(.+)$/);
-        if (idMatch) {
-          const [, seasonId, dayId, articleType] = idMatch;
-          const articlePath = `news_hub/${seasonId}/days/${dayId}/articles/${articleType}`;
-          try {
-            const docRef = doc(db, articlePath);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-              const data = docSnap.data();
-              // Determine category from article type
-              const category =
-                articleType === 'dci_recap' ? 'analysis' :
-                articleType === 'deep_analytics' ? 'analysis' :
-                articleType.startsWith('dci_') ? 'dci' :
-                articleType.startsWith('fantasy_') ? 'fantasy' : 'dci';
-              foundArticle = {
-                id,
-                seasonId,
-                reportDay: parseInt(dayId.replace('day_', ''), 10),
-                articleType,
-                category,
-                ...data,
-                createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
-              };
-            }
-          } catch {
-            // Path doesn't exist or no permission, try other methods
-          }
-        }
-
-        // Method 2: Try community submissions path
-        // Format: news_hub/{seasonId}/community/article_{submissionId}
-        if (!foundArticle && id.startsWith('article_')) {
-          // Try to find in community submissions - need to know seasonId
-          // Fetch active season from game-settings
-          try {
-            const seasonSettingsRef = doc(db, 'game-settings', 'season');
-            const seasonSettingsSnap = await getDoc(seasonSettingsRef);
-            if (seasonSettingsSnap.exists()) {
-              const seasonId = seasonSettingsSnap.data()?.seasonUid || 'current_season';
-              const communityPath = `news_hub/${seasonId}/community/${id}`;
-              const docRef = doc(db, communityPath);
-              const docSnap = await getDoc(docRef);
-              if (docSnap.exists()) {
-                const data = docSnap.data();
-                foundArticle = {
-                  id,
-                  ...data,
-                  createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
-                };
-              }
-            }
-          } catch {
-            // Community path doesn't exist
-          }
-        }
-
-        // Method 3: Try legacy flat collection paths
-        if (!foundArticle) {
-          const legacyCollections = ['news_hub', 'news', 'articles'];
-          for (const collectionPath of legacyCollections) {
-            try {
-              const docRef = doc(db, collectionPath, id);
-              const docSnap = await getDoc(docRef);
-              if (docSnap.exists()) {
-                const data = docSnap.data();
-                foundArticle = {
-                  id: docSnap.id,
-                  ...data,
-                  createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
-                };
-                break;
-              }
-            } catch {
-              // Collection doesn't exist or no permission, try next
-            }
-          }
-        }
-
-        // Method 4: Fall back to searching through recent news API
-        if (!foundArticle) {
-          let startAfter = null;
-          let attempts = 0;
-          const maxAttempts = 5;
-
-          while (!foundArticle && attempts < maxAttempts) {
-            const result = await getRecentNews({ limit: 100, startAfter });
-
-            if (!result.data?.success || !result.data.news?.length) {
-              break;
-            }
-
-            foundArticle = result.data.news.find(a => a.id === id);
-
-            if (!foundArticle && result.data.hasMore) {
-              const lastArticle = result.data.news[result.data.news.length - 1];
-              startAfter = lastArticle?.createdAt;
-              attempts++;
-            } else {
-              break;
-            }
-          }
-        }
+        const foundArticle = await resolveArticleById(id);
 
         if (foundArticle) {
           setArticle(foundArticle);
@@ -483,8 +309,6 @@ const Article = () => {
   }
 
   const config = getCategoryConfig(article.category);
-  const Icon = config.icon;
-  const readingTime = getReadingTime(article);
   const fullContent = article.fullStory || (article.narrative && article.narrative.trim()) || article.summary;
 
   return (
@@ -576,7 +400,7 @@ const Article = () => {
                     <span className={`px-2 py-1 ${config.bgClass} text-white text-[10px] font-bold uppercase tracking-wider`}>
                       {config.label}
                     </span>
-                    <span>{formatDate(article.createdAt)}</span>
+                    <span>{formatArticleDate(article.createdAt)}</span>
                     {article.metadata?.eventName && (
                       <>
                         <span className="text-gray-600">•</span>
@@ -694,139 +518,7 @@ const Article = () => {
                     </div>
                   )}
 
-                  {/* Standings Data */}
-                  {article.standings && article.standings.length > 0 && (
-                    <div className="mb-8">
-                      <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                        <Trophy className="w-4 h-4 text-[#0057B8]" />
-                        Standings
-                      </h3>
-                      <div className="bg-[#111] border border-[#333] divide-y divide-[#333]/50">
-                        {article.standings.slice(0, 10).map((item, idx) => (
-                          <div key={idx} className="flex items-center justify-between px-4 py-3">
-                            <div className="flex items-center gap-3">
-                              <span className={`w-7 h-7 flex items-center justify-center text-xs font-bold rounded-sm ${
-                                item.rank <= 3 ? 'bg-[#0057B8] text-white' : 'bg-[#222] text-gray-500'
-                              }`}>
-                                {item.rank}
-                              </span>
-                              <span className="text-sm text-white">{item.corps}</span>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <span className="text-sm font-bold font-data text-white tabular-nums">
-                                {typeof item.total === 'number' ? item.total.toFixed(3) : item.total}
-                              </span>
-                              {item.change !== undefined && (
-                                <span className={`text-xs font-data ${item.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                                  {item.change >= 0 ? '+' : ''}{typeof item.change === 'number' ? item.change.toFixed(3) : item.change}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Top Performers */}
-                  {article.topPerformers && article.topPerformers.length > 0 && (
-                    <div className="mb-8">
-                      <h3 className="text-sm font-bold text-orange-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                        <Flame className="w-4 h-4" />
-                        Top Performers
-                      </h3>
-                      <div className="space-y-3">
-                        {article.topPerformers.slice(0, 5).map((perf, idx) => (
-                          <div key={idx} className="bg-[#111] border border-[#333] p-4">
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-sm font-bold text-white">{perf.corpsName || perf.corps}</span>
-                              <span className="text-sm font-data font-bold text-orange-400">
-                                {typeof perf.score === 'number' ? perf.score.toFixed(3) : perf.score} pts
-                              </span>
-                            </div>
-                            {perf.director && (
-                              <span className="text-xs text-gray-500">Director: {perf.director}</span>
-                            )}
-                            {perf.highlight && (
-                              <p className="text-xs text-gray-400 mt-1">{perf.highlight}</p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Insights */}
-                  {article.insights && article.insights.length > 0 && (
-                    <div className="mb-8">
-                      <h3 className="text-sm font-bold text-purple-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                        <BookOpen className="w-4 h-4" />
-                        Key Insights
-                      </h3>
-                      <div className="space-y-3">
-                        {article.insights.map((insight, idx) => (
-                          <div key={idx} className="bg-purple-500/10 border border-purple-500/20 p-4">
-                            <div className="text-xs font-bold text-purple-400 uppercase mb-1">{insight.metric}</div>
-                            <p className="text-sm text-white mb-1">{insight.finding}</p>
-                            <p className="text-xs text-gray-400">{insight.implication}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Recommendations */}
-                  {article.recommendations && article.recommendations.length > 0 && (
-                    <div className="mb-8">
-                      <h3 className="text-sm font-bold text-green-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                        <TrendingUp className="w-4 h-4" />
-                        Fantasy Recommendations
-                      </h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {article.recommendations.map((rec, idx) => (
-                          <div key={idx} className="bg-[#111] border border-[#333] p-4">
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-sm font-bold text-white">{rec.corps}</span>
-                              <span className={`px-2 py-0.5 text-[10px] font-bold uppercase ${
-                                rec.action === 'buy' ? 'bg-green-500/20 text-green-400' :
-                                rec.action === 'sell' ? 'bg-red-500/20 text-red-400' :
-                                'bg-yellow-500/20 text-yellow-400'
-                              }`}>
-                                {rec.action}
-                              </span>
-                            </div>
-                            <p className="text-xs text-gray-400">{rec.reasoning}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Trending Corps */}
-                  {article.trendingCorps?.length > 0 && (
-                    <div className="bg-[#111] border border-[#333] p-5 mb-8">
-                      <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">
-                        Trending Corps
-                      </h3>
-                      <div className="space-y-4">
-                        {article.trendingCorps.map((corp, idx) => (
-                          <div key={idx} className="flex items-start gap-3">
-                            <TrendingBadge direction={corp.direction} />
-                            <div>
-                              <span className="text-sm font-bold text-white">
-                                {corp.corps}
-                              </span>
-                              {corp.reason && (
-                                <p className="text-xs text-gray-500 mt-0.5">
-                                  {corp.reason}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  <ArticleDataSections article={article} />
                 </div>
 
                 {/* Comments Section */}
