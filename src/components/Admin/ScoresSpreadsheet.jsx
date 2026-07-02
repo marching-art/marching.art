@@ -4,8 +4,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Table, RefreshCw, AlertCircle, Download, ChevronLeft, ChevronRight } from 'lucide-react';
-import { db } from '../../api';
-import { doc, getDoc } from 'firebase/firestore';
+import { getSeasonSettings, getDciDataDoc, getHistoricalScoresMap } from '../../api/admin';
 import { getCaptionLabel } from '../../utils/captionUtils';
 
 // Caption definitions for tabs
@@ -75,19 +74,17 @@ const ScoresSpreadsheet = () => {
         setError(null);
 
         // 1. Get current season settings
-        const seasonDoc = await getDoc(doc(db, 'game-settings/season'));
-        if (!seasonDoc.exists()) {
+        const season = await getSeasonSettings();
+        if (!season) {
           throw new Error('No active season found');
         }
-        const season = seasonDoc.data();
         setSeasonData(season);
 
         // 2. Get corps values (selected corps for each point value)
-        const corpsDataDoc = await getDoc(doc(db, `dci-data/${season.dataDocId}`));
-        if (!corpsDataDoc.exists()) {
+        const corpsData = await getDciDataDoc(season.dataDocId);
+        if (!corpsData) {
           throw new Error(`Corps data not found: ${season.dataDocId}`);
         }
-        const corpsData = corpsDataDoc.data();
         const corps = corpsData.corpsValues || [];
 
         // Sort by points descending (25 -> 1)
@@ -98,17 +95,7 @@ const ScoresSpreadsheet = () => {
         const yearsToFetch = [...new Set(corps.map(c => c.sourceYear))];
 
         // 4. Fetch historical scores for each year
-        const historicalPromises = yearsToFetch.map(year =>
-          getDoc(doc(db, `historical_scores/${year}`))
-        );
-        const historicalDocs = await Promise.all(historicalPromises);
-
-        const historical = {};
-        historicalDocs.forEach((docSnap) => {
-          if (docSnap.exists()) {
-            historical[docSnap.id] = docSnap.data().data || [];
-          }
-        });
+        const historical = await getHistoricalScoresMap(yearsToFetch);
         setHistoricalData(historical);
 
         setLoading(false);

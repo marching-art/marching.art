@@ -5,8 +5,13 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Database, Plus, Trash2, Save, RefreshCw, AlertCircle, X, FilePlus } from 'lucide-react';
-import { db } from '../../api';
-import { doc, getDoc, setDoc, collection, getDocs } from 'firebase/firestore';
+import {
+  listDciDataDocIds,
+  getSeasonSettings,
+  getCorpsValues,
+  saveCorpsValues,
+  createDciDataDoc,
+} from '../../api/admin';
 import toast from 'react-hot-toast';
 
 const emptyRow = () => ({ corpsName: '', sourceYear: new Date().getFullYear(), points: 0 });
@@ -31,15 +36,14 @@ const CorpsValuesEditor = () => {
     setLoadingList(true);
     setError(null);
     try {
-      const snap = await getDocs(collection(db, 'dci-data'));
-      const ids = snap.docs.map(d => d.id).sort();
+      const ids = await listDciDataDocIds();
       setSeasonDocIds(ids);
       if (ids.length > 0) {
         // Default to the active season if we can read it; otherwise first id.
         // A functional update keeps any existing selection, so this callback
         // doesn't need to depend on selectedDocId.
-        const activeDoc = await getDoc(doc(db, 'game-settings/season'));
-        const activeId = activeDoc.exists() ? activeDoc.data().dataDocId : null;
+        const season = await getSeasonSettings();
+        const activeId = season ? season.dataDocId : null;
         setSelectedDocId(prev => prev || (activeId && ids.includes(activeId) ? activeId : ids[0]));
       }
     } catch (err) {
@@ -61,8 +65,7 @@ const CorpsValuesEditor = () => {
       setLoadingDoc(true);
       setError(null);
       try {
-        const snap = await getDoc(doc(db, `dci-data/${selectedDocId}`));
-        const values = snap.exists() ? (snap.data().corpsValues || []) : [];
+        const values = await getCorpsValues(selectedDocId);
         const sorted = [...values].sort((a, b) => (b.points || 0) - (a.points || 0));
         setRows(sorted);
         setOriginalJson(JSON.stringify(sorted));
@@ -124,11 +127,7 @@ const CorpsValuesEditor = () => {
         sourceYear: Number(r.sourceYear),
         points: Number(r.points),
       }));
-      await setDoc(
-        doc(db, `dci-data/${selectedDocId}`),
-        { corpsValues: normalized },
-        { merge: true }
-      );
+      await saveCorpsValues(selectedDocId, normalized);
       const resorted = [...normalized].sort((a, b) => b.points - a.points);
       setRows(resorted);
       setOriginalJson(JSON.stringify(resorted));
@@ -152,7 +151,7 @@ const CorpsValuesEditor = () => {
     }
     setCreatingSeason(true);
     try {
-      await setDoc(doc(db, `dci-data/${id}`), { corpsValues: [] });
+      await createDciDataDoc(id);
       toast.success(`Created dci-data/${id}`);
       setNewSeasonId('');
       setShowNewSeasonModal(false);

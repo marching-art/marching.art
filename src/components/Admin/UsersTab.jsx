@@ -1,9 +1,8 @@
 // Admin > Users tab. Extracted from pages/Admin.jsx.
 
 import { useState, useEffect } from 'react';
-import { collection, collectionGroup, getDocs, doc, getDoc } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { db } from '../../api';
+import { getUserEngagementStats, getAllUserProfiles } from '../../api/admin';
 import { setUserRole } from '../../api/functions';
 import toast from 'react-hot-toast';
 import { Flame, Search, Shield, Terminal, UserCheck, UserX, Users, Wrench, X } from 'lucide-react';
@@ -35,54 +34,7 @@ const UsersTab = () => {
       // Use collectionGroup to query all profile documents directly
       // This is needed because user documents don't exist at the parent level,
       // only the nested profile/data documents exist
-      const profilesRef = collectionGroup(db, 'profile');
-      const snapshot = await getDocs(profilesRef);
-
-      let totalUsers = 0;
-      let activeCount = 0, corpsCount = 0, totalStreaks = 0, streakCount = 0, loginSum = 0;
-
-      for (const profileDoc of snapshot.docs) {
-        // Only count profile docs from the marching-art users collection
-        if (!profileDoc.ref.path.includes('artifacts/marching-art/users')) continue;
-
-        totalUsers++;
-        const data = profileDoc.data();
-
-        // Check activity using lastLogin (Timestamp) or engagement.lastLogin (Timestamp or string)
-        let lastLoginDate = null;
-        if (data.lastLogin?.toDate) {
-          lastLoginDate = data.lastLogin.toDate();
-        } else if (data.engagement?.lastLogin) {
-          // engagement.lastLogin may be a Firestore Timestamp (backend) or ISO string (client)
-          const el = data.engagement.lastLogin;
-          lastLoginDate = el.toDate ? el.toDate() : new Date(el);
-        }
-
-        if (lastLoginDate) {
-          const days = (Date.now() - lastLoginDate.getTime()) / (1000 * 60 * 60 * 24);
-          if (days <= 7) activeCount++;
-        }
-
-        // Engagement stats
-        if (data.engagement) {
-          if (data.engagement.loginStreak > 0) {
-            totalStreaks += data.engagement.loginStreak;
-            streakCount++;
-          }
-          loginSum += data.engagement.totalLogins || 0;
-        }
-
-        if (data.corps) corpsCount += Object.keys(data.corps).length;
-      }
-
-      const avgStreak = streakCount > 0 ? Math.round(totalStreaks / streakCount * 10) / 10 : 0;
-      setStats({
-        totalUsers,
-        activeUsers: activeCount,
-        avgLoginStreak: avgStreak,
-        totalCorps: corpsCount,
-        totalLogins: loginSum
-      });
+      setStats(await getUserEngagementStats());
     } catch (error) {
       console.error('Error loading user stats:', error);
     }
@@ -91,61 +43,9 @@ const UsersTab = () => {
   const loadAllUsers = async () => {
     setUsersLoading(true);
     try {
-      // Use collectionGroup to query all profile documents directly.
-      // Emails live in the owner-private `private/data` doc (never the public
-      // profile doc), so fetch those separately and join by uid. This query is
-      // admin-only per Firestore rules.
-      const profilesRef = collectionGroup(db, 'profile');
-      const privateRef = collectionGroup(db, 'private');
-      const [snapshot, privateSnapshot] = await Promise.all([
-        getDocs(profilesRef),
-        getDocs(privateRef).catch(() => ({ docs: [] })),
-      ]);
-
-      const emailByUid = {};
-      privateSnapshot.docs.forEach(privateDoc => {
-        if (!privateDoc.ref.path.includes('artifacts/marching-art/users')) return;
-        const uid = privateDoc.ref.path.split('/')[3];
-        const email = privateDoc.data()?.email;
-        if (uid && email) emailByUid[uid] = email;
-      });
-
-      const userList = snapshot.docs
-        .filter(profileDoc => profileDoc.ref.path.includes('artifacts/marching-art/users'))
-        .map(profileDoc => {
-          const data = profileDoc.data();
-
-          // Extract user ID from the doc path
-          // Path format: artifacts/marching-art/users/{userId}/profile/data
-          const pathParts = profileDoc.ref.path.split('/');
-          const uid = pathParts[3];
-
-          // Get last login from either lastLogin (Timestamp) or engagement.lastLogin (Timestamp or string)
-          let lastLoginDate = null;
-          if (data.lastLogin?.toDate) {
-            lastLoginDate = data.lastLogin.toDate();
-          } else if (data.engagement?.lastLogin) {
-            // engagement.lastLogin may be a Firestore Timestamp (backend) or ISO string (client)
-            const el = data.engagement.lastLogin;
-            lastLoginDate = el.toDate ? el.toDate() : new Date(el);
-          }
-
-          return {
-            uid,
-            username: data.username || 'Unknown',
-            email: emailByUid[uid] || data.email || null,
-            lastLogin: lastLoginDate,
-            xpLevel: data.xpLevel || 1,
-            xp: data.xp || 0,
-            loginStreak: data.engagement?.loginStreak || 0,
-            totalLogins: data.engagement?.totalLogins || 0,
-            corps: data.corps ? Object.keys(data.corps) : [],
-            createdAt: data.createdAt?.toDate?.() || null
-          };
-        });
-
-      // Sort by last login (most recent first)
-      setUsers(userList.sort((a, b) => (b.lastLogin?.getTime() || 0) - (a.lastLogin?.getTime() || 0)));
+      // Profiles are joined with the owner-private `private/data` emails and
+      // sorted by last login (most recent first). Admin-only per Firestore rules.
+      setUsers(await getAllUserProfiles());
       setShowUserList(true);
     } catch (error) {
       toast.error('Failed to load users');

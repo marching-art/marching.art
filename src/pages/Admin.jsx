@@ -10,8 +10,8 @@ import {
   Shield, Database, Calendar, Play, RefreshCw, FileText,
   Activity, AlertTriangle, Inbox, MessageSquare,
 } from 'lucide-react';
-import { db, adminHelpers } from '../api';
-import { doc, getDoc, getDocs, collectionGroup } from 'firebase/firestore';
+import { adminHelpers } from '../api';
+import { getSeasonSettings, getAdminOverviewStats } from '../api/admin';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
@@ -270,41 +270,11 @@ const Admin = () => {
 
   const loadAdminData = async () => {
     try {
-      const seasonDoc = await getDoc(doc(db, 'game-settings/season'));
-      if (seasonDoc.exists()) setSeasonData(seasonDoc.data());
+      const season = await getSeasonSettings();
+      if (season) setSeasonData(season);
 
       // Use collectionGroup to query all profile documents directly
-      const profilesRef = collectionGroup(db, 'profile');
-      const snapshot = await getDocs(profilesRef);
-
-      let totalUsers = 0;
-      let activeCount = 0, corpsCount = 0;
-
-      for (const profileDoc of snapshot.docs) {
-        // Only count profile docs from the marching-art users collection
-        if (!profileDoc.ref.path.includes('artifacts/marching-art/users')) continue;
-
-        totalUsers++;
-        const data = profileDoc.data();
-
-        // Check activity using lastLogin (Timestamp) or engagement.lastLogin (Timestamp or string)
-        let lastLoginDate = null;
-        if (data.lastLogin?.toDate) {
-          lastLoginDate = data.lastLogin.toDate();
-        } else if (data.engagement?.lastLogin) {
-          // engagement.lastLogin may be a Firestore Timestamp (backend) or ISO string (client)
-          const el = data.engagement.lastLogin;
-          lastLoginDate = el.toDate ? el.toDate() : new Date(el);
-        }
-
-        if (lastLoginDate) {
-          const days = (Date.now() - lastLoginDate.getTime()) / (1000 * 60 * 60 * 24);
-          if (days <= 7) activeCount++;
-        }
-
-        if (data.corps) corpsCount += Object.keys(data.corps).length;
-      }
-      setStats({ totalUsers, activeUsers: activeCount, totalCorps: corpsCount });
+      setStats(await getAdminOverviewStats());
     } catch (error) {
       if (!error.message?.includes('permission')) {
         console.error('Error loading admin data:', error);
