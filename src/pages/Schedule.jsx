@@ -6,9 +6,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  Calendar, MapPin, Check, ChevronRight, Trophy
-} from 'lucide-react';
+import { Calendar, MapPin, Check, ChevronRight, Trophy } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSeasonStore } from '../store/seasonStore';
 import { useScheduleStore } from '../store/scheduleStore';
@@ -21,10 +19,30 @@ import { isEventPast } from '../utils/scheduleUtils';
 // =============================================================================
 
 const CLASS_CONFIG = {
-  worldClass: { name: 'World', color: 'text-yellow-500', bgColor: 'bg-yellow-500/10', borderColor: 'border-yellow-500/30' },
-  openClass: { name: 'Open', color: 'text-purple-400', bgColor: 'bg-purple-400/10', borderColor: 'border-purple-400/30' },
-  aClass: { name: 'A Class', color: 'text-[#0057B8]', bgColor: 'bg-[#0057B8]/10', borderColor: 'border-[#0057B8]/30' },
-  soundSport: { name: 'SS', color: 'text-green-500', bgColor: 'bg-green-500/10', borderColor: 'border-green-500/30' },
+  worldClass: {
+    name: 'World',
+    color: 'text-yellow-500',
+    bgColor: 'bg-yellow-500/10',
+    borderColor: 'border-yellow-500/30',
+  },
+  openClass: {
+    name: 'Open',
+    color: 'text-purple-400',
+    bgColor: 'bg-purple-400/10',
+    borderColor: 'border-purple-400/30',
+  },
+  aClass: {
+    name: 'A Class',
+    color: 'text-[#0057B8]',
+    bgColor: 'bg-[#0057B8]/10',
+    borderColor: 'border-[#0057B8]/30',
+  },
+  soundSport: {
+    name: 'SS',
+    color: 'text-green-500',
+    bgColor: 'bg-green-500/10',
+    borderColor: 'border-green-500/30',
+  },
 };
 
 // Championship Week (Week 7) event configuration
@@ -95,7 +113,10 @@ const WeekPills = ({ weeks, currentWeek, selectedWeek, onSelect, getShowCount })
   return (
     <div className="bg-[#1a1a1a] border-b border-[#333] px-3 py-2">
       {/* Segmented Control Container */}
-      <div ref={containerRef} className="flex items-center gap-1 p-1 bg-[#111] border border-[#333] rounded-sm overflow-x-auto scrollbar-hide">
+      <div
+        ref={containerRef}
+        className="flex items-center gap-1 p-1 bg-[#111] border border-[#333] rounded-sm overflow-x-auto scrollbar-hide"
+      >
         {weeks.map((week) => {
           const isSelected = selectedWeek === week;
           const isCurrent = currentWeek === week;
@@ -109,9 +130,10 @@ const WeekPills = ({ weeks, currentWeek, selectedWeek, onSelect, getShowCount })
               className={`
                 relative flex items-center gap-1.5 px-3 py-2 text-[10px] font-bold uppercase tracking-wider
                 whitespace-nowrap transition-all
-                ${isSelected
-                  ? 'bg-[#0057B8] text-white'
-                  : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
+                ${
+                  isSelected
+                    ? 'bg-[#0057B8] text-white'
+                    : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
                 }
               `}
             >
@@ -119,10 +141,12 @@ const WeekPills = ({ weeks, currentWeek, selectedWeek, onSelect, getShowCount })
                 <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-[#0057B8] rounded-full" />
               )}
               <span>Wk {week}</span>
-              <span className={`
+              <span
+                className={`
                 text-[9px] px-1 py-0.5
                 ${isSelected ? 'bg-white/20' : 'bg-[#222] text-gray-400'}
-              `}>
+              `}
+              >
                 {showCount}
               </span>
             </button>
@@ -147,7 +171,7 @@ const RegistrationBadges = ({ show, userProfile }) => {
       const selectedShows = corpsData.selectedShows?.[weekKey] || [];
       // Match by eventName only - dates can have type mismatches (Timestamp vs string)
       // This matches the scoring.js logic which also only checks eventName
-      return selectedShows.some(s => s.eventName === show.eventName);
+      return selectedShows.some((s) => s.eventName === show.eventName);
     })
     .map(([corpsClass]) => corpsClass);
 
@@ -175,15 +199,23 @@ const RegistrationBadges = ({ show, userProfile }) => {
 // SHOW CARD COMPONENT
 // =============================================================================
 
-const ShowCard = ({ show, userProfile, formattedDate, isPast, onRegister, isCompleted, seasonUid }) => {
+const ShowCard = ({
+  show,
+  userProfile,
+  formattedDate,
+  isPast,
+  onRegister,
+  isCompleted,
+  seasonUid,
+}) => {
   const isRegistered = useMemo(() => {
     if (!userProfile?.corps) return false;
-    return Object.values(userProfile.corps).some(corps => {
+    return Object.values(userProfile.corps).some((corps) => {
       if (!corps) return false;
       const weekKey = `week${show.week}`;
       const selectedShows = corps.selectedShows?.[weekKey] || [];
       // Match by eventName only - dates can have type mismatches (Timestamp vs string)
-      return selectedShows.some(s => s.eventName === show.eventName);
+      return selectedShows.some((s) => s.eventName === show.eventName);
     });
   }, [show, userProfile]);
 
@@ -276,15 +308,16 @@ const DayIndicator = ({ date, dayNumber }) => {
   const isPast = isEventPast(date);
 
   return (
-    <div className={`
+    <div
+      className={`
       flex-shrink-0 w-20 lg:w-24 flex flex-col items-center justify-center
       py-3 px-2 rounded-sm border
-      ${isPast
-        ? 'bg-[#1a1a1a] border-[#333] text-gray-500'
-        : 'bg-[#0057B8]/10 border-[#0057B8]/30'
-      }
-    `}>
-      <span className={`text-[10px] font-bold uppercase ${isPast ? 'text-gray-500' : 'text-[#0057B8]'}`}>
+      ${isPast ? 'bg-[#1a1a1a] border-[#333] text-gray-500' : 'bg-[#0057B8]/10 border-[#0057B8]/30'}
+    `}
+    >
+      <span
+        className={`text-[10px] font-bold uppercase ${isPast ? 'text-gray-500' : 'text-[#0057B8]'}`}
+      >
         {dayOfWeek}
       </span>
       <span className={`text-sm font-bold font-data ${isPast ? 'text-gray-400' : 'text-white'}`}>
@@ -317,7 +350,7 @@ const DayRow = ({ day, shows, userProfile, formatDate, getActualDate, onRegister
             formattedDate={formatDate(show.day)}
             isPast={isPast}
             onRegister={onRegister}
-            isCompleted={isPast && show.scores?.some(s => s.score != null)}
+            isCompleted={isPast && show.scores?.some((s) => s.score != null)}
             seasonUid={seasonUid}
           />
         ))}
@@ -336,7 +369,7 @@ const ShowsList = ({ shows, userProfile, formatDate, getActualDate, onRegister, 
     if (!shows || shows.length === 0) return {};
 
     const grouped = {};
-    shows.forEach(show => {
+    shows.forEach((show) => {
       const day = show.day;
       if (!grouped[day]) grouped[day] = [];
       grouped[day].push(show);
@@ -345,7 +378,9 @@ const ShowsList = ({ shows, userProfile, formatDate, getActualDate, onRegister, 
     return grouped;
   }, [shows]);
 
-  const days = Object.keys(showsByDay).map(Number).sort((a, b) => a - b);
+  const days = Object.keys(showsByDay)
+    .map(Number)
+    .sort((a, b) => a - b);
 
   if (!shows || shows.length === 0) {
     return (
@@ -361,7 +396,7 @@ const ShowsList = ({ shows, userProfile, formatDate, getActualDate, onRegister, 
 
   return (
     <div className="p-3 flex flex-col gap-4">
-      {days.map(day => (
+      {days.map((day) => (
         <DayRow
           key={day}
           day={day}
@@ -460,7 +495,11 @@ const ChampionshipEventCard = ({ event, userProfile, getActualDate, seasonUid })
           {hasEligibleCorps ? (
             <div className="flex items-center gap-1 flex-wrap">
               {eligibleCorps.map(({ corpsClass }) => {
-                const config = CLASS_CONFIG[corpsClass] || { name: corpsClass, color: 'text-gray-400', bgColor: 'bg-gray-500/10' };
+                const config = CLASS_CONFIG[corpsClass] || {
+                  name: corpsClass,
+                  color: 'text-gray-400',
+                  bgColor: 'bg-gray-500/10',
+                };
                 return (
                   <span
                     key={corpsClass}
@@ -497,11 +536,18 @@ const ChampionshipEventCard = ({ event, userProfile, getActualDate, seasonUid })
   );
 };
 
-const ChampionshipWeekDisplay = ({ userProfile, getActualDate, seasonUid, regularShows, formatDate, onRegister }) => {
+const ChampionshipWeekDisplay = ({
+  userProfile,
+  getActualDate,
+  seasonUid,
+  regularShows,
+  formatDate,
+  onRegister,
+}) => {
   // Group championship events by day
   const eventsByDay = useMemo(() => {
     const grouped = {};
-    CHAMPIONSHIP_EVENTS.forEach(event => {
+    CHAMPIONSHIP_EVENTS.forEach((event) => {
       if (!grouped[event.day]) grouped[event.day] = [];
       grouped[event.day].push(event);
     });
@@ -512,7 +558,7 @@ const ChampionshipWeekDisplay = ({ userProfile, getActualDate, seasonUid, regula
   const regularShowsByDay = useMemo(() => {
     if (!regularShows || regularShows.length === 0) return {};
     const grouped = {};
-    regularShows.forEach(show => {
+    regularShows.forEach((show) => {
       // Only include days 43-44 (regular season days in week 7)
       if (show.day >= 43 && show.day <= 44) {
         if (!grouped[show.day]) grouped[show.day] = [];
@@ -522,15 +568,19 @@ const ChampionshipWeekDisplay = ({ userProfile, getActualDate, seasonUid, regula
     return grouped;
   }, [regularShows]);
 
-  const regularDays = Object.keys(regularShowsByDay).map(Number).sort((a, b) => a - b);
-  const championshipDays = Object.keys(eventsByDay).map(Number).sort((a, b) => a - b);
+  const regularDays = Object.keys(regularShowsByDay)
+    .map(Number)
+    .sort((a, b) => a - b);
+  const championshipDays = Object.keys(eventsByDay)
+    .map(Number)
+    .sort((a, b) => a - b);
 
   return (
     <div className="p-3 flex flex-col gap-4">
       {/* Regular Shows (Days 43-44) */}
       {regularDays.length > 0 && (
         <>
-          {regularDays.map(day => {
+          {regularDays.map((day) => {
             const date = getActualDate(day);
             const isPast = isEventPast(date);
             return (
@@ -545,7 +595,7 @@ const ChampionshipWeekDisplay = ({ userProfile, getActualDate, seasonUid, regula
                       formattedDate={formatDate(show.day)}
                       isPast={isPast}
                       onRegister={onRegister}
-                      isCompleted={isPast && show.scores?.some(s => s.score != null)}
+                      isCompleted={isPast && show.scores?.some((s) => s.score != null)}
                       seasonUid={seasonUid}
                     />
                   ))}
@@ -565,12 +615,14 @@ const ChampionshipWeekDisplay = ({ userProfile, getActualDate, seasonUid, regula
           </h3>
         </div>
         <p className="text-xs text-gray-400">
-          All championship events have <span className="text-[#0057B8] font-bold">automatic enrollment</span> based on your corps class and advancement. No registration required!
+          All championship events have{' '}
+          <span className="text-[#0057B8] font-bold">automatic enrollment</span> based on your corps
+          class and advancement. No registration required!
         </p>
       </div>
 
       {/* Championship Events by Day */}
-      {championshipDays.map(day => {
+      {championshipDays.map((day) => {
         const date = getActualDate(day);
         return (
           <div key={day} className="flex gap-3 items-stretch">
@@ -639,43 +691,52 @@ const Schedule = () => {
   }, [seasonLoading, scheduleLoading, profileLoading, user]);
 
   // Get actual date from day number
-  const getActualDate = useCallback((dayNumber) => {
-    if (!seasonData?.schedule?.startDate) return null;
-    const startDate = seasonData.schedule.startDate.toDate();
-    // Competition Day N falls on the Nth competition day, which starts after the
-    // spring-training period: startDate + springTrainingDays + (N - 1).
-    // Off-seasons have no spring training (field absent -> 0).
-    const springTrainingDays = seasonData.schedule.springTrainingDays || 0;
-    // startDate is stored at UTC midnight. Read its UTC calendar date and build a
-    // LOCAL-midnight date for the target day so weekday/day formatting (which uses
-    // local time) reflects the intended calendar date in every timezone. Using
-    // getDate()/setDate() here would read UTC-midnight as the previous evening in
-    // any negative-UTC-offset (e.g. North American) timezone, shifting every show
-    // one day early and making weeks appear to start on Saturday instead of Sunday.
-    return new Date(
-      startDate.getUTCFullYear(),
-      startDate.getUTCMonth(),
-      startDate.getUTCDate() + springTrainingDays + dayNumber - 1
-    );
-  }, [seasonData]);
+  const getActualDate = useCallback(
+    (dayNumber) => {
+      if (!seasonData?.schedule?.startDate) return null;
+      const startDate = seasonData.schedule.startDate.toDate();
+      // Competition Day N falls on the Nth competition day, which starts after the
+      // spring-training period: startDate + springTrainingDays + (N - 1).
+      // Off-seasons have no spring training (field absent -> 0).
+      const springTrainingDays = seasonData.schedule.springTrainingDays || 0;
+      // startDate is stored at UTC midnight. Read its UTC calendar date and build a
+      // LOCAL-midnight date for the target day so weekday/day formatting (which uses
+      // local time) reflects the intended calendar date in every timezone. Using
+      // getDate()/setDate() here would read UTC-midnight as the previous evening in
+      // any negative-UTC-offset (e.g. North American) timezone, shifting every show
+      // one day early and making weeks appear to start on Saturday instead of Sunday.
+      return new Date(
+        startDate.getUTCFullYear(),
+        startDate.getUTCMonth(),
+        startDate.getUTCDate() + springTrainingDays + dayNumber - 1
+      );
+    },
+    [seasonData]
+  );
 
   // Format date
-  const formatDate = useCallback((dayNumber) => {
-    const date = getActualDate(dayNumber);
-    if (!date) return `Day ${dayNumber}`;
-    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-  }, [getActualDate]);
+  const formatDate = useCallback(
+    (dayNumber) => {
+      const date = getActualDate(dayNumber);
+      if (!date) return `Day ${dayNumber}`;
+      return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    },
+    [getActualDate]
+  );
 
   // Get week date range
-  const getWeekDateRange = useCallback((weekNumber) => {
-    const startDay = (weekNumber - 1) * 7 + 1;
-    const endDay = weekNumber * 7;
-    const startDate = getActualDate(startDay);
-    const endDate = getActualDate(endDay);
-    if (!startDate || !endDate) return '';
-    const opts = { month: 'short', day: 'numeric' };
-    return `${startDate.toLocaleDateString('en-US', opts)} - ${endDate.toLocaleDateString('en-US', opts)}`;
-  }, [getActualDate]);
+  const getWeekDateRange = useCallback(
+    (weekNumber) => {
+      const startDay = (weekNumber - 1) * 7 + 1;
+      const endDay = weekNumber * 7;
+      const startDate = getActualDate(startDay);
+      const endDate = getActualDate(endDay);
+      if (!startDate || !endDate) return '';
+      const opts = { month: 'short', day: 'numeric' };
+      return `${startDate.toLocaleDateString('en-US', opts)} - ${endDate.toLocaleDateString('en-US', opts)}`;
+    },
+    [getActualDate]
+  );
 
   // showsByWeek and showCountsByWeek come from scheduleStore (pre-computed)
   // Ensure Week 7 is always included for championship events
@@ -686,14 +747,19 @@ const Schedule = () => {
   }, [showsByWeek]);
 
   // For Week 7, include both regular shows (days 43-44) and championship events
-  const getWeekShowCount = useCallback((week) => {
-    if (week === 7) {
-      // Count regular shows on days 43-44
-      const regularShowsCount = (showsByWeek[7] || []).filter(s => s.day >= 43 && s.day <= 44).length;
-      return regularShowsCount + CHAMPIONSHIP_EVENTS.length;
-    }
-    return showsByWeek[week]?.length || 0;
-  }, [showsByWeek]);
+  const getWeekShowCount = useCallback(
+    (week) => {
+      if (week === 7) {
+        // Count regular shows on days 43-44
+        const regularShowsCount = (showsByWeek[7] || []).filter(
+          (s) => s.day >= 43 && s.day <= 44
+        ).length;
+        return regularShowsCount + CHAMPIONSHIP_EVENTS.length;
+      }
+      return showsByWeek[week]?.length || 0;
+    },
+    [showsByWeek]
+  );
 
   // Handle show click
   const handleShowClick = useCallback((show) => {
@@ -768,11 +834,15 @@ const Schedule = () => {
           <div className="flex items-center gap-4 text-xs">
             <div className="text-right">
               <div className="text-[10px] text-gray-500 uppercase">This Week</div>
-              <div className="font-bold text-white font-data tabular-nums">{registrationStats.thisWeek}</div>
+              <div className="font-bold text-white font-data tabular-nums">
+                {registrationStats.thisWeek}
+              </div>
             </div>
             <div className="text-right">
               <div className="text-[10px] text-gray-500 uppercase">Total</div>
-              <div className="font-bold text-[#0057B8] font-data tabular-nums">{registrationStats.total}</div>
+              <div className="font-bold text-[#0057B8] font-data tabular-nums">
+                {registrationStats.total}
+              </div>
             </div>
           </div>
         </div>

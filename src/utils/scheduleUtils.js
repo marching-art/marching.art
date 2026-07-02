@@ -122,7 +122,7 @@ export function getShowsForWeek(competitions, weekNumber, options = {}) {
   const { skipChampionship = false } = options;
 
   return competitions
-    .filter(comp => {
+    .filter((comp) => {
       const week = comp.week || Math.ceil(comp.day / 7);
       if (week !== weekNumber) return false;
       if (skipChampionship && comp.type === 'championship') return false;
@@ -140,14 +140,14 @@ export function getShowsForWeek(competitions, weekNumber, options = {}) {
 export function groupShowsByWeek(competitions) {
   const grouped = {};
 
-  competitions.forEach(comp => {
+  competitions.forEach((comp) => {
     const week = comp.week || Math.ceil(comp.day / 7);
     if (!grouped[week]) grouped[week] = [];
     grouped[week].push(transformCompetitionToShow(comp));
   });
 
   // Sort shows within each week by day
-  Object.keys(grouped).forEach(week => {
+  Object.keys(grouped).forEach((week) => {
     grouped[week].sort((a, b) => a.day - b.day);
   });
 
@@ -162,13 +162,13 @@ export function groupShowsByWeek(competitions) {
 export function groupShowsByDay(competitions) {
   const dayMap = {};
 
-  competitions.forEach(comp => {
+  competitions.forEach((comp) => {
     const day = comp.day || 0;
     if (!dayMap[day]) {
       dayMap[day] = {
         offSeasonDay: day,
         week: comp.week || Math.ceil(day / 7),
-        shows: []
+        shows: [],
       };
     }
     dayMap[day].shows.push(transformCompetitionToShow(comp));
@@ -184,9 +184,7 @@ export function groupShowsByDay(competitions) {
  * @returns {Array} Shows for that day
  */
 export function getShowsForDay(competitions, dayNumber) {
-  return competitions
-    .filter(comp => comp.day === dayNumber)
-    .map(transformCompetitionToShow);
+  return competitions.filter((comp) => comp.day === dayNumber).map(transformCompetitionToShow);
 }
 
 /**
@@ -197,7 +195,7 @@ export function getShowsForDay(competitions, dayNumber) {
 export function getShowCountsByWeek(competitions) {
   const counts = {};
 
-  competitions.forEach(comp => {
+  competitions.forEach((comp) => {
     const week = comp.week || Math.ceil(comp.day / 7);
     counts[week] = (counts[week] || 0) + 1;
   });
@@ -214,11 +212,16 @@ export function getShowCountsByWeek(competitions) {
 export function formatDayKey(date, timeZone) {
   try {
     return new Intl.DateTimeFormat('en-CA', {
-      timeZone: timeZone || undefined, year: 'numeric', month: '2-digit', day: '2-digit',
+      timeZone: timeZone || undefined,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
     }).format(date);
   } catch {
     return new Intl.DateTimeFormat('en-CA', {
-      year: 'numeric', month: '2-digit', day: '2-digit',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
     }).format(date);
   }
 }

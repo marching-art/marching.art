@@ -14,7 +14,7 @@ class ErrorBoundary extends React.Component {
   componentDidCatch(error, errorInfo) {
     this.setState({
       error: error,
-      errorInfo: errorInfo
+      errorInfo: errorInfo,
     });
 
     // Log error to console in development
@@ -40,12 +40,11 @@ class ErrorBoundary extends React.Component {
               <AlertTriangle className="w-8 h-8 text-red-400" />
             </div>
 
-            <h1 className="text-2xl font-bold text-white mb-2">
-              Something went wrong
-            </h1>
+            <h1 className="text-2xl font-bold text-white mb-2">Something went wrong</h1>
 
             <p className="text-gray-400 mb-6">
-              An unexpected error occurred. Please try refreshing the page or return to the home page.
+              An unexpected error occurred. Please try refreshing the page or return to the home
+              page.
             </p>
 
             {import.meta.env.DEV && this.state.error && (

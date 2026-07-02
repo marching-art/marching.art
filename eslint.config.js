@@ -40,7 +40,6 @@ export default tseslint.config(
       'storybook-static/**',
       'playwright-report/**',
       'playwright/.cache/**',
-      'fantasymarchingarts/**', // legacy static HTML site (incl. minified vendor JS)
       'functions/eslint.config.js', // pre-existing ESM config; not a source file
       '**/*.d.ts',
     ],

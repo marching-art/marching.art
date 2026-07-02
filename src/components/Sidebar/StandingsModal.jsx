@@ -1,22 +1,13 @@
 import React from 'react';
 import { Activity, TrendingUp, TrendingDown, X, Play } from 'lucide-react';
 
-const StandingsModal = ({
-  show,
-  liveScores,
-  displayDay,
-  onClose,
-  onYoutubeClick
-}) => {
+const StandingsModal = ({ show, liveScores, displayDay, onClose, onYoutubeClick }) => {
   if (!show) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/80"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/80" onClick={onClose} />
 
       {/* Modal Content */}
       <div
@@ -58,14 +49,20 @@ const StandingsModal = ({
                   className="flex items-center justify-between px-4 py-2.5 hover:bg-white/[0.02] transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <span className={`w-6 h-6 flex items-center justify-center text-xs font-bold font-data tabular-nums rounded-sm ${
-                      row.rank <= 3 ? 'bg-[#0057B8] text-white' : 'bg-[#222] text-gray-500'
-                    }`}>
+                    <span
+                      className={`w-6 h-6 flex items-center justify-center text-xs font-bold font-data tabular-nums rounded-sm ${
+                        row.rank <= 3 ? 'bg-[#0057B8] text-white' : 'bg-[#222] text-gray-500'
+                      }`}
+                    >
                       {row.rank}
                     </span>
                     <div className="min-w-0">
-                      <span className="text-sm text-white block" title={`${row.sourceYear} ${row.corpsName}`}>
-                        <span className="text-gray-400 font-data">{row.sourceYear}</span> {row.corpsName}
+                      <span
+                        className="text-sm text-white block"
+                        title={`${row.sourceYear} ${row.corpsName}`}
+                      >
+                        <span className="text-gray-400 font-data">{row.sourceYear}</span>{' '}
+                        {row.corpsName}
                       </span>
                     </div>
                   </div>
@@ -73,10 +70,15 @@ const StandingsModal = ({
                     <span className="text-sm font-bold font-data text-white tabular-nums">
                       {row.score.toFixed(3)}
                     </span>
-                    <span className={`flex items-center gap-0.5 text-xs font-bold font-data tabular-nums w-12 justify-end ${
-                      row.direction === 'up' ? 'text-green-500' :
-                      row.direction === 'down' ? 'text-red-500' : 'text-gray-500'
-                    }`}>
+                    <span
+                      className={`flex items-center gap-0.5 text-xs font-bold font-data tabular-nums w-12 justify-end ${
+                        row.direction === 'up'
+                          ? 'text-green-500'
+                          : row.direction === 'down'
+                            ? 'text-red-500'
+                            : 'text-gray-500'
+                      }`}
+                    >
                       {row.direction === 'up' && <TrendingUp className="w-3 h-3" />}
                       {row.direction === 'down' && <TrendingDown className="w-3 h-3" />}
                       {changeDisplay}

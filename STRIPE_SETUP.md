@@ -3,6 +3,7 @@
 ## Step 1: Get Your Stripe Keys
 
 ### A. Publishable Key (Frontend) ✅ You have this!
+
 ```
 Starts with: rk_test_ or pk_test_
 Location: https://dashboard.stripe.com/test/apikeys
@@ -10,12 +11,14 @@ Safe to expose: Yes (it's public by design)
 ```
 
 ### B. Secret Key (Backend) - GET THIS NOW:
+
 1. Go to: https://dashboard.stripe.com/test/apikeys
 2. Find "Secret key" row
 3. Click "Reveal test key"
 4. Copy the key (starts with `sk_test_...`)
 
 ### C. Webhook Secret - GET THIS AFTER DEPLOYMENT:
+
 1. Deploy Cloud Functions first
 2. Go to: https://dashboard.stripe.com/test/webhooks
 3. Click "Add endpoint"
@@ -105,6 +108,7 @@ const stripe = require('stripe')(functions.config().stripe.secret_key);
 ## Step 5: Test Mode vs. Live Mode
 
 ### Test Mode (What You're Using Now)
+
 ```
 ✅ Perfect for development
 ✅ No real money charged
@@ -113,6 +117,7 @@ const stripe = require('stripe')(functions.config().stripe.secret_key);
 ```
 
 ### Live Mode (For Production)
+
 When ready to launch:
 
 1. Get live keys from: https://dashboard.stripe.com/apikeys
@@ -120,6 +125,7 @@ When ready to launch:
    - Live secret key: `sk_live_...`
 
 2. Update Firebase config:
+
 ```bash
 firebase functions:config:set stripe.secret_key="sk_live_YOUR_KEY"
 firebase functions:config:set stripe.publishable_key="pk_live_YOUR_KEY"
@@ -136,6 +142,7 @@ firebase functions:config:set stripe.webhook_secret="whsec_LIVE_SECRET"
 Use these cards for testing:
 
 ### Success
+
 ```
 Card: 4242 4242 4242 4242
 Expiry: Any future date
@@ -144,12 +151,14 @@ ZIP: Any 5 digits
 ```
 
 ### Declined
+
 ```
 Card: 4000 0000 0000 0002
 Result: Card declined
 ```
 
 ### Requires Authentication (3D Secure)
+
 ```
 Card: 4000 0027 6000 3184
 Result: Prompts for authentication
@@ -205,16 +214,19 @@ firebase deploy --only functions
 ## Troubleshooting
 
 ### "No such customer" error
+
 - Make sure you're using the correct API key (test vs. live)
 - Verify customer was created in same mode
 
 ### Webhook not receiving events
+
 - Check webhook URL is correct
 - Verify webhook secret is set
 - Check Firebase Functions logs
 - Test webhook in Stripe dashboard
 
 ### "Invalid API key" error
+
 - Secret key must start with `sk_test_` or `sk_live_`
 - Publishable key must start with `pk_test_` or `pk_live_`
 - Make sure no extra spaces when copying
@@ -224,6 +236,7 @@ firebase deploy --only functions
 ## Next Steps
 
 Once you have all three keys:
+
 1. ✅ Publishable key (you have)
 2. ⏳ Secret key (get from Stripe dashboard)
 3. ⏳ Webhook secret (get after deploying functions)

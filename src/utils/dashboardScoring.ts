@@ -133,9 +133,7 @@ export function processCaptionScores(
   captionId: string,
   effectiveDay: number | null
 ): CaptionScoreResult {
-  const sortedEvents = [...yearData].sort(
-    (a, b) => (a.offSeasonDay || 0) - (b.offSeasonDay || 0)
-  );
+  const sortedEvents = [...yearData].sort((a, b) => (a.offSeasonDay || 0) - (b.offSeasonDay || 0));
 
   if (effectiveDay === null) {
     // No processed scores yet — still surface the first upcoming show.

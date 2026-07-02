@@ -57,17 +57,22 @@ const DailyChallenges = memo(({ onLineupClick }) => {
   const completedCount = completed.length;
   const totalCount = challenges.length;
 
-  const markComplete = useCallback((id) => {
-    setCompleted(prev => {
-      if (prev.includes(id)) return prev;
-      const next = [...prev, id];
-      try {
-        localStorage.setItem(getCompletedKey(), JSON.stringify(next));
-      } catch { /* ignore */ }
-      return next;
-    });
-    haptic?.();
-  }, [haptic]);
+  const markComplete = useCallback(
+    (id) => {
+      setCompleted((prev) => {
+        if (prev.includes(id)) return prev;
+        const next = [...prev, id];
+        try {
+          localStorage.setItem(getCompletedKey(), JSON.stringify(next));
+        } catch {
+          /* ignore */
+        }
+        return next;
+      });
+      haptic?.();
+    },
+    [haptic]
+  );
 
   return (
     <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
@@ -90,20 +95,26 @@ const DailyChallenges = memo(({ onLineupClick }) => {
       </div>
 
       <div className="divide-y divide-[#222]">
-        {challenges.map(challenge => {
+        {challenges.map((challenge) => {
           const isDone = completed.includes(challenge.id);
           const inner = (
             <div className="flex items-center gap-3">
-              <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
-                isDone ? 'bg-green-500' : 'border border-[#444]'
-              }`}>
+              <div
+                className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
+                  isDone ? 'bg-green-500' : 'border border-[#444]'
+                }`}
+              >
                 {isDone && <Check className="w-3 h-3 text-white" />}
               </div>
-              <span className={`text-sm flex-1 ${isDone ? 'text-gray-500 line-through' : 'text-white'}`}>
+              <span
+                className={`text-sm flex-1 ${isDone ? 'text-gray-500 line-through' : 'text-white'}`}
+              >
                 {challenge.label}
               </span>
               <div className="flex items-center gap-1">
-                <span className="text-[10px] font-bold text-purple-400 font-data">+{challenge.xp} XP</span>
+                <span className="text-[10px] font-bold text-purple-400 font-data">
+                  +{challenge.xp} XP
+                </span>
                 {!isDone && <ChevronRight className="w-3.5 h-3.5 text-gray-600" />}
               </div>
             </div>

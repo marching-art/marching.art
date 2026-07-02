@@ -19,7 +19,13 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
-  Table, RefreshCw, AlertCircle, Download, ChevronLeft, ChevronRight, Radio
+  Table,
+  RefreshCw,
+  AlertCircle,
+  Download,
+  ChevronLeft,
+  ChevronRight,
+  Radio,
 } from 'lucide-react';
 import { getSeasonSettings, getHistoricalScoresForYear, getScoredRecapDays } from '../../api/admin';
 import { scrapeLiveScoresNow } from '../../api/functions';
@@ -35,8 +41,18 @@ const INDIVIDUAL_CAPTIONS = ['GE1', 'GE2', 'VP', 'VA', 'CG', 'B', 'MA', 'P'];
 const AGGREGATE_TABS = [
   { id: 'total', label: 'Total Score', max: 100 },
   { id: 'ge_total', label: 'Total GE', max: 40, calculate: (c) => (c.GE1 || 0) + (c.GE2 || 0) },
-  { id: 'music_total', label: 'Total Music', max: 30, calculate: (c) => ((c.B || 0) + (c.MA || 0) + (c.P || 0)) / 2 },
-  { id: 'visual_total', label: 'Total Visual', max: 30, calculate: (c) => ((c.VP || 0) + (c.VA || 0) + (c.CG || 0)) / 2 },
+  {
+    id: 'music_total',
+    label: 'Total Music',
+    max: 30,
+    calculate: (c) => ((c.B || 0) + (c.MA || 0) + (c.P || 0)) / 2,
+  },
+  {
+    id: 'visual_total',
+    label: 'Total Visual',
+    max: 30,
+    calculate: (c) => ((c.VP || 0) + (c.VA || 0) + (c.CG || 0)) / 2,
+  },
 ];
 
 // Heatmap cell background based on score as a fraction of the max possible.
@@ -145,25 +161,26 @@ const LiveScoresVerification = () => {
     for (const event of events) {
       const day = event.offSeasonDay;
       const dateKey = (event.date || '').slice(0, 10);
-      const key = (day != null) ? `day:${day}` : `pre:${dateKey}`;
+      const key = day != null ? `day:${day}` : `pre:${dateKey}`;
 
       let col = groups.get(key);
       if (!col) {
         col = {
           key,
-          day: (day != null) ? day : null,
+          day: day != null ? day : null,
           date: event.date,
           dateLabel: formatEventDate(event.date),
           eventNames: [],
           locations: new Set(),
           scoresByCorps: new Map(), // corps -> scoreData
-          scored: (day != null) && scoredDays.has(day),
+          scored: day != null && scoredDays.has(day),
         };
         groups.set(key, col);
       }
-      if (event.eventName && !col.eventNames.includes(event.eventName)) col.eventNames.push(event.eventName);
+      if (event.eventName && !col.eventNames.includes(event.eventName))
+        col.eventNames.push(event.eventName);
       if (event.location) col.locations.add(event.location);
-      for (const s of (event.scores || [])) {
+      for (const s of event.scores || []) {
         if (!s.corps) continue;
         const existing = col.scoresByCorps.get(s.corps);
         // Defensive: if a corps somehow appears twice in one day, keep the higher total.
@@ -188,7 +205,7 @@ const LiveScoresVerification = () => {
     const best = new Map(); // corps -> { latestDay, latestTotal }
     for (const event of events) {
       const day = event.offSeasonDay ?? -1;
-      for (const s of (event.scores || [])) {
+      for (const s of event.scores || []) {
         if (!s.corps) continue;
         const existing = best.get(s.corps);
         if (!existing || day >= existing.latestDay) {
@@ -206,7 +223,9 @@ const LiveScoresVerification = () => {
     const scoreData = column.scoresByCorps.get(corps);
     if (!scoreData) return null;
     if (activeTab === 'total') {
-      return typeof scoreData.score === 'number' && !isNaN(scoreData.score) ? scoreData.score : null;
+      return typeof scoreData.score === 'number' && !isNaN(scoreData.score)
+        ? scoreData.score
+        : null;
     }
     if (INDIVIDUAL_CAPTIONS.includes(activeTab)) {
       const v = scoreData.captions?.[activeTab];
@@ -287,7 +306,8 @@ const LiveScoresVerification = () => {
           <div>
             <h2 className="text-lg font-bold text-white">Live DCI Scores — {currentYear}</h2>
             <p className="text-xs text-gray-500">
-              {seasonData?.name} • {corpsRows.length} corps • {events.length} events across {columns.length} days • {totalScores} score rows
+              {seasonData?.name} • {corpsRows.length} corps • {events.length} events across{' '}
+              {columns.length} days • {totalScores} score rows
               {seasonData?.lastScrapedDate ? ` • last scraped ${seasonData.lastScrapedDate}` : ''}
             </p>
           </div>
@@ -306,7 +326,11 @@ const LiveScoresVerification = () => {
             disabled={scraping}
             className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-sm bg-amber-400 text-neutral-900 font-bold hover:bg-amber-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {scraping ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Radio className="w-3.5 h-3.5" />}
+            {scraping ? (
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Radio className="w-3.5 h-3.5" />
+            )}
             {scraping ? 'Scraping…' : 'Scrape DCI Scores Now'}
           </button>
         </div>
@@ -314,7 +338,8 @@ const LiveScoresVerification = () => {
 
       {!isLiveSeason && (
         <div className="text-[11px] text-yellow-500/80 px-1">
-          Status: {seasonData?.status?.toUpperCase() || 'UNKNOWN'} — scraping is a no-op until a live DCI season is active.
+          Status: {seasonData?.status?.toUpperCase() || 'UNKNOWN'} — scraping is a no-op until a
+          live DCI season is active.
         </div>
       )}
 
@@ -400,8 +425,12 @@ const LiveScoresVerification = () => {
                       className="px-0 py-1.5 text-center font-mono text-gray-400 w-[38px] border-r border-white/10"
                       title={`${col.eventNames.join(' + ')}\n${[...col.locations].join(' • ')}\nDay ${col.day ?? 'pre-season'}\nFantasy recap: ${col.scored ? 'scored' : 'not yet scored'}`}
                     >
-                      <div className="text-[10px] text-gray-500/70 leading-none">{col.dateLabel}</div>
-                      <div className={`text-[8px] leading-tight mt-0.5 ${col.scored ? 'text-green-400/70' : 'text-gray-500/40'}`}>
+                      <div className="text-[10px] text-gray-500/70 leading-none">
+                        {col.dateLabel}
+                      </div>
+                      <div
+                        className={`text-[8px] leading-tight mt-0.5 ${col.scored ? 'text-green-400/70' : 'text-gray-500/40'}`}
+                      >
                         {col.day != null ? `D${col.day}` : 'pre'}
                       </div>
                     </th>
@@ -418,7 +447,10 @@ const LiveScoresVerification = () => {
                   >
                     {/* Corps Name - Sticky */}
                     <td className="sticky left-0 z-10 bg-charcoal-900/95 px-1 py-1.5 border-r border-white/20 w-[90px] max-w-[90px]">
-                      <div className="font-medium text-white text-[11px] truncate leading-tight" title={corps}>
+                      <div
+                        className="font-medium text-white text-[11px] truncate leading-tight"
+                        title={corps}
+                      >
                         {corps}
                       </div>
                       <div className="text-[9px] text-gray-500/50 leading-none font-mono">
@@ -437,7 +469,11 @@ const LiveScoresVerification = () => {
                           className={`px-0 py-1.5 text-center font-mono text-[11px] w-[38px] border-r border-white/5 ${bgColor}`}
                         >
                           {value !== null ? (
-                            <span className={value >= maxScore * 0.85 ? 'text-green-400' : 'text-gray-300'}>
+                            <span
+                              className={
+                                value >= maxScore * 0.85 ? 'text-green-400' : 'text-gray-300'
+                              }
+                            >
                               {value.toFixed(3)}
                             </span>
                           ) : (
@@ -455,12 +491,24 @@ const LiveScoresVerification = () => {
           {/* Legend */}
           <div className="flex flex-wrap items-center gap-3 text-[9px] text-gray-500/60">
             <span className="font-mono">Heatmap:</span>
-            <span className="flex items-center gap-0.5"><span className="w-2.5 h-2.5 rounded-sm bg-green-900/30" /> 90%+</span>
-            <span className="flex items-center gap-0.5"><span className="w-2.5 h-2.5 rounded-sm bg-green-900/20" /> 80-90%</span>
-            <span className="flex items-center gap-0.5"><span className="w-2.5 h-2.5 rounded-sm bg-yellow-900/20" /> 70-80%</span>
-            <span className="flex items-center gap-0.5"><span className="w-2.5 h-2.5 rounded-sm bg-red-900/20" /> &lt;50%</span>
-            <span className="font-mono ml-2">Column = competition day (same-day events merged);</span>
-            <span>D# is the competition day (green = recap scored). Hover a column for event details.</span>
+            <span className="flex items-center gap-0.5">
+              <span className="w-2.5 h-2.5 rounded-sm bg-green-900/30" /> 90%+
+            </span>
+            <span className="flex items-center gap-0.5">
+              <span className="w-2.5 h-2.5 rounded-sm bg-green-900/20" /> 80-90%
+            </span>
+            <span className="flex items-center gap-0.5">
+              <span className="w-2.5 h-2.5 rounded-sm bg-yellow-900/20" /> 70-80%
+            </span>
+            <span className="flex items-center gap-0.5">
+              <span className="w-2.5 h-2.5 rounded-sm bg-red-900/20" /> &lt;50%
+            </span>
+            <span className="font-mono ml-2">
+              Column = competition day (same-day events merged);
+            </span>
+            <span>
+              D# is the competition day (green = recap scored). Hover a column for event details.
+            </span>
           </div>
         </>
       )}

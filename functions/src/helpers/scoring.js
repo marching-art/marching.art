@@ -31,6 +31,254 @@ const { ChunkedWriter } = require("./chunkedWriter");
 // END: Shared helper functions
 // =============================================================================
 
+// =============================================================================
+// SHARED DAILY-SCORING CORE
+//
+// The off-season and live-season scoring runs are identical except for how a
+// single caption's base score is derived (off-season regresses on the corps'
+// source year; live season prefers a scraped current-year score and falls
+// back to regression). Both build the same recap, per-corps score map, and
+// coin-award list, then commit the same set of writes. These two helpers hold
+// that shared body so a scoring fix only has to be made once.
+// =============================================================================
+
+/**
+ * Run the show-by-show, corps-by-corps scoring loop for a single day.
+ *
+ * Pushes one showResult per show into `dailyRecap.shows` and returns the
+ * accumulated per-corps daily scores and coin awards, plus diagnostic stats.
+ *
+ * @param {Object} params
+ * @param {Object} params.dayEventData - The day's shows (from the schedule).
+ * @param {FirebaseFirestore.QuerySnapshot} params.profilesSnapshot - Active profiles.
+ * @param {number} params.week - Competition week (ceil(scoredDay / 7)).
+ * @param {number} params.scoredDay - The day being scored (1-49).
+ * @param {Object|null} params.championshipConfig - Per-show championship config, or null.
+ * @param {Object} params.dailyRecap - Recap accumulator; shows are pushed onto it.
+ * @param {(corpsName: string, sourceYear: string, caption: string) => number}
+ *   params.getBaseCaptionScore - Season-specific base-score strategy.
+ * @returns {{ dailyScores: Map<string, number>, coinAwards: Array, stats: Object }}
+ */
+function scoreShowsForDay({
+  dayEventData,
+  profilesSnapshot,
+  week,
+  scoredDay,
+  championshipConfig,
+  dailyRecap,
+  getBaseCaptionScore,
+}) {
+  const dailyScores = new Map();
+  const coinAwards = []; // { uid, corpsClass, showName, amount }
+  const stats = { corpsProcessed: 0, corpsScored: 0, corpsWithNoShowsSelected: 0 };
+
+  for (const show of dayEventData.shows) {
+    const showResult = {
+      eventName: show.eventName,
+      location: show.location,
+      results: [],
+    };
+
+    // --- DAY 41/42 REGIONAL SPLIT LOGIC ---
+    // Eastern Classic spans two days. Split enrollees across all corps classes
+    // roughly in half per class, with Day 41 = Friday and Day 42 = Saturday.
+    // Keys are "${uid}_${corpsClass}" composites so per-corps assignment works
+    // even when a user has multiple corps registered for the show.
+    let day41_42_participantSet = null;
+    if ([41, 42].includes(scoredDay) && show.eventName.includes("Eastern Classic")) {
+      day41_42_participantSet = buildEasternClassicParticipantSet(
+        profilesSnapshot, show.eventName, week, scoredDay
+      );
+    }
+    // --- END: DAY 41/42 REGIONAL SPLIT LOGIC ---
+
+    // --- CHAMPIONSHIP SHOW CONFIGURATION ---
+    // Get config for this specific show if it's a championship event
+    const showConfig = championshipConfig ? championshipConfig[show.eventName] : null;
+    // OPTIMIZATION #6: Build Set for O(1) participant lookups instead of O(n) .some()
+    // Key format: "${uid}_${corpsClass}" for composite lookup
+    let participantSet = null;
+    if (showConfig?.participants) {
+      participantSet = new Set(showConfig.participants.map(p => `${p.uid}_${p.corpsClass}`));
+    }
+    // --- END: CHAMPIONSHIP SHOW CONFIGURATION ---
+
+    for (const userDoc of profilesSnapshot.docs) {
+      const userProfile = userDoc.data();
+      const uid = userDoc.ref.parent.parent.id;
+
+      const userCorps = userProfile.corps || {};
+      for (const corpsClass of Object.keys(userCorps)) {
+        const corps = userCorps[corpsClass];
+        if (!corps || !corps.corpsName || !corps.lineup) continue;
+
+        // Eastern Classic Day 41/42 per-corps filter (keyed by uid+corpsClass
+        // so each registered corps competes on exactly one of the two days).
+        if (day41_42_participantSet && !day41_42_participantSet.has(`${uid}_${corpsClass}`)) continue;
+
+        let attended = false;
+
+        // Championship Week Logic (Days 45-49)
+        if (showConfig) {
+          // Check if this corps class is eligible for this show
+          if (!showConfig.classFilter.includes(corpsClass)) {
+            continue; // This class can't participate in this show
+          }
+
+          // Check if this user/class combo is in the participants list (for advancement rounds)
+          // OPTIMIZATION #6: O(1) Set lookup instead of O(n) .some()
+          if (participantSet !== null) {
+            if (!participantSet.has(`${uid}_${corpsClass}`)) {
+              continue; // Didn't advance to this round
+            }
+          }
+
+          // If we get here, the corps is eligible and has advanced (if applicable)
+          attended = true;
+        } else {
+          // Regular show - check manual registration
+          const userShows = corps.selectedShows?.[`week${week}`] || [];
+          // Match by eventName only - dates can have type mismatches (Timestamp vs string)
+          // and eventName should be unique enough within a week
+          attended = userShows.some(s => s.eventName === show.eventName);
+
+          // Track statistics for diagnostics
+          stats.corpsProcessed++;
+          if (userShows.length === 0) {
+            stats.corpsWithNoShowsSelected++;
+          }
+        }
+
+        if (attended) {
+          stats.corpsScored++;
+          let geScore = 0, rawVisualScore = 0, rawMusicScore = 0;
+
+          // Calculate synergy bonus for show concept
+          const { captionBonuses } = calculateLineupSynergyBonus(
+            corps.showConcept || {},
+            corps.lineup
+          );
+
+          for (const caption in corps.lineup) {
+            const [corpsName, sourceYear] = corps.lineup[caption].split("|");
+            // Season-specific base score (regression vs. scraped-live strategy)
+            const baseCaptionScore = getBaseCaptionScore(corpsName, sourceYear, caption);
+
+            // Apply synergy bonus (0 - 1.0 based on show concept match)
+            const synergyBonus = captionBonuses[caption] || 0;
+            // Hard cap each caption at 20 points
+            const captionScore = Math.min(20, baseCaptionScore + synergyBonus);
+
+            if (["GE1", "GE2"].includes(caption)) geScore += captionScore;
+            else if (["VP", "VA", "CG"].includes(caption)) rawVisualScore += captionScore;
+            else if (["B", "MA", "P"].includes(caption)) rawMusicScore += captionScore;
+          }
+          const visualScore = rawVisualScore / 2;
+          const musicScore = rawMusicScore / 2;
+          // Hard cap at 100 - this is the maximum possible score
+          const totalShowScore = Math.min(100, geScore + visualScore + musicScore);
+
+          const currentDailyTotal = dailyScores.get(`${uid}_${corpsClass}`) || 0;
+          dailyScores.set(`${uid}_${corpsClass}`, currentDailyTotal + totalShowScore);
+
+          // OPTIMIZATION: Collect coin award for batch processing (instead of individual await)
+          const coinAmount = SHOW_PARTICIPATION_REWARDS[corpsClass] || 0;
+          if (coinAmount > 0) {
+            coinAwards.push({ uid, corpsClass, showName: show.eventName, amount: coinAmount });
+          }
+
+          showResult.results.push({
+            uid: uid,
+            displayName: userProfile.username || userProfile.displayName,
+            location: corps.location,
+            corpsClass: corpsClass,
+            corpsName: corps.corpsName,
+            avatarUrl: corps.avatarUrl || null,
+            totalScore: totalShowScore,
+            geScore, visualScore, musicScore,
+          });
+        }
+      }
+    }
+    dailyRecap.shows.push(showResult);
+  }
+
+  return { dailyScores, coinAwards, stats };
+}
+
+/**
+ * Commit a scored day: profile score updates, the recap subcollection doc,
+ * trophy awards, and coin awards, all in one chunked batch.
+ *
+ * @param {Object} params
+ * @param {FirebaseFirestore.Firestore} params.db
+ * @param {ChunkedWriter} params.batch
+ * @param {Object} params.seasonData
+ * @param {number} params.scoredDay
+ * @param {Map<string, number>} params.dailyScores
+ * @param {Object} params.dailyRecap
+ * @param {Array} params.coinAwards
+ * @returns {Promise<{ opCount: number, batchCount: number }>}
+ */
+async function commitDailyScoring({
+  db,
+  batch,
+  seasonData,
+  scoredDay,
+  dailyScores,
+  dailyRecap,
+  coinAwards,
+}) {
+  // Update user profiles with their most recent score.
+  // Note: Uses latest score (not cumulative) - drum corps rankings are based
+  // on most recent performance.
+  for (const [uidAndClass, totalDailyScore] of dailyScores.entries()) {
+    if (totalDailyScore > 0) {
+      const [uid, corpsClass] = uidAndClass.split("_");
+      const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+      batch.update(userProfileRef, {
+        [`corps.${corpsClass}.totalSeasonScore`]: totalDailyScore,
+        [`corps.${corpsClass}.lastScoredDay`]: scoredDay,
+      });
+    }
+  }
+
+  // Save the completed recap document as a per-day subcollection document.
+  // OPTIMIZATION: Write directly to subcollection instead of growing an array
+  // in a single document (O(1) per day, no 1MB document-size risk).
+  const recapDocRef = db.doc(`fantasy_recaps/${seasonData.seasonUid}`);
+  const dayRecapRef = db.doc(`fantasy_recaps/${seasonData.seasonUid}/days/${scoredDay}`);
+
+  // Ensure parent document exists with season metadata (only on first write)
+  const recapDoc = await recapDocRef.get();
+  if (!recapDoc.exists) {
+    batch.set(recapDocRef, {
+      seasonName: seasonData.name,
+      createdAt: new Date(),
+    });
+  }
+  batch.set(dayRecapRef, dailyRecap);
+
+  // --- TROPHY AWARDING LOGIC ---
+  // OPTIMIZATION #5: Uses shared trophy awarding helpers
+  awardRegionalTrophies(batch, dailyRecap, scoredDay, seasonData, db);
+
+  if (scoredDay === 46) {
+    awardClassChampionshipTrophies(batch, dailyRecap, seasonData, db);
+  }
+
+  if (scoredDay === 49) {
+    await awardFinalsAndSaveChampions(batch, dailyRecap, seasonData, db);
+  }
+  // --- END: TROPHY AWARDING LOGIC ---
+
+  // OPTIMIZATION #5: Uses shared processCoinAwardsBatch helper
+  processCoinAwardsBatch(coinAwards, batch, db);
+
+  // Commit all database writes (chunked into multiple batches as needed)
+  return batch.commit();
+}
+
 async function processAndArchiveOffSeasonScoresLogic() {
   const db = getDb();
   logger.info("Running Daily Off-Season Score Processor & Archiver...");
@@ -139,9 +387,6 @@ async function processAndArchiveOffSeasonScoresLogic() {
   // scales with the player base, so a single WriteBatch (capped per request)
   // would eventually fail outright on a busy scoring night.
   const batch = new ChunkedWriter(db);
-  const dailyScores = new Map();
-  // OPTIMIZATION: Collect coin awards to process in batch instead of individual transactions
-  const coinAwards = []; // Array of { uid, corpsClass, showName, amount }
 
   // --- CHAMPIONSHIP WEEK AUTO-ENROLLMENT & PROGRESSION LOGIC ---
   // OPTIMIZATION #5: Uses shared buildChampionshipConfig helper
@@ -160,194 +405,22 @@ async function processAndArchiveOffSeasonScoresLogic() {
     return;
   }
 
-  // Scoring statistics tracking for diagnostics
-  let corpsWithNoShowsSelected = 0;
-  let corpsProcessed = 0;
-  let corpsScored = 0;
+  // Off-season base score: regression on the corps' source year.
+  // OPTIMIZATION #1: Use cached regression score to avoid recomputing.
+  const getBaseCaptionScore = (corpsName, sourceYear, caption) =>
+    getCachedRegressionScore(corpsName, sourceYear, caption, scoredDay, historicalData);
 
-  for (const show of dayEventData.shows) {
-    const showResult = {
-      eventName: show.eventName,
-      location: show.location,
-      results: [],
-    };
-
-    // --- DAY 41/42 REGIONAL SPLIT LOGIC ---
-    // Eastern Classic spans two days. Split enrollees across all corps classes
-    // roughly in half per class, with Day 41 = Friday and Day 42 = Saturday.
-    // Keys are "${uid}_${corpsClass}" composites so per-corps assignment works
-    // even when a user has multiple corps registered for the show.
-    let day41_42_participantSet = null;
-    if ([41, 42].includes(scoredDay) && show.eventName.includes("Eastern Classic")) {
-      day41_42_participantSet = buildEasternClassicParticipantSet(
-        profilesSnapshot, show.eventName, week, scoredDay
-      );
-    }
-    // --- END: DAY 41/42 REGIONAL SPLIT LOGIC ---
-
-    // --- CHAMPIONSHIP SHOW CONFIGURATION ---
-    // Get config for this specific show if it's a championship event
-    const showConfig = championshipConfig ? championshipConfig[show.eventName] : null;
-    // OPTIMIZATION #6: Build Set for O(1) participant lookups instead of O(n) .some()
-    // Key format: "${uid}_${corpsClass}" for composite lookup
-    let participantSet = null;
-    if (showConfig?.participants) {
-      participantSet = new Set(showConfig.participants.map(p => `${p.uid}_${p.corpsClass}`));
-    }
-    // --- END: CHAMPIONSHIP SHOW CONFIGURATION ---
-
-    for (const userDoc of profilesSnapshot.docs) {
-      const userProfile = userDoc.data();
-      const uid = userDoc.ref.parent.parent.id;
-
-      const userCorps = userProfile.corps || {};
-      for (const corpsClass of Object.keys(userCorps)) {
-        const corps = userCorps[corpsClass];
-        if (!corps || !corps.corpsName || !corps.lineup) continue;
-
-        // Eastern Classic Day 41/42 per-corps filter (keyed by uid+corpsClass
-        // so each registered corps competes on exactly one of the two days).
-        if (day41_42_participantSet && !day41_42_participantSet.has(`${uid}_${corpsClass}`)) continue;
-
-        let attended = false;
-
-        // Championship Week Logic (Days 45-49)
-        if (showConfig) {
-          // Check if this corps class is eligible for this show
-          if (!showConfig.classFilter.includes(corpsClass)) {
-            continue; // This class can't participate in this show
-          }
-
-          // Check if this user/class combo is in the participants list (for advancement rounds)
-          // OPTIMIZATION #6: O(1) Set lookup instead of O(n) .some()
-          if (participantSet !== null) {
-            if (!participantSet.has(`${uid}_${corpsClass}`)) {
-              continue; // Didn't advance to this round
-            }
-          }
-
-          // If we get here, the corps is eligible and has advanced (if applicable)
-          attended = true;
-        } else {
-          // Regular show - check manual registration
-          const userShows = corps.selectedShows?.[`week${week}`] || [];
-          // Match by eventName only - dates can have type mismatches (Timestamp vs string)
-          // and eventName should be unique enough within a week
-          attended = userShows.some(s => s.eventName === show.eventName);
-
-          // Track statistics for diagnostics
-          corpsProcessed++;
-          if (userShows.length === 0) {
-            corpsWithNoShowsSelected++;
-          }
-        }
-
-        if (attended) {
-          corpsScored++;
-          let geScore = 0, rawVisualScore = 0, rawMusicScore = 0;
-
-          // Calculate synergy bonus for show concept
-          const { captionBonuses } = calculateLineupSynergyBonus(
-            corps.showConcept || {},
-            corps.lineup
-          );
-
-          for (const caption in corps.lineup) {
-            const [corpsName, sourceYear] = corps.lineup[caption].split("|");
-            // OPTIMIZATION #1: Use cached regression score to avoid recomputing
-            const baseCaptionScore = getCachedRegressionScore(corpsName, sourceYear, caption, scoredDay, historicalData);
-
-            // Apply synergy bonus (0 - 1.0 based on show concept match)
-            const synergyBonus = captionBonuses[caption] || 0;
-            // Hard cap each caption at 20 points
-            const captionScore = Math.min(20, baseCaptionScore + synergyBonus);
-
-            if (["GE1", "GE2"].includes(caption)) geScore += captionScore;
-            else if (["VP", "VA", "CG"].includes(caption)) rawVisualScore += captionScore;
-            else if (["B", "MA", "P"].includes(caption)) rawMusicScore += captionScore;
-          }
-          const visualScore = rawVisualScore / 2;
-          const musicScore = rawMusicScore / 2;
-          // Hard cap at 100 - this is the maximum possible score
-          const totalShowScore = Math.min(100, geScore + visualScore + musicScore);
-
-          const currentDailyTotal = dailyScores.get(`${uid}_${corpsClass}`) || 0;
-          dailyScores.set(`${uid}_${corpsClass}`, currentDailyTotal + totalShowScore);
-
-          // OPTIMIZATION: Collect coin award for batch processing (instead of individual await)
-          const coinAmount = SHOW_PARTICIPATION_REWARDS[corpsClass] || 0;
-          if (coinAmount > 0) {
-            coinAwards.push({ uid, corpsClass, showName: show.eventName, amount: coinAmount });
-          }
-
-          showResult.results.push({
-            uid: uid,
-            displayName: userProfile.username || userProfile.displayName,
-            location: corps.location,
-            corpsClass: corpsClass,
-            corpsName: corps.corpsName,
-            avatarUrl: corps.avatarUrl || null,
-            totalScore: totalShowScore,
-            geScore, visualScore, musicScore,
-          });
-        }
-      }
-    }
-    dailyRecap.shows.push(showResult);
-  }
+  const { dailyScores, coinAwards, stats } = scoreShowsForDay({
+    dayEventData, profilesSnapshot, week, scoredDay,
+    championshipConfig, dailyRecap, getBaseCaptionScore,
+  });
 
   // Log scoring statistics for diagnostics
-  logger.info(`Day ${scoredDay} scoring stats: ${corpsProcessed} corps processed, ${corpsScored} corps scored, ${corpsWithNoShowsSelected} corps with no shows selected for week ${week}`);
+  logger.info(`Day ${scoredDay} scoring stats: ${stats.corpsProcessed} corps processed, ${stats.corpsScored} corps scored, ${stats.corpsWithNoShowsSelected} corps with no shows selected for week ${week}`);
 
-  // Action 1: Update user profiles with their most recent score
-  // Note: Uses latest score (not cumulative) - drum corps rankings are based on most recent performance
-  for (const [uidAndClass, totalDailyScore] of dailyScores.entries()) {
-    if (totalDailyScore > 0) {
-      const [uid, corpsClass] = uidAndClass.split("_");
-      const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
-      batch.update(userProfileRef, {
-        [`corps.${corpsClass}.totalSeasonScore`]: totalDailyScore,
-        [`corps.${corpsClass}.lastScoredDay`]: scoredDay,
-      });
-    }
-  }
-
-  // Action 2: Save the completed recap document as subcollection document
-  // OPTIMIZATION: Write directly to subcollection instead of growing array in single document
-  // This reduces I/O from O(n) to O(1) per day and eliminates 1MB document limit risk
-  const recapDocRef = db.doc(`fantasy_recaps/${seasonData.seasonUid}`);
-  const dayRecapRef = db.doc(`fantasy_recaps/${seasonData.seasonUid}/days/${scoredDay}`);
-
-  // Ensure parent document exists with season metadata (only on first write)
-  const recapDoc = await recapDocRef.get();
-  if (!recapDoc.exists) {
-    batch.set(recapDocRef, {
-      seasonName: seasonData.name,
-      createdAt: new Date(),
-    });
-  }
-
-  // Write the day's recap directly - no need to read/filter/push entire array
-  batch.set(dayRecapRef, dailyRecap);
-
-  // --- TROPHY AWARDING LOGIC ---
-  // OPTIMIZATION #5: Uses shared trophy awarding helpers
-  awardRegionalTrophies(batch, dailyRecap, scoredDay, seasonData, db);
-
-  if (scoredDay === 46) {
-    awardClassChampionshipTrophies(batch, dailyRecap, seasonData, db);
-  }
-
-  if (scoredDay === 49) {
-    await awardFinalsAndSaveChampions(batch, dailyRecap, seasonData, db);
-  }
-  // --- END: TROPHY AWARDING LOGIC ---
-
-  // OPTIMIZATION #5: Uses shared processCoinAwardsBatch helper
-  processCoinAwardsBatch(coinAwards, batch, db);
-
-  // Commit all database writes (chunked into multiple batches as needed)
-  const { opCount, batchCount } = await batch.commit();
+  const { opCount, batchCount } = await commitDailyScoring({
+    db, batch, seasonData, scoredDay, dailyScores, dailyRecap, coinAwards,
+  });
   logger.info(`Successfully processed and archived scores for day ${scoredDay} (${opCount} writes in ${batchCount} batches).`);
 
   // OPTIMIZATION #5: Uses shared processWeeklyMatchups helper
@@ -401,9 +474,6 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
   // scales with the player base, so a single WriteBatch (capped per request)
   // would eventually fail outright on a busy scoring night.
   const batch = new ChunkedWriter(db);
-  const dailyScores = new Map();
-  // OPTIMIZATION: Collect coin awards to process in batch instead of individual transactions
-  const coinAwards = []; // Array of { uid, corpsClass, showName, amount }
 
   // --- CHAMPIONSHIP WEEK AUTO-ENROLLMENT & PROGRESSION LOGIC (Days 45-49) ---
   // OPTIMIZATION #5: Uses shared buildChampionshipConfig helper
@@ -425,197 +495,41 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
     return;
   }
 
-  for (const show of dayEventData.shows) {
-    const showResult = {
-      eventName: show.eventName,
-      location: show.location,
-      results: [],
-    };
+  // Live-season base score:
+  //   1. Prefer an actual scraped score for the current year on this day.
+  //   2. Otherwise regress on current-year scraped data if there are enough
+  //      points (>= 3); else fall back to prior-year (sourceYear) regression.
+  const getBaseCaptionScore = (corpsName, sourceYear, caption) => {
+    let baseCaptionScore = getScoreForDay(scoredDay, corpsName, currentYear.toString(), caption, historicalData);
 
-    // --- DAY 41/42 REGIONAL SPLIT LOGIC ---
-    // Eastern Classic spans two days. Split enrollees across all corps classes
-    // roughly in half per class, with Day 41 = Friday and Day 42 = Saturday.
-    let day41_42_participantSet = null;
-    if ([41, 42].includes(scoredDay) && show.eventName.includes("Eastern Classic")) {
-      day41_42_participantSet = buildEasternClassicParticipantSet(
-        profilesSnapshot, show.eventName, week, scoredDay
+    if (baseCaptionScore === null) {
+      const currentYearDataPoints = countDataPointsForCorps(
+        corpsName, currentYear.toString(), caption, historicalData
       );
-    }
-    // --- END: DAY 41/42 REGIONAL SPLIT LOGIC ---
 
-    const showConfig = championshipConfig ? championshipConfig[show.eventName] : null;
-    // OPTIMIZATION #6: Build Set for O(1) participant lookups instead of O(n) .some()
-    let participantSet = null;
-    if (showConfig?.participants) {
-      participantSet = new Set(showConfig.participants.map(p => `${p.uid}_${p.corpsClass}`));
-    }
-
-    for (const userDoc of profilesSnapshot.docs) {
-      const userProfile = userDoc.data();
-      const uid = userDoc.ref.parent.parent.id;
-
-      const userCorps = userProfile.corps || {};
-      for (const corpsClass of Object.keys(userCorps)) {
-        const corps = userCorps[corpsClass];
-        if (!corps || !corps.corpsName || !corps.lineup) continue;
-
-        // Eastern Classic Day 41/42 per-corps filter (keyed by uid+corpsClass
-        // so each registered corps competes on exactly one of the two days).
-        if (day41_42_participantSet && !day41_42_participantSet.has(`${uid}_${corpsClass}`)) continue;
-
-        let attended = false;
-
-        // Championship Week Logic (Days 45-49)
-        if (showConfig) {
-          if (!showConfig.classFilter.includes(corpsClass)) {
-            continue;
-          }
-
-          // OPTIMIZATION #6: O(1) Set lookup instead of O(n) .some()
-          if (participantSet !== null) {
-            if (!participantSet.has(`${uid}_${corpsClass}`)) {
-              continue;
-            }
-          }
-
-          attended = true;
-        } else {
-          // Regular show - check manual registration
-          const userShows = corps.selectedShows?.[`week${week}`] || [];
-          attended = userShows.some(s => s.eventName === show.eventName);
-        }
-
-        if (attended) {
-          let geScore = 0, rawVisualScore = 0, rawMusicScore = 0;
-
-          // Calculate synergy bonus for show concept
-          const { captionBonuses } = calculateLineupSynergyBonus(
-            corps.showConcept || {},
-            corps.lineup
-          );
-
-          for (const caption in corps.lineup) {
-            const [corpsName, sourceYear] = corps.lineup[caption].split("|");
-
-            // For live season scoring:
-            // 1. First check for actual score in current year (scraped live data)
-            // 2. If not found, use prior year (sourceYear from lineup) for regression
-            let baseCaptionScore = getScoreForDay(scoredDay, corpsName, currentYear.toString(), caption, historicalData);
-
-            if (baseCaptionScore === null) {
-              // No scraped score for current year on this exact day
-              // Try current year regression first if we have enough data points
-              const currentYearDataPoints = countDataPointsForCorps(
-                corpsName, currentYear.toString(), caption, historicalData
-              );
-
-              if (currentYearDataPoints >= 3) {
-                // Use current year data for regression (enough scraped data exists)
-                // OPTIMIZATION #1: Use cached regression score
-                baseCaptionScore = getCachedRegressionScore(
-                  corpsName,
-                  currentYear.toString(),
-                  caption,
-                  scoredDay,
-                  historicalData
-                );
-              } else {
-                // Fall back to prior year data for regression predictions
-                // OPTIMIZATION #1: Use cached regression score
-                baseCaptionScore = getCachedRegressionScore(
-                  corpsName,
-                  sourceYear,
-                  caption,
-                  scoredDay,
-                  historicalData
-                );
-              }
-            }
-
-            const synergyBonus = captionBonuses[caption] || 0;
-            const captionScore = Math.min(20, baseCaptionScore + synergyBonus);
-
-            if (["GE1", "GE2"].includes(caption)) geScore += captionScore;
-            else if (["VP", "VA", "CG"].includes(caption)) rawVisualScore += captionScore;
-            else if (["B", "MA", "P"].includes(caption)) rawMusicScore += captionScore;
-          }
-
-          const visualScore = rawVisualScore / 2;
-          const musicScore = rawMusicScore / 2;
-          const totalShowScore = Math.min(100, geScore + visualScore + musicScore);
-
-          const currentDailyTotal = dailyScores.get(`${uid}_${corpsClass}`) || 0;
-          dailyScores.set(`${uid}_${corpsClass}`, currentDailyTotal + totalShowScore);
-
-          // OPTIMIZATION: Collect coin award for batch processing (instead of individual await)
-          const coinAmount = SHOW_PARTICIPATION_REWARDS[corpsClass] || 0;
-          if (coinAmount > 0) {
-            coinAwards.push({ uid, corpsClass, showName: show.eventName, amount: coinAmount });
-          }
-
-          showResult.results.push({
-            uid: uid,
-            displayName: userProfile.username || userProfile.displayName,
-            location: corps.location,
-            corpsClass: corpsClass,
-            corpsName: corps.corpsName,
-            avatarUrl: corps.avatarUrl || null,
-            totalScore: totalShowScore,
-            geScore, visualScore, musicScore,
-          });
-        }
+      // OPTIMIZATION #1: Use cached regression score
+      if (currentYearDataPoints >= 3) {
+        baseCaptionScore = getCachedRegressionScore(
+          corpsName, currentYear.toString(), caption, scoredDay, historicalData
+        );
+      } else {
+        baseCaptionScore = getCachedRegressionScore(
+          corpsName, sourceYear, caption, scoredDay, historicalData
+        );
       }
     }
-    dailyRecap.shows.push(showResult);
-  }
 
-  // Update user profiles with their most recent score
-  // Note: Uses latest score (not cumulative) - drum corps rankings are based on most recent performance
-  for (const [uidAndClass, totalDailyScore] of dailyScores.entries()) {
-    if (totalDailyScore > 0) {
-      const [uid, corpsClass] = uidAndClass.split("_");
-      const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
-      batch.update(userProfileRef, {
-        [`corps.${corpsClass}.totalSeasonScore`]: totalDailyScore,
-        [`corps.${corpsClass}.lastScoredDay`]: scoredDay,
-      });
-    }
-  }
+    return baseCaptionScore;
+  };
 
-  // --- TROPHY AWARDING LOGIC ---
-  // OPTIMIZATION #5: Uses shared trophy awarding helpers
-  awardRegionalTrophies(batch, dailyRecap, scoredDay, seasonData, db);
+  const { dailyScores, coinAwards } = scoreShowsForDay({
+    dayEventData, profilesSnapshot, week, scoredDay,
+    championshipConfig, dailyRecap, getBaseCaptionScore,
+  });
 
-  if (scoredDay === 46) {
-    awardClassChampionshipTrophies(batch, dailyRecap, seasonData, db);
-  }
-
-  if (scoredDay === 49) {
-    await awardFinalsAndSaveChampions(batch, dailyRecap, seasonData, db);
-  }
-  // --- END: TROPHY AWARDING LOGIC ---
-
-  // OPTIMIZATION #5: Uses shared processCoinAwardsBatch helper
-  processCoinAwardsBatch(coinAwards, batch, db);
-
-  // Save the recap document as subcollection document
-  // OPTIMIZATION: Write directly to subcollection instead of growing array in single document
-  const recapDocRef = db.doc(`fantasy_recaps/${seasonData.seasonUid}`);
-  const dayRecapRef = db.doc(`fantasy_recaps/${seasonData.seasonUid}/days/${scoredDay}`);
-
-  // Ensure parent document exists with season metadata (only on first write)
-  const recapDoc = await recapDocRef.get();
-  if (!recapDoc.exists) {
-    batch.set(recapDocRef, {
-      seasonName: seasonData.name,
-      createdAt: new Date(),
-    });
-  }
-
-  // Write the day's recap directly - no need to read/filter/push entire array
-  batch.set(dayRecapRef, dailyRecap);
-
-  const { opCount, batchCount } = await batch.commit();
+  const { opCount, batchCount } = await commitDailyScoring({
+    db, batch, seasonData, scoredDay, dailyScores, dailyRecap, coinAwards,
+  });
   logger.info(`Successfully processed and archived scores for live season day ${scoredDay} (${opCount} writes in ${batchCount} batches).`);
 
   // OPTIMIZATION #5: Uses shared processWeeklyMatchups helper
@@ -735,4 +649,6 @@ module.exports = {
   processAndArchiveOffSeasonScoresLogic,
   calculateCorpsStatisticsLogic,
   processAndScoreLiveSeasonDayLogic,
+  // Exported for unit testing the shared scoring core
+  scoreShowsForDay,
 };

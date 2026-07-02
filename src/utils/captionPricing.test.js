@@ -11,7 +11,7 @@ import {
   getXPProgress,
   getCaptionChangesAllowed,
   formatCorpsName,
-  getClassInfo
+  getClassInfo,
 } from './captionPricing';
 
 describe('captionPricing constants', () => {
@@ -61,7 +61,7 @@ describe('calculateLineupValue', () => {
     const lineup = {
       GE1: 'corps1',
       GE2: 'corps2',
-      VP: 'corps3'
+      VP: 'corps3',
     };
     expect(calculateLineupValue(lineup, mockCorps)).toBe(45);
   });
@@ -69,7 +69,7 @@ describe('calculateLineupValue', () => {
   test('ignores corps IDs not in available list', () => {
     const lineup = {
       GE1: 'corps1',
-      GE2: 'unknown'
+      GE2: 'unknown',
     };
     expect(calculateLineupValue(lineup, mockCorps)).toBe(10);
   });
@@ -95,7 +95,7 @@ describe('validateLineup', () => {
     CG: 'corps5',
     B: 'corps6',
     MA: 'corps7',
-    P: 'corps8'
+    P: 'corps8',
   };
 
   test('validates a complete lineup within point limit', () => {
@@ -114,7 +114,7 @@ describe('validateLineup', () => {
   test('fails for duplicate corps selections', () => {
     const duplicateLineup = {
       ...validLineup,
-      GE2: 'corps1' // Same as GE1
+      GE2: 'corps1', // Same as GE1
     };
     const result = validateLineup(duplicateLineup, 'soundSport', mockCorps);
     expect(result.valid).toBe(false);
@@ -128,7 +128,7 @@ describe('validateLineup', () => {
   });
 
   test('fails when exceeding point limit', () => {
-    const expensiveCorps = mockCorps.map(c => ({ ...c, value: 20 }));
+    const expensiveCorps = mockCorps.map((c) => ({ ...c, value: 20 }));
     const result = validateLineup(validLineup, 'aClass', expensiveCorps);
     expect(result.valid).toBe(false);
     expect(result.totalValue).toBe(160);

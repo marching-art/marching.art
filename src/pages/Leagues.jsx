@@ -7,8 +7,17 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
-  Users, Trophy, Plus, Search, Crown, X, Zap,
-  ChevronRight, TrendingUp, Swords, MessageCircle
+  Users,
+  Trophy,
+  Plus,
+  Search,
+  Crown,
+  X,
+  Zap,
+  ChevronRight,
+  TrendingUp,
+  Swords,
+  MessageCircle,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -18,7 +27,7 @@ import {
   useCreateLeague,
   useJoinLeague,
   useJoinLeagueByCode,
-  useLeaveLeague
+  useLeaveLeague,
 } from '../hooks/useLeagues';
 import { useProfileStore } from '../store/profileStore';
 import { CreateLeagueModal, LeagueDetailView } from '../components/Leagues';
@@ -57,16 +66,14 @@ const RankBadge = ({ rank, total }) => {
   const isFirst = rank === 1;
 
   return (
-    <div className={`
+    <div
+      className={`
       flex flex-col items-center justify-center px-2
       ${isFirst ? 'text-yellow-400' : isTop3 ? 'text-green-400' : 'text-gray-400'}
-    `}>
-      <span className="text-lg font-bold font-data tabular-nums leading-tight">
-        #{rank}
-      </span>
-      <span className="text-[9px] uppercase tracking-wider text-gray-500">
-        of {total}
-      </span>
+    `}
+    >
+      <span className="text-lg font-bold font-data tabular-nums leading-tight">#{rank}</span>
+      <span className="text-[9px] uppercase tracking-wider text-gray-500">of {total}</span>
     </div>
   );
 };
@@ -85,9 +92,7 @@ const ActivityIndicator = ({ hasNewMessages, isLive }) => {
     );
   }
   if (hasNewMessages) {
-    return (
-      <span className="w-2 h-2 bg-green-500 rounded-full" title="New activity" />
-    );
+    return <span className="w-2 h-2 bg-green-500 rounded-full" title="New activity" />;
   }
   return null;
 };
@@ -105,7 +110,7 @@ const MyLeagueCard = ({ league, userProfile, onClick }) => {
   const userRank = useMemo(() => {
     if (!league.members || !userProfile?.odNumber) return null;
     const sorted = [...league.members].sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0));
-    const idx = sorted.findIndex(m => m.odNumber === userProfile.odNumber);
+    const idx = sorted.findIndex((m) => m.odNumber === userProfile.odNumber);
     return idx >= 0 ? idx + 1 : null;
   }, [league.members, userProfile?.odNumber]);
 
@@ -180,7 +185,7 @@ const DiscoverLeagueCard = ({ league, onJoin, isJoining }) => {
             <div className="min-w-0">
               <h3 className="text-sm font-bold text-white truncate">{league.name}</h3>
               <div className="flex items-center gap-1.5 mt-0.5">
-                {tags.slice(0, 2).map(tag => {
+                {tags.slice(0, 2).map((tag) => {
                   const config = LEAGUE_TAGS[tag];
                   return (
                     <span
@@ -213,7 +218,10 @@ const DiscoverLeagueCard = ({ league, onJoin, isJoining }) => {
             )}
           </div>
           <button
-            onClick={(e) => { e.stopPropagation(); onJoin(league.id); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onJoin(league.id);
+            }}
             disabled={isFull || isJoining}
             className={`px-3 py-1.5 text-[10px] font-bold uppercase transition-colors ${
               isFull
@@ -248,7 +256,9 @@ const QuickJoinModal = ({ inviteCode, setInviteCode, onJoin, onClose, isJoining 
       </div>
 
       <div className="px-4 py-3 border-b border-[#333] bg-[#222] flex items-center justify-between">
-        <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Join by Code</span>
+        <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
+          Join by Code
+        </span>
         <button
           onClick={onClose}
           className="p-2 -mr-2 text-gray-500 hover:text-white min-w-touch min-h-touch flex items-center justify-center"
@@ -257,7 +267,13 @@ const QuickJoinModal = ({ inviteCode, setInviteCode, onJoin, onClose, isJoining 
         </button>
       </div>
 
-      <form onSubmit={(e) => { e.preventDefault(); onJoin(); }} className="p-4 space-y-3">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          onJoin();
+        }}
+        className="p-4 space-y-3"
+      >
         <input
           type="text"
           value={inviteCode}
@@ -335,7 +351,11 @@ const Leagues = () => {
   // Current user's profile comes from the global realtime store — no need for
   // a second one-shot read of the same document through react-query.
   const userProfile = useProfileStore((state) => state.profile);
-  const { data: myLeagues = [], isLoading: loadingMyLeagues, refetch: refetchMyLeagues } = useMyLeagues(user?.uid);
+  const {
+    data: myLeagues = [],
+    isLoading: loadingMyLeagues,
+    refetch: refetchMyLeagues,
+  } = useMyLeagues(user?.uid);
   const {
     data: publicLeaguesData,
     isLoading: loadingPublicLeagues,
@@ -363,16 +383,16 @@ const Leagues = () => {
   // Flatten public leagues
   const availableLeagues = useMemo(() => {
     if (!publicLeaguesData?.pages) return [];
-    return publicLeaguesData.pages.flatMap(page => page.data);
+    return publicLeaguesData.pages.flatMap((page) => page.data);
   }, [publicLeaguesData]);
 
   // Filter available leagues
   const discoverLeagues = useMemo(() => {
-    const myLeagueIds = new Set(myLeagues.map(l => l.id));
-    let filtered = availableLeagues.filter(league => !myLeagueIds.has(league.id));
+    const myLeagueIds = new Set(myLeagues.map((l) => l.id));
+    let filtered = availableLeagues.filter((league) => !myLeagueIds.has(league.id));
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(league => league.name.toLowerCase().includes(term));
+      filtered = filtered.filter((league) => league.name.toLowerCase().includes(term));
     }
     return filtered;
   }, [availableLeagues, myLeagues, searchTerm]);
@@ -589,7 +609,10 @@ const Leagues = () => {
           inviteCode={inviteCode}
           setInviteCode={setInviteCode}
           onJoin={handleJoinByCode}
-          onClose={() => { setShowQuickJoin(false); setInviteCode(''); }}
+          onClose={() => {
+            setShowQuickJoin(false);
+            setInviteCode('');
+          }}
           isJoining={joiningByCode}
         />
       )}

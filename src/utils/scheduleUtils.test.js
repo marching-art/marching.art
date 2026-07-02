@@ -18,23 +18,32 @@ describe('showCalendarDay', () => {
   });
 
   it('reads startsAt in the show timezone when date is missing', () => {
-    expect(showCalendarDay({
-      startsAt: nebraska.startsAt,
-      timezone: nebraska.timezone,
-    })).toBe('2026-07-01');
+    expect(
+      showCalendarDay({
+        startsAt: nebraska.startsAt,
+        timezone: nebraska.timezone,
+      })
+    ).toBe('2026-07-01');
   });
 
   it('keeps a west-coast evening show on its own calendar day', () => {
-    expect(showCalendarDay({
-      name: 'MidCal Showcase',
-      startsAt: '2026-07-03T02:50:00.000Z', // 7:50 PM PDT on July 2
-      timezone: 'America/Los_Angeles',
-    })).toBe('2026-07-02');
+    expect(
+      showCalendarDay({
+        name: 'MidCal Showcase',
+        startsAt: '2026-07-03T02:50:00.000Z', // 7:50 PM PDT on July 2
+        timezone: 'America/Los_Angeles',
+      })
+    ).toBe('2026-07-02');
   });
 
   it('falls back to startsAt when date is unparseable, and null when nothing usable', () => {
-    expect(showCalendarDay({ date: 'not-a-date', startsAt: nebraska.startsAt, timezone: nebraska.timezone }))
-      .toBe('2026-07-01');
+    expect(
+      showCalendarDay({
+        date: 'not-a-date',
+        startsAt: nebraska.startsAt,
+        timezone: nebraska.timezone,
+      })
+    ).toBe('2026-07-01');
     expect(showCalendarDay({})).toBe(null);
   });
 

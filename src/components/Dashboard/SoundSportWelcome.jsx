@@ -8,8 +8,19 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
 import {
-  Music, Medal, ChevronRight, ChevronDown, Star, Clock,
-  Users, Target, Sparkles, BookOpen, Play, Trophy, X
+  Music,
+  Medal,
+  ChevronRight,
+  ChevronDown,
+  Star,
+  Clock,
+  Users,
+  Target,
+  Sparkles,
+  BookOpen,
+  Play,
+  Trophy,
+  X,
 } from 'lucide-react';
 
 // =============================================================================
@@ -72,10 +83,7 @@ const SoundSportWelcome = ({ onDismiss, showCompact = false }) => {
       )}
 
       {/* Header - Always visible */}
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full text-left p-4 pr-10"
-      >
+      <button onClick={() => setIsExpanded(!isExpanded)} className="w-full text-left p-4 pr-10">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-green-500/20 rounded-sm border border-green-500/30">
             <Music className="w-5 h-5 text-green-500" />
@@ -119,7 +127,9 @@ const SoundSportWelcome = ({ onDismiss, showCompact = false }) => {
                         <Icon className="w-3 h-3 text-green-500" />
                         <span className="text-lg font-bold font-data text-white">{stat.value}</span>
                       </div>
-                      <span className="text-[9px] uppercase tracking-wider text-gray-500">{stat.label}</span>
+                      <span className="text-[9px] uppercase tracking-wider text-gray-500">
+                        {stat.label}
+                      </span>
                     </div>
                   );
                 })}

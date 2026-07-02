@@ -4,9 +4,21 @@
 import React, { useState, useEffect } from 'react';
 import { m } from 'framer-motion';
 import {
-  Settings, Copy, Check, Swords, Calendar, Users,
-  Loader2, AlertCircle, CheckCircle, ChevronLeft, ChevronRight,
-  Zap, Trophy, Award, Star
+  Settings,
+  Copy,
+  Check,
+  Swords,
+  Calendar,
+  Users,
+  Loader2,
+  AlertCircle,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  Zap,
+  Trophy,
+  Award,
+  Star,
 } from 'lucide-react';
 import { getLeagueMatchupWeek } from '../../../api/leagues';
 import { generateMatchups } from '../../../api/functions';
@@ -15,7 +27,12 @@ import toast from 'react-hot-toast';
 
 // Corps class icons for visual display
 const CORPS_CLASS_CONFIG = {
-  worldClass: { name: 'World Class', icon: Trophy, color: 'text-yellow-500', bg: 'bg-yellow-500/10' },
+  worldClass: {
+    name: 'World Class',
+    icon: Trophy,
+    color: 'text-yellow-500',
+    bg: 'bg-yellow-500/10',
+  },
   openClass: { name: 'Open Class', icon: Award, color: 'text-purple-500', bg: 'bg-purple-500/10' },
   aClass: { name: 'A Class', icon: Star, color: 'text-blue-500', bg: 'bg-blue-500/10' },
   soundSport: { name: 'SoundSport', icon: Zap, color: 'text-green-500', bg: 'bg-green-500/10' },
@@ -86,14 +103,14 @@ const SettingsTab = ({ league, userProfile, currentWeek = 1, onBack }) => {
       });
 
       if (result.data?.success) {
-        setExistingMatchups(prev => ({
+        setExistingMatchups((prev) => ({
           ...prev,
-          [selectedWeek]: result.data.matchups
+          [selectedWeek]: result.data.matchups,
         }));
         setLastGeneratedResult({
           success: true,
           week: selectedWeek,
-          matchups: result.data.matchups
+          matchups: result.data.matchups,
         });
         toast.success(`Week ${selectedWeek} matchups generated!`);
       } else {
@@ -103,7 +120,7 @@ const SettingsTab = ({ league, userProfile, currentWeek = 1, onBack }) => {
       console.error('Error generating matchups:', error);
       setLastGeneratedResult({
         success: false,
-        error: error.message || 'Failed to generate matchups'
+        error: error.message || 'Failed to generate matchups',
       });
       toast.error(error.message || 'Failed to generate matchups');
     } finally {
@@ -138,10 +155,7 @@ const SettingsTab = ({ league, userProfile, currentWeek = 1, onBack }) => {
       {/* Header with Back Button */}
       <div className="flex items-center gap-3 mb-4">
         {onBack && (
-          <button
-            onClick={onBack}
-            className="p-2 bg-[#222] hover:bg-[#333] transition-colors"
-          >
+          <button onClick={onBack} className="p-2 bg-[#222] hover:bg-[#333] transition-colors">
             <ChevronLeft className="w-4 h-4 text-gray-400" />
           </button>
         )}
@@ -176,7 +190,10 @@ const SettingsTab = ({ league, userProfile, currentWeek = 1, onBack }) => {
               </button>
 
               <div className="flex-1 flex gap-1 overflow-x-auto py-1">
-                {Array.from({ length: Math.min(GAME_CONFIG.season.totalWeeks, 12) }, (_, i) => i + 1).map(week => {
+                {Array.from(
+                  { length: Math.min(GAME_CONFIG.season.totalWeeks, 12) },
+                  (_, i) => i + 1
+                ).map((week) => {
                   const hasMatchups = existingMatchups[week];
                   const isSelected = selectedWeek === week;
                   const isCurrent = week === currentWeek;
@@ -189,10 +206,10 @@ const SettingsTab = ({ league, userProfile, currentWeek = 1, onBack }) => {
                         isSelected
                           ? 'bg-yellow-500 text-black'
                           : hasMatchups
-                          ? 'bg-green-500/20 border border-green-500/30 text-green-500'
-                          : isCurrent
-                          ? 'bg-purple-500/20 border border-purple-500/30 text-purple-400'
-                          : 'bg-[#222] border border-[#333] text-gray-500 hover:border-[#444]'
+                            ? 'bg-green-500/20 border border-green-500/30 text-green-500'
+                            : isCurrent
+                              ? 'bg-purple-500/20 border border-purple-500/30 text-purple-400'
+                              : 'bg-[#222] border border-[#333] text-gray-500 hover:border-[#444]'
                       }`}
                     >
                       {week}
@@ -205,7 +222,9 @@ const SettingsTab = ({ league, userProfile, currentWeek = 1, onBack }) => {
               </div>
 
               <button
-                onClick={() => setSelectedWeek(Math.min(GAME_CONFIG.season.totalWeeks, selectedWeek + 1))}
+                onClick={() =>
+                  setSelectedWeek(Math.min(GAME_CONFIG.season.totalWeeks, selectedWeek + 1))
+                }
                 disabled={selectedWeek >= GAME_CONFIG.season.totalWeeks}
                 className="p-2 bg-[#222] hover:bg-[#333] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
@@ -215,11 +234,11 @@ const SettingsTab = ({ league, userProfile, currentWeek = 1, onBack }) => {
           </div>
 
           {/* Week Status */}
-          <div className={`p-3 border ${
-            weekHasMatchups
-              ? 'bg-green-500/10 border-green-500/30'
-              : 'bg-[#222] border-[#333]'
-          }`}>
+          <div
+            className={`p-3 border ${
+              weekHasMatchups ? 'bg-green-500/10 border-green-500/30' : 'bg-[#222] border-[#333]'
+            }`}
+          >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-gray-400" />
@@ -276,8 +295,8 @@ const SettingsTab = ({ league, userProfile, currentWeek = 1, onBack }) => {
               generating || !canGenerate
                 ? 'bg-[#333] text-gray-500 cursor-not-allowed'
                 : weekHasMatchups
-                ? 'bg-orange-500 hover:bg-orange-400 text-black'
-                : 'bg-green-500 hover:bg-green-400 text-black'
+                  ? 'bg-orange-500 hover:bg-orange-400 text-black'
+                  : 'bg-green-500 hover:bg-green-400 text-black'
             }`}
           >
             {generating ? (
@@ -295,11 +314,13 @@ const SettingsTab = ({ league, userProfile, currentWeek = 1, onBack }) => {
 
           {/* Last Result */}
           {lastGeneratedResult && (
-            <div className={`p-3 border ${
-              lastGeneratedResult.success
-                ? 'bg-green-500/10 border-green-500/30'
-                : 'bg-red-500/10 border-red-500/30'
-            }`}>
+            <div
+              className={`p-3 border ${
+                lastGeneratedResult.success
+                  ? 'bg-green-500/10 border-green-500/30'
+                  : 'bg-red-500/10 border-red-500/30'
+              }`}
+            >
               {lastGeneratedResult.success ? (
                 <div>
                   <p className="text-sm text-green-500 font-bold flex items-center gap-1">

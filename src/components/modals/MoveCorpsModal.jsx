@@ -21,16 +21,23 @@ const AVAILABLE_CLASSES = [
   { id: 'worldClass', name: 'World Class', level: 'Elite' },
 ];
 
-const MoveCorpsModal = ({ onClose, onMove, currentClass, corpsName, unlockedClasses, existingCorps, transferring, hasPendingWork = false }) => {
+const MoveCorpsModal = ({
+  onClose,
+  onMove,
+  currentClass,
+  corpsName,
+  unlockedClasses,
+  existingCorps,
+  transferring,
+  hasPendingWork = false,
+}) => {
   const [selectedClass, setSelectedClass] = useState('');
 
   // Close on Escape key
   useEscapeKey(onClose);
 
-  const availableClasses = AVAILABLE_CLASSES.filter(cls =>
-    cls.id !== currentClass &&
-    unlockedClasses.includes(cls.id) &&
-    !existingCorps[cls.id]
+  const availableClasses = AVAILABLE_CLASSES.filter(
+    (cls) => cls.id !== currentClass && unlockedClasses.includes(cls.id) && !existingCorps[cls.id]
   );
 
   const handleSubmit = (e) => {
@@ -55,7 +62,10 @@ const MoveCorpsModal = ({ onClose, onMove, currentClass, corpsName, unlockedClas
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
-            <h2 id="modal-title-move-corps" className="text-xs font-bold uppercase tracking-wider text-gray-300">
+            <h2
+              id="modal-title-move-corps"
+              className="text-xs font-bold uppercase tracking-wider text-gray-300"
+            >
               Transfer Corps
             </h2>
             <button onClick={onClose} className="p-1 text-gray-500 hover:text-white">
@@ -79,7 +89,8 @@ const MoveCorpsModal = ({ onClose, onMove, currentClass, corpsName, unlockedClas
                 <Lock className="w-10 h-10 text-gray-600 mx-auto mb-3" />
                 <p className="text-sm text-gray-500 mb-2">No classes available</p>
                 <p className="text-xs text-gray-600">
-                  Either you haven't unlocked other classes, or you already have a corps in each available class.
+                  Either you haven't unlocked other classes, or you already have a corps in each
+                  available class.
                 </p>
               </div>
             ) : (
@@ -115,7 +126,9 @@ const MoveCorpsModal = ({ onClose, onMove, currentClass, corpsName, unlockedClas
                 {/* Info */}
                 <div className="bg-yellow-500/10 border border-yellow-500/30 p-3 mt-4">
                   <p className="text-xs text-yellow-400">
-                    <strong>Note:</strong> Your corps name and identity will be preserved, but season-specific data (lineup, show selections, scores) will be reset. Each corps can only transfer once per season.
+                    <strong>Note:</strong> Your corps name and identity will be preserved, but
+                    season-specific data (lineup, show selections, scores) will be reset. Each corps
+                    can only transfer once per season.
                   </p>
                 </div>
 
@@ -124,9 +137,9 @@ const MoveCorpsModal = ({ onClose, onMove, currentClass, corpsName, unlockedClas
                     <div className="flex items-start gap-2">
                       <AlertTriangle className="w-4 h-4 text-orange-400 mt-0.5 flex-shrink-0" />
                       <p className="text-xs text-orange-300/90">
-                        You've already picked captions or scheduled shows for
-                        this corps. Those selections will be cleared on move
-                        and will need to be reselected in the new class.
+                        You've already picked captions or scheduled shows for this corps. Those
+                        selections will be cleared on move and will need to be reselected in the new
+                        class.
                       </p>
                     </div>
                   </div>

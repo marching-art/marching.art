@@ -16,7 +16,7 @@ interface SkipToContentProps {
  */
 export const SkipToContent: React.FC<SkipToContentProps> = ({
   contentId = 'main-content',
-  label = 'Skip to main content'
+  label = 'Skip to main content',
 }) => {
   return (
     <a
@@ -47,7 +47,10 @@ export const VisuallyHidden: React.FC<{ children: React.ReactNode }> = ({ childr
 /**
  * Focus trap hook - traps focus within a modal or dialog
  */
-export const useFocusTrap = (containerRef: React.RefObject<HTMLElement>, isActive: boolean = true) => {
+export const useFocusTrap = (
+  containerRef: React.RefObject<HTMLElement>,
+  isActive: boolean = true
+) => {
   React.useEffect(() => {
     if (!isActive || !containerRef.current) return;
 
@@ -88,21 +91,22 @@ export const useFocusTrap = (containerRef: React.RefObject<HTMLElement>, isActiv
 export const useAnnounce = () => {
   const [announcement, setAnnouncement] = React.useState('');
 
-  const announce = React.useCallback((message: string, priority: 'polite' | 'assertive' = 'polite') => {
-    setAnnouncement(''); // Clear first to ensure re-announcement
-    setTimeout(() => setAnnouncement(message), 100);
-  }, []);
+  const announce = React.useCallback(
+    (message: string, priority: 'polite' | 'assertive' = 'polite') => {
+      setAnnouncement(''); // Clear first to ensure re-announcement
+      setTimeout(() => setAnnouncement(message), 100);
+    },
+    []
+  );
 
-  const Announcer = React.useCallback(() => (
-    <div
-      role="status"
-      aria-live="polite"
-      aria-atomic="true"
-      className="sr-only"
-    >
-      {announcement}
-    </div>
-  ), [announcement]);
+  const Announcer = React.useCallback(
+    () => (
+      <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+        {announcement}
+      </div>
+    ),
+    [announcement]
+  );
 
   return { announce, Announcer };
 };

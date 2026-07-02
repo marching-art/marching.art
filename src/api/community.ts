@@ -49,7 +49,7 @@ export async function getRecentLeagueActivity(): Promise<CommunityActivityItem[]
 
   const items: CommunityActivityItem[] = [];
 
-  snapshot.docs.forEach(doc => {
+  snapshot.docs.forEach((doc) => {
     const data = doc.data();
     const memberCount = data.members?.length || data.memberCount || 1;
     const createdAt = data.createdAt?.toDate?.() || new Date();
@@ -59,7 +59,12 @@ export async function getRecentLeagueActivity(): Promise<CommunityActivityItem[]
       id: doc.id,
       type: 'league',
       text: `New league created with ${memberCount} director${memberCount !== 1 ? 's' : ''}`,
-      time: hoursAgo < 1 ? 'Just now' : hoursAgo < 24 ? `${hoursAgo}h ago` : `${Math.floor(hoursAgo / 24)}d ago`,
+      time:
+        hoursAgo < 1
+          ? 'Just now'
+          : hoursAgo < 24
+            ? `${hoursAgo}h ago`
+            : `${Math.floor(hoursAgo / 24)}d ago`,
       icon: 'users',
     });
   });
@@ -94,29 +99,32 @@ export async function getCommunityStats(): Promise<CommunityStats | null> {
       // Count users collection — requires admin, skip if not authenticated
       isAuthenticated
         ? getCountFromServer(collection(db, 'artifacts', 'fantasy_drum_corps_v1', 'users'))
-            .then(snap => snap.data().count)
+            .then((snap) => snap.data().count)
             .catch(() => null)
         : Promise.resolve(null),
 
       // Count leagues collection — requires auth, skip if not authenticated
       isAuthenticated
         ? getCountFromServer(collection(db, 'artifacts', 'fantasy_drum_corps_v1', 'leagues'))
-            .then(snap => snap.data().count)
+            .then((snap) => snap.data().count)
             .catch(() => null)
         : Promise.resolve(null),
 
       // Get lifetime leaderboard for total points (aggregated, public)
       getDoc(doc(db, 'artifacts', 'fantasy_drum_corps_v1', 'leaderboard', 'lifetime_totalPoints'))
-        .then(docSnap => docSnap.exists() ? docSnap.data() : null)
+        .then((docSnap) => (docSnap.exists() ? docSnap.data() : null))
         .catch(() => null),
     ]);
 
     // Calculate total points from lifetime leaderboard entries
     let totalPoints = 0;
     if (lifetimeData?.entries) {
-      totalPoints = lifetimeData.entries.reduce((sum: number, entry: { lifetimeStats?: { totalPoints?: number } }) => {
-        return sum + (entry.lifetimeStats?.totalPoints || 0);
-      }, 0);
+      totalPoints = lifetimeData.entries.reduce(
+        (sum: number, entry: { lifetimeStats?: { totalPoints?: number } }) => {
+          return sum + (entry.lifetimeStats?.totalPoints || 0);
+        },
+        0
+      );
     }
 
     const stats = {

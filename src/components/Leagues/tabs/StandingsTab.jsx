@@ -4,9 +4,19 @@
 import React, { useMemo, useState } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import {
-  Trophy, Flame, TrendingUp, TrendingDown, Minus, Crown,
-  ChevronDown, ChevronUp, BarChart3, LayoutDashboard, Table2,
-  UserX, Calendar
+  Trophy,
+  Flame,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Crown,
+  ChevronDown,
+  ChevronUp,
+  BarChart3,
+  LayoutDashboard,
+  Table2,
+  UserX,
+  Calendar,
 } from 'lucide-react';
 import SeasonStatsCard from '../SeasonStatsCard';
 import LeagueLeaderboards from '../LeagueLeaderboards';
@@ -44,14 +54,14 @@ const StandingsTab = ({
 
   // Get user's stats
   const userStats = useMemo(() => {
-    return standings.find(s => s.uid === userProfile?.uid);
+    return standings.find((s) => s.uid === userProfile?.uid);
   }, [standings, userProfile?.uid]);
 
   // Separate active vs inactive members
   const { activeStandings, inactiveStandings } = useMemo(() => {
     const active = [];
     const inactive = [];
-    standings.forEach(stats => {
+    standings.forEach((stats) => {
       const hasActivity = stats.wins > 0 || stats.losses > 0 || stats.totalPoints > 0;
       if (hasActivity) {
         active.push(stats);
@@ -82,12 +92,7 @@ const StandingsTab = ({
   }
 
   return (
-    <m.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="p-4"
-    >
+    <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4">
       {/* View Mode Toggle */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400">
@@ -108,9 +113,7 @@ const StandingsTab = ({
           <button
             onClick={() => setViewMode('table')}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold transition-colors ${
-              viewMode === 'table'
-                ? 'bg-yellow-500 text-black'
-                : 'text-gray-500 hover:text-white'
+              viewMode === 'table' ? 'bg-yellow-500 text-black' : 'text-gray-500 hover:text-white'
             }`}
           >
             <Table2 className="w-3.5 h-3.5" />
@@ -174,7 +177,9 @@ const StandingsTab = ({
                       >
                         <div className="flex items-center gap-3">
                           <RankBadge rank={rank} isPlayoffSpot={rank <= playoffSize} />
-                          <span className={`text-sm font-bold ${isUser ? 'text-purple-400' : 'text-white'}`}>
+                          <span
+                            className={`text-sm font-bold ${isUser ? 'text-purple-400' : 'text-white'}`}
+                          >
                             {getDisplayName(stats.uid)}
                           </span>
                           {stats.uid === league?.creatorId && (
@@ -188,10 +193,13 @@ const StandingsTab = ({
                             <span className="text-red-500">{stats.losses}</span>
                           </span>
                           {stats.streak > 0 && (
-                            <span className={`text-xs font-bold ${
-                              stats.streakType === 'W' ? 'text-green-500' : 'text-red-500'
-                            }`}>
-                              {stats.streakType}{stats.streak}
+                            <span
+                              className={`text-xs font-bold ${
+                                stats.streakType === 'W' ? 'text-green-500' : 'text-red-500'
+                              }`}
+                            >
+                              {stats.streakType}
+                              {stats.streak}
                             </span>
                           )}
                         </div>
@@ -201,7 +209,9 @@ const StandingsTab = ({
                 ) : (
                   <div className="px-4 py-6 text-center">
                     <p className="text-sm text-gray-500">No standings yet</p>
-                    <p className="text-xs text-gray-600 mt-1">Standings will appear after matchups are resolved</p>
+                    <p className="text-xs text-gray-600 mt-1">
+                      Standings will appear after matchups are resolved
+                    </p>
                   </div>
                 )}
               </div>
@@ -216,7 +226,8 @@ const StandingsTab = ({
               )}
               {inactiveStandings.length > 0 && (
                 <div className="px-4 py-2 text-[10px] text-gray-600 border-t border-[#222]">
-                  {inactiveStandings.length} inactive member{inactiveStandings.length !== 1 ? 's' : ''} not shown
+                  {inactiveStandings.length} inactive member
+                  {inactiveStandings.length !== 1 ? 's' : ''} not shown
                 </div>
               )}
             </div>
@@ -238,13 +249,12 @@ const StandingsTab = ({
                     Standings
                     {lastUpdated && (
                       <span className="text-[9px] text-gray-600 font-normal normal-case ml-2">
-                        Updated {lastUpdated.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                        Updated{' '}
+                        {lastUpdated.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
                       </span>
                     )}
                   </h3>
-                  <span className="text-[10px] text-gray-500">
-                    Top {playoffSize} qualify
-                  </span>
+                  <span className="text-[10px] text-gray-500">Top {playoffSize} qualify</span>
                 </div>
               </div>
 
@@ -286,7 +296,9 @@ const StandingsTab = ({
                       return (
                         <React.Fragment key={stats.uid}>
                           <tr
-                            onClick={() => hasStats && setExpandedUser(isExpanded ? null : stats.uid)}
+                            onClick={() =>
+                              hasStats && setExpandedUser(isExpanded ? null : stats.uid)
+                            }
                             className={`border-b transition-colors ${hasStats ? 'cursor-pointer' : ''} ${
                               isPlayoffLine ? 'border-b-2 border-green-500/50' : 'border-[#222]'
                             } ${
@@ -305,28 +317,38 @@ const StandingsTab = ({
                             {/* Director */}
                             <td className="py-2 px-3">
                               <div className="flex items-center gap-2">
-                                <div className={`w-7 h-7 flex-shrink-0 flex items-center justify-center ${
-                                  isUser ? 'bg-purple-500/20 border border-purple-500/50' : 'bg-[#333]'
-                                }`}>
-                                  <span className={`text-xs font-bold ${
-                                    isUser ? 'text-purple-400' : 'text-gray-400'
-                                  }`}>
+                                <div
+                                  className={`w-7 h-7 flex-shrink-0 flex items-center justify-center ${
+                                    isUser
+                                      ? 'bg-purple-500/20 border border-purple-500/50'
+                                      : 'bg-[#333]'
+                                  }`}
+                                >
+                                  <span
+                                    className={`text-xs font-bold ${
+                                      isUser ? 'text-purple-400' : 'text-gray-400'
+                                    }`}
+                                  >
                                     {getDisplayName(stats.uid).charAt(0)}
                                   </span>
                                 </div>
                                 <div className="min-w-0 flex items-center gap-1.5">
-                                  <p className={`font-bold text-sm truncate ${
-                                    isUser ? 'text-purple-400' : 'text-white'
-                                  }`}>
+                                  <p
+                                    className={`font-bold text-sm truncate ${
+                                      isUser ? 'text-purple-400' : 'text-white'
+                                    }`}
+                                  >
                                     {getDisplayName(stats.uid)}
                                   </p>
                                   {isCommissioner && (
                                     <Crown className="w-3 h-3 text-yellow-500 flex-shrink-0" />
                                   )}
                                   {hasStats && (
-                                    <ChevronDown className={`w-3 h-3 text-gray-500 transition-transform ${
-                                      isExpanded ? 'rotate-180' : ''
-                                    }`} />
+                                    <ChevronDown
+                                      className={`w-3 h-3 text-gray-500 transition-transform ${
+                                        isExpanded ? 'rotate-180' : ''
+                                      }`}
+                                    />
                                   )}
                                 </div>
                               </div>
@@ -351,13 +373,16 @@ const StandingsTab = ({
                             {/* Streak */}
                             <td className="text-center py-2 px-2">
                               {stats.streak > 0 ? (
-                                <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-bold ${
-                                  stats.streakType === 'W'
-                                    ? 'bg-green-500/20 text-green-500'
-                                    : 'bg-red-500/20 text-red-500'
-                                }`}>
+                                <span
+                                  className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-bold ${
+                                    stats.streakType === 'W'
+                                      ? 'bg-green-500/20 text-green-500'
+                                      : 'bg-red-500/20 text-red-500'
+                                  }`}
+                                >
                                   {stats.streakType === 'W' && <Flame className="w-2.5 h-2.5" />}
-                                  {stats.streakType}{stats.streak}
+                                  {stats.streakType}
+                                  {stats.streak}
                                 </span>
                               ) : (
                                 <span className="text-gray-600 text-xs">—</span>
@@ -420,7 +445,8 @@ const StandingsTab = ({
                     No Standings Yet
                   </h3>
                   <p className="text-center text-sm text-gray-400 mb-4 max-w-xs mx-auto">
-                    Standings will appear after league members complete their first shows and matchups are resolved.
+                    Standings will appear after league members complete their first shows and
+                    matchups are resolved.
                   </p>
                   <div className="flex flex-col items-center gap-2">
                     <div className="flex items-center gap-2 px-3 py-2 bg-[#222] border border-[#333] rounded-sm text-xs text-gray-400">
@@ -428,9 +454,7 @@ const StandingsTab = ({
                       <span>Register for a show to start earning points</span>
                     </div>
                     {currentWeek > 0 && (
-                      <div className="text-xs text-gray-500">
-                        Currently Week {currentWeek}
-                      </div>
+                      <div className="text-xs text-gray-500">Currently Week {currentWeek}</div>
                     )}
                   </div>
                 </div>
@@ -439,8 +463,12 @@ const StandingsTab = ({
               {/* Legend */}
               <div className="px-4 py-2.5 border-t border-[#333] bg-[#111]">
                 <div className="flex flex-wrap items-center gap-4 text-[10px] text-gray-500">
-                  <span><strong>PF</strong> = Points For</span>
-                  <span><strong>STRK</strong> = Streak</span>
+                  <span>
+                    <strong>PF</strong> = Points For
+                  </span>
+                  <span>
+                    <strong>STRK</strong> = Streak
+                  </span>
                   <div className="flex items-center gap-1.5">
                     <div className="w-2.5 h-2.5 bg-green-500/30 border border-green-500/50" />
                     <span>Playoff</span>
@@ -464,9 +492,7 @@ const StandingsTab = ({
                     <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
                       Inactive Members
                     </span>
-                    <span className="text-[10px] text-gray-600">
-                      ({inactiveStandings.length})
-                    </span>
+                    <span className="text-[10px] text-gray-600">({inactiveStandings.length})</span>
                   </div>
                   {showInactive ? (
                     <ChevronUp className="w-3.5 h-3.5 text-gray-500" />
@@ -499,18 +525,26 @@ const StandingsTab = ({
                                 isUser ? 'bg-purple-500/10' : ''
                               }`}
                             >
-                              <div className={`w-7 h-7 flex-shrink-0 flex items-center justify-center ${
-                                isUser ? 'bg-purple-500/20 border border-purple-500/50' : 'bg-[#222]'
-                              }`}>
-                                <span className={`text-xs font-bold ${
-                                  isUser ? 'text-purple-400' : 'text-gray-600'
-                                }`}>
+                              <div
+                                className={`w-7 h-7 flex-shrink-0 flex items-center justify-center ${
+                                  isUser
+                                    ? 'bg-purple-500/20 border border-purple-500/50'
+                                    : 'bg-[#222]'
+                                }`}
+                              >
+                                <span
+                                  className={`text-xs font-bold ${
+                                    isUser ? 'text-purple-400' : 'text-gray-600'
+                                  }`}
+                                >
                                   {getDisplayName(stats.uid).charAt(0)}
                                 </span>
                               </div>
-                              <p className={`text-sm truncate ${
-                                isUser ? 'text-purple-400 font-bold' : 'text-gray-500'
-                              }`}>
+                              <p
+                                className={`text-sm truncate ${
+                                  isUser ? 'text-purple-400 font-bold' : 'text-gray-500'
+                                }`}
+                              >
                                 {getDisplayName(stats.uid)}
                               </p>
                               {isCommissioner && (
@@ -596,11 +630,13 @@ const RankBadge = React.memo(({ rank, isPlayoffSpot }) => {
   }
 
   return (
-    <div className={`inline-flex items-center justify-center w-6 h-6 text-xs font-bold ${
-      isPlayoffSpot
-        ? 'bg-green-500/10 text-green-500 border border-green-500/30'
-        : 'bg-[#222] text-gray-500'
-    }`}>
+    <div
+      className={`inline-flex items-center justify-center w-6 h-6 text-xs font-bold ${
+        isPlayoffSpot
+          ? 'bg-green-500/10 text-green-500 border border-green-500/30'
+          : 'bg-[#222] text-gray-500'
+      }`}
+    >
       {rank}
     </div>
   );

@@ -4,9 +4,20 @@
 import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import {
-  Trophy, Crown, ChevronLeft, Settings, Swords,
-  MessageSquare, BarChart3, Flame, Bell,
-  Copy, Check, Users, Calendar, LogOut,
+  Trophy,
+  Crown,
+  ChevronLeft,
+  Settings,
+  Swords,
+  MessageSquare,
+  BarChart3,
+  Flame,
+  Bell,
+  Copy,
+  Check,
+  Users,
+  Calendar,
+  LogOut,
 } from 'lucide-react';
 import {
   subscribeToStandings,
@@ -28,7 +39,6 @@ const MatchupDetailView = lazy(() => import('./MatchupDetailView'));
 import { useRivalries, isRivalry as checkRivalry } from '../../hooks/useLeagueNotifications';
 import { useLeagueStats } from '../../hooks/useLeagueStats';
 import { SmackTalkInput, LeaveLeagueModal } from './LeagueDetailViewParts';
-
 
 const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
   const [activeTab, setActiveTab] = useState('standings');
@@ -121,7 +131,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
             const weeklyResults = {};
             const memberStats = {};
 
-            league.members.forEach(uid => {
+            league.members.forEach((uid) => {
               memberStats[uid] = {
                 uid,
                 wins: 0,
@@ -130,16 +140,16 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
                 weeklyScores: {},
                 streak: 0,
                 streakType: null,
-                trend: 'same'
+                trend: 'same',
               };
             });
 
-            recaps.forEach(dayRecap => {
+            recaps.forEach((dayRecap) => {
               const weekNum = Math.ceil(dayRecap.offSeasonDay / 7);
               if (!weeklyResults[weekNum]) weeklyResults[weekNum] = {};
 
-              dayRecap.shows?.forEach(show => {
-                show.results?.forEach(result => {
+              dayRecap.shows?.forEach((show) => {
+                show.results?.forEach((result) => {
                   if (memberUids.has(result.uid)) {
                     if (!weeklyResults[weekNum][result.uid]) {
                       weeklyResults[weekNum][result.uid] = 0;
@@ -157,7 +167,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
             // Fetch all matchup documents for this league
             const matchupDocs = await getLeagueMatchups(league.id);
 
-            matchupDocs.forEach(matchupData => {
+            matchupDocs.forEach((matchupData) => {
               const weekMatch = matchupData.id.match(/^week-(\d+)$/);
               if (!weekMatch) return;
 
@@ -168,7 +178,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
 
               for (const corpsClass of CORPS_CLASSES) {
                 const classMatchups = matchupData[`${corpsClass}Matchups`] || [];
-                classMatchups.forEach(matchup => {
+                classMatchups.forEach((matchup) => {
                   if (matchup.pair && matchup.pair[0] && matchup.pair[1]) {
                     matchupsPerWeek[weekNum].push({
                       user1: matchup.pair[0],
@@ -176,7 +186,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
                       winner: matchup.winner,
                       completed: matchup.completed,
                       scores: matchup.scores,
-                      corpsClass
+                      corpsClass,
                     });
                   }
                 });
@@ -196,7 +206,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
             Object.entries(weeklyResults).forEach(([weekNum, scores]) => {
               const weekMatchups = matchupsPerWeek[parseInt(weekNum)] || [];
 
-              weekMatchups.forEach(matchup => {
+              weekMatchups.forEach((matchup) => {
                 const score1 = scores[matchup.user1] || 0;
                 const score2 = scores[matchup.user2] || 0;
 
@@ -224,14 +234,18 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
             });
 
             // Calculate streaks
-            Object.values(memberStats).forEach(stats => {
+            Object.values(memberStats).forEach((stats) => {
               let streak = 0;
               let streakType = null;
-              const weeks = Object.keys(stats.weeklyScores).sort((a, b) => parseInt(b) - parseInt(a));
+              const weeks = Object.keys(stats.weeklyScores).sort(
+                (a, b) => parseInt(b) - parseInt(a)
+              );
 
               for (const weekNum of weeks) {
                 const matchups = matchupsPerWeek[parseInt(weekNum)] || [];
-                const matchup = matchups.find(m => m.user1 === stats.uid || m.user2 === stats.uid);
+                const matchup = matchups.find(
+                  (m) => m.user1 === stats.uid || m.user2 === stats.uid
+                );
 
                 if (matchup) {
                   const myScore = weeklyResults[weekNum]?.[stats.uid] || 0;
@@ -256,11 +270,10 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
               stats.streakType = streakType;
             });
 
-            const sortedStandings = Object.values(memberStats)
-              .sort((a, b) => {
-                if (b.wins !== a.wins) return b.wins - a.wins;
-                return b.totalPoints - a.totalPoints;
-              });
+            const sortedStandings = Object.values(memberStats).sort((a, b) => {
+              if (b.wins !== a.wins) return b.wins - a.wins;
+              return b.totalPoints - a.totalPoints;
+            });
 
             // Calculate trend based on recent matchup performance (last 3 weeks)
             sortedStandings.forEach((stats, idx) => {
@@ -277,7 +290,9 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
 
               for (const weekNum of recentWeeks) {
                 const matchups = matchupsPerWeek[weekNum] || [];
-                const matchup = matchups.find(m => m.user1 === stats.uid || m.user2 === stats.uid);
+                const matchup = matchups.find(
+                  (m) => m.user1 === stats.uid || m.user2 === stats.uid
+                );
 
                 if (matchup) {
                   const myScore = weeklyResults[weekNum]?.[stats.uid] || 0;
@@ -325,12 +340,18 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
       (standingsData) => {
         if (standingsData && standingsData.length > 0) {
           // Backend standings are already sorted - use them directly
-          setStandings(standingsData.map((s, idx) => ({
-            ...s,
-            currentRank: idx + 1,
-            trend: s.streak > 2 && s.streakType === 'W' ? 'up' :
-                   s.streak > 2 && s.streakType === 'L' ? 'down' : 'same'
-          })));
+          setStandings(
+            standingsData.map((s, idx) => ({
+              ...s,
+              currentRank: idx + 1,
+              trend:
+                s.streak > 2 && s.streakType === 'W'
+                  ? 'up'
+                  : s.streak > 2 && s.streakType === 'L'
+                    ? 'down'
+                    : 'same',
+            }))
+          );
           setStandingsLastUpdated(new Date());
         }
       },
@@ -367,14 +388,18 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
 
   // Get user's current stats
   const userStats = useMemo(() => {
-    return standings.find(s => s.uid === userProfile?.uid);
+    return standings.find((s) => s.uid === userProfile?.uid);
   }, [standings, userProfile]);
 
   // Get rivalry for selected matchup
   const getMatchupRivalry = (matchup) => {
     if (!userProfile?.uid) return null;
-    const opponentId = matchup.user1 === userProfile.uid ? matchup.user2 :
-                      matchup.user2 === userProfile.uid ? matchup.user1 : null;
+    const opponentId =
+      matchup.user1 === userProfile.uid
+        ? matchup.user2
+        : matchup.user2 === userProfile.uid
+          ? matchup.user1
+          : null;
     if (!opponentId) return null;
     return checkRivalry(rivalries, opponentId);
   };
@@ -489,7 +514,9 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
               <div className="hidden md:flex items-center gap-1 border-l border-[#333] pl-3">
                 <div className="px-2 py-1 bg-[#222] text-center min-w-[50px]">
                   <p className="text-[10px] uppercase tracking-wider text-gray-500">Rank</p>
-                  <p className="text-base font-bold text-white font-data tabular-nums">#{userStats.currentRank}</p>
+                  <p className="text-base font-bold text-white font-data tabular-nums">
+                    #{userStats.currentRank}
+                  </p>
                 </div>
                 <div className="px-2 py-1 bg-[#222] text-center min-w-[60px]">
                   <p className="text-[10px] uppercase tracking-wider text-gray-500">Record</p>
@@ -502,11 +529,14 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
                 {userStats.streak > 0 && (
                   <div className="px-2 py-1 bg-[#222] text-center min-w-[50px]">
                     <p className="text-[10px] uppercase tracking-wider text-gray-500">Streak</p>
-                    <p className={`text-base font-bold font-data tabular-nums flex items-center justify-center gap-0.5 ${
-                      userStats.streakType === 'W' ? 'text-green-500' : 'text-red-500'
-                    }`}>
+                    <p
+                      className={`text-base font-bold font-data tabular-nums flex items-center justify-center gap-0.5 ${
+                        userStats.streakType === 'W' ? 'text-green-500' : 'text-red-500'
+                      }`}
+                    >
                       {userStats.streakType === 'W' && <Flame className="w-3.5 h-3.5" />}
-                      {userStats.streakType}{userStats.streak}
+                      {userStats.streakType}
+                      {userStats.streak}
                     </p>
                   </div>
                 )}
@@ -519,7 +549,9 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
             <div className="flex md:hidden items-center gap-2 mt-3 pt-3 border-t border-[#222]">
               <div className="flex-1 px-2 py-1.5 bg-[#222] text-center">
                 <p className="text-[10px] uppercase tracking-wider text-gray-500">Rank</p>
-                <p className="text-sm font-bold text-white font-data tabular-nums">#{userStats.currentRank}</p>
+                <p className="text-sm font-bold text-white font-data tabular-nums">
+                  #{userStats.currentRank}
+                </p>
               </div>
               <div className="flex-1 px-2 py-1.5 bg-[#222] text-center">
                 <p className="text-[10px] uppercase tracking-wider text-gray-500">Record</p>
@@ -532,11 +564,14 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
               {userStats.streak > 0 && (
                 <div className="flex-1 px-2 py-1.5 bg-[#222] text-center">
                   <p className="text-[10px] uppercase tracking-wider text-gray-500">Streak</p>
-                  <p className={`text-sm font-bold font-data tabular-nums flex items-center justify-center gap-0.5 ${
-                    userStats.streakType === 'W' ? 'text-green-500' : 'text-red-500'
-                  }`}>
+                  <p
+                    className={`text-sm font-bold font-data tabular-nums flex items-center justify-center gap-0.5 ${
+                      userStats.streakType === 'W' ? 'text-green-500' : 'text-red-500'
+                    }`}
+                  >
                     {userStats.streakType === 'W' && <Flame className="w-3 h-3" />}
-                    {userStats.streakType}{userStats.streak}
+                    {userStats.streakType}
+                    {userStats.streak}
                   </p>
                 </div>
               )}
@@ -554,7 +589,7 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
 
         {/* STICKY TABS */}
         <div className="flex border-t border-[#222]">
-          {tabs.map(tab => {
+          {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
@@ -600,7 +635,8 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
                     user1: matchup.user1,
                     user2: matchup.user2,
                     week: currentWeek,
-                    isUserMatchup: matchup.user1 === userProfile?.uid || matchup.user2 === userProfile?.uid
+                    isUserMatchup:
+                      matchup.user1 === userProfile?.uid || matchup.user2 === userProfile?.uid,
                   });
                 }
               }}
@@ -632,14 +668,14 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
                 if (activity.type === 'matchup_result' && activity.metadata?.week) {
                   const matchups = weeklyMatchups[activity.metadata.week];
                   if (matchups) {
-                    const matchup = matchups.find(m =>
-                      (m.user1 === userProfile?.uid || m.user2 === userProfile?.uid)
+                    const matchup = matchups.find(
+                      (m) => m.user1 === userProfile?.uid || m.user2 === userProfile?.uid
                     );
                     if (matchup) {
                       setSelectedMatchup({
                         ...matchup,
                         week: activity.metadata.week,
-                        isUserMatchup: true
+                        isUserMatchup: true,
                       });
                     }
                   }

@@ -3,9 +3,7 @@
 
 import React, { useState, useEffect, useMemo, memo } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
-import {
-  ChevronLeft, Swords, Trophy, Flame, Calendar, BarChart3
-} from 'lucide-react';
+import { ChevronLeft, Swords, Trophy, Flame, Calendar, BarChart3 } from 'lucide-react';
 import { getSeasonData, getSeasonRecaps } from '../../api/season';
 import { RivalryBadge } from './LeagueActivityFeed';
 import BattleBreakdown, { BattleScoreHeader, BattleSummaryBar } from './BattleBreakdown';
@@ -15,8 +13,7 @@ import {
   calculateMatchupBattles,
   calculateHeadToHead,
   createWeeklyPerformance,
-  } from '../../utils/matchupScoring';
-
+} from '../../utils/matchupScoring';
 
 const MatchupDetailView = ({
   matchup,
@@ -37,8 +34,8 @@ const MatchupDetailView = ({
   const [activeView, setActiveView] = useState('battles'); // 'battles' | 'overview' | 'captions' | 'rivalry'
 
   // Get user stats from standings
-  const user1Stats = standings.find(s => s.uid === matchup.user1);
-  const user2Stats = standings.find(s => s.uid === matchup.user2);
+  const user1Stats = standings.find((s) => s.uid === matchup.user1);
+  const user2Stats = standings.find((s) => s.uid === matchup.user2);
 
   // Helper to get display name
   const getDisplayName = (uid) => {
@@ -53,7 +50,7 @@ const MatchupDetailView = ({
   const getCorpsName = (uid) => {
     const profile = memberProfiles?.[uid];
     if (profile?.corps) {
-      const activeCorps = Object.values(profile.corps).find(c => c.corpsName || c.name);
+      const activeCorps = Object.values(profile.corps).find((c) => c.corpsName || c.name);
       return activeCorps?.corpsName || activeCorps?.name || null;
     }
     return null;
@@ -77,23 +74,146 @@ const MatchupDetailView = ({
         }
 
         if (recaps && recaps.length > 0) {
-            let score1 = 0, score2 = 0;
-            let prevWeekScore1 = 0, prevWeekScore2 = 0;
-            const breakdown1 = { shows: [], geTotal: 0, visualTotal: 0, musicTotal: 0 };
-            const breakdown2 = { shows: [], geTotal: 0, visualTotal: 0, musicTotal: 0 };
-            const user1Shows = [];
-            const user2Shows = [];
+          let score1 = 0,
+            score2 = 0;
+          let prevWeekScore1 = 0,
+            prevWeekScore2 = 0;
+          const breakdown1 = { shows: [], geTotal: 0, visualTotal: 0, musicTotal: 0 };
+          const breakdown2 = { shows: [], geTotal: 0, visualTotal: 0, musicTotal: 0 };
+          const user1Shows = [];
+          const user2Shows = [];
 
-            recaps.forEach(dayRecap => {
+          recaps.forEach((dayRecap) => {
+            const weekNum = Math.ceil(dayRecap.offSeasonDay / 7);
+
+            // Current week data
+            if (weekNum === matchup.week) {
+              dayRecap.shows?.forEach((show) => {
+                show.results?.forEach((result) => {
+                  if (result.uid === matchup.user1) {
+                    score1 += result.totalScore || 0;
+                    const showData = {
+                      showId: show.showId || show.eventName,
+                      showName: show.eventName,
+                      score: result.totalScore || 0,
+                      placement: result.placement,
+                      captions: result.captions || {
+                        GE1: (result.geScore || 0) / 2,
+                        GE2: (result.geScore || 0) / 2,
+                        VP: (result.visualScore || 0) / 3,
+                        VA: (result.visualScore || 0) / 3,
+                        CG: (result.visualScore || 0) / 3,
+                        B: (result.musicScore || 0) / 3,
+                        MA: (result.musicScore || 0) / 3,
+                        P: (result.musicScore || 0) / 3,
+                      },
+                    };
+                    user1Shows.push(showData);
+                    breakdown1.shows.push({
+                      eventName: show.eventName,
+                      score: result.totalScore || 0,
+                      geScore: result.geScore || 0,
+                      visualScore: result.visualScore || 0,
+                      musicScore: result.musicScore || 0,
+                    });
+                    breakdown1.geTotal += result.geScore || 0;
+                    breakdown1.visualTotal += result.visualScore || 0;
+                    breakdown1.musicTotal += result.musicScore || 0;
+                  }
+                  if (result.uid === matchup.user2) {
+                    score2 += result.totalScore || 0;
+                    const showData = {
+                      showId: show.showId || show.eventName,
+                      showName: show.eventName,
+                      score: result.totalScore || 0,
+                      placement: result.placement,
+                      captions: result.captions || {
+                        GE1: (result.geScore || 0) / 2,
+                        GE2: (result.geScore || 0) / 2,
+                        VP: (result.visualScore || 0) / 3,
+                        VA: (result.visualScore || 0) / 3,
+                        CG: (result.visualScore || 0) / 3,
+                        B: (result.musicScore || 0) / 3,
+                        MA: (result.musicScore || 0) / 3,
+                        P: (result.musicScore || 0) / 3,
+                      },
+                    };
+                    user2Shows.push(showData);
+                    breakdown2.shows.push({
+                      eventName: show.eventName,
+                      score: result.totalScore || 0,
+                      geScore: result.geScore || 0,
+                      visualScore: result.visualScore || 0,
+                      musicScore: result.musicScore || 0,
+                    });
+                    breakdown2.geTotal += result.geScore || 0;
+                    breakdown2.visualTotal += result.visualScore || 0;
+                    breakdown2.musicTotal += result.musicScore || 0;
+                  }
+                });
+              });
+            }
+
+            // Previous week data (for momentum calculation)
+            if (weekNum === matchup.week - 1) {
+              dayRecap.shows?.forEach((show) => {
+                show.results?.forEach((result) => {
+                  if (result.uid === matchup.user1) {
+                    prevWeekScore1 += result.totalScore || 0;
+                  }
+                  if (result.uid === matchup.user2) {
+                    prevWeekScore2 += result.totalScore || 0;
+                  }
+                });
+              });
+            }
+          });
+
+          setWeeklyScores({ user1: score1, user2: score2 });
+          setScoreBreakdown({ user1: breakdown1, user2: breakdown2 });
+
+          // Calculate battle breakdown if we have data
+          if (user1Shows.length > 0 || user2Shows.length > 0) {
+            const user1Performance = createWeeklyPerformance(
+              matchup.user1,
+              matchup.week,
+              user1Shows,
+              prevWeekScore1 > 0 ? prevWeekScore1 : undefined
+            );
+            const user2Performance = createWeeklyPerformance(
+              matchup.user2,
+              matchup.week,
+              user2Shows,
+              prevWeekScore2 > 0 ? prevWeekScore2 : undefined
+            );
+
+            const battles = calculateMatchupBattles(
+              `${league?.id || 'league'}-w${matchup.week}`,
+              matchup.week,
+              matchup.user1,
+              matchup.user2,
+              user1Performance,
+              user2Performance
+            );
+
+            setBattleBreakdown(battles);
+          }
+
+          // Calculate head-to-head history from all past matchups
+          const allBreakdowns = [];
+          for (let week = 1; week < matchup.week; week++) {
+            const weekUser1Shows = [];
+            const weekUser2Shows = [];
+            let weekPrevScore1 = 0;
+            let weekPrevScore2 = 0;
+
+            recaps.forEach((dayRecap) => {
               const weekNum = Math.ceil(dayRecap.offSeasonDay / 7);
-
-              // Current week data
-              if (weekNum === matchup.week) {
-                dayRecap.shows?.forEach(show => {
-                  show.results?.forEach(result => {
+              if (weekNum === week) {
+                dayRecap.shows?.forEach((show) => {
+                  show.results?.forEach((result) => {
                     if (result.uid === matchup.user1) {
-                      score1 += result.totalScore || 0;
-                      const showData = {
+                      weekUser1Shows.push({
                         showId: show.showId || show.eventName,
                         showName: show.eventName,
                         score: result.totalScore || 0,
@@ -108,22 +228,10 @@ const MatchupDetailView = ({
                           MA: (result.musicScore || 0) / 3,
                           P: (result.musicScore || 0) / 3,
                         },
-                      };
-                      user1Shows.push(showData);
-                      breakdown1.shows.push({
-                        eventName: show.eventName,
-                        score: result.totalScore || 0,
-                        geScore: result.geScore || 0,
-                        visualScore: result.visualScore || 0,
-                        musicScore: result.musicScore || 0
                       });
-                      breakdown1.geTotal += result.geScore || 0;
-                      breakdown1.visualTotal += result.visualScore || 0;
-                      breakdown1.musicTotal += result.musicScore || 0;
                     }
                     if (result.uid === matchup.user2) {
-                      score2 += result.totalScore || 0;
-                      const showData = {
+                      weekUser2Shows.push({
                         showId: show.showId || show.eventName,
                         showName: show.eventName,
                         score: result.totalScore || 0,
@@ -138,150 +246,51 @@ const MatchupDetailView = ({
                           MA: (result.musicScore || 0) / 3,
                           P: (result.musicScore || 0) / 3,
                         },
-                      };
-                      user2Shows.push(showData);
-                      breakdown2.shows.push({
-                        eventName: show.eventName,
-                        score: result.totalScore || 0,
-                        geScore: result.geScore || 0,
-                        visualScore: result.visualScore || 0,
-                        musicScore: result.musicScore || 0
                       });
-                      breakdown2.geTotal += result.geScore || 0;
-                      breakdown2.visualTotal += result.visualScore || 0;
-                      breakdown2.musicTotal += result.musicScore || 0;
                     }
                   });
                 });
               }
-
-              // Previous week data (for momentum calculation)
-              if (weekNum === matchup.week - 1) {
-                dayRecap.shows?.forEach(show => {
-                  show.results?.forEach(result => {
-                    if (result.uid === matchup.user1) {
-                      prevWeekScore1 += result.totalScore || 0;
-                    }
-                    if (result.uid === matchup.user2) {
-                      prevWeekScore2 += result.totalScore || 0;
-                    }
+              if (weekNum === week - 1) {
+                dayRecap.shows?.forEach((show) => {
+                  show.results?.forEach((result) => {
+                    if (result.uid === matchup.user1) weekPrevScore1 += result.totalScore || 0;
+                    if (result.uid === matchup.user2) weekPrevScore2 += result.totalScore || 0;
                   });
                 });
               }
             });
 
-            setWeeklyScores({ user1: score1, user2: score2 });
-            setScoreBreakdown({ user1: breakdown1, user2: breakdown2 });
-
-            // Calculate battle breakdown if we have data
-            if (user1Shows.length > 0 || user2Shows.length > 0) {
-              const user1Performance = createWeeklyPerformance(
+            if (weekUser1Shows.length > 0 || weekUser2Shows.length > 0) {
+              const perf1 = createWeeklyPerformance(
                 matchup.user1,
-                matchup.week,
-                user1Shows,
-                prevWeekScore1 > 0 ? prevWeekScore1 : undefined
+                week,
+                weekUser1Shows,
+                weekPrevScore1 > 0 ? weekPrevScore1 : undefined
               );
-              const user2Performance = createWeeklyPerformance(
+              const perf2 = createWeeklyPerformance(
                 matchup.user2,
-                matchup.week,
-                user2Shows,
-                prevWeekScore2 > 0 ? prevWeekScore2 : undefined
+                week,
+                weekUser2Shows,
+                weekPrevScore2 > 0 ? weekPrevScore2 : undefined
               );
-
-              const battles = calculateMatchupBattles(
-                `${league?.id || 'league'}-w${matchup.week}`,
-                matchup.week,
+              const weekBreakdown = calculateMatchupBattles(
+                `${league?.id || 'league'}-w${week}`,
+                week,
                 matchup.user1,
                 matchup.user2,
-                user1Performance,
-                user2Performance
+                perf1,
+                perf2
               );
-
-              setBattleBreakdown(battles);
-            }
-
-            // Calculate head-to-head history from all past matchups
-            const allBreakdowns = [];
-            for (let week = 1; week < matchup.week; week++) {
-              const weekUser1Shows = [];
-              const weekUser2Shows = [];
-              let weekPrevScore1 = 0;
-              let weekPrevScore2 = 0;
-
-              recaps.forEach(dayRecap => {
-                const weekNum = Math.ceil(dayRecap.offSeasonDay / 7);
-                if (weekNum === week) {
-                  dayRecap.shows?.forEach(show => {
-                    show.results?.forEach(result => {
-                      if (result.uid === matchup.user1) {
-                        weekUser1Shows.push({
-                          showId: show.showId || show.eventName,
-                          showName: show.eventName,
-                          score: result.totalScore || 0,
-                          placement: result.placement,
-                          captions: result.captions || {
-                            GE1: (result.geScore || 0) / 2,
-                            GE2: (result.geScore || 0) / 2,
-                            VP: (result.visualScore || 0) / 3,
-                            VA: (result.visualScore || 0) / 3,
-                            CG: (result.visualScore || 0) / 3,
-                            B: (result.musicScore || 0) / 3,
-                            MA: (result.musicScore || 0) / 3,
-                            P: (result.musicScore || 0) / 3,
-                          },
-                        });
-                      }
-                      if (result.uid === matchup.user2) {
-                        weekUser2Shows.push({
-                          showId: show.showId || show.eventName,
-                          showName: show.eventName,
-                          score: result.totalScore || 0,
-                          placement: result.placement,
-                          captions: result.captions || {
-                            GE1: (result.geScore || 0) / 2,
-                            GE2: (result.geScore || 0) / 2,
-                            VP: (result.visualScore || 0) / 3,
-                            VA: (result.visualScore || 0) / 3,
-                            CG: (result.visualScore || 0) / 3,
-                            B: (result.musicScore || 0) / 3,
-                            MA: (result.musicScore || 0) / 3,
-                            P: (result.musicScore || 0) / 3,
-                          },
-                        });
-                      }
-                    });
-                  });
-                }
-                if (weekNum === week - 1) {
-                  dayRecap.shows?.forEach(show => {
-                    show.results?.forEach(result => {
-                      if (result.uid === matchup.user1) weekPrevScore1 += result.totalScore || 0;
-                      if (result.uid === matchup.user2) weekPrevScore2 += result.totalScore || 0;
-                    });
-                  });
-                }
-              });
-
-              if (weekUser1Shows.length > 0 || weekUser2Shows.length > 0) {
-                const perf1 = createWeeklyPerformance(matchup.user1, week, weekUser1Shows, weekPrevScore1 > 0 ? weekPrevScore1 : undefined);
-                const perf2 = createWeeklyPerformance(matchup.user2, week, weekUser2Shows, weekPrevScore2 > 0 ? weekPrevScore2 : undefined);
-                const weekBreakdown = calculateMatchupBattles(
-                  `${league?.id || 'league'}-w${week}`,
-                  week,
-                  matchup.user1,
-                  matchup.user2,
-                  perf1,
-                  perf2
-                );
-                allBreakdowns.push(weekBreakdown);
-              }
-            }
-
-            if (allBreakdowns.length > 0) {
-              const h2h = calculateHeadToHead(matchup.user1, matchup.user2, allBreakdowns);
-              setHeadToHead(h2h);
+              allBreakdowns.push(weekBreakdown);
             }
           }
+
+          if (allBreakdowns.length > 0) {
+            const h2h = calculateHeadToHead(matchup.user1, matchup.user2, allBreakdowns);
+            setHeadToHead(h2h);
+          }
+        }
       } catch (error) {
         console.error('Error processing recaps:', error);
       } finally {
@@ -337,9 +346,7 @@ const MatchupDetailView = ({
           )}
         </div>
 
-        <h1 className="text-xl font-bold text-white text-center">
-          Head-to-Head Matchup
-        </h1>
+        <h1 className="text-xl font-bold text-white text-center">Head-to-Head Matchup</h1>
       </m.div>
 
       {/* Rivalry Card */}
@@ -381,35 +388,47 @@ const MatchupDetailView = ({
         <div className="flex items-center justify-between">
           {/* User 1 */}
           <div className="flex-1 text-center">
-            <div className={`w-16 h-16 mx-auto rounded-sm flex items-center justify-center mb-2 ${
-              battleBreakdown
-                ? battleBreakdown.winnerId === matchup.user1
-                  ? 'bg-gradient-to-br from-green-500/30 to-green-600/20 border-2 border-green-500/50'
-                  : 'bg-charcoal-800 border-2 border-white/20'
-                : user1Leading
-                  ? 'bg-gradient-to-br from-green-500/30 to-green-600/20 border-2 border-green-500/50'
-                  : 'bg-charcoal-800 border-2 border-white/20'
-            }`}>
+            <div
+              className={`w-16 h-16 mx-auto rounded-sm flex items-center justify-center mb-2 ${
+                battleBreakdown
+                  ? battleBreakdown.winnerId === matchup.user1
+                    ? 'bg-gradient-to-br from-green-500/30 to-green-600/20 border-2 border-green-500/50'
+                    : 'bg-charcoal-800 border-2 border-white/20'
+                  : user1Leading
+                    ? 'bg-gradient-to-br from-green-500/30 to-green-600/20 border-2 border-green-500/50'
+                    : 'bg-charcoal-800 border-2 border-white/20'
+              }`}
+            >
               <span className="text-2xl font-bold text-white">
                 {getDisplayName(matchup.user1).charAt(0)}
               </span>
             </div>
-            <p className={`font-bold ${
-              matchup.user1 === userProfile?.uid ? 'text-purple-400' : 'text-white'
-            }`}>
+            <p
+              className={`font-bold ${
+                matchup.user1 === userProfile?.uid ? 'text-purple-400' : 'text-white'
+              }`}
+            >
               {getDisplayName(matchup.user1)}
             </p>
             <p className="text-xs text-gray-500/40 mb-3">
               {getCorpsName(matchup.user1) || 'Unknown Corps'}
             </p>
 
-            <div className={`text-2xl font-bold tabular-nums ${
-              battleBreakdown
-                ? battleBreakdown.winnerId === matchup.user1
-                  ? 'text-green-400'
-                  : battleBreakdown.isTie ? 'text-yellow-400' : 'text-white'
-                : user1Leading ? 'text-green-400' : tied ? 'text-yellow-400' : 'text-white'
-            }`}>
+            <div
+              className={`text-2xl font-bold tabular-nums ${
+                battleBreakdown
+                  ? battleBreakdown.winnerId === matchup.user1
+                    ? 'text-green-400'
+                    : battleBreakdown.isTie
+                      ? 'text-yellow-400'
+                      : 'text-white'
+                  : user1Leading
+                    ? 'text-green-400'
+                    : tied
+                      ? 'text-yellow-400'
+                      : 'text-white'
+              }`}
+            >
               {loading ? '—' : weeklyScores.user1.toFixed(1)}
             </div>
             <p className="text-[10px] text-gray-500/40 mt-1">Total Score</p>
@@ -428,51 +447,64 @@ const MatchupDetailView = ({
             </div>
             {!loading && scoreDiff > 0 && (
               <div className="mt-2 text-center">
-                <span className={`text-xs font-bold ${
-                  user1Leading ? 'text-green-400' : 'text-red-400'
-                }`}>
-                  {user1Leading ? '+' : '-'}{scoreDiff.toFixed(1)}
+                <span
+                  className={`text-xs font-bold ${
+                    user1Leading ? 'text-green-400' : 'text-red-400'
+                  }`}
+                >
+                  {user1Leading ? '+' : '-'}
+                  {scoreDiff.toFixed(1)}
                 </span>
               </div>
             )}
             {tied && !loading && (
-              <span className="mt-2 text-xs font-bold text-yellow-400">
-                TIE
-              </span>
+              <span className="mt-2 text-xs font-bold text-yellow-400">TIE</span>
             )}
           </div>
 
           {/* User 2 */}
           <div className="flex-1 text-center">
-            <div className={`w-16 h-16 mx-auto rounded-sm flex items-center justify-center mb-2 ${
-              battleBreakdown
-                ? battleBreakdown.winnerId === matchup.user2
-                  ? 'bg-gradient-to-br from-green-500/30 to-green-600/20 border-2 border-green-500/50'
-                  : 'bg-charcoal-800 border-2 border-white/20'
-                : user2Leading
-                  ? 'bg-gradient-to-br from-green-500/30 to-green-600/20 border-2 border-green-500/50'
-                  : 'bg-charcoal-800 border-2 border-white/20'
-            }`}>
+            <div
+              className={`w-16 h-16 mx-auto rounded-sm flex items-center justify-center mb-2 ${
+                battleBreakdown
+                  ? battleBreakdown.winnerId === matchup.user2
+                    ? 'bg-gradient-to-br from-green-500/30 to-green-600/20 border-2 border-green-500/50'
+                    : 'bg-charcoal-800 border-2 border-white/20'
+                  : user2Leading
+                    ? 'bg-gradient-to-br from-green-500/30 to-green-600/20 border-2 border-green-500/50'
+                    : 'bg-charcoal-800 border-2 border-white/20'
+              }`}
+            >
               <span className="text-2xl font-bold text-white">
                 {getDisplayName(matchup.user2).charAt(0)}
               </span>
             </div>
-            <p className={`font-bold ${
-              matchup.user2 === userProfile?.uid ? 'text-purple-400' : 'text-white'
-            }`}>
+            <p
+              className={`font-bold ${
+                matchup.user2 === userProfile?.uid ? 'text-purple-400' : 'text-white'
+              }`}
+            >
               {getDisplayName(matchup.user2)}
             </p>
             <p className="text-xs text-gray-500/40 mb-3">
               {getCorpsName(matchup.user2) || 'Unknown Corps'}
             </p>
 
-            <div className={`text-2xl font-bold tabular-nums ${
-              battleBreakdown
-                ? battleBreakdown.winnerId === matchup.user2
-                  ? 'text-green-400'
-                  : battleBreakdown.isTie ? 'text-yellow-400' : 'text-white'
-                : user2Leading ? 'text-green-400' : tied ? 'text-yellow-400' : 'text-white'
-            }`}>
+            <div
+              className={`text-2xl font-bold tabular-nums ${
+                battleBreakdown
+                  ? battleBreakdown.winnerId === matchup.user2
+                    ? 'text-green-400'
+                    : battleBreakdown.isTie
+                      ? 'text-yellow-400'
+                      : 'text-white'
+                  : user2Leading
+                    ? 'text-green-400'
+                    : tied
+                      ? 'text-yellow-400'
+                      : 'text-white'
+              }`}
+            >
               {loading ? '—' : weeklyScores.user2.toFixed(1)}
             </div>
             <p className="text-[10px] text-gray-500/40 mt-1">Total Score</p>
@@ -500,17 +532,21 @@ const MatchupDetailView = ({
         {!battleBreakdown && !loading && (weeklyScores.user1 > 0 || weeklyScores.user2 > 0) && (
           <div className="mt-4 pt-3 border-t border-white/10">
             <div className="flex items-center justify-between text-xs mb-2">
-              <span className={`font-semibold ${
-                winProbability >= 50 ? 'text-green-400' : 'text-gray-500/60'
-              }`}>
+              <span
+                className={`font-semibold ${
+                  winProbability >= 50 ? 'text-green-400' : 'text-gray-500/60'
+                }`}
+              >
                 {winProbability.toFixed(0)}%
               </span>
               <span className="text-gray-500/40 uppercase tracking-wide text-[10px]">
                 Win Probability
               </span>
-              <span className={`font-semibold ${
-                winProbability < 50 ? 'text-green-400' : 'text-gray-500/60'
-              }`}>
+              <span
+                className={`font-semibold ${
+                  winProbability < 50 ? 'text-green-400' : 'text-gray-500/60'
+                }`}
+              >
                 {(100 - winProbability).toFixed(0)}%
               </span>
             </div>
@@ -520,8 +556,11 @@ const MatchupDetailView = ({
                 animate={{ width: `${winProbability}%` }}
                 transition={{ type: 'spring', damping: 20 }}
                 className={`h-full rounded-l-full ${
-                  matchup.user1 === userProfile?.uid ? 'bg-purple-500' :
-                  winProbability >= 50 ? 'bg-green-500' : 'bg-white/30'
+                  matchup.user1 === userProfile?.uid
+                    ? 'bg-purple-500'
+                    : winProbability >= 50
+                      ? 'bg-green-500'
+                      : 'bg-white/30'
                 }`}
               />
               <m.div
@@ -529,8 +568,11 @@ const MatchupDetailView = ({
                 animate={{ width: `${100 - winProbability}%` }}
                 transition={{ type: 'spring', damping: 20 }}
                 className={`h-full rounded-r-full ${
-                  matchup.user2 === userProfile?.uid ? 'bg-purple-500' :
-                  winProbability < 50 ? 'bg-green-500' : 'bg-white/30'
+                  matchup.user2 === userProfile?.uid
+                    ? 'bg-purple-500'
+                    : winProbability < 50
+                      ? 'bg-green-500'
+                      : 'bg-white/30'
                 }`}
               />
             </div>
@@ -540,7 +582,7 @@ const MatchupDetailView = ({
 
       {/* View Tabs */}
       <div className="flex gap-2">
-        {tabs.map(tab => {
+        {tabs.map((tab) => {
           const Icon = tab.icon;
           return (
             <button
@@ -552,7 +594,9 @@ const MatchupDetailView = ({
                   : 'glass text-gray-300 hover:text-white'
               }`}
             >
-              <Icon className={`w-4 h-4 ${tab.id === 'rivalry' && tab.badge ? 'text-red-400' : ''}`} />
+              <Icon
+                className={`w-4 h-4 ${tab.id === 'rivalry' && tab.badge ? 'text-red-400' : ''}`}
+              />
               <span className="hidden sm:inline">{tab.label}</span>
               {tab.badge && activeView !== tab.id && (
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
@@ -597,11 +641,21 @@ const MatchupDetailView = ({
         )}
 
         {activeView === 'overview' && (
-          <MatchupOverviewPanel scoreBreakdown={scoreBreakdown} user1Stats={user1Stats} user2Stats={user2Stats} loading={loading} />
+          <MatchupOverviewPanel
+            scoreBreakdown={scoreBreakdown}
+            user1Stats={user1Stats}
+            user2Stats={user2Stats}
+            loading={loading}
+          />
         )}
 
         {activeView === 'captions' && (
-          <MatchupShowsPanel matchup={matchup} scoreBreakdown={scoreBreakdown} getDisplayName={getDisplayName} loading={loading} />
+          <MatchupShowsPanel
+            matchup={matchup}
+            scoreBreakdown={scoreBreakdown}
+            getDisplayName={getDisplayName}
+            loading={loading}
+          />
         )}
       </AnimatePresence>
     </div>

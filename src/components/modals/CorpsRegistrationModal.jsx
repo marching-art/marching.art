@@ -14,7 +14,12 @@ const CLASSES = [
   { id: 'soundSport', name: 'SoundSport', budget: '90 pts', reqLevel: 0 },
 ];
 
-const CorpsRegistrationModal = ({ onClose, onSubmit, unlockedClasses = ['soundSport'], defaultClass }) => {
+const CorpsRegistrationModal = ({
+  onClose,
+  onSubmit,
+  unlockedClasses = ['soundSport'],
+  defaultClass,
+}) => {
   const [formData, setFormData] = useState({
     name: '',
     location: '',
@@ -50,7 +55,10 @@ const CorpsRegistrationModal = ({ onClose, onSubmit, unlockedClasses = ['soundSp
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
-            <h2 id="modal-title-corps-registration" className="text-xs font-bold uppercase tracking-wider text-gray-300">
+            <h2
+              id="modal-title-corps-registration"
+              className="text-xs font-bold uppercase tracking-wider text-gray-300"
+            >
               Register Corps
             </h2>
             <button onClick={onClose} className="p-1 text-gray-500 hover:text-white">
@@ -105,9 +113,7 @@ const CorpsRegistrationModal = ({ onClose, onSubmit, unlockedClasses = ['soundSp
                   maxLength={500}
                   className="w-full h-20 px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] resize-none"
                 />
-                <p className="text-[10px] text-gray-600 mt-1">
-                  {formData.description.length}/500
-                </p>
+                <p className="text-[10px] text-gray-600 mt-1">{formData.description.length}/500</p>
               </div>
 
               {/* Class Selection Table */}
@@ -131,9 +137,11 @@ const CorpsRegistrationModal = ({ onClose, onSubmit, unlockedClasses = ['soundSp
                         `}
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`w-4 h-4 rounded-sm border-2 flex items-center justify-center ${
-                            isSelected ? 'border-[#0057B8] bg-[#0057B8]' : 'border-[#444]'
-                          }`}>
+                          <div
+                            className={`w-4 h-4 rounded-sm border-2 flex items-center justify-center ${
+                              isSelected ? 'border-[#0057B8] bg-[#0057B8]' : 'border-[#444]'
+                            }`}
+                          >
                             {isSelected && <Check className="w-2.5 h-2.5 text-white" />}
                           </div>
                           <span className="text-sm font-medium text-white">{cls.name}</span>

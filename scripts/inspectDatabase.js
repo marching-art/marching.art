@@ -4,14 +4,14 @@ const admin = require('firebase-admin');
 const serviceAccount = require('./serviceAccountKey.json');
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
+  credential: admin.credential.cert(serviceAccount),
 });
 
 const db = admin.firestore();
 
 async function inspectDatabase() {
   console.log('🔍 MARCHING.ART DATABASE INSPECTION\n');
-  console.log('=' .repeat(80));
+  console.log('='.repeat(80));
 
   try {
     // 1. Check Historical Scores
@@ -19,7 +19,7 @@ async function inspectDatabase() {
     console.log('-'.repeat(80));
     const historicalDocs = await db.collection('historical_scores').listDocuments();
     console.log(`Found ${historicalDocs.length} year(s) of historical data:`);
-    console.log(historicalDocs.map(doc => doc.id).join(', '));
+    console.log(historicalDocs.map((doc) => doc.id).join(', '));
 
     // Sample one year
     if (historicalDocs.length > 0) {
@@ -48,7 +48,7 @@ async function inspectDatabase() {
     console.log('-'.repeat(80));
     const dciDataDocs = await db.collection('dci-data').listDocuments();
     console.log(`Found ${dciDataDocs.length} season(s) of DCI data:`);
-    console.log(dciDataDocs.map(doc => doc.id).join(', '));
+    console.log(dciDataDocs.map((doc) => doc.id).join(', '));
 
     // Sample one season
     if (dciDataDocs.length > 0) {
@@ -86,7 +86,7 @@ async function inspectDatabase() {
     console.log('-'.repeat(80));
     const staffDocs = await db.collection('staff_database').limit(5).get();
     console.log(`Sample of ${staffDocs.size} staff members:`);
-    staffDocs.forEach(doc => {
+    staffDocs.forEach((doc) => {
       console.log(`- ${doc.id}:`, JSON.stringify(doc.data(), null, 2));
     });
 
@@ -95,7 +95,7 @@ async function inspectDatabase() {
     console.log('-'.repeat(80));
     const recapDocs = await db.collection('fantasy_recaps').listDocuments();
     console.log(`Found ${recapDocs.length} season recap(s):`);
-    console.log(recapDocs.map(doc => doc.id).join(', '));
+    console.log(recapDocs.map((doc) => doc.id).join(', '));
 
     if (recapDocs.length > 0) {
       const sampleRecap = await recapDocs[0].get();
@@ -103,7 +103,10 @@ async function inspectDatabase() {
         const data = sampleRecap.data();
         console.log(`\nRecaps count: ${data.recaps?.length || 0}`);
         if (data.recaps && data.recaps[0]) {
-          console.log('Sample recap:', JSON.stringify(data.recaps[0], null, 2).substring(0, 1000) + '...');
+          console.log(
+            'Sample recap:',
+            JSON.stringify(data.recaps[0], null, 2).substring(0, 1000) + '...'
+          );
         }
       }
     }
@@ -113,19 +116,25 @@ async function inspectDatabase() {
     console.log('-'.repeat(80));
     const userProfiles = await db.collectionGroup('profile').limit(1).get();
     if (!userProfiles.empty) {
-      userProfiles.forEach(doc => {
+      userProfiles.forEach((doc) => {
         const data = doc.data();
         console.log('User ID:', doc.ref.parent.parent.id);
         console.log('Profile data:');
-        console.log(JSON.stringify({
-          displayName: data.displayName,
-          xp: data.xp,
-          xpLevel: data.xpLevel,
-          corpsCoin: data.corpsCoin,
-          unlockedClasses: data.unlockedClasses,
-          corps: data.corps ? Object.keys(data.corps) : [],
-          staff: data.staff?.length || 0
-        }, null, 2));
+        console.log(
+          JSON.stringify(
+            {
+              displayName: data.displayName,
+              xp: data.xp,
+              xpLevel: data.xpLevel,
+              corpsCoin: data.corpsCoin,
+              unlockedClasses: data.unlockedClasses,
+              corps: data.corps ? Object.keys(data.corps) : [],
+              staff: data.staff?.length || 0,
+            },
+            null,
+            2
+          )
+        );
       });
     }
 
@@ -146,7 +155,6 @@ async function inspectDatabase() {
 
     console.log('\n' + '='.repeat(80));
     console.log('✅ Database inspection complete!\n');
-
   } catch (error) {
     console.error('❌ Error inspecting database:', error);
     console.error(error.stack);

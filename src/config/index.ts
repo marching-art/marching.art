@@ -26,9 +26,7 @@ if (import.meta.env.MODE === 'production') {
     'VITE_ADMIN_UIDS',
   ] as const;
 
-  const missingVars = requiredEnvVars.filter(
-    (varName) => !import.meta.env[varName]
-  );
+  const missingVars = requiredEnvVars.filter((varName) => !import.meta.env[varName]);
 
   if (missingVars.length > 0) {
     throw new Error(
@@ -166,17 +164,17 @@ export const GAME_CONFIG = {
 
   /** XP level thresholds */
   xpLevels: [
-    0,      // Level 1
-    100,    // Level 2
-    250,    // Level 3
-    500,    // Level 4
-    1000,   // Level 5
-    2000,   // Level 6
-    3500,   // Level 7
-    5000,   // Level 8
-    7500,   // Level 9
-    10000,  // Level 10
-    15000,  // Level 11+
+    0, // Level 1
+    100, // Level 2
+    250, // Level 3
+    500, // Level 4
+    1000, // Level 5
+    2000, // Level 6
+    3500, // Level 7
+    5000, // Level 8
+    7500, // Level 9
+    10000, // Level 10
+    15000, // Level 11+
   ],
 } as const;
 
@@ -222,5 +220,5 @@ export const DEV_CONFIG = {
 // TYPE EXPORTS
 // =============================================================================
 
-export type CorpsClass = typeof GAME_CONFIG.corpsClasses[number];
-export type Caption = typeof GAME_CONFIG.captions[number];
+export type CorpsClass = (typeof GAME_CONFIG.corpsClasses)[number];
+export type Caption = (typeof GAME_CONFIG.captions)[number];

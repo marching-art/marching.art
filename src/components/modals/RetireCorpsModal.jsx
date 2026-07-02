@@ -40,7 +40,10 @@ const RetireCorpsModal = ({
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
-            <h2 id="modal-title-retire-corps" className="text-xs font-bold uppercase tracking-wider text-orange-400 flex items-center gap-2">
+            <h2
+              id="modal-title-retire-corps"
+              className="text-xs font-bold uppercase tracking-wider text-orange-400 flex items-center gap-2"
+            >
               <Archive className="w-4 h-4" />
               Retire Corps
             </h2>
@@ -58,18 +61,14 @@ const RetireCorpsModal = ({
 
             {/* Message */}
             <div className="text-center mb-4">
-              <p className="text-sm text-gray-300 mb-2">
-                You are about to retire:
-              </p>
+              <p className="text-sm text-gray-300 mb-2">You are about to retire:</p>
               <p className="text-lg font-bold text-white">{corpsName}</p>
               <p className="text-xs text-gray-500">{CLASS_NAMES[corpsClass] || corpsClass}</p>
             </div>
 
             {/* Info */}
             <div className="bg-[#0057B8]/10 border border-[#0057B8]/30 p-3 mb-4">
-              <p className="text-xs text-[#0057B8] mb-2 font-bold uppercase">
-                What happens next
-              </p>
+              <p className="text-xs text-[#0057B8] mb-2 font-bold uppercase">What happens next</p>
               <ul className="text-xs text-gray-400 space-y-1">
                 <li>• All season history preserved</li>
                 <li>• Lifetime stats maintained</li>
@@ -86,10 +85,9 @@ const RetireCorpsModal = ({
                       Your caption lineup and show schedule will be cleared
                     </p>
                     <p className="text-xs text-orange-300/80">
-                      You haven't competed yet this season, so retiring is still
-                      allowed — but any captions you've picked and shows you've
-                      scheduled for this corps will be wiped and need to be
-                      reselected.
+                      You haven't competed yet this season, so retiring is still allowed — but any
+                      captions you've picked and shows you've scheduled for this corps will be wiped
+                      and need to be reselected.
                     </p>
                   </div>
                 </div>
@@ -116,7 +114,9 @@ const RetireCorpsModal = ({
                   <Archive className="w-4 h-4 animate-pulse" />
                   Retiring...
                 </>
-              ) : 'Retire'}
+              ) : (
+                'Retire'
+              )}
             </button>
           </div>
         </div>

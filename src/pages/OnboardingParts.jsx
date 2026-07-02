@@ -8,7 +8,13 @@ import { Check, HelpCircle } from 'lucide-react';
 import { CAPTIONS, CATEGORY_COLORS, SOUNDSPORT_POINT_LIMIT } from './onboardingConstants';
 
 // Guided Caption Selection Component
-export const GuidedCaptionSelection = ({ availableCorps, lineup, setLineup, currentCaptionIndex, setCurrentCaptionIndex }) => {
+export const GuidedCaptionSelection = ({
+  availableCorps,
+  lineup,
+  setLineup,
+  currentCaptionIndex,
+  setCurrentCaptionIndex,
+}) => {
   const currentCaption = CAPTIONS[currentCaptionIndex];
   const categoryInfo = CATEGORY_COLORS[currentCaption.category];
 
@@ -26,21 +32,21 @@ export const GuidedCaptionSelection = ({ availableCorps, lineup, setLineup, curr
 
   // Check if a corps is already selected in another caption
   const isCorpsUsed = (corpsName) => {
-    return Object.values(lineup).some(val => val && val.startsWith(corpsName + '|'));
+    return Object.values(lineup).some((val) => val && val.startsWith(corpsName + '|'));
   };
 
   const handleSelect = (corps) => {
     const value = `${corps.corpsName}|${corps.sourceYear}|${corps.points}`;
-    setLineup(prev => ({ ...prev, [currentCaption.id]: value }));
+    setLineup((prev) => ({ ...prev, [currentCaption.id]: value }));
 
     // Auto-advance to next caption
     if (currentCaptionIndex < CAPTIONS.length - 1) {
-      setTimeout(() => setCurrentCaptionIndex(prev => prev + 1), 300);
+      setTimeout(() => setCurrentCaptionIndex((prev) => prev + 1), 300);
     }
   };
 
   const handleDeselect = () => {
-    setLineup(prev => {
+    setLineup((prev) => {
       const newLineup = { ...prev };
       delete newLineup[currentCaption.id];
       return newLineup;
@@ -48,18 +54,22 @@ export const GuidedCaptionSelection = ({ availableCorps, lineup, setLineup, curr
   };
 
   const selectedValue = lineup[currentCaption.id];
-  const selectedCorps = selectedValue ? {
-    name: selectedValue.split('|')[0],
-    year: selectedValue.split('|')[1],
-    points: parseInt(selectedValue.split('|')[2]) || 0
-  } : null;
+  const selectedCorps = selectedValue
+    ? {
+        name: selectedValue.split('|')[0],
+        year: selectedValue.split('|')[1],
+        points: parseInt(selectedValue.split('|')[2]) || 0,
+      }
+    : null;
 
   return (
     <div className="space-y-4">
       {/* Progress indicator */}
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm text-gray-400">Caption {currentCaptionIndex + 1} of 8</span>
-        <span className={`text-sm font-bold ${remainingPoints < 10 ? 'text-yellow-400' : 'text-green-400'}`}>
+        <span
+          className={`text-sm font-bold ${remainingPoints < 10 ? 'text-yellow-400' : 'text-green-400'}`}
+        >
           {remainingPoints} pts remaining
         </span>
       </div>
@@ -92,7 +102,9 @@ export const GuidedCaptionSelection = ({ availableCorps, lineup, setLineup, curr
       {/* Current caption info */}
       <div className={`p-4 rounded-sm ${categoryInfo.bg} ${categoryInfo.border} border`}>
         <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-sm flex items-center justify-center ${categoryInfo.bg}`}>
+          <div
+            className={`w-10 h-10 rounded-sm flex items-center justify-center ${categoryInfo.bg}`}
+          >
             <span className={`font-bold ${categoryInfo.text}`}>{currentCaption.id}</span>
           </div>
           <div>
@@ -106,14 +118,13 @@ export const GuidedCaptionSelection = ({ availableCorps, lineup, setLineup, curr
             <div className="flex items-center gap-2">
               <Check className="w-4 h-4 text-green-400" />
               <span className="text-sm text-white font-semibold">{selectedCorps.name}</span>
-              <span className="text-xs text-gray-500">'{selectedCorps.year != null ? String(selectedCorps.year).slice(-2) : ''}</span>
+              <span className="text-xs text-gray-500">
+                '{selectedCorps.year != null ? String(selectedCorps.year).slice(-2) : ''}
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm font-bold text-yellow-400">{selectedCorps.points} pts</span>
-              <button
-                onClick={handleDeselect}
-                className="text-xs text-red-400 hover:text-red-300"
-              >
+              <button onClick={handleDeselect} className="text-xs text-red-400 hover:text-red-300">
                 Change
               </button>
             </div>
@@ -145,12 +156,18 @@ export const GuidedCaptionSelection = ({ availableCorps, lineup, setLineup, curr
               >
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-white text-sm">{corps.corpsName}</span>
-                  <span className="text-xs text-gray-500">'{corps.sourceYear != null ? String(corps.sourceYear).slice(-2) : ''}</span>
+                  <span className="text-xs text-gray-500">
+                    '{corps.sourceYear != null ? String(corps.sourceYear).slice(-2) : ''}
+                  </span>
                   {isUsed && <span className="text-xs text-gray-500/60">(already used)</span>}
                 </div>
-                <div className={`px-2 py-1 rounded text-xs font-bold ${
-                  wouldExceedBudget ? 'bg-red-500/20 text-red-400' : 'bg-yellow-500/20 text-yellow-400'
-                }`}>
+                <div
+                  className={`px-2 py-1 rounded text-xs font-bold ${
+                    wouldExceedBudget
+                      ? 'bg-red-500/20 text-red-400'
+                      : 'bg-yellow-500/20 text-yellow-400'
+                  }`}
+                >
                   {corps.points} pts
                 </div>
               </m.button>

@@ -7,6 +7,7 @@ marching.art is a modern, award-winning fantasy drum corps game that brings the 
 ## 🎯 Features
 
 ### Core Gameplay
+
 - **Two-Season Model**: Alternating between Off-Season (Director Sim) and Live Season (Classic Fantasy)
 - **Corps Management**: Create and manage your fantasy drum corps with unique names, locations, and show concepts
 - **Caption Selection**: Choose 8 captions from 25 available historical corps performances
@@ -14,6 +15,7 @@ marching.art is a modern, award-winning fantasy drum corps game that brings the 
 - **Progressive Unlocking**: Start with SoundSport and unlock higher classes through XP
 
 ### Modern Design
+
 - **Responsive UI**: Fully optimized for mobile and desktop devices
 - **Dark Theme**: Premium cream, black, and gold color scheme
 - **Smooth Animations**: Framer Motion powered transitions and effects
@@ -21,6 +23,7 @@ marching.art is a modern, award-winning fantasy drum corps game that brings the 
 - **PWA Support**: Install as a native app on any device
 
 ### Social Features
+
 - **League System**: Create or join private/public leagues
 - **Leaderboards**: Compete across different classes (World, Open, A, SoundSport)
 - **Director Profiles**: Track achievements, stats, and season history
@@ -29,6 +32,7 @@ marching.art is a modern, award-winning fantasy drum corps game that brings the 
 ## 🚀 Tech Stack
 
 ### Frontend
+
 - **React 18**: Modern React with hooks and Suspense
 - **React Router v6**: Client-side routing with protected routes
 - **Tailwind CSS**: Utility-first CSS with custom theme
@@ -37,6 +41,7 @@ marching.art is a modern, award-winning fantasy drum corps game that brings the 
 - **React Hot Toast**: Elegant notification system
 
 ### Backend (Firebase)
+
 - **Authentication**: Email/password, anonymous, and custom token auth
 - **Firestore**: Real-time NoSQL database
 - **Cloud Functions**: Serverless backend logic
@@ -44,6 +49,7 @@ marching.art is a modern, award-winning fantasy drum corps game that brings the 
 - **Analytics**: User tracking and engagement metrics
 
 ### Deployment
+
 - **Vercel**: Production hosting with automatic deployments
 - **GitHub**: Version control and CI/CD
 - **Node 20**: Runtime environment
@@ -51,6 +57,7 @@ marching.art is a modern, award-winning fantasy drum corps game that brings the 
 ## 📦 Installation
 
 ### Prerequisites
+
 - Node.js 20+
 - npm or yarn
 - Firebase project setup
@@ -58,28 +65,33 @@ marching.art is a modern, award-winning fantasy drum corps game that brings the 
 ### Setup Steps
 
 1. **Clone the repository**
+
 ```bash
 git clone https://github.com/yourusername/marching-art.git
 cd marching-art
 ```
 
 2. **Install dependencies**
+
 ```bash
 npm install
 ```
 
 3. **Configure environment variables**
+
 ```bash
 cp .env.example .env.local
 # Edit .env.local with your Firebase credentials
 ```
 
 4. **Start development server**
+
 ```bash
 npm start
 ```
 
 5. **Build for production**
+
 ```bash
 npm run build
 ```
@@ -87,22 +99,26 @@ npm run build
 ## 🎮 Game Rules
 
 ### Season Structure
+
 - **Live Season**: 10 weeks (ending second Saturday of August)
 - **Off-Season**: 42 weeks (6 periods of 7 weeks each)
 - **Automatic Reset**: Seasons reset at 3 AM after finals
 
 ### Caption Selection
+
 - Select 8 captions: GE1, GE2, VP, VA, CG, B, MA, P
 - Each caption from different historical corps
 - No duplicate lineups allowed (first submitted keeps it)
 - Dynamic cost system based on historical performance
 
 ### Caption Changes
+
 - Unlimited changes until 5 weeks remaining
 - 3 changes per week until 1 week remaining
 - Final week: 2 between quarters/semis, 2 between semis/finals
 
 ### Progression System
+
 - **SoundSport**: Available to all users
 - **A Class**: Unlocked at Level 3
 - **Open Class**: Unlocked at Level 5
@@ -124,8 +140,8 @@ marching-art/
 │   │   ├── Dashboard.jsx   # Main dashboard
 │   │   ├── Landing.jsx     # Landing page
 │   │   ├── Login.jsx       # Authentication
-│   │   ├── Register.jsx    
-│   │   ├── Leaderboard.jsx 
+│   │   ├── Register.jsx
+│   │   ├── Leaderboard.jsx
 │   │   └── ...
 │   ├── firebase.js         # Firebase configuration
 │   ├── App.jsx             # Main app component
@@ -139,12 +155,14 @@ marching-art/
 ## 🔐 Security
 
 ### Firebase Rules
+
 - Authenticated users can read public data
 - Users can only modify their own data
 - Admin-only access for system operations
 - Rate limiting on API calls
 
 ### Best Practices
+
 - Environment variables for sensitive data
 - Secure authentication flow
 - Input validation and sanitization
@@ -153,16 +171,19 @@ marching-art/
 ## 🎨 Design System
 
 ### Colors
+
 - **Primary**: Gold (#FFD44D)
 - **Secondary**: Cream (#E5D396)
 - **Background**: Charcoal (#1A1A1A)
 
 ### Typography
+
 - **Display**: Montserrat (headings)
 - **Body**: Inter (content)
 - **Mono**: Fira Code (code)
 
 ### Components
+
 - Glass morphism effects
 - Gradient accents
 - Shadow elevation system
@@ -171,6 +192,7 @@ marching-art/
 ## 📈 Performance
 
 ### Optimizations
+
 - Code splitting with React.lazy()
 - Image lazy loading
 - Bundle size optimization
@@ -178,6 +200,7 @@ marching-art/
 - Firebase offline persistence
 
 ### Metrics
+
 - First Contentful Paint: < 1.5s
 - Time to Interactive: < 3s
 - Lighthouse Score: 90+
@@ -188,6 +211,7 @@ marching-art/
 We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
 
 ### Development Workflow
+
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
@@ -214,4 +238,4 @@ This project is proprietary software. All rights reserved.
 
 **Built with ❤️ for the drum corps community**
 
-*marching.art - Where legends are made*
+_marching.art - Where legends are made_

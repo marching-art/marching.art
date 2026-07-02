@@ -41,9 +41,19 @@ export default function ArticleReactions({
   onReactionChange,
 }) {
   const { user } = useAuth();
-  const [counts, setCounts] = useState(initialCounts || {
-    '👏': 0, '🔥': 0, '💯': 0, '🎺': 0, '❤️': 0, '🤔': 0, '🏳️': 0, '🥁': 0, total: 0
-  });
+  const [counts, setCounts] = useState(
+    initialCounts || {
+      '👏': 0,
+      '🔥': 0,
+      '💯': 0,
+      '🎺': 0,
+      '❤️': 0,
+      '🤔': 0,
+      '🏳️': 0,
+      '🥁': 0,
+      total: 0,
+    }
+  );
   const [userReaction, setUserReaction] = useState(initialUserReaction);
   const [loading, setLoading] = useState(!initialCounts);
   const [reacting, setReacting] = useState(null);
@@ -144,8 +154,7 @@ export default function ArticleReactions({
 
   // Compact view - just show total and top reactions
   if (compact) {
-    const topReactions = REACTIONS
-      .filter(emoji => counts[emoji] > 0)
+    const topReactions = REACTIONS.filter((emoji) => counts[emoji] > 0)
       .sort((a, b) => counts[b] - counts[a])
       .slice(0, 3);
 
@@ -171,9 +180,7 @@ export default function ArticleReactions({
                 ))}
               </div>
             )}
-            <span className="text-[11px] text-gray-500 font-data tabular-nums">
-              {counts.total}
-            </span>
+            <span className="text-[11px] text-gray-500 font-data tabular-nums">{counts.total}</span>
           </>
         )}
       </div>
@@ -181,7 +188,7 @@ export default function ArticleReactions({
   }
 
   // Get emojis that have reactions (for display)
-  const activeEmojis = REACTIONS.filter(emoji => counts[emoji] > 0);
+  const activeEmojis = REACTIONS.filter((emoji) => counts[emoji] > 0);
 
   // Full reaction bar with picker menu
   return (
@@ -222,9 +229,9 @@ function ReactionPickerWithDisplay({ counts, userReaction, onReact, reacting, di
   const pickerRef = useRef(null);
 
   // Get top emojis that have been used (sorted by count)
-  const activeEmojis = REACTIONS
-    .filter(emoji => counts[emoji] > 0)
-    .sort((a, b) => counts[b] - counts[a]);
+  const activeEmojis = REACTIONS.filter((emoji) => counts[emoji] > 0).sort(
+    (a, b) => counts[b] - counts[a]
+  );
 
   // Close picker when clicking outside
   useEffect(() => {
@@ -271,9 +278,7 @@ function ReactionPickerWithDisplay({ counts, userReaction, onReact, reacting, di
               ))}
             </div>
             {/* Total count */}
-            <span className="text-xs text-gray-400 font-data tabular-nums">
-              {counts.total}
-            </span>
+            <span className="text-xs text-gray-400 font-data tabular-nums">{counts.total}</span>
           </>
         ) : (
           <>
@@ -300,17 +305,15 @@ function ReactionPickerWithDisplay({ counts, userReaction, onReact, reacting, di
                   title={`${REACTION_LABELS[emoji]}${count > 0 ? ` (${count})` : ''}`}
                   className={`
                     w-10 h-10 flex flex-col items-center justify-center rounded-lg transition-all
-                    ${isSelected
-                      ? 'bg-[#0057B8]/30 scale-110'
-                      : 'hover:bg-[#333] hover:scale-110'}
+                    ${isSelected ? 'bg-[#0057B8]/30 scale-110' : 'hover:bg-[#333] hover:scale-110'}
                     ${isReacting ? 'opacity-50' : ''}
                   `}
                 >
-                  <span className={`text-xl ${isReacting ? 'animate-pulse' : ''}`}>
-                    {emoji}
-                  </span>
+                  <span className={`text-xl ${isReacting ? 'animate-pulse' : ''}`}>{emoji}</span>
                   {count > 0 && (
-                    <span className={`text-[9px] font-data tabular-nums ${isSelected ? 'text-[#0057B8]' : 'text-gray-500'}`}>
+                    <span
+                      className={`text-[9px] font-data tabular-nums ${isSelected ? 'text-[#0057B8]' : 'text-gray-500'}`}
+                    >
                       {count}
                     </span>
                   )}
@@ -330,8 +333,7 @@ function ReactionPickerWithDisplay({ counts, userReaction, onReact, reacting, di
 export function ReactionSummary({ counts, userReaction }) {
   if (!counts || counts.total === 0) return null;
 
-  const topReactions = REACTIONS
-    .filter(emoji => counts[emoji] > 0)
+  const topReactions = REACTIONS.filter((emoji) => counts[emoji] > 0)
     .sort((a, b) => counts[b] - counts[a])
     .slice(0, 3);
 
@@ -352,9 +354,7 @@ export function ReactionSummary({ counts, userReaction }) {
           ))}
         </div>
       )}
-      <span className="text-[10px] text-gray-500 font-data tabular-nums">
-        {counts.total}
-      </span>
+      <span className="text-[10px] text-gray-500 font-data tabular-nums">{counts.total}</span>
     </div>
   );
 }
@@ -370,8 +370,7 @@ export function EngagementSummary({ reactionCounts, userReaction, commentCount }
   if (!hasReactions && !hasComments) return null;
 
   const topReactions = hasReactions
-    ? REACTIONS
-        .filter(emoji => reactionCounts[emoji] > 0)
+    ? REACTIONS.filter((emoji) => reactionCounts[emoji] > 0)
         .sort((a, b) => reactionCounts[b] - reactionCounts[a])
         .slice(0, 3)
     : [];
@@ -394,9 +393,7 @@ export function EngagementSummary({ reactionCounts, userReaction, commentCount }
               </span>
             ))}
           </div>
-          <span className="text-[10px] font-data tabular-nums">
-            {reactionCounts.total}
-          </span>
+          <span className="text-[10px] font-data tabular-nums">{reactionCounts.total}</span>
         </div>
       )}
 

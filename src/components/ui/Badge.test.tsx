@@ -162,9 +162,7 @@ describe('StatusBadge', () => {
 
   describe('custom className', () => {
     it('accepts and applies custom className', () => {
-      const { container } = render(
-        <StatusBadge status="online" className="custom-status" />
-      );
+      const { container } = render(<StatusBadge status="online" className="custom-status" />);
       expect(container.firstChild).toHaveClass('custom-status');
     });
   });

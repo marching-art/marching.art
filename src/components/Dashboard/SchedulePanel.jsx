@@ -8,9 +8,7 @@ const ShowRow = React.memo(({ show }) => (
   <div className="px-4 sm:px-3 py-3 sm:py-2 flex items-center gap-3 hover:bg-[#222] active:bg-[#222]">
     <Calendar className="w-5 h-5 sm:w-4 sm:h-4 text-gray-500 flex-shrink-0" />
     <div className="min-w-0 flex-1">
-      <div className="text-sm text-white truncate">
-        {show.eventName || show.name || 'Show'}
-      </div>
+      <div className="text-sm text-white truncate">{show.eventName || show.name || 'Show'}</div>
       <div className="text-[11px] sm:text-[10px] text-gray-500 truncate">
         {show.location || show.date || ''}
       </div>
@@ -19,12 +17,7 @@ const ShowRow = React.memo(({ show }) => (
 ));
 ShowRow.displayName = 'ShowRow';
 
-const SchedulePanel = React.memo(({
-  shows,
-  currentWeek,
-  seasonName,
-  isMobile = false
-}) => {
+const SchedulePanel = React.memo(({ shows, currentWeek, seasonName, isMobile = false }) => {
   const hasShows = shows && shows.length > 0;
 
   return (
@@ -34,7 +27,10 @@ const SchedulePanel = React.memo(({
         <span className="text-[11px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-500">
           Week {currentWeek} Schedule
         </span>
-        <Link to="/schedule" className="text-[11px] sm:text-[10px] text-[#F5A623] hover:text-[#FFB84D] transition-colors flex items-center gap-0.5 py-1">
+        <Link
+          to="/schedule"
+          className="text-[11px] sm:text-[10px] text-[#F5A623] hover:text-[#FFB84D] transition-colors flex items-center gap-0.5 py-1"
+        >
           Full Schedule <ChevronRight className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
         </Link>
       </div>

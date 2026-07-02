@@ -15,6 +15,7 @@ marching.art is a web application serving the drum corps community. The applicat
 ### 1.1 Purpose of YouTube Integration
 
 The YouTube integration allows users to:
+
 - View official corps performance videos without leaving the site
 - Quickly access performances while following live competition scores
 - Watch historical performances from past seasons
@@ -60,6 +61,7 @@ The YouTube integration allows users to:
 ### 3.1 YouTube Data API v3
 
 #### search.list Endpoint
+
 - **Purpose:** Find corps performance videos
 - **Quota Cost:** 100 units per request
 - **Parameters Used:**
@@ -70,6 +72,7 @@ The YouTube integration allows users to:
   - `videoEmbeddable=true` - Only embeddable videos
 
 #### videos.list Endpoint
+
 - **Purpose:** Get video duration for filtering
 - **Quota Cost:** 1 unit per video
 - **Parameters Used:**
@@ -77,6 +80,7 @@ The YouTube integration allows users to:
   - `id={videoIds}` - Comma-separated video IDs
 
 ### 3.2 YouTube Embeds
+
 - Videos displayed using official YouTube iframe embed
 - Privacy-enhanced mode: `youtube-nocookie.com`
 - Parameters: `autoplay=1&vq=hd720&rel=0`
@@ -126,7 +130,9 @@ The YouTube integration allows users to:
 ## 5. Video Filtering Logic
 
 ### 5.1 Title Blacklist
+
 Videos with these words in the title are excluded:
+
 - `lot` - Parking lot rehearsals
 - `drumline`, `hornline`, `brass`, `battery`, `pit` - Section-only videos
 - `guard` - Color guard only
@@ -138,16 +144,19 @@ Videos with these words in the title are excluded:
 - `headcam`, `cam` - POV/camera footage
 
 ### 5.2 Year Matching
+
 - Query extracts year from search (e.g., "2024" from "2024 Blue Devils corps")
 - Video title must contain full year (2024) OR short year (24)
 - Examples that match: "Blue Devils 2024 Finals", "BD 8-10-24"
 
 ### 5.3 Duration Filtering
+
 - Minimum: 8 minutes (full show minimum)
 - Maximum: 15 minutes (full show maximum)
 - Filters out clips, highlights, and multi-show compilations
 
 ### 5.4 Finals Prioritization
+
 - After filtering, videos with "finals" in title are prioritized
 - Finals performances are typically highest quality recordings
 
@@ -162,6 +171,7 @@ Videos with these words in the title are excluded:
 **Document ID:** Normalized query (e.g., `2024_blue_devils_corps`)
 
 **Document Fields:**
+
 ```json
 {
   "success": true,
@@ -175,11 +185,13 @@ Videos with these words in the title are excluded:
 ```
 
 ### 6.2 Cache Duration
+
 - **Permanent:** Historical corps performances don't change
 - **Manual Refresh:** Users can click "Refresh" to update stale entries
 - **On Refresh:** Old cache entry is overwritten with new result
 
 ### 6.3 Cache Benefits
+
 - Dramatically reduces API quota usage
 - Faster response times for repeat searches
 - 1000+ unique corps/year combinations can be cached
@@ -190,22 +202,24 @@ Videos with these words in the title are excluded:
 ## 7. Quota Usage Analysis
 
 ### 7.1 Per-Search Cost
-| Operation | Units |
-|-----------|-------|
-| search.list | 100 |
-| videos.list (25 videos) | 25 |
+
+| Operation                | Units   |
+| ------------------------ | ------- |
+| search.list              | 100     |
+| videos.list (25 videos)  | 25      |
 | **Total per cache miss** | **125** |
 
 ### 7.2 Daily Usage Scenarios
 
-| Scenario | API Calls | Units |
-|----------|-----------|-------|
-| Cache fully warmed | 0 | 0 |
-| New competition day (50 corps) | 50 | 6,250 |
-| Typical day (10 cache misses) | 10 | 1,250 |
-| DCI Finals (worst case) | 50 | 6,250 |
+| Scenario                       | API Calls | Units |
+| ------------------------------ | --------- | ----- |
+| Cache fully warmed             | 0         | 0     |
+| New competition day (50 corps) | 50        | 6,250 |
+| Typical day (10 cache misses)  | 10        | 1,250 |
+| DCI Finals (worst case)        | 50        | 6,250 |
 
 ### 7.3 Requested Quota
+
 - **Current:** 10,000 units/day
 - **Requested:** 50,000 units/day
 - **Justification:** 4-8x buffer for development, cache warming, and unexpected spikes
@@ -215,17 +229,20 @@ Videos with these words in the title are excluded:
 ## 8. Compliance
 
 ### 8.1 YouTube Terms of Service
+
 - Videos embedded using official YouTube iframe API
 - No downloading or redistribution of content
 - Proper attribution displayed (video title, channel name)
 - Privacy-enhanced mode enabled (youtube-nocookie.com)
 
 ### 8.2 Data Storage
+
 - Only metadata stored (video ID, title, thumbnail URL, channel)
 - No video content downloaded or cached
 - Users directed to YouTube for playback
 
 ### 8.3 User Experience
+
 - Clear YouTube branding in modal
 - "More Results" link to YouTube search
 - "Refresh" option for stale results
@@ -235,13 +252,16 @@ Videos with these words in the title are excluded:
 ## 9. Technical Implementation
 
 ### 9.1 Firebase Function Code Location
+
 `/functions/src/callable/youtube.js`
 
 ### 9.2 Client Code Locations
+
 - `/src/pages/Landing.jsx` - Main scores page
 - `/src/pages/Article.jsx` - Article detail page
 
 ### 9.3 API Key Security
+
 - Stored in Firebase Secrets (not in source code)
 - Only accessible by Firebase Cloud Functions
 - Never exposed to client-side code
@@ -251,10 +271,13 @@ Videos with these words in the title are excluded:
 ## 10. Screenshots
 
 ### 10.1 Standings with YouTube Icons
+
 Users see YouTube icon next to each corps name in the standings list.
 
 ### 10.2 Video Modal
+
 When clicked, a modal overlay displays:
+
 - Video player (720p, autoplay)
 - Video title
 - Search query used
@@ -262,6 +285,7 @@ When clicked, a modal overlay displays:
 - "More Results" link to YouTube
 
 ### 10.3 Modal Footer
+
 ```
 Search: "2024 Blue Devils corps"    [Refresh] [More Results →]
 ```
@@ -276,4 +300,4 @@ Search: "2024 Blue Devils corps"    [Refresh] [More Results →]
 
 ---
 
-*This document describes the implementation of YouTube API Services in the marching.art web application as of January 2026.*
+_This document describes the implementation of YouTube API Services in the marching.art web application as of January 2026._

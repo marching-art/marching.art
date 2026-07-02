@@ -3,9 +3,7 @@
 // =============================================================================
 
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Check, AlertCircle, Trophy, Save, Target, Award, X, ArrowLeft, Wand2
-} from 'lucide-react';
+import { Check, AlertCircle, Trophy, Save, Target, Award, X, ArrowLeft, Wand2 } from 'lucide-react';
 import { getProfile } from '../../api/profile';
 import { getSeasonData, getCorpsValues } from '../../api/season';
 import { getHotCorps, getActiveLineupKeys, saveLineup } from '../../api/functions';
@@ -22,7 +20,14 @@ import {
   CaptionButton,
 } from './CaptionSelectionParts';
 
-const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, seasonId, initialCaption }) => {
+const CaptionSelectionModal = ({
+  onClose,
+  onSubmit,
+  corpsClass,
+  currentLineup,
+  seasonId,
+  initialCaption,
+}) => {
   const { user } = useAuth();
   const [selections, setSelections] = useState(currentLineup || {});
   const [availableCorps, setAvailableCorps] = useState([]);
@@ -64,18 +69,27 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
   const pointLimits = { soundSport: 90, aClass: 60, openClass: 120, worldClass: 150 };
   const pointLimit = pointLimits[corpsClass];
 
-  const CLASS_LABELS = { soundSport: 'SoundSport', aClass: 'A Class', openClass: 'Open Class', worldClass: 'World Class' };
+  const CLASS_LABELS = {
+    soundSport: 'SoundSport',
+    aClass: 'A Class',
+    openClass: 'Open Class',
+    worldClass: 'World Class',
+  };
 
   const categoryColors = {
     'General Effect': 'bg-yellow-500',
-    'Visual': 'bg-[#0057B8]',
-    'Music': 'bg-purple-400',
+    Visual: 'bg-[#0057B8]',
+    Music: 'bg-purple-400',
   };
 
   // Load templates
   useEffect(() => {
     const saved = localStorage.getItem(`lineupTemplates_${user?.uid}_${corpsClass}`);
-    if (saved) { try { setTemplates(JSON.parse(saved)); } catch (e) {} }
+    if (saved) {
+      try {
+        setTemplates(JSON.parse(saved));
+      } catch (e) {}
+    }
   }, [user?.uid, corpsClass]);
 
   // Load user history and trade limits
@@ -87,8 +101,11 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
         if (data) {
           const history = new Set();
           if (data.corps) {
-            Object.values(data.corps).forEach(c => {
-              if (c?.lineup) Object.values(c.lineup).forEach(sel => { if (sel) history.add(sel.split('|')[0]); });
+            Object.values(data.corps).forEach((c) => {
+              if (c?.lineup)
+                Object.values(c.lineup).forEach((sel) => {
+                  if (sel) history.add(sel.split('|')[0]);
+                });
             });
           }
           setUserHistory(Array.from(history));
@@ -117,13 +134,17 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
               let unlimited = false;
               if (!hasExistingLineup) unlimited = true;
               if (seasonData.status === 'off-season' && currentWeek === 1) unlimited = true;
-              if (seasonData.status === 'live-season' && [1, 2, 3].includes(currentWeek)) unlimited = true;
+              if (seasonData.status === 'live-season' && [1, 2, 3].includes(currentWeek))
+                unlimited = true;
 
               setIsUnlimitedTrades(unlimited);
 
               if (!unlimited && weeklyTrades) {
-                const tradesUsed = (weeklyTrades.seasonUid === seasonData.seasonUid &&
-                  weeklyTrades.week === currentWeek) ? weeklyTrades.used : 0;
+                const tradesUsed =
+                  weeklyTrades.seasonUid === seasonData.seasonUid &&
+                  weeklyTrades.week === currentWeek
+                    ? weeklyTrades.used
+                    : 0;
                 setTradesRemaining(3 - tradesUsed);
               } else if (!unlimited) {
                 setTradesRemaining(3);
@@ -142,7 +163,10 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
   useEffect(() => {
     let cancelled = false;
     const fetchCorps = async () => {
-      if (!seasonId) { setLoading(false); return; }
+      if (!seasonId) {
+        setLoading(false);
+        return;
+      }
       try {
         setLoading(true);
 
@@ -150,7 +174,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
         const [corpsValues, hotCorpsResult, lineupKeysResult] = await Promise.all([
           getCorpsValues(seasonId),
           getHotCorps().catch(() => ({ data: { hotCorps: {} } })),
-          getActiveLineupKeys({ corpsClass }).catch(() => ({ data: { lineupKeys: [] } }))
+          getActiveLineupKeys({ corpsClass }).catch(() => ({ data: { lineupKeys: [] } })),
         ]);
 
         if (!cancelled) {
@@ -163,9 +187,9 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
           setActiveLineupKeys(new Set(lineupKeys));
 
           let corps = corpsValues;
-          corps = corps.filter(c => (c.points || 0) <= 50);
+          corps = corps.filter((c) => (c.points || 0) <= 50);
 
-          corps = corps.map(c => ({
+          corps = corps.map((c) => ({
             ...c,
             performanceData: {
               avgScore: c.avgScore || 80,
@@ -176,25 +200,35 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
           corps.sort((a, b) => b.points - a.points);
           setAvailableCorps(corps);
         }
-      } catch (e) { toast.error('Failed to load corps data'); }
-      finally { if (!cancelled) setLoading(false); }
+      } catch (e) {
+        toast.error('Failed to load corps data');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     };
     fetchCorps();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [seasonId, corpsClass]);
 
   // Generate suggestions based on the active caption
-  const generateSuggestions = useCallback((corps, caption, hotData) => {
-    // Hot suggestions: corps that are hot for the current caption
-    const hot = corps.filter(c => {
-      const corpsId = `${c.corpsName}|${c.sourceYear}`;
-      return hotData[corpsId]?.[caption]?.isHot;
-    }).slice(0, 5);
+  const generateSuggestions = useCallback(
+    (corps, caption, hotData) => {
+      // Hot suggestions: corps that are hot for the current caption
+      const hot = corps
+        .filter((c) => {
+          const corpsId = `${c.corpsName}|${c.sourceYear}`;
+          return hotData[corpsId]?.[caption]?.isHot;
+        })
+        .slice(0, 5);
 
-    const value = corps.filter(c => c.performanceData?.isValue).slice(0, 5);
-    const history = corps.filter(c => userHistory.includes(c.corpsName)).slice(0, 5);
-    setDraftSuggestions({ hot, value, history });
-  }, [userHistory]);
+      const value = corps.filter((c) => c.performanceData?.isValue).slice(0, 5);
+      const history = corps.filter((c) => userHistory.includes(c.corpsName)).slice(0, 5);
+      setDraftSuggestions({ hot, value, history });
+    },
+    [userHistory]
+  );
 
   // Regenerate suggestions when caption changes or data loads
   useEffect(() => {
@@ -204,7 +238,10 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
   }, [availableCorps, activeCaption, hotCorpsData, generateSuggestions]);
 
   const calculateTotalPoints = useCallback(() => {
-    return Object.values(selections).reduce((t, s) => t + (s ? parseInt(s.split('|')[2]) || 0 : 0), 0);
+    return Object.values(selections).reduce(
+      (t, s) => t + (s ? parseInt(s.split('|')[2]) || 0 : 0),
+      0
+    );
   }, [selections]);
 
   const totalPoints = calculateTotalPoints();
@@ -220,15 +257,21 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
     return { name, year, points: parseInt(pts) || 0 };
   };
 
-  const handleSelectionChange = useCallback((captionId, corpsData) => {
-    if (!corpsData) {
-      const newSel = { ...selections };
-      delete newSel[captionId];
-      setSelections(newSel);
-    } else {
-      setSelections(prev => ({ ...prev, [captionId]: `${corpsData.corpsName}|${corpsData.sourceYear}|${corpsData.points}` }));
-    }
-  }, [selections]);
+  const handleSelectionChange = useCallback(
+    (captionId, corpsData) => {
+      if (!corpsData) {
+        const newSel = { ...selections };
+        delete newSel[captionId];
+        setSelections(newSel);
+      } else {
+        setSelections((prev) => ({
+          ...prev,
+          [captionId]: `${corpsData.corpsName}|${corpsData.sourceYear}|${corpsData.points}`,
+        }));
+      }
+    },
+    [selections]
+  );
 
   const handleCaptionClick = (captionId) => {
     setActiveCaption(captionId);
@@ -245,7 +288,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
     handleSelectionChange(captionId, corps);
 
     // Find next empty caption
-    const currentIndex = captions.findIndex(c => c.id === captionId);
+    const currentIndex = captions.findIndex((c) => c.id === captionId);
     for (let i = currentIndex + 1; i < captions.length; i++) {
       if (!selections[captions[i].id]) {
         setActiveCaption(captions[i].id);
@@ -262,7 +305,12 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
   };
 
   const handleSaveTemplate = (name) => {
-    const newTemplate = { name, lineup: selections, totalPoints: calculateTotalPoints(), createdAt: new Date().toISOString() };
+    const newTemplate = {
+      name,
+      lineup: selections,
+      totalPoints: calculateTotalPoints(),
+      createdAt: new Date().toISOString(),
+    };
     const updated = [...templates, newTemplate];
     setTemplates(updated);
     localStorage.setItem(`lineupTemplates_${user?.uid}_${corpsClass}`, JSON.stringify(updated));
@@ -273,7 +321,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
     const valid = {};
     Object.entries(template.lineup).forEach(([id, sel]) => {
       const [name] = sel.split('|');
-      const c = availableCorps.find(x => x.corpsName === name);
+      const c = availableCorps.find((x) => x.corpsName === name);
       if (c) valid[id] = `${c.corpsName}|${c.sourceYear}|${c.points}`;
     });
     setSelections(valid);
@@ -289,9 +337,12 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
   };
 
   // Generate a lineup key matching the server format for duplicate checking
-  const generateLineupKey = useCallback((lineup) => {
-    return `${corpsClass}_${Object.values(lineup).filter(Boolean).sort().join("_")}`;
-  }, [corpsClass]);
+  const generateLineupKey = useCallback(
+    (lineup) => {
+      return `${corpsClass}_${Object.values(lineup).filter(Boolean).sort().join('_')}`;
+    },
+    [corpsClass]
+  );
 
   // Quick Fill - auto-fill empty slots randomly while targeting 95-100% of point limit
   // Guarantees all captions are filled by reserving budget for remaining slots
@@ -299,7 +350,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
   const handleQuickFill = useCallback(() => {
     if (availableCorps.length === 0) return;
 
-    const emptyCaptions = captions.filter(c => !selections[c.id]);
+    const emptyCaptions = captions.filter((c) => !selections[c.id]);
 
     if (emptyCaptions.length === 0) {
       toast('All positions are already filled!', { icon: '✓' });
@@ -312,7 +363,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
 
       // Get corps that will still be available after this pick
       const remainingCorps = availableCorps
-        .filter(c => !usedCorpsSet.has(c.corpsName) && c.corpsName !== corps.corpsName)
+        .filter((c) => !usedCorpsSet.has(c.corpsName) && c.corpsName !== corps.corpsName)
         .sort((a, b) => a.points - b.points);
 
       // Calculate minimum points needed to fill remaining slots
@@ -331,11 +382,12 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
       const usedCorps = new Set(
         Object.values(newSelections)
           .filter(Boolean)
-          .map(s => s.split('|')[0])
+          .map((s) => s.split('|')[0])
       );
 
       const usedPoints = Object.values(newSelections).reduce(
-        (t, s) => t + (s ? parseInt(s.split('|')[2]) || 0 : 0), 0
+        (t, s) => t + (s ? parseInt(s.split('|')[2]) || 0 : 0),
+        0
       );
       let remainingBudget = pointLimit - usedPoints;
 
@@ -348,8 +400,8 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
 
         // Get all viable candidates (picking them leaves enough for remaining slots)
         const viableCandidates = availableCorps
-          .filter(c => !usedCorps.has(c.corpsName) && c.points <= remainingBudget)
-          .filter(c => isViablePick(c, slotsAfterThis, remainingBudget - c.points, usedCorps));
+          .filter((c) => !usedCorps.has(c.corpsName) && c.points <= remainingBudget)
+          .filter((c) => isViablePick(c, slotsAfterThis, remainingBudget - c.points, usedCorps));
 
         if (viableCandidates.length === 0) {
           // Shouldn't happen with proper math, but safety fallback
@@ -366,7 +418,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
 
         // Take candidates that are at least 70% of ideal (but still viable)
         const minPreferred = Math.floor(idealPerSlot * 0.7);
-        let preferredCandidates = sortedByPoints.filter(c => c.points >= minPreferred);
+        let preferredCandidates = sortedByPoints.filter((c) => c.points >= minPreferred);
 
         // If no candidates meet preference, use all viable (prioritizing higher points)
         if (preferredCandidates.length === 0) {
@@ -377,7 +429,8 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
         const randomIndex = Math.floor(Math.random() * preferredCandidates.length);
         const selected = preferredCandidates[randomIndex];
 
-        newSelections[caption.id] = `${selected.corpsName}|${selected.sourceYear}|${selected.points}`;
+        newSelections[caption.id] =
+          `${selected.corpsName}|${selected.sourceYear}|${selected.points}`;
         usedCorps.add(selected.corpsName);
         remainingBudget -= selected.points;
       }
@@ -405,15 +458,21 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
 
     setSelections(newSelections);
 
-    const filledCount = emptyCaptions.filter(c => newSelections[c.id]).length;
+    const filledCount = emptyCaptions.filter((c) => newSelections[c.id]).length;
     if (filledCount > 0) {
       toast.success(`Auto-filled ${filledCount} position${filledCount > 1 ? 's' : ''}!`);
     }
   }, [availableCorps, selections, captions, pointLimit, activeLineupKeys, generateLineupKey]);
 
   const handleSubmit = async () => {
-    if (!isComplete) { toast.error('Please select all 8 captions'); return; }
-    if (isOverLimit) { toast.error(`Lineup exceeds ${pointLimit} point limit`); return; }
+    if (!isComplete) {
+      toast.error('Please select all 8 captions');
+      return;
+    }
+    if (isOverLimit) {
+      toast.error(`Lineup exceeds ${pointLimit} point limit`);
+      return;
+    }
     try {
       setSaving(true);
       await saveLineup({ lineup: selections, corpsClass });
@@ -432,7 +491,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
   };
 
   // Get active caption data
-  const activeCaptionData = activeCaption ? captions.find(c => c.id === activeCaption) : null;
+  const activeCaptionData = activeCaption ? captions.find((c) => c.id === activeCaption) : null;
   const activeCaptionSelection = activeCaption ? getSelectedCorps(activeCaption) : null;
 
   return (
@@ -444,7 +503,10 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
         aria-modal="true"
         aria-labelledby="modal-title-caption-selection"
       >
-        <div className="w-full max-w-5xl max-h-[95vh] bg-[#1a1a1a] border border-[#333] rounded-sm flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="w-full max-w-5xl max-h-[95vh] bg-[#1a1a1a] border border-[#333] rounded-sm flex flex-col"
+          onClick={(e) => e.stopPropagation()}
+        >
           {/* Header */}
           <div className="px-4 py-3 border-b border-[#333] bg-[#222] flex-shrink-0">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
@@ -459,12 +521,17 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
                   </button>
                 )}
                 <div>
-                  <h2 id="modal-title-caption-selection" className="text-xs font-bold uppercase tracking-wider text-gray-300">
+                  <h2
+                    id="modal-title-caption-selection"
+                    className="text-xs font-bold uppercase tracking-wider text-gray-300"
+                  >
                     {mobileView === 'selection' && activeCaptionData
                       ? `Select for ${activeCaptionData.name}`
                       : 'Draft Your Lineup'}
                   </h2>
-                  <p className="text-sm text-gray-500">{CLASS_LABELS[corpsClass]} • {pointLimit} pts budget</p>
+                  <p className="text-sm text-gray-500">
+                    {CLASS_LABELS[corpsClass]} • {pointLimit} pts budget
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -481,7 +548,10 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
                 >
                   <Wand2 className="w-3 h-3" /> Quick Fill
                 </button>
-                <button onClick={() => setShowTemplateModal(true)} className="h-8 px-3 border border-[#333] text-gray-400 text-xs font-bold uppercase hover:border-[#444] hover:text-white flex items-center gap-1">
+                <button
+                  onClick={() => setShowTemplateModal(true)}
+                  className="h-8 px-3 border border-[#333] text-gray-400 text-xs font-bold uppercase hover:border-[#444] hover:text-white flex items-center gap-1"
+                >
                   <Save className="w-3 h-3" /> Templates
                 </button>
                 <button onClick={onClose} className="p-1 text-gray-500 hover:text-white">
@@ -497,12 +567,16 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
               <div className="flex items-center gap-3">
                 <Target className="w-4 h-4 text-[#0057B8]" />
                 <span className="text-sm text-gray-400">Budget:</span>
-                <span className={`text-lg font-data font-bold ${isOverLimit ? 'text-red-500' : remainingPoints < 10 ? 'text-yellow-500' : 'text-[#0057B8]'}`}>
+                <span
+                  className={`text-lg font-data font-bold ${isOverLimit ? 'text-red-500' : remainingPoints < 10 ? 'text-yellow-500' : 'text-[#0057B8]'}`}
+                >
                   {totalPoints} / {pointLimit}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className={`text-xs font-bold ${isComplete ? 'text-green-400' : 'text-gray-500'}`}>
+                <span
+                  className={`text-xs font-bold ${isComplete ? 'text-green-400' : 'text-gray-500'}`}
+                >
                   {selectionCount}/8 selected
                 </span>
                 {isOverLimit && (
@@ -518,7 +592,10 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
               </div>
             </div>
             <div className="h-2 bg-[#333] overflow-hidden rounded">
-              <div className={`h-full transition-all ${isOverLimit ? 'bg-red-500' : 'bg-[#0057B8]'}`} style={{ width: `${Math.min((totalPoints / pointLimit) * 100, 100)}%` }} />
+              <div
+                className={`h-full transition-all ${isOverLimit ? 'bg-red-500' : 'bg-[#0057B8]'}`}
+                style={{ width: `${Math.min((totalPoints / pointLimit) * 100, 100)}%` }}
+              />
             </div>
           </div>
 
@@ -532,7 +609,9 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
             ) : (
               <div className="flex-1 flex min-h-0">
                 {/* Left Panel - Your Lineup (hidden on mobile when viewing selection) */}
-                <div className={`w-full lg:w-80 flex-shrink-0 border-r border-[#333] overflow-y-auto min-h-0 ${mobileView === 'selection' ? 'hidden lg:block' : ''}`}>
+                <div
+                  className={`w-full lg:w-80 flex-shrink-0 border-r border-[#333] overflow-y-auto min-h-0 ${mobileView === 'selection' ? 'hidden lg:block' : ''}`}
+                >
                   <div className="p-4 space-y-4">
                     {/* Draft Helper */}
                     <DraftHelper
@@ -583,17 +662,25 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
                 </div>
 
                 {/* Right Panel - Corps Selection (full screen on mobile when viewing selection) */}
-                <div className={`flex-1 flex flex-col overflow-hidden min-h-0 ${mobileView === 'lineup' ? 'hidden lg:flex' : ''}`}>
+                <div
+                  className={`flex-1 flex flex-col overflow-hidden min-h-0 ${mobileView === 'lineup' ? 'hidden lg:flex' : ''}`}
+                >
                   {activeCaption && activeCaptionData ? (
                     <>
                       {/* Caption Header */}
                       <div className="px-4 py-3 bg-[#222] border-b border-[#333] flex-shrink-0">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <div className={`w-1.5 h-6 rounded-sm ${categoryColors[activeCaptionData.category]}`} />
+                            <div
+                              className={`w-1.5 h-6 rounded-sm ${categoryColors[activeCaptionData.category]}`}
+                            />
                             <div>
-                              <h3 className="text-sm font-bold text-white">{activeCaptionData.name}</h3>
-                              <p className="text-[10px] text-gray-500">{activeCaptionData.category}</p>
+                              <h3 className="text-sm font-bold text-white">
+                                {activeCaptionData.name}
+                              </h3>
+                              <p className="text-[10px] text-gray-500">
+                                {activeCaptionData.category}
+                              </p>
                             </div>
                           </div>
                           {activeCaptionSelection && (
@@ -613,7 +700,10 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
                           {availableCorps.map((corps, idx) => {
                             const value = `${corps.corpsName}|${corps.sourceYear}|${corps.points}`;
                             const isCurrentSel = selections[activeCaption] === value;
-                            const wouldExceed = !isCurrentSel && (totalPoints - (activeCaptionSelection?.points || 0) + corps.points > pointLimit);
+                            const wouldExceed =
+                              !isCurrentSel &&
+                              totalPoints - (activeCaptionSelection?.points || 0) + corps.points >
+                                pointLimit;
                             // Get caption-specific hot status for this corps
                             const corpsId = `${corps.corpsName}|${corps.sourceYear}`;
                             const captionHotStatus = hotCorpsData[corpsId]?.[activeCaption];
@@ -649,7 +739,11 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
 
           {/* Footer */}
           <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end gap-2 flex-shrink-0">
-            <button onClick={onClose} disabled={saving} className="h-9 px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white disabled:opacity-50">
+            <button
+              onClick={onClose}
+              disabled={saving}
+              className="h-9 px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white disabled:opacity-50"
+            >
               Cancel
             </button>
             <button

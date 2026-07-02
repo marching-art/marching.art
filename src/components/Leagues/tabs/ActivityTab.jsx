@@ -64,11 +64,7 @@ const ActivityTab = ({
       />
 
       {/* Achievements */}
-      <AchievementsCard
-        standings={standings}
-        leagueStats={leagueStats}
-        userProfile={userProfile}
-      />
+      <AchievementsCard standings={standings} leagueStats={leagueStats} userProfile={userProfile} />
 
       {/* Activity Feed */}
       <div className="bg-[#1a1a1a] border border-[#333]">

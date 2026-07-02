@@ -72,7 +72,9 @@ const NotFound = () => {
           className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/30 rounded-full mb-6"
         >
           <AlertTriangle className="w-4 h-4 text-red-400" />
-          <span className="text-xs font-mono text-red-400 uppercase tracking-widest">System Error</span>
+          <span className="text-xs font-mono text-red-400 uppercase tracking-widest">
+            System Error
+          </span>
         </m.div>
 
         {/* 404 Number */}
@@ -137,7 +139,9 @@ const NotFound = () => {
           transition={{ delay: 0.6 }}
           className="mt-10 pt-6 border-t border-cream/10"
         >
-          <p className="text-xs text-cream/40 mb-3 font-mono uppercase tracking-wider">Quick Links</p>
+          <p className="text-xs text-cream/40 mb-3 font-mono uppercase tracking-wider">
+            Quick Links
+          </p>
           <div className="flex flex-wrap gap-2 justify-center">
             <Link
               to="/dashboard"

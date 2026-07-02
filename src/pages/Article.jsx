@@ -8,10 +8,24 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useLocation, Link } from 'react-router-dom';
 import {
-  ArrowLeft, Trophy, Flame, Share2, Loader2,
-  AlertCircle, ChevronRight, Lock, Mail, User, LogOut,
-  Settings, Zap, LayoutDashboard, Award, Activity,
-  MessageCircle, Coins
+  ArrowLeft,
+  Trophy,
+  Flame,
+  Share2,
+  Loader2,
+  AlertCircle,
+  ChevronRight,
+  Lock,
+  Mail,
+  User,
+  LogOut,
+  Settings,
+  Zap,
+  LayoutDashboard,
+  Award,
+  Activity,
+  MessageCircle,
+  Coins,
 } from 'lucide-react';
 import ArticleReactions from '../components/Articles/ArticleReactions';
 import ArticleComments from '../components/Articles/ArticleComments';
@@ -20,7 +34,12 @@ import ArticleNarrativeParser from '../components/Articles/ArticleNarrativeParse
 import CaptionInsightsCards from '../components/Articles/CaptionInsightsCards';
 import CaptionBreakdownCards from '../components/Articles/CaptionBreakdownCards';
 import RecommendationCards from '../components/Articles/RecommendationCards';
-import { LiveScoresBox, FantasyTrendingBox, StandingsModal, YouTubeModal } from '../components/Sidebar';
+import {
+  LiveScoresBox,
+  FantasyTrendingBox,
+  StandingsModal,
+  YouTubeModal,
+} from '../components/Sidebar';
 import { getArticleEngagement } from '../api/functions';
 import { useAuth } from '../context/AuthContext';
 import { useProfileStore } from '../store/profileStore';
@@ -34,7 +53,6 @@ import { useLandingScores } from '../hooks/useLandingScores';
 import { useYoutubeSearch } from '../hooks/useYoutubeSearch';
 import toast from 'react-hot-toast';
 
-
 /**
  * Article Page - Full article view with site layout
  */
@@ -45,7 +63,12 @@ const Article = () => {
   const { user, signIn, signOut } = useAuth();
   const profile = useProfileStore((state) => state.profile);
   const { tickerData, loading: tickerLoading } = useTickerData();
-  const { liveScores, displayDay, loading: scoresLoading, hasData: hasScoresData } = useLandingScores();
+  const {
+    liveScores,
+    displayDay,
+    loading: scoresLoading,
+    hasData: hasScoresData,
+  } = useLandingScores();
 
   // Auth form state
   const [email, setEmail] = useState('');
@@ -67,7 +90,8 @@ const Article = () => {
   const [showStandingsModal, setShowStandingsModal] = useState(false);
 
   // YouTube search hook
-  const { videoModal, handleYoutubeSearch, handleRetrySearch, closeVideoModal } = useYoutubeSearch();
+  const { videoModal, handleYoutubeSearch, handleRetrySearch, closeVideoModal } =
+    useYoutubeSearch();
 
   // Fetch article if not in navigation state (direct link access)
   // OR if article from navigation is missing full content (feedOnly mode)
@@ -130,7 +154,7 @@ const Article = () => {
     for (const classKey of ['worldClass', 'openClass', 'aClass']) {
       const classData = tickerData.byClass[classKey];
       if (classData?.movers) {
-        classData.movers.forEach(mover => {
+        classData.movers.forEach((mover) => {
           const prevScore = parseFloat(mover.previousScore);
           const changeValue = parseFloat(mover.change);
           const percentChange = prevScore > 0 ? (changeValue / prevScore) * 100 : 0;
@@ -145,9 +169,7 @@ const Article = () => {
       }
     }
 
-    return allMovers
-      .sort((a, b) => b.absChange - a.absChange)
-      .slice(0, 4);
+    return allMovers.sort((a, b) => b.absChange - a.absChange).slice(0, 4);
   }, [tickerData]);
 
   // Fetch engagement data if not provided
@@ -226,7 +248,9 @@ const Article = () => {
     };
 
     // Check if we're on a mobile device - Web Share API is only reliable on mobile
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
 
     if (navigator.share && isMobile) {
       try {
@@ -248,7 +272,9 @@ const Article = () => {
   };
 
   const handleCommentCountChange = (newCount) => {
-    setEngagement(prev => prev ? { ...prev, commentCount: newCount } : { commentCount: newCount });
+    setEngagement((prev) =>
+      prev ? { ...prev, commentCount: newCount } : { commentCount: newCount }
+    );
   };
 
   const scrollToComments = () => {
@@ -267,9 +293,9 @@ const Article = () => {
   const effectiveDay = useMemo(() => {
     if (!currentDay) return null;
     const etHour = parseInt(
-      new Intl.DateTimeFormat("en-US", {
-        timeZone: "America/New_York",
-        hour: "2-digit",
+      new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/New_York',
+        hour: '2-digit',
         hour12: false,
       }).format(new Date())
     );
@@ -280,7 +306,8 @@ const Article = () => {
     return day >= 1 ? day : null;
   }, [currentDay]);
   const isPriorSeasonArticle = seasonUid && article?.seasonId && article.seasonId !== seasonUid;
-  const isDayGated = article && effectiveDay && !isPriorSeasonArticle && article.reportDay > effectiveDay;
+  const isDayGated =
+    article && effectiveDay && !isPriorSeasonArticle && article.reportDay > effectiveDay;
 
   if (loading) {
     return (
@@ -309,7 +336,8 @@ const Article = () => {
   }
 
   const config = getCategoryConfig(article.category);
-  const fullContent = article.fullStory || (article.narrative && article.narrative.trim()) || article.summary;
+  const fullContent =
+    article.fullStory || (article.narrative && article.narrative.trim()) || article.summary;
 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-[#0A0A0A]">
@@ -321,9 +349,7 @@ const Article = () => {
               <div className="w-8 h-8 rounded-sm overflow-hidden">
                 <img src="/logo192.svg" alt="marching.art" className="w-full h-full object-cover" />
               </div>
-              <span className="text-base font-bold text-white tracking-wider">
-                marching.art
-              </span>
+              <span className="text-base font-bold text-white tracking-wider">marching.art</span>
             </Link>
           </div>
           <div className="ml-auto flex items-center gap-2">
@@ -358,10 +384,16 @@ const Article = () => {
                 <MessageCircle className="w-4 h-4" />
                 Discord
               </a>
-              <Link to="/privacy" className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center">
+              <Link
+                to="/privacy"
+                className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center"
+              >
                 Privacy
               </Link>
-              <Link to="/terms" className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center">
+              <Link
+                to="/terms"
+                className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center"
+              >
                 Terms
               </Link>
             </div>
@@ -373,7 +405,6 @@ const Article = () => {
       <main className="flex-1 overflow-y-auto min-h-0 pb-20 md:pb-4">
         <div className="max-w-[1920px] mx-auto p-4 lg:p-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
             {/* ============================================================= */}
             {/* MAIN COLUMN - Article Content (8 cols) */}
             {/* ============================================================= */}
@@ -397,7 +428,9 @@ const Article = () => {
                 <div className="p-5 lg:p-6 border-b border-[#333]">
                   {/* Meta */}
                   <div className="flex items-center gap-3 mb-4 text-xs text-gray-500 flex-wrap">
-                    <span className={`px-2 py-1 ${config.bgClass} text-white text-[10px] font-bold uppercase tracking-wider`}>
+                    <span
+                      className={`px-2 py-1 ${config.bgClass} text-white text-[10px] font-bold uppercase tracking-wider`}
+                    >
                       {config.label}
                     </span>
                     <span>{formatArticleDate(article.createdAt)}</span>
@@ -421,9 +454,7 @@ const Article = () => {
                   </h1>
 
                   {/* Summary */}
-                  <p className="text-lg text-gray-400 leading-relaxed">
-                    {article.summary}
-                  </p>
+                  <p className="text-lg text-gray-400 leading-relaxed">{article.summary}</p>
                 </div>
 
                 {/* Reactions */}
@@ -453,9 +484,7 @@ const Article = () => {
                       aria-label="Jump to comments"
                     >
                       <MessageCircle className="w-4 h-4" />
-                      <span className="text-sm font-medium">
-                        {engagement?.commentCount || 0}
-                      </span>
+                      <span className="text-sm font-medium">{engagement?.commentCount || 0}</span>
                     </button>
                   </div>
                 </div>
@@ -463,8 +492,12 @@ const Article = () => {
                 {/* Full Story - only show if different from summary */}
                 <div className="p-5 lg:p-6">
                   {/* Articles with structured sections get parsed layout */}
-                  {(['fantasy_recap', 'dci_recap', 'dci_daily', 'dci_feature'].includes(article.type) ||
-                    ['fantasy_recap', 'dci_recap', 'dci_daily', 'dci_feature'].includes(article.articleType)) ? (
+                  {['fantasy_recap', 'dci_recap', 'dci_daily', 'dci_feature'].includes(
+                    article.type
+                  ) ||
+                  ['fantasy_recap', 'dci_recap', 'dci_daily', 'dci_feature'].includes(
+                    article.articleType
+                  ) ? (
                     <div className="mb-8">
                       <ArticleNarrativeParser
                         narrative={article.narrative}
@@ -475,7 +508,10 @@ const Article = () => {
                   ) : fullContent && fullContent !== article.summary ? (
                     <div className="prose prose-invert prose-lg max-w-none mb-8">
                       {fullContent.split('\n\n').map((paragraph, idx) => (
-                        <p key={idx} className="text-base md:text-lg text-gray-300 leading-relaxed mb-6">
+                        <p
+                          key={idx}
+                          className="text-base md:text-lg text-gray-300 leading-relaxed mb-6"
+                        >
                           {paragraph}
                         </p>
                       ))}
@@ -549,7 +585,6 @@ const Article = () => {
             {/* ============================================================= */}
             <div className="lg:col-span-4">
               <div className="lg:sticky lg:top-4 space-y-5">
-
                 {/* ------------------------------------------------------- */}
                 {/* AUTH WIDGET - Login or User Dashboard */}
                 {/* ------------------------------------------------------- */}
@@ -568,15 +603,15 @@ const Article = () => {
                     <div className="p-4 border-b border-[#333]">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-[#0057B8] flex items-center justify-center text-white font-bold text-sm">
-                          {profile?.displayName?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'D'}
+                          {profile?.displayName?.[0]?.toUpperCase() ||
+                            user.email?.[0]?.toUpperCase() ||
+                            'D'}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-bold text-white truncate">
                             {profile?.displayName || 'Director'}
                           </div>
-                          <div className="text-xs text-gray-500 truncate">
-                            {user.email}
-                          </div>
+                          <div className="text-xs text-gray-500 truncate">{user.email}</div>
                         </div>
                       </div>
 
@@ -586,24 +621,32 @@ const Article = () => {
                           <div className="flex items-center gap-1.5">
                             <Zap className="w-3.5 h-3.5 text-purple-500" />
                             <span className="text-xs text-gray-400">Level</span>
-                            <span className="text-sm font-bold text-white">{profile.xpLevel || 1}</span>
+                            <span className="text-sm font-bold text-white">
+                              {profile.xpLevel || 1}
+                            </span>
                           </div>
                           <div className="flex items-center gap-1.5">
                             <Trophy className="w-3.5 h-3.5 text-[#0057B8]" />
                             <span className="text-xs text-gray-400">XP</span>
-                            <span className="text-sm font-bold text-white font-data tabular-nums">{profile.xp?.toLocaleString() || 0}</span>
+                            <span className="text-sm font-bold text-white font-data tabular-nums">
+                              {profile.xp?.toLocaleString() || 0}
+                            </span>
                           </div>
                           {profile.engagement?.loginStreak > 0 && (
                             <div className="flex items-center gap-1.5">
                               <Flame className="w-3.5 h-3.5 text-orange-500" />
                               <span className="text-xs text-gray-400">Streak</span>
-                              <span className="text-sm font-bold text-orange-500 font-data tabular-nums">{profile.engagement.loginStreak}</span>
+                              <span className="text-sm font-bold text-orange-500 font-data tabular-nums">
+                                {profile.engagement.loginStreak}
+                              </span>
                             </div>
                           )}
                           <div className="flex items-center gap-1.5">
                             <Coins className="w-3.5 h-3.5 text-yellow-500" />
                             <span className="text-xs text-gray-400">Coins</span>
-                            <span className="text-sm font-bold text-yellow-500 font-data tabular-nums">{(profile.corpsCoin || 0).toLocaleString()}</span>
+                            <span className="text-sm font-bold text-yellow-500 font-data tabular-nums">
+                              {(profile.corpsCoin || 0).toLocaleString()}
+                            </span>
                           </div>
                         </div>
                       )}
@@ -724,7 +767,10 @@ const Article = () => {
 
                       {/* Footer Links */}
                       <div className="flex items-center justify-between text-xs text-gray-500 pt-1">
-                        <Link to="/forgot-password" className="hover:text-[#0057B8] transition-colors">
+                        <Link
+                          to="/forgot-password"
+                          className="hover:text-[#0057B8] transition-colors"
+                        >
                           Forgot password?
                         </Link>
                         <span>Free to play</span>
@@ -749,7 +795,6 @@ const Article = () => {
                   onYoutubeClick={handleYoutubeSearch}
                   onShowStandings={() => setShowStandingsModal(true)}
                 />
-
               </div>
             </div>
           </div>
@@ -766,11 +811,7 @@ const Article = () => {
       />
 
       {/* YOUTUBE VIDEO MODAL */}
-      <YouTubeModal
-        videoModal={videoModal}
-        onClose={closeVideoModal}
-        onRetry={handleRetrySearch}
-      />
+      <YouTubeModal videoModal={videoModal} onClose={closeVideoModal} onRetry={handleRetrySearch} />
     </div>
   );
 };

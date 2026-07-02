@@ -14,7 +14,7 @@ const UsersTab = () => {
     activeUsers: 0,
     avgLoginStreak: 0,
     totalCorps: 0,
-    totalLogins: 0
+    totalLogins: 0,
   });
   const [users, setUsers] = useState([]);
   const [showUserList, setShowUserList] = useState(false);
@@ -69,7 +69,12 @@ const UsersTab = () => {
   };
 
   const handleFixProfiles = async () => {
-    if (!window.confirm('Fix missing profile fields for all users? This will add default values for any missing required fields.')) return;
+    if (
+      !window.confirm(
+        'Fix missing profile fields for all users? This will add default values for any missing required fields.'
+      )
+    )
+      return;
     setFixingProfiles(true);
     try {
       const result = await fixProfileFields();
@@ -82,9 +87,10 @@ const UsersTab = () => {
     }
   };
 
-  const filteredUsers = users.filter(u =>
-    u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.uid.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = users.filter(
+    (u) =>
+      u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.uid.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -95,27 +101,38 @@ const UsersTab = () => {
         <div className="flex divide-x divide-[#333]">
           <div className="flex-1 p-3">
             <p className="text-[9px] uppercase text-gray-500 mb-1">Total</p>
-            <p className="text-xl font-bold text-white font-data tabular-nums">{stats.totalUsers}</p>
+            <p className="text-xl font-bold text-white font-data tabular-nums">
+              {stats.totalUsers}
+            </p>
           </div>
           <div className="flex-1 p-3">
             <p className="text-[9px] uppercase text-gray-500 mb-1">Active (7d)</p>
-            <p className="text-xl font-bold text-green-500 font-data tabular-nums">{stats.activeUsers}</p>
+            <p className="text-xl font-bold text-green-500 font-data tabular-nums">
+              {stats.activeUsers}
+            </p>
           </div>
           <div className="flex-1 p-3">
             <p className="text-[9px] uppercase text-gray-500 mb-1 flex items-center gap-1">
-              <Flame className="w-3 h-3" />Avg Streak
+              <Flame className="w-3 h-3" />
+              Avg Streak
             </p>
-            <p className="text-xl font-bold text-yellow-500 font-data tabular-nums">{stats.avgLoginStreak}d</p>
+            <p className="text-xl font-bold text-yellow-500 font-data tabular-nums">
+              {stats.avgLoginStreak}d
+            </p>
           </div>
           <div className="flex-1 p-3">
             <p className="text-[9px] uppercase text-gray-500 mb-1">Corps</p>
-            <p className="text-xl font-bold text-[#0057B8] font-data tabular-nums">{stats.totalCorps}</p>
+            <p className="text-xl font-bold text-[#0057B8] font-data tabular-nums">
+              {stats.totalCorps}
+            </p>
           </div>
         </div>
         <div className="flex divide-x divide-[#333] border-t border-[#333]">
           <div className="flex-1 p-3">
             <p className="text-[9px] uppercase text-gray-500 mb-1">Total Logins</p>
-            <p className="text-lg font-bold text-gray-300 font-data tabular-nums">{stats.totalLogins.toLocaleString()}</p>
+            <p className="text-lg font-bold text-gray-300 font-data tabular-nums">
+              {stats.totalLogins.toLocaleString()}
+            </p>
           </div>
           <div className="flex-1 p-3">
             <p className="text-[9px] uppercase text-gray-500 mb-1">Engagement</p>
@@ -160,7 +177,10 @@ const UsersTab = () => {
               <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
                 All Users ({users.length})
               </h2>
-              <button onClick={() => setShowUserList(false)} className="text-gray-400 hover:text-white">
+              <button
+                onClick={() => setShowUserList(false)}
+                className="text-gray-400 hover:text-white"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -180,12 +200,22 @@ const UsersTab = () => {
               <table className="w-full">
                 <thead className="bg-[#222] sticky top-0">
                   <tr>
-                    <th className="text-left px-4 py-2 text-[10px] text-gray-500 uppercase">User</th>
+                    <th className="text-left px-4 py-2 text-[10px] text-gray-500 uppercase">
+                      User
+                    </th>
                     <th className="text-left px-4 py-2 text-[10px] text-gray-500 uppercase">Lvl</th>
-                    <th className="text-left px-4 py-2 text-[10px] text-gray-500 uppercase">Streak</th>
-                    <th className="text-left px-4 py-2 text-[10px] text-gray-500 uppercase">Logins</th>
-                    <th className="text-left px-4 py-2 text-[10px] text-gray-500 uppercase">Corps</th>
-                    <th className="text-left px-4 py-2 text-[10px] text-gray-500 uppercase">Last Login</th>
+                    <th className="text-left px-4 py-2 text-[10px] text-gray-500 uppercase">
+                      Streak
+                    </th>
+                    <th className="text-left px-4 py-2 text-[10px] text-gray-500 uppercase">
+                      Logins
+                    </th>
+                    <th className="text-left px-4 py-2 text-[10px] text-gray-500 uppercase">
+                      Corps
+                    </th>
+                    <th className="text-left px-4 py-2 text-[10px] text-gray-500 uppercase">
+                      Last Login
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#333]">
@@ -193,18 +223,26 @@ const UsersTab = () => {
                     <tr key={user.uid} className="hover:bg-[#111]">
                       <td className="px-4 py-2.5">
                         <p className="text-sm text-white">{user.username}</p>
-                        <p className="text-[10px] text-gray-600 font-data">{user.uid.slice(0, 12)}...</p>
+                        <p className="text-[10px] text-gray-600 font-data">
+                          {user.uid.slice(0, 12)}...
+                        </p>
                       </td>
                       <td className="px-4 py-2.5 text-sm text-white font-data">{user.xpLevel}</td>
                       <td className="px-4 py-2.5">
-                        <span className={`text-sm font-data ${user.loginStreak >= 7 ? 'text-yellow-500' : user.loginStreak >= 3 ? 'text-green-500' : 'text-gray-400'}`}>
+                        <span
+                          className={`text-sm font-data ${user.loginStreak >= 7 ? 'text-yellow-500' : user.loginStreak >= 3 ? 'text-green-500' : 'text-gray-400'}`}
+                        >
                           {user.loginStreak > 0 ? `${user.loginStreak}d` : '—'}
                         </span>
                       </td>
-                      <td className="px-4 py-2.5 text-sm text-gray-400 font-data">{user.totalLogins || 0}</td>
+                      <td className="px-4 py-2.5 text-sm text-gray-400 font-data">
+                        {user.totalLogins || 0}
+                      </td>
                       <td className="px-4 py-2.5 text-sm text-gray-400">{user.corps.length}</td>
                       <td className="px-4 py-2.5 text-xs text-gray-400">
-                        {user.lastLogin && !isNaN(user.lastLogin.getTime()) ? user.lastLogin.toLocaleDateString() : '—'}
+                        {user.lastLogin && !isNaN(user.lastLogin.getTime())
+                          ? user.lastLogin.toLocaleDateString()
+                          : '—'}
                       </td>
                     </tr>
                   ))}
@@ -220,14 +258,21 @@ const UsersTab = () => {
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-[#1a1a1a] border border-[#333] w-full max-w-sm">
             <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
-              <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Manage Roles</h2>
-              <button onClick={() => setShowRoleManager(false)} className="text-gray-400 hover:text-white">
+              <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                Manage Roles
+              </h2>
+              <button
+                onClick={() => setShowRoleManager(false)}
+                className="text-gray-400 hover:text-white"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
             <div className="p-4 space-y-4">
               <div>
-                <label className="block text-[10px] text-gray-500 uppercase mb-2">Email Address</label>
+                <label className="block text-[10px] text-gray-500 uppercase mb-2">
+                  Email Address
+                </label>
                 <input
                   type="email"
                   placeholder="user@example.com"

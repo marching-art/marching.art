@@ -20,12 +20,7 @@ import {
 } from 'firebase/firestore';
 import { db, paths } from '../api/client';
 import { queryKeys } from '../lib/queryClient';
-import type {
-  LeagueNotification,
-  LeagueActivity,
-  RivalryData,
-  League,
-} from '../types';
+import type { LeagueNotification, LeagueActivity, RivalryData, League } from '../types';
 
 // =============================================================================
 // TYPES
@@ -116,11 +111,11 @@ export function useLeagueNotifications(
   // Subscribe to real-time notifications
   useEffect(() => {
     if (!uid || !enabled) {
-      setState(prev => ({ ...prev, loading: false }));
+      setState((prev) => ({ ...prev, loading: false }));
       return;
     }
 
-    setState(prev => ({ ...prev, loading: true }));
+    setState((prev) => ({ ...prev, loading: true }));
 
     // Query for league notifications
     const notificationsRef = collection(db, paths.userNotifications(uid));
@@ -142,12 +137,12 @@ export function useLeagueNotifications(
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const notifications = snapshot.docs.map(doc => ({
+        const notifications = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         })) as LeagueNotification[];
 
-        const unreadCount = notifications.filter(n => !n.read).length;
+        const unreadCount = notifications.filter((n) => !n.read).length;
 
         setState({
           notifications,
@@ -157,14 +152,11 @@ export function useLeagueNotifications(
         });
 
         // Update query cache for badge
-        queryClient.setQueryData(
-          queryKeys.unreadNotificationCount(uid),
-          unreadCount
-        );
+        queryClient.setQueryData(queryKeys.unreadNotificationCount(uid), unreadCount);
       },
       (error) => {
         console.error('Notification subscription error:', error);
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           loading: false,
           error: error as Error,
@@ -176,16 +168,19 @@ export function useLeagueNotifications(
   }, [uid, enabled, notificationLimit, queryClient]);
 
   // Mark notification as read
-  const markAsRead = useCallback(async (notificationId: string) => {
-    if (!uid) return;
+  const markAsRead = useCallback(
+    async (notificationId: string) => {
+      if (!uid) return;
 
-    try {
-      const notificationRef = doc(db, paths.userNotifications(uid), notificationId);
-      await updateDoc(notificationRef, { read: true });
-    } catch (error) {
-      console.error('Failed to mark notification as read:', error);
-    }
-  }, [uid]);
+      try {
+        const notificationRef = doc(db, paths.userNotifications(uid), notificationId);
+        await updateDoc(notificationRef, { read: true });
+      } catch (error) {
+        console.error('Failed to mark notification as read:', error);
+      }
+    },
+    [uid]
+  );
 
   // Mark all notifications as read
   const markAllAsRead = useCallback(async () => {
@@ -193,9 +188,9 @@ export function useLeagueNotifications(
 
     try {
       const batch = writeBatch(db);
-      const unreadNotifications = state.notifications.filter(n => !n.read);
+      const unreadNotifications = state.notifications.filter((n) => !n.read);
 
-      unreadNotifications.forEach(notification => {
+      unreadNotifications.forEach((notification) => {
         const notificationRef = doc(db, paths.userNotifications(uid), notification.id);
         batch.update(notificationRef, { read: true });
       });
@@ -207,33 +202,36 @@ export function useLeagueNotifications(
   }, [uid, state.notifications]);
 
   // Clear old notifications
-  const clearOldNotifications = useCallback(async (olderThanDays = 30) => {
-    if (!uid) return;
+  const clearOldNotifications = useCallback(
+    async (olderThanDays = 30) => {
+      if (!uid) return;
 
-    try {
-      const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
-      const cutoffTimestamp = Timestamp.fromDate(cutoffDate);
+      try {
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
+        const cutoffTimestamp = Timestamp.fromDate(cutoffDate);
 
-      const notificationsRef = collection(db, paths.userNotifications(uid));
-      const q = query(
-        notificationsRef,
-        where('createdAt', '<', cutoffTimestamp),
-        where('read', '==', true)
-      );
+        const notificationsRef = collection(db, paths.userNotifications(uid));
+        const q = query(
+          notificationsRef,
+          where('createdAt', '<', cutoffTimestamp),
+          where('read', '==', true)
+        );
 
-      const snapshot = await getDocs(q);
-      const batch = writeBatch(db);
+        const snapshot = await getDocs(q);
+        const batch = writeBatch(db);
 
-      snapshot.docs.forEach(doc => {
-        batch.delete(doc.ref);
-      });
+        snapshot.docs.forEach((doc) => {
+          batch.delete(doc.ref);
+        });
 
-      await batch.commit();
-    } catch (error) {
-      console.error('Failed to clear old notifications:', error);
-    }
-  }, [uid]);
+        await batch.commit();
+      } catch (error) {
+        console.error('Failed to clear old notifications:', error);
+      }
+    },
+    [uid]
+  );
 
   return {
     ...state,
@@ -266,16 +264,12 @@ export function useLeagueActivity(
     setLoading(true);
 
     const activityRef = collection(db, paths.leagueActivity(leagueId));
-    const q = query(
-      activityRef,
-      orderBy('timestamp', 'desc'),
-      limit(activityLimit)
-    );
+    const q = query(activityRef, orderBy('timestamp', 'desc'), limit(activityLimit));
 
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const activityData = snapshot.docs.map(doc => ({
+        const activityData = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         })) as LeagueActivity[];
@@ -349,7 +343,7 @@ export function useRivalries(
 
     // Count matchups with each opponent
     Object.entries(weeklyMatchups).forEach(([weekNum, matchups]) => {
-      matchups.forEach(matchup => {
+      matchups.forEach((matchup) => {
         if (matchup.user1 !== uid && matchup.user2 !== uid) return;
 
         const opponentId = matchup.user1 === uid ? matchup.user2 : matchup.user1;
@@ -358,7 +352,8 @@ export function useRivalries(
           const profile = memberProfiles[opponentId];
           rivalryMap[opponentId] = {
             rivalId: opponentId,
-            rivalName: profile?.displayName || profile?.username || `Director ${opponentId.slice(0, 6)}`,
+            rivalName:
+              profile?.displayName || profile?.username || `Director ${opponentId.slice(0, 6)}`,
             matchupCount: 0,
             userWins: 0,
             rivalWins: 0,
@@ -387,7 +382,7 @@ export function useRivalries(
     });
 
     // Calculate streaks
-    Object.values(rivalryMap).forEach(rivalry => {
+    Object.values(rivalryMap).forEach((rivalry) => {
       const weeks = Object.keys(weeklyMatchups)
         .map(Number)
         .sort((a, b) => b - a);
@@ -397,8 +392,9 @@ export function useRivalries(
 
       for (const week of weeks) {
         const matchup = weeklyMatchups[week]?.find(
-          m => (m.user1 === uid && m.user2 === rivalry.rivalId) ||
-               (m.user2 === uid && m.user1 === rivalry.rivalId)
+          (m) =>
+            (m.user1 === uid && m.user2 === rivalry.rivalId) ||
+            (m.user2 === uid && m.user1 === rivalry.rivalId)
         );
 
         if (!matchup) continue;
@@ -430,7 +426,7 @@ export function useRivalries(
 
     // Return rivals with 2+ matchups, sorted by total matchups
     return Object.values(rivalryMap)
-      .filter(r => r.matchupCount >= 2)
+      .filter((r) => r.matchupCount >= 2)
       .sort((a, b) => b.matchupCount - a.matchupCount);
   }, [uid, leagueId, weeklyMatchups, weeklyResults, memberProfiles]);
 }
@@ -475,11 +471,8 @@ export async function createLeagueNotification(
 // UTILITY: Check if user has rivalry with opponent
 // =============================================================================
 
-export function isRivalry(
-  rivalries: RivalryData[],
-  opponentId: string
-): RivalryData | undefined {
-  return rivalries.find(r => r.rivalId === opponentId);
+export function isRivalry(rivalries: RivalryData[], opponentId: string): RivalryData | undefined {
+  return rivalries.find((r) => r.rivalId === opponentId);
 }
 
 // =============================================================================
@@ -488,9 +481,7 @@ export function isRivalry(
 
 export function getRivalryDescription(rivalry: RivalryData): string {
   const record = `${rivalry.userWins}-${rivalry.rivalWins}`;
-  const streak = rivalry.streak
-    ? ` (${rivalry.streak.type}${rivalry.streak.count} streak)`
-    : '';
+  const streak = rivalry.streak ? ` (${rivalry.streak.type}${rivalry.streak.count} streak)` : '';
 
   return `${rivalry.matchupCount} matchups, ${record}${streak}`;
 }

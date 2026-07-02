@@ -62,7 +62,9 @@ const CardRoot = forwardRef<HTMLDivElement, CardProps>(
           ${hoverable ? 'cursor-pointer hover:border-[#555]' : ''}
           ${pressable ? 'cursor-pointer active:bg-[#222] focus:outline-none focus:border-[#0057B8]' : ''}
           ${className}
-        `.trim().replace(/\s+/g, ' ')}
+        `
+          .trim()
+          .replace(/\s+/g, ' ')}
         {...props}
       >
         {children}

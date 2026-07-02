@@ -1,8 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import {
-  Trophy, Award, Calendar, MapPin, Star, TrendingUp,
-  Crown, Archive, RefreshCw, X, Music, Medal
+  Trophy,
+  Award,
+  Calendar,
+  MapPin,
+  Star,
+  TrendingUp,
+  Crown,
+  Archive,
+  RefreshCw,
+  X,
+  Music,
+  Medal,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { subscribeToProfile } from '../api/profile';
@@ -39,7 +49,7 @@ const RetiredCorpsGallery = () => {
       worldClass: 'World Class',
       openClass: 'Open Class',
       aClass: 'A Class',
-      soundSport: 'SoundSport'
+      soundSport: 'SoundSport',
     };
     return classNames[corpsClass] || corpsClass;
   };
@@ -49,7 +59,7 @@ const RetiredCorpsGallery = () => {
       worldClass: 'from-purple-500 to-pink-500',
       openClass: 'from-blue-500 to-cyan-500',
       aClass: 'from-green-500 to-emerald-500',
-      soundSport: 'from-orange-500 to-yellow-500'
+      soundSport: 'from-orange-500 to-yellow-500',
     };
     return colors[corpsClass] || 'from-gray-500 to-gray-600';
   };
@@ -73,7 +83,7 @@ const RetiredCorpsGallery = () => {
 
   // Filter and sort retired corps
   const filteredCorps = retiredCorps
-    .filter(corps => filterClass === 'all' || corps.corpsClass === filterClass)
+    .filter((corps) => filterClass === 'all' || corps.corpsClass === filterClass)
     .map((corps, index) => ({ ...corps, originalIndex: index }))
     .sort((a, b) => {
       switch (sortBy) {
@@ -105,9 +115,7 @@ const RetiredCorpsGallery = () => {
       >
         <div className="flex items-center gap-3 mb-2">
           <Archive className="w-8 h-8 text-purple-400" />
-          <h1 className="text-3xl sm:text-4xl font-bold text-white">
-            Retired Corps Gallery
-          </h1>
+          <h1 className="text-3xl sm:text-4xl font-bold text-white">Retired Corps Gallery</h1>
         </div>
         <p className="text-gray-300 text-lg">
           Honor the legacy of your past corps and their achievements
@@ -199,7 +207,9 @@ const RetiredCorpsGallery = () => {
         >
           <Archive className="w-16 h-16 text-gray-500 mx-auto mb-4" />
           <h3 className="text-2xl font-bold text-white mb-2">
-            {filterClass === 'all' ? 'No Retired Corps Yet' : `No Retired ${getClassDisplayName(filterClass)} Corps`}
+            {filterClass === 'all'
+              ? 'No Retired Corps Yet'
+              : `No Retired ${getClassDisplayName(filterClass)} Corps`}
           </h3>
           <p className="text-gray-400">
             Retired corps will appear here when you retire them from your active roster.
@@ -228,7 +238,9 @@ const RetiredCorpsGallery = () => {
                 <div className="mb-4">
                   <div className="flex items-start justify-between mb-2">
                     <Music className="w-6 h-6 text-purple-400" />
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r ${getClassColor(corps.corpsClass)} text-white`}>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r ${getClassColor(corps.corpsClass)} text-white`}
+                    >
                       {getClassDisplayName(corps.corpsClass)}
                     </span>
                   </div>
@@ -248,9 +260,7 @@ const RetiredCorpsGallery = () => {
                       <Calendar className="w-4 h-4 text-blue-400" />
                       <span className="text-xs text-gray-400">Seasons</span>
                     </div>
-                    <div className="text-2xl font-bold text-white">
-                      {corps.totalSeasons || 0}
-                    </div>
+                    <div className="text-2xl font-bold text-white">{corps.totalSeasons || 0}</div>
                   </div>
 
                   <div className="bg-white/5 rounded-lg p-3">
@@ -268,9 +278,7 @@ const RetiredCorpsGallery = () => {
                       <Star className="w-4 h-4 text-purple-400" />
                       <span className="text-xs text-gray-400">Shows</span>
                     </div>
-                    <div className="text-2xl font-bold text-white">
-                      {corps.totalShows || 0}
-                    </div>
+                    <div className="text-2xl font-bold text-white">{corps.totalShows || 0}</div>
                   </div>
 
                   <div className="bg-white/5 rounded-lg p-3">
@@ -315,86 +323,95 @@ const RetiredCorpsGallery = () => {
               className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
               onClick={() => !unretiring && setShowUnretireModal(false)}
             >
-            <m.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 max-w-md w-full border border-purple-500/30"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-2xl font-bold text-white">Bring Out of Retirement?</h3>
-                <button
-                  onClick={() => setShowUnretireModal(false)}
-                  disabled={unretiring}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                >
-                  <X className="w-6 h-6 text-gray-400" />
-                </button>
-              </div>
+              <m.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 max-w-md w-full border border-purple-500/30"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-2xl font-bold text-white">Bring Out of Retirement?</h3>
+                  <button
+                    onClick={() => setShowUnretireModal(false)}
+                    disabled={unretiring}
+                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                  >
+                    <X className="w-6 h-6 text-gray-400" />
+                  </button>
+                </div>
 
-              <div className="mb-6">
-                <div className="bg-white/5 rounded-lg p-4 mb-4">
-                  <div className="flex items-center gap-3 mb-2">
-                    <Music className="w-6 h-6 text-purple-400" />
-                    <div>
-                      <h4 className="text-xl font-bold text-white">{selectedCorps.corpsName}</h4>
-                      <p className="text-sm text-gray-400">{getClassDisplayName(selectedCorps.corpsClass)}</p>
+                <div className="mb-6">
+                  <div className="bg-white/5 rounded-lg p-4 mb-4">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Music className="w-6 h-6 text-purple-400" />
+                      <div>
+                        <h4 className="text-xl font-bold text-white">{selectedCorps.corpsName}</h4>
+                        <p className="text-sm text-gray-400">
+                          {getClassDisplayName(selectedCorps.corpsClass)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 mt-3">
+                      <div className="text-center">
+                        <div className="text-xs text-gray-400">Seasons</div>
+                        <div className="text-lg font-bold text-white">
+                          {selectedCorps.totalSeasons}
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-gray-400">Best Score</div>
+                        <div className="text-lg font-bold text-white">
+                          {selectedCorps.bestSeasonScore?.toFixed(1)}
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-gray-400">Shows</div>
+                        <div className="text-lg font-bold text-white">
+                          {selectedCorps.totalShows}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-2 mt-3">
-                    <div className="text-center">
-                      <div className="text-xs text-gray-400">Seasons</div>
-                      <div className="text-lg font-bold text-white">{selectedCorps.totalSeasons}</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-xs text-gray-400">Best Score</div>
-                      <div className="text-lg font-bold text-white">{selectedCorps.bestSeasonScore?.toFixed(1)}</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-xs text-gray-400">Shows</div>
-                      <div className="text-lg font-bold text-white">{selectedCorps.totalShows}</div>
-                    </div>
+
+                  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                    <p className="text-sm text-yellow-200">
+                      <strong>Note:</strong> This corps will become your active{' '}
+                      {getClassDisplayName(selectedCorps.corpsClass)} corps. All season history will
+                      be preserved, but you'll start fresh for the current season.
+                    </p>
                   </div>
                 </div>
 
-                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
-                  <p className="text-sm text-yellow-200">
-                    <strong>Note:</strong> This corps will become your active {getClassDisplayName(selectedCorps.corpsClass)} corps.
-                    All season history will be preserved, but you'll start fresh for the current season.
-                  </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowUnretireModal(false)}
+                    disabled={unretiring}
+                    className="flex-1 py-3 px-4 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleUnretire(selectedCorps.corpsClass, selectedCorps.index)}
+                    disabled={unretiring}
+                    className="flex-1 py-3 px-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {unretiring ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        Unretiring...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-4 h-4" />
+                        Confirm
+                      </>
+                    )}
+                  </button>
                 </div>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowUnretireModal(false)}
-                  disabled={unretiring}
-                  className="flex-1 py-3 px-4 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleUnretire(selectedCorps.corpsClass, selectedCorps.index)}
-                  disabled={unretiring}
-                  className="flex-1 py-3 px-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {unretiring ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                      Unretiring...
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="w-4 h-4" />
-                      Confirm
-                    </>
-                  )}
-                </button>
-              </div>
+              </m.div>
             </m.div>
-          </m.div>
-        </Portal>
+          </Portal>
         )}
       </AnimatePresence>
     </div>

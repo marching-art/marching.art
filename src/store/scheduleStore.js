@@ -170,7 +170,9 @@ export const useScheduleStore = create((set, get) => ({
    */
   getWeeksWithShows: () => {
     const { showsByWeek } = get();
-    return Object.keys(showsByWeek).map(Number).sort((a, b) => a - b);
+    return Object.keys(showsByWeek)
+      .map(Number)
+      .sort((a, b) => a - b);
   },
 
   /**

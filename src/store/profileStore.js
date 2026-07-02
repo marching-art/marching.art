@@ -249,13 +249,15 @@ export const useProfileStore = create((set, get) => ({
    */
   getEngagement: () => {
     const { profile } = get();
-    return profile?.engagement || {
-      loginStreak: 0,
-      lastLogin: null,
-      totalLogins: 0,
-      recentActivity: [],
-      weeklyProgress: [],
-    };
+    return (
+      profile?.engagement || {
+        loginStreak: 0,
+        lastLogin: null,
+        totalLogins: 0,
+        recentActivity: [],
+        weeklyProgress: [],
+      }
+    );
   },
 
   /**

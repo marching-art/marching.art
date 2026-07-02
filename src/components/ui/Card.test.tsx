@@ -74,9 +74,7 @@ describe('CardHeader', () => {
 
   it('renders an action slot', () => {
     render(
-      <CardHeader action={<button data-testid="action-btn">Action</button>}>
-        Title
-      </CardHeader>
+      <CardHeader action={<button data-testid="action-btn">Action</button>}>Title</CardHeader>
     );
     expect(screen.getByTestId('action-btn')).toBeInTheDocument();
   });

@@ -9,7 +9,7 @@ import { LazyMotion, MotionConfig } from 'framer-motion';
 
 // Async feature loader - defers ~80KB from initial bundle
 // Features are loaded after initial render, not blocking FCP/LCP
-const loadFeatures = () => import('framer-motion').then(mod => mod.domMax);
+const loadFeatures = () => import('framer-motion').then((mod) => mod.domMax);
 
 /**
  * LazyMotion provider that wraps the app with async-loaded animation features
@@ -30,9 +30,7 @@ const loadFeatures = () => import('framer-motion').then(mod => mod.domMax);
 export const MotionProvider = ({ children }) => {
   return (
     <LazyMotion features={loadFeatures} strict={false}>
-      <MotionConfig reducedMotion="user">
-        {children}
-      </MotionConfig>
+      <MotionConfig reducedMotion="user">{children}</MotionConfig>
     </LazyMotion>
   );
 };

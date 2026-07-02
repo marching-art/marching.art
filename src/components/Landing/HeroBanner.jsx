@@ -55,13 +55,15 @@ const HeroBanner = ({ onDismiss }) => {
 
               {/* Urgency Badge - Show live/countdown info */}
               {primary && (
-                <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm border ${
-                  primary.level === 'high'
-                    ? 'bg-red-500/20 border-red-500/30'
-                    : primary.level === 'medium'
-                    ? 'bg-yellow-500/20 border-yellow-500/30'
-                    : 'bg-gray-500/20 border-gray-500/30'
-                }`}>
+                <div
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm border ${
+                    primary.level === 'high'
+                      ? 'bg-red-500/20 border-red-500/30'
+                      : primary.level === 'medium'
+                        ? 'bg-yellow-500/20 border-yellow-500/30'
+                        : 'bg-gray-500/20 border-gray-500/30'
+                  }`}
+                >
                   {primary.type === 'live' && (
                     <span className="relative flex h-2 w-2">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -69,9 +71,11 @@ const HeroBanner = ({ onDismiss }) => {
                     </span>
                   )}
                   {primary.type !== 'live' && <Clock className="w-3.5 h-3.5 text-yellow-500" />}
-                  <span className={`text-xs font-bold uppercase tracking-wider ${
-                    primary.level === 'high' ? 'text-red-500' : 'text-yellow-500'
-                  }`}>
+                  <span
+                    className={`text-xs font-bold uppercase tracking-wider ${
+                      primary.level === 'high' ? 'text-red-500' : 'text-yellow-500'
+                    }`}
+                  >
                     {primary.message}
                   </span>
                 </div>
@@ -81,12 +85,17 @@ const HeroBanner = ({ onDismiss }) => {
             {/* Headline */}
             <h1 className="text-2xl lg:text-3xl font-bold text-white leading-tight mb-3">
               The fantasy drum corps game.
-              <span className="text-gray-400"> Draft legendary performers. Compete with fans worldwide.</span>
+              <span className="text-gray-400">
+                {' '}
+                Draft legendary performers. Compete with fans worldwide.
+              </span>
             </h1>
 
             {/* Subhead */}
             <p className="text-base lg:text-lg text-gray-400 mb-6 max-w-xl">
-              Build your dream <JargonTooltip termKey="corps">corps</JargonTooltip> from 50 years of <JargonTooltip termKey="dci">DCI</JargonTooltip> history. Earn points from real show scores. Climb the leaderboard.
+              Build your dream <JargonTooltip termKey="corps">corps</JargonTooltip> from 50 years of{' '}
+              <JargonTooltip termKey="dci">DCI</JargonTooltip> history. Earn points from real show
+              scores. Climb the leaderboard.
             </p>
 
             {/* Feature pills */}

@@ -7,7 +7,7 @@ const LiveScoresBox = ({
   loading,
   hasData,
   onYoutubeClick,
-  onShowStandings
+  onShowStandings,
 }) => {
   return (
     <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
@@ -68,17 +68,23 @@ const LiveScoresBox = ({
                     {row.rank}
                   </span>
                   <span className="text-sm text-white" title={`${row.sourceYear} ${row.corpsName}`}>
-                    <span className="text-gray-400 font-data">{row.sourceYear}</span> {row.corpsName}
+                    <span className="text-gray-400 font-data">{row.sourceYear}</span>{' '}
+                    {row.corpsName}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold font-data text-white tabular-nums">
                     {row.score.toFixed(3)}
                   </span>
-                  <span className={`flex items-center gap-0.5 text-xs font-bold font-data tabular-nums w-12 justify-end ${
-                    row.direction === 'up' ? 'text-green-500' :
-                    row.direction === 'down' ? 'text-red-500' : 'text-gray-500'
-                  }`}>
+                  <span
+                    className={`flex items-center gap-0.5 text-xs font-bold font-data tabular-nums w-12 justify-end ${
+                      row.direction === 'up'
+                        ? 'text-green-500'
+                        : row.direction === 'down'
+                          ? 'text-red-500'
+                          : 'text-gray-500'
+                    }`}
+                  >
                     {row.direction === 'up' && <TrendingUp className="w-3 h-3" />}
                     {row.direction === 'down' && <TrendingDown className="w-3 h-3" />}
                     {changeDisplay}

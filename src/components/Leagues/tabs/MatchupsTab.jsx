@@ -3,10 +3,7 @@
 
 import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { m } from 'framer-motion';
-import {
-  Swords, Calendar, Radio, ChevronLeft, ChevronRight,
-  LayoutGrid, List
-} from 'lucide-react';
+import { Swords, Calendar, Radio, ChevronLeft, ChevronRight, LayoutGrid, List } from 'lucide-react';
 import { getLeagueMatchupWeek } from '../../../api/leagues';
 import { getSeasonData } from '../../../api/season';
 import { GAME_CONFIG } from '../../../config';
@@ -21,11 +18,16 @@ import {
 // OPTIMIZATION #9: Lazy-load heavy MatchupDetailView component (1058 lines)
 const MatchupDetailView = lazy(() => import('../MatchupDetailView'));
 
-
 const CORPS_CLASSES = ['worldClass', 'openClass', 'aClass', 'soundSport'];
 
 // Season Schedule Overview - Visual week-by-week calendar
-const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {}, rivalries = [] }) => {
+const MatchupsTab = ({
+  league,
+  userProfile,
+  standings = [],
+  memberProfiles = {},
+  rivalries = [],
+}) => {
   const [matchupsByClass, setMatchupsByClass] = useState({});
   const [loading, setLoading] = useState(true);
   const [selectedWeek, setSelectedWeek] = useState(null);
@@ -42,7 +44,7 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
     if (!userProfile?.uid || !rivalries.length || !matchup.pair) return false;
     const [p1, p2] = matchup.pair;
     const opponentId = p1 === userProfile.uid ? p2 : p2 === userProfile.uid ? p1 : null;
-    return opponentId ? rivalries.some(r => r.rivalId === opponentId) : false;
+    return opponentId ? rivalries.some((r) => r.rivalId === opponentId) : false;
   };
 
   // Fetch matchups from Firestore
@@ -108,8 +110,12 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
           corpsClass,
           week: selectedWeek,
           // Determine status based on week
-          status: selectedWeek < currentWeek ? 'completed' :
-                  selectedWeek === currentWeek ? 'live' : 'scheduled',
+          status:
+            selectedWeek < currentWeek
+              ? 'completed'
+              : selectedWeek === currentWeek
+                ? 'live'
+                : 'scheduled',
         }));
       }
     }
@@ -122,7 +128,10 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
     const matches = [];
     for (const [corpsClass, matchups] of Object.entries(weekMatchups)) {
       for (const matchup of matchups) {
-        if (matchup.pair && (matchup.pair[0] === userProfile?.uid || matchup.pair[1] === userProfile?.uid)) {
+        if (
+          matchup.pair &&
+          (matchup.pair[0] === userProfile?.uid || matchup.pair[1] === userProfile?.uid)
+        ) {
           matches.push(matchup);
         }
       }
@@ -138,7 +147,10 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
       for (const corpsClass of CORPS_CLASSES) {
         const classMatchups = weekData[`${corpsClass}Matchups`] || [];
         for (const matchup of classMatchups) {
-          if (matchup.pair && (matchup.pair[0] === userProfile?.uid || matchup.pair[1] === userProfile?.uid)) {
+          if (
+            matchup.pair &&
+            (matchup.pair[0] === userProfile?.uid || matchup.pair[1] === userProfile?.uid)
+          ) {
             history.push({ ...matchup, week: w, corpsClass });
           }
         }
@@ -161,7 +173,7 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
   };
 
   // Get user standing
-  const getStanding = (userId) => standings.find(s => s.uid === userId);
+  const getStanding = (userId) => standings.find((s) => s.uid === userId);
 
   // Handle matchup click
   const handleMatchupClick = (matchup) => {
@@ -208,21 +220,24 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
           standings={standings}
           currentWeek={currentWeek}
           onBack={() => setSelectedMatchup(null)}
-          rivalry={isRivalryMatchup(selectedMatchup) ? rivalries.find(r =>
-            r.rivalId === (selectedMatchup.user1 === userProfile?.uid ? selectedMatchup.user2 : selectedMatchup.user1)
-          ) : null}
+          rivalry={
+            isRivalryMatchup(selectedMatchup)
+              ? rivalries.find(
+                  (r) =>
+                    r.rivalId ===
+                    (selectedMatchup.user1 === userProfile?.uid
+                      ? selectedMatchup.user2
+                      : selectedMatchup.user1)
+                )
+              : null
+          }
         />
       </Suspense>
     );
   }
 
   return (
-    <m.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="p-4"
-    >
+    <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4">
       {/* View Toggle */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400">
@@ -232,9 +247,7 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
           <button
             onClick={() => setViewMode('week')}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold transition-colors ${
-              viewMode === 'week'
-                ? 'bg-yellow-500 text-black'
-                : 'text-gray-500 hover:text-white'
+              viewMode === 'week' ? 'bg-yellow-500 text-black' : 'text-gray-500 hover:text-white'
             }`}
           >
             <List className="w-3.5 h-3.5" />
@@ -243,9 +256,7 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
           <button
             onClick={() => setViewMode('season')}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold transition-colors ${
-              viewMode === 'season'
-                ? 'bg-yellow-500 text-black'
-                : 'text-gray-500 hover:text-white'
+              viewMode === 'season' ? 'bg-yellow-500 text-black' : 'text-gray-500 hover:text-white'
             }`}
           >
             <LayoutGrid className="w-3.5 h-3.5" />
@@ -305,7 +316,11 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
                     <ChevronLeft className="w-4 h-4" />
                   </button>
                   <span className="text-xs text-gray-500 min-w-[60px] text-center">
-                    {selectedWeek === currentWeek ? 'Current' : selectedWeek < currentWeek ? 'Past' : 'Upcoming'}
+                    {selectedWeek === currentWeek
+                      ? 'Current'
+                      : selectedWeek < currentWeek
+                        ? 'Past'
+                        : 'Upcoming'}
                   </span>
                   <button
                     onClick={goToNextWeek}
@@ -320,32 +335,34 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
 
             {/* Week Pills */}
             <div className="p-3 flex gap-1.5 overflow-x-auto scrollbar-hide">
-              {Array.from({ length: GAME_CONFIG.season.totalWeeks }, (_, i) => i + 1).map(week => {
-                const hasData = weeksWithMatchups.has(week);
-                const isSelected = selectedWeek === week;
-                const isCurrent = week === currentWeek;
+              {Array.from({ length: GAME_CONFIG.season.totalWeeks }, (_, i) => i + 1).map(
+                (week) => {
+                  const hasData = weeksWithMatchups.has(week);
+                  const isSelected = selectedWeek === week;
+                  const isCurrent = week === currentWeek;
 
-                return (
-                  <button
-                    key={week}
-                    onClick={() => setSelectedWeek(week)}
-                    className={`flex-shrink-0 px-3 py-1.5 text-xs font-bold transition-all relative ${
-                      isSelected
-                        ? 'bg-yellow-500 text-black'
-                        : isCurrent
-                        ? 'bg-[#222] border border-purple-500/50 text-white'
-                        : hasData
-                        ? 'bg-[#222] border border-[#444] text-white hover:border-[#555]'
-                        : 'bg-[#222] border border-[#333] text-gray-500 hover:text-white hover:border-[#444]'
-                    }`}
-                  >
-                    W{week}
-                    {isCurrent && !isSelected && (
-                      <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-purple-500 rounded-sm animate-pulse" />
-                    )}
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      key={week}
+                      onClick={() => setSelectedWeek(week)}
+                      className={`flex-shrink-0 px-3 py-1.5 text-xs font-bold transition-all relative ${
+                        isSelected
+                          ? 'bg-yellow-500 text-black'
+                          : isCurrent
+                            ? 'bg-[#222] border border-purple-500/50 text-white'
+                            : hasData
+                              ? 'bg-[#222] border border-[#444] text-white hover:border-[#555]'
+                              : 'bg-[#222] border border-[#333] text-gray-500 hover:text-white hover:border-[#444]'
+                      }`}
+                    >
+                      W{week}
+                      {isCurrent && !isSelected && (
+                        <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-purple-500 rounded-sm animate-pulse" />
+                      )}
+                    </button>
+                  );
+                }
+              )}
             </div>
           </div>
 
@@ -365,7 +382,7 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
               </div>
 
               <div className="divide-y divide-[#222]">
-                {userMatchups.map(matchup => (
+                {userMatchups.map((matchup) => (
                   <VersusStrip
                     key={matchup.id}
                     matchup={matchup}
@@ -383,11 +400,11 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
           )}
 
           {/* Matchups by Corps Class */}
-          {CORPS_CLASSES.map(corpsClass => {
+          {CORPS_CLASSES.map((corpsClass) => {
             const classMatchups = weekMatchups[corpsClass] || [];
             // Filter out user's matchups (already shown above)
-            const otherMatchups = classMatchups.filter(m =>
-              !m.pair || (m.pair[0] !== userProfile?.uid && m.pair[1] !== userProfile?.uid)
+            const otherMatchups = classMatchups.filter(
+              (m) => !m.pair || (m.pair[0] !== userProfile?.uid && m.pair[1] !== userProfile?.uid)
             );
 
             if (otherMatchups.length === 0) return null;
@@ -397,7 +414,9 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
 
             return (
               <div key={corpsClass} className="bg-[#1a1a1a] border border-[#333] mb-4">
-                <div className={`px-4 py-2 border-b border-[#333] bg-[#222] flex items-center gap-2`}>
+                <div
+                  className={`px-4 py-2 border-b border-[#333] bg-[#222] flex items-center gap-2`}
+                >
                   <div className={`p-1 ${config.bgColor} border ${config.borderColor}`}>
                     <Icon className={`w-3 h-3 ${config.color}`} />
                   </div>
@@ -407,7 +426,7 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
                 </div>
 
                 <div className="divide-y divide-[#222]">
-                  {otherMatchups.map(matchup => (
+                  {otherMatchups.map((matchup) => (
                     <VersusStrip
                       key={matchup.id}
                       matchup={matchup}

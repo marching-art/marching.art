@@ -12,26 +12,26 @@
 
 export const hapticPatterns = {
   // Single vibrations
-  light: 10,        // Light tap - buttons, toggles
-  medium: 25,       // Medium tap - tab switches, selections
-  heavy: 50,        // Heavy tap - important actions, confirmations
+  light: 10, // Light tap - buttons, toggles
+  medium: 25, // Medium tap - tab switches, selections
+  heavy: 50, // Heavy tap - important actions, confirmations
 
   // Pattern vibrations [vibrate, pause, vibrate, ...]
-  success: [10, 30, 10],           // Success feedback - form submissions
-  error: [50, 50, 50],             // Error feedback - validation errors
-  warning: [30, 50, 30],           // Warning feedback - destructive actions
+  success: [10, 30, 10], // Success feedback - form submissions
+  error: [50, 50, 50], // Error feedback - validation errors
+  warning: [30, 50, 30], // Warning feedback - destructive actions
   notification: [10, 50, 10, 50, 10], // Notification arrival
 
   // Gesture feedback
-  swipe: 15,                       // Swipe gesture completion
-  pull: [10, 20, 30],              // Pull-to-refresh trigger
-  longPress: [20, 30, 50],         // Long press activation
+  swipe: 15, // Swipe gesture completion
+  pull: [10, 20, 30], // Pull-to-refresh trigger
+  longPress: [20, 30, 50], // Long press activation
 
   // UI transitions
-  sheetOpen: 20,                   // Bottom sheet opening
-  sheetClose: 15,                  // Bottom sheet closing
-  modalOpen: 25,                   // Modal opening
-  modalClose: 20,                  // Modal closing
+  sheetOpen: 20, // Bottom sheet opening
+  sheetClose: 15, // Bottom sheet closing
+  modalOpen: 25, // Modal opening
+  modalClose: 20, // Modal closing
 } as const;
 
 export type HapticPattern = keyof typeof hapticPatterns;
@@ -51,17 +51,13 @@ export const isHapticSupported = (): boolean => {
  * Trigger haptic feedback with a predefined pattern or custom vibration
  * @param pattern - A predefined pattern name, single duration, or array of durations
  */
-export const triggerHaptic = (
-  pattern: HapticPattern | number | number[]
-): boolean => {
+export const triggerHaptic = (pattern: HapticPattern | number | number[]): boolean => {
   if (!isHapticSupported()) {
     return false;
   }
 
   try {
-    const vibrationPattern = typeof pattern === 'string'
-      ? hapticPatterns[pattern]
-      : pattern;
+    const vibrationPattern = typeof pattern === 'string' ? hapticPatterns[pattern] : pattern;
 
     // hapticPatterns is `as const`, so array values are readonly tuples;
     // navigator.vibrate does not mutate its argument, so the cast is safe.

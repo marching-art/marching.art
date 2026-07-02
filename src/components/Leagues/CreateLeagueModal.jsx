@@ -101,17 +101,17 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
         aria-modal="true"
         aria-labelledby="modal-title-create-league"
       >
-        <div
-          className="w-full max-w-md my-auto"
-          onClick={(e) => e.stopPropagation()}
-        >
+        <div className="w-full max-w-md my-auto" onClick={(e) => e.stopPropagation()}>
           {step === 'create' ? (
             <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
               {/* Header */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
                 <div className="flex items-center gap-2">
                   <Trophy className="w-4 h-4 text-[#0057B8]" />
-                  <h2 id="modal-title-create-league" className="text-xs font-bold uppercase tracking-wider text-gray-300">
+                  <h2
+                    id="modal-title-create-league"
+                    className="text-xs font-bold uppercase tracking-wider text-gray-300"
+                  >
                     Create League
                   </h2>
                 </div>
@@ -190,7 +190,9 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
                       min="4"
                       max="20"
                       value={formData.maxMembers}
-                      onChange={(e) => setFormData({ ...formData, maxMembers: parseInt(e.target.value) })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, maxMembers: parseInt(e.target.value) })
+                      }
                       className="w-full h-2 bg-[#333] rounded-sm appearance-none cursor-pointer accent-[#0057B8]"
                     />
                     <div className="flex justify-between text-[10px] text-gray-600 mt-1">
@@ -238,9 +240,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
                   <Check className="w-6 h-6 text-green-500" />
                 </div>
 
-                <p className="text-sm text-gray-400 mb-4">
-                  Share the invite code with friends
-                </p>
+                <p className="text-sm text-gray-400 mb-4">Share the invite code with friends</p>
 
                 {/* League Info */}
                 <div className="bg-[#0a0a0a] border border-[#333] p-3 mb-4">

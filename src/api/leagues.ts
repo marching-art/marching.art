@@ -37,14 +37,10 @@ const DEFAULT_PAGE_SIZE = 12;
 export async function getMyLeagues(uid: string): Promise<League[]> {
   return withErrorHandling(async () => {
     const leaguesRef = collection(db, paths.leagues());
-    const q = query(
-      leaguesRef,
-      where('members', 'array-contains', uid),
-      limit(20)
-    );
+    const q = query(leaguesRef, where('members', 'array-contains', uid), limit(20));
 
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({
+    return snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     })) as League[];
@@ -81,7 +77,7 @@ export async function getPublicLeagues(
     }
 
     const snapshot = await getDocs(q);
-    const leagues = snapshot.docs.map(doc => ({
+    const leagues = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     })) as League[];
@@ -148,9 +144,7 @@ export function subscribeToLeague(
 /**
  * Get league standings
  */
-export async function getLeagueStandings(
-  leagueId: string
-): Promise<LeagueStanding[]> {
+export async function getLeagueStandings(leagueId: string): Promise<LeagueStanding[]> {
   return withErrorHandling(async () => {
     const standingsRef = doc(db, paths.leagueStandings(leagueId));
     const standingsDoc = await getDoc(standingsRef);
@@ -213,14 +207,11 @@ export async function createLeague(
 /**
  * Join a league by ID
  */
-export async function joinLeague(
-  leagueId: string
-): Promise<ApiResponse> {
+export async function joinLeague(leagueId: string): Promise<ApiResponse> {
   return withErrorHandling(async () => {
-    const result = await callFunction<{ leagueId: string }, ApiResponse>(
-      'joinLeague',
-      { leagueId }
-    );
+    const result = await callFunction<{ leagueId: string }, ApiResponse>('joinLeague', {
+      leagueId,
+    });
     return result.data;
   }, 'Failed to join league');
 }
@@ -228,14 +219,11 @@ export async function joinLeague(
 /**
  * Join a league by invite code
  */
-export async function joinLeagueByCode(
-  inviteCode: string
-): Promise<ApiResponse> {
+export async function joinLeagueByCode(inviteCode: string): Promise<ApiResponse> {
   return withErrorHandling(async () => {
-    const result = await callFunction<{ inviteCode: string }, ApiResponse>(
-      'joinLeagueByCode',
-      { inviteCode }
-    );
+    const result = await callFunction<{ inviteCode: string }, ApiResponse>('joinLeagueByCode', {
+      inviteCode,
+    });
     return result.data;
   }, 'Failed to join league');
 }
@@ -243,14 +231,11 @@ export async function joinLeagueByCode(
 /**
  * Leave a league
  */
-export async function leaveLeague(
-  leagueId: string
-): Promise<ApiResponse> {
+export async function leaveLeague(leagueId: string): Promise<ApiResponse> {
   return withErrorHandling(async () => {
-    const result = await callFunction<{ leagueId: string }, ApiResponse>(
-      'leaveLeague',
-      { leagueId }
-    );
+    const result = await callFunction<{ leagueId: string }, ApiResponse>('leaveLeague', {
+      leagueId,
+    });
     return result.data;
   }, 'Failed to leave league');
 }
@@ -282,7 +267,7 @@ export function subscribeToChat(
   return onSnapshot(
     q,
     (snapshot) => {
-      const messages = snapshot.docs.map(doc => ({
+      const messages = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       })) as ChatMessage[];
@@ -300,10 +285,7 @@ export function subscribeToChat(
 /**
  * Post a message to league chat
  */
-export async function postChatMessage(
-  leagueId: string,
-  message: string
-): Promise<ApiResponse> {
+export async function postChatMessage(leagueId: string, message: string): Promise<ApiResponse> {
   return withErrorHandling(async () => {
     const result = await callFunction<{ leagueId: string; message: string }, ApiResponse>(
       'postLeagueMessage',
@@ -375,9 +357,7 @@ export async function getLeagueWeekRecap(
 /**
  * Fetch the precomputed rivalries metadata document for a league, or null.
  */
-export async function getLeagueRivalries(
-  leagueId: string
-): Promise<DocumentData | null> {
+export async function getLeagueRivalries(leagueId: string): Promise<DocumentData | null> {
   const snap = await getDoc(doc(db, paths.leagueMeta(leagueId, 'rivalries')));
   return snap.exists() ? snap.data() : null;
 }
@@ -427,8 +407,16 @@ export async function getPendingInvitations(
  * Placement points (DCI/NASCAR style scoring)
  */
 export const PLACEMENT_POINTS: Record<number, number> = {
-  1: 15, 2: 12, 3: 10, 4: 8, 5: 6,
-  6: 5, 7: 4, 8: 3, 9: 2, 10: 1,
+  1: 15,
+  2: 12,
+  3: 10,
+  4: 8,
+  5: 6,
+  6: 5,
+  7: 4,
+  8: 3,
+  9: 2,
+  10: 1,
 };
 
 /**

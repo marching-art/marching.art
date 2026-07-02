@@ -7,7 +7,7 @@ import {
   CAPTIONS,
   CAPTION_CATEGORIES,
   getCorpsClassName,
-  formatSeasonName
+  formatSeasonName,
 } from './constants';
 
 describe('SeasonSetupWizard constants', () => {
@@ -54,7 +54,7 @@ describe('SeasonSetupWizard constants', () => {
     });
 
     test('each caption has required properties', () => {
-      CAPTIONS.forEach(caption => {
+      CAPTIONS.forEach((caption) => {
         expect(caption).toHaveProperty('id');
         expect(caption).toHaveProperty('name');
         expect(caption).toHaveProperty('category');
@@ -64,7 +64,7 @@ describe('SeasonSetupWizard constants', () => {
     });
 
     test('has correct caption IDs', () => {
-      const ids = CAPTIONS.map(c => c.id);
+      const ids = CAPTIONS.map((c) => c.id);
       expect(ids).toContain('GE1');
       expect(ids).toContain('GE2');
       expect(ids).toContain('VP');
@@ -76,7 +76,7 @@ describe('SeasonSetupWizard constants', () => {
     });
 
     test('has captions in all categories', () => {
-      const categories = CAPTIONS.map(c => c.category);
+      const categories = CAPTIONS.map((c) => c.category);
       expect(categories).toContain('General Effect');
       expect(categories).toContain('Visual');
       expect(categories).toContain('Music');

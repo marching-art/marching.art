@@ -5,8 +5,14 @@
 import React, { useMemo, memo } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Trophy, TrendingUp, TrendingDown, Music,
-  ChevronRight, MapPin, Medal, Users,
+  Trophy,
+  TrendingUp,
+  TrendingDown,
+  Music,
+  ChevronRight,
+  MapPin,
+  Medal,
+  Users,
 } from 'lucide-react';
 import { TeamAvatar } from '../components/ui/TeamAvatar';
 import { formatEventName } from '../utils/season';
@@ -17,13 +23,8 @@ import {
   getCaptionBreakdown,
 } from '../utils/scoresUtils';
 
-const BlueRibbonIcon = ({ className = "w-5 h-5" }) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    className={className}
-    xmlns="http://www.w3.org/2000/svg"
-  >
+const BlueRibbonIcon = ({ className = 'w-5 h-5' }) => (
+  <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
     {/* Ribbon circle/badge */}
     <circle cx="12" cy="9" r="7" fill="#0057B8" stroke="#003d82" strokeWidth="1" />
     {/* Inner circle highlight */}
@@ -48,14 +49,17 @@ const PillTabControl = ({ tabs, activeTab, onTabChange, haptic }) => (
     {tabs.map((tab) => (
       <button
         key={tab.id}
-        onClick={() => { haptic?.('medium'); onTabChange(tab.id); }}
+        onClick={() => {
+          haptic?.('medium');
+          onTabChange(tab.id);
+        }}
         className={`px-3 sm:px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap flex-shrink-0 border-b-2 -mb-px ${
           activeTab === tab.id
             ? tab.accent === 'green'
               ? 'text-green-400 border-green-500'
               : tab.accent === 'yellow'
-              ? 'text-yellow-400 border-yellow-500'
-              : 'text-white border-[#0057B8]'
+                ? 'text-yellow-400 border-yellow-500'
+                : 'text-white border-[#0057B8]'
             : 'text-gray-500 hover:text-gray-300 border-transparent'
         }`}
       >
@@ -70,19 +74,11 @@ const PillTabControl = ({ tabs, activeTab, onTabChange, haptic }) => (
 // OPTIMIZATION #3: Memoized to prevent re-renders when sibling recap grids update
 // =============================================================================
 
-const RecapDataGrid = memo(({
-  scores,
-  eventName,
-  location,
-  date,
-  userCorpsName
-}) => {
+const RecapDataGrid = memo(({ scores, eventName, location, date, userCorpsName }) => {
   // Pre-compute all caption breakdowns once (real data only, no synthetic values)
   const captionMap = useMemo(() => {
     if (!scores || scores.length === 0) return new Map();
-    return new Map(
-      scores.map((score, idx) => [idx, getCaptionBreakdown(score)])
-    );
+    return new Map(scores.map((score, idx) => [idx, getCaptionBreakdown(score)]));
   }, [scores]);
 
   if (!scores || scores.length === 0) return null;
@@ -92,7 +88,9 @@ const RecapDataGrid = memo(({
       {/* Event Header - Super Row integrated with table */}
       <div className="bg-[#222] px-4 py-2.5 flex items-center justify-between">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="font-bold text-white text-sm truncate">{formatEventName(eventName)}</span>
+          <span className="font-bold text-white text-sm truncate">
+            {formatEventName(eventName)}
+          </span>
           <span className="text-gray-500 text-xs hidden sm:flex items-center gap-1">
             <MapPin className="w-3 h-3" />
             {location}
@@ -131,16 +129,14 @@ const RecapDataGrid = memo(({
           <tbody>
             {scores.map((score, idx) => {
               const captions = captionMap.get(idx);
-              const isUserCorps = userCorpsName &&
+              const isUserCorps =
+                userCorpsName &&
                 (score.corps?.toLowerCase() === userCorpsName.toLowerCase() ||
-                 score.corpsName?.toLowerCase() === userCorpsName.toLowerCase());
+                  score.corpsName?.toLowerCase() === userCorpsName.toLowerCase());
               const rowBg = idx % 2 === 0 ? 'bg-[#1a1a1a]' : 'bg-[#111]';
 
               return (
-                <tr
-                  key={idx}
-                  className={rowBg}
-                >
+                <tr key={idx} className={rowBg}>
                   {/* Rank */}
                   <td className="py-2 px-2">
                     <span className="w-6 h-6 bg-[#222] border border-[#333] flex items-center justify-center text-[10px] font-bold text-gray-400 tabular-nums">
@@ -151,13 +147,17 @@ const RecapDataGrid = memo(({
                   {/* Corps + Location */}
                   <td className="py-2 px-2">
                     <div className="flex items-center gap-2 min-w-0">
-                      <TeamAvatar name={score.corpsName || score.corps} logoUrl={score.avatarUrl} size="xs" />
+                      <TeamAvatar
+                        name={score.corpsName || score.corps}
+                        logoUrl={score.avatarUrl}
+                        size="xs"
+                      />
                       <div className="min-w-0">
                         <span className="font-bold text-white text-sm block truncate">
                           {score.corpsName || score.corps}
                         </span>
-                        {score.displayName && (
-                          score.uid ? (
+                        {score.displayName &&
+                          (score.uid ? (
                             <Link
                               to={`/profile/${score.uid}`}
                               className="text-[10px] text-gray-500 hover:text-[#0057B8] block truncate"
@@ -168,8 +168,7 @@ const RecapDataGrid = memo(({
                             <span className="text-[10px] text-gray-500 block truncate">
                               {score.displayName}
                             </span>
-                          )
-                        )}
+                          ))}
                       </div>
                     </div>
                   </td>
@@ -232,10 +231,10 @@ const SoundSportMedalList = ({ shows }) => {
     let mockNameIndex = 0;
 
     shows
-      .filter(show => show.scores?.some(s => s.corpsClass === 'soundSport'))
+      .filter((show) => show.scores?.some((s) => s.corpsClass === 'soundSport'))
       .forEach((show) => {
         const soundSportScores = show.scores
-          .filter(s => s.corpsClass === 'soundSport')
+          .filter((s) => s.corpsClass === 'soundSport')
           .map((score) => ({
             ...score,
             rating: getSoundSportRating(score.score),
@@ -243,18 +242,20 @@ const SoundSportMedalList = ({ shows }) => {
 
         if (soundSportScores.length > 0) {
           // Find best in show (highest score at this event)
-          const maxScore = Math.max(...soundSportScores.map(s => s.score || 0));
-          const bestInShowCorps = soundSportScores.find(s => s.score === maxScore)?.corps ||
-                                  soundSportScores.find(s => s.score === maxScore)?.corpsName;
+          const maxScore = Math.max(...soundSportScores.map((s) => s.score || 0));
+          const bestInShowCorps =
+            soundSportScores.find((s) => s.score === maxScore)?.corps ||
+            soundSportScores.find((s) => s.score === maxScore)?.corpsName;
 
           // Mark best in show
-          soundSportScores.forEach(score => {
+          soundSportScores.forEach((score) => {
             const corpsName = score.corps || score.corpsName;
             score.isBestInShow = corpsName === bestInShowCorps;
           });
 
           // Use show eventName or mock one for display
-          const eventName = show.eventName || MOCK_EVENT_NAMES[mockNameIndex % MOCK_EVENT_NAMES.length];
+          const eventName =
+            show.eventName || MOCK_EVENT_NAMES[mockNameIndex % MOCK_EVENT_NAMES.length];
 
           // Shuffle to avoid implied rankings (SoundSport is rating-based, not placement-based)
           // Use deterministic shuffle so order is consistent on re-renders
@@ -276,8 +277,8 @@ const SoundSportMedalList = ({ shows }) => {
   // Aggregate stats across all groups
   const stats = useMemo(() => {
     const counts = { Gold: 0, Silver: 0, Bronze: 0, Participation: 0, total: 0 };
-    groupedResults.forEach(group => {
-      group.scores.forEach(r => {
+    groupedResults.forEach((group) => {
+      group.scores.forEach((r) => {
         counts[r.rating]++;
         counts.total++;
       });
@@ -330,7 +331,9 @@ const SoundSportMedalList = ({ shows }) => {
           {/* Event Header */}
           <div className="bg-[#222] px-4 py-2.5 flex items-center justify-between">
             <div className="flex items-center gap-2 min-w-0">
-              <span className="font-bold text-white text-sm truncate">{formatEventName(group.eventName)}</span>
+              <span className="font-bold text-white text-sm truncate">
+                {formatEventName(group.eventName)}
+              </span>
               <span className="text-gray-500 text-xs hidden sm:flex items-center gap-1">
                 <MapPin className="w-3 h-3" />
                 {group.location}
@@ -354,16 +357,22 @@ const SoundSportMedalList = ({ shows }) => {
                 >
                   {/* Left: Medal Icon + Avatar + Ensemble Name + Director */}
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className={`w-6 h-6 ${config.bg} flex items-center justify-center flex-shrink-0`}>
+                    <div
+                      className={`w-6 h-6 ${config.bg} flex items-center justify-center flex-shrink-0`}
+                    >
                       <Medal className={`w-4 h-4 ${config.text}`} />
                     </div>
-                    <TeamAvatar name={result.corps || result.corpsName} logoUrl={result.avatarUrl} size="xs" />
+                    <TeamAvatar
+                      name={result.corps || result.corpsName}
+                      logoUrl={result.avatarUrl}
+                      size="xs"
+                    />
                     <div className="min-w-0">
                       <span className="font-bold text-white text-sm block truncate">
                         {result.corps || result.corpsName}
                       </span>
-                      {result.displayName && (
-                        result.uid ? (
+                      {result.displayName &&
+                        (result.uid ? (
                           <Link
                             to={`/profile/${result.uid}`}
                             className="text-[10px] text-gray-500 hover:text-[#0057B8] block truncate"
@@ -374,16 +383,13 @@ const SoundSportMedalList = ({ shows }) => {
                           <span className="text-[10px] text-gray-500 block truncate">
                             {result.displayName}
                           </span>
-                        )
-                      )}
+                        ))}
                     </div>
                   </div>
 
                   {/* Right: Best in Show + Rating Badge */}
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    {result.isBestInShow && (
-                      <BlueRibbonIcon className="w-5 h-5" />
-                    )}
+                    {result.isBestInShow && <BlueRibbonIcon className="w-5 h-5" />}
                     <span className={`text-[10px] font-bold uppercase px-2 py-1 ${config.badge}`}>
                       {result.rating}
                     </span>
@@ -413,11 +419,7 @@ const SoundSportMedalList = ({ shows }) => {
 // STANDINGS TABLE FOR CLASS TABS
 // =============================================================================
 
-const ClassStandingsGrid = ({
-  standings,
-  className,
-  userCorpsName
-}) => {
+const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
   // Pre-compute all caption breakdowns once (real data only, no synthetic values)
   const captionMap = useMemo(() => {
     if (!standings || standings.length === 0) return new Map();
@@ -442,9 +444,7 @@ const ClassStandingsGrid = ({
         <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
           {className} Season Standings
         </span>
-        <span className="text-[10px] text-gray-500">
-          {standings.length} corps
-        </span>
+        <span className="text-[10px] text-gray-500">{standings.length} corps</span>
       </div>
 
       {/* Data Grid */}
@@ -478,16 +478,13 @@ const ClassStandingsGrid = ({
           <tbody>
             {standings.map((entry, idx) => {
               const captions = captionMap.get(idx);
-              const isUserCorps = userCorpsName &&
-                entry.corpsName?.toLowerCase() === userCorpsName.toLowerCase();
+              const isUserCorps =
+                userCorpsName && entry.corpsName?.toLowerCase() === userCorpsName.toLowerCase();
               const rowBg = idx % 2 === 0 ? 'bg-[#1a1a1a]' : 'bg-[#111]';
               const trend = entry.trend?.direction || 0;
 
               return (
-                <tr
-                  key={entry.corpsName || idx}
-                  className={rowBg}
-                >
+                <tr key={entry.corpsName || idx} className={rowBg}>
                   {/* Rank */}
                   <td className="py-2.5 px-2">
                     <span className="w-6 h-6 bg-[#222] border border-[#333] flex items-center justify-center text-[10px] font-bold text-gray-400 tabular-nums">
@@ -503,8 +500,8 @@ const ClassStandingsGrid = ({
                         <span className="font-bold text-white text-sm block truncate">
                           {entry.corpsName}
                         </span>
-                        {entry.displayName && (
-                          entry.uid ? (
+                        {entry.displayName &&
+                          (entry.uid ? (
                             <Link
                               to={`/profile/${entry.uid}`}
                               className="text-[10px] text-gray-500 hover:text-[#0057B8] block truncate"
@@ -515,8 +512,7 @@ const ClassStandingsGrid = ({
                             <span className="text-[10px] text-gray-500 block truncate">
                               {entry.displayName}
                             </span>
-                          )
-                        )}
+                          ))}
                       </div>
                     </div>
                   </td>

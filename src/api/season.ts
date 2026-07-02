@@ -131,7 +131,7 @@ export async function getSeasonRecaps(seasonUid: string): Promise<DayRecap[]> {
  */
 export async function getCorpsValues(docId: string): Promise<DocumentData[]> {
   const snap = await getDoc(doc(db, `dci-data/${docId}`));
-  return snap.exists() ? (snap.data().corpsValues || []) : [];
+  return snap.exists() ? snap.data().corpsValues || [] : [];
 }
 
 /**
@@ -146,11 +146,9 @@ export async function getDciDataDoc(docId: string): Promise<DocumentData | null>
  * Fetch the scraped event array for a single year from historical_scores.
  * Returns [] if the doc or array does not exist.
  */
-export async function getHistoricalScoresForYear(
-  year: string | number
-): Promise<DocumentData[]> {
+export async function getHistoricalScoresForYear(year: string | number): Promise<DocumentData[]> {
   const scoresDoc = await getDoc(doc(db, `historical_scores/${year}`));
-  return scoresDoc.exists() ? (scoresDoc.data().data || []) : [];
+  return scoresDoc.exists() ? scoresDoc.data().data || [] : [];
 }
 
 /**
@@ -372,7 +370,8 @@ export async function getSeasonChampions(): Promise<SeasonChampions[]> {
       id: doc.id,
       seasonName: data.seasonName,
       seasonType: data.seasonType,
-      archivedAt: data.archivedAt?.toDate?.() || (data.archivedAt ? new Date(data.archivedAt) : null),
+      archivedAt:
+        data.archivedAt?.toDate?.() || (data.archivedAt ? new Date(data.archivedAt) : null),
       classes: data.classes || {},
     });
   });

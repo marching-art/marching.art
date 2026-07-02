@@ -143,7 +143,12 @@ describe('countCaptionWins', () => {
 
 describe('individual battles', () => {
   it('total score battle awards the higher weekly total', () => {
-    const r = calculateTotalScoreBattle('H', 'A', perf({ totalScore: 100 }), perf({ totalScore: 90 }));
+    const r = calculateTotalScoreBattle(
+      'H',
+      'A',
+      perf({ totalScore: 100 }),
+      perf({ totalScore: 90 })
+    );
     expect(r.winnerId).toBe('H');
     expect(r.differential).toBe(10);
     expect(r.pointsAwarded).toBe(1);
@@ -151,7 +156,12 @@ describe('individual battles', () => {
   });
 
   it('high single battle awards the better single show', () => {
-    const r = calculateHighSingleBattle('H', 'A', perf({ highSingleScore: 40 }), perf({ highSingleScore: 55 }));
+    const r = calculateHighSingleBattle(
+      'H',
+      'A',
+      perf({ highSingleScore: 40 }),
+      perf({ highSingleScore: 55 })
+    );
     expect(r.winnerId).toBe('A');
   });
 
@@ -207,7 +217,12 @@ describe('calculateMatchupBattles', () => {
   });
 
   it('resolves a tie when every dimension is equal', () => {
-    const same = perf({ captions: allCaptions(5), totalScore: 50, highSingleScore: 25, scoreDelta: 0 });
+    const same = perf({
+      captions: allCaptions(5),
+      totalScore: 50,
+      highSingleScore: 25,
+      scoreDelta: 0,
+    });
     const r = build(1, 'H', 'A', same, { ...same });
     expect(r.homeBattlePoints).toBe(0);
     expect(r.awayBattlePoints).toBe(0);
@@ -356,8 +371,18 @@ describe('formatBattleScore & getMatchupDescription', () => {
     expect(getMatchupDescription(build(1, 'H', 'A', dominantPerf, weakPerf))).toBe('Blowout');
 
     // plain win: sweeps only total/high/momentum (margin 3), captions all tied
-    const home = perf({ captions: allCaptions(5), totalScore: 100, highSingleScore: 50, scoreDelta: 5 });
-    const away = perf({ captions: allCaptions(5), totalScore: 90, highSingleScore: 40, scoreDelta: 0 });
+    const home = perf({
+      captions: allCaptions(5),
+      totalScore: 100,
+      highSingleScore: 50,
+      scoreDelta: 5,
+    });
+    const away = perf({
+      captions: allCaptions(5),
+      totalScore: 90,
+      highSingleScore: 40,
+      scoreDelta: 0,
+    });
     const winBreakdown = build(1, 'H', 'A', home, away);
     expect(winBreakdown.margin).toBe(3);
     expect(getMatchupDescription(winBreakdown)).toBe('Win');
@@ -398,9 +423,7 @@ describe('createWeeklyPerformance', () => {
   });
 
   it('leaves scoreDelta undefined without a previous week', () => {
-    const wp = createWeeklyPerformance('A', 1, [
-      { showId: 's1', showName: 'Show 1', score: 80 },
-    ]);
+    const wp = createWeeklyPerformance('A', 1, [{ showId: 's1', showName: 'Show 1', score: 80 }]);
     expect(wp.scoreDelta).toBeUndefined();
   });
 });

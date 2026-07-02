@@ -70,26 +70,18 @@ function RecommendationItem({ rec, config }) {
     <div className={`${config.cardBg} border ${config.cardBorder} p-3 rounded-sm`}>
       <div className="flex items-start justify-between gap-2 mb-1">
         <div className="flex-1 min-w-0">
-          <span className="text-sm font-bold text-white block truncate">
-            {rec.corps}
-          </span>
-          {rec.caption && (
-            <span className="text-xs text-gray-500">
-              {captionLabel}
-            </span>
-          )}
+          <span className="text-sm font-bold text-white block truncate">{rec.corps}</span>
+          {rec.caption && <span className="text-xs text-gray-500">{captionLabel}</span>}
         </div>
         {rec.score > 0 && (
-          <span className={`text-sm font-data font-bold ${config.scoreClass} tabular-nums whitespace-nowrap`}>
+          <span
+            className={`text-sm font-data font-bold ${config.scoreClass} tabular-nums whitespace-nowrap`}
+          >
             {rec.score.toFixed(2)}
           </span>
         )}
       </div>
-      {rec.reason && (
-        <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
-          {rec.reason}
-        </p>
-      )}
+      {rec.reason && <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">{rec.reason}</p>}
     </div>
   );
 }
@@ -108,12 +100,8 @@ function RecommendationSection({ type, items }) {
           <Icon className={`w-4 h-4 ${config.iconClass}`} />
         </div>
         <div>
-          <span className={`text-sm font-bold ${config.titleClass}`}>
-            {config.title}
-          </span>
-          <span className="text-xs text-gray-500 ml-2">
-            {config.subtitle}
-          </span>
+          <span className={`text-sm font-bold ${config.titleClass}`}>{config.title}</span>
+          <span className="text-xs text-gray-500 ml-2">{config.subtitle}</span>
         </div>
       </div>
       <div className="space-y-2">

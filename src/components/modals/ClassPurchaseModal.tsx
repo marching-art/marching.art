@@ -150,12 +150,16 @@ const ClassPurchaseModal: React.FC<ClassPurchaseModalProps> = ({
                     <p className="text-xs text-red-300/80">
                       {className} registration locks with {lockWeeks} weeks remaining.
                       {weeksRemaining !== null && (
-                        <> Only {weeksRemaining} week{weeksRemaining !== 1 ? 's' : ''} left this season.</>
+                        <>
+                          {' '}
+                          Only {weeksRemaining} week{weeksRemaining !== 1 ? 's' : ''} left this
+                          season.
+                        </>
                       )}
                     </p>
                     <p className="text-xs text-red-300/80 mt-1">
-                      You can still unlock this class, but you won't be able to register
-                      a corps until next season.
+                      You can still unlock this class, but you won't be able to register a corps
+                      until next season.
                     </p>
                   </div>
                 </div>
@@ -168,15 +172,14 @@ const ClassPurchaseModal: React.FC<ClassPurchaseModalProps> = ({
                 <div className="flex items-start gap-2">
                   <AlertTriangle className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-xs text-yellow-400 font-bold uppercase mb-1">
-                      Early Unlock
-                    </p>
+                    <p className="text-xs text-yellow-400 font-bold uppercase mb-1">Early Unlock</p>
                     <p className="text-xs text-yellow-300/80">
-                      You're unlocking this class before reaching Level {levelRequired}.
-                      You can also wait and unlock it for free when you level up
+                      You're unlocking this class before reaching Level {levelRequired}. You can
+                      also wait and unlock it for free when you level up
                       {weeksUntilAutoUnlock != null && weeksUntilAutoUnlock > 0
                         ? ` or when it auto-unlocks in ${weeksUntilAutoUnlock} week${weeksUntilAutoUnlock !== 1 ? 's' : ''}`
-                        : ''}.
+                        : ''}
+                      .
                     </p>
                   </div>
                 </div>
@@ -184,16 +187,20 @@ const ClassPurchaseModal: React.FC<ClassPurchaseModalProps> = ({
             )}
 
             {/* Time-based auto-unlock info */}
-            {weeksUntilAutoUnlock != null && weeksUntilAutoUnlock > 0 && !isEarlyUnlock && !isRegistrationLocked && (
-              <div className="bg-cyan-500/10 border border-cyan-500/30 p-3 mb-4">
-                <div className="flex items-start gap-2">
-                  <Clock className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-cyan-300/80">
-                    This class will auto-unlock for free in {weeksUntilAutoUnlock} week{weeksUntilAutoUnlock !== 1 ? 's' : ''}.
-                  </p>
+            {weeksUntilAutoUnlock != null &&
+              weeksUntilAutoUnlock > 0 &&
+              !isEarlyUnlock &&
+              !isRegistrationLocked && (
+                <div className="bg-cyan-500/10 border border-cyan-500/30 p-3 mb-4">
+                  <div className="flex items-start gap-2">
+                    <Clock className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" />
+                    <p className="text-xs text-cyan-300/80">
+                      This class will auto-unlock for free in {weeksUntilAutoUnlock} week
+                      {weeksUntilAutoUnlock !== 1 ? 's' : ''}.
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
             {/* Cost Breakdown */}
             <div className="bg-[#0a0a0a] border border-[#333] p-4 mb-4">

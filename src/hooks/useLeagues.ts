@@ -29,8 +29,7 @@ export function usePublicLeagues(pageSize = 12) {
     queryFn: ({ pageParam }: { pageParam: unknown }) =>
       leaguesApi.getPublicLeagues(pageSize, pageParam),
     initialPageParam: undefined as unknown,
-    getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? lastPage.lastDoc : undefined,
+    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.lastDoc : undefined),
     staleTime: 5 * 60 * 1000,
   });
 }

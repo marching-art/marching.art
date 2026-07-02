@@ -65,9 +65,7 @@ export const Glass: Story = {
       <>
         <CardHeader title="Glass Card" />
         <CardContent>
-          <p className="text-cream-300">
-            A glass card has a translucent backdrop blur effect.
-          </p>
+          <p className="text-cream-300">A glass card has a translucent backdrop blur effect.</p>
         </CardContent>
       </>
     ),
@@ -80,13 +78,15 @@ export const WithFooter: Story = {
       <>
         <CardHeader title="Card with Footer" subtitle="Complete card example" />
         <CardContent>
-          <p className="text-cream-300">
-            This card includes a footer with action buttons.
-          </p>
+          <p className="text-cream-300">This card includes a footer with action buttons.</p>
         </CardContent>
         <CardFooter>
-          <Button variant="ghost" size="sm">Cancel</Button>
-          <Button variant="primary" size="sm">Save</Button>
+          <Button variant="ghost" size="sm">
+            Cancel
+          </Button>
+          <Button variant="primary" size="sm">
+            Save
+          </Button>
         </CardFooter>
       </>
     ),
@@ -101,9 +101,7 @@ export const Interactive: Story = {
       <>
         <CardHeader title="Interactive Card" />
         <CardContent>
-          <p className="text-cream-300">
-            Hover over this card to see the interactive effect.
-          </p>
+          <p className="text-cream-300">Hover over this card to see the interactive effect.</p>
         </CardContent>
       </>
     ),

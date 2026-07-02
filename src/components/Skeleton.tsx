@@ -34,12 +34,7 @@ const variantClasses: Record<SkeletonVariant, string> = {
   button: 'h-10 rounded-sm',
 };
 
-const Skeleton: React.FC<SkeletonProps> = ({
-  className = '',
-  variant = 'text',
-  width,
-  height,
-}) => {
+const Skeleton: React.FC<SkeletonProps> = ({ className = '', variant = 'text', width, height }) => {
   const baseClasses = 'animate-pulse bg-charcoal-800 rounded';
 
   const style: React.CSSProperties = {};
@@ -47,10 +42,7 @@ const Skeleton: React.FC<SkeletonProps> = ({
   if (height) style.height = height;
 
   return (
-    <div
-      className={`${baseClasses} ${variantClasses[variant] || ''} ${className}`}
-      style={style}
-    />
+    <div className={`${baseClasses} ${variantClasses[variant] || ''} ${className}`} style={style} />
   );
 };
 
@@ -167,7 +159,10 @@ export const ScoresSkeleton: React.FC<ScoresSkeletonProps> = ({ rows = 5 }) => (
     <Skeleton variant="title" className="w-1/3 mb-4" />
     <div className="space-y-3">
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex items-center justify-between p-3 bg-charcoal-700/30 rounded-sm">
+        <div
+          key={i}
+          className="flex items-center justify-between p-3 bg-charcoal-700/30 rounded-sm"
+        >
           <div className="flex items-center gap-3">
             <Skeleton variant="text" className="w-8" />
             <Skeleton variant="text" className="w-32" />
@@ -325,7 +320,10 @@ export const LeaguesPageSkeleton: React.FC = () => (
           </div>
           <div className="space-y-2">
             {Array.from({ length: 4 }).map((_, j) => (
-              <div key={j} className="flex items-center justify-between p-2 bg-charcoal-800/50 rounded">
+              <div
+                key={j}
+                className="flex items-center justify-between p-2 bg-charcoal-800/50 rounded"
+              >
                 <Skeleton variant="text" className="w-24" />
                 <Skeleton variant="text" className="w-12" />
               </div>
@@ -412,7 +410,10 @@ export const ProfilePageSkeleton: React.FC = () => (
           <Skeleton variant="title" className="w-32 mb-4" />
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, j) => (
-              <div key={j} className="flex items-center justify-between p-3 bg-charcoal-800/50 rounded">
+              <div
+                key={j}
+                className="flex items-center justify-between p-3 bg-charcoal-800/50 rounded"
+              >
                 <Skeleton variant="text" className="w-32" />
                 <Skeleton variant="text" className="w-16" />
               </div>

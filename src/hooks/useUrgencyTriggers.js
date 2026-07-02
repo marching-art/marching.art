@@ -185,7 +185,9 @@ export function useUrgencyTriggers() {
           .filter((s) => showStartsAtDate(s) > now)
           .sort((a, b) => showStartsAtDate(a) - showStartsAtDate(b));
         result.nextShowToday = upcoming[0] || null;
-        result.nextShowStartLabel = result.nextShowToday ? formatShowStart(result.nextShowToday) : null;
+        result.nextShowStartLabel = result.nextShowToday
+          ? formatShowStart(result.nextShowToday)
+          : null;
       } else {
         // No enriched timing (off-season / unscraped) — preserve prior behavior so
         // nothing regresses: assume evening shows are live.
@@ -273,7 +275,8 @@ export function useUrgencyTriggers() {
       if (result.daysUntilRegistrationCloses <= 7 && result.daysUntilRegistrationCloses > 0) {
         triggers.push({
           id: 'registration_closing',
-          level: result.daysUntilRegistrationCloses <= 3 ? URGENCY_LEVELS.HIGH : URGENCY_LEVELS.MEDIUM,
+          level:
+            result.daysUntilRegistrationCloses <= 3 ? URGENCY_LEVELS.HIGH : URGENCY_LEVELS.MEDIUM,
           type: 'deadline',
           message: `Registration closes in ${result.daysUntilRegistrationCloses} day${result.daysUntilRegistrationCloses > 1 ? 's' : ''}`,
           subMessage: 'Join before the deadline',

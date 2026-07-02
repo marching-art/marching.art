@@ -205,9 +205,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             )}
 
             {/* Content */}
-            <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-              {children}
-            </div>
+            <div className="flex-1 min-h-0 flex flex-col overflow-hidden">{children}</div>
           </m.div>
         </>
       )}
@@ -272,9 +270,10 @@ export const ActionSheet: React.FC<ActionSheetProps> = ({
                   text-left text-base font-medium
                   transition-all press-feedback
                   disabled:opacity-50 disabled:cursor-not-allowed
-                  ${action.variant === 'danger'
-                    ? 'text-red-400 hover:bg-red-500/10 active:bg-red-500/20'
-                    : 'text-white hover:bg-white/5 active:bg-white/10'
+                  ${
+                    action.variant === 'danger'
+                      ? 'text-red-400 hover:bg-red-500/10 active:bg-red-500/20'
+                      : 'text-white hover:bg-white/5 active:bg-white/10'
                   }
                 `}
               >
@@ -352,9 +351,10 @@ export const ConfirmationSheet: React.FC<ConfirmationSheetProps> = ({
             disabled={isLoading}
             className={`
               flex-1 py-4 min-h-[52px] rounded-sm text-base font-bold transition-all press-feedback-strong disabled:opacity-50
-              ${variant === 'danger'
-                ? 'bg-red-600 text-white hover:bg-red-500 active:bg-red-700'
-                : 'bg-[#0057B8] text-white hover:bg-[#0066d6] active:bg-[#004a9e]'
+              ${
+                variant === 'danger'
+                  ? 'bg-red-600 text-white hover:bg-red-500 active:bg-red-700'
+                  : 'bg-[#0057B8] text-white hover:bg-[#0066d6] active:bg-[#004a9e]'
               }
             `}
           >

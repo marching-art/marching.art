@@ -33,7 +33,10 @@ const DeleteCorpsModal = ({ onClose, onConfirm, corpsName, corpsClass }) => {
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
-            <h2 id="modal-title-delete-corps" className="text-xs font-bold uppercase tracking-wider text-red-400 flex items-center gap-2">
+            <h2
+              id="modal-title-delete-corps"
+              className="text-xs font-bold uppercase tracking-wider text-red-400 flex items-center gap-2"
+            >
               <AlertTriangle className="w-4 h-4" />
               Confirm Delete
             </h2>
@@ -51,18 +54,14 @@ const DeleteCorpsModal = ({ onClose, onConfirm, corpsName, corpsClass }) => {
 
             {/* Message */}
             <div className="text-center mb-4">
-              <p className="text-sm text-gray-300 mb-2">
-                You are about to delete:
-              </p>
+              <p className="text-sm text-gray-300 mb-2">You are about to delete:</p>
               <p className="text-lg font-bold text-white">{corpsName}</p>
               <p className="text-xs text-gray-500">{CLASS_NAMES[corpsClass] || corpsClass}</p>
             </div>
 
             {/* Warning */}
             <div className="bg-red-500/10 border border-red-500/30 p-3 mb-4">
-              <p className="text-xs text-red-400 mb-2 font-bold uppercase">
-                This cannot be undone
-              </p>
+              <p className="text-xs text-red-400 mb-2 font-bold uppercase">This cannot be undone</p>
               <ul className="text-xs text-red-300/80 space-y-1">
                 <li>• Caption lineup</li>
                 <li>• Show selections</li>

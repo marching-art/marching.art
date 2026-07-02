@@ -257,9 +257,7 @@ export const LevelUpCelebrationContainer: React.FC = () => {
   const [levelUpData, setLevelUpData] = useState<LevelUpData | null>(null);
 
   useEffect(() => {
-    const handleLevelUp = (
-      event: CustomEvent<{ newLevel: number; classUnlocked?: string }>
-    ) => {
+    const handleLevelUp = (event: CustomEvent<{ newLevel: number; classUnlocked?: string }>) => {
       const { newLevel, classUnlocked } = event.detail;
       setLevelUpData({
         id: `levelup-${Date.now()}`,
@@ -269,8 +267,7 @@ export const LevelUpCelebrationContainer: React.FC = () => {
     };
 
     window.addEventListener('level-up', handleLevelUp as EventListener);
-    return () =>
-      window.removeEventListener('level-up', handleLevelUp as EventListener);
+    return () => window.removeEventListener('level-up', handleLevelUp as EventListener);
   }, []);
 
   const handleComplete = () => {
@@ -280,11 +277,7 @@ export const LevelUpCelebrationContainer: React.FC = () => {
   return (
     <AnimatePresence>
       {levelUpData && (
-        <LevelUpModal
-          key={levelUpData.id}
-          data={levelUpData}
-          onComplete={handleComplete}
-        />
+        <LevelUpModal key={levelUpData.id} data={levelUpData} onComplete={handleComplete} />
       )}
     </AnimatePresence>
   );

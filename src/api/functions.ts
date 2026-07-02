@@ -30,15 +30,28 @@ function createCallable<TData = void, TResult = unknown>(
 // USER MANAGEMENT
 // =============================================================================
 
-export const checkUsername = createCallable<{ username: string }, { available: boolean }>('checkUsername');
-export const createUserProfile = createCallable<{ username: string; displayName?: string }, void>('createUserProfile');
-export const setUserRole = createCallable<{ email: string; makeAdmin: boolean }, { message: string }>('setUserRole');
-export const getShowRegistrations = createCallable<{ showId: string }, unknown>('getShowRegistrations');
+export const checkUsername = createCallable<{ username: string }, { available: boolean }>(
+  'checkUsername'
+);
+export const createUserProfile = createCallable<{ username: string; displayName?: string }, void>(
+  'createUserProfile'
+);
+export const setUserRole = createCallable<
+  { email: string; makeAdmin: boolean },
+  { message: string }
+>('setUserRole');
+export const getShowRegistrations = createCallable<{ showId: string }, unknown>(
+  'getShowRegistrations'
+);
 export const getUserRankings = createCallable<{ uid: string }, unknown>('getUserRankings');
 // Renamed to avoid conflict with profile.ts updateProfile (local Firestore)
-export const updateProfileCF = createCallable<{ displayName?: string; bio?: string }, void>('updateProfile');
+export const updateProfileCF = createCallable<{ displayName?: string; bio?: string }, void>(
+  'updateProfile'
+);
 export const getPublicProfile = createCallable<{ uid: string }, unknown>('getPublicProfile');
-export const updateUsername = createCallable<{ username: string }, { success: boolean }>('updateUsername');
+export const updateUsername = createCallable<{ username: string }, { success: boolean }>(
+  'updateUsername'
+);
 export const updateEmail = createCallable<{ email: string }, { success: boolean }>('updateEmail');
 export const deleteAccount = createCallable<void, { success: boolean }>('deleteAccount');
 
@@ -53,12 +66,26 @@ export interface RegisterCorpsData {
   class: 'soundSport' | 'aClass' | 'openClass' | 'worldClass';
 }
 
-export const registerCorps = createCallable<RegisterCorpsData, { success: boolean }>('registerCorps');
-export const saveLineup = createCallable<{ corpsClass: string; lineup: Record<string, string>; forceUpdate?: boolean }, void>('saveLineup');
-export const selectUserShows = createCallable<{ week: number; shows: unknown[]; corpsClass: string }, void>('selectUserShows');
-export const saveShowConcept = createCallable<{ corpsClass: string; showConcept: string }, void>('saveShowConcept');
-export const getHotCorps = createCallable<void, { hotCorps: Record<string, unknown> }>('getHotCorps');
-export const getActiveLineupKeys = createCallable<{ corpsClass: string }, { lineupKeys: string[] }>('getActiveLineupKeys');
+export const registerCorps = createCallable<RegisterCorpsData, { success: boolean }>(
+  'registerCorps'
+);
+export const saveLineup = createCallable<
+  { corpsClass: string; lineup: Record<string, string>; forceUpdate?: boolean },
+  void
+>('saveLineup');
+export const selectUserShows = createCallable<
+  { week: number; shows: unknown[]; corpsClass: string },
+  void
+>('selectUserShows');
+export const saveShowConcept = createCallable<{ corpsClass: string; showConcept: string }, void>(
+  'saveShowConcept'
+);
+export const getHotCorps = createCallable<void, { hotCorps: Record<string, unknown> }>(
+  'getHotCorps'
+);
+export const getActiveLineupKeys = createCallable<{ corpsClass: string }, { lineupKeys: string[] }>(
+  'getActiveLineupKeys'
+);
 export const processCorpsDecisions = createCallable<
   { decisions: unknown[] },
   { corpsNeedingSetup?: unknown[] }
@@ -79,7 +106,9 @@ export interface ValidateLineupResult {
   requiresUpdate: boolean;
 }
 
-export const validateLineup = createCallable<{ corpsClass: string }, ValidateLineupResult>('validateLineup');
+export const validateLineup = createCallable<{ corpsClass: string }, ValidateLineupResult>(
+  'validateLineup'
+);
 
 // =============================================================================
 // CORPS MANAGEMENT
@@ -90,8 +119,13 @@ export interface RetireCorpsData {
   checkOnly?: boolean;
 }
 
-export const retireCorps = createCallable<RetireCorpsData, { success: boolean; message?: string }>('retireCorps');
-export const unretireCorps = createCallable<{ corpsClass: string; retiredIndex: number }, { success: boolean }>('unretireCorps');
+export const retireCorps = createCallable<RetireCorpsData, { success: boolean; message?: string }>(
+  'retireCorps'
+);
+export const unretireCorps = createCallable<
+  { corpsClass: string; retiredIndex: number },
+  { success: boolean }
+>('unretireCorps');
 
 export interface TransferCorpsData {
   fromClass: string;
@@ -105,7 +139,9 @@ export interface TransferCorpsResult {
   corpsName: string;
 }
 
-export const transferCorps = createCallable<TransferCorpsData, TransferCorpsResult>('transferCorps');
+export const transferCorps = createCallable<TransferCorpsData, TransferCorpsResult>(
+  'transferCorps'
+);
 
 export interface DuplicateCorpsConflict {
   winnerUid: string;
@@ -119,7 +155,9 @@ export interface DuplicateCorpsEntry {
   conflictsWith: DuplicateCorpsConflict | null;
 }
 
-export const detectMyDuplicateCorps = createCallable<void, { duplicates: DuplicateCorpsEntry[] }>('detectMyDuplicateCorps');
+export const detectMyDuplicateCorps = createCallable<void, { duplicates: DuplicateCorpsEntry[] }>(
+  'detectMyDuplicateCorps'
+);
 
 export const renameCorps = createCallable<
   { corpsClass: string; newName: string },
@@ -140,13 +178,18 @@ export interface SweepDuplicateCorpsResult {
   }>;
 }
 
-export const sweepDuplicateCorps = createCallable<void, SweepDuplicateCorpsResult>('sweepDuplicateCorps');
+export const sweepDuplicateCorps = createCallable<void, SweepDuplicateCorpsResult>(
+  'sweepDuplicateCorps'
+);
 
 // =============================================================================
 // ECONOMY
 // =============================================================================
 
-export const unlockClassWithCorpsCoin = createCallable<{ classToUnlock: string }, { success: boolean; classUnlocked: string; newBalance: number }>('unlockClassWithCorpsCoin');
+export const unlockClassWithCorpsCoin = createCallable<
+  { classToUnlock: string },
+  { success: boolean; classUnlocked: string; newBalance: number }
+>('unlockClassWithCorpsCoin');
 
 // =============================================================================
 // EXECUTION SYSTEM
@@ -165,11 +208,24 @@ export interface RehearsalResult {
 }
 
 export const dailyRehearsal = createCallable<RehearsalData, RehearsalResult>('dailyRehearsal');
-export const repairEquipment = createCallable<{ corpsClass: string; equipmentType: string }, { success: boolean }>('repairEquipment');
-export const upgradeEquipment = createCallable<{ corpsClass: string; equipmentType: string }, { success: boolean }>('upgradeEquipment');
-export const setShowDifficulty = createCallable<{ corpsClass: string; difficulty: number }, void>('setShowDifficulty');
-export const boostMorale = createCallable<{ corpsClass: string }, { success: boolean; newMorale: number }>('boostMorale');
-export const getExecutionStatus = createCallable<{ corpsClass: string }, unknown>('getExecutionStatus');
+export const repairEquipment = createCallable<
+  { corpsClass: string; equipmentType: string },
+  { success: boolean }
+>('repairEquipment');
+export const upgradeEquipment = createCallable<
+  { corpsClass: string; equipmentType: string },
+  { success: boolean }
+>('upgradeEquipment');
+export const setShowDifficulty = createCallable<{ corpsClass: string; difficulty: number }, void>(
+  'setShowDifficulty'
+);
+export const boostMorale = createCallable<
+  { corpsClass: string },
+  { success: boolean; newMorale: number }
+>('boostMorale');
+export const getExecutionStatus = createCallable<{ corpsClass: string }, unknown>(
+  'getExecutionStatus'
+);
 
 // =============================================================================
 // DAILY OPERATIONS
@@ -199,7 +255,9 @@ export const claimDailyLogin = createCallable<void, ClaimDailyLoginResult>('clai
 // LEADERBOARDS
 // =============================================================================
 
-export const updateLifetimeLeaderboard = createCallable<void, { success: boolean }>('updateLifetimeLeaderboard');
+export const updateLifetimeLeaderboard = createCallable<void, { success: boolean }>(
+  'updateLifetimeLeaderboard'
+);
 
 // =============================================================================
 // SOCIAL & LEAGUES
@@ -214,15 +272,27 @@ export interface CreateLeagueData {
 
 // Note: createLeague, joinLeague, leaveLeague are in leagues.ts with higher-level wrappers
 // These raw CF exports are available with CF suffix if needed
-export const createLeagueCF = createCallable<CreateLeagueData, { leagueId: string }>('createLeague');
-export const joinLeagueCF = createCallable<{ leagueId: string } | { inviteCode: string }, { success: boolean }>('joinLeague');
-export const leaveLeagueCF = createCallable<{ leagueId: string }, { success: boolean }>('leaveLeague');
+export const createLeagueCF = createCallable<CreateLeagueData, { leagueId: string }>(
+  'createLeague'
+);
+export const joinLeagueCF = createCallable<
+  { leagueId: string } | { inviteCode: string },
+  { success: boolean }
+>('joinLeague');
+export const leaveLeagueCF = createCallable<{ leagueId: string }, { success: boolean }>(
+  'leaveLeague'
+);
 export const generateMatchups = createCallable<
   { leagueId: string; week: number },
   { success: boolean; matchups?: unknown[]; message?: string }
 >('generateMatchups');
-export const updateMatchupResults = createCallable<{ matchupId: string; results: unknown }, void>('updateMatchupResults');
-export const postLeagueMessageCF = createCallable<{ leagueId: string; message: string }, { messageId: string }>('postLeagueMessage');
+export const updateMatchupResults = createCallable<{ matchupId: string; results: unknown }, void>(
+  'updateMatchupResults'
+);
+export const postLeagueMessageCF = createCallable<
+  { leagueId: string; message: string },
+  { messageId: string }
+>('postLeagueMessage');
 export const inviteDirectorToLeague = createCallable<
   { leagueId: string; inviteeUid: string; message?: string },
   { success: boolean }
@@ -231,17 +301,32 @@ export const respondToLeagueInvitation = createCallable<
   { leagueId: string; accept: boolean },
   { success: boolean }
 >('respondToLeagueInvitation');
-export const sendCommentNotification = createCallable<{ targetUid: string; commentId: string }, void>('sendCommentNotification');
-export const deleteComment = createCallable<{ commentId: string }, { success: boolean }>('deleteComment');
-export const reportComment = createCallable<{ commentId: string; reason: string }, { success: boolean }>('reportComment');
+export const sendCommentNotification = createCallable<
+  { targetUid: string; commentId: string },
+  void
+>('sendCommentNotification');
+export const deleteComment = createCallable<{ commentId: string }, { success: boolean }>(
+  'deleteComment'
+);
+export const reportComment = createCallable<
+  { commentId: string; reason: string },
+  { success: boolean }
+>('reportComment');
 
 // =============================================================================
 // ADMIN
 // =============================================================================
 
-export const startNewOffSeason = createCallable<{ seasonNumber: number }, { success: boolean }>('startNewOffSeason');
-export const startNewLiveSeason = createCallable<{ year: number }, { success: boolean }>('startNewLiveSeason');
-export const manualTrigger = createCallable<{ action: string; params?: unknown }, { success: boolean }>('manualTrigger');
+export const startNewOffSeason = createCallable<{ seasonNumber: number }, { success: boolean }>(
+  'startNewOffSeason'
+);
+export const startNewLiveSeason = createCallable<{ year: number }, { success: boolean }>(
+  'startNewLiveSeason'
+);
+export const manualTrigger = createCallable<
+  { action: string; params?: unknown },
+  { success: boolean }
+>('manualTrigger');
 
 // =============================================================================
 // NEWS HUB
@@ -253,23 +338,28 @@ export interface GetRecentNewsParams {
   limit?: number;
   category?: NewsCategory;
   startAfter?: string;
-  includeEngagement?: boolean;  // Fetch engagement data in same request
-  feedOnly?: boolean;           // Return minimal fields for feed display (no full content)
+  includeEngagement?: boolean; // Fetch engagement data in same request
+  feedOnly?: boolean; // Return minimal fields for feed display (no full content)
 }
 
 export interface GetRecentNewsResult {
   success: boolean;
   news: NewsEntry[];
   hasMore?: boolean;
-  engagement?: Record<string, {
-    commentCount: number;
-    reactionCounts: Record<string, number>;
-  }>;
-  fromCache?: boolean;  // Indicates if response was served from server cache
-  cacheAge?: number;    // Age of cached data in milliseconds
+  engagement?: Record<
+    string,
+    {
+      commentCount: number;
+      reactionCounts: Record<string, number>;
+    }
+  >;
+  fromCache?: boolean; // Indicates if response was served from server cache
+  cacheAge?: number; // Age of cached data in milliseconds
 }
 
-export const getRecentNews = createCallable<GetRecentNewsParams, GetRecentNewsResult>('getRecentNews');
+export const getRecentNews = createCallable<GetRecentNewsParams, GetRecentNewsResult>(
+  'getRecentNews'
+);
 
 // =============================================================================
 // OPTIMIZED NEWS FETCH VIA HTTP ENDPOINT
@@ -299,7 +389,12 @@ export async function fetchNewsFeedHttp(params: {
 
   // Firebase Hosting rewrites only work in production; skip HTTP path in dev
   if (!import.meta.env.PROD) {
-    const result = await getRecentNews({ limit, category, feedOnly: true, includeEngagement: true });
+    const result = await getRecentNews({
+      limit,
+      category,
+      feedOnly: true,
+      includeEngagement: true,
+    });
     return result.data;
   }
 
@@ -308,7 +403,7 @@ export async function fetchNewsFeedHttp(params: {
     const response = await fetch(`/api/news?${queryParams.toString()}`, {
       method: 'GET',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
       },
     });
 
@@ -326,14 +421,26 @@ export async function fetchNewsFeedHttp(params: {
     return data as GetRecentNewsResult;
   } catch {
     // Fall back to callable function
-    const result = await getRecentNews({ limit, category, feedOnly: true, includeEngagement: true });
+    const result = await getRecentNews({
+      limit,
+      category,
+      feedOnly: true,
+      includeEngagement: true,
+    });
     return result.data;
   }
 }
-export const triggerNewsGeneration = createCallable<{ type: 'dci' | 'fantasy'; data: unknown }, { success: boolean; result?: unknown }>('triggerNewsGeneration');
+export const triggerNewsGeneration = createCallable<
+  { type: 'dci' | 'fantasy'; data: unknown },
+  { success: boolean; result?: unknown }
+>('triggerNewsGeneration');
 export const fixProfileFields = createCallable<void, { message: string }>('fixProfileFields');
-export const scrapeLiveScoresNow = createCallable<void, { success?: boolean; message?: string }>('scrapeLiveScoresNow');
-export const discoverAndQueueUrls = createCallable<void, { success?: boolean; message?: string }>('discoverAndQueueUrls');
+export const scrapeLiveScoresNow = createCallable<void, { success?: boolean; message?: string }>(
+  'scrapeLiveScoresNow'
+);
+export const discoverAndQueueUrls = createCallable<void, { success?: boolean; message?: string }>(
+  'discoverAndQueueUrls'
+);
 // 3 min timeout: generates the full day's AI articles in one call
 export const triggerDailyNews = createCallable<
   { currentDay?: number; dataDocId?: string; seasonId?: string },
@@ -444,11 +551,24 @@ export interface DeleteArticleData {
   confirmDelete: boolean;
 }
 
-export const listAllArticles = createCallable<ListAllArticlesData | void, ListAllArticlesResult>('listAllArticles');
-export const getArticleForEdit = createCallable<{ path: string }, GetArticleForEditResult>('getArticleForEdit');
-export const updateArticle = createCallable<UpdateArticleData, { success: boolean; message: string }>('updateArticle');
-export const archiveArticle = createCallable<ArchiveArticleData, { success: boolean; message: string }>('archiveArticle');
-export const deleteArticle = createCallable<DeleteArticleData, { success: boolean; message: string }>('deleteArticle');
+export const listAllArticles = createCallable<ListAllArticlesData | void, ListAllArticlesResult>(
+  'listAllArticles'
+);
+export const getArticleForEdit = createCallable<{ path: string }, GetArticleForEditResult>(
+  'getArticleForEdit'
+);
+export const updateArticle = createCallable<
+  UpdateArticleData,
+  { success: boolean; message: string }
+>('updateArticle');
+export const archiveArticle = createCallable<
+  ArchiveArticleData,
+  { success: boolean; message: string }
+>('archiveArticle');
+export const deleteArticle = createCallable<
+  DeleteArticleData,
+  { success: boolean; message: string }
+>('deleteArticle');
 
 // Regenerate AI image for an article
 export interface RegenerateArticleImageData {
@@ -463,7 +583,10 @@ export interface RegenerateArticleImageResult {
   imageUrl?: string;
 }
 
-export const regenerateArticleImage = createCallable<RegenerateArticleImageData, RegenerateArticleImageResult>('regenerateArticleImage');
+export const regenerateArticleImage = createCallable<
+  RegenerateArticleImageData,
+  RegenerateArticleImageResult
+>('regenerateArticleImage');
 
 // =============================================================================
 // NEWS SUBMISSIONS (User-submitted articles for admin approval)
@@ -483,7 +606,9 @@ export interface SubmitNewsResult {
   submissionId?: string;
 }
 
-export const submitNewsForApproval = createCallable<SubmitNewsData, SubmitNewsResult>('submitNewsForApproval');
+export const submitNewsForApproval = createCallable<SubmitNewsData, SubmitNewsResult>(
+  'submitNewsForApproval'
+);
 
 // =============================================================================
 // ADMIN ARTICLE MANAGEMENT
@@ -518,7 +643,10 @@ export interface ListPendingSubmissionsResult {
   count: number;
 }
 
-export const listPendingSubmissions = createCallable<ListPendingSubmissionsData, ListPendingSubmissionsResult>('listPendingSubmissions');
+export const listPendingSubmissions = createCallable<
+  ListPendingSubmissionsData,
+  ListPendingSubmissionsResult
+>('listPendingSubmissions');
 
 export interface ApproveSubmissionData {
   submissionId: string;
@@ -535,7 +663,9 @@ export interface ApproveSubmissionResult {
   imageUrl?: string | null;
 }
 
-export const approveSubmission = createCallable<ApproveSubmissionData, ApproveSubmissionResult>('approveSubmission');
+export const approveSubmission = createCallable<ApproveSubmissionData, ApproveSubmissionResult>(
+  'approveSubmission'
+);
 
 export interface RejectSubmissionData {
   submissionId: string;
@@ -547,7 +677,9 @@ export interface RejectSubmissionResult {
   message: string;
 }
 
-export const rejectSubmission = createCallable<RejectSubmissionData, RejectSubmissionResult>('rejectSubmission');
+export const rejectSubmission = createCallable<RejectSubmissionData, RejectSubmissionResult>(
+  'rejectSubmission'
+);
 
 // =============================================================================
 // AVATAR GENERATION
@@ -563,13 +695,21 @@ export interface GenerateAvatarResult {
   message: string;
 }
 
-export const generateCorpsAvatar = createCallable<GenerateAvatarData, GenerateAvatarResult>('generateCorpsAvatar');
+export const generateCorpsAvatar = createCallable<GenerateAvatarData, GenerateAvatarResult>(
+  'generateCorpsAvatar'
+);
 
 // =============================================================================
 // ARTICLE REACTIONS
 // =============================================================================
 
-import type { ArticleReactionType, ArticleReactionCounts, ArticleComment, CommentStatus, ArticleEngagement } from '../types';
+import type {
+  ArticleReactionType,
+  ArticleReactionCounts,
+  ArticleComment,
+  CommentStatus,
+  ArticleEngagement,
+} from '../types';
 
 export interface ToggleArticleReactionData {
   articleId: string;
@@ -582,7 +722,10 @@ export interface ToggleArticleReactionResult {
   emoji: ArticleReactionType | null;
 }
 
-export const toggleArticleReaction = createCallable<ToggleArticleReactionData, ToggleArticleReactionResult>('toggleArticleReaction');
+export const toggleArticleReaction = createCallable<
+  ToggleArticleReactionData,
+  ToggleArticleReactionResult
+>('toggleArticleReaction');
 
 export interface GetArticleReactionsData {
   articleId: string;
@@ -594,7 +737,10 @@ export interface GetArticleReactionsResult {
   userReaction: ArticleReactionType | null;
 }
 
-export const getArticleReactions = createCallable<GetArticleReactionsData, GetArticleReactionsResult>('getArticleReactions');
+export const getArticleReactions = createCallable<
+  GetArticleReactionsData,
+  GetArticleReactionsResult
+>('getArticleReactions');
 
 // =============================================================================
 // ARTICLE COMMENTS
@@ -611,7 +757,9 @@ export interface AddArticleCommentResult {
   message: string;
 }
 
-export const addArticleComment = createCallable<AddArticleCommentData, AddArticleCommentResult>('addArticleComment');
+export const addArticleComment = createCallable<AddArticleCommentData, AddArticleCommentResult>(
+  'addArticleComment'
+);
 
 export interface GetArticleCommentsData {
   articleId: string;
@@ -627,7 +775,9 @@ export interface GetArticleCommentsResult {
   total: number;
 }
 
-export const getArticleComments = createCallable<GetArticleCommentsData, GetArticleCommentsResult>('getArticleComments');
+export const getArticleComments = createCallable<GetArticleCommentsData, GetArticleCommentsResult>(
+  'getArticleComments'
+);
 
 export interface EditArticleCommentData {
   commentId: string;
@@ -640,7 +790,9 @@ export interface EditArticleCommentResult {
   message: string;
 }
 
-export const editArticleComment = createCallable<EditArticleCommentData, EditArticleCommentResult>('editArticleComment');
+export const editArticleComment = createCallable<EditArticleCommentData, EditArticleCommentResult>(
+  'editArticleComment'
+);
 
 export interface DeleteArticleCommentData {
   commentId: string;
@@ -651,7 +803,10 @@ export interface DeleteArticleCommentResult {
   message: string;
 }
 
-export const deleteArticleComment = createCallable<DeleteArticleCommentData, DeleteArticleCommentResult>('deleteArticleComment');
+export const deleteArticleComment = createCallable<
+  DeleteArticleCommentData,
+  DeleteArticleCommentResult
+>('deleteArticleComment');
 
 export interface ReportArticleCommentData {
   commentId: string;
@@ -663,7 +818,10 @@ export interface ReportArticleCommentResult {
   message: string;
 }
 
-export const reportArticleComment = createCallable<ReportArticleCommentData, ReportArticleCommentResult>('reportArticleComment');
+export const reportArticleComment = createCallable<
+  ReportArticleCommentData,
+  ReportArticleCommentResult
+>('reportArticleComment');
 
 // =============================================================================
 // ARTICLE ENGAGEMENT (Combined reactions + comments count)
@@ -678,7 +836,10 @@ export interface GetArticleEngagementResult {
   engagement: Record<string, ArticleEngagement>;
 }
 
-export const getArticleEngagement = createCallable<GetArticleEngagementData, GetArticleEngagementResult>('getArticleEngagement');
+export const getArticleEngagement = createCallable<
+  GetArticleEngagementData,
+  GetArticleEngagementResult
+>('getArticleEngagement');
 
 // =============================================================================
 // ADMIN COMMENT MODERATION
@@ -703,7 +864,10 @@ export interface ListCommentsForModerationResult {
   };
 }
 
-export const listCommentsForModeration = createCallable<ListCommentsForModerationData, ListCommentsForModerationResult>('listCommentsForModeration');
+export const listCommentsForModeration = createCallable<
+  ListCommentsForModerationData,
+  ListCommentsForModerationResult
+>('listCommentsForModeration');
 
 export interface ModerateCommentData {
   commentId: string;
@@ -717,7 +881,9 @@ export interface ModerateCommentResult {
   message: string;
 }
 
-export const moderateComment = createCallable<ModerateCommentData, ModerateCommentResult>('moderateComment');
+export const moderateComment = createCallable<ModerateCommentData, ModerateCommentResult>(
+  'moderateComment'
+);
 
 export interface BulkModerateCommentsData {
   commentIds: string[];
@@ -732,4 +898,7 @@ export interface BulkModerateCommentsResult {
   message: string;
 }
 
-export const bulkModerateComments = createCallable<BulkModerateCommentsData, BulkModerateCommentsResult>('bulkModerateComments');
+export const bulkModerateComments = createCallable<
+  BulkModerateCommentsData,
+  BulkModerateCommentsResult
+>('bulkModerateComments');

@@ -4,9 +4,23 @@
 import React, { useMemo } from 'react';
 import { m } from 'framer-motion';
 import {
-  Trophy, Crown, Flame, TrendingUp, TrendingDown, Minus,
-  Swords, Target, Zap, Calendar, Users, Award, Star,
-  ChevronRight, BarChart3, Medal, Radio
+  Trophy,
+  Crown,
+  Flame,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Swords,
+  Target,
+  Zap,
+  Calendar,
+  Users,
+  Award,
+  Star,
+  ChevronRight,
+  BarChart3,
+  Medal,
+  Radio,
 } from 'lucide-react';
 
 // Stat Card - Main building block
@@ -19,7 +33,7 @@ const StatCard = ({
   size = 'md',
   trend,
   onClick,
-  children
+  children,
 }) => {
   const colorClasses = {
     yellow: 'text-yellow-500 bg-yellow-500/10 border-yellow-500/30',
@@ -50,10 +64,15 @@ const StatCard = ({
           <Icon className="w-4 h-4" />
         </div>
         {trend && (
-          <div className={`flex items-center gap-0.5 text-xs font-bold ${
-            trend === 'up' ? 'text-green-500' :
-            trend === 'down' ? 'text-red-500' : 'text-gray-500'
-          }`}>
+          <div
+            className={`flex items-center gap-0.5 text-xs font-bold ${
+              trend === 'up'
+                ? 'text-green-500'
+                : trend === 'down'
+                  ? 'text-red-500'
+                  : 'text-gray-500'
+            }`}
+          >
             {trend === 'up' && <TrendingUp className="w-3 h-3" />}
             {trend === 'down' && <TrendingDown className="w-3 h-3" />}
             {trend === 'same' && <Minus className="w-3 h-3" />}
@@ -63,9 +82,7 @@ const StatCard = ({
       <div>
         <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-0.5">{title}</p>
         <p className="text-xl font-bold text-white font-data tabular-nums">{value}</p>
-        {subtitle && (
-          <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>
-        )}
+        {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
       </div>
       {children}
     </Component>
@@ -83,9 +100,10 @@ const YourPositionCard = ({ userStats, totalMembers, onViewStandings }) => {
     return n + (s[(v - 20) % 10] || s[v] || s[0]);
   };
 
-  const winPct = userStats.wins + userStats.losses > 0
-    ? ((userStats.wins / (userStats.wins + userStats.losses)) * 100).toFixed(0)
-    : 0;
+  const winPct =
+    userStats.wins + userStats.losses > 0
+      ? ((userStats.wins / (userStats.wins + userStats.losses)) * 100).toFixed(0)
+      : 0;
 
   return (
     <m.div
@@ -98,7 +116,9 @@ const YourPositionCard = ({ userStats, totalMembers, onViewStandings }) => {
           <div className="p-2 bg-purple-500/20 border border-purple-500/30">
             <Crown className="w-4 h-4 text-purple-400" />
           </div>
-          <span className="text-[10px] uppercase tracking-wider text-purple-400 font-bold">Your Position</span>
+          <span className="text-[10px] uppercase tracking-wider text-purple-400 font-bold">
+            Your Position
+          </span>
         </div>
         <button
           onClick={onViewStandings}
@@ -118,9 +138,13 @@ const YourPositionCard = ({ userStats, totalMembers, onViewStandings }) => {
           </div>
           <div className="flex items-center gap-3 mt-2">
             <div className="flex items-center gap-1">
-              <span className="text-lg font-bold text-green-500 font-data tabular-nums">{userStats.wins}</span>
+              <span className="text-lg font-bold text-green-500 font-data tabular-nums">
+                {userStats.wins}
+              </span>
               <span className="text-gray-600">-</span>
-              <span className="text-lg font-bold text-red-500 font-data tabular-nums">{userStats.losses}</span>
+              <span className="text-lg font-bold text-red-500 font-data tabular-nums">
+                {userStats.losses}
+              </span>
             </div>
             <span className="text-sm text-gray-500">({winPct}%)</span>
           </div>
@@ -129,13 +153,16 @@ const YourPositionCard = ({ userStats, totalMembers, onViewStandings }) => {
         {/* Visual rank indicator */}
         <div className="flex flex-col items-center">
           {userStats.streak > 0 && (
-            <div className={`flex items-center gap-1 px-2 py-1 text-sm font-bold ${
-              userStats.streakType === 'W'
-                ? 'bg-green-500/20 text-green-500'
-                : 'bg-red-500/20 text-red-500'
-            }`}>
+            <div
+              className={`flex items-center gap-1 px-2 py-1 text-sm font-bold ${
+                userStats.streakType === 'W'
+                  ? 'bg-green-500/20 text-green-500'
+                  : 'bg-red-500/20 text-red-500'
+              }`}
+            >
               {userStats.streakType === 'W' && <Flame className="w-4 h-4" />}
-              {userStats.streakType}{userStats.streak}
+              {userStats.streakType}
+              {userStats.streak}
             </div>
           )}
           {rank <= 4 && (
@@ -180,9 +207,7 @@ const NextMatchupCard = ({ matchup, opponent, opponentStats, currentWeek, isLive
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-[#333] flex items-center justify-center">
-            <span className="text-sm font-bold text-gray-400">
-              {opponent?.charAt(0) || '?'}
-            </span>
+            <span className="text-sm font-bold text-gray-400">{opponent?.charAt(0) || '?'}</span>
           </div>
           <div>
             <p className="font-bold text-white text-sm">vs {opponent || 'TBD'}</p>
@@ -237,7 +262,13 @@ const QuickStatsRow = ({ stats, leagueStats, userId }) => {
 };
 
 // League Leaders Mini Display
-const LeagueLeadersMini = ({ standings, memberProfiles, userId, leagueStats, onViewLeaderboards }) => {
+const LeagueLeadersMini = ({
+  standings,
+  memberProfiles,
+  userId,
+  leagueStats,
+  onViewLeaderboards,
+}) => {
   const topThree = standings.slice(0, 3);
 
   return (
@@ -245,7 +276,9 @@ const LeagueLeadersMini = ({ standings, memberProfiles, userId, leagueStats, onV
       <div className="px-4 py-3 border-b border-[#333] bg-[#222] flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Trophy className="w-4 h-4 text-yellow-500" />
-          <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">League Leaders</span>
+          <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">
+            League Leaders
+          </span>
         </div>
         <button
           onClick={onViewLeaderboards}
@@ -260,7 +293,10 @@ const LeagueLeadersMini = ({ standings, memberProfiles, userId, leagueStats, onV
           {topThree.map((player, idx) => {
             const profile = memberProfiles[player.uid];
             const isUser = player.uid === userId;
-            const rawName = profile?.displayName && profile.displayName !== 'Director' ? profile.displayName : profile?.username;
+            const rawName =
+              profile?.displayName && profile.displayName !== 'Director'
+                ? profile.displayName
+                : profile?.username;
             const displayName = isUser ? 'You' : rawName || `User ${player.uid?.slice(0, 6)}`;
             const medals = ['text-yellow-500', 'text-gray-400', 'text-orange-500'];
 
@@ -274,7 +310,9 @@ const LeagueLeadersMini = ({ standings, memberProfiles, userId, leagueStats, onV
                 <div className="flex items-center justify-center mb-1">
                   <Medal className={`w-5 h-5 ${medals[idx]}`} />
                 </div>
-                <p className={`text-xs font-bold truncate ${isUser ? 'text-purple-400' : 'text-white'}`}>
+                <p
+                  className={`text-xs font-bold truncate ${isUser ? 'text-purple-400' : 'text-white'}`}
+                >
                   {displayName}
                 </p>
                 <p className="text-[10px] text-gray-500">
@@ -290,8 +328,8 @@ const LeagueLeadersMini = ({ standings, memberProfiles, userId, leagueStats, onV
           <div className="mt-3 pt-3 border-t border-[#333] grid grid-cols-2 gap-2">
             {/* Most Battle Points */}
             {(() => {
-              const sorted = Object.values(leagueStats).sort((a, b) =>
-                (b.totalBattlePointsFor || 0) - (a.totalBattlePointsFor || 0)
+              const sorted = Object.values(leagueStats).sort(
+                (a, b) => (b.totalBattlePointsFor || 0) - (a.totalBattlePointsFor || 0)
               );
               const leader = sorted[0];
               if (!leader) return null;
@@ -302,8 +340,14 @@ const LeagueLeadersMini = ({ standings, memberProfiles, userId, leagueStats, onV
                   <Target className="w-4 h-4 text-purple-500 flex-shrink-0" />
                   <div className="min-w-0">
                     <p className="text-[9px] uppercase text-gray-500">Most BP</p>
-                    <p className={`text-xs font-bold truncate ${isUser ? 'text-purple-400' : 'text-white'}`}>
-                      {isUser ? 'You' : (profile?.displayName && profile.displayName !== 'Director' ? profile.displayName : profile?.username) || 'Unknown'}
+                    <p
+                      className={`text-xs font-bold truncate ${isUser ? 'text-purple-400' : 'text-white'}`}
+                    >
+                      {isUser
+                        ? 'You'
+                        : (profile?.displayName && profile.displayName !== 'Director'
+                            ? profile.displayName
+                            : profile?.username) || 'Unknown'}
                     </p>
                   </div>
                 </div>
@@ -312,8 +356,8 @@ const LeagueLeadersMini = ({ standings, memberProfiles, userId, leagueStats, onV
 
             {/* Best Win Rate */}
             {(() => {
-              const sorted = Object.values(leagueStats).sort((a, b) =>
-                (b.winPercentage || 0) - (a.winPercentage || 0)
+              const sorted = Object.values(leagueStats).sort(
+                (a, b) => (b.winPercentage || 0) - (a.winPercentage || 0)
               );
               const leader = sorted[0];
               if (!leader) return null;
@@ -324,8 +368,14 @@ const LeagueLeadersMini = ({ standings, memberProfiles, userId, leagueStats, onV
                   <Award className="w-4 h-4 text-green-500 flex-shrink-0" />
                   <div className="min-w-0">
                     <p className="text-[9px] uppercase text-gray-500">Best Win%</p>
-                    <p className={`text-xs font-bold truncate ${isUser ? 'text-purple-400' : 'text-white'}`}>
-                      {isUser ? 'You' : (profile?.displayName && profile.displayName !== 'Director' ? profile.displayName : profile?.username) || 'Unknown'}
+                    <p
+                      className={`text-xs font-bold truncate ${isUser ? 'text-purple-400' : 'text-white'}`}
+                    >
+                      {isUser
+                        ? 'You'
+                        : (profile?.displayName && profile.displayName !== 'Director'
+                            ? profile.displayName
+                            : profile?.username) || 'Unknown'}
                     </p>
                   </div>
                 </div>
@@ -347,9 +397,13 @@ const SeasonProgressBar = ({ currentWeek, totalWeeks = 12 }) => {
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <Calendar className="w-4 h-4 text-blue-500" />
-          <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Season Progress</span>
+          <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">
+            Season Progress
+          </span>
         </div>
-        <span className="text-xs text-gray-500">Week {currentWeek} of {totalWeeks}</span>
+        <span className="text-xs text-gray-500">
+          Week {currentWeek} of {totalWeeks}
+        </span>
       </div>
       <div className="h-2 bg-[#222] overflow-hidden">
         <m.div
@@ -384,22 +438,22 @@ const LeagueDashboard = ({
   // Find user's current week matchup
   const currentMatchup = useMemo(() => {
     const weekMatchups = weeklyMatchups?.[currentWeek] || [];
-    return weekMatchups.find(m =>
-      m.user1 === userProfile?.uid || m.user2 === userProfile?.uid
-    );
+    return weekMatchups.find((m) => m.user1 === userProfile?.uid || m.user2 === userProfile?.uid);
   }, [weeklyMatchups, currentWeek, userProfile?.uid]);
 
   // Get opponent info
   const opponentInfo = useMemo(() => {
     if (!currentMatchup) return null;
-    const opponentId = currentMatchup.user1 === userProfile?.uid
-      ? currentMatchup.user2
-      : currentMatchup.user1;
+    const opponentId =
+      currentMatchup.user1 === userProfile?.uid ? currentMatchup.user2 : currentMatchup.user1;
     const profile = memberProfiles[opponentId];
-    const stats = standings.find(s => s.uid === opponentId);
+    const stats = standings.find((s) => s.uid === opponentId);
     return {
       id: opponentId,
-      name: (profile?.displayName && profile.displayName !== 'Director' ? profile.displayName : profile?.username) || `User ${opponentId?.slice(0, 6)}`,
+      name:
+        (profile?.displayName && profile.displayName !== 'Director'
+          ? profile.displayName
+          : profile?.username) || `User ${opponentId?.slice(0, 6)}`,
       stats,
     };
   }, [currentMatchup, userProfile?.uid, memberProfiles, standings]);
@@ -424,11 +478,7 @@ const LeagueDashboard = ({
       <SeasonProgressBar currentWeek={currentWeek} />
 
       {/* Quick Stats */}
-      <QuickStatsRow
-        stats={userStats}
-        leagueStats={leagueStats}
-        userId={userProfile?.uid}
-      />
+      <QuickStatsRow stats={userStats} leagueStats={leagueStats} userId={userProfile?.uid} />
 
       {/* Next Matchup */}
       <NextMatchupCard

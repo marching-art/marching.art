@@ -116,7 +116,7 @@ export const useSeasonStore = create((set, get) => ({
             currentWeek,
             currentDay,
             loading: false,
-            error: null
+            error: null,
           });
         } else {
           set({
@@ -126,7 +126,7 @@ export const useSeasonStore = create((set, get) => ({
             currentWeek: 1,
             currentDay: 1,
             loading: false,
-            error: 'No active season found'
+            error: 'No active season found',
           });
         }
       },
@@ -134,7 +134,7 @@ export const useSeasonStore = create((set, get) => ({
         console.error('Error fetching season data:', err);
         set({
           loading: false,
-          error: err.message
+          error: err.message,
         });
       }
     );
@@ -176,7 +176,7 @@ export const useSeasonStore = create((set, get) => ({
       world: 6,
       open: 5,
       aClass: 4,
-      soundSport: 0
+      soundSport: 0,
     };
 
     const lockWeeks = locks[corpsClass] || 0;
@@ -195,7 +195,7 @@ export const useSeasonStore = create((set, get) => ({
         label: 'Live Season',
         color: 'text-red-500',
         bgColor: 'bg-red-500/20',
-        description: 'Follow real DCI scores as they happen!'
+        description: 'Follow real DCI scores as they happen!',
       };
     }
 
@@ -203,7 +203,7 @@ export const useSeasonStore = create((set, get) => ({
       label: 'Off-Season',
       color: 'text-gold-500',
       bgColor: 'bg-gold-500/20',
-      description: 'Fantasy competition with historical data'
+      description: 'Fantasy competition with historical data',
     };
   },
 
@@ -214,7 +214,7 @@ export const useSeasonStore = create((set, get) => ({
   formatSeasonName: () => {
     const { seasonData } = get();
     return formatSeasonName(seasonData?.name);
-  }
+  },
 }));
 
 export default useSeasonStore;

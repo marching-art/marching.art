@@ -41,18 +41,16 @@ export const StatCard = forwardRef<HTMLDivElement, StatCardProps>(
           p-4
           relative
           ${className}
-        `.trim().replace(/\s+/g, ' ')}
+        `
+          .trim()
+          .replace(/\s+/g, ' ')}
         {...props}
       >
         {/* Label - top, uppercase, muted */}
-        <div className="text-xs uppercase tracking-wider text-neutral-500 mb-2">
-          {label}
-        </div>
+        <div className="text-xs uppercase tracking-wider text-neutral-500 mb-2">{label}</div>
 
         {/* Value - large, tabular-nums for alignment, bold */}
-        <div className="text-2xl font-bold text-white tabular-nums">
-          {value}
-        </div>
+        <div className="text-2xl font-bold text-white tabular-nums">{value}</div>
 
         {/* Trend indicator - small, bottom right */}
         {trend && (
@@ -61,7 +59,9 @@ export const StatCard = forwardRef<HTMLDivElement, StatCardProps>(
               absolute bottom-3 right-4
               text-xs font-medium
               ${trendColors[trend]}
-            `.trim().replace(/\s+/g, ' ')}
+            `
+              .trim()
+              .replace(/\s+/g, ' ')}
           >
             <span className="mr-0.5">{trendIcons[trend]}</span>
             {trendValue && <span>{trendValue}</span>}

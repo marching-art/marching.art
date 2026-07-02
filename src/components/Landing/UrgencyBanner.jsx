@@ -10,8 +10,14 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { m } from 'framer-motion';
 import {
-  Activity, Calendar, Clock, Trophy, TrendingUp, UserPlus,
-  ChevronRight, Zap
+  Activity,
+  Calendar,
+  Clock,
+  Trophy,
+  TrendingUp,
+  UserPlus,
+  ChevronRight,
+  Zap,
 } from 'lucide-react';
 import { useUrgencyTriggers, URGENCY_LEVELS } from '../../hooks/useUrgencyTriggers';
 
@@ -77,9 +83,7 @@ export const UrgencyBadge = ({ className = '' }) => {
       <div className={`${primary.pulse ? styles.pulse : ''}`}>
         <Icon className={`w-4 h-4 ${styles.icon.split(' ')[1]}`} />
       </div>
-      <span className={`text-sm font-medium ${styles.text}`}>
-        {primary.message}
-      </span>
+      <span className={`text-sm font-medium ${styles.text}`}>{primary.message}</span>
     </m.div>
   );
 };
@@ -108,25 +112,20 @@ const UrgencyBanner = ({ showCTA = true, maxTriggers = 2, className = '' }) => {
         const Icon = ICONS[trigger.icon] || Activity;
 
         return (
-          <div
-            key={trigger.id}
-            className={`rounded-sm border overflow-hidden ${styles.container}`}
-          >
+          <div key={trigger.id} className={`rounded-sm border overflow-hidden ${styles.container}`}>
             <div className="px-3 py-2.5 flex items-center gap-3">
               {/* Icon */}
-              <div className={`flex-shrink-0 w-8 h-8 rounded-sm flex items-center justify-center ${styles.icon} ${trigger.pulse ? styles.pulse : ''}`}>
+              <div
+                className={`flex-shrink-0 w-8 h-8 rounded-sm flex items-center justify-center ${styles.icon} ${trigger.pulse ? styles.pulse : ''}`}
+              >
                 <Icon className="w-4 h-4" />
               </div>
 
               {/* Content */}
               <div className="flex-1 min-w-0">
-                <div className={`text-sm font-semibold ${styles.text}`}>
-                  {trigger.message}
-                </div>
+                <div className={`text-sm font-semibold ${styles.text}`}>{trigger.message}</div>
                 {trigger.subMessage && (
-                  <div className={`text-xs ${styles.subtext}`}>
-                    {trigger.subMessage}
-                  </div>
+                  <div className={`text-xs ${styles.subtext}`}>{trigger.subMessage}</div>
                 )}
               </div>
 
@@ -167,7 +166,8 @@ const UrgencyBanner = ({ showCTA = true, maxTriggers = 2, className = '' }) => {
 // =============================================================================
 
 export const SeasonCountdown = ({ className = '' }) => {
-  const { weeksRemaining, daysUntilFinals, currentWeek, seasonType, isLoading } = useUrgencyTriggers();
+  const { weeksRemaining, daysUntilFinals, currentWeek, seasonType, isLoading } =
+    useUrgencyTriggers();
 
   if (isLoading || weeksRemaining === 0) return null;
 
@@ -178,8 +178,8 @@ export const SeasonCountdown = ({ className = '' }) => {
     <div className={`flex items-center gap-2 text-sm ${className}`}>
       <Clock className="w-4 h-4 text-yellow-500" />
       <span className="text-gray-400">
-        <span className="font-semibold text-white">{weeksRemaining}</span>
-        {' '}week{weeksRemaining > 1 ? 's' : ''} until finals
+        <span className="font-semibold text-white">{weeksRemaining}</span> week
+        {weeksRemaining > 1 ? 's' : ''} until finals
       </span>
     </div>
   );
@@ -202,9 +202,7 @@ export const LiveIndicator = ({ className = '' }) => {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
           </span>
-          <span className="text-xs font-bold text-red-500 uppercase tracking-wider">
-            Live Now
-          </span>
+          <span className="text-xs font-bold text-red-500 uppercase tracking-wider">Live Now</span>
         </>
       ) : (
         <>

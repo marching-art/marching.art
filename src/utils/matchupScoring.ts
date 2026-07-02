@@ -50,10 +50,11 @@ export const BATTLE_POINTS = {
 } as const;
 
 /** Maximum possible battle points */
-export const MAX_BATTLE_POINTS = (CAPTIONS.length * BATTLE_POINTS.caption)
-  + BATTLE_POINTS.total
-  + BATTLE_POINTS.highSingle
-  + BATTLE_POINTS.momentum;
+export const MAX_BATTLE_POINTS =
+  CAPTIONS.length * BATTLE_POINTS.caption +
+  BATTLE_POINTS.total +
+  BATTLE_POINTS.highSingle +
+  BATTLE_POINTS.momentum;
 
 // =============================================================================
 // CAPTION BATTLE CALCULATIONS
@@ -68,7 +69,7 @@ export function calculateCaptionBattles(
   homeCaptions: CaptionScores,
   awayCaptions: CaptionScores
 ): CaptionBattle[] {
-  return CAPTIONS.map(caption => {
+  return CAPTIONS.map((caption) => {
     const homeScore = homeCaptions[caption] ?? 0;
     const awayScore = awayCaptions[caption] ?? 0;
     const differential = homeScore - awayScore;
@@ -182,13 +183,7 @@ export function calculateMomentumBattle(
   const homeDelta = homePerformance.scoreDelta ?? 0;
   const awayDelta = awayPerformance.scoreDelta ?? 0;
 
-  return createBattleResult(
-    'momentum',
-    homeUserId,
-    awayUserId,
-    homeDelta,
-    awayDelta
-  );
+  return createBattleResult('momentum', homeUserId, awayUserId, homeDelta, awayDelta);
 }
 
 // =============================================================================
@@ -236,7 +231,7 @@ export function calculateMatchupBattles(
   );
 
   // Convert caption battles to BattleResult format for allBattles array
-  const captionBattleResults: BattleResult[] = captionBattles.map(cb => ({
+  const captionBattleResults: BattleResult[] = captionBattles.map((cb) => ({
     type: 'caption' as BattleType,
     caption: cb.caption,
     homeValue: cb.homeScore,
@@ -246,12 +241,7 @@ export function calculateMatchupBattles(
     pointsAwarded: BATTLE_POINTS.caption,
   }));
 
-  const allBattles = [
-    ...captionBattleResults,
-    totalScoreBattle,
-    highSingleBattle,
-    momentumBattle,
-  ];
+  const allBattles = [...captionBattleResults, totalScoreBattle, highSingleBattle, momentumBattle];
 
   // Calculate total battle points
   let homeBattlePoints = captionBattlesWon.home;
@@ -461,7 +451,8 @@ export function calculateSeasonStats(
   const totalMatchups = breakdowns.length;
   stats.winPercentage = totalMatchups > 0 ? stats.wins / totalMatchups : 0;
   stats.avgBattlePointsFor = totalMatchups > 0 ? stats.totalBattlePointsFor / totalMatchups : 0;
-  stats.avgBattlePointsAgainst = totalMatchups > 0 ? stats.totalBattlePointsAgainst / totalMatchups : 0;
+  stats.avgBattlePointsAgainst =
+    totalMatchups > 0 ? stats.totalBattlePointsAgainst / totalMatchups : 0;
 
   stats.currentStreak = currentStreak;
   stats.currentStreakType = currentStreakType;
@@ -474,9 +465,7 @@ export function calculateSeasonStats(
     cwr.winRate = cwr.totalMatchups > 0 ? cwr.wins / cwr.totalMatchups : 0;
 
     const diffs = captionDifferentials[caption];
-    cwr.avgDifferential = diffs.length > 0
-      ? diffs.reduce((a, b) => a + b, 0) / diffs.length
-      : 0;
+    cwr.avgDifferential = diffs.length > 0 ? diffs.reduce((a, b) => a + b, 0) / diffs.length : 0;
 
     // Dominance rating: win rate * (1 + normalized avg differential)
     cwr.dominanceRating = cwr.winRate * (1 + Math.tanh(cwr.avgDifferential / 10));
@@ -508,8 +497,9 @@ export function calculateHeadToHead(
 ): ExtendedHeadToHead {
   // Filter to only matchups between these two users
   const relevantMatchups = breakdowns.filter(
-    b => (b.homeUserId === user1Id && b.awayUserId === user2Id)
-      || (b.homeUserId === user2Id && b.awayUserId === user1Id)
+    (b) =>
+      (b.homeUserId === user1Id && b.awayUserId === user2Id) ||
+      (b.homeUserId === user2Id && b.awayUserId === user1Id)
   );
 
   const h2h: ExtendedHeadToHead = {
@@ -521,7 +511,10 @@ export function calculateHeadToHead(
     totalMatchups: relevantMatchups.length,
     user1TotalBattlePoints: 0,
     user2TotalBattlePoints: 0,
-    captionDomination: {} as Record<Caption, { user1Wins: number; user2Wins: number; dominantUserId: string | null }>,
+    captionDomination: {} as Record<
+      Caption,
+      { user1Wins: number; user2Wins: number; dominantUserId: string | null }
+    >,
     avgMargin: 0,
     currentStreak: null,
     matchupHistory: [],
@@ -560,12 +553,18 @@ export function calculateHeadToHead(
       h2h.user1Wins++;
       totalMargin += user1Points - user2Points;
       if (lastWinnerId === user1Id) streakCount++;
-      else { lastWinnerId = user1Id; streakCount = 1; }
+      else {
+        lastWinnerId = user1Id;
+        streakCount = 1;
+      }
     } else if (breakdown.winnerId === user2Id) {
       h2h.user2Wins++;
       totalMargin -= user1Points - user2Points;
       if (lastWinnerId === user2Id) streakCount++;
-      else { lastWinnerId = user2Id; streakCount = 1; }
+      else {
+        lastWinnerId = user2Id;
+        streakCount = 1;
+      }
     } else {
       h2h.ties++;
       lastWinnerId = null;
@@ -699,7 +698,7 @@ export function createWeeklyPerformance(
 ): WeeklyUserPerformance {
   const totalScore = shows.reduce((sum, s) => sum + s.score, 0);
   const highSingle = shows.reduce(
-    (best, s) => s.score > best.score ? { score: s.score, showId: s.showId } : best,
+    (best, s) => (s.score > best.score ? { score: s.score, showId: s.showId } : best),
     { score: 0, showId: undefined as string | undefined }
   );
 

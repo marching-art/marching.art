@@ -39,12 +39,8 @@ export const Spinner: React.FC<SpinnerProps> = ({
 }) => {
   return (
     <div className={`inline-flex items-center gap-2 ${className}`} role="status">
-      <Loader2
-        className={`animate-spin ${sizeStyles[size]} ${variantStyles[variant]}`}
-      />
-      {label && (
-        <span className="text-sm text-gray-400">{label}</span>
-      )}
+      <Loader2 className={`animate-spin ${sizeStyles[size]} ${variantStyles[variant]}`} />
+      {label && <span className="text-sm text-gray-400">{label}</span>}
       <span className="sr-only">{label || 'Loading...'}</span>
     </div>
   );
@@ -85,9 +81,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
             <div className="animate-pulse">
               <BrandLogo className="w-12 h-12" color="text-[#0057B8]" />
             </div>
-            {label && (
-              <p className="font-mono text-xs text-[#0057B8]/60 tracking-wide">{label}</p>
-            )}
+            {label && <p className="font-mono text-xs text-[#0057B8]/60 tracking-wide">{label}</p>}
           </div>
         </m.div>
       )}

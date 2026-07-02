@@ -2,11 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Flame, TrendingUp, TrendingDown, ChevronRight } from 'lucide-react';
 
-const FantasyTrendingBox = ({
-  trendingPlayers,
-  loading,
-  dayLabel
-}) => {
+const FantasyTrendingBox = ({ trendingPlayers, loading, dayLabel }) => {
   return (
     <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
       {/* Header */}
@@ -47,9 +43,11 @@ const FantasyTrendingBox = ({
                 </span>
                 <span className="text-sm text-white">{player.name}</span>
               </div>
-              <div className={`flex items-center gap-1 text-sm font-bold font-data tabular-nums ${
-                player.direction === 'up' ? 'text-green-500' : 'text-red-500'
-              }`}>
+              <div
+                className={`flex items-center gap-1 text-sm font-bold font-data tabular-nums ${
+                  player.direction === 'up' ? 'text-green-500' : 'text-red-500'
+                }`}
+              >
                 {player.direction === 'up' ? (
                   <TrendingUp className="w-3.5 h-3.5" />
                 ) : (

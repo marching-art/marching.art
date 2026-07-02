@@ -23,8 +23,10 @@ export interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'size'> {
 // Button variant styles
 const variantStyles: Record<ButtonVariant, string> = {
   primary: 'bg-primary text-white border border-primary hover:bg-primary/90',
-  secondary: 'bg-transparent border border-white/30 text-cream hover:bg-white/5 hover:border-white/50',
-  ghost: 'bg-transparent text-cream/80 border border-transparent hover:bg-white/10 hover:text-cream',
+  secondary:
+    'bg-transparent border border-white/30 text-cream hover:bg-white/5 hover:border-white/50',
+  ghost:
+    'bg-transparent text-cream/80 border border-transparent hover:bg-white/10 hover:text-cream',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
@@ -84,9 +86,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
         <span>{children}</span>
 
-        {!isLoading && RightIcon && (
-          <RightIcon className={iconSizes[size]} />
-        )}
+        {!isLoading && RightIcon && <RightIcon className={iconSizes[size]} />}
       </m.button>
     );
   }
@@ -112,12 +112,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
     };
 
     return (
-      <Button
-        ref={ref}
-        size={size}
-        className={`${iconButtonSizes[size]} ${className}`}
-        {...props}
-      >
+      <Button ref={ref} size={size} className={`${iconButtonSizes[size]} ${className}`} {...props}>
         <Icon className={iconSizes[size]} />
       </Button>
     );

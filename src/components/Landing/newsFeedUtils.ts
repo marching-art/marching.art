@@ -64,7 +64,10 @@ export function safeString(value: unknown): string {
  * Formats a timestamp in a professional news style: relative for recent stories,
  * absolute for older ones. `now` is injectable for testing.
  */
-export function formatTimestamp(dateString: string | number | Date, now: Date = new Date()): string {
+export function formatTimestamp(
+  dateString: string | number | Date,
+  now: Date = new Date()
+): string {
   const date = new Date(dateString);
   const diffInMs = now.getTime() - date.getTime();
   const diffInMins = Math.floor(diffInMs / (1000 * 60));

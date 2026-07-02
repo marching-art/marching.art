@@ -1,22 +1,34 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" href="/favicon.ico" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
+    />
     <meta name="theme-color" content="#EAB308" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#EAB308" media="(prefers-color-scheme: light)" />
     <meta name="color-scheme" content="dark" />
-    <meta name="description" content="marching.art is the free fantasy drum corps game. Draft legendary DCI captions, build your dream corps, and compete with directors worldwide on live leaderboards." />
-    <meta name="keywords" content="fantasy drum corps, fantasy DCI, drum corps, DCI, fantasy sports, marching band, drum corps game, competition" />
+    <meta
+      name="description"
+      content="marching.art is the free fantasy drum corps game. Draft legendary DCI captions, build your dream corps, and compete with directors worldwide on live leaderboards."
+    />
+    <meta
+      name="keywords"
+      content="fantasy drum corps, fantasy DCI, drum corps, DCI, fantasy sports, marching band, drum corps game, competition"
+    />
     <link rel="canonical" href="https://marching.art/" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://marching.art/" />
     <meta property="og:title" content="marching.art — Fantasy Drum Corps" />
-    <meta property="og:description" content="The free fantasy drum corps game. Draft legendary DCI captions, build your dream corps, and compete with directors worldwide." />
+    <meta
+      property="og:description"
+      content="The free fantasy drum corps game. Draft legendary DCI captions, build your dream corps, and compete with directors worldwide."
+    />
     <meta property="og:image" content="https://marching.art/og-image.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -26,7 +38,10 @@
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="marching.art — Fantasy Drum Corps" />
-    <meta name="twitter:description" content="The free fantasy drum corps game. Draft legendary DCI captions, build your dream corps, and compete with directors worldwide." />
+    <meta
+      name="twitter:description"
+      content="The free fantasy drum corps game. Draft legendary DCI captions, build your dream corps, and compete with directors worldwide."
+    />
     <meta name="twitter:image" content="https://marching.art/og-image.jpg" />
 
     <!-- Apple PWA Meta Tags -->
@@ -52,26 +67,29 @@
     <link rel="manifest" href="/manifest.json" />
 
     <!-- Preconnect to external domains for faster resource loading -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
     <!-- Preconnect to Firebase/Cloud Functions for faster API calls -->
-    <link rel="preconnect" href="https://firestore.googleapis.com">
-    <link rel="preconnect" href="https://us-central1-marching-art.cloudfunctions.net">
-    <link rel="dns-prefetch" href="https://us-central1-marching-art.cloudfunctions.net">
+    <link rel="preconnect" href="https://firestore.googleapis.com" />
+    <link rel="preconnect" href="https://us-central1-marching-art.cloudfunctions.net" />
+    <link rel="dns-prefetch" href="https://us-central1-marching-art.cloudfunctions.net" />
 
     <!-- Preconnect to image CDN for faster news images -->
-    <link rel="preconnect" href="https://res.cloudinary.com">
-    <link rel="dns-prefetch" href="https://res.cloudinary.com">
+    <link rel="preconnect" href="https://res.cloudinary.com" />
+    <link rel="dns-prefetch" href="https://res.cloudinary.com" />
 
     <!-- Preconnect to Firebase Storage -->
-    <link rel="preconnect" href="https://firebasestorage.googleapis.com">
-    <link rel="dns-prefetch" href="https://firebasestorage.googleapis.com">
+    <link rel="preconnect" href="https://firebasestorage.googleapis.com" />
+    <link rel="dns-prefetch" href="https://firebasestorage.googleapis.com" />
 
     <!-- Google Fonts - Non-blocking load with optimized weights
          Moved from CSS @import to <link> for better LCP (non-render-blocking)
          Reduced from 9 weights to 6 weights (~40KB savings) -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
 
     <title>marching.art — Fantasy Drum Corps | Draft DCI Lineups &amp; Compete</title>
 
@@ -79,51 +97,51 @@
          despite the SPA architecture. Covers Organization, WebSite, and
          WebApplication schemas for rich results eligibility. -->
     <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@graph": [
-        {
-          "@type": "Organization",
-          "@id": "https://marching.art/#organization",
-          "name": "marching.art",
-          "url": "https://marching.art/",
-          "logo": {
-            "@type": "ImageObject",
-            "url": "https://marching.art/logo512.png",
-            "width": 512,
-            "height": 512
-          }
-        },
-        {
-          "@type": "WebSite",
-          "@id": "https://marching.art/#website",
-          "url": "https://marching.art/",
-          "name": "marching.art",
-          "alternateName": ["Fantasy Drum Corps", "marching.art Fantasy Drum Corps"],
-          "description": "Fantasy drum corps game — draft legendary DCI lineups and compete with directors worldwide.",
-          "publisher": { "@id": "https://marching.art/#organization" },
-          "inLanguage": "en-US"
-        },
-        {
-          "@type": "WebApplication",
-          "@id": "https://marching.art/#webapp",
-          "name": "marching.art",
-          "url": "https://marching.art/",
-          "description": "Build your dream drum corps from 50 years of DCI history. Draft captions across GE, Visual, and Music, then compete on the live scoreboard with directors worldwide.",
-          "applicationCategory": "GameApplication",
-          "applicationSubCategory": "Fantasy Sports",
-          "keywords": "fantasy drum corps, fantasy DCI, drum corps game",
-          "operatingSystem": "Web",
-          "browserRequirements": "Requires JavaScript",
-          "offers": {
-            "@type": "Offer",
-            "price": "0",
-            "priceCurrency": "USD"
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://marching.art/#organization",
+            "name": "marching.art",
+            "url": "https://marching.art/",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://marching.art/logo512.png",
+              "width": 512,
+              "height": 512
+            }
           },
-          "publisher": { "@id": "https://marching.art/#organization" }
-        }
-      ]
-    }
+          {
+            "@type": "WebSite",
+            "@id": "https://marching.art/#website",
+            "url": "https://marching.art/",
+            "name": "marching.art",
+            "alternateName": ["Fantasy Drum Corps", "marching.art Fantasy Drum Corps"],
+            "description": "Fantasy drum corps game — draft legendary DCI lineups and compete with directors worldwide.",
+            "publisher": { "@id": "https://marching.art/#organization" },
+            "inLanguage": "en-US"
+          },
+          {
+            "@type": "WebApplication",
+            "@id": "https://marching.art/#webapp",
+            "name": "marching.art",
+            "url": "https://marching.art/",
+            "description": "Build your dream drum corps from 50 years of DCI history. Draft captions across GE, Visual, and Music, then compete on the live scoreboard with directors worldwide.",
+            "applicationCategory": "GameApplication",
+            "applicationSubCategory": "Fantasy Sports",
+            "keywords": "fantasy drum corps, fantasy DCI, drum corps game",
+            "operatingSystem": "Web",
+            "browserRequirements": "Requires JavaScript",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "publisher": { "@id": "https://marching.art/#organization" }
+          }
+        ]
+      }
     </script>
 
     <!-- Critical CSS for App Loader - Matches React LoadingScreen exactly -->
@@ -132,10 +150,11 @@
          Dark theme base - prevents white flash on load.
          Scrolling is controlled per-page via CSS/JS.
          ================================================================= */
-      html, body {
+      html,
+      body {
         margin: 0;
         padding: 0;
-        background-color: #0A0A0A;
+        background-color: #0a0a0a;
         color-scheme: dark;
       }
 
@@ -167,7 +186,7 @@
       .app-loader {
         position: fixed;
         inset: 0;
-        background-color: #0A0A0A; /* charcoal-950 */
+        background-color: #0a0a0a; /* charcoal-950 */
         z-index: 9999;
         display: flex;
         flex-direction: column;
@@ -176,9 +195,9 @@
       }
 
       .app-loader svg {
-        width: 96px;  /* w-24 = 6rem = 96px */
+        width: 96px; /* w-24 = 6rem = 96px */
         height: 96px;
-        color: #EAB308; /* gold-500 */
+        color: #eab308; /* gold-500 */
       }
 
       .app-loader-text {
@@ -196,8 +215,13 @@
       }
 
       @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
       }
 
       /* Hide loader when app loads */
@@ -210,35 +234,61 @@
   </head>
   <body>
     <noscript>
-      <div style="max-width: 720px; margin: 48px auto; padding: 24px; font-family: Inter, system-ui, sans-serif; color: #e5e5e5; line-height: 1.6;">
-        <h1 style="color: #EAB308; font-size: 28px; margin-bottom: 12px;">marching.art — Fantasy Drum Corps</h1>
-        <p style="font-size: 18px; margin-bottom: 16px;">
-          Build your dream drum corps from 50 years of DCI history. Draft captions across General Effect,
-          Visual, and Music, then compete on a live scoreboard with directors worldwide.
+      <div
+        style="
+          max-width: 720px;
+          margin: 48px auto;
+          padding: 24px;
+          font-family: Inter, system-ui, sans-serif;
+          color: #e5e5e5;
+          line-height: 1.6;
+        "
+      >
+        <h1 style="color: #eab308; font-size: 28px; margin-bottom: 12px">
+          marching.art — Fantasy Drum Corps
+        </h1>
+        <p style="font-size: 18px; margin-bottom: 16px">
+          Build your dream drum corps from 50 years of DCI history. Draft captions across General
+          Effect, Visual, and Music, then compete on a live scoreboard with directors worldwide.
         </p>
-        <h2 style="color: #EAB308; font-size: 20px; margin-top: 24px; margin-bottom: 8px;">How it works</h2>
-        <ul style="font-size: 16px; padding-left: 20px;">
-          <li>Draft 8 captions (GE1, GE2, Visual Proficiency, Visual Analysis, Color Guard, Brass, Music Analysis, Percussion) from any year in DCI history.</li>
+        <h2 style="color: #eab308; font-size: 20px; margin-top: 24px; margin-bottom: 8px">
+          How it works
+        </h2>
+        <ul style="font-size: 16px; padding-left: 20px">
+          <li>
+            Draft 8 captions (GE1, GE2, Visual Proficiency, Visual Analysis, Color Guard, Brass,
+            Music Analysis, Percussion) from any year in DCI history.
+          </li>
           <li>Earn points from real DCI competition results as the season unfolds.</li>
           <li>Compete in public leaderboards or private leagues with friends.</li>
-          <li>Level up your director profile and unlock higher divisions: SoundSport, Open Class, and World Class.</li>
+          <li>
+            Level up your director profile and unlock higher divisions: SoundSport, Open Class, and
+            World Class.
+          </li>
         </ul>
-        <h2 style="color: #EAB308; font-size: 20px; margin-top: 24px; margin-bottom: 8px;">Get started</h2>
-        <p style="font-size: 16px;">
-          <strong>This app requires JavaScript.</strong> Please enable JavaScript in your browser to play.
+        <h2 style="color: #eab308; font-size: 20px; margin-top: 24px; margin-bottom: 8px">
+          Get started
+        </h2>
+        <p style="font-size: 16px">
+          <strong>This app requires JavaScript.</strong> Please enable JavaScript in your browser to
+          play.
         </p>
-        <p style="font-size: 16px;">
-          <a href="/register" style="color: #0057B8; text-decoration: underline;">Create a free account</a>
+        <p style="font-size: 16px">
+          <a href="/register" style="color: #0057b8; text-decoration: underline"
+            >Create a free account</a
+          >
           &nbsp;·&nbsp;
-          <a href="/login" style="color: #0057B8; text-decoration: underline;">Sign in</a>
+          <a href="/login" style="color: #0057b8; text-decoration: underline">Sign in</a>
           &nbsp;·&nbsp;
-          <a href="/how-to-play" style="color: #0057B8; text-decoration: underline;">How to play fantasy drum corps</a>
+          <a href="/how-to-play" style="color: #0057b8; text-decoration: underline"
+            >How to play fantasy drum corps</a
+          >
           &nbsp;·&nbsp;
-          <a href="/preview" style="color: #0057B8; text-decoration: underline;">Preview the demo</a>
+          <a href="/preview" style="color: #0057b8; text-decoration: underline">Preview the demo</a>
           &nbsp;·&nbsp;
-          <a href="/privacy" style="color: #0057B8; text-decoration: underline;">Privacy</a>
+          <a href="/privacy" style="color: #0057b8; text-decoration: underline">Privacy</a>
           &nbsp;·&nbsp;
-          <a href="/terms" style="color: #0057B8; text-decoration: underline;">Terms</a>
+          <a href="/terms" style="color: #0057b8; text-decoration: underline">Terms</a>
         </p>
       </div>
     </noscript>
@@ -250,17 +300,23 @@
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="-5 -5 65 65">
           <g>
             <!-- The 9 Dots (Field Grid) - Gray markers -->
-            <circle cx="0" cy="0" r="4" fill="#a0a0a0"/>
-            <circle cx="25" cy="0" r="4" fill="#a0a0a0"/>
-            <circle cx="50" cy="0" r="4" fill="#a0a0a0"/>
-            <circle cx="0" cy="25" r="4" fill="#a0a0a0"/>
-            <circle cx="25" cy="25" r="4" fill="#a0a0a0"/>
-            <circle cx="50" cy="25" r="4" fill="#a0a0a0"/>
-            <circle cx="0" cy="50" r="4" fill="#a0a0a0"/>
-            <circle cx="25" cy="50" r="4" fill="#a0a0a0"/>
-            <circle cx="50" cy="50" r="4" fill="#a0a0a0"/>
+            <circle cx="0" cy="0" r="4" fill="#a0a0a0" />
+            <circle cx="25" cy="0" r="4" fill="#a0a0a0" />
+            <circle cx="50" cy="0" r="4" fill="#a0a0a0" />
+            <circle cx="0" cy="25" r="4" fill="#a0a0a0" />
+            <circle cx="25" cy="25" r="4" fill="#a0a0a0" />
+            <circle cx="50" cy="25" r="4" fill="#a0a0a0" />
+            <circle cx="0" cy="50" r="4" fill="#a0a0a0" />
+            <circle cx="25" cy="50" r="4" fill="#a0a0a0" />
+            <circle cx="50" cy="50" r="4" fill="#a0a0a0" />
             <!-- The Drill Path - Gold stroke -->
-            <path d="M 0 0 Q 50 0, 50 50" stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round"/>
+            <path
+              d="M 0 0 Q 50 0, 50 50"
+              stroke="currentColor"
+              stroke-width="6"
+              fill="none"
+              stroke-linecap="round"
+            />
           </g>
         </svg>
       </div>
@@ -275,10 +331,10 @@
 
     <!-- Remove loader once React hydrates -->
     <script>
-      window.addEventListener('load', function() {
-        setTimeout(function() {
+      window.addEventListener('load', function () {
+        setTimeout(function () {
           document.body.classList.add('app-loaded');
-          setTimeout(function() {
+          setTimeout(function () {
             var loader = document.getElementById('app-loader');
             if (loader) loader.remove();
           }, 300);

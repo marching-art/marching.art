@@ -61,7 +61,8 @@ export async function getAdminOverviewStats(): Promise<AdminOverviewStats> {
   const snapshot = await getDocs(profilesRef);
 
   let totalUsers = 0;
-  let activeCount = 0, corpsCount = 0;
+  let activeCount = 0,
+    corpsCount = 0;
 
   for (const profileDoc of snapshot.docs) {
     // Only count profile docs from the marching-art users collection
@@ -112,7 +113,11 @@ export async function getUserEngagementStats(): Promise<UserEngagementStats> {
   const snapshot = await getDocs(profilesRef);
 
   let totalUsers = 0;
-  let activeCount = 0, corpsCount = 0, totalStreaks = 0, streakCount = 0, loginSum = 0;
+  let activeCount = 0,
+    corpsCount = 0,
+    totalStreaks = 0,
+    streakCount = 0,
+    loginSum = 0;
 
   for (const profileDoc of snapshot.docs) {
     // Only count profile docs from the marching-art users collection
@@ -148,7 +153,7 @@ export async function getUserEngagementStats(): Promise<UserEngagementStats> {
     if (data.corps) corpsCount += Object.keys(data.corps).length;
   }
 
-  const avgStreak = streakCount > 0 ? Math.round(totalStreaks / streakCount * 10) / 10 : 0;
+  const avgStreak = streakCount > 0 ? Math.round((totalStreaks / streakCount) * 10) / 10 : 0;
   return {
     totalUsers,
     activeUsers: activeCount,
@@ -188,7 +193,7 @@ export async function getAllUserProfiles(): Promise<AdminUserProfile[]> {
   ]);
 
   const emailByUid: Record<string, string> = {};
-  privateSnapshot.docs.forEach(privateDoc => {
+  privateSnapshot.docs.forEach((privateDoc) => {
     if (!privateDoc.ref.path.includes('artifacts/marching-art/users')) return;
     const uid = privateDoc.ref.path.split('/')[3];
     const email = privateDoc.data()?.email;
@@ -196,8 +201,8 @@ export async function getAllUserProfiles(): Promise<AdminUserProfile[]> {
   });
 
   const userList = snapshot.docs
-    .filter(profileDoc => profileDoc.ref.path.includes('artifacts/marching-art/users'))
-    .map(profileDoc => {
+    .filter((profileDoc) => profileDoc.ref.path.includes('artifacts/marching-art/users'))
+    .map((profileDoc) => {
       const data = profileDoc.data();
 
       // Extract user ID from the doc path
@@ -248,7 +253,7 @@ export interface CorpsValue {
  */
 export async function listDciDataDocIds(): Promise<string[]> {
   const snap = await getDocs(collection(db, 'dci-data'));
-  return snap.docs.map(d => d.id).sort();
+  return snap.docs.map((d) => d.id).sort();
 }
 
 /**
@@ -272,11 +277,7 @@ export async function getCorpsValues(docId: string): Promise<CorpsValue[]> {
  * other fields on the doc are preserved).
  */
 export async function saveCorpsValues(docId: string, values: CorpsValue[]): Promise<void> {
-  await setDoc(
-    doc(db, `dci-data/${docId}`),
-    { corpsValues: values },
-    { merge: true }
-  );
+  await setDoc(doc(db, `dci-data/${docId}`), { corpsValues: values }, { merge: true });
 }
 
 /**
@@ -304,9 +305,7 @@ export async function getHistoricalScoresMap(
  * Fetch the scraped event array for a single year from historical_scores.
  * Delegates to the canonical reference reader in api/season.
  */
-export async function getHistoricalScoresForYear(
-  year: string | number
-): Promise<DocumentData[]> {
+export async function getHistoricalScoresForYear(year: string | number): Promise<DocumentData[]> {
   return getHistoricalScoresForYearRef(year);
 }
 

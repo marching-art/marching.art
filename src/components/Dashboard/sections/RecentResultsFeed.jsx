@@ -19,7 +19,7 @@ const RecentResultsFeed = memo(({ results, loading, corpsClass }) => {
 
       {loading ? (
         <div className="p-4 space-y-3">
-          {[1, 2, 3].map(i => (
+          {[1, 2, 3].map((i) => (
             <div key={i} className="flex items-center justify-between">
               <div className="w-32 h-4 bg-[#333] animate-pulse" />
               <div className="w-16 h-4 bg-[#333] animate-pulse" />
@@ -41,7 +41,9 @@ const RecentResultsFeed = memo(({ results, loading, corpsClass }) => {
                 <div className="text-right ml-3">
                   {isSoundSport && rating ? (
                     // SoundSport: Display medal badge
-                    <div className={`inline-flex items-center gap-1 px-2 py-1 ${rating.color} rounded-sm`}>
+                    <div
+                      className={`inline-flex items-center gap-1 px-2 py-1 ${rating.color} rounded-sm`}
+                    >
                       <Medal className={`w-3 h-3 ${rating.textColor}`} />
                       <span className={`text-xs font-bold ${rating.textColor}`}>
                         {rating.rating}

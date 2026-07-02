@@ -1,14 +1,7 @@
 // Profile API - Centralized profile data operations
 // Handles all user profile CRUD operations
 
-import {
-  doc,
-  getDoc,
-  updateDoc,
-  setDoc,
-  onSnapshot,
-  Unsubscribe,
-} from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc, onSnapshot, Unsubscribe } from 'firebase/firestore';
 import { db, paths, withErrorHandling } from './client';
 import type { UserProfile, CorpsData, CorpsClass, DeepPartial } from '../types';
 
@@ -77,10 +70,7 @@ export function subscribeToProfile(
 /**
  * Get a specific corps for a user
  */
-export async function getCorps(
-  uid: string,
-  corpsClass: CorpsClass
-): Promise<CorpsData | null> {
+export async function getCorps(uid: string, corpsClass: CorpsClass): Promise<CorpsData | null> {
   return withErrorHandling(async () => {
     const profile = await getProfile(uid);
     return profile?.corps?.[corpsClass] || null;
@@ -101,10 +91,7 @@ export async function getCorps(
 /**
  * Update a user's profile
  */
-export async function updateProfile(
-  uid: string,
-  updates: DeepPartial<UserProfile>
-): Promise<void> {
+export async function updateProfile(uid: string, updates: DeepPartial<UserProfile>): Promise<void> {
   return withErrorHandling(async () => {
     const profileRef = doc(db, paths.userProfile(uid));
     await updateDoc(profileRef, updates as Record<string, unknown>);
@@ -119,10 +106,7 @@ export async function updateProfile(
  * written from the client — economy/progression fields are server-only.
  * Errors propagate unchanged.
  */
-export async function mergeProfile(
-  uid: string,
-  data: Record<string, unknown>
-): Promise<void> {
+export async function mergeProfile(uid: string, data: Record<string, unknown>): Promise<void> {
   const profileRef = doc(db, paths.userProfile(uid));
   await setDoc(profileRef, data, { merge: true });
 }

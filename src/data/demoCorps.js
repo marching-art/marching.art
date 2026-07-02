@@ -51,8 +51,8 @@ export const DEMO_CORPS = {
 
   // Show selections for demo
   selectedShows: {
-    '1': ['show_001', 'show_002'],
-    '2': ['show_003', 'show_004'],
+    1: ['show_001', 'show_002'],
+    2: ['show_003', 'show_004'],
   },
 };
 
@@ -173,7 +173,7 @@ export const DEMO_CORPS_STATS = {
   totalScore: 847.65,
   showCount: 12,
   geScore: 18.25,
-  visualScore: 17.80,
+  visualScore: 17.8,
   musicScore: 18.15,
   placement: 4,
   weeklyChange: '+2.35',
@@ -197,7 +197,7 @@ export const DEMO_RECENT_SCORES = [
     showId: 'show_011',
     showName: 'Houston Classic',
     date: new Date(Date.now() - 7 * 86400000).toISOString(),
-    score: 91.20,
+    score: 91.2,
     placement: 4,
     captions: { GE1: 18.2, GE2: 18.1, VP: 17.7, VA: 17.9, CG: 17.6, B: 18.0, MA: 18.2, P: 18.1 },
   },

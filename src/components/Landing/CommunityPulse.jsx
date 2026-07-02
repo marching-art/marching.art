@@ -83,7 +83,7 @@ const CommunityPulse = memo(() => {
 
       {loading ? (
         <div className="p-4 space-y-3">
-          {[1, 2, 3].map(i => (
+          {[1, 2, 3].map((i) => (
             <div key={i} className="flex items-center gap-3">
               <div className="w-6 h-6 rounded-full bg-[#333] animate-pulse" />
               <div className="flex-1">

@@ -121,7 +121,10 @@ describe('Tabs', () => {
         </Tabs>
       );
 
-      expect(screen.getByRole('tab', { name: 'First' })).toHaveAttribute('aria-controls', 'tabpanel-first');
+      expect(screen.getByRole('tab', { name: 'First' })).toHaveAttribute(
+        'aria-controls',
+        'tabpanel-first'
+      );
     });
 
     it('sets correct role on tab content', () => {
@@ -144,7 +147,9 @@ describe('Tabs', () => {
         <Tabs defaultTab="first">
           <TabsList>
             <TabTrigger value="first">First</TabTrigger>
-            <TabTrigger value="second" disabled>Second</TabTrigger>
+            <TabTrigger value="second" disabled>
+              Second
+            </TabTrigger>
           </TabsList>
           <TabContent value="first">First content</TabContent>
           <TabContent value="second">Second content</TabContent>
@@ -162,7 +167,9 @@ describe('Tabs', () => {
         <Tabs defaultTab="first">
           <TabsList>
             <TabTrigger value="first">First</TabTrigger>
-            <TabTrigger value="second" disabled>Second</TabTrigger>
+            <TabTrigger value="second" disabled>
+              Second
+            </TabTrigger>
           </TabsList>
         </Tabs>
       );
@@ -216,7 +223,9 @@ describe('Tabs', () => {
       render(
         <Tabs defaultTab="first">
           <TabsList>
-            <TabTrigger value="first" className="custom-trigger">First</TabTrigger>
+            <TabTrigger value="first" className="custom-trigger">
+              First
+            </TabTrigger>
           </TabsList>
         </Tabs>
       );
@@ -230,7 +239,9 @@ describe('Tabs', () => {
           <TabsList>
             <TabTrigger value="first">First</TabTrigger>
           </TabsList>
-          <TabContent value="first" className="custom-content">Content</TabContent>
+          <TabContent value="first" className="custom-content">
+            Content
+          </TabContent>
         </Tabs>
       );
 
@@ -286,7 +297,12 @@ describe('SimpleTabs', () => {
 
   it('renders tabs with icons', () => {
     const tabsWithIcons = [
-      { id: 'trophy', label: 'Trophies', icon: <Trophy data-testid="trophy" />, content: <p>Trophies</p> },
+      {
+        id: 'trophy',
+        label: 'Trophies',
+        icon: <Trophy data-testid="trophy" />,
+        content: <p>Trophies</p>,
+      },
       { id: 'star', label: 'Stars', icon: <Star data-testid="star" />, content: <p>Stars</p> },
     ];
 
@@ -311,9 +327,7 @@ describe('SimpleTabs', () => {
   });
 
   it('applies custom className', () => {
-    const { container } = render(
-      <SimpleTabs tabs={mockTabs} className="custom-simple-tabs" />
-    );
+    const { container } = render(<SimpleTabs tabs={mockTabs} className="custom-simple-tabs" />);
 
     expect(container.firstChild).toHaveClass('custom-simple-tabs');
   });

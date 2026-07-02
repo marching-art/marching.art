@@ -78,14 +78,16 @@ const SocialProofBar = ({ className = '' }) => {
   useEffect(() => {
     let mounted = true;
 
-    fetchCommunityStats().then(data => {
+    fetchCommunityStats().then((data) => {
       if (mounted) {
         setStats(data);
         setLoading(false);
       }
     });
 
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   // Don't render if no data and still loading, or if all stats are 0
@@ -121,8 +123,8 @@ const SocialProofBar = ({ className = '' }) => {
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4 text-[#0057B8]" />
           <span className="text-sm text-gray-400 font-data tabular-nums">
-            <span className="text-white font-semibold">{formatNumber(stats.directors)}</span>
-            {' '}directors
+            <span className="text-white font-semibold">{formatNumber(stats.directors)}</span>{' '}
+            directors
           </span>
         </div>
       )}
@@ -132,8 +134,7 @@ const SocialProofBar = ({ className = '' }) => {
         <div className="flex items-center gap-2">
           <Trophy className="w-4 h-4 text-yellow-500" />
           <span className="text-sm text-gray-400 font-data tabular-nums">
-            <span className="text-white font-semibold">{formatNumber(stats.leagues)}</span>
-            {' '}leagues
+            <span className="text-white font-semibold">{formatNumber(stats.leagues)}</span> leagues
           </span>
         </div>
       )}
@@ -143,8 +144,8 @@ const SocialProofBar = ({ className = '' }) => {
         <div className="flex items-center gap-2">
           <Zap className="w-4 h-4 text-orange-500" />
           <span className="text-sm text-gray-400 font-data tabular-nums">
-            <span className="text-white font-semibold">{formatNumber(stats.totalPoints)}</span>
-            {' '}points scored
+            <span className="text-white font-semibold">{formatNumber(stats.totalPoints)}</span>{' '}
+            points scored
           </span>
         </div>
       )}

@@ -57,8 +57,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: npm test
+      # Coverage runs the same vitest suite; the text summary in the job log
+      # keeps the coverage gap visible on every PR without gating on it.
+      - name: Run tests with coverage
+        run: npm run test:coverage
 
   typecheck:
     name: Type check
@@ -97,10 +99,12 @@ jobs:
 
       - name: ESLint
         run: npm run lint
-      # Prettier is intentionally not enforced here yet: the existing codebase
-      # has not been run through it. After a one-time `npm run format` pass
-      # (its own dedicated PR), add `npm run format:check` as a step and
-      # promote it to a required check.
+
+      # Enforced now that the one-time format pass has landed. The Cloud
+      # Functions codebases are excluded via .prettierignore (they use their
+      # own ESLint-enforced style).
+      - name: Prettier
+        run: npm run format:check
 
   functions:
     name: Functions check + tests

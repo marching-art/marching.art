@@ -3,9 +3,23 @@
 
 import React, { useState } from 'react';
 import {
-  RefreshCw, Edit3, Archive, ArchiveRestore, Trash2, X, Save,
-  Eye, EyeOff, ChevronDown, ChevronUp, Calendar, Clock,
-  AlertCircle, Check, Image, Sparkles,
+  RefreshCw,
+  Edit3,
+  Archive,
+  ArchiveRestore,
+  Trash2,
+  X,
+  Save,
+  Eye,
+  EyeOff,
+  ChevronDown,
+  ChevronUp,
+  Calendar,
+  Clock,
+  AlertCircle,
+  Check,
+  Image,
+  Sparkles,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -26,11 +40,7 @@ const ArticleRow = ({ article, onEdit, onArchive, onDelete, formatDate, editLoad
           {/* Image thumbnail */}
           <div className="w-16 h-16 bg-[#222] rounded flex-shrink-0 overflow-hidden">
             {article.imageUrl ? (
-              <img
-                src={article.imageUrl}
-                alt=""
-                className="w-full h-full object-cover"
-              />
+              <img src={article.imageUrl} alt="" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
                 <Image className="w-6 h-6 text-gray-600" />
@@ -42,17 +52,15 @@ const ArticleRow = ({ article, onEdit, onArchive, onDelete, formatDate, editLoad
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
-                <h3 className="font-bold text-white text-sm truncate">
-                  {article.headline}
-                </h3>
-                <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
-                  {article.summary}
-                </p>
+                <h3 className="font-bold text-white text-sm truncate">{article.headline}</h3>
+                <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{article.summary}</p>
               </div>
 
               {/* Status badges */}
               <div className="flex items-center gap-2 flex-shrink-0">
-                <span className={`px-2 py-0.5 rounded text-xs font-medium ${SOURCE_COLORS[article.source]}`}>
+                <span
+                  className={`px-2 py-0.5 rounded text-xs font-medium ${SOURCE_COLORS[article.source]}`}
+                >
                   {article.source === 'current_season' ? 'Season' : 'Legacy'}
                 </span>
                 {article.isArchived ? (
@@ -85,9 +93,7 @@ const ArticleRow = ({ article, onEdit, onArchive, onDelete, formatDate, editLoad
                 <Clock className="w-3 h-3" />
                 {formatDate(article.createdAt)}
               </span>
-              <span className="text-gray-600">
-                {article.category}
-              </span>
+              <span className="text-gray-600">{article.category}</span>
             </div>
           </div>
 
@@ -121,11 +127,7 @@ const ArticleRow = ({ article, onEdit, onArchive, onDelete, formatDate, editLoad
               className="p-2 text-gray-400 hover:text-white hover:bg-[#333] rounded transition-colors"
               title="Toggle details"
             >
-              {expanded ? (
-                <ChevronUp className="w-4 h-4" />
-              ) : (
-                <ChevronDown className="w-4 h-4" />
-              )}
+              {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
           </div>
         </div>
@@ -183,7 +185,7 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
   const [activeSection, setActiveSection] = useState('basic');
 
   const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -215,12 +217,20 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
   };
 
   const handleRegenerateImage = async () => {
-    if (!window.confirm('Generate a new AI image for this article? This will replace the current image.')) {
+    if (
+      !window.confirm(
+        'Generate a new AI image for this article? This will replace the current image.'
+      )
+    ) {
       return;
     }
     setRegeneratingImage(true);
     try {
-      const newImageUrl = await onRegenerateImage(article.path, formData.headline, article.category);
+      const newImageUrl = await onRegenerateImage(
+        article.path,
+        formData.headline,
+        article.category
+      );
       if (newImageUrl) {
         handleChange('imageUrl', newImageUrl);
       }
@@ -238,10 +248,7 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
             <Edit3 className="w-4 h-4 text-yellow-500" />
             <h2 className="text-sm font-bold text-white uppercase tracking-wider">Edit Article</h2>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
-          >
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -319,7 +326,7 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
                           src={formData.imageUrl}
                           alt="Preview"
                           className="w-full h-full object-cover"
-                          onError={(e) => e.target.style.display = 'none'}
+                          onError={(e) => (e.target.style.display = 'none')}
                         />
                       </div>
                     )}
@@ -403,11 +410,7 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
               <div className="space-y-4">
                 {/* DCI Recap Section */}
                 {article.dciRecap && (
-                  <SectionEditor
-                    title="DCI Recap"
-                    section={article.dciRecap}
-                    color="blue"
-                  />
+                  <SectionEditor title="DCI Recap" section={article.dciRecap} color="blue" />
                 )}
 
                 {/* Fantasy Spotlight Section */}
@@ -501,9 +504,7 @@ const SectionEditor = ({ title, section, color }) => {
         <div className="flex items-center gap-2">
           <Check className="w-4 h-4 text-gray-500" />
           <span className="font-medium text-white text-sm">{title}</span>
-          {section.title && (
-            <span className="text-xs text-gray-500">- {section.title}</span>
-          )}
+          {section.title && <span className="text-xs text-gray-500">- {section.title}</span>}
         </div>
         {expanded ? (
           <ChevronUp className="w-4 h-4 text-gray-500" />
@@ -519,9 +520,7 @@ const SectionEditor = ({ title, section, color }) => {
               <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1">
                 Narrative
               </label>
-              <p className="text-sm text-gray-300 bg-[#1a1a1a] p-3 rounded">
-                {section.narrative}
-              </p>
+              <p className="text-sm text-gray-300 bg-[#1a1a1a] p-3 rounded">{section.narrative}</p>
             </div>
           )}
 

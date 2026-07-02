@@ -92,9 +92,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
         ${className}
       `}
     >
-      {showDot && (
-        <span className={`w-2 h-2 rounded-full ${statusColors[status]}`} />
-      )}
+      {showDot && <span className={`w-2 h-2 rounded-full ${statusColors[status]}`} />}
       {label || statusLabels[status]}
     </span>
   );

@@ -36,20 +36,20 @@ const getCorpsAbbreviation = (name) => {
     'Phantom Regiment': 'PR',
     'Blue Knights': 'BK',
     'Blue Stars': 'BSTARS',
-    'Bluecoats': 'BLOO',
+    Bluecoats: 'BLOO',
     'The Cadets': 'CAD',
-    'Colts': 'COLTS',
-    'Crossmen': 'CX',
-    'Genesis': 'GEN',
+    Colts: 'COLTS',
+    Crossmen: 'CX',
+    Genesis: 'GEN',
     'Jersey Surf': 'SURF',
     'Madison Scouts': 'MAD',
-    'Mandarins': 'MAN',
+    Mandarins: 'MAN',
     'Music City': 'MC',
     'Pacific Crest': 'PC',
     'Phantom Regiment': 'PR',
-    'Spartans': 'SPA',
+    Spartans: 'SPA',
     'Spirit of Atlanta': 'SOA',
-    'Troopers': 'TROOP',
+    Troopers: 'TROOP',
   };
 
   // Try exact match first
@@ -57,8 +57,10 @@ const getCorpsAbbreviation = (name) => {
 
   // Try partial match
   for (const [fullName, abbr] of Object.entries(abbreviations)) {
-    if (name.toLowerCase().includes(fullName.toLowerCase()) ||
-        fullName.toLowerCase().includes(name.toLowerCase())) {
+    if (
+      name.toLowerCase().includes(fullName.toLowerCase()) ||
+      fullName.toLowerCase().includes(name.toLowerCase())
+    ) {
       return abbr;
     }
   }
@@ -66,8 +68,8 @@ const getCorpsAbbreviation = (name) => {
   // Fallback: create abbreviation from first letters
   return name
     .split(' ')
-    .filter(word => !['The', 'of'].includes(word))
-    .map(word => word[0])
+    .filter((word) => !['The', 'of'].includes(word))
+    .map((word) => word[0])
     .join('')
     .toUpperCase()
     .slice(0, 4);
@@ -94,11 +96,14 @@ export const useTickerData = ({ enabled = true } = {}) => {
     // Scores for day N are processed at 2 AM ET and become available after that.
     // After 2 AM ET: previous day's scores were just processed (currentDay - 1)
     // Before 2 AM ET: scores only available up to currentDay - 2 (yesterday's processing hasn't run)
-    const hour = parseInt(new Date().toLocaleString('en-US', {
-      timeZone: 'America/New_York',
-      hour: 'numeric',
-      hour12: false
-    }), 10);
+    const hour = parseInt(
+      new Date().toLocaleString('en-US', {
+        timeZone: 'America/New_York',
+        hour: 'numeric',
+        hour12: false,
+      }),
+      10
+    );
     const calculatedDay = hour < 2 ? currentDay - 2 : currentDay - 1;
     const effectiveDay = calculatedDay >= 1 ? calculatedDay : null;
 
@@ -107,8 +112,8 @@ export const useTickerData = ({ enabled = true } = {}) => {
 
     // Find the most recent day that has scores up to and including effective day
     const availableDays = allRecaps
-      .map(r => r.offSeasonDay)
-      .filter(day => day <= effectiveDay)
+      .map((r) => r.offSeasonDay)
+      .filter((day) => day <= effectiveDay)
       .sort((a, b) => b - a);
 
     return availableDays[0] || null;
@@ -128,7 +133,7 @@ export const useTickerData = ({ enabled = true } = {}) => {
         let recaps = [];
         if (!recapsSnapshot.empty) {
           // New subcollection format
-          recaps = recapsSnapshot.docs.map(d => d.data());
+          recaps = recapsSnapshot.docs.map((d) => d.data());
         } else {
           // Fallback to legacy single-document format
           const legacyDocRef = doc(db, 'fantasy_recaps', seasonUid);
@@ -177,7 +182,7 @@ export const useTickerData = ({ enabled = true } = {}) => {
 
     // Get all recaps up to and including the display day, sorted by day descending
     const relevantRecaps = allRecaps
-      .filter(r => r.offSeasonDay <= displayDay)
+      .filter((r) => r.offSeasonDay <= displayDay)
       .sort((a, b) => b.offSeasonDay - a.offSeasonDay);
 
     if (relevantRecaps.length === 0) {
@@ -194,8 +199,8 @@ export const useTickerData = ({ enabled = true } = {}) => {
     for (const recap of relevantRecaps) {
       totalShowCount += recap.shows?.length || 0;
 
-      recap.shows?.forEach(show => {
-        show.results?.forEach(result => {
+      recap.shows?.forEach((show) => {
+        show.results?.forEach((result) => {
           if (result.corpsClass === 'soundSport') {
             // Process SoundSport medals - only from the most recent day they performed
             if (!mostRecentByCorps.has(`soundsport_${result.corpsName}`)) {
@@ -269,8 +274,8 @@ export const useTickerData = ({ enabled = true } = {}) => {
       // Skip if not relevant for either calculation
       if (!isUpToDisplayDay) continue;
 
-      recap.shows?.forEach(show => {
-        show.results?.forEach(result => {
+      recap.shows?.forEach((show) => {
+        show.results?.forEach((result) => {
           if (result.corpsClass === 'soundSport') return;
 
           const corps = result.corpsName;
@@ -319,7 +324,7 @@ export const useTickerData = ({ enabled = true } = {}) => {
       const classResults = resultsByClass[classKey] || [];
 
       // Scores for this class (already sorted by total score)
-      const scores = classResults.slice(0, 10).map(result => ({
+      const scores = classResults.slice(0, 10).map((result) => ({
         name: result.abbr,
         fullName: result.corpsName,
         score: (result.totalScore || 0).toFixed(3),
@@ -381,21 +386,27 @@ export const useTickerData = ({ enabled = true } = {}) => {
       movers.sort((a, b) => b._absChange - a._absChange);
 
       const captionLeaders = {
-        ge: geLeader ? {
-          name: geLeader.result.abbr,
-          fullName: geLeader.result.corpsName,
-          score: geLeader.score.toFixed(3),
-        } : null,
-        visual: visualLeader ? {
-          name: visualLeader.result.abbr,
-          fullName: visualLeader.result.corpsName,
-          score: visualLeader.score.toFixed(3),
-        } : null,
-        music: musicLeader ? {
-          name: musicLeader.result.abbr,
-          fullName: musicLeader.result.corpsName,
-          score: musicLeader.score.toFixed(3),
-        } : null,
+        ge: geLeader
+          ? {
+              name: geLeader.result.abbr,
+              fullName: geLeader.result.corpsName,
+              score: geLeader.score.toFixed(3),
+            }
+          : null,
+        visual: visualLeader
+          ? {
+              name: visualLeader.result.abbr,
+              fullName: visualLeader.result.corpsName,
+              score: visualLeader.score.toFixed(3),
+            }
+          : null,
+        music: musicLeader
+          ? {
+              name: musicLeader.result.abbr,
+              fullName: musicLeader.result.corpsName,
+              score: musicLeader.score.toFixed(3),
+            }
+          : null,
       };
 
       // Season leaders for this class - optimized with pre-grouped data
@@ -405,7 +416,7 @@ export const useTickerData = ({ enabled = true } = {}) => {
 
         // Scores are already sorted by day (most recent first from our earlier loop)
         const latestScore = entry.scores[0]?.score || 0;
-        const trend = calculateTrend(entry.scores.map(s => ({ score: s.score })));
+        const trend = calculateTrend(entry.scores.map((s) => ({ score: s.score })));
 
         classSeasonData.push({
           name: entry.abbr,
@@ -441,19 +452,19 @@ export const useTickerData = ({ enabled = true } = {}) => {
     combinedLeaders.music.sort((a, b) => b._score - a._score);
 
     const combinedCaptionLeaders = {
-      ge: combinedLeaders.ge.slice(0, 8).map(r => ({
+      ge: combinedLeaders.ge.slice(0, 8).map((r) => ({
         name: r.name,
         fullName: r.fullName,
         score: r._score.toFixed(3),
         corpsClass: r.corpsClass,
       })),
-      visual: combinedLeaders.visual.slice(0, 8).map(r => ({
+      visual: combinedLeaders.visual.slice(0, 8).map((r) => ({
         name: r.name,
         fullName: r.fullName,
         score: r._score.toFixed(3),
         corpsClass: r.corpsClass,
       })),
-      music: combinedLeaders.music.slice(0, 8).map(r => ({
+      music: combinedLeaders.music.slice(0, 8).map((r) => ({
         name: r.name,
         fullName: r.fullName,
         score: r._score.toFixed(3),
@@ -470,7 +481,9 @@ export const useTickerData = ({ enabled = true } = {}) => {
       soundSportMedals,
       dayLabel: `Season`,
       showCount: totalShowCount,
-      date: mostRecentRecap?.date?.toDate?.() || (mostRecentRecap?.date ? new Date(mostRecentRecap.date) : new Date()),
+      date:
+        mostRecentRecap?.date?.toDate?.() ||
+        (mostRecentRecap?.date ? new Date(mostRecentRecap.date) : new Date()),
       availableClasses,
       displayDay, // Include for reference if needed
     };
@@ -494,10 +507,10 @@ export const useTickerData = ({ enabled = true } = {}) => {
     const corpsStats = new Map();
 
     allRecaps
-      .filter(r => r.offSeasonDay <= displayDay)
-      .forEach(recap => {
-        recap.shows?.forEach(show => {
-          show.results?.forEach(result => {
+      .filter((r) => r.offSeasonDay <= displayDay)
+      .forEach((recap) => {
+        recap.shows?.forEach((show) => {
+          show.results?.forEach((result) => {
             if (result.corpsClass === 'soundSport') return;
 
             const corps = result.corpsName;
@@ -531,7 +544,7 @@ export const useTickerData = ({ enabled = true } = {}) => {
     // Build class-separated caption stats
     const byClass = {};
     for (const classKey of Object.keys(CLASS_CONFIG)) {
-      const classStats = allStats.filter(s => s.corpsClass === classKey);
+      const classStats = allStats.filter((s) => s.corpsClass === classKey);
       byClass[classKey] = {
         topGE: [...classStats].sort((a, b) => b.latestGE - a.latestGE).slice(0, 5),
         topVisual: [...classStats].sort((a, b) => b.latestVisual - a.latestVisual).slice(0, 5),

@@ -9,7 +9,7 @@ export const CLASS_POINT_LIMITS = {
   soundSport: 90,
   aClass: 60,
   openClass: 120,
-  worldClass: 150
+  worldClass: 150,
 };
 
 /**
@@ -17,10 +17,10 @@ export const CLASS_POINT_LIMITS = {
  * Level 1 = 1000 XP, so Level 3 = 3000 XP, etc.
  */
 export const CLASS_UNLOCK_REQUIREMENTS = {
-  soundSport: 0,  // Always available (0 XP)
-  aClass: 3,      // Level 3 (3000 XP)
-  openClass: 5,   // Level 5 (5000 XP)
-  worldClass: 10  // Level 10 (10000 XP)
+  soundSport: 0, // Always available (0 XP)
+  aClass: 3, // Level 3 (3000 XP)
+  openClass: 5, // Level 5 (5000 XP)
+  worldClass: 10, // Level 10 (10000 XP)
 };
 
 /**
@@ -28,19 +28,19 @@ export const CLASS_UNLOCK_REQUIREMENTS = {
  */
 export const CLASS_XP_THRESHOLDS = {
   soundSport: 0,
-  aClass: 3000,      // Level 3
-  openClass: 5000,   // Level 5
-  worldClass: 10000  // Level 10
+  aClass: 3000, // Level 3
+  openClass: 5000, // Level 5
+  worldClass: 10000, // Level 10
 };
 
 /**
  * Weeks remaining lockout for each class
  */
 export const CLASS_REGISTRATION_LOCKS = {
-  soundSport: 0,  // No lock
-  aClass: 4,      // Locks 4 weeks before season end
-  openClass: 5,   // Locks 5 weeks before season end
-  worldClass: 6   // Locks 6 weeks before season end
+  soundSport: 0, // No lock
+  aClass: 4, // Locks 4 weeks before season end
+  openClass: 5, // Locks 5 weeks before season end
+  worldClass: 6, // Locks 6 weeks before season end
 };
 
 /**
@@ -49,7 +49,7 @@ export const CLASS_REGISTRATION_LOCKS = {
 export const CLASS_UNLOCK_COSTS = {
   aClass: 1000,
   openClass: 2500,
-  worldClass: 5000
+  worldClass: 5000,
 };
 
 /**
@@ -57,28 +57,28 @@ export const CLASS_UNLOCK_COSTS = {
  * Matches backend configuration for consistency
  */
 export const XP_SOURCES = {
-  weeklyParticipation: 100,  // Submit lineup and participate weekly
-  leagueWin: 50,             // Win a weekly league matchup
+  weeklyParticipation: 100, // Submit lineup and participate weekly
+  leagueWin: 50, // Win a weekly league matchup
   seasonCompletion: {
-    top10: 500,              // Top 10 finish
-    top25: 400,              // Top 25 finish
-    top50: 300,              // Top 50 finish
-    completed: 200           // Just finishing the season
-  }
+    top10: 500, // Top 10 finish
+    top25: 400, // Top 25 finish
+    top50: 300, // Top 50 finish
+    completed: 200, // Just finishing the season
+  },
 };
 
 /**
  * Required captions for a valid lineup
  */
 export const REQUIRED_CAPTIONS = [
-  'GE1',  // General Effect 1
-  'GE2',  // General Effect 2
-  'VP',   // Visual Proficiency
-  'VA',   // Visual Analysis
-  'CG',   // Color Guard
-  'B',    // Brass
-  'MA',   // Music Analysis
-  'P'     // Percussion
+  'GE1', // General Effect 1
+  'GE2', // General Effect 2
+  'VP', // Visual Proficiency
+  'VA', // Visual Analysis
+  'CG', // Color Guard
+  'B', // Brass
+  'MA', // Music Analysis
+  'P', // Percussion
 ];
 
 /**
@@ -92,7 +92,7 @@ export const CAPTION_CATEGORIES = {
   CG: { name: 'Color Guard', category: 'Visual', weight: 10, shortName: 'CG' },
   B: { name: 'Brass', category: 'Music', weight: 10, shortName: 'B' },
   MA: { name: 'Music Analysis', category: 'Music', weight: 10, shortName: 'MA' },
-  P: { name: 'Percussion', category: 'Music', weight: 10, shortName: 'P' }
+  P: { name: 'Percussion', category: 'Music', weight: 10, shortName: 'P' },
 };
 
 /**
@@ -105,9 +105,9 @@ export const calculateLineupValue = (lineup, availableCorps) => {
   if (!lineup || !availableCorps) return 0;
 
   let total = 0;
-  const corpsMap = new Map(availableCorps.map(c => [c.id, c.value]));
+  const corpsMap = new Map(availableCorps.map((c) => [c.id, c.value]));
 
-  Object.values(lineup).forEach(corpsId => {
+  Object.values(lineup).forEach((corpsId) => {
     const value = corpsMap.get(corpsId);
     if (value) total += value;
   });
@@ -129,17 +129,17 @@ export const validateLineup = (lineup, corpsClass, availableCorps) => {
     return {
       valid: false,
       reason: `Please select all ${REQUIRED_CAPTIONS.length} captions`,
-      totalValue: 0
+      totalValue: 0,
     };
   }
 
   // Check for missing captions
-  const missingCaptions = REQUIRED_CAPTIONS.filter(c => !selectedCaptions.includes(c));
+  const missingCaptions = REQUIRED_CAPTIONS.filter((c) => !selectedCaptions.includes(c));
   if (missingCaptions.length > 0) {
     return {
       valid: false,
       reason: `Missing captions: ${missingCaptions.join(', ')}`,
-      totalValue: 0
+      totalValue: 0,
     };
   }
 
@@ -150,7 +150,7 @@ export const validateLineup = (lineup, corpsClass, availableCorps) => {
     return {
       valid: false,
       reason: 'Cannot select the same corps for multiple captions',
-      totalValue: 0
+      totalValue: 0,
     };
   }
 
@@ -163,7 +163,7 @@ export const validateLineup = (lineup, corpsClass, availableCorps) => {
     return {
       valid: false,
       reason: 'Invalid competition class',
-      totalValue
+      totalValue,
     };
   }
 
@@ -171,14 +171,14 @@ export const validateLineup = (lineup, corpsClass, availableCorps) => {
     return {
       valid: false,
       reason: `Lineup exceeds ${corpsClass} point limit of ${limit} (current: ${totalValue})`,
-      totalValue
+      totalValue,
     };
   }
 
   return {
     valid: true,
     reason: 'Lineup is valid',
-    totalValue
+    totalValue,
   };
 };
 
@@ -189,9 +189,9 @@ export const validateLineup = (lineup, corpsClass, availableCorps) => {
  */
 export const generateLineupHash = (lineup) => {
   // Sort captions alphabetically and concatenate corps IDs
-  const sortedEntries = REQUIRED_CAPTIONS
-    .map(caption => `${caption}:${lineup[caption] || 'none'}`)
-    .join('|');
+  const sortedEntries = REQUIRED_CAPTIONS.map(
+    (caption) => `${caption}:${lineup[caption] || 'none'}`
+  ).join('|');
 
   return btoa(sortedEntries); // Base64 encode
 };
@@ -214,7 +214,7 @@ export const canRegisterForClass = (userLevel, corpsCoin, corpsClass, weeksRemai
     return {
       canRegister: false,
       reason: `Registration for ${corpsClass} closed (locks at ${lockWeeks} weeks remaining)`,
-      cost: 0
+      cost: 0,
     };
   }
 
@@ -223,7 +223,7 @@ export const canRegisterForClass = (userLevel, corpsCoin, corpsClass, weeksRemai
     return {
       canRegister: true,
       reason: 'Level requirement met',
-      cost: 0
+      cost: 0,
     };
   }
 
@@ -233,14 +233,14 @@ export const canRegisterForClass = (userLevel, corpsCoin, corpsClass, weeksRemai
       canRegister: true,
       reason: `Can unlock with ${unlockCost} CorpsCoin`,
       cost: unlockCost,
-      requiresPayment: true
+      requiresPayment: true,
     };
   }
 
   return {
     canRegister: false,
     reason: `Requires Level ${requiredLevel} or ${unlockCost} CorpsCoin (have ${corpsCoin})`,
-    cost: unlockCost
+    cost: unlockCost,
   };
 };
 
@@ -269,7 +269,7 @@ export const getXPProgress = (currentXP) => {
     needed: xpNeeded,
     percentage: Math.round(percentage),
     level: currentLevel,
-    nextLevel: currentLevel + 1
+    nextLevel: currentLevel + 1,
   };
 };
 
@@ -330,7 +330,7 @@ export const getClassInfo = (corpsClass) => {
       description: 'Entry level - Perfect for beginners',
       pointLimit: 90,
       requiredLevel: 0,
-      requiredXP: 0
+      requiredXP: 0,
     },
     aClass: {
       name: 'A Class',
@@ -342,7 +342,7 @@ export const getClassInfo = (corpsClass) => {
       pointLimit: 60,
       requiredLevel: 3,
       requiredXP: 3000,
-      unlockCost: 1000
+      unlockCost: 1000,
     },
     open: {
       name: 'Open Class',
@@ -354,7 +354,7 @@ export const getClassInfo = (corpsClass) => {
       pointLimit: 120,
       requiredLevel: 5,
       requiredXP: 5000,
-      unlockCost: 2500
+      unlockCost: 2500,
     },
     world: {
       name: 'World Class',
@@ -366,8 +366,8 @@ export const getClassInfo = (corpsClass) => {
       pointLimit: 150,
       requiredLevel: 10,
       requiredXP: 10000,
-      unlockCost: 5000
-    }
+      unlockCost: 5000,
+    },
   };
 
   return info[corpsClass] || info.soundSport;
@@ -385,9 +385,13 @@ const CLASS_PROGRESSION = ['soundSport', 'aClass', 'openClass', 'worldClass'];
  * @param {number} corpsCoin - User's CorpsCoin balance
  * @returns {Object|null} Progress info or null if all classes unlocked
  */
-export const getNextClassProgress = (currentXP, unlockedClasses = ['soundSport'], corpsCoin = 0) => {
+export const getNextClassProgress = (
+  currentXP,
+  unlockedClasses = ['soundSport'],
+  corpsCoin = 0
+) => {
   // Find the next class to unlock
-  const nextClass = CLASS_PROGRESSION.find(cls => !unlockedClasses.includes(cls));
+  const nextClass = CLASS_PROGRESSION.find((cls) => !unlockedClasses.includes(cls));
 
   if (!nextClass) {
     return null; // All classes unlocked
@@ -396,7 +400,7 @@ export const getNextClassProgress = (currentXP, unlockedClasses = ['soundSport']
   const thresholds = {
     aClass: { xp: 3000, cc: 1000, name: 'A Class', color: 'blue' },
     openClass: { xp: 5000, cc: 2500, name: 'Open Class', color: 'purple' },
-    worldClass: { xp: 10000, cc: 5000, name: 'World Class', color: 'gold' }
+    worldClass: { xp: 10000, cc: 5000, name: 'World Class', color: 'gold' },
   };
 
   const threshold = thresholds[nextClass];
@@ -417,7 +421,7 @@ export const getNextClassProgress = (currentXP, unlockedClasses = ['soundSport']
     requiredCC: threshold.cc,
     currentCC: corpsCoin,
     canUnlockWithCC,
-    ccRemaining: Math.max(threshold.cc - corpsCoin, 0)
+    ccRemaining: Math.max(threshold.cc - corpsCoin, 0),
   };
 };
 
@@ -440,5 +444,5 @@ export default {
   getMaxShowsForWeek,
   formatCorpsName,
   getClassInfo,
-  getNextClassProgress
+  getNextClassProgress,
 };

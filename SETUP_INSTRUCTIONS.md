@@ -60,6 +60,7 @@ firebase functions:config:set \
 ## 🎯 Next: Choose Your Path
 
 ### Option A: Build Battle Pass System Now
+
 ```bash
 # I'll implement:
 # - Stripe checkout integration
@@ -71,6 +72,7 @@ firebase functions:config:set \
 ```
 
 ### Option B: Build Core Game First (Recommended)
+
 ```bash
 # I'll implement:
 # - Execution system (0.70-1.10 multiplier)
@@ -82,6 +84,7 @@ firebase functions:config:set \
 ```
 
 ### Option C: Build Everything Together
+
 ```bash
 # Full epic implementation:
 # - Core gameplay + Battle pass + Community features
@@ -93,16 +96,19 @@ firebase functions:config:set \
 ## 🔐 Security Notes
 
 **Files that are gitignored (safe):**
+
 - ✅ `.env.local` (publishable key)
 - ✅ `STRIPE_KEYS_SETUP.sh` (secret keys)
 - ✅ `.firebase/` (Firebase cache)
 
 **Never commit:**
+
 - ❌ Stripe secret keys
 - ❌ Firebase service account keys
 - ❌ Webhook secrets
 
 **Safe to commit:**
+
 - ✅ Documentation files
 - ✅ Code that uses environment variables
 - ✅ `.env.local.example` (template without real keys)

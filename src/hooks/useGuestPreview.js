@@ -207,13 +207,16 @@ export function useGuestPreview() {
   /**
    * Get the full demo profile with current corps data
    */
-  const demoProfile = useMemo(() => ({
-    ...DEMO_PROFILE,
-    corps: {
-      ...DEMO_PROFILE.corps,
-      world: demoCorps,
-    },
-  }), [demoCorps]);
+  const demoProfile = useMemo(
+    () => ({
+      ...DEMO_PROFILE,
+      corps: {
+        ...DEMO_PROFILE.corps,
+        world: demoCorps,
+      },
+    }),
+    [demoCorps]
+  );
 
   /**
    * Should we prompt for registration?

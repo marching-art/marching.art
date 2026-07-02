@@ -7,11 +7,34 @@ import React, { memo } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
-  Trophy, Calendar, Crown, Medal,
-  MapPin, Award, ChevronRight,
-  Music, Disc3, Shield, Minus, ExternalLink, Globe, Twitter, Instagram, Youtube, Facebook, MessageCircle,
-  Flag, Quote, } from 'lucide-react';
-import type { UserProfile, Achievement, CorpsClass, EnsembleProfileInfo, DirectorSocialLinks } from '../../types';
+  Trophy,
+  Calendar,
+  Crown,
+  Medal,
+  MapPin,
+  Award,
+  ChevronRight,
+  Music,
+  Disc3,
+  Shield,
+  Minus,
+  ExternalLink,
+  Globe,
+  Twitter,
+  Instagram,
+  Youtube,
+  Facebook,
+  MessageCircle,
+  Flag,
+  Quote,
+} from 'lucide-react';
+import type {
+  UserProfile,
+  Achievement,
+  CorpsClass,
+  EnsembleProfileInfo,
+  DirectorSocialLinks,
+} from '../../types';
 import { formatSeasonName } from '../../utils/season';
 import { CORPS_CLASS_ORDER, resolveCorpsForClass, isCorpsClassUnlocked } from '../../utils/corps';
 import { toCanonicalClassKey } from '../../utils/classUnlockTime';
@@ -49,7 +72,12 @@ interface TrophyData {
 // data layer stores. Look up via getClassDisplay() so legacy short keys
 // ('world'/'open') still resolve.
 const CLASS_DISPLAY = {
-  worldClass: { name: 'World Class', short: 'WC', color: 'text-purple-400', bg: 'bg-purple-500/10' },
+  worldClass: {
+    name: 'World Class',
+    short: 'WC',
+    color: 'text-purple-400',
+    bg: 'bg-purple-500/10',
+  },
   openClass: { name: 'Open Class', short: 'OC', color: 'text-blue-400', bg: 'bg-blue-500/10' },
   aClass: { name: 'A Class', short: 'A', color: 'text-green-400', bg: 'bg-green-500/10' },
   soundSport: { name: 'SoundSport', short: 'SS', color: 'text-orange-400', bg: 'bg-orange-500/10' },
@@ -63,10 +91,30 @@ function getClassDisplay(classKey: string): ClassDisplayConfig {
 }
 
 const TIER_STYLES = {
-  gold: { bg: 'bg-yellow-500/15', border: 'border-yellow-500/40', text: 'text-yellow-400', icon: 'text-yellow-500' },
-  silver: { bg: 'bg-gray-300/10', border: 'border-gray-400/40', text: 'text-gray-300', icon: 'text-gray-400' },
-  bronze: { bg: 'bg-orange-600/15', border: 'border-orange-500/40', text: 'text-orange-400', icon: 'text-orange-500' },
-  special: { bg: 'bg-purple-500/15', border: 'border-purple-500/40', text: 'text-purple-400', icon: 'text-purple-500' },
+  gold: {
+    bg: 'bg-yellow-500/15',
+    border: 'border-yellow-500/40',
+    text: 'text-yellow-400',
+    icon: 'text-yellow-500',
+  },
+  silver: {
+    bg: 'bg-gray-300/10',
+    border: 'border-gray-400/40',
+    text: 'text-gray-300',
+    icon: 'text-gray-400',
+  },
+  bronze: {
+    bg: 'bg-orange-600/15',
+    border: 'border-orange-500/40',
+    text: 'text-orange-400',
+    icon: 'text-orange-500',
+  },
+  special: {
+    bg: 'bg-purple-500/15',
+    border: 'border-purple-500/40',
+    text: 'text-purple-400',
+    icon: 'text-purple-500',
+  },
 };
 
 const STATUS_INDICATORS = {
@@ -81,7 +129,8 @@ const STATUS_INDICATORS = {
 // =============================================================================
 
 function getDirectorStatus(profile: UserProfile): keyof typeof STATUS_INDICATORS {
-  const hasActiveCorps = profile.corps && Object.values(profile.corps).some(c => c && c.corpsName);
+  const hasActiveCorps =
+    profile.corps && Object.values(profile.corps).some((c) => c && c.corpsName);
   const hasActiveSeasonId = !!profile.activeSeasonId;
 
   if (!hasActiveCorps) return 'retired';
@@ -104,7 +153,7 @@ function calculateDirectorRating(profile: UserProfile): number {
   const championships = profile.stats?.championships || 0;
   const seasons = profile.stats?.seasonsPlayed || 0;
   const topTens = profile.stats?.topTenFinishes || 0;
-  const rating = baseRating + (championships * 150) + (topTens * 50) + (seasons * 10);
+  const rating = baseRating + championships * 150 + topTens * 50 + seasons * 10;
   return Math.min(rating, 3000);
 }
 
@@ -141,7 +190,10 @@ function getDisplayTitle(profile: UserProfile): string {
 }
 
 // Get primary corps avatar URL - respects profileAvatarCorps selection
-function getCorpsAvatarUrl(profile: UserProfile): { url: string | null; corpsClass: CorpsClass | null } {
+function getCorpsAvatarUrl(profile: UserProfile): {
+  url: string | null;
+  corpsClass: CorpsClass | null;
+} {
   if (!profile.corps) return { url: null, corpsClass: null };
 
   // If user has selected a specific corps for their profile avatar, use that
@@ -161,7 +213,9 @@ function getCorpsAvatarUrl(profile: UserProfile): { url: string | null; corpsCla
 }
 
 // Get all corps with avatars for selection
-function getCorpsWithAvatars(profile: UserProfile): { corpsClass: CorpsClass; corpsName: string; avatarUrl: string }[] {
+function getCorpsWithAvatars(
+  profile: UserProfile
+): { corpsClass: CorpsClass; corpsName: string; avatarUrl: string }[] {
   if (!profile.corps) return [];
   const result: { corpsClass: CorpsClass; corpsName: string; avatarUrl: string }[] = [];
 
@@ -246,7 +300,9 @@ const StatusIndicator = memo(({ status }: { status: keyof typeof STATUS_INDICATO
       <div className="relative">
         <div className={`w-2 h-2 rounded-full ${config.color}`} />
         {config.pulse && (
-          <div className={`absolute inset-0 w-2 h-2 rounded-full ${config.color} animate-ping opacity-50`} />
+          <div
+            className={`absolute inset-0 w-2 h-2 rounded-full ${config.color} animate-ping opacity-50`}
+          />
         )}
       </div>
       <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
@@ -258,18 +314,25 @@ const StatusIndicator = memo(({ status }: { status: keyof typeof STATUS_INDICATO
 StatusIndicator.displayName = 'StatusIndicator';
 
 // Compact stat pill
-const StatPill = memo(({ icon: Icon, value, label, color = 'text-white' }: {
-  icon: React.ElementType;
-  value: string | number;
-  label: string;
-  color?: string;
-}) => (
-  <div className="flex items-center gap-1.5 px-2 py-1 bg-[#222] border border-[#333]">
-    <Icon className={`w-3.5 h-3.5 ${color}`} />
-    <span className={`text-xs font-bold font-data tabular-nums ${color}`}>{value}</span>
-    <span className="text-[9px] text-gray-500 uppercase">{label}</span>
-  </div>
-));
+const StatPill = memo(
+  ({
+    icon: Icon,
+    value,
+    label,
+    color = 'text-white',
+  }: {
+    icon: React.ElementType;
+    value: string | number;
+    label: string;
+    color?: string;
+  }) => (
+    <div className="flex items-center gap-1.5 px-2 py-1 bg-[#222] border border-[#333]">
+      <Icon className={`w-3.5 h-3.5 ${color}`} />
+      <span className={`text-xs font-bold font-data tabular-nums ${color}`}>{value}</span>
+      <span className="text-[9px] text-gray-500 uppercase">{label}</span>
+    </div>
+  )
+);
 StatPill.displayName = 'StatPill';
 
 // Trophy mini card
@@ -277,9 +340,14 @@ const TrophyMini = memo(({ trophy }: { trophy: TrophyData }) => {
   const styles = TIER_STYLES[trophy.tier];
   const Icon = trophy.icon;
   return (
-    <div className={`p-2 ${styles.bg} border ${styles.border} flex flex-col items-center text-center`} title={trophy.description}>
+    <div
+      className={`p-2 ${styles.bg} border ${styles.border} flex flex-col items-center text-center`}
+      title={trophy.description}
+    >
       <Icon className={`w-5 h-5 ${styles.icon}`} />
-      <span className={`text-[9px] font-bold ${styles.text} mt-1 truncate w-full`}>{trophy.title}</span>
+      <span className={`text-[9px] font-bold ${styles.text} mt-1 truncate w-full`}>
+        {trophy.title}
+      </span>
     </div>
   );
 });
@@ -296,7 +364,10 @@ const AchievementMini = memo(({ achievement }: { achievement: Achievement }) => 
   const colors = rarityColors[achievement.rarity] || rarityColors.common;
 
   return (
-    <div className={`px-2 py-1.5 border ${colors} flex items-center gap-1.5`} title={achievement.description}>
+    <div
+      className={`px-2 py-1.5 border ${colors} flex items-center gap-1.5`}
+      title={achievement.description}
+    >
       <Award className="w-3.5 h-3.5 flex-shrink-0" />
       <span className="text-[10px] font-bold truncate">{achievement.title}</span>
     </div>
@@ -305,103 +376,134 @@ const AchievementMini = memo(({ achievement }: { achievement: Achievement }) => 
 AchievementMini.displayName = 'AchievementMini';
 
 // Season row (compact)
-const SeasonRow = memo(({ season, isExpanded, onToggle }: {
-  season: SeasonHistoryEntry;
-  isExpanded: boolean;
-  onToggle: () => void;
-}) => {
-  const classConfig = getClassDisplay(season.classKey);
-  const score = season.finalScore || season.totalSeasonScore || 0;
-  const placement = season.placement;
+const SeasonRow = memo(
+  ({
+    season,
+    isExpanded,
+    onToggle,
+  }: {
+    season: SeasonHistoryEntry;
+    isExpanded: boolean;
+    onToggle: () => void;
+  }) => {
+    const classConfig = getClassDisplay(season.classKey);
+    const score = season.finalScore || season.totalSeasonScore || 0;
+    const placement = season.placement;
 
-  return (
-    <div className="border-b border-[#333] last:border-b-0">
-      <button
-        onClick={onToggle}
-        className="w-full px-3 py-2 flex items-center gap-2 hover:bg-[#222] transition-colors text-left"
-      >
-        {/* Rank */}
-        <div className={`w-8 h-8 flex-shrink-0 flex items-center justify-center border ${
-          placement === 1 ? 'bg-yellow-500/20 border-yellow-500/40 text-yellow-400' :
-          placement && placement <= 3 ? 'bg-gray-400/10 border-gray-500/30 text-gray-300' :
-          placement && placement <= 10 ? 'bg-orange-500/10 border-orange-500/30 text-orange-400' :
-          'bg-[#222] border-[#333] text-gray-500'
-        }`}>
-          {placement ? <span className="text-xs font-bold">#{placement}</span> : <Minus className="w-3 h-3" />}
-        </div>
+    return (
+      <div className="border-b border-[#333] last:border-b-0">
+        <button
+          onClick={onToggle}
+          className="w-full px-3 py-2 flex items-center gap-2 hover:bg-[#222] transition-colors text-left"
+        >
+          {/* Rank */}
+          <div
+            className={`w-8 h-8 flex-shrink-0 flex items-center justify-center border ${
+              placement === 1
+                ? 'bg-yellow-500/20 border-yellow-500/40 text-yellow-400'
+                : placement && placement <= 3
+                  ? 'bg-gray-400/10 border-gray-500/30 text-gray-300'
+                  : placement && placement <= 10
+                    ? 'bg-orange-500/10 border-orange-500/30 text-orange-400'
+                    : 'bg-[#222] border-[#333] text-gray-500'
+            }`}
+          >
+            {placement ? (
+              <span className="text-xs font-bold">#{placement}</span>
+            ) : (
+              <Minus className="w-3 h-3" />
+            )}
+          </div>
 
-        {/* Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs font-bold text-white truncate">{season.corpsName}</span>
-            <span className={`text-[9px] font-bold px-1 ${classConfig.bg} ${classConfig.color}`}>
-              {classConfig.short}
+          {/* Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-bold text-white truncate">{season.corpsName}</span>
+              <span className={`text-[9px] font-bold px-1 ${classConfig.bg} ${classConfig.color}`}>
+                {classConfig.short}
+              </span>
+            </div>
+            <span className="text-[10px] text-gray-500">
+              {formatSeasonName(season.seasonId || season.seasonName || '')}
             </span>
           </div>
-          <span className="text-[10px] text-gray-500">{formatSeasonName(season.seasonId || season.seasonName || '')}</span>
-        </div>
 
-        {/* Score */}
-        <div className="text-right">
-          <span className="text-xs font-bold text-white font-data">{score > 0 ? score.toLocaleString() : '-'}</span>
-        </div>
+          {/* Score */}
+          <div className="text-right">
+            <span className="text-xs font-bold text-white font-data">
+              {score > 0 ? score.toLocaleString() : '-'}
+            </span>
+          </div>
 
-        <ChevronRight className={`w-3 h-3 text-gray-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
-      </button>
+          <ChevronRight
+            className={`w-3 h-3 text-gray-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+          />
+        </button>
 
-      <AnimatePresence>
-        {isExpanded && (
-          <m.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden"
-          >
-            <div className="px-3 pb-2 pt-1 bg-[#0a0a0a] grid grid-cols-3 gap-2 text-center">
-              <div>
-                <div className="text-xs font-bold text-white">{season.showsAttended || 0}</div>
-                <div className="text-[9px] text-gray-500">Shows</div>
-              </div>
-              <div>
-                <div className="text-xs font-bold text-white">{season.circuitPoints || 0}</div>
-                <div className="text-[9px] text-gray-500">Pts</div>
-              </div>
-              <div>
-                <div className="text-xs font-bold text-white">
-                  {score > 0 && season.showsAttended ? (score / season.showsAttended).toFixed(1) : '-'}
+        <AnimatePresence>
+          {isExpanded && (
+            <m.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="px-3 pb-2 pt-1 bg-[#0a0a0a] grid grid-cols-3 gap-2 text-center">
+                <div>
+                  <div className="text-xs font-bold text-white">{season.showsAttended || 0}</div>
+                  <div className="text-[9px] text-gray-500">Shows</div>
                 </div>
-                <div className="text-[9px] text-gray-500">Avg</div>
+                <div>
+                  <div className="text-xs font-bold text-white">{season.circuitPoints || 0}</div>
+                  <div className="text-[9px] text-gray-500">Pts</div>
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-white">
+                    {score > 0 && season.showsAttended
+                      ? (score / season.showsAttended).toFixed(1)
+                      : '-'}
+                  </div>
+                  <div className="text-[9px] text-gray-500">Avg</div>
+                </div>
               </div>
-            </div>
-          </m.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-});
+            </m.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }
+);
 SeasonRow.displayName = 'SeasonRow';
 
 // Section wrapper
-const Section = memo(({ icon: Icon, iconColor, title, children, action }: {
-  icon: React.ElementType;
-  iconColor?: string;
-  title: string;
-  children: React.ReactNode;
-  action?: React.ReactNode;
-}) => (
-  <div className="bg-[#1a1a1a] border border-[#333]">
-    <div className="px-3 py-2 border-b border-[#333] bg-[#222] flex items-center justify-between">
-      <div className="flex items-center gap-1.5">
-        <Icon className={`w-3.5 h-3.5 ${iconColor || 'text-gray-400'}`} />
-        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
-          {title}
-        </span>
+const Section = memo(
+  ({
+    icon: Icon,
+    iconColor,
+    title,
+    children,
+    action,
+  }: {
+    icon: React.ElementType;
+    iconColor?: string;
+    title: string;
+    children: React.ReactNode;
+    action?: React.ReactNode;
+  }) => (
+    <div className="bg-[#1a1a1a] border border-[#333]">
+      <div className="px-3 py-2 border-b border-[#333] bg-[#222] flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <Icon className={`w-3.5 h-3.5 ${iconColor || 'text-gray-400'}`} />
+          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+            {title}
+          </span>
+        </div>
+        {action}
       </div>
-      {action}
+      {children}
     </div>
-    {children}
-  </div>
-));
+  )
+);
 Section.displayName = 'Section';
 
 // Normalize a social handle/URL into a clickable absolute URL
@@ -419,7 +521,9 @@ function normalizeSocialUrl(platform: keyof DirectorSocialLinks, value: string):
     case 'tiktok':
       return `https://tiktok.com/@${handle}`;
     case 'youtube':
-      return handle.includes('/') ? `https://youtube.com/${handle}` : `https://youtube.com/@${handle}`;
+      return handle.includes('/')
+        ? `https://youtube.com/${handle}`
+        : `https://youtube.com/@${handle}`;
     case 'facebook':
       return `https://facebook.com/${handle}`;
     case 'website':
@@ -489,115 +593,125 @@ const SocialLinks = memo(({ links }: { links: DirectorSocialLinks }) => {
 SocialLinks.displayName = 'SocialLinks';
 
 // Ensemble card - displays one corps's ensemble identity
-const EnsembleCard = memo(({
-  corpsName,
-  classKey,
-  info,
-  avatarUrl,
-  location,
-}: {
-  corpsName: string;
-  classKey: CorpsClass;
-  info: EnsembleProfileInfo;
-  avatarUrl?: string;
-  location?: string;
-}) => {
-  const classConfig = getClassDisplay(classKey);
-  const hasAnyInfo = !!(
-    info.tagline || info.mission || info.history || info.motto ||
-    info.foundedYear || info.homeVenue || (info.notableShows && info.notableShows.length > 0)
-  );
+const EnsembleCard = memo(
+  ({
+    corpsName,
+    classKey,
+    info,
+    avatarUrl,
+    location,
+  }: {
+    corpsName: string;
+    classKey: CorpsClass;
+    info: EnsembleProfileInfo;
+    avatarUrl?: string;
+    location?: string;
+  }) => {
+    const classConfig = getClassDisplay(classKey);
+    const hasAnyInfo = !!(
+      info.tagline ||
+      info.mission ||
+      info.history ||
+      info.motto ||
+      info.foundedYear ||
+      info.homeVenue ||
+      (info.notableShows && info.notableShows.length > 0)
+    );
 
-  return (
-    <div className="bg-[#0a0a0a] border border-[#333]">
-      <div className="px-3 py-2 border-b border-[#333] bg-[#111] flex items-center gap-2">
-        {avatarUrl && (
-          <img
-            src={avatarUrl}
-            alt={corpsName}
-            className="w-7 h-7 object-cover border border-[#333]"
-            loading="lazy"
-            decoding="async"
-          />
+    return (
+      <div className="bg-[#0a0a0a] border border-[#333]">
+        <div className="px-3 py-2 border-b border-[#333] bg-[#111] flex items-center gap-2">
+          {avatarUrl && (
+            <img
+              src={avatarUrl}
+              alt={corpsName}
+              className="w-7 h-7 object-cover border border-[#333]"
+              loading="lazy"
+              decoding="async"
+            />
+          )}
+          <div className="flex-1 min-w-0">
+            <div className="text-xs font-bold text-white truncate">{corpsName}</div>
+            <div className="flex items-center gap-2 text-[9px] text-gray-500">
+              <span className={`font-bold ${classConfig.color}`}>{classConfig.name}</span>
+              {location && (
+                <span className="flex items-center gap-1">
+                  <MapPin className="w-2.5 h-2.5" /> {location}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {!hasAnyInfo ? (
+          <div className="px-3 py-4 text-center">
+            <p className="text-[10px] text-gray-500">No ensemble details yet.</p>
+          </div>
+        ) : (
+          <div className="px-3 py-2 space-y-2">
+            {info.tagline && (
+              <p className="text-[11px] italic text-gray-300">&ldquo;{info.tagline}&rdquo;</p>
+            )}
+
+            <div className="flex flex-wrap gap-2 text-[10px] text-gray-400">
+              {info.foundedYear && (
+                <span className="flex items-center gap-1">
+                  <Calendar className="w-3 h-3" /> Est. {info.foundedYear}
+                </span>
+              )}
+              {info.homeVenue && (
+                <span className="flex items-center gap-1">
+                  <Flag className="w-3 h-3" /> {info.homeVenue}
+                </span>
+              )}
+              {info.motto && (
+                <span className="flex items-center gap-1">
+                  <Quote className="w-3 h-3" /> {info.motto}
+                </span>
+              )}
+            </div>
+
+            {info.mission && (
+              <div>
+                <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">
+                  Mission
+                </div>
+                <p className="text-[11px] text-gray-300 whitespace-pre-wrap">{info.mission}</p>
+              </div>
+            )}
+
+            {info.history && (
+              <div>
+                <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">
+                  History
+                </div>
+                <p className="text-[11px] text-gray-300 whitespace-pre-wrap">{info.history}</p>
+              </div>
+            )}
+
+            {info.notableShows && info.notableShows.length > 0 && (
+              <div>
+                <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">
+                  Notable Shows
+                </div>
+                <ul className="space-y-0.5">
+                  {info.notableShows.map((show, i) => (
+                    <li
+                      key={`${show}-${i}`}
+                      className="text-[11px] text-gray-300 flex items-center gap-1.5"
+                    >
+                      <Disc3 className="w-2.5 h-2.5 text-[#0057B8] flex-shrink-0" /> {show}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
         )}
-        <div className="flex-1 min-w-0">
-          <div className="text-xs font-bold text-white truncate">{corpsName}</div>
-          <div className="flex items-center gap-2 text-[9px] text-gray-500">
-            <span className={`font-bold ${classConfig.color}`}>{classConfig.name}</span>
-            {location && (
-              <span className="flex items-center gap-1">
-                <MapPin className="w-2.5 h-2.5" /> {location}
-              </span>
-            )}
-          </div>
-        </div>
       </div>
-
-      {!hasAnyInfo ? (
-        <div className="px-3 py-4 text-center">
-          <p className="text-[10px] text-gray-500">No ensemble details yet.</p>
-        </div>
-      ) : (
-        <div className="px-3 py-2 space-y-2">
-          {info.tagline && (
-            <p className="text-[11px] italic text-gray-300">&ldquo;{info.tagline}&rdquo;</p>
-          )}
-
-          <div className="flex flex-wrap gap-2 text-[10px] text-gray-400">
-            {info.foundedYear && (
-              <span className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" /> Est. {info.foundedYear}
-              </span>
-            )}
-            {info.homeVenue && (
-              <span className="flex items-center gap-1">
-                <Flag className="w-3 h-3" /> {info.homeVenue}
-              </span>
-            )}
-            {info.motto && (
-              <span className="flex items-center gap-1">
-                <Quote className="w-3 h-3" /> {info.motto}
-              </span>
-            )}
-          </div>
-
-          {info.mission && (
-            <div>
-              <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">
-                Mission
-              </div>
-              <p className="text-[11px] text-gray-300 whitespace-pre-wrap">{info.mission}</p>
-            </div>
-          )}
-
-          {info.history && (
-            <div>
-              <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">
-                History
-              </div>
-              <p className="text-[11px] text-gray-300 whitespace-pre-wrap">{info.history}</p>
-            </div>
-          )}
-
-          {info.notableShows && info.notableShows.length > 0 && (
-            <div>
-              <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">
-                Notable Shows
-              </div>
-              <ul className="space-y-0.5">
-                {info.notableShows.map((show, i) => (
-                  <li key={`${show}-${i}`} className="text-[11px] text-gray-300 flex items-center gap-1.5">
-                    <Disc3 className="w-2.5 h-2.5 text-[#0057B8] flex-shrink-0" /> {show}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-});
+    );
+  }
+);
 EnsembleCard.displayName = 'EnsembleCard';
 
 // Placeholder card for an unlocked-but-unregistered class
@@ -631,22 +745,31 @@ const UnregisteredEnsembleCard = memo(({ classKey }: { classKey: CorpsClass }) =
 UnregisteredEnsembleCard.displayName = 'UnregisteredEnsembleCard';
 
 // Empty state with CTA
-const EmptyWithCTA = memo(({ icon: Icon, title, cta, to }: {
-  icon: React.ElementType;
-  title: string;
-  cta: string;
-  to: string;
-}) => (
-  <div className="p-4 text-center">
-    <Icon className="w-6 h-6 text-gray-600 mx-auto mb-1" />
-    <p className="text-[10px] text-gray-500 mb-2">{title}</p>
-    <Link to={to} className="inline-flex items-center gap-1 text-[10px] text-[#0057B8] hover:underline">
-      {cta} <ExternalLink className="w-3 h-3" />
-    </Link>
-  </div>
-));
+const EmptyWithCTA = memo(
+  ({
+    icon: Icon,
+    title,
+    cta,
+    to,
+  }: {
+    icon: React.ElementType;
+    title: string;
+    cta: string;
+    to: string;
+  }) => (
+    <div className="p-4 text-center">
+      <Icon className="w-6 h-6 text-gray-600 mx-auto mb-1" />
+      <p className="text-[10px] text-gray-500 mb-2">{title}</p>
+      <Link
+        to={to}
+        className="inline-flex items-center gap-1 text-[10px] text-[#0057B8] hover:underline"
+      >
+        {cta} <ExternalLink className="w-3 h-3" />
+      </Link>
+    </div>
+  )
+);
 EmptyWithCTA.displayName = 'EmptyWithCTA';
-
 
 export {
   CLASS_DISPLAY,

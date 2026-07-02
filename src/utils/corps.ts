@@ -271,10 +271,8 @@ export function canEditCorpsThisSeason(corps: CorpsRecord | null | undefined): b
 export function corpsHasPendingWork(corps: CorpsRecord | null | undefined): boolean {
   if (!corps) return false;
   const lineup = corps.lineup;
-  const hasLineup =
-    !!lineup && typeof lineup === 'object' && Object.keys(lineup).length > 0;
+  const hasLineup = !!lineup && typeof lineup === 'object' && Object.keys(lineup).length > 0;
   const shows = corps.selectedShows;
-  const hasShows =
-    !!shows && typeof shows === 'object' && Object.keys(shows).length > 0;
+  const hasShows = !!shows && typeof shows === 'object' && Object.keys(shows).length > 0;
   return hasLineup || hasShows;
 }

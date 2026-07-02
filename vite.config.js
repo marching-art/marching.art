@@ -29,7 +29,14 @@ export default defineConfig({
         manualChunks: {
           // Split vendor chunks for better caching
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/functions', 'firebase/storage', 'firebase/analytics'],
+          'vendor-firebase': [
+            'firebase/app',
+            'firebase/auth',
+            'firebase/firestore',
+            'firebase/functions',
+            'firebase/storage',
+            'firebase/analytics',
+          ],
           // UI utilities - lightweight, loaded immediately
           'vendor-ui': ['lucide-react', 'react-hot-toast'],
           'vendor-query': ['@tanstack/react-query', 'zustand', 'date-fns'],
@@ -57,5 +64,19 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/setupTests.jsx'],
     include: ['src/**/*.{test,spec}.{js,jsx,ts,tsx}'],
+    coverage: {
+      provider: 'v8',
+      // Measure the whole src tree, not just files touched by tests, so the
+      // coverage report shows the real gap rather than a flattering subset.
+      all: true,
+      include: ['src/**/*.{js,jsx,ts,tsx}'],
+      exclude: [
+        'src/**/*.{test,spec}.{js,jsx,ts,tsx}',
+        'src/**/*.stories.*',
+        'src/setupTests.jsx',
+        'src/types/**',
+      ],
+      reporter: ['text-summary', 'lcov'],
+    },
   },
 });

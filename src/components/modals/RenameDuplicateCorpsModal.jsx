@@ -68,10 +68,12 @@ const RenameDuplicateCorpsModal = ({ duplicates, onResolved }) => {
           <form onSubmit={handleSubmit}>
             <div className="p-4 space-y-4">
               <p className="text-sm text-gray-300 leading-relaxed">
-                Your corps <span className="font-bold text-white">"{current.corpsName}"</span>{' '}
-                in <span className="font-bold text-white">{getCorpsClassName(current.corpsClass)}</span>{' '}
-                shares a name with another director's corps and must be renamed before you
-                can take any other corps action.
+                Your corps <span className="font-bold text-white">"{current.corpsName}"</span> in{' '}
+                <span className="font-bold text-white">
+                  {getCorpsClassName(current.corpsClass)}
+                </span>{' '}
+                shares a name with another director's corps and must be renamed before you can take
+                any other corps action.
               </p>
 
               {current.conflictsWith && (

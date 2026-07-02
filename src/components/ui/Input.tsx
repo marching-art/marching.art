@@ -79,9 +79,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               transition-colors
               focus:outline-none
               disabled:opacity-50 disabled:cursor-not-allowed
-              ${hasError
-                ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/30'
-                : 'border-[#333] hover:border-[#444] focus:border-[#0057B8]'
+              ${
+                hasError
+                  ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/30'
+                  : 'border-[#333] hover:border-[#444] focus:border-[#0057B8]'
               }
               ${sizeStyles[inputSize]}
               ${LeftIcon ? 'pl-8' : ''}
@@ -97,9 +98,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           )}
         </div>
         {(helperText || error) && (
-          <p
-            className={`mt-1 text-xs ${hasError ? 'text-red-400' : 'text-gray-500'}`}
-          >
+          <p className={`mt-1 text-xs ${hasError ? 'text-red-400' : 'text-gray-500'}`}>
             {error || helperText}
           </p>
         )}
@@ -114,8 +113,7 @@ Input.displayName = 'Input';
 // TEXTAREA COMPONENT
 // =============================================================================
 
-export interface TextareaProps
-  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
   helperText?: string;
   error?: string;
@@ -147,18 +145,17 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             transition-colors
             focus:outline-none
             disabled:opacity-50 disabled:cursor-not-allowed
-            ${hasError
-              ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/30'
-              : 'border-[#333] hover:border-[#444] focus:border-[#0057B8]'
+            ${
+              hasError
+                ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/30'
+                : 'border-[#333] hover:border-[#444] focus:border-[#0057B8]'
             }
             ${className}
           `}
           {...props}
         />
         {(helperText || error) && (
-          <p
-            className={`mt-1 text-xs ${hasError ? 'text-red-400' : 'text-gray-500'}`}
-          >
+          <p className={`mt-1 text-xs ${hasError ? 'text-red-400' : 'text-gray-500'}`}>
             {error || helperText}
           </p>
         )}
@@ -179,8 +176,7 @@ export interface SelectOption {
   disabled?: boolean;
 }
 
-export interface SelectProps
-  extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'size'> {
+export interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'size'> {
   label?: string;
   helperText?: string;
   error?: string;
@@ -228,9 +224,10 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             transition-colors
             focus:outline-none
             disabled:opacity-50 disabled:cursor-not-allowed
-            ${hasError
-              ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/30'
-              : 'border-[#333] hover:border-[#444] focus:border-[#0057B8]'
+            ${
+              hasError
+                ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/30'
+                : 'border-[#333] hover:border-[#444] focus:border-[#0057B8]'
             }
             ${sizeStyles[selectSize]}
             ${className}
@@ -243,19 +240,13 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             </option>
           )}
           {options.map((option) => (
-            <option
-              key={option.value}
-              value={option.value}
-              disabled={option.disabled}
-            >
+            <option key={option.value} value={option.value} disabled={option.disabled}>
               {option.label}
             </option>
           ))}
         </select>
         {(helperText || error) && (
-          <p
-            className={`mt-1 text-xs ${hasError ? 'text-red-400' : 'text-gray-500'}`}
-          >
+          <p className={`mt-1 text-xs ${hasError ? 'text-red-400' : 'text-gray-500'}`}>
             {error || helperText}
           </p>
         )}

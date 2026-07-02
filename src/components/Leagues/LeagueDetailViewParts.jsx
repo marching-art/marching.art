@@ -117,7 +117,14 @@ export const LeaveLeagueModal = ({ leagueName, onClose, onConfirm, isLoading }) 
             disabled={isLoading}
             className="h-8 px-3 bg-red-600 text-white text-xs font-bold uppercase tracking-wider hover:bg-red-500 disabled:opacity-50 flex items-center gap-1.5"
           >
-            {isLoading ? 'Leaving...' : <><LogOut className="w-3.5 h-3.5" />Leave</>}
+            {isLoading ? (
+              'Leaving...'
+            ) : (
+              <>
+                <LogOut className="w-3.5 h-3.5" />
+                Leave
+              </>
+            )}
           </button>
         </div>
       </m.div>

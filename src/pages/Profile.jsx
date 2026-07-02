@@ -6,9 +6,7 @@
 
 import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
-import {
-  User, Crown, Coins, Heart, MessageCircle,
-} from 'lucide-react';
+import { User, Crown, Coins, Heart, MessageCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../hooks/useProfile';
 import { useQueryClient } from '@tanstack/react-query';
@@ -30,7 +28,6 @@ import SettingsModal from '../components/Profile/SettingsModal';
 // =============================================================================
 // NOTE: Achievement and season history display is now handled by DirectorProfile
 // =============================================================================
-
 
 // =============================================================================
 // NOTE: StatCell component moved to DirectorProfile
@@ -57,7 +54,7 @@ const Profile = () => {
   const rawParam = userId || '';
   const isUsernameParam = rawParam.startsWith('@');
   const usernameKey = isUsernameParam ? rawParam.slice(1).toLowerCase() : null;
-  const [resolvedUid, setResolvedUid] = useState(isUsernameParam ? null : (userId || null));
+  const [resolvedUid, setResolvedUid] = useState(isUsernameParam ? null : userId || null);
   const [usernameResolveError, setUsernameResolveError] = useState(null);
 
   useEffect(() => {
@@ -104,7 +101,7 @@ const Profile = () => {
     }
   }, [searchParams, isOwnProfile, setSearchParams]);
 
-  const profileUserId = isUsernameParam ? resolvedUid : (userId || user?.uid);
+  const profileUserId = isUsernameParam ? resolvedUid : userId || user?.uid;
   const { data: profile, isLoading, error, isError, refetch } = useProfile(profileUserId);
 
   // When viewing someone else's profile, check whether the current user
@@ -134,7 +131,7 @@ const Profile = () => {
   const canInviteToLeague =
     !isOwnProfile &&
     visitorCommissionsLeagues &&
-    (profile?.directorInfo?.acceptingLeagueInvites !== false);
+    profile?.directorInfo?.acceptingLeagueInvites !== false;
 
   // NOTE: Stats, achievements, and season history are now computed in DirectorProfile
 
@@ -142,11 +139,13 @@ const Profile = () => {
   // resolve corps tolerating legacy short keys ('world'/'open').
   const allCorps = React.useMemo(() => {
     if (!profile?.corps) return [];
-    return CORPS_CLASS_ORDER
-      .map(c => ({ classKey: c, corps: resolveCorpsForClass(profile.corps, c) }))
+    return CORPS_CLASS_ORDER.map((c) => ({
+      classKey: c,
+      corps: resolveCorpsForClass(profile.corps, c),
+    }))
       .filter(({ corps }) => corps?.corpsName)
       .map(({ classKey, corps }) => ({
-        classKey,  // Must match CorpsOption interface in UniformDesignModal
+        classKey, // Must match CorpsOption interface in UniformDesignModal
         corpsName: corps.corpsName,
         uniformDesign: corps.uniformDesign,
       }));
@@ -156,153 +155,166 @@ const Profile = () => {
   const initialCorpsClass = allCorps.length > 0 ? allCorps[0].classKey : 'soundSport';
 
   // Handle uniform design save with copy-to-others support
-  const handleUniformDesign = useCallback(async (design, corpsClass, copyToClasses = []) => {
-    if (!user || !corpsClass) return;
-    try {
-      // Build update object for primary corps and any copies
-      const updateData = {
-        [`corps.${corpsClass}.uniformDesign`]: design,
-        // Auto-switch profile avatar to the corps being designed
-        profileAvatarCorps: corpsClass,
-      };
+  const handleUniformDesign = useCallback(
+    async (design, corpsClass, copyToClasses = []) => {
+      if (!user || !corpsClass) return;
+      try {
+        // Build update object for primary corps and any copies
+        const updateData = {
+          [`corps.${corpsClass}.uniformDesign`]: design,
+          // Auto-switch profile avatar to the corps being designed
+          profileAvatarCorps: corpsClass,
+        };
 
-      // Add copy targets
-      for (const targetClass of copyToClasses) {
-        updateData[`corps.${targetClass}.uniformDesign`] = design;
-      }
+        // Add copy targets
+        for (const targetClass of copyToClasses) {
+          updateData[`corps.${targetClass}.uniformDesign`] = design;
+        }
 
-      // Save the uniform design first
-      await updateProfile(user.uid, updateData);
-      setShowUniformDesign(false);
+        // Save the uniform design first
+        await updateProfile(user.uid, updateData);
+        setShowUniformDesign(false);
 
-      // Generate avatars for all affected corps
-      const corpsToGenerate = [corpsClass, ...copyToClasses];
-      const totalCount = corpsToGenerate.length;
+        // Generate avatars for all affected corps
+        const corpsToGenerate = [corpsClass, ...copyToClasses];
+        const totalCount = corpsToGenerate.length;
 
-      toast.loading(`Generating avatar${totalCount > 1 ? 's' : ''}...`, { id: 'generate-avatars' });
+        toast.loading(`Generating avatar${totalCount > 1 ? 's' : ''}...`, {
+          id: 'generate-avatars',
+        });
 
-      let successCount = 0;
-      let failCount = 0;
-      const avatarUpdates = {};
+        let successCount = 0;
+        let failCount = 0;
+        const avatarUpdates = {};
 
-      for (const targetClass of corpsToGenerate) {
-        try {
-          const result = await generateCorpsAvatar({ corpsClass: targetClass });
-          if (result.data.success) {
-            successCount++;
-            // Collect the new avatar URL for cache update
-            if (result.data.avatarUrl) {
-              avatarUpdates[targetClass] = result.data.avatarUrl;
+        for (const targetClass of corpsToGenerate) {
+          try {
+            const result = await generateCorpsAvatar({ corpsClass: targetClass });
+            if (result.data.success) {
+              successCount++;
+              // Collect the new avatar URL for cache update
+              if (result.data.avatarUrl) {
+                avatarUpdates[targetClass] = result.data.avatarUrl;
+              }
+            } else {
+              failCount++;
             }
-          } else {
+          } catch (err) {
             failCount++;
           }
-        } catch (err) {
-          failCount++;
         }
-      }
 
-      // Immediately update the cache with all new avatar URLs and profileAvatarCorps
-      if (Object.keys(avatarUpdates).length > 0) {
-        queryClient.setQueryData(queryKeys.profile(user.uid), (oldData) => {
-          if (!oldData) return oldData;
-          const updatedCorps = { ...oldData.corps };
-          for (const [targetClass, avatarUrl] of Object.entries(avatarUpdates)) {
-            updatedCorps[targetClass] = {
-              ...updatedCorps[targetClass],
-              avatarUrl,
-              avatarGeneratedAt: new Date().toISOString(),
-            };
-          }
-          return {
-            ...oldData,
-            corps: updatedCorps,
-            profileAvatarCorps: corpsClass, // Switch to the designed corps
-          };
-        });
-      } else if (successCount > 0) {
-        // Fallback: if no avatarUrls returned (function not deployed yet), refetch from server
-        await new Promise(resolve => setTimeout(resolve, 500));
-        refetch();
-      }
-
-      // Show final result
-      if (failCount === 0) {
-        toast.success(
-          totalCount > 1
-            ? `${successCount} avatar${successCount > 1 ? 's' : ''} generated!`
-            : 'Avatar generated!',
-          { id: 'generate-avatars' }
-        );
-      } else if (successCount > 0) {
-        toast.success(
-          `${successCount} avatar${successCount > 1 ? 's' : ''} generated, ${failCount} failed`,
-          { id: 'generate-avatars' }
-        );
-      } else {
-        toast.error('Failed to generate avatars', { id: 'generate-avatars' });
-      }
-    } catch (err) {
-      toast.error('Failed to save uniform design');
-      throw err;
-    }
-  }, [user, queryClient, refetch]);
-
-  // Handle profile avatar corps selection
-  const handleSelectAvatarCorps = useCallback(async (corpsClass) => {
-    if (!user) return;
-    try {
-      await updateProfile(user.uid, {
-        profileAvatarCorps: corpsClass,
-      });
-      toast.success('Profile avatar updated!');
-      refetch();
-    } catch (err) {
-      toast.error('Failed to update avatar');
-      throw err;
-    }
-  }, [user, refetch]);
-
-  // Handle avatar regeneration
-  const handleRegenerateAvatar = useCallback(async (corpsClass) => {
-    if (!user) return;
-    try {
-      toast.loading('Generating new avatar...', { id: 'regenerate-avatar' });
-      const result = await generateCorpsAvatar({ corpsClass });
-      if (result.data.success) {
-        // Immediately update the cache with the new avatar URL
-        const newAvatarUrl = result.data.avatarUrl;
-        if (newAvatarUrl) {
-          // Update cache for current user's profile
+        // Immediately update the cache with all new avatar URLs and profileAvatarCorps
+        if (Object.keys(avatarUpdates).length > 0) {
           queryClient.setQueryData(queryKeys.profile(user.uid), (oldData) => {
             if (!oldData) return oldData;
+            const updatedCorps = { ...oldData.corps };
+            for (const [targetClass, avatarUrl] of Object.entries(avatarUpdates)) {
+              updatedCorps[targetClass] = {
+                ...updatedCorps[targetClass],
+                avatarUrl,
+                avatarGeneratedAt: new Date().toISOString(),
+              };
+            }
             return {
               ...oldData,
-              corps: {
-                ...oldData.corps,
-                [corpsClass]: {
-                  ...oldData.corps?.[corpsClass],
-                  avatarUrl: newAvatarUrl,
-                  avatarGeneratedAt: new Date().toISOString(),
-                },
-              },
+              corps: updatedCorps,
+              profileAvatarCorps: corpsClass, // Switch to the designed corps
             };
           });
-        } else {
-          // Fallback: if avatarUrl not returned, refetch from server
-          // This handles cases where the function hasn't been deployed yet
-          await new Promise(resolve => setTimeout(resolve, 500));
+        } else if (successCount > 0) {
+          // Fallback: if no avatarUrls returned (function not deployed yet), refetch from server
+          await new Promise((resolve) => setTimeout(resolve, 500));
           refetch();
         }
-        toast.success('Avatar regenerated!', { id: 'regenerate-avatar' });
-      } else {
-        toast.error(result.data.message || 'Failed to regenerate avatar', { id: 'regenerate-avatar' });
+
+        // Show final result
+        if (failCount === 0) {
+          toast.success(
+            totalCount > 1
+              ? `${successCount} avatar${successCount > 1 ? 's' : ''} generated!`
+              : 'Avatar generated!',
+            { id: 'generate-avatars' }
+          );
+        } else if (successCount > 0) {
+          toast.success(
+            `${successCount} avatar${successCount > 1 ? 's' : ''} generated, ${failCount} failed`,
+            { id: 'generate-avatars' }
+          );
+        } else {
+          toast.error('Failed to generate avatars', { id: 'generate-avatars' });
+        }
+      } catch (err) {
+        toast.error('Failed to save uniform design');
+        throw err;
       }
-    } catch (err) {
-      toast.error('Failed to regenerate avatar', { id: 'regenerate-avatar' });
-      throw err;
-    }
-  }, [user, queryClient, refetch]);
+    },
+    [user, queryClient, refetch]
+  );
+
+  // Handle profile avatar corps selection
+  const handleSelectAvatarCorps = useCallback(
+    async (corpsClass) => {
+      if (!user) return;
+      try {
+        await updateProfile(user.uid, {
+          profileAvatarCorps: corpsClass,
+        });
+        toast.success('Profile avatar updated!');
+        refetch();
+      } catch (err) {
+        toast.error('Failed to update avatar');
+        throw err;
+      }
+    },
+    [user, refetch]
+  );
+
+  // Handle avatar regeneration
+  const handleRegenerateAvatar = useCallback(
+    async (corpsClass) => {
+      if (!user) return;
+      try {
+        toast.loading('Generating new avatar...', { id: 'regenerate-avatar' });
+        const result = await generateCorpsAvatar({ corpsClass });
+        if (result.data.success) {
+          // Immediately update the cache with the new avatar URL
+          const newAvatarUrl = result.data.avatarUrl;
+          if (newAvatarUrl) {
+            // Update cache for current user's profile
+            queryClient.setQueryData(queryKeys.profile(user.uid), (oldData) => {
+              if (!oldData) return oldData;
+              return {
+                ...oldData,
+                corps: {
+                  ...oldData.corps,
+                  [corpsClass]: {
+                    ...oldData.corps?.[corpsClass],
+                    avatarUrl: newAvatarUrl,
+                    avatarGeneratedAt: new Date().toISOString(),
+                  },
+                },
+              };
+            });
+          } else {
+            // Fallback: if avatarUrl not returned, refetch from server
+            // This handles cases where the function hasn't been deployed yet
+            await new Promise((resolve) => setTimeout(resolve, 500));
+            refetch();
+          }
+          toast.success('Avatar regenerated!', { id: 'regenerate-avatar' });
+        } else {
+          toast.error(result.data.message || 'Failed to regenerate avatar', {
+            id: 'regenerate-avatar',
+          });
+        }
+      } catch (err) {
+        toast.error('Failed to regenerate avatar', { id: 'regenerate-avatar' });
+        throw err;
+      }
+    },
+    [user, queryClient, refetch]
+  );
 
   // Handlers
   const handleStartEdit = () => {
@@ -337,29 +349,32 @@ const Profile = () => {
     toast(url);
   }, [profile]);
 
-  const handleSaveProfile = useCallback(async ({ displayName, location, directorInfo, ensembleInfo }) => {
-    if (!user) return;
-    try {
-      const updateData = {
-        displayName,
-        location,
-        directorInfo,
-      };
-      // Write per-corps ensembleInfo using dotted paths so other corps fields are untouched
-      if (ensembleInfo) {
-        for (const [classKey, info] of Object.entries(ensembleInfo)) {
-          updateData[`corps.${classKey}.ensembleInfo`] = info;
+  const handleSaveProfile = useCallback(
+    async ({ displayName, location, directorInfo, ensembleInfo }) => {
+      if (!user) return;
+      try {
+        const updateData = {
+          displayName,
+          location,
+          directorInfo,
+        };
+        // Write per-corps ensembleInfo using dotted paths so other corps fields are untouched
+        if (ensembleInfo) {
+          for (const [classKey, info] of Object.entries(ensembleInfo)) {
+            updateData[`corps.${classKey}.ensembleInfo`] = info;
+          }
         }
+        await updateProfile(user.uid, updateData);
+        await refetch();
+        toast.success('Profile updated');
+      } catch (error) {
+        console.error('Failed to update profile:', error);
+        toast.error('Failed to update profile');
+        throw error;
       }
-      await updateProfile(user.uid, updateData);
-      await refetch();
-      toast.success('Profile updated');
-    } catch (error) {
-      console.error('Failed to update profile:', error);
-      toast.error('Failed to update profile');
-      throw error;
-    }
-  }, [user, refetch]);
+    },
+    [user, refetch]
+  );
 
   // Username resolution error
   if (usernameResolveError) {
@@ -430,13 +445,13 @@ const Profile = () => {
         />
 
         {/* PENDING LEAGUE INVITATIONS (own profile only) */}
-        {isOwnProfile && user && (
-          <PendingLeagueInvitations userId={user.uid} />
-        )}
+        {isOwnProfile && user && <PendingLeagueInvitations userId={user.uid} />}
 
         {/* QUICK LINKS */}
         <div className="px-4 pb-4">
-          <div className={`grid gap-2 ${isOwnProfile ? 'grid-cols-2 sm:grid-cols-5' : 'grid-cols-4'}`}>
+          <div
+            className={`grid gap-2 ${isOwnProfile ? 'grid-cols-2 sm:grid-cols-5' : 'grid-cols-4'}`}
+          >
             <Link
               to="/scores?tab=champions"
               className="bg-[#1a1a1a] border border-[#333] p-4 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"

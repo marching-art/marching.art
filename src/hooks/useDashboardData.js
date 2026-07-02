@@ -3,7 +3,16 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../api';
-import { doc, updateDoc, getDoc, collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import {
+  doc,
+  updateDoc,
+  getDoc,
+  collection,
+  getDocs,
+  query,
+  orderBy,
+  limit,
+} from 'firebase/firestore';
 import { useSeason, getSeasonProgress } from './useSeason';
 import { useProfileStore } from '../store/profileStore';
 import toast from 'react-hot-toast';
@@ -37,7 +46,7 @@ export const useDashboardData = () => {
   // Note: class IDs are 'worldClass', 'openClass', 'aClass', 'soundSport'
   const unlockedClasses = isAdmin
     ? ['worldClass', 'openClass', 'aClass', 'soundSport']
-    : (profile?.unlockedClasses || ['soundSport']);
+    : profile?.unlockedClasses || ['soundSport'];
 
   // Additional local state
   const [availableCorps, setAvailableCorps] = useState([]);
@@ -57,7 +66,7 @@ export const useDashboardData = () => {
     lastLogin: null,
     totalLogins: 0,
     recentActivity: [],
-    weeklyProgress: []
+    weeklyProgress: [],
   });
 
   // Season setup
@@ -69,9 +78,11 @@ export const useDashboardData = () => {
 
   // Derived values
   const activeCorpsClass = selectedCorpsClass || (corps ? Object.keys(corps)[0] : null);
-  const activeCorps = (activeCorpsClass && corps) ? corps[activeCorpsClass] : null;
+  const activeCorps = activeCorpsClass && corps ? corps[activeCorpsClass] : null;
   const hasMultipleCorps = corps && Object.keys(corps).length > 1;
-  const { currentWeek, currentDay } = seasonData ? getSeasonProgress(seasonData) : { currentWeek: 1, currentDay: 1 };
+  const { currentWeek, currentDay } = seasonData
+    ? getSeasonProgress(seasonData)
+    : { currentWeek: 1, currentDay: 1 };
 
   // CONSOLIDATED: Corps selection state management
   // Combines localStorage load/save and corps data sync into single effect
@@ -118,13 +129,11 @@ export const useDashboardData = () => {
     // Only check for new unlocks if we have a previous state to compare
     if (previousUnlocked.length > 0) {
       const newlyUnlocked = currentUnlocked.filter(
-        classId => !previousUnlocked.includes(classId)
+        (classId) => !previousUnlocked.includes(classId)
       );
       // Filter out classes where user already has a corps (e.g., purchased before XP unlock)
       // This prevents showing "class unlocked" notification when they already have a corps
-      const newlyUnlockedWithoutCorps = newlyUnlocked.filter(
-        classId => !corps?.[classId]
-      );
+      const newlyUnlockedWithoutCorps = newlyUnlocked.filter((classId) => !corps?.[classId]);
       if (newlyUnlockedWithoutCorps.length > 0) {
         setNewlyUnlockedClass(newlyUnlockedWithoutCorps[0]);
       }
@@ -177,11 +186,12 @@ export const useDashboardData = () => {
         });
       }
 
-      const hasEligibleNewClasses = unlockedClasses.some(classId => {
+      const hasEligibleNewClasses = unlockedClasses.some((classId) => {
         return !corps?.[classId]?.corpsName;
       });
 
-      const shouldShowWizard = needSetup.length > 0 ||
+      const shouldShowWizard =
+        needSetup.length > 0 ||
         (hasCorps && needSetup.length > 0) ||
         (hasRetiredCorps && !hasCorps) ||
         (hasEligibleNewClasses && !hasCorps && hasRetiredCorps);
@@ -236,14 +246,14 @@ export const useDashboardData = () => {
             lastLogin: new Date().toISOString(),
             totalLogins: (profile.engagement?.totalLogins || 0) + 1,
             recentActivity: profile.engagement?.recentActivity || [],
-            weeklyProgress: profile.engagement?.weeklyProgress || []
+            weeklyProgress: profile.engagement?.weeklyProgress || [],
           };
 
           updatedEngagement.recentActivity.unshift({
             type: 'login',
             message: `Day ${newStreak} login streak!`,
             timestamp: new Date().toISOString(),
-            icon: 'flame'
+            icon: 'flame',
           });
 
           updatedEngagement.recentActivity = updatedEngagement.recentActivity.slice(0, 10);
@@ -254,18 +264,25 @@ export const useDashboardData = () => {
             const achievementId = `streak_${newStreak}`;
             const existingAchievements = profile.achievements || [];
 
-            if (!existingAchievements.find(a => a.id === achievementId)) {
+            if (!existingAchievements.find((a) => a.id === achievementId)) {
               const achievement = {
                 id: achievementId,
                 title: `${newStreak} Day Streak!`,
                 description: `Logged in ${newStreak} days in a row`,
                 icon: 'flame',
                 earnedAt: new Date().toISOString(),
-                rarity: newStreak >= 30 ? 'legendary' : newStreak >= 14 ? 'epic' : newStreak >= 7 ? 'rare' : 'common'
+                rarity:
+                  newStreak >= 30
+                    ? 'legendary'
+                    : newStreak >= 14
+                      ? 'epic'
+                      : newStreak >= 7
+                        ? 'rare'
+                        : 'common',
               };
 
               await updateDoc(profileRef, {
-                achievements: [...existingAchievements, achievement]
+                achievements: [...existingAchievements, achievement],
               });
 
               setNewAchievement(achievement);
@@ -273,7 +290,7 @@ export const useDashboardData = () => {
           }
 
           await updateDoc(profileRef, {
-            engagement: updatedEngagement
+            engagement: updatedEngagement,
           });
 
           setEngagementData(updatedEngagement);
@@ -330,20 +347,20 @@ export const useDashboardData = () => {
               type: 'milestone',
               message: `New best rank: #${currentRank} in ${getCorpsClassName(classKey)}!`,
               timestamp: new Date().toISOString(),
-              icon: 'trophy'
+              icon: 'trophy',
             });
 
             if (currentRank <= 10) {
               const achievementId = `top_10_${classKey}`;
               const existingAchievements = profile.achievements || [];
-              if (!existingAchievements.find(a => a.id === achievementId)) {
+              if (!existingAchievements.find((a) => a.id === achievementId)) {
                 newAchievements.push({
                   id: achievementId,
                   title: 'Top 10 Finish!',
                   description: `Reached top 10 in ${getCorpsClassName(classKey)}`,
                   icon: 'trophy',
                   earnedAt: new Date().toISOString(),
-                  rarity: currentRank === 1 ? 'legendary' : currentRank <= 3 ? 'epic' : 'rare'
+                  rarity: currentRank === 1 ? 'legendary' : currentRank <= 3 ? 'epic' : 'rare',
                 });
               }
             }
@@ -361,19 +378,22 @@ export const useDashboardData = () => {
               type: 'milestone',
               message: `New high score: ${currentScore.toFixed(3)} in ${getCorpsClassName(classKey)}!`,
               timestamp: new Date().toISOString(),
-              icon: 'star'
+              icon: 'star',
             });
           }
         }
 
         if (hasNewMilestone) {
           const updateData = {
-            milestones: updatedMilestones
+            milestones: updatedMilestones,
           };
 
           if (newActivities.length > 0) {
             const currentActivities = profile.engagement?.recentActivity || [];
-            updateData['engagement.recentActivity'] = [...newActivities, ...currentActivities].slice(0, 10);
+            updateData['engagement.recentActivity'] = [
+              ...newActivities,
+              ...currentActivities,
+            ].slice(0, 10);
           }
 
           if (newAchievements.length > 0) {
@@ -428,12 +448,12 @@ export const useDashboardData = () => {
       const recapsSnapshot = await getDocs(recapsQuery);
 
       if (!recapsSnapshot.empty) {
-        return recapsSnapshot.docs.map(d => d.data());
+        return recapsSnapshot.docs.map((d) => d.data());
       }
       // Fallback to legacy single-document format
       const legacyDocRef = doc(db, 'fantasy_recaps', seasonData.seasonUid);
       const legacyDoc = await getDoc(legacyDocRef);
-      return legacyDoc.exists() ? (legacyDoc.data().recaps || []) : [];
+      return legacyDoc.exists() ? legacyDoc.data().recaps || [] : [];
     },
     enabled: !!seasonData?.seasonUid,
     staleTime: 5 * 60 * 1000,
@@ -443,14 +463,18 @@ export const useDashboardData = () => {
     if (!rawRecentRecaps?.length) return [];
     const isSoundSport = activeCorpsClass === 'soundSport';
     return rawRecentRecaps
-      .filter(r => r.showName || r.eventName || r.name || r.shows?.length > 0)
+      .filter((r) => r.showName || r.eventName || r.name || r.shows?.length > 0)
       .sort((a, b) => (b.offSeasonDay || 0) - (a.offSeasonDay || 0))
       .slice(0, 5)
-      .map(r => ({
+      .map((r) => ({
         showName: r.showName || r.eventName || r.name || r.shows?.[0]?.eventName || 'Show',
         date: r.date || '',
-        totalScore: isSoundSport ? 'Complete' : (typeof r.totalScore === 'number' ? r.totalScore.toFixed(3) : (r.totalScore || '0.000')),
-        rank: isSoundSport ? null : (r.rank ?? '-')
+        totalScore: isSoundSport
+          ? 'Complete'
+          : typeof r.totalScore === 'number'
+            ? r.totalScore.toFixed(3)
+            : r.totalScore || '0.000',
+        rank: isSoundSport ? null : (r.rank ?? '-'),
       }));
   }, [rawRecentRecaps, activeCorpsClass]);
 
@@ -540,7 +564,7 @@ export const useDashboardData = () => {
     // Utility functions
     getCorpsClassName,
     getCorpsClassColor,
-    refreshProfile
+    refreshProfile,
   };
 };
 

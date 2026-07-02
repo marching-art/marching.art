@@ -107,9 +107,7 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   };
 
   // Parse aspect ratio to CSS value
-  const aspectRatioStyle = aspectRatio.includes('/')
-    ? aspectRatio
-    : undefined;
+  const aspectRatioStyle = aspectRatio.includes('/') ? aspectRatio : undefined;
 
   // Use blur placeholder or color-based placeholder
   const placeholderSrc = blurPlaceholder
@@ -227,9 +225,7 @@ export const AvatarImage: React.FC<AvatarImageProps> = ({
     >
       {/* Fallback with initials */}
       {showFallback && (
-        <span className="text-gray-400 font-bold text-xs">
-          {fallback || initials}
-        </span>
+        <span className="text-gray-400 font-bold text-xs">{fallback || initials}</span>
       )}
 
       {/* Avatar Image */}
@@ -250,9 +246,7 @@ export const AvatarImage: React.FC<AvatarImageProps> = ({
       )}
 
       {/* Loading skeleton */}
-      {!showFallback && !isLoaded && (
-        <div className="absolute inset-0 skeleton-pulse rounded-sm" />
-      )}
+      {!showFallback && !isLoaded && <div className="absolute inset-0 skeleton-pulse rounded-sm" />}
     </div>
   );
 };
@@ -311,11 +305,7 @@ export const CorpsLogo: React.FC<CorpsLogoProps> = ({
       `}
     >
       {/* Fallback with initials */}
-      {showFallback && (
-        <span className="text-gray-500 font-bold text-[10px]">
-          {initials}
-        </span>
-      )}
+      {showFallback && <span className="text-gray-500 font-bold text-[10px]">{initials}</span>}
 
       {/* Logo Image */}
       {!showFallback && (
@@ -335,9 +325,7 @@ export const CorpsLogo: React.FC<CorpsLogoProps> = ({
       )}
 
       {/* Loading skeleton */}
-      {!showFallback && !isLoaded && (
-        <div className="absolute inset-0 skeleton-pulse" />
-      )}
+      {!showFallback && !isLoaded && <div className="absolute inset-0 skeleton-pulse" />}
     </div>
   );
 };

@@ -24,10 +24,7 @@ export interface LoadingScreenProps {
   message?: string;
 }
 
-const LoadingScreen: React.FC<LoadingScreenProps> = ({
-  fullScreen = true,
-  message,
-}) => {
+const LoadingScreen: React.FC<LoadingScreenProps> = ({ fullScreen = true, message }) => {
   if (fullScreen) {
     return <FullPageLoading label={message || 'Loading...'} showLogo={true} />;
   }
@@ -38,9 +35,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
       <div className="glow-pulse">
         <BrandLogo className="w-16 h-16" color="text-[#0057B8]" />
       </div>
-      {message && (
-        <p className="font-mono text-sm text-[#0057B8]/60 tracking-wide">{message}</p>
-      )}
+      {message && <p className="font-mono text-sm text-[#0057B8]/60 tracking-wide">{message}</p>}
     </div>
   );
 };
@@ -58,10 +53,7 @@ export interface SkeletonLoaderProps {
   count?: number;
 }
 
-export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
-  type = 'card',
-  count = 1,
-}) => {
+export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({ type = 'card', count = 1 }) => {
   const renderSkeleton = () => {
     switch (type) {
       case 'card':
@@ -121,9 +113,7 @@ export const ContentSkeleton: React.FC<ContentSkeletonProps> = ({
 }) => {
   const content = (
     <div className="space-y-4">
-      {showTitle && (
-        <Skeleton width="40%" height={24} rounded="sm" />
-      )}
+      {showTitle && <Skeleton width="40%" height={24} rounded="sm" />}
       <SkeletonText lines={paragraphLines} lastLineWidth="70%" />
     </div>
   );

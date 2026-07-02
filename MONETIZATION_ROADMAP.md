@@ -1,4 +1,5 @@
 # Monetization Roadmap
+
 ## marching.art — Premium Features Without Pay-to-Win
 
 **Created:** December 30, 2025
@@ -17,13 +18,14 @@ This roadmap outlines a **freemium monetization strategy** that:
 4. **Creates sustainable revenue** — Multiple small purchases vs. one-time payments
 
 **Revenue Projection (Year 1):**
-| Source | Conversion | ARPU | Monthly |
-|--------|------------|------|---------|
-| Battle Pass | 5% of 1000 users | $4.99 | $250 |
-| CorpsCoin Bundles | 2% | $5 avg | $100 |
-| Cosmetics Store | 3% | $3 avg | $90 |
-| Premium Subscription | 2% | $3.99/mo | $80 |
-| **Total** | — | — | **~$520/mo** |
+
+| Source               | Conversion       | ARPU     | Monthly      |
+| -------------------- | ---------------- | -------- | ------------ |
+| Battle Pass          | 5% of 1000 users | $4.99    | $250         |
+| CorpsCoin Bundles    | 2%               | $5 avg   | $100         |
+| Cosmetics Store      | 3%               | $3 avg   | $90          |
+| Premium Subscription | 2%               | $3.99/mo | $80          |
+| **Total**            | —                | —        | **~$520/mo** |
 
 At 10,000 users: **~$5,200/month** ($62K/year)
 
@@ -35,38 +37,38 @@ At 10,000 users: **~$5,200/month** ($62K/year)
 
 Discord's freemium success comes from:
 
-| Principle | Discord Implementation | marching.art Application |
-|-----------|------------------------|--------------------------|
-| **Core is forever free** | All chat/voice free | All fantasy gameplay free |
-| **Cosmetics are premium** | Animated avatars, custom emoji | Corps uniforms, profile badges |
-| **Enhanced limits** | File size, stream quality | Extra streak freezes, lineup slots |
-| **Social expression** | Profile banners, custom status | Season cards, achievement showcases |
-| **No competitive advantage** | Nitro users can't "win" more | Premium users score the same |
+| Principle                    | Discord Implementation         | marching.art Application            |
+| ---------------------------- | ------------------------------ | ----------------------------------- |
+| **Core is forever free**     | All chat/voice free            | All fantasy gameplay free           |
+| **Cosmetics are premium**    | Animated avatars, custom emoji | Corps uniforms, profile badges      |
+| **Enhanced limits**          | File size, stream quality      | Extra streak freezes, lineup slots  |
+| **Social expression**        | Profile banners, custom status | Season cards, achievement showcases |
+| **No competitive advantage** | Nitro users can't "win" more   | Premium users score the same        |
 
 ### The Sleeper Premium Model
 
 Sleeper's fantasy sports monetization:
 
-| Feature | Free | Premium |
-|---------|------|---------|
-| Leagues | ✅ | ✅ |
-| Live scoring | ✅ | ✅ |
-| Custom team colors | ❌ | ✅ |
+| Feature              | Free  | Premium  |
+| -------------------- | ----- | -------- |
+| Leagues              | ✅    | ✅       |
+| Live scoring         | ✅    | ✅       |
+| Custom team colors   | ❌    | ✅       |
 | Advanced projections | Basic | Detailed |
-| Offline draft | ❌ | ✅ |
-| No ads | ❌ | ✅ |
+| Offline draft        | ❌    | ✅       |
+| No ads               | ❌    | ✅       |
 
 ### The Duolingo Super Model
 
 Gamification monetization:
 
-| Feature | Free | Super |
-|---------|------|-------|
-| All lessons | ✅ | ✅ |
-| Streak repair | 1 free | Unlimited |
-| Streak freeze | Purchasable | Free monthly |
-| Mistake protection | ❌ | ✅ |
-| Progress insights | Basic | Detailed |
+| Feature            | Free        | Super        |
+| ------------------ | ----------- | ------------ |
+| All lessons        | ✅          | ✅           |
+| Streak repair      | 1 free      | Unlimited    |
+| Streak freeze      | Purchasable | Free monthly |
+| Mistake protection | ❌          | ✅           |
+| Progress insights  | Basic       | Detailed     |
 
 ---
 
@@ -80,19 +82,19 @@ Gamification monetization:
 
 #### Reward Structure
 
-| Level | Free Track | Premium Track |
-|-------|------------|---------------|
-| 1 | 50 CC | Animated Corps Card |
-| 5 | Profile Badge | 100 CC + Exclusive Badge |
-| 10 | 100 CC | Rare Uniform Color |
-| 15 | — | Streak Freeze Token |
-| 20 | 150 CC | Epic Profile Banner |
-| 25 | Achievement | 250 CC + Title |
-| 30 | — | Streak Freeze Token |
-| 35 | 200 CC | Legendary Badge |
-| 40 | — | Custom Season Card |
-| 45 | 300 CC | Streak Freeze Token |
-| 50 | Title | 500 CC + Exclusive Finale Reward |
+| Level | Free Track    | Premium Track                    |
+| ----- | ------------- | -------------------------------- |
+| 1     | 50 CC         | Animated Corps Card              |
+| 5     | Profile Badge | 100 CC + Exclusive Badge         |
+| 10    | 100 CC        | Rare Uniform Color               |
+| 15    | —             | Streak Freeze Token              |
+| 20    | 150 CC        | Epic Profile Banner              |
+| 25    | Achievement   | 250 CC + Title                   |
+| 30    | —             | Streak Freeze Token              |
+| 35    | 200 CC        | Legendary Badge                  |
+| 40    | —             | Custom Season Card               |
+| 45    | 300 CC        | Streak Freeze Token              |
+| 50    | Title         | 500 CC + Exclusive Finale Reward |
 
 **Total Free Track Value:** 800 CC + badges
 **Total Premium Track Value:** 850 CC + 3 Streak Freezes + cosmetics worth ~$15
@@ -120,19 +122,21 @@ const BATTLE_PASS_XP = {
 **What it is:** Skip the grind, buy currency directly
 **Philosophy:** Time-savers, not power-ups
 
-| Bundle | Price | CC Amount | Bonus | CC/$ |
-|--------|-------|-----------|-------|------|
-| Starter | $2.99 | 500 | — | 167 |
-| Standard | $7.99 | 1,750 | +250 (17%) | 219 |
-| Value | $14.99 | 4,000 | +1,000 (33%) | 267 |
-| Ultimate | $29.99 | 10,000 | +4,000 (67%) | 333 |
+| Bundle   | Price  | CC Amount | Bonus        | CC/$ |
+| -------- | ------ | --------- | ------------ | ---- |
+| Starter  | $2.99  | 500       | —            | 167  |
+| Standard | $7.99  | 1,750     | +250 (17%)   | 219  |
+| Value    | $14.99 | 4,000     | +1,000 (33%) | 267  |
+| Ultimate | $29.99 | 10,000    | +4,000 (67%) | 333  |
 
 **Use Cases:**
+
 - Faster class unlocks (A: 1000 CC, Open: 2500 CC, World: 5000 CC)
 - Streak freeze purchases (300 CC each)
 - Future cosmetics store purchases
 
 **No Pay-to-Win Safeguard:**
+
 - CorpsCoin cannot buy better scores
 - CorpsCoin cannot buy exclusive gameplay content
 - CorpsCoin can only buy convenience + cosmetics
@@ -146,31 +150,31 @@ const BATTLE_PASS_XP = {
 
 #### Corps Customization
 
-| Item | Price | Description |
-|------|-------|-------------|
-| **Uniform Colors** | $1.99 | 12 premium color palettes |
-| **Corps Emblem** | $2.99 | 20 emblem designs |
-| **Corps Badge** | $0.99 | Display badge on leaderboard |
-| **Animated Corps Card** | $2.99 | Motion effects on your card |
-| **Corps Theme** | $3.99 | Complete visual package |
+| Item                    | Price | Description                  |
+| ----------------------- | ----- | ---------------------------- |
+| **Uniform Colors**      | $1.99 | 12 premium color palettes    |
+| **Corps Emblem**        | $2.99 | 20 emblem designs            |
+| **Corps Badge**         | $0.99 | Display badge on leaderboard |
+| **Animated Corps Card** | $2.99 | Motion effects on your card  |
+| **Corps Theme**         | $3.99 | Complete visual package      |
 
 #### Profile Customization
 
-| Item | Price | Description |
-|------|-------|-------------|
-| **Profile Banner** | $1.99 | Custom banner image |
-| **Profile Frame** | $0.99 | Border around avatar |
+| Item                     | Price | Description                  |
+| ------------------------ | ----- | ---------------------------- |
+| **Profile Banner**       | $1.99 | Custom banner image          |
+| **Profile Frame**        | $0.99 | Border around avatar         |
 | **Achievement Showcase** | $1.99 | Featured achievement display |
-| **Title/Flair** | $0.99 | Custom text under name |
-| **Season Card Style** | $2.99 | Shareable card design |
+| **Title/Flair**          | $0.99 | Custom text under name       |
+| **Season Card Style**    | $2.99 | Shareable card design        |
 
 #### Social Items
 
-| Item | Price | Description |
-|------|-------|-------------|
-| **League Badge** | $0.99 | Display in league standings |
-| **Celebration Effect** | $1.99 | Custom win celebration |
-| **Chat Emoji Pack** | $2.99 | Exclusive emoji set |
+| Item                   | Price | Description                 |
+| ---------------------- | ----- | --------------------------- |
+| **League Badge**       | $0.99 | Display in league standings |
+| **Celebration Effect** | $1.99 | Custom win celebration      |
+| **Chat Emoji Pack**    | $2.99 | Exclusive emoji set         |
 
 ---
 
@@ -181,19 +185,20 @@ const BATTLE_PASS_XP = {
 
 #### Premium Benefits
 
-| Feature | Free | Premium |
-|---------|------|---------|
-| **Streak Freezes** | 300 CC each | 2 free/month |
-| **Lineup Presets** | 1 saved | 5 saved |
-| **Advanced Stats** | Basic | Detailed breakdowns |
-| **Season Recaps** | Text summary | Rich visual recap |
-| **Profile Analytics** | — | Performance trends |
-| **Custom Season Card** | Basic | Premium templates |
-| **Early Feature Access** | — | Beta features |
-| **Support Priority** | Standard | Priority queue |
-| **Ad-Free** | Potential ads | Never |
+| Feature                  | Free          | Premium             |
+| ------------------------ | ------------- | ------------------- |
+| **Streak Freezes**       | 300 CC each   | 2 free/month        |
+| **Lineup Presets**       | 1 saved       | 5 saved             |
+| **Advanced Stats**       | Basic         | Detailed breakdowns |
+| **Season Recaps**        | Text summary  | Rich visual recap   |
+| **Profile Analytics**    | —             | Performance trends  |
+| **Custom Season Card**   | Basic         | Premium templates   |
+| **Early Feature Access** | —             | Beta features       |
+| **Support Priority**     | Standard      | Priority queue      |
+| **Ad-Free**              | Potential ads | Never               |
 
 **What Premium Does NOT Include:**
+
 - ❌ Better scores
 - ❌ Exclusive corps
 - ❌ Point multipliers
@@ -205,6 +210,7 @@ const BATTLE_PASS_XP = {
 ## Part 3: Implementation Roadmap
 
 ### Phase 1: Foundation (Week 1-2)
+
 **Goal:** Wire Stripe to actually fulfill purchases
 
 #### Step 1.1: Complete Stripe Webhook Handler
@@ -301,6 +307,7 @@ export const PRODUCTS = {
 ---
 
 ### Phase 2: Battle Pass (Week 3-4)
+
 **Goal:** Launch first paid product
 
 #### Step 2.1: Add Battle Pass Types
@@ -430,6 +437,7 @@ exports.awardBattlePassXP = async (userId, source) => {
 ---
 
 ### Phase 3: CorpsCoin Bundles (Week 5)
+
 **Goal:** Enable direct currency purchase
 
 #### Step 3.1: Add Purchase UI to Store
@@ -447,7 +455,7 @@ export function CorpsCoinBundles() {
 
   return (
     <div className="grid grid-cols-2 gap-4">
-      {bundles.map(bundle => (
+      {bundles.map((bundle) => (
         <BundleCard
           key={bundle.id}
           {...bundle}
@@ -485,6 +493,7 @@ exports.grantPurchasedCorpsCoin = async (userId, bundleId) => {
 ---
 
 ### Phase 4: Cosmetics System (Week 6-7)
+
 **Goal:** Launch visual customization store
 
 #### Step 4.1: Define Cosmetics Types
@@ -604,6 +613,7 @@ export function CorpsCard({ corps, cosmetics }) {
 ---
 
 ### Phase 5: Premium Subscription (Week 8-9)
+
 **Goal:** Recurring revenue stream
 
 #### Step 5.1: Create Subscription Webhook Handler
@@ -652,8 +662,7 @@ const grantMonthlyPremiumBenefits = async (userId) => {
 export function usePremium() {
   const { profile } = useProfileStore();
 
-  const isPremium = profile?.isPremium &&
-    new Date(profile.premiumExpiresAt) > new Date();
+  const isPremium = profile?.isPremium && new Date(profile.premiumExpiresAt) > new Date();
 
   const premiumFeatures = {
     freeStreakFreezes: isPremium ? 2 : 0,
@@ -691,6 +700,7 @@ export function AdvancedStats() {
 ---
 
 ### Phase 6: Analytics & Optimization (Week 10)
+
 **Goal:** Track and improve conversion
 
 #### Step 6.1: Add Purchase Analytics
@@ -801,25 +811,25 @@ Show what others are buying:
 
 ### What Money Can NEVER Buy
 
-| Protected Element | Why It's Protected |
-|-------------------|-------------------|
-| **Better scores** | Core gameplay integrity |
-| **Exclusive corps** | Everyone competes on same field |
-| **Point multipliers** | Unfair competitive advantage |
-| **Earlier show access** | Time-based advantage |
-| **Better draft picks** | Lineup fairness |
-| **League advantages** | Fair competition |
-| **Skip progression** | Undermines achievement |
+| Protected Element       | Why It's Protected              |
+| ----------------------- | ------------------------------- |
+| **Better scores**       | Core gameplay integrity         |
+| **Exclusive corps**     | Everyone competes on same field |
+| **Point multipliers**   | Unfair competitive advantage    |
+| **Earlier show access** | Time-based advantage            |
+| **Better draft picks**  | Lineup fairness                 |
+| **League advantages**   | Fair competition                |
+| **Skip progression**    | Undermines achievement          |
 
 ### What Money CAN Buy
 
-| Purchasable | Why It's OK |
-|-------------|-------------|
-| **Visual cosmetics** | No gameplay impact |
-| **Convenience items** | Saves time, not power |
-| **Extra customization** | Self-expression |
-| **Premium analytics** | Information, not advantage |
-| **Social features** | Enhanced sharing |
+| Purchasable             | Why It's OK                |
+| ----------------------- | -------------------------- |
+| **Visual cosmetics**    | No gameplay impact         |
+| **Convenience items**   | Saves time, not power      |
+| **Extra customization** | Self-expression            |
+| **Premium analytics**   | Information, not advantage |
+| **Social features**     | Enhanced sharing           |
 
 ### Competitive Integrity Statement
 
@@ -834,6 +844,7 @@ Add to Terms of Service and display in store:
 ## Part 6: Implementation Checklist
 
 ### Week 1: Stripe Foundation
+
 - [ ] Complete webhook handler with fulfillment logic
 - [ ] Create checkout session Cloud Function
 - [ ] Add Stripe.js to frontend
@@ -841,6 +852,7 @@ Add to Terms of Service and display in store:
 - [ ] Test end-to-end purchase flow
 
 ### Week 2: Database & Types
+
 - [ ] Add BattlePass types
 - [ ] Add Cosmetics types
 - [ ] Add Premium subscription fields to user profile
@@ -848,6 +860,7 @@ Add to Terms of Service and display in store:
 - [ ] Set up purchase analytics events
 
 ### Week 3: Battle Pass Backend
+
 - [ ] Create Battle Pass Cloud Functions
 - [ ] Implement XP earning triggers
 - [ ] Create reward claiming logic
@@ -855,6 +868,7 @@ Add to Terms of Service and display in store:
 - [ ] Test level-up flow
 
 ### Week 4: Battle Pass Frontend
+
 - [ ] Build Battle Pass page
 - [ ] Create progress visualization
 - [ ] Build reward track component
@@ -862,6 +876,7 @@ Add to Terms of Service and display in store:
 - [ ] Integrate with navigation
 
 ### Week 5: CorpsCoin Bundles
+
 - [ ] Create bundle purchase UI
 - [ ] Wire to Stripe checkout
 - [ ] Add success/failure handling
@@ -869,12 +884,14 @@ Add to Terms of Service and display in store:
 - [ ] Add purchase history
 
 ### Week 6: Cosmetics Backend
+
 - [ ] Create cosmetics catalog in Firestore
 - [ ] Build purchase + equip Cloud Functions
 - [ ] Add cosmetics to user profile
 - [ ] Create inventory management
 
 ### Week 7: Cosmetics Frontend
+
 - [ ] Build Store page
 - [ ] Create cosmetic preview components
 - [ ] Build inventory/wardrobe UI
@@ -882,6 +899,7 @@ Add to Terms of Service and display in store:
 - [ ] Add equipped indicator to profile
 
 ### Week 8: Premium Subscription
+
 - [ ] Configure Stripe subscription product
 - [ ] Handle subscription webhooks
 - [ ] Create premium feature checks
@@ -889,6 +907,7 @@ Add to Terms of Service and display in store:
 - [ ] Add cancellation flow
 
 ### Week 9: Premium Features
+
 - [ ] Implement free streak freezes
 - [ ] Add lineup preset expansion
 - [ ] Build advanced stats component
@@ -896,6 +915,7 @@ Add to Terms of Service and display in store:
 - [ ] Add premium badge/indicator
 
 ### Week 10: Polish & Analytics
+
 - [ ] Add purchase funnel analytics
 - [ ] Build admin revenue dashboard
 - [ ] A/B test pricing display
@@ -909,16 +929,17 @@ Add to Terms of Service and display in store:
 ### Conservative Estimate (Year 1)
 
 **Assumptions:**
+
 - 1,000 active users by month 6
 - 5,000 active users by month 12
 - Industry-standard conversion rates
 
-| Month | Users | Battle Pass | Bundles | Premium | Total |
-|-------|-------|-------------|---------|---------|-------|
-| 1 | 500 | $125 | $30 | $20 | $175 |
-| 3 | 1,000 | $250 | $80 | $40 | $370 |
-| 6 | 2,500 | $625 | $200 | $100 | $925 |
-| 12 | 5,000 | $1,250 | $500 | $200 | $1,950 |
+| Month | Users | Battle Pass | Bundles | Premium | Total  |
+| ----- | ----- | ----------- | ------- | ------- | ------ |
+| 1     | 500   | $125        | $30     | $20     | $175   |
+| 3     | 1,000 | $250        | $80     | $40     | $370   |
+| 6     | 2,500 | $625        | $200    | $100    | $925   |
+| 12    | 5,000 | $1,250      | $500    | $200    | $1,950 |
 
 **Year 1 Total: ~$10,000-15,000**
 
@@ -926,10 +947,10 @@ Add to Terms of Service and display in store:
 
 With strong retention and word-of-mouth:
 
-| Month | Users | Battle Pass | Bundles | Premium | Cosmetics | Total |
-|-------|-------|-------------|---------|---------|-----------|-------|
-| 6 | 5,000 | $1,250 | $400 | $200 | $300 | $2,150 |
-| 12 | 15,000 | $3,750 | $1,200 | $600 | $900 | $6,450 |
+| Month | Users  | Battle Pass | Bundles | Premium | Cosmetics | Total  |
+| ----- | ------ | ----------- | ------- | ------- | --------- | ------ |
+| 6     | 5,000  | $1,250      | $400    | $200    | $300      | $2,150 |
+| 12    | 15,000 | $3,750      | $1,200  | $600    | $900      | $6,450 |
 
 **Year 1 Total: ~$40,000-50,000**
 
@@ -939,13 +960,13 @@ With strong retention and word-of-mouth:
 
 ### How Others Monetize Fantasy Sports
 
-| Platform | Model | ARPU | Key Lesson |
-|----------|-------|------|------------|
-| **Sleeper** | Premium tier ($50/yr) + cosmetics | $8-12/yr | Cosmetics drive 60% of revenue |
-| **ESPN** | ESPN+ bundle ($10/mo) | $15-20/yr | Content + features combined |
-| **Yahoo** | Minimal monetization | $2-3/yr | Missed opportunity |
-| **DraftKings** | Entry fees (gambling) | $200+/yr | Different model (regulated) |
-| **Duolingo** | Super ($7/mo) + hearts | $25-30/yr | Streak protection is powerful |
+| Platform       | Model                             | ARPU      | Key Lesson                     |
+| -------------- | --------------------------------- | --------- | ------------------------------ |
+| **Sleeper**    | Premium tier ($50/yr) + cosmetics | $8-12/yr  | Cosmetics drive 60% of revenue |
+| **ESPN**       | ESPN+ bundle ($10/mo)             | $15-20/yr | Content + features combined    |
+| **Yahoo**      | Minimal monetization              | $2-3/yr   | Missed opportunity             |
+| **DraftKings** | Entry fees (gambling)             | $200+/yr  | Different model (regulated)    |
+| **Duolingo**   | Super ($7/mo) + hearts            | $25-30/yr | Streak protection is powerful  |
 
 ### marching.art Opportunity
 
@@ -1075,6 +1096,6 @@ cosmetics/{cosmeticId}
 
 ---
 
-*Roadmap created: December 30, 2025*
-*Version: 1.0*
-*Next review: After Phase 1 completion*
+_Roadmap created: December 30, 2025_
+_Version: 1.0_
+_Next review: After Phase 1 completion_

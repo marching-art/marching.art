@@ -7,9 +7,23 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Trophy, Lock, Mail, AlertCircle, ChevronRight,
-  LayoutDashboard, Award, User, LogOut, Flame, Activity,
-  Settings, Zap, UserPlus, MessageCircle, Coins, Play
+  Trophy,
+  Lock,
+  Mail,
+  AlertCircle,
+  ChevronRight,
+  LayoutDashboard,
+  Award,
+  User,
+  LogOut,
+  Flame,
+  Activity,
+  Settings,
+  Zap,
+  UserPlus,
+  MessageCircle,
+  Coins,
+  Play,
 } from 'lucide-react';
 import YouTubeIcon from '../components/YouTubeIcon';
 import { useAuth } from '../context/AuthContext';
@@ -22,7 +36,12 @@ import SocialProofBar from '../components/Landing/SocialProofBar';
 import UrgencyBanner, { LiveIndicator } from '../components/Landing/UrgencyBanner';
 import CommunityPulse from '../components/Landing/CommunityPulse';
 import JargonTooltip from '../components/JargonTooltip';
-import { LiveScoresBox, FantasyTrendingBox, StandingsModal, YouTubeModal } from '../components/Sidebar';
+import {
+  LiveScoresBox,
+  FantasyTrendingBox,
+  StandingsModal,
+  YouTubeModal,
+} from '../components/Sidebar';
 import { useTooltipPreference } from '../hooks/useTooltipPreference';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useTickerData } from '../hooks/useTickerData';
@@ -30,7 +49,6 @@ import { useLandingScores } from '../hooks/useLandingScores';
 import { useYoutubeSearch } from '../hooks/useYoutubeSearch';
 import { useFirstVisit } from '../hooks/useFirstVisit';
 import { useSEO } from '../hooks/useSEO';
-
 
 // =============================================================================
 // LANDING PAGE COMPONENT
@@ -70,8 +88,17 @@ const Landing = () => {
     }
   }, []);
 
-  const { tickerData, loading: tickerLoading, hasData: hasTickerData } = useTickerData({ enabled: secondaryDataEnabled });
-  const { liveScores, displayDay, loading: scoresLoading, hasData: hasScoresData } = useLandingScores({ enabled: secondaryDataEnabled });
+  const {
+    tickerData,
+    loading: tickerLoading,
+    hasData: hasTickerData,
+  } = useTickerData({ enabled: secondaryDataEnabled });
+  const {
+    liveScores,
+    displayDay,
+    loading: scoresLoading,
+    hasData: hasScoresData,
+  } = useLandingScores({ enabled: secondaryDataEnabled });
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -80,7 +107,8 @@ const Landing = () => {
   const [showStandingsModal, setShowStandingsModal] = useState(false);
 
   // YouTube search hook
-  const { videoModal, handleYoutubeSearch, handleRetrySearch, closeVideoModal } = useYoutubeSearch();
+  const { videoModal, handleYoutubeSearch, handleRetrySearch, closeVideoModal } =
+    useYoutubeSearch();
 
   // Compute trending players from movers across all classes
   const trendingPlayers = useMemo(() => {
@@ -91,7 +119,7 @@ const Landing = () => {
     for (const classKey of ['worldClass', 'openClass', 'aClass']) {
       const classData = tickerData.byClass[classKey];
       if (classData?.movers) {
-        classData.movers.forEach(mover => {
+        classData.movers.forEach((mover) => {
           // Calculate percentage change
           const prevScore = parseFloat(mover.previousScore);
           const changeValue = parseFloat(mover.change);
@@ -108,9 +136,7 @@ const Landing = () => {
     }
 
     // Sort by absolute percentage change and take top 4
-    return allMovers
-      .sort((a, b) => b.absChange - a.absChange)
-      .slice(0, 4);
+    return allMovers.sort((a, b) => b.absChange - a.absChange).slice(0, 4);
   }, [tickerData]);
 
   const handleSignOut = async () => {
@@ -163,9 +189,7 @@ const Landing = () => {
             <div className="w-8 h-8 rounded-sm overflow-hidden">
               <img src="/logo192.svg" alt="marching.art" className="w-full h-full object-cover" />
             </div>
-            <span className="text-base font-bold text-white tracking-wider">
-              marching.art
-            </span>
+            <span className="text-base font-bold text-white tracking-wider">marching.art</span>
           </div>
           <div className="ml-auto flex items-center gap-2">
             {/* Mobile Auth Buttons - Only show for unauthenticated users on mobile */}
@@ -206,10 +230,16 @@ const Landing = () => {
                 <MessageCircle className="w-4 h-4" />
                 Discord
               </a>
-              <Link to="/privacy" className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center">
+              <Link
+                to="/privacy"
+                className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center"
+              >
                 Privacy
               </Link>
-              <Link to="/terms" className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center">
+              <Link
+                to="/terms"
+                className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center"
+              >
                 Terms
               </Link>
             </div>
@@ -220,269 +250,283 @@ const Landing = () => {
       {/* SCROLLABLE CONTENT */}
       <main className="flex-1 pb-24 md:pb-4">
         <div className="max-w-[1920px] mx-auto p-4 lg:p-6">
-
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6">
-
-          {/* ============================================================= */}
-          {/* SIDEBAR */}
-          {/* On desktop: 4 cols on right, sticky */}
-          {/* On mobile: Full width. Shows AFTER hero for first-time visitors, */}
-          {/* BEFORE news for returning/authenticated users */}
-          {/* ============================================================= */}
-          <div className={`${!user && !isFirstVisitLoading && isFirstVisit ? 'order-2' : 'order-1'} lg:order-2 lg:col-span-4`}>
-            <div className="lg:sticky lg:top-4 space-y-4 lg:space-y-5">
-
-              {/* ------------------------------------------------------- */}
-              {/* AUTH WIDGET - Login or User Dashboard */}
-              {/* ------------------------------------------------------- */}
-              {user ? (
-                /* AUTHENTICATED USER WIDGET */
-                <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
-                  {/* User Header */}
-                  <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                      <User className="w-3.5 h-3.5 text-[#0057B8]" />
-                      My Fantasy
-                    </h3>
-                  </div>
-
-                  {/* User Info */}
-                  <div className="p-4 border-b border-[#333]">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#0057B8] flex items-center justify-center text-white font-bold text-sm">
-                        {profile?.displayName?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'D'}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-bold text-white truncate">
-                          {profile?.displayName || 'Director'}
-                        </div>
-                        <div className="text-xs text-gray-500 truncate">
-                          {user.email}
-                        </div>
-                      </div>
+            {/* ============================================================= */}
+            {/* SIDEBAR */}
+            {/* On desktop: 4 cols on right, sticky */}
+            {/* On mobile: Full width. Shows AFTER hero for first-time visitors, */}
+            {/* BEFORE news for returning/authenticated users */}
+            {/* ============================================================= */}
+            <div
+              className={`${!user && !isFirstVisitLoading && isFirstVisit ? 'order-2' : 'order-1'} lg:order-2 lg:col-span-4`}
+            >
+              <div className="lg:sticky lg:top-4 space-y-4 lg:space-y-5">
+                {/* ------------------------------------------------------- */}
+                {/* AUTH WIDGET - Login or User Dashboard */}
+                {/* ------------------------------------------------------- */}
+                {user ? (
+                  /* AUTHENTICATED USER WIDGET */
+                  <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
+                    {/* User Header */}
+                    <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
+                      <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                        <User className="w-3.5 h-3.5 text-[#0057B8]" />
+                        My Fantasy
+                      </h3>
                     </div>
 
-                    {/* Quick Stats */}
-                    {profile && (
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-3 pt-3 border-t border-[#333]/50">
-                        <div className="flex items-center gap-1.5">
-                          <Zap className="w-3.5 h-3.5 text-purple-500" />
-                          <span className="text-xs text-gray-400">Level</span>
-                          <span className="text-sm font-bold text-white">{profile.xpLevel || 1}</span>
+                    {/* User Info */}
+                    <div className="p-4 border-b border-[#333]">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-[#0057B8] flex items-center justify-center text-white font-bold text-sm">
+                          {profile?.displayName?.[0]?.toUpperCase() ||
+                            user.email?.[0]?.toUpperCase() ||
+                            'D'}
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          <Trophy className="w-3.5 h-3.5 text-[#0057B8]" />
-                          <span className="text-xs text-gray-400">XP</span>
-                          <span className="text-sm font-bold text-white font-data tabular-nums">{profile.xp?.toLocaleString() || 0}</span>
-                        </div>
-                        {profile.engagement?.loginStreak > 0 && (
-                          <div className="flex items-center gap-1.5">
-                            <Flame className="w-3.5 h-3.5 text-orange-500" />
-                            <span className="text-xs text-gray-400">Streak</span>
-                            <span className="text-sm font-bold text-orange-500 font-data tabular-nums">{profile.engagement.loginStreak}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-bold text-white truncate">
+                            {profile?.displayName || 'Director'}
                           </div>
-                        )}
-                        <div className="flex items-center gap-1.5">
-                          <Coins className="w-3.5 h-3.5 text-yellow-500" />
-                          <span className="text-xs text-gray-400">Coins</span>
-                          <span className="text-sm font-bold text-yellow-500 font-data tabular-nums">{(profile.corpsCoin || 0).toLocaleString()}</span>
+                          <div className="text-xs text-gray-500 truncate">{user.email}</div>
                         </div>
                       </div>
-                    )}
-                  </div>
 
-                  {/* Quick Links - hidden on mobile to save space, show on desktop */}
-                  <div className="hidden lg:block p-2 space-y-0.5">
-                    <Link
-                      to="/dashboard"
-                      className="flex items-center gap-3 px-3 min-h-[44px] rounded-sm hover:bg-white/[0.05] active:bg-white/[0.08] transition-colors group press-feedback"
-                    >
-                      <LayoutDashboard className="w-5 h-5 text-[#0057B8]" />
-                      <span className="text-sm text-white font-medium">Dashboard</span>
-                      <ChevronRight className="w-4 h-4 text-gray-600 ml-auto group-hover:text-gray-400" />
-                    </Link>
-                    <Link
-                      to="/leagues"
-                      className="flex items-center gap-3 px-3 min-h-[44px] rounded-sm hover:bg-white/[0.05] active:bg-white/[0.08] transition-colors group press-feedback"
-                    >
-                      <Award className="w-5 h-5 text-orange-500" />
-                      <span className="text-sm text-white font-medium">My Leagues</span>
-                      <ChevronRight className="w-4 h-4 text-gray-600 ml-auto group-hover:text-gray-400" />
-                    </Link>
-                    <Link
-                      to="/scores"
-                      className="flex items-center gap-3 px-3 min-h-[44px] rounded-sm hover:bg-white/[0.05] active:bg-white/[0.08] transition-colors group press-feedback"
-                    >
-                      <Activity className="w-5 h-5 text-green-500" />
-                      <span className="text-sm text-white font-medium">Live Scores</span>
-                      <ChevronRight className="w-4 h-4 text-gray-600 ml-auto group-hover:text-gray-400" />
-                    </Link>
-                    <Link
-                      to="/profile"
-                      className="flex items-center gap-3 px-3 min-h-[44px] rounded-sm hover:bg-white/[0.05] active:bg-white/[0.08] transition-colors group press-feedback"
-                    >
-                      <Settings className="w-5 h-5 text-gray-400" />
-                      <span className="text-sm text-white font-medium">Profile & Settings</span>
-                      <ChevronRight className="w-4 h-4 text-gray-600 ml-auto group-hover:text-gray-400" />
-                    </Link>
-                  </div>
-
-                  {/* Sign Out - hidden on mobile (accessible from Dashboard), show on desktop */}
-                  <div className="hidden lg:block px-2 py-2 border-t border-[#333] bg-[#111]">
-                    <button
-                      onClick={handleSignOut}
-                      className="flex items-center gap-2 px-2 min-h-[44px] w-full text-sm text-gray-500 hover:text-red-400 active:text-red-500 transition-colors press-feedback rounded-sm"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      Sign Out
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                /* LOGIN/REGISTER WIDGET */
-                <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
-                  {/* Card Header */}
-                  <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                      <Trophy className="w-3.5 h-3.5 text-yellow-500" />
-                      Play Now
-                    </h3>
-                  </div>
-
-                  {/* Card Body - Compact Form */}
-                  <form onSubmit={handleSubmit} className="p-4 space-y-3">
-                    {/* Error Message */}
-                    {error && (
-                      <div className="p-2.5 bg-red-500/10 border border-red-500/30 rounded-sm flex items-start gap-2">
-                        <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-                        <p className="text-xs text-red-300">{error}</p>
-                      </div>
-                    )}
-
-                    {/* Email Input - 44px+ height for touch targets */}
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                      <input
-                        type="email"
-                        placeholder="Email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        disabled={loading}
-                        className="w-full min-h-[44px] h-11 pl-10 pr-3 bg-[#111] border border-[#333] rounded-sm text-base text-white placeholder-gray-500 focus:outline-none focus:border-[#0057B8] disabled:opacity-50 transition-colors"
-                      />
+                      {/* Quick Stats */}
+                      {profile && (
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-3 pt-3 border-t border-[#333]/50">
+                          <div className="flex items-center gap-1.5">
+                            <Zap className="w-3.5 h-3.5 text-purple-500" />
+                            <span className="text-xs text-gray-400">Level</span>
+                            <span className="text-sm font-bold text-white">
+                              {profile.xpLevel || 1}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <Trophy className="w-3.5 h-3.5 text-[#0057B8]" />
+                            <span className="text-xs text-gray-400">XP</span>
+                            <span className="text-sm font-bold text-white font-data tabular-nums">
+                              {profile.xp?.toLocaleString() || 0}
+                            </span>
+                          </div>
+                          {profile.engagement?.loginStreak > 0 && (
+                            <div className="flex items-center gap-1.5">
+                              <Flame className="w-3.5 h-3.5 text-orange-500" />
+                              <span className="text-xs text-gray-400">Streak</span>
+                              <span className="text-sm font-bold text-orange-500 font-data tabular-nums">
+                                {profile.engagement.loginStreak}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-1.5">
+                            <Coins className="w-3.5 h-3.5 text-yellow-500" />
+                            <span className="text-xs text-gray-400">Coins</span>
+                            <span className="text-sm font-bold text-yellow-500 font-data tabular-nums">
+                              {(profile.corpsCoin || 0).toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Password Input - 44px+ height for touch targets */}
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                      <input
-                        type="password"
-                        placeholder="Password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        disabled={loading}
-                        className="w-full min-h-[44px] h-11 pl-10 pr-3 bg-[#111] border border-[#333] rounded-sm text-base text-white placeholder-gray-500 focus:outline-none focus:border-[#0057B8] disabled:opacity-50 transition-colors"
-                      />
-                    </div>
-
-                    {/* Actions Row - 44px+ height for touch targets */}
-                    <div className="flex gap-2">
-                      <button
-                        type="submit"
-                        disabled={loading}
-                        className="flex-1 min-h-[44px] h-11 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:bg-[#0066d6] active:bg-[#004a9e] active:scale-[0.98] transition-all duration-150 press-feedback-strong disabled:opacity-50 disabled:cursor-not-allowed rounded-sm"
-                      >
-                        {loading ? '...' : 'Sign In'}
-                      </button>
+                    {/* Quick Links - hidden on mobile to save space, show on desktop */}
+                    <div className="hidden lg:block p-2 space-y-0.5">
                       <Link
-                        to="/register"
-                        className="flex-1 min-h-[44px] h-11 border border-[#333] text-gray-400 font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:border-[#444] hover:text-white active:scale-[0.98] transition-all duration-150 press-feedback rounded-sm"
+                        to="/dashboard"
+                        className="flex items-center gap-3 px-3 min-h-[44px] rounded-sm hover:bg-white/[0.05] active:bg-white/[0.08] transition-colors group press-feedback"
                       >
-                        Register
+                        <LayoutDashboard className="w-5 h-5 text-[#0057B8]" />
+                        <span className="text-sm text-white font-medium">Dashboard</span>
+                        <ChevronRight className="w-4 h-4 text-gray-600 ml-auto group-hover:text-gray-400" />
+                      </Link>
+                      <Link
+                        to="/leagues"
+                        className="flex items-center gap-3 px-3 min-h-[44px] rounded-sm hover:bg-white/[0.05] active:bg-white/[0.08] transition-colors group press-feedback"
+                      >
+                        <Award className="w-5 h-5 text-orange-500" />
+                        <span className="text-sm text-white font-medium">My Leagues</span>
+                        <ChevronRight className="w-4 h-4 text-gray-600 ml-auto group-hover:text-gray-400" />
+                      </Link>
+                      <Link
+                        to="/scores"
+                        className="flex items-center gap-3 px-3 min-h-[44px] rounded-sm hover:bg-white/[0.05] active:bg-white/[0.08] transition-colors group press-feedback"
+                      >
+                        <Activity className="w-5 h-5 text-green-500" />
+                        <span className="text-sm text-white font-medium">Live Scores</span>
+                        <ChevronRight className="w-4 h-4 text-gray-600 ml-auto group-hover:text-gray-400" />
+                      </Link>
+                      <Link
+                        to="/profile"
+                        className="flex items-center gap-3 px-3 min-h-[44px] rounded-sm hover:bg-white/[0.05] active:bg-white/[0.08] transition-colors group press-feedback"
+                      >
+                        <Settings className="w-5 h-5 text-gray-400" />
+                        <span className="text-sm text-white font-medium">Profile & Settings</span>
+                        <ChevronRight className="w-4 h-4 text-gray-600 ml-auto group-hover:text-gray-400" />
                       </Link>
                     </div>
 
-                    {/* Free to play badge - prominent placement */}
-                    <div className="flex items-center justify-center gap-2 py-2 bg-green-500/10 border border-green-500/20 rounded-sm">
-                      <Zap className="w-4 h-4 text-green-500" />
-                      <span className="text-sm font-semibold text-green-400">100% Free to Play</span>
+                    {/* Sign Out - hidden on mobile (accessible from Dashboard), show on desktop */}
+                    <div className="hidden lg:block px-2 py-2 border-t border-[#333] bg-[#111]">
+                      <button
+                        onClick={handleSignOut}
+                        className="flex items-center gap-2 px-2 min-h-[44px] w-full text-sm text-gray-500 hover:text-red-400 active:text-red-500 transition-colors press-feedback rounded-sm"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Sign Out
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* LOGIN/REGISTER WIDGET */
+                  <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
+                    {/* Card Header */}
+                    <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
+                      <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                        <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+                        Play Now
+                      </h3>
                     </div>
 
-                    {/* Try Demo Link */}
-                    <Link
-                      to="/preview"
-                      className="flex items-center justify-center gap-2 py-2.5 border border-yellow-500/30 rounded-sm text-yellow-500 hover:bg-yellow-500/10 hover:border-yellow-500/50 transition-colors"
-                    >
-                      <Play className="w-4 h-4" />
-                      <span className="text-sm font-medium">Try Demo First</span>
-                    </Link>
+                    {/* Card Body - Compact Form */}
+                    <form onSubmit={handleSubmit} className="p-4 space-y-3">
+                      {/* Error Message */}
+                      {error && (
+                        <div className="p-2.5 bg-red-500/10 border border-red-500/30 rounded-sm flex items-start gap-2">
+                          <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                          <p className="text-xs text-red-300">{error}</p>
+                        </div>
+                      )}
 
-                    {/* Footer Links */}
-                    <div className="flex items-center justify-center text-xs text-gray-500 pt-1">
-                      <Link to="/forgot-password" className="hover:text-[#0057B8] transition-colors">
-                        Forgot password?
+                      {/* Email Input - 44px+ height for touch targets */}
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                        <input
+                          type="email"
+                          placeholder="Email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          required
+                          disabled={loading}
+                          className="w-full min-h-[44px] h-11 pl-10 pr-3 bg-[#111] border border-[#333] rounded-sm text-base text-white placeholder-gray-500 focus:outline-none focus:border-[#0057B8] disabled:opacity-50 transition-colors"
+                        />
+                      </div>
+
+                      {/* Password Input - 44px+ height for touch targets */}
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                        <input
+                          type="password"
+                          placeholder="Password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          required
+                          disabled={loading}
+                          className="w-full min-h-[44px] h-11 pl-10 pr-3 bg-[#111] border border-[#333] rounded-sm text-base text-white placeholder-gray-500 focus:outline-none focus:border-[#0057B8] disabled:opacity-50 transition-colors"
+                        />
+                      </div>
+
+                      {/* Actions Row - 44px+ height for touch targets */}
+                      <div className="flex gap-2">
+                        <button
+                          type="submit"
+                          disabled={loading}
+                          className="flex-1 min-h-[44px] h-11 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:bg-[#0066d6] active:bg-[#004a9e] active:scale-[0.98] transition-all duration-150 press-feedback-strong disabled:opacity-50 disabled:cursor-not-allowed rounded-sm"
+                        >
+                          {loading ? '...' : 'Sign In'}
+                        </button>
+                        <Link
+                          to="/register"
+                          className="flex-1 min-h-[44px] h-11 border border-[#333] text-gray-400 font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:border-[#444] hover:text-white active:scale-[0.98] transition-all duration-150 press-feedback rounded-sm"
+                        >
+                          Register
+                        </Link>
+                      </div>
+
+                      {/* Free to play badge - prominent placement */}
+                      <div className="flex items-center justify-center gap-2 py-2 bg-green-500/10 border border-green-500/20 rounded-sm">
+                        <Zap className="w-4 h-4 text-green-500" />
+                        <span className="text-sm font-semibold text-green-400">
+                          100% Free to Play
+                        </span>
+                      </div>
+
+                      {/* Try Demo Link */}
+                      <Link
+                        to="/preview"
+                        className="flex items-center justify-center gap-2 py-2.5 border border-yellow-500/30 rounded-sm text-yellow-500 hover:bg-yellow-500/10 hover:border-yellow-500/50 transition-colors"
+                      >
+                        <Play className="w-4 h-4" />
+                        <span className="text-sm font-medium">Try Demo First</span>
                       </Link>
-                    </div>
-                  </form>
-                </div>
-              )}
 
-              {/* URGENCY BANNER - Show time-sensitive info */}
-              {!user && <UrgencyBanner showCTA={true} maxTriggers={2} />}
+                      {/* Footer Links */}
+                      <div className="flex items-center justify-center text-xs text-gray-500 pt-1">
+                        <Link
+                          to="/forgot-password"
+                          className="hover:text-[#0057B8] transition-colors"
+                        >
+                          Forgot password?
+                        </Link>
+                      </div>
+                    </form>
+                  </div>
+                )}
 
-              {/* COMMUNITY PULSE - Live activity feed for social proof */}
-              <CommunityPulse />
+                {/* URGENCY BANNER - Show time-sensitive info */}
+                {!user && <UrgencyBanner showCTA={true} maxTriggers={2} />}
 
-              {/* FANTASY TRENDING MODULE */}
-              <FantasyTrendingBox
-                trendingPlayers={trendingPlayers}
-                loading={tickerLoading}
-                dayLabel={tickerData?.dayLabel}
-              />
+                {/* COMMUNITY PULSE - Live activity feed for social proof */}
+                <CommunityPulse />
 
-              {/* LIVE SCORE TICKER */}
-              <LiveScoresBox
-                liveScores={liveScores}
-                displayDay={displayDay}
-                loading={scoresLoading}
-                hasData={hasScoresData}
-                onYoutubeClick={handleYoutubeSearch}
-                onShowStandings={() => setShowStandingsModal(true)}
-              />
+                {/* FANTASY TRENDING MODULE */}
+                <FantasyTrendingBox
+                  trendingPlayers={trendingPlayers}
+                  loading={tickerLoading}
+                  dayLabel={tickerData?.dayLabel}
+                />
 
+                {/* LIVE SCORE TICKER */}
+                <LiveScoresBox
+                  liveScores={liveScores}
+                  displayDay={displayDay}
+                  loading={scoresLoading}
+                  hasData={hasScoresData}
+                  onYoutubeClick={handleYoutubeSearch}
+                  onShowStandings={() => setShowStandingsModal(true)}
+                />
+              </div>
             </div>
-          </div>
 
-          {/* ============================================================= */}
-          {/* MAIN COLUMN - Hero (first-time visitors) + News Feed */}
-          {/* On desktop: 8 cols on left */}
-          {/* On mobile: First for first-time visitors, after sidebar otherwise */}
-          {/* ============================================================= */}
-          <div className={`${!user && !isFirstVisitLoading && isFirstVisit ? 'order-1' : 'order-2'} lg:order-1 lg:col-span-8 space-y-4 lg:space-y-5`}>
-            {/* =============================================================
+            {/* ============================================================= */}
+            {/* MAIN COLUMN - Hero (first-time visitors) + News Feed */}
+            {/* On desktop: 8 cols on left */}
+            {/* On mobile: First for first-time visitors, after sidebar otherwise */}
+            {/* ============================================================= */}
+            <div
+              className={`${!user && !isFirstVisitLoading && isFirstVisit ? 'order-1' : 'order-2'} lg:order-1 lg:col-span-8 space-y-4 lg:space-y-5`}
+            >
+              {/* =============================================================
                 FIRST-TIME VISITOR SECTION - Hero + How It Works
                 Shows value proposition and educational content inline with
                 the articles column for new unauthenticated users.
                 ============================================================= */}
-            {!user && !isFirstVisitLoading && isFirstVisit && (
-              <>
-                <HeroBanner onDismiss={markAsReturning} />
-                <SocialProofBar />
-                <HowItWorks />
-              </>
-            )}
+              {!user && !isFirstVisitLoading && isFirstVisit && (
+                <>
+                  <HeroBanner onDismiss={markAsReturning} />
+                  <SocialProofBar />
+                  <HowItWorks />
+                </>
+              )}
 
-            {/* Section header for mobile - helps users understand the content */}
-            <div className="flex items-center gap-2 mb-0 lg:hidden">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Latest News</span>
-              <div className="flex-1 h-px bg-[#333]" />
+              {/* Section header for mobile - helps users understand the content */}
+              <div className="flex items-center gap-2 mb-0 lg:hidden">
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  Latest News
+                </span>
+                <div className="flex-1 h-px bg-[#333]" />
+              </div>
+              {/* Dynamic News Feed powered by Gemini AI */}
+              <NewsFeed maxItems={5} />
             </div>
-            {/* Dynamic News Feed powered by Gemini AI */}
-            <NewsFeed maxItems={5} />
-          </div>
-
           </div>
         </div>
       </main>
@@ -497,11 +541,7 @@ const Landing = () => {
       />
 
       {/* YOUTUBE VIDEO MODAL */}
-      <YouTubeModal
-        videoModal={videoModal}
-        onClose={closeVideoModal}
-        onRetry={handleRetrySearch}
-      />
+      <YouTubeModal videoModal={videoModal} onClose={closeVideoModal} onRetry={handleRetrySearch} />
     </div>
   );
 };

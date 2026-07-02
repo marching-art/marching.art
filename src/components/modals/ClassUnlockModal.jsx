@@ -48,7 +48,10 @@ const ClassUnlockModal = ({ unlockedClass, onSetup, onDecline }) => {
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
-            <h2 id="modal-title-class-unlock" className="text-xs font-bold uppercase tracking-wider text-green-400 flex items-center gap-2">
+            <h2
+              id="modal-title-class-unlock"
+              className="text-xs font-bold uppercase tracking-wider text-green-400 flex items-center gap-2"
+            >
               <Unlock className="w-4 h-4" />
               Class Unlocked
             </h2>
@@ -64,9 +67,7 @@ const ClassUnlockModal = ({ unlockedClass, onSetup, onDecline }) => {
               <p className="text-[10px] font-bold uppercase tracking-wider text-green-400 mb-1">
                 Congratulations
               </p>
-              <p className="text-lg font-bold text-white">
-                You've earned {classInfo.xpRequired}!
-              </p>
+              <p className="text-lg font-bold text-white">You've earned {classInfo.xpRequired}!</p>
             </div>
 
             {/* Class Info Card */}
@@ -75,9 +76,7 @@ const ClassUnlockModal = ({ unlockedClass, onSetup, onDecline }) => {
                 <h3 className="text-sm font-bold text-white">{classInfo.name}</h3>
                 <span className="text-xs font-data text-[#0057B8]">{classInfo.budget}</span>
               </div>
-              <p className="text-xs text-gray-400 leading-relaxed">
-                {classInfo.description}
-              </p>
+              <p className="text-xs text-gray-400 leading-relaxed">{classInfo.description}</p>
             </div>
 
             {/* Prompt */}

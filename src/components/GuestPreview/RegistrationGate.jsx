@@ -9,8 +9,16 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
 import {
-  X, UserPlus, Lock, Trophy, Users, Save, Calendar,
-  ChevronRight, Zap, Star
+  X,
+  UserPlus,
+  Lock,
+  Trophy,
+  Users,
+  Save,
+  Calendar,
+  ChevronRight,
+  Zap,
+  Star,
 } from 'lucide-react';
 
 // =============================================================================
@@ -78,12 +86,7 @@ const GATE_CONFIGS = {
 // REGISTRATION GATE COMPONENT
 // =============================================================================
 
-const RegistrationGate = ({
-  isOpen,
-  onClose,
-  gateType = 'default',
-  hasEngaged = false,
-}) => {
+const RegistrationGate = ({ isOpen, onClose, gateType = 'default', hasEngaged = false }) => {
   const config = GATE_CONFIGS[gateType] || GATE_CONFIGS.default;
   const GateIcon = config.icon;
 
@@ -117,19 +120,17 @@ const RegistrationGate = ({
             {/* Content */}
             <div className="p-6 text-center">
               {/* Icon */}
-              <div className={`inline-flex items-center justify-center w-16 h-16 rounded-sm ${config.iconBg} mb-4`}>
+              <div
+                className={`inline-flex items-center justify-center w-16 h-16 rounded-sm ${config.iconBg} mb-4`}
+              >
                 <GateIcon className={`w-8 h-8 ${config.iconColor}`} />
               </div>
 
               {/* Title */}
-              <h2 className="text-xl font-bold text-white mb-2">
-                {config.title}
-              </h2>
+              <h2 className="text-xl font-bold text-white mb-2">{config.title}</h2>
 
               {/* Description */}
-              <p className="text-gray-400 mb-4">
-                {config.description}
-              </p>
+              <p className="text-gray-400 mb-4">{config.description}</p>
 
               {/* Benefit highlight */}
               <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-sm mb-6">

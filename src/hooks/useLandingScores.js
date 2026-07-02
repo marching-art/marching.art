@@ -26,11 +26,14 @@ const calculateTotalScore = (captions) => {
  * Get the current hour in Eastern Time (0-23)
  */
 const getEasternHour = () => {
-  return parseInt(new Date().toLocaleString('en-US', {
-    timeZone: 'America/New_York',
-    hour: 'numeric',
-    hour12: false
-  }), 10);
+  return parseInt(
+    new Date().toLocaleString('en-US', {
+      timeZone: 'America/New_York',
+      hour: 'numeric',
+      hour12: false,
+    }),
+    10
+  );
 };
 
 /**
@@ -98,7 +101,7 @@ export const useLandingScores = ({ enabled = true } = {}) => {
   useEffect(() => {
     const checkProcessingTime = () => {
       const nowPastProcessingTime = getEasternHour() >= 2;
-      setIsPastProcessingTime(prev => {
+      setIsPastProcessingTime((prev) => {
         // Only update if the value actually changed to avoid unnecessary re-renders
         return prev !== nowPastProcessingTime ? nowPastProcessingTime : prev;
       });
@@ -141,9 +144,9 @@ export const useLandingScores = ({ enabled = true } = {}) => {
             getDoc(doc(db, `dci-data/${seasonData.dataDocId}`)),
           ]);
 
-          const yearData = liveDataDoc.exists() ? (liveDataDoc.data().data || []) : [];
+          const yearData = liveDataDoc.exists() ? liveDataDoc.data().data || [] : [];
           const selectableNames = new Set(
-            (poolDoc.exists() ? (poolDoc.data().corpsValues || []) : []).map((c) => c.corpsName)
+            (poolDoc.exists() ? poolDoc.data().corpsValues || [] : []).map((c) => c.corpsName)
           );
 
           const uniqueCorps = new Map();
@@ -177,10 +180,10 @@ export const useLandingScores = ({ enabled = true } = {}) => {
         setCorpsValues(corps);
 
         // 2. Get unique years to fetch
-        const yearsToFetch = [...new Set(corps.map(c => c.sourceYear))];
+        const yearsToFetch = [...new Set(corps.map((c) => c.sourceYear))];
 
         // 3. Fetch historical scores for each year
-        const historicalPromises = yearsToFetch.map(year =>
+        const historicalPromises = yearsToFetch.map((year) =>
           getDoc(doc(db, `historical_scores/${year}`))
         );
         const historicalDocs = await Promise.all(historicalPromises);
@@ -208,7 +211,12 @@ export const useLandingScores = ({ enabled = true } = {}) => {
   const liveScores = useMemo(() => {
     // Guard: If no data or maxScoreDay is null/0, no scores should be visible
     // maxScoreDay is null on Day 1 and Day 2 before 2 AM (no processed scores yet)
-    if (corpsValues.length === 0 || Object.keys(historicalData).length === 0 || !maxScoreDay || maxScoreDay < 1) {
+    if (
+      corpsValues.length === 0 ||
+      Object.keys(historicalData).length === 0 ||
+      !maxScoreDay ||
+      maxScoreDay < 1
+    ) {
       return [];
     }
 
@@ -216,11 +224,11 @@ export const useLandingScores = ({ enabled = true } = {}) => {
     const corpsScoreHistory = new Map();
 
     // For each selected corps, gather their scores from historical data
-    corpsValues.forEach(corps => {
+    corpsValues.forEach((corps) => {
       const yearData = historicalData[corps.sourceYear] || [];
       const scores = [];
 
-      yearData.forEach(event => {
+      yearData.forEach((event) => {
         // CRITICAL: Never show scores from the current day or future days
         // Day N scores should only be visible starting at 2 AM on Day N+1
         // This is a hard cap to prevent showing today's competition results before they happen
@@ -231,7 +239,7 @@ export const useLandingScores = ({ enabled = true } = {}) => {
         // After 2 AM, yesterday's scores were just processed, so show up to day-1
         if (event.offSeasonDay > maxScoreDay) return;
 
-        const scoreData = event.scores?.find(s => s.corps === corps.corpsName);
+        const scoreData = event.scores?.find((s) => s.corps === corps.corpsName);
         if (scoreData && scoreData.captions) {
           const totalScore = calculateTotalScore(scoreData.captions);
           // Skip zero scores (treat as blank)
@@ -241,7 +249,7 @@ export const useLandingScores = ({ enabled = true } = {}) => {
               date: event.date,
               eventName: event.eventName,
               totalScore,
-              captions: scoreData.captions
+              captions: scoreData.captions,
             });
           }
         }
@@ -255,7 +263,7 @@ export const useLandingScores = ({ enabled = true } = {}) => {
           corpsName: corps.corpsName,
           sourceYear: corps.sourceYear,
           points: corps.points,
-          scores
+          scores,
         });
       }
     });
@@ -293,7 +301,7 @@ export const useLandingScores = ({ enabled = true } = {}) => {
         change,
         direction,
         showCount: data.scores.length,
-        latestDay
+        latestDay,
       });
     });
 
@@ -309,7 +317,7 @@ export const useLandingScores = ({ enabled = true } = {}) => {
   // Get the display day (most recent day with scores)
   const displayDay = useMemo(() => {
     if (liveScores.length === 0) return null;
-    return Math.max(...liveScores.map(s => s.latestDay));
+    return Math.max(...liveScores.map((s) => s.latestDay));
   }, [liveScores]);
 
   return {
@@ -318,7 +326,7 @@ export const useLandingScores = ({ enabled = true } = {}) => {
     liveScores,
     displayDay,
     currentDay,
-    hasData: liveScores.length > 0
+    hasData: liveScores.length > 0,
   };
 };
 

@@ -47,31 +47,24 @@ const RivalsPanel = memo(({ rivals, corpsClass }) => {
 
       {list.length === 0 ? (
         <div className="px-4 py-5 text-xs text-gray-500 text-center">
-          No rivals yet — once other directors compete in your class, the
-          closest scores will show up here.
+          No rivals yet — once other directors compete in your class, the closest scores will show
+          up here.
         </div>
       ) : (
         <div className="divide-y divide-[#222]">
           {list.map((rival) => {
-            const isSoundSport =
-              corpsClass === 'soundSport' || rival.corpsClass === 'soundSport';
-            const crossClass =
-              rival.corpsClass && rival.corpsClass !== corpsClass;
+            const isSoundSport = corpsClass === 'soundSport' || rival.corpsClass === 'soundSport';
+            const crossClass = rival.corpsClass && rival.corpsClass !== corpsClass;
 
             // SoundSport: render medal tier instead of numeric score, and a
             // relative arrow based on medal rank rather than score delta.
             if (isSoundSport) {
               const medalColor = MEDAL_COLORS[rival.medal] || 'text-gray-300';
-              const rankDelta =
-                (rival.medalRank ?? 0) - (rival.userMedalRank ?? 0);
+              const rankDelta = (rival.medalRank ?? 0) - (rival.userMedalRank ?? 0);
               const tied = rankDelta === 0;
               const ahead = rankDelta > 0;
               const RankIcon = tied ? Minus : ahead ? ChevronUp : ChevronDown;
-              const rankColor = tied
-                ? 'text-gray-500'
-                : ahead
-                  ? 'text-red-400'
-                  : 'text-green-400';
+              const rankColor = tied ? 'text-gray-500' : ahead ? 'text-red-400' : 'text-green-400';
               const rankLabel = tied
                 ? `Tied at ${rival.medal || 'Participation'}`
                 : ahead
@@ -85,9 +78,7 @@ const RivalsPanel = memo(({ rivals, corpsClass }) => {
                   className="flex items-center justify-between px-4 py-2.5 hover:bg-[#222] transition-colors gap-3"
                 >
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm text-white truncate">
-                      {rival.corpsName}
-                    </div>
+                    <div className="text-sm text-white truncate">{rival.corpsName}</div>
                     <div className="text-[10px] text-gray-500 truncate">
                       {rival.username}
                       {crossClass && (
@@ -98,7 +89,9 @@ const RivalsPanel = memo(({ rivals, corpsClass }) => {
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <div className={`text-sm font-bold flex items-center justify-end gap-1 ${medalColor}`}>
+                    <div
+                      className={`text-sm font-bold flex items-center justify-end gap-1 ${medalColor}`}
+                    >
                       <Medal className="w-3.5 h-3.5" />
                       {rival.medal || 'Participation'}
                     </div>
@@ -117,11 +110,7 @@ const RivalsPanel = memo(({ rivals, corpsClass }) => {
             const ahead = (rival.scoreDelta || 0) > 0;
             const tied = (rival.scoreDelta || 0) === 0;
             const DeltaIcon = tied ? Minus : ahead ? ChevronUp : ChevronDown;
-            const deltaColor = tied
-              ? 'text-gray-500'
-              : ahead
-                ? 'text-red-400'
-                : 'text-green-400';
+            const deltaColor = tied ? 'text-gray-500' : ahead ? 'text-red-400' : 'text-green-400';
 
             return (
               <Link
@@ -130,9 +119,7 @@ const RivalsPanel = memo(({ rivals, corpsClass }) => {
                 className="flex items-center justify-between px-4 py-2.5 hover:bg-[#222] transition-colors gap-3"
               >
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm text-white truncate">
-                    {rival.corpsName}
-                  </div>
+                  <div className="text-sm text-white truncate">{rival.corpsName}</div>
                   <div className="text-[10px] text-gray-500 truncate">
                     {rival.username}
                     {crossClass && (

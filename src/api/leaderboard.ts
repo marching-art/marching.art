@@ -45,13 +45,16 @@ export async function getLeaderboard(
       return getLifetimeLeaderboard('totalPoints', pageSize);
     }
 
-    const leaderboardRef = collection(db, 'artifacts', DATA_NAMESPACE, 'leaderboard', type, corpsClass);
-
-    let q = query(
-      leaderboardRef,
-      orderBy('score', 'desc'),
-      limit(pageSize)
+    const leaderboardRef = collection(
+      db,
+      'artifacts',
+      DATA_NAMESPACE,
+      'leaderboard',
+      type,
+      corpsClass
     );
+
+    let q = query(leaderboardRef, orderBy('score', 'desc'), limit(pageSize));
 
     // Cast lastDoc to the expected type for pagination
     const lastDocSnapshot = lastDoc as QueryDocumentSnapshot<DocumentData> | undefined;
@@ -154,11 +157,18 @@ export async function getUserRank(
     // Handle lifetime separately (different structure)
     if (type === 'lifetime') {
       const result = await getLifetimeLeaderboard('totalPoints', 100);
-      const userEntry = result.data.find(entry => entry.username === username);
+      const userEntry = result.data.find((entry) => entry.username === username);
       return userEntry?.rank || null;
     }
 
-    const leaderboardRef = collection(db, 'artifacts', DATA_NAMESPACE, 'leaderboard', type, corpsClass);
+    const leaderboardRef = collection(
+      db,
+      'artifacts',
+      DATA_NAMESPACE,
+      'leaderboard',
+      type,
+      corpsClass
+    );
 
     // Step 1: Query for the user's specific entry by username (1 document read)
     const userQuery = query(leaderboardRef, where('username', '==', username), limit(1));
@@ -198,7 +208,7 @@ export async function getUserContext(
     // Handle lifetime separately (different structure - keep simple approach)
     if (type === 'lifetime') {
       const result = await getLifetimeLeaderboard('totalPoints', 50);
-      const userIndex = result.data.findIndex(entry => entry.username === username);
+      const userIndex = result.data.findIndex((entry) => entry.username === username);
       if (userIndex === -1) {
         return { userRank: null, entries: result.data.slice(0, contextSize * 2 + 1) };
       }
@@ -207,7 +217,14 @@ export async function getUserContext(
       return { userRank: userIndex + 1, entries: result.data.slice(startIndex, endIndex) };
     }
 
-    const leaderboardRef = collection(db, 'artifacts', DATA_NAMESPACE, 'leaderboard', type, corpsClass);
+    const leaderboardRef = collection(
+      db,
+      'artifacts',
+      DATA_NAMESPACE,
+      'leaderboard',
+      type,
+      corpsClass
+    );
 
     // Step 1: Find the user's entry and score
     const userQuery = query(leaderboardRef, where('username', '==', username), limit(1));
@@ -336,7 +353,7 @@ export async function getLeaderboardStats(
       if (result.data.length === 0) {
         return { totalPlayers: 0, topScore: 0, averageScore: 0 };
       }
-      const scores = result.data.map(e => e.score);
+      const scores = result.data.map((e) => e.score);
       const totalScore = scores.reduce((sum, score) => sum + score, 0);
       return {
         totalPlayers: result.total || result.data.length,
@@ -345,7 +362,14 @@ export async function getLeaderboardStats(
       };
     }
 
-    const leaderboardRef = collection(db, 'artifacts', DATA_NAMESPACE, 'leaderboard', type, corpsClass);
+    const leaderboardRef = collection(
+      db,
+      'artifacts',
+      DATA_NAMESPACE,
+      'leaderboard',
+      type,
+      corpsClass
+    );
 
     // Get total count using aggregation (no document reads)
     const countSnapshot = await getCountFromServer(query(leaderboardRef));
@@ -365,10 +389,11 @@ export async function getLeaderboardStats(
     // For now, we'll fetch a sample of top 10 for a reasonable estimate
     const sampleQuery = query(leaderboardRef, orderBy('score', 'desc'), limit(10));
     const sampleSnapshot = await getDocs(sampleQuery);
-    const sampleScores = sampleSnapshot.docs.map(doc => doc.data().score || 0);
-    const sampleAverage = sampleScores.length > 0
-      ? sampleScores.reduce((sum, score) => sum + score, 0) / sampleScores.length
-      : 0;
+    const sampleScores = sampleSnapshot.docs.map((doc) => doc.data().score || 0);
+    const sampleAverage =
+      sampleScores.length > 0
+        ? sampleScores.reduce((sum, score) => sum + score, 0) / sampleScores.length
+        : 0;
 
     return {
       totalPlayers,
@@ -442,4 +467,4 @@ export const LIFETIME_VIEWS = [
   { id: 'leagueChampionships' as const, label: 'Championships', desc: 'League titles won' },
 ] as const;
 
-export type LifetimeViewId = typeof LIFETIME_VIEWS[number]['id'];
+export type LifetimeViewId = (typeof LIFETIME_VIEWS)[number]['id'];

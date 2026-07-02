@@ -4,13 +4,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import {
-  Spinner,
-  LoadingOverlay,
-  FullPageLoading,
-  Skeleton,
-  SkeletonText,
-} from './Spinner';
+import { Spinner, LoadingOverlay, FullPageLoading, Skeleton, SkeletonText } from './Spinner';
 
 describe('Spinner', () => {
   describe('rendering', () => {
@@ -35,7 +29,7 @@ describe('Spinner', () => {
       render(<Spinner label="Loading data" />);
       // There are two elements with this text - visible and sr-only
       const labels = screen.getAllByText('Loading data');
-      const visibleLabel = labels.find(el => !el.classList.contains('sr-only'));
+      const visibleLabel = labels.find((el) => !el.classList.contains('sr-only'));
       expect(visibleLabel).toBeInTheDocument();
     });
   });

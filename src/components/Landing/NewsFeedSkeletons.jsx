@@ -1,9 +1,7 @@
 // News feed loading skeletons. Extracted from NewsFeed.jsx.
 
 function SkeletonPulse({ className }) {
-  return (
-    <div className={`animate-pulse bg-[#2a2a2a] ${className}`} />
-  );
+  return <div className={`animate-pulse bg-[#2a2a2a] ${className}`} />;
 }
 
 function HeroSkeleton() {
