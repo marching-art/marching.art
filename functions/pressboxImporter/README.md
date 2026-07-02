@@ -98,20 +98,16 @@ Finals -> Semifinals -> Quarterfinals events.
   has no modern equivalent. Counts appear in `output/report.json`.
 - **2013**: already in Firestore from the dci.org scrape.
 
-### Known source gaps
+### Source link quirks
 
-As of July 2026 the season pages link the wrong workbooks for some months, so
-these are genuinely unavailable from this source:
-
-- **2008**: only June exists (the "July" link points at the 2000 workbook), so
-  2008 has 20 events and **no final_rankings** — 2008 corps won't be
-  draftable until championship data is found elsewhere.
-- **2011**: all three links point at the 2010 workbooks; nothing importable.
-
-`harvest.js` detects and skips these mislinked files. If corrected documents
-appear (or you obtain them another way), drop them into `cache/` with the
-right `{year}{month}recaps.htm` name, add the entry to `manifest.json`, and
-re-run `parse.js`.
+Some season pages have carried mislinked workbooks (e.g. the 2008 page once
+pointed its July link at the 2000 workbook, and the 2011 page at the 2010
+ones — both since fixed at the source and now fully parsed). `harvest.js`
+detects and skips any wrong-year links it finds, and also ignores extra
+correct-but-offtopic links (the 2009 page links the 2005 workbooks). If a
+month ever goes missing again, drop the workbook into `cache/` with the right
+`{year}{month}recaps.htm` name, add the entry to `manifest.json`, and re-run
+`parse.js`.
 
 Roughly 1-4% of score rows have arithmetic typos in the source sheets
 themselves (a judge cell that disagrees with the sheet's own subtotal, e.g.

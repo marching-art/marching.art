@@ -104,14 +104,14 @@
     "subtotalMismatches": 20
   },
   "2008": {
-    "documents": 1,
-    "events": 20,
-    "scoreEntries": 148,
-    "rankings": 0,
-    "fileBytes": 36759,
-    "skippedNonDciBlocks": 4,
+    "documents": 3,
+    "events": 104,
+    "scoreEntries": 830,
+    "rankings": 20,
+    "fileBytes": 210431,
+    "skippedNonDciBlocks": 32,
     "unmappableDciBlocks": [],
-    "subtotalMismatches": 0
+    "subtotalMismatches": 3
   },
   "2009": {
     "documents": 3,
@@ -134,8 +134,14 @@
     "subtotalMismatches": 9
   },
   "2011": {
-    "documents": 0,
-    "events": 0
+    "documents": 3,
+    "events": 96,
+    "scoreEntries": 849,
+    "rankings": 25,
+    "fileBytes": 213100,
+    "skippedNonDciBlocks": 39,
+    "unmappableDciBlocks": [],
+    "subtotalMismatches": 3
   },
   "2012": {
     "documents": 3,
