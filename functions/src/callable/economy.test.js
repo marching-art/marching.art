@@ -65,8 +65,20 @@ describe("economy config", () => {
   test("show participation rewards increase with class tier", () => {
     assert.equal(SHOW_PARTICIPATION_REWARDS.soundSport, 50);
     assert.ok(SHOW_PARTICIPATION_REWARDS.soundSport < SHOW_PARTICIPATION_REWARDS.aClass);
-    assert.ok(SHOW_PARTICIPATION_REWARDS.aClass < SHOW_PARTICIPATION_REWARDS.open);
-    assert.ok(SHOW_PARTICIPATION_REWARDS.open < SHOW_PARTICIPATION_REWARDS.world);
+    assert.ok(SHOW_PARTICIPATION_REWARDS.aClass < SHOW_PARTICIPATION_REWARDS.openClass);
+    assert.ok(SHOW_PARTICIPATION_REWARDS.openClass < SHOW_PARTICIPATION_REWARDS.worldClass);
+  });
+
+  test("show participation rewards resolve for every canonical corps-map key", () => {
+    // Regression guard: the scoring loop looks up the canonical corps-map key.
+    // When this table was short-key-only ('open'/'world'), World and Open
+    // class corps silently earned zero show-participation coins.
+    for (const cls of ["soundSport", "aClass", "openClass", "worldClass"]) {
+      assert.ok(SHOW_PARTICIPATION_REWARDS[cls] > 0, `no reward for ${cls}`);
+    }
+    // Legacy short aliases stay equal to their canonical values
+    assert.equal(SHOW_PARTICIPATION_REWARDS.open, SHOW_PARTICIPATION_REWARDS.openClass);
+    assert.equal(SHOW_PARTICIPATION_REWARDS.world, SHOW_PARTICIPATION_REWARDS.worldClass);
   });
 
   test("class unlock costs accept both short and canonical keys with equal values", () => {

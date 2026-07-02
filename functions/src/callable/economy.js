@@ -90,13 +90,20 @@ function addCoinHistoryEntryToTransaction(transaction, db, uid, entry) {
 // =============================================================================
 
 /**
- * CorpsCoin earning amounts by class for show participation
+ * CorpsCoin earning amounts by class for show participation.
+ * Keyed by canonical class names (the scoring loop looks up the corps-map
+ * key, which is always canonical); legacy short aliases retained for any
+ * caller still holding old-style keys — same pattern as CLASS_UNLOCK_COSTS.
+ * The table was previously short-key-only, which silently paid World and
+ * Open class corps ZERO show-participation coins.
  */
 const SHOW_PARTICIPATION_REWARDS = {
   soundSport: 50,
   aClass: 100,
   open: 150,
+  openClass: 150,
   world: 200,
+  worldClass: 200,
 };
 
 /**

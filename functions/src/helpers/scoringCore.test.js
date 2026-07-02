@@ -74,16 +74,17 @@ describe("scoreShowsForDay", () => {
     assert.equal(result.stats.corpsScored, 1);
     assert.equal(result.stats.corpsProcessed, 1);
 
-    // KNOWN LATENT BUG (documented, not introduced by the dedup refactor):
-    // SHOW_PARTICIPATION_REWARDS is keyed by short class names ('world',
-    // 'open') while the scoring loop looks up the canonical corpsClass
-    // ('worldClass'), so World- and Open-class corps currently earn ZERO
-    // show-participation coins. This test pins the current behavior; see the
-    // aClass test below for a class where the reward lookup does resolve.
-    assert.deepEqual(result.coinAwards, []);
+    // Regression guard: SHOW_PARTICIPATION_REWARDS was once keyed only by
+    // short class names ('world', 'open') while the scoring loop looks up
+    // the canonical corps-map key ('worldClass'), silently paying World and
+    // Open class corps ZERO show-participation coins. The table now carries
+    // canonical keys, so every class must earn its reward.
+    assert.deepEqual(result.coinAwards, [
+      { uid: "u1", corpsClass: "worldClass", showName: "Season Opener", amount: 200 },
+    ]);
   });
 
-  test("awards show-participation coins for a class whose key matches the reward table", () => {
+  test("awards class-tiered show-participation coins (aClass)", () => {
     const profilesSnapshot = {
       docs: [
         profileDoc("u1", {
@@ -253,7 +254,10 @@ describe("scoreShowsForDay", () => {
     });
 
     assert.equal(result.dailyScores.get("u1_openClass"), 40); // 20 + 20
-    // openClass hits the same reward-key mismatch as worldClass, so no coins.
-    assert.equal(result.coinAwards.length, 0);
+    // One participation award per show attended, at the openClass rate.
+    assert.deepEqual(result.coinAwards, [
+      { uid: "u1", corpsClass: "openClass", showName: "Show A", amount: 150 },
+      { uid: "u1", corpsClass: "openClass", showName: "Show B", amount: 150 },
+    ]);
   });
 });
