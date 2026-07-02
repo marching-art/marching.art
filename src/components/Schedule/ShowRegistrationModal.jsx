@@ -18,6 +18,7 @@ import { BottomSheet } from '../ui/BottomSheet';
 import { useHaptic } from '../../hooks/useHaptic';
 import { getMaxShowsForWeek } from '../../utils/captionPricing';
 import { compareCorpsClasses } from '../../utils/corps';
+import RunningOrder from './RunningOrder';
 
 const CLASS_CONFIG = {
   worldClass: { name: 'World Class', shortName: 'World', color: 'text-yellow-500', bgColor: 'bg-yellow-500/10' },
@@ -290,6 +291,13 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
   // Shared body content
   const BodyContent = () => (
     <>
+      {/* Real running order (scraped from dci.org) — shown when available */}
+      {show.lineup?.length > 0 && (
+        <div className="px-4 pt-4">
+          <RunningOrder show={show} />
+        </div>
+      )}
+
       {/* Championship Auto-Enrollment Display */}
       {isChampionship ? (
         <div className="px-4 py-6">

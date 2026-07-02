@@ -57,6 +57,8 @@ import {
 } from '../components/Dashboard';
 
 import { getWeeksUntilUnlock } from '../utils/classUnlockTime';
+import NextPerformancePanel from '../components/Dashboard/NextPerformancePanel';
+import { useScheduleStore } from '../store/scheduleStore';
 
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useScoresData } from '../hooks/useScoresData';
@@ -150,6 +152,10 @@ const Dashboard = () => {
   // Computed values
   const lineup = useMemo(() => activeCorps?.lineup || {}, [activeCorps?.lineup]);
   const lineupCount = useMemo(() => Object.keys(lineup).length, [lineup]);
+
+  // Enriched schedule (real start times + running order) for the Next Performance
+  // panel. Single shared listener via the store — no extra reads.
+  const competitions = useScheduleStore((state) => state.competitions);
 
   // Rivals are precomputed daily by scheduledRivalsUpdate and stored on the
   // profile under rivals[<corpsClass>]. Pull the slice for the active corps.
@@ -768,6 +774,13 @@ const Dashboard = () => {
 
                 {/* Daily Challenges - drives daily return visits */}
                 <DailyChallenges onLineupClick={() => openCaptionSelection()} />
+
+                {/* Next Performance - real show timing + running order + your-picks-live spotlight */}
+                <NextPerformancePanel
+                  competitions={competitions}
+                  selectedShows={activeCorps?.selectedShows || {}}
+                  lineup={lineup}
+                />
 
                 {/* Rivals - closest competitors in the active corps's class */}
                 <RivalsPanel rivals={activeCorpsRivals} corpsClass={activeCorpsClass} />

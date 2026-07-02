@@ -9,6 +9,7 @@ import { useMemo } from 'react';
 import { useSeasonStore } from '../store/seasonStore';
 import { useScheduleStore } from '../store/scheduleStore';
 import { getSeasonProgress } from './useSeason';
+import { isShowLive, showStartsAtDate } from '../utils/scheduleUtils';
 
 // =============================================================================
 // URGENCY TRIGGER TYPES
@@ -72,6 +73,27 @@ function getCurrentHour() {
   return new Date().getHours();
 }
 
+/**
+ * Format a show's real start time in its venue timezone (e.g. "7:30 PM").
+ * Falls back to the local zone when the show has no timezone.
+ * @param {Object} show
+ * @returns {string|null}
+ */
+function formatShowStart(show) {
+  const start = showStartsAtDate(show);
+  if (!start) return null;
+  try {
+    return new Intl.DateTimeFormat('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZone: show.timezone || undefined,
+      timeZoneName: 'short',
+    }).format(start);
+  } catch {
+    return new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' }).format(start);
+  }
+}
+
 // =============================================================================
 // URGENCY TRIGGERS HOOK
 // =============================================================================
@@ -100,6 +122,9 @@ export function useUrgencyTriggers() {
       isLiveShowNow: false,
       showsToday: [],
       showsTomorrow: [],
+      liveShows: [],
+      nextShowToday: null,
+      nextShowStartLabel: null,
 
       // Season info
       seasonType: seasonData?.seasonType || 'off',
@@ -141,38 +166,66 @@ export function useUrgencyTriggers() {
 
     // Find today's and tomorrow's shows
     if (competitions && competitions.length > 0) {
+      const now = new Date();
       result.showsToday = competitions.filter((show) => isToday(show.date));
       result.showsTomorrow = competitions.filter((show) => isTomorrow(show.date));
       result.isLiveShowDay = result.showsToday.length > 0;
 
-      // Check if shows are likely happening now (evening hours, typically 7pm-11pm)
-      const hour = getCurrentHour();
-      result.isLiveShowNow = result.isLiveShowDay && hour >= 18 && hour <= 23;
+      // HONEST live detection: a show is "in progress" only when NOW falls inside
+      // its real start→scores window (from the scraped detail page). No more
+      // "it's evening so assume shows are live" guessing.
+      const enrichedToday = result.showsToday.filter((s) => showStartsAtDate(s));
+      result.liveShows = result.showsToday.filter((s) => isShowLive(s, now));
+
+      if (enrichedToday.length > 0) {
+        // We have real timing for at least some of today's shows — trust it.
+        result.isLiveShowNow = result.liveShows.length > 0;
+        // Earliest upcoming (not-yet-started) show today, for the countdown copy.
+        const upcoming = enrichedToday
+          .filter((s) => showStartsAtDate(s) > now)
+          .sort((a, b) => showStartsAtDate(a) - showStartsAtDate(b));
+        result.nextShowToday = upcoming[0] || null;
+        result.nextShowStartLabel = result.nextShowToday ? formatShowStart(result.nextShowToday) : null;
+      } else {
+        // No enriched timing (off-season / unscraped) — preserve prior behavior so
+        // nothing regresses: assume evening shows are live.
+        const hour = getCurrentHour();
+        result.isLiveShowNow = result.isLiveShowDay && hour >= 18 && hour <= 23;
+      }
     }
 
     // Build urgency triggers based on conditions
     const triggers = [];
 
-    // 1. LIVE SHOWS NOW (highest priority)
+    // 1. LIVE SHOWS NOW (highest priority) — only when a show is genuinely on the
+    //    field right now. Count reflects shows actually performing, not every show
+    //    dated today. Scores archive overnight, so the copy says "performing now".
     if (result.isLiveShowNow) {
+      // liveShows is populated when we have real timing; fall back to today's count
+      // for the unenriched evening-heuristic path.
+      const liveCount = result.liveShows.length || result.showsToday.length;
       triggers.push({
         id: 'live_now',
         level: URGENCY_LEVELS.HIGH,
         type: 'live',
-        message: 'Live scores updating now',
-        subMessage: `${result.showsToday.length} show${result.showsToday.length > 1 ? 's' : ''} in progress`,
+        message: `${liveCount} show${liveCount > 1 ? 's' : ''} performing now`,
+        subMessage: 'Live from the DCI tour',
         icon: 'activity',
         pulse: true,
       });
     }
-    // 2. SHOWS TODAY (before evening)
+    // 2. SHOWS TODAY (before showtime)
     else if (result.isLiveShowDay) {
       triggers.push({
         id: 'shows_today',
         level: URGENCY_LEVELS.HIGH,
         type: 'show_day',
         message: 'Live scores tonight',
-        subMessage: `${result.showsToday.length} show${result.showsToday.length > 1 ? 's' : ''} competing today`,
+        // Prefer the real first-show time when we scraped it; otherwise fall back
+        // to a simple count of today's shows.
+        subMessage: result.nextShowStartLabel
+          ? `First show at ${result.nextShowStartLabel}`
+          : `${result.showsToday.length} show${result.showsToday.length > 1 ? 's' : ''} competing today`,
         icon: 'calendar',
         pulse: false,
       });

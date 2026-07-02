@@ -27,13 +27,15 @@ exports.showReminderPushJob = onSchedule(
 
     const now = new Date();
 
-    // Look for shows starting in 1-2 hours
+    // Look for shows starting in 1-2 hours (based on REAL start time).
     const reminderStart = new Date(now.getTime() + 1 * 60 * 60 * 1000);
     const reminderEnd = new Date(now.getTime() + 2 * 60 * 60 * 1000);
 
     try {
+      const db = admin.firestore();
+
       // Get current season
-      const seasonDoc = await admin.firestore().doc("game-settings/season").get();
+      const seasonDoc = await db.doc("game-settings/season").get();
       const season = seasonDoc.data();
 
       if (!season?.seasonUid) {
@@ -41,44 +43,73 @@ exports.showReminderPushJob = onSchedule(
         return;
       }
 
-      // Find shows starting soon
-      const showsSnapshot = await admin
-        .firestore()
-        .collection(`seasons/${season.seasonUid}/shows`)
-        .where("date", ">=", reminderStart)
-        .where("date", "<=", reminderEnd)
-        .get();
+      // Source shows from the real schedule (schedules/{seasonId}.competitions),
+      // which now carries scraped `startsAt` timing. Reminders key off startsAt,
+      // NOT the midnight `date`, so they fire at real showtime.
+      const scheduleDoc = await db.doc(`schedules/${season.seasonUid}`).get();
+      const competitions = scheduleDoc.exists ? (scheduleDoc.data().competitions || []) : [];
 
-      if (showsSnapshot.empty) {
-        logger.info("No shows starting soon");
+      // Shows whose real start falls in the 1-2h reminder window.
+      const startingSoon = competitions.filter((comp) => {
+        if (!comp.startsAt) return false;
+        const startsAt = new Date(comp.startsAt);
+        return startsAt >= reminderStart && startsAt <= reminderEnd;
+      });
+
+      if (startingSoon.length === 0) {
+        logger.info("No shows starting soon (by real start time)");
         return;
       }
 
+      // Index the starting-soon shows by day + normalized name so we can match
+      // directors' selectedShows snapshots against them.
+      const normalize = (name) => String(name || "").toLowerCase().replace(/\s+/g, " ").trim();
+      const soonByKey = new Map();
+      for (const comp of startingSoon) {
+        const hoursUntil = Math.max(1, Math.round((new Date(comp.startsAt) - now) / (60 * 60 * 1000)));
+        soonByKey.set(`${comp.day}::${normalize(comp.name)}`, { name: comp.name, hoursUntil });
+      }
+
+      // Find directors in this season (indexed collectionGroup query — same pattern
+      // scoring.js uses). This only runs when shows are actually starting soon.
+      const profilesSnapshot = await db
+        .collectionGroup("profile")
+        .where("activeSeasonId", "==", season.seasonUid)
+        .get();
+
       let totalSent = 0;
+      const CORPS_CLASSES = ["worldClass", "openClass", "aClass", "soundSport"];
 
-      for (const showDoc of showsSnapshot.docs) {
-        const show = showDoc.data();
-        const showDate = show.date.toDate();
-        const hoursUntil = Math.ceil((showDate - now) / (60 * 60 * 1000));
+      for (const profileDoc of profilesSnapshot.docs) {
+        // profile/data lives under artifacts/{ns}/users/{uid}/profile/data
+        const uid = profileDoc.ref.parent.parent?.id;
+        if (!uid) continue;
+        const profile = profileDoc.data();
 
-        // Get registrations for this show
-        const registrationsSnapshot = await admin
-          .firestore()
-          .collection(`seasons/${season.seasonUid}/shows/${showDoc.id}/registrations`)
-          .get();
-
-        for (const regDoc of registrationsSnapshot.docs) {
-          const registration = regDoc.data();
-          const userId = registration.userId;
-
-          if (userId) {
-            const sent = await sendShowReminderPush(userId, show.eventName, hoursUntil);
-            if (sent) totalSent++;
+        // Collect this director's selected shows that are starting soon (dedupe so
+        // a director entering the same show in multiple classes gets one reminder).
+        const notified = new Set();
+        for (const corpsClass of CORPS_CLASSES) {
+          const selectedShows = profile.corps?.[corpsClass]?.selectedShows || {};
+          for (const weekShows of Object.values(selectedShows)) {
+            if (!Array.isArray(weekShows)) continue;
+            for (const sel of weekShows) {
+              const key = `${sel.day}::${normalize(sel.eventName || sel.name)}`;
+              const soon = soonByKey.get(key);
+              if (soon && !notified.has(key)) {
+                notified.add(key);
+                const sent = await sendShowReminderPush(uid, soon.name, soon.hoursUntil);
+                if (sent) totalSent++;
+              }
+            }
           }
         }
       }
 
-      logger.info(`Show reminder push job complete. Sent ${totalSent} notifications.`);
+      logger.info(
+        `Show reminder push job complete. ${startingSoon.length} show(s) starting soon, ` +
+        `sent ${totalSent} notifications.`
+      );
     } catch (error) {
       logger.error("Error in show reminder push job:", error);
     }
@@ -105,7 +136,7 @@ exports.weeklyMatchupPushJob = onSchedule(
 
     const db = admin.firestore();
     const namespace = dataNamespaceParam.value();
-    const CORPS_CLASSES = ['worldClass', 'openClass', 'aClass', 'soundSport'];
+    const CORPS_CLASSES = ["worldClass", "openClass", "aClass", "soundSport"];
 
     try {
       // Get current season week
