@@ -31,7 +31,7 @@ import { newsCache, prefetchCache } from './newsFeedCache';
 import {
   NewsMasthead,
   HeroStory,
-  ImageGridCard,
+  TextStoryRow,
   LoadingState,
   ErrorState,
   EmptyState,
@@ -154,8 +154,8 @@ function useIntersectionObserver(callback, enabled, options = {}) {
 
 
 /**
- * Image Grid Card - Image-focused card for visual browsing (like news sites)
- * Prominently displays story image with category badge and headline below
+ * Text Story Row - Headline + summary only, no thumbnail (classic newspaper style)
+ * Only the hero story carries an image; everything below is text-only
  * OPTIMIZATION: Memoized to prevent re-renders when sibling news items update
  */
 
@@ -502,19 +502,19 @@ export default function NewsFeed({ maxItems = 4 }) {
             />
           )}
 
-          {/* Image Grid - 4 Column Layout for Visual Browsing */}
+          {/* More Stories - Text-only two-column list (classic newspaper style) */}
           {otherStories.length > 0 && (
             <div className="mb-6">
-              <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-2 mb-2">
                 <Zap className="w-4 h-4 text-[#0057B8]" />
                 <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest">
                   More Stories
                 </h2>
                 <div className="flex-1 h-px bg-[#333]" />
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="md:columns-2 md:gap-10 md:[column-rule:1px_solid_#33333399]">
                 {otherStories.map((story) => (
-                  <ImageGridCard
+                  <TextStoryRow
                     key={story.id}
                     story={story}
                     onClick={handleStoryClick}

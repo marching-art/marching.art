@@ -186,71 +186,45 @@ function HeroStory({ story, onClick, storyNumber, engagement }) {
   );
 }
 
-const ImageGridCard = memo(({ story, onClick, engagement }) => {
+const TextStoryRow = memo(({ story, onClick, engagement }) => {
   const config = getCategoryConfig(story.category);
-  const Icon = config.icon;
   const urgency = getUrgencyBadge(story.createdAt);
 
   return (
     <article
-      className="bg-[#1a1a1a] border border-[#333] overflow-hidden hover:border-[#444] transition-colors cursor-pointer group flex flex-col"
+      className="py-4 border-b border-[#333]/60 break-inside-avoid cursor-pointer group"
       onClick={() => onClick?.(story)}
     >
-      {/* Image Container */}
-      <div className="aspect-[4/3] bg-[#0a0a0a] relative overflow-hidden">
-        {story.imageUrl ? (
-          <img
-            src={story.imageUrl}
-            alt={story.headline}
-            className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
-            loading="lazy"
-          />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#0057B8]/10 to-transparent">
-            <Icon className="w-12 h-12 text-[#0057B8]/30" />
-          </div>
-        )}
-
-        {/* Gradient overlay at bottom */}
-        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/60 to-transparent" />
-
-        {/* Category badge */}
-        <div className="absolute bottom-2 left-2">
-          <span className={`px-2 py-1 ${config.bgClass} text-white text-[10px] font-bold uppercase tracking-wider`}>
-            {config.label}
-          </span>
-        </div>
-
-        {/* Urgency badge */}
-        {urgency && (
-          <div className="absolute top-2 right-2">
-            <UrgencyBadge urgency={urgency} />
-          </div>
-        )}
+      {/* Kicker: category + urgency */}
+      <div className="flex items-center gap-2 mb-1.5">
+        <span className={`text-[10px] font-bold uppercase tracking-widest ${config.textClass}`}>
+          {config.label}
+        </span>
+        {urgency && <UrgencyBadge urgency={urgency} />}
       </div>
 
-      {/* Content */}
-      <div className="p-3 flex-1 flex flex-col">
-        {/* Headline */}
-        <h2 className="text-sm font-bold text-white leading-snug group-hover:text-gray-100 transition-colors line-clamp-3 mb-2 flex-1">
-          {safeString(story.headline)}
-        </h2>
+      {/* Headline */}
+      <h2 className="font-serif text-lg font-bold text-white leading-snug mb-1.5 group-hover:underline decoration-gray-500 decoration-1 underline-offset-[3px]">
+        {safeString(story.headline)}
+      </h2>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between pt-2 border-t border-[#333]/50 mt-auto">
-          <span className="text-[10px] text-gray-500">
-            {formatTimestamp(story.createdAt)}
-          </span>
-          <div className="flex items-center gap-2">
-            {engagement && (
-              <EngagementSummary
-                reactionCounts={engagement.reactionCounts}
-                userReaction={engagement.userReaction}
-                commentCount={engagement.commentCount}
-              />
-            )}
-          </div>
-        </div>
+      {/* Summary line */}
+      <p className="text-sm text-gray-400 leading-relaxed line-clamp-2 mb-2">
+        {safeString(story.summary)}
+      </p>
+
+      {/* Meta */}
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] text-gray-500 uppercase tracking-wide">
+          {formatTimestamp(story.createdAt)}
+        </span>
+        {engagement && (
+          <EngagementSummary
+            reactionCounts={engagement.reactionCounts}
+            userReaction={engagement.userReaction}
+            commentCount={engagement.commentCount}
+          />
+        )}
       </div>
     </article>
   );
@@ -292,4 +266,4 @@ function EmptyState({ category }) {
   );
 }
 
-export { NewsMasthead, HeroStory, ImageGridCard, LoadingState, ErrorState, EmptyState };
+export { NewsMasthead, HeroStory, TextStoryRow, LoadingState, ErrorState, EmptyState };
