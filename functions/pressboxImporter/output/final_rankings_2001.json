@@ -1,0 +1,142 @@
+{
+ "data": [
+  {
+   "rank": 1,
+   "corps": "The Cavaliers",
+   "points": 25,
+   "originalScore": 98.35
+  },
+  {
+   "rank": 2,
+   "corps": "Blue Devils",
+   "points": 24,
+   "originalScore": 97.6
+  },
+  {
+   "rank": 3,
+   "corps": "The Cadets",
+   "points": 23,
+   "originalScore": 97.6
+  },
+  {
+   "rank": 4,
+   "corps": "Santa Clara Vanguard",
+   "points": 22,
+   "originalScore": 95.35
+  },
+  {
+   "rank": 5,
+   "corps": "Glassmen",
+   "points": 21,
+   "originalScore": 94.3
+  },
+  {
+   "rank": 6,
+   "corps": "Phantom Regiment",
+   "points": 20,
+   "originalScore": 91.9
+  },
+  {
+   "rank": 7,
+   "corps": "Crossmen",
+   "points": 19,
+   "originalScore": 91.15
+  },
+  {
+   "rank": 8,
+   "corps": "Bluecoats",
+   "points": 18,
+   "originalScore": 90.75
+  },
+  {
+   "rank": 9,
+   "corps": "Boston Crusaders",
+   "points": 17,
+   "originalScore": 88.8
+  },
+  {
+   "rank": 10,
+   "corps": "Carolina Crown",
+   "points": 16,
+   "originalScore": 86.95
+  },
+  {
+   "rank": 11,
+   "corps": "Madison Scouts",
+   "points": 15,
+   "originalScore": 86.55
+  },
+  {
+   "rank": 12,
+   "corps": "Colts",
+   "points": 14,
+   "originalScore": 84.9
+  },
+  {
+   "rank": 13,
+   "corps": "Spirit of Atlanta",
+   "points": 13,
+   "originalScore": 84.05
+  },
+  {
+   "rank": 14,
+   "corps": "Blue Knights",
+   "points": 12,
+   "originalScore": 83.9
+  },
+  {
+   "rank": 15,
+   "corps": "Southwind",
+   "points": 11,
+   "originalScore": 80.05
+  },
+  {
+   "rank": 16,
+   "corps": "Mandarins",
+   "points": 10,
+   "originalScore": 79.3
+  },
+  {
+   "rank": 17,
+   "corps": "Pioneer",
+   "points": 9,
+   "originalScore": 79.3
+  },
+  {
+   "rank": 18,
+   "corps": "Seattle Cascades",
+   "points": 8,
+   "originalScore": 78.3
+  },
+  {
+   "rank": 19,
+   "corps": "Troopers",
+   "points": 7,
+   "originalScore": 76.2
+  },
+  {
+   "rank": 20,
+   "corps": "Spartans",
+   "points": 6,
+   "originalScore": 73.8
+  },
+  {
+   "rank": 21,
+   "corps": "Capital Regiment",
+   "points": 5,
+   "originalScore": 73.45
+  },
+  {
+   "rank": 22,
+   "corps": "Patriots",
+   "points": 4,
+   "originalScore": 72.6
+  },
+  {
+   "rank": 23,
+   "corps": "Kiwanis Kavaliers",
+   "points": 3,
+   "originalScore": 72.5
+  }
+ ]
+}

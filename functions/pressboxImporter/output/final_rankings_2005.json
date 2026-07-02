@@ -1,0 +1,148 @@
+{
+ "data": [
+  {
+   "rank": 1,
+   "corps": "The Cadets",
+   "points": 25,
+   "originalScore": 99.15
+  },
+  {
+   "rank": 2,
+   "corps": "The Cavaliers",
+   "points": 24,
+   "originalScore": 97.625
+  },
+  {
+   "rank": 3,
+   "corps": "Phantom Regiment",
+   "points": 23,
+   "originalScore": 96.825
+  },
+  {
+   "rank": 4,
+   "corps": "Blue Devils",
+   "points": 22,
+   "originalScore": 95.25
+  },
+  {
+   "rank": 5,
+   "corps": "Bluecoats",
+   "points": 21,
+   "originalScore": 94.45
+  },
+  {
+   "rank": 6,
+   "corps": "Madison Scouts",
+   "points": 20,
+   "originalScore": 92.625
+  },
+  {
+   "rank": 7,
+   "corps": "Carolina Crown",
+   "points": 19,
+   "originalScore": 90.725
+  },
+  {
+   "rank": 8,
+   "corps": "Santa Clara Vanguard",
+   "points": 18,
+   "originalScore": 88.65
+  },
+  {
+   "rank": 9,
+   "corps": "Boston Crusaders",
+   "points": 17,
+   "originalScore": 88.4
+  },
+  {
+   "rank": 10,
+   "corps": "Blue Knights",
+   "points": 16,
+   "originalScore": 88.225
+  },
+  {
+   "rank": 11,
+   "corps": "Glassmen",
+   "points": 15,
+   "originalScore": 87.7
+  },
+  {
+   "rank": 12,
+   "corps": "Spirit of Atlanta",
+   "points": 14,
+   "originalScore": 86.075
+  },
+  {
+   "rank": 13,
+   "corps": "Colts",
+   "points": 13,
+   "originalScore": 84.075
+  },
+  {
+   "rank": 14,
+   "corps": "Crossmen",
+   "points": 12,
+   "originalScore": 84.05
+  },
+  {
+   "rank": 15,
+   "corps": "Capital Regiment",
+   "points": 11,
+   "originalScore": 81.4
+  },
+  {
+   "rank": 16,
+   "corps": "Southwind",
+   "points": 10,
+   "originalScore": 80.95
+  },
+  {
+   "rank": 17,
+   "corps": "Seattle Cascades",
+   "points": 9,
+   "originalScore": 78.1
+  },
+  {
+   "rank": 18,
+   "corps": "Mandarins",
+   "points": 8,
+   "originalScore": 78.1
+  },
+  {
+   "rank": 19,
+   "corps": "Pacific Crest",
+   "points": 7,
+   "originalScore": 77.25
+  },
+  {
+   "rank": 20,
+   "corps": "Esperanza",
+   "points": 6,
+   "originalScore": 76.2
+  },
+  {
+   "rank": 21,
+   "corps": "Magic of Orlando",
+   "points": 5,
+   "originalScore": 75.975
+  },
+  {
+   "rank": 22,
+   "corps": "Troopers",
+   "points": 4,
+   "originalScore": 71.675
+  },
+  {
+   "rank": 23,
+   "corps": "Pioneer",
+   "points": 3,
+   "originalScore": 71.525
+  },
+  {
+   "rank": 24,
+   "corps": "Kiwanis Kavaliers",
+   "points": 2,
+   "originalScore": 68.6
+  }
+ ]
+}

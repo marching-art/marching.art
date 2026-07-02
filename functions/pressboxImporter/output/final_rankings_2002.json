@@ -1,0 +1,136 @@
+{
+ "data": [
+  {
+   "rank": 1,
+   "corps": "The Cavaliers",
+   "points": 25,
+   "originalScore": 99.15
+  },
+  {
+   "rank": 2,
+   "corps": "Blue Devils",
+   "points": 24,
+   "originalScore": 97.3
+  },
+  {
+   "rank": 3,
+   "corps": "The Cadets",
+   "points": 23,
+   "originalScore": 96.75
+  },
+  {
+   "rank": 4,
+   "corps": "Santa Clara Vanguard",
+   "points": 22,
+   "originalScore": 95.65
+  },
+  {
+   "rank": 5,
+   "corps": "Phantom Regiment",
+   "points": 21,
+   "originalScore": 92.4
+  },
+  {
+   "rank": 6,
+   "corps": "Boston Crusaders",
+   "points": 20,
+   "originalScore": 92.4
+  },
+  {
+   "rank": 7,
+   "corps": "Bluecoats",
+   "points": 19,
+   "originalScore": 91.5
+  },
+  {
+   "rank": 8,
+   "corps": "Glassmen",
+   "points": 18,
+   "originalScore": 91
+  },
+  {
+   "rank": 9,
+   "corps": "Crossmen",
+   "points": 17,
+   "originalScore": 89.1
+  },
+  {
+   "rank": 10,
+   "corps": "Blue Knights",
+   "points": 16,
+   "originalScore": 85.5
+  },
+  {
+   "rank": 11,
+   "corps": "Spirit of Atlanta",
+   "points": 15,
+   "originalScore": 85.45
+  },
+  {
+   "rank": 12,
+   "corps": "Magic of Orlando",
+   "points": 14,
+   "originalScore": 84.85
+  },
+  {
+   "rank": 13,
+   "corps": "Madison Scouts",
+   "points": 13,
+   "originalScore": 84.85
+  },
+  {
+   "rank": 14,
+   "corps": "Seattle Cascades",
+   "points": 12,
+   "originalScore": 84.05
+  },
+  {
+   "rank": 15,
+   "corps": "Colts",
+   "points": 11,
+   "originalScore": 83.9
+  },
+  {
+   "rank": 16,
+   "corps": "Carolina Crown",
+   "points": 10,
+   "originalScore": 81.8
+  },
+  {
+   "rank": 17,
+   "corps": "Southwind",
+   "points": 9,
+   "originalScore": 79.25
+  },
+  {
+   "rank": 18,
+   "corps": "Mandarins",
+   "points": 8,
+   "originalScore": 78.05
+  },
+  {
+   "rank": 19,
+   "corps": "Capital Regiment",
+   "points": 7,
+   "originalScore": 77.35
+  },
+  {
+   "rank": 20,
+   "corps": "Kiwanis Kavaliers",
+   "points": 6,
+   "originalScore": 75.9
+  },
+  {
+   "rank": 21,
+   "corps": "Troopers",
+   "points": 5,
+   "originalScore": 75.55
+  },
+  {
+   "rank": 22,
+   "corps": "Pioneer",
+   "points": 4,
+   "originalScore": 72.35
+  }
+ ]
+}

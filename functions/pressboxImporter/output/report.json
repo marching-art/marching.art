@@ -1,0 +1,150 @@
+{
+  "2000": {
+    "documents": 3,
+    "events": 137,
+    "scoreEntries": 1192,
+    "rankings": 24,
+    "fileBytes": 301712,
+    "skippedNonDciBlocks": 20,
+    "unmappableDciBlocks": [
+      "2000-06-17 Fort Monmouth, New Jersey [2 captions]",
+      "2000-06-25 Haledon, New Jersey [2 captions]",
+      "2000-07-01 Nashua, New Hampshire [2 captions]",
+      "2000-07-01 Endicott, New York [2 captions]",
+      "2000-07-09 Lakewood, New Jersey [2 captions]",
+      "2000-07-16 Brick, New Jersey [2 captions]",
+      "2000-07-22 Brooklyn, New York [2 captions]"
+    ],
+    "subtotalMismatches": 48
+  },
+  "2001": {
+    "documents": 3,
+    "events": 131,
+    "scoreEntries": 1114,
+    "rankings": 23,
+    "fileBytes": 281989,
+    "skippedNonDciBlocks": 17,
+    "unmappableDciBlocks": [
+      "2001-07-29 Lakewood, New Jersey [3 captions]",
+      "2001-08-04 East Providence, Rhode Island [3 captions]"
+    ],
+    "subtotalMismatches": 58
+  },
+  "2002": {
+    "documents": 3,
+    "events": 128,
+    "scoreEntries": 1117,
+    "rankings": 22,
+    "fileBytes": 282794,
+    "skippedNonDciBlocks": 14,
+    "unmappableDciBlocks": [
+      "2002-07-13 Reading, Pennsylvania [3 captions]",
+      "2002-06-22 Waterbury, Connecticut [3 captions]"
+    ],
+    "subtotalMismatches": 38
+  },
+  "2003": {
+    "documents": 3,
+    "events": 140,
+    "scoreEntries": 1152,
+    "rankings": 22,
+    "fileBytes": 293010,
+    "skippedNonDciBlocks": 17,
+    "unmappableDciBlocks": [
+      "2003-07-05 Rockmart, Georgia [2 captions]",
+      "2003-07-06 Westminster, South Carolina [2 captions]",
+      "2003-07-12 Reading, Pennsylvania [2 captions]"
+    ],
+    "subtotalMismatches": 36
+  },
+  "2004": {
+    "documents": 3,
+    "events": 124,
+    "scoreEntries": 1043,
+    "rankings": 24,
+    "fileBytes": 265115,
+    "skippedNonDciBlocks": 18,
+    "unmappableDciBlocks": [],
+    "subtotalMismatches": 27
+  },
+  "2005": {
+    "documents": 3,
+    "events": 134,
+    "scoreEntries": 1128,
+    "rankings": 24,
+    "fileBytes": 287121,
+    "skippedNonDciBlocks": 19,
+    "unmappableDciBlocks": [
+      "2005-07-17 Saint Peter, Minnesota [2 captions]"
+    ],
+    "subtotalMismatches": 11
+  },
+  "2006": {
+    "documents": 3,
+    "events": 127,
+    "scoreEntries": 1017,
+    "rankings": 23,
+    "fileBytes": 259885,
+    "skippedNonDciBlocks": 38,
+    "unmappableDciBlocks": [
+      "2006-06-20 Memphis, Tennessee [0 captions]",
+      "2006-07-08 Indianapolis, Indiana (DCI Central Division All-Age Championship Prelims) [2 captions]",
+      "2006-07-08 Indianapolis, Indiana (DCI Central Division All-Age Championship Finals) [2 captions]"
+    ],
+    "subtotalMismatches": 4
+  },
+  "2007": {
+    "documents": 3,
+    "events": 126,
+    "scoreEntries": 961,
+    "rankings": 22,
+    "fileBytes": 246604,
+    "skippedNonDciBlocks": 26,
+    "unmappableDciBlocks": [],
+    "subtotalMismatches": 20
+  },
+  "2008": {
+    "documents": 1,
+    "events": 20,
+    "scoreEntries": 148,
+    "rankings": 0,
+    "fileBytes": 36759,
+    "skippedNonDciBlocks": 4,
+    "unmappableDciBlocks": [],
+    "subtotalMismatches": 0
+  },
+  "2009": {
+    "documents": 3,
+    "events": 97,
+    "scoreEntries": 827,
+    "rankings": 22,
+    "fileBytes": 208480,
+    "skippedNonDciBlocks": 37,
+    "unmappableDciBlocks": [],
+    "subtotalMismatches": 13
+  },
+  "2010": {
+    "documents": 3,
+    "events": 103,
+    "scoreEntries": 863,
+    "rankings": 23,
+    "fileBytes": 217627,
+    "skippedNonDciBlocks": 37,
+    "unmappableDciBlocks": [],
+    "subtotalMismatches": 9
+  },
+  "2011": {
+    "documents": 0,
+    "events": 0
+  },
+  "2012": {
+    "documents": 3,
+    "events": 95,
+    "scoreEntries": 786,
+    "rankings": 25,
+    "fileBytes": 198776,
+    "skippedNonDciBlocks": 34,
+    "unmappableDciBlocks": [],
+    "subtotalMismatches": 7
+  }
+}

@@ -1,0 +1,2256 @@
+{
+ "data": [
+  {
+   "eventName": "DCI Competition - Rockford, Illinois",
+   "date": "2008-06-21T00:00:00.000Z",
+   "location": "Rockford, Illinois",
+   "offSeasonDay": null,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "The Cavaliers",
+     "score": 73.4,
+     "captions": {
+      "GE1": 13.7,
+      "GE2": 14.4,
+      "VP": 0,
+      "VA": 15.4,
+      "CG": 0,
+      "B": 0,
+      "MA": 15.1,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 72.4,
+     "captions": {
+      "GE1": 13.9,
+      "GE2": 14.1,
+      "VP": 0,
+      "VA": 14.5,
+      "CG": 0,
+      "B": 0,
+      "MA": 14.9,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 70.2,
+     "captions": {
+      "GE1": 13.4,
+      "GE2": 13.6,
+      "VP": 0,
+      "VA": 14.4,
+      "CG": 0,
+      "B": 0,
+      "MA": 14.4,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 64.5,
+     "captions": {
+      "GE1": 12.9,
+      "GE2": 12.4,
+      "VP": 0,
+      "VA": 13.5,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.5,
+      "P": 12.2
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 62.5,
+     "captions": {
+      "GE1": 10.9,
+      "GE2": 12.8,
+      "VP": 0,
+      "VA": 13,
+      "CG": 0,
+      "B": 0,
+      "MA": 12.7,
+      "P": 13.1
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 61.5,
+     "captions": {
+      "GE1": 13.1,
+      "GE2": 12.1,
+      "VP": 0,
+      "VA": 11.3,
+      "CG": 0,
+      "B": 0,
+      "MA": 12.9,
+      "P": 12.1
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 52.8,
+     "captions": {
+      "GE1": 10.3,
+      "GE2": 10.2,
+      "VP": 0,
+      "VA": 11,
+      "CG": 0,
+      "B": 0,
+      "MA": 10.9,
+      "P": 10.4
+     }
+    },
+    {
+     "corps": "Racine Scouts",
+     "score": 46.5,
+     "captions": {
+      "GE1": 8.6,
+      "GE2": 10.5,
+      "VP": 0,
+      "VA": 10,
+      "CG": 0,
+      "B": 0,
+      "MA": 8.3,
+      "P": 9.1
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Toledo, Ohio",
+   "date": "2008-06-21T00:00:00.000Z",
+   "location": "Toledo, Ohio",
+   "offSeasonDay": null,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "The Cadets",
+     "score": 71.2,
+     "captions": {
+      "GE1": 14.8,
+      "GE2": 14.9,
+      "VP": 0,
+      "VA": 13.7,
+      "CG": 0,
+      "B": 0,
+      "MA": 14.9,
+      "P": 12.9
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 68.8,
+     "captions": {
+      "GE1": 14.2,
+      "GE2": 13.7,
+      "VP": 0,
+      "VA": 13.1,
+      "CG": 0,
+      "B": 0,
+      "MA": 14.6,
+      "P": 13.2
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 67.1,
+     "captions": {
+      "GE1": 14,
+      "GE2": 12.8,
+      "VP": 0,
+      "VA": 14,
+      "CG": 0,
+      "B": 0,
+      "MA": 14.2,
+      "P": 12.1
+     }
+    },
+    {
+     "corps": "Glassmen",
+     "score": 63,
+     "captions": {
+      "GE1": 12.8,
+      "GE2": 12.6,
+      "VP": 0,
+      "VA": 12.9,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.7,
+      "P": 11
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 62.4,
+     "captions": {
+      "GE1": 13.2,
+      "GE2": 12.2,
+      "VP": 0,
+      "VA": 12.6,
+      "CG": 0,
+      "B": 0,
+      "MA": 12.8,
+      "P": 11.6
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 57.9,
+     "captions": {
+      "GE1": 12.1,
+      "GE2": 11.3,
+      "VP": 0,
+      "VA": 11.6,
+      "CG": 0,
+      "B": 0,
+      "MA": 12.2,
+      "P": 10.7
+     }
+    },
+    {
+     "corps": "Pioneer",
+     "score": 52.3,
+     "captions": {
+      "GE1": 10.6,
+      "GE2": 10.2,
+      "VP": 0,
+      "VA": 11.1,
+      "CG": 0,
+      "B": 0,
+      "MA": 11.2,
+      "P": 9.2
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Dublin, Ohio",
+   "date": "2008-06-22T00:00:00.000Z",
+   "location": "Dublin, Ohio",
+   "offSeasonDay": 1,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Bluecoats",
+     "score": 69.5,
+     "captions": {
+      "GE1": 14.4,
+      "GE2": 14,
+      "VP": 0,
+      "VA": 13.1,
+      "CG": 0,
+      "B": 0,
+      "MA": 14.2,
+      "P": 13.8
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 68.6,
+     "captions": {
+      "GE1": 14.5,
+      "GE2": 13.6,
+      "VP": 0,
+      "VA": 14.5,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.6,
+      "P": 12.4
+     }
+    },
+    {
+     "corps": "Glassmen",
+     "score": 64.6,
+     "captions": {
+      "GE1": 13.6,
+      "GE2": 12.9,
+      "VP": 0,
+      "VA": 13.5,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.1,
+      "P": 11.5
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 62.4,
+     "captions": {
+      "GE1": 13.2,
+      "GE2": 13,
+      "VP": 0,
+      "VA": 12.4,
+      "CG": 0,
+      "B": 0,
+      "MA": 12.8,
+      "P": 11
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 62,
+     "captions": {
+      "GE1": 13.4,
+      "GE2": 12.7,
+      "VP": 0,
+      "VA": 13,
+      "CG": 0,
+      "B": 0,
+      "MA": 11.6,
+      "P": 11.3
+     }
+    },
+    {
+     "corps": "Pioneer",
+     "score": 51.6,
+     "captions": {
+      "GE1": 10.4,
+      "GE2": 10.6,
+      "VP": 0,
+      "VA": 10.8,
+      "CG": 0,
+      "B": 0,
+      "MA": 9.9,
+      "P": 9.9
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Stillwater, Minnesota",
+   "date": "2008-06-22T00:00:00.000Z",
+   "location": "Stillwater, Minnesota",
+   "offSeasonDay": 1,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Phantom Regiment",
+     "score": 73.6,
+     "captions": {
+      "GE1": 14.1,
+      "GE2": 14.6,
+      "VP": 0,
+      "VA": 14.8,
+      "CG": 0,
+      "B": 0,
+      "MA": 15.3,
+      "P": 14.9
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 70.7,
+     "captions": {
+      "GE1": 13.7,
+      "GE2": 13.8,
+      "VP": 0,
+      "VA": 14.1,
+      "CG": 0,
+      "B": 0,
+      "MA": 14.7,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 65.5,
+     "captions": {
+      "GE1": 13.4,
+      "GE2": 12.5,
+      "VP": 0,
+      "VA": 13.6,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.9,
+      "P": 12.1
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 65.3,
+     "captions": {
+      "GE1": 12.2,
+      "GE2": 13,
+      "VP": 0,
+      "VA": 12.9,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.6,
+      "P": 13.6
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 64.1,
+     "captions": {
+      "GE1": 13.2,
+      "GE2": 12.1,
+      "VP": 0,
+      "VA": 13,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.4,
+      "P": 12.4
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 64,
+     "captions": {
+      "GE1": 11.5,
+      "GE2": 12.9,
+      "VP": 0,
+      "VA": 13.4,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.1,
+      "P": 13.1
+     }
+    },
+    {
+     "corps": "Racine Scouts",
+     "score": 55,
+     "captions": {
+      "GE1": 10.2,
+      "GE2": 12,
+      "VP": 0,
+      "VA": 11,
+      "CG": 0,
+      "B": 0,
+      "MA": 11.3,
+      "P": 10.5
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Stockton, California",
+   "date": "2008-06-22T00:00:00.000Z",
+   "location": "Stockton, California",
+   "offSeasonDay": 1,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 75.9,
+     "captions": {
+      "GE1": 15.3,
+      "GE2": 15.6,
+      "VP": 0,
+      "VA": 15.9,
+      "CG": 0,
+      "B": 0,
+      "MA": 14.9,
+      "P": 14.2
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 74,
+     "captions": {
+      "GE1": 14.6,
+      "GE2": 15.8,
+      "VP": 0,
+      "VA": 15.1,
+      "CG": 0,
+      "B": 0,
+      "MA": 14.5,
+      "P": 14
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 64.6,
+     "captions": {
+      "GE1": 11.7,
+      "GE2": 13.9,
+      "VP": 0,
+      "VA": 13.1,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.4,
+      "P": 12.5
+     }
+    },
+    {
+     "corps": "Vanguard Cadets",
+     "score": 70.1,
+     "captions": {
+      "GE1": 13.3,
+      "GE2": 13.7,
+      "VP": 0,
+      "VA": 14.3,
+      "CG": 0,
+      "B": 0,
+      "MA": 14.7,
+      "P": 14.1
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 69.9,
+     "captions": {
+      "GE1": 13.7,
+      "GE2": 14,
+      "VP": 0,
+      "VA": 14,
+      "CG": 0,
+      "B": 0,
+      "MA": 14.4,
+      "P": 13.8
+     }
+    },
+    {
+     "corps": "Blue Devils C",
+     "score": 48.9,
+     "captions": {
+      "GE1": 10.5,
+      "GE2": 7.6,
+      "VP": 0,
+      "VA": 9.9,
+      "CG": 0,
+      "B": 0,
+      "MA": 10.1,
+      "P": 10.8
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Mankato, Minnesota",
+   "date": "2008-06-23T00:00:00.000Z",
+   "location": "Mankato, Minnesota",
+   "offSeasonDay": 2,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Phantom Regiment",
+     "score": 75.9,
+     "captions": {
+      "GE1": 15,
+      "GE2": 15,
+      "VP": 0,
+      "VA": 15.1,
+      "CG": 0,
+      "B": 0,
+      "MA": 15.3,
+      "P": 15.5
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 72.7,
+     "captions": {
+      "GE1": 14.1,
+      "GE2": 14.5,
+      "VP": 0,
+      "VA": 14.6,
+      "CG": 0,
+      "B": 0,
+      "MA": 14.7,
+      "P": 14.8
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 65.9,
+     "captions": {
+      "GE1": 12.9,
+      "GE2": 12.9,
+      "VP": 0,
+      "VA": 13.5,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.7,
+      "P": 12.9
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 65.9,
+     "captions": {
+      "GE1": 13.2,
+      "GE2": 13.5,
+      "VP": 0,
+      "VA": 12.5,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.6,
+      "P": 13.1
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 65.1,
+     "captions": {
+      "GE1": 12.2,
+      "GE2": 13.6,
+      "VP": 0,
+      "VA": 12.8,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.2,
+      "P": 13.3
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 64.7,
+     "captions": {
+      "GE1": 13.4,
+      "GE2": 12.8,
+      "VP": 0,
+      "VA": 13,
+      "CG": 0,
+      "B": 0,
+      "MA": 13,
+      "P": 12.5
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 58.9,
+     "captions": {
+      "GE1": 11.4,
+      "GE2": 12.6,
+      "VP": 0,
+      "VA": 12,
+      "CG": 0,
+      "B": 0,
+      "MA": 10.9,
+      "P": 12
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Port Huron, Michigan",
+   "date": "2008-06-23T00:00:00.000Z",
+   "location": "Port Huron, Michigan",
+   "offSeasonDay": 2,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "The Cavaliers",
+     "score": 76.1,
+     "captions": {
+      "GE1": 16,
+      "GE2": 15.2,
+      "VP": 0,
+      "VA": 15.7,
+      "CG": 0,
+      "B": 0,
+      "MA": 14.3,
+      "P": 14.9
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 71.6,
+     "captions": {
+      "GE1": 15,
+      "GE2": 14.6,
+      "VP": 0,
+      "VA": 13.9,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.6,
+      "P": 14.5
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 70.2,
+     "captions": {
+      "GE1": 14.7,
+      "GE2": 14.2,
+      "VP": 0,
+      "VA": 14.6,
+      "CG": 0,
+      "B": 0,
+      "MA": 13,
+      "P": 13.7
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 63.4,
+     "captions": {
+      "GE1": 12.7,
+      "GE2": 13.5,
+      "VP": 0,
+      "VA": 13.4,
+      "CG": 0,
+      "B": 0,
+      "MA": 11.6,
+      "P": 12.2
+     }
+    },
+    {
+     "corps": "Pioneer",
+     "score": 58.2,
+     "captions": {
+      "GE1": 11.4,
+      "GE2": 12.8,
+      "VP": 0,
+      "VA": 12.5,
+      "CG": 0,
+      "B": 0,
+      "MA": 10,
+      "P": 11.5
+     }
+    },
+    {
+     "corps": "Dutch Boy",
+     "score": 52.5,
+     "captions": {
+      "GE1": 11,
+      "GE2": 10.3,
+      "VP": 0,
+      "VA": 10.9,
+      "CG": 0,
+      "B": 0,
+      "MA": 10,
+      "P": 10.3
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Belding, Michigan",
+   "date": "2008-06-24T00:00:00.000Z",
+   "location": "Belding, Michigan",
+   "offSeasonDay": 3,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "The Cadets",
+     "score": 74,
+     "captions": {
+      "GE1": 14.2,
+      "GE2": 14.9,
+      "VP": 0,
+      "VA": 15.5,
+      "CG": 0,
+      "B": 0,
+      "MA": 15.5,
+      "P": 13.9
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 69.6,
+     "captions": {
+      "GE1": 14.6,
+      "GE2": 13.6,
+      "VP": 0,
+      "VA": 14.9,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.8,
+      "P": 12.7
+     }
+    },
+    {
+     "corps": "Glassmen",
+     "score": 67.1,
+     "captions": {
+      "GE1": 13.3,
+      "GE2": 13.1,
+      "VP": 0,
+      "VA": 14.4,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.2,
+      "P": 13.1
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 62.2,
+     "captions": {
+      "GE1": 13,
+      "GE2": 12,
+      "VP": 0,
+      "VA": 13.9,
+      "CG": 0,
+      "B": 0,
+      "MA": 11.7,
+      "P": 11.6
+     }
+    },
+    {
+     "corps": "Pioneer",
+     "score": 55.2,
+     "captions": {
+      "GE1": 11.2,
+      "GE2": 10.9,
+      "VP": 0,
+      "VA": 12.2,
+      "CG": 0,
+      "B": 0,
+      "MA": 10.2,
+      "P": 10.7
+     }
+    },
+    {
+     "corps": "Dutch Boy",
+     "score": 51.1,
+     "captions": {
+      "GE1": 8.9,
+      "GE2": 10.6,
+      "VP": 0,
+      "VA": 11.4,
+      "CG": 0,
+      "B": 0,
+      "MA": 10.1,
+      "P": 10.1
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Sioux Falls, South Dakota",
+   "date": "2008-06-24T00:00:00.000Z",
+   "location": "Sioux Falls, South Dakota",
+   "offSeasonDay": 3,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Phantom Regiment",
+     "score": 76.3,
+     "captions": {
+      "GE1": 15.4,
+      "GE2": 15,
+      "VP": 0,
+      "VA": 15.1,
+      "CG": 0,
+      "B": 0,
+      "MA": 15.4,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 67.4,
+     "captions": {
+      "GE1": 13.1,
+      "GE2": 13.8,
+      "VP": 0,
+      "VA": 13.6,
+      "CG": 0,
+      "B": 0,
+      "MA": 14,
+      "P": 12.9
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 66.4,
+     "captions": {
+      "GE1": 13.4,
+      "GE2": 14,
+      "VP": 0,
+      "VA": 12.7,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.7,
+      "P": 12.6
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 65.8,
+     "captions": {
+      "GE1": 13.2,
+      "GE2": 13.9,
+      "VP": 0,
+      "VA": 12.9,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.5,
+      "P": 12.3
+     }
+    },
+    {
+     "corps": "Revolution",
+     "score": 57.7,
+     "captions": {
+      "GE1": 10.5,
+      "GE2": 11.6,
+      "VP": 0,
+      "VA": 12.1,
+      "CG": 0,
+      "B": 0,
+      "MA": 12,
+      "P": 11.5
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Dubuque, Iowa",
+   "date": "2008-06-26T00:00:00.000Z",
+   "location": "Dubuque, Iowa",
+   "offSeasonDay": 5,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Phantom Regiment",
+     "score": 77.6,
+     "captions": {
+      "GE1": 15.1,
+      "GE2": 15.3,
+      "VP": 0,
+      "VA": 15.1,
+      "CG": 0,
+      "B": 0,
+      "MA": 16.4,
+      "P": 15.7
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 75.6,
+     "captions": {
+      "GE1": 14.7,
+      "GE2": 14.6,
+      "VP": 0,
+      "VA": 14.9,
+      "CG": 0,
+      "B": 0,
+      "MA": 16.3,
+      "P": 15.1
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 69.7,
+     "captions": {
+      "GE1": 14.4,
+      "GE2": 13.3,
+      "VP": 0,
+      "VA": 13.6,
+      "CG": 0,
+      "B": 0,
+      "MA": 14.7,
+      "P": 13.7
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 69.2,
+     "captions": {
+      "GE1": 13.8,
+      "GE2": 13.2,
+      "VP": 0,
+      "VA": 12.7,
+      "CG": 0,
+      "B": 0,
+      "MA": 15.1,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 68.7,
+     "captions": {
+      "GE1": 14.1,
+      "GE2": 13,
+      "VP": 0,
+      "VA": 13.3,
+      "CG": 0,
+      "B": 0,
+      "MA": 14.4,
+      "P": 13.9
+     }
+    },
+    {
+     "corps": "Revolution",
+     "score": 64,
+     "captions": {
+      "GE1": 14,
+      "GE2": 12.6,
+      "VP": 0,
+      "VA": 11.9,
+      "CG": 0,
+      "B": 0,
+      "MA": 12.4,
+      "P": 13.1
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 57.5,
+     "captions": {
+      "GE1": 12.7,
+      "GE2": 11.1,
+      "VP": 0,
+      "VA": 11.3,
+      "CG": 0,
+      "B": 0,
+      "MA": 11.4,
+      "P": 11
+     }
+    },
+    {
+     "corps": "Racine Scouts",
+     "score": 53.4,
+     "captions": {
+      "GE1": 12.5,
+      "GE2": 9.7,
+      "VP": 0,
+      "VA": 10.4,
+      "CG": 0,
+      "B": 0,
+      "MA": 10.5,
+      "P": 10.3
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Oswego, Illinois",
+   "date": "2008-06-26T00:00:00.000Z",
+   "location": "Oswego, Illinois",
+   "offSeasonDay": 5,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "The Cavaliers",
+     "score": 78.2,
+     "captions": {
+      "GE1": 15.9,
+      "GE2": 15.3,
+      "VP": 0,
+      "VA": 15.7,
+      "CG": 0,
+      "B": 0,
+      "MA": 15.9,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 66.9,
+     "captions": {
+      "GE1": 13.9,
+      "GE2": 13.7,
+      "VP": 0,
+      "VA": 13,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.2,
+      "P": 13.1
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 64.3,
+     "captions": {
+      "GE1": 14.2,
+      "GE2": 12.5,
+      "VP": 0,
+      "VA": 12,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.3,
+      "P": 12.3
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 63.8,
+     "captions": {
+      "GE1": 14.4,
+      "GE2": 11.8,
+      "VP": 0,
+      "VA": 12.5,
+      "CG": 0,
+      "B": 0,
+      "MA": 12.4,
+      "P": 12.7
+     }
+    },
+    {
+     "corps": "Pioneer",
+     "score": 57.3,
+     "captions": {
+      "GE1": 13.1,
+      "GE2": 11.2,
+      "VP": 0,
+      "VA": 11.6,
+      "CG": 0,
+      "B": 0,
+      "MA": 9.5,
+      "P": 11.9
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Clovis, California",
+   "date": "2008-06-27T00:00:00.000Z",
+   "location": "Clovis, California",
+   "offSeasonDay": 6,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 79.8,
+     "captions": {
+      "GE1": 16.2,
+      "GE2": 16.2,
+      "VP": 0,
+      "VA": 16.3,
+      "CG": 0,
+      "B": 0,
+      "MA": 16.1,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 78.2,
+     "captions": {
+      "GE1": 15.7,
+      "GE2": 16.1,
+      "VP": 0,
+      "VA": 15.3,
+      "CG": 0,
+      "B": 0,
+      "MA": 15.9,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 67.7,
+     "captions": {
+      "GE1": 13.3,
+      "GE2": 14.3,
+      "VP": 0,
+      "VA": 13.2,
+      "CG": 0,
+      "B": 0,
+      "MA": 14.1,
+      "P": 12.8
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 71.3,
+     "captions": {
+      "GE1": 13.6,
+      "GE2": 14.4,
+      "VP": 0,
+      "VA": 14.6,
+      "CG": 0,
+      "B": 0,
+      "MA": 14.6,
+      "P": 14.1
+     }
+    },
+    {
+     "corps": "Vanguard Cadets",
+     "score": 70.8,
+     "captions": {
+      "GE1": 12.5,
+      "GE2": 14.2,
+      "VP": 0,
+      "VA": 14.4,
+      "CG": 0,
+      "B": 0,
+      "MA": 15,
+      "P": 14.7
+     }
+    },
+    {
+     "corps": "Blue Devils C",
+     "score": 57.2,
+     "captions": {
+      "GE1": 10.9,
+      "GE2": 10.8,
+      "VP": 0,
+      "VA": 10.3,
+      "CG": 0,
+      "B": 0,
+      "MA": 13,
+      "P": 12.2
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Central Illinois",
+   "date": "2008-06-27T00:00:00.000Z",
+   "location": "Bloomington-Normal, Illinois",
+   "offSeasonDay": 6,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "The Cavaliers",
+     "score": 78.6,
+     "captions": {
+      "GE1": 15.9,
+      "GE2": 14.9,
+      "VP": 0,
+      "VA": 15.9,
+      "CG": 0,
+      "B": 0,
+      "MA": 15.8,
+      "P": 16.1
+     }
+    },
+    {
+     "corps": "Phantom Regiment",
+     "score": 76.7,
+     "captions": {
+      "GE1": 15.1,
+      "GE2": 14.2,
+      "VP": 0,
+      "VA": 15.2,
+      "CG": 0,
+      "B": 0,
+      "MA": 15.6,
+      "P": 16.6
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 75.4,
+     "captions": {
+      "GE1": 15,
+      "GE2": 14.6,
+      "VP": 0,
+      "VA": 15.1,
+      "CG": 0,
+      "B": 0,
+      "MA": 14.8,
+      "P": 15.9
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 74.7,
+     "captions": {
+      "GE1": 15.3,
+      "GE2": 14.4,
+      "VP": 0,
+      "VA": 14.1,
+      "CG": 0,
+      "B": 0,
+      "MA": 14.7,
+      "P": 16.2
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 69.2,
+     "captions": {
+      "GE1": 14.3,
+      "GE2": 13.9,
+      "VP": 0,
+      "VA": 12.8,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.5,
+      "P": 14.7
+     }
+    },
+    {
+     "corps": "Glassmen",
+     "score": 69,
+     "captions": {
+      "GE1": 13.7,
+      "GE2": 13.3,
+      "VP": 0,
+      "VA": 14.3,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.2,
+      "P": 14.5
+     }
+    },
+    {
+     "corps": "Colts",
+     "score": 68.7,
+     "captions": {
+      "GE1": 14.5,
+      "GE2": 13.6,
+      "VP": 0,
+      "VA": 13.7,
+      "CG": 0,
+      "B": 0,
+      "MA": 12.6,
+      "P": 14.3
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 65.6,
+     "captions": {
+      "GE1": 14,
+      "GE2": 13,
+      "VP": 0,
+      "VA": 12.4,
+      "CG": 0,
+      "B": 0,
+      "MA": 12,
+      "P": 14.2
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Racine, Wisconsin",
+   "date": "2008-06-27T00:00:00.000Z",
+   "location": "Racine, Wisconsin",
+   "offSeasonDay": 6,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "The Cadets",
+     "score": 77.38,
+     "captions": {
+      "GE1": 15.8,
+      "GE2": 15.3,
+      "VP": 0,
+      "VA": 15.5,
+      "CG": 0,
+      "B": 0,
+      "MA": 15.3,
+      "P": 15.48
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 73.76,
+     "captions": {
+      "GE1": 15.5,
+      "GE2": 14.2,
+      "VP": 0,
+      "VA": 14.4,
+      "CG": 0,
+      "B": 0,
+      "MA": 14.9,
+      "P": 14.76
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 70.5,
+     "captions": {
+      "GE1": 14.4,
+      "GE2": 13.8,
+      "VP": 0,
+      "VA": 14.7,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.5,
+      "P": 14.1
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 65.38,
+     "captions": {
+      "GE1": 13,
+      "GE2": 12.4,
+      "VP": 0,
+      "VA": 14,
+      "CG": 0,
+      "B": 0,
+      "MA": 12.9,
+      "P": 13.08
+     }
+    },
+    {
+     "corps": "Pioneer",
+     "score": 58.76,
+     "captions": {
+      "GE1": 12.6,
+      "GE2": 11.3,
+      "VP": 0,
+      "VA": 11.7,
+      "CG": 0,
+      "B": 0,
+      "MA": 11.4,
+      "P": 11.76
+     }
+    },
+    {
+     "corps": "Revolution",
+     "score": 63.62,
+     "captions": {
+      "GE1": 12.2,
+      "GE2": 11.9,
+      "VP": 0,
+      "VA": 14.2,
+      "CG": 0,
+      "B": 0,
+      "MA": 12.6,
+      "P": 12.72
+     }
+    },
+    {
+     "corps": "Racine Scouts",
+     "score": 55.5,
+     "captions": {
+      "GE1": 10.9,
+      "GE2": 10,
+      "VP": 0,
+      "VA": 13.1,
+      "CG": 0,
+      "B": 0,
+      "MA": 10.4,
+      "P": 11.1
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Madison",
+   "date": "2008-06-28T00:00:00.000Z",
+   "location": "Madison, Wisconsin",
+   "offSeasonDay": 7,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "The Cavaliers",
+     "score": 79.5,
+     "captions": {
+      "GE1": 16,
+      "GE2": 15.5,
+      "VP": 0,
+      "VA": 16,
+      "CG": 0,
+      "B": 0,
+      "MA": 15.7,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "The Cadets",
+     "score": 77.2,
+     "captions": {
+      "GE1": 15.7,
+      "GE2": 15,
+      "VP": 0,
+      "VA": 15.5,
+      "CG": 0,
+      "B": 0,
+      "MA": 15.5,
+      "P": 15.5
+     }
+    },
+    {
+     "corps": "Bluecoats",
+     "score": 75,
+     "captions": {
+      "GE1": 14.7,
+      "GE2": 14.8,
+      "VP": 0,
+      "VA": 14.6,
+      "CG": 0,
+      "B": 0,
+      "MA": 15,
+      "P": 15.9
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 74.6,
+     "captions": {
+      "GE1": 14.8,
+      "GE2": 14.6,
+      "VP": 0,
+      "VA": 15.3,
+      "CG": 0,
+      "B": 0,
+      "MA": 14.7,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 71.1,
+     "captions": {
+      "GE1": 12.4,
+      "GE2": 14.5,
+      "VP": 0,
+      "VA": 15,
+      "CG": 0,
+      "B": 0,
+      "MA": 14.3,
+      "P": 14.9
+     }
+    },
+    {
+     "corps": "Blue Stars",
+     "score": 69.7,
+     "captions": {
+      "GE1": 13.6,
+      "GE2": 14.1,
+      "VP": 0,
+      "VA": 14,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.7,
+      "P": 14.3
+     }
+    },
+    {
+     "corps": "Glassmen",
+     "score": 69.7,
+     "captions": {
+      "GE1": 13.8,
+      "GE2": 13.5,
+      "VP": 0,
+      "VA": 14.4,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.9,
+      "P": 14.1
+     }
+    },
+    {
+     "corps": "Blue Knights",
+     "score": 68.4,
+     "captions": {
+      "GE1": 13.4,
+      "GE2": 13.9,
+      "VP": 0,
+      "VA": 13.4,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.8,
+      "P": 13.9
+     }
+    },
+    {
+     "corps": "Spirit of Atlanta",
+     "score": 67.9,
+     "captions": {
+      "GE1": 12.9,
+      "GE2": 13.8,
+      "VP": 0,
+      "VA": 13.5,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.1,
+      "P": 14.6
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 66.8,
+     "captions": {
+      "GE1": 12.7,
+      "GE2": 14.3,
+      "VP": 0,
+      "VA": 13.7,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.3,
+      "P": 12.8
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 65.7,
+     "captions": {
+      "GE1": 13.1,
+      "GE2": 13.7,
+      "VP": 0,
+      "VA": 12.9,
+      "CG": 0,
+      "B": 0,
+      "MA": 12.9,
+      "P": 13.1
+     }
+    },
+    {
+     "corps": "Madison Scouts",
+     "score": 65.4,
+     "captions": {
+      "GE1": 12.3,
+      "GE2": 13.9,
+      "VP": 0,
+      "VA": 13.2,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.5,
+      "P": 12.5
+     }
+    },
+    {
+     "corps": "Pioneer",
+     "score": 58.7,
+     "captions": {
+      "GE1": 11.2,
+      "GE2": 12.8,
+      "VP": 0,
+      "VA": 11.7,
+      "CG": 0,
+      "B": 0,
+      "MA": 11.2,
+      "P": 11.8
+     }
+    },
+    {
+     "corps": "Revolution",
+     "score": 69.3,
+     "captions": {
+      "GE1": 14.2,
+      "GE2": 12.7,
+      "VP": 0,
+      "VA": 14.2,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.3,
+      "P": 14.9
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 54.8,
+     "captions": {
+      "GE1": 10.3,
+      "GE2": 10.7,
+      "VP": 0,
+      "VA": 12.2,
+      "CG": 0,
+      "B": 0,
+      "MA": 11.2,
+      "P": 10.4
+     }
+    },
+    {
+     "corps": "Racine Scouts",
+     "score": 49.4,
+     "captions": {
+      "GE1": 9.4,
+      "GE2": 10.2,
+      "VP": 0,
+      "VA": 11.8,
+      "CG": 0,
+      "B": 0,
+      "MA": 9.4,
+      "P": 8.6
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - New London, Connecticut",
+   "date": "2008-06-28T00:00:00.000Z",
+   "location": "New London, Connecticut",
+   "offSeasonDay": 7,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Jersey Surf",
+     "score": 73.35,
+     "captions": {
+      "GE1": 14.7,
+      "GE2": 15.4,
+      "VP": 14.6,
+      "VA": 14.7,
+      "CG": 14.6,
+      "B": 14.6,
+      "MA": 13.5,
+      "P": 14.6
+     }
+    },
+    {
+     "corps": "Citations",
+     "score": 66.65,
+     "captions": {
+      "GE1": 14.2,
+      "GE2": 13.7,
+      "VP": 13.2,
+      "VA": 13.2,
+      "CG": 13.2,
+      "B": 13.2,
+      "MA": 11.6,
+      "P": 13.2
+     }
+    },
+    {
+     "corps": "Spartans",
+     "score": 59.35,
+     "captions": {
+      "GE1": 12.5,
+      "GE2": 12.2,
+      "VP": 11.8,
+      "VA": 12.4,
+      "CG": 11.8,
+      "B": 11.8,
+      "MA": 9.9,
+      "P": 11.8
+     }
+    },
+    {
+     "corps": "7th Regiment",
+     "score": 57.65,
+     "captions": {
+      "GE1": 12,
+      "GE2": 11.7,
+      "VP": 11.5,
+      "VA": 13.6,
+      "CG": 11.5,
+      "B": 11.5,
+      "MA": 8.5,
+      "P": 11.5
+     }
+    },
+    {
+     "corps": "Raiders",
+     "score": 56.35,
+     "captions": {
+      "GE1": 12.3,
+      "GE2": 11.6,
+      "VP": 11.1,
+      "VA": 11.7,
+      "CG": 11.1,
+      "B": 11.1,
+      "MA": 8.8,
+      "P": 11.1
+     }
+    },
+    {
+     "corps": "Targets",
+     "score": 45.85,
+     "captions": {
+      "GE1": 7.1,
+      "GE2": 11,
+      "VP": 9.2,
+      "VA": 11.1,
+      "CG": 9.2,
+      "B": 9.2,
+      "MA": 7.6,
+      "P": 9.2
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Walnut, California",
+   "date": "2008-06-28T00:00:00.000Z",
+   "location": "Walnut, California",
+   "offSeasonDay": 7,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 81.9,
+     "captions": {
+      "GE1": 16.4,
+      "GE2": 16.3,
+      "VP": 0,
+      "VA": 16.4,
+      "CG": 0,
+      "B": 0,
+      "MA": 16.5,
+      "P": 16.3
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 79.5,
+     "captions": {
+      "GE1": 15.8,
+      "GE2": 16,
+      "VP": 0,
+      "VA": 15.9,
+      "CG": 0,
+      "B": 0,
+      "MA": 16.1,
+      "P": 15.7
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 71.7,
+     "captions": {
+      "GE1": 14.2,
+      "GE2": 14.9,
+      "VP": 0,
+      "VA": 14,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.7,
+      "P": 14.9
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 69.8,
+     "captions": {
+      "GE1": 12.9,
+      "GE2": 14,
+      "VP": 0,
+      "VA": 13.2,
+      "CG": 0,
+      "B": 0,
+      "MA": 15.1,
+      "P": 14.4
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 69,
+     "captions": {
+      "GE1": 13.4,
+      "GE2": 14.4,
+      "VP": 0,
+      "VA": 13.7,
+      "CG": 0,
+      "B": 0,
+      "MA": 14,
+      "P": 13.5
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 73.7,
+     "captions": {
+      "GE1": 14.4,
+      "GE2": 14.7,
+      "VP": 0,
+      "VA": 14.7,
+      "CG": 0,
+      "B": 0,
+      "MA": 14.9,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Yamato",
+     "score": 65.6,
+     "captions": {
+      "GE1": 12.4,
+      "GE2": 13.2,
+      "VP": 0,
+      "VA": 13.9,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.3,
+      "P": 12.8
+     }
+    },
+    {
+     "corps": "Velvet Knights",
+     "score": 65.4,
+     "captions": {
+      "GE1": 12.6,
+      "GE2": 14.1,
+      "VP": 0,
+      "VA": 10.9,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.6,
+      "P": 14.2
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 60.4,
+     "captions": {
+      "GE1": 11.3,
+      "GE2": 13.7,
+      "VP": 0,
+      "VA": 10,
+      "CG": 0,
+      "B": 0,
+      "MA": 13,
+      "P": 12.4
+     }
+    },
+    {
+     "corps": "Impulse",
+     "score": 59.5,
+     "captions": {
+      "GE1": 11.7,
+      "GE2": 9.9,
+      "VP": 0,
+      "VA": 10.5,
+      "CG": 0,
+      "B": 0,
+      "MA": 12.8,
+      "P": 14.6
+     }
+    },
+    {
+     "corps": "Mystikal",
+     "score": 55.2,
+     "captions": {
+      "GE1": 11.4,
+      "GE2": 9.7,
+      "VP": 0,
+      "VA": 10.6,
+      "CG": 0,
+      "B": 0,
+      "MA": 12.2,
+      "P": 11.3
+     }
+    },
+    {
+     "corps": "Incognito",
+     "score": 53.2,
+     "captions": {
+      "GE1": 11.6,
+      "GE2": 10.4,
+      "VP": 0,
+      "VA": 8.4,
+      "CG": 0,
+      "B": 0,
+      "MA": 12.4,
+      "P": 10.4
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Coon Rapids, Minnesota",
+   "date": "2008-06-29T00:00:00.000Z",
+   "location": "Coon Rapids, Minnesota",
+   "offSeasonDay": 8,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Glassmen",
+     "score": 70.3,
+     "captions": {
+      "GE1": 12.8,
+      "GE2": 13.7,
+      "VP": 0,
+      "VA": 14.3,
+      "CG": 0,
+      "B": 0,
+      "MA": 14.6,
+      "P": 14.9
+     }
+    },
+    {
+     "corps": "Troopers",
+     "score": 65.4,
+     "captions": {
+      "GE1": 10.2,
+      "GE2": 13.9,
+      "VP": 0,
+      "VA": 13.2,
+      "CG": 0,
+      "B": 0,
+      "MA": 14.2,
+      "P": 13.9
+     }
+    },
+    {
+     "corps": "Revolution",
+     "score": 64.2,
+     "captions": {
+      "GE1": 11.2,
+      "GE2": 10.7,
+      "VP": 0,
+      "VA": 14.2,
+      "CG": 0,
+      "B": 0,
+      "MA": 12.9,
+      "P": 15.2
+     }
+    },
+    {
+     "corps": "Colt Cadets",
+     "score": 56,
+     "captions": {
+      "GE1": 10.5,
+      "GE2": 10.3,
+      "VP": 0,
+      "VA": 12.3,
+      "CG": 0,
+      "B": 0,
+      "MA": 10.6,
+      "P": 12.3
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Riverside, California",
+   "date": "2008-06-29T00:00:00.000Z",
+   "location": "Riverside, California",
+   "offSeasonDay": 8,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "Blue Devils",
+     "score": 82.2,
+     "captions": {
+      "GE1": 16.4,
+      "GE2": 16.5,
+      "VP": 0,
+      "VA": 16.4,
+      "CG": 0,
+      "B": 0,
+      "MA": 16.7,
+      "P": 16.2
+     }
+    },
+    {
+     "corps": "Santa Clara Vanguard",
+     "score": 80.2,
+     "captions": {
+      "GE1": 15.7,
+      "GE2": 16.3,
+      "VP": 0,
+      "VA": 15.8,
+      "CG": 0,
+      "B": 0,
+      "MA": 16.5,
+      "P": 15.9
+     }
+    },
+    {
+     "corps": "Pacific Crest",
+     "score": 72.6,
+     "captions": {
+      "GE1": 14.5,
+      "GE2": 15,
+      "VP": 0,
+      "VA": 14.2,
+      "CG": 0,
+      "B": 0,
+      "MA": 14.2,
+      "P": 14.7
+     }
+    },
+    {
+     "corps": "The Academy",
+     "score": 70,
+     "captions": {
+      "GE1": 13.7,
+      "GE2": 14.1,
+      "VP": 0,
+      "VA": 13.9,
+      "CG": 0,
+      "B": 0,
+      "MA": 14.4,
+      "P": 13.9
+     }
+    },
+    {
+     "corps": "Mandarins",
+     "score": 68.9,
+     "captions": {
+      "GE1": 12.3,
+      "GE2": 14.2,
+      "VP": 0,
+      "VA": 13.1,
+      "CG": 0,
+      "B": 0,
+      "MA": 15,
+      "P": 14.3
+     }
+    },
+    {
+     "corps": "Blue Devils B",
+     "score": 74.5,
+     "captions": {
+      "GE1": 15,
+      "GE2": 14.8,
+      "VP": 0,
+      "VA": 14.7,
+      "CG": 0,
+      "B": 0,
+      "MA": 15,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Velvet Knights",
+     "score": 66.6,
+     "captions": {
+      "GE1": 13,
+      "GE2": 13.7,
+      "VP": 0,
+      "VA": 13,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.2,
+      "P": 13.7
+     }
+    },
+    {
+     "corps": "Yamato",
+     "score": 64.1,
+     "captions": {
+      "GE1": 12.7,
+      "GE2": 12.9,
+      "VP": 0,
+      "VA": 12.4,
+      "CG": 0,
+      "B": 0,
+      "MA": 12.9,
+      "P": 13.2
+     }
+    },
+    {
+     "corps": "Gold",
+     "score": 61.3,
+     "captions": {
+      "GE1": 11.7,
+      "GE2": 12.7,
+      "VP": 0,
+      "VA": 11.6,
+      "CG": 0,
+      "B": 0,
+      "MA": 12.3,
+      "P": 13
+     }
+    },
+    {
+     "corps": "Impulse",
+     "score": 60.8,
+     "captions": {
+      "GE1": 11.9,
+      "GE2": 10.2,
+      "VP": 0,
+      "VA": 11.5,
+      "CG": 0,
+      "B": 0,
+      "MA": 12.6,
+      "P": 14.6
+     }
+    },
+    {
+     "corps": "Incognito",
+     "score": 56.4,
+     "captions": {
+      "GE1": 11.4,
+      "GE2": 10.5,
+      "VP": 0,
+      "VA": 11.2,
+      "CG": 0,
+      "B": 0,
+      "MA": 12.1,
+      "P": 11.2
+     }
+    },
+    {
+     "corps": "Mystikal",
+     "score": 55.6,
+     "captions": {
+      "GE1": 10.7,
+      "GE2": 10.1,
+      "VP": 0,
+      "VA": 11.1,
+      "CG": 0,
+      "B": 0,
+      "MA": 11.9,
+      "P": 11.8
+     }
+    }
+   ]
+  },
+  {
+   "eventName": "DCI Competition - Erie, Pennsylvania",
+   "date": "2008-06-30T00:00:00.000Z",
+   "location": "Erie, Pennsylvania",
+   "offSeasonDay": 9,
+   "headerMap": {},
+   "scores": [
+    {
+     "corps": "The Cadets",
+     "score": 78.8,
+     "captions": {
+      "GE1": 15.4,
+      "GE2": 15.6,
+      "VP": 0,
+      "VA": 16,
+      "CG": 0,
+      "B": 0,
+      "MA": 16.2,
+      "P": 15.6
+     }
+    },
+    {
+     "corps": "Carolina Crown",
+     "score": 77,
+     "captions": {
+      "GE1": 15.2,
+      "GE2": 15.7,
+      "VP": 0,
+      "VA": 15.2,
+      "CG": 0,
+      "B": 0,
+      "MA": 15.5,
+      "P": 15.4
+     }
+    },
+    {
+     "corps": "Boston Crusaders",
+     "score": 74,
+     "captions": {
+      "GE1": 14,
+      "GE2": 14.8,
+      "VP": 0,
+      "VA": 15.1,
+      "CG": 0,
+      "B": 0,
+      "MA": 15.1,
+      "P": 15
+     }
+    },
+    {
+     "corps": "Crossmen",
+     "score": 68,
+     "captions": {
+      "GE1": 13,
+      "GE2": 13.5,
+      "VP": 0,
+      "VA": 14.2,
+      "CG": 0,
+      "B": 0,
+      "MA": 14.1,
+      "P": 13.2
+     }
+    },
+    {
+     "corps": "Teal Sound",
+     "score": 69.7,
+     "captions": {
+      "GE1": 12.4,
+      "GE2": 13,
+      "VP": 0,
+      "VA": 14.7,
+      "CG": 0,
+      "B": 0,
+      "MA": 14.9,
+      "P": 14.7
+     }
+    },
+    {
+     "corps": "Dutch Boy",
+     "score": 56.1,
+     "captions": {
+      "GE1": 8.8,
+      "GE2": 9.6,
+      "VP": 0,
+      "VA": 13.1,
+      "CG": 0,
+      "B": 0,
+      "MA": 13.7,
+      "P": 10.9
+     }
+    }
+   ]
+  }
+ ]
+}
