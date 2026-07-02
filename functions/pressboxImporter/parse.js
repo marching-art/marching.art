@@ -46,6 +46,9 @@ function extractRows(html) {
         .replace(/&nbsp;?/gi, " ")
         .replace(/&amp;/gi, "&")
         .replace(/&#\d+;/g, " ")
+        // Intentional control-character match: the workbooks are
+        // windows-1252 read as latin1, which leaves C0/C1 bytes in cell text.
+        // eslint-disable-next-line no-control-regex
         .replace(/[\x00-\x1f\x7f-\x9f]/g, " ")
         .replace(/\s+/g, " ")
         .trim();
