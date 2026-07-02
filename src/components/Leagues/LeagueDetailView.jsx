@@ -8,9 +8,13 @@ import {
   MessageSquare, BarChart3, Flame, Bell,
   Copy, Check, Users, Calendar, LogOut,
 } from 'lucide-react';
-import { collection, query, orderBy, limit as firestoreLimit, onSnapshot, doc, getDoc, getDocs } from 'firebase/firestore';
-import { db } from '../../api';
-import { subscribeToStandings } from '../../api/leagues';
+import {
+  subscribeToStandings,
+  subscribeToChat,
+  getMemberProfiles,
+  getLeagueMatchups,
+} from '../../api/leagues';
+import { getSeasonData, getSeasonRecaps } from '../../api/season';
 import toast from 'react-hot-toast';
 
 // Import tab components
@@ -91,23 +95,14 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
 
       try {
         // Fetch member profiles
-        const profiles = {};
-        await Promise.all(league.members.map(async (uid) => {
-          const profileRef = doc(db, `artifacts/marching-art/users/${uid}/profile/data`);
-          const profileDoc = await getDoc(profileRef);
-          if (profileDoc.exists()) {
-            profiles[uid] = profileDoc.data();
-          }
-        }));
+        const profiles = await getMemberProfiles(league.members);
         setMemberProfiles(profiles);
 
         // Fetch season data
-        const seasonRef = doc(db, 'game-settings/season');
-        const seasonDoc = await getDoc(seasonRef);
+        const sData = await getSeasonData();
         let week = 1;
 
-        if (seasonDoc.exists()) {
-          const sData = seasonDoc.data();
+        if (sData) {
           const startDate = sData.schedule?.startDate?.toDate();
           if (startDate) {
             const now = new Date();
@@ -116,21 +111,8 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
           }
           setCurrentWeek(week);
 
-          // Try new subcollection format first, fallback to legacy single-document format
-          const recapsCollectionRef = collection(db, 'fantasy_recaps', sData.seasonUid, 'days');
-          const recapsSnapshot = await getDocs(recapsCollectionRef);
-
-          let recapsData = [];
-          if (!recapsSnapshot.empty) {
-            recapsData = recapsSnapshot.docs.map(d => d.data());
-          } else {
-            // Fallback to legacy single-document format
-            const legacyDocRef = doc(db, 'fantasy_recaps', sData.seasonUid);
-            const legacyDoc = await getDoc(legacyDocRef);
-            if (legacyDoc.exists()) {
-              recapsData = legacyDoc.data().recaps || [];
-            }
-          }
+          // Subcollection format with legacy single-document fallback
+          const recapsData = await getSeasonRecaps(sData.seasonUid);
 
           if (recapsData.length > 0) {
             setRecaps(recapsData); // Store for useLeagueStats hook
@@ -173,15 +155,13 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
             const CORPS_CLASSES = ['worldClass', 'openClass', 'aClass', 'soundSport'];
 
             // Fetch all matchup documents for this league
-            const matchupsCollectionRef = collection(db, `artifacts/marching-art/leagues/${league.id}/matchups`);
-            const matchupsSnapshot = await getDocs(matchupsCollectionRef);
+            const matchupDocs = await getLeagueMatchups(league.id);
 
-            matchupsSnapshot.forEach(matchupDoc => {
-              const weekMatch = matchupDoc.id.match(/^week-(\d+)$/);
+            matchupDocs.forEach(matchupData => {
+              const weekMatch = matchupData.id.match(/^week-(\d+)$/);
               if (!weekMatch) return;
 
               const weekNum = parseInt(weekMatch[1]);
-              const matchupData = matchupDoc.data();
 
               // Convert class-based matchups to flat array format for useLeagueStats
               matchupsPerWeek[weekNum] = [];
@@ -334,15 +314,10 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
 
     fetchData();
 
-    // Real-time chat listener
-    const messagesRef = collection(db, `artifacts/marching-art/leagues/${league.id}/chat`);
-    const unsubMessages = onSnapshot(
-      query(messagesRef, orderBy('createdAt', 'desc'), firestoreLimit(50)),
-      (snapshot) => {
-        const messagesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setMessages(messagesData.reverse());
-      }
-    );
+    // Real-time chat listener (api helper: newest 50, delivered oldest-first)
+    const unsubMessages = subscribeToChat(league.id, (messagesData) => {
+      setMessages(messagesData);
+    });
 
     // Real-time standings listener for instant updates
     const unsubStandings = subscribeToStandings(

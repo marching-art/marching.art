@@ -3,8 +3,7 @@
 // LeagueDetailView and MatchupDetailView (was 2+ queries, now 1)
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
-import { db } from '../../api';
+import { getSeasonData, getSeasonRecaps } from '../../api/season';
 
 const LeagueRecapsContext = createContext(null);
 
@@ -24,11 +23,9 @@ export const LeagueRecapsProvider = ({ children, seasonUid }) => {
       if (!seasonUid) {
         // If no seasonUid provided, fetch current season first
         try {
-          const seasonRef = doc(db, 'game-settings/season');
-          const seasonDoc = await getDoc(seasonRef);
+          const sData = await getSeasonData();
 
-          if (seasonDoc.exists()) {
-            const sData = seasonDoc.data();
+          if (sData) {
             setSeasonData(sData);
             await fetchRecapsData(sData.seasonUid);
           } else {
@@ -47,21 +44,8 @@ export const LeagueRecapsProvider = ({ children, seasonUid }) => {
     const fetchRecapsData = async (uid) => {
       setLoading(true);
       try {
-        // Try new subcollection format first, fallback to legacy single-document format
-        const recapsCollectionRef = collection(db, 'fantasy_recaps', uid, 'days');
-        const recapsSnapshot = await getDocs(recapsCollectionRef);
-
-        let recapsData = [];
-        if (!recapsSnapshot.empty) {
-          recapsData = recapsSnapshot.docs.map(d => d.data());
-        } else {
-          // Fallback to legacy single-document format
-          const legacyDocRef = doc(db, 'fantasy_recaps', uid);
-          const legacyDoc = await getDoc(legacyDocRef);
-          if (legacyDoc.exists()) {
-            recapsData = legacyDoc.data().recaps || [];
-          }
-        }
+        // Subcollection format with legacy single-document fallback
+        const recapsData = await getSeasonRecaps(uid);
 
         setRecaps(recapsData);
         setError(null);

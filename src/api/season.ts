@@ -4,6 +4,8 @@
 import {
   doc,
   getDoc,
+  getDocs,
+  collection,
   onSnapshot,
   Unsubscribe,
 } from 'firebase/firestore';
@@ -86,6 +88,32 @@ export async function getFantasyRecaps(seasonUid: string): Promise<DayRecap[]> {
     const data = recapsDoc.data();
     return (data.recaps || []) as DayRecap[];
   }, 'Failed to fetch fantasy recaps');
+}
+
+/**
+ * Get all daily recap documents for a season.
+ *
+ * Reads the per-day subcollection first (the current format) and falls back
+ * to the legacy single-document `recaps` array when the subcollection is
+ * empty. Errors propagate to the caller unchanged (callers own their own
+ * try/catch and fallback behavior), so this intentionally does not use
+ * withErrorHandling.
+ */
+export async function getSeasonRecaps(seasonUid: string): Promise<DayRecap[]> {
+  const recapsCollectionRef = collection(db, paths.fantasyRecapsDays(seasonUid));
+  const recapsSnapshot = await getDocs(recapsCollectionRef);
+
+  if (!recapsSnapshot.empty) {
+    return recapsSnapshot.docs.map((d) => d.data() as DayRecap);
+  }
+
+  // Fallback to legacy single-document format
+  const legacyDocRef = doc(db, paths.fantasyRecaps(seasonUid));
+  const legacyDoc = await getDoc(legacyDocRef);
+  if (legacyDoc.exists()) {
+    return (legacyDoc.data().recaps || []) as DayRecap[];
+  }
+  return [];
 }
 
 /**
@@ -236,4 +264,52 @@ export function getGameDayDate(season: SeasonData, day: number): string {
   targetDate.setDate(targetDate.getDate() + day - 1);
 
   return targetDate.toISOString().split('T')[0];
+}
+
+// =============================================================================
+// SEASON CHAMPIONS (Hall of Champions)
+// =============================================================================
+
+/** A single finalist entry within an archived season's class standings. */
+export interface SeasonChampionEntry {
+  uid?: string;
+  username?: string;
+  corpsName?: string;
+  score?: number;
+  rank?: number;
+}
+
+/** An archived season's championship record. */
+export interface SeasonChampions {
+  id: string;
+  seasonName?: string;
+  seasonType?: string;
+  archivedAt: Date | null;
+  classes: Record<string, SeasonChampionEntry[]>;
+}
+
+/**
+ * Get all archived season championship records, most recently archived first.
+ * Errors propagate unchanged to the caller (intentionally not wrapped with
+ * withErrorHandling — consumers rely on the original error semantics).
+ */
+export async function getSeasonChampions(): Promise<SeasonChampions[]> {
+  const championsRef = collection(db, 'season_champions');
+  const championsSnapshot = await getDocs(championsRef);
+
+  const seasonsData: SeasonChampions[] = [];
+  championsSnapshot.forEach((doc) => {
+    const data = doc.data();
+    seasonsData.push({
+      id: doc.id,
+      seasonName: data.seasonName,
+      seasonType: data.seasonType,
+      archivedAt: data.archivedAt?.toDate?.() || (data.archivedAt ? new Date(data.archivedAt) : null),
+      classes: data.classes || {},
+    });
+  });
+
+  seasonsData.sort((a, b) => (b.archivedAt?.getTime?.() || 0) - (a.archivedAt?.getTime?.() || 0));
+
+  return seasonsData;
 }

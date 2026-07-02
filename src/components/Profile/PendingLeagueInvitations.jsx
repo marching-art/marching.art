@@ -6,8 +6,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Users, Check, X, Calendar } from 'lucide-react';
-import { db } from '../../api';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { getPendingInvitations } from '../../api/leagues';
 import { respondToLeagueInvitation } from '../../api/functions';
 import toast from 'react-hot-toast';
 
@@ -19,22 +18,7 @@ const PendingLeagueInvitations = ({ userId, onChange }) => {
   const fetchInvitations = async () => {
     setLoading(true);
     try {
-      const ref = collection(db, 'artifacts/marching-art/leagueInvitations');
-      // Indexed composite query may require a Firestore index; fall back to a
-      // simple where() and client-side sort to avoid requiring the index.
-      const q = query(
-        ref,
-        where('inviteeUid', '==', userId),
-        where('status', '==', 'pending')
-      );
-      const snapshot = await getDocs(q);
-      const rows = snapshot.docs
-        .map((d) => ({ id: d.id, ...d.data() }))
-        .sort((a, b) => {
-          const aTime = a.invitedAt?.toMillis?.() || 0;
-          const bTime = b.invitedAt?.toMillis?.() || 0;
-          return bTime - aTime;
-        });
+      const rows = await getPendingInvitations(userId);
       setInvitations(rows);
     } catch (err) {
       console.error('Failed to load invitations:', err);

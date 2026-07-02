@@ -6,8 +6,7 @@ import { m, AnimatePresence } from 'framer-motion';
 import {
   ChevronLeft, Swords, Trophy, Flame, Calendar, BarChart3
 } from 'lucide-react';
-import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
-import { db } from '../../api';
+import { getSeasonData, getSeasonRecaps } from '../../api/season';
 import { RivalryBadge } from './LeagueActivityFeed';
 import BattleBreakdown, { BattleScoreHeader, BattleSummaryBar } from './BattleBreakdown';
 import RivalryHistoryCard from './RivalryHistoryCard';
@@ -71,23 +70,9 @@ const MatchupDetailView = ({
 
         if (!recaps || recaps.length === 0) {
           // Fallback: fetch recaps if not provided (backwards compatibility)
-          const seasonRef = doc(db, 'game-settings/season');
-          const seasonDoc = await getDoc(seasonRef);
-
-          if (seasonDoc.exists()) {
-            const sData = seasonDoc.data();
-            const recapsCollectionRef = collection(db, 'fantasy_recaps', sData.seasonUid, 'days');
-            const recapsSnapshot = await getDocs(recapsCollectionRef);
-
-            if (!recapsSnapshot.empty) {
-              recaps = recapsSnapshot.docs.map(d => d.data());
-            } else {
-              const legacyDocRef = doc(db, 'fantasy_recaps', sData.seasonUid);
-              const legacyDoc = await getDoc(legacyDocRef);
-              if (legacyDoc.exists()) {
-                recaps = legacyDoc.data().recaps || [];
-              }
-            }
+          const sData = await getSeasonData();
+          if (sData) {
+            recaps = await getSeasonRecaps(sData.seasonUid);
           }
         }
 

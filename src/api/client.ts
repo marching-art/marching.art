@@ -256,6 +256,15 @@ export const paths = {
     `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}/chat`,
   leagueActivity: (leagueId: string) =>
     `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}/activity`,
+  leagueMatchups: (leagueId: string) =>
+    `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}/matchups`,
+  leagueMatchupWeek: (leagueId: string, week: number | string) =>
+    `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}/matchups/week-${week}`,
+  leagueWeekRecap: (leagueId: string, week: number | string) =>
+    `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}/recaps/week-${week}`,
+  leagueMeta: (leagueId: string, docId: string) =>
+    `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}/meta/${docId}`,
+  leagueInvitations: () => `artifacts/${DATA_NAMESPACE}/leagueInvitations`,
 
   // User notification paths
   userNotifications: (uid: string) =>
