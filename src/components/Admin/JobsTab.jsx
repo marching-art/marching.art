@@ -19,6 +19,8 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
     { id: 'processLiveSeasonScores', name: 'Process Live Season Scores', description: 'Trigger daily live season score processing', icon: RefreshCw },
     { id: 'refreshLiveSeasonSchedule', name: 'Refresh Live Schedule', description: 'Scrape DCI events and update schedule', icon: Calendar },
     { id: 'regenerateOffSeasonSchedule', name: 'Regenerate Off-Season Schedule', description: 'Regenerate schedule for current off-season', icon: Calendar },
+    { id: 'auditShowSelections', name: 'Audit Show Selections (Dry Run)', description: 'Report directors\' selections that no longer match the schedule — changes nothing', icon: Search },
+    { id: 'repairShowSelections', name: 'Repair Show Selections', description: 'Re-match selections to the schedule: rename/move stale entries, remove dead ones to free slots', icon: RefreshCw },
   ];
 
   const handleRunJob = async (jobId, jobName) => {

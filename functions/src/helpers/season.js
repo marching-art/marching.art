@@ -1622,6 +1622,7 @@ module.exports = {
   mergeScheduleRefresh,
   showMatchKey,
   applyEnrichment,
+  brandEventName,
   // Schedule helpers
   writeScheduleToCollection,
   writeScheduleToSubcollection,

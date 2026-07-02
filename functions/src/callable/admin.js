@@ -11,6 +11,7 @@ const {
   scraperInvokeKey,
 } = require("../helpers/season");
 const { processAndArchiveOffSeasonScoresLogic, calculateCorpsStatisticsLogic, processAndScoreLiveSeasonDayLogic } = require("../helpers/scoring");
+const { reconcileSelectedShows } = require("../helpers/scheduleAudit");
 const { scrapeLatestLiveScores } = require("../scheduled/liveScraper");
 const { sendWelcomeEmail, brevoApiKey } = require("../helpers/emailService");
 const { DCI_CORPS_DATA } = require("../scripts/seedDciReference");
@@ -242,6 +243,93 @@ exports.manualTrigger = onCall({
         message: `Schedule refreshed from ${result.totalEvents} scraped events: ` +
           `${result.addedCount} added, ${result.enrichedCount} enriched with times/lineup, ` +
           `${result.unchangedCount} unchanged.`,
+      };
+    }
+    case "auditShowSelections":
+    case "repairShowSelections": {
+      // Re-match every director's saved show selections against the current
+      // schedule. Stale snapshots (e.g. pre-branding "DCI ..." names after a
+      // schedule reset) are renamed/moved to their canonical shows; entries that
+      // match nothing in editable weeks are removed so they stop consuming the
+      // per-week show slots. Past weeks are history: renamed when safe, never
+      // removed. "audit" reports what WOULD change; "repair" applies it.
+      const apply = jobName === "repairShowSelections";
+      const db = getDb();
+
+      const seasonDoc = await db.doc("game-settings/season").get();
+      if (!seasonDoc.exists) throw new HttpsError("failed-precondition", "No active season found.");
+      const seasonData = seasonDoc.data();
+      const seasonId = seasonData.seasonUid;
+
+      const scheduleDoc = await db.doc(`schedules/${seasonId}`).get();
+      const competitions = scheduleDoc.exists ? (scheduleDoc.data().competitions || []) : [];
+      if (competitions.length === 0) {
+        throw new HttpsError("failed-precondition", `schedules/${seasonId} has no competitions to match against.`);
+      }
+
+      // Same current-week derivation as regenerateOffSeasonSchedule above.
+      let currentWeek = 1;
+      if (seasonData.schedule?.startDate) {
+        const startDate = seasonData.schedule.startDate.toDate();
+        const diffInDays = Math.floor((Date.now() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+        const springTrainingDays = seasonData.schedule.springTrainingDays || 0;
+        currentWeek = Math.max(1, Math.ceil((diffInDays + 1 - springTrainingDays) / 7));
+      }
+
+      const profilesSnapshot = await db.collectionGroup("profile")
+        .where("activeSeasonId", "==", seasonId).get();
+
+      const corpsClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+      const totals = { profiles: profilesSnapshot.size, corpsChanged: 0, renamed: 0, moved: 0, removed: 0, kept: 0 };
+      let usersUpdated = 0;
+      let batch = db.batch();
+      let batchCount = 0;
+
+      for (const doc of profilesSnapshot.docs) {
+        const corpsData = doc.data().corps || {};
+        const updates = {};
+        let hasUpdates = false;
+
+        for (const corpsClass of corpsClasses) {
+          const selectedShows = corpsData[corpsClass]?.selectedShows;
+          if (!selectedShows || Object.keys(selectedShows).length === 0) continue;
+
+          const result = reconcileSelectedShows(selectedShows, competitions, currentWeek);
+          totals.renamed += result.stats.renamed;
+          totals.moved += result.stats.moved;
+          totals.removed += result.stats.removed;
+          totals.kept += result.stats.kept;
+
+          if (result.changed) {
+            totals.corpsChanged++;
+            updates[`corps.${corpsClass}.selectedShows`] = result.selectedShows;
+            hasUpdates = true;
+          }
+        }
+
+        if (hasUpdates) {
+          usersUpdated++;
+          if (apply) {
+            batch.update(doc.ref, updates);
+            batchCount++;
+            if (batchCount >= 400) {
+              await batch.commit();
+              batch = db.batch();
+              batchCount = 0;
+            }
+          }
+        }
+      }
+
+      if (apply && batchCount > 0) await batch.commit();
+
+      const verb = apply ? "Repaired" : "Audit (dry run) — would repair";
+      logger.info(`${verb} show selections for season ${seasonId}:`, totals);
+      return {
+        success: true,
+        message: `${verb} ${totals.corpsChanged} corps across ${usersUpdated} of ${totals.profiles} directors ` +
+          `(week ${currentWeek}+ editable): ${totals.renamed} renamed, ${totals.moved} moved, ` +
+          `${totals.removed} removed (slots freed), ${totals.kept} untouched.`,
       };
     }
     case "regenerateOffSeasonSchedule": {
