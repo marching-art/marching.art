@@ -1,6 +1,6 @@
 // Shared Admin panel UI primitives. Extracted from pages/Admin.jsx.
 
-import { CheckCircle, RefreshCw, Terminal, Users } from 'lucide-react';
+import { CheckCircle, RefreshCw, Terminal } from 'lucide-react';
 
 const ADMIN_TABS = [
   { id: 'overview', label: 'Overview' },
