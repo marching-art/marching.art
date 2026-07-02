@@ -13,6 +13,7 @@ const {
   updateScheduleDay,
   addShowToDay,
   shuffleArray,
+  brandEventName,
 } = require("./seasonSchedule");
 const {
   generateLiveSeasonSchedule,
