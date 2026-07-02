@@ -204,7 +204,7 @@ const TextStoryRow = memo(({ story, onClick, engagement }) => {
       </div>
 
       {/* Headline */}
-      <h2 className="font-serif text-lg font-bold text-white leading-snug mb-1.5 group-hover:underline decoration-gray-500 decoration-1 underline-offset-[3px]">
+      <h2 className="text-lg font-bold text-white leading-snug mb-1.5 group-hover:underline decoration-gray-500 decoration-1 underline-offset-[3px]">
         {safeString(story.headline)}
       </h2>
 
