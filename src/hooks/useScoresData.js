@@ -5,7 +5,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { doc, getDoc, collection, getDocs, query, orderBy } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db } from '../api';
 import { useSeasonStore } from '../store/seasonStore';
 
 /**

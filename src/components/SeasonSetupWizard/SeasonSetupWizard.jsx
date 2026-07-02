@@ -5,7 +5,7 @@
 // Laws: No slider animations, tabbed layout, utilitarian design
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { db, functions } from '../../firebase';
+import { db, functions } from '../../api';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';

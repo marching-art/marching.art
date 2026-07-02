@@ -6,7 +6,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Check, AlertCircle, Trophy, Save, Target, Award, X, ArrowLeft, Wand2
 } from 'lucide-react';
-import { db, functions } from '../../firebase';
+import { db, functions } from '../../api';
 import { doc, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';

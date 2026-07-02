@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { collection, collectionGroup, getDocs, doc, getDoc } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { db } from '../../firebase';
-import { setUserRole } from '../../firebase/functions';
+import { db } from '../../api';
+import { setUserRole } from '../../api/functions';
 import toast from 'react-hot-toast';
 import { Flame, Search, Shield, Terminal, UserCheck, UserX, Users, Wrench, X } from 'lucide-react';
 import { SectionHeader, ProcessRow } from './AdminUI';

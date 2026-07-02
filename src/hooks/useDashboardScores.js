@@ -3,7 +3,7 @@
 // Effect/memo bodies extracted verbatim from Dashboard.jsx.
 
 import { useState, useEffect, useMemo } from 'react';
-import { db } from '../firebase';
+import { db } from '../api';
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { CAPTIONS } from '../components/Dashboard';
 import {

@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Database, Plus, Trash2, Save, RefreshCw, AlertCircle, X, FilePlus } from 'lucide-react';
-import { db } from '../../firebase';
+import { db } from '../../api';
 import { doc, getDoc, setDoc, collection, getDocs } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 

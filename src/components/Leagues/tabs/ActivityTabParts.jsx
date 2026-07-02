@@ -9,7 +9,7 @@ import {
   MessageCircle, AlertTriangle, Swords,
 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../../firebase';
+import { db } from '../../../api';
 
 const LeagueStatsOverview = ({ standings, memberProfiles, leagueStats, currentWeek }) => {
   // Calculate league-wide stats

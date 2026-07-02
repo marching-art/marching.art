@@ -4,7 +4,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { db } from '../../api';
 
 const LeagueRecapsContext = createContext(null);
 

@@ -13,7 +13,6 @@ import { createContext, useContext } from 'react';
  * @property {Error | undefined} [error]
  * @property {(email: string, password: string) => Promise<unknown>} signIn
  * @property {(email: string, password: string) => Promise<unknown>} signUp
- * @property {() => Promise<unknown>} signInWithGoogle
  * @property {() => Promise<unknown>} signInAnonymously
  * @property {() => Promise<unknown>} signOut
  */

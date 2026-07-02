@@ -9,7 +9,7 @@ import {
   Copy, Check, Users, Calendar, LogOut,
 } from 'lucide-react';
 import { collection, query, orderBy, limit as firestoreLimit, onSnapshot, doc, getDoc, getDocs } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { db } from '../../api';
 import { subscribeToStandings } from '../../api/leagues';
 import toast from 'react-hot-toast';
 

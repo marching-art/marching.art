@@ -7,7 +7,7 @@
 
 import React, { memo, useState, useEffect } from 'react';
 import { Users, TrendingUp, Award, Activity } from 'lucide-react';
-import { db } from '../../firebase';
+import { db } from '../../api';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 

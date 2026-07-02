@@ -4,7 +4,7 @@
 // Typed wrappers for all Firebase Cloud Functions
 // Usage: import { registerCorps, dailyRehearsal } from '@/api/functions';
 
-import { httpsCallable, HttpsCallableResult } from 'firebase/functions';
+import { httpsCallable, HttpsCallableResult, HttpsCallableOptions } from 'firebase/functions';
 import { functions } from './client';
 
 // =============================================================================
@@ -14,8 +14,13 @@ import { functions } from './client';
 /**
  * Create a typed callable function wrapper
  */
-function createCallable<TData = void, TResult = unknown>(name: string) {
-  const callable = httpsCallable<TData, TResult>(functions, name);
+function createCallable<TData = void, TResult = unknown>(
+  name: string,
+  options?: HttpsCallableOptions
+) {
+  const callable = options
+    ? httpsCallable<TData, TResult>(functions, name, options)
+    : httpsCallable<TData, TResult>(functions, name);
   return async (data?: TData): Promise<HttpsCallableResult<TResult>> => {
     return callable(data as TData);
   };
@@ -27,12 +32,15 @@ function createCallable<TData = void, TResult = unknown>(name: string) {
 
 export const checkUsername = createCallable<{ username: string }, { available: boolean }>('checkUsername');
 export const createUserProfile = createCallable<{ username: string; displayName?: string }, void>('createUserProfile');
-export const setUserRole = createCallable<{ uid: string; role: string }, void>('setUserRole');
+export const setUserRole = createCallable<{ email: string; makeAdmin: boolean }, { message: string }>('setUserRole');
 export const getShowRegistrations = createCallable<{ showId: string }, unknown>('getShowRegistrations');
 export const getUserRankings = createCallable<{ uid: string }, unknown>('getUserRankings');
 // Renamed to avoid conflict with profile.ts updateProfile (local Firestore)
 export const updateProfileCF = createCallable<{ displayName?: string; bio?: string }, void>('updateProfile');
 export const getPublicProfile = createCallable<{ uid: string }, unknown>('getPublicProfile');
+export const updateUsername = createCallable<{ username: string }, { success: boolean }>('updateUsername');
+export const updateEmail = createCallable<{ email: string }, { success: boolean }>('updateEmail');
+export const deleteAccount = createCallable<void, { success: boolean }>('deleteAccount');
 
 // =============================================================================
 // CORPS & LINEUP
@@ -73,10 +81,10 @@ export const validateLineup = createCallable<{ corpsClass: string }, ValidateLin
 
 export interface RetireCorpsData {
   corpsClass: string;
-  corpsName: string;
+  checkOnly?: boolean;
 }
 
-export const retireCorps = createCallable<RetireCorpsData, { success: boolean }>('retireCorps');
+export const retireCorps = createCallable<RetireCorpsData, { success: boolean; message?: string }>('retireCorps');
 export const unretireCorps = createCallable<{ corpsClass: string; retiredIndex: number }, { success: boolean }>('unretireCorps');
 
 export interface TransferCorpsData {
@@ -203,9 +211,20 @@ export interface CreateLeagueData {
 export const createLeagueCF = createCallable<CreateLeagueData, { leagueId: string }>('createLeague');
 export const joinLeagueCF = createCallable<{ leagueId: string } | { inviteCode: string }, { success: boolean }>('joinLeague');
 export const leaveLeagueCF = createCallable<{ leagueId: string }, { success: boolean }>('leaveLeague');
-export const generateMatchups = createCallable<{ leagueId: string }, { matchups: unknown[] }>('generateMatchups');
+export const generateMatchups = createCallable<
+  { leagueId: string; week: number },
+  { success: boolean; matchups?: unknown[]; message?: string }
+>('generateMatchups');
 export const updateMatchupResults = createCallable<{ matchupId: string; results: unknown }, void>('updateMatchupResults');
 export const postLeagueMessageCF = createCallable<{ leagueId: string; message: string }, { messageId: string }>('postLeagueMessage');
+export const inviteDirectorToLeague = createCallable<
+  { leagueId: string; inviteeUid: string; message?: string },
+  { success: boolean }
+>('inviteDirectorToLeague');
+export const respondToLeagueInvitation = createCallable<
+  { leagueId: string; accept: boolean },
+  { success: boolean }
+>('respondToLeagueInvitation');
 export const sendCommentNotification = createCallable<{ targetUid: string; commentId: string }, void>('sendCommentNotification');
 export const deleteComment = createCallable<{ commentId: string }, { success: boolean }>('deleteComment');
 export const reportComment = createCallable<{ commentId: string; reason: string }, { success: boolean }>('reportComment');
@@ -306,6 +325,11 @@ export async function fetchNewsFeedHttp(params: {
   }
 }
 export const triggerNewsGeneration = createCallable<{ type: 'dci' | 'fantasy'; data: unknown }, { success: boolean; result?: unknown }>('triggerNewsGeneration');
+// 3 min timeout: generates the full day's AI articles in one call
+export const triggerDailyNews = createCallable<
+  { currentDay?: number; dataDocId?: string; seasonId?: string },
+  { success: boolean }
+>('triggerDailyNews', { timeout: 180000 });
 
 // =============================================================================
 // ARTICLE MANAGEMENT (Admin)

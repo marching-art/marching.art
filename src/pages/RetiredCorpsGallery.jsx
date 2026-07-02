@@ -5,9 +5,9 @@ import {
   Crown, Archive, RefreshCw, X, Music, Medal
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { db, dataNamespace } from '../firebase';
+import { db, dataNamespace } from '../api';
 import { doc, onSnapshot } from 'firebase/firestore';
-import { unretireCorps } from '../firebase/functions';
+import { unretireCorps } from '../api/functions';
 import toast from 'react-hot-toast';
 import LoadingScreen from '../components/LoadingScreen';
 import Portal from '../components/Portal';

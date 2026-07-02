@@ -21,7 +21,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Table, RefreshCw, AlertCircle, Download, ChevronLeft, ChevronRight, Radio
 } from 'lucide-react';
-import { db } from '../../firebase';
+import { db } from '../../api';
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';

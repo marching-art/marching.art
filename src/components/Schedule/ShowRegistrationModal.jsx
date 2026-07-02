@@ -11,7 +11,7 @@ import {
   Trophy, ChevronRight, Clock, Info, Ticket
 } from 'lucide-react';
 import { httpsCallable } from 'firebase/functions';
-import { functions } from '../../firebase';
+import { functions } from '../../api';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
 import { BottomSheet } from '../ui/BottomSheet';

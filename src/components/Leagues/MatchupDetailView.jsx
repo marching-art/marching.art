@@ -7,7 +7,7 @@ import {
   ChevronLeft, Swords, Trophy, Flame, Calendar, BarChart3
 } from 'lucide-react';
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { db } from '../../api';
 import { RivalryBadge } from './LeagueActivityFeed';
 import BattleBreakdown, { BattleScoreHeader, BattleSummaryBar } from './BattleBreakdown';
 import RivalryHistoryCard from './RivalryHistoryCard';

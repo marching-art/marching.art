@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db } from '../api';
 import { useSeasonStore } from '../store/seasonStore';
 
 /**

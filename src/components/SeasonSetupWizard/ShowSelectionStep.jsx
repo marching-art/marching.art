@@ -4,7 +4,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { Calendar, Check, ChevronRight, MapPin, Trophy } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { db } from '../../api';
 import { ShowRegistrationModal } from '../Schedule';
 import { useScheduleStore } from '../../store/scheduleStore';
 import { compareCorpsClasses } from '../../utils/corps';

@@ -9,7 +9,7 @@ import {
   PartyPopper, AtSign, Loader2, CheckCircle2, XCircle
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { db, functions } from '../firebase';
+import { db, functions } from '../api';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';

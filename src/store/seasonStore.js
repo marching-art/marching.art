@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { db } from '../firebase';
+import { db } from '../api';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { formatSeasonName } from '../utils/season';
 
