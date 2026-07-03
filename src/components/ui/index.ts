@@ -31,11 +31,7 @@ export {
 export { StatCard, type StatCardProps, type TrendDirection } from './StatCard';
 
 // PageHeader Component
-export {
-  PageHeader,
-  type PageHeaderProps,
-  type PageHeaderStat,
-} from './PageHeader';
+export { PageHeader, type PageHeaderProps, type PageHeaderStat } from './PageHeader';
 
 // Modal Components
 export {

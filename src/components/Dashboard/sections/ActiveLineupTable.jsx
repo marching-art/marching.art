@@ -27,7 +27,9 @@ const TrendChip = ({ trend }) => {
         ? 'text-red-500'
         : 'text-gray-500';
   return (
-    <span className={`inline-flex items-center gap-0.5 text-[11px] font-data tabular-nums ${color}`}>
+    <span
+      className={`inline-flex items-center gap-0.5 text-[11px] font-data tabular-nums ${color}`}
+    >
       {trend.direction === 'up' && <TrendingUp className="w-3 h-3" />}
       {trend.direction === 'down' && <TrendingDown className="w-3 h-3" />}
       {trend.direction === 'same' && <Minus className="w-3 h-3" />}

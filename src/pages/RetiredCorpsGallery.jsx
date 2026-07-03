@@ -1,15 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
-import {
-  Trophy,
-  Calendar,
-  MapPin,
-  Star,
-  Archive,
-  RefreshCw,
-  X,
-  Music,
-} from 'lucide-react';
+import { Trophy, Calendar, MapPin, Star, Archive, RefreshCw, X, Music } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { subscribeToProfile } from '../api/profile';
 import { unretireCorps } from '../api/functions';
@@ -21,10 +12,30 @@ import { PageHeader } from '../components/ui';
 // Class styling matches the site's design system (see Schedule CLASS_CONFIG):
 // sharp, flat color tints rather than gradients.
 const CLASS_CONFIG = {
-  worldClass: { name: 'World Class', color: 'text-yellow-500', bg: 'bg-yellow-500/10', accent: 'bg-yellow-500' },
-  openClass: { name: 'Open Class', color: 'text-purple-400', bg: 'bg-purple-400/10', accent: 'bg-purple-400' },
-  aClass: { name: 'A Class', color: 'text-[#0057B8]', bg: 'bg-[#0057B8]/10', accent: 'bg-[#0057B8]' },
-  soundSport: { name: 'SoundSport', color: 'text-green-500', bg: 'bg-green-500/10', accent: 'bg-green-500' },
+  worldClass: {
+    name: 'World Class',
+    color: 'text-yellow-500',
+    bg: 'bg-yellow-500/10',
+    accent: 'bg-yellow-500',
+  },
+  openClass: {
+    name: 'Open Class',
+    color: 'text-purple-400',
+    bg: 'bg-purple-400/10',
+    accent: 'bg-purple-400',
+  },
+  aClass: {
+    name: 'A Class',
+    color: 'text-[#0057B8]',
+    bg: 'bg-[#0057B8]/10',
+    accent: 'bg-[#0057B8]',
+  },
+  soundSport: {
+    name: 'SoundSport',
+    color: 'text-green-500',
+    bg: 'bg-green-500/10',
+    accent: 'bg-green-500',
+  },
 };
 
 const CLASS_FILTERS = [
@@ -362,8 +373,8 @@ const RetiredCorpsGallery = () => {
                   <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-sm p-3 mb-4">
                     <p className="text-xs text-yellow-200">
                       <strong>Note:</strong> This corps will become your active{' '}
-                      {getClassConfig(selectedCorps.corpsClass).name} corps. All season history
-                      will be preserved, but you'll start fresh for the current season.
+                      {getClassConfig(selectedCorps.corpsClass).name} corps. All season history will
+                      be preserved, but you'll start fresh for the current season.
                     </p>
                   </div>
 
