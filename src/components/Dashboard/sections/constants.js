@@ -1,19 +1,12 @@
 // Dashboard section shared constants
 // OPTIMIZATION #4: Extracted from Dashboard.jsx to reduce file size and enable code-splitting
 
-export const CLASS_LABELS = {
-  worldClass: 'World',
-  openClass: 'Open',
-  aClass: 'A Class',
-  soundSport: 'SoundSport',
-};
+import { CORPS_CLASS_LABELS, CORPS_CLASS_SHORT_LABELS } from '../../../utils/corps';
 
-export const CLASS_SHORT_LABELS = {
-  worldClass: 'World',
-  openClass: 'Open',
-  aClass: 'Class A',
-  soundSport: 'SoundSport',
-};
+// Class labels come from the single source in utils/corps.ts — do not
+// re-declare label maps here ("A Class", never "Class A").
+export const CLASS_LABELS = CORPS_CLASS_LABELS;
+export const CLASS_SHORT_LABELS = CORPS_CLASS_SHORT_LABELS;
 
 export const CAPTIONS = [
   { id: 'GE1', name: 'GE1', fullName: 'General Effect 1', category: 'ge' },
@@ -26,10 +19,13 @@ export const CAPTIONS = [
   { id: 'P', name: 'Perc', fullName: 'Percussion', category: 'mus' },
 ];
 
-export const CLASS_UNLOCK_LEVELS = { aClass: 3, open: 5, world: 10 };
-export const CLASS_UNLOCK_COSTS = { aClass: 1000, open: 2500, world: 5000 };
-export const CLASS_UNLOCK_WEEKS = { aClass: 5, open: 12, world: 19 };
-export const CLASS_DISPLAY_NAMES = { aClass: 'A Class', open: 'Open Class', world: 'World Class' };
+// Keyed by canonical class keys (aClass/openClass/worldClass — same scheme as
+// CORPS_CLASS_ORDER and profile.unlockedClasses). The backend callable
+// canonicalizes, so these keys flow through the whole unlock/purchase path.
+export const CLASS_UNLOCK_LEVELS = { aClass: 3, openClass: 5, worldClass: 10 };
+export const CLASS_UNLOCK_COSTS = { aClass: 1000, openClass: 2500, worldClass: 5000 };
+export const CLASS_UNLOCK_WEEKS = { aClass: 5, openClass: 12, worldClass: 19 };
+export const CLASS_DISPLAY_NAMES = CORPS_CLASS_LABELS;
 
 // SoundSport medal rating thresholds
 export const SOUNDSPORT_RATING_THRESHOLDS = [

@@ -84,7 +84,7 @@ const CorpsOptionRow = ({ corps, isSelected, onSelect, disabled, captionHotStatu
       <div
         className={`text-xs font-data font-bold ${isSelected ? 'text-[#0057B8]' : 'text-gray-400'}`}
       >
-        {corps.points} pts
+        Cost {corps.points}
       </div>
     </button>
   );
@@ -157,7 +157,7 @@ const TemplateModal = ({ isOpen, onClose, templates, onSave, onLoad, onDelete, c
                   <div>
                     <div className="font-bold text-white text-sm">{template.name}</div>
                     <div className="text-[10px] text-gray-500">
-                      {Object.keys(template.lineup).length} selections • {template.totalPoints} pts
+                      {Object.keys(template.lineup).length} selections • cost {template.totalPoints}
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
@@ -267,7 +267,7 @@ const DraftHelper = ({ suggestions, onSelectSuggestion, selections, activeCaptio
                     }`}
                   >
                     <span className="text-gray-300">{corps.corpsName}</span>
-                    <span className="text-gray-500 font-data">{corps.points} pts</span>
+                    <span className="text-gray-500 font-data">Cost {corps.points}</span>
                   </button>
                 );
               })
@@ -372,7 +372,7 @@ const CaptionButton = ({ caption, selected, isActive, onClick, categoryColor }) 
         <div className="flex items-center gap-2">
           <div className="text-right min-w-0">
             <div className="text-xs text-white truncate max-w-[100px]">{selected.name}</div>
-            <div className="text-[10px] font-data text-[#0057B8]">{selected.points} pts</div>
+            <div className="text-[10px] font-data text-[#0057B8]">Cost {selected.points}</div>
           </div>
           <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
         </div>

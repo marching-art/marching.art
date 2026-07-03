@@ -13,27 +13,20 @@ import {
 import { getWeeksUntilUnlock } from '../../../utils/classUnlockTime';
 import NextDeadlineChip from './NextDeadlineChip';
 
-// Helper to get next class unlock info
-// Note: unlockedClasses uses 'aClass', 'openClass', 'worldClass' format
-// But CLASS_UNLOCK_* constants use 'aClass', 'open', 'world' format
+// Helper to get next class unlock info. Everything speaks canonical class
+// keys (aClass/openClass/worldClass) — the same scheme as unlockedClasses,
+// CORPS_CLASS_ORDER, and the CLASS_UNLOCK_* constants.
 const getNextClassUnlock = (unlockedClasses, xpLevel, corpsCoin, createdAt) => {
-  // Map from unlock key to profile key
-  const classConfig = [
-    { unlockKey: 'aClass', profileKey: 'aClass' },
-    { unlockKey: 'open', profileKey: 'openClass' },
-    { unlockKey: 'world', profileKey: 'worldClass' },
-  ];
-
-  for (const { unlockKey, profileKey } of classConfig) {
-    if (!unlockedClasses?.includes(profileKey)) {
-      const levelRequired = CLASS_UNLOCK_LEVELS[unlockKey];
-      const coinCost = CLASS_UNLOCK_COSTS[unlockKey];
+  for (const classKey of ['aClass', 'openClass', 'worldClass']) {
+    if (!unlockedClasses?.includes(classKey)) {
+      const levelRequired = CLASS_UNLOCK_LEVELS[classKey];
+      const coinCost = CLASS_UNLOCK_COSTS[classKey];
       const meetsLevel = xpLevel >= levelRequired;
       const canAfford = corpsCoin >= coinCost;
-      const weeksUntil = createdAt ? getWeeksUntilUnlock(createdAt, unlockKey) : null;
+      const weeksUntil = createdAt ? getWeeksUntilUnlock(createdAt, classKey) : null;
       return {
-        className: CLASS_DISPLAY_NAMES[unlockKey],
-        classKey: unlockKey,
+        className: CLASS_DISPLAY_NAMES[classKey],
+        classKey,
         levelRequired,
         coinCost,
         meetsLevel,

@@ -172,8 +172,12 @@ export const useSeasonStore = create((set, get) => ({
     const { weeksRemaining } = get();
     if (weeksRemaining === null) return false;
 
+    // Accepts canonical keys (worldClass/openClass) and legacy short keys
+    // (world/open) — callers now pass canonical.
     const locks = {
+      worldClass: 6,
       world: 6,
+      openClass: 5,
       open: 5,
       aClass: 4,
       soundSport: 0,

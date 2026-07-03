@@ -13,6 +13,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { useSeasonDeadlines } from '../../hooks/useSeasonClock';
 import { getTradeWeekInfo, formatCountdown, WEEKLY_TRADE_LIMIT } from '../../utils/seasonClock';
+import { CORPS_CLASS_LABELS as CLASS_LABELS } from '../../utils/corps';
 import {
   LineupCelebration,
   CorpsOptionRow,
@@ -74,13 +75,6 @@ const CaptionSelectionModal = ({
 
   const pointLimits = { soundSport: 90, aClass: 60, openClass: 120, worldClass: 150 };
   const pointLimit = pointLimits[corpsClass];
-
-  const CLASS_LABELS = {
-    soundSport: 'SoundSport',
-    aClass: 'A Class',
-    openClass: 'Open Class',
-    worldClass: 'World Class',
-  };
 
   const categoryColors = {
     'General Effect': 'bg-yellow-500',
@@ -524,7 +518,7 @@ const CaptionSelectionModal = ({
                       : 'Draft Your Lineup'}
                   </h2>
                   <p className="text-sm text-gray-500">
-                    {CLASS_LABELS[corpsClass]} • {pointLimit} pts budget
+                    {CLASS_LABELS[corpsClass]} • Draft budget: {pointLimit}
                   </p>
                 </div>
               </div>
@@ -715,6 +709,10 @@ const CaptionSelectionModal = ({
                             );
                           })}
                         </div>
+                        <p className="px-4 py-3 text-[10px] text-gray-600 text-center border-t border-[#222]">
+                          Showing this season's draftable corps (cost 50 or less). Cost counts
+                          against your budget — scores come from real performances.
+                        </p>
                       </div>
                     </>
                   ) : (

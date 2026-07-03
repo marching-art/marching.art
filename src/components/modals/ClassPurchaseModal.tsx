@@ -30,23 +30,25 @@ interface ClassPurchaseModalProps {
 // CONSTANTS
 // =============================================================================
 
+// Keyed by canonical class keys (aClass/openClass/worldClass), the scheme
+// used by CORPS_CLASS_ORDER, unlockedClasses, and the dashboard constants.
 const CLASS_DESCRIPTIONS: Record<string, string> = {
-  aClass: 'Intermediate level corps with higher point limits and more competitive shows',
-  open: 'Advanced level corps with expanded opportunities and prestigious competitions',
-  world: 'Elite level corps competing at the highest tier of drum corps activity',
+  aClass: 'Intermediate level corps with higher draft budgets and more competitive shows',
+  openClass: 'Advanced level corps with expanded opportunities and prestigious competitions',
+  worldClass: 'Elite level corps competing at the highest tier of drum corps activity',
 };
 
 const CLASS_BUDGETS: Record<string, string> = {
-  aClass: '60 pts',
-  open: '120 pts',
-  world: '150 pts',
+  aClass: '60',
+  openClass: '120',
+  worldClass: '150',
 };
 
 // Registration lock thresholds (weeks remaining when class locks)
 const REGISTRATION_LOCK_WEEKS: Record<string, number> = {
   aClass: 4,
-  open: 5,
-  world: 6,
+  openClass: 5,
+  worldClass: 6,
   soundSport: 0,
 };
 
@@ -130,7 +132,7 @@ const ClassPurchaseModal: React.FC<ClassPurchaseModalProps> = ({
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-bold text-white">{className}</h3>
                 <span className="text-xs font-data text-[#0057B8]">
-                  {CLASS_BUDGETS[classKey] || '—'}
+                  Draft budget: {CLASS_BUDGETS[classKey] || '—'}
                 </span>
               </div>
               <p className="text-xs text-gray-400 leading-relaxed">

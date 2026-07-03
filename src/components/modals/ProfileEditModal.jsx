@@ -14,7 +14,7 @@ import { CORPS_CLASS_ORDER, resolveCorpsForClass, isCorpsClassUnlocked } from '.
 const CLASS_LABELS = {
   worldClass: 'World Class',
   openClass: 'Open Class',
-  aClass: 'Class A',
+  aClass: 'A Class',
   soundSport: 'SoundSport',
 };
 

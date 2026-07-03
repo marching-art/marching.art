@@ -51,14 +51,19 @@ export const getSeasonProgress = (seasonData) => {
 };
 
 /**
- * Check if a class registration is locked based on weeks remaining
- * @param {string} corpsClass - Class to check ('soundSport', 'aClass', 'open', 'world')
+ * Check if a class registration is locked based on weeks remaining.
+ * Accepts canonical keys (worldClass/openClass/aClass/soundSport) and legacy
+ * short keys (world/open). Keep the thresholds in sync with
+ * seasonStore.isRegistrationLocked.
+ * @param {string} corpsClass - Class to check
  * @param {number} weeksRemaining - Weeks until season end
  * @returns {boolean} True if registration is locked
  */
 export const isRegistrationLocked = (corpsClass, weeksRemaining) => {
   const locks = {
+    worldClass: 6,
     world: 6,
+    openClass: 5,
     open: 5,
     aClass: 4,
     soundSport: 0,

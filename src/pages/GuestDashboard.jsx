@@ -7,11 +7,10 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { m } from 'framer-motion';
 import {
   Trophy,
-  Star,
   Calendar,
   TrendingUp,
   ChevronRight,
@@ -26,7 +25,6 @@ import {
   Info,
   Flame,
   Target,
-  Clock,
   Lock,
 } from 'lucide-react';
 import { useGuestPreview } from '../hooks/useGuestPreview';
@@ -34,6 +32,7 @@ import { RegistrationGate, GuestLineupPicker } from '../components/GuestPreview'
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useSEO } from '../hooks/useSEO';
 import { getSeasonData, getCorpsValues } from '../api/season';
+import { getCorpsClassName } from '../utils/corps';
 
 const STARTER_BUDGET = 90; // Same 90-pt SoundSport budget onboarding drafts under
 
@@ -51,13 +50,6 @@ const CAPTIONS = [
   { id: 'MA', name: 'MA', category: 'mus', fullName: 'Music Analysis' },
   { id: 'P', name: 'P', category: 'mus', fullName: 'Percussion' },
 ];
-
-const CLASS_LABELS = {
-  world: 'World Class',
-  open: 'Open Class',
-  aClass: 'A Class',
-  soundSport: 'SoundSport',
-};
 
 // =============================================================================
 // GUEST HEADER COMPONENT
@@ -165,7 +157,7 @@ const LineupRow = ({ caption, value, captionScore, pointsCost, isLast, isPlayabl
         {hasValue ? (
           pointsCost != null ? (
             <span className="text-xs font-bold font-data text-yellow-400 tabular-nums">
-              {pointsCost} pts
+              Cost {pointsCost}
             </span>
           ) : (
             <span className="text-xs font-data text-gray-400 tabular-nums">
@@ -210,7 +202,6 @@ const GuestDashboard = () => {
       'Preview the marching.art fantasy drum corps dashboard — live scores, lineups, and leaderboards — before creating your free corps.',
     path: '/preview',
   });
-  const navigate = useNavigate();
 
   const {
     isLoading,
@@ -402,7 +393,7 @@ const GuestDashboard = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs font-bold text-yellow-500 uppercase tracking-wider">
-                          {CLASS_LABELS[demoCorps.corpsClass]}
+                          {getCorpsClassName(demoCorps.corpsClass)}
                         </span>
                       </div>
                       <h1 className="text-xl font-bold text-white truncate">
@@ -472,7 +463,7 @@ const GuestDashboard = () => {
                               draftPoints > STARTER_BUDGET ? 'text-red-400' : 'text-yellow-400'
                             }
                           >
-                            {draftPoints}/{STARTER_BUDGET} pts
+                            {draftPoints}/{STARTER_BUDGET} budget
                           </span>
                         </span>
                         <button

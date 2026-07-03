@@ -26,7 +26,7 @@ import { TeamAvatar } from '../components/ui/TeamAvatar';
 const CLASS_CONFIG = {
   worldClass: { name: 'World Class', short: 'World', icon: Crown },
   openClass: { name: 'Open Class', short: 'Open', icon: Trophy },
-  aClass: { name: 'Class A', short: 'Class A', icon: Award },
+  aClass: { name: 'A Class', short: 'A Class', icon: Award },
 };
 
 const RANK_META = {

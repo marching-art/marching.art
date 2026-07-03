@@ -625,7 +625,7 @@ const Onboarding = () => {
                       </div>
                       <h2 className="text-xl font-bold text-white mb-1">Build Your Lineup</h2>
                       <p className="text-gray-400 text-xs">
-                        Draft a corps for each caption • Budget: {SOUNDSPORT_POINT_LIMIT} points
+                        Draft a corps for each caption • Budget: {SOUNDSPORT_POINT_LIMIT}
                       </p>
                     </div>
 
@@ -681,7 +681,8 @@ const Onboarding = () => {
                         />
                       </div>
                       <p className="text-xs text-gray-500 mt-2 text-center">
-                        You can change this anytime from your dashboard
+                        You can adjust this from your dashboard — changes are unlimited in the
+                        opening weeks, then limited to a few per week
                       </p>
                     </div>
                   </m.div>

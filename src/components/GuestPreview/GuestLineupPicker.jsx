@@ -84,7 +84,7 @@ const GuestLineupPicker = ({
                   >
                     {remainingPoints}
                   </span>{' '}
-                  of {STARTER_BUDGET} pts remaining
+                  of {STARTER_BUDGET} remaining
                 </p>
               </div>
               <button
@@ -135,7 +135,7 @@ const GuestLineupPicker = ({
                           : 'bg-yellow-500/20 text-yellow-400'
                       }`}
                     >
-                      {corps.points} pts
+                      Cost {corps.points}
                     </span>
                   </button>
                 );

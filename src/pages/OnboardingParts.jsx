@@ -73,7 +73,7 @@ export const GuidedCaptionSelection = ({
         <span
           className={`text-sm font-bold ${remainingPoints < 10 ? 'text-yellow-400' : 'text-green-400'}`}
         >
-          {remainingPoints} pts remaining
+          {remainingPoints} budget left
         </span>
       </div>
 
@@ -126,7 +126,7 @@ export const GuidedCaptionSelection = ({
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-yellow-400">{selectedCorps.points} pts</span>
+              <span className="text-sm font-bold text-yellow-400">Cost {selectedCorps.points}</span>
               <button onClick={handleDeselect} className="text-xs text-red-400 hover:text-red-300">
                 Change
               </button>
@@ -171,7 +171,7 @@ export const GuidedCaptionSelection = ({
                       : 'bg-yellow-500/20 text-yellow-400'
                   }`}
                 >
-                  {corps.points} pts
+                  Cost {corps.points}
                 </div>
               </m.button>
             );

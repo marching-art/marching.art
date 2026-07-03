@@ -108,6 +108,26 @@ export function sortCorpsEntriesByClass<T>(entries: [string, T][]): [string, T][
 // CLASS NAME MAPPING
 // =============================================================================
 
+/**
+ * Canonical display labels — the ONLY approved spellings for user-facing
+ * class names. It is "A Class" (matching "Open Class"/"World Class"), never
+ * "Class A". Import these instead of declaring local label maps.
+ */
+export const CORPS_CLASS_LABELS: Record<string, string> = {
+  worldClass: 'World Class',
+  openClass: 'Open Class',
+  aClass: 'A Class',
+  soundSport: 'SoundSport',
+};
+
+/** Compact variants for tabs and tight chips. */
+export const CORPS_CLASS_SHORT_LABELS: Record<string, string> = {
+  worldClass: 'World',
+  openClass: 'Open',
+  aClass: 'A Class',
+  soundSport: 'SoundSport',
+};
+
 // Supports both canonical names (open, world) and legacy names (openClass, worldClass)
 const CLASS_NAMES: Record<string, string> = {
   soundSport: 'SoundSport',
