@@ -6,125 +6,111 @@ import { Edit, TrendingUp, TrendingDown, Minus, Lock, MapPin } from 'lucide-reac
 import { CAPTIONS } from './constants';
 
 // Skeleton row for loading state
-const SkeletonRow = memo(({ scoresAvailable = true }) => (
-  <tr className="border-b border-[#222]">
-    <td className="py-2.5 px-3">
-      <div className="w-10 h-6 bg-[#333] animate-pulse" />
-    </td>
-    <td className="py-2.5 px-3">
-      <div className="w-32 h-4 bg-[#333] animate-pulse" />
-    </td>
-    {scoresAvailable && (
-      <td className="py-2.5 px-2 text-right">
-        <div className="w-14 h-4 bg-[#333] animate-pulse ml-auto" />
-      </td>
-    )}
-    {scoresAvailable && (
-      <td className="py-2.5 px-2 text-center">
-        <div className="w-8 h-4 bg-[#333] animate-pulse mx-auto" />
-      </td>
-    )}
-    <td className="py-2.5 px-3 text-right">
-      <div className="w-20 h-4 bg-[#333] animate-pulse ml-auto" />
-    </td>
-  </tr>
+const SkeletonRow = memo(() => (
+  <div className="flex items-center gap-3 px-3 py-2.5 border-b border-[#222]">
+    <div className="w-11 h-6 bg-[#333] animate-pulse flex-shrink-0" />
+    <div className="flex-1 min-w-0 space-y-1.5">
+      <div className="w-32 h-3.5 bg-[#333] animate-pulse" />
+      <div className="w-24 h-3 bg-[#222] animate-pulse" />
+    </div>
+    <div className="w-12 h-4 bg-[#333] animate-pulse flex-shrink-0" />
+  </div>
 ));
 
-// Memoized lineup row to prevent unnecessary re-renders
+// Trend chip (up/down/flat) shown next to the score.
+const TrendChip = ({ trend }) => {
+  if (!trend) return null;
+  const color =
+    trend.direction === 'up'
+      ? 'text-green-500'
+      : trend.direction === 'down'
+        ? 'text-red-500'
+        : 'text-gray-500';
+  return (
+    <span className={`inline-flex items-center gap-0.5 text-[11px] font-data tabular-nums ${color}`}>
+      {trend.direction === 'up' && <TrendingUp className="w-3 h-3" />}
+      {trend.direction === 'down' && <TrendingDown className="w-3 h-3" />}
+      {trend.direction === 'same' && <Minus className="w-3 h-3" />}
+      {trend.delta}
+    </span>
+  );
+};
+
+// Memoized lineup row - two-line layout that fits the mobile width instead of
+// a wide table whose Next Show column clipped off the right edge.
 const LineupTableRow = memo(({ caption, value, captionData, onSlotClick, scoresAvailable }) => {
   const hasValue = !!value;
   const [corpsName, sourceYear] = hasValue ? value.split('|') : [null, null];
   const { score, trend, nextShow } = captionData || {};
 
   return (
-    <tr
+    <button
+      type="button"
       onClick={() => onSlotClick(caption.id)}
-      className="border-b border-[#222] hover:bg-[#222] cursor-pointer transition-colors"
+      className="w-full text-left flex items-center gap-3 px-3 py-2.5 border-b border-[#222] hover:bg-[#222] active:bg-[#222] transition-colors"
     >
       {/* Slot Badge */}
-      <td className="py-2.5 px-3">
-        <span
-          className={`inline-block px-2 py-1 text-[10px] font-bold ${
-            hasValue ? 'bg-[#0057B8]/20 text-[#0057B8]' : 'bg-[#333] text-gray-500'
-          }`}
-        >
-          {caption.name}
-        </span>
-      </td>
+      <span
+        className={`flex-shrink-0 w-11 text-center px-1.5 py-1 text-[10px] font-bold ${
+          hasValue ? 'bg-[#0057B8]/20 text-[#0057B8]' : 'bg-[#333] text-gray-500'
+        }`}
+      >
+        {caption.name}
+      </span>
 
-      {/* Corps Name + Year */}
-      <td className="py-2.5 px-3">
-        {hasValue ? (
-          <div>
-            <span className="text-sm text-white">{corpsName}</span>
-            {sourceYear && (
-              <span className="text-[10px] text-gray-500 ml-1.5">
-                '{String(sourceYear).slice(-2)}
-              </span>
+      {/* Corps + Next Show */}
+      <div className="flex-1 min-w-0">
+        {/* Line 1: corps name (+year) and score/trend */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-baseline gap-1.5 min-w-0">
+            {hasValue ? (
+              <>
+                <span className="text-sm text-white truncate">{corpsName}</span>
+                {sourceYear && (
+                  <span className="text-[10px] text-gray-500 flex-shrink-0">
+                    '{String(sourceYear).slice(-2)}
+                  </span>
+                )}
+              </>
+            ) : (
+              <span className="text-sm text-gray-500 italic">Empty slot</span>
             )}
           </div>
-        ) : (
-          <span className="text-sm text-gray-500 italic">Empty slot</span>
-        )}
-      </td>
 
-      {/* Last Score */}
-      {scoresAvailable && (
-        <td className="py-2.5 px-2 text-right">
-          {hasValue && score !== null && score !== undefined ? (
-            <span className="text-sm font-bold text-white font-data tabular-nums">
-              {score.toFixed(2)}
+          {scoresAvailable && hasValue && (
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {score !== null && score !== undefined ? (
+                <span className="text-sm font-bold text-white font-data tabular-nums">
+                  {score.toFixed(2)}
+                </span>
+              ) : (
+                <span className="text-sm text-gray-600">—</span>
+              )}
+              <TrendChip trend={trend} />
+            </div>
+          )}
+        </div>
+
+        {/* Line 2: next show / status */}
+        <div className="mt-0.5">
+          {hasValue && nextShow ? (
+            <span className="text-[11px] text-gray-500 flex items-center gap-1 min-w-0">
+              <MapPin className="w-3 h-3 flex-shrink-0 text-purple-400" />
+              <span className="truncate">
+                Day {nextShow.day} · {nextShow.location}
+              </span>
+            </span>
+          ) : hasValue ? (
+            <span className="text-[11px] text-gray-600 flex items-center gap-1">
+              <Lock className="w-3 h-3" />
+              Season complete
             </span>
           ) : (
-            <span className="text-sm text-gray-600">—</span>
+            <span className="text-[11px] text-yellow-500 font-bold">+ Draft player</span>
           )}
-        </td>
-      )}
-
-      {/* Trend */}
-      {scoresAvailable && (
-        <td className="py-2.5 px-2 text-center">
-          {hasValue && trend ? (
-            <span
-              className={`inline-flex items-center gap-0.5 text-xs font-data tabular-nums ${
-                trend.direction === 'up'
-                  ? 'text-green-500'
-                  : trend.direction === 'down'
-                    ? 'text-red-500'
-                    : 'text-gray-500'
-              }`}
-            >
-              {trend.direction === 'up' && <TrendingUp className="w-3 h-3" />}
-              {trend.direction === 'down' && <TrendingDown className="w-3 h-3" />}
-              {trend.direction === 'same' && <Minus className="w-3 h-3" />}
-              {trend.delta}
-            </span>
-          ) : (
-            <span className="text-gray-600">—</span>
-          )}
-        </td>
-      )}
-
-      {/* Next Show (Day + Location) */}
-      <td className="py-2.5 px-3 text-right">
-        {hasValue && nextShow ? (
-          <div className="text-right">
-            <span className="text-[10px] text-gray-500 block">Day {nextShow.day}</span>
-            <span className="text-[11px] text-gray-400 truncate block max-w-[120px] flex items-center justify-end gap-1">
-              <MapPin className="w-3 h-3 flex-shrink-0" />
-              <span className="truncate">{nextShow.location}</span>
-            </span>
-          </div>
-        ) : hasValue ? (
-          <span className="text-[11px] text-gray-600 flex items-center justify-end gap-1">
-            <Lock className="w-3 h-3" />
-            Season complete
-          </span>
-        ) : (
-          <span className="text-[11px] text-yellow-500 font-bold">+ Draft</span>
-        )}
-      </td>
-    </tr>
+        </div>
+      </div>
+    </button>
   );
 });
 
@@ -152,49 +138,20 @@ const ActiveLineupTable = memo(
           </div>
         </div>
 
-        {/* Roster Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-[#333] bg-[#111]">
-                <th className="text-left py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-16">
-                  Slot
-                </th>
-                <th className="text-left py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">
-                  Corps
-                </th>
-                {scoresAvailable && (
-                  <th className="text-right py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-20">
-                    Last Score
-                  </th>
-                )}
-                {scoresAvailable && (
-                  <th className="text-center py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-20">
-                    Trend
-                  </th>
-                )}
-                <th className="text-right py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-32">
-                  Next Show
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading
-                ? Array.from({ length: 8 }).map((_, i) => (
-                    <SkeletonRow key={i} scoresAvailable={scoresAvailable} />
-                  ))
-                : CAPTIONS.map((caption) => (
-                    <LineupTableRow
-                      key={caption.id}
-                      caption={caption}
-                      value={lineup[caption.id]}
-                      captionData={lineupScoreData?.[caption.id]}
-                      onSlotClick={onSlotClick}
-                      scoresAvailable={scoresAvailable}
-                    />
-                  ))}
-            </tbody>
-          </table>
+        {/* Roster - stacked rows that fit the mobile width */}
+        <div>
+          {loading
+            ? Array.from({ length: 8 }).map((_, i) => <SkeletonRow key={i} />)
+            : CAPTIONS.map((caption) => (
+                <LineupTableRow
+                  key={caption.id}
+                  caption={caption}
+                  value={lineup[caption.id]}
+                  captionData={lineupScoreData?.[caption.id]}
+                  onSlotClick={onSlotClick}
+                  scoresAvailable={scoresAvailable}
+                />
+              ))}
         </div>
 
         {/* Manage Lineup Button */}
