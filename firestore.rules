@@ -16,11 +16,41 @@ function isOwner(userId) {
 // Guards the game economy: currency, XP/level, class unlocks, career stats,
 // and trophies must never be client-writable, and createdAt/username/uid are
 // protected because unlock timing and username reservation depend on them.
+// lifetimeStats feeds the lifetime leaderboards and activeSeasonId /
+// lastScoredDay drive the scoring engine, so they are server-only too.
 function touchesProtectedProfileFields() {
   return request.resource.data.diff(resource.data).affectedKeys().hasAny([
     'corpsCoin', 'xp', 'xpLevel', 'userTitle', 'unlockedClasses',
-    'stats', 'trophies', 'username', 'createdAt', 'uid'
+    'stats', 'trophies', 'username', 'createdAt', 'uid',
+    'lifetimeStats', 'activeSeasonId', 'lastScoredDay'
   ]);
+}
+
+// The corps map itself stays client-writable because cosmetic fields
+// (corpsName, location, showConcept) are edited from the dashboard and
+// onboarding creates the soundSport corps client-side — but the subfields
+// the scoring engine and leaderboards trust must only change through Cloud
+// Functions: lineups/trade counters via the saveLineup callable, season
+// scores via the scoring processors, and mustRename via renameCorps.
+// Deleting a whole class entry (setting it to null) stays allowed; a
+// director can only zero out their own corps that way, not forge scores.
+function corpsClassUntouched(corpsClass) {
+  return request.resource.data.get(['corps', corpsClass], null) == null ||
+    (request.resource.data.get(['corps', corpsClass, 'lineup'], null) == resource.data.get(['corps', corpsClass, 'lineup'], null) &&
+     request.resource.data.get(['corps', corpsClass, 'lineupKey'], null) == resource.data.get(['corps', corpsClass, 'lineupKey'], null) &&
+     request.resource.data.get(['corps', corpsClass, 'weeklyTrades'], null) == resource.data.get(['corps', corpsClass, 'weeklyTrades'], null) &&
+     request.resource.data.get(['corps', corpsClass, 'mustRename'], null) == resource.data.get(['corps', corpsClass, 'mustRename'], null) &&
+     request.resource.data.get(['corps', corpsClass, 'totalSeasonScore'], null) == resource.data.get(['corps', corpsClass, 'totalSeasonScore'], null));
+}
+
+// SoundSport lineups are created during client-side onboarding, so only its
+// score is guarded; the three competitive classes get the full guard.
+function touchesProtectedCorpsFields() {
+  return !corpsClassUntouched('worldClass') ||
+    !corpsClassUntouched('openClass') ||
+    !corpsClassUntouched('aClass') ||
+    request.resource.data.get(['corps', 'soundSport', 'totalSeasonScore'], null)
+      != resource.data.get(['corps', 'soundSport', 'totalSeasonScore'], null);
 }
 
 // --- USER DATA ---
@@ -40,7 +70,8 @@ match /artifacts/{appId}/users/{userId} {
     allow read: if true;
     allow create, delete: if isAdmin();
     allow update: if isAdmin() ||
-      (isOwner(userId) && !touchesProtectedProfileFields());
+      (isOwner(userId) && !touchesProtectedProfileFields() &&
+        !touchesProtectedCorpsFields());
   }
   
   // Comments are public to read. Logged-in users can create.
@@ -73,11 +104,16 @@ match /artifacts/{appId}/users/{userId} {
   // a stricter rule elsewhere cannot "override" a permissive match, so the
   // exclusion has to live on the permissive rule itself. Likewise
   // `corpsCoinHistory` is excluded from owner writes: it is the economy audit
-  // trail and is written exclusively by Cloud Functions.
+  // trail and is written exclusively by Cloud Functions. `profile` must be
+  // excluded too — without it, this catch-all silently granted owners
+  // unrestricted writes to profile/data, bypassing the protected-field
+  // guards above entirely (currency, XP, trophies, lineups, scores).
   match /{subcollection}/{document=**} {
     allow read: if isAuthenticated() && subcollection != 'private';
     allow write: if isAdmin() ||
-      (isOwner(userId) && subcollection != 'corpsCoinHistory');
+      (isOwner(userId) &&
+        subcollection != 'corpsCoinHistory' &&
+        subcollection != 'profile');
   }
 }
 

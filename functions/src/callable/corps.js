@@ -3,6 +3,7 @@ const { getDb, dataNamespaceParam } = require("../config");
 const admin = require("firebase-admin");
 const { logger } = require("firebase-functions/v2");
 const { hasCorpsCompeted } = require("../helpers/corpsEligibility");
+const { assertAuth } = require("../helpers/callableGuards");
 const {
   VALID_CLASSES,
   normalizeCorpsName,
@@ -17,9 +18,7 @@ const {
  * Handles continue/retire/unretire/new/skip/move decisions for all classes atomically
  */
 exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in.");
-  }
+  assertAuth(request);
 
   const { decisions } = request.data;
   const uid = request.auth.uid;
@@ -327,9 +326,7 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
  * Retire a corps - move it from active corps to retired list
  */
 exports.retireCorps = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in to retire a corps.");
-  }
+  assertAuth(request);
 
   const { corpsClass, checkOnly } = request.data;
   const uid = request.auth.uid;
@@ -427,9 +424,7 @@ exports.retireCorps = onCall({ cors: true }, async (request) => {
  * - Preserves corps identity (name, location, history) but resets season-specific data.
  */
 exports.transferCorps = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in.");
-  }
+  assertAuth(request);
 
   const { fromClass, toClass } = request.data;
   const uid = request.auth.uid;
@@ -600,9 +595,7 @@ exports.transferCorps = onCall({ cors: true }, async (request) => {
  * Unretire a corps - restore it from retired list to active corps
  */
 exports.unretireCorps = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in to unretire a corps.");
-  }
+  assertAuth(request);
 
   const { corpsClass, retiredIndex } = request.data;
   const uid = request.auth.uid;
@@ -691,10 +684,7 @@ exports.unretireCorps = onCall({ cors: true }, async (request) => {
  *   - cannot match a name reserved in the corpsnames collection
  */
 exports.renameCorps = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in.");
-  }
-  const uid = request.auth.uid;
+  const uid = assertAuth(request);
   const { corpsClass, newName } = request.data || {};
 
   if (!corpsClass || !VALID_CLASSES.includes(corpsClass)) {

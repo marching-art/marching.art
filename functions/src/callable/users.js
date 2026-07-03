@@ -3,12 +3,10 @@ const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb, dataNamespaceParam } = require("../config");
 const { calculateXPUpdates, calculateLevel, getLevelTitle, XP_SOURCES } = require("../helpers/xpCalculations");
+const { assertAuth, assertAdmin } = require("../helpers/callableGuards");
 
 exports.setUserRole = onCall({ cors: true }, async (request) => {
-  if (!request.auth || !request.auth.token.admin) {
-    throw new HttpsError("permission-denied",
-      "You must be an admin to perform this action.");
-  }
+  assertAdmin(request);
 
   const { email, makeAdmin } = request.data;
   logger.info(`Admin ${request.auth.uid} attempting to set role for ${email} to admin: ${makeAdmin}`);
@@ -53,9 +51,7 @@ exports.checkUsername = onCall({ cors: true }, async (request) => {
 });
 
 exports.createUserProfile = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in to create a profile.");
-  }
+  assertAuth(request);
 
   const { username, displayName } = request.data;
   const { uid, email } = request.auth.token;
@@ -152,7 +148,7 @@ exports.createUserProfile = onCall({ cors: true }, async (request) => {
 });
 
 exports.getShowRegistrations = onCall({ cors: true }, async (request) => {
-  if (!request.auth) throw new HttpsError("unauthenticated", "You must be logged in.");
+  assertAuth(request);
 
   const { week, eventName, date } = request.data;
   if (!week || !eventName || !date) {
@@ -197,10 +193,7 @@ exports.getShowRegistrations = onCall({ cors: true }, async (request) => {
 });
 
 exports.getUserRankings = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in to perform this action.");
-  }
-  const uid = request.auth.uid;
+  const uid = assertAuth(request);
   const db = getDb();
 
   const seasonDoc = await db.doc("game-settings/season").get();
@@ -249,9 +242,7 @@ exports.getUserRankings = onCall({ cors: true }, async (request) => {
 });
 
 exports.migrateUserProfiles = onCall({ cors: true }, async (request) => {
-  if (!request.auth || !request.auth.token.admin) {
-    throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
-  }
+  assertAdmin(request);
 
   const db = getDb();
   let migratedCount = 0;
@@ -326,11 +317,7 @@ exports.migrateUserProfiles = onCall({ cors: true }, async (request) => {
  * which affect readiness/morale/equipment
  */
 exports.dailyXPCheckIn = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in.");
-  }
-
-  const uid = request.auth.uid;
+  const uid = assertAuth(request);
   const db = getDb();
   const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
 
@@ -386,9 +373,7 @@ exports.dailyXPCheckIn = onCall({ cors: true }, async (request) => {
  * arbitrary XP values.
  */
 exports.awardXP = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in.");
-  }
+  assertAuth(request);
 
   const { reason } = request.data;
   const uid = request.auth.uid;
@@ -437,9 +422,7 @@ exports.awardXP = onCall({ cors: true }, async (request) => {
  * Admin-only function to ensure all profiles have required fields
  */
 exports.fixProfileFields = onCall({ cors: true }, async (request) => {
-  if (!request.auth || !request.auth.token.admin) {
-    throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
-  }
+  assertAdmin(request);
 
   const db = getDb();
   let fixedCount = 0;

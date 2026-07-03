@@ -16,6 +16,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb, dataNamespaceParam } = require("../config");
+const { assertAuth } = require("../helpers/callableGuards");
 
 const ALL_CLASSES = ["worldClass", "openClass", "aClass", "soundSport"];
 const SOUNDSPORT_BUCKET = new Set(["soundSport"]);
@@ -234,9 +235,7 @@ exports.scheduledRivalsUpdate = onSchedule(
 );
 
 exports.updateRivalsNow = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "Authentication required");
-  }
+  assertAuth(request);
   const db = getDb();
   const callerProfile = await db
     .doc(`artifacts/${dataNamespaceParam.value()}/users/${request.auth.uid}/profile/data`)

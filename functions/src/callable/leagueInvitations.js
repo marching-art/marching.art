@@ -5,6 +5,7 @@ const { getDb, dataNamespaceParam } = require("../config");
 const admin = require("firebase-admin");
 const { logger } = require("firebase-functions/v2");
 const { createLeagueActivity, invitationId } = require("../helpers/leagueHelpers");
+const { assertAuth } = require("../helpers/callableGuards");
 
 // =============================================================================
 // PER-DIRECTOR LEAGUE INVITATIONS
@@ -19,9 +20,7 @@ const { createLeagueActivity, invitationId } = require("../helpers/leagueHelpers
 
 
 exports.inviteDirectorToLeague = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in to send invitations.");
-  }
+  assertAuth(request);
 
   const { leagueId, inviteeUid, message } = request.data || {};
   const inviterUid = request.auth.uid;
@@ -95,9 +94,7 @@ exports.inviteDirectorToLeague = onCall({ cors: true }, async (request) => {
 });
 
 exports.respondToLeagueInvitation = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in.");
-  }
+  assertAuth(request);
   const { leagueId, accept } = request.data || {};
   const uid = request.auth.uid;
   if (!leagueId || typeof accept !== 'boolean') {
@@ -197,9 +194,7 @@ exports.respondToLeagueInvitation = onCall({ cors: true }, async (request) => {
 });
 
 exports.rescindLeagueInvitation = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in.");
-  }
+  assertAuth(request);
   const { leagueId, inviteeUid } = request.data || {};
   const uid = request.auth.uid;
   if (!leagueId || !inviteeUid) {

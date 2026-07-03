@@ -14,6 +14,7 @@ const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { FieldValue } = require("firebase-admin/firestore");
 const { brevoApiKey } = require("../helpers/emailService");
+const { assertAuth } = require("../helpers/callableGuards");
 
 // Maximum comment length
 const MAX_COMMENT_LENGTH = 1000;
@@ -37,9 +38,7 @@ exports.toggleArticleReaction = onCall(
     timeoutSeconds: 30,
   },
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "You must be signed in to react");
-    }
+    assertAuth(request);
 
     const db = getDb();
     const { articleId, emoji } = request.data || {};
@@ -196,9 +195,7 @@ exports.addArticleComment = onCall(
     timeoutSeconds: 30,
   },
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "You must be signed in to comment");
-    }
+    assertAuth(request);
 
     const db = getDb();
     const { articleId, content } = request.data || {};
@@ -395,9 +392,7 @@ exports.editArticleComment = onCall(
     timeoutSeconds: 30,
   },
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "You must be signed in");
-    }
+    assertAuth(request);
 
     const db = getDb();
     const { commentId, content } = request.data || {};
@@ -481,9 +476,7 @@ exports.deleteArticleComment = onCall(
     timeoutSeconds: 30,
   },
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "You must be signed in");
-    }
+    assertAuth(request);
 
     const db = getDb();
     const { commentId } = request.data || {};
@@ -538,9 +531,7 @@ exports.reportArticleComment = onCall(
     secrets: [brevoApiKey],
   },
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "You must be signed in to report");
-    }
+    assertAuth(request);
 
     const db = getDb();
     const { commentId, reason } = request.data || {};

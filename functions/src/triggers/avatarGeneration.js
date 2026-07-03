@@ -18,6 +18,7 @@ const {
   initializeGemini,
 } = require("../helpers/newsGeneration");
 const { uploadFromUrl } = require("../helpers/mediaService");
+const { assertAuth, assertAdmin } = require("../helpers/callableGuards");
 
 // Define secrets
 const geminiApiKey = defineSecret("GOOGLE_GENERATIVE_AI_API_KEY");
@@ -242,9 +243,7 @@ exports.generateCorpsAvatar = onCall(
     secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret],
   },
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "User must be authenticated");
-    }
+    assertAuth(request);
 
     const { corpsClass } = request.data || {};
 
@@ -307,14 +306,7 @@ exports.regenerateAllAvatars = onCall(
     secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret],
   },
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "User must be authenticated");
-    }
-
-    // Check admin status
-    if (!request.auth.token?.admin) {
-      throw new HttpsError("permission-denied", "Only admins can regenerate all avatars");
-    }
+    assertAdmin(request);
 
     const db = getDb();
     const { limit = 10 } = request.data || {};

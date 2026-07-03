@@ -15,6 +15,7 @@ const { reconcileSelectedShows } = require("../helpers/scheduleAudit");
 const { scrapeLatestLiveScores } = require("../scheduled/liveScraper");
 const { sendWelcomeEmail, brevoApiKey } = require("../helpers/emailService");
 const { DCI_CORPS_DATA } = require("../scripts/seedDciReference");
+const { assertAdmin } = require("../helpers/callableGuards");
 
 // Spring training period (calendar days) before competition day 1 in a live season.
 // Kept in sync with dailyProcessors.js / season helper defaults.
@@ -75,9 +76,7 @@ function getCurrentLiveScoredDay(seasonData) {
 }
 
 exports.startNewOffSeason = onCall({ cors: true }, async (request) => {
-  if (!request.auth || !request.auth.token.admin) {
-    throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
-  }
+  assertAdmin(request);
   try {
     logger.info(`Manual override triggered by admin: ${request.auth.uid}. Starting new off-season.`);
     await startNewOffSeason();
@@ -94,9 +93,7 @@ exports.startNewLiveSeason = onCall({
   timeoutSeconds: 540,
   memory: "512MiB",
 }, async (request) => {
-  if (!request.auth || !request.auth.token.admin) {
-    throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
-  }
+  assertAdmin(request);
   try {
     logger.info(`Manual override triggered by admin: ${request.auth.uid}. Starting new live-season.`);
     await startNewLiveSeason();
@@ -113,9 +110,7 @@ exports.manualTrigger = onCall({
   timeoutSeconds: 540,
   memory: "512MiB",
 }, async (request) => {
-  if (!request.auth || !request.auth.token.admin) {
-    throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
-  }
+  assertAdmin(request);
 
   const { jobName } = request.data;
   logger.info(`Admin ${request.auth.uid} is manually triggering job: ${jobName}`);
@@ -499,9 +494,7 @@ exports.scrapeLiveScoresNow = onCall({
   timeoutSeconds: 120,
   memory: "512MiB",
 }, async (request) => {
-  if (!request.auth || !request.auth.token.admin) {
-    throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
-  }
+  assertAdmin(request);
 
   logger.info(`Admin ${request.auth.uid} manually triggered a live DCI score scrape.`);
 
@@ -546,9 +539,7 @@ exports.sendTestEmail = onCall(
     secrets: [brevoApiKey],
   },
   async (request) => {
-    if (!request.auth || !request.auth.token.admin) {
-      throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
-    }
+    assertAdmin(request);
 
     const { email } = request.data;
     const targetEmail = email || request.auth.token.email;

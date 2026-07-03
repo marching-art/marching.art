@@ -5,6 +5,7 @@ const { getDb, dataNamespaceParam } = require("../config");
 const admin = require("firebase-admin");
 const { logger } = require("firebase-functions/v2");
 const { normalizeCorpsName, pickDuplicateWinner, VALID_CLASSES } = require("../helpers/corpsHelpers");
+const { assertAuth, assertAdmin } = require("../helpers/callableGuards");
 
 /**
  * Detect corps in this user's profile that must be renamed because they share
@@ -14,10 +15,7 @@ const { normalizeCorpsName, pickDuplicateWinner, VALID_CLASSES } = require("../h
  * entries.
  */
 exports.detectMyDuplicateCorps = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in.");
-  }
-  const uid = request.auth.uid;
+  const uid = assertAuth(request);
   const db = getDb();
   const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
 
@@ -54,9 +52,7 @@ exports.detectMyDuplicateCorps = onCall({ cors: true }, async (request) => {
  * corpsnames reservation.
  */
 exports.sweepDuplicateCorps = onCall({ cors: true, timeoutSeconds: 540 }, async (request) => {
-  if (!request.auth || !request.auth.token.admin) {
-    throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
-  }
+  assertAdmin(request);
 
   const db = getDb();
 

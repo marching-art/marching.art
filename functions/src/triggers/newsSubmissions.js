@@ -7,6 +7,7 @@ const { logger } = require("firebase-functions/v2");
 const { defineSecret } = require("firebase-functions/params");
 const { getDb } = require("../config");
 const { brevoApiKey } = require("../helpers/emailService");
+const { assertAuth, assertAdmin } = require("../helpers/callableGuards");
 
 const geminiApiKey = defineSecret("GOOGLE_GENERATIVE_AI_API_KEY");
 
@@ -25,9 +26,7 @@ exports.submitNewsForApproval = onCall(
     secrets: [brevoApiKey],
   },
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "You must be logged in to submit articles");
-    }
+    assertAuth(request);
 
     const db = getDb();
     const { headline, summary, fullStory, category, imageUrl } = request.data || {};
@@ -136,13 +135,7 @@ exports.listPendingSubmissions = onCall(
     timeoutSeconds: 30,
   },
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "You must be logged in");
-    }
-
-    if (!request.auth.token.admin) {
-      throw new HttpsError("permission-denied", "Admin access required");
-    }
+    assertAdmin(request);
 
     const db = getDb();
     const { status = "pending", limit = 50 } = request.data || {};
@@ -188,13 +181,7 @@ exports.approveSubmission = onCall(
     secrets: [geminiApiKey],
   },
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "You must be logged in");
-    }
-
-    if (!request.auth.token.admin) {
-      throw new HttpsError("permission-denied", "Admin access required");
-    }
+    assertAdmin(request);
 
     const db = getDb();
     // Support both old 'generateImage' boolean and new 'imageOption' string
@@ -410,13 +397,7 @@ exports.rejectSubmission = onCall(
     timeoutSeconds: 30,
   },
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "You must be logged in");
-    }
-
-    if (!request.auth.token.admin) {
-      throw new HttpsError("permission-denied", "Admin access required");
-    }
+    assertAdmin(request);
 
     const db = getDb();
     const { submissionId, reason } = request.data || {};
