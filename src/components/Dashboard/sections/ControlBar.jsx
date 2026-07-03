@@ -68,9 +68,11 @@ const ControlBar = memo(
 
     return (
       <div className="sticky top-0 z-10 bg-[#1a1a1a] border-b border-[#333]">
-        <div className="flex items-center justify-between px-4 py-2">
-          {/* LEFT: Class Switcher (Fixed 4 Tabs) */}
-          <div className="flex items-center gap-1">
+        {/* On mobile the class selector and the director HUD each get their own
+            row so neither clips off the right edge; on md+ they share one row. */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 px-4 py-2">
+          {/* Class Switcher (Fixed 4 Tabs) */}
+          <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide -mx-1 px-1">
             {CORPS_CLASS_ORDER.map((classId) => {
               const isUnlocked = unlockedClasses?.includes(classId);
               const hasCorps = corps && corps[classId];
@@ -85,7 +87,7 @@ const ControlBar = memo(
                   <button
                     key={classId}
                     onClick={() => onCreateCorps?.(classId)}
-                    className="text-[10px] font-bold uppercase px-3 py-1.5 rounded-sm text-gray-600 hover:text-gray-400 border border-dashed border-[#444] transition-colors"
+                    className="flex-shrink-0 whitespace-nowrap text-[10px] font-bold uppercase px-3 py-1.5 rounded-sm text-gray-600 hover:text-gray-400 border border-dashed border-[#444] transition-colors"
                   >
                     {CLASS_SHORT_LABELS[classId]}
                   </button>
@@ -97,7 +99,7 @@ const ControlBar = memo(
                 <button
                   key={classId}
                   onClick={() => onSwitch(classId)}
-                  className={`text-[10px] font-bold uppercase px-3 py-1.5 rounded-sm transition-colors ${
+                  className={`flex-shrink-0 whitespace-nowrap text-[10px] font-bold uppercase px-3 py-1.5 rounded-sm transition-colors ${
                     isActive
                       ? 'bg-[#0057B8] text-white'
                       : 'text-gray-500 hover:text-white hover:bg-white/5'
@@ -114,8 +116,9 @@ const ControlBar = memo(
             <NextDeadlineChip />
           </div>
 
-          {/* RIGHT: Director HUD - Order: Streak, Level, Coins, Buy */}
-          <div className="flex items-center gap-3">
+          {/* Director HUD - Order: Streak, Level, Coins, Buy. On mobile this
+              sits on its own row; a top divider separates it from the tabs. */}
+          <div className="flex items-center gap-3 flex-wrap border-t border-[#2a2a2a] pt-2 md:border-t-0 md:pt-0">
             {/* Streak with milestone indicator */}
             {streak > 0 && (
               <div
