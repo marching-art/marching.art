@@ -20,6 +20,10 @@ export interface PullToRefreshProps {
   pullThreshold?: number;
   maxPull?: number;
   className?: string;
+  /** Classes applied to the inner content wrapper — use for bottom padding
+   *  (e.g. mobile-nav clearance) so it scrolls with the content instead of
+   *  being added to a second, outer scroll container. */
+  contentClassName?: string;
 }
 
 // =============================================================================
@@ -33,6 +37,7 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
   pullThreshold = 80,
   maxPull = 120,
   className = '',
+  contentClassName = '',
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -171,7 +176,9 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <m.div style={{ y: pullDistance }}>{children}</m.div>
+        <m.div className={contentClassName} style={{ y: pullDistance }}>
+          {children}
+        </m.div>
       </div>
     </div>
   );

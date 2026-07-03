@@ -315,9 +315,11 @@ const Scores = () => {
         />
       </div>
 
-      {/* SCROLLABLE CONTENT */}
-      <div className="flex-1 overflow-y-auto min-h-0 pb-20 md:pb-4">
-        <PullToRefresh onRefresh={handleRefresh}>
+      {/* SCROLLABLE CONTENT - PullToRefresh owns the single scroll container.
+          Bottom-nav clearance rides on the content (contentClassName) so there
+          is no second outer scroller leaving a dead band above the nav. */}
+      <div className="flex-1 min-h-0">
+        <PullToRefresh onRefresh={handleRefresh} contentClassName="pb-20 md:pb-4">
           {loading ? (
             <div className="p-8 text-center text-gray-500 text-sm">Loading scores...</div>
           ) : error ? (
