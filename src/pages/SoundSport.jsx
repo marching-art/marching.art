@@ -30,6 +30,7 @@ import {
   Mic2,
 } from 'lucide-react';
 import { Card } from '../components/ui/Card';
+import { PageHeader } from '../components/ui';
 
 // =============================================================================
 // CONSTANTS
@@ -221,29 +222,17 @@ const SoundSport = () => {
   ];
 
   return (
-    <div className="h-full overflow-y-auto bg-[#0a0a0a]">
-      {/* Hero Header - Full width background */}
-      <div className="w-full bg-gradient-to-b from-green-900/30 to-[#0a0a0a] border-b border-green-500/20">
-        <div className="w-full px-4 py-8">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="p-3 bg-green-500/20 rounded-lg border border-green-500/30">
-              <Music className="w-8 h-8 text-green-500" />
-            </div>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-white">SoundSport</h1>
-              <p className="text-green-400 text-sm">Your Gateway to Marching Music Performance</p>
-            </div>
-          </div>
-          <p className="text-gray-300 text-sm md:text-base max-w-2xl">
-            SoundSport provides exciting performance opportunities for community-based musical
-            ensembles of all types, all ages, and all instruments. Receive ratings (Gold, Silver,
-            Bronze) based on your performance - no rankings, just recognition of excellence.
-          </p>
-        </div>
-      </div>
+    <div className="h-full flex flex-col overflow-hidden bg-[#0a0a0a]">
+      {/* FIXED HEADER */}
+      <PageHeader
+        icon={Music}
+        iconClassName="text-green-500"
+        title="SoundSport"
+        subtitle="Your gateway to marching music performance"
+      />
 
-      {/* Tab Navigation - Premium Pill Style */}
-      <div className="w-full sticky top-0 z-10 bg-[#1a1a1a] border-b border-[#333]">
+      {/* Tab Navigation - Fixed */}
+      <div className="flex-shrink-0 bg-[#1a1a1a] border-b border-[#333]">
         <div className="w-full px-4 py-1.5">
           <nav className="flex gap-1 overflow-x-auto scrollbar-hide">
             {tabs.map((tab) => {
@@ -254,7 +243,7 @@ const SoundSport = () => {
                   onClick={() => setActiveSection(tab.id)}
                   className={`
                     relative flex items-center gap-2 px-4 py-2.5 min-h-[44px] text-sm font-bold uppercase tracking-wider
-                    whitespace-nowrap rounded-full transition-all duration-200 ease-out
+                    whitespace-nowrap rounded-sm transition-all duration-200 ease-out
                     ${
                       activeSection === tab.id
                         ? 'text-green-400 bg-green-500/15'
@@ -275,8 +264,17 @@ const SoundSport = () => {
         </div>
       </div>
 
-      {/* Content */}
-      <div className="w-full px-4 py-6">
+      {/* Content - Scrollable */}
+      <div className="flex-1 overflow-y-auto min-h-0 w-full px-4 py-6 pb-20 md:pb-6">
+        {/* Intro */}
+        <div className="mb-6 bg-[#1a1a1a] border border-[#333] rounded-sm p-4">
+          <p className="text-gray-400 text-sm">
+            SoundSport provides exciting performance opportunities for community-based musical
+            ensembles of all types, all ages, and all instruments. Receive ratings (Gold, Silver,
+            Bronze) based on your performance — no rankings, just recognition of excellence.
+          </p>
+        </div>
+
         <AnimatePresence mode="wait">
           {/* OVERVIEW SECTION */}
           {activeSection === 'overview' && (
@@ -402,7 +400,7 @@ const SoundSport = () => {
               className="space-y-4"
             >
               {/* Quick Reference - Compact Horizontal Bar */}
-              <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-3 mb-6">
+              <div className="bg-green-900/20 border border-green-500/30 rounded-sm p-3 mb-6">
                 <div className="flex items-center justify-between">
                   <h3 className="font-bold text-green-400 flex items-center gap-2 text-sm">
                     <Zap className="w-4 h-4" />

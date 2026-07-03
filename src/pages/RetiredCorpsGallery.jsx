@@ -2,17 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import {
   Trophy,
-  Award,
   Calendar,
   MapPin,
   Star,
-  TrendingUp,
-  Crown,
   Archive,
   RefreshCw,
   X,
   Music,
-  Medal,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { subscribeToProfile } from '../api/profile';
@@ -20,6 +16,24 @@ import { unretireCorps } from '../api/functions';
 import toast from 'react-hot-toast';
 import LoadingScreen from '../components/LoadingScreen';
 import Portal from '../components/Portal';
+import { PageHeader } from '../components/ui';
+
+// Class styling matches the site's design system (see Schedule CLASS_CONFIG):
+// sharp, flat color tints rather than gradients.
+const CLASS_CONFIG = {
+  worldClass: { name: 'World Class', color: 'text-yellow-500', bg: 'bg-yellow-500/10', accent: 'bg-yellow-500' },
+  openClass: { name: 'Open Class', color: 'text-purple-400', bg: 'bg-purple-400/10', accent: 'bg-purple-400' },
+  aClass: { name: 'A Class', color: 'text-[#0057B8]', bg: 'bg-[#0057B8]/10', accent: 'bg-[#0057B8]' },
+  soundSport: { name: 'SoundSport', color: 'text-green-500', bg: 'bg-green-500/10', accent: 'bg-green-500' },
+};
+
+const CLASS_FILTERS = [
+  { id: 'all', label: 'All Classes' },
+  { id: 'worldClass', label: 'World' },
+  { id: 'openClass', label: 'Open' },
+  { id: 'aClass', label: 'A Class' },
+  { id: 'soundSport', label: 'SoundSport' },
+];
 
 const RetiredCorpsGallery = () => {
   const { user } = useAuth();
@@ -44,25 +58,13 @@ const RetiredCorpsGallery = () => {
     return () => unsubscribe();
   }, [user]);
 
-  const getClassDisplayName = (corpsClass) => {
-    const classNames = {
-      worldClass: 'World Class',
-      openClass: 'Open Class',
-      aClass: 'A Class',
-      soundSport: 'SoundSport',
+  const getClassConfig = (corpsClass) =>
+    CLASS_CONFIG[corpsClass] || {
+      name: corpsClass,
+      color: 'text-gray-400',
+      bg: 'bg-gray-500/10',
+      accent: 'bg-gray-500',
     };
-    return classNames[corpsClass] || corpsClass;
-  };
-
-  const getClassColor = (corpsClass) => {
-    const colors = {
-      worldClass: 'from-purple-500 to-pink-500',
-      openClass: 'from-blue-500 to-cyan-500',
-      aClass: 'from-green-500 to-emerald-500',
-      soundSport: 'from-orange-500 to-yellow-500',
-    };
-    return colors[corpsClass] || 'from-gray-500 to-gray-600';
-  };
 
   const handleUnretire = async (corpsClass, retiredIndex) => {
     setUnretiring(true);
@@ -99,217 +101,188 @@ const RetiredCorpsGallery = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 p-4 sm:p-6">
-        <LoadingScreen fullScreen={false} />
+      <div className="h-full flex flex-col overflow-hidden bg-[#0a0a0a]">
+        <PageHeader icon={Archive} title="Retired Corps" subtitle="Career legacy" />
+        <div className="flex-1 min-h-0 flex items-center justify-center">
+          <LoadingScreen fullScreen={false} />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 p-4 sm:p-6">
-      {/* Header */}
-      <m.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-7xl mx-auto mb-8"
-      >
-        <div className="flex items-center gap-3 mb-2">
-          <Archive className="w-8 h-8 text-purple-400" />
-          <h1 className="text-3xl sm:text-4xl font-bold text-white">Retired Corps Gallery</h1>
-        </div>
-        <p className="text-gray-300 text-lg">
-          Honor the legacy of your past corps and their achievements
-        </p>
-      </m.div>
+    <div className="h-full flex flex-col overflow-hidden bg-[#0a0a0a]">
+      {/* FIXED HEADER */}
+      <PageHeader
+        icon={Archive}
+        title="Retired Corps"
+        subtitle="Honor the legacy of your past corps"
+        stats={[{ label: 'Retired', value: retiredCorps.length }]}
+      />
 
-      {/* Filters and Sort */}
-      <m.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-7xl mx-auto mb-6 bg-white/5 backdrop-blur-sm rounded-lg p-4"
-      >
-        <div className="flex flex-col sm:flex-row gap-4 justify-between">
-          {/* Class Filter */}
-          <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={() => setFilterClass('all')}
-              className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                filterClass === 'all'
-                  ? 'bg-purple-500 text-white'
-                  : 'bg-white/10 text-gray-300 hover:bg-white/20'
-              }`}
-            >
-              All Classes
-            </button>
-            <button
-              onClick={() => setFilterClass('worldClass')}
-              className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                filterClass === 'worldClass'
-                  ? 'bg-purple-500 text-white'
-                  : 'bg-white/10 text-gray-300 hover:bg-white/20'
-              }`}
-            >
-              World Class
-            </button>
-            <button
-              onClick={() => setFilterClass('openClass')}
-              className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                filterClass === 'openClass'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-white/10 text-gray-300 hover:bg-white/20'
-              }`}
-            >
-              Open Class
-            </button>
-            <button
-              onClick={() => setFilterClass('aClass')}
-              className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                filterClass === 'aClass'
-                  ? 'bg-green-500 text-white'
-                  : 'bg-white/10 text-gray-300 hover:bg-white/20'
-              }`}
-            >
-              A Class
-            </button>
-            <button
-              onClick={() => setFilterClass('soundSport')}
-              className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                filterClass === 'soundSport'
-                  ? 'bg-orange-500 text-white'
-                  : 'bg-white/10 text-gray-300 hover:bg-white/20'
-              }`}
-            >
-              SoundSport
-            </button>
+      {/* FILTER / SORT BAR - Fixed */}
+      <div className="flex-shrink-0 bg-[#111] border-b border-[#333] px-3 py-2">
+        <div className="flex items-center gap-2 justify-between flex-wrap">
+          {/* Class Filter Pills */}
+          <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
+            {CLASS_FILTERS.map((filter) => {
+              const isActive = filterClass === filter.id;
+              return (
+                <button
+                  key={filter.id}
+                  onClick={() => setFilterClass(filter.id)}
+                  className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap rounded-sm transition-all ${
+                    isActive
+                      ? 'bg-[#0057B8] text-white'
+                      : 'bg-[#1a1a1a] text-gray-500 hover:text-gray-300 hover:bg-white/5'
+                  }`}
+                >
+                  {filter.label}
+                </button>
+              );
+            })}
           </div>
 
           {/* Sort Options */}
-          <div className="flex gap-2">
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="px-4 py-2 rounded-lg bg-white/10 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            >
-              <option value="retiredAt">Recently Retired</option>
-              <option value="totalSeasons">Most Seasons</option>
-              <option value="bestScore">Best Score</option>
-            </select>
-          </div>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-sm bg-[#1a1a1a] text-gray-300 border border-[#333] focus:outline-none focus:border-[#0057B8]"
+          >
+            <option value="retiredAt">Recently Retired</option>
+            <option value="totalSeasons">Most Seasons</option>
+            <option value="bestScore">Best Score</option>
+          </select>
         </div>
-      </m.div>
+      </div>
 
-      {/* Empty State */}
-      {filteredCorps.length === 0 && (
-        <m.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="max-w-2xl mx-auto text-center py-16"
-        >
-          <Archive className="w-16 h-16 text-gray-500 mx-auto mb-4" />
-          <h3 className="text-2xl font-bold text-white mb-2">
-            {filterClass === 'all'
-              ? 'No Retired Corps Yet'
-              : `No Retired ${getClassDisplayName(filterClass)} Corps`}
-          </h3>
-          <p className="text-gray-400">
-            Retired corps will appear here when you retire them from your active roster.
-          </p>
-        </m.div>
-      )}
+      {/* SCROLLABLE CONTENT */}
+      <div className="flex-1 overflow-y-auto min-h-0 pb-20 md:pb-4">
+        {/* Empty State */}
+        {filteredCorps.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+            <Archive className="w-12 h-12 text-gray-600 mb-3" />
+            <h3 className="text-sm font-bold text-white mb-1">
+              {filterClass === 'all'
+                ? 'No Retired Corps Yet'
+                : `No Retired ${getClassConfig(filterClass).name} Corps`}
+            </h3>
+            <p className="text-xs text-gray-500 max-w-[280px]">
+              Retired corps will appear here when you retire them from your active roster.
+            </p>
+          </div>
+        ) : (
+          <div className="p-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <AnimatePresence>
+              {filteredCorps.map((corps, index) => {
+                const config = getClassConfig(corps.corpsClass);
+                return (
+                  <m.div
+                    key={`${corps.corpsClass}-${corps.originalIndex}`}
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.98 }}
+                    transition={{ delay: index * 0.03 }}
+                    className="bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden hover:border-[#444] transition-all cursor-pointer"
+                    onClick={() => setSelectedCorps({ ...corps, index: corps.originalIndex })}
+                  >
+                    {/* Class Accent Line */}
+                    <div className={`h-1 ${config.accent}`} />
 
-      {/* Corps Grid */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-        <AnimatePresence>
-          {filteredCorps.map((corps, index) => (
-            <m.div
-              key={`${corps.corpsClass}-${corps.originalIndex}`}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ delay: index * 0.05 }}
-              className="bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden hover:border-[#444] transition-all cursor-pointer"
-              onClick={() => setSelectedCorps({ ...corps, index: corps.originalIndex })}
-            >
-              {/* Class Badge Header */}
-              <div className={`h-2 bg-gradient-to-r ${getClassColor(corps.corpsClass)}`} />
+                    <div className="p-4">
+                      {/* Corps Name + Class Badge */}
+                      <div className="mb-4">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <Music className="w-5 h-5 text-purple-400 flex-shrink-0" />
+                          <span
+                            className={`px-2 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-wider ${config.bg} ${config.color}`}
+                          >
+                            {config.name}
+                          </span>
+                        </div>
+                        <h3 className="text-lg font-bold text-white leading-tight truncate">
+                          {corps.corpsName}
+                        </h3>
+                        {corps.location && (
+                          <div className="flex items-center gap-1 text-gray-500 text-[11px] mt-1">
+                            <MapPin className="w-3 h-3" />
+                            <span className="truncate">{corps.location}</span>
+                          </div>
+                        )}
+                      </div>
 
-              <div className="p-6">
-                {/* Corps Name */}
-                <div className="mb-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <Music className="w-6 h-6 text-purple-400" />
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r ${getClassColor(corps.corpsClass)} text-white`}
-                    >
-                      {getClassDisplayName(corps.corpsClass)}
-                    </span>
-                  </div>
-                  <h3 className="text-2xl font-bold text-white mb-1 group-hover:text-purple-300 transition-colors">
-                    {corps.corpsName}
-                  </h3>
-                  <div className="flex items-center gap-1 text-gray-400 text-sm">
-                    <MapPin className="w-4 h-4" />
-                    {corps.location}
-                  </div>
-                </div>
+                      {/* Stats Grid */}
+                      <div className="grid grid-cols-2 gap-2 mb-4">
+                        <div className="bg-[#111] border border-[#333] rounded-sm p-3">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <Calendar className="w-3.5 h-3.5 text-[#0057B8]" />
+                            <span className="text-[10px] text-gray-500 uppercase tracking-wider">
+                              Seasons
+                            </span>
+                          </div>
+                          <div className="text-xl font-bold text-white font-data tabular-nums">
+                            {corps.totalSeasons || 0}
+                          </div>
+                        </div>
 
-                {/* Stats Grid */}
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="bg-white/5 rounded-lg p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Calendar className="w-4 h-4 text-blue-400" />
-                      <span className="text-xs text-gray-400">Seasons</span>
+                        <div className="bg-[#111] border border-[#333] rounded-sm p-3">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+                            <span className="text-[10px] text-gray-500 uppercase tracking-wider">
+                              Best
+                            </span>
+                          </div>
+                          <div className="text-xl font-bold text-white font-data tabular-nums">
+                            {corps.bestSeasonScore?.toFixed(1) || '0.0'}
+                          </div>
+                        </div>
+
+                        <div className="bg-[#111] border border-[#333] rounded-sm p-3">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <Star className="w-3.5 h-3.5 text-purple-400" />
+                            <span className="text-[10px] text-gray-500 uppercase tracking-wider">
+                              Shows
+                            </span>
+                          </div>
+                          <div className="text-xl font-bold text-white font-data tabular-nums">
+                            {corps.totalShows || 0}
+                          </div>
+                        </div>
+
+                        <div className="bg-[#111] border border-[#333] rounded-sm p-3">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <Archive className="w-3.5 h-3.5 text-gray-400" />
+                            <span className="text-[10px] text-gray-500 uppercase tracking-wider">
+                              Retired
+                            </span>
+                          </div>
+                          <div className="text-[11px] font-bold text-white font-data">
+                            {corps.retiredAt
+                              ? new Date(corps.retiredAt.seconds * 1000).toLocaleDateString()
+                              : 'Unknown'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Bring Out of Retirement Button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedCorps({ ...corps, index: corps.originalIndex });
+                          setShowUnretireModal(true);
+                        }}
+                        className="w-full py-2 px-4 bg-[#0057B8] hover:bg-[#0066d6] text-white font-bold text-xs uppercase tracking-wider rounded-sm transition-all flex items-center justify-center gap-2"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                        Bring Out of Retirement
+                      </button>
                     </div>
-                    <div className="text-2xl font-bold text-white">{corps.totalSeasons || 0}</div>
-                  </div>
-
-                  <div className="bg-white/5 rounded-lg p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Trophy className="w-4 h-4 text-yellow-400" />
-                      <span className="text-xs text-gray-400">Best Score</span>
-                    </div>
-                    <div className="text-2xl font-bold text-white">
-                      {corps.bestSeasonScore?.toFixed(1) || '0.0'}
-                    </div>
-                  </div>
-
-                  <div className="bg-white/5 rounded-lg p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Star className="w-4 h-4 text-purple-400" />
-                      <span className="text-xs text-gray-400">Shows</span>
-                    </div>
-                    <div className="text-2xl font-bold text-white">{corps.totalShows || 0}</div>
-                  </div>
-
-                  <div className="bg-white/5 rounded-lg p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Archive className="w-4 h-4 text-gray-400" />
-                      <span className="text-xs text-gray-400">Retired</span>
-                    </div>
-                    <div className="text-xs font-semibold text-white">
-                      {corps.retiredAt
-                        ? new Date(corps.retiredAt.seconds * 1000).toLocaleDateString()
-                        : 'Unknown'}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Bring Out of Retirement Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedCorps({ ...corps, index: corps.originalIndex });
-                    setShowUnretireModal(true);
-                  }}
-                  className="w-full py-2 px-4 bg-[#0057B8] hover:bg-[#0066d6] text-white font-bold text-sm rounded-sm transition-all flex items-center justify-center gap-2"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  Bring Out of Retirement
-                </button>
-              </div>
-            </m.div>
-          ))}
-        </AnimatePresence>
+                  </m.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+        )}
       </div>
 
       {/* Unretire Confirmation Modal */}
@@ -320,94 +293,106 @@ const RetiredCorpsGallery = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
               onClick={() => !unretiring && setShowUnretireModal(false)}
             >
               <m.div
-                initial={{ scale: 0.9, opacity: 0 }}
+                initial={{ scale: 0.98, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 max-w-md w-full border border-purple-500/30"
+                exit={{ scale: 0.98, opacity: 0 }}
+                className="bg-[#1a1a1a] border border-[#333] rounded-sm max-w-md w-full overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-2xl font-bold text-white">Bring Out of Retirement?</h3>
+                {/* Modal Header */}
+                <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                    Bring Out of Retirement?
+                  </h3>
                   <button
                     onClick={() => setShowUnretireModal(false)}
                     disabled={unretiring}
-                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                    className="text-gray-400 hover:text-white transition-colors"
+                    aria-label="Close"
                   >
-                    <X className="w-6 h-6 text-gray-400" />
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
 
-                <div className="mb-6">
-                  <div className="bg-white/5 rounded-lg p-4 mb-4">
-                    <div className="flex items-center gap-3 mb-2">
-                      <Music className="w-6 h-6 text-purple-400" />
+                <div className="p-4">
+                  <div className="bg-[#111] border border-[#333] rounded-sm p-4 mb-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <Music className="w-5 h-5 text-purple-400" />
                       <div>
-                        <h4 className="text-xl font-bold text-white">{selectedCorps.corpsName}</h4>
-                        <p className="text-sm text-gray-400">
-                          {getClassDisplayName(selectedCorps.corpsClass)}
+                        <h4 className="text-base font-bold text-white">
+                          {selectedCorps.corpsName}
+                        </h4>
+                        <p className="text-[11px] text-gray-500">
+                          {getClassConfig(selectedCorps.corpsClass).name}
                         </p>
                       </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-2 mt-3">
+                    <div className="grid grid-cols-3 gap-2">
                       <div className="text-center">
-                        <div className="text-xs text-gray-400">Seasons</div>
-                        <div className="text-lg font-bold text-white">
+                        <div className="text-[10px] text-gray-500 uppercase tracking-wider">
+                          Seasons
+                        </div>
+                        <div className="text-base font-bold text-white font-data tabular-nums">
                           {selectedCorps.totalSeasons}
                         </div>
                       </div>
                       <div className="text-center">
-                        <div className="text-xs text-gray-400">Best Score</div>
-                        <div className="text-lg font-bold text-white">
+                        <div className="text-[10px] text-gray-500 uppercase tracking-wider">
+                          Best
+                        </div>
+                        <div className="text-base font-bold text-white font-data tabular-nums">
                           {selectedCorps.bestSeasonScore?.toFixed(1)}
                         </div>
                       </div>
                       <div className="text-center">
-                        <div className="text-xs text-gray-400">Shows</div>
-                        <div className="text-lg font-bold text-white">
+                        <div className="text-[10px] text-gray-500 uppercase tracking-wider">
+                          Shows
+                        </div>
+                        <div className="text-base font-bold text-white font-data tabular-nums">
                           {selectedCorps.totalShows}
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
-                    <p className="text-sm text-yellow-200">
+                  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-sm p-3 mb-4">
+                    <p className="text-xs text-yellow-200">
                       <strong>Note:</strong> This corps will become your active{' '}
-                      {getClassDisplayName(selectedCorps.corpsClass)} corps. All season history will
-                      be preserved, but you'll start fresh for the current season.
+                      {getClassConfig(selectedCorps.corpsClass).name} corps. All season history
+                      will be preserved, but you'll start fresh for the current season.
                     </p>
                   </div>
-                </div>
 
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setShowUnretireModal(false)}
-                    disabled={unretiring}
-                    className="flex-1 py-3 px-4 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => handleUnretire(selectedCorps.corpsClass, selectedCorps.index)}
-                    disabled={unretiring}
-                    className="flex-1 py-3 px-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {unretiring ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                        Unretiring...
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw className="w-4 h-4" />
-                        Confirm
-                      </>
-                    )}
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowUnretireModal(false)}
+                      disabled={unretiring}
+                      className="flex-1 py-2.5 px-4 bg-[#222] hover:bg-[#333] border border-[#333] text-white text-xs font-bold uppercase tracking-wider rounded-sm transition-colors disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => handleUnretire(selectedCorps.corpsClass, selectedCorps.index)}
+                      disabled={unretiring}
+                      className="flex-1 py-2.5 px-4 bg-[#0057B8] hover:bg-[#0066d6] text-white text-xs font-bold uppercase tracking-wider rounded-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {unretiring ? (
+                        <>
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          Unretiring...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="w-3.5 h-3.5" />
+                          Confirm
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </m.div>
             </m.div>

@@ -30,6 +30,13 @@ export {
 // StatCard Components
 export { StatCard, type StatCardProps, type TrendDirection } from './StatCard';
 
+// PageHeader Component
+export {
+  PageHeader,
+  type PageHeaderProps,
+  type PageHeaderStat,
+} from './PageHeader';
+
 // Modal Components
 export {
   Modal,
