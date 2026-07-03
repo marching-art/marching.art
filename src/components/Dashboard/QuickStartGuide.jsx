@@ -17,34 +17,41 @@ import {
   Star,
   ArrowRight,
 } from 'lucide-react';
+import { WEEKLY_TRADE_LIMIT } from '../../utils/seasonClock';
+import { getMaxShowsForWeek } from '../../utils/captionPricing';
+
+// Rule numbers come from the same constants the game enforces
+// (WEEKLY_TRADE_LIMIT, getMaxShowsForWeek) so this guide can't drift out of
+// sync with actual gameplay again.
+const REGULAR_WEEK_SHOWS = getMaxShowsForWeek(1);
+const FINAL_WEEK_SHOWS = getMaxShowsForWeek(7);
 
 const QUICK_START_STEPS = [
   {
     id: 'lineup',
     title: 'Build Your Lineup',
     description:
-      'Pick historical corps performances for each of the 8 scoring captions. Stay within your point budget!',
+      'Pick historical corps performances for each of the 8 scoring captions. Stay within your draft budget!',
     icon: Music,
     color: 'blue',
     action: { label: 'Edit Lineup', target: 'lineup' },
     tips: [
       'Each caption needs one corps selection',
-      'Higher-scoring corps cost more points',
-      'You can change your lineup anytime',
+      'Stronger corps cost more of your budget',
+      `Changes are limited to ${WEEKLY_TRADE_LIMIT} per week once the season is underway (unlimited in the opening weeks)`,
     ],
   },
   {
     id: 'schedule',
     title: 'Register for Shows',
-    description:
-      'Sign up for shows each week to earn points. You can register for up to 4 shows per week.',
+    description: `Sign up for shows each week to earn scores. You can register for up to ${REGULAR_WEEK_SHOWS} shows per week (${FINAL_WEEK_SHOWS} in Championship Week).`,
     icon: Calendar,
     color: 'purple',
     action: { label: 'View Schedule', target: '/schedule' },
     tips: [
       'Weekend shows often have more participants',
       'Register early to secure your spots',
-      'Points are based on real DCI scores',
+      'Scores are based on real DCI results',
     ],
   },
   {

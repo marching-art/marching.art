@@ -1,7 +1,15 @@
-// Tests for the daily-challenge helpers that back profileStore's
-// completeDailyChallenge — the client half of the daily game loop.
+// Tests for the daily-challenge helpers that back the dashboard widget and
+// profileStore's completeDailyChallenge — the client half of the daily game
+// loop. The rotation is mirrored server-side in
+// functions/src/helpers/dailyChallenges.js; the pinned fixed-date
+// expectations here are IDENTICAL to that file's tests to catch drift.
 import { describe, test, expect, vi, afterEach } from 'vitest';
-import { getGameDay, pruneOldChallenges, CHALLENGE_DEFINITIONS } from './dailyChallenges';
+import {
+  getGameDay,
+  getChallengesForGameDay,
+  CHALLENGE_POOL,
+  CHALLENGES_PER_DAY,
+} from './dailyChallenges';
 
 describe('getGameDay', () => {
   afterEach(() => {
@@ -41,49 +49,51 @@ describe('getGameDay', () => {
   });
 });
 
-describe('pruneOldChallenges', () => {
-  const makeChallenges = (count, startDay = 1) => {
-    const out = {};
-    for (let i = 0; i < count; i++) {
-      const d = new Date(2026, 0, startDay + i);
-      out[d.toDateString()] = [{ id: `c${i}` }];
+describe('getChallengesForGameDay', () => {
+  test('returns three distinct challenges from the pool', () => {
+    const picks = getChallengesForGameDay('Sat Jul 04 2026');
+    expect(picks).toHaveLength(CHALLENGES_PER_DAY);
+    expect(new Set(picks.map((c) => c.id)).size).toBe(CHALLENGES_PER_DAY);
+    for (const pick of picks) {
+      expect(CHALLENGE_POOL.some((c) => c.id === pick.id)).toBe(true);
     }
-    return out;
-  };
-
-  test('passes through non-objects unchanged', () => {
-    expect(pruneOldChallenges(null)).toBe(null);
-    expect(pruneOldChallenges(undefined)).toBe(undefined);
-    expect(pruneOldChallenges('nope')).toBe('nope');
   });
 
-  test('keeps 30 or fewer day-buckets untouched', () => {
-    const challenges = makeChallenges(30);
-    expect(pruneOldChallenges(challenges)).toBe(challenges);
+  test('is deterministic for the same day', () => {
+    expect(getChallengesForGameDay('Sat Jul 04 2026')).toEqual(
+      getChallengesForGameDay('Sat Jul 04 2026')
+    );
   });
 
-  test('keeps only the most recent 30 of 45 day-buckets', () => {
-    const challenges = makeChallenges(45);
-    const pruned = pruneOldChallenges(challenges);
-    const keys = Object.keys(pruned);
+  test('rotates across days', () => {
+    const days = ['Sat Jul 04 2026', 'Sun Jul 05 2026', 'Mon Jul 06 2026', 'Tue Jul 07 2026'];
+    const signatures = days.map((d) =>
+      getChallengesForGameDay(d)
+        .map((c) => c.id)
+        .join(',')
+    );
+    expect(new Set(signatures).size).toBeGreaterThanOrEqual(2);
+  });
 
-    expect(keys).toHaveLength(30);
-    // Oldest 15 dropped, newest kept
-    expect(pruned[new Date(2026, 0, 1).toDateString()]).toBeUndefined();
-    expect(pruned[new Date(2026, 0, 15).toDateString()]).toBeUndefined();
-    expect(pruned[new Date(2026, 0, 16).toDateString()]).toBeDefined();
-    expect(pruned[new Date(2026, 0, 45).toDateString()]).toBeDefined();
+  test('pinned rotation matches the server mirror (sync check)', () => {
+    // Same expectation exists in functions/src/helpers/dailyChallenges.test.js
+    expect(getChallengesForGameDay('Wed Jan 14 2026').map((c) => c.id)).toEqual([
+      'visit-guide',
+      'read-news',
+      'visit-schedule',
+    ]);
   });
 });
 
-describe('CHALLENGE_DEFINITIONS', () => {
-  test('every definition is complete and self-consistent', () => {
-    for (const [key, def] of Object.entries(CHALLENGE_DEFINITIONS)) {
-      expect(def.id).toBe(key);
-      expect(def.title).toBeTruthy();
-      expect(def.target).toBeGreaterThan(0);
-      expect(def.progress).toBe(def.target); // created pre-completed
-      expect(def.completed).toBe(true);
+describe('CHALLENGE_POOL', () => {
+  test('every challenge is complete and navigable', () => {
+    for (const challenge of CHALLENGE_POOL) {
+      expect(challenge.id).toBeTruthy();
+      expect(challenge.label).toBeTruthy();
+      expect(challenge.xp).toBeGreaterThan(0);
+      // Every challenge is either a link or an in-dashboard action
+      expect(Boolean(challenge.link) || Boolean(challenge.action)).toBe(true);
     }
+    expect(new Set(CHALLENGE_POOL.map((c) => c.id)).size).toBe(CHALLENGE_POOL.length);
   });
 });

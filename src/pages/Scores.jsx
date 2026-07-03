@@ -31,8 +31,8 @@ const HallOfChampions = lazy(() => import('./HallOfChampions'));
 const TABS = [
   { id: 'latest', label: 'Latest' },
   { id: 'world', label: 'World' },
-  { id: 'open', label: 'Open Class' },
-  { id: 'aclass', label: 'Class A' },
+  { id: 'open', label: 'Open' },
+  { id: 'aclass', label: 'A Class' },
   { id: 'soundsport', label: 'SoundSport', accent: 'green' },
   { id: 'archive', label: 'Archive', accent: 'yellow' },
   { id: 'champions', label: 'Hall of Champions', accent: 'yellow' },
@@ -128,8 +128,9 @@ const Scores = () => {
   }, [profile?.corps]);
 
   useEffect(() => {
+    // Soft no-op server-side when 'visit-scores' isn't in today's rotation
     if (user && profile && completeDailyChallenge) {
-      completeDailyChallenge('check_leaderboard');
+      completeDailyChallenge('visit-scores');
     }
   }, [user, profile, completeDailyChallenge]);
 
@@ -368,7 +369,7 @@ const Scores = () => {
               {activeTab === 'aclass' && (
                 <ClassStandingsGrid
                   standings={aClassStandings}
-                  className="Class A"
+                  className="A Class"
                   userCorpsName={userCorpsName}
                 />
               )}
@@ -474,7 +475,7 @@ const Scores = () => {
                           { id: 'latest', label: 'Recaps' },
                           { id: 'world', label: 'World' },
                           { id: 'open', label: 'Open' },
-                          { id: 'aclass', label: 'Class A' },
+                          { id: 'aclass', label: 'A Class' },
                           { id: 'soundsport', label: 'SoundSport' },
                         ].map((tab) => (
                           <button
@@ -541,7 +542,7 @@ const Scores = () => {
                       {archiveViewTab === 'aclass' && (
                         <ClassStandingsGrid
                           standings={aClassStandings}
-                          className="Class A"
+                          className="A Class"
                           userCorpsName={userCorpsName}
                         />
                       )}

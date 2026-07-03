@@ -14,6 +14,7 @@ import {
   onAuthStateChanged,
   User as FirebaseUser,
   sendPasswordResetEmail,
+  updateProfile as updateAuthProfile,
 } from 'firebase/auth';
 import {
   initializeFirestore,
@@ -117,10 +118,20 @@ export const authApi = {
   },
 
   /**
-   * Create a new account with email and password
+   * Create a new account with email and password.
+   * When a display name is given it is stored on the Firebase Auth user so
+   * onboarding can prefill it instead of asking again.
    */
-  signUpWithEmail: async (email: string, password: string) => {
-    return createUserWithEmailAndPassword(auth, email, password);
+  signUpWithEmail: async (email: string, password: string, displayName?: string) => {
+    const credential = await createUserWithEmailAndPassword(auth, email, password);
+    if (displayName) {
+      try {
+        await updateAuthProfile(credential.user, { displayName });
+      } catch {
+        // Non-blocking: onboarding still lets the user enter their name.
+      }
+    }
+    return credential;
   },
 
   /**

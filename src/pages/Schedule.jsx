@@ -6,13 +6,15 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, MapPin, Check, ChevronRight, Trophy } from 'lucide-react';
+import { Calendar, MapPin, Check, ChevronRight, Trophy, Clock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSeasonStore } from '../store/seasonStore';
 import { useScheduleStore } from '../store/scheduleStore';
 import { useProfileStore } from '../store/profileStore';
 import { ShowRegistrationModal } from '../components/Schedule';
 import { isEventPast } from '../utils/scheduleUtils';
+import { formatCountdown } from '../utils/seasonClock';
+import { useSeasonDeadlines } from '../hooks/useSeasonClock';
 
 // =============================================================================
 // CONSTANTS
@@ -654,6 +656,7 @@ const ChampionshipWeekDisplay = ({
 
 const Schedule = () => {
   const { user } = useAuth();
+  const { scoresInMs } = useSeasonDeadlines();
   const [loading, setLoading] = useState(true);
   const [selectedShow, setSelectedShow] = useState(null);
   const [registrationModal, setRegistrationModal] = useState(false);
@@ -827,6 +830,14 @@ const Schedule = () => {
               <p className="text-[10px] text-gray-500">
                 Week {currentWeek} of 7 • {getWeekDateRange(currentWeek)}
               </p>
+              <p className="text-[10px] text-cyan-400 flex items-center gap-1">
+                <Clock className="w-2.5 h-2.5" aria-hidden="true" />
+                Scores process in{' '}
+                <span className="font-bold font-data tabular-nums">
+                  {formatCountdown(scoresInMs)}
+                </span>{' '}
+                (nightly at 2 AM ET)
+              </p>
             </div>
           </div>
 
@@ -888,6 +899,7 @@ const Schedule = () => {
           show={selectedShow}
           userProfile={userProfile}
           formattedDate={formatDate(selectedShow.day)}
+          eventDate={getActualDate(selectedShow.day)}
           onClose={() => setRegistrationModal(false)}
           onSuccess={() => {
             // Profile updates automatically via real-time listener in profileStore

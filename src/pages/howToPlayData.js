@@ -80,7 +80,7 @@ export const FAQ = [
   },
   {
     q: 'Can I change my lineup?',
-    a: 'Yes! Early in the season you have unlimited changes. As finals approach, changes become limited (3/week mid-season, 2 per round during finals).',
+    a: 'Yes! In the opening weeks you have unlimited changes (week 1 of an off-season; weeks 1-3 of a live season). After that you get 3 changes per week, and the counter resets when the next season week begins.',
   },
   {
     q: 'What happens when a season ends?',

@@ -45,48 +45,53 @@ export const getGameDay = () => {
 };
 
 /**
- * Prune old challenge entries to prevent unbounded document growth.
- * Keeps only the most recent 30 day-buckets.
+ * The full pool of rotating challenges. Three are offered per game day.
  *
- * @param {Object} challenges - Current challenges object keyed by date string
- * @returns {Object} - Pruned challenges object
+ * MUST STAY IN SYNC with the server catalog in
+ * functions/src/helpers/dailyChallenges.js — the completeDailyChallenge
+ * callable only awards XP for challenges in today's server-side rotation.
+ * Both sides pin the same fixed-date expectations in their tests to catch
+ * drift.
  */
-export const pruneOldChallenges = (challenges) => {
-  if (!challenges || typeof challenges !== 'object') return challenges;
+export const CHALLENGE_POOL = [
+  { id: 'check-lineup', label: 'Review your lineup', link: null, action: 'lineup', xp: 10 },
+  { id: 'visit-scores', label: 'Check the leaderboard', link: '/scores', xp: 10 },
+  { id: 'visit-schedule', label: 'View upcoming shows', link: '/schedule', xp: 10 },
+  { id: 'visit-profile', label: 'Visit your profile', link: '/profile', xp: 5 },
+  { id: 'read-news', label: 'Read the latest news', link: '/', xp: 5 },
+  { id: 'visit-guide', label: 'Review game rules', link: '/guide', xp: 5 },
+  { id: 'visit-hall', label: 'Visit Hall of Champions', link: '/hall-of-champions', xp: 5 },
+];
 
-  const entries = Object.entries(challenges);
-  if (entries.length <= 30) return challenges;
+export const CHALLENGES_PER_DAY = 3;
 
-  // Date-string keys sort chronologically once parsed
-  const sorted = entries.sort(
-    ([dateA], [dateB]) => new Date(dateA).getTime() - new Date(dateB).getTime()
-  );
-  return Object.fromEntries(sorted.slice(-30));
+/**
+ * 32-bit string hash (djb2-style, same as the server mirror).
+ * @param {string} str
+ * @returns {number}
+ */
+const hashString = (str) => {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = ((h << 5) - h + str.charCodeAt(i)) | 0;
+  }
+  return h;
 };
 
 /**
- * Challenges that can be created on-the-fly when a page marks them complete
- * before the day's challenge list was seeded.
+ * The three challenges offered on a given game day — deterministic from the
+ * day string so this always matches the server's rotation without a round
+ * trip.
+ * @param {string} gameDay - Value from getGameDay()
+ * @returns {Array<{id: string, label: string, link: string|null, action?: string, xp: number}>}
  */
-export const CHALLENGE_DEFINITIONS = {
-  check_leaderboard: {
-    id: 'check_leaderboard',
-    title: 'Scout the Competition',
-    description: 'Visit the leaderboard page',
-    progress: 1,
-    target: 1,
-    reward: '25 XP',
-    icon: 'trophy',
-    completed: true,
-  },
-  maintain_equipment: {
-    id: 'maintain_equipment',
-    title: 'Equipment Care',
-    description: 'Check your equipment status',
-    progress: 1,
-    target: 1,
-    reward: '30 XP',
-    icon: 'wrench',
-    completed: true,
-  },
+export const getChallengesForGameDay = (gameDay) => {
+  const seed = hashString(gameDay);
+  return CHALLENGE_POOL.map((challenge) => ({
+    challenge,
+    order: hashString(`${seed}:${challenge.id}`) & 0x7fffffff,
+  }))
+    .sort((a, b) => a.order - b.order)
+    .slice(0, CHALLENGES_PER_DAY)
+    .map((entry) => entry.challenge);
 };

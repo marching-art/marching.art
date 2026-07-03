@@ -1,12 +1,13 @@
 // Tests for profileStore.completeDailyChallenge — the store half of the
-// daily game loop. Firebase modules are mocked; the store's challenge state
-// machine (existing / already-complete / unseeded / unknown) and the shape
-// of the Firestore write are the units under test.
+// daily game loop. The heavy lifting (validation, XP award, ledger write)
+// lives in the completeDailyChallenge callable; the store's job is the
+// local short-circuit, the callable delegation, and the success feedback.
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 
-const { mockUpdateDoc, mockToastSuccess } = vi.hoisted(() => ({
-  mockUpdateDoc: vi.fn(async () => {}),
+const { mockCallable, mockToastSuccess, mockTriggerXPFeedback } = vi.hoisted(() => ({
+  mockCallable: vi.fn(),
   mockToastSuccess: vi.fn(),
+  mockTriggerXPFeedback: vi.fn(),
 }));
 
 vi.mock('../api', () => ({
@@ -17,10 +18,18 @@ vi.mock('../api', () => ({
   },
 }));
 
+vi.mock('../api/functions', () => ({
+  completeDailyChallenge: mockCallable,
+}));
+
+vi.mock('../components/XPFeedback', () => ({
+  triggerXPFeedback: mockTriggerXPFeedback,
+}));
+
 vi.mock('firebase/firestore', () => ({
   doc: vi.fn((db, path) => ({ path })),
   onSnapshot: vi.fn(() => () => {}),
-  updateDoc: mockUpdateDoc,
+  updateDoc: vi.fn(async () => {}),
 }));
 
 vi.mock('firebase/functions', () => ({
@@ -32,7 +41,7 @@ vi.mock('react-hot-toast', () => ({
 }));
 
 import { useProfileStore } from './profileStore';
-import { getGameDay, CHALLENGE_DEFINITIONS } from '../utils/dailyChallenges';
+import { getGameDay } from '../utils/dailyChallenges';
 
 const seedStore = (profile, uid = 'user-1') => {
   useProfileStore.setState({ profile, _currentUid: uid });
@@ -45,101 +54,74 @@ describe('profileStore.completeDailyChallenge', () => {
   });
 
   test('returns false when no user is signed in', async () => {
-    const ok = await useProfileStore.getState().completeDailyChallenge('check_leaderboard');
+    const ok = await useProfileStore.getState().completeDailyChallenge('visit-scores');
     expect(ok).toBe(false);
-    expect(mockUpdateDoc).not.toHaveBeenCalled();
+    expect(mockCallable).not.toHaveBeenCalled();
   });
 
   test('returns false when the profile has not loaded', async () => {
     useProfileStore.setState({ profile: null, _currentUid: 'user-1' });
-    const ok = await useProfileStore.getState().completeDailyChallenge('check_leaderboard');
+    const ok = await useProfileStore.getState().completeDailyChallenge('visit-scores');
     expect(ok).toBe(false);
-    expect(mockUpdateDoc).not.toHaveBeenCalled();
+    expect(mockCallable).not.toHaveBeenCalled();
   });
 
-  test('returns false for an unknown challenge id', async () => {
-    seedStore({ challenges: {} });
-    const ok = await useProfileStore.getState().completeDailyChallenge('not_a_challenge');
-    expect(ok).toBe(false);
-    expect(mockUpdateDoc).not.toHaveBeenCalled();
-  });
-
-  test('completes an existing incomplete challenge for today', async () => {
-    const today = getGameDay();
+  test('short-circuits without a call when today already shows completion', async () => {
     seedStore({
-      challenges: {
-        [today]: [
-          {
-            id: 'check_leaderboard',
-            title: 'Scout',
-            reward: '25 XP',
-            progress: 0,
-            target: 1,
-            completed: false,
-          },
-        ],
-      },
+      challenges: { [getGameDay()]: [{ id: 'visit-scores', completed: true }] },
     });
 
-    const ok = await useProfileStore.getState().completeDailyChallenge('check_leaderboard');
-    expect(ok).toBe(true);
-
-    const [ref, payload] = mockUpdateDoc.mock.calls[0];
-    expect(ref.path).toBe('artifacts/test-ns/users/user-1/profile/data');
-    // Only the client-owned challenges field may be written
-    expect(Object.keys(payload)).toEqual(['challenges']);
-    const written = payload.challenges[today].find((c) => c.id === 'check_leaderboard');
-    expect(written.completed).toBe(true);
-    expect(written.progress).toBe(written.target);
-    expect(mockToastSuccess).toHaveBeenCalledWith(expect.stringContaining('+25 XP'));
+    const ok = await useProfileStore.getState().completeDailyChallenge('visit-scores');
+    expect(ok).toBe(false);
+    expect(mockCallable).not.toHaveBeenCalled();
   });
 
-  test('is idempotent: an already-completed challenge returns false without a write', async () => {
-    const today = getGameDay();
-    seedStore({
-      challenges: {
-        [today]: [
-          { id: 'check_leaderboard', title: 'Scout', progress: 1, target: 1, completed: true },
-        ],
+  test('awards via the callable and surfaces the XP feedback', async () => {
+    mockCallable.mockResolvedValueOnce({
+      data: {
+        success: true,
+        xpAwarded: 10,
+        challenge: { id: 'visit-scores', label: 'Check the leaderboard', xp: 10 },
       },
     });
-
-    const ok = await useProfileStore.getState().completeDailyChallenge('check_leaderboard');
-    expect(ok).toBe(false);
-    expect(mockUpdateDoc).not.toHaveBeenCalled();
-  });
-
-  test('creates a known challenge on the fly when today is unseeded', async () => {
     seedStore({ challenges: {} });
 
-    const ok = await useProfileStore.getState().completeDailyChallenge('maintain_equipment');
+    const ok = await useProfileStore.getState().completeDailyChallenge('visit-scores');
     expect(ok).toBe(true);
-
-    const [, payload] = mockUpdateDoc.mock.calls[0];
-    const today = getGameDay();
-    expect(payload.challenges[today]).toEqual([CHALLENGE_DEFINITIONS.maintain_equipment]);
+    expect(mockCallable).toHaveBeenCalledWith({ challengeId: 'visit-scores' });
+    expect(mockToastSuccess).toHaveBeenCalledWith(expect.stringContaining('+10 XP'));
+    expect(mockTriggerXPFeedback).toHaveBeenCalledWith(10, 'xp');
   });
 
-  test('prunes challenge history beyond 30 day-buckets on write', async () => {
-    const oldChallenges = {};
-    for (let i = 1; i <= 40; i++) {
-      oldChallenges[new Date(2020, 0, i).toDateString()] = [{ id: 'old' }];
-    }
-    seedStore({ challenges: oldChallenges });
-
-    await useProfileStore.getState().completeDailyChallenge('check_leaderboard');
-
-    const [, payload] = mockUpdateDoc.mock.calls[0];
-    expect(Object.keys(payload.challenges)).toHaveLength(30);
-    // Today's bucket (the newest) must survive pruning
-    expect(payload.challenges[getGameDay()]).toBeDefined();
-  });
-
-  test('returns false and does not throw when the write fails', async () => {
-    mockUpdateDoc.mockRejectedValueOnce(new Error('permission-denied'));
+  test('returns false quietly when the challenge is not in rotation', async () => {
+    mockCallable.mockResolvedValueOnce({
+      data: { success: false, notInRotation: true, xpAwarded: 0 },
+    });
     seedStore({ challenges: {} });
 
-    const ok = await useProfileStore.getState().completeDailyChallenge('check_leaderboard');
+    const ok = await useProfileStore.getState().completeDailyChallenge('visit-hall');
     expect(ok).toBe(false);
+    expect(mockToastSuccess).not.toHaveBeenCalled();
+    expect(mockTriggerXPFeedback).not.toHaveBeenCalled();
+  });
+
+  test('returns false when the server reports an earlier completion', async () => {
+    mockCallable.mockResolvedValueOnce({
+      data: { success: true, alreadyCompleted: true, xpAwarded: 0 },
+    });
+    seedStore({ challenges: {} });
+
+    const ok = await useProfileStore.getState().completeDailyChallenge('visit-scores');
+    expect(ok).toBe(false);
+    expect(mockToastSuccess).not.toHaveBeenCalled();
+  });
+
+  test('returns false and does not throw when the callable fails', async () => {
+    mockCallable.mockRejectedValueOnce(new Error('unavailable'));
+    seedStore({ challenges: {} });
+
+    const ok = await useProfileStore.getState().completeDailyChallenge('visit-scores');
+    expect(ok).toBe(false);
+    expect(mockTriggerXPFeedback).not.toHaveBeenCalled();
   });
 });

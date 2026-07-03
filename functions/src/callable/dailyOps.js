@@ -5,6 +5,12 @@ const { getDb, dataNamespaceParam } = require("../config");
 const { calculateXPUpdates, XP_SOURCES } = require("../helpers/xpCalculations");
 const { addCoinHistoryEntryToTransaction } = require("./economy");
 const { assertAuth } = require("../helpers/callableGuards");
+const {
+  CHALLENGE_POOL,
+  getGameDay,
+  getChallengesForGameDay,
+  pruneOldChallenges,
+} = require("../helpers/dailyChallenges");
 
 // Streak milestone rewards (XP + CC + optional free streak freeze)
 const STREAK_MILESTONES = {
@@ -200,6 +206,93 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
 });
 
 /**
+ * Complete Daily Challenge
+ *
+ * Server-authoritative completion of one of today's three rotating
+ * challenges. Validates the challenge is actually offered today (the
+ * rotation is deterministic from the game day, so client and server agree
+ * without a round trip), guards against double-completion via the
+ * `challenges` day-bucket on the profile (a server-only field in
+ * firestore.rules), and awards the catalog XP through the shared XP
+ * pipeline (level-ups and class unlocks included).
+ */
+const completeDailyChallenge = onCall({ cors: true }, async (request) => {
+  const uid = assertAuth(request);
+  const { challengeId } = request.data || {};
+
+  if (!challengeId || typeof challengeId !== "string") {
+    throw new HttpsError("invalid-argument", "A challengeId is required.");
+  }
+  if (!CHALLENGE_POOL.some((c) => c.id === challengeId)) {
+    throw new HttpsError("invalid-argument", "Unknown challenge.");
+  }
+
+  const db = getDb();
+  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+
+  try {
+    const result = await db.runTransaction(async (transaction) => {
+      const profileDoc = await transaction.get(profileRef);
+      if (!profileDoc.exists) {
+        throw new HttpsError("not-found", "User profile not found.");
+      }
+      const profileData = profileDoc.data();
+
+      const gameDay = getGameDay();
+      const challenge = getChallengesForGameDay(gameDay).find((c) => c.id === challengeId);
+      if (!challenge) {
+        // Valid challenge, but not in today's rotation — a soft no-op so
+        // pages that auto-complete on visit don't surface errors.
+        return { success: false, notInRotation: true, xpAwarded: 0 };
+      }
+
+      const allBuckets = profileData.challenges || {};
+      const todayBucket = allBuckets[gameDay] || [];
+      if (todayBucket.some((c) => c.id === challengeId && c.completed)) {
+        return { success: true, alreadyCompleted: true, xpAwarded: 0 };
+      }
+
+      const xpResult = calculateXPUpdates(profileData, challenge.xp);
+      const updatedBucket = [
+        ...todayBucket.filter((c) => c.id !== challengeId),
+        {
+          id: challenge.id,
+          label: challenge.label,
+          xp: challenge.xp,
+          completed: true,
+          completedAt: new Date().toISOString(),
+        },
+      ];
+
+      transaction.update(profileRef, {
+        challenges: pruneOldChallenges({ ...allBuckets, [gameDay]: updatedBucket }),
+        ...xpResult.updates,
+      });
+
+      return {
+        success: true,
+        xpAwarded: challenge.xp,
+        challenge: { id: challenge.id, label: challenge.label, xp: challenge.xp },
+        completedToday: updatedBucket.length,
+        newLevel: xpResult.newLevel,
+        classUnlocked: xpResult.classUnlocked,
+      };
+    });
+
+    if (result.success && !result.alreadyCompleted) {
+      logger.info(
+        `User ${uid} completed daily challenge ${challengeId} (+${result.xpAwarded} XP)`
+      );
+    }
+    return result;
+  } catch (error) {
+    logger.error(`Error completing daily challenge for user ${uid}:`, error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", "Failed to complete challenge.");
+  }
+});
+
+/**
  * Purchase Streak Freeze
  * Protects streak for 24 hours if user misses a day
  * Cost: 300 CorpsCoin
@@ -376,6 +469,7 @@ const getStreakStatus = onCall({ cors: true }, async (request) => {
 
 module.exports = {
   claimDailyLogin,
+  completeDailyChallenge,
   purchaseStreakFreeze,
   getStreakStatus,
   STREAK_MILESTONES,

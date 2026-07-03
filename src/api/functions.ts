@@ -251,6 +251,22 @@ export interface ClaimDailyLoginResult {
 
 export const claimDailyLogin = createCallable<void, ClaimDailyLoginResult>('claimDailyLogin');
 
+export interface CompleteDailyChallengeResult {
+  success: boolean;
+  xpAwarded: number;
+  alreadyCompleted?: boolean;
+  notInRotation?: boolean;
+  challenge?: { id: string; label: string; xp: number };
+  completedToday?: number;
+  newLevel?: number;
+  classUnlocked?: string | null;
+}
+
+export const completeDailyChallenge = createCallable<
+  { challengeId: string },
+  CompleteDailyChallengeResult
+>('completeDailyChallenge');
+
 // =============================================================================
 // LEADERBOARDS
 // =============================================================================

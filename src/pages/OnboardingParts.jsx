@@ -5,6 +5,7 @@
 import React from 'react';
 import { m } from 'framer-motion';
 import { Check, HelpCircle } from 'lucide-react';
+import JargonTooltip from '../components/JargonTooltip';
 import { CAPTIONS, CATEGORY_COLORS, SOUNDSPORT_POINT_LIMIT } from './onboardingConstants';
 
 // Guided Caption Selection Component
@@ -66,11 +67,13 @@ export const GuidedCaptionSelection = ({
     <div className="space-y-4">
       {/* Progress indicator */}
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm text-gray-400">Caption {currentCaptionIndex + 1} of 8</span>
+        <span className="text-sm text-gray-400">
+          <JargonTooltip termKey="caption">Caption</JargonTooltip> {currentCaptionIndex + 1} of 8
+        </span>
         <span
           className={`text-sm font-bold ${remainingPoints < 10 ? 'text-yellow-400' : 'text-green-400'}`}
         >
-          {remainingPoints} pts remaining
+          {remainingPoints} budget left
         </span>
       </div>
 
@@ -123,7 +126,7 @@ export const GuidedCaptionSelection = ({
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-yellow-400">{selectedCorps.points} pts</span>
+              <span className="text-sm font-bold text-yellow-400">Cost {selectedCorps.points}</span>
               <button onClick={handleDeselect} className="text-xs text-red-400 hover:text-red-300">
                 Change
               </button>
@@ -168,7 +171,7 @@ export const GuidedCaptionSelection = ({
                       : 'bg-yellow-500/20 text-yellow-400'
                   }`}
                 >
-                  {corps.points} pts
+                  Cost {corps.points}
                 </div>
               </m.button>
             );
@@ -179,7 +182,9 @@ export const GuidedCaptionSelection = ({
       {/* Hint text */}
       <p className="text-xs text-gray-500 text-center">
         <HelpCircle className="w-3 h-3 inline mr-1" />
-        Pick the historical corps you think will score best in this caption
+        Pick the historical <JargonTooltip termKey="corps">corps</JargonTooltip> you think will
+        score best in this <JargonTooltip termKey="caption">caption</JargonTooltip> — your total
+        must fit the <JargonTooltip termKey="soundsport">SoundSport</JargonTooltip> budget
       </p>
     </div>
   );

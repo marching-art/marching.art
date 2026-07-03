@@ -3,9 +3,11 @@
 
 import React, { memo, useState, useEffect, useMemo } from 'react';
 import { BarChart3, TrendingUp, Calendar, Award, Star, Zap } from 'lucide-react';
+import { useReducedMotion } from '../../../hooks/useReducedMotion';
 
 const QuickStats = memo(({ profile, corpsClass, recentResults, lineupScoreData, lineupCount }) => {
   const [activeIndex, setActiveIndex] = useState(0);
+  const { prefersReducedMotion } = useReducedMotion();
 
   // Build stats array from available data
   const stats = useMemo(() => {
@@ -92,14 +94,15 @@ const QuickStats = memo(({ profile, corpsClass, recentResults, lineupScoreData, 
     return items;
   }, [profile, lineupCount, recentResults, lineupScoreData]);
 
-  // Auto-cycle every 5 seconds
+  // Auto-cycle every 5 seconds (paused for reduced-motion users — the dots
+  // below remain as manual navigation)
   useEffect(() => {
-    if (stats.length <= 1) return;
+    if (stats.length <= 1 || prefersReducedMotion) return;
     const interval = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % stats.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, [stats.length]);
+  }, [stats.length, prefersReducedMotion]);
 
   if (stats.length === 0) return null;
 

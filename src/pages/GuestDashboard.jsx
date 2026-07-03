@@ -7,11 +7,10 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { m } from 'framer-motion';
 import {
   Trophy,
-  Star,
   Calendar,
   TrendingUp,
   ChevronRight,
@@ -26,13 +25,16 @@ import {
   Info,
   Flame,
   Target,
-  Clock,
   Lock,
 } from 'lucide-react';
 import { useGuestPreview } from '../hooks/useGuestPreview';
-import { RegistrationGate } from '../components/GuestPreview';
+import { RegistrationGate, GuestLineupPicker } from '../components/GuestPreview';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useSEO } from '../hooks/useSEO';
+import { getSeasonData, getCorpsValues } from '../api/season';
+import { getCorpsClassName } from '../utils/corps';
+
+const STARTER_BUDGET = 90; // Same 90-pt SoundSport budget onboarding drafts under
 
 // =============================================================================
 // CAPTION DISPLAY DATA
@@ -48,13 +50,6 @@ const CAPTIONS = [
   { id: 'MA', name: 'MA', category: 'mus', fullName: 'Music Analysis' },
   { id: 'P', name: 'P', category: 'mus', fullName: 'Percussion' },
 ];
-
-const CLASS_LABELS = {
-  world: 'World Class',
-  open: 'Open Class',
-  aClass: 'A Class',
-  soundSport: 'SoundSport',
-};
 
 // =============================================================================
 // GUEST HEADER COMPONENT
@@ -114,17 +109,17 @@ const GuestHeader = () => {
 // LINEUP ROW COMPONENT (Read-Only)
 // =============================================================================
 
-const LineupRow = ({ caption, value, captionScore, isLast, onGatedClick }) => {
+const LineupRow = ({ caption, value, captionScore, pointsCost, isLast, isPlayable, onClick }) => {
   const hasValue = !!value;
   const [corpsName, sourceYear] = hasValue ? value.split('|') : [null, null];
   const captionLabel = `${caption.name} — ${caption.fullName}`;
 
   return (
     <button
-      onClick={onGatedClick}
+      onClick={onClick}
       aria-label={
         hasValue
-          ? `${captionLabel}: ${corpsName}${sourceYear ? ` ${sourceYear}` : ''}`
+          ? `${captionLabel}: ${corpsName}${sourceYear ? ` ${sourceYear}` : ''}. Tap to change.`
           : `${captionLabel}: empty slot. Tap to draft.`
       }
       className={`w-full flex items-center gap-3 px-3 py-3.5 transition-all cursor-pointer group ${
@@ -157,18 +152,24 @@ const LineupRow = ({ caption, value, captionScore, isLast, onGatedClick }) => {
         <div className="text-[10px] text-gray-500 truncate mt-0.5">{caption.fullName}</div>
       </div>
 
-      {/* Caption Score */}
+      {/* Right side: pick cost (draft mode), demo score, or draft CTA */}
       <div className="flex items-center gap-2">
         {hasValue ? (
-          <span className="text-xs font-data text-gray-400 tabular-nums">
-            {captionScore !== null ? captionScore.toFixed(1) : '—'}
-          </span>
+          pointsCost != null ? (
+            <span className="text-xs font-bold font-data text-yellow-400 tabular-nums">
+              Cost {pointsCost}
+            </span>
+          ) : (
+            <span className="text-xs font-data text-gray-400 tabular-nums">
+              {captionScore !== null ? captionScore.toFixed(1) : '—'}
+            </span>
+          )
         ) : (
           <span className="text-xs font-bold text-[#F5A623] group-hover:text-[#FFB84D]">
             + Draft
           </span>
         )}
-        <Lock className="w-3.5 h-3.5 text-gray-600 group-hover:text-gray-400" />
+        {!isPlayable && <Lock className="w-3.5 h-3.5 text-gray-600 group-hover:text-gray-400" />}
       </div>
     </button>
   );
@@ -201,7 +202,6 @@ const GuestDashboard = () => {
       'Preview the marching.art fantasy drum corps dashboard — live scores, lineups, and leaderboards — before creating your free corps.',
     path: '/preview',
   });
-  const navigate = useNavigate();
 
   const {
     isLoading,
@@ -214,10 +214,42 @@ const GuestDashboard = () => {
     trackInteraction,
     hasEngaged,
     startPreview,
+    guestLineup,
+    updateGuestLineup,
+    shouldPromptRegistration,
+    resetPreview,
   } = useGuestPreview();
 
   // Gate modal state
   const [gateModal, setGateModal] = useState({ isOpen: false, type: 'default' });
+
+  // Real season corps list (publicly readable) — the same pool onboarding
+  // drafts from, so the guest's picks import cleanly after signup. When the
+  // load fails, availableCorps stays empty and lineup taps fall back to the
+  // registration gate.
+  const [availableCorps, setAvailableCorps] = useState([]);
+  const [pickerCaption, setPickerCaption] = useState(null);
+  const [engagementGateShown, setEngagementGateShown] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const season = await getSeasonData();
+        if (!season?.seasonUid) return;
+        const corpsValues = await getCorpsValues(season.seasonUid);
+        if (!cancelled && corpsValues.length) {
+          // Mirror onboarding's availability filter (points <= 50)
+          setAvailableCorps(corpsValues.filter((c) => (c.points || 0) <= 50));
+        }
+      } catch {
+        // Demo stays gated-only without the corps list
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Mark preview as started on mount
   useEffect(() => {
@@ -232,6 +264,63 @@ const GuestDashboard = () => {
 
   const closeGate = () => {
     setGateModal({ isOpen: false, type: 'default' });
+  };
+
+  // Whether the demo lineup is actually draftable (corps list loaded)
+  const isPlayable = availableCorps.length > 0;
+  // Once the guest makes a pick, the panel shows their own draft
+  const isDrafting = guestLineup !== null;
+
+  const draftPickCount = isDrafting ? Object.values(guestLineup).filter(Boolean).length : 0;
+  const draftPoints = isDrafting
+    ? Object.values(guestLineup).reduce(
+        (sum, val) => sum + (val ? parseInt(val.split('|')[2]) || 0 : 0),
+        0
+      )
+    : 0;
+
+  // Open the draft picker for a caption (or gate when corps didn't load)
+  const handleLineupClick = (caption) => {
+    trackInteraction('lineup');
+    if (isPlayable) {
+      setPickerCaption(caption);
+    } else {
+      setGateModal({ isOpen: true, type: 'edit' });
+    }
+  };
+
+  const handleEditLineupClick = () => {
+    trackInteraction('lineup');
+    if (!isPlayable) {
+      setGateModal({ isOpen: true, type: 'edit' });
+      return;
+    }
+    const firstEmpty = CAPTIONS.find((c) => !(guestLineup || {})[c.id]);
+    setPickerCaption(firstEmpty || CAPTIONS[0]);
+  };
+
+  // A pick was made: advance to the next empty caption, or celebrate a
+  // complete draft with the save-progress prompt.
+  const handlePickerSelect = (captionId, value) => {
+    updateGuestLineup(captionId, value);
+    const nextLineup = { ...(guestLineup || {}), [captionId]: value };
+    const nextEmpty = CAPTIONS.find((c) => !nextLineup[c.id]);
+    if (nextEmpty) {
+      setPickerCaption(nextEmpty);
+    } else {
+      setPickerCaption(null);
+      setEngagementGateShown(true);
+      setGateModal({ isOpen: true, type: 'save' });
+    }
+  };
+
+  // Closing the picker after enough engagement shows the save prompt once
+  const handlePickerClose = () => {
+    setPickerCaption(null);
+    if (shouldPromptRegistration && !engagementGateShown) {
+      setEngagementGateShown(true);
+      setGateModal({ isOpen: true, type: 'save' });
+    }
   };
 
   // Caption score helper
@@ -304,7 +393,7 @@ const GuestDashboard = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs font-bold text-yellow-500 uppercase tracking-wider">
-                          {CLASS_LABELS[demoCorps.corpsClass]}
+                          {getCorpsClassName(demoCorps.corpsClass)}
                         </span>
                       </div>
                       <h1 className="text-xl font-bold text-white truncate">
@@ -362,28 +451,63 @@ const GuestDashboard = () => {
                 <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
                   <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
                     <Target className="w-3.5 h-3.5 text-[#0057B8]" />
-                    Active Lineup
+                    {isDrafting ? 'Your Draft' : 'Active Lineup'}
                   </h2>
-                  <button
-                    onClick={() => handleGatedClick('edit')}
-                    className="text-xs font-medium text-[#0057B8] hover:text-white transition-colors flex items-center gap-1"
-                  >
-                    <Lock className="w-3 h-3" />
-                    Edit Lineup
-                  </button>
+                  <div className="flex items-center gap-3">
+                    {isDrafting && (
+                      <>
+                        <span className="text-[10px] font-bold text-gray-400 font-data tabular-nums">
+                          {draftPickCount}/8 •{' '}
+                          <span
+                            className={
+                              draftPoints > STARTER_BUDGET ? 'text-red-400' : 'text-yellow-400'
+                            }
+                          >
+                            {draftPoints}/{STARTER_BUDGET} budget
+                          </span>
+                        </span>
+                        <button
+                          onClick={resetPreview}
+                          className="text-[10px] text-gray-500 hover:text-white uppercase"
+                        >
+                          Reset
+                        </button>
+                      </>
+                    )}
+                    <button
+                      onClick={handleEditLineupClick}
+                      className="text-xs font-medium text-[#0057B8] hover:text-white transition-colors flex items-center gap-1"
+                    >
+                      {!isPlayable && <Lock className="w-3 h-3" />}
+                      {isDrafting ? 'Continue Draft' : isPlayable ? 'Try Drafting' : 'Edit Lineup'}
+                    </button>
+                  </div>
                 </div>
 
+                {isDrafting && (
+                  <div className="px-4 py-2 bg-[#0057B8]/10 border-b border-[#0057B8]/20">
+                    <p className="text-[11px] text-[#0057B8]">
+                      You're drafting your own lineup — it carries over when you sign up.
+                    </p>
+                  </div>
+                )}
+
                 <div>
-                  {CAPTIONS.map((caption, index) => (
-                    <LineupRow
-                      key={caption.id}
-                      caption={caption}
-                      value={demoCorps.lineup?.[caption.id]}
-                      captionScore={getCaptionScore(caption.id)}
-                      isLast={index === CAPTIONS.length - 1}
-                      onGatedClick={() => handleGatedClick('edit')}
-                    />
-                  ))}
+                  {CAPTIONS.map((caption, index) => {
+                    const draftValue = isDrafting ? guestLineup[caption.id] : null;
+                    return (
+                      <LineupRow
+                        key={caption.id}
+                        caption={caption}
+                        value={isDrafting ? draftValue : demoCorps.lineup?.[caption.id]}
+                        captionScore={getCaptionScore(caption.id)}
+                        pointsCost={draftValue ? parseInt(draftValue.split('|')[2]) || null : null}
+                        isPlayable={isPlayable}
+                        isLast={index === CAPTIONS.length - 1}
+                        onClick={() => handleLineupClick(caption)}
+                      />
+                    );
+                  })}
                 </div>
               </div>
 
@@ -581,6 +705,17 @@ const GuestDashboard = () => {
           </div>
         </div>
       </main>
+
+      {/* Draft Picker Modal */}
+      <GuestLineupPicker
+        isOpen={pickerCaption !== null}
+        caption={pickerCaption}
+        availableCorps={availableCorps}
+        lineup={guestLineup || {}}
+        onSelect={handlePickerSelect}
+        onClose={handlePickerClose}
+        onComplete={handlePickerClose}
+      />
 
       {/* Registration Gate Modal */}
       <RegistrationGate

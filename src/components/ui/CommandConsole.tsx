@@ -45,7 +45,7 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
 }) => {
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [internalProgress, setInternalProgress] = useState(0);
-  const shouldReduceMotion = useShouldReduceMotion();
+  const shouldReduceMotion = useShouldReduceMotion({ includePerformanceHeuristics: true });
 
   // Cycle through messages - slower interval on mobile
   useEffect(() => {
@@ -482,7 +482,7 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
   const IconComponent = CustomIcon || config.icon;
   const displayTitle = title || config.defaultTitle;
   const displaySubtitle = subtitle || config.defaultSubtitle;
-  const shouldReduceMotion = useShouldReduceMotion();
+  const shouldReduceMotion = useShouldReduceMotion({ includePerformanceHeuristics: true });
 
   // Minimal variant - compact version
   if (variant === 'minimal') {

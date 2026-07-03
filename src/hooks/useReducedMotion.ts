@@ -1,14 +1,14 @@
 // =============================================================================
 // USE REDUCED MOTION HOOK
 // =============================================================================
-// Detects user preference for reduced motion AND mobile devices
-// Returns true if animations should be reduced/disabled for performance
+// Two SEPARATE signals, not conflated:
 //
-// Conditions that trigger reduced motion:
-// 1. User has prefers-reduced-motion enabled in OS settings
-// 2. Device is mobile (performance optimization)
-// 3. Device has low memory (if detectable)
-// 4. Connection is slow (2G/3G)
+// 1. prefersReducedMotion — the user's OS accessibility setting. This is the
+//    DEFAULT driver of shouldReduceMotion: a mobile user who did not ask for
+//    reduced motion gets animations.
+// 2. isLowPower — device/connection heuristics (mobile, 2G/3G, low memory).
+//    Heavy animations (confetti, celebrations) can opt in via
+//    { includePerformanceHeuristics: true } to also suppress on weak devices.
 
 import { useState, useEffect, useCallback } from 'react';
 
@@ -32,15 +32,21 @@ declare const navigator: NavigatorWithExtensions;
 interface ReducedMotionOptions {
   /** Allow override - force animations on even on mobile */
   forceAnimations?: boolean;
-  /** Consider only user preference, not device type */
-  respectOnlyUserPreference?: boolean;
+  /**
+   * Also reduce motion on low-power devices (mobile, slow connection, low
+   * memory). Off by default — only the OS accessibility preference reduces
+   * motion unless a heavy animation opts in.
+   */
+  includePerformanceHeuristics?: boolean;
 }
 
 interface ReducedMotionResult {
   /** Primary flag - should reduce/disable animations */
   shouldReduceMotion: boolean;
-  /** User explicitly prefers reduced motion */
+  /** User explicitly prefers reduced motion (OS accessibility setting) */
   prefersReducedMotion: boolean;
+  /** Device/connection heuristics suggest skipping heavy animations */
+  isLowPower: boolean;
   /** Device is mobile */
   isMobile: boolean;
   /** Connection is slow */
@@ -97,7 +103,7 @@ const checkIsLowMemory = (): boolean => {
  * Checks user preference, device type, connection speed, and memory
  */
 export const useReducedMotion = (options: ReducedMotionOptions = {}): ReducedMotionResult => {
-  const { forceAnimations = false, respectOnlyUserPreference = false } = options;
+  const { forceAnimations = false, includePerformanceHeuristics = false } = options;
 
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => {
     if (typeof window === 'undefined') return false;
@@ -166,24 +172,24 @@ export const useReducedMotion = (options: ReducedMotionOptions = {}): ReducedMot
     return () => connection.removeEventListener?.('change', handleConnectionChange);
   }, []);
 
+  const isLowPower = isMobile || isSlowConnection || isLowMemory;
+
   // Calculate if we should reduce motion
   const shouldReduceMotion = (() => {
     // Always respect force override
     if (forceAnimations) return false;
 
-    // User preference always wins
+    // The OS accessibility preference always wins
     if (prefersReducedMotion) return true;
 
-    // If only respecting user preference, stop here
-    if (respectOnlyUserPreference) return false;
-
-    // Reduce on mobile or slow/low-resource devices
-    return isMobile || isSlowConnection || isLowMemory;
+    // Performance-based reduction only when the caller opted in
+    return includePerformanceHeuristics ? isLowPower : false;
   })();
 
   return {
     shouldReduceMotion,
     prefersReducedMotion,
+    isLowPower,
     isMobile,
     isSlowConnection,
     isLowMemory,

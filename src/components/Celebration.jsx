@@ -18,7 +18,7 @@ let confettiModule = null;
  */
 const Celebration = ({ trigger, message, type = 'default' }) => {
   const [isVisible, setIsVisible] = useState(false);
-  const shouldReduceMotion = useShouldReduceMotion();
+  const shouldReduceMotion = useShouldReduceMotion({ includePerformanceHeuristics: true });
   const intervalRef = useRef(null);
 
   useEffect(() => {

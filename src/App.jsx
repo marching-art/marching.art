@@ -14,6 +14,7 @@ import {
   LeaguesPageSkeleton,
   SchedulePageSkeleton,
   ProfilePageSkeleton,
+  GalleryPageSkeleton,
 } from './components/Skeleton';
 import GameShell from './components/Layout/GameShell';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
@@ -219,8 +220,8 @@ function App() {
         analytics.logLogin('email');
         return result;
       },
-      signUp: async (email, password) => {
-        const result = await authHelpers.signUpWithEmail(email, password);
+      signUp: async (email, password, displayName) => {
+        const result = await authHelpers.signUpWithEmail(email, password, displayName);
         analytics.logSignUp('email');
         return result;
       },
@@ -521,13 +522,13 @@ function App() {
                     <Route
                       path="/hall-of-champions"
                       element={
-                        <Suspense fallback={<LoadingScreen fullScreen />}>
-                          <GameShell>
+                        <GameShell>
+                          <Suspense fallback={<GalleryPageSkeleton />}>
                             <Page name="Hall of Champions">
                               <HallOfChampions />
                             </Page>
-                          </GameShell>
-                        </Suspense>
+                          </Suspense>
+                        </GameShell>
                       }
                     />
 
@@ -536,9 +537,11 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <GameShell>
-                            <Page name="Admin">
-                              <Admin />
-                            </Page>
+                            <Suspense fallback={<GalleryPageSkeleton />}>
+                              <Page name="Admin">
+                                <Admin />
+                              </Page>
+                            </Suspense>
                           </GameShell>
                         </ProtectedRoute>
                       }
@@ -564,9 +567,11 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <GameShell>
-                            <Page name="Retired Corps">
-                              <RetiredCorpsGallery />
-                            </Page>
+                            <Suspense fallback={<GalleryPageSkeleton />}>
+                              <Page name="Retired Corps">
+                                <RetiredCorpsGallery />
+                              </Page>
+                            </Suspense>
                           </GameShell>
                         </ProtectedRoute>
                       }
@@ -577,9 +582,11 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <GameShell>
-                            <Page name="Corps History">
-                              <CorpsHistory />
-                            </Page>
+                            <Suspense fallback={<GalleryPageSkeleton />}>
+                              <Page name="Corps History">
+                                <CorpsHistory />
+                              </Page>
+                            </Suspense>
                           </GameShell>
                         </ProtectedRoute>
                       }
@@ -590,9 +597,11 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <GameShell>
-                            <Page name="SoundSport">
-                              <SoundSport />
-                            </Page>
+                            <Suspense fallback={<GalleryPageSkeleton />}>
+                              <Page name="SoundSport">
+                                <SoundSport />
+                              </Page>
+                            </Suspense>
                           </GameShell>
                         </ProtectedRoute>
                       }

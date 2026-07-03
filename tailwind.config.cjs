@@ -51,13 +51,13 @@ module.exports = {
           DEFAULT: '#FFFFFF', // Primary text
           primary: '#FFFFFF',
           secondary: '#B3B3B3', // Secondary text
-          muted: '#808080', // Muted/disabled text
+          muted: '#999999', // Muted/disabled text (>=4.5:1 on #0A0A0A per WCAG AA)
         },
         main: '#FFFFFF',
-        muted: '#808080',
+        muted: '#999999',
         'text-main': '#FFFFFF',
         'text-secondary': '#B3B3B3',
-        'text-muted': '#808080',
+        'text-muted': '#999999',
         'text-inverse': '#0A0A0A',
 
         // TREND COLORS - Data status indicators

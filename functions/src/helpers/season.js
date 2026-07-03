@@ -2,6 +2,7 @@ const { logger } = require("firebase-functions/v2");
 const { getDb, dataNamespaceParam } = require("../config");
 const { Timestamp } = require("firebase-admin/firestore");
 const admin = require("firebase-admin");
+const { TRANSACTION_TYPES, addCoinHistoryEntryToBatch } = require("../callable/economy");
 const {
   applyEnrichment,
   brandEventName,
@@ -552,7 +553,12 @@ async function archiveSeasonResultsLogic() {
   const seasonId = seasonData.seasonUid;
   const seasonName = seasonData.name;
 
-  const leaguesSnapshot = await db.collection("leagues").get();
+  // Leagues live under the data namespace (see callable/leagues.js) — this
+  // path must stay in sync with that writer or archival silently processes
+  // zero leagues.
+  const leaguesSnapshot = await db
+    .collection(`artifacts/${dataNamespaceParam.value()}/leagues`)
+    .get();
   if (leaguesSnapshot.empty) {
     logger.info("No leagues found to archive.");
     return;
@@ -596,7 +602,7 @@ async function archiveSeasonResultsLogic() {
     });
 
     if (leagueWinner.userId) {
-      const leagueRef = db.doc(`leagues/${leagueId}`);
+      const leagueRef = leagueDoc.ref;
       const championEntry = {
         seasonName: seasonName,
         winnerId: leagueWinner.userId,
@@ -623,6 +629,24 @@ async function archiveSeasonResultsLogic() {
         achievements: admin.firestore.FieldValue.arrayUnion(championAchievement),
       });
       logger.info(`Granted 'League Champion' achievement to ${leagueWinner.username}.`);
+
+      // --- PRIZE POOL PAYOUT ---
+      // Pay the CorpsCoin prize pool shown on the league's settings tab.
+      const prizePool = league.settings?.prizePool || 0;
+      if (prizePool > 0) {
+        batch.update(winnerProfileRef, {
+          corpsCoin: admin.firestore.FieldValue.increment(prizePool),
+        });
+        addCoinHistoryEntryToBatch(batch, db, leagueWinner.userId, {
+          type: TRANSACTION_TYPES.LEAGUE_WIN,
+          amount: prizePool,
+          description: `${seasonName} champion prize pool — ${league.name}`,
+          timestamp: new Date(),
+        });
+        logger.info(
+          `Paid ${prizePool} CC prize pool to ${leagueWinner.username} for winning '${league.name}'.`
+        );
+      }
 
       // --- NEW NOTIFICATION LOGIC ---
       const notificationMessage = `🏆 ${leagueWinner.username} has won the ${seasonName} ` +

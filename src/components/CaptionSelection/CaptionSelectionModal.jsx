@@ -11,6 +11,9 @@ import toast from 'react-hot-toast';
 import Portal from '../Portal';
 import { useAuth } from '../../context/AuthContext';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { useSeasonDeadlines } from '../../hooks/useSeasonClock';
+import { getTradeWeekInfo, formatCountdown, WEEKLY_TRADE_LIMIT } from '../../utils/seasonClock';
+import { CORPS_CLASS_LABELS as CLASS_LABELS } from '../../utils/corps';
 import {
   LineupCelebration,
   CorpsOptionRow,
@@ -48,9 +51,13 @@ const CaptionSelectionModal = ({
   const [activeCaption, setActiveCaption] = useState(initialCaption || null);
 
   // Trade limits state
-  const [tradesRemaining, setTradesRemaining] = useState(3);
+  const [tradesRemaining, setTradesRemaining] = useState(WEEKLY_TRADE_LIMIT);
   const [isUnlimitedTrades, setIsUnlimitedTrades] = useState(false);
   const [isInitialSetup, setIsInitialSetup] = useState(false);
+  const [tradeWeekInfo, setTradeWeekInfo] = useState(null);
+
+  // Live countdown to the nightly score processing (shown next to Lock Lineup)
+  const { scoresInMs } = useSeasonDeadlines();
 
   // Close on Escape key
   useEscapeKey(onClose);
@@ -68,13 +75,6 @@ const CaptionSelectionModal = ({
 
   const pointLimits = { soundSport: 90, aClass: 60, openClass: 120, worldClass: 150 };
   const pointLimit = pointLimits[corpsClass];
-
-  const CLASS_LABELS = {
-    soundSport: 'SoundSport',
-    aClass: 'A Class',
-    openClass: 'Open Class',
-    worldClass: 'World Class',
-  };
 
   const categoryColors = {
     'General Effect': 'bg-yellow-500',
@@ -119,36 +119,24 @@ const CaptionSelectionModal = ({
           // Get weekly trades info
           const weeklyTrades = currentCorpsData?.weeklyTrades;
 
-          // Load season data to check trade limits
+          // Load season data to check trade limits.
+          // getTradeWeekInfo mirrors the backend week math exactly
+          // (functions/src/callable/lineups.js), including spring-training days.
           const seasonData = await getSeasonData();
-          if (seasonData) {
-            const now = new Date();
-            const seasonStartDate = seasonData.schedule?.startDate?.toDate();
+          const trade = getTradeWeekInfo(seasonData);
+          if (trade) {
+            setTradeWeekInfo(trade);
+            const unlimited = !hasExistingLineup || trade.isUnlimitedWeek;
+            setIsUnlimitedTrades(unlimited);
 
-            if (seasonStartDate) {
-              const diffInMillis = now.getTime() - seasonStartDate.getTime();
-              const currentDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1;
-              const currentWeek = Math.ceil(currentDay / 7);
-
-              // Determine if unlimited trades
-              let unlimited = false;
-              if (!hasExistingLineup) unlimited = true;
-              if (seasonData.status === 'off-season' && currentWeek === 1) unlimited = true;
-              if (seasonData.status === 'live-season' && [1, 2, 3].includes(currentWeek))
-                unlimited = true;
-
-              setIsUnlimitedTrades(unlimited);
-
-              if (!unlimited && weeklyTrades) {
-                const tradesUsed =
-                  weeklyTrades.seasonUid === seasonData.seasonUid &&
-                  weeklyTrades.week === currentWeek
-                    ? weeklyTrades.used
-                    : 0;
-                setTradesRemaining(3 - tradesUsed);
-              } else if (!unlimited) {
-                setTradesRemaining(3);
-              }
+            if (!unlimited && weeklyTrades) {
+              const tradesUsed =
+                weeklyTrades.seasonUid === seasonData.seasonUid && weeklyTrades.week === trade.week
+                  ? weeklyTrades.used
+                  : 0;
+              setTradesRemaining(trade.tradeLimit - tradesUsed);
+            } else if (!unlimited) {
+              setTradesRemaining(trade.tradeLimit);
             }
           }
         }
@@ -530,7 +518,7 @@ const CaptionSelectionModal = ({
                       : 'Draft Your Lineup'}
                   </h2>
                   <p className="text-sm text-gray-500">
-                    {CLASS_LABELS[corpsClass]} • {pointLimit} pts budget
+                    {CLASS_LABELS[corpsClass]} • Draft budget: {pointLimit}
                   </p>
                 </div>
               </div>
@@ -539,6 +527,8 @@ const CaptionSelectionModal = ({
                   tradesRemaining={tradesRemaining}
                   isUnlimited={isUnlimitedTrades}
                   isInitialSetup={isInitialSetup}
+                  resetsAt={tradeWeekInfo?.resetsAt}
+                  unlimitedEndsAt={tradeWeekInfo?.unlimitedEndsAt}
                 />
                 <button
                   onClick={handleQuickFill}
@@ -719,6 +709,10 @@ const CaptionSelectionModal = ({
                             );
                           })}
                         </div>
+                        <p className="px-4 py-3 text-[10px] text-gray-600 text-center border-t border-[#222]">
+                          Showing this season's draftable corps (cost 50 or less). Cost counts
+                          against your budget — scores come from real performances.
+                        </p>
                       </div>
                     </>
                   ) : (
@@ -738,31 +732,39 @@ const CaptionSelectionModal = ({
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end gap-2 flex-shrink-0">
-            <button
-              onClick={onClose}
-              disabled={saving}
-              className="h-9 px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white disabled:opacity-50"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={!isComplete || isOverLimit || saving || loading}
-              className="h-9 px-4 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6] disabled:opacity-50 flex items-center gap-2"
-            >
-              {saving ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-sm animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Trophy className="w-4 h-4" />
-                  Lock Lineup ({totalPoints}/{pointLimit})
-                </>
-              )}
-            </button>
+          <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex items-center justify-between gap-3 flex-shrink-0">
+            <p className="text-[10px] text-gray-500 leading-snug min-w-0 hidden sm:block">
+              Locked lineups are scored nightly at 2 AM ET — next run in{' '}
+              <span className="text-cyan-400 font-bold font-data tabular-nums">
+                {formatCountdown(scoresInMs)}
+              </span>
+            </p>
+            <div className="flex justify-end gap-2 flex-shrink-0 ml-auto">
+              <button
+                onClick={onClose}
+                disabled={saving}
+                className="h-9 px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={!isComplete || isOverLimit || saving || loading}
+                className="h-9 px-4 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6] disabled:opacity-50 flex items-center gap-2"
+              >
+                {saving ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-sm animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Trophy className="w-4 h-4" />
+                    Lock Lineup ({totalPoints}/{pointLimit})
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>

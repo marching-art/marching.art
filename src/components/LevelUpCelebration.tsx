@@ -112,7 +112,7 @@ const LevelUpModal: React.FC<{
   data: LevelUpData;
   onComplete: () => void;
 }> = ({ data, onComplete }) => {
-  const shouldReduceMotion = useShouldReduceMotion();
+  const shouldReduceMotion = useShouldReduceMotion({ includePerformanceHeuristics: true });
 
   useEffect(() => {
     // Trigger confetti unless reduced motion

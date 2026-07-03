@@ -190,6 +190,14 @@ const Dashboard = () => {
     return entry?.rank ?? null;
   }, [aggregatedScores, activeCorps]);
 
+  // Places climbed (positive) or dropped since the last daily rank snapshot,
+  // written by the rivals job (scheduled/rivalsComputation.js) at 2:30 AM ET.
+  const userRankChange = useMemo(() => {
+    const snapshot = profile?.classRanks?.[activeCorpsClass];
+    if (!snapshot?.rank || !snapshot?.previousRank) return null;
+    return snapshot.previousRank - snapshot.rank;
+  }, [profile?.classRanks, activeCorpsClass]);
+
   const bestInShowCount = useBestInShowCount(activeCorps, activeCorpsClass, allShows);
 
   const thisWeekShows = useMemo(() => {
@@ -587,7 +595,7 @@ const Dashboard = () => {
                   <SeasonScorecard
                     score={userCorpsScore}
                     rank={userCorpsRank}
-                    rankChange={null}
+                    rankChange={userRankChange}
                     corpsName={activeCorps.corpsName || activeCorps.name}
                     corpsClass={activeCorpsClass}
                     loading={scoresLoading}

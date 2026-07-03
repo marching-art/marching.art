@@ -21,7 +21,7 @@ export const RATING_CONFIG: Record<SoundSportRating, RatingStyle> = {
 export const CLASS_LABELS: Record<string, string> = {
   worldClass: 'World Class',
   openClass: 'Open Class',
-  aClass: 'Class A',
+  aClass: 'A Class',
   soundSport: 'SoundSport',
 };
 

@@ -151,6 +151,16 @@ await check(
   assertFails(updateDoc(doc(authed(), profilePath), { xp: 9999 }))
 );
 
+await freshSeed();
+await check(
+  'owner cannot write challenges ledger (XP farming)',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), {
+      challenges: { 'Wed Jan 14 2026': [{ id: 'visit-scores', completed: true }] },
+    })
+  )
+);
+
 // --- protected corps subfields ---
 await freshSeed();
 await check(

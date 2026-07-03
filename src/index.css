@@ -308,3 +308,27 @@
     font-size: max(12px, 0.75rem);
   }
 }
+
+/* =============================================================================
+   REDUCED MOTION (WCAG 2.3.3)
+   =============================================================================
+   Framer-motion animations already respect the OS setting via MotionConfig
+   (src/components/MotionProvider.jsx), but Tailwind keyframe animations
+   (pulse skeletons, shimmer, ping, fade-up) and CSS transitions did not.
+   Loading spinners stay animated — a frozen spinner reads as a hang — but
+   slow down so they don't strobe. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-spin {
+    animation-duration: 1.5s !important;
+    animation-iteration-count: infinite !important;
+  }
+}
