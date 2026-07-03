@@ -12,6 +12,7 @@ import BottomNav from '../BottomNav';
 import { useSeasonStore } from '../../store/seasonStore';
 import { formatSeasonName } from '../../utils/season';
 import { useTickerData } from '../../hooks/useTickerData';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 import {
   LayoutDashboard,
   Calendar,
@@ -90,7 +91,7 @@ const TopNav = () => {
             <span className="font-bold text-sm text-white leading-tight">marching.art</span>
             {/* Season badge - subtle, integrated */}
             {seasonLabel && (
-              <span className="hidden sm:block text-[9px] text-gray-500 uppercase tracking-wider leading-tight">
+              <span className="hidden sm:block text-[10px] text-gray-400 uppercase tracking-wider leading-tight">
                 {seasonLabel}
               </span>
             )}
@@ -170,6 +171,7 @@ const TickerBar = () => {
   const { tickerData, captionStats, loading, hasData } = useTickerData();
   const [activeSection, setActiveSection] = useState(0);
   const scrollRef = useRef(null);
+  const { prefersReducedMotion } = useReducedMotion();
 
   // Build dynamic sections based on available data
   const tickerSections = useMemo(() => {
@@ -218,16 +220,18 @@ const TickerBar = () => {
     return sections;
   }, [tickerData]);
 
-  // Auto-cycle through sections every 8 seconds
+  // Auto-cycle through sections every 8 seconds. Users with the OS
+  // reduced-motion preference keep the manual prev/next arrows instead of
+  // perpetually shifting content.
   useEffect(() => {
-    if (!hasData || tickerSections.length === 0) return;
+    if (!hasData || tickerSections.length === 0 || prefersReducedMotion) return;
 
     const interval = setInterval(() => {
       setActiveSection((prev) => (prev + 1) % tickerSections.length);
     }, 8000);
 
     return () => clearInterval(interval);
-  }, [hasData, tickerSections.length]);
+  }, [hasData, tickerSections.length, prefersReducedMotion]);
 
   // Reset activeSection if it's out of bounds
   useEffect(() => {
@@ -352,7 +356,7 @@ const TickerBar = () => {
                 key={`${item.fullName}-${item.score}`}
                 className="flex items-center gap-2 flex-shrink-0"
               >
-                <span className="text-gray-500 text-[11px] sm:text-[10px] font-mono">
+                <span className="text-gray-400 text-[11px] sm:text-[10px] font-mono">
                   #{idx + 1}
                 </span>
                 <span className="text-gray-400 font-medium text-xs whitespace-nowrap">
@@ -392,7 +396,7 @@ const TickerBar = () => {
                 key={`ge-${item.fullName}-${item.score}`}
                 className="flex items-center gap-2 flex-shrink-0"
               >
-                <span className="text-gray-500 text-[11px] sm:text-[10px] font-mono">
+                <span className="text-gray-400 text-[11px] sm:text-[10px] font-mono">
                   #{idx + 1}
                 </span>
                 <span className="text-gray-400 font-medium text-xs whitespace-nowrap">
@@ -421,7 +425,7 @@ const TickerBar = () => {
                 key={`vis-${item.fullName}-${item.score}`}
                 className="flex items-center gap-2 flex-shrink-0"
               >
-                <span className="text-gray-500 text-[11px] sm:text-[10px] font-mono">
+                <span className="text-gray-400 text-[11px] sm:text-[10px] font-mono">
                   #{idx + 1}
                 </span>
                 <span className="text-gray-400 font-medium text-xs whitespace-nowrap">
@@ -450,7 +454,7 @@ const TickerBar = () => {
                 key={`mus-${item.fullName}-${item.score}`}
                 className="flex items-center gap-2 flex-shrink-0"
               >
-                <span className="text-gray-500 text-[11px] sm:text-[10px] font-mono">
+                <span className="text-gray-400 text-[11px] sm:text-[10px] font-mono">
                   #{idx + 1}
                 </span>
                 <span className="text-gray-400 font-medium text-xs whitespace-nowrap">
@@ -533,7 +537,7 @@ const TickerBar = () => {
       {/* Mobile: Section navigation arrows */}
       <button
         onClick={handlePrevSection}
-        className="sm:hidden flex-shrink-0 w-8 h-full flex items-center justify-center text-gray-600 active:text-white active:bg-white/5 transition-colors"
+        className={`${prefersReducedMotion ? '' : 'sm:hidden '}flex-shrink-0 w-8 h-full flex items-center justify-center text-gray-600 hover:text-white active:text-white active:bg-white/5 transition-colors`}
         aria-label="Previous section"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -549,10 +553,11 @@ const TickerBar = () => {
         {renderSectionContent()}
       </div>
 
-      {/* Mobile: Section navigation arrows */}
+      {/* Section navigation arrows (always on mobile; on desktop only when
+          reduced motion disables the auto-cycle) */}
       <button
         onClick={handleNextSection}
-        className="sm:hidden flex-shrink-0 w-8 h-full flex items-center justify-center text-gray-600 active:text-white active:bg-white/5 transition-colors"
+        className={`${prefersReducedMotion ? '' : 'sm:hidden '}flex-shrink-0 w-8 h-full flex items-center justify-center text-gray-600 hover:text-white active:text-white active:bg-white/5 transition-colors`}
         aria-label="Next section"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -563,7 +568,7 @@ const TickerBar = () => {
       {/* Section indicator - mobile only, max 6 dots */}
       {tickerSections.length > 1 && (
         <div className="sm:hidden flex-shrink-0 flex items-center gap-0.5 px-1.5 border-l border-[#333]">
-          <span className="text-[9px] text-gray-500 font-mono mr-1">
+          <span className="text-[10px] text-gray-400 font-mono mr-1">
             {activeSection + 1}/{tickerSections.length}
           </span>
         </div>

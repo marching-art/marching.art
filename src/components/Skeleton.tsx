@@ -425,4 +425,25 @@ export const ProfilePageSkeleton: React.FC = () => (
   </div>
 );
 
+/**
+ * Gallery Page Skeleton
+ * Generic header + card grid used by the gallery-style pages (Hall of
+ * Champions, Retired Corps, Corps History, SoundSport, Admin) so their
+ * Suspense fallbacks match the rest of the app instead of a full-screen
+ * spinner. Works inside GameShell layout.
+ */
+export const GalleryPageSkeleton: React.FC = () => (
+  <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4">
+    <div className="mb-4">
+      <Skeleton variant="title" className="w-48 mb-2" />
+      <Skeleton variant="text" className="w-72" />
+    </div>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <CardSkeleton key={i} />
+      ))}
+    </div>
+  </div>
+);
+
 export default Skeleton;

@@ -8,7 +8,7 @@
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "theme_color": "#EAB308",
-  "background_color": "#FFFFFF",
+  "background_color": "#0A0A0A",
   "orientation": "any",
   "categories": ["games", "entertainment", "sports"],
   "launch_handler": {
