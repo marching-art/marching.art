@@ -72,7 +72,7 @@ const ControlBar = memo(
             row so neither clips off the right edge; on md+ they share one row. */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 px-4 py-2">
           {/* Class Switcher (Fixed 4 Tabs) */}
-          <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide -mx-1 px-1">
+          <div className="flex items-center justify-center md:justify-start gap-1 overflow-x-auto scrollbar-hide -mx-1 px-1">
             {CORPS_CLASS_ORDER.map((classId) => {
               const isUnlocked = unlockedClasses?.includes(classId);
               const hasCorps = corps && corps[classId];
@@ -118,7 +118,7 @@ const ControlBar = memo(
 
           {/* Director HUD - Order: Streak, Level, Coins, Buy. On mobile this
               sits on its own row; a top divider separates it from the tabs. */}
-          <div className="flex items-center gap-3 flex-wrap border-t border-[#2a2a2a] pt-2 md:border-t-0 md:pt-0">
+          <div className="flex items-center justify-center md:justify-start gap-3 flex-wrap border-t border-[#2a2a2a] pt-2 md:border-t-0 md:pt-0">
             {/* Streak with milestone indicator */}
             {streak > 0 && (
               <div
