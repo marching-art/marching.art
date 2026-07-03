@@ -235,6 +235,7 @@ const SeasonScorecard = memo(
                       className={`text-xs font-bold flex items-center gap-0.5 ${
                         rankChange > 0 ? 'text-green-500' : 'text-red-500'
                       }`}
+                      title={`${rankChange > 0 ? 'Up' : 'Down'} ${Math.abs(rankChange)} place${Math.abs(rankChange) !== 1 ? 's' : ''} since yesterday`}
                     >
                       {rankChange > 0 ? (
                         <TrendingUp className="w-3 h-3" />

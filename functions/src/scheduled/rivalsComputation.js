@@ -182,6 +182,28 @@ async function updateRivalsLogic() {
     `Indexed corps: soundSport=${byBucket.soundSport.length}, competitive=${byBucket.competitive.length}`,
   );
 
+  // Per-class ranks for the daily snapshot. Buckets mix classes (competitive
+  // = world+open+A), so rank is counted within each entry's own class; the
+  // bucket arrays are already sorted by score descending.
+  const classRankByKey = new Map();
+  for (const bucket of Object.keys(byBucket)) {
+    const perClassCounters = new Map();
+    for (const entry of byBucket[bucket]) {
+      const nextRank = (perClassCounters.get(entry.corpsClass) || 0) + 1;
+      perClassCounters.set(entry.corpsClass, nextRank);
+      classRankByKey.set(`${entry.uid}:${entry.corpsClass}`, nextRank);
+    }
+  }
+
+  // Previous snapshot (from the last run) feeds the dashboard's rank-change
+  // arrow: previousRank - rank = places climbed since yesterday.
+  const prevClassRanksByUid = new Map();
+  profileDocs.forEach((profileDoc, idx) => {
+    if (profileDoc.exists) {
+      prevClassRanksByUid.set(userIds[idx], profileDoc.data().classRanks || {});
+    }
+  });
+
   // Group user's competing corps by uid so each user gets one batched write.
   const rivalsByUid = new Map();
   for (const bucket of Object.keys(byBucket)) {
@@ -200,9 +222,20 @@ async function updateRivalsLogic() {
 
   for (const [uid, rivals] of rivalsByUid.entries()) {
     const ref = db.doc(`artifacts/${namespace}/users/${uid}/profile/data`);
+    const prevRanks = prevClassRanksByUid.get(uid) || {};
+    const classRanks = {};
+    for (const corpsClass of Object.keys(rivals)) {
+      const rank = classRankByKey.get(`${uid}:${corpsClass}`);
+      if (rank) {
+        classRanks[corpsClass] = {
+          rank,
+          previousRank: prevRanks[corpsClass]?.rank ?? null,
+        };
+      }
+    }
     batch.set(
       ref,
-      { rivals, rivalsUpdatedAt: updatedAt },
+      { rivals, classRanks, rivalsUpdatedAt: updatedAt },
       { merge: true },
     );
     writes += 1;

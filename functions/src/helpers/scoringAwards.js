@@ -6,7 +6,11 @@
 const { dataNamespaceParam } = require("../config");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
-const { TRANSACTION_TYPES, addCoinHistoryEntryToBatch } = require("../callable/economy");
+const {
+  TRANSACTION_TYPES,
+  addCoinHistoryEntryToBatch,
+  WEEKLY_LEAGUE_WIN_REWARD,
+} = require("../callable/economy");
 const { ChunkedWriter } = require("./chunkedWriter");
 
 /**
@@ -574,7 +578,14 @@ async function processWeeklyMatchups(week, seasonData, db) {
   logger.info(`End of week ${week}. Determining class-based matchup winners...`);
 
   const LEAGUE_FETCH_LIMIT = 500;
-  const leaguesSnapshot = await db.collection("leagues").limit(LEAGUE_FETCH_LIMIT).get();
+  // Leagues live under the data namespace (see callable/leagues.js) and
+  // matchup docs are written as `week-N` by generateMatchups /
+  // generateWeeklyMatchups — these paths must stay in sync with those
+  // writers or winner determination silently processes zero leagues.
+  const leaguesSnapshot = await db
+    .collection(`artifacts/${dataNamespaceParam.value()}/leagues`)
+    .limit(LEAGUE_FETCH_LIMIT)
+    .get();
   if (leaguesSnapshot.size === LEAGUE_FETCH_LIMIT) {
     logger.warn(`OPTIMIZATION WARNING: League fetch hit limit of ${LEAGUE_FETCH_LIMIT}. Consider implementing pagination.`);
   }
@@ -586,7 +597,7 @@ async function processWeeklyMatchups(week, seasonData, db) {
 
   // Batch fetch ALL matchup documents in ONE operation
   const matchupRefs = leaguesSnapshot.docs.map(leagueDoc =>
-    db.doc(`leagues/${leagueDoc.id}/matchups/week${week}`)
+    db.doc(`${leagueDoc.ref.path}/matchups/week-${week}`)
   );
   const matchupDocs = matchupRefs.length > 0 ? await db.getAll(...matchupRefs) : [];
 
@@ -662,6 +673,28 @@ async function processWeeklyMatchups(week, seasonData, db) {
             // Tie
             winnerBatch.set(p1_profile.ref, { [seasonRecordPath]: { t: increment } }, { merge: true });
             winnerBatch.set(p2_profile.ref, { [seasonRecordPath]: { t: increment } }, { merge: true });
+          }
+
+          // Pay the advertised weekly-win bonus (getEarningOpportunities:
+          // "Win your weekly matchup to earn bonus CC") and keep the
+          // profile's leagueWins stat live. Byes and ties award nothing.
+          if (winnerUid) {
+            const winnerRef = winnerUid === p1_uid ? p1_profile.ref : p2_profile.ref;
+            winnerBatch.set(
+              winnerRef,
+              {
+                stats: { leagueWins: increment },
+                corpsCoin: admin.firestore.FieldValue.increment(WEEKLY_LEAGUE_WIN_REWARD),
+              },
+              { merge: true }
+            );
+            addCoinHistoryEntryToBatch(winnerBatch, db, winnerUid, {
+              type: TRANSACTION_TYPES.LEAGUE_WIN,
+              amount: WEEKLY_LEAGUE_WIN_REWARD,
+              description: `Week ${week} ${corpsClass} matchup win in ${leagueDoc.data().name || "your league"}`,
+              corpsClass,
+              timestamp: new Date(),
+            });
           }
         }
 

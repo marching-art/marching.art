@@ -4,7 +4,9 @@ import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { AUTH_CONFIG } from '../config';
 import { mergeTimeUnlockedClasses } from '../utils/classUnlockTime';
-import { getGameDay, pruneOldChallenges, CHALLENGE_DEFINITIONS } from '../utils/dailyChallenges';
+import { getGameDay } from '../utils/dailyChallenges';
+import { completeDailyChallenge as completeDailyChallengeFn } from '../api/functions';
+import { triggerXPFeedback } from '../components/XPFeedback';
 import toast from 'react-hot-toast';
 
 // All corps classes for admin override
@@ -182,61 +184,34 @@ export const useProfileStore = create((set, get) => ({
   },
 
   /**
-   * Mark a daily challenge as complete for the current game day.
+   * Complete a daily challenge for the current game day.
    *
-   * Writes only the client-owned `challenges` field; the onSnapshot listener
-   * syncs the store afterwards, so no optimistic set is needed. Returns true
-   * when a challenge was newly completed, false otherwise.
+   * Delegates to the completeDailyChallenge callable so XP is awarded
+   * server-side (the `challenges` field is server-only in firestore.rules).
+   * The onSnapshot listener syncs the store afterwards, so no optimistic set
+   * is needed. Returns true when a challenge was newly completed.
    *
-   * @param {string} challengeId - Challenge key (see CHALLENGE_DEFINITIONS)
+   * @param {string} challengeId - Challenge key (see CHALLENGE_POOL)
    */
   completeDailyChallenge: async (challengeId) => {
     const { _currentUid, profile } = get();
     if (!_currentUid || !profile) return false;
 
+    // Skip the round trip when today's bucket already shows completion
+    const todayBucket = profile.challenges?.[getGameDay()] || [];
+    if (todayBucket.some((c) => c.id === challengeId && c.completed)) {
+      return false;
+    }
+
     try {
-      const today = getGameDay(); // 2 AM ET reset, matches score processing
-      const currentChallenges = profile.challenges || {};
-      const todayChallenges = currentChallenges[today] || [];
-
-      const existingChallenge = todayChallenges.find((c) => c.id === challengeId);
-
-      let updatedChallenges;
-      let challengeTitle;
-      let challengeReward;
-
-      if (existingChallenge) {
-        if (existingChallenge.completed) {
-          return false; // Already completed
-        }
-        updatedChallenges = todayChallenges.map((challenge) =>
-          challenge.id === challengeId
-            ? { ...challenge, progress: challenge.target, completed: true }
-            : challenge
-        );
-        challengeTitle = existingChallenge.title;
-        challengeReward = existingChallenge.reward;
-      } else if (CHALLENGE_DEFINITIONS[challengeId]) {
-        // Challenge wasn't seeded for today yet - create it completed
-        const newChallenge = CHALLENGE_DEFINITIONS[challengeId];
-        updatedChallenges = [...todayChallenges, newChallenge];
-        challengeTitle = newChallenge.title;
-        challengeReward = newChallenge.reward;
-      } else {
-        return false; // Unknown challenge
+      const { data } = await completeDailyChallengeFn({ challengeId });
+      if (!data?.success || data.alreadyCompleted || !data.xpAwarded) {
+        return false;
       }
 
-      // Prune old entries to prevent unbounded document growth (keep last 30 days)
-      const newChallengesData = pruneOldChallenges({
-        ...currentChallenges,
-        [today]: updatedChallenges,
-      });
-
-      const profileRef = doc(db, paths.userProfile(_currentUid));
-      await updateDoc(profileRef, { challenges: newChallengesData });
-
-      const rewardText = challengeReward ? ` +${challengeReward}` : '';
-      toast.success(`${challengeTitle} complete!${rewardText}`);
+      const label = data.challenge?.label || 'Challenge';
+      toast.success(`${label} complete! +${data.xpAwarded} XP`);
+      triggerXPFeedback(data.xpAwarded, 'xp');
       return true;
     } catch (error) {
       console.error('Error completing challenge:', error);

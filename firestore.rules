@@ -18,11 +18,14 @@ function isOwner(userId) {
 // protected because unlock timing and username reservation depend on them.
 // lifetimeStats feeds the lifetime leaderboards and activeSeasonId /
 // lastScoredDay drive the scoring engine, so they are server-only too.
+// challenges is the daily-challenge completion ledger the
+// completeDailyChallenge callable trusts for XP awards — client-writable
+// completions could be cleared and re-claimed to farm XP.
 function touchesProtectedProfileFields() {
   return request.resource.data.diff(resource.data).affectedKeys().hasAny([
     'corpsCoin', 'xp', 'xpLevel', 'userTitle', 'unlockedClasses',
     'stats', 'trophies', 'username', 'createdAt', 'uid',
-    'lifetimeStats', 'activeSeasonId', 'lastScoredDay'
+    'lifetimeStats', 'activeSeasonId', 'lastScoredDay', 'challenges'
   ]);
 }
 
@@ -62,8 +65,9 @@ match /artifacts/{appId}/users/{userId} {
 
   // Profile data is public to read (leaderboards and public profiles).
   // Owners may update cosmetic/preference fields (corps details, settings,
-  // display name, challenges, engagement, etc.) but NOT the protected
-  // economy/progression fields — those change only via Cloud Functions.
+  // display name, engagement, etc.) but NOT the protected
+  // economy/progression fields (including the challenges ledger) — those
+  // change only via Cloud Functions.
   // Creation is owned by the createUserProfile callable, which atomically
   // reserves the username server-side.
   match /profile/data {

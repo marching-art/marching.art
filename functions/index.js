@@ -87,6 +87,7 @@ const {
 } = require("./src/callable/profile");
 const {
   claimDailyLogin,
+  completeDailyChallenge,
   purchaseStreakFreeze,
   getStreakStatus,
 } = require("./src/callable/dailyOps");
@@ -245,6 +246,7 @@ module.exports = {
   renameCorps,
   sweepDuplicateCorps,
   claimDailyLogin,
+  completeDailyChallenge,
   purchaseStreakFreeze,
   getStreakStatus,
 

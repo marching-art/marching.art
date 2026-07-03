@@ -128,8 +128,9 @@ const Scores = () => {
   }, [profile?.corps]);
 
   useEffect(() => {
+    // Soft no-op server-side when 'visit-scores' isn't in today's rotation
     if (user && profile && completeDailyChallenge) {
-      completeDailyChallenge('check_leaderboard');
+      completeDailyChallenge('visit-scores');
     }
   }, [user, profile, completeDailyChallenge]);
 

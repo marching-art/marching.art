@@ -74,7 +74,9 @@ exports.onLeagueChatMessage = onDocumentCreated(
     const message = event.data?.data();
     if (!message) return;
 
-    const { senderId, text } = message;
+    // Chat docs are written by postLeagueMessage (callable/leagues.js) with
+    // fields { userId, message } — keep these names in sync with that write.
+    const { userId: senderId, message: text } = message;
 
     // Check for @mentions in the message
     const mentionRegex = /@(\w+)/g;

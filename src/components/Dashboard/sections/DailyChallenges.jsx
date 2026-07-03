@@ -1,78 +1,39 @@
-// DailyChallenges - Sidebar widget showing daily objectives to drive return visits
-// Rotates 3 challenges per day based on date seed. Tracks completion in localStorage.
+// DailyChallenges - Sidebar widget showing daily objectives to drive return visits.
+// The rotation comes from the shared catalog (mirrored server-side) and resets
+// at 2 AM ET with the nightly scores. Completion is server-authoritative:
+// profileStore.completeDailyChallenge calls the completeDailyChallenge
+// callable, which awards the XP and writes the profile's `challenges` bucket;
+// the profile listener then syncs the checked state here.
 
-import React, { memo, useState, useMemo, useCallback } from 'react';
+import React, { memo, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Target, Check, ChevronRight, Flame } from 'lucide-react';
 import { useHaptic } from '../../../hooks/useHaptic';
-
-// Pool of challenges that rotate daily
-const CHALLENGE_POOL = [
-  { id: 'check-lineup', label: 'Review your lineup', link: null, action: 'lineup', xp: 10 },
-  { id: 'visit-scores', label: 'Check the leaderboard', link: '/scores', xp: 10 },
-  { id: 'visit-schedule', label: 'View upcoming shows', link: '/schedule', xp: 10 },
-  { id: 'visit-profile', label: 'Visit your profile', link: '/profile', xp: 5 },
-  { id: 'read-news', label: 'Read the latest news', link: '/', xp: 5 },
-  { id: 'visit-guide', label: 'Review game rules', link: '/guide', xp: 5 },
-  { id: 'visit-hall', label: 'Visit Hall of Champions', link: '/hall-of-champions', xp: 5 },
-];
-
-// Deterministic daily seed to pick 3 challenges
-const getDailyKey = () => {
-  const now = new Date();
-  return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
-};
-
-const getDailyChallenges = () => {
-  const key = getDailyKey();
-  // Simple hash from date string to get a seed
-  let seed = 0;
-  for (let i = 0; i < key.length; i++) {
-    seed = ((seed << 5) - seed + key.charCodeAt(i)) | 0;
-  }
-  // Use seed to pick 3 unique challenges
-  const shuffled = [...CHALLENGE_POOL].sort((a, b) => {
-    const ha = ((seed * 31 + a.id.charCodeAt(0)) | 0) & 0x7fffffff;
-    const hb = ((seed * 31 + b.id.charCodeAt(0)) | 0) & 0x7fffffff;
-    return ha - hb;
-  });
-  return shuffled.slice(0, 3);
-};
-
-const getCompletedKey = () => `dailyChallenges_${getDailyKey()}`;
-
-const getCompleted = () => {
-  try {
-    return JSON.parse(localStorage.getItem(getCompletedKey()) || '[]');
-  } catch {
-    return [];
-  }
-};
+import { useProfileStore } from '../../../store/profileStore';
+import { getGameDay, getChallengesForGameDay } from '../../../utils/dailyChallenges';
 
 const DailyChallenges = memo(({ onLineupClick }) => {
   const { trigger: haptic } = useHaptic();
-  const challenges = useMemo(() => getDailyChallenges(), []);
-  const [completed, setCompleted] = useState(() => getCompleted());
+  const profile = useProfileStore((state) => state.profile);
+  const completeDailyChallenge = useProfileStore((state) => state.completeDailyChallenge);
 
-  const completedCount = completed.length;
+  const gameDay = getGameDay();
+  const challenges = useMemo(() => getChallengesForGameDay(gameDay), [gameDay]);
+
+  const completedIds = useMemo(() => {
+    const bucket = profile?.challenges?.[gameDay] || [];
+    return new Set(bucket.filter((c) => c.completed).map((c) => c.id));
+  }, [profile?.challenges, gameDay]);
+
+  const completedCount = challenges.filter((c) => completedIds.has(c.id)).length;
   const totalCount = challenges.length;
 
-  const markComplete = useCallback(
-    (id) => {
-      setCompleted((prev) => {
-        if (prev.includes(id)) return prev;
-        const next = [...prev, id];
-        try {
-          localStorage.setItem(getCompletedKey(), JSON.stringify(next));
-        } catch {
-          /* ignore */
-        }
-        return next;
-      });
-      haptic?.();
-    },
-    [haptic]
-  );
+  const markComplete = (id) => {
+    haptic?.();
+    // Fire-and-forget: the profile listener syncs the completed state, and
+    // the store toasts + floats the XP gain on success.
+    completeDailyChallenge(id);
+  };
 
   return (
     <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
@@ -96,7 +57,7 @@ const DailyChallenges = memo(({ onLineupClick }) => {
 
       <div className="divide-y divide-[#222]">
         {challenges.map((challenge) => {
-          const isDone = completed.includes(challenge.id);
+          const isDone = completedIds.has(challenge.id);
           const inner = (
             <div className="flex items-center gap-3">
               <div
