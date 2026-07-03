@@ -158,15 +158,22 @@ async function updateRivalsLogic() {
   logger.info("Computing rivals for all users…");
 
   const usersRef = db.collection(`artifacts/${namespace}/users`);
-  const usersSnapshot = await usersRef.select().get();
-  if (usersSnapshot.empty) {
+  // The users/{uid} documents are "missing ancestors": createUserProfile only
+  // writes the profile/ and private/ subcollection docs, never the users/{uid}
+  // doc itself, so those docs have no fields of their own. A collection query
+  // (.get()) returns only documents that exist, so it skips every one of them
+  // and reports the collection as empty even when profiles are present. Use
+  // listDocuments(), which enumerates every document reference in the collection
+  // INCLUDING implicit ancestors of subcollections.
+  const userDocRefs = await usersRef.listDocuments();
+  if (userDocRefs.length === 0) {
     logger.info("No users found; skipping rivals computation.");
     return { processed: 0 };
   }
 
-  const userIds = usersSnapshot.docs.map((d) => d.id);
-  const profileRefs = usersSnapshot.docs.map((d) =>
-    d.ref.collection("profile").doc("data"),
+  const userIds = userDocRefs.map((ref) => ref.id);
+  const profileRefs = userDocRefs.map((ref) =>
+    ref.collection("profile").doc("data"),
   );
 
   // Batch-fetch profiles (Admin SDK getAll caps at 500).
