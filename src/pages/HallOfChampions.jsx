@@ -13,11 +13,29 @@ import {
   ArrowLeft,
   Hash,
   Users,
+  Music,
 } from 'lucide-react';
 import { getSeasonChampionDocs } from '../api/season';
+import { getSoundSportRating, RATING_CONFIG } from '../utils/scoresUtils';
 import { Link } from 'react-router-dom';
 import LoadingScreen from '../components/LoadingScreen';
 import { TeamAvatar } from '../components/ui/TeamAvatar';
+
+// Blue Ribbon icon for SoundSport "Best in Show" recognition (matches the
+// award used on the Scores page). Local copy avoids importing the heavy
+// ScoresParts page module.
+const BlueRibbonIcon = ({ className = 'w-5 h-5' }) => (
+  <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+    <circle cx="12" cy="9" r="7" fill="#0057B8" stroke="#003d82" strokeWidth="1" />
+    <circle cx="12" cy="9" r="4" fill="#0066d6" />
+    <path
+      d="M12 5.5l1.09 2.21 2.44.35-1.77 1.72.42 2.43L12 11.1l-2.18 1.15.42-2.43-1.77-1.72 2.44-.35L12 5.5z"
+      fill="#FFD700"
+    />
+    <path d="M8 15l-2 7 4-2.5V15H8z" fill="#0057B8" stroke="#003d82" strokeWidth="0.5" />
+    <path d="M16 15l2 7-4-2.5V15h2z" fill="#0057B8" stroke="#003d82" strokeWidth="0.5" />
+  </svg>
+);
 
 // =============================================================================
 // CONSTANTS
@@ -27,7 +45,16 @@ const CLASS_CONFIG = {
   worldClass: { name: 'World Class', short: 'World', icon: Crown },
   openClass: { name: 'Open Class', short: 'Open', icon: Trophy },
   aClass: { name: 'A Class', short: 'A Class', icon: Award },
+  // SoundSport is rating-based (not placement-based). Its top-scoring ensemble
+  // at each season's SoundSport International Music & Food Festival earns
+  // "Best in Show" — surfaced here with the blue-ribbon award.
+  soundSport: { name: 'SoundSport', short: 'Sound', icon: Music },
 };
+
+// SoundSport recognizes a "Best in Show" ensemble rather than a champion, so
+// its plaque, table, and season rows swap the champion framing for the
+// blue-ribbon / rating presentation used elsewhere for SoundSport.
+const isSoundSportClass = (classKey) => classKey === 'soundSport';
 
 const RANK_META = {
   1: {
@@ -96,6 +123,7 @@ const SeasonRow = ({ season, isSelected, classKey, onSelect }) => {
   const champ = season.classes?.[classKey]?.[0];
   if (!champ) return null;
   const { type, year } = parseSeasonName(season.seasonName);
+  const soundSport = isSoundSportClass(classKey);
 
   return (
     <button
@@ -114,7 +142,11 @@ const SeasonRow = ({ season, isSelected, classKey, onSelect }) => {
         <span className="text-[10px] text-gray-500 font-data tabular-nums">{year}</span>
       </div>
       <div className="flex items-center gap-2 min-w-0">
-        <Crown className="w-3 h-3 text-yellow-500 flex-shrink-0" />
+        {soundSport ? (
+          <BlueRibbonIcon className="w-3 h-3 flex-shrink-0" />
+        ) : (
+          <Crown className="w-3 h-3 text-yellow-500 flex-shrink-0" />
+        )}
         <span className="text-xs text-white truncate min-w-0 flex-1">
           {champ.corpsName || champ.username || '—'}
         </span>
@@ -137,6 +169,11 @@ const ChampionPlaque = ({ champion, season, classKey, fieldStats }) => {
   const { type, year } = parseSeasonName(season.seasonName);
   const ClassIcon = CLASS_CONFIG[classKey]?.icon || Trophy;
   const corpsName = champion.corpsName || champion.username || '—';
+  const soundSport = isSoundSportClass(classKey);
+  const rating = soundSport && typeof champion.score === 'number'
+    ? getSoundSportRating(champion.score)
+    : null;
+  const ratingStyle = rating ? RATING_CONFIG[rating] : null;
 
   return (
     <m.div
@@ -146,11 +183,15 @@ const ChampionPlaque = ({ champion, season, classKey, fieldStats }) => {
       className="bg-[#1a1a1a] border border-[#333] mb-4"
     >
       {/* Top banner */}
-      <div className="bg-yellow-500 text-black px-4 py-2 flex items-center justify-between">
+      <div
+        className={`px-4 py-2 flex items-center justify-between ${
+          soundSport ? 'bg-[#0057B8] text-white' : 'bg-yellow-500 text-black'
+        }`}
+      >
         <div className="flex items-center gap-2">
-          <Crown className="w-4 h-4" />
+          {soundSport ? <BlueRibbonIcon className="w-4 h-4" /> : <Crown className="w-4 h-4" />}
           <span className="text-[11px] font-bold uppercase tracking-widest">
-            {type} {year} Champion
+            {type} {year} {soundSport ? 'Best in Show' : 'Champion'}
           </span>
         </div>
         <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">
@@ -177,33 +218,60 @@ const ChampionPlaque = ({ champion, season, classKey, fieldStats }) => {
           )}
         </div>
         <div className="text-right flex-shrink-0">
-          <div className="text-[10px] text-gray-500 uppercase tracking-wider">Final Score</div>
-          <div className="text-3xl sm:text-4xl font-bold text-yellow-500 font-data tabular-nums leading-none">
-            {formatScore(champion.score)}
-          </div>
+          {soundSport ? (
+            <>
+              <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Rating</div>
+              {ratingStyle ? (
+                <span
+                  className={`inline-block text-sm font-bold uppercase px-3 py-1.5 ${ratingStyle.badge}`}
+                >
+                  {rating}
+                </span>
+              ) : (
+                <span className="text-xl font-bold text-[#3b82f6]">—</span>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="text-[10px] text-gray-500 uppercase tracking-wider">Final Score</div>
+              <div className="text-3xl sm:text-4xl font-bold text-yellow-500 font-data tabular-nums leading-none">
+                {formatScore(champion.score)}
+              </div>
+            </>
+          )}
         </div>
       </div>
 
       {/* Stats strip */}
       <div className="grid grid-cols-3 border-t border-[#333] divide-x divide-[#333]">
         <div className="px-3 py-2.5">
-          <div className="text-[10px] text-gray-500 uppercase tracking-wider">Crowned</div>
+          <div className="text-[10px] text-gray-500 uppercase tracking-wider">
+            {soundSport ? 'Awarded' : 'Crowned'}
+          </div>
           <div className="text-xs text-white font-data tabular-nums truncate">
             {formatDate(season.archivedAt)}
           </div>
         </div>
         <div className="px-3 py-2.5">
-          <div className="text-[10px] text-gray-500 uppercase tracking-wider">Margin</div>
-          <div
-            className={`text-xs font-data tabular-nums truncate ${fieldStats.margin > 0 ? 'text-green-500' : 'text-gray-400'}`}
-          >
-            {formatDelta(fieldStats.margin)}
+          <div className="text-[10px] text-gray-500 uppercase tracking-wider">
+            {soundSport ? 'Score' : 'Margin'}
           </div>
+          {soundSport ? (
+            <div className="text-xs text-white font-data tabular-nums truncate">
+              {formatScore(champion.score)}
+            </div>
+          ) : (
+            <div
+              className={`text-xs font-data tabular-nums truncate ${fieldStats.margin > 0 ? 'text-green-500' : 'text-gray-400'}`}
+            >
+              {formatDelta(fieldStats.margin)}
+            </div>
+          )}
         </div>
         <div className="px-3 py-2.5">
           <div className="text-[10px] text-gray-500 uppercase tracking-wider">Division</div>
           <div className="text-xs text-white truncate flex items-center gap-1">
-            <ClassIcon className="w-3 h-3 text-yellow-500" />
+            <ClassIcon className={`w-3 h-3 ${soundSport ? 'text-[#3b82f6]' : 'text-yellow-500'}`} />
             {CLASS_CONFIG[classKey]?.short}
           </div>
         </div>
@@ -212,20 +280,28 @@ const ChampionPlaque = ({ champion, season, classKey, fieldStats }) => {
   );
 };
 
-const FinalistsTable = ({ champions }) => {
+const FinalistsTable = ({ champions, classKey }) => {
   if (!champions || champions.length === 0) return null;
+  const soundSport = isSoundSportClass(classKey);
 
   return (
     <div className="bg-[#1a1a1a] border border-[#333]">
       <div className="bg-[#222] px-4 py-2.5 flex items-center justify-between border-b border-[#333]">
         <div className="flex items-center gap-2">
-          <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+          {soundSport ? (
+            <Music className="w-3.5 h-3.5 text-[#3b82f6]" />
+          ) : (
+            <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+          )}
           <span className="text-[11px] font-bold uppercase tracking-wider text-gray-300">
-            Final Standings
+            {soundSport ? 'Recognized Ensembles' : 'Final Standings'}
           </span>
         </div>
         <span className="text-[10px] text-gray-500 font-data tabular-nums">
-          {champions.length} Finalist{champions.length !== 1 ? 's' : ''}
+          {champions.length}{' '}
+          {soundSport
+            ? `Ensemble${champions.length !== 1 ? 's' : ''}`
+            : `Finalist${champions.length !== 1 ? 's' : ''}`}
         </span>
       </div>
 
@@ -233,16 +309,16 @@ const FinalistsTable = ({ champions }) => {
         <thead>
           <tr className="bg-[#111] border-b border-[#333]">
             <th className="text-left py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-10">
-              #
+              {soundSport ? '' : '#'}
             </th>
             <th className="text-left py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500">
-              Corps
+              {soundSport ? 'Ensemble' : 'Corps'}
             </th>
             <th className="text-left py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 hidden sm:table-cell">
               Director
             </th>
             <th className="text-right py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-20">
-              Score
+              {soundSport ? 'Rating' : 'Score'}
             </th>
           </tr>
         </thead>
@@ -251,6 +327,11 @@ const FinalistsTable = ({ champions }) => {
             const meta = RANK_META[c.rank] || {};
             const rowBg = idx % 2 === 0 ? 'bg-[#1a1a1a]' : 'bg-[#111]';
             const corpsName = c.corpsName || c.username || '—';
+            const isBestInShow = soundSport && c.rank === 1;
+            const rating =
+              soundSport && typeof c.score === 'number' ? getSoundSportRating(c.score) : null;
+            const ratingStyle = rating ? RATING_CONFIG[rating] : null;
+            const highlight = soundSport ? isBestInShow : c.rank === 1;
 
             return (
               <tr
@@ -258,30 +339,49 @@ const FinalistsTable = ({ champions }) => {
                 className={`${rowBg} border-b border-[#333] last:border-b-0`}
               >
                 <td className="py-2.5 px-3">
-                  <div className="flex items-center gap-1.5">
-                    {meta.label ? (
-                      <Medal className={`w-3.5 h-3.5 ${meta.medalColor}`} />
-                    ) : (
-                      <Hash className="w-3 h-3 text-gray-600" />
-                    )}
-                    <span className="text-xs font-bold text-gray-300 font-data tabular-nums">
-                      {c.rank}
-                    </span>
-                  </div>
+                  {soundSport ? (
+                    <div className="flex items-center justify-center">
+                      {isBestInShow ? (
+                        <BlueRibbonIcon className="w-4 h-4" />
+                      ) : (
+                        <Music className="w-3 h-3 text-gray-600" />
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5">
+                      {meta.label ? (
+                        <Medal className={`w-3.5 h-3.5 ${meta.medalColor}`} />
+                      ) : (
+                        <Hash className="w-3 h-3 text-gray-600" />
+                      )}
+                      <span className="text-xs font-bold text-gray-300 font-data tabular-nums">
+                        {c.rank}
+                      </span>
+                    </div>
+                  )}
                 </td>
                 <td className="py-2.5 px-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <TeamAvatar name={corpsName} size="xs" />
                     <div className="min-w-0">
                       <span
-                        className={`text-sm font-bold block truncate ${c.rank === 1 ? 'text-yellow-500' : 'text-white'}`}
+                        className={`text-sm font-bold block truncate ${
+                          highlight ? (soundSport ? 'text-[#3b82f6]' : 'text-yellow-500') : 'text-white'
+                        }`}
                       >
                         {corpsName}
                       </span>
-                      {meta.label && (
-                        <span className={`text-[10px] uppercase tracking-wider ${meta.accent}`}>
-                          {meta.label}
+                      {isBestInShow ? (
+                        <span className="text-[10px] uppercase tracking-wider text-[#3b82f6]">
+                          Best in Show
                         </span>
+                      ) : (
+                        meta.label &&
+                        !soundSport && (
+                          <span className={`text-[10px] uppercase tracking-wider ${meta.accent}`}>
+                            {meta.label}
+                          </span>
+                        )
                       )}
                     </div>
                   </div>
@@ -301,11 +401,23 @@ const FinalistsTable = ({ champions }) => {
                   )}
                 </td>
                 <td className="py-2.5 px-3 text-right">
-                  <span
-                    className={`text-sm font-bold font-data tabular-nums ${c.rank === 1 ? 'text-yellow-500' : 'text-white'}`}
-                  >
-                    {formatScore(c.score)}
-                  </span>
+                  {soundSport ? (
+                    ratingStyle ? (
+                      <span
+                        className={`inline-block text-[10px] font-bold uppercase px-2 py-1 ${ratingStyle.badge}`}
+                      >
+                        {rating}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-gray-500">—</span>
+                    )
+                  ) : (
+                    <span
+                      className={`text-sm font-bold font-data tabular-nums ${c.rank === 1 ? 'text-yellow-500' : 'text-white'}`}
+                    >
+                      {formatScore(c.score)}
+                    </span>
+                  )}
                 </td>
               </tr>
             );
@@ -382,23 +494,30 @@ const HallOfChampions = () => {
     return seasons.filter((s) => (s.classes?.[selectedClass]?.length || 0) > 0);
   }, [seasons, selectedClass]);
 
-  // Default to the most recent crowned season for the active class.
-  // When the class changes (or a stale season is selected), snap to the newest crowned one.
+  // Clear a selection that is no longer valid for the active class (e.g. after
+  // switching divisions to one the selected season has no champions in). We
+  // never *force* a selection here — leaving it null lets mobile show the
+  // season list, while desktop falls back to the newest season via
+  // `displaySeason` below. Forcing a selection previously made the mobile
+  // "Seasons" back button impossible: tapping it set the selection to null,
+  // and this effect immediately snapped it back to the detail view.
   useEffect(() => {
-    if (crownedSeasons.length === 0) {
-      if (selectedSeason) setSelectedSeason(null);
-      return;
-    }
-    const stillValid = selectedSeason && crownedSeasons.some((s) => s.id === selectedSeason.id);
-    if (!stillValid) {
-      setSelectedSeason(crownedSeasons[0]);
+    if (selectedSeason && !crownedSeasons.some((s) => s.id === selectedSeason.id)) {
+      setSelectedSeason(null);
     }
   }, [crownedSeasons, selectedSeason]);
 
+  // The season rendered in the main stage. On desktop (sidebar + stage shown
+  // together) this defaults to the most recent crowned season so a champion is
+  // always visible. On mobile the main stage is only revealed once the user
+  // taps a season, so `selectedSeason` gates visibility while `displaySeason`
+  // supplies the content.
+  const displaySeason = selectedSeason || crownedSeasons[0] || null;
+
   const currentChampions = useMemo(() => {
-    if (!selectedSeason) return [];
-    return selectedSeason.classes?.[selectedClass] || [];
-  }, [selectedSeason, selectedClass]);
+    if (!displaySeason) return [];
+    return displaySeason.classes?.[selectedClass] || [];
+  }, [displaySeason, selectedClass]);
 
   const totalCrowns = crownedSeasons.length;
 
@@ -416,6 +535,7 @@ const HallOfChampions = () => {
 
   if (loading) return <LoadingScreen fullScreen={false} />;
 
+  // Mobile: the sidebar (season list) shows until the user picks a season.
   const showSidebarOnly = !selectedSeason;
   const champion = currentChampions[0];
 
@@ -476,7 +596,7 @@ const HallOfChampions = () => {
           {/* Section label */}
           <div className="flex-shrink-0 bg-[#0a0a0a] border-b border-[#333] px-4 py-1.5">
             <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
-              Champions · Most Recent First
+              {isSoundSportClass(selectedClass) ? 'Best in Show' : 'Champions'} · Most Recent First
             </span>
           </div>
 
@@ -494,7 +614,7 @@ const HallOfChampions = () => {
                 <SeasonRow
                   key={season.id}
                   season={season}
-                  isSelected={selectedSeason?.id === season.id}
+                  isSelected={displaySeason?.id === season.id}
                   classKey={selectedClass}
                   onSelect={setSelectedSeason}
                 />
@@ -509,7 +629,7 @@ const HallOfChampions = () => {
         <div
           className={`flex-1 flex flex-col min-h-0 ${showSidebarOnly ? 'hidden lg:flex' : 'flex'}`}
         >
-          {!selectedSeason ? (
+          {!displaySeason ? (
             <div className="flex-1 flex items-center justify-center px-4">
               <NoChampionsPanel classKey={selectedClass} />
             </div>
@@ -534,18 +654,25 @@ const HallOfChampions = () => {
                       <span>Championship Record</span>
                     </div>
                     <h2 className="text-base sm:text-lg font-bold text-white uppercase tracking-wider truncate">
-                      {parseSeasonName(selectedSeason.seasonName).type}{' '}
+                      {parseSeasonName(displaySeason.seasonName).type}{' '}
                       <span className="text-gray-400 font-data tabular-nums">
-                        {parseSeasonName(selectedSeason.seasonName).year}
+                        {parseSeasonName(displaySeason.seasonName).year}
                       </span>
                     </h2>
                   </div>
                   <div className="flex-shrink-0 flex items-center gap-2 text-[10px] uppercase tracking-wider">
                     <span className="hidden sm:inline-flex items-center gap-1 px-2 py-1 bg-[#0a0a0a] border border-[#333] text-gray-300">
                       <Users className="w-3 h-3" />
-                      {currentChampions.length} Finalists
+                      {currentChampions.length}{' '}
+                      {isSoundSportClass(selectedClass) ? 'Ensembles' : 'Finalists'}
                     </span>
-                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-500 text-black font-bold">
+                    <span
+                      className={`inline-flex items-center gap-1 px-2 py-1 font-bold ${
+                        isSoundSportClass(selectedClass)
+                          ? 'bg-[#0057B8] text-white'
+                          : 'bg-yellow-500 text-black'
+                      }`}
+                    >
                       {CLASS_CONFIG[selectedClass]?.name}
                     </span>
                   </div>
@@ -558,12 +685,12 @@ const HallOfChampions = () => {
                   {champion && (
                     <ChampionPlaque
                       champion={champion}
-                      season={selectedSeason}
+                      season={displaySeason}
                       classKey={selectedClass}
                       fieldStats={fieldStats}
                     />
                   )}
-                  <FinalistsTable champions={currentChampions} />
+                  <FinalistsTable champions={currentChampions} classKey={selectedClass} />
                 </div>
               </div>
             </>
