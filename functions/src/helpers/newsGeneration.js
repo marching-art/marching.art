@@ -137,20 +137,37 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay, onArti
 
     // Process data
     const dayScores = getScoresForDay(historicalData, reportDay, activeCorps);
+    const hasDciScores = Array.isArray(dayScores) && dayScores.length > 0;
 
-    // No DCI scores for this day (e.g. a dark night, or scraping hasn't run/landed
-    // yet). The DCI-style articles are built entirely from this day's scores, so
-    // there's nothing to write — bail cleanly and let the caller fall back to
-    // legacy generation instead of crashing on an undefined top/feature corps.
-    if (!dayScores || dayScores.length === 0) {
-      logger.warn(`No DCI scores found for Day ${reportDay}; skipping DCI-style articles and falling back to legacy.`);
-      return { success: false, error: `No DCI scores for day ${reportDay}` };
+    // Fantasy results are produced independently of DCI scraping: the nightly
+    // scorer processes fantasy competitions from existing/regressed data even on
+    // nights DCI hasn't published (or held) real shows. So Articles 1–4 — which
+    // are built entirely from this day's DCI scores — require dayScores, but the
+    // fantasy RESULTS article (Article 5) only needs the processed fantasy recap.
+    const hasFantasyResults = Boolean(
+      fantasyData?.current &&
+      (fantasyData.current.shows || []).some(s => (s.results || []).length > 0)
+    );
+
+    // Nothing to write about at all — no DCI field AND no fantasy results. Bail
+    // cleanly and let the caller fall back to legacy generation instead of
+    // crashing downstream on an undefined top/feature corps.
+    if (!hasDciScores && !hasFantasyResults) {
+      logger.warn(`No DCI scores or fantasy results for Day ${reportDay}; skipping article generation.`);
+      return { success: false, error: `No scores for day ${reportDay}` };
+    }
+    if (!hasDciScores) {
+      logger.warn(`No DCI scores for Day ${reportDay}; generating the fantasy-results article only (DCI-sourced articles 1–4 skipped).`);
     }
 
-    const trendData = calculateTrendData(historicalData, reportDay, activeCorps);
-    const captionLeaders = identifyCaptionLeaders(dayScores, trendData);
+    // Trend/caption/brief data is derived entirely from the DCI day scores and is
+    // only consumed by Articles 1–4; skip it when there are no DCI scores.
+    const trendData = hasDciScores ? calculateTrendData(historicalData, reportDay, activeCorps) : {};
+    const captionLeaders = hasDciScores ? identifyCaptionLeaders(dayScores, trendData) : {};
 
-    // Analyze competition context for dynamic tone
+    // Analyze competition context for dynamic tone. With no DCI scores this
+    // returns a safe "standard" default, which the fantasy-results article uses
+    // only for tone guidance.
     const competitionContext = analyzeCompetitionContext(dayScores, trendData, reportDay);
     const toneDescriptor = getToneDescriptor(competitionContext);
     logger.info(`Competition context for Day ${reportDay}: ${toneDescriptor} (${competitionContext.scenario}, ${competitionContext.seasonPhase} season, lead margin: ${competitionContext.leadMargin})`);
@@ -162,24 +179,29 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay, onArti
 
     // Editorial brief: deterministic pre-pass that assigns each article a
     // pre-computed angle (lead / trajectory / caption / market / fantasy) so
-    // the five articles don't all fight over the obvious hook.
-    const brief = buildEditorialBrief({ dayScores, trendData, fantasyData, reportDay });
-    logger.info(`Editorial brief for Day ${reportDay}: lead=${brief.lead?.subject || 'n/a'} | trajectory=${brief.trajectory?.corps || 'n/a'} | caption=${brief.caption?.family || 'n/a'} | market=${brief.market?.topBuy || 'n/a'}`);
+    // the five articles don't all fight over the obvious hook. Only the DCI
+    // articles consume it, so it's skipped when there are no DCI scores.
+    const brief = hasDciScores ? buildEditorialBrief({ dayScores, trendData, fantasyData, reportDay }) : null;
+    if (brief) {
+      logger.info(`Editorial brief for Day ${reportDay}: lead=${brief.lead?.subject || 'n/a'} | trajectory=${brief.trajectory?.corps || 'n/a'} | caption=${brief.caption?.family || 'n/a'} | market=${brief.market?.topBuy || 'n/a'}`);
+    }
 
     // Build metadata up front so each article can be persisted the moment it is
     // generated. Image generation is slow (Gemini 3 Pro Image can take minutes per
     // article), so producing all five before saving risks the caller's function
     // timing out with nothing written. Persisting incrementally guarantees that
     // whatever finished before a timeout is still visible on the news feed/admin.
+    // Articles 1–4 are DCI-sourced; Article 5 is the fantasy-results piece.
+    const expectedArticleCount = (hasDciScores ? 4 : 0) + (hasFantasyResults ? 1 : 0);
     const metadata = {
       reportDay,
       currentDay,
-      corpsCount: dayScores.length,
+      corpsCount: hasDciScores ? dayScores.length : 0,
       showName: showContext.showName,
       location: showContext.location,
       date: showContext.date,
       allShows: showContext.allShows,
-      articleCount: 5,
+      articleCount: expectedArticleCount,
       competitionContext: {
         scenario: competitionContext.scenario,
         seasonPhase: competitionContext.seasonPhase,
@@ -204,30 +226,39 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay, onArti
       }
     };
 
-    // Article 1: DCI DAILY - Today's competition results with score breakdown
-    await persist(await generateDciDailyArticle({
-      reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, ledger, brief, isLiveSeason
-    }));
+    // Articles 1–4 are sourced from this day's DCI scores. On nights DCI didn't
+    // publish (or hold) shows, dayScores is empty and these are skipped entirely
+    // so the fantasy-results article can still be written from processed recaps.
+    if (hasDciScores) {
+      // Article 1: DCI DAILY - Today's competition results with score breakdown
+      await persist(await generateDciDailyArticle({
+        reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, ledger, brief, isLiveSeason
+      }));
 
-    // Article 2: DCI FEATURE - Single corps season progress spotlight
-    await persist(await generateDciFeatureArticle({
-      reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, ledger, brief, isLiveSeason
-    }));
+      // Article 2: DCI FEATURE - Single corps season progress spotlight
+      await persist(await generateDciFeatureArticle({
+        reportDay, dayScores, trendData, activeCorps, showContext, competitionContext, db, ledger, brief, isLiveSeason
+      }));
 
-    // Article 3: DCI RECAP - Pure caption deep-dive (GE, Visual, Music). Descriptive, not prescriptive.
-    await persist(await generateDciRecapArticle({
-      reportDay, dayScores, trendData, captionLeaders, activeCorps, showContext, competitionContext, db, ledger, brief, isLiveSeason
-    }));
+      // Article 3: DCI RECAP - Pure caption deep-dive (GE, Visual, Music). Descriptive, not prescriptive.
+      await persist(await generateDciRecapArticle({
+        reportDay, dayScores, trendData, captionLeaders, activeCorps, showContext, competitionContext, db, ledger, brief, isLiveSeason
+      }));
 
-    // Article 4: FANTASY MARKET REPORT - Owns buy/hold/sell picks for the day (descriptive caption analysis already done in Article 3).
-    await persist(await generateFantasyRecapArticle({
-      reportDay, dayScores, trendData, showContext, competitionContext, db, ledger, brief, isLiveSeason
-    }));
+      // Article 4: FANTASY MARKET REPORT - Owns buy/hold/sell picks for the day (descriptive caption analysis already done in Article 3).
+      await persist(await generateFantasyRecapArticle({
+        reportDay, dayScores, trendData, showContext, competitionContext, db, ledger, brief, isLiveSeason
+      }));
+    }
 
-    // Article 5: FANTASY DAILY - Fantasy competition results with score breakdown (generated last to appear first in feed)
-    await persist(await generateFantasyDailyArticle({
-      reportDay, fantasyData, showContext, competitionContext, db, dataDocId, ledger
-    }));
+    // Article 5: FANTASY DAILY - Fantasy competition results with score breakdown
+    // (generated last to appear first in feed). Independent of DCI scores, so it
+    // runs whenever the day's fantasy competitions actually produced results.
+    if (hasFantasyResults) {
+      await persist(await generateFantasyDailyArticle({
+        reportDay, fantasyData, showContext, competitionContext, db, dataDocId, ledger
+      }));
+    }
 
     return {
       success: true,
