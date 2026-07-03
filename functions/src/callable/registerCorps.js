@@ -3,16 +3,13 @@ const { logger } = require("firebase-functions/v2");
 // Use dataNamespaceParam to match your other files
 const { getDb, dataNamespaceParam } = require("../config"); 
 const admin = require("firebase-admin");
+const { assertAuth } = require("../helpers/callableGuards");
 
 const isProfane = (text) => /fuck|shit|damn/.test(text.toLowerCase());
 
 exports.registerCorps = onCall({ cors: true }, async (request) => {
   const { corpsName, location, description, class: corpsClass } = request.data;
-  const uid = request.auth?.uid;
-
-  if (!uid) {
-    throw new HttpsError("unauthenticated", "You must be logged in to register a corps.");
-  }
+  const uid = assertAuth(request);
 
   // --- 1. Validation ---
   if (!corpsName || !location || !corpsClass) {

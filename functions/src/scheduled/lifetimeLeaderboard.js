@@ -2,15 +2,14 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
 const { getDb, dataNamespaceParam } = require("../config");
+const { assertAuth } = require("../helpers/callableGuards");
 
 /**
  * Manually callable function to update lifetime leaderboard
  * Can be called by admins or scheduled
  */
 exports.updateLifetimeLeaderboard = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "Authentication required");
-  }
+  assertAuth(request);
 
   // Check if user is admin - only fetch the role field
   const db = getDb();

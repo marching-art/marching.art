@@ -15,6 +15,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb, dataNamespaceParam } = require("../config");
+const { assertAuth } = require("../helpers/callableGuards");
 
 // Corps class configuration
 const CORPS_CLASSES = ['worldClass', 'openClass', 'aClass', 'soundSport'];
@@ -632,9 +633,7 @@ exports.updateLeagueRivalries = onSchedule(
 exports.triggerMatchupGeneration = onCall(
   { cors: true },
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "Authentication required.");
-    }
+    assertAuth(request);
 
     const { leagueId, week, forceRegenerate } = request.data;
     const uid = request.auth.uid;

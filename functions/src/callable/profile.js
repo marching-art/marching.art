@@ -3,6 +3,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { getDb, dataNamespaceParam } = require("../config");
 const { FieldValue } = require("firebase-admin/firestore");
+const { assertAuth } = require("../helpers/callableGuards");
 
 /**
  * Update user profile information
@@ -13,9 +14,7 @@ const { FieldValue } = require("firebase-admin/firestore");
  * @param {string} data.favoriteCorps - User's favorite corps
  */
 exports.updateProfile = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in to update your profile.");
-  }
+  assertAuth(request);
 
   const userId = request.auth.uid;
   const { displayName, location, bio, favoriteCorps } = request.data;
@@ -91,9 +90,7 @@ exports.updateProfile = onCall({ cors: true }, async (request) => {
  * @param {string} data.username - New username to set
  */
 exports.updateUsername = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in to update your username.");
-  }
+  assertAuth(request);
 
   const userId = request.auth.uid;
   const { username } = request.data;
@@ -189,9 +186,7 @@ exports.updateUsername = onCall({ cors: true }, async (request) => {
  * @param {string} data.email - New email address
  */
 exports.updateEmail = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in to update your email.");
-  }
+  assertAuth(request);
 
   const userId = request.auth.uid;
   const { email } = request.data;
@@ -342,9 +337,7 @@ exports.getPublicProfile = onCall({ cors: true }, async (request) => {
  * and removes all their data from Firestore
  */
 exports.deleteAccount = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in to delete your account.");
-  }
+  assertAuth(request);
 
   const userId = request.auth.uid;
 

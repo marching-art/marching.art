@@ -4,6 +4,7 @@ const admin = require("firebase-admin");
 const { getDb, dataNamespaceParam } = require("../config");
 const { calculateXPUpdates, XP_SOURCES } = require("../helpers/xpCalculations");
 const { addCoinHistoryEntryToTransaction } = require("./economy");
+const { assertAuth } = require("../helpers/callableGuards");
 
 // Streak milestone rewards (XP + CC + optional free streak freeze)
 const STREAK_MILESTONES = {
@@ -23,11 +24,7 @@ const STREAK_FREEZE_COST = 300;
  * Now awards XP and checks for streak milestone bonuses
  */
 const claimDailyLogin = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in.");
-  }
-
-  const uid = request.auth.uid;
+  const uid = assertAuth(request);
   const db = getDb();
   const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
 
@@ -209,11 +206,7 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
  * Limit: 1 freeze per 7 days
  */
 const purchaseStreakFreeze = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in.");
-  }
-
-  const uid = request.auth.uid;
+  const uid = assertAuth(request);
   const db = getDb();
   const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
 
@@ -305,11 +298,7 @@ const purchaseStreakFreeze = onCall({ cors: true }, async (request) => {
  * Returns current streak info including freeze status
  */
 const getStreakStatus = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in.");
-  }
-
-  const uid = request.auth.uid;
+  const uid = assertAuth(request);
   const db = getDb();
   const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
 

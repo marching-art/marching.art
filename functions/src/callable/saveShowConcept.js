@@ -2,14 +2,12 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 // Use dataNamespaceParam to match your other files
 const { getDb, dataNamespaceParam } = require("../config");
+const { assertAuth } = require("../helpers/callableGuards");
 
 exports.saveShowConcept = onCall({ cors: true }, async (request) => {
   const { concept, corpsClass } = request.data;
-  const uid = request.auth?.uid;
+  const uid = assertAuth(request);
 
-  if (!uid) {
-    throw new HttpsError("unauthenticated", "You must be logged in.");
-  }
   if (!concept || !corpsClass) {
     throw new HttpsError("invalid-argument", "Missing concept or corps class.");
   }

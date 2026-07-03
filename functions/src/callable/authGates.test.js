@@ -20,8 +20,9 @@ const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
 // [module, exportName, expectedRejection]
-// "unauthenticated" — plain auth gate; "permission-denied" — admin gate
-// (v2 checks `!request.auth || !request.auth.token.admin` in one branch).
+// Anonymous callers are rejected "unauthenticated" everywhere: admin gates
+// go through assertAdmin, which checks authentication before authorization,
+// so "permission-denied" is only reachable by a logged-in non-admin.
 const CALLABLES = [
   ["economy", "unlockClassWithCorpsCoin", "unauthenticated"],
   ["economy", "syncClassUnlocks", "unauthenticated"],
@@ -40,14 +41,14 @@ const CALLABLES = [
   ["lineups", "getActiveLineupKeys", "unauthenticated"],
   ["lineups", "validateLineup", "unauthenticated"],
   ["registerCorps", "registerCorps", "unauthenticated"],
-  ["users", "setUserRole", "permission-denied"],
+  ["users", "setUserRole", "unauthenticated"],
   ["users", "createUserProfile", "unauthenticated"],
   ["users", "getShowRegistrations", "unauthenticated"],
   ["users", "getUserRankings", "unauthenticated"],
-  ["users", "migrateUserProfiles", "permission-denied"],
+  ["users", "migrateUserProfiles", "unauthenticated"],
   ["users", "dailyXPCheckIn", "unauthenticated"],
   ["users", "awardXP", "unauthenticated"],
-  ["users", "fixProfileFields", "permission-denied"],
+  ["users", "fixProfileFields", "unauthenticated"],
   ["profile", "updateProfile", "unauthenticated"],
   ["profile", "updateUsername", "unauthenticated"],
   ["profile", "updateEmail", "unauthenticated"],

@@ -14,9 +14,7 @@ const { analyzeLineupTrends } = require("../helpers/captionAnalytics");
  */
 // Add { cors: true } here
 exports.saveLineup = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in to save a lineup.");
-  }
+  assertAuth(request);
   const { lineup, corpsClass, forceUpdate } = request.data;
   const uid = request.auth.uid;
 
@@ -230,10 +228,7 @@ const getMaxShowsForWeek = (week, totalWeeks = 7) => {
  */
 // Add { cors: true } here
 exports.selectUserShows = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in.");
-  }
-  const uid = request.auth.uid;
+  const uid = assertAuth(request);
   const { week, shows, corpsClass } = request.data;
 
   // Get the max shows allowed for this week (7 for final week, 4 otherwise)
@@ -309,9 +304,7 @@ exports.selectUserShows = onCall({ cors: true }, async (request) => {
  * Save show concept (theme, music source, drill style) for synergy bonuses
  */
 exports.saveShowConcept = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in.");
-  }
+  assertAuth(request);
 
   const { corpsClass, showConcept } = request.data;
   const uid = request.auth.uid;
@@ -536,9 +529,7 @@ exports.getHotCorps = onCall({ cors: true }, async (request) => {
  * Returns trend indicators without exposing raw scores
  */
 exports.getLineupAnalytics = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in.");
-  }
+  assertAuth(request);
 
   const { corpsClass } = request.data;
   const uid = request.auth.uid;
@@ -584,9 +575,7 @@ exports.getLineupAnalytics = onCall({ cors: true }, async (request) => {
  * Used by quick fill to avoid generating duplicate lineups.
  */
 exports.getActiveLineupKeys = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in.");
-  }
+  assertAuth(request);
 
   const { corpsClass } = request.data;
   const uid = request.auth.uid;
@@ -625,9 +614,7 @@ exports.getActiveLineupKeys = onCall({ cors: true }, async (request) => {
  * the lineup requires a forced update.
  */
 exports.validateLineup = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in.");
-  }
+  assertAuth(request);
 
   const { corpsClass } = request.data;
   const uid = request.auth.uid;

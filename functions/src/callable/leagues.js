@@ -3,12 +3,11 @@ const { getDb, dataNamespaceParam } = require("../config");
 const admin = require("firebase-admin");
 const { logger } = require("firebase-functions/v2");
 const { generateUniqueInviteCode, smartPairMembers, createLeagueActivity } = require("../helpers/leagueHelpers");
+const { assertAuth } = require("../helpers/callableGuards");
 
 
 exports.createLeague = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in to create a league.");
-  }
+  assertAuth(request);
   const {
     name,
     description = '',
@@ -100,9 +99,7 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
 });
 
 exports.joinLeague = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in to join a league.");
-  }
+  assertAuth(request);
   const { leagueId } = request.data;
   const uid = request.auth.uid;
 
@@ -194,9 +191,7 @@ exports.joinLeague = onCall({ cors: true }, async (request) => {
 });
 
 exports.joinLeagueByCode = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in to join a league.");
-  }
+  assertAuth(request);
   const { inviteCode } = request.data;
   const uid = request.auth.uid;
 
@@ -292,9 +287,7 @@ exports.joinLeagueByCode = onCall({ cors: true }, async (request) => {
 });
 
 exports.leaveLeague = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in to leave a league.");
-  }
+  assertAuth(request);
   const { leagueId } = request.data;
   const uid = request.auth.uid;
 
@@ -346,9 +339,7 @@ exports.leaveLeague = onCall({ cors: true }, async (request) => {
 // Matchups are segregated by corps class so corps only compete against same-class opponents
 // Uses smart pairing based on standings for competitive balance
 exports.generateMatchups = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "Authentication required.");
-  }
+  assertAuth(request);
 
   const { leagueId, week } = request.data;
   const uid = request.auth.uid;
@@ -478,9 +469,7 @@ exports.generateMatchups = onCall({ cors: true }, async (request) => {
 // Update matchup results based on actual performance scores
 // Processes matchups for each corps class separately
 exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "Authentication required.");
-  }
+  assertAuth(request);
 
   const { leagueId, week } = request.data;
   const uid = request.auth.uid;
@@ -726,9 +715,7 @@ async function updateStandings(db, leagueRef, pairs) {
 
 // Post a message to league chat
 exports.postLeagueMessage = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "Authentication required.");
-  }
+  assertAuth(request);
 
   const { leagueId, message } = request.data;
   const uid = request.auth.uid;

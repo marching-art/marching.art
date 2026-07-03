@@ -3,11 +3,10 @@ const { logger } = require("firebase-functions/v2");
 const { getDb, dataNamespaceParam } = require("../config");
 const admin = require("firebase-admin");
 const { serverTimestamp } = require("firebase-admin/firestore");
+const { assertAuth } = require("../helpers/callableGuards");
 
 exports.sendCommentNotification = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in to send a notification.");
-  }
+  assertAuth(request);
   const { recipientUid, commenterUsername } = request.data;
   const commenterUid = request.auth.uid;
 
@@ -41,9 +40,7 @@ exports.sendCommentNotification = onCall({ cors: true }, async (request) => {
 });
 
 exports.deleteComment = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in to delete comments.");
-  }
+  assertAuth(request);
 
   const { profileOwnerId, commentId } = request.data;
   const callerUid = request.auth.uid;
@@ -69,9 +66,7 @@ exports.deleteComment = onCall({ cors: true }, async (request) => {
 });
 
 exports.reportComment = onCall({ cors: true }, async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in to report comments.");
-  }
+  assertAuth(request);
 
   const { profileOwnerId, commentId, commentText, commentAuthorUid } = request.data;
   const reporterUid = request.auth.uid;

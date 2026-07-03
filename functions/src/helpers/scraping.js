@@ -1,8 +1,9 @@
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onCall } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { PubSub } = require("@google-cloud/pubsub");
 const axios = require("axios");
 const cheerio = require("cheerio");
+const { assertAdmin } = require("./callableGuards");
 
 // NOTE: Puppeteer/Chromium scraping has been moved to functions-scraper codebase
 // to reduce cold start time for all other functions (~800ms-1.2s improvement)
@@ -158,9 +159,7 @@ async function scrapeDciScoresLogic(urlToScrape, topic = "dci-scores-topic") {
 }
 
 const testScraper = onCall({ cors: true }, async (request) => {
-  if (!request.auth || !request.auth.token.admin) {
-    throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
-  }
+  assertAdmin(request);
 
   logger.info("Running scraper test...");
 
@@ -236,9 +235,7 @@ const discoverAndQueueUrls = onCall({
   timeoutSeconds: 300,
   memory: "512MiB",
 }, async (request) => {
-  if (!request.auth || !request.auth.token.admin) {
-    throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
-  }
+  assertAdmin(request);
   // Lazy initialize the client
   if (!pubsubClient) {
     pubsubClient = new PubSub();
