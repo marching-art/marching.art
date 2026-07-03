@@ -51,16 +51,22 @@ async function updateLifetimeLeaderboardLogic() {
   logger.info("Updating lifetime leaderboard...");
 
   try {
-    // Get all user document IDs only (no field data needed)
-    // Field projection: Empty select() returns only document references, reducing data transfer by ~99%
+    // Get all user document references.
+    // The users/{uid} docs are "missing ancestors": createUserProfile only
+    // writes the profile/ and private/ subcollection docs, never the parent
+    // users/{uid} doc, so those docs have no fields of their own. A collection
+    // query (.get()/.select()) returns only documents that exist and therefore
+    // skips every one of them, reporting the collection as empty even when
+    // profiles are present. listDocuments() enumerates every document reference
+    // INCLUDING implicit ancestors of subcollections.
     const usersRef = db.collection(`artifacts/${dataNamespaceParam.value()}/users`);
-    const usersSnapshot = await usersRef.select().get();
+    const userDocRefs = await usersRef.listDocuments();
 
     const lifetimeData = [];
 
     // Build array of profile document references for batch fetch
-    const profileRefs = usersSnapshot.docs.map(userDoc =>
-      userDoc.ref.collection("profile").doc("data")
+    const profileRefs = userDocRefs.map(ref =>
+      ref.collection("profile").doc("data")
     );
 
     // Batch fetch all profiles in chunks of 500 (Admin SDK getAll limit)
@@ -75,7 +81,7 @@ async function updateLifetimeLeaderboardLogic() {
     profileDocs.forEach((profileDoc, index) => {
       if (profileDoc.exists) {
         const profileData = profileDoc.data();
-        const userId = usersSnapshot.docs[index].id;
+        const userId = userDocRefs[index].id;
 
         if (profileData.lifetimeStats && profileData.username) {
           lifetimeData.push({
