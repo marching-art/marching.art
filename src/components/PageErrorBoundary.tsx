@@ -8,7 +8,6 @@ import React, { startTransition } from 'react';
 import { m } from 'framer-motion';
 import { AlertTriangle, RefreshCw, Home, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { ErrorBoundary as BaseErrorBoundary } from './ui/ErrorBoundary';
 
 // =============================================================================
 // PAGE ERROR FALLBACK
