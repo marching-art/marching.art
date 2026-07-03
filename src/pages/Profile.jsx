@@ -199,7 +199,7 @@ const Profile = () => {
             } else {
               failCount++;
             }
-          } catch (err) {
+          } catch {
             failCount++;
           }
         }

@@ -34,7 +34,7 @@ const MatchupsTab = ({
   const [selectedMatchup, setSelectedMatchup] = useState(null);
   const [currentWeek, setCurrentWeek] = useState(1);
   const [weeksWithMatchups, setWeeksWithMatchups] = useState(new Set());
-  const [weeklyResults, setWeeklyResults] = useState({});
+  const [weeklyResults, _setWeeklyResults] = useState({});
   const [viewMode, setViewMode] = useState('week'); // 'week' | 'season'
 
   const isCommissioner = league?.creatorId === userProfile?.uid;
@@ -126,7 +126,7 @@ const MatchupsTab = ({
   // Get user's matchups across all classes
   const userMatchups = useMemo(() => {
     const matches = [];
-    for (const [corpsClass, matchups] of Object.entries(weekMatchups)) {
+    for (const [_corpsClass, matchups] of Object.entries(weekMatchups)) {
       for (const matchup of matchups) {
         if (
           matchup.pair &&

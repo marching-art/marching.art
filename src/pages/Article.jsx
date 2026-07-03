@@ -144,6 +144,9 @@ const Article = () => {
     };
 
     fetchArticle();
+    // `engagement` is read only as a guard to avoid a redundant engagement fetch;
+    // including it would re-run the article fetch whenever engagement loads.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, location.state?.article]);
 
   // Compute trending players from movers across all classes
@@ -198,7 +201,7 @@ const Article = () => {
     try {
       await signOut();
       toast.success('Signed out successfully');
-    } catch (err) {
+    } catch {
       toast.error('Failed to sign out');
     }
   };
@@ -242,7 +245,7 @@ const Article = () => {
       try {
         await navigator.clipboard.writeText(shareUrl);
         toast.success('Link copied to clipboard');
-      } catch (err) {
+      } catch {
         toast.error('Failed to copy link');
       }
     };

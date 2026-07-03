@@ -4,7 +4,7 @@
 // Mobile-native swipe navigation between tabs
 // Uses Framer Motion for smooth gestures and animations
 
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { m, AnimatePresence, PanInfo } from 'framer-motion';
 import { triggerHaptic } from '../../hooks/useHaptic';
 

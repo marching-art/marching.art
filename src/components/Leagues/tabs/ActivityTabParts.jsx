@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { getLeagueWeekRecap, getLeagueRivalries } from '../../../api/leagues';
 
-const LeagueStatsOverview = ({ standings, memberProfiles, leagueStats, currentWeek }) => {
+const LeagueStatsOverview = ({ standings, memberProfiles, leagueStats: _leagueStats, currentWeek }) => {
   // Calculate league-wide stats
   const stats = useMemo(() => {
     if (!standings || standings.length === 0) return null;
@@ -451,7 +451,6 @@ const PowerRankingsCard = ({ standings, memberProfiles, userProfile }) => {
         {powerRankings.slice(0, 5).map((player, idx) => {
           const isUser = player.uid === userProfile?.uid;
           const isMovingUp = player.movement > 0;
-          const isMovingDown = player.movement < 0;
 
           return (
             <div
@@ -510,7 +509,7 @@ const PowerRankingsCard = ({ standings, memberProfiles, userProfile }) => {
 };
 
 // Weekly Recap Card - Displays auto-generated weekly highlights
-const WeeklyRecapCard = ({ leagueId, currentWeek, memberProfiles }) => {
+const WeeklyRecapCard = ({ leagueId, currentWeek, memberProfiles: _memberProfiles }) => {
   const [recap, setRecap] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -773,7 +772,7 @@ const EnhancedRivalriesCard = ({ leagueId, userProfile, memberProfiles }) => {
 
       <div className="p-3 space-y-2">
         <AnimatePresence>
-          {displayRivalries.map((rivalry, idx) => {
+          {displayRivalries.map((rivalry, _idx) => {
             const styles = getIntensityStyles(rivalry.intensity);
             const userWins = getUserWins(rivalry);
             const rivalWins = getRivalWins(rivalry);

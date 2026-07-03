@@ -6,12 +6,10 @@
 // Note: Results are displayed in the Scores section (/scores?tab=soundsport)
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
 import {
   Music,
   Medal,
-  Trophy,
   Users,
   Clock,
   Zap,

@@ -9,8 +9,6 @@ import {
   Trophy,
   Crown,
   ChevronRight,
-  TrendingUp,
-  TrendingDown,
   Flame,
   Zap,
 } from 'lucide-react';
@@ -38,7 +36,7 @@ const calculateWinProbability = (user1Score, user2Score, user1Avg, user2Avg) => 
 };
 
 const VersusCard = ({
-  matchup,
+  matchup: _matchup,
   user1,
   user2,
   user1Score = 0,

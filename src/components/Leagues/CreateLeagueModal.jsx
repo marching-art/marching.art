@@ -59,7 +59,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
       setCopied(true);
       toast.success('Invite code copied!');
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
+    } catch {
       toast.error('Failed to copy');
     }
   };
@@ -69,7 +69,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
     try {
       await navigator.clipboard.writeText(link);
       toast.success('Invite link copied!');
-    } catch (err) {
+    } catch {
       toast.error('Failed to copy link');
     }
   };
@@ -84,7 +84,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
     if (navigator.share) {
       try {
         await navigator.share(shareData);
-      } catch (err) {
+      } catch {
         copyInviteLink();
       }
     } else {

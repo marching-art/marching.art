@@ -7,7 +7,6 @@ import {
   Calendar,
   Star,
   TrendingUp,
-  Award,
   Music,
   ChevronRight,
   MapPin,
@@ -16,9 +15,6 @@ import {
   AlertTriangle,
   RefreshCw,
   BarChart3,
-  Clock,
-  Medal,
-  Crown,
   History,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -539,7 +535,7 @@ const CorpsHistory = () => {
                         </h4>
                         <div className="space-y-2">
                           {Object.entries(season.lineup).map(([caption, value]) => {
-                            const [corpsName, year] = (value || '').split('|');
+                            const [corpsName] = (value || '').split('|');
                             return (
                               <div key={caption} className="bg-[#222] rounded-sm p-2">
                                 <div className="text-[10px] text-gray-500/60 uppercase">

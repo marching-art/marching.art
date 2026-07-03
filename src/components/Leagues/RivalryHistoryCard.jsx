@@ -2,17 +2,13 @@
 // Shows historical matchup data, caption domination, streaks, and all past matchups
 
 import React, { useMemo } from 'react';
-import { m, AnimatePresence } from 'framer-motion';
+import { m } from 'framer-motion';
 import {
   Swords,
   Trophy,
   Flame,
   TrendingUp,
-  TrendingDown,
-  Crown,
   Target,
-  ChevronRight,
-  Users,
   Award,
   Zap,
 } from 'lucide-react';
@@ -21,7 +17,7 @@ import { GAME_CONFIG } from '../../config';
 /**
  * Caption domination bar showing who wins each caption more often
  */
-const CaptionDominationBar = ({ caption, user1Wins, user2Wins, user1Name, user2Name }) => {
+const CaptionDominationBar = ({ caption, user1Wins, user2Wins, user1Name: _user1Name, user2Name: _user2Name }) => {
   const total = user1Wins + user2Wins;
   const user1Pct = total > 0 ? (user1Wins / total) * 100 : 50;
   const tied = user1Wins === user2Wins;
@@ -75,8 +71,8 @@ const MatchupHistoryItem = ({
   user1Score,
   user2Score,
   user1Id,
-  user1Name,
-  user2Name,
+  user1Name: _user1Name,
+  user2Name: _user2Name,
   isUser1CurrentUser,
 }) => {
   const user1Won = winnerId === user1Id;
@@ -450,7 +446,7 @@ const RivalryHistoryCard = ({
             {matchupHistory
               .slice()
               .reverse()
-              .map((match, idx) => (
+              .map((match, _idx) => (
                 <MatchupHistoryItem
                   key={match.week}
                   {...match}

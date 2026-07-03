@@ -5,7 +5,7 @@
 // identity (mission, history, motto) — all preserved across seasons.
 
 import React, { useState, useMemo } from 'react';
-import { X, User, Music, Link as LinkIcon, MapPin } from 'lucide-react';
+import { X, User, Music, Link as LinkIcon } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { CORPS_CLASS_ORDER, resolveCorpsForClass, isCorpsClassUnlocked } from '../../utils/corps';

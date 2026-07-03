@@ -38,7 +38,7 @@ export function useFirstVisit() {
     try {
       const hasVisited = localStorage.getItem(STORAGE_KEY);
       setIsFirstVisit(hasVisited !== 'true');
-    } catch (e) {
+    } catch {
       // localStorage unavailable (private browsing, etc.)
       // Default to first visit experience
       console.warn('localStorage unavailable, defaulting to first visit experience');
@@ -53,7 +53,7 @@ export function useFirstVisit() {
     try {
       localStorage.setItem(STORAGE_KEY, 'true');
       setIsFirstVisit(false);
-    } catch (e) {
+    } catch {
       // Silently fail if localStorage unavailable
       console.warn('Could not save visit status to localStorage');
     }
@@ -64,7 +64,7 @@ export function useFirstVisit() {
     try {
       localStorage.removeItem(STORAGE_KEY);
       setIsFirstVisit(true);
-    } catch (e) {
+    } catch {
       console.warn('Could not reset visit status in localStorage');
     }
   }, []);

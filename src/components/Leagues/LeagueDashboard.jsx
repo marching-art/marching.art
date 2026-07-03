@@ -12,13 +12,9 @@ import {
   Minus,
   Swords,
   Target,
-  Zap,
   Calendar,
-  Users,
   Award,
-  Star,
   ChevronRight,
-  BarChart3,
   Medal,
   Radio,
 } from 'lucide-react';

@@ -13,7 +13,6 @@ import {
   HelpCircle,
   BookOpen,
   Zap,
-  Target,
   Star,
   ArrowRight,
 } from 'lucide-react';

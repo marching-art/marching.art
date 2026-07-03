@@ -44,9 +44,13 @@ export const useDashboardData = () => {
   // Compute unlocked classes directly (admins get all classes)
   // Must compute here rather than using store method so React tracks the isAdmin dependency
   // Note: class IDs are 'worldClass', 'openClass', 'aClass', 'soundSport'
-  const unlockedClasses = isAdmin
-    ? ['worldClass', 'openClass', 'aClass', 'soundSport']
-    : profile?.unlockedClasses || ['soundSport'];
+  const unlockedClasses = useMemo(
+    () =>
+      isAdmin
+        ? ['worldClass', 'openClass', 'aClass', 'soundSport']
+        : profile?.unlockedClasses || ['soundSport'],
+    [isAdmin, profile?.unlockedClasses]
+  );
 
   // Additional local state
   const [availableCorps, setAvailableCorps] = useState([]);
@@ -204,7 +208,7 @@ export const useDashboardData = () => {
         setShowSeasonSetupWizard(false);
       }
     }
-  }, [profile, corps, seasonData, loading, seasonLoading]);
+  }, [profile, corps, seasonData, loading, seasonLoading, unlockedClasses]);
 
   // Track daily login streaks and engagement
   // Guard prevents duplicate writes if effect re-runs within same session
@@ -308,6 +312,10 @@ export const useDashboardData = () => {
     };
 
     updateEngagement();
+    // Intentionally keyed on user + profile.uid only. The engagementProcessedRef
+    // guard makes re-runs on unrelated profile changes no-ops, so the full
+    // `profile` object is deliberately excluded to avoid redundant work.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, profile?.uid]);
 
   // Track performance milestones and achievements
@@ -413,6 +421,10 @@ export const useDashboardData = () => {
     };
 
     trackMilestones();
+    // Intentionally keyed on the specific rank/score fields this effect acts on.
+    // The milestonesProcessedRef guard dedupes writes, so the full `profile` and
+    // `activeCorps` objects are deliberately excluded to avoid redundant work.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, profile?.uid, activeCorps?.rank, activeCorps?.totalSeasonScore, activeCorpsClass]);
 
   // Fetch available corps

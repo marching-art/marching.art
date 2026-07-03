@@ -6,13 +6,11 @@
  */
 
 import { useMemo } from 'react';
-import { GAME_CONFIG } from '../config';
 import {
   calculateMatchupBattles,
   calculateSeasonStats,
   createWeeklyPerformance,
   initializeCaptionWinRates,
-  CAPTIONS,
 } from '../utils/matchupScoring';
 import type {
   SeasonMatchupStats,

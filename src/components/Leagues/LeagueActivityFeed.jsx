@@ -13,7 +13,6 @@ import {
   UserPlus,
   Flame,
   ChevronRight,
-  Filter,
   Eye,
   Trophy,
   Calendar,
@@ -245,7 +244,7 @@ FilterTab.displayName = 'FilterTab';
 const LeagueActivityFeed = ({
   leagueId,
   userId,
-  league,
+  league: _league,
   compact = false,
   showFilters = true,
   maxItems = 10,
@@ -263,7 +262,6 @@ const LeagueActivityFeed = ({
   // Fetch user notifications for this league
   const {
     notifications,
-    unreadCount,
     loading: notificationsLoading,
     markAsRead,
     markAllAsRead,

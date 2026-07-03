@@ -21,7 +21,7 @@ const MatchupDetailView = ({
   userProfile,
   memberProfiles,
   standings,
-  currentWeek,
+  currentWeek: _currentWeek,
   onBack,
   rivalry = null,
   recaps: recapsProp = null, // OPTIMIZATION: Accept pre-fetched recaps to avoid duplicate query

@@ -8,7 +8,7 @@
 
 import React, { useState } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
-import { Users, Trophy, TrendingUp, ChevronDown, ListChecks, Calendar, Award } from 'lucide-react';
+import { Trophy, ChevronDown, ListChecks, Calendar, Award } from 'lucide-react';
 import JargonTooltip from '../JargonTooltip';
 
 // =============================================================================

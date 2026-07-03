@@ -12,11 +12,8 @@ import {
   Check,
   X,
   AlertTriangle,
-  Users,
   Trophy,
-  ChevronRight,
   Clock,
-  Info,
   Ticket,
 } from 'lucide-react';
 import { selectUserShows } from '../../api/functions';
@@ -142,7 +139,6 @@ const ShowRegistrationModal = ({
 }) => {
   const [selectedCorps, setSelectedCorps] = useState([]);
   const [saving, setSaving] = useState(false);
-  const [activeSection, setActiveSection] = useState('register'); // 'register' | 'info'
   const { trigger: haptic } = useHaptic();
 
   // Get max shows based on the show's week (7 for final week, 4 otherwise)
@@ -154,7 +150,10 @@ const ShowRegistrationModal = ({
   // Check if this is a championship show with auto-enrollment
   const isChampionship = show.isChampionship === true;
   // allowedClasses comes from schedule transform, eligibleClasses is the backend field name
-  const eligibleClasses = show.allowedClasses || show.eligibleClasses || [];
+  const eligibleClasses = useMemo(
+    () => show.allowedClasses || show.eligibleClasses || [],
+    [show.allowedClasses, show.eligibleClasses]
+  );
 
   // Detect mobile for BottomSheet vs Modal
   const [isMobile, setIsMobile] = useState(false);

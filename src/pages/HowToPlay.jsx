@@ -5,7 +5,6 @@
 // Laws: No glow, no shadow, dense data, ESPN style
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import {
   Trophy,
   Users,
@@ -20,7 +19,6 @@ import {
   ChevronDown,
   ChevronRight,
   HelpCircle,
-  Music,
   Zap,
   Search,
 } from 'lucide-react';

@@ -10,7 +10,7 @@
 //    Heavy animations (confetti, celebrations) can opt in via
 //    { includePerformanceHeuristics: true } to also suppress on weak devices.
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 
 // Type declarations for Navigator APIs not in standard TypeScript definitions
 interface NetworkInformation extends EventTarget {

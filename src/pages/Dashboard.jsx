@@ -107,6 +107,8 @@ const Dashboard = () => {
 
   // Modal states
   const modalQueue = useModalQueue();
+  // Stable enqueue reference (memoized in the hook) for the modal-queue effects below
+  const { enqueue: enqueueModal } = modalQueue;
   const [showRegistration, setShowRegistration] = useState(false);
   const [registrationDefaultClass, setRegistrationDefaultClass] = useState(null);
   const [slotPickerClass, setSlotPickerClass] = useState(null);
@@ -224,34 +226,34 @@ const Dashboard = () => {
   // Queue auto-triggered modals
   useEffect(() => {
     if (showSeasonSetupWizard && seasonData) {
-      modalQueue.enqueue('seasonSetup', MODAL_PRIORITY.SEASON_SETUP, { seasonData });
+      enqueueModal('seasonSetup', MODAL_PRIORITY.SEASON_SETUP, { seasonData });
     }
-  }, [showSeasonSetupWizard, seasonData, modalQueue.enqueue]);
+  }, [showSeasonSetupWizard, seasonData, enqueueModal]);
 
   useEffect(() => {
     if (profile?.isFirstVisit && activeCorps) {
       const timer = setTimeout(() => {
-        modalQueue.enqueue('onboarding', MODAL_PRIORITY.ONBOARDING);
+        enqueueModal('onboarding', MODAL_PRIORITY.ONBOARDING);
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [profile?.isFirstVisit, activeCorps, modalQueue.enqueue]);
+  }, [profile?.isFirstVisit, activeCorps, enqueueModal]);
 
   useEffect(() => {
     if (newlyUnlockedClass) {
-      modalQueue.enqueue('classUnlock', MODAL_PRIORITY.CLASS_UNLOCK, {
+      enqueueModal('classUnlock', MODAL_PRIORITY.CLASS_UNLOCK, {
         unlockedClass: newlyUnlockedClass,
       });
     }
-  }, [newlyUnlockedClass, modalQueue.enqueue]);
+  }, [newlyUnlockedClass, enqueueModal]);
 
   useEffect(() => {
     if (newAchievement) {
-      modalQueue.enqueue('achievement', MODAL_PRIORITY.ACHIEVEMENT, {
+      enqueueModal('achievement', MODAL_PRIORITY.ACHIEVEMENT, {
         achievement: newAchievement,
       });
     }
-  }, [newAchievement, modalQueue.enqueue]);
+  }, [newAchievement, enqueueModal]);
 
   useEffect(() => {
     const userModalOpen =
@@ -340,7 +342,7 @@ const Dashboard = () => {
         });
         toast.success('Corps updated!');
         setShowEditCorps(false);
-      } catch (error) {
+      } catch {
         toast.error('Failed to update corps');
       }
     },
@@ -352,7 +354,7 @@ const Dashboard = () => {
       await updateProfile(user.uid, { [`corps.${activeCorpsClass}`]: null });
       toast.success('Corps deleted');
       setShowDeleteConfirm(false);
-    } catch (error) {
+    } catch {
       toast.error('Failed to delete corps');
     }
   }, [user, activeCorpsClass]);

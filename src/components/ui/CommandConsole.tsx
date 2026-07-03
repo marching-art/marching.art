@@ -6,7 +6,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
-import { Plus, AlertTriangle, Radar, Shield, Server, Wifi, WifiOff } from 'lucide-react';
+import { Plus, AlertTriangle, Radar, Server, WifiOff } from 'lucide-react';
 import { useShouldReduceMotion } from '../../hooks/useReducedMotion';
 
 // =============================================================================

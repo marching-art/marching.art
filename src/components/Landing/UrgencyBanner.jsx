@@ -93,7 +93,7 @@ export const UrgencyBadge = ({ className = '' }) => {
 // =============================================================================
 
 const UrgencyBanner = ({ showCTA = true, maxTriggers = 2, className = '' }) => {
-  const { all, isLoading, isLiveShowNow, showsToday } = useUrgencyTriggers();
+  const { all, isLoading } = useUrgencyTriggers();
 
   if (isLoading || all.length === 0) return null;
 
@@ -166,8 +166,7 @@ const UrgencyBanner = ({ showCTA = true, maxTriggers = 2, className = '' }) => {
 // =============================================================================
 
 export const SeasonCountdown = ({ className = '' }) => {
-  const { weeksRemaining, daysUntilFinals, currentWeek, seasonType, isLoading } =
-    useUrgencyTriggers();
+  const { weeksRemaining, seasonType, isLoading } = useUrgencyTriggers();
 
   if (isLoading || weeksRemaining === 0) return null;
 

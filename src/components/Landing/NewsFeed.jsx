@@ -9,7 +9,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Flame, Loader2, DollarSign, ArrowUpRight, ArrowDownRight, Zap } from 'lucide-react';
-import { fetchNewsFeedHttp, getRecentNews, getArticleEngagement } from '../../api/functions';
+import { fetchNewsFeedHttp, getRecentNews } from '../../api/functions';
 import { useSeasonStore } from '../../store/seasonStore';
 
 // =============================================================================
@@ -170,20 +170,6 @@ export default function NewsFeed({ maxItems = 4 }) {
     return day >= 1 ? day : null;
   }, [currentDay]);
 
-  // Fetch engagement data for articles (used for load more, where we don't want to re-fetch all)
-  const fetchEngagement = async (articleIds) => {
-    if (!articleIds || articleIds.length === 0) return;
-
-    try {
-      const result = await getArticleEngagement({ articleIds });
-      if (result.data?.success) {
-        setEngagement((prev) => ({ ...prev, ...result.data.engagement }));
-      }
-    } catch (err) {
-      console.error('Error fetching engagement:', err);
-    }
-  };
-
   /**
    * Fetch news with stale-while-revalidate pattern and request deduplication
    * - Fresh cache: Use immediately, no fetch
@@ -239,7 +225,7 @@ export default function NewsFeed({ maxItems = 4 }) {
             maxItems
           );
         }
-      } catch (err) {
+      } catch {
         // Error already handled by original request
       } finally {
         setLoading(false);
@@ -386,8 +372,12 @@ export default function NewsFeed({ maxItems = 4 }) {
   const autoLoadEnabled = autoLoadCount < MAX_AUTO_LOADS;
   const loadMoreRef = useIntersectionObserver(loadMore, autoLoadEnabled);
 
+  // Fetch on mount and whenever maxItems changes. `fetchNews` is intentionally
+  // excluded: it is recreated every render, so depending on it would re-fetch on
+  // every render.
   useEffect(() => {
     fetchNews();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [maxItems]);
 
   // Start prefetching next page once initial news is loaded (for instant pagination)

@@ -75,7 +75,7 @@ const SeasonSetupWizard = ({
   // Corps management state
   const [corpsDecisions, setCorpsDecisions] = useState({});
   const [newCorpsData, setNewCorpsData] = useState({});
-  const [finalCorpsNeedingSetup, setFinalCorpsNeedingSetup] = useState(corpsNeedingSetup);
+  const [_finalCorpsNeedingSetup, setFinalCorpsNeedingSetup] = useState(corpsNeedingSetup);
 
   // Lineup and shows state
 
