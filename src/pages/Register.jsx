@@ -67,7 +67,7 @@ const Register = () => {
     setLoading(true);
 
     try {
-      await signUp(formData.email, formData.password);
+      await signUp(formData.email, formData.password, formData.displayName.trim());
       markAsReturning();
       toast.success('Account created successfully!');
       startTransition(() => {

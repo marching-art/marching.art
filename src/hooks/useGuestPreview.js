@@ -28,6 +28,29 @@ const STORAGE_KEYS = {
   GUEST_INTERACTIONS: 'marching_art_guest_interactions',
 };
 
+/**
+ * Read the guest's drafted lineup without mounting the hook.
+ * Values use the onboarding slot format: "corpsName|sourceYear|points".
+ * Used by Onboarding to import the demo draft after signup.
+ */
+export function getStoredGuestLineup() {
+  return getStoredData(STORAGE_KEYS.GUEST_LINEUP, null);
+}
+
+/**
+ * Remove all guest-preview localStorage keys. Called after a successful
+ * registration so the "progress saved" promise completes cleanly.
+ */
+export function clearGuestPreviewData() {
+  Object.values(STORAGE_KEYS).forEach((key) => {
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      /* ignore */
+    }
+  });
+}
+
 // =============================================================================
 // HELPER FUNCTIONS
 // =============================================================================
@@ -138,14 +161,16 @@ export function useGuestPreview() {
   }, []);
 
   /**
-   * Update the guest's lineup (demo modification)
-   * This allows guests to "play" with lineup selection
+   * Update the guest's lineup (demo draft).
+   * The first pick starts a fresh draft (empty slots, own budget) rather than
+   * inheriting the demo corps' flavor lineup — the draft is the same activity
+   * the user will complete in onboarding, and it imports there on signup.
+   * Values use the onboarding slot format: "corpsName|sourceYear|points".
    */
   const updateGuestLineup = useCallback((caption, value) => {
     setGuestLineup((prev) => {
-      const currentLineup = prev || DEMO_CORPS.lineup;
       const updated = {
-        ...currentLineup,
+        ...(prev || {}),
         [caption]: value,
       };
       setStoredData(STORAGE_KEYS.GUEST_LINEUP, updated);
@@ -175,9 +200,7 @@ export function useGuestPreview() {
    * Clear all guest data (called after successful registration)
    */
   const clearGuestData = useCallback(() => {
-    Object.values(STORAGE_KEYS).forEach((key) => {
-      localStorage.removeItem(key);
-    });
+    clearGuestPreviewData();
     setHasStartedPreview(false);
     setGuestLineup(null);
     setInteractions({

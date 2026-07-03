@@ -29,6 +29,8 @@ import toast from 'react-hot-toast';
 import { useSeasonStore } from '../store/seasonStore';
 import { useScheduleStore } from '../store/scheduleStore';
 import { autoFillLineup } from '../utils/lineupAutoFill';
+import { getStoredGuestLineup, clearGuestPreviewData } from '../hooks/useGuestPreview';
+import { importGuestLineup } from '../utils/guestLineupImport';
 import { CAPTIONS, SOUNDSPORT_POINT_LIMIT, STEPS, GAME_FEATURES } from './onboardingConstants';
 import { GuidedCaptionSelection } from './OnboardingParts';
 
@@ -37,13 +39,17 @@ const Onboarding = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({
-    displayName: '',
+  const [formData, setFormData] = useState(() => ({
+    // Registration already asked for the director name (stored on the Firebase
+    // Auth user) — prefill so the user doesn't type it twice.
+    displayName: user?.displayName || '',
     username: '',
     corpsName: '',
-  });
+  }));
   const [loading, setLoading] = useState(false);
   const [availableCorps, setAvailableCorps] = useState([]);
+  // 'loading' | 'ready' | 'error' — drives the step-3 corps list vs retry UI
+  const [dataStatus, setDataStatus] = useState('loading');
   const [lineup, setLineup] = useState({});
   const [currentCaptionIndex, setCurrentCaptionIndex] = useState(0);
   const [seasonData, setSeasonData] = useState(null);
@@ -61,40 +67,61 @@ const Onboarding = () => {
   const globalCurrentWeek = useSeasonStore((state) => state.currentWeek);
   const getWeekShows = useScheduleStore((state) => state.getWeekShows);
 
-  // Fetch season data and available corps on mount
+  // Backfill the director name if the auth user finishes loading after mount
   useEffect(() => {
-    const fetchSeasonData = async () => {
-      try {
-        // The active season lives at game-settings/season (public read), the
-        // same source the rest of the app uses (seasonStore, SeasonSetupWizard).
-        // NOTE: the old `system/currentSeason` doc has no security rule, so
-        // reading it always failed with permission-denied and corps never loaded.
-        const season = await getSeasonData();
-        if (!season || !season.seasonUid) {
-          console.error('[Onboarding] No active season found in game-settings/season');
-          toast.error('No active season found. Please try again later.');
-          return;
-        }
+    if (user?.displayName) {
+      setFormData((prev) => (prev.displayName ? prev : { ...prev, displayName: user.displayName }));
+    }
+  }, [user?.displayName]);
 
-        setSeasonData({ ...season, seasonUid: season.seasonUid });
-
-        // Corps values for lineup selection live in dci-data/{seasonUid}.
-        const corpsValues = await getCorpsValues(season.seasonUid);
-        if (corpsValues.length) {
-          const corps = corpsValues.filter((c) => (c.points || 0) <= 50);
-          setAvailableCorps(corps);
-        } else {
-          console.error(`[Onboarding] dci-data/${season.seasonUid} not found or empty`);
-          toast.error('Corps data is unavailable. Please try again later.');
-        }
-      } catch (error) {
-        console.error('Error fetching season data:', error);
-        toast.error('Could not load season data. Please refresh the page.');
+  // Fetch season data and available corps (on mount, and again via the
+  // step-3 Retry button — a failure here used to strand the user on a
+  // perpetual "Loading available corps..." pulse).
+  const fetchSeasonData = React.useCallback(async () => {
+    setDataStatus('loading');
+    try {
+      // The active season lives at game-settings/season (public read), the
+      // same source the rest of the app uses (seasonStore, SeasonSetupWizard).
+      // NOTE: the old `system/currentSeason` doc has no security rule, so
+      // reading it always failed with permission-denied and corps never loaded.
+      const season = await getSeasonData();
+      if (!season || !season.seasonUid) {
+        console.error('[Onboarding] No active season found in game-settings/season');
+        setDataStatus('error');
+        return;
       }
-    };
 
-    fetchSeasonData();
+      setSeasonData({ ...season, seasonUid: season.seasonUid });
+
+      // Corps values for lineup selection live in dci-data/{seasonUid}.
+      const corpsValues = await getCorpsValues(season.seasonUid);
+      if (corpsValues.length) {
+        const corps = corpsValues.filter((c) => (c.points || 0) <= 50);
+        setAvailableCorps(corps);
+        setDataStatus('ready');
+
+        // Fulfill the guest-preview promise: picks drafted in the demo
+        // carry over into this draft.
+        const guestDraft = importGuestLineup(corps, getStoredGuestLineup());
+        if (guestDraft.count > 0) {
+          setLineup((prev) => (Object.keys(prev).length > 0 ? prev : guestDraft.lineup));
+          toast.success(
+            `Imported ${guestDraft.count} pick${guestDraft.count === 1 ? '' : 's'} from your demo draft!`
+          );
+        }
+      } else {
+        console.error(`[Onboarding] dci-data/${season.seasonUid} not found or empty`);
+        setDataStatus('error');
+      }
+    } catch (error) {
+      console.error('Error fetching season data:', error);
+      setDataStatus('error');
+    }
   }, []);
+
+  useEffect(() => {
+    fetchSeasonData();
+  }, [fetchSeasonData]);
 
   // Username validation function
   const validateUsername = async (username) => {
@@ -273,6 +300,10 @@ const Onboarding = () => {
         console.warn('Could not auto-register for shows:', regError);
         // Non-blocking - continue even if this fails
       }
+
+      // The guest-preview draft has served its purpose — clean up so a future
+      // signed-out visit starts fresh.
+      clearGuestPreviewData();
 
       // Show celebration before navigating
       setShowCelebration(true);
@@ -606,6 +637,24 @@ const Onboarding = () => {
                         currentCaptionIndex={currentCaptionIndex}
                         setCurrentCaptionIndex={setCurrentCaptionIndex}
                       />
+                    ) : dataStatus === 'error' ? (
+                      <div className="text-center py-8">
+                        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-500/10 border border-red-500/30 mb-3">
+                          <XCircle className="w-6 h-6 text-red-400" />
+                        </div>
+                        <p className="text-white text-sm font-semibold mb-1">
+                          Couldn't load the corps list
+                        </p>
+                        <p className="text-gray-500 text-xs mb-4">
+                          Check your connection and try again — your other answers are safe.
+                        </p>
+                        <button
+                          onClick={fetchSeasonData}
+                          className="h-10 px-5 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider rounded-sm hover:bg-[#0066d6]"
+                        >
+                          Try Again
+                        </button>
+                      </div>
                     ) : (
                       <div className="text-center py-8">
                         <div className="animate-pulse mb-4">

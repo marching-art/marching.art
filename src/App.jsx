@@ -219,8 +219,8 @@ function App() {
         analytics.logLogin('email');
         return result;
       },
-      signUp: async (email, password) => {
-        const result = await authHelpers.signUpWithEmail(email, password);
+      signUp: async (email, password, displayName) => {
+        const result = await authHelpers.signUpWithEmail(email, password, displayName);
         analytics.logSignUp('email');
         return result;
       },
