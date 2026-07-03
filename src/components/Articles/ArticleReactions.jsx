@@ -3,8 +3,8 @@
 // =============================================================================
 // Allows signed-in users to react to articles with emojis
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Loader2, MessageSquare, Plus, SmilePlus } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Loader2, MessageSquare, SmilePlus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { toggleArticleReaction, getArticleReactions } from '../../api/functions';
 import toast from 'react-hot-toast';
@@ -73,14 +73,7 @@ export default function ArticleReactions({
     }
   }, [initialUserReaction]);
 
-  // Fetch reactions on mount if not provided
-  useEffect(() => {
-    if (!initialCounts && articleId) {
-      fetchReactions();
-    }
-  }, [articleId]);
-
-  const fetchReactions = async () => {
+  const fetchReactions = useCallback(async () => {
     try {
       const result = await getArticleReactions({ articleId });
       if (result.data?.success) {
@@ -92,7 +85,14 @@ export default function ArticleReactions({
     } finally {
       setLoading(false);
     }
-  };
+  }, [articleId]);
+
+  // Fetch reactions on mount if not provided
+  useEffect(() => {
+    if (!initialCounts && articleId) {
+      fetchReactions();
+    }
+  }, [articleId, initialCounts, fetchReactions]);
 
   const handleReaction = async (emoji) => {
     if (!user) {
@@ -142,7 +142,7 @@ export default function ArticleReactions({
         setCounts(prevCounts);
         setUserReaction(prevUserReaction);
       }
-    } catch (err) {
+    } catch {
       // Rollback on error
       setCounts(prevCounts);
       setUserReaction(prevUserReaction);
@@ -186,9 +186,6 @@ export default function ArticleReactions({
       </div>
     );
   }
-
-  // Get emojis that have reactions (for display)
-  const activeEmojis = REACTIONS.filter((emoji) => counts[emoji] > 0);
 
   // Full reaction bar with picker menu
   return (

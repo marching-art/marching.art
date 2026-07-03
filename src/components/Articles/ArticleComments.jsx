@@ -3,7 +3,7 @@
 // =============================================================================
 // Allows signed-in users to comment on articles. Comments require moderation.
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   MessageSquare,
   Send,
@@ -85,7 +85,7 @@ function Comment({ comment, currentUserId, onEdit, onDelete, onReport }) {
       setShowReportModal(false);
       setReportReason('');
       toast.success('Comment reported');
-    } catch (err) {
+    } catch {
       toast.error('Failed to report comment');
     } finally {
       setReporting(false);
@@ -276,7 +276,7 @@ export default function ArticleComments({
     if (autoExpand && !isExpanded) {
       setIsExpanded(true);
     }
-  }, [autoExpand]);
+  }, [autoExpand, isExpanded]);
 
   // Focus textarea when expanded via autoExpand
   useEffect(() => {
@@ -285,14 +285,7 @@ export default function ArticleComments({
     }
   }, [isExpanded, autoExpand]);
 
-  // Fetch comments on mount
-  useEffect(() => {
-    if (!initialComments && articleId) {
-      fetchComments();
-    }
-  }, [articleId]);
-
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     try {
       const result = await getArticleComments({ articleId, status: 'approved', limit: 10 });
       if (result.data?.success) {
@@ -305,7 +298,14 @@ export default function ArticleComments({
     } finally {
       setLoading(false);
     }
-  };
+  }, [articleId]);
+
+  // Fetch comments on mount
+  useEffect(() => {
+    if (!initialComments && articleId) {
+      fetchComments();
+    }
+  }, [articleId, initialComments, fetchComments]);
 
   const loadMore = async () => {
     if (loadingMore || !hasMore || comments.length === 0) return;
@@ -361,7 +361,7 @@ export default function ArticleComments({
           toast.success('Comment posted');
         }
       }
-    } catch (err) {
+    } catch {
       toast.error('Failed to post comment');
     } finally {
       setSubmitting(false);
@@ -388,7 +388,7 @@ export default function ArticleComments({
         setEditContent('');
         toast.success('Comment updated');
       }
-    } catch (err) {
+    } catch {
       toast.error('Failed to update comment');
     } finally {
       setSubmitting(false);
@@ -406,7 +406,7 @@ export default function ArticleComments({
         onCommentCountChange?.(Math.max(0, commentCount - 1));
         toast.success('Comment deleted');
       }
-    } catch (err) {
+    } catch {
       toast.error('Failed to delete comment');
     }
   };
