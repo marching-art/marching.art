@@ -170,9 +170,8 @@ const ChampionPlaque = ({ champion, season, classKey, fieldStats }) => {
   const ClassIcon = CLASS_CONFIG[classKey]?.icon || Trophy;
   const corpsName = champion.corpsName || champion.username || '—';
   const soundSport = isSoundSportClass(classKey);
-  const rating = soundSport && typeof champion.score === 'number'
-    ? getSoundSportRating(champion.score)
-    : null;
+  const rating =
+    soundSport && typeof champion.score === 'number' ? getSoundSportRating(champion.score) : null;
   const ratingStyle = rating ? RATING_CONFIG[rating] : null;
 
   return (
@@ -366,7 +365,11 @@ const FinalistsTable = ({ champions, classKey }) => {
                     <div className="min-w-0">
                       <span
                         className={`text-sm font-bold block truncate ${
-                          highlight ? (soundSport ? 'text-[#3b82f6]' : 'text-yellow-500') : 'text-white'
+                          highlight
+                            ? soundSport
+                              ? 'text-[#3b82f6]'
+                              : 'text-yellow-500'
+                            : 'text-white'
                         }`}
                       >
                         {corpsName}

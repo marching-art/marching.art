@@ -47,7 +47,7 @@ const UsersTab = () => {
       // sorted by last login (most recent first). Admin-only per Firestore rules.
       setUsers(await getAllUserProfiles());
       setShowUserList(true);
-    } catch (error) {
+    } catch {
       toast.error('Failed to load users');
     } finally {
       setUsersLoading(false);
