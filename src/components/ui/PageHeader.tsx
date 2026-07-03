@@ -47,9 +47,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   className = '',
 }) => {
   return (
-    <div
-      className={`flex-shrink-0 bg-[#1a1a1a] border-b border-[#333] px-4 py-3 ${className}`}
-    >
+    <div className={`flex-shrink-0 bg-[#1a1a1a] border-b border-[#333] px-4 py-3 ${className}`}>
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <Icon className={`w-5 h-5 flex-shrink-0 ${iconClassName}`} aria-hidden="true" />
@@ -57,15 +55,14 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             <h1 className="text-sm font-bold text-white uppercase tracking-wider truncate">
               {title}
             </h1>
-            {subtitle && (
-              <div className="text-[10px] text-gray-500 truncate">{subtitle}</div>
-            )}
+            {subtitle && <div className="text-[10px] text-gray-500 truncate">{subtitle}</div>}
           </div>
         </div>
 
         {children
           ? children
-          : stats && stats.length > 0 && (
+          : stats &&
+            stats.length > 0 && (
               <div className="flex items-center gap-4 text-xs flex-shrink-0">
                 {stats.map((stat, idx) => (
                   <div key={idx} className="text-right">
