@@ -11,6 +11,7 @@ import {
   CLASS_DISPLAY_NAMES,
 } from './constants';
 import { getWeeksUntilUnlock } from '../../../utils/classUnlockTime';
+import NextDeadlineChip from './NextDeadlineChip';
 
 // Helper to get next class unlock info
 // Note: unlockedClasses uses 'aClass', 'openClass', 'worldClass' format
@@ -115,6 +116,11 @@ const ControlBar = memo(
             })}
           </div>
 
+          {/* CENTER: Next deadline countdown (scores drop / trade reset) */}
+          <div className="hidden md:block">
+            <NextDeadlineChip />
+          </div>
+
           {/* RIGHT: Director HUD - Order: Streak, Level, Coins, Buy */}
           <div className="flex items-center gap-3">
             {/* Streak with milestone indicator */}
@@ -198,6 +204,11 @@ const ControlBar = memo(
               <span className="text-[10px] text-green-500">All unlocked</span>
             )}
           </div>
+        </div>
+
+        {/* Small screens get the countdown as a full-width strip */}
+        <div className="md:hidden">
+          <NextDeadlineChip variant="strip" />
         </div>
       </div>
     );

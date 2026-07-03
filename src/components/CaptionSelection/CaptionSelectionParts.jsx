@@ -16,6 +16,7 @@ import {
   PartyPopper,
   RefreshCw,
 } from 'lucide-react';
+import { formatEtShort, formatEtDayTime } from '../../utils/seasonClock';
 
 // -----------------------------------------------------------------------------
 // LINEUP CELEBRATION
@@ -281,7 +282,13 @@ const DraftHelper = ({ suggestions, onSelectSuggestion, selections, activeCaptio
 // -----------------------------------------------------------------------------
 // TRADES REMAINING INDICATOR
 // -----------------------------------------------------------------------------
-const TradesRemainingIndicator = ({ tradesRemaining, isUnlimited, isInitialSetup }) => {
+const TradesRemainingIndicator = ({
+  tradesRemaining,
+  isUnlimited,
+  isInitialSetup,
+  resetsAt,
+  unlimitedEndsAt,
+}) => {
   if (isInitialSetup) {
     return (
       <div className="flex items-center gap-1.5 px-2 py-1 bg-green-500/10 border border-green-500/30 rounded">
@@ -295,11 +302,21 @@ const TradesRemainingIndicator = ({ tradesRemaining, isUnlimited, isInitialSetup
 
   if (isUnlimited) {
     return (
-      <div className="flex items-center gap-1.5 px-2 py-1 bg-[#0057B8]/10 border border-[#0057B8]/30 rounded">
+      <div
+        className="flex items-center gap-1.5 px-2 py-1 bg-[#0057B8]/10 border border-[#0057B8]/30 rounded"
+        title={
+          unlimitedEndsAt ? `Weekly limits begin ${formatEtDayTime(unlimitedEndsAt)}` : undefined
+        }
+      >
         <RefreshCw className="w-3 h-3 text-[#0057B8]" />
         <span className="text-[10px] font-bold text-[#0057B8] uppercase tracking-wider">
           Unlimited Changes This Week
         </span>
+        {unlimitedEndsAt && (
+          <span className="text-[9px] text-[#0057B8]/70 normal-case whitespace-nowrap">
+            until {formatEtShort(unlimitedEndsAt)}
+          </span>
+        )}
       </div>
     );
   }
@@ -310,11 +327,19 @@ const TradesRemainingIndicator = ({ tradesRemaining, isUnlimited, isInitialSetup
     : 'text-gray-400 border-[#333] bg-[#222]';
 
   return (
-    <div className={`flex items-center gap-1.5 px-2 py-1 border rounded ${colorClass}`}>
+    <div
+      className={`flex items-center gap-1.5 px-2 py-1 border rounded ${colorClass}`}
+      title={resetsAt ? `Change limit resets ${formatEtDayTime(resetsAt)}` : undefined}
+    >
       <RefreshCw className="w-3 h-3" />
       <span className="text-[10px] font-bold uppercase tracking-wider">
         {tradesRemaining} Change{tradesRemaining !== 1 ? 's' : ''} Left This Week
       </span>
+      {resetsAt && (
+        <span className="text-[9px] opacity-70 normal-case whitespace-nowrap">
+          resets {formatEtShort(resetsAt)}
+        </span>
+      )}
     </div>
   );
 };

@@ -25,6 +25,7 @@ import Portal from '../Portal';
 import { BottomSheet } from '../ui/BottomSheet';
 import { useHaptic } from '../../hooks/useHaptic';
 import { getMaxShowsForWeek } from '../../utils/captionPricing';
+import { getShowRegistrationDeadline, formatEtDayTime } from '../../utils/seasonClock';
 import { compareCorpsClasses } from '../../utils/corps';
 import RunningOrder from './RunningOrder';
 
@@ -131,7 +132,14 @@ const CorpsSelectionItem = ({
 // MAIN MODAL COMPONENT
 // =============================================================================
 
-const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSuccess }) => {
+const ShowRegistrationModal = ({
+  show,
+  userProfile,
+  formattedDate,
+  eventDate,
+  onClose,
+  onSuccess,
+}) => {
   const [selectedCorps, setSelectedCorps] = useState([]);
   const [saving, setSaving] = useState(false);
   const [activeSection, setActiveSection] = useState('register'); // 'register' | 'info'
@@ -139,6 +147,9 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
 
   // Get max shows based on the show's week (7 for final week, 4 otherwise)
   const maxShows = useMemo(() => getMaxShowsForWeek(show.week), [show.week]);
+
+  // Registration stays open until the nightly score processing after show day
+  const registrationDeadline = useMemo(() => getShowRegistrationDeadline(eventDate), [eventDate]);
 
   // Check if this is a championship show with auto-enrollment
   const isChampionship = show.isChampionship === true;
@@ -524,6 +535,17 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
                   <span className="text-[#0057B8] font-bold">{maxShows} shows per week</span>.
                   Scores from attended shows contribute to your season standings.
                 </p>
+                {registrationDeadline && (
+                  <p className="mt-1 flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-cyan-400 flex-shrink-0" aria-hidden="true" />
+                    <span>
+                      You can add or change attendance until scores process:{' '}
+                      <span className="text-cyan-400 font-bold">
+                        {formatEtDayTime(registrationDeadline)}
+                      </span>
+                    </span>
+                  </p>
+                )}
               </div>
             </div>
           </div>

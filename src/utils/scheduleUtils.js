@@ -5,6 +5,8 @@
  * Used by scheduleStore and any component that needs schedule data.
  */
 
+import { getShowRegistrationDeadline } from './seasonClock';
+
 /**
  * Transform a competition object from Firestore to a show object for UI
  * @param {Object} competition - Raw competition from Firestore
@@ -250,15 +252,13 @@ export function showCalendarDay(comp) {
 
 /**
  * Check if an event date is considered "past" for display purposes.
- * Events are considered past only after 2 AM the following day,
- * which is when scores are processed.
+ * Events are considered past only once the nightly score processing after
+ * show day has run (2 AM ET — the same instant registration closes), via
+ * the shared season clock.
  * @param {Date|null} eventDate - The date of the event
  * @returns {boolean} True if the event is past
  */
 export function isEventPast(eventDate) {
-  if (!eventDate) return false;
-  const nextDay2AM = new Date(eventDate);
-  nextDay2AM.setDate(nextDay2AM.getDate() + 1);
-  nextDay2AM.setHours(2, 0, 0, 0);
-  return new Date() >= nextDay2AM;
+  const deadline = getShowRegistrationDeadline(eventDate);
+  return deadline ? new Date() >= deadline : false;
 }
