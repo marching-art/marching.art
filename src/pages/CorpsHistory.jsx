@@ -178,13 +178,13 @@ const CorpsHistory = () => {
   if (error) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-center p-8 bg-charcoal-900/50 border border-red-500/20 rounded-xl max-w-md">
+        <div className="text-center p-8 bg-[#111] border border-red-500/20 rounded-sm max-w-md">
           <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-white mb-2">Error Loading History</h2>
           <p className="text-gray-500/60 mb-6">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-500 text-charcoal-900 rounded-lg font-bold"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-500 text-charcoal-900 rounded-sm font-bold"
           >
             <RefreshCw className="w-4 h-4" />
             Retry
@@ -207,7 +207,7 @@ const CorpsHistory = () => {
   }
 
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="flex flex-col h-full min-h-0 overflow-hidden bg-[#0a0a0a]">
       {/* ================================================================
           FIXED HEIGHT LAYOUT: Top Stats + Bottom Split
           ================================================================ */}
@@ -215,19 +215,17 @@ const CorpsHistory = () => {
       {/* ============================================================
           TOP: Corps Selector + Stats Row
           ============================================================ */}
-      <div className="flex-shrink-0 border-b border-white/10 bg-charcoal-950/50">
+      <div className="flex-shrink-0 border-b border-[#333] bg-[#1a1a1a]">
         <div className="p-4 lg:p-6">
           {/* Header & Corps Selector */}
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500/30 to-purple-500/30 border-2 border-yellow-500/50 flex items-center justify-center">
-                <BarChart3 className="w-6 h-6 text-yellow-400" />
-              </div>
+              <BarChart3 className="w-5 h-5 text-[#0057B8] flex-shrink-0" aria-hidden="true" />
               <div>
-                <h1 className="text-xl font-bold text-white uppercase tracking-wide">
+                <h1 className="text-sm font-bold text-white uppercase tracking-wider">
                   Corps History
                 </h1>
-                <p className="text-xs text-gray-500/60">Track performance and growth over time</p>
+                <p className="text-[10px] text-gray-500">Track performance and growth over time</p>
               </div>
             </div>
 
@@ -242,10 +240,10 @@ const CorpsHistory = () => {
                       setSelectedCorpsClass(corpsClass);
                       setSelectedSeason(null);
                     }}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-all ${
+                    className={`flex items-center gap-2 px-3 py-2 rounded-sm border transition-all ${
                       selectedCorpsClass === corpsClass
                         ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-400'
-                        : 'bg-charcoal-900/30 border-white/10 text-gray-400 hover:border-white/30'
+                        : 'bg-[#111] border-[#333] text-gray-400 hover:border-[#444]'
                     }`}
                   >
                     <Music className="w-4 h-4" />
@@ -263,15 +261,15 @@ const CorpsHistory = () => {
           {/* Stats Row */}
           {activeCorps && (
             <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-              <div className="bg-charcoal-900/50 border border-white/10 rounded-xl p-3 text-center">
+              <div className="bg-[#111] border border-[#333] rounded-sm p-3 text-center">
                 <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">Seasons</p>
                 <p className="text-xl font-mono font-bold text-white">{careerStats.totalSeasons}</p>
               </div>
-              <div className="bg-charcoal-900/50 border border-white/10 rounded-xl p-3 text-center">
+              <div className="bg-[#111] border border-[#333] rounded-sm p-3 text-center">
                 <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">Shows</p>
                 <p className="text-xl font-mono font-bold text-white">{careerStats.totalShows}</p>
               </div>
-              <div className="bg-charcoal-900/50 border border-white/10 rounded-xl p-3 text-center">
+              <div className="bg-[#111] border border-[#333] rounded-sm p-3 text-center">
                 <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">
                   Total Pts
                 </p>
@@ -279,7 +277,7 @@ const CorpsHistory = () => {
                   {careerStats.totalPoints.toFixed(3)}
                 </p>
               </div>
-              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3 text-center">
+              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-sm p-3 text-center">
                 <p className="text-[10px] text-yellow-400 uppercase tracking-wide mb-1">
                   Best Season
                 </p>
@@ -287,7 +285,7 @@ const CorpsHistory = () => {
                   {careerStats.bestSeasonScore.toFixed(3)}
                 </p>
               </div>
-              <div className="bg-charcoal-900/50 border border-white/10 rounded-xl p-3 text-center">
+              <div className="bg-[#111] border border-[#333] rounded-sm p-3 text-center">
                 <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">
                   Best Week
                 </p>
@@ -295,7 +293,7 @@ const CorpsHistory = () => {
                   {careerStats.bestWeeklyScore.toFixed(3)}
                 </p>
               </div>
-              <div className="bg-charcoal-900/50 border border-white/10 rounded-xl p-3 text-center">
+              <div className="bg-[#111] border border-[#333] rounded-sm p-3 text-center">
                 <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">
                   Avg Season
                 </p>
@@ -313,13 +311,13 @@ const CorpsHistory = () => {
           ============================================================ */}
       <div className="flex-1 flex flex-col lg:flex-row min-h-0">
         {/* LEFT: Chart or Timeline View */}
-        <div className="flex-1 flex flex-col min-h-0 lg:border-r border-white/10">
+        <div className="flex-1 flex flex-col min-h-0 lg:border-r border-[#333]">
           {/* View Toggle */}
-          <div className="flex-shrink-0 flex items-center justify-between p-3 border-b border-white/10 bg-charcoal-950/30">
+          <div className="flex-shrink-0 flex items-center justify-between p-3 border-b border-[#333] bg-[#111]">
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setActiveView('chart')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-wide transition-all ${
                   activeView === 'chart'
                     ? 'bg-yellow-500/20 text-yellow-400'
                     : 'text-gray-500/60 hover:text-gray-300'
@@ -330,7 +328,7 @@ const CorpsHistory = () => {
               </button>
               <button
                 onClick={() => setActiveView('timeline')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-wide transition-all ${
                   activeView === 'timeline'
                     ? 'bg-yellow-500/20 text-yellow-400'
                     : 'text-gray-500/60 hover:text-gray-300'
@@ -369,7 +367,7 @@ const CorpsHistory = () => {
                       <TrendingUp className="w-4 h-4 text-yellow-400" />
                       Performance Over Time
                     </h3>
-                    <div className="h-[calc(100%-40px)] bg-charcoal-900/30 border border-white/10 rounded-xl p-4">
+                    <div className="h-[calc(100%-40px)] bg-[#111] border border-[#333] rounded-sm p-4">
                       <Line data={chartData} options={chartOptions} />
                     </div>
                   </m.div>
@@ -390,16 +388,16 @@ const CorpsHistory = () => {
                         <button
                           key={`${season.seasonId}-${index}`}
                           onClick={() => setSelectedSeason(isSelected ? null : index)}
-                          className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                          className={`w-full text-left p-4 rounded-sm border transition-all ${
                             isSelected
-                              ? 'bg-yellow-500/20 border-yellow-500/50 shadow-[0_0_12px_rgba(234,179,8,0.2)]'
-                              : 'bg-charcoal-900/30 border-white/10 hover:border-white/30'
+                              ? 'bg-yellow-500/20 border-yellow-500/50'
+                              : 'bg-[#111] border-[#333] hover:border-[#444]'
                           }`}
                         >
                           <div className="flex items-center gap-4">
                             <div
-                              className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                                isSelected ? 'bg-yellow-500/30' : 'bg-charcoal-800'
+                              className={`w-12 h-12 rounded-sm flex items-center justify-center ${
+                                isSelected ? 'bg-yellow-500/30' : 'bg-[#222]'
                               }`}
                             >
                               <Trophy
@@ -451,7 +449,7 @@ const CorpsHistory = () => {
         </div>
 
         {/* RIGHT: Season Detail Panel (visible on lg+) */}
-        <div className="hidden lg:flex lg:w-80 xl:w-96 flex-col min-h-0 bg-charcoal-950/30">
+        <div className="hidden lg:flex lg:w-80 xl:w-96 flex-col min-h-0 bg-[#111]">
           {selectedSeason !== null && seasonHistory[selectedSeason] ? (
             (() => {
               const season = seasonHistory[selectedSeason];
@@ -461,9 +459,9 @@ const CorpsHistory = () => {
               return (
                 <>
                   {/* Panel Header */}
-                  <div className="flex-shrink-0 p-4 border-b border-white/10">
+                  <div className="flex-shrink-0 p-4 border-b border-[#333]">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-yellow-500/20 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-sm bg-yellow-500/20 flex items-center justify-center">
                         <Trophy className="w-5 h-5 text-yellow-400" />
                       </div>
                       <div>
@@ -480,7 +478,7 @@ const CorpsHistory = () => {
                   {/* Panel Content */}
                   <div className="flex-1 min-h-0 overflow-y-auto hud-scroll p-4 space-y-4">
                     {/* Final Score */}
-                    <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 text-center">
+                    <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-sm p-4 text-center">
                       <p className="text-xs text-yellow-400 uppercase tracking-wide mb-1">
                         Final Score
                       </p>
@@ -491,7 +489,7 @@ const CorpsHistory = () => {
 
                     {/* Stats Grid */}
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-charcoal-900/50 border border-white/10 rounded-xl p-3 text-center">
+                      <div className="bg-[#111] border border-[#333] rounded-sm p-3 text-center">
                         <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">
                           Best Week
                         </p>
@@ -499,7 +497,7 @@ const CorpsHistory = () => {
                           {(season.highestWeeklyScore || 0).toFixed(3)}
                         </p>
                       </div>
-                      <div className="bg-charcoal-900/50 border border-white/10 rounded-xl p-3 text-center">
+                      <div className="bg-[#111] border border-[#333] rounded-sm p-3 text-center">
                         <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">
                           Shows
                         </p>
@@ -520,7 +518,7 @@ const CorpsHistory = () => {
                           {weeks.map((week) => (
                             <div
                               key={week}
-                              className="bg-charcoal-800/50 rounded-lg p-2 flex items-center justify-between"
+                              className="bg-[#222] rounded-sm p-2 flex items-center justify-between"
                             >
                               <span className="text-xs text-gray-500/60">{week}</span>
                               <span className="text-xs font-mono font-bold text-white">
@@ -543,7 +541,7 @@ const CorpsHistory = () => {
                           {Object.entries(season.lineup).map(([caption, value]) => {
                             const [corpsName, year] = (value || '').split('|');
                             return (
-                              <div key={caption} className="bg-charcoal-800/50 rounded-lg p-2">
+                              <div key={caption} className="bg-[#222] rounded-sm p-2">
                                 <div className="text-[10px] text-gray-500/60 uppercase">
                                   {caption}
                                 </div>

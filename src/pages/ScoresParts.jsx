@@ -70,7 +70,46 @@ const PillTabControl = ({ tabs, activeTab, onTabChange, haptic }) => (
 );
 
 // =============================================================================
-// RECAP DATA GRID - HIGH DENSITY TABLE
+// CAPTION BREAKDOWN - GE / VIS / MUS secondary line
+// Rendered under the corps name so the numbers never push off the right edge
+// on mobile (the old wide-table layout clipped these columns).
+// =============================================================================
+
+const CaptionBreakdown = ({ captions }) => {
+  if (!captions) return null;
+  const fmt = (v) => (v !== null && v !== undefined ? v.toFixed(2) : '-');
+  const items = [
+    ['GE', captions.ge],
+    ['VIS', captions.vis],
+    ['MUS', captions.mus],
+  ];
+  return (
+    <div className="flex items-center gap-x-3 gap-y-0.5 flex-wrap mt-0.5 text-[10px] font-data tabular-nums">
+      {items.map(([label, value]) => (
+        <span key={label} className="text-gray-500">
+          {label} <span className="text-gray-300">{fmt(value)}</span>
+        </span>
+      ))}
+    </div>
+  );
+};
+
+// Director / display name shown next to the corps name. Truncates so a long
+// name can never break the row width.
+const DirectorTag = ({ displayName, uid }) => {
+  if (!displayName) return null;
+  const cls = 'text-[10px] text-gray-500 truncate flex-shrink-0 max-w-[45%]';
+  return uid ? (
+    <Link to={`/profile/${uid}`} className={`${cls} hover:text-[#0057B8]`}>
+      {displayName}
+    </Link>
+  ) : (
+    <span className={cls}>{displayName}</span>
+  );
+};
+
+// =============================================================================
+// RECAP DATA GRID - HIGH DENSITY, MOBILE-SAFE ROWS
 // OPTIMIZATION #3: Memoized to prevent re-renders when sibling recap grids update
 // =============================================================================
 
@@ -101,110 +140,53 @@ const RecapDataGrid = memo(({ scores, eventName, location, date, userCorpsName }
         </span>
       </div>
 
-      {/* Data Grid - Column headers immediately below event header */}
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-[#1a1a1a] border-t border-[#333]">
-              <th className="text-left py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-10">
-                #
-              </th>
-              <th className="text-left py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500">
-                Corps
-              </th>
-              <th className="text-right py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-14">
-                GE
-              </th>
-              <th className="text-right py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-14">
-                VIS
-              </th>
-              <th className="text-right py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-14">
-                MUS
-              </th>
-              <th className="text-right py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-20">
-                Total
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {scores.map((score, idx) => {
-              const captions = captionMap.get(idx);
-              const isUserCorps =
-                userCorpsName &&
-                (score.corps?.toLowerCase() === userCorpsName.toLowerCase() ||
-                  score.corpsName?.toLowerCase() === userCorpsName.toLowerCase());
-              const rowBg = idx % 2 === 0 ? 'bg-[#1a1a1a]' : 'bg-[#111]';
+      {/* Data Grid - stacked rows so caption scores never clip off the right */}
+      <div className="border-t border-[#333]">
+        {scores.map((score, idx) => {
+          const captions = captionMap.get(idx);
+          const isUserCorps =
+            userCorpsName &&
+            (score.corps?.toLowerCase() === userCorpsName.toLowerCase() ||
+              score.corpsName?.toLowerCase() === userCorpsName.toLowerCase());
+          const rowBg = idx % 2 === 0 ? 'bg-[#1a1a1a]' : 'bg-[#111]';
 
-              return (
-                <tr key={idx} className={rowBg}>
-                  {/* Rank */}
-                  <td className="py-2 px-2">
-                    <span className="w-6 h-6 bg-[#222] border border-[#333] flex items-center justify-center text-[10px] font-bold text-gray-400 tabular-nums">
-                      {idx + 1}
-                    </span>
-                  </td>
+          return (
+            <div
+              key={idx}
+              className={`${rowBg} flex items-center gap-2.5 px-3 py-2.5 ${
+                isUserCorps ? 'border-l-2 border-l-[#0057B8]' : ''
+              }`}
+            >
+              {/* Rank */}
+              <span className="flex-shrink-0 w-6 h-6 bg-[#222] border border-[#333] flex items-center justify-center text-[10px] font-bold text-gray-400 tabular-nums">
+                {idx + 1}
+              </span>
 
-                  {/* Corps + Location */}
-                  <td className="py-2 px-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <TeamAvatar
-                        name={score.corpsName || score.corps}
-                        logoUrl={score.avatarUrl}
-                        size="xs"
-                      />
-                      <div className="min-w-0">
-                        <span className="font-bold text-white text-sm block truncate">
-                          {score.corpsName || score.corps}
-                        </span>
-                        {score.displayName &&
-                          (score.uid ? (
-                            <Link
-                              to={`/profile/${score.uid}`}
-                              className="text-[10px] text-gray-500 hover:text-[#0057B8] block truncate"
-                            >
-                              {score.displayName}
-                            </Link>
-                          ) : (
-                            <span className="text-[10px] text-gray-500 block truncate">
-                              {score.displayName}
-                            </span>
-                          ))}
-                      </div>
-                    </div>
-                  </td>
+              {/* Avatar */}
+              <TeamAvatar
+                name={score.corpsName || score.corps}
+                logoUrl={score.avatarUrl}
+                size="xs"
+              />
 
-                  {/* GE */}
-                  <td className="py-2 px-2 text-right">
-                    <span className="text-gray-400 font-data tabular-nums text-sm">
-                      {captions.ge !== null ? captions.ge.toFixed(2) : '-'}
-                    </span>
-                  </td>
+              {/* Corps name + caption breakdown */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="font-bold text-white text-sm truncate">
+                    {score.corpsName || score.corps}
+                  </span>
+                  <DirectorTag displayName={score.displayName} uid={score.uid} />
+                </div>
+                <CaptionBreakdown captions={captions} />
+              </div>
 
-                  {/* VIS */}
-                  <td className="py-2 px-2 text-right">
-                    <span className="text-gray-400 font-data tabular-nums text-sm">
-                      {captions.vis !== null ? captions.vis.toFixed(2) : '-'}
-                    </span>
-                  </td>
-
-                  {/* MUS */}
-                  <td className="py-2 px-2 text-right">
-                    <span className="text-gray-400 font-data tabular-nums text-sm">
-                      {captions.mus !== null ? captions.mus.toFixed(2) : '-'}
-                    </span>
-                  </td>
-
-                  {/* Total */}
-                  <td className="py-2 px-3 text-right">
-                    <span className="font-bold text-white font-data tabular-nums text-sm">
-                      {(score.score || score.totalScore || 0).toFixed(3)}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              {/* Total */}
+              <span className="flex-shrink-0 font-bold text-white font-data tabular-nums text-base">
+                {(score.score || score.totalScore || 0).toFixed(3)}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -447,119 +429,57 @@ const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
         <span className="text-[10px] text-gray-500">{standings.length} corps</span>
       </div>
 
-      {/* Data Grid */}
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-[#111]">
-              <th className="text-left py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-10">
-                #
-              </th>
-              <th className="text-left py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500">
-                Corps
-              </th>
-              <th className="text-right py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-14">
-                GE
-              </th>
-              <th className="text-right py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-14">
-                VIS
-              </th>
-              <th className="text-right py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-14">
-                MUS
-              </th>
-              <th className="text-right py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-20">
-                Avg
-              </th>
-              <th className="text-center py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-12">
-                +/-
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {standings.map((entry, idx) => {
-              const captions = captionMap.get(idx);
-              const isUserCorps =
-                userCorpsName && entry.corpsName?.toLowerCase() === userCorpsName.toLowerCase();
-              const rowBg = idx % 2 === 0 ? 'bg-[#1a1a1a]' : 'bg-[#111]';
-              const trend = entry.trend?.direction || 0;
+      {/* Data Grid - stacked rows so caption scores never clip off the right */}
+      <div>
+        {standings.map((entry, idx) => {
+          const captions = captionMap.get(idx);
+          const isUserCorps =
+            userCorpsName && entry.corpsName?.toLowerCase() === userCorpsName.toLowerCase();
+          const rowBg = idx % 2 === 0 ? 'bg-[#1a1a1a]' : 'bg-[#111]';
+          const trend = entry.trend?.direction || 0;
 
-              return (
-                <tr key={entry.corpsName || idx} className={rowBg}>
-                  {/* Rank */}
-                  <td className="py-2.5 px-2">
-                    <span className="w-6 h-6 bg-[#222] border border-[#333] flex items-center justify-center text-[10px] font-bold text-gray-400 tabular-nums">
-                      {entry.rank}
-                    </span>
-                  </td>
+          return (
+            <div
+              key={entry.corpsName || idx}
+              className={`${rowBg} flex items-center gap-2.5 px-3 py-2.5 ${
+                isUserCorps ? 'border-l-2 border-l-[#0057B8]' : ''
+              }`}
+            >
+              {/* Rank */}
+              <span className="flex-shrink-0 w-6 h-6 bg-[#222] border border-[#333] flex items-center justify-center text-[10px] font-bold text-gray-400 tabular-nums">
+                {entry.rank}
+              </span>
 
-                  {/* Corps */}
-                  <td className="py-2.5 px-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <TeamAvatar name={entry.corpsName} logoUrl={entry.avatarUrl} size="xs" />
-                      <div className="min-w-0">
-                        <span className="font-bold text-white text-sm block truncate">
-                          {entry.corpsName}
-                        </span>
-                        {entry.displayName &&
-                          (entry.uid ? (
-                            <Link
-                              to={`/profile/${entry.uid}`}
-                              className="text-[10px] text-gray-500 hover:text-[#0057B8] block truncate"
-                            >
-                              {entry.displayName}
-                            </Link>
-                          ) : (
-                            <span className="text-[10px] text-gray-500 block truncate">
-                              {entry.displayName}
-                            </span>
-                          ))}
-                      </div>
-                    </div>
-                  </td>
+              {/* Avatar */}
+              <TeamAvatar name={entry.corpsName} logoUrl={entry.avatarUrl} size="xs" />
 
-                  {/* GE */}
-                  <td className="py-2.5 px-2 text-right">
-                    <span className="text-gray-400 font-data tabular-nums text-sm">
-                      {captions.ge !== null ? captions.ge.toFixed(2) : '-'}
-                    </span>
-                  </td>
+              {/* Corps name + caption breakdown */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="font-bold text-white text-sm truncate">{entry.corpsName}</span>
+                  <DirectorTag displayName={entry.displayName} uid={entry.uid} />
+                </div>
+                <CaptionBreakdown captions={captions} />
+              </div>
 
-                  {/* VIS */}
-                  <td className="py-2.5 px-2 text-right">
-                    <span className="text-gray-400 font-data tabular-nums text-sm">
-                      {captions.vis !== null ? captions.vis.toFixed(2) : '-'}
-                    </span>
-                  </td>
-
-                  {/* MUS */}
-                  <td className="py-2.5 px-2 text-right">
-                    <span className="text-gray-400 font-data tabular-nums text-sm">
-                      {captions.mus !== null ? captions.mus.toFixed(2) : '-'}
-                    </span>
-                  </td>
-
-                  {/* Avg Score */}
-                  <td className="py-2.5 px-2 text-right">
-                    <span className="font-bold text-white font-data tabular-nums text-sm">
-                      {typeof entry.score === 'number' ? entry.score.toFixed(3) : '-'}
-                    </span>
-                  </td>
-
-                  {/* Trend */}
-                  <td className="py-2.5 px-2 text-center">
-                    {trend > 0 ? (
-                      <TrendingUp className="w-3.5 h-3.5 text-green-500 mx-auto" />
-                    ) : trend < 0 ? (
-                      <TrendingDown className="w-3.5 h-3.5 text-red-500 mx-auto" />
-                    ) : (
-                      <span className="text-gray-600 text-xs">-</span>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              {/* Avg score + trend */}
+              <div className="flex-shrink-0 flex items-center gap-2">
+                <span className="font-bold text-white font-data tabular-nums text-base">
+                  {typeof entry.score === 'number' ? entry.score.toFixed(3) : '-'}
+                </span>
+                <span className="w-4 flex items-center justify-center">
+                  {trend > 0 ? (
+                    <TrendingUp className="w-3.5 h-3.5 text-green-500" />
+                  ) : trend < 0 ? (
+                    <TrendingDown className="w-3.5 h-3.5 text-red-500" />
+                  ) : (
+                    <span className="text-gray-600 text-xs">-</span>
+                  )}
+                </span>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
