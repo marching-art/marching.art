@@ -130,3 +130,6 @@ STRIPE_KEYS_SETUP.sh
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Firestore emulator artifacts (firestore-tests/)
+firestore-debug.log
