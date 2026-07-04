@@ -45,6 +45,65 @@ export interface CaptionScoreResult {
   nextShow: NextShow | null;
 }
 
+/** A show the director has registered for, as stored under corps.selectedShows. */
+export interface SelectedShow {
+  day?: number | null;
+  eventName?: string;
+  name?: string;
+  location?: string;
+}
+
+export interface NextSelectedShow {
+  day: number;
+  eventName: string;
+  location: string;
+}
+
+/**
+ * The director's actual next competition.
+ *
+ * A fantasy corps competes as a single unit at the shows its director
+ * registered for (corps.selectedShows), NOT at the real-world dates the
+ * historical source corps competed. Every caption is scored together at each
+ * registered show, so the "next show" is a corps-level fact shared by all
+ * eight lineup slots — not something that varies per caption.
+ *
+ * Flattens every week's selections, keeps shows dated today or later
+ * (a show on the current day has not been scored yet, so it still counts as
+ * upcoming), and returns the soonest one.
+ *
+ * @param selectedShows Map of `week{n}` -> array of registered shows.
+ * @param currentDay The current season day (1-49); when unknown, all dated
+ *   shows are treated as upcoming.
+ * @returns The soonest upcoming registered show, or null if none remain.
+ */
+export function getNextSelectedShow(
+  selectedShows: Record<string, SelectedShow[]> | null | undefined,
+  currentDay: number | null | undefined
+): NextSelectedShow | null {
+  if (!selectedShows) return null;
+
+  const upcoming: NextSelectedShow[] = [];
+  for (const weekShows of Object.values(selectedShows)) {
+    if (!Array.isArray(weekShows)) continue;
+    for (const show of weekShows) {
+      const day = show?.day;
+      if (typeof day !== 'number') continue;
+      // A show on the current day is still upcoming (scored at 2 AM the next day).
+      if (currentDay != null && day < currentDay) continue;
+      upcoming.push({
+        day,
+        eventName: show.eventName || show.name || 'TBD',
+        location: show.location || '',
+      });
+    }
+  }
+
+  if (upcoming.length === 0) return null;
+  upcoming.sort((a, b) => a.day - b.day);
+  return upcoming[0];
+}
+
 /**
  * Get the effective current day for score filtering.
  *

@@ -3,6 +3,7 @@ import {
   getEffectiveDay,
   processCategoryTotals,
   processCaptionScores,
+  getNextSelectedShow,
   type ScoreEvent,
 } from './dashboardScoring';
 
@@ -128,5 +129,78 @@ describe('processCaptionScores', () => {
     const result = processCaptionScores(data, 'Blue Devils', 'GE1', 1);
     expect(result.score).toBe(18.0);
     expect(result.trend).toBeNull();
+  });
+});
+
+describe('getNextSelectedShow', () => {
+  const selectedShows = {
+    week2: [
+      { day: 14, eventName: 'CrownBEAT', location: 'Fort Mill, SC' },
+      { day: 12, eventName: 'Southeastern Championship', location: 'Atlanta, GA' },
+    ],
+    week3: [{ day: 18, eventName: 'Gold Showcase', location: 'Denver, CO' }],
+  };
+
+  it('returns the soonest show on or after the current day', () => {
+    // Current day 13 -> day 12 is past, day 14 is next.
+    expect(getNextSelectedShow(selectedShows, 13)).toEqual({
+      day: 14,
+      eventName: 'CrownBEAT',
+      location: 'Fort Mill, SC',
+    });
+  });
+
+  it("treats a show on the current day as still upcoming (it hasn't scored yet)", () => {
+    expect(getNextSelectedShow(selectedShows, 14)).toEqual({
+      day: 14,
+      eventName: 'CrownBEAT',
+      location: 'Fort Mill, SC',
+    });
+  });
+
+  it('crosses week boundaries to find the next show', () => {
+    expect(getNextSelectedShow(selectedShows, 15)).toEqual({
+      day: 18,
+      eventName: 'Gold Showcase',
+      location: 'Denver, CO',
+    });
+  });
+
+  it('returns null once every registered show is in the past', () => {
+    expect(getNextSelectedShow(selectedShows, 20)).toBeNull();
+  });
+
+  it('returns the earliest show when the current day is unknown', () => {
+    expect(getNextSelectedShow(selectedShows, null)).toEqual({
+      day: 12,
+      eventName: 'Southeastern Championship',
+      location: 'Atlanta, GA',
+    });
+  });
+
+  it('is the same corps-level result regardless of which caption is asked', () => {
+    // The whole lineup competes together, so there is no per-caption variance.
+    const result = getNextSelectedShow(selectedShows, 13);
+    expect(getNextSelectedShow(selectedShows, 13)).toEqual(result);
+  });
+
+  it('handles missing, empty, and undated selections gracefully', () => {
+    expect(getNextSelectedShow(null, 5)).toBeNull();
+    expect(getNextSelectedShow(undefined, 5)).toBeNull();
+    expect(getNextSelectedShow({}, 5)).toBeNull();
+    expect(getNextSelectedShow({ week1: [{ eventName: 'No day field' }] }, 5)).toBeNull();
+  });
+
+  it('falls back to name/TBD and empty location when fields are absent', () => {
+    expect(getNextSelectedShow({ week1: [{ day: 3, name: 'Legacy Name' }] }, 1)).toEqual({
+      day: 3,
+      eventName: 'Legacy Name',
+      location: '',
+    });
+    expect(getNextSelectedShow({ week1: [{ day: 3 }] }, 1)).toEqual({
+      day: 3,
+      eventName: 'TBD',
+      location: '',
+    });
   });
 });
