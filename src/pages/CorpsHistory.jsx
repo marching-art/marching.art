@@ -23,6 +23,8 @@ import { subscribeToProfile } from '../api/profile';
 import { compareCorpsClasses } from '../utils/corps';
 import LoadingScreen from '../components/LoadingScreen';
 import { Line } from '../components/charts';
+import { getSoundSportRating } from '../utils/scoresUtils';
+import { toCanonicalClassKey } from '../utils/classUnlockTime';
 
 const CorpsHistory = () => {
   const { user } = useAuth();
@@ -88,12 +90,34 @@ const CorpsHistory = () => {
   };
 
   const activeCorps = selectedCorpsClass ? corps?.[selectedCorpsClass] : null;
+  // SoundSport is a ratings-only format — its numeric scores must never be
+  // displayed. When the selected corps is SoundSport we surface medal ratings
+  // (Gold/Silver/Bronze/Participation) and best-in-show recognition instead.
+  const isSoundSportView = toCanonicalClassKey(selectedCorpsClass || '') === 'soundSport';
   const seasonHistory = useMemo(() => {
     return (activeCorps?.seasonHistory || []).sort(
       (a, b) => (b.archivedAt?.seconds || 0) - (a.archivedAt?.seconds || 0)
     );
   }, [activeCorps]);
   const hasHistory = seasonHistory.length > 0;
+
+  // Medal tallies + best rating for SoundSport corps, derived from season
+  // scores without ever exposing the numbers themselves.
+  const soundSportRatings = useMemo(() => {
+    const counts = { Gold: 0, Silver: 0, Bronze: 0, Participation: 0 };
+    let bestScore = 0;
+    seasonHistory.forEach((s) => {
+      const score = s.totalSeasonScore || 0;
+      if (score > 0) {
+        counts[getSoundSportRating(score)]++;
+        if (score > bestScore) bestScore = score;
+      }
+    });
+    return { counts, bestRating: bestScore > 0 ? getSoundSportRating(bestScore) : null };
+  }, [seasonHistory]);
+
+  // SoundSport has no line chart of scores; force the timeline view.
+  const effectiveView = isSoundSportView ? 'timeline' : activeView;
 
   // Calculate career stats
   const careerStats = useMemo(
@@ -265,38 +289,75 @@ const CorpsHistory = () => {
                 <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">Shows</p>
                 <p className="text-xl font-mono font-bold text-white">{careerStats.totalShows}</p>
               </div>
-              <div className="bg-[#111] border border-[#333] rounded-sm p-3 text-center">
-                <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">
-                  Total Pts
-                </p>
-                <p className="text-xl font-mono font-bold text-white">
-                  {careerStats.totalPoints.toFixed(3)}
-                </p>
-              </div>
-              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-sm p-3 text-center">
-                <p className="text-[10px] text-yellow-400 uppercase tracking-wide mb-1">
-                  Best Season
-                </p>
-                <p className="text-xl font-mono font-bold text-yellow-400">
-                  {careerStats.bestSeasonScore.toFixed(3)}
-                </p>
-              </div>
-              <div className="bg-[#111] border border-[#333] rounded-sm p-3 text-center">
-                <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">
-                  Best Week
-                </p>
-                <p className="text-xl font-mono font-bold text-white">
-                  {careerStats.bestWeeklyScore.toFixed(3)}
-                </p>
-              </div>
-              <div className="bg-[#111] border border-[#333] rounded-sm p-3 text-center">
-                <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">
-                  Avg Season
-                </p>
-                <p className="text-xl font-mono font-bold text-white">
-                  {careerStats.averageSeasonScore.toFixed(3)}
-                </p>
-              </div>
+              {isSoundSportView ? (
+                <>
+                  <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-sm p-3 text-center">
+                    <p className="text-[10px] text-yellow-400 uppercase tracking-wide mb-1">
+                      Best Rating
+                    </p>
+                    <p className="text-xl font-bold text-yellow-400">
+                      {soundSportRatings.bestRating || '—'}
+                    </p>
+                  </div>
+                  <div className="bg-[#111] border border-[#333] rounded-sm p-3 text-center">
+                    <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">Gold</p>
+                    <p className="text-xl font-mono font-bold text-yellow-400">
+                      {soundSportRatings.counts.Gold}
+                    </p>
+                  </div>
+                  <div className="bg-[#111] border border-[#333] rounded-sm p-3 text-center">
+                    <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">
+                      Silver
+                    </p>
+                    <p className="text-xl font-mono font-bold text-gray-300">
+                      {soundSportRatings.counts.Silver}
+                    </p>
+                  </div>
+                  <div className="bg-[#111] border border-[#333] rounded-sm p-3 text-center">
+                    <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">
+                      Bronze
+                    </p>
+                    <p className="text-xl font-mono font-bold text-orange-400">
+                      {soundSportRatings.counts.Bronze}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="bg-[#111] border border-[#333] rounded-sm p-3 text-center">
+                    <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">
+                      Total Pts
+                    </p>
+                    <p className="text-xl font-mono font-bold text-white">
+                      {careerStats.totalPoints.toFixed(3)}
+                    </p>
+                  </div>
+                  <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-sm p-3 text-center">
+                    <p className="text-[10px] text-yellow-400 uppercase tracking-wide mb-1">
+                      Best Season
+                    </p>
+                    <p className="text-xl font-mono font-bold text-yellow-400">
+                      {careerStats.bestSeasonScore.toFixed(3)}
+                    </p>
+                  </div>
+                  <div className="bg-[#111] border border-[#333] rounded-sm p-3 text-center">
+                    <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">
+                      Best Week
+                    </p>
+                    <p className="text-xl font-mono font-bold text-white">
+                      {careerStats.bestWeeklyScore.toFixed(3)}
+                    </p>
+                  </div>
+                  <div className="bg-[#111] border border-[#333] rounded-sm p-3 text-center">
+                    <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">
+                      Avg Season
+                    </p>
+                    <p className="text-xl font-mono font-bold text-white">
+                      {careerStats.averageSeasonScore.toFixed(3)}
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -311,21 +372,24 @@ const CorpsHistory = () => {
           {/* View Toggle */}
           <div className="flex-shrink-0 flex items-center justify-between p-3 border-b border-[#333] bg-[#111]">
             <div className="flex items-center gap-1">
-              <button
-                onClick={() => setActiveView('chart')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-wide transition-all ${
-                  activeView === 'chart'
-                    ? 'bg-yellow-500/20 text-yellow-400'
-                    : 'text-gray-500/60 hover:text-gray-300'
-                }`}
-              >
-                <Activity className="w-3.5 h-3.5" />
-                Chart
-              </button>
+              {/* SoundSport has no numeric score chart — only the timeline. */}
+              {!isSoundSportView && (
+                <button
+                  onClick={() => setActiveView('chart')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-wide transition-all ${
+                    effectiveView === 'chart'
+                      ? 'bg-yellow-500/20 text-yellow-400'
+                      : 'text-gray-500/60 hover:text-gray-300'
+                  }`}
+                >
+                  <Activity className="w-3.5 h-3.5" />
+                  Chart
+                </button>
+              )}
               <button
                 onClick={() => setActiveView('timeline')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-wide transition-all ${
-                  activeView === 'timeline'
+                  effectiveView === 'timeline'
                     ? 'bg-yellow-500/20 text-yellow-400'
                     : 'text-gray-500/60 hover:text-gray-300'
                 }`}
@@ -351,7 +415,7 @@ const CorpsHistory = () => {
               </div>
             ) : (
               <AnimatePresence mode="wait">
-                {activeView === 'chart' ? (
+                {effectiveView === 'chart' ? (
                   <m.div
                     key="chart"
                     initial={{ opacity: 0 }}
@@ -416,7 +480,11 @@ const CorpsHistory = () => {
                               <div className="flex items-center gap-4 text-xs text-gray-500/60">
                                 <span className="flex items-center gap-1">
                                   <Star className="w-3 h-3" />
-                                  {(season.totalSeasonScore || 0).toFixed(3)} pts
+                                  {isSoundSportView
+                                    ? season.totalSeasonScore > 0
+                                      ? getSoundSportRating(season.totalSeasonScore)
+                                      : '—'
+                                    : `${(season.totalSeasonScore || 0).toFixed(3)} pts`}
                                 </span>
                                 <span className="flex items-center gap-1">
                                   <MapPin className="w-3 h-3" />
@@ -473,13 +541,17 @@ const CorpsHistory = () => {
 
                   {/* Panel Content */}
                   <div className="flex-1 min-h-0 overflow-y-auto hud-scroll p-4 space-y-4">
-                    {/* Final Score */}
+                    {/* Final Score / Rating */}
                     <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-sm p-4 text-center">
                       <p className="text-xs text-yellow-400 uppercase tracking-wide mb-1">
-                        Final Score
+                        {isSoundSportView ? 'Rating' : 'Final Score'}
                       </p>
-                      <p className="text-3xl font-mono font-bold text-yellow-400">
-                        {(season.totalSeasonScore || 0).toFixed(3)}
+                      <p className="text-3xl font-bold text-yellow-400 font-mono">
+                        {isSoundSportView
+                          ? season.totalSeasonScore > 0
+                            ? getSoundSportRating(season.totalSeasonScore)
+                            : '—'
+                          : (season.totalSeasonScore || 0).toFixed(3)}
                       </p>
                     </div>
 
@@ -490,7 +562,11 @@ const CorpsHistory = () => {
                           Best Week
                         </p>
                         <p className="text-xl font-mono font-bold text-white">
-                          {(season.highestWeeklyScore || 0).toFixed(3)}
+                          {isSoundSportView
+                            ? season.highestWeeklyScore > 0
+                              ? getSoundSportRating(season.highestWeeklyScore)
+                              : '—'
+                            : (season.highestWeeklyScore || 0).toFixed(3)}
                         </p>
                       </div>
                       <div className="bg-[#111] border border-[#333] rounded-sm p-3 text-center">
@@ -518,7 +594,11 @@ const CorpsHistory = () => {
                             >
                               <span className="text-xs text-gray-500/60">{week}</span>
                               <span className="text-xs font-mono font-bold text-white">
-                                {(weeklyScores[week] || 0).toFixed(3)}
+                                {isSoundSportView
+                                  ? weeklyScores[week] > 0
+                                    ? getSoundSportRating(weeklyScores[week])
+                                    : '—'
+                                  : (weeklyScores[week] || 0).toFixed(3)}
                               </span>
                             </div>
                           ))}

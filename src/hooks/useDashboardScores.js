@@ -6,11 +6,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { db } from '../api';
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { CAPTIONS } from '../components/Dashboard';
-import {
-  getEffectiveDay,
-  processCategoryTotals,
-  processCaptionScores,
-} from '../utils/dashboardScoring';
+import { getEffectiveDay, processCaptionScores } from '../utils/dashboardScoring';
 
 export function useLineupScores(lineup, currentDay, activeCorpsClass) {
   const [lineupScoreData, setLineupScoreData] = useState({});
@@ -59,25 +55,6 @@ export function useLineupScores(lineup, currentDay, activeCorpsClass) {
         });
         await Promise.all(yearPromises);
 
-        // For SoundSport, pre-compute category totals for each corps/year combo
-        const categoryTotalsCache = {};
-        if (isSoundSport) {
-          Object.values(lineup).forEach((value) => {
-            if (value) {
-              const [corpsName, sourceYear] = value.split('|');
-              const yearData = historicalData[sourceYear];
-              if (yearData) {
-                const cacheKey = `${corpsName}|${sourceYear}`;
-                categoryTotalsCache[cacheKey] = processCategoryTotals(
-                  yearData,
-                  corpsName,
-                  effectiveDay
-                );
-              }
-            }
-          });
-        }
-
         // Process scores for each caption slot
         const scoreData = {};
         CAPTIONS.forEach((caption) => {
@@ -95,31 +72,12 @@ export function useLineupScores(lineup, currentDay, activeCorpsClass) {
             return;
           }
 
-          // For SoundSport, show category totals instead of individual caption scores
+          // SoundSport is a ratings-only format — never surface numeric caption
+          // or category scores (or their deltas) in the lineup table. Only the
+          // next-show scheduling info is kept.
           if (isSoundSport) {
-            const cacheKey = `${corpsName}|${sourceYear}`;
-            const categoryData = categoryTotalsCache[cacheKey] || {};
             const baseData = processCaptionScores(yearData, corpsName, caption.id, effectiveDay);
-
-            // Map caption category to the appropriate total
-            let categoryScore = null;
-            let categoryTrend = null;
-            if (caption.category === 'ge') {
-              categoryScore = categoryData.geTotal;
-              categoryTrend = categoryData.geTrend;
-            } else if (caption.category === 'vis') {
-              categoryScore = categoryData.visTotal;
-              categoryTrend = categoryData.visTrend;
-            } else if (caption.category === 'mus') {
-              categoryScore = categoryData.musTotal;
-              categoryTrend = categoryData.musTrend;
-            }
-
-            scoreData[caption.id] = {
-              score: categoryScore,
-              trend: categoryTrend,
-              nextShow: baseData.nextShow,
-            };
+            scoreData[caption.id] = { score: null, trend: null, nextShow: baseData.nextShow };
           } else {
             // Process scores for this caption (non-SoundSport)
             scoreData[caption.id] = processCaptionScores(

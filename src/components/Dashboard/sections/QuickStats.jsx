@@ -4,11 +4,15 @@
 import React, { memo, useState, useEffect, useMemo } from 'react';
 import { BarChart3, TrendingUp, Calendar, Award, Star, Zap } from 'lucide-react';
 import { useReducedMotion } from '../../../hooks/useReducedMotion';
+import { getSoundSportRating } from '../../../utils/scoresUtils';
 
 const QuickStats = memo(
-  ({ profile, corpsClass: _corpsClass, recentResults, lineupScoreData, lineupCount }) => {
+  ({ profile, corpsClass, recentResults, lineupScoreData, lineupCount }) => {
     const [activeIndex, setActiveIndex] = useState(0);
     const { prefersReducedMotion } = useReducedMotion();
+    // SoundSport is a ratings-only format — surface the best rating tier
+    // instead of the numeric best score.
+    const isSoundSport = corpsClass === 'soundSport';
 
     // Build stats array from available data
     const stats = useMemo(() => {
@@ -29,13 +33,18 @@ const QuickStats = memo(
         });
       }
 
-      // Stat: Best recent result
+      // Stat: Best recent result. SoundSport shows the best rating tier, never
+      // the numeric score.
       if (recentResults?.length > 0) {
         const best = recentResults.reduce((a, b) => (a.score > b.score ? a : b), recentResults[0]);
         items.push({
           icon: <Star className="w-4 h-4 text-yellow-500" />,
-          label: 'Best Recent Score',
-          value: best.score?.toFixed(2) || 'N/A',
+          label: isSoundSport ? 'Best Recent Rating' : 'Best Recent Score',
+          value: isSoundSport
+            ? best.score > 0
+              ? getSoundSportRating(best.score)
+              : 'N/A'
+            : best.score?.toFixed(2) || 'N/A',
           detail: best.eventName || 'Recent show',
           color: 'text-yellow-400',
         });
@@ -93,7 +102,7 @@ const QuickStats = memo(
       }
 
       return items;
-    }, [profile, lineupCount, recentResults, lineupScoreData]);
+    }, [profile, lineupCount, recentResults, lineupScoreData, isSoundSport]);
 
     // Auto-cycle every 5 seconds (paused for reduced-motion users — the dots
     // below remain as manual navigation)

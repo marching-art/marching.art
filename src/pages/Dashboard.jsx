@@ -588,7 +588,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* Daily Predictions - check-back-tomorrow engagement loop */}
-                <PredictionGamePanel recentResults={recentResults} />
+                <PredictionGamePanel recentResults={recentResults} corpsClass={activeCorpsClass} />
               </div>
 
               {/* SIDEBAR (1/3) - Identity, stats & engagement */}

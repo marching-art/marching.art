@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import LoadingScreen from '../components/LoadingScreen';
 import Portal from '../components/Portal';
 import { PageHeader } from '../components/ui';
+import { getSoundSportRating, RATING_CONFIG } from '../utils/scoresUtils';
 
 // Class styling matches the site's design system (see Schedule CLASS_CONFIG):
 // sharp, flat color tints rather than gradients.
@@ -187,6 +188,13 @@ const RetiredCorpsGallery = () => {
             <AnimatePresence>
               {filteredCorps.map((corps, index) => {
                 const config = getClassConfig(corps.corpsClass);
+                // SoundSport is ratings-only — surface the best rating tier
+                // instead of the numeric best score.
+                const isSoundSport = corps.corpsClass === 'soundSport';
+                const bestRating =
+                  isSoundSport && corps.bestSeasonScore > 0
+                    ? getSoundSportRating(corps.bestSeasonScore)
+                    : null;
                 return (
                   <m.div
                     key={`${corps.corpsClass}-${corps.originalIndex}`}
@@ -243,9 +251,19 @@ const RetiredCorpsGallery = () => {
                               Best
                             </span>
                           </div>
-                          <div className="text-xl font-bold text-white font-data tabular-nums">
-                            {corps.bestSeasonScore?.toFixed(1) || '0.0'}
-                          </div>
+                          {isSoundSport ? (
+                            <div
+                              className={`inline-block text-xs font-bold uppercase px-2 py-1 rounded-sm ${
+                                bestRating ? RATING_CONFIG[bestRating].badge : 'text-gray-500'
+                              }`}
+                            >
+                              {bestRating || '—'}
+                            </div>
+                          ) : (
+                            <div className="text-xl font-bold text-white font-data tabular-nums">
+                              {corps.bestSeasonScore?.toFixed(1) || '0.0'}
+                            </div>
+                          )}
                         </div>
 
                         <div className="bg-[#111] border border-[#333] rounded-sm p-3">
@@ -355,9 +373,17 @@ const RetiredCorpsGallery = () => {
                         <div className="text-[10px] text-gray-500 uppercase tracking-wider">
                           Best
                         </div>
-                        <div className="text-base font-bold text-white font-data tabular-nums">
-                          {selectedCorps.bestSeasonScore?.toFixed(1)}
-                        </div>
+                        {selectedCorps.corpsClass === 'soundSport' ? (
+                          <div className="text-base font-bold text-white">
+                            {selectedCorps.bestSeasonScore > 0
+                              ? getSoundSportRating(selectedCorps.bestSeasonScore)
+                              : '—'}
+                          </div>
+                        ) : (
+                          <div className="text-base font-bold text-white font-data tabular-nums">
+                            {selectedCorps.bestSeasonScore?.toFixed(1)}
+                          </div>
+                        )}
                       </div>
                       <div className="text-center">
                         <div className="text-[10px] text-gray-500 uppercase tracking-wider">
