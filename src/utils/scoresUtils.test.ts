@@ -48,6 +48,25 @@ describe('seededShuffle', () => {
     seededShuffle(input, 'x');
     expect(input).toEqual(copy);
   });
+
+  it('does not systematically park the first element at the bottom', () => {
+    // SoundSport scores arrive sorted descending, so the best-in-show entry is
+    // at index 0. A biased shuffle used to reliably drop index 0 into the last
+    // slot for even-sized groups, making best-in-show always appear last.
+    // Guard against that by checking the landing position is well distributed.
+    for (const n of [4, 6, 8]) {
+      const seq = Array.from({ length: n }, (_, i) => n - i); // n..1, top = index 0
+      const positions = Array.from({ length: n }, () => 0);
+      const trials = 500;
+      for (let s = 0; s < trials; s++) {
+        const out = seededShuffle(seq, `Event ${s} SoundSport Showcase ${s * 7}`);
+        positions[out.indexOf(n)]++;
+      }
+      // With no bias each position gets ~trials/n. The old bug put >90% in the
+      // last slot; assert the last slot stays well under a third.
+      expect(positions[n - 1] / trials).toBeLessThan(0.33);
+    }
+  });
 });
 
 describe('getCaptionBreakdown', () => {
