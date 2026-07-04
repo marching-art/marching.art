@@ -36,17 +36,37 @@ export function getSoundSportRating(score: number): SoundSportRating {
 /**
  * Deterministic Fisher-Yates shuffle seeded by a string, so a given show always
  * renders its entries in the same order.
+ *
+ * Uses an xmur3 string hash to seed a mulberry32 PRNG, drawing each swap index
+ * from the generator's high bits via a float in [0, 1). An earlier version
+ * seeded a raw LCG and took `hash % (i + 1)`; because an LCG's low bits are
+ * barely random, that reliably swapped index 0 into the last slot for even-
+ * sized groups — which, since scores arrive sorted descending, parked the
+ * best-in-show entry at the bottom of every show. Drawing from the high bits
+ * removes that bias and produces a uniformly distributed order.
  */
 export function seededShuffle<T>(array: readonly T[], seed: string): T[] {
   const shuffled = [...array];
-  let hash = 0;
+
+  // xmur3: derive a well-mixed 32-bit seed from the string.
+  let h = 1779033703 ^ seed.length;
   for (let i = 0; i < seed.length; i++) {
-    hash = (hash << 5) - hash + seed.charCodeAt(i);
-    hash = hash & hash;
+    h = Math.imul(h ^ seed.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
   }
+  let state = (Math.imul(h ^ (h >>> 16), 2246822507) ^ h) >>> 0;
+
+  // mulberry32: fast PRNG with well-distributed high bits.
+  const nextFloat = () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+
   for (let i = shuffled.length - 1; i > 0; i--) {
-    hash = (hash * 1103515245 + 12345) & 0x7fffffff;
-    const j = hash % (i + 1);
+    const j = Math.floor(nextFloat() * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   return shuffled;
