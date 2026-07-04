@@ -220,11 +220,7 @@ export const calculateCaptionRanks = (scores) => {
  * Main hook for scores data
  */
 export const useScoresData = (options = {}) => {
-  const {
-    seasonId = null,
-    classFilter = 'all',
-    disableArchiveFallback = false,
-  } = options;
+  const { seasonId = null, classFilter = 'all', disableArchiveFallback = false } = options;
 
   const currentSeasonUid = useSeasonStore((state) => state.seasonUid);
   const currentSeasonData = useSeasonStore((state) => state.seasonData);

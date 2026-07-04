@@ -6,17 +6,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import {
-  Users,
-  Trophy,
-  Plus,
-  Search,
-  Crown,
-  X,
-  Zap,
-  ChevronRight,
-  Swords,
-} from 'lucide-react';
+import { Users, Trophy, Plus, Search, Crown, X, Zap, ChevronRight, Swords } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import {

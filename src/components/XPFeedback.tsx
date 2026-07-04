@@ -20,23 +20,6 @@ interface FeedbackItem {
 }
 
 // =============================================================================
-// GLOBAL EVENT SYSTEM
-// =============================================================================
-
-export const triggerXPFeedback = (amount: number, type: 'xp' | 'coin' = 'xp', message?: string) => {
-  const event = new CustomEvent('xp-feedback', {
-    detail: { amount, type, message },
-  });
-  window.dispatchEvent(event);
-};
-
-// Convenience helpers
-export const showXPGain = (amount: number, message?: string) =>
-  triggerXPFeedback(amount, 'xp', message);
-export const showCoinGain = (amount: number, message?: string) =>
-  triggerXPFeedback(amount, 'coin', message);
-
-// =============================================================================
 // FEEDBACK ITEM COMPONENT
 // =============================================================================
 

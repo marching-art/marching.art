@@ -3,17 +3,7 @@
 
 import React from 'react';
 import { m } from 'framer-motion';
-import {
-  Trophy,
-  TrendingUp,
-  Zap,
-  Target,
-  Check,
-  X,
-  Minus,
-  Flame,
-  Award,
-} from 'lucide-react';
+import { Trophy, TrendingUp, Zap, Target, Check, X, Minus, Flame, Award } from 'lucide-react';
 
 // Battle type icons and labels
 const BATTLE_INFO = {
