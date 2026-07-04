@@ -73,6 +73,12 @@ describe('HallOfChampions — SoundSport division', () => {
     expect(screen.getAllByText('Gold').length).toBeGreaterThan(0);
     // Rating-based framing, not "Champion".
     expect(screen.queryByText(/2025 Champion/i)).not.toBeInTheDocument();
+
+    // SoundSport is ratings-only: the raw numeric scores must NEVER be rendered
+    // (plaque, stats strip, finalists table, or the season sidebar row).
+    expect(screen.queryByText(/92\.3/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/78\.0/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/60\.0/)).not.toBeInTheDocument();
   });
 });
 

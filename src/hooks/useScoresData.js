@@ -371,14 +371,19 @@ export const useScoresData = (options = {}) => {
       return { recentShows: 0, topScore: '-', corpsActive: 0, avgScore: '0.000' };
     }
 
-    // Single pass: collect all scores and unique corps
+    // Single pass: collect all scores and unique corps.
+    // SoundSport is a ratings-only format — its numeric scores must never be
+    // surfaced, so exclude them from the top/avg score stats (they would
+    // otherwise leak an exact SoundSport score via the "High" figure). Corps
+    // still count toward the active-corps tally.
     const allScores = [];
     const uniqueCorps = new Set();
 
     for (const show of allShows) {
       for (const s of show.scores) {
-        allScores.push(s.score);
         uniqueCorps.add(s.corps);
+        if (s.corpsClass === 'soundSport') continue;
+        allScores.push(s.score);
       }
     }
 

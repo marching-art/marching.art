@@ -106,8 +106,12 @@ const buildQuestions = (recentResults) => {
 // Component
 // ---------------------------------------------------------------------------
 
-const PredictionGamePanel = memo(({ recentResults }) => {
+const PredictionGamePanel = memo(({ recentResults, corpsClass }) => {
   const { trigger: haptic } = useHaptic();
+  // SoundSport is a ratings-only format — its numeric scores must never be
+  // shown, and the score-based prediction prompts reveal them, so the panel
+  // is disabled entirely for SoundSport corps.
+  const isSoundSport = corpsClass === 'soundSport';
   const today = getToday();
   const [preds, setPreds] = useState(() => loadPredictions(today));
   const [stats, setStats] = useState(() => loadStats());
@@ -121,8 +125,11 @@ const PredictionGamePanel = memo(({ recentResults }) => {
     }
   }, []);
 
-  // Generate questions from current data
-  const questions = useMemo(() => buildQuestions(recentResults), [recentResults]);
+  // Generate questions from current data (never for SoundSport)
+  const questions = useMemo(
+    () => (isSoundSport ? [] : buildQuestions(recentResults)),
+    [recentResults, isSoundSport]
+  );
 
   // Resolve predictions when new results arrive
   useEffect(() => {

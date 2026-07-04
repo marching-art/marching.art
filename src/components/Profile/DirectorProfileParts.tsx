@@ -31,6 +31,8 @@ import type {
   DirectorSocialLinks,
 } from '../../types';
 import { formatSeasonName } from '../../utils/season';
+import { toCanonicalClassKey } from '../../utils/classUnlockTime';
+import { getSoundSportRating } from '../../utils/scoresUtils';
 import {
   TIER_STYLES,
   STATUS_INDICATORS,
@@ -139,6 +141,10 @@ const SeasonRow = memo(
     const classConfig = getClassDisplay(season.classKey);
     const score = season.finalScore || season.totalSeasonScore || 0;
     const placement = season.placement;
+    // SoundSport is a ratings-only format: never display the numeric score,
+    // only the earned rating tier (Gold / Silver / Bronze / Participation).
+    const isSoundSport = toCanonicalClassKey(season.classKey) === 'soundSport';
+    const rating = isSoundSport && score > 0 ? getSoundSportRating(score) : null;
 
     return (
       <div className="border-b border-[#333] last:border-b-0">
@@ -178,11 +184,17 @@ const SeasonRow = memo(
             </span>
           </div>
 
-          {/* Score */}
+          {/* Score (SoundSport shows its rating tier, never the numeric score) */}
           <div className="text-right">
-            <span className="text-xs font-bold text-white font-data">
-              {score > 0 ? score.toLocaleString() : '-'}
-            </span>
+            {isSoundSport ? (
+              <span className="text-[10px] font-bold uppercase tracking-wider text-orange-400">
+                {rating || '-'}
+              </span>
+            ) : (
+              <span className="text-xs font-bold text-white font-data">
+                {score > 0 ? score.toLocaleString() : '-'}
+              </span>
+            )}
           </div>
 
           <ChevronRight
@@ -208,12 +220,21 @@ const SeasonRow = memo(
                   <div className="text-[9px] text-gray-500">Pts</div>
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-white">
-                    {score > 0 && season.showsAttended
-                      ? (score / season.showsAttended).toFixed(1)
-                      : '-'}
-                  </div>
-                  <div className="text-[9px] text-gray-500">Avg</div>
+                  {isSoundSport ? (
+                    <>
+                      <div className="text-xs font-bold text-orange-400">{rating || '-'}</div>
+                      <div className="text-[9px] text-gray-500">Rating</div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-xs font-bold text-white">
+                        {score > 0 && season.showsAttended
+                          ? (score / season.showsAttended).toFixed(1)
+                          : '-'}
+                      </div>
+                      <div className="text-[9px] text-gray-500">Avg</div>
+                    </>
+                  )}
                 </div>
               </div>
             </m.div>
