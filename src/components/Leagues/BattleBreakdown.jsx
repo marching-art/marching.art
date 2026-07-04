@@ -11,14 +11,9 @@ import {
   Check,
   X,
   Minus,
-  Crown,
   Flame,
   Award,
 } from 'lucide-react';
-import { GAME_CONFIG } from '../../config';
-
-// Caption display names
-const CAPTION_NAMES = GAME_CONFIG.captionNames;
 
 // Battle type icons and labels
 const BATTLE_INFO = {
@@ -33,14 +28,14 @@ const BATTLE_INFO = {
 export const BattleScoreHeader = ({
   homeBattlePoints,
   awayBattlePoints,
-  homeUserId,
-  awayUserId,
-  currentUserId,
-  homeDisplayName,
-  awayDisplayName,
+  homeUserId: _homeUserId,
+  awayUserId: _awayUserId,
+  currentUserId: _currentUserId,
+  homeDisplayName: _homeDisplayName,
+  awayDisplayName: _awayDisplayName,
   isClutch,
   isBlowout,
-  winnerId,
+  winnerId: _winnerId,
 }) => {
   const homeWins = homeBattlePoints > awayBattlePoints;
   const awayWins = awayBattlePoints > homeBattlePoints;
@@ -109,10 +104,9 @@ const BattleRow = ({
   icon: Icon,
   color = 'cream',
   delay = 0,
-  showDiff = true,
+  showDiff: _showDiff = true,
 }) => {
   const isTie = !homeWins && !awayWins;
-  const diff = Math.abs(homeValue - awayValue);
 
   const colorClasses = {
     gold: 'text-yellow-400',
@@ -304,7 +298,7 @@ export const BattleSummaryBar = ({
   awayBattlePoints,
   maxPoints = 11,
   homeColor = 'purple',
-  awayColor = 'cream',
+  awayColor: _awayColor = 'cream',
 }) => {
   const homePercent = (homeBattlePoints / maxPoints) * 100;
   const awayPercent = (awayBattlePoints / maxPoints) * 100;

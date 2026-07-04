@@ -25,7 +25,6 @@ import {
   Coins,
   Play,
 } from 'lucide-react';
-import YouTubeIcon from '../components/YouTubeIcon';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import { useProfileStore } from '../store/profileStore';
@@ -33,16 +32,14 @@ import NewsFeed from '../components/Landing/NewsFeed';
 import HeroBanner from '../components/Landing/HeroBanner';
 import HowItWorks from '../components/Landing/HowItWorks';
 import SocialProofBar from '../components/Landing/SocialProofBar';
-import UrgencyBanner, { LiveIndicator } from '../components/Landing/UrgencyBanner';
+import UrgencyBanner from '../components/Landing/UrgencyBanner';
 import CommunityPulse from '../components/Landing/CommunityPulse';
-import JargonTooltip from '../components/JargonTooltip';
 import {
   LiveScoresBox,
   FantasyTrendingBox,
   StandingsModal,
   YouTubeModal,
 } from '../components/Sidebar';
-import { useTooltipPreference } from '../hooks/useTooltipPreference';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useTickerData } from '../hooks/useTickerData';
 import { useLandingScores } from '../hooks/useLandingScores';
@@ -66,10 +63,6 @@ const Landing = () => {
   // New visitors see educational content; returning visitors get data-focused view
   const { isFirstVisit, isLoading: isFirstVisitLoading, markAsReturning } = useFirstVisit();
 
-  // Tooltip preferences for jargon definitions
-  // Enabled by default for new users, auto-disables after 7 days
-  const { tooltipsEnabled } = useTooltipPreference();
-
   // Stagger secondary data loading to prioritize news feed on initial paint
   // Ticker and scores data loads after a brief delay to reduce bandwidth contention
   const [secondaryDataEnabled, setSecondaryDataEnabled] = useState(false);
@@ -91,7 +84,6 @@ const Landing = () => {
   const {
     tickerData,
     loading: tickerLoading,
-    hasData: hasTickerData,
   } = useTickerData({ enabled: secondaryDataEnabled });
   const {
     liveScores,
@@ -143,7 +135,7 @@ const Landing = () => {
     try {
       await signOut();
       toast.success('Signed out successfully');
-    } catch (err) {
+    } catch {
       toast.error('Failed to sign out');
     }
   };

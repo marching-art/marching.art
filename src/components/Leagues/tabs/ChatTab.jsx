@@ -5,7 +5,7 @@ import React, { useRef, useEffect } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import { MessageSquare, Clock, Crown } from 'lucide-react';
 
-const ChatTab = ({ league, messages, userProfile, memberProfiles, isCommissioner = false }) => {
+const ChatTab = ({ league, messages, userProfile, memberProfiles, isCommissioner: _isCommissioner = false }) => {
   const messagesEndRef = useRef(null);
 
   // Auto-scroll to bottom on new messages

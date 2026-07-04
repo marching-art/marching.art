@@ -18,7 +18,7 @@ import { useUrgencyTriggers } from '../../hooks/useUrgencyTriggers';
 // =============================================================================
 
 const HeroBanner = ({ onDismiss }) => {
-  const { primary, isLiveShowDay, weeksRemaining, seasonType } = useUrgencyTriggers();
+  const { primary } = useUrgencyTriggers();
 
   return (
     <AnimatePresence>

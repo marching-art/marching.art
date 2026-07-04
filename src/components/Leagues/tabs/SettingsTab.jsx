@@ -38,12 +38,12 @@ const CORPS_CLASS_CONFIG = {
   soundSport: { name: 'SoundSport', icon: Zap, color: 'text-green-500', bg: 'bg-green-500/10' },
 };
 
-const SettingsTab = ({ league, userProfile, currentWeek = 1, onBack }) => {
+const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBack }) => {
   const [inviteCopied, setInviteCopied] = useState(false);
   const [selectedWeek, setSelectedWeek] = useState(currentWeek);
   const [generating, setGenerating] = useState(false);
   const [existingMatchups, setExistingMatchups] = useState({});
-  const [checkingMatchups, setCheckingMatchups] = useState(true);
+  const [_checkingMatchups, setCheckingMatchups] = useState(true);
   const [lastGeneratedResult, setLastGeneratedResult] = useState(null);
 
   // Check which weeks have matchups already
@@ -126,19 +126,6 @@ const SettingsTab = ({ league, userProfile, currentWeek = 1, onBack }) => {
     } finally {
       setGenerating(false);
     }
-  };
-
-  // Count matchups by class
-  const getMatchupCounts = (weekData) => {
-    if (!weekData) return null;
-    const counts = {};
-    Object.entries(CORPS_CLASS_CONFIG).forEach(([key]) => {
-      const matchups = weekData[`${key}Matchups`] || [];
-      if (matchups.length > 0) {
-        counts[key] = matchups.length;
-      }
-    });
-    return Object.keys(counts).length > 0 ? counts : null;
   };
 
   const weekHasMatchups = existingMatchups[selectedWeek];

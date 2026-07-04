@@ -3,7 +3,7 @@
 // =============================================================================
 
 import React from 'react';
-import { Unlock, X, Plus } from 'lucide-react';
+import { Unlock, Plus } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 

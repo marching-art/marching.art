@@ -223,7 +223,6 @@ export const useScoresData = (options = {}) => {
   const {
     seasonId = null,
     classFilter = 'all',
-    enabledCaptions = { ge: true, vis: true, mus: true },
     disableArchiveFallback = false,
   } = options;
 

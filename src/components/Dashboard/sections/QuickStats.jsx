@@ -5,7 +5,7 @@ import React, { memo, useState, useEffect, useMemo } from 'react';
 import { BarChart3, TrendingUp, Calendar, Award, Star, Zap } from 'lucide-react';
 import { useReducedMotion } from '../../../hooks/useReducedMotion';
 
-const QuickStats = memo(({ profile, corpsClass, recentResults, lineupScoreData, lineupCount }) => {
+const QuickStats = memo(({ profile, corpsClass: _corpsClass, recentResults, lineupScoreData, lineupCount }) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const { prefersReducedMotion } = useReducedMotion();
 

@@ -167,7 +167,7 @@ const RegistrationBadges = ({ show, userProfile }) => {
   if (!userProfile?.corps) return null;
 
   const registeredCorps = Object.entries(userProfile.corps)
-    .filter(([corpsClass, corpsData]) => {
+    .filter(([_corpsClass, corpsData]) => {
       if (!corpsData) return false;
       const weekKey = `week${show.week}`;
       const selectedShows = corpsData.selectedShows?.[weekKey] || [];
@@ -302,7 +302,7 @@ const ShowCard = ({
 // DAY INDICATOR COMPONENT
 // =============================================================================
 
-const DayIndicator = ({ date, dayNumber }) => {
+const DayIndicator = ({ date, dayNumber: _dayNumber }) => {
   if (!date) return null;
 
   const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'short' });
@@ -418,7 +418,7 @@ const ShowsList = ({ shows, userProfile, formatDate, getActualDate, onRegister, 
 // CHAMPIONSHIP WEEK DISPLAY COMPONENT
 // =============================================================================
 
-const ChampionshipEventCard = ({ event, userProfile, getActualDate, seasonUid }) => {
+const ChampionshipEventCard = ({ event, userProfile, getActualDate, seasonUid: _seasonUid }) => {
   const date = getActualDate(event.day);
   const isPast = isEventPast(date);
   const formattedDate = date
@@ -675,8 +675,6 @@ const Schedule = () => {
 
   // Schedule store - pre-computed data from global listener
   const showsByWeek = useScheduleStore((state) => state.showsByWeek);
-  const showsByDay = useScheduleStore((state) => state.showsByDay);
-  const showCountsByWeek = useScheduleStore((state) => state.showCountsByWeek);
   const scheduleLoading = useScheduleStore((state) => state.loading);
 
   // Initialize selected week to current week

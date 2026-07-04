@@ -168,7 +168,7 @@ const MEDAL_COLORS = {
 };
 
 const TickerBar = () => {
-  const { tickerData, captionStats, loading, hasData } = useTickerData();
+  const { tickerData, loading, hasData } = useTickerData();
   const [activeSection, setActiveSection] = useState(0);
   const scrollRef = useRef(null);
   const { prefersReducedMotion } = useReducedMotion();

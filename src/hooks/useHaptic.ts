@@ -171,7 +171,7 @@ export const useHaptic = (options: UseHapticOptions = {}): UseHapticReturn => {
  * @param handler - The original event handler
  * @param pattern - The haptic pattern to trigger
  */
-export const withHaptic = <T extends (...args: any[]) => any>(
+export const withHaptic = <T extends (...args: never[]) => unknown>(
   handler: T,
   pattern: HapticPattern | number | number[] = 'light'
 ): T => {

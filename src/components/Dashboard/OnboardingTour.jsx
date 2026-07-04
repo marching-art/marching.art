@@ -1,7 +1,7 @@
 // src/components/Dashboard/OnboardingTour.jsx
 // Contextual tooltips for first-time dashboard visitors
 import React, { useState, useEffect } from 'react';
-import { m, AnimatePresence } from 'framer-motion';
+import { m } from 'framer-motion';
 import {
   X,
   ChevronRight,
@@ -11,7 +11,6 @@ import {
   Calendar,
   Users,
   Music,
-  HelpCircle,
 } from 'lucide-react';
 
 const TOUR_STEPS = [

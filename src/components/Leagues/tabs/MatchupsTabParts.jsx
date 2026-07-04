@@ -80,7 +80,6 @@ const SeasonScheduleOverview = ({
             const isSelected = selectedWeek === week;
             const isCurrent = week === currentWeek;
             const isPast = week < currentWeek;
-            const isFuture = week > currentWeek;
 
             return (
               <button
@@ -216,12 +215,12 @@ const YourSeasonHistory = ({ userMatchupHistory, memberProfiles, userProfile, on
 
 // Head to Head Section - Shows record against each opponent
 const HeadToHeadSection = ({
-  standings,
+  standings: _standings,
   memberProfiles,
   userProfile,
   weeklyMatchups,
   weeklyResults,
-  onSelectOpponent,
+  onSelectOpponent: _onSelectOpponent,
 }) => {
   // Calculate head-to-head records
   const h2hRecords = useMemo(() => {

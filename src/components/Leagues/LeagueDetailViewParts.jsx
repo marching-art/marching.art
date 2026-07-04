@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 import { postLeagueMessageCF as postLeagueMessage } from '../../api/functions';
 
 // Quick Smack Talk Input - Compact inline form
-export const SmackTalkInput = ({ leagueId, userProfile, disabled = false }) => {
+export const SmackTalkInput = ({ leagueId, userProfile: _userProfile, disabled = false }) => {
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
 

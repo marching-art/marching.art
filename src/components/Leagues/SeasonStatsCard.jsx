@@ -14,7 +14,6 @@ import {
   Award,
   Medal,
   X,
-  ChevronRight,
   BarChart3,
 } from 'lucide-react';
 import { GAME_CONFIG } from '../../config';
@@ -49,7 +48,7 @@ const StatRow = ({ label, value, subValue, icon: Icon, color = 'cream' }) => {
 /**
  * Caption win rate bar
  */
-const CaptionBar = ({ caption, winRate, avgDiff, isStrength, isWeakness }) => {
+const CaptionBar = ({ caption, winRate, avgDiff: _avgDiff, isStrength, isWeakness }) => {
   const percentage = winRate * 100;
 
   return (
@@ -134,14 +133,11 @@ const SeasonStatsCard = ({
     ties,
     winPercentage,
     totalBattlePointsFor,
-    totalBattlePointsAgainst,
     avgBattlePointsFor,
     avgBattlePointsAgainst,
     captionWinRates,
     bestCaption,
-    bestCaptionWinRate,
     worstCaption,
-    worstCaptionWinRate,
     totalScoreBattlesWon,
     highSingleBattlesWon,
     momentumBattlesWon,
@@ -151,9 +147,6 @@ const SeasonStatsCard = ({
     currentStreak,
     currentStreakType,
     longestWinStreak,
-    longestLossStreak,
-    bestWeek,
-    worstWeek,
   } = stats;
 
   const totalMatchups = wins + losses + ties;

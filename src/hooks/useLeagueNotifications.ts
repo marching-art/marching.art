@@ -2,7 +2,7 @@
 // Provides real-time notifications, unread counts, and rivalry detection
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   collection,
   doc,
@@ -14,13 +14,12 @@ import {
   writeBatch,
   Timestamp,
   getDocs,
-  getDoc,
   setDoc,
   updateDoc,
 } from 'firebase/firestore';
 import { db, paths } from '../api/client';
 import { queryKeys } from '../lib/queryClient';
-import type { LeagueNotification, LeagueActivity, RivalryData, League } from '../types';
+import type { LeagueNotification, LeagueActivity, RivalryData } from '../types';
 
 // =============================================================================
 // TYPES

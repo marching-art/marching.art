@@ -12,11 +12,9 @@ import {
   Medal,
   ChevronRight,
   ChevronDown,
-  Star,
   Clock,
   Users,
   Target,
-  Sparkles,
   BookOpen,
   Play,
   Trophy,
@@ -32,21 +30,6 @@ const KEY_STATS = [
   { label: 'Time', value: '5-7 min', icon: Clock },
   { label: 'Members', value: '5+', icon: Users },
   { label: 'Judges', value: '3', icon: Target },
-];
-
-const QUICK_TIPS = [
-  {
-    icon: Star,
-    title: 'Rating System',
-    tip: 'Earn Gold (90+), Silver (75+), or Bronze (60+) ratings.',
-  },
-];
-
-const ADJUDICATION_FOCUS = [
-  { label: 'Audience Engagement', icon: Sparkles },
-  { label: 'Entertainment Value', icon: Star },
-  { label: 'Creative Concept', icon: Target },
-  { label: 'Proficiency', icon: Trophy },
 ];
 
 // =============================================================================

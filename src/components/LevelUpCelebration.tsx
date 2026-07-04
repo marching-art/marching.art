@@ -23,7 +23,7 @@ interface LevelUpData {
 // LAZY CONFETTI
 // =============================================================================
 
-let confettiModule: any = null;
+let confettiModule: typeof import('canvas-confetti')['default'] | null = null;
 
 const triggerLevelUpConfetti = async () => {
   if (!confettiModule) {

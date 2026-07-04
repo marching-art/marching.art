@@ -3,7 +3,7 @@
 import React, { startTransition } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { m } from 'framer-motion';
-import { Home, ArrowLeft, Search, AlertTriangle } from 'lucide-react';
+import { Home, ArrowLeft, AlertTriangle } from 'lucide-react';
 import { useShouldReduceMotion } from '../hooks/useReducedMotion';
 import { useSEO } from '../hooks/useSEO';
 

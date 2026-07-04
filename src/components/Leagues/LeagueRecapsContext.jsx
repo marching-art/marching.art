@@ -2,7 +2,7 @@
 // OPTIMIZATION: Prevents duplicate Firestore queries when navigating between
 // LeagueDetailView and MatchupDetailView (was 2+ queries, now 1)
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getSeasonData, getSeasonRecaps } from '../../api/season';
 
 const LeagueRecapsContext = createContext(null);

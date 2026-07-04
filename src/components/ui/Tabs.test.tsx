@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { Trophy, Star, Settings } from 'lucide-react';
+import { Trophy, Star } from 'lucide-react';
 import { Tabs, TabsList, TabTrigger, TabContent, SimpleTabs } from './Tabs';
 
 describe('Tabs', () => {

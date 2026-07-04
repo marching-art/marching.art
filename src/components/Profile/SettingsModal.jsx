@@ -108,10 +108,14 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
     checkPushSupport();
   }, []);
 
+  // Load settings when the modal opens or the user changes. `loadSettings` is
+  // intentionally excluded: it is recreated every render, so depending on it
+  // would reload on every render.
   useEffect(() => {
     if (isOpen && user) {
       loadSettings();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, user]);
 
   const loadSettings = async () => {
@@ -275,7 +279,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
       await signOut();
       toast.success('Signed out');
       onClose();
-    } catch (error) {
+    } catch {
       toast.error('Failed to sign out');
     }
   };

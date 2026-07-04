@@ -56,7 +56,7 @@ export function useTooltipPreference() {
           }
         }
       }
-    } catch (e) {
+    } catch {
       // localStorage unavailable - default to enabled
       console.warn('localStorage unavailable for tooltip preferences');
     } finally {
@@ -69,7 +69,7 @@ export function useTooltipPreference() {
     try {
       localStorage.setItem(STORAGE_KEY_ENABLED, enabled.toString());
       setTooltipsEnabledState(enabled);
-    } catch (e) {
+    } catch {
       console.warn('Could not save tooltip preference');
       setTooltipsEnabledState(enabled);
     }

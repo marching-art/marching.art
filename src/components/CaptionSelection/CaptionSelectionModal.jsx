@@ -2,7 +2,7 @@
 // CAPTION SELECTION MODAL - CONSOLIDATED CAPTION-FOCUSED DESIGN
 // =============================================================================
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Check, AlertCircle, Trophy, Save, Target, Award, X, ArrowLeft, Wand2 } from 'lucide-react';
 import { getProfile } from '../../api/profile';
 import { getSeasonData, getCorpsValues } from '../../api/season';
@@ -62,16 +62,19 @@ const CaptionSelectionModal = ({
   // Close on Escape key
   useEscapeKey(onClose);
 
-  const captions = [
-    { id: 'GE1', name: 'General Effect 1', category: 'General Effect' },
-    { id: 'GE2', name: 'General Effect 2', category: 'General Effect' },
-    { id: 'VP', name: 'Visual Proficiency', category: 'Visual' },
-    { id: 'VA', name: 'Visual Analysis', category: 'Visual' },
-    { id: 'CG', name: 'Color Guard', category: 'Visual' },
-    { id: 'B', name: 'Brass', category: 'Music' },
-    { id: 'MA', name: 'Music Analysis', category: 'Music' },
-    { id: 'P', name: 'Percussion', category: 'Music' },
-  ];
+  const captions = useMemo(
+    () => [
+      { id: 'GE1', name: 'General Effect 1', category: 'General Effect' },
+      { id: 'GE2', name: 'General Effect 2', category: 'General Effect' },
+      { id: 'VP', name: 'Visual Proficiency', category: 'Visual' },
+      { id: 'VA', name: 'Visual Analysis', category: 'Visual' },
+      { id: 'CG', name: 'Color Guard', category: 'Visual' },
+      { id: 'B', name: 'Brass', category: 'Music' },
+      { id: 'MA', name: 'Music Analysis', category: 'Music' },
+      { id: 'P', name: 'Percussion', category: 'Music' },
+    ],
+    []
+  );
 
   const pointLimits = { soundSport: 90, aClass: 60, openClass: 120, worldClass: 150 };
   const pointLimit = pointLimits[corpsClass];
@@ -88,7 +91,7 @@ const CaptionSelectionModal = ({
     if (saved) {
       try {
         setTemplates(JSON.parse(saved));
-      } catch (e) {}
+      } catch {}
     }
   }, [user?.uid, corpsClass]);
 
@@ -188,7 +191,7 @@ const CaptionSelectionModal = ({
           corps.sort((a, b) => b.points - a.points);
           setAvailableCorps(corps);
         }
-      } catch (e) {
+      } catch {
         toast.error('Failed to load corps data');
       } finally {
         if (!cancelled) setLoading(false);

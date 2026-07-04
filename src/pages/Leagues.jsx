@@ -15,9 +15,7 @@ import {
   X,
   Zap,
   ChevronRight,
-  TrendingUp,
   Swords,
-  MessageCircle,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';

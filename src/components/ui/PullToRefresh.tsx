@@ -112,8 +112,6 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
     if (!isPulling.current) return;
     isPulling.current = false;
 
-    const currentPull = pullDistance.get();
-
     if (canRefresh && !isRefreshing && !disabled) {
       // Trigger refresh with haptic feedback
       triggerHaptic('pull');

@@ -92,7 +92,7 @@ const ShowSelectionStep = ({
     (show) => {
       if (!localUserProfile?.corps) return [];
       return Object.entries(localUserProfile.corps)
-        .filter(([corpsClass, corpsData]) => {
+        .filter(([_corpsClass, corpsData]) => {
           if (!corpsData) return false;
           const weekKey = `week${show.week}`;
           const selectedShows = corpsData.selectedShows?.[weekKey] || [];
@@ -136,7 +136,7 @@ const ShowSelectionStep = ({
       console.error('Error refreshing profile:', error);
     }
     setShowModal(false);
-  }, [user?.uid]);
+  }, [user?.uid, setLocalUserProfile]);
 
   return (
     <>

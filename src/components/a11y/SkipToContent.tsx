@@ -109,7 +109,7 @@ export const useAnnounce = () => {
   const [announcement, setAnnouncement] = React.useState('');
 
   const announce = React.useCallback(
-    (message: string, priority: 'polite' | 'assertive' = 'polite') => {
+    (message: string, _priority: 'polite' | 'assertive' = 'polite') => {
       setAnnouncement(''); // Clear first to ensure re-announcement
       setTimeout(() => setAnnouncement(message), 100);
     },

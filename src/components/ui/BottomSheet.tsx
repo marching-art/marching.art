@@ -37,7 +37,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   title,
   children,
   snapPoints = [90],
-  initialSnap = 0,
+  initialSnap: _initialSnap = 0,
   showHandle = true,
   showCloseButton = true,
   closeOnOverlayClick = true,

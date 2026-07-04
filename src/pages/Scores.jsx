@@ -65,11 +65,14 @@ const Scores = () => {
     validTabIds.includes(targetTab) ? targetTab : 'latest'
   );
 
-  // React to ?tab= changes when navigating within the app
+  // React to ?tab= changes when navigating within the app.
+  // Intentionally excludes `activeTab`: including it would re-sync to the URL
+  // param whenever the user manually switches tabs, overriding their choice.
   useEffect(() => {
     if (targetTab && validTabIds.includes(targetTab) && targetTab !== activeTab) {
       setActiveTab(targetTab);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetTab, validTabIds]);
   const [selectedShow, setSelectedShow] = useState(null);
   const [selectedArchiveSeason, setSelectedArchiveSeason] = useState(null);
@@ -79,7 +82,6 @@ const Scores = () => {
   const {
     loading,
     error,
-    allShows,
     unfilteredShows,
     stats,
     aggregatedScores,
