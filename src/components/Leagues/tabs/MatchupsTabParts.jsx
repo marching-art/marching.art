@@ -16,6 +16,7 @@ import {
   Award,
   Star,
 } from 'lucide-react';
+import { getSoundSportRating } from '../../../utils/scoresUtils';
 
 // Corps class display configuration
 const CORPS_CLASS_CONFIG = {
@@ -473,6 +474,9 @@ const VersusStrip = memo(
     const isTie = matchup.completed && matchup.winner === 'tie';
 
     const classConfig = CORPS_CLASS_CONFIG[matchup.corpsClass];
+    // SoundSport is a ratings-only format — a SoundSport matchup must show the
+    // earned rating tiers, never the numeric scores.
+    const isSoundSport = matchup.corpsClass === 'soundSport';
 
     return (
       <button
@@ -546,19 +550,27 @@ const VersusStrip = memo(
               ) : matchup.completed || matchup.status === 'live' ? (
                 <div className="flex items-center justify-center gap-1">
                   <span
-                    className={`text-sm font-bold font-data tabular-nums ${
-                      homeWon ? 'text-green-400' : isTie ? 'text-yellow-400' : 'text-gray-400'
-                    }`}
+                    className={`font-bold ${
+                      isSoundSport ? 'text-[10px] uppercase' : 'text-sm font-data tabular-nums'
+                    } ${homeWon ? 'text-green-400' : isTie ? 'text-yellow-400' : 'text-gray-400'}`}
                   >
-                    {home.score.toFixed(0)}
+                    {isSoundSport
+                      ? home.score > 0
+                        ? getSoundSportRating(home.score)
+                        : '—'
+                      : home.score.toFixed(0)}
                   </span>
                   <span className="text-gray-600">-</span>
                   <span
-                    className={`text-sm font-bold font-data tabular-nums ${
-                      awayWon ? 'text-green-400' : isTie ? 'text-yellow-400' : 'text-gray-400'
-                    }`}
+                    className={`font-bold ${
+                      isSoundSport ? 'text-[10px] uppercase' : 'text-sm font-data tabular-nums'
+                    } ${awayWon ? 'text-green-400' : isTie ? 'text-yellow-400' : 'text-gray-400'}`}
                   >
-                    {away.score.toFixed(0)}
+                    {isSoundSport
+                      ? away.score > 0
+                        ? getSoundSportRating(away.score)
+                        : '—'
+                      : away.score.toFixed(0)}
                   </span>
                 </div>
               ) : (
