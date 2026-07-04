@@ -124,6 +124,9 @@ const SeasonRow = ({ season, isSelected, classKey, onSelect }) => {
   if (!champ) return null;
   const { type, year } = parseSeasonName(season.seasonName);
   const soundSport = isSoundSportClass(classKey);
+  // SoundSport is a ratings-only format — never surface the numeric score here.
+  const rating =
+    soundSport && typeof champ.score === 'number' ? getSoundSportRating(champ.score) : null;
 
   return (
     <button
@@ -150,9 +153,15 @@ const SeasonRow = ({ season, isSelected, classKey, onSelect }) => {
         <span className="text-xs text-white truncate min-w-0 flex-1">
           {champ.corpsName || champ.username || '—'}
         </span>
-        <span className="text-[10px] text-gray-400 font-data tabular-nums flex-shrink-0">
-          {formatScore(champ.score)}
-        </span>
+        {soundSport ? (
+          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300 flex-shrink-0">
+            {rating || '—'}
+          </span>
+        ) : (
+          <span className="text-[10px] text-gray-400 font-data tabular-nums flex-shrink-0">
+            {formatScore(champ.score)}
+          </span>
+        )}
       </div>
       <div className="flex items-center gap-1.5 mt-1.5">
         <Calendar className="w-2.5 h-2.5 text-gray-600" />
@@ -253,12 +262,11 @@ const ChampionPlaque = ({ champion, season, classKey, fieldStats }) => {
         </div>
         <div className="px-3 py-2.5">
           <div className="text-[10px] text-gray-500 uppercase tracking-wider">
-            {soundSport ? 'Score' : 'Margin'}
+            {soundSport ? 'Rating' : 'Margin'}
           </div>
           {soundSport ? (
-            <div className="text-xs text-white font-data tabular-nums truncate">
-              {formatScore(champion.score)}
-            </div>
+            // Ratings-only format: show the rating tier, never the numeric score.
+            <div className="text-xs text-white truncate">{rating || '—'}</div>
           ) : (
             <div
               className={`text-xs font-data tabular-nums truncate ${fieldStats.margin > 0 ? 'text-green-500' : 'text-gray-400'}`}
