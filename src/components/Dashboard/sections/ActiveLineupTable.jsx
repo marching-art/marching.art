@@ -38,12 +38,13 @@ const TrendChip = ({ trend }) => {
   );
 };
 
-// Memoized lineup row - two-line layout that fits the mobile width instead of
-// a wide table whose Next Show column clipped off the right edge.
+// Memoized lineup row - compact layout that fits the mobile width. The "next
+// show" is a corps-level fact (every caption competes together at the shows the
+// director registered for), so it lives in the table header, not per row.
 const LineupTableRow = memo(({ caption, value, captionData, onSlotClick, scoresAvailable }) => {
   const hasValue = !!value;
   const [corpsName, sourceYear] = hasValue ? value.split('|') : [null, null];
-  const { score, trend, nextShow } = captionData || {};
+  const { score, trend } = captionData || {};
 
   return (
     <button
@@ -60,9 +61,8 @@ const LineupTableRow = memo(({ caption, value, captionData, onSlotClick, scoresA
         {caption.name}
       </span>
 
-      {/* Corps + Next Show */}
+      {/* Corps + score */}
       <div className="flex-1 min-w-0">
-        {/* Line 1: corps name (+year) and score/trend */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-baseline gap-1.5 min-w-0">
             {hasValue ? (
@@ -93,31 +93,28 @@ const LineupTableRow = memo(({ caption, value, captionData, onSlotClick, scoresA
           )}
         </div>
 
-        {/* Line 2: next show / status */}
-        <div className="mt-0.5">
-          {hasValue && nextShow ? (
-            <span className="text-[11px] text-gray-500 flex items-center gap-1 min-w-0">
-              <MapPin className="w-3 h-3 flex-shrink-0 text-purple-400" />
-              <span className="truncate">
-                Day {nextShow.day} · {nextShow.location}
-              </span>
-            </span>
-          ) : hasValue ? (
-            <span className="text-[11px] text-gray-600 flex items-center gap-1">
-              <Lock className="w-3 h-3" />
-              Season complete
-            </span>
-          ) : (
+        {/* Draft prompt for empty slots (filled slots need no second line —
+            the corps-level next show is surfaced in the header). */}
+        {!hasValue && (
+          <div className="mt-0.5">
             <span className="text-[11px] text-yellow-500 font-bold">+ Draft player</span>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </button>
   );
 });
 
 const ActiveLineupTable = memo(
-  ({ lineup, lineupScoreData, loading, onManageLineup, onSlotClick, scoresAvailable = true }) => {
+  ({
+    lineup,
+    lineupScoreData,
+    loading,
+    onManageLineup,
+    onSlotClick,
+    scoresAvailable = true,
+    nextShow = null,
+  }) => {
     const lineupCount = Object.keys(lineup).length;
 
     return (
@@ -139,6 +136,29 @@ const ActiveLineupTable = memo(
             </span>
           </div>
         </div>
+
+        {/* Corps-level next show — the whole lineup competes together at the
+            director's next registered show. */}
+        {!loading &&
+          (nextShow ? (
+            <div className="px-4 py-2 border-b border-[#333] bg-[#111] flex items-center gap-1.5 text-[11px] text-gray-400 min-w-0">
+              <MapPin className="w-3 h-3 flex-shrink-0 text-purple-400" />
+              <span className="font-bold uppercase tracking-wider text-gray-500 flex-shrink-0">
+                Next Show
+              </span>
+              <span className="text-gray-600 flex-shrink-0">·</span>
+              <span className="truncate text-gray-300">
+                Day {nextShow.day}
+                {nextShow.eventName ? ` · ${nextShow.eventName}` : ''}
+                {nextShow.location ? ` · ${nextShow.location}` : ''}
+              </span>
+            </div>
+          ) : (
+            <div className="px-4 py-2 border-b border-[#333] bg-[#111] flex items-center gap-1.5 text-[11px] text-gray-500">
+              <Lock className="w-3 h-3 flex-shrink-0" />
+              <span className="font-bold uppercase tracking-wider">No upcoming show selected</span>
+            </div>
+          ))}
 
         {/* Roster - stacked rows that fit the mobile width */}
         <div>

@@ -72,7 +72,7 @@ import { canEditCorpsThisSeason, corpsHasPendingWork } from '../utils/corps';
 import { useModalQueue, MODAL_PRIORITY } from '../hooks/useModalQueue';
 import { useLineupScores, useRecentResults, useBestInShowCount } from '../hooks/useDashboardScores';
 import { useSeasonStore } from '../store/seasonStore';
-import { getEffectiveDay } from '../utils/dashboardScoring';
+import { getEffectiveDay, getNextSelectedShow } from '../utils/dashboardScoring';
 
 // OPTIMIZATION #4: Constants moved to src/components/Dashboard/sections/constants.js
 // Imported via: CLASS_LABELS, CAPTIONS, CLASS_DISPLAY_NAMES, getSoundSportRating
@@ -206,6 +206,14 @@ const Dashboard = () => {
     if (!activeCorps?.selectedShows) return [];
     return (activeCorps.selectedShows[`week${currentWeek}`] || []).slice(0, 3);
   }, [activeCorps?.selectedShows, currentWeek]);
+
+  // The director's actual next competition. Every caption competes together at
+  // the shows the director registered for, so this is a single corps-level fact
+  // shared by all lineup slots — not the source corps' real-world schedule.
+  const nextSelectedShow = useMemo(
+    () => getNextSelectedShow(activeCorps?.selectedShows, currentDay),
+    [activeCorps?.selectedShows, currentDay]
+  );
 
   const { lineupScoreData, lineupScoresLoading } = useLineupScores(
     lineup,
@@ -568,6 +576,7 @@ const Dashboard = () => {
                     onManageLineup={() => openCaptionSelection()}
                     onSlotClick={(captionId) => openCaptionSelection(captionId)}
                     scoresAvailable={scoresAvailable}
+                    nextShow={nextSelectedShow}
                   />
                 </div>
 
