@@ -2,10 +2,9 @@
 // OPTIMIZATION: Prevents duplicate Firestore queries when navigating between
 // LeagueDetailView and MatchupDetailView (was 2+ queries, now 1)
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getSeasonData, getSeasonRecaps } from '../../api/season';
-
-const LeagueRecapsContext = createContext(null);
+import { LeagueRecapsContext } from './leagueRecapsContextValue';
 
 /**
  * Provider component that fetches and shares fantasy recaps data
@@ -73,30 +72,4 @@ export const LeagueRecapsProvider = ({ children, seasonUid }) => {
   return <LeagueRecapsContext.Provider value={value}>{children}</LeagueRecapsContext.Provider>;
 };
 
-/**
- * Hook to consume recaps data from context
- * Falls back to local fetch if context is not available (backwards compatibility)
- */
-export const useLeagueRecaps = () => {
-  const context = useContext(LeagueRecapsContext);
-
-  if (!context) {
-    // Context not available - component used outside provider
-    // Return a stub that indicates data needs to be fetched locally
-    return {
-      recaps: null,
-      loading: false,
-      error: null,
-      seasonData: null,
-      hasRecaps: false,
-      isContextAvailable: false,
-    };
-  }
-
-  return {
-    ...context,
-    isContextAvailable: true,
-  };
-};
-
-export default LeagueRecapsContext;
+export default LeagueRecapsProvider;

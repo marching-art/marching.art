@@ -23,7 +23,7 @@ interface LevelUpData {
 // LAZY CONFETTI
 // =============================================================================
 
-let confettiModule: typeof import('canvas-confetti')['default'] | null = null;
+let confettiModule: (typeof import('canvas-confetti'))['default'] | null = null;
 
 const triggerLevelUpConfetti = async () => {
   if (!confettiModule) {
@@ -91,17 +91,6 @@ const triggerLevelUpConfetti = async () => {
   }, 400);
 
   setTimeout(() => clearInterval(interval), duration);
-};
-
-// =============================================================================
-// GLOBAL EVENT SYSTEM
-// =============================================================================
-
-export const triggerLevelUp = (newLevel: number, classUnlocked?: string) => {
-  const event = new CustomEvent('level-up', {
-    detail: { newLevel, classUnlocked },
-  });
-  window.dispatchEvent(event);
 };
 
 // =============================================================================

@@ -6,16 +6,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  Calendar,
-  MapPin,
-  Check,
-  X,
-  AlertTriangle,
-  Trophy,
-  Clock,
-  Ticket,
-} from 'lucide-react';
+import { Calendar, MapPin, Check, X, AlertTriangle, Trophy, Clock, Ticket } from 'lucide-react';
 import { selectUserShows } from '../../api/functions';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';

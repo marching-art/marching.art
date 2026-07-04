@@ -4,9 +4,10 @@
 // Strict data terminal layout: fixed headers, scrollable content
 // Laws enforced: No glow, no shadow, tight spacing
 
-import React, { useEffect, useState, createContext, useContext, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { Link, useLocation, NavLink } from 'react-router-dom';
 import { analyticsHelpers, adminHelpers } from '../../api';
+import { ShellContext } from './shellContext';
 import { useAuth } from '../../context/AuthContext';
 import BottomNav from '../BottomNav';
 import { useSeasonStore } from '../../store/seasonStore';
@@ -28,20 +29,6 @@ import {
   Newspaper,
   HelpCircle,
 } from 'lucide-react';
-
-// =============================================================================
-// SHELL CONTEXT
-// =============================================================================
-
-const ShellContext = createContext(null);
-
-export const useShell = () => {
-  const context = useContext(ShellContext);
-  if (!context) {
-    throw new Error('useShell must be used within a GameShell');
-  }
-  return context;
-};
 
 // =============================================================================
 // TOP NAV - Clean, minimal header focused on navigation

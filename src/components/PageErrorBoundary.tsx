@@ -144,29 +144,4 @@ const PageErrorFallbackWrapper: React.FC<PageErrorFallbackProps> = (props) => {
   return <PageErrorFallback {...props} />;
 };
 
-// =============================================================================
-// HIGHER-ORDER COMPONENT
-// =============================================================================
-
-/**
- * HOC to wrap a page component with an error boundary
- * Usage: const SafeDashboard = withPageErrorBoundary(Dashboard, 'Dashboard');
- */
-export function withPageErrorBoundary<P extends object>(
-  Component: React.ComponentType<P>,
-  pageName: string
-): React.FC<P> {
-  const WrappedComponent: React.FC<P> = (props) => (
-    <PageErrorBoundary name={pageName}>
-      <Component {...props} />
-    </PageErrorBoundary>
-  );
-
-  WrappedComponent.displayName = `withPageErrorBoundary(${
-    Component.displayName || Component.name || 'Component'
-  })`;
-
-  return WrappedComponent;
-}
-
 export default PageErrorBoundary;

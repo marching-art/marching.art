@@ -33,14 +33,6 @@ import {
 import type { UserProfile, CorpsClass } from '../../types';
 import { CORPS_CLASS_ORDER, resolveCorpsForClass, isCorpsClassUnlocked } from '../../utils/corps';
 import {
-  getClassDisplay,
-  getDirectorStatus,
-  calculateInfluenceScore,
-  calculateDirectorRating,
-  getDisplayTitle,
-  getCorpsAvatarUrl,
-  getCorpsWithAvatars,
-  getCompetitionTrophies,
   StatusIndicator,
   StatPill,
   TrophyMini,
@@ -52,7 +44,17 @@ import {
   UnregisteredEnsembleCard,
   EmptyWithCTA,
 } from './DirectorProfileParts';
-import type { SeasonHistoryEntry } from './DirectorProfileParts';
+import {
+  getClassDisplay,
+  getDirectorStatus,
+  calculateInfluenceScore,
+  calculateDirectorRating,
+  getDisplayTitle,
+  getCorpsAvatarUrl,
+  getCorpsWithAvatars,
+  getCompetitionTrophies,
+} from './directorProfileHelpers';
+import type { SeasonHistoryEntry } from './directorProfileHelpers';
 
 // =============================================================================
 // TYPES
@@ -148,11 +150,9 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
       }
     });
 
-    return history.sort((a, b) => {
-      const aId = a.seasonId || a.seasonName || '';
-      const bId = b.seasonId || b.seasonName || '';
-      return bId.localeCompare(aId);
-    });
+    return history.sort((a, b) =>
+      (b.seasonId || b.seasonName || '').localeCompare(a.seasonId || a.seasonName || '')
+    );
   }, [profile.corps]);
 
   const memberSince = useMemo(() => {

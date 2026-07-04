@@ -23,7 +23,12 @@ import {
 } from 'lucide-react';
 import { getLeagueWeekRecap, getLeagueRivalries } from '../../../api/leagues';
 
-const LeagueStatsOverview = ({ standings, memberProfiles, leagueStats: _leagueStats, currentWeek }) => {
+const LeagueStatsOverview = ({
+  standings,
+  memberProfiles,
+  leagueStats: _leagueStats,
+  currentWeek,
+}) => {
   // Calculate league-wide stats
   const stats = useMemo(() => {
     if (!standings || standings.length === 0) return null;

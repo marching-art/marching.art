@@ -3,15 +3,7 @@
 
 import React, { useMemo } from 'react';
 import { m } from 'framer-motion';
-import {
-  Swords,
-  Radio,
-  Trophy,
-  Crown,
-  ChevronRight,
-  Flame,
-  Zap,
-} from 'lucide-react';
+import { Swords, Radio, Trophy, Crown, ChevronRight, Flame, Zap } from 'lucide-react';
 
 // Calculate win probability based on current scores and historical performance
 const calculateWinProbability = (user1Score, user2Score, user1Avg, user2Avg) => {

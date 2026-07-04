@@ -81,10 +81,7 @@ const Landing = () => {
     }
   }, []);
 
-  const {
-    tickerData,
-    loading: tickerLoading,
-  } = useTickerData({ enabled: secondaryDataEnabled });
+  const { tickerData, loading: tickerLoading } = useTickerData({ enabled: secondaryDataEnabled });
   const {
     liveScores,
     displayDay,

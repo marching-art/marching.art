@@ -8,5 +8,6 @@ export {
   RivalryBadge,
   NotificationDropdown,
 } from './LeagueActivityFeed';
-export { LeagueRecapsProvider, useLeagueRecaps } from './LeagueRecapsContext';
+export { LeagueRecapsProvider } from './LeagueRecapsContext';
+export { useLeagueRecaps } from './leagueRecapsContextValue';
 export * from './tabs';

@@ -207,18 +207,6 @@ const Celebration = ({ trigger, message, type = 'default' }) => {
 };
 
 /**
- * Hook to trigger celebrations programmatically
- */
-export const useCelebration = () => {
-  const celebrate = (message, type = 'default') => {
-    const event = new CustomEvent('celebration', { detail: { message, type } });
-    window.dispatchEvent(event);
-  };
-
-  return { celebrate };
-};
-
-/**
  * Global Celebration Container
  * Place once in your app root to handle all celebrations
  */

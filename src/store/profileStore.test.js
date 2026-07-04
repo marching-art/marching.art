@@ -22,7 +22,7 @@ vi.mock('../api/functions', () => ({
   completeDailyChallenge: mockCallable,
 }));
 
-vi.mock('../components/XPFeedback', () => ({
+vi.mock('../components/xpFeedbackTrigger', () => ({
   triggerXPFeedback: mockTriggerXPFeedback,
 }));
 

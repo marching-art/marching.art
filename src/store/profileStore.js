@@ -6,7 +6,7 @@ import { AUTH_CONFIG } from '../config';
 import { mergeTimeUnlockedClasses } from '../utils/classUnlockTime';
 import { getGameDay } from '../utils/dailyChallenges';
 import { completeDailyChallenge as completeDailyChallengeFn } from '../api/functions';
-import { triggerXPFeedback } from '../components/XPFeedback';
+import { triggerXPFeedback } from '../components/xpFeedbackTrigger';
 import toast from 'react-hot-toast';
 
 // All corps classes for admin override

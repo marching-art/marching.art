@@ -3,21 +3,19 @@
 
 import React, { useMemo } from 'react';
 import { m } from 'framer-motion';
-import {
-  Swords,
-  Trophy,
-  Flame,
-  TrendingUp,
-  Target,
-  Award,
-  Zap,
-} from 'lucide-react';
+import { Swords, Trophy, Flame, TrendingUp, Target, Award, Zap } from 'lucide-react';
 import { GAME_CONFIG } from '../../config';
 
 /**
  * Caption domination bar showing who wins each caption more often
  */
-const CaptionDominationBar = ({ caption, user1Wins, user2Wins, user1Name: _user1Name, user2Name: _user2Name }) => {
+const CaptionDominationBar = ({
+  caption,
+  user1Wins,
+  user2Wins,
+  user1Name: _user1Name,
+  user2Name: _user2Name,
+}) => {
   const total = user1Wins + user2Wins;
   const user1Pct = total > 0 ? (user1Wins / total) * 100 : 50;
   const tied = user1Wins === user2Wins;
