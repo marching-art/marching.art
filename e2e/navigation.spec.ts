@@ -2,13 +2,13 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Navigation', () => {
   test.describe('Public Pages', () => {
-    test('should redirect How to Play to dashboard', async ({ page }) => {
+    test('should render the public How to Play guide', async ({ page }) => {
+      // /how-to-play is a public marketing/guide page (it used to redirect to
+      // the dashboard; that behavior changed when the guide went public).
       await page.goto('/how-to-play');
 
-      // Should redirect to dashboard (or login if not authenticated)
-      await page.waitForTimeout(500);
-      const url = page.url();
-      expect(url.includes('/dashboard') || url.includes('/login')).toBeTruthy();
+      await expect(page).toHaveURL(/\/how-to-play/);
+      await expect(page.getByRole('heading', { name: /how to play/i })).toBeVisible();
     });
 
     test('should navigate to Terms page', async ({ page }) => {
@@ -30,36 +30,28 @@ test.describe('Navigation', () => {
     });
   });
 
-  test.describe('Protected Routes Redirect', () => {
-    test('should redirect dashboard to login when not authenticated', async ({ page }) => {
+  test.describe('Protected Routes', () => {
+    // Unauthenticated visitors must never see the real dashboard/profile.
+    // The app either redirects to /login or serves the guest preview, which
+    // always surfaces a sign-in path. The visible-filter + first matter:
+    // several elements match /sign in|login/i and the first DOM match is a
+    // hidden responsive nav link, while a bare isVisible() on multiple
+    // matches throws a strict-mode error that the old .catch(() => false)
+    // silently turned into a bogus failure.
+    test('should gate dashboard behind sign-in when not authenticated', async ({ page }) => {
       await page.goto('/dashboard');
 
-      // Should redirect to login or show login prompt
-      // Wait for navigation to complete
-      await page.waitForTimeout(1000);
-
-      // Either redirected to login or on a page with login prompt
-      const url = page.url();
-      const hasLoginPrompt = await page
-        .locator('text=/sign in|login/i')
-        .isVisible()
-        .catch(() => false);
-
-      expect(url.includes('/login') || hasLoginPrompt).toBeTruthy();
+      await expect(
+        page.locator('text=/sign in|login/i').filter({ visible: true }).first()
+      ).toBeVisible();
     });
 
-    test('should redirect profile to login when not authenticated', async ({ page }) => {
+    test('should gate profile behind sign-in when not authenticated', async ({ page }) => {
       await page.goto('/profile');
 
-      await page.waitForTimeout(1000);
-
-      const url = page.url();
-      const hasLoginPrompt = await page
-        .locator('text=/sign in|login/i')
-        .isVisible()
-        .catch(() => false);
-
-      expect(url.includes('/login') || hasLoginPrompt).toBeTruthy();
+      await expect(
+        page.locator('text=/sign in|login/i').filter({ visible: true }).first()
+      ).toBeVisible();
     });
   });
 
@@ -67,17 +59,10 @@ test.describe('Navigation', () => {
     test('should show 404 for unknown routes', async ({ page }) => {
       await page.goto('/this-page-does-not-exist-12345');
 
-      // Should show some indication of 404 or redirect
-      await page.waitForTimeout(500);
-
-      // Either shows 404 content or redirects to home/login
-      const is404 = await page
-        .locator("text=/not found|404|page doesn't exist/i")
-        .isVisible()
-        .catch(() => false);
-      const isRedirected = page.url().includes('/login') || page.url() === 'http://localhost:3000/';
-
-      expect(is404 || isRedirected).toBeTruthy();
+      // The 404 page renders "404" more than once (badge + heading), so match
+      // the heading specifically — a bare text locator hits Playwright strict
+      // mode on the duplicate matches.
+      await expect(page.getByRole('heading', { name: /404|not found/i }).first()).toBeVisible();
     });
   });
 });

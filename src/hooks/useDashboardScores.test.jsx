@@ -19,6 +19,27 @@ vi.mock('../utils/dashboardScoring', () => ({
   processCaptionScores: vi.fn(),
 }));
 
+// The hook imports CAPTIONS from the Dashboard barrel and formatRecapDate
+// from useScoresData; both transitively import api/client.ts, which
+// initializes Firebase Auth at module load and throws without real env vars
+// (exactly what happens in CI). Mock them so this test never touches Firebase.
+vi.mock('../components/Dashboard', () => ({
+  CAPTIONS: [
+    { id: 'GE1' },
+    { id: 'GE2' },
+    { id: 'VP' },
+    { id: 'VA' },
+    { id: 'CG' },
+    { id: 'B' },
+    { id: 'MA' },
+    { id: 'P' },
+  ],
+}));
+
+vi.mock('./useScoresData', () => ({
+  formatRecapDate: vi.fn(() => 'Jan 1'),
+}));
+
 import { getSeasonRecaps, getHistoricalScoresForYear } from '../api/season';
 import { getEffectiveDay, processCaptionScores } from '../utils/dashboardScoring';
 import { useLineupScores, useRecentResults, useBestInShowCount } from './useDashboardScores';

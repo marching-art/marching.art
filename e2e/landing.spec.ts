@@ -7,8 +7,15 @@ test.describe('Landing Page', () => {
     // Check for the main heading
     await expect(page.locator('text=marching.art')).toBeVisible();
 
-    // Check for main CTA buttons
-    await expect(page.getByRole('link', { name: /get started|sign in|login/i })).toBeVisible();
+    // Check for a sign-in affordance: the desktop landing embeds the sign-in
+    // form (a "Sign In" button), while other layouts link to /login instead.
+    // Filter to visible matches — a responsive nav link to /login exists in
+    // the DOM but is hidden at some viewport widths.
+    const signInAffordance = page
+      .getByRole('button', { name: /sign in/i })
+      .or(page.getByRole('link', { name: /get started|sign in|login/i }))
+      .filter({ visible: true });
+    await expect(signInAffordance.first()).toBeVisible();
   });
 
   test('should have proper meta tags and title', async ({ page }) => {
@@ -18,15 +25,23 @@ test.describe('Landing Page', () => {
     await expect(page).toHaveTitle(/marching\.art/i);
   });
 
-  test('should navigate to login page', async ({ page }) => {
+  test('should offer a sign-in path', async ({ page }) => {
     await page.goto('/');
 
-    // Click the sign in / login button
-    const loginLink = page.getByRole('link', { name: /sign in|login/i }).first();
-    await loginLink.click();
+    // The desktop landing embeds the sign-in form directly (email/password
+    // fields plus a "Sign In" button); some layouts link to /login instead.
+    // Filter to visible matches (a hidden responsive /login nav link exists
+    // in the DOM), wait for either affordance, then follow the link form.
+    const loginLink = page.getByRole('link', { name: /sign in|login/i }).filter({ visible: true });
+    const embeddedSignIn = page.getByRole('button', { name: /sign in/i }).filter({ visible: true });
+    await expect(loginLink.or(embeddedSignIn).first()).toBeVisible();
 
-    // Should be on login page
-    await expect(page).toHaveURL(/\/login/);
+    if (await loginLink.first().isVisible()) {
+      await loginLink.first().click();
+      await expect(page).toHaveURL(/\/login/);
+    } else {
+      await expect(embeddedSignIn.first()).toBeVisible();
+    }
   });
 
   test('should navigate to register page', async ({ page }) => {

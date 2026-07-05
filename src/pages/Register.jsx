@@ -154,12 +154,16 @@ const Register = () => {
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Display Name Field */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                  <label
+                    htmlFor="register-name"
+                    className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5"
+                  >
                     Director Name
                   </label>
                   <div className="relative">
                     <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                     <input
+                      id="register-name"
                       type="text"
                       className="w-full h-12 pl-11 pr-4 bg-[#0a0a0a] border border-[#333] rounded-sm text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
                       placeholder="Your director name"
@@ -174,12 +178,16 @@ const Register = () => {
 
                 {/* Email Field */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                  <label
+                    htmlFor="register-email"
+                    className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5"
+                  >
                     Email Address
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                     <input
+                      id="register-email"
                       type="email"
                       className="w-full h-12 pl-11 pr-4 bg-[#0a0a0a] border border-[#333] rounded-sm text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
                       placeholder="director@example.com"
@@ -194,12 +202,16 @@ const Register = () => {
 
                 {/* Password Field */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                  <label
+                    htmlFor="register-password"
+                    className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5"
+                  >
                     Password
                   </label>
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                     <input
+                      id="register-password"
                       type={showPassword ? 'text' : 'password'}
                       className="w-full h-12 pl-11 pr-12 bg-[#0a0a0a] border border-[#333] rounded-sm text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
                       placeholder="Minimum 8 characters"
