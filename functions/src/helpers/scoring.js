@@ -453,10 +453,21 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
     return;
   }
 
-  // Calculate the actual date for this scored day
+  // Calculate the actual calendar date for this competition day.
+  // Live seasons open with a spring-training period (schedule.springTrainingDays)
+  // before scoring begins, so competition day N falls on
+  // startDate + springTrainingDays + (N - 1). Omitting this offset shifted every
+  // live-season recap date earlier by the spring-training length (21 days),
+  // producing wrong dates in the Scores and SoundSport recaps. startDate is stored
+  // at UTC midnight; build the target date in UTC so the calendar date is stable
+  // regardless of the runtime timezone.
   const seasonStartDate = seasonData.schedule.startDate.toDate();
-  const scoreDate = new Date(seasonStartDate);
-  scoreDate.setDate(seasonStartDate.getDate() + (scoredDay - 1));
+  const springTrainingDays = seasonData.schedule.springTrainingDays || 0;
+  const scoreDate = new Date(Date.UTC(
+    seasonStartDate.getUTCFullYear(),
+    seasonStartDate.getUTCMonth(),
+    seasonStartDate.getUTCDate() + springTrainingDays + (scoredDay - 1),
+  ));
 
   // Get current year for fetching live scores from historical_scores
   const currentYear = new Date().getFullYear();
