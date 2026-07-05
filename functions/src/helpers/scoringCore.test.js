@@ -8,7 +8,7 @@
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { scoreShowsForDay } = require("./scoring");
+const { scoreShowsForDay, hasCompleteLineup } = require("./scoring");
 
 // A user profile document as produced by the collectionGroup("profile") query,
 // with the ref.parent.parent.id shape the loop reads the uid from.
@@ -27,6 +27,33 @@ function fullLineup(corpsName = "Blue Devils", year = "2023") {
   for (const c of CAPTIONS) lineup[c] = `${corpsName}|${year}`;
   return lineup;
 }
+
+describe("hasCompleteLineup", () => {
+  test("accepts a full 8-caption lineup", () => {
+    assert.equal(hasCompleteLineup(fullLineup()), true);
+  });
+
+  test("rejects an empty lineup", () => {
+    assert.equal(hasCompleteLineup({}), false);
+  });
+
+  test("rejects a missing lineup", () => {
+    assert.equal(hasCompleteLineup(undefined), false);
+    assert.equal(hasCompleteLineup(null), false);
+  });
+
+  test("rejects a lineup missing any caption", () => {
+    const partial = fullLineup();
+    delete partial.GE1;
+    assert.equal(hasCompleteLineup(partial), false);
+  });
+
+  test("rejects a lineup with an empty-string caption", () => {
+    const blank = fullLineup();
+    blank.MA = "";
+    assert.equal(hasCompleteLineup(blank), false);
+  });
+});
 
 describe("scoreShowsForDay", () => {
   test("scores a corps registered for a regular show and caps totals", () => {
@@ -191,6 +218,71 @@ describe("scoreShowsForDay", () => {
     });
     assert.equal(result.stats.corpsScored, 0);
     assert.equal(dailyRecap.shows[0].results.length, 0);
+  });
+
+  test("does not score a corps registered for a show but with no captions selected", () => {
+    const profilesSnapshot = {
+      docs: [
+        profileDoc("u1", {
+          corps: {
+            aClass: {
+              corpsName: "Unselected",
+              // Newly registered corps start with an empty lineup object.
+              lineup: {},
+              selectedShows: { week1: [{ eventName: "Season Opener" }] },
+            },
+          },
+        }),
+      ],
+    };
+    const dailyRecap = { shows: [] };
+    const result = scoreShowsForDay({
+      dayEventData: { shows: [{ eventName: "Season Opener" }] },
+      profilesSnapshot,
+      week: 1,
+      scoredDay: 1,
+      championshipConfig: null,
+      dailyRecap,
+      getBaseCaptionScore: () => 10,
+    });
+
+    // The corps registered for the show but never picked captions, so it must
+    // not appear in the recap, earn a score, or receive participation coins.
+    assert.equal(dailyRecap.shows[0].results.length, 0);
+    assert.equal(result.dailyScores.size, 0);
+    assert.equal(result.stats.corpsScored, 0);
+    assert.deepEqual(result.coinAwards, []);
+  });
+
+  test("does not score a corps with a partially-filled lineup", () => {
+    const partial = fullLineup();
+    delete partial.P; // one caption missing => incomplete
+    const profilesSnapshot = {
+      docs: [
+        profileDoc("u1", {
+          corps: {
+            aClass: {
+              corpsName: "HalfLineup",
+              lineup: partial,
+              selectedShows: { week1: [{ eventName: "Season Opener" }] },
+            },
+          },
+        }),
+      ],
+    };
+    const dailyRecap = { shows: [] };
+    const result = scoreShowsForDay({
+      dayEventData: { shows: [{ eventName: "Season Opener" }] },
+      profilesSnapshot,
+      week: 1,
+      scoredDay: 1,
+      championshipConfig: null,
+      dailyRecap,
+      getBaseCaptionScore: () => 10,
+    });
+
+    assert.equal(dailyRecap.shows[0].results.length, 0);
+    assert.equal(result.stats.corpsScored, 0);
   });
 
   test("championship config gates classes and non-advancing participants", () => {
