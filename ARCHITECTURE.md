@@ -152,12 +152,12 @@ Located in `src/components/ui/`:
 
 ### Caption Change Rules
 
-| Days                    | Changes Allowed                        |
-| ----------------------- | -------------------------------------- |
-| 1-14                    | Unlimited (until 8 PM ET on Day 14)    |
-| 15-42                   | 3 per week per class                   |
-| 43-44                   | None                                   |
-| 45-49 (Championships)   | 2 total per class, lock 8 PM ET daily  |
+| Days                  | Changes Allowed                       |
+| --------------------- | ------------------------------------- |
+| 1-14                  | Unlimited (until 8 PM ET on Day 14)   |
+| 15-42                 | 3 per week per class                  |
+| 43-44                 | None                                  |
+| 45-49 (Championships) | 2 total per class, lock 8 PM ET daily |
 
 Changes always lock from Saturday 8:00 PM ET until scores are processed
 (nightly run at 2:00 AM ET). Enforced by `functions/src/helpers/captionWindows.js`

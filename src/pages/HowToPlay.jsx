@@ -315,8 +315,8 @@ const CaptionsTab = () => (
       </div>
       <p className="mt-3 text-xs text-gray-500">
         Changes lock every Saturday at 8:00 PM ET until scores are processed (~2:00 AM ET). During
-        Championship Week they lock at 8:00 PM ET each day. Weekly changes can be used one at a
-        time or all at once.
+        Championship Week they lock at 8:00 PM ET each day. Weekly changes can be used one at a time
+        or all at once.
       </p>
     </SectionCard>
   </div>
