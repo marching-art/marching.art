@@ -1,6 +1,6 @@
 // NextDeadlineChip - always-visible countdown to the next game deadline.
-// Scores process nightly at 2 AM ET; the weekly lineup-change counter resets
-// on the season-week boundary. Both come from the shared season clock.
+// Scores process nightly at 2 AM ET; caption-change windows (unlimited /
+// weekly / championship / lockouts) come from the shared season clock.
 
 import React from 'react';
 import { Clock } from 'lucide-react';
@@ -14,15 +14,33 @@ const NextDeadlineChip = ({ variant = 'chip' }) => {
     `Scores process nightly at 2:00 AM ET — next: ${formatEtDayTime(scoresAt)}`,
   ];
   let tradeLabel = null;
-  if (trade?.isUnlimitedWeek && trade.unlimitedEndsAt) {
+  if (trade?.status === 'locked') {
+    tradeLabel = 'Changes locked until scores process';
+    tooltipLines.push(
+      `Caption changes reopen once scores are processed (~${formatEtDayTime(trade.reopensAt)})`
+    );
+  } else if (trade?.phase === 'blackout') {
+    tradeLabel = `Changes closed until ${formatEtShort(trade.reopensAt)}`;
+    tooltipLines.push(
+      'No caption changes on Days 43-44',
+      `Championship changes (${trade.nextLimit} total) open ${formatEtDayTime(trade.reopensAt)}`
+    );
+  } else if (trade?.phase === 'championship') {
+    tradeLabel = `Championship changes lock ${formatEtShort(trade.locksAt)}`;
+    tooltipLines.push(
+      `${trade.tradeLimit} caption changes total for Championship Week (Days 45-49)`,
+      `Changes lock nightly at ${formatEtDayTime(trade.locksAt)} until scores process`
+    );
+  } else if (trade?.isUnlimited && trade.unlimitedEndsAt) {
     tradeLabel = `Unlimited changes until ${formatEtShort(trade.unlimitedEndsAt)}`;
     tooltipLines.push(
       `Lineup changes are unlimited until ${formatEtDayTime(trade.unlimitedEndsAt)}`
     );
-  } else if (trade?.resetsAt) {
+  } else if (trade?.phase === 'weekly' && trade.resetsAt) {
     tradeLabel = `Changes reset ${formatEtShort(trade.resetsAt)}`;
     tooltipLines.push(
-      `Weekly lineup-change limit (${trade.tradeLimit}) resets ${formatEtDayTime(trade.resetsAt)}`
+      `Weekly lineup-change limit (${trade.tradeLimit}) resets ${formatEtDayTime(trade.resetsAt)}`,
+      `Changes lock ${formatEtDayTime(trade.locksAt)} until scores process`
     );
   }
 

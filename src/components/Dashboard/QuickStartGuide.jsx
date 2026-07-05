@@ -16,7 +16,7 @@ import {
   Star,
   ArrowRight,
 } from 'lucide-react';
-import { WEEKLY_TRADE_LIMIT } from '../../utils/seasonClock';
+import { WEEKLY_TRADE_LIMIT, CHAMPIONSHIP_TRADE_LIMIT } from '../../utils/seasonClock';
 import { getMaxShowsForWeek } from '../../utils/captionPricing';
 
 // Rule numbers come from the same constants the game enforces
@@ -37,7 +37,7 @@ const QUICK_START_STEPS = [
     tips: [
       'Each caption needs one corps selection',
       'Stronger corps cost more of your budget',
-      `Changes are limited to ${WEEKLY_TRADE_LIMIT} per week once the season is underway (unlimited in the opening weeks)`,
+      `Changes are unlimited through Day 14, then limited to ${WEEKLY_TRADE_LIMIT} per week (${CHAMPIONSHIP_TRADE_LIMIT} total during Championship Week)`,
     ],
   },
   {

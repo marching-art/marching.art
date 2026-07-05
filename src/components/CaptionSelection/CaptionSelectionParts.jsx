@@ -15,6 +15,7 @@ import {
   X,
   PartyPopper,
   RefreshCw,
+  Lock,
 } from 'lucide-react';
 import { formatEtShort, formatEtDayTime } from '../../utils/seasonClock';
 
@@ -282,13 +283,7 @@ const DraftHelper = ({ suggestions, onSelectSuggestion, selections, activeCaptio
 // -----------------------------------------------------------------------------
 // TRADES REMAINING INDICATOR
 // -----------------------------------------------------------------------------
-const TradesRemainingIndicator = ({
-  tradesRemaining,
-  isUnlimited,
-  isInitialSetup,
-  resetsAt,
-  unlimitedEndsAt,
-}) => {
+const TradesRemainingIndicator = ({ tradesRemaining, isInitialSetup, changeInfo }) => {
   if (isInitialSetup) {
     return (
       <div className="flex items-center gap-1.5 px-2 py-1 bg-green-500/10 border border-green-500/30 rounded">
@@ -300,44 +295,115 @@ const TradesRemainingIndicator = ({
     );
   }
 
-  if (isUnlimited) {
+  if (!changeInfo) return null;
+
+  // Nightly lockout: Saturday 8 PM ET (and every championship night) until
+  // scores are processed at ~2 AM ET.
+  if (changeInfo.status === 'locked') {
     return (
       <div
-        className="flex items-center gap-1.5 px-2 py-1 bg-[#0057B8]/10 border border-[#0057B8]/30 rounded"
+        className="flex items-center gap-1.5 px-2 py-1 bg-yellow-500/10 border border-yellow-500/30 rounded"
+        title={`Caption changes reopen once scores are processed (~${formatEtDayTime(changeInfo.reopensAt)})`}
+      >
+        <Lock className="w-3 h-3 text-yellow-400" />
+        <span className="text-[10px] font-bold text-yellow-400 uppercase tracking-wider">
+          Changes Locked
+        </span>
+        <span className="text-[9px] text-yellow-400/70 normal-case whitespace-nowrap">
+          until scores process (~{formatEtShort(changeInfo.reopensAt)})
+        </span>
+      </div>
+    );
+  }
+
+  if (changeInfo.status === 'closed') {
+    const isBlackout = changeInfo.phase === 'blackout';
+    return (
+      <div
+        className="flex items-center gap-1.5 px-2 py-1 bg-red-500/10 border border-red-500/30 rounded"
         title={
-          unlimitedEndsAt ? `Weekly limits begin ${formatEtDayTime(unlimitedEndsAt)}` : undefined
+          isBlackout
+            ? `No caption changes on Days 43-44. Championship changes (${changeInfo.nextLimit}) open ${formatEtDayTime(changeInfo.reopensAt)}`
+            : 'The season has ended — changes reopen next season'
         }
       >
-        <RefreshCw className="w-3 h-3 text-[#0057B8]" />
-        <span className="text-[10px] font-bold text-[#0057B8] uppercase tracking-wider">
-          Unlimited Changes This Week
+        <Lock className="w-3 h-3 text-red-400" />
+        <span className="text-[10px] font-bold text-red-400 uppercase tracking-wider">
+          {isBlackout ? 'Changes Closed (Days 43-44)' : 'Season Complete'}
         </span>
-        {unlimitedEndsAt && (
-          <span className="text-[9px] text-[#0057B8]/70 normal-case whitespace-nowrap">
-            until {formatEtShort(unlimitedEndsAt)}
+        {isBlackout && (
+          <span className="text-[9px] text-red-400/70 normal-case whitespace-nowrap">
+            reopen {formatEtShort(changeInfo.reopensAt)}
           </span>
         )}
       </div>
     );
   }
 
+  if (changeInfo.phase === 'unlimited') {
+    return (
+      <div
+        className="flex items-center gap-1.5 px-2 py-1 bg-[#0057B8]/10 border border-[#0057B8]/30 rounded"
+        title={
+          changeInfo.unlimitedEndsAt
+            ? `Weekly limits begin ${formatEtDayTime(changeInfo.unlimitedEndsAt)}`
+            : undefined
+        }
+      >
+        <RefreshCw className="w-3 h-3 text-[#0057B8]" />
+        <span className="text-[10px] font-bold text-[#0057B8] uppercase tracking-wider">
+          Unlimited Changes
+        </span>
+        {changeInfo.unlimitedEndsAt && (
+          <span className="text-[9px] text-[#0057B8]/70 normal-case whitespace-nowrap">
+            until {formatEtShort(changeInfo.unlimitedEndsAt)}
+          </span>
+        )}
+      </div>
+    );
+  }
+
+  const isChampionship = changeInfo.phase === 'championship';
   const isLow = tradesRemaining <= 1;
   const colorClass = isLow
     ? 'text-yellow-400 border-yellow-500/30 bg-yellow-500/10'
     : 'text-gray-400 border-[#333] bg-[#222]';
 
+  if (isChampionship) {
+    return (
+      <div
+        className={`flex items-center gap-1.5 px-2 py-1 border rounded ${colorClass}`}
+        title={`${changeInfo.tradeLimit} caption changes total for Championship Week (Days 45-49). Changes lock nightly at ${formatEtDayTime(changeInfo.locksAt)} until scores process.`}
+      >
+        <RefreshCw className="w-3 h-3" />
+        <span className="text-[10px] font-bold uppercase tracking-wider">
+          {tradesRemaining} of {changeInfo.tradeLimit} Championship Changes Left
+        </span>
+        {changeInfo.locksAt && (
+          <span className="text-[9px] opacity-70 normal-case whitespace-nowrap">
+            lock {formatEtShort(changeInfo.locksAt)}
+          </span>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div
       className={`flex items-center gap-1.5 px-2 py-1 border rounded ${colorClass}`}
-      title={resetsAt ? `Change limit resets ${formatEtDayTime(resetsAt)}` : undefined}
+      title={
+        changeInfo.resetsAt
+          ? `Change limit resets ${formatEtDayTime(changeInfo.resetsAt)}. Changes lock ${formatEtDayTime(changeInfo.locksAt)} until scores process.`
+          : undefined
+      }
     >
       <RefreshCw className="w-3 h-3" />
       <span className="text-[10px] font-bold uppercase tracking-wider">
         {tradesRemaining} Change{tradesRemaining !== 1 ? 's' : ''} Left This Week
       </span>
-      {resetsAt && (
+      {changeInfo.resetsAt && (
         <span className="text-[9px] opacity-70 normal-case whitespace-nowrap">
-          resets {formatEtShort(resetsAt)}
+          resets {formatEtShort(changeInfo.resetsAt)}
         </span>
       )}
     </div>

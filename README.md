@@ -113,9 +113,11 @@ npm run build
 
 ### Caption Changes
 
-- Unlimited changes until 5 weeks remaining
-- 3 changes per week until 1 week remaining
-- Final week: 2 between quarters/semis, 2 between semis/finals
+- Days 1-14: unlimited changes (until 8:00 PM ET on Day 14)
+- Days 15-42: 3 changes per week per class, usable one at a time or all at once
+- Every Saturday 8:00 PM ET: changes lock until scores are processed (~2:00 AM ET)
+- Days 43-44: no changes allowed
+- Days 45-49 (Championship Week): 2 changes total per class; changes lock at 8:00 PM ET each day until scores are processed
 
 ### Progression System
 

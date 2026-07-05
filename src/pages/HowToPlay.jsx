@@ -308,10 +308,16 @@ const CaptionsTab = () => (
     {/* Change Rules */}
     <SectionCard title="Lineup Change Rules" icon={Calendar}>
       <div className="bg-black/30 rounded-sm p-3">
-        <DataRow label="5+ weeks left" value="Unlimited" accent />
-        <DataRow label="1-4 weeks left" value="3 per week" />
-        <DataRow label="Finals week" value="2 per round" />
+        <DataRow label="Days 1-14" value="Unlimited" accent />
+        <DataRow label="Weeks 3-6 (Days 15-42)" value="3 per week" />
+        <DataRow label="Days 43-44" value="Closed" />
+        <DataRow label="Championships (Days 45-49)" value="2 total" />
       </div>
+      <p className="mt-3 text-xs text-gray-500">
+        Changes lock every Saturday at 8:00 PM ET until scores are processed (~2:00 AM ET). During
+        Championship Week they lock at 8:00 PM ET each day. Weekly changes can be used one at a
+        time or all at once.
+      </p>
     </SectionCard>
   </div>
 );

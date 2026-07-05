@@ -5,14 +5,15 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Check, AlertCircle, Trophy, Save, Target, Award, X, ArrowLeft, Wand2 } from 'lucide-react';
 import { getProfile } from '../../api/profile';
-import { getSeasonData, getCorpsValues } from '../../api/season';
+import { getCorpsValues } from '../../api/season';
 import { getHotCorps, getActiveLineupKeys, saveLineup } from '../../api/functions';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
 import { useAuth } from '../../context/AuthContext';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { useSeasonDeadlines } from '../../hooks/useSeasonClock';
-import { getTradeWeekInfo, formatCountdown, WEEKLY_TRADE_LIMIT } from '../../utils/seasonClock';
+import { useSeasonStore } from '../../store/seasonStore';
+import { formatCountdown } from '../../utils/seasonClock';
 import { CORPS_CLASS_LABELS as CLASS_LABELS } from '../../utils/corps';
 import {
   LineupCelebration,
@@ -50,14 +51,31 @@ const CaptionSelectionModal = ({
   // Active caption for selection
   const [activeCaption, setActiveCaption] = useState(initialCaption || null);
 
-  // Trade limits state
-  const [tradesRemaining, setTradesRemaining] = useState(WEEKLY_TRADE_LIMIT);
-  const [isUnlimitedTrades, setIsUnlimitedTrades] = useState(false);
+  // Change limits state
   const [isInitialSetup, setIsInitialSetup] = useState(false);
-  const [tradeWeekInfo, setTradeWeekInfo] = useState(null);
+  const [weeklyTrades, setWeeklyTrades] = useState(null);
 
-  // Live countdown to the nightly score processing (shown next to Lock Lineup)
-  const { scoresInMs } = useSeasonDeadlines();
+  // Live countdown to the nightly score processing (shown next to Lock
+  // Lineup) plus the current caption-change window (unlimited / weekly /
+  // championship / lockouts). `trade` mirrors the backend rules in
+  // functions/src/helpers/captionWindows.js and ticks with the clock.
+  const { scoresInMs, trade: changeInfo } = useSeasonDeadlines();
+  const seasonUid = useSeasonStore((s) => s.seasonData?.seasonUid);
+
+  // Changes remaining in the current allotment (weekly 3 / championship 2)
+  const tradesRemaining = useMemo(() => {
+    if (!changeInfo || !Number.isFinite(changeInfo.tradeLimit)) return Infinity;
+    const used =
+      weeklyTrades && weeklyTrades.seasonUid === seasonUid && weeklyTrades.week === changeInfo.week
+        ? weeklyTrades.used
+        : 0;
+    return Math.max(0, changeInfo.tradeLimit - used);
+  }, [changeInfo, weeklyTrades, seasonUid]);
+
+  // Whether the change window is shut right now (Saturday-night / nightly
+  // championship lockout, Days 43-44 blackout, or season complete). Initial
+  // lineup setup is always allowed.
+  const changesBlocked = !isInitialSetup && !!changeInfo && changeInfo.status !== 'open';
 
   // Close on Escape key
   useEscapeKey(onClose);
@@ -116,32 +134,11 @@ const CaptionSelectionModal = ({
           // Check if initial setup (no existing lineup)
           const currentCorpsData = data.corps?.[corpsClass];
           const existingLineup = currentCorpsData?.lineup || {};
-          const hasExistingLineup = Object.keys(existingLineup).length > 0;
-          setIsInitialSetup(!hasExistingLineup);
+          setIsInitialSetup(Object.keys(existingLineup).length === 0);
 
-          // Get weekly trades info
-          const weeklyTrades = currentCorpsData?.weeklyTrades;
-
-          // Load season data to check trade limits.
-          // getTradeWeekInfo mirrors the backend week math exactly
-          // (functions/src/callable/lineups.js), including spring-training days.
-          const seasonData = await getSeasonData();
-          const trade = getTradeWeekInfo(seasonData);
-          if (trade) {
-            setTradeWeekInfo(trade);
-            const unlimited = !hasExistingLineup || trade.isUnlimitedWeek;
-            setIsUnlimitedTrades(unlimited);
-
-            if (!unlimited && weeklyTrades) {
-              const tradesUsed =
-                weeklyTrades.seasonUid === seasonData.seasonUid && weeklyTrades.week === trade.week
-                  ? weeklyTrades.used
-                  : 0;
-              setTradesRemaining(trade.tradeLimit - tradesUsed);
-            } else if (!unlimited) {
-              setTradesRemaining(trade.tradeLimit);
-            }
-          }
+          // Weekly change counter ({seasonUid, week, used}); combined with
+          // the live change window to compute changes remaining.
+          setWeeklyTrades(currentCorpsData?.weeklyTrades || null);
         }
       } catch (e) {
         console.error('Failed to load user data:', e);
@@ -456,6 +453,21 @@ const CaptionSelectionModal = ({
   }, [availableCorps, selections, captions, pointLimit, activeLineupKeys, generateLineupKey]);
 
   const handleSubmit = async () => {
+    if (changesBlocked) {
+      // Mirrors the saveLineup enforcement messages.
+      if (changeInfo.status === 'locked') {
+        toast.error(
+          'Caption changes are locked while scores are processed. They reopen around 2:00 AM ET.'
+        );
+      } else if (changeInfo.phase === 'blackout') {
+        toast.error(
+          'Caption changes are closed on Days 43-44. Championship changes open on Day 45 once scores are processed.'
+        );
+      } else {
+        toast.error('The season has ended — caption changes are closed until next season.');
+      }
+      return;
+    }
     if (!isComplete) {
       toast.error('Please select all 8 captions');
       return;
@@ -528,10 +540,8 @@ const CaptionSelectionModal = ({
               <div className="flex items-center gap-2">
                 <TradesRemainingIndicator
                   tradesRemaining={tradesRemaining}
-                  isUnlimited={isUnlimitedTrades}
                   isInitialSetup={isInitialSetup}
-                  resetsAt={tradeWeekInfo?.resetsAt}
-                  unlimitedEndsAt={tradeWeekInfo?.unlimitedEndsAt}
+                  changeInfo={changeInfo}
                 />
                 <button
                   onClick={handleQuickFill}
@@ -752,13 +762,23 @@ const CaptionSelectionModal = ({
               </button>
               <button
                 onClick={handleSubmit}
-                disabled={!isComplete || isOverLimit || saving || loading}
+                disabled={!isComplete || isOverLimit || saving || loading || changesBlocked}
+                title={
+                  changesBlocked
+                    ? 'Caption changes are currently closed — see the change-window indicator above'
+                    : undefined
+                }
                 className="h-9 px-4 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6] disabled:opacity-50 flex items-center gap-2"
               >
                 {saving ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-sm animate-spin" />
                     Saving...
+                  </>
+                ) : changesBlocked ? (
+                  <>
+                    <Trophy className="w-4 h-4" />
+                    Changes {changeInfo?.status === 'locked' ? 'Locked' : 'Closed'}
                   </>
                 ) : (
                   <>

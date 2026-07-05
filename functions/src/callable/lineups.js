@@ -3,6 +3,7 @@ const { getDb, dataNamespaceParam } = require("../config");
 const { assertAuth } = require("../helpers/callableGuards");
 const { logger } = require("firebase-functions/v2");
 const { analyzeLineupTrends } = require("../helpers/captionAnalytics");
+const { getCaptionChangeWindow, isDayScoresProcessed } = require("../helpers/captionWindows");
 
 /**
  * Task 2.7: Saves a user's 8-caption lineup for a specific corps class.
@@ -138,42 +139,65 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
       const isForcedUpdate = forceUpdate === true && lineupNeedsUpdate;
 
       if (newTrades > 0) {
-        const now = new Date();
-        const seasonStartDate = seasonData.schedule.startDate.toDate();
-        const diffInMillis = now.getTime() - seasonStartDate.getTime();
-        // Subtract spring training so competition Day 1 starts after it (live season).
-        // Off-seasons have no spring training (field absent -> 0).
-        const springTrainingDays = seasonData.schedule.springTrainingDays || 0;
-        const currentDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1 - springTrainingDays;
-        const currentWeek = Math.max(1, Math.ceil(currentDay / 7));
-
-        let tradeLimit = 3; // Default
-        // Allow unlimited trades for initial lineup setup (no existing lineup)
+        // Initial lineup setup (no existing lineup) is exempt from all
+        // window and limit rules, as is the one-time stale-data update.
         const isInitialSetup = Object.keys(originalLineup).length === 0;
-        if (isInitialSetup) tradeLimit = Infinity;
-        if (seasonData.status === "off-season" && currentWeek === 1) tradeLimit = Infinity;
-        if (seasonData.status === "live-season" && [1, 2, 3].includes(currentWeek)) tradeLimit = Infinity;
-        // One-time exception: allow unlimited trades when lineup has stale data from previous season
         if (isForcedUpdate) {
-          tradeLimit = Infinity;
           logger.info(`User ${uid} using one-time lineup update exception for ${corpsClass} due to stale data.`);
         }
 
-        if (tradeLimit !== Infinity) {
-          const weeklyTrades = currentCorpsData.weeklyTrades || { week: 0, used: 0 };
-          let tradesAlreadyUsed = (weeklyTrades.seasonUid === activeSeasonId &&
-            weeklyTrades.week === currentWeek) ? weeklyTrades.used : 0;
+        if (!isInitialSetup && !isForcedUpdate) {
+          // Caption-change rules (mirrored in src/utils/seasonClock.js):
+          // days 1-14 unlimited; days 15-42 three per week; every Saturday
+          // 8 PM ET through scores processing locked; days 43-44 closed;
+          // days 45-49 two total, locking nightly at the 8 PM ET boundary.
+          const window = getCaptionChangeWindow(seasonData, new Date());
 
-          if (tradesAlreadyUsed + newTrades > tradeLimit) {
-            throw new HttpsError("failed-precondition",
-              `Exceeds trade limit. You have ${tradeLimit - tradesAlreadyUsed} trades remaining this week.`);
+          if (window) {
+            if (window.phase === "blackout") {
+              throw new HttpsError("failed-precondition",
+                "Caption changes are closed on Days 43-44. Championship changes (2 per corps) " +
+                "open on Day 45 once scores are processed (~2:00 AM ET).");
+            }
+            if (window.phase === "complete") {
+              throw new HttpsError("failed-precondition",
+                "The season has ended — caption changes are closed until the next season begins.");
+            }
+            if (window.status === "locked") {
+              throw new HttpsError("failed-precondition",
+                "Caption changes are locked while scores are processed. " +
+                "They reopen around 2:00 AM ET once results are in.");
+            }
+            if (window.pendingScoresDay) {
+              const processed = await isDayScoresProcessed(db, seasonData, window.pendingScoresDay);
+              if (!processed) {
+                throw new HttpsError("failed-precondition",
+                  "Caption changes are locked until last night's scores finish processing. Please try again shortly.");
+              }
+            }
+
+            if (window.tradeLimit !== Infinity) {
+              const weeklyTrades = currentCorpsData.weeklyTrades || { week: 0, used: 0 };
+              const tradesAlreadyUsed = (weeklyTrades.seasonUid === activeSeasonId &&
+                weeklyTrades.week === window.week) ? weeklyTrades.used : 0;
+
+              if (tradesAlreadyUsed + newTrades > window.tradeLimit) {
+                const remaining = Math.max(0, window.tradeLimit - tradesAlreadyUsed);
+                const scope = window.phase === "championship"
+                  ? "for Championship Week (Days 45-49)"
+                  : "this week";
+                const plural = remaining === 1 ? "" : "s";
+                throw new HttpsError("failed-precondition",
+                  `Exceeds change limit. You have ${remaining} caption change${plural} remaining ${scope}.`);
+              }
+
+              profileUpdateData[`corps.${corpsClass}.weeklyTrades`] = {
+                seasonUid: activeSeasonId,
+                week: window.week,
+                used: tradesAlreadyUsed + newTrades,
+              };
+            }
           }
-
-          profileUpdateData[`corps.${corpsClass}.weeklyTrades`] = {
-            seasonUid: activeSeasonId,
-            week: currentWeek,
-            used: tradesAlreadyUsed + newTrades,
-          };
         }
       }
 
