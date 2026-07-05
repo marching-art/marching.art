@@ -506,9 +506,6 @@ function calculateTrendData(historicalData, reportDay, activeCorps) {
         dataPoints: scores.length,
         // Full recent scores for corps feature show-by-show journey
         recentScores: sortedScores,
-        // Form-window best/worst (recent), kept for reference
-        bestInWindow,
-        worstInWindow,
         // True season-to-date arc
         seasonHigh,
         seasonLow,
