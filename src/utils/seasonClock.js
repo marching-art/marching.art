@@ -4,8 +4,8 @@
  * Single source of truth for every player-facing deadline:
  *   - When scores process (nightly Cloud Function, 02:00 America/New_York —
  *     see functions/src/scheduled/dailyProcessors.js)
- *   - When the weekly lineup-change (trade) counter resets — mirrors the
- *     backend week math in functions/src/callable/lineups.js
+ *   - When caption changes open, lock, and reset — mirrors the backend
+ *     rules in functions/src/helpers/captionWindows.js
  *   - When show registration effectively closes (scores processing the
  *     night after the show)
  *
@@ -22,8 +22,23 @@ export const SCORES_PROCESS_HOUR_ET = 2;
 /** Competition weeks in a season. */
 export const TOTAL_SEASON_WEEKS = 7;
 
-/** Lineup changes allowed per week once limits apply (backend tradeLimit). */
+/** Caption changes allowed per week per class on days 15-42 (backend tradeLimit). */
 export const WEEKLY_TRADE_LIMIT = 3;
+
+/** Caption changes allowed per class across all of Championship Week (days 45-49). */
+export const CHAMPIONSHIP_TRADE_LIMIT = 2;
+
+/** Last competition day with unlimited caption changes. */
+export const UNLIMITED_THROUGH_DAY = 14;
+
+/** No caption changes at all on these competition days. */
+export const BLACKOUT_DAYS = [43, 44];
+
+/** First day of Championship Week. */
+export const CHAMPIONSHIP_START_DAY = 45;
+
+/** Final competition day of a season. */
+export const SEASON_FINAL_DAY = 49;
 
 /**
  * Break a Date into its Eastern-Time wall-clock parts.
@@ -105,55 +120,122 @@ export function getShowRegistrationDeadline(eventDate) {
 }
 
 /**
- * Current trade week and when its counter resets.
+ * The caption-change window for a given instant.
  *
- * Replicates the backend math exactly (functions/src/callable/lineups.js):
- * weeks are 7-day blocks measured in raw milliseconds from schedule.startDate,
- * with spring-training days excluded before competition Day 1. The reset
- * instant is therefore startDate + (week * 7 + springTrainingDays) days.
+ * Replicates the backend rules exactly (functions/src/helpers/captionWindows.js,
+ * enforced by saveLineup) — keep the two in sync:
+ *   - Days 1-14: unlimited changes, ending at the day-14 boundary (8 PM ET
+ *     during EDT).
+ *   - Days 15-42: 3 changes per week per class, spendable one at a time or
+ *     all at once.
+ *   - Every Saturday 8 PM ET (end of days 7/14/21/28/35/42): changes lock
+ *     until scores process (nightly run at 2 AM ET).
+ *   - Days 43-44: no changes at all.
+ *   - Days 45-49 (Championship Week): 2 changes total per class; changes
+ *     close at the 8 PM ET boundary each day and reopen after scores process.
  *
- * @param {Object} seasonData - Season doc (needs schedule.startDate, status)
+ * Days are 24h blocks measured in raw milliseconds from schedule.startDate,
+ * with spring-training days excluded before competition Day 1. The client
+ * treats a lockout as ending at the 2 AM ET processing run; the backend
+ * additionally waits for the day's recap to actually exist.
+ *
+ * @param {Object} seasonData - Season doc (needs schedule.startDate)
  * @param {Date} [now]
  * @returns {{
+ *   day: number,
  *   week: number,
- *   resetsAt: Date|null,
- *   isUnlimitedWeek: boolean,
- *   unlimitedEndsAt: Date|null,
+ *   phase: 'unlimited'|'weekly'|'blackout'|'championship'|'complete',
+ *   status: 'open'|'locked'|'closed',
  *   tradeLimit: number,
+ *   isUnlimited: boolean,
+ *   unlimitedEndsAt: Date|null,
+ *   locksAt: Date|null,
+ *   reopensAt: Date|null,
+ *   resetsAt: Date|null,
+ *   nextLimit: number|null,
  * }|null} null when the season has no start date
  */
-export function getTradeWeekInfo(seasonData, now = new Date()) {
+export function getCaptionChangeInfo(seasonData, now = new Date()) {
   const startTs = seasonData?.schedule?.startDate;
   if (!startTs) return null;
   const startDate = typeof startTs.toDate === 'function' ? startTs.toDate() : new Date(startTs);
   if (Number.isNaN(startDate.getTime())) return null;
 
   const springTrainingDays = seasonData.schedule.springTrainingDays || 0;
-  const currentDay =
-    Math.floor((now.getTime() - startDate.getTime()) / DAY_MS) + 1 - springTrainingDays;
-  const week = Math.max(1, Math.ceil(currentDay / 7));
+  const dayStart = (d) => new Date(startDate.getTime() + (springTrainingDays + d - 1) * DAY_MS);
+  const day = Math.floor((now.getTime() - startDate.getTime()) / DAY_MS) + 1 - springTrainingDays;
+  const week = Math.max(1, Math.ceil(day / 7));
+  // Lockouts end at the nightly 2 AM ET score-processing run after a boundary.
+  const reopenAfter = (d) => getNextScoresProcessingTime(dayStart(d));
 
-  const boundaryAfterWeek = (w) =>
-    new Date(startDate.getTime() + (w * 7 + springTrainingDays) * DAY_MS);
+  const base = {
+    day,
+    week,
+    tradeLimit: WEEKLY_TRADE_LIMIT,
+    isUnlimited: false,
+    unlimitedEndsAt: null,
+    locksAt: null,
+    reopensAt: null,
+    resetsAt: null,
+    nextLimit: null,
+  };
 
-  // Unlimited-change windows mirror the backend: off-season week 1,
-  // live-season weeks 1-3.
-  let isUnlimitedWeek = false;
-  let unlimitedEndsAt = null;
-  if (seasonData.status === 'off-season' && week === 1) {
-    isUnlimitedWeek = true;
-    unlimitedEndsAt = boundaryAfterWeek(1);
-  } else if (seasonData.status === 'live-season' && week <= 3) {
-    isUnlimitedWeek = true;
-    unlimitedEndsAt = boundaryAfterWeek(3);
+  if (day > SEASON_FINAL_DAY) {
+    return { ...base, phase: 'complete', status: 'closed', tradeLimit: 0 };
   }
 
+  if (BLACKOUT_DAYS.includes(day)) {
+    const opensAt = reopenAfter(CHAMPIONSHIP_START_DAY);
+    return {
+      ...base,
+      phase: 'blackout',
+      status: 'closed',
+      tradeLimit: 0,
+      reopensAt: opensAt,
+      resetsAt: opensAt,
+      nextLimit: CHAMPIONSHIP_TRADE_LIMIT,
+    };
+  }
+
+  if (day >= CHAMPIONSHIP_START_DAY) {
+    const opensAt = reopenAfter(day);
+    const locked = now.getTime() < opensAt.getTime();
+    return {
+      ...base,
+      phase: 'championship',
+      status: locked ? 'locked' : 'open',
+      tradeLimit: CHAMPIONSHIP_TRADE_LIMIT,
+      reopensAt: locked ? opensAt : null,
+      locksAt: locked ? null : dayStart(day + 1),
+    };
+  }
+
+  // Days 1-42 (day < 1 is spring training / pre-season: unlimited, no lock).
+  // Weeks begin on days 8, 15, 22, 29, 36 — the morning after a Saturday
+  // 8 PM ET close — and stay locked until scores process at 2 AM ET.
+  const isWeekStartDay = day > 1 && day % 7 === 1;
+  const opensAt = isWeekStartDay ? reopenAfter(day) : null;
+  const locked = opensAt !== null && now.getTime() < opensAt.getTime();
+  const isUnlimited = day <= UNLIMITED_THROUGH_DAY;
+
+  // When the next fresh allotment becomes usable, and how big it is.
+  const resets = isUnlimited
+    ? { at: reopenAfter(UNLIMITED_THROUGH_DAY + 1), limit: WEEKLY_TRADE_LIMIT }
+    : week < 6
+      ? { at: reopenAfter(week * 7 + 1), limit: WEEKLY_TRADE_LIMIT }
+      : { at: reopenAfter(CHAMPIONSHIP_START_DAY), limit: CHAMPIONSHIP_TRADE_LIMIT };
+
   return {
-    week,
-    resetsAt: week < TOTAL_SEASON_WEEKS ? boundaryAfterWeek(week) : null,
-    isUnlimitedWeek,
-    unlimitedEndsAt,
-    tradeLimit: WEEKLY_TRADE_LIMIT,
+    ...base,
+    phase: isUnlimited ? 'unlimited' : 'weekly',
+    status: locked ? 'locked' : 'open',
+    tradeLimit: isUnlimited ? Infinity : WEEKLY_TRADE_LIMIT,
+    isUnlimited,
+    unlimitedEndsAt: isUnlimited ? dayStart(UNLIMITED_THROUGH_DAY + 1) : null,
+    locksAt: locked ? null : dayStart(week * 7 + 1),
+    reopensAt: locked ? opensAt : null,
+    resetsAt: resets.at,
+    nextLimit: resets.limit,
   };
 }
 

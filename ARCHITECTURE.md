@@ -152,11 +152,16 @@ Located in `src/components/ui/`:
 
 ### Caption Change Rules
 
-| Weeks Remaining | Changes Allowed      |
-| --------------- | -------------------- |
-| 5+              | Unlimited            |
-| 4-2             | 3 per week           |
-| 1 (finals week) | 2 between each round |
+| Days                    | Changes Allowed                        |
+| ----------------------- | -------------------------------------- |
+| 1-14                    | Unlimited (until 8 PM ET on Day 14)    |
+| 15-42                   | 3 per week per class                   |
+| 43-44                   | None                                   |
+| 45-49 (Championships)   | 2 total per class, lock 8 PM ET daily  |
+
+Changes always lock from Saturday 8:00 PM ET until scores are processed
+(nightly run at 2:00 AM ET). Enforced by `functions/src/helpers/captionWindows.js`
+(mirrored client-side in `src/utils/seasonClock.js`).
 
 ## Class System
 

@@ -500,8 +500,9 @@ const Onboarding = () => {
                         />
                       </div>
                       <p className="text-xs text-gray-500 mt-2 text-center">
-                        You can adjust this from your dashboard — changes are unlimited in the
-                        opening weeks, then limited to a few per week
+                        You can adjust this from your dashboard — changes are unlimited for the
+                        first two weeks, then limited to 3 per week (2 total during Championship
+                        Week)
                       </p>
                     </div>
                   </m.div>

@@ -4,7 +4,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useSeasonStore } from '../store/seasonStore';
-import { getNextScoresProcessingTime, getTradeWeekInfo } from '../utils/seasonClock';
+import { getNextScoresProcessingTime, getCaptionChangeInfo } from '../utils/seasonClock';
 
 /**
  * Current time, re-evaluated on an interval so countdowns tick.
@@ -27,7 +27,7 @@ export function useNow(intervalMs = 30000) {
  *   now: Date,
  *   scoresAt: Date,
  *   scoresInMs: number,
- *   trade: ReturnType<typeof getTradeWeekInfo>,
+ *   trade: ReturnType<typeof getCaptionChangeInfo>,
  * }}
  */
 export function useSeasonDeadlines(intervalMs = 30000) {
@@ -39,7 +39,7 @@ export function useSeasonDeadlines(intervalMs = 30000) {
       now,
       scoresAt,
       scoresInMs: scoresAt.getTime() - now.getTime(),
-      trade: getTradeWeekInfo(seasonData, now),
+      trade: getCaptionChangeInfo(seasonData, now),
     };
   }, [seasonData, now]);
 }

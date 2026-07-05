@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   getNextScoresProcessingTime,
   getShowRegistrationDeadline,
-  getTradeWeekInfo,
+  getCaptionChangeInfo,
   formatCountdown,
   formatEtShort,
 } from './seasonClock';
@@ -50,67 +50,109 @@ describe('getShowRegistrationDeadline', () => {
   });
 });
 
-describe('getTradeWeekInfo', () => {
+describe('getCaptionChangeInfo', () => {
   // Season starting at UTC midnight, the shape the admin UI writes.
+  // Day boundaries land at 8 PM EDT: day 1 = June 21, day 14 ends
+  // 2026-07-05T00:00:00Z = Saturday July 4, 8:00 PM EDT.
   const start = new Date('2026-06-21T00:00:00Z');
-  const season = (status, springTrainingDays) => ({
-    status,
+  const season = (springTrainingDays) => ({
+    status: 'off-season',
     schedule: {
       startDate: { toDate: () => start }, // Firestore Timestamp shape
       ...(springTrainingDays ? { springTrainingDays } : {}),
     },
   });
+  const info = (nowIso, springDays) => getCaptionChangeInfo(season(springDays), new Date(nowIso));
 
-  it('computes the week with raw millisecond math like the backend', () => {
-    // Day 3 of the season
-    const now = new Date('2026-06-23T12:00:00Z');
-    const info = getTradeWeekInfo(season('off-season'), now);
-    expect(info.week).toBe(1);
-    // Week 1 counter resets exactly 7 days after start
-    expect(info.resetsAt.toISOString()).toBe('2026-06-28T00:00:00.000Z');
+  it('is unlimited on days 1-14, ending at the day-14 boundary (Sat 8 PM ET)', () => {
+    const w = info('2026-06-23T12:00:00Z'); // day 3
+    expect(w.phase).toBe('unlimited');
+    expect(w.status).toBe('open');
+    expect(w.tradeLimit).toBe(Infinity);
+    expect(w.unlimitedEndsAt.toISOString()).toBe('2026-07-05T00:00:00.000Z');
+    // Weekly limits become usable after day 15 begins + the 2 AM ET run
+    expect(w.resetsAt.toISOString()).toBe('2026-07-05T06:00:00.000Z');
+    expect(w.nextLimit).toBe(3);
   });
 
-  it('is unlimited only in week 1 of an off-season', () => {
-    const week1 = getTradeWeekInfo(season('off-season'), new Date('2026-06-22T00:00:00Z'));
-    expect(week1.isUnlimitedWeek).toBe(true);
-    expect(week1.unlimitedEndsAt.toISOString()).toBe('2026-06-28T00:00:00.000Z');
+  it('locks on Saturday night even during the unlimited weeks', () => {
+    // Day 8 begins 2026-06-28T00:00:00Z (Sat June 27, 8 PM EDT); 9 PM EDT:
+    const w = info('2026-06-28T01:00:00Z');
+    expect(w.day).toBe(8);
+    expect(w.status).toBe('locked');
+    expect(w.reopensAt.toISOString()).toBe('2026-06-28T06:00:00.000Z'); // 2 AM EDT
 
-    const week2 = getTradeWeekInfo(season('off-season'), new Date('2026-06-29T00:00:00Z'));
-    expect(week2.week).toBe(2);
-    expect(week2.isUnlimitedWeek).toBe(false);
+    // After 2 AM ET it reopens, still unlimited
+    const reopened = info('2026-06-28T07:00:00Z');
+    expect(reopened.status).toBe('open');
+    expect(reopened.phase).toBe('unlimited');
   });
 
-  it('is unlimited through week 3 of a live season', () => {
-    const week3 = getTradeWeekInfo(season('live-season'), new Date('2026-07-06T00:00:00Z'));
-    expect(week3.week).toBe(3);
-    expect(week3.isUnlimitedWeek).toBe(true);
-    expect(week3.unlimitedEndsAt.toISOString()).toBe('2026-07-12T00:00:00.000Z');
+  it('allows 3 changes per week on days 15-42', () => {
+    const w = info('2026-07-06T12:00:00Z'); // day 16, week 3
+    expect(w.phase).toBe('weekly');
+    expect(w.status).toBe('open');
+    expect(w.week).toBe(3);
+    expect(w.tradeLimit).toBe(3);
+    // Locks at the Saturday 8 PM ET boundary ending week 3 (day 21)
+    expect(w.locksAt.toISOString()).toBe('2026-07-12T00:00:00.000Z');
+    // Fresh allotment once week 4 opens after the 2 AM ET run
+    expect(w.resetsAt.toISOString()).toBe('2026-07-12T06:00:00.000Z');
+  });
 
-    const week4 = getTradeWeekInfo(season('live-season'), new Date('2026-07-13T00:00:00Z'));
-    expect(week4.week).toBe(4);
-    expect(week4.isUnlimitedWeek).toBe(false);
+  it('locks week-start days until the 2 AM ET score run', () => {
+    // Day 22 begins 2026-07-12T00:00:00Z (Sat 8 PM EDT); 9 PM EDT:
+    const w = info('2026-07-12T01:00:00Z');
+    expect(w.day).toBe(22);
+    expect(w.status).toBe('locked');
+    expect(w.reopensAt.toISOString()).toBe('2026-07-12T06:00:00.000Z');
+  });
+
+  it('closes changes entirely on days 43-44', () => {
+    const w = info('2026-08-02T12:00:00Z'); // day 43
+    expect(w.phase).toBe('blackout');
+    expect(w.status).toBe('closed');
+    expect(w.tradeLimit).toBe(0);
+    // Championship changes open after day 45 begins + the 2 AM ET run
+    expect(w.reopensAt.toISOString()).toBe('2026-08-04T06:00:00.000Z');
+    expect(w.nextLimit).toBe(2);
+  });
+
+  it('gives 2 total changes during championships with nightly 8 PM ET locks', () => {
+    // Day 45 begins 2026-08-04T00:00:00Z (Mon 8 PM EDT). Before 2 AM ET: locked.
+    const locked = info('2026-08-04T01:00:00Z');
+    expect(locked.phase).toBe('championship');
+    expect(locked.status).toBe('locked');
+    expect(locked.reopensAt.toISOString()).toBe('2026-08-04T06:00:00.000Z');
+
+    // Tuesday afternoon: open with the championship limit, closing at the
+    // next day boundary (8 PM ET).
+    const open = info('2026-08-04T18:00:00Z');
+    expect(open.status).toBe('open');
+    expect(open.tradeLimit).toBe(2);
+    expect(open.week).toBe(7);
+    expect(open.locksAt.toISOString()).toBe('2026-08-05T00:00:00.000Z');
+  });
+
+  it('closes after the season ends', () => {
+    const w = info('2026-08-09T12:00:00Z'); // day 50
+    expect(w.phase).toBe('complete');
+    expect(w.status).toBe('closed');
+    expect(w.tradeLimit).toBe(0);
   });
 
   it('excludes spring-training days before competition day 1', () => {
-    // 14 spring-training days: 10 days in, competition hasn't reached week 2
-    const now = new Date('2026-07-01T00:00:00Z');
-    const info = getTradeWeekInfo(season('live-season', 14), now);
-    expect(info.week).toBe(1);
-    // Week 1 resets at start + (7 + 14) days
-    expect(info.resetsAt.toISOString()).toBe('2026-07-12T00:00:00.000Z');
-  });
-
-  it('has no further reset in the final week', () => {
-    // Day 44 → week 7
-    const now = new Date('2026-08-04T00:00:00Z');
-    const info = getTradeWeekInfo(season('off-season'), now);
-    expect(info.week).toBe(7);
-    expect(info.resetsAt).toBeNull();
+    // 21 spring-training days: 10 calendar days in is still pre-competition
+    const w = info('2026-07-01T00:00:00Z', 21);
+    expect(w.phase).toBe('unlimited');
+    expect(w.status).toBe('open');
+    // Unlimited ends at start + (21 + 14) days
+    expect(w.unlimitedEndsAt.toISOString()).toBe('2026-07-26T00:00:00.000Z');
   });
 
   it('returns null without a start date', () => {
-    expect(getTradeWeekInfo({ schedule: {} })).toBeNull();
-    expect(getTradeWeekInfo(null)).toBeNull();
+    expect(getCaptionChangeInfo({ schedule: {} })).toBeNull();
+    expect(getCaptionChangeInfo(null)).toBeNull();
   });
 });
 
