@@ -27,6 +27,28 @@ const { ChunkedWriter } = require("./chunkedWriter");
 
 
 
+// The eight lineup captions a corps must fill before it can be scored. A corps
+// with an incomplete (or empty) lineup has not finished selecting captions and
+// must be excluded from scoring entirely — otherwise it lands in the recap and
+// standings with a meaningless 0.000.
+const LINEUP_CAPTIONS = ["GE1", "GE2", "VP", "VA", "CG", "B", "MA", "P"];
+
+/**
+ * True only when a lineup has a non-empty selection for every scoring caption.
+ * Newly registered corps start with an empty `lineup: {}`, and the caption
+ * selection is only ever saved as a complete 8-caption set, so this rejects
+ * both the empty and any partially-filled case.
+ *
+ * @param {Object|undefined} lineup - The corps' caption -> "corpsName|year" map.
+ * @returns {boolean}
+ */
+function hasCompleteLineup(lineup) {
+  if (!lineup) return false;
+  return LINEUP_CAPTIONS.every(
+    (caption) => typeof lineup[caption] === "string" && lineup[caption].length > 0
+  );
+}
+
 // =============================================================================
 // END: Shared helper functions
 // =============================================================================
@@ -111,6 +133,11 @@ function scoreShowsForDay({
       for (const corpsClass of Object.keys(userCorps)) {
         const corps = userCorps[corpsClass];
         if (!corps || !corps.corpsName || !corps.lineup) continue;
+
+        // A corps that hasn't finished selecting its captions must not be
+        // scored at all. Without this it would otherwise "attend" any show it
+        // registered for and post a 0.000 in the recap and standings.
+        if (!hasCompleteLineup(corps.lineup)) continue;
 
         // Eastern Classic Day 41/42 per-corps filter (keyed by uid+corpsClass
         // so each registered corps competes on exactly one of the two days).
@@ -662,4 +689,5 @@ module.exports = {
   processAndScoreLiveSeasonDayLogic,
   // Exported for unit testing the shared scoring core
   scoreShowsForDay,
+  hasCompleteLineup,
 };
