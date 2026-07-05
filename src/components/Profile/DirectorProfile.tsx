@@ -43,7 +43,9 @@ import {
   EnsembleCard,
   UnregisteredEnsembleCard,
   EmptyWithCTA,
+  AvatarActions,
 } from './DirectorProfileParts';
+import type { AvatarAction } from './DirectorProfileParts';
 import {
   getClassDisplay,
   getDirectorStatus,
@@ -122,6 +124,31 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
     }
   };
 
+  // Avatar actions rendered twice: desktop hover overlay + mobile visible row
+  const avatarActions = [
+    onDesignUniform && {
+      label: 'Design',
+      icon: Palette,
+      onClick: onDesignUniform,
+      primary: true,
+    },
+    avatarData.url &&
+      onRegenerateAvatar &&
+      avatarData.corpsClass && {
+        label: isRegenerating ? 'Generating...' : 'Regenerate',
+        icon: RefreshCw,
+        onClick: handleRegenerateAvatar,
+        disabled: isRegenerating,
+        spinning: isRegenerating,
+      },
+    corpsWithAvatars.length > 1 &&
+      onSelectAvatarCorps && {
+        label: 'Change',
+        icon: User,
+        onClick: () => setShowAvatarSelector(true),
+      },
+  ].filter(Boolean) as AvatarAction[];
+
   // DEDUPED: Trophies are competition-based, achievements are profile.achievements
   const trophies = useMemo(() => getCompetitionTrophies(profile), [profile]);
   const achievements = profile.achievements || [];
@@ -195,43 +222,10 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
               )}
             </div>
 
-            {/* Overlay actions for own profile */}
-            {isOwnProfile && (
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-2 transition-opacity">
-                {onDesignUniform && (
-                  <button
-                    onClick={onDesignUniform}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0057B8] hover:bg-[#0066d6] transition-colors"
-                  >
-                    <Palette className="w-4 h-4 text-white" />
-                    <span className="text-[10px] text-white font-bold uppercase">Design</span>
-                  </button>
-                )}
-                {avatarData.url && onRegenerateAvatar && avatarData.corpsClass && (
-                  <button
-                    onClick={handleRegenerateAvatar}
-                    disabled={isRegenerating}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#333] hover:bg-[#444] transition-colors disabled:opacity-50"
-                  >
-                    <RefreshCw
-                      className={`w-4 h-4 text-white ${isRegenerating ? 'animate-spin' : ''}`}
-                    />
-                    <span className="text-[10px] text-white font-bold uppercase">
-                      {isRegenerating ? 'Generating...' : 'Regenerate'}
-                    </span>
-                  </button>
-                )}
-                {corpsWithAvatars.length > 1 && onSelectAvatarCorps && (
-                  <button
-                    onClick={() => setShowAvatarSelector(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#333] hover:bg-[#444] transition-colors"
-                  >
-                    <User className="w-4 h-4 text-white" />
-                    <span className="text-[10px] text-white font-bold uppercase">Change</span>
-                  </button>
-                )}
-              </div>
-            )}
+            {/* Own-profile avatar actions. Desktop: hover overlay. Touch/small
+                screens: always-visible row below the avatar, since hover never
+                fires there and hidden controls would be unreachable. */}
+            {isOwnProfile && <AvatarActions actions={avatarActions} />}
 
             {/* Avatar selector modal */}
             <AnimatePresence>

@@ -17,7 +17,7 @@ import { formatCountdown } from '../../utils/seasonClock';
 import { CORPS_CLASS_LABELS as CLASS_LABELS } from '../../utils/corps';
 import {
   LineupCelebration,
-  CorpsOptionRow,
+  CorpsSelectionList,
   TemplateModal,
   DraftHelper,
   TradesRemainingIndicator,
@@ -50,6 +50,14 @@ const CaptionSelectionModal = ({
 
   // Active caption for selection
   const [activeCaption, setActiveCaption] = useState(initialCaption || null);
+
+  // Corps list search — essential on mobile where the full list is a long scroll
+  const [corpsSearch, setCorpsSearch] = useState('');
+
+  // Clear the search when switching captions so each list starts unfiltered
+  useEffect(() => {
+    setCorpsSearch('');
+  }, [activeCaption]);
 
   // Change limits state
   const [isInitialSetup, setIsInitialSetup] = useState(false);
@@ -497,6 +505,17 @@ const CaptionSelectionModal = ({
   const activeCaptionData = activeCaption ? captions.find((c) => c.id === activeCaption) : null;
   const activeCaptionSelection = activeCaption ? getSelectedCorps(activeCaption) : null;
 
+  // Corps list filtered by the search box (matches name or source year)
+  const filteredCorps = useMemo(() => {
+    const query = corpsSearch.trim().toLowerCase();
+    if (!query) return availableCorps;
+    return availableCorps.filter(
+      (corps) =>
+        corps.corpsName?.toLowerCase().includes(query) ||
+        String(corps.sourceYear ?? '').includes(query)
+    );
+  }, [availableCorps, corpsSearch]);
+
   return (
     <Portal>
       <div
@@ -507,7 +526,7 @@ const CaptionSelectionModal = ({
         aria-labelledby="modal-title-caption-selection"
       >
         <div
-          className="w-full max-w-5xl max-h-[95vh] bg-[#1a1a1a] border border-[#333] rounded-sm flex flex-col"
+          className="w-full max-w-5xl max-h-[95dvh] bg-[#1a1a1a] border border-[#333] rounded-sm flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -518,7 +537,8 @@ const CaptionSelectionModal = ({
                 {mobileView === 'selection' && (
                   <button
                     onClick={handleBackToLineup}
-                    className="lg:hidden p-1.5 -ml-1.5 text-gray-400 hover:text-white"
+                    className="lg:hidden min-w-touch min-h-touch -ml-2 flex items-center justify-center text-gray-400 hover:text-white active:text-white press-feedback"
+                    aria-label="Back to lineup"
                   >
                     <ArrowLeft className="w-5 h-5" />
                   </button>
@@ -546,19 +566,23 @@ const CaptionSelectionModal = ({
                 <button
                   onClick={handleQuickFill}
                   disabled={loading || selectionCount === 8}
-                  className="h-8 px-3 bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold uppercase flex items-center gap-1"
+                  className="min-h-touch px-3 bg-green-600 hover:bg-green-500 active:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold uppercase flex items-center gap-1 press-feedback"
                   title="Auto-fill empty positions with balanced picks"
                 >
                   <Wand2 className="w-3 h-3" /> Quick Fill
                 </button>
                 <button
                   onClick={() => setShowTemplateModal(true)}
-                  className="h-8 px-3 border border-[#333] text-gray-400 text-xs font-bold uppercase hover:border-[#444] hover:text-white flex items-center gap-1"
+                  className="min-h-touch px-3 border border-[#333] text-gray-400 text-xs font-bold uppercase hover:border-[#444] hover:text-white active:text-white flex items-center gap-1 press-feedback"
                 >
                   <Save className="w-3 h-3" /> Templates
                 </button>
-                <button onClick={onClose} className="p-1 text-gray-500 hover:text-white">
-                  <X className="w-4 h-4" />
+                <button
+                  onClick={onClose}
+                  className="min-w-touch min-h-touch -mr-2 flex items-center justify-center text-gray-500 hover:text-white active:text-white press-feedback"
+                  aria-label="Close lineup editor"
+                >
+                  <X className="w-5 h-5" />
                 </button>
               </div>
             </div>
@@ -697,36 +721,19 @@ const CaptionSelectionModal = ({
                         </div>
                       </div>
 
-                      {/* Corps List */}
-                      <div className="flex-1 overflow-y-auto min-h-0">
-                        <div className="divide-y divide-[#222]">
-                          {availableCorps.map((corps, idx) => {
-                            const value = `${corps.corpsName}|${corps.sourceYear}|${corps.points}`;
-                            const isCurrentSel = selections[activeCaption] === value;
-                            const wouldExceed =
-                              !isCurrentSel &&
-                              totalPoints - (activeCaptionSelection?.points || 0) + corps.points >
-                                pointLimit;
-                            // Get caption-specific hot status for this corps
-                            const corpsId = `${corps.corpsName}|${corps.sourceYear}`;
-                            const captionHotStatus = hotCorpsData[corpsId]?.[activeCaption];
-                            return (
-                              <CorpsOptionRow
-                                key={idx}
-                                corps={corps}
-                                isSelected={isCurrentSel}
-                                onSelect={() => handleCorpsSelect(activeCaption, corps)}
-                                disabled={wouldExceed}
-                                captionHotStatus={captionHotStatus}
-                              />
-                            );
-                          })}
-                        </div>
-                        <p className="px-4 py-3 text-[10px] text-gray-600 text-center border-t border-[#222]">
-                          Showing this season's draftable corps (cost 50 or less). Cost counts
-                          against your budget — scores come from real performances.
-                        </p>
-                      </div>
+                      {/* Corps Search + List */}
+                      <CorpsSelectionList
+                        corpsList={filteredCorps}
+                        searchValue={corpsSearch}
+                        onSearchChange={setCorpsSearch}
+                        selections={selections}
+                        activeCaption={activeCaption}
+                        activeCaptionSelection={activeCaptionSelection}
+                        totalPoints={totalPoints}
+                        pointLimit={pointLimit}
+                        hotCorpsData={hotCorpsData}
+                        onSelect={(corps) => handleCorpsSelect(activeCaption, corps)}
+                      />
                     </>
                   ) : (
                     <div className="flex-1 flex items-center justify-center text-center p-8">
@@ -745,7 +752,7 @@ const CaptionSelectionModal = ({
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex items-center justify-between gap-3 flex-shrink-0">
+          <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex items-center justify-between gap-3 flex-shrink-0 safe-area-bottom">
             <p className="text-[10px] text-gray-500 leading-snug min-w-0 hidden sm:block">
               Locked lineups are scored nightly at 2 AM ET — next run in{' '}
               <span className="text-cyan-400 font-bold font-data tabular-nums">
@@ -756,7 +763,7 @@ const CaptionSelectionModal = ({
               <button
                 onClick={onClose}
                 disabled={saving}
-                className="h-9 px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white disabled:opacity-50"
+                className="min-h-touch px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white disabled:opacity-50 press-feedback"
               >
                 Cancel
               </button>
@@ -768,7 +775,7 @@ const CaptionSelectionModal = ({
                     ? 'Caption changes are currently closed — see the change-window indicator above'
                     : undefined
                 }
-                className="h-9 px-4 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6] disabled:opacity-50 flex items-center gap-2"
+                className="min-h-touch px-4 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6] active:bg-[#004a9e] disabled:opacity-50 flex items-center gap-2 press-feedback-strong"
               >
                 {saving ? (
                   <>

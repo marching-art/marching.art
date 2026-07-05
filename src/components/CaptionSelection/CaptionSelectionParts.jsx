@@ -16,6 +16,7 @@ import {
   PartyPopper,
   RefreshCw,
   Lock,
+  Search,
 } from 'lucide-react';
 import { formatEtShort, formatEtDayTime } from '../../utils/seasonClock';
 
@@ -49,7 +50,7 @@ const CorpsOptionRow = ({ corps, isSelected, onSelect, disabled, captionHotStatu
     <button
       onClick={() => !disabled && onSelect(corps)}
       disabled={disabled}
-      className={`w-full flex items-center justify-between px-3 py-2.5 text-left transition-colors ${
+      className={`w-full min-h-touch flex items-center justify-between px-3 py-2.5 text-left transition-colors ${
         isSelected
           ? 'bg-[#0057B8]/10 border-l-2 border-l-[#0057B8]'
           : disabled
@@ -90,6 +91,83 @@ const CorpsOptionRow = ({ corps, isSelected, onSelect, disabled, captionHotStatu
     </button>
   );
 };
+
+// -----------------------------------------------------------------------------
+// CORPS SELECTION LIST (search box + scrollable option rows)
+// -----------------------------------------------------------------------------
+const CorpsSelectionList = ({
+  corpsList,
+  searchValue,
+  onSearchChange,
+  selections,
+  activeCaption,
+  activeCaptionSelection,
+  totalPoints,
+  pointLimit,
+  hotCorpsData,
+  onSelect,
+}) => (
+  <>
+    {/* Search — 16px text so iOS doesn't zoom on focus, 44px touch height */}
+    <div className="px-3 py-2 bg-[#1a1a1a] border-b border-[#333] flex-shrink-0">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+        <input
+          type="search"
+          inputMode="search"
+          value={searchValue}
+          onChange={(e) => onSearchChange(e.target.value)}
+          placeholder="Search corps or year..."
+          aria-label="Search available corps"
+          className="w-full h-11 pl-9 pr-9 bg-[#0a0a0a] border border-[#333] rounded-sm text-base text-white placeholder-gray-500 focus:border-[#0057B8] focus:outline-none"
+        />
+        {searchValue && (
+          <button
+            onClick={() => onSearchChange('')}
+            className="absolute right-0 top-0 h-11 w-11 flex items-center justify-center text-gray-500 hover:text-white active:text-white"
+            aria-label="Clear search"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+    </div>
+
+    <div className="flex-1 overflow-y-auto min-h-0">
+      {corpsList.length === 0 && (
+        <p className="px-4 py-8 text-sm text-gray-500 text-center">
+          No corps match &ldquo;{searchValue}&rdquo;
+        </p>
+      )}
+      <div className="divide-y divide-[#222]">
+        {corpsList.map((corps) => {
+          const value = `${corps.corpsName}|${corps.sourceYear}|${corps.points}`;
+          const isCurrentSel = selections[activeCaption] === value;
+          const wouldExceed =
+            !isCurrentSel &&
+            totalPoints - (activeCaptionSelection?.points || 0) + corps.points > pointLimit;
+          // Get caption-specific hot status for this corps
+          const corpsId = `${corps.corpsName}|${corps.sourceYear}`;
+          const captionHotStatus = hotCorpsData[corpsId]?.[activeCaption];
+          return (
+            <CorpsOptionRow
+              key={value}
+              corps={corps}
+              isSelected={isCurrentSel}
+              onSelect={() => onSelect(corps)}
+              disabled={wouldExceed}
+              captionHotStatus={captionHotStatus}
+            />
+          );
+        })}
+      </div>
+      <p className="px-4 py-3 text-[10px] text-gray-600 text-center border-t border-[#222]">
+        Showing this season's draftable corps (cost 50 or less). Cost counts against your budget —
+        scores come from real performances.
+      </p>
+    </div>
+  </>
+);
 
 // -----------------------------------------------------------------------------
 // TEMPLATE MODAL
@@ -419,7 +497,7 @@ const CaptionButton = ({ caption, selected, isActive, onClick, categoryColor }) 
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center justify-between p-2.5 border transition-all ${
+      className={`w-full min-h-touch flex items-center justify-between p-2.5 border transition-all ${
         isActive
           ? 'border-[#0057B8] bg-[#0057B8]/10'
           : hasValue
@@ -456,6 +534,7 @@ const CaptionButton = ({ caption, selected, isActive, onClick, categoryColor }) 
 export {
   LineupCelebration,
   CorpsOptionRow,
+  CorpsSelectionList,
   TemplateModal,
   DraftHelper,
   TradesRemainingIndicator,
