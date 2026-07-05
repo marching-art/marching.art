@@ -495,12 +495,20 @@ const Article = () => {
                 {/* Full Story - only show if different from summary */}
                 <div className="p-5 lg:p-6">
                   {/* Articles with structured sections get parsed layout */}
-                  {['fantasy_recap', 'fantasy_daily', 'dci_recap', 'dci_daily', 'dci_feature'].includes(
-                    article.type
-                  ) ||
-                  ['fantasy_recap', 'fantasy_daily', 'dci_recap', 'dci_daily', 'dci_feature'].includes(
-                    article.articleType
-                  ) ? (
+                  {[
+                    'fantasy_recap',
+                    'fantasy_daily',
+                    'dci_recap',
+                    'dci_daily',
+                    'dci_feature',
+                  ].includes(article.type) ||
+                  [
+                    'fantasy_recap',
+                    'fantasy_daily',
+                    'dci_recap',
+                    'dci_daily',
+                    'dci_feature',
+                  ].includes(article.articleType) ? (
                     <div className="mb-8">
                       <ArticleNarrativeParser
                         narrative={article.narrative}

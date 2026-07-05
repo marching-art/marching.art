@@ -300,7 +300,9 @@ const CorpsHistory = () => {
                     </p>
                   </div>
                   <div className="bg-[#111] border border-[#333] rounded-sm p-3 text-center">
-                    <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">Gold</p>
+                    <p className="text-[10px] text-gray-500/60 uppercase tracking-wide mb-1">
+                      Gold
+                    </p>
                     <p className="text-xl font-mono font-bold text-yellow-400">
                       {soundSportRatings.counts.Gold}
                     </p>

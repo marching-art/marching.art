@@ -509,7 +509,10 @@ export default function ArticleNarrativeParser({ narrative, summary, articleType
 // Paragraphs without a lead-in render as normal prose, so the styling degrades
 // cleanly whether or not the model emitted subheads.
 function formatEditorialContent(narrative) {
-  const paragraphs = narrative.trim().split(/\n\n+/).filter((p) => p.trim());
+  const paragraphs = narrative
+    .trim()
+    .split(/\n\n+/)
+    .filter((p) => p.trim());
   const strip = (s) => s.replace(/\*\*/g, '').replace(/\*/g, '').trim();
 
   return paragraphs.map((para, idx) => {
@@ -524,7 +527,9 @@ function formatEditorialContent(narrative) {
     const sep = m ? m[2] : '';
     const bodyText = m ? strip(m[3]) : '';
     const looksLikeSubhead =
-      m && rawHead.length > 0 && rawHead.length <= 40 &&
+      m &&
+      rawHead.length > 0 &&
+      rawHead.length <= 40 &&
       (/[.:!]$/.test(rawHead) || Boolean(sep) || bodyText === '');
     if (looksLikeSubhead) {
       const head = rawHead.replace(/[.:!]+$/, '');
@@ -532,9 +537,7 @@ function formatEditorialContent(narrative) {
       return (
         <div key={idx} className="mb-6">
           <h4 className="text-xs font-bold uppercase tracking-wider text-[#0057B8] mb-2">{head}</h4>
-          {body && (
-            <p className="text-base md:text-lg text-gray-300 leading-relaxed">{body}</p>
-          )}
+          {body && <p className="text-base md:text-lg text-gray-300 leading-relaxed">{body}</p>}
         </div>
       );
     }
