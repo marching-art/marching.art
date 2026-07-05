@@ -5,9 +5,10 @@ test.describe('Authentication Pages', () => {
     test('should display login form', async ({ page }) => {
       await page.goto('/login');
 
-      // Check for email and password fields
+      // Check for email and password fields. The password regex is anchored so
+      // it matches only the field label, not the "Show password" toggle button.
       await expect(page.getByLabel(/email/i)).toBeVisible();
-      await expect(page.getByLabel(/password/i)).toBeVisible();
+      await expect(page.getByLabel(/^password$/i)).toBeVisible();
 
       // Check for submit button
       await expect(page.getByRole('button', { name: /sign in|login|submit/i })).toBeVisible();
@@ -41,9 +42,9 @@ test.describe('Authentication Pages', () => {
       await expect(page.getByLabel(/email/i)).toBeVisible();
       await expect(page.getByLabel(/password/i).first()).toBeVisible();
 
-      // Check for submit button
+      // Check for submit button ("Start Playing — Free" on the current page)
       await expect(
-        page.getByRole('button', { name: /register|sign up|create|submit/i })
+        page.getByRole('button', { name: /register|sign up|create|submit|start playing/i })
       ).toBeVisible();
     });
 

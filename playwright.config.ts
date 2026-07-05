@@ -8,6 +8,11 @@ export default defineConfig({
   testDir: './e2e',
   /* Run tests in files in parallel */
   fullyParallel: true,
+  /* The webServer is the unbundled Vite dev server, so each fresh browser
+     context re-fetches hundreds of ESM modules before first paint. The 5s
+     expect default flakes on slower runners (especially the mobile-emulation
+     project); genuinely-missing elements still fail, just a bit later. */
+  expect: { timeout: 15000 },
   /* Fail the build on CI if you accidentally left test.only in the source code */
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
