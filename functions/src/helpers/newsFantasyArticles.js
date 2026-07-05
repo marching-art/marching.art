@@ -5,6 +5,7 @@ const { Type } = require("@google/genai");
 const { logger } = require("firebase-functions/v2");
 const {
   ARTICLE_TYPES,
+  NEWS_INTEGRITY_RULES,
   formatFantasyEventName,
   formatNegativeSpace,
   processGeneratedImage,
@@ -224,12 +225,12 @@ ACCURACY RULES (read first)
 - The field is ${totalCompetitors} competitive ensemble${totalCompetitors === 1 ? '' : 's'} tonight${soundSportResults.length > 0 ? ` plus ${soundSportResults.length} SoundSport participant${soundSportResults.length === 1 ? '' : 's'}` : ''}. Never claim any other count — do not say "25 corps" or any number other than ${totalCompetitors}.
 - Only reference ensembles, directors, scores, and venues that appear in the DATA block. Do not invent ensembles, directors, venues, or scores.
 ${fieldMode === 'soundsport' ? `- No competitive ensembles tonight; SoundSport is non-competitive, so do NOT describe anyone as "winning" against anyone else. Performances are appraised by rating level, not rank.` : multiShow ? `- There are ${competitiveByShow.length} separate fantasy shows tonight at different venues. Ensembles at different shows did NOT compete head-to-head. When you cite a placement or margin, make the show clear.` : fieldMode === 'solo' ? `- Only one competitive ensemble performed tonight: "${topPerformers[0].corpsName}" at ${competitiveByShow[0]?.name || fantasyShowName}${competitiveByShow[0]?.location ? ` (${competitiveByShow[0].location})` : ''}. There are no opponents to frame against — do not invent rivals, runners-up, or head-to-head narratives.` : `- All ensembles tonight competed at the same fantasy show: ${competitiveByShow[0]?.name || fantasyShowName}${competitiveByShow[0]?.location ? ` (${competitiveByShow[0].location})` : ''}.`}
-- NO FABRICATED QUOTES OR REACTIONS. The directors are real people you have not spoken to. Never write or imply a direct quote, a paraphrased statement, an interview, or a private reaction ("druski noted…", "the director said they were frustrated", "you could feel the disappointment"). Convey personality and stakes only through your own observation of the scores and standings — the way a reporter writes up a game they watched but got no locker-room access to.
-- INVENT NOTHING FACTUAL. Beyond your own analytical characterization of the results, invent nothing: no rivalries, backstories, quotes, injuries, crowd or camp reactions, program/show themes, or biographical details. If it is not in the DATA block or directly derivable from the scores, do not state it.
+- The ranked lines give the exact gap to the ensemble directly above ("[0.041 behind the ensemble above]") — quote those verbatim and never re-derive them, and don't state a margin between two non-adjacent ensembles that the data doesn't provide.
 - HOME CITY IS NOT THE VENUE. Each ranked line may list the corps' home city as "(based in X)" — that is where the program is based, NOT where it performed. The performance venue is the SHOW location in the section header. Never write that an ensemble performed, competed, or delivered its show "in" its home city unless that city is the show venue. Refer to a home city only as the corps' base (e.g., "the Denver-based ensemble"), never as the location of tonight's performance.
-- MARGINS AND SCORES VERBATIM. Cite scores exactly as written. Each ranked line includes the exact gap to the ensemble directly above it in brackets (e.g., "[0.041 behind the ensemble above]") — use those bracketed values verbatim. Do NOT compute, re-derive, or re-round your own margins; a self-computed gap that disagrees with the data by even 0.001 is an error. If you want a margin the data does not provide (e.g., between two non-adjacent ensembles), do not state a number for it.
-- Never reveal specific roster/lineup picks.
+- Beyond your own analytical characterization of the results, invent nothing else: no rivalries, backstories, injuries, program/show themes, or biographical details. Do not reveal specific roster/lineup picks.
 - Director names in the DATA block are whatever each user set as their displayName — some are real names ("Sarah Jones"), some are usernames ("elithecreature", "mike_42", "BluecoatsFan"). When you refer to a director, prefer an ensemble-based reference ("Mendota DBC's director", "the director behind Stellar Vista"). Use the bare displayName only when it reads like a real name (a capitalized word with a space). For handle-style names, wrap them in the role ("director elithecreature") so the reader sees a screen name rather than a first name — never use a handle as a bare first name.
+
+${NEWS_INTEGRITY_RULES}
 
 Date: ${showContext.date} | Day ${reportDay}
 Field mode: ${fieldMode} (${totalCompetitors} competitive ensemble${totalCompetitors === 1 ? '' : 's'}${soundSportResults.length > 0 ? `, ${soundSportResults.length} SoundSport` : ''})
@@ -424,6 +425,8 @@ ${isLiveSeason
   ? `- This is the ${dayScores.find(s => s.sourceYear)?.sourceYear || String(new Date().getFullYear())} live DCI season — the caption scores below come from this season's real competitions. Do NOT reference a prior year's book or tag corps with a past season year.`
   : `- Source-year disclosure: on each corps' first mention in the narrative, include their source-year in parentheses — e.g., "Blue Stars (2019)" — so fantasy directors know which season's book they're picking against. Every corps' year is listed in CORPS SOURCE YEARS below.`}
 - If a caption shows "No data" in the DATA block, do not reference it. If a specific number isn't in the data, don't cite a number.
+
+${NEWS_INTEGRITY_RULES}
 
 ${variety.framing}
 Depth: ${variety.depthArea}

@@ -29,6 +29,20 @@ function formatFantasyEventName(name) {
 }
 
 // =============================================================================
+// INTEGRITY RULES
+// -----------------------------------------------------------------------------
+// The professionalism contract shared by every nightly article. Kept in one
+// place so the five generators can't drift on the fundamentals: don't invent
+// facts, don't fabricate quotes from real people, and quote the numbers exactly
+// as the data provides them. Each generator interpolates this block near the top
+// of its prompt and then adds only the rules specific to its own data shape.
+// =============================================================================
+const NEWS_INTEGRITY_RULES = `INTEGRITY RULES (non-negotiable — apply to the entire article)
+- Facts come only from the DATA block. Every corps/ensemble name, score, caption number, margin, placement, date, show name, and location must match the data exactly. If a detail isn't in the data, leave it out — never fill a gap with plausible-sounding invention.
+- No fabricated quotes or reactions. The corps, directors, and performers are real and you have not interviewed anyone. Never write or imply a direct quote, a paraphrased statement, or a private feeling ("X said…", "the staff were frustrated", "you could sense the relief"). Convey stakes through what the scores show, not through words put in a real person's mouth.
+- Numbers verbatim. Cite scores exactly as written, and use the margins and gaps already computed in the DATA block as-is — do not recompute, re-derive, or re-round them, and never state a margin the data doesn't provide. Approximate prose ("about three-tenths back") is fine only when it matches a value that's actually in the data.`;
+
+// =============================================================================
 // COVERAGE LEDGER
 // -----------------------------------------------------------------------------
 // Tracks what subjects, numbers, and hooks have already been used across tonight's
@@ -179,6 +193,7 @@ module.exports = {
   NEWS_CATEGORIES,
   getCategoryFromType,
   ARTICLE_TYPES,
+  NEWS_INTEGRITY_RULES,
   formatFantasyEventName,
   createCoverageLedger,
   formatNegativeSpace,

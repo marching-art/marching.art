@@ -5,6 +5,7 @@ const { Type } = require("@google/genai");
 const { logger } = require("firebase-functions/v2");
 const {
   ARTICLE_TYPES,
+  NEWS_INTEGRITY_RULES,
   formatNegativeSpace,
   processGeneratedImage,
   createFallbackArticle,
@@ -127,6 +128,8 @@ ${isLiveSeason
   : `- Source-year disclosure: on each corps' FIRST mention in the narrative, include their source-year in parentheses — e.g., "Blue Stars (2019)" — so fantasy readers know which season's program material the corps is performing. Every corps in the DATA block has a listed sourceYear; use it. After the first mention, the year can be omitted.`}
 - If a data point you want to reference isn't in the DATA block, leave it out. Do not fill gaps with plausible-sounding invention.
 
+${NEWS_INTEGRITY_RULES}
+
 VOICE & STYLE
 Study how DCI.org actually writes:
 - "Boom." (punchy one-word opener)
@@ -176,6 +179,7 @@ HOW TO WRITE THIS ARTICLE
 ${multiShow ? `- Cover all ${scoresByShow.length} shows by name. For each score or placement you cite, make the show clear (via dateline, a phrase like "at [Show]", or section framing). Readers should never be confused about which corps competed where.` : `- This is a single-show night — ground the article in ${scoresByShow[0]?.name}${scoresByShow[0]?.location ? ` (${scoresByShow[0].location})` : ''} and treat the standings as one field.`}
 - Weave day-over-day changes and caption details where they're relevant; don't break them out as obligatory sections.
 - Close with a specific, grounded observation — a number, a trend, a question the next show will answer. No "tune in tomorrow" sign-offs.
+- Also fill the structured fields: trendingCorps (only corps with a real up/down move from tonight's movers/momentum data, each with a short data-grounded reason — omit corps that didn't move) and insights (2-4 scannable takeaways, each tied to a specific number from the data).
 
 Write like you've covered this beat for years. Let the scores drive the story.`;
 
@@ -214,6 +218,32 @@ Write like you've covered this beat for years. Let the scores drive the story.`;
           musicScore: { type: Type.NUMBER, description: "Winning Music score" },
         },
         required: ["geWinner", "geScore", "visualWinner", "visualScore", "musicWinner", "musicScore"],
+      },
+      trendingCorps: {
+        type: Type.ARRAY,
+        description: "Up to 5 corps with a genuine day-over-day or momentum direction, drawn ONLY from the DAY-OVER-DAY MOVERS and MOMENTUM data. Omit corps with no meaningful movement — do not pad the list to fill it.",
+        items: {
+          type: Type.OBJECT,
+          properties: {
+            corps: { type: Type.STRING, description: "Corps name, exactly as in the data." },
+            direction: { type: Type.STRING, enum: ["up", "down", "stable"], description: "Momentum direction from the data." },
+            reason: { type: Type.STRING, description: "One concise, data-grounded reason (e.g., '+0.412 tonight, led by GE'). No invented numbers." },
+          },
+          required: ["corps", "direction", "reason"],
+        },
+      },
+      insights: {
+        type: Type.ARRAY,
+        description: "2-4 scannable key takeaways from tonight for a reader skimming the article. Each must be grounded in the DATA block.",
+        items: {
+          type: Type.OBJECT,
+          properties: {
+            metric: { type: Type.STRING, description: "Short label, e.g., 'Tightest Race' or 'Biggest Mover'." },
+            finding: { type: Type.STRING, description: "The specific data point, e.g., '0.087 separates the top two.'" },
+            implication: { type: Type.STRING, description: "Why it matters for the standings. Descriptive, not a fantasy pick." },
+          },
+          required: ["metric", "finding", "implication"],
+        },
       },
     },
     required: ["headline", "summary", "narrative", "standings", "scoreBreakdown"],
@@ -358,6 +388,8 @@ ${isLiveSeason
 - Source-year disclosure: on the corps' FIRST mention in the narrative, render as "${featureCorps.corps} (${featureCorps.sourceYear})" so fantasy readers know which season's program they're reading about. After the first mention, omit the year unless you're explicitly contrasting seasons.`}
 - If a fact isn't in the data, leave it out — do not fill gaps with plausible-sounding invention.
 
+${NEWS_INTEGRITY_RULES}
+
 VOICE: Sports analyst who respects the reader's intelligence. Specific scores, real comparisons, honest assessments. No filler about tradition or history — only this season's data matters.
 
 BANNED PHRASES: dominant, commanding, stunning, thrilling, incredible, captivating, testament, mettle, identity forged in, legacy of excellence, storied history, tradition of, proving doubters wrong, making a statement, force to be reckoned with, passion and dedication, pushing the boundaries, compelling visual storytelling, emotionally resonant
@@ -405,7 +437,8 @@ ARTICLE REQUIREMENTS
 - Narrative: 700-900 words. A season profile built on scores.
   Include: specific scores from their recent shows (use the exact show names from the data), analysis of at least 3 individual captions with numbers, a comparison to the corps around them tonight, and a reasoned outlook that follows the closing angle above.
   Sequence and emphasis are your call — if GE is the story, lead with GE; if trajectory is the story, lead with the arc. Don't walk through a checklist.
-  Do NOT end with fantasy buy/hold/sell or lineup picks — that belongs to the Fantasy Market Report. Do NOT predict exact future scores — only analyze visible trends.`;
+  Do NOT end with fantasy buy/hold/sell or lineup picks — that belongs to the Fantasy Market Report. Do NOT predict exact future scores — only analyze visible trends.
+- Also fill the insights field: 2-3 scannable takeaways about this corps, each tied to a specific score, caption, or trend from the data.`;
 
   const schema = {
     type: Type.OBJECT,
@@ -413,17 +446,21 @@ ARTICLE REQUIREMENTS
       headline: { type: Type.STRING, description: "Corps name with a real number/trend from tonight. No 'dominates', no exclamation points, no invented facts." },
       summary: { type: Type.STRING, description: "2-3 sentences: corps name, current score, rank, and one specific caption insight grounded in the data." },
       narrative: { type: Type.STRING, description: "700-900 word analytical profile. Uses the exact show names and scores from the data block — no invented venues, dates, or statistics. Covers current position, show-by-show journey with specific scores, caption strengths, caption weaknesses, and trajectory, ending per the closing angle above. No fantasy buy/hold/sell picks — that belongs to the Fantasy Market Report. Structure follows what the data emphasizes, not a fixed checklist. Never uses 'dominant', 'commanding', 'stunning'." },
-      corpsIdentity: {
-        type: Type.OBJECT,
-        properties: {
-          tradition: { type: Type.STRING, description: "Corps' historical identity" },
-          strength: { type: Type.STRING, description: "Primary competitive strength" },
-          trajectory: { type: Type.STRING, description: "Season trajectory assessment" },
+      insights: {
+        type: Type.ARRAY,
+        description: "2-3 scannable key takeaways about this corps for a reader skimming the profile. Each must be grounded in the DATA block — a real score, caption, or trend. No invented history or biography.",
+        items: {
+          type: Type.OBJECT,
+          properties: {
+            metric: { type: Type.STRING, description: "Short label, e.g., 'Caption Strength' or 'Season Arc'." },
+            finding: { type: Type.STRING, description: "The specific data point, e.g., 'GE up +0.45 over the last three shows.'" },
+            implication: { type: Type.STRING, description: "What it says about this corps' season. Descriptive analysis, not a fantasy pick." },
+          },
+          required: ["metric", "finding", "implication"],
         },
-        required: ["tradition", "strength", "trajectory"],
       },
     },
-    required: ["headline", "summary", "narrative", "corpsIdentity"],
+    required: ["headline", "summary", "narrative"],
   };
 
   try {
@@ -539,6 +576,8 @@ ${isLiveSeason
   : `- Source-year disclosure: on each corps' FIRST mention in the narrative, include their source-year in parentheses — e.g., "Blue Stars (2019)" — so fantasy readers know which season's book is driving the caption scores. Every corps' year is listed in CORPS SOURCE YEARS below. After the first mention, the year can be omitted.`}
 - If a fact isn't in the data, leave it out.
 
+${NEWS_INTEGRITY_RULES}
+
 VOICE: Authoritative but readable. Not dumbed down, not written for judges. A knowledgeable fan should come away understanding the caption landscape better than they did before.
 
 BANNED PHRASES: dominant, commanding, stunning, thrilling, heating up, captivating, testament, battle for supremacy, stakes are high, every point matters, absolutely crucial, setting the stage, poised to, poised for success, will have a significant advantage, buy, sell, hold, trade, pick up, drop, fade, target, stash, fantasy directors should, for fantasy purposes, in your lineup
@@ -594,7 +633,8 @@ ARTICLE REQUIREMENTS
 - Narrative: 900-1200 words of caption analysis covering GE, Visual, and Music. Describe what the judges rewarded, where the races are tight, how the sub-caption picture differs from the composite picture, and how the week's trajectory reshapes each corps' caption profile. Close per the closing angle above.
   Reference a meaningful cross-section of the field in each caption family — aim for ${Math.min(5, dayScores.length)} or more corps per family, but never pad by inventing. Cite specific point gaps from the data.
   Weight the sections by where the real story is tonight. If the Visual race is tight and GE is decided, Visual gets more ink.
-  Do NOT end with buy/hold/sell, fantasy picks, or "who to target" — the Fantasy Market Report handles that. Your ending belongs to the closing angle above.`;
+  Do NOT end with buy/hold/sell, fantasy picks, or "who to target" — the Fantasy Market Report handles that. Your ending belongs to the closing angle above.
+- Also fill the insights field: 2-4 scannable caption takeaways, each tied to a specific gap, leader, or trend from the data. Descriptive only — no picks.`;
 
   const schema = {
     type: Type.OBJECT,
@@ -610,6 +650,19 @@ ARTICLE REQUIREMENTS
           musicAnalysis: { type: Type.STRING, description: "Music caption analysis" },
         },
         required: ["geAnalysis", "visualAnalysis", "musicAnalysis"],
+      },
+      insights: {
+        type: Type.ARRAY,
+        description: "2-4 scannable caption takeaways for a reader skimming the deep-dive. Each must be grounded in the DATA block — a specific caption gap, leader, or trend. Descriptive, never a fantasy pick.",
+        items: {
+          type: Type.OBJECT,
+          properties: {
+            metric: { type: Type.STRING, description: "Short label, e.g., 'GE Race' or 'Visual Swing'." },
+            finding: { type: Type.STRING, description: "The specific caption data point, e.g., '0.15 separates the top three in Visual.'" },
+            implication: { type: Type.STRING, description: "What it reveals about the caption landscape. Descriptive, not prescriptive — no buy/sell." },
+          },
+          required: ["metric", "finding", "implication"],
+        },
       },
     },
     required: ["headline", "summary", "narrative", "captionBreakdown"],

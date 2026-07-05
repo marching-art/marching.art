@@ -184,6 +184,7 @@ async function saveArticleDoc(db, { reportDay, article, metadata, seasonId }) {
     topPerformers: article.topPerformers || null,
     leagueHighlights: article.leagueHighlights || null,
     insights: article.insights || null,
+    trendingCorps: article.trendingCorps || null,
     recommendations: article.recommendations || null,
 
     // Image (from Imagen)

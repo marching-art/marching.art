@@ -282,21 +282,21 @@ function getWritingVariety(reportDay, articleType) {
     },
   ];
 
-  // Fantasy Daily: rotate narrative voice
+  // Fantasy Daily: rotate narrative voice. No quoteStyle — the fantasy daily
+  // recap is a data-only piece that never fabricates director quotes (the
+  // directors are real users), so personality lives in the voice and the way the
+  // standings are read, not in invented interviews.
   const fantasyApproaches = [
     {
       voice: "Write like a local sports beat reporter covering a high school football rivalry — earnest, detailed, community-focused.",
-      quoteStyle: "Post-game interview quotes. Directors reflecting on what went right or wrong tonight.",
-      storyEngine: "Frame the night around a rivalry between two ensembles jockeying for the same position.",
+      storyEngine: "Frame the night around a rivalry between two ensembles jockeying for the same position — grounded in the actual margin between them, not invented backstory.",
     },
     {
       voice: "Write like a fantasy sports podcast host — opinionated, direct, fun. Talk to the reader like they're in on the game.",
-      quoteStyle: "Locker room quotes. Raw, immediate reactions — some triumphant, some frustrated.",
-      storyEngine: "Frame the night around a surprise result — someone who jumped or fell unexpectedly.",
+      storyEngine: "Frame the night around a surprise result — someone who jumped or fell unexpectedly in the standings.",
     },
     {
       voice: "Write like a longform sportswriter — find the human story in the numbers. Give the fantasy world some texture.",
-      quoteStyle: "Mix of press conference quotes and overheard sideline comments. Vary the formality.",
       storyEngine: "Frame the night around the season narrative — who's peaking, who's building, who's fighting to stay relevant.",
     },
   ];
