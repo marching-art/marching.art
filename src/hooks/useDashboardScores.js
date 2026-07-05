@@ -7,6 +7,7 @@ import { db } from '../api';
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { CAPTIONS } from '../components/Dashboard';
 import { getEffectiveDay, processCaptionScores } from '../utils/dashboardScoring';
+import { formatRecapDate } from './useScoresData';
 
 export function useLineupScores(lineup, currentDay, activeCorpsClass) {
   const [lineupScoreData, setLineupScoreData] = useState({});
@@ -145,11 +146,11 @@ export function useRecentResults(user, seasonData, activeCorpsClass, currentDay)
                   eventName: show.eventName || show.name || 'Show',
                   score: userResult.totalScore,
                   placement: userResult.placement,
-                  date: recap.date
-                    ? new Date(recap.date.seconds * 1000).toLocaleDateString('en-US', {
-                        timeZone: 'UTC',
-                      })
-                    : null,
+                  // Derive the event date from the season schedule so live-season
+                  // recaps (whose stored date omitted the spring-training offset)
+                  // display the correct calendar date. Falls back to the stored
+                  // recap date for off-season/archived data.
+                  date: formatRecapDate(recap, seasonData?.schedule),
                 });
               }
             }
