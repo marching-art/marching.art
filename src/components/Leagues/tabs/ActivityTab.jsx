@@ -5,13 +5,8 @@ import React from 'react';
 import { m } from 'framer-motion';
 import { Activity } from 'lucide-react';
 import LeagueActivityFeed from '../LeagueActivityFeed';
-import {
-  LeagueStatsOverview,
-  AchievementsCard,
-  PowerRankingsCard,
-  WeeklyRecapCard,
-  EnhancedRivalriesCard,
-} from './ActivityTabParts';
+import { LeagueStatsOverview, AchievementsCard, PowerRankingsCard } from './ActivityTabStatsCards';
+import { WeeklyRecapCard, EnhancedRivalriesCard } from './ActivityTabRecapCards';
 
 // Main Activity Tab Component
 const ActivityTab = ({
