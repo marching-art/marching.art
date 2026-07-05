@@ -4,12 +4,9 @@
 // Hero: Active Lineup Roster Table. Sidebar: Season Scorecard + Recent Results.
 // Laws: App Shell, 2/3 + 1/3 grid, data tables over cards, no glow
 
-import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { useMemo, lazy, Suspense } from 'react';
 import { Trophy, FileText } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { updateProfile } from '../api/profile';
-import toast from 'react-hot-toast';
 
 // OPTIMIZATION #9: Lazy-load large modal components to reduce initial bundle size
 // Prioritized by file size: CaptionSelectionModal (1007 lines), UniformDesignModal (794 lines),
@@ -59,17 +56,9 @@ import { useScheduleStore } from '../store/scheduleStore';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useScoresData } from '../hooks/useScoresData';
 import { useMyLeagues } from '../hooks/useLeagues';
-import {
-  registerCorps,
-  retireCorps,
-  unlockClassWithCorpsCoin,
-  submitNewsForApproval,
-  transferCorps,
-  unretireCorps,
-} from '../api/functions';
 import { CORPS_CLASS_ORDER } from '../utils/corps';
 import { canEditCorpsThisSeason, corpsHasPendingWork } from '../utils/corps';
-import { useModalQueue, MODAL_PRIORITY } from '../hooks/useModalQueue';
+import { useDashboardModals } from '../hooks/useDashboardModals';
 import { useLineupScores, useRecentResults, useBestInShowCount } from '../hooks/useDashboardScores';
 import { useSeasonStore } from '../store/seasonStore';
 import { getEffectiveDay, getNextSelectedShow } from '../utils/dashboardScoring';
@@ -87,7 +76,6 @@ import { getEffectiveDay, getNextSelectedShow } from '../utils/dashboardScoring'
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const location = useLocation();
   const dashboardData = useDashboardData();
   const {
     aggregatedScores,
@@ -105,27 +93,57 @@ const Dashboard = () => {
   // Calculate if scores are available (for hiding Last Score/Trend columns on Day 1)
   const scoresAvailable = currentDay ? getEffectiveDay(currentDay) !== null : false;
 
-  // Modal states
-  const modalQueue = useModalQueue();
-  // Stable enqueue reference (memoized in the hook) for the modal-queue effects below
-  const { enqueue: enqueueModal } = modalQueue;
-  const [showRegistration, setShowRegistration] = useState(false);
-  const [registrationDefaultClass, setRegistrationDefaultClass] = useState(null);
-  const [slotPickerClass, setSlotPickerClass] = useState(null);
-  const [unretiring, setUnretiring] = useState(false);
-  const [showCaptionSelection, setShowCaptionSelection] = useState(false);
-  const [selectedCaption, setSelectedCaption] = useState(null);
-  const [showEditCorps, setShowEditCorps] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showMoveCorps, setShowMoveCorps] = useState(false);
-  const [showRetireConfirm, setShowRetireConfirm] = useState(false);
-  const [retiring, setRetiring] = useState(false);
-  const [transferring, setTransferring] = useState(false);
-  const [showQuickStartGuide, setShowQuickStartGuide] = useState(false);
-  const [classToPurchase, setClassToPurchase] = useState(null);
-  const [showUniformDesign, setShowUniformDesign] = useState(false);
-  const [showNewsSubmission, setShowNewsSubmission] = useState(false);
-  const [submittingNews, setSubmittingNews] = useState(false);
+  // Modal state, modal-queue effects, and modal action handlers
+  // (extracted to src/hooks/useDashboardModals.js)
+  const {
+    modalQueue,
+    showRegistration,
+    setShowRegistration,
+    registrationDefaultClass,
+    setRegistrationDefaultClass,
+    slotPickerClass,
+    setSlotPickerClass,
+    unretiring,
+    showCaptionSelection,
+    setShowCaptionSelection,
+    selectedCaption,
+    setSelectedCaption,
+    showEditCorps,
+    setShowEditCorps,
+    showDeleteConfirm,
+    setShowDeleteConfirm,
+    showMoveCorps,
+    setShowMoveCorps,
+    showRetireConfirm,
+    setShowRetireConfirm,
+    retiring,
+    transferring,
+    showQuickStartGuide,
+    setShowQuickStartGuide,
+    classToPurchase,
+    setClassToPurchase,
+    showUniformDesign,
+    setShowUniformDesign,
+    showNewsSubmission,
+    setShowNewsSubmission,
+    submittingNews,
+    handleTourComplete,
+    handleSetupNewClass,
+    handleDeclineSetup,
+    handleAchievementClose,
+    handleSeasonSetupFinish,
+    handleEditCorps,
+    handleDeleteCorps,
+    handleRetireCorps,
+    handleMoveCorps,
+    handleCorpsRegistration,
+    handleClassUnlock,
+    handleUnretireCorps,
+    handleConfirmClassPurchase,
+    openCaptionSelection,
+    handleNewsSubmission,
+    handleUniformDesign,
+  } = useDashboardModals(user, dashboardData);
 
   // Destructure dashboard data
   const {
@@ -135,14 +153,10 @@ const Dashboard = () => {
     activeCorpsClass,
     seasonData,
     currentWeek,
-    showSeasonSetupWizard,
-    setShowSeasonSetupWizard,
     corpsNeedingSetup,
-    handleSeasonSetupComplete,
     newlyUnlockedClass,
     clearNewlyUnlockedClass,
     newAchievement,
-    clearNewAchievement,
     refreshProfile,
     handleCorpsSwitch,
     unlockedClasses, // Includes admin override - admins have all classes
@@ -221,288 +235,6 @@ const Dashboard = () => {
     activeCorpsClass
   );
   const recentResults = useRecentResults(user, seasonData, activeCorpsClass, currentDay);
-
-  // Handle navigation state for class purchase (from header Buy button)
-  useEffect(() => {
-    if (location.state?.purchaseClass) {
-      setClassToPurchase(location.state.purchaseClass);
-      // Clear the state to prevent re-triggering on subsequent renders
-      window.history.replaceState({}, document.title);
-    }
-  }, [location.state?.purchaseClass]);
-
-  // Queue auto-triggered modals
-  useEffect(() => {
-    if (showSeasonSetupWizard && seasonData) {
-      enqueueModal('seasonSetup', MODAL_PRIORITY.SEASON_SETUP, { seasonData });
-    }
-  }, [showSeasonSetupWizard, seasonData, enqueueModal]);
-
-  useEffect(() => {
-    if (profile?.isFirstVisit && activeCorps) {
-      const timer = setTimeout(() => {
-        enqueueModal('onboarding', MODAL_PRIORITY.ONBOARDING);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [profile?.isFirstVisit, activeCorps, enqueueModal]);
-
-  useEffect(() => {
-    if (newlyUnlockedClass) {
-      enqueueModal('classUnlock', MODAL_PRIORITY.CLASS_UNLOCK, {
-        unlockedClass: newlyUnlockedClass,
-      });
-    }
-  }, [newlyUnlockedClass, enqueueModal]);
-
-  useEffect(() => {
-    if (newAchievement) {
-      enqueueModal('achievement', MODAL_PRIORITY.ACHIEVEMENT, {
-        achievement: newAchievement,
-      });
-    }
-  }, [newAchievement, enqueueModal]);
-
-  useEffect(() => {
-    const userModalOpen =
-      showRegistration ||
-      showCaptionSelection ||
-      showEditCorps ||
-      showDeleteConfirm ||
-      showMoveCorps ||
-      showRetireConfirm ||
-      showNewsSubmission;
-    if (userModalOpen) {
-      modalQueue.pauseQueue();
-    } else {
-      modalQueue.resumeQueue();
-    }
-  }, [
-    showRegistration,
-    showCaptionSelection,
-    showEditCorps,
-    showDeleteConfirm,
-    showMoveCorps,
-    showRetireConfirm,
-    showNewsSubmission,
-    modalQueue,
-  ]);
-
-  // Handlers
-  const handleTourComplete = useCallback(async () => {
-    modalQueue.dequeue();
-    if (profile?.isFirstVisit && user) {
-      try {
-        await updateProfile(user.uid, { isFirstVisit: false });
-      } catch (error) {
-        console.error('Error updating first visit flag:', error);
-      }
-    }
-  }, [modalQueue, profile?.isFirstVisit, user]);
-
-  const handleSetupNewClass = useCallback(() => {
-    modalQueue.dequeue();
-    setShowRegistration(true);
-  }, [modalQueue]);
-
-  const handleDeclineSetup = useCallback(() => {
-    modalQueue.dequeue();
-    clearNewlyUnlockedClass();
-    toast.success('You can register your new corps anytime!');
-  }, [modalQueue, clearNewlyUnlockedClass]);
-
-  const handleAchievementClose = useCallback(() => {
-    modalQueue.dequeue();
-    clearNewAchievement();
-  }, [modalQueue, clearNewAchievement]);
-
-  const handleSeasonSetupClose = useCallback(() => {
-    modalQueue.dequeue();
-    setShowSeasonSetupWizard(false);
-  }, [modalQueue, setShowSeasonSetupWizard]);
-
-  // Save initialSetupComplete flag when wizard is completed
-  // This prevents the wizard from showing again on subsequent page loads
-  const handleSeasonSetupFinish = useCallback(async () => {
-    handleSeasonSetupComplete();
-    handleSeasonSetupClose();
-
-    // Save flag to prevent wizard from showing again this season
-    if (user?.uid && seasonData?.seasonUid) {
-      try {
-        await updateProfile(user.uid, {
-          initialSetupComplete: seasonData.seasonUid,
-        });
-      } catch (error) {
-        console.error('Failed to save initial setup flag:', error);
-        // Don't show error to user - the wizard closed successfully
-      }
-    }
-  }, [handleSeasonSetupComplete, handleSeasonSetupClose, user?.uid, seasonData?.seasonUid]);
-
-  const handleEditCorps = useCallback(
-    async (formData) => {
-      try {
-        await updateProfile(user.uid, {
-          [`corps.${activeCorpsClass}.corpsName`]: formData.name,
-          [`corps.${activeCorpsClass}.location`]: formData.location,
-          [`corps.${activeCorpsClass}.showConcept`]: formData.showConcept,
-        });
-        toast.success('Corps updated!');
-        setShowEditCorps(false);
-      } catch {
-        toast.error('Failed to update corps');
-      }
-    },
-    [user, activeCorpsClass]
-  );
-
-  const handleDeleteCorps = useCallback(async () => {
-    try {
-      await updateProfile(user.uid, { [`corps.${activeCorpsClass}`]: null });
-      toast.success('Corps deleted');
-      setShowDeleteConfirm(false);
-    } catch {
-      toast.error('Failed to delete corps');
-    }
-  }, [user, activeCorpsClass]);
-
-  const handleRetireCorps = useCallback(async () => {
-    setRetiring(true);
-    try {
-      const result = await retireCorps({ corpsClass: activeCorpsClass });
-      if (result.data.success) {
-        toast.success(result.data.message);
-        setShowRetireConfirm(false);
-      }
-    } catch (error) {
-      toast.error(error.message || 'Failed to retire corps');
-    } finally {
-      setRetiring(false);
-    }
-  }, [activeCorpsClass]);
-
-  const handleMoveCorps = useCallback(
-    async (targetClass) => {
-      try {
-        setTransferring(true);
-        const result = await transferCorps({ fromClass: activeCorpsClass, toClass: targetClass });
-        toast.success(result.data.message || 'Corps transferred!');
-        setShowMoveCorps(false);
-      } catch (error) {
-        const msg = error?.message || error?.details?.message || 'Failed to transfer corps';
-        toast.error(msg);
-      } finally {
-        setTransferring(false);
-      }
-    },
-    [activeCorpsClass]
-  );
-
-  const handleCorpsRegistration = useCallback(
-    async (formData) => {
-      try {
-        if (!seasonData?.seasonUid) {
-          toast.error('Season data not loaded');
-          return;
-        }
-        const result = await registerCorps({
-          corpsName: formData.name,
-          location: formData.location,
-          showConcept: formData.showConcept || '',
-          class: formData.class,
-        });
-        if (result.data.success) {
-          toast.success(`${formData.name} registered!`);
-          setShowRegistration(false);
-          clearNewlyUnlockedClass();
-          refreshProfile?.();
-        }
-      } catch (error) {
-        toast.error(error.message || 'Failed to register corps');
-      }
-    },
-    [seasonData?.seasonUid, clearNewlyUnlockedClass, refreshProfile]
-  );
-
-  const handleClassUnlock = useCallback((classKey) => {
-    setClassToPurchase(classKey);
-  }, []);
-
-  const handleUnretireCorps = useCallback(
-    async (corpsClass, retiredIndex) => {
-      setUnretiring(true);
-      try {
-        const retiredRecord = profile?.retiredCorps?.[retiredIndex];
-        const result = await unretireCorps({ corpsClass, retiredIndex });
-        if (result.data.success) {
-          toast.success(
-            retiredRecord?.corpsName
-              ? `${retiredRecord.corpsName} is back in action!`
-              : 'Corps brought out of retirement!'
-          );
-          setSlotPickerClass(null);
-          refreshProfile?.();
-        }
-      } catch (error) {
-        toast.error(error.message || 'Failed to unretire corps');
-      } finally {
-        setUnretiring(false);
-      }
-    },
-    [profile?.retiredCorps, refreshProfile]
-  );
-
-  const handleConfirmClassPurchase = useCallback(async () => {
-    if (!classToPurchase) return;
-    try {
-      const result = await unlockClassWithCorpsCoin({ classToUnlock: classToPurchase });
-      if (result.data.success) {
-        toast.success(`${CLASS_DISPLAY_NAMES[classToPurchase]} unlocked!`);
-        setClassToPurchase(null);
-        refreshProfile?.();
-      }
-    } catch (error) {
-      throw new Error(error.message || 'Failed to unlock class');
-    }
-  }, [classToPurchase, refreshProfile]);
-
-  const openCaptionSelection = useCallback((captionId = null) => {
-    setSelectedCaption(captionId);
-    setShowCaptionSelection(true);
-  }, []);
-
-  const handleNewsSubmission = useCallback(async (formData) => {
-    setSubmittingNews(true);
-    try {
-      const result = await submitNewsForApproval(formData);
-      if (result.data.success) {
-        toast.success('Article submitted for review!');
-        setShowNewsSubmission(false);
-      }
-    } catch (error) {
-      toast.error(error.message || 'Failed to submit article');
-    } finally {
-      setSubmittingNews(false);
-    }
-  }, []);
-
-  const handleUniformDesign = useCallback(
-    async (design) => {
-      try {
-        await updateProfile(user.uid, {
-          [`corps.${activeCorpsClass}.uniformDesign`]: design,
-        });
-        toast.success('Uniform design saved! Avatar will be generated soon.');
-        setShowUniformDesign(false);
-        refreshProfile?.();
-      } catch (error) {
-        toast.error('Failed to save uniform design');
-        throw error;
-      }
-    },
-    [user, activeCorpsClass, refreshProfile]
-  );
 
   // =============================================================================
   // RENDER

@@ -3,23 +3,7 @@
 import React, { useState, useEffect, startTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
-import {
-  User,
-  Flag,
-  ArrowRight,
-  Check,
-  ArrowLeft,
-  Star,
-  Zap,
-  Music,
-  ChevronRight,
-  Sparkles,
-  PartyPopper,
-  AtSign,
-  Loader2,
-  CheckCircle2,
-  XCircle,
-} from 'lucide-react';
+import { ArrowRight, Check, ArrowLeft, Music, PartyPopper, XCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { getSeasonData, getCorpsValues } from '../api/season';
@@ -31,8 +15,9 @@ import { useScheduleStore } from '../store/scheduleStore';
 import { autoFillLineup } from '../utils/lineupAutoFill';
 import { getStoredGuestLineup, clearGuestPreviewData } from '../hooks/useGuestPreview';
 import { importGuestLineup } from '../utils/guestLineupImport';
-import { CAPTIONS, SOUNDSPORT_POINT_LIMIT, STEPS, GAME_FEATURES } from './onboardingConstants';
+import { CAPTIONS, SOUNDSPORT_POINT_LIMIT, STEPS } from './onboardingConstants';
 import { GuidedCaptionSelection } from './OnboardingParts';
+import { StepWelcome, StepCorps, CelebrationModal } from './OnboardingSteps';
 
 const Onboarding = () => {
   useBodyScroll();
@@ -430,184 +415,18 @@ const Onboarding = () => {
               <AnimatePresence mode="wait">
                 {/* Step 1: Welcome + Director Name */}
                 {step === 1 && (
-                  <m.div
+                  <StepWelcome
                     key="step1"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    className="space-y-5"
-                  >
-                    <div className="text-center mb-4">
-                      <div className="inline-flex items-center justify-center w-16 h-16 bg-[#0057B8]/20 rounded-sm mb-4">
-                        <Star className="w-8 h-8 text-[#0057B8]" />
-                      </div>
-                      <h2 className="text-2xl font-bold text-white mb-2">
-                        Welcome to marching.art!
-                      </h2>
-                      <p className="text-gray-400 text-sm">Fantasy drum corps gaming</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      {GAME_FEATURES.map((feature, idx) => {
-                        const Icon = feature.icon;
-                        return (
-                          <div
-                            key={idx}
-                            className="flex items-start gap-3 p-3 rounded-sm bg-charcoal-800/50"
-                          >
-                            <div className="p-2 rounded-sm bg-[#0057B8]/20 flex-shrink-0">
-                              <Icon className="w-4 h-4 text-[#0057B8]" />
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-semibold text-white">{feature.title}</h4>
-                              <p className="text-xs text-gray-500">{feature.description}</p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    <div className="pt-2 space-y-4">
-                      <div>
-                        <label className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
-                          <User className="w-4 h-4 text-[#0057B8]" />
-                          What's your name, Director?
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full h-12 px-4 bg-[#0a0a0a] border border-[#333] rounded-sm text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
-                          name="name"
-                          autoComplete="name"
-                          placeholder="e.g., George Zingali"
-                          value={formData.displayName}
-                          onChange={(e) =>
-                            setFormData({ ...formData, displayName: e.target.value })
-                          }
-                          maxLength={50}
-                          autoFocus
-                        />
-                      </div>
-
-                      <div>
-                        <label className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
-                          <AtSign className="w-4 h-4 text-[#0057B8]" />
-                          Choose a username
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="text"
-                            className={`w-full h-12 px-4 bg-[#0a0a0a] border border-[#333] rounded-sm text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] pr-10 ${
-                              usernameStatus.valid === true
-                                ? 'border-green-500/50 focus:border-green-500'
-                                : usernameStatus.valid === false
-                                  ? 'border-red-500/50 focus:border-red-500'
-                                  : ''
-                            }`}
-                            name="username"
-                            autoComplete="username"
-                            placeholder="e.g., drumcorps_fan"
-                            value={formData.username}
-                            onChange={handleUsernameChange}
-                            maxLength={15}
-                          />
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                            {usernameStatus.checking && (
-                              <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
-                            )}
-                            {!usernameStatus.checking && usernameStatus.valid === true && (
-                              <CheckCircle2 className="w-5 h-5 text-green-400" />
-                            )}
-                            {!usernameStatus.checking && usernameStatus.valid === false && (
-                              <XCircle className="w-5 h-5 text-red-400" />
-                            )}
-                          </div>
-                        </div>
-                        {usernameStatus.message && (
-                          <p
-                            className={`text-xs mt-1 ${
-                              usernameStatus.valid === true
-                                ? 'text-green-400'
-                                : usernameStatus.valid === false
-                                  ? 'text-red-400'
-                                  : 'text-gray-400'
-                            }`}
-                          >
-                            {usernameStatus.message}
-                          </p>
-                        )}
-                        <p className="text-xs text-gray-500 mt-1">
-                          3-15 characters, letters, numbers, and underscores only
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="p-3 rounded-sm bg-green-500/10 border border-green-500/20">
-                      <div className="flex items-center gap-2">
-                        <Zap className="w-4 h-4 text-green-400" />
-                        <p className="text-sm text-green-300">
-                          You'll get <span className="font-bold">100 CorpsCoin</span> to start!
-                        </p>
-                      </div>
-                    </div>
-                  </m.div>
+                    formData={formData}
+                    setFormData={setFormData}
+                    usernameStatus={usernameStatus}
+                    onUsernameChange={handleUsernameChange}
+                  />
                 )}
 
                 {/* Step 2: Create Corps */}
                 {step === 2 && (
-                  <m.div
-                    key="step2"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    className="space-y-6"
-                  >
-                    <div className="text-center mb-6">
-                      <div className="inline-flex items-center justify-center w-16 h-16 bg-[#0057B8]/20 rounded-sm mb-4">
-                        <Flag className="w-8 h-8 text-[#0057B8]" />
-                      </div>
-                      <h2 className="text-2xl font-bold text-white mb-2">Create Your Corps</h2>
-                      <p className="text-gray-400 text-sm">Name your first fantasy drum corps</p>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
-                        Corps Name *
-                      </label>
-                      <input
-                        type="text"
-                        className="w-full h-12 px-4 bg-[#0a0a0a] border border-[#333] rounded-sm text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
-                        name="corpsName"
-                        autoComplete="off"
-                        placeholder="e.g., The Cavaliers"
-                        value={formData.corpsName}
-                        onChange={(e) => setFormData({ ...formData, corpsName: e.target.value })}
-                        maxLength={50}
-                        autoFocus
-                      />
-                    </div>
-
-                    <div className="p-4 rounded-sm bg-green-500/10 border border-green-500/20">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-sm bg-green-500/20">
-                          <Sparkles className="w-5 h-5 text-green-400" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-green-300">Starting in SoundSport</h4>
-                          <p className="text-xs text-green-400/80">
-                            Earn CorpsCoin to unlock higher competition classes!
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="p-4 bg-charcoal-800/50 rounded-sm">
-                      <h4 className="font-semibold text-gray-200 mb-2">Next: Build Your Lineup</h4>
-                      <p className="text-xs text-gray-500">
-                        You'll pick historical corps performances to compete in 8 scoring captions.
-                        Think of it like a fantasy football draft!
-                      </p>
-                    </div>
-                  </m.div>
+                  <StepCorps key="step2" formData={formData} setFormData={setFormData} />
                 )}
 
                 {/* Step 3: Build Lineup (Guided Caption Selection) */}
@@ -773,99 +592,12 @@ const Onboarding = () => {
       </div>
 
       {/* Celebration Modal */}
-      <AnimatePresence>
-        {showCelebration && (
-          <m.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
-            onClick={handleCelebrationComplete}
-          >
-            <m.div
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.5, opacity: 0 }}
-              className="text-center p-8"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <m.div
-                animate={{
-                  scale: [1, 1.2, 1],
-                  rotate: [0, 10, -10, 0],
-                }}
-                transition={{ duration: 0.5, repeat: 2 }}
-                className="inline-block mb-6"
-              >
-                <PartyPopper className="w-24 h-24 text-[#0057B8]" />
-              </m.div>
-
-              <m.h2
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="text-4xl font-black text-[#0057B8] mb-3"
-              >
-                YOU'RE ALL SET!
-              </m.h2>
-
-              <m.p
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="text-gray-300 text-lg mb-2"
-              >
-                Welcome, {formData.displayName}!
-              </m.p>
-
-              <m.p
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.7 }}
-                className="text-gray-400 mb-8"
-              >
-                {formData.corpsName} is ready to compete
-              </m.p>
-
-              <m.button
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.9 }}
-                onClick={handleCelebrationComplete}
-                className="px-8 py-4 bg-[#0057B8] text-white rounded-sm font-bold uppercase tracking-wide hover:bg-[#0066d6] transition-colors flex items-center gap-2 mx-auto"
-              >
-                Go to Dashboard
-                <ChevronRight className="w-5 h-5" />
-              </m.button>
-
-              {/* Confetti particles */}
-              {[...Array(20)].map((_, i) => (
-                <m.div
-                  key={i}
-                  className="absolute w-3 h-3 rounded-full"
-                  style={{
-                    background: ['#FACC15', '#22C55E', '#3B82F6', '#A855F7', '#EF4444'][i % 5],
-                    left: `${Math.random() * 100}%`,
-                    top: '-20px',
-                  }}
-                  initial={{ y: -20, opacity: 1, rotate: 0 }}
-                  animate={{
-                    y: typeof window !== 'undefined' ? window.innerHeight + 100 : 800,
-                    opacity: 0,
-                    rotate: Math.random() * 720 - 360,
-                    x: (Math.random() - 0.5) * 200,
-                  }}
-                  transition={{
-                    duration: 2 + Math.random() * 2,
-                    delay: Math.random() * 0.5,
-                    ease: 'easeOut',
-                  }}
-                />
-              ))}
-            </m.div>
-          </m.div>
-        )}
-      </AnimatePresence>
+      <CelebrationModal
+        show={showCelebration}
+        displayName={formData.displayName}
+        corpsName={formData.corpsName}
+        onComplete={handleCelebrationComplete}
+      />
     </div>
   );
 };
