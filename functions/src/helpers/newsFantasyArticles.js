@@ -460,7 +460,8 @@ ARTICLE REQUIREMENTS
   3. Include one or two lines on caption WEIGHT or SCARCITY where it matters (e.g., a 0.30 swing in a ~20%-weight caption like GE1 is worth roughly 2x the same swing in a ~10% caption like Percussion).
   4. Close with a SLEEPER — one under-the-radar corps+caption most fantasy directors will miss, with the reason it's mispriced.
   Cite specific scores and margins drawn only from the data. Do NOT re-narrate what the DCI Recap already covered — no paragraph-length caption-by-caption play-by-play. Every paragraph should end with a picks-actionable takeaway or be cut.
-  Pick style (confident / analytical / contrarian) follows the framing above.`;
+  Pick style (confident / analytical / contrarian) follows the framing above.
+- Also fill two structured fields: fantasyImpact (one or two sentences distilling tonight's single most actionable move — it appears on its own in the home-feed widget, so it must stand alone) and trendingCorps (up to 3 corps from the TRENDING data, each with a direction and a short data-grounded reason; omit any that aren't really moving).`;
 
   const schema = {
     type: Type.OBJECT,
@@ -523,8 +524,25 @@ ARTICLE REQUIREMENTS
         },
         required: ["buy", "hold", "sell"],
       },
+      fantasyImpact: {
+        type: Type.STRING,
+        description: "One or two sentences: tonight's single most actionable lineup takeaway (the highest-conviction move and why), grounded in the data. This is the tip surfaced on the home feed's Fantasy Impact widget, so make it stand alone.",
+      },
+      trendingCorps: {
+        type: Type.ARRAY,
+        description: "Up to 3 corps whose captions are moving tonight, drawn ONLY from the TRENDING data in the DATA block. Omit if nothing is meaningfully trending — do not pad.",
+        items: {
+          type: Type.OBJECT,
+          properties: {
+            corps: { type: Type.STRING, description: "Corps name, exactly as in the data." },
+            direction: { type: Type.STRING, enum: ["up", "down", "stable"], description: "Caption trend direction from the data." },
+            reason: { type: Type.STRING, description: "One concise, data-grounded reason (e.g., 'GE1 up to 18.9'). No invented numbers." },
+          },
+          required: ["corps", "direction", "reason"],
+        },
+      },
     },
-    required: ["headline", "summary", "narrative", "captionInsights", "recommendations"],
+    required: ["headline", "summary", "narrative", "captionInsights", "recommendations", "fantasyImpact"],
   };
 
   try {
