@@ -428,9 +428,11 @@ function parseSections(narrative) {
   return sections.length > 0 ? sections : null;
 }
 
-// Check if article type is a DCI article (editorial style)
-function isDCIArticle(articleType) {
-  return ['dci_recap', 'dci_daily', 'dci_feature'].includes(articleType);
+// Editorial-style articles render as clean prose with understated inline
+// subheads (magazine style), NOT the colored section boxes used for the fantasy
+// market report. DCI pieces and the fantasy results recap all use this style.
+function isEditorialArticle(articleType) {
+  return ['dci_recap', 'dci_daily', 'dci_feature', 'fantasy_daily'].includes(articleType);
 }
 
 /**
@@ -448,8 +450,9 @@ export default function ArticleNarrativeParser({ narrative, summary, articleType
     return null;
   }
 
-  // DCI articles use clean editorial style - no section parsing, just clean prose
-  if (isDCIArticle(articleType)) {
+  // Editorial articles (DCI + fantasy results) use clean prose with inline
+  // subheads — scannable, but not the heavy colored boxes.
+  if (isEditorialArticle(articleType)) {
     return (
       <div className="prose prose-invert prose-lg max-w-none">
         {formatEditorialContent(narrative)}
@@ -499,20 +502,46 @@ export default function ArticleNarrativeParser({ narrative, summary, articleType
   );
 }
 
-// Format editorial content - clean paragraphs with styled inline headers
+// Format editorial content - clean paragraphs with understated inline subheads.
+// A paragraph that opens with a short **bold lead-in** (optionally followed by an
+// em dash/colon and body text) renders the lead-in as a small accent subhead,
+// giving DCI/fantasy-results pieces a scannable structure without colored boxes.
+// Paragraphs without a lead-in render as normal prose, so the styling degrades
+// cleanly whether or not the model emitted subheads.
 function formatEditorialContent(narrative) {
-  // Clean up markdown
-  const cleaned = narrative
-    .replace(/\*\*/g, '') // Remove bold markdown
-    .replace(/\*/g, '') // Remove italic markdown
-    .trim();
+  const paragraphs = narrative.trim().split(/\n\n+/).filter((p) => p.trim());
+  const strip = (s) => s.replace(/\*\*/g, '').replace(/\*/g, '').trim();
 
-  // Split into paragraphs
-  const paragraphs = cleaned.split(/\n\n+/).filter((p) => p.trim());
-
-  return paragraphs.map((para, idx) => (
-    <p key={idx} className="text-base md:text-lg text-gray-300 leading-relaxed mb-6">
-      {para}
-    </p>
-  ));
+  return paragraphs.map((para, idx) => {
+    const p = para.trim();
+    // Leading bold subhead: "**The margins.** body...", "**Visual** — body", or a
+    // standalone "**Header**". Guarded so a sentence that merely opens with a
+    // bolded corps name ("**Blue Devils** took the lead...") is NOT treated as a
+    // subhead: the label must end in .:! , be followed by a dash separator, or
+    // stand alone with no body.
+    const m = p.match(/^\*\*(.+?)\*\*(\s*[—:–-]\s*)?([\s\S]*)$/);
+    const rawHead = m ? strip(m[1]) : '';
+    const sep = m ? m[2] : '';
+    const bodyText = m ? strip(m[3]) : '';
+    const looksLikeSubhead =
+      m && rawHead.length > 0 && rawHead.length <= 40 &&
+      (/[.:!]$/.test(rawHead) || Boolean(sep) || bodyText === '');
+    if (looksLikeSubhead) {
+      const head = rawHead.replace(/[.:!]+$/, '');
+      const body = bodyText;
+      return (
+        <div key={idx} className="mb-6">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-[#0057B8] mb-2">{head}</h4>
+          {body && (
+            <p className="text-base md:text-lg text-gray-300 leading-relaxed">{body}</p>
+          )}
+        </div>
+      );
+    }
+    return (
+      <p key={idx} className="text-base md:text-lg text-gray-300 leading-relaxed mb-6">
+        {strip(p)}
+      </p>
+    );
+  });
 }

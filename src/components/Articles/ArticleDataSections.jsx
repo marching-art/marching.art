@@ -1,7 +1,8 @@
 // Structured data panels for the full-article view (standings, top performers,
-// insights, recommendations, trending corps). Extracted from pages/Article.jsx.
+// insights, trending corps). Fantasy buy/hold/sell picks are rendered separately
+// by RecommendationCards in pages/Article.jsx. Extracted from pages/Article.jsx.
 
-import { Trophy, Flame, BookOpen, TrendingUp } from 'lucide-react';
+import { Trophy, Flame, BookOpen } from 'lucide-react';
 import { TrendingBadge } from '../Landing/NewsFeedBadges';
 
 const ArticleDataSections = ({ article }) => (
@@ -92,36 +93,9 @@ const ArticleDataSections = ({ article }) => (
       </div>
     )}
 
-    {/* Recommendations */}
-    {article.recommendations && article.recommendations.length > 0 && (
-      <div className="mb-8">
-        <h3 className="text-sm font-bold text-green-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-          <TrendingUp className="w-4 h-4" />
-          Fantasy Recommendations
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {article.recommendations.map((rec, idx) => (
-            <div key={idx} className="bg-[#111] border border-[#333] p-4">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-bold text-white">{rec.corps}</span>
-                <span
-                  className={`px-2 py-0.5 text-[10px] font-bold uppercase ${
-                    rec.action === 'buy'
-                      ? 'bg-green-500/20 text-green-400'
-                      : rec.action === 'sell'
-                        ? 'bg-red-500/20 text-red-400'
-                        : 'bg-yellow-500/20 text-yellow-400'
-                  }`}
-                >
-                  {rec.action}
-                </span>
-              </div>
-              <p className="text-xs text-gray-400">{rec.reasoning}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    )}
+    {/* Fantasy buy/hold/sell picks (object shape) are rendered by
+        RecommendationCards in Article.jsx; no array-shaped recommendations
+        panel here to avoid a dead double-render. */}
 
     {/* Trending Corps */}
     {article.trendingCorps?.length > 0 && (

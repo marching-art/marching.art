@@ -181,10 +181,13 @@ async function saveArticleDoc(db, { reportDay, article, metadata, seasonId }) {
     // Type-specific data
     standings: article.standings || null,
     captionBreakdown: article.captionBreakdown || null,
+    captionInsights: article.captionInsights || null,
     topPerformers: article.topPerformers || null,
     leagueHighlights: article.leagueHighlights || null,
     insights: article.insights || null,
+    trendingCorps: article.trendingCorps || null,
     recommendations: article.recommendations || null,
+    fantasyImpact: article.fantasyImpact || null,
 
     // Image (from Imagen)
     imageUrl: article.imageUrl || null,
@@ -194,7 +197,7 @@ async function saveArticleDoc(db, { reportDay, article, metadata, seasonId }) {
     // Metadata
     metadata: {
       ...metadata,
-      generatedBy: "gemini-2.0-flash-lite",
+      generatedBy: "gemini-2.5-flash",
       imageGeneratedBy: "gemini-3-pro-image", // Nano Banana Pro (paid tier)
     },
 
@@ -246,7 +249,7 @@ async function saveDailyNews(db, { reportDay, content, metadata, articles, seaso
       primaryImageUrl: articles[0]?.imageUrl || null,
       metadata: {
         ...metadata,
-        generatedBy: "gemini-2.0-flash-lite",
+        generatedBy: "gemini-2.5-flash",
       },
       isPublished: true,
     };
@@ -280,7 +283,7 @@ async function saveDailyNews(db, { reportDay, content, metadata, articles, seaso
     imagePrompt: content.imagePrompt || null,
     metadata: {
       ...metadata,
-      generatedBy: "gemini-2.0-flash-lite",
+      generatedBy: "gemini-2.5-flash",
       imagePublicId: imageResult.publicId || null,
     },
     isPublished: true,
@@ -649,7 +652,7 @@ async function saveToNewsHubLegacy(db, { category, date, content, metadata, offS
     metadata: {
       ...metadata,
       offSeasonDay,
-      generatedBy: "gemini-2.0-flash-lite",
+      generatedBy: "gemini-2.5-flash",
       imagePublicId: image.publicId || null,
     },
 

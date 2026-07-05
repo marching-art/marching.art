@@ -82,9 +82,10 @@ function collectArticleText(content) {
     content.captionBreakdown?.geAnalysis,
     content.captionBreakdown?.visualAnalysis,
     content.captionBreakdown?.musicAnalysis,
-    content.corpsIdentity?.tradition,
-    content.corpsIdentity?.strength,
-    content.corpsIdentity?.trajectory,
+    ...(Array.isArray(content.insights)
+      ? content.insights.flatMap(i => [i?.metric, i?.finding, i?.implication])
+      : []),
+    ...(Array.isArray(content.trendingCorps) ? content.trendingCorps.map(t => t?.reason) : []),
     ...(Array.isArray(content.recommendations) ? content.recommendations.map(r => r?.reasoning) : []),
     ...(content.recommendations?.buy?.map?.(r => r?.reason) || []),
     ...(content.recommendations?.hold?.map?.(r => r?.reason) || []),

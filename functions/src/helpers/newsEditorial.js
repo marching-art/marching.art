@@ -282,21 +282,21 @@ function getWritingVariety(reportDay, articleType) {
     },
   ];
 
-  // Fantasy Daily: rotate narrative voice
+  // Fantasy Daily: rotate narrative voice. No quoteStyle — the fantasy daily
+  // recap is a data-only piece that never fabricates director quotes (the
+  // directors are real users), so personality lives in the voice and the way the
+  // standings are read, not in invented interviews.
   const fantasyApproaches = [
     {
       voice: "Write like a local sports beat reporter covering a high school football rivalry — earnest, detailed, community-focused.",
-      quoteStyle: "Post-game interview quotes. Directors reflecting on what went right or wrong tonight.",
-      storyEngine: "Frame the night around a rivalry between two ensembles jockeying for the same position.",
+      storyEngine: "Frame the night around a rivalry between two ensembles jockeying for the same position — grounded in the actual margin between them, not invented backstory.",
     },
     {
       voice: "Write like a fantasy sports podcast host — opinionated, direct, fun. Talk to the reader like they're in on the game.",
-      quoteStyle: "Locker room quotes. Raw, immediate reactions — some triumphant, some frustrated.",
-      storyEngine: "Frame the night around a surprise result — someone who jumped or fell unexpectedly.",
+      storyEngine: "Frame the night around a surprise result — someone who jumped or fell unexpectedly in the standings.",
     },
     {
       voice: "Write like a longform sportswriter — find the human story in the numbers. Give the fantasy world some texture.",
-      quoteStyle: "Mix of press conference quotes and overheard sideline comments. Vary the formality.",
       storyEngine: "Frame the night around the season narrative — who's peaking, who's building, who's fighting to stay relevant.",
     },
   ];
@@ -504,53 +504,188 @@ function buildEditorialBrief({ dayScores, trendData, fantasyData, reportDay }) {
     };
   }
 
+  // --- Field shape: spread, compression, and rank churn ----------------------
+  // These are field-level facts (not per-corps) that give the DCI Daily its
+  // signature analytical angle — how the standings moved as a whole tonight —
+  // and are computed here so the piece can lead with structure, not just the
+  // winner. All grounded in real totals + each corps' dayChange.
+  if (dayScores.length >= 2) {
+    const totals = dayScores.map(s => s.total);
+    const spread = totals[0] - totals[totals.length - 1];
+    const top3Spread = dayScores.length >= 3 ? totals[0] - totals[2] : null;
+
+    // Reconstruct yesterday's standings from today's total minus dayChange, but
+    // only for corps that actually competed yesterday (a real day-over-day
+    // delta). Rank churn/spread-trend are computed over that comparable subset.
+    const withYesterday = dayScores
+      .map(s => {
+        const t = trendData?.[s.corps];
+        const hadYesterday = Array.isArray(t?.recentScores) && t.recentScores.some(r => r.day === reportDay - 1);
+        return hadYesterday ? { corps: s.corps, today: s.total, yesterday: s.total - (t.dayChange || 0) } : null;
+      })
+      .filter(Boolean);
+
+    let rankChurn = null, biggestClimber = null, biggestFaller = null, spreadTrend = null, gapCloser = null;
+    if (withYesterday.length >= 2) {
+      const todayOrder = [...withYesterday].sort((a, b) => b.today - a.today).map(x => x.corps);
+      const yestOrder = [...withYesterday].sort((a, b) => b.yesterday - a.yesterday).map(x => x.corps);
+      const todayRank = new Map(todayOrder.map((c, i) => [c, i]));
+      const yestRank = new Map(yestOrder.map((c, i) => [c, i]));
+      let churn = 0, bestClimb = 0, bestFall = 0;
+      for (const c of todayOrder) {
+        const delta = yestRank.get(c) - todayRank.get(c); // + = climbed
+        if (delta !== 0) churn++;
+        if (delta > bestClimb) { bestClimb = delta; biggestClimber = { corps: c, spots: delta }; }
+        if (delta < bestFall) { bestFall = delta; biggestFaller = { corps: c, spots: -delta }; }
+      }
+      rankChurn = churn;
+
+      const yTotals = withYesterday.map(x => x.yesterday).sort((a, b) => b - a);
+      const ySpread = yTotals[0] - yTotals[yTotals.length - 1];
+      const spreadDelta = spread - ySpread;
+      spreadTrend = {
+        direction: spreadDelta < -0.05 ? "tightening" : spreadDelta > 0.05 ? "loosening" : "holding",
+        delta: Math.abs(spreadDelta),
+      };
+
+      // Biggest gap-closer: corps that shaved the most off the margin to the
+      // corps directly above it in today's order (a compression sub-story).
+      for (let i = 1; i < todayOrder.length; i++) {
+        const cur = withYesterday.find(x => x.corps === todayOrder[i]);
+        const above = withYesterday.find(x => x.corps === todayOrder[i - 1]);
+        if (!cur || !above) continue;
+        const closed = (above.yesterday - cur.yesterday) - (above.today - cur.today);
+        if (closed > (gapCloser?.closed || 0.049)) {
+          gapCloser = { corps: cur.corps, onCorps: above.corps, closed };
+        }
+      }
+    }
+
+    brief.field = {
+      spread,
+      top3Spread,
+      leadMargin: dayScores.length >= 2 ? totals[0] - totals[1] : null,
+      rankChurn,
+      biggestClimber,
+      biggestFaller,
+      spreadTrend,
+      gapCloser,
+    };
+  }
+
+  // Subject map: which corps/ensemble each article is leading with tonight, so
+  // every article's brief can be told what the OTHER four already own and pick
+  // a different lead. This is the core anti-repetition guard.
+  brief.subjects = {
+    dci_daily: brief.lead?.subject || null,
+    dci_feature: brief.trajectory?.corps || null,
+    dci_recap: brief.caption ? `${brief.caption.family} race (led by ${brief.caption.leader})` : null,
+    fantasy_recap: brief.market?.topBuy || null,
+    fantasy_daily: brief.fantasy?.ensemble || null,
+  };
+
   return brief;
 }
 
+// Human labels + one-line beat identity for each of the five nightly articles.
+// The "beat" makes each piece's distinct job explicit in its own prompt; the
+// labels drive the cross-article "off-limits" list that prevents five articles
+// from all leading with the same corps or number.
+const ARTICLE_BEATS = {
+  dci_daily: {
+    label: "DCI Daily",
+    beat: "the result and the margins — who won each show tonight, the decisive gaps, and how the field as a whole tightened or spread. You own the standings and the shape of the night.",
+  },
+  dci_feature: {
+    label: "DCI Feature",
+    beat: "one corps, audited across the week — their show-by-show arc, caption profile, and what the trend says about where they're headed. You own depth on a single program.",
+  },
+  dci_recap: {
+    label: "DCI Recap",
+    beat: "the caption laboratory — where inside GE, Visual, and Music the judges are actually separating the field, and how the sub-caption picture differs from the totals. You own caption science.",
+  },
+  fantasy_recap: {
+    label: "Fantasy Market Report",
+    beat: "the only actionable column — buy/hold/sell on individual captions, weight and scarcity, and one sleeper. You own the picks.",
+  },
+  fantasy_daily: {
+    label: "Fantasy Results",
+    beat: "the users' league — the community's own fantasy ensembles, their races, and SoundSport. You own the human competition among directors.",
+  },
+};
+
 /**
- * Render the brief into a prompt-ready "YOUR ASSIGNED ANGLE" block for a
- * given article type. Returns empty string when there's nothing to assign so
- * the prompt degrades cleanly instead of printing "undefined".
+ * Build the "off-limits" block: the lead subjects the OTHER four articles are
+ * covering tonight, so this article doesn't build its hook on a story already
+ * owned elsewhere in the batch. Returns "" when nothing else is assigned.
+ */
+function formatOffLimits(brief, selfType) {
+  const lines = Object.entries(brief.subjects || {})
+    .filter(([type, subject]) => type !== selfType && subject)
+    .map(([type, subject]) => `  • ${ARTICLE_BEATS[type]?.label || type} is leading with: ${subject}`);
+  if (lines.length === 0) return "";
+  return `\nOWNED BY OTHER ARTICLES TONIGHT (do NOT make any of these your lead or headline — find a different entry point):\n${lines.join("\n")}\n`;
+}
+
+/**
+ * Render the brief into a prompt-ready beat + assigned-angle + off-limits block
+ * for a given article type. Returns empty string when there's nothing to assign
+ * so the prompt degrades cleanly instead of printing "undefined".
  */
 function formatBriefForArticle(brief, articleType) {
   if (!brief) return "";
 
+  const beat = ARTICLE_BEATS[articleType]?.beat;
+  const beatLine = beat ? `YOUR BEAT: ${beat}\n` : "";
+  const offLimits = formatOffLimits(brief, articleType);
+
   switch (articleType) {
     case "dci_daily": {
-      if (!brief.lead) return "";
+      const f = brief.field;
+      // Qualitative direction only — the actual FIELD SHAPE decimals live in the
+      // DATA block (so the number-source guard accepts them). Here we just point
+      // the writer at tonight's most distinctive structural angle.
+      const shapeAngle = f?.spreadTrend
+        ? `The field is ${f.spreadTrend.direction} tonight${f.rankChurn ? ` with ${f.rankChurn} position change${f.rankChurn === 1 ? "" : "s"}` : ""} — lead with what that movement means, not just the winner. See FIELD SHAPE in the DATA block for the exact figures.`
+        : brief.lead
+          ? `Lead story: ${brief.lead.angle} (${brief.lead.subject}).`
+          : "";
+      if (!beatLine && !shapeAngle && !offLimits) return "";
       return `
-YOUR ASSIGNED ANGLE (editorial brief — build your hook around this, not a different obvious story)
-Lead story of the night: ${brief.lead.angle}
-Subject: ${brief.lead.subject}
-Why it's the lead: ${brief.lead.metric}
-`;
+${beatLine}YOUR ANGLE TONIGHT (editorial brief): ${shapeAngle}
+${offLimits}`;
     }
     case "dci_feature": {
-      if (!brief.trajectory) return "";
+      if (!brief.trajectory && !beatLine) return "";
+      const why = brief.trajectory
+        ? `Featured corps: ${brief.trajectory.corps} — ${brief.trajectory.metric}; momentum: ${brief.trajectory.momentum}. Make the case for THIS corps' trajectory; do not fight for the lead headline.`
+        : "";
       return `
-YOUR ASSIGNED ANGLE (editorial brief — this is the corps to profile tonight)
-Featured corps: ${brief.trajectory.corps}
-Why them: ${brief.trajectory.metric}; momentum reading: ${brief.trajectory.momentum}
-This corps was picked because DCI Daily is covering a different story tonight — your job is to make the case for this corps' trajectory, not to fight for the lead headline.
-`;
+${beatLine}YOUR ANGLE TONIGHT (editorial brief): ${why}
+${offLimits}`;
     }
     case "dci_recap": {
-      if (!brief.caption) return "";
+      if (!brief.caption && !beatLine) return "";
+      const why = brief.caption
+        ? `Open on the ${brief.caption.family} race (${brief.caption.leader} leads, ${brief.caption.metric}). The other two families still get body coverage, but your first paragraphs belong to ${brief.caption.family}.`
+        : "";
       return `
-YOUR ASSIGNED ANGLE (editorial brief — lead with this caption family)
-Caption to lead with: ${brief.caption.family}
-Why it's the story: ${brief.caption.metric} — ${brief.caption.leader} leads tonight
-The other two caption families still get coverage in the body, but your opening paragraphs belong to ${brief.caption.family}.
-`;
+${beatLine}YOUR ANGLE TONIGHT (editorial brief): ${why}
+${offLimits}`;
     }
     case "fantasy_recap": {
-      if (!brief.market) return "";
+      if (!brief.market && !beatLine) return "";
+      const why = brief.market
+        ? `Seed BUY thesis: ${brief.market.topBuy} (${brief.market.metric}). Build around it unless the data clearly supports a stronger pick.`
+        : "";
       return `
-YOUR ASSIGNED ANGLE (editorial brief — anchor your top BUY around this)
-Seed BUY thesis: ${brief.market.topBuy}
-Supporting metric: ${brief.market.metric}
-You may adjust if the data supports a stronger pick, but this is the pre-computed top candidate — build around it unless you have a clearly better alternative.
-`;
+${beatLine}YOUR ANGLE TONIGHT (editorial brief): ${why}
+${offLimits}`;
+    }
+    case "fantasy_daily": {
+      if (!beatLine && !offLimits) return "";
+      return `
+${beatLine}${offLimits}`;
     }
     default:
       return "";
