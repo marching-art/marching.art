@@ -107,6 +107,28 @@ async function generateDciDailyArticle({ reportDay, dayScores, trendData, showCo
 
   const corpsRoster = dayScores.map(s => s.corps).join(', ');
 
+  // Actual position-battle matchups (not just a count) so the writer can name
+  // the specific races that are within striking distance tonight.
+  const positionBattlesBlock = (competitionContext.positionBattles || [])
+    .map(b => `- ${b.corps1} vs ${b.corps2}: ${b.gap} apart (positions ${b.position}–${b.position + 1})`)
+    .join('\n');
+
+  // Field-shape metrics from the editorial brief: how the standings moved as a
+  // whole tonight. Decimals live here inside the DATA block so the number-source
+  // guard accepts them when the writer cites them. This is the DCI Daily's
+  // signature analytical angle — the field, not just the winner.
+  const f = brief?.field;
+  const fieldShapeBlock = f ? [
+    Number.isFinite(f.spread) ? `- Field spread (1st to last): ${f.spread.toFixed(3)}` : null,
+    Number.isFinite(f.top3Spread) ? `- Top-3 spread: ${f.top3Spread.toFixed(3)}` : null,
+    Number.isFinite(f.leadMargin) ? `- Lead margin (1st over 2nd): ${f.leadMargin.toFixed(3)}` : null,
+    f.spreadTrend ? `- Standings are ${f.spreadTrend.direction}${Number.isFinite(f.spreadTrend.delta) && f.spreadTrend.delta > 0 ? ` (${f.spreadTrend.delta.toFixed(3)} vs yesterday)` : ''}` : null,
+    Number.isInteger(f.rankChurn) ? `- Position changes since yesterday: ${f.rankChurn}` : null,
+    f.biggestClimber ? `- Biggest riser by rank: ${f.biggestClimber.corps} (+${f.biggestClimber.spots} spot${f.biggestClimber.spots === 1 ? '' : 's'})` : null,
+    f.biggestFaller ? `- Biggest slider by rank: ${f.biggestFaller.corps} (-${f.biggestFaller.spots} spot${f.biggestFaller.spots === 1 ? '' : 's'})` : null,
+    f.gapCloser ? `- Biggest gap-closer: ${f.gapCloser.corps} shaved ${f.gapCloser.closed.toFixed(3)} off the margin to ${f.gapCloser.onCorps}` : null,
+  ].filter(Boolean).join('\n') : '';
+
   // Get today's narrative variety to keep articles from feeling templated
   const variety = getWritingVariety(reportDay, "dci_daily");
 
@@ -160,8 +182,8 @@ ${captionWinnersByShow}
 
 DAY-OVER-DAY MOVERS${moversBlock ? '' : ': none of note'}
 ${moversBlock}
-
-POSITION BATTLES: ${competitionContext.positionBattleCount} corps within 0.2 of the position directly ahead of them.
+${fieldShapeBlock ? `\nFIELD SHAPE (how the standings moved as a whole tonight):\n${fieldShapeBlock}\n` : ''}
+POSITION BATTLES (${competitionContext.positionBattleCount} within 0.2 of the spot ahead)${positionBattlesBlock ? `:\n${positionBattlesBlock}` : ': none within 0.2 tonight.'}
 ===== END DATA =====
 
 ${toneGuidance}
@@ -178,6 +200,7 @@ HOW TO WRITE THIS ARTICLE
 - Narrative: 600-900 words. Every scoring corps should appear by name at least once, but let significance drive the emphasis — don't pad coverage to hit a checklist, and don't march through rank order unless that's genuinely the best frame.
 ${multiShow ? `- Cover all ${scoresByShow.length} shows by name. For each score or placement you cite, make the show clear (via dateline, a phrase like "at [Show]", or section framing). Readers should never be confused about which corps competed where.` : `- This is a single-show night — ground the article in ${scoresByShow[0]?.name}${scoresByShow[0]?.location ? ` (${scoresByShow[0].location})` : ''} and treat the standings as one field.`}
 - Weave day-over-day changes and caption details where they're relevant; don't break them out as obligatory sections.
+- Use the FIELD SHAPE data — whether the field tightened or spread, how much position churn there was, the biggest gap-closer — as a structural through-line, not just a list of who placed where. This is what separates your piece from a bare results table: the story of how the whole standings moved tonight.
 - Close with a specific, grounded observation — a number, a trend, a question the next show will answer. No "tune in tomorrow" sign-offs.
 - Also fill the structured fields: trendingCorps (only corps with a real up/down move from tonight's movers/momentum data, each with a short data-grounded reason — omit corps that didn't move) and insights (2-4 scannable takeaways, each tied to a specific number from the data).
 
@@ -350,12 +373,9 @@ async function generateDciFeatureArticle({ reportDay, dayScores, trendData, show
    GE: ${s.subtotals?.ge?.toFixed(2) || 'N/A'} | Visual: ${s.subtotals?.visual?.toFixed(2) || 'N/A'} | Music: ${s.subtotals?.music?.toFixed(2) || 'N/A'}`;
     }).join('\n') || 'Limited show history available';
 
-  // Build caption trajectory analysis
-  const _captionTrajectory = {
-    ge: corpsTrend.captionHistory?.ge || [],
-    visual: corpsTrend.captionHistory?.visual || [],
-    music: corpsTrend.captionHistory?.music || [],
-  };
+  // The per-day caption arc (GE/Visual/Music show by show) is already carried in
+  // the SHOW-BY-SHOW block below, so the writer can narrate the caption
+  // trajectory directly from that — no separate structure needed.
 
   // Get today's narrative variety
   const variety = getWritingVariety(reportDay, "dci_feature");
@@ -587,25 +607,31 @@ ${dayScores.length} CORPS | Week: Days ${reportDay - 6} through ${reportDay} | D
 CORPS IN TONIGHT'S FIELD: ${dayScores.map(s => s.corps).join(', ')}
 ${isLiveSeason ? '' : `CORPS SOURCE YEARS: ${dayScores.map(s => `${s.corps} (${s.sourceYear || 'unknown'})`).join(', ')}
 `}
-GENERAL EFFECT (40% of total):
+GENERAL EFFECT (40% of total) — arrow is the week trend, "wk" is the point swing over the window:
 ${geSorted.map((s, i) => {
   const trend = trendData[s.corps]?.captionTrends?.ge;
   const margin = i > 0 ? (geSorted[i-1].subtotals?.ge - s.subtotals?.ge).toFixed(2) : '-';
-  return `${i + 1}. ${s.corps}: ${s.subtotals?.ge?.toFixed(2)} [GE1: ${s.captions?.GE1?.toFixed(2)}, GE2: ${s.captions?.GE2?.toFixed(2)}] ${trend?.trending === "up" ? "↑" : trend?.trending === "down" ? "↓" : "→"} (${margin} behind)`;
+  const arrow = trend?.trending === "up" ? "↑" : trend?.trending === "down" ? "↓" : "→";
+  const wk = trend && Number.isFinite(trend.weekChange) && Math.abs(trend.weekChange) >= 0.05 ? ` wk ${trend.weekChange >= 0 ? '+' : ''}${trend.weekChange.toFixed(2)}` : '';
+  return `${i + 1}. ${s.corps}: ${s.subtotals?.ge?.toFixed(2)} [GE1: ${s.captions?.GE1?.toFixed(2)}, GE2: ${s.captions?.GE2?.toFixed(2)}] ${arrow}${wk} (${margin} behind)`;
 }).join('\n')}
 
-VISUAL (30% of total):
+VISUAL (30% of total) — arrow is the week trend, "wk" is the point swing over the window:
 ${visualSorted.map((s, i) => {
   const trend = trendData[s.corps]?.captionTrends?.visual;
   const margin = i > 0 ? (visualSorted[i-1].subtotals?.visual - s.subtotals?.visual).toFixed(2) : '-';
-  return `${i + 1}. ${s.corps}: ${s.subtotals?.visual?.toFixed(2)} [VP: ${s.captions?.VP?.toFixed(2)}, VA: ${s.captions?.VA?.toFixed(2)}, CG: ${s.captions?.CG?.toFixed(2)}] ${trend?.trending === "up" ? "↑" : trend?.trending === "down" ? "↓" : "→"} (${margin} behind)`;
+  const arrow = trend?.trending === "up" ? "↑" : trend?.trending === "down" ? "↓" : "→";
+  const wk = trend && Number.isFinite(trend.weekChange) && Math.abs(trend.weekChange) >= 0.05 ? ` wk ${trend.weekChange >= 0 ? '+' : ''}${trend.weekChange.toFixed(2)}` : '';
+  return `${i + 1}. ${s.corps}: ${s.subtotals?.visual?.toFixed(2)} [VP: ${s.captions?.VP?.toFixed(2)}, VA: ${s.captions?.VA?.toFixed(2)}, CG: ${s.captions?.CG?.toFixed(2)}] ${arrow}${wk} (${margin} behind)`;
 }).join('\n')}
 
-MUSIC (30% of total):
+MUSIC (30% of total) — arrow is the week trend, "wk" is the point swing over the window:
 ${musicSorted.map((s, i) => {
   const trend = trendData[s.corps]?.captionTrends?.music;
   const margin = i > 0 ? (musicSorted[i-1].subtotals?.music - s.subtotals?.music).toFixed(2) : '-';
-  return `${i + 1}. ${s.corps}: ${s.subtotals?.music?.toFixed(2)} [B: ${s.captions?.B?.toFixed(2)}, MA: ${s.captions?.MA?.toFixed(2)}, P: ${s.captions?.P?.toFixed(2)}] ${trend?.trending === "up" ? "↑" : trend?.trending === "down" ? "↓" : "→"} (${margin} behind)`;
+  const arrow = trend?.trending === "up" ? "↑" : trend?.trending === "down" ? "↓" : "→";
+  const wk = trend && Number.isFinite(trend.weekChange) && Math.abs(trend.weekChange) >= 0.05 ? ` wk ${trend.weekChange >= 0 ? '+' : ''}${trend.weekChange.toFixed(2)}` : '';
+  return `${i + 1}. ${s.corps}: ${s.subtotals?.music?.toFixed(2)} [B: ${s.captions?.B?.toFixed(2)}, MA: ${s.captions?.MA?.toFixed(2)}, P: ${s.captions?.P?.toFixed(2)}] ${arrow}${wk} (${margin} behind)`;
 }).join('\n')}
 
 MOMENTUM BY CORPS:

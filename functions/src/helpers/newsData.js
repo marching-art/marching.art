@@ -345,30 +345,38 @@ function calculateTrendData(historicalData, reportDay, activeCorps) {
       const atSeasonBest = latestScore && Math.abs(latestScore.total - bestInWindow) < 0.01;
       const atSeasonWorst = latestScore && Math.abs(latestScore.total - worstInWindow) < 0.01;
 
-      // Caption-specific trends (compare today to 7-day caption averages)
+      // Caption-specific trends (compare today to 7-day caption averages).
+      // weekChange = latest minus the earliest score in the window for that
+      // caption — a true week-over-week swing magnitude (distinct from `diff`,
+      // which is today vs the window average). The Recap/Feature prompts want
+      // the magnitude, not just the ↑↓→ arrow, so both are exposed.
       let captionTrends = null;
       if (latestScore && scores.length >= 3) {
         const avgGE = scores.reduce((s, d) => s + d.subtotals.ge, 0) / scores.length;
         const avgVisual = scores.reduce((s, d) => s + d.subtotals.visual, 0) / scores.length;
         const avgMusic = scores.reduce((s, d) => s + d.subtotals.music, 0) / scores.length;
+        const firstScore = sortedScores[0];
 
         captionTrends = {
           ge: {
             current: latestScore.subtotals.ge,
             avg: avgGE,
             diff: latestScore.subtotals.ge - avgGE,
+            weekChange: latestScore.subtotals.ge - firstScore.subtotals.ge,
             trending: latestScore.subtotals.ge - avgGE > 0.05 ? "up" : latestScore.subtotals.ge - avgGE < -0.05 ? "down" : "stable",
           },
           visual: {
             current: latestScore.subtotals.visual,
             avg: avgVisual,
             diff: latestScore.subtotals.visual - avgVisual,
+            weekChange: latestScore.subtotals.visual - firstScore.subtotals.visual,
             trending: latestScore.subtotals.visual - avgVisual > 0.03 ? "up" : latestScore.subtotals.visual - avgVisual < -0.03 ? "down" : "stable",
           },
           music: {
             current: latestScore.subtotals.music,
             avg: avgMusic,
             diff: latestScore.subtotals.music - avgMusic,
+            weekChange: latestScore.subtotals.music - firstScore.subtotals.music,
             trending: latestScore.subtotals.music - avgMusic > 0.03 ? "up" : latestScore.subtotals.music - avgMusic < -0.03 ? "down" : "stable",
           },
         };
