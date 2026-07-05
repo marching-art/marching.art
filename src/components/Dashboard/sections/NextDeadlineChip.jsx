@@ -15,10 +15,20 @@ const NextDeadlineChip = ({ variant = 'chip' }) => {
   ];
   let tradeLabel = null;
   if (trade?.status === 'locked') {
-    tradeLabel = 'Changes locked until scores process';
-    tooltipLines.push(
-      `Caption changes reopen once scores are processed (~${formatEtDayTime(trade.reopensAt)})`
-    );
+    if (trade.phase === 'weekly') {
+      // Locked at the Saturday 8 PM ET week boundary — the fresh weekly
+      // allotment becomes usable once scores process, so now the reset matters.
+      tradeLabel = `Changes reset ${formatEtShort(trade.reopensAt)}`;
+      tooltipLines.push(
+        'Caption changes are locked until scores process',
+        `Weekly lineup-change limit (${trade.tradeLimit}) resets ${formatEtDayTime(trade.reopensAt)}`
+      );
+    } else {
+      tradeLabel = 'Changes locked until scores process';
+      tooltipLines.push(
+        `Caption changes reopen once scores are processed (~${formatEtDayTime(trade.reopensAt)})`
+      );
+    }
   } else if (trade?.phase === 'blackout') {
     tradeLabel = `Changes closed until ${formatEtShort(trade.reopensAt)}`;
     tooltipLines.push(
@@ -36,11 +46,13 @@ const NextDeadlineChip = ({ variant = 'chip' }) => {
     tooltipLines.push(
       `Lineup changes are unlimited until ${formatEtDayTime(trade.unlimitedEndsAt)}`
     );
-  } else if (trade?.phase === 'weekly' && trade.resetsAt) {
-    tradeLabel = `Changes reset ${formatEtShort(trade.resetsAt)}`;
+  } else if (trade?.phase === 'weekly' && trade.locksAt) {
+    // While the window is open the upcoming lock is what matters; the reset
+    // only becomes relevant once changes actually lock (handled above).
+    tradeLabel = `Changes lock ${formatEtShort(trade.locksAt)}`;
     tooltipLines.push(
-      `Weekly lineup-change limit (${trade.tradeLimit}) resets ${formatEtDayTime(trade.resetsAt)}`,
-      `Changes lock ${formatEtDayTime(trade.locksAt)} until scores process`
+      `Changes lock ${formatEtDayTime(trade.locksAt)} until scores process`,
+      `Weekly lineup-change limit (${trade.tradeLimit}) resets ${formatEtDayTime(trade.resetsAt)}`
     );
   }
 
