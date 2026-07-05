@@ -12,7 +12,7 @@ import {
   assertFails,
 } from '@firebase/rules-unit-testing';
 import { readFileSync } from 'node:fs';
-import { doc, updateDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc, deleteDoc } from 'firebase/firestore';
 
 const APP = 'marching-art';
 const ALICE = 'alice-uid';
@@ -233,6 +233,99 @@ await check(
   'non-owner cannot update profile at all',
   assertFails(updateDoc(doc(mallory(), profilePath), { bio: 'hax' }))
 );
+
+// =============================================================================
+// PROFILE COMMENTS — creation is backend-only. The old rule
+// (`allow create: if isAuthenticated()`) let any signed-in user create a
+// comment attributed to ANY authorUid: impersonation plus an unbounded
+// arbitrary-document spam surface. These tests pin the lockdown.
+// =============================================================================
+const commentPath = `artifacts/${APP}/users/${ALICE}/comments/comment-1`;
+const seedComment = { authorUid: 'mallory-uid', text: 'first!', createdAt: new Date() };
+
+async function freshCommentSeed() {
+  await testEnv.clearFirestore();
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), profilePath), seedProfile);
+    await setDoc(doc(ctx.firestore(), commentPath), seedComment);
+  });
+}
+
+await freshCommentSeed();
+await check(
+  'comments are publicly readable',
+  assertSucceeds(getDoc(doc(testEnv.unauthenticatedContext().firestore(), commentPath)))
+);
+
+await freshCommentSeed();
+await check(
+  'signed-in user cannot create a comment client-side (backend only)',
+  assertFails(
+    setDoc(doc(mallory(), `artifacts/${APP}/users/${ALICE}/comments/comment-2`), {
+      authorUid: 'mallory-uid',
+      text: 'hello',
+    })
+  )
+);
+
+await freshCommentSeed();
+await check(
+  'user cannot create a comment forged as another authorUid (regression)',
+  assertFails(
+    setDoc(doc(mallory(), `artifacts/${APP}/users/${ALICE}/comments/comment-3`), {
+      authorUid: ALICE, // impersonating Alice
+      text: 'I said something terrible',
+    })
+  )
+);
+
+await freshCommentSeed();
+await check(
+  'comment author can edit their own comment',
+  assertSucceeds(updateDoc(doc(mallory(), commentPath), { text: 'edited' }))
+);
+
+await freshCommentSeed();
+await check(
+  "non-author cannot edit someone else's comment",
+  assertFails(
+    updateDoc(doc(testEnv.authenticatedContext('eve-uid').firestore(), commentPath), {
+      text: 'defaced',
+    })
+  )
+);
+
+await freshCommentSeed();
+await check(
+  'profile owner can delete a comment on their profile',
+  assertSucceeds(deleteDoc(doc(authed(), commentPath)))
+);
+
+// =============================================================================
+// REPORTS & NEWS SUBMISSIONS — created exclusively by callables (Admin SDK).
+// The old open create rules were a spam/storage-abuse vector.
+// =============================================================================
+await testEnv.clearFirestore();
+await check(
+  'signed-in user cannot create a report directly',
+  assertFails(setDoc(doc(mallory(), 'reports/report-1'), { reason: 'spam', reportedUid: ALICE }))
+);
+
+await check(
+  'signed-in user cannot create a news submission directly',
+  assertFails(setDoc(doc(mallory(), 'news_submissions/sub-1'), { headline: 'BREAKING', body: 'x' }))
+);
+
+await check(
+  'admin can read reports',
+  assertSucceeds(
+    getDoc(
+      doc(testEnv.authenticatedContext('admin-uid', { admin: true }).firestore(), 'reports/nope')
+    )
+  )
+);
+
+await check('non-admin cannot read reports', assertFails(getDoc(doc(mallory(), 'reports/nope'))));
 
 await testEnv.cleanup();
 console.log(`\n${passed} passed, ${failed} failed`);

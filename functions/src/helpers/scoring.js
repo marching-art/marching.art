@@ -24,6 +24,12 @@ const {
   processWeeklyMatchups,
 } = require("./scoringAwards");
 const { ChunkedWriter } = require("./chunkedWriter");
+const { getCompletedCalendarDay } = require("./gameDay");
+const {
+  claimScoringRun,
+  markScoringRunCompleted,
+  markScoringRunFailed,
+} = require("./scoringRunGuard");
 
 
 
@@ -306,7 +312,7 @@ async function commitDailyScoring({
   return batch.commit();
 }
 
-async function processAndArchiveOffSeasonScoresLogic() {
+async function processAndArchiveOffSeasonScoresLogic({ force = false } = {}) {
   const db = getDb();
   logger.info("Running Daily Off-Season Score Processor & Archiver...");
 
@@ -318,151 +324,145 @@ async function processAndArchiveOffSeasonScoresLogic() {
 
   if (!seasonDoc.exists || seasonDoc.data().status !== "off-season") {
     logger.info("No active off-season found. Exiting.");
-    return;
+    return { status: "skipped", reason: "no-active-season" };
   }
 
   const seasonData = seasonDoc.data();
   const seasonStartDate = seasonData.schedule.startDate.toDate();
 
-  // Calculate "yesterday" in Eastern timezone with 2 AM game day reset.
-  // This function runs at 2 AM ET via the scheduler, so we need the date of
-  // the game day that just ended (i.e., yesterday's game day).
-  //
-  // We use Intl.DateTimeFormat to reliably get the current Eastern date,
-  // which correctly handles DST transitions (unlike toLocaleString round-trip
-  // which loses timezone context when re-parsed by new Date()).
-  const nowUtc = new Date();
-  const etParts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  }).formatToParts(nowUtc);
-  const etValues = {};
-  for (const part of etParts) etValues[part.type] = part.value;
-  // Build a UTC Date that represents the ET wall-clock time (for arithmetic only)
-  const nowET = new Date(Date.UTC(
-    parseInt(etValues.year),
-    parseInt(etValues.month) - 1,
-    parseInt(etValues.day),
-    parseInt(etValues.hour === "24" ? "0" : etValues.hour),
-    parseInt(etValues.minute),
-    parseInt(etValues.second),
-  ));
-  // Shift by 2 hours to align with 2 AM game day boundary
-  // e.g., 1 AM on Jan 5 becomes 11 PM on Jan 4 (still Jan 4's game day)
-  const gameTimeET = new Date(nowET.getTime() - (2 * 60 * 60 * 1000));
-  const yesterday = new Date(gameTimeET);
-  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
-  // Normalize to start of day for consistent day calculation
-  yesterday.setUTCHours(0, 0, 0, 0);
-
-  // Normalize seasonStartDate using the UTC calendar date directly.
-  // seasonStartDate is stored at midnight UTC by getNextOffSeasonWindow().
-  // Reading it via ET timezone incorrectly shifts winter UTC-midnight dates back
-  // one day (midnight UTC = previous evening in EST/UTC-5), making scoredDay one
-  // too high and causing e.g. Semifinals (day 48) to be labeled Finals (day 49).
-  const seasonStartNormalized = new Date(Date.UTC(
-    seasonStartDate.getUTCFullYear(),
-    seasonStartDate.getUTCMonth(),
-    seasonStartDate.getUTCDate(),
-    0, 0, 0,
-  ));
-
-  const diffInMillis = yesterday.getTime() - seasonStartNormalized.getTime();
-  const scoredDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1;
+  // Off-season has no spring training, so the calendar day IS the scored day.
+  const scoredDay = getCompletedCalendarDay(seasonStartDate);
 
   if (scoredDay < 1 || scoredDay > 49) {
     logger.info(`Scored day (${scoredDay}) is outside the 1-49 range. Exiting.`);
-    return;
+    return { status: "skipped", reason: "out-of-range", scoredDay };
   }
 
-  logger.info(`Processing and archiving scores for Off-Season Day: ${scoredDay}`);
-
-  const historicalData = await fetchHistoricalData(seasonData.dataDocId);
-  // Fetch day data from subcollection instead of season document
-  const dayEventData = await getScheduleDay(seasonData.seasonUid, scoredDay);
-
-  // Field projection: Only fetch 'corps' field to reduce data transfer by ~87%
-  // Full profile docs are ~15KB each; with projection ~2KB each
-  // OPTIMIZATION #8: Added limit to prevent runaway memory usage
-  // Note: For true pagination at scale (10K+ users), implement cursor-based batching
-  const PROFILE_FETCH_LIMIT = 5000;
-  const profilesQuery = db.collectionGroup("profile")
-    .where("activeSeasonId", "==", seasonData.seasonUid)
-    .select("corps", "username", "displayName")
-    .limit(PROFILE_FETCH_LIMIT);
-  const profilesSnapshot = await profilesQuery.get();
-  if (profilesSnapshot.empty) return;
-  if (profilesSnapshot.size === PROFILE_FETCH_LIMIT) {
-    logger.warn(`OPTIMIZATION WARNING: Profile fetch hit limit of ${PROFILE_FETCH_LIMIT}. Consider implementing pagination for larger user bases.`);
+  // Coin and league-record awards use FieldValue.increment, so a repeat run
+  // (scheduler redelivery, manual re-trigger) would double-award. Claim the
+  // day before doing any work.
+  const claim = await claimScoringRun(db, seasonData.seasonUid, scoredDay, { force });
+  if (!claim.claimed) {
+    logger.warn(`Off-season day ${scoredDay} already ${claim.reason}. Skipping to prevent double-awarding.`);
+    return { status: "skipped", reason: claim.reason, scoredDay };
   }
 
-  const week = Math.ceil(scoredDay / 7);
-  // Calculate the actual date for this off-season day from the season start date
-  const scoredDayDate = new Date(seasonStartDate.getTime() + (scoredDay - 1) * 24 * 60 * 60 * 1000);
-  const dailyRecap = {
-    offSeasonDay: scoredDay,
-    date: scoredDayDate,  // The actual calendar date for this off-season day
-    shows: [],
-  };
-  // ChunkedWriter: one write per scored corps plus coin/trophy/recap writes
-  // scales with the player base, so a single WriteBatch (capped per request)
-  // would eventually fail outright on a busy scoring night.
-  const batch = new ChunkedWriter(db);
+  try {
+    logger.info(`Processing and archiving scores for Off-Season Day: ${scoredDay}`);
 
-  // --- CHAMPIONSHIP WEEK AUTO-ENROLLMENT & PROGRESSION LOGIC ---
-  // OPTIMIZATION #5: Uses shared buildChampionshipConfig helper
-  let championshipConfig = null;
+    const historicalData = await fetchHistoricalData(seasonData.dataDocId);
+    // Fetch day data from subcollection instead of season document
+    const dayEventData = await getScheduleDay(seasonData.seasonUid, scoredDay);
 
-  if (scoredDay >= 45) {
-    const recapsSnapshot = await db.collection(`fantasy_recaps/${seasonData.seasonUid}/days`).get();
-    const allRecaps = recapsSnapshot.docs.map(doc => doc.data());
-    const recapsByDay = new Map(allRecaps.map(r => [r.offSeasonDay, r]));
-    championshipConfig = buildChampionshipConfig(scoredDay, recapsByDay, allRecaps);
-  }
-  // --- END: CHAMPIONSHIP WEEK AUTO-ENROLLMENT & PROGRESSION LOGIC ---
+    // Field projection: Only fetch 'corps' field to reduce data transfer by ~87%
+    // Full profile docs are ~15KB each; with projection ~2KB each
+    // OPTIMIZATION #8: Added limit to prevent runaway memory usage
+    // Note: For true pagination at scale (10K+ users), implement cursor-based batching
+    const PROFILE_FETCH_LIMIT = 5000;
+    const profilesQuery = db.collectionGroup("profile")
+      .where("activeSeasonId", "==", seasonData.seasonUid)
+      .select("corps", "username", "displayName")
+      .limit(PROFILE_FETCH_LIMIT);
+    const profilesSnapshot = await profilesQuery.get();
+    if (profilesSnapshot.empty) {
+      await markScoringRunCompleted(db, seasonData.seasonUid, scoredDay, { note: "no active profiles" });
+      return { status: "processed", scoredDay, note: "no active profiles" };
+    }
+    if (profilesSnapshot.size === PROFILE_FETCH_LIMIT) {
+      logger.warn(`OPTIMIZATION WARNING: Profile fetch hit limit of ${PROFILE_FETCH_LIMIT}. Consider implementing pagination for larger user bases.`);
+    }
 
-  if (!dayEventData || !dayEventData.shows || dayEventData.shows.length === 0) {
-    logger.info(`No shows for day ${scoredDay}. Nothing to process.`);
-    return;
-  }
+    const week = Math.ceil(scoredDay / 7);
+    // Calculate the actual date for this off-season day from the season start date
+    const scoredDayDate = new Date(seasonStartDate.getTime() + (scoredDay - 1) * 24 * 60 * 60 * 1000);
+    const dailyRecap = {
+      offSeasonDay: scoredDay,
+      date: scoredDayDate,  // The actual calendar date for this off-season day
+      shows: [],
+    };
+    // ChunkedWriter: one write per scored corps plus coin/trophy/recap writes
+    // scales with the player base, so a single WriteBatch (capped per request)
+    // would eventually fail outright on a busy scoring night.
+    const batch = new ChunkedWriter(db);
 
-  // Off-season base score: regression on the corps' source year.
-  // OPTIMIZATION #1: Use cached regression score to avoid recomputing.
-  const getBaseCaptionScore = (corpsName, sourceYear, caption) =>
-    getCachedRegressionScore(corpsName, sourceYear, caption, scoredDay, historicalData);
+    // --- CHAMPIONSHIP WEEK AUTO-ENROLLMENT & PROGRESSION LOGIC ---
+    // OPTIMIZATION #5: Uses shared buildChampionshipConfig helper
+    let championshipConfig = null;
 
-  const { dailyScores, coinAwards, stats } = scoreShowsForDay({
-    dayEventData, profilesSnapshot, week, scoredDay,
-    championshipConfig, dailyRecap, getBaseCaptionScore,
-  });
+    if (scoredDay >= 45) {
+      const recapsSnapshot = await db.collection(`fantasy_recaps/${seasonData.seasonUid}/days`).get();
+      const allRecaps = recapsSnapshot.docs.map(doc => doc.data());
+      const recapsByDay = new Map(allRecaps.map(r => [r.offSeasonDay, r]));
+      championshipConfig = buildChampionshipConfig(scoredDay, recapsByDay, allRecaps);
+    }
+    // --- END: CHAMPIONSHIP WEEK AUTO-ENROLLMENT & PROGRESSION LOGIC ---
 
-  // Log scoring statistics for diagnostics
-  logger.info(`Day ${scoredDay} scoring stats: ${stats.corpsProcessed} corps processed, ${stats.corpsScored} corps scored, ${stats.corpsWithNoShowsSelected} corps with no shows selected for week ${week}`);
+    if (!dayEventData || !dayEventData.shows || dayEventData.shows.length === 0) {
+      logger.info(`No shows for day ${scoredDay}. Nothing to process.`);
+      await markScoringRunCompleted(db, seasonData.seasonUid, scoredDay, { note: "no shows" });
+      return { status: "processed", scoredDay, note: "no shows" };
+    }
 
-  const { opCount, batchCount } = await commitDailyScoring({
-    db, batch, seasonData, scoredDay, dailyScores, dailyRecap, coinAwards,
-  });
-  logger.info(`Successfully processed and archived scores for day ${scoredDay} (${opCount} writes in ${batchCount} batches).`);
+    // Off-season base score: regression on the corps' source year.
+    // OPTIMIZATION #1: Use cached regression score to avoid recomputing.
+    const getBaseCaptionScore = (corpsName, sourceYear, caption) =>
+      getCachedRegressionScore(corpsName, sourceYear, caption, scoredDay, historicalData);
 
-  // OPTIMIZATION #5: Uses shared processWeeklyMatchups helper
-  if (scoredDay % 7 === 0) {
-    await processWeeklyMatchups(scoredDay / 7, seasonData, db);
+    const { dailyScores, coinAwards, stats } = scoreShowsForDay({
+      dayEventData, profilesSnapshot, week, scoredDay,
+      championshipConfig, dailyRecap, getBaseCaptionScore,
+    });
+
+    // Log scoring statistics for diagnostics
+    logger.info(`Day ${scoredDay} scoring stats: ${stats.corpsProcessed} corps processed, ${stats.corpsScored} corps scored, ${stats.corpsWithNoShowsSelected} corps with no shows selected for week ${week}`);
+
+    const { opCount, batchCount } = await commitDailyScoring({
+      db, batch, seasonData, scoredDay, dailyScores, dailyRecap, coinAwards,
+    });
+    logger.info(`Successfully processed and archived scores for day ${scoredDay} (${opCount} writes in ${batchCount} batches).`);
+
+    // OPTIMIZATION #5: Uses shared processWeeklyMatchups helper
+    if (scoredDay % 7 === 0) {
+      await processWeeklyMatchups(scoredDay / 7, seasonData, db);
+    }
+
+    await markScoringRunCompleted(db, seasonData.seasonUid, scoredDay, { opCount, batchCount });
+    return { status: "processed", scoredDay };
+  } catch (error) {
+    // Mark failed so a retry can re-claim immediately instead of waiting out
+    // the stale lease; then let the original error propagate.
+    await markScoringRunFailed(db, seasonData.seasonUid, scoredDay, error);
+    throw error;
   }
 }
 
-async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
+async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData, { force = false } = {}) {
   const db = getDb();
   logger.info(`Processing and scoring Live Season Day: ${scoredDay}`);
 
   // OPTIMIZATION #1: Clear regression cache at start of each scoring run
   clearRegressionCache();
 
+  // Coin and league-record awards use FieldValue.increment, so a repeat run
+  // (scheduler redelivery, manual re-trigger) would double-award. Claim the
+  // day before doing any work.
+  const claim = await claimScoringRun(db, seasonData.seasonUid, scoredDay, { force });
+  if (!claim.claimed) {
+    logger.warn(`Live season day ${scoredDay} already ${claim.reason}. Skipping to prevent double-awarding.`);
+    return { status: "skipped", reason: claim.reason, scoredDay };
+  }
+
+  try {
+    return await scoreLiveSeasonDay(db, scoredDay, seasonData);
+  } catch (error) {
+    // Mark failed so a retry can re-claim immediately instead of waiting out
+    // the stale lease; then let the original error propagate.
+    await markScoringRunFailed(db, seasonData.seasonUid, scoredDay, error);
+    throw error;
+  }
+}
+
+async function scoreLiveSeasonDay(db, scoredDay, seasonData) {
   const week = Math.ceil(scoredDay / 7);
 
   // OPTIMIZATION #8: Added limit and field projection to prevent runaway memory usage
@@ -477,7 +477,8 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
   }
   if (profilesSnapshot.empty) {
     logger.info("No active profiles found for the live season.");
-    return;
+    await markScoringRunCompleted(db, seasonData.seasonUid, scoredDay, { note: "no active profiles" });
+    return { status: "processed", scoredDay, note: "no active profiles" };
   }
 
   // Calculate the actual calendar date for this competition day.
@@ -530,7 +531,8 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
 
   if (!dayEventData || !dayEventData.shows || dayEventData.shows.length === 0) {
     logger.info(`No shows for day ${scoredDay}. Nothing to process.`);
-    return;
+    await markScoringRunCompleted(db, seasonData.seasonUid, scoredDay, { note: "no shows" });
+    return { status: "processed", scoredDay, note: "no shows" };
   }
 
   // Live-season base score:
@@ -574,6 +576,9 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
   if (scoredDay % 7 === 0) {
     await processWeeklyMatchups(scoredDay / 7, seasonData, db);
   }
+
+  await markScoringRunCompleted(db, seasonData.seasonUid, scoredDay, { opCount, batchCount });
+  return { status: "processed", scoredDay };
 }
 
 async function calculateCorpsStatisticsLogic() {

@@ -4,11 +4,19 @@
 //   live-scraped scores in historical_scores/{seasonYear}.
 // - Off-season: ranks the fantasy lineup corps using their historical DCI scores,
 //   similar to how ESPN Fantasy shows actual game results.
+//
+// Reads go through the api/season service and react-query: the corps pool and
+// per-year historical docs share cache entries with the Dashboard lineup table
+// (same query keys), so landing/news pages reuse data other surfaces fetched.
 
 import { useState, useEffect, useMemo } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../api';
+import { useQuery, useQueries } from '@tanstack/react-query';
+import { getCorpsValues, getHistoricalScoresForYear } from '../api/season';
+import { queryKeys } from '../lib/queryClient';
 import { useSeasonStore } from '../store/seasonStore';
+import { getEasternHour, getEffectiveDay } from '../utils/dashboardScoring';
+
+const SCORES_STALE_TIME = 5 * 60 * 1000;
 
 /**
  * Calculate total score from individual captions
@@ -20,57 +28,6 @@ const calculateTotalScore = (captions) => {
   const visual = ((captions.VP || 0) + (captions.VA || 0) + (captions.CG || 0)) / 2;
   const music = ((captions.B || 0) + (captions.MA || 0) + (captions.P || 0)) / 2;
   return ge + visual + music;
-};
-
-/**
- * Get the current hour in Eastern Time (0-23)
- */
-const getEasternHour = () => {
-  return parseInt(
-    new Date().toLocaleString('en-US', {
-      timeZone: 'America/New_York',
-      hour: 'numeric',
-      hour12: false,
-    }),
-    10
-  );
-};
-
-/**
- * Get the maximum day of scores that should be displayed.
- *
- * IMPORTANT: Scores for Day N are processed at 2 AM ET on Day N+1.
- * This means Day N scores should NOT be visible until 2 AM ET on Day N+1.
- *
- * Example timeline:
- * - Day 5 competition happens on Day 5
- * - Day 5 scores are processed at 2 AM ET on Day 6
- * - Day 5 scores are visible from 2 AM Day 6 until 2 AM Day 7 (24 hours)
- * - Day 6 competition happens on Day 6
- * - Day 6 scores are processed at 2 AM ET on Day 7
- * - Day 6 scores become visible starting at 2 AM Day 7
- *
- * Formula:
- * - Before 2 AM ET: Show scores up to currentDay - 2 (yesterday's processing hasn't run yet)
- * - At/After 2 AM ET: Show scores up to currentDay - 1 (today's processing just ran)
- *
- * @param {number} currentDay - The current season day (1-49)
- * @returns {number|null} The maximum day of scores to show, or null if none
- */
-const getMaxScoreDay = (currentDay) => {
-  const hour = getEasternHour();
-
-  // Before 2 AM ET: Today's score processing hasn't run yet.
-  // The most recent processing was at 2 AM yesterday for the day before yesterday's competition.
-  // Example: On Day 7 at 1 AM, Day 6 processing hasn't happened yet, so show Day 5 scores max.
-  //
-  // At/After 2 AM ET: Today's score processing has completed.
-  // It processed yesterday's competition scores.
-  // Example: On Day 7 at 3 AM, Day 6 scores were just processed, so show Day 6 scores max.
-  const maxScoreDay = hour < 2 ? currentDay - 2 : currentDay - 1;
-
-  // Return null if no scores should be available yet (e.g., Day 1 or Day 2 before 2 AM)
-  return maxScoreDay >= 1 ? maxScoreDay : null;
 };
 
 /**
@@ -87,11 +44,7 @@ export const useLandingScores = ({ enabled = true } = {}) => {
   // not the previous-year corps that fantasy lineup point values are based on.
   const isLiveSeason = seasonData?.status === 'live-season';
   const liveSeasonYear = seasonData?.seasonYear != null ? String(seasonData.seasonYear) : null;
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [corpsValues, setCorpsValues] = useState([]);
-  const [historicalData, setHistoricalData] = useState({});
+  const dataDocId = seasonData?.dataDocId;
 
   // Track whether we're past the 2 AM ET score processing time
   // This state updates every minute to ensure we react to the 2 AM boundary
@@ -113,99 +66,87 @@ export const useLandingScores = ({ enabled = true } = {}) => {
     return () => clearInterval(interval);
   }, []);
 
-  // Calculate max score day accounting for 2 AM score processing
-  // This recalculates when currentDay changes OR when we cross the 2 AM boundary
+  // Max day of scores to display, accounting for the 2 AM ET processing window:
+  // scores for day N are processed at 2 AM ET on day N+1, so before 2 AM only
+  // day N-2 is available and after 2 AM day N-1 is. Recalculates when the day
+  // changes OR when we cross the 2 AM boundary.
   const maxScoreDay = useMemo(() => {
     if (!currentDay) return null;
-    return getMaxScoreDay(currentDay);
+    return getEffectiveDay(currentDay);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentDay, isPastProcessingTime]);
 
-  // Fetch season corps and historical scores
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!seasonData?.dataDocId || !enabled) {
-        setLoading(false);
-        return;
-      }
+  // Fantasy pool corps (dci-data doc). Needed in both modes: it defines the
+  // off-season ranking list, and in live season it filters the scraped corps
+  // to those selectable as caption options.
+  const corpsValuesQuery = useQuery({
+    queryKey: queryKeys.corpsValues(dataDocId),
+    queryFn: () => getCorpsValues(dataDocId),
+    enabled: !!dataDocId && enabled,
+    staleTime: SCORES_STALE_TIME,
+  });
+  const poolCorps = corpsValuesQuery.data;
 
-      try {
-        setLoading(true);
+  // Which historical_scores years to load: just the live year during a live
+  // season, otherwise every source year referenced by the fantasy pool.
+  const yearsNeeded = useMemo(() => {
+    if (isLiveSeason && liveSeasonYear) return [liveSeasonYear];
+    if (!poolCorps) return [];
+    return [...new Set(poolCorps.map((c) => String(c.sourceYear)))].sort();
+  }, [isLiveSeason, liveSeasonYear, poolCorps]);
 
-        // LIVE SEASON: rank the real current-year DCI corps from the live-scraped
-        // data in historical_scores/{seasonYear}. Only include corps that are
-        // selectable as caption options (matched by corps name against the fantasy
-        // pool in dci-data/{dataDocId}). So the 2026 Blue Devils show because the
-        // 2025 Blue Devils are a caption option, but a 2026 corps whose name isn't
-        // in the pool is omitted.
-        if (isLiveSeason && liveSeasonYear) {
-          const [liveDataDoc, poolDoc] = await Promise.all([
-            getDoc(doc(db, `historical_scores/${liveSeasonYear}`)),
-            getDoc(doc(db, `dci-data/${seasonData.dataDocId}`)),
-          ]);
+  const {
+    historicalData,
+    anyPending: yearsPending,
+    errorMessage: yearsError,
+  } = useQueries({
+    queries: yearsNeeded.map((year) => ({
+      queryKey: queryKeys.historicalScores(year),
+      queryFn: () => getHistoricalScoresForYear(year),
+      enabled,
+      staleTime: SCORES_STALE_TIME,
+    })),
+    combine: (results) => {
+      const byYear = {};
+      results.forEach((result, i) => {
+        if (result.data && result.data.length > 0) byYear[yearsNeeded[i]] = result.data;
+      });
+      return {
+        historicalData: byYear,
+        anyPending: results.some((result) => result.isPending),
+        errorMessage: results.find((result) => result.error)?.error?.message || null,
+      };
+    },
+  });
 
-          const yearData = liveDataDoc.exists() ? liveDataDoc.data().data || [] : [];
-          const selectableNames = new Set(
-            (poolDoc.exists() ? poolDoc.data().corpsValues || [] : []).map((c) => c.corpsName)
-          );
+  // The ranked corps list. Live season: the scraped current-year corps that are
+  // also selectable in the fantasy pool (so the 2026 Blue Devils show because
+  // the 2025 Blue Devils are a caption option, but a corps whose name isn't in
+  // the pool is omitted). Off-season: the fantasy pool itself.
+  const corpsValues = useMemo(() => {
+    if (isLiveSeason && liveSeasonYear) {
+      const yearData = historicalData[liveSeasonYear] || [];
+      const selectableNames = new Set((poolCorps || []).map((c) => c.corpsName));
 
-          const uniqueCorps = new Map();
-          yearData.forEach((event) => {
-            event.scores?.forEach((s) => {
-              if (s.corps && selectableNames.has(s.corps) && !uniqueCorps.has(s.corps)) {
-                uniqueCorps.set(s.corps, {
-                  corpsName: s.corps,
-                  sourceYear: liveSeasonYear,
-                  points: null,
-                });
-              }
+      const uniqueCorps = new Map();
+      yearData.forEach((event) => {
+        event.scores?.forEach((s) => {
+          if (s.corps && selectableNames.has(s.corps) && !uniqueCorps.has(s.corps)) {
+            uniqueCorps.set(s.corps, {
+              corpsName: s.corps,
+              sourceYear: liveSeasonYear,
+              points: null,
             });
-          });
-
-          setCorpsValues([...uniqueCorps.values()]);
-          setHistoricalData({ [liveSeasonYear]: yearData });
-          setLoading(false);
-          return;
-        }
-
-        // OFF-SEASON: rank the fantasy lineup corps using their historical scores.
-        // 1. Get corps values (selected corps for each point value)
-        const corpsDataDoc = await getDoc(doc(db, `dci-data/${seasonData.dataDocId}`));
-        if (!corpsDataDoc.exists()) {
-          setLoading(false);
-          return;
-        }
-        const corpsData = corpsDataDoc.data();
-        const corps = corpsData.corpsValues || [];
-        setCorpsValues(corps);
-
-        // 2. Get unique years to fetch
-        const yearsToFetch = [...new Set(corps.map((c) => c.sourceYear))];
-
-        // 3. Fetch historical scores for each year
-        const historicalPromises = yearsToFetch.map((year) =>
-          getDoc(doc(db, `historical_scores/${year}`))
-        );
-        const historicalDocs = await Promise.all(historicalPromises);
-
-        const historical = {};
-        historicalDocs.forEach((docSnap) => {
-          if (docSnap.exists()) {
-            historical[docSnap.id] = docSnap.data().data || [];
           }
         });
-        setHistoricalData(historical);
+      });
+      return [...uniqueCorps.values()];
+    }
+    return poolCorps || [];
+  }, [isLiveSeason, liveSeasonYear, historicalData, poolCorps]);
 
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching landing scores:', err);
-        setError(err.message);
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [seasonData?.dataDocId, enabled, isLiveSeason, liveSeasonYear]);
+  const loading = enabled && !!dataDocId && (corpsValuesQuery.isPending || yearsPending);
+  const error = corpsValuesQuery.error?.message || yearsError;
 
   // Process scores for landing page display
   const liveScores = useMemo(() => {
@@ -225,7 +166,7 @@ export const useLandingScores = ({ enabled = true } = {}) => {
 
     // For each selected corps, gather their scores from historical data
     corpsValues.forEach((corps) => {
-      const yearData = historicalData[corps.sourceYear] || [];
+      const yearData = historicalData[String(corps.sourceYear)] || [];
       const scores = [];
 
       yearData.forEach((event) => {

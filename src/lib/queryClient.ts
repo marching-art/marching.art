@@ -73,6 +73,11 @@ export const queryKeys = {
   season: () => ['season'] as const,
   fantasyRecaps: (seasonUid: string) => ['fantasyRecaps', seasonUid] as const,
 
+  // Score reference data (public reads shared across Scores/Dashboard/Landing/ticker)
+  historicalScores: (year: string) => ['historicalScores', year] as const,
+  corpsValues: (dataDocId: string) => ['corpsValues', dataDocId] as const,
+  archivedSeasons: () => ['archivedSeasons'] as const,
+
   // Leaderboard queries
   leaderboard: (type: string, corpsClass: string) => ['leaderboard', type, corpsClass] as const,
   lifetimeLeaderboard: (view: string) => ['lifetimeLeaderboard', view] as const,

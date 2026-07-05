@@ -1,13 +1,18 @@
 // =============================================================================
 // PAGE ERROR BOUNDARY
 // =============================================================================
-// Wraps individual pages with error boundaries for graceful error handling
+// Wraps individual pages with error boundaries for graceful error handling.
 // Usage: <PageErrorBoundary name="Dashboard"><Dashboard /></PageErrorBoundary>
+//
+// The boundary mechanics live in ui/ErrorBoundary (the single boundary class
+// in the app); this file only contributes the page-level fallback UI, which
+// differs from the inline feature fallback by offering router navigation.
 
 import React, { startTransition } from 'react';
 import { m } from 'framer-motion';
 import { AlertTriangle, RefreshCw, Home, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { ErrorBoundary } from './ui/ErrorBoundary';
 
 // =============================================================================
 // PAGE ERROR FALLBACK
@@ -94,54 +99,18 @@ interface PageErrorBoundaryProps {
   children: React.ReactNode;
 }
 
-interface PageErrorBoundaryState {
-  hasError: boolean;
-  error: Error | null;
-}
-
-export class PageErrorBoundary extends React.Component<
-  PageErrorBoundaryProps,
-  PageErrorBoundaryState
-> {
-  constructor(props: PageErrorBoundaryProps) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-
-  static getDerivedStateFromError(error: Error): PageErrorBoundaryState {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error(`[${this.props.name}] Error:`, error);
-    console.error(`[${this.props.name}] Component Stack:`, errorInfo.componentStack);
-
-    // Here you could send to an error tracking service
-    // e.g., Sentry, LogRocket, etc.
-  }
-
-  handleReset = () => {
-    this.setState({ hasError: false, error: null });
-  };
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <PageErrorFallbackWrapper
-          error={this.state.error}
-          pageName={this.props.name}
-          onReset={this.handleReset}
-        />
-      );
-    }
-
-    return this.props.children;
-  }
-}
-
-// Wrapper to use hooks in fallback
-const PageErrorFallbackWrapper: React.FC<PageErrorFallbackProps> = (props) => {
-  return <PageErrorFallback {...props} />;
-};
+export const PageErrorBoundary: React.FC<PageErrorBoundaryProps> = ({ name, children }) => (
+  <ErrorBoundary
+    onError={(error, errorInfo) => {
+      console.error(`[${name}] Error:`, error);
+      console.error(`[${name}] Component Stack:`, errorInfo.componentStack);
+    }}
+    fallbackRender={(error, reset) => (
+      <PageErrorFallback error={error} pageName={name} onReset={reset} />
+    )}
+  >
+    {children}
+  </ErrorBoundary>
+);
 
 export default PageErrorBoundary;

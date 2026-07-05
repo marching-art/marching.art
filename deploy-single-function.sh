@@ -1,41 +1,28 @@
 #!/bin/bash
 # Deploy a single Cloud Function or a few specific functions
 # Usage: ./deploy-single-function.sh functionName1 functionName2 ...
-# Example: ./deploy-single-function.sh onLeagueChatMessage onMatchupCompleted
+# Example: ./deploy-single-function.sh onLeagueChatMessage manualTrigger
 
 set -e
 
 if [ $# -eq 0 ]; then
     echo "Usage: $0 functionName1 [functionName2] ..."
-    echo "Example: $0 onLeagueChatMessage onMatchupCompleted"
+    echo "Example: $0 onLeagueChatMessage manualTrigger"
     echo ""
-    echo "Available functions:"
+    echo "Available functions (from functions/index.js exports):"
     echo ""
-    echo "  SCORE CRITICAL (1:30-2:00 AM):"
-    echo "    scrapeDciScores, processDailyLiveScores, dailyOffSeasonProcessor"
-    echo "    processLiveScoreRecap, processDciScores, processDciRecap"
-    echo ""
-    echo "  User: checkUsername, setUserRole, getShowRegistrations, getUserRankings, migrateUserProfiles"
-    echo "  Profile: createUserProfile, dailyXPCheckIn, awardXP, updateProfile, getPublicProfile"
-    echo "  Lineups: validateLineup, getActiveLineupKeys, saveLineup, selectUserShows, saveShowConcept, getLineupAnalytics, getHotCorps"
-    echo "  Economy: unlockClassWithCorpsCoin, getCorpsCoinHistory, getEarningOpportunities, registerCorps"
-    echo "  Corps: processCorpsDecisions, retireCorps, unretireCorps"
-    echo "  Leagues: createLeague, joinLeague, leaveLeague, generateMatchups, updateMatchupResults, postLeagueMessage"
-    echo "  Comments: sendCommentNotification, deleteComment, reportComment"
-    echo "  Daily: claimDailyLogin, purchaseStreakFreeze, getStreakStatus"
-    echo "  Admin: startNewOffSeason, startNewLiveSeason, manualTrigger, sendTestEmail"
-    echo "  Admin Scrape: scrapeLiveScoresNow, discoverAndQueueUrls"
-    echo "  Scheduled: seasonScheduler, dailyOffSeasonProcessor, processDailyLiveScores, generateWeeklyMatchups"
-    echo "  Scheduled: updateLifetimeLeaderboard, scheduledLifetimeLeaderboardUpdate"
-    echo "  Email Jobs: streakAtRiskEmailJob, weeklyDigestEmailJob, winBackEmailJob, streakBrokenEmailJob"
-    echo "  Push Jobs: streakAtRiskPushJob, showReminderPushJob, weeklyMatchupPushJob"
-    echo "  Triggers: processDciScores, processLiveScoreRecap, processDciRecap"
-    echo "  News: processNewsGeneration, onFantasyRecapUpdated, triggerNewsGeneration, triggerDailyNews"
-    echo "  News: getDailyNews, getRecentNews, listAllArticles, getArticleForEdit, updateArticle"
-    echo "  News: archiveArticle, deleteArticle, submitNewsForApproval"
-    echo "  Email Triggers: onProfileCreated, onStreakMilestoneReached"
-    echo "  Push Triggers: onMatchupCompleted, onTradeProposalCreated, onLeagueMemberJoined, onLeagueChatMessage"
-    echo "  Webhooks: stripeWebhook"
+    # Derived from the codebase so this list can't drift. Requires
+    # functions/node_modules to be installed (cd functions && npm install).
+    if (cd functions && node -e "
+        const names = Object.keys(require('./index.js')).sort();
+        for (let i = 0; i < names.length; i += 4) {
+            console.log('    ' + names.slice(i, i + 4).join(', '));
+        }
+    " 2>/dev/null); then
+        :
+    else
+        echo "    (could not load functions/index.js — run: cd functions && npm install)"
+    fi
     exit 1
 fi
 

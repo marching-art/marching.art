@@ -78,12 +78,18 @@ match /artifacts/{appId}/users/{userId} {
         !touchesProtectedCorpsFields());
   }
   
-  // Comments are public to read. Logged-in users can create.
+  // Profile comments are public to read. Creation is backend-only: no client
+  // code writes this subcollection (management goes through the deleteComment
+  // callable), and the previous `allow create: if isAuthenticated()` let any
+  // signed-in user create a comment attributed to ANY authorUid (impersonation)
+  // with an arbitrary document shape. If client-side comment creation returns,
+  // add a validated rule that requires
+  // request.resource.data.authorUid == request.auth.uid and caps field sizes.
   match /comments/{commentId} {
     allow read: if true;
-    allow create: if isAuthenticated();
+    allow create: if false; // Backend only
     allow update: if isAuthenticated() && request.auth.uid == resource.data.authorUid;
-    allow delete: if isAuthenticated() && 
+    allow delete: if isAuthenticated() &&
       (request.auth.uid == userId || request.auth.uid == resource.data.authorUid || isAdmin());
   }
   
@@ -263,9 +269,12 @@ match /usernames/{username} {
   allow write: if false; // Backend only
 }
 
+// Comment reports are created exclusively by the reportComment callable
+// (Admin SDK bypasses rules). The previous open create rule let any signed-in
+// user write arbitrary documents here — a spam/storage-abuse vector.
 match /reports/{reportId} {
   allow read, update: if isAdmin();
-  allow create: if isAuthenticated();
+  allow create: if false; // Backend only (via reportComment callable)
 }
 
 // Season settings (needed for dashboard)
@@ -324,10 +333,13 @@ match /{path=**}/articles/{articleId} {
 }
 
 // --- NEWS SUBMISSIONS ---
-// User-submitted articles pending admin approval
+// User-submitted articles pending admin approval. Created exclusively by the
+// submitNewsForApproval callable (Admin SDK bypasses rules), which validates
+// and shapes the submission server-side; the previous open create rule let
+// any signed-in user write arbitrary documents here.
 match /news_submissions/{submissionId} {
   allow read: if isAdmin();
-  allow create: if isAuthenticated();
+  allow create: if false; // Backend only (via submitNewsForApproval callable)
   allow update, delete: if isAdmin();
 }
 

@@ -329,17 +329,8 @@
     <!-- Vite entry point -->
     <script type="module" src="/src/index.jsx"></script>
 
-    <!-- Remove loader once React hydrates -->
-    <script>
-      window.addEventListener('load', function () {
-        setTimeout(function () {
-          document.body.classList.add('app-loaded');
-          setTimeout(function () {
-            var loader = document.getElementById('app-loader');
-            if (loader) loader.remove();
-          }, 300);
-        }, 100);
-      });
-    </script>
+    <!-- Remove loader once React hydrates. External file (not inline) so the
+         CSP can enforce script-src without 'unsafe-inline'. -->
+    <script src="/app-loader.js" defer></script>
   </body>
 </html>

@@ -10,6 +10,13 @@ import { Button } from './Button';
 export interface ErrorBoundaryProps {
   children: React.ReactNode;
   fallback?: React.ReactNode;
+  /**
+   * Render-prop fallback that receives the caught error and a reset callback.
+   * Takes precedence over `fallback`. This lets wrappers (the root app
+   * boundary, PageErrorBoundary) supply their own fallback UI while sharing
+   * this single boundary implementation.
+   */
+  fallbackRender?: (error: Error | null, reset: () => void) => React.ReactNode;
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
   resetKeys?: unknown[];
   featureName?: string;
@@ -53,6 +60,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   render() {
     if (this.state.hasError) {
+      if (this.props.fallbackRender) {
+        return this.props.fallbackRender(this.state.error, this.handleReset);
+      }
+
       if (this.props.fallback) {
         return this.props.fallback;
       }

@@ -147,6 +147,7 @@ const {
   triggerDailyNews,
   getDailyNews,
   getRecentNews,
+  getNewsFeedHttp,
   listAllArticles,
   getArticleForEdit,
   updateArticle,
@@ -290,6 +291,10 @@ module.exports = {
   triggerDailyNews,
   getDailyNews,
   getRecentNews,
+  // Backs the /api/news hosting rewrite (firebase.json) that gives the news
+  // feed CDN caching; without this export the rewrite 404s and every client
+  // silently falls back to the slower getRecentNews callable.
+  getNewsFeedHttp,
 
   // Article Management (Admin)
   listAllArticles,

@@ -1,8 +1,14 @@
 #!/bin/bash
 # Deploy Cloud Functions in batches to avoid quota errors
 # Google Cloud Run has a limit on "Write requests per minute per region"
-# Deploying all ~70 functions at once exceeds this limit
-# This script deploys in batches of 4-6 functions with delays between batches
+# Deploying all ~110 functions at once exceeds this limit
+# This script deploys in batches with delays between batches
+#
+# The function list is derived from functions/index.js exports at run time,
+# so this script cannot drift from what the codebase actually deploys. (The
+# previous hand-maintained batch lists had drifted: ~30 exported functions
+# were missing and 4 removed ones were still listed, so anything not in a
+# batch only ever shipped via a full `firebase deploy --only functions`.)
 #
 # SCORE PROCESSING TIMELINE (all times Eastern):
 #   1:30 AM - scrapeDciScores (scrapes DCI website)
@@ -11,16 +17,16 @@
 #   2:00 AM - onFantasyRecapUpdated trigger → processNewsGeneration
 #   3:00 AM - seasonScheduler, scheduledLifetimeLeaderboardUpdate
 #
-# Score-critical functions are deployed in the first 3 batches to minimize
+# Score-critical functions are pinned to the first batches to minimize
 # risk if deploying near the 1:30-2:00 AM window.
 
 set -e
 
 DELAY_SECONDS=75  # Delay between batches to avoid quota errors (Cloud Run: 600 writes/min)
-BATCH_SIZE=4      # Target number of functions per batch (each deploy = ~10 write requests)
+BATCH_SIZE=5      # Functions per batch (each deploy = ~10 write requests)
 
 echo "Deploying Cloud Functions to Firebase in batches..."
-echo "Batch size: ~$BATCH_SIZE functions"
+echo "Batch size: $BATCH_SIZE functions"
 echo "Delay between batches: $DELAY_SECONDS seconds"
 echo ""
 
@@ -34,94 +40,80 @@ fi
 echo "Checking Firebase authentication..."
 firebase login:list
 
-# Install dependencies
+# Install dependencies (also required to `require` index.js below)
 echo ""
 echo "Installing function dependencies..."
 cd functions && npm install && cd ..
 
 # =============================================================================
-# BATCH ORDERING: Score-critical functions FIRST
+# FUNCTION LIST: derived from functions/index.js exports
 # =============================================================================
 
-# Batch 1: CRITICAL - Score scraping and processing (1:30 AM - 2:00 AM window)
-BATCH1="scrapeDciScores,processDailyLiveScores,dailyOffSeasonProcessor,processLiveScoreRecap,processDciScores"
+ALL_FUNCTIONS=$(cd functions && node -e "console.log(Object.keys(require('./index.js')).join('\n'))")
 
-# Batch 2: CRITICAL - Score triggers and news generation
-BATCH2="processDciRecap,onFantasyRecapUpdated,processNewsGeneration,triggerNewsGeneration,triggerDailyNews"
+declare -A IS_EXPORTED
+while IFS= read -r fn; do
+    IS_EXPORTED[$fn]=1
+done <<< "$ALL_FUNCTIONS"
 
-# Batch 3: CRITICAL - Season scheduler and leaderboard (3:00 AM)
-BATCH3="seasonScheduler,updateLifetimeLeaderboard,scheduledLifetimeLeaderboardUpdate,generateWeeklyMatchups"
-
-# Batch 4: News functions
-BATCH4="getDailyNews,getRecentNews,listAllArticles,getArticleForEdit,updateArticle,archiveArticle"
-
-# Batch 5: More news functions
-BATCH5="deleteArticle,submitNewsForApproval"
-
-# Batch 6: Email scheduled jobs
-BATCH6="streakAtRiskEmailJob,weeklyDigestEmailJob,winBackEmailJob,streakBrokenEmailJob"
-
-# Batch 7: Push scheduled jobs and triggers
-BATCH7="streakAtRiskPushJob,showReminderPushJob,weeklyMatchupPushJob"
-
-# Batch 8: Push triggers
-BATCH8="onMatchupCompleted,onTradeProposalCreated,onLeagueMemberJoined,onLeagueChatMessage"
-
-# Batch 9: Email triggers
-BATCH9="onProfileCreated,onStreakMilestoneReached"
-
-# Batch 10: User management
-BATCH10="checkUsername,setUserRole,getShowRegistrations,getUserRankings,migrateUserProfiles"
-
-# Batch 11: User profile operations
-BATCH11="createUserProfile,dailyXPCheckIn,awardXP,updateProfile,getPublicProfile"
-
-# Batch 12: Lineup functions
-BATCH12="validateLineup,getActiveLineupKeys,saveLineup,selectUserShows,saveShowConcept,getLineupAnalytics,getHotCorps"
-
-# Batch 13: Economy functions
-BATCH13="unlockClassWithCorpsCoin,getCorpsCoinHistory,getEarningOpportunities,registerCorps"
-
-# Batch 14: Corps functions
-BATCH14="processCorpsDecisions,retireCorps,unretireCorps"
-
-# Batch 15: League functions part 1
-BATCH15="createLeague,joinLeague,leaveLeague,generateMatchups,updateMatchupResults"
-
-# Batch 16: League functions part 2
-BATCH16="postLeagueMessage"
-
-# Batch 17: Comments and daily ops
-BATCH17="sendCommentNotification,deleteComment,reportComment,claimDailyLogin,purchaseStreakFreeze,getStreakStatus"
-
-# Batch 18: Admin functions and webhook
-BATCH18="startNewOffSeason,startNewLiveSeason,manualTrigger,sendTestEmail,stripeWebhook"
-
-# Batch 19: Admin DCI score scraping (manual + deep-scrape backfill)
-BATCH19="scrapeLiveScoresNow,discoverAndQueueUrls"
-
-# Array of all batches
-BATCHES=(
-    "$BATCH1"
-    "$BATCH2"
-    "$BATCH3"
-    "$BATCH4"
-    "$BATCH5"
-    "$BATCH6"
-    "$BATCH7"
-    "$BATCH8"
-    "$BATCH9"
-    "$BATCH10"
-    "$BATCH11"
-    "$BATCH12"
-    "$BATCH13"
-    "$BATCH14"
-    "$BATCH15"
-    "$BATCH16"
-    "$BATCH17"
-    "$BATCH18"
-    "$BATCH19"
+# Score-critical functions, in nightly-pipeline order (see timeline above).
+# These deploy first; everything else follows in export order. Names listed
+# here must exist in index.js — a stale entry is skipped with a warning.
+PRIORITY_FUNCTIONS=(
+    scrapeDciScores
+    processDailyLiveScores
+    dailyOffSeasonProcessor
+    processLiveScoreRecap
+    processDciScores
+    processDciRecap
+    onFantasyRecapUpdated
+    processNewsGeneration
+    triggerNewsGeneration
+    triggerDailyNews
+    seasonScheduler
+    updateLifetimeLeaderboard
+    scheduledLifetimeLeaderboardUpdate
+    generateWeeklyMatchups
 )
+
+ORDERED_FUNCTIONS=()
+declare -A QUEUED
+
+for fn in "${PRIORITY_FUNCTIONS[@]}"; do
+    if [[ -n "${IS_EXPORTED[$fn]:-}" ]]; then
+        ORDERED_FUNCTIONS+=("$fn")
+        QUEUED[$fn]=1
+    else
+        echo "WARNING: priority function '$fn' is not exported by functions/index.js; dropping it from the deploy."
+    fi
+done
+
+while IFS= read -r fn; do
+    if [[ -z "${QUEUED[$fn]:-}" ]]; then
+        ORDERED_FUNCTIONS+=("$fn")
+    fi
+done <<< "$ALL_FUNCTIONS"
+
+# Chunk the ordered list into comma-separated batches of BATCH_SIZE
+BATCHES=()
+current=""
+count=0
+for fn in "${ORDERED_FUNCTIONS[@]}"; do
+    if [ $count -eq 0 ]; then
+        current="$fn"
+    else
+        current="$current,$fn"
+    fi
+    count=$((count + 1))
+    if [ $count -ge $BATCH_SIZE ]; then
+        BATCHES+=("$current")
+        current=""
+        count=0
+    fi
+done
+if [ -n "$current" ]; then
+    BATCHES+=("$current")
+fi
 
 TOTAL_BATCHES=${#BATCHES[@]}
 CURRENT_BATCH=0
@@ -130,10 +122,10 @@ FAILED_BATCHES=()
 # Calculate estimated time
 ESTIMATED_MINUTES=$(( (TOTAL_BATCHES - 1) * DELAY_SECONDS / 60 ))
 echo ""
-echo "Starting deployment of $TOTAL_BATCHES batches..."
+echo "Starting deployment of ${#ORDERED_FUNCTIONS[@]} functions in $TOTAL_BATCHES batches..."
 echo "Estimated time: ~$ESTIMATED_MINUTES minutes"
 echo ""
-echo "NOTE: Score-critical functions are in batches 1-3 (deployed first)"
+echo "NOTE: Score-critical functions are in the first batches (deployed first)"
 echo ""
 
 for batch in "${BATCHES[@]}"; do

@@ -37,7 +37,6 @@ export default tseslint.config(
       'node_modules/**',
       '**/node_modules/**',
       'coverage/**',
-      'storybook-static/**',
       'playwright-report/**',
       'playwright/.cache/**',
       'functions/eslint.config.js', // pre-existing ESM config; not a source file

@@ -12,6 +12,7 @@ const {
 } = require("../helpers/season");
 const { processAndArchiveOffSeasonScoresLogic, calculateCorpsStatisticsLogic, processAndScoreLiveSeasonDayLogic } = require("../helpers/scoring");
 const { reconcileSelectedShows } = require("../helpers/scheduleAudit");
+const { getCompletedCalendarDay } = require("../helpers/gameDay");
 const { scrapeLatestLiveScores } = require("../scheduled/liveScraper");
 const { sendWelcomeEmail, brevoApiKey } = require("../helpers/emailService");
 const { DCI_CORPS_DATA } = require("../scripts/seedDciReference");
@@ -34,45 +35,9 @@ const SPRING_TRAINING_DAYS = 21;
 function getCurrentLiveScoredDay(seasonData) {
   const seasonStartDate = seasonData.schedule.startDate.toDate();
   const springTrainingDays = seasonData.schedule.springTrainingDays || SPRING_TRAINING_DAYS;
-
-  // Determine "yesterday" in Eastern time with a 2 AM game-day reset, matching
-  // processDailyLiveScores so manual runs target the same day the scheduler would.
-  const nowUtc = new Date();
-  const etParts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  }).formatToParts(nowUtc);
-  const etValues = {};
-  for (const part of etParts) etValues[part.type] = part.value;
-  const nowET = new Date(Date.UTC(
-    parseInt(etValues.year),
-    parseInt(etValues.month) - 1,
-    parseInt(etValues.day),
-    parseInt(etValues.hour === "24" ? "0" : etValues.hour),
-    parseInt(etValues.minute),
-    parseInt(etValues.second),
-  ));
-  const gameTimeET = new Date(nowET.getTime() - (2 * 60 * 60 * 1000));
-  const yesterday = new Date(gameTimeET);
-  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
-  yesterday.setUTCHours(0, 0, 0, 0);
-
-  const seasonStartNormalized = new Date(Date.UTC(
-    seasonStartDate.getUTCFullYear(),
-    seasonStartDate.getUTCMonth(),
-    seasonStartDate.getUTCDate(),
-    0, 0, 0,
-  ));
-
-  const diffInMillis = yesterday.getTime() - seasonStartNormalized.getTime();
-  const calendarDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1;
-  return calendarDay - springTrainingDays;
+  // Same "yesterday in ET with 2 AM reset" math as processDailyLiveScores
+  // (see helpers/gameDay.js), so manual runs target the day the scheduler would.
+  return getCompletedCalendarDay(seasonStartDate) - springTrainingDays;
 }
 
 exports.startNewOffSeason = onCall({ cors: true }, async (request) => {
@@ -123,9 +88,21 @@ exports.manualTrigger = onCall({
     case "archiveSeasonResults":
       await archiveSeasonResultsLogic();
       return { success: true, message: "Season results and league champions have been archived." };
-    case "processAndArchiveOffSeasonScores":
-      await processAndArchiveOffSeasonScoresLogic();
+    case "processAndArchiveOffSeasonScores": {
+      // force=true bypasses the already-processed guard for reprocessing after
+      // a data fix — it re-applies coin/league-record increments, so it is
+      // surfaced as an explicit admin choice, never the default.
+      const result = await processAndArchiveOffSeasonScoresLogic({ force: request.data.force === true });
+      if (result.status === "skipped" && (result.reason === "completed" || result.reason === "in-progress")) {
+        return {
+          success: true,
+          skipped: true,
+          message: `Off-season day ${result.scoredDay} was already ${result.reason === "completed" ? "processed" : "being processed"}. ` +
+            "Re-run with force=true to reprocess (re-applies coin awards).",
+        };
+      }
       return { success: true, message: "Off-Season Score Processor & Archiver finished successfully." };
+    }
     case "processLiveSeasonScores": {
       const db = getDb();
       const seasonDoc = await db.doc("game-settings/season").get();
@@ -142,7 +119,15 @@ exports.manualTrigger = onCall({
       if (scoredDay > 49) {
         throw new HttpsError("failed-precondition", `Competition day ${scoredDay} is past the 49-day season. Nothing to score.`);
       }
-      await processAndScoreLiveSeasonDayLogic(scoredDay, seasonData);
+      const result = await processAndScoreLiveSeasonDayLogic(scoredDay, seasonData, { force: request.data.force === true });
+      if (result.status === "skipped") {
+        return {
+          success: true,
+          skipped: true,
+          message: `Live season day ${scoredDay} was already ${result.reason === "completed" ? "processed" : "being processed"}. ` +
+            "Re-run with force=true to reprocess (re-applies coin awards).",
+        };
+      }
       return { success: true, message: `Live Season scores processed for day ${scoredDay}.` };
     }
     case "patchChampionshipShows": {

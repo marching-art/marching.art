@@ -70,13 +70,17 @@ export default defineConfig({
       // coverage report shows the real gap rather than a flattering subset.
       all: true,
       include: ['src/**/*.{js,jsx,ts,tsx}'],
-      exclude: [
-        'src/**/*.{test,spec}.{js,jsx,ts,tsx}',
-        'src/**/*.stories.*',
-        'src/setupTests.jsx',
-        'src/types/**',
-      ],
+      exclude: ['src/**/*.{test,spec}.{js,jsx,ts,tsx}', 'src/setupTests.jsx', 'src/types/**'],
       reporter: ['text-summary', 'lcov'],
+      // Ratchet, not target: floors sit just below the current whole-tree
+      // numbers so coverage can only move up. When a PR raises coverage
+      // meaningfully, raise the floors to just below the new numbers.
+      thresholds: {
+        statements: 10,
+        branches: 7.5,
+        functions: 6,
+        lines: 10,
+      },
     },
   },
 });
