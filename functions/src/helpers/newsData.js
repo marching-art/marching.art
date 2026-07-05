@@ -41,10 +41,12 @@ async function fetchTimeLockednScores(db, yearsToFetch, reportDay) {
     historicalDocs.forEach(doc => {
       if (doc.exists) {
         const allEvents = doc.data().data || [];
-        const filteredEvents = allEvents.filter(event => {
-          const eventDay = event.offSeasonDay;
-          return eventDay >= reportDay - 6 && eventDay <= reportDay;
-        });
+        // Keep the full season UP TO the report day (time-locked — never leak
+        // future shows). Consumers that only want a specific day or the trailing
+        // form window filter further downstream; retaining the whole season here
+        // lets calculateTrendData compute true season-long aggregates (real
+        // season high/low/avg, opener-to-now arc) rather than 7-day-window ones.
+        const filteredEvents = allEvents.filter(event => event.offSeasonDay <= reportDay);
 
         const sanitizedEvents = filteredEvents.map(event => ({
           ...event,
@@ -82,6 +84,82 @@ async function fetchFantasyRecaps(db, seasonId, reportDay) {
     logger.error("Error fetching fantasy recaps:", error);
     return null;
   }
+}
+
+/**
+ * Fetch the season-long, field-wide caption aggregates (dci-stats/{seasonId}).
+ * One document per season holding, per corps, { stats: { GE1..P: {avg,max,min,
+ * count} } }. Used to compute field-relative percentile context. Returns null
+ * (graceful) when the doc is absent, e.g. very early in a season or off-season.
+ */
+async function fetchSeasonStats(db, seasonId) {
+  try {
+    const doc = await db.doc(`dci-stats/${seasonId}`).get();
+    if (!doc.exists) return null;
+    return doc.data().data || null;
+  } catch (error) {
+    logger.warn("Could not fetch dci-stats:", error.message);
+    return null;
+  }
+}
+
+/**
+ * Build field-relative season context from the dci-stats aggregates. For each
+ * corps in the field, derive per-caption-family season averages (same GE/Visual/
+ * Music math as live scoring) and a field PERCENTILE — where that corps ranks
+ * against the whole field this season. This is the "elite / top-of-field"
+ * dimension that per-corps trend data alone cannot provide. Returns a map keyed
+ * by corpsName; empty when stats are unavailable so callers degrade cleanly.
+ */
+function buildSeasonContext(statsData, activeCorps) {
+  const context = {};
+  if (!Array.isArray(statsData) || statsData.length === 0) return context;
+
+  const famAvg = (stats) => {
+    if (!stats) return null;
+    const g = (c) => stats?.[c]?.avg || 0;
+    const ge = g("GE1") + g("GE2");
+    const visual = (g("VP") + g("VA") + g("CG")) / 2;
+    const music = (g("B") + g("MA") + g("P")) / 2;
+    if (ge <= 0 && visual <= 0 && music <= 0) return null;
+    return { ge, visual, music, total: ge + visual + music };
+  };
+
+  const rows = statsData
+    .map(c => ({ corpsName: c.corpsName, sourceYear: c.sourceYear, fam: famAvg(c.stats) }))
+    .filter(r => r.fam);
+  if (rows.length === 0) return context;
+
+  const fieldArrays = {
+    ge: rows.map(r => r.fam.ge).sort((a, b) => a - b),
+    visual: rows.map(r => r.fam.visual).sort((a, b) => a - b),
+    music: rows.map(r => r.fam.music).sort((a, b) => a - b),
+    total: rows.map(r => r.fam.total).sort((a, b) => a - b),
+  };
+  const pct = (arr, v) => (arr.length ? Math.round((arr.filter(x => x < v).length / arr.length) * 100) : 50);
+  const label = (p) => (p >= 90 ? "elite" : p >= 75 ? "strong" : p >= 50 ? "above average" : p >= 25 ? "below average" : "developing");
+
+  for (const corps of activeCorps) {
+    const row =
+      rows.find(r => r.corpsName === corps.corpsName && r.sourceYear === corps.sourceYear) ||
+      rows.find(r => r.corpsName === corps.corpsName);
+    if (!row) continue;
+    const f = row.fam;
+    const families = ["ge", "visual", "music"].map(k => {
+      const percentile = pct(fieldArrays[k], f[k]);
+      return { family: k, seasonAvg: f[k], percentile, label: label(percentile) };
+    });
+    const byStrength = [...families].sort((a, b) => b.percentile - a.percentile);
+    context[corps.corpsName] = {
+      seasonAvgTotal: f.total,
+      percentileTotal: pct(fieldArrays.total, f.total),
+      fieldSize: rows.length,
+      captions: { ge: families[0], visual: families[1], music: families[2] },
+      strongest: byStrength[0],
+      weakest: byStrength[byStrength.length - 1],
+    };
+  }
+  return context;
 }
 
 /**
@@ -339,11 +417,33 @@ function calculateTrendData(historicalData, reportDay, activeCorps) {
         momentum = "consistent";
       }
 
-      // Find best and worst in window
+      // Find best and worst in the 7-day form window (used for recent-form feel)
       const bestInWindow = Math.max(...scores.map(s => s.total));
       const worstInWindow = Math.min(...scores.map(s => s.total));
-      const atSeasonBest = latestScore && Math.abs(latestScore.total - bestInWindow) < 0.01;
-      const atSeasonWorst = latestScore && Math.abs(latestScore.total - worstInWindow) < 0.01;
+
+      // True season-to-date aggregates: scan every event this corps competed in
+      // up to reportDay (the fetch now retains the whole season). Distinct from
+      // the form window above — this is the real arc from the opener to tonight.
+      const seasonTotals = [];
+      for (const ev of yearEvents) {
+        if (ev.offSeasonDay > reportDay) continue;
+        const cs = (ev.scores || []).find(s => s.corps === corpsName);
+        if (!cs) continue;
+        const t = calculateTotal(cs.captions);
+        if (t > 0) seasonTotals.push({ day: ev.offSeasonDay, total: t });
+      }
+      seasonTotals.sort((a, b) => a.day - b.day);
+      const seasonHigh = seasonTotals.length ? Math.max(...seasonTotals.map(s => s.total)) : bestInWindow;
+      const seasonLow = seasonTotals.length ? Math.min(...seasonTotals.map(s => s.total)) : worstInWindow;
+      const seasonAvg = seasonTotals.length ? seasonTotals.reduce((a, s) => a + s.total, 0) / seasonTotals.length : avgTotal;
+      const seasonOpener = seasonTotals.length ? seasonTotals[0].total : null;
+      const seasonImprovement = seasonTotals.length >= 2 ? seasonTotals[seasonTotals.length - 1].total - seasonTotals[0].total : 0;
+      const seasonShows = seasonTotals.length;
+
+      // "At season best/worst" now means the TRUE season high/low, so narrative
+      // phrases like "hitting their season high" are literally accurate.
+      const atSeasonBest = latestScore && Math.abs(latestScore.total - seasonHigh) < 0.01;
+      const atSeasonWorst = latestScore && Math.abs(latestScore.total - seasonLow) < 0.01;
 
       // Caption-specific trends (compare today to 7-day caption averages).
       // weekChange = latest minus the earliest score in the window for that
@@ -406,9 +506,16 @@ function calculateTrendData(historicalData, reportDay, activeCorps) {
         dataPoints: scores.length,
         // Full recent scores for corps feature show-by-show journey
         recentScores: sortedScores,
-        // Season high/low for trajectory analysis
-        seasonHigh: bestInWindow,
-        seasonLow: worstInWindow,
+        // Form-window best/worst (recent), kept for reference
+        bestInWindow,
+        worstInWindow,
+        // True season-to-date arc
+        seasonHigh,
+        seasonLow,
+        seasonAvg,
+        seasonOpener,
+        seasonShows,
+        seasonImprovement,
         totalImprovement: sortedScores.length >= 2 ? sortedScores[sortedScores.length - 1].total - sortedScores[0].total : 0,
       };
     }
@@ -460,6 +567,8 @@ module.exports = {
   fetchActiveCorps,
   fetchTimeLockednScores,
   fetchFantasyRecaps,
+  fetchSeasonStats,
+  buildSeasonContext,
   fetchShowContext,
   calculateTotal,
   calculateCaptionSubtotals,

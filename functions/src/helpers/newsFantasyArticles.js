@@ -56,6 +56,28 @@ async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext
   const topPerformers = [...competitiveResults].sort((a, b) => b.totalScore - a.totalScore);
   const totalCompetitors = topPerformers.length;
 
+  // Caption dimension among the user ensembles: which fantasy corps won GE,
+  // Visual, and Music tonight. Fantasy results carry geScore/visualScore/
+  // musicScore, so the recap can tell a caption story (did the winner sweep, or
+  // did someone else take a caption?) instead of only ranking totals.
+  const captionLeaderOf = (key) => {
+    const ranked = competitiveResults
+      .filter(r => Number.isFinite(r[key]))
+      .sort((a, b) => b[key] - a[key]);
+    return ranked[0] || null;
+  };
+  const fantasyCaptionLeaders = {
+    ge: captionLeaderOf('geScore'),
+    visual: captionLeaderOf('visualScore'),
+    music: captionLeaderOf('musicScore'),
+  };
+  const hasCaptionSplits = competitiveResults.some(r => Number.isFinite(r.geScore));
+  const captionLeadersBlock = hasCaptionSplits ? [
+    fantasyCaptionLeaders.ge ? `- General Effect: "${fantasyCaptionLeaders.ge.corpsName}" (${fantasyCaptionLeaders.ge.geScore.toFixed(2)})` : null,
+    fantasyCaptionLeaders.visual ? `- Visual: "${fantasyCaptionLeaders.visual.corpsName}" (${fantasyCaptionLeaders.visual.visualScore.toFixed(2)})` : null,
+    fantasyCaptionLeaders.music ? `- Music: "${fantasyCaptionLeaders.music.corpsName}" (${fantasyCaptionLeaders.music.musicScore.toFixed(2)})` : null,
+  ].filter(Boolean).join('\n') : '';
+
   // Return a fallback if there is genuinely no content to write about tonight.
   // Only fire the fallback when BOTH the competitive field and the SoundSport
   // field are empty — a SoundSport-only evening still deserves its own piece.
@@ -207,7 +229,10 @@ async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext
       // venue is the SHOW header's location. Labeled explicitly so the writer
       // can't misread a home city as the place the ensemble performed.
       const hometown = r.location ? ` (based in ${r.location})` : '';
-      return `  ${i + 1}. "${r.corpsName}"${hometown} (Director: ${director}) - ${r.totalScore.toFixed(3)}${i > 0 ? ` [${margin} behind the ensemble above]` : ' [SHOW WINNER]'}`;
+      const split = Number.isFinite(r.geScore)
+        ? ` [GE ${r.geScore.toFixed(2)} | Vis ${r.visualScore.toFixed(2)} | Mus ${r.musicScore.toFixed(2)}]`
+        : '';
+      return `  ${i + 1}. "${r.corpsName}"${hometown} (Director: ${director}) - ${r.totalScore.toFixed(3)}${i > 0 ? ` [${margin} behind the ensemble above]` : ' [SHOW WINNER]'}${split}`;
     }).join('\n');
     return `SHOW: ${header}\n${lines}`;
   }).join('\n\n');
@@ -242,6 +267,7 @@ Sourcing: Data-only recap — you have the scores and standings and nothing else
 ===== DATA =====
 TOTAL COMPETITIVE ENSEMBLES: ${totalCompetitors}
 ${directorClassBlock ? `\nDIRECTOR REFERENCE GUIDE (check this before naming any director — "HANDLE" names should NEVER be used as a bare first name; refer via the ensemble instead):\n${directorClassBlock}\n` : ''}${totalCompetitors === 0 ? 'No competitive ensembles tonight — this is a SoundSport-only evening.' : multiShow ? `\nRESULTS BY SHOW\n${resultsByShowBlock}\n\nOVERALL RANKING (across all shows tonight — reference carefully; these ensembles did NOT all face each other):\n${overallRankingBlock}` : `\nRESULTS\n${resultsByShowBlock}`}
+${captionLeadersBlock ? `\nCAPTION LEADERS AMONG TONIGHT'S ENSEMBLES (who won each scoring caption — the winner didn't necessarily sweep):\n${captionLeadersBlock}\n` : ''}
 
 ${soundSportResults.length > 0 ? `SOUNDSPORT RATINGS (non-competitive, ratings-only showcase — NEVER reveal SoundSport scores, only rating levels):
 ${soundSportBestInShow ? `Best in Show: "${soundSportBestInShow.corpsName}" (${soundSportBestInShow.displayName || 'Unknown'})` : ''}
@@ -264,7 +290,7 @@ ARTICLE REQUIREMENTS
 - Headline: ${mode.headlineGuidance}
 - Summary: 2-3 sentences — top result, score, and one storyline hook${multiShow ? '. Make the multi-show night clear' : ''}.
 - Narrative: ${mode.words} words. ${mode.coverage} Carry personality through sharp, specific observation of the scores, the margins, and the competitive picture — the tight gaps, who closed on whom, where a score lands in the field. Do NOT manufacture quotes, reactions, or feelings to add color; characterize the ensembles and the night, never speak for a director.
-${mode.bodyNote ? `${mode.bodyNote}\n` : ''}${multiShow ? `- Cover all ${competitiveByShow.length} fantasy shows by name. When you cite a placement or score, make the show clear so readers know which ensembles actually faced each other.\n` : ''}${soundSportResults.length > 0 && fieldMode !== 'soundsport' ? `- Include a SoundSport highlight — celebrate the ratings without ever revealing SoundSport scores.\n` : ''}- End with a specific observation or stat from the data, not a rhetorical question or generic send-off.`;
+${mode.bodyNote ? `${mode.bodyNote}\n` : ''}${captionLeadersBlock && fieldMode !== 'soundsport' ? `- Work in the caption story: the GE, Visual, and Music leaders are in the data. Note when the night's winner also swept the captions, or when a different ensemble took a caption — that's often the most interesting subplot.\n` : ''}${(fieldMode === 'full' || fieldMode === 'small') ? `- Structure the piece with 3-4 short bolded lead-ins in Markdown (e.g., **Top of the night.**, **The chase.**, **Caption watch.**) at natural transitions — 2-4 words each; they render as section subheads. Don't over-segment a short night.\n` : ''}${multiShow ? `- Cover all ${competitiveByShow.length} fantasy shows by name. When you cite a placement or score, make the show clear so readers know which ensembles actually faced each other.\n` : ''}${soundSportResults.length > 0 && fieldMode !== 'soundsport' ? `- Include a SoundSport highlight — celebrate the ratings without ever revealing SoundSport scores.\n` : ''}- End with a specific observation or stat from the data, not a rhetorical question or generic send-off.`;
 
   const schema = {
     type: Type.OBJECT,
@@ -357,7 +383,7 @@ ${mode.bodyNote ? `${mode.bodyNote}\n` : ''}${multiShow ? `- Cover all ${competi
  * describes the caption landscape; this article translates it into actionable
  * lineup moves on individual DCI captions (GE1, GE2, VP, VA, CG, B, MA, P).
  */
-async function generateFantasyRecapArticle({ reportDay, dayScores, trendData, competitionContext, db, ledger, brief, isLiveSeason }) {
+async function generateFantasyRecapArticle({ reportDay, dayScores, trendData, seasonContext, competitionContext, db, ledger, brief, isLiveSeason }) {
   const toneGuidance = getToneGuidance(competitionContext, "fantasy_captions");
 
   // Build individual caption "stock" data for each corps
@@ -415,6 +441,19 @@ async function generateFantasyRecapArticle({ reportDay, dayScores, trendData, co
   const uniqueCaptionShows = Array.from(new Set(dayScores.map(s => s.showName).filter(Boolean)));
   const multiShowCaption = uniqueCaptionShows.length > 1;
 
+  // Season-long "elite assets": corps whose strongest caption family sits in the
+  // top of the field this season. Lets the picks weigh proven season-long value,
+  // not just tonight's number. One compact line — deliberately not a full table.
+  const eliteAssets = dayScores
+    .map(s => {
+      const st = seasonContext?.[s.corps]?.strongest;
+      return st && st.percentile >= 85 ? `${s.corps} ${st.family.toUpperCase()} (${st.percentile}th pct)` : null;
+    })
+    .filter(Boolean);
+  const eliteAssetsLine = eliteAssets.length
+    ? `SEASON-LONG ELITE ASSETS (strongest family in the field ≥85th percentile this season — proven value beyond tonight): ${eliteAssets.join(', ')}`
+    : '';
+
   const prompt = `You are the Fantasy Market Report analyst for marching.art. Fantasy directors pick individual DCI captions (GE1, GE2, VP, VA, CG, B, MA, P) for their lineups — you tell them what to do about it. This is THE picks column; it is the only article in tonight's five that gives buy/hold/sell recommendations. Earlier in the batch a separate DCI Recap already described tonight's caption landscape in depth. Assume the reader has read it. Your job is to translate that landscape into action, not to redo the description.
 
 ACCURACY RULES (read first)
@@ -444,6 +483,7 @@ ${captionTypes.map(cap => {
 }).join('\n')}
 
 TRENDING: ↑ ${trendingUp.length} rising${trendingUp.length > 0 ? ` (${trendingUp.slice(0, 5).map(s => `${s.corps} ${s.caption} ${s.score.toFixed(2)}`).join(', ')})` : ''} | ↓ ${trendingDown.length} falling${trendingDown.length > 0 ? ` (${trendingDown.slice(0, 5).map(s => `${s.corps} ${s.caption} ${s.score.toFixed(2)}`).join(', ')})` : ''} | → ${steadyPerformers.length} steady
+${eliteAssetsLine ? `\n${eliteAssetsLine}\n` : ''}
 ===== END DATA =====
 
 ${toneGuidance}

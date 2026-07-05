@@ -34,7 +34,7 @@ const {
  * Article 1: DCI Scores Analysis
  * Daily competition results in DCI.org editorial style
  */
-async function generateDciDailyArticle({ reportDay, dayScores, trendData, showContext, competitionContext, db, ledger, brief, isLiveSeason }) {
+async function generateDciDailyArticle({ reportDay, dayScores, trendData, seasonContext, showContext, competitionContext, db, ledger, brief, isLiveSeason }) {
   const topCorps = dayScores[0];
 
   // Get dynamic tone guidance based on competition context
@@ -129,6 +129,18 @@ async function generateDciDailyArticle({ reportDay, dayScores, trendData, showCo
     f.gapCloser ? `- Biggest gap-closer: ${f.gapCloser.corps} shaved ${f.gapCloser.closed.toFixed(3)} off the margin to ${f.gapCloser.onCorps}` : null,
   ].filter(Boolean).join('\n') : '';
 
+  // Season milestones: corps that hit a true season high or low tonight, plus
+  // where tonight's overall leader ranks against the field this season. A light
+  // touch — the Daily's spine is the field shape above, this is seasoning.
+  const seasonHighsTonight = Object.entries(trendData).filter(([, t]) => t.atSeasonBest).map(([c]) => c);
+  const seasonLowsTonight = Object.entries(trendData).filter(([, t]) => t.atSeasonWorst).map(([c]) => c);
+  const leaderPct = seasonContext?.[dayScores[0]?.corps]?.percentileTotal;
+  const milestonesBlock = [
+    seasonHighsTonight.length ? `- Season high tonight: ${seasonHighsTonight.join(', ')}` : null,
+    seasonLowsTonight.length ? `- Season low tonight: ${seasonLowsTonight.join(', ')}` : null,
+    Number.isFinite(leaderPct) ? `- Tonight's top corps ${dayScores[0].corps} ranks ${leaderPct}th percentile in the field this season` : null,
+  ].filter(Boolean).join('\n');
+
   // Get today's narrative variety to keep articles from feeling templated
   const variety = getWritingVariety(reportDay, "dci_daily");
 
@@ -182,7 +194,7 @@ ${captionWinnersByShow}
 
 DAY-OVER-DAY MOVERS${moversBlock ? '' : ': none of note'}
 ${moversBlock}
-${fieldShapeBlock ? `\nFIELD SHAPE (how the standings moved as a whole tonight):\n${fieldShapeBlock}\n` : ''}
+${fieldShapeBlock ? `\nFIELD SHAPE (how the standings moved as a whole tonight):\n${fieldShapeBlock}\n` : ''}${milestonesBlock ? `\nSEASON MILESTONES:\n${milestonesBlock}\n` : ''}
 POSITION BATTLES (${competitionContext.positionBattleCount} within 0.2 of the spot ahead)${positionBattlesBlock ? `:\n${positionBattlesBlock}` : ': none within 0.2 tonight.'}
 ===== END DATA =====
 
@@ -201,6 +213,7 @@ HOW TO WRITE THIS ARTICLE
 ${multiShow ? `- Cover all ${scoresByShow.length} shows by name. For each score or placement you cite, make the show clear (via dateline, a phrase like "at [Show]", or section framing). Readers should never be confused about which corps competed where.` : `- This is a single-show night — ground the article in ${scoresByShow[0]?.name}${scoresByShow[0]?.location ? ` (${scoresByShow[0].location})` : ''} and treat the standings as one field.`}
 - Weave day-over-day changes and caption details where they're relevant; don't break them out as obligatory sections.
 - Use the FIELD SHAPE data — whether the field tightened or spread, how much position churn there was, the biggest gap-closer — as a structural through-line, not just a list of who placed where. This is what separates your piece from a bare results table: the story of how the whole standings moved tonight.
+- Structure the piece with 3-4 short bolded lead-ins in Markdown (e.g., **The result.**, **The margins.**, **Movers.**, **What's next.**) at natural transitions. Keep each to 2-4 words — they render as section subheads and make the piece scannable. Don't over-segment.
 - Close with a specific, grounded observation — a number, a trend, a question the next show will answer. No "tune in tomorrow" sign-offs.
 - Also fill the structured fields: trendingCorps (only corps with a real up/down move from tonight's movers/momentum data, each with a short data-grounded reason — omit corps that didn't move) and insights (2-4 scannable takeaways, each tied to a specific number from the data).
 
@@ -316,7 +329,7 @@ Write like you've covered this beat for years. Let the scores drive the story.`;
  * In-depth feature on a single corps and their progress across the season
  * Written in DCI.org editorial style
  */
-async function generateDciFeatureArticle({ reportDay, dayScores, trendData, showContext, competitionContext, db, ledger, brief, isLiveSeason }) {
+async function generateDciFeatureArticle({ reportDay, dayScores, trendData, seasonContext, showContext, competitionContext, db, ledger, brief, isLiveSeason }) {
   // Derive the corps exclusion set from the coverage ledger so this article
   // doesn't repeat a spotlight subject from earlier in the batch.
   const excludeCorps = ledger?.dciCorps || new Set();
@@ -355,10 +368,27 @@ async function generateDciFeatureArticle({ reportDay, dayScores, trendData, show
   const showTitle = db ? await getShowTitleFromFirestore(db, featureCorps.corps, featureCorps.sourceYear) : null;
   const uniformDetails = db ? await getUniformDetailsFromFirestore(db, featureCorps.corps, featureCorps.sourceYear) : null;
 
-  // Calculate season progress data
+  // Calculate season progress data (true season-to-date now, not a 7-day window)
   const seasonHigh = corpsTrend.seasonHigh || featureCorps.total;
   const seasonLow = corpsTrend.seasonLow || featureCorps.total;
   const improvement = corpsTrend.totalImprovement || 0;
+  const seasonAvg = corpsTrend.seasonAvg;
+  const seasonShows = corpsTrend.seasonShows;
+  const seasonImprovement = corpsTrend.seasonImprovement;
+
+  // Field-relative season context for THIS corps: where their caption families
+  // rank against the whole field this season. This is the signature "wow" data
+  // for the feature — percentile strength no single-corps trend can show.
+  const sc = seasonContext?.[featureCorps.corps] || null;
+  const pctPhrase = (c) => c ? `${c.label} (${c.percentile}th percentile of the field)` : null;
+  const seasonContextBlock = sc ? [
+    `FIELD-RELATIVE SEASON CONTEXT (this corps vs the ${sc.fieldSize}-corps field, season to date):`,
+    Number.isFinite(sc.seasonAvgTotal) ? `- Season average total: ${sc.seasonAvgTotal.toFixed(2)} — ${sc.percentileTotal}th percentile overall` : null,
+    sc.captions?.ge ? `- General Effect: ${pctPhrase(sc.captions.ge)}` : null,
+    sc.captions?.visual ? `- Visual: ${pctPhrase(sc.captions.visual)}` : null,
+    sc.captions?.music ? `- Music: ${pctPhrase(sc.captions.music)}` : null,
+    sc.strongest && sc.weakest ? `- Strongest area this season: ${sc.strongest.family.toUpperCase()}; softest: ${sc.weakest.family.toUpperCase()}` : null,
+  ].filter(Boolean).join('\n') : '';
 
   // Build show-by-show history for the last 5 shows
   const recentShowHistory = corpsTrend.recentScores || [];
@@ -421,8 +451,8 @@ FEATURED CORPS: ${featureCorps.corps}
 ${isLiveSeason ? 'Live season' : 'Season material'}: ${featureCorps.sourceYear}${showTitle ? ` | Show title: "${showTitle}"` : ''}
 Tonight's competition: ${tonightShow || 'N/A'}${tonightLocation ? ` — ${tonightLocation}` : ''}
 Tonight's placement: ${currentRank}${currentRank === 1 ? 'st' : currentRank === 2 ? 'nd' : currentRank === 3 ? 'rd' : 'th'} of ${dayScores.length} at that show, ${featureCorps.total.toFixed(3)} (${corpsTrend.dayChange >= 0 ? '+' : ''}${corpsTrend.dayChange.toFixed(3)} from yesterday)
-Season High: ${seasonHigh.toFixed(3)} | Season Low: ${seasonLow >= 60 ? seasonLow.toFixed(3) : 'N/A'} | Net improvement: ${improvement >= 0 ? '+' : ''}${improvement.toFixed(3)} | Momentum: ${corpsTrend.momentum || 'steady'}${corpsTrend.atSeasonBest ? ' | ★ AT SEASON HIGH' : ''}
-
+Season (${seasonShows || 'few'} shows to date): High ${seasonHigh.toFixed(3)} | Low ${seasonLow >= 60 ? seasonLow.toFixed(3) : 'N/A'}${Number.isFinite(seasonAvg) ? ` | Avg ${seasonAvg.toFixed(3)}` : ''}${Number.isFinite(seasonImprovement) ? ` | Opener-to-now ${seasonImprovement >= 0 ? '+' : ''}${seasonImprovement.toFixed(3)}` : ''} | 7-day net ${improvement >= 0 ? '+' : ''}${improvement.toFixed(3)} | Momentum: ${corpsTrend.momentum || 'steady'}${corpsTrend.atSeasonBest ? ' | ★ AT SEASON HIGH TONIGHT' : ''}${corpsTrend.atSeasonWorst ? ' | ▼ SEASON LOW TONIGHT' : ''}
+${seasonContextBlock ? `\n${seasonContextBlock}\n` : ''}
 SHOW-BY-SHOW (last 5 valid — use these exact show names and locations):
 ${showHistoryText}
 
@@ -457,6 +487,8 @@ ARTICLE REQUIREMENTS
 - Narrative: 700-900 words. A season profile built on scores.
   Include: specific scores from their recent shows (use the exact show names from the data), analysis of at least 3 individual captions with numbers, a comparison to the corps around them tonight, and a reasoned outlook that follows the closing angle above.
   Sequence and emphasis are your call — if GE is the story, lead with GE; if trajectory is the story, lead with the arc. Don't walk through a checklist.
+  If the FIELD-RELATIVE SEASON CONTEXT is present, use it — where this corps ranks against the whole field (percentile, "elite/strong/developing" in each caption family) is exactly the context that separates a real season audit from a recap of one night. Anchor at least one point in it.
+  Structure the piece with 3-5 short bolded lead-ins in Markdown (e.g., **Where they stand.**, **The caption story.**, **Season arc.**, **The outlook.**) at natural transitions — 2-4 words each; they render as section subheads. Don't over-segment.
   Do NOT end with fantasy buy/hold/sell or lineup picks — that belongs to the Fantasy Market Report. Do NOT predict exact future scores — only analyze visible trends.
 - Also fill the insights field: 2-3 scannable takeaways about this corps, each tied to a specific score, caption, or trend from the data.`;
 
@@ -522,7 +554,7 @@ ARTICLE REQUIREMENTS
  * Deep dive on General Effect, Visual, and Music trends over the last week
  * Written in DCI.org recap analysis style
  */
-async function generateDciRecapArticle({ reportDay, dayScores, trendData, showContext, competitionContext, db, ledger, brief, isLiveSeason }) {
+async function generateDciRecapArticle({ reportDay, dayScores, trendData, seasonContext, showContext, competitionContext, db, ledger, brief, isLiveSeason }) {
   // Derive the corps exclusion set from the coverage ledger so the image subject
   // picker below doesn't land on a corps already spotlit in an earlier article.
   const excludeCorps = ledger?.dciCorps || new Set();
@@ -579,6 +611,38 @@ async function generateDciRecapArticle({ reportDay, dayScores, trendData, showCo
   // Distinct shows represented in today's field (for venue-aware phrasing)
   const uniqueShows = Array.from(new Set(dayScores.map(s => s.showName).filter(Boolean)));
   const multiShowToday = uniqueShows.length > 1;
+
+  // Season-long, field-relative caption leaders. Connects tonight's snapshot to
+  // the whole-season picture: who has actually owned each caption family this
+  // year, and where tonight's leader sits in that season-long ranking. This is
+  // the field-relative depth a bare one-night ranking can't show.
+  const recapFieldNames = dayScores.map(s => s.corps);
+  const seasonLeader = (fam) => {
+    let best = null;
+    for (const name of recapFieldNames) {
+      const c = seasonContext?.[name]?.captions?.[fam];
+      if (c && (!best || c.percentile > best.percentile)) best = { corps: name, ...c };
+    }
+    return best;
+  };
+  const seasonPctOf = (corps, fam) => seasonContext?.[corps]?.captions?.[fam]?.percentile;
+  const seasonLeadersBlock = (() => {
+    if (!seasonContext || Object.keys(seasonContext).length === 0) return '';
+    const rows = [
+      { fam: 'ge', label: 'GE', tonight: geSorted[0]?.corps },
+      { fam: 'visual', label: 'Visual', tonight: visualSorted[0]?.corps },
+      { fam: 'music', label: 'Music', tonight: musicSorted[0]?.corps },
+    ].map(({ fam, label, tonight }) => {
+      const lead = seasonLeader(fam);
+      if (!lead) return null;
+      const tonightPct = seasonPctOf(tonight, fam);
+      const tonightNote = tonight && Number.isFinite(tonightPct)
+        ? ` Tonight's ${label} leader ${tonight} sits at the ${tonightPct}th percentile season-long.`
+        : '';
+      return `- ${label}: ${lead.corps} has owned the field this season (${lead.label}, ${lead.percentile}th percentile).${tonightNote}`;
+    }).filter(Boolean);
+    return rows.length ? `SEASON-LONG FIELD LEADERS (whole season, field-relative — use to frame tonight against the year):\n${rows.join('\n')}` : '';
+  })();
 
   const prompt = `You are a DCI score analyst writing tonight's caption deep-dive. This is the piece a serious drum corps fan bookmarks — the one that explains what the judges are actually rewarding and where the real races are hiding inside the overall standings. It is PURE caption analysis and description — it is not a fantasy column.
 
@@ -643,6 +707,7 @@ SUBCAPTION LEADERS:
 GE1: ${[...dayScores].sort((a, b) => (b.captions?.GE1 || 0) - (a.captions?.GE1 || 0))[0]?.corps} (${[...dayScores].sort((a, b) => (b.captions?.GE1 || 0) - (a.captions?.GE1 || 0))[0]?.captions?.GE1?.toFixed(2)}) | GE2: ${[...dayScores].sort((a, b) => (b.captions?.GE2 || 0) - (a.captions?.GE2 || 0))[0]?.corps} (${[...dayScores].sort((a, b) => (b.captions?.GE2 || 0) - (a.captions?.GE2 || 0))[0]?.captions?.GE2?.toFixed(2)})
 VP: ${[...dayScores].sort((a, b) => (b.captions?.VP || 0) - (a.captions?.VP || 0))[0]?.corps} (${[...dayScores].sort((a, b) => (b.captions?.VP || 0) - (a.captions?.VP || 0))[0]?.captions?.VP?.toFixed(2)}) | VA: ${[...dayScores].sort((a, b) => (b.captions?.VA || 0) - (a.captions?.VA || 0))[0]?.corps} (${[...dayScores].sort((a, b) => (b.captions?.VA || 0) - (a.captions?.VA || 0))[0]?.captions?.VA?.toFixed(2)}) | CG: ${[...dayScores].sort((a, b) => (b.captions?.CG || 0) - (a.captions?.CG || 0))[0]?.corps} (${[...dayScores].sort((a, b) => (b.captions?.CG || 0) - (a.captions?.CG || 0))[0]?.captions?.CG?.toFixed(2)})
 B: ${[...dayScores].sort((a, b) => (b.captions?.B || 0) - (a.captions?.B || 0))[0]?.corps} (${[...dayScores].sort((a, b) => (b.captions?.B || 0) - (a.captions?.B || 0))[0]?.captions?.B?.toFixed(2)}) | MA: ${[...dayScores].sort((a, b) => (b.captions?.MA || 0) - (a.captions?.MA || 0))[0]?.corps} (${[...dayScores].sort((a, b) => (b.captions?.MA || 0) - (a.captions?.MA || 0))[0]?.captions?.MA?.toFixed(2)}) | P: ${[...dayScores].sort((a, b) => (b.captions?.P || 0) - (a.captions?.P || 0))[0]?.corps} (${[...dayScores].sort((a, b) => (b.captions?.P || 0) - (a.captions?.P || 0))[0]?.captions?.P?.toFixed(2)})
+${seasonLeadersBlock ? `\n${seasonLeadersBlock}\n` : ''}
 ===== END DATA =====
 
 ${toneGuidance}
@@ -660,6 +725,7 @@ ARTICLE REQUIREMENTS
   Reference a meaningful cross-section of the field in each caption family — aim for ${Math.min(5, dayScores.length)} or more corps per family, but never pad by inventing. Cite specific point gaps from the data.
   Weight the sections by where the real story is tonight. If the Visual race is tight and GE is decided, Visual gets more ink.
   Do NOT end with buy/hold/sell, fantasy picks, or "who to target" — the Fantasy Market Report handles that. Your ending belongs to the closing angle above.
+- Structure the piece with short bolded lead-ins in Markdown (e.g., **General Effect.**, **Visual.**, **Music.**, **The takeaway.**) so each caption family is a scannable section — 2-4 words each; they render as subheads.
 - Also fill the insights field: 2-4 scannable caption takeaways, each tied to a specific gap, leader, or trend from the data. Descriptive only — no picks.`;
 
   const schema = {
