@@ -33,10 +33,25 @@ describe('NextDeadlineChip', () => {
     expect(screen.getByText(/Scores in/i)).toBeInTheDocument();
   });
 
-  it('shows the change-limit reset during limited weeks', () => {
+  it('shows the upcoming lock while changes are open during limited weeks', () => {
     seedSeason('off-season', new Date(Date.now() - 30 * 24 * 3600e3));
     render(<NextDeadlineChip />);
-    expect(screen.getByText(/Changes reset/i)).toBeInTheDocument();
+    expect(screen.getByText(/Changes lock/i)).toBeInTheDocument();
+  });
+
+  it('shows the change-limit reset once changes are locked', () => {
+    // Freeze time at 1:30 AM ET Sunday and start the season 14.5 days
+    // earlier: competition day 15, inside the lockout that ends when scores
+    // process at 2 AM ET.
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-07-05T05:30:00Z'));
+      seedSeason('off-season', new Date(Date.now() - 14.5 * 24 * 3600e3));
+      render(<NextDeadlineChip />);
+      expect(screen.getByText(/Changes reset/i)).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('shows the unlimited window during live-season week 1', () => {
