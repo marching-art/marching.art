@@ -164,7 +164,7 @@ export function useRecentResults(user, seasonData, activeCorpsClass, currentDay)
     };
 
     fetchRecentResults();
-  }, [user?.uid, seasonData?.seasonUid, activeCorpsClass, currentDay]);
+  }, [user?.uid, seasonData?.seasonUid, seasonData?.schedule, activeCorpsClass, currentDay]);
 
   return recentResults;
 }
