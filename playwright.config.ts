@@ -24,6 +24,13 @@ export default defineConfig({
     trace: 'on-first-retry',
     /* Take screenshot on failure */
     screenshot: 'only-on-failure',
+    /* Sandboxed environments (e.g. Claude Code on the web) pre-install a
+       Chromium that may not match this Playwright version's registry layout.
+       Point PLAYWRIGHT_CHROMIUM_PATH at its binary to use it; unset (the
+       normal case, including CI) Playwright resolves its own browsers. */
+    ...(process.env.PLAYWRIGHT_CHROMIUM_PATH
+      ? { launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH } }
+      : {}),
   },
 
   /* Configure projects for major browsers */
