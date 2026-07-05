@@ -2,10 +2,12 @@
 // Hook for fetching real-time ticker data from all corps' most recent scores across the season
 // Displays data like a sports stats ticker, separated by class
 
-import { useState, useEffect, useMemo } from 'react';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
-import { db } from '../api';
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getSeasonRecaps } from '../api/season';
+import { queryKeys } from '../lib/queryClient';
 import { useSeasonStore } from '../store/seasonStore';
+import { getEffectiveDay } from '../utils/dashboardScoring';
 import { calculateCaptionAggregates, calculateTrend } from './useScoresData';
 
 // Class display names and order
@@ -83,31 +85,29 @@ export const useTickerData = ({ enabled = true } = {}) => {
   const currentDay = useSeasonStore((state) => state.currentDay);
   const seasonData = useSeasonStore((state) => state.seasonData);
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [allRecaps, setAllRecaps] = useState([]);
+  // Season recaps come from the shared react-query cache (same key as the
+  // Scores page and Dashboard recent-results), so mounting the ticker costs
+  // no extra Firestore reads when another surface already fetched them.
+  const {
+    data: allRecapsData,
+    isPending: loading,
+    error: queryError,
+  } = useQuery({
+    queryKey: queryKeys.fantasyRecaps(seasonUid),
+    queryFn: () => getSeasonRecaps(seasonUid),
+    enabled: !!seasonUid && enabled,
+    staleTime: 5 * 60 * 1000,
+  });
+  const allRecaps = useMemo(() => allRecapsData || [], [allRecapsData]);
+  const error = queryError?.message || null;
 
   // The day to show is the most recent day with processed scores
   // At 2 AM ET, scores for the current day are processed, so we can show them
   const displayDay = useMemo(() => {
     if (allRecaps.length === 0) return null;
 
-    // Calculate effective day (same logic as Dashboard and useLandingScores)
-    // Scores for day N are processed at 2 AM ET and become available after that.
-    // After 2 AM ET: previous day's scores were just processed (currentDay - 1)
-    // Before 2 AM ET: scores only available up to currentDay - 2 (yesterday's processing hasn't run)
-    const hour = parseInt(
-      new Date().toLocaleString('en-US', {
-        timeZone: 'America/New_York',
-        hour: 'numeric',
-        hour12: false,
-      }),
-      10
-    );
-    const calculatedDay = hour < 2 ? currentDay - 2 : currentDay - 1;
-    const effectiveDay = calculatedDay >= 1 ? calculatedDay : null;
-
-    // Guard: If effectiveDay is null (Day 1 or Day 2 before 2 AM), no scores should be visible
+    // Guard: null on Day 1 (or Day 2 before 2 AM ET) — no processed scores yet
+    const effectiveDay = getEffectiveDay(currentDay);
     if (!effectiveDay || effectiveDay < 1) return null;
 
     // Find the most recent day that has scores up to and including effective day
@@ -118,41 +118,6 @@ export const useTickerData = ({ enabled = true } = {}) => {
 
     return availableDays[0] || null;
   }, [allRecaps, currentDay]);
-
-  // Fetch all recaps for the season from subcollection
-  useEffect(() => {
-    const fetchRecaps = async () => {
-      if (!seasonUid || !enabled) return;
-
-      try {
-        setLoading(true);
-        // Try new subcollection format first, fallback to legacy single-document format
-        const recapsCollectionRef = collection(db, 'fantasy_recaps', seasonUid, 'days');
-        const recapsSnapshot = await getDocs(recapsCollectionRef);
-
-        let recaps = [];
-        if (!recapsSnapshot.empty) {
-          // New subcollection format
-          recaps = recapsSnapshot.docs.map((d) => d.data());
-        } else {
-          // Fallback to legacy single-document format
-          const legacyDocRef = doc(db, 'fantasy_recaps', seasonUid);
-          const legacyDoc = await getDoc(legacyDocRef);
-          if (legacyDoc.exists()) {
-            recaps = legacyDoc.data().recaps || [];
-          }
-        }
-        setAllRecaps(recaps);
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching ticker data:', err);
-        setError(err.message);
-        setLoading(false);
-      }
-    };
-
-    fetchRecaps();
-  }, [seasonUid, enabled]);
 
   // Process the previous day's data - separated by class
   // OPTIMIZED: Single-pass processing to reduce array iterations from O(5n) to O(n)

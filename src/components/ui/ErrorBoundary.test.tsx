@@ -54,6 +54,49 @@ describe('ErrorBoundary', () => {
       expect(screen.getByText('Custom error UI')).toBeInTheDocument();
     });
 
+    it('renders fallbackRender with the error, taking precedence over fallback', () => {
+      render(
+        <ErrorBoundary
+          fallback={<div>Static fallback</div>}
+          fallbackRender={(error) => <div>Rendered: {error?.message}</div>}
+        >
+          <ThrowError />
+        </ErrorBoundary>
+      );
+      expect(screen.getByText('Rendered: Test error')).toBeInTheDocument();
+      expect(screen.queryByText('Static fallback')).not.toBeInTheDocument();
+    });
+
+    it('passes a working reset callback to fallbackRender', () => {
+      let shouldThrow = true;
+      const TestComponent = () => {
+        if (shouldThrow) {
+          throw new Error('Test');
+        }
+        return <div>Recovered</div>;
+      };
+
+      const { rerender } = render(
+        <ErrorBoundary
+          fallbackRender={(_error, reset) => <button onClick={reset}>Reset now</button>}
+        >
+          <TestComponent />
+        </ErrorBoundary>
+      );
+
+      // Fix the error condition, reset via the render-prop callback
+      shouldThrow = false;
+      fireEvent.click(screen.getByText('Reset now'));
+      rerender(
+        <ErrorBoundary
+          fallbackRender={(_error, reset) => <button onClick={reset}>Reset now</button>}
+        >
+          <TestComponent />
+        </ErrorBoundary>
+      );
+      expect(screen.getByText('Recovered')).toBeInTheDocument();
+    });
+
     it('renders feature name in error message', () => {
       render(
         <ErrorBoundary featureName="Dashboard">

@@ -3,16 +3,9 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../api';
-import {
-  doc,
-  updateDoc,
-  getDoc,
-  collection,
-  getDocs,
-  query,
-  orderBy,
-  limit,
-} from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
+import { getSeasonRecaps, getCorpsValues } from '../api/season';
+import { queryKeys } from '../lib/queryClient';
 import { useSeason, getSeasonProgress } from './useSeason';
 import { useProfileStore } from '../store/profileStore';
 import toast from 'react-hot-toast';
@@ -435,38 +428,21 @@ export const useDashboardData = () => {
         return;
       }
 
-      const corpsDataRef = doc(db, 'dci-data', seasonData.seasonUid);
-      const corpsDataSnap = await getDoc(corpsDataRef);
-
-      if (corpsDataSnap.exists()) {
-        const data = corpsDataSnap.data();
-        setAvailableCorps(data.corpsValues || []);
-      } else {
-        setAvailableCorps([]);
-      }
+      setAvailableCorps(await getCorpsValues(seasonData.seasonUid));
     } catch (error) {
       console.error('Error fetching available corps:', error);
       setAvailableCorps([]);
     }
   }, [seasonData?.seasonUid]);
 
-  // Fetch the 5 most-recent recap days; React Query caches this for the session so
-  // navigating back to Dashboard won't trigger a second Firestore read.
+  // Season recaps from the shared react-query cache. Dashboard already fetches
+  // the full recap set via useScoresData/useRecentResults under this same key,
+  // so this costs no extra Firestore reads (a previous version ran a separate
+  // limit(5) query alongside the full fetch — pure redundancy on this page).
+  // The recentScores memo below slices to the 5 most recent days itself.
   const { data: rawRecentRecaps } = useQuery({
-    queryKey: ['fantasyRecaps-recent', seasonData?.seasonUid],
-    queryFn: async () => {
-      const recapsCollectionRef = collection(db, 'fantasy_recaps', seasonData.seasonUid, 'days');
-      const recapsQuery = query(recapsCollectionRef, orderBy('offSeasonDay', 'desc'), limit(5));
-      const recapsSnapshot = await getDocs(recapsQuery);
-
-      if (!recapsSnapshot.empty) {
-        return recapsSnapshot.docs.map((d) => d.data());
-      }
-      // Fallback to legacy single-document format
-      const legacyDocRef = doc(db, 'fantasy_recaps', seasonData.seasonUid);
-      const legacyDoc = await getDoc(legacyDocRef);
-      return legacyDoc.exists() ? legacyDoc.data().recaps || [] : [];
-    },
+    queryKey: queryKeys.fantasyRecaps(seasonData?.seasonUid),
+    queryFn: () => getSeasonRecaps(seasonData.seasonUid),
     enabled: !!seasonData?.seasonUid,
     staleTime: 5 * 60 * 1000,
   });

@@ -4,36 +4,10 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { doc, getDoc, collection, getDocs, query, orderBy } from 'firebase/firestore';
-import { db } from '../api';
+import { getSeasonRecaps, getSeasonChampions } from '../api/season';
+import { queryKeys } from '../lib/queryClient';
 import { useSeasonStore } from '../store/seasonStore';
-
-/**
- * Get the effective current day for score filtering
- * Scores are processed at 2 AM, so between midnight and 2 AM
- * we should still show the previous day's cutoff
- * Returns null if no scores should be available yet (e.g., day 1)
- */
-const getEffectiveDay = (currentDay) => {
-  if (!currentDay) return null;
-  // Get the current hour in Eastern Time (not browser local time),
-  // since scores are processed at 2 AM ET regardless of the user's timezone.
-  const now = new Date();
-  const etHour = parseInt(
-    new Intl.DateTimeFormat('en-US', {
-      timeZone: 'America/New_York',
-      hour: '2-digit',
-      hour12: false,
-    }).format(now)
-  );
-  // Scores for day N are processed at 2 AM ET and become available after that.
-  // After 2 AM ET: previous day's scores were just processed (currentDay - 1)
-  // Before 2 AM ET: scores only available up to currentDay - 2 (yesterday's processing hasn't run)
-  const effectiveDay = etHour < 2 ? currentDay - 2 : currentDay - 1;
-
-  // Return null if no scores should be available yet (e.g., day 1)
-  return effectiveDay >= 1 ? effectiveDay : null;
-};
+import { getEffectiveDay } from '../utils/dashboardScoring';
 
 /**
  * Resolve the display date for a recap day.
@@ -256,7 +230,6 @@ export const useScoresData = (options = {}) => {
   const currentDay = useSeasonStore((state) => state.currentDay);
 
   const [error, setError] = useState(null);
-  const [archivedSeasons, setArchivedSeasons] = useState([]);
   const [fallbackSeasonId, setFallbackSeasonId] = useState(null);
 
   // Determine which season to fetch (fallbackSeasonId takes precedence when set)
@@ -265,54 +238,22 @@ export const useScoresData = (options = {}) => {
     (seasonId && seasonId !== currentSeasonUid) ||
     (fallbackSeasonId && fallbackSeasonId !== currentSeasonUid);
 
-  // Fetch available archived seasons
-  useEffect(() => {
-    const fetchArchivedSeasons = async () => {
-      try {
-        const championsRef = collection(db, 'season_champions');
-        const championsQuery = query(championsRef, orderBy('archivedAt', 'desc'));
-        const championsSnapshot = await getDocs(championsQuery);
-
-        const seasons = [];
-        championsSnapshot.forEach((doc) => {
-          const data = doc.data();
-          seasons.push({
-            id: doc.id,
-            seasonName: data.seasonName,
-            seasonType: data.seasonType,
-            archivedAt: data.archivedAt?.toDate?.() || new Date(data.archivedAt),
-          });
-        });
-
-        setArchivedSeasons(seasons);
-      } catch (err) {
-        console.error('Error fetching archived seasons:', err);
-      }
-    };
-
-    fetchArchivedSeasons();
-  }, []);
+  // Fetch available archived seasons (shared cache with Hall of Champions)
+  const { data: archivedSeasons = [] } = useQuery({
+    queryKey: queryKeys.archivedSeasons(),
+    queryFn: getSeasonChampions,
+  });
 
   // Fetch all recap days for the target season; React Query de-duplicates in-session refetches
-  // so navigating away and back to the Scores page costs zero extra Firestore reads.
+  // so navigating away and back to the Scores page costs zero extra Firestore reads. The
+  // ticker and Dashboard recent-results hooks share this exact cache entry.
   const {
     data: rawRecaps,
     isLoading: loading,
     error: queryError,
   } = useQuery({
-    queryKey: ['fantasyRecaps', targetSeasonId],
-    queryFn: async () => {
-      const recapsCollectionRef = collection(db, 'fantasy_recaps', targetSeasonId, 'days');
-      const recapsSnapshot = await getDocs(recapsCollectionRef);
-
-      if (!recapsSnapshot.empty) {
-        return recapsSnapshot.docs.map((d) => d.data());
-      }
-      // Fallback to legacy single-document format for backward compatibility
-      const legacyDocRef = doc(db, 'fantasy_recaps', targetSeasonId);
-      const legacyDoc = await getDoc(legacyDocRef);
-      return legacyDoc.exists() ? legacyDoc.data().recaps || [] : [];
-    },
+    queryKey: queryKeys.fantasyRecaps(targetSeasonId),
+    queryFn: () => getSeasonRecaps(targetSeasonId),
     enabled: !!targetSeasonId,
     staleTime: 5 * 60 * 1000,
   });
