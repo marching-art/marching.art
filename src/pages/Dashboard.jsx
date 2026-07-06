@@ -49,6 +49,7 @@ import {
   CLASS_UNLOCK_COSTS,
 } from '../components/Dashboard';
 
+import { ModalLoadingFallback } from '../components/ui';
 import { getWeeksUntilUnlock } from '../utils/classUnlockTime';
 import NextPerformancePanel from '../components/Dashboard/NextPerformancePanel';
 import { useScheduleStore } from '../store/scheduleStore';
@@ -245,14 +246,14 @@ const Dashboard = () => {
       {/* Rename-required modal: hard-blocks all dashboard actions until every
           duplicate-name conflict surfaced by the admin sweep is resolved. */}
       {duplicateCorps.length > 0 && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<ModalLoadingFallback />}>
           <RenameDuplicateCorpsModal duplicates={duplicateCorps} onResolved={refreshProfile} />
         </Suspense>
       )}
 
       {/* Season Setup Wizard */}
       {modalQueue.isActive('seasonSetup') && seasonData && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<ModalLoadingFallback />}>
           <SeasonSetupWizard
             onComplete={handleSeasonSetupFinish}
             profile={profile}
@@ -467,7 +468,7 @@ const Dashboard = () => {
       )}
 
       {slotPickerClass && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<ModalLoadingFallback />}>
           <NewCorpsSlotModal
             onClose={() => setSlotPickerClass(null)}
             onStartNew={() => {
@@ -487,7 +488,7 @@ const Dashboard = () => {
       )}
 
       {showCaptionSelection && activeCorps && seasonData && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<ModalLoadingFallback />}>
           <CaptionSelectionModal
             onClose={() => {
               setShowCaptionSelection(false);
@@ -553,7 +554,7 @@ const Dashboard = () => {
 
       {/* OPTIMIZATION #9: Lazy-loaded modals wrapped with Suspense */}
       {showUniformDesign && activeCorps && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<ModalLoadingFallback />}>
           <UniformDesignModal
             onClose={() => setShowUniformDesign(false)}
             onSubmit={handleUniformDesign}
@@ -564,7 +565,7 @@ const Dashboard = () => {
       )}
 
       {showNewsSubmission && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<ModalLoadingFallback />}>
           <NewsSubmissionModal
             onClose={() => setShowNewsSubmission(false)}
             onSubmit={handleNewsSubmission}
@@ -601,7 +602,7 @@ const Dashboard = () => {
       />
 
       {classToPurchase && profile && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<ModalLoadingFallback />}>
           <ClassPurchaseModal
             classKey={classToPurchase}
             className={CLASS_DISPLAY_NAMES[classToPurchase]}

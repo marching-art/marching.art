@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 import Portal from '../Portal';
 import { BottomSheet } from '../ui/BottomSheet';
 import { useHaptic } from '../../hooks/useHaptic';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { getMaxShowsForWeek } from '../../utils/captionPricing';
 import { getShowRegistrationDeadline, formatEtDayTime } from '../../utils/seasonClock';
 import { compareCorpsClasses } from '../../utils/corps';
@@ -147,13 +148,7 @@ const ShowRegistrationModal = ({
   );
 
   // Detect mobile for BottomSheet vs Modal
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 640);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  const isMobile = useIsMobile();
 
   const userCorpsClasses = useMemo(
     () => (userProfile?.corps ? Object.keys(userProfile.corps).sort(compareCorpsClasses) : []),

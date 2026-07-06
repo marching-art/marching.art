@@ -139,6 +139,15 @@ const ShowCard = ({
   return (
     <div
       onClick={() => !isPast && onRegister(show)}
+      onKeyDown={(e) => {
+        if (!isPast && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          onRegister(show);
+        }
+      }}
+      role={isPast ? undefined : 'button'}
+      tabIndex={isPast ? undefined : 0}
+      aria-label={isPast ? undefined : `Open registration for ${show.eventName}`}
       className={`
         bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden
         ${isPast ? 'opacity-60' : 'hover:border-[#444] cursor-pointer active:bg-[#222]'}

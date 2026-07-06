@@ -160,6 +160,18 @@ const TickerBar = () => {
   const scrollRef = useRef(null);
   const { prefersReducedMotion } = useReducedMotion();
 
+  // Pause the auto-cycle while the user is reading/scrolling the ticker —
+  // content swapping out from under a touch is disorienting. Resumes a few
+  // seconds after the last interaction.
+  const [isInteracting, setIsInteracting] = useState(false);
+  const interactionTimer = useRef(null);
+  const handleInteraction = () => {
+    setIsInteracting(true);
+    clearTimeout(interactionTimer.current);
+    interactionTimer.current = setTimeout(() => setIsInteracting(false), 5000);
+  };
+  useEffect(() => () => clearTimeout(interactionTimer.current), []);
+
   // Build dynamic sections based on available data
   const tickerSections = useMemo(() => {
     const sections = [];
@@ -211,14 +223,14 @@ const TickerBar = () => {
   // reduced-motion preference keep the manual prev/next arrows instead of
   // perpetually shifting content.
   useEffect(() => {
-    if (!hasData || tickerSections.length === 0 || prefersReducedMotion) return;
+    if (!hasData || tickerSections.length === 0 || prefersReducedMotion || isInteracting) return;
 
     const interval = setInterval(() => {
       setActiveSection((prev) => (prev + 1) % tickerSections.length);
     }, 8000);
 
     return () => clearInterval(interval);
-  }, [hasData, tickerSections.length, prefersReducedMotion]);
+  }, [hasData, tickerSections.length, prefersReducedMotion, isInteracting]);
 
   // Reset activeSection if it's out of bounds
   useEffect(() => {
@@ -532,12 +544,20 @@ const TickerBar = () => {
         </svg>
       </button>
 
-      {/* Ticker content */}
-      <div
-        ref={scrollRef}
-        className="flex-1 flex items-center gap-2 sm:gap-3 px-2 sm:px-3 text-xs overflow-x-auto scrollbar-hide scroll-smooth"
-      >
-        {renderSectionContent()}
+      {/* Ticker content — right-edge fade hints that the row scrolls */}
+      <div className="relative flex-1 min-w-0 h-full flex items-center">
+        <div
+          ref={scrollRef}
+          className="flex-1 flex items-center gap-2 sm:gap-3 px-2 sm:px-3 text-xs overflow-x-auto scrollbar-hide scroll-smooth"
+          onTouchStart={handleInteraction}
+          onScroll={handleInteraction}
+        >
+          {renderSectionContent()}
+        </div>
+        <div
+          className="absolute top-0 right-0 bottom-0 w-6 pointer-events-none bg-gradient-to-l from-black to-transparent"
+          aria-hidden="true"
+        />
       </div>
 
       {/* Section navigation arrows (always on mobile; on desktop only when
@@ -585,7 +605,10 @@ const GameShell = ({ children }) => {
   }, [location]);
 
   const shellContextValue = {
-    headerHeight: 80, // 48px (h-12) + 32px (h-8) = 80px total
+    // 48px top nav + ticker: 32px (h-8) on sm+, 40px (h-10) on mobile.
+    // Currently unconsumed — if you use it, prefer the responsive values.
+    headerHeight: 80,
+    headerHeightMobile: 88,
   };
 
   return (

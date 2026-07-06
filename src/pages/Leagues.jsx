@@ -4,7 +4,7 @@
 // Dense league cards, 2-col discover grid, activity indicators
 // Laws: No glow, no shadow, tight spacing, data-rich cards
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Users, Trophy, Plus, Search, Crown, X, Zap, ChevronRight, Swords } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -19,6 +19,7 @@ import {
 } from '../hooks/useLeagues';
 import { useProfileStore } from '../store/profileStore';
 import { CreateLeagueModal, LeagueDetailView } from '../components/Leagues';
+import { PullToRefresh } from '../components/ui/PullToRefresh';
 
 // =============================================================================
 // LEAGUE TYPE TAGS
@@ -350,7 +351,13 @@ const Leagues = () => {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    refetch: refetchPublicLeagues,
   } = usePublicLeagues(12);
+
+  // Pull-to-refresh (mobile) — refresh both league lists together
+  const handlePullRefresh = useCallback(async () => {
+    await Promise.all([refetchMyLeagues(), refetchPublicLeagues()]);
+  }, [refetchMyLeagues, refetchPublicLeagues]);
 
   // Mutations
   const createLeagueMutation = useCreateLeague();
@@ -480,8 +487,8 @@ const Leagues = () => {
         </div>
       </div>
 
-      {/* SCROLLABLE CONTENT */}
-      <div className="flex-1 overflow-y-auto min-h-0 scroll-momentum">
+      {/* SCROLLABLE CONTENT — pull down at the top to refresh both lists */}
+      <PullToRefresh onRefresh={handlePullRefresh} className="flex-1 min-h-0">
         {/* MY LEAGUES SECTION */}
         <section className="border-b border-[#333]">
           <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
@@ -591,7 +598,7 @@ const Leagues = () => {
             )}
           </div>
         </section>
-      </div>
+      </PullToRefresh>
 
       {/* MODALS */}
       {showQuickJoin && (

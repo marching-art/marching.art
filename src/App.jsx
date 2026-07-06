@@ -296,8 +296,10 @@ function App() {
                   />
                 </div>
 
-                {/* PWA Install Prompt - shows after user engagement */}
-                {user && <PWAInstallPrompt />}
+                {/* PWA Install Prompt - shows after engagement delay, for
+                    anonymous visitors too (they're the likeliest installers);
+                    the component handles dismissal memory + installed state */}
+                <PWAInstallPrompt />
 
                 {/* Username Prompt Modal - shows for existing users without username */}
                 {user && <UsernamePromptModal />}
