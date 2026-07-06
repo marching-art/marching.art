@@ -1,11 +1,14 @@
 // =============================================================================
 // SHOW CONCEPT MODAL - per-season show design (theme / music / drill)
 // =============================================================================
-// Saves through the saveShowConcept callable; the nightly scorer awards
-// per-caption synergy bonuses when the concept's tags match a lineup's corps
-// (functions/src/helpers/showConceptSynergy.js). Concepts reset each season
-// at rollover — a new season means a new show. Option lists mirror the
-// backend's SHOW_THEMES / MUSIC_SOURCES / DRILL_STYLES — keep in sync.
+// Saves through the saveShowConcept callable. Show concepts are a GAME
+// system, never a competitive one: matching your concept to your lineup's
+// corps pays a nightly CorpsCoin design bonus, and concepts give the daily
+// article generator real program themes to write about — competitive scores
+// are never affected (functions/src/helpers/showConceptSynergy.js).
+// Concepts reset each season at rollover — a new season means a new show.
+// Option lists mirror the backend's SHOW_THEMES / MUSIC_SOURCES /
+// DRILL_STYLES — keep in sync.
 
 import React, { useState } from 'react';
 import { Palette, Music, Route, Sparkles, X } from 'lucide-react';
@@ -86,7 +89,7 @@ const ShowConceptModal = ({ onClose, corpsClass, corpsName, currentConcept }) =>
     setSaving(true);
     try {
       await saveShowConcept({ corpsClass, showConcept: { theme, musicSource, drillStyle } });
-      toast.success("Show concept saved — synergy bonuses apply at tonight's scoring!");
+      toast.success("Show concept saved — design bonuses pay out after tonight's shows!");
       onClose();
     } catch (error) {
       toast.error(error.message || 'Could not save show concept');
@@ -130,8 +133,9 @@ const ShowConceptModal = ({ onClose, corpsClass, corpsName, currentConcept }) =>
           {/* Body */}
           <div className="p-4 space-y-4 overflow-y-auto flex-1">
             <p className="text-xs text-gray-400">
-              Your show concept earns per-caption synergy bonuses at scoring when its style matches
-              the corps in your lineup. It lasts one season — every new season is a new show.
+              Matching your concept to the corps in your lineup earns a nightly CorpsCoin design
+              bonus, and marching.art's daily coverage may feature your program. Concepts never
+              affect competitive scores. One season, one show — every new season is a new design.
             </p>
             <PickerGroup
               label="Theme"

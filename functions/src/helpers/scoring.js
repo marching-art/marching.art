@@ -187,21 +187,15 @@ function scoreShowsForDay({
           stats.corpsScored++;
           let geScore = 0, rawVisualScore = 0, rawMusicScore = 0;
 
-          // Calculate synergy bonus for show concept
-          const { captionBonuses } = calculateLineupSynergyBonus(
-            corps.showConcept || {},
-            corps.lineup
-          );
-
           for (const caption in corps.lineup) {
             const [corpsName, sourceYear] = corps.lineup[caption].split("|");
             // Season-specific base score (regression vs. scraped-live strategy)
             const baseCaptionScore = getBaseCaptionScore(corpsName, sourceYear, caption);
 
-            // Apply synergy bonus (0 - 1.0 based on show concept match)
-            const synergyBonus = captionBonuses[caption] || 0;
-            // Hard cap each caption at 20 points
-            const captionScore = Math.min(20, baseCaptionScore + synergyBonus);
+            // Hard cap each caption at 20 points. Competitive scores come ONLY
+            // from the historical data — no game system (show concepts,
+            // purchases, streaks) may ever modify them.
+            const captionScore = Math.min(20, baseCaptionScore);
 
             if (["GE1", "GE2"].includes(caption)) geScore += captionScore;
             else if (["VP", "VA", "CG"].includes(caption)) rawVisualScore += captionScore;
@@ -219,6 +213,23 @@ function scoreShowsForDay({
           const coinAmount = SHOW_PARTICIPATION_REWARDS[corpsClass] || 0;
           if (coinAmount > 0) {
             coinAwards.push({ uid, corpsClass, showName: show.eventName, amount: coinAmount });
+          }
+
+          // Show-design bonus: a structured show concept whose style matches
+          // the lineup's corps pays a small nightly CorpsCoin award — a game
+          // reward only, with zero effect on the competitive score above.
+          const { captionBonuses } = calculateLineupSynergyBonus(
+            corps.showConcept || {},
+            corps.lineup
+          );
+          const synergyTotal = Object.values(captionBonuses).reduce((sum, v) => sum + v, 0);
+          const designCoin = Math.min(15, Math.round(synergyTotal * 2));
+          if (designCoin > 0) {
+            coinAwards.push({
+              uid, corpsClass, showName: show.eventName, amount: designCoin,
+              type: 'show_design',
+              description: `Show design bonus at ${show.eventName}`,
+            });
           }
 
           showResult.results.push({

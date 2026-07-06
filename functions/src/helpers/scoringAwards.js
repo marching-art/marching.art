@@ -267,9 +267,9 @@ function processCoinAwardsBatch(coinAwards, batch, db) {
     const existing = coinByUser.get(award.uid) || { totalAmount: 0, history: [] };
     existing.totalAmount += award.amount;
     existing.history.push({
-      type: TRANSACTION_TYPES.SHOW_PARTICIPATION,
+      type: award.type || TRANSACTION_TYPES.SHOW_PARTICIPATION,
       amount: award.amount,
-      description: `Show performance at ${award.showName}`,
+      description: award.description || `Show performance at ${award.showName}`,
       corpsClass: award.corpsClass,
       timestamp: new Date(),
     });

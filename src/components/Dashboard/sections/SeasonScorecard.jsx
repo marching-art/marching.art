@@ -163,7 +163,7 @@ const SeasonScorecard = memo(
                         role="menuitem"
                         onClick={handleShowConcept}
                         className="w-full flex items-center gap-2 px-3 py-2 min-h-touch text-xs text-left text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
-                        title="Design your show — theme, music, and drill earn synergy bonuses"
+                        title="Design your show — matching styles earn nightly CorpsCoin bonuses"
                       >
                         <Sparkles className="w-3.5 h-3.5" />
                         Show concept

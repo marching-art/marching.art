@@ -47,7 +47,7 @@ const STEPS = [
   {
     id: 'show_concept',
     title: 'Design Your Show',
-    description: 'Set a show concept — it earns synergy bonuses at scoring',
+    description: 'Set a show concept — matching styles earn nightly CorpsCoin bonuses',
     xp: 50,
     coin: 50,
     icon: Palette,
