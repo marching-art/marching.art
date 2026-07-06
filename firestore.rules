@@ -200,6 +200,13 @@ match /season_champions/{docId} {
   allow write: if false; // Backend only
 }
 
+// All-time Records Book (game-records/records), maintained by the nightly
+// scoring run and season archival.
+match /game-records/{docId} {
+  allow read: if true;
+  allow write: if false; // Backend only
+}
+
 match /final_rankings/{docId} {
   allow read: if true;
   allow write: if isAdmin();

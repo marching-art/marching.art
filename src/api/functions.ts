@@ -327,6 +327,11 @@ export const equipShopItem = createCallable<
   { success: boolean; slot: string; itemId: string | null; message: string }
 >('equipShopItem');
 
+export const sponsorShow = createCallable<
+  { day: number; eventName: string; corpsClass: string },
+  { success: boolean; message: string; newBalance: number; price: number }
+>('sponsorShow');
+
 export const joinRookieLeague = createCallable<
   void,
   { success: boolean; leagueId: string; leagueName: string; alreadyMember: boolean; message: string }

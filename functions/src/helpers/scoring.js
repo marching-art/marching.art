@@ -25,6 +25,7 @@ const {
 } = require("./scoringAwards");
 const { ChunkedWriter } = require("./chunkedWriter");
 const { getCompletedCalendarDay } = require("./gameDay");
+const { updateRecordsFromRecap } = require("./gameRecords");
 const {
   claimScoringRun,
   markScoringRunCompleted,
@@ -421,6 +422,9 @@ async function processAndArchiveOffSeasonScoresLogic({ force = false } = {}) {
     });
     logger.info(`Successfully processed and archived scores for day ${scoredDay} (${opCount} writes in ${batchCount} batches).`);
 
+    // Records Book: fold tonight's results into the all-time records doc.
+    await updateRecordsFromRecap(db, dailyRecap, seasonData.name || seasonData.seasonUid, scoredDay);
+
     // OPTIMIZATION #5: Uses shared processWeeklyMatchups helper
     if (scoredDay % 7 === 0) {
       await processWeeklyMatchups(scoredDay / 7, seasonData, db);
@@ -571,6 +575,9 @@ async function scoreLiveSeasonDay(db, scoredDay, seasonData) {
     db, batch, seasonData, scoredDay, dailyScores, dailyRecap, coinAwards,
   });
   logger.info(`Successfully processed and archived scores for live season day ${scoredDay} (${opCount} writes in ${batchCount} batches).`);
+
+  // Records Book: fold tonight's results into the all-time records doc.
+  await updateRecordsFromRecap(db, dailyRecap, seasonData.name || seasonData.seasonUid, scoredDay);
 
   // OPTIMIZATION #5: Uses shared processWeeklyMatchups helper
   if (scoredDay % 7 === 0) {

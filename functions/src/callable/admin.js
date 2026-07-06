@@ -88,6 +88,14 @@ exports.manualTrigger = onCall({
     case "archiveSeasonResults":
       await archiveSeasonResultsLogic();
       return { success: true, message: "Season results and league champions have been archived." };
+    case "rebuildGameRecords": {
+      const { rebuildGameRecords } = require("../helpers/gameRecords");
+      const result = await rebuildGameRecords(getDb());
+      return {
+        success: true,
+        message: `Records Book rebuilt from ${result.daysProcessed} recap days across ${result.seasons} seasons.`,
+      };
+    }
     case "processAndArchiveOffSeasonScores": {
       // force=true bypasses the already-processed guard for reprocessing after
       // a data fix — it re-applies coin/league-record increments, so it is

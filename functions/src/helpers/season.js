@@ -8,6 +8,7 @@ const {
   getSeasonBonusAmount,
 } = require("../callable/economy");
 const { calculateXPUpdates, getSeasonCompletionXP } = require("./xpCalculations");
+const { updateSeasonBestRecords } = require("./gameRecords");
 const {
   applyEnrichment,
   brandEventName,
@@ -61,10 +62,11 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
   // Keyed by the user's uid (doc.ref.parent.parent.id) — every profile doc in
   // the collectionGroup has the same doc.id ("data"), so keying by doc.id
   // made findIndex match the first entry and archived placement 1 for everyone.
-  const classRankings = {}; // Map<classKey, Array<{uid, totalSeasonScore}>>
+  const classRankings = {}; // Map<classKey, Array<{uid, totalSeasonScore, corpsName, displayName}>>
   for (const doc of profilesSnapshot.docs) {
     const uid = doc.ref.parent.parent.id;
-    const corpsData = doc.data().corps || {};
+    const profileData = doc.data();
+    const corpsData = profileData.corps || {};
     Object.keys(corpsData).forEach((corpsClass) => {
       const corps = corpsData[corpsClass];
       if (corps.lineup || corps.totalSeasonScore > 0) {
@@ -74,6 +76,8 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
         classRankings[corpsClass].push({
           uid,
           totalSeasonScore: corps.totalSeasonScore || 0,
+          corpsName: corps.corpsName || null,
+          displayName: profileData.username || profileData.displayName || null,
         });
       }
     });
@@ -251,6 +255,18 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
   if (opCount > 0) {
     await batch.commit();
   }
+
+  // Records Book: each class's top season total is a best-season candidate.
+  const topFinishers = Object.entries(classRankings)
+    .filter(([, ranking]) => ranking.length > 0)
+    .map(([corpsClass, ranking]) => ({
+      corpsClass,
+      value: ranking[0].totalSeasonScore,
+      corpsName: ranking[0].corpsName,
+      displayName: ranking[0].displayName,
+      uid: ranking[0].uid,
+    }));
+  await updateSeasonBestRecords(db, topFinishers, oldSeasonUid);
 
   logger.info(`Successfully auto-continued all user corps into new season: ${newSeasonUid}`);
 }

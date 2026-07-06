@@ -569,13 +569,19 @@ const HallOfChampions = () => {
                 Hall of Champions
               </h1>
             </div>
-            <div className="flex items-center gap-3 text-[10px] uppercase tracking-wider">
+            <div className="flex items-center justify-between gap-3 text-[10px] uppercase tracking-wider">
               <span className="flex items-center gap-1 text-gray-500">
                 <Crown className="w-3 h-3 text-yellow-500" />
                 <span className="font-data tabular-nums text-gray-300">
                   {totalCrowns}
                 </span> Crowned {totalCrowns === 1 ? 'Season' : 'Seasons'}
               </span>
+              <Link
+                to="/records"
+                className="font-bold text-[#0057B8] hover:text-[#0066d6] whitespace-nowrap"
+              >
+                Records Book →
+              </Link>
             </div>
           </div>
 

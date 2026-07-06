@@ -173,6 +173,11 @@ const ShowCard = ({
                 </span>
               )}
             </div>
+            {show.sponsor?.corpsName && (
+              <div className="mt-1 text-[10px] text-yellow-500/90 truncate">
+                ★ Presented by {show.sponsor.corpsName}
+              </div>
+            )}
           </div>
 
           {/* Status Badge */}

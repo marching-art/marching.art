@@ -47,6 +47,7 @@ const HallOfChampions = lazyWithRetry(() => import('./pages/HallOfChampions'), '
 const Admin = lazyWithRetry(() => import('./pages/Admin'), 'Admin');
 const Leagues = lazyWithRetry(() => import('./pages/Leagues'), 'Leagues');
 const Shop = lazyWithRetry(() => import('./pages/Shop'), 'Shop');
+const Records = lazyWithRetry(() => import('./pages/Records'), 'Records');
 const Onboarding = lazyWithRetry(() => import('./pages/Onboarding'), 'Onboarding');
 const Login = lazyWithRetry(() => import('./pages/Login'), 'Login');
 const Register = lazyWithRetry(() => import('./pages/Register'), 'Register');
@@ -478,6 +479,21 @@ function App() {
                             <Suspense fallback={<SchedulePageSkeleton />}>
                               <Page name="Schedule">
                                 <Schedule />
+                              </Page>
+                            </Suspense>
+                          </GameShell>
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    <Route
+                      path="/records"
+                      element={
+                        <ProtectedRoute>
+                          <GameShell>
+                            <Suspense fallback={<GalleryPageSkeleton />}>
+                              <Page name="Records">
+                                <Records />
                               </Page>
                             </Suspense>
                           </GameShell>
