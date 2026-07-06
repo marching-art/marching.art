@@ -28,6 +28,7 @@ const {
   getWritingVariety,
   formatBriefForArticle,
 } = require("./newsEditorial");
+const { describeShowConcept } = require("./showConceptSynergy");
 
 /**
  * Article 4: marching.art Fantasy Results
@@ -247,6 +248,31 @@ async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext
     return `${i + 1}. "${r.corpsName}" (${director}) - ${r.totalScore.toFixed(3)}${i > 0 ? ` [${margin} behind the ensemble above]` : ' [OVERALL HIGH]'}${showTag}`;
   }).join('\n');
 
+  // Director-designed show concepts for tonight's featured ensembles — the
+  // one piece of program/theme information that actually exists, mirroring
+  // how the top performer's uniform design feeds the article image. Fetched
+  // for the top three competitive ensembles plus SoundSport Best in Show.
+  const conceptTargets = [...topPerformers.slice(0, 3), soundSportBestInShow]
+    .filter(Boolean)
+    .filter(r => r.uid && r.corpsClass);
+  const programConcepts = [];
+  if (db && dataDocId && conceptTargets.length > 0) {
+    for (const target of conceptTargets) {
+      try {
+        const profileDoc = await db.doc(`artifacts/${dataDocId}/users/${target.uid}/profile/data`).get();
+        const concept = profileDoc.exists
+          ? describeShowConcept(profileDoc.data()?.corps?.[target.corpsClass]?.showConcept)
+          : null;
+        if (concept) programConcepts.push({ corpsName: target.corpsName, concept });
+      } catch (profileError) {
+        logger.warn("Could not fetch show concept for article context:", profileError.message);
+      }
+    }
+  }
+  const programConceptsBlock = programConcepts.length > 0
+    ? programConcepts.map(p => `- "${p.corpsName}": performing ${p.concept}`).join('\n')
+    : '';
+
   const prompt = `You are a marching.art fantasy sports journalist writing a professional, data-grounded recap of tonight's results. These are FANTASY ensembles run by real users. You may write with an engaging sportswriter's voice and characterize the performances and the shape of the standings — but you have no interview access and no information beyond the scores and standings in the DATA block. Every factual detail — ensemble names, director names, scores, margins, competition names, locations, counts — must match the DATA block exactly. Do not state anything a reporter could not know from a scoresheet.
 
 ACCURACY RULES (read first)
@@ -255,7 +281,7 @@ ACCURACY RULES (read first)
 ${fieldMode === 'soundsport' ? `- No competitive ensembles tonight; SoundSport is non-competitive, so do NOT describe anyone as "winning" against anyone else. Performances are appraised by rating level, not rank.` : multiShow ? `- There are ${competitiveByShow.length} separate fantasy shows tonight at different venues. Ensembles at different shows did NOT compete head-to-head. When you cite a placement or margin, make the show clear.` : fieldMode === 'solo' ? `- Only one competitive ensemble performed tonight: "${topPerformers[0].corpsName}" at ${competitiveByShow[0]?.name || fantasyShowName}${competitiveByShow[0]?.location ? ` (${competitiveByShow[0].location})` : ''}. There are no opponents to frame against — do not invent rivals, runners-up, or head-to-head narratives.` : `- All ensembles tonight competed at the same fantasy show: ${competitiveByShow[0]?.name || fantasyShowName}${competitiveByShow[0]?.location ? ` (${competitiveByShow[0].location})` : ''}.`}
 - The ranked lines give the exact gap to the ensemble directly above ("[0.041 behind the ensemble above]") — quote those verbatim and never re-derive them, and don't state a margin between two non-adjacent ensembles that the data doesn't provide.
 - HOME CITY IS NOT THE VENUE. Each ranked line may list the corps' home city as "(based in X)" — that is where the program is based, NOT where it performed. The performance venue is the SHOW location in the section header. Never write that an ensemble performed, competed, or delivered its show "in" its home city unless that city is the show venue. Refer to a home city only as the corps' base (e.g., "the Denver-based ensemble"), never as the location of tonight's performance.
-- Beyond your own analytical characterization of the results, invent nothing else: no rivalries, backstories, injuries, program/show themes, or biographical details. Do not reveal specific roster/lineup picks.
+- Beyond your own analytical characterization of the results, invent nothing else: no rivalries, backstories, injuries, or biographical details. Do not reveal specific roster/lineup picks. Program/show themes may be referenced ONLY for ensembles listed in the PROGRAM CONCEPTS block, exactly as described there — never invent a theme for anyone else.
 - Director names in the DATA block are whatever each user set as their displayName — some are real names ("Sarah Jones"), some are usernames ("elithecreature", "mike_42", "BluecoatsFan"). When you refer to a director, prefer an ensemble-based reference ("Mendota DBC's director", "the director behind Stellar Vista"). Use the bare displayName only when it reads like a real name (a capitalized word with a space). For handle-style names, wrap them in the role ("director elithecreature") so the reader sees a screen name rather than a first name — never use a handle as a bare first name.
 
 ${NEWS_INTEGRITY_RULES}
@@ -270,7 +296,7 @@ Sourcing: Data-only recap — you have the scores and standings and nothing else
 ===== DATA =====
 TOTAL COMPETITIVE ENSEMBLES: ${totalCompetitors}
 ${directorClassBlock ? `\nDIRECTOR REFERENCE GUIDE (check this before naming any director — "HANDLE" names should NEVER be used as a bare first name; refer via the ensemble instead):\n${directorClassBlock}\n` : ''}${totalCompetitors === 0 ? 'No competitive ensembles tonight — this is a SoundSport-only evening.' : multiShow ? `\nRESULTS BY SHOW\n${resultsByShowBlock}\n\nOVERALL RANKING (across all shows tonight — reference carefully; these ensembles did NOT all face each other):\n${overallRankingBlock}` : `\nRESULTS\n${resultsByShowBlock}`}
-${captionLeadersBlock ? `\nCAPTION LEADERS AMONG TONIGHT'S ENSEMBLES (who won each scoring caption — the winner didn't necessarily sweep):\n${captionLeadersBlock}\n` : ''}
+${captionLeadersBlock ? `\nCAPTION LEADERS AMONG TONIGHT'S ENSEMBLES (who won each scoring caption — the winner didn't necessarily sweep):\n${captionLeadersBlock}\n` : ''}${programConceptsBlock ? `\nPROGRAM CONCEPTS (real, director-designed show concepts — the only theme information that exists; ensembles not listed have no known concept):\n${programConceptsBlock}\n` : ''}
 
 ${soundSportResults.length > 0 ? `SOUNDSPORT RATINGS (non-competitive, ratings-only showcase — NEVER reveal SoundSport scores, only rating levels):
 ${soundSportBestInShow ? `Best in Show: "${soundSportBestInShow.corpsName}" (${soundSportBestInShow.displayName || 'Unknown'})` : ''}
@@ -354,9 +380,11 @@ ${mode.bodyNote ? `${mode.bodyNote}\n` : ''}${captionLeadersBlock && fieldMode !
       }
     }
 
+    const topConcept = programConcepts.find(p => p.corpsName === topCorps?.corpsName);
+    const imageContext = `${fieldMode === 'soundsport' ? `SoundSport showcase on Day ${reportDay}` : `Performance finale on Day ${reportDay}`}${topConcept ? ` — the ensemble is performing ${topConcept.concept}` : ''}`;
     const imagePrompt = buildFantasyPerformersImagePrompt(
       topCorps?.corpsName || "Champion Corps",
-      fieldMode === 'soundsport' ? `SoundSport showcase on Day ${reportDay}` : `Performance finale on Day ${reportDay}`,
+      imageContext,
       corpsLocation,
       uniformDesign,
       reportDay,

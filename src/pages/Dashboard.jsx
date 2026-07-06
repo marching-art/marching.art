@@ -25,11 +25,11 @@ const RenameDuplicateCorpsModal = lazy(
 const StreakModal = lazy(() => import('../components/modals/StreakModal'));
 const CorpsCoinModal = lazy(() => import('../components/modals/CorpsCoinModal'));
 const SeasonRecapModal = lazy(() => import('../components/modals/SeasonRecapModal'));
+const ShowConceptModal = lazy(() => import('../components/modals/ShowConceptModal'));
 
 import {
   ClassUnlockCongratsModal,
   CorpsRegistrationModal,
-  EditCorpsModal,
   DeleteConfirmModal,
   RetireConfirmModal,
   MoveCorpsModal,
@@ -115,8 +115,8 @@ const Dashboard = () => {
     setShowCaptionSelection,
     selectedCaption,
     setSelectedCaption,
-    showEditCorps,
-    setShowEditCorps,
+    showConceptModal,
+    setShowConceptModal,
     showDeleteConfirm,
     setShowDeleteConfirm,
     showMoveCorps,
@@ -144,7 +144,6 @@ const Dashboard = () => {
     handleAchievementClose,
     handleSeasonRecapClose,
     handleSeasonSetupFinish,
-    handleEditCorps,
     handleDeleteCorps,
     handleRetireCorps,
     handleMoveCorps,
@@ -321,6 +320,7 @@ const Dashboard = () => {
               <div className="lg:col-start-3 lg:row-start-1" data-tour="scorecard">
                 <SeasonScorecard
                   themeClass={equippedCardTheme?.cardClass}
+                  onShowConcept={() => setShowConceptModal(true)}
                   score={userCorpsScore}
                   rank={userCorpsRank}
                   rankChange={userRankChange}
@@ -387,7 +387,7 @@ const Dashboard = () => {
                   profile={profile}
                   resultCount={recentResults.length}
                   onEditLineup={() => openCaptionSelection()}
-                  onSetConcept={() => setShowEditCorps(true)}
+                  onSetConcept={() => setShowConceptModal(true)}
                 />
 
                 {/* Daily Challenges - drives daily return visits */}
@@ -534,16 +534,15 @@ const Dashboard = () => {
         </Suspense>
       )}
 
-      {showEditCorps && activeCorps && (
-        <EditCorpsModal
-          onClose={() => setShowEditCorps(false)}
-          onSubmit={handleEditCorps}
-          currentData={{
-            name: activeCorps.corpsName || activeCorps.name,
-            location: activeCorps.location,
-            showConcept: activeCorps.showConcept,
-          }}
-        />
+      {showConceptModal && activeCorps && (
+        <Suspense fallback={<ModalLoadingFallback />}>
+          <ShowConceptModal
+            onClose={() => setShowConceptModal(false)}
+            corpsClass={activeCorpsClass}
+            corpsName={activeCorps.corpsName || activeCorps.name}
+            currentConcept={activeCorps.showConcept}
+          />
+        </Suspense>
       )}
 
       {showDeleteConfirm && activeCorps && (

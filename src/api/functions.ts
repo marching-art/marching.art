@@ -61,9 +61,13 @@ export const selectUserShows = createCallable<
   { week: number; shows: unknown[]; corpsClass: string },
   void
 >('selectUserShows');
-export const saveShowConcept = createCallable<{ corpsClass: string; showConcept: string }, void>(
-  'saveShowConcept'
-);
+export const saveShowConcept = createCallable<
+  {
+    corpsClass: string;
+    showConcept: { theme: string; musicSource: string; drillStyle: string };
+  },
+  { success: boolean; message: string }
+>('saveShowConcept');
 export const getHotCorps = createCallable<void, { hotCorps: Record<string, unknown> }>(
   'getHotCorps'
 );

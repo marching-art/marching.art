@@ -79,9 +79,21 @@ await check(
   'owner edits corps cosmetic fields',
   assertSucceeds(
     updateDoc(doc(authed(), profilePath), {
-      'corps.worldClass.corpsName': 'Renamed Corps',
       'corps.worldClass.location': 'Elsewhere',
       'corps.worldClass.showConcept': 'New Show',
+    })
+  )
+);
+
+// Corps identity is permanent: names are set at registration (registerCorps
+// callable) and changed only by the admin duplicate-rename flow — retiring
+// and restarting is the player path to a new name.
+await freshSeed();
+await check(
+  'owner cannot rename a competitive-class corps',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), {
+      'corps.worldClass.corpsName': 'Renamed Corps',
     })
   )
 );

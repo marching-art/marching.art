@@ -40,11 +40,14 @@ function touchesProtectedProfileFields() {
 }
 
 // The corps map itself stays client-writable because cosmetic fields
-// (corpsName, location, showConcept) are edited from the dashboard and
-// onboarding creates the soundSport corps client-side — but the subfields
-// the scoring engine and leaderboards trust must only change through Cloud
-// Functions: lineups/trade counters via the saveLineup callable, season
-// scores via the scoring processors, and mustRename via renameCorps.
+// (location, uniform design) are edited from the dashboard and onboarding
+// creates the soundSport corps client-side — but the subfields the scoring
+// engine and leaderboards trust must only change through Cloud Functions:
+// lineups/trade counters via the saveLineup callable, season scores via the
+// scoring processors, and mustRename via renameCorps. corpsName is guarded
+// too: corps identity is permanent (retire and restart instead of renaming),
+// so names are set only at registration (registerCorps callable) and changed
+// only by the admin duplicate-rename flow.
 // Deleting a whole class entry (setting it to null) stays allowed; a
 // director can only zero out their own corps that way, not forge scores.
 function corpsClassUntouched(corpsClass) {
@@ -53,6 +56,7 @@ function corpsClassUntouched(corpsClass) {
      request.resource.data.get(['corps', corpsClass, 'lineupKey'], null) == resource.data.get(['corps', corpsClass, 'lineupKey'], null) &&
      request.resource.data.get(['corps', corpsClass, 'weeklyTrades'], null) == resource.data.get(['corps', corpsClass, 'weeklyTrades'], null) &&
      request.resource.data.get(['corps', corpsClass, 'mustRename'], null) == resource.data.get(['corps', corpsClass, 'mustRename'], null) &&
+     request.resource.data.get(['corps', corpsClass, 'corpsName'], null) == resource.data.get(['corps', corpsClass, 'corpsName'], null) &&
      request.resource.data.get(['corps', corpsClass, 'totalSeasonScore'], null) == resource.data.get(['corps', corpsClass, 'totalSeasonScore'], null));
 }
 

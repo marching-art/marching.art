@@ -3,7 +3,6 @@
 export {
   ClassUnlockCongratsModal,
   CorpsRegistrationModal,
-  EditCorpsModal,
   DeleteConfirmModal,
   RetireConfirmModal,
   MoveCorpsModal,

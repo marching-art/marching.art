@@ -47,7 +47,7 @@ const STEPS = [
   {
     id: 'show_concept',
     title: 'Design Your Show',
-    description: 'Set a show concept — it earns synergy bonuses at scoring',
+    description: 'Set a show concept — matching styles earn nightly CorpsCoin bonuses',
     xp: 50,
     coin: 50,
     icon: Palette,
@@ -118,7 +118,7 @@ const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept })
       hasShows: corpsList.some((c) =>
         Object.values(c.selectedShows || {}).some((w) => Array.isArray(w) && w.length > 0)
       ),
-      hasConcept: corpsList.some((c) => !!c.showConcept),
+      hasConcept: corpsList.some((c) => !!(c.showConcept && c.showConcept.theme)),
       hasResults: (resultCount || 0) > 0,
       hasPrediction: Object.keys(profile?.predictions || {}).length > 0,
       hasTraded: corpsList.some((c) => (c.weeklyTrades?.used || 0) > 0),

@@ -1,5 +1,9 @@
 // Backend Show Concept Synergy Logic
-// Used in Cloud Functions for scoring calculations
+//
+// Show concepts are a GAME system, never a competitive one: synergy drives
+// the nightly show-design CorpsCoin award (scoring.js) and gives the daily
+// article generator real program themes to write about — it must never
+// modify a competitive score.
 
 const SHOW_THEMES = [
     { value: 'classical', label: 'Classical/Orchestral', tags: ['classical', 'traditional', 'elegant'] },
@@ -189,10 +193,30 @@ function calculateLineupSynergyBonus(showConcept, lineup, corpsSynergyData = nul
     };
 }
 
+
+/**
+ * Human-readable description of a structured show concept, for article
+ * prompts and other narrative surfaces. Returns null for missing or
+ * legacy free-text concepts.
+ */
+function describeShowConcept(showConcept) {
+    if (!showConcept || typeof showConcept !== 'object') return null;
+    const theme = SHOW_THEMES.find(t => t.value === showConcept.theme);
+    const source = MUSIC_SOURCES.find(s => s.value === showConcept.musicSource);
+    const drill = DRILL_STYLES.find(d => d.value === showConcept.drillStyle);
+    if (!theme && !source && !drill) return null;
+    const parts = [];
+    if (theme) parts.push(`a ${theme.label} program`);
+    if (source) parts.push(`built on ${source.label.toLowerCase()} music`);
+    if (drill) parts.push(`with ${drill.label.toLowerCase()} drill`);
+    return parts.join(' ');
+}
+
 module.exports = {
     getShowConceptTags,
     calculateCaptionSynergyBonus,
     calculateLineupSynergyBonus,
+    describeShowConcept,
     getDefaultCorpsTags,
     SHOW_THEMES,
     MUSIC_SOURCES,
