@@ -371,12 +371,15 @@ const EnsembleCard = memo(
     info,
     avatarUrl,
     location,
+    showTitle,
   }: {
     corpsName: string;
     classKey: CorpsClass;
     info: EnsembleProfileInfo;
     avatarUrl?: string;
     location?: string;
+    /** This season's show title (from the per-season show concept) */
+    showTitle?: string | null;
   }) => {
     const classConfig = getClassDisplay(classKey);
     const hasAnyInfo = !!(
@@ -405,6 +408,9 @@ const EnsembleCard = memo(
             <div className="text-xs font-bold text-white truncate">{corpsName}</div>
             <div className="flex items-center gap-2 text-[9px] text-gray-500">
               <span className={`font-bold ${classConfig.color}`}>{classConfig.name}</span>
+              {showTitle && (
+                <span className="text-[#0057B8] italic truncate">&ldquo;{showTitle}&rdquo;</span>
+              )}
               {location && (
                 <span className="flex items-center gap-1">
                   <MapPin className="w-2.5 h-2.5" /> {location}

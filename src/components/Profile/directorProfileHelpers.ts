@@ -128,6 +128,15 @@ export function calculateDirectorRating(profile: UserProfile): number {
   return Math.min(rating, 3000);
 }
 
+// This season's show title from the per-season concept (legacy free-text
+// concepts don't count).
+export function getShowTitle(corps: { showConcept?: unknown }): string | null {
+  const concept = corps?.showConcept;
+  if (!concept || typeof concept !== 'object') return null;
+  const name = (concept as { showName?: string | null }).showName;
+  return typeof name === 'string' && name.trim() ? name : null;
+}
+
 // Kept in sync with functions/src/helpers/xpCalculations.js getLevelTitle.
 // Extended tiers past Level 10: 15 Icon, 20 Hall of Famer, 25 Immortal, 30 Eternal.
 const LEVEL_TITLES: Record<number, string> = {

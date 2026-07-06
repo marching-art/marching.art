@@ -7,8 +7,8 @@
 // article generator real program themes to write about — competitive scores
 // are never affected (functions/src/helpers/showConceptSynergy.js).
 // Concepts reset each season at rollover — a new season means a new show.
-// Option lists mirror the backend's SHOW_THEMES / MUSIC_SOURCES /
-// DRILL_STYLES — keep in sync.
+// Option lists live in src/utils/showConcept.js (client mirror of the
+// backend lists).
 
 import React, { useState } from 'react';
 import { Palette, Music, Route, Sparkles, Type, X } from 'lucide-react';
@@ -16,35 +16,7 @@ import toast from 'react-hot-toast';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { saveShowConcept } from '../../api/functions';
-
-const SHOW_THEMES = [
-  { value: 'classical', label: 'Classical / Orchestral' },
-  { value: 'jazz', label: 'Jazz / Swing' },
-  { value: 'rock', label: 'Rock / Modern' },
-  { value: 'latin', label: 'Latin / World' },
-  { value: 'cinematic', label: 'Cinematic / Film' },
-  { value: 'abstract', label: 'Abstract / Conceptual' },
-  { value: 'patriotic', label: 'Patriotic / Americana' },
-  { value: 'electronic', label: 'Electronic / Synthesized' },
-  { value: 'broadway', label: 'Broadway / Musical Theater' },
-];
-
-const MUSIC_SOURCES = [
-  { value: 'original', label: 'Original Composition' },
-  { value: 'arranged', label: 'Arranged Classical' },
-  { value: 'popular', label: 'Popular Music' },
-  { value: 'film', label: 'Film Score' },
-  { value: 'mixed', label: 'Mixed / Eclectic' },
-];
-
-const DRILL_STYLES = [
-  { value: 'traditional', label: 'Traditional / Symmetrical' },
-  { value: 'asymmetrical', label: 'Asymmetrical / Modern' },
-  { value: 'curvilinear', label: 'Curvilinear / Flowing' },
-  { value: 'angular', label: 'Angular / Geometric' },
-  { value: 'scatter', label: 'Scatter / Organic' },
-  { value: 'dance', label: 'Dance / Movement-Heavy' },
-];
+import { SHOW_THEMES, MUSIC_SOURCES, DRILL_STYLES } from '../../utils/showConcept';
 
 const PickerGroup = ({ label, icon: Icon, options, value, onChange }) => (
   <div>

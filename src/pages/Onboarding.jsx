@@ -260,7 +260,6 @@ const Onboarding = () => {
           soundSport: {
             name: formData.corpsName.trim(),
             corpsName: formData.corpsName.trim(),
-            showConcept: 'Untitled Show',
             class: 'soundSport',
             createdAt: new Date(),
             seasonId: seasonData?.seasonUid || null,

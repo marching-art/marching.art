@@ -56,6 +56,7 @@ import {
   getCorpsAvatarUrl,
   getCorpsWithAvatars,
   getCompetitionTrophies,
+  getShowTitle,
 } from './directorProfileHelpers';
 import type { SeasonHistoryEntry } from './directorProfileHelpers';
 import { getEquippedCosmetic } from '../../utils/cosmetics';
@@ -586,6 +587,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                       location={corps.location}
                       avatarUrl={corps.avatarUrl}
                       info={corps.ensembleInfo || {}}
+                      showTitle={getShowTitle(corps)}
                     />
                   ) : (
                     <UnregisteredEnsembleCard key={classKey} classKey={classKey} />
