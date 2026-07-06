@@ -1,7 +1,8 @@
 # Engagement, Economy & Gamification Review
 
-> Generated: July 2026
+> Generated: July 2026 (revised same month)
 > Scope: complete review of the user experience, gameplay process, and gamification elements, with a concrete plan for making CorpsCoin and XP valuable, giving new directors a guided path, and giving long-term directors goals worth chasing.
+> Assumption: **no real-money monetization.** The game is donation-supported (Buy Me a Coffee). CorpsCoin is a fully closed-loop currency — earned only by playing, spent only in-game. `MONETIZATION_ROADMAP.md` is deprecated; only its competitive-integrity principle carries forward.
 
 ---
 
@@ -85,8 +86,9 @@ There is also a **legacy client-side streak writer** in `useDashboardData.js:206
 ## Part 2 — Design Principles for the Fix
 
 1. **Sinks must recur.** One-time purchases (class unlocks) can't balance perpetual faucets. Every economy that works has consumables, seasonal catalogs, or prestige tiers.
-2. **Prestige over power.** Consistent with `MONETIZATION_ROADMAP.md`'s no-pay-to-win promise: CorpsCoin must never buy scores, extra trades, or competitive edges. It buys **identity, ceremony, and status** — which is what drum corps culture actually runs on (uniforms, corps names, legacy, the retirement of a jacket).
+2. **Prestige over power.** CorpsCoin must never buy scores, extra trades, or competitive edges. It buys **identity, ceremony, and status** — which is what drum corps culture actually runs on (uniforms, corps names, legacy, the retirement of a jacket).
 3. **Price against weekly income.** Anchor: active player ≈ 800–1,200 CC/week. Consumables at ~25–40% of a week's income; cosmetics at 1–3 weeks; prestige items at 10–25 weeks (there to drain long-term hoards).
+   *Because there is no real-money CC injection, the economy is fully closed-loop: every coin in circulation was earned by playing. That makes balance tractable — tune faucets and sink prices freely without worrying about purchased hoards, and "unfair advantage" is structurally impossible as long as sinks stay cosmetic.*
 4. **Absorb existing hoards deliberately.** Veterans may hold 20,000–50,000+ CC. Launching the shop with only 500 CC items lets them buy everything on day one and feel done. The catalog needs a top shelf from day one.
 5. **The season is the heartbeat.** Both season types run 49-day cycles year-round — every reward structure should reset, pay out, and re-hook at season boundaries, because the infrastructure for that (archival, champions, wizard re-entry) already exists.
 
@@ -125,7 +127,7 @@ There is also a **legacy client-side streak writer** in `useDashboardData.js:206
 
 - Deploy `payLeagueEntryFee`; commissioner-set buy-ins (100–1,000 CC) fund real prize pools — leagues become CC circulation loops instead of pure faucets
 - League cosmetics bought from the league treasury: custom league trophy styles, banner, chat badge (2,500–10,000 CC)
-- Friendly matchup side-wagers, escrowed and capped (e.g., 100 CC) — opt-in, symmetric, zero scoring impact
+- *(Optional, later)* Friendly matchup side-wagers, escrowed and capped (e.g., 100 CC) — opt-in, symmetric, zero scoring impact. Zero-sum transfers don't inflate the economy, but they add moderation edge cases; skip until leagues are humming.
 
 **B4. Prestige sinks — for the 40,000 CC veterans:**
 
@@ -139,7 +141,7 @@ There is also a **legacy client-side streak writer** in `useDashboardData.js:206
 
 **C1. Extend the ladder past Level 10.** Keep 1,000 XP/level; add titles (Legend → 15 Icon → 20 Hall of Famer → 25 Immortal → 30+ numbered "Legend II"-style prestige), a small CC stipend per level-up (+100 CC), and a cosmetic unlock every 5 levels. Cheap to implement — it's a table in `xpCalculations.js` plus profile display.
 
-**C2. Seasonal Director's Pass (free).** Repurpose the battle-pass structure from `MONETIZATION_ROADMAP.md` as a **free seasonal reward track first**: ~30 tiers over the 49-day season, fed by the XP players already earn (login, challenges, predictions, participation), paying out CC, cosmetics, titles, and streak freezes. This converts XP from a lifetime odometer into a **seasonal ladder with an endpoint you can see**, gives every login visible progress, and — later — a premium track can be added on top with the Stripe work already scoped. This is the single highest-impact engagement system available, and ~70% of its inputs (XP events, season boundaries, reward granting) already exist.
+**C2. Seasonal reward ladder (free, one track, keep it simple).** A single free seasonal reward ladder — deliberately *not* a battle pass: no premium track, no separate pass XP pool, no FOMO mechanics. ~15–20 tiers over the 49-day season, fed directly by the XP players already earn (login, challenges, predictions, participation), paying out CC, one seasonal cosmetic set, and a title at the cap. Implementation is one reward table + a claim function + a progress bar; season boundaries and XP events already exist. This converts XP from a lifetime odometer into a **seasonal ladder with a visible endpoint**, and the seasonal cosmetic set (themed to the off-season's name — the seasons are already thematically named) creates recurring demand in the shop without a new art pipeline. Miss a season? The set rotates into the regular catalog a year later at a higher price — gentle exclusivity, no punishment.
 
 **C3. Caption mastery tracks.** Cumulative per-caption performance across seasons ("Brass: 2,400 lifetime points → Brass Specialist III") with titles/badges. Deepens the actual strategic identity of the game (caption picking) rather than bolting on generic quests. Data already exists in recaps/season history.
 
@@ -170,14 +172,34 @@ This directly addresses "new directors learning the ropes": the trade windows, s
 
 ## Part 4 — Suggested Sequencing
 
+Ordered for a donation-supported project where development time is the scarce resource. Each phase is independently shippable and valuable; stopping after any phase leaves the game better balanced than before.
+
 | Phase | Work | Effort | Payoff |
 | --- | --- | --- | --- |
 | 1 | A1–A3, A5 (wire streak freeze, season payouts, CC ledger, cleanup) | ~1 week | Economy stops being broken; Finals becomes a payday |
 | 2 | A4 unified achievements + D4 graduation ceremonies + C1 extended levels | ~1–2 weeks | Every existing milestone starts paying and celebrating |
-| 3 | D1 First Season Journey + D2 deadline visibility + D3 rookie leagues | ~2 weeks | New-director activation and week-2 retention |
-| 4 | B1 Corps Identity Shop (+ B2 consumables) | ~2–3 weeks | The currency finally has a job; leverages built uniform/avatar tech |
-| 5 | C2 free Director's Pass | ~2–3 weeks | The flagship seasonal engagement ladder |
-| 6 | B3 league economy, B4 prestige sinks, C3 mastery, E1–E3 records | ongoing | Endgame + veteran hoard drain; premium pass/Stripe becomes viable after |
+| 3 | D1 First Season Journey questline + D2 deadline visibility + D3 rookie leagues | ~2 weeks | New-director activation and week-2 retention |
+| 4 | B1 Corps Identity Shop **v1: three item types only** (director titles, uniform palettes, corps card themes) + streak freeze in-shop | ~1–2 weeks | The currency gets a job with minimal new surface area |
+| 5 | E1 Records Book + B4 show sponsorship | ~1–2 weeks | Endgame targets + the big hoard drain, both mostly reads of existing data |
+| 6 | C2 seasonal reward ladder, then shop expansion (emblems, celebrations, league cosmetics, B3 entry fees), C3 mastery, E2–E3 | ongoing | The seasonal cadence layer, once the fundamentals have a season of data behind them |
+
+Explicitly dropped from the original plan: premium pass track, Stripe integration, CC bundles, and all real-money cosmetics — the project is donation-supported and the closed-loop economy is stronger for it. One optional nod to supporters: a manually granted, purely cosmetic **"Supporter" profile badge** for Buy-Me-a-Coffee donors. No gameplay effect, no store — just a visible thank-you.
+
+---
+
+## Part 5 — Will it feel balanced? (the math)
+
+Balance here has two axes. **Fairness** is solved by construction: nothing purchasable touches scoring, so no amount of CC — hoarded or fresh — changes competition. What remains is **pacing**: does earning feel meaningful and does spending feel affordable-but-not-trivial? Checked against the actual faucet rates:
+
+- **The active-player weekly budget (~800–1,200 CC)** comfortably covers one consumable (streak freeze 300) plus one entry-tier cosmetic (~500) per week, or saves toward a 2,500 CC item in ~3 weeks. That is a healthy "always something in reach, always something to save for" cadence.
+- **Class income asymmetry is real but acceptable.** World Class show payouts are 4× SoundSport's (200 vs 50 CC/show). Since sinks are cosmetic, this is progression flavor, not unfairness — but the shop needs a 250–500 CC entry tier so rookies can buy *something* in their first two weeks. First purchase is the moment the currency becomes real.
+- **Veteran hoards (est. 20,000–50,000 CC) are absorbed, not confiscated.** Prestige tier (10,000–25,000: sponsorships, plaques, banners) plus the full cosmetic catalog gives an opening-day catalog depth of roughly 40,000–60,000 CC for a completionist. Veterans get a shopping spree, not instant completion — and seasonal rotation (C2) keeps demand recurring afterward.
+- **XP pacing is already right.** A daily-active player earns ~450–600 XP/week → a level every ~2 weeks → World Class via XP in ~4–5 months, matching the target in `docs/GAMIFICATION_REDESIGN.md`. Extended levels at the same rate mean a title bump roughly every 10 weeks — slow enough to mean something.
+- **Season payouts (Phase 1) won't inflate.** Even the champion's 1,000 CC + league pool is ~1 week of active income, arriving once per 49 days.
+- **One caution: AI avatar regeneration costs real API money.** Pricing regen tokens in CC (250+) conveniently rate-limits actual infrastructure spend — keep that sink priced firmly and consider a hard daily cap.
+- **Instrument it.** The `corpsCoinHistory` ledger already records every transaction with a type. A one-page admin stat — total CC minted vs. sunk per week — is the only dashboard needed to tune prices after launch. Expect to adjust cosmetic prices once, about one season in.
+
+The honest overall verdict: the plan is a set of **small independent systems attached to one existing loop**, not one big interlocking machine. Phases 1–2 involve no new balance decisions at all (they activate rates already in the code). The first genuinely new balance surface is shop pricing in Phase 4, and a closed-loop cosmetic economy is forgiving — a mispriced palette is a shrug, not an exploit.
 
 ---
 
