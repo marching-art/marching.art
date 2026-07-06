@@ -46,7 +46,7 @@ export function useDashboardModals(user, dashboardData) {
   const [unretiring, setUnretiring] = useState(false);
   const [showCaptionSelection, setShowCaptionSelection] = useState(false);
   const [selectedCaption, setSelectedCaption] = useState(null);
-  const [showEditCorps, setShowEditCorps] = useState(false);
+  const [showConceptModal, setShowConceptModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showMoveCorps, setShowMoveCorps] = useState(false);
   const [showRetireConfirm, setShowRetireConfirm] = useState(false);
@@ -113,7 +113,7 @@ export function useDashboardModals(user, dashboardData) {
     const userModalOpen =
       showRegistration ||
       showCaptionSelection ||
-      showEditCorps ||
+      showConceptModal ||
       showDeleteConfirm ||
       showMoveCorps ||
       showRetireConfirm ||
@@ -128,7 +128,7 @@ export function useDashboardModals(user, dashboardData) {
   }, [
     showRegistration,
     showCaptionSelection,
-    showEditCorps,
+    showConceptModal,
     showDeleteConfirm,
     showMoveCorps,
     showRetireConfirm,
@@ -202,23 +202,6 @@ export function useDashboardModals(user, dashboardData) {
       }
     }
   }, [handleSeasonSetupComplete, handleSeasonSetupClose, user?.uid, seasonData?.seasonUid]);
-
-  const handleEditCorps = useCallback(
-    async (formData) => {
-      try {
-        await updateProfile(user.uid, {
-          [`corps.${activeCorpsClass}.corpsName`]: formData.name,
-          [`corps.${activeCorpsClass}.location`]: formData.location,
-          [`corps.${activeCorpsClass}.showConcept`]: formData.showConcept,
-        });
-        toast.success('Corps updated!');
-        setShowEditCorps(false);
-      } catch {
-        toast.error('Failed to update corps');
-      }
-    },
-    [user, activeCorpsClass]
-  );
 
   const handleDeleteCorps = useCallback(async () => {
     try {
@@ -381,8 +364,8 @@ export function useDashboardModals(user, dashboardData) {
     setShowCaptionSelection,
     selectedCaption,
     setSelectedCaption,
-    showEditCorps,
-    setShowEditCorps,
+    showConceptModal,
+    setShowConceptModal,
     showDeleteConfirm,
     setShowDeleteConfirm,
     showMoveCorps,
@@ -411,7 +394,6 @@ export function useDashboardModals(user, dashboardData) {
     handleAchievementClose,
     handleSeasonRecapClose,
     handleSeasonSetupFinish,
-    handleEditCorps,
     handleDeleteCorps,
     handleRetireCorps,
     handleMoveCorps,

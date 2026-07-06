@@ -3,6 +3,7 @@
 
 import React, { memo, useState, useRef, useEffect } from 'react';
 import {
+  Sparkles,
   Trophy,
   TrendingUp,
   TrendingDown,
@@ -47,6 +48,8 @@ const SeasonScorecard = memo(
     // Corps Identity Shop card theme (equipped cosmetic) — overrides the
     // default container border/background when set.
     themeClass = null,
+    // Opens the per-season show concept designer (synergy bonuses at scoring)
+    onShowConcept,
     // Corps management: all optional so existing usage keeps rendering unchanged.
     canManage = false,
     canMove = false,
@@ -78,8 +81,12 @@ const SeasonScorecard = memo(
       setMenuOpen(false);
       onRetireCorps?.();
     };
+    const handleShowConcept = () => {
+      setMenuOpen(false);
+      onShowConcept?.();
+    };
 
-    const showMenu = !!(onMoveCorps || onRetireCorps);
+    const showMenu = !!(onMoveCorps || onRetireCorps || onShowConcept);
 
     return (
       <div className={`border overflow-hidden ${themeClass || 'bg-[#1a1a1a] border-[#333]'}`}>
@@ -149,6 +156,18 @@ const SeasonScorecard = memo(
                         <Lock className="w-3 h-3 mt-0.5 flex-shrink-0" />
                         <span>{lockReason}</span>
                       </div>
+                    )}
+                    {onShowConcept && (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={handleShowConcept}
+                        className="w-full flex items-center gap-2 px-3 py-2 min-h-touch text-xs text-left text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
+                        title="Design your show — theme, music, and drill earn synergy bonuses"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        Show concept
+                      </button>
                     )}
                     {onMoveCorps && (
                       <button

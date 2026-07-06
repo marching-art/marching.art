@@ -4,7 +4,6 @@
 
 export { default as ClassUnlockCongratsModal } from '../modals/ClassUnlockModal';
 export { default as CorpsRegistrationModal } from '../modals/CorpsRegistrationModal';
-export { default as EditCorpsModal } from '../modals/EditCorpsModal';
 export { default as DeleteConfirmModal } from '../modals/DeleteCorpsModal';
 export { default as RetireConfirmModal } from '../modals/RetireCorpsModal';
 export { default as MoveCorpsModal } from '../modals/MoveCorpsModal';

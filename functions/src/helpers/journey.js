@@ -104,7 +104,9 @@ function verifyJourneyStep(step, profileData) {
         Object.values(c.selectedShows || {}).some((shows) => Array.isArray(shows) && shows.length > 0)
       );
     case 'concept':
-      return corpsList.some((c) => !!c.showConcept);
+      // Must be the structured concept the synergy scorer reads — a legacy
+      // free-text string doesn't count
+      return corpsList.some((c) => !!(c.showConcept && c.showConcept.theme));
     case 'prediction':
       return Object.keys(profileData.predictions || {}).length > 0;
     case 'trade':
