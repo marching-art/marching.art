@@ -55,6 +55,7 @@ const {
   postLeagueMessage,
 } = require("./src/callable/leagues");
 const { completeJourneyStep } = require("./src/callable/journey");
+const { purchaseShopItem, equipShopItem } = require("./src/callable/shop");
 const {
   inviteDirectorToLeague,
   respondToLeagueInvitation,
@@ -199,6 +200,8 @@ module.exports = {
   joinLeagueByCode,
   joinRookieLeague,
   completeJourneyStep,
+  purchaseShopItem,
+  equipShopItem,
   leaveLeague,
   generateMatchups,
   updateMatchupResults,

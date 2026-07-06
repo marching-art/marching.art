@@ -317,6 +317,16 @@ export const completeJourneyStep = createCallable<{ stepId: string }, CompleteJo
   'completeJourneyStep'
 );
 
+export const purchaseShopItem = createCallable<
+  { itemId: string },
+  { success: boolean; itemId: string; name: string; newBalance: number; message: string }
+>('purchaseShopItem');
+
+export const equipShopItem = createCallable<
+  { itemId: string | null; slot?: string },
+  { success: boolean; slot: string; itemId: string | null; message: string }
+>('equipShopItem');
+
 export const joinRookieLeague = createCallable<
   void,
   { success: boolean; leagueId: string; leagueName: string; alreadyMember: boolean; message: string }

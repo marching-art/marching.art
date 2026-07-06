@@ -35,7 +35,7 @@ function touchesProtectedProfileFields() {
     'stats', 'trophies', 'username', 'createdAt', 'uid',
     'lifetimeStats', 'activeSeasonId', 'lastScoredDay', 'challenges',
     'predictions', 'predictionStats', 'achievements', 'lastRewardedLevel',
-    'journey'
+    'journey', 'cosmetics'
   ]);
 }
 

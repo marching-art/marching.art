@@ -76,6 +76,12 @@ export interface UserProfile {
   // Currency
   corpsCoin: number;
 
+  // Corps Identity Shop cosmetics (server-only field; purchased with CC)
+  cosmetics?: {
+    owned?: string[];
+    equipped?: Record<string, string | null>;
+  };
+
   // Unlocks
   unlockedClasses: CorpsClass[];
 

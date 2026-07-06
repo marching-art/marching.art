@@ -6,6 +6,7 @@
 // every server-side coin transaction.
 
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Coins, TrendingUp, TrendingDown, X } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
@@ -227,7 +228,14 @@ const CorpsCoinModal = ({ onClose }) => {
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end flex-shrink-0">
+          <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex items-center justify-between flex-shrink-0">
+            <Link
+              to="/shop"
+              onClick={onClose}
+              className="text-xs font-bold text-yellow-500 hover:text-yellow-400 uppercase tracking-wider"
+            >
+              Visit the Shop →
+            </Link>
             <button
               onClick={onClose}
               className="h-9 px-4 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6]"

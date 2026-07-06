@@ -67,6 +67,7 @@ import { useDashboardModals } from '../hooks/useDashboardModals';
 import { useLineupScores, useRecentResults, useBestInShowCount } from '../hooks/useDashboardScores';
 import { useSeasonStore } from '../store/seasonStore';
 import { getEffectiveDay, getNextSelectedShow } from '../utils/dashboardScoring';
+import { getEquippedCosmetic } from '../utils/cosmetics';
 
 // OPTIMIZATION #4: Constants moved to src/components/Dashboard/sections/constants.js
 // Imported via: CLASS_LABELS, CAPTIONS, CLASS_DISPLAY_NAMES, getSoundSportRating
@@ -174,6 +175,8 @@ const Dashboard = () => {
 
   // Computed values
   const lineup = useMemo(() => activeCorps?.lineup || {}, [activeCorps?.lineup]);
+  // Corps Identity Shop card theme (equipped cosmetic) for the scorecard
+  const equippedCardTheme = useMemo(() => getEquippedCosmetic(profile, 'cardTheme'), [profile]);
   const lineupCount = useMemo(() => Object.keys(lineup).length, [lineup]);
 
   // Enriched schedule (real start times + running order) for the Next Performance
@@ -316,6 +319,7 @@ const Dashboard = () => {
               {/* SCORECARD - top of mobile stack, top of right column on lg */}
               <div className="lg:col-start-3 lg:row-start-1" data-tour="scorecard">
                 <SeasonScorecard
+                  themeClass={equippedCardTheme?.cardClass}
                   score={userCorpsScore}
                   rank={userCorpsRank}
                   rankChange={userRankChange}
