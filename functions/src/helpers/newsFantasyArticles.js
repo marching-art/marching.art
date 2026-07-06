@@ -14,12 +14,13 @@ const {
 const {
   generateWithFactCheckGuard,
   generateImageWithImagen,
+  PAID_IMAGE_MODEL,
 } = require("./geminiService");
-const { getContextualPlaceholder } = require("./mediaService");
 // Only the fantasy-corps events article (Article 5, generateFantasyDailyArticle)
-// generates AI imagery — of the user's own fantasy corps. The Fantasy Market
-// Report (Article 4) analyzes real DCI corps, so it uses stock photography
-// instead of a fabricated depiction of a real corps.
+// generates AI imagery — of the user's own fantasy corps, using the quality
+// (paid) image model. The Fantasy Market Report (Article 4) analyzes real DCI
+// corps, so it carries no imagery at all (imageUrl: null), same as the DCI
+// articles — a fabricated depiction of a real corps would be misleading.
 const {
   buildFantasyPerformersImagePrompt,
 } = require("./newsImagePrompts");
@@ -391,7 +392,10 @@ ${mode.bodyNote ? `${mode.bodyNote}\n` : ''}${captionLeadersBlock && fieldMode !
       4 // articleIndex 4: Fantasy Daily
     );
 
-    const imageData = await generateImageWithImagen(imagePrompt);
+    // Explicitly pin the quality (paid) image model — this is the one nightly
+    // article that ships an AI image, and it should not silently degrade if the
+    // service-level default tier ever changes.
+    const imageData = await generateImageWithImagen(imagePrompt, { model: PAID_IMAGE_MODEL });
     const imageResult = await processGeneratedImage(imageData, "fantasy_daily");
 
     return {
@@ -622,22 +626,18 @@ ARTICLE REQUIREMENTS
       fieldCorpsNames: dayScores.map(s => s.corps),
     });
 
-    // The Fantasy Market Report analyzes real DCI corps, so it gets no
-    // AI-generated imagery (only the fantasy-corps events article does) — use a
-    // real stock marching-arts photo rather than a fabricated corps depiction.
-    const topCorpsForImage = dayScores[0];
-
     // Headline subject for the coverage ledger. Prefer the corps named in the
     // top BUY recommendation since that's what the headline pitch is built on;
     // fall back to the top-scoring corps.
-    const featuredCorps = content?.recommendations?.buy?.[0]?.corps || topCorpsForImage?.corps || null;
+    const featuredCorps = content?.recommendations?.buy?.[0]?.corps || dayScores[0]?.corps || null;
 
+    // The Fantasy Market Report analyzes real DCI corps, so it carries no
+    // imagery — only the fantasy-corps events article generates an image.
     return {
       type: ARTICLE_TYPES.FANTASY_RECAP,
       ...content,
       featuredCorps,
-      imageUrl: getContextualPlaceholder({ newsCategory: "fantasy_recap", headline: content.headline }),
-      isPlaceholder: true,
+      imageUrl: null,
       reportDay,
     };
   } catch (error) {

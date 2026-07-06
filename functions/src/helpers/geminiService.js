@@ -348,6 +348,11 @@ module.exports = {
   generateStructuredContent,
   generateWithFactCheckGuard,
   generateImageWithImagen,
+  // Exported so callers can pin an explicit tier instead of relying on the
+  // USE_PAID_IMAGE_GEN default: nightly fantasy-corps article images use
+  // PAID_IMAGE_MODEL; profile uniform/logo avatars use FREE_IMAGE_MODEL.
+  PAID_IMAGE_MODEL,
+  FREE_IMAGE_MODEL,
   DRUM_CORPS_VISUAL_CONTEXT,
   IMAGE_NEGATIVE_PROMPT,
 };

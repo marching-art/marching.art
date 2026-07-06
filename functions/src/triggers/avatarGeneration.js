@@ -17,6 +17,7 @@ const {
   generateImageWithImagen,
   initializeGemini,
 } = require("../helpers/newsGeneration");
+const { FREE_IMAGE_MODEL } = require("../helpers/geminiService");
 const { uploadFromUrl } = require("../helpers/mediaService");
 const { assertAuth, assertAdmin } = require("../helpers/callableGuards");
 
@@ -154,10 +155,12 @@ async function generateAndSaveAvatar({ userId, corpsClass, corpsName, location, 
     hasUniformDesign: !!uniformDesign?.primaryColor,
   });
 
-  // Generate image using Gemini Flash for faster avatar generation
-  // Use 1:1 aspect ratio for square avatars that fill the frame
+  // Uniform/logo avatars always use the FREE-tier image model (Gemini 2.5 Flash
+  // Image, 500 RPD free quota) — avatars are user-triggered and high-volume, so
+  // they must never bill against the paid model reserved for the nightly
+  // fantasy-corps article image. 1:1 aspect ratio for square avatars.
   const imageData = await generateImageWithImagen(prompt, {
-    model: "gemini-2.5-flash-image",
+    model: FREE_IMAGE_MODEL,
     aspectRatio: "1:1",
   });
 
