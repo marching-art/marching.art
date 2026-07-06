@@ -47,8 +47,11 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   const dragControls = useDragControls();
   const previousActiveElement = useRef<Element | null>(null);
 
-  // Calculate heights
-  const maxHeight = `${snapPoints[snapPoints.length - 1]}vh`;
+  // Calculate heights — dvh tracks the visible viewport on iOS (the Safari
+  // toolbar shrinks it below 100vh). Inline styles can't carry a fallback
+  // declaration pair, so feature-detect and use vh where dvh is unsupported.
+  const dvhSupported = typeof CSS !== 'undefined' && CSS.supports?.('height', '100dvh') === true;
+  const maxHeight = `${snapPoints[snapPoints.length - 1]}${dvhSupported ? 'dvh' : 'vh'}`;
   const dismissThreshold = 150; // pixels to drag down before dismissing
 
   // Lock body scroll when open

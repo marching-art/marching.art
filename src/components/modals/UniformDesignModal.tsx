@@ -169,7 +169,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
         aria-labelledby="modal-title-uniform-design"
       >
         <div
-          className="w-full max-w-2xl bg-[#1a1a1a] border border-[#333] rounded-sm max-h-[90vh] flex flex-col"
+          className="w-full max-w-2xl bg-[#1a1a1a] border border-[#333] rounded-sm max-h-[90dvh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}

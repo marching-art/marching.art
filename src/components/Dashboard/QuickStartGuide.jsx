@@ -111,7 +111,7 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-2xl max-h-[85vh] bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden flex flex-col"
+          className="w-full max-w-2xl max-h-[85dvh] bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden flex flex-col"
         >
           {/* Header */}
           <div className="p-6 border-b border-[#333] bg-[#222]">

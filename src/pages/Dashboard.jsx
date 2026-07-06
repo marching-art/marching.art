@@ -296,10 +296,40 @@ const Dashboard = () => {
 
         {activeCorps ? (
           <div className="p-3 md:p-4">
-            {/* 2/3 + 1/3 Grid Layout - balanced columns */}
+            {/* 2/3 + 1/3 Grid Layout - balanced columns. The scorecard is
+                first in the DOM so the headline score/rank leads the mobile
+                stack; explicit lg placement keeps the desktop layout
+                (main left, scorecard atop the right sidebar) unchanged. */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {/* SCORECARD - top of mobile stack, top of right column on lg */}
+              <div className="lg:col-start-3 lg:row-start-1" data-tour="scorecard">
+                <SeasonScorecard
+                  score={userCorpsScore}
+                  rank={userCorpsRank}
+                  rankChange={userRankChange}
+                  corpsName={activeCorps.corpsName || activeCorps.name}
+                  corpsClass={activeCorpsClass}
+                  loading={scoresLoading}
+                  avatarUrl={activeCorps.avatarUrl}
+                  onDesignUniform={() => setShowUniformDesign(true)}
+                  bestInShowCount={bestInShowCount}
+                  canManage={canEditCorpsThisSeason(activeCorps)}
+                  canMove={
+                    Object.values(corps || {}).filter(Boolean).length <
+                    (unlockedClasses?.length || 0)
+                  }
+                  lockReason={
+                    canEditCorpsThisSeason(activeCorps)
+                      ? null
+                      : 'Locked — this corps has already competed this season.'
+                  }
+                  onMoveCorps={() => setShowMoveCorps(true)}
+                  onRetireCorps={() => setShowRetireConfirm(true)}
+                />
+              </div>
+
               {/* MAIN CONTENT (2/3) - Lineup + related analysis */}
-              <div className="lg:col-span-2 space-y-4">
+              <div className="lg:col-span-2 lg:col-start-1 lg:row-start-1 lg:row-span-2 space-y-4">
                 <div data-tour="lineup">
                   <ActiveLineupTable
                     lineup={lineup}
@@ -332,34 +362,8 @@ const Dashboard = () => {
                 <PredictionGamePanel recentResults={recentResults} corpsClass={activeCorpsClass} />
               </div>
 
-              {/* SIDEBAR (1/3) - Identity, stats & engagement */}
-              <div className="space-y-4">
-                <div data-tour="scorecard">
-                  <SeasonScorecard
-                    score={userCorpsScore}
-                    rank={userCorpsRank}
-                    rankChange={userRankChange}
-                    corpsName={activeCorps.corpsName || activeCorps.name}
-                    corpsClass={activeCorpsClass}
-                    loading={scoresLoading}
-                    avatarUrl={activeCorps.avatarUrl}
-                    onDesignUniform={() => setShowUniformDesign(true)}
-                    bestInShowCount={bestInShowCount}
-                    canManage={canEditCorpsThisSeason(activeCorps)}
-                    canMove={
-                      Object.values(corps || {}).filter(Boolean).length <
-                      (unlockedClasses?.length || 0)
-                    }
-                    lockReason={
-                      canEditCorpsThisSeason(activeCorps)
-                        ? null
-                        : 'Locked — this corps has already competed this season.'
-                    }
-                    onMoveCorps={() => setShowMoveCorps(true)}
-                    onRetireCorps={() => setShowRetireConfirm(true)}
-                  />
-                </div>
-
+              {/* SIDEBAR (1/3) - Engagement panels below the scorecard */}
+              <div className="lg:col-start-3 space-y-4">
                 {/* Daily Challenges - drives daily return visits */}
                 <DailyChallenges onLineupClick={() => openCaptionSelection()} />
 

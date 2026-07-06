@@ -172,7 +172,7 @@ const UsersTab = () => {
       {/* User List Modal */}
       {showUserList && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1a1a1a] border border-[#333] w-full max-w-4xl max-h-[80vh] flex flex-col">
+          <div className="bg-[#1a1a1a] border border-[#333] w-full max-w-4xl max-h-[80dvh] flex flex-col">
             <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
               <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
                 All Users ({users.length})

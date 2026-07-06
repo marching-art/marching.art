@@ -185,17 +185,21 @@ module.exports = {
       // GRADIENTS & BLUR BANNED - Law 4: No Glow, No Shadow
       backgroundImage: {},
       backdropBlur: {},
+      // `screen` maps to dvh so h-screen/min-h-screen track the *visible*
+      // viewport on mobile (iOS Safari's dynamic toolbar shrinks it below
+      // 100vh; static vh lets bottom-anchored UI get clipped). Browsers
+      // without dvh support fall back to the vh declaration listed first.
       height: {
         dvh: '100dvh',
-        screen: '100vh',
+        screen: ['100vh', '100dvh'],
       },
       minHeight: {
         dvh: '100dvh',
-        screen: '100vh',
+        screen: ['100vh', '100dvh'],
       },
       maxHeight: {
         dvh: '100dvh',
-        screen: '100vh',
+        screen: ['100vh', '100dvh'],
       },
       gridTemplateColumns: {
         'bento-12': 'repeat(12, minmax(0, 1fr))',

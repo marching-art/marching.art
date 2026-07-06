@@ -211,7 +211,7 @@ const DiscoverLeagueCard = ({ league, onJoin, isJoining }) => {
               onJoin(league.id);
             }}
             disabled={isFull || isJoining}
-            className={`px-3 py-1.5 text-[10px] font-bold uppercase transition-colors ${
+            className={`px-4 min-h-touch text-[10px] font-bold uppercase transition-colors press-feedback ${
               isFull
                 ? 'bg-[#333] text-gray-500 cursor-not-allowed'
                 : 'bg-[#0057B8] text-white hover:bg-[#0066d6] active:bg-[#004a9e]'
@@ -465,13 +465,13 @@ const Leagues = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowQuickJoin(true)}
-              className="px-3 py-2 text-[10px] font-bold uppercase text-gray-400 border border-[#444] hover:text-white hover:border-[#555] min-h-[36px] transition-colors"
+              className="px-3 py-2 text-[10px] font-bold uppercase text-gray-400 border border-[#444] hover:text-white hover:border-[#555] min-h-touch transition-colors press-feedback"
             >
               Join Code
             </button>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-3 py-2 text-[10px] font-bold uppercase text-white bg-[#0057B8] hover:bg-[#0066d6] flex items-center gap-1.5 min-h-[36px] transition-colors"
+              className="px-3 py-2 text-[10px] font-bold uppercase text-white bg-[#0057B8] hover:bg-[#0066d6] flex items-center gap-1.5 min-h-touch transition-colors press-feedback"
             >
               <Plus className="w-3.5 h-3.5" />
               Create
@@ -537,11 +537,13 @@ const Leagues = () => {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
               <input
-                type="text"
+                type="search"
+                inputMode="search"
                 placeholder="Search leagues..."
+                aria-label="Search public leagues"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-[#0a0a0a] border border-[#444] text-sm text-white focus:outline-none focus:border-[#0057B8] placeholder:text-gray-600"
+                className="w-full h-11 pl-10 pr-4 bg-[#0a0a0a] border border-[#444] text-base text-white focus:outline-none focus:border-[#0057B8] placeholder:text-gray-600"
               />
             </div>
           </div>

@@ -31,7 +31,7 @@ import { useSeasonStore } from './store/seasonStore';
 import { useScheduleStore } from './store/scheduleStore';
 import { useProfileStore } from './store/profileStore';
 import OfflineBanner from './components/OfflineBanner';
-import { SkipToContent } from './components/a11y';
+import { SkipToContent, RouteChangeFocus } from './components/a11y';
 import { lazyWithRetry } from './utils/lazyWithRetry';
 
 // Lazy load pages for better performance.
@@ -252,6 +252,9 @@ function App() {
                 {/* Skip to Content - Accessibility */}
                 <SkipToContent />
 
+                {/* Reset scroll + move focus to main content on navigation */}
+                <RouteChangeFocus />
+
                 {/* Offline Banner - Shows when network is unavailable */}
                 <OfflineBanner />
 
@@ -259,12 +262,12 @@ function App() {
                 {/* ARIA live region for screen reader accessibility (WCAG 4.1.3) */}
                 <div role="region" aria-live="polite" aria-atomic="true" aria-label="Notifications">
                   <Toaster
-                    position="top-right"
-                    containerStyle={{
-                      // Safe area + header offset, with right padding to prevent overflow
-                      top: 'max(env(safe-area-inset-top, 0px) + 16px, 16px)',
-                      right: 'max(env(safe-area-inset-right, 0px) + 16px, 16px)',
-                    }}
+                    position="bottom-center"
+                    // Bottom-center is thumb-reachable and clear of the notch,
+                    // header, and offline banner. The container class offsets
+                    // above the mobile bottom nav (see .toaster-container in
+                    // index.css); on lg+ (no bottom nav) it hugs the bottom.
+                    containerClassName="toaster-container"
                     toastOptions={{
                       duration: 4000,
                       className: 'press-feedback',

@@ -323,7 +323,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                   {onShare && (
                     <button
                       onClick={onShare}
-                      className="flex items-center gap-1 px-2 py-1 border border-[#333] text-gray-400 hover:text-white hover:border-[#555] transition-colors"
+                      className="flex items-center gap-1 px-2.5 min-h-touch border border-[#333] text-gray-400 hover:text-white hover:border-[#555] active:text-white transition-colors press-feedback"
                       aria-label="Share profile"
                     >
                       <Share2 className="w-3 h-3" />
@@ -335,7 +335,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                   {!isOwnProfile && canInviteToLeague && onInviteToLeague && (
                     <button
                       onClick={onInviteToLeague}
-                      className="flex items-center gap-1 px-2 py-1 border border-[#0057B8]/40 bg-[#0057B8]/10 text-[#0057B8] hover:bg-[#0057B8]/20 transition-colors"
+                      className="flex items-center gap-1 px-2.5 min-h-touch border border-[#0057B8]/40 bg-[#0057B8]/10 text-[#0057B8] hover:bg-[#0057B8]/20 transition-colors press-feedback"
                       aria-label="Invite to league"
                     >
                       <UserPlus className="w-3 h-3" />
@@ -345,7 +345,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                   {isOwnProfile && onEditProfile && (
                     <button
                       onClick={onEditProfile}
-                      className="flex items-center gap-1 px-2 py-1 border border-[#333] text-gray-400 hover:text-white hover:border-[#555] transition-colors"
+                      className="flex items-center gap-1 px-2.5 min-h-touch border border-[#333] text-gray-400 hover:text-white hover:border-[#555] active:text-white transition-colors press-feedback"
                       aria-label="Edit profile"
                     >
                       <Edit3 className="w-3 h-3" />
@@ -355,7 +355,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                   {isOwnProfile && onSettings && (
                     <button
                       onClick={onSettings}
-                      className="flex items-center gap-1 px-2 py-1 border border-[#333] text-gray-400 hover:text-white hover:border-[#555] transition-colors"
+                      className="flex items-center gap-1 px-2.5 min-h-touch border border-[#333] text-gray-400 hover:text-white hover:border-[#555] active:text-white transition-colors press-feedback"
                       aria-label="Settings"
                     >
                       <Settings className="w-3 h-3" />

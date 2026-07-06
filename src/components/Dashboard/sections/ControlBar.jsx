@@ -87,7 +87,7 @@ const ControlBar = memo(
                   <button
                     key={classId}
                     onClick={() => onCreateCorps?.(classId)}
-                    className="flex-shrink-0 whitespace-nowrap text-[10px] font-bold uppercase px-3 py-1.5 rounded-sm text-gray-600 hover:text-gray-400 border border-dashed border-[#444] transition-colors"
+                    className="flex-shrink-0 whitespace-nowrap text-[10px] font-bold uppercase px-3 min-h-touch rounded-sm text-gray-600 hover:text-gray-400 border border-dashed border-[#444] transition-colors press-feedback"
                   >
                     {CLASS_SHORT_LABELS[classId]}
                   </button>
@@ -99,7 +99,7 @@ const ControlBar = memo(
                 <button
                   key={classId}
                   onClick={() => onSwitch(classId)}
-                  className={`flex-shrink-0 whitespace-nowrap text-[10px] font-bold uppercase px-3 py-1.5 rounded-sm transition-colors ${
+                  className={`flex-shrink-0 whitespace-nowrap text-[10px] font-bold uppercase px-3 min-h-touch rounded-sm transition-colors press-feedback ${
                     isActive
                       ? 'bg-[#0057B8] text-white'
                       : 'text-gray-500 hover:text-white hover:bg-white/5'
@@ -175,7 +175,7 @@ const ControlBar = memo(
               nextUnlock.canAfford && onUnlockClass ? (
                 <button
                   onClick={() => onUnlockClass(nextUnlock.classKey)}
-                  className={`h-7 px-2.5 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-colors ${
+                  className={`min-h-touch px-3 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-colors press-feedback ${
                     nextUnlock.meetsLevel
                       ? 'bg-green-600 hover:bg-green-500 text-white'
                       : 'bg-yellow-600 hover:bg-yellow-500 text-white'

@@ -225,7 +225,7 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
         aria-labelledby="modal-title-edit-profile"
       >
         <div
-          className="w-full sm:max-w-lg bg-[#1a1a1a] border-t sm:border border-[#333] rounded-t-xl sm:rounded-sm max-h-[92vh] flex flex-col"
+          className="w-full sm:max-w-lg bg-[#1a1a1a] border-t sm:border border-[#333] rounded-t-xl sm:rounded-sm max-h-[92dvh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Drag handle - mobile only */}

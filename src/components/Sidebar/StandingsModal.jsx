@@ -11,7 +11,7 @@ const StandingsModal = ({ show, liveScores, displayDay, onClose, onYoutubeClick 
 
       {/* Modal Content */}
       <div
-        className="relative w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-sm max-h-[85vh] flex flex-col"
+        className="relative w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-sm max-h-[85dvh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

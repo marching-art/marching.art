@@ -312,7 +312,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
       onClick={onClose}
     >
       <div
-        className="w-full sm:max-w-md bg-[#1a1a1a] border-t sm:border border-[#333] rounded-t-xl sm:rounded-sm safe-area-bottom max-h-[85vh] flex flex-col"
+        className="w-full sm:max-w-md bg-[#1a1a1a] border-t sm:border border-[#333] rounded-t-xl sm:rounded-sm safe-area-bottom max-h-[85dvh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Drag handle - mobile only */}

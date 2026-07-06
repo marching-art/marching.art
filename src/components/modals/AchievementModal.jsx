@@ -63,7 +63,7 @@ const AchievementModal = ({ onClose, achievements, newAchievement }) => {
         aria-labelledby="modal-title-achievement"
       >
         <div
-          className="w-full max-w-2xl max-h-[80vh] bg-[#1a1a1a] border border-[#333] rounded-sm flex flex-col"
+          className="w-full max-w-2xl max-h-[80dvh] bg-[#1a1a1a] border border-[#333] rounded-sm flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
