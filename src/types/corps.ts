@@ -61,6 +61,11 @@ export interface CorpsData {
   // Ensemble profile info (preserved across seasons)
   ensembleInfo?: EnsembleProfileInfo;
 
+  // Per-season show concept (reset at rollover; saved via saveShowConcept).
+  // Legacy profiles may carry a free-text string here — treat as unset.
+  showConcept?:
+    { showName?: string | null; theme: string; musicSource: string; drillStyle: string } | string;
+
   // Uniform Design (director-customizable, preserved across seasons)
   uniformDesign?: CorpsUniformDesign;
 

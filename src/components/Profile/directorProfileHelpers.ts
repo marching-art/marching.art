@@ -21,6 +21,11 @@ export interface SeasonHistoryEntry {
   previousPlacement?: number;
   showTitle?: string;
   repertoire?: string[];
+  /** Archived per-season show concept (legacy seasons may carry a string) */
+  showConcept?:
+    | { showName?: string | null; theme: string; musicSource: string; drillStyle: string }
+    | string
+    | null;
   showsAttended?: number;
   circuitPoints?: number;
 }
@@ -126,6 +131,15 @@ export function calculateDirectorRating(profile: UserProfile): number {
   const topTens = profile.stats?.topTenFinishes || 0;
   const rating = baseRating + championships * 150 + topTens * 50 + seasons * 10;
   return Math.min(rating, 3000);
+}
+
+// This season's show title from the per-season concept (legacy free-text
+// concepts don't count).
+export function getShowTitle(corps: { showConcept?: unknown }): string | null {
+  const concept = corps?.showConcept;
+  if (!concept || typeof concept !== 'object') return null;
+  const name = (concept as { showName?: string | null }).showName;
+  return typeof name === 'string' && name.trim() ? name : null;
 }
 
 // Kept in sync with functions/src/helpers/xpCalculations.js getLevelTitle.

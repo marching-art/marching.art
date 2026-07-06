@@ -12,6 +12,7 @@ import { ClipboardList, ChevronRight, ChevronLeft, Check, X } from 'lucide-react
 import { useSeasonStore } from '../../store/seasonStore';
 import CorpsVerificationStep from './CorpsVerificationStep';
 import ShowSelectionStep from './ShowSelectionStep';
+import ShowConceptStep from './ShowConceptStep';
 import { useAuth } from '../../context/AuthContext';
 
 // Import constants
@@ -178,9 +179,9 @@ const SeasonSetupWizard = ({
         }
       }
 
-      // No lineup needed, complete
+      // No lineup needed — continue to show design
       setStep(5);
-      toast.success('Season setup complete');
+      toast.success('Corps confirmed for the new season');
     } catch (error) {
       console.error('Error processing corps decisions:', error);
       toast.error(error.message || 'Failed to process corps decisions');
@@ -216,9 +217,9 @@ const SeasonSetupWizard = ({
         }
       }
 
-      // If no lineup needed, complete
+      // If no lineup needed — continue to show design
       setStep(5);
-      toast.success('Registration complete');
+      toast.success('Registration saved');
     } catch (error) {
       console.error('Error:', error);
       toast.error(error.message || 'Registration failed');
@@ -248,10 +249,10 @@ const SeasonSetupWizard = ({
           <div className="max-w-3xl mx-auto px-4">
             <div className="flex">
               {hasExistingCorps
-                ? // Returning user tabs: Corps Management -> Shows -> Complete
-                  ['Manage Corps', 'Shows'].map((label, idx) => {
-                    // Map to actual steps: 0, 4
-                    const stepMapping = [0, 4];
+                ? // Returning user tabs: Corps Management -> Shows -> Show Design -> Complete
+                  ['Manage Corps', 'Shows', 'Show Design'].map((label, idx) => {
+                    // Map to actual steps: 0, 4, 5
+                    const stepMapping = [0, 4, 5];
                     const stepNum = stepMapping[idx];
                     const isActive = step === stepNum;
                     const isComplete = step > stepNum;
@@ -585,10 +586,13 @@ const SeasonSetupWizard = ({
             />
           )}
 
-          {/* Show Registration Modal */}
-
-          {/* STEP 5: Complete */}
+          {/* STEP 5: Show Design (every season is a new show) */}
           {step === 5 && (
+            <ShowConceptStep localUserProfile={localUserProfile} onContinue={() => setStep(6)} />
+          )}
+
+          {/* STEP 6: Complete */}
+          {step === 6 && (
             <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
               <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
                 <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">

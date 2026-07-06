@@ -31,6 +31,7 @@ import type {
   DirectorSocialLinks,
 } from '../../types';
 import { formatSeasonName } from '../../utils/season';
+import { describeConceptStyle, getConceptTitle } from '../../utils/showConcept';
 import { toCanonicalClassKey } from '../../utils/classUnlockTime';
 import { getSoundSportRating } from '../../utils/scoresUtils';
 import {
@@ -145,6 +146,9 @@ const SeasonRow = memo(
     // only the earned rating tier (Gold / Silver / Bronze / Participation).
     const isSoundSport = toCanonicalClassKey(season.classKey) === 'soundSport';
     const rating = isSoundSport && score > 0 ? getSoundSportRating(score) : null;
+    // Archived show concept: title in the row, full program style when expanded
+    const conceptTitle = getConceptTitle(season.showConcept);
+    const conceptStyle = describeConceptStyle(season.showConcept);
 
     return (
       <div className="border-b border-[#333] last:border-b-0">
@@ -180,6 +184,9 @@ const SeasonRow = memo(
               </span>
             </div>
             <span className="text-[10px] text-gray-500">
+              {conceptTitle && (
+                <span className="text-[#0057B8] italic">&ldquo;{conceptTitle}&rdquo; · </span>
+              )}
               {formatSeasonName(season.seasonId || season.seasonName || '')}
             </span>
           </div>
@@ -210,6 +217,15 @@ const SeasonRow = memo(
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden"
             >
+              {conceptStyle && (
+                <div className="px-3 pt-1 pb-1 bg-[#0a0a0a] flex items-center gap-1.5 text-[10px] text-gray-400">
+                  <Music className="w-3 h-3 text-[#0057B8] flex-shrink-0" />
+                  <span className="truncate">
+                    {conceptTitle ? `“${conceptTitle}” — ` : ''}
+                    {conceptStyle}
+                  </span>
+                </div>
+              )}
               <div className="px-3 pb-2 pt-1 bg-[#0a0a0a] grid grid-cols-3 gap-2 text-center">
                 <div>
                   <div className="text-xs font-bold text-white">{season.showsAttended || 0}</div>
@@ -371,12 +387,15 @@ const EnsembleCard = memo(
     info,
     avatarUrl,
     location,
+    showTitle,
   }: {
     corpsName: string;
     classKey: CorpsClass;
     info: EnsembleProfileInfo;
     avatarUrl?: string;
     location?: string;
+    /** This season's show title (from the per-season show concept) */
+    showTitle?: string | null;
   }) => {
     const classConfig = getClassDisplay(classKey);
     const hasAnyInfo = !!(
@@ -405,6 +424,9 @@ const EnsembleCard = memo(
             <div className="text-xs font-bold text-white truncate">{corpsName}</div>
             <div className="flex items-center gap-2 text-[9px] text-gray-500">
               <span className={`font-bold ${classConfig.color}`}>{classConfig.name}</span>
+              {showTitle && (
+                <span className="text-[#0057B8] italic truncate">&ldquo;{showTitle}&rdquo;</span>
+              )}
               {location && (
                 <span className="flex items-center gap-1">
                   <MapPin className="w-2.5 h-2.5" /> {location}

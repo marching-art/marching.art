@@ -351,7 +351,7 @@ const ShowSelectionStep = ({
               disabled={currentWeek !== 7 && totalWeekRegistrations === 0}
               className="h-10 px-6 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center disabled:opacity-50 hover:bg-[#0066d6]"
             >
-              {currentWeek === 7 ? 'Continue' : 'Complete Setup'}
+              Continue
               <ChevronRight className="w-4 h-4 ml-1" />
             </button>
           </div>
