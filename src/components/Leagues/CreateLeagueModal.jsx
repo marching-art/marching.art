@@ -22,6 +22,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
       scoringFormat: 'circuit',
       finalsSize: 12,
       prizePool: 1000,
+      entryFee: 0,
     },
   });
   const [processing, setProcessing] = useState(false);
@@ -173,6 +174,38 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
                         <p className="text-[10px] text-gray-500">Invite only</p>
                       </button>
                     </div>
+                  </div>
+
+                  {/* Entry Fee (CorpsCoin, feeds the prize pool) */}
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                      Entry Fee (CorpsCoin)
+                    </label>
+                    <div className="grid grid-cols-5 gap-1">
+                      {[0, 100, 250, 500, 1000].map((fee) => (
+                        <button
+                          key={fee}
+                          type="button"
+                          onClick={() =>
+                            setFormData({
+                              ...formData,
+                              settings: { ...formData.settings, entryFee: fee },
+                            })
+                          }
+                          className={`py-2 text-[10px] font-bold border transition-colors ${
+                            (formData.settings.entryFee || 0) === fee
+                              ? 'border-yellow-500 bg-yellow-500/10 text-yellow-400'
+                              : 'border-[#333] text-gray-500 hover:border-[#444]'
+                          }`}
+                        >
+                          {fee === 0 ? 'Free' : fee.toLocaleString()}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-gray-600 mt-1">
+                      Every joiner (you included) pays into the prize pool — the league champion
+                      takes it all at Finals. No refunds for leaving.
+                    </p>
                   </div>
 
                   {/* Max Members */}

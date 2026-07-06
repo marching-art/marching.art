@@ -4,6 +4,45 @@ const admin = require("firebase-admin");
 const { logger } = require("firebase-functions/v2");
 const { generateUniqueInviteCode, smartPairMembers, createLeagueActivity } = require("../helpers/leagueHelpers");
 const { assertAuth } = require("../helpers/callableGuards");
+const { addCoinHistoryEntryToTransaction, TRANSACTION_TYPES } = require("./economy");
+
+// Commissioner-set entry fee bounds (CorpsCoin). Fees flow into the league's
+// prize pool, which season archival pays to the league champion — a closed
+// zero-sum loop, no new coin minted.
+const MAX_LEAGUE_ENTRY_FEE = 5000;
+
+/**
+ * Charge a league entry fee inside an existing join transaction: validates
+ * balance, debits the profile, credits the league prize pool, and writes the
+ * ledger entry. profileDoc must already have been read by the transaction.
+ */
+function chargeEntryFeeInTransaction(transaction, db, uid, profileDoc, leagueRef, leagueData) {
+  const entryFee = leagueData.settings?.entryFee || 0;
+  if (entryFee <= 0) return 0;
+
+  if (!profileDoc.exists) {
+    throw new HttpsError("not-found", "User profile not found.");
+  }
+  const balance = profileDoc.data().corpsCoin || 0;
+  if (balance < entryFee) {
+    throw new HttpsError(
+      "failed-precondition",
+      `This league has a ${entryFee.toLocaleString()} CC entry fee. You have ${balance.toLocaleString()} CC.`
+    );
+  }
+
+  transaction.update(leagueRef, {
+    'settings.prizePool': admin.firestore.FieldValue.increment(entryFee),
+  });
+  addCoinHistoryEntryToTransaction(transaction, db, uid, {
+    type: TRANSACTION_TYPES.LEAGUE_ENTRY,
+    amount: -entryFee,
+    balance: balance - entryFee,
+    description: `Entry fee for ${leagueData.name}`,
+    leagueId: leagueRef.id,
+  });
+  return entryFee;
+}
 
 
 exports.createLeague = onCall({ cors: true }, async (request) => {
@@ -21,6 +60,16 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
     throw new HttpsError("invalid-argument", "League name must be at least 3 characters long.");
   }
 
+  // Commissioner-set entry fee: validated here, charged to every joiner
+  // (including the creator, below) and paid into the prize pool.
+  const entryFee = Number(settings.entryFee) || 0;
+  if (!Number.isInteger(entryFee) || entryFee < 0 || entryFee > MAX_LEAGUE_ENTRY_FEE) {
+    throw new HttpsError(
+      "invalid-argument",
+      `Entry fee must be a whole number between 0 and ${MAX_LEAGUE_ENTRY_FEE.toLocaleString()} CC.`
+    );
+  }
+
   const db = getDb();
   const seasonDoc = await db.doc("game-settings/season").get();
   if (!seasonDoc.exists) throw new HttpsError("not-found", "No active season.");
@@ -35,6 +84,22 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
   const standingsRef = leagueRef.collection('standings').doc('current');
 
   await db.runTransaction(async (transaction) => {
+    // Creator pays the entry fee too — same terms as every member
+    let creatorBalance = null;
+    if (entryFee > 0) {
+      const creatorProfileDoc = await transaction.get(userProfileRef);
+      if (!creatorProfileDoc.exists) {
+        throw new HttpsError("not-found", "User profile not found.");
+      }
+      creatorBalance = creatorProfileDoc.data().corpsCoin || 0;
+      if (creatorBalance < entryFee) {
+        throw new HttpsError(
+          "failed-precondition",
+          `You need ${entryFee.toLocaleString()} CC to cover your own entry fee.`
+        );
+      }
+    }
+
     // Create league
     transaction.set(leagueRef, {
       name: name.trim(),
@@ -49,10 +114,26 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
       settings: {
         matchupType: settings.matchupType || 'weekly', // weekly, h2h
         playoffSize: settings.playoffSize || 4,
-        prizePool: settings.prizePool || 1000, // CorpsCoin
-        ...settings
+        ...settings,
+        // After the spread so client values can't override the validated fee
+        // or the seeded pool (base pool + the creator's own entry fee).
+        entryFee,
+        prizePool: (settings.prizePool || 1000) + entryFee,
       }
     });
+
+    if (entryFee > 0) {
+      transaction.update(userProfileRef, {
+        corpsCoin: admin.firestore.FieldValue.increment(-entryFee),
+      });
+      addCoinHistoryEntryToTransaction(transaction, db, uid, {
+        type: TRANSACTION_TYPES.LEAGUE_ENTRY,
+        amount: -entryFee,
+        balance: creatorBalance - entryFee,
+        description: `Entry fee for ${name.trim()}`,
+        leagueId: leagueRef.id,
+      });
+    }
 
     // Initialize standings with both formats (records object + standings array)
     const initialRecord = {
@@ -118,6 +199,7 @@ exports.joinLeague = onCall({ cors: true }, async (request) => {
     }
 
     const standingsDoc = await transaction.get(standingsRef);
+    const profileDoc = await transaction.get(userProfileRef);
 
     const leagueData = leagueDoc.data();
 
@@ -131,6 +213,9 @@ exports.joinLeague = onCall({ cors: true }, async (request) => {
       throw new HttpsError("failed-precondition", "This league is full.");
     }
 
+    // Commissioner-set entry fee (if any) goes into the prize pool
+    const entryFee = chargeEntryFeeInTransaction(transaction, db, uid, profileDoc, leagueRef, leagueData);
+
     // Perform ALL writes after reads
     // Add to league
     transaction.update(leagueRef, {
@@ -140,6 +225,7 @@ exports.joinLeague = onCall({ cors: true }, async (request) => {
     // Add to user profile
     transaction.update(userProfileRef, {
       leagueIds: admin.firestore.FieldValue.arrayUnion(leagueId),
+      ...(entryFee > 0 ? { corpsCoin: admin.firestore.FieldValue.increment(-entryFee) } : {}),
     });
 
     // Initialize standings for new member
@@ -369,6 +455,7 @@ exports.joinLeagueByCode = onCall({ cors: true }, async (request) => {
     }
 
     const standingsDoc = await transaction.get(standingsRef);
+    const profileDoc = await transaction.get(userProfileRef);
     const leagueData = leagueDoc.data();
 
     if (leagueData.members.includes(uid)) {
@@ -379,12 +466,16 @@ exports.joinLeagueByCode = onCall({ cors: true }, async (request) => {
       throw new HttpsError("failed-precondition", "This league is full.");
     }
 
+    // Commissioner-set entry fee (if any) goes into the prize pool
+    const entryFee = chargeEntryFeeInTransaction(transaction, db, uid, profileDoc, leagueRef, leagueData);
+
     transaction.update(leagueRef, {
       members: admin.firestore.FieldValue.arrayUnion(uid),
     });
 
     transaction.update(userProfileRef, {
       leagueIds: admin.firestore.FieldValue.arrayUnion(leagueId),
+      ...(entryFee > 0 ? { corpsCoin: admin.firestore.FieldValue.increment(-entryFee) } : {}),
     });
 
     if (standingsDoc.exists) {

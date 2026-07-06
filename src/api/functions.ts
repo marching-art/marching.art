@@ -327,6 +327,17 @@ export const equipShopItem = createCallable<
   { success: boolean; slot: string; itemId: string | null; message: string }
 >('equipShopItem');
 
+export const claimLadderTier = createCallable<
+  { tier: number },
+  {
+    success: boolean;
+    alreadyClaimed?: boolean;
+    tier?: number;
+    coinAwarded: number;
+    grantItem?: string | null;
+  }
+>('claimLadderTier');
+
 export const sponsorShow = createCallable<
   { day: number; eventName: string; corpsClass: string },
   { success: boolean; message: string; newBalance: number; price: number }

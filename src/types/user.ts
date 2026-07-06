@@ -72,6 +72,10 @@ export interface UserProfile {
   userTitle: string;
   /** Highest level already paid the level-up CC stipend (server-only) */
   lastRewardedLevel?: number;
+  /** XP total at season start — season ladder baseline (server-only) */
+  xpAtSeasonStart?: number;
+  /** Season reward ladder claims (server-only) */
+  seasonLadder?: { seasonUid: string; claimed: number[] } | null;
 
   // Currency
   corpsCoin: number;

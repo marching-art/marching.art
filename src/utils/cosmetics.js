@@ -6,6 +6,15 @@
 export const SHOP_ITEMS = [
   // --- Director titles: flair shown on the profile next to the level title ---
   {
+    id: 'title_laureate',
+    type: 'title',
+    name: 'Laureate',
+    price: null,
+    grantOnly: true,
+    description: 'Season reward ladder exclusive — reach Tier 12 in a single season',
+    textClass: 'text-emerald-400',
+  },
+  {
     id: 'title_section_leader',
     type: 'title',
     name: 'Section Leader',

@@ -59,6 +59,12 @@ const ACHIEVEMENT_CATALOG = [
   { id: 'league_win_1', title: 'Matchup Victor', description: 'Won a weekly league matchup', icon: 'trophy', rarity: 'common', ccReward: RARITY_CC.common, earned: (s) => s.leagueWins >= 1 },
   { id: 'league_wins_10', title: 'League Force', description: 'Won 10 weekly league matchups', icon: 'trophy', rarity: 'rare', ccReward: RARITY_CC.rare, earned: (s) => s.leagueWins >= 10 },
 
+  // --- Dynasty (trophy case; trophies.* arrays written by nightly scoring) ---
+  { id: 'regional_medalist', title: 'Regional Medalist', description: 'Medaled at a regional', icon: 'medal', rarity: 'rare', ccReward: RARITY_CC.rare, earned: (s) => s.regionalTrophies >= 1 },
+  { id: 'class_champion', title: 'Class Champion', description: 'Won an Open or A Class Finals title', icon: 'trophy', rarity: 'epic', ccReward: RARITY_CC.epic, earned: (s) => s.classChampionships >= 1 },
+  { id: 'world_champion', title: 'Ring Bearer', description: 'Won a Championship Finals title', icon: 'crown', rarity: 'legendary', ccReward: RARITY_CC.legendary, earned: (s) => s.championships >= 1 },
+  { id: 'dynasty', title: 'Dynasty', description: 'Won multiple Championship Finals titles', icon: 'crown', rarity: 'legendary', ccReward: RARITY_CC.legendary, earned: (s) => s.championships >= 2 },
+
   // --- Top-10 standing (per class; classRanks written daily by the rivals job) ---
   { id: 'top_10_aClass', title: 'Top 10 Finish!', description: 'Reached top 10 in A Class', icon: 'trophy', rarity: 'rare', ccReward: RARITY_CC.rare, earned: (s) => (s.classRanks.aClass || Infinity) <= 10 },
   { id: 'top_10_openClass', title: 'Top 10 Finish!', description: 'Reached top 10 in Open Class', icon: 'trophy', rarity: 'rare', ccReward: RARITY_CC.rare, earned: (s) => (s.classRanks.openClass || Infinity) <= 10 },
@@ -79,6 +85,7 @@ function buildAchievementState(profileData, overrides = {}) {
   Object.entries(profileData.classRanks || {}).forEach(([cls, snapshot]) => {
     if (snapshot && typeof snapshot.rank === 'number') classRanks[cls] = snapshot.rank;
   });
+  const trophies = profileData.trophies || {};
   return {
     streak: overrides.streak ?? profileData.engagement?.loginStreak ?? 0,
     level: overrides.level ?? profileData.xpLevel ?? 1,
@@ -88,6 +95,9 @@ function buildAchievementState(profileData, overrides = {}) {
     totalSeasons: profileData.lifetimeStats?.totalSeasons || 0,
     leagueWins: profileData.stats?.leagueWins || 0,
     classRanks,
+    regionalTrophies: (trophies.regionals || []).length,
+    classChampionships: (trophies.classChampionships || []).length,
+    championships: (trophies.championships || []).length,
   };
 }
 

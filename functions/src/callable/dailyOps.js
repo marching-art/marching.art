@@ -145,6 +145,13 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
         logger.info(`User ${uid} awarded free streak freeze for ${newStreak}-day milestone`);
       }
 
+      // Season-ladder baseline for accounts that predate the ladder: stamp
+      // xpAtSeasonStart on first claim so season XP starts counting. New
+      // seasons stamp it properly at rollover (archiveAndResetProfiles).
+      if (typeof profileData.xpAtSeasonStart !== 'number') {
+        updates.xpAtSeasonStart = profileData.xp || 0;
+      }
+
       // Level-up stipend: +100 CC per level gained, settled daily against
       // lastRewardedLevel (a server-only field). XP is earned through many
       // callables; settling here keeps the payout in one idempotent place.

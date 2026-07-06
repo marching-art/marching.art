@@ -29,6 +29,8 @@ export interface LeagueSettings {
   scoringFormat: 'circuit' | 'weekly' | 'total';
   finalsSize: number;
   prizePool: number;
+  /** CorpsCoin fee charged to every joiner (creator included), paid into the prize pool */
+  entryFee?: number;
 }
 
 export interface LeagueStanding {

@@ -36,6 +36,9 @@ const purchaseShopItem = onCall({ cors: true }, async (request) => {
       const profileData = profileDoc.data();
       const owned = profileData.cosmetics?.owned || [];
 
+      if (item.grantOnly || !item.price) {
+        throw new HttpsError("failed-precondition", "This item can only be earned, not bought.");
+      }
       if (owned.includes(item.id)) {
         throw new HttpsError("already-exists", "You already own this item.");
       }

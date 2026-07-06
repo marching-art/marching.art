@@ -56,6 +56,7 @@ const {
 } = require("./src/callable/leagues");
 const { completeJourneyStep } = require("./src/callable/journey");
 const { purchaseShopItem, equipShopItem, sponsorShow } = require("./src/callable/shop");
+const { claimLadderTier } = require("./src/callable/seasonLadder");
 const {
   inviteDirectorToLeague,
   respondToLeagueInvitation,
@@ -203,6 +204,7 @@ module.exports = {
   purchaseShopItem,
   equipShopItem,
   sponsorShow,
+  claimLadderTier,
   leaveLeague,
   generateMatchups,
   updateMatchupResults,

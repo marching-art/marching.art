@@ -280,14 +280,18 @@ const Shop = () => {
               {items.map((item) => {
                 const owned = isOwned(profile, item.id);
                 const isEquipped = equipped[item.type] === item.id;
-                const canAfford = balance >= item.price;
+                const canAfford = item.price != null && balance >= item.price;
                 return (
                   <div key={item.id} className="bg-[#1a1a1a] border border-[#333] flex flex-col">
                     <ItemPreview item={item} />
                     <div className="p-3 flex-1 flex flex-col">
                       <p className="text-sm font-bold text-white">{item.name}</p>
                       <p className="text-[10px] text-gray-500 mb-3 flex-1">{item.description}</p>
-                      {owned ? (
+                      {item.grantOnly && !owned ? (
+                        <div className="h-8 w-full text-[10px] font-bold uppercase tracking-wider flex items-center justify-center bg-emerald-600/10 border border-emerald-500/30 text-emerald-400">
+                          Earned, Not Bought
+                        </div>
+                      ) : owned ? (
                         <button
                           onClick={() => handleEquipToggle(item, isEquipped)}
                           disabled={busy === item.id}

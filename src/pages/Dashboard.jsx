@@ -48,6 +48,7 @@ import {
   PredictionGamePanel,
   AchievementTrackerPanel,
   JourneyPanel,
+  SeasonLadderPanel,
   CLASS_DISPLAY_NAMES,
   CLASS_UNLOCK_LEVELS,
   CLASS_UNLOCK_COSTS,
@@ -391,6 +392,9 @@ const Dashboard = () => {
 
                 {/* Daily Challenges - drives daily return visits */}
                 <DailyChallenges onLineupClick={() => openCaptionSelection()} />
+
+                {/* Season Ladder - free seasonal reward track fed by all XP */}
+                <SeasonLadderPanel profile={profile} seasonUid={seasonData?.seasonUid} />
 
                 {/* Next Performance - real show timing + running order + your-picks-live spotlight */}
                 <NextPerformancePanel

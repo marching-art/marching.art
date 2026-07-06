@@ -14,6 +14,7 @@ export { default as LineupSimulatorPanel } from './LineupSimulatorPanel';
 export { default as PredictionGamePanel } from './PredictionGamePanel';
 export { default as AchievementTrackerPanel } from './AchievementTrackerPanel';
 export { default as JourneyPanel } from './JourneyPanel';
+export { default as SeasonLadderPanel } from './SeasonLadderPanel';
 
 // Re-export constants for convenience
 export * from './constants';

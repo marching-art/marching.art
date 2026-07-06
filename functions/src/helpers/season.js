@@ -212,6 +212,11 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
     if (totalXP > 0) {
       Object.assign(updateData, calculateXPUpdates(profileData, totalXP).updates);
     }
+
+    // Reset the seasonal reward ladder: new baseline is the post-award XP
+    // total, and tier claims reset with the new seasonUid.
+    updateData.xpAtSeasonStart = (profileData.xp || 0) + totalXP;
+    updateData.seasonLadder = null;
     if (totalCoin > 0) {
       updateData.corpsCoin = admin.firestore.FieldValue.increment(totalCoin);
     }
