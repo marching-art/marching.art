@@ -25,37 +25,37 @@ That is genuinely a lot of loop for a "passive" game. The problem is that most o
 
 **CorpsCoin faucets (live, verified in code):**
 
-| Source | Amount | Where |
-| --- | --- | --- |
-| New-account grant | 1,000 CC | `functions/src/callable/users.js:108` |
-| Show participation (nightly) | 50/100/150/200 CC by class | `economy.js:100-107`, paid via `scoringAwards.js:261-293` |
-| Weekly league matchup win | 100 CC | `scoringAwards.js:681-698` |
-| Streak milestones (3→100 days) | 50–1,000 CC | `dailyOps.js:23-30` |
-| Prediction accuracy | 10 CC/correct + 25 CC perfect day | `dailyPredictions.js:18-21` |
-| League prize pool (champion) | default 1,000 CC | `season.js:635-649` |
+| Source                         | Amount                            | Where                                                     |
+| ------------------------------ | --------------------------------- | --------------------------------------------------------- |
+| New-account grant              | 1,000 CC                          | `functions/src/callable/users.js:108`                     |
+| Show participation (nightly)   | 50/100/150/200 CC by class        | `economy.js:100-107`, paid via `scoringAwards.js:261-293` |
+| Weekly league matchup win      | 100 CC                            | `scoringAwards.js:681-698`                                |
+| Streak milestones (3→100 days) | 50–1,000 CC                       | `dailyOps.js:23-30`                                       |
+| Prediction accuracy            | 10 CC/correct + 25 CC perfect day | `dailyPredictions.js:18-21`                               |
+| League prize pool (champion)   | default 1,000 CC                  | `season.js:635-649`                                       |
 
 An active World Class director earns roughly **800–1,200 CC per week** (4 shows + league win + predictions + streak amortization). A SoundSport rookie earns roughly 300–500 CC/week.
 
 **CorpsCoin sinks reachable in the UI:**
 
-| Sink | Cost | Status |
-| --- | --- | --- |
+| Sink                         | Cost                     | Status                                                          |
+| ---------------------------- | ------------------------ | --------------------------------------------------------------- |
 | Class unlocks (A/Open/World) | 1,000 / 2,500 / 5,000 CC | ✅ Live (`ClassPurchaseModal.tsx` → `unlockClassWithCorpsCoin`) |
 
 That's the entire list. **8,500 CC of one-time lifetime spending** against an income of ~50,000+ CC/year for an active player — and even that sink is undercut by the account-age auto-unlock (`CLASS_UNLOCK_WEEKS`: 5/12/19 weeks), which hands out the same classes for free just by waiting. After roughly week 19, CorpsCoin is a score with no scoreboard.
 
 **Built but broken or unreachable (highest-leverage findings):**
 
-| Item | Status | Evidence |
-| --- | --- | --- |
-| **Streak freeze (300 CC)** — the one recurring sink | Server-side complete (`purchaseStreakFreeze`, `getStreakStatus` in `dailyOps.js:308-475`, deployed in `index.js`), **zero frontend references** — unpurchasable | grep of `src/**` for `streakFreeze\|purchaseStreakFreeze\|getStreakStatus` = 0 hits |
-| **Season finish bonuses** (Champion 1,000 / 2nd 750 / 3rd 500 / top10 350 / top25 250 CC) | `awardSeasonBonus` + `SEASON_FINISH_BONUSES` fully implemented, **never called** — the advertised season payday never happens | `economy.js:117-123, 248` |
-| **Season completion XP** (top10 500 / top25 400 / top50 300 / completed 200) | `getSeasonCompletionXP` defined, **never invoked** | `xpCalculations.js:195` |
-| **CorpsCoin ledger + earning guide** | `getCorpsCoinHistory` and `getEarningOpportunities` implemented and deployed, **no frontend caller** | `economy.js:486, 525`; `index.js:240-241` |
-| League entry fees | `payLeagueEntryFee` implemented, not deployed, no UI | `economy.js:436` |
-| Stripe webhook | Placeholder; logs analytics only, grants nothing | `functions/src/webhooks/stripe.js` |
-| Execution system (equipment/morale/readiness) | Typed client stubs in `functions.ts:182-212` with **no backend** (intentionally cut per `PRIORITIES.md`) | dead client code |
-| XP display drift | Frontend shows `weeklyParticipation: 100, leagueWin: 50` (`captionPricing.js:59-68`) — **half** the real backend values (200/100) | stale mirror |
+| Item                                                                                      | Status                                                                                                                                                          | Evidence                                                                            |
+| ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| **Streak freeze (300 CC)** — the one recurring sink                                       | Server-side complete (`purchaseStreakFreeze`, `getStreakStatus` in `dailyOps.js:308-475`, deployed in `index.js`), **zero frontend references** — unpurchasable | grep of `src/**` for `streakFreeze\|purchaseStreakFreeze\|getStreakStatus` = 0 hits |
+| **Season finish bonuses** (Champion 1,000 / 2nd 750 / 3rd 500 / top10 350 / top25 250 CC) | `awardSeasonBonus` + `SEASON_FINISH_BONUSES` fully implemented, **never called** — the advertised season payday never happens                                   | `economy.js:117-123, 248`                                                           |
+| **Season completion XP** (top10 500 / top25 400 / top50 300 / completed 200)              | `getSeasonCompletionXP` defined, **never invoked**                                                                                                              | `xpCalculations.js:195`                                                             |
+| **CorpsCoin ledger + earning guide**                                                      | `getCorpsCoinHistory` and `getEarningOpportunities` implemented and deployed, **no frontend caller**                                                            | `economy.js:486, 525`; `index.js:240-241`                                           |
+| League entry fees                                                                         | `payLeagueEntryFee` implemented, not deployed, no UI                                                                                                            | `economy.js:436`                                                                    |
+| Stripe webhook                                                                            | Placeholder; logs analytics only, grants nothing                                                                                                                | `functions/src/webhooks/stripe.js`                                                  |
+| Execution system (equipment/morale/readiness)                                             | Typed client stubs in `functions.ts:182-212` with **no backend** (intentionally cut per `PRIORITIES.md`)                                                        | dead client code                                                                    |
+| XP display drift                                                                          | Frontend shows `weeklyParticipation: 100, leagueWin: 50` (`captionPricing.js:59-68`) — **half** the real backend values (200/100)                               | stale mirror                                                                        |
 
 The practical consequence: **every season ends in silence.** No rank bonus, no completion XP, no ceremony — for a game whose entire dramatic arc builds toward Finals night, the anticlimax is the single biggest wasted engagement moment in the product.
 
@@ -88,7 +88,7 @@ There is also a **legacy client-side streak writer** in `useDashboardData.js:206
 1. **Sinks must recur.** One-time purchases (class unlocks) can't balance perpetual faucets. Every economy that works has consumables, seasonal catalogs, or prestige tiers.
 2. **Prestige over power.** CorpsCoin must never buy scores, extra trades, or competitive edges. It buys **identity, ceremony, and status** — which is what drum corps culture actually runs on (uniforms, corps names, legacy, the retirement of a jacket).
 3. **Price against weekly income.** Anchor: active player ≈ 800–1,200 CC/week. Consumables at ~25–40% of a week's income; cosmetics at 1–3 weeks; prestige items at 10–25 weeks (there to drain long-term hoards).
-   *Because there is no real-money CC injection, the economy is fully closed-loop: every coin in circulation was earned by playing. That makes balance tractable — tune faucets and sink prices freely without worrying about purchased hoards, and "unfair advantage" is structurally impossible as long as sinks stay cosmetic.*
+   _Because there is no real-money CC injection, the economy is fully closed-loop: every coin in circulation was earned by playing. That makes balance tractable — tune faucets and sink prices freely without worrying about purchased hoards, and "unfair advantage" is structurally impossible as long as sinks stay cosmetic._
 4. **Absorb existing hoards deliberately.** Veterans may hold 20,000–50,000+ CC. Launching the shop with only 500 CC items lets them buy everything on day one and feel done. The catalog needs a top shelf from day one.
 5. **The season is the heartbeat.** Both season types run 49-day cycles year-round — every reward structure should reset, pay out, and re-hook at season boundaries, because the infrastructure for that (archival, champions, wizard re-entry) already exists.
 
@@ -98,13 +98,13 @@ There is also a **legacy client-side streak writer** in `useDashboardData.js:206
 
 ### A. Repair the economy you already built (days, not weeks — do first)
 
-| # | Fix | Effort | Why |
-| --- | --- | --- | --- |
-| A1 | **Wire the streak-freeze UI** — surface `getStreakStatus` + `purchaseStreakFreeze` in the streak display and in an "streak at risk" state | Small | The only recurring CC sink in the game is fully built and unreachable |
-| A2 | **Call `awardSeasonBonus` and `getSeasonCompletionXP` during season archival** (`season.js` rollover) and announce them in a season-recap modal | Small | Turns Finals night into a payday; instantly gives rank a currency meaning |
-| A3 | **Ship the CorpsCoin ledger + "How to earn" panel** using the already-deployed `getCorpsCoinHistory` / `getEarningOpportunities` | Small | A currency without a visible ledger doesn't feel real; the earning guide doubles as new-player education |
-| A4 | **Unify achievements server-side** — move streak/top-10 awards out of the browser, merge the 17 tracker achievements into the persisted system, award small CC per achievement, fix the dead `/profile?tab=achievements` link | Medium | Three inconsistent systems → one trustworthy one; removes client-trusted writes |
-| A5 | Delete the legacy client streak writer (`useDashboardData.js:206-312`), fix the stale XP mirror in `captionPricing.js` | Small | Prevents divergent streaks and misleading numbers |
+| #   | Fix                                                                                                                                                                                                                           | Effort | Why                                                                                                      |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------- |
+| A1  | **Wire the streak-freeze UI** — surface `getStreakStatus` + `purchaseStreakFreeze` in the streak display and in an "streak at risk" state                                                                                     | Small  | The only recurring CC sink in the game is fully built and unreachable                                    |
+| A2  | **Call `awardSeasonBonus` and `getSeasonCompletionXP` during season archival** (`season.js` rollover) and announce them in a season-recap modal                                                                               | Small  | Turns Finals night into a payday; instantly gives rank a currency meaning                                |
+| A3  | **Ship the CorpsCoin ledger + "How to earn" panel** using the already-deployed `getCorpsCoinHistory` / `getEarningOpportunities`                                                                                              | Small  | A currency without a visible ledger doesn't feel real; the earning guide doubles as new-player education |
+| A4  | **Unify achievements server-side** — move streak/top-10 awards out of the browser, merge the 17 tracker achievements into the persisted system, award small CC per achievement, fix the dead `/profile?tab=achievements` link | Medium | Three inconsistent systems → one trustworthy one; removes client-trusted writes                          |
+| A5  | Delete the legacy client streak writer (`useDashboardData.js:206-312`), fix the stale XP mirror in `captionPricing.js`                                                                                                        | Small  | Prevents divergent streaks and misleading numbers                                                        |
 
 ### B. Give CorpsCoin a job (the sink catalog)
 
@@ -112,7 +112,7 @@ There is also a **legacy client-side streak writer** in `useDashboardData.js:206
 
 - Premium uniform palettes and fabric/finish tiers: 500–2,500 CC
 - Emblems, plumes, helmet styles, mascots: 750–3,000 CC
-- Corps card themes and animated card effects (leaderboards/league standings show them to *others* — status must be visible to be worth buying): 1,500–3,500 CC
+- Corps card themes and animated card effects (leaderboards/league standings show them to _others_ — status must be visible to be worth buying): 1,500–3,500 CC
 - Avatar regeneration tokens beyond a free allowance: 250 CC
 - Director titles/flair displayed under the username in leagues and scores: 1,000–10,000 CC
 - Victory celebration effects (confetti variants — `canvas-confetti` is already a dependency): 1,500 CC
@@ -127,7 +127,7 @@ There is also a **legacy client-side streak writer** in `useDashboardData.js:206
 
 - Deploy `payLeagueEntryFee`; commissioner-set buy-ins (100–1,000 CC) fund real prize pools — leagues become CC circulation loops instead of pure faucets
 - League cosmetics bought from the league treasury: custom league trophy styles, banner, chat badge (2,500–10,000 CC)
-- *(Optional, later)* Friendly matchup side-wagers, escrowed and capped (e.g., 100 CC) — opt-in, symmetric, zero scoring impact. Zero-sum transfers don't inflate the economy, but they add moderation edge cases; skip until leagues are humming.
+- _(Optional, later)_ Friendly matchup side-wagers, escrowed and capped (e.g., 100 CC) — opt-in, symmetric, zero scoring impact. Zero-sum transfers don't inflate the economy, but they add moderation edge cases; skip until leagues are humming.
 
 **B4. Prestige sinks — for the 40,000 CC veterans:**
 
@@ -141,7 +141,7 @@ There is also a **legacy client-side streak writer** in `useDashboardData.js:206
 
 **C1. Extend the ladder past Level 10.** Keep 1,000 XP/level; add titles (Legend → 15 Icon → 20 Hall of Famer → 25 Immortal → 30+ numbered "Legend II"-style prestige), a small CC stipend per level-up (+100 CC), and a cosmetic unlock every 5 levels. Cheap to implement — it's a table in `xpCalculations.js` plus profile display.
 
-**C2. Seasonal reward ladder (free, one track, keep it simple).** A single free seasonal reward ladder — deliberately *not* a battle pass: no premium track, no separate pass XP pool, no FOMO mechanics. ~15–20 tiers over the 49-day season, fed directly by the XP players already earn (login, challenges, predictions, participation), paying out CC, one seasonal cosmetic set, and a title at the cap. Implementation is one reward table + a claim function + a progress bar; season boundaries and XP events already exist. This converts XP from a lifetime odometer into a **seasonal ladder with a visible endpoint**, and the seasonal cosmetic set (themed to the off-season's name — the seasons are already thematically named) creates recurring demand in the shop without a new art pipeline. Miss a season? The set rotates into the regular catalog a year later at a higher price — gentle exclusivity, no punishment.
+**C2. Seasonal reward ladder (free, one track, keep it simple).** A single free seasonal reward ladder — deliberately _not_ a battle pass: no premium track, no separate pass XP pool, no FOMO mechanics. ~15–20 tiers over the 49-day season, fed directly by the XP players already earn (login, challenges, predictions, participation), paying out CC, one seasonal cosmetic set, and a title at the cap. Implementation is one reward table + a claim function + a progress bar; season boundaries and XP events already exist. This converts XP from a lifetime odometer into a **seasonal ladder with a visible endpoint**, and the seasonal cosmetic set (themed to the off-season's name — the seasons are already thematically named) creates recurring demand in the shop without a new art pipeline. Miss a season? The set rotates into the regular catalog a year later at a higher price — gentle exclusivity, no punishment.
 
 **C3. Caption mastery tracks.** Cumulative per-caption performance across seasons ("Brass: 2,400 lifetime points → Brass Specialist III") with titles/badges. Deepens the actual strategic identity of the game (caption picking) rather than bolting on generic quests. Data already exists in recaps/season history.
 
@@ -151,7 +151,7 @@ Onboarding today is good at minute one and silent by day two. Bridge it:
 
 **D1. "First Season Journey" questline.** Extend QuickStartGuide's 3-step checklist into a staged, server-validated quest line across the rookie season, each step paying CC/XP and teaching one mechanic at the moment it matters:
 
-1. Field your full lineup (exists) → 2. Register for your first show → 3. Read your first recap → 4. Make your first prediction → 5. Make your first caption trade *in a change window* (teaches the window system) → 6. Join a league → 7. Set a show concept (teaches synergy bonuses) → 8. Survive Championship Week → 9. Complete your first season → unlock "Sophomore Season" achievement + A Class spotlight.
+1. Field your full lineup (exists) → 2. Register for your first show → 3. Read your first recap → 4. Make your first prediction → 5. Make your first caption trade _in a change window_ (teaches the window system) → 6. Join a league → 7. Set a show concept (teaches synergy bonuses) → 8. Survive Championship Week → 9. Complete your first season → unlock "Sophomore Season" achievement + A Class spotlight.
 
 This directly addresses "new directors learning the ropes": the trade windows, show registration cadence, and synergy system — the game's real depth — currently have to be discovered by accident.
 
@@ -174,14 +174,14 @@ This directly addresses "new directors learning the ropes": the trade windows, s
 
 Ordered for a donation-supported project where development time is the scarce resource. Each phase is independently shippable and valuable; stopping after any phase leaves the game better balanced than before.
 
-| Phase | Work | Effort | Payoff |
-| --- | --- | --- | --- |
-| 1 | A1–A3, A5 (wire streak freeze, season payouts, CC ledger, cleanup) | ~1 week | Economy stops being broken; Finals becomes a payday |
-| 2 | A4 unified achievements + D4 graduation ceremonies + C1 extended levels | ~1–2 weeks | Every existing milestone starts paying and celebrating |
-| 3 | D1 First Season Journey questline + D2 deadline visibility + D3 rookie leagues | ~2 weeks | New-director activation and week-2 retention |
-| 4 | B1 Corps Identity Shop **v1: three item types only** (director titles, uniform palettes, corps card themes) + streak freeze in-shop | ~1–2 weeks | The currency gets a job with minimal new surface area |
-| 5 | E1 Records Book + B4 show sponsorship | ~1–2 weeks | Endgame targets + the big hoard drain, both mostly reads of existing data |
-| 6 | C2 seasonal reward ladder, then shop expansion (emblems, celebrations, league cosmetics, B3 entry fees), C3 mastery, E2–E3 | ongoing | The seasonal cadence layer, once the fundamentals have a season of data behind them |
+| Phase | Work                                                                                                                                | Effort     | Payoff                                                                              |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------- | ---------- | ----------------------------------------------------------------------------------- |
+| 1     | A1–A3, A5 (wire streak freeze, season payouts, CC ledger, cleanup)                                                                  | ~1 week    | Economy stops being broken; Finals becomes a payday                                 |
+| 2     | A4 unified achievements + D4 graduation ceremonies + C1 extended levels                                                             | ~1–2 weeks | Every existing milestone starts paying and celebrating                              |
+| 3     | D1 First Season Journey questline + D2 deadline visibility + D3 rookie leagues                                                      | ~2 weeks   | New-director activation and week-2 retention                                        |
+| 4     | B1 Corps Identity Shop **v1: three item types only** (director titles, uniform palettes, corps card themes) + streak freeze in-shop | ~1–2 weeks | The currency gets a job with minimal new surface area                               |
+| 5     | E1 Records Book + B4 show sponsorship                                                                                               | ~1–2 weeks | Endgame targets + the big hoard drain, both mostly reads of existing data           |
+| 6     | C2 seasonal reward ladder, then shop expansion (emblems, celebrations, league cosmetics, B3 entry fees), C3 mastery, E2–E3          | ongoing    | The seasonal cadence layer, once the fundamentals have a season of data behind them |
 
 Explicitly dropped from the original plan: premium pass track, Stripe integration, CC bundles, and all real-money cosmetics — the project is donation-supported and the closed-loop economy is stronger for it. One optional nod to supporters: a manually granted, purely cosmetic **"Supporter" profile badge** for Buy-Me-a-Coffee donors. No gameplay effect, no store — just a visible thank-you.
 
@@ -192,7 +192,7 @@ Explicitly dropped from the original plan: premium pass track, Stripe integratio
 Balance here has two axes. **Fairness** is solved by construction: nothing purchasable touches scoring, so no amount of CC — hoarded or fresh — changes competition. What remains is **pacing**: does earning feel meaningful and does spending feel affordable-but-not-trivial? Checked against the actual faucet rates:
 
 - **The active-player weekly budget (~800–1,200 CC)** comfortably covers one consumable (streak freeze 300) plus one entry-tier cosmetic (~500) per week, or saves toward a 2,500 CC item in ~3 weeks. That is a healthy "always something in reach, always something to save for" cadence.
-- **Class income asymmetry is real but acceptable.** World Class show payouts are 4× SoundSport's (200 vs 50 CC/show). Since sinks are cosmetic, this is progression flavor, not unfairness — but the shop needs a 250–500 CC entry tier so rookies can buy *something* in their first two weeks. First purchase is the moment the currency becomes real.
+- **Class income asymmetry is real but acceptable.** World Class show payouts are 4× SoundSport's (200 vs 50 CC/show). Since sinks are cosmetic, this is progression flavor, not unfairness — but the shop needs a 250–500 CC entry tier so rookies can buy _something_ in their first two weeks. First purchase is the moment the currency becomes real.
 - **Veteran hoards (est. 20,000–50,000 CC) are absorbed, not confiscated.** Prestige tier (10,000–25,000: sponsorships, plaques, banners) plus the full cosmetic catalog gives an opening-day catalog depth of roughly 40,000–60,000 CC for a completionist. Veterans get a shopping spree, not instant completion — and seasonal rotation (C2) keeps demand recurring afterward.
 - **XP pacing is already right.** A daily-active player earns ~450–600 XP/week → a level every ~2 weeks → World Class via XP in ~4–5 months, matching the target in `docs/GAMIFICATION_REDESIGN.md`. Extended levels at the same rate mean a title bump roughly every 10 weeks — slow enough to mean something.
 - **Season payouts (Phase 1) won't inflate.** Even the champion's 1,000 CC + league pool is ~1 week of active income, arriving once per 49 days.
@@ -205,14 +205,14 @@ The honest overall verdict: the plan is a set of **small independent systems att
 
 ## Appendix — Pricing anchors
 
-| Income profile | CC/week (approx.) |
-| --- | --- |
-| SoundSport rookie, moderately active | 300–500 |
-| World Class, fully active (4 shows, league, predictions, streak) | 800–1,200 |
+| Income profile                                                   | CC/week (approx.) |
+| ---------------------------------------------------------------- | ----------------- |
+| SoundSport rookie, moderately active                             | 300–500           |
+| World Class, fully active (4 shows, league, predictions, streak) | 800–1,200         |
 
-| Sink tier | Price band | Examples |
-| --- | --- | --- |
-| Consumable | 250–750 | Streak freeze, avatar reroll, template slot |
-| Cosmetic | 500–3,500 | Palettes, emblems, card themes, celebrations |
-| Identity/title | 1,000–10,000 | Director titles, league trophy styles |
-| Prestige | 10,000–25,000 | Show sponsorship, Hall banner, gold retirement plaque |
+| Sink tier      | Price band    | Examples                                              |
+| -------------- | ------------- | ----------------------------------------------------- |
+| Consumable     | 250–750       | Streak freeze, avatar reroll, template slot           |
+| Cosmetic       | 500–3,500     | Palettes, emblems, card themes, celebrations          |
+| Identity/title | 1,000–10,000  | Director titles, league trophy styles                 |
+| Prestige       | 10,000–25,000 | Show sponsorship, Hall banner, gold retirement plaque |

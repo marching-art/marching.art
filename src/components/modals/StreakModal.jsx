@@ -153,8 +153,7 @@ const StreakModal = ({ onClose, corpsCoin = 0 }) => {
                   ) : (
                     <>
                       <p className="text-xs text-gray-400 mb-3">
-                        Protects your streak for 24 hours if you miss a day. One freeze per 7
-                        days.
+                        Protects your streak for 24 hours if you miss a day. One freeze per 7 days.
                       </p>
                       {status?.canPurchaseFreeze ? (
                         <button

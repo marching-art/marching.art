@@ -8,7 +8,12 @@ import { useAuth } from '../context/AuthContext';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { getSeasonData, getCorpsValues } from '../api/season';
 import { mergeProfile } from '../api/profile';
-import { checkUsername, createUserProfile, selectUserShows, joinRookieLeague } from '../api/functions';
+import {
+  checkUsername,
+  createUserProfile,
+  selectUserShows,
+  joinRookieLeague,
+} from '../api/functions';
 import toast from 'react-hot-toast';
 import { useSeasonStore } from '../store/seasonStore';
 import { useScheduleStore } from '../store/scheduleStore';

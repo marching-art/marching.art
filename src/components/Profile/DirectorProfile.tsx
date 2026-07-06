@@ -44,6 +44,7 @@ import {
   UnregisteredEnsembleCard,
   EmptyWithCTA,
   AvatarActions,
+  ShopTitleFlair,
 } from './DirectorProfileParts';
 import type { AvatarAction } from './DirectorProfileParts';
 import {
@@ -387,9 +388,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                     {profile.xpLevel || 1}
                   </span>
                 </span>
-                {equippedTitle && (
-                  <span className={`text-[11px] font-bold ${equippedTitle.textClass}`}>{`★ ${equippedTitle.name}`}</span>
-                )}
+                {equippedTitle && <ShopTitleFlair item={equippedTitle} />}
               </div>
 
               <div className="flex items-center gap-3 text-[10px] text-gray-500">

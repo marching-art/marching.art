@@ -19,7 +19,12 @@ const RECORD_CLASSES = [
 ];
 
 const CATEGORIES = [
-  { key: 'highestScore', label: 'Highest Single-Night Score', icon: Trophy, color: 'text-yellow-500' },
+  {
+    key: 'highestScore',
+    label: 'Highest Single-Night Score',
+    icon: Trophy,
+    color: 'text-yellow-500',
+  },
   { key: 'highestGE', label: 'Best General Effect', icon: Sparkles, color: 'text-purple-400' },
   { key: 'highestVisual', label: 'Best Visual', icon: Eye, color: 'text-cyan-400' },
   { key: 'highestMusic', label: 'Best Music', icon: Music, color: 'text-green-400' },

@@ -7,7 +7,16 @@
 // the client catalog mirror in src/utils/cosmetics.js.
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { Coins, ShoppingBag, Check, Snowflake, Shield, User, CreditCard, Megaphone } from 'lucide-react';
+import {
+  Coins,
+  ShoppingBag,
+  Check,
+  Snowflake,
+  Shield,
+  User,
+  CreditCard,
+  Megaphone,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useProfileStore } from '../store/profileStore';
 import { useScheduleStore } from '../store/scheduleStore';
@@ -53,7 +62,9 @@ const ItemPreview = ({ item }) => {
   if (item.type === 'frame') {
     return (
       <div className="h-14 flex items-center justify-center bg-[#0a0a0a] border border-[#2a2a2a]">
-        <div className={`w-9 h-9 rounded-sm bg-[#222] ${item.frameClass} flex items-center justify-center`}>
+        <div
+          className={`w-9 h-9 rounded-sm bg-[#222] ${item.frameClass} flex items-center justify-center`}
+        >
           <User className="w-4 h-4 text-gray-500" />
         </div>
       </div>
@@ -140,9 +151,11 @@ const Shop = () => {
   const handleSponsor = async (show) => {
     if (!sponsorCorps) return;
     const price = getSponsorshipPrice(show);
-    if (!window.confirm(
-      `Sponsor ${show.eventName} for ${price.toLocaleString()} CC?\n\n"Presented by ${sponsorCorps.corpsName}" will appear on the schedule for every director.`
-    )) {
+    if (
+      !window.confirm(
+        `Sponsor ${show.eventName} for ${price.toLocaleString()} CC?\n\n"Presented by ${sponsorCorps.corpsName}" will appear on the schedule for every director.`
+      )
+    ) {
       return;
     }
     setBusy(`sponsor_${show.day}_${show.eventName}`);

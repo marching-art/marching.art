@@ -599,6 +599,14 @@ const AvatarActions = ({ actions }: { actions: AvatarAction[] }) => {
   );
 };
 
+// Purchased director title from the Corps Identity Shop, shown as flair next
+// to the level title in the profile hero.
+const ShopTitleFlair = ({ item }: { item: { name: string; textClass?: string } }) => (
+  <span className={`text-[11px] font-bold ${item.textClass || 'text-yellow-400'}`}>
+    ★ {item.name}
+  </span>
+);
+
 export {
   StatusIndicator,
   StatPill,
@@ -611,4 +619,5 @@ export {
   UnregisteredEnsembleCard,
   EmptyWithCTA,
   AvatarActions,
+  ShopTitleFlair,
 };
