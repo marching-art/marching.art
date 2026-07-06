@@ -15,11 +15,10 @@ const {
 const {
   getShowTitleFromFirestore,
 } = require("./newsUniforms");
-const { getContextualPlaceholder } = require("./mediaService");
-// NOTE: The DCI articles (1–3) deliberately do NOT generate AI imagery. Fabricated
-// depictions of real corps in invented uniforms are misleading, so these articles
-// fall back to real stock marching-arts photography. Only the fantasy-corps events
-// article (Article 5) generates images (of a user's own fantasy corps).
+// NOTE: The DCI articles (1–3) deliberately carry NO imagery at all (imageUrl:
+// null — the feed/article pages render text-only). Fabricated AI depictions of
+// real corps in invented uniforms are misleading. Only the fantasy-corps events
+// article (Article 5) generates an AI image, of the user's own fantasy corps.
 const { getTrendNarrative } = require("./newsNarratives");
 const {
   getToneGuidance,
@@ -288,14 +287,13 @@ Write like you've covered this beat for years. Let the scores drive the story.`;
       fieldCorpsNames: dayScores.map(s => s.corps),
     });
 
-    // No AI-generated imagery for DCI articles — a fabricated depiction of the top
-    // corps would be misleading, so use a real stock marching-arts photo instead.
+    // No imagery for DCI articles — a fabricated depiction of the top corps
+    // would be misleading, and the feed/article pages render fine without one.
     return {
       type: ARTICLE_TYPES.DCI_DAILY,
       ...content,
       featuredCorps: topCorps.corps, // Track which corps was featured for diversity
-      imageUrl: getContextualPlaceholder({ newsCategory: "dci_daily", headline: content.headline }),
-      isPlaceholder: true,
+      imageUrl: null,
       reportDay,
     };
   } catch (error) {
@@ -500,15 +498,14 @@ ARTICLE REQUIREMENTS
       fieldCorpsNames: dayScores.map(s => s.corps),
     });
 
-    // No AI-generated imagery for DCI articles — use a real stock marching-arts photo.
+    // No imagery for DCI articles (see note at top of file).
     return {
       type: ARTICLE_TYPES.DCI_FEATURE,
       ...content,
       featuredCorps: featureCorps.corps,
       featuredYear: featureCorps.sourceYear,
       showTitle,
-      imageUrl: getContextualPlaceholder({ newsCategory: "dci_feature", headline: content.headline }),
-      isPlaceholder: true,
+      imageUrl: null,
       reportDay,
     };
   } catch (error) {
@@ -737,13 +734,12 @@ ARTICLE REQUIREMENTS
     // Feature the GE leader for coverage-ledger tracking (or next available if excluded).
     const featuredCorps = geSorted.find(s => !excludeCorps.has(s.corps)) || geSorted[0];
 
-    // No AI-generated imagery for DCI articles — use a real stock marching-arts photo.
+    // No imagery for DCI articles (see note at top of file).
     return {
       type: ARTICLE_TYPES.DCI_RECAP,
       ...content,
       featuredCorps: featuredCorps.corps,
-      imageUrl: getContextualPlaceholder({ newsCategory: "dci_recap", headline: content.headline }),
-      isPlaceholder: true,
+      imageUrl: null,
       reportDay,
     };
   } catch (error) {

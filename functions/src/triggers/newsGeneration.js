@@ -189,7 +189,8 @@ async function saveArticleDoc(db, { reportDay, article, metadata, seasonId }) {
     recommendations: article.recommendations || null,
     fantasyImpact: article.fantasyImpact || null,
 
-    // Image (from Imagen)
+    // Image — only the fantasy-corps events article carries one (AI-generated,
+    // quality model). The DCI-sourced articles ship imageUrl: null by design.
     imageUrl: article.imageUrl || null,
     imageIsPlaceholder: article.isPlaceholder || false,
     imagePrompt: article.imagePrompt || null,
@@ -198,7 +199,9 @@ async function saveArticleDoc(db, { reportDay, article, metadata, seasonId }) {
     metadata: {
       ...metadata,
       generatedBy: "gemini-2.5-flash",
-      imageGeneratedBy: "gemini-3-pro-image", // Nano Banana Pro (paid tier)
+      // Nano Banana Pro (paid tier) — stamped only when this article actually
+      // generated an AI image (not null, not a stock placeholder).
+      imageGeneratedBy: article.imageUrl && !article.isPlaceholder ? "gemini-3-pro-image" : null,
     },
 
     isPublished: true,
@@ -246,7 +249,9 @@ async function saveDailyNews(db, { reportDay, content, metadata, articles, seaso
       articleTypes: articles.map(a => a.type),
       articleCount: articles.length,
       primaryHeadline: articles[0]?.headline || `Day ${reportDay} Recap`,
-      primaryImageUrl: articles[0]?.imageUrl || null,
+      // Only the fantasy-corps events article carries an image now, so take the
+      // first article that actually has one rather than articles[0] (DCI Daily).
+      primaryImageUrl: articles.find(a => a.imageUrl)?.imageUrl || null,
       metadata: {
         ...metadata,
         generatedBy: "gemini-2.5-flash",

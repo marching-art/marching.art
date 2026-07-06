@@ -150,7 +150,9 @@ async function processGeneratedImage(imageData, category) {
 }
 
 /**
- * Create fallback article when generation fails
+ * Create fallback article when generation fails.
+ * Carries no image: the DCI articles never have imagery by design, and a
+ * "check back shortly" stub gains nothing from an unrelated stock photo.
  */
 function createFallbackArticle(type, reportDay) {
   return {
@@ -158,8 +160,7 @@ function createFallbackArticle(type, reportDay) {
     headline: `Day ${reportDay} ${type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`,
     summary: "Analysis is being processed. Check back shortly.",
     narrative: "Full analysis will be available soon.",
-    imageUrl: getContextualPlaceholder({ newsCategory: type }),
-    isPlaceholder: true,
+    imageUrl: null,
     reportDay,
   };
 }
