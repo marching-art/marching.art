@@ -11,6 +11,7 @@ import { getProfile, updateProfile } from '../../api/profile';
 import { updateUsername, updateEmail, deleteAccount } from '../../api/functions';
 import toast from 'react-hot-toast';
 import { useTooltipPreference } from '../../hooks/useTooltipPreference';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 
 // =============================================================================
 // TOGGLE
@@ -41,6 +42,7 @@ const Toggle = ({ checked, onChange, label, description }) => (
 
 const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
   const { signOut } = useAuth();
+  useEscapeKey(onClose, isOpen);
   const [activeTab, setActiveTab] = useState(initialTab);
 
   // Tooltip preferences
@@ -310,6 +312,9 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
     <div
       className="fixed inset-0 z-50 bg-black/80 flex items-end sm:items-center justify-center"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Settings"
     >
       <div
         className="w-full sm:max-w-md bg-[#1a1a1a] border-t sm:border border-[#333] rounded-t-xl sm:rounded-sm safe-area-bottom max-h-[85dvh] flex flex-col"

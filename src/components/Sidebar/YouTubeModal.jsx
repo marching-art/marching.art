@@ -1,12 +1,20 @@
 import React from 'react';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { X, Loader2, RefreshCw, ChevronRight } from 'lucide-react';
 import YouTubeIcon from '../YouTubeIcon';
 
 const YouTubeModal = ({ videoModal, onClose, onRetry }) => {
+  useEscapeKey(onClose, !!videoModal.show);
+
   if (!videoModal.show) return null;
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+    <div
+      className="fixed inset-0 z-[110] flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label={videoModal.title || 'Video player'}
+    >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/90" onClick={onClose} />
 

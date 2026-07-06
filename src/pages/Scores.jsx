@@ -14,6 +14,7 @@ import { formatEventName } from '../utils/season';
 import { useScoresData } from '../hooks/useScoresData';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { useHaptic } from '../hooks/useHaptic';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import {
   PillTabControl,
   RecapDataGrid,
@@ -78,6 +79,9 @@ const Scores = () => {
   const [selectedArchiveSeason, setSelectedArchiveSeason] = useState(null);
   const [selectedArchiveYear, setSelectedArchiveYear] = useState(null);
   const [archiveViewTab, setArchiveViewTab] = useState('latest'); // Sub-tab within archive
+
+  // Close the full-recap modal on Escape
+  useEscapeKey(() => setSelectedShow(null), !!selectedShow);
 
   const {
     loading,
@@ -592,7 +596,12 @@ const Scores = () => {
 
       {/* SELECTED SHOW MODAL (Full Recap) */}
       {selectedShow && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Recap for ${formatEventName(selectedShow.eventName)}`}
+        >
           <div className="absolute inset-0 bg-black/80" onClick={() => setSelectedShow(null)} />
           <div className="relative w-full max-w-lg max-h-[80dvh] bg-[#1a1a1a] border border-[#333] sm:rounded-sm overflow-hidden flex flex-col">
             {/* Modal Header */}

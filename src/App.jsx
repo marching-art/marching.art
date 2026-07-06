@@ -32,6 +32,7 @@ import { useScheduleStore } from './store/scheduleStore';
 import { useProfileStore } from './store/profileStore';
 import OfflineBanner from './components/OfflineBanner';
 import { SkipToContent, RouteChangeFocus } from './components/a11y';
+import { initOfflineLineupReplay } from './lib/offlineLineupQueue';
 import { lazyWithRetry } from './utils/lazyWithRetry';
 
 // Lazy load pages for better performance.
@@ -162,6 +163,13 @@ function App() {
       // Only cleanup on unmount, not on user change (handled above)
     };
   }, [user, initProfileListener, cleanupProfileListener]);
+
+  // Replay lineup saves queued while offline: flush on sign-in and whenever
+  // connectivity returns (see src/lib/offlineLineupQueue.ts).
+  useEffect(() => {
+    if (!user) return;
+    return initOfflineLineupReplay(user.uid);
+  }, [user]);
 
   // Claim daily login once per calendar day to award XP, update streak, and
   // update userTitle. The backend is idempotent (returns alreadyClaimed:true

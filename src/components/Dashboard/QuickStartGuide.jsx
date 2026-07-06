@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { WEEKLY_TRADE_LIMIT, CHAMPIONSHIP_TRADE_LIMIT } from '../../utils/seasonClock';
 import { getMaxShowsForWeek } from '../../utils/captionPricing';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 
 // Rule numbers come from the same constants the game enforces
 // (WEEKLY_TRADE_LIMIT, getMaxShowsForWeek) so this guide can't drift out of
@@ -92,6 +93,7 @@ const colorClasses = {
 
 const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => {
   const [expandedStep, setExpandedStep] = useState(null);
+  useEscapeKey(onClose, isOpen);
 
   if (!isOpen) return null;
 
@@ -105,6 +107,9 @@ const QuickStartGuide = ({ isOpen, onClose, onAction, completedSteps = [] }) => 
         exit={{ opacity: 0 }}
         className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
         onClick={onClose}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Quick start guide"
       >
         <m.div
           initial={{ scale: 0.95, opacity: 0 }}

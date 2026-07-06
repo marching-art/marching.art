@@ -7,6 +7,7 @@ import { Check, AlertCircle, Trophy, Save, Target, Award, X, ArrowLeft, Wand2 } 
 import { getProfile } from '../../api/profile';
 import { getCorpsValues } from '../../api/season';
 import { getHotCorps, getActiveLineupKeys, saveLineup } from '../../api/functions';
+import { queueLineupSave } from '../../lib/offlineLineupQueue';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
 import { useAuth } from '../../context/AuthContext';
@@ -484,11 +485,32 @@ const CaptionSelectionModal = ({
       toast.error(`Lineup exceeds ${pointLimit} point limit`);
       return;
     }
+    // Offline: store the save locally and submit automatically on reconnect.
+    // Backend rules (change windows, limits) still apply at replay time.
+    const saveOffline = () => {
+      queueLineupSave(user.uid, corpsClass, selections);
+      toast.success("You're offline — lineup saved and will submit when you reconnect.", {
+        duration: 6000,
+      });
+      onSubmit(selections);
+      onClose();
+    };
+
+    if (!navigator.onLine) {
+      saveOffline();
+      return;
+    }
+
     try {
       setSaving(true);
       await saveLineup({ lineup: selections, corpsClass });
       setShowCelebration(true);
     } catch (e) {
+      if (!navigator.onLine) {
+        // Connection dropped mid-save
+        saveOffline();
+        return;
+      }
       toast.error(e.message || 'Failed to save lineup');
       setSaving(false);
     }

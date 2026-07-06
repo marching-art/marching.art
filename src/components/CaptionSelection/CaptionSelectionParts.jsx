@@ -19,6 +19,7 @@ import {
   Search,
 } from 'lucide-react';
 import { formatEtShort, formatEtDayTime } from '../../utils/seasonClock';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 
 // -----------------------------------------------------------------------------
 // LINEUP CELEBRATION
@@ -174,12 +175,16 @@ const CorpsSelectionList = ({
 // -----------------------------------------------------------------------------
 const TemplateModal = ({ isOpen, onClose, templates, onSave, onLoad, onDelete, currentLineup }) => {
   const [newTemplateName, setNewTemplateName] = useState('');
+  useEscapeKey(onClose, isOpen);
   if (!isOpen) return null;
 
   return (
     <div
       className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Lineup templates"
     >
       <div
         className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-sm"

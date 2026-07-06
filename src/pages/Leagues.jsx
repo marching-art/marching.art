@@ -20,6 +20,7 @@ import {
 import { useProfileStore } from '../store/profileStore';
 import { CreateLeagueModal, LeagueDetailView } from '../components/Leagues';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 // =============================================================================
 // LEAGUE TYPE TAGS
@@ -230,59 +231,65 @@ const DiscoverLeagueCard = ({ league, onJoin, isJoining }) => {
 // QUICK JOIN MODAL
 // =============================================================================
 
-const QuickJoinModal = ({ inviteCode, setInviteCode, onJoin, onClose, isJoining }) => (
-  <div
-    className="fixed inset-0 bg-black/80 z-50 flex items-end sm:items-center justify-center"
-    onClick={onClose}
-  >
+const QuickJoinModal = ({ inviteCode, setInviteCode, onJoin, onClose, isJoining }) => {
+  useEscapeKey(onClose);
+  return (
     <div
-      className="w-full sm:max-w-sm bg-[#1a1a1a] border-t sm:border border-[#333] rounded-t-xl sm:rounded-sm"
-      onClick={(e) => e.stopPropagation()}
+      className="fixed inset-0 bg-black/80 z-50 flex items-end sm:items-center justify-center"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Join league by invite code"
     >
-      {/* Drag handle - mobile */}
-      <div className="sm:hidden flex justify-center py-2">
-        <div className="w-8 h-1 bg-gray-600 rounded-full" />
-      </div>
-
-      <div className="px-4 py-3 border-b border-[#333] bg-[#222] flex items-center justify-between">
-        <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
-          Join by Code
-        </span>
-        <button
-          onClick={onClose}
-          className="p-2 -mr-2 text-gray-500 hover:text-white min-w-touch min-h-touch flex items-center justify-center"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          onJoin();
-        }}
-        className="p-4 space-y-3"
+      <div
+        className="w-full sm:max-w-sm bg-[#1a1a1a] border-t sm:border border-[#333] rounded-t-xl sm:rounded-sm"
+        onClick={(e) => e.stopPropagation()}
       >
-        <input
-          type="text"
-          value={inviteCode}
-          onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-          placeholder="XXXXXXXX"
-          className="w-full px-4 py-3 bg-[#0a0a0a] border border-[#444] text-center text-xl font-bold font-data text-white tracking-[0.3em] focus:outline-none focus:border-[#0057B8] placeholder:text-gray-600"
-          maxLength={8}
-          autoFocus
-        />
-        <button
-          type="submit"
-          disabled={isJoining || !inviteCode.trim()}
-          className="w-full py-3 min-h-[44px] bg-[#0057B8] text-white font-bold text-sm hover:bg-[#0066d6] disabled:opacity-50 transition-colors"
+        {/* Drag handle - mobile */}
+        <div className="sm:hidden flex justify-center py-2">
+          <div className="w-8 h-1 bg-gray-600 rounded-full" />
+        </div>
+
+        <div className="px-4 py-3 border-b border-[#333] bg-[#222] flex items-center justify-between">
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
+            Join by Code
+          </span>
+          <button
+            onClick={onClose}
+            className="p-2 -mr-2 text-gray-500 hover:text-white min-w-touch min-h-touch flex items-center justify-center"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            onJoin();
+          }}
+          className="p-4 space-y-3"
         >
-          {isJoining ? 'Joining...' : 'Join League'}
-        </button>
-      </form>
+          <input
+            type="text"
+            value={inviteCode}
+            onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+            placeholder="XXXXXXXX"
+            className="w-full px-4 py-3 bg-[#0a0a0a] border border-[#444] text-center text-xl font-bold font-data text-white tracking-[0.3em] focus:outline-none focus:border-[#0057B8] placeholder:text-gray-600"
+            maxLength={8}
+            autoFocus
+          />
+          <button
+            type="submit"
+            disabled={isJoining || !inviteCode.trim()}
+            className="w-full py-3 min-h-[44px] bg-[#0057B8] text-white font-bold text-sm hover:bg-[#0066d6] disabled:opacity-50 transition-colors"
+          >
+            {isJoining ? 'Joining...' : 'Join League'}
+          </button>
+        </form>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // =============================================================================
 // EMPTY STATE COMPONENTS
