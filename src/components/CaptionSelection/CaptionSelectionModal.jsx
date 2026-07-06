@@ -49,6 +49,11 @@ const CaptionSelectionModal = ({
   // Mobile state - whether we're viewing lineup or selection list
   const [mobileView, setMobileView] = useState('lineup'); // 'lineup' or 'selection'
 
+  // Prominent, in-modal save error (e.g. the caption-change-limit message from
+  // the backend). Shown as a banner inside the modal instead of only a toast —
+  // a bottom-center toast is easily lost behind the near-full-height modal.
+  const [saveError, setSaveError] = useState(null);
+
   // Active caption for selection
   const [activeCaption, setActiveCaption] = useState(initialCaption || null);
 
@@ -256,6 +261,8 @@ const CaptionSelectionModal = ({
 
   const handleSelectionChange = useCallback(
     (captionId, corpsData) => {
+      // Editing the lineup dismisses any prior save error so it doesn't linger
+      setSaveError(null);
       if (!corpsData) {
         const newSel = { ...selections };
         delete newSel[captionId];
@@ -462,27 +469,29 @@ const CaptionSelectionModal = ({
   }, [availableCorps, selections, captions, pointLimit, activeLineupKeys, generateLineupKey]);
 
   const handleSubmit = async () => {
+    // Clear any prior error before re-attempting the save.
+    setSaveError(null);
     if (changesBlocked) {
       // Mirrors the saveLineup enforcement messages.
       if (changeInfo.status === 'locked') {
-        toast.error(
+        setSaveError(
           'Caption changes are locked while scores are processed. They reopen around 2:00 AM ET.'
         );
       } else if (changeInfo.phase === 'blackout') {
-        toast.error(
+        setSaveError(
           'Caption changes are closed on Days 43-44. Championship changes open on Day 45 once scores are processed.'
         );
       } else {
-        toast.error('The season has ended — caption changes are closed until next season.');
+        setSaveError('The season has ended — caption changes are closed until next season.');
       }
       return;
     }
     if (!isComplete) {
-      toast.error('Please select all 8 captions');
+      setSaveError('Please select all 8 captions.');
       return;
     }
     if (isOverLimit) {
-      toast.error(`Lineup exceeds ${pointLimit} point limit`);
+      setSaveError(`Lineup exceeds the ${pointLimit} point limit.`);
       return;
     }
     // Offline: store the save locally and submit automatically on reconnect.
@@ -511,7 +520,9 @@ const CaptionSelectionModal = ({
         saveOffline();
         return;
       }
-      toast.error(e.message || 'Failed to save lineup');
+      // Surface the backend message (e.g. the caption-change-limit error)
+      // prominently inside the modal so it isn't lost behind it.
+      setSaveError(e.message || 'Failed to save lineup. Please try again.');
       setSaving(false);
     }
   };
@@ -647,6 +658,27 @@ const CaptionSelectionModal = ({
               />
             </div>
           </div>
+
+          {/* Prominent save-error banner — mirrors the lock/celebration
+              messaging so change-limit and other save failures can't be lost
+              behind the modal the way a bottom toast is. */}
+          {saveError && (
+            <div
+              role="alert"
+              aria-live="assertive"
+              className="px-4 py-3 bg-red-500/15 border-b-2 border-red-500 flex items-start gap-3 flex-shrink-0 animate-slide-in-top"
+            >
+              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+              <p className="flex-1 text-sm font-bold text-red-300 leading-snug">{saveError}</p>
+              <button
+                onClick={() => setSaveError(null)}
+                className="min-w-touch min-h-touch -my-1 -mr-2 flex items-center justify-center text-red-400/70 hover:text-red-300 active:text-red-300 press-feedback"
+                aria-label="Dismiss error"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
 
           {/* Body */}
           <div className="flex-1 flex flex-col overflow-hidden min-h-0">
