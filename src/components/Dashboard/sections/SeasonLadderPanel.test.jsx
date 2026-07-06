@@ -31,16 +31,17 @@ describe('SeasonLadderPanel', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('shows zero progress when the baseline has not been stamped yet', () => {
+  it('explains that tracking has not started when the baseline is missing', () => {
     render(
       <SeasonLadderPanel
         profile={makeProfile({ xp: 5000, xpAtSeasonStart: undefined })}
         seasonUid="s1"
       />
     );
-    // No baseline → 0 season XP → tier 1 locked, 150 XP away
-    expect(screen.getByText(/Tier 1:/)).toBeInTheDocument();
-    expect(screen.getByText(/150 XP away/)).toBeInTheDocument();
+    // No baseline → season XP can't be computed yet; say so instead of
+    // showing a misleading locked tier
+    expect(screen.getByText(/starts counting/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Tier 1 ready/)).not.toBeInTheDocument();
   });
 
   it('offers claims for every tier the season XP has reached', () => {

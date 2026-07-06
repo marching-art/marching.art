@@ -37,6 +37,19 @@ const STREAK_MILESTONES = {
 const STREAK_FREEZE_COST = 300;
 
 /**
+ * Season-ladder baseline for accounts that predate the ladder: returns a
+ * one-time { xpAtSeasonStart } stamp (the profile's pre-award XP) when the
+ * baseline is missing, else {}. Merged into every daily XP callable's update
+ * so the ladder starts counting on a player's first XP event after deploy —
+ * new seasons stamp the baseline properly at rollover.
+ */
+function seasonBaselineStamp(profileData) {
+  return typeof profileData.xpAtSeasonStart === 'number'
+    ? {}
+    : { xpAtSeasonStart: profileData.xp || 0 };
+}
+
+/**
  * Claim Daily Login
  * Now awards XP and checks for streak milestone bonuses
  */
@@ -65,7 +78,13 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
       if (lastLogin) {
         const lastLoginDay = new Date(lastLogin.getFullYear(), lastLogin.getMonth(), lastLogin.getDate());
         if (lastLoginDay.getTime() === today.getTime()) {
-          // Already logged in today - just return current streak info
+          // Already logged in today. Still stamp the season-ladder baseline
+          // if it's missing — otherwise a player who claimed before this
+          // code deployed would show zero season XP until tomorrow.
+          const baseline = seasonBaselineStamp(profileData);
+          if (baseline.xpAtSeasonStart !== undefined) {
+            transaction.update(profileRef, baseline);
+          }
           return {
             alreadyClaimed: true,
             loginStreak: engagement.loginStreak || 1,
@@ -145,12 +164,8 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
         logger.info(`User ${uid} awarded free streak freeze for ${newStreak}-day milestone`);
       }
 
-      // Season-ladder baseline for accounts that predate the ladder: stamp
-      // xpAtSeasonStart on first claim so season XP starts counting. New
-      // seasons stamp it properly at rollover (archiveAndResetProfiles).
-      if (typeof profileData.xpAtSeasonStart !== 'number') {
-        updates.xpAtSeasonStart = profileData.xp || 0;
-      }
+      // Season-ladder baseline (no-op once stamped)
+      Object.assign(updates, seasonBaselineStamp(profileData));
 
       // Level-up stipend: +100 CC per level gained, settled daily against
       // lastRewardedLevel (a server-only field). XP is earned through many
@@ -329,6 +344,7 @@ const completeDailyChallenge = onCall({ cors: true }, async (request) => {
       transaction.update(profileRef, {
         challenges: pruneOldChallenges({ ...allBuckets, [gameDay]: updatedBucket }),
         ...xpResult.updates,
+        ...seasonBaselineStamp(profileData),
       });
 
       return {
@@ -728,6 +744,7 @@ const resolvePredictions = onCall({ cors: true }, async (request) => {
         },
       };
 
+      Object.assign(updates, seasonBaselineStamp(data));
       let newLevel = data.xpLevel;
       let classUnlocked = null;
       if (totalXp > 0) {

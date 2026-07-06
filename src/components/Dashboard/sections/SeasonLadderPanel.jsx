@@ -28,6 +28,10 @@ const TIERS = [
 const SeasonLadderPanel = memo(({ profile, seasonUid }) => {
   const [claiming, setClaiming] = useState(null);
 
+  // The baseline is stamped server-side by the first daily XP event (login,
+  // challenge, prediction) or at season rollover. Until then season XP can't
+  // be computed — say so instead of showing a misleading 0.
+  const baselineStamped = typeof profile?.xpAtSeasonStart === 'number';
   const seasonXP = useMemo(() => {
     if (typeof profile?.xpAtSeasonStart !== 'number') return 0;
     return Math.max(0, (profile.xp || 0) - profile.xpAtSeasonStart);
@@ -114,8 +118,16 @@ const SeasonLadderPanel = memo(({ profile, seasonUid }) => {
         </div>
       )}
 
+      {/* Baseline not stamped yet — tracking begins with the next XP event */}
+      {!baselineStamped && (
+        <div className="px-4 py-3 text-[10px] text-gray-500">
+          Season XP starts counting with your next check-in, challenge, or prediction — all the XP
+          you earn from then on climbs the ladder.
+        </div>
+      )}
+
       {/* Next tier preview */}
-      {nextTier && claimable.length === 0 && (
+      {baselineStamped && nextTier && claimable.length === 0 && (
         <div className="px-4 py-3 flex items-center gap-2 text-[10px] text-gray-500">
           <Lock className="w-3 h-3" />
           Tier {nextTier.tier}: {(nextTier.xp - seasonXP).toLocaleString()} XP away — +
