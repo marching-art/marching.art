@@ -193,7 +193,7 @@ export const StepCorps = ({ formData, setFormData }) => (
 );
 
 // Celebration modal shown after the profile is created, before navigating away
-export const CelebrationModal = ({ show, displayName, corpsName, onComplete }) => (
+export const CelebrationModal = ({ show, displayName, corpsName, onComplete, onJoinLeague }) => (
   <AnimatePresence>
     {show && (
       <m.div
@@ -258,6 +258,19 @@ export const CelebrationModal = ({ show, displayName, corpsName, onComplete }) =
             Go to Dashboard
             <ChevronRight className="w-5 h-5" />
           </m.button>
+
+          {/* Rookie league offer — directors in leagues retain far better */}
+          {onJoinLeague && (
+            <m.button
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 1.1 }}
+              onClick={onJoinLeague}
+              className="mt-3 px-6 py-2.5 border border-[#0057B8]/50 text-[#0057B8] rounded-sm font-bold text-sm uppercase tracking-wide hover:bg-[#0057B8]/10 transition-colors mx-auto block"
+            >
+              Join the Rookie Circuit — compete head-to-head weekly
+            </m.button>
+          )}
 
           {/* Confetti particles */}
           {[...Array(20)].map((_, i) => (

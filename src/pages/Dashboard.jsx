@@ -47,6 +47,7 @@ import {
   LineupSimulatorPanel,
   PredictionGamePanel,
   AchievementTrackerPanel,
+  JourneyPanel,
   CLASS_DISPLAY_NAMES,
   CLASS_UNLOCK_LEVELS,
   CLASS_UNLOCK_COSTS,
@@ -375,6 +376,15 @@ const Dashboard = () => {
 
               {/* SIDEBAR (1/3) - Engagement panels below the scorecard */}
               <div className="lg:col-start-3 space-y-4">
+                {/* First Season Journey - server-rewarded quest line for new
+                    directors; hides itself once all steps are claimed */}
+                <JourneyPanel
+                  profile={profile}
+                  resultCount={recentResults.length}
+                  onEditLineup={() => openCaptionSelection()}
+                  onSetConcept={() => setShowEditCorps(true)}
+                />
+
                 {/* Daily Challenges - drives daily return visits */}
                 <DailyChallenges onLineupClick={() => openCaptionSelection()} />
 

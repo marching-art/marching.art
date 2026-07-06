@@ -303,6 +303,25 @@ export interface StreakStatusResult {
 
 export const getStreakStatus = createCallable<void, StreakStatusResult>('getStreakStatus');
 
+export interface CompleteJourneyStepResult {
+  success: boolean;
+  alreadyCompleted?: boolean;
+  step?: { id: string; title: string };
+  xpAwarded: number;
+  coinAwarded: number;
+  newLevel?: number;
+  classUnlocked?: string | null;
+}
+
+export const completeJourneyStep = createCallable<{ stepId: string }, CompleteJourneyStepResult>(
+  'completeJourneyStep'
+);
+
+export const joinRookieLeague = createCallable<
+  void,
+  { success: boolean; leagueId: string; leagueName: string; alreadyMember: boolean; message: string }
+>('joinRookieLeague');
+
 export const purchaseStreakFreeze = createCallable<
   void,
   { success: boolean; message: string; freezeUntil: string; newBalance: number }

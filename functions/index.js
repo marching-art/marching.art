@@ -48,11 +48,13 @@ const {
   createLeague,
   joinLeague,
   joinLeagueByCode,
+  joinRookieLeague,
   leaveLeague,
   generateMatchups,
   updateMatchupResults,
   postLeagueMessage,
 } = require("./src/callable/leagues");
+const { completeJourneyStep } = require("./src/callable/journey");
 const {
   inviteDirectorToLeague,
   respondToLeagueInvitation,
@@ -195,6 +197,8 @@ module.exports = {
   createLeague,
   joinLeague,
   joinLeagueByCode,
+  joinRookieLeague,
+  completeJourneyStep,
   leaveLeague,
   generateMatchups,
   updateMatchupResults,
