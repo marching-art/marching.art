@@ -140,13 +140,17 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
           xpBonus,
         });
 
-        // Archive this season's performance
+        // Archive this season's performance. The show concept (title +
+        // theme/music/drill) is part of the historical record — the corps
+        // history a director looks back on — even though the live field
+        // resets for the new season.
         seasonHistory.push({
           seasonId: oldSeasonUid,
           seasonName: oldSeasonUid,
           corpsClass,
           corpsName: corps.corpsName || null,
           location: corps.location || null,
+          showConcept: corps.showConcept?.theme ? corps.showConcept : null,
           lineup: corps.lineup || null,
           selectedShows: corps.selectedShows || {},
           weeklyScores: corps.weeklyScores || {},

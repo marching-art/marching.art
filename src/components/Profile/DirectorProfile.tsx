@@ -20,7 +20,6 @@ import {
   Clock,
   Target,
   Shield,
-  Swords,
   X,
   Palette,
   RefreshCw,
@@ -37,7 +36,6 @@ import {
   StatPill,
   TrophyMini,
   AchievementMini,
-  SeasonRow,
   Section,
   SocialLinks,
   EnsembleCard,
@@ -60,6 +58,7 @@ import {
 } from './directorProfileHelpers';
 import type { SeasonHistoryEntry } from './directorProfileHelpers';
 import { getEquippedCosmetic } from '../../utils/cosmetics';
+import SeasonHistorySection from './SeasonHistorySection';
 
 // =============================================================================
 // TYPES
@@ -94,7 +93,6 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
   onInviteToLeague,
   canInviteToLeague = false,
 }) => {
-  const [expandedSeason, setExpandedSeason] = useState<string | null>(null);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [showAvatarSelector, setShowAvatarSelector] = useState(false);
   const [savingAvatar, setSavingAvatar] = useState(false);
@@ -718,46 +716,10 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
       </div>
 
       {/* ================================================================== */}
-      {/* SEASON HISTORY - Full Width */}
+      {/* SEASON HISTORY - Full Width (corps history archive, tabbed by class) */}
       {/* ================================================================== */}
       <div className="px-3 pb-3">
-        <div className="bg-[#1a1a1a] border border-[#333]">
-          <div className="px-3 py-2 border-b border-[#333] bg-[#222] flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <Swords className="w-3.5 h-3.5 text-[#0057B8]" />
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                Season History
-              </span>
-            </div>
-            <span className="text-[9px] text-gray-500">{seasonHistory.length} seasons</span>
-          </div>
-
-          {seasonHistory.length > 0 ? (
-            <div className="max-h-64 overflow-y-auto">
-              {seasonHistory.map((season) => (
-                <SeasonRow
-                  key={`${season.classKey}-${season.seasonId}`}
-                  season={season}
-                  isExpanded={expandedSeason === `${season.classKey}-${season.seasonId}`}
-                  onToggle={() =>
-                    setExpandedSeason(
-                      expandedSeason === `${season.classKey}-${season.seasonId}`
-                        ? null
-                        : `${season.classKey}-${season.seasonId}`
-                    )
-                  }
-                />
-              ))}
-            </div>
-          ) : (
-            <EmptyWithCTA
-              icon={Calendar}
-              title="No season history yet"
-              cta="Find your first show"
-              to="/schedule"
-            />
-          )}
-        </div>
+        <SeasonHistorySection seasons={seasonHistory} />
       </div>
     </div>
   );

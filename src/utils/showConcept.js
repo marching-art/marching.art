@@ -36,3 +36,21 @@ export const DRILL_STYLES = [
 export function isStructuredConcept(showConcept) {
   return !!(showConcept && typeof showConcept === 'object' && showConcept.theme);
 }
+
+/** "Cinematic / Film · Film Score · Curvilinear / Flowing" (null if unset) */
+export function describeConceptStyle(showConcept) {
+  if (!isStructuredConcept(showConcept)) return null;
+  const parts = [
+    SHOW_THEMES.find((t) => t.value === showConcept.theme)?.label,
+    MUSIC_SOURCES.find((s) => s.value === showConcept.musicSource)?.label,
+    DRILL_STYLES.find((d) => d.value === showConcept.drillStyle)?.label,
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join(' · ') : null;
+}
+
+/** Show title from a structured concept (null for legacy strings / unset) */
+export function getConceptTitle(showConcept) {
+  if (!isStructuredConcept(showConcept)) return null;
+  const name = showConcept.showName;
+  return typeof name === 'string' && name.trim() ? name.trim() : null;
+}

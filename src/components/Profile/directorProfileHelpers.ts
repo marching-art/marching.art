@@ -21,6 +21,11 @@ export interface SeasonHistoryEntry {
   previousPlacement?: number;
   showTitle?: string;
   repertoire?: string[];
+  /** Archived per-season show concept (legacy seasons may carry a string) */
+  showConcept?:
+    | { showName?: string | null; theme: string; musicSource: string; drillStyle: string }
+    | string
+    | null;
   showsAttended?: number;
   circuitPoints?: number;
 }
