@@ -20,12 +20,16 @@ function isOwner(userId) {
 // lastScoredDay drive the scoring engine, so they are server-only too.
 // challenges is the daily-challenge completion ledger the
 // completeDailyChallenge callable trusts for XP awards — client-writable
-// completions could be cleared and re-claimed to farm XP.
+// completions could be cleared and re-claimed to farm XP. predictions and
+// predictionStats are the daily-prediction ledger the resolvePredictions
+// callable trusts for XP/coin bonuses, so they're server-only for the same
+// reason.
 function touchesProtectedProfileFields() {
   return request.resource.data.diff(resource.data).affectedKeys().hasAny([
     'corpsCoin', 'xp', 'xpLevel', 'userTitle', 'unlockedClasses',
     'stats', 'trophies', 'username', 'createdAt', 'uid',
-    'lifetimeStats', 'activeSeasonId', 'lastScoredDay', 'challenges'
+    'lifetimeStats', 'activeSeasonId', 'lastScoredDay', 'challenges',
+    'predictions', 'predictionStats'
   ]);
 }
 

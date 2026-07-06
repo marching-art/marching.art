@@ -88,6 +88,8 @@ const {
 const {
   claimDailyLogin,
   completeDailyChallenge,
+  submitPrediction,
+  resolvePredictions,
   purchaseStreakFreeze,
   getStreakStatus,
 } = require("./src/callable/dailyOps");
@@ -248,6 +250,8 @@ module.exports = {
   sweepDuplicateCorps,
   claimDailyLogin,
   completeDailyChallenge,
+  submitPrediction,
+  resolvePredictions,
   purchaseStreakFreeze,
   getStreakStatus,
 

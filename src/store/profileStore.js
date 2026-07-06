@@ -5,7 +5,11 @@ import { httpsCallable } from 'firebase/functions';
 import { AUTH_CONFIG } from '../config';
 import { mergeTimeUnlockedClasses } from '../utils/classUnlockTime';
 import { getGameDay } from '../utils/dailyChallenges';
-import { completeDailyChallenge as completeDailyChallengeFn } from '../api/functions';
+import {
+  completeDailyChallenge as completeDailyChallengeFn,
+  submitPrediction as submitPredictionFn,
+  resolvePredictions as resolvePredictionsFn,
+} from '../api/functions';
 import { triggerXPFeedback } from '../components/xpFeedbackTrigger';
 import toast from 'react-hot-toast';
 
@@ -216,6 +220,81 @@ export const useProfileStore = create((set, get) => ({
     } catch (error) {
       console.error('Error completing challenge:', error);
       return false;
+    }
+  },
+
+  /**
+   * Submit a daily prediction pick for the current game day.
+   *
+   * Delegates to the submitPrediction callable so the pick is saved to the
+   * profile's server-only `predictions` ledger (client-writes are blocked by
+   * firestore.rules). The onSnapshot listener syncs the store afterwards, so
+   * no optimistic set is needed. Returns true when the pick was accepted.
+   *
+   * @param {string} questionId - Prediction question key
+   * @param {string} pick - The chosen option
+   * @param {number|null} threshold - Threshold the pick is scored against
+   * @param {string} corpsClass - Active corps class the prediction is for
+   * @param {string|null} snapshotEvent - Latest event at pick time
+   */
+  submitPrediction: async (questionId, pick, threshold, corpsClass, snapshotEvent) => {
+    const { _currentUid, profile } = get();
+    if (!_currentUid || !profile) return false;
+
+    // Skip the round trip when the day is closed or the question is answered.
+    const bucket = profile.predictions?.[getGameDay()];
+    if (bucket?.resolved || bucket?.picks?.[questionId]) {
+      return false;
+    }
+
+    try {
+      const { data } = await submitPredictionFn({
+        questionId,
+        pick,
+        threshold: threshold ?? null,
+        corpsClass,
+        snapshotEvent: snapshotEvent ?? null,
+      });
+      return !!data?.success && !data.alreadyPicked && !data.locked;
+    } catch (error) {
+      console.error('Error submitting prediction:', error);
+      return false;
+    }
+  },
+
+  // Guard against overlapping resolvePredictions calls (the panel re-triggers
+  // as results change; the callable is idempotent but the round trip is not
+  // free).
+  _resolvingPredictions: false,
+
+  /**
+   * Resolve outstanding daily predictions and collect any bonuses.
+   *
+   * Delegates to the resolvePredictions callable, which reads the
+   * authoritative recaps to score each pending prediction and awards XP + a
+   * CorpsCoin bonus for correct picks. Fire-and-forget: the profile listener
+   * syncs the resolved state; here we just surface the XP float and a toast.
+   */
+  resolvePredictions: async () => {
+    const { _currentUid, profile, _resolvingPredictions } = get();
+    if (!_currentUid || !profile || _resolvingPredictions) return;
+
+    set({ _resolvingPredictions: true });
+    try {
+      const { data } = await resolvePredictionsFn();
+      if (data?.resolvedDays > 0) {
+        if (data.xpAwarded > 0) {
+          triggerXPFeedback(data.xpAwarded, 'xp');
+        }
+        const bits = [`${data.correct}/${data.total} predictions correct`];
+        if (data.xpAwarded > 0) bits.push(`+${data.xpAwarded} XP`);
+        if (data.coinAwarded > 0) bits.push(`+${data.coinAwarded} CC`);
+        toast.success(bits.join(' · '));
+      }
+    } catch (error) {
+      console.error('Error resolving predictions:', error);
+    } finally {
+      set({ _resolvingPredictions: false });
     }
   },
 

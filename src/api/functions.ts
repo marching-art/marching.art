@@ -251,6 +251,40 @@ export const completeDailyChallenge = createCallable<
   CompleteDailyChallengeResult
 >('completeDailyChallenge');
 
+export interface SubmitPredictionData {
+  questionId: string;
+  pick: string;
+  threshold?: number | null;
+  corpsClass: string;
+  snapshotEvent?: string | null;
+}
+
+export interface SubmitPredictionResult {
+  success: boolean;
+  picked?: string;
+  alreadyPicked?: boolean;
+  locked?: boolean;
+}
+
+export const submitPrediction = createCallable<SubmitPredictionData, SubmitPredictionResult>(
+  'submitPrediction'
+);
+
+export interface ResolvePredictionsResult {
+  success: boolean;
+  resolvedDays: number;
+  xpAwarded?: number;
+  coinAwarded?: number;
+  correct?: number;
+  total?: number;
+  newLevel?: number;
+  classUnlocked?: string | null;
+}
+
+export const resolvePredictions = createCallable<void, ResolvePredictionsResult>(
+  'resolvePredictions'
+);
+
 // =============================================================================
 // LEADERBOARDS
 // =============================================================================
