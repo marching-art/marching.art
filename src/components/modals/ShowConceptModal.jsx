@@ -11,7 +11,7 @@
 // DRILL_STYLES — keep in sync.
 
 import React, { useState } from 'react';
-import { Palette, Music, Route, Sparkles, X } from 'lucide-react';
+import { Palette, Music, Route, Sparkles, Type, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
@@ -77,18 +77,22 @@ const ShowConceptModal = ({ onClose, corpsClass, corpsName, currentConcept }) =>
   // Tolerate the legacy free-text value some corps carry (a string can't
   // match the pickers, so it simply starts unselected)
   const existing = currentConcept && typeof currentConcept === 'object' ? currentConcept : {};
+  const [showName, setShowName] = useState(existing.showName || '');
   const [theme, setTheme] = useState(existing.theme || null);
   const [musicSource, setMusicSource] = useState(existing.musicSource || null);
   const [drillStyle, setDrillStyle] = useState(existing.drillStyle || null);
   const [saving, setSaving] = useState(false);
 
-  const complete = theme && musicSource && drillStyle;
+  const complete = showName.trim().length >= 2 && theme && musicSource && drillStyle;
 
   const handleSave = async () => {
     if (!complete) return;
     setSaving(true);
     try {
-      await saveShowConcept({ corpsClass, showConcept: { theme, musicSource, drillStyle } });
+      await saveShowConcept({
+        corpsClass,
+        showConcept: { showName: showName.trim(), theme, musicSource, drillStyle },
+      });
       toast.success("Show concept saved — design bonuses pay out after tonight's shows!");
       onClose();
     } catch (error) {
@@ -137,6 +141,23 @@ const ShowConceptModal = ({ onClose, corpsClass, corpsName, currentConcept }) =>
               bonus, and marching.art's daily coverage may feature your program. Concepts never
               affect competitive scores. One season, one show — every new season is a new design.
             </p>
+            <div>
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <Type className="w-3 h-3 text-[#0057B8]" />
+                Show Title
+              </p>
+              <input
+                type="text"
+                value={showName}
+                onChange={(e) => setShowName(e.target.value)}
+                placeholder={'e.g., "Beneath the Surface"'}
+                maxLength={60}
+                className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+              />
+              <p className="text-[10px] text-gray-600 mt-1">
+                The name of this season&apos;s program — it appears in recaps and press coverage.
+              </p>
+            </div>
             <PickerGroup
               label="Theme"
               icon={Palette}
@@ -163,7 +184,9 @@ const ShowConceptModal = ({ onClose, corpsClass, corpsName, currentConcept }) =>
           {/* Footer */}
           <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex items-center justify-between flex-shrink-0">
             <p className="text-[10px] text-gray-600">
-              {complete ? 'Ready to take the field' : 'Pick a theme, music source, and drill style'}
+              {complete
+                ? 'Ready to take the field'
+                : 'Name your show and pick a theme, music source, and drill style'}
             </p>
             <button
               onClick={handleSave}

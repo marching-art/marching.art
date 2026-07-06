@@ -343,12 +343,27 @@ exports.saveShowConcept = onCall({ cors: true }, async (request) => {
     throw new HttpsError("invalid-argument", "Complete show concept required (theme, musicSource, drillStyle).");
   }
 
+  // Show title: user text that flows into recaps and the daily articles —
+  // trimmed, single-line, length-capped. Optional server-side so concepts
+  // saved before titles existed stay valid; the UI requires it.
+  let showName = null;
+  if (showConcept.showName !== undefined && showConcept.showName !== null) {
+    if (typeof showConcept.showName !== "string") {
+      throw new HttpsError("invalid-argument", "Show name must be text.");
+    }
+    showName = showConcept.showName.replace(/\s+/g, " ").trim().slice(0, 60);
+    if (showName.length < 2) {
+      throw new HttpsError("invalid-argument", "Show name must be at least 2 characters.");
+    }
+  }
+
   const db = getDb();
   const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
 
   try {
     await userProfileRef.update({
       [`corps.${corpsClass}.showConcept`]: {
+        showName,
         theme: showConcept.theme,
         musicSource: showConcept.musicSource,
         drillStyle: showConcept.drillStyle,

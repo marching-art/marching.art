@@ -64,7 +64,7 @@ export const selectUserShows = createCallable<
 export const saveShowConcept = createCallable<
   {
     corpsClass: string;
-    showConcept: { theme: string; musicSource: string; drillStyle: string };
+    showConcept: { showName?: string; theme: string; musicSource: string; drillStyle: string };
   },
   { success: boolean; message: string }
 >('saveShowConcept');

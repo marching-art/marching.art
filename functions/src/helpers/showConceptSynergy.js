@@ -209,7 +209,9 @@ function describeShowConcept(showConcept) {
     if (theme) parts.push(`a ${theme.label} program`);
     if (source) parts.push(`built on ${source.label.toLowerCase()} music`);
     if (drill) parts.push(`with ${drill.label.toLowerCase()} drill`);
-    return parts.join(' ');
+    const style = parts.join(' ');
+    const title = typeof showConcept.showName === 'string' ? showConcept.showName.trim() : '';
+    return title ? `"${title}" — ${style}` : style;
 }
 
 module.exports = {
