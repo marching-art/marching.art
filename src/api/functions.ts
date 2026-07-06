@@ -267,6 +267,16 @@ export interface ClaimDailyLoginResult {
     coin: number;
     freeFreeze?: boolean;
   };
+  newAchievements?: Array<{
+    id: string;
+    title: string;
+    description: string;
+    icon: string;
+    rarity: string;
+    ccReward: number;
+    earnedAt: string;
+  }>;
+  levelsGained?: number;
   newLevel?: number;
   classUnlocked?: string;
 }

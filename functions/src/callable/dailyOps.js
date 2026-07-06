@@ -18,6 +18,10 @@ const {
   resolveBucket,
   pruneOldPredictions,
 } = require("../helpers/dailyPredictions");
+const { sweepProfileAchievements } = require("../helpers/achievements");
+
+// CorpsCoin paid per XP level gained (settled daily against lastRewardedLevel)
+const LEVEL_UP_STIPEND = 100;
 
 // Streak milestone rewards (XP + CC + optional free streak freeze)
 const STREAK_MILESTONES = {
@@ -141,39 +145,62 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
         logger.info(`User ${uid} awarded free streak freeze for ${newStreak}-day milestone`);
       }
 
-      // Add CorpsCoin if milestone reached
-      if (coinAwarded > 0) {
-        updates.corpsCoin = admin.firestore.FieldValue.increment(coinAwarded);
+      // Level-up stipend: +100 CC per level gained, settled daily against
+      // lastRewardedLevel (a server-only field). XP is earned through many
+      // callables; settling here keeps the payout in one idempotent place.
+      const previousRewardedLevel =
+        profileData.lastRewardedLevel ?? Math.floor((profileData.xp || 0) / 1000) + 1;
+      const levelsGained = Math.max(0, xpResult.newLevel - previousRewardedLevel);
+      const stipendCoin = levelsGained * LEVEL_UP_STIPEND;
+      coinAwarded += stipendCoin;
+      updates.lastRewardedLevel = Math.max(previousRewardedLevel, xpResult.newLevel);
+
+      // Daily achievement sweep — the single server-side award point for the
+      // whole catalog (streak tiers, levels, class unlocks, career milestones).
+      // Replaces the legacy client-side achievement writers; also backfills
+      // existing directors on their next login. Evaluated against post-update
+      // state (new streak/level/unlocks from this claim).
+      const newAchievements = sweepProfileAchievements(profileData, {
+        streak: newStreak,
+        level: xpResult.newLevel,
+        unlockedClasses: xpResult.updates.unlockedClasses || profileData.unlockedClasses,
+      });
+      const achievementCoin = newAchievements.reduce((sum, a) => sum + (a.ccReward || 0), 0);
+      coinAwarded += achievementCoin;
+      if (newAchievements.length > 0) {
+        updates.achievements = admin.firestore.FieldValue.arrayUnion(...newAchievements);
       }
 
-      // Persist a streak achievement at each milestone. This used to be a
-      // client-side updateDoc in useDashboardData.js; the server is the only
-      // writer now so streak counts and achievements can't diverge.
-      if (milestoneReached) {
-        const achievementId = `streak_${newStreak}`;
-        const existingAchievements = profileData.achievements || [];
-        if (!existingAchievements.find((a) => a.id === achievementId)) {
-          updates.achievements = admin.firestore.FieldValue.arrayUnion({
-            id: achievementId,
-            title: `${newStreak} Day Streak!`,
-            description: `Logged in ${newStreak} days in a row`,
-            icon: 'flame',
-            earnedAt: new Date().toISOString(),
-            rarity:
-              newStreak >= 30 ? 'legendary' : newStreak >= 14 ? 'epic' : newStreak >= 7 ? 'rare' : 'common',
-          });
-        }
+      // Add CorpsCoin if milestone reached / levels gained / achievements earned
+      if (coinAwarded > 0) {
+        updates.corpsCoin = admin.firestore.FieldValue.increment(coinAwarded);
       }
 
       transaction.update(profileRef, updates);
 
       // Write coin history to subcollection (outside profile doc to avoid unbounded growth)
-      if (coinAwarded > 0) {
+      if (milestoneReached && milestoneReached.coin > 0) {
         addCoinHistoryEntryToTransaction(transaction, db, uid, {
           type: 'streak_milestone',
-          amount: coinAwarded,
+          amount: milestoneReached.coin,
           description: `${newStreak}-day streak milestone!${freeFreeze ? ' +Free Streak Freeze!' : ''}`,
         });
+      }
+      if (stipendCoin > 0) {
+        addCoinHistoryEntryToTransaction(transaction, db, uid, {
+          type: 'level_up',
+          amount: stipendCoin,
+          description: `Reached Level ${xpResult.newLevel}`,
+        });
+      }
+      for (const achievement of newAchievements) {
+        if (achievement.ccReward > 0) {
+          addCoinHistoryEntryToTransaction(transaction, db, uid, {
+            type: 'achievement',
+            amount: achievement.ccReward,
+            description: `Achievement unlocked: ${achievement.title}`,
+          });
+        }
       }
 
       return {
@@ -184,6 +211,8 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
         xpAwarded,
         coinAwarded,
         milestoneReached,
+        newAchievements,
+        levelsGained,
         newLevel: xpResult.newLevel,
         classUnlocked: xpResult.classUnlocked,
       };

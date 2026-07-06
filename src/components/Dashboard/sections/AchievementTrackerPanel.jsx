@@ -10,13 +10,16 @@ import { isCorpsClassUnlocked } from '../../../utils/corps';
 const ROSTER_SIZE = REQUIRED_CAPTIONS.length;
 
 // ---------------------------------------------------------------------------
-// Achievement definitions — evaluated client-side from available dashboard data
+// Achievement definitions — progress bars computed client-side for display;
+// the awards themselves are server-side (daily sweep in claimDailyLogin).
+// Ids match the catalog in functions/src/helpers/achievements.js so earned
+// state reads straight from profile.achievements.
 // ---------------------------------------------------------------------------
 
 const ACHIEVEMENTS = [
   // Lineup
   {
-    id: 'full-roster',
+    id: 'first_lineup',
     title: 'Full Roster',
     desc: `Fill all ${ROSTER_SIZE} lineup slots`,
     icon: Target,
@@ -42,7 +45,7 @@ const ACHIEVEMENTS = [
 
   // Streaks (matches backend STREAK_MILESTONES: 3, 7, 14, 30, 60, 100)
   {
-    id: 'streak-3',
+    id: 'streak_3',
     title: '3-Day Streak',
     desc: 'Log in 3 days in a row',
     icon: Flame,
@@ -50,7 +53,7 @@ const ACHIEVEMENTS = [
     eval: (d) => ({ current: Math.min(d.streak, 3), goal: 3 }),
   },
   {
-    id: 'streak-7',
+    id: 'streak_7',
     title: 'Week Warrior',
     desc: '7-day login streak',
     icon: Flame,
@@ -58,7 +61,7 @@ const ACHIEVEMENTS = [
     eval: (d) => ({ current: Math.min(d.streak, 7), goal: 7 }),
   },
   {
-    id: 'streak-14',
+    id: 'streak_14',
     title: 'Two Week Terror',
     desc: '14-day login streak',
     icon: Flame,
@@ -66,7 +69,7 @@ const ACHIEVEMENTS = [
     eval: (d) => ({ current: Math.min(d.streak, 14), goal: 14 }),
   },
   {
-    id: 'streak-30',
+    id: 'streak_30',
     title: 'Monthly Master',
     desc: '30-day login streak',
     icon: Flame,
@@ -74,7 +77,7 @@ const ACHIEVEMENTS = [
     eval: (d) => ({ current: Math.min(d.streak, 30), goal: 30 }),
   },
   {
-    id: 'streak-60',
+    id: 'streak_60',
     title: 'Streak Legend',
     desc: '60-day login streak',
     icon: Flame,
@@ -82,7 +85,7 @@ const ACHIEVEMENTS = [
     eval: (d) => ({ current: Math.min(d.streak, 60), goal: 60 }),
   },
   {
-    id: 'streak-100',
+    id: 'streak_100',
     title: 'Century Club',
     desc: '100-day login streak',
     icon: Crown,
@@ -92,7 +95,7 @@ const ACHIEVEMENTS = [
 
   // Progression
   {
-    id: 'level-3',
+    id: 'level_3',
     title: 'Rank Up',
     desc: 'Reach XP Level 3',
     icon: Award,
@@ -100,7 +103,7 @@ const ACHIEVEMENTS = [
     eval: (d) => ({ current: Math.min(d.level, 3), goal: 3 }),
   },
   {
-    id: 'level-5',
+    id: 'level_5',
     title: 'Veteran',
     desc: 'Reach XP Level 5',
     icon: Award,
@@ -108,7 +111,7 @@ const ACHIEVEMENTS = [
     eval: (d) => ({ current: Math.min(d.level, 5), goal: 5 }),
   },
   {
-    id: 'level-10',
+    id: 'level_10',
     title: 'Elite Director',
     desc: 'Reach XP Level 10',
     icon: Crown,
@@ -118,7 +121,7 @@ const ACHIEVEMENTS = [
 
   // Class unlocks
   {
-    id: 'unlock-a',
+    id: 'unlock_aClass',
     title: 'A Class Access',
     desc: 'Unlock A Class',
     icon: Trophy,
@@ -126,7 +129,7 @@ const ACHIEVEMENTS = [
     eval: (d) => ({ current: isCorpsClassUnlocked(d.unlockedClasses, 'aClass') ? 1 : 0, goal: 1 }),
   },
   {
-    id: 'unlock-open',
+    id: 'unlock_openClass',
     title: 'Open Class Access',
     desc: 'Unlock Open Class',
     icon: Trophy,
@@ -134,7 +137,7 @@ const ACHIEVEMENTS = [
     eval: (d) => ({ current: isCorpsClassUnlocked(d.unlockedClasses, 'open') ? 1 : 0, goal: 1 }),
   },
   {
-    id: 'unlock-world',
+    id: 'unlock_worldClass',
     title: 'World Class Access',
     desc: 'Unlock World Class',
     icon: Trophy,
@@ -152,7 +155,7 @@ const ACHIEVEMENTS = [
     eval: (d) => ({ current: d.leagueCount > 0 ? 1 : 0, goal: 1 }),
   },
   {
-    id: 'league-win',
+    id: 'league_win_1',
     title: 'Matchup Victor',
     desc: 'Win a league matchup',
     icon: Users,
@@ -171,6 +174,7 @@ const AchievementTrackerPanel = memo(({ profile, lineupCount, resultCount, leagu
   const level = profile?.xpLevel || 1;
   const unlockedClasses = profile?.unlockedClasses;
   const leagueWins = profile?.stats?.leagueWins || profile?.lifetimeStats?.leagueChampionships || 0;
+  const earnedAchievements = profile?.achievements;
 
   // Evaluate all achievements in a single memo with primitive deps
   const { completed, nextUp, totalEarned } = useMemo(() => {
@@ -183,9 +187,15 @@ const AchievementTrackerPanel = memo(({ profile, lineupCount, resultCount, leagu
       leagueCount: leagueCount || 0,
       leagueWins,
     };
+    // Server-awarded achievements (daily sweep) count as done regardless of
+    // locally-computed progress — ids match the server catalog.
+    const earnedIds = new Set((earnedAchievements || []).map((a) => a.id));
 
     const evaluated = ACHIEVEMENTS.map((a) => {
       const { current, goal } = a.eval(evalData);
+      if (earnedIds.has(a.id)) {
+        return { ...a, current: goal, goal, pct: 100, done: true };
+      }
       const pct = goal === 0 ? 100 : Math.min(Math.round((current / goal) * 100), 100);
       return { ...a, current, goal, pct, done: pct >= 100 };
     });
@@ -201,7 +211,16 @@ const AchievementTrackerPanel = memo(({ profile, lineupCount, resultCount, leagu
       nextUp: incomplete.slice(0, 3),
       totalEarned: done.length,
     };
-  }, [lineupCount, resultCount, streak, level, unlockedClasses, leagueCount, leagueWins]);
+  }, [
+    lineupCount,
+    resultCount,
+    streak,
+    level,
+    unlockedClasses,
+    leagueCount,
+    leagueWins,
+    earnedAchievements,
+  ]);
 
   // Don't render if profile hasn't loaded
   if (!profile) return null;
@@ -292,11 +311,11 @@ const AchievementTrackerPanel = memo(({ profile, lineupCount, resultCount, leagu
         </div>
       )}
 
-      {/* Footer link to full profile achievements tab */}
+      {/* Footer link to the profile, where achievements are displayed inline */}
       {totalEarned > 0 && nextUp.length > 0 && (
         <div className="px-3 py-1.5 border-t border-[#333] bg-[#111]">
           <Link
-            to="/profile?tab=achievements"
+            to="/profile"
             className="text-[10px] text-gray-600 hover:text-gray-400 transition-colors"
           >
             View all achievements →

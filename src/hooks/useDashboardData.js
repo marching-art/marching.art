@@ -214,6 +214,26 @@ export const useDashboardData = () => {
     }
   }, [profile?.engagement]);
 
+  // Achievements are awarded server-side (daily sweep in claimDailyLogin,
+  // league champion at archival). Watch the profile snapshot for additions and
+  // surface the newest one in the celebration modal. The initial snapshot
+  // seeds the baseline without firing, so returning users aren't re-shown
+  // old achievements.
+  const achievementIdsRef = useRef(null);
+  useEffect(() => {
+    const list = profile?.achievements;
+    if (!list) return;
+    if (achievementIdsRef.current === null) {
+      achievementIdsRef.current = new Set(list.map((a) => a.id));
+      return;
+    }
+    const added = list.filter((a) => !achievementIdsRef.current.has(a.id));
+    if (added.length > 0) {
+      setNewAchievement(added[added.length - 1]);
+      added.forEach((a) => achievementIdsRef.current.add(a.id));
+    }
+  }, [profile?.achievements]);
+
   // Track performance milestones and achievements
   // Guard prevents duplicate writes for same rank/score values
   useEffect(() => {
@@ -238,9 +258,9 @@ export const useDashboardData = () => {
         let hasNewMilestone = false;
         const updatedMilestones = { ...milestones, [classKey]: { ...classMilestones } };
         const newActivities = [];
-        const newAchievements = [];
 
-        // Track best rank
+        // Track best rank. (Top-10 achievements are awarded server-side by the
+        // daily achievement sweep in claimDailyLogin — not written from here.)
         if (currentRank) {
           const bestRank = classMilestones.bestRank || Infinity;
           if (currentRank < bestRank) {
@@ -253,21 +273,6 @@ export const useDashboardData = () => {
               timestamp: new Date().toISOString(),
               icon: 'trophy',
             });
-
-            if (currentRank <= 10) {
-              const achievementId = `top_10_${classKey}`;
-              const existingAchievements = profile.achievements || [];
-              if (!existingAchievements.find((a) => a.id === achievementId)) {
-                newAchievements.push({
-                  id: achievementId,
-                  title: 'Top 10 Finish!',
-                  description: `Reached top 10 in ${getCorpsClassName(classKey)}`,
-                  icon: 'trophy',
-                  earnedAt: new Date().toISOString(),
-                  rarity: currentRank === 1 ? 'legendary' : currentRank <= 3 ? 'epic' : 'rare',
-                });
-              }
-            }
           }
         }
 
@@ -298,12 +303,6 @@ export const useDashboardData = () => {
               ...newActivities,
               ...currentActivities,
             ].slice(0, 10);
-          }
-
-          if (newAchievements.length > 0) {
-            const currentAchievements = profile.achievements || [];
-            updateData.achievements = [...currentAchievements, ...newAchievements];
-            setNewAchievement(newAchievements[0]);
           }
 
           await updateDoc(profileRef, updateData);

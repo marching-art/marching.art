@@ -24,12 +24,15 @@ function isOwner(userId) {
 // predictionStats are the daily-prediction ledger the resolvePredictions
 // callable trusts for XP/coin bonuses, so they're server-only for the same
 // reason.
+// achievements carry CorpsCoin rewards (paid by the daily sweep in
+// claimDailyLogin) and lastRewardedLevel gates the level-up stipend, so both
+// are server-only like the rest of the economy.
 function touchesProtectedProfileFields() {
   return request.resource.data.diff(resource.data).affectedKeys().hasAny([
     'corpsCoin', 'xp', 'xpLevel', 'userTitle', 'unlockedClasses',
     'stats', 'trophies', 'username', 'createdAt', 'uid',
     'lifetimeStats', 'activeSeasonId', 'lastScoredDay', 'challenges',
-    'predictions', 'predictionStats'
+    'predictions', 'predictionStats', 'achievements', 'lastRewardedLevel'
   ]);
 }
 

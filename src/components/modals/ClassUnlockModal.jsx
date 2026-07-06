@@ -2,7 +2,7 @@
 // CLASS UNLOCK MODAL - ESPN DATA STYLE
 // =============================================================================
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Unlock, Plus } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
@@ -33,6 +33,20 @@ const ClassUnlockModal = ({ unlockedClass, onSetup, onDecline }) => {
 
   // Close on Escape key
   useEscapeKey(onDecline);
+
+  // A class unlock is a major progression moment — celebrate it
+  useEffect(() => {
+    let cancelled = false;
+    import('canvas-confetti')
+      .then(({ default: confetti }) => {
+        if (cancelled) return;
+        confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <Portal>
@@ -67,7 +81,9 @@ const ClassUnlockModal = ({ unlockedClass, onSetup, onDecline }) => {
               <p className="text-[10px] font-bold uppercase tracking-wider text-green-400 mb-1">
                 Congratulations
               </p>
-              <p className="text-lg font-bold text-white">You've earned {classInfo.xpRequired}!</p>
+              {/* Unlocks come via XP level, account age, or CorpsCoin purchase —
+                  don't claim a specific XP total was earned */}
+              <p className="text-lg font-bold text-white">Welcome to {classInfo.name}!</p>
             </div>
 
             {/* Class Info Card */}

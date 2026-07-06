@@ -70,6 +70,8 @@ export interface UserProfile {
   xp: number;
   xpLevel: number;
   userTitle: string;
+  /** Highest level already paid the level-up CC stipend (server-only) */
+  lastRewardedLevel?: number;
 
   // Currency
   corpsCoin: number;
