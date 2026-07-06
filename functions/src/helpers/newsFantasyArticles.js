@@ -15,10 +15,13 @@ const {
   generateWithFactCheckGuard,
   generateImageWithImagen,
 } = require("./geminiService");
-const { getUniformDetailsFromFirestore } = require("./newsUniforms");
+const { getContextualPlaceholder } = require("./mediaService");
+// Only the fantasy-corps events article (Article 5, generateFantasyDailyArticle)
+// generates AI imagery — of the user's own fantasy corps. The Fantasy Market
+// Report (Article 4) analyzes real DCI corps, so it uses stock photography
+// instead of a fabricated depiction of a real corps.
 const {
   buildFantasyPerformersImagePrompt,
-  buildFantasyLeagueImagePrompt,
 } = require("./newsImagePrompts");
 const {
   getToneGuidance,
@@ -383,7 +386,7 @@ ${mode.bodyNote ? `${mode.bodyNote}\n` : ''}${captionLeadersBlock && fieldMode !
  * describes the caption landscape; this article translates it into actionable
  * lineup moves on individual DCI captions (GE1, GE2, VP, VA, CG, B, MA, P).
  */
-async function generateFantasyRecapArticle({ reportDay, dayScores, trendData, seasonContext, competitionContext, db, ledger, brief, isLiveSeason }) {
+async function generateFantasyRecapArticle({ reportDay, dayScores, trendData, seasonContext, competitionContext, ledger, brief, isLiveSeason }) {
   const toneGuidance = getToneGuidance(competitionContext, "fantasy_captions");
 
   // Build individual caption "stock" data for each corps
@@ -591,37 +594,22 @@ ARTICLE REQUIREMENTS
       fieldCorpsNames: dayScores.map(s => s.corps),
     });
 
-    // Feature the top-scoring corps with photojournalistic image
+    // The Fantasy Market Report analyzes real DCI corps, so it gets no
+    // AI-generated imagery (only the fantasy-corps events article does) — use a
+    // real stock marching-arts photo rather than a fabricated corps depiction.
     const topCorpsForImage = dayScores[0];
-    let recapUniformDetails = null;
-    if (topCorpsForImage && db) {
-      recapUniformDetails = await getUniformDetailsFromFirestore(db, topCorpsForImage.corps, topCorpsForImage.sourceYear);
-    }
-    // Determine which caption to emphasize based on trending data
-    const topTrendingCaption = trendingUp[0]?.fullName || "General Effect";
-    const imagePrompt = buildFantasyLeagueImagePrompt(
-      topCorpsForImage?.corps,
-      topCorpsForImage?.sourceYear,
-      topTrendingCaption,
-      recapUniformDetails,
-      reportDay,
-      3 // articleIndex 3: Fantasy Recap
-    );
-
-    const imageData = await generateImageWithImagen(imagePrompt);
-    const imageResult = await processGeneratedImage(imageData, "fantasy_recap");
 
     // Headline subject for the coverage ledger. Prefer the corps named in the
     // top BUY recommendation since that's what the headline pitch is built on;
-    // fall back to the top-scoring corps used for the image.
+    // fall back to the top-scoring corps.
     const featuredCorps = content?.recommendations?.buy?.[0]?.corps || topCorpsForImage?.corps || null;
 
     return {
       type: ARTICLE_TYPES.FANTASY_RECAP,
       ...content,
       featuredCorps,
-      imageUrl: imageResult.url,
-      imagePrompt,
+      imageUrl: getContextualPlaceholder({ newsCategory: "fantasy_recap", headline: content.headline }),
+      isPlaceholder: true,
       reportDay,
     };
   } catch (error) {

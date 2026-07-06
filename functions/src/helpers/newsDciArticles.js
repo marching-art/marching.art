@@ -7,22 +7,19 @@ const {
   ARTICLE_TYPES,
   NEWS_INTEGRITY_RULES,
   formatNegativeSpace,
-  processGeneratedImage,
   createFallbackArticle,
 } = require("./newsArticleShared");
 const {
   generateWithFactCheckGuard,
-  generateImageWithImagen,
 } = require("./geminiService");
 const {
-  getUniformDetailsFromFirestore,
   getShowTitleFromFirestore,
 } = require("./newsUniforms");
-const {
-  buildStandingsImagePrompt,
-  buildCaptionsImagePrompt,
-  buildCorpsSpotlightImagePrompt,
-} = require("./newsImagePrompts");
+const { getContextualPlaceholder } = require("./mediaService");
+// NOTE: The DCI articles (1–3) deliberately do NOT generate AI imagery. Fabricated
+// depictions of real corps in invented uniforms are misleading, so these articles
+// fall back to real stock marching-arts photography. Only the fantasy-corps events
+// article (Article 5) generates images (of a user's own fantasy corps).
 const { getTrendNarrative } = require("./newsNarratives");
 const {
   getToneGuidance,
@@ -34,7 +31,7 @@ const {
  * Article 1: DCI Scores Analysis
  * Daily competition results in DCI.org editorial style
  */
-async function generateDciDailyArticle({ reportDay, dayScores, trendData, seasonContext, showContext, competitionContext, db, ledger, brief, isLiveSeason }) {
+async function generateDciDailyArticle({ reportDay, dayScores, trendData, seasonContext, showContext, competitionContext, ledger, brief, isLiveSeason }) {
   const topCorps = dayScores[0];
 
   // Get dynamic tone guidance based on competition context
@@ -291,31 +288,14 @@ Write like you've covered this beat for years. Let the scores drive the story.`;
       fieldCorpsNames: dayScores.map(s => s.corps),
     });
 
-    // Look up the corps' show title and uniform details from Firestore
-    const showTitle = db ? await getShowTitleFromFirestore(db, topCorps.corps, topCorps.sourceYear) : null;
-    const uniformDetails = db ? await getUniformDetailsFromFirestore(db, topCorps.corps, topCorps.sourceYear) : null;
-
-    // Generate image featuring top corps with accurate historical uniform
-    const imagePrompt = buildStandingsImagePrompt(
-      topCorps.corps,
-      topCorps.sourceYear,
-      showContext.location,
-      showContext.showName,
-      showTitle,
-      uniformDetails,
-      reportDay,
-      0 // articleIndex 0: DCI Daily
-    );
-
-    const imageData = await generateImageWithImagen(imagePrompt);
-    const imageResult = await processGeneratedImage(imageData, "dci_daily");
-
+    // No AI-generated imagery for DCI articles — a fabricated depiction of the top
+    // corps would be misleading, so use a real stock marching-arts photo instead.
     return {
       type: ARTICLE_TYPES.DCI_DAILY,
       ...content,
       featuredCorps: topCorps.corps, // Track which corps was featured for diversity
-      imageUrl: imageResult.url,
-      imagePrompt,
+      imageUrl: getContextualPlaceholder({ newsCategory: "dci_daily", headline: content.headline }),
+      isPlaceholder: true,
       reportDay,
     };
   } catch (error) {
@@ -364,9 +344,8 @@ async function generateDciFeatureArticle({ reportDay, dayScores, trendData, seas
   const currentRank = dayScores.findIndex(s => s.corps === featureCorps.corps) + 1;
   const corpsTrend = trendData[featureCorps.corps] || { dayChange: 0, trendFromAvg: 0, avgTotal: featureCorps.total };
 
-  // Get show title and uniform details for this corps from Firestore
+  // Get show title for this corps from Firestore (referenced in the prompt below).
   const showTitle = db ? await getShowTitleFromFirestore(db, featureCorps.corps, featureCorps.sourceYear) : null;
-  const uniformDetails = db ? await getUniformDetailsFromFirestore(db, featureCorps.corps, featureCorps.sourceYear) : null;
 
   // Calculate season progress data (true season-to-date now, not a 7-day window)
   const seasonHigh = corpsTrend.seasonHigh || featureCorps.total;
@@ -521,26 +500,15 @@ ARTICLE REQUIREMENTS
       fieldCorpsNames: dayScores.map(s => s.corps),
     });
 
-    const imagePrompt = buildCorpsSpotlightImagePrompt(
-      featureCorps.corps,
-      featureCorps.sourceYear,
-      showTitle,
-      uniformDetails,
-      reportDay,
-      1 // articleIndex 1: DCI Feature
-    );
-
-    const imageData = await generateImageWithImagen(imagePrompt);
-    const imageResult = await processGeneratedImage(imageData, "dci_feature");
-
+    // No AI-generated imagery for DCI articles — use a real stock marching-arts photo.
     return {
       type: ARTICLE_TYPES.DCI_FEATURE,
       ...content,
       featuredCorps: featureCorps.corps,
       featuredYear: featureCorps.sourceYear,
       showTitle,
-      imageUrl: imageResult.url,
-      imagePrompt,
+      imageUrl: getContextualPlaceholder({ newsCategory: "dci_feature", headline: content.headline }),
+      isPlaceholder: true,
       reportDay,
     };
   } catch (error) {
@@ -554,7 +522,7 @@ ARTICLE REQUIREMENTS
  * Deep dive on General Effect, Visual, and Music trends over the last week
  * Written in DCI.org recap analysis style
  */
-async function generateDciRecapArticle({ reportDay, dayScores, trendData, seasonContext, showContext, competitionContext, db, ledger, brief, isLiveSeason }) {
+async function generateDciRecapArticle({ reportDay, dayScores, trendData, seasonContext, showContext, competitionContext, ledger, brief, isLiveSeason }) {
   // Derive the corps exclusion set from the coverage ledger so the image subject
   // picker below doesn't land on a corps already spotlit in an earlier article.
   const excludeCorps = ledger?.dciCorps || new Set();
@@ -766,31 +734,16 @@ ARTICLE REQUIREMENTS
       fieldCorpsNames: dayScores.map(s => s.corps),
     });
 
-    // Feature the GE leader for the image (or next available if excluded)
-    let featuredCorps = geSorted.find(s => !excludeCorps.has(s.corps)) || geSorted[0];
-    const showTitle = db ? await getShowTitleFromFirestore(db, featuredCorps.corps, featuredCorps.sourceYear) : null;
-    const uniformDetails = db ? await getUniformDetailsFromFirestore(db, featuredCorps.corps, featuredCorps.sourceYear) : null;
+    // Feature the GE leader for coverage-ledger tracking (or next available if excluded).
+    const featuredCorps = geSorted.find(s => !excludeCorps.has(s.corps)) || geSorted[0];
 
-    const imagePrompt = buildCaptionsImagePrompt(
-      featuredCorps.corps,
-      featuredCorps.sourceYear,
-      "General Effect",
-      showContext.location,
-      showTitle,
-      uniformDetails,
-      reportDay,
-      2 // articleIndex 2: DCI Recap
-    );
-
-    const imageData = await generateImageWithImagen(imagePrompt);
-    const imageResult = await processGeneratedImage(imageData, "dci_recap");
-
+    // No AI-generated imagery for DCI articles — use a real stock marching-arts photo.
     return {
       type: ARTICLE_TYPES.DCI_RECAP,
       ...content,
       featuredCorps: featuredCorps.corps,
-      imageUrl: imageResult.url,
-      imagePrompt,
+      imageUrl: getContextualPlaceholder({ newsCategory: "dci_recap", headline: content.headline }),
+      isPlaceholder: true,
       reportDay,
     };
   } catch (error) {
