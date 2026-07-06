@@ -128,49 +128,54 @@ const SeasonSummaryCards = ({ seasonSummary }) => {
       )}
 
       {/* SoundSport — ratings only, never scores. */}
-      {soundSport && (soundSport.bestInShowLeaders?.length > 0 || soundSport.ratings?.length > 0) && (
-        <div className="mb-8">
-          <h3 className="text-sm font-bold text-purple-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-            <Medal className="w-4 h-4" />
-            SoundSport Spotlight
-          </h3>
+      {soundSport &&
+        (soundSport.bestInShowLeaders?.length > 0 || soundSport.ratings?.length > 0) && (
+          <div className="mb-8">
+            <h3 className="text-sm font-bold text-purple-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <Medal className="w-4 h-4" />
+              SoundSport Spotlight
+            </h3>
 
-          {soundSport.ratings?.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-3">
-              {soundSport.ratings.map((r) => (
-                <span
-                  key={r.rating}
-                  className={`text-xs font-bold px-3 py-1.5 border rounded-sm ${
-                    RATING_STYLES[r.rating] || 'text-gray-300 border-[#333] bg-[#111]'
-                  }`}
-                >
-                  {r.rating}: {r.count}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {soundSport.bestInShowLeaders?.length > 0 && (
-            <div className="space-y-2">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                Best-in-Show Recognition
+            {soundSport.ratings?.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {soundSport.ratings.map((r) => (
+                  <span
+                    key={r.rating}
+                    className={`text-xs font-bold px-3 py-1.5 border rounded-sm ${
+                      RATING_STYLES[r.rating] || 'text-gray-300 border-[#333] bg-[#111]'
+                    }`}
+                  >
+                    {r.rating}: {r.count}
+                  </span>
+                ))}
               </div>
-              {soundSport.bestInShowLeaders.map((l, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between bg-[#111] border border-[#333] px-4 py-2.5"
-                >
-                  <div>
-                    <span className="text-sm text-white">{l.corpsName}</span>
-                    {l.director && <span className="text-xs text-gray-500 ml-2">{l.director}</span>}
-                  </div>
-                  <span className="text-sm font-bold font-data text-purple-400">×{l.bestInShow}</span>
+            )}
+
+            {soundSport.bestInShowLeaders?.length > 0 && (
+              <div className="space-y-2">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                  Best-in-Show Recognition
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+                {soundSport.bestInShowLeaders.map((l, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between bg-[#111] border border-[#333] px-4 py-2.5"
+                  >
+                    <div>
+                      <span className="text-sm text-white">{l.corpsName}</span>
+                      {l.director && (
+                        <span className="text-xs text-gray-500 ml-2">{l.director}</span>
+                      )}
+                    </div>
+                    <span className="text-sm font-bold font-data text-purple-400">
+                      ×{l.bestInShow}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
     </div>
   );
 };
