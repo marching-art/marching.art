@@ -243,32 +243,32 @@ const awardLeagueWinBonus = async (uid, leagueName, week) => {
 };
 
 /**
+ * Pure lookup: CorpsCoin bonus and label for a final season rank.
+ * Used by the season-rollover payout in helpers/season.js and by
+ * awardSeasonBonus below. Ranks below top 25 earn no coin bonus.
+ */
+const getSeasonBonusAmount = (finalRank) => {
+  if (!finalRank || finalRank <= 0) return { amount: 0, rankDescription: '' };
+  if (finalRank === 1) return { amount: SEASON_FINISH_BONUSES[1], rankDescription: 'Champion' };
+  if (finalRank === 2) return { amount: SEASON_FINISH_BONUSES[2], rankDescription: '2nd place' };
+  if (finalRank === 3) return { amount: SEASON_FINISH_BONUSES[3], rankDescription: '3rd place' };
+  if (finalRank <= 10) {
+    return { amount: SEASON_FINISH_BONUSES.top10, rankDescription: `${finalRank}th place (Top 10)` };
+  }
+  if (finalRank <= 25) {
+    return { amount: SEASON_FINISH_BONUSES.top25, rankDescription: `${finalRank}th place (Top 25)` };
+  }
+  return { amount: 0, rankDescription: '' };
+};
+
+/**
  * Award season finish bonus based on final ranking
  */
 const awardSeasonBonus = async (uid, finalRank, seasonName, corpsClass) => {
   const db = getDb();
   const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
 
-  // Determine bonus amount based on rank
-  let amount = 0;
-  let rankDescription = '';
-
-  if (finalRank === 1) {
-    amount = SEASON_FINISH_BONUSES[1];
-    rankDescription = 'Champion';
-  } else if (finalRank === 2) {
-    amount = SEASON_FINISH_BONUSES[2];
-    rankDescription = '2nd place';
-  } else if (finalRank === 3) {
-    amount = SEASON_FINISH_BONUSES[3];
-    rankDescription = '3rd place';
-  } else if (finalRank <= 10) {
-    amount = SEASON_FINISH_BONUSES.top10;
-    rankDescription = `${finalRank}th place (Top 10)`;
-  } else if (finalRank <= 25) {
-    amount = SEASON_FINISH_BONUSES.top25;
-    rankDescription = `${finalRank}th place (Top 25)`;
-  }
+  const { amount, rankDescription } = getSeasonBonusAmount(finalRank);
 
   if (amount === 0) return { success: true, amount: 0 }; // No bonus for ranks below top 25
 
@@ -568,6 +568,7 @@ module.exports = {
   awardCorpsCoin,
   awardLeagueWinBonus,
   awardSeasonBonus,
+  getSeasonBonusAmount,
 
   // Spending functions
   unlockClassWithCorpsCoin,

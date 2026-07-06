@@ -57,6 +57,8 @@ const ControlBar = memo(
     onSwitch,
     onCreateCorps,
     onUnlockClass,
+    onStreakClick,
+    onWalletClick,
   }) => {
     // Director stats from profile
     const streak = profile?.engagement?.loginStreak || 0;
@@ -119,11 +121,13 @@ const ControlBar = memo(
           {/* Director HUD - Order: Streak, Level, Coins, Buy. On mobile this
               sits on its own row; a top divider separates it from the tabs. */}
           <div className="flex items-center justify-center md:justify-start gap-3 flex-wrap border-t border-[#2a2a2a] pt-2 md:border-t-0 md:pt-0">
-            {/* Streak with milestone indicator */}
+            {/* Streak with milestone indicator — opens the streak panel
+                (status, next milestone, streak freeze purchase) */}
             {streak > 0 && (
-              <div
-                className="flex items-center gap-1"
-                title={`${streak}-day login streak${getStreakMilestone(streak) ? ` — ${getStreakMilestone(streak)}` : ''}`}
+              <button
+                onClick={() => onStreakClick?.()}
+                className="flex items-center gap-1 press-feedback hover:bg-white/5 rounded-sm px-1 -mx-1"
+                title={`${streak}-day login streak${getStreakMilestone(streak) ? ` — ${getStreakMilestone(streak)}` : ''} — tap for streak details`}
               >
                 <Flame
                   className={`w-3.5 h-3.5 ${streak >= 30 ? 'text-red-500' : streak >= 7 ? 'text-orange-400' : 'text-orange-500'}`}
@@ -152,7 +156,7 @@ const ControlBar = memo(
                           : 'HOT'}
                   </span>
                 )}
-              </div>
+              </button>
             )}
 
             {/* Level */}
@@ -162,13 +166,17 @@ const ControlBar = memo(
               </span>
             </div>
 
-            {/* CorpsCoin Wallet */}
-            <div className="flex items-center gap-1">
+            {/* CorpsCoin Wallet — opens transaction history + earning guide */}
+            <button
+              onClick={() => onWalletClick?.()}
+              className="flex items-center gap-1 press-feedback hover:bg-white/5 rounded-sm px-1 -mx-1"
+              title="CorpsCoin wallet — history and how to earn"
+            >
               <Coins className="w-3.5 h-3.5 text-yellow-500" />
               <span className="text-xs font-bold text-yellow-500 font-data tabular-nums">
                 {corpsCoin.toLocaleString()}
               </span>
-            </div>
+            </button>
 
             {/* Buy Button - show when user can afford next class */}
             {nextUnlock ? (

@@ -2,7 +2,12 @@ const { logger } = require("firebase-functions/v2");
 const { getDb, dataNamespaceParam } = require("../config");
 const { Timestamp } = require("firebase-admin/firestore");
 const admin = require("firebase-admin");
-const { TRANSACTION_TYPES, addCoinHistoryEntryToBatch } = require("../callable/economy");
+const {
+  TRANSACTION_TYPES,
+  addCoinHistoryEntryToBatch,
+  getSeasonBonusAmount,
+} = require("../callable/economy");
+const { calculateXPUpdates, getSeasonCompletionXP } = require("./xpCalculations");
 const {
   applyEnrichment,
   brandEventName,
@@ -30,6 +35,263 @@ const {
 } = require("./scheduleRefresh");
 
 
+
+/**
+ * Archive every active profile's season, pay season-finish rewards, and reset
+ * corps for the new season. Shared by startNewLiveSeason and startNewOffSeason
+ * (the two previously carried identical copies of this loop).
+ *
+ * For each corps that was active this season (has a lineup or a score):
+ * - placement within its class is computed and archived to seasonHistory
+ * - a CorpsCoin finish bonus is paid per SEASON_FINISH_BONUSES (top 25;
+ *   SoundSport is non-competitive so it earns no rank-based coin)
+ * - season-completion XP is awarded per getSeasonCompletionXP
+ * - a pendingSeasonRecap summary is written to the profile so the client can
+ *   show a "Season Complete" recap modal (client clears the field on dismiss)
+ */
+async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
+  const profilesQuery = db.collectionGroup("profile").where("activeSeasonId", "==", oldSeasonUid);
+  const profilesSnapshot = await profilesQuery.get();
+
+  if (profilesSnapshot.empty) return;
+
+  logger.info(`Resetting ${profilesSnapshot.size} user profiles from season ${oldSeasonUid}...`);
+
+  // Build class rankings from all profiles before archiving.
+  // Keyed by the user's uid (doc.ref.parent.parent.id) — every profile doc in
+  // the collectionGroup has the same doc.id ("data"), so keying by doc.id
+  // made findIndex match the first entry and archived placement 1 for everyone.
+  const classRankings = {}; // Map<classKey, Array<{uid, totalSeasonScore}>>
+  for (const doc of profilesSnapshot.docs) {
+    const uid = doc.ref.parent.parent.id;
+    const corpsData = doc.data().corps || {};
+    Object.keys(corpsData).forEach((corpsClass) => {
+      const corps = corpsData[corpsClass];
+      if (corps.lineup || corps.totalSeasonScore > 0) {
+        if (!classRankings[corpsClass]) {
+          classRankings[corpsClass] = [];
+        }
+        classRankings[corpsClass].push({
+          uid,
+          totalSeasonScore: corps.totalSeasonScore || 0,
+        });
+      }
+    });
+  }
+  // Sort each class by score descending to determine rankings
+  Object.keys(classRankings).forEach((classKey) => {
+    classRankings[classKey].sort((a, b) => b.totalSeasonScore - a.totalSeasonScore);
+  });
+  logger.info(`Computed rankings for ${Object.keys(classRankings).length} classes`);
+
+  let batch = db.batch();
+  let opCount = 0; // counts every write in the batch (profile + coin history)
+
+  for (const doc of profilesSnapshot.docs) {
+    const uid = doc.ref.parent.parent.id;
+    const profileData = doc.data();
+    const corpsData = profileData.corps || {};
+    const lifetimeStats = profileData.lifetimeStats || {
+      totalSeasons: 0,
+      totalShows: 0,
+      totalPoints: 0,
+      bestSeasonScore: 0,
+      bestWeeklyScore: 0,
+      leagueChampionships: 0,
+    };
+
+    // Archive current season data and reset corps
+    const resetCorps = {};
+    let seasonShowCount = 0;
+    let seasonPointsTotal = 0;
+    const seasonAwards = []; // one entry per active corps: recap + payout data
+
+    Object.keys(corpsData).forEach((corpsClass) => {
+      const corps = corpsData[corpsClass];
+      const seasonHistory = corps.seasonHistory || [];
+
+      // Only archive if this corps was active this season
+      if (corps.lineup || corps.totalSeasonScore > 0) {
+        const showsAttended = Object.keys(corps.selectedShows || {}).length;
+        const highestWeeklyScore = Math.max(...Object.values(corps.weeklyScores || {}), 0);
+
+        // Find placement for this corps in its class
+        const classRanking = classRankings[corpsClass] || [];
+        const rankIndex = classRanking.findIndex((r) => r.uid === uid);
+        const placement = rankIndex >= 0 ? rankIndex + 1 : null;
+
+        // Season-finish rewards. SoundSport is deliberately non-competitive
+        // (medals, no numeric standings), so it earns completion XP but no
+        // rank-based coin bonus.
+        const coinBonus =
+          corpsClass === "soundSport" ? 0 : getSeasonBonusAmount(placement).amount;
+        const xpBonus = getSeasonCompletionXP(placement, classRanking.length);
+        seasonAwards.push({
+          corpsClass,
+          corpsName: corps.corpsName || null,
+          placement,
+          totalInClass: classRanking.length,
+          totalSeasonScore: corps.totalSeasonScore || 0,
+          coinBonus,
+          xpBonus,
+        });
+
+        // Archive this season's performance
+        seasonHistory.push({
+          seasonId: oldSeasonUid,
+          seasonName: oldSeasonUid,
+          corpsClass,
+          corpsName: corps.corpsName || null,
+          location: corps.location || null,
+          lineup: corps.lineup || null,
+          selectedShows: corps.selectedShows || {},
+          weeklyScores: corps.weeklyScores || {},
+          totalSeasonScore: corps.totalSeasonScore || 0,
+          showsAttended,
+          highestWeeklyScore,
+          placement,
+          archivedAt: new Date(),
+        });
+
+        seasonShowCount += showsAttended;
+        seasonPointsTotal += corps.totalSeasonScore || 0;
+
+        // Update lifetime stats
+        lifetimeStats.bestSeasonScore = Math.max(
+          lifetimeStats.bestSeasonScore,
+          corps.totalSeasonScore || 0
+        );
+        lifetimeStats.bestWeeklyScore = Math.max(lifetimeStats.bestWeeklyScore, highestWeeklyScore);
+      }
+
+      resetCorps[corpsClass] = {
+        // PRESERVE: Historical data
+        corpsName: corps.corpsName || null,
+        location: corps.location || null,
+        seasonHistory,
+        // PRESERVE: Director-designed branding and ensemble identity across seasons
+        uniformDesign: corps.uniformDesign || null,
+        avatarUrl: corps.avatarUrl || null,
+        avatarGeneratedAt: corps.avatarGeneratedAt || null,
+        ensembleInfo: corps.ensembleInfo || null,
+        // RESET: Season-specific data (including weeklyTrades so users can set up corps)
+        weeklyTrades: null,
+        lineup: null,
+        lineupKey: null,
+        selectedShows: {},
+        weeklyScores: {},
+        totalSeasonScore: 0,
+      };
+    });
+
+    // Update lifetime stats
+    if (seasonShowCount > 0 || seasonPointsTotal > 0) {
+      lifetimeStats.totalSeasons = (lifetimeStats.totalSeasons || 0) + 1;
+      lifetimeStats.totalShows = (lifetimeStats.totalShows || 0) + seasonShowCount;
+      lifetimeStats.totalPoints = (lifetimeStats.totalPoints || 0) + seasonPointsTotal;
+    }
+
+    // Reset corps data for new season but DON'T update activeSeasonId yet.
+    // This allows the SeasonSetupWizard to detect the season mismatch and show
+    // the corps verification step (Step 0) where users can choose to continue,
+    // retire, or start a new corps. activeSeasonId gets updated by processCorpsDecisions
+    // after the user makes their decisions.
+    const updateData = {
+      corps: resetCorps,
+      lifetimeStats,
+      retiredCorps: profileData.retiredCorps || [], // Preserve retired corps list
+    };
+
+    // Season-finish payouts (coin + XP) and the recap the client shows once.
+    const totalCoin = seasonAwards.reduce((sum, a) => sum + a.coinBonus, 0);
+    const totalXP = seasonAwards.reduce((sum, a) => sum + a.xpBonus, 0);
+    if (totalXP > 0) {
+      Object.assign(updateData, calculateXPUpdates(profileData, totalXP).updates);
+    }
+    if (totalCoin > 0) {
+      updateData.corpsCoin = admin.firestore.FieldValue.increment(totalCoin);
+    }
+    if (seasonAwards.length > 0) {
+      updateData.pendingSeasonRecap = {
+        seasonId: oldSeasonUid,
+        seasonName: oldSeasonUid,
+        results: seasonAwards,
+        totalCoin,
+        totalXP,
+        awardedAt: new Date(),
+      };
+    }
+
+    batch.update(doc.ref, updateData);
+    opCount++;
+
+    for (const award of seasonAwards) {
+      if (award.coinBonus > 0) {
+        const { rankDescription } = getSeasonBonusAmount(award.placement);
+        addCoinHistoryEntryToBatch(batch, db, uid, {
+          type: TRANSACTION_TYPES.SEASON_BONUS,
+          amount: award.coinBonus,
+          description: `${rankDescription} in ${oldSeasonUid} (${award.corpsClass})`,
+          finalRank: award.placement,
+          corpsClass: award.corpsClass,
+          timestamp: new Date(),
+        });
+        opCount++;
+      }
+    }
+
+    if (opCount >= 400) {
+      logger.info(`Committing batch of ${opCount} season-archival writes...`);
+      await batch.commit();
+      batch = db.batch();
+      opCount = 0;
+    }
+  }
+
+  if (opCount > 0) {
+    await batch.commit();
+  }
+
+  logger.info(`Successfully auto-continued all user corps into new season: ${newSeasonUid}`);
+}
+
+/**
+ * Delete every activeLineups doc belonging to the finished season.
+ * Shared by startNewLiveSeason and startNewOffSeason.
+ */
+async function clearActiveLineups(db, oldSeasonUid) {
+  logger.info(`Clearing active lineups from season ${oldSeasonUid}...`);
+  const activeLineupsQuery = db.collection("activeLineups").where("seasonId", "==", oldSeasonUid);
+  const lineupSnapshot = await activeLineupsQuery.get();
+
+  if (lineupSnapshot.empty) {
+    logger.info("No active lineups found to clear");
+    return;
+  }
+
+  logger.info(`Found ${lineupSnapshot.size} active lineups to clear...`);
+
+  let batch = db.batch();
+  let batchCount = 0;
+
+  for (const doc of lineupSnapshot.docs) {
+    batch.delete(doc.ref);
+    batchCount++;
+
+    if (batchCount >= 400) {
+      logger.info(`Committing batch of ${batchCount} lineup deletions...`);
+      await batch.commit();
+      batch = db.batch();
+      batchCount = 0;
+    }
+  }
+
+  if (batchCount > 0) {
+    await batch.commit();
+  }
+
+  logger.info(`Successfully cleared ${lineupSnapshot.size} active lineups from previous season`);
+}
 
 async function startNewLiveSeason() {
   logger.info("Generating new live season...");
@@ -105,182 +367,8 @@ async function startNewLiveSeason() {
   logger.info(`Successfully started the ${newSeasonData.name}.`);
 
   if (oldSeasonUid) {
-    // Reset user profiles from old season
-    const profilesQuery = db.collectionGroup("profile").where("activeSeasonId", "==", oldSeasonUid);
-    const profilesSnapshot = await profilesQuery.get();
-
-    if (!profilesSnapshot.empty) {
-      logger.info(`Resetting ${profilesSnapshot.size} user profiles from season ${oldSeasonUid}...`);
-
-      // Build class rankings from all profiles before archiving
-      const classRankings = {}; // Map<classKey, Array<{docId, totalSeasonScore}>>
-      for (const doc of profilesSnapshot.docs) {
-        const profileData = doc.data();
-        const corpsData = profileData.corps || {};
-        Object.keys(corpsData).forEach(corpsClass => {
-          const corps = corpsData[corpsClass];
-          if (corps.lineup || corps.totalSeasonScore > 0) {
-            if (!classRankings[corpsClass]) {
-              classRankings[corpsClass] = [];
-            }
-            classRankings[corpsClass].push({
-              docId: doc.id,
-              totalSeasonScore: corps.totalSeasonScore || 0
-            });
-          }
-        });
-      }
-      // Sort each class by score descending to determine rankings
-      Object.keys(classRankings).forEach(classKey => {
-        classRankings[classKey].sort((a, b) => b.totalSeasonScore - a.totalSeasonScore);
-      });
-      logger.info(`Computed rankings for ${Object.keys(classRankings).length} classes`);
-
-      let batch = db.batch();
-      let batchCount = 0;
-
-      for (const doc of profilesSnapshot.docs) {
-        const profileData = doc.data();
-        const corpsData = profileData.corps || {};
-        const lifetimeStats = profileData.lifetimeStats || {
-          totalSeasons: 0,
-          totalShows: 0,
-          totalPoints: 0,
-          bestSeasonScore: 0,
-          bestWeeklyScore: 0,
-          leagueChampionships: 0
-        };
-
-        // Archive current season data and reset corps
-        const resetCorps = {};
-        let seasonShowCount = 0;
-        let seasonPointsTotal = 0;
-
-        Object.keys(corpsData).forEach(corpsClass => {
-          const corps = corpsData[corpsClass];
-          const seasonHistory = corps.seasonHistory || [];
-
-          // Only archive if this corps was active this season
-          if (corps.lineup || corps.totalSeasonScore > 0) {
-            const showsAttended = Object.keys(corps.selectedShows || {}).length;
-            const highestWeeklyScore = Math.max(...Object.values(corps.weeklyScores || {}), 0);
-
-            // Find placement for this corps in its class
-            const classRanking = classRankings[corpsClass] || [];
-            const rankIndex = classRanking.findIndex(r => r.docId === doc.id);
-            const placement = rankIndex >= 0 ? rankIndex + 1 : null;
-
-            // Archive this season's performance
-            seasonHistory.push({
-              seasonId: oldSeasonUid,
-              seasonName: oldSeasonUid,
-              corpsClass,
-              corpsName: corps.corpsName || null,
-              location: corps.location || null,
-              lineup: corps.lineup || null,
-              selectedShows: corps.selectedShows || {},
-              weeklyScores: corps.weeklyScores || {},
-              totalSeasonScore: corps.totalSeasonScore || 0,
-              showsAttended,
-              highestWeeklyScore,
-              placement,
-              archivedAt: new Date()
-            });
-
-            seasonShowCount += showsAttended;
-            seasonPointsTotal += (corps.totalSeasonScore || 0);
-
-            // Update lifetime stats
-            lifetimeStats.bestSeasonScore = Math.max(lifetimeStats.bestSeasonScore, corps.totalSeasonScore || 0);
-            lifetimeStats.bestWeeklyScore = Math.max(lifetimeStats.bestWeeklyScore, highestWeeklyScore);
-          }
-
-          resetCorps[corpsClass] = {
-            // PRESERVE: Historical data
-            corpsName: corps.corpsName || null,
-            location: corps.location || null,
-            seasonHistory,
-            // PRESERVE: Director-designed branding and ensemble identity across seasons
-            uniformDesign: corps.uniformDesign || null,
-            avatarUrl: corps.avatarUrl || null,
-            avatarGeneratedAt: corps.avatarGeneratedAt || null,
-            ensembleInfo: corps.ensembleInfo || null,
-            // RESET: Season-specific data (including weeklyTrades so users can set up corps)
-            weeklyTrades: null,
-            lineup: null,
-            lineupKey: null,
-            selectedShows: {},
-            weeklyScores: {},
-            totalSeasonScore: 0,
-          };
-        });
-
-        // Update lifetime stats
-        if (seasonShowCount > 0 || seasonPointsTotal > 0) {
-          lifetimeStats.totalSeasons = (lifetimeStats.totalSeasons || 0) + 1;
-          lifetimeStats.totalShows = (lifetimeStats.totalShows || 0) + seasonShowCount;
-          lifetimeStats.totalPoints = (lifetimeStats.totalPoints || 0) + seasonPointsTotal;
-        }
-
-        // Reset corps data for new season but DON'T update activeSeasonId yet.
-        // This allows the SeasonSetupWizard to detect the season mismatch and show
-        // the corps verification step (Step 0) where users can choose to continue,
-        // retire, or start a new corps. activeSeasonId gets updated by processCorpsDecisions
-        // after the user makes their decisions.
-        batch.update(doc.ref, {
-          corps: resetCorps,
-          lifetimeStats,
-          retiredCorps: profileData.retiredCorps || [] // Preserve retired corps list
-        });
-
-        batchCount++;
-
-        if (batchCount >= 400) {
-          logger.info(`Committing batch of ${batchCount} profile resets...`);
-          await batch.commit();
-          batch = db.batch();
-          batchCount = 0;
-        }
-      }
-
-      if (batchCount > 0) {
-        await batch.commit();
-      }
-
-      logger.info(`Successfully auto-continued all user corps into new season: ${dataDocId}`);
-    }
-
-    // Clear all active lineups from previous season
-    logger.info(`Clearing active lineups from season ${oldSeasonUid}...`);
-    const activeLineupsQuery = db.collection("activeLineups").where("seasonId", "==", oldSeasonUid);
-    const lineupSnapshot = await activeLineupsQuery.get();
-
-    if (!lineupSnapshot.empty) {
-      logger.info(`Found ${lineupSnapshot.size} active lineups to clear...`);
-
-      let batch = db.batch();
-      let batchCount = 0;
-
-      for (const doc of lineupSnapshot.docs) {
-        batch.delete(doc.ref);
-        batchCount++;
-
-        if (batchCount >= 400) {
-          logger.info(`Committing batch of ${batchCount} lineup deletions...`);
-          await batch.commit();
-          batch = db.batch();
-          batchCount = 0;
-        }
-      }
-
-      if (batchCount > 0) {
-        await batch.commit();
-      }
-
-      logger.info(`Successfully cleared ${lineupSnapshot.size} active lineups from previous season`);
-    } else {
-      logger.info("No active lineups found to clear");
-    }
+    await archiveAndResetProfiles(db, oldSeasonUid, dataDocId);
+    await clearActiveLineups(db, oldSeasonUid);
   }
 }
 
@@ -359,182 +447,8 @@ async function startNewOffSeason() {
   logger.info(`Successfully started ${seasonName}.`);
 
   if (oldSeasonUid) {
-    // Reset user profiles from old season
-    const profilesQuery = db.collectionGroup("profile").where("activeSeasonId", "==", oldSeasonUid);
-    const profilesSnapshot = await profilesQuery.get();
-
-    if (!profilesSnapshot.empty) {
-      logger.info(`Resetting ${profilesSnapshot.size} user profiles from season ${oldSeasonUid}...`);
-
-      // Build class rankings from all profiles before archiving
-      const classRankings = {}; // Map<classKey, Array<{docId, totalSeasonScore}>>
-      for (const doc of profilesSnapshot.docs) {
-        const profileData = doc.data();
-        const corpsData = profileData.corps || {};
-        Object.keys(corpsData).forEach(corpsClass => {
-          const corps = corpsData[corpsClass];
-          if (corps.lineup || corps.totalSeasonScore > 0) {
-            if (!classRankings[corpsClass]) {
-              classRankings[corpsClass] = [];
-            }
-            classRankings[corpsClass].push({
-              docId: doc.id,
-              totalSeasonScore: corps.totalSeasonScore || 0
-            });
-          }
-        });
-      }
-      // Sort each class by score descending to determine rankings
-      Object.keys(classRankings).forEach(classKey => {
-        classRankings[classKey].sort((a, b) => b.totalSeasonScore - a.totalSeasonScore);
-      });
-      logger.info(`Computed rankings for ${Object.keys(classRankings).length} classes`);
-
-      let batch = db.batch();
-      let batchCount = 0;
-
-      for (const doc of profilesSnapshot.docs) {
-        const profileData = doc.data();
-        const corpsData = profileData.corps || {};
-        const lifetimeStats = profileData.lifetimeStats || {
-          totalSeasons: 0,
-          totalShows: 0,
-          totalPoints: 0,
-          bestSeasonScore: 0,
-          bestWeeklyScore: 0,
-          leagueChampionships: 0
-        };
-
-        // Archive current season data and reset corps
-        const resetCorps = {};
-        let seasonShowCount = 0;
-        let seasonPointsTotal = 0;
-
-        Object.keys(corpsData).forEach(corpsClass => {
-          const corps = corpsData[corpsClass];
-          const seasonHistory = corps.seasonHistory || [];
-
-          // Only archive if this corps was active this season
-          if (corps.lineup || corps.totalSeasonScore > 0) {
-            const showsAttended = Object.keys(corps.selectedShows || {}).length;
-            const highestWeeklyScore = Math.max(...Object.values(corps.weeklyScores || {}), 0);
-
-            // Find placement for this corps in its class
-            const classRanking = classRankings[corpsClass] || [];
-            const rankIndex = classRanking.findIndex(r => r.docId === doc.id);
-            const placement = rankIndex >= 0 ? rankIndex + 1 : null;
-
-            // Archive this season's performance
-            seasonHistory.push({
-              seasonId: oldSeasonUid,
-              seasonName: oldSeasonUid,
-              corpsClass,
-              corpsName: corps.corpsName || null,
-              location: corps.location || null,
-              lineup: corps.lineup || null,
-              selectedShows: corps.selectedShows || {},
-              weeklyScores: corps.weeklyScores || {},
-              totalSeasonScore: corps.totalSeasonScore || 0,
-              showsAttended,
-              highestWeeklyScore,
-              placement,
-              archivedAt: new Date()
-            });
-
-            seasonShowCount += showsAttended;
-            seasonPointsTotal += (corps.totalSeasonScore || 0);
-
-            // Update lifetime stats
-            lifetimeStats.bestSeasonScore = Math.max(lifetimeStats.bestSeasonScore, corps.totalSeasonScore || 0);
-            lifetimeStats.bestWeeklyScore = Math.max(lifetimeStats.bestWeeklyScore, highestWeeklyScore);
-          }
-
-          resetCorps[corpsClass] = {
-            // PRESERVE: Historical data
-            corpsName: corps.corpsName || null,
-            location: corps.location || null,
-            seasonHistory,
-            // PRESERVE: Director-designed branding and ensemble identity across seasons
-            uniformDesign: corps.uniformDesign || null,
-            avatarUrl: corps.avatarUrl || null,
-            avatarGeneratedAt: corps.avatarGeneratedAt || null,
-            ensembleInfo: corps.ensembleInfo || null,
-            // RESET: Season-specific data (including weeklyTrades so users can set up corps)
-            weeklyTrades: null,
-            lineup: null,
-            lineupKey: null,
-            selectedShows: {},
-            weeklyScores: {},
-            totalSeasonScore: 0,
-          };
-        });
-
-        // Update lifetime stats
-        if (seasonShowCount > 0 || seasonPointsTotal > 0) {
-          lifetimeStats.totalSeasons = (lifetimeStats.totalSeasons || 0) + 1;
-          lifetimeStats.totalShows = (lifetimeStats.totalShows || 0) + seasonShowCount;
-          lifetimeStats.totalPoints = (lifetimeStats.totalPoints || 0) + seasonPointsTotal;
-        }
-
-        // Reset corps data for new season but DON'T update activeSeasonId yet.
-        // This allows the SeasonSetupWizard to detect the season mismatch and show
-        // the corps verification step (Step 0) where users can choose to continue,
-        // retire, or start a new corps. activeSeasonId gets updated by processCorpsDecisions
-        // after the user makes their decisions.
-        batch.update(doc.ref, {
-          corps: resetCorps,
-          lifetimeStats,
-          retiredCorps: profileData.retiredCorps || [] // Preserve retired corps list
-        });
-
-        batchCount++;
-
-        if (batchCount >= 400) {
-          logger.info(`Committing batch of ${batchCount} profile resets...`);
-          await batch.commit();
-          batch = db.batch();
-          batchCount = 0;
-        }
-      }
-
-      if (batchCount > 0) {
-        await batch.commit();
-      }
-
-      logger.info(`Successfully auto-continued all user corps into new season: ${dataDocId}`);
-    }
-
-    // Clear all active lineups from previous season
-    logger.info(`Clearing active lineups from season ${oldSeasonUid}...`);
-    const activeLineupsQuery = db.collection("activeLineups").where("seasonId", "==", oldSeasonUid);
-    const lineupSnapshot = await activeLineupsQuery.get();
-
-    if (!lineupSnapshot.empty) {
-      logger.info(`Found ${lineupSnapshot.size} active lineups to clear...`);
-
-      let batch = db.batch();
-      let batchCount = 0;
-
-      for (const doc of lineupSnapshot.docs) {
-        batch.delete(doc.ref);
-        batchCount++;
-
-        if (batchCount >= 400) {
-          logger.info(`Committing batch of ${batchCount} lineup deletions...`);
-          await batch.commit();
-          batch = db.batch();
-          batchCount = 0;
-        }
-      }
-
-      if (batchCount > 0) {
-        await batch.commit();
-      }
-
-      logger.info(`Successfully cleared ${lineupSnapshot.size} active lineups from previous season`);
-    } else {
-      logger.info("No active lineups found to clear");
-    }
+    await archiveAndResetProfiles(db, oldSeasonUid, dataDocId);
+    await clearActiveLineups(db, oldSeasonUid);
   }
 }
 

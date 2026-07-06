@@ -22,6 +22,9 @@ const NewCorpsSlotModal = lazy(() => import('../components/modals/NewCorpsSlotMo
 const RenameDuplicateCorpsModal = lazy(
   () => import('../components/modals/RenameDuplicateCorpsModal')
 );
+const StreakModal = lazy(() => import('../components/modals/StreakModal'));
+const CorpsCoinModal = lazy(() => import('../components/modals/CorpsCoinModal'));
+const SeasonRecapModal = lazy(() => import('../components/modals/SeasonRecapModal'));
 
 import {
   ClassUnlockCongratsModal,
@@ -128,10 +131,15 @@ const Dashboard = () => {
     showNewsSubmission,
     setShowNewsSubmission,
     submittingNews,
+    showStreakModal,
+    setShowStreakModal,
+    showWalletModal,
+    setShowWalletModal,
     handleTourComplete,
     handleSetupNewClass,
     handleDeclineSetup,
     handleAchievementClose,
+    handleSeasonRecapClose,
     handleSeasonSetupFinish,
     handleEditCorps,
     handleDeleteCorps,
@@ -292,6 +300,8 @@ const Dashboard = () => {
               }
             }}
             onUnlockClass={handleClassUnlock}
+            onStreakClick={() => setShowStreakModal(true)}
+            onWalletClick={() => setShowWalletModal(true)}
           />
         </div>
 
@@ -580,6 +590,28 @@ const Dashboard = () => {
           achievements={profile?.achievements || []}
           newAchievement={newAchievement}
         />
+      )}
+
+      {/* End-of-season results + payout ceremony (one-shot, written by rollover) */}
+      {modalQueue.isActive('seasonRecap') && profile?.pendingSeasonRecap && (
+        <Suspense fallback={<ModalLoadingFallback />}>
+          <SeasonRecapModal recap={profile.pendingSeasonRecap} onClose={handleSeasonRecapClose} />
+        </Suspense>
+      )}
+
+      {showStreakModal && (
+        <Suspense fallback={<ModalLoadingFallback />}>
+          <StreakModal
+            onClose={() => setShowStreakModal(false)}
+            corpsCoin={profile?.corpsCoin || 0}
+          />
+        </Suspense>
+      )}
+
+      {showWalletModal && (
+        <Suspense fallback={<ModalLoadingFallback />}>
+          <CorpsCoinModal onClose={() => setShowWalletModal(false)} />
+        </Suspense>
       )}
 
       <OnboardingTour

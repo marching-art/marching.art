@@ -146,6 +146,25 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
         updates.corpsCoin = admin.firestore.FieldValue.increment(coinAwarded);
       }
 
+      // Persist a streak achievement at each milestone. This used to be a
+      // client-side updateDoc in useDashboardData.js; the server is the only
+      // writer now so streak counts and achievements can't diverge.
+      if (milestoneReached) {
+        const achievementId = `streak_${newStreak}`;
+        const existingAchievements = profileData.achievements || [];
+        if (!existingAchievements.find((a) => a.id === achievementId)) {
+          updates.achievements = admin.firestore.FieldValue.arrayUnion({
+            id: achievementId,
+            title: `${newStreak} Day Streak!`,
+            description: `Logged in ${newStreak} days in a row`,
+            icon: 'flame',
+            earnedAt: new Date().toISOString(),
+            rarity:
+              newStreak >= 30 ? 'legendary' : newStreak >= 14 ? 'epic' : newStreak >= 7 ? 'rare' : 'common',
+          });
+        }
+      }
+
       transaction.update(profileRef, updates);
 
       // Write coin history to subcollection (outside profile doc to avoid unbounded growth)

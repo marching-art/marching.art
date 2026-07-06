@@ -175,6 +175,44 @@ export const unlockClassWithCorpsCoin = createCallable<
   { success: boolean; classUnlocked: string; newBalance: number }
 >('unlockClassWithCorpsCoin');
 
+export interface CorpsCoinTransaction {
+  id: string;
+  type: string;
+  amount: number;
+  balance?: number;
+  description: string;
+  corpsClass?: string;
+  timestamp?: { _seconds: number; _nanoseconds: number } | string | null;
+}
+
+export const getCorpsCoinHistory = createCallable<
+  { limit?: number } | void,
+  { success: boolean; balance: number; history: CorpsCoinTransaction[] }
+>('getCorpsCoinHistory');
+
+export interface EarningOpportunity {
+  title: string;
+  description: string;
+  reward?: number;
+  rewards?: Record<string, number>;
+}
+
+export interface SpendingOption {
+  title: string;
+  description: string;
+  costs?: Record<string, number>;
+  note?: string;
+}
+
+export const getEarningOpportunities = createCallable<
+  void,
+  {
+    success: boolean;
+    opportunities: Record<string, EarningOpportunity>;
+    spending: Record<string, SpendingOption>;
+  }
+>('getEarningOpportunities');
+
 // =============================================================================
 // EXECUTION SYSTEM
 // =============================================================================
@@ -234,6 +272,31 @@ export interface ClaimDailyLoginResult {
 }
 
 export const claimDailyLogin = createCallable<void, ClaimDailyLoginResult>('claimDailyLogin');
+
+export interface StreakStatusResult {
+  success: boolean;
+  streak: number;
+  lastLogin: string | null;
+  hasActiveFreeze: boolean;
+  freezeExpiresAt: string | null;
+  canPurchaseFreeze: boolean;
+  freezeCooldownDays: number;
+  freezeCost: number;
+  isAtRisk: boolean;
+  hoursUntilAtRisk: number | null;
+  nextMilestone: {
+    days: number;
+    rewards: { xp: number; coin: number; title: string; freeFreeze?: boolean };
+    daysRemaining: number;
+  } | null;
+}
+
+export const getStreakStatus = createCallable<void, StreakStatusResult>('getStreakStatus');
+
+export const purchaseStreakFreeze = createCallable<
+  void,
+  { success: boolean; message: string; freezeUntil: string; newBalance: number }
+>('purchaseStreakFreeze');
 
 export interface CompleteDailyChallengeResult {
   success: boolean;

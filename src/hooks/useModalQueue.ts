@@ -8,6 +8,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 
 // Modal priorities (lower number = higher priority)
 export const MODAL_PRIORITY = {
+  SEASON_RECAP: 0, // Last season's results + payouts — shown before new-season setup
   SEASON_SETUP: 1, // Critical - needed to play
   ONBOARDING: 2, // High - first visit experience
   CLASS_UNLOCK: 3, // Medium - celebration
