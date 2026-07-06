@@ -44,6 +44,9 @@ const SeasonScorecard = memo(
     avatarUrl,
     onDesignUniform,
     bestInShowCount = 0,
+    // Corps Identity Shop card theme (equipped cosmetic) — overrides the
+    // default container border/background when set.
+    themeClass = null,
     // Corps management: all optional so existing usage keeps rendering unchanged.
     canManage = false,
     canMove = false,
@@ -79,7 +82,7 @@ const SeasonScorecard = memo(
     const showMenu = !!(onMoveCorps || onRetireCorps);
 
     return (
-      <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      <div className={`border overflow-hidden ${themeClass || 'bg-[#1a1a1a] border-[#333]'}`}>
         <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
           <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
             <Trophy className="w-3.5 h-3.5 text-yellow-500" />

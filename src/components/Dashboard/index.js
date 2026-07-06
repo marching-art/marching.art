@@ -38,6 +38,8 @@ export {
   LineupSimulatorPanel,
   PredictionGamePanel,
   AchievementTrackerPanel,
+  JourneyPanel,
+  SeasonLadderPanel,
   // Constants
   CLASS_LABELS,
   CLASS_SHORT_LABELS,

@@ -57,6 +57,8 @@ export function useDashboardModals(user, dashboardData) {
   const [showUniformDesign, setShowUniformDesign] = useState(false);
   const [showNewsSubmission, setShowNewsSubmission] = useState(false);
   const [submittingNews, setSubmittingNews] = useState(false);
+  const [showStreakModal, setShowStreakModal] = useState(false);
+  const [showWalletModal, setShowWalletModal] = useState(false);
 
   // Handle navigation state for class purchase (from header Buy button)
   useEffect(() => {
@@ -73,6 +75,14 @@ export function useDashboardModals(user, dashboardData) {
       enqueueModal('seasonSetup', MODAL_PRIORITY.SEASON_SETUP, { seasonData });
     }
   }, [showSeasonSetupWizard, seasonData, enqueueModal]);
+
+  // Last season's results + payouts, written by the season rollover.
+  // Highest priority so the payday shows before the new-season setup wizard.
+  useEffect(() => {
+    if (profile?.pendingSeasonRecap) {
+      enqueueModal('seasonRecap', MODAL_PRIORITY.SEASON_RECAP);
+    }
+  }, [profile?.pendingSeasonRecap, enqueueModal]);
 
   useEffect(() => {
     if (profile?.isFirstVisit && activeCorps) {
@@ -107,7 +117,9 @@ export function useDashboardModals(user, dashboardData) {
       showDeleteConfirm ||
       showMoveCorps ||
       showRetireConfirm ||
-      showNewsSubmission;
+      showNewsSubmission ||
+      showStreakModal ||
+      showWalletModal;
     if (userModalOpen) {
       modalQueue.pauseQueue();
     } else {
@@ -121,6 +133,8 @@ export function useDashboardModals(user, dashboardData) {
     showMoveCorps,
     showRetireConfirm,
     showNewsSubmission,
+    showStreakModal,
+    showWalletModal,
     modalQueue,
   ]);
 
@@ -151,6 +165,19 @@ export function useDashboardModals(user, dashboardData) {
     modalQueue.dequeue();
     clearNewAchievement();
   }, [modalQueue, clearNewAchievement]);
+
+  // Dismissing the season recap clears the one-shot pendingSeasonRecap field
+  // (a client-writable field; the rewards themselves were applied server-side).
+  const handleSeasonRecapClose = useCallback(async () => {
+    modalQueue.dequeue();
+    if (user?.uid) {
+      try {
+        await updateProfile(user.uid, { pendingSeasonRecap: null });
+      } catch (error) {
+        console.error('Error clearing season recap:', error);
+      }
+    }
+  }, [modalQueue, user?.uid]);
 
   const handleSeasonSetupClose = useCallback(() => {
     modalQueue.dequeue();
@@ -373,11 +400,16 @@ export function useDashboardModals(user, dashboardData) {
     showNewsSubmission,
     setShowNewsSubmission,
     submittingNews,
+    showStreakModal,
+    setShowStreakModal,
+    showWalletModal,
+    setShowWalletModal,
     // Handlers
     handleTourComplete,
     handleSetupNewClass,
     handleDeclineSetup,
     handleAchievementClose,
+    handleSeasonRecapClose,
     handleSeasonSetupFinish,
     handleEditCorps,
     handleDeleteCorps,

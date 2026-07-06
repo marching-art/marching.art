@@ -26,7 +26,10 @@ const XP_CONFIG = {
 };
 
 /**
- * Title mapping - must stay in sync with client getLevelTitle() in src/api/profile.ts
+ * Title mapping - must stay in sync with the client mirror in
+ * src/components/Profile/directorProfileHelpers.ts.
+ * The ladder continues past Level 10 so long-term directors keep a title to
+ * chase: 10 Legend → 15 Icon → 20 Hall of Famer → 25 Immortal → 30 Eternal.
  */
 const LEVEL_TITLES = {
   1: 'Rookie',
@@ -39,15 +42,25 @@ const LEVEL_TITLES = {
   8: 'Director',
   9: 'Executive Director',
   10: 'Legend',
+  15: 'Icon',
+  20: 'Hall of Famer',
+  25: 'Immortal',
+  30: 'Eternal',
 };
+
+/** Extended-tier thresholds, highest first, for levels 10+ */
+const EXTENDED_TITLE_TIERS = [30, 25, 20, 15, 10];
 
 /**
  * Get the director title for a given level (1+).
- * Levels 10 and above all return "Legend".
+ * Levels 10+ resolve to the highest extended tier reached.
  */
 function getLevelTitle(level) {
   const lvl = Math.max(1, Math.floor(Number(level) || 1));
-  if (lvl >= 10) return LEVEL_TITLES[10];
+  if (lvl >= 10) {
+    const tier = EXTENDED_TITLE_TIERS.find((t) => lvl >= t);
+    return LEVEL_TITLES[tier];
+  }
   return LEVEL_TITLES[lvl] || 'Rookie';
 }
 

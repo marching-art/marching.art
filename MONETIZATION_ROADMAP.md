@@ -1,3 +1,5 @@
+> **⚠️ DEPRECATED (July 2026):** marching.art is donation-supported (Buy Me a Coffee) and has no plans for real-money monetization. This roadmap is retained for historical reference only — do not implement Stripe, CC bundles, premium subscriptions, or paid cosmetics from it. Its competitive-integrity principle ("money never buys scores") carries forward and is restated in `docs/ENGAGEMENT_ECONOMY_REVIEW.md`, which is the current plan for the CorpsCoin/XP economy.
+
 # Monetization Roadmap
 
 ## marching.art — Premium Features Without Pay-to-Win

@@ -54,11 +54,11 @@ export const CLASS_UNLOCK_COSTS = {
 
 /**
  * Simplified XP Sources - Clear, achievable amounts
- * Matches backend configuration for consistency
+ * Must stay in sync with XP_SOURCES in functions/src/helpers/xpCalculations.js
  */
 export const XP_SOURCES = {
-  weeklyParticipation: 100, // Submit lineup and participate weekly
-  leagueWin: 50, // Win a weekly league matchup
+  weeklyParticipation: 200, // Submit lineup and participate weekly
+  leagueWin: 100, // Win a weekly league matchup
   seasonCompletion: {
     top10: 500, // Top 10 finish
     top25: 400, // Top 25 finish

@@ -22,6 +22,9 @@ const NewCorpsSlotModal = lazy(() => import('../components/modals/NewCorpsSlotMo
 const RenameDuplicateCorpsModal = lazy(
   () => import('../components/modals/RenameDuplicateCorpsModal')
 );
+const StreakModal = lazy(() => import('../components/modals/StreakModal'));
+const CorpsCoinModal = lazy(() => import('../components/modals/CorpsCoinModal'));
+const SeasonRecapModal = lazy(() => import('../components/modals/SeasonRecapModal'));
 
 import {
   ClassUnlockCongratsModal,
@@ -44,6 +47,8 @@ import {
   LineupSimulatorPanel,
   PredictionGamePanel,
   AchievementTrackerPanel,
+  JourneyPanel,
+  SeasonLadderPanel,
   CLASS_DISPLAY_NAMES,
   CLASS_UNLOCK_LEVELS,
   CLASS_UNLOCK_COSTS,
@@ -63,6 +68,7 @@ import { useDashboardModals } from '../hooks/useDashboardModals';
 import { useLineupScores, useRecentResults, useBestInShowCount } from '../hooks/useDashboardScores';
 import { useSeasonStore } from '../store/seasonStore';
 import { getEffectiveDay, getNextSelectedShow } from '../utils/dashboardScoring';
+import { getEquippedCosmetic } from '../utils/cosmetics';
 
 // OPTIMIZATION #4: Constants moved to src/components/Dashboard/sections/constants.js
 // Imported via: CLASS_LABELS, CAPTIONS, CLASS_DISPLAY_NAMES, getSoundSportRating
@@ -128,10 +134,15 @@ const Dashboard = () => {
     showNewsSubmission,
     setShowNewsSubmission,
     submittingNews,
+    showStreakModal,
+    setShowStreakModal,
+    showWalletModal,
+    setShowWalletModal,
     handleTourComplete,
     handleSetupNewClass,
     handleDeclineSetup,
     handleAchievementClose,
+    handleSeasonRecapClose,
     handleSeasonSetupFinish,
     handleEditCorps,
     handleDeleteCorps,
@@ -165,6 +176,8 @@ const Dashboard = () => {
 
   // Computed values
   const lineup = useMemo(() => activeCorps?.lineup || {}, [activeCorps?.lineup]);
+  // Corps Identity Shop card theme (equipped cosmetic) for the scorecard
+  const equippedCardTheme = useMemo(() => getEquippedCosmetic(profile, 'cardTheme'), [profile]);
   const lineupCount = useMemo(() => Object.keys(lineup).length, [lineup]);
 
   // Enriched schedule (real start times + running order) for the Next Performance
@@ -292,6 +305,8 @@ const Dashboard = () => {
               }
             }}
             onUnlockClass={handleClassUnlock}
+            onStreakClick={() => setShowStreakModal(true)}
+            onWalletClick={() => setShowWalletModal(true)}
           />
         </div>
 
@@ -305,6 +320,7 @@ const Dashboard = () => {
               {/* SCORECARD - top of mobile stack, top of right column on lg */}
               <div className="lg:col-start-3 lg:row-start-1" data-tour="scorecard">
                 <SeasonScorecard
+                  themeClass={equippedCardTheme?.cardClass}
                   score={userCorpsScore}
                   rank={userCorpsRank}
                   rankChange={userRankChange}
@@ -365,8 +381,20 @@ const Dashboard = () => {
 
               {/* SIDEBAR (1/3) - Engagement panels below the scorecard */}
               <div className="lg:col-start-3 space-y-4">
+                {/* First Season Journey - server-rewarded quest line for new
+                    directors; hides itself once all steps are claimed */}
+                <JourneyPanel
+                  profile={profile}
+                  resultCount={recentResults.length}
+                  onEditLineup={() => openCaptionSelection()}
+                  onSetConcept={() => setShowEditCorps(true)}
+                />
+
                 {/* Daily Challenges - drives daily return visits */}
                 <DailyChallenges onLineupClick={() => openCaptionSelection()} />
+
+                {/* Season Ladder - free seasonal reward track fed by all XP */}
+                <SeasonLadderPanel profile={profile} seasonUid={seasonData?.seasonUid} />
 
                 {/* Next Performance - real show timing + running order + your-picks-live spotlight */}
                 <NextPerformancePanel
@@ -580,6 +608,28 @@ const Dashboard = () => {
           achievements={profile?.achievements || []}
           newAchievement={newAchievement}
         />
+      )}
+
+      {/* End-of-season results + payout ceremony (one-shot, written by rollover) */}
+      {modalQueue.isActive('seasonRecap') && profile?.pendingSeasonRecap && (
+        <Suspense fallback={<ModalLoadingFallback />}>
+          <SeasonRecapModal recap={profile.pendingSeasonRecap} onClose={handleSeasonRecapClose} />
+        </Suspense>
+      )}
+
+      {showStreakModal && (
+        <Suspense fallback={<ModalLoadingFallback />}>
+          <StreakModal
+            onClose={() => setShowStreakModal(false)}
+            corpsCoin={profile?.corpsCoin || 0}
+          />
+        </Suspense>
+      )}
+
+      {showWalletModal && (
+        <Suspense fallback={<ModalLoadingFallback />}>
+          <CorpsCoinModal onClose={() => setShowWalletModal(false)} />
+        </Suspense>
       )}
 
       <OnboardingTour

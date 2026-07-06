@@ -53,8 +53,7 @@ export const useDashboardData = () => {
   const [newlyUnlockedClass, setNewlyUnlockedClass] = useState(null);
   const previousUnlockedClassesRef = useRef([]);
 
-  // Guards to prevent duplicate Firestore writes within same session
-  const engagementProcessedRef = useRef(false);
+  // Guard to prevent duplicate milestone Firestore writes within same session
   const milestonesProcessedRef = useRef(new Map()); // Map<classKey, {rank, score}>
 
   // Engagement data
@@ -203,113 +202,37 @@ export const useDashboardData = () => {
     }
   }, [profile, corps, seasonData, loading, seasonLoading, unlockedClasses]);
 
-  // Track daily login streaks and engagement
-  // Guard prevents duplicate writes if effect re-runs within same session
+  // Streaks are server-authoritative: claimDailyLogin (called once per day
+  // from App.jsx) owns loginStreak/lastLogin/totalLogins and awards streak
+  // milestone achievements. This hook only mirrors the profile's engagement
+  // data into local state. (A legacy client-side writer here used to update
+  // engagement and achievements directly, which could diverge from the
+  // server's streak count.)
   useEffect(() => {
-    if (!user || !profile) return;
+    if (profile?.engagement) {
+      setEngagementData(profile.engagement);
+    }
+  }, [profile?.engagement]);
 
-    // Prevent duplicate processing in same session
-    if (engagementProcessedRef.current) {
-      // Still sync local state if profile has engagement data
-      if (profile.engagement) {
-        setEngagementData(profile.engagement);
-      }
+  // Achievements are awarded server-side (daily sweep in claimDailyLogin,
+  // league champion at archival). Watch the profile snapshot for additions and
+  // surface the newest one in the celebration modal. The initial snapshot
+  // seeds the baseline without firing, so returning users aren't re-shown
+  // old achievements.
+  const achievementIdsRef = useRef(null);
+  useEffect(() => {
+    const list = profile?.achievements;
+    if (!list) return;
+    if (achievementIdsRef.current === null) {
+      achievementIdsRef.current = new Set(list.map((a) => a.id));
       return;
     }
-
-    const updateEngagement = async () => {
-      try {
-        const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-        const today = new Date().toDateString();
-        const lastLogin = profile.engagement?.lastLogin;
-        const lastLoginDate = lastLogin
-          ? (lastLogin.toDate ? lastLogin.toDate() : new Date(lastLogin)).toDateString()
-          : null;
-
-        if (lastLoginDate !== today) {
-          const yesterday = new Date();
-          yesterday.setDate(yesterday.getDate() - 1);
-          const yesterdayStr = yesterday.toDateString();
-
-          let newStreak = 1;
-          const currentStreak = profile.engagement?.loginStreak || 0;
-
-          if (lastLoginDate === yesterdayStr) {
-            newStreak = currentStreak + 1;
-          }
-
-          const updatedEngagement = {
-            loginStreak: newStreak,
-            lastLogin: new Date().toISOString(),
-            totalLogins: (profile.engagement?.totalLogins || 0) + 1,
-            recentActivity: profile.engagement?.recentActivity || [],
-            weeklyProgress: profile.engagement?.weeklyProgress || [],
-          };
-
-          updatedEngagement.recentActivity.unshift({
-            type: 'login',
-            message: `Day ${newStreak} login streak!`,
-            timestamp: new Date().toISOString(),
-            icon: 'flame',
-          });
-
-          updatedEngagement.recentActivity = updatedEngagement.recentActivity.slice(0, 10);
-
-          // Award streak achievements
-          const milestones = [3, 7, 14, 30, 60, 100];
-          if (milestones.includes(newStreak)) {
-            const achievementId = `streak_${newStreak}`;
-            const existingAchievements = profile.achievements || [];
-
-            if (!existingAchievements.find((a) => a.id === achievementId)) {
-              const achievement = {
-                id: achievementId,
-                title: `${newStreak} Day Streak!`,
-                description: `Logged in ${newStreak} days in a row`,
-                icon: 'flame',
-                earnedAt: new Date().toISOString(),
-                rarity:
-                  newStreak >= 30
-                    ? 'legendary'
-                    : newStreak >= 14
-                      ? 'epic'
-                      : newStreak >= 7
-                        ? 'rare'
-                        : 'common',
-              };
-
-              await updateDoc(profileRef, {
-                achievements: [...existingAchievements, achievement],
-              });
-
-              setNewAchievement(achievement);
-            }
-          }
-
-          await updateDoc(profileRef, {
-            engagement: updatedEngagement,
-          });
-
-          setEngagementData(updatedEngagement);
-        } else {
-          if (profile.engagement) {
-            setEngagementData(profile.engagement);
-          }
-        }
-
-        // Mark as processed for this session
-        engagementProcessedRef.current = true;
-      } catch (error) {
-        console.error('Error updating engagement:', error);
-      }
-    };
-
-    updateEngagement();
-    // Intentionally keyed on user + profile.uid only. The engagementProcessedRef
-    // guard makes re-runs on unrelated profile changes no-ops, so the full
-    // `profile` object is deliberately excluded to avoid redundant work.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, profile?.uid]);
+    const added = list.filter((a) => !achievementIdsRef.current.has(a.id));
+    if (added.length > 0) {
+      setNewAchievement(added[added.length - 1]);
+      added.forEach((a) => achievementIdsRef.current.add(a.id));
+    }
+  }, [profile?.achievements]);
 
   // Track performance milestones and achievements
   // Guard prevents duplicate writes for same rank/score values
@@ -335,9 +258,9 @@ export const useDashboardData = () => {
         let hasNewMilestone = false;
         const updatedMilestones = { ...milestones, [classKey]: { ...classMilestones } };
         const newActivities = [];
-        const newAchievements = [];
 
-        // Track best rank
+        // Track best rank. (Top-10 achievements are awarded server-side by the
+        // daily achievement sweep in claimDailyLogin — not written from here.)
         if (currentRank) {
           const bestRank = classMilestones.bestRank || Infinity;
           if (currentRank < bestRank) {
@@ -350,21 +273,6 @@ export const useDashboardData = () => {
               timestamp: new Date().toISOString(),
               icon: 'trophy',
             });
-
-            if (currentRank <= 10) {
-              const achievementId = `top_10_${classKey}`;
-              const existingAchievements = profile.achievements || [];
-              if (!existingAchievements.find((a) => a.id === achievementId)) {
-                newAchievements.push({
-                  id: achievementId,
-                  title: 'Top 10 Finish!',
-                  description: `Reached top 10 in ${getCorpsClassName(classKey)}`,
-                  icon: 'trophy',
-                  earnedAt: new Date().toISOString(),
-                  rarity: currentRank === 1 ? 'legendary' : currentRank <= 3 ? 'epic' : 'rare',
-                });
-              }
-            }
           }
         }
 
@@ -395,12 +303,6 @@ export const useDashboardData = () => {
               ...newActivities,
               ...currentActivities,
             ].slice(0, 10);
-          }
-
-          if (newAchievements.length > 0) {
-            const currentAchievements = profile.achievements || [];
-            updateData.achievements = [...currentAchievements, ...newAchievements];
-            setNewAchievement(newAchievements[0]);
           }
 
           await updateDoc(profileRef, updateData);

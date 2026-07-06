@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { getSeasonData, getCorpsValues } from '../api/season';
 import { mergeProfile } from '../api/profile';
-import { checkUsername, createUserProfile, selectUserShows } from '../api/functions';
+import { checkUsername, createUserProfile, selectUserShows, joinRookieLeague } from '../api/functions';
 import toast from 'react-hot-toast';
 import { useSeasonStore } from '../store/seasonStore';
 import { useScheduleStore } from '../store/scheduleStore';
@@ -357,6 +357,19 @@ const Onboarding = () => {
     });
   };
 
+  // One-tap rookie league placement from the celebration screen. The join
+  // runs in the background — head to the dashboard either way.
+  const handleJoinRookieLeague = () => {
+    joinRookieLeague()
+      .then((result) => {
+        toast.success(result.data.message || 'Joined the Rookie Circuit!');
+      })
+      .catch(() => {
+        toast.error('Could not join a league right now — find one on the Leagues page.');
+      });
+    handleCelebrationComplete();
+  };
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
@@ -598,6 +611,7 @@ const Onboarding = () => {
         displayName={formData.displayName}
         corpsName={formData.corpsName}
         onComplete={handleCelebrationComplete}
+        onJoinLeague={handleJoinRookieLeague}
       />
     </div>
   );

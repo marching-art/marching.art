@@ -4,6 +4,45 @@ const admin = require("firebase-admin");
 const { logger } = require("firebase-functions/v2");
 const { generateUniqueInviteCode, smartPairMembers, createLeagueActivity } = require("../helpers/leagueHelpers");
 const { assertAuth } = require("../helpers/callableGuards");
+const { addCoinHistoryEntryToTransaction, TRANSACTION_TYPES } = require("./economy");
+
+// Commissioner-set entry fee bounds (CorpsCoin). Fees flow into the league's
+// prize pool, which season archival pays to the league champion — a closed
+// zero-sum loop, no new coin minted.
+const MAX_LEAGUE_ENTRY_FEE = 5000;
+
+/**
+ * Charge a league entry fee inside an existing join transaction: validates
+ * balance, debits the profile, credits the league prize pool, and writes the
+ * ledger entry. profileDoc must already have been read by the transaction.
+ */
+function chargeEntryFeeInTransaction(transaction, db, uid, profileDoc, leagueRef, leagueData) {
+  const entryFee = leagueData.settings?.entryFee || 0;
+  if (entryFee <= 0) return 0;
+
+  if (!profileDoc.exists) {
+    throw new HttpsError("not-found", "User profile not found.");
+  }
+  const balance = profileDoc.data().corpsCoin || 0;
+  if (balance < entryFee) {
+    throw new HttpsError(
+      "failed-precondition",
+      `This league has a ${entryFee.toLocaleString()} CC entry fee. You have ${balance.toLocaleString()} CC.`
+    );
+  }
+
+  transaction.update(leagueRef, {
+    'settings.prizePool': admin.firestore.FieldValue.increment(entryFee),
+  });
+  addCoinHistoryEntryToTransaction(transaction, db, uid, {
+    type: TRANSACTION_TYPES.LEAGUE_ENTRY,
+    amount: -entryFee,
+    balance: balance - entryFee,
+    description: `Entry fee for ${leagueData.name}`,
+    leagueId: leagueRef.id,
+  });
+  return entryFee;
+}
 
 
 exports.createLeague = onCall({ cors: true }, async (request) => {
@@ -21,6 +60,16 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
     throw new HttpsError("invalid-argument", "League name must be at least 3 characters long.");
   }
 
+  // Commissioner-set entry fee: validated here, charged to every joiner
+  // (including the creator, below) and paid into the prize pool.
+  const entryFee = Number(settings.entryFee) || 0;
+  if (!Number.isInteger(entryFee) || entryFee < 0 || entryFee > MAX_LEAGUE_ENTRY_FEE) {
+    throw new HttpsError(
+      "invalid-argument",
+      `Entry fee must be a whole number between 0 and ${MAX_LEAGUE_ENTRY_FEE.toLocaleString()} CC.`
+    );
+  }
+
   const db = getDb();
   const seasonDoc = await db.doc("game-settings/season").get();
   if (!seasonDoc.exists) throw new HttpsError("not-found", "No active season.");
@@ -35,6 +84,22 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
   const standingsRef = leagueRef.collection('standings').doc('current');
 
   await db.runTransaction(async (transaction) => {
+    // Creator pays the entry fee too — same terms as every member
+    let creatorBalance = null;
+    if (entryFee > 0) {
+      const creatorProfileDoc = await transaction.get(userProfileRef);
+      if (!creatorProfileDoc.exists) {
+        throw new HttpsError("not-found", "User profile not found.");
+      }
+      creatorBalance = creatorProfileDoc.data().corpsCoin || 0;
+      if (creatorBalance < entryFee) {
+        throw new HttpsError(
+          "failed-precondition",
+          `You need ${entryFee.toLocaleString()} CC to cover your own entry fee.`
+        );
+      }
+    }
+
     // Create league
     transaction.set(leagueRef, {
       name: name.trim(),
@@ -49,10 +114,26 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
       settings: {
         matchupType: settings.matchupType || 'weekly', // weekly, h2h
         playoffSize: settings.playoffSize || 4,
-        prizePool: settings.prizePool || 1000, // CorpsCoin
-        ...settings
+        ...settings,
+        // After the spread so client values can't override the validated fee
+        // or the seeded pool (base pool + the creator's own entry fee).
+        entryFee,
+        prizePool: (settings.prizePool || 1000) + entryFee,
       }
     });
+
+    if (entryFee > 0) {
+      transaction.update(userProfileRef, {
+        corpsCoin: admin.firestore.FieldValue.increment(-entryFee),
+      });
+      addCoinHistoryEntryToTransaction(transaction, db, uid, {
+        type: TRANSACTION_TYPES.LEAGUE_ENTRY,
+        amount: -entryFee,
+        balance: creatorBalance - entryFee,
+        description: `Entry fee for ${name.trim()}`,
+        leagueId: leagueRef.id,
+      });
+    }
 
     // Initialize standings with both formats (records object + standings array)
     const initialRecord = {
@@ -118,6 +199,7 @@ exports.joinLeague = onCall({ cors: true }, async (request) => {
     }
 
     const standingsDoc = await transaction.get(standingsRef);
+    const profileDoc = await transaction.get(userProfileRef);
 
     const leagueData = leagueDoc.data();
 
@@ -131,6 +213,9 @@ exports.joinLeague = onCall({ cors: true }, async (request) => {
       throw new HttpsError("failed-precondition", "This league is full.");
     }
 
+    // Commissioner-set entry fee (if any) goes into the prize pool
+    const entryFee = chargeEntryFeeInTransaction(transaction, db, uid, profileDoc, leagueRef, leagueData);
+
     // Perform ALL writes after reads
     // Add to league
     transaction.update(leagueRef, {
@@ -140,6 +225,7 @@ exports.joinLeague = onCall({ cors: true }, async (request) => {
     // Add to user profile
     transaction.update(userProfileRef, {
       leagueIds: admin.firestore.FieldValue.arrayUnion(leagueId),
+      ...(entryFee > 0 ? { corpsCoin: admin.firestore.FieldValue.increment(-entryFee) } : {}),
     });
 
     // Initialize standings for new member
@@ -190,6 +276,152 @@ exports.joinLeague = onCall({ cors: true }, async (request) => {
   return { success: true, message: "Successfully joined league!" };
 });
 
+/**
+ * One-tap rookie league placement.
+ *
+ * Joins the current "Rookie Circuit" league — a public, auto-provisioned
+ * league for new directors. A pointer doc (game-settings/rookie-league)
+ * tracks the active circuit; when it's full (or missing), a fresh
+ * "Rookie Circuit N" is created with the joining director as its first
+ * member and the pointer advances. Weekly matchups are fully automated, so
+ * these leagues need no commissioner attention.
+ */
+const ROOKIE_LEAGUE_MAX_MEMBERS = 16;
+
+exports.joinRookieLeague = onCall({ cors: true }, async (request) => {
+  assertAuth(request);
+  const uid = request.auth.uid;
+
+  const db = getDb();
+  const pointerRef = db.doc("game-settings/rookie-league");
+  const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+
+  const seasonDoc = await db.doc("game-settings/season").get();
+  if (!seasonDoc.exists) throw new HttpsError("not-found", "No active season.");
+  const { seasonUid } = seasonDoc.data();
+
+  const result = await db.runTransaction(async (transaction) => {
+    // Reads first (Firestore transaction requirement)
+    const pointerDoc = await transaction.get(pointerRef);
+    const pointer = pointerDoc.exists ? pointerDoc.data() : { leagueId: null, counter: 0 };
+
+    let leagueRef = null;
+    let leagueData = null;
+    if (pointer.leagueId) {
+      leagueRef = db.doc(`artifacts/${dataNamespaceParam.value()}/leagues/${pointer.leagueId}`);
+      const leagueDoc = await transaction.get(leagueRef);
+      if (leagueDoc.exists) {
+        leagueData = leagueDoc.data();
+      }
+    }
+
+    // Already in the current rookie circuit — nothing to do
+    if (leagueData && leagueData.members.includes(uid)) {
+      return { leagueId: leagueRef.id, leagueName: leagueData.name, alreadyMember: true };
+    }
+
+    const currentIsJoinable =
+      leagueData && leagueData.members.length < (leagueData.maxMembers || ROOKIE_LEAGUE_MAX_MEMBERS);
+
+    if (currentIsJoinable) {
+      const standingsRef = leagueRef.collection('standings').doc('current');
+      const standingsDoc = await transaction.get(standingsRef);
+
+      transaction.update(leagueRef, {
+        members: admin.firestore.FieldValue.arrayUnion(uid),
+      });
+      transaction.update(userProfileRef, {
+        leagueIds: admin.firestore.FieldValue.arrayUnion(leagueRef.id),
+      });
+      if (standingsDoc.exists) {
+        const existingStandings = standingsDoc.data().standings || [];
+        transaction.update(standingsRef, {
+          [`records.${uid}`]: {
+            wins: 0, losses: 0, ties: 0,
+            pointsFor: 0, pointsAgainst: 0,
+            currentStreak: 0, streakType: null,
+          },
+          standings: [...existingStandings, {
+            uid, wins: 0, losses: 0, ties: 0,
+            totalPoints: 0, pointsAgainst: 0, streak: 0, streakType: null,
+          }],
+        });
+      }
+      return { leagueId: leagueRef.id, leagueName: leagueData.name, alreadyMember: false, created: false };
+    }
+
+    // Current circuit missing or full — provision the next one
+    const nextNumber = (pointer.counter || 0) + 1;
+    const newName = `Rookie Circuit ${nextNumber}`;
+    const inviteCode = generateUniqueInviteCode(uid);
+    const newLeagueRef = db.collection(`artifacts/${dataNamespaceParam.value()}/leagues`).doc();
+    const newStandingsRef = newLeagueRef.collection('standings').doc('current');
+    const inviteRef = db.doc(`leagueInvites/${inviteCode}`);
+
+    transaction.set(newLeagueRef, {
+      name: newName,
+      description: 'Auto-created league for new directors. Weekly matchups are fully automated — just compete!',
+      creatorId: uid,
+      seasonId: seasonUid,
+      members: [uid],
+      inviteCode,
+      isPublic: true,
+      maxMembers: ROOKIE_LEAGUE_MAX_MEMBERS,
+      isRookieCircuit: true,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      settings: {
+        matchupType: 'weekly',
+        playoffSize: 4,
+        prizePool: 1000,
+      },
+    });
+    transaction.set(newStandingsRef, {
+      records: {
+        [uid]: {
+          wins: 0, losses: 0, ties: 0,
+          pointsFor: 0, pointsAgainst: 0,
+          currentStreak: 0, streakType: null,
+        },
+      },
+      standings: [{
+        uid, wins: 0, losses: 0, ties: 0,
+        totalPoints: 0, pointsAgainst: 0, streak: 0, streakType: null,
+      }],
+      lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    transaction.set(inviteRef, { leagueId: newLeagueRef.id });
+    transaction.update(userProfileRef, {
+      leagueIds: admin.firestore.FieldValue.arrayUnion(newLeagueRef.id),
+    });
+    transaction.set(pointerRef, { leagueId: newLeagueRef.id, counter: nextNumber });
+
+    return { leagueId: newLeagueRef.id, leagueName: newName, alreadyMember: false, created: true };
+  });
+
+  if (!result.alreadyMember) {
+    await createLeagueActivity(db, result.leagueId, {
+      type: 'member_joined',
+      title: 'New Member Joined',
+      message: 'A new director has joined the circuit!',
+      userId: uid,
+      metadata: {},
+    });
+    logger.info(
+      `User ${uid} joined rookie league '${result.leagueName}'${result.created ? ' (newly created)' : ''}`
+    );
+  }
+
+  return {
+    success: true,
+    leagueId: result.leagueId,
+    leagueName: result.leagueName,
+    alreadyMember: !!result.alreadyMember,
+    message: result.alreadyMember
+      ? `You're already in ${result.leagueName}.`
+      : `Welcome to ${result.leagueName}!`,
+  };
+});
+
 exports.joinLeagueByCode = onCall({ cors: true }, async (request) => {
   assertAuth(request);
   const { inviteCode } = request.data;
@@ -223,6 +455,7 @@ exports.joinLeagueByCode = onCall({ cors: true }, async (request) => {
     }
 
     const standingsDoc = await transaction.get(standingsRef);
+    const profileDoc = await transaction.get(userProfileRef);
     const leagueData = leagueDoc.data();
 
     if (leagueData.members.includes(uid)) {
@@ -233,12 +466,16 @@ exports.joinLeagueByCode = onCall({ cors: true }, async (request) => {
       throw new HttpsError("failed-precondition", "This league is full.");
     }
 
+    // Commissioner-set entry fee (if any) goes into the prize pool
+    const entryFee = chargeEntryFeeInTransaction(transaction, db, uid, profileDoc, leagueRef, leagueData);
+
     transaction.update(leagueRef, {
       members: admin.firestore.FieldValue.arrayUnion(uid),
     });
 
     transaction.update(userProfileRef, {
       leagueIds: admin.firestore.FieldValue.arrayUnion(leagueId),
+      ...(entryFee > 0 ? { corpsCoin: admin.firestore.FieldValue.increment(-entryFee) } : {}),
     });
 
     if (standingsDoc.exists) {

@@ -57,6 +57,7 @@ import {
   getCompetitionTrophies,
 } from './directorProfileHelpers';
 import type { SeasonHistoryEntry } from './directorProfileHelpers';
+import { getEquippedCosmetic } from '../../utils/cosmetics';
 
 // =============================================================================
 // TYPES
@@ -102,6 +103,8 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
   const directorRating = useMemo(() => calculateDirectorRating(profile), [profile]);
   const avatarData = useMemo(() => getCorpsAvatarUrl(profile), [profile]);
   const corpsWithAvatars = useMemo(() => getCorpsWithAvatars(profile), [profile]);
+  const equippedTitle = getEquippedCosmetic(profile, 'title');
+  const equippedFrame = getEquippedCosmetic(profile, 'frame');
 
   const handleSelectAvatar = async (corpsClass: CorpsClass) => {
     if (!onSelectAvatarCorps) return;
@@ -203,8 +206,10 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
       {/* ================================================================== */}
       <div className="bg-[#1a1a1a] border-b border-[#333]">
         <div className="flex">
-          {/* LEFT: Avatar/Uniform - Large */}
-          <div className="flex-shrink-0 w-32 sm:w-40 lg:w-48 bg-[#0a0a0a] border-r border-[#333] relative group">
+          {/* LEFT: Avatar/Uniform - Large (equipped shop frame renders as ring) */}
+          <div
+            className={`flex-shrink-0 w-32 sm:w-40 lg:w-48 bg-[#0a0a0a] border-r border-[#333] relative group ${equippedFrame ? equippedFrame.frameClass : ''}`}
+          >
             {/* OPTIMIZATION #7: Added lazy loading for profile avatar */}
             <div className="aspect-square w-full">
               {avatarData.url ? (
@@ -369,7 +374,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                 <div className="text-[10px] text-gray-500 font-data mb-1">@{profile.username}</div>
               )}
 
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <div className="flex items-center gap-1">
                   <Shield className="w-3 h-3 text-[#0057B8]" />
                   <span className="text-[11px] text-[#0057B8] font-bold">
@@ -382,6 +387,9 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                     {profile.xpLevel || 1}
                   </span>
                 </span>
+                {equippedTitle && (
+                  <span className={`text-[11px] font-bold ${equippedTitle.textClass}`}>{`★ ${equippedTitle.name}`}</span>
+                )}
               </div>
 
               <div className="flex items-center gap-3 text-[10px] text-gray-500">

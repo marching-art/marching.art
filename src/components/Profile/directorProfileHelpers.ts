@@ -128,8 +128,8 @@ export function calculateDirectorRating(profile: UserProfile): number {
   return Math.min(rating, 3000);
 }
 
-// Kept in sync with src/api/profile.ts getLevelTitle and
-// functions/src/helpers/xpCalculations.js getLevelTitle.
+// Kept in sync with functions/src/helpers/xpCalculations.js getLevelTitle.
+// Extended tiers past Level 10: 15 Icon, 20 Hall of Famer, 25 Immortal, 30 Eternal.
 const LEVEL_TITLES: Record<number, string> = {
   1: 'Rookie',
   2: 'Trainee',
@@ -141,11 +141,20 @@ const LEVEL_TITLES: Record<number, string> = {
   8: 'Director',
   9: 'Executive Director',
   10: 'Legend',
+  15: 'Icon',
+  20: 'Hall of Famer',
+  25: 'Immortal',
+  30: 'Eternal',
 };
+
+const EXTENDED_TITLE_TIERS = [30, 25, 20, 15, 10];
 
 function titleForLevel(level: number): string {
   const lvl = Math.max(1, Math.floor(level || 1));
-  if (lvl >= 10) return LEVEL_TITLES[10];
+  if (lvl >= 10) {
+    const tier = EXTENDED_TITLE_TIERS.find((t) => lvl >= t) ?? 10;
+    return LEVEL_TITLES[tier];
+  }
   return LEVEL_TITLES[lvl] || 'Rookie';
 }
 

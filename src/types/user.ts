@@ -70,9 +70,21 @@ export interface UserProfile {
   xp: number;
   xpLevel: number;
   userTitle: string;
+  /** Highest level already paid the level-up CC stipend (server-only) */
+  lastRewardedLevel?: number;
+  /** XP total at season start — season ladder baseline (server-only) */
+  xpAtSeasonStart?: number;
+  /** Season reward ladder claims (server-only) */
+  seasonLadder?: { seasonUid: string; claimed: number[] } | null;
 
   // Currency
   corpsCoin: number;
+
+  // Corps Identity Shop cosmetics (server-only field; purchased with CC)
+  cosmetics?: {
+    owned?: string[];
+    equipped?: Record<string, string | null>;
+  };
 
   // Unlocks
   unlockedClasses: CorpsClass[];
