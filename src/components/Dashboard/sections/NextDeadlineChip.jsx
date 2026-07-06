@@ -2,13 +2,14 @@
 // Scores process nightly at 2 AM ET; caption-change windows (unlimited /
 // weekly / championship / lockouts) come from the shared season clock.
 
-import React from 'react';
-import { Clock } from 'lucide-react';
+import React, { useState } from 'react';
+import { Clock, ChevronDown } from 'lucide-react';
 import { useSeasonDeadlines } from '../../../hooks/useSeasonClock';
 import { formatCountdown, formatEtShort, formatEtDayTime } from '../../../utils/seasonClock';
 
 const NextDeadlineChip = ({ variant = 'chip' }) => {
   const { scoresAt, scoresInMs, trade } = useSeasonDeadlines();
+  const [expanded, setExpanded] = useState(false);
 
   const tooltipLines = [
     `Scores process nightly at 2:00 AM ET — next: ${formatEtDayTime(scoresAt)}`,
@@ -68,16 +69,34 @@ const NextDeadlineChip = ({ variant = 'chip' }) => {
 
   if (variant === 'strip') {
     // Full-width row for small screens, shown under the ControlBar tabs.
+    // Tap to expand the full deadline details — title tooltips are
+    // hover-only, which touch devices never see.
     return (
-      <div
-        className="flex items-center justify-center gap-2 px-4 py-1 border-t border-[#333] bg-[#111]"
-        title={tooltipLines.join('\n')}
-      >
-        {countdown}
-        {tradeLabel && (
-          <span className="text-[10px] text-gray-500 whitespace-nowrap truncate">
-            • {tradeLabel}
-          </span>
+      <div className="border-t border-[#333] bg-[#111]">
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          className="w-full min-h-[36px] flex items-center justify-center gap-2 px-4 py-1"
+          title={tooltipLines.join('\n')}
+        >
+          {countdown}
+          {tradeLabel && (
+            <span className="text-[10px] text-gray-500 whitespace-nowrap truncate">
+              • {tradeLabel}
+            </span>
+          )}
+          <ChevronDown
+            className={`w-3 h-3 text-gray-600 flex-shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`}
+            aria-hidden="true"
+          />
+        </button>
+        {expanded && (
+          <ul className="px-4 pb-2 space-y-0.5 text-[10px] text-gray-500 text-center">
+            {tooltipLines.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
         )}
       </div>
     );

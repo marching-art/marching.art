@@ -162,6 +162,9 @@ const CorpsHistory = () => {
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    // Touch-friendly tooltips: snap to the nearest x-position instead of
+    // requiring the finger to land exactly on a 5px point.
+    interaction: { mode: 'index', intersect: false },
     plugins: {
       legend: { display: false },
       tooltip: {

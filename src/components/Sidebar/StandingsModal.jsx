@@ -1,17 +1,25 @@
 import React from 'react';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { Activity, TrendingUp, TrendingDown, X, Play } from 'lucide-react';
 
 const StandingsModal = ({ show, liveScores, displayDay, onClose, onYoutubeClick }) => {
+  useEscapeKey(onClose, !!show);
+
   if (!show) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Full standings"
+    >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/80" onClick={onClose} />
 
       {/* Modal Content */}
       <div
-        className="relative w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-sm max-h-[85vh] flex flex-col"
+        className="relative w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-sm max-h-[85dvh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

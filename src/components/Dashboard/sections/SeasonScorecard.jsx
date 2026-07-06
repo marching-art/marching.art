@@ -107,8 +107,13 @@ const SeasonScorecard = memo(
               ) : (
                 <Trophy className="w-7 h-7 text-yellow-500" />
               )}
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 hidden lg:flex items-center justify-center transition-opacity">
                 <Palette className="w-4 h-4 text-white" />
+              </div>
+              {/* Touch devices never hover — show a small persistent badge so
+                  the avatar reads as tappable (opens uniform design) */}
+              <div className="lg:hidden absolute bottom-0 right-0 bg-black/70 p-1">
+                <Palette className="w-3 h-3 text-white" />
               </div>
             </button>
             <div className="flex-1 min-w-0">
@@ -122,13 +127,13 @@ const SeasonScorecard = memo(
                 <button
                   type="button"
                   onClick={() => setMenuOpen((v) => !v)}
-                  className="p-1.5 text-gray-500 hover:text-white hover:bg-white/5 transition-colors rounded-sm"
+                  className="min-w-touch min-h-touch flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/5 active:text-white transition-colors rounded-sm press-feedback"
                   aria-haspopup="menu"
                   aria-expanded={menuOpen}
                   aria-label="Manage corps"
                   title="Manage corps"
                 >
-                  <MoreVertical className="w-4 h-4" />
+                  <MoreVertical className="w-5 h-5" />
                 </button>
 
                 {menuOpen && (
@@ -148,7 +153,7 @@ const SeasonScorecard = memo(
                         role="menuitem"
                         onClick={handleMove}
                         disabled={!canManage || !canMove}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left text-gray-300 hover:bg-white/5 hover:text-white disabled:text-gray-600 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-colors"
+                        className="w-full flex items-center gap-2 px-3 py-2 min-h-touch text-xs text-left text-gray-300 hover:bg-white/5 hover:text-white disabled:text-gray-600 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-colors"
                         title={
                           !canManage
                             ? lockReason || 'Locked after your corps competes'
@@ -167,7 +172,7 @@ const SeasonScorecard = memo(
                         role="menuitem"
                         onClick={handleRetire}
                         disabled={!canManage}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left text-gray-300 hover:bg-white/5 hover:text-orange-400 disabled:text-gray-600 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-colors border-t border-[#333]"
+                        className="w-full flex items-center gap-2 px-3 py-2 min-h-touch text-xs text-left text-gray-300 hover:bg-white/5 hover:text-orange-400 disabled:text-gray-600 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-colors border-t border-[#333]"
                         title={
                           !canManage
                             ? lockReason || 'Locked after your corps competes'

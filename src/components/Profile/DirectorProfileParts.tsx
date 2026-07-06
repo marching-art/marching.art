@@ -542,6 +542,63 @@ const EmptyWithCTA = memo(
 );
 EmptyWithCTA.displayName = 'EmptyWithCTA';
 
+// -----------------------------------------------------------------------------
+// AVATAR ACTIONS - Design / Regenerate / Change avatar
+// -----------------------------------------------------------------------------
+// Rendered twice from one action list: a hover overlay on desktop, and an
+// always-visible button row on touch/small screens where hover never fires.
+
+export interface AvatarAction {
+  label: string;
+  icon: React.ElementType;
+  onClick: () => void;
+  primary?: boolean;
+  disabled?: boolean;
+  spinning?: boolean;
+}
+
+const AvatarActions = ({ actions }: { actions: AvatarAction[] }) => {
+  if (actions.length === 0) return null;
+  return (
+    <>
+      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 focus-within:opacity-100 hidden lg:flex flex-col items-center justify-center gap-2 transition-opacity">
+        {actions.map((action) => (
+          <button
+            key={action.label}
+            onClick={action.onClick}
+            disabled={action.disabled}
+            className={`flex items-center gap-1.5 px-3 py-1.5 transition-colors disabled:opacity-50 ${
+              action.primary ? 'bg-[#0057B8] hover:bg-[#0066d6]' : 'bg-[#333] hover:bg-[#444]'
+            }`}
+          >
+            <action.icon
+              className={`w-4 h-4 text-white ${action.spinning ? 'animate-spin' : ''}`}
+            />
+            <span className="text-[10px] text-white font-bold uppercase">{action.label}</span>
+          </button>
+        ))}
+      </div>
+      <div className="lg:hidden flex flex-col border-t border-[#333] divide-y divide-[#333]">
+        {actions.map((action) => (
+          <button
+            key={action.label}
+            onClick={action.onClick}
+            disabled={action.disabled}
+            className={`flex items-center justify-center gap-1.5 min-h-touch px-2 transition-colors press-feedback disabled:opacity-50 ${
+              action.primary
+                ? 'bg-[#0057B8] active:bg-[#0066d6] text-white'
+                : 'bg-[#1a1a1a] active:bg-[#333] text-gray-300'
+            }`}
+          >
+            <action.icon className={`w-4 h-4 ${action.spinning ? 'animate-spin' : ''}`} />
+            <span className="text-[10px] font-bold uppercase">{action.label}</span>
+          </button>
+        ))}
+      </div>
+    </>
+  );
+};
+
 export {
   StatusIndicator,
   StatPill,
@@ -553,4 +610,5 @@ export {
   EnsembleCard,
   UnregisteredEnsembleCard,
   EmptyWithCTA,
+  AvatarActions,
 };

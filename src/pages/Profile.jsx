@@ -15,6 +15,7 @@ import { resolveUsername, updateProfile } from '../api/profile';
 import { getLeaguesByCreator } from '../api/leagues';
 import toast from 'react-hot-toast';
 import { DirectorProfile } from '../components/Profile/DirectorProfile';
+import { ModalLoadingFallback } from '../components/ui';
 import PendingLeagueInvitations from '../components/Profile/PendingLeagueInvitations';
 import { generateCorpsAvatar } from '../api/functions';
 import { CORPS_CLASS_ORDER, resolveCorpsForClass } from '../utils/corps';
@@ -512,7 +513,7 @@ const Profile = () => {
 
       {/* UNIFORM DESIGN MODAL - OPTIMIZATION #9: Lazy-loaded */}
       {showUniformDesign && allCorps.length > 0 && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<ModalLoadingFallback />}>
           <UniformDesignModal
             onClose={() => setShowUniformDesign(false)}
             onSubmit={handleUniformDesign}
@@ -526,7 +527,7 @@ const Profile = () => {
 
       {/* PROFILE EDIT MODAL */}
       {showEditModal && isOwnProfile && profile && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<ModalLoadingFallback />}>
           <ProfileEditModal
             profile={profile}
             onClose={() => setShowEditModal(false)}
@@ -537,7 +538,7 @@ const Profile = () => {
 
       {/* LEAGUE INVITE MODAL */}
       {showInviteModal && !isOwnProfile && profile && user && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<ModalLoadingFallback />}>
           <LeagueInviteModal
             inviterUid={user.uid}
             inviteeUid={profile.uid || profileUserId}

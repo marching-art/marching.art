@@ -241,7 +241,7 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#1a1a1a] border border-[#333] rounded-sm w-full max-w-4xl max-h-[90vh] flex flex-col">
+      <div className="bg-[#1a1a1a] border border-[#333] rounded-sm w-full max-w-4xl max-h-[90dvh] flex flex-col">
         {/* Header */}
         <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2">

@@ -31,7 +31,8 @@ import { useSeasonStore } from './store/seasonStore';
 import { useScheduleStore } from './store/scheduleStore';
 import { useProfileStore } from './store/profileStore';
 import OfflineBanner from './components/OfflineBanner';
-import { SkipToContent } from './components/a11y';
+import { SkipToContent, RouteChangeFocus } from './components/a11y';
+import { initOfflineLineupReplay } from './lib/offlineLineupQueue';
 import { lazyWithRetry } from './utils/lazyWithRetry';
 
 // Lazy load pages for better performance.
@@ -163,6 +164,13 @@ function App() {
     };
   }, [user, initProfileListener, cleanupProfileListener]);
 
+  // Replay lineup saves queued while offline: flush on sign-in and whenever
+  // connectivity returns (see src/lib/offlineLineupQueue.ts).
+  useEffect(() => {
+    if (!user) return;
+    return initOfflineLineupReplay(user.uid);
+  }, [user]);
+
   // Claim daily login once per calendar day to award XP, update streak, and
   // update userTitle. The backend is idempotent (returns alreadyClaimed:true
   // on subsequent calls within the same day); the localStorage guard just
@@ -252,6 +260,9 @@ function App() {
                 {/* Skip to Content - Accessibility */}
                 <SkipToContent />
 
+                {/* Reset scroll + move focus to main content on navigation */}
+                <RouteChangeFocus />
+
                 {/* Offline Banner - Shows when network is unavailable */}
                 <OfflineBanner />
 
@@ -259,12 +270,12 @@ function App() {
                 {/* ARIA live region for screen reader accessibility (WCAG 4.1.3) */}
                 <div role="region" aria-live="polite" aria-atomic="true" aria-label="Notifications">
                   <Toaster
-                    position="top-right"
-                    containerStyle={{
-                      // Safe area + header offset, with right padding to prevent overflow
-                      top: 'max(env(safe-area-inset-top, 0px) + 16px, 16px)',
-                      right: 'max(env(safe-area-inset-right, 0px) + 16px, 16px)',
-                    }}
+                    position="bottom-center"
+                    // Bottom-center is thumb-reachable and clear of the notch,
+                    // header, and offline banner. The container class offsets
+                    // above the mobile bottom nav (see .toaster-container in
+                    // index.css); on lg+ (no bottom nav) it hugs the bottom.
+                    containerClassName="toaster-container"
                     toastOptions={{
                       duration: 4000,
                       className: 'press-feedback',
@@ -293,8 +304,10 @@ function App() {
                   />
                 </div>
 
-                {/* PWA Install Prompt - shows after user engagement */}
-                {user && <PWAInstallPrompt />}
+                {/* PWA Install Prompt - shows after engagement delay, for
+                    anonymous visitors too (they're the likeliest installers);
+                    the component handles dismissal memory + installed state */}
+                <PWAInstallPrompt />
 
                 {/* Username Prompt Modal - shows for existing users without username */}
                 {user && <UsernamePromptModal />}

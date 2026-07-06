@@ -21,10 +21,13 @@ export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElem
   inputSize?: 'sm' | 'md' | 'lg';
 }
 
+// Heights meet the 44px touch minimum at md/lg; sm stays available for dense
+// desktop-only contexts. Font is 16px on mobile (text-base) so iOS Safari
+// doesn't zoom the viewport on focus, dropping to text-sm on larger screens.
 const sizeStyles = {
-  sm: 'px-2.5 py-1.5 text-sm h-8',
-  md: 'px-3 py-2 text-sm h-9',
-  lg: 'px-3.5 py-2.5 text-sm h-10',
+  sm: 'px-2.5 py-1.5 h-9',
+  md: 'px-3 py-2 h-11',
+  lg: 'px-3.5 py-2.5 h-12',
 };
 
 const iconSizes = {
@@ -75,7 +78,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             className={`
               w-full rounded-sm
               bg-[#111] border
-              text-white text-sm placeholder-gray-400
+              text-white text-base sm:text-sm placeholder-gray-400
               transition-colors
               focus:outline-none
               disabled:opacity-50 disabled:cursor-not-allowed
@@ -141,7 +144,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           className={`
             w-full px-3 py-2 rounded-sm min-h-[80px] resize-none
             bg-[#111] border
-            text-white text-sm placeholder-gray-400
+            text-white text-base sm:text-sm placeholder-gray-400
             transition-colors
             focus:outline-none
             disabled:opacity-50 disabled:cursor-not-allowed
@@ -220,7 +223,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           className={`
             w-full rounded-sm appearance-none cursor-pointer
             bg-[#111] border
-            text-white text-sm
+            text-white text-base sm:text-sm
             transition-colors
             focus:outline-none
             disabled:opacity-50 disabled:cursor-not-allowed

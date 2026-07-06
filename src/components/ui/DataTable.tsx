@@ -31,6 +31,10 @@ export interface DataTableColumn<T = Record<string, unknown>> {
   cellClassName?: string;
   /** Is this a rank column? (special bold centered styling) */
   isRank?: boolean;
+  /** Hide this column below the sm breakpoint. Use for low-priority columns
+   *  so phones see the essentials instead of relying purely on horizontal
+   *  scroll. Applied via CSS (hidden sm:table-cell) — no resize listeners. */
+  hideOnMobile?: boolean;
 }
 
 export interface DataTableProps<T = Record<string, unknown>> {
@@ -134,6 +138,7 @@ const TableRowComponent = <T extends Record<string, unknown>>({
               ${isRankColumn ? 'font-bold text-center text-gray-300 w-12' : 'font-data text-gray-100'}
               ${alignStyles[column.align || 'left']}
               ${column.sticky ? `sticky left-0 ${rowBg} z-10` : ''}
+              ${column.hideOnMobile ? 'hidden sm:table-cell' : ''}
               ${column.cellClassName || ''}
             `.trim()}
             style={column.width ? { width: column.width, minWidth: column.width } : undefined}
@@ -165,6 +170,7 @@ const SkeletonRow = <T,>({ columns }: SkeletonRowProps<T>) => (
           px-2 py-1
           ${alignStyles[column.align || 'left']}
           ${column.sticky ? 'sticky left-0 bg-[#1a1a1a] z-10' : ''}
+          ${column.hideOnMobile ? 'hidden sm:table-cell' : ''}
         `.trim()}
         style={column.width ? { width: column.width, minWidth: column.width } : undefined}
       >
@@ -247,6 +253,7 @@ export const DataTable = <T extends Record<string, unknown>>({
                     className={`
                       px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider
                       sticky top-0 bg-[#1a1a1a] z-20
+                      ${column.hideOnMobile ? 'hidden sm:table-cell' : ''}
                       ${alignStyles[column.align || 'left']}
                       ${column.sticky ? 'sticky left-0 z-30' : ''}
                       ${column.headerClassName || ''}
@@ -301,6 +308,7 @@ export const DataTable = <T extends Record<string, unknown>>({
                     className={`
                       px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider
                       sticky top-0 bg-[#1a1a1a] z-20
+                      ${column.hideOnMobile ? 'hidden sm:table-cell' : ''}
                       ${isRankColumn ? 'text-center w-12' : alignStyles[column.align || 'left']}
                       ${column.sticky ? 'sticky left-0 z-30' : ''}
                       ${column.headerClassName || ''}

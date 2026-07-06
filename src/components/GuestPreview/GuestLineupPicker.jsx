@@ -60,7 +60,7 @@ const GuestLineupPicker = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="bg-[#1a1a1a] border border-[#333] rounded-sm w-full max-w-md max-h-[85vh] flex flex-col overflow-hidden"
+            className="bg-[#1a1a1a] border border-[#333] rounded-sm w-full max-w-md max-h-[85dvh] flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"

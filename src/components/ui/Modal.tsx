@@ -1,7 +1,8 @@
 // =============================================================================
 // MODAL COMPONENT - ESPN DATA STYLE
 // =============================================================================
-// Rigid system modal. Dead-center. High contrast overlay. No glow.
+// Rigid system modal. Bottom sheet on mobile, dead-center on sm+.
+// High contrast overlay. No glow.
 // Laws: z-[100], bg-black/80 overlay, border-[#333], no backdrop-blur
 
 import React, { useEffect, useCallback, useRef, useId } from 'react';
@@ -118,17 +119,19 @@ export const Modal: React.FC<ModalProps> = ({
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[100] bg-black/80 flex items-end sm:items-center justify-center sm:p-4"
       onClick={handleOverlayClick}
       role="dialog"
       aria-modal="true"
       aria-labelledby={title ? titleId : undefined}
     >
-      {/* Modal Container */}
+      {/* Modal Container — bottom sheet on mobile, centered dialog on sm+.
+          dvh (not vh) so the iOS dynamic toolbar never clips the footer. */}
       <div
         ref={modalRef}
         className={`
-          bg-[#1a1a1a] border border-[#333] rounded-sm w-full overflow-hidden
+          bg-[#1a1a1a] border-t sm:border border-[#333] rounded-t-xl sm:rounded-sm w-full
+          overflow-hidden flex flex-col max-h-[85dvh] sm:max-h-[90dvh] safe-area-bottom
           transform transition-all duration-150
           ${sizeStyles[size]}
         `}
@@ -137,9 +140,14 @@ export const Modal: React.FC<ModalProps> = ({
           animation: 'modalIn 150ms ease-out',
         }}
       >
+        {/* Grab cue - mobile sheet only */}
+        <div className="sm:hidden flex-shrink-0 pt-2 flex justify-center" aria-hidden="true">
+          <div className="w-9 h-1 rounded-full bg-[#444]" />
+        </div>
+
         {/* Header */}
         {(title || showCloseButton) && (
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
+          <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-[#333] bg-transparent sm:bg-[#222]">
             {title && (
               <h2 id={titleId} className="text-xs font-bold uppercase tracking-wider text-gray-300">
                 {title}
@@ -159,11 +167,11 @@ export const Modal: React.FC<ModalProps> = ({
         )}
 
         {/* Body - Let children define padding */}
-        <div className="max-h-[70vh] overflow-y-auto">{children}</div>
+        <div className="min-h-0 overflow-y-auto overscroll-contain">{children}</div>
 
         {/* Footer */}
         {footer && (
-          <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end gap-2">
+          <div className="flex-shrink-0 px-4 py-3 border-t border-[#333] bg-[#111] flex justify-end gap-2">
             {footer}
           </div>
         )}
@@ -174,11 +182,11 @@ export const Modal: React.FC<ModalProps> = ({
         @keyframes modalIn {
           from {
             opacity: 0;
-            transform: scale(0.95);
+            transform: translateY(12px) scale(0.98);
           }
           to {
             opacity: 1;
-            transform: scale(1);
+            transform: translateY(0) scale(1);
           }
         }
       `}</style>
@@ -286,7 +294,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="h-9 px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white active:bg-white/5 transition-all press-feedback disabled:opacity-50 rounded-sm"
+            className="min-h-touch px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white active:bg-white/5 transition-all press-feedback disabled:opacity-50 rounded-sm"
           >
             {cancelText}
           </button>
@@ -294,7 +302,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             onClick={onConfirm}
             disabled={isLoading}
             className={`
-              h-9 px-4 text-sm font-bold uppercase tracking-wider transition-all press-feedback-strong disabled:opacity-50 rounded-sm
+              min-h-touch px-4 text-sm font-bold uppercase tracking-wider transition-all press-feedback-strong disabled:opacity-50 rounded-sm
               ${
                 variant === 'danger'
                   ? 'bg-red-600 text-white hover:bg-red-500 active:bg-red-700'

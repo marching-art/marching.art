@@ -2,7 +2,7 @@
 // SoundSport medal list, and class standings grid. Extracted verbatim from
 // Scores.jsx.
 
-import React, { useMemo, memo } from 'react';
+import React, { useMemo, memo, useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Trophy,
@@ -44,30 +44,65 @@ const BlueRibbonIcon = ({ className = 'w-5 h-5' }) => (
 // PILL TAB CONTROL (Design System)
 // =============================================================================
 
-const PillTabControl = ({ tabs, activeTab, onTabChange, haptic }) => (
-  <div className="flex items-center overflow-x-auto scrollbar-hide bg-transparent border-b border-[#333]">
-    {tabs.map((tab) => (
-      <button
-        key={tab.id}
-        onClick={() => {
-          haptic?.('medium');
-          onTabChange(tab.id);
-        }}
-        className={`px-3 sm:px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap flex-shrink-0 border-b-2 -mb-px ${
-          activeTab === tab.id
-            ? tab.accent === 'green'
-              ? 'text-green-400 border-green-500'
-              : tab.accent === 'yellow'
-                ? 'text-yellow-400 border-yellow-500'
-                : 'text-white border-[#0057B8]'
-            : 'text-gray-500 hover:text-gray-300 border-transparent'
-        }`}
+const PillTabControl = ({ tabs, activeTab, onTabChange, haptic }) => {
+  const scrollRef = useRef(null);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  // Right-edge fade hint when tabs overflow off-screen (matches DataTable's
+  // scroll-hint pattern) — without it, off-screen tabs are undiscoverable.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const checkScroll = () => {
+      const hasMore = el.scrollWidth > el.clientWidth;
+      const notAtEnd = el.scrollLeft < el.scrollWidth - el.clientWidth - 1;
+      setCanScrollRight(hasMore && notAtEnd);
+    };
+    checkScroll();
+    window.addEventListener('resize', checkScroll);
+    el.addEventListener('scroll', checkScroll);
+    return () => {
+      window.removeEventListener('resize', checkScroll);
+      el.removeEventListener('scroll', checkScroll);
+    };
+  }, [tabs]);
+
+  return (
+    <div className="relative">
+      <div
+        ref={scrollRef}
+        className="flex items-center overflow-x-auto scrollbar-hide bg-transparent border-b border-[#333]"
       >
-        {tab.label}
-      </button>
-    ))}
-  </div>
-);
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => {
+              haptic?.('medium');
+              onTabChange(tab.id);
+            }}
+            className={`px-3 sm:px-4 py-2.5 min-h-touch text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap flex-shrink-0 border-b-2 -mb-px ${
+              activeTab === tab.id
+                ? tab.accent === 'green'
+                  ? 'text-green-400 border-green-500'
+                  : tab.accent === 'yellow'
+                    ? 'text-yellow-400 border-yellow-500'
+                    : 'text-white border-[#0057B8]'
+                : 'text-gray-500 hover:text-gray-300 border-transparent'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+      {canScrollRight && (
+        <div
+          className="absolute top-0 right-0 bottom-0 w-6 pointer-events-none bg-gradient-to-l from-[#0a0a0a] to-transparent"
+          aria-hidden="true"
+        />
+      )}
+    </div>
+  );
+};
 
 // =============================================================================
 // CAPTION BREAKDOWN - GE / VIS / MUS secondary line

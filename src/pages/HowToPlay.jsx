@@ -392,12 +392,74 @@ const FAQTab = () => (
 );
 
 // =============================================================================
+// SEARCH
+// =============================================================================
+// Flat index across the guide's data-driven sections so the header search box
+// actually filters content (title or body match, case-insensitive).
+
+const SEARCH_SOURCES = [
+  ...CAPTIONS.map((c) => ({
+    tabId: 'captions',
+    section: 'Captions',
+    title: `${c.abbr} — ${c.name}`,
+    text: c.desc,
+  })),
+  ...CLASSES.map((c) => ({
+    tabId: 'classes',
+    section: 'Classes',
+    title: c.name,
+    text: `${c.desc}. Budget: ${c.points} points. Unlock: ${c.unlock}.`,
+  })),
+  ...GLOSSARY.map((g) => ({
+    tabId: 'glossary',
+    section: 'Glossary',
+    title: g.term,
+    text: g.def,
+  })),
+  ...FAQ.map((f) => ({ tabId: 'faq', section: 'FAQ', title: f.q, text: f.a })),
+];
+
+const SearchResults = ({ query, onNavigate }) => {
+  const q = query.toLowerCase();
+  const results = SEARCH_SOURCES.filter(
+    (entry) => entry.title.toLowerCase().includes(q) || entry.text.toLowerCase().includes(q)
+  );
+
+  if (results.length === 0) {
+    return (
+      <p className="text-sm text-gray-500 text-center py-8">
+        No results for &ldquo;{query}&rdquo; — try the tabs above.
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {results.map((result) => (
+        <button
+          key={`${result.tabId}-${result.title}`}
+          onClick={() => onNavigate(result.tabId)}
+          className="w-full text-left bg-[#111] border border-white/10 rounded-sm px-4 py-3 hover:bg-white/5 active:bg-white/5 transition-colors"
+        >
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#0057B8]">
+            {result.section}
+          </span>
+          <p className="text-sm font-bold text-white mt-0.5">{result.title}</p>
+          <p className="text-xs text-gray-400 mt-0.5">{result.text}</p>
+        </button>
+      ))}
+    </div>
+  );
+};
+
+// =============================================================================
 // MAIN COMPONENT
 // =============================================================================
 
 const HowToPlay = () => {
   const [activeTab, setActiveTab] = useState('basics');
   const [searchQuery, setSearchQuery] = useState('');
+  const query = searchQuery.trim();
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -432,15 +494,17 @@ const HowToPlay = () => {
           </div>
         </div>
 
-        {/* Search */}
+        {/* Search — 16px text so iOS doesn't zoom on focus */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
           <input
-            type="text"
-            placeholder="Search..."
+            type="search"
+            inputMode="search"
+            placeholder="Search the guide..."
+            aria-label="Search the game guide"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 bg-black/30 border border-white/10 rounded-sm text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#0057B8]/50"
+            className="w-full h-11 pl-9 pr-3 bg-black/30 border border-white/10 rounded-sm text-base text-white placeholder-gray-500 focus:outline-none focus:border-[#0057B8]/50"
           />
         </div>
       </div>
@@ -452,15 +516,30 @@ const HowToPlay = () => {
             <TabButton
               key={tab.id}
               tab={tab}
-              isActive={activeTab === tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              isActive={query.length < 2 && activeTab === tab.id}
+              onClick={() => {
+                setActiveTab(tab.id);
+                setSearchQuery('');
+              }}
             />
           ))}
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4">{renderTabContent()}</div>
+      {/* Content — search results replace the tab body while a query is active */}
+      <div className="flex-1 overflow-y-auto p-4">
+        {query.length >= 2 ? (
+          <SearchResults
+            query={query}
+            onNavigate={(tabId) => {
+              setActiveTab(tabId);
+              setSearchQuery('');
+            }}
+          />
+        ) : (
+          renderTabContent()
+        )}
+      </div>
 
       {/* Quick Reference Footer */}
       <div className="flex-shrink-0 px-4 py-3 border-t border-white/10 bg-black/30">

@@ -332,3 +332,33 @@
     animation-iteration-count: infinite !important;
   }
 }
+
+/* =============================================================================
+   DYNAMIC VIEWPORT HEIGHT
+   =============================================================================
+   The Tailwind config maps h-screen/max-h-screen to 100vh with a 100dvh
+   fallback pair, but the minHeight core plugin drops the second value of the
+   pair — patch min-h-screen here so it also tracks the visible viewport on
+   mobile (iOS Safari's toolbar shrinks it below 100vh). Unlayered on purpose
+   so it wins over the generated utility. */
+@supports (min-height: 100dvh) {
+  .min-h-screen {
+    min-height: 100dvh;
+  }
+}
+
+/* =============================================================================
+   TOASTS (react-hot-toast)
+   =============================================================================
+   Bottom-center toasts must clear the 66px mobile bottom nav plus the iOS
+   home-indicator safe area; on lg+ the bottom nav is hidden so a plain
+   margin suffices. Matches the .main-content-bottom math above. */
+.toaster-container {
+  bottom: calc(66px + env(safe-area-inset-bottom, 0px) + 12px) !important;
+}
+
+@media (min-width: 1024px) {
+  .toaster-container {
+    bottom: 24px !important;
+  }
+}

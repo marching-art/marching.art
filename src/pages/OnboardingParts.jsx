@@ -77,8 +77,9 @@ export const GuidedCaptionSelection = ({
         </span>
       </div>
 
-      {/* Caption dots */}
-      <div className="flex items-center justify-center gap-2 mb-4">
+      {/* Caption dots — 32px visuals (8 × 44px wouldn't fit a 375px screen),
+          with pseudo-element hit areas extended to ~44px for touch */}
+      <div className="flex items-center justify-center gap-3 mb-4">
         {CAPTIONS.map((cap, idx) => {
           const isSelected = lineup[cap.id];
           const isCurrent = idx === currentCaptionIndex;
@@ -88,7 +89,8 @@ export const GuidedCaptionSelection = ({
             <button
               key={cap.id}
               onClick={() => setCurrentCaptionIndex(idx)}
-              className={`w-8 h-8 rounded-sm flex items-center justify-center text-xs font-bold transition-all ${
+              aria-label={`${cap.fullName || cap.id}${isSelected ? ' (selected)' : ''}`}
+              className={`relative before:absolute before:-inset-1.5 before:content-[''] w-8 h-8 rounded-sm flex items-center justify-center text-xs font-bold transition-all ${
                 isCurrent
                   ? `${catColors.bg} ${catColors.border} border-2 ${catColors.text}`
                   : isSelected
@@ -127,7 +129,10 @@ export const GuidedCaptionSelection = ({
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm font-bold text-yellow-400">Cost {selectedCorps.points}</span>
-              <button onClick={handleDeselect} className="text-xs text-red-400 hover:text-red-300">
+              <button
+                onClick={handleDeselect}
+                className="text-xs text-red-400 hover:text-red-300 active:text-red-300 min-h-touch px-2 -my-2 press-feedback"
+              >
                 Change
               </button>
             </div>

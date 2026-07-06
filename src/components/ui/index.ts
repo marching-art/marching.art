@@ -95,6 +95,7 @@ export {
   type SkeletonProps,
   type SkeletonTextProps,
 } from './Spinner';
+export { ModalLoadingFallback } from './ModalLoadingFallback';
 
 // Command Console Components (System Boot / Empty States)
 export {

@@ -14,6 +14,7 @@ import { formatEventName } from '../utils/season';
 import { useScoresData } from '../hooks/useScoresData';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { useHaptic } from '../hooks/useHaptic';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import {
   PillTabControl,
   RecapDataGrid,
@@ -78,6 +79,9 @@ const Scores = () => {
   const [selectedArchiveSeason, setSelectedArchiveSeason] = useState(null);
   const [selectedArchiveYear, setSelectedArchiveYear] = useState(null);
   const [archiveViewTab, setArchiveViewTab] = useState('latest'); // Sub-tab within archive
+
+  // Close the full-recap modal on Escape
+  useEscapeKey(() => setSelectedShow(null), !!selectedShow);
 
   const {
     loading,
@@ -471,10 +475,11 @@ const Scores = () => {
                     )}
                   </div>
 
-                  {/* Archive Sub-tabs for different views */}
+                  {/* Archive Sub-tabs for different views — scrollable so five
+                      tabs can't force horizontal page scroll on narrow phones */}
                   {selectedArchiveSeason && (
                     <div className="bg-[#111] border-b border-[#333] px-4 py-2">
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
                         {[
                           { id: 'latest', label: 'Recaps' },
                           { id: 'world', label: 'World' },
@@ -488,7 +493,7 @@ const Scores = () => {
                               haptic('light');
                               setArchiveViewTab(tab.id);
                             }}
-                            className={`px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all rounded-sm ${
+                            className={`px-2.5 py-1.5 min-h-touch text-[10px] font-bold uppercase tracking-wider transition-all rounded-sm whitespace-nowrap flex-shrink-0 ${
                               archiveViewTab === tab.id
                                 ? 'bg-[#333] text-white'
                                 : 'text-gray-500 hover:text-gray-300'
@@ -591,9 +596,14 @@ const Scores = () => {
 
       {/* SELECTED SHOW MODAL (Full Recap) */}
       {selectedShow && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Recap for ${formatEventName(selectedShow.eventName)}`}
+        >
           <div className="absolute inset-0 bg-black/80" onClick={() => setSelectedShow(null)} />
-          <div className="relative w-full max-w-lg max-h-[80vh] bg-[#1a1a1a] border border-[#333] sm:rounded-sm overflow-hidden flex flex-col">
+          <div className="relative w-full max-w-lg max-h-[80dvh] bg-[#1a1a1a] border border-[#333] sm:rounded-sm overflow-hidden flex flex-col">
             {/* Modal Header */}
             <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between flex-shrink-0">
               <div>

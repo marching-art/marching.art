@@ -53,8 +53,11 @@ export const OfflineBanner: React.FC<OfflineBannerProps> = ({ className = '' }) 
               <div className="flex items-center justify-center gap-3">
                 <WifiOff className="w-4 h-4 text-white animate-pulse" />
                 <span className="text-sm font-semibold text-white">You're offline</span>
+                {/* Keep this honest: reads come from the local cache and
+                    lineup saves queue for replay (offlineLineupQueue), but
+                    other writes still need a connection */}
                 <span className="text-xs text-white/80 hidden sm:inline">
-                  — Changes will sync when you reconnect
+                  — Browsing works from cache; lineup saves submit on reconnect
                 </span>
                 <button
                   onClick={() => window.location.reload()}
