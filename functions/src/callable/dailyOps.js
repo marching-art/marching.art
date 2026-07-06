@@ -11,6 +11,13 @@ const {
   getChallengesForGameDay,
   pruneOldChallenges,
 } = require("../helpers/dailyChallenges");
+const {
+  PREDICTION_QUESTIONS,
+  fetchRecentRecaps,
+  findLatestResultForCorps,
+  resolveBucket,
+  pruneOldPredictions,
+} = require("../helpers/dailyPredictions");
 
 // Streak milestone rewards (XP + CC + optional free streak freeze)
 const STREAK_MILESTONES = {
@@ -467,9 +474,258 @@ const getStreakStatus = onCall({ cors: true }, async (request) => {
   }
 });
 
+/**
+ * Submit a Daily Prediction pick
+ *
+ * Saves one of the day's prediction picks to the profile's server-only
+ * `predictions` bucket (mirrors the challenges ledger). Picks lock once made —
+ * a question can't be re-answered, and once the day resolves the whole bucket
+ * is closed — so predictions can't be farmed. The stored threshold is what the
+ * pick is scored against later, so it survives even if the recent-results the
+ * questions were generated from change.
+ */
+const submitPrediction = onCall({ cors: true }, async (request) => {
+  const uid = assertAuth(request);
+  const { questionId, pick, threshold, corpsClass, snapshotEvent } = request.data || {};
+
+  if (!questionId || typeof questionId !== "string") {
+    throw new HttpsError("invalid-argument", "A questionId is required.");
+  }
+  if (!PREDICTION_QUESTIONS.some((q) => q.id === questionId)) {
+    throw new HttpsError("invalid-argument", "Unknown prediction question.");
+  }
+  if (!pick || typeof pick !== "string") {
+    throw new HttpsError("invalid-argument", "A pick is required.");
+  }
+  if (!corpsClass || typeof corpsClass !== "string") {
+    throw new HttpsError("invalid-argument", "A corpsClass is required.");
+  }
+  // SoundSport is a ratings-only format — its numeric scores are never shown,
+  // and the prediction prompts reveal them, so it has no prediction game.
+  if (corpsClass === "soundSport") {
+    throw new HttpsError("invalid-argument", "Predictions are not available for SoundSport.");
+  }
+
+  const db = getDb();
+  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+
+  try {
+    const result = await db.runTransaction(async (transaction) => {
+      const profileDoc = await transaction.get(profileRef);
+      if (!profileDoc.exists) {
+        throw new HttpsError("not-found", "User profile not found.");
+      }
+      const profileData = profileDoc.data();
+
+      const gameDay = getGameDay();
+      const allBuckets = profileData.predictions || {};
+      const bucket = allBuckets[gameDay] || {
+        picks: {},
+        corpsClass,
+        snapshotEvent: snapshotEvent ?? null,
+        resolved: false,
+      };
+
+      // The day's predictions are closed once resolved, and each question can
+      // only be answered once.
+      if (bucket.resolved) {
+        return { success: true, locked: true };
+      }
+      if (bucket.picks && bucket.picks[questionId]) {
+        return { success: true, alreadyPicked: true };
+      }
+
+      const updatedBucket = {
+        ...bucket,
+        // Lock the corps + snapshot context to whatever the first pick saw.
+        corpsClass: bucket.corpsClass || corpsClass,
+        snapshotEvent: bucket.snapshotEvent ?? snapshotEvent ?? null,
+        resolved: false,
+        picks: {
+          ...(bucket.picks || {}),
+          [questionId]: {
+            pick,
+            threshold: typeof threshold === "number" ? threshold : null,
+          },
+        },
+      };
+
+      transaction.update(profileRef, {
+        predictions: pruneOldPredictions({ ...allBuckets, [gameDay]: updatedBucket }),
+      });
+
+      return { success: true, picked: questionId };
+    });
+
+    return result;
+  } catch (error) {
+    logger.error(`Error submitting prediction for user ${uid}:`, error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", "Failed to submit prediction.");
+  }
+});
+
+/**
+ * Resolve outstanding Daily Predictions and award bonuses
+ *
+ * Reads the authoritative fantasy_recaps for the director's active season to
+ * determine each pending prediction's real outcome, then awards XP and a
+ * CorpsCoin bonus for every correct pick (plus a perfect-day bonus). Because
+ * the outcome is derived server-side from recap data — never taken from the
+ * client — accuracy bonuses can't be forged. Idempotent: buckets flip to
+ * `resolved` in the same transaction that pays out, so repeat calls (or a
+ * concurrent one) never double-award.
+ */
+const resolvePredictions = onCall({ cors: true }, async (request) => {
+  const uid = assertAuth(request);
+  const db = getDb();
+  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+
+  try {
+    // Read the profile once up front to discover pending buckets and the
+    // active season. Recaps are immutable, so they're read outside the
+    // transaction (a bounded query, not an unbounded in-txn collection read).
+    const profileSnap = await profileRef.get();
+    if (!profileSnap.exists) {
+      throw new HttpsError("not-found", "User profile not found.");
+    }
+    const profileData = profileSnap.data();
+    const seasonUid = profileData.activeSeasonId;
+    const allBuckets = profileData.predictions || {};
+
+    const pendingDays = Object.keys(allBuckets).filter((day) => {
+      const bucket = allBuckets[day];
+      return (
+        bucket &&
+        !bucket.resolved &&
+        bucket.picks &&
+        Object.keys(bucket.picks).length > 0
+      );
+    });
+
+    if (!seasonUid || pendingDays.length === 0) {
+      return { success: true, resolvedDays: 0 };
+    }
+
+    const recapDocs = await fetchRecentRecaps(db, seasonUid);
+
+    // Precompute each pending day's resolution. The latest result per corps
+    // class is the same across buckets, so cache it.
+    const latestByClass = {};
+    const resolutions = {};
+    for (const day of pendingDays) {
+      const bucket = allBuckets[day];
+      const corpsClass = bucket.corpsClass;
+      if (!corpsClass) continue;
+      if (!(corpsClass in latestByClass)) {
+        latestByClass[corpsClass] = findLatestResultForCorps(recapDocs, uid, corpsClass);
+      }
+      const resolution = resolveBucket(bucket, latestByClass[corpsClass]);
+      if (resolution) resolutions[day] = resolution;
+    }
+
+    if (Object.keys(resolutions).length === 0) {
+      return { success: true, resolvedDays: 0 };
+    }
+
+    const result = await db.runTransaction(async (transaction) => {
+      const doc = await transaction.get(profileRef);
+      if (!doc.exists) {
+        throw new HttpsError("not-found", "User profile not found.");
+      }
+      const data = doc.data();
+      const buckets = { ...(data.predictions || {}) };
+
+      let totalXp = 0;
+      let totalCoin = 0;
+      let totalCorrect = 0;
+      let totalCount = 0;
+      const resolvedDays = [];
+
+      for (const [day, resolution] of Object.entries(resolutions)) {
+        const bucket = buckets[day];
+        // Re-check under the transaction so a concurrent resolve can't
+        // double-pay.
+        if (!bucket || bucket.resolved) continue;
+        buckets[day] = {
+          ...bucket,
+          resolved: true,
+          results: resolution.results,
+          resolvedEvent: resolution.resolvedEvent,
+        };
+        totalXp += resolution.xpAwarded;
+        totalCoin += resolution.coinAwarded;
+        totalCorrect += resolution.correctCount;
+        totalCount += resolution.totalCount;
+        resolvedDays.push(day);
+      }
+
+      if (resolvedDays.length === 0) {
+        return { success: true, resolvedDays: 0 };
+      }
+
+      const prevStats = data.predictionStats || { correct: 0, total: 0 };
+      const updates = {
+        predictions: pruneOldPredictions(buckets),
+        predictionStats: {
+          correct: (prevStats.correct || 0) + totalCorrect,
+          total: (prevStats.total || 0) + totalCount,
+        },
+      };
+
+      let newLevel = data.xpLevel;
+      let classUnlocked = null;
+      if (totalXp > 0) {
+        const xpResult = calculateXPUpdates(data, totalXp);
+        Object.assign(updates, xpResult.updates);
+        newLevel = xpResult.newLevel;
+        classUnlocked = xpResult.classUnlocked;
+      }
+      if (totalCoin > 0) {
+        updates.corpsCoin = admin.firestore.FieldValue.increment(totalCoin);
+      }
+
+      transaction.update(profileRef, updates);
+
+      if (totalCoin > 0) {
+        addCoinHistoryEntryToTransaction(transaction, db, uid, {
+          type: "prediction_bonus",
+          amount: totalCoin,
+          description: `Prediction bonus — ${totalCorrect}/${totalCount} correct`,
+        });
+      }
+
+      return {
+        success: true,
+        resolvedDays: resolvedDays.length,
+        xpAwarded: totalXp,
+        coinAwarded: totalCoin,
+        correct: totalCorrect,
+        total: totalCount,
+        newLevel,
+        classUnlocked,
+      };
+    });
+
+    if (result.resolvedDays > 0) {
+      logger.info(
+        `User ${uid} resolved ${result.resolvedDays} prediction day(s): ` +
+          `${result.correct}/${result.total} correct (+${result.xpAwarded} XP, +${result.coinAwarded} CC)`
+      );
+    }
+    return result;
+  } catch (error) {
+    logger.error(`Error resolving predictions for user ${uid}:`, error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", "Failed to resolve predictions.");
+  }
+});
+
 module.exports = {
   claimDailyLogin,
   completeDailyChallenge,
+  submitPrediction,
+  resolvePredictions,
   purchaseStreakFreeze,
   getStreakStatus,
   STREAK_MILESTONES,

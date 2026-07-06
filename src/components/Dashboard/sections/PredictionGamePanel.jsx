@@ -1,129 +1,37 @@
 // PredictionGamePanel - Daily prediction questions that resolve when new scores arrive
-// Creates a natural "check back tomorrow" engagement loop between 2 AM scoring cycles
+// Creates a natural "check back tomorrow" engagement loop between 2 AM scoring cycles.
+//
+// Picks and their outcomes are persisted server-side on the profile's
+// `predictions` ledger (mirrors DailyChallenges). submitPrediction saves each
+// pick; resolvePredictions scores pending days against the authoritative
+// recaps and awards XP + a CorpsCoin bonus for accurate picks. The profile
+// listener syncs the checked/resolved state back here — nothing lives in
+// localStorage anymore, so predictions survive across devices and sessions.
 
-import React, { memo, useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { memo, useEffect, useMemo, useCallback } from 'react';
 import { Crosshair, Check, X, Trophy } from 'lucide-react';
 import { useHaptic } from '../../../hooks/useHaptic';
-
-// ---------------------------------------------------------------------------
-// localStorage helpers (same pattern as DailyChallenges)
-// ---------------------------------------------------------------------------
-
-const getToday = () => new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
-
-const PRED_KEY = (date) => `pred_${date}`;
-const STATS_KEY = 'predStats';
-
-const loadPredictions = (date) => {
-  try {
-    return JSON.parse(localStorage.getItem(PRED_KEY(date)) || '{}');
-  } catch {
-    return {};
-  }
-};
-
-const savePredictions = (date, data) => {
-  try {
-    localStorage.setItem(PRED_KEY(date), JSON.stringify(data));
-  } catch {
-    /* ignore */
-  }
-};
-
-const loadStats = () => {
-  try {
-    return JSON.parse(localStorage.getItem(STATS_KEY) || '{"correct":0,"total":0}');
-  } catch {
-    return { correct: 0, total: 0 };
-  }
-};
-
-const saveStats = (stats) => {
-  try {
-    localStorage.setItem(STATS_KEY, JSON.stringify(stats));
-  } catch {
-    /* ignore */
-  }
-};
-
-/** Prune prediction entries older than 30 days to prevent unbounded localStorage growth */
-const pruneOldPredictions = () => {
-  try {
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 30);
-    const cutoffStr = cutoff.toLocaleDateString('en-CA');
-    for (let i = localStorage.length - 1; i >= 0; i--) {
-      const key = localStorage.key(i);
-      if (key?.startsWith('pred_') && key < `pred_${cutoffStr}`) {
-        localStorage.removeItem(key);
-      }
-    }
-  } catch {
-    /* ignore */
-  }
-};
-
-// ---------------------------------------------------------------------------
-// Question generation — uses recent results for thresholds
-// ---------------------------------------------------------------------------
-
-const buildQuestions = (recentResults) => {
-  if (!recentResults || recentResults.length < 2) return [];
-
-  const scores = recentResults.map((r) => r.score).filter(Boolean);
-  if (scores.length < 2) return [];
-
-  const avg = scores.slice(0, 3).reduce((s, v) => s + v, 0) / Math.min(scores.length, 3);
-  const line = Math.round(avg * 10) / 10;
-  const lastScore = scores[0];
-
-  return [
-    {
-      id: 'over-under',
-      text: `Next score over or under ${line.toFixed(1)}?`,
-      options: ['Over', 'Under'],
-      xp: 15,
-      threshold: line,
-    },
-    {
-      id: 'beat-prev',
-      text: `Beat your last score of ${lastScore.toFixed(1)}?`,
-      options: ['Yes', 'No'],
-      xp: 15,
-      threshold: lastScore,
-    },
-    {
-      id: 'podium',
-      text: 'Top 3 finish next show?',
-      options: ['Yes', 'No'],
-      xp: 15,
-      threshold: 3,
-    },
-  ];
-};
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
+import { useProfileStore } from '../../../store/profileStore';
+import { getGameDay } from '../../../utils/dailyChallenges';
+import { buildQuestions } from '../../../utils/dailyPredictions';
 
 const PredictionGamePanel = memo(({ recentResults, corpsClass }) => {
   const { trigger: haptic } = useHaptic();
+  const profile = useProfileStore((state) => state.profile);
+  const submitPrediction = useProfileStore((state) => state.submitPrediction);
+  const resolvePredictions = useProfileStore((state) => state.resolvePredictions);
+
   // SoundSport is a ratings-only format — its numeric scores must never be
   // shown, and the score-based prediction prompts reveal them, so the panel
   // is disabled entirely for SoundSport corps.
   const isSoundSport = corpsClass === 'soundSport';
-  const today = getToday();
-  const [preds, setPreds] = useState(() => loadPredictions(today));
-  const [stats, setStats] = useState(() => loadStats());
+  const gameDay = getGameDay();
 
-  // Prune old localStorage entries once per mount
-  const hasPruned = useRef(false);
-  useEffect(() => {
-    if (!hasPruned.current) {
-      hasPruned.current = true;
-      pruneOldPredictions();
-    }
-  }, []);
+  const bucket = profile?.predictions?.[gameDay] || {};
+  const picks = bucket.picks || {};
+  const results = bucket.results || {};
+  const isResolved = !!bucket.resolved;
+  const stats = profile?.predictionStats || { correct: 0, total: 0 };
 
   // Generate questions from current data (never for SoundSport)
   const questions = useMemo(
@@ -131,93 +39,31 @@ const PredictionGamePanel = memo(({ recentResults, corpsClass }) => {
     [recentResults, isSoundSport]
   );
 
-  // Resolve predictions when new results arrive
+  // Trigger server-side resolution once a newer result arrives. The callable
+  // reads the authoritative recap, scores the picks and awards bonuses; the
+  // profile listener then syncs the resolved state below. Idempotent + guarded
+  // in the store, so re-renders are safe.
+  const pickedCount = Object.keys(picks).length;
+  const snapshotEvent = bucket.snapshotEvent ?? null;
+  const latestEvent = recentResults?.[0]?.eventName ?? null;
   useEffect(() => {
-    if (!preds.picks || preds.resolved || !recentResults?.length) return;
-
-    // Detect new result by comparing latest event name to stored snapshot
-    const latestEvent = recentResults[0]?.eventName;
-    if (!latestEvent || latestEvent === preds.snapshotEvent) return;
-
-    const newScore = recentResults[0]?.score;
-    const newPlacement = recentResults[0]?.placement;
-    if (newScore == null) return;
-
-    // Evaluate each pick against stored thresholds
-    const results = {};
-    let correct = 0;
-    const storedPicks = preds.picks;
-
-    const resolvers = [
-      {
-        id: 'over-under',
-        answer: () => (newScore > storedPicks['over-under']?.threshold ? 'Over' : 'Under'),
-        extra: { newScore },
-      },
-      {
-        id: 'beat-prev',
-        answer: () => (newScore > storedPicks['beat-prev']?.threshold ? 'Yes' : 'No'),
-        extra: { newScore },
-      },
-      {
-        id: 'podium',
-        skip: newPlacement == null,
-        answer: () => (newPlacement <= 3 ? 'Yes' : 'No'),
-        extra: { placement: newPlacement },
-      },
-    ];
-
-    for (const { id, skip, answer, extra } of resolvers) {
-      if (!storedPicks[id] || skip) continue;
-      const resolved = answer();
-      const isCorrect = storedPicks[id].pick === resolved;
-      results[id] = { answer: resolved, isCorrect, ...extra };
-      if (isCorrect) correct++;
-    }
-
-    if (Object.keys(results).length === 0) return;
-
-    const resolvedPreds = { ...preds, resolved: true, results };
-    setPreds(resolvedPreds);
-    savePredictions(today, resolvedPreds);
-
-    setStats((prev) => {
-      const next = {
-        correct: prev.correct + correct,
-        total: prev.total + Object.keys(results).length,
-      };
-      saveStats(next);
-      return next;
-    });
-  }, [preds, recentResults, today]);
+    if (isResolved || pickedCount === 0 || !latestEvent) return;
+    if (latestEvent === snapshotEvent) return;
+    resolvePredictions();
+  }, [isResolved, pickedCount, latestEvent, snapshotEvent, resolvePredictions]);
 
   // Handle user picking an option
   const handlePick = useCallback(
     (questionId, option, threshold) => {
       haptic?.();
-      setPreds((prev) => {
-        const next = {
-          ...prev,
-          picks: {
-            ...(prev.picks || {}),
-            [questionId]: { pick: option, threshold },
-          },
-          snapshotEvent: recentResults?.[0]?.eventName ?? null,
-        };
-        savePredictions(today, next);
-        return next;
-      });
+      submitPrediction(questionId, option, threshold, corpsClass, latestEvent);
     },
-    [today, recentResults, haptic]
+    [submitPrediction, corpsClass, latestEvent, haptic]
   );
 
   // Don't render if not enough data to generate questions
   if (questions.length === 0) return null;
 
-  const picks = preds.picks || {};
-  const results = preds.results || {};
-  const isResolved = preds.resolved;
-  const pickedCount = Object.keys(picks).length;
   const totalQ = questions.length;
   const correctCount = isResolved ? Object.values(results).filter((r) => r.isCorrect).length : 0;
   const accuracy = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : null;
