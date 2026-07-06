@@ -17,6 +17,7 @@ import ArticleNarrativeParser from '../components/Articles/ArticleNarrativeParse
 import CaptionInsightsCards from '../components/Articles/CaptionInsightsCards';
 import CaptionBreakdownCards from '../components/Articles/CaptionBreakdownCards';
 import RecommendationCards from '../components/Articles/RecommendationCards';
+import SeasonSummaryCards from '../components/Articles/SeasonSummaryCards';
 import {
   LiveScoresBox,
   FantasyTrendingBox,
@@ -377,6 +378,7 @@ const Article = () => {
                     'dci_recap',
                     'dci_daily',
                     'dci_feature',
+                    'season_summary',
                   ].includes(article.type) ||
                   [
                     'fantasy_recap',
@@ -384,6 +386,7 @@ const Article = () => {
                     'dci_recap',
                     'dci_daily',
                     'dci_feature',
+                    'season_summary',
                   ].includes(article.articleType) ? (
                     <div className="mb-8">
                       <ArticleNarrativeParser
@@ -424,6 +427,13 @@ const Article = () => {
                       article.recommendations.hold?.length > 0 ||
                       article.recommendations.sell?.length > 0) && (
                       <RecommendationCards recommendations={article.recommendations} />
+                    )}
+
+                  {/* Season Summary structured panels - for season_summary articles */}
+                  {(article.type === 'season_summary' ||
+                    article.articleType === 'season_summary') &&
+                    article.seasonSummary && (
+                      <SeasonSummaryCards seasonSummary={article.seasonSummary} />
                     )}
 
                   {/* Fantasy Impact */}

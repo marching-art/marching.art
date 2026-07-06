@@ -50,11 +50,13 @@ export async function resolveArticleById(
             ? 'analysis'
             : articleType === 'deep_analytics'
               ? 'analysis'
-              : articleType.startsWith('dci_')
-                ? 'dci'
-                : articleType.startsWith('fantasy_')
-                  ? 'fantasy'
-                  : 'dci';
+              : articleType === 'season_summary'
+                ? 'analysis'
+                : articleType.startsWith('dci_')
+                  ? 'dci'
+                  : articleType.startsWith('fantasy_')
+                    ? 'fantasy'
+                    : 'dci';
         foundArticle = {
           id,
           seasonId,

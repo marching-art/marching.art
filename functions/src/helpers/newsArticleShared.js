@@ -17,6 +17,7 @@ const ARTICLE_TYPES = {
   DCI_RECAP: "dci_recap",             // Article 3: DCI caption deep-dive (GE, Visual, Music) — descriptive, not prescriptive
   FANTASY_DAILY: "fantasy_daily",     // Article 5: marching.art results from the day (generated last → top of feed)
   FANTASY_RECAP: "fantasy_recap",     // Article 4: Fantasy Market Report — owns buy/hold/sell picks exclusively
+  SEASON_SUMMARY: "season_summary",   // Article 6: RARE season-to-date summary published on scored days (15–49) with no events to score
 };
 
 /**
@@ -184,6 +185,8 @@ function getCategoryFromType(articleType) {
   // Analysis articles - check specific types before prefix matching
   if (articleType === "dci_recap") return NEWS_CATEGORIES.ANALYSIS;
   if (articleType === "deep_analytics") return NEWS_CATEGORIES.ANALYSIS;
+  // Season summary is a season-to-date analytical deep dive (Article 6).
+  if (articleType === "season_summary") return NEWS_CATEGORIES.ANALYSIS;
   // DCI and Fantasy articles by prefix
   if (articleType.startsWith("dci_")) return NEWS_CATEGORIES.DCI_RECAP;
   if (articleType.startsWith("fantasy_")) return NEWS_CATEGORIES.FANTASY;

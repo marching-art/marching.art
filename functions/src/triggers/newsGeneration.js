@@ -22,6 +22,7 @@ const {
   generateFantasyRecap,
   getArticleImage,
 } = require("../helpers/newsGeneration");
+const { generateSeasonSummaryArticle } = require("../helpers/newsSeasonSummary");
 const { getCategoryFromType, NEWS_CATEGORIES } = require("../helpers/newsArticleShared");
 const { checkAdminAuth } = require("./newsAdmin");
 
@@ -77,6 +78,9 @@ exports.processNewsGeneration = onMessagePublished(
       switch (type) {
         case "daily_news":
           result = await handleDailyNewsGeneration(data);
+          break;
+        case "season_summary":
+          result = await handleSeasonSummaryGeneration(data);
           break;
         case "dci_scores":
           // Legacy handler
@@ -152,6 +156,70 @@ async function handleDailyNewsGeneration(data) {
 }
 
 /**
+ * Handle the season-summary article (Article 6).
+ *
+ * Published on a competition day (15–49) that had NO events to score, when the
+ * nightly 5-article batch cannot run because no scores were processed. The
+ * scoring processors detect the empty day and publish a `season_summary`
+ * request to this topic; this handler builds the single season-to-date summary
+ * article from the fantasy_recaps already on record and saves it at
+ * day_{throughDay} alongside a day-index document.
+ */
+async function handleSeasonSummaryGeneration(data) {
+  const db = getDb();
+  const { seasonId, dataDocId, throughDay } = data || {};
+
+  if (!seasonId || !throughDay) {
+    logger.error("Missing required parameters for season summary generation", { seasonId, dataDocId, throughDay });
+    return null;
+  }
+
+  const isLiveSeason = typeof seasonId === "string" && seasonId.startsWith("live_");
+
+  try {
+    const article = await generateSeasonSummaryArticle({
+      db,
+      seasonId,
+      dataDocId: dataDocId || seasonId,
+      throughDay,
+      isLiveSeason,
+    });
+
+    if (!article) {
+      logger.info(`Season summary produced no article for day ${throughDay} (not enough season on record).`);
+      return null;
+    }
+
+    const metadata = {
+      reportDay: throughDay,
+      currentDay: throughDay,
+      articleCount: 1,
+      isSeasonSummary: true,
+    };
+
+    await saveArticleDoc(db, { reportDay: throughDay, article, metadata, seasonId });
+
+    // Merge a day-index document so the day appears in the feed's day listing.
+    // merge:true so this never clobbers a same-day batch that might also exist.
+    const seasonPath = seasonId || "current_season";
+    await db.doc(`news_hub/${seasonPath}/days/day_${throughDay}`).set({
+      reportDay: throughDay,
+      currentDay: throughDay,
+      updatedAt: new Date(),
+      primaryHeadline: article.headline || `Day ${throughDay} Season Summary`,
+      primaryImageUrl: article.imageUrl || null,
+      isPublished: true,
+    }, { merge: true });
+
+    logger.info(`Season summary generated and saved for day ${throughDay}: ${article.headline}`);
+    return article;
+  } catch (error) {
+    logger.error("Error in season summary generation:", error);
+    throw error;
+  }
+}
+
+/**
  * Persist a single generated article to Firestore.
  * Path: /news_hub/{seasonId}/days/day_{reportDay}/articles/{type}
  *
@@ -185,6 +253,9 @@ async function saveArticleDoc(db, { reportDay, article, metadata, seasonId }) {
     topPerformers: article.topPerformers || null,
     leagueHighlights: article.leagueHighlights || null,
     insights: article.insights || null,
+    // Season Summary (Article 6): per-class standings, rivalries, SoundSport /
+    // Best-in-Show tallies — built deterministically so rendered numbers are exact.
+    seasonSummary: article.seasonSummary || null,
     trendingCorps: article.trendingCorps || null,
     recommendations: article.recommendations || null,
     fantasyImpact: article.fantasyImpact || null,
