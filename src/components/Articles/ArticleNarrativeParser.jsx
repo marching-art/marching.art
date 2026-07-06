@@ -432,7 +432,9 @@ function parseSections(narrative) {
 // subheads (magazine style), NOT the colored section boxes used for the fantasy
 // market report. DCI pieces and the fantasy results recap all use this style.
 function isEditorialArticle(articleType) {
-  return ['dci_recap', 'dci_daily', 'dci_feature', 'fantasy_daily'].includes(articleType);
+  return ['dci_recap', 'dci_daily', 'dci_feature', 'fantasy_daily', 'season_summary'].includes(
+    articleType
+  );
 }
 
 /**

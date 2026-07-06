@@ -31,6 +31,7 @@ const {
   markScoringRunCompleted,
   markScoringRunFailed,
 } = require("./scoringRunGuard");
+const { publishSeasonSummaryRequest } = require("./newsSeasonSummaryTrigger");
 
 
 
@@ -411,6 +412,13 @@ async function processAndArchiveOffSeasonScoresLogic({ force = false } = {}) {
 
     if (!dayEventData || !dayEventData.shows || dayEventData.shows.length === 0) {
       logger.info(`No shows for day ${scoredDay}. Nothing to process.`);
+      // Empty scored day (15–49): publish a season-to-date summary article so
+      // the news feed has something on a day the 5-article batch can't run.
+      await publishSeasonSummaryRequest({
+        seasonId: seasonData.seasonUid,
+        dataDocId: seasonData.dataDocId,
+        scoredDay,
+      });
       await markScoringRunCompleted(db, seasonData.seasonUid, scoredDay, { note: "no shows" });
       return { status: "processed", scoredDay, note: "no shows" };
     }
@@ -546,6 +554,14 @@ async function scoreLiveSeasonDay(db, scoredDay, seasonData) {
 
   if (!dayEventData || !dayEventData.shows || dayEventData.shows.length === 0) {
     logger.info(`No shows for day ${scoredDay}. Nothing to process.`);
+    // Empty scored day (15–49): publish a season-to-date summary article so the
+    // news feed has something on a day the 5-article batch can't run. This is
+    // the common case for the summary — live seasons routinely have dark days.
+    await publishSeasonSummaryRequest({
+      seasonId: seasonData.seasonUid,
+      dataDocId: seasonData.dataDocId,
+      scoredDay,
+    });
     await markScoringRunCompleted(db, seasonData.seasonUid, scoredDay, { note: "no shows" });
     return { status: "processed", scoredDay, note: "no shows" };
   }

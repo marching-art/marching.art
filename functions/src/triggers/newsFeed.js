@@ -288,6 +288,7 @@ exports.getRecentNews = onCall(
           article.topPerformers = data.topPerformers || null;
           article.recommendations = data.recommendations || null;
           article.insights = data.insights || null;
+          article.seasonSummary = data.seasonSummary || null;
         }
 
         articles.push(article);
