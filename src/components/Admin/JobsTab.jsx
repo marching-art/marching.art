@@ -6,6 +6,7 @@ import { triggerDailyNews } from '../../api/functions';
 import {
   AlertTriangle,
   Award,
+  BookOpen,
   Calendar,
   Database,
   Mail,
@@ -59,6 +60,13 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
       name: 'Regenerate Off-Season Schedule',
       description: 'Regenerate schedule for current off-season',
       icon: Calendar,
+    },
+    {
+      id: 'rebuildGameRecords',
+      name: 'Rebuild Records Book',
+      description:
+        'Rebuild all-time records (/records) from every archived recap — run once after the Records Book ships, then only after data fixes',
+      icon: BookOpen,
     },
     {
       id: 'auditShowSelections',

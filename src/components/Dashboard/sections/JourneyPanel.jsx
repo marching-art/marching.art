@@ -166,7 +166,9 @@ const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept })
       // League membership is now on the profile — claim the step right away
       const claim = await completeJourneyStep({ stepId: 'join_league' });
       if (claim.data.success && !claim.data.alreadyCompleted) {
-        toast.success(`Find Your Circuit — +${claim.data.xpAwarded} XP +${claim.data.coinAwarded} CC`);
+        toast.success(
+          `Find Your Circuit — +${claim.data.xpAwarded} XP +${claim.data.coinAwarded} CC`
+        );
       }
     } catch (error) {
       toast.error(error.message || 'Could not join the rookie league');
@@ -212,11 +214,15 @@ const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept })
                   {step.done ? (
                     <Check className="w-3 h-3 text-green-400" />
                   ) : (
-                    <Icon className={`w-3 h-3 ${step.ready ? 'text-[#0057B8]' : 'text-gray-600'}`} />
+                    <Icon
+                      className={`w-3 h-3 ${step.ready ? 'text-[#0057B8]' : 'text-gray-600'}`}
+                    />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <span className={`text-sm ${step.done ? 'text-gray-500 line-through' : 'text-white'}`}>
+                  <span
+                    className={`text-sm ${step.done ? 'text-gray-500 line-through' : 'text-white'}`}
+                  >
                     {step.title}
                   </span>
                   {!step.done && (

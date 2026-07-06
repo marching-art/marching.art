@@ -345,7 +345,13 @@ export const sponsorShow = createCallable<
 
 export const joinRookieLeague = createCallable<
   void,
-  { success: boolean; leagueId: string; leagueName: string; alreadyMember: boolean; message: string }
+  {
+    success: boolean;
+    leagueId: string;
+    leagueName: string;
+    alreadyMember: boolean;
+    message: string;
+  }
 >('joinRookieLeague');
 
 export const purchaseStreakFreeze = createCallable<

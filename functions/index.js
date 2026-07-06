@@ -48,12 +48,12 @@ const {
   createLeague,
   joinLeague,
   joinLeagueByCode,
-  joinRookieLeague,
   leaveLeague,
   generateMatchups,
   updateMatchupResults,
   postLeagueMessage,
 } = require("./src/callable/leagues");
+const { joinRookieLeague } = require("./src/callable/rookieLeague");
 const { completeJourneyStep } = require("./src/callable/journey");
 const { purchaseShopItem, equipShopItem, sponsorShow } = require("./src/callable/shop");
 const { claimLadderTier } = require("./src/callable/seasonLadder");
