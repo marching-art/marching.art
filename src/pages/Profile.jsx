@@ -24,6 +24,7 @@ import { CORPS_CLASS_ORDER, resolveCorpsForClass } from '../utils/corps';
 const UniformDesignModal = lazy(() => import('../components/modals/UniformDesignModal'));
 const ProfileEditModal = lazy(() => import('../components/modals/ProfileEditModal'));
 const LeagueInviteModal = lazy(() => import('../components/modals/LeagueInviteModal'));
+const CorpsCoinModal = lazy(() => import('../components/modals/CorpsCoinModal'));
 import SettingsModal from '../components/Profile/SettingsModal';
 
 // =============================================================================
@@ -48,6 +49,7 @@ const Profile = () => {
   const [settingsTab, setSettingsTab] = useState('account');
   const [showUniformDesign, setShowUniformDesign] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showCorpsCoin, setShowCorpsCoin] = useState(false);
   const [visitorCommissionsLeagues, setVisitorCommissionsLeagues] = useState(false);
 
   // Resolve @username → uid. The usernames/{lower} doc holds { uid } and is
@@ -486,15 +488,16 @@ const Profile = () => {
               <span className="text-xs text-gray-400">Leagues</span>
             </Link>
             {isOwnProfile && (
-              <Link
-                to="/dashboard"
+              <button
+                type="button"
+                onClick={() => setShowCorpsCoin(true)}
                 className="bg-[#1a1a1a] border border-[#333] p-4 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
               >
                 <Coins className="w-5 h-5 text-yellow-500 mb-1" />
                 <span className="text-xs text-gray-400 font-data tabular-nums">
                   {(profile.corpsCoin || 0).toLocaleString()} CC
                 </span>
-              </Link>
+              </button>
             )}
           </div>
         </div>
@@ -533,6 +536,13 @@ const Profile = () => {
             onClose={() => setShowEditModal(false)}
             onSave={handleSaveProfile}
           />
+        </Suspense>
+      )}
+
+      {/* CORPSCOIN WALLET MODAL (own profile only) */}
+      {showCorpsCoin && isOwnProfile && (
+        <Suspense fallback={<ModalLoadingFallback />}>
+          <CorpsCoinModal onClose={() => setShowCorpsCoin(false)} />
         </Suspense>
       )}
 
