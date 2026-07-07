@@ -15,6 +15,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { CLASS_LABELS, getSoundSportRating } from './constants';
+import { getConceptTitle, describeConceptStyle } from '../../../utils/showConcept';
 
 // Blue Ribbon icon for Best in Show awards
 const BlueRibbonIcon = ({ className = 'w-5 h-5' }) => (
@@ -50,6 +51,9 @@ const SeasonScorecard = memo(
     themeClass = null,
     // Opens the per-season show concept designer (synergy bonuses at scoring)
     onShowConcept,
+    // This corps's saved show concept (per corps class) — drives the inline
+    // show-design row so the concept is visible and editable on the scorecard.
+    showConcept,
     // Corps management: all optional so existing usage keeps rendering unchanged.
     canManage = false,
     canMove = false,
@@ -81,12 +85,13 @@ const SeasonScorecard = memo(
       setMenuOpen(false);
       onRetireCorps?.();
     };
-    const handleShowConcept = () => {
-      setMenuOpen(false);
-      onShowConcept?.();
-    };
+    const showMenu = !!(onMoveCorps || onRetireCorps);
 
-    const showMenu = !!(onMoveCorps || onRetireCorps || onShowConcept);
+    // Per-corps show design, surfaced inline so directors can see (and set) the
+    // concept attached to THIS corps rather than hunting through the ⋮ menu.
+    const conceptTitle = getConceptTitle(showConcept);
+    const conceptStyle = describeConceptStyle(showConcept);
+    const hasConcept = !!conceptTitle;
 
     return (
       <div className={`border overflow-hidden ${themeClass || 'bg-[#1a1a1a] border-[#333]'}`}>
@@ -157,18 +162,6 @@ const SeasonScorecard = memo(
                         <span>{lockReason}</span>
                       </div>
                     )}
-                    {onShowConcept && (
-                      <button
-                        type="button"
-                        role="menuitem"
-                        onClick={handleShowConcept}
-                        className="w-full flex items-center gap-2 px-3 py-2 min-h-touch text-xs text-left text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
-                        title="Design your show — matching styles earn nightly CorpsCoin bonuses"
-                      >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        Show concept
-                      </button>
-                    )}
                     {onMoveCorps && (
                       <button
                         type="button"
@@ -210,6 +203,38 @@ const SeasonScorecard = memo(
               </div>
             )}
           </div>
+
+          {/* Show Design — this corps's program concept (per corps class).
+              Visible on the scorecard so directors know a concept applies to
+              this specific corps, with a one-tap way to design or edit it. */}
+          {onShowConcept && (
+            <button
+              type="button"
+              onClick={onShowConcept}
+              className="w-full mb-4 flex items-center gap-3 px-3 py-2.5 bg-[#222] border border-[#333] hover:border-[#0057B8] text-left transition-colors group"
+              title={hasConcept ? 'Edit this corps’ show design' : 'Design this corps’ show'}
+            >
+              <Sparkles className="w-4 h-4 text-[#0057B8] flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] uppercase tracking-wider text-gray-500">Show Design</p>
+                {hasConcept ? (
+                  <>
+                    <p className="text-sm font-bold text-white truncate">{conceptTitle}</p>
+                    {conceptStyle && (
+                      <p className="text-[10px] text-gray-500 truncate">{conceptStyle}</p>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-sm font-bold text-[#0057B8]">Design your show →</p>
+                )}
+              </div>
+              {hasConcept && (
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 group-hover:text-[#0057B8] flex-shrink-0">
+                  Edit
+                </span>
+              )}
+            </button>
+          )}
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-3">

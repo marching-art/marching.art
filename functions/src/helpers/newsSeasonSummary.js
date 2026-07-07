@@ -29,6 +29,7 @@ const {
 } = require("./geminiService");
 const { buildFantasyPerformersImagePrompt } = require("./newsImagePrompts");
 const { describeShowConcept } = require("./showConceptSynergy");
+const { dataNamespaceParam } = require("../config");
 
 const CLASS_LABELS = {
   worldClass: "World Class",
@@ -228,10 +229,14 @@ function detectRivalries(classCorps) {
 async function fetchDesignContext(db, dataDocId, targets) {
   const design = new Map();
   if (!db || !dataDocId) return design;
+  // Director profiles live under the DATA_NAMESPACE artifacts root — NOT under
+  // the per-season dci-data doc id (dataDocId). Using dataDocId here silently
+  // missed every profile, which is why concepts read as "none on record".
+  const namespace = dataNamespaceParam.value();
   for (const t of targets) {
     if (!t.uid || !t.corpsClass) continue;
     try {
-      const profileDoc = await db.doc(`artifacts/${dataDocId}/users/${t.uid}/profile/data`).get();
+      const profileDoc = await db.doc(`artifacts/${namespace}/users/${t.uid}/profile/data`).get();
       if (!profileDoc.exists) continue;
       const corpsData = profileDoc.data()?.corps?.[t.corpsClass];
       design.set(t.key, {
