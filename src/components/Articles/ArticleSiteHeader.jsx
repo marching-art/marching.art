@@ -11,7 +11,6 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import {
   MessageCircle,
-  UserPlus,
   Coins,
   Zap,
   Newspaper,
@@ -38,25 +37,9 @@ const ArticleSiteHeader = () => {
           <span className="text-base font-bold text-white tracking-wider">marching.art</span>
         </Link>
 
-        <div className="ml-auto flex items-center gap-2">
-          {/* Signed-out mobile auth buttons */}
-          {!user && (
-            <div className="flex items-center gap-2 lg:hidden">
-              <Link
-                to="/login"
-                className="min-h-[44px] px-5 bg-yellow-500 text-slate-900 font-semibold text-sm uppercase tracking-wide flex items-center justify-center rounded-lg hover:bg-yellow-400 active:bg-yellow-600 active:scale-95 transition-all duration-150 press-feedback-strong"
-              >
-                Sign In
-              </Link>
-              <Link
-                to="/register"
-                className="min-h-[44px] px-4 border border-yellow-500/50 text-yellow-500 font-semibold text-sm uppercase tracking-wide flex items-center justify-center gap-1.5 rounded-lg hover:bg-yellow-500/10 hover:border-yellow-500 active:bg-yellow-500/20 active:scale-95 transition-all duration-150 press-feedback"
-              >
-                <UserPlus className="w-4 h-4" />
-                <span className="hidden xs:inline">Register</span>
-              </Link>
-            </div>
-          )}
+        <div className="ml-auto flex items-center gap-1">
+          {/* Signed-out auth actions live in the bottom nav (GuestActionBar),
+              not the header — leaving the corner for Discord + Privacy/Terms. */}
 
           {/* Signed-in mobile status chip - replaces the old DASHBOARD button.
               Navigation lives in the persistent BottomNav rendered by the page. */}
@@ -87,25 +70,28 @@ const ArticleSiteHeader = () => {
               <DesktopNavItem to="/profile" icon={User} label="Profile" />
             </nav>
           ) : (
-            <div className="hidden lg:flex items-center">
+            /* Signed out: Discord + Privacy/Terms in the corner, now on mobile
+               too. Discord is an icon; legal links stay compact. */
+            <div className="flex items-center gap-0.5">
               <a
                 href="https://discord.gg/YvFRJ97A5H"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-[#5865F2] active:text-white transition-colors press-feedback flex items-center gap-1.5"
+                className="p-2 text-gray-400 hover:text-[#5865F2] hover:bg-white/10 rounded-sm transition-colors press-feedback flex items-center"
+                title="Join our Discord"
+                aria-label="Join our Discord"
               >
-                <MessageCircle className="w-4 h-4" />
-                Discord
+                <MessageCircle className="w-5 h-5" />
               </a>
               <Link
                 to="/privacy"
-                className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center"
+                className="px-2 py-2.5 min-h-touch text-xs text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center"
               >
                 Privacy
               </Link>
               <Link
                 to="/terms"
-                className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center"
+                className="px-2 py-2.5 min-h-touch text-xs text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center"
               >
                 Terms
               </Link>
