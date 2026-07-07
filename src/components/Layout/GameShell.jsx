@@ -536,10 +536,7 @@ const TickerBar = () => {
       aria-hidden={copyKey === 'b' ? true : undefined}
     >
       {tickerSections.map((section, idx) => (
-        <div
-          key={`${copyKey}-${idx}`}
-          className="flex items-center gap-2 sm:gap-3 shrink-0"
-        >
+        <div key={`${copyKey}-${idx}`} className="flex items-center gap-2 sm:gap-3 shrink-0">
           {renderSegment(section)}
         </div>
       ))}
