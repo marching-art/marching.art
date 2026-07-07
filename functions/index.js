@@ -151,6 +151,7 @@ const {
   onFantasyRecapUpdated,
   triggerNewsGeneration,
   triggerDailyNews,
+  triggerSeasonSummary,
   getDailyNews,
   getRecentNews,
   getNewsFeedHttp,
@@ -303,6 +304,7 @@ module.exports = {
   onFantasyRecapUpdated,
   triggerNewsGeneration,
   triggerDailyNews,
+  triggerSeasonSummary,
   getDailyNews,
   getRecentNews,
   // Backs the /api/news hosting rewrite (firebase.json) that gives the news

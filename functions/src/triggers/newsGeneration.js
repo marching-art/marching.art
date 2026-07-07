@@ -565,6 +565,48 @@ exports.triggerDailyNews = onCall(
   }
 );
 
+/**
+ * Callable to manually generate the season-summary article (Article 6) for a
+ * given day (admin use). Two purposes:
+ *   1. Backfill — the automatic trigger only fires the first time an empty day
+ *      is scored; a dark day that was scored before this feature shipped (or
+ *      one whose scoring run completed for any other reason) is never revisited
+ *      by the scoring guard, so it can be produced here on demand.
+ *   2. Testing — verify the article end-to-end without waiting for a dark day.
+ *
+ * Unlike the Pub/Sub path, this bypasses the scoring run-guard entirely, so it
+ * works regardless of whether the day was already marked scored.
+ */
+exports.triggerSeasonSummary = onCall(
+  {
+    cors: true,
+    // Gemini text + paid image generation can take a couple of minutes.
+    timeoutSeconds: 540,
+    memory: "1GiB",
+    secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret],
+  },
+  async (request) => {
+    checkAdminAuth(request.auth);
+
+    const { seasonId, dataDocId, throughDay } = request.data || {};
+
+    if (!seasonId || !throughDay) {
+      throw new HttpsError("invalid-argument", "Missing required parameters: seasonId, throughDay");
+    }
+
+    try {
+      const article = await handleSeasonSummaryGeneration({ seasonId, dataDocId, throughDay });
+      if (!article) {
+        return { success: false, error: "No article produced (not enough season data on record for that day)." };
+      }
+      return { success: true, throughDay, headline: article.headline, hasImage: Boolean(article.imageUrl) };
+    } catch (error) {
+      logger.error("Error in manual season summary generation:", error);
+      throw new HttpsError("internal", error.message);
+    }
+  }
+);
+
 
 // =============================================================================
 // LEGACY HANDLERS (for backward compatibility)

@@ -609,6 +609,14 @@ export const triggerDailyNews = createCallable<
   { success: boolean }
 >('triggerDailyNews', { timeout: 180000 });
 
+// Manually generate/backfill the season-summary article (Article 6) for a day.
+// Bypasses the scoring run-guard, so it works for dark days that were already
+// scored (which the automatic Pub/Sub trigger will not revisit).
+export const triggerSeasonSummary = createCallable<
+  { seasonId: string; dataDocId?: string; throughDay: number },
+  { success: boolean; throughDay?: number; headline?: string; hasImage?: boolean; error?: string }
+>('triggerSeasonSummary', { timeout: 300000 });
+
 // =============================================================================
 // ARTICLE MANAGEMENT (Admin)
 // =============================================================================
