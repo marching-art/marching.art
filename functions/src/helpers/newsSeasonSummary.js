@@ -29,6 +29,7 @@ const {
 } = require("./geminiService");
 const { buildFantasyPerformersImagePrompt } = require("./newsImagePrompts");
 const { describeShowConcept } = require("./showConceptSynergy");
+const { dataNamespaceParam } = require("../config");
 
 const CLASS_LABELS = {
   worldClass: "World Class",
@@ -52,6 +53,7 @@ function getSoundSportRating(score) {
   if (score >= 65) return "Bronze";
   return "Participation";
 }
+
 
 /**
  * Collapse every recap day (offSeasonDay <= throughDay) into per-corps season
@@ -228,10 +230,14 @@ function detectRivalries(classCorps) {
 async function fetchDesignContext(db, dataDocId, targets) {
   const design = new Map();
   if (!db || !dataDocId) return design;
+  // Director profiles live under the DATA_NAMESPACE artifacts root — NOT under
+  // the per-season dci-data doc id (dataDocId). Using dataDocId here silently
+  // missed every profile, which is why concepts read as "none on record".
+  const namespace = dataNamespaceParam.value();
   for (const t of targets) {
     if (!t.uid || !t.corpsClass) continue;
     try {
-      const profileDoc = await db.doc(`artifacts/${dataDocId}/users/${t.uid}/profile/data`).get();
+      const profileDoc = await db.doc(`artifacts/${namespace}/users/${t.uid}/profile/data`).get();
       if (!profileDoc.exists) continue;
       const corpsData = profileDoc.data()?.corps?.[t.corpsClass];
       design.set(t.key, {
@@ -272,8 +278,11 @@ async function generateSeasonSummaryArticle({ db, seasonId, dataDocId, throughDa
   }
 
   const corps = aggregateSeason(recaps);
-  const competitive = corps.filter(c => COMPETITIVE_CLASSES.includes(c.corpsClass));
-  const soundSport = corps.filter(c => c.corpsClass === "soundSport");
+  // Feature every corps that has posted a real score. A corps sitting at 0.000
+  // (e.g. an incomplete lineup) is a data anomaly, not a competitor — leave it
+  // out rather than surfacing a dead 0.000 row.
+  const competitive = corps.filter(c => COMPETITIVE_CLASSES.includes(c.corpsClass) && c.bestTotal > 0);
+  const soundSport = corps.filter(c => c.corpsClass === "soundSport" && c.bestTotal > 0);
 
   // Need at least a small competitive field or a SoundSport field to say anything.
   if (competitive.length === 0 && soundSport.length === 0) {
@@ -285,13 +294,26 @@ async function generateSeasonSummaryArticle({ db, seasonId, dataDocId, throughDa
   const daysScored = scoredDays.size;
 
   // Per-class standings (competitive), ranked by latest total (the same metric
-  // the game itself uses for season standings).
+  // the game itself uses for season standings). Each standing carries analysis
+  // hooks — gap to the class leader, which caption family the ensemble ranks
+  // best/worst on within its class, and its trajectory since its opener — so the
+  // writer can interpret rather than recite the raw table.
+  const rankByField = (list, field) => {
+    const order = [...list].sort((a, b) => b[field] - a[field]);
+    const rank = new Map();
+    order.forEach((c, i) => rank.set(c.key, i + 1));
+    return rank;
+  };
   const classBlocks = [];
   for (const classKey of COMPETITIVE_CLASSES) {
     const inClass = competitive
       .filter(c => c.corpsClass === classKey)
       .sort((a, b) => b.latestTotal - a.latestTotal);
     if (inClass.length === 0) continue;
+    const leaderTotal = inClass[0].latestTotal;
+    const geRank = rankByField(inClass, "avgGE");
+    const visRank = rankByField(inClass, "avgVisual");
+    const musRank = rankByField(inClass, "avgMusic");
     const standings = inClass.map((c, i) => ({
       rank: i + 1,
       corpsName: c.corpsName,
@@ -302,13 +324,20 @@ async function generateSeasonSummaryArticle({ db, seasonId, dataDocId, throughDa
       avgMusic: Number(c.avgMusic.toFixed(2)),
       showsCount: c.showsCount,
       showWins: c.showWins,
+      // Analysis hooks (all sourced, combined-family only):
+      gapToLeader: i === 0 ? 0 : Number((leaderTotal - c.latestTotal).toFixed(3)),
+      geRankInClass: geRank.get(c.key),
+      visRankInClass: visRank.get(c.key),
+      musRankInClass: musRank.get(c.key),
+      // Trajectory: latest vs first scored show (only meaningful with 2+ shows).
+      seasonDelta: c.showsCount >= 2 ? Number((c.latestTotal - c.entries[0].total).toFixed(3)) : null,
     }));
     const rivalries = detectRivalries(inClass).map(r => ({
       corpsA: r.corpsA,
       corpsB: r.corpsB,
       note: r.flipped
-        ? `have traded the lead across ${r.sharedShows} shared shows (${r.aWins}-${r.bWins}), never separated by more than a hair`
-        : `separated by an average of ${r.avgMargin.toFixed(2)} across ${r.sharedShows} shared shows`,
+        ? `have split ${r.sharedShows} head-to-head meetings ${r.aWins}-${r.bWins}, an average of ${r.avgMargin.toFixed(2)} apart`
+        : `separated by an average of ${r.avgMargin.toFixed(2)} over ${r.sharedShows} shared shows`,
     }));
     classBlocks.push({ classKey, label: CLASS_LABELS[classKey], standings, rivalries });
   }
@@ -356,12 +385,28 @@ async function generateSeasonSummaryArticle({ db, seasonId, dataDocId, throughDa
   }
 
   // ---- Build the DATA block (nothing finer than combined families) ----
+  // Each line carries the raw numbers (for grounding) plus interpretation hooks:
+  // gap to the leader, a caption-family profile (which family the ensemble is
+  // strongest/weakest on relative to its class), and its trajectory. The writer
+  // is told to INTERPRET these, not restate them.
   const standingsText = classBlocks.map(block => {
-    const lines = block.standings.slice(0, 8).map(s =>
-      `  ${s.rank}. "${s.corpsName}" (${s.director}) — latest total ${s.latestTotal.toFixed(3)} | season avg GE ${s.avgGE.toFixed(2)}, Visual ${s.avgVisual.toFixed(2)}, Music ${s.avgMusic.toFixed(2)} | ${s.showsCount} show${s.showsCount === 1 ? "" : "s"}${s.showWins > 0 ? `, ${s.showWins} show win${s.showWins === 1 ? "" : "s"}` : ""}`
-    ).join("\n");
+    const n = block.standings.length;
+    const lines = block.standings.slice(0, 8).map(s => {
+      const nameLabel = `"${s.corpsName}" (${s.director})`;
+      const place = s.rank === 1 ? "leads the class" : `${s.gapToLeader.toFixed(3)} behind the leader`;
+      const fams = [["GE", s.geRankInClass], ["Visual", s.visRankInClass], ["Music", s.musRankInClass]];
+      const strongest = fams.reduce((a, b) => (b[1] < a[1] ? b : a));
+      const weakest = fams.reduce((a, b) => (b[1] > a[1] ? b : a));
+      const profile = n >= 2 && strongest[0] !== weakest[0]
+        ? `; profile: strongest on ${strongest[0]} (${strongest[1]} of ${n} in class), weakest on ${weakest[0]} (${weakest[1]} of ${n})`
+        : "";
+      const traj = s.seasonDelta !== null
+        ? `; trajectory ${s.seasonDelta >= 0 ? "+" : ""}${s.seasonDelta.toFixed(3)} from opener to latest`
+        : "";
+      return `  ${s.rank}. ${nameLabel} — ${s.latestTotal.toFixed(3)}, ${place} | ${s.showsCount} show${s.showsCount === 1 ? "" : "s"}${s.showWins > 0 ? `, ${s.showWins} show win${s.showWins === 1 ? "" : "s"}` : ""} | avg GE ${s.avgGE.toFixed(2)} / Visual ${s.avgVisual.toFixed(2)} / Music ${s.avgMusic.toFixed(2)}${profile}${traj}`;
+    }).join("\n");
     const rivalryLines = block.rivalries.length
-      ? "\n  RIVALRIES: " + block.rivalries.map(r => `"${r.corpsA}" vs "${r.corpsB}" (${r.note})`).join("; ")
+      ? "\n  RIVALRIES: " + block.rivalries.map(r => `${r.corpsA} vs ${r.corpsB} — ${r.note}`).join("; ")
       : "";
     return `${block.label} (${block.standings.length} ensembles):\n${lines}${rivalryLines}`;
   }).join("\n\n");
@@ -376,9 +421,13 @@ async function generateSeasonSummaryArticle({ db, seasonId, dataDocId, throughDa
     ? showWinLeaders.map(l => `"${l.corpsName}" (${l.classLabel}): ${l.showWins} show win${l.showWins === 1 ? "" : "s"}`).join(", ")
     : "No show wins recorded yet.";
 
-  const conceptsText = programConcepts.length
-    ? programConcepts.map(p => `- "${p.corpsName}": performing ${p.concept}`).join("\n")
-    : "No director-designed show concepts on record for the featured ensembles.";
+  // Only surface a show-concepts section when concepts actually exist — an empty
+  // section otherwise invites the writer to speculate about why directors haven't
+  // logged one, which is padding.
+  const hasConcepts = programConcepts.length > 0;
+  const conceptsBlock = hasConcepts
+    ? `\nSHOW CONCEPTS (director-designed themes — the only theme information that exists; reference ONLY these, exactly as written):\n${programConcepts.map(p => `- "${p.corpsName}": performing ${p.concept}`).join("\n")}\n`
+    : "";
 
   const reportDay = throughDay;
   const prompt = `You are a marching.art fantasy sports journalist writing a special SEASON-TO-DATE SUMMARY. There are no competitions to score today, so instead of a nightly recap you are taking stock of the whole fantasy season so far — through Day ${throughDay}, across ${daysScored} scored days. These are FANTASY ensembles run by real users.
@@ -395,8 +444,9 @@ HARD PRIVACY RULE (never violate)
 
 ACCURACY RULES
 - Every ensemble name, director name, score, average, margin, count, class, rivalry, rating, and award below comes from the DATA block. Do not invent any of them. Quote numbers as written; do not recompute or re-round.
-- Program/show themes may be referenced ONLY for ensembles in the SHOW CONCEPTS block, exactly as described there.
+- Program/show themes may be referenced ONLY for ensembles in a SHOW CONCEPTS block, exactly as described there. If there is no SHOW CONCEPTS block, do not discuss show design at all and do not speculate about why — simply omit the topic.
 - Director names are user display names — some are real names, some are handles ("elithecreature", "mike_42"). For handle-style names, refer via the ensemble ("the director behind Stellar Vista") rather than as a bare first name.
+- Every ensemble name in the DATA block is a real, deliberate proper noun and the corps' actual chosen name — even one that reads like a generic word (e.g., "Unspecified", "Unspecified Open"). Print it verbatim, capitalized as a name, and treat it exactly like any other corps. NEVER interpret such a name as missing data, and never rephrase it into a lowercase description ("an unspecified ensemble"). "Unspecified" is the corps; write "Unspecified leads Open Class," not "an unspecified ensemble leads."
 
 ${NEWS_INTEGRITY_RULES}
 
@@ -410,30 +460,35 @@ SOUNDSPORT BEST-IN-SHOW TO DATE (Best in Show is a SoundSport award):
 ${soundSportText}
 
 COMPETITIVE SHOW WINS — first-place finishes per class, season totals (a count of wins to date, NOT a list of individual shows; do NOT call these "Best in Show"): ${showWinsText}
+${conceptsBlock}===== END DATA =====
 
-SHOW CONCEPTS (director-designed — the only theme information that exists):
-${conceptsText}
-===== END DATA =====
+VOICE & CRAFT
+- Write as a knowledgeable marching-arts columnist taking stock mid-season — think a smart DCI beat writer, not a stats printout. You know the activity: General Effect, Visual, and Music are the three scoring books; a season builds toward August finals; a "tight class" means the field is bunched. Use that texture, but stay accessible.
+- INTERPRET, DON'T RECITE. The article is published alongside full standings tables that already list every ensemble's total, GE/Visual/Music averages, show count, and show wins. Your job is NOT to read those tables back. Do not walk down a class rank-by-rank reciting each ensemble's four numbers. Instead, tell the story the numbers reveal.
+- Use the analysis hooks in the data — gap to the leader, each ensemble's caption-family PROFILE (which book carries them, which lags), and trajectory (rising or sliding since their opener). The best sentences compare and explain: "Altitude tops the class on Music but its GE trails the leaders — that's the ground it has to make up," or "the leader has done it in two shows; the corps chasing has proven it over five." Lead with the story, and cite only the two or three numbers that actually carry the point.
+- Be selective. Feature the genuine storylines — the leader and the ensemble pressing it, the corps winning the most shows, a lopsided profile, a corps trending up. You do not have to mention every ensemble in prose; the tables cover the rest.
+- Vary your sentences and your phrasing. Do not lean on a stock phrase (never repeat something like "never separated by more than a hair"). When a margin matters, use the actual figure or find a fresh way to say it.
 
-BANNED PHRASES: dominant, commanding, stunning, heating up, sent shockwaves, the drama is just beginning, tune in tomorrow, testament to
+BANNED PHRASES: dominant, commanding, stunning, heating up, sent shockwaves, the drama is just beginning, tune in tomorrow, testament to, incredibly close, proving to be, holding their cards close, let the numbers speak, never separated by more than a hair
 
 ARTICLE REQUIREMENTS
-- Headline: Frame the state of the season — a class race, a rivalry, or the overall picture. Name a real ensemble. No hype words, no invented numbers.
-- Summary: 2-3 sentences setting up the season-to-date picture and the single most compelling storyline.
-- Narrative: 700-950 words. Structure it with 4-6 short bolded lead-ins in Markdown (e.g., **World Class at the top.**, **The rivalry to watch.**, **Design choices.**, **SoundSport spotlight.**) at natural transitions — 2-4 words each. Cover, in whatever order reads best:
-  1. Overall placement in each competitive class, comparing ensembles on combined GE, combined Visual, and combined Music (never individual captions).
-  2. The rivalries taking shape — who has traded places with whom, and how close it is.
-  3. Show themes and design choices from the SHOW CONCEPTS block — what directors are going for artistically.
-  4. The show-win and SoundSport picture to date. For the competitive classes, treat show wins (first-place finishes) as a season-long ACHIEVEMENT COUNT — who has piled up the most first-places in their class and what that says about their consistency. Then cover the SoundSport Best-in-Show race (ratings-only). Reserve the phrase "Best in Show" for SoundSport; competitive wins are "show wins" or "first place." Do NOT recap or narrate individual shows one by one; this is a season summary, not a show-by-show log.
+- Headline: A specific storyline — the class race, a rivalry, or the corps quietly racking up wins. Name a real ensemble. No hype words, no invented numbers.
+- Summary: 2-3 sentences that open on the single sharpest storyline of the season so far — a real lede, not a throat-clearing "through Day N, the landscape is taking shape."
+- Narrative: 550-800 words (shorter and sharper beats longer and padded — do not pad to hit a count). Open with a true lede on the most newsworthy thread, then use 4-6 short bolded Markdown lead-ins (2-4 words each, e.g. **World Class.**, **The chase.**, **Rising fast.**, **SoundSport.**) at natural transitions. Cover, in whatever order reads best:
+  1. The competitive-class picture — who leads, who is closing, and what the GE/Visual/Music PROFILES reveal about how each contender is built. Interpret; do not recite the table.
+  2. The most compelling rivalries — who has traded places and how close it is (weave in a real margin figure, not a stock phrase).
+  3. The show-win story: which corps have piled up the most first-place finishes in their class and what that says about their consistency (a season achievement count — never a show-by-show log; reserve "Best in Show" for SoundSport).
+  4. The SoundSport picture — the Best-in-Show leaders and the ratings landscape (ratings only, never a SoundSport score).
+  ${hasConcepts ? "5. What the ensembles with logged show concepts are going for artistically (only those in the SHOW CONCEPTS block)." : "There are no show concepts on record, so do NOT discuss show design or themes at all."}
   Carry personality through sharp reading of the combined numbers and the season arc. No fabricated quotes, reactions, or feelings.
-- End with a specific, data-grounded observation about where the season stands — not a rhetorical question.`;
+- End on a forward-looking beat — what to watch as the field builds toward finals — grounded in a specific fact from the data, not a rhetorical question.`;
 
   const schema = {
     type: Type.OBJECT,
     properties: {
       headline: { type: Type.STRING, description: "State-of-the-season headline naming a real ensemble. No hype words, no invented numbers, no individual captions." },
       summary: { type: Type.STRING, description: "2-3 sentence setup of the season-to-date picture and the top storyline." },
-      narrative: { type: Type.STRING, description: "700-950 word season summary. Discusses ONLY combined GE / combined Visual / combined Music and totals — never individual captions and never any director's lineup picks. Every name, score, average, margin, count, rating, and award comes from the DATA block. SoundSport is ratings-only. Uses 4-6 short bolded Markdown lead-ins." },
+      narrative: { type: Type.STRING, description: "550-800 word season summary that INTERPRETS the data rather than reciting the standings tables. Opens on a real lede, uses 4-6 short bolded Markdown lead-ins, and reads like a marching-arts columnist. Discusses ONLY combined GE / combined Visual / combined Music and totals — never individual captions and never any director's lineup picks. Every name, score, margin, count, rating, and award comes from the DATA block, with each corps name printed verbatim as a proper noun (including generic-looking names like 'Unspecified'). SoundSport is ratings-only. Reserves 'Best in Show' for SoundSport; competitive wins are 'show wins'." },
     },
     required: ["headline", "summary", "narrative"],
   };

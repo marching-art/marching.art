@@ -30,6 +30,7 @@ const {
   formatBriefForArticle,
 } = require("./newsEditorial");
 const { describeShowConcept } = require("./showConceptSynergy");
+const { dataNamespaceParam } = require("../config");
 
 /**
  * Article 4: marching.art Fantasy Results
@@ -258,9 +259,13 @@ async function generateFantasyDailyArticle({ reportDay, fantasyData, showContext
     .filter(r => r.uid && r.corpsClass);
   const programConcepts = [];
   if (db && dataDocId && conceptTargets.length > 0) {
+    // Profiles live under the DATA_NAMESPACE artifacts root, not the per-season
+    // dci-data doc id (dataDocId). Using dataDocId here missed every profile, so
+    // real, director-designed concepts never reached the article.
+    const namespace = dataNamespaceParam.value();
     for (const target of conceptTargets) {
       try {
-        const profileDoc = await db.doc(`artifacts/${dataDocId}/users/${target.uid}/profile/data`).get();
+        const profileDoc = await db.doc(`artifacts/${namespace}/users/${target.uid}/profile/data`).get();
         const concept = profileDoc.exists
           ? describeShowConcept(profileDoc.data()?.corps?.[target.corpsClass]?.showConcept)
           : null;
@@ -369,7 +374,8 @@ ${mode.bodyNote ? `${mode.bodyNote}\n` : ''}${captionLeadersBlock && fieldMode !
     let corpsLocation = null;
     if (topCorps?.uid && topCorps?.corpsClass && db && dataDocId) {
       try {
-        const profileDoc = await db.doc(`artifacts/${dataDocId}/users/${topCorps.uid}/profile/data`).get();
+        // Profiles are namespaced by DATA_NAMESPACE, not the dci-data doc id.
+        const profileDoc = await db.doc(`artifacts/${dataNamespaceParam.value()}/users/${topCorps.uid}/profile/data`).get();
         if (profileDoc.exists) {
           const profileData = profileDoc.data();
           const corpsData = profileData?.corps?.[topCorps.corpsClass];
