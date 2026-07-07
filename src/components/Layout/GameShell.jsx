@@ -156,21 +156,26 @@ const MEDAL_COLORS = {
 
 const TickerBar = () => {
   const { tickerData, loading, hasData } = useTickerData();
-  const [activeSection, setActiveSection] = useState(0);
-  const scrollRef = useRef(null);
   const { prefersReducedMotion } = useReducedMotion();
 
-  // Pause the auto-cycle while the user is reading/scrolling the ticker —
-  // content swapping out from under a touch is disorienting. Resumes a few
-  // seconds after the last interaction.
-  const [isInteracting, setIsInteracting] = useState(false);
-  const interactionTimer = useRef(null);
-  const handleInteraction = () => {
-    setIsInteracting(true);
-    clearTimeout(interactionTimer.current);
-    interactionTimer.current = setTimeout(() => setIsInteracting(false), 5000);
+  // Measure the width of one content copy so the marquee scrolls at a
+  // consistent speed regardless of how many items are present.
+  const trackRef = useRef(null);
+  const [duration, setDuration] = useState(40);
+
+  // Pause the scroll while the user is hovering (desktop) or touching
+  // (mobile) so they can read a specific item.
+  const [isPaused, setIsPaused] = useState(false);
+  const resumeTimer = useRef(null);
+  const pauseNow = () => {
+    clearTimeout(resumeTimer.current);
+    setIsPaused(true);
   };
-  useEffect(() => () => clearTimeout(interactionTimer.current), []);
+  const resumeSoon = () => {
+    clearTimeout(resumeTimer.current);
+    resumeTimer.current = setTimeout(() => setIsPaused(false), 2000);
+  };
+  useEffect(() => () => clearTimeout(resumeTimer.current), []);
 
   // Build dynamic sections based on available data
   const tickerSections = useMemo(() => {
@@ -219,25 +224,24 @@ const TickerBar = () => {
     return sections;
   }, [tickerData]);
 
-  // Auto-cycle through sections every 8 seconds. Users with the OS
-  // reduced-motion preference keep the manual prev/next arrows instead of
-  // perpetually shifting content.
+  // Scale the marquee duration to the content width for a constant scroll
+  // speed (~60px/s), regardless of how many items the season produced.
+  // Re-measures when the data or the viewport width changes.
   useEffect(() => {
-    if (!hasData || tickerSections.length === 0 || prefersReducedMotion || isInteracting) return;
+    if (prefersReducedMotion) return;
 
-    const interval = setInterval(() => {
-      setActiveSection((prev) => (prev + 1) % tickerSections.length);
-    }, 8000);
+    const measure = () => {
+      const width = trackRef.current?.scrollWidth || 0;
+      if (width > 0) {
+        const SPEED = 60; // pixels per second
+        setDuration(Math.max(20, width / SPEED));
+      }
+    };
 
-    return () => clearInterval(interval);
-  }, [hasData, tickerSections.length, prefersReducedMotion, isInteracting]);
-
-  // Reset activeSection if it's out of bounds
-  useEffect(() => {
-    if (activeSection >= tickerSections.length && tickerSections.length > 0) {
-      setActiveSection(0);
-    }
-  }, [activeSection, tickerSections.length]);
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [tickerSections, prefersReducedMotion]);
 
   // Trend indicator component
   const TrendIndicator = ({ trend }) => {
@@ -249,7 +253,7 @@ const TickerBar = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="fixed top-12 w-full h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
+      <div className="fixed top-12 w-full h-10 sm:h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
         <div className="flex items-center gap-4 px-4 text-xs">
           <span className="text-gray-500 animate-pulse">Loading scores...</span>
         </div>
@@ -260,7 +264,7 @@ const TickerBar = () => {
   // No data state
   if (!hasData || tickerSections.length === 0) {
     return (
-      <div className="fixed top-12 w-full h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
+      <div className="fixed top-12 w-full h-10 sm:h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
         <div className="flex items-center gap-4 px-4 text-xs">
           <span className="text-gray-500">No scores available yet</span>
         </div>
@@ -268,9 +272,9 @@ const TickerBar = () => {
     );
   }
 
-  // Get current section content
-  const renderSectionContent = () => {
-    const section = tickerSections[activeSection];
+  // Render one section (label chip + its items) as an inline segment of the
+  // continuous ticker stream.
+  const renderSegment = (section) => {
     if (!section) return null;
 
     const { type, classKey, label } = section;
@@ -522,64 +526,74 @@ const TickerBar = () => {
     }
   };
 
-  // Handle touch/swipe navigation
-  const handlePrevSection = () => {
-    setActiveSection((prev) => (prev === 0 ? tickerSections.length - 1 : prev - 1));
-  };
+  // Render one full pass of every section as a single inline row. Two of
+  // these sit side by side inside the marquee track so the loop is seamless.
+  const renderTrack = (copyKey) => (
+    <div
+      ref={copyKey === 'a' ? trackRef : undefined}
+      className="flex items-center gap-4 sm:gap-6 pr-4 sm:pr-6 shrink-0"
+      // The second copy is purely decorative duplication for the loop.
+      aria-hidden={copyKey === 'b' ? true : undefined}
+    >
+      {tickerSections.map((section, idx) => (
+        <div
+          key={`${copyKey}-${idx}`}
+          className="flex items-center gap-2 sm:gap-3 shrink-0"
+        >
+          {renderSegment(section)}
+        </div>
+      ))}
+    </div>
+  );
 
-  const handleNextSection = () => {
-    setActiveSection((prev) => (prev + 1) % tickerSections.length);
-  };
+  // Reduced-motion users get a manually scrollable row instead of an
+  // auto-scrolling marquee (the OS media query also freezes CSS animations).
+  if (prefersReducedMotion) {
+    return (
+      <div className="fixed top-12 w-full h-10 sm:h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
+        <div className="relative flex-1 min-w-0 h-full flex items-center">
+          <div className="flex-1 flex items-center gap-4 sm:gap-6 px-3 text-xs overflow-x-auto scrollbar-hide">
+            {renderTrack('a')}
+          </div>
+          <div
+            className="absolute top-0 right-0 bottom-0 w-6 pointer-events-none bg-gradient-to-l from-black to-transparent"
+            aria-hidden="true"
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed top-12 w-full h-10 sm:h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
-      {/* Mobile: Section navigation arrows */}
-      <button
-        onClick={handlePrevSection}
-        className={`${prefersReducedMotion ? '' : 'sm:hidden '}flex-shrink-0 w-8 h-full flex items-center justify-center text-gray-600 hover:text-white active:text-white active:bg-white/5 transition-colors`}
-        aria-label="Previous section"
-      >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
-
-      {/* Ticker content — right-edge fade hints that the row scrolls */}
-      <div className="relative flex-1 min-w-0 h-full flex items-center">
+      <div className="relative flex-1 min-w-0 h-full flex items-center overflow-hidden">
+        {/* Continuous marquee: two identical copies scroll left together,
+            looping seamlessly. Duration scales with content width. */}
         <div
-          ref={scrollRef}
-          className="flex-1 flex items-center gap-2 sm:gap-3 px-2 sm:px-3 text-xs overflow-x-auto scrollbar-hide scroll-smooth"
-          onTouchStart={handleInteraction}
-          onScroll={handleInteraction}
+          className="flex items-center text-xs animate-marquee shrink-0 will-change-transform"
+          style={{
+            animationDuration: `${duration}s`,
+            animationPlayState: isPaused ? 'paused' : 'running',
+          }}
+          onMouseEnter={pauseNow}
+          onMouseLeave={resumeSoon}
+          onTouchStart={pauseNow}
+          onTouchEnd={resumeSoon}
         >
-          {renderSectionContent()}
+          {renderTrack('a')}
+          {renderTrack('b')}
         </div>
+
+        {/* Edge fades hint that the row continues beyond the viewport. */}
+        <div
+          className="absolute top-0 left-0 bottom-0 w-6 pointer-events-none bg-gradient-to-r from-black to-transparent"
+          aria-hidden="true"
+        />
         <div
           className="absolute top-0 right-0 bottom-0 w-6 pointer-events-none bg-gradient-to-l from-black to-transparent"
           aria-hidden="true"
         />
       </div>
-
-      {/* Section navigation arrows (always on mobile; on desktop only when
-          reduced motion disables the auto-cycle) */}
-      <button
-        onClick={handleNextSection}
-        className={`${prefersReducedMotion ? '' : 'sm:hidden '}flex-shrink-0 w-8 h-full flex items-center justify-center text-gray-600 hover:text-white active:text-white active:bg-white/5 transition-colors`}
-        aria-label="Next section"
-      >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
-
-      {/* Section indicator - mobile only, max 6 dots */}
-      {tickerSections.length > 1 && (
-        <div className="sm:hidden flex-shrink-0 flex items-center gap-0.5 px-1.5 border-l border-[#333]">
-          <span className="text-[10px] text-gray-400 font-mono mr-1">
-            {activeSection + 1}/{tickerSections.length}
-          </span>
-        </div>
-      )}
     </div>
   );
 };
