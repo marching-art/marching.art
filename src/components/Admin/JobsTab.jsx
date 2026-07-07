@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { triggerDailyNews } from '../../api/functions';
+import { triggerDailyNews, triggerSeasonSummary } from '../../api/functions';
 import {
   AlertTriangle,
   Award,
@@ -22,6 +22,7 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
   const [loading, setLoading] = useState(null);
   const [testEmail, setTestEmail] = useState('');
   const [newsDay, setNewsDay] = useState('');
+  const [summaryDay, setSummaryDay] = useState('');
   const [sweepResult, setSweepResult] = useState(null);
 
   const jobs = [
@@ -144,6 +145,32 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
     }
   };
 
+  const handleTriggerSeasonSummary = async () => {
+    const day = parseInt(summaryDay, 10);
+    if (!day || day < 15 || day > 49) return toast.error('Enter a valid day (15-49)');
+    if (!seasonData?.seasonUid) {
+      return toast.error('Season data not available');
+    }
+    setLoading('seasonSummary');
+    try {
+      const result = await triggerSeasonSummary({
+        seasonId: seasonData.seasonUid,
+        dataDocId: seasonData.dataDocId,
+        throughDay: day,
+      });
+      if (result?.data?.success) {
+        toast.success(`Season summary generated for Day ${day}`);
+        setSummaryDay('');
+      } else {
+        toast.error(result?.data?.error || 'Not enough season data for that day');
+      }
+    } catch (error) {
+      toast.error(error.message || 'Failed to generate season summary');
+    } finally {
+      setLoading(null);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* News Generation - Trigger for specific day */}
@@ -174,6 +201,40 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
                 <Newspaper className="w-3 h-3" />
               )}
               {loading === 'newsGen' ? 'Generating...' : 'Generate'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Season Summary (Article 6) - manual generate/backfill for a dark day */}
+      <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+        <SectionHeader title="Season Summary Article" icon={BookOpen} />
+        <div className="p-3">
+          <p className="text-[11px] text-gray-500 mb-2">
+            Generate the season-to-date summary (Article 6) for a day (15-49). Auto-publishes on
+            dark days; use this to backfill a day already scored or to test.
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="number"
+              min="15"
+              max="49"
+              placeholder="Day #"
+              value={summaryDay}
+              onChange={(e) => setSummaryDay(e.target.value)}
+              className="w-20 px-3 py-2 bg-[#111] border border-[#333] text-xs text-white font-data tabular-nums focus:outline-none focus:border-[#0057B8]"
+            />
+            <button
+              onClick={handleTriggerSeasonSummary}
+              disabled={loading === 'seasonSummary' || !summaryDay || !seasonData}
+              className="flex items-center gap-1.5 h-9 px-3 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] border border-[#0057B8]/20 hover:bg-[#0057B8] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {loading === 'seasonSummary' ? (
+                <RefreshCw className="w-3 h-3 animate-spin" />
+              ) : (
+                <BookOpen className="w-3 h-3" />
+              )}
+              {loading === 'seasonSummary' ? 'Generating...' : 'Generate'}
             </button>
           </div>
         </div>
