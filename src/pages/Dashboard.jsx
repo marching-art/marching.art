@@ -354,6 +354,7 @@ const Dashboard = () => {
                 <SeasonScorecard
                   themeClass={equippedCardTheme?.cardClass}
                   onShowConcept={() => setShowConceptModal(true)}
+                  showConcept={activeCorps.showConcept}
                   score={userCorpsScore}
                   rank={userCorpsRank}
                   rankChange={userRankChange}
