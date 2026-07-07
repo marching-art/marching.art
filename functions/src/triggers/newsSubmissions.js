@@ -320,15 +320,24 @@ exports.approveSubmission = onCall(
         }
       }
 
-      // Create the published article in news_hub
-      // User submissions go to a "community" subcollection
-      const articlePath = `news_hub/${seasonId}/community/article_${submissionId}`;
+      // Publish into the day's "articles" subcollection so the article surfaces
+      // in the news feed. getRecentNews/getNewsFeedHttp read via a collection-group
+      // query on `articles` (news_hub/{seasonId}/days/day_{n}/articles/{type}); a
+      // document parked in a separate `community` subcollection is never queried,
+      // which is why approved submissions previously vanished. The composite id the
+      // feed derives (`{seasonId}_day_{n}_community_{submissionId}`) also round-trips
+      // through resolveArticleById so the article's shared URL resolves.
+      const articleType = `community_${submissionId}`;
+      const articlePath = `news_hub/${seasonId}/days/day_${currentDay}/articles/${articleType}`;
 
       const publishedArticle = {
-        type: "community_submission",
+        type: articleType,
         submissionId,
         reportDay: currentDay,
-        createdAt: submission.createdAt,
+        // Order the feed by publish time so a freshly approved article lands at the
+        // top rather than being buried at its original (possibly days-old) submission date.
+        createdAt: new Date(),
+        submittedAt: submission.createdAt,
         publishedAt: new Date(),
         updatedAt: new Date(),
 

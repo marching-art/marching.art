@@ -4,7 +4,7 @@
 // Redesigned with rich Trophy Case, Season Timeline, and gamification
 // Laws: No glow, no shadow, grid layout, expandable sections
 
-import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { User, Crown, Coins, Heart, MessageCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -19,12 +19,27 @@ import { ModalLoadingFallback } from '../components/ui';
 import PendingLeagueInvitations from '../components/Profile/PendingLeagueInvitations';
 import { generateCorpsAvatar } from '../api/functions';
 import { CORPS_CLASS_ORDER, resolveCorpsForClass } from '../utils/corps';
+import { lazyWithRetry } from '../utils/lazyWithRetry';
 
-// OPTIMIZATION #9: Lazy-load UniformDesignModal (794 lines) to reduce initial bundle
-const UniformDesignModal = lazy(() => import('../components/modals/UniformDesignModal'));
-const ProfileEditModal = lazy(() => import('../components/modals/ProfileEditModal'));
-const LeagueInviteModal = lazy(() => import('../components/modals/LeagueInviteModal'));
-const CorpsCoinModal = lazy(() => import('../components/modals/CorpsCoinModal'));
+// OPTIMIZATION #9: Lazy-load UniformDesignModal (794 lines) to reduce initial bundle.
+// lazyWithRetry (not raw React.lazy) so a stale hashed chunk after a deploy
+// self-recovers with one reload instead of crashing the page error boundary.
+const UniformDesignModal = lazyWithRetry(
+  () => import('../components/modals/UniformDesignModal'),
+  'UniformDesignModal'
+);
+const ProfileEditModal = lazyWithRetry(
+  () => import('../components/modals/ProfileEditModal'),
+  'ProfileEditModal'
+);
+const LeagueInviteModal = lazyWithRetry(
+  () => import('../components/modals/LeagueInviteModal'),
+  'LeagueInviteModal'
+);
+const CorpsCoinModal = lazyWithRetry(
+  () => import('../components/modals/CorpsCoinModal'),
+  'CorpsCoinModal'
+);
 import SettingsModal from '../components/Profile/SettingsModal';
 
 // =============================================================================

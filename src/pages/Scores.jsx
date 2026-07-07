@@ -4,7 +4,7 @@
 // High-density data grid for scores with caption breakdowns (GE, VIS, MUS)
 // Laws: App Shell, Pill Tab Segmented Control, High-Density Tables, no glow
 
-import React, { useState, useMemo, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Calendar, Activity, Archive } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -21,9 +21,11 @@ import {
   SoundSportMedalList,
   ClassStandingsGrid,
 } from './ScoresParts';
+import { lazyWithRetry } from '../utils/lazyWithRetry';
 
-// Lazy-load Hall of Champions — only loaded if the user opens that tab
-const HallOfChampions = lazy(() => import('./HallOfChampions'));
+// Lazy-load Hall of Champions — only loaded if the user opens that tab.
+// lazyWithRetry recovers from stale-chunk 404s after a deploy (see utils/lazyWithRetry).
+const HallOfChampions = lazyWithRetry(() => import('./HallOfChampions'), 'HallOfChampionsTab');
 
 // =============================================================================
 // CONSTANTS
