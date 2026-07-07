@@ -1,5 +1,6 @@
 // src/pages/NotFound.jsx
-// Enhanced 404 Page with tactical/diegetic styling
+// 404 page styled to match the ESPN-style professional dark design system:
+// charcoal surfaces, ESPN-blue primary actions, no gradients / glow / shadow.
 import React, { startTransition } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { m } from 'framer-motion';
@@ -13,63 +14,58 @@ const NotFound = () => {
   const shouldReduceMotion = useShouldReduceMotion();
 
   return (
-    <div className="min-h-screen bg-charcoal-950 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background Effects */}
-      <div className="absolute inset-0">
-        {/* Grid Pattern */}
-        <div
-          className="absolute inset-0 opacity-[0.02]"
-          style={{
-            backgroundImage: `
-              linear-gradient(rgba(234, 179, 8, 0.5) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(234, 179, 8, 0.5) 1px, transparent 1px)
-            `,
-            backgroundSize: '60px 60px',
-          }}
-        />
-        {/* Radial Gradient */}
-        <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-charcoal-950" />
-      </div>
+    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Subtle grid pattern */}
+      <div
+        className="absolute inset-0 opacity-[0.03] pointer-events-none"
+        style={{
+          backgroundImage: `
+            linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px)
+          `,
+          backgroundSize: '60px 60px',
+        }}
+      />
 
-      {/* Giant Watermark */}
+      {/* Giant watermark */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
         <span
-          className="font-black text-cream/[0.02] uppercase leading-none whitespace-nowrap"
+          className="font-black text-white/[0.03] uppercase leading-none whitespace-nowrap"
           style={{ fontSize: 'clamp(8rem, 30vw, 20rem)' }}
         >
           404
         </span>
       </div>
 
-      {/* Scanning Line - skip on mobile */}
+      {/* Scanning line - skip when reduced motion is requested */}
       {!shouldReduceMotion && (
         <m.div
-          className="absolute inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-red-500/40 to-transparent pointer-events-none"
+          className="absolute inset-x-0 h-px bg-[#0057B8]/40 pointer-events-none"
           initial={{ top: '10%' }}
           animate={{ top: ['10%', '90%', '10%'] }}
           transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
         />
       )}
 
-      {/* Corner Decorations */}
-      <div className="absolute top-8 left-8 w-16 h-16 border-l-2 border-t-2 border-red-500/30" />
-      <div className="absolute top-8 right-8 w-16 h-16 border-r-2 border-t-2 border-red-500/30" />
-      <div className="absolute bottom-8 left-8 w-16 h-16 border-l-2 border-b-2 border-red-500/30" />
-      <div className="absolute bottom-8 right-8 w-16 h-16 border-r-2 border-b-2 border-red-500/30" />
+      {/* Corner decorations */}
+      <div className="absolute top-8 left-8 w-16 h-16 border-l-2 border-t-2 border-white/10" />
+      <div className="absolute top-8 right-8 w-16 h-16 border-r-2 border-t-2 border-white/10" />
+      <div className="absolute bottom-8 left-8 w-16 h-16 border-l-2 border-b-2 border-white/10" />
+      <div className="absolute bottom-8 right-8 w-16 h-16 border-r-2 border-b-2 border-white/10" />
 
-      {/* Main Content */}
+      {/* Main content */}
       <m.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="relative z-10 text-center max-w-lg mx-auto"
       >
-        {/* Status Badge */}
+        {/* Status badge */}
         <m.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/30 rounded-full mb-6"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/30 rounded-sm mb-6"
         >
           <AlertTriangle className="w-4 h-4 text-red-400" />
           <span className="text-xs font-mono text-red-400 uppercase tracking-widest">
@@ -77,22 +73,22 @@ const NotFound = () => {
           </span>
         </m.div>
 
-        {/* 404 Number */}
+        {/* 404 number */}
         <m.h1
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1, type: 'spring', stiffness: 100 }}
-          className="text-8xl sm:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-b from-cream via-cream/80 to-cream/20 mb-4"
+          className="text-8xl sm:text-9xl font-black text-white mb-4"
         >
           404
         </m.h1>
 
-        {/* Error Title */}
+        {/* Error title */}
         <m.h2
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="text-xl sm:text-2xl font-bold text-cream mb-2 uppercase tracking-wide"
+          className="text-xl sm:text-2xl font-bold text-white mb-2 uppercase tracking-wide"
         >
           Route Not Found
         </m.h2>
@@ -102,14 +98,14 @@ const NotFound = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="text-cream/60 mb-8 font-mono text-sm"
+          className="text-gray-400 mb-8 font-mono text-sm"
         >
           The requested page doesn't exist or has been moved.
           <br className="hidden sm:block" />
           Let's get you back on track.
         </m.p>
 
-        {/* Action Buttons */}
+        {/* Action buttons */}
         <m.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -118,69 +114,69 @@ const NotFound = () => {
         >
           <button
             onClick={() => startTransition(() => navigate(-1))}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-charcoal-800 border border-cream/20 rounded-lg text-cream font-semibold hover:bg-charcoal-700 hover:border-cream/30 transition-all"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-transparent border border-white/20 rounded-sm text-white font-semibold hover:bg-white/5 hover:border-white/40 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Go Back
           </button>
           <Link
             to="/"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-yellow-500 text-charcoal-900 rounded-lg font-bold uppercase hover:bg-yellow-400 transition-colors shadow-[0_0_15px_rgba(234,179,8,0.2)]"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#0057B8] border border-[#0057B8] text-white rounded-sm font-semibold uppercase hover:bg-[#0057B8]/90 transition-colors"
           >
             <Home className="w-4 h-4" />
             Return Home
           </Link>
         </m.div>
 
-        {/* Quick Links */}
+        {/* Quick links */}
         <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}
-          className="mt-10 pt-6 border-t border-cream/10"
+          className="mt-10 pt-6 border-t border-[#333]"
         >
-          <p className="text-xs text-cream/40 mb-3 font-mono uppercase tracking-wider">
+          <p className="text-xs text-gray-500 mb-3 font-mono uppercase tracking-wider">
             Quick Links
           </p>
           <div className="flex flex-wrap gap-2 justify-center">
             <Link
               to="/dashboard"
-              className="px-3 py-1.5 text-xs text-cream/60 hover:text-cream bg-charcoal-900 hover:bg-charcoal-800 rounded border border-cream/10 hover:border-cream/20 transition-all"
+              className="px-3 py-1.5 text-xs text-gray-400 hover:text-white bg-[#1a1a1a] hover:bg-[#222] rounded-sm border border-[#333] hover:border-[#555] transition-colors"
             >
               Dashboard
             </Link>
             <Link
               to="/schedule"
-              className="px-3 py-1.5 text-xs text-cream/60 hover:text-cream bg-charcoal-900 hover:bg-charcoal-800 rounded border border-cream/10 hover:border-cream/20 transition-all"
+              className="px-3 py-1.5 text-xs text-gray-400 hover:text-white bg-[#1a1a1a] hover:bg-[#222] rounded-sm border border-[#333] hover:border-[#555] transition-colors"
             >
               Schedule
             </Link>
             <Link
               to="/scores"
-              className="px-3 py-1.5 text-xs text-cream/60 hover:text-cream bg-charcoal-900 hover:bg-charcoal-800 rounded border border-cream/10 hover:border-cream/20 transition-all"
+              className="px-3 py-1.5 text-xs text-gray-400 hover:text-white bg-[#1a1a1a] hover:bg-[#222] rounded-sm border border-[#333] hover:border-[#555] transition-colors"
             >
               Scores
             </Link>
             <Link
               to="/leagues"
-              className="px-3 py-1.5 text-xs text-cream/60 hover:text-cream bg-charcoal-900 hover:bg-charcoal-800 rounded border border-cream/10 hover:border-cream/20 transition-all"
+              className="px-3 py-1.5 text-xs text-gray-400 hover:text-white bg-[#1a1a1a] hover:bg-[#222] rounded-sm border border-[#333] hover:border-[#555] transition-colors"
             >
               Leagues
             </Link>
           </div>
         </m.div>
 
-        {/* Technical Footer */}
+        {/* Technical footer */}
         <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7 }}
-          className="mt-8 flex items-center justify-center gap-4 text-[9px] font-mono text-cream/20 uppercase tracking-widest"
+          className="mt-8 flex items-center justify-center gap-4 text-[9px] font-mono text-gray-600 uppercase tracking-widest"
         >
           <span>Error: ENOENT</span>
-          <span className="text-red-500/40">|</span>
+          <span className="text-gray-700">|</span>
           <span>Route: {window.location.pathname}</span>
-          <span className="text-red-500/40">|</span>
+          <span className="text-gray-700">|</span>
           <span>Status: 404</span>
         </m.div>
       </m.div>
