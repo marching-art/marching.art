@@ -134,6 +134,9 @@ module.exports = {
         'fade-up': 'fadeUp 0.5s ease-out',
         'fade-in': 'fadeIn 0.3s ease-out',
         'slide-in': 'slideIn 0.4s ease-out',
+        // Continuous horizontal ticker scroll. Duration is set inline per
+        // instance (scaled to content width) so speed stays consistent.
+        marquee: 'marquee linear infinite',
         shimmer: 'shimmer 2s linear infinite',
         'spin-slow': 'spin 8s linear infinite',
         'bounce-slow': 'bounce 2s infinite',
@@ -156,6 +159,13 @@ module.exports = {
         slideIn: {
           '0%': { transform: 'translateX(-100%)' },
           '100%': { transform: 'translateX(0)' },
+        },
+        // Track holds two identical copies of the ticker content side by side;
+        // translating by -50% scrolls exactly one copy width, so the loop is
+        // seamless.
+        marquee: {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(-50%)' },
         },
         slideInBottom: {
           '0%': { opacity: '0', transform: 'translateY(12px)' },
