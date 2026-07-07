@@ -5,8 +5,8 @@
 // were processed. It is a season-to-date state of the union built entirely from
 // the fantasy_recaps already on record: overall placement and rivalries in each
 // class, comparisons of combined GE / combined Visual / combined Music, show
-// themes and design choices, and a deep dive into SoundSport and Best-in-Show
-// awards to date.
+// themes and design choices, the show-win (first-place) leaders in each class,
+// and a deep dive into the SoundSport Best-in-Show awards to date.
 //
 // INTEGRITY: this article must NEVER discuss individual caption results
 // (GE1/GE2/VP/VA/CG/B/MA/P) or reveal any director's specific lineup picks —
@@ -61,17 +61,29 @@ function getSoundSportRating(score) {
  */
 function aggregateSeason(recaps) {
   const byCorps = new Map();
-  // Per (day, eventName) competitive winner tally = "Best in Show" for that show.
-  const showWinners = new Map(); // corpsKey -> count
-  // Per day SoundSport top scorer = SoundSport Best in Show for that showcase.
-  const soundSportBestInShow = new Map(); // corpsKey -> count
+  // Win tallies, counted ONCE PER SHOW (event), not per day. A single day can
+  // hold several shows (e.g. a regional weekend), so the unit is the individual
+  // show — identified by (day, show index) so it is stable even when two shows on
+  // a day share (or lack) an event name.
+  //   - Competitive: a "show win" = first place WITHIN A CLASS at a show. Per
+  //     class (not a single overall winner) so it is meaningful in every class;
+  //     otherwise World Class would sweep every one. This is a placement, not the
+  //     "Best in Show" award.
+  //   - SoundSport: "Best in Show" is the genuine SoundSport award — the top
+  //     SoundSport ensemble at a showcase (ratings format, scores never shown).
+  const showWinners = new Map(); // corpsKey -> competitive first-place (show win) count
+  const soundSportBestInShow = new Map(); // corpsKey -> SoundSport Best-in-Show count
 
   for (const recap of recaps) {
     const day = recap.offSeasonDay;
-    const dayCompetitiveByShow = new Map(); // eventName -> best {key,total}
-    let daySoundSportBest = null; // {key, total}
 
-    for (const show of recap.shows || []) {
+    (recap.shows || []).forEach((show, showIdx) => {
+      // Stable per-event identity. Every result in this show shares it, so
+      // best-in-show and head-to-head rivalry math all agree on what "a show" is.
+      const showId = `${day}::${showIdx}`;
+      const topByClass = new Map(); // corpsClass -> { key, total } — class winner at this show
+      let topSoundSport = null; // { key, total }
+
       for (const r of show.results || []) {
         if (!r || !r.corpsClass || !r.corpsName) continue;
         const key = `${r.uid || r.corpsName}_${r.corpsClass}`;
@@ -88,14 +100,16 @@ function aggregateSeason(recaps) {
           });
         }
         const agg = byCorps.get(key);
-        // Latest-day metadata wins (names/hometowns can be edited mid-season).
-        if (agg.entries.length === 0 || day >= agg.entries[agg.entries.length - 1].day) {
-          agg.corpsName = r.corpsName;
-          agg.displayName = r.displayName || agg.displayName;
-          agg.hometown = r.location || agg.hometown;
-        }
+        // Recaps are processed oldest-first and shows in array order, so the most
+        // recently seen entry is always the latest — take its metadata (names /
+        // hometowns can be edited mid-season).
+        agg.corpsName = r.corpsName;
+        agg.displayName = r.displayName || agg.displayName;
+        agg.hometown = r.location || agg.hometown;
         agg.entries.push({
           day,
+          showIdx,
+          showId,
           eventName: show.eventName || null,
           total,
           ge: Number.isFinite(r.geScore) ? r.geScore : null,
@@ -104,32 +118,30 @@ function aggregateSeason(recaps) {
         });
 
         if (r.corpsClass === "soundSport") {
-          if (!daySoundSportBest || total > daySoundSportBest.total) {
-            daySoundSportBest = { key, total };
-          }
+          if (!topSoundSport || total > topSoundSport.total) topSoundSport = { key, total };
         } else {
-          const evt = show.eventName || "Unspecified";
-          const cur = dayCompetitiveByShow.get(evt);
-          if (!cur || total > cur.total) dayCompetitiveByShow.set(evt, { key, total });
+          const cur = topByClass.get(r.corpsClass);
+          if (!cur || total > cur.total) topByClass.set(r.corpsClass, { key, total });
         }
       }
-    }
 
-    for (const winner of dayCompetitiveByShow.values()) {
-      showWinners.set(winner.key, (showWinners.get(winner.key) || 0) + 1);
-    }
-    if (daySoundSportBest) {
-      soundSportBestInShow.set(
-        daySoundSportBest.key,
-        (soundSportBestInShow.get(daySoundSportBest.key) || 0) + 1
-      );
-    }
+      // One show win per class (the top corps in each competitive class takes
+      // first place at that show), plus the SoundSport Best in Show for the top
+      // SoundSport ensemble (ratings-only, so it is a recognition not a score).
+      for (const winner of topByClass.values()) {
+        showWinners.set(winner.key, (showWinners.get(winner.key) || 0) + 1);
+      }
+      if (topSoundSport) {
+        soundSportBestInShow.set(topSoundSport.key, (soundSportBestInShow.get(topSoundSport.key) || 0) + 1);
+      }
+    });
   }
 
   // Finalize per-corps derived stats.
   const corps = [];
   for (const agg of byCorps.values()) {
-    const sorted = [...agg.entries].sort((a, b) => a.day - b.day);
+    // Order by day then within-day show index so "latest" is the true most-recent show.
+    const sorted = [...agg.entries].sort((a, b) => (a.day - b.day) || (a.showIdx - b.showIdx));
     const totals = sorted.map(e => e.total);
     const geVals = sorted.map(e => e.ge).filter(v => Number.isFinite(v));
     const visVals = sorted.map(e => e.visual).filter(v => Number.isFinite(v));
@@ -157,8 +169,10 @@ function aggregateSeason(recaps) {
 
 /**
  * Detect rivalries within a competitive class: pairs that have traded places
- * across shared competition days, or that sit within a tight season-average
- * margin of each other. Considers only the top of each class to stay cheap.
+ * across shared SHOWS (not days — two corps can meet at several shows in one
+ * day), or that sit within a tight season-average margin of each other.
+ * Head-to-head is keyed on the same per-show identity as best-in-show, so the
+ * two never disagree. Considers only the top of each class to stay cheap.
  */
 function detectRivalries(classCorps) {
   const pool = [...classCorps]
@@ -170,35 +184,35 @@ function detectRivalries(classCorps) {
     for (let j = i + 1; j < pool.length; j++) {
       const a = pool[i];
       const b = pool[j];
-      // Head-to-head over days both competed.
-      const bByDay = new Map(b.entries.map(e => [e.day, e.total]));
-      let sharedDays = 0;
+      // Head-to-head over the individual shows both competed at (by showId).
+      const bByShow = new Map(b.entries.map(e => [e.showId, e.total]));
+      let sharedShows = 0;
       let aWins = 0;
       let bWins = 0;
       let marginSum = 0;
       for (const e of a.entries) {
-        if (!bByDay.has(e.day)) continue;
-        sharedDays++;
-        const bt = bByDay.get(e.day);
+        if (!bByShow.has(e.showId)) continue;
+        sharedShows++;
+        const bt = bByShow.get(e.showId);
         marginSum += Math.abs(e.total - bt);
         if (e.total > bt) aWins++;
         else if (bt > e.total) bWins++;
       }
-      if (sharedDays < 2) continue;
-      const avgMargin = marginSum / sharedDays;
+      if (sharedShows < 2) continue;
+      const avgMargin = marginSum / sharedShows;
       const flipped = aWins > 0 && bWins > 0;
       if (!flipped && avgMargin > 1.0) continue;
       rivalries.push({
         corpsA: a.corpsName,
         corpsB: b.corpsName,
-        sharedDays,
+        sharedShows,
         aWins,
         bWins,
         avgMargin,
         flipped,
         // Ranking weight: flipped lead is the strongest rivalry signal, then a
         // tighter average margin, then a longer shared history.
-        weight: (flipped ? 1000 : 0) + Math.max(0, 200 - avgMargin * 100) + sharedDays,
+        weight: (flipped ? 1000 : 0) + Math.max(0, 200 - avgMargin * 100) + sharedShows,
       });
     }
   }
@@ -293,8 +307,8 @@ async function generateSeasonSummaryArticle({ db, seasonId, dataDocId, throughDa
       corpsA: r.corpsA,
       corpsB: r.corpsB,
       note: r.flipped
-        ? `have traded the lead across ${r.sharedDays} shared shows (${r.aWins}-${r.bWins}), never separated by more than a hair`
-        : `separated by an average of ${r.avgMargin.toFixed(2)} across ${r.sharedDays} shared shows`,
+        ? `have traded the lead across ${r.sharedShows} shared shows (${r.aWins}-${r.bWins}), never separated by more than a hair`
+        : `separated by an average of ${r.avgMargin.toFixed(2)} across ${r.sharedShows} shared shows`,
     }));
     classBlocks.push({ classKey, label: CLASS_LABELS[classKey], standings, rivalries });
   }
@@ -310,12 +324,17 @@ async function generateSeasonSummaryArticle({ db, seasonId, dataDocId, throughDa
     .map(rating => ({ rating, count: soundSport.filter(c => c.bestRating === rating).length }))
     .filter(r => r.count > 0);
 
-  // Competitive Best-in-Show (show-win) leaders across all competitive classes.
-  const showWinLeaders = competitive
-    .filter(c => c.showWins > 0)
-    .sort((a, b) => b.showWins - a.showWins)
-    .slice(0, 6)
-    .map(c => ({ corpsName: c.corpsName, classLabel: CLASS_LABELS[c.corpsClass], showWins: c.showWins }));
+  // Competitive show-win (first-place) leaders, top few PER CLASS so each class
+  // is represented rather than swept by the highest-scoring class.
+  const showWinLeaders = [];
+  for (const classKey of COMPETITIVE_CLASSES) {
+    const leaders = competitive
+      .filter(c => c.corpsClass === classKey && c.showWins > 0)
+      .sort((a, b) => b.showWins - a.showWins)
+      .slice(0, 3)
+      .map(c => ({ corpsName: c.corpsName, classLabel: CLASS_LABELS[classKey], showWins: c.showWins }));
+    showWinLeaders.push(...leaders);
+  }
 
   // The single top overall competitive ensemble anchors the article image.
   const topOverall = [...competitive].sort((a, b) => b.latestTotal - a.latestTotal)[0] || null;
@@ -339,7 +358,7 @@ async function generateSeasonSummaryArticle({ db, seasonId, dataDocId, throughDa
   // ---- Build the DATA block (nothing finer than combined families) ----
   const standingsText = classBlocks.map(block => {
     const lines = block.standings.slice(0, 8).map(s =>
-      `  ${s.rank}. "${s.corpsName}" (${s.director}) — latest total ${s.latestTotal.toFixed(3)} | season avg GE ${s.avgGE.toFixed(2)}, Visual ${s.avgVisual.toFixed(2)}, Music ${s.avgMusic.toFixed(2)} | ${s.showsCount} show${s.showsCount === 1 ? "" : "s"}${s.showWins > 0 ? `, ${s.showWins} best-in-show` : ""}`
+      `  ${s.rank}. "${s.corpsName}" (${s.director}) — latest total ${s.latestTotal.toFixed(3)} | season avg GE ${s.avgGE.toFixed(2)}, Visual ${s.avgVisual.toFixed(2)}, Music ${s.avgMusic.toFixed(2)} | ${s.showsCount} show${s.showsCount === 1 ? "" : "s"}${s.showWins > 0 ? `, ${s.showWins} show win${s.showWins === 1 ? "" : "s"}` : ""}`
     ).join("\n");
     const rivalryLines = block.rivalries.length
       ? "\n  RIVALRIES: " + block.rivalries.map(r => `"${r.corpsA}" vs "${r.corpsB}" (${r.note})`).join("; ")
@@ -354,8 +373,8 @@ async function generateSeasonSummaryArticle({ db, seasonId, dataDocId, throughDa
     : "No SoundSport participants this season.";
 
   const showWinsText = showWinLeaders.length
-    ? showWinLeaders.map(l => `"${l.corpsName}" (${l.classLabel}): ${l.showWins} best-in-show`).join(", ")
-    : "No competitive best-in-show titles recorded yet.";
+    ? showWinLeaders.map(l => `"${l.corpsName}" (${l.classLabel}): ${l.showWins} show win${l.showWins === 1 ? "" : "s"}`).join(", ")
+    : "No show wins recorded yet.";
 
   const conceptsText = programConcepts.length
     ? programConcepts.map(p => `- "${p.corpsName}": performing ${p.concept}`).join("\n")
@@ -365,7 +384,8 @@ async function generateSeasonSummaryArticle({ db, seasonId, dataDocId, throughDa
   const prompt = `You are a marching.art fantasy sports journalist writing a special SEASON-TO-DATE SUMMARY. There are no competitions to score today, so instead of a nightly recap you are taking stock of the whole fantasy season so far — through Day ${throughDay}, across ${daysScored} scored days. These are FANTASY ensembles run by real users.
 
 WHAT THIS ARTICLE IS
-- A state-of-the-season overview: overall placement and the rivalries taking shape in each competitive class, how ensembles compare on their COMBINED General Effect, COMBINED Visual, and COMBINED Music scores, the show themes and design choices directors have committed to, and a look at the SoundSport and Best-in-Show story so far.
+- A state-of-the-season overview: overall placement and the rivalries taking shape in each competitive class, how ensembles compare on their COMBINED General Effect, COMBINED Visual, and COMBINED Music scores, the show themes and design choices directors have committed to, which ensembles have piled up the most show wins (first-place finishes), and the SoundSport Best-in-Show story so far.
+- TERMINOLOGY: In the competitive classes (World, Open, A), winning a show is a "show win" or "first place" — do NOT call it "Best in Show." "Best in Show" is a SoundSport-only award; use that phrase only for SoundSport.
 - A change of pace on a quiet day — reflective and big-picture, not a box score.
 
 HARD PRIVACY RULE (never violate)
@@ -386,10 +406,10 @@ Through Day ${throughDay} | ${daysScored} scored days${isLiveSeason ? " | LIVE s
 CLASS STANDINGS & RIVALRIES (ranked by latest total score — combined families only):
 ${standingsText}
 
-SOUNDSPORT & BEST-IN-SHOW TO DATE:
+SOUNDSPORT BEST-IN-SHOW TO DATE (Best in Show is a SoundSport award):
 ${soundSportText}
 
-COMPETITIVE BEST-IN-SHOW (show wins across the season): ${showWinsText}
+COMPETITIVE SHOW WINS — first-place finishes per class, season totals (a count of wins to date, NOT a list of individual shows; do NOT call these "Best in Show"): ${showWinsText}
 
 SHOW CONCEPTS (director-designed — the only theme information that exists):
 ${conceptsText}
@@ -404,7 +424,7 @@ ARTICLE REQUIREMENTS
   1. Overall placement in each competitive class, comparing ensembles on combined GE, combined Visual, and combined Music (never individual captions).
   2. The rivalries taking shape — who has traded places with whom, and how close it is.
   3. Show themes and design choices from the SHOW CONCEPTS block — what directors are going for artistically.
-  4. A deep dive into SoundSport and Best-in-Show to date (ratings only for SoundSport).
+  4. The show-win and SoundSport picture to date. For the competitive classes, treat show wins (first-place finishes) as a season-long ACHIEVEMENT COUNT — who has piled up the most first-places in their class and what that says about their consistency. Then cover the SoundSport Best-in-Show race (ratings-only). Reserve the phrase "Best in Show" for SoundSport; competitive wins are "show wins" or "first place." Do NOT recap or narrate individual shows one by one; this is a season summary, not a show-by-show log.
   Carry personality through sharp reading of the combined numbers and the season arc. No fabricated quotes, reactions, or feelings.
 - End with a specific, data-grounded observation about where the season stands — not a rhetorical question.`;
 
@@ -435,7 +455,7 @@ ARTICLE REQUIREMENTS
       bestInShowLeaders: soundSportLeaders,
       ratings: ratingCounts,
     },
-    bestInShow: showWinLeaders,
+    showWinLeaders,
   };
 
   // Image: the top overall competitive ensemble, like the fantasy-results

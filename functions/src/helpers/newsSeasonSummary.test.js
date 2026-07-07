@@ -59,7 +59,7 @@ describe("aggregateSeason", () => {
     assert.ok(Math.abs(byName.Aurora.avgVisual - 24.25) < 1e-9);
   });
 
-  test("tallies competitive best-in-show (show wins)", () => {
+  test("tallies competitive show wins (first place per class)", () => {
     // Aurora wins days 15,17,18; Borealis wins day 16.
     assert.strictEqual(byName.Aurora.showWins, 3);
     assert.strictEqual(byName.Borealis.showWins, 1);
@@ -93,7 +93,7 @@ describe("detectRivalries", () => {
       ["Aurora", "Borealis"]
     );
     assert.strictEqual(top.flipped, true);
-    assert.strictEqual(top.sharedDays, 4);
+    assert.strictEqual(top.sharedShows, 4);
   });
 
   test("does not invent a rivalry with a distant, non-competitive corps", () => {
@@ -101,5 +101,84 @@ describe("detectRivalries", () => {
     const rivalries = detectRivalries(wcCorps);
     const involvesComet = rivalries.some((r) => r.corpsA === "Comet" || r.corpsB === "Comet");
     assert.strictEqual(involvesComet, false);
+  });
+});
+
+describe("multiple shows on the same day (regression: show wins vs head-to-head)", () => {
+  // Two shows on Day 20. Nova wins Show 0; Pulse wins Show 1. They meet at both.
+  // Correct result: each has 1 show win, and their head-to-head is 1-1 over
+  // 2 shared SHOWS. The old per-day keying collapsed the day to a single meeting,
+  // which desynced the show-win tally from the rivalry record.
+  const twoShowDay = {
+    offSeasonDay: 20,
+    shows: [
+      { eventName: "Morning Regional", location: "V", results: [wc("n", "Nova", 81.0, 33, 24, 24), wc("p", "Pulse", 80.5, 32, 24, 24.5)] },
+      { eventName: "Evening Regional", location: "V", results: [wc("p", "Pulse", 82.0, 33, 25, 24), wc("n", "Nova", 81.5, 33, 24, 24.5)] },
+    ],
+  };
+  const corps = aggregateSeason([twoShowDay]);
+  const byName = Object.fromEntries(corps.map((c) => [c.corpsName, c]));
+
+  test("counts one show win per show, not one per day", () => {
+    assert.strictEqual(byName.Nova.showWins, 1); // won Show 0
+    assert.strictEqual(byName.Pulse.showWins, 1); // won Show 1
+    assert.strictEqual(byName.Nova.showsCount, 2);
+    assert.strictEqual(byName.Pulse.showsCount, 2);
+  });
+
+  test("head-to-head is per-show and agrees with the show-win split", () => {
+    const rivalries = detectRivalries(corps);
+    assert.strictEqual(rivalries.length, 1);
+    const r = rivalries[0];
+    assert.strictEqual(r.sharedShows, 2);
+    assert.strictEqual(r.flipped, true);
+    // 1-1: each corps won the show it topped — matching each having 1 show win.
+    assert.deepStrictEqual([r.aWins, r.bWins].sort(), [1, 1]);
+  });
+
+  test("latest total is the most recent show within the day", () => {
+    // Evening Regional (showIdx 1) is the latest; Pulse 82.0, Nova 81.5.
+    assert.strictEqual(byName.Pulse.latestTotal, 82.0);
+    assert.strictEqual(byName.Nova.latestTotal, 81.5);
+  });
+});
+
+describe("competitive show wins are per class (not a single overall winner)", () => {
+  const oc = (uid, name, total) => ({
+    uid, corpsName: name, displayName: `${uid}_dir`, corpsClass: "openClass",
+    location: "T", totalScore: total, geScore: 30, visualScore: 20, musicScore: 20,
+  });
+  const ac = (uid, name, total) => ({
+    uid, corpsName: name, displayName: `${uid}_dir`, corpsClass: "aClass",
+    location: "T", totalScore: total, geScore: 28, visualScore: 19, musicScore: 19,
+  });
+  // One show with all three competitive classes present. Each class's top corps
+  // should earn a show win — not just the overall (World Class) winner.
+  const mixed = {
+    offSeasonDay: 22,
+    shows: [
+      {
+        eventName: "Championship Preview",
+        location: "V",
+        results: [
+          wc("w1", "Titan", 80.0, 33, 24, 23), wc("w2", "Vertex", 78.0, 32, 23, 23),
+          oc("o1", "Meridian", 76.0), oc("o2", "Cascade", 74.0),
+          ac("a1", "Beacon", 71.0), ac("a2", "Summit", 70.0),
+        ],
+      },
+    ],
+  };
+  const byName = Object.fromEntries(aggregateSeason([mixed]).map((c) => [c.corpsName, c]));
+
+  test("each class's top corps earns a show win", () => {
+    assert.strictEqual(byName.Titan.showWins, 1); // World Class winner
+    assert.strictEqual(byName.Meridian.showWins, 1); // Open Class winner
+    assert.strictEqual(byName.Beacon.showWins, 1); // A Class winner
+  });
+
+  test("lower corps in each class earn none", () => {
+    assert.strictEqual(byName.Vertex.showWins, 0);
+    assert.strictEqual(byName.Cascade.showWins, 0);
+    assert.strictEqual(byName.Summit.showWins, 0);
   });
 });
