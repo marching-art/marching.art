@@ -93,7 +93,7 @@ describe("detectRivalries", () => {
       ["Aurora", "Borealis"]
     );
     assert.strictEqual(top.flipped, true);
-    assert.strictEqual(top.sharedDays, 4);
+    assert.strictEqual(top.sharedShows, 4);
   });
 
   test("does not invent a rivalry with a distant, non-competitive corps", () => {
@@ -101,5 +101,44 @@ describe("detectRivalries", () => {
     const rivalries = detectRivalries(wcCorps);
     const involvesComet = rivalries.some((r) => r.corpsA === "Comet" || r.corpsB === "Comet");
     assert.strictEqual(involvesComet, false);
+  });
+});
+
+describe("multiple shows on the same day (regression: best-in-show vs head-to-head)", () => {
+  // Two shows on Day 20. Nova wins Show 0; Pulse wins Show 1. They meet at both.
+  // Correct result: each has 1 best-in-show, and their head-to-head is 1-1 over
+  // 2 shared SHOWS. The old per-day keying collapsed the day to a single meeting,
+  // which desynced the best-in-show tally from the rivalry record.
+  const twoShowDay = {
+    offSeasonDay: 20,
+    shows: [
+      { eventName: "Morning Regional", location: "V", results: [wc("n", "Nova", 81.0, 33, 24, 24), wc("p", "Pulse", 80.5, 32, 24, 24.5)] },
+      { eventName: "Evening Regional", location: "V", results: [wc("p", "Pulse", 82.0, 33, 25, 24), wc("n", "Nova", 81.5, 33, 24, 24.5)] },
+    ],
+  };
+  const corps = aggregateSeason([twoShowDay]);
+  const byName = Object.fromEntries(corps.map((c) => [c.corpsName, c]));
+
+  test("counts one best-in-show per show, not one per day", () => {
+    assert.strictEqual(byName.Nova.showWins, 1); // won Show 0
+    assert.strictEqual(byName.Pulse.showWins, 1); // won Show 1
+    assert.strictEqual(byName.Nova.showsCount, 2);
+    assert.strictEqual(byName.Pulse.showsCount, 2);
+  });
+
+  test("head-to-head is per-show and agrees with the best-in-show split", () => {
+    const rivalries = detectRivalries(corps);
+    assert.strictEqual(rivalries.length, 1);
+    const r = rivalries[0];
+    assert.strictEqual(r.sharedShows, 2);
+    assert.strictEqual(r.flipped, true);
+    // 1-1: each corps won the show it topped — matching each having 1 best-in-show.
+    assert.deepStrictEqual([r.aWins, r.bWins].sort(), [1, 1]);
+  });
+
+  test("latest total is the most recent show within the day", () => {
+    // Evening Regional (showIdx 1) is the latest; Pulse 82.0, Nova 81.5.
+    assert.strictEqual(byName.Pulse.latestTotal, 82.0);
+    assert.strictEqual(byName.Nova.latestTotal, 81.5);
   });
 });
