@@ -50,35 +50,6 @@ import { useFirstVisit } from '../hooks/useFirstVisit';
 import { useSEO } from '../hooks/useSEO';
 
 // =============================================================================
-// DESKTOP NAV ITEM - mirrors GameShell's top-nav item so the home header reads
-// as the same app chrome. Shown only to signed-in users (see header below).
-// =============================================================================
-
-const DesktopNavItem = ({ to, icon: Icon, label, end = false }) => (
-  <NavLink
-    to={to}
-    end={end}
-    className={({ isActive }) =>
-      `relative flex items-center gap-2 px-3 py-2.5 min-h-touch text-sm font-medium transition-all duration-150 press-feedback ${
-        isActive ? 'text-white' : 'text-gray-400 hover:text-white'
-      }`
-    }
-  >
-    {({ isActive }) => (
-      <>
-        <Icon
-          className={`w-5 h-5 transition-colors duration-150 ${isActive ? 'text-yellow-400' : ''}`}
-        />
-        <span>{label}</span>
-        {isActive && (
-          <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-yellow-400 rounded-sm" />
-        )}
-      </>
-    )}
-  </NavLink>
-);
-
-// =============================================================================
 // LANDING PAGE COMPONENT
 // =============================================================================
 
