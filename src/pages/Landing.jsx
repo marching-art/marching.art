@@ -66,7 +66,9 @@ const DesktopNavItem = ({ to, icon: Icon, label, end = false }) => (
   >
     {({ isActive }) => (
       <>
-        <Icon className={`w-5 h-5 transition-colors duration-150 ${isActive ? 'text-yellow-400' : ''}`} />
+        <Icon
+          className={`w-5 h-5 transition-colors duration-150 ${isActive ? 'text-yellow-400' : ''}`}
+        />
         <span>{label}</span>
         {isActive && (
           <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-yellow-400 rounded-sm" />
