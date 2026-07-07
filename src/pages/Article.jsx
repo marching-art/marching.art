@@ -10,6 +10,9 @@ import { useParams, useLocation, Link } from 'react-router-dom';
 import { ArrowLeft, Flame, Share2, Loader2, AlertCircle, MessageCircle } from 'lucide-react';
 import ArticleReactions from '../components/Articles/ArticleReactions';
 import ArticleSiteHeader from '../components/Articles/ArticleSiteHeader';
+import BottomNav from '../components/BottomNav';
+import GuestActionBar from '../components/Landing/GuestActionBar';
+import { useAuth } from '../context/AuthContext';
 import ArticleSidebarAuth from '../components/Articles/ArticleSidebarAuth';
 import ArticleComments from '../components/Articles/ArticleComments';
 import { OptimizedImage } from '../components/ui/OptimizedImage';
@@ -40,6 +43,7 @@ import toast from 'react-hot-toast';
  */
 const Article = () => {
   useBodyScroll();
+  const { user } = useAuth();
   const { id } = useParams();
   const location = useLocation();
   const { tickerData, loading: tickerLoading } = useTickerData();
@@ -281,8 +285,9 @@ const Article = () => {
       {/* FIXED HEADER - Same as Landing */}
       <ArticleSiteHeader />
 
-      {/* SCROLLABLE CONTENT */}
-      <main className="flex-1 overflow-y-auto min-h-0 pb-20 md:pb-4">
+      {/* SCROLLABLE CONTENT - pb reserves space for the fixed bottom bar up to
+          lg (where the bar is hidden), so content clears it on tablets too. */}
+      <main className="flex-1 overflow-y-auto min-h-0 pb-24 lg:pb-4">
         <div className="max-w-[1920px] mx-auto p-4 lg:p-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* ============================================================= */}
@@ -520,6 +525,11 @@ const Article = () => {
 
       {/* YOUTUBE VIDEO MODAL */}
       <YouTubeModal videoModal={videoModal} onClose={closeVideoModal} onRetry={handleRetrySearch} />
+
+      {/* PERSISTENT MOBILE NAV - same auth-aware pattern as the home screen:
+          signed-in users get the app's 5-tab BottomNav, signed-out visitors get
+          the Demo / Sign In / Join conversion bar. Both are lg:hidden. */}
+      {user ? <BottomNav /> : <GuestActionBar />}
     </div>
   );
 };
