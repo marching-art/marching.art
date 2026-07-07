@@ -48,9 +48,7 @@ const ClassStandings = ({ block }) => (
               {s.rank}
             </span>
             <div className="min-w-0">
-              <div className="text-sm text-white truncate">
-                {s.namePlaceholder ? `${s.director}'s entry` : s.corpsName}
-              </div>
+              <div className="text-sm text-white truncate">{s.corpsName}</div>
               <div className="text-[11px] text-gray-500 truncate">
                 {s.director}
                 {s.showsCount ? ` · ${s.showsCount} show${s.showsCount === 1 ? '' : 's'}` : ''}

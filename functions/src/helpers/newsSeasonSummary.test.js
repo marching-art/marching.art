@@ -9,7 +9,6 @@ const {
   aggregateSeason,
   detectRivalries,
   getSoundSportRating,
-  isPlaceholderName,
 } = require("./newsSeasonSummary");
 
 // Helpers to build recap fixtures shaped exactly like commitDailyScoring writes.
@@ -32,19 +31,6 @@ const RECAPS = [
   show(17, [wc("u1", "Aurora", 81.2, 33, 24, 24.2), wc("u2", "Borealis", 81.0, 32, 25, 24), wc("u3", "Comet", 72.5, 29, 21, 22.5), ss("s2", "Embers", 76), ss("s1", "Sparks", 80)]),
   show(18, [wc("u1", "Aurora", 82.0, 33, 25, 24), wc("u2", "Borealis", 81.7, 33, 24, 24.7)]),
 ];
-
-describe("isPlaceholderName", () => {
-  test("flags unset / default names, accepts real ones", () => {
-    assert.strictEqual(isPlaceholderName(""), true);
-    assert.strictEqual(isPlaceholderName("   "), true);
-    assert.strictEqual(isPlaceholderName(null), true);
-    assert.strictEqual(isPlaceholderName("Unspecified"), true);
-    assert.strictEqual(isPlaceholderName("Unspecified Open"), true);
-    assert.strictEqual(isPlaceholderName("Unnamed"), true);
-    assert.strictEqual(isPlaceholderName("The Knights"), false);
-    assert.strictEqual(isPlaceholderName("Gulf Knights A"), false);
-  });
-});
 
 describe("getSoundSportRating", () => {
   test("maps scores to rating bands and rejects non-scores", () => {

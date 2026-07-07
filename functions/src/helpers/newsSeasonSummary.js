@@ -53,16 +53,6 @@ function getSoundSportRating(score) {
   return "Participation";
 }
 
-/**
- * True when a corps name is an unset placeholder ("Unspecified", blank, etc.).
- * The writer is told to refer to these ensembles by their director rather than
- * printing the placeholder as if it were a real name.
- */
-function isPlaceholderName(name) {
-  if (!name || typeof name !== "string") return true;
-  const t = name.trim();
-  return t.length === 0 || /^unspecified\b/i.test(t) || /^unnamed\b/i.test(t);
-}
 
 /**
  * Collapse every recap day (offSeasonDay <= throughDay) into per-corps season
@@ -283,9 +273,9 @@ async function generateSeasonSummaryArticle({ db, seasonId, dataDocId, throughDa
   }
 
   const corps = aggregateSeason(recaps);
-  // Only feature ensembles that have actually posted a real score. A corps that
-  // marched with an incomplete lineup lands in the recap with a 0.000 and would
-  // otherwise show up as a dead "0.000" row — exclude it from standings and prose.
+  // Feature every corps that has posted a real score. A corps sitting at 0.000
+  // (e.g. an incomplete lineup) is a data anomaly, not a competitor — leave it
+  // out rather than surfacing a dead 0.000 row.
   const competitive = corps.filter(c => COMPETITIVE_CLASSES.includes(c.corpsClass) && c.bestTotal > 0);
   const soundSport = corps.filter(c => c.corpsClass === "soundSport" && c.bestTotal > 0);
 
@@ -323,7 +313,6 @@ async function generateSeasonSummaryArticle({ db, seasonId, dataDocId, throughDa
       rank: i + 1,
       corpsName: c.corpsName,
       director: c.displayName || "Unknown",
-      namePlaceholder: isPlaceholderName(c.corpsName),
       latestTotal: Number(c.latestTotal.toFixed(3)),
       avgGE: Number(c.avgGE.toFixed(2)),
       avgVisual: Number(c.avgVisual.toFixed(2)),
@@ -398,9 +387,7 @@ async function generateSeasonSummaryArticle({ db, seasonId, dataDocId, throughDa
   const standingsText = classBlocks.map(block => {
     const n = block.standings.length;
     const lines = block.standings.slice(0, 8).map(s => {
-      const nameLabel = s.namePlaceholder
-        ? `${s.director}'s ${block.label} entry [UNNAMED corps — do NOT print "${s.corpsName}"; refer to it by its director]`
-        : `"${s.corpsName}" (${s.director})`;
+      const nameLabel = `"${s.corpsName}" (${s.director})`;
       const place = s.rank === 1 ? "leads the class" : `${s.gapToLeader.toFixed(3)} behind the leader`;
       const fams = [["GE", s.geRankInClass], ["Visual", s.visRankInClass], ["Music", s.musRankInClass]];
       const strongest = fams.reduce((a, b) => (b[1] < a[1] ? b : a));
@@ -454,7 +441,7 @@ ACCURACY RULES
 - Every ensemble name, director name, score, average, margin, count, class, rivalry, rating, and award below comes from the DATA block. Do not invent any of them. Quote numbers as written; do not recompute or re-round.
 - Program/show themes may be referenced ONLY for ensembles in a SHOW CONCEPTS block, exactly as described there. If there is no SHOW CONCEPTS block, do not discuss show design at all and do not speculate about why — simply omit the topic.
 - Director names are user display names — some are real names, some are handles ("elithecreature", "mike_42"). For handle-style names, refer via the ensemble ("the director behind Stellar Vista") rather than as a bare first name.
-- Some corps are UNNAMED (marked in the data). Never print the placeholder — refer to those ensembles by their director and class (e.g., "Chris's World Class entry"). Do not draw attention to the missing name.
+- Every ensemble name in the DATA block is a real, deliberate proper noun and the corps' actual chosen name — even one that reads like a generic word (e.g., "Unspecified", "Unspecified Open"). Print it verbatim, capitalized as a name, and treat it exactly like any other corps. NEVER interpret such a name as missing data, and never rephrase it into a lowercase description ("an unspecified ensemble"). "Unspecified" is the corps; write "Unspecified leads Open Class," not "an unspecified ensemble leads."
 
 ${NEWS_INTEGRITY_RULES}
 
@@ -496,7 +483,7 @@ ARTICLE REQUIREMENTS
     properties: {
       headline: { type: Type.STRING, description: "State-of-the-season headline naming a real ensemble. No hype words, no invented numbers, no individual captions." },
       summary: { type: Type.STRING, description: "2-3 sentence setup of the season-to-date picture and the top storyline." },
-      narrative: { type: Type.STRING, description: "550-800 word season summary that INTERPRETS the data rather than reciting the standings tables. Opens on a real lede, uses 4-6 short bolded Markdown lead-ins, and reads like a marching-arts columnist. Discusses ONLY combined GE / combined Visual / combined Music and totals — never individual captions and never any director's lineup picks. Every name, score, margin, count, rating, and award comes from the DATA block; unnamed corps are referred to by their director. SoundSport is ratings-only. Reserves 'Best in Show' for SoundSport; competitive wins are 'show wins'." },
+      narrative: { type: Type.STRING, description: "550-800 word season summary that INTERPRETS the data rather than reciting the standings tables. Opens on a real lede, uses 4-6 short bolded Markdown lead-ins, and reads like a marching-arts columnist. Discusses ONLY combined GE / combined Visual / combined Music and totals — never individual captions and never any director's lineup picks. Every name, score, margin, count, rating, and award comes from the DATA block, with each corps name printed verbatim as a proper noun (including generic-looking names like 'Unspecified'). SoundSport is ratings-only. Reserves 'Best in Show' for SoundSport; competitive wins are 'show wins'." },
     },
     required: ["headline", "summary", "narrative"],
   };
@@ -572,5 +559,4 @@ module.exports = {
   aggregateSeason,
   detectRivalries,
   getSoundSportRating,
-  isPlaceholderName,
 };
