@@ -4,28 +4,61 @@
 // Hero: Active Lineup Roster Table. Sidebar: Season Scorecard + Recent Results.
 // Laws: App Shell, 2/3 + 1/3 grid, data tables over cards, no glow
 
-import React, { useMemo, lazy, Suspense } from 'react';
+import React, { useMemo, Suspense } from 'react';
 import { Trophy, FileText } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { lazyWithRetry } from '../utils/lazyWithRetry';
 
 // OPTIMIZATION #9: Lazy-load large modal components to reduce initial bundle size
 // Prioritized by file size: CaptionSelectionModal (1007 lines), UniformDesignModal (794 lines),
 // NewsSubmissionModal (283 lines), ClassPurchaseModal (247 lines)
-const CaptionSelectionModal = lazy(
-  () => import('../components/CaptionSelection/CaptionSelectionModal')
+//
+// These use lazyWithRetry (not raw React.lazy) so that a stale hashed chunk
+// after a deploy self-recovers with a single reload instead of crashing into
+// the page error boundary. Installed mobile PWAs are the common victim: they
+// run cached entry code that imports an old chunk hash which 404s the first
+// time a not-yet-opened modal is triggered.
+const CaptionSelectionModal = lazyWithRetry(
+  () => import('../components/CaptionSelection/CaptionSelectionModal'),
+  'CaptionSelectionModal'
 );
-const SeasonSetupWizard = lazy(() => import('../components/SeasonSetupWizard'));
-const UniformDesignModal = lazy(() => import('../components/modals/UniformDesignModal'));
-const NewsSubmissionModal = lazy(() => import('../components/modals/NewsSubmissionModal'));
-const ClassPurchaseModal = lazy(() => import('../components/modals/ClassPurchaseModal'));
-const NewCorpsSlotModal = lazy(() => import('../components/modals/NewCorpsSlotModal'));
-const RenameDuplicateCorpsModal = lazy(
-  () => import('../components/modals/RenameDuplicateCorpsModal')
+const SeasonSetupWizard = lazyWithRetry(
+  () => import('../components/SeasonSetupWizard'),
+  'SeasonSetupWizard'
 );
-const StreakModal = lazy(() => import('../components/modals/StreakModal'));
-const CorpsCoinModal = lazy(() => import('../components/modals/CorpsCoinModal'));
-const SeasonRecapModal = lazy(() => import('../components/modals/SeasonRecapModal'));
-const ShowConceptModal = lazy(() => import('../components/modals/ShowConceptModal'));
+const UniformDesignModal = lazyWithRetry(
+  () => import('../components/modals/UniformDesignModal'),
+  'UniformDesignModal'
+);
+const NewsSubmissionModal = lazyWithRetry(
+  () => import('../components/modals/NewsSubmissionModal'),
+  'NewsSubmissionModal'
+);
+const ClassPurchaseModal = lazyWithRetry(
+  () => import('../components/modals/ClassPurchaseModal'),
+  'ClassPurchaseModal'
+);
+const NewCorpsSlotModal = lazyWithRetry(
+  () => import('../components/modals/NewCorpsSlotModal'),
+  'NewCorpsSlotModal'
+);
+const RenameDuplicateCorpsModal = lazyWithRetry(
+  () => import('../components/modals/RenameDuplicateCorpsModal'),
+  'RenameDuplicateCorpsModal'
+);
+const StreakModal = lazyWithRetry(() => import('../components/modals/StreakModal'), 'StreakModal');
+const CorpsCoinModal = lazyWithRetry(
+  () => import('../components/modals/CorpsCoinModal'),
+  'CorpsCoinModal'
+);
+const SeasonRecapModal = lazyWithRetry(
+  () => import('../components/modals/SeasonRecapModal'),
+  'SeasonRecapModal'
+);
+const ShowConceptModal = lazyWithRetry(
+  () => import('../components/modals/ShowConceptModal'),
+  'ShowConceptModal'
+);
 
 import {
   ClassUnlockCongratsModal,
