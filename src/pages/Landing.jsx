@@ -5,30 +5,30 @@
 // Laws: No marketing fluff, no parallax, no testimonials
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import {
   Trophy,
   Lock,
   Mail,
   AlertCircle,
-  ChevronRight,
   LayoutDashboard,
-  Award,
   User,
   LogOut,
   Flame,
-  Activity,
-  Settings,
   Zap,
   UserPlus,
   MessageCircle,
   Coins,
   Play,
+  Newspaper,
+  Calendar,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import { useProfileStore } from '../store/profileStore';
 import NewsFeed from '../components/Landing/NewsFeed';
+import GuestActionBar from '../components/Landing/GuestActionBar';
+import BottomNav from '../components/BottomNav';
 import HeroBanner from '../components/Landing/HeroBanner';
 import HowItWorks from '../components/Landing/HowItWorks';
 import SocialProofBar from '../components/Landing/SocialProofBar';
@@ -46,6 +46,33 @@ import { useLandingScores } from '../hooks/useLandingScores';
 import { useYoutubeSearch } from '../hooks/useYoutubeSearch';
 import { useFirstVisit } from '../hooks/useFirstVisit';
 import { useSEO } from '../hooks/useSEO';
+
+// =============================================================================
+// DESKTOP NAV ITEM - mirrors GameShell's top-nav item so the home header reads
+// as the same app chrome. Shown only to signed-in users (see header below).
+// =============================================================================
+
+const DesktopNavItem = ({ to, icon: Icon, label, end = false }) => (
+  <NavLink
+    to={to}
+    end={end}
+    className={({ isActive }) =>
+      `relative flex items-center gap-2 px-3 py-2.5 min-h-touch text-sm font-medium transition-all duration-150 press-feedback ${
+        isActive ? 'text-white' : 'text-gray-400 hover:text-white'
+      }`
+    }
+  >
+    {({ isActive }) => (
+      <>
+        <Icon className={`w-5 h-5 transition-colors duration-150 ${isActive ? 'text-yellow-400' : ''}`} />
+        <span>{label}</span>
+        {isActive && (
+          <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-yellow-400 rounded-sm" />
+        )}
+      </>
+    )}
+  </NavLink>
+);
 
 // =============================================================================
 // LANDING PAGE COMPONENT
@@ -199,45 +226,72 @@ const Landing = () => {
                 </Link>
               </div>
             )}
-            {/* Authenticated user - Show dashboard link on mobile */}
-            {user && (
+            {/* Authenticated user - Compact status chip on mobile.
+                Replaces the old oversized DASHBOARD button: navigation now lives
+                in the persistent BottomNav below, so the header only needs to
+                surface glanceable status (coins + level). Links to the dashboard
+                to preserve the one-tap path into the game. */}
+            {user && profile && (
               <Link
                 to="/dashboard"
-                className="min-h-[44px] px-5 bg-yellow-500 text-slate-900 font-semibold text-sm uppercase tracking-wide flex items-center justify-center rounded-lg hover:bg-yellow-400 active:bg-yellow-600 active:scale-95 transition-all duration-150 press-feedback-strong lg:hidden"
+                aria-label={`Dashboard — ${(profile.corpsCoin || 0).toLocaleString()} coins, level ${profile.xpLevel || 1}`}
+                className="lg:hidden flex items-center gap-2 min-h-[44px] pl-3 pr-2 rounded-lg bg-white/[0.04] border border-[#333] active:scale-95 transition-all duration-150 press-feedback"
               >
-                Dashboard
+                <span className="flex items-center gap-1 text-sm font-bold text-yellow-500 font-data tabular-nums">
+                  <Coins className="w-3.5 h-3.5" />
+                  {(profile.corpsCoin || 0).toLocaleString()}
+                </span>
+                <span className="flex items-center gap-1 text-sm font-bold text-purple-400 font-data tabular-nums pl-2 border-l border-[#333]">
+                  <Zap className="w-3.5 h-3.5" />
+                  {profile.xpLevel || 1}
+                </span>
               </Link>
             )}
             {/* Desktop links */}
-            <div className="hidden lg:flex items-center">
-              <a
-                href="https://discord.gg/YvFRJ97A5H"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-[#5865F2] active:text-white transition-colors press-feedback flex items-center gap-1.5"
-              >
-                <MessageCircle className="w-4 h-4" />
-                Discord
-              </a>
-              <Link
-                to="/privacy"
-                className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center"
-              >
-                Privacy
-              </Link>
-              <Link
-                to="/terms"
-                className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center"
-              >
-                Terms
-              </Link>
-            </div>
+            {user ? (
+              /* Signed in: the app's primary navigation, matching GameShell's top
+                 nav. Without this the home screen would be the only page where a
+                 desktop user has no way into Dashboard/Schedule/Scores/Profile
+                 (previously hidden inside the sidebar widget's quick-links). */
+              <nav className="hidden lg:flex items-center gap-1" aria-label="Primary">
+                <DesktopNavItem to="/" icon={Newspaper} label="News" end />
+                <DesktopNavItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
+                <DesktopNavItem to="/schedule" icon={Calendar} label="Schedule" />
+                <DesktopNavItem to="/scores" icon={Trophy} label="Scores" />
+                <DesktopNavItem to="/profile" icon={User} label="Profile" />
+              </nav>
+            ) : (
+              /* Signed out: keep the lightweight informational links. */
+              <div className="hidden lg:flex items-center">
+                <a
+                  href="https://discord.gg/YvFRJ97A5H"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-[#5865F2] active:text-white transition-colors press-feedback flex items-center gap-1.5"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  Discord
+                </a>
+                <Link
+                  to="/privacy"
+                  className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center"
+                >
+                  Privacy
+                </Link>
+                <Link
+                  to="/terms"
+                  className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center"
+                >
+                  Terms
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </header>
 
       {/* SCROLLABLE CONTENT */}
-      <main className="flex-1 pb-24 md:pb-4">
+      <main className="flex-1 pb-24 lg:pb-4">
         <div className="max-w-[1920px] mx-auto p-4 lg:p-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6">
             {/* ============================================================= */}
@@ -317,41 +371,10 @@ const Landing = () => {
                       )}
                     </div>
 
-                    {/* Quick Links - hidden on mobile to save space, show on desktop */}
-                    <div className="hidden lg:block p-2 space-y-0.5">
-                      <Link
-                        to="/dashboard"
-                        className="flex items-center gap-3 px-3 min-h-[44px] rounded-sm hover:bg-white/[0.05] active:bg-white/[0.08] transition-colors group press-feedback"
-                      >
-                        <LayoutDashboard className="w-5 h-5 text-[#0057B8]" />
-                        <span className="text-sm text-white font-medium">Dashboard</span>
-                        <ChevronRight className="w-4 h-4 text-gray-600 ml-auto group-hover:text-gray-400" />
-                      </Link>
-                      <Link
-                        to="/leagues"
-                        className="flex items-center gap-3 px-3 min-h-[44px] rounded-sm hover:bg-white/[0.05] active:bg-white/[0.08] transition-colors group press-feedback"
-                      >
-                        <Award className="w-5 h-5 text-orange-500" />
-                        <span className="text-sm text-white font-medium">My Leagues</span>
-                        <ChevronRight className="w-4 h-4 text-gray-600 ml-auto group-hover:text-gray-400" />
-                      </Link>
-                      <Link
-                        to="/scores"
-                        className="flex items-center gap-3 px-3 min-h-[44px] rounded-sm hover:bg-white/[0.05] active:bg-white/[0.08] transition-colors group press-feedback"
-                      >
-                        <Activity className="w-5 h-5 text-green-500" />
-                        <span className="text-sm text-white font-medium">Live Scores</span>
-                        <ChevronRight className="w-4 h-4 text-gray-600 ml-auto group-hover:text-gray-400" />
-                      </Link>
-                      <Link
-                        to="/profile"
-                        className="flex items-center gap-3 px-3 min-h-[44px] rounded-sm hover:bg-white/[0.05] active:bg-white/[0.08] transition-colors group press-feedback"
-                      >
-                        <Settings className="w-5 h-5 text-gray-400" />
-                        <span className="text-sm text-white font-medium">Profile & Settings</span>
-                        <ChevronRight className="w-4 h-4 text-gray-600 ml-auto group-hover:text-gray-400" />
-                      </Link>
-                    </div>
+                    {/* Quick Links removed — the app's primary destinations now
+                        live in the desktop header nav (added above), matching
+                        every other page. Only Sign Out remains, since the header
+                        nav intentionally doesn't carry it. */}
 
                     {/* Sign Out - hidden on mobile (accessible from Dashboard), show on desktop */}
                     <div className="hidden lg:block px-2 py-2 border-t border-[#333] bg-[#111]">
@@ -531,6 +554,13 @@ const Landing = () => {
 
       {/* YOUTUBE VIDEO MODAL */}
       <YouTubeModal videoModal={videoModal} onClose={closeVideoModal} onRetry={handleRetrySearch} />
+
+      {/* PERSISTENT MOBILE NAV — the home screen previously had none, which is
+          why it leaned on an oversized DASHBOARD button. Signed-in users get the
+          same 5-tab BottomNav as the rest of the app; signed-out visitors get a
+          conversion bar (Demo / Sign In / Join) instead of gated app tabs that
+          would dead-end at the login wall. Both are lg:hidden. */}
+      {user ? <BottomNav /> : <GuestActionBar />}
     </div>
   );
 };
