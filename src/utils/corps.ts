@@ -147,13 +147,13 @@ const CLASS_COLORS: Record<string, string> = {
   soundSport: 'text-green-500 bg-green-500/10 border-green-500/30',
   aClass: 'text-blue-500 bg-blue-500/10 border-blue-500/30',
   open: 'text-purple-500 bg-purple-500/10 border-purple-500/30',
-  world: 'text-gold-500 bg-gold-500/10 border-gold-500/30',
+  world: 'text-amber-500 bg-amber-500/10 border-amber-500/30',
   // Legacy keys for backward compatibility
   openClass: 'text-purple-500 bg-purple-500/10 border-purple-500/30',
-  worldClass: 'text-gold-500 bg-gold-500/10 border-gold-500/30',
+  worldClass: 'text-amber-500 bg-amber-500/10 border-amber-500/30',
 };
 
-const DEFAULT_COLOR = 'text-cream-500 bg-cream-500/10 border-cream-500/30';
+const DEFAULT_COLOR = 'text-gray-500 bg-gray-500/10 border-gray-500/30';
 
 // =============================================================================
 // CLASS STYLES (extended styling)
@@ -186,10 +186,10 @@ const CLASS_STYLES: Record<string, CorpsClassStyles> = {
     gradient: 'from-purple-500 to-purple-600',
   },
   world: {
-    text: 'text-gold-500',
-    bg: 'bg-gold-500/10',
-    border: 'border-gold-500/30',
-    gradient: 'from-gold-500 to-gold-600',
+    text: 'text-amber-500',
+    bg: 'bg-amber-500/10',
+    border: 'border-amber-500/30',
+    gradient: 'from-amber-500 to-amber-600',
   },
   // Legacy keys
   openClass: {
@@ -199,18 +199,18 @@ const CLASS_STYLES: Record<string, CorpsClassStyles> = {
     gradient: 'from-purple-500 to-purple-600',
   },
   worldClass: {
-    text: 'text-gold-500',
-    bg: 'bg-gold-500/10',
-    border: 'border-gold-500/30',
-    gradient: 'from-gold-500 to-gold-600',
+    text: 'text-amber-500',
+    bg: 'bg-amber-500/10',
+    border: 'border-amber-500/30',
+    gradient: 'from-amber-500 to-amber-600',
   },
 };
 
 const DEFAULT_STYLES: CorpsClassStyles = {
-  text: 'text-cream-500',
-  bg: 'bg-cream-500/10',
-  border: 'border-cream-500/30',
-  gradient: 'from-cream-500 to-cream-600',
+  text: 'text-gray-500',
+  bg: 'bg-gray-500/10',
+  border: 'border-gray-500/30',
+  gradient: 'from-gray-500 to-gray-600',
 };
 
 // =============================================================================

@@ -16,7 +16,7 @@ export interface BadgeProps {
 
 // Premium refined: Subtle backgrounds, soft borders, no shadows
 const variantStyles: Record<BadgeVariant, string> = {
-  default: 'bg-white/10 text-cream border border-white/20',
+  default: 'bg-white/10 text-white border border-white/20',
   gold: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
   success: 'bg-green-500/15 text-green-400 border border-green-500/30',
   danger: 'bg-red-500/15 text-red-400 border border-red-500/30',
@@ -87,7 +87,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
     <span
       className={`
         inline-flex items-center gap-2 px-2.5 py-1
-        text-xs font-medium text-cream/80
+        text-xs font-medium text-white/80
         rounded-sm bg-white/10 border border-white/15
         ${className}
       `}

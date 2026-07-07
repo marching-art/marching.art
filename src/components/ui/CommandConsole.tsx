@@ -112,7 +112,7 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
           {shouldReduceMotion ? (
             <div className="flex items-center gap-3">
               <span className="text-yellow-500 font-mono">&gt;</span>
-              <span className="font-mono text-sm text-cream tracking-wide">
+              <span className="font-mono text-sm text-white tracking-wide">
                 {messages[currentMessageIndex]}
               </span>
             </div>
@@ -134,7 +134,7 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
                 >
                   &gt;
                 </m.span>
-                <span className="font-mono text-sm text-cream tracking-wide">
+                <span className="font-mono text-sm text-white tracking-wide">
                   {messages[currentMessageIndex]}
                 </span>
               </m.div>
@@ -172,7 +172,7 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
           </div>
           {/* Progress Percentage */}
           <div className="flex justify-between mt-1.5">
-            <span className="font-mono text-[9px] text-cream/40 uppercase tracking-widest">
+            <span className="font-mono text-[9px] text-white/40 uppercase tracking-widest">
               Progress
             </span>
             <span className="font-mono text-[10px] text-yellow-500 tabular-nums">
@@ -183,7 +183,7 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
       )}
 
       {/* Technical Footer */}
-      <div className="flex items-center gap-4 text-[8px] font-mono text-cream/20 uppercase tracking-widest">
+      <div className="flex items-center gap-4 text-[8px] font-mono text-white/20 uppercase tracking-widest">
         <span>SYS.INIT</span>
         <span className="text-yellow-500/40">|</span>
         <span>v2.4.1</span>
@@ -497,10 +497,10 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
       >
         <div className="text-center">
           <IconComponent className="w-10 h-10 text-warning/50 mx-auto mb-4" />
-          <h3 className="font-mono text-sm text-cream/70 uppercase tracking-wider mb-2">
+          <h3 className="font-mono text-sm text-white/70 uppercase tracking-wider mb-2">
             {displayTitle}
           </h3>
-          <p className="font-mono text-xs text-cream/40 mb-4">{displaySubtitle}</p>
+          <p className="font-mono text-xs text-white/40 mb-4">{displaySubtitle}</p>
           {actionLabel && onAction && (
             <button
               onClick={onAction}
@@ -562,12 +562,12 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
         </div>
 
         {/* Title */}
-        <h3 className="font-mono font-bold text-base md:text-lg text-cream/80 uppercase tracking-wider mb-2">
+        <h3 className="font-mono font-bold text-base md:text-lg text-white/80 uppercase tracking-wider mb-2">
           {displayTitle}
         </h3>
 
         {/* Subtitle */}
-        <p className="font-mono text-xs text-cream/40 mb-6 max-w-xs mx-auto leading-relaxed">
+        <p className="font-mono text-xs text-white/40 mb-6 max-w-xs mx-auto leading-relaxed">
           {displaySubtitle}
         </p>
 
@@ -584,7 +584,7 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
 
         {/* Technical Footer */}
         <div className="mt-8 pt-4 border-t border-warning/10">
-          <div className="flex items-center justify-center gap-4 text-[8px] font-mono text-cream/20 uppercase tracking-widest">
+          <div className="flex items-center justify-center gap-4 text-[8px] font-mono text-white/20 uppercase tracking-widest">
             <span>Signal: --</span>
             <span className="text-warning/30">|</span>
             <span>Queue: 0</span>

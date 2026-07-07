@@ -12,8 +12,8 @@ import { ErrorBoundary as BaseErrorBoundary } from './ui/ErrorBoundary';
 
 const AppErrorFallback: React.FC<{ error: Error | null }> = ({ error }) => (
   <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
-    <div className="max-w-md w-full bg-charcoal-800 rounded-sm border border-white/20 p-8 text-center">
-      <div className="w-16 h-16 bg-red-500/20 rounded-sm flex items-center justify-center mx-auto mb-6">
+    <div className="max-w-md w-full bg-[#1a1a1a] rounded-sm border border-[#333] p-8 text-center">
+      <div className="w-16 h-16 bg-red-500/10 border border-red-500/30 rounded-sm flex items-center justify-center mx-auto mb-6">
         <AlertTriangle className="w-8 h-8 text-red-400" />
       </div>
 
@@ -24,7 +24,7 @@ const AppErrorFallback: React.FC<{ error: Error | null }> = ({ error }) => (
       </p>
 
       {import.meta.env.DEV && error && (
-        <div className="bg-charcoal-900 rounded-sm p-4 mb-6 text-left">
+        <div className="bg-[#0a0a0a] border border-[#333] rounded-sm p-4 mb-6 text-left">
           <p className="text-red-400 text-sm font-mono break-all">{error.toString()}</p>
         </div>
       )}
@@ -32,7 +32,7 @@ const AppErrorFallback: React.FC<{ error: Error | null }> = ({ error }) => (
       <div className="flex gap-3 justify-center">
         <button
           onClick={() => window.location.reload()}
-          className="flex items-center gap-2 px-4 py-2 bg-yellow-500 text-charcoal-900 rounded-sm font-medium hover:bg-yellow-400 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-[#0057B8] border border-[#0057B8] text-white rounded-sm font-semibold hover:bg-[#0057B8]/90 transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
           Refresh
@@ -42,7 +42,7 @@ const AppErrorFallback: React.FC<{ error: Error | null }> = ({ error }) => (
           onClick={() => {
             window.location.href = '/';
           }}
-          className="flex items-center gap-2 px-4 py-2 bg-charcoal-700 text-white rounded-sm font-medium hover:bg-charcoal-600 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-transparent border border-white/20 text-white rounded-sm font-semibold hover:bg-white/5 hover:border-white/40 transition-colors"
         >
           <Home className="w-4 h-4" />
           Home
