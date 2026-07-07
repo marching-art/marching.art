@@ -5,8 +5,8 @@
 // were processed. It is a season-to-date state of the union built entirely from
 // the fantasy_recaps already on record: overall placement and rivalries in each
 // class, comparisons of combined GE / combined Visual / combined Music, show
-// themes and design choices, and a deep dive into SoundSport and Best-in-Show
-// awards to date.
+// themes and design choices, the show-win (first-place) leaders in each class,
+// and a deep dive into the SoundSport Best-in-Show awards to date.
 //
 // INTEGRITY: this article must NEVER discuss individual caption results
 // (GE1/GE2/VP/VA/CG/B/MA/P) or reveal any director's specific lineup picks —
@@ -61,12 +61,18 @@ function getSoundSportRating(score) {
  */
 function aggregateSeason(recaps) {
   const byCorps = new Map();
-  // Best-in-Show tallies, counted ONCE PER SHOW (event), not per day. A single
-  // day can hold several shows (e.g. a regional weekend), so the unit of a
-  // "best in show" is the individual show — identified by (day, show index) so
-  // it is stable even when two shows on a day share (or lack) an event name.
-  const showWinners = new Map(); // corpsKey -> competitive best-in-show count
-  const soundSportBestInShow = new Map(); // corpsKey -> SoundSport best-in-show count
+  // Win tallies, counted ONCE PER SHOW (event), not per day. A single day can
+  // hold several shows (e.g. a regional weekend), so the unit is the individual
+  // show — identified by (day, show index) so it is stable even when two shows on
+  // a day share (or lack) an event name.
+  //   - Competitive: a "show win" = first place WITHIN A CLASS at a show. Per
+  //     class (not a single overall winner) so it is meaningful in every class;
+  //     otherwise World Class would sweep every one. This is a placement, not the
+  //     "Best in Show" award.
+  //   - SoundSport: "Best in Show" is the genuine SoundSport award — the top
+  //     SoundSport ensemble at a showcase (ratings format, scores never shown).
+  const showWinners = new Map(); // corpsKey -> competitive first-place (show win) count
+  const soundSportBestInShow = new Map(); // corpsKey -> SoundSport Best-in-Show count
 
   for (const recap of recaps) {
     const day = recap.offSeasonDay;
@@ -75,7 +81,7 @@ function aggregateSeason(recaps) {
       // Stable per-event identity. Every result in this show shares it, so
       // best-in-show and head-to-head rivalry math all agree on what "a show" is.
       const showId = `${day}::${showIdx}`;
-      let topCompetitive = null; // { key, total } — overall show winner (any competitive class)
+      const topByClass = new Map(); // corpsClass -> { key, total } — class winner at this show
       let topSoundSport = null; // { key, total }
 
       for (const r of show.results || []) {
@@ -113,15 +119,17 @@ function aggregateSeason(recaps) {
 
         if (r.corpsClass === "soundSport") {
           if (!topSoundSport || total > topSoundSport.total) topSoundSport = { key, total };
-        } else if (!topCompetitive || total > topCompetitive.total) {
-          topCompetitive = { key, total };
+        } else {
+          const cur = topByClass.get(r.corpsClass);
+          if (!cur || total > cur.total) topByClass.set(r.corpsClass, { key, total });
         }
       }
 
-      // One best-in-show per show for the top competitive corps, and one for the
-      // top SoundSport ensemble (ratings-only, so it is a recognition not a score).
-      if (topCompetitive) {
-        showWinners.set(topCompetitive.key, (showWinners.get(topCompetitive.key) || 0) + 1);
+      // One show win per class (the top corps in each competitive class takes
+      // first place at that show), plus the SoundSport Best in Show for the top
+      // SoundSport ensemble (ratings-only, so it is a recognition not a score).
+      for (const winner of topByClass.values()) {
+        showWinners.set(winner.key, (showWinners.get(winner.key) || 0) + 1);
       }
       if (topSoundSport) {
         soundSportBestInShow.set(topSoundSport.key, (soundSportBestInShow.get(topSoundSport.key) || 0) + 1);
@@ -316,12 +324,17 @@ async function generateSeasonSummaryArticle({ db, seasonId, dataDocId, throughDa
     .map(rating => ({ rating, count: soundSport.filter(c => c.bestRating === rating).length }))
     .filter(r => r.count > 0);
 
-  // Competitive Best-in-Show (show-win) leaders across all competitive classes.
-  const showWinLeaders = competitive
-    .filter(c => c.showWins > 0)
-    .sort((a, b) => b.showWins - a.showWins)
-    .slice(0, 6)
-    .map(c => ({ corpsName: c.corpsName, classLabel: CLASS_LABELS[c.corpsClass], showWins: c.showWins }));
+  // Competitive show-win (first-place) leaders, top few PER CLASS so each class
+  // is represented rather than swept by the highest-scoring class.
+  const showWinLeaders = [];
+  for (const classKey of COMPETITIVE_CLASSES) {
+    const leaders = competitive
+      .filter(c => c.corpsClass === classKey && c.showWins > 0)
+      .sort((a, b) => b.showWins - a.showWins)
+      .slice(0, 3)
+      .map(c => ({ corpsName: c.corpsName, classLabel: CLASS_LABELS[classKey], showWins: c.showWins }));
+    showWinLeaders.push(...leaders);
+  }
 
   // The single top overall competitive ensemble anchors the article image.
   const topOverall = [...competitive].sort((a, b) => b.latestTotal - a.latestTotal)[0] || null;
@@ -345,7 +358,7 @@ async function generateSeasonSummaryArticle({ db, seasonId, dataDocId, throughDa
   // ---- Build the DATA block (nothing finer than combined families) ----
   const standingsText = classBlocks.map(block => {
     const lines = block.standings.slice(0, 8).map(s =>
-      `  ${s.rank}. "${s.corpsName}" (${s.director}) — latest total ${s.latestTotal.toFixed(3)} | season avg GE ${s.avgGE.toFixed(2)}, Visual ${s.avgVisual.toFixed(2)}, Music ${s.avgMusic.toFixed(2)} | ${s.showsCount} show${s.showsCount === 1 ? "" : "s"}${s.showWins > 0 ? `, ${s.showWins} best-in-show` : ""}`
+      `  ${s.rank}. "${s.corpsName}" (${s.director}) — latest total ${s.latestTotal.toFixed(3)} | season avg GE ${s.avgGE.toFixed(2)}, Visual ${s.avgVisual.toFixed(2)}, Music ${s.avgMusic.toFixed(2)} | ${s.showsCount} show${s.showsCount === 1 ? "" : "s"}${s.showWins > 0 ? `, ${s.showWins} show win${s.showWins === 1 ? "" : "s"}` : ""}`
     ).join("\n");
     const rivalryLines = block.rivalries.length
       ? "\n  RIVALRIES: " + block.rivalries.map(r => `"${r.corpsA}" vs "${r.corpsB}" (${r.note})`).join("; ")
@@ -360,8 +373,8 @@ async function generateSeasonSummaryArticle({ db, seasonId, dataDocId, throughDa
     : "No SoundSport participants this season.";
 
   const showWinsText = showWinLeaders.length
-    ? showWinLeaders.map(l => `"${l.corpsName}" (${l.classLabel}): ${l.showWins} best-in-show`).join(", ")
-    : "No competitive best-in-show titles recorded yet.";
+    ? showWinLeaders.map(l => `"${l.corpsName}" (${l.classLabel}): ${l.showWins} show win${l.showWins === 1 ? "" : "s"}`).join(", ")
+    : "No show wins recorded yet.";
 
   const conceptsText = programConcepts.length
     ? programConcepts.map(p => `- "${p.corpsName}": performing ${p.concept}`).join("\n")
@@ -371,7 +384,8 @@ async function generateSeasonSummaryArticle({ db, seasonId, dataDocId, throughDa
   const prompt = `You are a marching.art fantasy sports journalist writing a special SEASON-TO-DATE SUMMARY. There are no competitions to score today, so instead of a nightly recap you are taking stock of the whole fantasy season so far — through Day ${throughDay}, across ${daysScored} scored days. These are FANTASY ensembles run by real users.
 
 WHAT THIS ARTICLE IS
-- A state-of-the-season overview: overall placement and the rivalries taking shape in each competitive class, how ensembles compare on their COMBINED General Effect, COMBINED Visual, and COMBINED Music scores, the show themes and design choices directors have committed to, and a look at the SoundSport and Best-in-Show story so far.
+- A state-of-the-season overview: overall placement and the rivalries taking shape in each competitive class, how ensembles compare on their COMBINED General Effect, COMBINED Visual, and COMBINED Music scores, the show themes and design choices directors have committed to, which ensembles have piled up the most show wins (first-place finishes), and the SoundSport Best-in-Show story so far.
+- TERMINOLOGY: In the competitive classes (World, Open, A), winning a show is a "show win" or "first place" — do NOT call it "Best in Show." "Best in Show" is a SoundSport-only award; use that phrase only for SoundSport.
 - A change of pace on a quiet day — reflective and big-picture, not a box score.
 
 HARD PRIVACY RULE (never violate)
@@ -392,10 +406,10 @@ Through Day ${throughDay} | ${daysScored} scored days${isLiveSeason ? " | LIVE s
 CLASS STANDINGS & RIVALRIES (ranked by latest total score — combined families only):
 ${standingsText}
 
-SOUNDSPORT & BEST-IN-SHOW TO DATE:
+SOUNDSPORT BEST-IN-SHOW TO DATE (Best in Show is a SoundSport award):
 ${soundSportText}
 
-COMPETITIVE BEST-IN-SHOW (show wins across the season): ${showWinsText}
+COMPETITIVE SHOW WINS — first-place finishes per class, season totals (a count of wins to date, NOT a list of individual shows; do NOT call these "Best in Show"): ${showWinsText}
 
 SHOW CONCEPTS (director-designed — the only theme information that exists):
 ${conceptsText}
@@ -410,7 +424,7 @@ ARTICLE REQUIREMENTS
   1. Overall placement in each competitive class, comparing ensembles on combined GE, combined Visual, and combined Music (never individual captions).
   2. The rivalries taking shape — who has traded places with whom, and how close it is.
   3. Show themes and design choices from the SHOW CONCEPTS block — what directors are going for artistically.
-  4. A deep dive into SoundSport and Best-in-Show to date (ratings only for SoundSport).
+  4. The show-win and SoundSport picture to date. For the competitive classes, treat show wins (first-place finishes) as a season-long ACHIEVEMENT COUNT — who has piled up the most first-places in their class and what that says about their consistency. Then cover the SoundSport Best-in-Show race (ratings-only). Reserve the phrase "Best in Show" for SoundSport; competitive wins are "show wins" or "first place." Do NOT recap or narrate individual shows one by one; this is a season summary, not a show-by-show log.
   Carry personality through sharp reading of the combined numbers and the season arc. No fabricated quotes, reactions, or feelings.
 - End with a specific, data-grounded observation about where the season stands — not a rhetorical question.`;
 
@@ -441,7 +455,7 @@ ARTICLE REQUIREMENTS
       bestInShowLeaders: soundSportLeaders,
       ratings: ratingCounts,
     },
-    bestInShow: showWinLeaders,
+    showWinLeaders,
   };
 
   // Image: the top overall competitive ensemble, like the fantasy-results

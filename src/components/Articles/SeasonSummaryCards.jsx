@@ -52,7 +52,7 @@ const ClassStandings = ({ block }) => (
               <div className="text-[11px] text-gray-500 truncate">
                 {s.director}
                 {s.showsCount ? ` · ${s.showsCount} show${s.showsCount === 1 ? '' : 's'}` : ''}
-                {s.showWins > 0 ? ` · ${s.showWins} best-in-show` : ''}
+                {s.showWins > 0 ? ` · ${s.showWins} show win${s.showWins === 1 ? '' : 's'}` : ''}
               </div>
             </div>
             <span className="text-sm font-bold font-data text-white tabular-nums text-right">
@@ -98,7 +98,7 @@ const ClassStandings = ({ block }) => (
 
 const SeasonSummaryCards = ({ seasonSummary }) => {
   if (!seasonSummary) return null;
-  const { classes = [], soundSport, bestInShow = [] } = seasonSummary;
+  const { classes = [], soundSport, showWinLeaders = [] } = seasonSummary;
 
   return (
     <div className="mt-8">
@@ -106,15 +106,15 @@ const SeasonSummaryCards = ({ seasonSummary }) => {
         <ClassStandings key={block.classKey} block={block} />
       ))}
 
-      {/* Competitive Best-in-Show tally across all classes. */}
-      {bestInShow.length > 0 && (
+      {/* Competitive show-win (first-place) leaders per class. */}
+      {showWinLeaders.length > 0 && (
         <div className="mb-8">
           <h3 className="text-sm font-bold text-orange-400 uppercase tracking-wider mb-4 flex items-center gap-2">
             <Award className="w-4 h-4" />
-            Best-in-Show Titles
+            Show Wins
           </h3>
           <div className="flex flex-wrap gap-2">
-            {bestInShow.map((b, idx) => (
+            {showWinLeaders.map((b, idx) => (
               <div key={idx} className="bg-[#111] border border-[#333] px-3 py-2">
                 <span className="text-sm text-white">{b.corpsName}</span>
                 <span className="text-xs text-gray-500 ml-2">{b.classLabel}</span>
