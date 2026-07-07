@@ -515,6 +515,18 @@ const Profile = () => {
               </button>
             )}
           </div>
+
+          {/* Legal links — restored here so signed-in users always have a path
+              to Privacy & Terms (they used to live in the home header). */}
+          <div className="mt-4 flex items-center justify-center gap-4 text-xs text-gray-600">
+            <Link to="/privacy" className="hover:text-gray-400 transition-colors">
+              Privacy
+            </Link>
+            <span aria-hidden="true">·</span>
+            <Link to="/terms" className="hover:text-gray-400 transition-colors">
+              Terms
+            </Link>
+          </div>
         </div>
       </div>
 

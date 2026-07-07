@@ -312,6 +312,22 @@ const Landing = () => {
                 </Link>
               </div>
             )}
+            {/* Discord — signed-in users don't get the informational link row
+                above, so surface the community link as an icon here (matches the
+                Discord icon in GameShell's header on every other page). Sits after
+                the chip on mobile and after the nav on desktop. */}
+            {user && (
+              <a
+                href="https://discord.gg/YvFRJ97A5H"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 text-gray-400 hover:text-[#5865F2] hover:bg-white/10 rounded-sm transition-colors press-feedback flex items-center"
+                title="Join our Discord"
+                aria-label="Join our Discord"
+              >
+                <MessageCircle className="w-5 h-5" />
+              </a>
+            )}
           </div>
         </div>
       </header>

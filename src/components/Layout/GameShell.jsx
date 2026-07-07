@@ -28,6 +28,7 @@ import {
   Shield,
   Newspaper,
   HelpCircle,
+  MessageCircle,
 } from 'lucide-react';
 
 // =============================================================================
@@ -98,10 +99,23 @@ const TopNav = () => {
           {isAdmin && <NavItem to="/admin" icon={Shield} label="Admin" />}
         </div>
 
+        {/* Discord — kept in the persistent header so the community link is
+            reachable from every page (it used to live only on the home header). */}
+        <a
+          href="https://discord.gg/YvFRJ97A5H"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ml-2 p-2 text-gray-400 hover:text-[#5865F2] hover:bg-white/10 rounded-sm transition-colors"
+          title="Join our Discord"
+          aria-label="Join our Discord"
+        >
+          <MessageCircle className="w-5 h-5" />
+        </a>
+
         {/* Help Icon */}
         <Link
           to="/guide"
-          className="ml-2 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-sm transition-colors"
+          className="ml-1 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-sm transition-colors"
           title="Game Guide"
         >
           <HelpCircle className="w-5 h-5" />
