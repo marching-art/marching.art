@@ -442,16 +442,16 @@ export function getRankDisplay(rank: number): {
       if (rank <= 10) {
         return {
           icon: null,
-          color: 'text-cream-300',
+          color: 'text-gray-300',
           bgColor: 'bg-charcoal-800/30',
-          borderColor: 'border-cream-500/20',
+          borderColor: 'border-gray-500/20',
         };
       }
       return {
         icon: null,
-        color: 'text-cream-500/60',
+        color: 'text-gray-400',
         bgColor: 'bg-charcoal-900/30',
-        borderColor: 'border-cream-500/10',
+        borderColor: 'border-gray-500/10',
       };
   }
 }
