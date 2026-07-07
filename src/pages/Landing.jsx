@@ -29,6 +29,8 @@ import { useProfileStore } from '../store/profileStore';
 import NewsFeed from '../components/Landing/NewsFeed';
 import GuestActionBar from '../components/Landing/GuestActionBar';
 import BottomNav from '../components/BottomNav';
+import NextPerformancePanel from '../components/Dashboard/NextPerformancePanel';
+import { useScheduleStore } from '../store/scheduleStore';
 import HeroBanner from '../components/Landing/HeroBanner';
 import HowItWorks from '../components/Landing/HowItWorks';
 import SocialProofBar from '../components/Landing/SocialProofBar';
@@ -85,6 +87,30 @@ const Landing = () => {
   useSEO({ path: '/' });
   const { user, signIn, signOut } = useAuth();
   const profile = useProfileStore((state) => state.profile);
+
+  // Signed-in home surfaces the director's next show as the primary action.
+  // Data comes straight from the global stores (already listening app-wide) —
+  // NOT useDashboardData, which carries heavy side effects (season-setup wizard,
+  // milestone writes, achievement modals) that must never fire from the home page.
+  const corps = useProfileStore((state) => state.corps);
+  const competitions = useScheduleStore((state) => state.competitions);
+
+  // Resolve the corps the director last viewed, mirroring the Dashboard's
+  // per-user localStorage key so home and dashboard agree on which corps is
+  // "active"; fall back to the first available class.
+  const activeCorps = useMemo(() => {
+    if (!corps) return null;
+    const classes = Object.keys(corps);
+    if (classes.length === 0) return null;
+    let selected = classes[0];
+    try {
+      const saved = user && localStorage.getItem(`selectedCorps_${user.uid}`);
+      if (saved && classes.includes(saved)) selected = saved;
+    } catch {
+      // localStorage unavailable (private browsing) — first class is fine.
+    }
+    return corps[selected];
+  }, [corps, user]);
 
   // First-visit detection for progressive disclosure
   // New visitors see educational content; returning visitors get data-focused view
@@ -305,6 +331,19 @@ const Landing = () => {
             >
               <div className="lg:sticky lg:top-4 space-y-4 lg:space-y-5">
                 {/* ------------------------------------------------------- */}
+                {/* YOUR NEXT SHOW - the director's primary action, promoted */}
+                {/* to the top of home. Renders nothing off-season or when no */}
+                {/* show is upcoming, so it never shows an empty shell. */}
+                {/* ------------------------------------------------------- */}
+                {user && (
+                  <NextPerformancePanel
+                    competitions={competitions}
+                    selectedShows={activeCorps?.selectedShows || {}}
+                    lineup={activeCorps?.lineup || {}}
+                  />
+                )}
+
+                {/* ------------------------------------------------------- */}
                 {/* AUTH WIDGET - Login or User Dashboard */}
                 {/* ------------------------------------------------------- */}
                 {user ? (
@@ -334,9 +373,12 @@ const Landing = () => {
                         </div>
                       </div>
 
-                      {/* Quick Stats */}
+                      {/* Quick Stats - desktop only. On mobile these live in the
+                          header status chip (coins + level), so the full grid here
+                          would just repeat them; the card stays a slim identity
+                          strip on phones. */}
                       {profile && (
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-3 pt-3 border-t border-[#333]/50">
+                        <div className="hidden lg:grid grid-cols-2 gap-x-4 gap-y-2 mt-3 pt-3 border-t border-[#333]/50">
                           <div className="flex items-center gap-1.5">
                             <Zap className="w-3.5 h-3.5 text-purple-500" />
                             <span className="text-xs text-gray-400">Level</span>
