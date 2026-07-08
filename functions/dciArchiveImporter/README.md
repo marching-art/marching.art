@@ -111,7 +111,7 @@ counts. As harvested (renames applied to the pressbox output):
 |------|---------------|----------------|----------------------|
 | 2000 | manual.json   | 25 (majors)    | 9                    |
 | 2001 | showmonth     | 82             | 59                   |
-| 2002 | showmonth     | 25 (Aug only)  | 13                   |
+| 2002 | showmonth + calendar | 66      | 36                   |
 | 2003 | manual/2003.txt | 99           | 64                   |
 | 2004 | cfm           | 125            | 86                   |
 | 2005 | cfm           | 139            | 94                   |
@@ -123,7 +123,7 @@ counts. As harvested (renames applied to the pressbox output):
 | 2011 | cfm           | 111            | 64                   |
 | 2012 | cfm           | 106            | 66                   |
 
-**~858 placeholder eventNames** were replaced with official show names; every
+**~881 placeholder eventNames** were replaced with official show names; every
 year 2000-2012 now has data. *2009 has no in-season capture of its own - a
 June-2010 snapshot whose dropdown still listed the finished 2009 season is used
 instead (the parser keeps only the 2009-dated rows; see `snapshots.json`).
@@ -143,14 +143,21 @@ earlier sources win a date+city collision):
   (date headers + `(CLASS) Show, City, ST` lines), parsed by
   `parseOtherScoresText`. 2003 is filled this way - no in-season `showmonth.php`
   was ever archived for it.
+- **Event-calendar pages** (`events/calendar/index.php`) cached as
+  `cache/{year}-cal-{month}.html` and parsed positionally by
+  `parseEventCalendar`: the month grid pins each event to its column's exact
+  day, giving full date+city records. 2002's June/July come from here (only its
+  August `showmonth.php` page was archived).
 
-Add more by editing those files and re-running `parse.js` + `apply.js`.
+Add more by editing those files (or caching a calendar page) and re-running
+`parse.js` + `apply.js`.
 
 ### Remaining gaps
 
-- **2002** only has an August `showmonth.php` capture archived, so its
-  June/July events keep their placeholders. Filling it needs another archived
-  month page or a manual paste.
+- No whole-year gaps remain; every season 2000-2012 has data. What is still
+  unmatched is individual events the archive never listed (or listed only as a
+  bare `City, ST` with no title), plus Division II/III rows the game doesn't
+  carry - counted as "unmatched" in the apply summary.
 
 ### Other caveats
 

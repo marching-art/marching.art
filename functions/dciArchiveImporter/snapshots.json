@@ -20,12 +20,25 @@
     ]
   },
   "2002": {
-    "era": "showmonth",
+    "era": "showmonth+calendar",
     "months": [
       {
         "month": "08",
+        "source": "showmonth",
         "timestamp": "20020810205417",
         "original": "http://www.dci.org:80/scores/showmonth.php"
+      },
+      {
+        "month": "06",
+        "source": "calendar",
+        "timestamp": "20021021175054",
+        "original": "http://www.dci.org/events/calendar/index.php?year=2002&month=06&day=01&xCorps="
+      },
+      {
+        "month": "07",
+        "source": "calendar",
+        "timestamp": "20021021174945",
+        "original": "http://www.dci.org/events/calendar/index.php?year=2002&month=07&day=01&xCorps="
       }
     ]
   },

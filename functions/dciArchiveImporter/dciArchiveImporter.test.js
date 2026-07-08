@@ -12,7 +12,7 @@ const {
 } = require("./config");
 const {
   parseLabel, parseCfmDropdown, parseShowmonth, parseOtherScoresText,
-  buildLocation, loadManualRecords,
+  parseEventCalendar, buildLocation, loadManualRecords,
 } = require("./parse");
 const { buildIndex, planRenames } = require("./apply");
 
@@ -104,6 +104,26 @@ describe("parseOtherScoresText", () => {
   test("still parses a normal event under the same date header", () => {
     assert.ok(recs.find((r) => r.key === "2003-06-16|portage"
       || r.showName === "Beauty and the Brass"));
+  });
+});
+
+describe("parseEventCalendar", () => {
+  // Two weekly rows: day-number row then a day-aligned event row.
+  const html = `
+    <TR><TD><FONT color=#0000ff>09</FONT></TD><TD><FONT color=#0000ff>10</FONT></TD>
+    <TD><FONT color=#0000ff>11</FONT></TD><TD><FONT color=#0000ff>12</FONT></TD>
+    <TD><FONT color=#0000ff>13</FONT></TD><TD><FONT color=#0000ff>14</FONT></TD>
+    <TD><FONT color=#0000ff>15</FONT></TD></TR>
+    <TR><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD>
+    <TD><a href="index.php?xId=1">(DCI Atlantic) Spirit of America, Jacksonville, AL</a></TD>
+    <TD><a href="index.php?xId=2">(DCM) All Star Review, Toledo, OH</a></TD></TR>`;
+  const recs = parseEventCalendar(html, 2002, 6);
+
+  test("maps each event to its column's exact day", () => {
+    const jax = recs.find((r) => r.key === "2002-06-14|jacksonville");
+    assert.equal(jax.showName, "Spirit of America");
+    const toledo = recs.find((r) => r.key === "2002-06-15|toledo");
+    assert.equal(toledo.showName, "All Star Review");
   });
 });
 

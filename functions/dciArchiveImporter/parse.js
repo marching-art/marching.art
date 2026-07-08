@@ -305,6 +305,79 @@ function monthName(m) {
 // Hand-curated records for a year from manual.json (e.g. gap years with no
 // usable Wayback capture). Same record shape as the parsers, so apply.js
 // treats them identically.
+// Parse an archived dci.org event-calendar page (events/calendar/index.php).
+// It is a month grid: alternating table rows of seven day-number cells
+// (<FONT color=#0000ff>NN</FONT>) then seven day-aligned event cells, each
+// holding zero or more <a>(CLASS) Show, City, ST</a> links. The event's exact
+// day is its column's number in the preceding day-number row, so this yields
+// full date+city records (no month-only guessing). `month` disambiguates the
+// leading/trailing days that belong to the adjacent month.
+function parseEventCalendar(html, year, month) {
+  const records = [];
+  const seen = new Set();
+  const rows = html.split(/<tr[^>]*>/i);
+  let days = null;
+  for (const row of rows) {
+    const dayCells = [...row.matchAll(/<font color=#0000ff>(\d{1,2})<\/font>/gi)]
+      .map((m) => Number(m[1]));
+    if (dayCells.length === 7) { days = dayCells; continue; }
+    if (!days) continue;
+
+    const cells = row.split(/<td[^>]*>/i).slice(1);
+    cells.forEach((cell, i) => {
+      if (i > 6) return;
+      const day = days[i];
+      // A day number that jumps (e.g. 30, 31, 1, 2) marks the adjacent month;
+      // only keep cells whose number is a plausible day for THIS month by
+      // checking it sits in the run that contains a mid-month value.
+      for (const m of cell.matchAll(/<a[^>]*>\s*\(([^)]*)\)\s*([^<]+?)\s*<\/a>/gi)) {
+        const parsed = parseLabel(`(${m[1]}) ${decodeEntities(m[2])} -- ` +
+          `${monthName(month)} ${day}, ${year}`, year);
+        if (!parsed || !parsed.city || !parsed.showName) continue;
+        if (normalizeCity(parsed.showName.split(",")[0]) === normalizeCity(parsed.city)) continue;
+        const key = matchKey(parsed.year, parsed.month, parsed.day,
+          normalizeCity(parsed.city));
+        if (seen.has(key)) continue;
+        seen.add(key);
+        records.push({
+          key,
+          eventId: null,
+          date: new Date(Date.UTC(parsed.year, parsed.month - 1, parsed.day)).toISOString(),
+          division: parsed.division,
+          showName: parsed.showName,
+          city: parsed.city,
+          state: parsed.state,
+          location: buildLocation(parsed.city, parsed.state),
+          ignoredDivision: IGNORED_DIVISION_RE.test(parsed.division),
+          label: `(${parsed.division}) ${decodeEntities(m[2])}`,
+          source: "calendar",
+        });
+      }
+    });
+    days = null; // each day-number row pairs with the next event row only
+  }
+  return records;
+}
+
+// Calendar records for a year from cached cache/{year}-cal-{month}.html pages.
+function loadCalendarRecords(year) {
+  if (!fs.existsSync(CACHE_DIR)) return [];
+  const records = [];
+  const seen = new Set();
+  for (const f of fs.readdirSync(CACHE_DIR)
+    .filter((n) => n.startsWith(`${year}-cal-`) && n.endsWith(".html")).sort()) {
+    const month = Number(f.match(/-cal-(\d{2})\.html$/)?.[1]);
+    if (!month) continue;
+    const html = fs.readFileSync(path.join(CACHE_DIR, f), "utf-8");
+    for (const r of parseEventCalendar(html, year, month)) {
+      if (seen.has(r.key)) continue;
+      seen.add(r.key);
+      records.push(r);
+    }
+  }
+  return records;
+}
+
 // Records from a pasted "Other Scores" listing at manual/{year}.txt, if any.
 function loadTextRecords(year) {
   const p = path.join(MANUAL_TEXT_DIR, `${year}.txt`);
@@ -377,7 +450,9 @@ function main() {
     const records = [];
     const keys = new Set();
     let extra = 0;
-    for (const src of [parsed, loadTextRecords(year), loadManualRecords(year)]) {
+    const sources = [parsed, loadCalendarRecords(year), loadTextRecords(year),
+      loadManualRecords(year)];
+    for (const src of sources) {
       for (const r of src) {
         if (keys.has(r.key)) continue;
         keys.add(r.key);
@@ -421,5 +496,5 @@ if (require.main === module) main();
 
 module.exports = {
   decodeEntities, parseLabel, buildLocation, parseCfmDropdown, parseShowmonth,
-  parseOtherScoresText, loadManualRecords,
+  parseOtherScoresText, parseEventCalendar, loadManualRecords,
 };
