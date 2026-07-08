@@ -9,24 +9,11 @@ import {
   showCalendarDay,
 } from '../../utils/scheduleUtils';
 import RunningOrder from '../Schedule/RunningOrder';
-
-// Caption code -> human label, mirroring CaptionSelectionModal.
-const CAPTION_LABELS = {
-  GE1: 'General Effect 1',
-  GE2: 'General Effect 2',
-  VP: 'Visual Proficiency',
-  VA: 'Visual Analysis',
-  CG: 'Color Guard',
-  B: 'Brass',
-  MA: 'Music Analysis',
-  P: 'Percussion',
-};
-
-const normalize = (name) =>
-  String(name || '')
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .trim();
+import {
+  CAPTION_LABELS,
+  normalizeCorpsName as normalize,
+  buildShowHighlights,
+} from '../../utils/pickHighlights';
 
 function formatStart(show) {
   const start = showStartsAtDate(show);
@@ -80,8 +67,10 @@ function formatPerformTime(entry, timezone) {
  * @param {Array} props.competitions - Raw enriched competitions from scheduleStore.
  * @param {Object} props.selectedShows - activeCorps.selectedShows ({ week1: [...] }).
  * @param {Object} props.lineup - Caption -> "CorpsName|Year" map (activeCorps.lineup).
+ * @param {Array} props.poolCorps - dci-data corpsValues; supplies resultDays so the
+ *   running-order highlight can distinguish real-result (full) from interpolated (dim).
  */
-const NextPerformancePanel = ({ competitions = [], selectedShows = {}, lineup = {} }) => {
+const NextPerformancePanel = ({ competitions = [], selectedShows = {}, lineup = {}, poolCorps = [] }) => {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 60 * 1000);
@@ -234,7 +223,7 @@ const NextPerformancePanel = ({ competitions = [], selectedShows = {}, lineup = 
           <RunningOrder
             show={nextCompetition}
             compact
-            highlightCorps={new Set(picksByCorps.keys())}
+            highlights={buildShowHighlights({ show: nextCompetition, lineup, poolCorps })}
           />
         </div>
       )}

@@ -10,22 +10,23 @@ import { getRunningOrderStatus } from '../../utils/scheduleUtils';
  * / "UP NEXT" marker that advances as the evening progresses.
  *
  * Optionally highlights corps that appear in the director's own caption lineup
- * (the "your picks are live" tie-in) — pass a Set of normalized corps names.
+ * (the "your picks are live" tie-in), in two tiers:
+ *   - full: the picked (corps, year) had a real result on this show's day.
+ *   - dim:  the brand is present but the day's score is interpolated.
+ * Pass `highlights` (a Map from buildShowHighlights). The legacy `highlightCorps`
+ * (a Set of normalized names) is still accepted and rendered as full-tier.
  *
  * Renders nothing when the show has no lineup, so it's safe to drop in anywhere.
  *
  * @param {Object} props
  * @param {Object} props.show - Enriched show ({ lineup, timezone, startsAt, scoresAt }).
- * @param {Set<string>} [props.highlightCorps] - Normalized corps names to star.
+ * @param {Map<string,{tier:string,corps:string,captions:string[],sourceYear:any}>} [props.highlights]
+ * @param {Set<string>} [props.highlightCorps] - Legacy: normalized names, full tier.
  * @param {boolean} [props.compact] - Tighter layout for dashboard panels.
  */
-const normalize = (name) =>
-  String(name || '')
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .trim();
+import { normalizeCorpsName as normalize, highlightLabel } from '../../utils/pickHighlights';
 
-const RunningOrder = ({ show, highlightCorps, compact = false }) => {
+const RunningOrder = ({ show, highlights, highlightCorps, compact = false }) => {
   // Tick every 60s so the performing-now marker stays current without a reload.
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
@@ -54,13 +55,24 @@ const RunningOrder = ({ show, highlightCorps, compact = false }) => {
         {lineup.map((entry) => {
           const isNow = entry.order === currentOrder;
           const isNext = entry.order === nextOrder;
-          const isMine = highlightCorps && highlightCorps.has(normalize(entry.corps));
+          const key = normalize(entry.corps);
+          const hi = highlights?.get(key);
+          const tier = hi?.tier || (highlightCorps?.has(key) ? 'full' : null);
+          const isFull = tier === 'full';
+          const isDim = tier === 'dim';
 
           return (
             <div
               key={`${entry.order}-${entry.corps}`}
+              title={hi ? highlightLabel(hi) : undefined}
               className={`flex items-center justify-between px-4 ${compact ? 'py-1.5' : 'py-2'} ${
-                isNow ? 'bg-[#0057B8]/10' : isMine ? 'bg-[#F5A623]/[0.06]' : ''
+                isNow
+                  ? 'bg-[#0057B8]/10'
+                  : isFull
+                    ? 'bg-[#F5A623]/[0.06]'
+                    : isDim
+                      ? 'bg-[#F5A623]/[0.02]'
+                      : ''
               }`}
             >
               <div className="flex items-center gap-2.5 min-w-0">
@@ -68,10 +80,13 @@ const RunningOrder = ({ show, highlightCorps, compact = false }) => {
                   {entry.performanceTime}
                 </span>
                 <span className="text-sm text-white truncate flex items-center gap-1.5">
-                  {isMine && (
+                  {isFull && (
                     <Star className="w-3 h-3 text-[#F5A623] fill-[#F5A623] flex-shrink-0" />
                   )}
-                  <span className="truncate">{entry.corps}</span>
+                  {isDim && (
+                    <Star className="w-3 h-3 text-[#F5A623]/50 flex-shrink-0" />
+                  )}
+                  <span className={`truncate ${isDim ? 'text-gray-300' : ''}`}>{entry.corps}</span>
                 </span>
               </div>
               <div className="flex-shrink-0 pl-2">

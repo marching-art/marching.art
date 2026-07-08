@@ -204,6 +204,7 @@ const Dashboard = () => {
     refreshProfile,
     handleCorpsSwitch,
     unlockedClasses, // Includes admin override - admins have all classes
+    availableCorps, // Season pool (corpsValues) — supplies resultDays for pick highlights
   } = dashboardData;
 
   // Computed values
@@ -435,6 +436,7 @@ const Dashboard = () => {
                   competitions={competitions}
                   selectedShows={activeCorps?.selectedShows || {}}
                   lineup={lineup}
+                  poolCorps={availableCorps}
                 />
 
                 {/* Rivals - closest competitors in the active corps's class */}

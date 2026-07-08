@@ -450,6 +450,16 @@ async function startNewOffSeason() {
       usedCorpsNames.add(chosenCorps.corpsName);
     }
   }
+  // Attach each pool corps' real competition days so the client can resolve the
+  // two-tier pick highlight (full = real result that day, dim = interpolated).
+  // Best-effort: highlighting degrades to "full" if this can't be computed.
+  try {
+    const { computeResultDaysForPool } = require("./pickResultDays");
+    await computeResultDaysForPool(db, offSeasonCorpsData);
+  } catch (error) {
+    logger.warn(`Pool result-day index failed (non-fatal): ${error.message}`);
+  }
+
   const schedule = await generateOffSeasonSchedule(seasonLength, 1);
   const seasonName = getThematicOffSeasonName(seasonType, finalsYear);
   const dataDocId = seasonName;
