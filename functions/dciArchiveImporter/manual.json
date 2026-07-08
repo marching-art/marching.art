@@ -1,0 +1,33 @@
+{
+  "_comment": "Hand-curated official event names for gap years that have no usable Wayback showmonth/dropdown capture. parse.js merges these into output/names_{year}.json (archive-parsed records win on a key collision). Per event: {date: 'YYYY-MM-DD', showName, location: 'City, ST', division}.",
+  "2000": {
+    "source": "Archived dci.org 'The 2000 Summer Music Games' Major & Premium Events page (no showmonth.php capture exists for 2000).",
+    "events": [
+      { "date": "2000-06-21", "showName": "DCI Central Illinois", "location": "Normal, IL", "division": "DCI Major" },
+      { "date": "2000-06-25", "showName": "DCI Orlando", "location": "Orlando, FL", "division": "DCI Major" },
+      { "date": "2000-07-08", "showName": "DCI Atlantic Championships", "location": "Philadelphia, PA", "division": "DCI Major" },
+      { "date": "2000-07-22", "showName": "DCI Midwestern", "location": "Indianapolis, IN", "division": "DCI Major" },
+      { "date": "2000-07-23", "showName": "DCI Southwestern", "location": "San Antonio, TX", "division": "DCI Major" },
+      { "date": "2000-07-28", "showName": "DCI Mid-America", "location": "Murfreesboro, TN", "division": "DCI Major" },
+      { "date": "2000-07-29", "showName": "DCI Mid-America", "location": "Murfreesboro, TN", "division": "DCI Major" },
+      { "date": "2000-08-04", "showName": "DCI Eastern", "location": "Allentown, PA", "division": "DCI Major" },
+      { "date": "2000-08-05", "showName": "DCI Eastern", "location": "Allentown, PA", "division": "DCI Major" },
+      { "date": "2000-08-07", "showName": "DCI Division II & III Prelims", "location": "Westminster, MD", "division": "DCI Division II & III" },
+      { "date": "2000-08-08", "showName": "DCI Division II & III Prelims", "location": "Westminster, MD", "division": "DCI Division II & III" },
+      { "date": "2000-08-07", "showName": "DCI World Championships", "location": "College Park, MD", "division": "DCI Major" },
+      { "date": "2000-08-08", "showName": "DCI World Championships", "location": "College Park, MD", "division": "DCI Major" },
+      { "date": "2000-08-09", "showName": "DCI World Championships", "location": "College Park, MD", "division": "DCI Major" },
+      { "date": "2000-08-10", "showName": "DCI World Championships", "location": "College Park, MD", "division": "DCI Major" },
+      { "date": "2000-08-11", "showName": "DCI World Championships", "location": "College Park, MD", "division": "DCI Major" },
+      { "date": "2000-08-12", "showName": "DCI World Championships", "location": "College Park, MD", "division": "DCI Major" },
+      { "date": "2000-07-15", "showName": "DCI Drums Along the Rockies", "location": "Denver, CO", "division": "DCI Premium" },
+      { "date": "2000-07-21", "showName": "DCI Festival of Drums & Bugles", "location": "Dallas, TX", "division": "DCI Premium" },
+      { "date": "2000-07-22", "showName": "DCI ExSIGHTment of Sound", "location": "Houston, TX", "division": "DCI Premium" },
+      { "date": "2000-07-27", "showName": "DCI Drums Across America", "location": "Sevierville, TN", "division": "DCI Premium" },
+      { "date": "2000-07-30", "showName": "DCI NightBEAT", "location": "Charlotte, NC", "division": "DCI Premium" },
+      { "date": "2000-07-30", "showName": "DCI SUMMER MUSIC GAMES in Cincinnati", "location": "Cincinnati, OH", "division": "DCI Premium" },
+      { "date": "2000-08-06", "showName": "DCI Drums Along the Waterfront", "location": "Buffalo, NY", "division": "DCI Premium" },
+      { "date": "2000-08-06", "showName": "DCI Big Apple Invitational", "location": "East Rutherford, NJ", "division": "DCI Premium" }
+    ]
+  }
+}

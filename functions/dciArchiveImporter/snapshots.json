@@ -1,0 +1,109 @@
+{
+  "2001": {
+    "era": "showmonth",
+    "months": [
+      {
+        "month": "06",
+        "timestamp": "20010806070455",
+        "original": "http://dci.org:80/scores/showmonth.php?year=2001&month=06&day=01"
+      },
+      {
+        "month": "07",
+        "timestamp": "20020603012953",
+        "original": "http://www.dci.org:80/scores/showmonth.php?year=2001&month=07&day=01"
+      },
+      {
+        "month": "08",
+        "timestamp": "20010801171426",
+        "original": "http://www.dci.org:80/scores/showmonth.php"
+      }
+    ]
+  },
+  "2002": {
+    "era": "showmonth+calendar",
+    "months": [
+      {
+        "month": "08",
+        "source": "showmonth",
+        "timestamp": "20020810205417",
+        "original": "http://www.dci.org:80/scores/showmonth.php"
+      },
+      {
+        "month": "06",
+        "source": "calendar",
+        "timestamp": "20021021175054",
+        "original": "http://www.dci.org/events/calendar/index.php?year=2002&month=06&day=01&xCorps="
+      },
+      {
+        "month": "07",
+        "source": "calendar",
+        "timestamp": "20021021174945",
+        "original": "http://www.dci.org/events/calendar/index.php?year=2002&month=07&day=01&xCorps="
+      }
+    ]
+  },
+  "2004": {
+    "era": "cfm",
+    "timestamp": "20040901020231",
+    "original": "http://www.dci.org/scores/",
+    "url": "https://web.archive.org/web/20040901020231id_/http://www.dci.org/scores/",
+    "bytes": 39275
+  },
+  "2005": {
+    "era": "cfm",
+    "timestamp": "20051024234231",
+    "original": "http://www.dci.org:80/scores/",
+    "url": "https://web.archive.org/web/20051024234231id_/http://www.dci.org:80/scores/",
+    "bytes": 45237
+  },
+  "2006": {
+    "era": "cfm",
+    "timestamp": "20061101094051",
+    "original": "http://www.dci.org:80/scores/?event_id=7f94e6ce-bde6-4c78-aa32-4e25178aee0e",
+    "url": "https://web.archive.org/web/20061101094051id_/http://www.dci.org:80/scores/?event_id=7f94e6ce-bde6-4c78-aa32-4e25178aee0e",
+    "bytes": 43220
+  },
+  "2007": {
+    "era": "cfm",
+    "timestamp": "20080221011542",
+    "original": "http://www.dci.org:80/scores/index.cfm",
+    "url": "https://web.archive.org/web/20080221011542id_/http://www.dci.org:80/scores/index.cfm",
+    "bytes": 54637
+  },
+  "2008": {
+    "era": "cfm",
+    "timestamp": "20081015164600",
+    "original": "http://www.dci.org/scores",
+    "url": "https://web.archive.org/web/20081015164600id_/http://www.dci.org/scores",
+    "bytes": 55197
+  },
+  "2009": {
+    "era": "cfm",
+    "note": "A June 2010 capture whose dropdown still listed the finished 2009 season (no in-season 2009 capture of the scores page exists in the Wayback Machine); the parser keeps only the 2009-dated rows.",
+    "timestamp": "20100616210639",
+    "original": "http://www.dci.org/scores/",
+    "url": "https://web.archive.org/web/20100616210639id_/http://www.dci.org/scores/",
+    "bytes": 70102
+  },
+  "2010": {
+    "era": "cfm",
+    "timestamp": "20101223110151",
+    "original": "http://www.dci.org/scores/index.cfm?event=00094ae7-75a0-40e3-9606-a0536ebae61b",
+    "url": "https://web.archive.org/web/20101223110151id_/http://www.dci.org/scores/index.cfm?event=00094ae7-75a0-40e3-9606-a0536ebae61b",
+    "bytes": 79902
+  },
+  "2011": {
+    "era": "cfm",
+    "timestamp": "20120118232716",
+    "original": "http://www.dci.org/scores/",
+    "url": "https://web.archive.org/web/20120118232716id_/http://www.dci.org/scores/",
+    "bytes": 59757
+  },
+  "2012": {
+    "era": "cfm",
+    "timestamp": "20130217154952",
+    "original": "http://www.dci.org/scores/index.cfm?event=9f8d37c6-c127-4a72-8b50-87f543f9678a",
+    "url": "https://web.archive.org/web/20130217154952id_/http://www.dci.org/scores/index.cfm?event=9f8d37c6-c127-4a72-8b50-87f543f9678a",
+    "bytes": 75622
+  }
+}

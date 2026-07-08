@@ -1,7 +1,7 @@
 {
  "data": [
   {
-   "eventName": "DCI Competition - Menasha, Wisconsin",
+   "eventName": "Flag Day Fiesta",
    "date": "2004-06-18T00:00:00.000Z",
    "location": "Menasha, Wisconsin",
    "offSeasonDay": null,
@@ -80,7 +80,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Oswego, Illinois",
+   "eventName": "Festival of Brass",
    "date": "2004-06-18T00:00:00.000Z",
    "location": "Oswego, Illinois",
    "offSeasonDay": null,
@@ -173,7 +173,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Mankato, Minnesota",
+   "eventName": "The Thunder of Drums",
    "date": "2004-06-19T00:00:00.000Z",
    "location": "Mankato, Minnesota",
    "offSeasonDay": null,
@@ -308,7 +308,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Stockton, California",
+   "eventName": "Moonlight Classic",
    "date": "2004-06-19T00:00:00.000Z",
    "location": "Stockton, California",
    "offSeasonDay": null,
@@ -564,7 +564,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Toledo, Ohio",
+   "eventName": "All Star Review",
    "date": "2004-06-19T00:00:00.000Z",
    "location": "Toledo, Ohio",
    "offSeasonDay": null,
@@ -699,7 +699,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Menomonie, Wisconsin",
+   "eventName": "Drums Along the Red Cedar",
    "date": "2004-06-20T00:00:00.000Z",
    "location": "Menomonie, Wisconsin",
    "offSeasonDay": null,
@@ -983,7 +983,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Canton, Michigan",
+   "eventName": "SUMMER MUSIC GAMES at the Park",
    "date": "2004-06-22T00:00:00.000Z",
    "location": "Canton, Michigan",
    "offSeasonDay": null,
@@ -1104,7 +1104,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Pittsburg, Kansas",
+   "eventName": "Brass Spectacular!",
    "date": "2004-06-22T00:00:00.000Z",
    "location": "Pittsburg, Kansas",
    "offSeasonDay": null,
@@ -1211,7 +1211,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Enid, Oklahoma",
+   "eventName": "Festival of Drum Corps",
    "date": "2004-06-23T00:00:00.000Z",
    "location": "Enid, Oklahoma",
    "offSeasonDay": null,
@@ -1318,7 +1318,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Port Huron, Michigan",
+   "eventName": "Blue Water Brass",
    "date": "2004-06-23T00:00:00.000Z",
    "location": "Port Huron, Michigan",
    "offSeasonDay": null,
@@ -1425,7 +1425,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Woodburn, Oregon",
+   "eventName": "Drums of Fire",
    "date": "2004-06-23T00:00:00.000Z",
    "location": "Woodburn, Oregon",
    "offSeasonDay": null,
@@ -1625,7 +1625,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Spokane, Washington",
+   "eventName": "Spokane Drum And Bugle Classic",
    "date": "2004-06-25T00:00:00.000Z",
    "location": "Spokane, Washington",
    "offSeasonDay": null,
@@ -1704,7 +1704,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Wichita Falls, Texas",
+   "eventName": "A Summer Night with Drums & Bugle Corps",
    "date": "2004-06-25T00:00:00.000Z",
    "location": "Wichita Falls, Texas",
    "offSeasonDay": null,
@@ -1797,7 +1797,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Louisville, Kentucky",
+   "eventName": "DCI Louisville",
    "date": "2004-06-26T00:00:00.000Z",
    "location": "Louisville, Kentucky",
    "offSeasonDay": null,
@@ -1988,7 +1988,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Malden, Massachusetts",
+   "eventName": "Music on Parade",
    "date": "2004-06-26T00:00:00.000Z",
    "location": "Malden, Massachusetts",
    "offSeasonDay": null,
@@ -2095,7 +2095,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Seattle, Washington",
+   "eventName": "Seattle SUMMER MUSIC GAMES",
    "date": "2004-06-26T00:00:00.000Z",
    "location": "Seattle, Washington",
    "offSeasonDay": null,
@@ -2360,7 +2360,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Kelso, Washington",
+   "eventName": "Sounds of Summer Drum Corps Competition",
    "date": "2004-06-27T00:00:00.000Z",
    "location": "Kelso, Washington",
    "offSeasonDay": 1,
@@ -2518,7 +2518,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Alton, Illinois",
+   "eventName": "Alton Drum and Brass Review",
    "date": "2004-06-28T00:00:00.000Z",
    "location": "Alton, Illinois",
    "offSeasonDay": 2,
@@ -2625,7 +2625,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Lima, Ohio",
+   "eventName": "Summer Serenade",
    "date": "2004-06-28T00:00:00.000Z",
    "location": "Lima, Ohio",
    "offSeasonDay": 2,
@@ -2732,7 +2732,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Memphis, Tennessee",
+   "eventName": "Sound of Champions",
    "date": "2004-06-28T00:00:00.000Z",
    "location": "Memphis, Tennessee",
    "offSeasonDay": 2,
@@ -2839,7 +2839,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Elizabeth, Pennsylvania",
+   "eventName": "Music on the Mon",
    "date": "2004-06-29T00:00:00.000Z",
    "location": "Elizabeth, Pennsylvania",
    "offSeasonDay": 3,
@@ -3053,7 +3053,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - New London, Connecticut",
+   "eventName": "Drum Corps on the Thames",
    "date": "2004-06-30T00:00:00.000Z",
    "location": "New London, Connecticut",
    "offSeasonDay": 4,
@@ -3188,7 +3188,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Bristol, Rhode Island",
+   "eventName": "Summer Music Preview",
    "date": "2004-07-01T00:00:00.000Z",
    "location": "Bristol, Rhode Island",
    "offSeasonDay": 5,
@@ -3295,7 +3295,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Charles City, Iowa",
+   "eventName": "Music in Motion",
    "date": "2004-07-01T00:00:00.000Z",
    "location": "Charles City, Iowa",
    "offSeasonDay": 5,
@@ -3402,7 +3402,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Modesto, California",
+   "eventName": "Kaleidoscope Klassic",
    "date": "2004-07-01T00:00:00.000Z",
    "location": "Modesto, California",
    "offSeasonDay": 5,
@@ -3523,7 +3523,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Riverside, California",
+   "eventName": "Western Corps Connection I",
    "date": "2004-07-02T00:00:00.000Z",
    "location": "Riverside, California",
    "offSeasonDay": 6,
@@ -3914,7 +3914,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Old Bridge Township, New Jersey",
+   "eventName": "Music in Motion--Central Jersey",
    "date": "2004-07-02T00:00:00.000Z",
    "location": "Old Bridge Township, New Jersey",
    "offSeasonDay": 6,
@@ -4021,7 +4021,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Allentown, Pennsylvania",
+   "eventName": "Music is Cool--Lehigh Valley",
    "date": "2004-07-03T00:00:00.000Z",
    "location": "Allentown, Pennsylvania",
    "offSeasonDay": 7,
@@ -4142,7 +4142,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Walnut, California",
+   "eventName": "Corps at the Crest I",
    "date": "2004-07-03T00:00:00.000Z",
    "location": "Walnut, California",
    "offSeasonDay": 7,
@@ -4305,7 +4305,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Springfield, Massachusetts",
+   "eventName": "Youth on Parade",
    "date": "2004-07-03T00:00:00.000Z",
    "location": "Springfield, Massachusetts",
    "offSeasonDay": 7,
@@ -4426,7 +4426,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Dubuque, Iowa",
+   "eventName": "Music on the March",
    "date": "2004-07-05T00:00:00.000Z",
    "location": "Dubuque, Iowa",
    "offSeasonDay": 9,
@@ -4533,7 +4533,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Nashua, New Hampshire",
+   "eventName": "Sights & Sounds",
    "date": "2004-07-05T00:00:00.000Z",
    "location": "Nashua, New Hampshire",
    "offSeasonDay": 9,
@@ -4761,7 +4761,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - San Diego, California",
+   "eventName": "Esperanza Experience",
    "date": "2004-07-05T00:00:00.000Z",
    "location": "San Diego, California",
    "offSeasonDay": 9,
@@ -4868,7 +4868,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Phoenix, Arizona",
+   "eventName": "Southwest Corps Connection",
    "date": "2004-07-06T00:00:00.000Z",
    "location": "Phoenix, Arizona",
    "offSeasonDay": 10,
@@ -4961,7 +4961,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Wichita, Kansas",
+   "eventName": "Drums Across Kansas",
    "date": "2004-07-06T00:00:00.000Z",
    "location": "Wichita, Kansas",
    "offSeasonDay": 10,
@@ -5026,7 +5026,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Broken Arrow, Oklahoma",
+   "eventName": "Drums of Summer",
    "date": "2004-07-07T00:00:00.000Z",
    "location": "Broken Arrow, Oklahoma",
    "offSeasonDay": 11,
@@ -5226,7 +5226,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Dallas, Texas",
+   "eventName": "Festival of Drums and Bugles",
    "date": "2004-07-08T00:00:00.000Z",
    "location": "Dallas, Texas",
    "offSeasonDay": 12,
@@ -5319,7 +5319,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - El Paso, Texas",
+   "eventName": "Drums Along the Border",
    "date": "2004-07-08T00:00:00.000Z",
    "location": "El Paso, Texas",
    "offSeasonDay": 12,
@@ -5384,7 +5384,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Rockford, Illinois",
+   "eventName": "Show of Shows",
    "date": "2004-07-08T00:00:00.000Z",
    "location": "Rockford, Illinois",
    "offSeasonDay": 12,
@@ -5519,7 +5519,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Houston, Texas",
+   "eventName": "THE exSIGHTment OF SOUND",
    "date": "2004-07-09T00:00:00.000Z",
    "location": "Houston, Texas",
    "offSeasonDay": 13,
@@ -5612,7 +5612,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Midland, Texas",
+   "eventName": "Thunder in the Desert",
    "date": "2004-07-09T00:00:00.000Z",
    "location": "Midland, Texas",
    "offSeasonDay": 13,
@@ -5677,7 +5677,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Brick, New Jersey",
+   "eventName": "Brick SUMMER MUSIC GAMES",
    "date": "2004-07-10T00:00:00.000Z",
    "location": "Brick, New Jersey",
    "offSeasonDay": 14,
@@ -6096,7 +6096,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Evansville, Indiana",
+   "eventName": "Drums on the Ohio",
    "date": "2004-07-11T00:00:00.000Z",
    "location": "Evansville, Indiana",
    "offSeasonDay": 15,
@@ -6175,7 +6175,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Harrison, Ohio",
+   "eventName": "The Hottest Show on Turf!",
    "date": "2004-07-11T00:00:00.000Z",
    "location": "Harrison, Ohio",
    "offSeasonDay": 15,
@@ -6268,7 +6268,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Baton Rouge, Louisiana",
+   "eventName": "Red Stick Thunder",
    "date": "2004-07-12T00:00:00.000Z",
    "location": "Baton Rouge, Louisiana",
    "offSeasonDay": 16,
@@ -6417,7 +6417,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Huntington, West Virginia",
+   "eventName": "Drums Across the Tri-State",
    "date": "2004-07-12T00:00:00.000Z",
    "location": "Huntington, West Virginia",
    "offSeasonDay": 16,
@@ -6524,7 +6524,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Birmingham, Alabama",
+   "eventName": "Sparks in the Park",
    "date": "2004-07-13T00:00:00.000Z",
    "location": "Birmingham, Alabama",
    "offSeasonDay": 17,
@@ -6631,7 +6631,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Pascagoula, Mississippi",
+   "eventName": "Mississippi Gulf Coast MUSIC GAMES",
    "date": "2004-07-13T00:00:00.000Z",
    "location": "Pascagoula, Mississippi",
    "offSeasonDay": 17,
@@ -6752,7 +6752,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Columbia, South Carolina",
+   "eventName": "Columbia SUMMER MUSIC GAMES",
    "date": "2004-07-14T00:00:00.000Z",
    "location": "Columbia, South Carolina",
    "offSeasonDay": 18,
@@ -6859,7 +6859,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Troy, Alabama",
+   "eventName": "Trojan SUMMER MUSIC GAMES",
    "date": "2004-07-14T00:00:00.000Z",
    "location": "Troy, Alabama",
    "offSeasonDay": 18,
@@ -6994,7 +6994,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Elko, Nevada",
+   "eventName": "Thunder in the Ruby Mountains",
    "date": "2004-07-15T00:00:00.000Z",
    "location": "Elko, Nevada",
    "offSeasonDay": 19,
@@ -7059,7 +7059,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Powder Springs, Georgia",
+   "eventName": "The Atlanta Brass Classic",
    "date": "2004-07-15T00:00:00.000Z",
    "location": "Powder Springs, Georgia",
    "offSeasonDay": 19,
@@ -7180,7 +7180,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Carson City, Nevada",
+   "eventName": "Sierra Capital Drum Corps Classic",
    "date": "2004-07-16T00:00:00.000Z",
    "location": "Carson City, Nevada",
    "offSeasonDay": 20,
@@ -7259,7 +7259,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Everett, Massachusetts",
+   "eventName": "Everett Drum and Bugle Competition",
    "date": "2004-07-16T00:00:00.000Z",
    "location": "Everett, Massachusetts",
    "offSeasonDay": 20,
@@ -7678,7 +7678,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Sacramento, California",
+   "eventName": "West Coast Showdown",
    "date": "2004-07-17T00:00:00.000Z",
    "location": "Sacramento, California",
    "offSeasonDay": 21,
@@ -7841,7 +7841,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Southbridge, Massachusetts",
+   "eventName": "Trumpets in July",
    "date": "2004-07-17T00:00:00.000Z",
    "location": "Southbridge, Massachusetts",
    "offSeasonDay": 21,
@@ -7948,7 +7948,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Jacksonville, Alabama",
+   "eventName": "SPIRIT of America",
    "date": "2004-07-18T00:00:00.000Z",
    "location": "Jacksonville, Alabama",
    "offSeasonDay": 22,
@@ -8232,7 +8232,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Lexington, Kentucky",
+   "eventName": "Drums Across the Bluegrass",
    "date": "2004-07-19T00:00:00.000Z",
    "location": "Lexington, Kentucky",
    "offSeasonDay": 23,
@@ -8311,7 +8311,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Salem, Virginia",
+   "eventName": "The SUMMER MUSIC GAMES of Southwest Virginia",
    "date": "2004-07-19T00:00:00.000Z",
    "location": "Salem, Virginia",
    "offSeasonDay": 23,
@@ -8418,7 +8418,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Centerville, Ohio",
+   "eventName": "Soaring Sounds",
    "date": "2004-07-20T00:00:00.000Z",
    "location": "Centerville, Ohio",
    "offSeasonDay": 24,
@@ -8539,7 +8539,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Chesapeake, Virginia",
+   "eventName": "Tidewater SUMMER MUSIC GAMES",
    "date": "2004-07-20T00:00:00.000Z",
    "location": "Chesapeake, Virginia",
    "offSeasonDay": 24,
@@ -8618,7 +8618,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Warrenton, Virginia",
+   "eventName": "DCI Fauquier",
    "date": "2004-07-20T00:00:00.000Z",
    "location": "Warrenton, Virginia",
    "offSeasonDay": 24,
@@ -8739,7 +8739,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Pittsburgh, Pennsylvania",
+   "eventName": "Three Rivers SUMMER MUSIC GAMES",
    "date": "2004-07-21T00:00:00.000Z",
    "location": "Pittsburgh, Pennsylvania",
    "offSeasonDay": 25,
@@ -8860,7 +8860,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Utica, New York",
+   "eventName": "Drums Along the Mohawk",
    "date": "2004-07-21T00:00:00.000Z",
    "location": "Utica, New York",
    "offSeasonDay": 25,
@@ -9116,7 +9116,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - East Rutherford, New Jersey",
+   "eventName": "Music is Cool--The Big Apple",
    "date": "2004-07-22T00:00:00.000Z",
    "location": "East Rutherford, New Jersey",
    "offSeasonDay": 26,
@@ -9237,7 +9237,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Lynn, Massachusetts",
+   "eventName": "East Coast Classic",
    "date": "2004-07-22T00:00:00.000Z",
    "location": "Lynn, Massachusetts",
    "offSeasonDay": 26,
@@ -9372,7 +9372,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Long Beach, California",
+   "eventName": "Southern California Classic",
    "date": "2004-07-23T00:00:00.000Z",
    "location": "Long Beach, California",
    "offSeasonDay": 27,
@@ -9917,7 +9917,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Riverside, California",
+   "eventName": "Western Corps Connection II",
    "date": "2004-07-24T00:00:00.000Z",
    "location": "Riverside, California",
    "offSeasonDay": 28,
@@ -10215,7 +10215,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Hilton Head, South Carolina",
+   "eventName": "Island Music SHOWDOWN",
    "date": "2004-07-24T00:00:00.000Z",
    "location": "Hilton Head, South Carolina",
    "offSeasonDay": 28,
@@ -10415,7 +10415,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Atlanta, Georgia",
+   "eventName": "Drum Corps Atlanta: Sound in Motion",
    "date": "2004-07-25T00:00:00.000Z",
    "location": "Atlanta, Georgia",
    "offSeasonDay": 29,
@@ -10508,7 +10508,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Hershey, Pennsylvania",
+   "eventName": "Hershey Spectacular",
    "date": "2004-07-25T00:00:00.000Z",
    "location": "Hershey, Pennsylvania",
    "offSeasonDay": 29,
@@ -10601,7 +10601,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Massillon, Ohio",
+   "eventName": "Pro Football Hall of Fame Festival Drum Corps Comp",
    "date": "2004-07-25T00:00:00.000Z",
    "location": "Massillon, Ohio",
    "offSeasonDay": 29,
@@ -10722,7 +10722,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Phoenix, Arizona",
+   "eventName": "Southwest Corps Connection II",
    "date": "2004-07-25T00:00:00.000Z",
    "location": "Phoenix, Arizona",
    "offSeasonDay": 29,
@@ -10964,7 +10964,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Buffalo, New York",
+   "eventName": "Drums Along the Waterfront",
    "date": "2004-07-26T00:00:00.000Z",
    "location": "Buffalo, New York",
    "offSeasonDay": 30,
@@ -11150,7 +11150,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Charlotte, North Carolina",
+   "eventName": "NightBEAT",
    "date": "2004-07-27T00:00:00.000Z",
    "location": "Charlotte, North Carolina",
    "offSeasonDay": 31,
@@ -11229,7 +11229,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Columbus, Ohio",
+   "eventName": "Artistry in Motion",
    "date": "2004-07-27T00:00:00.000Z",
    "location": "Columbus, Ohio",
    "offSeasonDay": 31,
@@ -11336,7 +11336,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Dubuque, Iowa",
+   "eventName": "Music on the March II",
    "date": "2004-07-27T00:00:00.000Z",
    "location": "Dubuque, Iowa",
    "offSeasonDay": 31,
@@ -11485,7 +11485,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Hornell, New York",
+   "eventName": "Music Under the Stars",
    "date": "2004-07-27T00:00:00.000Z",
    "location": "Hornell, New York",
    "offSeasonDay": 31,
@@ -11578,7 +11578,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Jackson, Tennessee",
+   "eventName": "Music in Motion",
    "date": "2004-07-27T00:00:00.000Z",
    "location": "Jackson, Tennessee",
    "offSeasonDay": 31,
@@ -11727,7 +11727,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Fairfield, Ohio",
+   "eventName": "SUMMER MUSIC GAMES in Cincinnati",
    "date": "2004-07-28T00:00:00.000Z",
    "location": "Fairfield, Ohio",
    "offSeasonDay": 32,
@@ -11983,7 +11983,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Murray, Kentucky",
+   "eventName": "Drums Between the Rivers",
    "date": "2004-07-29T00:00:00.000Z",
    "location": "Murray, Kentucky",
    "offSeasonDay": 33,
@@ -12104,7 +12104,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Sevierville, Tennessee",
+   "eventName": "Drums Across America",
    "date": "2004-07-29T00:00:00.000Z",
    "location": "Sevierville, Tennessee",
    "offSeasonDay": 33,
@@ -13152,7 +13152,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Garden City, Kansas",
+   "eventName": "Drums Across Garden",
    "date": "2004-07-31T00:00:00.000Z",
    "location": "Garden City, Kansas",
    "offSeasonDay": 35,
@@ -13329,7 +13329,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Salina, Kansas",
+   "eventName": "Pageantry of Sight & Sound",
    "date": "2004-07-31T00:00:00.000Z",
    "location": "Salina, Kansas",
    "offSeasonDay": 35,
@@ -13506,7 +13506,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Ankeny, Iowa",
+   "eventName": "Celebration in Brass",
    "date": "2004-08-01T00:00:00.000Z",
    "location": "Ankeny, Iowa",
    "offSeasonDay": 36,
@@ -13627,7 +13627,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Naperville, Illinois",
+   "eventName": "Cavalcade of Brass",
    "date": "2004-08-01T00:00:00.000Z",
    "location": "Naperville, Illinois",
    "offSeasonDay": 36,

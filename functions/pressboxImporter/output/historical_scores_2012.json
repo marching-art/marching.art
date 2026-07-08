@@ -1,7 +1,7 @@
 {
  "data": [
   {
-   "eventName": "DCI Competition - Akron, Ohio",
+   "eventName": "Innovations in Brass",
    "date": "2012-06-16T00:00:00.000Z",
    "location": "Akron, Ohio",
    "offSeasonDay": null,
@@ -173,7 +173,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Albuquerque, New Mexico",
+   "eventName": "Drums Along the Sandias",
    "date": "2012-06-19T00:00:00.000Z",
    "location": "Albuquerque, New Mexico",
    "offSeasonDay": null,
@@ -238,7 +238,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Battle Creek, Michigan",
+   "eventName": "Legends Drum Corps Preview",
    "date": "2012-06-20T00:00:00.000Z",
    "location": "Battle Creek, Michigan",
    "offSeasonDay": null,
@@ -303,7 +303,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Martin, Tennessee",
+   "eventName": "Sounds of Summer",
    "date": "2012-06-20T00:00:00.000Z",
    "location": "Martin, Tennessee",
    "offSeasonDay": null,
@@ -382,7 +382,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Mesa, Arizona",
+   "eventName": "Southwest Corps Connection",
    "date": "2012-06-20T00:00:00.000Z",
    "location": "Mesa, Arizona",
    "offSeasonDay": null,
@@ -447,7 +447,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Dothan, Alabama",
+   "eventName": "Deep South DCI",
    "date": "2012-06-21T00:00:00.000Z",
    "location": "Dothan, Alabama",
    "offSeasonDay": null,
@@ -512,7 +512,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Clovis, California",
+   "eventName": "MidCal Champions Showcase",
    "date": "2012-06-22T00:00:00.000Z",
    "location": "Clovis, California",
    "offSeasonDay": null,
@@ -647,7 +647,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Madison, Wisconsin",
+   "eventName": "Drums on Parade",
    "date": "2012-06-22T00:00:00.000Z",
    "location": "Madison, Wisconsin",
    "offSeasonDay": null,
@@ -982,7 +982,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Woodbury, Minnesota",
+   "eventName": "River City Rhapsody - Woodbury",
    "date": "2012-06-23T00:00:00.000Z",
    "location": "Woodbury, Minnesota",
    "offSeasonDay": null,
@@ -1075,7 +1075,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Sioux Falls, South Dakota",
+   "eventName": "Sioux Empire Spectacular",
    "date": "2012-06-24T00:00:00.000Z",
    "location": "Sioux Falls, South Dakota",
    "offSeasonDay": 1,
@@ -1168,7 +1168,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Fort Mill, South Carolina",
+   "eventName": "FirstBEAT",
    "date": "2012-06-25T00:00:00.000Z",
    "location": "Fort Mill, South Carolina",
    "offSeasonDay": 2,
@@ -1247,7 +1247,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Mankato, Minnesota",
+   "eventName": "The Thunder of Drums",
    "date": "2012-06-26T00:00:00.000Z",
    "location": "Mankato, Minnesota",
    "offSeasonDay": 3,
@@ -1340,7 +1340,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Santa Clara, California",
+   "eventName": "Pacific Procession",
    "date": "2012-06-26T00:00:00.000Z",
    "location": "Santa Clara, California",
    "offSeasonDay": 3,
@@ -1433,7 +1433,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Sevierville, Tennessee",
+   "eventName": "Drums Across America",
    "date": "2012-06-26T00:00:00.000Z",
    "location": "Sevierville, Tennessee",
    "offSeasonDay": 3,
@@ -1526,7 +1526,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Fairfield, Ohio",
+   "eventName": "Summer Music Games in Cincinnati",
    "date": "2012-06-27T00:00:00.000Z",
    "location": "Fairfield, Ohio",
    "offSeasonDay": 4,
@@ -1805,7 +1805,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Hillsboro, Oregon",
+   "eventName": "Portland Summer Music Games",
    "date": "2012-06-29T00:00:00.000Z",
    "location": "Hillsboro, Oregon",
    "offSeasonDay": 6,
@@ -1884,7 +1884,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Oceanside, California",
+   "eventName": "Corps at the Crest San Diego",
    "date": "2012-06-29T00:00:00.000Z",
    "location": "Oceanside, California",
    "offSeasonDay": 6,
@@ -2019,7 +2019,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Lynn, Massachusetts",
+   "eventName": "The Beanpot Invitational",
    "date": "2012-06-30T00:00:00.000Z",
    "location": "Lynn, Massachusetts",
    "offSeasonDay": 7,
@@ -2112,7 +2112,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Michigan City, Indiana",
+   "eventName": "Pageant of Drums",
    "date": "2012-06-30T00:00:00.000Z",
    "location": "Michigan City, Indiana",
    "offSeasonDay": 7,
@@ -2247,7 +2247,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Walnut, California",
+   "eventName": "Corps at the Crest Walnut",
    "date": "2012-06-30T00:00:00.000Z",
    "location": "Walnut, California",
    "offSeasonDay": 7,
@@ -2396,7 +2396,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Muscatine, Iowa",
+   "eventName": "Percussion on the Pearl",
    "date": "2012-07-01T00:00:00.000Z",
    "location": "Muscatine, Iowa",
    "offSeasonDay": 8,
@@ -2517,7 +2517,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - New Haven, Connecticut",
+   "eventName": "Connecticut Drums @ Southern Connecticut State University",
    "date": "2012-07-01T00:00:00.000Z",
    "location": "New Haven, Connecticut",
    "offSeasonDay": 8,
@@ -2689,7 +2689,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Riverside, California",
+   "eventName": "Western Corps Connection",
    "date": "2012-07-01T00:00:00.000Z",
    "location": "Riverside, California",
    "offSeasonDay": 8,
@@ -2838,7 +2838,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Bristol, Rhode Island",
+   "eventName": "Summer Music Preview",
    "date": "2012-07-03T00:00:00.000Z",
    "location": "Bristol, Rhode Island",
    "offSeasonDay": 10,
@@ -2959,7 +2959,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Cedarburg, Wisconsin",
+   "eventName": "Rotary Music Festival",
    "date": "2012-07-03T00:00:00.000Z",
    "location": "Cedarburg, Wisconsin",
    "offSeasonDay": 10,
@@ -3080,7 +3080,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Ogden, Utah",
+   "eventName": "Corps Encore",
    "date": "2012-07-03T00:00:00.000Z",
    "location": "Ogden, Utah",
    "offSeasonDay": 10,
@@ -3187,7 +3187,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Casper, Wyoming",
+   "eventName": "Drums Along the Rockies - Casper Edition",
    "date": "2012-07-06T00:00:00.000Z",
    "location": "Casper, Wyoming",
    "offSeasonDay": 13,
@@ -3364,7 +3364,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Whitewater, Wisconsin",
+   "eventName": "The Whitewater Classic",
    "date": "2012-07-06T00:00:00.000Z",
    "location": "Whitewater, Wisconsin",
    "offSeasonDay": 13,
@@ -3606,7 +3606,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Jackson, New Jersey",
+   "eventName": "Drum Corps: An American Tradition",
    "date": "2012-07-07T00:00:00.000Z",
    "location": "Jackson, New Jersey",
    "offSeasonDay": 14,
@@ -3713,7 +3713,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Sacramento, California",
+   "eventName": "DCI Capital Classic Corps Show",
    "date": "2012-07-07T00:00:00.000Z",
    "location": "Sacramento, California",
    "offSeasonDay": 14,
@@ -3806,7 +3806,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Chambersburg, Pennsylvania",
+   "eventName": "Drum Corps: An American Tradition",
    "date": "2012-07-08T00:00:00.000Z",
    "location": "Chambersburg, Pennsylvania",
    "offSeasonDay": 15,
@@ -3899,7 +3899,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Pleasant Hill, California",
+   "eventName": "Loudest Show on Earth",
    "date": "2012-07-08T00:00:00.000Z",
    "location": "Pleasant Hill, California",
    "offSeasonDay": 15,
@@ -3992,7 +3992,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Omaha, Nebraska",
+   "eventName": "Drums Across Nebraska",
    "date": "2012-07-09T00:00:00.000Z",
    "location": "Omaha, Nebraska",
    "offSeasonDay": 16,
@@ -4099,7 +4099,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Waukee, Iowa",
+   "eventName": "Celebration in Brass",
    "date": "2012-07-10T00:00:00.000Z",
    "location": "Waukee, Iowa",
    "offSeasonDay": 17,
@@ -4206,7 +4206,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Bowling Green, Ohio",
+   "eventName": "Glassmen All Star Review",
    "date": "2012-07-11T00:00:00.000Z",
    "location": "Bowling Green, Ohio",
    "offSeasonDay": 18,
@@ -4299,7 +4299,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Metamora, Illinois",
+   "eventName": "River City Rhapsody-Metamora",
    "date": "2012-07-11T00:00:00.000Z",
    "location": "Metamora, Illinois",
    "offSeasonDay": 18,
@@ -4392,7 +4392,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Davenport, Iowa",
+   "eventName": "Music on the March",
    "date": "2012-07-12T00:00:00.000Z",
    "location": "Davenport, Iowa",
    "offSeasonDay": 19,
@@ -4499,7 +4499,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Salem, Wisconsin",
+   "eventName": "Music on the Border",
    "date": "2012-07-12T00:00:00.000Z",
    "location": "Salem, Wisconsin",
    "offSeasonDay": 19,
@@ -4671,7 +4671,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Lisle, Illinois",
+   "eventName": "Cavalcade of Brass",
    "date": "2012-07-13T00:00:00.000Z",
    "location": "Lisle, Illinois",
    "offSeasonDay": 20,
@@ -5202,7 +5202,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Bellflower, California",
+   "eventName": "So Cal Classic Open Class Championship",
    "date": "2012-07-15T00:00:00.000Z",
    "location": "Bellflower, California",
    "offSeasonDay": 22,
@@ -5323,7 +5323,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Manchester, New Hampshire",
+   "eventName": "Fiesta De Musica",
    "date": "2012-07-15T00:00:00.000Z",
    "location": "Manchester, New Hampshire",
    "offSeasonDay": 22,
@@ -5509,7 +5509,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Lebanon, Illinois",
+   "eventName": "DCI St. Louis presented by Etymotic Research",
    "date": "2012-07-16T00:00:00.000Z",
    "location": "Lebanon, Illinois",
    "offSeasonDay": 23,
@@ -5630,7 +5630,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Olathe, Kansas",
+   "eventName": "Brass Impact",
    "date": "2012-07-16T00:00:00.000Z",
    "location": "Olathe, Kansas",
    "offSeasonDay": 23,
@@ -5751,7 +5751,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Bentonville, Arkansas",
+   "eventName": "Music on the Move",
    "date": "2012-07-17T00:00:00.000Z",
    "location": "Bentonville, Arkansas",
    "offSeasonDay": 24,
@@ -5886,7 +5886,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Wichita, Kansas",
+   "eventName": "Drums Across Kansas",
    "date": "2012-07-17T00:00:00.000Z",
    "location": "Wichita, Kansas",
    "offSeasonDay": 24,
@@ -6799,7 +6799,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Lafayette, Louisiana",
+   "eventName": "Drums Across Cajun Field",
    "date": "2012-07-23T00:00:00.000Z",
    "location": "Lafayette, Louisiana",
    "offSeasonDay": 30,
@@ -6920,7 +6920,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Odessa, Texas",
+   "eventName": "Thunder in the Desert",
    "date": "2012-07-23T00:00:00.000Z",
    "location": "Odessa, Texas",
    "offSeasonDay": 30,
@@ -7218,7 +7218,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Ocean Springs, Mississippi",
+   "eventName": "Mississippi Sound Spectacular",
    "date": "2012-07-24T00:00:00.000Z",
    "location": "Ocean Springs, Mississippi",
    "offSeasonDay": 31,
@@ -7567,7 +7567,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Little Rock, Arkansas",
+   "eventName": "DCI Arkansas presented by Evans & ProMark",
    "date": "2012-07-26T00:00:00.000Z",
    "location": "Little Rock, Arkansas",
    "offSeasonDay": 33,
@@ -8098,7 +8098,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Paw Paw, Michigan",
+   "eventName": "Drum Corps in the Village",
    "date": "2012-07-28T00:00:00.000Z",
    "location": "Paw Paw, Michigan",
    "offSeasonDay": 35,
@@ -8354,7 +8354,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Charleston, West Virginia",
+   "eventName": "Drums Across the Tri-State",
    "date": "2012-07-30T00:00:00.000Z",
    "location": "Charleston, West Virginia",
    "offSeasonDay": 37,
@@ -8554,7 +8554,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Erie, Pennsylvania",
+   "eventName": "Lake Erie Fanfare I",
    "date": "2012-07-30T00:00:00.000Z",
    "location": "Erie, Pennsylvania",
    "offSeasonDay": 37,
@@ -8647,7 +8647,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Spring Valley, Illinois",
+   "eventName": "Music to the Core",
    "date": "2012-07-30T00:00:00.000Z",
    "location": "Spring Valley, Illinois",
    "offSeasonDay": 37,
@@ -8754,7 +8754,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Dublin, Ohio",
+   "eventName": "Emerald City Music Games",
    "date": "2012-07-31T00:00:00.000Z",
    "location": "Dublin, Ohio",
    "offSeasonDay": 38,
@@ -8861,7 +8861,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Salem, Virginia",
+   "eventName": "WDBJ-7 Summer Music Games of Southwest Virginia",
    "date": "2012-07-31T00:00:00.000Z",
    "location": "Salem, Virginia",
    "offSeasonDay": 38,
@@ -8954,7 +8954,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Johnsonburg, Pennsylvania",
+   "eventName": "A Blast in the Burg",
    "date": "2012-07-31T00:00:00.000Z",
    "location": "Johnsonburg, Pennsylvania",
    "offSeasonDay": 38,
@@ -9033,7 +9033,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Erie, Pennsylvania",
+   "eventName": "Lake Erie Fanfare II",
    "date": "2012-08-01T00:00:00.000Z",
    "location": "Erie, Pennsylvania",
    "offSeasonDay": 39,
@@ -9154,7 +9154,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - West Chester, Pennsylvania",
+   "eventName": "Drum Corps: An American Tradition",
    "date": "2012-08-01T00:00:00.000Z",
    "location": "West Chester, Pennsylvania",
    "offSeasonDay": 39,
@@ -9261,7 +9261,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Rice Lake, Wisconsin",
+   "eventName": "Rhythm Across Rice Lake",
    "date": "2012-08-01T00:00:00.000Z",
    "location": "Rice Lake, Wisconsin",
    "offSeasonDay": 39,
@@ -9354,7 +9354,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Lawrence, Massachusetts",
+   "eventName": "East Coast Classic",
    "date": "2012-08-02T00:00:00.000Z",
    "location": "Lawrence, Massachusetts",
    "offSeasonDay": 40,
@@ -9447,7 +9447,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Rome, New York",
+   "eventName": "Drums Along the Mohawk",
    "date": "2012-08-02T00:00:00.000Z",
    "location": "Rome, New York",
    "offSeasonDay": 40,
@@ -9554,7 +9554,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Avon Lake, Ohio",
+   "eventName": "Shoremen Brass Classic",
    "date": "2012-08-03T00:00:00.000Z",
    "location": "Avon Lake, Ohio",
    "offSeasonDay": 41,
@@ -9647,7 +9647,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Oskaloosa, Iowa",
+   "eventName": "Music on the March 2",
    "date": "2012-08-03T00:00:00.000Z",
    "location": "Oskaloosa, Iowa",
    "offSeasonDay": 41,
@@ -10080,7 +10080,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Niles, Michigan",
+   "eventName": "Four Flags Spectacular",
    "date": "2012-08-04T00:00:00.000Z",
    "location": "Niles, Michigan",
    "offSeasonDay": 42,
@@ -10201,7 +10201,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Pittsburgh, Pennsylvania",
+   "eventName": "Three Rivers SUMMER MUSIC GAMES",
    "date": "2012-08-05T00:00:00.000Z",
    "location": "Pittsburgh, Pennsylvania",
    "offSeasonDay": 43,
@@ -10322,7 +10322,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Massillon, Ohio",
+   "eventName": "Pro Football Hall of Fame Enshrinement Festival Drum Corps C...",
    "date": "2012-08-06T00:00:00.000Z",
    "location": "Massillon, Ohio",
    "offSeasonDay": 44,
