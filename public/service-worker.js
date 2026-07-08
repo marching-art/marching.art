@@ -1,7 +1,12 @@
 // Service Worker for marching.art Progressive Web App
 // Provides offline support, caching, and improved performance
 
-const APP_VERSION = '2.1.0';
+// APP_VERSION is stamped with a unique per-build id at production build time by
+// the stamp-service-worker Vite plugin (see vite.config.js). This guarantees the
+// cache names below change on every deploy, so returning PWA users get the fresh
+// app shell instead of a stale cached one. The literal fallback only applies to
+// dev, where the service worker isn't registered anyway.
+const APP_VERSION = '__BUILD_ID__';
 const CACHE_NAME = `marching-art-v${APP_VERSION}`;
 const RUNTIME_CACHE = `marching-art-runtime-v${APP_VERSION}`;
 const IMAGE_CACHE = `marching-art-images-v${APP_VERSION}`;
