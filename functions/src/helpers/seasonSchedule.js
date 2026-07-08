@@ -9,7 +9,7 @@ const axios = require("axios");
 
 // Fields carried from an enriched scraped event onto a stored show/competition.
 // Kept in one place so generate + refresh + write all stay in sync.
-const ENRICHMENT_FIELDS = ["startsAt", "scoresAt", "gatesAt", "timezone", "lineup", "venue", "url"];
+const ENRICHMENT_FIELDS = ["startsAt", "scoresAt", "gatesAt", "timezone", "lineup", "venue", "url", "heritageSource"];
 
 /**
  * Copy the detail-page enrichment fields (timing + running order) from a scraped

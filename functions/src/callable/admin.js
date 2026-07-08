@@ -233,6 +233,16 @@ exports.manualTrigger = onCall({
           `${result.unchangedCount} unchanged.`,
       };
     }
+    case "setHeritageSchedules": {
+      // Feature-flag kill switch for off-season heritage schedule enrichment.
+      // enabled=false reverts NEW off-seasons to the names-only schedule.
+      const enabled = request.data.enabled !== false;
+      await getDb().doc("game-settings/config").set({ heritageSchedulesEnabled: enabled }, { merge: true });
+      return {
+        success: true,
+        message: `Heritage schedule enrichment ${enabled ? "ENABLED" : "DISABLED"} for future off-seasons.`,
+      };
+    }
     case "auditShowSelections":
     case "repairShowSelections": {
       // Re-match every director's saved show selections against the current

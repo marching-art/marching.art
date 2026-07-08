@@ -7,7 +7,11 @@
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { mergeEventIntoHistoricalSchedules, buildScheduleEventData } = require("./historicalSchedules");
+const {
+  mergeEventIntoHistoricalSchedules,
+  buildScheduleEventData,
+  mergeEventRecords,
+} = require("./historicalSchedules");
 
 // Fake Firestore where historical_schedules/{year} maps to `stored` (or absent).
 function makeDb(stored) {
@@ -147,6 +151,49 @@ describe("mergeEventIntoHistoricalSchedules", () => {
 
     // Nothing new (same corps, all fields already present) -> no write.
     assert.equal(writes.length, 0);
+  });
+});
+
+describe("mergeEventRecords — source precedence", () => {
+  const scraped = (o = {}) => ({ eventName: "X", date: "2015-07-01", source: "scraped", lineup: [], ...o });
+  const learned = (o = {}) => ({ eventName: "X", date: "2015-07-01", source: "learned", lineup: [], ...o });
+
+  test("scraped replaces an existing learned record", () => {
+    const { event, changed } = mergeEventRecords(learned({ venue: "guess" }), scraped({ venue: "real" }));
+    assert.equal(changed, true);
+    assert.equal(event.source, "scraped");
+    assert.equal(event.venue, "real");
+  });
+
+  test("learned never downgrades an existing scraped record", () => {
+    const { event, changed } = mergeEventRecords(scraped({ venue: "real" }), learned({ venue: "guess" }));
+    assert.equal(changed, false);
+    assert.equal(event.source, "scraped");
+    assert.equal(event.venue, "real");
+  });
+
+  test("a learned rebuild replaces the prior learned record", () => {
+    const { event, changed } = mergeEventRecords(
+      learned({ modelVersion: "2026.01", startsAt: "old" }),
+      learned({ modelVersion: "2026.07", startsAt: "new" })
+    );
+    assert.equal(changed, true);
+    assert.equal(event.startsAt, "new");
+  });
+
+  test("identical learned records report no change", () => {
+    const { changed } = mergeEventRecords(learned({ startsAt: "a" }), learned({ startsAt: "a" }));
+    assert.equal(changed, false);
+  });
+
+  test("records with no source behave as scraped (legacy data)", () => {
+    // Existing legacy (no source) must not be downgraded by an incoming learned.
+    const { event, changed } = mergeEventRecords(
+      { eventName: "X", date: "2015-07-01", venue: "legacy", lineup: [] },
+      learned({ venue: "guess" })
+    );
+    assert.equal(changed, false);
+    assert.equal(event.venue, "legacy");
   });
 });
 

@@ -607,6 +607,19 @@ export const discoverAndQueueEventUrls = createCallable<
   void,
   { success?: boolean; message?: string }
 >('discoverAndQueueEventUrls');
+export const buildLearnedSchedules = createCallable<
+  void,
+  { success?: boolean; message?: string; built?: number; scrapedKept?: number; skipped?: number }
+>('buildLearnedSchedules');
+export const getScheduleCoverage = createCallable<
+  void,
+  {
+    success?: boolean;
+    years?: Array<Record<string, unknown>>;
+    totals?: Record<string, number>;
+    pool?: { seasonId: string | null; size: number; unmapped: string[] };
+  }
+>('getScheduleCoverage');
 // 3 min timeout: generates the full day's AI articles in one call
 export const triggerDailyNews = createCallable<
   { currentDay?: number; dataDocId?: string; seasonId?: string },

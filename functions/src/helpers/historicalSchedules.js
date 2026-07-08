@@ -44,25 +44,77 @@ function normalizeCorps(name) {
   return String(name || "").toLowerCase().replace(/\s+/g, " ").trim();
 }
 
+// Provenance precedence. A scraped (real dci.org) record outranks a learned
+// (synthesized) one. Records with no `source` predate the flag and are real
+// scrapes, so they default to the scraped rank.
+const SOURCE_RANK = { scraped: 2, "learned-championship": 1, learned: 1 };
+function sourceRank(ev) {
+  return SOURCE_RANK[ev && ev.source] ?? 2;
+}
+
+/**
+ * Additive fill-blanks merge of two SAME-provenance records (the original scraped
+ * behavior): fill blank scalar fields, append missing lineup corps, fill blank
+ * per-corps fields. Mutates `target`. Returns true if anything changed.
+ */
+function additiveFillMerge(target, incoming) {
+  let changed = fillBlankFields(target, incoming, SCHEDULE_SCALAR_FIELDS);
+  if (!Array.isArray(target.lineup)) target.lineup = [];
+  const byCorps = new Map(target.lineup.map((e) => [normalizeCorps(e.corps), e]));
+  for (const entry of incoming.lineup || []) {
+    const key = normalizeCorps(entry.corps);
+    if (!key) continue;
+    const existing = byCorps.get(key);
+    if (!existing) {
+      target.lineup.push(entry);
+      byCorps.set(key, entry);
+      changed = true;
+    } else if (fillBlankFields(existing, entry, LINEUP_FILL_FIELDS)) {
+      changed = true;
+    }
+  }
+  if (changed) target.lineup.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  return changed;
+}
+
+/**
+ * Resolve how an incoming event record merges with the existing record for the
+ * same event (name+date), honoring source precedence:
+ *   - scraped always beats learned (real replaces synthesized; never downgrade);
+ *   - two scraped -> additive fill-blanks (idempotent live/backfill re-runs);
+ *   - two learned -> replace (a rebuild adopts the latest model constants).
+ * @param {Object|undefined} existing
+ * @param {Object} incoming
+ * @returns {{event:Object, changed:boolean}}
+ */
+function mergeEventRecords(existing, incoming) {
+  if (!existing) return { event: incoming, changed: true };
+  const re = sourceRank(existing);
+  const ri = sourceRank(incoming);
+  if (ri > re) return { event: incoming, changed: true }; // scraped replaces learned
+  if (ri < re) return { event: existing, changed: false }; // keep scraped over learned
+  if (ri === 1) { // both learned -> rebuild picks up the latest model
+    return { event: incoming, changed: JSON.stringify(existing) !== JSON.stringify(incoming) };
+  }
+  const changed = additiveFillMerge(existing, incoming); // both scraped -> additive
+  return { event: existing, changed };
+}
+
 /**
  * Merge one event's running order + timing into historical_schedules/{year},
  * inside a transaction. The schedule analog of mergeEventIntoHistoricalScores,
- * so both archives fill continuously (live + backfill) and stay joinable to each
- * other by event name + date.
+ * so both archives fill continuously (live + backfill + learned) and stay
+ * joinable to each other by event name + date.
  *
- * Merge rules (idempotent, additive — never overwrites existing data):
- *  - No year document yet   -> create it with this event.
- *  - Event not present       -> append it.
- *  - Event already present   -> add any lineup corps not yet recorded, fill only
- *                               blank per-corps fields on existing entries, and
- *                               fill blank scalar timing/venue fields. If nothing
- *                               changed, skip the write.
+ *  - No year document yet -> create it with this event.
+ *  - Event not present     -> append it.
+ *  - Event already present -> resolve via mergeEventRecords (source precedence).
  *
  * @param {FirebaseFirestore.Firestore} db
  * @param {string|number} year - Calendar year; used as the document id.
  * @param {Object} newEventData - { eventName, date, location, venue, timezone,
- *   gatesAt, startsAt, scoresAt, offSeasonDay, lineup:[{order,corps,hometown,
- *   performanceTime,performsAt}] }
+ *   gatesAt, startsAt, scoresAt, offSeasonDay, source, lineup:[{order,corps,
+ *   hometown,performanceTime,performsAt}] }
  * @returns {Promise<void>}
  */
 async function mergeEventIntoHistoricalSchedules(db, year, newEventData) {
@@ -85,47 +137,16 @@ async function mergeEventIntoHistoricalSchedules(db, year, newEventData) {
     );
 
     if (eventIndex === -1) {
-      const updatedData = [...existingData, newEventData];
-      logger.info(`Appending new event to historical_schedules/${year}. Total events: ${updatedData.length}`);
-      transaction.update(yearDocRef, { data: updatedData });
+      transaction.update(yearDocRef, { data: [...existingData, newEventData] });
+      logger.info(`Appended new event to historical_schedules/${year}: ${newEventData.eventName}`);
       return;
     }
 
-    const eventToUpdate = existingData[eventIndex];
-    let hasBeenUpdated = false;
-
-    // Fill blank scalar timing/venue fields.
-    if (fillBlankFields(eventToUpdate, newEventData, SCHEDULE_SCALAR_FIELDS)) {
-      hasBeenUpdated = true;
-    }
-
-    // Merge the running order: add missing corps, fill blanks on existing ones.
-    if (!Array.isArray(eventToUpdate.lineup)) eventToUpdate.lineup = [];
-    const existingByCorps = new Map(
-      eventToUpdate.lineup.map((entry) => [normalizeCorps(entry.corps), entry])
-    );
-    for (const newEntry of newEventData.lineup || []) {
-      const key = normalizeCorps(newEntry.corps);
-      if (!key) continue;
-      const existingEntry = existingByCorps.get(key);
-      if (!existingEntry) {
-        eventToUpdate.lineup.push(newEntry);
-        existingByCorps.set(key, newEntry);
-        hasBeenUpdated = true;
-        logger.info(`Adding missing lineup entry for ${newEntry.corps}.`);
-      } else if (fillBlankFields(existingEntry, newEntry, LINEUP_FILL_FIELDS)) {
-        hasBeenUpdated = true;
-      }
-    }
-
-    if (hasBeenUpdated) {
-      // Keep the running order sorted by performance time when order is known.
-      eventToUpdate.lineup.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-      existingData[eventIndex] = eventToUpdate;
+    const { event, changed } = mergeEventRecords(existingData[eventIndex], newEventData);
+    if (changed) {
+      existingData[eventIndex] = event;
       transaction.update(yearDocRef, { data: existingData });
-      logger.info(`Successfully merged schedule into event: ${newEventData.eventName}`);
-    } else {
-      logger.info(`No new schedule data to merge for event: ${newEventData.eventName}. Skipping.`);
+      logger.info(`Merged schedule into event: ${newEventData.eventName}`);
     }
   });
 }
@@ -164,6 +185,7 @@ function buildScheduleEventData(event) {
       startsAt: event.startsAt || null,
       scoresAt: event.scoresAt || null,
       offSeasonDay,
+      source: "scraped",
       lineup: Array.isArray(event.lineup) ? event.lineup : [],
     },
   };
@@ -201,6 +223,8 @@ async function archiveScheduleEvents(db, events) {
 
 module.exports = {
   mergeEventIntoHistoricalSchedules,
+  mergeEventRecords,
+  sourceRank,
   buildScheduleEventData,
   archiveScheduleEvents,
   normalizeCorps,
