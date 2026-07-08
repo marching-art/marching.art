@@ -132,13 +132,13 @@ describe('LoadingOverlay', () => {
       expect(container.querySelector('.bg-charcoal-900\\/60')).not.toBeInTheDocument();
     });
 
-    it('shows label when loading', () => {
+    it('exposes label as accessible name when loading', () => {
       render(
         <LoadingOverlay isLoading={true} label="Please wait">
           <p>Content</p>
         </LoadingOverlay>
       );
-      expect(screen.getByText('Please wait')).toBeInTheDocument();
+      expect(screen.getByRole('status', { name: 'Please wait' })).toBeInTheDocument();
     });
   });
 

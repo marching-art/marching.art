@@ -79,11 +79,14 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
             ${blur ? 'backdrop-blur-sm' : ''}
           `}
         >
-          <div className="flex flex-col items-center gap-3">
+          <div
+            className="flex flex-col items-center gap-3"
+            role="status"
+            aria-label={label || 'Loading...'}
+          >
             <div className="animate-pulse">
-              <BrandLogo className="w-12 h-12" color="text-[#0057B8]" />
+              <BrandLogo className="w-12 h-12" color="text-[#eab308]" />
             </div>
-            {label && <p className="font-mono text-xs text-[#0057B8]/60 tracking-wide">{label}</p>}
           </div>
         </m.div>
       )}
