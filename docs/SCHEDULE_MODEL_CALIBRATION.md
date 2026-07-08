@@ -30,12 +30,12 @@ Championship.
 
 Spearman rank correlation between performance order and final score, per event:
 
-| statistic | value |
-|---|---|
-| median rho | **0.917** |
-| min rho | 0.600 |
-| max rho | 1.000 |
-| events with rho ≥ 0.8 | 17 / 24 |
+| statistic             | value       |
+| --------------------- | ----------- |
+| median rho            | **0.917**   |
+| min rho               | 0.600       |
+| max rho               | 1.000       |
+| events with rho ≥ 0.8 | 17 / 24     |
 | events with rho ≥ 0.6 | **24 / 24** |
 
 Positive rho = later performers score higher = worst-to-best order. Every event
@@ -58,14 +58,14 @@ corps score lower, so a pure score sort already tiers them.
 
 ## Finding 2 — timing constants (medians)
 
-| constant | fitted median | used in model |
-|---|---|---|
-| first performer, local start | 19.17 h (~7:10 PM) | `defaultStartLocalMinutes = 1150` |
-| gates open before first performer | 80 min | `gatesOffsetMin = 80` |
-| scores announced after last performer | 23 min | `scoresOffsetMin = 23` |
-| interval between performers | 17.0 min | `intervalMin = 17` |
-| intermission gap | 34 min | `intermissionMin = 34` |
-| intermission position | 0.43 of field | `intermissionPosition = 0.43` |
+| constant                              | fitted median      | used in model                     |
+| ------------------------------------- | ------------------ | --------------------------------- |
+| first performer, local start          | 19.17 h (~7:10 PM) | `defaultStartLocalMinutes = 1150` |
+| gates open before first performer     | 80 min             | `gatesOffsetMin = 80`             |
+| scores announced after last performer | 23 min             | `scoresOffsetMin = 23`            |
+| interval between performers           | 17.0 min           | `intervalMin = 17`                |
+| intermission gap                      | 34 min             | `intermissionMin = 34`            |
+| intermission position                 | 0.43 of field      | `intermissionPosition = 0.43`     |
 
 Large fields would run past midnight from a fixed 7:10 PM start, so the model
 **end-anchors**: it targets the last performer at ~10:30 PM and pulls the start

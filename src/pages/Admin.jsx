@@ -150,8 +150,8 @@ const DeepScrapeCard = () => {
     if (
       !window.confirm(
         'Build LEARNED schedules for all archived events?\n\n' +
-          "Synthesizes a DCI-style running order + performance times for every archived " +
-          'scored event (from each event\'s real corps + scores) and writes them into ' +
+          'Synthesizes a DCI-style running order + performance times for every archived ' +
+          "scored event (from each event's real corps + scores) and writes them into " +
           'historical_schedules. Real scraped running orders (2019+) are always kept — ' +
           'learned ones only fill years/events that have none.\n\n' +
           'Idempotent; safe to re-run (a rebuild adopts the latest model).'
@@ -175,7 +175,7 @@ const DeepScrapeCard = () => {
       !window.confirm(
         'Start a DEEP SCRAPE of all DCI schedules?\n\n' +
           'This reads dci.org/events (every event, 2019-present) and archives each ' +
-          "running order + performance times into historical_schedules. It runs in the " +
+          'running order + performance times into historical_schedules. It runs in the ' +
           'background and can take a while.\n\n' +
           'Safe and idempotent: missing events and lineup entries are filled in, existing ' +
           'values are NEVER overwritten. Running it also seeds the current year in full.'
@@ -228,94 +228,94 @@ const DeepScrapeCard = () => {
 
   return (
     <>
-    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
-      <SectionHeader title="Deep Scrape — Full DCI History" icon={Database} />
-      <div className="p-4 space-y-3">
-        <p className="text-[11px] text-gray-500 leading-relaxed">
-          Backfill the entire scores database from dci.org —{' '}
-          <span className="text-gray-300">all events across all years</span>. Use this to fill in
-          missing caption scores and events. The scrape runs asynchronously in the background (watch
-          the function logs for progress) and is{' '}
-          <span className="text-gray-300">100% format-compatible</span> with the existing database:
-          it appends missing corps and fills only blank/zero captions — it never overwrites existing
-          values.
-        </p>
-        <div className="flex items-start gap-2 px-3 py-2 bg-[#111] border border-[#333]">
-          <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
-          <p className="text-[11px] text-yellow-500/80">
-            Heavy, long-running job. It paginates all of dci.org's score history, so it may take a
-            while and generate many background invocations. Safe to re-run; runs are idempotent.
+      <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+        <SectionHeader title="Deep Scrape — Full DCI History" icon={Database} />
+        <div className="p-4 space-y-3">
+          <p className="text-[11px] text-gray-500 leading-relaxed">
+            Backfill the entire scores database from dci.org —{' '}
+            <span className="text-gray-300">all events across all years</span>. Use this to fill in
+            missing caption scores and events. The scrape runs asynchronously in the background
+            (watch the function logs for progress) and is{' '}
+            <span className="text-gray-300">100% format-compatible</span> with the existing
+            database: it appends missing corps and fills only blank/zero captions — it never
+            overwrites existing values.
           </p>
-        </div>
-        <button
-          onClick={handleDeepScrape}
-          disabled={loading}
-          className="flex items-center gap-1.5 h-9 px-3 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] border border-[#0057B8]/30 hover:bg-[#0057B8] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {loading ? (
-            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-          ) : (
-            <Database className="w-3.5 h-3.5" />
-          )}
-          {loading ? 'Starting…' : 'Start Deep Scrape (All Years)'}
-        </button>
-      </div>
-    </div>
-
-    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
-      <SectionHeader title="Deep Scrape — Schedules & Performance Times" icon={Calendar} />
-      <div className="p-4 space-y-3">
-        <p className="text-[11px] text-gray-500 leading-relaxed">
-          Backfill the schedule archive from dci.org —{' '}
-          <span className="text-gray-300">every event's running order + performance times</span>,{' '}
-          all years (2019-present; earlier years aren't published). This fills{' '}
-          <span className="text-gray-300">historical_schedules</span>, the companion to
-          historical_scores, joinable to scores by event name + date. The scrape runs in the
-          background and appends missing events and lineup entries while filling only blank timing
-          fields — it never overwrites existing values. Running it also seeds the{' '}
-          <span className="text-gray-300">current year in full</span> (past + upcoming shows).
-        </p>
-        <div className="flex items-start gap-2 px-3 py-2 bg-[#111] border border-[#333]">
-          <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
-          <p className="text-[11px] text-yellow-500/80">
-            Heavy, long-running job — ~1,100 event pages across all years. Safe to re-run; runs are
-            idempotent.
-          </p>
-        </div>
-        <button
-          onClick={handleDeepScrapeSchedules}
-          disabled={scheduleLoading}
-          className="flex items-center gap-1.5 h-9 px-3 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] border border-[#0057B8]/30 hover:bg-[#0057B8] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {scheduleLoading ? (
-            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-          ) : (
-            <Calendar className="w-3.5 h-3.5" />
-          )}
-          {scheduleLoading ? 'Starting…' : 'Start Schedule Scrape (All Years)'}
-        </button>
-        <div className="pt-2 border-t border-[#333]">
-          <p className="text-[11px] text-gray-500 leading-relaxed mb-2">
-            After the scrape, synthesize running orders for the years dci.org never published
-            (pre-2019) from each event's real corps + scores. Writes{' '}
-            <span className="text-gray-300">learned</span> entries into historical_schedules;{' '}
-            real scraped orders are always kept.
-          </p>
+          <div className="flex items-start gap-2 px-3 py-2 bg-[#111] border border-[#333]">
+            <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
+            <p className="text-[11px] text-yellow-500/80">
+              Heavy, long-running job. It paginates all of dci.org's score history, so it may take a
+              while and generate many background invocations. Safe to re-run; runs are idempotent.
+            </p>
+          </div>
           <button
-            onClick={handleBuildLearnedSchedules}
-            disabled={learnedLoading}
+            onClick={handleDeepScrape}
+            disabled={loading}
             className="flex items-center gap-1.5 h-9 px-3 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] border border-[#0057B8]/30 hover:bg-[#0057B8] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {learnedLoading ? (
+            {loading ? (
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Database className="w-3.5 h-3.5" />
+            )}
+            {loading ? 'Starting…' : 'Start Deep Scrape (All Years)'}
+          </button>
+        </div>
+      </div>
+
+      <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+        <SectionHeader title="Deep Scrape — Schedules & Performance Times" icon={Calendar} />
+        <div className="p-4 space-y-3">
+          <p className="text-[11px] text-gray-500 leading-relaxed">
+            Backfill the schedule archive from dci.org —{' '}
+            <span className="text-gray-300">every event's running order + performance times</span>,{' '}
+            all years (2019-present; earlier years aren't published). This fills{' '}
+            <span className="text-gray-300">historical_schedules</span>, the companion to
+            historical_scores, joinable to scores by event name + date. The scrape runs in the
+            background and appends missing events and lineup entries while filling only blank timing
+            fields — it never overwrites existing values. Running it also seeds the{' '}
+            <span className="text-gray-300">current year in full</span> (past + upcoming shows).
+          </p>
+          <div className="flex items-start gap-2 px-3 py-2 bg-[#111] border border-[#333]">
+            <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
+            <p className="text-[11px] text-yellow-500/80">
+              Heavy, long-running job — ~1,100 event pages across all years. Safe to re-run; runs
+              are idempotent.
+            </p>
+          </div>
+          <button
+            onClick={handleDeepScrapeSchedules}
+            disabled={scheduleLoading}
+            className="flex items-center gap-1.5 h-9 px-3 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] border border-[#0057B8]/30 hover:bg-[#0057B8] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {scheduleLoading ? (
               <RefreshCw className="w-3.5 h-3.5 animate-spin" />
             ) : (
               <Calendar className="w-3.5 h-3.5" />
             )}
-            {learnedLoading ? 'Building…' : 'Build Learned Schedules (All Years)'}
+            {scheduleLoading ? 'Starting…' : 'Start Schedule Scrape (All Years)'}
           </button>
+          <div className="pt-2 border-t border-[#333]">
+            <p className="text-[11px] text-gray-500 leading-relaxed mb-2">
+              After the scrape, synthesize running orders for the years dci.org never published
+              (pre-2019) from each event's real corps + scores. Writes{' '}
+              <span className="text-gray-300">learned</span> entries into historical_schedules; real
+              scraped orders are always kept.
+            </p>
+            <button
+              onClick={handleBuildLearnedSchedules}
+              disabled={learnedLoading}
+              className="flex items-center gap-1.5 h-9 px-3 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] border border-[#0057B8]/30 hover:bg-[#0057B8] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {learnedLoading ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Calendar className="w-3.5 h-3.5" />
+              )}
+              {learnedLoading ? 'Building…' : 'Build Learned Schedules (All Years)'}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
     </>
   );
 };
@@ -338,7 +338,11 @@ const ScheduleCoverageCard = () => {
   };
 
   const setFlag = async (enabled) => {
-    if (!window.confirm(`${enabled ? 'Enable' : 'Disable'} heritage schedules for future off-seasons?`))
+    if (
+      !window.confirm(
+        `${enabled ? 'Enable' : 'Disable'} heritage schedules for future off-seasons?`
+      )
+    )
       return;
     setFlagBusy(true);
     try {
@@ -369,7 +373,11 @@ const ScheduleCoverageCard = () => {
             disabled={loading}
             className="flex items-center gap-1.5 h-9 px-3 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] border border-[#0057B8]/30 hover:bg-[#0057B8] hover:text-white disabled:opacity-50 transition-colors"
           >
-            {loading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Activity className="w-3.5 h-3.5" />}
+            {loading ? (
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Activity className="w-3.5 h-3.5" />
+            )}
             {loading ? 'Checking…' : 'Check Coverage'}
           </button>
           <button
@@ -398,7 +406,11 @@ const ScheduleCoverageCard = () => {
                   ['Missing', t.missing, t.missing > 0 ? 'text-yellow-500' : 'text-gray-400'],
                   ['Scraped', t.scraped, 'text-white'],
                   ['Learned', t.learned, 'text-white'],
-                  ['All-Age Leak', t.allAgeLeak, t.allAgeLeak > 0 ? 'text-red-400' : 'text-gray-400'],
+                  [
+                    'All-Age Leak',
+                    t.allAgeLeak,
+                    t.allAgeLeak > 0 ? 'text-red-400' : 'text-gray-400',
+                  ],
                 ].map(([label, val, cls]) => (
                   <div key={label} className="bg-[#111] border border-[#333] p-2">
                     <div className="text-gray-500">{label}</div>
@@ -411,7 +423,8 @@ const ScheduleCoverageCard = () => {
             {report.pool?.unmapped?.length > 0 && (
               <div className="bg-[#111] border border-red-500/30 p-3">
                 <div className="text-[10px] uppercase tracking-wider text-red-400 mb-1">
-                  Pool corps with no matching results ({report.pool.unmapped.length}) — likely name-map gaps
+                  Pool corps with no matching results ({report.pool.unmapped.length}) — likely
+                  name-map gaps
                 </div>
                 <div className="text-[11px] text-gray-400">{report.pool.unmapped.join(', ')}</div>
               </div>
@@ -421,9 +434,13 @@ const ScheduleCoverageCard = () => {
               <table className="w-full text-[11px]">
                 <thead>
                   <tr className="text-gray-500 text-left">
-                    {['Year', 'Expected', 'Matched', 'Missing', 'Scraped', 'Learned', 'Finals'].map((h) => (
-                      <th key={h} className="font-normal pb-1 pr-2">{h}</th>
-                    ))}
+                    {['Year', 'Expected', 'Matched', 'Missing', 'Scraped', 'Learned', 'Finals'].map(
+                      (h) => (
+                        <th key={h} className="font-normal pb-1 pr-2">
+                          {h}
+                        </th>
+                      )
+                    )}
                   </tr>
                 </thead>
                 <tbody className="text-gray-300 font-data tabular-nums">
@@ -432,7 +449,9 @@ const ScheduleCoverageCard = () => {
                       <td className="py-1 pr-2">{r.year}</td>
                       <td className="py-1 pr-2">{r.expected}</td>
                       <td className="py-1 pr-2 text-green-400">{r.matched}</td>
-                      <td className={`py-1 pr-2 ${r.missingCount > 0 ? 'text-yellow-500' : ''}`}>{r.missingCount}</td>
+                      <td className={`py-1 pr-2 ${r.missingCount > 0 ? 'text-yellow-500' : ''}`}>
+                        {r.missingCount}
+                      </td>
                       <td className="py-1 pr-2">{r.scraped}</td>
                       <td className="py-1 pr-2">{r.learned}</td>
                       <td className={`py-1 pr-2 ${r.finalsOk ? 'text-gray-500' : 'text-red-400'}`}>

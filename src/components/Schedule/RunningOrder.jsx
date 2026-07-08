@@ -83,9 +83,7 @@ const RunningOrder = ({ show, highlights, highlightCorps, compact = false }) => 
                   {isFull && (
                     <Star className="w-3 h-3 text-[#F5A623] fill-[#F5A623] flex-shrink-0" />
                   )}
-                  {isDim && (
-                    <Star className="w-3 h-3 text-[#F5A623]/50 flex-shrink-0" />
-                  )}
+                  {isDim && <Star className="w-3 h-3 text-[#F5A623]/50 flex-shrink-0" />}
                   <span className={`truncate ${isDim ? 'text-gray-300' : ''}`}>{entry.corps}</span>
                 </span>
               </div>

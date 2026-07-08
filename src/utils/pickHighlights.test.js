@@ -35,7 +35,11 @@ describe('buildShowHighlights', () => {
 
   test('dim when the brand is present but no real result this day', () => {
     // Crown 2012 competed days 11 & 13, not 12 -> interpolated today.
-    const map = buildShowHighlights({ show, lineup: { GE2: 'Carolina Crown|2012' }, poolCorps: pool });
+    const map = buildShowHighlights({
+      show,
+      lineup: { GE2: 'Carolina Crown|2012' },
+      poolCorps: pool,
+    });
     expect(map.get('carolina crown').tier).toBe('dim');
     // Troopers has an empty resultDays -> also dim on any day.
     const map2 = buildShowHighlights({ show, lineup: { VP: 'Troopers|2024' }, poolCorps: pool });
@@ -71,9 +75,21 @@ describe('buildShowHighlights', () => {
 
 describe('highlightLabel', () => {
   test('names the captions, corps, and year; flags interpolation for dim', () => {
-    expect(highlightLabel({ corps: 'Blue Devils', sourceYear: '2009', tier: 'full', captions: ['General Effect 1'] }))
-      .toBe('Your General Effect 1 — Blue Devils (2009)');
-    expect(highlightLabel({ corps: 'Carolina Crown', sourceYear: '2012', tier: 'dim', captions: ['Brass'] }))
-      .toContain('interpolated form today');
+    expect(
+      highlightLabel({
+        corps: 'Blue Devils',
+        sourceYear: '2009',
+        tier: 'full',
+        captions: ['General Effect 1'],
+      })
+    ).toBe('Your General Effect 1 — Blue Devils (2009)');
+    expect(
+      highlightLabel({
+        corps: 'Carolina Crown',
+        sourceYear: '2012',
+        tier: 'dim',
+        captions: ['Brass'],
+      })
+    ).toContain('interpolated form today');
   });
 });
