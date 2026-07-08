@@ -259,7 +259,7 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay, onArti
 
       // Article 4: FANTASY MARKET REPORT - Owns buy/hold/sell picks for the day (descriptive caption analysis already done in Article 3).
       await persist(await generateFantasyRecapArticle({
-        reportDay, dayScores, trendData, seasonContext, showContext, competitionContext, db, ledger, brief, isLiveSeason
+        reportDay, dayScores, trendData, seasonContext, activeCorps, showContext, competitionContext, db, ledger, brief, isLiveSeason
       }));
     }
 

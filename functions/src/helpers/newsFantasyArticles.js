@@ -424,8 +424,23 @@ ${mode.bodyNote ? `${mode.bodyNote}\n` : ''}${captionLeadersBlock && fieldMode !
  * describes the caption landscape; this article translates it into actionable
  * lineup moves on individual DCI captions (GE1, GE2, VP, VA, CG, B, MA, P).
  */
-async function generateFantasyRecapArticle({ reportDay, dayScores, trendData, seasonContext, competitionContext, ledger, brief, isLiveSeason }) {
+async function generateFantasyRecapArticle({ reportDay, dayScores, trendData, seasonContext, activeCorps, competitionContext, ledger, brief, isLiveSeason }) {
   const toneGuidance = getToneGuidance(competitionContext, "fantasy_captions");
+
+  // Purchase cost per corps: the point price (1–50) a fantasy director pays to
+  // slot that corps into a caption, drawn from the season's corpsValues. This is
+  // what lets the picks weigh caption output against roster cost — a cheap corps
+  // posting a strong caption is better "value" than a premium corps posting the
+  // same number for twice the points.
+  const costByCorps = new Map();
+  (activeCorps || []).forEach(c => {
+    const pts = Number(c?.points);
+    if (c?.corpsName && Number.isFinite(pts) && pts > 0) {
+      costByCorps.set(c.corpsName, pts);
+    }
+  });
+  const getCost = (corps) => costByCorps.get(corps) ?? null;
+  const hasCostData = costByCorps.size > 0;
 
   // Build individual caption "stock" data for each corps
   const captionStocks = [];
@@ -433,6 +448,8 @@ async function generateFantasyRecapArticle({ reportDay, dayScores, trendData, se
   dayScores.forEach(score => {
     const trend = trendData[score.corps] || {};
     const captionTrends = trend.captionTrends || {};
+    const cost = getCost(score.corps);
+    const tenDayAvgGain = Number.isFinite(trend.tenDayAvgGain) ? trend.tenDayAvgGain : null;
 
     // Individual caption scores with trends
     const captions = [
@@ -448,6 +465,9 @@ async function generateFantasyRecapArticle({ reportDay, dayScores, trendData, se
 
     captions.forEach(cap => {
       if (cap.score && cap.score > 0) {
+        // Value = caption output per roster point. Same "bang for buck" idea the
+        // lineup builder uses (score ÷ cost); higher means a more efficient pick.
+        const value = cost && cost > 0 ? cap.score / cost : null;
         captionStocks.push({
           corps: score.corps,
           caption: cap.name,
@@ -456,6 +476,9 @@ async function generateFantasyRecapArticle({ reportDay, dayScores, trendData, se
           trend: cap.trend || 'steady',
           weight: cap.weight,
           dayChange: trend.dayChange || 0,
+          cost,
+          value,
+          tenDayAvgGain,
         });
       }
     });
@@ -495,6 +518,54 @@ async function generateFantasyRecapArticle({ reportDay, dayScores, trendData, se
     ? `SEASON-LONG ELITE ASSETS (strongest family in the field ≥85th percentile this season — proven value beyond tonight): ${eliteAssets.join(', ')}`
     : '';
 
+  // VALUE BOARD — caption score ÷ purchase cost, per caption. Ranks the field's
+  // available selections by how much caption output each roster point buys, so
+  // the picks can flag underpriced corps (great score, low cost) and overpriced
+  // ones (premium cost, ordinary score). Every ratio is pre-computed and printed
+  // so the writer cites it verbatim instead of doing arithmetic (which the
+  // fact-check guard would flag as an unsourced number).
+  const valueBoardBlock = hasCostData
+    ? captionTypes.map(cap => {
+        const withCost = (stocksByCaption[cap] || []).filter(s => Number.isFinite(s.value));
+        if (withCost.length === 0) return `${cap}: no cost data`;
+        const topVal = [...withCost].sort((a, b) => b.value - a.value).slice(0, 5);
+        const line = topVal
+          .map((s, i) => `${i + 1}. ${s.corps} ${s.score.toFixed(2)}/${s.cost}pt=${s.value.toFixed(2)}`)
+          .join(' | ');
+        return `${cap}: ${line}`;
+      }).join('\n')
+    : '';
+
+  // Best single value pick tonight — the highest score-per-point across every
+  // caption. A ready-made lead for the "is the expensive name actually worth it?"
+  // angle: the cheapest strong output in the whole field.
+  const allValued = captionStocks.filter(s => Number.isFinite(s.value));
+  const bestValue = allValued.length
+    ? [...allValued].sort((a, b) => b.value - a.value)[0]
+    : null;
+  const bestValueLine = bestValue
+    ? `TONIGHT'S BEST VALUE (most caption output per roster point): ${bestValue.corps} ${bestValue.caption} — ${bestValue.score.toFixed(2)} for ${bestValue.cost}pt (${bestValue.value.toFixed(2)} per point)`
+    : '';
+
+  // 10-DAY AVERAGE DAILY GAIN — points/day the corps' total has climbed over the
+  // trailing 10 competition days. Ranks tonight's field by form velocity so the
+  // picks reward corps that are appreciating (buy the climb) and fade corps whose
+  // form is sliding (sell before the market catches up). Pre-computed decimals.
+  const gainRows = dayScores
+    .map(s => {
+      const t = trendData[s.corps] || {};
+      const gain = Number.isFinite(t.tenDayAvgGain) ? t.tenDayAvgGain : null;
+      const shows = t.tenDayShows || 0;
+      return gain !== null && shows >= 2 ? { corps: s.corps, gain, shows } : null;
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.gain - a.gain);
+  const gainBlock = gainRows.length
+    ? gainRows
+        .map(g => `${g.corps}: ${g.gain >= 0 ? '+' : ''}${g.gain.toFixed(2)}/day over ${g.shows} shows`)
+        .join('\n')
+    : '';
+
   const prompt = `You are the Fantasy Market Report analyst for marching.art. Fantasy directors pick individual DCI captions (GE1, GE2, VP, VA, CG, B, MA, P) for their lineups — you tell them what to do about it. This is THE picks column; it is the only article in tonight's five that gives buy/hold/sell recommendations. Earlier in the batch a separate DCI Recap already described tonight's caption landscape in depth. Assume the reader has read it. Your job is to translate that landscape into action, not to redo the description.
 
 ACCURACY RULES (read first)
@@ -505,6 +576,8 @@ ${isLiveSeason
   ? `- This is the ${dayScores.find(s => s.sourceYear)?.sourceYear || String(new Date().getFullYear())} live DCI season — the caption scores below come from this season's real competitions. Do NOT reference a prior year's book or tag corps with a past season year.`
   : `- Source-year disclosure: on each corps' first mention in the narrative, include their source-year in parentheses — e.g., "Blue Stars (2019)" — so fantasy directors know which season's book they're picking against. Every corps' year is listed in CORPS SOURCE YEARS below.`}
 - If a caption shows "No data" in the DATA block, do not reference it. If a specific number isn't in the data, don't cite a number.
+${hasCostData ? `- PURCHASE COST & VALUE: each corps carries a point price (1–50) — what a director pays to slot it into a caption. The VALUE BOARD lists caption score ÷ that cost as a pre-computed ratio (higher = more caption output per roster point). Cite costs and value ratios exactly as printed; never divide, average, or invent your own ratio.` : ''}
+${gainBlock ? `- 10-DAY GAIN is a pre-computed points-per-day figure (already printed with its sign). Quote it verbatim (e.g., "+0.18/day"); do not recompute it or derive a different daily average.` : ''}
 
 ${NEWS_INTEGRITY_RULES}
 
@@ -524,7 +597,7 @@ ${captionTypes.map(cap => {
 }).join('\n')}
 
 TRENDING: ↑ ${trendingUp.length} rising${trendingUp.length > 0 ? ` (${trendingUp.slice(0, 5).map(s => `${s.corps} ${s.caption} ${s.score.toFixed(2)}`).join(', ')})` : ''} | ↓ ${trendingDown.length} falling${trendingDown.length > 0 ? ` (${trendingDown.slice(0, 5).map(s => `${s.corps} ${s.caption} ${s.score.toFixed(2)}`).join(', ')})` : ''} | → ${steadyPerformers.length} steady
-${eliteAssetsLine ? `\n${eliteAssetsLine}\n` : ''}
+${valueBoardBlock ? `\nVALUE BOARD — caption score ÷ purchase cost (top ${Math.min(5, dayScores.length)} per caption; format "score/costpt=value per point", higher value = cheaper output):\n${valueBoardBlock}\n${bestValueLine ? `${bestValueLine}\n` : ''}` : ''}${gainBlock ? `\n10-DAY AVERAGE DAILY GAIN (points/day the corps' total has climbed over the trailing 10 competition days; + rising form, − sliding, ranked fastest first):\n${gainBlock}\n` : ''}${eliteAssetsLine ? `\n${eliteAssetsLine}\n` : ''}
 ===== END DATA =====
 
 ${toneGuidance}
@@ -542,7 +615,26 @@ ARTICLE REQUIREMENTS
   4. Close with a SLEEPER — one under-the-radar corps+caption most fantasy directors will miss, with the reason it's mispriced.
   Cite specific scores and margins drawn only from the data. Do NOT re-narrate what the DCI Recap already covered — no paragraph-length caption-by-caption play-by-play. Every paragraph should end with a picks-actionable takeaway or be cut.
   Pick style (confident / analytical / contrarian) follows the framing above.
-- Also fill two structured fields: fantasyImpact (one or two sentences distilling tonight's single most actionable move — it appears on its own in the home-feed widget, so it must stand alone) and trendingCorps (up to 3 corps from the TRENDING data, each with a direction and a short data-grounded reason; omit any that aren't really moving).`;
+${(hasCostData || gainBlock) ? `- GROUND THE PICKS IN VALUE AND FORM VELOCITY. A pick is not just "who scored highest" — it is "who is the best buy":${hasCostData ? `\n  • VALUE (score ÷ cost): a BUY should offer strong caption output for its price. Favor underpriced corps from the VALUE BOARD; when a top scorer's cost makes it a mediocre value, say so and point to the cheaper corps that nearly matches it. Flag SELLS for premium-priced corps whose output no longer justifies the point cost. Always name the cost and the value ratio for a pick, exactly as printed.` : ''}${gainBlock ? `\n  • 10-DAY GAIN (points/day): buy the climb — corps with a positive daily gain are appreciating and worth grabbing before the field notices. Fade the slide — a negative gain is a reason to SELL or downgrade to HOLD even when tonight's number still looks fine. Quote the +/−x.xx/day figure.` : ''}\n  • The strongest BUY combines good value with a positive 10-day gain; the clearest SELL pairs a poor value (or falling form) with a premium cost. Make each recommendation's reason state which of these it turns on.\n` : ''}- Also fill two structured fields: fantasyImpact (one or two sentences distilling tonight's single most actionable move — it appears on its own in the home-feed widget, so it must stand alone) and trendingCorps (up to 3 corps from the TRENDING data, each with a direction and a short data-grounded reason; omit any that aren't really moving).`;
+
+  // Shared shape for a buy/hold/sell pick. cost/value/tenDayGain are optional
+  // enrichments — present only when the season carries corps point costs and the
+  // corps has enough form history — that the recommendation cards surface next to
+  // the caption score so the pick's value-and-form basis is visible, not just its
+  // score.
+  const recommendationItem = {
+    type: Type.OBJECT,
+    properties: {
+      corps: { type: Type.STRING },
+      caption: { type: Type.STRING, description: "Specific caption: GE1, GE2, VP, VA, CG, B, MA, or P" },
+      score: { type: Type.NUMBER },
+      cost: { type: Type.NUMBER, description: "The corps' purchase cost in points (1–50), copied from the DATA block. Omit when no cost data is provided." },
+      value: { type: Type.NUMBER, description: "Caption score ÷ cost — points of caption output per roster point — copied verbatim from the VALUE BOARD. Omit when no cost data is provided." },
+      tenDayGain: { type: Type.NUMBER, description: "The corps' 10-day average daily gain (points/day) copied verbatim from the DATA block; positive = rising form, negative = sliding. Omit when the corps isn't listed." },
+      reason: { type: Type.STRING, description: "Brief pick rationale. When value (score vs cost) or 10-day gain drove the call, say which and cite the figures exactly as printed in the DATA block." },
+    },
+    required: ["corps", "caption", "score", "reason"],
+  };
 
   const schema = {
     type: Type.OBJECT,
@@ -561,47 +653,11 @@ ARTICLE REQUIREMENTS
       },
       recommendations: {
         type: Type.OBJECT,
-        description: "Caption pick recommendations for fantasy directors",
+        description: "Caption pick recommendations for fantasy directors, grounded in caption score, value (score vs purchase cost), and 10-day form.",
         properties: {
-          buy: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                corps: { type: Type.STRING },
-                caption: { type: Type.STRING, description: "Specific caption: GE1, GE2, VP, VA, CG, B, MA, or P" },
-                score: { type: Type.NUMBER },
-                reason: { type: Type.STRING },
-              },
-              required: ["corps", "caption", "score", "reason"],
-            },
-          },
-          hold: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                corps: { type: Type.STRING },
-                caption: { type: Type.STRING, description: "Specific caption: GE1, GE2, VP, VA, CG, B, MA, or P" },
-                score: { type: Type.NUMBER },
-                reason: { type: Type.STRING },
-              },
-              required: ["corps", "caption", "score", "reason"],
-            },
-          },
-          sell: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                corps: { type: Type.STRING },
-                caption: { type: Type.STRING, description: "Specific caption: GE1, GE2, VP, VA, CG, B, MA, or P" },
-                score: { type: Type.NUMBER },
-                reason: { type: Type.STRING },
-              },
-              required: ["corps", "caption", "score", "reason"],
-            },
-          },
+          buy: { type: Type.ARRAY, items: recommendationItem },
+          hold: { type: Type.ARRAY, items: recommendationItem },
+          sell: { type: Type.ARRAY, items: recommendationItem },
         },
         required: ["buy", "hold", "sell"],
       },

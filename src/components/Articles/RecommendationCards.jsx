@@ -62,9 +62,27 @@ const REC_CONFIG = {
   },
 };
 
+// Compact metric chip shown under a pick: cost, value (score/point), or 10-day gain.
+function MetricChip({ label, value, tone = 'text-gray-300' }) {
+  return (
+    <span className="inline-flex items-baseline gap-1 px-1.5 py-0.5 bg-white/5 rounded-sm">
+      <span className="text-[9px] uppercase tracking-wider text-gray-500">{label}</span>
+      <span className={`text-[11px] font-data font-bold tabular-nums ${tone}`}>{value}</span>
+    </span>
+  );
+}
+
 // Individual recommendation item
 function RecommendationItem({ rec, config }) {
   const captionLabel = CAPTION_NAMES[rec.caption] || rec.caption;
+
+  // Value/cost/gain are optional enrichments from the Fantasy Market Report:
+  // cost = the corps' purchase price in points, value = caption score per point,
+  // gain = 10-day average daily gain. Show whichever the article provided.
+  const hasCost = Number.isFinite(rec.cost) && rec.cost > 0;
+  const hasValue = Number.isFinite(rec.value) && rec.value > 0;
+  const hasGain = Number.isFinite(rec.tenDayGain);
+  const showMetrics = hasCost || hasValue || hasGain;
 
   return (
     <div className={`${config.cardBg} border ${config.cardBorder} p-3 rounded-sm`}>
@@ -81,6 +99,19 @@ function RecommendationItem({ rec, config }) {
           </span>
         )}
       </div>
+      {showMetrics && (
+        <div className="flex flex-wrap gap-1.5 mt-1.5">
+          {hasCost && <MetricChip label="Cost" value={`${rec.cost} pt`} />}
+          {hasValue && <MetricChip label="Value" value={`${rec.value.toFixed(2)}/pt`} />}
+          {hasGain && (
+            <MetricChip
+              label="10-Day"
+              value={`${rec.tenDayGain >= 0 ? '+' : ''}${rec.tenDayGain.toFixed(2)}/d`}
+              tone={rec.tenDayGain >= 0 ? 'text-green-400' : 'text-red-400'}
+            />
+          )}
+        </div>
+      )}
       {rec.reason && <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">{rec.reason}</p>}
     </div>
   );

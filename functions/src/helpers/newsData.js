@@ -440,6 +440,25 @@ function calculateTrendData(historicalData, reportDay, activeCorps) {
       const seasonImprovement = seasonTotals.length >= 2 ? seasonTotals[seasonTotals.length - 1].total - seasonTotals[0].total : 0;
       const seasonShows = seasonTotals.length;
 
+      // Trailing 10-day form: how fast the corps' total is climbing per day over
+      // the last 10 competition days (reportDay-9..reportDay). Distinct from the
+      // 7-day form window and the full-season arc — the Fantasy Market Report
+      // (Article 4) leans on this "average daily gain" to gauge which corps are
+      // appreciating fastest before recommending buys and sells. Points-per-day,
+      // measured over the actual span between the first and last show in the
+      // window so a corps that competes every other day isn't penalized.
+      const tenDayScores = seasonTotals.filter(s => s.day >= reportDay - 9);
+      const tenDayShows = tenDayScores.length;
+      let tenDayTotalGain = 0;
+      let tenDayAvgGain = 0;
+      if (tenDayScores.length >= 2) {
+        const firstTen = tenDayScores[0];
+        const lastTen = tenDayScores[tenDayScores.length - 1];
+        tenDayTotalGain = lastTen.total - firstTen.total;
+        const daySpan = lastTen.day - firstTen.day;
+        tenDayAvgGain = daySpan > 0 ? tenDayTotalGain / daySpan : 0;
+      }
+
       // "At season best/worst" now means the TRUE season high/low, so narrative
       // phrases like "hitting their season high" are literally accurate.
       const atSeasonBest = latestScore && Math.abs(latestScore.total - seasonHigh) < 0.01;
@@ -513,6 +532,10 @@ function calculateTrendData(historicalData, reportDay, activeCorps) {
         seasonOpener,
         seasonShows,
         seasonImprovement,
+        // Trailing 10-day average daily gain (points/day) + supporting window size
+        tenDayAvgGain,
+        tenDayTotalGain,
+        tenDayShows,
         totalImprovement: sortedScores.length >= 2 ? sortedScores[sortedScores.length - 1].total - sortedScores[0].total : 0,
       };
     }
