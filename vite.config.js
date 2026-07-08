@@ -1,6 +1,32 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import { readFileSync, writeFileSync } from 'node:fs';
+
+// Stamp the service worker with a unique version on every production build.
+// service-worker.js ships a literal '__BUILD_ID__'; the SW derives all of its
+// cache names from APP_VERSION, so if that string never changes (it was
+// hard-coded), the SW never invalidates its caches and returning PWA users keep
+// getting served the previously cached app shell after a deploy. Rewriting the
+// emitted file in closeBundle guarantees a fresh version per build/deploy.
+function stampServiceWorker() {
+  const buildId = `${new Date().toISOString().slice(0, 10)}.${Date.now()}`;
+  return {
+    name: 'stamp-service-worker',
+    apply: 'build',
+    closeBundle() {
+      const swPath = path.resolve(__dirname, 'build/service-worker.js');
+      try {
+        const src = readFileSync(swPath, 'utf8');
+        if (!src.includes('__BUILD_ID__')) return;
+        writeFileSync(swPath, src.replace('__BUILD_ID__', buildId));
+        console.log(`[stamp-service-worker] APP_VERSION = ${buildId}`);
+      } catch (err) {
+        console.warn('[stamp-service-worker] skipped:', err.message);
+      }
+    },
+  };
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -9,6 +35,7 @@ export default defineConfig({
       // Include .js files for JSX transformation (CRA compatibility)
       include: /\.(jsx?|tsx?)$/,
     }),
+    stampServiceWorker(),
   ],
   resolve: {
     alias: {
