@@ -1,6 +1,5 @@
 import React from 'react';
 import { m } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
 import BrandLogo from '../BrandLogo';
 
 // =============================================================================
@@ -27,7 +26,7 @@ const sizeStyles: Record<SpinnerSize, string> = {
 
 const variantStyles: Record<SpinnerVariant, string> = {
   default: 'text-gray-500',
-  gold: 'text-[#0057B8]',
+  gold: 'text-[#eab308]',
   white: 'text-white',
 };
 
@@ -38,9 +37,12 @@ export const Spinner: React.FC<SpinnerProps> = ({
   className = '',
 }) => {
   return (
-    <div className={`inline-flex items-center gap-2 ${className}`} role="status">
-      <Loader2 className={`animate-spin ${sizeStyles[size]} ${variantStyles[variant]}`} />
-      {label && <span className="text-sm text-gray-400">{label}</span>}
+    <div
+      className={`inline-flex items-center justify-center ${className}`}
+      role="status"
+      aria-label={label || 'Loading...'}
+    >
+      <BrandLogo className={`animate-pulse ${sizeStyles[size]}`} color={variantStyles[variant]} />
       <span className="sr-only">{label || 'Loading...'}</span>
     </div>
   );
@@ -77,11 +79,14 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
             ${blur ? 'backdrop-blur-sm' : ''}
           `}
         >
-          <div className="flex flex-col items-center gap-3">
+          <div
+            className="flex flex-col items-center gap-3"
+            role="status"
+            aria-label={label || 'Loading...'}
+          >
             <div className="animate-pulse">
-              <BrandLogo className="w-12 h-12" color="text-[#0057B8]" />
+              <BrandLogo className="w-12 h-12" color="text-[#eab308]" />
             </div>
-            {label && <p className="font-mono text-xs text-[#0057B8]/60 tracking-wide">{label}</p>}
           </div>
         </m.div>
       )}
@@ -111,18 +116,12 @@ export const FullPageLoading: React.FC<FullPageLoadingProps> = ({
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3 }}
             className="glow-pulse"
+            role="status"
+            aria-label={label}
           >
-            <BrandLogo className="w-24 h-24" color="text-[#0057B8]" />
+            <BrandLogo className="w-24 h-24" color="text-[#eab308]" />
           </m.div>
         )}
-        <m.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="font-mono text-sm text-[#0057B8]/60 tracking-wide"
-        >
-          {label}
-        </m.p>
       </div>
     </div>
   );

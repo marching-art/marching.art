@@ -32,10 +32,9 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ fullScreen = true, messag
   // Inline loading with centered brand logo
   return (
     <div className="flex flex-col items-center justify-center py-20 gap-4">
-      <div className="glow-pulse">
-        <BrandLogo className="w-16 h-16" color="text-[#0057B8]" />
+      <div className="glow-pulse" role="status" aria-label={message || 'Loading...'}>
+        <BrandLogo className="w-24 h-24" color="text-[#eab308]" />
       </div>
-      {message && <p className="font-mono text-sm text-[#0057B8]/60 tracking-wide">{message}</p>}
     </div>
   );
 };

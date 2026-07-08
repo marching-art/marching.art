@@ -20,48 +20,44 @@ describe('Spinner', () => {
 
     it('renders with custom label', () => {
       render(<Spinner label="Processing" />);
-      // Both visible label and sr-only have the same text
-      const labels = screen.getAllByText('Processing');
-      expect(labels.length).toBeGreaterThan(0);
+      // The label is exposed to screen readers via sr-only text
+      expect(screen.getByText('Processing')).toBeInTheDocument();
     });
 
-    it('shows visible label when provided', () => {
+    it('exposes label as accessible name when provided', () => {
       render(<Spinner label="Loading data" />);
-      // There are two elements with this text - visible and sr-only
-      const labels = screen.getAllByText('Loading data');
-      const visibleLabel = labels.find((el) => !el.classList.contains('sr-only'));
-      expect(visibleLabel).toBeInTheDocument();
+      expect(screen.getByRole('status', { name: 'Loading data' })).toBeInTheDocument();
     });
   });
 
   describe('sizes', () => {
     it('applies extra small size', () => {
       const { container } = render(<Spinner size="xs" />);
-      const icon = container.querySelector('.animate-spin');
+      const icon = container.querySelector('.animate-pulse');
       expect(icon).toHaveClass('w-3', 'h-3');
     });
 
     it('applies small size', () => {
       const { container } = render(<Spinner size="sm" />);
-      const icon = container.querySelector('.animate-spin');
+      const icon = container.querySelector('.animate-pulse');
       expect(icon).toHaveClass('w-4', 'h-4');
     });
 
     it('applies medium size by default', () => {
       const { container } = render(<Spinner />);
-      const icon = container.querySelector('.animate-spin');
+      const icon = container.querySelector('.animate-pulse');
       expect(icon).toHaveClass('w-6', 'h-6');
     });
 
     it('applies large size', () => {
       const { container } = render(<Spinner size="lg" />);
-      const icon = container.querySelector('.animate-spin');
+      const icon = container.querySelector('.animate-pulse');
       expect(icon).toHaveClass('w-8', 'h-8');
     });
 
     it('applies extra large size', () => {
       const { container } = render(<Spinner size="xl" />);
-      const icon = container.querySelector('.animate-spin');
+      const icon = container.querySelector('.animate-pulse');
       expect(icon).toHaveClass('w-12', 'h-12');
     });
   });
@@ -72,7 +68,7 @@ describe('Spinner', () => {
         const { container, unmount } = render(<Spinner variant={variant} />);
         // The icon is an SVG, so read the class attribute (className would be
         // an SVGAnimatedString object).
-        const className = container.querySelector('.animate-spin')?.getAttribute('class') ?? '';
+        const className = container.querySelector('.animate-pulse')?.getAttribute('class') ?? '';
         unmount();
         return className;
       };
@@ -86,7 +82,7 @@ describe('Spinner', () => {
 
     it('applies white variant', () => {
       const { container } = render(<Spinner variant="white" />);
-      const icon = container.querySelector('.animate-spin');
+      const icon = container.querySelector('.animate-pulse');
       expect(icon).toHaveClass('text-white');
     });
   });
@@ -99,9 +95,9 @@ describe('Spinner', () => {
   });
 
   describe('animation', () => {
-    it('has animate-spin class', () => {
+    it('has animate-pulse class', () => {
       const { container } = render(<Spinner />);
-      const icon = container.querySelector('.animate-spin');
+      const icon = container.querySelector('.animate-pulse');
       expect(icon).toBeInTheDocument();
     });
   });
@@ -136,13 +132,13 @@ describe('LoadingOverlay', () => {
       expect(container.querySelector('.bg-charcoal-900\\/60')).not.toBeInTheDocument();
     });
 
-    it('shows label when loading', () => {
+    it('exposes label as accessible name when loading', () => {
       render(
         <LoadingOverlay isLoading={true} label="Please wait">
           <p>Content</p>
         </LoadingOverlay>
       );
-      expect(screen.getByText('Please wait')).toBeInTheDocument();
+      expect(screen.getByRole('status', { name: 'Please wait' })).toBeInTheDocument();
     });
   });
 
@@ -171,15 +167,14 @@ describe('FullPageLoading', () => {
   describe('rendering', () => {
     it('renders with default label', () => {
       render(<FullPageLoading />);
-      // There are multiple "Loading..." texts - visible label and sr-only
-      const loadingTexts = screen.getAllByText('Loading...');
-      expect(loadingTexts.length).toBeGreaterThan(0);
+      // The label is exposed via aria-label on the status wrapper (no visible text)
+      expect(screen.getByRole('status', { name: 'Loading...' })).toBeInTheDocument();
     });
 
     it('renders with custom label', () => {
       render(<FullPageLoading label="Initializing" />);
-      // The visible label (in motion.p) should have the custom text
-      expect(screen.getByText('Initializing')).toBeInTheDocument();
+      // The custom label is exposed via aria-label on the status wrapper
+      expect(screen.getByRole('status', { name: 'Initializing' })).toBeInTheDocument();
     });
 
     it('shows logo by default', () => {
