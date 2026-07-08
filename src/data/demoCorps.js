@@ -100,6 +100,15 @@ export const DEMO_CORPS = {
     P: 'Pacific Crest|2018',
   },
 
+  // Per-corps show concept (drives the nightly show-design CorpsCoin bonus).
+  // Structured shape: { showName, theme, musicSource, drillStyle }.
+  showConcept: {
+    showName: 'Rivers of Sound',
+    theme: 'cinematic',
+    musicSource: 'film',
+    drillStyle: 'curvilinear',
+  },
+
   // Registered shows, keyed by `week{n}` to match the real schedule structure
   // (see SCHEDULE_SYSTEM.md). Directors pick up to 4 shows per week.
   selectedShows: {
@@ -285,6 +294,43 @@ export const DEMO_RECENT_SCORES = [
     captions: { GE1: 17.9, GE2: 18.0, VP: 17.6, VA: 17.7, CG: 17.5, B: 17.8, MA: 17.9, P: 17.7 },
   },
 ].map((show) => ({ ...show, score: computeShowTotal(show.captions) }));
+
+// =============================================================================
+// DEMO RIVALS (closest competitors — populated daily by scheduledRivalsUpdate)
+// =============================================================================
+// SoundSport rivals are compared by medal tier (ratings-only), matching the
+// real RivalsPanel's SoundSport branch. userMedalRank is the demo director's
+// standing so the panel can render the relative arrow.
+
+export const DEMO_RIVALS = [
+  {
+    uid: 'demo_rival_1',
+    corpsName: 'Lone Star Cadets',
+    username: 'txdirector',
+    corpsClass: 'soundSport',
+    medal: 'Gold',
+    medalRank: 1,
+    userMedalRank: 2,
+  },
+  {
+    uid: 'demo_rival_2',
+    corpsName: 'Gulf Coast Sound',
+    username: 'coastdrums',
+    corpsClass: 'soundSport',
+    medal: 'Gold',
+    medalRank: 3,
+    userMedalRank: 2,
+  },
+  {
+    uid: 'demo_rival_3',
+    corpsName: 'Hill Country Brass',
+    username: 'hcbrass',
+    corpsClass: 'soundSport',
+    medal: 'Silver',
+    medalRank: 5,
+    userMedalRank: 2,
+  },
+];
 
 // =============================================================================
 // DEMO SCHEDULE (upcoming shows)

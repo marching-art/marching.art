@@ -14,6 +14,7 @@ import {
   DEMO_CORPS_STATS,
   DEMO_RECENT_SCORES,
   DEMO_UPCOMING_SHOWS,
+  DEMO_RIVALS,
 } from '../data/demoCorps';
 
 // =============================================================================
@@ -278,6 +279,7 @@ export function useGuestPreview() {
     demoStats: DEMO_CORPS_STATS,
     demoRecentScores: DEMO_RECENT_SCORES,
     demoUpcomingShows: DEMO_UPCOMING_SHOWS,
+    demoRivals: DEMO_RIVALS,
 
     // Computed
     shouldPromptRegistration,

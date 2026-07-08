@@ -1,40 +1,54 @@
 /**
  * GuestDashboard - Read-Only Dashboard for Guest Preview Mode
  *
- * Allows unauthenticated users to experience the dashboard with demo data.
- * All edit actions are gated with registration prompts.
- * Designed to give visitors a taste of the game before committing.
+ * Lets unauthenticated visitors experience the ACTUAL dashboard before
+ * registering. It reuses the real dashboard section components (ControlBar,
+ * SeasonScorecard, RecentResultsFeed, RivalsPanel, QuickStats,
+ * AchievementTrackerPanel) fed with demo data, so the preview mirrors what a
+ * signed-in director sees. Every edit/management action is gated with a
+ * registration prompt, and the one interactive affordance — drafting a
+ * SoundSport lineup — carries over to the user's account on signup.
  */
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { m } from 'framer-motion';
 import {
-  Trophy,
   Calendar,
-  TrendingUp,
   ChevronRight,
   Users,
-  Award,
   Zap,
-  MapPin,
-  User,
   LogIn,
   UserPlus,
   ArrowLeft,
   Info,
-  Flame,
   Target,
   Lock,
-  Medal,
+  Check,
+  FileText,
+  TrendingUp,
 } from 'lucide-react';
 import { useGuestPreview } from '../hooks/useGuestPreview';
 import { RegistrationGate, GuestLineupPicker } from '../components/GuestPreview';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useSEO } from '../hooks/useSEO';
 import { getSeasonData, getCorpsValues } from '../api/season';
-import { getCorpsClassName } from '../utils/corps';
-import { getSoundSportRating } from '../components/Dashboard/sections/constants';
+import { getChallengesForGameDay } from '../utils/dailyChallenges';
+import { CORPS_CLASS_ORDER, CORPS_CLASS_LABELS, isCorpsClassUnlocked } from '../utils/corps';
+import {
+  CLASS_UNLOCK_LEVELS,
+  CLASS_UNLOCK_COSTS,
+} from '../components/Dashboard/sections/constants';
+
+// Real dashboard section components — reused directly so the preview is the
+// genuine article, not a facsimile. Imported by file path (not the barrel) to
+// keep the guest bundle lean.
+import ControlBar from '../components/Dashboard/sections/ControlBar';
+import SeasonScorecard from '../components/Dashboard/sections/SeasonScorecard';
+import RecentResultsFeed from '../components/Dashboard/sections/RecentResultsFeed';
+import RivalsPanel from '../components/Dashboard/sections/RivalsPanel';
+import QuickStats from '../components/Dashboard/sections/QuickStats';
+import AchievementTrackerPanel from '../components/Dashboard/sections/AchievementTrackerPanel';
 
 const STARTER_BUDGET = 90; // Same 90-pt SoundSport budget onboarding drafts under
 
@@ -108,7 +122,7 @@ const GuestHeader = () => {
 };
 
 // =============================================================================
-// LINEUP ROW COMPONENT (Read-Only)
+// LINEUP ROW COMPONENT (draftable)
 // =============================================================================
 
 const LineupRow = ({ caption, value, pointsCost, isLast, isPlayable, onClick }) => {
@@ -176,17 +190,159 @@ const LineupRow = ({ caption, value, pointsCost, isLast, isPlayable, onClick }) 
 };
 
 // =============================================================================
-// STATS CARD COMPONENT
+// DEMO DAILY CHALLENGES (read-only mirror of the real engagement panel)
 // =============================================================================
+// The real DailyChallenges panel writes completion to the profile via a
+// callable; a guest has no profile, so this read-only version shows the same
+// catalog with one pre-completed and routes taps to the registration gate.
 
-const StatsCard = ({ icon: Icon, iconColor, label, value, sublabel }) => (
-  <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-3">
-    <div className="flex items-center gap-2 mb-1">
-      <Icon className={`w-4 h-4 ${iconColor}`} />
-      <span className="text-xs text-gray-500 uppercase tracking-wider">{label}</span>
+const DEMO_CHALLENGE_DAY = 5;
+
+const DemoDailyChallenges = ({ onGate }) => {
+  const challenges = getChallengesForGameDay(DEMO_CHALLENGE_DAY) || [];
+  const completedIds = new Set(challenges.slice(0, 1).map((c) => c.id));
+  const totalCount = challenges.length || 1;
+  const completedCount = completedIds.size;
+
+  return (
+    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
+        <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+          <Target className="w-3.5 h-3.5 text-orange-500" />
+          Daily Challenges
+        </h3>
+        <span className="text-[10px] font-bold text-gray-500 font-data tabular-nums">
+          {completedCount}/{totalCount}
+        </span>
+      </div>
+
+      {/* Progress bar */}
+      <div className="h-1 bg-[#222]">
+        <div
+          className="h-full bg-orange-500 transition-all duration-500"
+          style={{ width: `${(completedCount / totalCount) * 100}%` }}
+        />
+      </div>
+
+      <div className="divide-y divide-[#222]">
+        {challenges.map((challenge) => {
+          const isDone = completedIds.has(challenge.id);
+          return (
+            <button
+              key={challenge.id}
+              onClick={() => onGate('challenge')}
+              className="w-full px-4 py-3 hover:bg-[#222] transition-colors text-left"
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
+                    isDone ? 'bg-green-500' : 'border border-[#444]'
+                  }`}
+                >
+                  {isDone && <Check className="w-3 h-3 text-white" />}
+                </div>
+                <span
+                  className={`text-sm flex-1 ${isDone ? 'text-gray-500 line-through' : 'text-white'}`}
+                >
+                  {challenge.label}
+                </span>
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] font-bold text-purple-400 font-data">
+                    +{challenge.xp} XP
+                  </span>
+                  {!isDone && <ChevronRight className="w-3.5 h-3.5 text-gray-600" />}
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
     </div>
-    <div className="text-xl font-bold text-white font-data tabular-nums">{value}</div>
-    {sublabel && <div className="text-xs text-gray-500 mt-0.5">{sublabel}</div>}
+  );
+};
+
+// =============================================================================
+// CLASS PROGRESSION PANEL
+// =============================================================================
+// Reflects the real class-unlock ladder (ARCHITECTURE.md): SoundSport is the
+// ratings-only starter tier; A/Open/World Class add full competitive scoring
+// (numeric scores + rank, Lineup Analyzer, Daily Predictions). Surfaces what a
+// director unlocks as they level up — the "fuller dashboard" beyond SoundSport.
+
+// Per-class point caps (SoundSport 90, A 60, Open 120, World 150).
+const CLASS_POINT_CAPS = { soundSport: 90, aClass: 60, openClass: 120, worldClass: 150 };
+
+const CLASS_PERKS = {
+  soundSport: 'Medal ratings & Best in Show',
+  aClass: 'Numeric scoring, class rank & Lineup Analyzer',
+  openClass: 'Deeper field, Daily Predictions & head-to-head leagues',
+  worldClass: 'The complete competitive experience',
+};
+
+const ClassProgressionPanel = ({ unlockedClasses, activeCorpsClass, onGate }) => (
+  <div className="bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden">
+    <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
+      <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+        <TrendingUp className="w-3.5 h-3.5 text-purple-500" />
+        Class Progression
+      </h2>
+    </div>
+
+    <div className="divide-y divide-[#333]/50">
+      {CORPS_CLASS_ORDER.map((classId) => {
+        const isUnlocked = isCorpsClassUnlocked(unlockedClasses, classId);
+        const isActive = classId === activeCorpsClass;
+        const requirement =
+          classId === 'soundSport'
+            ? 'Unlocked by default'
+            : `Level ${CLASS_UNLOCK_LEVELS[classId]} or ${CLASS_UNLOCK_COSTS[classId].toLocaleString()} CorpsCoin`;
+
+        return (
+          <button
+            key={classId}
+            onClick={() => onGate('default')}
+            className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[#222] transition-colors"
+          >
+            <div
+              className={`w-9 h-9 rounded-sm flex items-center justify-center flex-shrink-0 text-[10px] font-bold ${
+                isActive
+                  ? 'bg-[#0057B8]/20 text-[#0057B8]'
+                  : isUnlocked
+                    ? 'bg-green-500/10 text-green-500'
+                    : 'bg-[#111] text-gray-600'
+              }`}
+            >
+              {CLASS_POINT_CAPS[classId]}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-white truncate">
+                  {CORPS_CLASS_LABELS[classId]}
+                </span>
+                {isActive ? (
+                  <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-[#0057B8]/20 text-[#0057B8] rounded-sm">
+                    Your Corps
+                  </span>
+                ) : isUnlocked ? (
+                  <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-green-500/20 text-green-500 rounded-sm">
+                    Unlocked
+                  </span>
+                ) : null}
+              </div>
+              <div className="text-[11px] text-gray-500 truncate">{CLASS_PERKS[classId]}</div>
+              <div className="text-[10px] text-gray-600 truncate mt-0.5">{requirement}</div>
+            </div>
+            {!isUnlocked && <Lock className="w-3.5 h-3.5 text-gray-600 flex-shrink-0" />}
+          </button>
+        );
+      })}
+    </div>
+
+    <div className="px-4 py-2.5 border-t border-[#333] bg-[#111]">
+      <p className="text-[10px] text-gray-500">
+        Level up as a director to unlock higher classes and the full competitive dashboard.
+      </p>
+    </div>
   </div>
 );
 
@@ -209,6 +365,7 @@ const GuestDashboard = () => {
     demoProfile,
     demoRecentScores,
     demoUpcomingShows,
+    demoRivals,
     trackInteraction,
     hasEngaged,
     startPreview,
@@ -321,18 +478,16 @@ const GuestDashboard = () => {
     }
   };
 
-  // SoundSport medal rating driven by the corps' best show score (ratings-only
-  // format — mirrors the real Season Scorecard).
-  const medalRating = getSoundSportRating(demoCorps.seasonHighScore || 0);
-  // Readable accent for the rating shown as plain text (the badge's black-on-gold
-  // treatment is only legible on its filled background).
-  const RATING_TEXT_COLORS = {
-    Gold: 'text-yellow-500',
-    Silver: 'text-gray-300',
-    Bronze: 'text-orange-400',
-    Participation: 'text-white',
-  };
-  const ratingTextColor = RATING_TEXT_COLORS[medalRating.rating] || 'text-white';
+  // Caption count powering QuickStats / AchievementTracker (guest's draft
+  // progress while drafting, the full demo lineup otherwise).
+  const lineupCount = isDrafting ? draftPickCount : Object.keys(demoCorps.lineup || {}).length;
+
+  // Shapes the reused dashboard components expect.
+  const recentResultsForFeed = demoRecentScores.map((show) => ({
+    eventName: show.showName,
+    score: show.score,
+    date: new Date(show.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+  }));
 
   if (isLoading) {
     return (
@@ -347,9 +502,25 @@ const GuestDashboard = () => {
       {/* Header */}
       <GuestHeader />
 
+      {/* Control Bar — real class tabs + Director HUD (streak, level, wallet,
+          next-class unlock) + live deadline countdown. All actions gated. */}
+      <ControlBar
+        corps={demoProfile.corps}
+        activeCorpsClass="soundSport"
+        unlockedClasses={demoProfile.unlockedClasses}
+        profile={demoProfile}
+        onSwitch={(classId) => {
+          if (classId !== 'soundSport') handleGatedClick('default');
+        }}
+        onCreateCorps={() => handleGatedClick('default')}
+        onUnlockClass={() => handleGatedClick('default')}
+        onStreakClick={() => handleGatedClick('default')}
+        onWalletClick={() => handleGatedClick('default')}
+      />
+
       {/* Main Content */}
       <main className="flex-1 pb-24 md:pb-4">
-        <div className="max-w-[1920px] mx-auto p-4 lg:p-6">
+        <div className="max-w-[1920px] mx-auto p-3 md:p-4 lg:p-6">
           {/* Preview Notice Banner */}
           <m.div
             initial={{ opacity: 0, y: -10 }}
@@ -360,9 +531,12 @@ const GuestDashboard = () => {
               <div className="flex items-center gap-3 flex-1">
                 <Info className="w-5 h-5 text-[#0057B8] flex-shrink-0" />
                 <div>
-                  <p className="text-sm text-white font-medium">You're viewing a demo dashboard</p>
+                  <p className="text-sm text-white font-medium">
+                    You're exploring a live demo dashboard
+                  </p>
                   <p className="text-xs text-gray-400 mt-0.5">
-                    Create a free account to build your own corps and compete
+                    Draft a SoundSport lineup below — it carries over when you create your free
+                    account
                   </p>
                 </div>
               </div>
@@ -376,86 +550,33 @@ const GuestDashboard = () => {
             </div>
           </m.div>
 
-          {/* Grid Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
-            {/* LEFT COLUMN - Corps Info & Lineup */}
-            <div className="lg:col-span-8 space-y-4">
-              {/* Corps Header Card */}
-              <div className="bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden">
-                {/* Accent Line */}
-                <div className="h-1 bg-gradient-to-r from-[#0057B8] via-yellow-500 to-[#0057B8]" />
+          {/* 2/3 + 1/3 Grid — mirrors the real Dashboard layout. Scorecard leads
+              the mobile stack, then sits atop the right column on lg. */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* SCORECARD — top of mobile stack, top of right column on lg */}
+            <div className="lg:col-start-3 lg:row-start-1">
+              <SeasonScorecard
+                score={demoCorps.seasonHighScore}
+                rank={null}
+                rankChange={null}
+                corpsName={demoCorps.corpsName}
+                corpsClass="soundSport"
+                loading={false}
+                avatarUrl={demoCorps.avatarUrl || null}
+                bestInShowCount={demoCorps.bestInShowCount}
+                showConcept={demoCorps.showConcept}
+                onShowConcept={() => handleGatedClick('default')}
+                onDesignUniform={() => handleGatedClick('default')}
+                canManage
+                canMove
+                onMoveCorps={() => handleGatedClick('default')}
+                onRetireCorps={() => handleGatedClick('default')}
+              />
+            </div>
 
-                <div className="p-4">
-                  <div className="flex items-start gap-4">
-                    {/* Corps Avatar */}
-                    <div className="w-16 h-16 rounded-sm bg-[#0057B8]/20 border border-[#0057B8]/30 flex items-center justify-center flex-shrink-0">
-                      <Trophy className="w-8 h-8 text-[#0057B8]" />
-                    </div>
-
-                    {/* Corps Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-bold text-yellow-500 uppercase tracking-wider">
-                          {getCorpsClassName(demoCorps.corpsClass)}
-                        </span>
-                      </div>
-                      <h1 className="text-xl font-bold text-white truncate">
-                        {demoCorps.corpsName}
-                      </h1>
-                      <div className="flex items-center gap-1.5 text-sm text-gray-500 mt-1">
-                        <MapPin className="w-3.5 h-3.5" />
-                        <span>{demoCorps.location}</span>
-                      </div>
-                    </div>
-
-                    {/* Medal Rating — SoundSport is ratings-only, so the
-                        headline is the season-best medal, not a numeric score. */}
-                    <div className="text-right flex-shrink-0">
-                      <div
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm ${medalRating.color}`}
-                      >
-                        <Medal className={`w-5 h-5 ${medalRating.textColor}`} />
-                        <span className={`text-xl font-bold ${medalRating.textColor}`}>
-                          {medalRating.rating}
-                        </span>
-                      </div>
-                      <div className="text-xs text-gray-500 uppercase tracking-wider mt-1">
-                        Medal Rating
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Quick Stats Row */}
-                  <div className="grid grid-cols-4 gap-3 mt-4 pt-4 border-t border-[#333]/50">
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-white font-data">
-                        {demoCorps.showsAttended}
-                      </div>
-                      <div className="text-xs text-gray-500">Shows</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-green-500 font-data">
-                        {demoCorps.seasonHighScore.toFixed(2)}
-                      </div>
-                      <div className="text-xs text-gray-500">High Score</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-[#0057B8] font-data">
-                        {demoCorps.bestInShowCount}
-                      </div>
-                      <div className="text-xs text-gray-500">Best in Show</div>
-                    </div>
-                    <div className="text-center">
-                      <div className={`text-lg font-bold font-data ${ratingTextColor}`}>
-                        {medalRating.rating}
-                      </div>
-                      <div className="text-xs text-gray-500">Rating</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Lineup Panel */}
+            {/* MAIN CONTENT (2/3) - Lineup + results */}
+            <div className="lg:col-span-2 lg:col-start-1 lg:row-start-1 lg:row-span-2 space-y-4">
+              {/* Lineup Panel (draftable) */}
               <div className="bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden">
                 <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
                   <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
@@ -519,107 +640,26 @@ const GuestDashboard = () => {
                 </div>
               </div>
 
-              {/* Recent Scores */}
-              <div className="bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden">
-                <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-                  <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                    <TrendingUp className="w-3.5 h-3.5 text-green-500" />
-                    Recent Results
-                  </h2>
-                </div>
+              {/* Recent Results — real component, medal ratings for SoundSport */}
+              <RecentResultsFeed
+                results={recentResultsForFeed}
+                loading={false}
+                corpsClass="soundSport"
+              />
 
-                <div className="divide-y divide-[#333]/50">
-                  {demoRecentScores.map((show) => {
-                    const rating = getSoundSportRating(show.score);
-                    return (
-                      <div key={show.showId} className="p-4 flex items-center gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-white truncate">
-                            {show.showName}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {new Date(show.date).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                            })}
-                          </div>
-                        </div>
-                        {/* SoundSport shows earn a medal rating, not a placement. */}
-                        <div
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm ${rating.color}`}
-                        >
-                          <Medal className={`w-4 h-4 ${rating.textColor}`} />
-                          <span className={`text-sm font-bold ${rating.textColor}`}>
-                            {rating.rating}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              {/* Class Progression — the fuller competitive dashboard that
+                  unlocks beyond the SoundSport starter tier. */}
+              <ClassProgressionPanel
+                unlockedClasses={demoProfile.unlockedClasses}
+                activeCorpsClass="soundSport"
+                onGate={handleGatedClick}
+              />
             </div>
 
-            {/* RIGHT COLUMN - Stats & Actions */}
-            <div className="lg:col-span-4 space-y-4">
-              {/* Director Card */}
-              <div className="bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden">
-                <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-                  <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                    <User className="w-3.5 h-3.5 text-[#0057B8]" />
-                    Demo Director
-                  </h2>
-                </div>
-
-                <div className="p-4">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 rounded-full bg-[#0057B8] flex items-center justify-center text-white font-bold text-lg">
-                      D
-                    </div>
-                    <div>
-                      <div className="text-sm font-bold text-white">{demoProfile.displayName}</div>
-                      <div className="text-xs text-gray-500">{demoProfile.userTitle}</div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="text-center p-2 bg-[#111] rounded-sm">
-                      <div className="flex items-center justify-center gap-1 mb-1">
-                        <Zap className="w-3.5 h-3.5 text-purple-500" />
-                      </div>
-                      <div className="text-lg font-bold text-white">{demoProfile.xpLevel}</div>
-                      <div className="text-xs text-gray-500">Level</div>
-                    </div>
-                    <div className="text-center p-2 bg-[#111] rounded-sm">
-                      <div className="flex items-center justify-center gap-1 mb-1">
-                        <Flame className="w-3.5 h-3.5 text-orange-500" />
-                      </div>
-                      <div className="text-lg font-bold text-orange-500">
-                        {demoProfile.engagement.loginStreak}
-                      </div>
-                      <div className="text-xs text-gray-500">Streak</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Season Stats */}
-              <div className="grid grid-cols-2 gap-3">
-                <StatsCard
-                  icon={Calendar}
-                  iconColor="text-[#0057B8]"
-                  label="Shows"
-                  value={demoCorps.showsAttended}
-                  sublabel="this season"
-                />
-                <StatsCard
-                  icon={Award}
-                  iconColor="text-yellow-500"
-                  label="High Score"
-                  value={demoCorps.seasonHighScore}
-                  sublabel="season best"
-                />
-              </div>
+            {/* SIDEBAR (1/3) - Engagement panels below the scorecard */}
+            <div className="lg:col-start-3 space-y-4">
+              {/* Daily Challenges - drives daily return visits */}
+              <DemoDailyChallenges onGate={handleGatedClick} />
 
               {/* Upcoming Shows */}
               <div className="bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden">
@@ -668,6 +708,26 @@ const GuestDashboard = () => {
                 </div>
               </div>
 
+              {/* Rivals — real component, closest SoundSport competitors */}
+              <RivalsPanel rivals={demoRivals} corpsClass="soundSport" />
+
+              {/* Quick Stats — real rotating fun-facts widget */}
+              <QuickStats
+                profile={demoProfile}
+                corpsClass="soundSport"
+                recentResults={recentResultsForFeed}
+                lineupScoreData={{}}
+                lineupCount={lineupCount}
+              />
+
+              {/* Achievement Tracker — real progress-to-next-achievement widget */}
+              <AchievementTrackerPanel
+                profile={demoProfile}
+                lineupCount={lineupCount}
+                resultCount={demoRecentScores.length}
+                leagueCount={0}
+              />
+
               {/* Join League CTA */}
               <button
                 onClick={() => handleGatedClick('league')}
@@ -686,6 +746,28 @@ const GuestDashboard = () => {
                   <Lock className="w-4 h-4 text-gray-500 group-hover:text-yellow-500 transition-colors" />
                 </div>
               </button>
+
+              {/* Submit Article — community content (gated) */}
+              <div className="bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden">
+                <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
+                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+                    <FileText className="w-3.5 h-3.5 text-green-500" />
+                    Community Content
+                  </h3>
+                </div>
+                <div className="p-4">
+                  <p className="text-xs text-gray-500 mb-3">
+                    Share your insights, analysis, or news with the community.
+                  </p>
+                  <button
+                    onClick={() => handleGatedClick('default')}
+                    className="w-full py-2.5 bg-[#222] hover:bg-[#333] border border-[#333] text-white text-sm font-bold transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Lock className="w-4 h-4" />
+                    Submit Article
+                  </button>
+                </div>
+              </div>
 
               {/* Register CTA */}
               <div className="bg-gradient-to-br from-[#0057B8]/20 to-[#0057B8]/5 border border-[#0057B8]/30 rounded-sm p-4">
