@@ -14,7 +14,6 @@ import {
   DEMO_CORPS_STATS,
   DEMO_RECENT_SCORES,
   DEMO_UPCOMING_SHOWS,
-  DEMO_LEADERBOARD_POSITION,
 } from '../data/demoCorps';
 
 // =============================================================================
@@ -235,7 +234,7 @@ export function useGuestPreview() {
       ...DEMO_PROFILE,
       corps: {
         ...DEMO_PROFILE.corps,
-        world: demoCorps,
+        soundSport: demoCorps,
       },
     }),
     [demoCorps]
@@ -279,7 +278,6 @@ export function useGuestPreview() {
     demoStats: DEMO_CORPS_STATS,
     demoRecentScores: DEMO_RECENT_SCORES,
     demoUpcomingShows: DEMO_UPCOMING_SHOWS,
-    demoLeaderboardPosition: DEMO_LEADERBOARD_POSITION,
 
     // Computed
     shouldPromptRegistration,

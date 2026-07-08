@@ -1,20 +1,68 @@
 /**
  * Demo Corps Data - Sample corps for Guest Preview Mode
  *
- * This provides realistic sample data for unauthenticated users to experience
- * the dashboard before registering. The demo corps is a fully-populated
- * World Class corps with real-looking scores and lineup data.
+ * Provides realistic sample data for unauthenticated visitors to experience the
+ * dashboard before registering. The demo mirrors what a brand-new director
+ * actually gets: a SoundSport corps. SoundSport is the only class unlocked by
+ * default (A Class needs Level 3, Open Class Level 5, World Class Level 10), it
+ * drafts under a 90-point budget, and it is a ratings-only format — shows earn
+ * a Gold/Silver/Bronze medal rating and "Best in Show" wins rather than a
+ * numeric rank or cumulative season score.
+ *
+ * Scores here are generated with the SAME formula the backend uses
+ * (functions/src/helpers/scoring.js) so the demo never shows numbers the real
+ * game could not produce.
  */
 
 // =============================================================================
-// DEMO CORPS CONFIGURATION
+// SCORING MODEL (mirrors functions/src/helpers/scoring.js)
+// =============================================================================
+// Each caption is scored out of 20. The show total is:
+//   geScore     = GE1 + GE2                  (max 40)
+//   visualScore = (VP + VA + CG) / 2         (max 30)
+//   musicScore  = (B + MA + P) / 2           (max 30)
+//   totalScore  = min(100, ge + visual + music)
+// SoundSport shares this math; only its *presentation* (medal ratings) differs.
+
+/** Sum the GE / Visual / Music category totals from a caption map. */
+export function computeCategoryTotals(captions) {
+  const geScore = (captions.GE1 || 0) + (captions.GE2 || 0);
+  const visualScore = ((captions.VP || 0) + (captions.VA || 0) + (captions.CG || 0)) / 2;
+  const musicScore = ((captions.B || 0) + (captions.MA || 0) + (captions.P || 0)) / 2;
+  return { geScore, visualScore, musicScore };
+}
+
+/** Compute the capped show total (<= 100) from a caption map. */
+export function computeShowTotal(captions) {
+  const { geScore, visualScore, musicScore } = computeCategoryTotals(captions);
+  return Math.round(Math.min(100, geScore + visualScore + musicScore) * 100) / 100;
+}
+
+// =============================================================================
+// DEMO CORPS CONFIGURATION (SoundSport)
 // =============================================================================
 
+// Representative recent show, used to derive the corps' category totals and
+// medal rating. Every caption is a plausible <=20 value for a strong SoundSport
+// corps.
+const DEMO_LATEST_CAPTIONS = {
+  GE1: 18.4,
+  GE2: 18.5,
+  VP: 18.1,
+  VA: 18.2,
+  CG: 18.0,
+  B: 18.3,
+  MA: 18.4,
+  P: 18.2,
+};
+
+const DEMO_LATEST_TOTAL = computeShowTotal(DEMO_LATEST_CAPTIONS); // 91.5 -> Gold
+
 export const DEMO_CORPS = {
-  corpsName: 'The Ambassadors',
-  location: 'Houston, TX',
-  description: 'A legacy corps built on precision and power',
-  corpsClass: 'world',
+  corpsName: 'River City Regiment',
+  location: 'Austin, TX',
+  description: 'A community-built SoundSport corps chasing its first gold rating',
+  corpsClass: 'soundSport',
   createdAt: { seconds: Date.now() / 1000, nanoseconds: 0 },
 
   // Uniform Design (for display)
@@ -29,30 +77,48 @@ export const DEMO_CORPS = {
     performanceStyle: 'powerful and precise',
   },
 
-  // Season stats (impressive but realistic)
-  totalSeasonScore: 847.65,
-  showsAttended: 12,
-  seasonHighScore: 92.45,
+  // SoundSport is ratings-only: the medal rating comes from the best show score,
+  // and Best in Show counts shows won outright. There is no numeric rank or
+  // cumulative "season score" for SoundSport.
+  seasonHighScore: DEMO_LATEST_TOTAL,
+  showsAttended: 6,
+  bestInShowCount: 2,
   lastRehearsalDate: new Date().toISOString().split('T')[0],
   rehearsalsToday: 0,
 
-  // Demo lineup with historical DCI caption selections
-  // Format: "Corps Name|Year" (matches real lineup slot format)
+  // Demo lineup: 8 captions drafted from value-priced historical corps, the way
+  // a SoundSport roster is built inside the 90-point budget. Format is
+  // "Corps Name|Year" to match the real active-lineup slot format.
   lineup: {
-    GE1: 'Blue Devils|2014',
-    GE2: 'Carolina Crown|2013',
-    VP: 'Santa Clara Vanguard|2018',
-    VA: 'Bluecoats|2019',
-    CG: 'Carolina Crown|2015',
-    B: 'The Cavaliers|2002',
-    MA: 'Blue Devils|2017',
-    P: 'Santa Clara Vanguard|2022',
+    GE1: 'Blue Stars|2017',
+    GE2: 'The Academy|2019',
+    VP: 'Mandarins|2022',
+    VA: 'Colts|2018',
+    CG: 'Spirit of Atlanta|2019',
+    B: 'Boston Crusaders|2016',
+    MA: 'Blue Knights|2019',
+    P: 'Pacific Crest|2018',
   },
 
-  // Show selections for demo
+  // Registered shows, keyed by `week{n}` to match the real schedule structure
+  // (see SCHEDULE_SYSTEM.md). Directors pick up to 4 shows per week.
   selectedShows: {
-    1: ['show_001', 'show_002'],
-    2: ['show_003', 'show_004'],
+    week4: [
+      {
+        eventName: 'Heartland Classic',
+        date: 'July 1, 2026',
+        location: 'Des Moines, IA',
+        day: 24,
+      },
+    ],
+    week5: [
+      {
+        eventName: 'Rocky Mountain Invitational',
+        date: 'July 8, 2026',
+        location: 'Denver, CO',
+        day: 31,
+      },
+    ],
   },
 };
 
@@ -74,31 +140,34 @@ export const DEMO_PROFILE = {
   // Currency
   corpsCoin: 1200,
 
-  // Unlocks (all classes unlocked for demo)
-  unlockedClasses: ['soundSport', 'aClass', 'open', 'world'],
+  // Level 8 unlocks SoundSport, A Class (L3), and Open Class (L5). World Class
+  // stays locked until Level 10. Keys are canonical (matches profile.corps and
+  // CORPS_CLASS_ORDER).
+  unlockedClasses: ['soundSport', 'aClass', 'openClass'],
 
-  // Corps data
+  // Corps data keyed by canonical class ids. The director is competing their
+  // SoundSport corps; higher-class slots are still open.
   corps: {
-    soundSport: undefined,
+    soundSport: DEMO_CORPS,
     aClass: undefined,
-    open: undefined,
-    world: DEMO_CORPS,
+    openClass: undefined,
+    worldClass: undefined,
   },
 
   // Stats
   stats: {
     seasonsPlayed: 3,
-    championships: 0,
-    topTenFinishes: 2,
+    goldRatings: 4,
+    bestInShowWins: 5,
     leagueWins: 1,
   },
 
   // Lifetime stats
   lifetimeStats: {
-    totalPoints: 12450,
     totalSeasons: 3,
     totalShows: 36,
-    bestSeasonScore: 892.15,
+    goldRatings: 4,
+    bestInShowWins: 5,
     leagueChampionships: 1,
     totalCorpsRetired: 2,
   },
@@ -111,7 +180,7 @@ export const DEMO_PROFILE = {
     recentActivity: [
       {
         type: 'show_result',
-        description: 'Earned 72.45 pts at San Antonio Regional',
+        description: 'Earned a Gold rating at Rocky Mountain Invitational',
         timestamp: new Date(Date.now() - 86400000).toISOString(),
         xp: 25,
       },
@@ -148,109 +217,109 @@ export const DEMO_PROFILE = {
 // =============================================================================
 // DEMO SEASON DATA
 // =============================================================================
+// The off-season runs a 49-day / 7-week fantasy calendar built from historical
+// DCI data (see SCHEDULE_SYSTEM.md). getSeasonProgress() caps the day at 49 and
+// the week at 7, so those bounds must hold here too.
 
 export const DEMO_SEASON = {
-  seasonUid: 'demo_season_2025',
-  seasonType: 'live',
+  seasonUid: 'adagio_2025-26',
+  name: 'adagio_2025-26',
+  status: 'off-season',
+  seasonType: 'off-season',
   seasonNumber: 1,
-  year: 2025,
-  currentWeek: 8,
-  currentDay: 52,
-  totalWeeks: 12,
+  year: 2026,
+  currentDay: 31,
+  currentWeek: 5, // ceil(31 / 7)
+  totalDays: 49,
+  totalWeeks: 7,
+  currentPointCap: 150, // season-wide cap; per-class caps (SoundSport 90) apply within
   registrationOpen: true,
   schedule: {
-    startDate: { seconds: Date.now() / 1000 - 52 * 86400, nanoseconds: 0 },
-    endDate: { seconds: Date.now() / 1000 + 28 * 86400, nanoseconds: 0 },
-    weeksRemaining: 4,
+    startDate: { seconds: Date.now() / 1000 - 30 * 86400, nanoseconds: 0 },
+    endDate: { seconds: Date.now() / 1000 + 18 * 86400, nanoseconds: 0 },
+    weeksRemaining: 3,
   },
 };
 
 // =============================================================================
-// DEMO CORPS STATS (for display in dashboard panels)
+// DEMO CORPS STATS (category totals for the most recent show)
 // =============================================================================
+// geScore is the GE1+GE2 total (max 40); visual/music are the halved category
+// totals (max 30 each) — matching the backend's scoring output shape.
 
 export const DEMO_CORPS_STATS = {
-  totalScore: 847.65,
-  showCount: 12,
-  geScore: 18.25,
-  visualScore: 17.8,
-  musicScore: 18.15,
-  placement: 4,
-  weeklyChange: '+2.35',
+  totalScore: DEMO_LATEST_TOTAL,
+  showCount: 6,
+  ...computeCategoryTotals(DEMO_LATEST_CAPTIONS),
+  bestInShowCount: 2,
+  rating: 'Gold',
   trend: 'up',
 };
 
 // =============================================================================
-// DEMO RECENT SCORES (for standings panel)
+// DEMO RECENT SCORES (SoundSport — presented as medal ratings)
 // =============================================================================
+// Totals are derived from the caption maps with computeShowTotal so they match
+// the real scoring formula (and the medal thresholds) exactly.
 
 export const DEMO_RECENT_SCORES = [
   {
-    showId: 'show_012',
-    showName: 'San Antonio Regional',
+    showId: 'show_031',
+    showName: 'Rocky Mountain Invitational',
     date: new Date(Date.now() - 86400000).toISOString(),
-    score: 92.45,
-    placement: 3,
-    captions: { GE1: 18.5, GE2: 18.3, VP: 17.9, VA: 18.1, CG: 17.8, B: 18.2, MA: 18.4, P: 18.25 },
+    day: 31,
+    captions: DEMO_LATEST_CAPTIONS,
   },
   {
-    showId: 'show_011',
-    showName: 'Houston Classic',
+    showId: 'show_024',
+    showName: 'Heartland Classic',
     date: new Date(Date.now() - 7 * 86400000).toISOString(),
-    score: 91.2,
-    placement: 4,
-    captions: { GE1: 18.2, GE2: 18.1, VP: 17.7, VA: 17.9, CG: 17.6, B: 18.0, MA: 18.2, P: 18.1 },
+    day: 24,
+    captions: { GE1: 18.1, GE2: 18.2, VP: 17.8, VA: 17.9, CG: 17.7, B: 18.0, MA: 18.1, P: 17.9 },
   },
   {
-    showId: 'show_010',
-    showName: 'Austin Showcase',
+    showId: 'show_017',
+    showName: 'Prairie State Preview',
     date: new Date(Date.now() - 14 * 86400000).toISOString(),
-    score: 89.85,
-    placement: 5,
-    captions: { GE1: 17.9, GE2: 17.8, VP: 17.5, VA: 17.7, CG: 17.4, B: 17.8, MA: 18.0, P: 17.85 },
+    day: 17,
+    captions: { GE1: 17.9, GE2: 18.0, VP: 17.6, VA: 17.7, CG: 17.5, B: 17.8, MA: 17.9, P: 17.7 },
   },
-];
+].map((show) => ({ ...show, score: computeShowTotal(show.captions) }));
 
 // =============================================================================
 // DEMO SCHEDULE (upcoming shows)
 // =============================================================================
+// SoundSport corps compete at regular off-season shows and are auto-enrolled in
+// the SoundSport International Music & Food Festival on Day 49 (see
+// SCHEDULE_SYSTEM.md).
 
 export const DEMO_UPCOMING_SHOWS = [
   {
-    showId: 'upcoming_001',
-    eventName: 'Dallas Championship',
-    location: 'Dallas, TX',
-    date: new Date(Date.now() + 3 * 86400000).toISOString(),
-    classes: ['world', 'open'],
+    showId: 'upcoming_036',
+    eventName: 'Great Plains SoundSport Showcase',
+    location: 'Kansas City, MO',
+    date: new Date(Date.now() + 5 * 86400000).toISOString(),
+    day: 36,
+    classes: ['soundSport', 'aClass', 'openClass', 'worldClass'],
     isSelected: true,
   },
   {
-    showId: 'upcoming_002',
-    eventName: 'Southwest Regional',
-    location: 'Phoenix, AZ',
-    date: new Date(Date.now() + 10 * 86400000).toISOString(),
-    classes: ['world', 'open', 'aClass'],
+    showId: 'upcoming_043',
+    eventName: 'Prairie Capital Invitational',
+    location: 'Springfield, IL',
+    date: new Date(Date.now() + 12 * 86400000).toISOString(),
+    day: 43,
+    classes: ['soundSport', 'aClass', 'openClass'],
     isSelected: false,
   },
   {
-    showId: 'upcoming_003',
-    eventName: 'DCI Southwestern Championship',
-    location: 'San Antonio, TX',
-    date: new Date(Date.now() + 17 * 86400000).toISOString(),
-    classes: ['world'],
-    isFinals: false,
+    showId: 'upcoming_049',
+    eventName: 'SoundSport International Music & Food Festival',
+    location: 'Indianapolis, IN',
+    date: new Date(Date.now() + 18 * 86400000).toISOString(),
+    day: 49,
+    classes: ['soundSport'],
+    isChampionship: true,
     isSelected: false,
   },
 ];
-
-// =============================================================================
-// DEMO LEADERBOARD POSITION
-// =============================================================================
-
-export const DEMO_LEADERBOARD_POSITION = {
-  rank: 47,
-  totalUsers: 2847,
-  percentile: 98.3,
-  pointsBehindNext: 12.5,
-  pointsAheadPrevious: 8.2,
-};

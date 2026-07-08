@@ -26,6 +26,7 @@ import {
   Flame,
   Target,
   Lock,
+  Medal,
 } from 'lucide-react';
 import { useGuestPreview } from '../hooks/useGuestPreview';
 import { RegistrationGate, GuestLineupPicker } from '../components/GuestPreview';
@@ -33,6 +34,7 @@ import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useSEO } from '../hooks/useSEO';
 import { getSeasonData, getCorpsValues } from '../api/season';
 import { getCorpsClassName } from '../utils/corps';
+import { getSoundSportRating } from '../components/Dashboard/sections/constants';
 
 const STARTER_BUDGET = 90; // Same 90-pt SoundSport budget onboarding drafts under
 
@@ -109,7 +111,7 @@ const GuestHeader = () => {
 // LINEUP ROW COMPONENT (Read-Only)
 // =============================================================================
 
-const LineupRow = ({ caption, value, captionScore, pointsCost, isLast, isPlayable, onClick }) => {
+const LineupRow = ({ caption, value, pointsCost, isLast, isPlayable, onClick }) => {
   const hasValue = !!value;
   const [corpsName, sourceYear] = hasValue ? value.split('|') : [null, null];
   const captionLabel = `${caption.name} — ${caption.fullName}`;
@@ -152,18 +154,16 @@ const LineupRow = ({ caption, value, captionScore, pointsCost, isLast, isPlayabl
         <div className="text-[10px] text-gray-500 truncate mt-0.5">{caption.fullName}</div>
       </div>
 
-      {/* Right side: pick cost (draft mode), demo score, or draft CTA */}
+      {/* Right side: pick cost (draft mode) or draft CTA. SoundSport is a
+          ratings-only format, so a locked-in active lineup shows no per-caption
+          numeric score — matching the real dashboard's SoundSport lineup. */}
       <div className="flex items-center gap-2">
         {hasValue ? (
           pointsCost != null ? (
             <span className="text-xs font-bold font-data text-yellow-400 tabular-nums">
               Cost {pointsCost}
             </span>
-          ) : (
-            <span className="text-xs font-data text-gray-400 tabular-nums">
-              {captionScore !== null ? captionScore.toFixed(1) : '—'}
-            </span>
-          )
+          ) : null
         ) : (
           <span className="text-xs font-bold text-[#F5A623] group-hover:text-[#FFB84D]">
             + Draft
@@ -207,10 +207,8 @@ const GuestDashboard = () => {
     isLoading,
     demoCorps,
     demoProfile,
-    demoStats,
     demoRecentScores,
     demoUpcomingShows,
-    demoLeaderboardPosition,
     trackInteraction,
     hasEngaged,
     startPreview,
@@ -323,13 +321,18 @@ const GuestDashboard = () => {
     }
   };
 
-  // Caption score helper
-  const getCaptionScore = (captionId) => {
-    if (['GE1', 'GE2'].includes(captionId)) return demoStats?.geScore ?? null;
-    if (['VP', 'VA', 'CG'].includes(captionId)) return demoStats?.visualScore ?? null;
-    if (['B', 'MA', 'P'].includes(captionId)) return demoStats?.musicScore ?? null;
-    return null;
+  // SoundSport medal rating driven by the corps' best show score (ratings-only
+  // format — mirrors the real Season Scorecard).
+  const medalRating = getSoundSportRating(demoCorps.seasonHighScore || 0);
+  // Readable accent for the rating shown as plain text (the badge's black-on-gold
+  // treatment is only legible on its filled background).
+  const RATING_TEXT_COLORS = {
+    Gold: 'text-yellow-500',
+    Silver: 'text-gray-300',
+    Bronze: 'text-orange-400',
+    Participation: 'text-white',
   };
+  const ratingTextColor = RATING_TEXT_COLORS[medalRating.rating] || 'text-white';
 
   if (isLoading) {
     return (
@@ -405,13 +408,19 @@ const GuestDashboard = () => {
                       </div>
                     </div>
 
-                    {/* Season Score */}
+                    {/* Medal Rating — SoundSport is ratings-only, so the
+                        headline is the season-best medal, not a numeric score. */}
                     <div className="text-right flex-shrink-0">
-                      <div className="text-3xl font-bold text-white font-data tabular-nums">
-                        {demoCorps.totalSeasonScore.toFixed(1)}
+                      <div
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm ${medalRating.color}`}
+                      >
+                        <Medal className={`w-5 h-5 ${medalRating.textColor}`} />
+                        <span className={`text-xl font-bold ${medalRating.textColor}`}>
+                          {medalRating.rating}
+                        </span>
                       </div>
-                      <div className="text-xs text-gray-500 uppercase tracking-wider">
-                        Season Score
+                      <div className="text-xs text-gray-500 uppercase tracking-wider mt-1">
+                        Medal Rating
                       </div>
                     </div>
                   </div>
@@ -426,21 +435,21 @@ const GuestDashboard = () => {
                     </div>
                     <div className="text-center">
                       <div className="text-lg font-bold text-green-500 font-data">
-                        {demoCorps.seasonHighScore}
+                        {demoCorps.seasonHighScore.toFixed(2)}
                       </div>
                       <div className="text-xs text-gray-500">High Score</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-lg font-bold text-yellow-500 font-data">
-                        #{demoLeaderboardPosition.rank}
+                      <div className="text-lg font-bold text-[#0057B8] font-data">
+                        {demoCorps.bestInShowCount}
                       </div>
-                      <div className="text-xs text-gray-500">Global Rank</div>
+                      <div className="text-xs text-gray-500">Best in Show</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-lg font-bold text-[#0057B8] font-data">
-                        {demoLeaderboardPosition.percentile}%
+                      <div className={`text-lg font-bold font-data ${ratingTextColor}`}>
+                        {medalRating.rating}
                       </div>
-                      <div className="text-xs text-gray-500">Percentile</div>
+                      <div className="text-xs text-gray-500">Rating</div>
                     </div>
                   </div>
                 </div>
@@ -500,7 +509,6 @@ const GuestDashboard = () => {
                         key={caption.id}
                         caption={caption}
                         value={isDrafting ? draftValue : demoCorps.lineup?.[caption.id]}
-                        captionScore={getCaptionScore(caption.id)}
                         pointsCost={draftValue ? parseInt(draftValue.split('|')[2]) || null : null}
                         isPlayable={isPlayable}
                         isLast={index === CAPTIONS.length - 1}
@@ -521,36 +529,33 @@ const GuestDashboard = () => {
                 </div>
 
                 <div className="divide-y divide-[#333]/50">
-                  {demoRecentScores.map((show) => (
-                    <div key={show.showId} className="p-4 flex items-center gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-white truncate">
-                          {show.showName}
+                  {demoRecentScores.map((show) => {
+                    const rating = getSoundSportRating(show.score);
+                    return (
+                      <div key={show.showId} className="p-4 flex items-center gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-white truncate">
+                            {show.showName}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {new Date(show.date).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                          </div>
                         </div>
-                        <div className="text-xs text-gray-500">
-                          {new Date(show.date).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                          })}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-lg font-bold text-white font-data tabular-nums">
-                          {show.score.toFixed(2)}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {show.placement === 1
-                            ? '1st'
-                            : show.placement === 2
-                              ? '2nd'
-                              : show.placement === 3
-                                ? '3rd'
-                                : `${show.placement}th`}{' '}
-                          place
+                        {/* SoundSport shows earn a medal rating, not a placement. */}
+                        <div
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm ${rating.color}`}
+                        >
+                          <Medal className={`w-4 h-4 ${rating.textColor}`} />
+                          <span className={`text-sm font-bold ${rating.textColor}`}>
+                            {rating.rating}
+                          </span>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
