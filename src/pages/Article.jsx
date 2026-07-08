@@ -288,7 +288,7 @@ const Article = () => {
       {/* SCROLLABLE CONTENT - pb reserves space for the fixed bottom bar up to
           lg (where the bar is hidden), so content clears it on tablets too. */}
       <main className="flex-1 overflow-y-auto min-h-0 pb-24 lg:pb-4">
-        <div className="max-w-[1920px] mx-auto p-4 lg:p-6">
+        <div className="p-4 lg:p-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* ============================================================= */}
             {/* MAIN COLUMN - Article Content (8 cols) */}
