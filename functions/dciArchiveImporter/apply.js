@@ -126,7 +126,9 @@ function loadPressboxYear(year) {
   return { path: p, doc: JSON.parse(fs.readFileSync(p, "utf-8")) };
 }
 
-async function applyFirestore(year, index) {
+let firestoreDb = null;
+function getDb() {
+  if (firestoreDb) return firestoreDb;
   const admin = require("firebase-admin");
   if (!admin.apps.length) {
     const keyPath = path.join(__dirname, "..", "serviceAccountKey.json");
@@ -136,26 +138,38 @@ async function applyFirestore(year, index) {
       admin.initializeApp();
     }
   }
-  const db = admin.firestore();
-  const ref = db.collection("historical_scores").doc(year);
+  firestoreDb = admin.firestore();
+  return firestoreDb;
+}
+
+// Plan and (unless dryRun) apply against the LIVE historical_scores/{year}
+// document, so the preview and the write both reflect what is actually in
+// Firestore - not the committed pressbox output, which this tool has already
+// patched. Returns the per-year counts for the running totals.
+async function applyFirestore(year, index, dryRun) {
+  const ref = getDb().collection("historical_scores").doc(year);
   const snap = await ref.get();
   if (!snap.exists) {
-    console.log(`  ${year}: historical_scores/${year} does not exist, skipping.`);
-    return;
+    console.log(`${year}: historical_scores/${year} does not exist, skipping.`);
+    return { renames: 0, locationFixed: 0 };
   }
-  // Re-plan against the live documents (whose names/locations may differ from
-  // the committed pressbox output) so the same add-only rules apply.
   const data = snap.data().data || [];
   const { renames, locationFixes } = planRenames(data, index);
-  for (const r of renames) r.event.eventName = r.to;
-  for (const f of locationFixes) f.event.location = f.to;
-  if (renames.length || locationFixes.length) {
-    await ref.set({ data });
-    console.log(`  ${year}: updated ${renames.length} name(s) and ` +
-      `${locationFixes.length} location(s) in Firestore.`);
-  } else {
-    console.log(`  ${year}: nothing to update in Firestore.`);
+  const verb = dryRun ? "would update" : "updating";
+  console.log(`${year}: ${verb} ${renames.length} name(s), ` +
+    `${locationFixes.length} location(s) (live doc has ${data.length} events).`);
+  for (const r of renames.slice(0, 8)) {
+    console.log(`    name: ${r.key}  "${r.from}" -> "${r.to}"`);
   }
+  if (renames.length > 8) console.log(`    ... +${renames.length - 8} more`);
+
+  if (!dryRun && (renames.length || locationFixes.length)) {
+    for (const r of renames) r.event.eventName = r.to;
+    for (const f of locationFixes) f.event.location = f.to;
+    await ref.set({ data });
+    console.log(`  ${year}: written.`);
+  }
+  return { renames: renames.length, locationFixed: locationFixes.length };
 }
 
 async function main() {
@@ -167,12 +181,21 @@ async function main() {
       console.log(`${year}: no archive names parsed, skipping.`);
       continue;
     }
+
+    // --firestore: plan/report/write against the live document.
+    if (FIRESTORE) {
+      const r = await applyFirestore(year, index, DRY_RUN);
+      totals.renamed += r.renames;
+      totals.locationFixed += r.locationFixed;
+      continue;
+    }
+
+    // Default: patch the committed pressbox output in place.
     const pressbox = loadPressboxYear(year);
     if (!pressbox) {
       console.log(`${year}: no pressbox output, skipping.`);
       continue;
     }
-
     const events = pressbox.doc.data || [];
     const { renames, locationFixes, unmatched, unusedArchive } =
       planRenames(events, index);
@@ -196,11 +219,7 @@ async function main() {
     }
     if (locationFixes.length > 6) console.log(`    ... +${locationFixes.length - 6} more cities`);
 
-    if (DRY_RUN) continue;
-
-    if (FIRESTORE) {
-      await applyFirestore(year, index);
-    } else {
+    if (!DRY_RUN) {
       for (const r of renames) r.event.eventName = r.to;
       for (const f of locationFixes) f.event.location = f.to;
       // Match the pressbox importer's 1-space indentation (see its parse.js)
@@ -211,8 +230,8 @@ async function main() {
   }
 
   console.log(`\nTotal: ${totals.renamed} renamed, ${totals.locationFixed} ` +
-    `cities completed, ${totals.unmatched} unmatched placeholders, ` +
-    `${totals.unusedArchive} unused archive names.`);
+    `cities completed${FIRESTORE ? "" : `, ${totals.unmatched} unmatched ` +
+    `placeholders, ${totals.unusedArchive} unused archive names`}.`);
   console.log(DRY_RUN ? "Dry run - nothing written." : "Done.");
   if (!DRY_RUN && !FIRESTORE) {
     console.log("Next: review the patched pressboxImporter/output diff, then " +
