@@ -63,20 +63,24 @@ const TopNav = () => {
   const seasonLabel = getSeasonLabel();
 
   return (
-    <nav className="fixed top-0 w-full h-12 bg-[#1a1a1a] border-b border-[#333] z-50">
-      <div className="w-full h-full flex items-center px-2 sm:px-4">
+    <nav className="fixed top-0 w-full h-14 bg-[#1a1a1a] border-b border-[#333] z-50">
+      <div className="w-full h-full flex items-center px-4 lg:px-6">
         {/* Logo + Brand - OPTIMIZATION #7: Added eager loading for LCP */}
-        <Link to="/dashboard" className="flex items-center gap-2 mr-4">
-          <img
-            src="/logo192.svg"
-            alt="marching.art"
-            className="w-8 h-8 rounded"
-            loading="eager"
-            decoding="async"
-            fetchPriority="high"
-          />
+        <Link to="/dashboard" className="flex items-center gap-2.5 mr-4">
+          <div className="w-8 h-8 rounded-sm overflow-hidden">
+            <img
+              src="/logo192.svg"
+              alt="marching.art"
+              className="w-full h-full object-cover"
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
+            />
+          </div>
           <div className="flex flex-col">
-            <span className="font-bold text-sm text-white leading-tight">marching.art</span>
+            <span className="text-base font-bold text-white tracking-wider leading-tight">
+              marching.art
+            </span>
             {/* Season badge - subtle, integrated */}
             {seasonLabel && (
               <span className="hidden sm:block text-[10px] text-gray-400 uppercase tracking-wider leading-tight">
@@ -267,7 +271,7 @@ const TickerBar = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="fixed top-12 w-full h-10 sm:h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
+      <div className="fixed top-14 w-full h-10 sm:h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
         <div className="flex items-center gap-4 px-4 text-xs">
           <span className="text-gray-500 animate-pulse">Loading scores...</span>
         </div>
@@ -278,7 +282,7 @@ const TickerBar = () => {
   // No data state
   if (!hasData || tickerSections.length === 0) {
     return (
-      <div className="fixed top-12 w-full h-10 sm:h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
+      <div className="fixed top-14 w-full h-10 sm:h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
         <div className="flex items-center gap-4 px-4 text-xs">
           <span className="text-gray-500">No scores available yet</span>
         </div>
@@ -561,7 +565,7 @@ const TickerBar = () => {
   // auto-scrolling marquee (the OS media query also freezes CSS animations).
   if (prefersReducedMotion) {
     return (
-      <div className="fixed top-12 w-full h-10 sm:h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
+      <div className="fixed top-14 w-full h-10 sm:h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
         <div className="relative flex-1 min-w-0 h-full flex items-center">
           <div className="flex-1 flex items-center gap-4 sm:gap-6 px-3 text-xs overflow-x-auto scrollbar-hide">
             {renderTrack('a')}
@@ -576,7 +580,7 @@ const TickerBar = () => {
   }
 
   return (
-    <div className="fixed top-12 w-full h-10 sm:h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
+    <div className="fixed top-14 w-full h-10 sm:h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
       <div className="relative flex-1 min-w-0 h-full flex items-center overflow-hidden">
         {/* Continuous marquee: two identical copies scroll left together,
             looping seamlessly. Duration scales with content width. */}
@@ -630,10 +634,10 @@ const GameShell = ({ children }) => {
   }, [location]);
 
   const shellContextValue = {
-    // 48px top nav + ticker: 32px (h-8) on sm+, 40px (h-10) on mobile.
+    // 56px top nav + ticker: 32px (h-8) on sm+, 40px (h-10) on mobile.
     // Currently unconsumed — if you use it, prefer the responsive values.
-    headerHeight: 80,
-    headerHeightMobile: 88,
+    headerHeight: 88,
+    headerHeightMobile: 96,
   };
 
   return (
@@ -646,12 +650,12 @@ const GameShell = ({ children }) => {
         <TickerBar />
 
         {/* Main Content Area - Fixed position fills space between headers and footer */}
-        {/* On mobile: top-nav (48px) + ticker (40px) = 88px */}
-        {/* On desktop: top-nav (48px) + ticker (32px) = 80px */}
+        {/* On mobile: top-nav (56px) + ticker (40px) = 96px */}
+        {/* On desktop: top-nav (56px) + ticker (32px) = 88px */}
         <main
           id="main-content"
           role="main"
-          className="fixed top-[88px] sm:top-20 left-0 right-0 bg-[#0a0a0a] overflow-hidden main-content-bottom"
+          className="fixed top-[96px] sm:top-[88px] left-0 right-0 bg-[#0a0a0a] overflow-hidden main-content-bottom"
         >
           {/* Full-width wrapper so each page's own scroll container spans the
               viewport — this keeps scrollbars flush against the right edge of
