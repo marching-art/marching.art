@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { adminHelpers } from '../api';
 import { getSeasonSettings, getAdminOverviewStats } from '../api/admin';
-import { discoverAndQueueUrls } from '../api/functions';
+import { discoverAndQueueUrls, discoverAndQueueEventUrls } from '../api/functions';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
@@ -138,6 +138,35 @@ const SeasonOpsTab = ({ callAdminFunction }) => {
 
 const DeepScrapeCard = () => {
   const [loading, setLoading] = useState(false);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
+
+  const handleDeepScrapeSchedules = async () => {
+    if (
+      !window.confirm(
+        'Start a DEEP SCRAPE of all DCI schedules?\n\n' +
+          'This reads dci.org/events (every event, 2019-present) and archives each ' +
+          "running order + performance times into historical_schedules. It runs in the " +
+          'background and can take a while.\n\n' +
+          'Safe and idempotent: missing events and lineup entries are filled in, existing ' +
+          'values are NEVER overwritten. Running it also seeds the current year in full.'
+      )
+    )
+      return;
+    setScheduleLoading(true);
+    try {
+      const result = await discoverAndQueueEventUrls();
+      const data = result.data || {};
+      if (data.success === false) {
+        toast.error(data.message || 'Schedule deep scrape found nothing to queue.');
+      } else {
+        toast.success(data.message || 'Schedule deep scrape started.');
+      }
+    } catch (error) {
+      toast.error(error.message || 'Failed to start schedule deep scrape');
+    } finally {
+      setScheduleLoading(false);
+    }
+  };
 
   const handleDeepScrape = async () => {
     if (
@@ -168,6 +197,7 @@ const DeepScrapeCard = () => {
   };
 
   return (
+    <>
     <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
       <SectionHeader title="Deep Scrape — Full DCI History" icon={Database} />
       <div className="p-4 space-y-3">
@@ -201,6 +231,42 @@ const DeepScrapeCard = () => {
         </button>
       </div>
     </div>
+
+    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      <SectionHeader title="Deep Scrape — Schedules & Performance Times" icon={Calendar} />
+      <div className="p-4 space-y-3">
+        <p className="text-[11px] text-gray-500 leading-relaxed">
+          Backfill the schedule archive from dci.org —{' '}
+          <span className="text-gray-300">every event's running order + performance times</span>,{' '}
+          all years (2019-present; earlier years aren't published). This fills{' '}
+          <span className="text-gray-300">historical_schedules</span>, the companion to
+          historical_scores, joinable to scores by event name + date. The scrape runs in the
+          background and appends missing events and lineup entries while filling only blank timing
+          fields — it never overwrites existing values. Running it also seeds the{' '}
+          <span className="text-gray-300">current year in full</span> (past + upcoming shows).
+        </p>
+        <div className="flex items-start gap-2 px-3 py-2 bg-[#111] border border-[#333]">
+          <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
+          <p className="text-[11px] text-yellow-500/80">
+            Heavy, long-running job — ~1,100 event pages across all years. Safe to re-run; runs are
+            idempotent.
+          </p>
+        </div>
+        <button
+          onClick={handleDeepScrapeSchedules}
+          disabled={scheduleLoading}
+          className="flex items-center gap-1.5 h-9 px-3 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] border border-[#0057B8]/30 hover:bg-[#0057B8] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {scheduleLoading ? (
+            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <Calendar className="w-3.5 h-3.5" />
+          )}
+          {scheduleLoading ? 'Starting…' : 'Start Schedule Scrape (All Years)'}
+        </button>
+      </div>
+    </div>
+    </>
   );
 };
 

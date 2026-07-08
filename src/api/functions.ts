@@ -603,6 +603,10 @@ export const scrapeLiveScoresNow = createCallable<void, { success?: boolean; mes
 export const discoverAndQueueUrls = createCallable<void, { success?: boolean; message?: string }>(
   'discoverAndQueueUrls'
 );
+export const discoverAndQueueEventUrls = createCallable<
+  void,
+  { success?: boolean; message?: string }
+>('discoverAndQueueEventUrls');
 // 3 min timeout: generates the full day's AI articles in one call
 export const triggerDailyNews = createCallable<
   { currentDay?: number; dataDocId?: string; seasonId?: string },

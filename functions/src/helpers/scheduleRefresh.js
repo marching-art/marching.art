@@ -5,6 +5,7 @@
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { enrichEventsWithDetails } = require("./eventDetails");
+const { archiveScheduleEvents } = require("./historicalSchedules");
 const {
   applyEnrichment,
   SPRING_TRAINING_DAYS,
@@ -146,14 +147,29 @@ async function refreshLiveSeasonSchedule() {
 
   try {
     logger.info(`Scraping upcoming DCI events for ${year}...`);
-    const upcomingEvents = (await scrapeUpcomingDciEvents(year)).map((e) => ({
+    // Scrape with the REAL DCI event names first, and enrich with detail-page
+    // timing + running order. Branding happens afterward so the historical
+    // archive keeps unbranded names that join to historical_scores.
+    const scrapedEvents = await scrapeUpcomingDciEvents(year);
+    logger.info(`Found ${scrapedEvents.length} events to process.`);
+    await enrichEventsWithDetails(scrapedEvents);
+
+    // Archive the real running orders into historical_schedules/{year} so the
+    // schedule archive fills continuously as shows are posted — the same
+    // philosophy as historical_scores. Best-effort: a failure here must never
+    // block the live in-game schedule refresh below.
+    try {
+      const { archived } = await archiveScheduleEvents(db, scrapedEvents);
+      logger.info(`Archived ${archived} running orders into historical_schedules.`);
+    } catch (error) {
+      logger.warn(`Failed to archive schedules to history: ${error.message}`);
+    }
+
+    // Brand for the in-game schedule (DCI -> marching.art) and merge in place.
+    const upcomingEvents = scrapedEvents.map((e) => ({
       ...e,
       eventName: brandEventName(e.eventName),
     }));
-    logger.info(`Found ${upcomingEvents.length} events to process.`);
-
-    // Enrich with detail-page timing + running order before merging.
-    await enrichEventsWithDetails(upcomingEvents);
 
     const scheduleRef = db.doc(`schedules/${seasonId}`);
     const scheduleDoc = await scheduleRef.get();

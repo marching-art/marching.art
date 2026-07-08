@@ -13,9 +13,15 @@ const { assertAdmin } = require("./callableGuards");
 let pubsubClient;
 
 const DCI_RECAP_TOPIC = "dci-recap-topic";
+const DCI_EVENT_TOPIC = "dci-event-topic";
 const DCI_BASE_URL = "https://www.dci.org";
 const SITEMAP_INDEX_URL = `${DCI_BASE_URL}/sitemap_index.xml`;
 const SCRAPER_USER_AGENT = "Mozilla/5.0 (compatible; MarchingArtBot/1.0)";
+
+// dci.org's /events/ detail pages carry running-order + performance times only
+// from 2019 on (2018 and earlier 404). We still discover from the sitemap, which
+// only lists live URLs, but keep this floor documented for anyone extending it.
+const EARLIEST_SCHEDULE_YEAR = 2019;
 
 /**
  * Derive a recap URL from a "final scores" URL. dci.org serves the per-caption
@@ -284,10 +290,122 @@ const discoverAndQueueUrls = onCall({
   };
 });
 
+/**
+ * Discover every event detail URL across all years from dci.org's Yoast "event"
+ * sitemap(s). Returns unique /events/{year}-slug/ URLs (2019-present; earlier
+ * years 404 and are not listed).
+ *
+ * The event sitemap is the direct analog of the competition sitemap used for
+ * scores: it exposes every event detail page over plain GET, so a historical
+ * schedule backfill needs no Puppeteer (the AJAX-paginated /events/ listing is
+ * only needed for the live "upcoming events" scrape).
+ *
+ * @returns {Promise<string[]>} Array of unique event detail URLs.
+ */
+async function discoverAllEventUrls() {
+  const headers = { "User-Agent": SCRAPER_USER_AGENT };
+
+  const { data: indexXml } = await axios.get(SITEMAP_INDEX_URL, { timeout: 30000, headers });
+  // Match event-sitemap.xml / event-sitemap2.xml, but NOT tribe_events-sitemap.xml.
+  const eventSitemaps = extractSitemapLocs(indexXml)
+    .filter((u) => /(^|\/)event-sitemap\d*\.xml/.test(u));
+
+  if (eventSitemaps.length === 0) {
+    logger.warn("[ScheduleScrape] No event sitemaps found in sitemap index.");
+    return [];
+  }
+  logger.info(`[ScheduleScrape] Found ${eventSitemaps.length} event sitemap(s).`);
+
+  const eventUrls = new Set();
+  for (const sitemapUrl of eventSitemaps) {
+    try {
+      const { data: xml } = await axios.get(sitemapUrl, { timeout: 30000, headers });
+      for (const loc of extractSitemapLocs(xml)) {
+        const match = loc.match(/\/events\/(\d{4})-/);
+        if (match && parseInt(match[1], 10) >= EARLIEST_SCHEDULE_YEAR) {
+          eventUrls.add(loc);
+        }
+      }
+    } catch (error) {
+      logger.warn(`[ScheduleScrape] Failed to read sitemap ${sitemapUrl}: ${error.message}`);
+    }
+  }
+
+  return [...eventUrls];
+}
+
+/**
+ * Admin-only "deep scrape" for SCHEDULES: discover every event across all years
+ * on dci.org and archive each running order + performance times into
+ * historical_schedules/{year}.
+ *
+ * Pipeline (mirrors the scores deep scrape):
+ *   discoverAndQueueEventUrls (this) -- reads the event sitemap(s), derives every
+ *     event detail URL, and fans them out to dci-event-topic
+ *   -> processDciEvent (throttled) -> fetchEventForArchive
+ *   -> mergeEventIntoHistoricalSchedules -> historical_schedules/{year}
+ *
+ * The merge is additive/idempotent: it appends missing events and lineup corps
+ * and fills only blank timing fields, so re-running is safe. Running this once
+ * also seeds the current year in full (past + upcoming shows) with real DCI names.
+ */
+const discoverAndQueueEventUrls = onCall({
+  cors: true,
+  timeoutSeconds: 300,
+  memory: "512MiB",
+}, async (request) => {
+  assertAdmin(request);
+  if (!pubsubClient) {
+    pubsubClient = new PubSub();
+  }
+
+  logger.info(`Admin ${request.auth.uid} kicked off a full DCI schedule deep scrape.`);
+
+  const eventUrls = await discoverAllEventUrls();
+  if (eventUrls.length === 0) {
+    return {
+      success: false,
+      message: "Schedule deep scrape found no event URLs in the dci.org sitemaps. Nothing was queued.",
+      discovered: 0,
+      published: 0,
+    };
+  }
+
+  const topic = pubsubClient.topic(DCI_EVENT_TOPIC);
+  const CHUNK_SIZE = 50;
+  let published = 0;
+  for (let i = 0; i < eventUrls.length; i += CHUNK_SIZE) {
+    const chunk = eventUrls.slice(i, i + CHUNK_SIZE);
+    const results = await Promise.allSettled(
+      chunk.map((url) =>
+        topic.publishMessage({ data: Buffer.from(JSON.stringify({ url })) })
+      )
+    );
+    for (const r of results) {
+      if (r.status === "fulfilled") published++;
+      else logger.error(`[ScheduleScrape] Failed to publish an event URL: ${r.reason?.message}`);
+    }
+  }
+
+  logger.info(`[ScheduleScrape] Queued ${published}/${eventUrls.length} event URLs for archiving.`);
+
+  return {
+    success: true,
+    message: `Schedule deep scrape started: queued ${published} events (2019-present) on dci.org ` +
+      "for archiving running orders + performance times into historical_schedules. Missing events " +
+      "and lineup entries are filled in; existing values are never overwritten. This runs over the " +
+      "next several minutes — watch the function logs.",
+    discovered: eventUrls.length,
+    published,
+  };
+});
+
 module.exports = {
   scrapeDciScoresLogic,
   finalScoresToRecapUrl,
   discoverAllRecapUrls,
+  discoverAllEventUrls,
   testScraper,
   discoverAndQueueUrls,
+  discoverAndQueueEventUrls,
 };

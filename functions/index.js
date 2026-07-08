@@ -142,7 +142,8 @@ const {
   processLiveScoreRecap,
   processDciRecap,
 } = require("./src/triggers/scoreProcessing");
-const { discoverAndQueueUrls } = require("./src/helpers/scraping");
+const { processDciEvent } = require("./src/triggers/scheduleProcessing");
+const { discoverAndQueueUrls, discoverAndQueueEventUrls } = require("./src/helpers/scraping");
 
 // Live Scraper (1:30 AM - scrapes DCI scores before 2 AM processing)
 const { scrapeDciScores } = require("./src/scheduled/liveScraper");
@@ -292,9 +293,11 @@ module.exports = {
   processDciScores,
   processLiveScoreRecap,
   processDciRecap,
+  processDciEvent,
 
   // Deep scrape (admin: all events / all years)
   discoverAndQueueUrls,
+  discoverAndQueueEventUrls,
 
   // Live Scraper (1:30 AM)
   scrapeDciScores,
