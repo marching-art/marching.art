@@ -244,6 +244,23 @@ async function enrichOffSeasonSchedule(db, schedule, { startDate, pool, dataDocI
   return counts;
 }
 
+/**
+ * Feature flag (kill switch) for heritage schedule enrichment. Reads
+ * game-settings/config.heritageSchedulesEnabled; defaults to enabled when the
+ * doc/field is absent. Set it to false to revert new off-seasons to the
+ * names-only schedule if enrichment ever misbehaves in production.
+ * @param {FirebaseFirestore.Firestore} db
+ * @returns {Promise<boolean>}
+ */
+async function isHeritageSchedulesEnabled(db) {
+  try {
+    const doc = await db.doc("game-settings/config").get();
+    return doc.exists ? doc.data().heritageSchedulesEnabled !== false : true;
+  } catch {
+    return true;
+  }
+}
+
 module.exports = {
   enrichOffSeasonSchedule,
   enrichRegularShow,
@@ -253,4 +270,5 @@ module.exports = {
   offSeasonDateFor,
   rebaseIso,
   midnightUtc,
+  isHeritageSchedulesEnabled,
 };

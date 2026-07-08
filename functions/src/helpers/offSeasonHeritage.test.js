@@ -12,6 +12,7 @@ const {
   buildChampionshipLineup,
   pickHeritage,
   offSeasonDateFor,
+  enrichOffSeasonSchedule,
 } = require("./offSeasonHeritage");
 
 // Local hour-of-day (0-23.99) for an instant in a timezone.
@@ -116,6 +117,43 @@ describe("buildChampionshipLineup", () => {
   test("skips when too few pool corps have a positive score", () => {
     const show = { eventName: "marching.art World Championship Finals", location: "Indianapolis, IN", eligibleClasses: ["worldClass"] };
     assert.equal(buildChampionshipLineup(show, pool, 49, new Date("2026-08-08Z"), { corpsTotalAtDay: () => 0 }), false);
+  });
+});
+
+describe("enrichOffSeasonSchedule — orchestration dry run", () => {
+  test("enriches matched regular shows and leaves unmatched ones bare", async () => {
+    const docs = {
+      "historical_schedules/2015": {
+        data: [{
+          eventName: "DCI Capital Classic", date: "2015-07-01T00:00:00Z", location: "Sacramento, CA",
+          timezone: "America/Los_Angeles", source: "scraped",
+          startsAt: "2015-07-02T01:40:00Z", gatesAt: "2015-07-02T00:20:00Z", scoresAt: "2015-07-02T04:41:00Z",
+          lineup: [{ order: 1, corps: "Gold", hometown: "San Diego, CA", performanceTime: "6:40 PM", performsAt: "2015-07-02T01:40:00Z" }],
+        }],
+      },
+    };
+    const db = { doc: (p) => ({ get: async () => ({ exists: p in docs, data: () => docs[p] }) }) };
+
+    const schedule = [
+      { offSeasonDay: 12, shows: [{ eventName: "marching.art Capital Classic", date: "2015-07-01T00:00:00Z", location: "Sacramento, CA" }] },
+      { offSeasonDay: 13, shows: [{ eventName: "marching.art Ghost Show", date: "2015-07-05T00:00:00Z", location: "Nowhere, ZZ" }] },
+    ];
+
+    const counts = await enrichOffSeasonSchedule(db, schedule, {
+      startDate: new Date("2026-06-15T00:00:00Z"), pool: [], dataDocId: "x",
+    });
+
+    assert.equal(counts.regular, 1);
+    assert.equal(counts.unmatched, 1);
+
+    const matched = schedule[0].shows[0];
+    assert.equal(matched.heritageSource, "scraped");
+    assert.equal(matched.lineup[0].corps, "Gold");
+    assert.equal(matched.date, "2026-06-26T00:00:00.000Z"); // day 12 = start + 11
+
+    const bare = schedule[1].shows[0];
+    assert.equal(bare.lineup, undefined); // no heritage -> left as-is
+    assert.equal(bare.date, "2015-07-05T00:00:00Z");
   });
 });
 

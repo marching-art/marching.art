@@ -145,6 +145,7 @@ const {
 const { processDciEvent } = require("./src/triggers/scheduleProcessing");
 const { discoverAndQueueUrls, discoverAndQueueEventUrls } = require("./src/helpers/scraping");
 const { buildLearnedSchedules } = require("./src/helpers/learnedSchedules");
+const { getScheduleCoverage } = require("./src/helpers/scheduleCoverage");
 
 // Live Scraper (1:30 AM - scrapes DCI scores before 2 AM processing)
 const { scrapeDciScores } = require("./src/scheduled/liveScraper");
@@ -302,6 +303,7 @@ module.exports = {
 
   // Learned schedules (admin: synthesize running orders for archived events)
   buildLearnedSchedules,
+  getScheduleCoverage,
 
   // Live Scraper (1:30 AM)
   scrapeDciScores,

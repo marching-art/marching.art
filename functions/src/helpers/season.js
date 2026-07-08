@@ -469,14 +469,19 @@ async function startNewOffSeason() {
   // Enrich each stage with a running order + performance clock (heritage for
   // regular shows, pool-synthesized for championships), rebased onto the
   // off-season calendar so the live RunningOrder/NextPerformance UI works
-  // off-season too. Best-effort: a failure here must not block season creation.
+  // off-season too. Gated by a feature flag (kill switch) and best-effort: a
+  // failure here must not block season creation.
   try {
-    const { enrichOffSeasonSchedule } = require("./offSeasonHeritage");
-    await enrichOffSeasonSchedule(db, schedule, {
-      startDate,
-      pool: offSeasonCorpsData,
-      dataDocId,
-    });
+    const { enrichOffSeasonSchedule, isHeritageSchedulesEnabled } = require("./offSeasonHeritage");
+    if (await isHeritageSchedulesEnabled(db)) {
+      await enrichOffSeasonSchedule(db, schedule, {
+        startDate,
+        pool: offSeasonCorpsData,
+        dataDocId,
+      });
+    } else {
+      logger.info("Heritage schedule enrichment disabled by flag; using names-only schedule.");
+    }
   } catch (error) {
     logger.warn(`Off-season schedule heritage enrichment failed (non-fatal): ${error.message}`);
   }
