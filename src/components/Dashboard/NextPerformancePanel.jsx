@@ -70,7 +70,12 @@ function formatPerformTime(entry, timezone) {
  * @param {Array} props.poolCorps - dci-data corpsValues; supplies resultDays so the
  *   running-order highlight can distinguish real-result (full) from interpolated (dim).
  */
-const NextPerformancePanel = ({ competitions = [], selectedShows = {}, lineup = {}, poolCorps = [] }) => {
+const NextPerformancePanel = ({
+  competitions = [],
+  selectedShows = {},
+  lineup = {},
+  poolCorps = [],
+}) => {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 60 * 1000);
