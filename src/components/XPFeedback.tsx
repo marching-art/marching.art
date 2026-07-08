@@ -43,7 +43,7 @@ const FeedbackItemComponent: React.FC<{ item: FeedbackItem; onComplete: () => vo
 
   return (
     <m.div
-      className="fixed top-20 left-1/2 z-[200] pointer-events-none"
+      className="fixed top-[88px] left-1/2 z-[200] pointer-events-none"
       initial={{ opacity: 0, y: 20, x: '-50%', scale: 0.8 }}
       animate={{
         opacity: [0, 1, 1, 0],
