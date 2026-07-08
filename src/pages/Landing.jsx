@@ -21,6 +21,7 @@ import {
   Play,
   Newspaper,
   Calendar,
+  HelpCircle,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -288,6 +289,19 @@ const Landing = () => {
               >
                 <MessageCircle className="w-5 h-5" />
               </a>
+            )}
+            {/* Game Guide — mirrors the help icon in GameShell's header so the
+                guide is reachable from the home page too. Signed-in only, sitting
+                after Discord to match the icon order elsewhere on the site. */}
+            {user && (
+              <Link
+                to="/guide"
+                className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-sm transition-colors press-feedback flex items-center"
+                title="Game Guide"
+                aria-label="Game Guide"
+              >
+                <HelpCircle className="w-5 h-5" />
+              </Link>
             )}
           </div>
         </div>
