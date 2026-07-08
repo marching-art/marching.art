@@ -111,18 +111,12 @@ export const FullPageLoading: React.FC<FullPageLoadingProps> = ({
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3 }}
             className="glow-pulse"
+            role="status"
+            aria-label={label}
           >
-            <BrandLogo className="w-24 h-24" color="text-[#0057B8]" />
+            <BrandLogo className="w-24 h-24" color="text-[#eab308]" />
           </m.div>
         )}
-        <m.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="font-mono text-sm text-[#0057B8]/60 tracking-wide"
-        >
-          {label}
-        </m.p>
       </div>
     </div>
   );

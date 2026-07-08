@@ -171,15 +171,14 @@ describe('FullPageLoading', () => {
   describe('rendering', () => {
     it('renders with default label', () => {
       render(<FullPageLoading />);
-      // There are multiple "Loading..." texts - visible label and sr-only
-      const loadingTexts = screen.getAllByText('Loading...');
-      expect(loadingTexts.length).toBeGreaterThan(0);
+      // The label is exposed via aria-label on the status wrapper (no visible text)
+      expect(screen.getByRole('status', { name: 'Loading...' })).toBeInTheDocument();
     });
 
     it('renders with custom label', () => {
       render(<FullPageLoading label="Initializing" />);
-      // The visible label (in motion.p) should have the custom text
-      expect(screen.getByText('Initializing')).toBeInTheDocument();
+      // The custom label is exposed via aria-label on the status wrapper
+      expect(screen.getByRole('status', { name: 'Initializing' })).toBeInTheDocument();
     });
 
     it('shows logo by default', () => {
