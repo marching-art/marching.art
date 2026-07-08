@@ -627,7 +627,7 @@ ${isLiveSeason
 
 ${NEWS_INTEGRITY_RULES}
 
-VOICE: Authoritative but readable. Not dumbed down, not written for judges. A knowledgeable fan should come away understanding the caption landscape better than they did before.
+VOICE & CRAFT: Write like a working journalist, not a stat sheet. The best drum corps writing finds the one tension that defines the night and pulls the reader through it — a race that has no business being this close, a caption a corps has quietly rebuilt over the week, a number that argues with the eye test. Open with a real lede that frames that tension; do not throat-clear with "here are tonight's caption rankings." Spend adjectives sparingly and let the numbers carry the drama — your job is to explain what they MEAN, not to re-list them. Prize the specific over the generic (name the sub-caption, the exact gap, the corps that moved), vary your sentence rhythm so short lines can land after longer ones, and keep one through-line running from the lede to the close. Authoritative but readable: a knowledgeable fan should finish both understanding the caption landscape better than before AND having enjoyed the read. Analyze; never merely recite.
 
 BANNED PHRASES: dominant, commanding, stunning, thrilling, heating up, captivating, testament, battle for supremacy, stakes are high, every point matters, absolutely crucial, setting the stage, poised to, poised for success, will have a significant advantage, buy, sell, hold, trade, pick up, drop, fade, target, stash, fantasy directors should, for fantasy purposes, in your lineup
 
@@ -691,7 +691,8 @@ ARTICLE REQUIREMENTS
   Weight the sections by where the real story is tonight. If the Visual race is tight and GE is decided, Visual gets more ink.
   Do NOT end with buy/hold/sell, fantasy picks, or "who to target" — the Fantasy Market Report handles that. Your ending belongs to the closing angle above.
 - Structure the piece with short bolded lead-ins in Markdown (e.g., **General Effect.**, **Visual.**, **Music.**, **The takeaway.**) so each caption family is a scannable section — 2-4 words each; they render as subheads.
-- Also fill the insights field: 2-4 scannable caption takeaways, each tied to a specific gap, leader, or trend from the data. Descriptive only — no picks.`;
+- Fill the captionBreakdown field (geAnalysis / visualAnalysis / musicAnalysis — the "Caption Analysis Summary" cards). This is a SUMMARY, not a second copy of the narrative. For each family, distill the ONE thing a reader should walk away with — the defining number, the race that actually matters, or the shift worth watching next — in 1-2 tight sentences that lead with the verdict. Use different wording and a different angle than the narrative's corresponding section; never reuse its sentences or restate its full argument. If the narrative already made the obvious point at length, compress it to its essence or surface the sharper secondary insight the long form had no room to dwell on. Descriptive only — no picks.
+- Also fill the insights field: 2-4 scannable caption takeaways, each tied to a specific gap, leader, or trend from the data. These are cross-cutting one-liners (a single stat or race per item) and should not duplicate the captionBreakdown summaries. Descriptive only — no picks.`;
 
   const schema = {
     type: Type.OBJECT,
@@ -701,10 +702,11 @@ ARTICLE REQUIREMENTS
       narrative: { type: Type.STRING, description: "900-1200 word caption analysis covering GE, Visual, and Music: what the judges rewarded, where the tightest races are, and how the week's trajectory reshapes each corps' caption profile. Every corps, score, and trend must come from the data block. No fantasy buy/hold/sell picks — that is the Fantasy Market Report's job. Never uses 'dominant', 'heating up', 'captivating'." },
       captionBreakdown: {
         type: Type.OBJECT,
+        description: "The 'Caption Analysis Summary' cards — a distilled verdict per family, NOT a rehash of the narrative. Each field is 1-2 tight sentences leading with the single defining takeaway, in different words from the narrative.",
         properties: {
-          geAnalysis: { type: Type.STRING, description: "General Effect analysis" },
-          visualAnalysis: { type: Type.STRING, description: "Visual caption analysis" },
-          musicAnalysis: { type: Type.STRING, description: "Music caption analysis" },
+          geAnalysis: { type: Type.STRING, description: "1-2 sentence distilled verdict for General Effect: the single defining number or race, led with the bottom line. Different wording and angle from the narrative's GE section — a summary, never a repeat." },
+          visualAnalysis: { type: Type.STRING, description: "1-2 sentence distilled verdict for Visual (VP/VA/CG): the one takeaway that matters most, led with the bottom line. Different wording and angle from the narrative's Visual section — a summary, never a repeat." },
+          musicAnalysis: { type: Type.STRING, description: "1-2 sentence distilled verdict for Music (Brass/MA/Percussion): the one takeaway that matters most, led with the bottom line. Different wording and angle from the narrative's Music section — a summary, never a repeat." },
         },
         required: ["geAnalysis", "visualAnalysis", "musicAnalysis"],
       },
