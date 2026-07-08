@@ -4,6 +4,7 @@
 // newsGeneration.js.
 
 const { logger } = require("firebase-functions/v2");
+const { cleanLocation } = require("./newsArticleShared");
 
 const CAPTIONS = {
   GE1: "General Effect 1",
@@ -166,6 +167,38 @@ function buildSeasonContext(statsData, activeCorps) {
  * Fetch show context (event name, location, actual date) for articles
  * Pulls from historical_scores and season schedule to get full context
  */
+// Normalize a show/event name for matching a scored event against a scheduled
+// competition: lowercase, collapse whitespace, trim. Also unify the brand token
+// — the schedule stores names branded "marching.art" (brandEventName swaps DCI →
+// marching.art) while the score scrape keeps the raw "DCI ..." name, so without
+// this a show like "DCI Southwestern Championship" would never match its
+// scheduled "marching.art Southwestern Championship" twin.
+function normalizeShowName(name) {
+  return String(name || "")
+    .toLowerCase()
+    .replace(/marching\.art/g, "dci")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Backfill each day-score's venue from the schedule-derived location map when the
+ * scraped score event didn't carry one. The season schedule (built from DCI event
+ * listings) is the authoritative source of locations; the nightly score scrape
+ * often stores a placeholder. Mutates and returns dayScores.
+ */
+function applyScheduleLocations(dayScores, showContext) {
+  const map = showContext?.locationByShow;
+  if (!map || !Array.isArray(dayScores)) return dayScores;
+  for (const s of dayScores) {
+    if (!s.location && s.showName) {
+      const loc = map[normalizeShowName(s.showName)];
+      if (loc) s.location = loc;
+    }
+  }
+  return dayScores;
+}
+
 async function fetchShowContext(db, seasonId, historicalData, reportDay) {
   try {
     // Collect ALL shows from this day for comprehensive coverage
@@ -183,7 +216,7 @@ async function fetchShowContext(db, seasonId, historicalData, reportDay) {
       const dayEvents = yearEvents.filter(e => e.offSeasonDay === reportDay);
       for (const dayEvent of dayEvents) {
         const eventName = dayEvent.eventName;
-        const eventLocation = dayEvent.location;
+        const eventLocation = cleanLocation(dayEvent.location);
         if (eventName && !seenShowNames.has(eventName)) {
           seenShowNames.add(eventName);
           allShows.push({
@@ -201,32 +234,55 @@ async function fetchShowContext(db, seasonId, historicalData, reportDay) {
       }
     }
 
-    // 2. Try to get from season schedule if not found or to add more shows
+    // 2. The authoritative source of venues is the season schedule
+    // (schedules/{seasonId}.competitions[]) — it's built from scraped DCI event
+    // listings that DO carry real locations, unlike the nightly score scrape,
+    // which frequently stores "Unknown Location". Read it, key by day, and build
+    // a show-name → location map used to backfill venues the scores lack.
+    // (The previous seasons/{seasonId}/schedule/day_N path is never written, so
+    // this lookup used to silently miss and every venue fell back to the score
+    // scrape's placeholder.)
+    const locationByShow = new Map();
     try {
-      const scheduleDoc = await db.doc(`seasons/${seasonId}/schedule/day_${reportDay}`).get();
+      const scheduleDoc = await db.doc(`schedules/${seasonId}`).get();
       if (scheduleDoc.exists) {
-        const scheduleData = scheduleDoc.data();
-        const shows = scheduleData.shows || [];
-        for (const show of shows) {
-          const scheduleName = show.eventName || show.name;
-          if (scheduleName && !seenShowNames.has(scheduleName)) {
+        const competitions = scheduleDoc.data().competitions || [];
+        const dayComps = competitions.filter(c => c.day === reportDay);
+        for (const comp of dayComps) {
+          const scheduleName = comp.name || comp.eventName;
+          if (!scheduleName) continue;
+          const loc = cleanLocation(comp.location);
+          if (loc) {
+            const norm = normalizeShowName(scheduleName);
+            if (!locationByShow.has(norm)) locationByShow.set(norm, loc);
+          }
+          if (!seenShowNames.has(scheduleName)) {
             seenShowNames.add(scheduleName);
-            allShows.push({
-              name: scheduleName,
-              location: show.location,
-              date: show.date,
-            });
+            allShows.push({ name: scheduleName, location: loc, date: comp.date });
           }
         }
-        // Use first show for primary context if not already set
-        if (!showName && shows.length > 0) {
-          showName = shows[0].eventName || shows[0].name;
-          location = shows[0].location;
-          eventDate = shows[0].date;
+        // Use the first scheduled show for primary context if the scores gave none.
+        if (!showName && dayComps.length > 0) {
+          showName = dayComps[0].name || dayComps[0].eventName;
+          location = cleanLocation(dayComps[0].location);
+          eventDate = dayComps[0].date;
         }
       }
     } catch (scheduleError) {
       logger.warn("Could not fetch schedule:", scheduleError.message);
+    }
+
+    // Backfill venues the score scrape lacked from the schedule map: the primary
+    // show's location, and any allShows entry still missing one. Matched by
+    // normalized event name so a scored show lines up with its scheduled twin.
+    if (!location && showName) {
+      location = locationByShow.get(normalizeShowName(showName)) || null;
+    }
+    for (const s of allShows) {
+      if (!s.location && s.name) {
+        const loc = locationByShow.get(normalizeShowName(s.name));
+        if (loc) s.location = loc;
+      }
     }
 
     // 3. Calculate actual date from season start + day number
@@ -254,22 +310,28 @@ async function fetchShowContext(db, seasonId, historicalData, reportDay) {
 
     return {
       showName: showName || `Day ${reportDay} Competition`,
-      location: location || "Competition Venue",
+      // null (not a placeholder venue) when no real location is known, so the
+      // article and header omit the venue instead of printing "Unknown Location".
+      location: location || null,
       date: formattedDate,
       rawDate: actualDate || (eventDate ? new Date(eventDate) : null),
       reportDay,
       // Include all shows so articles can reference multiple competitions
-      allShows: allShows.length > 0 ? allShows : [{ name: showName || `Day ${reportDay} Competition`, location: location || "Competition Venue" }],
+      allShows: allShows.length > 0 ? allShows : [{ name: showName || `Day ${reportDay} Competition`, location: location || null }],
+      // Schedule-derived show-name → venue map (normalized names) so the article
+      // builders can backfill per-show locations the score scrape didn't carry.
+      locationByShow: Object.fromEntries(locationByShow),
     };
   } catch (error) {
     logger.error("Error fetching show context:", error);
     return {
       showName: `Day ${reportDay} Competition`,
-      location: "Competition Venue",
+      location: null,
       date: `Day ${reportDay}`,
       rawDate: null,
       reportDay,
-      allShows: [{ name: `Day ${reportDay} Competition`, location: "Competition Venue" }],
+      allShows: [{ name: `Day ${reportDay} Competition`, location: null }],
+      locationByShow: {},
     };
   }
 }
@@ -325,7 +387,7 @@ function getScoresForDay(historicalData, targetDay, activeCorps) {
       total,
       subtotals: calculateCaptionSubtotals(corpsScore.captions),
       showName: matchingEvent.eventName || matchingEvent.name || null,
-      location: matchingEvent.location || null,
+      location: cleanLocation(matchingEvent.location),
     });
   }
 
@@ -367,7 +429,7 @@ function calculateTrendData(historicalData, reportDay, activeCorps) {
               subtotals,
               // Include show context for journey narrative
               showName: matchingEvent.eventName || matchingEvent.name || null,
-              location: matchingEvent.location || null,
+              location: cleanLocation(matchingEvent.location),
             });
           }
         }
@@ -439,6 +501,25 @@ function calculateTrendData(historicalData, reportDay, activeCorps) {
       const seasonOpener = seasonTotals.length ? seasonTotals[0].total : null;
       const seasonImprovement = seasonTotals.length >= 2 ? seasonTotals[seasonTotals.length - 1].total - seasonTotals[0].total : 0;
       const seasonShows = seasonTotals.length;
+
+      // Trailing 10-day form: how fast the corps' total is climbing per day over
+      // the last 10 competition days (reportDay-9..reportDay). Distinct from the
+      // 7-day form window and the full-season arc — the Fantasy Market Report
+      // (Article 4) leans on this "average daily gain" to gauge which corps are
+      // appreciating fastest before recommending buys and sells. Points-per-day,
+      // measured over the actual span between the first and last show in the
+      // window so a corps that competes every other day isn't penalized.
+      const tenDayScores = seasonTotals.filter(s => s.day >= reportDay - 9);
+      const tenDayShows = tenDayScores.length;
+      let tenDayTotalGain = 0;
+      let tenDayAvgGain = 0;
+      if (tenDayScores.length >= 2) {
+        const firstTen = tenDayScores[0];
+        const lastTen = tenDayScores[tenDayScores.length - 1];
+        tenDayTotalGain = lastTen.total - firstTen.total;
+        const daySpan = lastTen.day - firstTen.day;
+        tenDayAvgGain = daySpan > 0 ? tenDayTotalGain / daySpan : 0;
+      }
 
       // "At season best/worst" now means the TRUE season high/low, so narrative
       // phrases like "hitting their season high" are literally accurate.
@@ -513,6 +594,10 @@ function calculateTrendData(historicalData, reportDay, activeCorps) {
         seasonOpener,
         seasonShows,
         seasonImprovement,
+        // Trailing 10-day average daily gain (points/day) + supporting window size
+        tenDayAvgGain,
+        tenDayTotalGain,
+        tenDayShows,
         totalImprovement: sortedScores.length >= 2 ? sortedScores[sortedScores.length - 1].total - sortedScores[0].total : 0,
       };
     }
@@ -570,6 +655,7 @@ module.exports = {
   calculateTotal,
   calculateCaptionSubtotals,
   getScoresForDay,
+  applyScheduleLocations,
   calculateTrendData,
   identifyCaptionLeaders,
 };

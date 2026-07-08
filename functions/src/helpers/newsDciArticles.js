@@ -157,6 +157,7 @@ ${isLiveSeason
   ? `- This is the ${liveSeasonYear} live DCI season. Write about THIS season's competitions and scores as they happen now — do NOT reference a prior year's program material or tag corps with a past season year.`
   : `- Source-year disclosure: on each corps' FIRST mention in the narrative, include their source-year in parentheses — e.g., "Blue Stars (2019)" — so fantasy readers know which season's program material the corps is performing. Every corps in the DATA block has a listed sourceYear; use it. After the first mention, the year can be omitted.`}
 - If a data point you want to reference isn't in the DATA block, leave it out. Do not fill gaps with plausible-sounding invention.
+- VENUE: a show's city or venue is available only when the DATA block prints one next to the show name. When a show has no location listed, refer to it by name alone ("at Drums Across the Smokies") — never write "an unknown location", "an undisclosed venue", "Competition Venue", "somewhere", or invent a city or state. A dateline (e.g., "INDIANAPOLIS —") is allowed only if that city is actually in the data. Simply omitting the venue reads as professional; naming a placeholder reads as broken.
 
 ${NEWS_INTEGRITY_RULES}
 
@@ -168,6 +169,12 @@ Study how DCI.org actually writes:
 - "Less than half a point separated The Cavaliers, Blue Stars, and Troopers — three corps who have been neck-and-neck throughout the season."
 
 Lead with specific facts, stay concise, let the numbers carry the weight. No hype words. No exclamation points. The drama is in the data.
+
+Write it like a reporter with a real story, not a results database narrating itself. The most common failure mode is recitation — marching corps-by-corps and reading out each one's total, then GE, then Visual, then Music, in the same flat cadence. Do NOT do that. Instead:
+- Find tonight's through-line first (the tightest race, a lead that flipped, a caption that decided the night, a corps surging from nowhere) and build the piece around it.
+- Cite the numbers that MEAN something — a decisive caption gap, a margin that shrank, a season high — and let the rest of the field be summarized rather than enumerated. A corps can be covered in a sharp clause; not every corps needs its full caption line.
+- Vary sentence rhythm and connect results to each other ("what cost Carolina Crown the lead was Visual, not GE") rather than listing them side by side.
+- Prefer the active, specific verb ("edged", "shaved the gap to", "held off") over flat linking verbs ("posted", "achieved", "resulted in a score of").
 
 Score language should be precise: "edging past by 0.087" / "three-tenths back" / "a scant 0.2-point gap" / "swept every caption except Color Guard"
 Caption terminology: GE (GE1 Music Effect + GE2 Visual Effect), Visual (VP, VA, CG), Music (B, MA, P)
@@ -627,7 +634,7 @@ ${isLiveSeason
 
 ${NEWS_INTEGRITY_RULES}
 
-VOICE: Authoritative but readable. Not dumbed down, not written for judges. A knowledgeable fan should come away understanding the caption landscape better than they did before.
+VOICE & CRAFT: Write like a working journalist, not a stat sheet. The best drum corps writing finds the one tension that defines the night and pulls the reader through it — a race that has no business being this close, a caption a corps has quietly rebuilt over the week, a number that argues with the eye test. Open with a real lede that frames that tension; do not throat-clear with "here are tonight's caption rankings." Spend adjectives sparingly and let the numbers carry the drama — your job is to explain what they MEAN, not to re-list them. Prize the specific over the generic (name the sub-caption, the exact gap, the corps that moved), vary your sentence rhythm so short lines can land after longer ones, and keep one through-line running from the lede to the close. Authoritative but readable: a knowledgeable fan should finish both understanding the caption landscape better than before AND having enjoyed the read. Analyze; never merely recite.
 
 BANNED PHRASES: dominant, commanding, stunning, thrilling, heating up, captivating, testament, battle for supremacy, stakes are high, every point matters, absolutely crucial, setting the stage, poised to, poised for success, will have a significant advantage, buy, sell, hold, trade, pick up, drop, fade, target, stash, fantasy directors should, for fantasy purposes, in your lineup
 
@@ -691,7 +698,8 @@ ARTICLE REQUIREMENTS
   Weight the sections by where the real story is tonight. If the Visual race is tight and GE is decided, Visual gets more ink.
   Do NOT end with buy/hold/sell, fantasy picks, or "who to target" — the Fantasy Market Report handles that. Your ending belongs to the closing angle above.
 - Structure the piece with short bolded lead-ins in Markdown (e.g., **General Effect.**, **Visual.**, **Music.**, **The takeaway.**) so each caption family is a scannable section — 2-4 words each; they render as subheads.
-- Also fill the insights field: 2-4 scannable caption takeaways, each tied to a specific gap, leader, or trend from the data. Descriptive only — no picks.`;
+- Fill the captionBreakdown field (geAnalysis / visualAnalysis / musicAnalysis — the "Caption Analysis Summary" cards). This is a SUMMARY, not a second copy of the narrative. For each family, distill the ONE thing a reader should walk away with — the defining number, the race that actually matters, or the shift worth watching next — in 1-2 tight sentences that lead with the verdict. Use different wording and a different angle than the narrative's corresponding section; never reuse its sentences or restate its full argument. If the narrative already made the obvious point at length, compress it to its essence or surface the sharper secondary insight the long form had no room to dwell on. Descriptive only — no picks.
+- Also fill the insights field: 2-4 scannable caption takeaways, each tied to a specific gap, leader, or trend from the data. These are cross-cutting one-liners (a single stat or race per item) and should not duplicate the captionBreakdown summaries. Descriptive only — no picks.`;
 
   const schema = {
     type: Type.OBJECT,
@@ -701,10 +709,11 @@ ARTICLE REQUIREMENTS
       narrative: { type: Type.STRING, description: "900-1200 word caption analysis covering GE, Visual, and Music: what the judges rewarded, where the tightest races are, and how the week's trajectory reshapes each corps' caption profile. Every corps, score, and trend must come from the data block. No fantasy buy/hold/sell picks — that is the Fantasy Market Report's job. Never uses 'dominant', 'heating up', 'captivating'." },
       captionBreakdown: {
         type: Type.OBJECT,
+        description: "The 'Caption Analysis Summary' cards — a distilled verdict per family, NOT a rehash of the narrative. Each field is 1-2 tight sentences leading with the single defining takeaway, in different words from the narrative.",
         properties: {
-          geAnalysis: { type: Type.STRING, description: "General Effect analysis" },
-          visualAnalysis: { type: Type.STRING, description: "Visual caption analysis" },
-          musicAnalysis: { type: Type.STRING, description: "Music caption analysis" },
+          geAnalysis: { type: Type.STRING, description: "1-2 sentence distilled verdict for General Effect: the single defining number or race, led with the bottom line. Different wording and angle from the narrative's GE section — a summary, never a repeat." },
+          visualAnalysis: { type: Type.STRING, description: "1-2 sentence distilled verdict for Visual (VP/VA/CG): the one takeaway that matters most, led with the bottom line. Different wording and angle from the narrative's Visual section — a summary, never a repeat." },
+          musicAnalysis: { type: Type.STRING, description: "1-2 sentence distilled verdict for Music (Brass/MA/Percussion): the one takeaway that matters most, led with the bottom line. Different wording and angle from the narrative's Music section — a summary, never a repeat." },
         },
         required: ["geAnalysis", "visualAnalysis", "musicAnalysis"],
       },

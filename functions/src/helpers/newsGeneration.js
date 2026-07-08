@@ -53,6 +53,7 @@ const {
   calculateTotal,
   calculateCaptionSubtotals,
   getScoresForDay,
+  applyScheduleLocations,
   calculateTrendData,
   identifyCaptionLeaders,
 } = require("./newsData");
@@ -135,10 +136,14 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay, onArti
 
     // Fetch show context (event name, location, date) - now includes all shows
     const showContext = await fetchShowContext(db, seasonId, historicalData, reportDay);
-    logger.info(`Show context for Day ${reportDay}: ${showContext.showName} at ${showContext.location} on ${showContext.date}${showContext.allShows?.length > 1 ? ` (${showContext.allShows.length} shows total)` : ''}`);
+    logger.info(`Show context for Day ${reportDay}: ${showContext.showName}${showContext.location ? ` at ${showContext.location}` : ''} on ${showContext.date}${showContext.allShows?.length > 1 ? ` (${showContext.allShows.length} shows total)` : ''}`);
 
     // Process data
     const dayScores = getScoresForDay(historicalData, reportDay, activeCorps);
+    // Backfill each corps' show venue from the schedule (the authoritative source
+    // of locations) when the score scrape didn't carry one, so every article —
+    // not just the header — reports real venues instead of omitting them.
+    applyScheduleLocations(dayScores, showContext);
     const hasDciScores = Array.isArray(dayScores) && dayScores.length > 0;
 
     // Fantasy results are produced independently of DCI scraping: the nightly
@@ -259,7 +264,7 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay, onArti
 
       // Article 4: FANTASY MARKET REPORT - Owns buy/hold/sell picks for the day (descriptive caption analysis already done in Article 3).
       await persist(await generateFantasyRecapArticle({
-        reportDay, dayScores, trendData, seasonContext, showContext, competitionContext, db, ledger, brief, isLiveSeason
+        reportDay, dayScores, trendData, seasonContext, activeCorps, showContext, competitionContext, db, ledger, brief, isLiveSeason
       }));
     }
 

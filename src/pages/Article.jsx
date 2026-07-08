@@ -30,7 +30,7 @@ import {
 import { getArticleEngagement } from '../api/functions';
 import { useSeasonStore } from '../store/seasonStore';
 import { useBodyScroll } from '../hooks/useBodyScroll';
-import { getCategoryConfig, formatArticleDate } from '../components/Landing/newsFeedUtils';
+import { getCategoryConfig, formatArticleDate, cleanLocation } from '../components/Landing/newsFeedUtils';
 import ArticleDataSections from '../components/Articles/ArticleDataSections';
 import { resolveArticleById } from '../api/articles';
 import { useTickerData } from '../hooks/useTickerData';
@@ -325,10 +325,10 @@ const Article = () => {
                         <span>{article.metadata.eventName}</span>
                       </>
                     )}
-                    {article.metadata?.location && (
+                    {cleanLocation(article.metadata?.location) && (
                       <>
                         <span className="text-gray-600">•</span>
-                        <span>{article.metadata.location}</span>
+                        <span>{cleanLocation(article.metadata.location)}</span>
                       </>
                     )}
                   </div>

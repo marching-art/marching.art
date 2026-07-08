@@ -29,6 +29,38 @@ function formatFantasyEventName(name) {
   return name.replace(/\bDCI\b/g, "marching.art");
 }
 
+// Placeholder venue strings the scraper/importer write when they can't extract a
+// real location (see scraping.js / scoreProcessing.js / pressboxImporter). They
+// are truthy, so without normalizing them they slip through every `location || …`
+// fallback and end up printed verbatim ("held at an Unknown Location"). Treat
+// them as "no known location" so the articles omit the venue gracefully instead
+// of surfacing a placeholder.
+const PLACEHOLDER_LOCATIONS = new Set([
+  "unknown location",
+  "unknown",
+  "competition venue",
+  "location tbd",
+  "venue tbd",
+  "tbd",
+  "tba",
+  "n/a",
+  "na",
+  "-",
+]);
+
+/**
+ * Normalize a location string: returns a trimmed real location, or null when the
+ * value is empty or one of the known scraper placeholders. Use this everywhere a
+ * venue enters the article/metadata pipeline so "Unknown Location" never reaches
+ * a reader.
+ */
+function cleanLocation(loc) {
+  if (loc == null || typeof loc !== "string") return null;
+  const trimmed = loc.trim();
+  if (!trimmed) return null;
+  return PLACEHOLDER_LOCATIONS.has(trimmed.toLowerCase()) ? null : trimmed;
+}
+
 // =============================================================================
 // INTEGRITY RULES
 // -----------------------------------------------------------------------------
@@ -199,6 +231,7 @@ module.exports = {
   ARTICLE_TYPES,
   NEWS_INTEGRITY_RULES,
   formatFantasyEventName,
+  cleanLocation,
   createCoverageLedger,
   formatNegativeSpace,
   processGeneratedImage,
