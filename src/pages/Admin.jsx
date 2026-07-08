@@ -20,7 +20,11 @@ import {
 } from 'lucide-react';
 import { adminHelpers } from '../api';
 import { getSeasonSettings, getAdminOverviewStats } from '../api/admin';
-import { discoverAndQueueUrls, discoverAndQueueEventUrls } from '../api/functions';
+import {
+  discoverAndQueueUrls,
+  discoverAndQueueEventUrls,
+  buildLearnedSchedules,
+} from '../api/functions';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
@@ -139,6 +143,31 @@ const SeasonOpsTab = ({ callAdminFunction }) => {
 const DeepScrapeCard = () => {
   const [loading, setLoading] = useState(false);
   const [scheduleLoading, setScheduleLoading] = useState(false);
+  const [learnedLoading, setLearnedLoading] = useState(false);
+
+  const handleBuildLearnedSchedules = async () => {
+    if (
+      !window.confirm(
+        'Build LEARNED schedules for all archived events?\n\n' +
+          "Synthesizes a DCI-style running order + performance times for every archived " +
+          'scored event (from each event\'s real corps + scores) and writes them into ' +
+          'historical_schedules. Real scraped running orders (2019+) are always kept — ' +
+          'learned ones only fill years/events that have none.\n\n' +
+          'Idempotent; safe to re-run (a rebuild adopts the latest model).'
+      )
+    )
+      return;
+    setLearnedLoading(true);
+    try {
+      const result = await buildLearnedSchedules();
+      const data = result.data || {};
+      toast.success(data.message || 'Learned schedules built.');
+    } catch (error) {
+      toast.error(error.message || 'Failed to build learned schedules');
+    } finally {
+      setLearnedLoading(false);
+    }
+  };
 
   const handleDeepScrapeSchedules = async () => {
     if (
@@ -264,6 +293,26 @@ const DeepScrapeCard = () => {
           )}
           {scheduleLoading ? 'Starting…' : 'Start Schedule Scrape (All Years)'}
         </button>
+        <div className="pt-2 border-t border-[#333]">
+          <p className="text-[11px] text-gray-500 leading-relaxed mb-2">
+            After the scrape, synthesize running orders for the years dci.org never published
+            (pre-2019) from each event's real corps + scores. Writes{' '}
+            <span className="text-gray-300">learned</span> entries into historical_schedules;{' '}
+            real scraped orders are always kept.
+          </p>
+          <button
+            onClick={handleBuildLearnedSchedules}
+            disabled={learnedLoading}
+            className="flex items-center gap-1.5 h-9 px-3 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] border border-[#0057B8]/30 hover:bg-[#0057B8] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {learnedLoading ? (
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Calendar className="w-3.5 h-3.5" />
+            )}
+            {learnedLoading ? 'Building…' : 'Build Learned Schedules (All Years)'}
+          </button>
+        </div>
       </div>
     </div>
     </>
