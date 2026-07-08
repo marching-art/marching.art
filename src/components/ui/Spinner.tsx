@@ -1,6 +1,5 @@
 import React from 'react';
 import { m } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
 import BrandLogo from '../BrandLogo';
 
 // =============================================================================
@@ -27,7 +26,7 @@ const sizeStyles: Record<SpinnerSize, string> = {
 
 const variantStyles: Record<SpinnerVariant, string> = {
   default: 'text-gray-500',
-  gold: 'text-[#0057B8]',
+  gold: 'text-[#eab308]',
   white: 'text-white',
 };
 
@@ -38,9 +37,12 @@ export const Spinner: React.FC<SpinnerProps> = ({
   className = '',
 }) => {
   return (
-    <div className={`inline-flex items-center gap-2 ${className}`} role="status">
-      <Loader2 className={`animate-spin ${sizeStyles[size]} ${variantStyles[variant]}`} />
-      {label && <span className="text-sm text-gray-400">{label}</span>}
+    <div
+      className={`inline-flex items-center justify-center ${className}`}
+      role="status"
+      aria-label={label || 'Loading...'}
+    >
+      <BrandLogo className={`animate-pulse ${sizeStyles[size]}`} color={variantStyles[variant]} />
       <span className="sr-only">{label || 'Loading...'}</span>
     </div>
   );
