@@ -1,0 +1,97 @@
+{
+  "2000": {
+    "snapshot": false,
+    "events": 0,
+    "titled": 0
+  },
+  "2001": {
+    "snapshot": true,
+    "era": "showmonth",
+    "pages": 3,
+    "events": 82,
+    "titled": 82,
+    "ignored": 0
+  },
+  "2002": {
+    "snapshot": true,
+    "era": "showmonth",
+    "pages": 1,
+    "events": 25,
+    "titled": 25,
+    "ignored": 0
+  },
+  "2003": {
+    "snapshot": false,
+    "events": 0,
+    "titled": 0
+  },
+  "2004": {
+    "snapshot": true,
+    "era": "cfm",
+    "pages": 1,
+    "events": 125,
+    "titled": 116,
+    "ignored": 0
+  },
+  "2005": {
+    "snapshot": true,
+    "era": "cfm",
+    "pages": 1,
+    "events": 139,
+    "titled": 133,
+    "ignored": 0
+  },
+  "2006": {
+    "snapshot": true,
+    "era": "cfm",
+    "pages": 1,
+    "events": 138,
+    "titled": 135,
+    "ignored": 0
+  },
+  "2007": {
+    "snapshot": true,
+    "era": "cfm",
+    "pages": 1,
+    "events": 132,
+    "titled": 130,
+    "ignored": 0
+  },
+  "2008": {
+    "snapshot": true,
+    "era": "cfm",
+    "pages": 1,
+    "events": 111,
+    "titled": 110,
+    "ignored": 0
+  },
+  "2009": {
+    "snapshot": false,
+    "events": 0,
+    "titled": 0
+  },
+  "2010": {
+    "snapshot": true,
+    "era": "cfm",
+    "pages": 1,
+    "events": 112,
+    "titled": 111,
+    "ignored": 0
+  },
+  "2011": {
+    "snapshot": true,
+    "era": "cfm",
+    "pages": 1,
+    "events": 111,
+    "titled": 111,
+    "ignored": 0
+  },
+  "2012": {
+    "snapshot": true,
+    "era": "cfm",
+    "pages": 1,
+    "events": 106,
+    "titled": 105,
+    "ignored": 0
+  }
+}

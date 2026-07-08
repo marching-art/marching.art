@@ -1,7 +1,7 @@
 {
  "data": [
   {
-   "eventName": "DCI Competition - Oswego, Illinois",
+   "eventName": "Festival of Brass Drum Corps Show",
    "date": "2006-06-16T00:00:00.000Z",
    "location": "Oswego, Illinois",
    "offSeasonDay": null,
@@ -66,7 +66,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Coon Rapids, Minnesota",
+   "eventName": "Drums Along the Rapids",
    "date": "2006-06-17T00:00:00.000Z",
    "location": "Coon Rapids, Minnesota",
    "offSeasonDay": null,
@@ -131,7 +131,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Hayward, California",
+   "eventName": "Pacific Procession",
    "date": "2006-06-17T00:00:00.000Z",
    "location": "Hayward, California",
    "offSeasonDay": null,
@@ -238,7 +238,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Toledo, Ohio",
+   "eventName": "GLASSMEN All-Star Review",
    "date": "2006-06-17T00:00:00.000Z",
    "location": "Toledo, Ohio",
    "offSeasonDay": null,
@@ -317,7 +317,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Menomonie, Wisconsin",
+   "eventName": "Drums Along the Red Cedar",
    "date": "2006-06-18T00:00:00.000Z",
    "location": "Menomonie, Wisconsin",
    "offSeasonDay": null,
@@ -489,7 +489,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Modesto, California",
+   "eventName": "Kaleidoscope Klassic",
    "date": "2006-06-18T00:00:00.000Z",
    "location": "Modesto, California",
    "offSeasonDay": null,
@@ -596,7 +596,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Ankeny, Iowa",
+   "eventName": "Celebration In Brass",
    "date": "2006-06-20T00:00:00.000Z",
    "location": "Ankeny, Iowa",
    "offSeasonDay": null,
@@ -689,7 +689,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Bakersfield, California",
+   "eventName": "Bakersfield Sounds of Summer",
    "date": "2006-06-20T00:00:00.000Z",
    "location": "Bakersfield, California",
    "offSeasonDay": null,
@@ -782,7 +782,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Omaha, Nebraska",
+   "eventName": "Omaha SUMMER MUSIC GAMES",
    "date": "2006-06-21T00:00:00.000Z",
    "location": "Omaha, Nebraska",
    "offSeasonDay": null,
@@ -875,7 +875,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Mesa, Arizona",
+   "eventName": "Southwest Corps Connection I",
    "date": "2006-06-21T00:00:00.000Z",
    "location": "Mesa, Arizona",
    "offSeasonDay": null,
@@ -1047,7 +1047,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Cedar Rapids, Iowa",
+   "eventName": "Tournament of Drums Parade of Parades",
    "date": "2006-06-22T00:00:00.000Z",
    "location": "Cedar Rapids, Iowa",
    "offSeasonDay": null,
@@ -1140,7 +1140,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Powder Springs, Georgia",
+   "eventName": "The Atlanta Brass Classic",
    "date": "2006-06-23T00:00:00.000Z",
    "location": "Powder Springs, Georgia",
    "offSeasonDay": null,
@@ -1261,7 +1261,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - San Diego, California",
+   "eventName": "Esperanza Experience",
    "date": "2006-06-23T00:00:00.000Z",
    "location": "San Diego, California",
    "offSeasonDay": null,
@@ -1410,7 +1410,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Columbia, Missouri",
+   "eventName": "DCI Columbia",
    "date": "2006-06-24T00:00:00.000Z",
    "location": "Columbia, Missouri",
    "offSeasonDay": null,
@@ -1517,7 +1517,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Columbia, South Carolina",
+   "eventName": "DCI Columbia",
    "date": "2006-06-24T00:00:00.000Z",
    "location": "Columbia, South Carolina",
    "offSeasonDay": null,
@@ -1638,7 +1638,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Walnut, California",
+   "eventName": "Corps at the Crest I",
    "date": "2006-06-24T00:00:00.000Z",
    "location": "Walnut, California",
    "offSeasonDay": null,
@@ -1801,7 +1801,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Brockton, Massachusetts",
+   "eventName": "Sunday Night Lights",
    "date": "2006-06-25T00:00:00.000Z",
    "location": "Brockton, Massachusetts",
    "offSeasonDay": 1,
@@ -1894,7 +1894,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Riverside, California",
+   "eventName": "Western Corps Connection I",
    "date": "2006-06-25T00:00:00.000Z",
    "location": "Riverside, California",
    "offSeasonDay": 1,
@@ -2057,7 +2057,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Lexington, Kentucky",
+   "eventName": "Drums Across the Bluegrass",
    "date": "2006-06-25T00:00:00.000Z",
    "location": "Lexington, Kentucky",
    "offSeasonDay": 1,
@@ -2164,7 +2164,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Port Huron, Michigan",
+   "eventName": "Blue Water Brass Summer Music Games",
    "date": "2006-06-27T00:00:00.000Z",
    "location": "Port Huron, Michigan",
    "offSeasonDay": 3,
@@ -2229,7 +2229,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Evansville, Indiana",
+   "eventName": "Drums on the Ohio",
    "date": "2006-06-27T00:00:00.000Z",
    "location": "Evansville, Indiana",
    "offSeasonDay": 3,
@@ -2322,7 +2322,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Belding, Michigan",
+   "eventName": "Silk City Rhythms",
    "date": "2006-06-28T00:00:00.000Z",
    "location": "Belding, Michigan",
    "offSeasonDay": 4,
@@ -2415,7 +2415,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Huntington, Virginia",
+   "eventName": "Drums Across the Tri-State",
    "date": "2006-06-28T00:00:00.000Z",
    "location": "Huntington, Virginia",
    "offSeasonDay": 4,
@@ -2508,7 +2508,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Newbury Park, California",
+   "eventName": "Corps at the Crest II",
    "date": "2006-06-28T00:00:00.000Z",
    "location": "Newbury Park, California",
    "offSeasonDay": 4,
@@ -2629,7 +2629,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Westminster, Maryland",
+   "eventName": "MUSIC IN MOTION - MARYLAND",
    "date": "2006-06-30T00:00:00.000Z",
    "location": "Westminster, Maryland",
    "offSeasonDay": 6,
@@ -2857,7 +2857,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Pleasant Hill, California",
+   "eventName": "Precision West",
    "date": "2006-06-30T00:00:00.000Z",
    "location": "Pleasant Hill, California",
    "offSeasonDay": 6,
@@ -3034,7 +3034,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Allentown, Pennsylvania",
+   "eventName": "MUSIC IS COOL",
    "date": "2006-07-01T00:00:00.000Z",
    "location": "Allentown, Pennsylvania",
    "offSeasonDay": 7,
@@ -3155,7 +3155,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Michigan City, Indiana",
+   "eventName": "Pageant of Drums",
    "date": "2006-07-01T00:00:00.000Z",
    "location": "Michigan City, Indiana",
    "offSeasonDay": 7,
@@ -3276,7 +3276,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Stockton, California",
+   "eventName": "27th Annual Moonlight Classic",
    "date": "2006-07-01T00:00:00.000Z",
    "location": "Stockton, California",
    "offSeasonDay": 7,
@@ -3453,7 +3453,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Beverly, Massachusetts",
+   "eventName": "Beanpot Invitational",
    "date": "2006-07-02T00:00:00.000Z",
    "location": "Beverly, Massachusetts",
    "offSeasonDay": 8,
@@ -3574,7 +3574,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Madison, Wisconsin",
+   "eventName": "Drums on Parade",
    "date": "2006-07-02T00:00:00.000Z",
    "location": "Madison, Wisconsin",
    "offSeasonDay": 8,
@@ -3695,7 +3695,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Bristol, Rhode Island",
+   "eventName": "Summer Music Preview",
    "date": "2006-07-03T00:00:00.000Z",
    "location": "Bristol, Rhode Island",
    "offSeasonDay": 9,
@@ -3788,7 +3788,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Nashua, New Hampshire",
+   "eventName": "Bugler's Holiday",
    "date": "2006-07-03T00:00:00.000Z",
    "location": "Nashua, New Hampshire",
    "offSeasonDay": 9,
@@ -3881,7 +3881,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Cedarburg, Wisconsin",
+   "eventName": "Cedarburg Music Festival",
    "date": "2006-07-03T00:00:00.000Z",
    "location": "Cedarburg, Wisconsin",
    "offSeasonDay": 9,
@@ -4109,7 +4109,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - South Milwaukee, Wisconsin",
+   "eventName": "Spectacle City Drum & Bugle Corps Competition",
    "date": "2006-07-05T00:00:00.000Z",
    "location": "South Milwaukee, Wisconsin",
    "offSeasonDay": 11,
@@ -4202,7 +4202,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Salem, Oregon",
+   "eventName": "Drums of Fire",
    "date": "2006-07-05T00:00:00.000Z",
    "location": "Salem, Oregon",
    "offSeasonDay": 11,
@@ -4281,7 +4281,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Elizabeth, Pennsylvania",
+   "eventName": "Music on the Mon",
    "date": "2006-07-07T00:00:00.000Z",
    "location": "Elizabeth, Pennsylvania",
    "offSeasonDay": 13,
@@ -4402,7 +4402,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Alton, Illinois",
+   "eventName": "Alton Drum and Brass Review",
    "date": "2006-07-07T00:00:00.000Z",
    "location": "Alton, Illinois",
    "offSeasonDay": 13,
@@ -4481,7 +4481,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Dubuque, Iowa",
+   "eventName": "Music on the March",
    "date": "2006-07-07T00:00:00.000Z",
    "location": "Dubuque, Iowa",
    "offSeasonDay": 13,
@@ -4588,7 +4588,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Hillsboro, Oregon",
+   "eventName": "Music in Motion",
    "date": "2006-07-07T00:00:00.000Z",
    "location": "Hillsboro, Oregon",
    "offSeasonDay": 13,
@@ -4667,7 +4667,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Springfield, Massachusetts",
+   "eventName": "Youth on Parade",
    "date": "2006-07-08T00:00:00.000Z",
    "location": "Springfield, Massachusetts",
    "offSeasonDay": 14,
@@ -5128,7 +5128,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Newbury Park, California",
+   "eventName": "Drums Along the Pacific",
    "date": "2006-07-08T00:00:00.000Z",
    "location": "Newbury Park, California",
    "offSeasonDay": 14,
@@ -5291,7 +5291,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Seattle, Washington",
+   "eventName": "Seattle SUMMER MUSIC GAMES",
    "date": "2006-07-08T00:00:00.000Z",
    "location": "Seattle, Washington",
    "offSeasonDay": 14,
@@ -5370,7 +5370,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Pittsfield, Massachusetts",
+   "eventName": "Precision & Pageantry",
    "date": "2006-07-09T00:00:00.000Z",
    "location": "Pittsfield, Massachusetts",
    "offSeasonDay": 15,
@@ -5491,7 +5491,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Rockford, Illinois",
+   "eventName": "Phantom Regiment's Show of Shows presented by the Rockford Register Star",
    "date": "2006-07-09T00:00:00.000Z",
    "location": "Rockford, Illinois",
    "offSeasonDay": 15,
@@ -5775,7 +5775,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Spokane, Washington",
+   "eventName": "SUMMER THUNDER",
    "date": "2006-07-09T00:00:00.000Z",
    "location": "Spokane, Washington",
    "offSeasonDay": 15,
@@ -5854,7 +5854,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Erie, Pennsylvania",
+   "eventName": "Lake Erie Fanfare",
    "date": "2006-07-10T00:00:00.000Z",
    "location": "Erie, Pennsylvania",
    "offSeasonDay": 16,
@@ -5961,7 +5961,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Fairfield, Ohio",
+   "eventName": "SUMMER MUSIC GAMES in Cincinnati",
    "date": "2006-07-10T00:00:00.000Z",
    "location": "Fairfield, Ohio",
    "offSeasonDay": 16,
@@ -6054,7 +6054,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Stillwater, Minnesota",
+   "eventName": "Drum Beauty",
    "date": "2006-07-10T00:00:00.000Z",
    "location": "Stillwater, Minnesota",
    "offSeasonDay": 16,
@@ -6105,7 +6105,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Hornell, New York",
+   "eventName": "Music Under the Stars",
    "date": "2006-07-11T00:00:00.000Z",
    "location": "Hornell, New York",
    "offSeasonDay": 17,
@@ -6212,7 +6212,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Mankato, Minnesota",
+   "eventName": "The Thunder of Drums",
    "date": "2006-07-11T00:00:00.000Z",
    "location": "Mankato, Minnesota",
    "offSeasonDay": 17,
@@ -6342,7 +6342,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Dublin, Ohio",
+   "eventName": "Emerald City SUMMER MUSIC GAMES 2006",
    "date": "2006-07-12T00:00:00.000Z",
    "location": "Dublin, Ohio",
    "offSeasonDay": 18,
@@ -6435,7 +6435,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Boise, Idaho",
+   "eventName": "Thunder in Boise",
    "date": "2006-07-12T00:00:00.000Z",
    "location": "Boise, Idaho",
    "offSeasonDay": 18,
@@ -6514,7 +6514,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Decatur, Indiana",
+   "eventName": "Waves of Thunder",
    "date": "2006-07-14T00:00:00.000Z",
    "location": "Decatur, Indiana",
    "offSeasonDay": 20,
@@ -6635,7 +6635,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Elk Grove, California",
+   "eventName": "West Coast Showdown",
    "date": "2006-07-14T00:00:00.000Z",
    "location": "Elk Grove, California",
    "offSeasonDay": 20,
@@ -6756,7 +6756,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Wildwood, New Jersey",
+   "eventName": "Sounds of the Surf Summer Classic",
    "date": "2006-07-15T00:00:00.000Z",
    "location": "Wildwood, New Jersey",
    "offSeasonDay": 21,
@@ -7217,7 +7217,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Sunnyvale, California",
+   "eventName": "California State Open",
    "date": "2006-07-15T00:00:00.000Z",
    "location": "Sunnyvale, California",
    "offSeasonDay": 21,
@@ -7338,7 +7338,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Centerville, Ohio",
+   "eventName": "2006 Special Edition Soaring Sounds",
    "date": "2006-07-16T00:00:00.000Z",
    "location": "Centerville, Ohio",
    "offSeasonDay": 22,
@@ -7538,7 +7538,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Great Bend, Kansas",
+   "eventName": "March of Champions",
    "date": "2006-07-17T00:00:00.000Z",
    "location": "Great Bend, Kansas",
    "offSeasonDay": 23,
@@ -7631,7 +7631,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Pittsburg, Kansas",
+   "eventName": "Brass Spectacular!",
    "date": "2006-07-18T00:00:00.000Z",
    "location": "Pittsburg, Kansas",
    "offSeasonDay": 24,
@@ -7738,7 +7738,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Tupelo, Mississippi",
+   "eventName": "Drummin' Down the Trace",
    "date": "2006-07-18T00:00:00.000Z",
    "location": "Tupelo, Mississippi",
    "offSeasonDay": 24,
@@ -7817,7 +7817,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - West Monroe, Louisiana",
+   "eventName": "The Northeast Louisiana SUMMER MUSIC GAMES",
    "date": "2006-07-19T00:00:00.000Z",
    "location": "West Monroe, Louisiana",
    "offSeasonDay": 25,
@@ -7910,7 +7910,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Broken Arrow, Oklahoma",
+   "eventName": "Drums of Summer",
    "date": "2006-07-19T00:00:00.000Z",
    "location": "Broken Arrow, Oklahoma",
    "offSeasonDay": 25,
@@ -8031,7 +8031,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Dallas, Texas",
+   "eventName": "North Texas Festival of Drums and Bugles",
    "date": "2006-07-20T00:00:00.000Z",
    "location": "Dallas, Texas",
    "offSeasonDay": 26,
@@ -8180,7 +8180,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Houston, Texas",
+   "eventName": "THE exSIGHTment OF SOUND",
    "date": "2006-07-20T00:00:00.000Z",
    "location": "Houston, Texas",
    "offSeasonDay": 26,
@@ -8860,7 +8860,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Denton, Texas",
+   "eventName": "Red River Thunder",
    "date": "2006-07-23T00:00:00.000Z",
    "location": "Denton, Texas",
    "offSeasonDay": 29,
@@ -8981,7 +8981,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Enid, Oklahoma",
+   "eventName": "The Bob Costello Festival of Drum Corps",
    "date": "2006-07-24T00:00:00.000Z",
    "location": "Enid, Oklahoma",
    "offSeasonDay": 30,
@@ -9074,7 +9074,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Midland, Texas",
+   "eventName": "THUNDER in the DESERT",
    "date": "2006-07-24T00:00:00.000Z",
    "location": "Midland, Texas",
    "offSeasonDay": 30,
@@ -9181,7 +9181,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Troy, Alabama",
+   "eventName": "Trojan SUMMER MUSIC GAMES",
    "date": "2006-07-25T00:00:00.000Z",
    "location": "Troy, Alabama",
    "offSeasonDay": 31,
@@ -9288,7 +9288,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Wichita Falls, Texas",
+   "eventName": "\"Rumble in the Falls\"",
    "date": "2006-07-25T00:00:00.000Z",
    "location": "Wichita Falls, Texas",
    "offSeasonDay": 31,
@@ -9395,7 +9395,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Wichita, Kansas",
+   "eventName": "Drums Across Kansas",
    "date": "2006-07-25T00:00:00.000Z",
    "location": "Wichita, Kansas",
    "offSeasonDay": 31,
@@ -9516,7 +9516,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Russellville, Alabama",
+   "eventName": "Alabama Battle of the Brass",
    "date": "2006-07-26T00:00:00.000Z",
    "location": "Russellville, Alabama",
    "offSeasonDay": 32,
@@ -9623,7 +9623,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Siloam Springs, Arkansas",
+   "eventName": "Northwest Arkansas SUMMER MUSIC GAMES",
    "date": "2006-07-26T00:00:00.000Z",
    "location": "Siloam Springs, Arkansas",
    "offSeasonDay": 32,
@@ -9837,7 +9837,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Modesto, California",
+   "eventName": "Sizzling Sounds of Summer",
    "date": "2006-07-26T00:00:00.000Z",
    "location": "Modesto, California",
    "offSeasonDay": 32,
@@ -10405,7 +10405,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Bridgeport, Connecticut",
+   "eventName": "Bridgeport's Summer Music Games",
    "date": "2006-07-29T00:00:00.000Z",
    "location": "Bridgeport, Connecticut",
    "offSeasonDay": 35,
@@ -10526,7 +10526,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Racine, Wisconsin",
+   "eventName": "Kiltie Klassic XIII",
    "date": "2006-07-29T00:00:00.000Z",
    "location": "Racine, Wisconsin",
    "offSeasonDay": 35,
@@ -10619,7 +10619,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Glendale, California",
+   "eventName": "Southwest Corps Connection II",
    "date": "2006-07-29T00:00:00.000Z",
    "location": "Glendale, California",
    "offSeasonDay": 35,
@@ -10726,7 +10726,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Charlotte, North Carolina",
+   "eventName": "NightBEAT",
    "date": "2006-07-30T00:00:00.000Z",
    "location": "Charlotte, North Carolina",
    "offSeasonDay": 36,
@@ -10833,7 +10833,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Massillon, Ohio",
+   "eventName": "Pro Football Hall of Fame Festival Drum Corps Competition",
    "date": "2006-07-31T00:00:00.000Z",
    "location": "Massillon, Ohio",
    "offSeasonDay": 37,
@@ -10940,7 +10940,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Pittsburgh, Pennsylvania",
+   "eventName": "Three Rivers SUMMER MUSIC GAMES",
    "date": "2006-07-31T00:00:00.000Z",
    "location": "Pittsburgh, Pennsylvania",
    "offSeasonDay": 37,
@@ -11061,7 +11061,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Salem, Virginia",
+   "eventName": "The SUMMER MUSIC GAMES of Southwest Virginia",
    "date": "2006-07-31T00:00:00.000Z",
    "location": "Salem, Virginia",
    "offSeasonDay": 37,
@@ -11168,7 +11168,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Buffalo, New York",
+   "eventName": "Finale to Drums Along the Waterfront",
    "date": "2006-08-01T00:00:00.000Z",
    "location": "Buffalo, New York",
    "offSeasonDay": 38,
@@ -11475,7 +11475,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Warrenton, Virginia",
+   "eventName": "Drum Corps in Fauquier",
    "date": "2006-08-01T00:00:00.000Z",
    "location": "Warrenton, Virginia",
    "offSeasonDay": 38,
@@ -11596,7 +11596,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Bensalem, Pennsylvania",
+   "eventName": "MUSIC IN MOTION - PENNSYLVANIA",
    "date": "2006-08-02T00:00:00.000Z",
    "location": "Bensalem, Pennsylvania",
    "offSeasonDay": 39,
@@ -11838,7 +11838,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Lawrence, Massachusetts",
+   "eventName": "East Coast Classic",
    "date": "2006-08-02T00:00:00.000Z",
    "location": "Lawrence, Massachusetts",
    "offSeasonDay": 39,
@@ -11945,7 +11945,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Van Buren, Arkansas",
+   "eventName": "Battle on the Border III",
    "date": "2006-08-02T00:00:00.000Z",
    "location": "Van Buren, Arkansas",
    "offSeasonDay": 39,
@@ -12066,7 +12066,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - East Rutherford, New Jersey",
+   "eventName": "MUSIC IN MOTION",
    "date": "2006-08-03T00:00:00.000Z",
    "location": "East Rutherford, New Jersey",
    "offSeasonDay": 40,
@@ -12173,7 +12173,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Jackson, Tennessee",
+   "eventName": "Music in Motion",
    "date": "2006-08-03T00:00:00.000Z",
    "location": "Jackson, Tennessee",
    "offSeasonDay": 40,
@@ -12280,7 +12280,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Dayton, Ohio",
+   "eventName": "Northridge Summer Classic",
    "date": "2006-08-04T00:00:00.000Z",
    "location": "Dayton, Ohio",
    "offSeasonDay": 41,
@@ -12755,7 +12755,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Dubuque, Iowa",
+   "eventName": "Music on the March II",
    "date": "2006-08-05T00:00:00.000Z",
    "location": "Dubuque, Iowa",
    "offSeasonDay": 42,
@@ -12862,7 +12862,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Racine, Wisconsin",
+   "eventName": "Music on the March",
    "date": "2006-08-05T00:00:00.000Z",
    "location": "Racine, Wisconsin",
    "offSeasonDay": 42,
@@ -13379,7 +13379,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Columbus, Ohio",
+   "eventName": "Artistry in Motion",
    "date": "2006-08-06T00:00:00.000Z",
    "location": "Columbus, Ohio",
    "offSeasonDay": 43,
@@ -13500,7 +13500,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Naperville, Illinois",
+   "eventName": "Cavalcade of Brass",
    "date": "2006-08-06T00:00:00.000Z",
    "location": "Naperville, Illinois",
    "offSeasonDay": 43,
@@ -13621,7 +13621,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - LaCrosse, Wisconsin",
+   "eventName": "River City Rhapsody",
    "date": "2006-08-06T00:00:00.000Z",
    "location": "LaCrosse, Wisconsin",
    "offSeasonDay": 43,

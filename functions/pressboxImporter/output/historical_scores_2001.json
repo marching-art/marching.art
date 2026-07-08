@@ -415,7 +415,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Buffalo, New York",
+   "eventName": "Showdown in Buffalo",
    "date": "2001-06-17T00:00:00.000Z",
    "location": "Buffalo, New York",
    "offSeasonDay": null,
@@ -810,7 +810,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Jacksonville, Alabama",
+   "eventName": "Drums Across America",
    "date": "2001-06-21T00:00:00.000Z",
    "location": "Jacksonville, Alabama",
    "offSeasonDay": null,
@@ -903,7 +903,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Clovis, California",
+   "eventName": "Buchanan SUMMER MUSIC GAMES",
    "date": "2001-06-22T00:00:00.000Z",
    "location": "Clovis, California",
    "offSeasonDay": null,
@@ -968,7 +968,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Dothan, Alabama",
+   "eventName": "Deep South SUMMER MUSIC GAMES",
    "date": "2001-06-22T00:00:00.000Z",
    "location": "Dothan, Alabama",
    "offSeasonDay": null,
@@ -1624,7 +1624,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Orlando, Florida",
+   "eventName": "DCI Orlando",
    "date": "2001-06-23T00:00:00.000Z",
    "location": "Orlando, Florida",
    "offSeasonDay": null,
@@ -2308,7 +2308,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Brunswick, Georgia",
+   "eventName": "SEA Open Drum Corps Competition",
    "date": "2001-06-25T00:00:00.000Z",
    "location": "Brunswick, Georgia",
    "offSeasonDay": 2,
@@ -2429,7 +2429,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Columbia, South Carolina",
+   "eventName": "Columbia SUMMER MUSIC GAMES",
    "date": "2001-06-26T00:00:00.000Z",
    "location": "Columbia, South Carolina",
    "offSeasonDay": 3,
@@ -2806,7 +2806,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Boise, Idaho",
+   "eventName": "Thunder in Boise",
    "date": "2001-06-28T00:00:00.000Z",
    "location": "Boise, Idaho",
    "offSeasonDay": 5,
@@ -2899,7 +2899,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Herndon, Virginia",
+   "eventName": "Capital Showcase",
    "date": "2001-06-28T00:00:00.000Z",
    "location": "Herndon, Virginia",
    "offSeasonDay": 5,
@@ -2992,7 +2992,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Cheney, Washington",
+   "eventName": "Cheney SUMMER MUSIC GAMES",
    "date": "2001-06-29T00:00:00.000Z",
    "location": "Cheney, Washington",
    "offSeasonDay": 6,
@@ -3206,7 +3206,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Philadelphia, Pennsylvania",
+   "eventName": "Music in Motion \"Mid-Atlantic Debut\"",
    "date": "2001-06-29T00:00:00.000Z",
    "location": "Philadelphia, Pennsylvania",
    "offSeasonDay": 6,
@@ -3327,7 +3327,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Clifton, New Jersey",
+   "eventName": "Music in Motion \"The Independence Celebration\"",
    "date": "2001-06-30T00:00:00.000Z",
    "location": "Clifton, New Jersey",
    "offSeasonDay": 7,
@@ -3448,7 +3448,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Seattle, Washington",
+   "eventName": "2001 Northwest Freedom Cup",
    "date": "2001-06-30T00:00:00.000Z",
    "location": "Seattle, Washington",
    "offSeasonDay": 7,
@@ -3769,7 +3769,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Bridgeport, Connecticut",
+   "eventName": "Barnum Festival",
    "date": "2001-07-01T00:00:00.000Z",
    "location": "Bridgeport, Connecticut",
    "offSeasonDay": 8,
@@ -3890,7 +3890,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Longview, Washington",
+   "eventName": "Sounds of Summer Drum Corps Show",
    "date": "2001-07-01T00:00:00.000Z",
    "location": "Longview, Washington",
    "offSeasonDay": 8,
@@ -4290,7 +4290,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Everett, Massachusetts",
+   "eventName": "Everett 4th of July Celebration",
    "date": "2001-07-02T00:00:00.000Z",
    "location": "Everett, Massachusetts",
    "offSeasonDay": 9,
@@ -4369,7 +4369,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Woodburn, Oregon",
+   "eventName": "Drums on Fire",
    "date": "2001-07-02T00:00:00.000Z",
    "location": "Woodburn, Oregon",
    "offSeasonDay": 9,
@@ -4462,7 +4462,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Bristol, Rhode, Island",
+   "eventName": "Summer Music Preview",
    "date": "2001-07-02T00:00:00.000Z",
    "location": "Bristol, Rhode, Island",
    "offSeasonDay": 9,
@@ -4569,7 +4569,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Beverly, Massachusetts",
+   "eventName": "Beanpot Invitational",
    "date": "2001-07-03T00:00:00.000Z",
    "location": "Beverly, Massachusetts",
    "offSeasonDay": 10,
@@ -4876,7 +4876,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Stockton, California",
+   "eventName": "Moonlight Classic",
    "date": "2001-07-06T00:00:00.000Z",
    "location": "Stockton, California",
    "offSeasonDay": 13,
@@ -5160,7 +5160,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Concord, California",
+   "eventName": "Precision West",
    "date": "2001-07-07T00:00:00.000Z",
    "location": "Concord, California",
    "offSeasonDay": 14,
@@ -5323,7 +5323,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Hershey, Pennsylvania",
+   "eventName": "Hershey Spectacular",
    "date": "2001-07-07T00:00:00.000Z",
    "location": "Hershey, Pennsylvania",
    "offSeasonDay": 14,
@@ -6114,7 +6114,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Burlington, Iowa",
+   "eventName": "The Sight of Music",
    "date": "2001-07-10T00:00:00.000Z",
    "location": "Burlington, Iowa",
    "offSeasonDay": 17,
@@ -6477,7 +6477,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - San Diego, California",
+   "eventName": "Esperanza Experience",
    "date": "2001-07-11T00:00:00.000Z",
    "location": "San Diego, California",
    "offSeasonDay": 18,
@@ -6598,7 +6598,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Casper, Wyoming",
+   "eventName": "Drums Along the Rockies - Casper Edition",
    "date": "2001-07-13T00:00:00.000Z",
    "location": "Casper, Wyoming",
    "offSeasonDay": 20,
@@ -6705,7 +6705,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Riverside, California",
+   "eventName": "Western Corps Connection",
    "date": "2001-07-13T00:00:00.000Z",
    "location": "Riverside, California",
    "offSeasonDay": 20,
@@ -7306,7 +7306,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Blackwood, New Jersey",
+   "eventName": "Summer Classic",
    "date": "2001-07-14T00:00:00.000Z",
    "location": "Blackwood, New Jersey",
    "offSeasonDay": 21,
@@ -7427,7 +7427,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Glendora, California",
+   "eventName": "Corps at the Crest",
    "date": "2001-07-14T00:00:00.000Z",
    "location": "Glendora, California",
    "offSeasonDay": 21,
@@ -7902,7 +7902,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Santa Ana, California",
+   "eventName": "Santa Ana SUMMER MUSIC GAMES",
    "date": "2001-07-15T00:00:00.000Z",
    "location": "Santa Ana, California",
    "offSeasonDay": 22,
@@ -8051,7 +8051,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Albuquerque, New Mexico",
+   "eventName": "Albuquerque SUMMER MUSIC GAMES",
    "date": "2001-07-16T00:00:00.000Z",
    "location": "Albuquerque, New Mexico",
    "offSeasonDay": 23,
@@ -8172,7 +8172,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Alton, Illinois",
+   "eventName": "Alton Drum and Brass Review",
    "date": "2001-07-16T00:00:00.000Z",
    "location": "Alton, Illinois",
    "offSeasonDay": 23,
@@ -8265,7 +8265,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Ankeny, Iowa",
+   "eventName": "Celebration in Brass",
    "date": "2001-07-17T00:00:00.000Z",
    "location": "Ankeny, Iowa",
    "offSeasonDay": 24,
@@ -8451,7 +8451,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Phoenix, Arizona",
+   "eventName": "Southwest Corps Connection",
    "date": "2001-07-17T00:00:00.000Z",
    "location": "Phoenix, Arizona",
    "offSeasonDay": 24,
@@ -8530,7 +8530,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - El Paso, Texas",
+   "eventName": "Drums Along the Border",
    "date": "2001-07-18T00:00:00.000Z",
    "location": "El Paso, Texas",
    "offSeasonDay": 25,
@@ -8651,7 +8651,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Tulsa, Oklahoma",
+   "eventName": "Tulsa's Festival of Music",
    "date": "2001-07-18T00:00:00.000Z",
    "location": "Tulsa, Oklahoma",
    "offSeasonDay": 25,
@@ -8730,7 +8730,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Wichita, Kansas",
+   "eventName": "Drums Across Kansas",
    "date": "2001-07-18T00:00:00.000Z",
    "location": "Wichita, Kansas",
    "offSeasonDay": 25,
@@ -8809,7 +8809,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Dallas, Texas",
+   "eventName": "Festival of Drums and Bugles",
    "date": "2001-07-19T00:00:00.000Z",
    "location": "Dallas, Texas",
    "offSeasonDay": 26,
@@ -8958,7 +8958,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Midland, Texas",
+   "eventName": "Thunder in the Desert",
    "date": "2001-07-19T00:00:00.000Z",
    "location": "Midland, Texas",
    "offSeasonDay": 26,
@@ -9605,7 +9605,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Houston, Texas",
+   "eventName": "THE exSIGHTment OF SOUND",
    "date": "2001-07-22T00:00:00.000Z",
    "location": "Houston, Texas",
    "offSeasonDay": 29,
@@ -9740,7 +9740,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Arkadelphia, Arkansas",
+   "eventName": "Arkansas SUMMER MUSIC GAMES",
    "date": "2001-07-23T00:00:00.000Z",
    "location": "Arkadelphia, Arkansas",
    "offSeasonDay": 30,
@@ -9847,7 +9847,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Baton Rouge, Louisiana",
+   "eventName": "Red Stick Thunder Pageant of Champions",
    "date": "2001-07-23T00:00:00.000Z",
    "location": "Baton Rouge, Louisiana",
    "offSeasonDay": 30,
@@ -9982,7 +9982,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Joplin, Missouri",
+   "eventName": "Missouri SUMMER MUSIC GAMES",
    "date": "2001-07-24T00:00:00.000Z",
    "location": "Joplin, Missouri",
    "offSeasonDay": 31,
@@ -10089,7 +10089,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Pascagoula, Mississippi",
+   "eventName": "Mississippi Gulf Coast SUMMER MUSIC GAMES",
    "date": "2001-07-24T00:00:00.000Z",
    "location": "Pascagoula, Mississippi",
    "offSeasonDay": 31,
@@ -10168,7 +10168,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Evansville, Indiana",
+   "eventName": "Drums on the Ohio",
    "date": "2001-07-25T00:00:00.000Z",
    "location": "Evansville, Indiana",
    "offSeasonDay": 32,
@@ -10275,7 +10275,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Sevierville, Tennessee",
+   "eventName": "Drums Across America",
    "date": "2001-07-25T00:00:00.000Z",
    "location": "Sevierville, Tennessee",
    "offSeasonDay": 32,
@@ -10382,7 +10382,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Cincinnati, Ohio",
+   "eventName": "SUMMER MUSIC GAMES in Cincinnati",
    "date": "2001-07-26T00:00:00.000Z",
    "location": "Cincinnati, Ohio",
    "offSeasonDay": 33,
@@ -11644,7 +11644,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Centerville, Ohio",
+   "eventName": "Soaring Sounds",
    "date": "2001-07-29T00:00:00.000Z",
    "location": "Centerville, Ohio",
    "offSeasonDay": 36,
@@ -11765,7 +11765,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Des Plaines, Illinois",
+   "eventName": "Cavalcade of Brass",
    "date": "2001-07-29T00:00:00.000Z",
    "location": "Des Plaines, Illinois",
    "offSeasonDay": 36,
@@ -11886,7 +11886,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Huntington, West Virginia",
+   "eventName": "Drums Across the Tri-State",
    "date": "2001-07-29T00:00:00.000Z",
    "location": "Huntington, West Virginia",
    "offSeasonDay": 36,
@@ -12487,7 +12487,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Pittsburgh, Pennsylvania",
+   "eventName": "Three Rivers SUMMER MUSIC GAMES",
    "date": "2001-07-30T00:00:00.000Z",
    "location": "Pittsburgh, Pennsylvania",
    "offSeasonDay": 37,
@@ -12594,7 +12594,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Port Huron, Michigan",
+   "eventName": "Blue Water Brass",
    "date": "2001-07-30T00:00:00.000Z",
    "location": "Port Huron, Michigan",
    "offSeasonDay": 37,
@@ -12687,7 +12687,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Winston-Salem, North Carolina",
+   "eventName": "Carolina Drum Classic",
    "date": "2001-07-30T00:00:00.000Z",
    "location": "Winston-Salem, North Carolina",
    "offSeasonDay": 37,
@@ -12766,7 +12766,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Erie, Pennsylvania",
+   "eventName": "Lake Erie Fanfare",
    "date": "2001-07-31T00:00:00.000Z",
    "location": "Erie, Pennsylvania",
    "offSeasonDay": 38,
@@ -12873,7 +12873,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Hampton, Virginia",
+   "eventName": "Drums Along the Bay",
    "date": "2001-07-31T00:00:00.000Z",
    "location": "Hampton, Virginia",
    "offSeasonDay": 38,
@@ -12952,7 +12952,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Hornell, New York",
+   "eventName": "Maple City Sound",
    "date": "2001-07-31T00:00:00.000Z",
    "location": "Hornell, New York",
    "offSeasonDay": 38,
@@ -13525,7 +13525,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Fort Edward, New York",
+   "eventName": "Adirondack Drums",
    "date": "2001-08-01T00:00:00.000Z",
    "location": "Fort Edward, New York",
    "offSeasonDay": 39,
@@ -13632,7 +13632,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Rome, New York",
+   "eventName": "Drums Along the Mohawk",
    "date": "2001-08-01T00:00:00.000Z",
    "location": "Rome, New York",
    "offSeasonDay": 39,
@@ -13739,7 +13739,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Charlotte, North Carolina",
+   "eventName": "NightBEAT",
    "date": "2001-08-02T00:00:00.000Z",
    "location": "Charlotte, North Carolina",
    "offSeasonDay": 40,
@@ -13953,7 +13953,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Lynn, Massachusetts",
+   "eventName": "East Coast Classic",
    "date": "2001-08-02T00:00:00.000Z",
    "location": "Lynn, Massachusetts",
    "offSeasonDay": 40,
