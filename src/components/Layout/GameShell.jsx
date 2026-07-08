@@ -10,8 +10,6 @@ import { analyticsHelpers, adminHelpers } from '../../api';
 import { ShellContext } from './shellContext';
 import { useAuth } from '../../context/AuthContext';
 import BottomNav from '../BottomNav';
-import { useSeasonStore } from '../../store/seasonStore';
-import { formatSeasonName } from '../../utils/season';
 import { useTickerData } from '../../hooks/useTickerData';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import {
@@ -36,7 +34,6 @@ import {
 // =============================================================================
 
 const TopNav = () => {
-  const seasonData = useSeasonStore((state) => state.seasonData);
   const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -48,19 +45,6 @@ const TopNav = () => {
       setIsAdmin(false);
     }
   }, [user]);
-
-  // Format the season name for display - compact version
-  const getSeasonLabel = () => {
-    if (!seasonData?.name) return null;
-    const name = seasonData.name;
-    if (name.startsWith('live_')) {
-      const yearPart = name.replace('live_', '').split('-')[0];
-      return yearPart;
-    }
-    return formatSeasonName(name).replace(' Season', '');
-  };
-
-  const seasonLabel = getSeasonLabel();
 
   return (
     <nav className="fixed top-0 w-full h-14 bg-[#1a1a1a] border-b border-[#333] z-50">
@@ -77,17 +61,7 @@ const TopNav = () => {
               fetchPriority="high"
             />
           </div>
-          <div className="flex flex-col">
-            <span className="text-base font-bold text-white tracking-wider leading-tight">
-              marching.art
-            </span>
-            {/* Season badge - subtle, integrated */}
-            {seasonLabel && (
-              <span className="hidden sm:block text-[10px] text-gray-400 uppercase tracking-wider leading-tight">
-                {seasonLabel}
-              </span>
-            )}
-          </div>
+          <span className="text-base font-bold text-white tracking-wider">marching.art</span>
         </Link>
 
         {/* Spacer */}
