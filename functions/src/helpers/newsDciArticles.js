@@ -157,6 +157,7 @@ ${isLiveSeason
   ? `- This is the ${liveSeasonYear} live DCI season. Write about THIS season's competitions and scores as they happen now — do NOT reference a prior year's program material or tag corps with a past season year.`
   : `- Source-year disclosure: on each corps' FIRST mention in the narrative, include their source-year in parentheses — e.g., "Blue Stars (2019)" — so fantasy readers know which season's program material the corps is performing. Every corps in the DATA block has a listed sourceYear; use it. After the first mention, the year can be omitted.`}
 - If a data point you want to reference isn't in the DATA block, leave it out. Do not fill gaps with plausible-sounding invention.
+- VENUE: a show's city or venue is available only when the DATA block prints one next to the show name. When a show has no location listed, refer to it by name alone ("at Drums Across the Smokies") — never write "an unknown location", "an undisclosed venue", "Competition Venue", "somewhere", or invent a city or state. A dateline (e.g., "INDIANAPOLIS —") is allowed only if that city is actually in the data. Simply omitting the venue reads as professional; naming a placeholder reads as broken.
 
 ${NEWS_INTEGRITY_RULES}
 
@@ -168,6 +169,12 @@ Study how DCI.org actually writes:
 - "Less than half a point separated The Cavaliers, Blue Stars, and Troopers — three corps who have been neck-and-neck throughout the season."
 
 Lead with specific facts, stay concise, let the numbers carry the weight. No hype words. No exclamation points. The drama is in the data.
+
+Write it like a reporter with a real story, not a results database narrating itself. The most common failure mode is recitation — marching corps-by-corps and reading out each one's total, then GE, then Visual, then Music, in the same flat cadence. Do NOT do that. Instead:
+- Find tonight's through-line first (the tightest race, a lead that flipped, a caption that decided the night, a corps surging from nowhere) and build the piece around it.
+- Cite the numbers that MEAN something — a decisive caption gap, a margin that shrank, a season high — and let the rest of the field be summarized rather than enumerated. A corps can be covered in a sharp clause; not every corps needs its full caption line.
+- Vary sentence rhythm and connect results to each other ("what cost Carolina Crown the lead was Visual, not GE") rather than listing them side by side.
+- Prefer the active, specific verb ("edged", "shaved the gap to", "held off") over flat linking verbs ("posted", "achieved", "resulted in a score of").
 
 Score language should be precise: "edging past by 0.087" / "three-tenths back" / "a scant 0.2-point gap" / "swept every caption except Color Guard"
 Caption terminology: GE (GE1 Music Effect + GE2 Visual Effect), Visual (VP, VA, CG), Music (B, MA, P)

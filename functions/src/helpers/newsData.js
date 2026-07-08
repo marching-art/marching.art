@@ -4,6 +4,7 @@
 // newsGeneration.js.
 
 const { logger } = require("firebase-functions/v2");
+const { cleanLocation } = require("./newsArticleShared");
 
 const CAPTIONS = {
   GE1: "General Effect 1",
@@ -183,7 +184,7 @@ async function fetchShowContext(db, seasonId, historicalData, reportDay) {
       const dayEvents = yearEvents.filter(e => e.offSeasonDay === reportDay);
       for (const dayEvent of dayEvents) {
         const eventName = dayEvent.eventName;
-        const eventLocation = dayEvent.location;
+        const eventLocation = cleanLocation(dayEvent.location);
         if (eventName && !seenShowNames.has(eventName)) {
           seenShowNames.add(eventName);
           allShows.push({
@@ -213,7 +214,7 @@ async function fetchShowContext(db, seasonId, historicalData, reportDay) {
             seenShowNames.add(scheduleName);
             allShows.push({
               name: scheduleName,
-              location: show.location,
+              location: cleanLocation(show.location),
               date: show.date,
             });
           }
@@ -221,7 +222,7 @@ async function fetchShowContext(db, seasonId, historicalData, reportDay) {
         // Use first show for primary context if not already set
         if (!showName && shows.length > 0) {
           showName = shows[0].eventName || shows[0].name;
-          location = shows[0].location;
+          location = cleanLocation(shows[0].location);
           eventDate = shows[0].date;
         }
       }
@@ -254,22 +255,24 @@ async function fetchShowContext(db, seasonId, historicalData, reportDay) {
 
     return {
       showName: showName || `Day ${reportDay} Competition`,
-      location: location || "Competition Venue",
+      // null (not a placeholder venue) when no real location is known, so the
+      // article and header omit the venue instead of printing "Unknown Location".
+      location: location || null,
       date: formattedDate,
       rawDate: actualDate || (eventDate ? new Date(eventDate) : null),
       reportDay,
       // Include all shows so articles can reference multiple competitions
-      allShows: allShows.length > 0 ? allShows : [{ name: showName || `Day ${reportDay} Competition`, location: location || "Competition Venue" }],
+      allShows: allShows.length > 0 ? allShows : [{ name: showName || `Day ${reportDay} Competition`, location: location || null }],
     };
   } catch (error) {
     logger.error("Error fetching show context:", error);
     return {
       showName: `Day ${reportDay} Competition`,
-      location: "Competition Venue",
+      location: null,
       date: `Day ${reportDay}`,
       rawDate: null,
       reportDay,
-      allShows: [{ name: `Day ${reportDay} Competition`, location: "Competition Venue" }],
+      allShows: [{ name: `Day ${reportDay} Competition`, location: null }],
     };
   }
 }
@@ -325,7 +328,7 @@ function getScoresForDay(historicalData, targetDay, activeCorps) {
       total,
       subtotals: calculateCaptionSubtotals(corpsScore.captions),
       showName: matchingEvent.eventName || matchingEvent.name || null,
-      location: matchingEvent.location || null,
+      location: cleanLocation(matchingEvent.location),
     });
   }
 
@@ -367,7 +370,7 @@ function calculateTrendData(historicalData, reportDay, activeCorps) {
               subtotals,
               // Include show context for journey narrative
               showName: matchingEvent.eventName || matchingEvent.name || null,
-              location: matchingEvent.location || null,
+              location: cleanLocation(matchingEvent.location),
             });
           }
         }

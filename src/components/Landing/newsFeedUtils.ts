@@ -61,6 +61,36 @@ export function safeString(value: unknown): string {
 }
 
 /**
+ * Placeholder venue strings the scraper/importer write when no real location was
+ * found. They are stored verbatim on older articles' metadata, so the article
+ * header must treat them as "no location" rather than printing "Unknown Location".
+ * Kept in sync with cleanLocation() in functions/src/helpers/newsArticleShared.js.
+ */
+const PLACEHOLDER_LOCATIONS = new Set([
+  'unknown location',
+  'unknown',
+  'competition venue',
+  'location tbd',
+  'venue tbd',
+  'tbd',
+  'tba',
+  'n/a',
+  'na',
+  '-',
+]);
+
+/**
+ * Returns a real, trimmed location string, or null when the value is empty or a
+ * known scraper placeholder. Use before rendering an article/show location.
+ */
+export function cleanLocation(loc: unknown): string | null {
+  if (typeof loc !== 'string') return null;
+  const trimmed = loc.trim();
+  if (!trimmed) return null;
+  return PLACEHOLDER_LOCATIONS.has(trimmed.toLowerCase()) ? null : trimmed;
+}
+
+/**
  * Formats a timestamp in a professional news style: relative for recent stories,
  * absolute for older ones. `now` is injectable for testing.
  */
