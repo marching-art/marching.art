@@ -1,7 +1,7 @@
 {
  "data": [
   {
-   "eventName": "DCI Competition - Chambersburg, Pennsylvania",
+   "eventName": "Music in Motion",
    "date": "2009-06-19T00:00:00.000Z",
    "location": "Chambersburg, Pennsylvania",
    "offSeasonDay": null,
@@ -159,7 +159,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Stillwater, Minnesota",
+   "eventName": "Drum Beauty",
    "date": "2009-06-20T00:00:00.000Z",
    "location": "Stillwater, Minnesota",
    "offSeasonDay": null,
@@ -266,7 +266,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Walnut, California",
+   "eventName": "Corps at the Crest",
    "date": "2009-06-20T00:00:00.000Z",
    "location": "Walnut, California",
    "offSeasonDay": null,
@@ -415,7 +415,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Riverside, California",
+   "eventName": "Western Corps Connection",
    "date": "2009-06-21T00:00:00.000Z",
    "location": "Riverside, California",
    "offSeasonDay": 1,
@@ -564,7 +564,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Pittsburgh, Pennsylvania",
+   "eventName": "Three Rivers SUMMER MUSIC GAMES",
    "date": "2009-06-22T00:00:00.000Z",
    "location": "Pittsburgh, Pennsylvania",
    "offSeasonDay": 2,
@@ -657,7 +657,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Mankato, Minnesota",
+   "eventName": "The Thunder of Drums",
    "date": "2009-06-22T00:00:00.000Z",
    "location": "Mankato, Minnesota",
    "offSeasonDay": 2,
@@ -750,7 +750,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Dublin, Ohio",
+   "eventName": "Emerald City Music Games",
    "date": "2009-06-23T00:00:00.000Z",
    "location": "Dublin, Ohio",
    "offSeasonDay": 3,
@@ -843,7 +843,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Sioux Falls, South Dakota",
+   "eventName": "Sioux Empire Spectacular",
    "date": "2009-06-23T00:00:00.000Z",
    "location": "Sioux Falls, South Dakota",
    "offSeasonDay": 3,
@@ -936,7 +936,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Rio Rancho, New Mexico",
+   "eventName": "Drums Along the Sandias",
    "date": "2009-06-23T00:00:00.000Z",
    "location": "Rio Rancho, New Mexico",
    "offSeasonDay": 3,
@@ -1029,7 +1029,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Glendale, Arizona",
+   "eventName": "Southwest Corps Connection",
    "date": "2009-06-24T00:00:00.000Z",
    "location": "Glendale, Arizona",
    "offSeasonDay": 4,
@@ -1122,7 +1122,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Toledo, Ohio",
+   "eventName": "Glassmen All Star Review",
    "date": "2009-06-25T00:00:00.000Z",
    "location": "Toledo, Ohio",
    "offSeasonDay": 5,
@@ -1229,7 +1229,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - West Des Moines, Iowa",
+   "eventName": "Summer Showdown",
    "date": "2009-06-25T00:00:00.000Z",
    "location": "West Des Moines, Iowa",
    "offSeasonDay": 5,
@@ -1457,7 +1457,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Clovis, California",
+   "eventName": "Mid Cal Tour of Champions",
    "date": "2009-06-26T00:00:00.000Z",
    "location": "Clovis, California",
    "offSeasonDay": 6,
@@ -1592,7 +1592,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Brockton, Massachusetts",
+   "eventName": "Saturday Night Lights",
    "date": "2009-06-27T00:00:00.000Z",
    "location": "Brockton, Massachusetts",
    "offSeasonDay": 7,
@@ -1792,7 +1792,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Decatur, Indiana",
+   "eventName": "Waves of Thunder",
    "date": "2009-06-28T00:00:00.000Z",
    "location": "Decatur, Indiana",
    "offSeasonDay": 8,
@@ -1913,7 +1913,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Madison, Wisconsin",
+   "eventName": "Drums on Parade",
    "date": "2009-06-28T00:00:00.000Z",
    "location": "Madison, Wisconsin",
    "offSeasonDay": 8,
@@ -2020,7 +2020,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Stanford, California",
+   "eventName": "DCI West",
    "date": "2009-06-28T00:00:00.000Z",
    "location": "Stanford, California",
    "offSeasonDay": 8,
@@ -2169,7 +2169,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Erie, Pennsylvania",
+   "eventName": "Lake Erie Fanfare",
    "date": "2009-06-29T00:00:00.000Z",
    "location": "Erie, Pennsylvania",
    "offSeasonDay": 9,
@@ -2276,7 +2276,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Dubuque, Iowa",
+   "eventName": "Music on the March",
    "date": "2009-06-30T00:00:00.000Z",
    "location": "Dubuque, Iowa",
    "offSeasonDay": 10,
@@ -2411,7 +2411,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Rome, New York",
+   "eventName": "Drums Along the Mohawk",
    "date": "2009-06-30T00:00:00.000Z",
    "location": "Rome, New York",
    "offSeasonDay": 10,
@@ -2504,7 +2504,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - South Milwaukee, Wisconsin",
+   "eventName": "Spectacle of Music",
    "date": "2009-07-01T00:00:00.000Z",
    "location": "South Milwaukee, Wisconsin",
    "offSeasonDay": 11,
@@ -2611,7 +2611,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Beverly, Massachusetts",
+   "eventName": "The Beanpot Invitational",
    "date": "2009-07-02T00:00:00.000Z",
    "location": "Beverly, Massachusetts",
    "offSeasonDay": 12,
@@ -2760,7 +2760,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Vicksburg, Michigan",
+   "eventName": "Legends Drum Corps Preview",
    "date": "2009-07-02T00:00:00.000Z",
    "location": "Vicksburg, Michigan",
    "offSeasonDay": 12,
@@ -2946,7 +2946,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Bristol, Rhode Island",
+   "eventName": "Summer Music Preview",
    "date": "2009-07-03T00:00:00.000Z",
    "location": "Bristol, Rhode Island",
    "offSeasonDay": 13,
@@ -3053,7 +3053,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Cedarburg, Wisconsin",
+   "eventName": "Rotary Music Festival",
    "date": "2009-07-03T00:00:00.000Z",
    "location": "Cedarburg, Wisconsin",
    "offSeasonDay": 13,
@@ -3188,7 +3188,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Santa Barbara, California",
+   "eventName": "Brass Along the Beach @ UCSB",
    "date": "2009-07-03T00:00:00.000Z",
    "location": "Santa Barbara, California",
    "offSeasonDay": 13,
@@ -3295,7 +3295,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Michigan City, Indiana",
+   "eventName": "Pageant of Drums",
    "date": "2009-07-05T00:00:00.000Z",
    "location": "Michigan City, Indiana",
    "offSeasonDay": 15,
@@ -3416,7 +3416,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - San Diego, California",
+   "eventName": "Corps at the Crest - Vista",
    "date": "2009-07-05T00:00:00.000Z",
    "location": "San Diego, California",
    "offSeasonDay": 15,
@@ -3565,7 +3565,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Fairfield, Ohio",
+   "eventName": "Summer Music Games in Cincinnati",
    "date": "2009-07-06T00:00:00.000Z",
    "location": "Fairfield, Ohio",
    "offSeasonDay": 16,
@@ -3672,7 +3672,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Jackson, New Jersey",
+   "eventName": "Music in Motion - Central Jersey",
    "date": "2009-07-06T00:00:00.000Z",
    "location": "Jackson, New Jersey",
    "offSeasonDay": 16,
@@ -3779,7 +3779,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Tri-Cities, Washington",
+   "eventName": "Drums Along the Columbia - A DCI Northwest Classic",
    "date": "2009-07-06T00:00:00.000Z",
    "location": "Tri-Cities, Washington",
    "offSeasonDay": 16,
@@ -3858,7 +3858,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Chesapeake, Virginia",
+   "eventName": "TIDEWATER SUMMER MUSIC GAMES",
    "date": "2009-07-07T00:00:00.000Z",
    "location": "Chesapeake, Virginia",
    "offSeasonDay": 17,
@@ -3951,7 +3951,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Kingsport, Tennessee",
+   "eventName": "The Royal Showdown",
    "date": "2009-07-07T00:00:00.000Z",
    "location": "Kingsport, Tennessee",
    "offSeasonDay": 17,
@@ -4044,7 +4044,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Ontario, Idaho",
+   "eventName": "Thunder in Oregon",
    "date": "2009-07-07T00:00:00.000Z",
    "location": "Ontario, Idaho",
    "offSeasonDay": 17,
@@ -4123,7 +4123,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Ogden, Utah",
+   "eventName": "Corps Encore",
    "date": "2009-07-08T00:00:00.000Z",
    "location": "Ogden, Utah",
    "offSeasonDay": 18,
@@ -4230,7 +4230,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Columbia, South Carolina",
+   "eventName": "FirstBEAT",
    "date": "2009-07-09T00:00:00.000Z",
    "location": "Columbia, South Carolina",
    "offSeasonDay": 19,
@@ -4323,7 +4323,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Valdosta, Georgia",
+   "eventName": "Sounds of the South",
    "date": "2009-07-10T00:00:00.000Z",
    "location": "Valdosta, Georgia",
    "offSeasonDay": 20,
@@ -4430,7 +4430,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Windsor, Colorado",
+   "eventName": "Drums Along the Rockies Windsor Edition",
    "date": "2009-07-10T00:00:00.000Z",
    "location": "Windsor, Colorado",
    "offSeasonDay": 20,
@@ -4686,7 +4686,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Long Beach, California",
+   "eventName": "So-Cal Classic",
    "date": "2009-07-11T00:00:00.000Z",
    "location": "Long Beach, California",
    "offSeasonDay": 21,
@@ -4779,7 +4779,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Groton, Connecticut",
+   "eventName": "Drum Corps On The Thames",
    "date": "2009-07-11T00:00:00.000Z",
    "location": "Groton, Connecticut",
    "offSeasonDay": 21,
@@ -4979,7 +4979,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Fort Walton Beach, Florida",
+   "eventName": "Emerald Coast Classic",
    "date": "2009-07-13T00:00:00.000Z",
    "location": "Fort Walton Beach, Florida",
    "offSeasonDay": 23,
@@ -5193,7 +5193,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Ocean Springs, Mississippi",
+   "eventName": "Mississippi Sound Spectacular",
    "date": "2009-07-14T00:00:00.000Z",
    "location": "Ocean Springs, Mississippi",
    "offSeasonDay": 24,
@@ -5314,7 +5314,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Broken Arrow, Oklahoma",
+   "eventName": "Drums of Summer",
    "date": "2009-07-14T00:00:00.000Z",
    "location": "Broken Arrow, Oklahoma",
    "offSeasonDay": 24,
@@ -5449,7 +5449,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Edmond, Oklahoma",
+   "eventName": "DCI Central Oklahoma",
    "date": "2009-07-15T00:00:00.000Z",
    "location": "Edmond, Oklahoma",
    "offSeasonDay": 25,
@@ -6497,7 +6497,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - San Jose, California",
+   "eventName": "California State Open",
    "date": "2009-07-18T00:00:00.000Z",
    "location": "San Jose, California",
    "offSeasonDay": 28,
@@ -6604,7 +6604,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Denton, Texas",
+   "eventName": "Red River Thunder",
    "date": "2009-07-19T00:00:00.000Z",
    "location": "Denton, Texas",
    "offSeasonDay": 29,
@@ -6697,7 +6697,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Dublin, California",
+   "eventName": "Loudest Show on Earth",
    "date": "2009-07-19T00:00:00.000Z",
    "location": "Dublin, California",
    "offSeasonDay": 29,
@@ -6804,7 +6804,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Lafayette, Louisiana",
+   "eventName": "Drums Across Cajun Field",
    "date": "2009-07-20T00:00:00.000Z",
    "location": "Lafayette, Louisiana",
    "offSeasonDay": 30,
@@ -6925,7 +6925,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Monroe, Louisiana",
+   "eventName": "Battle on the Bayou",
    "date": "2009-07-21T00:00:00.000Z",
    "location": "Monroe, Louisiana",
    "offSeasonDay": 31,
@@ -7032,7 +7032,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Van Buren, Arkansas",
+   "eventName": "Battle on the Border VI",
    "date": "2009-07-21T00:00:00.000Z",
    "location": "Van Buren, Arkansas",
    "offSeasonDay": 31,
@@ -7642,7 +7642,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Gadsden, Alabama",
+   "eventName": "DCI Gadsden presented by Alabama Battle of the Brass",
    "date": "2009-07-24T00:00:00.000Z",
    "location": "Gadsden, Alabama",
    "offSeasonDay": 34,
@@ -8122,7 +8122,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Amherst, Ohio",
+   "eventName": "Amherst Drum Corps Showcase!",
    "date": "2009-07-25T00:00:00.000Z",
    "location": "Amherst, Ohio",
    "offSeasonDay": 35,
@@ -8229,7 +8229,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Omaha, Nebraska",
+   "eventName": "Drums Across Nebraska",
    "date": "2009-07-25T00:00:00.000Z",
    "location": "Omaha, Nebraska",
    "offSeasonDay": 35,
@@ -8471,7 +8471,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Salem, Virginia",
+   "eventName": "The SUMMER MUSIC GAMES of Southwest Virginia",
    "date": "2009-07-27T00:00:00.000Z",
    "location": "Salem, Virginia",
    "offSeasonDay": 37,
@@ -8578,7 +8578,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Sevierville, Tennessee",
+   "eventName": "Drums Across America",
    "date": "2009-07-27T00:00:00.000Z",
    "location": "Sevierville, Tennessee",
    "offSeasonDay": 37,
@@ -8671,7 +8671,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Charleston, West Virginia",
+   "eventName": "Drums Across the Tri-State",
    "date": "2009-07-27T00:00:00.000Z",
    "location": "Charleston, West Virginia",
    "offSeasonDay": 37,
@@ -8778,7 +8778,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Eau Claire, Wisconsin",
+   "eventName": "Drums On The Chippewa",
    "date": "2009-07-27T00:00:00.000Z",
    "location": "Eau Claire, Wisconsin",
    "offSeasonDay": 37,
@@ -8899,7 +8899,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - South Lyon, Michigan",
+   "eventName": "Motor City Music Tune-Up",
    "date": "2009-07-27T00:00:00.000Z",
    "location": "South Lyon, Michigan",
    "offSeasonDay": 37,
@@ -9034,7 +9034,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Richmond, Kentucky",
+   "eventName": "Drums Across the Bluegrass",
    "date": "2009-07-28T00:00:00.000Z",
    "location": "Richmond, Kentucky",
    "offSeasonDay": 38,
@@ -9141,7 +9141,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Centerville, Ohio",
+   "eventName": "Soaring Sounds 30",
    "date": "2009-07-29T00:00:00.000Z",
    "location": "Centerville, Ohio",
    "offSeasonDay": 39,
@@ -9248,7 +9248,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Fairfax, Virginia",
+   "eventName": "Drum Corps in Fairfax",
    "date": "2009-07-29T00:00:00.000Z",
    "location": "Fairfax, Virginia",
    "offSeasonDay": 39,
@@ -9341,7 +9341,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Belding, Michigan",
+   "eventName": "Silk City Rhythms",
    "date": "2009-07-29T00:00:00.000Z",
    "location": "Belding, Michigan",
    "offSeasonDay": 39,
@@ -9504,7 +9504,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Columbus, Ohio",
+   "eventName": "Artistry in Motion",
    "date": "2009-07-30T00:00:00.000Z",
    "location": "Columbus, Ohio",
    "offSeasonDay": 40,
@@ -9597,7 +9597,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - West Chester, Pennsylvania",
+   "eventName": "Music in Motion",
    "date": "2009-07-30T00:00:00.000Z",
    "location": "West Chester, Pennsylvania",
    "offSeasonDay": 40,
@@ -9690,7 +9690,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Lawrence, Massachusetts",
+   "eventName": "East Coast Classic",
    "date": "2009-07-31T00:00:00.000Z",
    "location": "Lawrence, Massachusetts",
    "offSeasonDay": 41,
@@ -9797,7 +9797,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Dubuque, Iowa",
+   "eventName": "Music on the March 2",
    "date": "2009-07-31T00:00:00.000Z",
    "location": "Dubuque, Iowa",
    "offSeasonDay": 41,
@@ -9918,7 +9918,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Paw Paw, Michigan",
+   "eventName": "Drum Corps in the Village",
    "date": "2009-07-31T00:00:00.000Z",
    "location": "Paw Paw, Michigan",
    "offSeasonDay": 41,
@@ -10407,7 +10407,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Buffalo, New York",
+   "eventName": "Drums Along the Waterfront",
    "date": "2009-08-02T00:00:00.000Z",
    "location": "Buffalo, New York",
    "offSeasonDay": 43,
@@ -10528,7 +10528,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - East Rutherford, New Jersey",
+   "eventName": "Music in Motion-New Jersey",
    "date": "2009-08-02T00:00:00.000Z",
    "location": "East Rutherford, New Jersey",
    "offSeasonDay": 43,
@@ -10635,7 +10635,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Dayton, Ohio",
+   "eventName": "Dayton Summer Classic",
    "date": "2009-08-02T00:00:00.000Z",
    "location": "Dayton, Ohio",
    "offSeasonDay": 43,
@@ -10919,7 +10919,7 @@
    ]
   },
   {
-   "eventName": "DCI Competition - Toledo, Ohio",
+   "eventName": "Summer Showcase",
    "date": "2009-08-03T00:00:00.000Z",
    "location": "Toledo, Ohio",
    "offSeasonDay": 44,

@@ -18,8 +18,8 @@
 const fs = require("fs");
 const path = require("path");
 const {
-  YEARS, CACHE_DIR, OUTPUT_DIR, REPORT_PATH, STATE_ABBREV, MONTH_NAMES,
-  IGNORED_DIVISION_RE, normalizeCity, matchKey,
+  YEARS, CACHE_DIR, OUTPUT_DIR, REPORT_PATH, MANUAL_PATH, MANUAL_TEXT_DIR,
+  STATE_ABBREV, MONTH_NAMES, IGNORED_DIVISION_RE, normalizeCity, matchKey,
 } = require("./config");
 
 // Years whose scores predate the CFM dropdown and instead live in the
@@ -230,6 +230,120 @@ function parseShowmonth(htmls, year) {
   return records;
 }
 
+// Parse a pasted dci.org "Other Scores" listing (manual/{year}.txt): events
+// grouped under "Month DD, YYYY" date headers, each an "(CLASS) Show, City, ST"
+// line (the date lives in the header, not the line). We re-attach the current
+// header date to each line and hand it to the format-C parser. Location-only
+// lines (no show name) and city-echo lines ("Harrison, Ohio, Harrison, OH")
+// are dropped - there is no real title to apply. On a date+city collision the
+// Division I entry is kept over a Division II/III one.
+function parseOtherScoresText(text, year) {
+  const records = [];
+  const byKey = new Map();
+  let currentDate = null; // { month, day }
+  const pending = []; // event lines seen before the first date header
+  const headerRe = /^([A-Za-z]+)\s+(\d{1,2}),\s*(\d{4})\s*$/;
+  const eventRe = /^\(([^)]*)\)\s*(.+)$/;
+
+  const emit = (division, rest, date) => {
+    const parsed = parseLabel(`(${division}) ${rest} -- ${monthName(date.month)} ` +
+      `${date.day}, ${year}`, year);
+    if (!parsed || !parsed.city || !parsed.showName) return;
+    // Drop city echoes: a "show name" that is really just the city.
+    if (normalizeCity(parsed.showName.split(",")[0]) === normalizeCity(parsed.city)) return;
+    const key = matchKey(parsed.year, parsed.month, parsed.day,
+      normalizeCity(parsed.city));
+    const isDiv23 = /division ii/i.test(parsed.division);
+    const existing = byKey.get(key);
+    if (existing) {
+      // Prefer a Division I title over a Division II/III one at the same slot.
+      if (!(/division ii/i.test(existing.division) && !isDiv23)) return;
+      records.splice(records.indexOf(existing), 1);
+    }
+    const record = {
+      key,
+      eventId: null,
+      date: new Date(Date.UTC(parsed.year, parsed.month - 1, parsed.day)).toISOString(),
+      division: parsed.division,
+      showName: parsed.showName,
+      city: parsed.city,
+      state: parsed.state,
+      location: buildLocation(parsed.city, parsed.state),
+      ignoredDivision: IGNORED_DIVISION_RE.test(parsed.division),
+      label: `(${parsed.division}) ${rest}`,
+      source: "manual-text",
+    };
+    records.push(record);
+    byKey.set(key, record);
+  };
+
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line) continue;
+    const h = line.match(headerRe);
+    if (h && MONTH_NAMES[h[1].toLowerCase()]) {
+      currentDate = { month: MONTH_NAMES[h[1].toLowerCase()], day: Number(h[2]) };
+      while (pending.length) {
+        const p = pending.shift();
+        emit(p.division, p.rest, currentDate);
+      }
+      continue;
+    }
+    const e = line.match(eventRe);
+    if (!e) continue; // score-table rows, "Other Scores", "View Recap", etc.
+    if (currentDate) emit(e[1].trim(), e[2].trim(), currentDate);
+    else pending.push({ division: e[1].trim(), rest: e[2].trim() });
+  }
+  return records;
+}
+
+function monthName(m) {
+  return ["", "January", "February", "March", "April", "May", "June", "July",
+    "August", "September", "October", "November", "December"][m];
+}
+
+// Hand-curated records for a year from manual.json (e.g. gap years with no
+// usable Wayback capture). Same record shape as the parsers, so apply.js
+// treats them identically.
+// Records from a pasted "Other Scores" listing at manual/{year}.txt, if any.
+function loadTextRecords(year) {
+  const p = path.join(MANUAL_TEXT_DIR, `${year}.txt`);
+  if (!fs.existsSync(p)) return [];
+  return parseOtherScoresText(fs.readFileSync(p, "utf-8"), year);
+}
+
+function loadManualRecords(year) {
+  if (!fs.existsSync(MANUAL_PATH)) return [];
+  const manual = JSON.parse(fs.readFileSync(MANUAL_PATH, "utf-8"));
+  const entry = manual[year];
+  if (!entry || !Array.isArray(entry.events)) return [];
+  const records = [];
+  const seen = new Set();
+  for (const ev of entry.events) {
+    const [, mm, dd] = ev.date.split("-").map(Number);
+    const [cityRaw, stateRaw] = ev.location.split(",");
+    const city = (cityRaw || "").trim();
+    const state = (stateRaw || "").trim().toUpperCase();
+    const key = matchKey(Number(year), mm, dd, normalizeCity(city));
+    if (seen.has(key)) continue; // one show per date+city
+    seen.add(key);
+    records.push({
+      key,
+      eventId: null,
+      date: new Date(`${ev.date}T00:00:00.000Z`).toISOString(),
+      division: ev.division || "",
+      showName: ev.showName,
+      city,
+      state,
+      location: `${city}, ${STATE_ABBREV[state] || state}`,
+      ignoredDivision: IGNORED_DIVISION_RE.test(ev.division || ""),
+      label: `${ev.showName} -- ${ev.location} ${ev.date}`,
+      source: "manual",
+    });
+  }
+  return records;
+}
+
 // Collect the cached HTML for a year: one {year}.html for the CFM era, or the
 // set of {year}-{month}.html month pages for the showmonth era.
 function loadYearHtml(year) {
@@ -253,27 +367,49 @@ function main() {
 
   for (const year of yearFilter) {
     const { era, htmls } = loadYearHtml(year);
-    if (htmls.length === 0) {
-      console.log(`${year}: no cached snapshot, skipping (run harvest.js).`);
+    const parsed = htmls.length === 0 ? []
+      : era === "showmonth" ? parseShowmonth(htmls, year)
+        : parseCfmDropdown(htmls[0], year);
+
+    // Merge sources in precedence order (earlier wins a date+city collision):
+    // archive-parsed HTML, then a pasted "Other Scores" listing, then the
+    // structured manual.json. Later sources only fill gaps.
+    const records = [];
+    const keys = new Set();
+    let extra = 0;
+    for (const src of [parsed, loadTextRecords(year), loadManualRecords(year)]) {
+      for (const r of src) {
+        if (keys.has(r.key)) continue;
+        keys.add(r.key);
+        records.push(r);
+        if (src !== parsed) extra++;
+      }
+    }
+
+    if (records.length === 0) {
+      console.log(`${year}: no cached snapshot or manual data, skipping.`);
       report[year] = { snapshot: false, events: 0, titled: 0 };
       continue;
     }
-    const records = era === "showmonth"
-      ? parseShowmonth(htmls, year)
-      : parseCfmDropdown(htmls[0], year);
 
+    const manualUsed = { length: extra };
+    const resolvedEra = htmls.length === 0
+      ? (loadTextRecords(year).length ? "manual-text" : "manual") : era;
     const titled = records.filter((r) => r.showName).length;
     const outPath = path.join(OUTPUT_DIR, `names_${year}.json`);
-    fs.writeFileSync(outPath, JSON.stringify({ year, era, records }, null, 2));
+    fs.writeFileSync(outPath,
+      JSON.stringify({ year, era: resolvedEra, records }, null, 2));
     report[year] = {
-      snapshot: true,
-      era,
+      snapshot: htmls.length > 0,
+      era: resolvedEra,
       pages: htmls.length,
+      manual: manualUsed.length,
       events: records.length,
       titled,
       ignored: records.filter((r) => r.ignoredDivision).length,
     };
-    console.log(`${year}: ${era} parser (${htmls.length} page) -> ` +
+    console.log(`${year}: ${resolvedEra} parser (${htmls.length} page` +
+      `${manualUsed.length ? `, +${manualUsed.length} manual` : ""}) -> ` +
       `${records.length} events (${titled} with a show name).`);
   }
 
@@ -285,4 +421,5 @@ if (require.main === module) main();
 
 module.exports = {
   decodeEntities, parseLabel, buildLocation, parseCfmDropdown, parseShowmonth,
+  parseOtherScoresText, loadManualRecords,
 };

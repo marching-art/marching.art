@@ -1,13 +1,18 @@
 {
   "2000": {
     "snapshot": false,
-    "events": 0,
-    "titled": 0
+    "era": "manual",
+    "pages": 0,
+    "manual": 25,
+    "events": 25,
+    "titled": 25,
+    "ignored": 0
   },
   "2001": {
     "snapshot": true,
     "era": "showmonth",
     "pages": 3,
+    "manual": 0,
     "events": 82,
     "titled": 82,
     "ignored": 0
@@ -16,19 +21,25 @@
     "snapshot": true,
     "era": "showmonth",
     "pages": 1,
+    "manual": 0,
     "events": 25,
     "titled": 25,
     "ignored": 0
   },
   "2003": {
     "snapshot": false,
-    "events": 0,
-    "titled": 0
+    "era": "manual-text",
+    "pages": 0,
+    "manual": 99,
+    "events": 99,
+    "titled": 99,
+    "ignored": 0
   },
   "2004": {
     "snapshot": true,
     "era": "cfm",
     "pages": 1,
+    "manual": 0,
     "events": 125,
     "titled": 116,
     "ignored": 0
@@ -37,6 +48,7 @@
     "snapshot": true,
     "era": "cfm",
     "pages": 1,
+    "manual": 0,
     "events": 139,
     "titled": 133,
     "ignored": 0
@@ -45,6 +57,7 @@
     "snapshot": true,
     "era": "cfm",
     "pages": 1,
+    "manual": 0,
     "events": 138,
     "titled": 135,
     "ignored": 0
@@ -53,6 +66,7 @@
     "snapshot": true,
     "era": "cfm",
     "pages": 1,
+    "manual": 0,
     "events": 132,
     "titled": 130,
     "ignored": 0
@@ -61,19 +75,25 @@
     "snapshot": true,
     "era": "cfm",
     "pages": 1,
+    "manual": 0,
     "events": 111,
     "titled": 110,
     "ignored": 0
   },
   "2009": {
-    "snapshot": false,
-    "events": 0,
-    "titled": 0
+    "snapshot": true,
+    "era": "cfm",
+    "pages": 1,
+    "manual": 0,
+    "events": 105,
+    "titled": 104,
+    "ignored": 0
   },
   "2010": {
     "snapshot": true,
     "era": "cfm",
     "pages": 1,
+    "manual": 0,
     "events": 112,
     "titled": 111,
     "ignored": 0
@@ -82,6 +102,7 @@
     "snapshot": true,
     "era": "cfm",
     "pages": 1,
+    "manual": 0,
     "events": 111,
     "titled": 111,
     "ignored": 0
@@ -90,6 +111,7 @@
     "snapshot": true,
     "era": "cfm",
     "pages": 1,
+    "manual": 0,
     "events": 106,
     "titled": 105,
     "ignored": 0

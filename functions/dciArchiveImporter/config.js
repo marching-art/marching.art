@@ -30,6 +30,8 @@ const WAYBACK_SNAPSHOT = (timestamp, url) =>
 const CACHE_DIR = path.join(__dirname, "cache");
 const OUTPUT_DIR = path.join(__dirname, "output");
 const SNAPSHOTS_PATH = path.join(__dirname, "snapshots.json");
+const MANUAL_PATH = path.join(__dirname, "manual.json");
+const MANUAL_TEXT_DIR = path.join(__dirname, "manual");
 const REPORT_PATH = path.join(OUTPUT_DIR, "report.json");
 
 // Where the pressbox importer writes the score data we enrich. apply.js reads
@@ -179,6 +181,8 @@ module.exports = {
   CACHE_DIR,
   OUTPUT_DIR,
   SNAPSHOTS_PATH,
+  MANUAL_PATH,
+  MANUAL_TEXT_DIR,
   REPORT_PATH,
   PRESSBOX_OUTPUT_DIR,
   STATE_ABBREV,

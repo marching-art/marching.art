@@ -109,31 +109,48 @@ counts. As harvested (renames applied to the pressbox output):
 
 | Year | Source        | Archive events | Placeholders renamed |
 |------|---------------|----------------|----------------------|
-| 2000 | -             | none archived  | 0                    |
+| 2000 | manual.json   | 25 (majors)    | 9                    |
 | 2001 | showmonth     | 82             | 59                   |
 | 2002 | showmonth     | 25 (Aug only)  | 13                   |
-| 2003 | -             | none archived  | 0                    |
+| 2003 | manual/2003.txt | 99           | 64                   |
 | 2004 | cfm           | 125            | 86                   |
 | 2005 | cfm           | 139            | 94                   |
 | 2006 | cfm           | 138            | 94                   |
 | 2007 | cfm           | 132            | 86                   |
 | 2008 | cfm           | 111            | 82                   |
-| 2009 | -             | none archived  | 0                    |
+| 2009 | cfm*          | 105            | 71                   |
 | 2010 | cfm           | 112            | 70                   |
 | 2011 | cfm           | 111            | 64                   |
 | 2012 | cfm           | 106            | 66                   |
 
-**714 placeholder eventNames** were replaced with official show names.
+**~858 placeholder eventNames** were replaced with official show names; every
+year 2000-2012 now has data. *2009 has no in-season capture of its own - a
+June-2010 snapshot whose dropdown still listed the finished 2009 season is used
+instead (the parser keeps only the 2009-dated rows; see `snapshots.json`).
 
-### Gaps
+### Manual sources (gap years)
 
-- **2000, 2003, 2009** have no usable Wayback capture: 2000/2003 predate a
-  reliably-archived in-season `showmonth.php`, and dci.org's scores page simply
-  wasn't captured during the 2009 season. To fill one later, drop a snapshot's
-  HTML into `cache/` with the right name (`{year}.html` for the CFM dropdown,
-  or `{year}-{month}.html` for showmonth) and re-run `parse.js` + `apply.js`.
-- **2002** only has an August `showmonth.php` capture archived, so June/July
-  events keep their placeholders.
+Two ways to feed in names for years the automated harvest can't reach, both
+merged by `parse.js` into `output/names_{year}.json` (archive-parsed and
+earlier sources win a date+city collision):
+
+- **`manual.json`** - structured entries (`{date, showName, location,
+  division}`). 2000 is seeded this way from dci.org's archived "Major & Premium
+  Events" page; only its ~9 lesser events were placeholders (the majors and
+  championships were already titled in the pressbox data, so the
+  placeholder-only rule left them alone).
+- **`manual/{year}.txt`** - a raw paste of dci.org's "Other Scores" listing
+  (date headers + `(CLASS) Show, City, ST` lines), parsed by
+  `parseOtherScoresText`. 2003 is filled this way - no in-season `showmonth.php`
+  was ever archived for it.
+
+Add more by editing those files and re-running `parse.js` + `apply.js`.
+
+### Remaining gaps
+
+- **2002** only has an August `showmonth.php` capture archived, so its
+  June/July events keep their placeholders. Filling it needs another archived
+  month page or a manual paste.
 
 ### Other caveats
 

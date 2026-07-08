@@ -64,6 +64,14 @@
     "url": "https://web.archive.org/web/20081015164600id_/http://www.dci.org/scores",
     "bytes": 55197
   },
+  "2009": {
+    "era": "cfm",
+    "note": "A June 2010 capture whose dropdown still listed the finished 2009 season (no in-season 2009 capture of the scores page exists in the Wayback Machine); the parser keeps only the 2009-dated rows.",
+    "timestamp": "20100616210639",
+    "original": "http://www.dci.org/scores/",
+    "url": "https://web.archive.org/web/20100616210639id_/http://www.dci.org/scores/",
+    "bytes": 70102
+  },
   "2010": {
     "era": "cfm",
     "timestamp": "20101223110151",

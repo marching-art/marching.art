@@ -10,7 +10,10 @@ const {
   normalizeCity, cityFromLocation, matchKey, matchKeyForEvent,
   expandCityDisplay, canonicalCity, canonicalLocation,
 } = require("./config");
-const { parseLabel, parseCfmDropdown, parseShowmonth, buildLocation } = require("./parse");
+const {
+  parseLabel, parseCfmDropdown, parseShowmonth, parseOtherScoresText,
+  buildLocation, loadManualRecords,
+} = require("./parse");
 const { buildIndex, planRenames } = require("./apply");
 
 describe("normalizeCity", () => {
@@ -74,6 +77,47 @@ describe("parseLabel", () => {
     const r = parseLabel("(DCI Division II & III) Coast Guard Open - Prelims, Grand Haven, MI -- August 3, 2001", 2001);
     assert.equal(r.showName, "Coast Guard Open - Prelims");
     assert.equal(r.city, "Grand Haven");
+  });
+});
+
+describe("parseOtherScoresText", () => {
+  const text = [
+    "Other Scores",
+    "August 1, 2003",
+    "(DCI) Eastern Classic, Allentown, PA",
+    "(DCI Division II & III) Tarboro, Finals - Tarboro, NC",
+    "June 18, 2003",
+    "(DCI Midwest) Harrison, Ohio, Harrison, OH",
+    "(DCI Midwest) Beauty and the Brass, Portage, MI",
+  ].join("\n");
+  const recs = parseOtherScoresText(text, 2003);
+
+  test("attaches the header date and parses the show + location", () => {
+    const ec = recs.find((r) => r.key === "2003-08-01|allentown");
+    assert.equal(ec.showName, "Eastern Classic");
+    assert.equal(ec.location, "Allentown, Pennsylvania");
+  });
+  test("drops city-echo lines with no real show name", () => {
+    // "Harrison, Ohio, Harrison, OH" -> show would echo the city -> dropped.
+    assert.equal(recs.some((r) => r.key === "2003-06-18|harrison"), false);
+  });
+  test("still parses a normal event under the same date header", () => {
+    assert.ok(recs.find((r) => r.key === "2003-06-16|portage"
+      || r.showName === "Beauty and the Brass"));
+  });
+});
+
+describe("loadManualRecords", () => {
+  const recs = loadManualRecords("2000");
+  test("reads the committed 2000 manual list into matchable records", () => {
+    assert.ok(recs.length > 0);
+    const normal = recs.find((r) => r.key === "2000-06-21|normal");
+    assert.equal(normal.showName, "DCI Central Illinois");
+    assert.equal(normal.location, "Normal, Illinois");
+    assert.equal(normal.source, "manual");
+  });
+  test("returns [] for a year with no manual entry", () => {
+    assert.deepEqual(loadManualRecords("1999"), []);
   });
 });
 
