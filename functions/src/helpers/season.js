@@ -456,6 +456,21 @@ async function startNewOffSeason() {
 
   await db.doc(`dci-data/${dataDocId}`).set({ corpsValues: offSeasonCorpsData });
 
+  // Enrich each stage with a running order + performance clock (heritage for
+  // regular shows, pool-synthesized for championships), rebased onto the
+  // off-season calendar so the live RunningOrder/NextPerformance UI works
+  // off-season too. Best-effort: a failure here must not block season creation.
+  try {
+    const { enrichOffSeasonSchedule } = require("./offSeasonHeritage");
+    await enrichOffSeasonSchedule(db, schedule, {
+      startDate,
+      pool: offSeasonCorpsData,
+      dataDocId,
+    });
+  } catch (error) {
+    logger.warn(`Off-season schedule heritage enrichment failed (non-fatal): ${error.message}`);
+  }
+
   // Write schedule to schedules collection (competitions array format)
   await writeScheduleToCollection(dataDocId, schedule);
 
