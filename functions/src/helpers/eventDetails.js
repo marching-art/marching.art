@@ -81,6 +81,11 @@ const TZ_ABBREV = {
 
 const DEFAULT_TIMEZONE = "America/New_York";
 
+const MONTH_INDEX = {
+  january: 0, february: 1, march: 2, april: 3, may: 4, june: 5,
+  july: 6, august: 7, september: 8, october: 9, november: 10, december: 11,
+};
+
 /**
  * Pull the two-letter US state out of a "City, ST" or "..., ST 95762" string.
  * @param {string} text
@@ -248,6 +253,109 @@ function parseEventDetail(html, event) {
 }
 
 /**
+ * Parse the event's calendar date from a detail page.
+ *
+ * The live enrichment path gets each event's date from the /events/ listing, but
+ * a historical backfill starts from a bare URL, so the date must come from the
+ * page itself. dci.org renders it in the hero as e.g.
+ *   <div class="inner-hero-inner"><p>Saturday, August 10, 2019 5:30 PM</p><h1>…</h1>
+ * We read the "Month D, YYYY" portion and return that day at UTC midnight, matching
+ * how the list scraper stores event.date (so parseEventDetail's getUTC* reads back
+ * the intended Y/M/D regardless of server timezone).
+ *
+ * @param {string} html
+ * @returns {string|null} ISO date at UTC midnight, or null if none found.
+ */
+function parseEventDate(html) {
+  const $ = cheerio.load(html);
+  const heroText = $(".inner-hero-inner p").first().text().trim();
+  const dateRe =
+    /(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2}),\s+(\d{4})/i;
+  // Prefer the hero paragraph; fall back to the whole document.
+  const match = heroText.match(dateRe) || $("body").text().match(dateRe);
+  if (!match) return null;
+  const monthIndex = MONTH_INDEX[match[1].toLowerCase()];
+  const day = parseInt(match[2], 10);
+  const year = parseInt(match[3], 10);
+  if (monthIndex === undefined || !day || !year) return null;
+  return new Date(Date.UTC(year, monthIndex, day)).toISOString();
+}
+
+/**
+ * Parse the real (unbranded) DCI event name from the detail page's hero <h1>.
+ * @param {string} html
+ * @returns {string|null}
+ */
+function parseEventName(html) {
+  const $ = cheerio.load(html);
+  const h1 = $(".inner-hero-inner h1").first().text().trim() || $("h1").first().text().trim();
+  return h1 || null;
+}
+
+/**
+ * Pull a clean "City, ST" location from the venue address block, if present.
+ * The address is a <br>-separated stack (Venue / Street / City, ST ZIP); cheerio's
+ * .text() would concatenate the lines with no separator ("StreetCity, ST"), so we
+ * split on <br> and read the last line that ends in ", ST".
+ * @param {string} html
+ * @returns {string|null}
+ */
+function parseEventLocation(html) {
+  const $ = cheerio.load(html);
+  const addressHtml = $(".event-location address").first().html();
+  if (!addressHtml) return null;
+  const lines = addressHtml
+    .split(/<br\s*\/?>/i)
+    .map((line) => line.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const match = lines[i].match(/^(.*,\s*[A-Z]{2})(?:\s+\d{5})?$/);
+    if (match) return match[1].trim();
+  }
+  return null;
+}
+
+/**
+ * Fetch + parse one event detail page for the HISTORICAL archive, starting from
+ * a bare URL (no list-supplied date/name/location). Reads the event date, real
+ * DCI name, and location from the page itself, then reuses parseEventDetail for
+ * timing + running order. Never throws — returns null on failure or when the page
+ * carries neither timing nor a lineup (e.g. an event with no posted schedule).
+ *
+ * @param {string} url
+ * @returns {Promise<object|null>} Normalized archive event, or null.
+ */
+async function fetchEventForArchive(url) {
+  if (!url) return null;
+  try {
+    const { data: html } = await axios.get(url, {
+      timeout: 20000,
+      headers: { "User-Agent": SCRAPER_USER_AGENT },
+    });
+    const date = parseEventDate(html);
+    const eventName = parseEventName(html);
+    const location = parseEventLocation(html);
+    const detail = parseEventDetail(html, { date, location });
+    if (!detail.startsAt && detail.lineup.length === 0) return null;
+    return {
+      url,
+      eventName,
+      date,
+      location,
+      venue: detail.venue,
+      timezone: detail.timezone,
+      gatesAt: detail.gatesAt,
+      startsAt: detail.startsAt,
+      scoresAt: detail.scoresAt,
+      lineup: detail.lineup,
+    };
+  } catch (error) {
+    logger.warn(`[EventDetails] Failed to archive ${url}: ${error.message}`);
+    return null;
+  }
+}
+
+/**
  * Fetch + parse one event detail page. Never throws — returns null on failure so
  * one bad page can't abort a schedule build.
  * @param {object} event - { url, date, location }
@@ -304,7 +412,11 @@ async function enrichEventsWithDetails(events, { concurrency = 5 } = {}) {
 module.exports = {
   enrichEventsWithDetails,
   fetchEventDetail,
+  fetchEventForArchive,
   parseEventDetail,
+  parseEventDate,
+  parseEventName,
+  parseEventLocation,
   resolveTimezone,
   zonedWallTimeToUtc,
   parseClock,
