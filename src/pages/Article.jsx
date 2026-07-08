@@ -30,7 +30,11 @@ import {
 import { getArticleEngagement } from '../api/functions';
 import { useSeasonStore } from '../store/seasonStore';
 import { useBodyScroll } from '../hooks/useBodyScroll';
-import { getCategoryConfig, formatArticleDate, cleanLocation } from '../components/Landing/newsFeedUtils';
+import {
+  getCategoryConfig,
+  formatArticleDate,
+  cleanLocation,
+} from '../components/Landing/newsFeedUtils';
 import ArticleDataSections from '../components/Articles/ArticleDataSections';
 import { resolveArticleById } from '../api/articles';
 import { useTickerData } from '../hooks/useTickerData';

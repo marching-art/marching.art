@@ -29,7 +29,7 @@ client:
 
 ## Go-live sequence (run in order)
 
-1. **Finish the live 2026 scrape** — scores *and* schedules. The nightly job
+1. **Finish the live 2026 scrape** — scores _and_ schedules. The nightly job
    already archives both; confirm `historical_schedules/2026` is populated.
 2. **Schedule backfill (2019+ real):** admin → Live Scores tab → **Start Schedule
    Scrape (All Years)**. Wait for the `dci-event-topic` workers to drain (watch
@@ -61,7 +61,7 @@ already-generated schedules are unaffected (regenerate to apply a change).
 
 - A show with no heritage match keeps its base fields; `RunningOrder` renders
   nothing for an empty lineup, and `NextPerformancePanel` is inert with no timing.
-- Pre-2019 shows get a *plausible* clock (end-anchored by field size), not their
+- Pre-2019 shows get a _plausible_ clock (end-anchored by field size), not their
   historical time-of-day — intentional; 2019+ always use the real scraped times.
 - When a pool corps has no `resultDays` (e.g. live season), highlights degrade to
   full — the simple "your pick is performing" star.
@@ -80,16 +80,16 @@ cd functions && npm run serve      # firebase emulators (functions + firestore)
 
 ## Key files
 
-| Concern | File |
-|---|---|
-| Timing/order model (calibrated) | `functions/src/helpers/scheduleModel.js` |
-| Archive merge + precedence | `functions/src/helpers/historicalSchedules.js` |
-| Learned build | `functions/src/helpers/learnedSchedules.js` |
-| Off-season enrichment + flag | `functions/src/helpers/offSeasonHeritage.js` |
-| Pool result-day index | `functions/src/helpers/pickResultDays.js` |
-| Coverage audit | `functions/src/helpers/scheduleCoverage.js` |
-| Highlight (client) | `src/utils/pickHighlights.js`, `src/components/Schedule/RunningOrder.jsx` |
-| Calibration report | `docs/SCHEDULE_MODEL_CALIBRATION.md` |
+| Concern                         | File                                                                      |
+| ------------------------------- | ------------------------------------------------------------------------- |
+| Timing/order model (calibrated) | `functions/src/helpers/scheduleModel.js`                                  |
+| Archive merge + precedence      | `functions/src/helpers/historicalSchedules.js`                            |
+| Learned build                   | `functions/src/helpers/learnedSchedules.js`                               |
+| Off-season enrichment + flag    | `functions/src/helpers/offSeasonHeritage.js`                              |
+| Pool result-day index           | `functions/src/helpers/pickResultDays.js`                                 |
+| Coverage audit                  | `functions/src/helpers/scheduleCoverage.js`                               |
+| Highlight (client)              | `src/utils/pickHighlights.js`, `src/components/Schedule/RunningOrder.jsx` |
+| Calibration report              | `docs/SCHEDULE_MODEL_CALIBRATION.md`                                      |
 
 ## Coverage ceilings (expected, not bugs)
 
