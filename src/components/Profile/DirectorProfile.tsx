@@ -58,6 +58,7 @@ import {
 } from './directorProfileHelpers';
 import type { SeasonHistoryEntry } from './directorProfileHelpers';
 import { getEquippedCosmetic } from '../../utils/cosmetics';
+import { getXPProgress } from '../../utils/captionPricing';
 import SeasonHistorySection from './SeasonHistorySection';
 
 // =============================================================================
@@ -381,10 +382,19 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                     {getDisplayTitle(profile)}
                   </span>
                 </div>
-                <span className="text-[10px] text-gray-500">
+                <span
+                  className="flex items-center gap-1.5 text-[10px] text-gray-500"
+                  title={`${getXPProgress(profile.xp || 0).current}/${getXPProgress(profile.xp || 0).needed} XP to Level ${(profile.xpLevel || 1) + 1}`}
+                >
                   Lv{' '}
                   <span className="font-bold text-gray-300 font-data tabular-nums">
                     {profile.xpLevel || 1}
+                  </span>
+                  <span className="inline-block w-10 h-1 bg-[#2a2a2a] rounded-full overflow-hidden align-middle">
+                    <span
+                      className="block h-full bg-[#0057B8]"
+                      style={{ width: `${getXPProgress(profile.xp || 0).percentage}%` }}
+                    />
                   </span>
                 </span>
                 {equippedTitle && <ShopTitleFlair item={equippedTitle} />}

@@ -260,9 +260,11 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
       success: true,
       message,
       loginStreak: result.loginStreak,
+      streakBroken: result.streakBroken,
       xpAwarded: result.xpAwarded,
       coinAwarded: result.coinAwarded,
       milestoneReached: result.milestoneReached,
+      levelsGained: result.levelsGained,
       newLevel: result.newLevel,
       classUnlocked: result.classUnlocked,
     };

@@ -11,6 +11,7 @@ import {
   CLASS_DISPLAY_NAMES,
 } from './constants';
 import { getWeeksUntilUnlock } from '../../../utils/classUnlockTime';
+import { getXPProgress } from '../../../utils/captionPricing';
 import NextDeadlineChip from './NextDeadlineChip';
 
 // Helper to get next class unlock info. Everything speaks canonical class
@@ -64,6 +65,7 @@ const ControlBar = memo(
     const streak = profile?.engagement?.loginStreak || 0;
     const corpsCoin = profile?.corpsCoin || 0;
     const level = profile?.xpLevel || 1;
+    const xpProgress = getXPProgress(profile?.xp || 0);
 
     // Calculate next class unlock
     const nextUnlock = getNextClassUnlock(unlockedClasses, level, corpsCoin, profile?.createdAt);
@@ -159,11 +161,29 @@ const ControlBar = memo(
               </button>
             )}
 
-            {/* Level */}
-            <div className="flex items-center">
+            {/* Level + XP-to-next-level progress (the pill used to be a bare
+                number — the game's most basic progression readout was
+                invisible) */}
+            <div
+              className="flex items-center gap-1.5"
+              title={`${xpProgress.current}/${xpProgress.needed} XP to Level ${xpProgress.nextLevel}`}
+            >
               <span className="text-[10px] font-bold uppercase px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded-sm">
                 Lvl {level}
               </span>
+              <div
+                className="w-12 h-1.5 bg-[#2a2a2a] rounded-full overflow-hidden"
+                role="progressbar"
+                aria-valuenow={xpProgress.current}
+                aria-valuemin={0}
+                aria-valuemax={xpProgress.needed}
+                aria-label={`XP progress to Level ${xpProgress.nextLevel}`}
+              >
+                <div
+                  className="h-full bg-purple-500 transition-all"
+                  style={{ width: `${xpProgress.percentage}%` }}
+                />
+              </div>
             </div>
 
             {/* CorpsCoin Wallet — opens transaction history + earning guide */}

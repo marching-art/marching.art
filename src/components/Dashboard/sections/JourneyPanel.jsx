@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { completeJourneyStep, joinRookieLeague } from '../../../api/functions';
+import { showXPGain, showCoinGain } from '../../xpFeedbackTrigger';
 
 const STEPS = [
   {
@@ -150,6 +151,8 @@ const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept })
         const parts = [`+${result.data.xpAwarded} XP`];
         if (result.data.coinAwarded > 0) parts.push(`+${result.data.coinAwarded} CC`);
         toast.success(`${step.title} — ${parts.join(' ')}`);
+        if (result.data.xpAwarded > 0) showXPGain(result.data.xpAwarded, step.title);
+        if (result.data.coinAwarded > 0) showCoinGain(result.data.coinAwarded);
       }
     } catch (error) {
       toast.error(error.message || 'Could not complete step');
@@ -169,6 +172,8 @@ const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept })
         toast.success(
           `Find Your Circuit — +${claim.data.xpAwarded} XP +${claim.data.coinAwarded} CC`
         );
+        if (claim.data.xpAwarded > 0) showXPGain(claim.data.xpAwarded, 'Find Your Circuit');
+        if (claim.data.coinAwarded > 0) showCoinGain(claim.data.coinAwarded);
       }
     } catch (error) {
       toast.error(error.message || 'Could not join the rookie league');

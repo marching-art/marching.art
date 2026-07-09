@@ -234,6 +234,7 @@ export interface ClaimDailyLoginResult {
   message: string;
   loginStreak: number;
   alreadyClaimed?: boolean;
+  streakBroken?: boolean;
   xpAwarded?: number;
   coinAwarded?: number;
   milestoneReached?: {

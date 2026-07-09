@@ -23,6 +23,7 @@ import {
   Search,
 } from 'lucide-react';
 import { CAPTIONS, CLASSES, GLOSSARY, FAQ } from './howToPlayData';
+import { XP_PER_LEVEL, XP_SOURCE_GUIDE, UNLOCK_PATH_GUIDE } from '../data/progressionGuide';
 
 // =============================================================================
 // CONSTANTS
@@ -147,26 +148,34 @@ const BasicsTab = () => (
       </div>
     </SectionCard>
 
-    {/* XP & Progression */}
+    {/* XP & Progression — generated from src/data/progressionGuide.js, which
+        is pinned by test to the backend pay tables so it can never drift */}
     <SectionCard title="XP & Leveling" icon={TrendingUp}>
-      <p className="mb-3">Earn XP to level up and unlock higher classes.</p>
-      <div className="grid grid-cols-2 gap-2 mb-3">
-        <div className="bg-black/30 rounded-sm p-2 text-center">
-          <Zap className="w-4 h-4 text-yellow-500 mx-auto mb-1" />
-          <p className="text-xs text-gray-400">Daily Check-in</p>
-        </div>
-        <div className="bg-black/30 rounded-sm p-2 text-center">
-          <Trophy className="w-4 h-4 text-yellow-500 mx-auto mb-1" />
-          <p className="text-xs text-gray-400">Competition Scores</p>
-        </div>
-        <div className="bg-black/30 rounded-sm p-2 text-center">
-          <Award className="w-4 h-4 text-yellow-500 mx-auto mb-1" />
-          <p className="text-xs text-gray-400">Achievements</p>
-        </div>
-        <div className="bg-black/30 rounded-sm p-2 text-center">
-          <Star className="w-4 h-4 text-yellow-500 mx-auto mb-1" />
-          <p className="text-xs text-gray-400">Streak Bonuses</p>
-        </div>
+      <p className="mb-3">
+        Every {XP_PER_LEVEL.toLocaleString()} XP is one director level. Levels never reset, and
+        each one brings a new title on the ladder from Rookie to Eternal. Here is every way to
+        earn XP:
+      </p>
+      <div className="bg-black/30 rounded-sm p-3 mb-3">
+        {XP_SOURCE_GUIDE.map((source) => (
+          <DataRow
+            key={source.id}
+            label={source.label}
+            value={typeof source.xp === 'number' ? `${source.xp} XP` : source.xp}
+          />
+        ))}
+      </div>
+      <p className="mb-2 text-xs text-gray-400">
+        <Zap className="w-3 h-3 inline mr-1 text-yellow-500" />
+        Classes unlock three different ways — any one of them is enough:
+      </p>
+      <div className="space-y-1.5">
+        {UNLOCK_PATH_GUIDE.map((path) => (
+          <div key={path.id} className="bg-black/30 rounded-sm p-2">
+            <p className="text-xs font-bold text-gray-300">{path.label}</p>
+            <p className="text-[11px] text-gray-500">{path.detail}</p>
+          </div>
+        ))}
       </div>
     </SectionCard>
 

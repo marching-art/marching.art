@@ -2,8 +2,8 @@
 // ACHIEVEMENT MODAL - ESPN DATA STYLE
 // =============================================================================
 
-import React from 'react';
-import { Trophy, Star, Crown, Award, Medal, Flame, X } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { Trophy, Star, Crown, Award, Medal, Flame, X, Coins } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 
@@ -46,6 +46,20 @@ const RARITY_STYLES = {
 const AchievementModal = ({ onClose, achievements, newAchievement }) => {
   // Close on Escape key
   useEscapeKey(onClose);
+
+  // A fresh unlock deserves a pop, not just a list row (lazy-loaded confetti,
+  // same pattern as SeasonRecapModal/ClassUnlockModal).
+  useEffect(() => {
+    if (!newAchievement) return;
+    let cancelled = false;
+    import('canvas-confetti').then(({ default: confetti }) => {
+      if (cancelled) return;
+      confetti({ particleCount: 80, spread: 70, origin: { y: 0.4 }, zIndex: 200 });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [newAchievement]);
 
   const sortedAchievements = [...achievements].sort(
     (a, b) => new Date(b.earnedAt) - new Date(a.earnedAt)
@@ -109,6 +123,11 @@ const AchievementModal = ({ onClose, achievements, newAchievement }) => {
                   <div>
                     <h3 className="text-sm font-bold text-white">{newAchievement.title}</h3>
                     <p className="text-xs text-gray-400">{newAchievement.description}</p>
+                    {newAchievement.ccReward > 0 && (
+                      <p className="text-[11px] font-bold text-yellow-500 flex items-center gap-1 mt-1">
+                        <Coins className="w-3 h-3" />+{newAchievement.ccReward} CC
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

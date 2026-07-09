@@ -88,7 +88,11 @@ export const FAQ = [
   },
   {
     q: 'How do I unlock higher classes?',
-    a: 'Reach the required level (3/5/10) OR spend CorpsCoin to unlock early. Classes remain unlocked permanently.',
+    a: 'Three ways, any one is enough: reach the required level (3/5/10), wait for the automatic account-age unlock (5/12/19 weeks after registration), or spend CorpsCoin (1,000/2,500/5,000 CC) to skip ahead. Classes remain unlocked permanently.',
+  },
+  {
+    q: 'Why do some Level 1 directors have multiple classes?',
+    a: 'Classes and levels are separate tracks. A class unlocks by level, by account age, or by CorpsCoin — so a director can hold every class while still climbing levels. Level is pure XP.',
   },
   {
     q: 'Can I compete in multiple classes?',

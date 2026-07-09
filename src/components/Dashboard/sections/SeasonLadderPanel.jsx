@@ -9,6 +9,7 @@ import React, { memo, useMemo, useState } from 'react';
 import { TrendingUp, Gift, Lock, Award } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { claimLadderTier } from '../../../api/functions';
+import { showCoinGain } from '../../xpFeedbackTrigger';
 
 const TIERS = [
   { tier: 1, xp: 150, coin: 50 },
@@ -57,6 +58,7 @@ const SeasonLadderPanel = memo(({ profile, seasonUid }) => {
       if (result.data.success && !result.data.alreadyClaimed) {
         const extra = result.data.grantItem ? ' + Laureate title unlocked!' : '';
         toast.success(`Tier ${tier.tier} claimed — +${result.data.coinAwarded} CC${extra}`);
+        if (result.data.coinAwarded > 0) showCoinGain(result.data.coinAwarded, `Ladder Tier ${tier.tier}`);
       }
     } catch (error) {
       toast.error(error.message || 'Could not claim tier');
