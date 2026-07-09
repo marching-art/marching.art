@@ -1,3 +1,5 @@
+> **⚠️ HISTORICAL SNAPSHOT (December 2025) — issues resolved.** A point-in-time security/code audit; the items it flags (hardcoded Firebase key, admin UID, console statements) were fixed. Retained for history only — do not treat its findings as open. Current strategy docs live in `docs/`.
+
 # Code Audit Report - marching.art
 
 **Date:** December 14, 2025

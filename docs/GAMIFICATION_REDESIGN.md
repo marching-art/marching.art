@@ -1,3 +1,5 @@
+> **⚠️ LARGELY IMPLEMENTED (as of July 2026).** The XP rebalance, daily-login XP, streak milestones + visibility, streak freeze, and class-unlock modal proposed here have shipped — the "proposed" XP rates are now the live values. Superseded as an active plan by `docs/ENGAGEMENT_ECONOMY_REVIEW.md`, `docs/LIFELONG_GAMIFICATION_ROADMAP.md`, and `docs/PROGRESSION_ECONOMY_REDESIGN.md`. Retained for its analysis and rationale.
+
 # Gamification System Redesign
 
 ## From Good to World-Class

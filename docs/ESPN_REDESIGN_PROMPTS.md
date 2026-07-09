@@ -1,3 +1,5 @@
+> **✅ COMPLETED — historical.** This one-time sequential prompt series drove the ESPN-style redesign, which is implemented (the design system is live in `tailwind.config.cjs` and throughout the app). Retained as a record of that effort; not an active plan.
+
 # ESPN Fantasy Sports Redesign - Implementation Prompts
 
 ## Overview

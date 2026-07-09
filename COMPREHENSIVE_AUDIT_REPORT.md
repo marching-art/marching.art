@@ -1,3 +1,5 @@
+> **⚠️ HISTORICAL SNAPSHOT (December 2025) — superseded.** This point-in-time audit predates the July 2026 work. Many "critical gaps" it flags (email + push notifications, streak visibility, season-end payouts, CorpsCoin sinks) have since shipped. For the current picture see `docs/PRODUCT_ANALYSIS_UX.md` (product/UX) and `docs/ENGAGEMENT_ECONOMY_REVIEW.md` + `docs/LIFELONG_GAMIFICATION_ROADMAP.md` (economy/gamification). Retained for history only.
+
 # Comprehensive Build Audit Report
 
 ## marching.art — Path to World-Class

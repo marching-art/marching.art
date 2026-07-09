@@ -1,3 +1,5 @@
+> **⚠️ HISTORICAL SNAPSHOT (December 2025) — superseded.** A point-in-time priority list; most items are marked FIXED and its "future features" backlog (Stripe, Battle Pass, execution/equipment systems) is abandoned — marching.art is donation-supported with no integrated purchases, and those game systems were cut. Current strategy lives in `docs/` (LIFELONG_GAMIFICATION_ROADMAP, PROGRESSION_ECONOMY_REDESIGN, DASHBOARD_UNIFICATION, ENGAGEMENT_ECONOMY_REVIEW, LEAGUES_ENGAGEMENT_STRATEGY, PRODUCT_ANALYSIS_UX). Retained for history only.
+
 # marching.art Priority List
 
 > Generated: December 2025

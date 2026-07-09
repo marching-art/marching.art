@@ -1,3 +1,5 @@
+> **✅ IMPLEMENTED (as of 2026).** The YouTube video feature described here has shipped (`src/components/Sidebar/YouTubeModal.jsx`, `src/hooks/useYoutubeSearch.js`, `src/components/YouTubeIcon.jsx`). Retained as the original design/reference for the integration.
+
 # YouTube API Implementation Design Document
 
 ## Application: marching.art
