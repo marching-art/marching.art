@@ -59,6 +59,8 @@ const CALLABLES = [
   ["leagues", "updateMatchupResults", "unauthenticated"],
   ["leagues", "postLeagueMessage", "unauthenticated"],
   ["leaguePools", "joinLeaguePool", "unauthenticated"],
+  ["prestige", "purchaseRetirementPlaque", "unauthenticated"],
+  ["prestige", "purchaseHallBanner", "unauthenticated"],
   ["leagueInvitations", "inviteDirectorToLeague", "unauthenticated"],
   ["leagueInvitations", "respondToLeagueInvitation", "unauthenticated"],
   ["leagueInvitations", "rescindLeagueInvitation", "unauthenticated"],

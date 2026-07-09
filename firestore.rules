@@ -29,13 +29,18 @@ function isOwner(userId) {
 // journey is the First Season Journey completion ledger (each step pays
 // XP + coin via completeJourneyStep) — all server-only like the rest of
 // the economy.
+// retiredCorps carries purchased memorial plaques (purchaseRetirementPlaque
+// debits CorpsCoin for them), so a client-writable array would make plaques
+// forgeable for free; every retire/unretire mutation already goes through
+// callables.
 function touchesProtectedProfileFields() {
   return request.resource.data.diff(resource.data).affectedKeys().hasAny([
     'corpsCoin', 'xp', 'xpLevel', 'userTitle', 'unlockedClasses',
     'stats', 'trophies', 'username', 'createdAt', 'uid',
     'lifetimeStats', 'activeSeasonId', 'lastScoredDay', 'challenges',
     'predictions', 'predictionStats', 'achievements', 'lastRewardedLevel',
-    'journey', 'cosmetics', 'seasonLadder', 'xpAtSeasonStart'
+    'journey', 'cosmetics', 'seasonLadder', 'xpAtSeasonStart',
+    'retiredCorps'
   ]);
 }
 

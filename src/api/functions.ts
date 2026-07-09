@@ -320,6 +320,16 @@ export const sponsorShow = createCallable<
   { success: boolean; message: string; newBalance: number; price: number }
 >('sponsorShow');
 
+export const purchaseRetirementPlaque = createCallable<
+  { retiredIndex: number; corpsName: string; tier: string },
+  { success: boolean; tier: string; newBalance: number; message: string }
+>('purchaseRetirementPlaque');
+
+export const purchaseHallBanner = createCallable<
+  { seasonId: string; corpsClass: string; message: string },
+  { success: boolean; newBalance: number; message: string }
+>('purchaseHallBanner');
+
 export const joinRookieLeague = createCallable<
   void,
   {

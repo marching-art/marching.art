@@ -136,6 +136,8 @@ export interface RetiredCorps {
   retiredAt: string;
   finalScore?: number;
   seasonsPlayed?: number;
+  /** Purchased memorial plaque (purchaseRetirementPlaque callable) */
+  plaque?: { tier: 'bronze' | 'silver' | 'gold'; purchasedAt: string };
 }
 
 export interface EngagementData {
