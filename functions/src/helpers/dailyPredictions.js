@@ -93,34 +93,81 @@ async function fetchRecentRecaps(db, seasonUid) {
 }
 
 /**
- * Find a director's most recent competition result for a corps class across a
- * set of recap days. Mirrors the client's useRecentResults notion of
- * recentResults[0]: the first result found scanning days newest-first.
+ * Find a director's most recent competition results for a corps class across
+ * a set of recap days, newest first. Mirrors the client's useRecentResults
+ * ordering (recentResults[0] = latest).
  *
  * @param {Array<Object>} recapDocs
  * @param {string} uid
  * @param {string} corpsClass
- * @returns {{eventName: string, score: (number|null), placement: (number|null)}|null}
+ * @param {number} [limit]
+ * @returns {Array<{eventName: string, score: (number|null), placement: (number|null)}>}
  */
-function findLatestResultForCorps(recapDocs, uid, corpsClass) {
+function findRecentResultsForCorps(recapDocs, uid, corpsClass, limit = 5) {
   const sorted = [...recapDocs].sort(
     (a, b) => (b.offSeasonDay || 0) - (a.offSeasonDay || 0)
   );
+  const results = [];
   for (const recap of sorted) {
     for (const show of recap.shows || []) {
       const userResult = (show.results || []).find(
         (r) => r.uid === uid && r.corpsClass === corpsClass
       );
       if (userResult) {
-        return {
+        results.push({
           eventName: show.eventName || show.name || "Show",
           score: userResult.totalScore ?? null,
           placement: userResult.placement ?? null,
-        };
+        });
+        if (results.length >= limit) return results;
       }
     }
   }
-  return null;
+  return results;
+}
+
+/**
+ * A director's most recent result for a corps class — recentResults[0].
+ */
+function findLatestResultForCorps(recapDocs, uid, corpsClass) {
+  return findRecentResultsForCorps(recapDocs, uid, corpsClass, 1)[0] || null;
+}
+
+/**
+ * Server-authoritative threshold for a question, derived from the director's
+ * recent recap results with EXACTLY the client's buildQuestions math
+ * (src/utils/dailyPredictions.js). Returns null when the question isn't
+ * available for this history — fewer than two results overall, fewer than
+ * two scores for the score-based lines, or nowhere to climb for ss-improve.
+ *
+ * This exists because resolution trusts the stored threshold: a pick saved
+ * with a client-chosen threshold of -1 makes "Over" a guaranteed win, which
+ * the league pools would turn into draining leaguemates' escrowed antes.
+ * submitPrediction stores THIS value and rejects material client drift.
+ */
+function deriveQuestionThreshold(questionId, recentResults) {
+  if (!recentResults || recentResults.length < 2) return null;
+  const scores = recentResults.map((r) => r.score).filter(Boolean);
+  switch (questionId) {
+    case "over-under": {
+      if (scores.length < 2) return null;
+      const avg =
+        scores.slice(0, 3).reduce((s, v) => s + v, 0) / Math.min(scores.length, 3);
+      return Math.round(avg * 10) / 10;
+    }
+    case "beat-prev":
+      return scores.length < 2 ? null : scores[0];
+    case "podium":
+      return 3;
+    case "ss-improve": {
+      const lastPlacement = recentResults
+        .map((r) => r.placement)
+        .find((p) => typeof p === "number" && p > 0);
+      return typeof lastPlacement === "number" && lastPlacement > 1 ? lastPlacement : null;
+    }
+    default:
+      return null;
+  }
 }
 
 /**
@@ -210,7 +257,9 @@ module.exports = {
   PREDICTION_QUESTION_IDS,
   SCORE_FREE_QUESTION_IDS,
   fetchRecentRecaps,
+  findRecentResultsForCorps,
   findLatestResultForCorps,
+  deriveQuestionThreshold,
   resolveBucket,
   pruneOldPredictions,
 };

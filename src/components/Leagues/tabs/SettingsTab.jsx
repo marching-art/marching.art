@@ -386,7 +386,8 @@ const SettingsTab = ({ league, userProfile: _userProfile, currentWeek = 1, onBac
           <div className="px-4 py-3 flex items-center justify-between">
             <span className="text-sm text-gray-400">Prize Pool</span>
             <span className="text-sm font-bold text-yellow-500">
-              {(league.settings?.prizePool || 1000).toLocaleString()} CC
+              {/* Escrowed entry fees only — no phantom seeded pool */}
+              {(league.settings?.prizePool || 0).toLocaleString()} CC
             </span>
           </div>
           <div className="px-4 py-3 flex items-center justify-between">

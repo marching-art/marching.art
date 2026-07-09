@@ -145,7 +145,10 @@ describe("entrantHadPerfectDay", () => {
           corpsClass: "worldClass",
           resolved: false,
           snapshotEvent: "Show A",
-          picks: { podium: { pick: "Yes", threshold: 3 } },
+          picks: {
+            podium: { pick: "Yes", threshold: 3 },
+            "over-under": { pick: "Over", threshold: 70 },
+          },
         },
       },
     };
@@ -161,6 +164,45 @@ describe("entrantHadPerfectDay", () => {
       },
     ];
     assert.equal(entrantHadPerfectDay("u", profile, GAME_DAY, recapDays), true);
+  });
+
+  test("a single-pick perfect day never wins the pool (min 2 answered)", () => {
+    // Personal perfect-day bonus accepts one pick; pool wins take other
+    // members' antes, so a one-question coin-flip is excluded.
+    const onePickResolved = {
+      predictions: {
+        [GAME_DAY]: {
+          corpsClass: "worldClass",
+          resolved: true,
+          results: { podium: { isCorrect: true } },
+          picks: { podium: { pick: "Yes" } },
+        },
+      },
+    };
+    assert.equal(entrantHadPerfectDay("u", onePickResolved, GAME_DAY, []), false);
+
+    const onePickUnresolved = {
+      predictions: {
+        [GAME_DAY]: {
+          corpsClass: "worldClass",
+          resolved: false,
+          snapshotEvent: "Show A",
+          picks: { podium: { pick: "Yes", threshold: 3 } },
+        },
+      },
+    };
+    const recapDays = [
+      {
+        offSeasonDay: 10,
+        shows: [
+          {
+            eventName: "Show B",
+            results: [{ uid: "u", corpsClass: "worldClass", totalScore: 80, placement: 2 }],
+          },
+        ],
+      },
+    ];
+    assert.equal(entrantHadPerfectDay("u", onePickUnresolved, GAME_DAY, recapDays), false);
   });
 });
 

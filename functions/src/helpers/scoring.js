@@ -445,7 +445,18 @@ async function processAndArchiveOffSeasonScoresLogic({ force = false } = {}) {
     // --- END: CHAMPIONSHIP WEEK AUTO-ENROLLMENT & PROGRESSION LOGIC ---
 
     if (!dayEventData || !dayEventData.shows || dayEventData.shows.length === 0) {
-      logger.info(`No shows for day ${scoredDay}. Nothing to process.`);
+      logger.info(`No shows for day ${scoredDay}. Nothing to score.`);
+      // A dark day still has obligations: members may have bought into
+      // league pools (joinLeaguePool doesn't require shows), and if the
+      // dark day lands on a week boundary the whole week's matchup and
+      // participation payouts are due. Skipping these here stranded pool
+      // antes in escrow forever and silently dropped week payouts — and
+      // the completed guard means no retry would ever pick them up.
+      await settleLeaguePoolsForDay(db, seasonData);
+      if (scoredDay % 7 === 0) {
+        await payWeeklyParticipationXP(scoredDay / 7, seasonData, db);
+        await processWeeklyMatchups(scoredDay / 7, seasonData, db);
+      }
       // Empty scored day (15–49): publish a season-to-date summary article so
       // the news feed has something on a day the 5-article batch can't run.
       await publishSeasonSummaryRequest({
@@ -594,7 +605,16 @@ async function scoreLiveSeasonDay(db, scoredDay, seasonData) {
   const dayEventData = await getScheduleDay(seasonData.seasonUid, scoredDay);
 
   if (!dayEventData || !dayEventData.shows || dayEventData.shows.length === 0) {
-    logger.info(`No shows for day ${scoredDay}. Nothing to process.`);
+    logger.info(`No shows for day ${scoredDay}. Nothing to score.`);
+    // A dark day still has obligations — league pool settlement and, on a
+    // week boundary, the week's matchup/participation payouts (live seasons
+    // routinely have dark days, so this path is COMMON here). Skipping them
+    // stranded pool antes and dropped week payouts with no retry possible.
+    await settleLeaguePoolsForDay(db, seasonData);
+    if (scoredDay % 7 === 0) {
+      await payWeeklyParticipationXP(scoredDay / 7, seasonData, db);
+      await processWeeklyMatchups(scoredDay / 7, seasonData, db);
+    }
     // Empty scored day (15–49): publish a season-to-date summary article so the
     // news feed has something on a day the 5-article batch can't run. This is
     // the common case for the summary — live seasons routinely have dark days.

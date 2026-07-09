@@ -208,8 +208,11 @@ describe("archiveAndResetProfiles participation gate", () => {
     assert.equal(update.pendingSeasonRecap.results.length, 1);
     assert.equal(update.pendingSeasonRecap.results[0].corpsClass, "worldClass");
 
-    // Completion XP paid for the participant only: placement 1 → top10 (500)
-    assert.equal(update.xp, 100 + 500);
+    // Completion XP paid for the participant only: placement 1 → top10 (500),
+    // written as an INCREMENT so XP earned concurrently between the profile
+    // snapshot and the chunked batch commit is never clobbered.
+    assert.equal(update.xp.operand, 500);
+    assert.equal(update.xp.constructor.name, "NumericIncrementTransform");
 
     // Champion finish bonus (placement 1 → 1000 CC) via increment
     assert.ok(update.corpsCoin, "finish bonus should be paid");
@@ -372,11 +375,19 @@ describe("archiveSeasonResultsLogic", () => {
     const leagueWrite = writes.find((w) => w.path === `${leaguesPath}/league-1`);
     assert.ok(leagueWrite, "league champions should be updated");
 
-    // Winner (alice, higher score) gets the catalog-shaped achievement + CC
+    // Winner (alice, higher score) gets the catalog-shaped achievement + CC.
+    // The id is keyed per league AND season so multi-league champions earn
+    // distinct achievements instead of duplicate entries under one id.
     const achievementWrite = writes.find(
       (w) => w.path === profilePath("alice") && w.data?.achievements
     );
     assert.ok(achievementWrite, "winner should receive the achievement");
+    assert.ok(
+      JSON.stringify(achievementWrite.data.achievements).includes(
+        "league_champion_league-1_old-season"
+      ),
+      "achievement id must be keyed per league + season"
+    );
     assert.ok(
       achievementWrite.data.corpsCoin,
       "achievement CC should be paid with the achievement"
@@ -387,6 +398,14 @@ describe("archiveSeasonResultsLogic", () => {
       (w) => w.path === profilePath("alice") && w.data?.corpsCoin && !w.data?.achievements
     );
     assert.ok(poolWrite, "prize pool should be paid to the winner");
+
+    // The escrow is drained in the same batch — without this the same pool
+    // would be re-minted to every future season's champion.
+    const drainWrite = writes.find(
+      (w) => w.path === `${leaguesPath}/league-1` && w.data?.["settings.prizePool"]
+    );
+    assert.ok(drainWrite, "prize pool must be drained on payout");
+    assert.equal(drainWrite.data["settings.prizePool"].operand, -500);
     const bobPayout = writes.find(
       (w) => w.path === profilePath("bob") && w.data?.corpsCoin
     );

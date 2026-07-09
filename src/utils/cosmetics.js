@@ -176,10 +176,13 @@ export function isOwned(profile, itemId) {
 /**
  * True when an item can be purchased right now: evergreen items always,
  * seasonal items only while the matching season type is running. Ownership
- * and equipping are never gated — only the register.
+ * and equipping are never gated — only the register. An unknown/unloaded
+ * season status (null) counts as available so the shop doesn't flash the
+ * "returns next season" state before the season store hydrates — the server
+ * enforces the real gate on purchase either way.
  */
 export function isSeasonallyAvailable(item, seasonStatus) {
-  return !item?.seasonal || item.seasonal === seasonStatus;
+  return !item?.seasonal || seasonStatus == null || item.seasonal === seasonStatus;
 }
 
 /** Short badge label for a seasonal item ("Live season only" / etc.) */

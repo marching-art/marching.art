@@ -128,18 +128,25 @@ describe("submitPrediction", () => {
     );
   });
 
-  test("saves a pick to the day's bucket", async () => {
+  // Two recent results: scores [73, 72] newest-first → over-under line
+  // round(avg*10)/10 = 72.5, beat-prev canonical = 73, snapshot "Show B".
+  const twoResultRecaps = () => [
+    recapDay(2, "Show B", 73, 2),
+    recapDay(1, "Show A", 72, 3),
+  ];
+
+  test("saves a pick with the SERVER-derived threshold and snapshot", async () => {
     const docs = new Map([[profilePath("u1"), baseProfile()]]);
-    const { db, writes } = makeFakeDb(docs);
+    const { db, writes } = makeFakeDb(docs, twoResultRecaps());
     setDbForTesting(db);
 
     const result = await submitPrediction.run(
       authedRequest("u1", {
         questionId: "over-under",
         pick: "Over",
-        threshold: 72.5,
+        threshold: 72.5, // matches the canonical line
         corpsClass: "worldClass",
-        snapshotEvent: "Opening Show",
+        snapshotEvent: "Client Claims Something Else",
       })
     );
 
@@ -148,9 +155,58 @@ describe("submitPrediction", () => {
     assert.equal(writes.length, 1);
     const bucket = writes[0].data.predictions[gameDay];
     assert.equal(bucket.corpsClass, "worldClass");
-    assert.equal(bucket.snapshotEvent, "Opening Show");
+    // snapshotEvent comes from the recaps, never from the client — a forged
+    // null/stale snapshot would disable resolveBucket's freshness guard.
+    assert.equal(bucket.snapshotEvent, "Show B");
     assert.equal(bucket.resolved, false);
     assert.deepEqual(bucket.picks["over-under"], { pick: "Over", threshold: 72.5 });
+  });
+
+  test("accepts a pick without a client threshold and stores the canonical one", async () => {
+    const docs = new Map([[profilePath("u1"), baseProfile()]]);
+    const { db, writes } = makeFakeDb(docs, twoResultRecaps());
+    setDbForTesting(db);
+
+    const result = await submitPrediction.run(
+      authedRequest("u1", { questionId: "beat-prev", pick: "Yes", corpsClass: "worldClass" })
+    );
+    assert.equal(result.success, true);
+    const bucket = writes[0].data.predictions[gameDay];
+    assert.deepEqual(bucket.picks["beat-prev"], { pick: "Yes", threshold: 73 });
+  });
+
+  test("rejects a forged threshold (the 'Over -1' guaranteed win)", async () => {
+    const docs = new Map([[profilePath("u1"), baseProfile()]]);
+    const { db, writes } = makeFakeDb(docs, twoResultRecaps());
+    setDbForTesting(db);
+
+    await assert.rejects(
+      submitPrediction.run(
+        authedRequest("u1", {
+          questionId: "over-under",
+          pick: "Over",
+          threshold: -1,
+          corpsClass: "worldClass",
+        })
+      ),
+      /out of date/i
+    );
+    assert.equal(writes.length, 0);
+  });
+
+  test("rejects picks when the director has fewer than two scored results", async () => {
+    const docs = new Map([[profilePath("u1"), baseProfile()]]);
+    // Only one result — buildQuestions would show nothing on the client.
+    const { db, writes } = makeFakeDb(docs, [recapDay(1, "Show A", 72, 3)]);
+    setDbForTesting(db);
+
+    await assert.rejects(
+      submitPrediction.run(
+        authedRequest("u1", { questionId: "over-under", pick: "Over", corpsClass: "worldClass" })
+      ),
+      /isn't available yet/i
+    );
+    assert.equal(writes.length, 0);
   });
 
   test("does not overwrite an already-answered question", async () => {

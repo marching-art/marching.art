@@ -43,19 +43,30 @@ const DirectorsReport = memo(
   const loginDone = !!lastLogin && getGameDay(lastLogin) === gameDay;
   const streak = profile?.engagement?.loginStreak || 0;
 
-  // --- Challenges: same server-authoritative state DailyChallenges renders ---
-  const challenges = useMemo(() => getChallengesForGameDay(gameDay), [gameDay]);
-  const challengesDone = useMemo(() => {
-    const bucket = profile?.challenges?.[gameDay] || [];
-    const ids = new Set(bucket.filter((c) => c.completed).map((c) => c.id));
-    return challenges.filter((c) => ids.has(c.id)).length;
-  }, [profile?.challenges, gameDay, challenges]);
-
   // --- Predictions: picked or resolved both count as "done for today" ---
   const questions = useMemo(
     () => buildQuestions(recentResults, corpsClass),
     [recentResults, corpsClass]
   );
+  // No questions (fewer than two scored results) means make-prediction is
+  // genuinely impossible today — drop it from the set instead of pinning
+  // "Today · N of M" below M forever (the server excuses it the same way
+  // when counting weekly-arc days).
+  const predictionAvailable = questions.length > 0;
+
+  // --- Challenges: same server-authoritative state DailyChallenges renders ---
+  const challenges = useMemo(
+    () =>
+      getChallengesForGameDay(gameDay).filter(
+        (c) => c.id !== 'make-prediction' || predictionAvailable
+      ),
+    [gameDay, predictionAvailable]
+  );
+  const challengesDone = useMemo(() => {
+    const bucket = profile?.challenges?.[gameDay] || [];
+    const ids = new Set(bucket.filter((c) => c.completed).map((c) => c.id));
+    return challenges.filter((c) => ids.has(c.id)).length;
+  }, [profile?.challenges, gameDay, challenges]);
   const predictionBucket = profile?.predictions?.[gameDay] || {};
   const predictionsDone = predictionBucket.resolved
     ? questions.length
@@ -155,7 +166,12 @@ const DirectorsReport = memo(
       </div>
 
       {/* Daily challenges (embedded — no double card chrome) */}
-      <DailyChallenges embedded onLineupClick={onLineupClick} onConceptClick={onConceptClick} />
+      <DailyChallenges
+        embedded
+        onLineupClick={onLineupClick}
+        onConceptClick={onConceptClick}
+        predictionAvailable={predictionAvailable}
+      />
 
       {/* Predictions (embedded); SoundSport gets the placement-only set */}
       <PredictionGamePanel embedded recentResults={recentResults} corpsClass={corpsClass} />

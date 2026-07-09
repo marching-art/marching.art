@@ -243,10 +243,13 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
     // the corps verification step (Step 0) where users can choose to continue,
     // retire, or start a new corps. activeSeasonId gets updated by processCorpsDecisions
     // after the user makes their decisions.
+    // NOTE: no retiredCorps write here — batch.update only touches listed
+    // fields, so "preserving" it was a no-op that could only ever clobber a
+    // concurrent retire/unretire/plaque purchase landing between the
+    // snapshot read and this batch's commit.
     const updateData = {
       corps: resetCorps,
       lifetimeStats,
-      retiredCorps: profileData.retiredCorps || [], // Preserve retired corps list
     };
 
     // Season-finish payouts (coin + XP) and the recap the client shows once.
@@ -260,6 +263,13 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
         updateData,
         calculateXPUpdates({ ...profileData, lifetimeStats }, totalXP).updates
       );
+      // calculateXPUpdates emits xp as a plain total computed from the
+      // query snapshot, which can be minutes stale by the time this chunked
+      // batch commits — a claimDailyLogin or challenge completed in that
+      // window would be silently erased. Award the season XP as an
+      // increment instead; xpLevel/userTitle stay plain-set and reconcile
+      // on the next claim (the codebase's lazy-recompute convention).
+      updateData.xp = admin.firestore.FieldValue.increment(totalXP);
     }
 
     // Reset the seasonal reward ladder: new baseline is the post-award XP
@@ -703,7 +713,11 @@ async function archiveSeasonResultsLogic(dbArg = null, season = null) {
       // and paid nothing.
       const winnerProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${leagueWinner.userId}/profile/data`);
       const championAchievement = {
-        id: `league_champion_${seasonId}`, // Unique ID for this achievement
+        // Keyed per league AND season: a director who wins two leagues in
+        // one season earns two distinct achievements (each with its CC),
+        // not two array entries sharing one id (which breaks id-keyed
+        // rendering and reads as a duplicate grant).
+        id: `league_champion_${leagueId}_${seasonId}`,
         title: `League Champion: ${seasonName}`,
         description: `Finished 1st in the ${league.name} league during the ${seasonName}.`,
         icon: "trophy", // An identifier for the frontend to use
@@ -724,11 +738,19 @@ async function archiveSeasonResultsLogic(dbArg = null, season = null) {
       logger.info(`Granted 'League Champion' achievement to ${leagueWinner.username}.`);
 
       // --- PRIZE POOL PAYOUT ---
-      // Pay the CorpsCoin prize pool shown on the league's settings tab.
+      // Pay the escrowed entry-fee pool shown on the league's settings tab,
+      // and drain it in the same batch — the pool is escrow, so paying
+      // without zeroing would re-mint the same fees at every future
+      // rollover (the champions[] guard is per-season, not per-pool).
+      // Decrement rather than set 0 so an entry fee escrowed concurrently
+      // by a joiner mid-rollover isn't clobbered.
       const prizePool = league.settings?.prizePool || 0;
       if (prizePool > 0) {
         batch.update(winnerProfileRef, {
           corpsCoin: admin.firestore.FieldValue.increment(prizePool),
+        });
+        batch.update(leagueRef, {
+          "settings.prizePool": admin.firestore.FieldValue.increment(-prizePool),
         });
         addCoinHistoryEntryToBatch(batch, db, leagueWinner.userId, {
           type: TRANSACTION_TYPES.LEAGUE_WIN,

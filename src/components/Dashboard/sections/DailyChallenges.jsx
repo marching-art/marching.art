@@ -25,13 +25,24 @@ import {
 
 // `embedded` renders the same content without the outer card chrome, for
 // composition inside the Director's Report (the unified Zone-B daily card).
-const DailyChallenges = memo(({ onLineupClick, onConceptClick, embedded = false }) => {
+// `predictionAvailable={false}` drops the make-prediction row entirely: a
+// brand-new director (fewer than two scored results) has NO prediction
+// questions, so the row would point at a panel that doesn't exist and the
+// day's set could never complete (the server excuses it the same way).
+const DailyChallenges = memo(
+  ({ onLineupClick, onConceptClick, embedded = false, predictionAvailable = true }) => {
   const { trigger: haptic } = useHaptic();
   const profile = useProfileStore((state) => state.profile);
   const completeDailyChallenge = useProfileStore((state) => state.completeDailyChallenge);
 
   const gameDay = getGameDay();
-  const challenges = useMemo(() => getChallengesForGameDay(gameDay), [gameDay]);
+  const challenges = useMemo(
+    () =>
+      getChallengesForGameDay(gameDay).filter(
+        (c) => c.id !== 'make-prediction' || predictionAvailable
+      ),
+    [gameDay, predictionAvailable]
+  );
 
   const completedIds = useMemo(() => {
     const bucket = profile?.challenges?.[gameDay] || [];
@@ -186,6 +197,7 @@ const DailyChallenges = memo(({ onLineupClick, onConceptClick, embedded = false 
       </div>
     </div>
   );
-});
+  }
+);
 
 export default DailyChallenges;

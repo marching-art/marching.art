@@ -356,8 +356,11 @@ export interface CompleteDailyChallengeResult {
   xpAwarded: number;
   alreadyCompleted?: boolean;
   notInRotation?: boolean;
+  notDoneYet?: boolean;
   challenge?: { id: string; label: string; xp: number };
   completedToday?: number;
+  weeklyArcDays?: number;
+  weeklyArcBonus?: { xp: number; coin: number } | null;
   newLevel?: number;
   classUnlocked?: string | null;
 }

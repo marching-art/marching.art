@@ -756,13 +756,18 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
             <div className="p-2 grid grid-cols-2 sm:grid-cols-4 gap-1.5">
               {MASTERY_CAPTIONS.map((caption) => {
                 const mastery = getCaptionMastery(profile.captionStats?.[caption]);
-                const style = mastery.tier ? MASTERY_TIER_STYLES[mastery.tier.id] : null;
+                const style = mastery.tier
+                  ? MASTERY_TIER_STYLES[mastery.tier.id as keyof typeof MASTERY_TIER_STYLES]
+                  : null;
                 return (
                   <div key={caption} className="bg-[#111] border border-[#333] px-2.5 py-2">
                     <div className="flex items-center justify-between gap-1 mb-1">
                       <span
                         className="text-[10px] font-bold text-white"
-                        title={CAPTION_CATEGORIES[caption]?.name || caption}
+                        title={
+                          CAPTION_CATEGORIES[caption as keyof typeof CAPTION_CATEGORIES]?.name ||
+                          caption
+                        }
                       >
                         {caption}
                       </span>

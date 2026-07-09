@@ -79,9 +79,14 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
         playoffSize: settings.playoffSize || 4,
         ...settings,
         // After the spread so client values can't override the validated fee
-        // or the seeded pool (base pool + the creator's own entry fee).
+        // or the pool. The prize pool is PURE ESCROW: it holds only entry
+        // fees actually debited from members (creator's fee here, joiners'
+        // via helpers/leagueEconomy.js) and is paid out + zeroed at season
+        // archival. It must never seed from a client value — the payout
+        // mints whatever this field says, so a client-supplied prizePool
+        // would be free CorpsCoin printed for the league champion.
         entryFee,
-        prizePool: (settings.prizePool || 1000) + entryFee,
+        prizePool: entryFee,
       }
     });
 

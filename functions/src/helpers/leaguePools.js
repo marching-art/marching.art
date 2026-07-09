@@ -43,23 +43,32 @@ function completedGameDayString(now = new Date()) {
 }
 
 /**
- * Perfect day for one entrant: every answered pick correct, at least one
- * answered. Uses the user's already-resolved bucket when present, otherwise
- * resolves read-only against the recaps (the user's own bucket resolves
- * lazily via resolvePredictions — settlement can't wait for that).
+ * Perfect day for one entrant: every answered pick correct, with at least
+ * TWO answered. The personal perfect-day bonus accepts a single pick, but a
+ * pool win takes other members' escrowed antes — a one-question coin-flip
+ * must not outdraw leaguemates who answered the full board. Uses the user's
+ * already-resolved bucket when present, otherwise resolves read-only against
+ * the recaps (the user's own bucket resolves lazily via resolvePredictions —
+ * settlement can't wait for that).
  */
+const POOL_MIN_ANSWERED = 2;
+
 function entrantHadPerfectDay(uid, profileData, gameDay, recapDocs) {
   const bucket = profileData?.predictions?.[gameDay];
   if (!bucket || Object.keys(bucket.picks || {}).length === 0) return false;
 
   if (bucket.resolved && bucket.results) {
     const results = Object.values(bucket.results);
-    return results.length > 0 && results.every((r) => r.isCorrect);
+    return results.length >= POOL_MIN_ANSWERED && results.every((r) => r.isCorrect);
   }
 
   const latest = findLatestResultForCorps(recapDocs, uid, bucket.corpsClass);
   const resolved = resolveBucket(bucket, latest);
-  return !!resolved && resolved.totalCount > 0 && resolved.correctCount === resolved.totalCount;
+  return (
+    !!resolved &&
+    resolved.totalCount >= POOL_MIN_ANSWERED &&
+    resolved.correctCount === resolved.totalCount
+  );
 }
 
 /**
@@ -167,6 +176,7 @@ async function settleLeaguePoolsForDay(db, seasonData, now = new Date()) {
 
 module.exports = {
   POOL_ANTE,
+  POOL_MIN_ANSWERED,
   completedGameDayString,
   entrantHadPerfectDay,
   settleLeaguePoolsForDay,

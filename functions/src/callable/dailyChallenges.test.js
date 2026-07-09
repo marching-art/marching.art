@@ -27,19 +27,40 @@ const notOfferedToday = [
   "set-show-concept",
 ].find((id) => !todaysChallenges.some((c) => c.id === id));
 
-function makeFakeDb(docs = new Map()) {
+function makeFakeDb(docs = new Map(), recaps = []) {
   const writes = [];
   let autoId = 0;
   const db = {
     doc(path) {
-      return { path };
+      return {
+        path,
+        // completeDailyChallenge pre-reads the profile (and possibly recaps)
+        // outside the transaction for the prediction-availability check.
+        async get() {
+          const data = docs.get(path);
+          return { exists: data !== undefined, data: () => data };
+        },
+      };
     },
     collection(path) {
-      return {
+      const query = {
+        orderBy() {
+          return query;
+        },
+        limit() {
+          return query;
+        },
+        async get() {
+          if (path.startsWith("fantasy_recaps/")) {
+            return { empty: recaps.length === 0, docs: recaps.map((r) => ({ data: () => r })) };
+          }
+          return { empty: true, docs: [] };
+        },
         doc(id) {
           return { path: `${path}/${id ?? `auto-${++autoId}`}` };
         },
       };
+      return query;
     },
     async runTransaction(fn) {
       const transaction = {
@@ -237,6 +258,38 @@ describe("completeDailyChallenge", () => {
     assert.equal(result.success, true);
     assert.equal(result.weeklyArcDays, 1);
     assert.equal(result.weeklyArcBonus, null);
+    const loop = writes[0].data["engagement.weeklyLoop"];
+    assert.deepEqual(loop.countedDays, [gameDay]);
+  });
+
+  test("a new director with no prediction questions can still complete the day's set", async () => {
+    // A brand-new director has fewer than two scored results, so
+    // make-prediction is impossible (buildQuestions returns nothing and
+    // submitPrediction rejects). The weekly arc must not require it: with
+    // every OTHER challenge in today's rotation done, the day counts.
+    const withPrediction = todaysChallenges.some((c) => c.id === "make-prediction");
+    const others = todaysChallenges.filter((c) => c.id !== "make-prediction");
+    if (!withPrediction || others.length === 0) {
+      // Rotation without make-prediction today — nothing to excuse.
+      return;
+    }
+    const last = others[others.length - 1];
+    const newDirector = {
+      ...baseProfile(),
+      predictions: {}, // no picks — and no recaps exist (empty fake recaps)
+      challenges: {
+        [gameDay]: others.slice(0, -1).map((c) => ({ id: c.id, completed: true })),
+      },
+    };
+    const docs = new Map([[profilePath("u1"), newDirector]]);
+    const { db, writes } = makeFakeDb(docs, []); // no recap results at all
+    setDbForTesting(db);
+
+    const result = await completeDailyChallenge.run(
+      authedRequest("u1", { challengeId: last.id })
+    );
+    assert.equal(result.success, true);
+    assert.equal(result.weeklyArcDays, 1, "the day must count without make-prediction");
     const loop = writes[0].data["engagement.weeklyLoop"];
     assert.deepEqual(loop.countedDays, [gameDay]);
   });

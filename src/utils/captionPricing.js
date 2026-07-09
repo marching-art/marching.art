@@ -258,7 +258,7 @@ export const calculateLevel = (xp) => {
 /**
  * Calculate XP needed for next level
  * @param {number} currentXP - Current total XP
- * @returns {Object} { current: number, needed: number, percentage: number }
+ * @returns {{current: number, needed: number, percentage: number, level: number, nextLevel: number}}
  */
 export const getXPProgress = (currentXP) => {
   const currentLevel = calculateLevel(currentXP);

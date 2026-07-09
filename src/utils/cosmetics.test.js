@@ -77,9 +77,15 @@ describe('seasonal rotation helpers', () => {
     expect(isSeasonallyAvailable(summer, 'live-season')).toBe(true);
     expect(isSeasonallyAvailable(summer, 'off-season')).toBe(false);
     expect(isSeasonallyAvailable(offCircuit, 'off-season')).toBe(true);
-    expect(isSeasonallyAvailable(offCircuit, null)).toBe(false);
     expect(isSeasonallyAvailable(getShopItem('theme_midnight'), null)).toBe(true);
     expect(isSeasonallyAvailable(getShopItem('theme_midnight'), 'off-season')).toBe(true);
+  });
+
+  it('treats an unloaded season status as available (server enforces the gate)', () => {
+    // Before the season store hydrates the status is null — the shop must
+    // not flash "returns next season" on an item that is actually buyable.
+    expect(isSeasonallyAvailable(summer, null)).toBe(true);
+    expect(isSeasonallyAvailable(offCircuit, undefined)).toBe(true);
   });
 
   it('labels seasonal items and not evergreens', () => {
