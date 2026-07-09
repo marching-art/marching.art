@@ -1,5 +1,7 @@
 # Gamification Execution Plan — The Tactical Layer
 
+> **PROGRESS (July 2026):** PRs **1–6 have landed** (all commits on this branch): WS0 complete (weekly XP paid, orphans deleted, rollover guarded + auto-paying league pools, participation unified, matchup push/resolution fixed, dead code swept), WS1 complete (login payoff, XP bar, universal feedback, drift-proof progression guide), WS2 complete (seasons-completed unlocks live with graduation asymmetry + per-show XP + SoundSport predictions). **Next up: PR 7 (`feat/dashboard-zones`).** One additional finding since: **F18 🟡 two divergent SoundSport rating tables** — `src/utils/scoresUtils.ts:28-34` (Gold ≥85 / Silver ≥75 / Bronze ≥65) vs `src/components/Dashboard/sections/constants.js:31-36` (Gold ≥90 / Silver ≥75 / Bronze ≥60); scores 85–89 and 60–64 show different medals on different pages. Unify (owner should pick the canonical thresholds) before any server-side rating feature builds on either.
+
 > Generated: July 2026, after a five-subsystem code deep-dive (backend economy, class unlocks, dashboard/celebrations, achievements/shop/cosmetics, season lifecycle/leagues).
 > Scope: the concrete, file-level execution map for the owner-approved redesign. Strategy lives in `LIFELONG_GAMIFICATION_ROADMAP.md`; specs live in `PROGRESSION_ECONOMY_REDESIGN.md` (both decisions **approved**) and `DASHBOARD_UNIFICATION.md`; this doc turns them into ordered, verifiable work.
 > Every file:line reference below was verified against the code in July 2026.
