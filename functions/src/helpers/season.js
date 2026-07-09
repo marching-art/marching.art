@@ -134,6 +134,9 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
     let seasonShowCount = 0;
     let seasonPointsTotal = 0;
     const seasonAwards = []; // one entry per active corps: recap + payout data
+    // Snapshot the pre-season career bests so the recap can call out a new
+    // personal best (self-competition retains directors who'll never be #1).
+    const previousBestSeasonScore = lifetimeStats.bestSeasonScore || 0;
 
     Object.keys(corpsData).forEach((corpsClass) => {
       const corps = corpsData[corpsClass];
@@ -169,6 +172,10 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
             totalSeasonScore: corps.totalSeasonScore || 0,
             coinBonus,
             xpBonus,
+            // Personal best: beat every season you've ever played
+            newBestSeason:
+              (corps.totalSeasonScore || 0) > previousBestSeasonScore &&
+              (corps.totalSeasonScore || 0) > 0,
           });
         }
 

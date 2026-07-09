@@ -274,6 +274,35 @@ describe("archiveAndResetProfiles participation gate", () => {
     assert.equal(update["classUnlockPaths.aClass"], "seasons");
   });
 
+  test("the recap flags a new personal-best season", async () => {
+    const { db, writes } = makeFakeDb({
+      profiles: [
+        {
+          uid: "alice",
+          data: {
+            lifetimeStats: { totalSeasons: 2, bestSeasonScore: 85 },
+            corps: { worldClass: participatingCorps(90) }, // beats her 85
+          },
+        },
+        {
+          uid: "bob",
+          data: {
+            lifetimeStats: { totalSeasons: 2, bestSeasonScore: 95 },
+            corps: { worldClass: participatingCorps(88) }, // short of his 95
+          },
+        },
+      ],
+    });
+
+    await archiveAndResetProfiles(db, "old-season", "new-season");
+
+    const recapFor = (uid) =>
+      writes.find((w) => w.type === "update" && w.path === profilePath(uid)).data
+        .pendingSeasonRecap.results[0];
+    assert.equal(recapFor("alice").newBestSeason, true);
+    assert.equal(recapFor("bob").newBestSeason, false);
+  });
+
   test("lineup-only corps occupies no rank slot", async () => {
     const { db, writes } = makeFakeDb({
       profiles: [

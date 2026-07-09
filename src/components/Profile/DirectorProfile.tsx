@@ -156,6 +156,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
   // DEDUPED: Trophies are competition-based, achievements are profile.achievements
   const trophies = useMemo(() => getCompetitionTrophies(profile), [profile]);
   const achievements = profile.achievements || [];
+  const [showAllAchievements, setShowAllAchievements] = useState(false);
 
   // Season history
   const seasonHistory = useMemo((): SeasonHistoryEntry[] => {
@@ -652,15 +653,23 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
 
           {achievements.length > 0 ? (
             <div className="p-2 space-y-1">
-              {achievements.slice(0, 4).map((achievement) => (
-                <AchievementMini key={achievement.id} achievement={achievement} />
-              ))}
+              {(showAllAchievements ? achievements : achievements.slice(0, 4)).map(
+                (achievement) => (
+                  <AchievementMini key={achievement.id} achievement={achievement} />
+                )
+              )}
               {achievements.length > 4 && (
                 <button
+                  onClick={() => setShowAllAchievements((v) => !v)}
                   className="w-full text-[9px] text-[#0057B8] hover:underline py-1"
-                  aria-label={`View ${achievements.length - 4} more achievements`}
+                  aria-expanded={showAllAchievements}
+                  aria-label={
+                    showAllAchievements
+                      ? 'Show fewer achievements'
+                      : `View ${achievements.length - 4} more achievements`
+                  }
                 >
-                  +{achievements.length - 4} more
+                  {showAllAchievements ? 'Show fewer' : `+${achievements.length - 4} more`}
                 </button>
               )}
             </div>

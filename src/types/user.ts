@@ -103,6 +103,9 @@ export interface UserProfile {
   // Lifetime stats (detailed)
   lifetimeStats?: LifetimeStats;
 
+  // Competition trophies — server-awarded nightly by scoringAwards.js
+  trophies?: ProfileTrophies;
+
   // Daily challenges (keyed by date string)
   challenges?: Record<string, DailyChallenge[]>;
   dailyChallenges?: DailyChallenges; // Legacy/alternative structure
@@ -159,6 +162,24 @@ export interface WeeklyProgressData {
     scoreImprovement?: number;
     rankChange?: number;
   };
+}
+
+/** One server-awarded competition trophy (written by scoringAwards.js) */
+export interface CompetitionTrophy {
+  type: string;
+  corpsClass?: CorpsClass | string;
+  seasonName?: string;
+  eventName?: string;
+  score?: number;
+  rank?: number;
+}
+
+/** The profile's trophy case, grouped by competition tier */
+export interface ProfileTrophies {
+  regionals?: CompetitionTrophy[];
+  classChampionships?: CompetitionTrophy[];
+  championships?: CompetitionTrophy[];
+  finalistMedals?: CompetitionTrophy[];
 }
 
 export interface LifetimeStats {
