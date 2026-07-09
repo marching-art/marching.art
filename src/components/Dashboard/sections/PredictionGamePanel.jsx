@@ -15,16 +15,14 @@ import { useProfileStore } from '../../../store/profileStore';
 import { getGameDay } from '../../../utils/dailyChallenges';
 import { buildQuestions } from '../../../utils/dailyPredictions';
 
-const PredictionGamePanel = memo(({ recentResults, corpsClass }) => {
+// `embedded` renders the same content without the outer card chrome, for
+// composition inside the Director's Report (the unified Zone-B daily card).
+const PredictionGamePanel = memo(({ recentResults, corpsClass, embedded = false }) => {
   const { trigger: haptic } = useHaptic();
   const profile = useProfileStore((state) => state.profile);
   const submitPrediction = useProfileStore((state) => state.submitPrediction);
   const resolvePredictions = useProfileStore((state) => state.resolvePredictions);
 
-  // SoundSport is a ratings-only format — its numeric scores must never be
-  // shown, and the score-based prediction prompts reveal them, so the panel
-  // is disabled entirely for SoundSport corps.
-  const isSoundSport = corpsClass === 'soundSport';
   const gameDay = getGameDay();
 
   const bucket = profile?.predictions?.[gameDay] || {};
@@ -33,10 +31,11 @@ const PredictionGamePanel = memo(({ recentResults, corpsClass }) => {
   const isResolved = !!bucket.resolved;
   const stats = profile?.predictionStats || { correct: 0, total: 0 };
 
-  // Generate questions from current data (never for SoundSport)
+  // Generate questions from current data. SoundSport gets the placement-only
+  // set (medal + improvement) — its numeric scores stay hidden.
   const questions = useMemo(
-    () => (isSoundSport ? [] : buildQuestions(recentResults)),
-    [recentResults, isSoundSport]
+    () => buildQuestions(recentResults, corpsClass),
+    [recentResults, corpsClass]
   );
 
   // Trigger server-side resolution once a newer result arrives. The callable
@@ -69,7 +68,7 @@ const PredictionGamePanel = memo(({ recentResults, corpsClass }) => {
   const accuracy = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : null;
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+    <div className={embedded ? 'overflow-hidden' : 'bg-[#1a1a1a] border border-[#333] overflow-hidden'}>
       {/* Header */}
       <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
         <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">

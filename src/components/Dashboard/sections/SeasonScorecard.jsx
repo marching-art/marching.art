@@ -60,6 +60,9 @@ const SeasonScorecard = memo(
     onMoveCorps,
     onRetireCorps,
     lockReason,
+    // Best recent result { score, eventName } — the one fact worth keeping
+    // from the retired rotating QuickStats widget, folded in here.
+    bestRecent = null,
   }) => {
     const isSoundSport = corpsClass === 'soundSport';
     const rating = isSoundSport && score ? getSoundSportRating(score) : null;
@@ -301,6 +304,23 @@ const SeasonScorecard = memo(
               )}
             </div>
           </div>
+
+          {/* Best recent result — folded in from the retired QuickStats
+              widget. SoundSport shows the medal tier, never the number. */}
+          {bestRecent && bestRecent.score > 0 && (
+            <p className="mt-3 text-[10px] text-gray-500 flex items-center gap-1.5">
+              <Trophy className="w-3 h-3 text-yellow-500 flex-shrink-0" />
+              <span className="truncate">
+                Best recent:{' '}
+                <span className="font-bold text-gray-300">
+                  {isSoundSport
+                    ? getSoundSportRating(bestRecent.score).rating
+                    : bestRecent.score.toFixed(2)}
+                </span>
+                {bestRecent.eventName ? ` at ${bestRecent.eventName}` : ''}
+              </span>
+            </p>
+          )}
         </div>
       </div>
     );

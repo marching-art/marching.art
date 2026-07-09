@@ -84,7 +84,30 @@ function getCompletedCalendarDay(seasonStartDate, now = new Date()) {
   return Math.floor(diffInMillis / MS_PER_DAY) + 1;
 }
 
+/**
+ * 1-based competition week for a season doc, computed from the schedule
+ * dates (there is no persisted currentWeek field — jobs that read one were
+ * dead paths). Live seasons subtract spring training so competition Day 1
+ * starts week 1; off-seasons have no spring training (field absent -> 0).
+ *
+ * @param {Object} seasonData - game-settings/season doc data.
+ * @param {Date} [now] - Injectable clock for tests; defaults to now.
+ * @returns {number|null} Week number (≥1), or null if the season doc has no
+ *   usable start date.
+ */
+function getCurrentSeasonWeek(seasonData, now = new Date()) {
+  const rawStart = seasonData?.schedule?.startDate;
+  const startDate =
+    rawStart && typeof rawStart.toDate === "function" ? rawStart.toDate() : rawStart;
+  if (!(startDate instanceof Date) || isNaN(startDate.getTime())) return null;
+
+  const diffInDays = Math.floor((now - startDate) / MS_PER_DAY);
+  const springTrainingDays = seasonData?.schedule?.springTrainingDays || 0;
+  return Math.max(1, Math.ceil((diffInDays + 1 - springTrainingDays) / 7));
+}
+
 module.exports = {
   getCompletedGameDayET,
   getCompletedCalendarDay,
+  getCurrentSeasonWeek,
 };

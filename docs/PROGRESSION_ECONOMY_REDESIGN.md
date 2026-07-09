@@ -5,7 +5,7 @@
 > Companion to: `LIFELONG_GAMIFICATION_ROADMAP.md` (this is the detailed spec behind that roadmap's Steps 2, 4, 5, and 8) and `ENGAGEMENT_ECONOMY_REVIEW.md` (the CorpsCoin *sink* side; this doc is the *source* side).
 > Prompted by: a real player request to "earn class unlocks the slow way" and the discovery that the slow way is both under-rewarded and partly broken.
 
-> **Two decisions are pending owner sign-off** (flagged inline as ⚑ DECISION). This doc is written assuming the recommended answer to each; overruling either changes the corresponding section only.
+> **✅ Both decisions were approved by the owner (July 2026).** The recommended answers below are the plan of record: Decision 1 (unlock trigger moves from calendar weeks to seasons actively completed) and Decision 2 (fix the dead-XP bugs first — Phase A — then the full rebalance — Phase B). The ⚑ DECISION flags are retained inline for context.
 
 ---
 
@@ -60,7 +60,7 @@ The class unlock becomes an **early, celebrated milestone** (a graduation), not 
 ## Part 3 — The reframe that resolves the contradiction
 
 > **⚑ DECISION 1 — Change the unlock trigger from _calendar weeks_ to _seasons actively completed_.**
-> Recommended: **Yes.** (Alternatives considered in §7.)
+> Recommended: **Yes.** (Alternatives considered in §7.) — **✅ APPROVED by owner, July 2026.**
 
 The single highest-leverage change. Replace "weeks since registration" with "seasons the director actually participated in and completed." This aligns with the owner's own framing ("classes unlock after seasons are completed") and makes the contradiction vanish, because **playing becomes earning:**
 
@@ -84,7 +84,7 @@ The single highest-leverage change. Replace "weeks since registration" with "sea
 ## Part 4 — The rebalanced earning table (the "slow way," made real)
 
 > **⚑ DECISION 2 — Overhaul scope.**
-> Recommended: **Fix bugs first (Phase A), then full rebalance (Phase B).** Restores an honest slow way in days; the redesign follows. (Full table below is the Phase B target.)
+> Recommended: **Fix bugs first (Phase A), then full rebalance (Phase B).** Restores an honest slow way in days; the redesign follows. (Full table below is the Phase B target.) — **✅ APPROVED by owner, July 2026.**
 
 Design intent: **competing out-earns logging in.** The core act (fielding a corps and competing in shows) should be the biggest recurring earner, not passive check-ins.
 

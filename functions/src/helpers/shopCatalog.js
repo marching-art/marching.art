@@ -19,6 +19,10 @@ const SHOP_CATALOG = [
   // grantOnly items can never be purchased — they are awarded by game systems
   // (title_laureate: season reward ladder tier 12).
   { id: 'title_laureate', type: 'title', name: 'Laureate', price: null, grantOnly: true },
+  // Granted when a class is unlocked EARLY via XP level (the "did it the
+  // hard way" recognition-asymmetry mark — seasons-completed and CorpsCoin
+  // unlocks never receive it). Granted by the daily achievement sweep.
+  { id: 'title_earned_not_given', type: 'title', name: 'Earned, Not Given', price: null, grantOnly: true },
   { id: 'title_section_leader', type: 'title', name: 'Section Leader', price: 1000 },
   { id: 'title_drum_major', type: 'title', name: 'Drum Major', price: 2500 },
   { id: 'title_the_maestro', type: 'title', name: 'The Maestro', price: 5000 },
@@ -35,6 +39,14 @@ const SHOP_CATALOG = [
   { id: 'theme_crimson', type: 'cardTheme', name: 'Crimson Corps', price: 1500 },
   { id: 'theme_gold_standard', type: 'cardTheme', name: 'Gold Standard', price: 3500 },
   { id: 'theme_aurora', type: 'cardTheme', name: 'Aurora', price: 5000 },
+
+  // --- Seasonal rotation (WS6.2) ---
+  // `seasonal` names the game-settings/season.status during which the item
+  // can be PURCHASED (validated server-side in callable/shop.js). Ownership
+  // is forever — the gate only closes the register, making each theme a
+  // collectible you had to be there for. Rotate this set over time.
+  { id: 'theme_summer_tour', type: 'cardTheme', name: 'Summer Tour', price: 2500, seasonal: 'live-season' },
+  { id: 'theme_off_circuit', type: 'cardTheme', name: 'Off-Season Circuit', price: 2500, seasonal: 'off-season' },
 ];
 
 /** Equip slot per item type — one equipped item per slot */

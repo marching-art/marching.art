@@ -86,3 +86,49 @@ describe("getCompletedCalendarDay", () => {
     assert.equal(day, 7);
   });
 });
+
+describe("getCurrentSeasonWeek", () => {
+  const { getCurrentSeasonWeek } = require("./gameDay");
+  const season = (startIso, springTrainingDays) => ({
+    schedule: {
+      startDate: new Date(startIso),
+      ...(springTrainingDays ? { springTrainingDays } : {}),
+    },
+  });
+
+  test("off-season: day 1 is week 1, day 8 is week 2", () => {
+    assert.equal(
+      getCurrentSeasonWeek(season("2026-07-01T00:00:00Z"), new Date("2026-07-01T12:00:00Z")),
+      1
+    );
+    assert.equal(
+      getCurrentSeasonWeek(season("2026-07-01T00:00:00Z"), new Date("2026-07-08T12:00:00Z")),
+      2
+    );
+  });
+
+  test("live season: spring training days shift competition week 1", () => {
+    // 21 days of spring training — 25 days in is competition day 4 → week 1
+    assert.equal(
+      getCurrentSeasonWeek(season("2026-06-01T00:00:00Z", 21), new Date("2026-06-25T12:00:00Z")),
+      1
+    );
+  });
+
+  test("clamps to week 1 during spring training and returns null without a start date", () => {
+    assert.equal(
+      getCurrentSeasonWeek(season("2026-06-01T00:00:00Z", 21), new Date("2026-06-05T12:00:00Z")),
+      1
+    );
+    assert.equal(getCurrentSeasonWeek({}), null);
+    assert.equal(getCurrentSeasonWeek(null), null);
+  });
+
+  test("accepts Firestore Timestamp-like start dates", () => {
+    const ts = { toDate: () => new Date("2026-07-01T00:00:00Z") };
+    assert.equal(
+      getCurrentSeasonWeek({ schedule: { startDate: ts } }, new Date("2026-07-16T12:00:00Z")),
+      3
+    );
+  });
+});

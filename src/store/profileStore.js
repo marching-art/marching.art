@@ -3,7 +3,7 @@ import { db, functions, paths } from '../api';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { AUTH_CONFIG } from '../config';
-import { mergeTimeUnlockedClasses } from '../utils/classUnlockTime';
+import { normalizeUnlockedClasses } from '../utils/classUnlocks';
 import { getGameDay } from '../utils/dailyChallenges';
 import {
   completeDailyChallenge as completeDailyChallengeFn,
@@ -102,17 +102,25 @@ export const useProfileStore = create((set, get) => ({
             error: null,
           });
 
-          // Check for time-based class unlocks (once per session).
-          // The local check is only a cheap eligibility test — security rules
-          // make unlockedClasses read-only for clients, so the actual unlock
-          // is computed and written server-side by the syncClassUnlocks
-          // callable. The listener picks up the resulting profile update.
+          // Sync class unlocks once per session. Security rules make
+          // unlockedClasses read-only for clients, so eligibility is computed
+          // and written server-side by the syncClassUnlocks callable (it
+          // covers the account-age backstop, any missed archival-time
+          // seasons-completed grant, and legacy key canonicalization). The
+          // listener picks up the resulting profile update. Cheap local
+          // pre-check: skip the call when every class is already unlocked and
+          // the stored keys are canonical.
           if (!_timeUnlockProcessed && !isAdmin && data.createdAt) {
             _timeUnlockProcessed = true;
-            const currentUnlocked = data.unlockedClasses || ['soundSport'];
-            if (mergeTimeUnlockedClasses(currentUnlocked, data.createdAt)) {
+            const { normalized, changed } = normalizeUnlockedClasses(
+              data.unlockedClasses || ['soundSport']
+            );
+            const allUnlocked = ['aClass', 'openClass', 'worldClass'].every((c) =>
+              normalized.includes(c)
+            );
+            if (changed || !allUnlocked) {
               httpsCallable(functions, 'syncClassUnlocks')().catch((err) => {
-                console.error('Error syncing time-based class unlocks:', err);
+                console.error('Error syncing class unlocks:', err);
               });
             }
           }
@@ -216,6 +224,12 @@ export const useProfileStore = create((set, get) => ({
       const label = data.challenge?.label || 'Challenge';
       toast.success(`${label} complete! +${data.xpAwarded} XP`);
       triggerXPFeedback(data.xpAwarded, 'xp');
+      if (data.weeklyArcBonus) {
+        toast.success(
+          `Weekly arc complete — +${data.weeklyArcBonus.coin} CC bonus!`
+        );
+        triggerXPFeedback(data.weeklyArcBonus.coin, 'coin', 'Weekly arc');
+      }
       return true;
     } catch (error) {
       console.error('Error completing challenge:', error);

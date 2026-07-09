@@ -7,34 +7,30 @@ const { addCoinHistoryEntryToTransaction } = require("./economy");
 const { assertAuth } = require("../helpers/callableGuards");
 const {
   CHALLENGE_POOL,
+  WEEKLY_LOOP_TARGET_DAYS,
   getGameDay,
+  advanceWeeklyLoop,
   getChallengesForGameDay,
   pruneOldChallenges,
 } = require("../helpers/dailyChallenges");
 const {
   PREDICTION_QUESTIONS,
+  SCORE_FREE_QUESTION_IDS,
   fetchRecentRecaps,
+  findRecentResultsForCorps,
   findLatestResultForCorps,
+  deriveQuestionThreshold,
   resolveBucket,
   pruneOldPredictions,
 } = require("../helpers/dailyPredictions");
-const { sweepProfileAchievements } = require("../helpers/achievements");
-
-// CorpsCoin paid per XP level gained (settled daily against lastRewardedLevel)
-const LEVEL_UP_STIPEND = 100;
-
-// Streak milestone rewards (XP + CC + optional free streak freeze)
-const STREAK_MILESTONES = {
-  3: { xp: 50, coin: 50, title: '3 Day Streak!' },
-  7: { xp: 100, coin: 100, title: 'Week Warrior!' },
-  14: { xp: 250, coin: 200, title: 'Two Week Terror!' },
-  30: { xp: 500, coin: 500, title: 'Monthly Master!', freeFreeze: true },
-  60: { xp: 750, coin: 750, title: 'Streak Legend!' },
-  100: { xp: 1000, coin: 1000, title: 'Century Club!' },
-};
-
-// Streak freeze cost
-const STREAK_FREEZE_COST = 300;
+const { sweepProfileAchievements, sweepCosmeticGrants } = require("../helpers/achievements");
+// Reward tables live in helpers/engagementRewards.js (the single source of
+// truth, also read by the economy earning guide).
+const {
+  LEVEL_UP_STIPEND,
+  STREAK_MILESTONES,
+  STREAK_FREEZE_COST,
+} = require("../helpers/engagementRewards");
 
 /**
  * Season-ladder baseline for accounts that predate the ladder: returns a
@@ -193,6 +189,22 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
         updates.achievements = admin.firestore.FieldValue.arrayUnion(...newAchievements);
       }
 
+      // Cosmetic grants driven by profile state (e.g. the 'Earned, Not
+      // Given' title for an XP-path early class unlock). Merge any unlock
+      // paths this very claim just set so the grant lands same-day.
+      const mergedUnlockPaths = { ...(profileData.classUnlockPaths || {}) };
+      for (const [key, value] of Object.entries(xpResult.updates)) {
+        if (key.startsWith('classUnlockPaths.')) {
+          mergedUnlockPaths[key.split('.')[1]] = value;
+        }
+      }
+      const cosmeticGrants = sweepCosmeticGrants(profileData, {
+        classUnlockPaths: mergedUnlockPaths,
+      });
+      if (cosmeticGrants.length > 0) {
+        updates['cosmetics.owned'] = admin.firestore.FieldValue.arrayUnion(...cosmeticGrants);
+      }
+
       // Add CorpsCoin if milestone reached / levels gained / achievements earned
       if (coinAwarded > 0) {
         updates.corpsCoin = admin.firestore.FieldValue.increment(coinAwarded);
@@ -269,9 +281,11 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
       success: true,
       message,
       loginStreak: result.loginStreak,
+      streakBroken: result.streakBroken,
       xpAwarded: result.xpAwarded,
       coinAwarded: result.coinAwarded,
       milestoneReached: result.milestoneReached,
+      levelsGained: result.levelsGained,
       newLevel: result.newLevel,
       classUnlocked: result.classUnlocked,
     };
@@ -308,6 +322,38 @@ const completeDailyChallenge = onCall({ cors: true }, async (request) => {
   const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
 
   try {
+    // Weekly-arc fairness for brand-new directors: with fewer than two
+    // scored results there are NO prediction questions (buildQuestions
+    // returns [] and submitPrediction rejects), so on days whose rotation
+    // includes make-prediction their "full set" could never complete and
+    // the arc would silently exclude exactly the players it's meant to
+    // hook. When predictions are genuinely unavailable, that challenge
+    // drops out of the required set. Recaps are immutable, so this is
+    // safely computed outside the transaction; it only costs a recap read
+    // when the answer could matter (rotation includes it, no picks yet).
+    const gameDayPre = getGameDay();
+    const rotationIds = getChallengesForGameDay(gameDayPre).map((c) => c.id);
+    let predictionAvailable = true;
+    if (rotationIds.includes("make-prediction")) {
+      const preSnap = await profileRef.get();
+      const pre = preSnap.exists ? preSnap.data() : {};
+      const hasPicksToday =
+        Object.keys(pre.predictions?.[gameDayPre]?.picks || {}).length > 0;
+      if (!hasPicksToday) {
+        const seasonUid = pre.activeSeasonId;
+        const recapDocs = seasonUid ? await fetchRecentRecaps(db, seasonUid) : [];
+        const classes = Object.keys(pre.corps || {});
+        predictionAvailable = classes.some((cls) => {
+          const recent = findRecentResultsForCorps(recapDocs, uid, cls, 5);
+          return PREDICTION_QUESTIONS.some(
+            (q) =>
+              (cls !== "soundSport" || SCORE_FREE_QUESTION_IDS.includes(q.id)) &&
+              deriveQuestionThreshold(q.id, recent) !== null
+          );
+        });
+      }
+    }
+
     const result = await db.runTransaction(async (transaction) => {
       const profileDoc = await transaction.get(profileRef);
       if (!profileDoc.exists) {
@@ -319,8 +365,15 @@ const completeDailyChallenge = onCall({ cors: true }, async (request) => {
       const challenge = getChallengesForGameDay(gameDay).find((c) => c.id === challengeId);
       if (!challenge) {
         // Valid challenge, but not in today's rotation — a soft no-op so
-        // pages that auto-complete on visit don't surface errors.
+        // client auto-claims never surface errors.
         return { success: false, notInRotation: true, xpAwarded: 0 };
+      }
+
+      // Challenges are decisions with verifiable outcomes — the claim only
+      // succeeds when the thing was actually done (soft no-op, since the
+      // client auto-claims whenever it believes the state is satisfied).
+      if (challenge.verify && !challenge.verify(profileData, gameDay)) {
+        return { success: false, notDoneYet: true, xpAwarded: 0 };
       }
 
       const allBuckets = profileData.challenges || {};
@@ -329,7 +382,6 @@ const completeDailyChallenge = onCall({ cors: true }, async (request) => {
         return { success: true, alreadyCompleted: true, xpAwarded: 0 };
       }
 
-      const xpResult = calculateXPUpdates(profileData, challenge.xp);
       const updatedBucket = [
         ...todayBucket.filter((c) => c.id !== challengeId),
         {
@@ -341,17 +393,51 @@ const completeDailyChallenge = onCall({ cors: true }, async (request) => {
         },
       ];
 
+      // Weekly arc: completing the full daily set on 5 distinct days in an
+      // ET week pays a one-time bonus (pure state machine in
+      // helpers/dailyChallenges.js — day-counting and payout both idempotent).
+      // make-prediction only counts toward the required set when the user
+      // can actually make predictions (see predictionAvailable above).
+      const todaysIds = getChallengesForGameDay(gameDay)
+        .map((c) => c.id)
+        .filter((id) => id !== "make-prediction" || predictionAvailable);
+      const completedIds = new Set(
+        updatedBucket.filter((c) => c.completed).map((c) => c.id)
+      );
+      const setComplete = todaysIds.every((id) => completedIds.has(id));
+      const { weeklyLoop, bonus: weeklyArcBonus } = advanceWeeklyLoop(
+        profileData.engagement?.weeklyLoop,
+        gameDay,
+        setComplete
+      );
+
+      const totalXP = challenge.xp + (weeklyArcBonus?.xp || 0);
+      const xpResult = calculateXPUpdates(profileData, totalXP);
+
       transaction.update(profileRef, {
         challenges: pruneOldChallenges({ ...allBuckets, [gameDay]: updatedBucket }),
+        "engagement.weeklyLoop": weeklyLoop,
+        ...(weeklyArcBonus
+          ? { corpsCoin: admin.firestore.FieldValue.increment(weeklyArcBonus.coin) }
+          : {}),
         ...xpResult.updates,
         ...seasonBaselineStamp(profileData),
       });
+      if (weeklyArcBonus) {
+        addCoinHistoryEntryToTransaction(transaction, db, uid, {
+          type: "weekly_arc",
+          amount: weeklyArcBonus.coin,
+          description: `Weekly arc complete — ${WEEKLY_LOOP_TARGET_DAYS} full daily sets this week`,
+        });
+      }
 
       return {
         success: true,
-        xpAwarded: challenge.xp,
+        xpAwarded: totalXP,
         challenge: { id: challenge.id, label: challenge.label, xp: challenge.xp },
         completedToday: updatedBucket.length,
+        weeklyArcDays: weeklyLoop.countedDays?.length || 0,
+        weeklyArcBonus,
         newLevel: xpResult.newLevel,
         classUnlocked: xpResult.classUnlocked,
       };
@@ -551,13 +637,20 @@ const getStreakStatus = onCall({ cors: true }, async (request) => {
  * Saves one of the day's prediction picks to the profile's server-only
  * `predictions` bucket (mirrors the challenges ledger). Picks lock once made —
  * a question can't be re-answered, and once the day resolves the whole bucket
- * is closed — so predictions can't be farmed. The stored threshold is what the
- * pick is scored against later, so it survives even if the recent-results the
- * questions were generated from change.
+ * is closed — so predictions can't be farmed.
+ *
+ * The stored threshold is what the pick is scored against later, so it is
+ * DERIVED SERVER-SIDE from the director's recap history (the same math as
+ * the client's buildQuestions). Accepting a client threshold would make
+ * "Over -1" a guaranteed win — free accuracy CC, and worse, a certain
+ * "perfect day" that drains leaguemates' escrowed league-pool antes. A
+ * client-sent threshold is only compared against the canonical one so a
+ * stale prediction board rejects instead of resolving against a line the
+ * user never saw.
  */
 const submitPrediction = onCall({ cors: true }, async (request) => {
   const uid = assertAuth(request);
-  const { questionId, pick, threshold, corpsClass, snapshotEvent } = request.data || {};
+  const { questionId, pick, threshold, corpsClass } = request.data || {};
 
   if (!questionId || typeof questionId !== "string") {
     throw new HttpsError("invalid-argument", "A questionId is required.");
@@ -572,15 +665,32 @@ const submitPrediction = onCall({ cors: true }, async (request) => {
     throw new HttpsError("invalid-argument", "A corpsClass is required.");
   }
   // SoundSport is a ratings-only format — its numeric scores are never shown,
-  // and the prediction prompts reveal them, so it has no prediction game.
-  if (corpsClass === "soundSport") {
-    throw new HttpsError("invalid-argument", "Predictions are not available for SoundSport.");
+  // so it only gets the placement-based questions (medal + improvement),
+  // whose prompts and resolutions reveal no score.
+  if (corpsClass === "soundSport" && !SCORE_FREE_QUESTION_IDS.includes(questionId)) {
+    throw new HttpsError(
+      "invalid-argument",
+      "That prediction is not available for SoundSport."
+    );
   }
 
   const db = getDb();
   const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
 
   try {
+    // Canonical question context, derived outside the transaction (recaps
+    // are immutable). Same season source as resolvePredictions so the
+    // threshold saved here and the resolution later read identical data.
+    const preSnap = await profileRef.get();
+    if (!preSnap.exists) {
+      throw new HttpsError("not-found", "User profile not found.");
+    }
+    const seasonUid = preSnap.data().activeSeasonId;
+    const recapDocs = seasonUid ? await fetchRecentRecaps(db, seasonUid) : [];
+    const recentResults = findRecentResultsForCorps(recapDocs, uid, corpsClass, 5);
+    const canonicalThreshold = deriveQuestionThreshold(questionId, recentResults);
+    const serverSnapshotEvent = recentResults[0]?.eventName ?? null;
+
     const result = await db.runTransaction(async (transaction) => {
       const profileDoc = await transaction.get(profileRef);
       if (!profileDoc.exists) {
@@ -593,7 +703,7 @@ const submitPrediction = onCall({ cors: true }, async (request) => {
       const bucket = allBuckets[gameDay] || {
         picks: {},
         corpsClass,
-        snapshotEvent: snapshotEvent ?? null,
+        snapshotEvent: serverSnapshotEvent,
         resolved: false,
       };
 
@@ -606,17 +716,36 @@ const submitPrediction = onCall({ cors: true }, async (request) => {
         return { success: true, alreadyPicked: true };
       }
 
+      // Enforced at save time (after the soft no-ops): the question must be
+      // genuinely available, and a client-sent threshold must match the
+      // canonical one — otherwise the user is picking against a stale line.
+      if (canonicalThreshold === null) {
+        throw new HttpsError(
+          "failed-precondition",
+          "That prediction isn't available yet — it unlocks once your corps has a couple of scored shows."
+        );
+      }
+      if (
+        typeof threshold === "number" &&
+        Math.abs(threshold - canonicalThreshold) > 0.05
+      ) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Your prediction board is out of date — refresh and pick again."
+        );
+      }
+
       const updatedBucket = {
         ...bucket,
         // Lock the corps + snapshot context to whatever the first pick saw.
         corpsClass: bucket.corpsClass || corpsClass,
-        snapshotEvent: bucket.snapshotEvent ?? snapshotEvent ?? null,
+        snapshotEvent: bucket.snapshotEvent ?? serverSnapshotEvent,
         resolved: false,
         picks: {
           ...(bucket.picks || {}),
           [questionId]: {
             pick,
-            threshold: typeof threshold === "number" ? threshold : null,
+            threshold: canonicalThreshold,
           },
         },
       };

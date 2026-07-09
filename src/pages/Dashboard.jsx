@@ -75,20 +75,17 @@ import {
   SeasonScorecard,
   RecentResultsFeed,
   RivalsPanel,
-  DailyChallenges,
-  QuickStats,
   LineupSimulatorPanel,
-  PredictionGamePanel,
-  AchievementTrackerPanel,
   JourneyPanel,
-  SeasonLadderPanel,
+  SeasonProgressHub,
+  DirectorsReport,
   CLASS_DISPLAY_NAMES,
   CLASS_UNLOCK_LEVELS,
   CLASS_UNLOCK_COSTS,
 } from '../components/Dashboard';
 
 import { ModalLoadingFallback } from '../components/ui';
-import { getWeeksUntilUnlock } from '../utils/classUnlockTime';
+import { getSeasonsUntilUnlock } from '../utils/classUnlocks';
 import NextPerformancePanel from '../components/Dashboard/NextPerformancePanel';
 import { useScheduleStore } from '../store/scheduleStore';
 
@@ -107,7 +104,7 @@ import { getEquippedCosmetic } from '../utils/cosmetics';
 // Imported via: CLASS_LABELS, CAPTIONS, CLASS_DISPLAY_NAMES, getSoundSportRating
 
 // OPTIMIZATION #4: Inline components extracted to src/components/Dashboard/sections/
-// - ControlBar, ActiveLineupTable, SeasonScorecard, RecentResultsFeed, LeagueStatus
+// - ControlBar, ActiveLineupTable, SeasonScorecard, RecentResultsFeed
 // This reduces Dashboard.jsx from 1600+ lines to ~800 lines and isolates renders
 
 // =============================================================================
@@ -283,6 +280,13 @@ const Dashboard = () => {
   );
   const recentResults = useRecentResults(user, seasonData, activeCorpsClass, currentDay);
 
+  // Best recent result — the one fact kept from the retired QuickStats
+  // widget, shown inline on the scorecard (Zone A).
+  const bestRecent = useMemo(() => {
+    if (!recentResults?.length) return null;
+    return recentResults.reduce((a, b) => ((a.score || 0) > (b.score || 0) ? a : b));
+  }, [recentResults]);
+
   // =============================================================================
   // RENDER
   // =============================================================================
@@ -350,10 +354,12 @@ const Dashboard = () => {
                 stack; explicit lg placement keeps the desktop layout
                 (main left, scorecard atop the right sidebar) unchanged. */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {/* SCORECARD - top of mobile stack, top of right column on lg */}
+              {/* ZONE A — HEADLINE: last night's payoff leads the page on
+                  every device (top of mobile stack, top of right column) */}
               <div className="lg:col-start-3 lg:row-start-1" data-tour="scorecard">
                 <SeasonScorecard
                   themeClass={equippedCardTheme?.cardClass}
+                  bestRecent={bestRecent}
                   onShowConcept={() => setShowConceptModal(true)}
                   showConcept={activeCorps.showConcept}
                   score={userCorpsScore}
@@ -380,8 +386,40 @@ const Dashboard = () => {
                 />
               </div>
 
-              {/* MAIN CONTENT (2/3) - Lineup + related analysis */}
-              <div className="lg:col-span-2 lg:col-start-1 lg:row-start-1 lg:row-span-2 space-y-4">
+              {/* ZONE B — TODAY: the whole daily set in one card (second in
+                  the mobile stack so the to-do list is one scroll from the
+                  score) */}
+              <div className="lg:col-start-3 lg:row-start-2 space-y-4">
+                <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-500 -mb-2">
+                  Today
+                </h2>
+
+                {/* Director's Report — login + challenges + predictions +
+                    pending claims as one checklist with a single count */}
+                <DirectorsReport
+                  recentResults={recentResults}
+                  corpsClass={activeCorpsClass}
+                  seasonUid={seasonData?.seasonUid}
+                  onLineupClick={() => openCaptionSelection()}
+                  onConceptClick={() => setShowConceptModal(true)}
+                />
+
+                {/* First Season Journey - server-rewarded quest line for new
+                    directors; hides itself once all steps are claimed */}
+                <JourneyPanel
+                  profile={profile}
+                  resultCount={recentResults.length}
+                  onEditLineup={() => openCaptionSelection()}
+                  onSetConcept={() => setShowConceptModal(true)}
+                />
+              </div>
+
+              {/* ZONE C — MY CORPS (2/3): the strategic work — build, tune,
+                  and tonight's performances */}
+              <div className="lg:col-span-2 lg:col-start-1 lg:row-start-1 lg:row-span-3 space-y-4">
+                <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-500 -mb-2 lg:sr-only">
+                  My Corps
+                </h2>
                 <div data-tour="lineup">
                   <ActiveLineupTable
                     lineup={lineup}
@@ -402,35 +440,6 @@ const Dashboard = () => {
                   onSwapCaption={openCaptionSelection}
                 />
 
-                <div data-tour="recent-results">
-                  <RecentResultsFeed
-                    results={recentResults}
-                    loading={scoresLoading}
-                    corpsClass={activeCorpsClass}
-                  />
-                </div>
-
-                {/* Daily Predictions - check-back-tomorrow engagement loop */}
-                <PredictionGamePanel recentResults={recentResults} corpsClass={activeCorpsClass} />
-              </div>
-
-              {/* SIDEBAR (1/3) - Engagement panels below the scorecard */}
-              <div className="lg:col-start-3 space-y-4">
-                {/* First Season Journey - server-rewarded quest line for new
-                    directors; hides itself once all steps are claimed */}
-                <JourneyPanel
-                  profile={profile}
-                  resultCount={recentResults.length}
-                  onEditLineup={() => openCaptionSelection()}
-                  onSetConcept={() => setShowConceptModal(true)}
-                />
-
-                {/* Daily Challenges - drives daily return visits */}
-                <DailyChallenges onLineupClick={() => openCaptionSelection()} />
-
-                {/* Season Ladder - free seasonal reward track fed by all XP */}
-                <SeasonLadderPanel profile={profile} seasonUid={seasonData?.seasonUid} />
-
                 {/* Next Performance - real show timing + running order + your-picks-live spotlight */}
                 <NextPerformancePanel
                   competitions={competitions}
@@ -438,48 +447,51 @@ const Dashboard = () => {
                   lineup={lineup}
                   poolCorps={availableCorps}
                 />
+              </div>
 
-                {/* Rivals - closest competitors in the active corps's class */}
-                <RivalsPanel rivals={activeCorpsRivals} corpsClass={activeCorpsClass} />
+              {/* ZONE D — THE SEASON: how am I advancing, who am I chasing,
+                  what just happened */}
+              <div className="lg:col-start-3 lg:row-start-3 space-y-4">
+                <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-500 -mb-2">
+                  The Season
+                </h2>
 
-                {/* Quick Stats - rotating fun facts about user performance */}
-                <QuickStats
+                {/* Season progress hub — ladder + achievements as one surface */}
+                <SeasonProgressHub
                   profile={profile}
-                  corpsClass={activeCorpsClass}
-                  recentResults={recentResults}
-                  lineupScoreData={lineupScoreData}
-                  lineupCount={lineupCount}
-                />
-
-                {/* Achievement Tracker - progress toward next unlockable achievements */}
-                <AchievementTrackerPanel
-                  profile={profile}
+                  seasonUid={seasonData?.seasonUid}
                   lineupCount={lineupCount}
                   resultCount={recentResults.length}
                   leagueCount={myLeagues?.length || 0}
                 />
 
-                {/* Submit Article */}
-                <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
-                  <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-                    <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-                      <FileText className="w-3.5 h-3.5 text-green-500" />
-                      Community Content
-                    </h3>
-                  </div>
-                  <div className="p-4">
-                    <p className="text-xs text-gray-500 mb-3">
-                      Share your insights, analysis, or news with the community.
-                    </p>
-                    <button
-                      onClick={() => setShowNewsSubmission(true)}
-                      className="w-full py-2.5 bg-[#222] hover:bg-[#333] border border-[#333] text-white text-sm font-bold transition-colors flex items-center justify-center gap-2"
-                    >
-                      <FileText className="w-4 h-4" />
-                      Submit Article
-                    </button>
-                  </div>
+                {/* Rivals - closest competitors in the active corps's class */}
+                <RivalsPanel rivals={activeCorpsRivals} corpsClass={activeCorpsClass} />
+
+                <div data-tour="recent-results">
+                  <RecentResultsFeed
+                    results={recentResults}
+                    loading={scoresLoading}
+                    corpsClass={activeCorpsClass}
+                  />
                 </div>
+              </div>
+            </div>
+
+            {/* Footer — community content is not a daily action, so it sits
+                below the zones instead of occupying sidebar real estate */}
+            <div className="mt-4 bg-[#1a1a1a] border border-[#333] overflow-hidden">
+              <div className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                <p className="text-xs text-gray-500 flex-1">
+                  Share your insights, analysis, or news with the community.
+                </p>
+                <button
+                  onClick={() => setShowNewsSubmission(true)}
+                  className="py-2.5 px-4 bg-[#222] hover:bg-[#333] border border-[#333] text-white text-sm font-bold transition-colors flex items-center justify-center gap-2"
+                >
+                  <FileText className="w-4 h-4" />
+                  Submit Article
+                </button>
               </div>
             </div>
           </div>
@@ -696,9 +708,10 @@ const Dashboard = () => {
             levelRequired={CLASS_UNLOCK_LEVELS[classToPurchase]}
             currentLevel={profile.xpLevel || 1}
             weeksRemaining={weeksRemaining}
-            weeksUntilAutoUnlock={
-              profile?.createdAt ? getWeeksUntilUnlock(profile.createdAt, classToPurchase) : null
-            }
+            seasonsUntilUnlock={getSeasonsUntilUnlock(
+              profile?.lifetimeStats?.totalSeasons,
+              classToPurchase
+            )}
             isRegistrationLocked={isRegistrationLocked(classToPurchase)}
             onConfirm={handleConfirmClassPurchase}
             onClose={() => setClassToPurchase(null)}

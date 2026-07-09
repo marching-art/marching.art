@@ -13,8 +13,6 @@ const {
   getUserRankings,
   migrateUserProfiles,
   createUserProfile,
-  dailyXPCheckIn,
-  awardXP,
   fixProfileFields,
 } = require("./src/callable/users");
 const {
@@ -54,8 +52,10 @@ const {
   postLeagueMessage,
 } = require("./src/callable/leagues");
 const { joinRookieLeague } = require("./src/callable/rookieLeague");
+const { joinLeaguePool } = require("./src/callable/leaguePools");
 const { completeJourneyStep } = require("./src/callable/journey");
 const { purchaseShopItem, equipShopItem, sponsorShow } = require("./src/callable/shop");
+const { purchaseRetirementPlaque, purchaseHallBanner } = require("./src/callable/prestige");
 const { claimLadderTier } = require("./src/callable/seasonLadder");
 const {
   inviteDirectorToLeague,
@@ -122,6 +122,7 @@ const {
   updateLifetimeLeaderboard,
   scheduledLifetimeLeaderboardUpdate
 } = require("./src/scheduled/lifetimeLeaderboard");
+const { economyStatsJob } = require("./src/scheduled/economyStats");
 const {
   scheduledRivalsUpdate,
   updateRivalsNow,
@@ -204,10 +205,13 @@ module.exports = {
   joinLeague,
   joinLeagueByCode,
   joinRookieLeague,
+  joinLeaguePool,
   completeJourneyStep,
   purchaseShopItem,
   equipShopItem,
   sponsorShow,
+  purchaseRetirementPlaque,
+  purchaseHallBanner,
   claimLadderTier,
   leaveLeague,
   generateMatchups,
@@ -247,8 +251,6 @@ module.exports = {
   startNewLiveSeason,
   sendTestEmail,
   scrapeLiveScoresNow,
-  dailyXPCheckIn,
-  awardXP,
   fixProfileFields,
   unlockClassWithCorpsCoin,
   getCorpsCoinHistory,
@@ -275,6 +277,7 @@ module.exports = {
   processDailyLiveScores,
   updateLifetimeLeaderboard,
   scheduledLifetimeLeaderboardUpdate,
+  economyStatsJob,
 
   // Rivals
   scheduledRivalsUpdate,

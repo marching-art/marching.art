@@ -21,6 +21,7 @@ import {
 import SeasonStatsCard from '../SeasonStatsCard';
 import LeagueLeaderboards from '../LeagueLeaderboards';
 import LeagueDashboard from '../LeagueDashboard';
+import { getEquippedCosmetic } from '../../../utils/cosmetics';
 
 const StandingsTab = ({
   standings,
@@ -50,6 +51,40 @@ const StandingsTab = ({
     if (name && name !== 'Director') return name;
     if (profile?.username) return profile.username;
     return name || `Director ${uid?.slice(0, 6)}`;
+  };
+
+  // Corps Identity Shop flair — status only works when OTHERS see it, so
+  // standings rows show each member's equipped title and card-theme swatch.
+  const getMemberFlair = (uid) => {
+    const profile = memberProfiles[uid];
+    if (!profile) return { title: null, theme: null };
+    return {
+      title: getEquippedCosmetic(profile, 'title'),
+      theme: getEquippedCosmetic(profile, 'cardTheme'),
+    };
+  };
+
+  const MemberFlair = ({ uid }) => {
+    const flair = getMemberFlair(uid);
+    if (!flair.title && !flair.theme) return null;
+    return (
+      <>
+        {flair.title && (
+          <span
+            className={`text-[9px] font-bold uppercase tracking-wider flex-shrink-0 ${flair.title.textClass || 'text-gray-400'}`}
+          >
+            {flair.title.name}
+          </span>
+        )}
+        {flair.theme && (
+          <span
+            className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${flair.theme.swatchClass || 'bg-gray-500'}`}
+            title={flair.theme.name}
+            aria-label={`${flair.theme.name} card theme`}
+          />
+        )}
+      </>
+    );
   };
 
   // Get user's stats
@@ -182,6 +217,7 @@ const StandingsTab = ({
                           >
                             {getDisplayName(stats.uid)}
                           </span>
+                          <MemberFlair uid={stats.uid} />
                           {stats.uid === league?.creatorId && (
                             <Crown className="w-3 h-3 text-yellow-500" />
                           )}
@@ -340,6 +376,7 @@ const StandingsTab = ({
                                   >
                                     {getDisplayName(stats.uid)}
                                   </p>
+                                  <MemberFlair uid={stats.uid} />
                                   {isCommissioner && (
                                     <Crown className="w-3 h-3 text-yellow-500 flex-shrink-0" />
                                   )}

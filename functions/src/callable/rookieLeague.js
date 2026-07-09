@@ -101,7 +101,10 @@ exports.joinRookieLeague = onCall({ cors: true }, async (request) => {
       settings: {
         matchupType: 'weekly',
         playoffSize: 4,
-        prizePool: 1000,
+        // Pure escrow like every league (see createLeague): the rookie
+        // circuit has no entry fee, so its pool stays 0 — champions here
+        // win the trophy and the league-champion achievement, not minted CC.
+        prizePool: 0,
       },
     });
     transaction.set(newStandingsRef, {

@@ -13,6 +13,12 @@ vi.mock('../api/season', () => ({
   getSeasonChampionDocs: vi.fn(),
 }));
 
+// The banner purchase path pulls in api/functions, which initializes
+// Firebase at module load — mock it out like every other component test.
+vi.mock('../api/functions', () => ({
+  purchaseHallBanner: vi.fn(),
+}));
+
 import { getSeasonChampionDocs } from '../api/season';
 
 const SEASONS = [

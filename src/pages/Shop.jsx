@@ -28,7 +28,13 @@ import {
   getStreakStatus,
   sponsorShow,
 } from '../api/functions';
-import { SHOP_ITEMS, SHOP_SECTIONS, isOwned } from '../utils/cosmetics';
+import {
+  SHOP_ITEMS,
+  SHOP_SECTIONS,
+  isOwned,
+  isSeasonallyAvailable,
+  seasonalLabel,
+} from '../utils/cosmetics';
 
 // Mirror of getSponsorshipPrice in functions/src/callable/shop.js
 const SPONSORSHIP_REGIONAL_DAYS = [28, 35, 41, 42];
@@ -81,6 +87,7 @@ const Shop = () => {
   const profile = useProfileStore((state) => state.profile);
   const showsByDay = useScheduleStore((state) => state.showsByDay);
   const currentDay = useSeasonStore((state) => state.currentDay);
+  const seasonStatus = useSeasonStore((state) => state.seasonData?.status || null);
   const [busy, setBusy] = useState(null); // itemId currently purchasing/equipping
   const [freezeStatus, setFreezeStatus] = useState(null);
 
@@ -221,14 +228,14 @@ const Shop = () => {
             ) : (
               <button
                 onClick={handleBuyFreeze}
-                disabled={busy === 'streak_freeze' || balance < 300}
+                disabled={busy === 'streak_freeze' || balance < (freezeStatus?.freezeCost ?? 300)}
                 className={`h-9 px-4 text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
-                  balance >= 300
+                  balance >= (freezeStatus?.freezeCost ?? 300)
                     ? 'bg-cyan-600 hover:bg-cyan-500 text-white'
                     : 'bg-[#222] text-gray-600 cursor-not-allowed'
                 }`}
               >
-                {busy === 'streak_freeze' ? '...' : '300 CC'}
+                {busy === 'streak_freeze' ? '...' : `${freezeStatus?.freezeCost ?? 300} CC`}
               </button>
             )}
           </div>
@@ -298,13 +305,31 @@ const Shop = () => {
                   const owned = isOwned(profile, item.id);
                   const isEquipped = equipped[item.type] === item.id;
                   const canAfford = item.price != null && balance >= item.price;
+                  const inSeason = isSeasonallyAvailable(item, seasonStatus);
                   return (
                     <div key={item.id} className="bg-[#1a1a1a] border border-[#333] flex flex-col">
                       <ItemPreview item={item} />
                       <div className="p-3 flex-1 flex flex-col">
-                        <p className="text-sm font-bold text-white">{item.name}</p>
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-bold text-white">{item.name}</p>
+                          {item.seasonal && (
+                            <span
+                              className={`px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider whitespace-nowrap border ${
+                                inSeason
+                                  ? 'bg-amber-500/10 border-amber-500/40 text-amber-400'
+                                  : 'bg-[#222] border-[#333] text-gray-500'
+                              }`}
+                            >
+                              {seasonalLabel(item)}
+                            </span>
+                          )}
+                        </div>
                         <p className="text-[10px] text-gray-500 mb-3 flex-1">{item.description}</p>
-                        {item.grantOnly && !owned ? (
+                        {!owned && !item.grantOnly && !inSeason ? (
+                          <div className="h-8 w-full text-[10px] font-bold uppercase tracking-wider flex items-center justify-center bg-[#222] border border-[#333] text-gray-500">
+                            Returns Next {item.seasonal === 'live-season' ? 'Summer' : 'Off-Season'}
+                          </div>
+                        ) : item.grantOnly && !owned ? (
                           <div className="h-8 w-full text-[10px] font-bold uppercase tracking-wider flex items-center justify-center bg-emerald-600/10 border border-emerald-500/30 text-emerald-400">
                             Earned, Not Bought
                           </div>

@@ -78,22 +78,32 @@ describe('getChallengesForGameDay', () => {
   test('pinned rotation matches the server mirror (sync check)', () => {
     // Same expectation exists in functions/src/helpers/dailyChallenges.test.js
     expect(getChallengesForGameDay('Wed Jan 14 2026').map((c) => c.id)).toEqual([
-      'visit-guide',
-      'read-news',
-      'visit-schedule',
+      'check-lineup',
+      'make-prediction',
+      'register-show',
     ]);
   });
 });
 
 describe('CHALLENGE_POOL', () => {
-  test('every challenge is complete and navigable', () => {
+  test('every challenge is complete, navigable, and checkable', () => {
     for (const challenge of CHALLENGE_POOL) {
       expect(challenge.id).toBeTruthy();
       expect(challenge.label).toBeTruthy();
       expect(challenge.xp).toBeGreaterThan(0);
-      // Every challenge is either a link or an in-dashboard action
+      // Every challenge is either a link or an in-dashboard action…
       expect(Boolean(challenge.link) || Boolean(challenge.action)).toBe(true);
+      // …and carries the client-side auto-claim predicate mirroring the
+      // server's verify (decisions, not clicks)
+      expect(typeof challenge.check).toBe('function');
     }
     expect(new Set(CHALLENGE_POOL.map((c) => c.id)).size).toBe(CHALLENGE_POOL.length);
+  });
+
+  test('ids match the server pool (mirror check)', async () => {
+    const server = await import('../../functions/src/helpers/dailyChallenges.js');
+    expect(CHALLENGE_POOL.map((c) => c.id).sort()).toEqual(
+      server.CHALLENGE_POOL.map((c) => c.id).sort()
+    );
   });
 });

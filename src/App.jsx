@@ -6,6 +6,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { auth, authHelpers, analytics } from './api';
 import { claimDailyLogin } from './api/functions';
+import { surfaceDailyLoginPayoff } from './utils/dailyLoginPayoff';
 import { queryClient } from './lib/queryClient';
 import LoadingScreen from './components/LoadingScreen';
 import {
@@ -188,8 +189,12 @@ function App() {
     const lastClaimed = window.localStorage.getItem(storageKey);
     if (lastClaimed === todayKey) return;
     claimDailyLogin()
-      .then(() => {
+      .then((result) => {
         window.localStorage.setItem(storageKey, todayKey);
+        // Show the payoff (XP/coin pills, milestone celebration, level-up).
+        // The response used to be discarded, making the game's most
+        // reliable daily reward beat completely silent.
+        surfaceDailyLoginPayoff(result?.data);
       })
       .catch((err) => {
         console.warn('Daily login claim skipped:', err?.message || err);

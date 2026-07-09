@@ -21,7 +21,8 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
     settings: {
       scoringFormat: 'circuit',
       finalsSize: 12,
-      prizePool: 1000,
+      // No prizePool here: the pool is pure escrow, seeded and maintained
+      // server-side from entry fees only (createLeague ignores client values).
       entryFee: 0,
     },
   });

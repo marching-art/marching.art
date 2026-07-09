@@ -1,13 +1,16 @@
 // Admin > Jobs tab. Extracted from pages/Admin.jsx.
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../api';
 import { triggerDailyNews, triggerSeasonSummary } from '../../api/functions';
 import {
   AlertTriangle,
   Award,
   BookOpen,
   Calendar,
+  Coins,
   Database,
   Mail,
   Newspaper,
@@ -18,12 +21,91 @@ import {
 } from 'lucide-react';
 import { SectionHeader, ProcessRow } from './AdminUI';
 
+// Mint-vs-sink readout — the one dashboard the closed-loop economy needs
+// (written weekly by economyStatsJob; refresh on demand with the job below).
+const EconomyStatsPanel = ({ refreshKey }) => {
+  const [stats, setStats] = useState(null);
+
+  useEffect(() => {
+    getDoc(doc(db, 'admin-stats/economy'))
+      .then((snap) => setStats(snap.exists() ? snap.data() : null))
+      .catch(() => setStats(null));
+  }, [refreshKey]);
+
+  const types = Object.entries(stats?.byType || {}).sort(
+    (a, b) => Math.abs(b[1].amount) - Math.abs(a[1].amount)
+  );
+  const computedAt = stats?.computedAt?.toDate?.();
+
+  return (
+    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      <SectionHeader title="Economy — Mint vs Sink" icon={Coins} />
+      <div className="p-3">
+        {!stats ? (
+          <p className="text-[11px] text-gray-500">
+            No stats yet — run “Refresh Economy Stats” below (also runs automatically every
+            Monday).
+          </p>
+        ) : (
+          <>
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              <div className="bg-[#111] border border-[#333] p-2 text-center">
+                <p className="text-[9px] uppercase tracking-wider text-gray-500">Minted</p>
+                <p className="text-sm font-bold text-green-500 font-data tabular-nums">
+                  +{(stats.minted || 0).toLocaleString()}
+                </p>
+              </div>
+              <div className="bg-[#111] border border-[#333] p-2 text-center">
+                <p className="text-[9px] uppercase tracking-wider text-gray-500">Sunk</p>
+                <p className="text-sm font-bold text-red-500 font-data tabular-nums">
+                  −{(stats.sunk || 0).toLocaleString()}
+                </p>
+              </div>
+              <div className="bg-[#111] border border-[#333] p-2 text-center">
+                <p className="text-[9px] uppercase tracking-wider text-gray-500">Net</p>
+                <p
+                  className={`text-sm font-bold font-data tabular-nums ${
+                    (stats.net || 0) > 0 ? 'text-yellow-500' : 'text-emerald-400'
+                  }`}
+                >
+                  {(stats.net || 0) > 0 ? '+' : ''}
+                  {(stats.net || 0).toLocaleString()}
+                </p>
+              </div>
+            </div>
+            <div className="space-y-0.5">
+              {types.map(([type, t]) => (
+                <div key={type} className="flex items-center justify-between text-[11px]">
+                  <span className="text-gray-400 font-mono">{type}</span>
+                  <span
+                    className={`font-data tabular-nums ${t.amount >= 0 ? 'text-green-500' : 'text-red-500'}`}
+                  >
+                    {t.amount >= 0 ? '+' : ''}
+                    {t.amount.toLocaleString()} CC
+                    <span className="text-gray-600"> · {t.count}×</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="text-[9px] text-gray-600 mt-2">
+              Trailing {stats.windowDays}d · {stats.transactions?.toLocaleString()} transactions ·{' '}
+              {stats.activeWallets?.toLocaleString()} active wallets
+              {computedAt ? ` · computed ${computedAt.toLocaleString()}` : ''}
+            </p>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const JobsTab = ({ callAdminFunction, seasonData }) => {
   const [loading, setLoading] = useState(null);
   const [testEmail, setTestEmail] = useState('');
   const [newsDay, setNewsDay] = useState('');
   const [summaryDay, setSummaryDay] = useState('');
   const [sweepResult, setSweepResult] = useState(null);
+  const [statsRefresh, setStatsRefresh] = useState(0);
 
   const jobs = [
     {
@@ -63,6 +145,12 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
       icon: Calendar,
     },
     {
+      id: 'updateEconomyStats',
+      name: 'Refresh Economy Stats',
+      description: 'Recompute the mint-vs-sink aggregates above (also runs weekly)',
+      icon: Coins,
+    },
+    {
       id: 'rebuildGameRecords',
       name: 'Rebuild Records Book',
       description:
@@ -90,6 +178,7 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
     setLoading(jobId);
     try {
       await callAdminFunction('manualTrigger', { jobName: jobId });
+      if (jobId === 'updateEconomyStats') setStatsRefresh((n) => n + 1);
     } finally {
       setLoading(null);
     }
@@ -173,6 +262,9 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
 
   return (
     <div className="space-y-4">
+      {/* Economy instrumentation — read before touching prices */}
+      <EconomyStatsPanel refreshKey={statsRefresh} />
+
       {/* News Generation - Trigger for specific day */}
       <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
         <SectionHeader title="News Generation" icon={Newspaper} />

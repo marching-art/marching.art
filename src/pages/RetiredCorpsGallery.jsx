@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
-import { Trophy, Calendar, MapPin, Star, Archive, RefreshCw, X, Music } from 'lucide-react';
+import { Trophy, Calendar, MapPin, Star, Archive, RefreshCw, X, Music, Award, Coins } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { subscribeToProfile } from '../api/profile';
-import { unretireCorps } from '../api/functions';
+import { unretireCorps, purchaseRetirementPlaque } from '../api/functions';
 import toast from 'react-hot-toast';
 import LoadingScreen from '../components/LoadingScreen';
 import Portal from '../components/Portal';
 import { PageHeader } from '../components/ui';
 import { getSoundSportRating, RATING_CONFIG } from '../utils/scoresUtils';
+import { PLAQUE_TIERS, PLAQUE_STYLES, availablePlaqueUpgrades } from '../utils/prestige';
 
 // Class styling matches the site's design system (see Schedule CLASS_CONFIG):
 // sharp, flat color tints rather than gradients.
@@ -50,9 +51,12 @@ const CLASS_FILTERS = [
 const RetiredCorpsGallery = () => {
   const { user } = useAuth();
   const [retiredCorps, setRetiredCorps] = useState([]);
+  const [corpsCoin, setCorpsCoin] = useState(0);
   const [loading, setLoading] = useState(true);
   const [selectedCorps, setSelectedCorps] = useState(null);
   const [showUnretireModal, setShowUnretireModal] = useState(false);
+  const [showPlaqueModal, setShowPlaqueModal] = useState(false);
+  const [purchasingTier, setPurchasingTier] = useState(null);
   const [unretiring, setUnretiring] = useState(false);
   const [filterClass, setFilterClass] = useState('all');
   const [sortBy, setSortBy] = useState('retiredAt'); // retiredAt, totalSeasons, bestScore
@@ -63,6 +67,7 @@ const RetiredCorpsGallery = () => {
     const unsubscribe = subscribeToProfile(user.uid, (profileData) => {
       if (profileData) {
         setRetiredCorps(profileData.retiredCorps || []);
+        setCorpsCoin(profileData.corpsCoin || 0);
       }
       setLoading(false);
     });
@@ -95,10 +100,36 @@ const RetiredCorpsGallery = () => {
     }
   };
 
-  // Filter and sort retired corps
+  const handlePurchasePlaque = async (tier) => {
+    if (!selectedCorps) return;
+    setPurchasingTier(tier);
+    try {
+      const result = await purchaseRetirementPlaque({
+        retiredIndex: selectedCorps.index,
+        corpsName: selectedCorps.corpsName,
+        tier,
+      });
+      if (result.data.success) {
+        toast.success(result.data.message);
+        setShowPlaqueModal(false);
+        setSelectedCorps(null);
+      }
+    } catch (error) {
+      console.error('Error commissioning plaque:', error);
+      toast.error(error.message || 'Failed to commission plaque');
+    } finally {
+      setPurchasingTier(null);
+    }
+  };
+
+  // Filter and sort retired corps. originalIndex MUST be captured before the
+  // filter runs — it is the index into the raw profile.retiredCorps array
+  // that unretireCorps/purchaseRetirementPlaque receive, and mapping after
+  // the filter made it the filtered position (wrong corps when a class
+  // filter was active).
   const filteredCorps = retiredCorps
-    .filter((corps) => filterClass === 'all' || corps.corpsClass === filterClass)
     .map((corps, index) => ({ ...corps, originalIndex: index }))
+    .filter((corps) => filterClass === 'all' || corps.corpsClass === filterClass)
     .sort((a, b) => {
       switch (sortBy) {
         case 'totalSeasons':
@@ -213,11 +244,21 @@ const RetiredCorpsGallery = () => {
                       <div className="mb-4">
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <Music className="w-5 h-5 text-purple-400 flex-shrink-0" />
-                          <span
-                            className={`px-2 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-wider ${config.bg} ${config.color}`}
-                          >
-                            {config.name}
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            {corps.plaque && PLAQUE_STYLES[corps.plaque.tier] && (
+                              <span
+                                className={`flex items-center gap-1 px-2 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-wider border ${PLAQUE_STYLES[corps.plaque.tier].bg} ${PLAQUE_STYLES[corps.plaque.tier].text} ${PLAQUE_STYLES[corps.plaque.tier].border}`}
+                              >
+                                <Award className="w-3 h-3" />
+                                {corps.plaque.tier}
+                              </span>
+                            )}
+                            <span
+                              className={`px-2 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-wider ${config.bg} ${config.color}`}
+                            >
+                              {config.name}
+                            </span>
+                          </div>
                         </div>
                         <h3 className="text-lg font-bold text-white leading-tight truncate">
                           {corps.corpsName}
@@ -305,6 +346,21 @@ const RetiredCorpsGallery = () => {
                         <RefreshCw className="w-3.5 h-3.5" />
                         Bring Out of Retirement
                       </button>
+
+                      {/* Commission Plaque Button — hidden once gold hangs */}
+                      {availablePlaqueUpgrades(corps).length > 0 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedCorps({ ...corps, index: corps.originalIndex });
+                            setShowPlaqueModal(true);
+                          }}
+                          className="w-full mt-2 py-2 px-4 bg-[#1a1a1a] hover:bg-[#222] border border-yellow-500/40 text-yellow-500 font-bold text-xs uppercase tracking-wider rounded-sm transition-all flex items-center justify-center gap-2"
+                        >
+                          <Award className="w-3.5 h-3.5" />
+                          {corps.plaque ? 'Upgrade Plaque' : 'Commission Plaque'}
+                        </button>
+                      )}
                     </div>
                   </m.div>
                 );
@@ -313,6 +369,101 @@ const RetiredCorpsGallery = () => {
           </div>
         )}
       </div>
+
+      {/* Commission Plaque Modal */}
+      <AnimatePresence>
+        {showPlaqueModal && selectedCorps && (
+          <Portal>
+            <m.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+              onClick={() => !purchasingTier && setShowPlaqueModal(false)}
+            >
+              <m.div
+                initial={{ scale: 0.98, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.98, opacity: 0 }}
+                className="bg-[#1a1a1a] border border-[#333] rounded-sm max-w-md w-full overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                    <Award className="w-4 h-4 text-yellow-500" />
+                    Commission a Plaque
+                  </h3>
+                  <button
+                    onClick={() => setShowPlaqueModal(false)}
+                    disabled={!!purchasingTier}
+                    className="text-gray-400 hover:text-white transition-colors"
+                    aria-label="Close"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="p-4">
+                  <p className="text-xs text-gray-400 mb-1">
+                    Honor the legacy of{' '}
+                    <span className="text-white font-bold">{selectedCorps.corpsName}</span> with a
+                    memorial plaque, displayed forever on its gallery card.
+                  </p>
+                  <div className="flex items-center gap-1.5 text-[11px] text-gray-500 mb-4">
+                    <Coins className="w-3 h-3 text-yellow-500" />
+                    <span className="font-data tabular-nums">
+                      {corpsCoin.toLocaleString()}
+                    </span>{' '}
+                    CorpsCoin available
+                  </div>
+
+                  <div className="space-y-2">
+                    {availablePlaqueUpgrades(selectedCorps).map((tier) => {
+                      const style = PLAQUE_STYLES[tier.id];
+                      const affordable = corpsCoin >= tier.price;
+                      const busy = purchasingTier === tier.id;
+                      return (
+                        <button
+                          key={tier.id}
+                          onClick={() => handlePurchasePlaque(tier.id)}
+                          disabled={!affordable || !!purchasingTier}
+                          className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-sm border transition-all ${style.bg} ${style.border} ${
+                            affordable
+                              ? 'hover:brightness-125'
+                              : 'opacity-50 cursor-not-allowed'
+                          }`}
+                        >
+                          <span
+                            className={`flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${style.text}`}
+                          >
+                            {busy ? (
+                              <RefreshCw className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Award className="w-4 h-4" />
+                            )}
+                            {tier.name}
+                          </span>
+                          <span className="flex items-center gap-1 text-xs font-bold text-white font-data tabular-nums">
+                            <Coins className="w-3.5 h-3.5 text-yellow-500" />
+                            {tier.price.toLocaleString()}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {selectedCorps.plaque && (
+                    <p className="text-[10px] text-gray-500 mt-3">
+                      Upgrading replaces the current {PLAQUE_TIERS[selectedCorps.plaque.tier]?.name}{' '}
+                      and pays the full price of the new tier.
+                    </p>
+                  )}
+                </div>
+              </m.div>
+            </m.div>
+          </Portal>
+        )}
+      </AnimatePresence>
 
       {/* Unretire Confirmation Modal */}
       <AnimatePresence>

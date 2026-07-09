@@ -103,6 +103,12 @@ export interface UserProfile {
   // Lifetime stats (detailed)
   lifetimeStats?: LifetimeStats;
 
+  // Competition trophies — server-awarded nightly by scoringAwards.js
+  trophies?: ProfileTrophies;
+
+  // Lifetime per-caption mastery points — banked nightly by the scoring run
+  captionStats?: CaptionStats;
+
   // Daily challenges (keyed by date string)
   challenges?: Record<string, DailyChallenge[]>;
   dailyChallenges?: DailyChallenges; // Legacy/alternative structure
@@ -133,7 +139,15 @@ export interface RetiredCorps {
   retiredAt: string;
   finalScore?: number;
   seasonsPlayed?: number;
+  /** Purchased memorial plaque (purchaseRetirementPlaque callable) */
+  plaque?: { tier: 'bronze' | 'silver' | 'gold'; purchasedAt: string };
 }
+
+/**
+ * Lifetime per-caption mastery points (GE1..P), banked nightly by the
+ * scoring run. Server-only; tiers derive from src/utils/captionMastery.js.
+ */
+export type CaptionStats = Record<string, number>;
 
 export interface EngagementData {
   loginStreak: number;
@@ -159,6 +173,24 @@ export interface WeeklyProgressData {
     scoreImprovement?: number;
     rankChange?: number;
   };
+}
+
+/** One server-awarded competition trophy (written by scoringAwards.js) */
+export interface CompetitionTrophy {
+  type: string;
+  corpsClass?: CorpsClass | string;
+  seasonName?: string;
+  eventName?: string;
+  score?: number;
+  rank?: number;
+}
+
+/** The profile's trophy case, grouped by competition tier */
+export interface ProfileTrophies {
+  regionals?: CompetitionTrophy[];
+  classChampionships?: CompetitionTrophy[];
+  championships?: CompetitionTrophy[];
+  finalistMedals?: CompetitionTrophy[];
 }
 
 export interface LifetimeStats {

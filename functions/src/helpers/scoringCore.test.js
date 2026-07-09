@@ -319,6 +319,55 @@ describe("scoreShowsForDay", () => {
     assert.equal(result.stats.corpsScored, 1);
   });
 
+  test("accumulates lifetime caption points per uid across corps and shows", () => {
+    const profilesSnapshot = {
+      docs: [
+        profileDoc("u1", {
+          corps: {
+            worldClass: {
+              corpsName: "TwoClasses A",
+              lineup: fullLineup(),
+              selectedShows: { week1: [{ eventName: "Show A" }] },
+            },
+            aClass: {
+              corpsName: "TwoClasses B",
+              lineup: fullLineup(),
+              selectedShows: { week1: [{ eventName: "Show A" }] },
+            },
+          },
+        }),
+        profileDoc("u2", {
+          corps: {
+            openClass: {
+              corpsName: "Bystander",
+              lineup: fullLineup(),
+              selectedShows: { week1: [{ eventName: "Elsewhere" }] },
+            },
+          },
+        }),
+      ],
+    };
+    const dailyRecap = { shows: [] };
+    // Base 25 => capped at 20 per caption. u1 fields two corps in the same
+    // show, so each caption banks 20 + 20 = 40 tonight.
+    const result = scoreShowsForDay({
+      dayEventData: { shows: [{ eventName: "Show A" }] },
+      profilesSnapshot,
+      week: 1,
+      scoredDay: 1,
+      championshipConfig: null,
+      dailyRecap,
+      getBaseCaptionScore: () => 25,
+    });
+
+    const u1 = result.captionPoints.get("u1");
+    for (const caption of CAPTIONS) {
+      assert.equal(u1[caption], 40, `${caption} should bank capped points from both corps`);
+    }
+    // A corps that didn't attend banks nothing.
+    assert.equal(result.captionPoints.has("u2"), false);
+  });
+
   test("sums scores across multiple shows for the same corps", () => {
     const profilesSnapshot = {
       docs: [

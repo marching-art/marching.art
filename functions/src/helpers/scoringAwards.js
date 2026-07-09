@@ -11,7 +11,10 @@ const {
   addCoinHistoryEntryToBatch,
   WEEKLY_LEAGUE_WIN_REWARD,
 } = require("../callable/economy");
+const { XP_SOURCES } = require("./xpCalculations");
 const { ChunkedWriter } = require("./chunkedWriter");
+const { updateStandings } = require("./leagueStandings");
+const { createLeagueActivity } = require("./leagueHelpers");
 
 /**
  * Get top N corps from season standings with tie handling at cutoff position.
@@ -261,11 +264,17 @@ function buildChampionshipConfig(scoredDay, recapsByDay, allRecaps) {
 function processCoinAwardsBatch(coinAwards, batch, db) {
   if (coinAwards.length === 0) return;
 
-  const coinByUser = new Map(); // uid -> { totalAmount, history: [] }
+  const coinByUser = new Map(); // uid -> { totalAmount, xpAmount, history: [] }
 
   for (const award of coinAwards) {
-    const existing = coinByUser.get(award.uid) || { totalAmount: 0, history: [] };
+    const existing = coinByUser.get(award.uid) || { totalAmount: 0, xpAmount: 0, history: [] };
     existing.totalAmount += award.amount;
+    // Competing is the core act, so each attended show also pays XP
+    // (XP_SOURCES.showParticipation) alongside its CC. Design bonuses
+    // (type 'show_design') are CC-only.
+    if (!award.type || award.type === TRANSACTION_TYPES.SHOW_PARTICIPATION) {
+      existing.xpAmount += XP_SOURCES.showParticipation;
+    }
     existing.history.push({
       type: award.type || TRANSACTION_TYPES.SHOW_PARTICIPATION,
       amount: award.amount,
@@ -278,10 +287,15 @@ function processCoinAwardsBatch(coinAwards, batch, db) {
 
   // Add coin updates to batch (uses increment for concurrency safety)
   // History entries are written to subcollection instead of arrayUnion on profile
+  // XP lands as a raw increment; xpLevel/title/unlocks recompute on the next
+  // claimDailyLogin (same convention as the weekly XP payments).
   for (const [uid, data] of coinByUser) {
     const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
     batch.update(userProfileRef, {
       corpsCoin: admin.firestore.FieldValue.increment(data.totalAmount),
+      ...(data.xpAmount > 0
+        ? { xp: admin.firestore.FieldValue.increment(data.xpAmount) }
+        : {}),
     });
 
     for (const entry of data.history) {
@@ -594,6 +608,9 @@ async function processWeeklyMatchups(week, seasonData, db) {
   // plus coin awards can exceed a single WriteBatch's per-request cap.
   const winnerBatch = new ChunkedWriter(db);
   const corpsClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+  // Per-league resolved pairs, applied to standings only after the matchup
+  // docs commit (see below).
+  const standingsByLeague = [];
 
   // Batch fetch ALL matchup documents in ONE operation
   const matchupRefs = leaguesSnapshot.docs.map(leagueDoc =>
@@ -618,6 +635,10 @@ async function processWeeklyMatchups(week, seasonData, db) {
     const matchupData = { ...matchupEntry.data };
     const matchupDocRef = matchupEntry.ref;
     let hasUpdates = false;
+    // Resolved pairs for the standings/current doc — same shape the
+    // commissioner callable feeds updateStandings, so the automatic weekly
+    // close and a manual resolution produce identical standings.
+    const standingsPairs = [];
 
     for (const corpsClass of corpsClasses) {
       const matchupArrayKey = `${corpsClass}Matchups`;
@@ -627,7 +648,7 @@ async function processWeeklyMatchups(week, seasonData, db) {
       const updatedMatchupsForClass = [];
 
       // Batch fetch all matchup profiles for this class upfront
-      const matchupsNeedingScores = matchups.filter(m => !m.winner);
+      const matchupsNeedingScores = matchups.filter(m => !m.winner && !m.completed);
       const allPlayerIds = [...new Set(matchupsNeedingScores.flatMap(m => m.pair))];
 
       // Batch fetch all profiles in ONE operation
@@ -643,7 +664,20 @@ async function processWeeklyMatchups(week, seasonData, db) {
       });
 
       for (const matchup of matchups) {
-        if (matchup.winner) {
+        if (matchup.winner || matchup.completed) {
+          // Already resolved: a generator bye, a previous run, or a
+          // commissioner manual resolution (which folded itself into
+          // standings). Byes are folded into standings HERE — this guarded
+          // once-per-week run is their single counting point.
+          if (matchup.isBye && matchup.pair?.[0]) {
+            standingsPairs.push({
+              player1: matchup.pair[0],
+              player2: null,
+              winner: matchup.pair[0],
+              completed: true,
+              corpsClass,
+            });
+          }
           updatedMatchupsForClass.push(matchup);
           continue;
         }
@@ -678,6 +712,9 @@ async function processWeeklyMatchups(week, seasonData, db) {
           // Pay the advertised weekly-win bonus (getEarningOpportunities:
           // "Win your weekly matchup to earn bonus CC") and keep the
           // profile's leagueWins stat live. Byes and ties award nothing.
+          // The XP lands as a raw increment; xpLevel/title/class unlocks
+          // recompute from the stored xp total on the next claimDailyLogin,
+          // where the level-up stipend also settles via lastRewardedLevel.
           if (winnerUid) {
             const winnerRef = winnerUid === p1_uid ? p1_profile.ref : p2_profile.ref;
             winnerBatch.set(
@@ -685,6 +722,7 @@ async function processWeeklyMatchups(week, seasonData, db) {
               {
                 stats: { leagueWins: increment },
                 corpsCoin: admin.firestore.FieldValue.increment(WEEKLY_LEAGUE_WIN_REWARD),
+                xp: admin.firestore.FieldValue.increment(XP_SOURCES.leagueWin),
               },
               { merge: true }
             );
@@ -698,12 +736,27 @@ async function processWeeklyMatchups(week, seasonData, db) {
           }
         }
 
+        // Doc convention matches the commissioner callable: completed flag
+        // set, ties stored as the string 'tie' (winnerUid stays null
+        // internally so ties pay nothing above). The completed flag is what
+        // the weekly recap generator and the Monday push job read.
         const newMatchup = {
           ...matchup,
           scores: { [p1_uid]: p1_score, [p2_uid]: p2_score },
-          winner: winnerUid,
+          winner: winnerUid ?? 'tie',
+          completed: true,
         };
         updatedMatchupsForClass.push(newMatchup);
+
+        standingsPairs.push({
+          player1: p1_uid,
+          player2: p2_uid,
+          player1Score: p1_score,
+          player2Score: p2_score,
+          winner: winnerUid ?? 'tie',
+          completed: true,
+          corpsClass,
+        });
       }
       matchupData[matchupArrayKey] = updatedMatchupsForClass;
       hasUpdates = true;
@@ -711,10 +764,105 @@ async function processWeeklyMatchups(week, seasonData, db) {
     if (hasUpdates) {
       winnerBatch.update(matchupDocRef, matchupData);
     }
+    if (standingsPairs.length > 0) {
+      standingsByLeague.push({ leagueDoc, standingsPairs });
+    }
   }
 
   await winnerBatch.commit();
+
+  // Fold this week's results into each league's standings/current and drop a
+  // summary event into the activity feed — previously only the
+  // commissioner-invoked updateMatchupResults callable did either, so
+  // auto-generated matchups never moved the standings. Applied strictly
+  // AFTER the matchup docs commit: if the commit fails, matchups stay
+  // unresolved and the re-run re-derives everything; standings are never
+  // ahead of the docs they summarize.
+  for (const { leagueDoc, standingsPairs } of standingsByLeague) {
+    try {
+      await updateStandings(db, leagueDoc.ref, standingsPairs);
+      const decided = standingsPairs.filter((p) => p.player2 !== null).length;
+      if (decided > 0) {
+        await createLeagueActivity(db, leagueDoc.id, {
+          type: 'matchup_result',
+          title: `Week ${week} Results`,
+          message: `${decided} matchup${decided > 1 ? 's' : ''} decided in week ${week}.`,
+          metadata: { week, matchupsCompleted: decided },
+        });
+      }
+    } catch (error) {
+      // Standings/feed are derived views — never let them fail the
+      // guarded scoring run that pays rewards.
+      logger.error(`Standings/activity update failed for league ${leagueDoc.id}:`, error);
+    }
+  }
+
   logger.info(`Matchup winner determination for week ${week} complete.`);
+}
+
+/**
+ * Pay the advertised weekly-participation XP to every director who competed
+ * in at least one show this week — once per participating class, so a
+ * director fielding two classes earns two grants.
+ *
+ * Participation is derived from the week's committed recap docs
+ * (fantasy_recaps/{seasonUid}/days/{day}), which only contain corps that
+ * actually attended and were scored — the same source of truth the
+ * standings read. Runs at the week boundary inside the scoringRunGuard-
+ * protected run, so scheduler redeliveries cannot double-pay (with the
+ * same documented ChunkedWriter mid-commit residual risk the CorpsCoin
+ * awards carry).
+ *
+ * XP lands as a raw increment; xpLevel/title/class unlocks recompute from
+ * the stored xp total on the next claimDailyLogin, where the level-up
+ * CorpsCoin stipend also settles via lastRewardedLevel — no reward is lost
+ * by deferring the recompute.
+ *
+ * @param {number} week - The week number (1-7)
+ * @param {Object} seasonData - Season configuration data
+ * @param {Firestore} db - Firestore database instance
+ */
+async function payWeeklyParticipationXP(week, seasonData, db) {
+  const firstDay = week * 7 - 6;
+  const lastDay = week * 7;
+  const dayRefs = [];
+  for (let day = firstDay; day <= lastDay; day++) {
+    dayRefs.push(db.doc(`fantasy_recaps/${seasonData.seasonUid}/days/${day}`));
+  }
+  const dayDocs = await db.getAll(...dayRefs);
+
+  // Distinct participating classes per director across the week.
+  const classesByUid = new Map();
+  for (const dayDoc of dayDocs) {
+    if (!dayDoc.exists) continue;
+    for (const show of (dayDoc.data().shows || [])) {
+      for (const result of (show.results || [])) {
+        if (!result?.uid || !result?.corpsClass) continue;
+        if (!classesByUid.has(result.uid)) classesByUid.set(result.uid, new Set());
+        classesByUid.get(result.uid).add(result.corpsClass);
+      }
+    }
+  }
+
+  if (classesByUid.size === 0) {
+    logger.info(`Week ${week}: no show participants in recaps; no weekly participation XP to pay.`);
+    return;
+  }
+
+  const xpBatch = new ChunkedWriter(db);
+  let totalXP = 0;
+  for (const [uid, classes] of classesByUid.entries()) {
+    const amount = XP_SOURCES.weeklyParticipation * classes.size;
+    totalXP += amount;
+    const profileRef = db.doc(
+      `artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`
+    );
+    xpBatch.set(profileRef, { xp: admin.firestore.FieldValue.increment(amount) }, { merge: true });
+  }
+  await xpBatch.commit();
+  logger.info(
+    `Week ${week}: paid weekly-participation XP to ${classesByUid.size} directors (${totalXP} XP total).`
+  );
 }
 
 module.exports = {
@@ -726,4 +874,5 @@ module.exports = {
   awardFinalsAndSaveChampions,
   buildEasternClassicParticipantSet,
   processWeeklyMatchups,
+  payWeeklyParticipationXP,
 };

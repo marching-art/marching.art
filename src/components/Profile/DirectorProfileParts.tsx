@@ -32,7 +32,7 @@ import type {
 } from '../../types';
 import { formatSeasonName } from '../../utils/season';
 import { describeConceptStyle, getConceptTitle } from '../../utils/showConcept';
-import { toCanonicalClassKey } from '../../utils/classUnlockTime';
+import { toCanonicalClassKey } from '../../utils/classUnlocks';
 import { getSoundSportRating } from '../../utils/scoresUtils';
 import {
   TIER_STYLES,

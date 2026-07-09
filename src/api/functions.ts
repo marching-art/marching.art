@@ -2,7 +2,7 @@
 // FIREBASE CLOUD FUNCTIONS
 // =============================================================================
 // Typed wrappers for all Firebase Cloud Functions
-// Usage: import { registerCorps, dailyRehearsal } from '@/api/functions';
+// Usage: import { registerCorps, claimDailyLogin } from '@/api/functions';
 
 import { createCallable } from './callable';
 
@@ -220,41 +220,10 @@ export const getEarningOpportunities = createCallable<
   }
 >('getEarningOpportunities');
 
-// =============================================================================
-// EXECUTION SYSTEM
-// =============================================================================
-
-export interface RehearsalData {
-  corpsClass: string;
-}
-
-export interface RehearsalResult {
-  success: boolean;
-  readinessGain: number;
-  moraleChange: number;
-  newReadiness: number;
-  newMorale: number;
-}
-
-export const dailyRehearsal = createCallable<RehearsalData, RehearsalResult>('dailyRehearsal');
-export const repairEquipment = createCallable<
-  { corpsClass: string; equipmentType: string },
-  { success: boolean }
->('repairEquipment');
-export const upgradeEquipment = createCallable<
-  { corpsClass: string; equipmentType: string },
-  { success: boolean }
->('upgradeEquipment');
-export const setShowDifficulty = createCallable<{ corpsClass: string; difficulty: number }, void>(
-  'setShowDifficulty'
-);
-export const boostMorale = createCallable<
-  { corpsClass: string },
-  { success: boolean; newMorale: number }
->('boostMorale');
-export const getExecutionStatus = createCallable<{ corpsClass: string }, unknown>(
-  'getExecutionStatus'
-);
+// NOTE: the "execution system" client stubs (dailyRehearsal, repairEquipment,
+// upgradeEquipment, setShowDifficulty, boostMorale, getExecutionStatus) were
+// removed — the backend was intentionally cut (see PRIORITIES.md) and none of
+// the stubs had a server function or a component caller.
 
 // =============================================================================
 // DAILY OPERATIONS
@@ -265,6 +234,7 @@ export interface ClaimDailyLoginResult {
   message: string;
   loginStreak: number;
   alreadyClaimed?: boolean;
+  streakBroken?: boolean;
   xpAwarded?: number;
   coinAwarded?: number;
   milestoneReached?: {
@@ -350,6 +320,16 @@ export const sponsorShow = createCallable<
   { success: boolean; message: string; newBalance: number; price: number }
 >('sponsorShow');
 
+export const purchaseRetirementPlaque = createCallable<
+  { retiredIndex: number; corpsName: string; tier: string },
+  { success: boolean; tier: string; newBalance: number; message: string }
+>('purchaseRetirementPlaque');
+
+export const purchaseHallBanner = createCallable<
+  { seasonId: string; corpsClass: string; message: string },
+  { success: boolean; newBalance: number; message: string }
+>('purchaseHallBanner');
+
 export const joinRookieLeague = createCallable<
   void,
   {
@@ -361,6 +341,11 @@ export const joinRookieLeague = createCallable<
   }
 >('joinRookieLeague');
 
+export const joinLeaguePool = createCallable<
+  { leagueId: string },
+  { success: boolean; pot: number; ante?: number; alreadyIn?: boolean }
+>('joinLeaguePool');
+
 export const purchaseStreakFreeze = createCallable<
   void,
   { success: boolean; message: string; freezeUntil: string; newBalance: number }
@@ -371,8 +356,11 @@ export interface CompleteDailyChallengeResult {
   xpAwarded: number;
   alreadyCompleted?: boolean;
   notInRotation?: boolean;
+  notDoneYet?: boolean;
   challenge?: { id: string; label: string; xp: number };
   completedToday?: number;
+  weeklyArcDays?: number;
+  weeklyArcBonus?: { xp: number; coin: number } | null;
   newLevel?: number;
   classUnlocked?: string | null;
 }

@@ -82,10 +82,10 @@ export async function getCorps(uid: string, corpsClass: CorpsClass): Promise<Cor
 //
 // NOTE: Profile creation and all economy/progression mutations (XP, level,
 // CorpsCoin, class unlocks, stats, trophies) are server-only. They happen in
-// Cloud Functions callables (createUserProfile, awardXP, syncClassUnlocks,
-// unlockClassWithCorpsCoin, ...) and are blocked for clients by Firestore
-// security rules. The helpers below may only touch cosmetic/preference
-// fields.
+// Cloud Functions callables (createUserProfile, claimDailyLogin,
+// syncClassUnlocks, unlockClassWithCorpsCoin, ...) or scheduled scoring runs,
+// and are blocked for clients by Firestore security rules. The helpers below
+// may only touch cosmetic/preference fields.
 // =============================================================================
 
 /**

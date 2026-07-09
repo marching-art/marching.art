@@ -24,14 +24,18 @@ export const CAPTIONS = [
 // canonicalizes, so these keys flow through the whole unlock/purchase path.
 export const CLASS_UNLOCK_LEVELS = { aClass: 3, openClass: 5, worldClass: 10 };
 export const CLASS_UNLOCK_COSTS = { aClass: 1000, openClass: 2500, worldClass: 5000 };
-export const CLASS_UNLOCK_WEEKS = { aClass: 5, openClass: 12, worldClass: 19 };
 export const CLASS_DISPLAY_NAMES = CORPS_CLASS_LABELS;
 
-// SoundSport medal rating thresholds
+// SoundSport medal rating thresholds. The tier boundaries are canonical in
+// src/utils/scoresUtils.ts getSoundSportRating (Gold ≥85 / Silver ≥75 /
+// Bronze ≥65, owner-confirmed) — this table only adds the dashboard's chip
+// styling. A test in scoresUtils.test.ts pins the two tables together; this
+// copy once drifted (Gold 90 / Bronze 60), showing different medals for the
+// same score on different pages.
 export const SOUNDSPORT_RATING_THRESHOLDS = [
-  { rating: 'Gold', min: 90, color: 'bg-yellow-500', textColor: 'text-black' },
+  { rating: 'Gold', min: 85, color: 'bg-yellow-500', textColor: 'text-black' },
   { rating: 'Silver', min: 75, color: 'bg-stone-300', textColor: 'text-black' },
-  { rating: 'Bronze', min: 60, color: 'bg-orange-300', textColor: 'text-black' },
+  { rating: 'Bronze', min: 65, color: 'bg-orange-300', textColor: 'text-black' },
   { rating: 'Participation', min: 0, color: 'bg-white', textColor: 'text-black' },
 ];
 

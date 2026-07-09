@@ -6,9 +6,15 @@
 
 import React from 'react';
 import { Trophy, Crown, Medal, Shield } from 'lucide-react';
-import type { UserProfile, CorpsClass } from '../../types';
-import { CORPS_CLASS_ORDER, resolveCorpsForClass, isCorpsClassUnlocked } from '../../utils/corps';
-import { toCanonicalClassKey } from '../../utils/classUnlockTime';
+import type { UserProfile, CorpsClass, CompetitionTrophy } from '../../types';
+import {
+  CORPS_CLASS_ORDER,
+  CORPS_CLASS_LABELS,
+  resolveCorpsForClass,
+  isCorpsClassUnlocked,
+} from '../../utils/corps';
+import { toCanonicalClassKey } from '../../utils/classUnlocks';
+import { formatSeasonName } from '../../utils/season';
 
 export interface SeasonHistoryEntry {
   seasonId: string;
@@ -226,12 +232,88 @@ export function getCorpsWithAvatars(
   return result;
 }
 
-// Get trophies (competition-based awards only - NOT achievements)
+// ---------------------------------------------------------------------------
+// Trophy Case — competition-based awards only (NOT achievements).
+// Reads the REAL server-awarded trophy arrays (profile.trophies.*, written
+// nightly by functions scoringAwards.js: regionals, class championships,
+// finals championships, finalist medals). The old implementation fabricated
+// placeholder rows from stats counters and never read this data — the game's
+// best-earned hardware was displayed nowhere. The synthetic rows remain only
+// as a fallback for profiles with no real trophies yet.
+// ---------------------------------------------------------------------------
+
+const rankTier = (rank?: number): TrophyData['tier'] =>
+  rank === 1 ? 'gold' : rank === 2 ? 'silver' : 'bronze';
+
+const medalWord = (rank?: number): string =>
+  rank === 1 ? 'Champion' : rank === 2 ? 'Silver Medalist' : rank === 3 ? 'Bronze Medalist' : `${rank}th Place`;
+
+const classLabel = (key?: string): string =>
+  (key && CORPS_CLASS_LABELS[toCanonicalClassKey(key) as CorpsClass]) || '';
+
+const trophyDescription = (t: CompetitionTrophy): string =>
+  [t.eventName, t.seasonName ? formatSeasonName(t.seasonName) : null].filter(Boolean).join(' · ') ||
+  'Competition award';
+
 export function getCompetitionTrophies(profile: UserProfile): TrophyData[] {
+  const real = getRealTrophies(profile);
+  return real.length > 0 ? real : getLegacySyntheticTrophies(profile);
+}
+
+function getRealTrophies(profile: UserProfile): TrophyData[] {
+  const t = profile.trophies;
+  if (!t) return [];
+  const out: TrophyData[] = [];
+
+  (t.championships || []).forEach((trophy, i) =>
+    out.push({
+      id: `championship-${i}`,
+      title: `Finals ${medalWord(trophy.rank)}`,
+      description: trophyDescription(trophy),
+      tier: rankTier(trophy.rank),
+      season: trophy.seasonName,
+      icon: Crown,
+    })
+  );
+  (t.classChampionships || []).forEach((trophy, i) =>
+    out.push({
+      id: `class-championship-${i}`,
+      title: `${classLabel(trophy.corpsClass)} ${medalWord(trophy.rank)}`.trim(),
+      description: trophyDescription(trophy),
+      tier: rankTier(trophy.rank),
+      season: trophy.seasonName,
+      icon: Trophy,
+    })
+  );
+  (t.regionals || []).forEach((trophy, i) =>
+    out.push({
+      id: `regional-${i}`,
+      title: `Regional ${medalWord(trophy.rank)}`,
+      description: trophyDescription(trophy),
+      tier: rankTier(trophy.rank),
+      season: trophy.seasonName,
+      icon: Medal,
+    })
+  );
+  (t.finalistMedals || []).forEach((trophy, i) =>
+    out.push({
+      id: `finalist-${i}`,
+      title: trophy.type === 'soundsport_finalist' ? 'Festival Finalist' : 'Finals Finalist',
+      description: trophyDescription(trophy),
+      tier: 'special',
+      season: trophy.seasonName,
+      icon: Shield,
+    })
+  );
+
+  return out;
+}
+
+// Legacy placeholder rows, shown only while a profile has no real hardware.
+function getLegacySyntheticTrophies(profile: UserProfile): TrophyData[] {
   const trophies: TrophyData[] = [];
   const stats = profile.stats;
 
-  // Championship trophies
   if (stats?.championships && stats.championships > 0) {
     for (let i = 0; i < Math.min(stats.championships, 5); i++) {
       trophies.push({
@@ -244,7 +326,6 @@ export function getCompetitionTrophies(profile: UserProfile): TrophyData[] {
     }
   }
 
-  // Top 10 finishes (excluding championships)
   if (stats?.topTenFinishes && stats.topTenFinishes > (stats?.championships || 0)) {
     const topTenCount = Math.min(stats.topTenFinishes - (stats?.championships || 0), 3);
     for (let i = 0; i < topTenCount; i++) {
@@ -258,7 +339,6 @@ export function getCompetitionTrophies(profile: UserProfile): TrophyData[] {
     }
   }
 
-  // Class unlock as special trophy
   if (isCorpsClassUnlocked(profile.unlockedClasses, 'worldClass')) {
     trophies.push({
       id: 'world-unlock',
@@ -269,7 +349,6 @@ export function getCompetitionTrophies(profile: UserProfile): TrophyData[] {
     });
   }
 
-  // Veteran badge (seasons-based)
   if (stats?.seasonsPlayed && stats.seasonsPlayed >= 5) {
     trophies.push({
       id: 'veteran',

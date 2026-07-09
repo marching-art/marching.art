@@ -58,6 +58,13 @@ import {
 } from './directorProfileHelpers';
 import type { SeasonHistoryEntry } from './directorProfileHelpers';
 import { getEquippedCosmetic } from '../../utils/cosmetics';
+import { getXPProgress, CAPTION_CATEGORIES } from '../../utils/captionPricing';
+import {
+  MASTERY_CAPTIONS,
+  MASTERY_TIER_STYLES,
+  getCaptionMastery,
+  hasCaptionStats,
+} from '../../utils/captionMastery';
 import SeasonHistorySection from './SeasonHistorySection';
 
 // =============================================================================
@@ -155,6 +162,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
   // DEDUPED: Trophies are competition-based, achievements are profile.achievements
   const trophies = useMemo(() => getCompetitionTrophies(profile), [profile]);
   const achievements = profile.achievements || [];
+  const [showAllAchievements, setShowAllAchievements] = useState(false);
 
   // Season history
   const seasonHistory = useMemo((): SeasonHistoryEntry[] => {
@@ -381,10 +389,19 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                     {getDisplayTitle(profile)}
                   </span>
                 </div>
-                <span className="text-[10px] text-gray-500">
+                <span
+                  className="flex items-center gap-1.5 text-[10px] text-gray-500"
+                  title={`${getXPProgress(profile.xp || 0).current}/${getXPProgress(profile.xp || 0).needed} XP to Level ${(profile.xpLevel || 1) + 1}`}
+                >
                   Lv{' '}
                   <span className="font-bold text-gray-300 font-data tabular-nums">
                     {profile.xpLevel || 1}
+                  </span>
+                  <span className="inline-block w-10 h-1 bg-[#2a2a2a] rounded-full overflow-hidden align-middle">
+                    <span
+                      className="block h-full bg-[#0057B8]"
+                      style={{ width: `${getXPProgress(profile.xp || 0).percentage}%` }}
+                    />
                   </span>
                 </span>
                 {equippedTitle && <ShopTitleFlair item={equippedTitle} />}
@@ -642,15 +659,23 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
 
           {achievements.length > 0 ? (
             <div className="p-2 space-y-1">
-              {achievements.slice(0, 4).map((achievement) => (
-                <AchievementMini key={achievement.id} achievement={achievement} />
-              ))}
+              {(showAllAchievements ? achievements : achievements.slice(0, 4)).map(
+                (achievement) => (
+                  <AchievementMini key={achievement.id} achievement={achievement} />
+                )
+              )}
               {achievements.length > 4 && (
                 <button
+                  onClick={() => setShowAllAchievements((v) => !v)}
                   className="w-full text-[9px] text-[#0057B8] hover:underline py-1"
-                  aria-label={`View ${achievements.length - 4} more achievements`}
+                  aria-expanded={showAllAchievements}
+                  aria-label={
+                    showAllAchievements
+                      ? 'Show fewer achievements'
+                      : `View ${achievements.length - 4} more achievements`
+                  }
                 >
-                  +{achievements.length - 4} more
+                  {showAllAchievements ? 'Show fewer' : `+${achievements.length - 4} more`}
                 </button>
               )}
             </div>
@@ -714,6 +739,69 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
           )}
         </div>
       </div>
+
+      {/* ================================================================== */}
+      {/* CAPTION MASTERY - lifetime per-caption craft, banked by the nightly */}
+      {/* scoring run into captionStats (WS5.5). Hidden until points exist.   */}
+      {/* ================================================================== */}
+      {hasCaptionStats(profile.captionStats) && (
+        <div className="px-3 pb-3">
+          <div className="bg-[#1a1a1a] border border-[#333]">
+            <div className="px-3 py-2 border-b border-[#333] bg-[#222] flex items-center gap-1.5">
+              <Target className="w-3.5 h-3.5 text-[#0057B8]" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                Caption Mastery
+              </span>
+            </div>
+            <div className="p-2 grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+              {MASTERY_CAPTIONS.map((caption) => {
+                const mastery = getCaptionMastery(profile.captionStats?.[caption]);
+                const style = mastery.tier
+                  ? MASTERY_TIER_STYLES[mastery.tier.id as keyof typeof MASTERY_TIER_STYLES]
+                  : null;
+                return (
+                  <div key={caption} className="bg-[#111] border border-[#333] px-2.5 py-2">
+                    <div className="flex items-center justify-between gap-1 mb-1">
+                      <span
+                        className="text-[10px] font-bold text-white"
+                        title={
+                          CAPTION_CATEGORIES[caption as keyof typeof CAPTION_CATEGORIES]?.name ||
+                          caption
+                        }
+                      >
+                        {caption}
+                      </span>
+                      <span
+                        className={`text-[9px] font-bold uppercase tracking-wider ${
+                          style ? style.text : 'text-gray-600'
+                        }`}
+                      >
+                        {mastery.tier ? mastery.tier.name : '—'}
+                      </span>
+                    </div>
+                    <div className="h-1 bg-[#222] rounded-sm overflow-hidden mb-1">
+                      <div
+                        className={`h-full ${style ? style.bar : 'bg-[#0057B8]'}`}
+                        style={{ width: `${Math.round(mastery.progress * 100)}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] text-gray-500 font-data tabular-nums">
+                        {Math.round(mastery.points).toLocaleString()}
+                      </span>
+                      {mastery.next && (
+                        <span className="text-[9px] text-gray-600 font-data tabular-nums">
+                          {mastery.next.min.toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ================================================================== */}
       {/* SEASON HISTORY - Full Width (corps history archive, tabbed by class) */}

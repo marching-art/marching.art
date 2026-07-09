@@ -2,7 +2,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb, dataNamespaceParam } = require("../config");
-const { calculateXPUpdates, calculateLevel, getLevelTitle, XP_SOURCES } = require("../helpers/xpCalculations");
+const { calculateLevel, getLevelTitle } = require("../helpers/xpCalculations");
 const { assertAuth, assertAdmin } = require("../helpers/callableGuards");
 
 exports.setUserRole = onCall({ cors: true }, async (request) => {
@@ -311,111 +311,13 @@ exports.migrateUserProfiles = onCall({ cors: true }, async (request) => {
   }
 });
 
-/**
- * Daily XP Check-in - Earns XP once per 23 hours
- * Note: This is separate from corps section rehearsals in execution.js
- * which affect readiness/morale/equipment
- */
-exports.dailyXPCheckIn = onCall({ cors: true }, async (request) => {
-  const uid = assertAuth(request);
-  const db = getDb();
-  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
-
-  try {
-    const profileDoc = await profileRef.get();
-    if (!profileDoc.exists) {
-      throw new HttpsError("not-found", "User profile not found.");
-    }
-
-    const profileData = profileDoc.data();
-    const lastRehearsal = profileData.lastRehearsal?.toDate();
-    const now = new Date();
-    const twentyThreeHoursAgo = new Date(now.getTime() - (23 * 60 * 60 * 1000));
-
-    if (lastRehearsal && lastRehearsal > twentyThreeHoursAgo) {
-      const timeRemaining = 23 - Math.floor((now - lastRehearsal) / (60 * 60 * 1000));
-      throw new HttpsError("failed-precondition", `You can rehearse again in ${timeRemaining} hours.`);
-    }
-
-    const XP_PER_REHEARSAL = 10;
-    const xpResult = calculateXPUpdates(profileData, XP_PER_REHEARSAL);
-
-    const updateData = {
-      ...xpResult.updates,
-      lastRehearsal: admin.firestore.FieldValue.serverTimestamp(),
-    };
-
-    await profileRef.update(updateData);
-
-    logger.info(`User ${uid} completed daily rehearsal. Earned ${XP_PER_REHEARSAL} XP. New total: ${xpResult.newXP} (Level ${xpResult.newLevel})`);
-
-    return {
-      success: true,
-      xpEarned: XP_PER_REHEARSAL,
-      totalXP: xpResult.newXP,
-      level: xpResult.newLevel,
-      classUnlocked: xpResult.classUnlocked,
-      message: xpResult.classUnlocked ? `🎉 Unlocked ${xpResult.classUnlocked}!` : `Great practice! +${XP_PER_REHEARSAL} XP`,
-    };
-  } catch (error) {
-    logger.error(`Error in dailyRehearsal for user ${uid}:`, error);
-    if (error instanceof HttpsError) throw error;
-    throw new HttpsError("internal", "Failed to complete rehearsal.");
-  }
-});
-
-/**
- * Award XP for various actions (comments, chat, etc.)
- *
- * SECURITY: Only allows predefined XP sources with server-validated amounts.
- * The client specifies the action (reason), and the server determines the
- * correct XP amount from XP_SOURCES. This prevents clients from injecting
- * arbitrary XP values.
- */
-exports.awardXP = onCall({ cors: true }, async (request) => {
-  assertAuth(request);
-
-  const { reason } = request.data;
-  const uid = request.auth.uid;
-
-  // Server-side allowlist of valid XP awards — clients cannot specify amounts
-  const ALLOWED_XP_AWARDS = {
-    dailyLogin: XP_SOURCES.dailyLogin,
-    weeklyParticipation: XP_SOURCES.weeklyParticipation,
-    leagueWin: XP_SOURCES.leagueWin,
-  };
-
-  if (!reason || !ALLOWED_XP_AWARDS[reason]) {
-    throw new HttpsError("invalid-argument",
-      `Invalid XP reason. Allowed: ${Object.keys(ALLOWED_XP_AWARDS).join(', ')}`);
-  }
-
-  const amount = ALLOWED_XP_AWARDS[reason];
-
-  const db = getDb();
-  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
-
-  try {
-    await db.runTransaction(async (transaction) => {
-      const profileDoc = await transaction.get(profileRef);
-      if (!profileDoc.exists) {
-        throw new HttpsError("not-found", "User profile not found.");
-      }
-
-      const profileData = profileDoc.data();
-      const { updates } = calculateXPUpdates(profileData, amount);
-
-      transaction.update(profileRef, updates);
-    });
-
-    logger.info(`Awarded ${amount} XP to user ${uid} for: ${reason}`);
-    return { success: true, xpAwarded: amount };
-  } catch (error) {
-    logger.error(`Error awarding XP to user ${uid}:`, error);
-    if (error instanceof HttpsError) throw error;
-    throw new HttpsError("internal", "Failed to award XP.");
-  }
-});
+// NOTE: dailyXPCheckIn and awardXP used to live here. Both were orphaned —
+// dailyXPCheckIn's client binding pointed at a function name that never
+// existed ('dailyRehearsal'), and awardXP had no callers at all, which is
+// why weekly-participation and league-win XP never paid. Those two sources
+// are now paid server-side inside the guarded weekly scoring run
+// (helpers/scoringAwards.js payWeeklyParticipationXP / processWeeklyMatchups),
+// and daily-login XP is owned by claimDailyLogin (callable/dailyOps.js).
 
 /**
  * Fix missing profile fields for existing users

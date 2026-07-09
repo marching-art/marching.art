@@ -39,6 +39,7 @@ const MatchupDetailView = lazy(() => import('./MatchupDetailView'));
 import { useRivalries, isRivalry as checkRivalry } from '../../hooks/useLeagueNotifications';
 import { useLeagueStats } from '../../hooks/useLeagueStats';
 import { SmackTalkInput, LeaveLeagueModal } from './LeagueDetailViewParts';
+import LeaguePoolCard from './LeaguePoolCard';
 
 const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
   const [activeTab, setActiveTab] = useState('standings');
@@ -615,6 +616,13 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
 
       {/* SCROLLABLE CONTENT */}
       <div className="flex-1 overflow-y-auto min-h-0 scroll-smooth">
+        {/* Daily prediction pool — the league's social side-pot, on the
+            default tab where every member lands */}
+        {activeTab === 'standings' && (
+          <div className="px-4 pt-4">
+            <LeaguePoolCard league={league} userProfile={userProfile} />
+          </div>
+        )}
         <AnimatePresence mode="wait">
           {activeTab === 'standings' && (
             <StandingsTab
@@ -706,10 +714,16 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
         </AnimatePresence>
       </div>
 
-      {/* FIXED BOTTOM: Smack Talk Input - pb-14 clears mobile nav */}
-      <div className="flex-shrink-0 bg-[#1a1a1a] border-t border-[#333] px-4 py-3 pb-14 md:pb-3 z-40">
-        <SmackTalkInput leagueId={league.id} userProfile={userProfile} />
-      </div>
+      {/* FIXED BOTTOM: Smack Talk Input — Chat tab only. It used to render
+          across every tab, so a member on Standings could type, send, get a
+          success toast, and never see the message (it lands in the Chat tab).
+          Sending now always happens where the conversation is visible.
+          pb-14 clears mobile nav. */}
+      {activeTab === 'chat' && (
+        <div className="flex-shrink-0 bg-[#1a1a1a] border-t border-[#333] px-4 py-3 pb-14 md:pb-3 z-40">
+          <SmackTalkInput leagueId={league.id} userProfile={userProfile} />
+        </div>
+      )}
 
       {/* Leave League Modal */}
       <AnimatePresence>

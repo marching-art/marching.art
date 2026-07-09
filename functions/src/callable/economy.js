@@ -166,86 +166,15 @@ const TRANSACTION_TYPES = {
 // =============================================================================
 // EARNING FUNCTIONS
 // =============================================================================
-
-/**
- * Award CorpsCoin after show performance (called by scoring functions)
- */
-const awardCorpsCoin = async (uid, corpsClass, showName, customAmount = null) => {
-  const db = getDb();
-  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
-
-  try {
-    const amount = customAmount !== null ? customAmount : (SHOW_PARTICIPATION_REWARDS[corpsClass] || 0);
-    if (amount === 0) return;
-
-    let newBalance;
-    await db.runTransaction(async (transaction) => {
-      const profileDoc = await transaction.get(profileRef);
-      if (!profileDoc.exists) return;
-
-      const currentBalance = profileDoc.data().corpsCoin || 0;
-      newBalance = currentBalance + amount;
-
-      transaction.update(profileRef, {
-        corpsCoin: newBalance,
-      });
-
-      addCoinHistoryEntryToTransaction(transaction, db, uid, {
-        type: TRANSACTION_TYPES.SHOW_PARTICIPATION,
-        amount: amount,
-        balance: newBalance,
-        description: `Show performance at ${showName}`,
-        corpsClass: corpsClass,
-      });
-    });
-
-    logger.info(`Awarded ${amount} CorpsCoin to user ${uid} for ${corpsClass} performance at ${showName}`);
-    return { success: true, amount };
-  } catch (error) {
-    logger.error(`Error awarding CorpsCoin to user ${uid}:`, error);
-    return { success: false, error: error.message };
-  }
-};
-
-/**
- * Award weekly league win bonus
- */
-const awardLeagueWinBonus = async (uid, leagueName, week) => {
-  const db = getDb();
-  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
-
-  try {
-    await db.runTransaction(async (transaction) => {
-      const profileDoc = await transaction.get(profileRef);
-      if (!profileDoc.exists) return;
-
-      const currentBalance = profileDoc.data().corpsCoin || 0;
-      const newBalance = currentBalance + WEEKLY_LEAGUE_WIN_REWARD;
-
-      transaction.update(profileRef, {
-        corpsCoin: newBalance,
-      });
-
-      addCoinHistoryEntryToTransaction(transaction, db, uid, {
-        type: TRANSACTION_TYPES.LEAGUE_WIN,
-        amount: WEEKLY_LEAGUE_WIN_REWARD,
-        balance: newBalance,
-        description: `Week ${week} win in ${leagueName}`,
-      });
-    });
-
-    logger.info(`Awarded ${WEEKLY_LEAGUE_WIN_REWARD} CorpsCoin to user ${uid} for Week ${week} league win`);
-    return { success: true, amount: WEEKLY_LEAGUE_WIN_REWARD };
-  } catch (error) {
-    logger.error(`Error awarding league win bonus to user ${uid}:`, error);
-    return { success: false, error: error.message };
-  }
-};
+// NOTE: single-write helpers awardCorpsCoin, awardLeagueWinBonus, and
+// awardSeasonBonus were removed — the live paths batch these awards instead
+// (helpers/scoringAwards.js processCoinAwardsBatch / processWeeklyMatchups,
+// and helpers/season.js getSeasonBonusAmount at rollover).
 
 /**
  * Pure lookup: CorpsCoin bonus and label for a final season rank.
- * Used by the season-rollover payout in helpers/season.js and by
- * awardSeasonBonus below. Ranks below top 25 earn no coin bonus.
+ * Used by the season-rollover payout in helpers/season.js.
+ * Ranks below top 25 earn no coin bonus.
  */
 const getSeasonBonusAmount = (finalRank) => {
   if (!finalRank || finalRank <= 0) return { amount: 0, rankDescription: '' };
@@ -259,47 +188,6 @@ const getSeasonBonusAmount = (finalRank) => {
     return { amount: SEASON_FINISH_BONUSES.top25, rankDescription: `${finalRank}th place (Top 25)` };
   }
   return { amount: 0, rankDescription: '' };
-};
-
-/**
- * Award season finish bonus based on final ranking
- */
-const awardSeasonBonus = async (uid, finalRank, seasonName, corpsClass) => {
-  const db = getDb();
-  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
-
-  const { amount, rankDescription } = getSeasonBonusAmount(finalRank);
-
-  if (amount === 0) return { success: true, amount: 0 }; // No bonus for ranks below top 25
-
-  try {
-    await db.runTransaction(async (transaction) => {
-      const profileDoc = await transaction.get(profileRef);
-      if (!profileDoc.exists) return;
-
-      const currentBalance = profileDoc.data().corpsCoin || 0;
-      const newBalance = currentBalance + amount;
-
-      transaction.update(profileRef, {
-        corpsCoin: newBalance,
-      });
-
-      addCoinHistoryEntryToTransaction(transaction, db, uid, {
-        type: TRANSACTION_TYPES.SEASON_BONUS,
-        amount: amount,
-        balance: newBalance,
-        description: `${rankDescription} in ${seasonName} (${corpsClass})`,
-        finalRank: finalRank,
-        corpsClass: corpsClass,
-      });
-    });
-
-    logger.info(`Awarded ${amount} CorpsCoin to user ${uid} for ${rankDescription} finish in ${seasonName}`);
-    return { success: true, amount, rank: finalRank };
-  } catch (error) {
-    logger.error(`Error awarding season bonus to user ${uid}:`, error);
-    return { success: false, error: error.message };
-  }
 };
 
 // =============================================================================
@@ -382,14 +270,16 @@ const unlockClassWithCorpsCoin = onCall({ cors: true }, async (request) => {
 });
 
 /**
- * Sync time-based class unlocks.
+ * Sync class unlocks outside of XP events.
  *
- * Classes unlock by XP level OR account age (weeks since registration).
- * XP-based unlocks are applied whenever the server awards XP, but an idle
- * user can become eligible for a time-based unlock without any XP event.
- * Clients call this on session start; the server recomputes eligibility and
- * persists any newly unlocked classes. This replaces the old client-side
- * unlockedClasses write, which security rules no longer permit.
+ * Classes unlock by XP level (early), seasons actively completed (the
+ * standard path — applied at season archival), or the distant account-age
+ * backstop. XP- and archival-driven unlocks are applied when those events
+ * run, but a returning user can cross the backstop threshold (or have
+ * missed an archival-time grant) without any XP event. Clients call this on
+ * session start; the server recomputes eligibility and persists any newly
+ * unlocked classes. This replaces the old client-side unlockedClasses
+ * write, which security rules no longer permit.
  */
 const syncClassUnlocks = onCall({ cors: true }, async (request) => {
   const uid = assertAuth(request);
@@ -404,9 +294,9 @@ const syncClassUnlocks = onCall({ cors: true }, async (request) => {
       }
 
       const profileData = profileDoc.data();
-      // calculateXPUpdates with 0 XP recomputes unlock eligibility (level- or
-      // time-based) and canonicalizes legacy class keys without changing XP.
-      const { updates, classUnlocked } = calculateXPUpdates(profileData, 0);
+      // calculateXPUpdates with 0 XP recomputes unlock eligibility and
+      // canonicalizes legacy class keys without changing XP.
+      const { updates, classUnlocked, unlockPath } = calculateXPUpdates(profileData, 0);
 
       if (!updates.unlockedClasses) {
         return {
@@ -415,12 +305,20 @@ const syncClassUnlocks = onCall({ cors: true }, async (request) => {
         };
       }
 
-      transaction.update(profileRef, { unlockedClasses: updates.unlockedClasses });
-      return { unlockedClasses: updates.unlockedClasses, classUnlocked };
+      // Persist the unlock-path marks (classUnlockPaths.*) alongside the
+      // array — the client uses them for the graduation ceremony asymmetry.
+      const pathUpdates = Object.fromEntries(
+        Object.entries(updates).filter(([key]) => key.startsWith("classUnlockPaths."))
+      );
+      transaction.update(profileRef, {
+        unlockedClasses: updates.unlockedClasses,
+        ...pathUpdates,
+      });
+      return { unlockedClasses: updates.unlockedClasses, classUnlocked, unlockPath };
     });
 
     if (result.classUnlocked) {
-      logger.info(`User ${uid} unlocked ${result.classUnlocked} via time-based sync`);
+      logger.info(`User ${uid} unlocked ${result.classUnlocked} via sync (${result.unlockPath})`);
     }
     return { success: true, ...result };
   } catch (error) {
@@ -430,51 +328,9 @@ const syncClassUnlocks = onCall({ cors: true }, async (request) => {
   }
 });
 
-/**
- * Pay league entry fee (for commissioner-set league fees)
- */
-const payLeagueEntryFee = async (uid, leagueId, leagueName, fee) => {
-  if (fee <= 0) return { success: true, amount: 0 }; // No fee
-
-  const db = getDb();
-  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
-
-  try {
-    await db.runTransaction(async (transaction) => {
-      const profileDoc = await transaction.get(profileRef);
-      if (!profileDoc.exists) {
-        throw new Error("User profile not found.");
-      }
-
-      const profileData = profileDoc.data();
-      const currentCoin = profileData.corpsCoin || 0;
-
-      if (currentCoin < fee) {
-        throw new Error(`Insufficient CorpsCoin. Need ${fee}, have ${currentCoin}.`);
-      }
-
-      const newBalance = currentCoin - fee;
-
-      transaction.update(profileRef, {
-        corpsCoin: newBalance,
-      });
-
-      addCoinHistoryEntryToTransaction(transaction, db, uid, {
-        type: TRANSACTION_TYPES.LEAGUE_ENTRY,
-        amount: -fee,
-        balance: newBalance,
-        description: `Entry fee for ${leagueName}`,
-        leagueId: leagueId,
-      });
-    });
-
-    logger.info(`User ${uid} paid ${fee} CorpsCoin entry fee for league ${leagueName}`);
-    return { success: true, amount: fee };
-  } catch (error) {
-    logger.error(`Error processing league entry fee for user ${uid}:`, error);
-    return { success: false, error: error.message };
-  }
-};
+// NOTE: payLeagueEntryFee was removed — league entry fees are charged inside
+// the create/join league transactions via
+// helpers/leagueEconomy.js chargeEntryFeeInTransaction.
 
 // =============================================================================
 // QUERY FUNCTIONS
@@ -520,10 +376,28 @@ const getCorpsCoinHistory = onCall({ cors: true }, async (request) => {
 });
 
 /**
- * Get earning opportunities summary
+ * Get earning opportunities summary — the in-game "how to earn" guide.
+ * Every value is read from the table that actually pays it, so this guide
+ * can never drift from the live economy.
  */
 const getEarningOpportunities = onCall({ cors: true }, async (request) => {
   assertAuth(request);
+
+  const { PREDICTION_COIN, PERFECT_BONUS_COIN } = require("../helpers/dailyPredictions");
+  const { RARITY_CC } = require("../helpers/achievements");
+  const { LADDER_TIERS } = require("../helpers/seasonLadder");
+  const {
+    LEVEL_UP_STIPEND,
+    STREAK_MILESTONES,
+    STREAK_FREEZE_COST,
+  } = require("../helpers/engagementRewards");
+  const { SHOP_CATALOG } = require("../helpers/shopCatalog");
+
+  const streakCoinByDay = Object.fromEntries(
+    Object.entries(STREAK_MILESTONES).map(([day, m]) => [day, m.coin])
+  );
+  const ladderCoinTotal = LADDER_TIERS.reduce((sum, t) => sum + (t.coin || 0), 0);
+  const shopPrices = SHOP_CATALOG.filter((i) => !i.grantOnly && i.price).map((i) => i.price);
 
   return {
     success: true,
@@ -538,6 +412,29 @@ const getEarningOpportunities = onCall({ cors: true }, async (request) => {
         description: "Win your weekly matchup to earn bonus CC",
         reward: WEEKLY_LEAGUE_WIN_REWARD,
       },
+      dailyPredictions: {
+        title: "Daily Predictions",
+        description: `Earn ${PREDICTION_COIN} CC per correct pick, +${PERFECT_BONUS_COIN} CC bonus for a perfect day`,
+        reward: PREDICTION_COIN,
+      },
+      streakMilestones: {
+        title: "Login Streak Milestones",
+        description: "CC bonuses when your daily login streak hits a milestone day",
+        rewards: streakCoinByDay,
+      },
+      levelUpStipend: {
+        title: "Level-Up Stipend",
+        description: "CC for every director level you gain",
+        reward: LEVEL_UP_STIPEND,
+      },
+      seasonLadder: {
+        title: "Season Reward Ladder",
+        description: `Claim ladder tiers as you earn XP — up to ${ladderCoinTotal} CC per season`,
+      },
+      achievements: {
+        title: "Achievements",
+        description: `One-time CC per achievement, ${RARITY_CC.common}–${RARITY_CC.legendary} CC by rarity`,
+      },
       seasonBonus: {
         title: "Season Finish Bonus",
         description: "Earn CC based on your final season ranking",
@@ -549,6 +446,14 @@ const getEarningOpportunities = onCall({ cors: true }, async (request) => {
         title: "Class Unlocks",
         description: "One-time unlock for higher competition classes",
         costs: CLASS_UNLOCK_COSTS,
+      },
+      streakFreeze: {
+        title: "Streak Freeze",
+        description: `Protect your login streak for 24 hours (${STREAK_FREEZE_COST} CC, one per 7 days)`,
+      },
+      shop: {
+        title: "Corps Identity Shop",
+        description: `Director titles, profile frames, and card themes (${Math.min(...shopPrices).toLocaleString()}–${Math.max(...shopPrices).toLocaleString()} CC)`,
       },
       leagueEntryFees: {
         title: "League Entry Fees",
@@ -565,14 +470,10 @@ const getEarningOpportunities = onCall({ cors: true }, async (request) => {
 
 module.exports = {
   // Earning functions
-  awardCorpsCoin,
-  awardLeagueWinBonus,
-  awardSeasonBonus,
   getSeasonBonusAmount,
 
   // Spending functions
   unlockClassWithCorpsCoin,
-  payLeagueEntryFee,
 
   // Progression sync
   syncClassUnlocks,

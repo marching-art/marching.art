@@ -197,7 +197,10 @@ describe("unlockClassWithCorpsCoin", () => {
 });
 
 // =============================================================================
-// syncClassUnlocks (time-based unlock sync; replaces the old client write)
+// syncClassUnlocks (session-start unlock sync; replaces the old client write).
+// Unlock inputs: XP level (early), seasons actively completed (standard), or
+// the distant account-age backstop. The old 5/12/19-week calendar path is
+// gone — an aged account that never played unlocks nothing until ~a year.
 // =============================================================================
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
@@ -234,12 +237,29 @@ describe("syncClassUnlocks", () => {
     assert.equal(writes.length, 0);
   });
 
-  test("grants time-based unlocks for an aged account (6 weeks -> aClass)", async () => {
+  test("the old calendar path is gone: an aged idle account (20 weeks, 0 seasons) unlocks nothing", async () => {
     const docs = new Map([
       [profilePath("u1"), {
         xp: 0,
-        createdAt: weeksAgo(6), // past the 5-week aClass threshold
+        createdAt: weeksAgo(20), // would have unlocked everything pre-redesign
         unlockedClasses: ["soundSport"],
+      }],
+    ]);
+    const { db, writes } = makeFakeDb(docs);
+    setDbForTesting(db);
+
+    const result = await syncClassUnlocks.run(authedRequest("u1"));
+    assert.deepEqual(result.unlockedClasses, ["soundSport"]);
+    assert.equal(writes.length, 0);
+  });
+
+  test("grants the seasons-completed unlock (1 completed season -> aClass, path 'seasons')", async () => {
+    const docs = new Map([
+      [profilePath("u1"), {
+        xp: 0,
+        createdAt: weeksAgo(8),
+        unlockedClasses: ["soundSport"],
+        lifetimeStats: { totalSeasons: 1 },
       }],
     ]);
     const { db, writes } = makeFakeDb(docs);
@@ -252,16 +272,54 @@ describe("syncClassUnlocks", () => {
 
     const update = writes.find((w) => w.type === "update");
     assert.equal(update.path, profilePath("u1"));
-    assert.deepEqual(Object.keys(update.data), ["unlockedClasses"]);
     assert.deepEqual(update.data.unlockedClasses, ["soundSport", "aClass"]);
+    assert.equal(update.data["classUnlockPaths.aClass"], "seasons");
   });
 
-  test("grants all time-based unlocks for a very old account (20 weeks)", async () => {
+  test("XP level unlocks early with the 'xp' path mark", async () => {
+    const docs = new Map([
+      [profilePath("u1"), {
+        xp: 3200, // Level 4 — past the aClass level-3 threshold
+        createdAt: weeksAgo(2),
+        unlockedClasses: ["soundSport"],
+      }],
+    ]);
+    const { db, writes } = makeFakeDb(docs);
+    setDbForTesting(db);
+
+    const result = await syncClassUnlocks.run(authedRequest("u1"));
+    assert.ok(result.unlockedClasses.includes("aClass"));
+    const update = writes.find((w) => w.type === "update");
+    assert.equal(update.data["classUnlockPaths.aClass"], "xp");
+  });
+
+  test("grants everything via the silent backstop after ~a year", async () => {
     const docs = new Map([
       [profilePath("u1"), {
         xp: 0,
-        createdAt: weeksAgo(20), // past aClass (5), open (12), and world (19)
+        createdAt: weeksAgo(61), // past all backstop thresholds (52/56/60)
         unlockedClasses: ["soundSport"],
+      }],
+    ]);
+    const { db, writes } = makeFakeDb(docs);
+    setDbForTesting(db);
+
+    const result = await syncClassUnlocks.run(authedRequest("u1"));
+    for (const cls of ["aClass", "openClass", "worldClass"]) {
+      assert.ok(result.unlockedClasses.includes(cls), `missing ${cls}`);
+    }
+    assert.equal(writes.length, 1);
+    const update = writes.find((w) => w.type === "update");
+    assert.equal(update.data["classUnlockPaths.worldClass"], "backstop");
+  });
+
+  test("3 completed seasons unlock all three classes", async () => {
+    const docs = new Map([
+      [profilePath("u1"), {
+        xp: 0,
+        createdAt: weeksAgo(30),
+        unlockedClasses: ["soundSport"],
+        lifetimeStats: { totalSeasons: 3 },
       }],
     ]);
     const { db, writes } = makeFakeDb(docs);
@@ -298,6 +356,7 @@ describe("syncClassUnlocks", () => {
         xpLevel: 5,
         createdAt: weeksAgo(6),
         unlockedClasses: ["soundSport"],
+        lifetimeStats: { totalSeasons: 1 },
       }],
     ]);
     const { db, writes } = makeFakeDb(docs);

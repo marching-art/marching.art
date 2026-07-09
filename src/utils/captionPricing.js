@@ -57,7 +57,9 @@ export const CLASS_UNLOCK_COSTS = {
  * Must stay in sync with XP_SOURCES in functions/src/helpers/xpCalculations.js
  */
 export const XP_SOURCES = {
-  weeklyParticipation: 200, // Submit lineup and participate weekly
+  dailyLogin: 25, // Automatic daily login claim
+  showParticipation: 25, // Per show your corps performs at
+  weeklyParticipation: 150, // Compete in ≥1 show in a week, per participating class
   leagueWin: 100, // Win a weekly league matchup
   seasonCompletion: {
     top10: 500, // Top 10 finish
@@ -256,7 +258,7 @@ export const calculateLevel = (xp) => {
 /**
  * Calculate XP needed for next level
  * @param {number} currentXP - Current total XP
- * @returns {Object} { current: number, needed: number, percentage: number }
+ * @returns {{current: number, needed: number, percentage: number, level: number, nextLevel: number}}
  */
 export const getXPProgress = (currentXP) => {
   const currentLevel = calculateLevel(currentXP);

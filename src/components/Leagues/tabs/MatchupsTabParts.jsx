@@ -162,8 +162,10 @@ const YourSeasonHistory = ({ userMatchupHistory, memberProfiles, userProfile, on
             const opponentId = match.pair[0] === userProfile?.uid ? match.pair[1] : match.pair[0];
             const isBye = !opponentId;
             const won = match.winner === userProfile?.uid;
-            const lost = match.winner && match.winner !== userProfile?.uid;
-            const tie = match.completed && !match.winner;
+            // Ties are stored as winner:'tie' (both the automatic weekly
+            // close and the commissioner callable); legacy docs used null.
+            const tie = match.completed && (match.winner === 'tie' || !match.winner);
+            const lost = !tie && match.winner && match.winner !== userProfile?.uid;
 
             return (
               <button
@@ -471,7 +473,8 @@ const VersusStrip = memo(
 
     const homeWon = matchup.completed && matchup.winner === p1_uid;
     const awayWon = matchup.completed && matchup.winner === p2_uid;
-    const isTie = matchup.completed && matchup.winner === 'tie';
+    // 'tie' is the stored convention; legacy docs used null for ties.
+    const isTie = matchup.completed && (matchup.winner === 'tie' || !matchup.winner);
 
     const classConfig = CORPS_CLASS_CONFIG[matchup.corpsClass];
     // SoundSport is a ratings-only format — a SoundSport matchup must show the

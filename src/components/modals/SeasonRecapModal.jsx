@@ -86,6 +86,11 @@ const SeasonRecapModal = ({ recap, onClose }) => {
                   <p className="text-[10px] uppercase tracking-wider text-gray-500">
                     {CLASS_DISPLAY_NAMES[result.corpsClass] || result.corpsClass}
                   </p>
+                  {result.newBestSeason && (
+                    <p className="text-[10px] font-bold text-emerald-400">
+                      🎉 New personal best season!
+                    </p>
+                  )}
                 </div>
                 <div className="text-right flex-shrink-0">
                   <p className="text-sm font-bold text-white font-data">

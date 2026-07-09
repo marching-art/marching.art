@@ -17,12 +17,6 @@ export { default as QuickStartGuide, QuickStartButton } from './QuickStartGuide'
 // SoundSport welcome component
 export { default as SoundSportWelcome, SoundSportBanner } from './SoundSportWelcome';
 
-// Dashboard panel sub-components (extracted for code splitting)
-export { default as TeamSwitcher } from './TeamSwitcher';
-export { default as LineupPanel } from './LineupPanel';
-export { default as StandingsPanel } from './StandingsPanel';
-export { default as SchedulePanel } from './SchedulePanel';
-
 // OPTIMIZATION #4: Dashboard section components extracted from Dashboard.jsx
 // These reduce the main file from 1600+ lines to ~400 lines and isolate renders
 export {
@@ -30,22 +24,21 @@ export {
   ActiveLineupTable,
   SeasonScorecard,
   RecentResultsFeed,
-  LeagueStatus,
   RivalsPanel,
   DailyChallenges,
-  QuickStats,
   LineupSimulatorPanel,
   PredictionGamePanel,
   AchievementTrackerPanel,
   JourneyPanel,
   SeasonLadderPanel,
+  SeasonProgressHub,
+  DirectorsReport,
   // Constants
   CLASS_LABELS,
   CLASS_SHORT_LABELS,
   CAPTIONS,
   CLASS_UNLOCK_LEVELS,
   CLASS_UNLOCK_COSTS,
-  CLASS_UNLOCK_WEEKS,
   CLASS_DISPLAY_NAMES,
   SOUNDSPORT_RATING_THRESHOLDS,
   getSoundSportRating,

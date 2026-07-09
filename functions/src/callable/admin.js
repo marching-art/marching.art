@@ -96,6 +96,18 @@ exports.manualTrigger = onCall({
         message: `Records Book rebuilt from ${result.daysProcessed} recap days across ${result.seasons} seasons.`,
       };
     }
+    case "updateEconomyStats": {
+      const { updateEconomyStats } = require("../helpers/economyStats");
+      const stats = await updateEconomyStats(getDb(), {
+        days: Number(request.data.days) > 0 ? Number(request.data.days) : undefined,
+      });
+      return {
+        success: true,
+        message:
+          `Economy stats refreshed (${stats.windowDays}d): minted ${stats.minted.toLocaleString()} CC, ` +
+          `sunk ${stats.sunk.toLocaleString()} CC, net ${stats.net.toLocaleString()} CC.`,
+      };
+    }
     case "processAndArchiveOffSeasonScores": {
       // force=true bypasses the already-processed guard for reprocessing after
       // a data fix — it re-applies coin/league-record increments, so it is

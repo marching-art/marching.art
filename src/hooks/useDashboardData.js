@@ -2,8 +2,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
-import { db } from '../api';
-import { doc, updateDoc } from 'firebase/firestore';
 import { getSeasonRecaps, getCorpsValues } from '../api/season';
 import { queryKeys } from '../lib/queryClient';
 import { useSeason, getSeasonProgress } from './useSeason';
@@ -54,7 +52,6 @@ export const useDashboardData = () => {
   const previousUnlockedClassesRef = useRef([]);
 
   // Guard to prevent duplicate milestone Firestore writes within same session
-  const milestonesProcessedRef = useRef(new Map()); // Map<classKey, {rank, score}>
 
   // Engagement data
   const [engagementData, setEngagementData] = useState({
@@ -128,8 +125,13 @@ export const useDashboardData = () => {
         (classId) => !previousUnlocked.includes(classId)
       );
       // Filter out classes where user already has a corps (e.g., purchased before XP unlock)
-      // This prevents showing "class unlocked" notification when they already have a corps
-      const newlyUnlockedWithoutCorps = newlyUnlocked.filter((classId) => !corps?.[classId]);
+      // This prevents showing "class unlocked" notification when they already have a corps.
+      // Backstop unlocks (account-age anti-frustration floor) are deliberately
+      // silent — a graduation ceremony for a grant you didn't earn reads as
+      // hollow, so those skip the congrats modal entirely.
+      const newlyUnlockedWithoutCorps = newlyUnlocked.filter(
+        (classId) => !corps?.[classId] && profile?.classUnlockPaths?.[classId] !== 'backstop'
+      );
       if (newlyUnlockedWithoutCorps.length > 0) {
         setNewlyUnlockedClass(newlyUnlockedWithoutCorps[0]);
       }
@@ -137,7 +139,7 @@ export const useDashboardData = () => {
 
     // Update ref for next comparison (doesn't trigger re-render)
     previousUnlockedClassesRef.current = currentUnlocked;
-  }, [unlockedClasses, corps]);
+  }, [unlockedClasses, corps, profile?.classUnlockPaths]);
 
   // NOTE: Profile subscription is now handled by profileStore (initialized in App.jsx)
   // This eliminates duplicate Firestore listeners when multiple components use this hook
@@ -234,93 +236,12 @@ export const useDashboardData = () => {
     }
   }, [profile?.achievements]);
 
-  // Track performance milestones and achievements
-  // Guard prevents duplicate writes for same rank/score values
-  useEffect(() => {
-    if (!user || !profile || !activeCorps || activeCorpsClass === 'soundSport') return;
-
-    const classKey = activeCorpsClass;
-    const currentRank = activeCorps.rank;
-    const currentScore = activeCorps.totalSeasonScore;
-
-    // Check if we've already processed these exact values for this class
-    const processed = milestonesProcessedRef.current.get(classKey);
-    if (processed?.rank === currentRank && processed?.score === currentScore) {
-      return; // Skip - already processed this combination
-    }
-
-    const trackMilestones = async () => {
-      try {
-        const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-        const milestones = profile.milestones || {};
-        const classMilestones = milestones[classKey] || {};
-
-        let hasNewMilestone = false;
-        const updatedMilestones = { ...milestones, [classKey]: { ...classMilestones } };
-        const newActivities = [];
-
-        // Track best rank. (Top-10 achievements are awarded server-side by the
-        // daily achievement sweep in claimDailyLogin — not written from here.)
-        if (currentRank) {
-          const bestRank = classMilestones.bestRank || Infinity;
-          if (currentRank < bestRank) {
-            updatedMilestones[classKey].bestRank = currentRank;
-            hasNewMilestone = true;
-
-            newActivities.push({
-              type: 'milestone',
-              message: `New best rank: #${currentRank} in ${getCorpsClassName(classKey)}!`,
-              timestamp: new Date().toISOString(),
-              icon: 'trophy',
-            });
-          }
-        }
-
-        // Track best score
-        if (currentScore) {
-          const bestScore = classMilestones.bestScore || 0;
-          if (currentScore > bestScore) {
-            updatedMilestones[classKey].bestScore = currentScore;
-            hasNewMilestone = true;
-
-            newActivities.push({
-              type: 'milestone',
-              message: `New high score: ${currentScore.toFixed(3)} in ${getCorpsClassName(classKey)}!`,
-              timestamp: new Date().toISOString(),
-              icon: 'star',
-            });
-          }
-        }
-
-        if (hasNewMilestone) {
-          const updateData = {
-            milestones: updatedMilestones,
-          };
-
-          if (newActivities.length > 0) {
-            const currentActivities = profile.engagement?.recentActivity || [];
-            updateData['engagement.recentActivity'] = [
-              ...newActivities,
-              ...currentActivities,
-            ].slice(0, 10);
-          }
-
-          await updateDoc(profileRef, updateData);
-        }
-
-        // Mark as processed for this class/rank/score combination
-        milestonesProcessedRef.current.set(classKey, { rank: currentRank, score: currentScore });
-      } catch (error) {
-        console.error('Error tracking milestones:', error);
-      }
-    };
-
-    trackMilestones();
-    // Intentionally keyed on the specific rank/score fields this effect acts on.
-    // The milestonesProcessedRef guard dedupes writes, so the full `profile` and
-    // `activeCorps` objects are deliberately excluded to avoid redundant work.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, profile?.uid, activeCorps?.rank, activeCorps?.totalSeasonScore, activeCorpsClass]);
+  // NOTE: a client-side milestones writer used to live here (profile
+  // `milestones` + `engagement.recentActivity` via direct updateDoc). It was
+  // the last surviving client profile write, and nothing anywhere rendered
+  // the data it produced — so it's gone. Lifetime bests are server-owned
+  // (lifetimeStats at season archival) and personal-best callouts ride the
+  // season recap.
 
   // Fetch available corps
   const fetchAvailableCorps = useCallback(async () => {

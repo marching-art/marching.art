@@ -27,6 +27,10 @@
 const { logger } = require("firebase-functions/v2");
 
 const RUNS_COLLECTION = "scoring_runs";
+// Season rollover (archiveAndResetProfiles + league champion payout) shares
+// the same lease pattern under its own backend-only collection, keyed by the
+// season being closed out.
+const ROLLOVERS_COLLECTION = "season_rollovers";
 // A "running" claim older than this is assumed crashed and may be re-claimed.
 // Scoring jobs run with 540s timeouts, so 30 minutes is comfortably past any
 // live run.
@@ -34,6 +38,10 @@ const STALE_LEASE_MS = 30 * 60 * 1000;
 
 function scoringRunRef(db, seasonUid, scoredDay) {
   return db.collection(RUNS_COLLECTION).doc(`${seasonUid}_day${scoredDay}`);
+}
+
+function rolloverRef(db, seasonUid) {
+  return db.collection(ROLLOVERS_COLLECTION).doc(seasonUid);
 }
 
 // startedAt round-trips as a Firestore Timestamp in production but stays a
@@ -56,7 +64,11 @@ function toDate(value) {
  * @returns {Promise<{claimed: boolean, reason?: "completed"|"in-progress"}>}
  */
 async function claimScoringRun(db, seasonUid, scoredDay, { force = false, now = new Date() } = {}) {
-  const ref = scoringRunRef(db, seasonUid, scoredDay);
+  return claimRun(db, scoringRunRef(db, seasonUid, scoredDay), { seasonUid, scoredDay }, { force, now });
+}
+
+/** Shared lease transaction behind claimScoringRun and claimSeasonRollover. */
+async function claimRun(db, ref, claimFields, { force = false, now = new Date() } = {}) {
   return db.runTransaction(async (transaction) => {
     const snapshot = await transaction.get(ref);
     const previous = snapshot.exists ? snapshot.data() : null;
@@ -70,14 +82,13 @@ async function claimScoringRun(db, seasonUid, scoredDay, { force = false, now = 
         if (startedAt && now.getTime() - startedAt.getTime() < STALE_LEASE_MS) {
           return { claimed: false, reason: "in-progress" };
         }
-        logger.warn(`Scoring run ${ref.id} has a stale "running" claim; re-claiming.`);
+        logger.warn(`Run ${ref.id} has a stale "running" claim; re-claiming.`);
       }
       // "failed" (or stale "running") falls through to re-claim.
     }
 
     transaction.set(ref, {
-      seasonUid,
-      scoredDay,
+      ...claimFields,
       status: "running",
       startedAt: now,
       attempts: (previous?.attempts || 0) + 1,
@@ -113,9 +124,42 @@ async function markScoringRunFailed(db, seasonUid, scoredDay, error) {
   }
 }
 
+/**
+ * Atomically claim the one-time rollover (payouts + profile archival) for a
+ * season that just ended. Same lease semantics as claimScoringRun — a
+ * completed rollover is never re-claimed unless force is passed, so a forced
+ * double season-start cannot re-pay finish bonuses or re-increment
+ * lifetimeStats.totalSeasons.
+ */
+async function claimSeasonRollover(db, seasonUid, { force = false, now = new Date() } = {}) {
+  return claimRun(db, rolloverRef(db, seasonUid), { seasonUid, kind: "rollover" }, { force, now });
+}
+
+async function markSeasonRolloverCompleted(db, seasonUid, details = {}) {
+  await rolloverRef(db, seasonUid).set(
+    { status: "completed", completedAt: new Date(), ...details },
+    { merge: true },
+  );
+}
+
+/** Best-effort, never throws — the original rollover error must propagate. */
+async function markSeasonRolloverFailed(db, seasonUid, error) {
+  try {
+    await rolloverRef(db, seasonUid).set(
+      { status: "failed", failedAt: new Date(), lastError: String(error?.message || error) },
+      { merge: true },
+    );
+  } catch (writeError) {
+    logger.error(`Failed to mark season rollover ${seasonUid} as failed:`, writeError);
+  }
+}
+
 module.exports = {
   claimScoringRun,
   markScoringRunCompleted,
   markScoringRunFailed,
+  claimSeasonRollover,
+  markSeasonRolloverCompleted,
+  markSeasonRolloverFailed,
   STALE_LEASE_MS,
 };

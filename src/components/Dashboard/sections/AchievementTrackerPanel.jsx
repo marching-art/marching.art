@@ -27,7 +27,7 @@ const ACHIEVEMENTS = [
     eval: (d) => ({ current: d.lineupCount, goal: ROSTER_SIZE }),
   },
   {
-    id: 'scorer',
+    id: 'first_show',
     title: 'First Blood',
     desc: 'Receive your first score',
     icon: Zap,
@@ -35,12 +35,12 @@ const ACHIEVEMENTS = [
     eval: (d) => ({ current: d.resultCount > 0 ? 1 : 0, goal: 1 }),
   },
   {
-    id: 'five-shows',
+    id: 'shows_10',
     title: 'Road Warrior',
-    desc: 'Compete in 5 scored shows',
+    desc: 'Compete in 10 career shows',
     icon: Star,
     category: 'scoring',
-    eval: (d) => ({ current: Math.min(d.resultCount, 5), goal: 5 }),
+    eval: (d) => ({ current: Math.min(d.totalShows + d.resultCount, 10), goal: 10 }),
   },
 
   // Streaks (matches backend STREAK_MILESTONES: 3, 7, 14, 30, 60, 100)
@@ -134,7 +134,10 @@ const ACHIEVEMENTS = [
     desc: 'Unlock Open Class',
     icon: Trophy,
     category: 'unlock',
-    eval: (d) => ({ current: isCorpsClassUnlocked(d.unlockedClasses, 'open') ? 1 : 0, goal: 1 }),
+    eval: (d) => ({
+      current: isCorpsClassUnlocked(d.unlockedClasses, 'openClass') ? 1 : 0,
+      goal: 1,
+    }),
   },
   {
     id: 'unlock_worldClass',
@@ -142,12 +145,15 @@ const ACHIEVEMENTS = [
     desc: 'Unlock World Class',
     icon: Trophy,
     category: 'unlock',
-    eval: (d) => ({ current: isCorpsClassUnlocked(d.unlockedClasses, 'world') ? 1 : 0, goal: 1 }),
+    eval: (d) => ({
+      current: isCorpsClassUnlocked(d.unlockedClasses, 'worldClass') ? 1 : 0,
+      goal: 1,
+    }),
   },
 
   // League / Social
   {
-    id: 'league-join',
+    id: 'league_join',
     title: 'League Player',
     desc: 'Join a league',
     icon: Users,
@@ -174,6 +180,7 @@ const AchievementTrackerPanel = memo(({ profile, lineupCount, resultCount, leagu
   const level = profile?.xpLevel || 1;
   const unlockedClasses = profile?.unlockedClasses;
   const leagueWins = profile?.stats?.leagueWins || profile?.lifetimeStats?.leagueChampionships || 0;
+  const totalShows = profile?.lifetimeStats?.totalShows || 0;
   const earnedAchievements = profile?.achievements;
 
   // Evaluate all achievements in a single memo with primitive deps
@@ -181,6 +188,7 @@ const AchievementTrackerPanel = memo(({ profile, lineupCount, resultCount, leagu
     const evalData = {
       lineupCount: lineupCount || 0,
       resultCount: resultCount || 0,
+      totalShows,
       streak,
       level,
       unlockedClasses: unlockedClasses || ['soundSport'],
@@ -214,6 +222,7 @@ const AchievementTrackerPanel = memo(({ profile, lineupCount, resultCount, leagu
   }, [
     lineupCount,
     resultCount,
+    totalShows,
     streak,
     level,
     unlockedClasses,
