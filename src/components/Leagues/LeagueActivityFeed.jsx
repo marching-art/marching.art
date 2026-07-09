@@ -34,6 +34,7 @@ import { Star, Settings, Crown, Target, Zap, Award } from 'lucide-react';
 
 const iconMap = {
   matchup_result: Swords,
+  new_champion: Trophy,
   standings_change: TrendingUp,
   new_message: MessageSquare,
   trade_proposal: ArrowLeftRight,
@@ -58,6 +59,7 @@ const colorMap = {
     bg: 'bg-purple-500/10',
     border: 'border-purple-500/30',
   },
+  new_champion: { text: 'text-yellow-500', bg: 'bg-yellow-500/10', border: 'border-yellow-500/30' },
   standings_change: { text: 'text-blue-500', bg: 'bg-blue-500/10', border: 'border-blue-500/30' },
   new_message: { text: 'text-green-500', bg: 'bg-green-500/10', border: 'border-green-500/30' },
   trade_proposal: {
@@ -298,11 +300,11 @@ const LeagueActivityFeed = ({
       return timeB - timeA;
     });
 
-    // Apply type filter
+    // Apply type filter. (A 'chat' filter used to exist here, but chat
+    // messages live in the league's chat subcollection, not the activity
+    // feed — the filter could never match anything and is gone.)
     if (activeFilter === 'matchups') {
       items = items.filter((i) => i.type === 'matchup_result' || i.type === 'rivalry_matchup');
-    } else if (activeFilter === 'chat') {
-      items = items.filter((i) => i.type === 'new_message');
     } else if (activeFilter === 'trades') {
       items = items.filter((i) => i.type === 'trade_proposal' || i.type === 'trade_response');
     }
@@ -379,13 +381,6 @@ const LeagueActivityFeed = ({
             count={0}
           >
             Matchups
-          </FilterTab>
-          <FilterTab
-            active={activeFilter === 'chat'}
-            onClick={() => setActiveFilter('chat')}
-            count={0}
-          >
-            Chat
           </FilterTab>
           <FilterTab
             active={activeFilter === 'trades'}

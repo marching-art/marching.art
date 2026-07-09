@@ -748,6 +748,25 @@ async function archiveSeasonResultsLogic(dbArg = null, season = null) {
         });
       });
       logger.info(`Created notifications for all ${members.length} members of league '${league.name}'.`);
+
+      // Champion crowned is a league moment — drop it into the activity feed
+      // too (same batch, so the feed and the champions[] entry land together).
+      const activityRef = db
+        .collection(`artifacts/${dataNamespaceParam.value()}/leagues/${leagueId}/activity`)
+        .doc();
+      batch.set(activityRef, {
+        id: activityRef.id,
+        type: "new_champion",
+        title: "League Champion Crowned",
+        message: notificationMessage,
+        metadata: {
+          seasonId,
+          winnerId: leagueWinner.userId,
+          winnerUsername: leagueWinner.username,
+          score: leagueWinner.finalScore,
+        },
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      });
     }
   }
 

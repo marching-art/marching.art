@@ -706,10 +706,16 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
         </AnimatePresence>
       </div>
 
-      {/* FIXED BOTTOM: Smack Talk Input - pb-14 clears mobile nav */}
-      <div className="flex-shrink-0 bg-[#1a1a1a] border-t border-[#333] px-4 py-3 pb-14 md:pb-3 z-40">
-        <SmackTalkInput leagueId={league.id} userProfile={userProfile} />
-      </div>
+      {/* FIXED BOTTOM: Smack Talk Input — Chat tab only. It used to render
+          across every tab, so a member on Standings could type, send, get a
+          success toast, and never see the message (it lands in the Chat tab).
+          Sending now always happens where the conversation is visible.
+          pb-14 clears mobile nav. */}
+      {activeTab === 'chat' && (
+        <div className="flex-shrink-0 bg-[#1a1a1a] border-t border-[#333] px-4 py-3 pb-14 md:pb-3 z-40">
+          <SmackTalkInput leagueId={league.id} userProfile={userProfile} />
+        </div>
+      )}
 
       {/* Leave League Modal */}
       <AnimatePresence>
