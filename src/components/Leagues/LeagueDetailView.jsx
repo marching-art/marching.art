@@ -39,6 +39,7 @@ const MatchupDetailView = lazy(() => import('./MatchupDetailView'));
 import { useRivalries, isRivalry as checkRivalry } from '../../hooks/useLeagueNotifications';
 import { useLeagueStats } from '../../hooks/useLeagueStats';
 import { SmackTalkInput, LeaveLeagueModal } from './LeagueDetailViewParts';
+import LeaguePoolCard from './LeaguePoolCard';
 
 const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
   const [activeTab, setActiveTab] = useState('standings');
@@ -615,6 +616,13 @@ const LeagueDetailView = ({ league, userProfile, userId, onBack, onLeave }) => {
 
       {/* SCROLLABLE CONTENT */}
       <div className="flex-1 overflow-y-auto min-h-0 scroll-smooth">
+        {/* Daily prediction pool — the league's social side-pot, on the
+            default tab where every member lands */}
+        {activeTab === 'standings' && (
+          <div className="px-4 pt-4">
+            <LeaguePoolCard league={league} userProfile={userProfile} />
+          </div>
+        )}
         <AnimatePresence mode="wait">
           {activeTab === 'standings' && (
             <StandingsTab

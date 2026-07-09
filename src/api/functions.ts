@@ -331,6 +331,11 @@ export const joinRookieLeague = createCallable<
   }
 >('joinRookieLeague');
 
+export const joinLeaguePool = createCallable<
+  { leagueId: string },
+  { success: boolean; pot: number; ante?: number; alreadyIn?: boolean }
+>('joinLeaguePool');
+
 export const purchaseStreakFreeze = createCallable<
   void,
   { success: boolean; message: string; freezeUntil: string; newBalance: number }

@@ -262,6 +262,8 @@ export const paths = {
   leagueTrades: (leagueId: string) => `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}/trades`,
   leagueChat: (leagueId: string) => `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}/chat`,
   leagueActivity: (leagueId: string) => `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}/activity`,
+  leaguePool: (leagueId: string, gameDay: string) =>
+    `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}/pools/${gameDay}`,
   leagueMatchups: (leagueId: string) => `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}/matchups`,
   leagueMatchupWeek: (leagueId: string, week: number | string) =>
     `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}/matchups/week-${week}`,

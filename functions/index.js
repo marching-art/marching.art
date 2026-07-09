@@ -52,6 +52,7 @@ const {
   postLeagueMessage,
 } = require("./src/callable/leagues");
 const { joinRookieLeague } = require("./src/callable/rookieLeague");
+const { joinLeaguePool } = require("./src/callable/leaguePools");
 const { completeJourneyStep } = require("./src/callable/journey");
 const { purchaseShopItem, equipShopItem, sponsorShow } = require("./src/callable/shop");
 const { claimLadderTier } = require("./src/callable/seasonLadder");
@@ -202,6 +203,7 @@ module.exports = {
   joinLeague,
   joinLeagueByCode,
   joinRookieLeague,
+  joinLeaguePool,
   completeJourneyStep,
   purchaseShopItem,
   equipShopItem,

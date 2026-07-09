@@ -32,6 +32,7 @@ const {
   markScoringRunCompleted,
   markScoringRunFailed,
 } = require("./scoringRunGuard");
+const { settleLeaguePoolsForDay } = require("./leaguePools");
 const { publishSeasonSummaryRequest } = require("./newsSeasonSummaryTrigger");
 
 
@@ -445,6 +446,10 @@ async function processAndArchiveOffSeasonScoresLogic({ force = false } = {}) {
     // Records Book: fold tonight's results into the all-time records doc.
     await updateRecordsFromRecap(db, dailyRecap, seasonData.name || seasonData.seasonUid, scoredDay);
 
+    // Settle league prediction pools for the game day whose results just
+    // posted (inside the guard, so redeliveries cannot double-pay).
+    await settleLeaguePoolsForDay(db, seasonData);
+
     // Week boundary: resolve league matchups and pay the weekly XP the
     // economy advertises (participation + league win). Both run inside the
     // scoringRunGuard claim above, so redeliveries cannot double-pay.
@@ -609,6 +614,10 @@ async function scoreLiveSeasonDay(db, scoredDay, seasonData) {
 
   // Records Book: fold tonight's results into the all-time records doc.
   await updateRecordsFromRecap(db, dailyRecap, seasonData.name || seasonData.seasonUid, scoredDay);
+
+  // Settle league prediction pools for the game day whose results just
+  // posted (inside the caller's guard, so redeliveries cannot double-pay).
+  await settleLeaguePoolsForDay(db, seasonData);
 
   // Week boundary: resolve league matchups and pay the weekly XP the
   // economy advertises (participation + league win). Runs inside the
