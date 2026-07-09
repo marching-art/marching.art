@@ -23,8 +23,8 @@ const HALL_BANNER_MAX_LENGTH = 60;
  */
 function sanitizeBannerMessage(raw) {
   if (typeof raw !== 'string') return null;
-  // eslint-disable-next-line no-control-regex
   const cleaned = raw
+    // eslint-disable-next-line no-control-regex
     .replace(/[\u0000-\u001f\u007f]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();

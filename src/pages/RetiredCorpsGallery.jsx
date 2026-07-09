@@ -122,10 +122,14 @@ const RetiredCorpsGallery = () => {
     }
   };
 
-  // Filter and sort retired corps
+  // Filter and sort retired corps. originalIndex MUST be captured before the
+  // filter runs — it is the index into the raw profile.retiredCorps array
+  // that unretireCorps/purchaseRetirementPlaque receive, and mapping after
+  // the filter made it the filtered position (wrong corps when a class
+  // filter was active).
   const filteredCorps = retiredCorps
-    .filter((corps) => filterClass === 'all' || corps.corpsClass === filterClass)
     .map((corps, index) => ({ ...corps, originalIndex: index }))
+    .filter((corps) => filterClass === 'all' || corps.corpsClass === filterClass)
     .sort((a, b) => {
       switch (sortBy) {
         case 'totalSeasons':
