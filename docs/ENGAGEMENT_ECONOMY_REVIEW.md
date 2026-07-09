@@ -75,7 +75,8 @@ The practical consequence: **every season ends in silence.** No rank bonus, no c
 > - **Season finish bonuses & completion XP:** ✅ SHIPPED — season archival (`functions/src/helpers/season.js`) now pays `SEASON_FINISH_BONUSES` and `getSeasonCompletionXP`, and a `SeasonRecapModal` exists. "Every season ends in silence" is no longer true.
 > - **CorpsCoin ledger + earning guide:** ✅ SHIPPED — `CorpsCoinModal.jsx` calls `getCorpsCoinHistory` and `getEarningOpportunities`.
 > - **XP display drift:** ✅ FIXED — `captionPricing.js` now mirrors the backend values (200/100). *However* those backend values still never pay out (`awardXP` uninvoked) — see `PROGRESSION_ECONOMY_REDESIGN.md` Phase A, the top open bug.
-> - **League entry fees, Stripe webhook, execution-system stubs:** ⏳ status unchanged (entry fees folded into the roadmap's Step 6 league economy; Stripe stays a placeholder — no real-money path, per this doc's own assumption).
+> - **League entry fees:** ⚠️ actually HALF-LIVE, contrary to this doc's "not deployed" — fees are charged into `settings.prizePool` on league create/join via `chargeEntryFeeInTransaction` (`functions/src/helpers/leagueEconomy.js`), but the payout side (`archiveSeasonResultsLogic`, `season.js:511`) is only reachable via the admin `manualTrigger` — automatic rollovers collect fees and **never pay the pool out**. The exported `payLeagueEntryFee` callable named here does not exist. See the execution plan.
+> - **Stripe webhook, execution-system stubs:** ⏳ unchanged (Stripe stays a placeholder — no real-money path, per this doc's own assumption).
 
 ### 1.3 XP: a road that ends at Level 10
 
@@ -161,6 +162,8 @@ There is also a **legacy client-side streak writer** in `useDashboardData.js:206
 - **Corps retirement ceremonies:** the Retired Corps gallery exists — sell commemorative tiers (bronze/silver/gold plaque, 2,500/7,500/15,000 CC) with a permanent styled page recording the corps' trophies and history.
 - **Hall of Champions banner:** past champions can hang a customized banner (10,000 CC) on their Hall entry.
 
+> 📌 **STATUS (July 2026):** B1 ⚠️ PARTIAL — the Shop (`src/pages/Shop.jsx` + `functions/src/helpers/shopCatalog.js`) sells director titles (1,000–10,000 CC), profile frames (750–7,500 CC), and corps card themes (1,500–5,000 CC), with purchase/equip callables and `cosmetics.owned/equipped` persistence. Caveat: **equipped card themes render nowhere** (no component consumes `getEquippedCosmetic(profile,'cardTheme')`) — a purchasable item with zero visible effect. Uniform tiers, emblems, celebrations, and avatar-regen pricing remain unbuilt (avatar regen is currently free/ungated, on Gemini's free tier). · B2 ⚠️ streak freeze in shop ✅; template slots and scrapbook ⏳. · B3 ⚠️ entry fees half-live (see §1.2 note), pools never auto-pay out; prediction pools not started. · B4 ⚠️ **show sponsorship is SHIPPED** (`sponsorShow`, 10,000/15,000/25,000 CC); retirement plaques and Hall banners ⏳.
+
 **B5. What CorpsCoin should never buy:** extra caption changes, show slots, score modifiers, or earlier deadlines. The moment currency touches competition, the classic-server trust that makes the game work is gone. (Recommend also revisiting the class-unlock triple-path: keep the age-based fallback for accessibility, but it's the reason classes can't be the load-bearing sink.)
 
 ### C. XP: progression that doesn't end
@@ -198,6 +201,8 @@ This directly addresses "new directors learning the ropes": the trade windows, s
 - **E3. Personal bests & season report cards:** at archival time, show each director their PBs and whether they beat last season — self-competition retains veterans who'll never be #1.
 - **E4. Sponsorship & memorial sinks (B4)** are the hoard-drain and the status game for this cohort.
 
+> 📌 **STATUS (July 2026):** E1 ✅ SHIPPED — a Records Book exists end-to-end (`functions/src/helpers/gameRecords.js` maintaining `game-records/records`, updated nightly and at archival; `src/pages/Records.jsx` UI with holder names; SoundSport excluded by design). Lifetime leaderboards are also computed nightly (`functions/src/scheduled/lifetimeLeaderboard.js`) though they lack a dedicated UI page. · E2 ⚠️ PARTIAL (a `dynasty` achievement exists in the server catalog; the fuller meta-achievement set is open) · E3 ⏳ OPEN (the one-shot `SeasonRecapModal` is the closest thing; no PB comparisons) · E4 ⚠️ sponsorship shipped, memorials open.
+
 ---
 
 ## Part 4 — Suggested Sequencing
@@ -215,7 +220,7 @@ Ordered for a donation-supported project where development time is the scarce re
 
 Explicitly dropped from the original plan: premium pass track, Stripe integration, CC bundles, and all real-money cosmetics — the project is donation-supported and the closed-loop economy is stronger for it. One optional nod to supporters: a manually granted, purely cosmetic **"Supporter" profile badge** for Buy-Me-a-Coffee donors. No gameplay effect, no store — just a visible thank-you.
 
-> 📌 **STATUS (July 2026):** Phases 1–2 are ✅ essentially SHIPPED (streak freeze, season payouts, ledger, cleanup, extended levels; achievement unification remains ⚠️ partial). Phase 3's questline is ✅ shipped; deadline visibility and rookie leagues remain open. Phases 4–6 are ⏳ OPEN — but sequencing is now owned by `LIFELONG_GAMIFICATION_ROADMAP.md` Part 4, which supersedes this table. The Shop currently sells director titles + the streak freeze only; the rest of the B-catalog is unbuilt.
+> 📌 **STATUS (July 2026):** Phases 1–2 ✅ essentially SHIPPED (streak freeze, season payouts, ledger, cleanup, extended levels; achievement unification ⚠️ partial). Phase 3 ⚠️ questline shipped, one-tap rookie-league join exists in onboarding/journey; deadline visibility partial. Phase 4 ✅ largely SHIPPED (Shop v1: titles + frames + card themes + in-shop streak freeze — though card themes render nowhere yet). Phase 5 ⚠️ PARTIAL (Records Book ✅, show sponsorship ✅; hoard-drain memorials open). Phase 6 ⏳ ladder ✅ shipped (12 tiers), the rest open. Sequencing is now owned by `LIFELONG_GAMIFICATION_ROADMAP.md` Part 4 and the execution plan, which supersede this table.
 
 ---
 
