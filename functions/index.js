@@ -121,6 +121,7 @@ const {
   updateLifetimeLeaderboard,
   scheduledLifetimeLeaderboardUpdate
 } = require("./src/scheduled/lifetimeLeaderboard");
+const { economyStatsJob } = require("./src/scheduled/economyStats");
 const {
   scheduledRivalsUpdate,
   updateRivalsNow,
@@ -273,6 +274,7 @@ module.exports = {
   processDailyLiveScores,
   updateLifetimeLeaderboard,
   scheduledLifetimeLeaderboardUpdate,
+  economyStatsJob,
 
   // Rivals
   scheduledRivalsUpdate,

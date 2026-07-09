@@ -211,6 +211,13 @@ match /game-records/{docId} {
   allow write: if false; // Backend only
 }
 
+// Economy instrumentation (admin-stats/economy) — mint-vs-sink aggregates
+// written weekly by economyStatsJob and rendered on the Admin page only.
+match /admin-stats/{docId} {
+  allow read: if isAdmin();
+  allow write: if false; // Backend only
+}
+
 match /final_rankings/{docId} {
   allow read: if true;
   allow write: if isAdmin();
