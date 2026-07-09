@@ -46,8 +46,6 @@ const CALLABLES = [
   ["users", "getShowRegistrations", "unauthenticated"],
   ["users", "getUserRankings", "unauthenticated"],
   ["users", "migrateUserProfiles", "unauthenticated"],
-  ["users", "dailyXPCheckIn", "unauthenticated"],
-  ["users", "awardXP", "unauthenticated"],
   ["users", "fixProfileFields", "unauthenticated"],
   ["profile", "updateProfile", "unauthenticated"],
   ["profile", "updateUsername", "unauthenticated"],

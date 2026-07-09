@@ -2,7 +2,7 @@
 // FIREBASE CLOUD FUNCTIONS
 // =============================================================================
 // Typed wrappers for all Firebase Cloud Functions
-// Usage: import { registerCorps, dailyRehearsal } from '@/api/functions';
+// Usage: import { registerCorps, claimDailyLogin } from '@/api/functions';
 
 import { createCallable } from './callable';
 
@@ -220,41 +220,10 @@ export const getEarningOpportunities = createCallable<
   }
 >('getEarningOpportunities');
 
-// =============================================================================
-// EXECUTION SYSTEM
-// =============================================================================
-
-export interface RehearsalData {
-  corpsClass: string;
-}
-
-export interface RehearsalResult {
-  success: boolean;
-  readinessGain: number;
-  moraleChange: number;
-  newReadiness: number;
-  newMorale: number;
-}
-
-export const dailyRehearsal = createCallable<RehearsalData, RehearsalResult>('dailyRehearsal');
-export const repairEquipment = createCallable<
-  { corpsClass: string; equipmentType: string },
-  { success: boolean }
->('repairEquipment');
-export const upgradeEquipment = createCallable<
-  { corpsClass: string; equipmentType: string },
-  { success: boolean }
->('upgradeEquipment');
-export const setShowDifficulty = createCallable<{ corpsClass: string; difficulty: number }, void>(
-  'setShowDifficulty'
-);
-export const boostMorale = createCallable<
-  { corpsClass: string },
-  { success: boolean; newMorale: number }
->('boostMorale');
-export const getExecutionStatus = createCallable<{ corpsClass: string }, unknown>(
-  'getExecutionStatus'
-);
+// NOTE: the "execution system" client stubs (dailyRehearsal, repairEquipment,
+// upgradeEquipment, setShowDifficulty, boostMorale, getExecutionStatus) were
+// removed — the backend was intentionally cut (see PRIORITIES.md) and none of
+// the stubs had a server function or a component caller.
 
 // =============================================================================
 // DAILY OPERATIONS

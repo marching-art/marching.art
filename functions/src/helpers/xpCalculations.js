@@ -73,21 +73,18 @@ const XP_SOURCES = {
   // Daily login - reward consistency
   dailyLogin: 25,              // 175 XP/week if daily
 
-  // Weekly participation - just play the game
-  weeklyParticipation: 200,    // Submit a lineup and participate in weekly shows
+  // Weekly participation — compete in ≥1 show in a week, paid once per
+  // participating class at the week boundary of the nightly scoring run
+  // (helpers/scoringAwards.js payWeeklyParticipationXP).
+  weeklyParticipation: 150,
 
-  // League wins - reward competitive success
-  leagueWin: 100,              // Win a weekly league matchup
+  // League wins — paid alongside the weekly-win CorpsCoin in
+  // processWeeklyMatchups. Byes and ties award nothing.
+  leagueWin: 100,
 
-  // Streak milestones - reward dedication
-  streakMilestone: {
-    3: 50,                     // 3-day streak bonus
-    7: 100,                    // Week streak bonus
-    14: 250,                   // 2-week streak bonus
-    30: 500,                   // Month streak bonus
-    60: 750,                   // 2-month streak bonus
-    100: 1000,                 // Century streak bonus
-  },
+  // Streak-milestone XP/CC live in STREAK_MILESTONES
+  // (helpers/engagementRewards.js), the single source of truth — it also
+  // carries the CC amounts and titles.
 
   // Season completion - end of season bonus based on final rank
   seasonCompletion: {

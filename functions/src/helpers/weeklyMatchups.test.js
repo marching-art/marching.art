@@ -12,8 +12,10 @@ process.env.DATA_NAMESPACE = process.env.DATA_NAMESPACE || "test-ns";
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { processWeeklyMatchups } = require("./scoringAwards");
+const admin = require("firebase-admin");
+const { processWeeklyMatchups, payWeeklyParticipationXP } = require("./scoringAwards");
 const { WEEKLY_LEAGUE_WIN_REWARD } = require("../callable/economy");
+const { XP_SOURCES } = require("./xpCalculations");
 
 const NS = process.env.DATA_NAMESPACE;
 const profilePath = (uid) => `artifacts/${NS}/users/${uid}/profile/data`;
@@ -140,6 +142,10 @@ describe("processWeeklyMatchups", () => {
     );
     assert.ok(rewardWrite, "winner should receive a corpsCoin write");
     assert.ok(rewardWrite.data.stats?.leagueWins, "winner should get a leagueWins increment");
+    assert.ok(
+      rewardWrite.data.xp?.isEqual(admin.firestore.FieldValue.increment(XP_SOURCES.leagueWin)),
+      "winner should get the league-win XP increment"
+    );
 
     const historyWrite = writes.find(
       (w) => w.path.startsWith(`artifacts/${NS}/users/alice/`) && w.data?.type === "league_win"
@@ -178,5 +184,82 @@ describe("processWeeklyMatchups", () => {
 
     const rewardWrites = writes.filter((w) => w.data?.corpsCoin !== undefined);
     assert.equal(rewardWrites.length, 0);
+  });
+});
+
+// Weekly-participation XP — the "compete in the weekly shows" earner that was
+// advertised in XP_SOURCES but never paid (awardXP had no callers). Paid at
+// the week boundary from the week's committed recap docs, once per
+// participating class.
+describe("payWeeklyParticipationXP", () => {
+  const recapDayPath = (day) => `fantasy_recaps/season-1/days/${day}`;
+  const recapWithResults = (results) => ({
+    offSeasonDay: 0,
+    shows: [{ eventName: "Test Show", results }],
+  });
+
+  test("pays once per participating class across the week's recaps", async () => {
+    const docs = new Map([
+      // alice competes twice in worldClass (still one grant) and once in aClass
+      [recapDayPath(15), recapWithResults([
+        { uid: "alice", corpsClass: "worldClass" },
+        { uid: "bob", corpsClass: "soundSport" },
+      ])],
+      [recapDayPath(17), recapWithResults([
+        { uid: "alice", corpsClass: "worldClass" },
+        { uid: "alice", corpsClass: "aClass" },
+      ])],
+    ]);
+    const { db, writes } = makeFakeDb({ docs });
+
+    await payWeeklyParticipationXP(3, seasonData, db);
+
+    const aliceWrite = writes.find((w) => w.path === profilePath("alice"));
+    assert.ok(aliceWrite, "alice should receive an XP write");
+    assert.ok(
+      aliceWrite.data.xp.isEqual(
+        admin.firestore.FieldValue.increment(XP_SOURCES.weeklyParticipation * 2)
+      ),
+      "alice competed in two classes → two grants in one increment"
+    );
+
+    const bobWrite = writes.find((w) => w.path === profilePath("bob"));
+    assert.ok(bobWrite, "bob should receive an XP write");
+    assert.ok(
+      bobWrite.data.xp.isEqual(
+        admin.firestore.FieldValue.increment(XP_SOURCES.weeklyParticipation)
+      ),
+      "bob competed in one class → one grant"
+    );
+
+    // Exactly one write per director — no per-show double-pay.
+    assert.equal(writes.filter((w) => w.path === profilePath("alice")).length, 1);
+  });
+
+  test("reads exactly the week's seven day docs", async () => {
+    const requested = [];
+    const { db } = makeFakeDb({ docs: new Map() });
+    const origGetAll = db.getAll.bind(db);
+    db.getAll = async (...refs) => {
+      requested.push(...refs.map((r) => r.path));
+      return origGetAll(...refs);
+    };
+
+    await payWeeklyParticipationXP(2, seasonData, db);
+
+    assert.deepEqual(
+      requested,
+      [8, 9, 10, 11, 12, 13, 14].map((d) => recapDayPath(d))
+    );
+  });
+
+  test("pays nothing when the week has no participants", async () => {
+    const { db, writes } = makeFakeDb({
+      docs: new Map([[recapDayPath(7), recapWithResults([])]]),
+    });
+
+    await payWeeklyParticipationXP(1, seasonData, db);
+
+    assert.equal(writes.length, 0);
   });
 });

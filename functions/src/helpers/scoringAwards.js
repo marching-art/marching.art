@@ -11,6 +11,7 @@ const {
   addCoinHistoryEntryToBatch,
   WEEKLY_LEAGUE_WIN_REWARD,
 } = require("../callable/economy");
+const { XP_SOURCES } = require("./xpCalculations");
 const { ChunkedWriter } = require("./chunkedWriter");
 
 /**
@@ -678,6 +679,9 @@ async function processWeeklyMatchups(week, seasonData, db) {
           // Pay the advertised weekly-win bonus (getEarningOpportunities:
           // "Win your weekly matchup to earn bonus CC") and keep the
           // profile's leagueWins stat live. Byes and ties award nothing.
+          // The XP lands as a raw increment; xpLevel/title/class unlocks
+          // recompute from the stored xp total on the next claimDailyLogin,
+          // where the level-up stipend also settles via lastRewardedLevel.
           if (winnerUid) {
             const winnerRef = winnerUid === p1_uid ? p1_profile.ref : p2_profile.ref;
             winnerBatch.set(
@@ -685,6 +689,7 @@ async function processWeeklyMatchups(week, seasonData, db) {
               {
                 stats: { leagueWins: increment },
                 corpsCoin: admin.firestore.FieldValue.increment(WEEKLY_LEAGUE_WIN_REWARD),
+                xp: admin.firestore.FieldValue.increment(XP_SOURCES.leagueWin),
               },
               { merge: true }
             );
@@ -717,6 +722,71 @@ async function processWeeklyMatchups(week, seasonData, db) {
   logger.info(`Matchup winner determination for week ${week} complete.`);
 }
 
+/**
+ * Pay the advertised weekly-participation XP to every director who competed
+ * in at least one show this week — once per participating class, so a
+ * director fielding two classes earns two grants.
+ *
+ * Participation is derived from the week's committed recap docs
+ * (fantasy_recaps/{seasonUid}/days/{day}), which only contain corps that
+ * actually attended and were scored — the same source of truth the
+ * standings read. Runs at the week boundary inside the scoringRunGuard-
+ * protected run, so scheduler redeliveries cannot double-pay (with the
+ * same documented ChunkedWriter mid-commit residual risk the CorpsCoin
+ * awards carry).
+ *
+ * XP lands as a raw increment; xpLevel/title/class unlocks recompute from
+ * the stored xp total on the next claimDailyLogin, where the level-up
+ * CorpsCoin stipend also settles via lastRewardedLevel — no reward is lost
+ * by deferring the recompute.
+ *
+ * @param {number} week - The week number (1-7)
+ * @param {Object} seasonData - Season configuration data
+ * @param {Firestore} db - Firestore database instance
+ */
+async function payWeeklyParticipationXP(week, seasonData, db) {
+  const firstDay = week * 7 - 6;
+  const lastDay = week * 7;
+  const dayRefs = [];
+  for (let day = firstDay; day <= lastDay; day++) {
+    dayRefs.push(db.doc(`fantasy_recaps/${seasonData.seasonUid}/days/${day}`));
+  }
+  const dayDocs = await db.getAll(...dayRefs);
+
+  // Distinct participating classes per director across the week.
+  const classesByUid = new Map();
+  for (const dayDoc of dayDocs) {
+    if (!dayDoc.exists) continue;
+    for (const show of (dayDoc.data().shows || [])) {
+      for (const result of (show.results || [])) {
+        if (!result?.uid || !result?.corpsClass) continue;
+        if (!classesByUid.has(result.uid)) classesByUid.set(result.uid, new Set());
+        classesByUid.get(result.uid).add(result.corpsClass);
+      }
+    }
+  }
+
+  if (classesByUid.size === 0) {
+    logger.info(`Week ${week}: no show participants in recaps; no weekly participation XP to pay.`);
+    return;
+  }
+
+  const xpBatch = new ChunkedWriter(db);
+  let totalXP = 0;
+  for (const [uid, classes] of classesByUid.entries()) {
+    const amount = XP_SOURCES.weeklyParticipation * classes.size;
+    totalXP += amount;
+    const profileRef = db.doc(
+      `artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`
+    );
+    xpBatch.set(profileRef, { xp: admin.firestore.FieldValue.increment(amount) }, { merge: true });
+  }
+  await xpBatch.commit();
+  logger.info(
+    `Week ${week}: paid weekly-participation XP to ${classesByUid.size} directors (${totalXP} XP total).`
+  );
+}
+
 module.exports = {
   getTopCorpsFromSeasonStandings,
   buildChampionshipConfig,
@@ -726,4 +796,5 @@ module.exports = {
   awardFinalsAndSaveChampions,
   buildEasternClassicParticipantSet,
   processWeeklyMatchups,
+  payWeeklyParticipationXP,
 };

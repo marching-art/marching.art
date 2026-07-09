@@ -13,8 +13,6 @@ const {
   getUserRankings,
   migrateUserProfiles,
   createUserProfile,
-  dailyXPCheckIn,
-  awardXP,
   fixProfileFields,
 } = require("./src/callable/users");
 const {
@@ -247,8 +245,6 @@ module.exports = {
   startNewLiveSeason,
   sendTestEmail,
   scrapeLiveScoresNow,
-  dailyXPCheckIn,
-  awardXP,
   fixProfileFields,
   unlockClassWithCorpsCoin,
   getCorpsCoinHistory,

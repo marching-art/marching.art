@@ -19,22 +19,13 @@ const {
   pruneOldPredictions,
 } = require("../helpers/dailyPredictions");
 const { sweepProfileAchievements } = require("../helpers/achievements");
-
-// CorpsCoin paid per XP level gained (settled daily against lastRewardedLevel)
-const LEVEL_UP_STIPEND = 100;
-
-// Streak milestone rewards (XP + CC + optional free streak freeze)
-const STREAK_MILESTONES = {
-  3: { xp: 50, coin: 50, title: '3 Day Streak!' },
-  7: { xp: 100, coin: 100, title: 'Week Warrior!' },
-  14: { xp: 250, coin: 200, title: 'Two Week Terror!' },
-  30: { xp: 500, coin: 500, title: 'Monthly Master!', freeFreeze: true },
-  60: { xp: 750, coin: 750, title: 'Streak Legend!' },
-  100: { xp: 1000, coin: 1000, title: 'Century Club!' },
-};
-
-// Streak freeze cost
-const STREAK_FREEZE_COST = 300;
+// Reward tables live in helpers/engagementRewards.js (the single source of
+// truth, also read by the economy earning guide).
+const {
+  LEVEL_UP_STIPEND,
+  STREAK_MILESTONES,
+  STREAK_FREEZE_COST,
+} = require("../helpers/engagementRewards");
 
 /**
  * Season-ladder baseline for accounts that predate the ladder: returns a

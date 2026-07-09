@@ -22,6 +22,7 @@ const {
   awardFinalsAndSaveChampions,
   buildEasternClassicParticipantSet,
   processWeeklyMatchups,
+  payWeeklyParticipationXP,
 } = require("./scoringAwards");
 const { ChunkedWriter } = require("./chunkedWriter");
 const { getCompletedCalendarDay } = require("./gameDay");
@@ -444,8 +445,11 @@ async function processAndArchiveOffSeasonScoresLogic({ force = false } = {}) {
     // Records Book: fold tonight's results into the all-time records doc.
     await updateRecordsFromRecap(db, dailyRecap, seasonData.name || seasonData.seasonUid, scoredDay);
 
-    // OPTIMIZATION #5: Uses shared processWeeklyMatchups helper
+    // Week boundary: resolve league matchups and pay the weekly XP the
+    // economy advertises (participation + league win). Both run inside the
+    // scoringRunGuard claim above, so redeliveries cannot double-pay.
     if (scoredDay % 7 === 0) {
+      await payWeeklyParticipationXP(scoredDay / 7, seasonData, db);
       await processWeeklyMatchups(scoredDay / 7, seasonData, db);
     }
 
@@ -606,8 +610,12 @@ async function scoreLiveSeasonDay(db, scoredDay, seasonData) {
   // Records Book: fold tonight's results into the all-time records doc.
   await updateRecordsFromRecap(db, dailyRecap, seasonData.name || seasonData.seasonUid, scoredDay);
 
-  // OPTIMIZATION #5: Uses shared processWeeklyMatchups helper
+  // Week boundary: resolve league matchups and pay the weekly XP the
+  // economy advertises (participation + league win). Runs inside the
+  // scoringRunGuard claim taken by the caller, so redeliveries cannot
+  // double-pay.
   if (scoredDay % 7 === 0) {
+    await payWeeklyParticipationXP(scoredDay / 7, seasonData, db);
     await processWeeklyMatchups(scoredDay / 7, seasonData, db);
   }
 

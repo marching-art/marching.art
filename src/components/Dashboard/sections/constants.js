@@ -24,7 +24,6 @@ export const CAPTIONS = [
 // canonicalizes, so these keys flow through the whole unlock/purchase path.
 export const CLASS_UNLOCK_LEVELS = { aClass: 3, openClass: 5, worldClass: 10 };
 export const CLASS_UNLOCK_COSTS = { aClass: 1000, openClass: 2500, worldClass: 5000 };
-export const CLASS_UNLOCK_WEEKS = { aClass: 5, openClass: 12, worldClass: 19 };
 export const CLASS_DISPLAY_NAMES = CORPS_CLASS_LABELS;
 
 // SoundSport medal rating thresholds

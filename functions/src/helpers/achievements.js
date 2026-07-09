@@ -12,8 +12,9 @@
  * { id, title, description, icon, earnedAt, rarity }
  *
  * ccReward is paid once, when the achievement is first added. Streak-tier
- * achievements carry no ccReward because STREAK_MILESTONES in dailyOps.js
- * already pays coin at the moment the milestone is hit.
+ * achievements carry no ccReward because STREAK_MILESTONES
+ * (helpers/engagementRewards.js) already pays coin at the moment the
+ * milestone is hit.
  */
 
 /** CorpsCoin paid when an achievement is first earned, by rarity */

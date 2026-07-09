@@ -221,14 +221,14 @@ const Shop = () => {
             ) : (
               <button
                 onClick={handleBuyFreeze}
-                disabled={busy === 'streak_freeze' || balance < 300}
+                disabled={busy === 'streak_freeze' || balance < (freezeStatus?.freezeCost ?? 300)}
                 className={`h-9 px-4 text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
-                  balance >= 300
+                  balance >= (freezeStatus?.freezeCost ?? 300)
                     ? 'bg-cyan-600 hover:bg-cyan-500 text-white'
                     : 'bg-[#222] text-gray-600 cursor-not-allowed'
                 }`}
               >
-                {busy === 'streak_freeze' ? '...' : '300 CC'}
+                {busy === 'streak_freeze' ? '...' : `${freezeStatus?.freezeCost ?? 300} CC`}
               </button>
             )}
           </div>

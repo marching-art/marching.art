@@ -107,7 +107,7 @@ import { getEquippedCosmetic } from '../utils/cosmetics';
 // Imported via: CLASS_LABELS, CAPTIONS, CLASS_DISPLAY_NAMES, getSoundSportRating
 
 // OPTIMIZATION #4: Inline components extracted to src/components/Dashboard/sections/
-// - ControlBar, ActiveLineupTable, SeasonScorecard, RecentResultsFeed, LeagueStatus
+// - ControlBar, ActiveLineupTable, SeasonScorecard, RecentResultsFeed
 // This reduces Dashboard.jsx from 1600+ lines to ~800 lines and isolates renders
 
 // =============================================================================

@@ -198,8 +198,6 @@ export const authApi = {
 // =============================================================================
 
 type CloudFunctionName =
-  | 'dailyRehearsal'
-  | 'getExecutionStatus'
   | 'registerCorps'
   | 'retireCorps'
   | 'deleteCorps'

@@ -57,7 +57,8 @@ export const CLASS_UNLOCK_COSTS = {
  * Must stay in sync with XP_SOURCES in functions/src/helpers/xpCalculations.js
  */
 export const XP_SOURCES = {
-  weeklyParticipation: 200, // Submit lineup and participate weekly
+  dailyLogin: 25, // Automatic daily login claim
+  weeklyParticipation: 150, // Compete in ≥1 show in a week, per participating class
   leagueWin: 100, // Win a weekly league matchup
   seasonCompletion: {
     top10: 500, // Top 10 finish

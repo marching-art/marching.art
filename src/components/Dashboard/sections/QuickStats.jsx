@@ -70,7 +70,7 @@ const QuickStats = memo(({ profile, corpsClass, recentResults, lineupScoreData, 
           icon: <TrendingUp className="w-4 h-4 text-green-500" />,
           label: 'Captions Trending Up',
           value: `${trending}`,
-          detail: `of ${Object.keys(lineupScoreData).filter(([, d]) => d?.score).length || 8} active`,
+          detail: `of ${Object.entries(lineupScoreData).filter(([, d]) => d?.score).length || 8} active`,
           color: 'text-green-400',
         });
       }
