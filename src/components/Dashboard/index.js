@@ -32,6 +32,7 @@ export {
   JourneyPanel,
   SeasonLadderPanel,
   SeasonProgressHub,
+  DirectorsReport,
   // Constants
   CLASS_LABELS,
   CLASS_SHORT_LABELS,

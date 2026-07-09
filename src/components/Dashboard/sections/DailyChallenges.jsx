@@ -12,7 +12,9 @@ import { useHaptic } from '../../../hooks/useHaptic';
 import { useProfileStore } from '../../../store/profileStore';
 import { getGameDay, getChallengesForGameDay } from '../../../utils/dailyChallenges';
 
-const DailyChallenges = memo(({ onLineupClick }) => {
+// `embedded` renders the same content without the outer card chrome, for
+// composition inside the Director's Report (the unified Zone-B daily card).
+const DailyChallenges = memo(({ onLineupClick, embedded = false }) => {
   const { trigger: haptic } = useHaptic();
   const profile = useProfileStore((state) => state.profile);
   const completeDailyChallenge = useProfileStore((state) => state.completeDailyChallenge);
@@ -36,7 +38,7 @@ const DailyChallenges = memo(({ onLineupClick }) => {
   };
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+    <div className={embedded ? 'overflow-hidden' : 'bg-[#1a1a1a] border border-[#333] overflow-hidden'}>
       <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
         <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
           <Target className="w-3.5 h-3.5 text-orange-500" />

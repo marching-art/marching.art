@@ -11,7 +11,7 @@
  * depend on the viewer's local timezone. The previous hand-rolled offset
  * math had an inverted sign and rolled the day over ~10 hours late.
  */
-export const getGameDay = () => {
+export const getGameDay = (date = new Date()) => {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: 'America/New_York',
     year: 'numeric',
@@ -19,7 +19,7 @@ export const getGameDay = () => {
     day: '2-digit',
     hour: '2-digit',
     hour12: false,
-  }).formatToParts(new Date());
+  }).formatToParts(date);
 
   const v = {};
   for (const part of parts) v[part.type] = part.value;

@@ -75,11 +75,10 @@ import {
   SeasonScorecard,
   RecentResultsFeed,
   RivalsPanel,
-  DailyChallenges,
   LineupSimulatorPanel,
-  PredictionGamePanel,
   JourneyPanel,
   SeasonProgressHub,
+  DirectorsReport,
   CLASS_DISPLAY_NAMES,
   CLASS_UNLOCK_LEVELS,
   CLASS_UNLOCK_COSTS,
@@ -387,14 +386,22 @@ const Dashboard = () => {
                 />
               </div>
 
-              {/* ZONE B — TODAY: everything the player can do right now,
-                  gathered in one place (second in the mobile stack so the
-                  to-do list is one scroll from the score). PR 8 composes
-                  these into the single Director's Report card. */}
+              {/* ZONE B — TODAY: the whole daily set in one card (second in
+                  the mobile stack so the to-do list is one scroll from the
+                  score) */}
               <div className="lg:col-start-3 lg:row-start-2 space-y-4">
                 <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-500 -mb-2">
                   Today
                 </h2>
+
+                {/* Director's Report — login + challenges + predictions +
+                    pending claims as one checklist with a single count */}
+                <DirectorsReport
+                  recentResults={recentResults}
+                  corpsClass={activeCorpsClass}
+                  seasonUid={seasonData?.seasonUid}
+                  onLineupClick={() => openCaptionSelection()}
+                />
 
                 {/* First Season Journey - server-rewarded quest line for new
                     directors; hides itself once all steps are claimed */}
@@ -404,12 +411,6 @@ const Dashboard = () => {
                   onEditLineup={() => openCaptionSelection()}
                   onSetConcept={() => setShowConceptModal(true)}
                 />
-
-                {/* Daily Challenges - drives daily return visits */}
-                <DailyChallenges onLineupClick={() => openCaptionSelection()} />
-
-                {/* Daily Predictions - check-back-tomorrow engagement loop */}
-                <PredictionGamePanel recentResults={recentResults} corpsClass={activeCorpsClass} />
               </div>
 
               {/* ZONE C — MY CORPS (2/3): the strategic work — build, tune,

@@ -15,7 +15,9 @@ import { useProfileStore } from '../../../store/profileStore';
 import { getGameDay } from '../../../utils/dailyChallenges';
 import { buildQuestions } from '../../../utils/dailyPredictions';
 
-const PredictionGamePanel = memo(({ recentResults, corpsClass }) => {
+// `embedded` renders the same content without the outer card chrome, for
+// composition inside the Director's Report (the unified Zone-B daily card).
+const PredictionGamePanel = memo(({ recentResults, corpsClass, embedded = false }) => {
   const { trigger: haptic } = useHaptic();
   const profile = useProfileStore((state) => state.profile);
   const submitPrediction = useProfileStore((state) => state.submitPrediction);
@@ -66,7 +68,7 @@ const PredictionGamePanel = memo(({ recentResults, corpsClass }) => {
   const accuracy = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : null;
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+    <div className={embedded ? 'overflow-hidden' : 'bg-[#1a1a1a] border border-[#333] overflow-hidden'}>
       {/* Header */}
       <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
         <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
