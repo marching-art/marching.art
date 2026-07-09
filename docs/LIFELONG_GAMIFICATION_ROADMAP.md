@@ -185,3 +185,22 @@ The test of this plan is whether it describes a satisfying decade. It does:
 - **Years 5–10 (legacy):** may never be #1 again, and doesn't need to be — chasing personal records, dynasty achievements, beating last season's self, curating a Hall of Champions legacy and a gallery of retired corps. The Director Card is now a decade-deep biography. The seasonal live-ops rhythm keeps each new chapter feeling fresh.
 
 At no point does the arc flatten into "the same season, again." Every year adds a permanent sentence to a story the player owns. **That is the lifelong experience — and it is built almost entirely from systems marching.art already has, given a spine to hang on.**
+
+---
+
+## Appendix — Field Note: primary-source validation
+
+An unprompted note from a new SoundSport director (July 2026) validates the diagnosis almost line-for-line, and its confusion led directly to a concrete bug.
+
+**What it confirms is working.** The player led with the emotional peak — _"finding out my corps pulled a Silver rating at Mankato and Des Moines genuinely made my week."_ That is the nightly-drop variable-reward loop (Part 0) doing exactly its job. The core hook is not the problem; it is the foundation everything else hangs on.
+
+**What it confirms is broken — the legibility gap (Steps 2, 3, 8).** The player's actual request: _"I can't work out how director leveling actually works… I'd rather earn it the slow way, and I can't find what levels a director up."_ This is the "make progression legible" gap, reported unprompted by a motivated user. His secondary observation — _"most of us show as level 1, yet several directors are fielding ensembles in multiple classes"_ — is the silo problem surfacing as felt confusion. The answer, from the code:
+
+- **Level is driven _only_ by XP** (1,000 XP/level, flat). "Most show Level 1" is largely correct — a new player simply has under 1,000 XP.
+- **Classes decouple from level entirely** because they unlock three redundant ways: XP level (3/5/10), _account age_ (5/12/19 weeks, regardless of XP), _or_ CorpsCoin. A Class costs 1,000 CC and the welcome grant is exactly 1,000 CC — so a Level-1 rookie can unlock A Class on day one. "Level 1 but multiple classes" is the age-timer and the welcome-grant purchase, working as built. This is precisely the redundant triple-path Step 5 recommends demoting: it is the reason level and class visibly contradict each other.
+
+**The bug this surfaced (elevate to Phase I, Step 2).** Tracing "what levels a director up" revealed that `awardXP` (the callable holding the two largest recurring XP sources — **weekly participation, 200 XP**, and **league win, 100 XP**) is defined and exported but **invoked nowhere** in the codebase — no client caller, no scoring-path caller. Those two sources never fire. The XP that _does_ work for this player is daily login (~175/wk) and daily challenges (~140–210/wk); predictions are excluded for SoundSport entirely. So an active director levels at roughly **half the designed rate**, and the intended _primary_ earner ("participate in the weekly shows") pays nothing. This is the exact "broken reward promise" failure mode the roadmap warns about — a reward the game advertises and never delivers — now with a named culprit. Wiring `awardXP` into the weekly scoring rollover (idempotently, once per participating class per week) is a small, high-trust Phase I fix that makes "the slow way" the player explicitly _wants_ actually work.
+
+**The signpost the player asked for.** _"A pinned 'how progression works' post or a single FAQ page. I suspect all the info already exists, it's just spread out."_ Correct — `HowToPlay.jsx` has an "XP & Leveling" section but it doesn't enumerate the XP sources or explain the level-vs-class decoupling. This is Step 8 (one rules vocabulary) in miniature, and worth doing early: a single authoritative progression explainer, generated from the real constants so it can't drift.
+
+**The meta-lesson.** One motivated new user found, in a week, both a design-legibility gap and a live XP bug that a full code audit corroborated. That is an argument for Step 6's social layer and for a lightweight, _visible_ feedback intake — because engaged players will do this work for you if there is a channel pointed at the right target.
