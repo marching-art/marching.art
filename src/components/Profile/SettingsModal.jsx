@@ -5,13 +5,26 @@
 // keep that page focused on the profile view.
 
 import React, { useState, useEffect } from 'react';
-import { Mail, AtSign, AlertCircle, Bell, Trash2, Heart, LogOut, X } from 'lucide-react';
+import {
+  Mail,
+  AtSign,
+  AlertCircle,
+  Bell,
+  Trash2,
+  Heart,
+  LogOut,
+  X,
+  Download,
+  CheckCircle2,
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getProfile, updateProfile } from '../../api/profile';
 import { updateUsername, updateEmail, deleteAccount } from '../../api/functions';
 import toast from 'react-hot-toast';
 import { useTooltipPreference } from '../../hooks/useTooltipPreference';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { usePWAInstall } from '../../hooks/usePWAInstall';
+import PWAInstallInstructions from '../PWAInstallInstructions';
 
 // =============================================================================
 // TOGGLE
@@ -47,6 +60,26 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
 
   // Tooltip preferences
   const { tooltipsEnabled, setTooltipsEnabled } = useTooltipPreference();
+
+  // PWA install — a persistent, always-reachable way to install the app, so
+  // users who dismissed or missed the transient prompt can still find it here.
+  const { platform, isInstalled, canPromptInstall, promptInstall } = usePWAInstall();
+  const [showInstallHelp, setShowInstallHelp] = useState(false);
+
+  const handleInstallApp = async () => {
+    if (canPromptInstall) {
+      const outcome = await promptInstall();
+      if (outcome === 'accepted') {
+        toast.success('Installing marching.art...');
+      } else if (outcome === 'unavailable') {
+        // The native prompt slipped away — fall back to manual steps.
+        setShowInstallHelp(true);
+      }
+      return;
+    }
+    // No native prompt (iOS, or the browser hasn't offered one): reveal steps.
+    setShowInstallHelp((prev) => !prev);
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -450,6 +483,32 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                   description="Explain terms like Corps, Caption, DCI on hover"
                 />
               </div>
+
+              {/* Install App — always available here so it never becomes a
+                  dead end after the transient prompt is dismissed. Hidden once
+                  the app is running as an installed PWA. */}
+              {isInstalled ? (
+                <div className="w-full py-3 min-h-[44px] bg-[#111] border border-[#333] text-gray-400 text-sm font-bold rounded-sm flex items-center justify-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  App Installed
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <button
+                    onClick={handleInstallApp}
+                    className="w-full py-3 min-h-[44px] bg-[#0057B8]/15 border border-[#0057B8]/40 text-[#4d9fff] text-sm font-bold hover:bg-[#0057B8]/25 active:bg-[#0057B8]/35 transition-all press-feedback rounded-sm flex items-center justify-center gap-2"
+                    aria-expanded={!canPromptInstall ? showInstallHelp : undefined}
+                  >
+                    <Download className="w-4 h-4" />
+                    {canPromptInstall ? 'Install App' : 'How to Install App'}
+                  </button>
+                  {!canPromptInstall && showInstallHelp && (
+                    <div className="bg-[#111] border border-[#333] p-3 rounded-sm">
+                      <PWAInstallInstructions platform={platform} />
+                    </div>
+                  )}
+                </div>
+              )}
 
               <a
                 href="https://buymeacoffee.com/marching.art"
