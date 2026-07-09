@@ -1,6 +1,6 @@
 // News feed presentational cards + state views. Extracted from NewsFeed.jsx.
 
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { Newspaper, Clock, BookOpen, Flame, ChevronRight, AlertCircle } from 'lucide-react';
 import { EngagementSummary } from '../Articles';
 import {
@@ -76,6 +76,12 @@ function HeroStory({ story, onClick, storyNumber, engagement }) {
   const urgency = getUrgencyBadge(story.createdAt);
   const readingTime = getReadingTime(story);
 
+  // Fall back to the category-icon placeholder if the image URL fails to load
+  // (e.g. an upload that landed on a placeholder host) rather than showing the
+  // browser's broken-image glyph.
+  const [imageFailed, setImageFailed] = useState(false);
+  const showImage = story.imageUrl && !imageFailed;
+
   return (
     <article
       className="mb-6 bg-[#1a1a1a] border border-[#333] overflow-hidden cursor-pointer hover:border-[#444] transition-colors group"
@@ -83,13 +89,14 @@ function HeroStory({ story, onClick, storyNumber, engagement }) {
     >
       {/* Hero Image */}
       <div className="aspect-[21/9] bg-[#0a0a0a] relative overflow-hidden">
-        {story.imageUrl ? (
+        {showImage ? (
           <img
             src={story.imageUrl}
             alt={story.headline}
             className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
             loading="eager"
             fetchpriority="high"
+            onError={() => setImageFailed(true)}
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#0057B8]/10 to-transparent">

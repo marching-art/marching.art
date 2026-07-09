@@ -13,6 +13,7 @@
  * Firebase Storage is used as fallback (no additional config needed)
  */
 
+const crypto = require("crypto");
 const cloudinary = require("cloudinary").v2;
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
@@ -93,27 +94,33 @@ async function uploadToFirebaseStorage(base64Data, options = {}) {
     const fileName = publicId || `news_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const filePath = `${folder}/${fileName}.${extension}`;
 
-    // Upload to Firebase Storage
+    // Upload to Firebase Storage with a download token in the object metadata.
+    // The token lets us build a firebasestorage.googleapis.com download URL,
+    // which (unlike storage.googleapis.com) is on the app's CSP allowlist and
+    // works under uniform bucket-level access / public-access-prevention — so
+    // no fragile makePublic() call is needed.
+    const downloadToken = crypto.randomUUID();
     const file = bucket.file(filePath);
     await file.save(imageBuffer, {
       metadata: {
         contentType: mimeType,
         cacheControl: "public, max-age=31536000", // Cache for 1 year
+        metadata: {
+          firebaseStorageDownloadTokens: downloadToken,
+        },
       },
     });
 
-    // Make the file publicly accessible
-    await file.makePublic();
-
-    // Get the public URL with cache-busting timestamp
-    const timestamp = Date.now();
-    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filePath}?v=${timestamp}`;
+    // Firebase download URL (CSP-allowlisted host; path is fully URL-encoded so
+    // the folder slashes become %2F). The token both authorizes the read and
+    // cache-busts, so no separate ?v= timestamp is needed.
+    const encodedPath = encodeURIComponent(filePath);
+    const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodedPath}?alt=media&token=${downloadToken}`;
 
     logger.info("Image uploaded to Firebase Storage:", {
       filePath,
       url: publicUrl,
       bytes: imageBuffer.length,
-      version: timestamp,
     });
 
     return {
@@ -121,7 +128,7 @@ async function uploadToFirebaseStorage(base64Data, options = {}) {
       url: publicUrl,
       filePath,
       bytes: imageBuffer.length,
-      version: timestamp,
+      version: downloadToken,
       isPlaceholder: false,
     };
   } catch (error) {

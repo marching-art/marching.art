@@ -4,7 +4,7 @@
 // Displays a circular badge with team initial or custom logo
 // Uses brand yellow/gold accent color for the fallback initial badge
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 export interface TeamAvatarProps {
   /** Team/Corps name - used to extract initial */
@@ -35,9 +35,17 @@ export const TeamAvatar: React.FC<TeamAvatarProps> = ({
 
   const sizeClass = sizeClasses[size];
 
+  // Fall back to the initial badge if the logo URL fails to load, rather than
+  // showing the browser's broken-image glyph. Reset on src change so a new
+  // logo gets a fresh attempt.
+  const [hasError, setHasError] = useState(false);
+  useEffect(() => {
+    setHasError(false);
+  }, [logoUrl]);
+
   // If we have a custom logo, display it
   // OPTIMIZATION #7: Added lazy loading for team logos
-  if (logoUrl) {
+  if (logoUrl && !hasError) {
     return (
       <div
         className={`${sizeClass} rounded-sm overflow-hidden bg-[#333] flex-shrink-0 ${className}`}
@@ -48,6 +56,7 @@ export const TeamAvatar: React.FC<TeamAvatarProps> = ({
           className="w-full h-full object-cover"
           loading="lazy"
           decoding="async"
+          onError={() => setHasError(true)}
         />
       </div>
     );
