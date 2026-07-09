@@ -14,7 +14,7 @@ marching.art is a fantasy drum corps game built with React 18 and Firebase. User
 | State    | Zustand (client), React Query (server)               |
 | Backend  | Firebase (Auth, Firestore, Cloud Functions, Storage) |
 | Hosting  | Vercel (frontend), Firebase (functions)              |
-| Payments | Stripe (Battle Pass)                                 |
+| Monetization | Donation-based (Buy Me a Coffee) — no integrated purchases |
 
 ## Project Structure
 
@@ -247,9 +247,9 @@ cd functions && npm run deploy
 | -------------------------------- | --------------------------- |
 | `README.md`                      | Project overview and setup  |
 | `ARCHITECTURE.md`                | This file - system design   |
-| `SETUP_INSTRUCTIONS.md`          | Detailed environment setup  |
-| `STRIPE_SETUP.md`                | Payment integration guide   |
 | `SCHEDULE_SYSTEM.md`             | Schedule generation details |
-| `CODE_AUDIT_REPORT.md`           | Current issues and fixes    |
-| `docs/ESPN_REDESIGN_PROMPTS.md`  | UI implementation guide     |
+| `docs/LIFELONG_GAMIFICATION_ROADMAP.md` | Gamification strategy (current) |
+| `docs/ENGAGEMENT_ECONOMY_REVIEW.md`     | CorpsCoin/XP economy plan (current) |
+| `CODE_AUDIT_REPORT.md`           | Security/code audit (Dec 2025, historical) |
+| `docs/ESPN_REDESIGN_PROMPTS.md`  | ESPN redesign prompts (completed, historical) |
 | `scripts/README_STAFF_IMPORT.md` | Staff data import guide     |
