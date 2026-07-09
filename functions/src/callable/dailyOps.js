@@ -7,7 +7,9 @@ const { addCoinHistoryEntryToTransaction } = require("./economy");
 const { assertAuth } = require("../helpers/callableGuards");
 const {
   CHALLENGE_POOL,
+  WEEKLY_LOOP_TARGET_DAYS,
   getGameDay,
+  advanceWeeklyLoop,
   getChallengesForGameDay,
   pruneOldChallenges,
 } = require("../helpers/dailyChallenges");
@@ -329,8 +331,15 @@ const completeDailyChallenge = onCall({ cors: true }, async (request) => {
       const challenge = getChallengesForGameDay(gameDay).find((c) => c.id === challengeId);
       if (!challenge) {
         // Valid challenge, but not in today's rotation — a soft no-op so
-        // pages that auto-complete on visit don't surface errors.
+        // client auto-claims never surface errors.
         return { success: false, notInRotation: true, xpAwarded: 0 };
+      }
+
+      // Challenges are decisions with verifiable outcomes — the claim only
+      // succeeds when the thing was actually done (soft no-op, since the
+      // client auto-claims whenever it believes the state is satisfied).
+      if (challenge.verify && !challenge.verify(profileData, gameDay)) {
+        return { success: false, notDoneYet: true, xpAwarded: 0 };
       }
 
       const allBuckets = profileData.challenges || {};
@@ -339,7 +348,6 @@ const completeDailyChallenge = onCall({ cors: true }, async (request) => {
         return { success: true, alreadyCompleted: true, xpAwarded: 0 };
       }
 
-      const xpResult = calculateXPUpdates(profileData, challenge.xp);
       const updatedBucket = [
         ...todayBucket.filter((c) => c.id !== challengeId),
         {
@@ -351,17 +359,47 @@ const completeDailyChallenge = onCall({ cors: true }, async (request) => {
         },
       ];
 
+      // Weekly arc: completing the full daily set on 5 distinct days in an
+      // ET week pays a one-time bonus (pure state machine in
+      // helpers/dailyChallenges.js — day-counting and payout both idempotent).
+      const todaysIds = getChallengesForGameDay(gameDay).map((c) => c.id);
+      const completedIds = new Set(
+        updatedBucket.filter((c) => c.completed).map((c) => c.id)
+      );
+      const setComplete = todaysIds.every((id) => completedIds.has(id));
+      const { weeklyLoop, bonus: weeklyArcBonus } = advanceWeeklyLoop(
+        profileData.engagement?.weeklyLoop,
+        gameDay,
+        setComplete
+      );
+
+      const totalXP = challenge.xp + (weeklyArcBonus?.xp || 0);
+      const xpResult = calculateXPUpdates(profileData, totalXP);
+
       transaction.update(profileRef, {
         challenges: pruneOldChallenges({ ...allBuckets, [gameDay]: updatedBucket }),
+        "engagement.weeklyLoop": weeklyLoop,
+        ...(weeklyArcBonus
+          ? { corpsCoin: admin.firestore.FieldValue.increment(weeklyArcBonus.coin) }
+          : {}),
         ...xpResult.updates,
         ...seasonBaselineStamp(profileData),
       });
+      if (weeklyArcBonus) {
+        addCoinHistoryEntryToTransaction(transaction, db, uid, {
+          type: "weekly_arc",
+          amount: weeklyArcBonus.coin,
+          description: `Weekly arc complete — ${WEEKLY_LOOP_TARGET_DAYS} full daily sets this week`,
+        });
+      }
 
       return {
         success: true,
-        xpAwarded: challenge.xp,
+        xpAwarded: totalXP,
         challenge: { id: challenge.id, label: challenge.label, xp: challenge.xp },
         completedToday: updatedBucket.length,
+        weeklyArcDays: weeklyLoop.countedDays?.length || 0,
+        weeklyArcBonus,
         newLevel: xpResult.newLevel,
         classUnlocked: xpResult.classUnlocked,
       };

@@ -30,7 +30,8 @@ const toDate = (value) => {
   return null;
 };
 
-const DirectorsReport = memo(({ recentResults, corpsClass, seasonUid, onLineupClick }) => {
+const DirectorsReport = memo(
+  ({ recentResults, corpsClass, seasonUid, onLineupClick, onConceptClick }) => {
   const profile = useProfileStore((state) => state.profile);
   const [claimingTier, setClaimingTier] = useState(null);
   const celebratedRef = useRef(null);
@@ -154,7 +155,7 @@ const DirectorsReport = memo(({ recentResults, corpsClass, seasonUid, onLineupCl
       </div>
 
       {/* Daily challenges (embedded — no double card chrome) */}
-      <DailyChallenges embedded onLineupClick={onLineupClick} />
+      <DailyChallenges embedded onLineupClick={onLineupClick} onConceptClick={onConceptClick} />
 
       {/* Predictions (embedded); SoundSport gets the placement-only set */}
       <PredictionGamePanel embedded recentResults={recentResults} corpsClass={corpsClass} />

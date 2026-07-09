@@ -54,16 +54,65 @@ export const getGameDay = (date = new Date()) => {
  * drift.
  */
 export const CHALLENGE_POOL = [
-  { id: 'check-lineup', label: 'Review your lineup', link: null, action: 'lineup', xp: 10 },
-  { id: 'visit-scores', label: 'Check the leaderboard', link: '/scores', xp: 10 },
-  { id: 'visit-schedule', label: 'View upcoming shows', link: '/schedule', xp: 10 },
-  { id: 'visit-profile', label: 'Visit your profile', link: '/profile', xp: 5 },
-  { id: 'read-news', label: 'Read the latest news', link: '/', xp: 5 },
-  { id: 'visit-guide', label: 'Review game rules', link: '/guide', xp: 5 },
-  { id: 'visit-hall', label: 'Visit Hall of Champions', link: '/hall-of-champions', xp: 5 },
+  {
+    id: 'check-lineup',
+    label: 'Review your lineup',
+    link: null,
+    action: 'lineup',
+    xp: 10,
+    check: (profile) =>
+      Object.values(profile?.corps || {}).some(
+        (c) => c && c.lineup && Object.keys(c.lineup).length > 0
+      ),
+  },
+  {
+    id: 'make-prediction',
+    label: "Make today's prediction",
+    link: null,
+    action: 'predictions',
+    xp: 10,
+    check: (profile, gameDay) =>
+      Object.keys(profile?.predictions?.[gameDay]?.picks || {}).length > 0,
+  },
+  {
+    id: 'register-show',
+    label: 'Register for a show',
+    link: '/schedule',
+    xp: 10,
+    check: (profile) =>
+      Object.values(profile?.corps || {}).some(
+        (c) => c && Object.keys(c.selectedShows || {}).length > 0
+      ),
+  },
+  {
+    id: 'set-show-concept',
+    label: 'Set your show concept',
+    link: null,
+    action: 'concept',
+    xp: 10,
+    check: (profile) =>
+      Object.values(profile?.corps || {}).some((c) => c && c.showConcept?.theme),
+  },
 ];
 
 export const CHALLENGES_PER_DAY = 3;
+
+/** Weekly arc target/bonus — mirrors the server (helpers/dailyChallenges.js). */
+export const WEEKLY_LOOP_TARGET_DAYS = 5;
+export const WEEKLY_LOOP_BONUS = { xp: 100, coin: 100 };
+
+/**
+ * ET-week identifier (the Monday of the game day's week), mirroring the
+ * server's getWeekKey so the weekly-arc progress reads the right bucket.
+ * @param {string} gameDay - Value from getGameDay()
+ * @returns {string}
+ */
+export const getWeekKey = (gameDay) => {
+  const d = new Date(gameDay);
+  const sinceMonday = (d.getDay() + 6) % 7;
+  d.setDate(d.getDate() - sinceMonday);
+  return d.toDateString();
+};
 
 /**
  * 32-bit string hash (djb2-style, same as the server mirror).

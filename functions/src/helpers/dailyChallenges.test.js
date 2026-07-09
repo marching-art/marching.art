@@ -8,7 +8,10 @@ const assert = require("node:assert/strict");
 const {
   CHALLENGE_POOL,
   CHALLENGES_PER_DAY,
+  WEEKLY_LOOP_BONUS,
   getGameDay,
+  getWeekKey,
+  advanceWeeklyLoop,
   getChallengesForGameDay,
   pruneOldChallenges,
 } = require("./dailyChallenges");
@@ -61,10 +64,115 @@ describe("getChallengesForGameDay", () => {
   test("pinned rotation matches the client mirror (sync check)", () => {
     // Same expectation exists in src/utils/dailyChallenges.test.js
     assert.deepEqual(getChallengesForGameDay("Wed Jan 14 2026").map((c) => c.id), [
-      "visit-guide",
-      "read-news",
-      "visit-schedule",
+      "check-lineup",
+      "make-prediction",
+      "register-show",
     ]);
+  });
+
+  test("every challenge is a verifiable decision", () => {
+    for (const challenge of CHALLENGE_POOL) {
+      assert.equal(
+        typeof challenge.verify,
+        "function",
+        `${challenge.id} must be server-verifiable — 'visit page X' busywork is retired`
+      );
+    }
+  });
+
+  test("verify predicates read the profile state that proves the decision", () => {
+    const gameDay = "Wed Jan 14 2026";
+    const byId = Object.fromEntries(CHALLENGE_POOL.map((c) => [c.id, c]));
+
+    assert.equal(byId["check-lineup"].verify({}, gameDay), false);
+    assert.equal(
+      byId["check-lineup"].verify({ corps: { aClass: { lineup: { GE1: "x" } } } }, gameDay),
+      true
+    );
+
+    assert.equal(byId["make-prediction"].verify({}, gameDay), false);
+    assert.equal(
+      byId["make-prediction"].verify(
+        { predictions: { [gameDay]: { picks: { podium: { pick: "Yes" } } } } },
+        gameDay
+      ),
+      true
+    );
+
+    assert.equal(byId["register-show"].verify({}, gameDay), false);
+    assert.equal(
+      byId["register-show"].verify(
+        { corps: { soundSport: { selectedShows: { 1: ["show-a"] } } } },
+        gameDay
+      ),
+      true
+    );
+
+    assert.equal(byId["set-show-concept"].verify({}, gameDay), false);
+    assert.equal(
+      byId["set-show-concept"].verify(
+        { corps: { aClass: { showConcept: { theme: "Space" } } } },
+        gameDay
+      ),
+      true
+    );
+  });
+});
+
+describe("weekly arc helpers", () => {
+  test("getWeekKey groups game days by their ET Monday", () => {
+    // Wed Jan 14 2026 and Sun Jan 18 2026 share the week of Mon Jan 12
+    assert.equal(getWeekKey("Wed Jan 14 2026"), getWeekKey("Sun Jan 18 2026"));
+    assert.equal(getWeekKey("Wed Jan 14 2026"), "Mon Jan 12 2026");
+    // The next Monday starts a new week
+    assert.notEqual(getWeekKey("Mon Jan 19 2026"), getWeekKey("Sun Jan 18 2026"));
+  });
+
+  test("advanceWeeklyLoop counts a full-set day exactly once", () => {
+    const day = "Wed Jan 14 2026";
+    const first = advanceWeeklyLoop(undefined, day, true);
+    assert.deepEqual(first.weeklyLoop.countedDays, [day]);
+    assert.equal(first.bonus, null);
+
+    // Same day again (another challenge completed later) — no double count
+    const again = advanceWeeklyLoop(first.weeklyLoop, day, true);
+    assert.deepEqual(again.weeklyLoop.countedDays, [day]);
+    assert.equal(again.bonus, null);
+
+    // Incomplete set never counts
+    const incomplete = advanceWeeklyLoop(undefined, day, false);
+    assert.deepEqual(incomplete.weeklyLoop.countedDays, []);
+  });
+
+  test("advanceWeeklyLoop pays the bonus once at the 5th day, then never again", () => {
+    const week = ["Mon Jan 12 2026", "Tue Jan 13 2026", "Wed Jan 14 2026", "Thu Jan 15 2026"];
+    let loop;
+    for (const day of week) {
+      const step = advanceWeeklyLoop(loop, day, true);
+      assert.equal(step.bonus, null, `no bonus before day 5 (${day})`);
+      loop = step.weeklyLoop;
+    }
+
+    const fifth = advanceWeeklyLoop(loop, "Fri Jan 16 2026", true);
+    assert.deepEqual(fifth.bonus, WEEKLY_LOOP_BONUS);
+    assert.equal(fifth.weeklyLoop.rewarded, true);
+
+    // A 6th day counts but never re-pays
+    const sixth = advanceWeeklyLoop(fifth.weeklyLoop, "Sat Jan 17 2026", true);
+    assert.equal(sixth.bonus, null);
+    assert.equal(sixth.weeklyLoop.countedDays.length, 6);
+  });
+
+  test("advanceWeeklyLoop resets for a new week", () => {
+    const prior = {
+      weekKey: "Mon Jan 12 2026",
+      countedDays: ["Mon Jan 12 2026", "Tue Jan 13 2026"],
+      rewarded: true,
+    };
+    const nextWeek = advanceWeeklyLoop(prior, "Mon Jan 19 2026", true);
+    assert.equal(nextWeek.weeklyLoop.weekKey, "Mon Jan 19 2026");
+    assert.deepEqual(nextWeek.weeklyLoop.countedDays, ["Mon Jan 19 2026"]);
+    assert.equal(nextWeek.weeklyLoop.rewarded, false);
   });
 });
 

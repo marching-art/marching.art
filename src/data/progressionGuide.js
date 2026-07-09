@@ -63,8 +63,8 @@ export const XP_SOURCE_GUIDE = [
   {
     id: 'dailyChallenges',
     label: 'Daily challenges',
-    xp: '5–10 XP each',
-    cadence: 'Three rotating tasks per day',
+    xp: '10 XP each',
+    cadence: 'Three rotating decisions per day; full set on 5 days a week pays a bonus',
   },
   {
     id: 'predictions',

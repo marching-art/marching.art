@@ -60,7 +60,7 @@ describe('progression guide mirrors the backend economy', () => {
 
   it('guide ranges cover the real tables (challenges, streaks)', () => {
     const challengeXP = CHALLENGE_POOL.map((c) => c.xp);
-    expect(Math.min(...challengeXP)).toBe(5);
+    expect(Math.min(...challengeXP)).toBe(10);
     expect(Math.max(...challengeXP)).toBe(10);
 
     const streakXP = Object.values(STREAK_MILESTONES).map((m) => m.xp);

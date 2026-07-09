@@ -401,6 +401,7 @@ const Dashboard = () => {
                   corpsClass={activeCorpsClass}
                   seasonUid={seasonData?.seasonUid}
                   onLineupClick={() => openCaptionSelection()}
+                  onConceptClick={() => setShowConceptModal(true)}
                 />
 
                 {/* First Season Journey - server-rewarded quest line for new
