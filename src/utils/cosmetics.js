@@ -127,6 +127,30 @@ export const SHOP_ITEMS = [
     cardClass: 'border-teal-500 bg-gradient-to-br from-[#0a2e2a] via-[#1a1a2e] to-[#1a1a1a]',
     swatchClass: 'bg-gradient-to-br from-teal-500 via-indigo-600 to-purple-600',
   },
+
+  // --- Seasonal rotation: purchasable only while the tagged season runs ---
+  // (`seasonal` matches game-settings/season.status; the server enforces the
+  // gate, this mirror drives the "limited" badge + disabled state.)
+  {
+    id: 'theme_summer_tour',
+    type: 'cardTheme',
+    name: 'Summer Tour',
+    price: 2500,
+    seasonal: 'live-season',
+    description: 'Sun-baked asphalt and stadium lights — live season exclusive',
+    cardClass: 'border-amber-500 bg-gradient-to-br from-[#2e1c0a] via-[#1a1a1a] to-[#1a1a1a]',
+    swatchClass: 'bg-gradient-to-br from-amber-500 via-orange-600 to-red-600',
+  },
+  {
+    id: 'theme_off_circuit',
+    type: 'cardTheme',
+    name: 'Off-Season Circuit',
+    price: 2500,
+    seasonal: 'off-season',
+    description: 'Rehearsal-hall glow for the grind months — off-season exclusive',
+    cardClass: 'border-sky-600 bg-gradient-to-br from-[#0a1c2e] via-[#12122e] to-[#1a1a1a]',
+    swatchClass: 'bg-gradient-to-br from-sky-600 via-slate-500 to-indigo-800',
+  },
 ];
 
 export const SHOP_SECTIONS = [
@@ -147,4 +171,19 @@ export function getEquippedCosmetic(profile, slot) {
 
 export function isOwned(profile, itemId) {
   return (profile?.cosmetics?.owned || []).includes(itemId);
+}
+
+/**
+ * True when an item can be purchased right now: evergreen items always,
+ * seasonal items only while the matching season type is running. Ownership
+ * and equipping are never gated — only the register.
+ */
+export function isSeasonallyAvailable(item, seasonStatus) {
+  return !item?.seasonal || item.seasonal === seasonStatus;
+}
+
+/** Short badge label for a seasonal item ("Live season only" / etc.) */
+export function seasonalLabel(item) {
+  if (!item?.seasonal) return null;
+  return item.seasonal === 'live-season' ? 'Live season only' : 'Off-season only';
 }

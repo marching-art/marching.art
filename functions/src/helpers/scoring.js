@@ -1,6 +1,6 @@
 const { getDb, dataNamespaceParam } = require("../config");
 const { logger } = require("firebase-functions/v2");
-const { getDoc } = require("firebase-admin/firestore");
+const { getDoc, FieldValue } = require("firebase-admin/firestore");
 const { getScheduleDay } = require("./season");
 const { calculateLineupSynergyBonus } = require('./showConceptSynergy');
 const { SHOW_PARTICIPATION_REWARDS } = require("../callable/economy");
@@ -89,7 +89,8 @@ function hasCompleteLineup(lineup) {
  * @param {Object} params.dailyRecap - Recap accumulator; shows are pushed onto it.
  * @param {(corpsName: string, sourceYear: string, caption: string) => number}
  *   params.getBaseCaptionScore - Season-specific base-score strategy.
- * @returns {{ dailyScores: Map<string, number>, coinAwards: Array, stats: Object }}
+ * @returns {{ dailyScores: Map<string, number>, coinAwards: Array,
+ *   captionPoints: Map<string, Object>, stats: Object }}
  */
 function scoreShowsForDay({
   dayEventData,
@@ -102,6 +103,10 @@ function scoreShowsForDay({
 }) {
   const dailyScores = new Map();
   const coinAwards = []; // { uid, corpsClass, showName, amount }
+  // Caption mastery (WS5.5): lifetime per-caption points, accumulated per
+  // uid across every corps and show scored today. Committed as
+  // captionStats.{caption} increments in commitDailyScoring.
+  const captionPoints = new Map(); // uid -> { GE1: points, ... }
   const stats = { corpsProcessed: 0, corpsScored: 0, corpsWithNoShowsSelected: 0 };
 
   for (const show of dayEventData.shows) {
@@ -189,6 +194,7 @@ function scoreShowsForDay({
         if (attended) {
           stats.corpsScored++;
           let geScore = 0, rawVisualScore = 0, rawMusicScore = 0;
+          const userCaptionPoints = captionPoints.get(uid) || {};
 
           for (const caption in corps.lineup) {
             const [corpsName, sourceYear] = corps.lineup[caption].split("|");
@@ -203,7 +209,12 @@ function scoreShowsForDay({
             if (["GE1", "GE2"].includes(caption)) geScore += captionScore;
             else if (["VP", "VA", "CG"].includes(caption)) rawVisualScore += captionScore;
             else if (["B", "MA", "P"].includes(caption)) rawMusicScore += captionScore;
+
+            // Lifetime mastery accumulation — display-only, never feeds back
+            // into competitive scoring.
+            userCaptionPoints[caption] = (userCaptionPoints[caption] || 0) + captionScore;
           }
+          captionPoints.set(uid, userCaptionPoints);
           const visualScore = rawVisualScore / 2;
           const musicScore = rawMusicScore / 2;
           // Hard cap at 100 - this is the maximum possible score
@@ -251,7 +262,7 @@ function scoreShowsForDay({
     dailyRecap.shows.push(showResult);
   }
 
-  return { dailyScores, coinAwards, stats };
+  return { dailyScores, coinAwards, captionPoints, stats };
 }
 
 /**
@@ -266,6 +277,7 @@ function scoreShowsForDay({
  * @param {Map<string, number>} params.dailyScores
  * @param {Object} params.dailyRecap
  * @param {Array} params.coinAwards
+ * @param {Map<string, Object>} [params.captionPoints] - uid -> per-caption points
  * @returns {Promise<{ opCount: number, batchCount: number }>}
  */
 async function commitDailyScoring({
@@ -276,6 +288,7 @@ async function commitDailyScoring({
   dailyScores,
   dailyRecap,
   coinAwards,
+  captionPoints,
 }) {
   // Update user profiles with their most recent score.
   // Note: Uses latest score (not cumulative) - drum corps rankings are based
@@ -288,6 +301,25 @@ async function commitDailyScoring({
         [`corps.${corpsClass}.totalSeasonScore`]: totalDailyScore,
         [`corps.${corpsClass}.lastScoredDay`]: scoredDay,
       });
+    }
+  }
+
+  // Caption mastery (WS5.5): bank tonight's per-caption points into the
+  // lifetime captionStats counters. Increments ride the same scoring-run
+  // lease as every other award, so a repeat run can't double-bank.
+  if (captionPoints) {
+    for (const [uid, points] of captionPoints.entries()) {
+      const updates = {};
+      for (const [caption, value] of Object.entries(points)) {
+        if (value > 0) {
+          updates[`captionStats.${caption}`] =
+            FieldValue.increment(Math.round(value * 10) / 10);
+        }
+      }
+      if (Object.keys(updates).length > 0) {
+        const ref = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+        batch.update(ref, updates);
+      }
     }
   }
 
@@ -430,7 +462,7 @@ async function processAndArchiveOffSeasonScoresLogic({ force = false } = {}) {
     const getBaseCaptionScore = (corpsName, sourceYear, caption) =>
       getCachedRegressionScore(corpsName, sourceYear, caption, scoredDay, historicalData);
 
-    const { dailyScores, coinAwards, stats } = scoreShowsForDay({
+    const { dailyScores, coinAwards, captionPoints, stats } = scoreShowsForDay({
       dayEventData, profilesSnapshot, week, scoredDay,
       championshipConfig, dailyRecap, getBaseCaptionScore,
     });
@@ -439,7 +471,7 @@ async function processAndArchiveOffSeasonScoresLogic({ force = false } = {}) {
     logger.info(`Day ${scoredDay} scoring stats: ${stats.corpsProcessed} corps processed, ${stats.corpsScored} corps scored, ${stats.corpsWithNoShowsSelected} corps with no shows selected for week ${week}`);
 
     const { opCount, batchCount } = await commitDailyScoring({
-      db, batch, seasonData, scoredDay, dailyScores, dailyRecap, coinAwards,
+      db, batch, seasonData, scoredDay, dailyScores, dailyRecap, coinAwards, captionPoints,
     });
     logger.info(`Successfully processed and archived scores for day ${scoredDay} (${opCount} writes in ${batchCount} batches).`);
 
@@ -602,13 +634,13 @@ async function scoreLiveSeasonDay(db, scoredDay, seasonData) {
     return baseCaptionScore;
   };
 
-  const { dailyScores, coinAwards } = scoreShowsForDay({
+  const { dailyScores, coinAwards, captionPoints } = scoreShowsForDay({
     dayEventData, profilesSnapshot, week, scoredDay,
     championshipConfig, dailyRecap, getBaseCaptionScore,
   });
 
   const { opCount, batchCount } = await commitDailyScoring({
-    db, batch, seasonData, scoredDay, dailyScores, dailyRecap, coinAwards,
+    db, batch, seasonData, scoredDay, dailyScores, dailyRecap, coinAwards, captionPoints,
   });
   logger.info(`Successfully processed and archived scores for live season day ${scoredDay} (${opCount} writes in ${batchCount} batches).`);
 

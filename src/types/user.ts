@@ -106,6 +106,9 @@ export interface UserProfile {
   // Competition trophies — server-awarded nightly by scoringAwards.js
   trophies?: ProfileTrophies;
 
+  // Lifetime per-caption mastery points — banked nightly by the scoring run
+  captionStats?: CaptionStats;
+
   // Daily challenges (keyed by date string)
   challenges?: Record<string, DailyChallenge[]>;
   dailyChallenges?: DailyChallenges; // Legacy/alternative structure
@@ -139,6 +142,12 @@ export interface RetiredCorps {
   /** Purchased memorial plaque (purchaseRetirementPlaque callable) */
   plaque?: { tier: 'bronze' | 'silver' | 'gold'; purchasedAt: string };
 }
+
+/**
+ * Lifetime per-caption mastery points (GE1..P), banked nightly by the
+ * scoring run. Server-only; tiers derive from src/utils/captionMastery.js.
+ */
+export type CaptionStats = Record<string, number>;
 
 export interface EngagementData {
   loginStreak: number;

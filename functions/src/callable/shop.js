@@ -27,6 +27,21 @@ const purchaseShopItem = onCall({ cors: true }, async (request) => {
   const db = getDb();
   const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
 
+  // Seasonal rotation gate (WS6.2): a seasonal item can only be bought while
+  // the named season type is running. Already-owned items are unaffected —
+  // the gate closes the register, never the wardrobe.
+  if (item.seasonal) {
+    const seasonDoc = await db.doc("game-settings/season").get();
+    const status = seasonDoc.exists ? seasonDoc.data().status : null;
+    if (status !== item.seasonal) {
+      throw new HttpsError(
+        "failed-precondition",
+        `${item.name} is a seasonal exclusive — it returns when the ` +
+          `${item.seasonal === "live-season" ? "live season" : "off-season"} is running.`
+      );
+    }
+  }
+
   try {
     const result = await db.runTransaction(async (transaction) => {
       const profileDoc = await transaction.get(profileRef);

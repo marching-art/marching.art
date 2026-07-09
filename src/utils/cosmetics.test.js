@@ -3,7 +3,19 @@
 // (functions/src/helpers/shopCatalog.js); these tests keep the display mirror
 // internally consistent so a bad entry can't silently break the shop UI.
 import { describe, it, expect } from 'vitest';
-import { SHOP_ITEMS, SHOP_SECTIONS, getShopItem, getEquippedCosmetic, isOwned } from './cosmetics';
+import {
+  SHOP_ITEMS,
+  SHOP_SECTIONS,
+  getShopItem,
+  getEquippedCosmetic,
+  isOwned,
+  isSeasonallyAvailable,
+  seasonalLabel,
+} from './cosmetics';
+
+// Backend source of truth (plain CJS, no firebase imports) — every purchase
+// is validated against THIS catalog, so the display mirror must match it.
+import { SHOP_CATALOG } from '../../functions/src/helpers/shopCatalog.js';
 
 describe('SHOP_ITEMS catalog', () => {
   it('has unique ids', () => {
@@ -43,6 +55,37 @@ describe('SHOP_ITEMS catalog', () => {
     const laureate = getShopItem('title_laureate');
     expect(laureate).not.toBeNull();
     expect(laureate.grantOnly).toBe(true);
+  });
+
+  it('mirrors the server catalog exactly (ids, prices, types, seasonal tags)', () => {
+    expect(SHOP_ITEMS.map((i) => i.id).sort()).toEqual(SHOP_CATALOG.map((i) => i.id).sort());
+    for (const serverItem of SHOP_CATALOG) {
+      const clientItem = getShopItem(serverItem.id);
+      expect(clientItem.price).toBe(serverItem.price);
+      expect(clientItem.type).toBe(serverItem.type);
+      expect(clientItem.grantOnly ?? undefined).toBe(serverItem.grantOnly ?? undefined);
+      expect(clientItem.seasonal ?? undefined).toBe(serverItem.seasonal ?? undefined);
+    }
+  });
+});
+
+describe('seasonal rotation helpers', () => {
+  const summer = getShopItem('theme_summer_tour');
+  const offCircuit = getShopItem('theme_off_circuit');
+
+  it('gates seasonal items to their season and leaves evergreens open', () => {
+    expect(isSeasonallyAvailable(summer, 'live-season')).toBe(true);
+    expect(isSeasonallyAvailable(summer, 'off-season')).toBe(false);
+    expect(isSeasonallyAvailable(offCircuit, 'off-season')).toBe(true);
+    expect(isSeasonallyAvailable(offCircuit, null)).toBe(false);
+    expect(isSeasonallyAvailable(getShopItem('theme_midnight'), null)).toBe(true);
+    expect(isSeasonallyAvailable(getShopItem('theme_midnight'), 'off-season')).toBe(true);
+  });
+
+  it('labels seasonal items and not evergreens', () => {
+    expect(seasonalLabel(summer)).toBe('Live season only');
+    expect(seasonalLabel(offCircuit)).toBe('Off-season only');
+    expect(seasonalLabel(getShopItem('theme_midnight'))).toBeNull();
   });
 });
 

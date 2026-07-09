@@ -39,6 +39,14 @@ const SHOP_CATALOG = [
   { id: 'theme_crimson', type: 'cardTheme', name: 'Crimson Corps', price: 1500 },
   { id: 'theme_gold_standard', type: 'cardTheme', name: 'Gold Standard', price: 3500 },
   { id: 'theme_aurora', type: 'cardTheme', name: 'Aurora', price: 5000 },
+
+  // --- Seasonal rotation (WS6.2) ---
+  // `seasonal` names the game-settings/season.status during which the item
+  // can be PURCHASED (validated server-side in callable/shop.js). Ownership
+  // is forever — the gate only closes the register, making each theme a
+  // collectible you had to be there for. Rotate this set over time.
+  { id: 'theme_summer_tour', type: 'cardTheme', name: 'Summer Tour', price: 2500, seasonal: 'live-season' },
+  { id: 'theme_off_circuit', type: 'cardTheme', name: 'Off-Season Circuit', price: 2500, seasonal: 'off-season' },
 ];
 
 /** Equip slot per item type — one equipped item per slot */

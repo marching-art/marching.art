@@ -40,7 +40,7 @@ function touchesProtectedProfileFields() {
     'lifetimeStats', 'activeSeasonId', 'lastScoredDay', 'challenges',
     'predictions', 'predictionStats', 'achievements', 'lastRewardedLevel',
     'journey', 'cosmetics', 'seasonLadder', 'xpAtSeasonStart',
-    'retiredCorps'
+    'retiredCorps', 'captionStats'
   ]);
 }
 
