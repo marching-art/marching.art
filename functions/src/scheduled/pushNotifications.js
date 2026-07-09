@@ -11,6 +11,7 @@ const {
   sendShowReminderPush,
   sendMatchupStartPush,
 } = require("../helpers/pushService");
+const { getCurrentSeasonWeek } = require("../helpers/gameDay");
 
 /**
  * Send show reminder push notifications
@@ -139,16 +140,19 @@ exports.weeklyMatchupPushJob = onSchedule(
     const CORPS_CLASSES = ["worldClass", "openClass", "aClass", "soundSport"];
 
     try {
-      // Get current season week
+      // Compute the current competition week from the schedule dates — the
+      // same math the matchup generator uses. (This job used to read a
+      // season.currentWeek field that nothing ever wrote, so it always
+      // early-returned and no matchup push was ever sent.)
       const seasonDoc = await db.doc("game-settings/season").get();
-      const season = seasonDoc.data();
+      const season = seasonDoc.exists ? seasonDoc.data() : null;
+      const currentWeek = season ? getCurrentSeasonWeek(season) : null;
 
-      if (!season?.currentWeek) {
+      if (!currentWeek || currentWeek < 1 || currentWeek > 7) {
         logger.info("No active season week, skipping matchup notifications");
         return;
       }
 
-      const currentWeek = season.currentWeek;
       logger.info(`Sending notifications for week ${currentWeek} matchups`);
 
       // Get all active leagues

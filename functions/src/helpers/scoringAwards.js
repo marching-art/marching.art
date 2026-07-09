@@ -13,6 +13,8 @@ const {
 } = require("../callable/economy");
 const { XP_SOURCES } = require("./xpCalculations");
 const { ChunkedWriter } = require("./chunkedWriter");
+const { updateStandings } = require("./leagueStandings");
+const { createLeagueActivity } = require("./leagueHelpers");
 
 /**
  * Get top N corps from season standings with tie handling at cutoff position.
@@ -595,6 +597,9 @@ async function processWeeklyMatchups(week, seasonData, db) {
   // plus coin awards can exceed a single WriteBatch's per-request cap.
   const winnerBatch = new ChunkedWriter(db);
   const corpsClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+  // Per-league resolved pairs, applied to standings only after the matchup
+  // docs commit (see below).
+  const standingsByLeague = [];
 
   // Batch fetch ALL matchup documents in ONE operation
   const matchupRefs = leaguesSnapshot.docs.map(leagueDoc =>
@@ -619,6 +624,10 @@ async function processWeeklyMatchups(week, seasonData, db) {
     const matchupData = { ...matchupEntry.data };
     const matchupDocRef = matchupEntry.ref;
     let hasUpdates = false;
+    // Resolved pairs for the standings/current doc — same shape the
+    // commissioner callable feeds updateStandings, so the automatic weekly
+    // close and a manual resolution produce identical standings.
+    const standingsPairs = [];
 
     for (const corpsClass of corpsClasses) {
       const matchupArrayKey = `${corpsClass}Matchups`;
@@ -628,7 +637,7 @@ async function processWeeklyMatchups(week, seasonData, db) {
       const updatedMatchupsForClass = [];
 
       // Batch fetch all matchup profiles for this class upfront
-      const matchupsNeedingScores = matchups.filter(m => !m.winner);
+      const matchupsNeedingScores = matchups.filter(m => !m.winner && !m.completed);
       const allPlayerIds = [...new Set(matchupsNeedingScores.flatMap(m => m.pair))];
 
       // Batch fetch all profiles in ONE operation
@@ -644,7 +653,20 @@ async function processWeeklyMatchups(week, seasonData, db) {
       });
 
       for (const matchup of matchups) {
-        if (matchup.winner) {
+        if (matchup.winner || matchup.completed) {
+          // Already resolved: a generator bye, a previous run, or a
+          // commissioner manual resolution (which folded itself into
+          // standings). Byes are folded into standings HERE — this guarded
+          // once-per-week run is their single counting point.
+          if (matchup.isBye && matchup.pair?.[0]) {
+            standingsPairs.push({
+              player1: matchup.pair[0],
+              player2: null,
+              winner: matchup.pair[0],
+              completed: true,
+              corpsClass,
+            });
+          }
           updatedMatchupsForClass.push(matchup);
           continue;
         }
@@ -703,12 +725,27 @@ async function processWeeklyMatchups(week, seasonData, db) {
           }
         }
 
+        // Doc convention matches the commissioner callable: completed flag
+        // set, ties stored as the string 'tie' (winnerUid stays null
+        // internally so ties pay nothing above). The completed flag is what
+        // the weekly recap generator and the Monday push job read.
         const newMatchup = {
           ...matchup,
           scores: { [p1_uid]: p1_score, [p2_uid]: p2_score },
-          winner: winnerUid,
+          winner: winnerUid ?? 'tie',
+          completed: true,
         };
         updatedMatchupsForClass.push(newMatchup);
+
+        standingsPairs.push({
+          player1: p1_uid,
+          player2: p2_uid,
+          player1Score: p1_score,
+          player2Score: p2_score,
+          winner: winnerUid ?? 'tie',
+          completed: true,
+          corpsClass,
+        });
       }
       matchupData[matchupArrayKey] = updatedMatchupsForClass;
       hasUpdates = true;
@@ -716,9 +753,39 @@ async function processWeeklyMatchups(week, seasonData, db) {
     if (hasUpdates) {
       winnerBatch.update(matchupDocRef, matchupData);
     }
+    if (standingsPairs.length > 0) {
+      standingsByLeague.push({ leagueDoc, standingsPairs });
+    }
   }
 
   await winnerBatch.commit();
+
+  // Fold this week's results into each league's standings/current and drop a
+  // summary event into the activity feed — previously only the
+  // commissioner-invoked updateMatchupResults callable did either, so
+  // auto-generated matchups never moved the standings. Applied strictly
+  // AFTER the matchup docs commit: if the commit fails, matchups stay
+  // unresolved and the re-run re-derives everything; standings are never
+  // ahead of the docs they summarize.
+  for (const { leagueDoc, standingsPairs } of standingsByLeague) {
+    try {
+      await updateStandings(db, leagueDoc.ref, standingsPairs);
+      const decided = standingsPairs.filter((p) => p.player2 !== null).length;
+      if (decided > 0) {
+        await createLeagueActivity(db, leagueDoc.id, {
+          type: 'matchup_result',
+          title: `Week ${week} Results`,
+          message: `${decided} matchup${decided > 1 ? 's' : ''} decided in week ${week}.`,
+          metadata: { week, matchupsCompleted: decided },
+        });
+      }
+    } catch (error) {
+      // Standings/feed are derived views — never let them fail the
+      // guarded scoring run that pays rewards.
+      logger.error(`Standings/activity update failed for league ${leagueDoc.id}:`, error);
+    }
+  }
+
   logger.info(`Matchup winner determination for week ${week} complete.`);
 }
 

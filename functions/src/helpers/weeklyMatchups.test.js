@@ -33,6 +33,25 @@ function makeFakeDb({ leagues = [], docs = new Map() } = {}) {
   const makeDocRef = (path) => ({
     path,
     id: path.split("/").pop(),
+    collection(name) {
+      const subPath = `${path}/${name}`;
+      return {
+        doc(docId) {
+          return makeDocRef(`${subPath}/${docId ?? `auto-${++autoId}`}`);
+        },
+      };
+    },
+    async get() {
+      return { exists: docs.has(path), data: () => docs.get(path) };
+    },
+    async set(data, options) {
+      docs.set(path, options?.merge ? { ...(docs.get(path) || {}), ...data } : data);
+      writes.push({ type: "docSet", path, data, options });
+    },
+    async update(data) {
+      docs.set(path, { ...(docs.get(path) || {}), ...data });
+      writes.push({ type: "docUpdate", path, data });
+    },
   });
 
   const db = {
@@ -184,6 +203,112 @@ describe("processWeeklyMatchups", () => {
 
     const rewardWrites = writes.filter((w) => w.data?.corpsCoin !== undefined);
     assert.equal(rewardWrites.length, 0);
+  });
+
+  test("marks resolved matchups completed, stores ties as 'tie', and folds results into standings", async () => {
+    const standingsPath = `${leaguesPath}/league-1/standings/current`;
+    const emptyRecord = () => ({
+      wins: 0, losses: 0, ties: 0, pointsFor: 0, pointsAgainst: 0,
+      currentStreak: 0, streakType: null,
+    });
+    const docs = new Map([
+      [
+        `${leaguesPath}/league-1/matchups/week-3`,
+        {
+          worldClassMatchups: [
+            { pair: ["alice", "bob"] },
+            { pair: ["carol", "dave"] }, // tie
+          ],
+        },
+      ],
+      [
+        standingsPath,
+        {
+          records: {
+            alice: emptyRecord(), bob: emptyRecord(),
+            carol: emptyRecord(), dave: emptyRecord(),
+          },
+        },
+      ],
+      [profilePath("alice"), { corps: { worldClass: { totalSeasonScore: 90 } } }],
+      [profilePath("bob"), { corps: { worldClass: { totalSeasonScore: 80 } } }],
+      [profilePath("carol"), { corps: { worldClass: { totalSeasonScore: 70 } } }],
+      [profilePath("dave"), { corps: { worldClass: { totalSeasonScore: 70 } } }],
+    ]);
+    const { db, writes } = makeFakeDb({
+      leagues: [{ id: "league-1", data: { name: "Test League" } }],
+      docs,
+    });
+
+    await processWeeklyMatchups(3, seasonData, db);
+
+    // Matchup doc: completed flags set (what the recap generator and Monday
+    // push job read), tie stored with the same 'tie' convention as the
+    // commissioner callable
+    const matchupWrite = writes.find((w) => w.path === `${leaguesPath}/league-1/matchups/week-3`);
+    const [decided, tied] = matchupWrite.data.worldClassMatchups;
+    assert.equal(decided.completed, true);
+    assert.equal(decided.winner, "alice");
+    assert.equal(tied.completed, true);
+    assert.equal(tied.winner, "tie");
+
+    // Standings/current updated: winner W, loser L, tie for both — this used
+    // to happen only via the commissioner callable, never automatically
+    const standingsWrite = writes.find(
+      (w) => w.type === "docUpdate" && w.path === standingsPath
+    );
+    assert.ok(standingsWrite, "standings should update automatically at week close");
+    assert.equal(standingsWrite.data.records.alice.wins, 1);
+    assert.equal(standingsWrite.data.records.bob.losses, 1);
+    assert.equal(standingsWrite.data.records.carol.ties, 1);
+    assert.equal(standingsWrite.data.records.dave.ties, 1);
+    assert.equal(standingsWrite.data.standings[0].uid, "alice");
+
+    // A summary event lands in the league activity feed
+    const activityWrite = writes.find(
+      (w) => w.type === "docSet" && w.path.includes("/activity/")
+    );
+    assert.ok(activityWrite, "a matchup_result activity event should be created");
+    assert.equal(activityWrite.data.type, "matchup_result");
+    assert.equal(activityWrite.data.metadata.matchupsCompleted, 2);
+  });
+
+  test("generator byes fold into standings exactly once and are not re-resolved", async () => {
+    const standingsPath = `${leaguesPath}/league-1/standings/current`;
+    const docs = new Map([
+      [
+        `${leaguesPath}/league-1/matchups/week-3`,
+        {
+          aClassMatchups: [
+            { pair: ["erin", null], winner: "erin", completed: true, isBye: true },
+          ],
+        },
+      ],
+      [
+        standingsPath,
+        {
+          records: {
+            erin: { wins: 0, losses: 0, ties: 0, pointsFor: 0, pointsAgainst: 0, currentStreak: 0, streakType: null },
+          },
+        },
+      ],
+    ]);
+    const { db, writes } = makeFakeDb({
+      leagues: [{ id: "league-1", data: { name: "Test League" } }],
+      docs,
+    });
+
+    await processWeeklyMatchups(3, seasonData, db);
+
+    // Bye counts as a standings win, but pays no CC/XP and creates no
+    // matchup_result event (nothing was "decided")
+    const standingsWrite = writes.find(
+      (w) => w.type === "docUpdate" && w.path === standingsPath
+    );
+    assert.ok(standingsWrite, "the bye should be folded into standings");
+    assert.equal(standingsWrite.data.records.erin.wins, 1);
+    assert.equal(writes.filter((w) => w.data?.corpsCoin !== undefined).length, 0);
+    assert.equal(writes.filter((w) => w.path.includes("/activity/")).length, 0);
   });
 });
 
