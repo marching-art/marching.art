@@ -9,6 +9,12 @@ const {
 } = require("../callable/economy");
 const { calculateXPUpdates, getSeasonCompletionXP } = require("./xpCalculations");
 const { updateSeasonBestRecords } = require("./gameRecords");
+const { RARITY_CC } = require("./achievements");
+const {
+  claimSeasonRollover,
+  markSeasonRolloverCompleted,
+  markSeasonRolloverFailed,
+} = require("./scoringRunGuard");
 const {
   applyEnrichment,
   brandEventName,
@@ -42,7 +48,17 @@ const {
  * corps for the new season. Shared by startNewLiveSeason and startNewOffSeason
  * (the two previously carried identical copies of this loop).
  *
- * For each corps that was active this season (has a lineup or a score):
+ * "Participated" has ONE definition here: the corps competed in at least one
+ * show (or carries a score). It gates rankings, completion XP, the finish
+ * bonus, the recap line, AND lifetimeStats.totalSeasons — the same counter
+ * the seasons-completed class unlock and the finish_season journey step read.
+ * A corps with a filled lineup that never competed is still archived to
+ * seasonHistory (the historical record) and reset, but earns nothing and
+ * occupies no rank slot. (Previously the award gate was `lineup || score>0`
+ * while totalSeasons required actual shows — a lineup-only corps was paid
+ * completion XP yet never advanced totalSeasons.)
+ *
+ * For each corps that participated:
  * - placement within its class is computed and archived to seasonHistory
  * - a CorpsCoin finish bonus is paid per SEASON_FINISH_BONUSES (top 25;
  *   SoundSport is non-competitive so it earns no rank-based coin)
@@ -50,6 +66,12 @@ const {
  * - a pendingSeasonRecap summary is written to the profile so the client can
  *   show a "Season Complete" recap modal (client clears the field on dismiss)
  */
+
+/** The single participation test: competed in ≥1 show, or carries points. */
+function corpsParticipatedThisSeason(corps) {
+  const showsAttended = Object.keys(corps.selectedShows || {}).length;
+  return showsAttended > 0 || (corps.totalSeasonScore || 0) > 0;
+}
 async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
   const profilesQuery = db.collectionGroup("profile").where("activeSeasonId", "==", oldSeasonUid);
   const profilesSnapshot = await profilesQuery.get();
@@ -69,7 +91,10 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
     const corpsData = profileData.corps || {};
     Object.keys(corpsData).forEach((corpsClass) => {
       const corps = corpsData[corpsClass];
-      if (corps.lineup || corps.totalSeasonScore > 0) {
+      // Only corps that actually competed occupy a rank slot — a lineup-only
+      // corps at 0 points must not inflate totalInClass or push real
+      // competitors' placements down.
+      if (corpsParticipatedThisSeason(corps)) {
         if (!classRankings[corpsClass]) {
           classRankings[corpsClass] = [];
         }
@@ -114,31 +139,38 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
       const corps = corpsData[corpsClass];
       const seasonHistory = corps.seasonHistory || [];
 
-      // Only archive if this corps was active this season
-      if (corps.lineup || corps.totalSeasonScore > 0) {
+      const participated = corpsParticipatedThisSeason(corps);
+
+      // Archive if the corps was set up at all (lineup) or participated —
+      // the seasonHistory record is historical, not a reward.
+      if (corps.lineup || participated) {
         const showsAttended = Object.keys(corps.selectedShows || {}).length;
         const highestWeeklyScore = Math.max(...Object.values(corps.weeklyScores || {}), 0);
 
-        // Find placement for this corps in its class
+        // Find placement for this corps in its class (participants only;
+        // a lineup-only corps was never ranked, so placement stays null)
         const classRanking = classRankings[corpsClass] || [];
         const rankIndex = classRanking.findIndex((r) => r.uid === uid);
         const placement = rankIndex >= 0 ? rankIndex + 1 : null;
 
-        // Season-finish rewards. SoundSport is deliberately non-competitive
-        // (medals, no numeric standings), so it earns completion XP but no
-        // rank-based coin bonus.
-        const coinBonus =
-          corpsClass === "soundSport" ? 0 : getSeasonBonusAmount(placement).amount;
-        const xpBonus = getSeasonCompletionXP(placement, classRanking.length);
-        seasonAwards.push({
-          corpsClass,
-          corpsName: corps.corpsName || null,
-          placement,
-          totalInClass: classRanking.length,
-          totalSeasonScore: corps.totalSeasonScore || 0,
-          coinBonus,
-          xpBonus,
-        });
+        // Season-finish rewards — participants only (the same gate as
+        // lifetimeStats.totalSeasons below). SoundSport is deliberately
+        // non-competitive (medals, no numeric standings), so it earns
+        // completion XP but no rank-based coin bonus.
+        if (participated) {
+          const coinBonus =
+            corpsClass === "soundSport" ? 0 : getSeasonBonusAmount(placement).amount;
+          const xpBonus = getSeasonCompletionXP(placement, classRanking.length);
+          seasonAwards.push({
+            corpsClass,
+            corpsName: corps.corpsName || null,
+            placement,
+            totalInClass: classRanking.length,
+            totalSeasonScore: corps.totalSeasonScore || 0,
+            coinBonus,
+            xpBonus,
+          });
+        }
 
         // Archive this season's performance. The show concept (title +
         // theme/music/drill) is part of the historical record — the corps
@@ -318,6 +350,37 @@ async function clearActiveLineups(db, oldSeasonUid) {
   logger.info(`Successfully cleared ${lineupSnapshot.size} active lineups from previous season`);
 }
 
+/**
+ * One-time close-out of the season that just ended: league champion archival
+ * and prize pools first (winner selection reads live corps.totalSeasonScore,
+ * which the profile reset zeroes), then profile archival/rewards, then
+ * lineup cleanup.
+ *
+ * Guarded by a season_rollovers/{oldSeasonUid} lease (scoringRunGuard
+ * pattern): scheduler redelivery or a forced double season-start cannot
+ * re-pay finish bonuses, re-increment lifetimeStats.totalSeasons, or
+ * double-pay league prize pools.
+ */
+async function rolloverFromOldSeason(db, oldSeason, newSeasonUid) {
+  const { seasonUid, seasonName } = oldSeason;
+  const claim = await claimSeasonRollover(db, seasonUid);
+  if (!claim.claimed) {
+    logger.warn(
+      `Season rollover for ${seasonUid} already ${claim.reason}; skipping payouts and archival.`
+    );
+    return;
+  }
+  try {
+    await archiveSeasonResultsLogic(db, { seasonUid, seasonName });
+    await archiveAndResetProfiles(db, seasonUid, newSeasonUid);
+    await clearActiveLineups(db, seasonUid);
+    await markSeasonRolloverCompleted(db, seasonUid);
+  } catch (error) {
+    await markSeasonRolloverFailed(db, seasonUid, error);
+    throw error;
+  }
+}
+
 async function startNewLiveSeason() {
   logger.info("Generating new live season...");
   const db = getDb();
@@ -325,10 +388,13 @@ async function startNewLiveSeason() {
   const year = today.getFullYear();
   const previousYear = (year - 1).toString();
 
-  let oldSeasonUid = null;
+  let oldSeason = null;
   const oldSeasonDoc = await db.doc("game-settings/season").get();
-  if (oldSeasonDoc.exists) {
-    oldSeasonUid = oldSeasonDoc.data().seasonUid;
+  if (oldSeasonDoc.exists && oldSeasonDoc.data().seasonUid) {
+    oldSeason = {
+      seasonUid: oldSeasonDoc.data().seasonUid,
+      seasonName: oldSeasonDoc.data().name || oldSeasonDoc.data().seasonUid,
+    };
   }
 
   const rankingsDocRef = db.doc(`final_rankings/${previousYear}`);
@@ -391,9 +457,8 @@ async function startNewLiveSeason() {
   await db.doc("game-settings/season").set(newSeasonData);
   logger.info(`Successfully started the ${newSeasonData.name}.`);
 
-  if (oldSeasonUid) {
-    await archiveAndResetProfiles(db, oldSeasonUid, dataDocId);
-    await clearActiveLineups(db, oldSeasonUid);
+  if (oldSeason) {
+    await rolloverFromOldSeason(db, oldSeason, dataDocId);
   }
 }
 
@@ -402,10 +467,13 @@ async function startNewOffSeason() {
   const db = getDb();
   const seasonSettingsRef = db.doc("game-settings/season");
 
-  let oldSeasonUid = null;
+  let oldSeason = null;
   const oldSeasonDoc = await seasonSettingsRef.get();
-  if (oldSeasonDoc.exists) {
-    oldSeasonUid = oldSeasonDoc.data().seasonUid;
+  if (oldSeasonDoc.exists && oldSeasonDoc.data().seasonUid) {
+    oldSeason = {
+      seasonUid: oldSeasonDoc.data().seasonUid,
+      seasonName: oldSeasonDoc.data().name || oldSeasonDoc.data().seasonUid,
+    };
   }
 
   const { startDate, endDate, seasonType, finalsYear } = getNextOffSeasonWindow();
@@ -501,26 +569,45 @@ async function startNewOffSeason() {
   await seasonSettingsRef.set(newSeasonSettings);
   logger.info(`Successfully started ${seasonName}.`);
 
-  if (oldSeasonUid) {
-    await archiveAndResetProfiles(db, oldSeasonUid, dataDocId);
-    await clearActiveLineups(db, oldSeasonUid);
+  if (oldSeason) {
+    await rolloverFromOldSeason(db, oldSeason, dataDocId);
   }
 }
 
 
-async function archiveSeasonResultsLogic() {
+/**
+ * Archive league champions and pay league prize pools for a finished season.
+ *
+ * Called automatically at season rollover (startNewLiveSeason /
+ * startNewOffSeason) BEFORE archiveAndResetProfiles — winner selection reads
+ * live corps.totalSeasonScore, which the profile reset zeroes. Also reachable
+ * via the admin manualTrigger("archiveSeasonResults"), which passes no season
+ * and falls back to the current game-settings/season doc.
+ *
+ * Idempotent per league: a league whose champions[] already records this
+ * season is skipped, so re-runs (manual after automatic, retry after a
+ * partial failure) cannot double-pay a prize pool.
+ *
+ * @param {FirebaseFirestore.Firestore} [dbArg] - Injectable for rollover/tests.
+ * @param {{seasonUid: string, seasonName: string}} [season] - The season to
+ *   archive; omit to read the current game-settings/season doc (admin path).
+ */
+async function archiveSeasonResultsLogic(dbArg = null, season = null) {
   logger.info("Starting end-of-season archival process...");
-  const db = getDb();
+  const db = dbArg || getDb();
 
-  const seasonSettingsRef = db.doc("game-settings/season");
-  const seasonDoc = await seasonSettingsRef.get();
-  if (!seasonDoc.exists) {
-    logger.error("No season document found. Cannot archive results.");
-    throw new Error("No active season document found.");
+  let seasonId = season?.seasonUid;
+  let seasonName = season?.seasonName || seasonId;
+  if (!seasonId) {
+    const seasonDoc = await db.doc("game-settings/season").get();
+    if (!seasonDoc.exists) {
+      logger.error("No season document found. Cannot archive results.");
+      throw new Error("No active season document found.");
+    }
+    const seasonData = seasonDoc.data();
+    seasonId = seasonData.seasonUid;
+    seasonName = seasonData.name;
   }
-  const seasonData = seasonDoc.data();
-  const seasonId = seasonData.seasonUid;
-  const seasonName = seasonData.name;
 
   // Leagues live under the data namespace (see callable/leagues.js) — this
   // path must stay in sync with that writer or archival silently processes
@@ -541,6 +628,16 @@ async function archiveSeasonResultsLogic() {
     const members = league.members || [];
 
     if (members.length === 0) continue;
+
+    // Idempotency: this league already has a champion recorded for this
+    // season (seasonId on new entries; seasonName covers legacy entries).
+    const alreadyArchived = (league.champions || []).some(
+      (c) => c.seasonId === seasonId || c.seasonName === seasonName
+    );
+    if (alreadyArchived) {
+      logger.info(`League '${league.name}' already has a ${seasonName} champion; skipping.`);
+      continue;
+    }
 
     let leagueWinner = { userId: null, username: "Unknown", finalScore: -1, corpsName: "Unknown" };
 
@@ -573,6 +670,7 @@ async function archiveSeasonResultsLogic() {
     if (leagueWinner.userId) {
       const leagueRef = leagueDoc.ref;
       const championEntry = {
+        seasonId: seasonId,
         seasonName: seasonName,
         winnerId: leagueWinner.userId,
         winnerUsername: leagueWinner.username,
@@ -586,16 +684,29 @@ async function archiveSeasonResultsLogic() {
       logger.info(`Archived winner for league '${league.name}': ${leagueWinner.username}`);
 
       // --- ACHIEVEMENT LOGIC ---
+      // Shape matches the server catalog (helpers/achievements.js) and what
+      // AchievementMini/the celebration modal render: title (not name),
+      // rarity, ccReward — the legacy `name` shape rendered with no title
+      // and paid nothing.
       const winnerProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${leagueWinner.userId}/profile/data`);
       const championAchievement = {
         id: `league_champion_${seasonId}`, // Unique ID for this achievement
-        name: `League Champion: ${seasonName}`,
+        title: `League Champion: ${seasonName}`,
         description: `Finished 1st in the ${league.name} league during the ${seasonName}.`,
-        earnedAt: new Date(),
         icon: "trophy", // An identifier for the frontend to use
+        rarity: "legendary",
+        ccReward: RARITY_CC.legendary,
+        earnedAt: new Date(),
       };
       batch.update(winnerProfileRef, {
         achievements: admin.firestore.FieldValue.arrayUnion(championAchievement),
+        corpsCoin: admin.firestore.FieldValue.increment(championAchievement.ccReward),
+      });
+      addCoinHistoryEntryToBatch(batch, db, leagueWinner.userId, {
+        type: "achievement",
+        amount: championAchievement.ccReward,
+        description: `Achievement unlocked: ${championAchievement.title}`,
+        timestamp: new Date(),
       });
       logger.info(`Granted 'League Champion' achievement to ${leagueWinner.username}.`);
 
@@ -650,6 +761,10 @@ module.exports = {
   getThematicOffSeasonName,
   getNextOffSeasonWindow,
   archiveSeasonResultsLogic,
+  // Exported for tests (rollover pipeline internals)
+  archiveAndResetProfiles,
+  rolloverFromOldSeason,
+  corpsParticipatedThisSeason,
   refreshLiveSeasonSchedule,
   mergeScheduleRefresh,
   showMatchKey,
