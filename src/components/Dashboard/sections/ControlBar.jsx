@@ -10,21 +10,21 @@ import {
   CLASS_UNLOCK_COSTS,
   CLASS_DISPLAY_NAMES,
 } from './constants';
-import { getWeeksUntilUnlock } from '../../../utils/classUnlockTime';
+import { getSeasonsUntilUnlock } from '../../../utils/classUnlocks';
 import { getXPProgress } from '../../../utils/captionPricing';
 import NextDeadlineChip from './NextDeadlineChip';
 
 // Helper to get next class unlock info. Everything speaks canonical class
 // keys (aClass/openClass/worldClass) — the same scheme as unlockedClasses,
 // CORPS_CLASS_ORDER, and the CLASS_UNLOCK_* constants.
-const getNextClassUnlock = (unlockedClasses, xpLevel, corpsCoin, createdAt) => {
+const getNextClassUnlock = (unlockedClasses, xpLevel, corpsCoin, totalSeasons) => {
   for (const classKey of ['aClass', 'openClass', 'worldClass']) {
     if (!unlockedClasses?.includes(classKey)) {
       const levelRequired = CLASS_UNLOCK_LEVELS[classKey];
       const coinCost = CLASS_UNLOCK_COSTS[classKey];
       const meetsLevel = xpLevel >= levelRequired;
       const canAfford = corpsCoin >= coinCost;
-      const weeksUntil = createdAt ? getWeeksUntilUnlock(createdAt, classKey) : null;
+      const seasonsUntil = getSeasonsUntilUnlock(totalSeasons, classKey);
       return {
         className: CLASS_DISPLAY_NAMES[classKey],
         classKey,
@@ -32,7 +32,7 @@ const getNextClassUnlock = (unlockedClasses, xpLevel, corpsCoin, createdAt) => {
         coinCost,
         meetsLevel,
         canAfford,
-        weeksUntil,
+        seasonsUntil,
       };
     }
   }
@@ -68,7 +68,12 @@ const ControlBar = memo(
     const xpProgress = getXPProgress(profile?.xp || 0);
 
     // Calculate next class unlock
-    const nextUnlock = getNextClassUnlock(unlockedClasses, level, corpsCoin, profile?.createdAt);
+    const nextUnlock = getNextClassUnlock(
+      unlockedClasses,
+      level,
+      corpsCoin,
+      profile?.lifetimeStats?.totalSeasons
+    );
 
     return (
       <div className="sticky top-0 z-10 bg-[#1a1a1a] border-b border-[#333]">
@@ -216,10 +221,13 @@ const ControlBar = memo(
               ) : (
                 <span className="text-[10px] text-gray-500 flex items-center gap-1">
                   {nextUnlock.className}: {nextUnlock.coinCost}CC
-                  {nextUnlock.weeksUntil != null && nextUnlock.weeksUntil > 0 && (
-                    <span className="text-cyan-400 flex items-center gap-0.5">
+                  {nextUnlock.seasonsUntil != null && nextUnlock.seasonsUntil > 0 && (
+                    <span
+                      className="text-cyan-400 flex items-center gap-0.5"
+                      title={`Unlocks free after ${nextUnlock.seasonsUntil} more completed season${nextUnlock.seasonsUntil > 1 ? 's' : ''} — or reach Level ${nextUnlock.levelRequired} first`}
+                    >
                       <Clock className="w-2.5 h-2.5" />
-                      {nextUnlock.weeksUntil}w
+                      {nextUnlock.seasonsUntil} season{nextUnlock.seasonsUntil > 1 ? 's' : ''}
                     </span>
                   )}
                 </span>

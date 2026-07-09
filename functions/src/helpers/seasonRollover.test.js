@@ -246,6 +246,34 @@ describe("archiveAndResetProfiles participation gate", () => {
     assert.equal(update.corps.aClass.seasonHistory.length, 1);
   });
 
+  test("completing season 1 unlocks A Class in the same archival write (the graduation)", async () => {
+    const { db, writes } = makeFakeDb({
+      profiles: [
+        {
+          uid: "alice",
+          data: {
+            xp: 100,
+            unlockedClasses: ["soundSport"],
+            lifetimeStats: { totalSeasons: 0 },
+            corps: { soundSport: participatingCorps(80) },
+          },
+        },
+      ],
+    });
+
+    await archiveAndResetProfiles(db, "old-season", "new-season");
+
+    const update = writes.find(
+      (w) => w.type === "update" && w.path === profilePath("alice")
+    ).data;
+    assert.equal(update.lifetimeStats.totalSeasons, 1);
+    assert.ok(
+      update.unlockedClasses?.includes("aClass"),
+      "season-1 completion must unlock A Class in this same write"
+    );
+    assert.equal(update["classUnlockPaths.aClass"], "seasons");
+  });
+
   test("lineup-only corps occupies no rank slot", async () => {
     const { db, writes } = makeFakeDb({
       profiles: [

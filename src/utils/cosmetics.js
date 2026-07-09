@@ -15,6 +15,15 @@ export const SHOP_ITEMS = [
     textClass: 'text-emerald-400',
   },
   {
+    id: 'title_earned_not_given',
+    type: 'title',
+    name: 'Earned, Not Given',
+    price: null,
+    grantOnly: true,
+    description: 'Unlocked a competition class early through XP — the hard way',
+    textClass: 'text-amber-400',
+  },
+  {
     id: 'title_section_leader',
     type: 'title',
     name: 'Section Leader',

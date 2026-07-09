@@ -33,17 +33,18 @@ describe('progression guide mirrors the backend economy', () => {
     expect(LEVEL_TITLES).toEqual(SERVER_LEVEL_TITLES);
   });
 
-  it('class unlock levels and calendar weeks match', () => {
+  it('class unlock levels and seasons-completed thresholds match', () => {
     expect(CLASS_UNLOCK_PATHS.aClass.level).toBe(XP_CONFIG.classUnlocks.aClass);
     expect(CLASS_UNLOCK_PATHS.openClass.level).toBe(XP_CONFIG.classUnlocks.open);
     expect(CLASS_UNLOCK_PATHS.worldClass.level).toBe(XP_CONFIG.classUnlocks.world);
-    expect(CLASS_UNLOCK_PATHS.aClass.weeks).toBe(XP_CONFIG.classUnlockWeeks.aClass);
-    expect(CLASS_UNLOCK_PATHS.openClass.weeks).toBe(XP_CONFIG.classUnlockWeeks.open);
-    expect(CLASS_UNLOCK_PATHS.worldClass.weeks).toBe(XP_CONFIG.classUnlockWeeks.world);
+    expect(CLASS_UNLOCK_PATHS.aClass.seasons).toBe(XP_CONFIG.classUnlockSeasons.aClass);
+    expect(CLASS_UNLOCK_PATHS.openClass.seasons).toBe(XP_CONFIG.classUnlockSeasons.open);
+    expect(CLASS_UNLOCK_PATHS.worldClass.seasons).toBe(XP_CONFIG.classUnlockSeasons.world);
   });
 
   it('client XP_SOURCES mirror matches the server table', () => {
     expect(CLIENT_XP_SOURCES.dailyLogin).toBe(SERVER_XP_SOURCES.dailyLogin);
+    expect(CLIENT_XP_SOURCES.showParticipation).toBe(SERVER_XP_SOURCES.showParticipation);
     expect(CLIENT_XP_SOURCES.weeklyParticipation).toBe(SERVER_XP_SOURCES.weeklyParticipation);
     expect(CLIENT_XP_SOURCES.leagueWin).toBe(SERVER_XP_SOURCES.leagueWin);
     expect(CLIENT_XP_SOURCES.seasonCompletion).toEqual(SERVER_XP_SOURCES.seasonCompletion);
@@ -52,6 +53,7 @@ describe('progression guide mirrors the backend economy', () => {
   it('guide rows for fixed-amount sources carry the paid amounts', () => {
     const byId = Object.fromEntries(XP_SOURCE_GUIDE.map((row) => [row.id, row]));
     expect(byId.dailyLogin.xp).toBe(SERVER_XP_SOURCES.dailyLogin);
+    expect(byId.showParticipation.xp).toBe(SERVER_XP_SOURCES.showParticipation);
     expect(byId.weeklyParticipation.xp).toBe(SERVER_XP_SOURCES.weeklyParticipation);
     expect(byId.leagueWin.xp).toBe(SERVER_XP_SOURCES.leagueWin);
   });

@@ -264,11 +264,17 @@ function buildChampionshipConfig(scoredDay, recapsByDay, allRecaps) {
 function processCoinAwardsBatch(coinAwards, batch, db) {
   if (coinAwards.length === 0) return;
 
-  const coinByUser = new Map(); // uid -> { totalAmount, history: [] }
+  const coinByUser = new Map(); // uid -> { totalAmount, xpAmount, history: [] }
 
   for (const award of coinAwards) {
-    const existing = coinByUser.get(award.uid) || { totalAmount: 0, history: [] };
+    const existing = coinByUser.get(award.uid) || { totalAmount: 0, xpAmount: 0, history: [] };
     existing.totalAmount += award.amount;
+    // Competing is the core act, so each attended show also pays XP
+    // (XP_SOURCES.showParticipation) alongside its CC. Design bonuses
+    // (type 'show_design') are CC-only.
+    if (!award.type || award.type === TRANSACTION_TYPES.SHOW_PARTICIPATION) {
+      existing.xpAmount += XP_SOURCES.showParticipation;
+    }
     existing.history.push({
       type: award.type || TRANSACTION_TYPES.SHOW_PARTICIPATION,
       amount: award.amount,
@@ -281,10 +287,15 @@ function processCoinAwardsBatch(coinAwards, batch, db) {
 
   // Add coin updates to batch (uses increment for concurrency safety)
   // History entries are written to subcollection instead of arrayUnion on profile
+  // XP lands as a raw increment; xpLevel/title/unlocks recompute on the next
+  // claimDailyLogin (same convention as the weekly XP payments).
   for (const [uid, data] of coinByUser) {
     const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
     batch.update(userProfileRef, {
       corpsCoin: admin.firestore.FieldValue.increment(data.totalAmount),
+      ...(data.xpAmount > 0
+        ? { xp: admin.firestore.FieldValue.increment(data.xpAmount) }
+        : {}),
     });
 
     for (const entry of data.history) {

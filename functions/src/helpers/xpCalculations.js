@@ -13,15 +13,33 @@
 const XP_CONFIG = {
   xpPerLevel: 1000,  // XP required per level
   classUnlocks: {
-    aClass: 3,       // Level 3 (3000 XP) unlocks A Class
-    open: 5,         // Level 5 (5000 XP) unlocks Open Class
-    world: 10        // Level 10 (10000 XP) unlocks World Class
+    aClass: 3,       // Level 3 (3000 XP) unlocks A Class early
+    open: 5,         // Level 5 (5000 XP) unlocks Open Class early
+    world: 10        // Level 10 (10000 XP) unlocks World Class early
   },
-  /** Weeks after registration when each class auto-unlocks */
-  classUnlockWeeks: {
-    aClass: 5,       // 5 weeks after registration
-    open: 12,        // 12 weeks after registration
-    world: 19        // 19 weeks after registration
+  /**
+   * Seasons actively completed (lifetimeStats.totalSeasons — competed in ≥1
+   * show in a season that then archived) that unlock each class. This is the
+   * "play = earning" path: finish a season, graduate a class. The old
+   * calendar path (5/12/19 weeks since registration, granted whether or not
+   * you played) is gone — it out-ran active play and made the XP path
+   * decorative. Owner-approved redesign: docs/PROGRESSION_ECONOMY_REDESIGN.md
+   * Decision 1.
+   */
+  classUnlockSeasons: {
+    aClass: 1,       // complete 1 season
+    open: 2,         // complete 2 seasons
+    world: 3         // complete 3 seasons
+  },
+  /**
+   * Silent anti-frustration backstop: after ~a year of account age a class
+   * unlocks regardless, set so far out that any active play beats it. Granted
+   * without the graduation fanfare (unlockPath 'backstop').
+   */
+  backstopWeeks: {
+    aClass: 52,
+    open: 56,
+    world: 60
   }
 };
 
@@ -72,6 +90,10 @@ function getLevelTitle(level) {
 const XP_SOURCES = {
   // Daily login - reward consistency
   dailyLogin: 25,              // 175 XP/week if daily
+
+  // Compete in a show — the core act. Paid per attended show alongside the
+  // participation CC in the nightly scoring run (≤4 shows/week → ≤100/wk).
+  showParticipation: 25,
 
   // Weekly participation — compete in ≥1 show in a week, paid once per
   // participating class at the week boundary of the nightly scoring run
@@ -163,27 +185,38 @@ function calculateXPUpdates(profileData, xpToAdd) {
   }
 
   let classUnlocked = null;
+  let unlockPath = null;
 
-  // Calculate weeks since registration for time-based unlocks
+  // Unlock inputs: XP level (early, earned), seasons actively completed
+  // (the standard "play = earning" path), and a distant silent backstop.
+  // unlockedClasses is additive and never revoked, so profiles that already
+  // hold classes from the retired calendar path keep them untouched.
+  const totalSeasons = profileData.lifetimeStats?.totalSeasons || 0;
   const weeksSinceRegistration = getWeeksSinceRegistration(profileData.createdAt);
 
-  if ((newLevel >= XP_CONFIG.classUnlocks.aClass || weeksSinceRegistration >= XP_CONFIG.classUnlockWeeks.aClass) && !unlockedClasses.includes('aClass')) {
-    unlockedClasses.push('aClass');
+  const CLASS_LABELS = { aClass: 'A Class', open: 'Open Class', world: 'World Class' };
+  const CANONICAL_KEY = { aClass: 'aClass', open: 'openClass', world: 'worldClass' };
+
+  for (const key of ['aClass', 'open', 'world']) {
+    const canonical = CANONICAL_KEY[key];
+    if (unlockedClasses.includes(canonical)) continue;
+
+    const byLevel = newLevel >= XP_CONFIG.classUnlocks[key];
+    const bySeasons = totalSeasons >= XP_CONFIG.classUnlockSeasons[key];
+    const byBackstop = weeksSinceRegistration >= XP_CONFIG.backstopWeeks[key];
+    if (!byLevel && !bySeasons && !byBackstop) continue;
+
+    unlockedClasses.push(canonical);
     updates.unlockedClasses = unlockedClasses;
-    classUnlocked = 'A Class';
-  }
-  if ((newLevel >= XP_CONFIG.classUnlocks.open || weeksSinceRegistration >= XP_CONFIG.classUnlockWeeks.open) && !unlockedClasses.includes('openClass')) {
-    unlockedClasses.push('openClass');
-    updates.unlockedClasses = unlockedClasses;
-    classUnlocked = 'Open Class';
-  }
-  if ((newLevel >= XP_CONFIG.classUnlocks.world || weeksSinceRegistration >= XP_CONFIG.classUnlockWeeks.world) && !unlockedClasses.includes('worldClass')) {
-    unlockedClasses.push('worldClass');
-    updates.unlockedClasses = unlockedClasses;
-    classUnlocked = 'World Class';
+    classUnlocked = CLASS_LABELS[key];
+    // Recognition asymmetry: 'xp' unlocks earn the "did it the hard way"
+    // mark; 'seasons' is the earned-by-playing graduation; 'backstop' is
+    // granted silently (no fanfare, no cosmetic).
+    unlockPath = byLevel ? 'xp' : bySeasons ? 'seasons' : 'backstop';
+    updates[`classUnlockPaths.${canonical}`] = unlockPath;
   }
 
-  return { updates, newXP, newLevel, classUnlocked };
+  return { updates, newXP, newLevel, classUnlocked, unlockPath };
 }
 
 /**

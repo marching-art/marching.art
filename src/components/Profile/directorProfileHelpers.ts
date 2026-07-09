@@ -8,7 +8,7 @@ import React from 'react';
 import { Trophy, Crown, Medal, Shield } from 'lucide-react';
 import type { UserProfile, CorpsClass } from '../../types';
 import { CORPS_CLASS_ORDER, resolveCorpsForClass, isCorpsClassUnlocked } from '../../utils/corps';
-import { toCanonicalClassKey } from '../../utils/classUnlockTime';
+import { toCanonicalClassKey } from '../../utils/classUnlocks';
 
 export interface SeasonHistoryEntry {
   seasonId: string;

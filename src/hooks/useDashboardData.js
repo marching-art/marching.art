@@ -128,8 +128,13 @@ export const useDashboardData = () => {
         (classId) => !previousUnlocked.includes(classId)
       );
       // Filter out classes where user already has a corps (e.g., purchased before XP unlock)
-      // This prevents showing "class unlocked" notification when they already have a corps
-      const newlyUnlockedWithoutCorps = newlyUnlocked.filter((classId) => !corps?.[classId]);
+      // This prevents showing "class unlocked" notification when they already have a corps.
+      // Backstop unlocks (account-age anti-frustration floor) are deliberately
+      // silent — a graduation ceremony for a grant you didn't earn reads as
+      // hollow, so those skip the congrats modal entirely.
+      const newlyUnlockedWithoutCorps = newlyUnlocked.filter(
+        (classId) => !corps?.[classId] && profile?.classUnlockPaths?.[classId] !== 'backstop'
+      );
       if (newlyUnlockedWithoutCorps.length > 0) {
         setNewlyUnlockedClass(newlyUnlockedWithoutCorps[0]);
       }
@@ -137,7 +142,7 @@ export const useDashboardData = () => {
 
     // Update ref for next comparison (doesn't trigger re-render)
     previousUnlockedClassesRef.current = currentUnlocked;
-  }, [unlockedClasses, corps]);
+  }, [unlockedClasses, corps, profile?.classUnlockPaths]);
 
   // NOTE: Profile subscription is now handled by profileStore (initialized in App.jsx)
   // This eliminates duplicate Firestore listeners when multiple components use this hook

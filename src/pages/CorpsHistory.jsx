@@ -24,7 +24,7 @@ import { compareCorpsClasses } from '../utils/corps';
 import LoadingScreen from '../components/LoadingScreen';
 import { Line } from '../components/charts';
 import { getSoundSportRating } from '../utils/scoresUtils';
-import { toCanonicalClassKey } from '../utils/classUnlockTime';
+import { toCanonicalClassKey } from '../utils/classUnlocks';
 
 const CorpsHistory = () => {
   const { user } = useAuth();

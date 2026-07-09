@@ -270,14 +270,16 @@ const unlockClassWithCorpsCoin = onCall({ cors: true }, async (request) => {
 });
 
 /**
- * Sync time-based class unlocks.
+ * Sync class unlocks outside of XP events.
  *
- * Classes unlock by XP level OR account age (weeks since registration).
- * XP-based unlocks are applied whenever the server awards XP, but an idle
- * user can become eligible for a time-based unlock without any XP event.
- * Clients call this on session start; the server recomputes eligibility and
- * persists any newly unlocked classes. This replaces the old client-side
- * unlockedClasses write, which security rules no longer permit.
+ * Classes unlock by XP level (early), seasons actively completed (the
+ * standard path — applied at season archival), or the distant account-age
+ * backstop. XP- and archival-driven unlocks are applied when those events
+ * run, but a returning user can cross the backstop threshold (or have
+ * missed an archival-time grant) without any XP event. Clients call this on
+ * session start; the server recomputes eligibility and persists any newly
+ * unlocked classes. This replaces the old client-side unlockedClasses
+ * write, which security rules no longer permit.
  */
 const syncClassUnlocks = onCall({ cors: true }, async (request) => {
   const uid = assertAuth(request);
@@ -292,9 +294,9 @@ const syncClassUnlocks = onCall({ cors: true }, async (request) => {
       }
 
       const profileData = profileDoc.data();
-      // calculateXPUpdates with 0 XP recomputes unlock eligibility (level- or
-      // time-based) and canonicalizes legacy class keys without changing XP.
-      const { updates, classUnlocked } = calculateXPUpdates(profileData, 0);
+      // calculateXPUpdates with 0 XP recomputes unlock eligibility and
+      // canonicalizes legacy class keys without changing XP.
+      const { updates, classUnlocked, unlockPath } = calculateXPUpdates(profileData, 0);
 
       if (!updates.unlockedClasses) {
         return {
@@ -303,12 +305,20 @@ const syncClassUnlocks = onCall({ cors: true }, async (request) => {
         };
       }
 
-      transaction.update(profileRef, { unlockedClasses: updates.unlockedClasses });
-      return { unlockedClasses: updates.unlockedClasses, classUnlocked };
+      // Persist the unlock-path marks (classUnlockPaths.*) alongside the
+      // array — the client uses them for the graduation ceremony asymmetry.
+      const pathUpdates = Object.fromEntries(
+        Object.entries(updates).filter(([key]) => key.startsWith("classUnlockPaths."))
+      );
+      transaction.update(profileRef, {
+        unlockedClasses: updates.unlockedClasses,
+        ...pathUpdates,
+      });
+      return { unlockedClasses: updates.unlockedClasses, classUnlocked, unlockPath };
     });
 
     if (result.classUnlocked) {
-      logger.info(`User ${uid} unlocked ${result.classUnlocked} via time-based sync`);
+      logger.info(`User ${uid} unlocked ${result.classUnlocked} via sync (${result.unlockPath})`);
     }
     return { success: true, ...result };
   } catch (error) {

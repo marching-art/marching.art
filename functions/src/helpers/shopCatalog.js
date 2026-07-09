@@ -19,6 +19,10 @@ const SHOP_CATALOG = [
   // grantOnly items can never be purchased — they are awarded by game systems
   // (title_laureate: season reward ladder tier 12).
   { id: 'title_laureate', type: 'title', name: 'Laureate', price: null, grantOnly: true },
+  // Granted when a class is unlocked EARLY via XP level (the "did it the
+  // hard way" recognition-asymmetry mark — seasons-completed and CorpsCoin
+  // unlocks never receive it). Granted by the daily achievement sweep.
+  { id: 'title_earned_not_given', type: 'title', name: 'Earned, Not Given', price: null, grantOnly: true },
   { id: 'title_section_leader', type: 'title', name: 'Section Leader', price: 1000 },
   { id: 'title_drum_major', type: 'title', name: 'Drum Major', price: 2500 },
   { id: 'title_the_maestro', type: 'title', name: 'The Maestro', price: 5000 },

@@ -274,8 +274,9 @@ const ClassesTab = () => (
 
     <div className="bg-[#0057B8]/10 border border-[#0057B8]/30 rounded-sm p-3">
       <p className="text-xs text-gray-300">
-        <strong className="text-white">Tip:</strong> Unlock via level OR CorpsCoin. A Class = Lvl 3
-        or 1,000 CC. Open = Lvl 5 or 2,500 CC. World = Lvl 10 or 5,000 CC.
+        <strong className="text-white">Tip:</strong> Unlock by completing seasons, by level, or
+        with CorpsCoin. A Class = 1 season, Lvl 3, or 1,000 CC. Open = 2 seasons, Lvl 5, or 2,500
+        CC. World = 3 seasons, Lvl 10, or 5,000 CC.
       </p>
     </div>
   </div>
@@ -559,7 +560,7 @@ const HowToPlay = () => {
           </div>
           <div>
             <p className="text-[10px] text-gray-500 uppercase tracking-wider">Unlocks</p>
-            <p className="text-xs text-white font-mono">Lvl 3/5/10</p>
+            <p className="text-xs text-white font-mono">1/2/3 seasons</p>
           </div>
           <div>
             <p className="text-[10px] text-gray-500 uppercase tracking-wider">Captions</p>

@@ -124,9 +124,36 @@ function sweepProfileAchievements(profileData, overrides = {}) {
   );
 }
 
+/**
+ * State-driven cosmetic grants, applied by the daily sweep in claimDailyLogin
+ * alongside achievements. Idempotent via cosmetics.owned.
+ *
+ * Currently one grant: the 'Earned, Not Given' title for unlocking any
+ * competition class EARLY via XP level (classUnlockPaths.* === 'xp') — the
+ * recognition-asymmetry mark seasons/coin/backstop unlocks never get.
+ *
+ * @param {Object} profileData - profile snapshot
+ * @param {Object} [overrides] - { classUnlockPaths } computed post-update
+ *   during the caller's transaction
+ * @returns {string[]} shop item ids to arrayUnion into cosmetics.owned
+ */
+function sweepCosmeticGrants(profileData, overrides = {}) {
+  const owned = new Set(profileData.cosmetics?.owned || []);
+  const unlockPaths = overrides.classUnlockPaths ?? profileData.classUnlockPaths ?? {};
+  const grants = [];
+  if (
+    Object.values(unlockPaths).some((path) => path === 'xp') &&
+    !owned.has('title_earned_not_given')
+  ) {
+    grants.push('title_earned_not_given');
+  }
+  return grants;
+}
+
 module.exports = {
   ACHIEVEMENT_CATALOG,
   RARITY_CC,
   buildAchievementState,
   sweepProfileAchievements,
+  sweepCosmeticGrants,
 };

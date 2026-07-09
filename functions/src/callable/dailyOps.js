@@ -18,7 +18,7 @@ const {
   resolveBucket,
   pruneOldPredictions,
 } = require("../helpers/dailyPredictions");
-const { sweepProfileAchievements } = require("../helpers/achievements");
+const { sweepProfileAchievements, sweepCosmeticGrants } = require("../helpers/achievements");
 // Reward tables live in helpers/engagementRewards.js (the single source of
 // truth, also read by the economy earning guide).
 const {
@@ -182,6 +182,22 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
       coinAwarded += achievementCoin;
       if (newAchievements.length > 0) {
         updates.achievements = admin.firestore.FieldValue.arrayUnion(...newAchievements);
+      }
+
+      // Cosmetic grants driven by profile state (e.g. the 'Earned, Not
+      // Given' title for an XP-path early class unlock). Merge any unlock
+      // paths this very claim just set so the grant lands same-day.
+      const mergedUnlockPaths = { ...(profileData.classUnlockPaths || {}) };
+      for (const [key, value] of Object.entries(xpResult.updates)) {
+        if (key.startsWith('classUnlockPaths.')) {
+          mergedUnlockPaths[key.split('.')[1]] = value;
+        }
+      }
+      const cosmeticGrants = sweepCosmeticGrants(profileData, {
+        classUnlockPaths: mergedUnlockPaths,
+      });
+      if (cosmeticGrants.length > 0) {
+        updates['cosmetics.owned'] = admin.firestore.FieldValue.arrayUnion(...cosmeticGrants);
       }
 
       // Add CorpsCoin if milestone reached / levels gained / achievements earned

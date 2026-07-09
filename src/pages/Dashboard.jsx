@@ -88,7 +88,7 @@ import {
 } from '../components/Dashboard';
 
 import { ModalLoadingFallback } from '../components/ui';
-import { getWeeksUntilUnlock } from '../utils/classUnlockTime';
+import { getSeasonsUntilUnlock } from '../utils/classUnlocks';
 import NextPerformancePanel from '../components/Dashboard/NextPerformancePanel';
 import { useScheduleStore } from '../store/scheduleStore';
 
@@ -696,9 +696,10 @@ const Dashboard = () => {
             levelRequired={CLASS_UNLOCK_LEVELS[classToPurchase]}
             currentLevel={profile.xpLevel || 1}
             weeksRemaining={weeksRemaining}
-            weeksUntilAutoUnlock={
-              profile?.createdAt ? getWeeksUntilUnlock(profile.createdAt, classToPurchase) : null
-            }
+            seasonsUntilUnlock={getSeasonsUntilUnlock(
+              profile?.lifetimeStats?.totalSeasons,
+              classToPurchase
+            )}
             isRegistrationLocked={isRegistrationLocked(classToPurchase)}
             onConfirm={handleConfirmClassPurchase}
             onClose={() => setClassToPurchase(null)}

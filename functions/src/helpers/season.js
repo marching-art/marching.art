@@ -243,10 +243,16 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
     };
 
     // Season-finish payouts (coin + XP) and the recap the client shows once.
+    // Pass the freshly-incremented lifetimeStats explicitly: completing
+    // season N must unlock the seasons-gated class in this same write (the
+    // "graduation" lands with the recap), not on some later XP event.
     const totalCoin = seasonAwards.reduce((sum, a) => sum + a.coinBonus, 0);
     const totalXP = seasonAwards.reduce((sum, a) => sum + a.xpBonus, 0);
     if (totalXP > 0) {
-      Object.assign(updateData, calculateXPUpdates(profileData, totalXP).updates);
+      Object.assign(
+        updateData,
+        calculateXPUpdates({ ...profileData, lifetimeStats }, totalXP).updates
+      );
     }
 
     // Reset the seasonal reward ladder: new baseline is the post-award XP

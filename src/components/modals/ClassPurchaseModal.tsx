@@ -20,7 +20,8 @@ interface ClassPurchaseModalProps {
   levelRequired: number;
   currentLevel: number;
   weeksRemaining: number | null;
-  weeksUntilAutoUnlock?: number | null;
+  /** Seasons still to complete before the free seasons-completed unlock */
+  seasonsUntilUnlock?: number | null;
   isRegistrationLocked: boolean;
   onConfirm: () => Promise<void>;
   onClose: () => void;
@@ -64,7 +65,7 @@ const ClassPurchaseModal: React.FC<ClassPurchaseModalProps> = ({
   levelRequired,
   currentLevel,
   weeksRemaining,
-  weeksUntilAutoUnlock,
+  seasonsUntilUnlock,
   isRegistrationLocked,
   onConfirm,
   onClose,
@@ -174,12 +175,14 @@ const ClassPurchaseModal: React.FC<ClassPurchaseModalProps> = ({
                 <div className="flex items-start gap-2">
                   <AlertTriangle className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-xs text-yellow-400 font-bold uppercase mb-1">Early Unlock</p>
+                    <p className="text-xs text-yellow-400 font-bold uppercase mb-1">
+                      Skip the Earn
+                    </p>
                     <p className="text-xs text-yellow-300/80">
-                      You're unlocking this class before reaching Level {levelRequired}. You can
-                      also wait and unlock it for free when you level up
-                      {weeksUntilAutoUnlock != null && weeksUntilAutoUnlock > 0
-                        ? ` or when it auto-unlocks in ${weeksUntilAutoUnlock} week${weeksUntilAutoUnlock !== 1 ? 's' : ''}`
+                      You're unlocking this class before earning it. You can also earn it free by
+                      reaching Level {levelRequired}
+                      {seasonsUntilUnlock != null && seasonsUntilUnlock > 0
+                        ? ` — or by completing ${seasonsUntilUnlock} more season${seasonsUntilUnlock !== 1 ? 's' : ''}`
                         : ''}
                       .
                     </p>
@@ -188,17 +191,18 @@ const ClassPurchaseModal: React.FC<ClassPurchaseModalProps> = ({
               </div>
             )}
 
-            {/* Time-based auto-unlock info */}
-            {weeksUntilAutoUnlock != null &&
-              weeksUntilAutoUnlock > 0 &&
+            {/* Seasons-completed unlock info */}
+            {seasonsUntilUnlock != null &&
+              seasonsUntilUnlock > 0 &&
               !isEarlyUnlock &&
               !isRegistrationLocked && (
                 <div className="bg-cyan-500/10 border border-cyan-500/30 p-3 mb-4">
                   <div className="flex items-start gap-2">
                     <Clock className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" />
                     <p className="text-xs text-cyan-300/80">
-                      This class will auto-unlock for free in {weeksUntilAutoUnlock} week
-                      {weeksUntilAutoUnlock !== 1 ? 's' : ''}.
+                      This class unlocks free when you complete {seasonsUntilUnlock} more season
+                      {seasonsUntilUnlock !== 1 ? 's' : ''} (compete in at least one show per
+                      season).
                     </p>
                   </div>
                 </div>

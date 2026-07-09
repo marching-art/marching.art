@@ -34,13 +34,13 @@ export const LEVEL_TITLES = {
   30: 'Eternal',
 };
 
-/** Class-unlock requirements — every path, including the one the FAQ never
- *  mentioned (see PROGRESSION_ECONOMY_REDESIGN.md for the approved future
- *  seasons-completed redesign; update here + tests when that ships). */
+/** Class-unlock requirements — every path (PROGRESSION_ECONOMY_REDESIGN.md
+ *  Decision 1: unlocks are earned by completing seasons, unlocked early by
+ *  XP level, or skipped with CorpsCoin; the old calendar path is gone). */
 export const CLASS_UNLOCK_PATHS = {
-  aClass: { level: 3, weeks: 5, coin: CLASS_UNLOCK_COSTS.aClass },
-  openClass: { level: 5, weeks: 12, coin: CLASS_UNLOCK_COSTS.openClass },
-  worldClass: { level: 10, weeks: 19, coin: CLASS_UNLOCK_COSTS.worldClass },
+  aClass: { level: 3, seasons: 1, coin: CLASS_UNLOCK_COSTS.aClass },
+  openClass: { level: 5, seasons: 2, coin: CLASS_UNLOCK_COSTS.openClass },
+  worldClass: { level: 10, seasons: 3, coin: CLASS_UNLOCK_COSTS.worldClass },
 };
 
 /**
@@ -53,6 +53,12 @@ export const XP_SOURCE_GUIDE = [
     label: 'Daily login',
     xp: XP_SOURCES.dailyLogin,
     cadence: 'Automatic, once per day',
+  },
+  {
+    id: 'showParticipation',
+    label: 'Compete in a show',
+    xp: XP_SOURCES.showParticipation,
+    cadence: 'Per show your corps performs at (up to 4 a week)',
   },
   {
     id: 'dailyChallenges',
@@ -95,14 +101,14 @@ export const XP_SOURCE_GUIDE = [
 /** The three ways a class unlocks, in plain language. */
 export const UNLOCK_PATH_GUIDE = [
   {
-    id: 'level',
-    label: 'Earn it with XP',
-    detail: `Reach Level ${CLASS_UNLOCK_PATHS.aClass.level} (A Class), ${CLASS_UNLOCK_PATHS.openClass.level} (Open), or ${CLASS_UNLOCK_PATHS.worldClass.level} (World)`,
+    id: 'seasons',
+    label: 'Earn it by playing',
+    detail: `Complete ${CLASS_UNLOCK_PATHS.aClass.seasons} season (A Class), ${CLASS_UNLOCK_PATHS.openClass.seasons} seasons (Open), or ${CLASS_UNLOCK_PATHS.worldClass.seasons} seasons (World) — a season counts when you competed in at least one show`,
   },
   {
-    id: 'time',
-    label: 'Automatic with account age',
-    detail: `${CLASS_UNLOCK_PATHS.aClass.weeks} / ${CLASS_UNLOCK_PATHS.openClass.weeks} / ${CLASS_UNLOCK_PATHS.worldClass.weeks} weeks after registration — this is why some Level 1 directors field multiple classes`,
+    id: 'level',
+    label: 'Earn it early with XP',
+    detail: `Reach Level ${CLASS_UNLOCK_PATHS.aClass.level} (A Class), ${CLASS_UNLOCK_PATHS.openClass.level} (Open), or ${CLASS_UNLOCK_PATHS.worldClass.level} (World) before the seasons do it for you`,
   },
   {
     id: 'coin',
