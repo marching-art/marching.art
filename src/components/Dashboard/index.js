@@ -26,12 +26,12 @@ export {
   RecentResultsFeed,
   RivalsPanel,
   DailyChallenges,
-  QuickStats,
   LineupSimulatorPanel,
   PredictionGamePanel,
   AchievementTrackerPanel,
   JourneyPanel,
   SeasonLadderPanel,
+  SeasonProgressHub,
   // Constants
   CLASS_LABELS,
   CLASS_SHORT_LABELS,

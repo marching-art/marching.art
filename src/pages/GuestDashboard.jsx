@@ -3,7 +3,7 @@
  *
  * Lets unauthenticated visitors experience the ACTUAL dashboard before
  * registering. It reuses the real dashboard section components (ControlBar,
- * SeasonScorecard, RecentResultsFeed, RivalsPanel, QuickStats,
+ * SeasonScorecard, RecentResultsFeed, RivalsPanel,
  * AchievementTrackerPanel) fed with demo data, so the preview mirrors what a
  * signed-in director sees. Every edit/management action is gated with a
  * registration prompt, and the one interactive affordance — drafting a
@@ -47,7 +47,6 @@ import ControlBar from '../components/Dashboard/sections/ControlBar';
 import SeasonScorecard from '../components/Dashboard/sections/SeasonScorecard';
 import RecentResultsFeed from '../components/Dashboard/sections/RecentResultsFeed';
 import RivalsPanel from '../components/Dashboard/sections/RivalsPanel';
-import QuickStats from '../components/Dashboard/sections/QuickStats';
 import AchievementTrackerPanel from '../components/Dashboard/sections/AchievementTrackerPanel';
 
 const STARTER_BUDGET = 90; // Same 90-pt SoundSport budget onboarding drafts under
@@ -478,7 +477,7 @@ const GuestDashboard = () => {
     }
   };
 
-  // Caption count powering QuickStats / AchievementTracker (guest's draft
+  // Caption count powering AchievementTracker (guest's draft
   // progress while drafting, the full demo lineup otherwise).
   const lineupCount = isDrafting ? draftPickCount : Object.keys(demoCorps.lineup || {}).length;
 
@@ -710,15 +709,6 @@ const GuestDashboard = () => {
 
               {/* Rivals — real component, closest SoundSport competitors */}
               <RivalsPanel rivals={demoRivals} corpsClass="soundSport" />
-
-              {/* Quick Stats — real rotating fun-facts widget */}
-              <QuickStats
-                profile={demoProfile}
-                corpsClass="soundSport"
-                recentResults={recentResultsForFeed}
-                lineupScoreData={{}}
-                lineupCount={lineupCount}
-              />
 
               {/* Achievement Tracker — real progress-to-next-achievement widget */}
               <AchievementTrackerPanel

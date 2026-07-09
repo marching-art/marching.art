@@ -49,7 +49,10 @@ const ACHIEVEMENT_CATALOG = [
 
   // --- Career milestones ---
   { id: 'first_lineup', title: 'Full Roster', description: 'Filled all 8 caption slots', icon: 'star', rarity: 'common', ccReward: RARITY_CC.common, earned: (s) => s.hasFullLineup },
-  { id: 'shows_10', title: 'Road Warrior', description: 'Competed in 10 career shows', icon: 'star', rarity: 'common', ccReward: RARITY_CC.common, earned: (s) => s.totalShows >= 10 },
+  // currentSeasonShows covers the live season — lifetimeStats.totalShows only
+  // updates at archival, and "first score" shouldn't wait months to land.
+  { id: 'first_show', title: 'First Blood', description: 'Received your first score', icon: 'star', rarity: 'common', ccReward: RARITY_CC.common, earned: (s) => s.totalShows >= 1 || s.currentSeasonShows >= 1 },
+  { id: 'shows_10', title: 'Road Warrior', description: 'Competed in 10 career shows', icon: 'star', rarity: 'common', ccReward: RARITY_CC.common, earned: (s) => s.totalShows + s.currentSeasonShows >= 10 },
   { id: 'shows_50', title: 'Tour Veteran', description: 'Competed in 50 career shows', icon: 'star', rarity: 'rare', ccReward: RARITY_CC.rare, earned: (s) => s.totalShows >= 50 },
   { id: 'shows_100', title: 'Century Tour', description: 'Competed in 100 career shows', icon: 'medal', rarity: 'epic', ccReward: RARITY_CC.epic, earned: (s) => s.totalShows >= 100 },
   { id: 'seasons_1', title: 'Season One', description: 'Completed your first season', icon: 'medal', rarity: 'common', ccReward: RARITY_CC.common, earned: (s) => s.totalSeasons >= 1 },
@@ -57,6 +60,7 @@ const ACHIEVEMENT_CATALOG = [
   { id: 'seasons_10', title: 'Decade of Drums', description: 'Completed 10 seasons', icon: 'crown', rarity: 'legendary', ccReward: RARITY_CC.legendary, earned: (s) => s.totalSeasons >= 10 },
 
   // --- League ---
+  { id: 'league_join', title: 'League Player', description: 'Joined a league', icon: 'award', rarity: 'common', ccReward: RARITY_CC.common, earned: (s) => s.inLeague },
   { id: 'league_win_1', title: 'Matchup Victor', description: 'Won a weekly league matchup', icon: 'trophy', rarity: 'common', ccReward: RARITY_CC.common, earned: (s) => s.leagueWins >= 1 },
   { id: 'league_wins_10', title: 'League Force', description: 'Won 10 weekly league matchups', icon: 'trophy', rarity: 'rare', ccReward: RARITY_CC.rare, earned: (s) => s.leagueWins >= 10 },
 
@@ -87,14 +91,22 @@ function buildAchievementState(profileData, overrides = {}) {
     if (snapshot && typeof snapshot.rank === 'number') classRanks[cls] = snapshot.rank;
   });
   const trophies = profileData.trophies || {};
+  // Live-season shows: selectedShows week-count per corps, the same
+  // "showsAttended" notion season archival folds into lifetimeStats.
+  const currentSeasonShows = Object.values(corps).reduce(
+    (sum, c) => sum + Object.keys(c?.selectedShows || {}).length,
+    0
+  );
   return {
     streak: overrides.streak ?? profileData.engagement?.loginStreak ?? 0,
     level: overrides.level ?? profileData.xpLevel ?? 1,
     unlockedClasses: overrides.unlockedClasses ?? profileData.unlockedClasses ?? ['soundSport'],
     hasFullLineup,
     totalShows: profileData.lifetimeStats?.totalShows || 0,
+    currentSeasonShows,
     totalSeasons: profileData.lifetimeStats?.totalSeasons || 0,
     leagueWins: profileData.stats?.leagueWins || 0,
+    inLeague: (profileData.leagueIds || []).length > 0,
     classRanks,
     regionalTrophies: (trophies.regionals || []).length,
     classChampionships: (trophies.classChampionships || []).length,
