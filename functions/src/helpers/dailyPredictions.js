@@ -47,9 +47,27 @@ const PREDICTION_QUESTIONS = [
     needs: "placement",
     resolve: (result) => (result.placement <= 3 ? "Yes" : "No"),
   },
+  {
+    id: "ss-improve",
+    xp: PREDICTION_XP,
+    needs: "placement",
+    // threshold = the placement snapshot when the pick was made; improving
+    // means a lower-numbered placement. Placement-only, so it's safe for
+    // SoundSport's ratings-only format (no numeric score is revealed).
+    resolve: (result, threshold) => (result.placement < threshold ? "Yes" : "No"),
+  },
 ];
 
 const PREDICTION_QUESTION_IDS = PREDICTION_QUESTIONS.map((q) => q.id);
+
+/**
+ * Questions that never reveal a numeric score (placement-based only) — the
+ * subset available to SoundSport, whose scores are deliberately hidden
+ * behind medal ratings.
+ */
+const SCORE_FREE_QUESTION_IDS = PREDICTION_QUESTIONS
+  .filter((q) => q.needs !== "score")
+  .map((q) => q.id);
 
 /**
  * Read the most recent recap days for a season, newest first. Prefers the
@@ -190,6 +208,7 @@ module.exports = {
   MAX_PREDICTION_DAYS_KEPT,
   PREDICTION_QUESTIONS,
   PREDICTION_QUESTION_IDS,
+  SCORE_FREE_QUESTION_IDS,
   fetchRecentRecaps,
   findLatestResultForCorps,
   resolveBucket,

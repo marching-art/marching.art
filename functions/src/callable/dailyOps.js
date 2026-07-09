@@ -13,6 +13,7 @@ const {
 } = require("../helpers/dailyChallenges");
 const {
   PREDICTION_QUESTIONS,
+  SCORE_FREE_QUESTION_IDS,
   fetchRecentRecaps,
   findLatestResultForCorps,
   resolveBucket,
@@ -581,9 +582,13 @@ const submitPrediction = onCall({ cors: true }, async (request) => {
     throw new HttpsError("invalid-argument", "A corpsClass is required.");
   }
   // SoundSport is a ratings-only format — its numeric scores are never shown,
-  // and the prediction prompts reveal them, so it has no prediction game.
-  if (corpsClass === "soundSport") {
-    throw new HttpsError("invalid-argument", "Predictions are not available for SoundSport.");
+  // so it only gets the placement-based questions (medal + improvement),
+  // whose prompts and resolutions reveal no score.
+  if (corpsClass === "soundSport" && !SCORE_FREE_QUESTION_IDS.includes(questionId)) {
+    throw new HttpsError(
+      "invalid-argument",
+      "That prediction is not available for SoundSport."
+    );
   }
 
   const db = getDb();

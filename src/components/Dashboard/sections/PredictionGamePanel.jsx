@@ -21,10 +21,6 @@ const PredictionGamePanel = memo(({ recentResults, corpsClass }) => {
   const submitPrediction = useProfileStore((state) => state.submitPrediction);
   const resolvePredictions = useProfileStore((state) => state.resolvePredictions);
 
-  // SoundSport is a ratings-only format — its numeric scores must never be
-  // shown, and the score-based prediction prompts reveal them, so the panel
-  // is disabled entirely for SoundSport corps.
-  const isSoundSport = corpsClass === 'soundSport';
   const gameDay = getGameDay();
 
   const bucket = profile?.predictions?.[gameDay] || {};
@@ -33,10 +29,11 @@ const PredictionGamePanel = memo(({ recentResults, corpsClass }) => {
   const isResolved = !!bucket.resolved;
   const stats = profile?.predictionStats || { correct: 0, total: 0 };
 
-  // Generate questions from current data (never for SoundSport)
+  // Generate questions from current data. SoundSport gets the placement-only
+  // set (medal + improvement) — its numeric scores stay hidden.
   const questions = useMemo(
-    () => (isSoundSport ? [] : buildQuestions(recentResults)),
-    [recentResults, isSoundSport]
+    () => buildQuestions(recentResults, corpsClass),
+    [recentResults, corpsClass]
   );
 
   // Trigger server-side resolution once a newer result arrives. The callable
