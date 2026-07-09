@@ -6,6 +6,16 @@
 
 ---
 
+## 📌 Status annotation — July 2026 (added after owner review; read this first)
+
+This review predates three newer companion docs — `LIFELONG_GAMIFICATION_ROADMAP.md`, `PROGRESSION_ECONOMY_REDESIGN.md`, and `DASHBOARD_UNIFICATION.md` — which **supersede this document wherever they overlap**. Much of Part 3 has since shipped. `📌 STATUS` blocks have been inserted below, recording per finding what is ✅ SHIPPED, ⚠️ PARTIAL, ⏳ OPEN, or ♻️ SUPERSEDED as of July 2026, verified against the code. Two corrections to this doc's analysis:
+
+1. **The XP earn-rate estimates in Parts 1 and 5 are too high.** `awardXP` — carrying the two largest recurring XP sources, weekly participation (200 XP) and league win (100 XP) — is defined but never invoked, so the real active earn rate is ~385 XP/week, not 450–600. See `PROGRESSION_ECONOMY_REDESIGN.md` §1.2. The Part 5 verdict "XP pacing is already right" is **superseded**.
+2. **League prediction pools** (deferred in B3 as optional side-wagers) are **promoted to flagship status** by `LIFELONG_GAMIFICATION_ROADMAP.md` Step 6, which is the plan of record.
+3. **Class-unlock paths:** the owner approved replacing the calendar-week auto-unlock with *seasons-actively-completed* (see `PROGRESSION_ECONOMY_REDESIGN.md` Decision 1) — this doc's B5 aside about the "class-unlock triple-path" is resolved by that decision.
+
+---
+
 ## Part 1 — State of the Game (what the code actually does)
 
 ### 1.1 The core loop is healthy — and richer than the UI lets on
@@ -59,11 +69,21 @@ That's the entire list. **8,500 CC of one-time lifetime spending** against an in
 
 The practical consequence: **every season ends in silence.** No rank bonus, no completion XP, no ceremony — for a game whose entire dramatic arc builds toward Finals night, the anticlimax is the single biggest wasted engagement moment in the product.
 
+> 📌 **STATUS (July 2026):** most rows of the table above have since been fixed —
+>
+> - **Streak freeze:** ✅ SHIPPED — purchasable via `src/pages/Shop.jsx` and `src/components/modals/StreakModal.jsx`.
+> - **Season finish bonuses & completion XP:** ✅ SHIPPED — season archival (`functions/src/helpers/season.js`) now pays `SEASON_FINISH_BONUSES` and `getSeasonCompletionXP`, and a `SeasonRecapModal` exists. "Every season ends in silence" is no longer true.
+> - **CorpsCoin ledger + earning guide:** ✅ SHIPPED — `CorpsCoinModal.jsx` calls `getCorpsCoinHistory` and `getEarningOpportunities`.
+> - **XP display drift:** ✅ FIXED — `captionPricing.js` now mirrors the backend values (200/100). *However* those backend values still never pay out (`awardXP` uninvoked) — see `PROGRESSION_ECONOMY_REDESIGN.md` Phase A, the top open bug.
+> - **League entry fees, Stripe webhook, execution-system stubs:** ⏳ status unchanged (entry fees folded into the roadmap's Step 6 league economy; Stripe stays a placeholder — no real-money path, per this doc's own assumption).
+
 ### 1.3 XP: a road that ends at Level 10
 
 - Flat 1,000 XP/level; titles Rookie → Legend (Levels 1–10) in `xpCalculations.js:31-52`.
 - The **only** thing XP unlocks is corps classes (Levels 3/5/10) — which are also obtainable by waiting (weeks) or paying (CC).
 - Past 10,000 XP: nothing. No titles, no unlocks, no prestige, no seasonal reset. Long-term directors are stacking a number that stopped meaning anything months ago.
+
+> 📌 **STATUS (July 2026):** ⚠️ PARTIAL — the title ladder now extends to Level 30 ("Legend" 10 → "Icon" 15 → "Hall of Famer" 20 → "Immortal" 25 → "Eternal" 30, `xpCalculations.js:44-48`), so C1 is largely shipped. Still open: no XP-to-next-level bar in the UI, no per-level CC stipend, no cosmetic unlocks per 5 levels, and the level-up celebration never fires (see `LIFELONG_GAMIFICATION_ROADMAP.md` Step 2).
 
 ### 1.4 Three achievement systems that don't talk to each other
 
@@ -72,6 +92,8 @@ The practical consequence: **every season ends in silence.** No rank bonus, no c
 3. **Trophies** — server-authoritative and excellent (regionals, class finals, world championships, Hall of Champions archive via `scoringAwards.js`).
 
 There is also a **legacy client-side streak writer** in `useDashboardData.js:206-312` that duplicates and can diverge from the server's `claimDailyLogin`.
+
+> 📌 **STATUS (July 2026):** ⚠️ PARTIAL — a server-authoritative achievement catalog with CC rewards per rarity now exists (`functions/src/helpers/achievements.js`), and the legacy client streak writer is gone (`useDashboardData.js` now only mirrors server-owned streak data). Still open: `AchievementTrackerPanel`'s client-side list diverges from the server catalog and must be reconciled (see `DASHBOARD_UNIFICATION.md` Part 3 and `LIFELONG_GAMIFICATION_ROADMAP.md` Step 1).
 
 ### 1.5 What's genuinely strong (don't touch, build on)
 
@@ -106,6 +128,8 @@ There is also a **legacy client-side streak writer** in `useDashboardData.js:206
 | A4  | **Unify achievements server-side** — move streak/top-10 awards out of the browser, merge the 17 tracker achievements into the persisted system, award small CC per achievement, fix the dead `/profile?tab=achievements` link | Medium | Three inconsistent systems → one trustworthy one; removes client-trusted writes                          |
 | A5  | Delete the legacy client streak writer (`useDashboardData.js:206-312`), fix the stale XP mirror in `captionPricing.js`                                                                                                        | Small  | Prevents divergent streaks and misleading numbers                                                        |
 
+> 📌 **STATUS (July 2026):** A1 ✅ SHIPPED (Shop + StreakModal) · A2 ✅ SHIPPED (`season.js` archival + `SeasonRecapModal`) · A3 ✅ SHIPPED (`CorpsCoinModal`) · A4 ⚠️ PARTIAL (server catalog exists; tracker-panel reconciliation still open) · A5 ✅ SHIPPED.
+
 ### B. Give CorpsCoin a job (the sink catalog)
 
 **B1. Corps Identity Shop — the flagship.** The uniform designer and AI avatar generator already exist; attach the economy to them:
@@ -129,6 +153,8 @@ There is also a **legacy client-side streak writer** in `useDashboardData.js:206
 - League cosmetics bought from the league treasury: custom league trophy styles, banner, chat badge (2,500–10,000 CC)
 - _(Optional, later)_ Friendly matchup side-wagers, escrowed and capped (e.g., 100 CC) — opt-in, symmetric, zero scoring impact. Zero-sum transfers don't inflate the economy, but they add moderation edge cases; skip until leagues are humming.
 
+> 📌 **STATUS (July 2026):** ♻️ SUPERSEDED — `LIFELONG_GAMIFICATION_ROADMAP.md` Step 6 promotes league prediction pools from "optional, later" to the flagship social mechanic and the economy's recurring CC-circulation sink. The roadmap's position is the plan of record.
+
 **B4. Prestige sinks — for the 40,000 CC veterans:**
 
 - **Show sponsorship:** spend 10,000–25,000 CC to sponsor a show on next season's schedule — "TourStop Invitational, presented by The Ambassadors" visible to every director who registers or reads that recap. One sponsor per show, first-come or sealed-bid. Pure status, enormous drain, uses the existing schedule system.
@@ -145,6 +171,8 @@ There is also a **legacy client-side streak writer** in `useDashboardData.js:206
 
 **C3. Caption mastery tracks.** Cumulative per-caption performance across seasons ("Brass: 2,400 lifetime points → Brass Specialist III") with titles/badges. Deepens the actual strategic identity of the game (caption picking) rather than bolting on generic quests. Data already exists in recaps/season history.
 
+> 📌 **STATUS (July 2026):** C1 ⚠️ mostly SHIPPED (titles to Level 30; stipend/cosmetic-per-5-levels and the level-up celebration wiring still open) · C2 ✅ SHIPPED as the 12-tier `SeasonLadderPanel` · C3 ⏳ OPEN (roadmap Step 4).
+
 ### D. The new-director journey (first 49 days, not first 10 minutes)
 
 Onboarding today is good at minute one and silent by day two. Bridge it:
@@ -160,6 +188,8 @@ This directly addresses "new directors learning the ropes": the trade windows, s
 **D3. Rookie leagues.** Auto-offer placement into a SoundSport rookie league at onboarding (social retention is the strongest predictor in fantasy sports, and today league discovery is entirely pull-based).
 
 **D4. Class graduation ceremonies.** Unlocking A/Open/World is currently a silent boolean. Make each one a celebrated moment (modal + confetti + free class-themed cosmetic + achievement) — it's the new director's clearest "I'm getting somewhere" milestone chain.
+
+> 📌 **STATUS (July 2026):** D1 ✅ SHIPPED (`JourneyPanel` + `functions/src/callable/journey.js`) · D2 ⚠️ PARTIAL (a next-deadline countdown lives in the dashboard `ControlBar`; full deadline visibility is `DASHBOARD_UNIFICATION.md`'s scope) · D3 ⏳ OPEN (roadmap Step 6) · D4 ⚠️ PARTIAL (a `ClassUnlockCongratsModal` exists; the full ceremony — including the "earned early" asymmetry — is `PROGRESSION_ECONOMY_REDESIGN.md` Phase B step 7).
 
 ### E. Long-term director goals (beyond stacking)
 
@@ -185,6 +215,8 @@ Ordered for a donation-supported project where development time is the scarce re
 
 Explicitly dropped from the original plan: premium pass track, Stripe integration, CC bundles, and all real-money cosmetics — the project is donation-supported and the closed-loop economy is stronger for it. One optional nod to supporters: a manually granted, purely cosmetic **"Supporter" profile badge** for Buy-Me-a-Coffee donors. No gameplay effect, no store — just a visible thank-you.
 
+> 📌 **STATUS (July 2026):** Phases 1–2 are ✅ essentially SHIPPED (streak freeze, season payouts, ledger, cleanup, extended levels; achievement unification remains ⚠️ partial). Phase 3's questline is ✅ shipped; deadline visibility and rookie leagues remain open. Phases 4–6 are ⏳ OPEN — but sequencing is now owned by `LIFELONG_GAMIFICATION_ROADMAP.md` Part 4, which supersedes this table. The Shop currently sells director titles + the streak freeze only; the rest of the B-catalog is unbuilt.
+
 ---
 
 ## Part 5 — Will it feel balanced? (the math)
@@ -194,7 +226,7 @@ Balance here has two axes. **Fairness** is solved by construction: nothing purch
 - **The active-player weekly budget (~800–1,200 CC)** comfortably covers one consumable (streak freeze 300) plus one entry-tier cosmetic (~500) per week, or saves toward a 2,500 CC item in ~3 weeks. That is a healthy "always something in reach, always something to save for" cadence.
 - **Class income asymmetry is real but acceptable.** World Class show payouts are 4× SoundSport's (200 vs 50 CC/show). Since sinks are cosmetic, this is progression flavor, not unfairness — but the shop needs a 250–500 CC entry tier so rookies can buy _something_ in their first two weeks. First purchase is the moment the currency becomes real.
 - **Veteran hoards (est. 20,000–50,000 CC) are absorbed, not confiscated.** Prestige tier (10,000–25,000: sponsorships, plaques, banners) plus the full cosmetic catalog gives an opening-day catalog depth of roughly 40,000–60,000 CC for a completionist. Veterans get a shopping spree, not instant completion — and seasonal rotation (C2) keeps demand recurring afterward.
-- **XP pacing is already right.** A daily-active player earns ~450–600 XP/week → a level every ~2 weeks → World Class via XP in ~4–5 months, matching the target in `docs/GAMIFICATION_REDESIGN.md`. Extended levels at the same rate mean a title bump roughly every 10 weeks — slow enough to mean something.
+- **XP pacing is already right.** A daily-active player earns ~450–600 XP/week → a level every ~2 weeks → World Class via XP in ~4–5 months, matching the target in `docs/GAMIFICATION_REDESIGN.md`. Extended levels at the same rate mean a title bump roughly every 10 weeks — slow enough to mean something. *(📌 ♻️ SUPERSEDED — this estimate assumed `awardXP` fires; it doesn't. Real rate ≈ 385 XP/week. See `PROGRESSION_ECONOMY_REDESIGN.md` §1.2 and §4 for the corrected numbers and the rebalanced target.)*
 - **Season payouts (Phase 1) won't inflate.** Even the champion's 1,000 CC + league pool is ~1 week of active income, arriving once per 49 days.
 - **One caution: AI avatar regeneration costs real API money.** Pricing regen tokens in CC (250+) conveniently rate-limits actual infrastructure spend — keep that sink priced firmly and consider a hard daily cap.
 - **Instrument it.** The `corpsCoinHistory` ledger already records every transaction with a type. A one-page admin stat — total CC minted vs. sunk per week — is the only dashboard needed to tune prices after launch. Expect to adjust cosmetic prices once, about one season in.
