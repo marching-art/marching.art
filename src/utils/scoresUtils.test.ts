@@ -23,6 +23,21 @@ describe('getSoundSportRating', () => {
       expect(RATING_CONFIG[rating]).toBeTruthy();
     }
   });
+
+  it('agrees with the dashboard threshold table (the copies once diverged)', async () => {
+    const { SOUNDSPORT_RATING_THRESHOLDS, getSoundSportRating: dashboardRating } = await import(
+      '../components/Dashboard/sections/constants'
+    );
+    // Same tier at every boundary and between-boundary score
+    for (const score of [0, 64.9, 65, 74.9, 75, 84.9, 85, 90, 100]) {
+      expect(dashboardRating(score).rating).toBe(getSoundSportRating(score));
+    }
+    // And the raw thresholds match the canonical function's cutoffs
+    const mins = Object.fromEntries(
+      SOUNDSPORT_RATING_THRESHOLDS.map((t: { rating: string; min: number }) => [t.rating, t.min])
+    );
+    expect(mins).toEqual({ Gold: 85, Silver: 75, Bronze: 65, Participation: 0 });
+  });
 });
 
 describe('seededShuffle', () => {
