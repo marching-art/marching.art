@@ -36,7 +36,7 @@ const SECTIONS = [
   {
     n: 6,
     title: 'The tour: shows, travel, majors',
-    body: `Pick up to 4 shows a week from the same schedule every class uses. Miles cost Corps Budget and stamina — routing matters, and southern venues in July drain more. Three majors anchor the season for everyone: the Southwestern Championship in Dallas (Day 28), the Southeastern in Atlanta (Day 35), and the two-night Eastern Classic in Allentown (Days 41–42, one registration covers both nights, you perform your assigned night). Podium corps attend all three automatically, plus Championship Week.`,
+    body: `Pick up to 4 shows a week from the same schedule every class uses. Miles cost Corps Budget and stamina — routing matters, and southern venues in July drain more. Three majors anchor the season for everyone: the Southwestern Championship in Dallas (Day 28), the Southeastern in Atlanta (Day 35), and the two-night Eastern Classic in Allentown (Days 41–42, one registration covers both nights, you perform your assigned night). Podium corps attend all three automatically, plus Championship Week in Indianapolis: A Class and Open Class run Prelims and Class Finals on Days 47–48; World Class runs Prelims, Semifinals, and Finals through Day 49.`,
   },
   {
     n: 7,
@@ -50,23 +50,38 @@ const SECTIONS = [
   },
   {
     n: 9,
+    title: 'Divisions: A Class, Open Class, World Class',
+    body: `Every corps starts in A Class. At each season's end the whole veteran field is assessed against published cutoffs (balanced thirds of the finals scores): finish above the next division's cutoff and you rise — one division per season, A to Open to World, the same climb corps made in the old days. Falling below your division's line gives you one grace season; two straight seasons below it and you drop one division. Sit out a season and your seat is held once; miss two or more and you restart in A Class. Each division crowns its own champions and medals at Finals.`,
+  },
+  {
+    n: 10,
     title: 'Money: Corps Budget and CorpsCoin',
     body: `Your Corps Budget is the season operating ledger: funded by an optional capped CorpsCoin commitment plus show payouts and fundraiser blocks; spent on travel, food, camp days, and clinicians. CorpsCoin is the game-wide currency. Nothing you can buy ever adds a point to a score — donations and purchases grant zero competitive advantage, ever.`,
   },
   {
-    n: 10,
+    n: 11,
     title: 'Staff',
-    body: `Each season a shared free-agency market opens: caption techs, a tour manager, a program coordinator. Every person signs with exactly ONE corps — scarcity is real, and contracts lapse each season, so there is always something to do with money and never a "maxed out" endgame.`,
+    body: `Staff are persistent people with careers. Each season a shared market opens — caption techs, a tour manager, a program coordinator — and every person signs with exactly ONE corps. Contracts run 1–3 seasons at the salary locked at signing; tenure raises both a person's tier and their price, so a 25-year legend costs a fortune while the total staff boost stays capped — decisions beat payroll, always. You can post a contract to the mid-season transfer market (the buyer pays a premium, you recoup the rest), or retrain a person into a new caption (reduced boost while they learn). Careers end in retirement around season 30 — Hall of Fame stuff — and fresh talent enters every season, so the market never maxes out.`,
   },
   {
-    n: 11,
+    n: 12,
     title: 'Joint rehearsals',
     body: `Propose a shared rehearsal day with another corps. If they accept: Full Ensemble sharpens for both, morale lifts, and each director privately receives the scrimmage report — a caption-by-caption head-to-head, the only scouting outside a shared floor. One per week; you must be within a day trip of each other on tour, or the proposer pays the travel. Repeat pairings decay, so spread the handshakes around.`,
   },
   {
-    n: 12,
+    n: 13,
+    title: 'Spring training (live seasons)',
+    body: `During a live season the first 21 calendar days are spring training: 20 blocks a day of pure install (content-heavy, no shows, no scores), camp days that cost a little Budget when you rehearse, and the whole thing closes with the Family Day exhibition — a private diagnostic score only you see, so you know exactly what you're taking on tour. Off-seasons skip camp and open competition-ready.`,
+  },
+  {
+    n: 14,
+    title: 'Host your own show',
+    body: `Any director can rent a venue and put a real event on the season schedule — open enrollment for every class, and you earn CorpsCoin for every corps that performs. Start with a high school stadium (day-one affordable), and run successful shows to unlock the College Bowl and eventually an NFL stadium. A well-drawn show profits; a great host funds a whole corps this way.`,
+  },
+  {
+    n: 15,
     title: 'The record',
-    body: `Every season is archived forever: your profile carries the full season history, medals, and trophies; champions enter the Hall of Champions; and the weekly Podium Report power rankings chart the whole class. The recap sheet is built to be screenshotted — argue about it somewhere public.`,
+    body: `Every season is archived forever: your profile carries the full season history, medals, and trophies; champions enter the Hall of Champions; and the weekly Podium Report power rankings chart the whole class. Fans vote a Fan Favorite each season — prelims ballots at every major, finals during Championship Week, banner at season end (cosmetic, always). Your trajectory chart draws real historical ghosts — Crown '12, Bluecoats '10, Jersey Surf, Pioneer — so you always know whose season you're living. The recap sheet is built to be screenshotted — argue about it somewhere public.`,
   },
 ];
 
