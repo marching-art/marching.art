@@ -2,7 +2,8 @@
 
 **A director-simulation game class for marching.art, spiritual successor to Fantasy Marching Arts**
 
-Status: Proposal v1 · July 2026
+Status: Proposal v1.1 · July 2026 — v1 open questions resolved (guard sectionals in, live
+season in with spring training design, no evening reveal window, director-hosted events added)
 
 ---
 
@@ -134,7 +135,7 @@ called it right.
 
 1. Open the dashboard → Podium tab. **Director's Sheet** shows today: rehearsal day, show day, or
    travel day, plus corps condition (stamina, morale) and yesterday's caption deltas.
-2. **Allocate today's rehearsal blocks** (the six blocks, §5.2) — or declare a light day / full rest
+2. **Allocate today's rehearsal blocks** (the seven blocks, §5.2) — or declare a light day / full rest
    day. One decision, real consequences, informed by last night's recap.
 3. On show days: watch for the nightly score drop; read the recap; compare caption-by-caption
    against rivals.
@@ -255,10 +256,10 @@ authentic (it's the Blue-Devils-hard-book gambit), but the condition system (§5
 expensive to actually clean. The interesting builds mix: an 8 in brass and GE1, 5s elsewhere, is a
 "music corps" identity that the recap will reflect all season.
 
-### 5.2 Rehearsal — the six blocks
+### 5.2 Rehearsal — the seven blocks
 
 The daily verb. Each rehearsal day grants a number of **blocks** (base 3; modified by day type and
-condition). Each block is assigned to one of six rehearsal types. Caption effect matrix
+condition). Each block is assigned to one of seven rehearsal types. Caption effect matrix
 (P = primary gain, S = secondary, in both `content` and `clean` with a season-phase-dependent
 split):
 
@@ -266,6 +267,7 @@ split):
 |---|---|---|---|---|---|---|---|---|
 | **Visual Basics** | | | **P** | S | S | | | |
 | **Visual Ensemble** | | **P** | S | **P** | S | | | |
+| **Guard Sectionals** | | S | | S | **P** | | | |
 | **Front Ensemble** | S | | | | | | S | **P** |
 | **Brass Sectionals** | S | | | | | **P** | S | |
 | **Percussion Sectionals** | | | | | | | S | **P** |
@@ -273,10 +275,9 @@ split):
 
 Notes:
 
-- Color guard (`CG`) trains through Visual Ensemble and Full Ensemble — the guard cleans inside the
-  ensemble, which is defensible and keeps the block list at the canonical six. A dedicated
-  **Guard Sectional** seventh block is a fast follow if CG-focused builds feel starved (flagged in
-  §12 open questions).
+- Color guard (`CG`) has its own sectional block (primary CG, secondary VA/GE2 — the guard *is*
+  a visual-effect engine) and still gains secondarily from Visual Ensemble and Full Ensemble, so
+  a guard-forward build is viable and an ensemble-only guard stays merely adequate.
 - **Diminishing returns within a day:** the 2nd consecutive block of the same type yields ~60%, the
   3rd ~35%. Balance is mechanically rewarded, spam is not — this is the direct implementation of
   "realistic variation in caption peaks and lows based on a balance of rehearsal."
@@ -390,6 +391,58 @@ Phase-4 scope, listed because it is *why* FMA survived abandonment:
 - **Leagues:** Podium corps join existing leagues; weekly head-to-head uses Podium scores within
   Podium matchups only.
 
+### 5.9 Live seasons and spring training
+
+Podium runs in **both** season types on the same schedule system, with no schedule changes:
+
+- **Off-season (49 days):** day 1 is the first show, as today. The registration window doubles as
+  implicit pre-season (challenge levels, staff, show concept) and captions initialize from the
+  corpus baseline for the chosen challenge profile.
+- **Live season (70 days = 21 spring training + 49 competition):** the 21 spring-training days —
+  which the fantasy classes skip over entirely — become Podium's best content, not a problem to
+  integrate:
+  - **Move-in is a purchase decision.** Directors choose their move-in day (up to 21 days early).
+    Each spring-training day costs CorpsCoin (housing + food for a corps that isn't earning), so
+    a long camp is a real investment — exactly the economics that separate real corps. A late,
+    cheap move-in is playable; it just arrives at the first show dirtier.
+  - **All-days:** spring-training days grant 4–5 blocks (vs. 3 in-season), no travel costs, and
+    feed `content` almost exclusively — this is where the book gets installed. Stamina drains
+    faster and morale sags under consecutive max-block days ("the grind of everydays"), so even
+    camp needs rest-day rhythm.
+  - **Family Day:** the final spring-training day is an unscored exhibition run-through that
+    returns a full diagnostic caption recap — your first look at the season, on the record for
+    you, invisible to the leaderboard. It's the calibration checkpoint and a natural community
+    moment (preview-show chatter is a DCI ritual).
+  - The strategic identity of spring training is the install-vs-clean dial: come out of camp with
+    90% content installed and filthy, or 70% and performance-ready. Both are historically
+    authentic openings and the trajectory bands will show the trade-off all June.
+
+### 5.10 Director-hosted competitions (all classes)
+
+The FMA event-hosting system, rebuilt without its failure modes — and scoped game-wide, not just
+Podium:
+
+- **Hosting:** any director with enough CorpsCoin can host a show on an open date in the current
+  season schedule: pick the day, name the event, choose a **venue tier** (high-school stadium →
+  college bowl → NFL stadium: rising rental cost, rising corps capacity and payout ceiling).
+  The event appears in the schedule subcollection alongside the historical events, selectable by
+  every class through the existing `selectUserShows` flow.
+- **Open enrollment, no gatekeeping.** FMA hosts accepted/declined applicants, which let
+  profit-maximizing hosts exclude low-draw groups and froze out newer players (a documented
+  decade-long complaint). Here enrollment is first-come within venue capacity, full stop.
+- **Payout by attendance:** the host earns CorpsCoin per enrolled corps (scaled by venue tier),
+  paid at the nightly processing of the event — instant gratification, not FMA's season-end lump.
+  A full NFL-tier show profits well; a half-empty one loses money. The skill is picking the right
+  date (avoid clashing with regional anchors), right tier, and building an event reputation.
+- **Prestige loop:** events persist as named history — "The 5th Annual Rohn Invitational" — with
+  the event's past winners on its page. Hosts can fund a trophy tier (extra CorpsCoin sink) that
+  writes a real achievement to the winners' trophy cases. Leagues can host from the league bank
+  (FMA's league-championship culture, productized).
+- **Guardrails:** hosted-event cap per day (protects schedule legibility), host must field a corps
+  that season, payouts tuned so the average host roughly breaks even and a *good* host profits —
+  hosting is a skill sink, not a faucet. Scores at hosted events are computed identically to any
+  other show; hosting confers zero competitive advantage.
+
 ---
 
 ## 6. UI — What Renders in Zone C
@@ -399,7 +452,7 @@ When `activeCorpsClass === 'podiumClass'`, `Dashboard.jsx` Zone C swaps
 `data-tour` region):
 
 1. **`RehearsalPlanner`** *(replaces ActiveLineupTable — the primary interactive surface)*
-   Today's day type (rehearsal / show / travel), block allocator with the six blocks as large
+   Today's day type (rehearsal / show / travel), block allocator with the seven blocks as large
    tap-targets, live yield preview per block given current phase/condition/staff, the
    "Action Complete" result panel, and rest-day / light-day declarations. One-thumb mobile
    operation is a hard requirement — this is the daily habit surface.
@@ -551,21 +604,61 @@ trajectory bands. Everything after deepens rather than gates.
 
 ---
 
-## 12. Open Questions
+## 12. Decisions & Open Questions
 
-1. **Guard sectional as a 7th block** — ship with six (user-canonical) and watch CG-build health,
-   or include from day one?
-2. **Live-season behavior** — during live seasons the schedule has 21 spring-training days before
-   day 1. Proposal: Podium treats spring training as pure rehearsal days (content installation
-   with no shows) — arguably the *best* version of the class — but it doubles the calibration
-   surface. Off-season-only for v1?
-3. **Point-cap semantics** — Podium has no lineup and no cap; `currentPointCap` on
-   `game-settings/season` is irrelevant to it. Confirm nothing downstream assumes every class has
-   a cap.
-4. **Nightly-drop presentation** — scores currently process ~02:00 ET. Keep the processing time but
-   add an evening "recap reveal" moment (notification + feed post at 8 PM ET for the *previous*
-   night's full recap), or move Podium's reveal to align with FMA's sacred 8 PM ritual?
-5. **Name** — Podium Class is the recommendation; Circuit/Command/Maestro are on the bench.
+**Resolved in v1.1:**
+
+1. **Guard Sectionals is a canonical seventh block** (§5.2) — CG primary, VA/GE2 secondary.
+2. **Live season ships**, with spring training as a purchasable, block-rich install camp ending in
+   the Family Day diagnostic exhibition (§5.9).
+3. **No evening recap reveal.** An 8 PM ET reveal would carve a dead no-rehearse window between
+   reveal and the 02:00 processing run. Scores land in the existing nightly job and the recap is
+   waiting at breakfast — the communal moment is the *morning* Director's Sheet, and the daily
+   rehearsal decision is made with fresh recap data in hand, which is better game design anyway.
+4. **Same schedule system, unchanged** — both season types, plus director-hosted events inserted
+   into the same schedule subcollection (§5.10).
+5. **Director-hosted competitions are in scope for all classes** (§5.10).
+
+**Still open:**
+
+1. **Point-cap semantics** — Podium has no lineup and no cap; confirm nothing downstream assumes
+   every class has a cap (`currentPointCap`, Lineup Analyzer efficiency math, trade windows).
+2. **Name** — Podium Class is the recommendation; Circuit/Command/Maestro on the bench.
+3. **Hosted-event pricing curve** — venue rental vs. per-corps payout constants need the §9
+   simulation harness treatment before launch (economy inflation risk).
+4. **Division cut population** — the Podium corps count that triggers multi-division seeding.
+
+---
+
+## 13. Round-Two Concepts (from FMA analysis, not yet committed)
+
+Ideas worth holding in the backlog, each traceable to an observed FMA dynamic:
+
+- **Regional anchor days.** Because directors pick 4 shows/week, two rivals might not meet for
+  weeks — FMA never had this problem because every event was globally visible. Designate 3–4
+  existing major shows per season (the real Louisville/Indy-style regionals already in the
+  historical schedule) as auto-enrolled, travel-subsidized, full-field meets for Podium. They
+  become calibration benchmarks (a veteran Rework-thread request), guaranteed rivalry collisions,
+  and natural seeding input for championship performance order.
+- **Historical shadows.** The engine already knows every historical caption score by day. The
+  trajectory panel can show "your 84.3 tonight — 2012 Crown was 84.1 on this day." Zero mechanics,
+  pure delight for the DCI-literate, and it advertises the realism calibration constantly.
+- **Assistant director (plan templates).** Set a default weekly rehearsal plan that auto-executes
+  at ~85% yield on days you don't log in. Active play strictly dominates, but a vacation doesn't
+  wreck a season — the healthy version of FMA's passive campaigns, and the fix for its
+  "inactive groups still score" resentment *and* its 3-logins-a-day energy pressure at once.
+- **Joint rehearsals.** Two directors mutually schedule a shared rehearsal day: both corps get a
+  small ensemble/GE yield bonus and a private head-to-head caption comparison. Weekly cap,
+  mutual opt-in. Social texture that mirrors real corps sharing housing sites.
+- **Deterministic climate.** Venue geography + calendar date give a published heat index that
+  scales stamina drain (a July Texas swing costs more than an Ohio week). No RNG — a routing-
+  strategy layer squeezed from data the schedule already has.
+- **Director Rating.** FMA's cross-circuit aggregate rating (the Player Directory sort key) has a
+  natural analogue: a lifetime rating aggregating *placements* (never scores) across all five
+  classes. Slots into the existing lifetime leaderboard job.
+- **Named finals hardware.** Finals-week caption trophies with persistent names — and naming them
+  after community legends is exactly the Hall-of-Fame-into-product move FMA's volunteers would
+  have made themselves.
 
 ---
 
