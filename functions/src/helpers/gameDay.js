@@ -106,8 +106,41 @@ function getCurrentSeasonWeek(seasonData, now = new Date()) {
   return Math.max(1, Math.ceil((diffInDays + 1 - springTrainingDays) / 7));
 }
 
+/**
+ * 1-based calendar day of the game day currently IN PROGRESS (Phase 1.3).
+ * The nightly processors score the completed day; interactive verbs (Podium
+ * rehearsal block allocation) act on the active one — always exactly
+ * completed + 1 because both share the 2 AM ET boundary. Server-side
+ * validation for "today" MUST use this, never client-supplied days
+ * (PODIUM_CLASS_DESIGN.md §14.2.4).
+ *
+ * @param {Date} seasonStartDate - Season start (UTC midnight).
+ * @param {Date} [now] - Injectable clock for tests; defaults to now.
+ * @returns {number}
+ */
+function getActiveCalendarDay(seasonStartDate, now = new Date()) {
+  return getCompletedCalendarDay(seasonStartDate, now) + 1;
+}
+
+/**
+ * Map a calendar day to a competition day by removing the season's
+ * spring-training offset (live seasons only; off-seasons have none).
+ * Values <1 mean spring training; >49 means the season is over.
+ *
+ * @param {number} calendarDay
+ * @param {Object} seasonData - game-settings/season doc data.
+ * @returns {number}
+ */
+function toCompetitionDay(calendarDay, seasonData) {
+  const springTrainingDays =
+    seasonData?.status === "live-season" ? seasonData?.schedule?.springTrainingDays || 21 : 0;
+  return calendarDay - springTrainingDays;
+}
+
 module.exports = {
   getCompletedGameDayET,
   getCompletedCalendarDay,
+  getActiveCalendarDay,
+  toCompetitionDay,
   getCurrentSeasonWeek,
 };

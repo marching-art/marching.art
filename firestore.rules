@@ -69,12 +69,27 @@ function corpsClassUntouched(corpsClass) {
      request.resource.data.get(['corps', corpsClass, 'seasonRankOf'], null) == resource.data.get(['corps', corpsClass, 'seasonRankOf'], null));
 }
 
+// Podium Class competitive state (corps.podiumClass.podium.*) is written
+// exclusively by Cloud Functions: captions, condition, budget, staff and
+// reputation ARE the game, so a client write here would be score forgery
+// (PODIUM_CLASS_DESIGN.md §14.2.5). Inert until podiumClass entries exist
+// on profiles (Phase 2) — a missing entry passes untouched.
+function podiumStateUntouched() {
+  return request.resource.data.get(['corps', 'podiumClass'], null) == null ||
+    request.resource.data.get(['corps', 'podiumClass', 'podium'], null)
+      == resource.data.get(['corps', 'podiumClass', 'podium'], null);
+}
+
 // SoundSport lineups are created during client-side onboarding, so only its
 // score is guarded; the three competitive classes get the full guard.
+// podiumClass gets the standard class guard (name/score/rank) plus the
+// podium-state guard above.
 function touchesProtectedCorpsFields() {
   return !corpsClassUntouched('worldClass') ||
     !corpsClassUntouched('openClass') ||
     !corpsClassUntouched('aClass') ||
+    !corpsClassUntouched('podiumClass') ||
+    !podiumStateUntouched() ||
     request.resource.data.get(['corps', 'soundSport', 'totalSeasonScore'], null)
       != resource.data.get(['corps', 'soundSport', 'totalSeasonScore'], null);
 }
