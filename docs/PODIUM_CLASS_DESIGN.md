@@ -403,7 +403,7 @@ All existing currency; new recurring sinks (the FMA community's "nothing to spen
 
 | Sink | Cost shape | Effect |
 |---|---|---|
-| **Class unlock** | Level 8 or 4,000 CorpsCoin (between Open and World) | Access to Podium Class |
+| ~~Class unlock~~ | **None — Podium is always open, always playable (the SoundSport model)** | Available from account creation; no level gate, no CorpsCoin cost, no registration cutoff |
 | **Caption staff** (8 slots + Tour Manager + Program Coordinator) | Per-season salaries from Corps Budget — see *The staff economy* below | +yield% on mapped rehearsal blocks (capped); ops staff reduce travel/condition costs |
 | **Clinicians** (Rework request) | One-off, 3-day engagement | Temporary large yield boost on one block type; the "my brass is drowning" panic button |
 | **Travel** | Per-mile per show | The routing cost (§5.3) |
@@ -943,7 +943,7 @@ New stage `processPodiumDay(seasonUid, day)` after fantasy scoring, inside the e
 (`GAME_CONFIG.corpsClasses`) · `sections/constants.js` (unlock level/cost) ·
 `src/utils/captionPricing.js` (unlock mirrors; Podium has **no point cap** — flag it exempt) ·
 `functions/src/callable/lineups.js` `validClasses` (Podium must be *rejected* by `saveLineup` — it
-has no lineup) · `registerCorps.js` (registration lock: 5 weeks, matching Open) ·
+has no lineup) · `registerCorps.js` (registration lock: 0 weeks, matching SoundSport — always joinable) ·
 `economy.js` (unlock cost, participation reward) · `scoring.js` (excluded from `RANKED_CLASSES`) ·
 `firestore.rules`.
 
@@ -994,8 +994,9 @@ Three governing principles, restated as build constraints:
 - **Fantasy pipeline untouched.** The nightly job is restructured into *stages* (Phase 1), but
   the fantasy stage's inputs, outputs, and timing are byte-identical; the Podium stage runs after
   it, isolated, with its own run-guard lease — a Podium failure can never block fantasy scoring.
-- **Cohort rollout.** Flag → admin allowlist → beta cohort → level-gated general unlock. Each
-  widening is a config change, not a deploy.
+- **Cohort rollout.** Flag → admin allowlist → beta cohort → open to everyone. Each widening is
+  a config change, not a deploy. (The cohort gate exists only during the beta; at launch Podium
+  is permanently open.)
 - **Harness before players.** No phase that changes scoring math ships without the simulation
   harness passing its assertions (§9, §5.13, §5.6).
 
@@ -1119,8 +1120,9 @@ Three governing principles, restated as build constraints:
     show-selection latency — the "simple like FMA" principle is measured, not asserted.
 8.3 Post-season: beta recap with the cohort (the FMA-Rework-thread constituency review),
     final constants locked.
-8.4 General unlock (Level 8 / 4,000 CorpsCoin) at the next season boundary; launch
-    announcement; live-season support (spring training) enabled the following live season.
+8.4 General availability at the next season boundary — **no unlock gate**: Podium is always
+    open, always playable, like SoundSport; launch announcement; live-season support (spring
+    training) enabled the following live season.
 
 **Sequencing rationale:** 0–1 are risk-free and independently valuable (the registry pays down
 existing tech debt). 2 is the minimum lovable product — the daily habit with real scores. 3–5
@@ -1234,6 +1236,12 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     the multi-group "portfolio" itch is already served by running Podium alongside the four
     fantasy classes. Every system in this doc (auditions, blocks, staff market, reputation,
     divisions) assumes and requires the single-corps model.
+20. **Podium is always open, always playable — the SoundSport model.** No level gate, no
+    CorpsCoin unlock, no registration cutoff (0-week lock). Anyone can found a corps on any day
+    of any season; mid-season joiners get the §9 catch-up baseline and the rookie journey.
+    Supersedes the earlier Level-8 / 4,000-CorpsCoin unlock. Rationale: the climb to Champion
+    Status is the gate — entry never should be, and an always-open Podium is the game's best
+    front door for brand-new players.
 
 **Resolved in v1.9:**
 
