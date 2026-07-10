@@ -1,0 +1,5374 @@
+{
+  "meta": {
+    "generatedFrom": "pressboxImporter/output",
+    "distinctRawLocations": 414,
+    "entries": 412,
+    "resolution": {
+      "exact": 369,
+      "fuzzy": 32,
+      "centroid": 11,
+      "unresolved": 0
+    },
+    "geodata": "GeoNames cities1000 via all-the-cities (CC-BY 4.0)"
+  },
+  "venues": {
+    "akron, ohio": {
+      "venueId": "akron-oh",
+      "city": "Akron",
+      "region": "OH",
+      "country": "US",
+      "lat": 41.0814,
+      "lng": -81.519,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Akron, Ohio"
+      ]
+    },
+    "albuquerque, new mexico": {
+      "venueId": "albuquerque-nm",
+      "city": "Albuquerque",
+      "region": "NM",
+      "country": "US",
+      "lat": 35.0845,
+      "lng": -106.6511,
+      "source": "exact",
+      "eventCount": 8,
+      "rawVariants": [
+        "Albuquerque, New Mexico"
+      ]
+    },
+    "alexandria, minnesota": {
+      "venueId": "alexandria-mn",
+      "city": "Alexandria",
+      "region": "MN",
+      "country": "US",
+      "lat": 45.8852,
+      "lng": -95.3775,
+      "source": "exact",
+      "eventCount": 4,
+      "rawVariants": [
+        "Alexandria, Minnesota"
+      ]
+    },
+    "allentown pennsylvania": {
+      "venueId": "allentown-pa",
+      "city": "Allentown",
+      "region": "PA",
+      "country": "US",
+      "lat": 40.6084,
+      "lng": -75.4902,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Allentown. Pennsylvania"
+      ]
+    },
+    "allentown, pennsylvania": {
+      "venueId": "allentown-pa",
+      "city": "Allentown",
+      "region": "PA",
+      "country": "US",
+      "lat": 40.6084,
+      "lng": -75.4902,
+      "source": "exact",
+      "eventCount": 26,
+      "rawVariants": [
+        "Allentown, Pennsylvania"
+      ]
+    },
+    "alpharetta, georgia": {
+      "venueId": "alpharetta-ga",
+      "city": "Alpharetta",
+      "region": "GA",
+      "country": "US",
+      "lat": 34.0754,
+      "lng": -84.2941,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Alpharetta, Georgia"
+      ]
+    },
+    "alton, illinois": {
+      "venueId": "alton-il",
+      "city": "Alton",
+      "region": "IL",
+      "country": "US",
+      "lat": 38.8906,
+      "lng": -90.1843,
+      "source": "exact",
+      "eventCount": 7,
+      "rawVariants": [
+        "Alton, Illinois"
+      ]
+    },
+    "altoona, pennsylvania": {
+      "venueId": "altoona-pa",
+      "city": "Altoona",
+      "region": "PA",
+      "country": "US",
+      "lat": 40.5187,
+      "lng": -78.3947,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Altoona, Pennsylvania"
+      ]
+    },
+    "amherst, ohio": {
+      "venueId": "amherst-oh",
+      "city": "Amherst",
+      "region": "OH",
+      "country": "US",
+      "lat": 41.3978,
+      "lng": -82.2224,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Amherst, Ohio"
+      ]
+    },
+    "ankeny, iowa": {
+      "venueId": "ankeny-ia",
+      "city": "Ankeny",
+      "region": "IA",
+      "country": "US",
+      "lat": 41.7297,
+      "lng": -93.6058,
+      "source": "exact",
+      "eventCount": 7,
+      "rawVariants": [
+        "Ankeny, Iowa"
+      ]
+    },
+    "annapolis, maryland": {
+      "venueId": "annapolis-md",
+      "city": "Annapolis",
+      "region": "MD",
+      "country": "US",
+      "lat": 38.9786,
+      "lng": -76.4918,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Annapolis, Maryland"
+      ]
+    },
+    "arkadelphia, arkansas": {
+      "venueId": "arkadelphia-ar",
+      "city": "Arkadelphia",
+      "region": "AR",
+      "country": "US",
+      "lat": 34.1209,
+      "lng": -93.0538,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Arkadelphia, Arkansas"
+      ]
+    },
+    "arlington, virginia": {
+      "venueId": "arlington-va",
+      "city": "Arlington",
+      "region": "VA",
+      "country": "US",
+      "lat": 38.881,
+      "lng": -77.1043,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Arlington, Virginia"
+      ]
+    },
+    "atascadero, california": {
+      "venueId": "atascadero-ca",
+      "city": "Atascadero",
+      "region": "CA",
+      "country": "US",
+      "lat": 35.4894,
+      "lng": -120.6707,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Atascadero, California"
+      ]
+    },
+    "atlanta, georgia": {
+      "venueId": "atlanta-ga",
+      "city": "Atlanta",
+      "region": "GA",
+      "country": "US",
+      "lat": 33.749,
+      "lng": -84.388,
+      "source": "exact",
+      "eventCount": 13,
+      "rawVariants": [
+        "Atlanta, Georgia"
+      ]
+    },
+    "auburn, washington": {
+      "venueId": "auburn-wa",
+      "city": "Auburn",
+      "region": "WA",
+      "country": "US",
+      "lat": 47.3073,
+      "lng": -122.2284,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Auburn, Washington"
+      ]
+    },
+    "austin, texas": {
+      "venueId": "austin-tx",
+      "city": "Austin",
+      "region": "TX",
+      "country": "US",
+      "lat": 30.2672,
+      "lng": -97.7431,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Austin, Texas"
+      ]
+    },
+    "avon lake, ohio": {
+      "venueId": "avon-lake-oh",
+      "city": "Avon Lake",
+      "region": "OH",
+      "country": "US",
+      "lat": 41.5053,
+      "lng": -82.0282,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Avon Lake, Ohio"
+      ]
+    },
+    "bakersfield, california": {
+      "venueId": "bakersfield-ca",
+      "city": "Bakersfield",
+      "region": "CA",
+      "country": "US",
+      "lat": 35.3733,
+      "lng": -119.0187,
+      "source": "exact",
+      "eventCount": 7,
+      "rawVariants": [
+        "Bakersfield, California"
+      ]
+    },
+    "baton rouge, louisiana": {
+      "venueId": "baton-rouge-la",
+      "city": "Baton Rouge",
+      "region": "LA",
+      "country": "US",
+      "lat": 30.4433,
+      "lng": -91.1875,
+      "source": "exact",
+      "eventCount": 6,
+      "rawVariants": [
+        "Baton Rouge, Louisiana"
+      ]
+    },
+    "battle creek, michigan": {
+      "venueId": "battle-creek-mi",
+      "city": "Battle Creek",
+      "region": "MI",
+      "country": "US",
+      "lat": 42.3173,
+      "lng": -85.1782,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Battle Creek, Michigan"
+      ]
+    },
+    "bealton, virginia": {
+      "venueId": "bealeton-va",
+      "city": "Bealeton",
+      "region": "VA",
+      "country": "US",
+      "lat": 38.5718,
+      "lng": -77.7639,
+      "source": "fuzzy",
+      "eventCount": 1,
+      "rawVariants": [
+        "Bealton, Virginia"
+      ]
+    },
+    "belding, michigan": {
+      "venueId": "belding-mi",
+      "city": "Belding",
+      "region": "MI",
+      "country": "US",
+      "lat": 43.0978,
+      "lng": -85.2289,
+      "source": "exact",
+      "eventCount": 7,
+      "rawVariants": [
+        "Belding, Michigan"
+      ]
+    },
+    "bellflower, california": {
+      "venueId": "bellflower-ca",
+      "city": "Bellflower",
+      "region": "CA",
+      "country": "US",
+      "lat": 33.8817,
+      "lng": -118.117,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Bellflower, California"
+      ]
+    },
+    "bensalem, pennsylvania": {
+      "venueId": "bensalem-pa",
+      "city": "Bensalem",
+      "region": "PA",
+      "country": "US",
+      "lat": 40.3939,
+      "lng": -76.8427,
+      "source": "centroid",
+      "eventCount": 1,
+      "rawVariants": [
+        "Bensalem, Pennsylvania"
+      ]
+    },
+    "benson, north carolina": {
+      "venueId": "benson-nc",
+      "city": "Benson",
+      "region": "NC",
+      "country": "US",
+      "lat": 35.3821,
+      "lng": -78.5486,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Benson, North Carolina"
+      ]
+    },
+    "bentonville, arkansas": {
+      "venueId": "bentonville-ar",
+      "city": "Bentonville",
+      "region": "AR",
+      "country": "US",
+      "lat": 36.3728,
+      "lng": -94.2088,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Bentonville, Arkansas"
+      ]
+    },
+    "beverly, massachusetts": {
+      "venueId": "beverly-ma",
+      "city": "Beverly",
+      "region": "MA",
+      "country": "US",
+      "lat": 42.5584,
+      "lng": -70.88,
+      "source": "exact",
+      "eventCount": 7,
+      "rawVariants": [
+        "Beverly, Massachusetts"
+      ]
+    },
+    "birmingham, alabama": {
+      "venueId": "birmingham-al",
+      "city": "Birmingham",
+      "region": "AL",
+      "country": "US",
+      "lat": 33.5207,
+      "lng": -86.8025,
+      "source": "exact",
+      "eventCount": 4,
+      "rawVariants": [
+        "Birmingham, Alabama"
+      ]
+    },
+    "blackwood, new jersey": {
+      "venueId": "blackwood-nj",
+      "city": "Blackwood",
+      "region": "NJ",
+      "country": "US",
+      "lat": 39.8023,
+      "lng": -75.0641,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Blackwood, New Jersey"
+      ]
+    },
+    "bloomington normal, illinois": {
+      "venueId": "bloomington-il",
+      "city": "Bloomington",
+      "region": "IL",
+      "country": "US",
+      "lat": 40.4842,
+      "lng": -88.9937,
+      "source": "fuzzy",
+      "eventCount": 2,
+      "rawVariants": [
+        "Bloomington/Normal, Illinois"
+      ]
+    },
+    "bloomington, indiana": {
+      "venueId": "bloomington-in",
+      "city": "Bloomington",
+      "region": "IN",
+      "country": "US",
+      "lat": 39.1653,
+      "lng": -86.5264,
+      "source": "exact",
+      "eventCount": 5,
+      "rawVariants": [
+        "Bloomington, Indiana"
+      ]
+    },
+    "bloomington-normal illinois": {
+      "venueId": "bloomington-il",
+      "city": "Bloomington",
+      "region": "IL",
+      "country": "US",
+      "lat": 40.4842,
+      "lng": -88.9937,
+      "source": "fuzzy",
+      "eventCount": 1,
+      "rawVariants": [
+        "Bloomington-Normal. Illinois"
+      ]
+    },
+    "bloomington-normal, illinois": {
+      "venueId": "bloomington-il",
+      "city": "Bloomington",
+      "region": "IL",
+      "country": "US",
+      "lat": 40.4842,
+      "lng": -88.9937,
+      "source": "fuzzy",
+      "eventCount": 6,
+      "rawVariants": [
+        "Bloomington-Normal, Illinois"
+      ]
+    },
+    "boise, idaho": {
+      "venueId": "boise-id",
+      "city": "Boise",
+      "region": "ID",
+      "country": "US",
+      "lat": 43.6135,
+      "lng": -116.2035,
+      "source": "exact",
+      "eventCount": 8,
+      "rawVariants": [
+        "Boise, Idaho"
+      ]
+    },
+    "bowling green, ohio": {
+      "venueId": "bowling-green-oh",
+      "city": "Bowling Green",
+      "region": "OH",
+      "country": "US",
+      "lat": 41.3748,
+      "lng": -83.6513,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Bowling Green, Ohio"
+      ]
+    },
+    "bowling, ohio": {
+      "venueId": "bowling-green-oh",
+      "city": "Bowling Green",
+      "region": "OH",
+      "country": "US",
+      "lat": 41.3748,
+      "lng": -83.6513,
+      "source": "fuzzy",
+      "eventCount": 1,
+      "rawVariants": [
+        "Bowling, Ohio"
+      ]
+    },
+    "braintree, massachusetts": {
+      "venueId": "braintree-ma",
+      "city": "Braintree",
+      "region": "MA",
+      "country": "US",
+      "lat": 42.2038,
+      "lng": -71.0022,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Braintree, Massachusetts"
+      ]
+    },
+    "brick, new jersey": {
+      "venueId": "brick-nj",
+      "city": "Brick",
+      "region": "NJ",
+      "country": "US",
+      "lat": 40.4845,
+      "lng": -74.388,
+      "source": "centroid",
+      "eventCount": 2,
+      "rawVariants": [
+        "Brick, New Jersey"
+      ]
+    },
+    "bridgeport, connecticut": {
+      "venueId": "bridgeport-ct",
+      "city": "Bridgeport",
+      "region": "CT",
+      "country": "US",
+      "lat": 41.1792,
+      "lng": -73.1894,
+      "source": "exact",
+      "eventCount": 6,
+      "rawVariants": [
+        "Bridgeport, Connecticut"
+      ]
+    },
+    "bridgewater, massachusetts": {
+      "venueId": "bridgewater-ma",
+      "city": "Bridgewater",
+      "region": "MA",
+      "country": "US",
+      "lat": 41.9904,
+      "lng": -70.975,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Bridgewater, Massachusetts"
+      ]
+    },
+    "bristol, rhode island": {
+      "venueId": "bristol-ri",
+      "city": "Bristol",
+      "region": "RI",
+      "country": "US",
+      "lat": 41.6771,
+      "lng": -71.2662,
+      "source": "exact",
+      "eventCount": 11,
+      "rawVariants": [
+        "Bristol, Rhode Island"
+      ]
+    },
+    "bristol, rhode, island": {
+      "venueId": "bristol-ri",
+      "city": "Bristol",
+      "region": "RI",
+      "country": "US",
+      "lat": 41.6771,
+      "lng": -71.2662,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Bristol, Rhode, Island"
+      ]
+    },
+    "brockton, massachusetts": {
+      "venueId": "brockton-ma",
+      "city": "Brockton",
+      "region": "MA",
+      "country": "US",
+      "lat": 42.0834,
+      "lng": -71.0184,
+      "source": "exact",
+      "eventCount": 7,
+      "rawVariants": [
+        "Brockton, Massachusetts"
+      ]
+    },
+    "broken arrow, oklahoma": {
+      "venueId": "broken-arrow-ok",
+      "city": "Broken Arrow",
+      "region": "OK",
+      "country": "US",
+      "lat": 36.0526,
+      "lng": -95.7908,
+      "source": "exact",
+      "eventCount": 9,
+      "rawVariants": [
+        "Broken Arrow, Oklahoma"
+      ]
+    },
+    "brooklyn, new york": {
+      "venueId": "brooklyn-ny",
+      "city": "Brooklyn",
+      "region": "NY",
+      "country": "US",
+      "lat": 40.6501,
+      "lng": -73.9496,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Brooklyn, New York"
+      ]
+    },
+    "brunswick, georgia": {
+      "venueId": "brunswick-ga",
+      "city": "Brunswick",
+      "region": "GA",
+      "country": "US",
+      "lat": 31.15,
+      "lng": -81.4915,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Brunswick, Georgia"
+      ]
+    },
+    "buffalo, new york": {
+      "venueId": "buffalo-ny",
+      "city": "Buffalo",
+      "region": "NY",
+      "country": "US",
+      "lat": 42.8865,
+      "lng": -78.8784,
+      "source": "exact",
+      "eventCount": 18,
+      "rawVariants": [
+        "Buffalo, New York"
+      ]
+    },
+    "burlington, iowa": {
+      "venueId": "burlington-ia",
+      "city": "Burlington",
+      "region": "IA",
+      "country": "US",
+      "lat": 40.8075,
+      "lng": -91.1129,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Burlington, Iowa"
+      ]
+    },
+    "butler, pennsylvania": {
+      "venueId": "butler-pa",
+      "city": "Butler",
+      "region": "PA",
+      "country": "US",
+      "lat": 40.8612,
+      "lng": -79.8953,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Butler, Pennsylvania"
+      ]
+    },
+    "calabasas, california": {
+      "venueId": "calabasas-ca",
+      "city": "Calabasas",
+      "region": "CA",
+      "country": "US",
+      "lat": 34.1578,
+      "lng": -118.6384,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Calabasas, California"
+      ]
+    },
+    "canton, michigan": {
+      "venueId": "canton-mi",
+      "city": "Canton",
+      "region": "MI",
+      "country": "US",
+      "lat": 42.3087,
+      "lng": -83.4822,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Canton, Michigan"
+      ]
+    },
+    "canton, ohio": {
+      "venueId": "canton-oh",
+      "city": "Canton",
+      "region": "OH",
+      "country": "US",
+      "lat": 40.7989,
+      "lng": -81.3785,
+      "source": "exact",
+      "eventCount": 4,
+      "rawVariants": [
+        "Canton, Ohio"
+      ]
+    },
+    "canyon, texas": {
+      "venueId": "canyon-tx",
+      "city": "Canyon",
+      "region": "TX",
+      "country": "US",
+      "lat": 34.9803,
+      "lng": -101.9188,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Canyon, Texas"
+      ]
+    },
+    "carmel, indiana": {
+      "venueId": "carmel-in",
+      "city": "Carmel",
+      "region": "IN",
+      "country": "US",
+      "lat": 39.9784,
+      "lng": -86.118,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Carmel, Indiana"
+      ]
+    },
+    "carson city, nevada": {
+      "venueId": "carson-city-nv",
+      "city": "Carson City",
+      "region": "NV",
+      "country": "US",
+      "lat": 39.1638,
+      "lng": -119.7674,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Carson City, Nevada"
+      ]
+    },
+    "casper, wyoming": {
+      "venueId": "casper-wy",
+      "city": "Casper",
+      "region": "WY",
+      "country": "US",
+      "lat": 42.8666,
+      "lng": -106.3131,
+      "source": "exact",
+      "eventCount": 5,
+      "rawVariants": [
+        "Casper, Wyoming"
+      ]
+    },
+    "cedar rapids, iowa": {
+      "venueId": "cedar-rapids-ia",
+      "city": "Cedar Rapids",
+      "region": "IA",
+      "country": "US",
+      "lat": 42.0083,
+      "lng": -91.6441,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Cedar Rapids, Iowa"
+      ]
+    },
+    "cedarburg, wisconsin": {
+      "venueId": "cedarburg-wi",
+      "city": "Cedarburg",
+      "region": "WI",
+      "country": "US",
+      "lat": 43.2967,
+      "lng": -87.9876,
+      "source": "exact",
+      "eventCount": 10,
+      "rawVariants": [
+        "Cedarburg, Wisconsin"
+      ]
+    },
+    "centerville, michigan": {
+      "venueId": "centreville-mi",
+      "city": "Centreville",
+      "region": "MI",
+      "country": "US",
+      "lat": 41.9234,
+      "lng": -85.5283,
+      "source": "fuzzy",
+      "eventCount": 1,
+      "rawVariants": [
+        "Centerville, Michigan"
+      ]
+    },
+    "centerville, ohio": {
+      "venueId": "centerville-oh",
+      "city": "Centerville",
+      "region": "OH",
+      "country": "US",
+      "lat": 39.6284,
+      "lng": -84.1594,
+      "source": "exact",
+      "eventCount": 11,
+      "rawVariants": [
+        "Centerville, Ohio"
+      ]
+    },
+    "chambersburg, pennsylvania": {
+      "venueId": "chambersburg-pa",
+      "city": "Chambersburg",
+      "region": "PA",
+      "country": "US",
+      "lat": 39.9376,
+      "lng": -77.6611,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Chambersburg, Pennsylvania"
+      ]
+    },
+    "champlin, minnesota": {
+      "venueId": "champlin-mn",
+      "city": "Champlin",
+      "region": "MN",
+      "country": "US",
+      "lat": 45.1889,
+      "lng": -93.3975,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Champlin, Minnesota"
+      ]
+    },
+    "charles city, iowa": {
+      "venueId": "charles-city-ia",
+      "city": "Charles City",
+      "region": "IA",
+      "country": "US",
+      "lat": 43.0664,
+      "lng": -92.6724,
+      "source": "exact",
+      "eventCount": 6,
+      "rawVariants": [
+        "Charles City, Iowa"
+      ]
+    },
+    "charleston, west virginia": {
+      "venueId": "charleston-wv",
+      "city": "Charleston",
+      "region": "WV",
+      "country": "US",
+      "lat": 38.3498,
+      "lng": -81.6326,
+      "source": "exact",
+      "eventCount": 6,
+      "rawVariants": [
+        "Charleston, West Virginia"
+      ]
+    },
+    "charlotte, north carolina": {
+      "venueId": "charlotte-nc",
+      "city": "Charlotte",
+      "region": "NC",
+      "country": "US",
+      "lat": 35.2271,
+      "lng": -80.8431,
+      "source": "exact",
+      "eventCount": 9,
+      "rawVariants": [
+        "Charlotte, North Carolina"
+      ]
+    },
+    "chattanooga, tennessee": {
+      "venueId": "chattanooga-tn",
+      "city": "Chattanooga",
+      "region": "TN",
+      "country": "US",
+      "lat": 35.0456,
+      "lng": -85.3097,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Chattanooga, Tennessee"
+      ]
+    },
+    "cheney, washington": {
+      "venueId": "cheney-wa",
+      "city": "Cheney",
+      "region": "WA",
+      "country": "US",
+      "lat": 47.4874,
+      "lng": -117.5758,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Cheney, Washington"
+      ]
+    },
+    "chesapeake, virginia": {
+      "venueId": "chesapeake-va",
+      "city": "Chesapeake",
+      "region": "VA",
+      "country": "US",
+      "lat": 36.819,
+      "lng": -76.2749,
+      "source": "exact",
+      "eventCount": 5,
+      "rawVariants": [
+        "Chesapeake, Virginia"
+      ]
+    },
+    "cheyenne, wyoming": {
+      "venueId": "cheyenne-wy",
+      "city": "Cheyenne",
+      "region": "WY",
+      "country": "US",
+      "lat": 41.14,
+      "lng": -104.8203,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Cheyenne, Wyoming"
+      ]
+    },
+    "chicopee, massachusetts": {
+      "venueId": "chicopee-ma",
+      "city": "Chicopee",
+      "region": "MA",
+      "country": "US",
+      "lat": 42.1487,
+      "lng": -72.6079,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Chicopee, Massachusetts"
+      ]
+    },
+    "chippewa falls, wisconsin": {
+      "venueId": "chippewa-falls-wi",
+      "city": "Chippewa Falls",
+      "region": "WI",
+      "country": "US",
+      "lat": 44.9369,
+      "lng": -91.3929,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Chippewa Falls, Wisconsin"
+      ]
+    },
+    "cincinnati, ohio": {
+      "venueId": "cincinnati-oh",
+      "city": "Cincinnati",
+      "region": "OH",
+      "country": "US",
+      "lat": 39.1271,
+      "lng": -84.5144,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Cincinnati, Ohio"
+      ]
+    },
+    "clarion, pennsylvania": {
+      "venueId": "clarion-pa",
+      "city": "Clarion",
+      "region": "PA",
+      "country": "US",
+      "lat": 41.2148,
+      "lng": -79.3853,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Clarion, Pennsylvania"
+      ]
+    },
+    "clifton, new jersey": {
+      "venueId": "clifton-nj",
+      "city": "Clifton",
+      "region": "NJ",
+      "country": "US",
+      "lat": 40.8584,
+      "lng": -74.1638,
+      "source": "exact",
+      "eventCount": 9,
+      "rawVariants": [
+        "Clifton, New Jersey"
+      ]
+    },
+    "clovis, california": {
+      "venueId": "clovis-ca",
+      "city": "Clovis",
+      "region": "CA",
+      "country": "US",
+      "lat": 36.8252,
+      "lng": -119.7029,
+      "source": "exact",
+      "eventCount": 7,
+      "rawVariants": [
+        "Clovis, California"
+      ]
+    },
+    "college park, maryland": {
+      "venueId": "college-park-md",
+      "city": "College Park",
+      "region": "MD",
+      "country": "US",
+      "lat": 38.9807,
+      "lng": -76.9369,
+      "source": "exact",
+      "eventCount": 4,
+      "rawVariants": [
+        "College Park, Maryland"
+      ]
+    },
+    "columbia, missouri": {
+      "venueId": "columbia-mo",
+      "city": "Columbia",
+      "region": "MO",
+      "country": "US",
+      "lat": 38.9517,
+      "lng": -92.3341,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Columbia, Missouri"
+      ]
+    },
+    "columbia, south carolina": {
+      "venueId": "columbia-sc",
+      "city": "Columbia",
+      "region": "SC",
+      "country": "US",
+      "lat": 34.0007,
+      "lng": -81.0348,
+      "source": "exact",
+      "eventCount": 8,
+      "rawVariants": [
+        "Columbia, South Carolina"
+      ]
+    },
+    "columbus, ohio": {
+      "venueId": "columbus-oh",
+      "city": "Columbus",
+      "region": "OH",
+      "country": "US",
+      "lat": 39.9612,
+      "lng": -82.9988,
+      "source": "exact",
+      "eventCount": 9,
+      "rawVariants": [
+        "Columbus, Ohio"
+      ]
+    },
+    "concord, california": {
+      "venueId": "concord-ca",
+      "city": "Concord",
+      "region": "CA",
+      "country": "US",
+      "lat": 37.978,
+      "lng": -122.0311,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Concord, California"
+      ]
+    },
+    "converse, texas": {
+      "venueId": "converse-tx",
+      "city": "Converse",
+      "region": "TX",
+      "country": "US",
+      "lat": 29.518,
+      "lng": -98.3161,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Converse, Texas"
+      ]
+    },
+    "coon rapids, minnesota": {
+      "venueId": "coon-rapids-mn",
+      "city": "Coon Rapids",
+      "region": "MN",
+      "country": "US",
+      "lat": 45.12,
+      "lng": -93.2877,
+      "source": "exact",
+      "eventCount": 4,
+      "rawVariants": [
+        "Coon Rapids, Minnesota"
+      ]
+    },
+    "corona, california": {
+      "venueId": "corona-ca",
+      "city": "Corona",
+      "region": "CA",
+      "country": "US",
+      "lat": 33.8753,
+      "lng": -117.5664,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Corona, California"
+      ]
+    },
+    "costa, mesa, california": {
+      "venueId": "costa-mesa-ca",
+      "city": "Costa Mesa",
+      "region": "CA",
+      "country": "US",
+      "lat": 33.6411,
+      "lng": -117.9187,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Costa, Mesa, California"
+      ]
+    },
+    "crown point, indiana": {
+      "venueId": "crown-point-in",
+      "city": "Crown Point",
+      "region": "IN",
+      "country": "US",
+      "lat": 41.417,
+      "lng": -87.3653,
+      "source": "exact",
+      "eventCount": 4,
+      "rawVariants": [
+        "Crown Point, Indiana"
+      ]
+    },
+    "cupertino, california": {
+      "venueId": "cupertino-ca",
+      "city": "Cupertino",
+      "region": "CA",
+      "country": "US",
+      "lat": 37.323,
+      "lng": -122.0322,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Cupertino, California"
+      ]
+    },
+    "dallas texas": {
+      "venueId": "dallas-tx",
+      "city": "Dallas",
+      "region": "TX",
+      "country": "US",
+      "lat": 32.7831,
+      "lng": -96.8067,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Dallas. Texas"
+      ]
+    },
+    "dallas, texas": {
+      "venueId": "dallas-tx",
+      "city": "Dallas",
+      "region": "TX",
+      "country": "US",
+      "lat": 32.7831,
+      "lng": -96.8067,
+      "source": "exact",
+      "eventCount": 13,
+      "rawVariants": [
+        "Dallas, Texas"
+      ]
+    },
+    "davenport, iowa": {
+      "venueId": "davenport-ia",
+      "city": "Davenport",
+      "region": "IA",
+      "country": "US",
+      "lat": 41.5236,
+      "lng": -90.5776,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Davenport, Iowa"
+      ]
+    },
+    "dayton, ohio": {
+      "venueId": "dayton-oh",
+      "city": "Dayton",
+      "region": "OH",
+      "country": "US",
+      "lat": 39.7589,
+      "lng": -84.1916,
+      "source": "exact",
+      "eventCount": 6,
+      "rawVariants": [
+        "Dayton, Ohio"
+      ]
+    },
+    "decatur, indiana": {
+      "venueId": "decatur-in",
+      "city": "Decatur",
+      "region": "IN",
+      "country": "US",
+      "lat": 40.8306,
+      "lng": -84.9291,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Decatur, Indiana"
+      ]
+    },
+    "decorah, iowa": {
+      "venueId": "decorah-ia",
+      "city": "Decorah",
+      "region": "IA",
+      "country": "US",
+      "lat": 43.3033,
+      "lng": -91.7857,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Decorah, Iowa"
+      ]
+    },
+    "dekalb, illinois": {
+      "venueId": "dekalb-il",
+      "city": "DeKalb",
+      "region": "IL",
+      "country": "US",
+      "lat": 41.9295,
+      "lng": -88.7504,
+      "source": "exact",
+      "eventCount": 17,
+      "rawVariants": [
+        "DeKalb, Illinois"
+      ]
+    },
+    "denton, texas": {
+      "venueId": "denton-tx",
+      "city": "Denton",
+      "region": "TX",
+      "country": "US",
+      "lat": 33.2148,
+      "lng": -97.1331,
+      "source": "exact",
+      "eventCount": 7,
+      "rawVariants": [
+        "Denton, Texas"
+      ]
+    },
+    "denver, colorado": {
+      "venueId": "denver-co",
+      "city": "Denver",
+      "region": "CO",
+      "country": "US",
+      "lat": 39.7392,
+      "lng": -104.9847,
+      "source": "exact",
+      "eventCount": 18,
+      "rawVariants": [
+        "Denver, Colorado"
+      ]
+    },
+    "des plaines, illinois": {
+      "venueId": "des-plaines-il",
+      "city": "Des Plaines",
+      "region": "IL",
+      "country": "US",
+      "lat": 42.0334,
+      "lng": -87.8834,
+      "source": "exact",
+      "eventCount": 5,
+      "rawVariants": [
+        "Des Plaines, Illinois"
+      ]
+    },
+    "dixon, illinois": {
+      "venueId": "dixon-il",
+      "city": "Dixon",
+      "region": "IL",
+      "country": "US",
+      "lat": 41.8389,
+      "lng": -89.4796,
+      "source": "exact",
+      "eventCount": 4,
+      "rawVariants": [
+        "Dixon, Illinois"
+      ]
+    },
+    "dothan, alabama": {
+      "venueId": "dothan-al",
+      "city": "Dothan",
+      "region": "AL",
+      "country": "US",
+      "lat": 31.2232,
+      "lng": -85.3905,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Dothan, Alabama"
+      ]
+    },
+    "dublin, california": {
+      "venueId": "dublin-ca",
+      "city": "Dublin",
+      "region": "CA",
+      "country": "US",
+      "lat": 37.7022,
+      "lng": -121.9358,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Dublin, California"
+      ]
+    },
+    "dublin, ohio": {
+      "venueId": "dublin-oh",
+      "city": "Dublin",
+      "region": "OH",
+      "country": "US",
+      "lat": 40.0992,
+      "lng": -83.1141,
+      "source": "exact",
+      "eventCount": 7,
+      "rawVariants": [
+        "Dublin, Ohio"
+      ]
+    },
+    "dubuque, iowa": {
+      "venueId": "dubuque-ia",
+      "city": "Dubuque",
+      "region": "IA",
+      "country": "US",
+      "lat": 42.5006,
+      "lng": -90.6646,
+      "source": "exact",
+      "eventCount": 21,
+      "rawVariants": [
+        "Dubuque, Iowa"
+      ]
+    },
+    "duncan, south carolina": {
+      "venueId": "duncan-sc",
+      "city": "Duncan",
+      "region": "SC",
+      "country": "US",
+      "lat": 34.9379,
+      "lng": -82.1451,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Duncan, South Carolina"
+      ]
+    },
+    "east rutherford, new jersey": {
+      "venueId": "east-rutherford-nj",
+      "city": "East Rutherford",
+      "region": "NJ",
+      "country": "US",
+      "lat": 40.834,
+      "lng": -74.0971,
+      "source": "exact",
+      "eventCount": 9,
+      "rawVariants": [
+        "East Rutherford, New Jersey"
+      ]
+    },
+    "easton, pennsylvania": {
+      "venueId": "easton-pa",
+      "city": "Easton",
+      "region": "PA",
+      "country": "US",
+      "lat": 40.6884,
+      "lng": -75.2207,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Easton, Pennsylvania"
+      ]
+    },
+    "eau claire, wisconsin": {
+      "venueId": "eau-claire-wi",
+      "city": "Eau Claire",
+      "region": "WI",
+      "country": "US",
+      "lat": 44.8113,
+      "lng": -91.4985,
+      "source": "exact",
+      "eventCount": 4,
+      "rawVariants": [
+        "Eau Claire, Wisconsin"
+      ]
+    },
+    "edmond, oklahoma": {
+      "venueId": "edmond-ok",
+      "city": "Edmond",
+      "region": "OK",
+      "country": "US",
+      "lat": 35.6528,
+      "lng": -97.4781,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Edmond, Oklahoma"
+      ]
+    },
+    "el paso, texas": {
+      "venueId": "el-paso-tx",
+      "city": "El Paso",
+      "region": "TX",
+      "country": "US",
+      "lat": 31.7587,
+      "lng": -106.4869,
+      "source": "exact",
+      "eventCount": 6,
+      "rawVariants": [
+        "El Paso, Texas"
+      ]
+    },
+    "elizabeth, pennsylvania": {
+      "venueId": "elizabeth-pa",
+      "city": "Elizabeth",
+      "region": "PA",
+      "country": "US",
+      "lat": 40.2692,
+      "lng": -79.8898,
+      "source": "exact",
+      "eventCount": 5,
+      "rawVariants": [
+        "Elizabeth, Pennsylvania"
+      ]
+    },
+    "elk grove california": {
+      "venueId": "elk-grove-ca",
+      "city": "Elk Grove",
+      "region": "CA",
+      "country": "US",
+      "lat": 38.4088,
+      "lng": -121.3716,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Elk Grove. California"
+      ]
+    },
+    "elk grove, california": {
+      "venueId": "elk-grove-ca",
+      "city": "Elk Grove",
+      "region": "CA",
+      "country": "US",
+      "lat": 38.4088,
+      "lng": -121.3716,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Elk Grove, California"
+      ]
+    },
+    "elko, nevada": {
+      "venueId": "elko-nv",
+      "city": "Elko",
+      "region": "NV",
+      "country": "US",
+      "lat": 40.8324,
+      "lng": -115.7631,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Elko, Nevada"
+      ]
+    },
+    "elkton, maryland": {
+      "venueId": "elkton-md",
+      "city": "Elkton",
+      "region": "MD",
+      "country": "US",
+      "lat": 39.6068,
+      "lng": -75.8333,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Elkton, Maryland"
+      ]
+    },
+    "enid, oklahoma": {
+      "venueId": "enid-ok",
+      "city": "Enid",
+      "region": "OK",
+      "country": "US",
+      "lat": 36.3956,
+      "lng": -97.8784,
+      "source": "exact",
+      "eventCount": 6,
+      "rawVariants": [
+        "Enid, Oklahoma"
+      ]
+    },
+    "erie pennsylvania": {
+      "venueId": "erie-pa",
+      "city": "Erie",
+      "region": "PA",
+      "country": "US",
+      "lat": 42.1292,
+      "lng": -80.0851,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Erie. Pennsylvania"
+      ]
+    },
+    "erie, pennsylvania": {
+      "venueId": "erie-pa",
+      "city": "Erie",
+      "region": "PA",
+      "country": "US",
+      "lat": 42.1292,
+      "lng": -80.0851,
+      "source": "exact",
+      "eventCount": 19,
+      "rawVariants": [
+        "Erie, Pennsylvania"
+      ]
+    },
+    "escondido, california": {
+      "venueId": "escondido-ca",
+      "city": "Escondido",
+      "region": "CA",
+      "country": "US",
+      "lat": 33.1192,
+      "lng": -117.0864,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Escondido, California"
+      ]
+    },
+    "evansville, indiana": {
+      "venueId": "evansville-in",
+      "city": "Evansville",
+      "region": "IN",
+      "country": "US",
+      "lat": 37.9748,
+      "lng": -87.5559,
+      "source": "exact",
+      "eventCount": 8,
+      "rawVariants": [
+        "Evansville, Indiana"
+      ]
+    },
+    "everett, massachusetts": {
+      "venueId": "everett-ma",
+      "city": "Everett",
+      "region": "MA",
+      "country": "US",
+      "lat": 42.4084,
+      "lng": -71.0537,
+      "source": "exact",
+      "eventCount": 4,
+      "rawVariants": [
+        "Everett, Massachusetts"
+      ]
+    },
+    "everett, washington": {
+      "venueId": "everett-wa",
+      "city": "Everett",
+      "region": "WA",
+      "country": "US",
+      "lat": 47.979,
+      "lng": -122.2021,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Everett, Washington"
+      ]
+    },
+    "ewing, new jersey": {
+      "venueId": "ewing-nj",
+      "city": "Ewing",
+      "region": "NJ",
+      "country": "US",
+      "lat": 40.2698,
+      "lng": -74.7999,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Ewing, New Jersey"
+      ]
+    },
+    "fairfax, virginia": {
+      "venueId": "fairfax-va",
+      "city": "Fairfax",
+      "region": "VA",
+      "country": "US",
+      "lat": 38.8462,
+      "lng": -77.3064,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Fairfax, Virginia"
+      ]
+    },
+    "fairfield, ohio": {
+      "venueId": "fairfield-oh",
+      "city": "Fairfield",
+      "region": "OH",
+      "country": "US",
+      "lat": 39.3459,
+      "lng": -84.5605,
+      "source": "exact",
+      "eventCount": 9,
+      "rawVariants": [
+        "Fairfield, Ohio"
+      ]
+    },
+    "fayetteville, arkansas": {
+      "venueId": "fayetteville-ar",
+      "city": "Fayetteville",
+      "region": "AR",
+      "country": "US",
+      "lat": 36.0626,
+      "lng": -94.1574,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Fayetteville, Arkansas"
+      ]
+    },
+    "fort edward, new york": {
+      "venueId": "fort-edward-ny",
+      "city": "Fort Edward",
+      "region": "NY",
+      "country": "US",
+      "lat": 43.267,
+      "lng": -73.5846,
+      "source": "exact",
+      "eventCount": 8,
+      "rawVariants": [
+        "Fort Edward, New York"
+      ]
+    },
+    "fort edwards glens falls, new york": {
+      "venueId": "glens-falls-ny",
+      "city": "Glens Falls",
+      "region": "NY",
+      "country": "US",
+      "lat": 43.3095,
+      "lng": -73.644,
+      "source": "fuzzy",
+      "eventCount": 1,
+      "rawVariants": [
+        "Fort Edwards/Glens Falls, New York"
+      ]
+    },
+    "fort edwards new york": {
+      "venueId": "fort-edward-ny",
+      "city": "Fort Edward",
+      "region": "NY",
+      "country": "US",
+      "lat": 43.267,
+      "lng": -73.5846,
+      "source": "fuzzy",
+      "eventCount": 1,
+      "rawVariants": [
+        "Fort Edwards. New York"
+      ]
+    },
+    "fort edwards, new york": {
+      "venueId": "fort-edward-ny",
+      "city": "Fort Edward",
+      "region": "NY",
+      "country": "US",
+      "lat": 43.267,
+      "lng": -73.5846,
+      "source": "fuzzy",
+      "eventCount": 1,
+      "rawVariants": [
+        "Fort Edwards, New York"
+      ]
+    },
+    "fort mill, south carolina": {
+      "venueId": "fort-mill-sc",
+      "city": "Fort Mill",
+      "region": "SC",
+      "country": "US",
+      "lat": 35.0074,
+      "lng": -80.9451,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Fort Mill, South Carolina"
+      ]
+    },
+    "fort mills, south carolina": {
+      "venueId": "fort-mill-sc",
+      "city": "Fort Mill",
+      "region": "SC",
+      "country": "US",
+      "lat": 35.0074,
+      "lng": -80.9451,
+      "source": "fuzzy",
+      "eventCount": 1,
+      "rawVariants": [
+        "Fort Mills, South Carolina"
+      ]
+    },
+    "fort walton beach, florida": {
+      "venueId": "fort-walton-beach-fl",
+      "city": "Fort Walton Beach",
+      "region": "FL",
+      "country": "US",
+      "lat": 30.4206,
+      "lng": -86.6171,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Fort Walton Beach, Florida"
+      ]
+    },
+    "fort walton, beach, florida": {
+      "venueId": "fort-walton-beach-fl",
+      "city": "Fort Walton Beach",
+      "region": "FL",
+      "country": "US",
+      "lat": 30.4206,
+      "lng": -86.6171,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Fort Walton, Beach, Florida"
+      ]
+    },
+    "fort wayne, indiana": {
+      "venueId": "fort-wayne-in",
+      "city": "Fort Wayne",
+      "region": "IN",
+      "country": "US",
+      "lat": 41.1306,
+      "lng": -85.1289,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Fort Wayne, Indiana"
+      ]
+    },
+    "foxboro, massachusetts": {
+      "venueId": "foxborough-ma",
+      "city": "Foxborough",
+      "region": "MA",
+      "country": "US",
+      "lat": 42.0654,
+      "lng": -71.2478,
+      "source": "fuzzy",
+      "eventCount": 3,
+      "rawVariants": [
+        "Foxboro, Massachusetts"
+      ]
+    },
+    "frankfort, illinois": {
+      "venueId": "frankfort-il",
+      "city": "Frankfort",
+      "region": "IL",
+      "country": "US",
+      "lat": 41.4959,
+      "lng": -87.8487,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Frankfort, Illinois"
+      ]
+    },
+    "frankfurt, illinois": {
+      "venueId": "frankfort-il",
+      "city": "Frankfort",
+      "region": "IL",
+      "country": "US",
+      "lat": 41.4959,
+      "lng": -87.8487,
+      "source": "fuzzy",
+      "eventCount": 1,
+      "rawVariants": [
+        "Frankfurt, Illinois"
+      ]
+    },
+    "fremont, california": {
+      "venueId": "fremont-ca",
+      "city": "Fremont",
+      "region": "CA",
+      "country": "US",
+      "lat": 37.5483,
+      "lng": -121.9886,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Fremont, California"
+      ]
+    },
+    "gadsden, alabama": {
+      "venueId": "gadsden-al",
+      "city": "Gadsden",
+      "region": "AL",
+      "country": "US",
+      "lat": 34.0143,
+      "lng": -86.0064,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Gadsden, Alabama"
+      ]
+    },
+    "garden city, kansas": {
+      "venueId": "garden-city-ks",
+      "city": "Garden City",
+      "region": "KS",
+      "country": "US",
+      "lat": 37.9717,
+      "lng": -100.8727,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Garden City, Kansas"
+      ]
+    },
+    "geneva, illinois": {
+      "venueId": "geneva-il",
+      "city": "Geneva",
+      "region": "IL",
+      "country": "US",
+      "lat": 41.8875,
+      "lng": -88.3054,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Geneva, Illinois"
+      ]
+    },
+    "geneva, wisconsin": {
+      "venueId": "lake-geneva-wi",
+      "city": "Lake Geneva",
+      "region": "WI",
+      "country": "US",
+      "lat": 42.5917,
+      "lng": -88.4334,
+      "source": "fuzzy",
+      "eventCount": 1,
+      "rawVariants": [
+        "Geneva, Wisconsin"
+      ]
+    },
+    "gilroy, california": {
+      "venueId": "gilroy-ca",
+      "city": "Gilroy",
+      "region": "CA",
+      "country": "US",
+      "lat": 37.0058,
+      "lng": -121.5683,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Gilroy, California"
+      ]
+    },
+    "glendale, arizona": {
+      "venueId": "glendale-az",
+      "city": "Glendale",
+      "region": "AZ",
+      "country": "US",
+      "lat": 33.5386,
+      "lng": -112.186,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Glendale, Arizona"
+      ]
+    },
+    "glendale, california": {
+      "venueId": "glendale-ca",
+      "city": "Glendale",
+      "region": "CA",
+      "country": "US",
+      "lat": 34.1425,
+      "lng": -118.2551,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Glendale, California"
+      ]
+    },
+    "glendora, california": {
+      "venueId": "glendora-ca",
+      "city": "Glendora",
+      "region": "CA",
+      "country": "US",
+      "lat": 34.1361,
+      "lng": -117.8653,
+      "source": "exact",
+      "eventCount": 4,
+      "rawVariants": [
+        "Glendora, California"
+      ]
+    },
+    "grand haven, michigan": {
+      "venueId": "grand-haven-mi",
+      "city": "Grand Haven",
+      "region": "MI",
+      "country": "US",
+      "lat": 43.0631,
+      "lng": -86.2284,
+      "source": "exact",
+      "eventCount": 7,
+      "rawVariants": [
+        "Grand Haven, Michigan"
+      ]
+    },
+    "grandville, michigan": {
+      "venueId": "grandville-mi",
+      "city": "Grandville",
+      "region": "MI",
+      "country": "US",
+      "lat": 42.9098,
+      "lng": -85.7631,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Grandville, Michigan"
+      ]
+    },
+    "grants pass, oregon": {
+      "venueId": "grants-pass-or",
+      "city": "Grants Pass",
+      "region": "OR",
+      "country": "US",
+      "lat": 42.4393,
+      "lng": -123.3307,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Grants Pass, Oregon"
+      ]
+    },
+    "great bend, kansas": {
+      "venueId": "great-bend-ks",
+      "city": "Great Bend",
+      "region": "KS",
+      "country": "US",
+      "lat": 38.3645,
+      "lng": -98.7648,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Great Bend, Kansas"
+      ]
+    },
+    "greeley, colorado": {
+      "venueId": "greeley-co",
+      "city": "Greeley",
+      "region": "CO",
+      "country": "US",
+      "lat": 40.4233,
+      "lng": -104.7091,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Greeley, Colorado"
+      ]
+    },
+    "green bay, wisconsin": {
+      "venueId": "green-bay-wi",
+      "city": "Green Bay",
+      "region": "WI",
+      "country": "US",
+      "lat": 44.5192,
+      "lng": -88.0198,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Green Bay, Wisconsin"
+      ]
+    },
+    "greendale, wisconsin": {
+      "venueId": "greendale-wi",
+      "city": "Greendale",
+      "region": "WI",
+      "country": "US",
+      "lat": 42.9406,
+      "lng": -87.9959,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Greendale, Wisconsin"
+      ]
+    },
+    "greenville, michigan": {
+      "venueId": "greenville-mi",
+      "city": "Greenville",
+      "region": "MI",
+      "country": "US",
+      "lat": 43.1775,
+      "lng": -85.2528,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Greenville, Michigan"
+      ]
+    },
+    "groton, connecticut": {
+      "venueId": "groton-ct",
+      "city": "Groton",
+      "region": "CT",
+      "country": "US",
+      "lat": 41.3501,
+      "lng": -72.0784,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Groton, Connecticut"
+      ]
+    },
+    "gulfport, mississippi": {
+      "venueId": "gulfport-ms",
+      "city": "Gulfport",
+      "region": "MS",
+      "country": "US",
+      "lat": 30.3674,
+      "lng": -89.0928,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Gulfport, Mississippi"
+      ]
+    },
+    "hamilton, ontario": {
+      "venueId": "hamilton-on",
+      "city": "Hamilton",
+      "region": "ON",
+      "country": "CA",
+      "lat": 43.2501,
+      "lng": -79.8496,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Hamilton, Ontario"
+      ]
+    },
+    "hampton, virginia": {
+      "venueId": "hampton-va",
+      "city": "Hampton",
+      "region": "VA",
+      "country": "US",
+      "lat": 37.0299,
+      "lng": -76.3452,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Hampton, Virginia"
+      ]
+    },
+    "harrison, ohio": {
+      "venueId": "harrison-oh",
+      "city": "Harrison",
+      "region": "OH",
+      "country": "US",
+      "lat": 39.262,
+      "lng": -84.82,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Harrison, Ohio"
+      ]
+    },
+    "hastings, minnesota": {
+      "venueId": "hastings-mn",
+      "city": "Hastings",
+      "region": "MN",
+      "country": "US",
+      "lat": 44.7433,
+      "lng": -92.8524,
+      "source": "exact",
+      "eventCount": 4,
+      "rawVariants": [
+        "Hastings, Minnesota"
+      ]
+    },
+    "hattiesburg, mississippi": {
+      "venueId": "hattiesburg-ms",
+      "city": "Hattiesburg",
+      "region": "MS",
+      "country": "US",
+      "lat": 31.3271,
+      "lng": -89.2903,
+      "source": "exact",
+      "eventCount": 5,
+      "rawVariants": [
+        "Hattiesburg, Mississippi"
+      ]
+    },
+    "hayward, california": {
+      "venueId": "hayward-ca",
+      "city": "Hayward",
+      "region": "CA",
+      "country": "US",
+      "lat": 37.6688,
+      "lng": -122.0808,
+      "source": "exact",
+      "eventCount": 4,
+      "rawVariants": [
+        "Hayward, California"
+      ]
+    },
+    "herndon, virginia": {
+      "venueId": "herndon-va",
+      "city": "Herndon",
+      "region": "VA",
+      "country": "US",
+      "lat": 38.9695,
+      "lng": -77.3861,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Herndon, Virginia"
+      ]
+    },
+    "hershey, pennsylvania": {
+      "venueId": "hershey-pa",
+      "city": "Hershey",
+      "region": "PA",
+      "country": "US",
+      "lat": 40.2859,
+      "lng": -76.6502,
+      "source": "exact",
+      "eventCount": 5,
+      "rawVariants": [
+        "Hershey, Pennsylvania"
+      ]
+    },
+    "hillsboro, oregon": {
+      "venueId": "hillsboro-or",
+      "city": "Hillsboro",
+      "region": "OR",
+      "country": "US",
+      "lat": 45.5229,
+      "lng": -122.9898,
+      "source": "exact",
+      "eventCount": 6,
+      "rawVariants": [
+        "Hillsboro, Oregon"
+      ]
+    },
+    "hilton head, south carolina": {
+      "venueId": "hilton-head-sc",
+      "city": "Hilton Head",
+      "region": "SC",
+      "country": "US",
+      "lat": 32.2163,
+      "lng": -80.7526,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Hilton Head, South Carolina"
+      ]
+    },
+    "hilton, south carolina": {
+      "venueId": "hilton-head-island-sc",
+      "city": "Hilton Head Island",
+      "region": "SC",
+      "country": "US",
+      "lat": 32.1938,
+      "lng": -80.7382,
+      "source": "fuzzy",
+      "eventCount": 1,
+      "rawVariants": [
+        "Hilton, South Carolina"
+      ]
+    },
+    "holman, wisconsin": {
+      "venueId": "holmen-wi",
+      "city": "Holmen",
+      "region": "WI",
+      "country": "US",
+      "lat": 43.9633,
+      "lng": -91.2562,
+      "source": "fuzzy",
+      "eventCount": 1,
+      "rawVariants": [
+        "Holman, Wisconsin"
+      ]
+    },
+    "hoover, alabama": {
+      "venueId": "hoover-al",
+      "city": "Hoover",
+      "region": "AL",
+      "country": "US",
+      "lat": 33.4054,
+      "lng": -86.8114,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Hoover, Alabama"
+      ]
+    },
+    "hornell, new york": {
+      "venueId": "hornell-ny",
+      "city": "Hornell",
+      "region": "NY",
+      "country": "US",
+      "lat": 42.3278,
+      "lng": -77.6611,
+      "source": "exact",
+      "eventCount": 9,
+      "rawVariants": [
+        "Hornell, New York"
+      ]
+    },
+    "houston, texas": {
+      "venueId": "houston-tx",
+      "city": "Houston",
+      "region": "TX",
+      "country": "US",
+      "lat": 29.7633,
+      "lng": -95.3633,
+      "source": "exact",
+      "eventCount": 14,
+      "rawVariants": [
+        "Houston, Texas"
+      ]
+    },
+    "huntington, virginia": {
+      "venueId": "huntington-va",
+      "city": "Huntington",
+      "region": "VA",
+      "country": "US",
+      "lat": 38.7923,
+      "lng": -77.0708,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Huntington, Virginia"
+      ]
+    },
+    "huntington, west virginia": {
+      "venueId": "huntington-wv",
+      "city": "Huntington",
+      "region": "WV",
+      "country": "US",
+      "lat": 38.4192,
+      "lng": -82.4451,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Huntington, West Virginia"
+      ]
+    },
+    "hutchison, kansas": {
+      "venueId": "hutchinson-ks",
+      "city": "Hutchinson",
+      "region": "KS",
+      "country": "US",
+      "lat": 38.0608,
+      "lng": -97.9298,
+      "source": "fuzzy",
+      "eventCount": 4,
+      "rawVariants": [
+        "Hutchison, Kansas"
+      ]
+    },
+    "indianapolis, indiana": {
+      "venueId": "indianapolis-in",
+      "city": "Indianapolis",
+      "region": "IN",
+      "country": "US",
+      "lat": 39.7684,
+      "lng": -86.158,
+      "source": "exact",
+      "eventCount": 31,
+      "rawVariants": [
+        "Indianapolis, Indiana",
+        ".Indianapolis, Indiana"
+      ]
+    },
+    "jackson, michigan": {
+      "venueId": "jackson-mi",
+      "city": "Jackson",
+      "region": "MI",
+      "country": "US",
+      "lat": 42.2459,
+      "lng": -84.4013,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Jackson, Michigan"
+      ]
+    },
+    "jackson, mississippi": {
+      "venueId": "jackson-ms",
+      "city": "Jackson",
+      "region": "MS",
+      "country": "US",
+      "lat": 32.2988,
+      "lng": -90.1848,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Jackson, Mississippi"
+      ]
+    },
+    "jackson, new jersey": {
+      "venueId": "jackson-nj",
+      "city": "Jackson",
+      "region": "NJ",
+      "country": "US",
+      "lat": 39.7765,
+      "lng": -74.8624,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Jackson, New Jersey"
+      ]
+    },
+    "jackson, tennessee": {
+      "venueId": "jackson-tn",
+      "city": "Jackson",
+      "region": "TN",
+      "country": "US",
+      "lat": 35.6145,
+      "lng": -88.814,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Jackson, Tennessee"
+      ]
+    },
+    "jacksonville, alabama": {
+      "venueId": "jacksonville-al",
+      "city": "Jacksonville",
+      "region": "AL",
+      "country": "US",
+      "lat": 33.8138,
+      "lng": -85.7613,
+      "source": "exact",
+      "eventCount": 6,
+      "rawVariants": [
+        "Jacksonville, Alabama"
+      ]
+    },
+    "jacksonville, florida": {
+      "venueId": "jacksonville-fl",
+      "city": "Jacksonville",
+      "region": "FL",
+      "country": "US",
+      "lat": 30.3322,
+      "lng": -81.6556,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Jacksonville, Florida"
+      ]
+    },
+    "jenison, michigan": {
+      "venueId": "jenison-mi",
+      "city": "Jenison",
+      "region": "MI",
+      "country": "US",
+      "lat": 42.9072,
+      "lng": -85.792,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Jenison, Michigan"
+      ]
+    },
+    "jensen, michigan": {
+      "venueId": "jenison-mi",
+      "city": "Jenison",
+      "region": "MI",
+      "country": "US",
+      "lat": 42.9072,
+      "lng": -85.792,
+      "source": "fuzzy",
+      "eventCount": 1,
+      "rawVariants": [
+        "Jensen, Michigan"
+      ]
+    },
+    "johnsonburg, pennsylvania": {
+      "venueId": "johnsonburg-pa",
+      "city": "Johnsonburg",
+      "region": "PA",
+      "country": "US",
+      "lat": 40.8862,
+      "lng": -78.8778,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Johnsonburg, Pennsylvania"
+      ]
+    },
+    "joplin, missouri": {
+      "venueId": "joplin-mo",
+      "city": "Joplin",
+      "region": "MO",
+      "country": "US",
+      "lat": 37.0842,
+      "lng": -94.5133,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Joplin, Missouri"
+      ]
+    },
+    "kalamazoo, michigan": {
+      "venueId": "kalamazoo-mi",
+      "city": "Kalamazoo",
+      "region": "MI",
+      "country": "US",
+      "lat": 42.2917,
+      "lng": -85.5872,
+      "source": "exact",
+      "eventCount": 7,
+      "rawVariants": [
+        "Kalamazoo, Michigan"
+      ]
+    },
+    "kansas city, missouri": {
+      "venueId": "kansas-city-mo",
+      "city": "Kansas City",
+      "region": "MO",
+      "country": "US",
+      "lat": 39.0997,
+      "lng": -94.5786,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Kansas City, Missouri"
+      ]
+    },
+    "kelso, washington": {
+      "venueId": "kelso-wa",
+      "city": "Kelso",
+      "region": "WA",
+      "country": "US",
+      "lat": 46.1468,
+      "lng": -122.9084,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Kelso, Washington"
+      ]
+    },
+    "kennesaw, georgia": {
+      "venueId": "kennesaw-ga",
+      "city": "Kennesaw",
+      "region": "GA",
+      "country": "US",
+      "lat": 34.0234,
+      "lng": -84.6155,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Kennesaw, Georgia"
+      ]
+    },
+    "kingsport, tennessee": {
+      "venueId": "kingsport-tn",
+      "city": "Kingsport",
+      "region": "TN",
+      "country": "US",
+      "lat": 36.5484,
+      "lng": -82.5618,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Kingsport, Tennessee"
+      ]
+    },
+    "kitchener, ontario": {
+      "venueId": "kitchener-on",
+      "city": "Kitchener",
+      "region": "ON",
+      "country": "CA",
+      "lat": 43.4254,
+      "lng": -80.5112,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Kitchener, Ontario"
+      ]
+    },
+    "kitchner, ontario": {
+      "venueId": "kitchener-on",
+      "city": "Kitchener",
+      "region": "ON",
+      "country": "CA",
+      "lat": 43.4254,
+      "lng": -80.5112,
+      "source": "fuzzy",
+      "eventCount": 8,
+      "rawVariants": [
+        "Kitchner, Ontario"
+      ]
+    },
+    "knox, ohio": {
+      "venueId": "knox-oh",
+      "city": "Knox",
+      "region": "OH",
+      "country": "US",
+      "lat": 40.5204,
+      "lng": -82.7546,
+      "source": "centroid",
+      "eventCount": 1,
+      "rawVariants": [
+        "Knox, Ohio"
+      ]
+    },
+    "lacrosse, wisconsin": {
+      "venueId": "la-crosse-wi",
+      "city": "La Crosse",
+      "region": "WI",
+      "country": "US",
+      "lat": 43.8014,
+      "lng": -91.2396,
+      "source": "fuzzy",
+      "eventCount": 8,
+      "rawVariants": [
+        "LaCrosse, Wisconsin"
+      ]
+    },
+    "lafayette, louisiana": {
+      "venueId": "lafayette-la",
+      "city": "Lafayette",
+      "region": "LA",
+      "country": "US",
+      "lat": 30.2241,
+      "lng": -92.0198,
+      "source": "exact",
+      "eventCount": 4,
+      "rawVariants": [
+        "Lafayette, Louisiana"
+      ]
+    },
+    "lake havasu city, arizona": {
+      "venueId": "lake-havasu-city-az",
+      "city": "Lake Havasu City",
+      "region": "AZ",
+      "country": "US",
+      "lat": 34.4839,
+      "lng": -114.3225,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Lake Havasu City, Arizona"
+      ]
+    },
+    "lamesa, california": {
+      "venueId": "la-mesa-ca",
+      "city": "La Mesa",
+      "region": "CA",
+      "country": "US",
+      "lat": 32.7678,
+      "lng": -117.0231,
+      "source": "fuzzy",
+      "eventCount": 1,
+      "rawVariants": [
+        "Lamesa, California"
+      ]
+    },
+    "lansdale, pennsylvania": {
+      "venueId": "lansdale-pa",
+      "city": "Lansdale",
+      "region": "PA",
+      "country": "US",
+      "lat": 40.2415,
+      "lng": -75.2838,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Lansdale, Pennsylvania"
+      ]
+    },
+    "laporte, indiana": {
+      "venueId": "laporte-in",
+      "city": "LaPorte",
+      "region": "IN",
+      "country": "US",
+      "lat": 41.6106,
+      "lng": -86.7225,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "LaPorte, Indiana"
+      ]
+    },
+    "lawrence, kansas": {
+      "venueId": "lawrence-ks",
+      "city": "Lawrence",
+      "region": "KS",
+      "country": "US",
+      "lat": 38.9717,
+      "lng": -95.2352,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Lawrence, Kansas"
+      ]
+    },
+    "lawrence, massachusetts": {
+      "venueId": "lawrence-ma",
+      "city": "Lawrence",
+      "region": "MA",
+      "country": "US",
+      "lat": 42.707,
+      "lng": -71.1631,
+      "source": "exact",
+      "eventCount": 8,
+      "rawVariants": [
+        "Lawrence, Massachusetts"
+      ]
+    },
+    "leander, texas": {
+      "venueId": "leander-tx",
+      "city": "Leander",
+      "region": "TX",
+      "country": "US",
+      "lat": 30.5788,
+      "lng": -97.8531,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Leander, Texas"
+      ]
+    },
+    "lebanon, illinois": {
+      "venueId": "lebanon-il",
+      "city": "Lebanon",
+      "region": "IL",
+      "country": "US",
+      "lat": 38.6039,
+      "lng": -89.8073,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Lebanon, Illinois"
+      ]
+    },
+    "lexington winchester, kentucky": {
+      "venueId": "lexington-ky",
+      "city": "Lexington",
+      "region": "KY",
+      "country": "US",
+      "lat": 37.9887,
+      "lng": -84.4777,
+      "source": "fuzzy",
+      "eventCount": 1,
+      "rawVariants": [
+        "Lexington/Winchester, Kentucky"
+      ]
+    },
+    "lexington, kentucky": {
+      "venueId": "lexington-ky",
+      "city": "Lexington",
+      "region": "KY",
+      "country": "US",
+      "lat": 37.9887,
+      "lng": -84.4777,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Lexington, Kentucky"
+      ]
+    },
+    "lima, ohio": {
+      "venueId": "lima-oh",
+      "city": "Lima",
+      "region": "OH",
+      "country": "US",
+      "lat": 40.7426,
+      "lng": -84.1052,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Lima, Ohio"
+      ]
+    },
+    "lincoln, nebraska": {
+      "venueId": "lincoln-ne",
+      "city": "Lincoln",
+      "region": "NE",
+      "country": "US",
+      "lat": 40.8,
+      "lng": -96.667,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Lincoln, Nebraska"
+      ]
+    },
+    "lisle, illinois": {
+      "venueId": "lisle-il",
+      "city": "Lisle",
+      "region": "IL",
+      "country": "US",
+      "lat": 41.8011,
+      "lng": -88.0748,
+      "source": "exact",
+      "eventCount": 5,
+      "rawVariants": [
+        "Lisle, Illinois"
+      ]
+    },
+    "little rock, arkansas": {
+      "venueId": "little-rock-ar",
+      "city": "Little Rock",
+      "region": "AR",
+      "country": "US",
+      "lat": 34.7465,
+      "lng": -92.2896,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Little Rock, Arkansas"
+      ]
+    },
+    "lodi, california": {
+      "venueId": "lodi-ca",
+      "city": "Lodi",
+      "region": "CA",
+      "country": "US",
+      "lat": 38.1302,
+      "lng": -121.2725,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Lodi, California"
+      ]
+    },
+    "long beach, california": {
+      "venueId": "long-beach-ca",
+      "city": "Long Beach",
+      "region": "CA",
+      "country": "US",
+      "lat": 33.767,
+      "lng": -118.1892,
+      "source": "exact",
+      "eventCount": 5,
+      "rawVariants": [
+        "Long Beach, California"
+      ]
+    },
+    "longview, washington": {
+      "venueId": "longview-wa",
+      "city": "Longview",
+      "region": "WA",
+      "country": "US",
+      "lat": 46.1382,
+      "lng": -122.9382,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Longview, Washington"
+      ]
+    },
+    "loomis, california": {
+      "venueId": "loomis-ca",
+      "city": "Loomis",
+      "region": "CA",
+      "country": "US",
+      "lat": 38.8213,
+      "lng": -121.193,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Loomis, California"
+      ]
+    },
+    "louisville, kentucky": {
+      "venueId": "louisville-ky",
+      "city": "Louisville",
+      "region": "KY",
+      "country": "US",
+      "lat": 38.2542,
+      "lng": -85.7594,
+      "source": "exact",
+      "eventCount": 9,
+      "rawVariants": [
+        "Louisville, Kentucky"
+      ]
+    },
+    "loveland, colorado": {
+      "venueId": "loveland-co",
+      "city": "Loveland",
+      "region": "CO",
+      "country": "US",
+      "lat": 40.3978,
+      "lng": -105.075,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Loveland, Colorado"
+      ]
+    },
+    "lubbock, texas": {
+      "venueId": "lubbock-tx",
+      "city": "Lubbock",
+      "region": "TX",
+      "country": "US",
+      "lat": 33.5779,
+      "lng": -101.8552,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Lubbock, Texas"
+      ]
+    },
+    "ludlow, massachusetts": {
+      "venueId": "ludlow-ma",
+      "city": "Ludlow",
+      "region": "MA",
+      "country": "US",
+      "lat": 42.1601,
+      "lng": -72.4759,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Ludlow, Massachusetts"
+      ]
+    },
+    "lynchburg, virginia": {
+      "venueId": "lynchburg-va",
+      "city": "Lynchburg",
+      "region": "VA",
+      "country": "US",
+      "lat": 37.4138,
+      "lng": -79.1423,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Lynchburg, Virginia"
+      ]
+    },
+    "lynn, massachusetts": {
+      "venueId": "lynn-ma",
+      "city": "Lynn",
+      "region": "MA",
+      "country": "US",
+      "lat": 42.4668,
+      "lng": -70.9495,
+      "source": "exact",
+      "eventCount": 8,
+      "rawVariants": [
+        "Lynn, Massachusetts"
+      ]
+    },
+    "madison, wisconsin": {
+      "venueId": "madison-wi",
+      "city": "Madison",
+      "region": "WI",
+      "country": "US",
+      "lat": 43.0731,
+      "lng": -89.4012,
+      "source": "exact",
+      "eventCount": 27,
+      "rawVariants": [
+        "Madison, Wisconsin"
+      ]
+    },
+    "malden, massachusetts": {
+      "venueId": "malden-ma",
+      "city": "Malden",
+      "region": "MA",
+      "country": "US",
+      "lat": 42.4251,
+      "lng": -71.0662,
+      "source": "exact",
+      "eventCount": 7,
+      "rawVariants": [
+        "Malden, Massachusetts"
+      ]
+    },
+    "manchester, new hampshire": {
+      "venueId": "manchester-nh",
+      "city": "Manchester",
+      "region": "NH",
+      "country": "US",
+      "lat": 42.9956,
+      "lng": -71.4548,
+      "source": "exact",
+      "eventCount": 7,
+      "rawVariants": [
+        "Manchester, New Hampshire"
+      ]
+    },
+    "mankato, minnesota": {
+      "venueId": "mankato-mn",
+      "city": "Mankato",
+      "region": "MN",
+      "country": "US",
+      "lat": 44.1591,
+      "lng": -94.0092,
+      "source": "exact",
+      "eventCount": 12,
+      "rawVariants": [
+        "Mankato, Minnesota"
+      ]
+    },
+    "marion, ohio": {
+      "venueId": "marion-oh",
+      "city": "Marion",
+      "region": "OH",
+      "country": "US",
+      "lat": 40.5887,
+      "lng": -83.1285,
+      "source": "exact",
+      "eventCount": 4,
+      "rawVariants": [
+        "Marion, Ohio"
+      ]
+    },
+    "martin, tennessee": {
+      "venueId": "martin-tn",
+      "city": "Martin",
+      "region": "TN",
+      "country": "US",
+      "lat": 36.3434,
+      "lng": -88.8503,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Martin, Tennessee"
+      ]
+    },
+    "massillon ohio": {
+      "venueId": "massillon-oh",
+      "city": "Massillon",
+      "region": "OH",
+      "country": "US",
+      "lat": 40.7967,
+      "lng": -81.5215,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Massillon. Ohio"
+      ]
+    },
+    "massillon, ohio": {
+      "venueId": "massillon-oh",
+      "city": "Massillon",
+      "region": "OH",
+      "country": "US",
+      "lat": 40.7967,
+      "lng": -81.5215,
+      "source": "exact",
+      "eventCount": 7,
+      "rawVariants": [
+        "Massillon, Ohio"
+      ]
+    },
+    "mckenzie, tennessee": {
+      "venueId": "mckenzie-tn",
+      "city": "McKenzie",
+      "region": "TN",
+      "country": "US",
+      "lat": 36.1326,
+      "lng": -88.5187,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "McKenzie, Tennessee"
+      ]
+    },
+    "medford, oregon": {
+      "venueId": "medford-or",
+      "city": "Medford",
+      "region": "OR",
+      "country": "US",
+      "lat": 42.3265,
+      "lng": -122.8756,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Medford, Oregon"
+      ]
+    },
+    "memphis, tennessee": {
+      "venueId": "memphis-tn",
+      "city": "Memphis",
+      "region": "TN",
+      "country": "US",
+      "lat": 35.1495,
+      "lng": -90.049,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Memphis, Tennessee"
+      ]
+    },
+    "menasha, wisconsin": {
+      "venueId": "menasha-wi",
+      "city": "Menasha",
+      "region": "WI",
+      "country": "US",
+      "lat": 44.2022,
+      "lng": -88.4465,
+      "source": "exact",
+      "eventCount": 5,
+      "rawVariants": [
+        "Menasha, Wisconsin"
+      ]
+    },
+    "menominee, wisconsin": {
+      "venueId": "menomonie-wi",
+      "city": "Menomonie",
+      "region": "WI",
+      "country": "US",
+      "lat": 44.8755,
+      "lng": -91.9193,
+      "source": "fuzzy",
+      "eventCount": 1,
+      "rawVariants": [
+        "Menominee, Wisconsin"
+      ]
+    },
+    "menomonie, wisconsin": {
+      "venueId": "menomonie-wi",
+      "city": "Menomonie",
+      "region": "WI",
+      "country": "US",
+      "lat": 44.8755,
+      "lng": -91.9193,
+      "source": "exact",
+      "eventCount": 4,
+      "rawVariants": [
+        "Menomonie, Wisconsin"
+      ]
+    },
+    "mesa, arizona": {
+      "venueId": "mesa-az",
+      "city": "Mesa",
+      "region": "AZ",
+      "country": "US",
+      "lat": 33.4223,
+      "lng": -111.8226,
+      "source": "exact",
+      "eventCount": 5,
+      "rawVariants": [
+        "Mesa, Arizona"
+      ]
+    },
+    "mesquite, texas": {
+      "venueId": "mesquite-tx",
+      "city": "Mesquite",
+      "region": "TX",
+      "country": "US",
+      "lat": 32.7668,
+      "lng": -96.5992,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Mesquite, Texas"
+      ]
+    },
+    "metamora, illinois": {
+      "venueId": "metamora-il",
+      "city": "Metamora",
+      "region": "IL",
+      "country": "US",
+      "lat": 40.7906,
+      "lng": -89.3606,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Metamora, Illinois"
+      ]
+    },
+    "michigan city, indiana": {
+      "venueId": "michigan-city-in",
+      "city": "Michigan City",
+      "region": "IN",
+      "country": "US",
+      "lat": 41.7075,
+      "lng": -86.895,
+      "source": "exact",
+      "eventCount": 21,
+      "rawVariants": [
+        "Michigan City, Indiana"
+      ]
+    },
+    "middleton, wisconsin": {
+      "venueId": "middleton-wi",
+      "city": "Middleton",
+      "region": "WI",
+      "country": "US",
+      "lat": 43.0972,
+      "lng": -89.5043,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Middleton, Wisconsin"
+      ]
+    },
+    "midland, texas": {
+      "venueId": "midland-tx",
+      "city": "Midland",
+      "region": "TX",
+      "country": "US",
+      "lat": 31.9974,
+      "lng": -102.0779,
+      "source": "exact",
+      "eventCount": 9,
+      "rawVariants": [
+        "Midland, Texas"
+      ]
+    },
+    "milton, florida": {
+      "venueId": "milton-fl",
+      "city": "Milton",
+      "region": "FL",
+      "country": "US",
+      "lat": 30.6324,
+      "lng": -87.0397,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Milton, Florida"
+      ]
+    },
+    "milton, georgia": {
+      "venueId": "milton-ga",
+      "city": "Milton",
+      "region": "GA",
+      "country": "US",
+      "lat": 34.1322,
+      "lng": -84.3007,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Milton, Georgia"
+      ]
+    },
+    "milwaukee, wisconsin": {
+      "venueId": "milwaukee-wi",
+      "city": "Milwaukee",
+      "region": "WI",
+      "country": "US",
+      "lat": 43.0389,
+      "lng": -87.9065,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Milwaukee, Wisconsin"
+      ]
+    },
+    "minneapolis, minnesota": {
+      "venueId": "minneapolis-mn",
+      "city": "Minneapolis",
+      "region": "MN",
+      "country": "US",
+      "lat": 44.98,
+      "lng": -93.2638,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Minneapolis, Minnesota"
+      ]
+    },
+    "mission viejo, california": {
+      "venueId": "mission-viejo-ca",
+      "city": "Mission Viejo",
+      "region": "CA",
+      "country": "US",
+      "lat": 33.6,
+      "lng": -117.672,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Mission Viejo, California"
+      ]
+    },
+    "mississauga, ontario": {
+      "venueId": "mississauga-on",
+      "city": "Mississauga",
+      "region": "ON",
+      "country": "CA",
+      "lat": 43.5789,
+      "lng": -79.6583,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Mississauga, Ontario"
+      ]
+    },
+    "modesto, california": {
+      "venueId": "modesto-ca",
+      "city": "Modesto",
+      "region": "CA",
+      "country": "US",
+      "lat": 37.6391,
+      "lng": -120.9969,
+      "source": "exact",
+      "eventCount": 6,
+      "rawVariants": [
+        "Modesto, California"
+      ]
+    },
+    "monroe, louisiana": {
+      "venueId": "monroe-la",
+      "city": "Monroe",
+      "region": "LA",
+      "country": "US",
+      "lat": 32.5093,
+      "lng": -92.1193,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Monroe, Louisiana"
+      ]
+    },
+    "monterey park, california": {
+      "venueId": "monterey-park-ca",
+      "city": "Monterey Park",
+      "region": "CA",
+      "country": "US",
+      "lat": 34.0625,
+      "lng": -118.1228,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Monterey Park, California"
+      ]
+    },
+    "montreal, quebec": {
+      "venueId": "montreal-qc",
+      "city": "Montréal",
+      "region": "QC",
+      "country": "CA",
+      "lat": 45.5088,
+      "lng": -73.5878,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Montreal, Quebec"
+      ]
+    },
+    "muncie, indiana": {
+      "venueId": "muncie-in",
+      "city": "Muncie",
+      "region": "IN",
+      "country": "US",
+      "lat": 40.1934,
+      "lng": -85.3864,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Muncie, Indiana"
+      ]
+    },
+    "munfordville, kentucky": {
+      "venueId": "munfordville-ky",
+      "city": "Munfordville",
+      "region": "KY",
+      "country": "US",
+      "lat": 37.2723,
+      "lng": -85.8911,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Munfordville, Kentucky"
+      ]
+    },
+    "murfreesboro, tennessee": {
+      "venueId": "murfreesboro-tn",
+      "city": "Murfreesboro",
+      "region": "TN",
+      "country": "US",
+      "lat": 35.8456,
+      "lng": -86.3903,
+      "source": "exact",
+      "eventCount": 14,
+      "rawVariants": [
+        "Murfreesboro, Tennessee"
+      ]
+    },
+    "murray, kentucky": {
+      "venueId": "murray-ky",
+      "city": "Murray",
+      "region": "KY",
+      "country": "US",
+      "lat": 36.6103,
+      "lng": -88.3148,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Murray, Kentucky"
+      ]
+    },
+    "muscatine, iowa": {
+      "venueId": "muscatine-ia",
+      "city": "Muscatine",
+      "region": "IA",
+      "country": "US",
+      "lat": 41.4245,
+      "lng": -91.0432,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Muscatine, Iowa"
+      ]
+    },
+    "muskegon, michigan": {
+      "venueId": "muskegon-mi",
+      "city": "Muskegon",
+      "region": "MI",
+      "country": "US",
+      "lat": 43.2342,
+      "lng": -86.2484,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Muskegon, Michigan"
+      ]
+    },
+    "naperville, illinois": {
+      "venueId": "naperville-il",
+      "city": "Naperville",
+      "region": "IL",
+      "country": "US",
+      "lat": 41.7859,
+      "lng": -88.1473,
+      "source": "exact",
+      "eventCount": 4,
+      "rawVariants": [
+        "Naperville, Illinois"
+      ]
+    },
+    "nashua, new hampshire": {
+      "venueId": "nashua-nh",
+      "city": "Nashua",
+      "region": "NH",
+      "country": "US",
+      "lat": 42.7654,
+      "lng": -71.4676,
+      "source": "exact",
+      "eventCount": 7,
+      "rawVariants": [
+        "Nashua, New Hampshire"
+      ]
+    },
+    "new brunswick, new jersey": {
+      "venueId": "new-brunswick-nj",
+      "city": "New Brunswick",
+      "region": "NJ",
+      "country": "US",
+      "lat": 40.4862,
+      "lng": -74.4518,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "New Brunswick, New Jersey"
+      ]
+    },
+    "new haven, connecticut": {
+      "venueId": "new-haven-ct",
+      "city": "New Haven",
+      "region": "CT",
+      "country": "US",
+      "lat": 41.3081,
+      "lng": -72.9282,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "New Haven, Connecticut"
+      ]
+    },
+    "new london, connecticut": {
+      "venueId": "new-london-ct",
+      "city": "New London",
+      "region": "CT",
+      "country": "US",
+      "lat": 41.3556,
+      "lng": -72.0995,
+      "source": "exact",
+      "eventCount": 6,
+      "rawVariants": [
+        "New London, Connecticut"
+      ]
+    },
+    "newbury park, california": {
+      "venueId": "newbury-park-ca",
+      "city": "Newbury Park",
+      "region": "CA",
+      "country": "US",
+      "lat": 35.3332,
+      "lng": -119.2959,
+      "source": "centroid",
+      "eventCount": 2,
+      "rawVariants": [
+        "Newbury Park, California"
+      ]
+    },
+    "newman, georgia": {
+      "venueId": "newnan-ga",
+      "city": "Newnan",
+      "region": "GA",
+      "country": "US",
+      "lat": 33.3807,
+      "lng": -84.7997,
+      "source": "fuzzy",
+      "eventCount": 1,
+      "rawVariants": [
+        "Newman, Georgia"
+      ]
+    },
+    "niles, michigan": {
+      "venueId": "niles-mi",
+      "city": "Niles",
+      "region": "MI",
+      "country": "US",
+      "lat": 41.8298,
+      "lng": -86.2542,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Niles, Michigan"
+      ]
+    },
+    "normal, illinois": {
+      "venueId": "normal-il",
+      "city": "Normal",
+      "region": "IL",
+      "country": "US",
+      "lat": 40.5142,
+      "lng": -88.9906,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Normal, Illinois"
+      ]
+    },
+    "norwalk, california": {
+      "venueId": "norwalk-ca",
+      "city": "Norwalk",
+      "region": "CA",
+      "country": "US",
+      "lat": 33.9022,
+      "lng": -118.0817,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Norwalk, California"
+      ]
+    },
+    "ocean springs, mississippi": {
+      "venueId": "ocean-springs-ms",
+      "city": "Ocean Springs",
+      "region": "MS",
+      "country": "US",
+      "lat": 30.4113,
+      "lng": -88.8278,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Ocean Springs, Mississippi"
+      ]
+    },
+    "ocean springs, oklahoma": {
+      "venueId": "ocean-springs-ok",
+      "city": "Ocean Springs",
+      "region": "OK",
+      "country": "US",
+      "lat": 35.6256,
+      "lng": -96.9657,
+      "source": "centroid",
+      "eventCount": 1,
+      "rawVariants": [
+        "Ocean Springs, Oklahoma"
+      ]
+    },
+    "oceanside, california": {
+      "venueId": "oceanside-ca",
+      "city": "Oceanside",
+      "region": "CA",
+      "country": "US",
+      "lat": 33.1959,
+      "lng": -117.3795,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Oceanside, California"
+      ]
+    },
+    "odessa, texas": {
+      "venueId": "odessa-tx",
+      "city": "Odessa",
+      "region": "TX",
+      "country": "US",
+      "lat": 31.8457,
+      "lng": -102.3676,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Odessa, Texas"
+      ]
+    },
+    "ogden, utah": {
+      "venueId": "ogden-ut",
+      "city": "Ogden",
+      "region": "UT",
+      "country": "US",
+      "lat": 41.223,
+      "lng": -111.9738,
+      "source": "exact",
+      "eventCount": 7,
+      "rawVariants": [
+        "Ogden, Utah"
+      ]
+    },
+    "ogdensburg, new york": {
+      "venueId": "ogdensburg-ny",
+      "city": "Ogdensburg",
+      "region": "NY",
+      "country": "US",
+      "lat": 44.6942,
+      "lng": -75.4863,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Ogdensburg, New York"
+      ]
+    },
+    "oklahoma city, oklahoma": {
+      "venueId": "oklahoma-city-ok",
+      "city": "Oklahoma City",
+      "region": "OK",
+      "country": "US",
+      "lat": 35.4676,
+      "lng": -97.5164,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Oklahoma City, Oklahoma"
+      ]
+    },
+    "olathe, kansas": {
+      "venueId": "olathe-ks",
+      "city": "Olathe",
+      "region": "KS",
+      "country": "US",
+      "lat": 38.8814,
+      "lng": -94.8191,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Olathe, Kansas"
+      ]
+    },
+    "old bridge township, new jersey": {
+      "venueId": "old-bridge-nj",
+      "city": "Old Bridge",
+      "region": "NJ",
+      "country": "US",
+      "lat": 40.4148,
+      "lng": -74.3654,
+      "source": "fuzzy",
+      "eventCount": 1,
+      "rawVariants": [
+        "Old Bridge Township, New Jersey"
+      ]
+    },
+    "old bridge, new jersey": {
+      "venueId": "old-bridge-nj",
+      "city": "Old Bridge",
+      "region": "NJ",
+      "country": "US",
+      "lat": 40.4148,
+      "lng": -74.3654,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Old Bridge, New Jersey"
+      ]
+    },
+    "omaha, nebraska": {
+      "venueId": "omaha-ne",
+      "city": "Omaha",
+      "region": "NE",
+      "country": "US",
+      "lat": 41.2563,
+      "lng": -95.9404,
+      "source": "exact",
+      "eventCount": 9,
+      "rawVariants": [
+        "Omaha, Nebraska"
+      ]
+    },
+    "oneida, wisconsin": {
+      "venueId": "oneida-wi",
+      "city": "Oneida",
+      "region": "WI",
+      "country": "US",
+      "lat": 44.4986,
+      "lng": -88.1829,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Oneida, Wisconsin"
+      ]
+    },
+    "ontario, california": {
+      "venueId": "ontario-ca",
+      "city": "Ontario",
+      "region": "CA",
+      "country": "US",
+      "lat": 34.0633,
+      "lng": -117.6509,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Ontario, California"
+      ]
+    },
+    "ontario, idaho": {
+      "venueId": "ontario-id",
+      "city": "Ontario",
+      "region": "ID",
+      "country": "US",
+      "lat": 44.207,
+      "lng": -115.3439,
+      "source": "centroid",
+      "eventCount": 1,
+      "rawVariants": [
+        "Ontario, Idaho"
+      ]
+    },
+    "orlando, florida": {
+      "venueId": "orlando-fl",
+      "city": "Orlando",
+      "region": "FL",
+      "country": "US",
+      "lat": 28.5383,
+      "lng": -81.3792,
+      "source": "exact",
+      "eventCount": 17,
+      "rawVariants": [
+        "Orlando, Florida"
+      ]
+    },
+    "oro valley, arizona": {
+      "venueId": "oro-valley-az",
+      "city": "Oro Valley",
+      "region": "AZ",
+      "country": "US",
+      "lat": 32.3909,
+      "lng": -110.9665,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Oro Valley, Arizona"
+      ]
+    },
+    "oskaloosa, iowa": {
+      "venueId": "oskaloosa-ia",
+      "city": "Oskaloosa",
+      "region": "IA",
+      "country": "US",
+      "lat": 41.2964,
+      "lng": -92.6444,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Oskaloosa, Iowa"
+      ]
+    },
+    "oswego, illinois": {
+      "venueId": "oswego-il",
+      "city": "Oswego",
+      "region": "IL",
+      "country": "US",
+      "lat": 41.6828,
+      "lng": -88.3515,
+      "source": "exact",
+      "eventCount": 9,
+      "rawVariants": [
+        "Oswego, Illinois"
+      ]
+    },
+    "ottawa, illinois": {
+      "venueId": "ottawa-il",
+      "city": "Ottawa",
+      "region": "IL",
+      "country": "US",
+      "lat": 41.3456,
+      "lng": -88.8426,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Ottawa, Illinois"
+      ]
+    },
+    "palto alto, california": {
+      "venueId": "palo-alto-ca",
+      "city": "Palo Alto",
+      "region": "CA",
+      "country": "US",
+      "lat": 37.4419,
+      "lng": -122.143,
+      "source": "fuzzy",
+      "eventCount": 1,
+      "rawVariants": [
+        "Palto Alto, California"
+      ]
+    },
+    "paramount, california": {
+      "venueId": "paramount-ca",
+      "city": "Paramount",
+      "region": "CA",
+      "country": "US",
+      "lat": 33.8895,
+      "lng": -118.1598,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Paramount, California"
+      ]
+    },
+    "pasadena, california": {
+      "venueId": "pasadena-ca",
+      "city": "Pasadena",
+      "region": "CA",
+      "country": "US",
+      "lat": 34.1478,
+      "lng": -118.1445,
+      "source": "exact",
+      "eventCount": 7,
+      "rawVariants": [
+        "Pasadena, California"
+      ]
+    },
+    "pascagoula, mississippi": {
+      "venueId": "pascagoula-ms",
+      "city": "Pascagoula",
+      "region": "MS",
+      "country": "US",
+      "lat": 30.3658,
+      "lng": -88.5561,
+      "source": "exact",
+      "eventCount": 4,
+      "rawVariants": [
+        "Pascagoula, Mississippi"
+      ]
+    },
+    "pasco, washington": {
+      "venueId": "pasco-wa",
+      "city": "Pasco",
+      "region": "WA",
+      "country": "US",
+      "lat": 46.2396,
+      "lng": -119.1006,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Pasco, Washington"
+      ]
+    },
+    "paso robles, california": {
+      "venueId": "paso-robles-ca",
+      "city": "Paso Robles",
+      "region": "CA",
+      "country": "US",
+      "lat": 35.6266,
+      "lng": -120.691,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Paso Robles, California"
+      ]
+    },
+    "paw paw, michigan": {
+      "venueId": "paw-paw-mi",
+      "city": "Paw Paw",
+      "region": "MI",
+      "country": "US",
+      "lat": 42.2178,
+      "lng": -85.8911,
+      "source": "exact",
+      "eventCount": 4,
+      "rawVariants": [
+        "Paw Paw, Michigan"
+      ]
+    },
+    "philadelphia, pennsylvania": {
+      "venueId": "philadelphia-pa",
+      "city": "Philadelphia",
+      "region": "PA",
+      "country": "US",
+      "lat": 39.9523,
+      "lng": -75.1638,
+      "source": "exact",
+      "eventCount": 5,
+      "rawVariants": [
+        "Philadelphia, Pennsylvania"
+      ]
+    },
+    "phoenix, arizona": {
+      "venueId": "phoenix-az",
+      "city": "Phoenix",
+      "region": "AZ",
+      "country": "US",
+      "lat": 33.4484,
+      "lng": -112.074,
+      "source": "exact",
+      "eventCount": 5,
+      "rawVariants": [
+        "Phoenix, Arizona"
+      ]
+    },
+    "pittsburg, kansas": {
+      "venueId": "pittsburg-ks",
+      "city": "Pittsburg",
+      "region": "KS",
+      "country": "US",
+      "lat": 37.4109,
+      "lng": -94.705,
+      "source": "exact",
+      "eventCount": 5,
+      "rawVariants": [
+        "Pittsburg, Kansas"
+      ]
+    },
+    "pittsburgh, pennsylvania": {
+      "venueId": "pittsburgh-pa",
+      "city": "Pittsburgh",
+      "region": "PA",
+      "country": "US",
+      "lat": 40.4406,
+      "lng": -79.9959,
+      "source": "exact",
+      "eventCount": 11,
+      "rawVariants": [
+        "Pittsburgh, Pennsylvania"
+      ]
+    },
+    "pittsfield, massachusetts": {
+      "venueId": "pittsfield-ma",
+      "city": "Pittsfield",
+      "region": "MA",
+      "country": "US",
+      "lat": 42.4501,
+      "lng": -73.2454,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Pittsfield, Massachusetts"
+      ]
+    },
+    "pleasant hill, california": {
+      "venueId": "pleasant-hill-ca",
+      "city": "Pleasant Hill",
+      "region": "CA",
+      "country": "US",
+      "lat": 37.948,
+      "lng": -122.0608,
+      "source": "exact",
+      "eventCount": 5,
+      "rawVariants": [
+        "Pleasant Hill, California"
+      ]
+    },
+    "port huron, michigan": {
+      "venueId": "port-huron-mi",
+      "city": "Port Huron",
+      "region": "MI",
+      "country": "US",
+      "lat": 42.9709,
+      "lng": -82.4249,
+      "source": "exact",
+      "eventCount": 9,
+      "rawVariants": [
+        "Port Huron, Michigan"
+      ]
+    },
+    "port washington, wisconsin": {
+      "venueId": "port-washington-wi",
+      "city": "Port Washington",
+      "region": "WI",
+      "country": "US",
+      "lat": 43.3872,
+      "lng": -87.8756,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Port Washington, Wisconsin"
+      ]
+    },
+    "portage, michigan": {
+      "venueId": "portage-mi",
+      "city": "Portage",
+      "region": "MI",
+      "country": "US",
+      "lat": 42.2011,
+      "lng": -85.58,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Portage, Michigan"
+      ]
+    },
+    "portland, oregon": {
+      "venueId": "portland-or",
+      "city": "Portland",
+      "region": "OR",
+      "country": "US",
+      "lat": 45.5234,
+      "lng": -122.6762,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Portland, Oregon"
+      ]
+    },
+    "powder springs, georgia": {
+      "venueId": "powder-springs-ga",
+      "city": "Powder Springs",
+      "region": "GA",
+      "country": "US",
+      "lat": 33.8595,
+      "lng": -84.6838,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Powder Springs, Georgia"
+      ]
+    },
+    "prescott, arizona": {
+      "venueId": "prescott-az",
+      "city": "Prescott",
+      "region": "AZ",
+      "country": "US",
+      "lat": 34.54,
+      "lng": -112.4685,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Prescott, Arizona"
+      ]
+    },
+    "pueblo, colorado": {
+      "venueId": "pueblo-co",
+      "city": "Pueblo",
+      "region": "CO",
+      "country": "US",
+      "lat": 38.2544,
+      "lng": -104.6091,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Pueblo, Colorado"
+      ]
+    },
+    "quincy, massachusetts": {
+      "venueId": "quincy-ma",
+      "city": "Quincy",
+      "region": "MA",
+      "country": "US",
+      "lat": 42.2529,
+      "lng": -71.0023,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Quincy, Massachusetts"
+      ]
+    },
+    "racine, wisconsin": {
+      "venueId": "racine-wi",
+      "city": "Racine",
+      "region": "WI",
+      "country": "US",
+      "lat": 42.7261,
+      "lng": -87.7828,
+      "source": "exact",
+      "eventCount": 13,
+      "rawVariants": [
+        "Racine, Wisconsin"
+      ]
+    },
+    "raleigh, north carolina": {
+      "venueId": "raleigh-nc",
+      "city": "Raleigh",
+      "region": "NC",
+      "country": "US",
+      "lat": 35.7721,
+      "lng": -78.6386,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Raleigh, North Carolina"
+      ]
+    },
+    "reedsburg, wisconsin": {
+      "venueId": "reedsburg-wi",
+      "city": "Reedsburg",
+      "region": "WI",
+      "country": "US",
+      "lat": 43.5325,
+      "lng": -90.0026,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Reedsburg, Wisconsin"
+      ]
+    },
+    "rexburg, idaho": {
+      "venueId": "rexburg-id",
+      "city": "Rexburg",
+      "region": "ID",
+      "country": "US",
+      "lat": 43.826,
+      "lng": -111.7897,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Rexburg, Idaho"
+      ]
+    },
+    "rice lake, wisconsin": {
+      "venueId": "rice-lake-wi",
+      "city": "Rice Lake",
+      "region": "WI",
+      "country": "US",
+      "lat": 45.5061,
+      "lng": -91.7382,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Rice Lake, Wisconsin"
+      ]
+    },
+    "richmond, kentucky": {
+      "venueId": "richmond-ky",
+      "city": "Richmond",
+      "region": "KY",
+      "country": "US",
+      "lat": 37.7479,
+      "lng": -84.2947,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Richmond, Kentucky"
+      ]
+    },
+    "rio rancho, new mexico": {
+      "venueId": "rio-rancho-nm",
+      "city": "Rio Rancho",
+      "region": "NM",
+      "country": "US",
+      "lat": 35.2334,
+      "lng": -106.6645,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Rio Rancho, New Mexico"
+      ]
+    },
+    "riverside, california": {
+      "venueId": "riverside-ca",
+      "city": "Riverside",
+      "region": "CA",
+      "country": "US",
+      "lat": 33.9534,
+      "lng": -117.3962,
+      "source": "exact",
+      "eventCount": 15,
+      "rawVariants": [
+        "Riverside, California"
+      ]
+    },
+    "rochester, new york": {
+      "venueId": "rochester-ny",
+      "city": "Rochester",
+      "region": "NY",
+      "country": "US",
+      "lat": 43.1548,
+      "lng": -77.6156,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Rochester, New York"
+      ]
+    },
+    "rock hill south carolina": {
+      "venueId": "rock-hill-sc",
+      "city": "Rock Hill",
+      "region": "SC",
+      "country": "US",
+      "lat": 34.9249,
+      "lng": -81.0251,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Rock Hill. South Carolina"
+      ]
+    },
+    "rock hill, north carolina": {
+      "venueId": "rose-hill-nc",
+      "city": "Rose Hill",
+      "region": "NC",
+      "country": "US",
+      "lat": 34.8282,
+      "lng": -78.023,
+      "source": "fuzzy",
+      "eventCount": 1,
+      "rawVariants": [
+        "Rock Hill, North Carolina"
+      ]
+    },
+    "rockford illinois": {
+      "venueId": "rockford-il",
+      "city": "Rockford",
+      "region": "IL",
+      "country": "US",
+      "lat": 42.2711,
+      "lng": -89.094,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Rockford Illinois"
+      ]
+    },
+    "rockford, illinois": {
+      "venueId": "rockford-il",
+      "city": "Rockford",
+      "region": "IL",
+      "country": "US",
+      "lat": 42.2711,
+      "lng": -89.094,
+      "source": "exact",
+      "eventCount": 11,
+      "rawVariants": [
+        "Rockford, Illinois"
+      ]
+    },
+    "rocklin, california": {
+      "venueId": "rocklin-ca",
+      "city": "Rocklin",
+      "region": "CA",
+      "country": "US",
+      "lat": 38.7907,
+      "lng": -121.2358,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Rocklin, California"
+      ]
+    },
+    "rome, new york": {
+      "venueId": "rome-ny",
+      "city": "Rome",
+      "region": "NY",
+      "country": "US",
+      "lat": 43.2129,
+      "lng": -75.4557,
+      "source": "exact",
+      "eventCount": 13,
+      "rawVariants": [
+        "Rome, New York"
+      ]
+    },
+    "rosemount, minnesota": {
+      "venueId": "rosemount-mn",
+      "city": "Rosemount",
+      "region": "MN",
+      "country": "US",
+      "lat": 44.7394,
+      "lng": -93.1258,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Rosemount, Minnesota"
+      ]
+    },
+    "round rock, texas": {
+      "venueId": "round-rock-tx",
+      "city": "Round Rock",
+      "region": "TX",
+      "country": "US",
+      "lat": 30.5083,
+      "lng": -97.6789,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Round Rock, Texas"
+      ]
+    },
+    "russellville, alabama": {
+      "venueId": "russellville-al",
+      "city": "Russellville",
+      "region": "AL",
+      "country": "US",
+      "lat": 34.5079,
+      "lng": -87.7286,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Russellville, Alabama"
+      ]
+    },
+    "sacramento, california": {
+      "venueId": "sacramento-ca",
+      "city": "Sacramento",
+      "region": "CA",
+      "country": "US",
+      "lat": 38.5816,
+      "lng": -121.4944,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Sacramento, California"
+      ]
+    },
+    "saginaw, texas": {
+      "venueId": "saginaw-tx",
+      "city": "Saginaw",
+      "region": "TX",
+      "country": "US",
+      "lat": 32.8601,
+      "lng": -97.3639,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Saginaw, Texas"
+      ]
+    },
+    "saint cloud, minnesota": {
+      "venueId": "saint-cloud-mn",
+      "city": "Saint Cloud",
+      "region": "MN",
+      "country": "US",
+      "lat": 45.5608,
+      "lng": -94.1625,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Saint Cloud, Minnesota"
+      ]
+    },
+    "saint louis, missouri": {
+      "venueId": "st-louis-mo",
+      "city": "St. Louis",
+      "region": "MO",
+      "country": "US",
+      "lat": 38.6273,
+      "lng": -90.1979,
+      "source": "fuzzy",
+      "eventCount": 1,
+      "rawVariants": [
+        "Saint Louis, Missouri"
+      ]
+    },
+    "saint peter, minnesota": {
+      "venueId": "saint-peter-mn",
+      "city": "Saint Peter",
+      "region": "MN",
+      "country": "US",
+      "lat": 44.3236,
+      "lng": -93.958,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Saint Peter, Minnesota"
+      ]
+    },
+    "saint peter, missouri": {
+      "venueId": "saint-peters-mo",
+      "city": "Saint Peters",
+      "region": "MO",
+      "country": "US",
+      "lat": 38.8003,
+      "lng": -90.6265,
+      "source": "fuzzy",
+      "eventCount": 2,
+      "rawVariants": [
+        "Saint Peter, Missouri"
+      ]
+    },
+    "saint peters, missouri": {
+      "venueId": "saint-peters-mo",
+      "city": "Saint Peters",
+      "region": "MO",
+      "country": "US",
+      "lat": 38.8003,
+      "lng": -90.6265,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Saint Peters, Missouri"
+      ]
+    },
+    "salem new hampshire": {
+      "venueId": "salem-nh",
+      "city": "Salem",
+      "region": "NH",
+      "country": "US",
+      "lat": 42.7884,
+      "lng": -71.2009,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Salem. New Hampshire"
+      ]
+    },
+    "salem, oregon": {
+      "venueId": "salem-or",
+      "city": "Salem",
+      "region": "OR",
+      "country": "US",
+      "lat": 44.9429,
+      "lng": -123.0351,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Salem, Oregon"
+      ]
+    },
+    "salem, virginia": {
+      "venueId": "salem-va",
+      "city": "Salem",
+      "region": "VA",
+      "country": "US",
+      "lat": 37.2935,
+      "lng": -80.0548,
+      "source": "exact",
+      "eventCount": 10,
+      "rawVariants": [
+        "Salem, Virginia"
+      ]
+    },
+    "salem, wisconsin": {
+      "venueId": "salem-wi",
+      "city": "Salem",
+      "region": "WI",
+      "country": "US",
+      "lat": 42.5547,
+      "lng": -88.1109,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Salem, Wisconsin"
+      ]
+    },
+    "salina, kansas": {
+      "venueId": "salina-ks",
+      "city": "Salina",
+      "region": "KS",
+      "country": "US",
+      "lat": 38.8403,
+      "lng": -97.6114,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Salina, Kansas"
+      ]
+    },
+    "salt lake city, utah": {
+      "venueId": "salt-lake-city-ut",
+      "city": "Salt Lake City",
+      "region": "UT",
+      "country": "US",
+      "lat": 40.7608,
+      "lng": -111.8911,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Salt Lake City, Utah"
+      ]
+    },
+    "san antonio, texas": {
+      "venueId": "san-antonio-tx",
+      "city": "San Antonio",
+      "region": "TX",
+      "country": "US",
+      "lat": 29.4241,
+      "lng": -98.4936,
+      "source": "exact",
+      "eventCount": 17,
+      "rawVariants": [
+        "San Antonio, Texas"
+      ]
+    },
+    "san diego, california": {
+      "venueId": "san-diego-ca",
+      "city": "San Diego",
+      "region": "CA",
+      "country": "US",
+      "lat": 32.7157,
+      "lng": -117.1647,
+      "source": "exact",
+      "eventCount": 13,
+      "rawVariants": [
+        "San Diego, California"
+      ]
+    },
+    "san jose, california": {
+      "venueId": "san-jose-ca",
+      "city": "San Jose",
+      "region": "CA",
+      "country": "US",
+      "lat": 37.3394,
+      "lng": -121.895,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "San Jose, California"
+      ]
+    },
+    "santa ana, california": {
+      "venueId": "santa-ana-ca",
+      "city": "Santa Ana",
+      "region": "CA",
+      "country": "US",
+      "lat": 33.7456,
+      "lng": -117.8678,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Santa Ana, California"
+      ]
+    },
+    "santa barbara, california": {
+      "venueId": "santa-barbara-ca",
+      "city": "Santa Barbara",
+      "region": "CA",
+      "country": "US",
+      "lat": 34.4208,
+      "lng": -119.6982,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Santa Barbara, California"
+      ]
+    },
+    "santa clara, california": {
+      "venueId": "santa-clara-ca",
+      "city": "Santa Clara",
+      "region": "CA",
+      "country": "US",
+      "lat": 37.3541,
+      "lng": -121.9552,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Santa Clara, California"
+      ]
+    },
+    "sarina, ontario": {
+      "venueId": "sarnia-on",
+      "city": "Sarnia",
+      "region": "ON",
+      "country": "CA",
+      "lat": 42.9787,
+      "lng": -82.4041,
+      "source": "fuzzy",
+      "eventCount": 1,
+      "rawVariants": [
+        "Sarina, Ontario"
+      ]
+    },
+    "sarnia, ontario": {
+      "venueId": "sarnia-on",
+      "city": "Sarnia",
+      "region": "ON",
+      "country": "CA",
+      "lat": 42.9787,
+      "lng": -82.4041,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Sarnia, Ontario"
+      ]
+    },
+    "sauk rapids, minnesota": {
+      "venueId": "sauk-rapids-mn",
+      "city": "Sauk Rapids",
+      "region": "MN",
+      "country": "US",
+      "lat": 45.5919,
+      "lng": -94.1661,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Sauk Rapids, Minnesota"
+      ]
+    },
+    "saul ste marie, ontario": {
+      "venueId": "sault-ste-marie-on",
+      "city": "Sault Ste. Marie",
+      "region": "ON",
+      "country": "CA",
+      "lat": 46.5168,
+      "lng": -84.3333,
+      "source": "fuzzy",
+      "eventCount": 1,
+      "rawVariants": [
+        "Saul Ste. Marie, Ontario"
+      ]
+    },
+    "seattle, washington": {
+      "venueId": "seattle-wa",
+      "city": "Seattle",
+      "region": "WA",
+      "country": "US",
+      "lat": 47.6062,
+      "lng": -122.3321,
+      "source": "exact",
+      "eventCount": 7,
+      "rawVariants": [
+        "Seattle, Washington"
+      ]
+    },
+    "severieville, tennessee": {
+      "venueId": "severieville-tn",
+      "city": "Severieville",
+      "region": "TN",
+      "country": "US",
+      "lat": 35.6578,
+      "lng": -87.1638,
+      "source": "centroid",
+      "eventCount": 1,
+      "rawVariants": [
+        "Severieville, Tennessee"
+      ]
+    },
+    "sevierville, tennessee": {
+      "venueId": "sevierville-tn",
+      "city": "Sevierville",
+      "region": "TN",
+      "country": "US",
+      "lat": 35.8681,
+      "lng": -83.5618,
+      "source": "exact",
+      "eventCount": 9,
+      "rawVariants": [
+        "Sevierville, Tennessee"
+      ]
+    },
+    "shelbyville, kentucky": {
+      "venueId": "shelbyville-ky",
+      "city": "Shelbyville",
+      "region": "KY",
+      "country": "US",
+      "lat": 38.212,
+      "lng": -85.2236,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Shelbyville, Kentucky"
+      ]
+    },
+    "sherbrooke, quebec": {
+      "venueId": "sherbrooke-qc",
+      "city": "Sherbrooke",
+      "region": "QC",
+      "country": "CA",
+      "lat": 45.4001,
+      "lng": -71.8991,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Sherbrooke, Quebec"
+      ]
+    },
+    "siloam springs, arkansas": {
+      "venueId": "siloam-springs-ar",
+      "city": "Siloam Springs",
+      "region": "AR",
+      "country": "US",
+      "lat": 36.1881,
+      "lng": -94.5405,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Siloam Springs, Arkansas"
+      ]
+    },
+    "sioux falls, iowa": {
+      "venueId": "sioux-falls-ia",
+      "city": "Sioux Falls",
+      "region": "IA",
+      "country": "US",
+      "lat": 41.9164,
+      "lng": -92.9848,
+      "source": "centroid",
+      "eventCount": 1,
+      "rawVariants": [
+        "Sioux Falls, Iowa"
+      ]
+    },
+    "sioux falls, south dakota": {
+      "venueId": "sioux-falls-sd",
+      "city": "Sioux Falls",
+      "region": "SD",
+      "country": "US",
+      "lat": 43.55,
+      "lng": -96.7003,
+      "source": "exact",
+      "eventCount": 6,
+      "rawVariants": [
+        "Sioux Falls, South Dakota"
+      ]
+    },
+    "south lyon, michigan": {
+      "venueId": "south-lyon-mi",
+      "city": "South Lyon",
+      "region": "MI",
+      "country": "US",
+      "lat": 42.4606,
+      "lng": -83.6516,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "South Lyon, Michigan"
+      ]
+    },
+    "south milwaukee, wisconsin": {
+      "venueId": "south-milwaukee-wi",
+      "city": "South Milwaukee",
+      "region": "WI",
+      "country": "US",
+      "lat": 42.9106,
+      "lng": -87.8606,
+      "source": "exact",
+      "eventCount": 5,
+      "rawVariants": [
+        "South Milwaukee, Wisconsin"
+      ]
+    },
+    "southbridge, massachusetts": {
+      "venueId": "southbridge-ma",
+      "city": "Southbridge",
+      "region": "MA",
+      "country": "US",
+      "lat": 42.0751,
+      "lng": -72.0334,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Southbridge, Massachusetts"
+      ]
+    },
+    "spokane valley, washington": {
+      "venueId": "spokane-valley-wa",
+      "city": "Spokane Valley",
+      "region": "WA",
+      "country": "US",
+      "lat": 47.6732,
+      "lng": -117.2394,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Spokane Valley, Washington"
+      ]
+    },
+    "spokane, washington": {
+      "venueId": "spokane-wa",
+      "city": "Spokane",
+      "region": "WA",
+      "country": "US",
+      "lat": 47.6597,
+      "lng": -117.4291,
+      "source": "exact",
+      "eventCount": 4,
+      "rawVariants": [
+        "Spokane, Washington"
+      ]
+    },
+    "spring valley, illinois": {
+      "venueId": "spring-valley-il",
+      "city": "Spring Valley",
+      "region": "IL",
+      "country": "US",
+      "lat": 41.3275,
+      "lng": -89.1998,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Spring Valley, Illinois"
+      ]
+    },
+    "springboro, ohio": {
+      "venueId": "springboro-oh",
+      "city": "Springboro",
+      "region": "OH",
+      "country": "US",
+      "lat": 39.5523,
+      "lng": -84.2333,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Springboro, Ohio"
+      ]
+    },
+    "springfield, massachusetts": {
+      "venueId": "springfield-ma",
+      "city": "Springfield",
+      "region": "MA",
+      "country": "US",
+      "lat": 42.1015,
+      "lng": -72.5898,
+      "source": "exact",
+      "eventCount": 6,
+      "rawVariants": [
+        "Springfield, Massachusetts"
+      ]
+    },
+    "stanford, california": {
+      "venueId": "stanford-ca",
+      "city": "Stanford",
+      "region": "CA",
+      "country": "US",
+      "lat": 37.4241,
+      "lng": -122.1661,
+      "source": "exact",
+      "eventCount": 6,
+      "rawVariants": [
+        "Stanford, California"
+      ]
+    },
+    "stillwater, minnesota": {
+      "venueId": "stillwater-mn",
+      "city": "Stillwater",
+      "region": "MN",
+      "country": "US",
+      "lat": 45.0564,
+      "lng": -92.806,
+      "source": "exact",
+      "eventCount": 11,
+      "rawVariants": [
+        "Stillwater, Minnesota"
+      ]
+    },
+    "stockton, california": {
+      "venueId": "stockton-ca",
+      "city": "Stockton",
+      "region": "CA",
+      "country": "US",
+      "lat": 37.9577,
+      "lng": -121.2908,
+      "source": "exact",
+      "eventCount": 10,
+      "rawVariants": [
+        "Stockton, California"
+      ]
+    },
+    "streator, illinois": {
+      "venueId": "streator-il",
+      "city": "Streator",
+      "region": "IL",
+      "country": "US",
+      "lat": 41.1209,
+      "lng": -88.8354,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Streator, Illinois"
+      ]
+    },
+    "stroudsburg, pennsylvania": {
+      "venueId": "stroudsburg-pa",
+      "city": "Stroudsburg",
+      "region": "PA",
+      "country": "US",
+      "lat": 40.9868,
+      "lng": -75.1946,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Stroudsburg, Pennsylvania"
+      ]
+    },
+    "sudbury, ontario": {
+      "venueId": "greater-sudbury-on",
+      "city": "Greater Sudbury",
+      "region": "ON",
+      "country": "CA",
+      "lat": 46.49,
+      "lng": -80.99,
+      "source": "fuzzy",
+      "eventCount": 2,
+      "rawVariants": [
+        "Sudbury, Ontario"
+      ]
+    },
+    "summerville, south carolina": {
+      "venueId": "summerville-sc",
+      "city": "Summerville",
+      "region": "SC",
+      "country": "US",
+      "lat": 33.0185,
+      "lng": -80.1757,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Summerville, South Carolina"
+      ]
+    },
+    "sunnyvale, california": {
+      "venueId": "sunnyvale-ca",
+      "city": "Sunnyvale",
+      "region": "CA",
+      "country": "US",
+      "lat": 37.3688,
+      "lng": -122.0363,
+      "source": "exact",
+      "eventCount": 6,
+      "rawVariants": [
+        "Sunnyvale, California"
+      ]
+    },
+    "tarboro, north carolina": {
+      "venueId": "tarboro-nc",
+      "city": "Tarboro",
+      "region": "NC",
+      "country": "US",
+      "lat": 35.8968,
+      "lng": -77.5358,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Tarboro, North Carolina"
+      ]
+    },
+    "tempe, arizona": {
+      "venueId": "tempe-az",
+      "city": "Tempe",
+      "region": "AZ",
+      "country": "US",
+      "lat": 33.4148,
+      "lng": -111.9093,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Tempe, Arizona"
+      ]
+    },
+    "toledo, ohio": {
+      "venueId": "toledo-oh",
+      "city": "Toledo",
+      "region": "OH",
+      "country": "US",
+      "lat": 41.6639,
+      "lng": -83.5552,
+      "source": "exact",
+      "eventCount": 13,
+      "rawVariants": [
+        "Toledo, Ohio"
+      ]
+    },
+    "traverse city, michigan": {
+      "venueId": "traverse-city-mi",
+      "city": "Traverse City",
+      "region": "MI",
+      "country": "US",
+      "lat": 44.7631,
+      "lng": -85.6206,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Traverse City, Michigan"
+      ]
+    },
+    "tri-cities, washington": {
+      "venueId": "tri-cities-wa",
+      "city": "Tri-Cities",
+      "region": "WA",
+      "country": "US",
+      "lat": 47.3356,
+      "lng": -121.6594,
+      "source": "centroid",
+      "eventCount": 2,
+      "rawVariants": [
+        "Tri-Cities, Washington"
+      ]
+    },
+    "troy alabama": {
+      "venueId": "troy-al",
+      "city": "Troy",
+      "region": "AL",
+      "country": "US",
+      "lat": 31.8088,
+      "lng": -85.9699,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Troy. Alabama"
+      ]
+    },
+    "troy, alabama": {
+      "venueId": "troy-al",
+      "city": "Troy",
+      "region": "AL",
+      "country": "US",
+      "lat": 31.8088,
+      "lng": -85.9699,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Troy, Alabama"
+      ]
+    },
+    "tulsa, oklahoma": {
+      "venueId": "tulsa-ok",
+      "city": "Tulsa",
+      "region": "OK",
+      "country": "US",
+      "lat": 36.154,
+      "lng": -95.9928,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Tulsa, Oklahoma"
+      ]
+    },
+    "tupelo, mississippi": {
+      "venueId": "tupelo-ms",
+      "city": "Tupelo",
+      "region": "MS",
+      "country": "US",
+      "lat": 34.2581,
+      "lng": -88.7046,
+      "source": "exact",
+      "eventCount": 4,
+      "rawVariants": [
+        "Tupelo, Mississippi"
+      ]
+    },
+    "upper darby, pennsylvania": {
+      "venueId": "darby-pa",
+      "city": "Darby",
+      "region": "PA",
+      "country": "US",
+      "lat": 39.9184,
+      "lng": -75.2591,
+      "source": "fuzzy",
+      "eventCount": 1,
+      "rawVariants": [
+        "Upper Darby, Pennsylvania"
+      ]
+    },
+    "utica, new york": {
+      "venueId": "utica-ny",
+      "city": "Utica",
+      "region": "NY",
+      "country": "US",
+      "lat": 43.1009,
+      "lng": -75.2327,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Utica, New York"
+      ]
+    },
+    "valdosta, georgia": {
+      "venueId": "valdosta-ga",
+      "city": "Valdosta",
+      "region": "GA",
+      "country": "US",
+      "lat": 30.8333,
+      "lng": -83.2803,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Valdosta, Georgia"
+      ]
+    },
+    "van buren, alabama": {
+      "venueId": "van-buren-al",
+      "city": "Van Buren",
+      "region": "AL",
+      "country": "US",
+      "lat": 33.0152,
+      "lng": -86.7327,
+      "source": "centroid",
+      "eventCount": 1,
+      "rawVariants": [
+        "Van Buren, Alabama"
+      ]
+    },
+    "van buren, arkansas": {
+      "venueId": "van-buren-ar",
+      "city": "Van Buren",
+      "region": "AR",
+      "country": "US",
+      "lat": 35.4368,
+      "lng": -94.3483,
+      "source": "exact",
+      "eventCount": 6,
+      "rawVariants": [
+        "Van Buren, Arkansas"
+      ]
+    },
+    "vancouver washington": {
+      "venueId": "vancouver-wa",
+      "city": "Vancouver",
+      "region": "WA",
+      "country": "US",
+      "lat": 45.6387,
+      "lng": -122.6615,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Vancouver. Washington"
+      ]
+    },
+    "vancouver, washington": {
+      "venueId": "vancouver-wa",
+      "city": "Vancouver",
+      "region": "WA",
+      "country": "US",
+      "lat": 45.6387,
+      "lng": -122.6615,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Vancouver, Washington"
+      ]
+    },
+    "vicksburg, michigan": {
+      "venueId": "vicksburg-mi",
+      "city": "Vicksburg",
+      "region": "MI",
+      "country": "US",
+      "lat": 42.12,
+      "lng": -85.5328,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Vicksburg, Michigan"
+      ]
+    },
+    "walnut, california": {
+      "venueId": "walnut-ca",
+      "city": "Walnut",
+      "region": "CA",
+      "country": "US",
+      "lat": 34.0203,
+      "lng": -117.8653,
+      "source": "exact",
+      "eventCount": 9,
+      "rawVariants": [
+        "Walnut, California"
+      ]
+    },
+    "warrenton, virginia": {
+      "venueId": "warrenton-va",
+      "city": "Warrenton",
+      "region": "VA",
+      "country": "US",
+      "lat": 38.7135,
+      "lng": -77.7953,
+      "source": "exact",
+      "eventCount": 6,
+      "rawVariants": [
+        "Warrenton, Virginia"
+      ]
+    },
+    "waukee, iowa": {
+      "venueId": "waukee-ia",
+      "city": "Waukee",
+      "region": "IA",
+      "country": "US",
+      "lat": 41.6117,
+      "lng": -93.8852,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Waukee, Iowa"
+      ]
+    },
+    "waukegan, illinois": {
+      "venueId": "waukegan-il",
+      "city": "Waukegan",
+      "region": "IL",
+      "country": "US",
+      "lat": 42.3636,
+      "lng": -87.8448,
+      "source": "exact",
+      "eventCount": 4,
+      "rawVariants": [
+        "Waukegan, Illinois"
+      ]
+    },
+    "waukesha, wisconsin": {
+      "venueId": "waukesha-wi",
+      "city": "Waukesha",
+      "region": "WI",
+      "country": "US",
+      "lat": 43.0117,
+      "lng": -88.2315,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Waukesha, Wisconsin"
+      ]
+    },
+    "wausau, wisconsin": {
+      "venueId": "wausau-wi",
+      "city": "Wausau",
+      "region": "WI",
+      "country": "US",
+      "lat": 44.9591,
+      "lng": -89.6301,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Wausau, Wisconsin"
+      ]
+    },
+    "wayne, new jersey": {
+      "venueId": "wayne-nj",
+      "city": "Wayne",
+      "region": "NJ",
+      "country": "US",
+      "lat": 40.9254,
+      "lng": -74.2765,
+      "source": "exact",
+      "eventCount": 6,
+      "rawVariants": [
+        "Wayne, New Jersey"
+      ]
+    },
+    "west chester, pennsylvania": {
+      "venueId": "west-chester-pa",
+      "city": "West Chester",
+      "region": "PA",
+      "country": "US",
+      "lat": 39.961,
+      "lng": -75.608,
+      "source": "exact",
+      "eventCount": 8,
+      "rawVariants": [
+        "West Chester, Pennsylvania"
+      ]
+    },
+    "west covina, california": {
+      "venueId": "west-covina-ca",
+      "city": "West Covina",
+      "region": "CA",
+      "country": "US",
+      "lat": 34.0686,
+      "lng": -117.939,
+      "source": "exact",
+      "eventCount": 5,
+      "rawVariants": [
+        "West Covina, California"
+      ]
+    },
+    "west des moines, iowa": {
+      "venueId": "west-des-moines-ia",
+      "city": "West Des Moines",
+      "region": "IA",
+      "country": "US",
+      "lat": 41.5772,
+      "lng": -93.7113,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "West Des Moines, Iowa"
+      ]
+    },
+    "west milford, new jersey": {
+      "venueId": "west-milford-nj",
+      "city": "West Milford",
+      "region": "NJ",
+      "country": "US",
+      "lat": 41.1312,
+      "lng": -74.3674,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "West Milford, New Jersey"
+      ]
+    },
+    "west monroe, louisiana": {
+      "venueId": "west-monroe-la",
+      "city": "West Monroe",
+      "region": "LA",
+      "country": "US",
+      "lat": 32.5185,
+      "lng": -92.1476,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "West Monroe, Louisiana"
+      ]
+    },
+    "westlake village, california": {
+      "venueId": "westlake-village-ca",
+      "city": "Westlake Village",
+      "region": "CA",
+      "country": "US",
+      "lat": 34.1458,
+      "lng": -118.8056,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Westlake Village, California"
+      ]
+    },
+    "westminster, maryland": {
+      "venueId": "westminster-md",
+      "city": "Westminster",
+      "region": "MD",
+      "country": "US",
+      "lat": 39.5754,
+      "lng": -76.9958,
+      "source": "exact",
+      "eventCount": 6,
+      "rawVariants": [
+        "Westminster, Maryland"
+      ]
+    },
+    "whitewater, wisconsin": {
+      "venueId": "whitewater-wi",
+      "city": "Whitewater",
+      "region": "WI",
+      "country": "US",
+      "lat": 42.8336,
+      "lng": -88.7323,
+      "source": "exact",
+      "eventCount": 5,
+      "rawVariants": [
+        "Whitewater, Wisconsin"
+      ]
+    },
+    "wichita falls, texas": {
+      "venueId": "wichita-falls-tx",
+      "city": "Wichita Falls",
+      "region": "TX",
+      "country": "US",
+      "lat": 33.9137,
+      "lng": -98.4934,
+      "source": "exact",
+      "eventCount": 6,
+      "rawVariants": [
+        "Wichita Falls, Texas"
+      ]
+    },
+    "wichita, kansas": {
+      "venueId": "wichita-ks",
+      "city": "Wichita",
+      "region": "KS",
+      "country": "US",
+      "lat": 37.6922,
+      "lng": -97.3375,
+      "source": "exact",
+      "eventCount": 12,
+      "rawVariants": [
+        "Wichita, Kansas"
+      ]
+    },
+    "wildwood, new jersey": {
+      "venueId": "wildwood-nj",
+      "city": "Wildwood",
+      "region": "NJ",
+      "country": "US",
+      "lat": 38.9918,
+      "lng": -74.8149,
+      "source": "exact",
+      "eventCount": 3,
+      "rawVariants": [
+        "Wildwood, New Jersey"
+      ]
+    },
+    "wilmot, wisconsin": {
+      "venueId": "wilmot-wi",
+      "city": "Wilmot",
+      "region": "WI",
+      "country": "US",
+      "lat": 43.5301,
+      "lng": -88.8159,
+      "source": "centroid",
+      "eventCount": 1,
+      "rawVariants": [
+        "Wilmot, Wisconsin"
+      ]
+    },
+    "windsor, colorado": {
+      "venueId": "windsor-co",
+      "city": "Windsor",
+      "region": "CO",
+      "country": "US",
+      "lat": 40.4775,
+      "lng": -104.9014,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Windsor, Colorado"
+      ]
+    },
+    "winston-salem, north carolina": {
+      "venueId": "winston-salem-nc",
+      "city": "Winston-Salem",
+      "region": "NC",
+      "country": "US",
+      "lat": 36.0999,
+      "lng": -80.2442,
+      "source": "exact",
+      "eventCount": 4,
+      "rawVariants": [
+        "Winston-Salem, North Carolina",
+        "Winston-Salem,. North Carolina"
+      ]
+    },
+    "wisconsin rapids, wisconsin": {
+      "venueId": "wisconsin-rapids-wi",
+      "city": "Wisconsin Rapids",
+      "region": "WI",
+      "country": "US",
+      "lat": 44.3836,
+      "lng": -89.8174,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Wisconsin Rapids, Wisconsin"
+      ]
+    },
+    "woodburn, oregon": {
+      "venueId": "woodburn-or",
+      "city": "Woodburn",
+      "region": "OR",
+      "country": "US",
+      "lat": 45.1437,
+      "lng": -122.8554,
+      "source": "exact",
+      "eventCount": 6,
+      "rawVariants": [
+        "Woodburn, Oregon"
+      ]
+    },
+    "woodbury, minnesota": {
+      "venueId": "woodbury-mn",
+      "city": "Woodbury",
+      "region": "MN",
+      "country": "US",
+      "lat": 44.9239,
+      "lng": -92.9594,
+      "source": "exact",
+      "eventCount": 2,
+      "rawVariants": [
+        "Woodbury, Minnesota"
+      ]
+    },
+    "woodstock, illinois": {
+      "venueId": "woodstock-il",
+      "city": "Woodstock",
+      "region": "IL",
+      "country": "US",
+      "lat": 42.3147,
+      "lng": -88.4487,
+      "source": "exact",
+      "eventCount": 5,
+      "rawVariants": [
+        "Woodstock, Illinois"
+      ]
+    },
+    "yukon, oklahoma": {
+      "venueId": "yukon-ok",
+      "city": "Yukon",
+      "region": "OK",
+      "country": "US",
+      "lat": 35.5067,
+      "lng": -97.7625,
+      "source": "exact",
+      "eventCount": 1,
+      "rawVariants": [
+        "Yukon, Oklahoma"
+      ]
+    }
+  }
+}
