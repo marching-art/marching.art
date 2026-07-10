@@ -258,6 +258,13 @@ match /podium-staff/{seasonUid} {
   allow write: if false; // Backend only
 }
 
+// Director-hosted events (all classes) — public event pages/history; all
+// mutations go through the hostEvent callable and the nightly payout.
+match /hosted-events/{seasonUid}/{document=**} {
+  allow read: if true;
+  allow write: if false; // Backend only
+}
+
 match /season_champions/{docId} {
   allow read: if true;
   allow write: if false; // Backend only

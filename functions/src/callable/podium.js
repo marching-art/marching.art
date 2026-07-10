@@ -19,6 +19,7 @@ const store = require("../helpers/podium/store");
 const venues = require("../helpers/podium/venues");
 const staffMarket = require("../helpers/podium/staffMarket");
 const career = require("../helpers/podium/career");
+const hostedEvents = require("../helpers/podium/hostedEvents");
 
 const FOOD_TIERS = ["gasStation", "standard", "fullKitchen"];
 const MAX_TEMPLATE_BLOCKS = 5;
@@ -523,6 +524,85 @@ exports.setPodiumPlanTemplate = onCall({ cors: true }, async (request) => {
     );
   });
   return { success: true, planTemplate: blocks };
+});
+
+exports.hostEvent = onCall({ cors: true }, async (request) => {
+  const { uid, db, seasonData, competitionDay } = await podiumContext(request);
+  let validated;
+  try {
+    validated = hostedEvents.validateHostRequest(request.data || {}, Math.max(0, competitionDay));
+  } catch (error) {
+    throw new HttpsError("invalid-argument", error.message);
+  }
+  const { eventName, venueTier, tier, day, venue } = validated;
+
+  // Host must field a corps somewhere in the game (anti-alt guard).
+  const profileSnapshotPre = await store.profileRef(db, uid).get();
+  const corpsMap = profileSnapshotPre.exists ? profileSnapshotPre.data().corps || {} : {};
+  if (Object.values(corpsMap).filter(Boolean).length === 0) {
+    throw new HttpsError("failed-precondition", "Field a corps before hosting events.");
+  }
+
+  const seasonUid = seasonData.seasonUid;
+  const dayEvents = await hostedEvents
+    .eventsCollection(db, seasonUid)
+    .where("day", "==", day)
+    .get();
+  if (dayEvents.size >= store.balance.hostedEvents.maxEventsPerDay) {
+    throw new HttpsError("failed-precondition", `Day ${day} already has the maximum hosted events.`);
+  }
+
+  const eventRef = hostedEvents.eventsCollection(db, seasonUid).doc();
+  await db.runTransaction(async (transaction) => {
+    const profileSnapshot = await transaction.get(store.profileRef(db, uid));
+    const corpsCoin = profileSnapshot.exists ? profileSnapshot.data().corpsCoin || 0 : 0;
+    if (corpsCoin < tier.rentalCC) {
+      throw new HttpsError(
+        "failed-precondition",
+        `Venue rental is ${tier.rentalCC} CC (you have ${corpsCoin}).`
+      );
+    }
+    transaction.update(store.profileRef(db, uid), { corpsCoin: corpsCoin - tier.rentalCC });
+    const historyRef = db
+      .collection(
+        `artifacts/${require("../config").dataNamespaceParam.value()}/users/${uid}/corpsCoinHistory`
+      )
+      .doc();
+    transaction.set(historyRef, {
+      type: "hosted_event_rental",
+      amount: -tier.rentalCC,
+      description: `Venue rental: ${eventName} (${tier.label})`,
+      timestamp: new Date(),
+    });
+    transaction.set(eventRef, {
+      hostUid: uid,
+      eventName,
+      venueTier,
+      day,
+      location: `${venue.city}, ${venue.region}`,
+      venueId: venue.venueId,
+      rentalCC: tier.rentalCC,
+      capacity: tier.capacity,
+      paidOut: false,
+      createdAt: new Date().toISOString(),
+    });
+  });
+
+  // Insert into the season schedule so every class can select it through
+  // the normal weekly picker (open enrollment — no host approval).
+  const { addShowToDay } = require("../helpers/seasonSchedule");
+  const scheduleId = seasonData.dataDocId || seasonData.name;
+  if (scheduleId) {
+    await addShowToDay(scheduleId, day, {
+      eventName,
+      location: `${venue.city}, ${venue.region}`,
+      eventTier: "hosted",
+      hostUid: uid,
+    });
+  }
+
+  logger.info(`Hosted event created: ${eventName} day ${day} by ${uid}`);
+  return { success: true, eventId: eventRef.id, day, eventName };
 });
 
 exports.getPodiumStaffMarket = onCall({ cors: true }, async (request) => {

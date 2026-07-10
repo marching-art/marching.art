@@ -75,7 +75,20 @@ async function runPodiumStage(db) {
   }
 
   const { processPodiumDay } = require("../helpers/podium/processor");
-  return processPodiumDay(db, seasonData, { calendarDay, competitionDay });
+  const result = await processPodiumDay(db, seasonData, { calendarDay, competitionDay });
+
+  // Hosted-event payouts ride the once-per-day completion (idempotent: a
+  // skipped/leased rerun never reaches this branch, and paid events are
+  // marked paidOut). Isolated: payout failures never fail the stage.
+  if (result.status === "completed" && competitionDay >= 1) {
+    try {
+      const { payoutHostedEvents } = require("../helpers/podium/hostedEvents");
+      result.hostedEvents = await payoutHostedEvents(db, seasonData, competitionDay);
+    } catch (error) {
+      logger.error(`[hosted-events] payout failed (stage unaffected): ${error.message}`);
+    }
+  }
+  return result;
 }
 
 module.exports = { runPodiumStage };

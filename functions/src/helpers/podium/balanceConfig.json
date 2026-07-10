@@ -94,6 +94,19 @@
     "springTrainingDayCost": 25
   },
   "clinician": { "cost": 120, "durationDays": 3, "yieldBoost": 1.3 },
+  "hostedEvents": {
+    "venueTiers": {
+      "highSchool": { "label": "High School Stadium", "rentalCC": 200, "capacity": 15, "payoutPerCorpsCC": 20 },
+      "collegeBowl": { "label": "College Bowl", "rentalCC": 500, "capacity": 30, "payoutPerCorpsCC": 25 },
+      "nflStadium": { "label": "NFL Stadium", "rentalCC": 1000, "capacity": 60, "payoutPerCorpsCC": 30 }
+    },
+    "maxEventsPerDay": 2,
+    "minDaysAhead": 2,
+    "lastHostableDay": 44,
+    "nameMin": 3,
+    "nameMax": 60
+  },
+  "medals": { "minFieldSize": 4 },
   "staff": {
     "tiers": {
       "apprentice": { "salary": 40, "boost": 0.03, "tourStaminaReductionPct": 10 },

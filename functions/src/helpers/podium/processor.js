@@ -278,11 +278,22 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
     }
 
     // --- 3. Recap doc -------------------------------------------------------
+    const medalByUid = {};
     if (results.length > 0) {
       results.sort((a, b) => b.totalScore - a.totalScore);
       results.forEach((entry, index) => {
         entry.place = index + 1;
       });
+      // Per-show medals (design §14.1.3): top 3 at any meaningfully-sized
+      // show bank a lifetime counter — the FMA "70+ regular-season golds"
+      // collector hook.
+      if (results.length >= store.balance.medals.minFieldSize) {
+        const medalNames = ["gold", "silver", "bronze"];
+        results.slice(0, 3).forEach((entry, index) => {
+          medalByUid[entry.uid] = medalNames[index];
+          entry.medal = medalNames[index];
+        });
+      }
       await store.recapDayRef(db, seasonUid, competitionDay).set({
         seasonUid,
         competitionDay,
@@ -300,14 +311,18 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
       if (!snapshot.exists) continue;
       const data = snapshot.data();
       if (data.lastTotal != null) {
-        standings.push({ uid: rosterDoc.id, lastTotal: data.lastTotal });
+        standings.push({ uid: rosterDoc.id, lastTotal: data.lastTotal, medals: data.medals });
       }
     }
     standings.sort((a, b) => b.lastTotal - a.lastTotal);
     for (let i = 0; i < standings.length; i++) {
-      const { uid, lastTotal } = standings[i];
+      const { uid, lastTotal, medals } = standings[i];
+      const medalWon = medalByUid[uid];
+      const updatedMedals = medalWon
+        ? { ...(medals || {}), [medalWon]: ((medals || {})[medalWon] || 0) + 1 }
+        : medals || {};
       await store.stateRef(db, uid).set(
-        { seasonRank: i + 1, seasonRankOf: standings.length },
+        { seasonRank: i + 1, seasonRankOf: standings.length, medals: updatedMedals },
         { merge: true }
       );
       await store.profileRef(db, uid).set(
@@ -317,6 +332,7 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
               totalSeasonScore: lastTotal,
               seasonRank: i + 1,
               seasonRankOf: standings.length,
+              medals: updatedMedals,
             },
           },
         },
