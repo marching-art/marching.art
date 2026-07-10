@@ -86,6 +86,14 @@ exports.manualTrigger = onCall({
     case "calculateCorpsStatistics":
       await calculateCorpsStatisticsLogic();
       return { success: true, message: "Successfully calculated and saved corps statistics." };
+    case "processPodiumStage": {
+      // Alpha/beta convenience: run the flag-gated Podium nightly stage now
+      // instead of waiting for the 2 AM scheduler. Same lease semantics; a
+      // completed day is skipped unless it is reprocessed via the guard.
+      const { runPodiumStage } = require("../scheduled/nightlyStages");
+      const stageResult = await runPodiumStage(getDb());
+      return { success: true, message: `Podium stage: ${JSON.stringify(stageResult)}` };
+    }
     case "archiveSeasonResults":
       await archiveSeasonResultsLogic();
       return { success: true, message: "Season results and league champions have been archived." };
