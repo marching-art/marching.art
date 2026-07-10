@@ -2,7 +2,12 @@
 
 **A director-simulation game class for marching.art, spiritual successor to Fantasy Marching Arts**
 
-Status: Proposal v1.3 · July 2026 — v1 open questions resolved (guard sectionals in, live
+Status: v3.0 · July 2026 — LIVE (launched mid-live-season 2026); v3.0 logs the launch-week
+decision sheet: three divisions (26), the hosting ladder (27), staff careers (28), historical
+shadows (29), Fan Favorite (30), the Podium Report article (31), the commitment-cap re-tune
+(32), 12-click days (33), records parity (34), skill tree dropped (35), instrumentation now
+(36), runtime curve rebuilds (37). Earlier: Proposal v1.3 — v1 open questions resolved (guard
+sectionals in, live
 season in with spring training design, no evening reveal window, director-hosted events added);
 v1.2 promotes the round-two backlog into committed design (regional anchors, joint rehearsals,
 assistant director, historical shadows, climate, Director Rating, named hardware) and clarifies
@@ -1409,13 +1414,83 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     keeping staff worth less than decision quality. Supersedes the v1 bronze/silver/gold
     retainer-tier sketch; there is no terminal "maxed staff" state, ever.
 
+**Resolved in v3.0 (July 2026 live-launch decision sheet, ChrisRohn):**
+
+26. **Three divisions — the A → Open → World climb** (§5.7 final form): every corps starts in
+    A Class; at each season boundary the veteran pool is assessed against PUBLISHED percentile
+    cutoffs (population-balanced thirds; Open forms at 6+ corps, World at 12+). Promotion is one
+    division per season, earned by finishing at/above the next division's cutoff. Demotion is
+    slow like old DCI: one grace season below your cutoff, a one-division drop after two straight.
+    One missed season holds the seat; two or more re-enter at A Class. Each division crowns its
+    own Finals hardware; the Hall of Champions shows the top active division's podium. The
+    Eastern Classic night snake is division-seeded from Day-38 standings (published Day 39;
+    uid-parity fallback until then). Championship Week is Indianapolis: A/Open run Prelims →
+    Class Finals (days 47-48), World runs Prelims → Semis → Finals (47-49). The commitment cap
+    is division-equal for real now: 2,500 / 4,000 / 6,000 (see 32).
+27. **Hosting venue ladder replaces show sponsorship** (supersedes the shop's sponsorship
+    purchase; resolves old open item 3): directors don't brand someone else's show — they RUN
+    one. High School Stadium (150 CC rental, 25 CC per attending corps) is day-one attainable;
+    2 successful HS events unlock the College Bowl (400/35), 3 successful College Bowls unlock
+    the NFL Stadium (900/50); success = drawing the tier's minimum field, tracked on the profile
+    hosting resume (server-written, rules-guarded). A well-drawn show profits, so hosting funds
+    the climb and the corps. Podium corps routed to a hosted venue count toward attendance.
+28. **Staff careers** (evolves decision 18): staff are persistent people in a career registry —
+    tenure floors their tier (journeyman yr 3 → legend yr 22), salaries escalate 6%/season (a
+    year-25 legend costs ~800/season against the capped +15% boost), and careers end in
+    retirement at season 30 with rookies restocking every specialty. Contracts run 1-3 seasons
+    at the salary frozen at signing; renewals charge each new season's budget and lapse quietly
+    if unaffordable. Mid-season transfer market: post a contract; the buyer pays remaining
+    pro-rata salary + 25% buyout premium (a sink — no player-to-player CC surface), the seller
+    recoups the remainder. Retraining moves a person to a new specialty for life (half boost for
+    the rest of that season). The 3-day clinician stays as-is.
+29. **Historical shadows ship as a CAST, not just Crown**: 8 committed real season arcs from the
+    2000-2012 corpus (Crown '12, Bluecoats '10, Boston '02, Blue Stars '10, Mandarins '08,
+    Cascades '05, Surf '12, Pioneer '07 — best season for the elite cast, median season for the
+    mid/community cast, which also filters Div II sheet artifacts). Rendered as muted ghost
+    lines under the corps' own score line (state.scoreHistory) in the Podium zone.
+30. **Fan Favorite is a two-level ballot** (resolves gap §14.1.5): prelims at each major (3-day
+    window, one vote per signed-in user — fans included — for a Podium corps that performed),
+    top 3 per major advance; the finals ballot runs Championship Week; the winner is crowned at
+    archival (season-record banner + profile trophy). Ballots private, results public, cosmetic
+    forever.
+31. **The Podium Report replaces one DCI article** (resolves 7.3's remainder): on Podium week
+    boundaries the deterministic power-rankings column runs as news Article 3 in place of the
+    DCI caption deep-dive — composed directly from the column doc, never LLM-written, so player
+    corps names and ranks cannot be hallucinated. The recap sheet gains a Discord-ready
+    share/copy affordance.
+32. **The commitment cap was never meant to be the starting grant** (amends decision 24's
+    number, keeps its principle): 1,000 CC is what a season comfortably COSTS, not the ceiling.
+    Caps are 2,500 (A) / 4,000 (Open) / 6,000 (World) — division-equal (a veteran's stockpile
+    fills the cap, never exceeds what a solvent rookie's division peer can field), with headroom
+    for World staff payrolls.
+33. **Twelve clicks a day**: rehearsal runs 12 blocks/day (20 spring training, 4 show days) with
+    per-block yield and stamina at exactly ¼ the old values and the repeat ladder in 4-click
+    groups — balance-identical to the 3-block day, four times the FMA mouse-mashing. The pacing
+    harness models absence per-day with assistant coverage (upset window 40%).
+34. **Records/leaderboard parity** (resolves gap §14.1.6's core): podiumClass joins the all-time
+    Records Book (nightly + season-best + full rebuild over podium recaps) and the recap sheet
+    is division-filterable. `dci-stats` (real-DCI reference stats) deliberately does NOT ingest
+    game results — the Records Book and season archives are the game's stats home.
+35. **Director skill tree: dropped.** Gap §14.1.4's sidegrades stay unbuilt by decision — the
+    identity itch is served by staff careers, divisions, and reputation; nothing compounds from
+    account age.
+36. **Funnel instrumentation ships with the beta, not after** (Phase 8.2 pulled forward):
+    nightly podium-metrics docs (D1/D7 cohort return, blocks per active corps, rest-day usage,
+    week-ahead pick coverage) surfaced in the Admin panel.
+37. **Full-archive curve rebuilds are a runtime job**: admin `rebuildPodiumCurves` rebuilds the
+    envelope from the complete Firestore archive (2000-2026, completed years only, survivorship
+    correction built in) into `podium-config/curves`, which the engine swaps in at runtime with
+    shape validation — committed curveData is the permanent fallback. All 11 gazetteer centroid
+    placeholders hand-corrected (incl. wrong-state source typos).
+
 **Still open:**
 
-1. **Point-cap semantics** — Podium has no lineup and no cap; confirm nothing downstream assumes
-   every class has a cap (`currentPointCap`, Lineup Analyzer efficiency math, trade windows).
-2. **Name** — Podium Class is the recommendation; Circuit/Command/Maestro on the bench.
-3. **Hosted-event pricing curve** — venue rental vs. per-corps payout constants need the §9
-   simulation harness treatment before launch (economy inflation risk).
+1. **Point-cap semantics** — largely resolved by the class-capability registry
+   (`pointCap: null`, `hasLineup: false` keep Podium out of every lineup path); a formal audit
+   of Lineup Analyzer efficiency math and trade windows remains a nice-to-have.
+2. ~~**Name**~~ — **Resolved: Podium Class is the official name.**
+3. ~~**Hosted-event pricing curve**~~ — **Resolved by decision 27** (venue ladder economics);
+   watch `economyStatsJob` through the beta for inflation drift.
 
 ---
 

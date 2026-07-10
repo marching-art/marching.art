@@ -60,7 +60,7 @@ const DIVISION_FILTERS = [
 ];
 
 function SheetTable({ recap, userCorpsName }) {
-  const allResults = recap.results || [];
+  const allResults = useMemo(() => recap.results || [], [recap.results]);
   const [division, setDivision] = useState('all');
   const presentDivisions = useMemo(
     () => new Set(allResults.map((row) => row.division || 'aClass')),
