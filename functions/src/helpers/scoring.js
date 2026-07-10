@@ -265,6 +265,47 @@ function scoreShowsForDay({
   return { dailyScores, coinAwards, captionPoints, stats };
 }
 
+// Competitive classes ranked nightly. SoundSport is deliberately excluded:
+// it is a ratings-only format whose standings are never shown as placements.
+const RANKED_CLASSES = ["worldClass", "openClass", "aClass"];
+
+/**
+ * Class standings after tonight's scoring — the "World Class · #14" number.
+ *
+ * Rank is by effective season score: tonight's daily total for corps that
+ * just performed (that becomes their totalSeasonScore), the stored
+ * totalSeasonScore for everyone else. Corps with no score yet are unranked.
+ * Pure function so the standing math is unit-testable without Firestore.
+ *
+ * @param {QuerySnapshot} profilesSnapshot - Active-season profile docs
+ * @param {Map<string, number>} dailyScores - uid_class -> tonight's total
+ * @returns {Map<string, {rank: number, of: number}>} keyed by `${uid}_${class}`
+ */
+function computeSeasonRankings(profilesSnapshot, dailyScores) {
+  const byClass = new Map(RANKED_CLASSES.map((c) => [c, []]));
+
+  for (const userDoc of profilesSnapshot.docs) {
+    const uid = userDoc.ref.parent.parent.id;
+    const corpsMap = userDoc.data().corps || {};
+    for (const corpsClass of RANKED_CLASSES) {
+      const corps = corpsMap[corpsClass];
+      if (!corps || !corps.corpsName) continue;
+      const key = `${uid}_${corpsClass}`;
+      const effective = dailyScores.get(key) ?? corps.totalSeasonScore ?? 0;
+      if (effective > 0) byClass.get(corpsClass).push({ key, effective });
+    }
+  }
+
+  const rankings = new Map();
+  for (const entries of byClass.values()) {
+    entries.sort((a, b) => b.effective - a.effective);
+    entries.forEach(({ key }, index) => {
+      rankings.set(key, { rank: index + 1, of: entries.length });
+    });
+  }
+  return rankings;
+}
+
 /**
  * Commit a scored day: profile score updates, the recap subcollection doc,
  * trophy awards, and coin awards, all in one chunked batch.
@@ -278,6 +319,7 @@ function scoreShowsForDay({
  * @param {Object} params.dailyRecap
  * @param {Array} params.coinAwards
  * @param {Map<string, Object>} [params.captionPoints] - uid -> per-caption points
+ * @param {QuerySnapshot} [params.profilesSnapshot] - for nightly class standings
  * @returns {Promise<{ opCount: number, batchCount: number }>}
  */
 async function commitDailyScoring({
@@ -289,6 +331,7 @@ async function commitDailyScoring({
   dailyRecap,
   coinAwards,
   captionPoints,
+  profilesSnapshot,
 }) {
   // Update user profiles with their most recent score.
   // Note: Uses latest score (not cumulative) - drum corps rankings are based
@@ -300,6 +343,22 @@ async function commitDailyScoring({
       batch.update(userProfileRef, {
         [`corps.${corpsClass}.totalSeasonScore`]: totalDailyScore,
         [`corps.${corpsClass}.lastScoredDay`]: scoredDay,
+      });
+    }
+  }
+
+  // Class standings — the profile's "World Class · #14" number. Recomputed
+  // for every ranked corps each night (a corps that sat out still moves
+  // when others pass it). One update per ranked corps; multiple updates to
+  // the same doc in one batch are legal and land in order.
+  if (profilesSnapshot) {
+    const rankings = computeSeasonRankings(profilesSnapshot, dailyScores);
+    for (const [uidAndClass, { rank, of }] of rankings.entries()) {
+      const [uid, corpsClass] = uidAndClass.split("_");
+      const ref = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+      batch.update(ref, {
+        [`corps.${corpsClass}.seasonRank`]: rank,
+        [`corps.${corpsClass}.seasonRankOf`]: of,
       });
     }
   }
@@ -483,6 +542,7 @@ async function processAndArchiveOffSeasonScoresLogic({ force = false } = {}) {
 
     const { opCount, batchCount } = await commitDailyScoring({
       db, batch, seasonData, scoredDay, dailyScores, dailyRecap, coinAwards, captionPoints,
+      profilesSnapshot,
     });
     logger.info(`Successfully processed and archived scores for day ${scoredDay} (${opCount} writes in ${batchCount} batches).`);
 
@@ -661,6 +721,7 @@ async function scoreLiveSeasonDay(db, scoredDay, seasonData) {
 
   const { opCount, batchCount } = await commitDailyScoring({
     db, batch, seasonData, scoredDay, dailyScores, dailyRecap, coinAwards, captionPoints,
+    profilesSnapshot,
   });
   logger.info(`Successfully processed and archived scores for live season day ${scoredDay} (${opCount} writes in ${batchCount} batches).`);
 
@@ -798,4 +859,5 @@ module.exports = {
   // Exported for unit testing the shared scoring core
   scoreShowsForDay,
   hasCompleteLineup,
+  computeSeasonRankings,
 };

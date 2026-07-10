@@ -8,7 +8,7 @@
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { scoreShowsForDay, hasCompleteLineup } = require("./scoring");
+const { scoreShowsForDay, hasCompleteLineup, computeSeasonRankings } = require("./scoring");
 
 // A user profile document as produced by the collectionGroup("profile") query,
 // with the ref.parent.parent.id shape the loop reads the uid from.
@@ -366,6 +366,40 @@ describe("scoreShowsForDay", () => {
     }
     // A corps that didn't attend banks nothing.
     assert.equal(result.captionPoints.has("u2"), false);
+  });
+
+  test("computeSeasonRankings ranks by effective score and skips SoundSport", () => {
+    const profilesSnapshot = {
+      docs: [
+        profileDoc("u1", {
+          corps: {
+            worldClass: { corpsName: "Leader", totalSeasonScore: 80 },
+            soundSport: { corpsName: "Fun Corps", totalSeasonScore: 95 },
+          },
+        }),
+        profileDoc("u2", {
+          corps: { worldClass: { corpsName: "Chaser", totalSeasonScore: 85 } },
+        }),
+        profileDoc("u3", {
+          // Never scored — must stay unranked, not #last.
+          corps: { worldClass: { corpsName: "Fresh", totalSeasonScore: 0 } },
+        }),
+        profileDoc("u4", {
+          corps: { aClass: { corpsName: "Solo A", totalSeasonScore: 60 } },
+        }),
+      ],
+    };
+    // Tonight u1 scored 90: their EFFECTIVE score beats u2's stored 85.
+    const dailyScores = new Map([["u1_worldClass", 90]]);
+
+    const rankings = computeSeasonRankings(profilesSnapshot, dailyScores);
+    assert.deepEqual(rankings.get("u1_worldClass"), { rank: 1, of: 2 });
+    assert.deepEqual(rankings.get("u2_worldClass"), { rank: 2, of: 2 });
+    assert.equal(rankings.has("u3_worldClass"), false);
+    // Classes rank independently.
+    assert.deepEqual(rankings.get("u4_aClass"), { rank: 1, of: 1 });
+    // SoundSport is ratings-only — never ranked, whatever it scores.
+    assert.equal(rankings.has("u1_soundSport"), false);
   });
 
   test("sums scores across multiple shows for the same corps", () => {

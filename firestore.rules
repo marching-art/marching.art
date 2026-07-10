@@ -62,7 +62,11 @@ function corpsClassUntouched(corpsClass) {
      request.resource.data.get(['corps', corpsClass, 'weeklyTrades'], null) == resource.data.get(['corps', corpsClass, 'weeklyTrades'], null) &&
      request.resource.data.get(['corps', corpsClass, 'mustRename'], null) == resource.data.get(['corps', corpsClass, 'mustRename'], null) &&
      request.resource.data.get(['corps', corpsClass, 'corpsName'], null) == resource.data.get(['corps', corpsClass, 'corpsName'], null) &&
-     request.resource.data.get(['corps', corpsClass, 'totalSeasonScore'], null) == resource.data.get(['corps', corpsClass, 'totalSeasonScore'], null));
+     request.resource.data.get(['corps', corpsClass, 'totalSeasonScore'], null) == resource.data.get(['corps', corpsClass, 'totalSeasonScore'], null) &&
+     // Nightly class standing ("World Class · #14") — written only by the
+     // scoring run; a client-forged rank would display on public profiles.
+     request.resource.data.get(['corps', corpsClass, 'seasonRank'], null) == resource.data.get(['corps', corpsClass, 'seasonRank'], null) &&
+     request.resource.data.get(['corps', corpsClass, 'seasonRankOf'], null) == resource.data.get(['corps', corpsClass, 'seasonRankOf'], null));
 }
 
 // SoundSport lineups are created during client-side onboarding, so only its

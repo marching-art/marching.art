@@ -13,7 +13,6 @@ import {
   TrendingUp,
   Calendar,
   MapPin,
-  Zap,
   Flame,
   Award,
   Music,
@@ -48,8 +47,7 @@ import type { AvatarAction } from './DirectorProfileParts';
 import {
   getClassDisplay,
   getDirectorStatus,
-  calculateInfluenceScore,
-  calculateDirectorRating,
+  getStandingDisplay,
   getDisplayTitle,
   getCorpsAvatarUrl,
   getCorpsWithAvatars,
@@ -106,8 +104,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
 
   // Computed values
   const status = useMemo(() => getDirectorStatus(profile), [profile]);
-  const influenceScore = useMemo(() => calculateInfluenceScore(profile), [profile]);
-  const directorRating = useMemo(() => calculateDirectorRating(profile), [profile]);
+  const standing = useMemo(() => getStandingDisplay(profile), [profile]);
   const avatarData = useMemo(() => getCorpsAvatarUrl(profile), [profile]);
   const corpsWithAvatars = useMemo(() => getCorpsWithAvatars(profile), [profile]);
   const equippedTitle = getEquippedCosmetic(profile, 'title');
@@ -419,20 +416,19 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
               </div>
             </div>
 
-            {/* Bottom: Stats Row */}
+            {/* Bottom: Stats Row — the progression hierarchy's secondaries.
+                Standing (class + live rank) answers "how good right now";
+                the retired Influence/Rating aggregates re-blended inputs
+                shown more clearly elsewhere. Streak and Seasons are context. */}
             <div className="flex flex-wrap gap-2 mt-3">
-              <StatPill
-                icon={Zap}
-                value={influenceScore.toLocaleString()}
-                label="Influence"
-                color="text-yellow-400"
-              />
-              <StatPill
-                icon={Target}
-                value={directorRating}
-                label="Rating"
-                color="text-[#0057B8]"
-              />
+              {standing && (
+                <StatPill
+                  icon={Target}
+                  value={`${standing.value}${standing.of ? ` of ${standing.of}` : ''}`}
+                  label={standing.label}
+                  color={standing.soundSport ? 'text-green-400' : 'text-[#0057B8]'}
+                />
+              )}
               <StatPill
                 icon={Flame}
                 value={profile.engagement?.loginStreak || 0}
