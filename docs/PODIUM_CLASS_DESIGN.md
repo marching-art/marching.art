@@ -709,6 +709,35 @@ mechanic:
 The pattern: influence bundled *identity, power, and access* into one number that compounded from
 activity. Podium unbundles them — identity is the trophy case, power ceiling is earned reputation,
 access is open — and nothing in the game compounds from simply being old.
+
+**Dormancy and comebacks.** A corps whose director doesn't register it for a season is
+**dormant**, and the governing invariant comes straight from real DCI: *a corps never returns
+from an absence stronger than it left.* Guaranteed by construction — nothing accrues while
+dormant, and every dormant season applies a minimum decay:
+
+- **Graduated decay, tuned for marching.art's cadence.** Seasons here run ~7 weeks back-to-back
+  (~7 per year), so one skipped season is a normal life event, not a real-world "year off" — the
+  first dormant season costs about a third of a tier. Consecutive absences accelerate: two
+  seasons ≈ a full tier, three ≈ nearly two, and a long absence (6+) winds a former champion
+  most of the way back to Community Corps. The trophy case, records, and history never decay —
+  identity is permanent, power is not.
+- **Staff scatter.** All staff contracts survive one dormant season (loyalty grace). Each
+  additional dormant season, contracts lapse — highest tier first; good staff get poached, which
+  is exactly how it goes.
+- **Division re-entry, published rule.** After one dormant season a corps seeds normally from its
+  decayed seeding score. After two or more it re-enters the bottom active division and climbs —
+  the real return-through-Open-Class path — with the §5.7 petition-up always available.
+- **Heritage credit — the comeback arc.** Returning below your corps' historical peak, reputation
+  gains run at +50% until one tier below that peak; the final tier back is earned at full price.
+  Alumni networks and name recognition make the re-climb faster than the first climb — but the
+  return point is always strictly lower than the departure point, and the summit is never free.
+  Mechanically this makes a comeback an *attractive storyline* (fast early wins, a visible
+  target) instead of pure punishment — and the feed marks it: "The Rohn Regiment returns after
+  three seasons."
+- **Phase 0 calibration:** mine the corpus for real return-from-hiatus cases and fit the decay
+  constants to them (small sample, so constants live in `podium-config/balance` and are
+  tunable). Harness assertions: return reputation strictly below departure reputation in every
+  simulated career, and heritage credit never overshoots the pre-dormancy peak.
 - **Attached to the corps, not the director.** Retiring a corps banks its legacy (Hall, prestige
   plaques, trophy case preserved) and a new corps starts the climb at tier 1. This makes a
   15-season-old corps genuinely precious — FMA's identity-permanence hook, now load-bearing.
@@ -998,6 +1027,11 @@ trajectory bands. Everything after deepens rather than gates.
     Podium does not reintroduce one. Influence's FMA roles are unbundled — flat audition pool
     (distribution-only), reputation for the earned ceiling, open enrollment for access,
     published formulas for divisions. Nothing compounds from account age.
+17. **Dormancy** (§5.13): a corps never returns from an absence stronger than it left —
+    graduated reputation decay per dormant season (tuned to the ~7-week season cadence), staff
+    contracts lapse after the one-season loyalty grace, 2+ season absences re-enter the bottom
+    division, and heritage credit (+50% re-earn rate up to one tier below the old peak) turns
+    comebacks into a storyline instead of a pure penalty.
 
 **Still open:**
 
