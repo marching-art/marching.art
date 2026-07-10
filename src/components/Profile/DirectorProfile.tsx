@@ -195,10 +195,18 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
   }, [profile.createdAt]);
 
   // Check if stats are empty
+  // Career Stats reads the fields the season pipeline actually maintains:
+  // lifetimeStats.* (bumped at season archival, season.js) and trophies.*
+  // (awarded nightly by scoringAwards.js). The legacy profile.stats.{
+  // seasonsPlayed, championships, topTenFinishes } counters are only ever
+  // initialized to 0 and never incremented, which is why those tiles read
+  // blank. stats.leagueWins is the exception — it IS incremented per matchup
+  // win — so that one still comes from stats.
   const hasStats =
-    (profile.stats?.championships || 0) > 0 ||
-    (profile.stats?.topTenFinishes || 0) > 0 ||
-    (profile.stats?.seasonsPlayed || 0) > 0;
+    (profile.trophies?.championships?.length || 0) > 0 ||
+    (profile.lifetimeStats?.totalSeasons || 0) > 0 ||
+    (profile.lifetimeStats?.totalShows || 0) > 0 ||
+    (profile.stats?.leagueWins || 0) > 0;
 
   return (
     <div className="bg-[#0a0a0a]">
@@ -437,7 +445,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
               />
               <StatPill
                 icon={Calendar}
-                value={profile.stats?.seasonsPlayed || 0}
+                value={profile.lifetimeStats?.totalSeasons || 0}
                 label="Seasons"
                 color="text-green-400"
               />
@@ -704,15 +712,19 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
               {[
                 {
                   label: 'Championships',
-                  value: profile.stats?.championships || 0,
+                  value: profile.trophies?.championships?.length || 0,
                   color: 'text-yellow-400',
                 },
                 {
-                  label: 'Top 10s',
-                  value: profile.stats?.topTenFinishes || 0,
+                  label: 'Career Shows',
+                  value: (profile.lifetimeStats?.totalShows || 0).toLocaleString(),
                   color: 'text-white',
                 },
-                { label: 'Seasons', value: profile.stats?.seasonsPlayed || 0, color: 'text-white' },
+                {
+                  label: 'Seasons',
+                  value: profile.lifetimeStats?.totalSeasons || 0,
+                  color: 'text-white',
+                },
                 {
                   label: 'League Wins',
                   value: profile.stats?.leagueWins || 0,
