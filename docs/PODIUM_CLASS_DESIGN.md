@@ -2,8 +2,11 @@
 
 **A director-simulation game class for marching.art, spiritual successor to Fantasy Marching Arts**
 
-Status: Proposal v1.1 · July 2026 — v1 open questions resolved (guard sectionals in, live
-season in with spring training design, no evening reveal window, director-hosted events added)
+Status: Proposal v1.2 · July 2026 — v1 open questions resolved (guard sectionals in, live
+season in with spring training design, no evening reveal window, director-hosted events added);
+v1.2 promotes the round-two backlog into committed design (regional anchors, joint rehearsals,
+assistant director, historical shadows, climate, Director Rating, named hardware) and clarifies
+that Podium is never locked out of week-1 events
 
 ---
 
@@ -291,6 +294,12 @@ Notes:
 - The FMA "Action Complete!" moment is sacred: every allocation returns an immediate, satisfying
   itemized result panel. Instant feedback on the action; competitive consequence only at the
   nightly drop.
+- **Assistant director (plan template):** every corps can save a default weekly rehearsal plan.
+  On any day the director doesn't log in, the assistant executes the template at **~85% yield**
+  and cannot declare rest days or accept joint rehearsals. Active play strictly dominates, but a
+  vacation doesn't wreck a season. This one mechanic fixes both of FMA's opposite complaints at
+  once: inactive groups coasting on stale scores, and an energy system that punished anyone who
+  couldn't log in 3–4 times a day.
 
 ### 5.3 Condition — travel, food, rest, performance load
 
@@ -333,6 +342,12 @@ directors already set at registration finally matters mechanically (it's also wh
 training is housed). Costs are shown in the weekly show picker *before* selections are confirmed,
 so routing is played as an open-information puzzle, and hosted events (§5.10) slot in automatically
 because hosts choose their venue city from the same gazetteer.
+
+**Climate (deterministic):** venue latitude + calendar date produce a published **heat index** per
+show that scales that day's stamina drain — a July swing through Texas genuinely costs more than a
+week in Ohio, and a director can see it in the show picker before committing. No RNG, no weather
+rolls: the index is a fixed function of geography and date (tunable table in
+`podium-config/balance`), so it adds routing texture without violating the determinism covenant.
 
 **Food:** a weekly food-budget setting (per week, three tiers): *Gas-station* (cheap, −stamina
 recovery, morale risk), *Standard* (baseline), *Full kitchen crew* (CorpsCoin cost, +recovery,
@@ -398,6 +413,15 @@ league wins, season-finish bonuses. Staff persistence between seasons is the lon
 - **Trophy case & awards:** end-of-season caption awards (Best Brass, Best GE, Most Improved,
   Iron-Corps for best condition management) written into the existing achievements/prestige
   systems. FMA's community ran these in Google Sheets; here they're product.
+- **Named finals hardware:** the finals-week caption trophies carry persistent names, ideally
+  honoring community figures — the Hall-of-Fame-into-product move FMA's volunteers would have made
+  themselves. Winning "the [Name] Trophy for Brass" writes a named line into the trophy case,
+  which is categorically stickier than a generic badge.
+- **Director Rating:** a lifetime cross-class rating — the analogue of FMA's Player Directory sort
+  key, the number its players chased for 15 years. It aggregates **placements** (percentile
+  finishes, championship results, caption awards) across all five classes; it never touches raw
+  scores, so fantasy and Podium results stay incomparable while still summing to one career
+  number. Slots into the existing `lifetimeLeaderboard` job and profile lifetime stats.
 
 ### 5.8 The social layer (build in what FMA's community had to invent)
 
@@ -439,6 +463,24 @@ Podium runs in **both** season types on the same schedule system, with no schedu
     90% content installed and filthy, or 70% and performance-ready. Both are historically
     authentic openings and the trajectory bands will show the trade-off all June.
 
+**Podium is never locked out of week-1 events.** The two season types resolve this differently,
+and neither needs a special rule:
+
+- In **live seasons**, spring training occupies the existing 21 calendar days during which the
+  nightly processor already skips scoring entirely — there are no events for *any* class in that
+  window. Podium's camp fills what is currently dead air in the player experience, and every
+  class hits competition day 1 together.
+- In **off-seasons** there is no spring-training period at all (calendar day 1 is scored
+  competition day 1), so Podium corps initialize **competition-ready** from the historical day-1
+  percentile bands for their challenge profile — which is precisely what those bands describe: a
+  real corps at its first show. The paid move-in mechanic simply doesn't exist in off-seasons.
+- In both season types, **opening-show timing is elective** anyway: show attendance is already
+  "up to 4 per week," not mandatory. A director may skip week-1 shows and pour those days into
+  rehearsal — the authentic "we don't open until DeKalb" strategy — trading early recorded scores
+  and CorpsCoin for a cleaner debut. Late-open vs. early-open is a strategic identity, not a rule.
+- Mid-season registrants get the compressed catch-up baseline (§9): the corpus knows what a median
+  day-N corps looks like. Playable, never advantaged.
+
 ### 5.10 Director-hosted competitions (all classes)
 
 The FMA event-hosting system, rebuilt without its failure modes — and scoped game-wide, not just
@@ -465,6 +507,59 @@ Podium:
   hosting is a skill sink, not a faucet. Scores at hosted events are computed identically to any
   other show; hosting confers zero competitive advantage.
 
+### 5.11 Regional anchor days
+
+Because directors pick up to 4 shows a week, two rivals might not share a floor for weeks — a
+problem FMA never had, since its events were globally visible. The fix: designate **3–4 existing
+major shows per season** (the real Louisville/Indianapolis/San Antonio/Denver-style regionals
+already present in the historical schedule data) as **regional anchors** for Podium:
+
+- **Auto-enrolled** for every active Podium corps (does not consume a weekly show slot) and
+  **travel-subsidized** (the anchor charges no CorpsCoin leg; stamina cost still applies, so
+  routing around an anchor still matters).
+- Full-field head-to-head meets: the guaranteed rivalry collisions, the recap everyone reads, and
+  the community's shared reference points ("wait for San Antonio" is a real DCI sentence).
+- **Calibration benchmarks** — the explicit veteran request from the FMA Rework thread: with the
+  whole class scored on the same night at the same show, the trajectory-percentile claims become
+  publicly verifiable.
+- **Championship seeding input:** performance order and division seeding for days 45–49 derive
+  from anchor results by a published formula — transparent seeding, the anti-FMA-division-rage
+  principle applied to scheduling.
+
+### 5.12 Joint rehearsals
+
+Two corps sharing a rehearsal day — the tour reality of shared housing sites and ensemble exchanges,
+turned into the class's social mechanic. Fully mutual, capped, and deterministic:
+
+- **The handshake.** Director A proposes a joint rehearsal to Director B for a specific upcoming
+  day (both must be active Podium corps in the current season). B accepts or declines; the
+  proposal expires unanswered at that day's block allocation. Assistant-director autoplay (§5.2)
+  never accepts on a director's behalf — this is a deliberately *human* handshake.
+- **Geography gates it.** Using the venue gazetteer, each corps has a "current location" at all
+  times (hometown before its first show, otherwise its most recent venue). A joint rehearsal
+  requires the two corps to be within the **Day Trip tier (≤250 mi)** of each other on that day —
+  or one party pays the normal travel cost to close the gap. Tour routing thus shapes your social
+  calendar, exactly as it does in real life: you rehearse with whoever's housed nearby.
+- **What it does mechanically.** On the shared day, each corps' **Full Ensemble block yields
+  +25%** and both receive a **morale bump** (+6; performing for an audience of peers). The bonus
+  touches only Full Ensemble — it can sharpen ensemble captions, never substitute for balanced
+  sectional work.
+- **The scrimmage report (the real prize).** Both directors receive a **private head-to-head
+  diagnostic**: a full caption-by-caption comparison scored as if tonight were a show — unofficial,
+  invisible to leaderboards and recaps. It's scouting: the only way, outside a shared show or a
+  regional anchor, to see exactly where you stand against a specific corps. Choosing *whom* to
+  scrimmage (the rival you'll meet Saturday? the class leader, to calibrate?) is itself strategy.
+- **Caps and anti-collusion.** One joint rehearsal per corps per week, consumed by both parties.
+  Repeat pairings decay: the second joint with the same partner in a season yields half the
+  ensemble bonus, the third none (the scrimmage report always works) — so the mechanic pushes the
+  social graph outward instead of letting two friends farm each other. Because Podium scores are
+  absolute against the historical envelope rather than relative, a mutual buff is not zero-sum
+  and cannot manufacture placement by collusion; the cap and decay exist to keep balance-of-
+  rehearsal dominant.
+- **The feed line.** Every joint rehearsal emits a public recap-feed item — "The Rohn Regiment and
+  the Sun Devils held a joint rehearsal in Allentown" — with the diagnostic kept private. Public
+  smoke, private fire: it seeds forum speculation the way real corps' shared-site rumors do.
+
 ---
 
 ## 6. UI — What Renders in Zone C
@@ -485,7 +580,10 @@ When `activeCorpsClass === 'podiumClass'`, `Dashboard.jsx` Zone C swaps
    Eight sparkline curves of the season so far, each drawn over its historical percentile band
    (p25–p75 shaded, p95 dashed) for the current day — "your VA is 74th percentile for Day 31."
    Weak-spot callouts mirror the Lineup Analyzer's swap suggestions: "Visual Ensemble has the best
-   marginal yield tomorrow."
+   marginal yield tomorrow." **Historical shadows** ride along free: the engine knows every
+   historical caption score by day, so show nights annotate with lines like "your 84.3 tonight —
+   2012 Crown was 84.1 on this day." Zero mechanics, pure delight for the DCI-literate, and a
+   nightly advertisement of the realism calibration.
 
 ControlBar: `podiumClass` appended to `CORPS_CLASS_ORDER` with short label `Podium`, its own class
 color, and the existing locked/create/active tab states. `NextPerformancePanel`, `SeasonScorecard`,
@@ -515,6 +613,10 @@ Podium populates identically).
     today:      { day: 22, blocksUsed: 2, blocks: ['visualBasics','fullEnsemble'],
                   restDay: false },             // written by the callable, read by the processor
     travelLog:  [{ day, fromShow, toShow, miles, coinCost, staminaCost }],
+    planTemplate: { mon: ['visualBasics','fullEnsemble','brassSectionals'], ... }, // §5.2 assistant
+    jointRehearsals: { usedThisWeek: 1,
+                       partnersThisSeason: { '<uid>': 2 },   // repeat-pair decay counter
+                       pending: { withUid, day, proposedBy } | null },
   }
 }
 ```
@@ -545,6 +647,9 @@ lesson).
 | `registerPodiumCorps` | Extends existing registration; validates challenge levels; initializes caption state from the corpus baselines for the chosen challenge profile |
 | `allocateRehearsalBlock` | The daily verb. Validates block budget for the day (server-derived from day type + condition), applies yields (staff/clinician/phase/diminishing-return multipliers), applies immediate state update, returns the itemized result panel. Idempotency: per-`(uid, seasonUid, day, blockIndex)` |
 | `setRestDay` / `setFoodPlan` / `hireStaff` / `hireClinician` | Setup verbs; CorpsCoin transactions via the existing economy helpers |
+| `savePlanTemplate` | Stores the assistant-director weekly plan (§5.2); the nightly processor executes it at ~85% yield on unplayed days |
+| `proposeJointRehearsal` / `respondJointRehearsal` | The §5.12 handshake; validates weekly cap, geography tier, repeat-pair decay; on acceptance both corps are flagged for the shared day and the diagnostic is generated at nightly processing |
+| `hostEvent` (all classes) | Creates a §5.10 hosted show in the schedule subcollection: validates date/venue-tier/CorpsCoin, stamps gazetteer venue data; attendance payouts settle in the nightly run |
 
 ### Extended: nightly pipeline (`dailyProcessors.js`)
 
@@ -601,9 +706,9 @@ has no lineup) · `registerCorps.js` (registration lock: 5 weeks, matching Open)
 |---|---|---|
 | **0 — Corpus & engine on paper** | `buildPodiumCurves.js`, band/archetype validation notebook, balance doc with concrete coefficients, simulation harness | 1–2 wks |
 | **1 — Core loop (internal alpha)** | Class registration + config touchpoints, `allocateRehearsalBlock`, nightly `processPodiumDay` (no condition system), `RehearsalPlanner` + `CaptionTrajectoryPanel` in Zone C, recap integration | 3–4 wks |
-| **2 — Condition & logistics** | Stamina/morale, travel costs off show locations, food plans, rest days, decay, `CorpsConditionPanel` | 2–3 wks |
-| **3 — Economy & persistence** | Staff (named, tiered, persistent), clinicians, unlock flow, season archival/rollover, caption awards | 2 wks |
-| **4 — Social & polish** | Season feed, press releases, auto power-rankings column, league integration, division seeding design | 2–3 wks |
+| **2 — Condition & logistics** | Stamina/morale, venue gazetteer + travel costs, climate index, food plans, rest days, decay, regional anchors, `CorpsConditionPanel`, historical shadows in the trajectory panel | 2–3 wks |
+| **3 — Economy & persistence** | Staff (named, tiered, persistent), clinicians, assistant-director templates, unlock flow, season archival/rollover, caption awards + named finals hardware | 2 wks |
+| **4 — Social & polish** | Joint rehearsals, director-hosted events (all classes), season feed, press releases, auto power-rankings column, league integration, division seeding design, Director Rating | 3–4 wks |
 | **Beta** | One full off-season cycle (49 days) with a capped cohort, tunables live-adjusted weekly, then general unlock the following season | 1 season |
 
 Phases 1–2 are the minimum lovable product: the daily rehearsal habit, real scores at real shows,
@@ -645,6 +750,15 @@ trajectory bands. Everything after deepens rather than gates.
    into the same schedule subcollection (§5.10).
 5. **Director-hosted competitions are in scope for all classes** (§5.10).
 
+**Resolved in v1.2:**
+
+6. **No week-1 lockout** (§5.9): live-season spring training overlaps the existing 21-day
+   no-scoring window; off-season corps initialize competition-ready from the day-1 bands; opening
+   timing is elective in both.
+7. **The round-two backlog is committed design**: regional anchors (§5.11), joint rehearsals
+   (§5.12), assistant director (§5.2), historical shadows (§6), deterministic climate (§5.3),
+   Director Rating and named finals hardware (§5.7). The former backlog section is retired.
+
 **Still open:**
 
 1. **Point-cap semantics** — Podium has no lineup and no cap; confirm nothing downstream assumes
@@ -656,35 +770,7 @@ trajectory bands. Everything after deepens rather than gates.
 
 ---
 
-## 13. Round-Two Concepts (from FMA analysis, not yet committed)
-
-Ideas worth holding in the backlog, each traceable to an observed FMA dynamic:
-
-- **Regional anchor days.** Because directors pick 4 shows/week, two rivals might not meet for
-  weeks — FMA never had this problem because every event was globally visible. Designate 3–4
-  existing major shows per season (the real Louisville/Indy-style regionals already in the
-  historical schedule) as auto-enrolled, travel-subsidized, full-field meets for Podium. They
-  become calibration benchmarks (a veteran Rework-thread request), guaranteed rivalry collisions,
-  and natural seeding input for championship performance order.
-- **Historical shadows.** The engine already knows every historical caption score by day. The
-  trajectory panel can show "your 84.3 tonight — 2012 Crown was 84.1 on this day." Zero mechanics,
-  pure delight for the DCI-literate, and it advertises the realism calibration constantly.
-- **Assistant director (plan templates).** Set a default weekly rehearsal plan that auto-executes
-  at ~85% yield on days you don't log in. Active play strictly dominates, but a vacation doesn't
-  wreck a season — the healthy version of FMA's passive campaigns, and the fix for its
-  "inactive groups still score" resentment *and* its 3-logins-a-day energy pressure at once.
-- **Joint rehearsals.** Two directors mutually schedule a shared rehearsal day: both corps get a
-  small ensemble/GE yield bonus and a private head-to-head caption comparison. Weekly cap,
-  mutual opt-in. Social texture that mirrors real corps sharing housing sites.
-- **Deterministic climate.** Venue geography + calendar date give a published heat index that
-  scales stamina drain (a July Texas swing costs more than an Ohio week). No RNG — a routing-
-  strategy layer squeezed from data the schedule already has.
-- **Director Rating.** FMA's cross-circuit aggregate rating (the Player Directory sort key) has a
-  natural analogue: a lifetime rating aggregating *placements* (never scores) across all five
-  classes. Slots into the existing lifetime leaderboard job.
-- **Named finals hardware.** Finals-week caption trophies with persistent names — and naming them
-  after community legends is exactly the Hall-of-Fame-into-product move FMA's volunteers would
-  have made themselves.
+*§13 (round-two backlog) was promoted into the body in v1.2 — see §12 for the mapping.*
 
 ---
 
