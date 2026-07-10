@@ -2,11 +2,12 @@
 
 **A director-simulation game class for marching.art, spiritual successor to Fantasy Marching Arts**
 
-Status: Proposal v1.2 · July 2026 — v1 open questions resolved (guard sectionals in, live
+Status: Proposal v1.3 · July 2026 — v1 open questions resolved (guard sectionals in, live
 season in with spring training design, no evening reveal window, director-hosted events added);
 v1.2 promotes the round-two backlog into committed design (regional anchors, joint rehearsals,
 assistant director, historical shadows, climate, Director Rating, named hardware) and clarifies
-that Podium is never locked out of week-1 events
+that Podium is never locked out of week-1 events; v1.3 names the anchor calendar after the real
+DCI majors and adds integrated World / Open / A divisions inside Podium
 
 ---
 
@@ -406,10 +407,36 @@ league wins, season-finish bonuses. Staff persistence between seasons is the lon
 - **Persists across seasons:** corps identity, trophy case, `seasonHistory`, staff roster, director
   XP/level. **Resets:** captions, condition, challenge levels (new show every season). Exactly
   FMA's persistence split, minus influence.
-- **Divisions (season 2+ of the class):** once population supports it, split Podium into divisions
-  seeded *transparently and only* from the previous Podium season's final score (published
-  formula, promotion/relegation shown on the season recap). This answers a decade of FMA division
-  rage. Season 1 runs as a single open division.
+- **Divisions — World / Open / A, inside Podium (season 2+):** Podium divides into its own three
+  DCI-named divisions, competing on the same engine but ranked, cut, and crowned separately:
+  - **Naming:** *World Class / Open Class / A Class* — deliberately the DCI names (and the game's
+    existing vocabulary). UI always shows the compound to avoid collision with the fantasy tabs:
+    "Podium · Open Class". The multi-season climb A → Open → World is the career arc, and it is
+    the strongest possible answer to "what persists between seasons."
+  - **Seeding — transparent and Podium-only** (the anti-FMA principle; FMA secretly weighted
+    influence and bank balance into division placement and players raged about it for a decade):
+    a published **seeding score** = decayed average of your last three Podium season finals
+    results (weights 0.5 / 0.3 / 0.2). Nothing else enters: not CorpsCoin, not XP, not fantasy
+    results, not account age. Every corps' seeding number is public before the season starts.
+  - **Movement:** automatic promotion/relegation bands published with the formula (e.g. top 4 of
+    A promote, bottom 4 of Open relegate — constants in `podium-config/balance`). Plus the
+    DCI-authentic **petition up**: any corps may opt into a higher division at registration.
+    No petitioning down, ever, and a returning division champion cannot re-enter that division —
+    the two sandbagging guards.
+  - **Inaugural season:** everyone competes in a single unified division (call it Open Class);
+    its final standings seed the three-division structure for season 2. No history is invented.
+  - **Population-adaptive:** division count follows active Podium population (1 division below
+    ~24 corps, 2 below ~48, 3 beyond; never a division under 8). This is the direct fix for
+    FMA's hollow Division III — thin divisions merge upward instead of limping.
+  - **What divisions change:** rankings/leaderboards, championship-week brackets (World runs
+    Prelims → Semis → Finals on days 47–49; Open and A crown earlier in the week, mirroring real
+    DCI's Marion/Michigan City cadence), performance order and division blocks at the three
+    regional anchors, show participation CorpsCoin (tiered by division, matching the existing
+    class-reward pattern), and per-division caption awards.
+  - **What divisions never change:** the scoring engine, the historical envelope, challenge-level
+    access, rehearsal mechanics. A brilliant rookie in A Class can post the best raw score in the
+    game — and the stats archive will let the forum argue about whether they'd have won World,
+    which is exactly the argument FMA's players loved having for fifteen years.
 - **Trophy case & awards:** end-of-season caption awards (Best Brass, Best GE, Most Improved,
   Iron-Corps for best condition management) written into the existing achievements/prestige
   systems. FMA's community ran these in Google Sheets; here they're product.
@@ -510,21 +537,33 @@ Podium:
 ### 5.11 Regional anchor days
 
 Because directors pick up to 4 shows a week, two rivals might not share a floor for weeks — a
-problem FMA never had, since its events were globally visible. The fix: designate **3–4 existing
-major shows per season** (the real Louisville/Indianapolis/San Antonio/Denver-style regionals
-already present in the historical schedule data) as **regional anchors** for Podium:
+problem FMA never had, since its events were globally visible. The fix, straight from the real DCI
+tour: **all of Podium Class attends the three majors and Championships Week.** The anchor calendar
+mirrors DCI's, and all four anchors already exist in the data and (mostly) in the scheduler:
+
+| Anchor | Historical event in corpus | Day | Scheduler status |
+|---|---|---|---|
+| **DCI Southwestern** | `DCI Southwestern` — San Antonio, TX | 28 | Already pinned: `placeExclusiveShow(28, "DCI Southwestern Championship")` in `scheduleGeneration.js` |
+| **DCI Southeastern** | `DCI Southeastern` — Atlanta, GA | 35 | Already pinned: championship-named show placed at day 35 |
+| **DCI Eastern Classic** | `DCI East` — Allentown, PA (23 appearances; modern slots days 41–42) | 41 | New pin needed (one line, same mechanism) |
+| **World Championships** | Prelims/Semis/Finals | 45–49 | Existing exclusive championship placement + auto-enrollment |
+
+Implementation: events gain an `eventTier: 'regional' | 'championship' | 'tour'` field stamped at
+schedule-generation time (extends the existing `isChampionship` boolean rather than replacing it).
 
 - **Auto-enrolled** for every active Podium corps (does not consume a weekly show slot) and
   **travel-subsidized** (the anchor charges no CorpsCoin leg; stamina cost still applies, so
-  routing around an anchor still matters).
+  routing *around* an anchor still matters — San Antonio in July is a real heat-index day).
 - Full-field head-to-head meets: the guaranteed rivalry collisions, the recap everyone reads, and
   the community's shared reference points ("wait for San Antonio" is a real DCI sentence).
 - **Calibration benchmarks** — the explicit veteran request from the FMA Rework thread: with the
   whole class scored on the same night at the same show, the trajectory-percentile claims become
   publicly verifiable.
-- **Championship seeding input:** performance order and division seeding for days 45–49 derive
+- **Championship seeding input:** performance order and division cut lines for days 45–49 derive
   from anchor results by a published formula — transparent seeding, the anti-FMA-division-rage
-  principle applied to scheduling.
+  principle applied to scheduling. The three anchors also give the season its natural act
+  structure: San Antonio answers "who's real," Atlanta answers "who's peaking," Allentown is the
+  last full-field look before Indy.
 
 ### 5.12 Joint rehearsals
 
@@ -759,6 +798,17 @@ trajectory bands. Everything after deepens rather than gates.
    (§5.12), assistant director (§5.2), historical shadows (§6), deterministic climate (§5.3),
    Director Rating and named finals hardware (§5.7). The former backlog section is retired.
 
+**Resolved in v1.3:**
+
+8. **Anchor calendar is the real DCI majors** (§5.11): Southwestern (San Antonio, day 28),
+   Southeastern (Atlanta, day 35), Eastern Classic (`DCI East`/Allentown, day 41), Championships
+   (days 45–49). Two of the four are already pinned by `scheduleGeneration.js`; Eastern Classic
+   needs one new pin; events gain an `eventTier` field.
+9. **Podium has integrated World / Open / A divisions** (§5.7): transparent Podium-only seeding
+   (decayed 3-season average, published), auto promotion/relegation plus petition-up,
+   population-adaptive division count, single unified division in the inaugural season. This
+   supersedes the earlier "division cut population" open question.
+
 **Still open:**
 
 1. **Point-cap semantics** — Podium has no lineup and no cap; confirm nothing downstream assumes
@@ -766,7 +816,6 @@ trajectory bands. Everything after deepens rather than gates.
 2. **Name** — Podium Class is the recommendation; Circuit/Command/Maestro on the bench.
 3. **Hosted-event pricing curve** — venue rental vs. per-corps payout constants need the §9
    simulation harness treatment before launch (economy inflation risk).
-4. **Division cut population** — the Podium corps count that triggers multi-division seeding.
 
 ---
 
