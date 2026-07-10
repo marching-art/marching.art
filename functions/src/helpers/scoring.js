@@ -267,7 +267,9 @@ function scoreShowsForDay({
 
 // Competitive classes ranked nightly. SoundSport is deliberately excluded:
 // it is a ratings-only format whose standings are never shown as placements.
-const RANKED_CLASSES = ["worldClass", "openClass", "aClass"];
+// Ranked classes come from the class-capability registry (Phase 1.1);
+// SoundSport (ratings-only) and disabled classes are excluded there.
+const { RANKED_CLASSES } = require("./classRegistry");
 
 /**
  * Class standings after tonight's scoring — the "World Class · #14" number.

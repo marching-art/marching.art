@@ -17,6 +17,7 @@ const { scrapeLatestLiveScores } = require("../scheduled/liveScraper");
 const { sendWelcomeEmail, brevoApiKey } = require("../helpers/emailService");
 const { DCI_CORPS_DATA } = require("../scripts/seedDciReference");
 const { assertAdmin } = require("../helpers/callableGuards");
+const { FANTASY_CLASSES } = require("../helpers/classRegistry");
 
 // Spring training period (calendar days) before competition day 1 in a live season.
 // Kept in sync with dailyProcessors.js / season helper defaults.
@@ -289,7 +290,7 @@ exports.manualTrigger = onCall({
       const profilesSnapshot = await db.collectionGroup("profile")
         .where("activeSeasonId", "==", seasonId).get();
 
-      const corpsClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+      const corpsClasses = FANTASY_CLASSES;
       const totals = { profiles: profilesSnapshot.size, corpsChanged: 0, renamed: 0, moved: 0, removed: 0, kept: 0 };
       let usersUpdated = 0;
       let batch = db.batch();
@@ -409,7 +410,7 @@ exports.manualTrigger = onCall({
         let batch = db.batch();
         let batchCount = 0;
 
-        const corpsClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+        const corpsClasses = FANTASY_CLASSES;
 
         for (const doc of profilesSnapshot.docs) {
           const profileData = doc.data();

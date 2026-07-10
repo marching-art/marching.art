@@ -22,8 +22,11 @@ export const CAPTIONS = [
 // Keyed by canonical class keys (aClass/openClass/worldClass — same scheme as
 // CORPS_CLASS_ORDER and profile.unlockedClasses). The backend callable
 // canonicalizes, so these keys flow through the whole unlock/purchase path.
-export const CLASS_UNLOCK_LEVELS = { aClass: 3, openClass: 5, worldClass: 10 };
-export const CLASS_UNLOCK_COSTS = { aClass: 1000, openClass: 2500, worldClass: 5000 };
+// Values come from the class-capability registry (Phase 1.1).
+export {
+  UNLOCK_LEVELS_GATED as CLASS_UNLOCK_LEVELS,
+  UNLOCK_COSTS as CLASS_UNLOCK_COSTS,
+} from '../../../utils/classRegistry';
 export const CLASS_DISPLAY_NAMES = CORPS_CLASS_LABELS;
 
 // SoundSport medal rating thresholds. The tier boundaries are canonical in

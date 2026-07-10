@@ -18,7 +18,9 @@ each artifact lists its generator script and the harness verifies the constants.
 - **Day-49 TOTAL band: p50 89.75 / p95 97.685 / max 99.117.** The "no corps ever
   scores 100" rule is not a design invention — it is the corpus maximum. (Adding
   the live-scraped years will raise the max toward ~99.65; the engine reads the
-  band, so no constant changes.)
+  band, so no constant changes.) The hard total cap is **99.70** (`scoring.totalCap`)
+  — just above DCI's real all-time 99.65, reachable only by a Champion-tier,
+  max-challenge, near-perfect unicorn season once the full corpus is loaded.
 - **Day-1 TOTAL band: p50 64.8 / p95 78.5 / max 81.4** — a strong opener is
   high-70s, exactly the design's §4.3 guess.
 - **Growth is logistic.** ~615 clean fits per caption (rmse < 1.5). The k-means

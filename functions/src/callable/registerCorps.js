@@ -4,6 +4,7 @@ const { logger } = require("firebase-functions/v2");
 const { getDb, dataNamespaceParam } = require("../config"); 
 const admin = require("firebase-admin");
 const { assertAuth } = require("../helpers/callableGuards");
+const { REGISTRATION_LOCK_WEEKS } = require("../helpers/classRegistry");
 
 const isProfane = (text) => /fuck|shit|damn/.test(text.toLowerCase());
 
@@ -46,14 +47,8 @@ exports.registerCorps = onCall({ cors: true }, async (request) => {
         const millisRemaining = endDate.getTime() - now.getTime();
         const weeksRemaining = Math.ceil(millisRemaining / (7 * 24 * 60 * 60 * 1000));
 
-        const registrationLocks = {
-          worldClass: 6,
-          openClass: 5,
-          aClass: 4,
-          soundSport: 0, // No lock
-        };
-
-        const lockWeeks = registrationLocks[corpsClass] || 0;
+        // Locks come from the class-capability registry (Phase 1.1).
+        const lockWeeks = REGISTRATION_LOCK_WEEKS[corpsClass] || 0;
         if (weeksRemaining < lockWeeks) {
           throw new HttpsError(
             "failed-precondition",

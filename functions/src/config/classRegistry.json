@@ -1,0 +1,69 @@
+{
+  "meta": {
+    "version": 1,
+    "note": "Class-capability registry (Phase 1.1, PODIUM_CLASS_DESIGN.md). Single source for the policy values that were previously mirrored across ~9 client/server sites: point caps, unlock gates, registration locks, participation rewards, ranking membership, and per-class capabilities. Presentation (labels/colors) stays in src/utils/corps.ts. This file MUST stay byte-identical to src/config/classRegistry.json — run scripts/checkClassRegistrySync.js --check (functions cannot import outside their deploy root, hence the copy).",
+    "podiumNote": "podiumClass ships disabled: derived lists (validClasses, rankings, rewards) exclude disabled classes, so registering it here changes no behavior until game-settings/features.podiumClass flips AND enabled becomes true."
+  },
+  "classes": {
+    "worldClass": {
+      "order": 0,
+      "enabled": true,
+      "aliases": ["worldClass", "world"],
+      "capabilities": { "hasLineup": true, "fantasyRanked": true, "usesRehearsal": false, "hasDivisions": false },
+      "pointCap": 150,
+      "unlockLevel": 10,
+      "unlockXp": 10000,
+      "unlockCost": 5000,
+      "registrationLockWeeks": 6,
+      "participationReward": 200
+    },
+    "openClass": {
+      "order": 1,
+      "enabled": true,
+      "aliases": ["openClass", "open"],
+      "capabilities": { "hasLineup": true, "fantasyRanked": true, "usesRehearsal": false, "hasDivisions": false },
+      "pointCap": 120,
+      "unlockLevel": 5,
+      "unlockXp": 5000,
+      "unlockCost": 2500,
+      "registrationLockWeeks": 5,
+      "participationReward": 150
+    },
+    "aClass": {
+      "order": 2,
+      "enabled": true,
+      "aliases": ["aClass"],
+      "capabilities": { "hasLineup": true, "fantasyRanked": true, "usesRehearsal": false, "hasDivisions": false },
+      "pointCap": 60,
+      "unlockLevel": 3,
+      "unlockXp": 3000,
+      "unlockCost": 1000,
+      "registrationLockWeeks": 4,
+      "participationReward": 100
+    },
+    "soundSport": {
+      "order": 3,
+      "enabled": true,
+      "aliases": ["soundSport"],
+      "capabilities": { "hasLineup": true, "fantasyRanked": false, "usesRehearsal": false, "hasDivisions": false },
+      "pointCap": 90,
+      "unlockLevel": 0,
+      "unlockXp": 0,
+      "unlockCost": 0,
+      "registrationLockWeeks": 0,
+      "participationReward": 50
+    },
+    "podiumClass": {
+      "order": 4,
+      "enabled": false,
+      "aliases": ["podiumClass", "podium"],
+      "capabilities": { "hasLineup": false, "fantasyRanked": false, "usesRehearsal": true, "hasDivisions": true },
+      "pointCap": null,
+      "unlockLevel": 0,
+      "unlockXp": 0,
+      "unlockCost": 0,
+      "registrationLockWeeks": 0,
+      "participationReward": 175
+    }
+  }
+}

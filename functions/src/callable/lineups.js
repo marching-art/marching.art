@@ -4,6 +4,7 @@ const { assertAuth } = require("../helpers/callableGuards");
 const { logger } = require("firebase-functions/v2");
 const { analyzeLineupTrends } = require("../helpers/captionAnalytics");
 const { getCaptionChangeWindow, isDayScoresProcessed } = require("../helpers/captionWindows");
+const { FANTASY_CLASSES, POINT_CAPS } = require("../helpers/classRegistry");
 
 /**
  * Task 2.7: Saves a user's 8-caption lineup for a specific corps class.
@@ -20,7 +21,7 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
   const uid = request.auth.uid;
 
   // 1. --- Validate Inputs ---
-  const validClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+  const validClasses = FANTASY_CLASSES;
   if (!validClasses.includes(corpsClass)) {
     throw new HttpsError("invalid-argument", "Invalid corps class specified.");
   }
@@ -30,13 +31,8 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
   }
 
   // 2. --- Validate Points Cap ---
-  const pointCaps = {
-    worldClass: 150,
-    openClass: 120,
-    aClass: 60,
-    soundSport: 90,
-  };
-  const pointCap = pointCaps[corpsClass];
+  // Caps come from the class-capability registry (Phase 1.1).
+  const pointCap = POINT_CAPS[corpsClass];
 
   const totalPoints = Object.values(lineup).reduce((sum, selection) => {
     if (!selection || typeof selection !== 'string') return sum;
@@ -263,7 +259,7 @@ exports.selectUserShows = onCall({ cors: true }, async (request) => {
       `Invalid data. A week number and a maximum of ${maxShowsForWeek} shows are required.`);
   }
 
-  if (!corpsClass || !["worldClass", "openClass", "aClass", "soundSport"].includes(corpsClass)) {
+  if (!corpsClass || !FANTASY_CLASSES.includes(corpsClass)) {
     throw new HttpsError("invalid-argument", "Valid corps class is required.");
   }
 
@@ -334,7 +330,7 @@ exports.saveShowConcept = onCall({ cors: true }, async (request) => {
   const uid = request.auth.uid;
 
   // Validate inputs
-  const validClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+  const validClasses = FANTASY_CLASSES;
   if (!validClasses.includes(corpsClass)) {
     throw new HttpsError("invalid-argument", "Invalid corps class specified.");
   }
@@ -573,7 +569,7 @@ exports.getLineupAnalytics = onCall({ cors: true }, async (request) => {
   const { corpsClass } = request.data;
   const uid = request.auth.uid;
 
-  const validClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+  const validClasses = FANTASY_CLASSES;
   if (!validClasses.includes(corpsClass)) {
     throw new HttpsError("invalid-argument", "Invalid corps class specified.");
   }
@@ -619,7 +615,7 @@ exports.getActiveLineupKeys = onCall({ cors: true }, async (request) => {
   const { corpsClass } = request.data;
   const uid = request.auth.uid;
 
-  const validClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+  const validClasses = FANTASY_CLASSES;
   if (!validClasses.includes(corpsClass)) {
     throw new HttpsError("invalid-argument", "Invalid corps class specified.");
   }
@@ -658,7 +654,7 @@ exports.validateLineup = onCall({ cors: true }, async (request) => {
   const { corpsClass } = request.data;
   const uid = request.auth.uid;
 
-  const validClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+  const validClasses = FANTASY_CLASSES;
   if (!validClasses.includes(corpsClass)) {
     throw new HttpsError("invalid-argument", "Invalid corps class specified.");
   }

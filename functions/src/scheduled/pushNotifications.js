@@ -12,6 +12,7 @@ const {
   sendMatchupStartPush,
 } = require("../helpers/pushService");
 const { getCurrentSeasonWeek } = require("../helpers/gameDay");
+const { FANTASY_CLASSES } = require("../helpers/classRegistry");
 
 /**
  * Send show reminder push notifications
@@ -79,7 +80,7 @@ exports.showReminderPushJob = onSchedule(
         .get();
 
       let totalSent = 0;
-      const CORPS_CLASSES = ["worldClass", "openClass", "aClass", "soundSport"];
+      const CORPS_CLASSES = FANTASY_CLASSES;
 
       for (const profileDoc of profilesSnapshot.docs) {
         // profile/data lives under artifacts/{ns}/users/{uid}/profile/data
@@ -137,7 +138,7 @@ exports.weeklyMatchupPushJob = onSchedule(
 
     const db = admin.firestore();
     const namespace = dataNamespaceParam.value();
-    const CORPS_CLASSES = ["worldClass", "openClass", "aClass", "soundSport"];
+    const CORPS_CLASSES = FANTASY_CLASSES;
 
     try {
       // Compute the current competition week from the schedule dates — the

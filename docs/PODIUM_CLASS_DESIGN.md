@@ -230,7 +230,7 @@ Each Podium corps carries, per caption `c ∈ {GE1, GE2, VP, VA, CG, B, MA, P}`:
 raw(c, d)   = L(c) · logistic(d; k(c), d₀(c)) · content(c) · (0.72 + 0.28 · clean(c))
 ceiling(c,d)= band(repTier.percentile, c, d)          // reputation-gated top of the band (§5.13)
 score(c, d) = clamp(raw(c,d) + condition(d) + variance(d,c), band_p5(c,d), ceiling(c,d))
-total(d)    = min(99.9, [GE1+GE2] + [VP+VA+CG]/2 + [B+MA+P]/2)
+total(d)    = min(99.70, [GE1+GE2] + [VP+VA+CG]/2 + [B+MA+P]/2)   // the unicorn cap
 ```
 
 - The total formula is **identical to the existing fantasy formula** in `scoring.js` (GE full
@@ -245,8 +245,11 @@ total(d)    = min(99.9, [GE1+GE2] + [VP+VA+CG]/2 + [B+MA+P]/2)
   18.4 because no Day-10 brass score in history was 18.4. The _top_ of each corps' band is gated
   by its multi-season Reputation tier (§5.13) — a first-season corps peaks in the historical
   mid-percentiles no matter how perfectly it is managed, and only Champion-Status corps can touch
-  the top of the envelope. **No corps ever scores 100**: the absolute ceiling is the best score
-  in the corpus (99.x), asserted by the simulation harness.
+  the top of the envelope. **No corps ever scores 100**: the hard cap is **99.70** — deliberately
+  just above DCI's real all-time best (99.65, Blue Devils 2014) so beating history is *possible*
+  but requires a true unicorn: Champion Status, maximum challenge, a near-perfect season, peak
+  condition, and the variance breaking your way, all at once. Asserted by the harness
+  (decision 25).
 
 ### 4.3 The season arc this produces
 
@@ -1341,6 +1344,13 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
       play"), tuned via `economyStatsJob` data, and recorded in `podium-config/balance` so
       re-tuning never needs a deploy. The rule of thumb: nothing a player _needs_ costs CC;
       everything CC buys is identity, access to more sandboxes, prestige — or Podium _margin_.
+
+**Resolved in v2.5:**
+
+25. **The unicorn cap is 99.70**: the total-score hard cap (`scoring.totalCap` in
+    `balanceConfig.json`) sits just above DCI's real-world 99.65 so surpassing history is
+    achievable exactly once-in-a-generation — Champion Status + challenge 8 + near-perfect
+    management + favorable variance required.
 
 **Resolved in v2.4:**
 
