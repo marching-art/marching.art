@@ -5,7 +5,7 @@
 // which keeps Vite's fast refresh working (react-refresh/only-export-components).
 
 import React from 'react';
-import { Trophy, Crown, Medal, Shield } from 'lucide-react';
+import { Trophy, Crown, Medal, Shield, Star, Ribbon, Gem } from 'lucide-react';
 import type { UserProfile, CorpsClass, CompetitionTrophy } from '../../types';
 import {
   CORPS_CLASS_ORDER,
@@ -41,18 +41,17 @@ export interface TrophyData {
   id: string;
   title: string;
   description: string;
-  tier: 'gold' | 'silver' | 'bronze' | 'special';
-  // The trophy case encodes each award in a single bare icon:
-  //   corpsClass -> icon SHAPE  (a unique glyph per competition class)
-  //   award      -> icon COLOR  (gold / silver / bronze / regional / finalist)
-  // so a World Class champion and an Open Class champion are different shapes,
-  // and a champion and a regional medalist in the same class are different
-  // colors. See CLASS_ICON / AWARD_COLOR in DirectorProfileParts.
-  corpsClass?: string;
-  award?: 'gold' | 'silver' | 'bronze' | 'regional' | 'finalist';
-  season?: string;
+  // Each trophy is one bare icon: the shape (icon) and color are fully resolved
+  // here in the data layer so the component just renders them. Encoding:
+  //   Finals medals  -> class-shaped icon (Crown/Trophy/Star), colored by metal
+  //   Regionals      -> Shield, colored by class (champion only)
+  //   SoundSport     -> Ribbon, colored by festival tier (blue shades)
+  //   Finalists      -> Medal, neutral
   icon: React.ElementType;
+  color: string; // tailwind text-* class for the icon
+  season?: string;
   earnedAt?: string;
+  sortWeight?: number; // lower = higher in the case
 }
 
 // =============================================================================
@@ -288,38 +287,37 @@ export function getCorpsWithAvatars(
 // as a fallback for profiles with no real trophies yet.
 // ---------------------------------------------------------------------------
 
-const rankTier = (rank?: number): TrophyData['tier'] =>
-  rank === 1 ? 'gold' : rank === 2 ? 'silver' : 'bronze';
-
-// Championship/class-final placements color by their medal; regionals and
-// finalists get their own colors so they don't collide with a Finals medal of
-// the same class (same shape).
-const rankAward = (rank?: number): TrophyData['award'] =>
-  rank === 1 ? 'gold' : rank === 2 ? 'silver' : 'bronze';
-
-// Trophy case ordering: group by class prestige, then by award within a class,
-// so the scrollable field reads top-down as a hierarchy.
+// --- Trophy encoding ---------------------------------------------------------
+// Finals medals: class = icon SHAPE, placement = icon COLOR (metal).
+const CLASS_CHAMP_ICON: Record<string, React.ElementType> = {
+  worldClass: Crown,
+  openClass: Trophy,
+  aClass: Star,
+  podiumClass: Gem,
+};
+const METAL_COLOR: Record<number, string> = {
+  1: 'text-yellow-400',
+  2: 'text-gray-300',
+  3: 'text-orange-400',
+};
+// Regionals: Shield colored BY CLASS.
+const CLASS_COLOR: Record<string, string> = {
+  worldClass: 'text-purple-400',
+  openClass: 'text-blue-400',
+  aClass: 'text-green-400',
+  soundSport: 'text-sky-400',
+  podiumClass: 'text-teal-400',
+};
+// Case order: Finals medals (by class then metal) → SoundSport → Regionals →
+// Finalists. SoundSport awards sit above regional champions per design.
 const CLASS_SORT: Record<string, number> = {
   worldClass: 0,
   openClass: 1,
   aClass: 2,
-  soundSport: 3,
-  podiumClass: 4,
+  podiumClass: 3,
+  soundSport: 4,
 };
-const AWARD_SORT: Record<string, number> = {
-  gold: 0,
-  silver: 1,
-  bronze: 2,
-  regional: 3,
-  finalist: 4,
-};
-const sortTrophies = (trophies: TrophyData[]): TrophyData[] =>
-  [...trophies].sort((a, b) => {
-    const ca = CLASS_SORT[a.corpsClass ? toCanonicalClassKey(a.corpsClass) : ''] ?? 99;
-    const cb = CLASS_SORT[b.corpsClass ? toCanonicalClassKey(b.corpsClass) : ''] ?? 99;
-    if (ca !== cb) return ca - cb;
-    return (AWARD_SORT[a.award ?? ''] ?? 99) - (AWARD_SORT[b.award ?? ''] ?? 99);
-  });
+const classSort = (c?: string): number => CLASS_SORT[c ? toCanonicalClassKey(c) : ''] ?? 9;
 
 const medalWord = (rank?: number): string =>
   rank === 1
@@ -342,65 +340,104 @@ export function getCompetitionTrophies(profile: UserProfile): TrophyData[] {
   return real.length > 0 ? real : getLegacySyntheticTrophies(profile);
 }
 
+const isSoundSportType = (type?: string): boolean => String(type || '').startsWith('soundsport');
+
 function getRealTrophies(profile: UserProfile): TrophyData[] {
   const t = profile.trophies;
   if (!t) return [];
   const out: TrophyData[] = [];
 
-  // Finals championships are the World Class crown unless the record says
-  // otherwise (older records omit corpsClass).
-  // Finals championships are the World Class crown unless the record says
-  // otherwise (older records omit corpsClass).
-  (t.championships || []).forEach((trophy, i) =>
+  // Finals championships (World Finals). Legacy `soundsport_championship`
+  // entries are remapped to the SoundSport International Festival ribbon
+  // (champion only) so old profiles still read correctly.
+  (t.championships || []).forEach((trophy, i) => {
+    if (isSoundSportType(trophy.type)) {
+      if (trophy.rank === 1) {
+        out.push({
+          id: `ss-festival-legacy-${i}`,
+          title: 'International Festival · Best in Show',
+          description: trophyDescription(trophy),
+          icon: Ribbon,
+          color: 'text-blue-500',
+          season: trophy.seasonName,
+          sortWeight: 1000,
+        });
+      }
+      return;
+    }
+    const cls = toCanonicalClassKey(trophy.corpsClass || 'worldClass');
     out.push({
       id: `championship-${i}`,
       title: `Finals ${medalWord(trophy.rank)}`,
       description: trophyDescription(trophy),
-      tier: rankTier(trophy.rank),
-      award: rankAward(trophy.rank),
-      corpsClass: trophy.corpsClass || 'worldClass',
+      icon: CLASS_CHAMP_ICON[cls] || Crown,
+      color: METAL_COLOR[trophy.rank ?? 1] || 'text-gray-300',
       season: trophy.seasonName,
-      icon: Crown,
-    })
-  );
-  (t.classChampionships || []).forEach((trophy, i) =>
+      sortWeight: classSort(cls) * 10 + ((trophy.rank ?? 1) - 1),
+    });
+  });
+
+  // Open / A Class Finals medals (class stored under `classType`).
+  (t.classChampionships || []).forEach((trophy, i) => {
+    const cls = toCanonicalClassKey(trophy.corpsClass || trophy.classType || 'openClass');
     out.push({
       id: `class-championship-${i}`,
-      title: `${classLabel(trophy.corpsClass)} ${medalWord(trophy.rank)}`.trim(),
+      title: `${classLabel(cls)} ${medalWord(trophy.rank)}`.trim(),
       description: trophyDescription(trophy),
-      tier: rankTier(trophy.rank),
-      award: rankAward(trophy.rank),
-      corpsClass: trophy.corpsClass,
+      icon: CLASS_CHAMP_ICON[cls] || Trophy,
+      color: METAL_COLOR[trophy.rank ?? 1] || 'text-gray-300',
       season: trophy.seasonName,
-      icon: Trophy,
-    })
-  );
-  (t.regionals || []).forEach((trophy, i) =>
+      sortWeight: classSort(cls) * 10 + ((trophy.rank ?? 1) - 1),
+    });
+  });
+
+  // SoundSport ribbons: International Festival (brighter blue) + Regional Best
+  // in Show (lighter blue). Sorted just above the regional champions.
+  (t.soundSportAwards || []).forEach((award, i) => {
+    const isFestival = award.type === 'international_festival';
+    out.push({
+      id: `soundsport-${i}`,
+      title: isFestival ? 'International Festival · Best in Show' : 'Regional Best in Show',
+      description: trophyDescription(award),
+      icon: Ribbon,
+      color: isFestival ? 'text-blue-500' : 'text-sky-300',
+      season: award.seasonName,
+      sortWeight: isFestival ? 1000 : 1001,
+    });
+  });
+
+  // Regional champions — champion only, Shield colored by class. Legacy
+  // regionals also stored silver/bronze; show only the gold (rank 1).
+  (t.regionals || []).forEach((trophy, i) => {
+    if ((trophy.rank ?? 1) !== 1) return;
+    const cls = trophy.corpsClass ? toCanonicalClassKey(trophy.corpsClass) : null;
     out.push({
       id: `regional-${i}`,
-      title: `Regional ${medalWord(trophy.rank)}`,
+      title: cls ? `${classLabel(cls)} Regional Champion` : 'Regional Champion',
       description: trophyDescription(trophy),
-      tier: rankTier(trophy.rank),
-      award: 'regional',
-      corpsClass: trophy.corpsClass,
+      icon: Shield,
+      color: (cls && CLASS_COLOR[cls]) || 'text-gray-400',
       season: trophy.seasonName,
-      icon: Medal,
-    })
-  );
-  (t.finalistMedals || []).forEach((trophy, i) =>
+      sortWeight: 2000 + classSort(cls || undefined),
+    });
+  });
+
+  // World Finals finalists (participation). Legacy `soundsport_finalist` is
+  // dropped — SoundSport recognition is the festival / best-in-show ribbons.
+  (t.finalistMedals || []).forEach((medal, i) => {
+    if (isSoundSportType(medal.type)) return;
     out.push({
       id: `finalist-${i}`,
-      title: trophy.type === 'soundsport_finalist' ? 'Festival Finalist' : 'Finals Finalist',
-      description: trophyDescription(trophy),
-      tier: 'special',
-      award: 'finalist',
-      corpsClass: trophy.corpsClass,
-      season: trophy.seasonName,
-      icon: Shield,
-    })
-  );
+      title: 'World Finals Finalist',
+      description: trophyDescription(medal),
+      icon: Medal,
+      color: 'text-gray-400',
+      season: medal.seasonName,
+      sortWeight: 3000 + (medal.rank ?? 0),
+    });
+  });
 
-  return sortTrophies(out);
+  return out.sort((a, b) => (a.sortWeight ?? 999) - (b.sortWeight ?? 999));
 }
 
 // Legacy placeholder rows, shown only while a profile has no real hardware.
@@ -414,7 +451,7 @@ function getLegacySyntheticTrophies(profile: UserProfile): TrophyData[] {
         id: `champ-${i}`,
         title: 'League Champion',
         description: 'Captured a league championship',
-        tier: 'gold',
+        color: 'text-yellow-400',
         icon: Trophy,
       });
     }
@@ -427,7 +464,7 @@ function getLegacySyntheticTrophies(profile: UserProfile): TrophyData[] {
         id: `top10-${i}`,
         title: 'Top 10 Finish',
         description: 'Finished in the top 10',
-        tier: 'silver',
+        color: 'text-gray-300',
         icon: Medal,
       });
     }
@@ -438,7 +475,7 @@ function getLegacySyntheticTrophies(profile: UserProfile): TrophyData[] {
       id: 'world-unlock',
       title: 'World Class',
       description: 'Achieved World Class status',
-      tier: 'special',
+      color: 'text-purple-400',
       icon: Crown,
     });
   }
@@ -448,7 +485,7 @@ function getLegacySyntheticTrophies(profile: UserProfile): TrophyData[] {
       id: 'veteran',
       title: 'Veteran',
       description: `${stats.seasonsPlayed} seasons`,
-      tier: 'bronze',
+      color: 'text-orange-400',
       icon: Shield,
     });
   }

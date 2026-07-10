@@ -179,6 +179,9 @@ export interface WeeklyProgressData {
 export interface CompetitionTrophy {
   type: string;
   corpsClass?: CorpsClass | string;
+  // Class-final trophies store the class under `classType`; keep both spellings.
+  classType?: CorpsClass | string;
+  metal?: 'gold' | 'silver' | 'bronze';
   seasonName?: string;
   eventName?: string;
   score?: number;
@@ -191,6 +194,8 @@ export interface ProfileTrophies {
   classChampionships?: CompetitionTrophy[];
   championships?: CompetitionTrophy[];
   finalistMedals?: CompetitionTrophy[];
+  // SoundSport awards — International Festival (Day 49) + Regional Best in Show.
+  soundSportAwards?: CompetitionTrophy[];
 }
 
 export interface LifetimeStats {

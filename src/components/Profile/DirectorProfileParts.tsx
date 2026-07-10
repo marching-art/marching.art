@@ -11,10 +11,6 @@ import {
   MapPin,
   Award,
   Trophy,
-  Crown,
-  Star,
-  Medal,
-  Shield,
   ChevronRight,
   Music,
   Disc3,
@@ -92,38 +88,16 @@ const StatPill = memo(
 );
 StatPill.displayName = 'StatPill';
 
-// A trophy is a single bare icon — no box, no label. Its SHAPE names the
-// competition class (a unique glyph per class, ranked most to least prestigious)
-// and its COLOR names the award won.
-const CLASS_ICON: Record<string, React.ElementType> = {
-  worldClass: Crown,
-  openClass: Trophy,
-  aClass: Star,
-  soundSport: Medal,
-  // Podium Class — the management-sim tier below SoundSport (in progress).
-  podiumClass: Shield,
-};
-const AWARD_COLOR: Record<string, string> = {
-  gold: 'text-yellow-400',
-  silver: 'text-gray-300',
-  bronze: 'text-orange-400',
-  regional: 'text-emerald-400',
-  finalist: 'text-sky-400',
-};
-
+// A trophy is a single bare icon — no box, no label. Shape (class or award
+// family) and color are resolved in the data layer (getRealTrophies); this just
+// renders them. Full detail lives in the tooltip.
 const TrophyMini = memo(({ trophy }: { trophy: TrophyData }) => {
-  const canonical = trophy.corpsClass ? toCanonicalClassKey(trophy.corpsClass) : null;
-  // Icon shape by class; fall back to the trophy's own icon for legacy
-  // synthetic trophies that carry no corpsClass.
-  const Icon = (canonical && CLASS_ICON[canonical]) || trophy.icon || Award;
-  // Color by award; legacy trophies only carry `tier`, so map that through.
-  const award = trophy.award || (trophy.tier === 'special' ? 'finalist' : trophy.tier);
-  const color = AWARD_COLOR[award] || 'text-gray-300';
+  const Icon = trophy.icon || Award;
   const tooltip = [trophy.title, trophy.description].filter(Boolean).join(' — ');
 
   return (
     <span className="inline-flex" title={tooltip} role="img" aria-label={tooltip}>
-      <Icon className={`w-7 h-7 ${color}`} />
+      <Icon className={`w-7 h-7 ${trophy.color}`} />
     </span>
   );
 });
