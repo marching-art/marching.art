@@ -50,6 +50,13 @@ export default function HostEventCard({ seasonUid }) {
 
   const corpsCoin = profile?.corpsCoin || 0;
   const hasCorps = Object.values(profile?.corps || {}).filter(Boolean).length > 0;
+  const hostingByTier = profile?.hosting?.byTier || {};
+  // Venue ladder: bigger stadiums are earned by running successful smaller
+  // shows (server-enforced; this mirrors the gate for display).
+  const tierLocked = (t) => {
+    if (!t.unlock) return false;
+    return (hostingByTier[t.unlock.tier]?.successful || 0) < t.unlock.successful;
+  };
   const tier = VENUE_TIERS.find((t) => t.id === venueTier) || VENUE_TIERS[0];
   const minDay = Math.max(1, (currentDay || 1) + HOSTING_RULES.minDaysAhead);
 
@@ -102,9 +109,11 @@ export default function HostEventCard({ seasonUid }) {
         <>
           <p className="text-[10px] text-gray-500 leading-relaxed">
             Rent a venue with CorpsCoin and your event joins the season schedule — open enrollment
-            for every class. You earn CC per corps that performs, paid the night the show is scored.
-            Days {minDay}&ndash;{HOSTING_RULES.lastHostableDay}; the majors' days (
-            {HOSTING_RULES.majorDays.join(', ')}) are exclusive.
+            for every class. You earn CC per corps that performs, paid the night the show is
+            scored, so a well-drawn show profits. Run successful shows to unlock bigger stadiums:
+            2 successful High School events open the College Bowl, 3 successful College Bowls open
+            the NFL Stadium. Days {minDay}&ndash;{HOSTING_RULES.lastHostableDay}; the majors' days
+            ({HOSTING_RULES.majorDays.join(', ')}) are exclusive.
           </p>
 
           {!hasCorps && (
@@ -113,23 +122,44 @@ export default function HostEventCard({ seasonUid }) {
 
           {/* Venue tier picker */}
           <div className="grid grid-cols-3 gap-1.5">
-            {VENUE_TIERS.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setVenueTier(t.id)}
-                className={`text-left px-2 py-1.5 rounded-sm border press-feedback ${
-                  venueTier === t.id
-                    ? 'border-[#c9a227] bg-[#c9a227]/10'
-                    : 'border-[#333] hover:border-[#555]'
-                }`}
-              >
-                <div className="text-[10px] font-bold text-white leading-tight">{t.label}</div>
-                <div className="text-[9px] text-gray-500 tabular-nums">
-                  {t.rentalCC} CC · cap {t.capacity} · {t.payoutPerCorpsCC}/corps
-                </div>
-              </button>
-            ))}
+            {VENUE_TIERS.map((t) => {
+              const locked = tierLocked(t);
+              const progress = t.unlock
+                ? `${hostingByTier[t.unlock.tier]?.successful || 0}/${t.unlock.successful}`
+                : null;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  disabled={locked}
+                  onClick={() => setVenueTier(t.id)}
+                  title={
+                    locked
+                      ? `Unlocks after ${t.unlock.successful} successful ${
+                          VENUE_TIERS.find((x) => x.id === t.unlock.tier)?.label
+                        } events (${progress})`
+                      : `Success = ${t.successAttendance}+ corps attending`
+                  }
+                  className={`text-left px-2 py-1.5 rounded-sm border press-feedback ${
+                    locked
+                      ? 'border-[#2a2a2a] opacity-50 cursor-not-allowed'
+                      : venueTier === t.id
+                        ? 'border-[#c9a227] bg-[#c9a227]/10'
+                        : 'border-[#333] hover:border-[#555]'
+                  }`}
+                >
+                  <div className="text-[10px] font-bold text-white leading-tight">
+                    {locked && '🔒 '}
+                    {t.label}
+                  </div>
+                  <div className="text-[9px] text-gray-500 tabular-nums">
+                    {locked
+                      ? `${progress} successful ${VENUE_TIERS.find((x) => x.id === t.unlock.tier)?.label.split(' ')[0]} shows`
+                      : `${t.rentalCC} CC · cap ${t.capacity} · ${t.payoutPerCorpsCC}/corps`}
+                  </div>
+                </button>
+              );
+            })}
           </div>
 
           <form onSubmit={submit} className="space-y-2">

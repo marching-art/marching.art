@@ -40,7 +40,11 @@ function touchesProtectedProfileFields() {
     'lifetimeStats', 'activeSeasonId', 'lastScoredDay', 'challenges',
     'predictions', 'predictionStats', 'achievements', 'lastRewardedLevel',
     'journey', 'cosmetics', 'seasonLadder', 'xpAtSeasonStart',
-    'retiredCorps', 'captionStats'
+    'retiredCorps', 'captionStats',
+    // Hosting resume (hosting.byTier) gates the venue ladder — written only
+    // by the nightly hosted-event payout pass; a client write would unlock
+    // the NFL Stadium for free.
+    'hosting'
   ]);
 }
 

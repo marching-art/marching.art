@@ -586,6 +586,16 @@ exports.hostEvent = onCall({ cors: true }, async (request) => {
   if (Object.values(corpsMap).filter(Boolean).length === 0) {
     throw new HttpsError("failed-precondition", "Field a corps before hosting events.");
   }
+  // Venue ladder (decision 27): bigger stadiums are earned by running
+  // successful smaller shows, never bought outright.
+  const lockReason = hostedEvents.tierLockReason(
+    profileSnapshotPre.exists ? profileSnapshotPre.data() : null,
+    venueTier,
+    store.balance
+  );
+  if (lockReason) {
+    throw new HttpsError("failed-precondition", lockReason);
+  }
 
   const seasonUid = seasonData.seasonUid;
   const dayEvents = await hostedEvents

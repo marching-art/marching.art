@@ -73,7 +73,7 @@ const {
 const { joinRookieLeague } = require("./src/callable/rookieLeague");
 const { joinLeaguePool } = require("./src/callable/leaguePools");
 const { completeJourneyStep } = require("./src/callable/journey");
-const { purchaseShopItem, equipShopItem, sponsorShow } = require("./src/callable/shop");
+const { purchaseShopItem, equipShopItem } = require("./src/callable/shop");
 const { purchaseRetirementPlaque, purchaseHallBanner } = require("./src/callable/prestige");
 const { claimLadderTier } = require("./src/callable/seasonLadder");
 const {
@@ -228,7 +228,6 @@ module.exports = {
   completeJourneyStep,
   purchaseShopItem,
   equipShopItem,
-  sponsorShow,
   purchaseRetirementPlaque,
   purchaseHallBanner,
   claimLadderTier,

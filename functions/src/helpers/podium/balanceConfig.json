@@ -292,21 +292,27 @@
     "venueTiers": {
       "highSchool": {
         "label": "High School Stadium",
-        "rentalCC": 200,
+        "rentalCC": 150,
         "capacity": 15,
-        "payoutPerCorpsCC": 20
+        "payoutPerCorpsCC": 25,
+        "successAttendance": 6,
+        "unlock": null
       },
       "collegeBowl": {
         "label": "College Bowl",
-        "rentalCC": 500,
+        "rentalCC": 400,
         "capacity": 30,
-        "payoutPerCorpsCC": 25
+        "payoutPerCorpsCC": 35,
+        "successAttendance": 12,
+        "unlock": { "tier": "highSchool", "successful": 2 }
       },
       "nflStadium": {
         "label": "NFL Stadium",
-        "rentalCC": 1000,
+        "rentalCC": 900,
         "capacity": 60,
-        "payoutPerCorpsCC": 30
+        "payoutPerCorpsCC": 50,
+        "successAttendance": 18,
+        "unlock": { "tier": "collegeBowl", "successful": 3 }
       }
     },
     "maxEventsPerDay": 2,
