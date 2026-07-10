@@ -4,7 +4,7 @@ const { assertAuth } = require("../helpers/callableGuards");
 const { logger } = require("firebase-functions/v2");
 const { analyzeLineupTrends } = require("../helpers/captionAnalytics");
 const { getCaptionChangeWindow, isDayScoresProcessed } = require("../helpers/captionWindows");
-const { FANTASY_CLASSES, POINT_CAPS } = require("../helpers/classRegistry");
+const { FANTASY_CLASSES, ENABLED_CLASSES, POINT_CAPS } = require("../helpers/classRegistry");
 
 /**
  * Task 2.7: Saves a user's 8-caption lineup for a specific corps class.
@@ -352,8 +352,12 @@ exports.saveShowConcept = onCall({ cors: true }, async (request) => {
   const { corpsClass, showConcept } = request.data;
   const uid = request.auth.uid;
 
-  // Validate inputs
-  const validClasses = FANTASY_CLASSES;
+  // Validate inputs. Show concepts are pure identity (title/theme/music/drill)
+  // and apply to EVERY enabled class, not just the lineup-bearing ones — a
+  // Podium Class corps (no lineup, so absent from FANTASY_CLASSES) designs a
+  // show the same way. The lineup-synergy bonus only pays out for corps that
+  // field a lineup, so this stays cosmetic for Podium.
+  const validClasses = ENABLED_CLASSES;
   if (!validClasses.includes(corpsClass)) {
     throw new HttpsError("invalid-argument", "Invalid corps class specified.");
   }
