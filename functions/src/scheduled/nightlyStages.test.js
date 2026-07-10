@@ -9,16 +9,42 @@ const assert = require("node:assert/strict");
 const { runPodiumStage } = require("./nightlyStages");
 const { resetFeatureCache } = require("../helpers/features");
 
-/** Minimal fake Firestore: doc(path).get() from a path->data map. */
+/**
+ * Fake Firestore covering everything the stage + processor touch: doc reads
+ * from a path->data map, doc writes (recorded), empty collections (roster),
+ * and the run-guard's lease transaction.
+ */
 function fakeDb(docs) {
-  return {
-    doc: (path) => ({
-      get: async () => ({
-        exists: Object.prototype.hasOwnProperty.call(docs, path),
-        data: () => docs[path],
-      }),
+  const writes = {};
+  const makeDocRef = (path) => ({
+    path,
+    get: async () => ({
+      exists: Object.prototype.hasOwnProperty.call(docs, path),
+      data: () => docs[path],
     }),
+    set: async (data) => {
+      writes[path] = data;
+    },
+  });
+  const db = {
+    writes,
+    doc: makeDocRef,
+    collection: (path) => ({
+      doc: (id) => makeDocRef(`${path}/${id}`),
+      get: async () => ({ empty: true, docs: [] }),
+    }),
+    runTransaction: async (fn) =>
+      fn({
+        get: async (ref) => ({
+          exists: Object.prototype.hasOwnProperty.call(docs, ref.path),
+          data: () => docs[ref.path],
+        }),
+        set: async (ref, data) => {
+          writes[ref.path] = data;
+        },
+      }),
   };
+  return db;
 }
 
 /** Season start `daysAgo` full days before now, at UTC midnight, as a fake Timestamp. */
@@ -42,31 +68,37 @@ describe("nightly Podium stage", () => {
     assert.deepEqual(await runPodiumStage(db), { status: "disabled" });
   });
 
-  test("enabled + off-season: competition day equals calendar day", async () => {
+  test("enabled + off-season: processor runs (empty roster) with competition day = calendar day", async () => {
     const db = fakeDb({
       "game-settings/features": { podiumClass: true },
       "game-settings/season": {
         status: "off-season",
+        seasonUid: "test_season",
         schedule: { startDate: startDaysAgo(10) },
       },
     });
     const result = await runPodiumStage(db);
-    assert.equal(result.status, "noop");
+    assert.equal(result.status, "completed");
+    assert.equal(result.corps, 0);
     assert.equal(result.calendarDay, result.competitionDay);
     assert.ok(result.calendarDay >= 9 && result.calendarDay <= 11);
+    // The lease was claimed and completed under the podium-specific key.
+    const leasePath = `scoring_runs/test_season_podium_day${result.calendarDay}`;
+    assert.ok(db.writes[leasePath], "podium lease doc must be written");
   });
 
-  test("enabled + live-season spring training: stage RUNS with competitionDay < 1", async () => {
+  test("enabled + live-season spring training: processor RUNS with competitionDay < 1", async () => {
     const db = fakeDb({
       "game-settings/features": { podiumClass: true },
       "game-settings/season": {
         status: "live-season",
+        seasonUid: "test_live",
         schedule: { startDate: startDaysAgo(5), springTrainingDays: 21 },
       },
     });
     const result = await runPodiumStage(db);
     // The fantasy path exits during spring training; the Podium stage must not.
-    assert.equal(result.status, "noop");
+    assert.equal(result.status, "completed");
     assert.ok(result.competitionDay < 1, `competitionDay ${result.competitionDay} should be < 1`);
   });
 

@@ -32,6 +32,13 @@ const {
 } = require("./src/callable/economy");
 const { registerCorps } = require("./src/callable/registerCorps");
 const {
+  registerPodiumCorps,
+  allocateRehearsalBlock,
+  setPodiumRestDay,
+  setPodiumShows,
+  getPodiumState,
+} = require("./src/callable/podium");
+const {
   processCorpsDecisions,
   retireCorps,
   unretireCorps,
@@ -257,6 +264,11 @@ module.exports = {
   getEarningOpportunities,
   syncClassUnlocks,
   registerCorps,
+  registerPodiumCorps,
+  allocateRehearsalBlock,
+  setPodiumRestDay,
+  setPodiumShows,
+  getPodiumState,
   processCorpsDecisions,
   retireCorps,
   unretireCorps,

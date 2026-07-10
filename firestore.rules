@@ -156,12 +156,22 @@ match /artifacts/{appId}/users/{userId} {
   // excluded too — without it, this catch-all silently granted owners
   // unrestricted writes to profile/data, bypassing the protected-field
   // guards above entirely (currency, XP, trophies, lineups, scores).
+  // Podium competitive state (podium/state) is server-only for writes —
+  // captions, condition, and reputation are the game — and OWNER-only for
+  // reads: challenge levels and caption progress are competitive intel
+  // (PODIUM_CLASS_DESIGN.md §14.2.5). Public identity lives on profile/data.
+  match /podium/{document=**} {
+    allow read: if isAdmin() || isOwner(userId);
+    allow write: if isAdmin();
+  }
+
   match /{subcollection}/{document=**} {
-    allow read: if isAuthenticated() && subcollection != 'private';
+    allow read: if isAuthenticated() && subcollection != 'private' && subcollection != 'podium';
     allow write: if isAdmin() ||
       (isOwner(userId) &&
         subcollection != 'corpsCoinHistory' &&
-        subcollection != 'profile');
+        subcollection != 'profile' &&
+        subcollection != 'podium');
   }
 }
 
@@ -221,6 +231,24 @@ match /fantasy_recaps/{docId} {
     allow read: if true;
     allow write: if false; // Backend only
   }
+}
+
+// Podium Class recap sheets — public like fantasy_recaps, backend-written by
+// the nightly Podium stage (helpers/podium/processor.js).
+match /podium-recaps/{seasonUid} {
+  allow read: if true;
+  allow write: if false; // Backend only
+
+  match /days/{dayId} {
+    allow read: if true;
+    allow write: if false; // Backend only
+  }
+}
+
+// Podium season roster — processor iteration index, backend only. Not
+// readable by clients: standings/recaps are the public surfaces.
+match /podium-season/{seasonUid}/{document=**} {
+  allow read, write: if false; // Backend only
 }
 
 match /season_champions/{docId} {

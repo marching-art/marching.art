@@ -53,14 +53,12 @@ async function runPodiumStage(db) {
   if (calendarDay < 1) return { status: "before-season" };
   if (competitionDay > 49) return { status: "season-over" };
 
-  // Phase 2: processPodiumDay(db, seasonData, { calendarDay, competitionDay })
-  // under its own run-guard lease. Until then the stage only proves the
-  // plumbing: flag honored, day context correct, spring training included.
   logger.info(
-    `[podium-stage] enabled; calendarDay=${calendarDay} competitionDay=${competitionDay} ` +
-      `(${competitionDay < 1 ? "spring training" : "competition"}) — processor lands in Phase 2.`
+    `[podium-stage] calendarDay=${calendarDay} competitionDay=${competitionDay} ` +
+      `(${competitionDay < 1 ? "spring training" : "competition"})`
   );
-  return { status: "noop", calendarDay, competitionDay };
+  const { processPodiumDay } = require("../helpers/podium/processor");
+  return processPodiumDay(db, seasonData, { calendarDay, competitionDay });
 }
 
 module.exports = { runPodiumStage };
