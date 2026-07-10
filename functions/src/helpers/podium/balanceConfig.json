@@ -25,6 +25,7 @@
     "blocksOnShowDay": 1,
     "primaryGain": 0.1,
     "repeatBlockMultipliers": [1.0, 0.6, 0.35],
+    "assistantYield": 0.85,
     "contentCleanSplitByPhase": { "early": [0.8, 0.2], "mid": [0.5, 0.5], "late": [0.2, 0.8] },
     "phaseBounds": { "earlyThroughDay": 14, "midThroughDay": 35 },
     "challengeGainExponent": 0.55,

@@ -22,6 +22,33 @@ const { logger } = require("firebase-functions/v2");
 const { claimScoringRun, markScoringRunCompleted, markScoringRunFailed } = require("../scoringRunGuard");
 const engine = require("./engine");
 const store = require("./store");
+const venues = require("./venues");
+
+/**
+ * Venue for a corps' show on `competitionDay`: the branded majors have fixed
+ * sites; self-selected days use the scheduled show's location (first show of
+ * the day). `scheduleShows` is a day -> location map preloaded once per run.
+ */
+function showVenueFor(competitionDay, scheduleLocations) {
+  if (venues.MAJOR_VENUES[competitionDay]) return venues.MAJOR_VENUES[competitionDay];
+  const location = scheduleLocations[competitionDay];
+  return location ? venues.venueFor(location) : null;
+}
+
+/** Preload {competitionDay -> location} from the season's schedule doc. */
+async function loadScheduleLocations(db, seasonData) {
+  const scheduleId = seasonData.dataDocId || seasonData.name;
+  if (!scheduleId) return {};
+  const doc = await db.doc(`schedules/${scheduleId}`).get();
+  if (!doc.exists) return {};
+  const locations = {};
+  for (const comp of doc.data().competitions || []) {
+    if (comp.day != null && comp.location && locations[comp.day] == null) {
+      locations[comp.day] = comp.location;
+    }
+  }
+  return locations;
+}
 
 /**
  * @param {FirebaseFirestore.Firestore} db
@@ -45,6 +72,7 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
       return { status: "completed", corps: 0, scored: 0, calendarDay, competitionDay };
     }
 
+    const scheduleLocations = await loadScheduleLocations(db, seasonData);
     const results = [];
     let processed = 0;
 
@@ -68,11 +96,94 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
       const isSpringTraining = seasonData.status === "live-season" && competitionDay < 1;
       const maxBlocks = engine.blocksAvailable(state, { isShowDay, isSpringTraining }, store.balance);
 
+      // Assistant director (design §5.2): on a day the director never played,
+      // the saved plan template runs at reduced yield. Active play strictly
+      // dominates; a missed day is growth lost, never a wrecked season.
+      if (
+        (dayInfo.blocksUsed || 0) === 0 &&
+        !dayInfo.restDay &&
+        Array.isArray(state.planTemplate) &&
+        state.planTemplate.length > 0 &&
+        competitionDay <= 49
+      ) {
+        const blocksSoFar = {};
+        const applied = [];
+        for (const blockType of state.planTemplate.slice(0, maxBlocks)) {
+          if (!engine.BLOCK_TYPES.includes(blockType)) continue;
+          engine.allocateBlock(
+            state,
+            blockType,
+            competitionDay,
+            applied.length,
+            blocksSoFar,
+            store.curves,
+            store.balance,
+            { yieldMultiplier: store.balance.rehearsal.assistantYield }
+          );
+          blocksSoFar[blockType] = (blocksSoFar[blockType] || 0) + 1;
+          applied.push(blockType);
+        }
+        if (applied.length > 0) {
+          dayInfo = {
+            blocksUsed: applied.length,
+            blocks: applied,
+            restDay: false,
+            warmupUsed: applied.includes("warmup"),
+            assistant: true,
+          };
+        }
+      }
+
       if (isShowDay) {
+        // Performance load + travel + climate (design §5.3). Majors are
+        // coin-subsidized; stamina always applies. Coin costs are logged now
+        // and charged when the Corps Budget ledger lands (Phase 4).
+        const showVenue = showVenueFor(competitionDay, scheduleLocations);
+        const fromVenue = state.lastVenue || venues.venueFor(state.location) || null;
+        const leg = venues.travelLeg(fromVenue, showVenue, store.balance);
+        const isMajor = Boolean(venues.MAJOR_VENUES[competitionDay]);
+        const heat = venues.heatStamina(showVenue, store.balance);
+        const travelStamina = leg ? leg.staminaCost : 0;
         state.condition.stamina = Math.max(
           0,
-          state.condition.stamina - store.balance.condition.showStaminaCost
+          state.condition.stamina -
+            store.balance.condition.showStaminaCost -
+            travelStamina -
+            heat
         );
+        if (leg && leg.miles > 0) {
+          state.travelLog = [
+            ...(state.travelLog || []).slice(-30),
+            {
+              day: competitionDay,
+              to: showVenue ? showVenue.venueId : null,
+              tier: leg.tier,
+              miles: leg.miles,
+              coinCost: isMajor ? 0 : leg.coinCost,
+              staminaCost: travelStamina,
+              heat,
+            },
+          ];
+        }
+        if (showVenue) {
+          state.lastVenue = {
+            venueId: showVenue.venueId,
+            city: showVenue.city,
+            region: showVenue.region,
+            lat: showVenue.lat,
+            lng: showVenue.lng,
+          };
+        }
+      }
+
+      // Family Day (design §5.9): the last spring-training day ends with an
+      // unscored exhibition — a private diagnostic recap, invisible to the
+      // leaderboard, scored against the day-1 band.
+      if (isSpringTraining && competitionDay === 0) {
+        state.familyDay = {
+          calendarDay,
+          ...engine.scoreCorps(state, 1, `${seasonUid}|familyday|${uid}`, store.curves, store.balance),
+        };
       }
       engine.endOfDay(
         state,

@@ -13,6 +13,8 @@ import {
   setPodiumRestDay,
   registerPodiumCorps,
   setPodiumShows,
+  setPodiumFoodPlan,
+  setPodiumPlanTemplate,
 } from '../api/podium';
 
 export function usePodium(enabled) {
@@ -85,6 +87,24 @@ export function usePodium(enabled) {
     [reload]
   );
 
+  const setFoodPlan = useCallback(
+    async (tier) => {
+      const result = await setPodiumFoodPlan({ tier });
+      await reload();
+      return result.data;
+    },
+    [reload]
+  );
+
+  const savePlanTemplate = useCallback(
+    async (blocks) => {
+      const result = await setPodiumPlanTemplate({ blocks });
+      await reload();
+      return result.data;
+    },
+    [reload]
+  );
+
   return {
     loading,
     error,
@@ -95,5 +115,7 @@ export function usePodium(enabled) {
     declareRestDay,
     register,
     selectShows,
+    setFoodPlan,
+    savePlanTemplate,
   };
 }

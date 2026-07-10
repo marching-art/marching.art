@@ -129,9 +129,12 @@ function createSeasonState(params, curves, cfg) {
  * @param {number} blockIndexToday 0-based index of this block today
  * @param {object} blocksSoFarToday counts by blockType already run today
  */
-function allocateBlock(state, blockType, day, blockIndexToday, blocksSoFarToday, curves, cfg) {
+function allocateBlock(state, blockType, day, blockIndexToday, blocksSoFarToday, curves, cfg, opts = {}) {
   const block = cfg.blocks[blockType];
   if (!block) throw new Error(`Unknown block type: ${blockType}`);
+  // Assistant-director autoplay runs template blocks at reduced yield
+  // (design §5.2): active play strictly dominates.
+  const yieldMultiplier = opts.yieldMultiplier ?? 1;
 
   const repeats = blocksSoFarToday[blockType] || 0;
   const repeatMult =
@@ -162,7 +165,8 @@ function allocateBlock(state, blockType, day, blockIndexToday, blocksSoFarToday,
     const cap = state.captions[caption];
     // Higher challenge installs slower (harder book).
     const challengeMult = Math.pow(4 / cap.challenge, cfg.rehearsal.challengeGainExponent);
-    const gain = cfg.rehearsal.primaryGain * weight * repeatMult * challengeMult * conditionMult;
+    const gain =
+      cfg.rehearsal.primaryGain * weight * repeatMult * challengeMult * conditionMult * yieldMultiplier;
     const contentGain = gain * cShare * (1 - cap.content);
     const cleanGain = gain * clShare * (1 - cap.clean);
     cap.content = Math.min(1, cap.content + contentGain);

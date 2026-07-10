@@ -16,6 +16,10 @@ const { isPodiumEnabled } = require("../helpers/features");
 const { getActiveCalendarDay, toCompetitionDay } = require("../helpers/gameDay");
 const engine = require("../helpers/podium/engine");
 const store = require("../helpers/podium/store");
+const venues = require("../helpers/podium/venues");
+
+const FOOD_TIERS = ["gasStation", "standard", "fullKitchen"];
+const MAX_TEMPLATE_BLOCKS = 5;
 
 const AUDITION_POOL = 100;
 const NAME_MIN = 3;
@@ -346,6 +350,103 @@ exports.setPodiumShows = onCall({ cors: true }, async (request) => {
   return { success: true, selectedShowDays: selected };
 });
 
+exports.setPodiumFoodPlan = onCall({ cors: true }, async (request) => {
+  const { uid, db, seasonData } = await podiumContext(request);
+  const { tier } = request.data || {};
+  if (!FOOD_TIERS.includes(tier)) {
+    throw new HttpsError("invalid-argument", `Food tier must be one of: ${FOOD_TIERS.join(", ")}.`);
+  }
+  const sRef = store.stateRef(db, uid);
+  await db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(sRef);
+    if (!snapshot.exists || snapshot.data().seasonUid !== seasonData.seasonUid) {
+      throw new HttpsError("failed-precondition", "Register a Podium corps first.");
+    }
+    // Cost lands with the Corps Budget ledger (Phase 4); tier switching is
+    // free until then so condition effects can be alpha-tested.
+    transaction.set(sRef, { foodTier: tier, updatedAt: new Date().toISOString() }, { merge: true });
+  });
+  return { success: true, tier };
+});
+
+exports.setPodiumPlanTemplate = onCall({ cors: true }, async (request) => {
+  const { uid, db, seasonData } = await podiumContext(request);
+  const { blocks } = request.data || {};
+  if (!Array.isArray(blocks) || blocks.length > MAX_TEMPLATE_BLOCKS) {
+    throw new HttpsError("invalid-argument", `Template must be an array of at most ${MAX_TEMPLATE_BLOCKS} blocks.`);
+  }
+  for (const blockType of blocks) {
+    if (!engine.BLOCK_TYPES.includes(blockType)) {
+      throw new HttpsError("invalid-argument", `Unknown block type: ${blockType}`);
+    }
+  }
+  const sRef = store.stateRef(db, uid);
+  await db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(sRef);
+    if (!snapshot.exists || snapshot.data().seasonUid !== seasonData.seasonUid) {
+      throw new HttpsError("failed-precondition", "Register a Podium corps first.");
+    }
+    transaction.set(
+      sRef,
+      { planTemplate: blocks, updatedAt: new Date().toISOString() },
+      { merge: true }
+    );
+  });
+  return { success: true, planTemplate: blocks };
+});
+
+/**
+ * Upcoming route preview: the chain of travel legs through the corps' next
+ * show days (auto + selected), each with tier, miles, coin cost (majors
+ * subsidized) and heat surcharge — shown in the tour picker BEFORE
+ * selections are confirmed (design §5.3 open-information routing).
+ */
+async function buildRoutePreview(db, seasonData, state, uid, competitionDay) {
+  const upcoming = [
+    ...new Set([
+      ...store.autoDaysFor(uid, seasonData.seasonUid),
+      ...(state.selectedShowDays || []),
+    ]),
+  ]
+    .filter((day) => day > Math.max(0, competitionDay) && day <= 49)
+    .sort((a, b) => a - b)
+    .slice(0, 8);
+  if (upcoming.length === 0) return [];
+
+  const scheduleId = seasonData.dataDocId || seasonData.name;
+  let locations = {};
+  if (scheduleId) {
+    const doc = await db.doc(`schedules/${scheduleId}`).get();
+    if (doc.exists) {
+      for (const comp of doc.data().competitions || []) {
+        if (comp.day != null && comp.location && locations[comp.day] == null) {
+          locations[comp.day] = comp.location;
+        }
+      }
+    }
+  }
+
+  const legs = [];
+  let cursor = state.lastVenue || venues.venueFor(state.location) || null;
+  for (const day of upcoming) {
+    const venue = venues.MAJOR_VENUES[day] || (locations[day] ? venues.venueFor(locations[day]) : null);
+    const leg = venues.travelLeg(cursor, venue, store.balance);
+    const isMajor = Boolean(venues.MAJOR_VENUES[day]);
+    legs.push({
+      day,
+      city: venue ? `${venue.city}, ${venue.region}` : "TBA",
+      tier: leg ? leg.tier : null,
+      miles: leg ? leg.miles : null,
+      coinCost: leg && !isMajor ? leg.coinCost : 0,
+      staminaCost: leg ? leg.staminaCost : 0,
+      heat: venues.heatStamina(venue, store.balance),
+      isMajor,
+    });
+    if (venue) cursor = venue;
+  }
+  return legs;
+}
+
 exports.getPodiumState = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData, calendarDay, competitionDay } = await podiumContext(request);
   const snapshot = await store.stateRef(db, uid).get();
@@ -354,12 +455,14 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
   }
   const state = snapshot.data();
   const isShowDay = store.isShowDayFor(state, uid, competitionDay);
+  const routePreview = await buildRoutePreview(db, seasonData, state, uid, competitionDay);
   return {
     exists: true,
     calendarDay,
     competitionDay,
     isShowDay,
     autoDays: store.autoDaysFor(uid, seasonData.seasonUid),
+    routePreview,
     state,
   };
 });

@@ -36,6 +36,8 @@ const {
   allocateRehearsalBlock,
   setPodiumRestDay,
   setPodiumShows,
+  setPodiumFoodPlan,
+  setPodiumPlanTemplate,
   getPodiumState,
 } = require("./src/callable/podium");
 const {
@@ -268,6 +270,8 @@ module.exports = {
   allocateRehearsalBlock,
   setPodiumRestDay,
   setPodiumShows,
+  setPodiumFoodPlan,
+  setPodiumPlanTemplate,
   getPodiumState,
   processCorpsDecisions,
   retireCorps,

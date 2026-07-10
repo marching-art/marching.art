@@ -34,12 +34,24 @@ export interface PodiumBlockResult {
   blocksRemaining: number;
 }
 
+export interface PodiumRouteLeg {
+  day: number;
+  city: string;
+  tier: string | null;
+  miles: number | null;
+  coinCost: number;
+  staminaCost: number;
+  heat: number;
+  isMajor: boolean;
+}
+
 export interface PodiumStateResponse {
   exists: boolean;
   calendarDay: number;
   competitionDay: number;
   isShowDay?: boolean;
   autoDays?: number[];
+  routePreview?: PodiumRouteLeg[];
   state?: Record<string, unknown>;
 }
 
@@ -61,3 +73,13 @@ export const setPodiumShows = createCallable<
 >('setPodiumShows');
 
 export const getPodiumState = createCallable<void, PodiumStateResponse>('getPodiumState');
+
+export const setPodiumFoodPlan = createCallable<
+  { tier: string },
+  { success: boolean; tier: string }
+>('setPodiumFoodPlan');
+
+export const setPodiumPlanTemplate = createCallable<
+  { blocks: string[] },
+  { success: boolean; planTemplate: string[] }
+>('setPodiumPlanTemplate');
