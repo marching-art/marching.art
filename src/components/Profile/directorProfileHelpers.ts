@@ -15,6 +15,7 @@ import {
 } from '../../utils/corps';
 import { toCanonicalClassKey } from '../../utils/classUnlocks';
 import { formatSeasonName } from '../../utils/season';
+import { getSoundSportRating } from '../../utils/scoresUtils';
 
 export interface SeasonHistoryEntry {
   seasonId: string;
@@ -121,22 +122,59 @@ export function getDirectorStatus(profile: UserProfile): keyof typeof STATUS_IND
   return 'offseason';
 }
 
-export function calculateInfluenceScore(profile: UserProfile): number {
-  const baseXp = profile.xp || 0;
-  const levelBonus = (profile.xpLevel || 1) * 100;
-  const streakBonus = (profile.engagement?.loginStreak || 0) * 10;
-  const champBonus = (profile.stats?.championships || 0) * 500;
-  const seasonBonus = (profile.stats?.seasonsPlayed || 0) * 50;
-  return baseXp + levelBonus + streakBonus + champBonus + seasonBonus;
+// -----------------------------------------------------------------------------
+// STANDING — "how good are you right now", one honest number.
+//
+// Replaces the retired "Influence" and "Rating" aggregates: both were opaque
+// re-blends of inputs (XP, level, streak, championships, seasons) that every
+// other profile surface already shows directly, so they double-counted the
+// journey and legacy axes while explaining nothing. Standing is instead the
+// number players actually chase: the flagship corps' live class rank, written
+// nightly by the scoring run (corps.{class}.seasonRank). SoundSport keeps its
+// ratings-only framing — a medal, never a placement.
+// -----------------------------------------------------------------------------
+
+const STANDING_CLASS_ORDER: CorpsClass[] = ['worldClass', 'openClass', 'aClass'];
+
+export interface StandingDisplay {
+  /** Class shown as the pill label, e.g. "World Class" */
+  label: string;
+  /** "#14" for ranked corps, a medal rating for SoundSport, "—" pre-score */
+  value: string;
+  /** Field size for context ("of 43"), null when unranked/SoundSport */
+  of: number | null;
+  soundSport: boolean;
 }
 
-export function calculateDirectorRating(profile: UserProfile): number {
-  const baseRating = 1000;
-  const championships = profile.stats?.championships || 0;
-  const seasons = profile.stats?.seasonsPlayed || 0;
-  const topTens = profile.stats?.topTenFinishes || 0;
-  const rating = baseRating + championships * 150 + topTens * 50 + seasons * 10;
-  return Math.min(rating, 3000);
+export function getStandingDisplay(profile: UserProfile): StandingDisplay | null {
+  const corpsMap = profile.corps || {};
+
+  // Flagship = highest competitive class the director fields.
+  for (const classKey of STANDING_CLASS_ORDER) {
+    const corps = corpsMap[classKey];
+    if (!corps?.corpsName) continue;
+    const rank = typeof corps.seasonRank === 'number' ? corps.seasonRank : null;
+    return {
+      label: CORPS_CLASS_LABELS[classKey] || classKey,
+      value: rank ? `#${rank}` : '—',
+      of: rank && typeof corps.seasonRankOf === 'number' ? corps.seasonRankOf : null,
+      soundSport: false,
+    };
+  }
+
+  // SoundSport-only directors: ratings, never placements.
+  const ss = corpsMap.soundSport;
+  if (ss?.corpsName) {
+    const score = ss.totalSeasonScore || 0;
+    return {
+      label: CORPS_CLASS_LABELS.soundSport || 'SoundSport',
+      value: score > 0 ? getSoundSportRating(score) : '—',
+      of: null,
+      soundSport: true,
+    };
+  }
+
+  return null;
 }
 
 // This season's show title from the per-season concept (legacy free-text

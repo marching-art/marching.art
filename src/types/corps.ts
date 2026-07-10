@@ -78,6 +78,12 @@ export interface CorpsData {
   showsAttended: number;
   seasonHighScore: number;
 
+  // Nightly class standing, written by the scoring run (competitive classes
+  // only — SoundSport is ratings-based and never ranked). "#seasonRank of
+  // seasonRankOf" is the profile's standing number.
+  seasonRank?: number;
+  seasonRankOf?: number;
+
   // Execution state (simplified - just for XP tracking)
   lastRehearsalDate?: string;
   rehearsalsToday: number;

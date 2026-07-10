@@ -21,7 +21,12 @@ import {
   Search,
 } from 'lucide-react';
 import { CAPTIONS, CLASSES, GLOSSARY, FAQ } from './howToPlayData';
-import { XP_PER_LEVEL, XP_SOURCE_GUIDE, UNLOCK_PATH_GUIDE } from '../data/progressionGuide';
+import {
+  XP_PER_LEVEL,
+  XP_SOURCE_GUIDE,
+  UNLOCK_PATH_GUIDE,
+  PROGRESSION_AXES,
+} from '../data/progressionGuide';
 
 // =============================================================================
 // CONSTANTS
@@ -148,7 +153,22 @@ const BasicsTab = () => (
 
     {/* XP & Progression — generated from src/data/progressionGuide.js, which
         is pinned by test to the backend pay tables so it can never drift */}
-    <SectionCard title="XP & Leveling" icon={TrendingUp}>
+    <SectionCard title="How Progression Works" icon={TrendingUp}>
+      <p className="mb-3">
+        Four numbers, four different questions — nothing overlaps, and each one tells you how to
+        raise it:
+      </p>
+      <div className="space-y-1.5 mb-4">
+        {PROGRESSION_AXES.map((axis) => (
+          <div key={axis.id} className="bg-black/30 rounded-sm p-2">
+            <p className="text-xs font-bold text-gray-300">{axis.label}</p>
+            <p className="text-[11px] text-gray-500">{axis.meaning}</p>
+            <p className="text-[11px] text-gray-400 mt-0.5">
+              <span className="text-[#0057B8] font-bold">Raise it:</span> {axis.raise}
+            </p>
+          </div>
+        ))}
+      </div>
       <p className="mb-3">
         Every {XP_PER_LEVEL.toLocaleString()} XP is one director level. Levels never reset, and
         each one brings a new title on the ladder from Rookie to Eternal. Here is every way to
