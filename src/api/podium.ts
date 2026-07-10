@@ -12,6 +12,7 @@ export interface PodiumRegistration {
   showConcept?: string;
   challenge: Record<string, number>; // 8 captions, 1-8
   auditions?: Record<string, number> | null; // points per caption, pool 100
+  budgetCommitment?: number; // CC -> Corps Budget, capped (decision 24)
 }
 
 export interface PodiumBlockResult {
@@ -83,3 +84,13 @@ export const setPodiumPlanTemplate = createCallable<
   { blocks: string[] },
   { success: boolean; planTemplate: string[] }
 >('setPodiumPlanTemplate');
+
+export const commitPodiumBudget = createCallable<
+  { amount: number },
+  { success: boolean; budget: Record<string, unknown> }
+>('commitPodiumBudget');
+
+export const hirePodiumClinician = createCallable<
+  { block: string },
+  { success: boolean; clinician: Record<string, unknown>; budget: Record<string, unknown> }
+>('hirePodiumClinician');

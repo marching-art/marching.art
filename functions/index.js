@@ -38,6 +38,8 @@ const {
   setPodiumShows,
   setPodiumFoodPlan,
   setPodiumPlanTemplate,
+  commitPodiumBudget,
+  hirePodiumClinician,
   getPodiumState,
 } = require("./src/callable/podium");
 const {
@@ -272,6 +274,8 @@ module.exports = {
   setPodiumShows,
   setPodiumFoodPlan,
   setPodiumPlanTemplate,
+  commitPodiumBudget,
+  hirePodiumClinician,
   getPodiumState,
   processCorpsDecisions,
   retireCorps,

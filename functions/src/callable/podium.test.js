@@ -7,7 +7,12 @@
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { validateChallenge, validateAuditions, validateShowDays } = require("./podium");
+const {
+  validateChallenge,
+  validateAuditions,
+  validateShowDays,
+  validateCommitment,
+} = require("./podium");
 const store = require("../helpers/podium/store");
 
 const CAPTIONS = ["GE1", "GE2", "VP", "VA", "CG", "B", "MA", "P"];
@@ -95,5 +100,24 @@ describe("validateShowDays", () => {
 
   test("dedupes and sorts", () => {
     assert.deepEqual(validateShowDays(1, [6, 3, 6], uid, seasonUid, 0), [3, 6]);
+  });
+});
+
+describe("validateCommitment (Corps Budget, decision 24)", () => {
+  test("zero/null commitments are allowed (free floor)", () => {
+    assert.equal(validateCommitment(null, 0), 0);
+    assert.equal(validateCommitment(0, 0), 0);
+  });
+
+  test("accepts up to the division-equal cap, cumulatively", () => {
+    assert.equal(validateCommitment(1000, 0), 1000);
+    assert.equal(validateCommitment(400, 600), 400);
+  });
+
+  test("rejects negatives, non-integers, and over-cap totals", () => {
+    assert.throws(() => validateCommitment(-1, 0));
+    assert.throws(() => validateCommitment(10.5, 0));
+    assert.throws(() => validateCommitment(1001, 0));
+    assert.throws(() => validateCommitment(500, 600));
   });
 });

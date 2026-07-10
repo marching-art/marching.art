@@ -17,6 +17,7 @@ export default function PodiumRegistration({ podium }) {
     Object.fromEntries(PODIUM_CAPTIONS.map((c) => [c, 5]))
   );
   const [auditionPreset, setAuditionPreset] = useState('balanced');
+  const [budgetCommitment, setBudgetCommitment] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [done, setDone] = useState(null);
@@ -38,6 +39,7 @@ export default function PodiumRegistration({ podium }) {
         showConcept: showConcept.trim(),
         challenge,
         auditions,
+        budgetCommitment: budgetCommitment > 0 ? budgetCommitment : undefined,
       });
       setDone(result);
     } catch (err) {

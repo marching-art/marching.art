@@ -87,9 +87,11 @@
     "heritageCreditMultiplier": 1.5
   },
   "budget": {
+    "commitmentCap": 1000,
     "commitmentCapByDivision": { "aClass": 400, "openClass": 700, "worldClass": 1000 },
     "showPayout": 30,
-    "fundraiserBlockYield": 12,
+    "fundraiser": { "yield": 12, "staminaCost": 8 },
     "springTrainingDayCost": 25
-  }
+  },
+  "clinician": { "cost": 120, "durationDays": 3, "yieldBoost": 1.3 }
 }

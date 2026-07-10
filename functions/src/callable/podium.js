@@ -21,6 +21,48 @@ const venues = require("../helpers/podium/venues");
 const FOOD_TIERS = ["gasStation", "standard", "fullKitchen"];
 const MAX_TEMPLATE_BLOCKS = 5;
 
+/**
+ * Validate a CorpsCoin -> Corps Budget commitment amount against the
+ * division-equal cap (decision 24). `alreadyCommitted` enforces the
+ * cumulative cap for mid-season top-ups.
+ */
+function validateCommitment(amount, alreadyCommitted) {
+  if (amount == null || amount === 0) return 0;
+  if (!Number.isInteger(amount) || amount < 0) {
+    throw new HttpsError("invalid-argument", "Budget commitment must be a non-negative integer.");
+  }
+  const cap = store.balance.budget.commitmentCap;
+  if (alreadyCommitted + amount > cap) {
+    throw new HttpsError(
+      "invalid-argument",
+      `Budget commitments are capped at ${cap} CC per season (already committed: ${alreadyCommitted}).`
+    );
+  }
+  return amount;
+}
+
+/**
+ * Inside a transaction: debit profile CorpsCoin for a budget commitment.
+ * Reads MUST have happened already (Firestore txn rule) — pass the profile
+ * snapshot in.
+ */
+function applyCommitmentDebit(transaction, db, uid, profileSnapshot, amount) {
+  const corpsCoin = profileSnapshot.exists ? profileSnapshot.data().corpsCoin || 0 : 0;
+  if (corpsCoin < amount) {
+    throw new HttpsError("failed-precondition", `Not enough CorpsCoin (have ${corpsCoin}, need ${amount}).`);
+  }
+  transaction.update(store.profileRef(db, uid), { corpsCoin: corpsCoin - amount });
+  const historyRef = db
+    .collection(`artifacts/${require("../config").dataNamespaceParam.value()}/users/${uid}/corpsCoinHistory`)
+    .doc();
+  transaction.set(historyRef, {
+    type: "podium_budget_commit",
+    amount: -amount,
+    description: "Corps Budget commitment (Podium Class)",
+    timestamp: new Date(),
+  });
+}
+
 const AUDITION_POOL = 100;
 const NAME_MIN = 3;
 const NAME_MAX = 40;
@@ -145,6 +187,7 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
   }
   const challenge = validateChallenge(request.data?.challenge);
   const auditionShares = validateAuditions(request.data?.auditions);
+  const budgetCommitment = validateCommitment(request.data?.budgetCommitment, 0);
 
   const seasonUid = seasonData.seasonUid;
   const trimmedName = corpsName.trim();
@@ -155,15 +198,19 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
   const sRef = store.stateRef(db, uid);
 
   await db.runTransaction(async (transaction) => {
-    const [existingState, existingName] = await Promise.all([
+    const [existingState, existingName, profileSnapshot] = await Promise.all([
       transaction.get(sRef),
       transaction.get(nameRef),
+      transaction.get(store.profileRef(db, uid)),
     ]);
     if (existingState.exists && existingState.data().seasonUid === seasonUid) {
       throw new HttpsError("already-exists", "You already field a Podium corps this season.");
     }
     if (existingName.exists && existingName.data().uid !== uid) {
       throw new HttpsError("already-exists", "That corps name is taken this season.");
+    }
+    if (budgetCommitment > 0) {
+      applyCommitmentDebit(transaction, db, uid, profileSnapshot, budgetCommitment);
     }
 
 
@@ -195,6 +242,15 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
       auditions: auditionShares || null,
       reputation: 0,
       repTier: 1,
+      budget: (() => {
+        const budget = store.initBudget();
+        if (budgetCommitment > 0) {
+          budget.balance = budgetCommitment;
+          budget.committed = budgetCommitment;
+          budget.log = [{ day: 0, amount: budgetCommitment, reason: "commitment" }];
+        }
+        return budget;
+      })(),
       selectedShowDays: [],
       today: { calendarDay, blocksUsed: 0, blocks: [], restDay: false, warmupUsed: false },
       lastScoredDay: null,
@@ -238,7 +294,8 @@ exports.allocateRehearsalBlock = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData, calendarDay, competitionDay } = await podiumContext(request);
   const { blockType, blockIndex } = request.data || {};
 
-  if (!engine.BLOCK_TYPES.includes(blockType)) {
+  const isFundraiser = blockType === "fundraiser";
+  if (!isFundraiser && !engine.BLOCK_TYPES.includes(blockType)) {
     throw new HttpsError("invalid-argument", `Unknown block type: ${blockType}`);
   }
   if (calendarDay < 1) {
@@ -276,17 +333,41 @@ exports.allocateRehearsalBlock = onCall({ cors: true }, async (request) => {
       );
     }
 
-    const blocksSoFar = {};
-    for (const b of state.today.blocks) blocksSoFar[b] = (blocksSoFar[b] || 0) + 1;
-    const panel = engine.allocateBlock(
-      state,
-      blockType,
-      competitionDay,
-      state.today.blocksUsed,
-      blocksSoFar,
-      store.curves,
-      store.balance
-    );
+    let panel;
+    if (isFundraiser) {
+      // The guns-vs-butter block (design §14.1.2): a block slot converted to
+      // Corps Budget income instead of caption growth.
+      const { yield: fundraiserYield, staminaCost } = store.balance.budget.fundraiser;
+      store.creditBudget(state, fundraiserYield, "fundraiser", competitionDay);
+      state.condition.stamina = Math.max(0, state.condition.stamina - staminaCost);
+      panel = {
+        blockType: "fundraiser",
+        day: competitionDay,
+        gains: {},
+        budgetEarned: fundraiserYield,
+        staminaCost,
+        repeatMult: 1,
+      };
+    } else {
+      const blocksSoFar = {};
+      for (const b of state.today.blocks) blocksSoFar[b] = (blocksSoFar[b] || 0) + 1;
+      // Active clinician engagement boosts their block type (design §5.6).
+      const clinicianActive =
+        state.clinician &&
+        state.clinician.block === blockType &&
+        state.clinician.expiresDay >= competitionDay;
+      panel = engine.allocateBlock(
+        state,
+        blockType,
+        competitionDay,
+        state.today.blocksUsed,
+        blocksSoFar,
+        store.curves,
+        store.balance,
+        clinicianActive ? { yieldMultiplier: store.balance.clinician.yieldBoost } : {}
+      );
+      if (clinicianActive) panel.clinicianBoost = store.balance.clinician.yieldBoost;
+    }
 
     state.today.blocksUsed += 1;
     state.today.blocks = [...state.today.blocks, blockType];
@@ -395,6 +476,61 @@ exports.setPodiumPlanTemplate = onCall({ cors: true }, async (request) => {
   return { success: true, planTemplate: blocks };
 });
 
+exports.commitPodiumBudget = onCall({ cors: true }, async (request) => {
+  const { uid, db, seasonData } = await podiumContext(request);
+  const { amount } = request.data || {};
+  const sRef = store.stateRef(db, uid);
+  const result = await db.runTransaction(async (transaction) => {
+    const [snapshot, profileSnapshot] = await Promise.all([
+      transaction.get(sRef),
+      transaction.get(store.profileRef(db, uid)),
+    ]);
+    if (!snapshot.exists || snapshot.data().seasonUid !== seasonData.seasonUid) {
+      throw new HttpsError("failed-precondition", "Register a Podium corps first.");
+    }
+    const state = snapshot.data();
+    const committed = state.budget ? state.budget.committed || 0 : 0;
+    const validated = validateCommitment(amount, committed);
+    if (validated <= 0) {
+      throw new HttpsError("invalid-argument", "Commitment amount must be positive.");
+    }
+    applyCommitmentDebit(transaction, db, uid, profileSnapshot, validated);
+    store.creditBudget(state, validated, "commitment", 0);
+    state.updatedAt = new Date().toISOString();
+    transaction.set(sRef, state);
+    return state.budget;
+  });
+  return { success: true, budget: result };
+});
+
+exports.hirePodiumClinician = onCall({ cors: true }, async (request) => {
+  const { uid, db, seasonData, competitionDay } = await podiumContext(request);
+  const { block } = request.data || {};
+  if (!engine.BLOCK_TYPES.includes(block) || block === "warmup") {
+    throw new HttpsError("invalid-argument", "Clinicians coach a rehearsal block (not warmup).");
+  }
+  const sRef = store.stateRef(db, uid);
+  const result = await db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(sRef);
+    if (!snapshot.exists || snapshot.data().seasonUid !== seasonData.seasonUid) {
+      throw new HttpsError("failed-precondition", "Register a Podium corps first.");
+    }
+    const state = snapshot.data();
+    if (state.clinician && state.clinician.expiresDay >= competitionDay) {
+      throw new HttpsError("failed-precondition", "A clinician engagement is already active.");
+    }
+    const { cost, durationDays } = store.balance.clinician;
+    if (!store.debitBudget(state, cost, "clinician", competitionDay)) {
+      throw new HttpsError("failed-precondition", `Not enough Corps Budget (need ${cost}).`);
+    }
+    state.clinician = { block, hiredDay: competitionDay, expiresDay: competitionDay + durationDays - 1 };
+    state.updatedAt = new Date().toISOString();
+    transaction.set(sRef, state);
+    return { clinician: state.clinician, budget: state.budget };
+  });
+  return { success: true, ...result };
+});
+
 /**
  * Upcoming route preview: the chain of travel legs through the corps' next
  * show days (auto + selected), each with tier, miles, coin cost (majors
@@ -468,5 +604,6 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
 });
 
 module.exports.validateChallenge = validateChallenge;
+module.exports.validateCommitment = validateCommitment;
 module.exports.validateAuditions = validateAuditions;
 module.exports.validateShowDays = validateShowDays;

@@ -3,7 +3,7 @@
 // with travel tiers + heat, and the Family Day diagnostic when present.
 
 import React, { useState } from 'react';
-import { Bus, UtensilsCrossed, UserCog, Loader2, Sun } from 'lucide-react';
+import { Bus, UtensilsCrossed, UserCog, Loader2, Sun, Coins, Sparkles } from 'lucide-react';
 import { BLOCKS } from './podiumConstants';
 
 const FOOD_TIERS = [
@@ -27,6 +27,8 @@ export default function CorpsConditionPanel({ podium }) {
   const [error, setError] = useState(null);
   const [editingTemplate, setEditingTemplate] = useState(false);
   const [templateDraft, setTemplateDraft] = useState([]);
+  const [topUp, setTopUp] = useState(100);
+  const [clinicianBlock, setClinicianBlock] = useState('brassSectionals');
 
   if (!state) return null;
 
@@ -43,12 +45,87 @@ export default function CorpsConditionPanel({ podium }) {
   };
 
   const template = state.planTemplate || [];
+  const budget = state.budget || { balance: 0, committed: 0, earned: 0, spent: 0 };
 
   return (
     <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4 space-y-4">
       <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
         Tour Logistics
       </h3>
+
+      {/* Corps Budget ledger */}
+      <div>
+        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase text-gray-400 mb-1.5">
+          <Coins className="w-3 h-3" /> Corps Budget
+        </div>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] tabular-nums">
+          <span className="text-white font-bold">{budget.balance}</span>
+          <span className="text-gray-500">
+            committed {budget.committed || 0}/1,000 · earned {budget.earned || 0} · spent{' '}
+            {budget.spent || 0}
+          </span>
+          {(budget.committed || 0) < 1000 && (
+            <span className="flex items-center gap-1.5">
+              <input
+                type="number"
+                min={50}
+                max={1000 - (budget.committed || 0)}
+                step={50}
+                value={topUp}
+                onChange={(e) => setTopUp(Math.max(0, Number(e.target.value) || 0))}
+                className="w-20 bg-[#111] border border-[#333] rounded-sm px-2 py-1 text-[11px] text-white focus:border-[#0057B8] outline-none tabular-nums"
+              />
+              <button
+                disabled={busy !== null || topUp <= 0}
+                onClick={() => act('commit', () => podium.commitBudget(topUp))}
+                className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-sm bg-[#0057B8] text-white hover:bg-[#0066d6] disabled:opacity-50 press-feedback"
+              >
+                {busy === 'commit' ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Commit CC'}
+              </button>
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Clinician */}
+      <div>
+        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase text-gray-400 mb-1.5">
+          <Sparkles className="w-3 h-3" /> Clinician
+        </div>
+        {state.clinician ? (
+          <p className="text-[10px] text-gray-400">
+            <span className="text-[#4d9fff] font-bold">
+              {BLOCKS.find((b) => b.id === state.clinician.block)?.label || state.clinician.block}
+            </span>{' '}
+            engagement active through day {state.clinician.expiresDay} (+30% yield).
+          </p>
+        ) : (
+          <div className="flex items-center gap-2">
+            <select
+              value={clinicianBlock}
+              onChange={(e) => setClinicianBlock(e.target.value)}
+              className="bg-[#111] border border-[#333] rounded-sm px-2 py-1 text-[11px] text-white focus:border-[#0057B8] outline-none"
+            >
+              {BLOCKS.filter((b) => b.id !== 'warmup').map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.label}
+                </option>
+              ))}
+            </select>
+            <button
+              disabled={busy !== null}
+              onClick={() => act('clinician', () => podium.hireClinician(clinicianBlock))}
+              className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-sm border border-[#333] text-gray-400 hover:text-white hover:border-[#0057B8] disabled:opacity-50 press-feedback"
+            >
+              {busy === 'clinician' ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                'Hire · 120 Budget / 3 days'
+              )}
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Food plan */}
       <div>

@@ -70,6 +70,47 @@ function recapDayRef(db, seasonUid, competitionDay) {
   return db.doc(`podium-recaps/${seasonUid}/days/${competitionDay}`);
 }
 
+// ---------------------------------------------------------------------------
+// Corps Budget ledger (Phase 4, design §14.2.1 / decision 24)
+// ---------------------------------------------------------------------------
+// The per-season operating ledger: funded by a capped CC commitment plus
+// in-class earnings, spent on travel/food/camp/clinicians. The free floor is
+// structural — debit() returns false instead of throwing, and callers apply
+// the degraded alternative (stamina surcharge, gas-station food).
+
+const BUDGET_LOG_LIMIT = 40;
+
+/** Initialize an empty ledger. */
+function initBudget() {
+  return { balance: 0, committed: 0, earned: 0, spent: 0, log: [] };
+}
+
+/** Credit the ledger (earnings/commitments). Mutates state. */
+function creditBudget(state, amount, reason, day) {
+  if (!state.budget) state.budget = initBudget();
+  state.budget.balance += amount;
+  state.budget.earned += reason === "commitment" ? 0 : amount;
+  if (reason === "commitment") state.budget.committed += amount;
+  state.budget.log = [...(state.budget.log || []).slice(-(BUDGET_LOG_LIMIT - 1)), { day, amount, reason }];
+}
+
+/**
+ * Debit the ledger if affordable. Mutates state and returns true, or leaves
+ * it untouched and returns false — the caller applies the free-floor
+ * fallback (never a block).
+ */
+function debitBudget(state, amount, reason, day) {
+  if (amount <= 0) return true;
+  if (!state.budget || state.budget.balance < amount) return false;
+  state.budget.balance -= amount;
+  state.budget.spent += amount;
+  state.budget.log = [
+    ...(state.budget.log || []).slice(-(BUDGET_LOG_LIMIT - 1)),
+    { day, amount: -amount, reason },
+  ];
+  return true;
+}
+
 /**
  * Re-attach derived curve params to a stored state so engine functions can
  * run. Stored docs persist only player state (content/clean/etc.).
@@ -113,6 +154,9 @@ module.exports = {
   recapDayRef,
   hydrateState,
   dehydrateState,
+  initBudget,
+  creditBudget,
+  debitBudget,
   curves,
   balance,
 };

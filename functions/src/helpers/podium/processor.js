@@ -143,7 +143,16 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         const leg = venues.travelLeg(fromVenue, showVenue, store.balance);
         const isMajor = Boolean(venues.MAJOR_VENUES[competitionDay]);
         const heat = venues.heatStamina(showVenue, store.balance);
-        const travelStamina = leg ? leg.staminaCost : 0;
+        let travelStamina = leg ? leg.staminaCost : 0;
+        // Budget charge (majors are subsidized). Free floor: an unaffordable
+        // leg becomes a stamina surcharge — the bus still rolls (decision 24).
+        let paidTravel = true;
+        if (leg && !isMajor && leg.coinCost > 0) {
+          paidTravel = store.debitBudget(state, leg.coinCost, "travel", competitionDay);
+          if (!paidTravel) {
+            travelStamina += store.balance.travel.unaffordableStaminaSurcharge;
+          }
+        }
         state.condition.stamina = Math.max(
           0,
           state.condition.stamina -
@@ -159,12 +168,15 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
               to: showVenue ? showVenue.venueId : null,
               tier: leg.tier,
               miles: leg.miles,
-              coinCost: isMajor ? 0 : leg.coinCost,
+              coinCost: isMajor || !paidTravel ? 0 : leg.coinCost,
+              unaffordable: !paidTravel || undefined,
               staminaCost: travelStamina,
               heat,
             },
           ];
         }
+        // Show payout: in-class Budget income for performing.
+        store.creditBudget(state, store.balance.budget.showPayout, "showPayout", competitionDay);
         if (showVenue) {
           state.lastVenue = {
             venueId: showVenue.venueId,
@@ -174,6 +186,28 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
             lng: showVenue.lng,
           };
         }
+      }
+
+      // Weekly food charge at the top of each calendar week; an unaffordable
+      // plan degrades to gas-station for the week (free floor, never a block).
+      if ((calendarDay - 1) % 7 === 0) {
+        const tier = state.foodTier || "standard";
+        const cost = (store.balance.condition.foodTiers[tier] || {}).costPerWeek || 0;
+        if (cost > 0 && !store.debitBudget(state, cost, `food:${tier}`, competitionDay)) {
+          state.foodTier = "gasStation";
+        }
+      }
+
+      // Spring-training camp economics: each camp day a corps actually
+      // rehearses costs housing+food. Unaffordable camp days are free —
+      // degraded recovery already prices poverty (free floor).
+      if (isSpringTraining && (dayInfo.blocksUsed || 0) > 0) {
+        store.debitBudget(state, store.balance.budget.springTrainingDayCost, "camp", competitionDay);
+      }
+
+      // Expire finished clinician engagements.
+      if (state.clinician && state.clinician.expiresDay < competitionDay) {
+        delete state.clinician;
       }
 
       // Family Day (design §5.9): the last spring-training day ends with an

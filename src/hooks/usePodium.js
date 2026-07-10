@@ -15,6 +15,8 @@ import {
   setPodiumShows,
   setPodiumFoodPlan,
   setPodiumPlanTemplate,
+  commitPodiumBudget,
+  hirePodiumClinician,
 } from '../api/podium';
 
 export function usePodium(enabled) {
@@ -105,6 +107,24 @@ export function usePodium(enabled) {
     [reload]
   );
 
+  const commitBudget = useCallback(
+    async (amount) => {
+      const result = await commitPodiumBudget({ amount });
+      await reload();
+      return result.data;
+    },
+    [reload]
+  );
+
+  const hireClinician = useCallback(
+    async (block) => {
+      const result = await hirePodiumClinician({ block });
+      await reload();
+      return result.data;
+    },
+    [reload]
+  );
+
   return {
     loading,
     error,
@@ -117,5 +137,7 @@ export function usePodium(enabled) {
     selectShows,
     setFoodPlan,
     savePlanTemplate,
+    commitBudget,
+    hireClinician,
   };
 }

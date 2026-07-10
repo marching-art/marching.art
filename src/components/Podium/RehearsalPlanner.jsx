@@ -3,7 +3,7 @@
 // Complete panel, or declare a rest day. Condition strip included.
 
 import React, { useState } from 'react';
-import { Flame, BatteryCharging, Moon, Loader2 } from 'lucide-react';
+import { Flame, BatteryCharging, Moon, Loader2, Coins } from 'lucide-react';
 import { BLOCKS, CAPTION_LABELS } from './podiumConstants';
 
 function ConditionBar({ label, value, icon: Icon, color }) {
@@ -36,6 +36,7 @@ export default function RehearsalPlanner({ podium }) {
 
   const today = state.today || { blocksUsed: 0, blocks: [], restDay: false };
   const condition = state.condition || { stamina: 0, morale: 0 };
+  const budget = state.budget || { balance: 0 };
   const competitionDay = data.competitionDay;
   const isSpringTraining = competitionDay < 1;
   const seasonOver = competitionDay > 49;
@@ -87,7 +88,15 @@ export default function RehearsalPlanner({ podium }) {
                 ? 'Post-season'
                 : `Day ${competitionDay} of 49`}
           </div>
-          <div className="text-sm font-bold text-white">{dayType}</div>
+          <div className="text-sm font-bold text-white flex items-center gap-3">
+            {dayType}
+            <span
+              className="flex items-center gap-1 text-[10px] font-bold text-[#c9a227] tabular-nums"
+              title="Corps Budget"
+            >
+              <Coins className="w-3 h-3" /> {budget.balance}
+            </span>
+          </div>
         </div>
         <div className="flex gap-4 flex-1 sm:max-w-xs">
           <ConditionBar
@@ -134,6 +143,19 @@ export default function RehearsalPlanner({ podium }) {
               </button>
             );
           })}
+          <button
+            disabled={busy !== null}
+            onClick={() => handleAllocate('fundraiser')}
+            className="text-left px-3 py-2.5 rounded-sm border border-[#5a4a12] hover:border-[#c9a227] hover:bg-[#c9a227]/10 transition-colors press-feedback disabled:opacity-50 sm:col-span-2"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-[#c9a227]">Fundraiser</span>
+              {busy === 'fundraiser' && <Loader2 className="w-3 h-3 animate-spin text-gray-400" />}
+            </div>
+            <div className="text-[10px] text-gray-500 mt-0.5">
+              Convert a block to Corps Budget income — no caption growth today
+            </div>
+          </button>
         </div>
       )}
 
@@ -174,6 +196,11 @@ export default function RehearsalPlanner({ podium }) {
             )}
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-0.5">
+            {lastPanel.budgetEarned > 0 && (
+              <span className="text-[11px] text-[#c9a227] tabular-nums font-bold">
+                +{lastPanel.budgetEarned} Corps Budget
+              </span>
+            )}
             {Object.entries(lastPanel.gains || {}).map(([caption, gain]) => (
               <span key={caption} className="text-[11px] text-gray-300 tabular-nums">
                 {CAPTION_LABELS[caption] || caption}:{' '}
