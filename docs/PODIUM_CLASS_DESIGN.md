@@ -7,7 +7,8 @@ season in with spring training design, no evening reveal window, director-hosted
 v1.2 promotes the round-two backlog into committed design (regional anchors, joint rehearsals,
 assistant director, historical shadows, climate, Director Rating, named hardware) and clarifies
 that Podium is never locked out of week-1 events; v1.3 names the anchor calendar after the real
-DCI majors and adds integrated World / Open / A divisions inside Podium
+DCI majors and adds integrated World / Open / A divisions inside Podium; v1.4 specs the
+two-night Eastern Classic split
 
 ---
 
@@ -545,7 +546,7 @@ mirrors DCI's, and all four anchors already exist in the data and (mostly) in th
 |---|---|---|---|
 | **DCI Southwestern** | `DCI Southwestern` — San Antonio, TX | 28 | Already pinned: `placeExclusiveShow(28, "DCI Southwestern Championship")` in `scheduleGeneration.js` |
 | **DCI Southeastern** | `DCI Southeastern` — Atlanta, GA | 35 | Already pinned: championship-named show placed at day 35 |
-| **DCI Eastern Classic** | `DCI East` — Allentown, PA (23 appearances; modern slots days 41–42) | 41 | New pin needed (one line, same mechanism) |
+| **DCI Eastern Classic** | `DCI East` — Allentown, PA (23 appearances; modern name via live scraper) | 41–42 | Already placed as a two-day stand: `generateOffSeasonSchedule` finds a "DCI Eastern Classic" event on days 41/42 and places the same event on **both** days |
 | **World Championships** | Prelims/Semis/Finals | 45–49 | Existing exclusive championship placement + auto-enrollment |
 
 Implementation: events gain an `eventTier: 'regional' | 'championship' | 'tour'` field stamped at
@@ -564,6 +565,32 @@ schedule-generation time (extends the existing `isChampionship` boolean rather t
   principle applied to scheduling. The three anchors also give the season its natural act
   structure: San Antonio answers "who's real," Atlanta answers "who's peaking," Allentown is the
   last full-field look before Indy.
+
+**The Eastern Classic is a two-night stand (days 41–42), exactly like the real event.** The
+schedule generator already places the same Eastern Classic event on both days; Podium adds the
+DCI-authentic even split of the field across Friday and Saturday:
+
+- **Balanced snake split, published in advance.** After the day-38 nightly run (post-Atlanta
+  standings), corps are distributed across the two nights by a snake draft on current seeding
+  *within each division* (seeds 1, 4, 5, 8… one night; 2, 3, 6, 7… the other), so both nights
+  carry equal strength and every division appears both nights. The night lineups publish on
+  day 39 — a mid-week community moment that mirrors DCI's real lineup announcements and gives
+  the feed two days of "who got Friday?" chatter.
+- **One performance, one residency.** Each corps performs on its assigned night only
+  (auto-enrolled, no weekly slot, no travel coin). The *other* Allentown day is a full rehearsal
+  day at the site with no travel leg — the corps is housed in the Lehigh Valley between nights,
+  exactly like the real tour.
+- **The night-two effect is real, and we keep it.** A Saturday corps carries one extra day of
+  growth relative to Friday scores — which is precisely why Saturday Allentown reads hotter on
+  real DCI recaps. The snake split distributes that small uniform bump evenly across strength
+  tiers, the effect is published rather than hidden, and night parity alternates season to season
+  so no corps is structurally the Friday corps forever.
+- **Two nightly drops, one event.** Each night scores in its own nightly run (half the field per
+  recap — two consecutive evenings of results to argue about), and the UI presents a combined
+  Eastern Classic standings view merging both nights once Saturday processes.
+- **Generalized mechanism:** the schedule day gains `multiNight: { eventId, nights: [41, 42] }`
+  metadata and the split/assignment logic is written event-agnostic, so any future two-night
+  event (a hosted mega-event, a two-night league championship) reuses it.
 
 ### 5.12 Joint rehearsals
 
@@ -808,6 +835,10 @@ trajectory bands. Everything after deepens rather than gates.
    (decayed 3-season average, published), auto promotion/relegation plus petition-up,
    population-adaptive division count, single unified division in the inaugural season. This
    supersedes the earlier "division cut population" open question.
+10. **The Eastern Classic is a two-night anchor** (§5.11): even snake split of the field across
+    days 41–42 balanced by seeding within each division, lineups published day 39, one
+    performance + one on-site rehearsal day per corps, night parity alternating by season, split
+    logic built event-agnostic (`multiNight` metadata).
 
 **Still open:**
 
