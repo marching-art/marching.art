@@ -4,9 +4,28 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Share2, Check } from 'lucide-react';
 import { db } from '../../api';
 import { PODIUM_CAPTIONS } from './podiumConstants';
+
+/**
+ * Format a recap as a monospace text sheet — pastes cleanly into Discord
+ * (wrap in a code block) and group chats, the way FMA recaps circulated.
+ */
+function formatRecapAsText(recap, masthead, day, seasonName) {
+  const fmt = (v) => (typeof v === 'number' ? v.toFixed(2) : '—');
+  const lines = [
+    `${masthead.name} — ${masthead.site} · Day ${day} of 49`,
+    '',
+    ...(recap.results || []).map(
+      (row) =>
+        `${String(row.place).padStart(2)}. ${(row.corpsName || 'Unknown').padEnd(24).slice(0, 24)} ${fmt(row.totalScore).padStart(7)}  (GE ${fmt(row.geScore)} · VIS ${fmt(row.visualScore)} · MUS ${fmt(row.musicScore)})`
+    ),
+    '',
+    `marching.art${seasonName ? ` · ${seasonName}` : ''} — Podium Class`,
+  ];
+  return '```\n' + lines.join('\n') + '\n```';
+}
 
 const MAJOR_MASTHEADS = {
   28: { name: 'marching.art Southwestern Championship', site: 'Dallas, TX' },
@@ -164,6 +183,7 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
   const [days, setDays] = useState([]); // [{day, recap}]
   const [selectedDay, setSelectedDay] = useState(null);
   const [report, setReport] = useState(null); // latest power-rankings column
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -254,8 +274,31 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
               {masthead.site} · Day {selected.day} of 49
             </div>
           </div>
-          <div className="text-[9px] uppercase tracking-wider text-[#c9a227] font-bold">
-            Official Recap
+          <div className="flex items-center gap-2">
+            <button
+              onClick={async () => {
+                const text = formatRecapAsText(selected.recap, masthead, selected.day, seasonName);
+                try {
+                  if (navigator.share && /Mobi/i.test(navigator.userAgent)) {
+                    await navigator.share({ text });
+                  } else {
+                    await navigator.clipboard.writeText(text);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }
+                } catch {
+                  /* user dismissed the share sheet */
+                }
+              }}
+              title="Copy the sheet as Discord-ready text"
+              className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-sm border border-[#333] text-gray-400 hover:text-white hover:border-[#c9a227] press-feedback"
+            >
+              {copied ? <Check className="w-3 h-3 text-green-400" /> : <Share2 className="w-3 h-3" />}
+              {copied ? 'Copied' : 'Share'}
+            </button>
+            <div className="text-[9px] uppercase tracking-wider text-[#c9a227] font-bold">
+              Official Recap
+            </div>
           </div>
         </div>
 
