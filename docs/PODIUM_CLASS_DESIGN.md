@@ -1225,6 +1225,16 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     division, and heritage credit (+50% re-earn rate up to one tier below the old peak) turns
     comebacks into a storyline instead of a pure penalty.
 
+**Resolved in v1.9.1:**
+
+19. **Podium is drum corps only — one corps per director.** FMA ran four parallel circuits
+    (Drum Corps, Marching Band, Color Guard, Drumline, each with its own caption set); Podium
+    deliberately does not. A director fields exactly **one drum corps** in Podium Class, scored
+    on the 8 DCI captions. No Marching Band, Guard, or Drumline circuits exist or are planned —
+    the multi-group "portfolio" itch is already served by running Podium alongside the four
+    fantasy classes. Every system in this doc (auditions, blocks, staff market, reputation,
+    divisions) assumes and requires the single-corps model.
+
 **Resolved in v1.9:**
 
 18. **Staff is a labor market, not a purchase ladder** (§5.6): generated persons with careers,
