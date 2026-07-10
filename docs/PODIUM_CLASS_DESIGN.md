@@ -312,6 +312,28 @@ stamina + CorpsCoin cost from the distance to the previous location — the exis
 week" mechanic silently becomes a routing puzzle. A Texas swing after a Florida weekend is a real
 decision with a real cost, exactly like the actual tour.
 
+*How distances are known when schedules are regenerated every season:* the schedule is random per
+season, but the **venue universe is not** — every generated schedule samples historical events, and
+every event (historical or live-scraped) carries a `location` string. Across the 13-year archive
+there are only ~414 distinct location strings, so travel resolves against a one-time
+**venue gazetteer** (`podium-config/venues`): a build script normalizes each distinct string
+(trim punctuation, canonicalize state names, fuzzy-match dirty entries like "Rockford Illinois")
+and geocodes it once to lat/lon from a bundled offline city dataset — a few hundred rows,
+hand-reviewable, zero runtime API dependency. Resolution happens at **schedule-generation time**:
+when `generateOffSeasonSchedule` builds a season (or the scraper ingests a live event), each event
+is stamped with its resolved `venueId` + coordinates, so schedule docs are self-contained and all
+downstream distance math is trivial and deterministic. A never-seen live-season city falls back in
+tiers: fuzzy match → one cached geocoding call → state centroid + admin-review flag; scoring never
+blocks on it. Distance itself is haversine × 1.2 road factor, then **bucketed into travel tiers**
+(Local &lt;75 mi / Day Trip / Overnight Haul / Long Haul / Cross-Country &gt;1,200 mi) — buckets, not raw
+mileage, are the gameplay interface: legible to players, tunable in `podium-config/balance`, and
+free of false precision. A corps' route is the chain of legs between its consecutive attended
+shows, and the season's first leg starts from the corps' **hometown** — the `location` field
+directors already set at registration finally matters mechanically (it's also where spring
+training is housed). Costs are shown in the weekly show picker *before* selections are confirmed,
+so routing is played as an open-information puzzle, and hosted events (§5.10) slot in automatically
+because hosts choose their venue city from the same gazetteer.
+
 **Food:** a weekly food-budget setting (per week, three tiers): *Gas-station* (cheap, −stamina
 recovery, morale risk), *Standard* (baseline), *Full kitchen crew* (CorpsCoin cost, +recovery,
 +morale floor). One decision a week, compounding effect — not micromanagement.
@@ -502,6 +524,7 @@ Podium populates identically).
 | Path | Purpose |
 |---|---|
 | `podium-config/curves` | Percentile bands, delta bounds, archetype params from the corpus job (§4.1) |
+| `podium-config/venues` | Venue gazetteer: normalized location string → `{venueId, city, state, lat, lng}` (§5.3); appended-to when live scraping meets a new city |
 | `podium-config/balance` | Tunables: block yields, decay rates, condition coefficients — hot-adjustable without deploys |
 | `fantasy_recaps/{seasonUid}/days/{d}` | Existing docs; Podium results appear as entries with `corpsClass: 'podiumClass'` |
 | `game-settings/season` | Unchanged — Podium reads the same schedule |
@@ -534,10 +557,13 @@ New stage `processPodiumDay(seasonUid, day)` after fantasy scoring, inside the e
 5. Existing downstream (rivals job, leaderboards, league matchups) picks Podium up via class
    filters.
 
-### New script: `functions/scripts/buildPodiumCurves.js`
+### New scripts
 
-The corpus-mining job from §4.1. Run manually per new data year; output committed as JSON +
-uploaded to `podium-config/curves`.
+- `functions/scripts/buildPodiumCurves.js` — the corpus-mining job from §4.1. Run manually per new
+  data year; output committed as JSON + uploaded to `podium-config/curves`.
+- `functions/scripts/buildVenueGazetteer.js` — extracts every distinct `location` string from
+  `historical_scores`, normalizes + geocodes offline, emits `podium-config/venues` (§5.3).
+  Schedule generation and the live scraper stamp events with resolved venue data at ingest time.
 
 ### Config touchpoints (the mirrored-constant checklist)
 
