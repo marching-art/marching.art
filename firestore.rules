@@ -40,7 +40,11 @@ function touchesProtectedProfileFields() {
     'lifetimeStats', 'activeSeasonId', 'lastScoredDay', 'challenges',
     'predictions', 'predictionStats', 'achievements', 'lastRewardedLevel',
     'journey', 'cosmetics', 'seasonLadder', 'xpAtSeasonStart',
-    'retiredCorps', 'captionStats'
+    'retiredCorps', 'captionStats',
+    // Hosting resume (hosting.byTier) gates the venue ladder — written only
+    // by the nightly hosted-event payout pass; a client write would unlock
+    // the NFL Stadium for free.
+    'hosting'
   ]);
 }
 
@@ -72,7 +76,10 @@ function corpsClassUntouched(corpsClass) {
      // case. Both are written only by season archival / the nightly
      // processors — a client-forged placement would mint leaderboard rank.
      request.resource.data.get(['corps', corpsClass, 'seasonHistory'], null) == resource.data.get(['corps', corpsClass, 'seasonHistory'], null) &&
-     request.resource.data.get(['corps', corpsClass, 'medals'], null) == resource.data.get(['corps', corpsClass, 'medals'], null));
+     request.resource.data.get(['corps', corpsClass, 'medals'], null) == resource.data.get(['corps', corpsClass, 'medals'], null) &&
+     // Podium division seat (A/Open/World) — assessed at season boundaries
+     // by archival; a client-forged seat would display a stolen rise.
+     request.resource.data.get(['corps', corpsClass, 'division'], null) == resource.data.get(['corps', corpsClass, 'division'], null));
 }
 
 // Podium Class competitive state (corps.podiumClass.podium.*) is written
@@ -290,6 +297,24 @@ match /eastern-classic/{seasonUid} {
 // competitive intel and lives on the server-only podium state).
 match /podium-joint/{seasonUid}/{document=**} {
   allow read, write: if false; // Backend only
+}
+
+// Podium funnel metrics (Phase 8.2) — operational telemetry for the admin
+// panel; not player-facing.
+match /podium-metrics/{seasonUid}/days/{dayId} {
+  allow read: if isAdmin();
+  allow write: if false; // Backend only
+}
+
+// Fan Favorite (decision 30): finalists + winner are public; individual
+// ballots are private (server-only — the vote callables are the API).
+match /podium-fan/{seasonUid} {
+  allow read: if true;
+  allow write: if false; // Backend only
+
+  match /ballots/{voterUid} {
+    allow read, write: if false; // Backend only — votes are private
+  }
 }
 
 match /season_champions/{docId} {

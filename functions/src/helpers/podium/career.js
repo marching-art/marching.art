@@ -23,6 +23,7 @@ const { logger } = require("firebase-functions/v2");
 const { dataNamespaceParam } = require("../../config");
 const engine = require("./engine");
 const store = require("./store");
+const divisions = require("./divisions");
 
 const SEASONS_DOC = "podium-config/podiumSeasons";
 
@@ -235,6 +236,7 @@ async function archivePodiumSeason(db, previousSeason) {
   const roster = await store.rosterCollection(db, previousSeason.seasonUid).get();
   let archived = 0;
   const swept = [];
+  const staffResumeRows = [];
   for (const rosterDoc of roster.docs) {
     const uid = rosterDoc.id;
     try {
@@ -276,7 +278,23 @@ async function archivePodiumSeason(db, previousSeason) {
           lastTotal: state.lastTotal ?? null,
           lastScoredDay: state.lastScoredDay ?? null,
           medals: state.medals || {},
+          division: divisions.normalizeDivision(state.division || career.division),
+          underCutoffSeasons: career.underCutoffSeasons || 0,
         });
+        // Staff resume rows (decision 28): every employed person banks the
+        // season on their career record.
+        for (const member of Object.values(state.staff || {})) {
+          if (member && member.id) {
+            staffResumeRows.push({
+              staffId: member.id,
+              seasonUid: previousSeason.seasonUid,
+              seasonIndex: previousSeason.index,
+              corpsName: state.corpsName || null,
+              division: divisions.normalizeDivision(state.division),
+              placement: state.seasonRank ?? null,
+            });
+          }
+        }
       } else {
         // The state was already replaced (lazy self-archival at re-registration
         // for the new season) — recover the finished season from the career.
@@ -290,6 +308,8 @@ async function archivePodiumSeason(db, previousSeason) {
             lastTotal: entry.finalsTotal ?? null,
             lastScoredDay: entry.finalsDay ?? null,
             medals: {},
+            division: divisions.normalizeDivision(career.division),
+            underCutoffSeasons: career.underCutoffSeasons || 0,
           });
         }
       }
@@ -299,12 +319,107 @@ async function archivePodiumSeason(db, previousSeason) {
   }
 
   const finalStandings = buildFinalStandings(swept);
+
+  // --- Staff careers (decision 28) ------------------------------------------
+  // One read-modify-write of the registry banks every employed person's
+  // season on their resume. Isolated: a registry failure never fails archival.
+  if (staffResumeRows.length > 0) {
+    try {
+      const registryRef = store.staffRegistryRef(db);
+      const registrySnapshot = await registryRef.get();
+      if (registrySnapshot.exists) {
+        const registry = registrySnapshot.data();
+        const cap = store.balance.staff.career.resumeCap || 30;
+        let touched = false;
+        for (const row of staffResumeRows) {
+          const person = registry.people && registry.people[row.staffId];
+          if (!person) continue;
+          const resume = person.resume || [];
+          if (resume.some((r) => r && r.seasonUid === row.seasonUid)) continue; // idempotent re-sweep
+          person.resume = [
+            ...resume.slice(-(cap - 1)),
+            {
+              seasonUid: row.seasonUid,
+              seasonIndex: row.seasonIndex,
+              corpsName: row.corpsName,
+              division: row.division,
+              placement: row.placement,
+            },
+          ];
+          touched = true;
+        }
+        if (touched) {
+          registry.updatedAt = new Date().toISOString();
+          await registryRef.set(registry);
+        }
+      }
+    } catch (error) {
+      logger.error(`[podium] staff resume sweep failed (archival unaffected): ${error.message}`);
+    }
+  }
+
+  // --- Division re-seat (design §5.7, decision 26) --------------------------
+  // Assess the veteran pool against published percentile cutoffs and write
+  // each corps' next-season seat into its career. If the corps already
+  // re-registered for the new season (rollover-night race), its live state
+  // and profile display are re-stamped with the assessed seat so nobody
+  // plays a whole season in yesterday's division.
+  const assessment = divisions.assessDivisions(
+    swept.map((entry) => ({
+      uid: entry.uid,
+      division: entry.division,
+      finalsTotal: entry.lastTotal,
+      underCutoffSeasons: entry.underCutoffSeasons,
+    })),
+    store.balance
+  );
+  for (const [uid, seat] of Object.entries(assessment.next)) {
+    try {
+      await careerRef(db, uid).set(
+        {
+          division: seat.division,
+          underCutoffSeasons: seat.underCutoffSeasons,
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
+      const liveState = await store.stateRef(db, uid).get();
+      if (liveState.exists && liveState.data().seasonUid !== previousSeason.seasonUid) {
+        await store.stateRef(db, uid).set({ division: seat.division }, { merge: true });
+        await store
+          .profileRef(db, uid)
+          .set({ corps: { podiumClass: { division: seat.division } } }, { merge: true });
+      }
+    } catch (error) {
+      logger.error(`[podium] division seat write failed for ${uid}: ${error.message}`);
+    }
+  }
+
+  // Champions per division — the FMA rise: every division crowns its own.
+  const divisionChampions = {};
+  for (const division of divisions.DIVISIONS) {
+    const top = finalStandings.find((entry) => entry.division === division);
+    if (top) {
+      divisionChampions[division] = {
+        uid: top.uid,
+        corpsName: top.corpsName,
+        score: top.lastTotal,
+        place: top.place,
+      };
+    }
+  }
+
   await db.doc(`podium-recaps/${previousSeason.seasonUid}`).set(
     {
       seasonUid: previousSeason.seasonUid,
       seasonIndex: previousSeason.index,
       champion: finalStandings[0] || null,
       finalStandings,
+      divisionChampions,
+      divisions: {
+        cutoffs: assessment.cutoffs,
+        nextSeasonCounts: assessment.counts,
+      },
       corpsCount: roster.size,
       archivedAt: new Date().toISOString(),
     },
@@ -321,54 +436,68 @@ async function archivePodiumSeason(db, previousSeason) {
   if (finalStandings.length > 0) {
     try {
       const metals = ["gold", "silver", "bronze"];
-      const champions = [];
-      for (const entry of finalStandings.slice(0, 3)) {
-        let username = "Unknown";
-        try {
-          const profileSnapshot = await store.profileRef(db, entry.uid).get();
-          const profile = profileSnapshot.exists ? profileSnapshot.data() : null;
-          if (profile) {
-            username = profile.username || profile.displayName || "Unknown";
-          }
-          // Finals medal — idempotent per season (re-sweeps skip the append).
-          const existing = (profile && profile.trophies && profile.trophies.championships) || [];
-          const alreadyAwarded = existing.some(
-            (trophy) =>
-              trophy &&
-              trophy.corpsClass === "podiumClass" &&
-              trophy.seasonName === previousSeason.seasonUid
-          );
-          if (!alreadyAwarded) {
-            await store.profileRef(db, entry.uid).set(
-              {
-                trophies: {
-                  championships: [
-                    ...existing,
-                    {
-                      type: "championship",
-                      metal: metals[entry.place - 1],
-                      corpsClass: "podiumClass",
-                      seasonName: previousSeason.seasonUid,
-                      eventName: "Podium Class Finals",
-                      score: entry.lastTotal,
-                      rank: entry.place,
-                    },
-                  ],
-                },
-              },
-              { merge: true }
+      // Finals hardware per DIVISION (the FMA rise: every division medals
+      // its own podium). A director fields one corps in one division, so the
+      // per-user corpsClass+seasonName dedupe still holds.
+      let hallChampions = [];
+      for (const division of [...divisions.DIVISIONS].reverse()) {
+        const divisionStandings = finalStandings.filter((entry) => entry.division === division);
+        if (divisionStandings.length === 0) continue;
+        const eventName = `Podium ${divisions.DIVISION_LABELS[division]} Finals`;
+        const champions = [];
+        for (let i = 0; i < Math.min(3, divisionStandings.length); i++) {
+          const entry = divisionStandings[i];
+          const medalRank = i + 1;
+          let username = "Unknown";
+          try {
+            const profileSnapshot = await store.profileRef(db, entry.uid).get();
+            const profile = profileSnapshot.exists ? profileSnapshot.data() : null;
+            if (profile) {
+              username = profile.username || profile.displayName || "Unknown";
+            }
+            // Finals medal — idempotent per season (re-sweeps skip the append).
+            const existing = (profile && profile.trophies && profile.trophies.championships) || [];
+            const alreadyAwarded = existing.some(
+              (trophy) =>
+                trophy &&
+                trophy.corpsClass === "podiumClass" &&
+                trophy.seasonName === previousSeason.seasonUid
             );
+            if (!alreadyAwarded) {
+              await store.profileRef(db, entry.uid).set(
+                {
+                  trophies: {
+                    championships: [
+                      ...existing,
+                      {
+                        type: "championship",
+                        metal: metals[medalRank - 1],
+                        corpsClass: "podiumClass",
+                        seasonName: previousSeason.seasonUid,
+                        eventName,
+                        score: entry.lastTotal,
+                        rank: medalRank,
+                      },
+                    ],
+                  },
+                },
+                { merge: true }
+              );
+            }
+          } catch (profileError) {
+            logger.warn(`[podium] medal/username write failed for ${entry.uid}: ${profileError.message}`);
           }
-        } catch (profileError) {
-          logger.warn(`[podium] medal/username write failed for ${entry.uid}: ${profileError.message}`);
+          champions.push({
+            rank: medalRank,
+            uid: entry.uid,
+            username,
+            corpsName: entry.corpsName,
+            score: entry.lastTotal,
+          });
         }
-        champions.push({
-          rank: entry.place,
-          uid: entry.uid,
-          username,
-          corpsName: entry.corpsName,
-          score: entry.lastTotal,
-        });
+        // The Hall of Champions shows the TOP active division's podium —
+        // World once it exists, the highest formed division until then.
+        if (hallChampions.length === 0) hallChampions = champions;
       }
       const championsRef = db.doc(`season_champions/${previousSeason.seasonUid}`);
       const championsSnapshot = await championsRef.get();
@@ -377,10 +506,40 @@ async function archivePodiumSeason(db, previousSeason) {
       const base = championsSnapshot.exists
         ? {}
         : { seasonName: previousSeason.seasonUid, archivedAt: new Date() };
-      await championsRef.set({ ...base, classes: { podiumClass: champions } }, { merge: true });
+      await championsRef.set({ ...base, classes: { podiumClass: hallChampions } }, { merge: true });
     } catch (error) {
       logger.error(`[podium] Hall of Champions merge failed (archival unaffected): ${error.message}`);
     }
+  }
+
+  // Records Book season-total mark (§14.1.6). Isolated; strictly-better
+  // merge makes re-sweeps harmless.
+  if (finalStandings.length > 0) {
+    try {
+      const { updateSeasonBestRecords } = require("../gameRecords");
+      const top = finalStandings[0];
+      await updateSeasonBestRecords(
+        db,
+        [{ corpsClass: "podiumClass", value: top.lastTotal, corpsName: top.corpsName, uid: top.uid }],
+        previousSeason.seasonUid
+      );
+    } catch (error) {
+      logger.error(`[podium] season-best record failed (archival unaffected): ${error.message}`);
+    }
+  }
+
+  // Fan Favorite (decision 30): crown the finals-ballot winner with the
+  // season record. Isolated + idempotent.
+  try {
+    const fanFavorite = require("./fanFavorite");
+    const winner = await fanFavorite.crownWinner(db, previousSeason.seasonUid);
+    if (winner) {
+      await db
+        .doc(`podium-recaps/${previousSeason.seasonUid}`)
+        .set({ fanFavorite: winner }, { merge: true });
+    }
+  } catch (error) {
+    logger.error(`[podium] Fan Favorite crowning failed (archival unaffected): ${error.message}`);
   }
 
   logger.info(

@@ -36,8 +36,8 @@ export function transformCompetitionToShow(competition) {
     timezone: competition.timezone || null,
     venue: competition.venue || null,
     lineup: competition.lineup || null,
-    // Show sponsorship ("Presented by <corps>") — written by the sponsorShow
-    // callable; purely cosmetic.
+    // Legacy show sponsorship ("Presented by <corps>") — the purchase was
+    // retired in favor of hosted events; old schedule docs still render it.
     sponsor: competition.sponsor || null,
   };
 }

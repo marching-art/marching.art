@@ -16,6 +16,7 @@ const RECORD_CLASSES = [
   { key: 'worldClass', label: 'World Class' },
   { key: 'openClass', label: 'Open Class' },
   { key: 'aClass', label: 'A Class' },
+  { key: 'podiumClass', label: 'Podium Class' },
 ];
 
 const CATEGORIES = [

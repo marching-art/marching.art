@@ -4,9 +4,28 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Share2, Check } from 'lucide-react';
 import { db } from '../../api';
 import { PODIUM_CAPTIONS } from './podiumConstants';
+
+/**
+ * Format a recap as a monospace text sheet — pastes cleanly into Discord
+ * (wrap in a code block) and group chats, the way FMA recaps circulated.
+ */
+function formatRecapAsText(recap, masthead, day, seasonName) {
+  const fmt = (v) => (typeof v === 'number' ? v.toFixed(2) : '—');
+  const lines = [
+    `${masthead.name} — ${masthead.site} · Day ${day} of 49`,
+    '',
+    ...(recap.results || []).map(
+      (row) =>
+        `${String(row.place).padStart(2)}. ${(row.corpsName || 'Unknown').padEnd(24).slice(0, 24)} ${fmt(row.totalScore).padStart(7)}  (GE ${fmt(row.geScore)} · VIS ${fmt(row.visualScore)} · MUS ${fmt(row.musicScore)})`
+    ),
+    '',
+    `marching.art${seasonName ? ` · ${seasonName}` : ''} — Podium Class`,
+  ];
+  return '```\n' + lines.join('\n') + '\n```';
+}
 
 const MAJOR_MASTHEADS = {
   28: { name: 'marching.art Southwestern Championship', site: 'Dallas, TX' },
@@ -33,13 +52,53 @@ function useBoxToppers(results) {
   }, [results]);
 }
 
+const DIVISION_FILTERS = [
+  { id: 'all', label: 'All' },
+  { id: 'worldClass', label: 'World' },
+  { id: 'openClass', label: 'Open' },
+  { id: 'aClass', label: 'A' },
+];
+
 function SheetTable({ recap, userCorpsName }) {
-  const results = recap.results || [];
+  const allResults = useMemo(() => recap.results || [], [recap.results]);
+  const [division, setDivision] = useState('all');
+  const presentDivisions = useMemo(
+    () => new Set(allResults.map((row) => row.division || 'aClass')),
+    [allResults]
+  );
+  const results = useMemo(
+    () =>
+      division === 'all'
+        ? allResults
+        : allResults.filter((row) => (row.division || 'aClass') === division),
+    [allResults, division]
+  );
   const tops = useBoxToppers(results);
   const fmt = (v) => (typeof v === 'number' ? v.toFixed(2) : '—');
 
   return (
     <div className="overflow-x-auto">
+      {/* Division filter — appears once the field spans more than one */}
+      {presentDivisions.size > 1 && (
+        <div className="flex items-center gap-1 mb-2">
+          {DIVISION_FILTERS.filter((f) => f.id === 'all' || presentDivisions.has(f.id)).map(
+            (filter) => (
+              <button
+                key={filter.id}
+                onClick={() => setDivision(filter.id)}
+                aria-pressed={division === filter.id}
+                className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-sm transition-colors press-feedback ${
+                  division === filter.id
+                    ? 'bg-[#8a6d1a] text-white'
+                    : 'bg-[#222] text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                {filter.label}
+              </button>
+            )
+          )}
+        </div>
+      )}
       <table className="w-full text-[11px] tabular-nums whitespace-nowrap">
         <thead>
           <tr className="text-[9px] uppercase tracking-wider text-gray-500 border-b border-[#333]">
@@ -56,7 +115,7 @@ function SheetTable({ recap, userCorpsName }) {
           </tr>
         </thead>
         <tbody>
-          {results.map((row) => {
+          {results.map((row, idx) => {
             const isMine = userCorpsName && row.corpsName === userCorpsName;
             return (
               <tr
@@ -64,10 +123,17 @@ function SheetTable({ recap, userCorpsName }) {
                 className={`border-b border-[#242424] ${isMine ? 'bg-[#0057B8]/10' : ''}`}
               >
                 <td className="py-1.5 pr-2 sticky left-0 bg-[#1a1a1a]">
-                  <span className="text-gray-500 mr-1.5">{row.place}.</span>
+                  <span className="text-gray-500 mr-1.5">
+                    {division === 'all' ? row.place : idx + 1}.
+                  </span>
                   <span className={`font-bold ${isMine ? 'text-[#4d9fff]' : 'text-white'}`}>
                     {row.corpsName}
                   </span>
+                  {presentDivisions.size > 1 && division === 'all' && (
+                    <span className="ml-1.5 text-[8px] font-bold uppercase text-gray-600">
+                      {(row.division || 'aClass').replace('Class', '')}
+                    </span>
+                  )}
                 </td>
                 {PODIUM_CAPTIONS.map((caption) => {
                   const value = row.captions?.[caption];
@@ -164,6 +230,7 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
   const [days, setDays] = useState([]); // [{day, recap}]
   const [selectedDay, setSelectedDay] = useState(null);
   const [report, setReport] = useState(null); // latest power-rankings column
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -254,8 +321,31 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
               {masthead.site} · Day {selected.day} of 49
             </div>
           </div>
-          <div className="text-[9px] uppercase tracking-wider text-[#c9a227] font-bold">
-            Official Recap
+          <div className="flex items-center gap-2">
+            <button
+              onClick={async () => {
+                const text = formatRecapAsText(selected.recap, masthead, selected.day, seasonName);
+                try {
+                  if (navigator.share && /Mobi/i.test(navigator.userAgent)) {
+                    await navigator.share({ text });
+                  } else {
+                    await navigator.clipboard.writeText(text);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }
+                } catch {
+                  /* user dismissed the share sheet */
+                }
+              }}
+              title="Copy the sheet as Discord-ready text"
+              className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-sm border border-[#333] text-gray-400 hover:text-white hover:border-[#c9a227] press-feedback"
+            >
+              {copied ? <Check className="w-3 h-3 text-green-400" /> : <Share2 className="w-3 h-3" />}
+              {copied ? 'Copied' : 'Share'}
+            </button>
+            <div className="text-[9px] uppercase tracking-wider text-[#c9a227] font-bold">
+              Official Recap
+            </div>
           </div>
         </div>
 

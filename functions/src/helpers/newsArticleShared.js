@@ -217,6 +217,8 @@ function getCategoryFromType(articleType) {
   // Analysis articles - check specific types before prefix matching
   if (articleType === "dci_recap") return NEWS_CATEGORIES.ANALYSIS;
   if (articleType === "deep_analytics") return NEWS_CATEGORIES.ANALYSIS;
+  // The Podium Report (decision 31) is the weekly power-rankings column.
+  if (articleType === "podium_report") return NEWS_CATEGORIES.ANALYSIS;
   // Season summary is a season-to-date analytical deep dive (Article 6).
   if (articleType === "season_summary") return NEWS_CATEGORIES.ANALYSIS;
   // DCI and Fantasy articles by prefix

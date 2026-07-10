@@ -6,7 +6,7 @@
 // validated server-side (functions/src/callable/shop.js); this page renders
 // the client catalog mirror in src/utils/cosmetics.js.
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   Coins,
   ShoppingBag,
@@ -19,14 +19,13 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useProfileStore } from '../store/profileStore';
-import { useScheduleStore } from '../store/scheduleStore';
 import { useSeasonStore } from '../store/seasonStore';
+import { Link } from 'react-router-dom';
 import {
   purchaseShopItem,
   equipShopItem,
   purchaseStreakFreeze,
   getStreakStatus,
-  sponsorShow,
 } from '../api/functions';
 import {
   SHOP_ITEMS,
@@ -35,24 +34,6 @@ import {
   isSeasonallyAvailable,
   seasonalLabel,
 } from '../utils/cosmetics';
-
-// Mirror of getSponsorshipPrice in functions/src/callable/shop.js
-const SPONSORSHIP_REGIONAL_DAYS = [28, 35, 41, 42];
-const getSponsorshipPrice = (show) => {
-  if (show.isChampionship) return 25000;
-  if (SPONSORSHIP_REGIONAL_DAYS.includes(show.day)) return 15000;
-  return 10000;
-};
-
-// Sponsor as the director's highest-class named corps
-const CLASS_PRIORITY = ['worldClass', 'openClass', 'aClass', 'soundSport'];
-const getSponsorCorps = (profile) => {
-  for (const corpsClass of CLASS_PRIORITY) {
-    const corps = profile?.corps?.[corpsClass];
-    if (corps?.corpsName) return { corpsClass, corpsName: corps.corpsName };
-  }
-  return null;
-};
 
 const SECTION_ICONS = { title: Shield, frame: User, cardTheme: CreditCard };
 
@@ -85,26 +66,12 @@ const ItemPreview = ({ item }) => {
 
 const Shop = () => {
   const profile = useProfileStore((state) => state.profile);
-  const showsByDay = useScheduleStore((state) => state.showsByDay);
-  const currentDay = useSeasonStore((state) => state.currentDay);
   const seasonStatus = useSeasonStore((state) => state.seasonData?.status || null);
   const [busy, setBusy] = useState(null); // itemId currently purchasing/equipping
   const [freezeStatus, setFreezeStatus] = useState(null);
 
   const balance = profile?.corpsCoin || 0;
   const equipped = profile?.cosmetics?.equipped || {};
-  const sponsorCorps = getSponsorCorps(profile);
-
-  // Upcoming shows eligible for sponsorship (not yet performed)
-  const upcomingShows = useMemo(() => {
-    const shows = [];
-    (showsByDay || []).forEach((dayEntry) => {
-      (dayEntry.shows || []).forEach((show) => {
-        if (show.day >= (currentDay || 1)) shows.push(show);
-      });
-    });
-    return shows.sort((a, b) => a.day - b.day).slice(0, 21);
-  }, [showsByDay, currentDay]);
 
   const loadFreezeStatus = useCallback(() => {
     getStreakStatus()
@@ -150,31 +117,6 @@ const Shop = () => {
       loadFreezeStatus();
     } catch (error) {
       toast.error(error.message || 'Could not purchase streak freeze');
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const handleSponsor = async (show) => {
-    if (!sponsorCorps) return;
-    const price = getSponsorshipPrice(show);
-    if (
-      !window.confirm(
-        `Sponsor ${show.eventName} for ${price.toLocaleString()} CC?\n\n"Presented by ${sponsorCorps.corpsName}" will appear on the schedule for every director.`
-      )
-    ) {
-      return;
-    }
-    setBusy(`sponsor_${show.day}_${show.eventName}`);
-    try {
-      const result = await sponsorShow({
-        day: show.day,
-        eventName: show.eventName,
-        corpsClass: sponsorCorps.corpsClass,
-      });
-      toast.success(result.data.message || 'Show sponsored!');
-    } catch (error) {
-      toast.error(error.message || 'Could not sponsor show');
     } finally {
       setBusy(null);
     }
@@ -241,54 +183,31 @@ const Shop = () => {
           </div>
         </div>
 
-        {/* Show sponsorship — the prestige sink */}
-        {upcomingShows.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1 flex items-center gap-2">
-              <Megaphone className="w-3.5 h-3.5 text-yellow-500" />
-              Show Sponsorship
-            </h2>
-            <p className="text-[10px] text-gray-600 mb-3">
-              Put &ldquo;Presented by {sponsorCorps?.corpsName || 'your corps'}&rdquo; on a show —
-              visible to every director on the schedule. One sponsor per show, first come.
-            </p>
-            <div className="bg-[#1a1a1a] border border-[#333] divide-y divide-[#222] max-h-80 overflow-y-auto">
-              {upcomingShows.map((show) => {
-                const price = getSponsorshipPrice(show);
-                const busyKey = `sponsor_${show.day}_${show.eventName}`;
-                return (
-                  <div key={busyKey} className="px-4 py-2.5 flex items-center gap-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-white truncate">{show.eventName}</p>
-                      <p className="text-[10px] text-gray-600">
-                        Day {show.day}
-                        {show.isChampionship ? ' · Championship' : ''}
-                        {show.sponsor?.corpsName ? '' : ` · ${price.toLocaleString()} CC`}
-                      </p>
-                    </div>
-                    {show.sponsor?.corpsName ? (
-                      <span className="text-[10px] text-yellow-500/90 whitespace-nowrap">
-                        ★ {show.sponsor.corpsName}
-                      </span>
-                    ) : (
-                      <button
-                        onClick={() => handleSponsor(show)}
-                        disabled={busy === busyKey || balance < price || !sponsorCorps}
-                        className={`h-8 px-3 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
-                          balance >= price && sponsorCorps
-                            ? 'bg-yellow-600 hover:bg-yellow-500 text-white'
-                            : 'bg-[#222] text-gray-600 cursor-not-allowed'
-                        }`}
-                      >
-                        {busy === busyKey ? '...' : 'Sponsor'}
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
+        {/* Hosting — sponsorship's replacement: run the show, don't just brand it */}
+        <div className="mb-8">
+          <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1 flex items-center gap-2">
+            <Megaphone className="w-3.5 h-3.5 text-yellow-500" />
+            Host Your Own Show
+          </h2>
+          <div className="bg-[#1a1a1a] border border-[#333] p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="flex-1">
+              <p className="text-sm font-bold text-white">
+                Sponsorship retired — now you RUN the show.
+              </p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Rent a stadium from 150 CC, put your event on the season schedule with open
+                enrollment for every class, and earn CC for every corps that performs. Run
+                successful shows to climb from a high school field to an NFL stadium.
+              </p>
             </div>
+            <Link
+              to="/schedule"
+              className="shrink-0 h-9 px-4 flex items-center text-xs font-bold uppercase tracking-wider bg-yellow-600 hover:bg-yellow-500 text-white"
+            >
+              Book a venue
+            </Link>
           </div>
-        )}
+        </div>
 
         {/* Cosmetic sections */}
         {SHOP_SECTIONS.map((section) => {

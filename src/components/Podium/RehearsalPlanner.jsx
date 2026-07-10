@@ -1,5 +1,5 @@
 // RehearsalPlanner — the Podium Class daily verb (Phase 2, design §6.1).
-// One screen, <=3 taps: pick today's rehearsal blocks, watch the Action
+// One screen, 12 clicks: pick today's rehearsal blocks, watch the Action
 // Complete panel, or declare a rest day. Condition strip included.
 
 import React, { useState } from 'react';
@@ -90,6 +90,11 @@ export default function RehearsalPlanner({ podium }) {
           </div>
           <div className="text-sm font-bold text-white flex items-center gap-3">
             {dayType}
+            {data.divisionLabel && (
+              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-sm bg-yellow-400/15 text-yellow-400">
+                {data.divisionLabel}
+              </span>
+            )}
             <span
               className="flex items-center gap-1 text-[10px] font-bold text-[#c9a227] tabular-nums"
               title="Corps Budget"
@@ -153,7 +158,7 @@ export default function RehearsalPlanner({ podium }) {
               {busy === 'fundraiser' && <Loader2 className="w-3 h-3 animate-spin text-gray-400" />}
             </div>
             <div className="text-[10px] text-gray-500 mt-0.5">
-              Convert a block to Corps Budget income — no caption growth today
+              Convert a block to Corps Budget income (+3 Budget per block) — no caption growth
             </div>
           </button>
         </div>

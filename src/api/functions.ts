@@ -317,10 +317,6 @@ export const claimLadderTier = createCallable<
   }
 >('claimLadderTier');
 
-export const sponsorShow = createCallable<
-  { day: number; eventName: string; corpsClass: string },
-  { success: boolean; message: string; newBalance: number; price: number }
->('sponsorShow');
 
 export const purchaseRetirementPlaque = createCallable<
   { retiredIndex: number; corpsName: string; tier: string },

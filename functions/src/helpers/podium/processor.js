@@ -25,6 +25,9 @@ const store = require("./store");
 const venues = require("./venues");
 const staffMarket = require("./staffMarket");
 const joint = require("./joint");
+const { processCoinAwardsBatch } = require("../scoringAwards");
+const { SHOW_PARTICIPATION_REWARDS } = require("../classRegistry");
+const { ChunkedWriter } = require("../chunkedWriter");
 
 /**
  * Venue for a corps' show on `competitionDay`: the branded majors have fixed
@@ -68,8 +71,10 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
   }
 
   // Beta tuning path: merge podium-config/balance overrides over the
-  // committed defaults before any engine math runs tonight.
+  // committed defaults, and swap in the full-archive curve rebuild when
+  // available, before any engine math runs tonight.
   await store.applyBalanceOverrides(db);
+  await store.applyCurveOverrides(db);
 
   try {
     const roster = await store.rosterCollection(db, seasonUid).get();
@@ -79,8 +84,23 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
     }
 
     const scheduleLocations = await loadScheduleLocations(db, seasonData);
+    // Published Day-39 Eastern night snake (null before publication — the
+    // uid-parity fallback stands until then).
+    const easternAssignments = await store.loadEasternAssignments(db, seasonUid);
     const results = [];
     const jointToday = []; // corps whose joint rehearsal was today (§5.12)
+    const coinAwards = []; // wallet CC per performance (shared economy faucet)
+    const funnel = {
+      corps: 0,
+      activeSelf: 0,
+      restDays: 0,
+      blocksAllocated: 0,
+      withUpcomingPicks: 0,
+      d1Cohort: 0,
+      d1Returned: 0,
+      d7Cohort: 0,
+      d7Returned: 0,
+    };
     let processed = 0;
 
     for (const rosterDoc of roster.docs) {
@@ -99,9 +119,40 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
       } else if (state.today && state.today.calendarDay === calendarDay) {
         dayInfo = state.today;
       }
-      const isShowDay = store.isShowDayFor(state, uid, competitionDay);
+      const isShowDay = store.isShowDayFor(state, uid, competitionDay, easternAssignments);
       const isSpringTraining = seasonData.status === "live-season" && competitionDay < 1;
       const maxBlocks = engine.blocksAvailable(state, { isShowDay, isSpringTraining }, store.balance);
+
+      // --- Funnel instrumentation (Phase 8.2): "simple like FMA" is
+      // measured, not asserted. Counted BEFORE assistant autoplay so
+      // self-played and autopiloted days never blur.
+      {
+        const playedSelf = (dayInfo.blocksUsed || 0) > 0;
+        funnel.corps += 1;
+        if (playedSelf) {
+          funnel.activeSelf += 1;
+          funnel.blocksAllocated += dayInfo.blocksUsed || 0;
+        } else if (dayInfo.restDay) {
+          funnel.restDays += 1;
+        }
+        const upcomingPicks = (state.selectedShowDays || []).filter(
+          (day) => day > competitionDay && day <= competitionDay + 7
+        ).length;
+        if (upcomingPicks > 0) funnel.withUpcomingPicks += 1;
+        if (state.createdAt) {
+          const ageDays = Math.floor(
+            (Date.now() - new Date(state.createdAt).getTime()) / 86400000
+          );
+          const engaged = playedSelf || dayInfo.restDay;
+          if (ageDays === 1) {
+            funnel.d1Cohort += 1;
+            if (engaged) funnel.d1Returned += 1;
+          } else if (ageDays === 7) {
+            funnel.d7Cohort += 1;
+            if (engaged) funnel.d7Returned += 1;
+          }
+        }
+      }
 
       // Assistant director (design §5.2): on a day the director never played,
       // the saved plan template runs at reduced yield. Active play strictly
@@ -200,6 +251,19 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         }
         // Show payout: in-class Budget income for performing.
         store.creditBudget(state, store.balance.budget.showPayout, "showPayout", competitionDay);
+        // Participation CC (registry-derived, same faucet every class has):
+        // performing pays the shared wallet — the income that funds class
+        // unlocks and the hosting ladder. Paid once per performance night.
+        const participationCC = SHOW_PARTICIPATION_REWARDS.podiumClass || 0;
+        if (participationCC > 0) {
+          coinAwards.push({
+            uid,
+            corpsClass: "podiumClass",
+            showName: `Day ${competitionDay}`,
+            amount: participationCC,
+            description: `Podium performance — Day ${competitionDay}`,
+          });
+        }
         if (showVenue) {
           state.lastVenue = {
             venueId: showVenue.venueId,
@@ -301,11 +365,17 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         );
         state.lastScoredDay = competitionDay;
         state.lastTotal = score.total;
+        // Season trajectory for the shadows chart (idempotent per day).
+        state.scoreHistory = [
+          ...(state.scoreHistory || []).filter((entry) => entry.day !== competitionDay).slice(-59),
+          { day: competitionDay, total: score.total },
+        ];
         results.push({
           uid,
           corpsName: state.corpsName,
           corpsClass: "podiumClass",
           repTier: state.repTier,
+          division: state.division || "aClass",
           totalScore: score.total,
           geScore: score.geScore,
           visualScore: score.visualScore,
@@ -376,6 +446,19 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
       }
     }
 
+    // --- 2c. Participation CC/XP pass ----------------------------------------
+    // Same batch path fantasy uses (increment + history subcollection).
+    // Isolated: a payout failure never fails the night's scoring.
+    if (coinAwards.length > 0) {
+      try {
+        const coinWriter = new ChunkedWriter(db);
+        processCoinAwardsBatch(coinAwards, coinWriter, db);
+        await coinWriter.commit();
+      } catch (error) {
+        logger.error(`[podium] participation coin pass failed: ${error.message}`);
+      }
+    }
+
     // --- 3. Recap doc -------------------------------------------------------
     const medalByUid = {};
     if (results.length > 0 || jointFeed.length > 0) {
@@ -403,6 +486,12 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         // scrimmage numbers (§5.12).
         ...(jointFeed.length > 0 ? { jointRehearsals: jointFeed } : {}),
       });
+      // Records Book parity (§14.1.6): Podium marks ride the same all-time
+      // records doc as the fantasy classes. Never fails the night.
+      if (results.length > 0) {
+        const { updateRecordsFromPodiumRecap } = require("../gameRecords");
+        await updateRecordsFromPodiumRecap(db, { results }, seasonUid, competitionDay);
+      }
     }
 
     // --- 4. Rankings (latest total, DCI-style current score) ----------------
@@ -417,14 +506,47 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
           uid: rosterDoc.id,
           corpsName: data.corpsName || null,
           repTier: data.repTier ?? null,
+          division: data.division || "aClass",
           lastTotal: data.lastTotal,
           medals: data.medals,
         });
       }
     }
     standings.sort((a, b) => b.lastTotal - a.lastTotal);
+
+    // --- 4a. Eastern Classic night snake (design §5.11) ----------------------
+    // Published once, at the end of Day 38 (players wake to lineups on Day
+    // 39): within each division, current standings snake across the two
+    // nights (1-4-5-8 / 2-3-6-7) so both nights carry equal strength. Corps
+    // outside the standings (never scored) keep the uid-parity fallback.
+    if (competitionDay === store.EASTERN_PUBLISH_DAY - 1 && standings.length > 0) {
+      try {
+        const assignments = {};
+        const divisionOrder = ["worldClass", "openClass", "aClass"];
+        for (const division of divisionOrder) {
+          const seeds = standings.filter((entry) => entry.division === division);
+          seeds.forEach((entry, index) => {
+            const snakePos = index % 4;
+            assignments[entry.uid] = snakePos === 0 || snakePos === 3 ? 41 : 42;
+          });
+        }
+        await db.doc(`eastern-classic/${seasonUid}`).set(
+          {
+            podium: {
+              assignments,
+              publishedAt: new Date().toISOString(),
+              publishedOnDay: competitionDay,
+            },
+          },
+          { merge: true }
+        );
+        logger.info(`[podium] Eastern night snake published: ${Object.keys(assignments).length} corps.`);
+      } catch (error) {
+        logger.error(`[podium] Eastern snake publication failed: ${error.message}`);
+      }
+    }
     for (let i = 0; i < standings.length; i++) {
-      const { uid, lastTotal, medals } = standings[i];
+      const { uid, lastTotal, medals, division } = standings[i];
       const medalWon = medalByUid[uid];
       const updatedMedals = medalWon
         ? { ...(medals || {}), [medalWon]: ((medals || {})[medalWon] || 0) + 1 }
@@ -440,12 +562,48 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
               totalSeasonScore: lastTotal,
               seasonRank: i + 1,
               seasonRankOf: standings.length,
+              division,
               medals: updatedMedals,
             },
           },
         },
         { merge: true }
       );
+    }
+
+    // --- 4a2. Funnel metrics doc (Phase 8.2) ----------------------------------
+    // One doc per calendar day; the Admin panel charts the last weeks.
+    // Isolated: a metrics failure never fails the night.
+    try {
+      await db.doc(`podium-metrics/${seasonUid}/days/${calendarDay}`).set({
+        seasonUid,
+        calendarDay,
+        competitionDay,
+        ...funnel,
+        blocksPerActiveCorps:
+          funnel.activeSelf > 0
+            ? Math.round((funnel.blocksAllocated / funnel.activeSelf) * 100) / 100
+            : 0,
+        d1ReturnRate: funnel.d1Cohort > 0 ? funnel.d1Returned / funnel.d1Cohort : null,
+        d7ReturnRate: funnel.d7Cohort > 0 ? funnel.d7Returned / funnel.d7Cohort : null,
+        pickCoverage: funnel.corps > 0 ? funnel.withUpcomingPicks / funnel.corps : 0,
+        processedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      logger.error(`[podium] funnel metrics write failed: ${error.message}`);
+    }
+
+    // --- 4b. Fan Favorite finalists (decision 30) -----------------------------
+    // The last prelims window (Eastern, days 41-42 + 3) closes with the
+    // Day-44 processing run; finalists publish for the championship-week
+    // finals ballot. Isolated + idempotent.
+    if (competitionDay === 44) {
+      try {
+        const fanFavorite = require("./fanFavorite");
+        await fanFavorite.publishFinalists(db, seasonUid, store.balance);
+      } catch (error) {
+        logger.error(`[podium] Fan Favorite finalists failed: ${error.message}`);
+      }
     }
 
     // --- 5. The Podium Report (Phase 7.3): weekly power-rankings column ------

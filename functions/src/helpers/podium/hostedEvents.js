@@ -1,5 +1,7 @@
 /**
- * Director-hosted events — ALL classes (Phase 6.2, design §5.10).
+ * Director-hosted events — ALL classes (Phase 6.2, design §5.10; venue
+ * ladder per decision 27: hosting REPLACES the old show-sponsorship
+ * purchase as the way a director puts their name on the season).
  *
  * Any director can rent a venue tier and host a show on an open tour date.
  * The FMA failure modes are designed out:
@@ -14,12 +16,21 @@
  *   - Hosting is CorpsCoin (cross-class prestige economy), never Corps
  *     Budget, and confers zero competitive advantage.
  *
+ * THE VENUE LADDER: everyone can book the high-school stadium on day one
+ * (150 CC — inside the 1,000-CC starting grant). The College Bowl unlocks
+ * after 2 SUCCESSFUL high-school events, the NFL Stadium after 3 successful
+ * College Bowls — success means drawing at least the tier's
+ * `successAttendance`. A well-drawn show profits (capacity x payout beats
+ * rental), so a good host climbs from Friday-night fields to Lucas Oil on
+ * hosting revenue alone. Progress lives on the host profile at
+ * `hosting.byTier.{tier}.{hosted,successful}` — written by the payout pass,
+ * displayed on the Schedule page's hosting card.
+ *
  * Event docs: hosted-events/{seasonUid}/events/{eventId} (public read).
  */
 
 const { logger } = require("firebase-functions/v2");
 const { dataNamespaceParam } = require("../../config");
-const balance = require("./balanceConfig.json");
 const venues = require("./venues");
 const store = require("./store");
 
@@ -28,12 +39,30 @@ function eventsCollection(db, seasonUid) {
 }
 
 /**
+ * The unlock gate for a venue tier against a host profile's hosting record
+ * (pure). Returns null when unlocked, else a human-readable requirement.
+ */
+function tierLockReason(profileData, venueTier, cfg) {
+  const tier = cfg.hostedEvents.venueTiers[venueTier];
+  if (!tier || !tier.unlock) return null;
+  const record = ((profileData && profileData.hosting) || {}).byTier || {};
+  const successful = (record[tier.unlock.tier] || {}).successful || 0;
+  if (successful >= tier.unlock.successful) return null;
+  const neededLabel = cfg.hostedEvents.venueTiers[tier.unlock.tier].label;
+  return (
+    `${tier.label} unlocks after ${tier.unlock.successful} successful ` +
+    `${neededLabel} events (you have ${successful}). Success = drawing at least ` +
+    `${cfg.hostedEvents.venueTiers[tier.unlock.tier].successAttendance} corps.`
+  );
+}
+
+/**
  * Validate a hosting request (pure). Throws Error with a message on
  * violation; the callable maps it to an HttpsError.
  * @returns {{eventName, venueTier, tier, day, venue}}
  */
 function validateHostRequest({ eventName, venueTier, day, location }, currentCompetitionDay) {
-  const cfg = balance.hostedEvents;
+  const cfg = store.balance.hostedEvents;
   const tier = cfg.venueTiers[venueTier];
   if (!tier) throw new Error(`Unknown venue tier: ${venueTier}`);
   if (
@@ -61,10 +90,12 @@ function validateHostRequest({ eventName, venueTier, day, location }, currentCom
 
 /**
  * Pay hosts for events on the completed competition day. Attendance =
- * distinct directors with scored results at the event in the fantasy recap
- * (plus Podium corps scored that day for Podium-hosted visibility later),
- * capped at capacity. Safe to call once per day (the caller runs it inside
- * the once-per-day Podium stage completion).
+ * distinct directors with scored results at the event in the fantasy recap,
+ * PLUS Podium corps that performed that day when this event was the day's
+ * tour stop (the Podium processor routes corps to the day's first scheduled
+ * location) — capped at capacity. Also advances the host's hosting résumé
+ * (`hosting.byTier`), which gates the venue ladder. Safe to call once per
+ * day (the caller runs it inside the once-per-day Podium stage completion).
  */
 async function payoutHostedEvents(db, seasonData, competitionDay) {
   const seasonUid = seasonData.seasonUid;
@@ -73,6 +104,29 @@ async function payoutHostedEvents(db, seasonData, competitionDay) {
 
   const recapSnapshot = await db.doc(`fantasy_recaps/${seasonUid}/days/${competitionDay}`).get();
   const recapShows = recapSnapshot.exists ? recapSnapshot.data().shows || [] : [];
+
+  // Podium corps travel to the day's first scheduled location — when that
+  // location is a hosted event's venue, its performers count for the host.
+  let podiumUids = [];
+  let podiumLocation = null;
+  try {
+    const scheduleId = seasonData.dataDocId || seasonData.name;
+    if (scheduleId) {
+      const scheduleDoc = await db.doc(`schedules/${scheduleId}`).get();
+      const todays = ((scheduleDoc.exists && scheduleDoc.data().competitions) || []).filter(
+        (comp) => comp.day === competitionDay && comp.location
+      );
+      podiumLocation = todays.length > 0 ? todays[0].location : null;
+    }
+    if (podiumLocation) {
+      const podiumRecap = await store.recapDayRef(db, seasonUid, competitionDay).get();
+      podiumUids = ((podiumRecap.exists && podiumRecap.data().results) || [])
+        .map((result) => result.uid)
+        .filter(Boolean);
+    }
+  } catch (error) {
+    logger.warn(`[hosted-events] podium attendance lookup failed: ${error.message}`);
+  }
 
   let paid = 0;
   for (const eventDoc of snapshot.docs) {
@@ -83,7 +137,7 @@ async function payoutHostedEvents(db, seasonData, competitionDay) {
     try {
       const event = eventDoc.data();
       if (event.paidOut) continue;
-      const tier = balance.hostedEvents.venueTiers[event.venueTier];
+      const tier = store.balance.hostedEvents.venueTiers[event.venueTier];
       if (!tier) continue;
 
       const show = recapShows.find((s) => s.eventName === event.eventName);
@@ -91,18 +145,29 @@ async function payoutHostedEvents(db, seasonData, competitionDay) {
       for (const result of (show && show.results) || []) {
         if (result.uid) uids.add(result.uid);
       }
+      if (podiumLocation && event.location === podiumLocation) {
+        for (const uid of podiumUids) uids.add(uid);
+      }
       const attendance = Math.min(uids.size, tier.capacity);
       const payout = attendance * tier.payoutPerCorpsCC;
+      const successful = attendance >= (tier.successAttendance || Infinity);
 
-      if (payout > 0) {
-        const profileRef = db.doc(
-          `artifacts/${dataNamespaceParam.value()}/users/${event.hostUid}/profile/data`
-        );
-        await db.runTransaction(async (transaction) => {
-          const profile = await transaction.get(profileRef);
-          if (!profile.exists) return; // host profile gone — nothing to pay
-          const corpsCoin = profile.data().corpsCoin || 0;
-          transaction.update(profileRef, { corpsCoin: corpsCoin + payout });
+      const profileRef = db.doc(
+        `artifacts/${dataNamespaceParam.value()}/users/${event.hostUid}/profile/data`
+      );
+      await db.runTransaction(async (transaction) => {
+        const profile = await transaction.get(profileRef);
+        if (!profile.exists) return; // host profile gone — nothing to record
+        const data = profile.data();
+        const byTier = ((data.hosting || {}).byTier || {})[event.venueTier] || {};
+        transaction.update(profileRef, {
+          ...(payout > 0 ? { corpsCoin: (data.corpsCoin || 0) + payout } : {}),
+          [`hosting.byTier.${event.venueTier}`]: {
+            hosted: (byTier.hosted || 0) + 1,
+            successful: (byTier.successful || 0) + (successful ? 1 : 0),
+          },
+        });
+        if (payout > 0) {
           const historyRef = db
             .collection(
               `artifacts/${dataNamespaceParam.value()}/users/${event.hostUid}/corpsCoinHistory`
@@ -114,10 +179,10 @@ async function payoutHostedEvents(db, seasonData, competitionDay) {
             description: `Hosting payout: ${event.eventName} (${attendance} corps)`,
             timestamp: new Date(),
           });
-        });
-      }
+        }
+      });
       await eventDoc.ref.set(
-        { paidOut: true, attendance, payout, paidAt: new Date().toISOString() },
+        { paidOut: true, attendance, payout, successful, paidAt: new Date().toISOString() },
         { merge: true }
       );
       paid += payout;
@@ -131,4 +196,4 @@ async function payoutHostedEvents(db, seasonData, competitionDay) {
   return { events: snapshot.size, paid };
 }
 
-module.exports = { eventsCollection, validateHostRequest, payoutHostedEvents };
+module.exports = { eventsCollection, tierLockReason, validateHostRequest, payoutHostedEvents };

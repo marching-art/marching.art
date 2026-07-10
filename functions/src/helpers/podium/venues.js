@@ -96,12 +96,17 @@ function heatStamina(venue, cfg) {
   return Math.min(maxExtraStamina, Math.round(degreesSouth * staminaPerDegreeSouth * 10) / 10);
 }
 
-// The branded majors' fixed sites (schedule generator hard-codes these).
+// The branded majors' fixed sites (schedule generator hard-codes these),
+// plus Championship Week in Indianapolis — subsidized travel like every
+// major (isMajor derives from membership here).
 const MAJOR_VENUES = {
   28: venueFor("Dallas, Texas"),
   35: venueFor("Atlanta, Georgia"),
   41: venueFor("Allentown, Pennsylvania"),
   42: venueFor("Allentown, Pennsylvania"),
+  47: venueFor("Indianapolis, Indiana"),
+  48: venueFor("Indianapolis, Indiana"),
+  49: venueFor("Indianapolis, Indiana"),
 };
 
 module.exports = {

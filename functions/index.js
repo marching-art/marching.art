@@ -40,16 +40,22 @@ const {
   setPodiumPlanTemplate,
   commitPodiumBudget,
   hirePodiumClinician,
-  getPodiumStaffMarket,
-  hirePodiumStaff,
   hostEvent,
   getPodiumState,
 } = require("./src/callable/podium");
+const {
+  getPodiumStaffMarket,
+  hirePodiumStaff,
+  postPodiumStaff,
+  buyPodiumStaffContract,
+  retrainPodiumStaff,
+} = require("./src/callable/podiumStaff");
 const {
   proposeJointRehearsal,
   respondJointRehearsal,
   getJointRehearsals,
 } = require("./src/callable/podiumJoint");
+const { getFanFavorite, castFanFavoriteVote } = require("./src/callable/podiumFan");
 const {
   processCorpsDecisions,
   retireCorps,
@@ -73,7 +79,7 @@ const {
 const { joinRookieLeague } = require("./src/callable/rookieLeague");
 const { joinLeaguePool } = require("./src/callable/leaguePools");
 const { completeJourneyStep } = require("./src/callable/journey");
-const { purchaseShopItem, equipShopItem, sponsorShow } = require("./src/callable/shop");
+const { purchaseShopItem, equipShopItem } = require("./src/callable/shop");
 const { purchaseRetirementPlaque, purchaseHallBanner } = require("./src/callable/prestige");
 const { claimLadderTier } = require("./src/callable/seasonLadder");
 const {
@@ -228,7 +234,6 @@ module.exports = {
   completeJourneyStep,
   purchaseShopItem,
   equipShopItem,
-  sponsorShow,
   purchaseRetirementPlaque,
   purchaseHallBanner,
   claimLadderTier,
@@ -286,11 +291,16 @@ module.exports = {
   hirePodiumClinician,
   getPodiumStaffMarket,
   hirePodiumStaff,
+  postPodiumStaff,
+  buyPodiumStaffContract,
+  retrainPodiumStaff,
   hostEvent,
   getPodiumState,
   proposeJointRehearsal,
   respondJointRehearsal,
   getJointRehearsals,
+  getFanFavorite,
+  castFanFavoriteVote,
   processCorpsDecisions,
   retireCorps,
   unretireCorps,

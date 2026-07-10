@@ -142,6 +142,34 @@ export interface JointRehearsalsResponse {
   roster: Array<{ uid: string; corpsName: string | null }>;
 }
 
+// Fan Favorite (decision 30): two-level cosmetic ballot — prelims at each
+// major, finals in championship week. Any signed-in user votes.
+export interface FanFavoriteCandidate {
+  uid: string;
+  corpsName: string | null;
+  division: string;
+  prelimVotes?: number;
+  finalsVotes?: number;
+}
+
+export const getFanFavorite = createCallable<
+  void,
+  {
+    success: boolean;
+    stage: 'prelims' | 'finals' | 'decided' | null;
+    major: number | null;
+    candidates: FanFavoriteCandidate[];
+    myVote: string | null;
+    finalists: FanFavoriteCandidate[];
+    winner: FanFavoriteCandidate | null;
+  }
+>('getFanFavorite');
+
+export const castFanFavoriteVote = createCallable<
+  { corpsUid: string },
+  { success: boolean; stage: string; vote: string }
+>('castFanFavoriteVote');
+
 export const proposeJointRehearsal = createCallable<
   { toUid: string; day: number },
   { success: boolean; proposalId: string; day: number }
@@ -156,24 +184,44 @@ export const getJointRehearsals = createCallable<void, JointRehearsalsResponse>(
   'getJointRehearsals'
 );
 
+export interface PodiumStaffResumeRow {
+  seasonUid: string;
+  seasonIndex: number;
+  corpsName: string | null;
+  division: string;
+  placement: number | null;
+}
+
 export interface PodiumStaffPerson {
   id: string;
   name: string;
   specialty: string;
   tier: string;
+  careerSeasons?: number;
   salary: number;
   boost: number;
   trait: string;
+  resume?: PodiumStaffResumeRow[];
   signedBy: string | null;
+}
+
+export interface PodiumStaffTransfer {
+  staffId: string;
+  member: Record<string, unknown> & { name?: string; specialty?: string; tier?: string };
+  fromUid: string;
+  fromCorpsName: string | null;
+  postedDay: number;
+  remainingSalary: number;
+  buyout: number;
 }
 
 export const getPodiumStaffMarket = createCallable<
   void,
-  { success: boolean; market: PodiumStaffPerson[] }
+  { success: boolean; market: PodiumStaffPerson[]; transfers: PodiumStaffTransfer[] }
 >('getPodiumStaffMarket');
 
 export const hirePodiumStaff = createCallable<
-  { staffId: string },
+  { staffId: string; seasons?: number },
   {
     success: boolean;
     hired: string;
@@ -181,3 +229,23 @@ export const hirePodiumStaff = createCallable<
     budget: Record<string, unknown>;
   }
 >('hirePodiumStaff');
+
+export const postPodiumStaff = createCallable<
+  { staffId: string },
+  { success: boolean; posted: string; buyout: number; staff: Record<string, unknown> }
+>('postPodiumStaff');
+
+export const buyPodiumStaffContract = createCallable<
+  { staffId: string },
+  {
+    success: boolean;
+    hired: string;
+    staff: Record<string, unknown>;
+    budget: Record<string, unknown>;
+  }
+>('buyPodiumStaffContract');
+
+export const retrainPodiumStaff = createCallable<
+  { staffId: string; toSpecialty: string },
+  { success: boolean; retrained: string; toSpecialty: string; staff: Record<string, unknown> }
+>('retrainPodiumStaff');

@@ -1,35 +1,117 @@
 {
   "meta": {
     "version": 1,
-    "note": "Phase 0.5 tunables for the Podium engine. This committed copy is the deploy-time seed for Firestore podium-config/balance; production reads Firestore so re-tuning never needs a deploy."
+    "note": "Tunables for the Podium engine. These committed values are the runtime defaults; Firestore podium-config/balance holds OVERRIDES ONLY (deep-merged over these at runtime, store.applyBalanceOverrides), so beta re-tuning never needs a deploy and a missing doc means these values."
   },
   "blocks": {
     "warmup": {
-      "captions": { "VP": 0.25 },
-      "staminaCost": 4,
-      "conditionEffect": { "staminaCostReductionPct": 30, "fatigueMitigationPct": 40 }
+      "captions": {
+        "VP": 0.25
+      },
+      "staminaCost": 1,
+      "conditionEffect": {
+        "staminaCostReductionPct": 30,
+        "fatigueMitigationPct": 40
+      }
     },
-    "visualBasics": { "captions": { "VP": 1.0, "VA": 0.45, "CG": 0.3 }, "staminaCost": 11 },
-    "visualEnsemble": { "captions": { "GE2": 1.0, "VP": 0.45, "VA": 1.0, "CG": 0.45 }, "staminaCost": 11 },
-    "guardSectionals": { "captions": { "GE2": 0.45, "VA": 0.45, "CG": 1.0 }, "staminaCost": 10 },
-    "brassSectionals": { "captions": { "GE1": 0.45, "B": 1.0, "MA": 0.45 }, "staminaCost": 10 },
-    "percussionSectionals": { "captions": { "GE1": 0.45, "MA": 0.45, "P": 1.0 }, "staminaCost": 10 },
+    "visualBasics": {
+      "captions": {
+        "VP": 1.0,
+        "VA": 0.45,
+        "CG": 0.3
+      },
+      "staminaCost": 2.75
+    },
+    "visualEnsemble": {
+      "captions": {
+        "GE2": 1.0,
+        "VP": 0.45,
+        "VA": 1.0,
+        "CG": 0.45
+      },
+      "staminaCost": 2.75
+    },
+    "guardSectionals": {
+      "captions": {
+        "GE2": 0.45,
+        "VA": 0.45,
+        "CG": 1.0
+      },
+      "staminaCost": 2.5
+    },
+    "brassSectionals": {
+      "captions": {
+        "GE1": 0.45,
+        "B": 1.0,
+        "MA": 0.45
+      },
+      "staminaCost": 2.5
+    },
+    "percussionSectionals": {
+      "captions": {
+        "GE1": 0.45,
+        "MA": 0.45,
+        "P": 1.0
+      },
+      "staminaCost": 2.5
+    },
     "fullEnsemble": {
-      "captions": { "GE1": 1.0, "GE2": 1.0, "VA": 0.45, "CG": 0.45, "B": 0.45, "MA": 1.0, "P": 0.45 },
-      "staminaCost": 13
+      "captions": {
+        "GE1": 1.0,
+        "GE2": 1.0,
+        "VA": 0.45,
+        "CG": 0.45,
+        "B": 0.45,
+        "MA": 1.0,
+        "P": 0.45
+      },
+      "staminaCost": 3.25
     }
   },
   "rehearsal": {
-    "blocksPerDay": 3,
-    "blocksPerDaySpringTraining": 5,
-    "blocksOnShowDay": 1,
-    "primaryGain": 0.1,
-    "repeatBlockMultipliers": [1.0, 0.6, 0.35],
+    "blocksPerDay": 12,
+    "blocksPerDaySpringTraining": 20,
+    "blocksOnShowDay": 4,
+    "primaryGain": 0.025,
+    "repeatBlockMultipliers": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.6,
+      0.6,
+      0.6,
+      0.6,
+      0.35,
+      0.35,
+      0.35,
+      0.35
+    ],
     "assistantYield": 0.85,
-    "contentCleanSplitByPhase": { "early": [0.8, 0.2], "mid": [0.5, 0.5], "late": [0.2, 0.8] },
-    "phaseBounds": { "earlyThroughDay": 14, "midThroughDay": 35 },
+    "contentCleanSplitByPhase": {
+      "early": [
+        0.8,
+        0.2
+      ],
+      "mid": [
+        0.5,
+        0.5
+      ],
+      "late": [
+        0.2,
+        0.8
+      ]
+    },
+    "phaseBounds": {
+      "earlyThroughDay": 14,
+      "midThroughDay": 35
+    },
     "challengeGainExponent": 0.55,
-    "neglectDecay": { "graceDays": 3, "cleanLossPerDay": 0.012, "maxLossPerDay": 0.035 }
+    "neglectDecay": {
+      "graceDays": 3,
+      "cleanLossPerDay": 0.012,
+      "maxLossPerDay": 0.035
+    }
   },
   "condition": {
     "staminaMax": 100,
@@ -39,33 +121,83 @@
     "restDayMoraleRecovery": 10,
     "showStaminaCost": 12,
     "lowStaminaThreshold": 30,
-    "lowStaminaBlockPenalty": 1,
+    "lowStaminaBlockPenalty": 4,
     "yieldByStamina": [
-      { "minStamina": 50, "multiplier": 1.0 },
-      { "minStamina": 30, "multiplier": 0.85 },
-      { "minStamina": 0, "multiplier": 0.55 }
+      {
+        "minStamina": 50,
+        "multiplier": 1.0
+      },
+      {
+        "minStamina": 30,
+        "multiplier": 0.85
+      },
+      {
+        "minStamina": 0,
+        "multiplier": 0.55
+      }
     ],
     "grindFatiguePerMaxDay": 6,
     "moraleGrindThresholdDays": 3,
     "scoreModifierMaxPerCaption": 0.15,
     "blockYieldModifierMaxPct": 8,
     "foodTiers": {
-      "gasStation": { "staminaRecoveryDelta": -3, "moraleDelta": -2, "costPerWeek": 0 },
-      "standard": { "staminaRecoveryDelta": 0, "moraleDelta": 0, "costPerWeek": 60 },
-      "fullKitchen": { "staminaRecoveryDelta": 3, "moraleDelta": 2, "costPerWeek": 150 }
+      "gasStation": {
+        "staminaRecoveryDelta": -3,
+        "moraleDelta": -2,
+        "costPerWeek": 0
+      },
+      "standard": {
+        "staminaRecoveryDelta": 0,
+        "moraleDelta": 0,
+        "costPerWeek": 60
+      },
+      "fullKitchen": {
+        "staminaRecoveryDelta": 3,
+        "moraleDelta": 2,
+        "costPerWeek": 150
+      }
     }
   },
   "travel": {
     "roadFactor": 1.2,
     "tiers": [
-      { "key": "local", "maxMiles": 75, "coinCost": 0, "staminaCost": 0 },
-      { "key": "dayTrip", "maxMiles": 250, "coinCost": 15, "staminaCost": 3 },
-      { "key": "overnightHaul", "maxMiles": 600, "coinCost": 40, "staminaCost": 6 },
-      { "key": "longHaul", "maxMiles": 1200, "coinCost": 80, "staminaCost": 10 },
-      { "key": "crossCountry", "maxMiles": 99999, "coinCost": 140, "staminaCost": 15 }
+      {
+        "key": "local",
+        "maxMiles": 75,
+        "coinCost": 0,
+        "staminaCost": 0
+      },
+      {
+        "key": "dayTrip",
+        "maxMiles": 250,
+        "coinCost": 15,
+        "staminaCost": 3
+      },
+      {
+        "key": "overnightHaul",
+        "maxMiles": 600,
+        "coinCost": 40,
+        "staminaCost": 6
+      },
+      {
+        "key": "longHaul",
+        "maxMiles": 1200,
+        "coinCost": 80,
+        "staminaCost": 10
+      },
+      {
+        "key": "crossCountry",
+        "maxMiles": 99999,
+        "coinCost": 140,
+        "staminaCost": 15
+      }
     ],
     "unaffordableStaminaSurcharge": 6,
-    "heatIndex": { "baseLatitude": 44, "staminaPerDegreeSouth": 0.25, "maxExtraStamina": 8 }
+    "heatIndex": {
+      "baseLatitude": 44,
+      "staminaPerDegreeSouth": 0.25,
+      "maxExtraStamina": 8
+    }
   },
   "scoring": {
     "cleanFloor": 0.72,
@@ -73,30 +205,84 @@
     "attainmentFullRealization": 0.58,
     "judgeVarianceMax": 0.05,
     "totalCap": 99.7,
-    "repCeilingPercentileByTier": { "1": 25, "2": 43, "3": 57, "4": 66, "5": 75, "6": 93, "7": 100 },
-    "challengeCeilingPercentile": { "1": 42, "2": 50, "3": 58, "4": 66, "5": 74, "6": 84, "7": 93, "8": 100 }
+    "repCeilingPercentileByTier": {
+      "1": 25,
+      "2": 43,
+      "3": 57,
+      "4": 66,
+      "5": 75,
+      "6": 93,
+      "7": 100
+    },
+    "challengeCeilingPercentile": {
+      "1": 42,
+      "2": 50,
+      "3": 58,
+      "4": 66,
+      "5": 74,
+      "6": 84,
+      "7": 93,
+      "8": 100
+    }
   },
   "reputation": {
     "max": 100,
-    "tierThresholds": { "1": 0, "2": 15, "3": 30, "4": 45, "5": 60, "6": 75, "7": 90 },
+    "tierThresholds": {
+      "1": 0,
+      "2": 15,
+      "3": 30,
+      "4": 45,
+      "5": 60,
+      "6": 75,
+      "7": 90
+    },
     "seasonGainCap": 9,
     "gainWindow": 8,
     "underperformDecay": 2,
-    "dormancyDecayBySeason": [5, 9, 12],
+    "dormancyDecayBySeason": [
+      5,
+      9,
+      12
+    ],
     "dormancyDecayFloorSeasons": 12,
     "heritageCreditMultiplier": 1.5
   },
+  "divisions": {
+    "cutoffPercentiles": {
+      "openClass": 34,
+      "worldClass": 67
+    },
+    "minPoolForOpen": 6,
+    "minPoolForWorld": 12,
+    "demotionGraceSeasons": 1,
+    "absenceResetSeasons": 2
+  },
   "budget": {
-    "commitmentCap": 1000,
-    "commitmentCapByDivision": { "aClass": 400, "openClass": 700, "worldClass": 1000 },
+    "commitmentCap": 2500,
+    "commitmentCapByDivision": {
+      "aClass": 2500,
+      "openClass": 4000,
+      "worldClass": 6000
+    },
     "showPayout": 30,
-    "fundraiser": { "yield": 12, "staminaCost": 8 },
+    "fundraiser": {
+      "yield": 3,
+      "staminaCost": 2
+    },
     "springTrainingDayCost": 25
   },
-  "clinician": { "cost": 120, "durationDays": 3, "yieldBoost": 1.3 },
+  "clinician": {
+    "cost": 120,
+    "durationDays": 3,
+    "yieldBoost": 1.3
+  },
   "joint": {
     "ensembleBonus": 0.25,
-    "repeatBonusMultipliers": [1, 0.5, 0],
+    "repeatBonusMultipliers": [
+      1,
+      0.5,
+      0
+    ],
     "moraleBonus": 6,
     "maxPerWeek": 1,
     "maxFreeDistanceTier": "dayTrip",
@@ -104,9 +290,30 @@
   },
   "hostedEvents": {
     "venueTiers": {
-      "highSchool": { "label": "High School Stadium", "rentalCC": 200, "capacity": 15, "payoutPerCorpsCC": 20 },
-      "collegeBowl": { "label": "College Bowl", "rentalCC": 500, "capacity": 30, "payoutPerCorpsCC": 25 },
-      "nflStadium": { "label": "NFL Stadium", "rentalCC": 1000, "capacity": 60, "payoutPerCorpsCC": 30 }
+      "highSchool": {
+        "label": "High School Stadium",
+        "rentalCC": 150,
+        "capacity": 15,
+        "payoutPerCorpsCC": 25,
+        "successAttendance": 6,
+        "unlock": null
+      },
+      "collegeBowl": {
+        "label": "College Bowl",
+        "rentalCC": 400,
+        "capacity": 30,
+        "payoutPerCorpsCC": 35,
+        "successAttendance": 12,
+        "unlock": { "tier": "highSchool", "successful": 2 }
+      },
+      "nflStadium": {
+        "label": "NFL Stadium",
+        "rentalCC": 900,
+        "capacity": 60,
+        "payoutPerCorpsCC": 50,
+        "successAttendance": 18,
+        "unlock": { "tier": "collegeBowl", "successful": 3 }
+      }
     },
     "maxEventsPerDay": 2,
     "minDaysAhead": 2,
@@ -114,18 +321,64 @@
     "nameMin": 3,
     "nameMax": 60
   },
-  "medals": { "minFieldSize": 4 },
+  "medals": {
+    "minFieldSize": 4
+  },
+  "fanFavorite": {
+    "voteWindowDays": 3,
+    "finalistsPerMajor": 3,
+    "finalsFromDay": 45
+  },
   "staff": {
     "tiers": {
-      "apprentice": { "salary": 40, "boost": 0.03, "tourStaminaReductionPct": 10 },
-      "journeyman": { "salary": 80, "boost": 0.06, "tourStaminaReductionPct": 15 },
-      "veteran": { "salary": 140, "boost": 0.09, "tourStaminaReductionPct": 20 },
-      "master": { "salary": 220, "boost": 0.12, "tourStaminaReductionPct": 25 },
-      "legend": { "salary": 320, "boost": 0.15, "tourStaminaReductionPct": 30 }
+      "apprentice": {
+        "salary": 40,
+        "boost": 0.03,
+        "tourStaminaReductionPct": 10
+      },
+      "journeyman": {
+        "salary": 80,
+        "boost": 0.06,
+        "tourStaminaReductionPct": 15
+      },
+      "veteran": {
+        "salary": 140,
+        "boost": 0.09,
+        "tourStaminaReductionPct": 20
+      },
+      "master": {
+        "salary": 220,
+        "boost": 0.12,
+        "tourStaminaReductionPct": 25
+      },
+      "legend": {
+        "salary": 320,
+        "boost": 0.15,
+        "tourStaminaReductionPct": 30
+      }
     },
     "maxTotalBoost": 0.15,
-    "marketPerSpecialty": { "apprentice": 2, "journeyman": 2, "veteran": 1 },
+    "marketPerSpecialty": {
+      "apprentice": 2,
+      "journeyman": 2,
+      "veteran": 1
+    },
     "masterChance": 0.5,
-    "legendChance": 0.18
+    "legendChance": 0.18,
+    "career": {
+      "maxSeasons": 30,
+      "tenureSalaryPerSeason": 0.06,
+      "promotionSeasons": {
+        "journeyman": 3,
+        "veteran": 8,
+        "master": 15,
+        "legend": 22
+      },
+      "maxContractSeasons": 3,
+      "buyoutPremium": 0.25,
+      "retrainBoostMultiplier": 0.5,
+      "retrainCost": 60,
+      "resumeCap": 30
+    }
   }
 }

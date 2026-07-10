@@ -19,26 +19,31 @@ const store = require("../helpers/podium/store");
 const venues = require("../helpers/podium/venues");
 const staffMarket = require("../helpers/podium/staffMarket");
 const career = require("../helpers/podium/career");
+const divisions = require("../helpers/podium/divisions");
 const hostedEvents = require("../helpers/podium/hostedEvents");
 
 const FOOD_TIERS = ["gasStation", "standard", "fullKitchen"];
-const MAX_TEMPLATE_BLOCKS = 5;
+// Template covers a full spring-training day (the largest block budget).
+const MAX_TEMPLATE_BLOCKS = 20;
 
 /**
  * Validate a CorpsCoin -> Corps Budget commitment amount against the
  * division-equal cap (decision 24). `alreadyCommitted` enforces the
- * cumulative cap for mid-season top-ups.
+ * cumulative cap for mid-season top-ups; the cap scales with the corps'
+ * division seat (a World budget fields World staff payrolls).
  */
-function validateCommitment(amount, alreadyCommitted) {
+function validateCommitment(amount, alreadyCommitted, division) {
   if (amount == null || amount === 0) return 0;
   if (!Number.isInteger(amount) || amount < 0) {
     throw new HttpsError("invalid-argument", "Budget commitment must be a non-negative integer.");
   }
-  const cap = store.balance.budget.commitmentCap;
+  const byDivision = store.balance.budget.commitmentCapByDivision || {};
+  const cap = byDivision[division] || store.balance.budget.commitmentCap;
   if (alreadyCommitted + amount > cap) {
     throw new HttpsError(
       "invalid-argument",
-      `Budget commitments are capped at ${cap} CC per season (already committed: ${alreadyCommitted}).`
+      `Budget commitments are capped at ${cap} CC per season for your division ` +
+        `(already committed: ${alreadyCommitted}).`
     );
   }
   return amount;
@@ -162,8 +167,11 @@ async function podiumContext(request) {
   const calendarDay = getActiveCalendarDay(seasonData.schedule.startDate.toDate());
   const competitionDay = toCompetitionDay(calendarDay, seasonData);
   // Beta tuning path: merge podium-config/balance overrides over the
-  // committed defaults (memoized; committed values stand on any failure).
+  // committed defaults, and swap in the full-archive curve rebuild when
+  // podium-config/curves exists (memoized; committed values stand on any
+  // failure or invalid payload).
   await store.applyBalanceOverrides(db);
+  await store.applyCurveOverrides(db);
   return { uid, db, seasonData, calendarDay, competitionDay };
 }
 
@@ -193,7 +201,6 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
   }
   const challenge = validateChallenge(request.data?.challenge);
   const auditionShares = validateAuditions(request.data?.auditions);
-  const budgetCommitment = validateCommitment(request.data?.budgetCommitment, 0);
   const freshStart = request.data?.freshStart === true;
 
   const seasonUid = seasonData.seasonUid;
@@ -223,6 +230,7 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
     // Profile résumé row for the finished season (idempotent with the sweep).
     await career.appendProfileSeasonHistory(db, uid, staleState.seasonUid, staleState);
   }
+  let missedSeasons = 0;
   if (freshStart && careerData.seasonsPlayed > 0) {
     const banked = { ...careerData };
     delete banked.retiredCareers;
@@ -231,17 +239,43 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
       retiredCareers: [...(careerData.retiredCareers || []).slice(-9), banked],
     };
   } else if (careerData.lastPlayedIndex != null) {
-    const missed = Math.max(0, seasonIndex.index - careerData.lastPlayedIndex - 1);
-    careerData = career.applyDormancy(careerData, missed, store.balance);
+    missedSeasons = Math.max(0, seasonIndex.index - careerData.lastPlayedIndex - 1);
+    careerData = career.applyDormancy(careerData, missedSeasons, store.balance);
   }
   const startingReputation = careerData.reputation || 0;
   const startingTier = engine.tierForReputation(startingReputation, store.balance);
+  // Division seat (§5.7): carried from the career's assessed seat; a fresh
+  // start or a 2+ season absence re-enters at A Class. The commitment cap is
+  // division-equal, so it can only be validated once the seat is known.
+  const division = divisions.divisionForRegistration(careerData, missedSeasons, store.balance);
+  const budgetCommitment = validateCommitment(request.data?.budgetCommitment, 0, division);
+  // Multi-season staff contracts carry into the new season at the salary
+  // frozen at signing (decision 28); each carried season is paid from the
+  // NEW budget below — an unaffordable renewal lapses, never a debt.
+  const carriedContracts = [];
+  if (
+    !freshStart &&
+    staleStateSnapshot.exists &&
+    staleStateSnapshot.data().seasonUid !== seasonUid
+  ) {
+    for (const member of Object.values(staleStateSnapshot.data().staff || {})) {
+      if (member && member.contract && member.contract.remaining > 1 && member.salaryPerSeason) {
+        const carried = {
+          ...member,
+          contract: { ...member.contract, remaining: member.contract.remaining - 1 },
+        };
+        delete carried.retrain; // the learning curve ended with the old season
+        carriedContracts.push(carried);
+      }
+    }
+  }
   const trimmedName = corpsName.trim();
   const normalizedName = trimmedName.toLowerCase();
   // Same reservation namespace as fantasy registration: one corps name per
   // season across the whole game.
   const nameRef = db.doc(`corpsnames/${seasonUid}_${normalizedName}`);
   const sRef = store.stateRef(db, uid);
+  const signedCarryIds = []; // carried contracts to pre-sign in the market
 
   await db.runTransaction(async (transaction) => {
     const [existingState, existingName, profileSnapshot] = await Promise.all([
@@ -278,6 +312,27 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
     }
 
     const stored = store.dehydrateState(engineState);
+    // Budget first, then carried contracts draw their season's salary from
+    // it. debitBudget mutates a draft {budget} holder.
+    const draft = {
+      budget: (() => {
+        const budget = store.initBudget();
+        if (budgetCommitment > 0) {
+          budget.balance = budgetCommitment;
+          budget.committed = budgetCommitment;
+          budget.log = [{ day: 0, amount: budgetCommitment, reason: "commitment" }];
+        }
+        return budget;
+      })(),
+    };
+    const carriedStaff = {};
+    for (const member of carriedContracts) {
+      if (store.debitBudget(draft, member.salaryPerSeason, `staff:${member.specialty}`, 0)) {
+        carriedStaff[member.specialty] = member;
+        signedCarryIds.push(member.id);
+      }
+      // else: renewal unaffordable — the contract lapses quietly.
+    }
     transaction.set(sRef, {
       ...stored,
       seasonUid,
@@ -288,15 +343,9 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
       auditions: auditionShares || null,
       reputation: startingReputation,
       repTier: startingTier,
-      budget: (() => {
-        const budget = store.initBudget();
-        if (budgetCommitment > 0) {
-          budget.balance = budgetCommitment;
-          budget.committed = budgetCommitment;
-          budget.log = [{ day: 0, amount: budgetCommitment, reason: "commitment" }];
-        }
-        return budget;
-      })(),
+      division,
+      budget: draft.budget,
+      ...(Object.keys(carriedStaff).length > 0 ? { staff: carriedStaff } : {}),
       selectedShowDays: [],
       today: { calendarDay, blocksUsed: 0, blocks: [], restDay: false, warmupUsed: false },
       lastScoredDay: null,
@@ -308,6 +357,7 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
     transaction.set(career.careerRef(db, uid), {
       ...careerData,
       corpsName: trimmedName,
+      division,
       updatedAt: new Date().toISOString(),
     });
     transaction.set(store.rosterRef(db, seasonUid, uid), {
@@ -326,6 +376,7 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
             showConcept: typeof showConcept === "string" ? showConcept.slice(0, 200) : "",
             class: "podiumClass",
             repTier: startingTier,
+            division,
             totalSeasonScore: null,
             seasonRank: null,
             seasonRankOf: null,
@@ -337,8 +388,45 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
     );
   });
 
-  logger.info(`Podium corps registered: ${trimmedName} (${uid}) season ${seasonUid}`);
-  return { success: true, corpsName: trimmedName, easternNight: store.easternNightFor(uid, seasonUid) };
+  // Carried contracts pre-sign in the new season's market so the person
+  // never shows as available (works whether the market doc exists yet or
+  // not; ensureSeasonMarket applies preSigned at generation).
+  if (signedCarryIds.length > 0) {
+    try {
+      const marketRef = store.staffMarketRef(db, seasonUid);
+      await marketRef.set(
+        { preSigned: Object.fromEntries(signedCarryIds.map((id) => [id, uid])) },
+        { merge: true }
+      );
+      const marketSnapshot = await marketRef.get();
+      if (marketSnapshot.exists && Array.isArray(marketSnapshot.data().staff)) {
+        const market = marketSnapshot.data();
+        let touched = false;
+        for (const person of market.staff) {
+          if (signedCarryIds.includes(person.id) && person.signedBy !== uid) {
+            person.signedBy = uid;
+            touched = true;
+          }
+        }
+        if (touched) await marketRef.set(market, { merge: true });
+      }
+    } catch (error) {
+      logger.warn(`[podium] carried-contract market stamp failed: ${error.message}`);
+    }
+  }
+
+  logger.info(
+    `Podium corps registered: ${trimmedName} (${uid}) season ${seasonUid} — ` +
+      `${divisions.DIVISION_LABELS[division]}`
+  );
+  const easternAssignments = await store.loadEasternAssignments(db, seasonUid);
+  return {
+    success: true,
+    corpsName: trimmedName,
+    division,
+    divisionLabel: divisions.DIVISION_LABELS[division],
+    easternNight: store.easternNightFor(uid, seasonUid, easternAssignments),
+  };
 });
 
 exports.allocateRehearsalBlock = onCall({ cors: true }, async (request) => {
@@ -357,6 +445,11 @@ exports.allocateRehearsalBlock = onCall({ cors: true }, async (request) => {
   }
 
   const sRef = store.stateRef(db, uid);
+  // On the Eastern nights the published snake decides which night is the
+  // show day (block budget shrinks on show days) — parity fallback otherwise.
+  const easternAssignments = store.EASTERN_DAYS.includes(competitionDay)
+    ? await store.loadEasternAssignments(db, seasonData.seasonUid)
+    : null;
   const result = await db.runTransaction(async (transaction) => {
     const snapshot = await transaction.get(sRef);
     if (!snapshot.exists || snapshot.data().seasonUid !== seasonData.seasonUid) {
@@ -368,7 +461,7 @@ exports.allocateRehearsalBlock = onCall({ cors: true }, async (request) => {
     if (state.today.restDay) {
       throw new HttpsError("failed-precondition", "Today is a declared rest day.");
     }
-    const isShowDay = store.isShowDayFor(state, uid, competitionDay);
+    const isShowDay = store.isShowDayFor(state, uid, competitionDay, easternAssignments);
     const isSpringTraining = seasonData.status === "live-season" && competitionDay < 1;
     const maxBlocks = engine.blocksAvailable(state, { isShowDay, isSpringTraining }, store.balance);
 
@@ -558,6 +651,16 @@ exports.hostEvent = onCall({ cors: true }, async (request) => {
   if (Object.values(corpsMap).filter(Boolean).length === 0) {
     throw new HttpsError("failed-precondition", "Field a corps before hosting events.");
   }
+  // Venue ladder (decision 27): bigger stadiums are earned by running
+  // successful smaller shows, never bought outright.
+  const lockReason = hostedEvents.tierLockReason(
+    profileSnapshotPre.exists ? profileSnapshotPre.data() : null,
+    venueTier,
+    store.balance
+  );
+  if (lockReason) {
+    throw new HttpsError("failed-precondition", lockReason);
+  }
 
   const seasonUid = seasonData.seasonUid;
   const dayEvents = await hostedEvents
@@ -621,79 +724,6 @@ exports.hostEvent = onCall({ cors: true }, async (request) => {
   return { success: true, eventId: eventRef.id, day, eventName };
 });
 
-exports.getPodiumStaffMarket = onCall({ cors: true }, async (request) => {
-  const { db, seasonData } = await podiumContext(request);
-  const marketRef = store.staffMarketRef(db, seasonData.seasonUid);
-  let snapshot = await marketRef.get();
-  if (!snapshot.exists) {
-    // Lazy, idempotent creation: generation is deterministic per season.
-    await marketRef.set({
-      seasonUid: seasonData.seasonUid,
-      generatedAt: new Date().toISOString(),
-      staff: staffMarket.generateMarket(seasonData.seasonUid),
-    });
-    snapshot = await marketRef.get();
-  }
-  return { success: true, market: snapshot.data().staff };
-});
-
-exports.hirePodiumStaff = onCall({ cors: true }, async (request) => {
-  const { uid, db, seasonData, competitionDay } = await podiumContext(request);
-  const { staffId } = request.data || {};
-  if (typeof staffId !== "string" || !staffId) {
-    throw new HttpsError("invalid-argument", "staffId is required.");
-  }
-  const marketRef = store.staffMarketRef(db, seasonData.seasonUid);
-  const sRef = store.stateRef(db, uid);
-
-  const result = await db.runTransaction(async (transaction) => {
-    const [marketSnapshot, stateSnapshot] = await Promise.all([
-      transaction.get(marketRef),
-      transaction.get(sRef),
-    ]);
-    if (!stateSnapshot.exists || stateSnapshot.data().seasonUid !== seasonData.seasonUid) {
-      throw new HttpsError("failed-precondition", "Register a Podium corps first.");
-    }
-    const market = marketSnapshot.exists
-      ? marketSnapshot.data()
-      : {
-        seasonUid: seasonData.seasonUid,
-        generatedAt: new Date().toISOString(),
-        staff: staffMarket.generateMarket(seasonData.seasonUid),
-      };
-    const person = market.staff.find((member) => member.id === staffId);
-    if (!person) throw new HttpsError("not-found", "That staff member is not in this season's market.");
-    if (person.signedBy && person.signedBy !== uid) {
-      throw new HttpsError("failed-precondition", `${person.name} has already signed elsewhere.`);
-    }
-    const state = stateSnapshot.data();
-    if (state.staff && state.staff[person.specialty]) {
-      throw new HttpsError("failed-precondition", `You already employ a ${person.specialty} staff member.`);
-    }
-    if (!store.debitBudget(state, person.salary, `staff:${person.specialty}`, Math.max(0, competitionDay))) {
-      throw new HttpsError("failed-precondition", `Not enough Corps Budget (salary ${person.salary}).`);
-    }
-    person.signedBy = uid;
-    state.staff = {
-      ...(state.staff || {}),
-      [person.specialty]: {
-        id: person.id,
-        name: person.name,
-        tier: person.tier,
-        boost: person.boost,
-        trait: person.trait,
-        hiredDay: Math.max(0, competitionDay),
-      },
-    };
-    state.updatedAt = new Date().toISOString();
-    transaction.set(marketRef, market);
-    transaction.set(sRef, state);
-    return { staff: state.staff, budget: state.budget, hired: person.name };
-  });
-
-  return { success: true, ...result };
-});
-
 exports.commitPodiumBudget = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData } = await podiumContext(request);
   const { amount } = request.data || {};
@@ -708,7 +738,7 @@ exports.commitPodiumBudget = onCall({ cors: true }, async (request) => {
     }
     const state = snapshot.data();
     const committed = state.budget ? state.budget.committed || 0 : 0;
-    const validated = validateCommitment(amount, committed);
+    const validated = validateCommitment(amount, committed, state.division);
     if (validated <= 0) {
       throw new HttpsError("invalid-argument", "Commitment amount must be positive.");
     }
@@ -749,16 +779,28 @@ exports.hirePodiumClinician = onCall({ cors: true }, async (request) => {
   return { success: true, ...result };
 });
 
+// Branded names for the fixed majors on the route sheet.
+const MAJOR_ROUTE_LABELS = {
+  28: "marching.art Southwestern Championship",
+  35: "marching.art Southeastern Championship",
+  41: "marching.art Eastern Classic",
+  42: "marching.art Eastern Classic",
+};
+
 /**
  * Upcoming route preview: the chain of travel legs through the corps' next
  * show days (auto + selected), each with tier, miles, coin cost (majors
- * subsidized) and heat surcharge — shown in the tour picker BEFORE
- * selections are confirmed (design §5.3 open-information routing).
+ * subsidized), heat surcharge, and — for the majors and Championship Week
+ * in Indianapolis — the division-correct event label (an A Class corps sees
+ * A Class Prelims/Finals, a World corps sees Prelims/Semis/Finals). Shown
+ * in the tour picker BEFORE selections are confirmed (design §5.3
+ * open-information routing).
  */
-async function buildRoutePreview(db, seasonData, state, uid, competitionDay) {
+async function buildRoutePreview(db, seasonData, state, uid, competitionDay, easternAssignments) {
+  const division = divisions.normalizeDivision(state.division);
   const upcoming = [
     ...new Set([
-      ...store.autoDaysFor(uid, seasonData.seasonUid),
+      ...store.autoDaysFor(uid, seasonData.seasonUid, { division, easternAssignments }),
       ...(state.selectedShowDays || []),
     ]),
   ]
@@ -780,6 +822,7 @@ async function buildRoutePreview(db, seasonData, state, uid, competitionDay) {
     }
   }
 
+  const championshipLabels = store.CHAMPIONSHIP_LABELS_BY_DIVISION[division];
   const legs = [];
   let cursor = state.lastVenue || venues.venueFor(state.location) || null;
   for (const day of upcoming) {
@@ -789,6 +832,7 @@ async function buildRoutePreview(db, seasonData, state, uid, competitionDay) {
     legs.push({
       day,
       city: venue ? `${venue.city}, ${venue.region}` : "TBA",
+      label: championshipLabels[day] || MAJOR_ROUTE_LABELS[day] || null,
       tier: leg ? leg.tier : null,
       miles: leg ? leg.miles : null,
       coinCost: leg && !isMajor ? leg.coinCost : 0,
@@ -808,16 +852,27 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
     return { exists: false, calendarDay, competitionDay };
   }
   const state = snapshot.data();
-  const isShowDay = store.isShowDayFor(state, uid, competitionDay);
-  const routePreview = await buildRoutePreview(db, seasonData, state, uid, competitionDay);
+  const easternAssignments = await store.loadEasternAssignments(db, seasonData.seasonUid);
+  const isShowDay = store.isShowDayFor(state, uid, competitionDay, easternAssignments);
+  const routePreview = await buildRoutePreview(
+    db, seasonData, state, uid, competitionDay, easternAssignments
+  );
   const careerSnapshot = await career.careerRef(db, uid).get();
   const careerData = careerSnapshot.exists ? careerSnapshot.data() : null;
+  const division = divisions.normalizeDivision(state.division);
   return {
     exists: true,
     calendarDay,
     competitionDay,
     isShowDay,
-    autoDays: store.autoDaysFor(uid, seasonData.seasonUid),
+    division,
+    divisionLabel: divisions.DIVISION_LABELS[division],
+    commitmentCap:
+      (store.balance.budget.commitmentCapByDivision || {})[division] ||
+      store.balance.budget.commitmentCap,
+    easternNight: store.easternNightFor(uid, seasonData.seasonUid, easternAssignments),
+    easternNightFinal: Boolean(easternAssignments && easternAssignments[uid]),
+    autoDays: store.autoDaysFor(uid, seasonData.seasonUid, { division, easternAssignments }),
     routePreview,
     career: careerData
       ? {

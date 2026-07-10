@@ -54,9 +54,11 @@ export default function PodiumRegistration({ podium }) {
       <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-6 text-center space-y-2">
         <div className="text-lg font-bold text-white">{done.corpsName} is on tour.</div>
         <div className="text-xs text-gray-400">
-          Your Eastern Classic night:{' '}
-          <span className="text-white font-bold">Day {done.easternNight}</span>. First rehearsal
-          block is waiting below.
+          Competing in{' '}
+          <span className="text-yellow-400 font-bold">{done.divisionLabel || 'A Class'}</span>.
+          Your provisional Eastern Classic night:{' '}
+          <span className="text-white font-bold">Day {done.easternNight}</span> (night lineups
+          publish Day 39). First rehearsal block is waiting below.
         </div>
       </div>
     );
@@ -213,7 +215,7 @@ export default function PodiumRegistration({ podium }) {
               <input
                 type="number"
                 min={0}
-                max={1000}
+                max={2500}
                 step={50}
                 value={budgetCommitment}
                 onChange={(e) =>
@@ -222,8 +224,9 @@ export default function PodiumRegistration({ podium }) {
                 className="w-28 bg-[#111] border border-[#333] rounded-sm px-3 py-2 text-sm text-white focus:border-[#0057B8] outline-none tabular-nums"
               />
               <span className="text-[10px] text-gray-500">
-                CorpsCoin into your Corps Budget — food, travel, staff. Never scores. You can top up
-                later; a 0-CC corps is always playable.
+                CorpsCoin into your Corps Budget — food, travel, staff. Never scores. ~1,000 CC
+                funds a comfortable season; you can top up later, and a 0-CC corps is always
+                playable.
               </span>
             </div>
           </div>

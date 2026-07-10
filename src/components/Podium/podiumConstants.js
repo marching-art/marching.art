@@ -74,12 +74,30 @@ export const VENUE_TIERS = [
   {
     id: 'highSchool',
     label: 'High School Stadium',
-    rentalCC: 200,
+    rentalCC: 150,
     capacity: 15,
-    payoutPerCorpsCC: 20,
+    payoutPerCorpsCC: 25,
+    successAttendance: 6,
+    unlock: null,
   },
-  { id: 'collegeBowl', label: 'College Bowl', rentalCC: 500, capacity: 30, payoutPerCorpsCC: 25 },
-  { id: 'nflStadium', label: 'NFL Stadium', rentalCC: 1000, capacity: 60, payoutPerCorpsCC: 30 },
+  {
+    id: 'collegeBowl',
+    label: 'College Bowl',
+    rentalCC: 400,
+    capacity: 30,
+    payoutPerCorpsCC: 35,
+    successAttendance: 12,
+    unlock: { tier: 'highSchool', successful: 2 },
+  },
+  {
+    id: 'nflStadium',
+    label: 'NFL Stadium',
+    rentalCC: 900,
+    capacity: 60,
+    payoutPerCorpsCC: 50,
+    successAttendance: 18,
+    unlock: { tier: 'collegeBowl', successful: 3 },
+  },
 ];
 
 export const HOSTING_RULES = {

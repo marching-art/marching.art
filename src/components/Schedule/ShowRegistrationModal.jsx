@@ -8,6 +8,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Check, X, AlertTriangle, Trophy, Clock, Ticket } from 'lucide-react';
 import { selectUserShows } from '../../api/functions';
+import { getPodiumState, setPodiumShows } from '../../api/podium';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
 import { BottomSheet } from '../ui/BottomSheet';
@@ -43,7 +44,19 @@ const CLASS_CONFIG = {
     color: 'text-green-500',
     bgColor: 'bg-green-500/10',
   },
+  podiumClass: {
+    name: 'Podium Class',
+    shortName: 'Podium',
+    color: 'text-yellow-400',
+    bgColor: 'bg-yellow-400/10',
+  },
 };
+
+// Podium tour rules (mirror of functions store.js; server re-validates):
+// majors + championship week are auto-attended, the Eastern Classic spans two
+// nights, and self-picked shows are capped per week.
+const PODIUM_EASTERN_DAYS = [41, 42];
+const podiumMaxPicksForWeek = (week) => (week === 7 ? 0 : week >= 4 ? 3 : 4);
 
 // =============================================================================
 // CORPS SELECTION ITEM
@@ -150,10 +163,78 @@ const ShowRegistrationModal = ({
   // Detect mobile for BottomSheet vs Modal
   const isMobile = useIsMobile();
 
+  // Fantasy corps only — the Podium corps schedules through setPodiumShows
+  // (day-based tour picks), never through selectUserShows, which rejects it.
   const userCorpsClasses = useMemo(
-    () => (userProfile?.corps ? Object.keys(userProfile.corps).sort(compareCorpsClasses) : []),
+    () =>
+      userProfile?.corps
+        ? Object.keys(userProfile.corps)
+            .filter((c) => c !== 'podiumClass')
+            .sort(compareCorpsClasses)
+        : [],
     [userProfile?.corps]
   );
+
+  // ---------------------------------------------------------------------------
+  // Podium corps attendance (day-based tour picks)
+  // ---------------------------------------------------------------------------
+  const podiumCorps = userProfile?.corps?.podiumClass || null;
+  const podiumDay = Number.isInteger(show.day) ? show.day : null;
+  const [podiumInfo, setPodiumInfo] = useState(null); // {selectedShowDays, autoDays, competitionDay}
+  const [podiumAttend, setPodiumAttend] = useState(false);
+  const [podiumInitial, setPodiumInitial] = useState(false);
+
+  useEffect(() => {
+    if (!podiumCorps || podiumDay === null) return undefined;
+    let cancelled = false;
+    getPodiumState()
+      .then((res) => {
+        if (cancelled || !res?.exists) return;
+        const selectedShowDays = res.state?.selectedShowDays || [];
+        const attending = selectedShowDays.includes(podiumDay);
+        setPodiumInfo({
+          selectedShowDays,
+          autoDays: res.autoDays || [],
+          competitionDay: res.competitionDay ?? 0,
+        });
+        setPodiumAttend(attending);
+        setPodiumInitial(attending);
+      })
+      .catch(() => {
+        // Feature off or transient failure — the Podium row simply doesn't render.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [podiumCorps, podiumDay]);
+
+  const podiumIsMyAutoDay = Boolean(podiumInfo?.autoDays?.includes(podiumDay));
+  const podiumIsEasternOffNight =
+    PODIUM_EASTERN_DAYS.includes(podiumDay) && podiumInfo && !podiumIsMyAutoDay;
+  const podiumIsPast = podiumInfo ? podiumDay <= podiumInfo.competitionDay : false;
+  const podiumMaxPicks = podiumMaxPicksForWeek(show.week);
+  const podiumOtherWeekPicks = useMemo(
+    () =>
+      (podiumInfo?.selectedShowDays || []).filter(
+        (d) => Math.ceil(d / 7) === show.week && d !== podiumDay
+      ),
+    [podiumInfo, show.week, podiumDay]
+  );
+  const podiumPicksThisWeek = podiumOtherWeekPicks.length + (podiumAttend ? 1 : 0);
+  const podiumChanged = Boolean(podiumInfo) && podiumAttend !== podiumInitial;
+
+  const togglePodium = () => {
+    if (!podiumInfo || podiumIsMyAutoDay || podiumIsEasternOffNight || podiumIsPast) return;
+    haptic('light');
+    if (!podiumAttend && podiumOtherWeekPicks.length >= podiumMaxPicks) {
+      haptic('error');
+      toast.error(
+        `Your Podium corps already has ${podiumOtherWeekPicks.length} picks in week ${show.week}.`
+      );
+      return;
+    }
+    setPodiumAttend((v) => !v);
+  };
 
   // For championship shows, determine which corps are enrolled/eligible
   const enrolledCorps = useMemo(() => {
@@ -248,8 +329,14 @@ const ShowRegistrationModal = ({
         });
       });
 
+      if (podiumChanged) {
+        const days = podiumAttend ? [...podiumOtherWeekPicks, podiumDay] : podiumOtherWeekPicks;
+        updatePromises.push(setPodiumShows({ week: show.week, days }));
+      }
+
       // Wait for all updates to complete
       await Promise.all(updatePromises);
+      if (podiumChanged) setPodiumInitial(podiumAttend);
 
       haptic('success');
       toast.success('Registration updated!');
@@ -272,8 +359,11 @@ const ShowRegistrationModal = ({
       // Match by eventName only - dates can have type mismatches (Timestamp vs string)
       return selectedShows.some((s) => s.eventName === show.eventName);
     });
-    return JSON.stringify(initialRegistered.sort()) !== JSON.stringify(selectedCorps.sort());
-  }, [selectedCorps, userCorpsClasses, userProfile, show]);
+    return (
+      JSON.stringify(initialRegistered.sort()) !== JSON.stringify(selectedCorps.sort()) ||
+      podiumChanged
+    );
+  }, [selectedCorps, userCorpsClasses, userProfile, show, podiumChanged]);
 
   // Shared header content for both mobile and desktop
   const HeaderContent = () => (
@@ -468,7 +558,7 @@ const ShowRegistrationModal = ({
             </div>
           </div>
         </div>
-      ) : userCorpsClasses.length === 0 ? (
+      ) : userCorpsClasses.length === 0 && !(podiumCorps && podiumInfo) ? (
         <div className="text-center py-10 px-4">
           <AlertTriangle className="w-12 h-12 text-gray-600 mx-auto mb-3" />
           <p className="text-sm text-gray-400 font-medium">No Corps Registered</p>
@@ -532,6 +622,51 @@ const ShowRegistrationModal = ({
                 />
               );
             })}
+
+            {/* Podium corps — day-based tour pick, separate rules from lineups */}
+            {podiumCorps && podiumInfo && (
+              <button
+                onClick={togglePodium}
+                disabled={podiumIsMyAutoDay || podiumIsEasternOffNight || podiumIsPast}
+                className={`
+                  flex items-center gap-3 p-4 w-full text-left transition-colors min-h-[60px]
+                  ${
+                    podiumAttend
+                      ? 'bg-yellow-400/5 border-l-2 border-l-yellow-400'
+                      : 'hover:bg-white/5 active:bg-white/10'
+                  }
+                  ${podiumIsMyAutoDay || podiumIsEasternOffNight || podiumIsPast ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
+                `}
+              >
+                <div
+                  className={`
+                  w-5 h-5 border-2 flex items-center justify-center flex-shrink-0
+                  ${podiumAttend || podiumIsMyAutoDay ? 'bg-yellow-500 border-yellow-500' : 'border-[#444]'}
+                `}
+                >
+                  {(podiumAttend || podiumIsMyAutoDay) && (
+                    <Check className="w-3.5 h-3.5 text-black" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-white text-sm truncate">
+                      {podiumCorps.corpsName || 'Podium Corps'}
+                    </span>
+                    <span className="text-[10px] font-bold uppercase text-yellow-400">Podium</span>
+                  </div>
+                  <div className="mt-0.5 text-[11px] text-gray-500">
+                    {podiumIsMyAutoDay
+                      ? 'Auto-attended — major / championship'
+                      : podiumIsEasternOffNight
+                        ? 'Eastern Classic — not your assigned night'
+                        : podiumIsPast
+                          ? 'This day has passed'
+                          : `${podiumPicksThisWeek}/${podiumMaxPicks} tour picks this week`}
+                  </div>
+                </div>
+              </button>
+            )}
           </div>
 
           {/* Info Section */}
@@ -605,7 +740,7 @@ const ShowRegistrationModal = ({
       );
     }
 
-    return userCorpsClasses.length > 0 ? (
+    return userCorpsClasses.length > 0 || (podiumCorps && podiumInfo) ? (
       <div className="flex gap-3">
         <button
           onClick={() => {
@@ -653,7 +788,7 @@ const ShowRegistrationModal = ({
         </div>
 
         {/* Footer */}
-        {(isChampionship || userCorpsClasses.length > 0) && (
+        {(isChampionship || userCorpsClasses.length > 0 || (podiumCorps && podiumInfo)) && (
           <div className="px-4 py-4 border-t border-[#333] bg-[#1a1a1a] flex-shrink-0 safe-area-bottom">
             <FooterContent />
           </div>
@@ -684,7 +819,7 @@ const ShowRegistrationModal = ({
           </div>
 
           {/* Footer */}
-          {(isChampionship || userCorpsClasses.length > 0) && (
+          {(isChampionship || userCorpsClasses.length > 0 || (podiumCorps && podiumInfo)) && (
             <div className="px-4 py-4 border-t border-[#333] bg-[#111] flex-shrink-0">
               <FooterContent />
             </div>

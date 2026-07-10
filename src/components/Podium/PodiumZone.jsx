@@ -9,11 +9,13 @@ import { usePodium } from '../../hooks/usePodium';
 import PodiumRegistration from './PodiumRegistration';
 import RehearsalPlanner from './RehearsalPlanner';
 import PodiumCaptionPanel from './PodiumCaptionPanel';
+import PodiumTrajectoryCard from './PodiumTrajectoryCard';
 import PodiumShowPicker from './PodiumShowPicker';
 import CorpsConditionPanel from './CorpsConditionPanel';
 import PodiumStaffPanel from './PodiumStaffPanel';
 import JointRehearsalPanel from './JointRehearsalPanel';
 import PodiumJourneyPanel from './PodiumJourneyPanel';
+import FanFavoriteCard from './FanFavoriteCard';
 
 export default function PodiumZone() {
   const podium = usePodium(true);
@@ -41,8 +43,10 @@ export default function PodiumZone() {
   return (
     <div className="space-y-4">
       <PodiumJourneyPanel />
+      <FanFavoriteCard />
       <RehearsalPlanner podium={podium} />
       <PodiumCaptionPanel podium={podium} />
+      <PodiumTrajectoryCard podium={podium} />
       <CorpsConditionPanel podium={podium} />
       <PodiumStaffPanel podium={podium} />
       <JointRehearsalPanel podium={podium} />
