@@ -970,19 +970,164 @@ has no lineup) · `registerCorps.js` (registration lock: 5 weeks, matching Open)
 
 ---
 
-## 10. Implementation Phases
+## 10. The Build Plan (v2.0 — authoritative)
 
-| Phase | Scope | Est. effort |
-|---|---|---|
-| **0 — Corpus & engine on paper** | `buildPodiumCurves.js`, band/archetype validation notebook, balance doc with concrete coefficients, simulation harness | 1–2 wks |
-| **1 — Core loop (internal alpha)** | Class registration + config touchpoints, `allocateRehearsalBlock`, nightly `processPodiumDay` (no condition system), `RehearsalPlanner` + `CaptionTrajectoryPanel` in Zone C, recap integration | 3–4 wks |
-| **2 — Condition & logistics** | Stamina/morale, venue gazetteer + travel costs, climate index, food plans, rest days, decay, regional anchors, `CorpsConditionPanel`, historical shadows in the trajectory panel | 2–3 wks |
-| **3 — Economy & persistence** | Staff (named, tiered, persistent), clinicians, assistant-director templates, unlock flow, season archival/rollover, caption awards + named finals hardware | 2 wks |
-| **4 — Social & polish** | Joint rehearsals, director-hosted events (all classes), season feed, press releases, auto power-rankings column, league integration, division seeding design, Director Rating | 3–4 wks |
-| **Beta** | One full off-season cycle (49 days) with a capped cohort, tunables live-adjusted weekly, then general unlock the following season | 1 season |
+Three governing principles, restated as build constraints:
 
-Phases 1–2 are the minimum lovable product: the daily rehearsal habit, real scores at real shows,
-trajectory bands. Everything after deepens rather than gates.
+1. **Simple like FMA.** The daily surface is one screen and ≲3 taps. Every system added in any
+   phase must surface to the player as *at most one decision* — if a feature needs a tutorial
+   paragraph, it ships with a one-tap default. A public FMA-style guide (short numbered sections)
+   ships with the beta, not after it.
+2. **Return-worthy.** Every phase must strengthen a comeback loop (nightly recap → morning
+   decision; season → next season; dormancy → heritage-credit comeback), never just add content.
+3. **Integrated yet separate (the SoundSport doctrine).** Podium shares the schedule, seasons,
+   recaps, economy surface, identity, leagues, and UI shell; its scoring, rankings, and
+   competitive state never mix with the fantasy classes'. Concretely: `RANKED_CLASSES` is never
+   modified; Podium gets its own ranking pass; recap entries are class-tagged and filtered.
+
+**Zero-disruption guarantees (apply to every phase):**
+
+- **Additive-only schema.** No existing Firestore field is renamed, retyped, or removed. Podium
+  state is new fields/collections only.
+- **Feature-flagged.** `game-settings/features.podiumClass: false` gates the tab, the callables,
+  and the nightly stage. Rollback at any point = flip the flag; dormant Podium data is inert.
+- **Fantasy pipeline untouched.** The nightly job is restructured into *stages* (Phase 1), but
+  the fantasy stage's inputs, outputs, and timing are byte-identical; the Podium stage runs after
+  it, isolated, with its own run-guard lease — a Podium failure can never block fantasy scoring.
+- **Cohort rollout.** Flag → admin allowlist → beta cohort → level-gated general unlock. Each
+  widening is a config change, not a deploy.
+- **Harness before players.** No phase that changes scoring math ships without the simulation
+  harness passing its assertions (§9, §5.13, §5.6).
+
+### Phase 0 — Data science & calibration *(no product code; 1–2 wks)*
+
+0.1 `functions/scripts/buildVenueGazetteer.js` — extract/normalize/geocode all distinct
+    `location` strings → `podium-config/venues` + bundled JSON (§5.3).
+0.2 `functions/scripts/buildPodiumCurves.js` — logistic fits, day-indexed percentile bands,
+    delta distributions, k-means archetypes → `podium-config/curves` + JSON (§4.1). Completed
+    years only (§14.2.7).
+0.3 Calibration notebook: reputation pacing vs real multi-season climbs (Crown 2004→2013 as
+    reference); dormancy decay vs real hiatus returns; challenge-level archetype mapping.
+0.4 Simulation harness (plain Node, no Firebase): single-season strategy archetypes,
+    multi-season careers, staff-market dynamics. Assertions: envelope containment; balanced-play
+    dominance; no 100s; Champion Status in 10–14 flawless seasons; 30–45% Elite-upset rate;
+    return-weaker invariant; staff cap ≤ +15%; no Legend monopoly.
+0.5 `podium-config/balance` v1: every tunable (block yields, decay rates, condition
+    coefficients, travel tiers, heat index, salary curves, rep thresholds) hot-adjustable
+    without deploys.
+
+### Phase 1 — Invisible foundations *(zero behavior change; 2 wks)*
+
+1.1 **Class-capability registry** — single shared module (consumed by `src/` and `functions/`)
+    declaring per-class `hasLineup / isRanked / hasDivisions / pointCap / usesRehearsal /
+    unlockLevel / unlockCost / participationReward`. Migrate the ~9 mirrored constant sites to
+    read from it. Test: existing four classes behave identically (snapshot tests on validators).
+1.2 **Nightly pipeline staging** — split `dailyOffSeasonProcessor` / `processDailyLiveScores`
+    into ordered stages with per-stage `scoringRunGuard` leases; fantasy stage unchanged; empty
+    flag-gated Podium stage. Live-season stage gates allow Podium work on calendar days 1–21
+    (§14.2.3).
+1.3 **`seasonClock` day-boundary helpers** — server-validated ET day index for block allocation
+    (§14.2.4); client mirrors for countdown UI.
+1.4 **Firestore rules carve-out** — deny client writes to `corps.*.podium` subtree; Podium
+    competitive state additionally lives server-side (`.../podium/state` subcollection) with the
+    profile carrying only display copies (§14.2.5).
+1.5 Feature flag plumbing + `podiumClass` registered in the capability registry
+    (`enabled: false`).
+
+### Phase 2 — The core loop *(internal alpha; 3–4 wks)*
+
+2.1 `registerPodiumCorps`: the 4-step setup — corps (keep/retire/found) → show concept →
+    design (challenge sliders + one-screen auditions with presets) → done (§5.13).
+2.2 Engine: `functions/src/helpers/podium/engine.js` — content/clean state, phase-dependent
+    yields, diminishing returns, neglect decay, envelope + reputation-ceiling scoring (§4.2,
+    §5.13). Pure functions, unit-tested against the harness.
+2.3 `allocateRehearsalBlock` callable — idempotent per (uid, season, day, blockIndex); returns
+    the itemized "Action Complete" panel.
+2.4 Nightly Podium stage v1: recovery/decay → score performing corps → recap entries
+    (`corpsClass: 'podiumClass'`) → `computePodiumRankings` → ranks on corps map.
+2.5 Zone C UI swap: `RehearsalPlanner` (block allocator, ≤3 taps), `CaptionTrajectoryPanel`
+    (curves over percentile bands + historical shadows). ControlBar tab, flag-gated.
+2.6 `selectUserShows`: `multiNight` counts-as-one validation + server-injected major
+    auto-registrations for Podium (3 free picks in weeks 4/5/6) (§5.11, §14.2.6).
+2.7 Exit gate: two full simulated off-seasons on staging with admin accounts; recap/leaderboard/
+    rivals surfaces render Podium correctly; fantasy regression suite green.
+
+### Phase 3 — Condition & logistics *(2–3 wks)*
+
+3.1 Stamina/morale meters + effects (§5.3); rest days; grind fatigue.
+3.2 Travel legs from the gazetteer (tiered), hometown anchoring, weekly route preview in the
+    show picker; climate heat index.
+3.3 Food plans (weekly tier decision).
+3.4 Live-season spring training: move-in purchase, all-day blocks, Family Day diagnostic
+    (§5.9); requires the Phase 1.2 stage gates.
+3.5 `CorpsConditionPanel`; assistant-director plan template (85% autoplay) — the
+    retention-safety valve ships *with* condition, not after it.
+3.6 Exit gate: harness re-run with condition; "rest-optimizer" archetype places between
+    "balanced" and "spam" as designed.
+
+### Phase 4 — Corps Budget & the staff market *(2–3 wks)*
+
+4.1 Corps Budget ledger: per-season, division-equal grant + in-class earnings (show payouts,
+    fundraiser blocks); resets at archival; real money and CorpsCoin can never convert into it
+    (§14.2.1).
+4.2 Fundraiser block conversion (§14.1.2).
+4.3 `podium-staff` collection + season market generation (deterministic from season seed);
+    tiers, traits, salaries, aging.
+4.4 Free agency at registration close: bids → published preference function → contracts;
+    retention raises; loyalty; poaching (§5.6).
+4.5 Clinicians; Tour Manager / Program Coordinator effects.
+4.6 Staff retirement at rollover; retired-Legend → clinician pool; trophy-namesake hooks.
+4.7 Exit gate: staff-market harness assertions; economy sim shows median corps solvent, careless
+    corps broke-but-playable.
+
+### Phase 5 — Reputation & the multi-season spine *(2 wks)*
+
+5.1 Reputation state + tier ceilings wired into the engine's clamp (already stubbed in 2.2).
+5.2 Season archival: rep gains (placement/awards, per-season cap), decay, dormancy detection,
+    heritage credit; staff-contract lapse rules (§5.13).
+5.3 Corps lifecycle: retire/found/rename flows with rep attachment rules.
+5.4 Division seeding: single division below population threshold; seeding-score formula
+    published on the standings page; promotion/relegation + petition-up (§5.7).
+5.5 Exit gate: multi-season harness green (pacing, upsets, dormancy invariant).
+
+### Phase 6 — Shared-calendar features *(all classes; 2–3 wks)*
+
+6.1 Eastern Classic two-night split for **fantasy classes too**: even per-class snake split,
+    day-39 lineup publication, combined standings view (§5.11).
+6.2 Director-hosted events (all classes): `hostEvent` callable, venue tiers, open enrollment,
+    attendance payouts with alt-farm guards (distinct active corps only), event history pages
+    (§5.10, §14.1.8).
+6.3 Regional-anchor UX for fantasy classes (the majors as marquee days).
+6.4 Fan Favorite ballots at majors (reuse `dailyPredictions`); per-show medal counters.
+6.5 Podium into `dci-stats`, `gameRecords`, season archives, Hall of Champions (class-filtered).
+
+### Phase 7 — Social & the return loops *(2–3 wks)*
+
+7.1 Joint rehearsals (§5.12): handshake callables, geography gate, scrimmage report, feed items.
+7.2 Podium rookie journey (guided first week, reusing `journey.js` pattern).
+7.3 Auto power-rankings column via the news pipeline; press-release posts; season feed anchored
+    to the nightly drop.
+7.4 League integration: Podium corps in league matchups (class-filtered scoring).
+7.5 Director Rating (lifetime, placements-only, cross-class) in the lifetime leaderboard job.
+7.6 The public guide — FMA-style short numbered sections, written from this doc.
+
+### Phase 8 — Beta season → launch *(1 season + 1 week)*
+
+8.1 Beta cohort (allowlist, ~50–100 directors incl. FMA veterans) runs one full 49-day
+    off-season; weekly balance tuning via `podium-config/balance`; no deploys for tuning.
+8.2 Instrument the funnel: D1/D7 return rate, blocks-allocated-per-day, rest-day usage,
+    show-selection latency — the "simple like FMA" principle is measured, not asserted.
+8.3 Post-season: beta recap with the cohort (the FMA-Rework-thread constituency review),
+    final constants locked.
+8.4 General unlock (Level 8 / 4,000 CorpsCoin) at the next season boundary; launch
+    announcement; live-season support (spring training) enabled the following live season.
+
+**Sequencing rationale:** 0–1 are risk-free and independently valuable (the registry pays down
+existing tech debt). 2 is the minimum lovable product — the daily habit with real scores. 3–5
+add depth in strict dependency order (condition needs stages; budget needs condition's costs;
+reputation needs archival). 6–7 widen to all classes and the community. Only 6.1/6.2 touch
+fantasy-class behavior at all, and both are additive, flag-gated, and land after Podium has
+proven the machinery. Total: ~16–20 engineering weeks to beta.
 
 ---
 
