@@ -21,7 +21,7 @@ import { claimLadderTier } from '../../../api/functions';
 import { showCoinGain } from '../../xpFeedbackTrigger';
 import DailyChallenges from './DailyChallenges';
 import PredictionGamePanel from './PredictionGamePanel';
-import { TIERS as LADDER_TIERS } from './SeasonLadderPanel';
+import { TIERS as LADDER_TIERS } from './seasonLadderTiers';
 
 const toDate = (value) => {
   if (!value) return null;
@@ -32,171 +32,172 @@ const toDate = (value) => {
 
 const DirectorsReport = memo(
   ({ recentResults, corpsClass, seasonUid, onLineupClick, onConceptClick }) => {
-  const profile = useProfileStore((state) => state.profile);
-  const [claimingTier, setClaimingTier] = useState(null);
-  const celebratedRef = useRef(null);
+    const profile = useProfileStore((state) => state.profile);
+    const [claimingTier, setClaimingTier] = useState(null);
+    const celebratedRef = useRef(null);
 
-  const gameDay = getGameDay();
+    const gameDay = getGameDay();
 
-  // --- Login row: claimed automatically on app load (claimDailyLogin) ---
-  const lastLogin = toDate(profile?.engagement?.lastLogin);
-  const loginDone = !!lastLogin && getGameDay(lastLogin) === gameDay;
-  const streak = profile?.engagement?.loginStreak || 0;
+    // --- Login row: claimed automatically on app load (claimDailyLogin) ---
+    const lastLogin = toDate(profile?.engagement?.lastLogin);
+    const loginDone = !!lastLogin && getGameDay(lastLogin) === gameDay;
+    const streak = profile?.engagement?.loginStreak || 0;
 
-  // --- Predictions: picked or resolved both count as "done for today" ---
-  const questions = useMemo(
-    () => buildQuestions(recentResults, corpsClass),
-    [recentResults, corpsClass]
-  );
-  // No questions (fewer than two scored results) means make-prediction is
-  // genuinely impossible today — drop it from the set instead of pinning
-  // "Today · N of M" below M forever (the server excuses it the same way
-  // when counting weekly-arc days).
-  const predictionAvailable = questions.length > 0;
-
-  // --- Challenges: same server-authoritative state DailyChallenges renders ---
-  const challenges = useMemo(
-    () =>
-      getChallengesForGameDay(gameDay).filter(
-        (c) => c.id !== 'make-prediction' || predictionAvailable
-      ),
-    [gameDay, predictionAvailable]
-  );
-  const challengesDone = useMemo(() => {
-    const bucket = profile?.challenges?.[gameDay] || [];
-    const ids = new Set(bucket.filter((c) => c.completed).map((c) => c.id));
-    return challenges.filter((c) => ids.has(c.id)).length;
-  }, [profile?.challenges, gameDay, challenges]);
-  const predictionBucket = profile?.predictions?.[gameDay] || {};
-  const predictionsDone = predictionBucket.resolved
-    ? questions.length
-    : Math.min(Object.keys(predictionBucket.picks || {}).length, questions.length);
-
-  // --- Pending Season Ladder claims (bonus row, not counted in the set) ---
-  const seasonXP =
-    typeof profile?.xpAtSeasonStart === 'number'
-      ? Math.max(0, (profile.xp || 0) - profile.xpAtSeasonStart)
-      : 0;
-  const claimedTiers = useMemo(() => {
-    const state = profile?.seasonLadder;
-    if (!state || (seasonUid && state.seasonUid !== seasonUid)) return [];
-    return state.claimed || [];
-  }, [profile?.seasonLadder, seasonUid]);
-  const claimableTiers = LADDER_TIERS.filter(
-    (t) => seasonXP >= t.xp && !claimedTiers.includes(t.tier)
-  );
-
-  const doneCount = (loginDone ? 1 : 0) + challengesDone + predictionsDone;
-  const totalCount = 1 + challenges.length + questions.length;
-  const allDone = totalCount > 0 && doneCount >= totalCount;
-
-  // Celebrate finishing the whole daily set — once per game day.
-  useEffect(() => {
-    if (!allDone || celebratedRef.current === gameDay) return;
-    if (typeof window === 'undefined') return;
-    const storageKey = `dailySetCelebrated:${gameDay}`;
-    if (window.localStorage.getItem(storageKey)) {
-      celebratedRef.current = gameDay;
-      return;
-    }
-    window.localStorage.setItem(storageKey, '1');
-    celebratedRef.current = gameDay;
-    window.dispatchEvent(
-      new CustomEvent('celebration', {
-        detail: { message: "Director's Report complete — see you tomorrow!", type: 'default' },
-      })
+    // --- Predictions: picked or resolved both count as "done for today" ---
+    const questions = useMemo(
+      () => buildQuestions(recentResults, corpsClass),
+      [recentResults, corpsClass]
     );
-  }, [allDone, gameDay]);
+    // No questions (fewer than two scored results) means make-prediction is
+    // genuinely impossible today — drop it from the set instead of pinning
+    // "Today · N of M" below M forever (the server excuses it the same way
+    // when counting weekly-arc days).
+    const predictionAvailable = questions.length > 0;
 
-  const handleClaimTier = async (tier) => {
-    setClaimingTier(tier.tier);
-    try {
-      const result = await claimLadderTier({ tier: tier.tier });
-      if (result.data.success && !result.data.alreadyClaimed) {
-        const extra = result.data.grantItem ? ' + Laureate title unlocked!' : '';
-        toast.success(`Tier ${tier.tier} claimed — +${result.data.coinAwarded} CC${extra}`);
-        if (result.data.coinAwarded > 0) {
-          showCoinGain(result.data.coinAwarded, `Ladder Tier ${tier.tier}`);
-        }
+    // --- Challenges: same server-authoritative state DailyChallenges renders ---
+    const challenges = useMemo(
+      () =>
+        getChallengesForGameDay(gameDay).filter(
+          (c) => c.id !== 'make-prediction' || predictionAvailable
+        ),
+      [gameDay, predictionAvailable]
+    );
+    const challengesDone = useMemo(() => {
+      const bucket = profile?.challenges?.[gameDay] || [];
+      const ids = new Set(bucket.filter((c) => c.completed).map((c) => c.id));
+      return challenges.filter((c) => ids.has(c.id)).length;
+    }, [profile?.challenges, gameDay, challenges]);
+    const predictionBucket = profile?.predictions?.[gameDay] || {};
+    const predictionsDone = predictionBucket.resolved
+      ? questions.length
+      : Math.min(Object.keys(predictionBucket.picks || {}).length, questions.length);
+
+    // --- Pending Season Ladder claims (bonus row, not counted in the set) ---
+    const seasonXP =
+      typeof profile?.xpAtSeasonStart === 'number'
+        ? Math.max(0, (profile.xp || 0) - profile.xpAtSeasonStart)
+        : 0;
+    const claimedTiers = useMemo(() => {
+      const state = profile?.seasonLadder;
+      if (!state || (seasonUid && state.seasonUid !== seasonUid)) return [];
+      return state.claimed || [];
+    }, [profile?.seasonLadder, seasonUid]);
+    const claimableTiers = LADDER_TIERS.filter(
+      (t) => seasonXP >= t.xp && !claimedTiers.includes(t.tier)
+    );
+
+    const doneCount = (loginDone ? 1 : 0) + challengesDone + predictionsDone;
+    const totalCount = 1 + challenges.length + questions.length;
+    const allDone = totalCount > 0 && doneCount >= totalCount;
+
+    // Celebrate finishing the whole daily set — once per game day.
+    useEffect(() => {
+      if (!allDone || celebratedRef.current === gameDay) return;
+      if (typeof window === 'undefined') return;
+      const storageKey = `dailySetCelebrated:${gameDay}`;
+      if (window.localStorage.getItem(storageKey)) {
+        celebratedRef.current = gameDay;
+        return;
       }
-    } catch (error) {
-      toast.error(error.message || 'Could not claim tier');
-    } finally {
-      setClaimingTier(null);
-    }
-  };
+      window.localStorage.setItem(storageKey, '1');
+      celebratedRef.current = gameDay;
+      window.dispatchEvent(
+        new CustomEvent('celebration', {
+          detail: { message: "Director's Report complete — see you tomorrow!", type: 'default' },
+        })
+      );
+    }, [allDone, gameDay]);
 
-  if (!profile) return null;
+    const handleClaimTier = async (tier) => {
+      setClaimingTier(tier.tier);
+      try {
+        const result = await claimLadderTier({ tier: tier.tier });
+        if (result.data.success && !result.data.alreadyClaimed) {
+          const extra = result.data.grantItem ? ' + Laureate title unlocked!' : '';
+          toast.success(`Tier ${tier.tier} claimed — +${result.data.coinAwarded} CC${extra}`);
+          if (result.data.coinAwarded > 0) {
+            showCoinGain(result.data.coinAwarded, `Ladder Tier ${tier.tier}`);
+          }
+        }
+      } catch (error) {
+        toast.error(error.message || 'Could not claim tier');
+      } finally {
+        setClaimingTier(null);
+      }
+    };
 
-  return (
-    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
-      {/* Report header — the one count that answers "am I done today?" */}
-      <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
-        <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-300 flex items-center gap-2">
-          <ClipboardList className="w-3.5 h-3.5 text-[#0057B8]" />
-          Director&apos;s Report
-        </h3>
-        <span
-          className={`text-[10px] font-bold font-data tabular-nums ${allDone ? 'text-green-400' : 'text-gray-400'}`}
-        >
-          Today · {doneCount} of {totalCount} done
-        </span>
-      </div>
-      <div className="h-1 bg-[#222]">
-        <div
-          className={`h-full transition-all duration-500 ${allDone ? 'bg-green-500' : 'bg-[#0057B8]'}`}
-          style={{ width: `${totalCount > 0 ? (doneCount / totalCount) * 100 : 0}%` }}
-        />
-      </div>
+    if (!profile) return null;
 
-      {/* Daily login — auto-claimed on load; surfaced so the day's most
-          reliable reward reads as done work, with the streak attached */}
-      <div className="px-4 py-3 border-b border-[#222] flex items-center gap-3">
-        <div
-          className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
-            loginDone ? 'bg-green-500' : 'border border-[#444]'
-          }`}
-        >
-          {loginDone && <Check className="w-3 h-3 text-white" />}
-        </div>
-        <span className={`text-sm flex-1 ${loginDone ? 'text-gray-500' : 'text-white'}`}>
-          Daily login{streak > 1 ? ` — ${streak} day streak` : ''}
-        </span>
-        <span className="text-[10px] font-bold text-purple-400 font-data">+25 XP</span>
-      </div>
-
-      {/* Daily challenges (embedded — no double card chrome) */}
-      <DailyChallenges
-        embedded
-        onLineupClick={onLineupClick}
-        onConceptClick={onConceptClick}
-        predictionAvailable={predictionAvailable}
-      />
-
-      {/* Predictions (embedded); SoundSport gets the placement-only set */}
-      <PredictionGamePanel embedded recentResults={recentResults} corpsClass={corpsClass} />
-
-      {/* Pending ladder claim — a reward already earned should never sit
-          unnoticed in another card */}
-      {claimableTiers.length > 0 && (
-        <div className="px-4 py-3 border-t border-[#222] bg-emerald-500/5 flex items-center gap-3">
-          <Gift className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-          <span className="text-sm text-emerald-300 flex-1">
-            Season Ladder Tier {claimableTiers[0].tier} ready
-            {claimableTiers.length > 1 ? ` (+${claimableTiers.length - 1} more)` : ''}
-          </span>
-          <button
-            onClick={() => handleClaimTier(claimableTiers[0])}
-            disabled={claimingTier !== null}
-            className="h-8 px-3 text-xs font-bold uppercase tracking-wider bg-emerald-600 hover:bg-emerald-500 disabled:bg-[#333] text-white transition-colors press-feedback"
+    return (
+      <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+        {/* Report header — the one count that answers "am I done today?" */}
+        <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
+          <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-300 flex items-center gap-2">
+            <ClipboardList className="w-3.5 h-3.5 text-[#0057B8]" />
+            Director&apos;s Report
+          </h3>
+          <span
+            className={`text-[10px] font-bold font-data tabular-nums ${allDone ? 'text-green-400' : 'text-gray-400'}`}
           >
-            {claimingTier ? '...' : `Claim +${claimableTiers[0].coin} CC`}
-          </button>
+            Today · {doneCount} of {totalCount} done
+          </span>
         </div>
-      )}
-    </div>
-  );
-});
+        <div className="h-1 bg-[#222]">
+          <div
+            className={`h-full transition-all duration-500 ${allDone ? 'bg-green-500' : 'bg-[#0057B8]'}`}
+            style={{ width: `${totalCount > 0 ? (doneCount / totalCount) * 100 : 0}%` }}
+          />
+        </div>
+
+        {/* Daily login — auto-claimed on load; surfaced so the day's most
+          reliable reward reads as done work, with the streak attached */}
+        <div className="px-4 py-3 border-b border-[#222] flex items-center gap-3">
+          <div
+            className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
+              loginDone ? 'bg-green-500' : 'border border-[#444]'
+            }`}
+          >
+            {loginDone && <Check className="w-3 h-3 text-white" />}
+          </div>
+          <span className={`text-sm flex-1 ${loginDone ? 'text-gray-500' : 'text-white'}`}>
+            Daily login{streak > 1 ? ` — ${streak} day streak` : ''}
+          </span>
+          <span className="text-[10px] font-bold text-purple-400 font-data">+25 XP</span>
+        </div>
+
+        {/* Daily challenges (embedded — no double card chrome) */}
+        <DailyChallenges
+          embedded
+          onLineupClick={onLineupClick}
+          onConceptClick={onConceptClick}
+          predictionAvailable={predictionAvailable}
+        />
+
+        {/* Predictions (embedded); SoundSport gets the placement-only set */}
+        <PredictionGamePanel embedded recentResults={recentResults} corpsClass={corpsClass} />
+
+        {/* Pending ladder claim — a reward already earned should never sit
+          unnoticed in another card */}
+        {claimableTiers.length > 0 && (
+          <div className="px-4 py-3 border-t border-[#222] bg-emerald-500/5 flex items-center gap-3">
+            <Gift className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+            <span className="text-sm text-emerald-300 flex-1">
+              Season Ladder Tier {claimableTiers[0].tier} ready
+              {claimableTiers.length > 1 ? ` (+${claimableTiers.length - 1} more)` : ''}
+            </span>
+            <button
+              onClick={() => handleClaimTier(claimableTiers[0])}
+              disabled={claimingTier !== null}
+              className="h-8 px-3 text-xs font-bold uppercase tracking-wider bg-emerald-600 hover:bg-emerald-500 disabled:bg-[#333] text-white transition-colors press-feedback"
+            >
+              {claimingTier ? '...' : `Claim +${claimableTiers[0].coin} CC`}
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+);
 
 DirectorsReport.displayName = 'DirectorsReport';
 

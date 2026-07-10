@@ -25,9 +25,8 @@ describe('getSoundSportRating', () => {
   });
 
   it('agrees with the dashboard threshold table (the copies once diverged)', async () => {
-    const { SOUNDSPORT_RATING_THRESHOLDS, getSoundSportRating: dashboardRating } = await import(
-      '../components/Dashboard/sections/constants'
-    );
+    const { SOUNDSPORT_RATING_THRESHOLDS, getSoundSportRating: dashboardRating } =
+      await import('../components/Dashboard/sections/constants');
     // Same tier at every boundary and between-boundary score
     for (const score of [0, 64.9, 65, 74.9, 75, 84.9, 85, 90, 100]) {
       expect(dashboardRating(score).rating).toBe(getSoundSportRating(score));

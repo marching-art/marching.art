@@ -284,7 +284,13 @@ const rankTier = (rank?: number): TrophyData['tier'] =>
   rank === 1 ? 'gold' : rank === 2 ? 'silver' : 'bronze';
 
 const medalWord = (rank?: number): string =>
-  rank === 1 ? 'Champion' : rank === 2 ? 'Silver Medalist' : rank === 3 ? 'Bronze Medalist' : `${rank}th Place`;
+  rank === 1
+    ? 'Champion'
+    : rank === 2
+      ? 'Silver Medalist'
+      : rank === 3
+        ? 'Bronze Medalist'
+        : `${rank}th Place`;
 
 const classLabel = (key?: string): string =>
   (key && CORPS_CLASS_LABELS[toCanonicalClassKey(key) as CorpsClass]) || '';

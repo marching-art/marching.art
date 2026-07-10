@@ -170,9 +170,8 @@ const BasicsTab = () => (
         ))}
       </div>
       <p className="mb-3">
-        Every {XP_PER_LEVEL.toLocaleString()} XP is one director level. Levels never reset, and
-        each one brings a new title on the ladder from Rookie to Eternal. Here is every way to
-        earn XP:
+        Every {XP_PER_LEVEL.toLocaleString()} XP is one director level. Levels never reset, and each
+        one brings a new title on the ladder from Rookie to Eternal. Here is every way to earn XP:
       </p>
       <div className="bg-black/30 rounded-sm p-3 mb-3">
         {XP_SOURCE_GUIDE.map((source) => (
@@ -292,9 +291,9 @@ const ClassesTab = () => (
 
     <div className="bg-[#0057B8]/10 border border-[#0057B8]/30 rounded-sm p-3">
       <p className="text-xs text-gray-300">
-        <strong className="text-white">Tip:</strong> Unlock by completing seasons, by level, or
-        with CorpsCoin. A Class = 1 season, Lvl 3, or 1,000 CC. Open = 2 seasons, Lvl 5, or 2,500
-        CC. World = 3 seasons, Lvl 10, or 5,000 CC.
+        <strong className="text-white">Tip:</strong> Unlock by completing seasons, by level, or with
+        CorpsCoin. A Class = 1 season, Lvl 3, or 1,000 CC. Open = 2 seasons, Lvl 5, or 2,500 CC.
+        World = 3 seasons, Lvl 10, or 5,000 CC.
       </p>
     </div>
   </div>

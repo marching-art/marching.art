@@ -28,8 +28,7 @@ export function surfaceDailyLoginPayoff(result) {
   // Floating pills: the daily XP and any coin (milestone CC, level-up
   // stipend, achievement CC) that landed with the claim.
   if (result.xpAwarded > 0) {
-    const streakNote =
-      result.loginStreak > 1 ? `${result.loginStreak} day streak` : 'Daily login';
+    const streakNote = result.loginStreak > 1 ? `${result.loginStreak} day streak` : 'Daily login';
     showXPGain(result.xpAwarded, streakNote);
   }
   if (result.coinAwarded > 0) {
@@ -39,10 +38,7 @@ export function surfaceDailyLoginPayoff(result) {
   // Streak milestone: a real moment ("Week Warrior!"), not just a pill.
   if (result.milestoneReached) {
     const m = result.milestoneReached;
-    celebrate(
-      `${m.title}${m.freeFreeze ? ' — free Streak Freeze earned!' : ''}`,
-      'achievement'
-    );
+    celebrate(`${m.title}${m.freeFreeze ? ' — free Streak Freeze earned!' : ''}`, 'achievement');
   }
 
   // Level-up: fire the mounted-but-never-triggered full-screen moment.

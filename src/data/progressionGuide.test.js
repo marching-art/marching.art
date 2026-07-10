@@ -19,9 +19,7 @@ import {
   XP_SOURCES as SERVER_XP_SOURCES,
   LEVEL_TITLES as SERVER_LEVEL_TITLES,
 } from '../../functions/src/helpers/xpCalculations.js';
-import {
-  STREAK_MILESTONES,
-} from '../../functions/src/helpers/engagementRewards.js';
+import { STREAK_MILESTONES } from '../../functions/src/helpers/engagementRewards.js';
 import { CHALLENGE_POOL } from '../../functions/src/helpers/dailyChallenges.js';
 
 describe('progression guide mirrors the backend economy', () => {

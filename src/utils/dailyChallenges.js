@@ -90,8 +90,7 @@ export const CHALLENGE_POOL = [
     link: null,
     action: 'concept',
     xp: 10,
-    check: (profile) =>
-      Object.values(profile?.corps || {}).some((c) => c && c.showConcept?.theme),
+    check: (profile) => Object.values(profile?.corps || {}).some((c) => c && c.showConcept?.theme),
   },
 ];
 

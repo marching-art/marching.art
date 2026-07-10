@@ -109,21 +109,24 @@ export const PROGRESSION_AXES = [
     id: 'journey',
     label: 'Your journey — Level & Title',
     meaning: `Experience over time. Every ${XP_PER_LEVEL.toLocaleString()} XP is a level; levels carry titles (Rookie → Eternal) and unlock classes early.`,
-    raise: 'Everything pays XP — logins, shows, challenges, predictions, league wins, seasons. See the sources below.',
+    raise:
+      'Everything pays XP — logins, shows, challenges, predictions, league wins, seasons. See the sources below.',
   },
   {
     id: 'standing',
     label: 'Your standing — Class · Rank',
     meaning:
       'How good you are right now: your flagship corps’ live rank in its class (e.g. "World Class · #14"), recomputed after every night’s scores from your most recent daily total. SoundSport shows a medal rating instead — it never ranks.',
-    raise: 'Score higher: field a stronger lineup, register for more shows, and outperform the corps above you.',
+    raise:
+      'Score higher: field a stronger lineup, register for more shows, and outperform the corps above you.',
   },
   {
     id: 'legacy',
     label: 'Your legacy — Trophies, Records & Mastery',
     meaning:
       'What you’ve permanently earned: championships and medals in the Trophy Case, Records Book entries, caption mastery tiers, Hall of Champions banners. Concrete and forever — no aggregate needed.',
-    raise: 'Win things. Finish seasons, take finals medals, push caption points past mastery thresholds.',
+    raise:
+      'Win things. Finish seasons, take finals medals, push caption points past mastery thresholds.',
   },
   {
     id: 'context',

@@ -10,23 +10,9 @@ import { TrendingUp, Gift, Lock, Award } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { claimLadderTier } from '../../../api/functions';
 import { showCoinGain } from '../../xpFeedbackTrigger';
-
-// Exported for the Director's Report, which surfaces pending tier claims.
-// Mirrors functions/src/helpers/seasonLadder.js LADDER_TIERS.
-export const TIERS = [
-  { tier: 1, xp: 150, coin: 50 },
-  { tier: 2, xp: 300, coin: 50 },
-  { tier: 3, xp: 500, coin: 75 },
-  { tier: 4, xp: 750, coin: 75 },
-  { tier: 5, xp: 1000, coin: 100 },
-  { tier: 6, xp: 1300, coin: 100 },
-  { tier: 7, xp: 1600, coin: 125 },
-  { tier: 8, xp: 2000, coin: 150 },
-  { tier: 9, xp: 2400, coin: 175 },
-  { tier: 10, xp: 2800, coin: 200 },
-  { tier: 11, xp: 3200, coin: 250 },
-  { tier: 12, xp: 3600, coin: 300, exclusive: 'Laureate title' },
-];
+// Tier table lives in its own module so this file only exports components
+// (react-refresh) — the Director's Report imports it from there too.
+import { TIERS } from './seasonLadderTiers';
 
 const SeasonLadderPanel = memo(({ profile, seasonUid }) => {
   const [claiming, setClaiming] = useState(null);
@@ -60,7 +46,8 @@ const SeasonLadderPanel = memo(({ profile, seasonUid }) => {
       if (result.data.success && !result.data.alreadyClaimed) {
         const extra = result.data.grantItem ? ' + Laureate title unlocked!' : '';
         toast.success(`Tier ${tier.tier} claimed — +${result.data.coinAwarded} CC${extra}`);
-        if (result.data.coinAwarded > 0) showCoinGain(result.data.coinAwarded, `Ladder Tier ${tier.tier}`);
+        if (result.data.coinAwarded > 0)
+          showCoinGain(result.data.coinAwarded, `Ladder Tier ${tier.tier}`);
       }
     } catch (error) {
       toast.error(error.message || 'Could not claim tier');
