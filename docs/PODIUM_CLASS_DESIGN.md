@@ -9,7 +9,8 @@ assistant director, historical shadows, climate, Director Rating, named hardware
 that Podium is never locked out of week-1 events; v1.3 names the anchor calendar after the real
 DCI majors and adds integrated World / Open / A divisions inside Podium; v1.4 specs the
 two-night Eastern Classic split; v1.5 hard-codes the branded majors in the schedule generator
-(implemented) and sets the counts-as-one / even-split / Podium-auto-registration rules
+(implemented) and sets the counts-as-one / even-split / Podium-auto-registration rules; v1.6
+adds the Gap & Conflict Register (§14) — open design decisions live there
 
 ---
 
@@ -884,6 +885,110 @@ trajectory bands. Everything after deepens rather than gates.
 ---
 
 *§13 (round-two backlog) was promoted into the body in v1.2 — see §12 for the mapping.*
+
+---
+
+## 14. Gap & Conflict Register (v1.6 audit)
+
+A deliberate pass over everything the FMA research surfaced vs. what §1–§11 commit to, and over
+every place Podium's philosophy grinds against the existing codebase. Gaps are candidate design
+additions; conflicts are things that **must** be resolved before Phase 1 code.
+
+### 14.1 Gaps — FMA elements not yet in the design
+
+1. **Auditions (the missing pre-season ritual).** FMA's pre-season had *two* knobs: challenge
+   levels AND audition point allocation (spend ~300 points across captions via sliders to set
+   starting stats). We kept challenge levels but initialize captions purely from corpus baselines
+   — no player agency in the starting *distribution*. Proposal: an *Auditions* step at
+   registration — a fixed budget of audition points allocated across the 8 captions, shifting the
+   day-1 starting position **within** the historical day-1 band for the chosen challenge profile
+   (identity: "we recruit brass talent"). Bounded by the envelope, so no power creep — pure
+   distribution choice. This was FMA's single most tactile pre-season moment; skipping it wastes
+   a beloved ritual that costs one screen.
+2. **Campaigns — the rehearse-vs-fundraise tradeoff.** FMA's passive campaigns (energy → money
+   or influence) made income an *opportunity cost of rehearsal*. Our economy earns passively
+   (participation rewards). Proposal: any rehearsal block may be converted to a **Fundraiser**
+   (CorpsCoin/budget instead of caption growth) — the guns-vs-butter choice, one line in the
+   allocator. Especially meaningful early season when cash for staff/travel is tight.
+3. **Per-show medals.** FMA profiles accumulate lifetime gold/silver/bronze medals for every
+   regular-season event (veterans flaunt "70+ golds"). Cheap collector hook: top-3 at any Podium
+   show banks a medal counter on the profile. Distinct from trophies (majors/finals hardware).
+4. **Director skill tree — sidegrades only.** FMA's director levels → skill points → buffs was a
+   core long-game hook we dropped entirely (to avoid power compounding). Recoverable as
+   **specializations with tradeoffs** (e.g. "Brass pedagogue: +5% brass block yield, −2% guard")
+   — identity, not power. Optional; Phase 3+.
+5. **Fan Favorite votes.** FMA's community ran "FMA VOTES" / fan-favorite polls by hand. The
+   `dailyPredictions` infrastructure already exists — a Fan Favorite ballot at each major
+   (cosmetic banner, no score impact) is nearly free and productizes another community ritual.
+6. **Stats-archive parity.** FMA's queryable all-seasons stats archive (/stats) is a documented
+   retention engine. Podium results must flow into `dci-stats`, the records book
+   (`gameRecords.js`), and season archives from day one — per-division, per-caption records
+   included. Currently unspecced.
+7. **Rookie onboarding.** The existing `journey.js` first-season quest covers fantasy; Podium's
+   deeper loop needs its own guided first week (set challenge levels → first rehearsal → read the
+   trajectory panel → first show). FMA was brutal to newcomers; we shouldn't be.
+8. **Hosted-event alt-farming guard.** FMA's endgame was alt-account cheating. Hosted-event
+   payouts scale with attendance — attendance must count only *distinct, active* corps (activity
+   threshold: scored ≥1 show that season), with per-host and per-day caps, or alts farm payouts.
+
+### 14.2 Conflicts — where Podium grinds against existing code/philosophy
+
+1. **[LOAD-BEARING] Money touching score breaks the site's core covenant.**
+   `scoring.js` states the existing invariant: *competitive score comes ONLY from historical
+   data — show concepts, coins, streaks never modify it.* Podium deliberately breaks this inside
+   its own class: CorpsCoin buys staff, clinicians, camp days, food, travel — all of which shape
+   score. Because CorpsCoin is a **shared cross-class wallet**, a veteran with a 50k stockpile
+   from years of fantasy play starts Podium with a purchased advantage — exactly FMA's influence
+   compounding, reintroduced through the wallet. **Recommended resolution: a dual-currency
+   split.** CorpsCoin stays cosmetic/unlock currency game-wide (covenant intact); Podium's
+   competitive inputs are paid from a **Corps Budget** — a per-season, class-internal currency
+   that starts equal for every corps in a division, is earned only by in-class activity
+   (show payouts, fundraiser blocks, hosting), and resets at archival. Realistic (corps budgets
+   are annual), self-balancing, and it makes the §14.1.2 fundraiser blocks meaningful. The
+   alternative (shared CC with per-season spend caps) is simpler but leaves the optics problem.
+2. **Lineup-assumption coupling.** Large parts of the code assume every class has a lineup and a
+   point cap: `saveLineup`/`validateLineup` validClasses, `activeLineups` uniqueness,
+   `weeklyTrades`, `captionWindows` deadlines, `LineupSimulatorPanel`, `CaptionSelectionModal`,
+   `lineupNeedsUpdate`/`duplicateConflict` flags, trade-deadline UI in `seasonClock`. Podium has
+   none of these. Piecemeal `if (podium) skip` guards will rot. **Recommended resolution: a
+   central class-capability registry** (single module consumed by both `src/` and `functions/`)
+   declaring per-class capabilities — `hasLineup`, `isRanked`, `hasDivisions`, `pointCap`,
+   `usesRehearsal` — replacing the ~9 mirrored constant sites §8 already flags. This is Phase 1
+   pre-work and it pays for itself even if Podium never ships (the mirrored constants are an
+   existing bug farm).
+3. **The nightly processor treats spring training as dead air.** `processDailyLiveScores`
+   early-returns on calendar days 1–21 ("No scoring today"). Podium needs those days *processed*
+   (recovery, decay, assistant-director autoplay, camp economics) without waking the fantasy
+   pipeline. The daily job needs restructuring into per-system stages with their own day gates —
+   touching the `scoringRunGuard` idempotency lease, which currently guards the whole run.
+4. **Day-boundary semantics for rehearsal.** Fantasy deadlines run on ET wall-clock
+   (`seasonClock.js` is the declared single source of truth). Podium's "one day's blocks" must
+   adopt the same ET day boundary explicitly (blocks roll at the 02:00 ET processing hour), or
+   players near midnight double-allocate. Every Podium callable validates "today" server-side
+   against the same clock module — never client time.
+5. **Profile-write security.** Podium state lives on the profile doc
+   (`corps.podiumClass.podium.*`), parts of which are legitimately client-writable (biography,
+   avatar). Firestore rules must deny client writes to the `podium` subtree specifically —
+   otherwise caption values are editable in the browser console. The fantasy classes never had
+   this exposure (their competitive inputs live in server-validated lineups); Podium's
+   competitive state on a user-owned doc is a **new** attack surface. Alternative: move Podium
+   state to a server-only subcollection (`.../podium/state`) and keep the profile doc clean.
+6. **Auto-registration vs. `selectedShows` shape.** The majors auto-register Podium corps, but
+   `selectedShows` is user-written via `selectUserShows` (max 4, one/day). The major entries must
+   be server-injected (week rollover writes them, UI shows them locked, validation counts them
+   against the cap) — or scoring treats majors as virtual attendance without touching
+   `selectedShows`. Decide once, in Phase 1; retrofitting is painful.
+7. **Live-season envelope contamination.** The live scraper writes the *current* year into
+   `historical_scores/{year}` as the season progresses. Podium's realism envelope must be built
+   from **completed** years only, or mid-season the envelope shifts under players' feet (and
+   early-season live data would define absurdly tight day bands).
+8. **Cosmetic inconsistency: Dallas vs. San Antonio.** Off-season hard-codes the Southwestern in
+   Dallas; live seasons keep the real scraped event (San Antonio). Accepted as branding freedom,
+   noted so nobody files it as a bug.
+9. **Faucet inflation.** Podium participation rewards + hosting payouts add a new CorpsCoin
+   faucet on top of a user's existing four classes. If conflict #1 resolves to dual currency,
+   most of this pressure disappears (Podium activity pays Budget, not CC); the residual
+   (unlock/participation CC) needs one `economyStatsJob` calibration pass.
 
 ---
 
