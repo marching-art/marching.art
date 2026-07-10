@@ -10,7 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { useSeasonStore } from '../store/seasonStore';
 import { useScheduleStore } from '../store/scheduleStore';
 import { useProfileStore } from '../store/profileStore';
-import { ShowRegistrationModal } from '../components/Schedule';
+import { ShowRegistrationModal, HostEventCard } from '../components/Schedule';
 import { formatCountdown } from '../utils/seasonClock';
 import { useSeasonDeadlines } from '../hooks/useSeasonClock';
 import { CHAMPIONSHIP_EVENTS } from './scheduleConstants';
@@ -255,6 +255,9 @@ const Schedule = () => {
             seasonUid={seasonUid}
           />
         )}
+
+        {/* Director-hosted events (all classes) — flag-gated, self-hiding */}
+        {user && <HostEventCard seasonUid={seasonUid} />}
       </div>
 
       {/* REGISTRATION MODAL */}

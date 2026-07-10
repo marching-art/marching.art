@@ -6,7 +6,13 @@
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { initCareer, applySeasonResult, applyDormancy, finalsPercentile } = require("./career");
+const {
+  initCareer,
+  applySeasonResult,
+  applyDormancy,
+  finalsPercentile,
+  buildFinalStandings,
+} = require("./career");
 const balance = require("./balanceConfig.json");
 const curves = require("./curveData.json");
 
@@ -81,6 +87,36 @@ describe("career dormancy", () => {
   test("zero missed seasons is a no-op", () => {
     const start = { ...initCareer(), reputation: 55 };
     assert.equal(applyDormancy(start, 0, balance).reputation, 55);
+  });
+});
+
+describe("buildFinalStandings", () => {
+  test("ranks by latest total, excludes unscored corps, assigns places", () => {
+    const standings = buildFinalStandings([
+      { uid: "b", corpsName: "Beta", lastTotal: 88.2, lastScoredDay: 49 },
+      { uid: "ghost", corpsName: "Ghost", lastTotal: null, lastScoredDay: null },
+      { uid: "a", corpsName: "Alpha", lastTotal: 91.5, lastScoredDay: 49 },
+      { uid: "c", corpsName: "Gamma", lastTotal: 76.0, lastScoredDay: 35 },
+    ]);
+    assert.deepEqual(
+      standings.map((s) => [s.uid, s.place]),
+      [["a", 1], ["b", 2], ["c", 3]]
+    );
+  });
+
+  test("ties break deterministically by uid (idempotent re-sweeps)", () => {
+    const entries = [
+      { uid: "z", lastTotal: 80, lastScoredDay: 49 },
+      { uid: "a", lastTotal: 80, lastScoredDay: 49 },
+    ];
+    const first = buildFinalStandings(entries);
+    const again = buildFinalStandings([...entries].reverse());
+    assert.deepEqual(first, again);
+    assert.equal(first[0].uid, "a");
+  });
+
+  test("empty sweep produces empty standings (champion null upstream)", () => {
+    assert.deepEqual(buildFinalStandings([]), []);
   });
 });
 

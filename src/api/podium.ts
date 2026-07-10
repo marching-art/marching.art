@@ -95,6 +95,13 @@ export const hirePodiumClinician = createCallable<
   { success: boolean; clinician: Record<string, unknown>; budget: Record<string, unknown> }
 >('hirePodiumClinician');
 
+// Hosting is ALL-class (design §5.10): any director with a fielded corps can
+// rent a venue and put a show on the season schedule. CorpsCoin economy only.
+export const hostEvent = createCallable<
+  { eventName: string; venueTier: string; day: number; location: string },
+  { success: boolean; eventId: string; day: number; eventName: string }
+>('hostEvent');
+
 export interface PodiumStaffPerson {
   id: string;
   name: string;

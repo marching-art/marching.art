@@ -67,6 +67,29 @@ export const AUDITION_PRESETS = [
   { id: 'visual', label: 'Visual-forward', points: { VP: 20, VA: 15, CG: 15 } },
 ];
 
+// Venue tiers for director-hosted events (all classes). Display copy of the
+// server's balanceConfig.hostedEvents — pricing/validation are authoritative
+// server-side in the hostEvent callable.
+export const VENUE_TIERS = [
+  {
+    id: 'highSchool',
+    label: 'High School Stadium',
+    rentalCC: 200,
+    capacity: 15,
+    payoutPerCorpsCC: 20,
+  },
+  { id: 'collegeBowl', label: 'College Bowl', rentalCC: 500, capacity: 30, payoutPerCorpsCC: 25 },
+  { id: 'nflStadium', label: 'NFL Stadium', rentalCC: 1000, capacity: 60, payoutPerCorpsCC: 30 },
+];
+
+export const HOSTING_RULES = {
+  minDaysAhead: 2,
+  lastHostableDay: 44,
+  majorDays: [28, 35, 41, 42],
+  nameMin: 3,
+  nameMax: 60,
+};
+
 export const REP_TIER_NAMES = {
   1: 'Community Corps',
   2: 'Regional Contender',

@@ -145,38 +145,101 @@ function applyDormancy(career, missedSeasons, cfg) {
   };
 }
 
+// The archived-standings doc keeps every realistic field size well under the
+// 1 MB doc cap; the slice only matters if Podium someday exceeds this.
+const FINAL_STANDINGS_CAP = 200;
+
 /**
- * Archive every corps of a just-ended season into careers. Runs once per
- * rollover under its own lease (caller provides it). Best-effort per corps.
+ * Rank a season's swept entries into final standings (pure). Latest-total
+ * ordering, matching the nightly rankings the players watched all season.
+ * Unscored corps (registered, never performed) are excluded. Deterministic
+ * tiebreak on uid so idempotent re-sweeps write identical docs.
+ */
+function buildFinalStandings(entries) {
+  return entries
+    .filter((entry) => entry.lastTotal != null)
+    .sort((a, b) => b.lastTotal - a.lastTotal || String(a.uid).localeCompare(String(b.uid)))
+    .slice(0, FINAL_STANDINGS_CAP)
+    .map((entry, index) => ({ ...entry, place: index + 1 }));
+}
+
+/**
+ * Archive every corps of a just-ended season into careers, then freeze the
+ * season's champion + final standings into the public recap parent doc
+ * (`podium-recaps/{seasonUid}`) — the permanent record the Scores archive and
+ * profile résumés read. Runs once per rollover under its own lease (caller
+ * provides it). Best-effort per corps; idempotent (re-sweeps skip archived
+ * careers but still rebuild the identical standings doc).
  */
 async function archivePodiumSeason(db, previousSeason) {
   const roster = await store.rosterCollection(db, previousSeason.seasonUid).get();
   let archived = 0;
+  const swept = [];
   for (const rosterDoc of roster.docs) {
     const uid = rosterDoc.id;
     try {
       const stateSnapshot = await store.stateRef(db, uid).get();
-      if (!stateSnapshot.exists || stateSnapshot.data().seasonUid !== previousSeason.seasonUid) {
-        continue;
-      }
-      const state = stateSnapshot.data();
+      const state =
+        stateSnapshot.exists && stateSnapshot.data().seasonUid === previousSeason.seasonUid
+          ? stateSnapshot.data()
+          : null;
       const careerSnapshot = await careerRef(db, uid).get();
       const career = careerSnapshot.exists ? careerSnapshot.data() : initCareer();
-      if (career.lastSeasonUid === previousSeason.seasonUid) continue; // already archived
-      const updated = applySeasonResult(
-        career,
-        { seasonUid: previousSeason.seasonUid, seasonIndex: previousSeason.index, state },
-        store.balance
-      );
-      updated.updatedAt = new Date().toISOString();
-      await careerRef(db, uid).set(updated);
-      archived++;
+      if (state && career.lastSeasonUid !== previousSeason.seasonUid) {
+        const updated = applySeasonResult(
+          career,
+          { seasonUid: previousSeason.seasonUid, seasonIndex: previousSeason.index, state },
+          store.balance
+        );
+        updated.updatedAt = new Date().toISOString();
+        await careerRef(db, uid).set(updated);
+        archived++;
+      }
+      if (state) {
+        swept.push({
+          uid,
+          corpsName: state.corpsName || null,
+          lastTotal: state.lastTotal ?? null,
+          lastScoredDay: state.lastScoredDay ?? null,
+          medals: state.medals || {},
+        });
+      } else {
+        // The state was already replaced (lazy self-archival at re-registration
+        // for the new season) — recover the finished season from the career.
+        const entry = (career.history || []).find(
+          (h) => h && h.seasonUid === previousSeason.seasonUid
+        );
+        if (entry) {
+          swept.push({
+            uid,
+            corpsName: entry.corpsName || null,
+            lastTotal: entry.finalsTotal ?? null,
+            lastScoredDay: entry.finalsDay ?? null,
+            medals: {},
+          });
+        }
+      }
     } catch (error) {
       logger.error(`[podium] career archival failed for ${uid}: ${error.message}`);
     }
   }
+
+  const finalStandings = buildFinalStandings(swept);
+  await db.doc(`podium-recaps/${previousSeason.seasonUid}`).set(
+    {
+      seasonUid: previousSeason.seasonUid,
+      seasonIndex: previousSeason.index,
+      champion: finalStandings[0] || null,
+      finalStandings,
+      corpsCount: roster.size,
+      archivedAt: new Date().toISOString(),
+    },
+    { merge: true }
+  );
+
   logger.info(
-    `[podium] archived season ${previousSeason.seasonUid} (index ${previousSeason.index}): ${archived} careers.`
+    `[podium] archived season ${previousSeason.seasonUid} (index ${previousSeason.index}): ` +
+      `${archived} careers, ${finalStandings.length} in final standings.`
   );
   return archived;
 }
@@ -190,5 +253,6 @@ module.exports = {
   finalsPercentile,
   applySeasonResult,
   applyDormancy,
+  buildFinalStandings,
   archivePodiumSeason,
 };
