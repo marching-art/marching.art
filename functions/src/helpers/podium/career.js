@@ -283,20 +283,53 @@ async function archivePodiumSeason(db, previousSeason) {
   // Hall of Champions (Phase 6.5): merge the Podium top 3 into the season's
   // champions doc — the same doc the fantasy finals write, same entry shape
   // (awardFinalsAndSaveChampions), so the Hall renders Podium class-filtered
-  // with zero special-casing. Isolated: a Hall failure never fails archival.
+  // with zero special-casing. Each medalist also banks a Finals medal in
+  // their profile trophy case (`trophies.championships`, fantasy shape) —
+  // the trophy-case client renders corpsClass podiumClass as the
+  // metal-colored Gem. Isolated: a Hall failure never fails archival.
   if (finalStandings.length > 0) {
     try {
+      const metals = ["gold", "silver", "bronze"];
       const champions = [];
       for (const entry of finalStandings.slice(0, 3)) {
         let username = "Unknown";
         try {
           const profileSnapshot = await store.profileRef(db, entry.uid).get();
-          if (profileSnapshot.exists) {
-            const profile = profileSnapshot.data();
+          const profile = profileSnapshot.exists ? profileSnapshot.data() : null;
+          if (profile) {
             username = profile.username || profile.displayName || "Unknown";
           }
+          // Finals medal — idempotent per season (re-sweeps skip the append).
+          const existing = (profile && profile.trophies && profile.trophies.championships) || [];
+          const alreadyAwarded = existing.some(
+            (trophy) =>
+              trophy &&
+              trophy.corpsClass === "podiumClass" &&
+              trophy.seasonName === previousSeason.seasonUid
+          );
+          if (!alreadyAwarded) {
+            await store.profileRef(db, entry.uid).set(
+              {
+                trophies: {
+                  championships: [
+                    ...existing,
+                    {
+                      type: "championship",
+                      metal: metals[entry.place - 1],
+                      corpsClass: "podiumClass",
+                      seasonName: previousSeason.seasonUid,
+                      eventName: "Podium Class Finals",
+                      score: entry.lastTotal,
+                      rank: entry.place,
+                    },
+                  ],
+                },
+              },
+              { merge: true }
+            );
+          }
         } catch (profileError) {
-          logger.warn(`[podium] username lookup failed for ${entry.uid}: ${profileError.message}`);
+          logger.warn(`[podium] medal/username write failed for ${entry.uid}: ${profileError.message}`);
         }
         champions.push({
           rank: entry.place,

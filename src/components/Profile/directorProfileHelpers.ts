@@ -342,7 +342,9 @@ const trophyDescription = (t: CompetitionTrophy): string =>
   'Competition award';
 
 export function getCompetitionTrophies(profile: UserProfile): TrophyData[] {
-  const real = [...getRealTrophies(profile), ...getPodiumMedalTrophies(profile)];
+  const real = [...getRealTrophies(profile), ...getPodiumMedalTrophies(profile)].sort(
+    (a, b) => (a.sortWeight ?? 999) - (b.sortWeight ?? 999)
+  );
   return real.length > 0 ? real : getLegacySyntheticTrophies(profile);
 }
 
@@ -450,7 +452,12 @@ function getRealTrophies(profile: UserProfile): TrophyData[] {
 // Podium Class show medals — the FMA "70+ regular-season golds" collector hook.
 // Lifetime = archived seasons' medal counts (corps.podiumClass.seasonHistory,
 // written at each rollover) plus the current season's running counters
-// (corps.podiumClass.medals, written nightly). One trophy row per metal.
+// (corps.podiumClass.medals, written nightly). Bare-icon encoding: ONE Medal
+// icon per metal, metal-colored, with the lifetime count in the tooltip —
+// counts stay legible without flooding the case (unlike per-award icons,
+// these are per-show medals and can reach 70+). Podium FINALS medals are a
+// separate thing: `trophies.championships` entries with corpsClass
+// 'podiumClass', which getRealTrophies renders as the metal-colored Gem.
 // -----------------------------------------------------------------------------
 
 interface PodiumMedalCounts {
@@ -480,18 +487,20 @@ export function getPodiumMedalTrophies(profile: UserProfile): TrophyData[] {
   addCounts(podiumCorps.medals);
 
   const metals = [
-    { key: 'gold' as const, label: 'Gold' },
-    { key: 'silver' as const, label: 'Silver' },
-    { key: 'bronze' as const, label: 'Bronze' },
+    { key: 'gold' as const, label: 'Gold', rank: 1 },
+    { key: 'silver' as const, label: 'Silver', rank: 2 },
+    { key: 'bronze' as const, label: 'Bronze', rank: 3 },
   ];
   return metals
     .filter(({ key }) => lifetime[key] > 0)
-    .map(({ key, label }) => ({
+    .map(({ key, label, rank }) => ({
       id: `podium-medals-${key}`,
       title: `Podium ${label} ×${lifetime[key]}`,
       description: 'Podium Class show medals (lifetime)',
-      tier: key,
       icon: Medal,
+      color: METAL_COLOR[rank] || 'text-gray-300',
+      // Between the regional champions (2000+) and the finalists (3000+).
+      sortWeight: 2500 + rank,
     }));
 }
 

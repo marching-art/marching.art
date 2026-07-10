@@ -417,7 +417,8 @@ async function commitDailyScoring({
 
   // --- TROPHY AWARDING LOGIC ---
   // OPTIMIZATION #5: Uses shared trophy awarding helpers
-  awardRegionalTrophies(batch, dailyRecap, scoredDay, seasonData, db);
+  // (async: day 42 reads the day-41 recap for the combined Eastern field)
+  await awardRegionalTrophies(batch, dailyRecap, scoredDay, seasonData, db);
 
   if (scoredDay === 46) {
     awardClassChampionshipTrophies(batch, dailyRecap, seasonData, db);
