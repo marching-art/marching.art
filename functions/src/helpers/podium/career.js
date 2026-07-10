@@ -75,6 +75,24 @@ async function ensureSeasonIndex(db, seasonData) {
 }
 
 /**
+ * The most recent PREVIOUS season ({seasonUid, index}) from the global index
+ * history, or null. Lets the nightly stage re-attempt a failed archival
+ * sweep on later nights — ensureSeasonIndex only reports `previous` on the
+ * single call that performs the rollover.
+ */
+async function latestPreviousSeason(db) {
+  const snapshot = await db.doc(SEASONS_DOC).get();
+  if (!snapshot.exists) return null;
+  let latest = null;
+  for (const entry of Object.values(snapshot.data().history || {})) {
+    if (entry && entry.seasonUid && (!latest || entry.index > latest.index)) {
+      latest = { seasonUid: entry.seasonUid, index: entry.index };
+    }
+  }
+  return latest;
+}
+
+/**
  * Look up the global index of a past season (null when unknown).
  */
 async function seasonIndexFor(db, seasonUid) {
@@ -220,24 +238,37 @@ async function archivePodiumSeason(db, previousSeason) {
   for (const rosterDoc of roster.docs) {
     const uid = rosterDoc.id;
     try {
-      const stateSnapshot = await store.stateRef(db, uid).get();
-      const state =
-        stateSnapshot.exists && stateSnapshot.data().seasonUid === previousSeason.seasonUid
-          ? stateSnapshot.data()
-          : null;
-      const careerSnapshot = await careerRef(db, uid).get();
-      const career = careerSnapshot.exists ? careerSnapshot.data() : initCareer();
-      if (state && career.lastSeasonUid !== previousSeason.seasonUid) {
-        const updated = applySeasonResult(
-          career,
-          { seasonUid: previousSeason.seasonUid, seasonIndex: previousSeason.index, state },
-          store.balance
-        );
-        updated.updatedAt = new Date().toISOString();
-        await careerRef(db, uid).set(updated);
-        await appendProfileSeasonHistory(db, uid, previousSeason.seasonUid, state);
-        archived++;
-      }
+      // Transactional per corps: registerPodiumCorps can lazily self-archive
+      // and/or freshStart-reset the career concurrently on rollover night —
+      // re-reading state AND career inside the transaction guarantees the
+      // sweep never clobbers a just-committed registration (both sides are
+      // idempotent via the lastSeasonUid / seasonUid guards).
+      const { state, career } = await db.runTransaction(async (transaction) => {
+        const stateSnapshot = await transaction.get(store.stateRef(db, uid));
+        const txnState =
+          stateSnapshot.exists && stateSnapshot.data().seasonUid === previousSeason.seasonUid
+            ? stateSnapshot.data()
+            : null;
+        const careerSnapshot = await transaction.get(careerRef(db, uid));
+        const txnCareer = careerSnapshot.exists ? careerSnapshot.data() : initCareer();
+        if (txnState && txnCareer.lastSeasonUid !== previousSeason.seasonUid) {
+          const updated = applySeasonResult(
+            txnCareer,
+            { seasonUid: previousSeason.seasonUid, seasonIndex: previousSeason.index, state: txnState },
+            store.balance
+          );
+          updated.updatedAt = new Date().toISOString();
+          transaction.set(careerRef(db, uid), updated);
+          return { state: txnState, career: txnCareer, didArchive: true };
+        }
+        return { state: txnState, career: txnCareer, didArchive: false };
+      }).then(async (result) => {
+        if (result.didArchive) {
+          await appendProfileSeasonHistory(db, uid, previousSeason.seasonUid, result.state);
+          archived++;
+        }
+        return result;
+      });
       if (state) {
         swept.push({
           uid,
@@ -365,6 +396,7 @@ module.exports = {
   initCareer,
   ensureSeasonIndex,
   seasonIndexFor,
+  latestPreviousSeason,
   finalsPercentile,
   applySeasonResult,
   applyDormancy,

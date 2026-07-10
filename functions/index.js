@@ -44,10 +44,12 @@ const {
   hirePodiumStaff,
   hostEvent,
   getPodiumState,
+} = require("./src/callable/podium");
+const {
   proposeJointRehearsal,
   respondJointRehearsal,
   getJointRehearsals,
-} = require("./src/callable/podium");
+} = require("./src/callable/podiumJoint");
 const {
   processCorpsDecisions,
   retireCorps,

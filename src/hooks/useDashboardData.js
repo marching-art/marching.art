@@ -86,18 +86,29 @@ export const useDashboardData = () => {
     const corpsClasses = corps ? Object.keys(corps) : [];
     const storageKey = `selectedCorps_${user.uid}`;
 
-    // On mount or user change: load from localStorage
+    // On mount or user change: load from localStorage. podiumClass is
+    // selectable without a corps entry (the Podium zone renders the founding
+    // flow), so it restores too.
     if (selectedCorpsClass === null) {
       const savedCorpsClass = localStorage.getItem(storageKey);
-      if (savedCorpsClass && corpsClasses.includes(savedCorpsClass)) {
+      if (
+        savedCorpsClass &&
+        (corpsClasses.includes(savedCorpsClass) || savedCorpsClass === 'podiumClass')
+      ) {
         setSelectedCorpsClass(savedCorpsClass);
         return;
       }
     }
 
-    // Sync selection with available corps
+    // Sync selection with available corps. podiumClass is exempt from the
+    // has-a-corps check — clicking its (dashed, unfounded) tab must land on
+    // the founding flow, not snap back to the first fantasy class.
     if (corpsClasses.length > 0) {
-      if (selectedCorpsClass && !corpsClasses.includes(selectedCorpsClass)) {
+      if (
+        selectedCorpsClass &&
+        selectedCorpsClass !== 'podiumClass' &&
+        !corpsClasses.includes(selectedCorpsClass)
+      ) {
         // Current selection no longer valid, reset to first available
         setSelectedCorpsClass(corpsClasses[0]);
       } else if (!selectedCorpsClass) {

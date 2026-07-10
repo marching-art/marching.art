@@ -7,6 +7,7 @@ const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
 const store = require("./store");
+const engine = require("./engine");
 const { correctSurvivorship } = require("../../scripts/buildPodiumCurves");
 
 describe("survivorship correction", () => {
@@ -51,25 +52,10 @@ describe("survivorship correction", () => {
     const targets = { 1: [72, 79], 4: [88, 93], 6: [96, 98], 7: [98.5, 99.7] };
     for (const [tier, [lo, hi]] of Object.entries(targets)) {
       const pct = store.balance.scoring.repCeilingPercentileByTier[tier];
-      // Ceiling total implied by the percentile of the finals band.
-      const band = store.curves.totalBands[48];
-      const points = [
-        [5, band.p5],
-        [25, band.p25],
-        [50, band.p50],
-        [75, band.p75],
-        [95, band.p95],
-        [100, band.max],
-      ];
-      let ceiling = band.max;
-      for (let i = 1; i < points.length; i++) {
-        const [p0, v0] = points[i - 1];
-        const [p1, v1] = points[i];
-        if (pct <= p1) {
-          ceiling = v0 + ((v1 - v0) * (pct - p0)) / (p1 - p0);
-          break;
-        }
-      }
+      // Ceiling total implied by the percentile of the finals band — through
+      // the SAME interpolation the production repCeiling path uses, so this
+      // guard is pinned to the shipped code, not a frozen copy.
+      const ceiling = engine.bandValueAtPercentile(store.curves.totalBands[48], pct);
       assert.ok(
         ceiling >= lo && ceiling <= hi,
         `tier ${tier} ceiling ${ceiling.toFixed(1)} outside [${lo}, ${hi}]`

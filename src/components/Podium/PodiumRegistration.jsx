@@ -187,7 +187,7 @@ export default function PodiumRegistration({ podium }) {
       )}
 
       {step === 3 && (
-        <div className="space-y-2">
+        <div className="space-y-3">
           <h2 className="text-sm font-bold text-white">Ready to march</h2>
           <div className="text-xs text-gray-400 space-y-1">
             <div>
@@ -199,6 +199,32 @@ export default function PodiumRegistration({ podium }) {
             <div>
               You&apos;re auto-registered at the majors — Southwestern (Day 28), Southeastern (Day
               35), the Eastern Classic, and Championship Week.
+            </div>
+          </div>
+
+          {/* Optional CC -> Corps Budget commitment (decision 24: capped,
+              buys margin — food, travel, staff — never caption points).
+              Server validates the cap; zero is always playable. */}
+          <div className="pt-2 border-t border-[#333]">
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
+              Fund the season (optional)
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={0}
+                max={1000}
+                step={50}
+                value={budgetCommitment}
+                onChange={(e) =>
+                  setBudgetCommitment(Math.max(0, Math.floor(Number(e.target.value) || 0)))
+                }
+                className="w-28 bg-[#111] border border-[#333] rounded-sm px-3 py-2 text-sm text-white focus:border-[#0057B8] outline-none tabular-nums"
+              />
+              <span className="text-[10px] text-gray-500">
+                CorpsCoin into your Corps Budget — food, travel, staff. Never scores. You can top up
+                later; a 0-CC corps is always playable.
+              </span>
             </div>
           </div>
         </div>

@@ -38,11 +38,14 @@ let balanceFetchedAt = 0;
 
 function deepMerge(target, source) {
   for (const [key, value] of Object.entries(source || {})) {
-    const bothObjects =
-      value && typeof value === "object" && !Array.isArray(value) &&
-      target[key] && typeof target[key] === "object" && !Array.isArray(target[key]);
-    if (bothObjects) {
+    const isObject = (v) => v && typeof v === "object" && !Array.isArray(v);
+    if (isObject(value) && isObject(target[key])) {
       deepMerge(target[key], value);
+    } else if (key in target && isObject(target[key]) !== isObject(value)) {
+      // Type-mismatched override (a scalar where the committed default is a
+      // section, or vice versa) would poison every read in the container —
+      // skip it; the committed default stands.
+      continue;
     } else {
       target[key] = value;
     }
@@ -64,7 +67,7 @@ async function applyBalanceOverrides(db, { force = false } = {}) {
     const merged = deepMerge(JSON.parse(JSON.stringify(BALANCE_DEFAULTS)), overrides || {});
     for (const key of Object.keys(balance)) delete balance[key];
     Object.assign(balance, merged);
-  } catch (error) {
+  } catch {
     // Reads can fail transiently; keep whatever is currently applied.
   }
   return balance;
