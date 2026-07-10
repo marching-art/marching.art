@@ -14,8 +14,9 @@ adds the Gap & Conflict Register (§14) — open design decisions live there; v1
 auditions, the no-competitive-donations rule, and the Reputation / Champion Status
 multi-season climb (§5.13); v1.8 specs dormancy and comebacks; v1.9 replaces the staff
 purchase ladder with a living labor market (§5.6); v2.0 is the authoritative eight-phase build
-plan (§10); v2.1 folds in the final FMA sweep (§14.3) — the design is complete and
-build-ready
+plan (§10); v2.1 folds in the final FMA sweep (§14.3); v2.2 places the sweep items (Scores-tab
+recap sheets with the caption-privacy rule, all-class profile résumés) and swaps Stretching /
+Physical Warmup in as the condition block — the design is complete and build-ready
 
 ---
 
@@ -280,18 +281,26 @@ condition). Each block is assigned to one of seven rehearsal types. Caption effe
 (P = primary gain, S = secondary, in both `content` and `clean` with a season-phase-dependent
 split):
 
-| Block | GE1 | GE2 | VP | VA | CG | B | MA | P |
-|---|---|---|---|---|---|---|---|---|
-| **Visual Basics** | | | **P** | S | S | | | |
-| **Visual Ensemble** | | **P** | S | **P** | S | | | |
-| **Guard Sectionals** | | S | | S | **P** | | | |
-| **Front Ensemble** | S | | | | | | S | **P** |
-| **Brass Sectionals** | S | | | | | **P** | S | |
-| **Percussion Sectionals** | | | | | | | S | **P** |
-| **Full Ensemble** | **P** | **P** | | S | S | S | **P** | S |
+| Block | GE1 | GE2 | VP | VA | CG | B | MA | P | Condition |
+|---|---|---|---|---|---|---|---|---|---|
+| **Stretching / Physical Warmup** | | | S | | | | | | **P** — cuts stamina drain of the day's remaining blocks, mitigates grind fatigue, raises burnout resistance |
+| **Visual Basics** | | | **P** | S | S | | | | |
+| **Visual Ensemble** | | **P** | S | **P** | S | | | | |
+| **Guard Sectionals** | | S | | S | **P** | | | | |
+| **Brass Sectionals** | S | | | | | **P** | S | | |
+| **Percussion Sectionals** (battery + front ensemble) | S | | | | | | S | **P** | |
+| **Full Ensemble** | **P** | **P** | | S | S | S | **P** | S | |
 
 Notes:
 
+- **Stretching / Physical Warmup is the condition block.** Its caption yield is nearly nil (a
+  small VP trickle — marching fitness); its real product is *efficiency*: the day's remaining
+  blocks drain less stamina, consecutive-max-day grind fatigue accrues slower, and burnout
+  resistance rises. Every real corps day starts with the stretch block; here it's the classic
+  "sharpen the axe" tradeoff — a block that makes the other blocks cheaper. Especially potent
+  during spring-training all-days and brutal-travel weeks.
+- **Percussion Sectionals covers the whole percussion program** — battery *and* front ensemble —
+  feeding `P` primary and `MA` secondary.
 - Color guard (`CG`) has its own sectional block (primary CG, secondary VA/GE2 — the guard *is*
   a visual-effect engine) and still gains secondarily from Visual Ensemble and Full Ensemble, so
   a guard-forward build is viable and an ensemble-only guard stays merely adequate.
@@ -379,10 +388,37 @@ minute?* — falls out of the mechanics with zero special-casing.
 - Scores post in the existing nightly pipeline. The recap entry carries the full caption breakdown,
   placement *within Podium Class only*, and phase-appropriate color ("Brass +0.3 since
   Tuesday — 2nd in class").
-- **The recap sheet is a first-class artifact.** FMA's most-screenshotted surface is the event
-  box score — a per-division table with every caption column, total, and place. Every Podium
-  show gets one: the DCI-style recap sheet view, per division, shareable/screenshot-clean. The
-  community's daily argument needs a daily exhibit.
+- **The recap sheet is a first-class artifact, and it lives in the Scores tab.** FMA's
+  most-screenshotted surface is the event box score — a per-division table with every caption
+  column, total, and place. Every Podium show gets one, and the Scores page is redesigned around
+  it (see *The Scores tab redesign* below). The community's daily argument needs a daily exhibit.
+
+**The Scores tab redesign (screenshot-worthy by design).** The existing Scores page already has
+the right bones — class sub-tabs, a condensed GE/VIS/MUS `RecapDataGrid`, archive, Hall of
+Champions. The redesign turns each event recap into a *sheet*, not a grid:
+
+- **Masthead:** event name, venue city/state, season name + day, `eventTier` badge
+  (Regional / Championship), and the Eastern Classic night badge (Night 1 / Night 2). The
+  masthead is the screenshot's headline.
+- **The Podium sheet (full captions):** division-sectioned table — Place · Corps (avatar chip +
+  name) · GE1 · GE2 │ VP · VA · CG │ B · MA · P │ GE · VIS · MUS │ Total, with movement arrows
+  vs. the corps' previous outing and **caption-box-toppers bolded** exactly like a real DCI
+  recap. Mobile: frozen corps column + horizontal scroll, tabular-nums throughout.
+- **The fantasy sheets (condensed captions):** identical masthead and typography, columns
+  Place · Corps · GE · VIS · MUS · Total. **World/Open/A never display per-caption values —
+  this is a hard privacy rule, not a layout choice: per-caption visibility would let players
+  harvest each other's lineups from the score column.** (The recap documents already store only
+  the condensed trio for fantasy classes, so the rule is enforced by the data shape itself, not
+  by UI discipline.)
+- **The footer strip:** marching.art wordmark + season/day — every screenshot shared to Discord
+  or a forum is an advertisement.
+- **Share affordances:** one-tap PNG export of the sheet (clean, theme-aware) and a
+  "copy as text" monospace table formatted for Discord paste — the community lives there.
+- **Caption leaderboards (sortable, class-appropriate):** a Caption Leaders view in the Scores
+  tab — season-long per-caption standings, filterable and sortable. Podium sorts across all 8
+  captions plus subtotals; **fantasy classes sort by GE / Visual / Music subtotals and total
+  only** — sorting derives from the same stored fields as display, so nothing harvestable is
+  ever queryable. Caption-leader history feeds the end-of-season caption awards directly.
 - Non-show days still matter (that's when you out-rehearse the corps you'll meet on Saturday), but
   nothing is scored — so skipping a quiet Tuesday costs you growth, never a recorded result.
   Forgiving to miss, rewarding to show up: the retention-safe version of FMA's energy pressure.
@@ -1053,7 +1089,8 @@ Three governing principles, restated as build constraints:
 2.4 Nightly Podium stage v1: recovery/decay → score performing corps → recap entries
     (`corpsClass: 'podiumClass'`) → `computePodiumRankings` → ranks on corps map.
 2.5 Zone C UI swap: `RehearsalPlanner` (block allocator, ≤3 taps), `CaptionTrajectoryPanel`
-    (curves over percentile bands + historical shadows). ControlBar tab, flag-gated.
+    (curves over percentile bands + historical shadows). ControlBar tab, flag-gated. Podium
+    recap sheet (full 8-caption, division-sectioned, §5.4) added to the Scores tab.
 2.6 `selectUserShows`: `multiNight` counts-as-one validation + server-injected major
     auto-registrations for Podium (3 free picks in weeks 4/5/6) (§5.11, §14.2.6).
 2.7 Exit gate: two full simulated off-seasons on staging with admin accounts; recap/leaderboard/
@@ -1107,6 +1144,11 @@ Three governing principles, restated as build constraints:
 6.3 Regional-anchor UX for fantasy classes (the majors as marquee days).
 6.4 Fan Favorite ballots at majors (reuse `dailyPredictions`); per-show medal counters.
 6.5 Podium into `dci-stats`, `gameRecords`, season archives, Hall of Champions (class-filtered).
+6.6 Scores-page redesign completed game-wide: shared sheet masthead/typography for the fantasy
+    classes (condensed columns), PNG/text share affordances, Caption Leaders view with the
+    class-appropriate caption sets (§5.4 privacy rule).
+6.7 Profile résumé for **all classes**: season selector, per-season score tables, show-concept/
+    repertoire history, hosting history, trophy case on every corps a director fields (§14.3.b).
 
 ### Phase 7 — Social & the return loops *(2–3 wks)*
 
@@ -1250,6 +1292,19 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     Status is the gate — entry never should be, and an always-open Podium is the game's best
     front door for brand-new players.
 
+**Resolved in v2.2:**
+
+21. **Sweep-item placements** (§5.4, §14.3): the recap sheet lives in the Scores tab and the
+    Scores page is redesigned to be screenshot-worthy; the permanent public résumé integrates
+    into user profiles for **all classes**; player columns ride the already-integrated dashboard
+    `newsSubmissions` pipeline; caption leaderboards are sortable in the Scores tab under the
+    hard privacy rule — Podium shows all 8 captions, **World/Open/A show condensed GE/VIS/MUS
+    only** (anti-lineup-harvesting, enforced by the recap data shape).
+22. **Rehearsal block swap** (§5.2): **Stretching / Physical Warmup** replaces Front Ensemble as
+    the seventh block — near-zero caption yield, primary effect on condition (cheaper remaining
+    blocks, slower grind fatigue, burnout resistance). Front ensemble training folds into
+    **Percussion Sectionals**, which covers the full percussion program (battery + front).
+
 **Resolved in v1.9:**
 
 18. **Staff is a labor market, not a purchase ladder** (§5.6): generated persons with careers,
@@ -1375,14 +1430,18 @@ additions; conflicts are things that **must** be resolved before Phase 1 code.
 ### 14.3 Final sweep (v2.1) — second FMA pass, adopted and confirmed
 
 A closing sweep of fantasymarchingarts.com surfaced a short list of genuinely new items.
-**Adopted into the design:** (a) the **recap sheet** as a first-class, screenshot-clean artifact
-for every show (§5.4) — FMA's per-caption event box score is its most-shared surface; (b) the
-**Podium corps page as permanent public résumé** — season selector over every season ever
-played, per-season score tables, repertoire history with composer credits, events-hosted
-history, trophy case (extends the existing profile/`seasonHistory` surfaces); (c)
-**player-columnist submissions** through the existing `newsSubmissions` pipeline (FMA's Staff
-Writers program as a sanctioned status role, Phase 7.3); (d) **per-caption filterable
-leaderboards** in the stats archive (§14.1.6). **Confirmed, no action needed:** FMA has no
+**Adopted, with placements decided:** (a) the **recap sheet** lives in the **Scores tab** under
+Podium Class, and the Scores page is redesigned to be screenshot-worthy (full spec in §5.4);
+(b) the **permanent public résumé integrates into user profiles — for ALL classes**: each of a
+director's corps (fantasy and Podium alike) gets the FMA-grade archive treatment on the profile
+page — season selector over every season played, per-season score tables, show
+concepts/repertoire history, hosting history, trophy case. The reverence is game-wide, not
+Podium-only; (c) **player-columnist submissions are already integrated into the dashboard** (the
+existing `newsSubmissions` pipeline) — Phase 7.3 only wires the Podium column into it, no new
+system; (d) **per-caption sortable leaderboards** live in the Scores tab with the hard privacy
+rule: Podium displays and sorts all 8 captions; **World/Open/A display and sort condensed
+captions only (GE/VIS/MUS)** to prevent lineup harvesting — enforced by the recap data shape,
+which stores only the condensed trio for fantasy classes. **Confirmed, no action needed:** FMA has no
 penalty/missed-show mechanics (validates elective attendance); support packs are mildly
 pay-to-progress (validates decision 14's hard no); the community hand-runs "schedule filler"
 event networks because event supply fails without coordination (our generated schedule makes
