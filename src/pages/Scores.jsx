@@ -19,6 +19,7 @@ import { useEscapeKey } from '../hooks/useEscapeKey';
 import {
   PillTabControl,
   RecapDataGrid,
+  EasternCombinedSheet,
   SoundSportMedalList,
   ClassStandingsGrid,
 } from './ScoresParts';
@@ -355,6 +356,9 @@ const Scores = () => {
               {/* LATEST RECAPS TAB */}
               {activeTab === 'latest' && (
                 <div>
+                  {/* Eastern Classic combined standings — appears once both
+                      nights (days 41-42) have processed (§5.11) */}
+                  <EasternCombinedSheet shows={recapShows} userCorpsName={userCorpsName} />
                   {latestShows.length > 0 ? (
                     latestShows.map((show, idx) => (
                       <RecapDataGrid
@@ -543,6 +547,9 @@ const Scores = () => {
                   {selectedArchiveSeason && !loading && (
                     <>
                       {/* Recaps View */}
+                      {archiveViewTab === 'latest' && (
+                        <EasternCombinedSheet shows={recapShows} userCorpsName={userCorpsName} />
+                      )}
                       {archiveViewTab === 'latest' &&
                         (recapShows.length > 0 ? (
                           recapShows.map((show, idx) => (

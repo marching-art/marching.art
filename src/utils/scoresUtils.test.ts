@@ -3,6 +3,7 @@ import {
   getSoundSportRating,
   seededShuffle,
   getCaptionBreakdown,
+  mergeTwoNightShows,
   RATING_CONFIG,
 } from './scoresUtils';
 
@@ -100,5 +101,68 @@ describe('getCaptionBreakdown', () => {
       vis: null,
       mus: null,
     });
+  });
+});
+
+describe('mergeTwoNightShows', () => {
+  const show = (
+    offSeasonDay: number,
+    scores: object[],
+    eventName = 'marching.art Eastern Classic'
+  ) => ({
+    eventName,
+    location: 'Allentown, PA',
+    date: offSeasonDay === 41 ? '8/1/2026' : '8/2/2026',
+    offSeasonDay,
+    scores: scores as never[],
+  });
+
+  const row = (corpsName: string, corpsClass: string, score: number) => ({
+    corpsName,
+    corpsClass,
+    score,
+    totalScore: score,
+  });
+
+  it('returns null until BOTH nights have scored', () => {
+    expect(mergeTwoNightShows([])).toBeNull();
+    expect(mergeTwoNightShows([show(41, [row('Solo', 'worldClass', 80)])])).toBeNull();
+    // Different event names on the two days are not a two-night event.
+    expect(
+      mergeTwoNightShows([
+        show(41, [row('A', 'worldClass', 80)]),
+        show(42, [row('B', 'worldClass', 81)], 'Some Other Show'),
+      ])
+    ).toBeNull();
+  });
+
+  it('merges both nights, tags each row, groups per class, ranks by score', () => {
+    const combined = mergeTwoNightShows([
+      show(41, [row('Friday World', 'worldClass', 82.1), row('Friday A', 'aClass', 60)]),
+      show(42, [row('Saturday World', 'worldClass', 84.3), row('Saturday Open', 'openClass', 71)]),
+    ]);
+    expect(combined).not.toBeNull();
+    expect(combined!.eventName).toBe('marching.art Eastern Classic');
+    expect(combined!.dateRange).toBe('8/1/2026 – 8/2/2026');
+    expect(combined!.sections.map((s) => s.corpsClass)).toEqual([
+      'worldClass',
+      'openClass',
+      'aClass',
+    ]);
+    const world = combined!.sections[0];
+    // Saturday's higher score leads the combined class standings.
+    expect(world.rows.map((r) => [r.corpsName, r.night])).toEqual([
+      ['Saturday World', 2],
+      ['Friday World', 1],
+    ]);
+  });
+
+  it('excludes SoundSport rows (ratings-only, never placed)', () => {
+    const combined = mergeTwoNightShows([
+      show(41, [row('W', 'worldClass', 80), row('SS Friday', 'soundSport', 88)]),
+      show(42, [row('W2', 'worldClass', 79), row('SS Saturday', 'soundSport', 90)]),
+    ]);
+    expect(combined!.sections).toHaveLength(1);
+    expect(combined!.sections[0].rows.every((r) => r.corpsClass === 'worldClass')).toBe(true);
   });
 });
