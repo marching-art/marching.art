@@ -11,6 +11,10 @@ import {
   MapPin,
   Award,
   Trophy,
+  Crown,
+  Star,
+  Medal,
+  Shield,
   ChevronRight,
   Music,
   Disc3,
@@ -36,7 +40,6 @@ import { describeConceptStyle, getConceptTitle } from '../../utils/showConcept';
 import { toCanonicalClassKey } from '../../utils/classUnlocks';
 import { getSoundSportRating } from '../../utils/scoresUtils';
 import {
-  TIER_STYLES,
   STATUS_INDICATORS,
   getClassDisplay,
   type SeasonHistoryEntry,
@@ -89,45 +92,39 @@ const StatPill = memo(
 );
 StatPill.displayName = 'StatPill';
 
-// Trophy mini card
-// Per-class accent: border color + 2-char code so each competition class reads
-// distinctly (an Open Class champion is not a World Class champion). The tile's
-// metal (gold/silver/bronze via TIER_STYLES) still encodes rank, and the icon
-// shape encodes the award type (Crown = Finals, Trophy = Class, Medal =
-// Regional, Shield = Finalist).
-const CLASS_ACCENT: Record<string, { border: string; text: string; code: string }> = {
-  worldClass: { border: 'border-purple-400/70', text: 'text-purple-300', code: 'WC' },
-  openClass: { border: 'border-blue-400/70', text: 'text-blue-300', code: 'OC' },
-  aClass: { border: 'border-green-400/70', text: 'text-green-300', code: 'A' },
-  soundSport: { border: 'border-orange-400/70', text: 'text-orange-300', code: 'SS' },
+// A trophy is a single bare icon — no box, no label. Its SHAPE names the
+// competition class (a unique glyph per class, ranked most to least prestigious)
+// and its COLOR names the award won.
+const CLASS_ICON: Record<string, React.ElementType> = {
+  worldClass: Crown,
+  openClass: Trophy,
+  aClass: Star,
+  soundSport: Medal,
   // Podium Class — the management-sim tier below SoundSport (in progress).
-  podiumClass: { border: 'border-teal-400/70', text: 'text-teal-300', code: 'PC' },
+  podiumClass: Shield,
+};
+const AWARD_COLOR: Record<string, string> = {
+  gold: 'text-yellow-400',
+  silver: 'text-gray-300',
+  bronze: 'text-orange-400',
+  regional: 'text-emerald-400',
+  finalist: 'text-sky-400',
 };
 
-// Compact trophy chip — an icon, not a card. Full detail lives in the tooltip.
 const TrophyMini = memo(({ trophy }: { trophy: TrophyData }) => {
-  const styles = TIER_STYLES[trophy.tier];
-  const Icon = trophy.icon;
   const canonical = trophy.corpsClass ? toCanonicalClassKey(trophy.corpsClass) : null;
-  const accent = (canonical && CLASS_ACCENT[canonical]) || null;
+  // Icon shape by class; fall back to the trophy's own icon for legacy
+  // synthetic trophies that carry no corpsClass.
+  const Icon = (canonical && CLASS_ICON[canonical]) || trophy.icon || Award;
+  // Color by award; legacy trophies only carry `tier`, so map that through.
+  const award = trophy.award || (trophy.tier === 'special' ? 'finalist' : trophy.tier);
+  const color = AWARD_COLOR[award] || 'text-gray-300';
   const tooltip = [trophy.title, trophy.description].filter(Boolean).join(' — ');
 
   return (
-    <div
-      className={`relative aspect-square flex items-center justify-center rounded-sm border-2 ${styles.bg} ${accent ? accent.border : styles.border}`}
-      title={tooltip}
-      role="img"
-      aria-label={tooltip}
-    >
-      <Icon className={`w-5 h-5 ${styles.icon}`} />
-      {accent && (
-        <span
-          className={`absolute bottom-0 inset-x-0 text-center text-[7px] font-bold leading-[1.4] ${accent.text} bg-black/50`}
-        >
-          {accent.code}
-        </span>
-      )}
-    </div>
+    <span className="inline-flex" title={tooltip} role="img" aria-label={tooltip}>
+      <Icon className={`w-7 h-7 ${color}`} />
+    </span>
   );
 });
 TrophyMini.displayName = 'TrophyMini';
@@ -590,27 +587,18 @@ const EmptyWithCTA = memo(
 );
 EmptyWithCTA.displayName = 'EmptyWithCTA';
 
-// Trophy case — a dense collection of class-distinct trophy chips (see
-// TrophyMini) rather than word-cards, capped with a "+N" overflow tile.
-const TROPHY_CAP = 11;
+// Trophy case — a scrollable field of bare trophy icons (see TrophyMini),
+// sorted by class hierarchy then award. No boxes, no labels; the shelf simply
+// fills and scrolls as hardware accumulates.
 const TrophyCaseGrid = memo(({ trophies }: { trophies: TrophyData[] }) => {
   if (trophies.length === 0) {
     return <EmptyWithCTA icon={Trophy} title="No trophies yet" cta="Join a league" to="/leagues" />;
   }
-  const overflow = trophies.length - TROPHY_CAP;
   return (
-    <div className="p-2 grid grid-cols-4 gap-1.5">
-      {trophies.slice(0, TROPHY_CAP).map((trophy) => (
+    <div className="p-3 flex flex-wrap gap-x-2.5 gap-y-3 max-h-44 overflow-y-auto">
+      {trophies.map((trophy) => (
         <TrophyMini key={trophy.id} trophy={trophy} />
       ))}
-      {overflow > 0 && (
-        <div
-          className="aspect-square flex items-center justify-center rounded-sm border-2 border-[#333] bg-[#222]"
-          title={`${overflow} more trophies`}
-        >
-          <span className="text-[10px] font-bold text-gray-400 font-data">+{overflow}</span>
-        </div>
-      )}
     </div>
   );
 });

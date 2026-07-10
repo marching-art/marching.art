@@ -42,10 +42,14 @@ export interface TrophyData {
   title: string;
   description: string;
   tier: 'gold' | 'silver' | 'bronze' | 'special';
-  // Canonical corps class the trophy was won in ('worldClass' | 'openClass' |
-  // 'aClass' | 'soundSport'). Drives the class-colored accent in the trophy
-  // case so an Open Class champion reads differently from a World Class one.
+  // The trophy case encodes each award in a single bare icon:
+  //   corpsClass -> icon SHAPE  (a unique glyph per competition class)
+  //   award      -> icon COLOR  (gold / silver / bronze / regional / finalist)
+  // so a World Class champion and an Open Class champion are different shapes,
+  // and a champion and a regional medalist in the same class are different
+  // colors. See CLASS_ICON / AWARD_COLOR in DirectorProfileParts.
   corpsClass?: string;
+  award?: 'gold' | 'silver' | 'bronze' | 'regional' | 'finalist';
   season?: string;
   icon: React.ElementType;
   earnedAt?: string;
@@ -287,6 +291,36 @@ export function getCorpsWithAvatars(
 const rankTier = (rank?: number): TrophyData['tier'] =>
   rank === 1 ? 'gold' : rank === 2 ? 'silver' : 'bronze';
 
+// Championship/class-final placements color by their medal; regionals and
+// finalists get their own colors so they don't collide with a Finals medal of
+// the same class (same shape).
+const rankAward = (rank?: number): TrophyData['award'] =>
+  rank === 1 ? 'gold' : rank === 2 ? 'silver' : 'bronze';
+
+// Trophy case ordering: group by class prestige, then by award within a class,
+// so the scrollable field reads top-down as a hierarchy.
+const CLASS_SORT: Record<string, number> = {
+  worldClass: 0,
+  openClass: 1,
+  aClass: 2,
+  soundSport: 3,
+  podiumClass: 4,
+};
+const AWARD_SORT: Record<string, number> = {
+  gold: 0,
+  silver: 1,
+  bronze: 2,
+  regional: 3,
+  finalist: 4,
+};
+const sortTrophies = (trophies: TrophyData[]): TrophyData[] =>
+  [...trophies].sort((a, b) => {
+    const ca = CLASS_SORT[a.corpsClass ? toCanonicalClassKey(a.corpsClass) : ''] ?? 99;
+    const cb = CLASS_SORT[b.corpsClass ? toCanonicalClassKey(b.corpsClass) : ''] ?? 99;
+    if (ca !== cb) return ca - cb;
+    return (AWARD_SORT[a.award ?? ''] ?? 99) - (AWARD_SORT[b.award ?? ''] ?? 99);
+  });
+
 const medalWord = (rank?: number): string =>
   rank === 1
     ? 'Champion'
@@ -315,12 +349,15 @@ function getRealTrophies(profile: UserProfile): TrophyData[] {
 
   // Finals championships are the World Class crown unless the record says
   // otherwise (older records omit corpsClass).
+  // Finals championships are the World Class crown unless the record says
+  // otherwise (older records omit corpsClass).
   (t.championships || []).forEach((trophy, i) =>
     out.push({
       id: `championship-${i}`,
       title: `Finals ${medalWord(trophy.rank)}`,
       description: trophyDescription(trophy),
       tier: rankTier(trophy.rank),
+      award: rankAward(trophy.rank),
       corpsClass: trophy.corpsClass || 'worldClass',
       season: trophy.seasonName,
       icon: Crown,
@@ -332,6 +369,7 @@ function getRealTrophies(profile: UserProfile): TrophyData[] {
       title: `${classLabel(trophy.corpsClass)} ${medalWord(trophy.rank)}`.trim(),
       description: trophyDescription(trophy),
       tier: rankTier(trophy.rank),
+      award: rankAward(trophy.rank),
       corpsClass: trophy.corpsClass,
       season: trophy.seasonName,
       icon: Trophy,
@@ -343,6 +381,7 @@ function getRealTrophies(profile: UserProfile): TrophyData[] {
       title: `Regional ${medalWord(trophy.rank)}`,
       description: trophyDescription(trophy),
       tier: rankTier(trophy.rank),
+      award: 'regional',
       corpsClass: trophy.corpsClass,
       season: trophy.seasonName,
       icon: Medal,
@@ -354,13 +393,14 @@ function getRealTrophies(profile: UserProfile): TrophyData[] {
       title: trophy.type === 'soundsport_finalist' ? 'Festival Finalist' : 'Finals Finalist',
       description: trophyDescription(trophy),
       tier: 'special',
+      award: 'finalist',
       corpsClass: trophy.corpsClass,
       season: trophy.seasonName,
       icon: Shield,
     })
   );
 
-  return out;
+  return sortTrophies(out);
 }
 
 // Legacy placeholder rows, shown only while a profile has no real hardware.
