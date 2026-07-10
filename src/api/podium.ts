@@ -94,3 +94,29 @@ export const hirePodiumClinician = createCallable<
   { block: string },
   { success: boolean; clinician: Record<string, unknown>; budget: Record<string, unknown> }
 >('hirePodiumClinician');
+
+export interface PodiumStaffPerson {
+  id: string;
+  name: string;
+  specialty: string;
+  tier: string;
+  salary: number;
+  boost: number;
+  trait: string;
+  signedBy: string | null;
+}
+
+export const getPodiumStaffMarket = createCallable<
+  void,
+  { success: boolean; market: PodiumStaffPerson[] }
+>('getPodiumStaffMarket');
+
+export const hirePodiumStaff = createCallable<
+  { staffId: string },
+  {
+    success: boolean;
+    hired: string;
+    staff: Record<string, unknown>;
+    budget: Record<string, unknown>;
+  }
+>('hirePodiumStaff');

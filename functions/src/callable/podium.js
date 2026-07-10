@@ -17,6 +17,7 @@ const { getActiveCalendarDay, toCompetitionDay } = require("../helpers/gameDay")
 const engine = require("../helpers/podium/engine");
 const store = require("../helpers/podium/store");
 const venues = require("../helpers/podium/venues");
+const staffMarket = require("../helpers/podium/staffMarket");
 
 const FOOD_TIERS = ["gasStation", "standard", "fullKitchen"];
 const MAX_TEMPLATE_BLOCKS = 5;
@@ -351,11 +352,14 @@ exports.allocateRehearsalBlock = onCall({ cors: true }, async (request) => {
     } else {
       const blocksSoFar = {};
       for (const b of state.today.blocks) blocksSoFar[b] = (blocksSoFar[b] || 0) + 1;
-      // Active clinician engagement boosts their block type (design §5.6).
+      // Staff + clinician boosts compose multiplicatively (design §5.6);
+      // the staff share is capped inside staffYieldMultiplier.
       const clinicianActive =
         state.clinician &&
         state.clinician.block === blockType &&
         state.clinician.expiresDay >= competitionDay;
+      const staffMult = staffMarket.staffYieldMultiplier(state, blockType, store.balance);
+      const clinicianMult = clinicianActive ? store.balance.clinician.yieldBoost : 1;
       panel = engine.allocateBlock(
         state,
         blockType,
@@ -364,9 +368,10 @@ exports.allocateRehearsalBlock = onCall({ cors: true }, async (request) => {
         blocksSoFar,
         store.curves,
         store.balance,
-        clinicianActive ? { yieldMultiplier: store.balance.clinician.yieldBoost } : {}
+        { yieldMultiplier: staffMult * clinicianMult }
       );
       if (clinicianActive) panel.clinicianBoost = store.balance.clinician.yieldBoost;
+      if (staffMult > 1) panel.staffBoost = Number((staffMult - 1).toFixed(3));
     }
 
     state.today.blocksUsed += 1;
@@ -474,6 +479,79 @@ exports.setPodiumPlanTemplate = onCall({ cors: true }, async (request) => {
     );
   });
   return { success: true, planTemplate: blocks };
+});
+
+exports.getPodiumStaffMarket = onCall({ cors: true }, async (request) => {
+  const { db, seasonData } = await podiumContext(request);
+  const marketRef = store.staffMarketRef(db, seasonData.seasonUid);
+  let snapshot = await marketRef.get();
+  if (!snapshot.exists) {
+    // Lazy, idempotent creation: generation is deterministic per season.
+    await marketRef.set({
+      seasonUid: seasonData.seasonUid,
+      generatedAt: new Date().toISOString(),
+      staff: staffMarket.generateMarket(seasonData.seasonUid),
+    });
+    snapshot = await marketRef.get();
+  }
+  return { success: true, market: snapshot.data().staff };
+});
+
+exports.hirePodiumStaff = onCall({ cors: true }, async (request) => {
+  const { uid, db, seasonData, competitionDay } = await podiumContext(request);
+  const { staffId } = request.data || {};
+  if (typeof staffId !== "string" || !staffId) {
+    throw new HttpsError("invalid-argument", "staffId is required.");
+  }
+  const marketRef = store.staffMarketRef(db, seasonData.seasonUid);
+  const sRef = store.stateRef(db, uid);
+
+  const result = await db.runTransaction(async (transaction) => {
+    const [marketSnapshot, stateSnapshot] = await Promise.all([
+      transaction.get(marketRef),
+      transaction.get(sRef),
+    ]);
+    if (!stateSnapshot.exists || stateSnapshot.data().seasonUid !== seasonData.seasonUid) {
+      throw new HttpsError("failed-precondition", "Register a Podium corps first.");
+    }
+    const market = marketSnapshot.exists
+      ? marketSnapshot.data()
+      : {
+        seasonUid: seasonData.seasonUid,
+        generatedAt: new Date().toISOString(),
+        staff: staffMarket.generateMarket(seasonData.seasonUid),
+      };
+    const person = market.staff.find((member) => member.id === staffId);
+    if (!person) throw new HttpsError("not-found", "That staff member is not in this season's market.");
+    if (person.signedBy && person.signedBy !== uid) {
+      throw new HttpsError("failed-precondition", `${person.name} has already signed elsewhere.`);
+    }
+    const state = stateSnapshot.data();
+    if (state.staff && state.staff[person.specialty]) {
+      throw new HttpsError("failed-precondition", `You already employ a ${person.specialty} staff member.`);
+    }
+    if (!store.debitBudget(state, person.salary, `staff:${person.specialty}`, Math.max(0, competitionDay))) {
+      throw new HttpsError("failed-precondition", `Not enough Corps Budget (salary ${person.salary}).`);
+    }
+    person.signedBy = uid;
+    state.staff = {
+      ...(state.staff || {}),
+      [person.specialty]: {
+        id: person.id,
+        name: person.name,
+        tier: person.tier,
+        boost: person.boost,
+        trait: person.trait,
+        hiredDay: Math.max(0, competitionDay),
+      },
+    };
+    state.updatedAt = new Date().toISOString();
+    transaction.set(marketRef, market);
+    transaction.set(sRef, state);
+    return { staff: state.staff, budget: state.budget, hired: person.name };
+  });
+
+  return { success: true, ...result };
 });
 
 exports.commitPodiumBudget = onCall({ cors: true }, async (request) => {

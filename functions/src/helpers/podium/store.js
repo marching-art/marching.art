@@ -70,6 +70,11 @@ function recapDayRef(db, seasonUid, competitionDay) {
   return db.doc(`podium-recaps/${seasonUid}/days/${competitionDay}`);
 }
 
+/** Season staff market — one public doc, lazily created (deterministic). */
+function staffMarketRef(db, seasonUid) {
+  return db.doc(`podium-staff/${seasonUid}`);
+}
+
 // ---------------------------------------------------------------------------
 // Corps Budget ledger (Phase 4, design §14.2.1 / decision 24)
 // ---------------------------------------------------------------------------
@@ -152,6 +157,7 @@ module.exports = {
   rosterRef,
   rosterCollection,
   recapDayRef,
+  staffMarketRef,
   hydrateState,
   dehydrateState,
   initBudget,

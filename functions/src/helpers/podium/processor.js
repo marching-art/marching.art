@@ -23,6 +23,7 @@ const { claimScoringRun, markScoringRunCompleted, markScoringRunFailed } = requi
 const engine = require("./engine");
 const store = require("./store");
 const venues = require("./venues");
+const staffMarket = require("./staffMarket");
 
 /**
  * Venue for a corps' show on `competitionDay`: the branded majors have fixed
@@ -118,7 +119,11 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
             blocksSoFar,
             store.curves,
             store.balance,
-            { yieldMultiplier: store.balance.rehearsal.assistantYield }
+            {
+              yieldMultiplier:
+                store.balance.rehearsal.assistantYield *
+                staffMarket.staffYieldMultiplier(state, blockType, store.balance),
+            }
           );
           blocksSoFar[blockType] = (blocksSoFar[blockType] || 0) + 1;
           applied.push(blockType);
@@ -143,7 +148,9 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         const leg = venues.travelLeg(fromVenue, showVenue, store.balance);
         const isMajor = Boolean(venues.MAJOR_VENUES[competitionDay]);
         const heat = venues.heatStamina(showVenue, store.balance);
-        let travelStamina = leg ? leg.staminaCost : 0;
+        // A Tour Manager smooths the miles (design §5.6 ops staff).
+        const tourReduction = staffMarket.tourStaminaReduction(state, store.balance);
+        let travelStamina = leg ? Math.round(leg.staminaCost * (1 - tourReduction) * 10) / 10 : 0;
         // Budget charge (majors are subsidized). Free floor: an unaffordable
         // leg becomes a stamina surcharge — the bus still rolls (decision 24).
         let paidTravel = true;

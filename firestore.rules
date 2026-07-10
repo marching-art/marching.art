@@ -251,6 +251,13 @@ match /podium-season/{seasonUid}/{document=**} {
   allow read, write: if false; // Backend only
 }
 
+// Podium staff market — free agency is communal (who signed whom is public
+// drama); all mutations go through the hirePodiumStaff callable.
+match /podium-staff/{seasonUid} {
+  allow read: if true;
+  allow write: if false; // Backend only
+}
+
 match /season_champions/{docId} {
   allow read: if true;
   allow write: if false; // Backend only

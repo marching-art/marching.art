@@ -11,6 +11,7 @@ import RehearsalPlanner from './RehearsalPlanner';
 import PodiumCaptionPanel from './PodiumCaptionPanel';
 import PodiumShowPicker from './PodiumShowPicker';
 import CorpsConditionPanel from './CorpsConditionPanel';
+import PodiumStaffPanel from './PodiumStaffPanel';
 
 export default function PodiumZone() {
   const podium = usePodium(true);
@@ -40,6 +41,7 @@ export default function PodiumZone() {
       <RehearsalPlanner podium={podium} />
       <PodiumCaptionPanel podium={podium} />
       <CorpsConditionPanel podium={podium} />
+      <PodiumStaffPanel podium={podium} />
       <PodiumShowPicker podium={podium} />
     </div>
   );

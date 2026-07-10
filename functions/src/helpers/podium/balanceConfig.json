@@ -93,5 +93,18 @@
     "fundraiser": { "yield": 12, "staminaCost": 8 },
     "springTrainingDayCost": 25
   },
-  "clinician": { "cost": 120, "durationDays": 3, "yieldBoost": 1.3 }
+  "clinician": { "cost": 120, "durationDays": 3, "yieldBoost": 1.3 },
+  "staff": {
+    "tiers": {
+      "apprentice": { "salary": 40, "boost": 0.03, "tourStaminaReductionPct": 10 },
+      "journeyman": { "salary": 80, "boost": 0.06, "tourStaminaReductionPct": 15 },
+      "veteran": { "salary": 140, "boost": 0.09, "tourStaminaReductionPct": 20 },
+      "master": { "salary": 220, "boost": 0.12, "tourStaminaReductionPct": 25 },
+      "legend": { "salary": 320, "boost": 0.15, "tourStaminaReductionPct": 30 }
+    },
+    "maxTotalBoost": 0.15,
+    "marketPerSpecialty": { "apprentice": 2, "journeyman": 2, "veteran": 1 },
+    "masterChance": 0.5,
+    "legendChance": 0.18
+  }
 }
