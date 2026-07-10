@@ -5,6 +5,7 @@
 // Laws: No glow, no shadow, grid layout, minimal scrolling
 
 import React, { useState, useMemo, memo } from 'react';
+import { Link } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
 import {
   User,
@@ -643,9 +644,18 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                 Achievements
               </span>
             </div>
-            {achievements.length > 0 && (
-              <span className="text-[9px] text-gray-500">{achievements.length} earned</span>
-            )}
+            <div className="flex items-center gap-2">
+              {achievements.length > 0 && (
+                <span className="text-[9px] text-gray-500">{achievements.length} earned</span>
+              )}
+              {/* Own profile: link to the full catalog (earned + locked). Other
+                  users' profiles omit it — that page shows the viewer's own list. */}
+              {isOwnProfile && (
+                <Link to="/achievements" className="text-[9px] text-[#0057B8] hover:underline">
+                  View all →
+                </Link>
+              )}
+            </div>
           </div>
 
           {achievements.length > 0 ? (

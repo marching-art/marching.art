@@ -1,217 +1,30 @@
 // AchievementTrackerPanel - Compact sidebar widget showing achievement progress
-// Surfaces the 3 achievements closest to being unlocked to drive goal-oriented play
+// Surfaces the 3 achievements closest to being unlocked to drive goal-oriented
+// play, plus a link to the full Achievements page for the complete list.
+//
+// Catalog + progress come from the shared client mirror in
+// src/data/achievementsCatalog.js, so this panel, the /achievements page, and
+// the server award logic all agree on the same set of achievements and the
+// same total count. Earned state is server-authoritative (profile.achievements).
 
 import React, { memo, useMemo } from 'react';
-import { Award, Trophy, Target, Users, Flame, Zap, Star, Crown } from 'lucide-react';
+import { Award, Crown } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { REQUIRED_CAPTIONS } from '../../../utils/captionPricing';
-import { isCorpsClassUnlocked } from '../../../utils/corps';
+import { useProfileStore } from '../../../store/profileStore';
+import { evaluateAchievements, ACHIEVEMENTS } from '../../../data/achievementsCatalog';
 
-const ROSTER_SIZE = REQUIRED_CAPTIONS.length;
-
-// ---------------------------------------------------------------------------
-// Achievement definitions — progress bars computed client-side for display;
-// the awards themselves are server-side (daily sweep in claimDailyLogin).
-// Ids match the catalog in functions/src/helpers/achievements.js so earned
-// state reads straight from profile.achievements.
-// ---------------------------------------------------------------------------
-
-const ACHIEVEMENTS = [
-  // Lineup
-  {
-    id: 'first_lineup',
-    title: 'Full Roster',
-    desc: `Fill all ${ROSTER_SIZE} lineup slots`,
-    icon: Target,
-    category: 'lineup',
-    eval: (d) => ({ current: d.lineupCount, goal: ROSTER_SIZE }),
-  },
-  {
-    id: 'first_show',
-    title: 'First Blood',
-    desc: 'Receive your first score',
-    icon: Zap,
-    category: 'scoring',
-    eval: (d) => ({ current: d.resultCount > 0 ? 1 : 0, goal: 1 }),
-  },
-  {
-    id: 'shows_10',
-    title: 'Road Warrior',
-    desc: 'Compete in 10 career shows',
-    icon: Star,
-    category: 'scoring',
-    eval: (d) => ({ current: Math.min(d.totalShows + d.resultCount, 10), goal: 10 }),
-  },
-
-  // Streaks (matches backend STREAK_MILESTONES: 3, 7, 14, 30, 60, 100)
-  {
-    id: 'streak_3',
-    title: '3-Day Streak',
-    desc: 'Log in 3 days in a row',
-    icon: Flame,
-    category: 'streak',
-    eval: (d) => ({ current: Math.min(d.streak, 3), goal: 3 }),
-  },
-  {
-    id: 'streak_7',
-    title: 'Week Warrior',
-    desc: '7-day login streak',
-    icon: Flame,
-    category: 'streak',
-    eval: (d) => ({ current: Math.min(d.streak, 7), goal: 7 }),
-  },
-  {
-    id: 'streak_14',
-    title: 'Two Week Terror',
-    desc: '14-day login streak',
-    icon: Flame,
-    category: 'streak',
-    eval: (d) => ({ current: Math.min(d.streak, 14), goal: 14 }),
-  },
-  {
-    id: 'streak_30',
-    title: 'Monthly Master',
-    desc: '30-day login streak',
-    icon: Flame,
-    category: 'streak',
-    eval: (d) => ({ current: Math.min(d.streak, 30), goal: 30 }),
-  },
-  {
-    id: 'streak_60',
-    title: 'Streak Legend',
-    desc: '60-day login streak',
-    icon: Flame,
-    category: 'streak',
-    eval: (d) => ({ current: Math.min(d.streak, 60), goal: 60 }),
-  },
-  {
-    id: 'streak_100',
-    title: 'Century Club',
-    desc: '100-day login streak',
-    icon: Crown,
-    category: 'streak',
-    eval: (d) => ({ current: Math.min(d.streak, 100), goal: 100 }),
-  },
-
-  // Progression
-  {
-    id: 'level_3',
-    title: 'Rank Up',
-    desc: 'Reach XP Level 3',
-    icon: Award,
-    category: 'progression',
-    eval: (d) => ({ current: Math.min(d.level, 3), goal: 3 }),
-  },
-  {
-    id: 'level_5',
-    title: 'Veteran',
-    desc: 'Reach XP Level 5',
-    icon: Award,
-    category: 'progression',
-    eval: (d) => ({ current: Math.min(d.level, 5), goal: 5 }),
-  },
-  {
-    id: 'level_10',
-    title: 'Elite Director',
-    desc: 'Reach XP Level 10',
-    icon: Crown,
-    category: 'progression',
-    eval: (d) => ({ current: Math.min(d.level, 10), goal: 10 }),
-  },
-
-  // Class unlocks
-  {
-    id: 'unlock_aClass',
-    title: 'A Class Access',
-    desc: 'Unlock A Class',
-    icon: Trophy,
-    category: 'unlock',
-    eval: (d) => ({ current: isCorpsClassUnlocked(d.unlockedClasses, 'aClass') ? 1 : 0, goal: 1 }),
-  },
-  {
-    id: 'unlock_openClass',
-    title: 'Open Class Access',
-    desc: 'Unlock Open Class',
-    icon: Trophy,
-    category: 'unlock',
-    eval: (d) => ({
-      current: isCorpsClassUnlocked(d.unlockedClasses, 'openClass') ? 1 : 0,
-      goal: 1,
-    }),
-  },
-  {
-    id: 'unlock_worldClass',
-    title: 'World Class Access',
-    desc: 'Unlock World Class',
-    icon: Trophy,
-    category: 'unlock',
-    eval: (d) => ({
-      current: isCorpsClassUnlocked(d.unlockedClasses, 'worldClass') ? 1 : 0,
-      goal: 1,
-    }),
-  },
-
-  // League / Social
-  {
-    id: 'league_join',
-    title: 'League Player',
-    desc: 'Join a league',
-    icon: Users,
-    category: 'social',
-    eval: (d) => ({ current: d.leagueCount > 0 ? 1 : 0, goal: 1 }),
-  },
-  {
-    id: 'league_win_1',
-    title: 'Matchup Victor',
-    desc: 'Win a league matchup',
-    icon: Users,
-    category: 'social',
-    eval: (d) => ({ current: Math.min(d.leagueWins, 1), goal: 1 }),
-  },
-];
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
-
-const AchievementTrackerPanel = memo(({ profile, lineupCount, resultCount, leagueCount }) => {
-  // Extract scalar fields so useMemo depends on primitives, not the full profile object
-  const streak = profile?.engagement?.loginStreak || 0;
-  const level = profile?.xpLevel || 1;
-  const unlockedClasses = profile?.unlockedClasses;
-  const leagueWins = profile?.stats?.leagueWins || profile?.lifetimeStats?.leagueChampionships || 0;
-  const totalShows = profile?.lifetimeStats?.totalShows || 0;
+const AchievementTrackerPanel = memo(({ profile }) => {
+  const corps = useProfileStore((state) => state.corps);
+  // Depend on the achievements array reference so a fresh server award triggers
+  // a recompute even if the rest of the profile snapshot is referentially equal.
   const earnedAchievements = profile?.achievements;
 
-  // Evaluate all achievements in a single memo with primitive deps
   const { completed, nextUp, totalEarned } = useMemo(() => {
-    const evalData = {
-      lineupCount: lineupCount || 0,
-      resultCount: resultCount || 0,
-      totalShows,
-      streak,
-      level,
-      unlockedClasses: unlockedClasses || ['soundSport'],
-      leagueCount: leagueCount || 0,
-      leagueWins,
-    };
-    // Server-awarded achievements (daily sweep) count as done regardless of
-    // locally-computed progress — ids match the server catalog.
-    const earnedIds = new Set((earnedAchievements || []).map((a) => a.id));
-
-    const evaluated = ACHIEVEMENTS.map((a) => {
-      const { current, goal } = a.eval(evalData);
-      if (earnedIds.has(a.id)) {
-        return { ...a, current: goal, goal, pct: 100, done: true };
-      }
-      const pct = goal === 0 ? 100 : Math.min(Math.round((current / goal) * 100), 100);
-      return { ...a, current, goal, pct, done: pct >= 100 };
-    });
-
-    const done = evaluated.filter((a) => a.done);
-    // Incomplete sorted by pct descending (closest to done first), then by goal ascending (easier first)
+    const evaluated = evaluateAchievements(profile, corps);
+    const done = evaluated.filter((a) => a.earned);
+    // Incomplete sorted by pct desc (closest first), then goal asc (easier first)
     const incomplete = evaluated
-      .filter((a) => !a.done)
+      .filter((a) => !a.earned)
       .sort((a, b) => b.pct - a.pct || a.goal - b.goal);
 
     return {
@@ -219,17 +32,8 @@ const AchievementTrackerPanel = memo(({ profile, lineupCount, resultCount, leagu
       nextUp: incomplete.slice(0, 3),
       totalEarned: done.length,
     };
-  }, [
-    lineupCount,
-    resultCount,
-    totalShows,
-    streak,
-    level,
-    unlockedClasses,
-    leagueCount,
-    leagueWins,
-    earnedAchievements,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile, corps, earnedAchievements]);
 
   // Don't render if profile hasn't loaded
   if (!profile) return null;
@@ -282,7 +86,7 @@ const AchievementTrackerPanel = memo(({ profile, lineupCount, resultCount, leagu
                     style={{ width: `${a.pct}%` }}
                   />
                 </div>
-                <p className="ml-8 text-[10px] text-gray-600 mt-1">{a.desc}</p>
+                <p className="ml-8 text-[10px] text-gray-600 mt-1">{a.description}</p>
               </div>
             );
           })}
@@ -320,17 +124,15 @@ const AchievementTrackerPanel = memo(({ profile, lineupCount, resultCount, leagu
         </div>
       )}
 
-      {/* Footer link to the profile, where achievements are displayed inline */}
-      {totalEarned > 0 && nextUp.length > 0 && (
-        <div className="px-3 py-1.5 border-t border-[#333] bg-[#111]">
-          <Link
-            to="/profile"
-            className="text-[10px] text-gray-600 hover:text-gray-400 transition-colors"
-          >
-            View all achievements →
-          </Link>
-        </div>
-      )}
+      {/* Footer link to the full Achievements page (all earned + locked) */}
+      <div className="px-3 py-1.5 border-t border-[#333] bg-[#111]">
+        <Link
+          to="/achievements"
+          className="text-[10px] text-gray-500 hover:text-gray-300 transition-colors"
+        >
+          View all achievements →
+        </Link>
+      </div>
     </div>
   );
 });
