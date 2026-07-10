@@ -42,6 +42,10 @@ export interface TrophyData {
   title: string;
   description: string;
   tier: 'gold' | 'silver' | 'bronze' | 'special';
+  // Canonical corps class the trophy was won in ('worldClass' | 'openClass' |
+  // 'aClass' | 'soundSport'). Drives the class-colored accent in the trophy
+  // case so an Open Class champion reads differently from a World Class one.
+  corpsClass?: string;
   season?: string;
   icon: React.ElementType;
   earnedAt?: string;
@@ -309,12 +313,15 @@ function getRealTrophies(profile: UserProfile): TrophyData[] {
   if (!t) return [];
   const out: TrophyData[] = [];
 
+  // Finals championships are the World Class crown unless the record says
+  // otherwise (older records omit corpsClass).
   (t.championships || []).forEach((trophy, i) =>
     out.push({
       id: `championship-${i}`,
       title: `Finals ${medalWord(trophy.rank)}`,
       description: trophyDescription(trophy),
       tier: rankTier(trophy.rank),
+      corpsClass: trophy.corpsClass || 'worldClass',
       season: trophy.seasonName,
       icon: Crown,
     })
@@ -325,6 +332,7 @@ function getRealTrophies(profile: UserProfile): TrophyData[] {
       title: `${classLabel(trophy.corpsClass)} ${medalWord(trophy.rank)}`.trim(),
       description: trophyDescription(trophy),
       tier: rankTier(trophy.rank),
+      corpsClass: trophy.corpsClass,
       season: trophy.seasonName,
       icon: Trophy,
     })
@@ -335,6 +343,7 @@ function getRealTrophies(profile: UserProfile): TrophyData[] {
       title: `Regional ${medalWord(trophy.rank)}`,
       description: trophyDescription(trophy),
       tier: rankTier(trophy.rank),
+      corpsClass: trophy.corpsClass,
       season: trophy.seasonName,
       icon: Medal,
     })
@@ -345,6 +354,7 @@ function getRealTrophies(profile: UserProfile): TrophyData[] {
       title: trophy.type === 'soundsport_finalist' ? 'Festival Finalist' : 'Finals Finalist',
       description: trophyDescription(trophy),
       tier: 'special',
+      corpsClass: trophy.corpsClass,
       season: trophy.seasonName,
       icon: Shield,
     })

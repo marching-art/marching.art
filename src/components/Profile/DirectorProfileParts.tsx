@@ -10,6 +10,7 @@ import {
   Calendar,
   MapPin,
   Award,
+  Trophy,
   ChevronRight,
   Music,
   Disc3,
@@ -89,18 +90,43 @@ const StatPill = memo(
 StatPill.displayName = 'StatPill';
 
 // Trophy mini card
+// Per-class accent: border color + 2-char code so each competition class reads
+// distinctly (an Open Class champion is not a World Class champion). The tile's
+// metal (gold/silver/bronze via TIER_STYLES) still encodes rank, and the icon
+// shape encodes the award type (Crown = Finals, Trophy = Class, Medal =
+// Regional, Shield = Finalist).
+const CLASS_ACCENT: Record<string, { border: string; text: string; code: string }> = {
+  worldClass: { border: 'border-purple-400/70', text: 'text-purple-300', code: 'WC' },
+  openClass: { border: 'border-blue-400/70', text: 'text-blue-300', code: 'OC' },
+  aClass: { border: 'border-green-400/70', text: 'text-green-300', code: 'A' },
+  soundSport: { border: 'border-orange-400/70', text: 'text-orange-300', code: 'SS' },
+  // Podium Class — the management-sim tier below SoundSport (in progress).
+  podiumClass: { border: 'border-teal-400/70', text: 'text-teal-300', code: 'PC' },
+};
+
+// Compact trophy chip — an icon, not a card. Full detail lives in the tooltip.
 const TrophyMini = memo(({ trophy }: { trophy: TrophyData }) => {
   const styles = TIER_STYLES[trophy.tier];
   const Icon = trophy.icon;
+  const canonical = trophy.corpsClass ? toCanonicalClassKey(trophy.corpsClass) : null;
+  const accent = (canonical && CLASS_ACCENT[canonical]) || null;
+  const tooltip = [trophy.title, trophy.description].filter(Boolean).join(' — ');
+
   return (
     <div
-      className={`p-2 ${styles.bg} border ${styles.border} flex flex-col items-center text-center`}
-      title={trophy.description}
+      className={`relative aspect-square flex items-center justify-center rounded-sm border-2 ${styles.bg} ${accent ? accent.border : styles.border}`}
+      title={tooltip}
+      role="img"
+      aria-label={tooltip}
     >
       <Icon className={`w-5 h-5 ${styles.icon}`} />
-      <span className={`text-[9px] font-bold ${styles.text} mt-1 truncate w-full`}>
-        {trophy.title}
-      </span>
+      {accent && (
+        <span
+          className={`absolute bottom-0 inset-x-0 text-center text-[7px] font-bold leading-[1.4] ${accent.text} bg-black/50`}
+        >
+          {accent.code}
+        </span>
+      )}
     </div>
   );
 });
@@ -564,6 +590,34 @@ const EmptyWithCTA = memo(
 );
 EmptyWithCTA.displayName = 'EmptyWithCTA';
 
+// Trophy case — a dense collection of class-distinct trophy chips (see
+// TrophyMini) rather than word-cards, capped with a "+N" overflow tile.
+const TROPHY_CAP = 11;
+const TrophyCaseGrid = memo(({ trophies }: { trophies: TrophyData[] }) => {
+  if (trophies.length === 0) {
+    return (
+      <EmptyWithCTA icon={Trophy} title="No trophies yet" cta="Join a league" to="/leagues" />
+    );
+  }
+  const overflow = trophies.length - TROPHY_CAP;
+  return (
+    <div className="p-2 grid grid-cols-4 gap-1.5">
+      {trophies.slice(0, TROPHY_CAP).map((trophy) => (
+        <TrophyMini key={trophy.id} trophy={trophy} />
+      ))}
+      {overflow > 0 && (
+        <div
+          className="aspect-square flex items-center justify-center rounded-sm border-2 border-[#333] bg-[#222]"
+          title={`${overflow} more trophies`}
+        >
+          <span className="text-[10px] font-bold text-gray-400 font-data">+{overflow}</span>
+        </div>
+      )}
+    </div>
+  );
+});
+TrophyCaseGrid.displayName = 'TrophyCaseGrid';
+
 // -----------------------------------------------------------------------------
 // AVATAR ACTIONS - Design / Regenerate / Change avatar
 // -----------------------------------------------------------------------------
@@ -633,6 +687,7 @@ export {
   StatusIndicator,
   StatPill,
   TrophyMini,
+  TrophyCaseGrid,
   AchievementMini,
   SeasonRow,
   Section,
