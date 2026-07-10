@@ -15,6 +15,7 @@ import {
   Trophy,
   Award,
   Star,
+  Medal,
 } from 'lucide-react';
 import { getSoundSportRating } from '../../../utils/scoresUtils';
 
@@ -47,6 +48,15 @@ const CORPS_CLASS_CONFIG = {
     color: 'text-green-500',
     bgColor: 'bg-green-500/10',
     borderColor: 'border-green-500/30',
+  },
+  // Podium corps join league matchups once the class registry enables the
+  // class (Phase 7.4) — the matchup doc arrays are registry-driven server-side.
+  podiumClass: {
+    name: 'Podium Class',
+    icon: Medal,
+    color: 'text-amber-400',
+    bgColor: 'bg-amber-400/10',
+    borderColor: 'border-amber-400/30',
   },
 };
 

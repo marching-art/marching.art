@@ -15,7 +15,7 @@ const { XP_SOURCES } = require("./xpCalculations");
 const { ChunkedWriter } = require("./chunkedWriter");
 const { updateStandings } = require("./leagueStandings");
 const { createLeagueActivity } = require("./leagueHelpers");
-const { FANTASY_CLASSES } = require("./classRegistry");
+const { MATCHUP_CLASSES } = require("./classRegistry");
 
 /**
  * Get top N corps from season standings with tie handling at cutoff position.
@@ -675,7 +675,10 @@ async function processWeeklyMatchups(week, seasonData, db) {
   // ChunkedWriter: two record writes per matchup across up to 500 leagues
   // plus coin awards can exceed a single WriteBatch's per-request cap.
   const winnerBatch = new ChunkedWriter(db);
-  const corpsClasses = FANTASY_CLASSES;
+  // Registry-derived (Phase 7.4): every matchup class resolves head-to-head
+  // on corps.{class}.totalSeasonScore — Podium's nightly display copy
+  // included, once its registry entry enables at launch.
+  const corpsClasses = MATCHUP_CLASSES;
   // Per-league resolved pairs, applied to standings only after the matchup
   // docs commit (see below).
   const standingsByLeague = [];

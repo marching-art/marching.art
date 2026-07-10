@@ -66,6 +66,7 @@ const ForgotPassword = lazyWithRetry(() => import('./pages/ForgotPassword'), 'Fo
 const Article = lazyWithRetry(() => import('./pages/Article'), 'Article');
 const HowToPlay = lazyWithRetry(() => import('./pages/HowToPlay'), 'HowToPlay');
 const HowToPlayPublic = lazyWithRetry(() => import('./pages/HowToPlayPublic'), 'HowToPlayPublic');
+const PodiumGuide = lazyWithRetry(() => import('./pages/PodiumGuide'), 'PodiumGuide');
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'NotFound');
 const GuestDashboard = lazyWithRetry(() => import('./pages/GuestDashboard'), 'GuestDashboard');
 
@@ -468,6 +469,15 @@ function App() {
                       element={
                         <Suspense fallback={<LoadingScreen fullScreen />}>
                           <HowToPlayPublic />
+                        </Suspense>
+                      }
+                    />
+                    {/* Public Podium Class guide (Phase 7.6) — crawlable, no auth */}
+                    <Route
+                      path="/podium-guide"
+                      element={
+                        <Suspense fallback={<LoadingScreen fullScreen />}>
+                          <PodiumGuide />
                         </Suspense>
                       }
                     />

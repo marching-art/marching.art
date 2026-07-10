@@ -18,8 +18,9 @@ const { getDb, dataNamespaceParam } = require("../config");
 const { assertAuth } = require("../helpers/callableGuards");
 const { getCurrentSeasonWeek } = require("../helpers/gameDay");
 
-// Corps class configuration
-const CORPS_CLASSES = ['worldClass', 'openClass', 'aClass', 'soundSport'];
+// Corps class configuration — registry-derived (Phase 7.4) so Podium joins
+// automated matchup generation when its registry entry enables at launch.
+const { MATCHUP_CLASSES: CORPS_CLASSES } = require("../helpers/classRegistry");
 
 /**
  * Calculate current week number from season start date

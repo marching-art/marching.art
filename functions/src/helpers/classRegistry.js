@@ -32,6 +32,15 @@ const RANKED_CLASSES = ENABLED_ENTRIES.filter(([, c]) => c.capabilities.fantasyR
   ([id]) => id
 );
 
+/**
+ * Classes eligible for weekly league matchups (Phase 7.4): every enabled
+ * class — matchups compare corps.{class}.totalSeasonScore head-to-head,
+ * which every class (including Podium, whose display copy is written
+ * nightly) maintains. Podium joins automatically when its registry entry
+ * enables at launch; until then this equals the historical literal.
+ */
+const MATCHUP_CLASSES = ENABLED_CLASSES;
+
 /** Lineup point caps by canonical class id (enabled, lineup-bearing only). */
 const POINT_CAPS = Object.fromEntries(
   ENABLED_ENTRIES.filter(([, c]) => c.capabilities.hasLineup).map(([id, c]) => [id, c.pointCap])
@@ -87,6 +96,7 @@ module.exports = {
   ENABLED_CLASSES,
   FANTASY_CLASSES,
   RANKED_CLASSES,
+  MATCHUP_CLASSES,
   POINT_CAPS,
   REGISTRATION_LOCK_WEEKS,
   CLASS_UNLOCK_COSTS,

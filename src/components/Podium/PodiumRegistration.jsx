@@ -83,7 +83,15 @@ export default function PodiumRegistration({ podium }) {
           <h2 className="text-sm font-bold text-white">Found your corps</h2>
           <p className="text-xs text-gray-400">
             One drum corps, yours for as long as you keep marching it. Reputation attaches to the
-            corps — its name is the thing you&apos;ll spend seasons building.
+            corps — its name is the thing you&apos;ll spend seasons building.{' '}
+            <a
+              href="/podium-guide"
+              target="_blank"
+              rel="noreferrer"
+              className="text-[#c9a227] hover:underline"
+            >
+              Read the guide →
+            </a>
           </p>
           <input
             value={corpsName}

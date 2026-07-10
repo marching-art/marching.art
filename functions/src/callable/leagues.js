@@ -7,6 +7,7 @@ const { updateStandings } = require("../helpers/leagueStandings");
 const { assertAuth } = require("../helpers/callableGuards");
 const { chargeEntryFeeInTransaction, MAX_LEAGUE_ENTRY_FEE } = require("../helpers/leagueEconomy");
 const { addCoinHistoryEntryToTransaction, TRANSACTION_TYPES } = require("./economy");
+const { MATCHUP_CLASSES } = require("../helpers/classRegistry");
 
 exports.createLeague = onCall({ cors: true }, async (request) => {
   assertAuth(request);
@@ -446,14 +447,10 @@ exports.generateMatchups = onCall({ cors: true }, async (request) => {
     standings[s.uid] = { ...s, rank: idx + 1 };
   });
 
-  // Group members by their active corps classes
-  const corpsClasses = ['worldClass', 'openClass', 'aClass', 'soundSport'];
-  const membersByClass = {
-    worldClass: [],
-    openClass: [],
-    aClass: [],
-    soundSport: []
-  };
+  // Group members by their active corps classes. Registry-derived (Phase
+  // 7.4) so Podium corps join league matchups automatically at launch.
+  const corpsClasses = MATCHUP_CLASSES;
+  const membersByClass = Object.fromEntries(corpsClasses.map((c) => [c, []]));
 
   profileDocs.forEach((doc, index) => {
     const memberId = members[index];
@@ -489,12 +486,12 @@ exports.generateMatchups = onCall({ cors: true }, async (request) => {
     matchupsGeneratedWeek: week
   });
 
-  // Count total matchups generated
-  const totalMatchups =
-    (matchupData.worldClassMatchups?.filter(m => !m.isBye).length || 0) +
-    (matchupData.openClassMatchups?.filter(m => !m.isBye).length || 0) +
-    (matchupData.aClassMatchups?.filter(m => !m.isBye).length || 0) +
-    (matchupData.soundSportMatchups?.filter(m => !m.isBye).length || 0);
+  // Count total matchups generated (across every matchup class)
+  const totalMatchups = corpsClasses.reduce(
+    (sum, corpsClass) =>
+      sum + (matchupData[`${corpsClass}Matchups`]?.filter(m => !m.isBye).length || 0),
+    0
+  );
 
   // Create activity event for matchup generation
   await createLeagueActivity(db, leagueId, {
@@ -504,24 +501,21 @@ exports.generateMatchups = onCall({ cors: true }, async (request) => {
     userId: uid,
     metadata: {
       week,
-      matchupCounts: {
-        worldClass: matchupData.worldClassMatchups?.length || 0,
-        openClass: matchupData.openClassMatchups?.length || 0,
-        aClass: matchupData.aClassMatchups?.length || 0,
-        soundSport: matchupData.soundSportMatchups?.length || 0
-      }
+      matchupCounts: Object.fromEntries(
+        corpsClasses.map(corpsClass => [
+          corpsClass,
+          matchupData[`${corpsClass}Matchups`]?.length || 0
+        ])
+      )
     }
   });
 
   return {
     success: true,
     message: "Matchups generated with smart pairing!",
-    matchups: {
-      worldClass: matchupData.worldClassMatchups || [],
-      openClass: matchupData.openClassMatchups || [],
-      aClass: matchupData.aClassMatchups || [],
-      soundSport: matchupData.soundSportMatchups || []
-    }
+    matchups: Object.fromEntries(
+      corpsClasses.map(corpsClass => [corpsClass, matchupData[`${corpsClass}Matchups`] || []])
+    )
   };
 });
 

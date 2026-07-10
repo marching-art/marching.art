@@ -205,6 +205,9 @@ export interface LifetimeStats {
   bestSeasonScore: number;
   leagueChampionships: number;
   totalCorpsRetired: number;
+  /** Director Rating (Phase 7.5): lifetime, placements-only, cross-class —
+   * derived nightly by the leaderboard job, never stored on profiles. */
+  directorRating?: number;
 }
 
 export interface UserSettings {
