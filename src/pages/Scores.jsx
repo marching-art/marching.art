@@ -523,6 +523,8 @@ const Scores = () => {
                           { id: 'open', label: 'Open' },
                           { id: 'aclass', label: 'A Class' },
                           { id: 'soundsport', label: 'SoundSport' },
+                          // Podium recap archives persist per season
+                          ...(podiumEnabled ? [{ id: 'podium', label: 'Podium' }] : []),
                         ].map((tab) => (
                           <button
                             key={tab.id}
@@ -599,6 +601,22 @@ const Scores = () => {
                       {/* SoundSport View */}
                       {archiveViewTab === 'soundsport' && (
                         <SoundSportMedalList shows={unfilteredShows} />
+                      )}
+
+                      {/* Podium View — recap sheets persist in podium-recaps
+                          per seasonUid, so archived seasons render directly */}
+                      {archiveViewTab === 'podium' && podiumEnabled && (
+                        <Suspense
+                          fallback={
+                            <div className="p-8 text-center text-xs text-gray-500">Loading…</div>
+                          }
+                        >
+                          <PodiumRecapSheet
+                            seasonUid={selectedArchiveSeason}
+                            seasonName={displayedSeasonName}
+                            userCorpsName={profile?.corps?.podiumClass?.corpsName}
+                          />
+                        </Suspense>
                       )}
                     </>
                   )}

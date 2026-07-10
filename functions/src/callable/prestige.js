@@ -120,7 +120,10 @@ const purchaseHallBanner = onCall({ cors: true }, async (request) => {
   if (!seasonId || typeof seasonId !== "string" || seasonId.includes("/")) {
     throw new HttpsError("invalid-argument", "A season is required.");
   }
-  if (!VALID_CLASSES.includes(corpsClass)) {
+  // Podium champions hang banners too (Phase 6.5). podiumClass is not in
+  // VALID_CLASSES (no fantasy lineup), but its champions live in the same
+  // season_champions doc — and the rank-1 ownership check below still gates.
+  if (!VALID_CLASSES.includes(corpsClass) && corpsClass !== "podiumClass") {
     throw new HttpsError("invalid-argument", "Invalid corps class.");
   }
   const banner = sanitizeBannerMessage(message);
@@ -178,8 +181,8 @@ const purchaseHallBanner = onCall({ cors: true }, async (request) => {
         banner: { message: banner, purchasedAt: new Date().toISOString() },
       };
 
-      // corpsClass is validated against VALID_CLASSES above, so it is safe
-      // to use in a field path.
+      // corpsClass is validated against the fixed class list above, so it is
+      // safe to use in a field path.
       transaction.update(championsRef, { [`classes.${corpsClass}`]: entries });
       transaction.update(profileRef, { corpsCoin: newBalance });
       addCoinHistoryEntryToTransaction(transaction, db, uid, {

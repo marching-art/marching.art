@@ -237,6 +237,45 @@ async function archivePodiumSeason(db, previousSeason) {
     { merge: true }
   );
 
+  // Hall of Champions (Phase 6.5): merge the Podium top 3 into the season's
+  // champions doc — the same doc the fantasy finals write, same entry shape
+  // (awardFinalsAndSaveChampions), so the Hall renders Podium class-filtered
+  // with zero special-casing. Isolated: a Hall failure never fails archival.
+  if (finalStandings.length > 0) {
+    try {
+      const champions = [];
+      for (const entry of finalStandings.slice(0, 3)) {
+        let username = "Unknown";
+        try {
+          const profileSnapshot = await store.profileRef(db, entry.uid).get();
+          if (profileSnapshot.exists) {
+            const profile = profileSnapshot.data();
+            username = profile.username || profile.displayName || "Unknown";
+          }
+        } catch (profileError) {
+          logger.warn(`[podium] username lookup failed for ${entry.uid}: ${profileError.message}`);
+        }
+        champions.push({
+          rank: entry.place,
+          uid: entry.uid,
+          username,
+          corpsName: entry.corpsName,
+          score: entry.lastTotal,
+        });
+      }
+      const championsRef = db.doc(`season_champions/${previousSeason.seasonUid}`);
+      const championsSnapshot = await championsRef.get();
+      // The fantasy finals normally create this doc at day 49; if Podium is
+      // the only crowned class this season, supply the doc-level fields.
+      const base = championsSnapshot.exists
+        ? {}
+        : { seasonName: previousSeason.seasonUid, archivedAt: new Date() };
+      await championsRef.set({ ...base, classes: { podiumClass: champions } }, { merge: true });
+    } catch (error) {
+      logger.error(`[podium] Hall of Champions merge failed (archival unaffected): ${error.message}`);
+    }
+  }
+
   logger.info(
     `[podium] archived season ${previousSeason.seasonUid} (index ${previousSeason.index}): ` +
       `${archived} careers, ${finalStandings.length} in final standings.`
