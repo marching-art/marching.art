@@ -18,6 +18,7 @@ const engine = require("../helpers/podium/engine");
 const store = require("../helpers/podium/store");
 const venues = require("../helpers/podium/venues");
 const staffMarket = require("../helpers/podium/staffMarket");
+const career = require("../helpers/podium/career");
 
 const FOOD_TIERS = ["gasStation", "standard", "fullKitchen"];
 const MAX_TEMPLATE_BLOCKS = 5;
@@ -189,8 +190,46 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
   const challenge = validateChallenge(request.data?.challenge);
   const auditionShares = validateAuditions(request.data?.auditions);
   const budgetCommitment = validateCommitment(request.data?.budgetCommitment, 0);
+  const freshStart = request.data?.freshStart === true;
 
   const seasonUid = seasonData.seasonUid;
+  // Career continuity (Phase 5): carry reputation across seasons, applying
+  // dormancy decay for missed seasons (counted via the global season index).
+  // freshStart banks the old lineage into retiredCareers and restarts.
+  const seasonIndex = await career.ensureSeasonIndex(db, seasonData);
+  const careerSnapshot = await career.careerRef(db, uid).get();
+  let careerData = careerSnapshot.exists ? careerSnapshot.data() : career.initCareer();
+  // Lazy self-archival: if this director's previous season hasn't been swept
+  // into the career yet (registering before the nightly rollover sweep),
+  // apply it now — idempotent with the sweep via lastSeasonUid.
+  const staleStateSnapshot = await store.stateRef(db, uid).get();
+  if (
+    staleStateSnapshot.exists &&
+    staleStateSnapshot.data().seasonUid !== seasonUid &&
+    careerData.lastSeasonUid !== staleStateSnapshot.data().seasonUid
+  ) {
+    const staleState = staleStateSnapshot.data();
+    const oldIndex =
+      (await career.seasonIndexFor(db, staleState.seasonUid)) ?? seasonIndex.index - 1;
+    careerData = career.applySeasonResult(
+      careerData,
+      { seasonUid: staleState.seasonUid, seasonIndex: oldIndex, state: staleState },
+      store.balance
+    );
+  }
+  if (freshStart && careerData.seasonsPlayed > 0) {
+    const banked = { ...careerData };
+    delete banked.retiredCareers;
+    careerData = {
+      ...career.initCareer(),
+      retiredCareers: [...(careerData.retiredCareers || []).slice(-9), banked],
+    };
+  } else if (careerData.lastPlayedIndex != null) {
+    const missed = Math.max(0, seasonIndex.index - careerData.lastPlayedIndex - 1);
+    careerData = career.applyDormancy(careerData, missed, store.balance);
+  }
+  const startingReputation = careerData.reputation || 0;
+  const startingTier = engine.tierForReputation(startingReputation, store.balance);
   const trimmedName = corpsName.trim();
   const normalizedName = trimmedName.toLowerCase();
   // Same reservation namespace as fantasy registration: one corps name per
@@ -219,7 +258,7 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
     // seeds day-1 state; content advances toward the median pace for the
     // current day (§9 catch-up: playable, never advantaged).
     const engineState = engine.createSeasonState(
-      { challenge, auditions: auditionShares, repTier: 1 },
+      { challenge, auditions: auditionShares, repTier: startingTier },
       store.curves,
       store.balance
     );
@@ -241,8 +280,8 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
       showConcept: typeof showConcept === "string" ? showConcept.slice(0, 200) : "",
       challenge,
       auditions: auditionShares || null,
-      reputation: 0,
-      repTier: 1,
+      reputation: startingReputation,
+      repTier: startingTier,
       budget: (() => {
         const budget = store.initBudget();
         if (budgetCommitment > 0) {
@@ -260,6 +299,11 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
       updatedAt: new Date().toISOString(),
     });
     transaction.set(nameRef, { uid, corpsClass: "podiumClass", seasonUid });
+    transaction.set(career.careerRef(db, uid), {
+      ...careerData,
+      corpsName: trimmedName,
+      updatedAt: new Date().toISOString(),
+    });
     transaction.set(store.rosterRef(db, seasonUid, uid), {
       uid,
       corpsName: trimmedName,
@@ -275,7 +319,7 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
             location: typeof location === "string" ? location.slice(0, 80) : "",
             showConcept: typeof showConcept === "string" ? showConcept.slice(0, 200) : "",
             class: "podiumClass",
-            repTier: 1,
+            repTier: startingTier,
             totalSeasonScore: null,
             seasonRank: null,
             seasonRankOf: null,
@@ -670,6 +714,8 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
   const state = snapshot.data();
   const isShowDay = store.isShowDayFor(state, uid, competitionDay);
   const routePreview = await buildRoutePreview(db, seasonData, state, uid, competitionDay);
+  const careerSnapshot = await career.careerRef(db, uid).get();
+  const careerData = careerSnapshot.exists ? careerSnapshot.data() : null;
   return {
     exists: true,
     calendarDay,
@@ -677,6 +723,14 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
     isShowDay,
     autoDays: store.autoDaysFor(uid, seasonData.seasonUid),
     routePreview,
+    career: careerData
+      ? {
+        reputation: careerData.reputation,
+        historicalPeak: careerData.historicalPeak,
+        seasonsPlayed: careerData.seasonsPlayed,
+        history: (careerData.history || []).slice(-5),
+      }
+      : null,
     state,
   };
 });

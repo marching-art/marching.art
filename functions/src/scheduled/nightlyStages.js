@@ -57,6 +57,23 @@ async function runPodiumStage(db) {
     `[podium-stage] calendarDay=${calendarDay} competitionDay=${competitionDay} ` +
       `(${competitionDay < 1 ? "spring training" : "competition"})`
   );
+
+  // Season rollover (Phase 5): bump the global Podium season index and, the
+  // first night of a new season, archive the previous season's corps into
+  // careers under a dedicated lease.
+  const career = require("../helpers/podium/career");
+  const { claimScoringRun, markScoringRunCompleted } = require("../helpers/scoringRunGuard");
+  const seasonIndex = await career.ensureSeasonIndex(db, seasonData);
+  if (seasonIndex.previous) {
+    const lease = await claimScoringRun(db, `${seasonIndex.previous.seasonUid}_podium_archive`, 0);
+    if (lease.claimed) {
+      const archived = await career.archivePodiumSeason(db, seasonIndex.previous);
+      await markScoringRunCompleted(db, `${seasonIndex.previous.seasonUid}_podium_archive`, 0, {
+        archived,
+      });
+    }
+  }
+
   const { processPodiumDay } = require("../helpers/podium/processor");
   return processPodiumDay(db, seasonData, { calendarDay, competitionDay });
 }
