@@ -17,8 +17,9 @@ const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb, dataNamespaceParam } = require("../config");
 const { assertAuth } = require("../helpers/callableGuards");
+const { FANTASY_CLASSES } = require("../helpers/classRegistry");
 
-const ALL_CLASSES = ["worldClass", "openClass", "aClass", "soundSport"];
+const ALL_CLASSES = FANTASY_CLASSES;
 const SOUNDSPORT_BUCKET = new Set(["soundSport"]);
 const COMPETITIVE_BUCKET = new Set(["worldClass", "openClass", "aClass"]);
 const RIVAL_TARGET = 3;

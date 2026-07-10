@@ -172,9 +172,14 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
       // events the From The Pressbox import (2000-2012) had no title for.
       // Their scores still feed regression/stats, but they make poor
       // schedule entries, so keep them out of the generated season.
+      // Historical majors (Southwestern/Southeastern/DCI East/Eastern
+      // Classic) are excluded too: their days are hard-coded below as
+      // branded marching.art majors, and letting the source events into
+      // the random pool would double them up on neighboring days.
       if (event.eventName && event.offSeasonDay &&
           !event.eventName.toLowerCase().includes("open class") &&
-          !event.eventName.startsWith("DCI Competition - ")) {
+          !event.eventName.startsWith("DCI Competition - ") &&
+          !/southwestern|southeastern|eastern classic|dci east\b/i.test(event.eventName)) {
         const showData = {
           eventName: event.eventName,
           date: event.date,
@@ -218,37 +223,34 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
   placeExclusiveShow(49, "marching.art World Championship Finals", true);
   placeExclusiveShow(48, "marching.art World Championship Semifinals", true);
   placeExclusiveShow(47, "marching.art World Championship Prelims", true);
-  placeExclusiveShow(28, "DCI Southwestern Championship", true);
-  placeExclusiveShow(35, "championship", false);
 
-  const showsForDay41 = showsByDay.get(41) || [];
-  const showsForDay42 = showsByDay.get(42) || [];
-
-  const ecCandidates = [...showsForDay41, ...showsForDay42];
-  const easternClassicCandidates = ecCandidates.filter((s) => {
-    const nameMatches = s.eventName.includes("DCI Eastern Classic");
-    const isUnused = !usedEventNames.has(s.eventName);
-    return nameMatches && isUnused;
-  });
-
-  const dciEastShow = shuffleArray(easternClassicCandidates)[0];
-
-  if (dciEastShow) {
-    const day41 = schedule.find((d) => d.offSeasonDay === 41);
-    const day42 = schedule.find((d) => d.offSeasonDay === 42);
-
-    if (day41) day41.shows = [{ ...dciEastShow, mandatory: false }];
-    if (day42) day42.shows = [{ ...dciEastShow, mandatory: false }];
-
-    if (day41 || day42) {
-      usedEventNames.add(dciEastShow.eventName);
-      usedLocations.add(dciEastShow.location);
+  // The marching.art majors are hard-coded like Championship Week: branded
+  // events on fixed days at fixed sites, never sourced from the historical
+  // pool, and never sharing their day with another show. The Eastern Classic
+  // is one two-night event placed on both days — registering for it counts
+  // as a single show, and attendees are split evenly per class across the
+  // two nights at scoring time.
+  const placeMajor = (days, eventName, location) => {
+    const multiNight = days.length > 1 ? { nights: [...days] } : null;
+    for (const day of days) {
+      const dayObject = schedule.find((d) => d.offSeasonDay === day);
+      if (!dayObject) continue;
+      dayObject.shows = [{
+        eventName,
+        location,
+        offSeasonDay: day,
+        eventTier: "regional",
+        mandatory: false,
+        ...(multiNight ? { multiNight } : {}),
+      }];
     }
-  } else {
-    const warnMsg = "Could not find \"DCI Eastern Classic\" on days 41 or 42. " +
-      "These days will be filled randomly if available.";
-    logger.warn(warnMsg);
-  }
+    usedEventNames.add(eventName);
+    usedLocations.add(location);
+  };
+
+  placeMajor([28], "marching.art Southwestern Championship", "Dallas, Texas");
+  placeMajor([35], "marching.art Southeastern Championship", "Atlanta, Georgia");
+  placeMajor([41, 42], "marching.art Eastern Classic", "Allentown, Pennsylvania");
 
   const remainingDays = schedule.filter((d) => d.shows.length === 0);
   const twoShowDayCount = Math.floor(remainingDays.length * 0.2);

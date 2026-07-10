@@ -3,6 +3,7 @@
 // retired-record builders. Unit-tested in corpsHelpers.test.js.
 
 const admin = require("firebase-admin");
+const { FANTASY_CLASSES } = require("./classRegistry");
 
 // Class tier ordering for duplicate-name conflict resolution: lower index =
 // higher tier. When two corps share a name, the higher-tier corps wins and
@@ -14,7 +15,7 @@ const CLASS_PRIORITY = {
   soundSport: 3,
 };
 
-const VALID_CLASSES = ["worldClass", "openClass", "aClass", "soundSport"];
+const VALID_CLASSES = FANTASY_CLASSES;
 
 const normalizeCorpsName = (name) => (name || "").toLowerCase().trim();
 

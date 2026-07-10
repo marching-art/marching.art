@@ -23,6 +23,11 @@ export function transformCompetitionToShow(competition) {
     isChampionship: competition.type === 'championship',
     allowedClasses: competition.allowedClasses || [],
     mandatory: competition.mandatory || false,
+    // Major-event metadata (hard-coded marching.art majors): eventTier marks
+    // regionals/championships; multiNight marks one event spanning several
+    // nights (e.g. the two-night Eastern Classic). Absent on regular shows.
+    eventTier: competition.eventTier || null,
+    multiNight: competition.multiNight || null,
     // Detail-page enrichment (present on live-season shows scraped from dci.org).
     // Absent on off-season / unenriched shows — consumers must handle null.
     startsAt: competition.startsAt || null,

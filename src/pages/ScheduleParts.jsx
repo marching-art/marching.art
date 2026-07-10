@@ -136,6 +136,11 @@ const ShowCard = ({
     });
   }, [show, userProfile]);
 
+  // The marching.art majors (§5.11) are the season's marquee days — the only
+  // event on their day, full-field convergence. Gold treatment mirrors the
+  // Championship Week styling.
+  const isMajor = show.eventTier === 'regional';
+
   return (
     <div
       onClick={() => !isPast && onRegister(show)}
@@ -149,15 +154,25 @@ const ShowCard = ({
       tabIndex={isPast ? undefined : 0}
       aria-label={isPast ? undefined : `Open registration for ${show.eventName}`}
       className={`
-        bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden
-        ${isPast ? 'opacity-60' : 'hover:border-[#444] cursor-pointer active:bg-[#222]'}
+        bg-[#1a1a1a] border rounded-sm overflow-hidden
+        ${isMajor ? 'border-yellow-500/40' : 'border-[#333]'}
+        ${isPast ? 'opacity-60' : `${isMajor ? 'hover:border-yellow-500/70' : 'hover:border-[#444]'} cursor-pointer active:bg-[#222]`}
         ${isRegistered && !isPast ? 'border-l-2 border-l-green-500' : ''}
       `}
     >
       {/* Card Header */}
-      <div className="px-4 py-3 border-b border-[#333]">
+      <div
+        className={`px-4 py-3 border-b border-[#333] ${
+          isMajor ? 'bg-gradient-to-r from-yellow-500/10 to-transparent' : ''
+        }`}
+      >
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
+            {isMajor && (
+              <div className="flex items-center gap-1 mb-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-yellow-500">
+                <Trophy className="w-3 h-3" /> marching.art Major
+              </div>
+            )}
             <h3 className="text-sm font-bold text-white truncate leading-tight">
               {show.eventName}
             </h3>
@@ -173,6 +188,12 @@ const ShowCard = ({
                 </span>
               )}
             </div>
+            {show.multiNight?.nights?.length > 1 && (
+              <div className="mt-1 text-[10px] text-[#c9a227]">
+                Two-night event — one registration covers both nights; you perform on your assigned
+                night (lineups announced Day {show.multiNight.nights[0] - 2})
+              </div>
+            )}
             {show.sponsor?.corpsName && (
               <div className="mt-1 text-[10px] text-yellow-500/90 truncate">
                 ★ Presented by {show.sponsor.corpsName}
@@ -231,7 +252,7 @@ const ShowCard = ({
 // DAY INDICATOR COMPONENT
 // =============================================================================
 
-const DayIndicator = ({ date, dayNumber: _dayNumber }) => {
+const DayIndicator = ({ date, dayNumber: _dayNumber, isMajorDay = false }) => {
   if (!date) return null;
 
   const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'short' });
@@ -243,17 +264,26 @@ const DayIndicator = ({ date, dayNumber: _dayNumber }) => {
       className={`
       flex-shrink-0 w-20 lg:w-24 flex flex-col items-center justify-center
       py-3 px-2 rounded-sm border
-      ${isPast ? 'bg-[#1a1a1a] border-[#333] text-gray-500' : 'bg-[#0057B8]/10 border-[#0057B8]/30'}
+      ${
+        isPast
+          ? 'bg-[#1a1a1a] border-[#333] text-gray-500'
+          : isMajorDay
+            ? 'bg-yellow-500/10 border-yellow-500/40'
+            : 'bg-[#0057B8]/10 border-[#0057B8]/30'
+      }
     `}
     >
       <span
-        className={`text-[10px] font-bold uppercase ${isPast ? 'text-gray-500' : 'text-[#0057B8]'}`}
+        className={`text-[10px] font-bold uppercase ${
+          isPast ? 'text-gray-500' : isMajorDay ? 'text-yellow-500' : 'text-[#0057B8]'
+        }`}
       >
         {dayOfWeek}
       </span>
       <span className={`text-sm font-bold font-data ${isPast ? 'text-gray-400' : 'text-white'}`}>
         {monthDay}
       </span>
+      {isMajorDay && !isPast && <Trophy className="w-3 h-3 text-yellow-500 mt-0.5" />}
     </div>
   );
 };
@@ -265,11 +295,12 @@ const DayIndicator = ({ date, dayNumber: _dayNumber }) => {
 const DayRow = ({ day, shows, userProfile, formatDate, getActualDate, onRegister, seasonUid }) => {
   const date = getActualDate(day);
   const isPast = isEventPast(date);
+  const isMajorDay = shows.some((show) => show.eventTier === 'regional');
 
   return (
     <div className="flex gap-3 items-stretch">
       {/* Day Indicator */}
-      <DayIndicator date={date} dayNumber={day} />
+      <DayIndicator date={date} dayNumber={day} isMajorDay={isMajorDay} />
 
       {/* Shows for this day - horizontal layout */}
       <div className="flex-1 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">

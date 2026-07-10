@@ -14,10 +14,12 @@ import { formatEventName } from '../utils/season';
 import { useScoresData } from '../hooks/useScoresData';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { useHaptic } from '../hooks/useHaptic';
+import { usePodiumEnabled } from '../hooks/useFeatures';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 import {
   PillTabControl,
   RecapDataGrid,
+  EasternCombinedSheet,
   SoundSportMedalList,
   ClassStandingsGrid,
 } from './ScoresParts';
@@ -26,6 +28,11 @@ import { lazyWithRetry } from '../utils/lazyWithRetry';
 // Lazy-load Hall of Champions — only loaded if the user opens that tab.
 // lazyWithRetry recovers from stale-chunk 404s after a deploy (see utils/lazyWithRetry).
 const HallOfChampions = lazyWithRetry(() => import('./HallOfChampions'), 'HallOfChampionsTab');
+// Podium Class recap sheets (flag-gated tab) — full-caption DCI-style box scores.
+const PodiumRecapSheet = lazyWithRetry(
+  () => import('../components/Podium/PodiumRecapSheet'),
+  'PodiumRecapSheet'
+);
 
 // =============================================================================
 // CONSTANTS
@@ -40,6 +47,12 @@ const TABS = [
   { id: 'archive', label: 'Archive', accent: 'yellow' },
   { id: 'champions', label: 'Hall of Champions', accent: 'yellow' },
 ];
+
+// Inserted after SoundSport when game-settings/features.podiumClass is on.
+// Podium shows ALL 8 captions (its scores are earned, not drafted); the
+// fantasy tabs stay condensed to GE/VIS/MUS — the anti-lineup-harvesting
+// rule (design §5.4).
+const PODIUM_TAB = { id: 'podium', label: 'Podium', accent: 'yellow' };
 
 // =============================================================================
 // HELPER FUNCTIONS
@@ -63,7 +76,13 @@ const Scores = () => {
   const targetSeasonId = searchParams.get('season');
   const targetTab = searchParams.get('tab');
 
-  const validTabIds = useMemo(() => TABS.map((t) => t.id), []);
+  const podiumEnabled = usePodiumEnabled();
+  const tabs = useMemo(() => {
+    if (!podiumEnabled) return TABS;
+    const archiveIndex = TABS.findIndex((t) => t.id === 'archive');
+    return [...TABS.slice(0, archiveIndex), PODIUM_TAB, ...TABS.slice(archiveIndex)];
+  }, [podiumEnabled]);
+  const validTabIds = useMemo(() => tabs.map((t) => t.id), [tabs]);
   const [activeTab, setActiveTab] = useState(() =>
     validTabIds.includes(targetTab) ? targetTab : 'latest'
   );
@@ -316,7 +335,7 @@ const Scores = () => {
       {/* TAB STRIP */}
       <div className="flex-shrink-0 bg-[#0A0A0A] px-3">
         <PillTabControl
-          tabs={TABS}
+          tabs={tabs}
           activeTab={activeTab}
           onTabChange={setActiveTab}
           haptic={haptic}
@@ -337,6 +356,9 @@ const Scores = () => {
               {/* LATEST RECAPS TAB */}
               {activeTab === 'latest' && (
                 <div>
+                  {/* Eastern Classic combined standings — appears once both
+                      nights (days 41-42) have processed (§5.11) */}
+                  <EasternCombinedSheet shows={recapShows} userCorpsName={userCorpsName} />
                   {latestShows.length > 0 ? (
                     latestShows.map((show, idx) => (
                       <RecapDataGrid
@@ -386,6 +408,19 @@ const Scores = () => {
 
               {/* SOUNDSPORT TAB */}
               {activeTab === 'soundsport' && <SoundSportMedalList shows={unfilteredShows} />}
+
+              {/* PODIUM CLASS TAB — full-caption recap sheets (flag-gated) */}
+              {activeTab === 'podium' && (
+                <Suspense
+                  fallback={<div className="p-8 text-center text-xs text-gray-500">Loading…</div>}
+                >
+                  <PodiumRecapSheet
+                    seasonUid={currentSeasonUid}
+                    seasonName={formatSeasonName?.(displayedSeasonId) || undefined}
+                    userCorpsName={profile?.corps?.podiumClass?.corpsName}
+                  />
+                </Suspense>
+              )}
 
               {/* ARCHIVE TAB */}
               {activeTab === 'archive' && (
@@ -488,6 +523,8 @@ const Scores = () => {
                           { id: 'open', label: 'Open' },
                           { id: 'aclass', label: 'A Class' },
                           { id: 'soundsport', label: 'SoundSport' },
+                          // Podium recap archives persist per season
+                          ...(podiumEnabled ? [{ id: 'podium', label: 'Podium' }] : []),
                         ].map((tab) => (
                           <button
                             key={tab.id}
@@ -512,6 +549,9 @@ const Scores = () => {
                   {selectedArchiveSeason && !loading && (
                     <>
                       {/* Recaps View */}
+                      {archiveViewTab === 'latest' && (
+                        <EasternCombinedSheet shows={recapShows} userCorpsName={userCorpsName} />
+                      )}
                       {archiveViewTab === 'latest' &&
                         (recapShows.length > 0 ? (
                           recapShows.map((show, idx) => (
@@ -561,6 +601,22 @@ const Scores = () => {
                       {/* SoundSport View */}
                       {archiveViewTab === 'soundsport' && (
                         <SoundSportMedalList shows={unfilteredShows} />
+                      )}
+
+                      {/* Podium View — recap sheets persist in podium-recaps
+                          per seasonUid, so archived seasons render directly */}
+                      {archiveViewTab === 'podium' && podiumEnabled && (
+                        <Suspense
+                          fallback={
+                            <div className="p-8 text-center text-xs text-gray-500">Loading…</div>
+                          }
+                        >
+                          <PodiumRecapSheet
+                            seasonUid={selectedArchiveSeason}
+                            seasonName={displayedSeasonName}
+                            userCorpsName={profile?.corps?.podiumClass?.corpsName}
+                          />
+                        </Suspense>
                       )}
                     </>
                   )}

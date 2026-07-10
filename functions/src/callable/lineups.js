@@ -4,6 +4,7 @@ const { assertAuth } = require("../helpers/callableGuards");
 const { logger } = require("firebase-functions/v2");
 const { analyzeLineupTrends } = require("../helpers/captionAnalytics");
 const { getCaptionChangeWindow, isDayScoresProcessed } = require("../helpers/captionWindows");
+const { FANTASY_CLASSES, POINT_CAPS } = require("../helpers/classRegistry");
 
 /**
  * Task 2.7: Saves a user's 8-caption lineup for a specific corps class.
@@ -20,7 +21,7 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
   const uid = request.auth.uid;
 
   // 1. --- Validate Inputs ---
-  const validClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+  const validClasses = FANTASY_CLASSES;
   if (!validClasses.includes(corpsClass)) {
     throw new HttpsError("invalid-argument", "Invalid corps class specified.");
   }
@@ -30,13 +31,8 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
   }
 
   // 2. --- Validate Points Cap ---
-  const pointCaps = {
-    worldClass: 150,
-    openClass: 120,
-    aClass: 60,
-    soundSport: 90,
-  };
-  const pointCap = pointCaps[corpsClass];
+  // Caps come from the class-capability registry (Phase 1.1).
+  const pointCap = POINT_CAPS[corpsClass];
 
   const totalPoints = Object.values(lineup).reduce((sum, selection) => {
     if (!selection || typeof selection !== 'string') return sum;
@@ -248,6 +244,44 @@ const getMaxShowsForWeek = (week, totalWeeks = 7) => {
 };
 
 /**
+ * Validate a week's show selection (pure — exported for tests). Throws
+ * HttpsError on violation:
+ *   - a week number and at most maxShowsForWeek shows;
+ *   - no two shows on the same day;
+ *   - no event selected twice. Multi-night events (the Eastern Classic
+ *     appears on both days 41 and 42) COUNT AS ONE SHOW: one registration
+ *     covers every night — scoring matches by eventName and assigns each
+ *     corps a single performance night server-side (§5.11) — so selecting
+ *     the second night would silently burn a weekly slot.
+ */
+function validateShowSelection(week, shows, maxShowsForWeek) {
+  if (!week || !shows || !Array.isArray(shows) || shows.length > maxShowsForWeek) {
+    throw new HttpsError("invalid-argument",
+      `Invalid data. A week number and a maximum of ${maxShowsForWeek} shows are required.`);
+  }
+
+  const daysUsed = new Set();
+  const eventsUsed = new Set();
+  for (const show of shows) {
+    if (show.day !== undefined && show.day !== null) {
+      if (daysUsed.has(show.day)) {
+        throw new HttpsError("invalid-argument",
+          `Cannot select multiple shows on day ${show.day}. Corps can only attend one show per day.`);
+      }
+      daysUsed.add(show.day);
+    }
+    if (typeof show.eventName === "string" && show.eventName) {
+      if (eventsUsed.has(show.eventName)) {
+        throw new HttpsError("invalid-argument",
+          `"${show.eventName}" is already selected. Multi-night events count as one show — ` +
+          "a single registration covers every night.");
+      }
+      eventsUsed.add(show.eventName);
+    }
+  }
+}
+
+/**
  * Task 3.3: Saves a user's selected shows for the week.
  */
 // Add { cors: true } here
@@ -258,25 +292,10 @@ exports.selectUserShows = onCall({ cors: true }, async (request) => {
   // Get the max shows allowed for this week (7 for final week, 4 otherwise)
   const maxShowsForWeek = getMaxShowsForWeek(week);
 
-  if (!week || !shows || !Array.isArray(shows) || shows.length > maxShowsForWeek) {
-    throw new HttpsError("invalid-argument",
-      `Invalid data. A week number and a maximum of ${maxShowsForWeek} shows are required.`);
-  }
+  validateShowSelection(week, shows, maxShowsForWeek);
 
-  if (!corpsClass || !["worldClass", "openClass", "aClass", "soundSport"].includes(corpsClass)) {
+  if (!corpsClass || !FANTASY_CLASSES.includes(corpsClass)) {
     throw new HttpsError("invalid-argument", "Valid corps class is required.");
-  }
-
-  // Validate no two shows on the same day
-  const daysUsed = new Set();
-  for (const show of shows) {
-    if (show.day !== undefined && show.day !== null) {
-      if (daysUsed.has(show.day)) {
-        throw new HttpsError("invalid-argument",
-          `Cannot select multiple shows on day ${show.day}. Corps can only attend one show per day.`);
-      }
-      daysUsed.add(show.day);
-    }
   }
 
   const db = getDb();
@@ -334,7 +353,7 @@ exports.saveShowConcept = onCall({ cors: true }, async (request) => {
   const uid = request.auth.uid;
 
   // Validate inputs
-  const validClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+  const validClasses = FANTASY_CLASSES;
   if (!validClasses.includes(corpsClass)) {
     throw new HttpsError("invalid-argument", "Invalid corps class specified.");
   }
@@ -573,7 +592,7 @@ exports.getLineupAnalytics = onCall({ cors: true }, async (request) => {
   const { corpsClass } = request.data;
   const uid = request.auth.uid;
 
-  const validClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+  const validClasses = FANTASY_CLASSES;
   if (!validClasses.includes(corpsClass)) {
     throw new HttpsError("invalid-argument", "Invalid corps class specified.");
   }
@@ -619,7 +638,7 @@ exports.getActiveLineupKeys = onCall({ cors: true }, async (request) => {
   const { corpsClass } = request.data;
   const uid = request.auth.uid;
 
-  const validClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+  const validClasses = FANTASY_CLASSES;
   if (!validClasses.includes(corpsClass)) {
     throw new HttpsError("invalid-argument", "Invalid corps class specified.");
   }
@@ -658,7 +677,7 @@ exports.validateLineup = onCall({ cors: true }, async (request) => {
   const { corpsClass } = request.data;
   const uid = request.auth.uid;
 
-  const validClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+  const validClasses = FANTASY_CLASSES;
   if (!validClasses.includes(corpsClass)) {
     throw new HttpsError("invalid-argument", "Invalid corps class specified.");
   }
@@ -754,3 +773,7 @@ exports.validateLineup = onCall({ cors: true }, async (request) => {
     throw new HttpsError("internal", "Could not validate lineup.");
   }
 });
+// Pure validators exported for unit tests (never registered as functions —
+// index.js destructures specific callables only).
+module.exports.validateShowSelection = validateShowSelection;
+module.exports.getMaxShowsForWeek = getMaxShowsForWeek;

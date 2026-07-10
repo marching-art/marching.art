@@ -18,7 +18,9 @@ import {
 // OPTIMIZATION #9: Lazy-load heavy MatchupDetailView component (1058 lines)
 const MatchupDetailView = lazy(() => import('../MatchupDetailView'));
 
-const CORPS_CLASSES = ['worldClass', 'openClass', 'aClass', 'soundSport'];
+// Registry-derived (Phase 7.4): mirrors the server's MATCHUP_CLASSES, so
+// Podium matchups render automatically when the class registry enables it.
+import { ENABLED_CLASSES as CORPS_CLASSES } from '../../../utils/classRegistry';
 
 // Season Schedule Overview - Visual week-by-week calendar
 const MatchupsTab = ({

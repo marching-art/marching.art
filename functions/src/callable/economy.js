@@ -97,14 +97,7 @@ function addCoinHistoryEntryToTransaction(transaction, db, uid, entry) {
  * The table was previously short-key-only, which silently paid World and
  * Open class corps ZERO show-participation coins.
  */
-const SHOW_PARTICIPATION_REWARDS = {
-  soundSport: 50,
-  aClass: 100,
-  open: 150,
-  openClass: 150,
-  world: 200,
-  worldClass: 200,
-};
+const { SHOW_PARTICIPATION_REWARDS, CLASS_UNLOCK_COSTS } = require("../helpers/classRegistry");
 
 /**
  * Weekly league win reward
@@ -126,13 +119,7 @@ const SEASON_FINISH_BONUSES = {
  * Class unlock costs with CorpsCoin.
  * Accepts both short ('open') and canonical ('openClass') keys — normalized before lookup.
  */
-const CLASS_UNLOCK_COSTS = {
-  aClass: 1000,
-  open: 2500,
-  openClass: 2500,
-  world: 5000,
-  worldClass: 5000,
-};
+// CLASS_UNLOCK_COSTS now comes from the class-capability registry (Phase 1.1).
 
 /**
  * Normalize a class key to canonical form stored in `unlockedClasses`.

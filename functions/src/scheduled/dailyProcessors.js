@@ -3,19 +3,42 @@ const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { processAndArchiveOffSeasonScoresLogic, processAndScoreLiveSeasonDayLogic } = require("../helpers/scoring");
 const { getCompletedCalendarDay } = require("../helpers/gameDay");
+const { runPodiumStage } = require("./nightlyStages");
+
+/**
+ * Run the flag-gated Podium stage after fantasy scoring (Phase 1.2). Fully
+ * isolated: a Podium failure is logged and swallowed so it can never block
+ * or corrupt the fantasy pipeline. No-op while
+ * game-settings/features.podiumClass is off.
+ * @param {FirebaseFirestore.Firestore} db
+ */
+async function runPodiumStageIsolated(db) {
+  try {
+    const result = await runPodiumStage(db);
+    if (result.status !== "disabled") {
+      logger.info(`[podium-stage] result: ${JSON.stringify(result)}`);
+    }
+  } catch (error) {
+    logger.error(`[podium-stage] failed (fantasy scoring unaffected): ${error.message}`);
+  }
+}
 
 exports.dailyOffSeasonProcessor = onSchedule({
   schedule: "every day 02:00",
   timeZone: "America/New_York",
 }, async () => {
   await processAndArchiveOffSeasonScoresLogic();
+  await runPodiumStageIsolated(getDb());
 });
 
-exports.processDailyLiveScores = onSchedule({
-  schedule: "every day 02:00",
-  timeZone: "America/New_York",
-}, async () => {
-  const db = getDb();
+/**
+ * The live-season fantasy scoring pass, exactly as it has always run.
+ * Extracted so its early returns (spring training, season over) end the
+ * FANTASY stage only — the Podium stage runs on those days too
+ * (recovery/decay/camp economics happen during spring training).
+ * @param {FirebaseFirestore.Firestore} db
+ */
+async function runLiveFantasyStage(db) {
   logger.info("Running Daily Live Season Score Processor...");
 
   const seasonDoc = await db.doc("game-settings/season").get();
@@ -43,7 +66,9 @@ exports.processDailyLiveScores = onSchedule({
   }
 
   if (scoredDay < 1) {
-    logger.info(`Calendar day ${calendarDay} is during spring training (days 1-${SPRING_TRAINING_DAYS}). No scoring today.`);
+    logger.info(
+      `Calendar day ${calendarDay} is during spring training (days 1-${SPRING_TRAINING_DAYS}). No scoring today.`
+    );
     return;
   }
 
@@ -54,6 +79,15 @@ exports.processDailyLiveScores = onSchedule({
 
   logger.info(`Calendar day ${calendarDay} maps to competition day ${scoredDay}`);
   await processAndScoreLiveSeasonDayLogic(scoredDay, seasonData);
+}
+
+exports.processDailyLiveScores = onSchedule({
+  schedule: "every day 02:00",
+  timeZone: "America/New_York",
+}, async () => {
+  const db = getDb();
+  await runLiveFantasyStage(db);
+  await runPodiumStageIsolated(db);
 });
 
 // Note: Legacy H2H matchup generation removed.

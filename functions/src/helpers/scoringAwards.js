@@ -15,6 +15,7 @@ const { XP_SOURCES } = require("./xpCalculations");
 const { ChunkedWriter } = require("./chunkedWriter");
 const { updateStandings } = require("./leagueStandings");
 const { createLeagueActivity } = require("./leagueHelpers");
+const { MATCHUP_CLASSES } = require("./classRegistry");
 
 /**
  * Get top N corps from season standings with tie handling at cutoff position.
@@ -315,9 +316,32 @@ function processCoinAwardsBatch(coinAwards, batch, db) {
  * @param {Object} seasonData - Season configuration data
  * @param {Firestore} db - Firestore database instance
  */
-function awardRegionalTrophies(batch, dailyRecap, scoredDay, seasonData, db) {
+async function awardRegionalTrophies(batch, dailyRecap, scoredDay, seasonData, db) {
   const regionalTrophyDays = [28, 35, 41, 42];
   if (!regionalTrophyDays.includes(scoredDay)) return;
+
+  // The Eastern Classic is ONE event spanning days 41-42 with each corps
+  // performing a single assigned night (§5.11, helpers/easternSplit.js).
+  // Crowning a champion per night would mint two Eastern champions per
+  // class from half-fields, so night one defers and night two awards from
+  // the COMBINED two-night results.
+  if (scoredDay === 41) {
+    logger.info("Day 41 (Eastern night 1): regional trophies defer to the day-42 combined field.");
+    return;
+  }
+  let shows = dailyRecap.shows;
+  if (scoredDay === 42) {
+    const night1Snapshot = await db
+      .doc(`fantasy_recaps/${seasonData.seasonUid}/days/41`)
+      .get();
+    const night1Shows = night1Snapshot.exists ? night1Snapshot.data().shows || [] : [];
+    shows = dailyRecap.shows.map(show => {
+      const night1 = night1Shows.find(s => s.eventName === show.eventName);
+      return night1
+        ? { ...show, results: [...(night1.results || []), ...(show.results || [])] }
+        : show;
+    });
+  }
 
   logger.info(`Day ${scoredDay} is a regional trophy day. Awarding trophies...`);
 
@@ -326,7 +350,7 @@ function awardRegionalTrophies(batch, dailyRecap, scoredDay, seasonData, db) {
   // SoundSport (non-competitive) earns a Regional Best in Show instead.
   const competitiveClasses = ["worldClass", "openClass", "aClass"];
 
-  dailyRecap.shows.forEach(show => {
+  shows.forEach(show => {
     competitiveClasses.forEach(corpsClass => {
       const classResults = show.results
         .filter(r => r.corpsClass === corpsClass)
@@ -651,7 +675,10 @@ async function processWeeklyMatchups(week, seasonData, db) {
   // ChunkedWriter: two record writes per matchup across up to 500 leagues
   // plus coin awards can exceed a single WriteBatch's per-request cap.
   const winnerBatch = new ChunkedWriter(db);
-  const corpsClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+  // Registry-derived (Phase 7.4): every matchup class resolves head-to-head
+  // on corps.{class}.totalSeasonScore — Podium's nightly display copy
+  // included, once its registry entry enables at launch.
+  const corpsClasses = MATCHUP_CLASSES;
   // Per-league resolved pairs, applied to standings only after the matchup
   // docs commit (see below).
   const standingsByLeague = [];

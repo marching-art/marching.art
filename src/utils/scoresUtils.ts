@@ -98,3 +98,93 @@ export function getCaptionBreakdown(existingCaptions?: ExistingCaptions): Captio
   }
   return { ge: null, vis: null, mus: null };
 }
+
+// =============================================================================
+// TWO-NIGHT EVENT COMBINED STANDINGS (Eastern Classic, days 41-42 — §5.11)
+// =============================================================================
+
+export const TWO_NIGHT_DAYS: readonly [number, number] = [41, 42];
+
+interface RecapScore {
+  corpsClass?: string;
+  score?: number;
+  totalScore?: number;
+  [key: string]: unknown;
+}
+
+interface RecapShow {
+  eventName: string;
+  location?: string | null;
+  date?: string;
+  offSeasonDay: number;
+  scores: RecapScore[];
+}
+
+export interface TwoNightSection {
+  corpsClass: string;
+  label: string;
+  rows: Array<RecapScore & { night: 1 | 2 }>;
+}
+
+export interface TwoNightCombined {
+  eventName: string;
+  location: string | null;
+  dateRange: string;
+  sections: TwoNightSection[];
+}
+
+/**
+ * Merge a two-night event's recaps (same eventName on days 41 and 42) into a
+ * combined standings view: rows tagged Night 1/Night 2, grouped per class and
+ * ranked within each class — placements across classes are meaningless, but
+ * the full-field per-class look is the point of the Eastern Classic.
+ *
+ * Returns null until BOTH nights have scored (the combined view appears once
+ * Saturday processes; before that each night's own recap stands alone).
+ * SoundSport rows are excluded: it is ratings-only and its numeric scores are
+ * never surfaced in placement views.
+ */
+export function mergeTwoNightShows(shows: RecapShow[]): TwoNightCombined | null {
+  if (!shows || shows.length === 0) return null;
+  const [nightA, nightB] = TWO_NIGHT_DAYS;
+  const firstNight = shows.find((s) => s.offSeasonDay === nightA);
+  if (!firstNight) return null;
+  const secondNight = shows.find(
+    (s) => s.offSeasonDay === nightB && s.eventName === firstNight.eventName
+  );
+  if (!secondNight) return null;
+
+  const merged: Array<RecapScore & { night: 1 | 2 }> = [];
+  for (const [night, show] of [
+    [1, firstNight],
+    [2, secondNight],
+  ] as Array<[1 | 2, RecapShow]>) {
+    for (const score of show.scores || []) {
+      if (score.corpsClass === 'soundSport') continue;
+      merged.push({ ...score, night });
+    }
+  }
+  if (merged.length === 0) return null;
+
+  const classOrder = ['worldClass', 'openClass', 'aClass'];
+  const sections = classOrder
+    .map((corpsClass) => ({
+      corpsClass,
+      label: CLASS_LABELS[corpsClass] || corpsClass,
+      rows: merged
+        .filter((row) => row.corpsClass === corpsClass)
+        .sort((a, b) => (b.score ?? b.totalScore ?? 0) - (a.score ?? a.totalScore ?? 0)),
+    }))
+    .filter((section) => section.rows.length > 0);
+  if (sections.length === 0) return null;
+
+  return {
+    eventName: firstNight.eventName,
+    location: firstNight.location || null,
+    dateRange:
+      firstNight.date && secondNight.date && firstNight.date !== secondNight.date
+        ? `${firstNight.date} – ${secondNight.date}`
+        : firstNight.date || '',
+    sections,
+  };
+}

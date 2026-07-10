@@ -4,6 +4,7 @@ const admin = require("firebase-admin");
 const { logger } = require("firebase-functions/v2");
 const { hasCorpsCompeted } = require("../helpers/corpsEligibility");
 const { assertAuth } = require("../helpers/callableGuards");
+const { FANTASY_CLASSES } = require("../helpers/classRegistry");
 const {
   VALID_CLASSES,
   normalizeCorpsName,
@@ -27,7 +28,7 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
     throw new HttpsError("invalid-argument", "Decisions array is required.");
   }
 
-  const validClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+  const validClasses = FANTASY_CLASSES;
   const validActions = ["continue", "retire", "unretire", "new", "skip", "move"];
 
   // Validate all decisions
@@ -335,7 +336,7 @@ exports.retireCorps = onCall({ cors: true }, async (request) => {
     throw new HttpsError("invalid-argument", "Corps class is required.");
   }
 
-  const validClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+  const validClasses = FANTASY_CLASSES;
   if (!validClasses.includes(corpsClass)) {
     throw new HttpsError("invalid-argument", "Invalid corps class specified.");
   }
@@ -437,7 +438,7 @@ exports.transferCorps = onCall({ cors: true }, async (request) => {
     throw new HttpsError("invalid-argument", "Cannot transfer a corps to the same class.");
   }
 
-  const validClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+  const validClasses = FANTASY_CLASSES;
   if (!validClasses.includes(fromClass) || !validClasses.includes(toClass)) {
     throw new HttpsError("invalid-argument", "Invalid corps class specified.");
   }
@@ -604,7 +605,7 @@ exports.unretireCorps = onCall({ cors: true }, async (request) => {
     throw new HttpsError("invalid-argument", "Corps class and retired index are required.");
   }
 
-  const validClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+  const validClasses = FANTASY_CLASSES;
   if (!validClasses.includes(corpsClass)) {
     throw new HttpsError("invalid-argument", "Invalid corps class specified.");
   }

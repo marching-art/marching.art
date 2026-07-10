@@ -12,7 +12,13 @@ import type { CorpsClass } from '../../types';
 import { SeasonRow, EmptyWithCTA } from './DirectorProfileParts';
 import { getClassDisplay, type SeasonHistoryEntry } from './directorProfileHelpers';
 
-const CLASS_TAB_ORDER: CorpsClass[] = ['worldClass', 'openClass', 'aClass', 'soundSport'];
+const CLASS_TAB_ORDER: CorpsClass[] = [
+  'worldClass',
+  'openClass',
+  'aClass',
+  'soundSport',
+  'podiumClass',
+];
 
 const SeasonHistorySection = ({ seasons }: { seasons: SeasonHistoryEntry[] }) => {
   const [classFilter, setClassFilter] = useState<CorpsClass | 'all'>('all');

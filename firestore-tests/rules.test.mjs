@@ -222,6 +222,29 @@ await check(
   assertFails(updateDoc(doc(authed(), profilePath), { 'corps.soundSport.totalSeasonScore': 99.9 }))
 );
 
+// seasonHistory feeds the public resume AND the lifetime Director Rating
+// leaderboard (placements-only) — a client-forged placement would mint
+// leaderboard rank. medals feed the trophy case. Both are archival-written.
+await freshSeed();
+await check(
+  'owner cannot forge seasonHistory placements (Director Rating input)',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), {
+      'corps.worldClass.seasonHistory': [{ seasonId: 'forged', placement: 1 }],
+    })
+  )
+);
+
+await freshSeed();
+await check(
+  'owner cannot forge Podium medal counters',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), {
+      'corps.podiumClass.medals': { gold: 70, silver: 0, bronze: 0 },
+    })
+  )
+);
+
 // replacing the whole corps map with score-bearing changes must fail
 await freshSeed();
 await check(

@@ -3,6 +3,7 @@ const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
 const { getDb, dataNamespaceParam } = require("../config");
 const { assertAuth } = require("../helpers/callableGuards");
+const { computeDirectorRating } = require("../helpers/directorRating");
 
 /**
  * Manually callable function to update lifetime leaderboard
@@ -88,7 +89,12 @@ async function updateLifetimeLeaderboardLogic() {
             userId,
             username: profileData.username,
             userTitle: profileData.userTitle || "Rookie",
-            lifetimeStats: profileData.lifetimeStats,
+            lifetimeStats: {
+              ...profileData.lifetimeStats,
+              // Director Rating (Phase 7.5): lifetime, placements-only,
+              // cross-class — derived here nightly, never stored on profiles.
+              directorRating: computeDirectorRating(profileData),
+            },
             updatedAt: new Date()
           });
         }
@@ -106,7 +112,8 @@ async function updateLifetimeLeaderboardLogic() {
       { id: "totalSeasons", field: "totalSeasons" },
       { id: "totalShows", field: "totalShows" },
       { id: "bestSeasonScore", field: "bestSeasonScore" },
-      { id: "leagueChampionships", field: "leagueChampionships" }
+      { id: "leagueChampionships", field: "leagueChampionships" },
+      { id: "directorRating", field: "directorRating" }
     ];
 
     let batch = db.batch();

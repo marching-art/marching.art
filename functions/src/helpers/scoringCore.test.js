@@ -402,6 +402,78 @@ describe("scoreShowsForDay", () => {
     assert.equal(rankings.has("u1_soundSport"), false);
   });
 
+  test("day 41: a resolved easternNightSet gates who scores at the two-night show", () => {
+    const easternShow = {
+      eventName: "marching.art Eastern Classic",
+      multiNight: { nights: [41, 42] },
+    };
+    const enrolled = (uid) =>
+      profileDoc(uid, {
+        corps: {
+          worldClass: {
+            corpsName: `Corps ${uid}`,
+            lineup: fullLineup(),
+            selectedShows: { week6: [{ eventName: easternShow.eventName, day: 41 }] },
+          },
+        },
+      });
+    const profilesSnapshot = { docs: [enrolled("friday"), enrolled("saturday")] };
+    const dailyRecap = { shows: [] };
+
+    const result = scoreShowsForDay({
+      dayEventData: { shows: [easternShow] },
+      profilesSnapshot,
+      week: 6,
+      scoredDay: 41,
+      championshipConfig: null,
+      dailyRecap,
+      getBaseCaptionScore: () => 10,
+      easternNightSet: new Set(["friday_worldClass"]),
+    });
+
+    // Only the assigned night performs, even though both corps registered.
+    assert.deepEqual(
+      dailyRecap.shows[0].results.map((r) => r.uid),
+      ["friday"]
+    );
+    assert.equal(result.dailyScores.has("saturday_worldClass"), false);
+  });
+
+  test("day 41/42 without a resolved set falls back to the legacy in-loop split", () => {
+    const enrolled = (uid) =>
+      profileDoc(uid, {
+        corps: {
+          worldClass: {
+            corpsName: `Corps ${uid}`,
+            lineup: fullLineup(),
+            selectedShows: { week6: [{ eventName: "DCI Eastern Classic", day: 41 }] },
+          },
+        },
+      });
+    const profilesSnapshot = { docs: [enrolled("alpha"), enrolled("beta")] };
+
+    const scoreNight = (scoredDay) => {
+      const dailyRecap = { shows: [] };
+      scoreShowsForDay({
+        dayEventData: { shows: [{ eventName: "DCI Eastern Classic" }] },
+        profilesSnapshot,
+        week: 6,
+        scoredDay,
+        championshipConfig: null,
+        dailyRecap,
+        getBaseCaptionScore: () => 10,
+      });
+      return dailyRecap.shows[0].results.map((r) => r.uid);
+    };
+
+    const night41 = scoreNight(41);
+    const night42 = scoreNight(42);
+    // Legacy alphabetical split: each corps performs exactly one night.
+    assert.deepEqual([...night41, ...night42].sort(), ["alpha", "beta"]);
+    assert.equal(night41.length, 1);
+    assert.equal(night42.length, 1);
+  });
+
   test("sums scores across multiple shows for the same corps", () => {
     const profilesSnapshot = {
       docs: [

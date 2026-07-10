@@ -1,56 +1,32 @@
 // src/utils/captionPricing.js
 // Dynamic caption pricing and validation utilities
 
-/**
- * Point limits for each competition class
- * Based on development guidelines
- */
-export const CLASS_POINT_LIMITS = {
-  soundSport: 90,
-  aClass: 60,
-  openClass: 120,
-  worldClass: 150,
-};
+import {
+  POINT_CAPS,
+  UNLOCK_LEVELS_ALL,
+  UNLOCK_XP_THRESHOLDS,
+  REGISTRATION_LOCK_WEEKS,
+  UNLOCK_COSTS,
+} from './classRegistry';
 
-/**
- * XP level requirements for class unlocks
- * Level 1 = 1000 XP, so Level 3 = 3000 XP, etc.
- */
-export const CLASS_UNLOCK_REQUIREMENTS = {
-  soundSport: 0, // Always available (0 XP)
-  aClass: 3, // Level 3 (3000 XP)
-  openClass: 5, // Level 5 (5000 XP)
-  worldClass: 10, // Level 10 (10000 XP)
-};
+// Class policy values come from the class-capability registry
+// (src/config/classRegistry.json — Phase 1.1). The exported names and shapes
+// below are unchanged; only their source moved.
 
-/**
- * XP thresholds for class unlocks (for display purposes)
- */
-export const CLASS_XP_THRESHOLDS = {
-  soundSport: 0,
-  aClass: 3000, // Level 3
-  openClass: 5000, // Level 5
-  worldClass: 10000, // Level 10
-};
+/** Point limits for each competition class */
+export const CLASS_POINT_LIMITS = POINT_CAPS;
 
-/**
- * Weeks remaining lockout for each class
- */
-export const CLASS_REGISTRATION_LOCKS = {
-  soundSport: 0, // No lock
-  aClass: 4, // Locks 4 weeks before season end
-  openClass: 5, // Locks 5 weeks before season end
-  worldClass: 6, // Locks 6 weeks before season end
-};
+/** XP level requirements for class unlocks (Level 1 = 1000 XP, etc.) */
+export const CLASS_UNLOCK_REQUIREMENTS = UNLOCK_LEVELS_ALL;
 
-/**
- * CorpsCoin cost to bypass class unlock requirements
- */
-export const CLASS_UNLOCK_COSTS = {
-  aClass: 1000,
-  openClass: 2500,
-  worldClass: 5000,
-};
+/** XP thresholds for class unlocks (for display purposes) */
+export const CLASS_XP_THRESHOLDS = UNLOCK_XP_THRESHOLDS;
+
+/** Weeks remaining lockout for each class */
+export const CLASS_REGISTRATION_LOCKS = REGISTRATION_LOCK_WEEKS;
+
+/** CorpsCoin cost to bypass class unlock requirements */
+export const CLASS_UNLOCK_COSTS = UNLOCK_COSTS;
 
 /**
  * Simplified XP Sources - Clear, achievable amounts

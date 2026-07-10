@@ -150,6 +150,13 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
       icon: Coins,
     },
     {
+      id: 'processPodiumStage',
+      name: 'Run Podium Stage',
+      description:
+        'Run the nightly Podium Class stage now (flag-gated; lease-guarded, so a completed day is skipped)',
+      icon: RefreshCw,
+    },
+    {
       id: 'rebuildGameRecords',
       name: 'Rebuild Records Book',
       description:

@@ -17,6 +17,7 @@ const { scrapeLatestLiveScores } = require("../scheduled/liveScraper");
 const { sendWelcomeEmail, brevoApiKey } = require("../helpers/emailService");
 const { DCI_CORPS_DATA } = require("../scripts/seedDciReference");
 const { assertAdmin } = require("../helpers/callableGuards");
+const { FANTASY_CLASSES } = require("../helpers/classRegistry");
 
 // Spring training period (calendar days) before competition day 1 in a live season.
 // Kept in sync with dailyProcessors.js / season helper defaults.
@@ -85,6 +86,14 @@ exports.manualTrigger = onCall({
     case "calculateCorpsStatistics":
       await calculateCorpsStatisticsLogic();
       return { success: true, message: "Successfully calculated and saved corps statistics." };
+    case "processPodiumStage": {
+      // Alpha/beta convenience: run the flag-gated Podium nightly stage now
+      // instead of waiting for the 2 AM scheduler. Same lease semantics; a
+      // completed day is skipped unless it is reprocessed via the guard.
+      const { runPodiumStage } = require("../scheduled/nightlyStages");
+      const stageResult = await runPodiumStage(getDb());
+      return { success: true, message: `Podium stage: ${JSON.stringify(stageResult)}` };
+    }
     case "archiveSeasonResults":
       await archiveSeasonResultsLogic();
       return { success: true, message: "Season results and league champions have been archived." };
@@ -289,7 +298,7 @@ exports.manualTrigger = onCall({
       const profilesSnapshot = await db.collectionGroup("profile")
         .where("activeSeasonId", "==", seasonId).get();
 
-      const corpsClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+      const corpsClasses = FANTASY_CLASSES;
       const totals = { profiles: profilesSnapshot.size, corpsChanged: 0, renamed: 0, moved: 0, removed: 0, kept: 0 };
       let usersUpdated = 0;
       let batch = db.batch();
@@ -364,7 +373,7 @@ exports.manualTrigger = onCall({
       schedule.forEach(day => {
         const week = Math.ceil(day.offSeasonDay / 7);
         (day.shows || []).forEach((show, idx) => {
-          competitions.push({
+          const competition = {
             id: `${seasonId}_day${day.offSeasonDay}_${idx}`,
             name: show.eventName,
             location: show.location || "",
@@ -374,7 +383,11 @@ exports.manualTrigger = onCall({
             type: show.isChampionship ? "championship" : "regular",
             allowedClasses: show.eligibleClasses || ["World Class", "Open Class", "A Class", "SoundSport"],
             mandatory: show.mandatory || false,
-          });
+          };
+          // Major-event metadata (hard-coded marching.art majors).
+          if (show.eventTier) competition.eventTier = show.eventTier;
+          if (show.multiNight) competition.multiNight = show.multiNight;
+          competitions.push(competition);
         });
       });
 
@@ -405,7 +418,7 @@ exports.manualTrigger = onCall({
         let batch = db.batch();
         let batchCount = 0;
 
-        const corpsClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+        const corpsClasses = FANTASY_CLASSES;
 
         for (const doc of profilesSnapshot.docs) {
           const profileData = doc.data();

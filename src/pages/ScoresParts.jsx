@@ -21,6 +21,7 @@ import {
   getSoundSportRating,
   seededShuffle,
   getCaptionBreakdown,
+  mergeTwoNightShows,
 } from '../utils/scoresUtils';
 
 const BlueRibbonIcon = ({ className = 'w-5 h-5' }) => (
@@ -110,7 +111,7 @@ const PillTabControl = ({ tabs, activeTab, onTabChange, haptic }) => {
 // on mobile (the old wide-table layout clipped these columns).
 // =============================================================================
 
-const CaptionBreakdown = ({ captions }) => {
+const CaptionBreakdown = ({ captions, highlight }) => {
   if (!captions) return null;
   const fmt = (v) => (v !== null && v !== undefined ? v.toFixed(2) : '-');
   const items = [
@@ -121,8 +122,11 @@ const CaptionBreakdown = ({ captions }) => {
   return (
     <div className="flex items-center gap-x-3 gap-y-0.5 flex-wrap mt-0.5 text-[10px] font-data tabular-nums">
       {items.map(([label, value]) => (
-        <span key={label} className="text-gray-500">
-          {label} <span className="text-gray-300">{fmt(value)}</span>
+        <span key={label} className={highlight === label ? 'text-[#0057B8]' : 'text-gray-500'}>
+          {label}{' '}
+          <span className={highlight === label ? 'text-white font-bold' : 'text-gray-300'}>
+            {fmt(value)}
+          </span>
         </span>
       ))}
     </div>
@@ -222,6 +226,106 @@ const RecapDataGrid = memo(({ scores, eventName, location, date, userCorpsName }
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+});
+
+// =============================================================================
+// TWO-NIGHT COMBINED STANDINGS — the Eastern Classic (days 41-42, §5.11).
+// One event, two nightly drops: once Saturday processes, this sheet merges
+// both nights into per-class combined standings with Night 1/2 badges. The
+// small uniform night-two growth bump is published, not hidden — that's the
+// real DCI recap-thread experience.
+// =============================================================================
+
+const NIGHT_BADGE = {
+  1: 'bg-[#0057B8]/15 text-[#4d9fff]',
+  2: 'bg-purple-500/15 text-purple-300',
+};
+
+const EasternCombinedSheet = memo(({ shows, userCorpsName }) => {
+  const combined = useMemo(() => mergeTwoNightShows(shows || []), [shows]);
+  if (!combined) return null;
+
+  return (
+    <div className="border-b border-[#333]">
+      {/* Masthead */}
+      <div className="bg-gradient-to-r from-[#c9a227]/15 to-transparent px-4 py-3 border-b border-[#c9a227]/30">
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#c9a227]">
+              Combined Standings · Both Nights
+            </div>
+            <div className="font-bold text-white text-sm truncate">
+              {formatEventName(combined.eventName)}
+            </div>
+            {combined.location && (
+              <div className="text-[10px] text-gray-500 flex items-center gap-1">
+                <MapPin className="w-3 h-3" />
+                {combined.location}
+              </div>
+            )}
+          </div>
+          <span className="text-[10px] text-gray-500 font-data tabular-nums flex-shrink-0">
+            {combined.dateRange}
+          </span>
+        </div>
+      </div>
+
+      {/* Per-class sections */}
+      {combined.sections.map((section) => (
+        <div key={section.corpsClass}>
+          <div className="bg-[#161616] px-4 py-1.5 border-y border-[#2a2a2a] flex items-center justify-between">
+            <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">
+              {section.label}
+            </span>
+            <span className="text-[9px] text-gray-600 tabular-nums">
+              {section.rows.length} corps
+            </span>
+          </div>
+          {section.rows.map((row, idx) => {
+            const isUserCorps =
+              userCorpsName && row.corpsName?.toLowerCase() === userCorpsName.toLowerCase();
+            const rowBg = idx % 2 === 0 ? 'bg-[#1a1a1a]' : 'bg-[#111]';
+            return (
+              <div
+                key={`${row.corpsName}-${idx}`}
+                className={`${rowBg} flex items-center gap-2.5 px-3 py-2 ${
+                  isUserCorps ? 'border-l-2 border-l-[#0057B8]' : ''
+                }`}
+              >
+                <span className="flex-shrink-0 w-6 h-6 bg-[#222] border border-[#333] flex items-center justify-center text-[10px] font-bold text-gray-400 tabular-nums">
+                  {idx + 1}
+                </span>
+                <TeamAvatar name={row.corpsName || row.corps} logoUrl={row.avatarUrl} size="xs" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="font-bold text-white text-sm truncate">
+                      {row.corpsName || row.corps}
+                    </span>
+                    <DirectorTag displayName={row.displayName} uid={row.uid} />
+                  </div>
+                  <CaptionBreakdown captions={getCaptionBreakdown(row)} />
+                </div>
+                <span
+                  className={`flex-shrink-0 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-sm ${NIGHT_BADGE[row.night]}`}
+                >
+                  N{row.night}
+                </span>
+                <span className="flex-shrink-0 font-bold text-white font-data tabular-nums text-base">
+                  {(row.score || row.totalScore || 0).toFixed(3)}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      ))}
+
+      {/* Footnote: the published night-two effect */}
+      <div className="px-4 py-2 bg-[#111] text-[9px] text-gray-600">
+        Night 2 corps carry one extra day of growth — the split is seeded evenly per class, and
+        night parity alternates each season.
       </div>
     </div>
   );
@@ -436,14 +540,31 @@ const SoundSportMedalList = ({ shows }) => {
 // STANDINGS TABLE FOR CLASS TABS
 // =============================================================================
 
+// Caption Leaders sorting (§5.4): the fantasy classes sort by the CONDENSED
+// captions only (GE/VIS/MUS) — per-caption detail stays Podium-exclusive so
+// lineups can't be harvested from the sheet.
+const STANDINGS_SORTS = [
+  { id: 'total', label: 'Score' },
+  { id: 'GE', label: 'GE' },
+  { id: 'VIS', label: 'VIS' },
+  { id: 'MUS', label: 'MUS' },
+];
+
 const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
-  // Pre-compute all caption breakdowns once (real data only, no synthetic values)
-  const captionMap = useMemo(() => {
-    if (!standings || standings.length === 0) return new Map();
-    return new Map(
-      standings.map((entry, idx) => [idx, getCaptionBreakdown(entry.scores?.[0] || entry)])
-    );
-  }, [standings]);
+  const [sortBy, setSortBy] = useState('total');
+
+  // Pre-compute breakdowns per entry (real data only, no synthetic values),
+  // then order by the selected caption — corps without caption data sort last.
+  const sorted = useMemo(() => {
+    if (!standings || standings.length === 0) return [];
+    const withCaptions = standings.map((entry) => ({
+      entry,
+      captions: getCaptionBreakdown(entry.scores?.[0] || entry),
+    }));
+    if (sortBy === 'total') return withCaptions;
+    const key = { GE: 'ge', VIS: 'vis', MUS: 'mus' }[sortBy];
+    return [...withCaptions].sort((a, b) => (b.captions[key] ?? -1) - (a.captions[key] ?? -1));
+  }, [standings, sortBy]);
 
   if (!standings || standings.length === 0) {
     return (
@@ -457,17 +578,31 @@ const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
   return (
     <div>
       {/* Section Header */}
-      <div className="bg-[#1a1a1a] px-4 py-3 border-b border-[#333] flex items-center justify-between">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
-          {className} Season Standings
+      <div className="bg-[#1a1a1a] px-4 py-3 border-b border-[#333] flex items-center justify-between gap-2">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 truncate">
+          {className} {sortBy === 'total' ? 'Season Standings' : `Caption Leaders · ${sortBy}`}
         </span>
-        <span className="text-[10px] text-gray-500">{standings.length} corps</span>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          {STANDINGS_SORTS.map((sort) => (
+            <button
+              key={sort.id}
+              onClick={() => setSortBy(sort.id)}
+              aria-pressed={sortBy === sort.id}
+              className={`px-2 py-1 text-[9px] font-bold uppercase tracking-wider rounded-sm transition-colors ${
+                sortBy === sort.id
+                  ? 'bg-[#0057B8] text-white'
+                  : 'bg-[#222] text-gray-500 hover:text-gray-300'
+              }`}
+            >
+              {sort.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Data Grid - stacked rows so caption scores never clip off the right */}
       <div>
-        {standings.map((entry, idx) => {
-          const captions = captionMap.get(idx);
+        {sorted.map(({ entry, captions }, idx) => {
           const isUserCorps =
             userCorpsName && entry.corpsName?.toLowerCase() === userCorpsName.toLowerCase();
           const rowBg = idx % 2 === 0 ? 'bg-[#1a1a1a]' : 'bg-[#111]';
@@ -480,9 +615,9 @@ const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
                 isUserCorps ? 'border-l-2 border-l-[#0057B8]' : ''
               }`}
             >
-              {/* Rank */}
+              {/* Rank — position under the active sort (caption rank when caption-sorted) */}
               <span className="flex-shrink-0 w-6 h-6 bg-[#222] border border-[#333] flex items-center justify-center text-[10px] font-bold text-gray-400 tabular-nums">
-                {entry.rank}
+                {sortBy === 'total' ? entry.rank : idx + 1}
               </span>
 
               {/* Avatar */}
@@ -494,7 +629,10 @@ const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
                   <span className="font-bold text-white text-sm truncate">{entry.corpsName}</span>
                   <DirectorTag displayName={entry.displayName} uid={entry.uid} />
                 </div>
-                <CaptionBreakdown captions={captions} />
+                <CaptionBreakdown
+                  captions={captions}
+                  highlight={sortBy === 'total' ? undefined : sortBy}
+                />
               </div>
 
               {/* Avg score + trend */}
@@ -520,4 +658,11 @@ const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
   );
 };
 
-export { BlueRibbonIcon, PillTabControl, RecapDataGrid, SoundSportMedalList, ClassStandingsGrid };
+export {
+  BlueRibbonIcon,
+  PillTabControl,
+  RecapDataGrid,
+  EasternCombinedSheet,
+  SoundSportMedalList,
+  ClassStandingsGrid,
+};

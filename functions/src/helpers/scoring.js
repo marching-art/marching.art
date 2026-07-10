@@ -34,6 +34,11 @@ const {
 } = require("./scoringRunGuard");
 const { settleLeaguePoolsForDay } = require("./leaguePools");
 const { publishSeasonSummaryRequest } = require("./newsSeasonSummaryTrigger");
+const {
+  isTwoNightShow,
+  resolveEasternNightSet,
+  publishEasternPreview,
+} = require("./easternSplit");
 
 
 
@@ -89,6 +94,10 @@ function hasCompleteLineup(lineup) {
  * @param {Object} params.dailyRecap - Recap accumulator; shows are pushed onto it.
  * @param {(corpsName: string, sourceYear: string, caption: string) => number}
  *   params.getBaseCaptionScore - Season-specific base-score strategy.
+ * @param {Set<string>|null} [params.easternNightSet] - Persisted two-night
+ *   assignment for this day's multi-night show ("${uid}_${corpsClass}" keys,
+ *   from easternSplit.resolveEasternNightSet). When absent, falls back to the
+ *   legacy in-loop alphabetical split.
  * @returns {{ dailyScores: Map<string, number>, coinAwards: Array,
  *   captionPoints: Map<string, Object>, stats: Object }}
  */
@@ -100,6 +109,7 @@ function scoreShowsForDay({
   championshipConfig,
   dailyRecap,
   getBaseCaptionScore,
+  easternNightSet = null,
 }) {
   const dailyScores = new Map();
   const coinAwards = []; // { uid, corpsClass, showName, amount }
@@ -117,13 +127,18 @@ function scoreShowsForDay({
     };
 
     // --- DAY 41/42 REGIONAL SPLIT LOGIC ---
-    // Eastern Classic spans two days. Split enrollees across all corps classes
-    // roughly in half per class, with Day 41 = Friday and Day 42 = Saturday.
+    // Eastern Classic spans two days; each corps performs one assigned night.
     // Keys are "${uid}_${corpsClass}" composites so per-corps assignment works
     // even when a user has multiple corps registered for the show.
+    // The caller resolves the PERSISTED snake split (easternSplit.js) so both
+    // nights score against the same assignment; the legacy in-loop
+    // alphabetical split remains the fallback when no set was resolved.
     let day41_42_participantSet = null;
-    if ([41, 42].includes(scoredDay) && show.eventName.includes("Eastern Classic")) {
-      day41_42_participantSet = buildEasternClassicParticipantSet(
+    if (
+      [41, 42].includes(scoredDay) &&
+      (isTwoNightShow(show) || show.eventName.includes("Eastern Classic"))
+    ) {
+      day41_42_participantSet = easternNightSet || buildEasternClassicParticipantSet(
         profilesSnapshot, show.eventName, week, scoredDay
       );
     }
@@ -267,7 +282,9 @@ function scoreShowsForDay({
 
 // Competitive classes ranked nightly. SoundSport is deliberately excluded:
 // it is a ratings-only format whose standings are never shown as placements.
-const RANKED_CLASSES = ["worldClass", "openClass", "aClass"];
+// Ranked classes come from the class-capability registry (Phase 1.1);
+// SoundSport (ratings-only) and disabled classes are excluded there.
+const { RANKED_CLASSES } = require("./classRegistry");
 
 /**
  * Class standings after tonight's scoring — the "World Class · #14" number.
@@ -400,7 +417,8 @@ async function commitDailyScoring({
 
   // --- TROPHY AWARDING LOGIC ---
   // OPTIMIZATION #5: Uses shared trophy awarding helpers
-  awardRegionalTrophies(batch, dailyRecap, scoredDay, seasonData, db);
+  // (async: day 42 reads the day-41 recap for the combined Eastern field)
+  await awardRegionalTrophies(batch, dailyRecap, scoredDay, seasonData, db);
 
   if (scoredDay === 46) {
     awardClassChampionshipTrophies(batch, dailyRecap, seasonData, db);
@@ -532,9 +550,23 @@ async function processAndArchiveOffSeasonScoresLogic({ force = false } = {}) {
     const getBaseCaptionScore = (corpsName, sourceYear, caption) =>
       getCachedRegressionScore(corpsName, sourceYear, caption, scoredDay, historicalData);
 
+    // Eastern Classic nights: resolve the persisted snake split so day 42
+    // scores the exact complement of day 41 (Phase 6.1, design §5.11). On
+    // any failure the loop falls back to the legacy in-loop split.
+    let easternNightSet = null;
+    if ([41, 42].includes(scoredDay)) {
+      try {
+        easternNightSet = await resolveEasternNightSet(
+          db, seasonData, profilesSnapshot, dayEventData, week, scoredDay
+        );
+      } catch (error) {
+        logger.error(`Eastern split resolution failed (legacy fallback in effect): ${error.message}`);
+      }
+    }
+
     const { dailyScores, coinAwards, captionPoints, stats } = scoreShowsForDay({
       dayEventData, profilesSnapshot, week, scoredDay,
-      championshipConfig, dailyRecap, getBaseCaptionScore,
+      championshipConfig, dailyRecap, getBaseCaptionScore, easternNightSet,
     });
 
     // Log scoring statistics for diagnostics
@@ -559,6 +591,17 @@ async function processAndArchiveOffSeasonScoresLogic({ force = false } = {}) {
     if (scoredDay % 7 === 0) {
       await payWeeklyParticipationXP(scoredDay / 7, seasonData, db);
       await processWeeklyMatchups(scoredDay / 7, seasonData, db);
+    }
+
+    // Post-day-38 (Atlanta standings final): publish the Eastern Classic
+    // night-lineup preview — the day-39 community moment. Isolated: the
+    // preview is decorative and must never fail the scoring run.
+    if (scoredDay === 38) {
+      try {
+        await publishEasternPreview(db, seasonData, profilesSnapshot, scoredDay);
+      } catch (error) {
+        logger.error(`Eastern preview publication failed (scoring unaffected): ${error.message}`);
+      }
     }
 
     await markScoringRunCompleted(db, seasonData.seasonUid, scoredDay, { opCount, batchCount });
@@ -714,9 +757,23 @@ async function scoreLiveSeasonDay(db, scoredDay, seasonData) {
     return baseCaptionScore;
   };
 
+  // Eastern Classic nights: resolve the persisted snake split so day 42
+  // scores the exact complement of day 41 (Phase 6.1, design §5.11). On
+  // any failure the loop falls back to the legacy in-loop split.
+  let easternNightSet = null;
+  if ([41, 42].includes(scoredDay)) {
+    try {
+      easternNightSet = await resolveEasternNightSet(
+        db, seasonData, profilesSnapshot, dayEventData, week, scoredDay
+      );
+    } catch (error) {
+      logger.error(`Eastern split resolution failed (legacy fallback in effect): ${error.message}`);
+    }
+  }
+
   const { dailyScores, coinAwards, captionPoints } = scoreShowsForDay({
     dayEventData, profilesSnapshot, week, scoredDay,
-    championshipConfig, dailyRecap, getBaseCaptionScore,
+    championshipConfig, dailyRecap, getBaseCaptionScore, easternNightSet,
   });
 
   const { opCount, batchCount } = await commitDailyScoring({
@@ -739,6 +796,16 @@ async function scoreLiveSeasonDay(db, scoredDay, seasonData) {
   if (scoredDay % 7 === 0) {
     await payWeeklyParticipationXP(scoredDay / 7, seasonData, db);
     await processWeeklyMatchups(scoredDay / 7, seasonData, db);
+  }
+
+  // Post-day-38: publish the Eastern Classic night-lineup preview (see the
+  // off-season path). Isolated — never fails the scoring run.
+  if (scoredDay === 38) {
+    try {
+      await publishEasternPreview(db, seasonData, profilesSnapshot, scoredDay);
+    } catch (error) {
+      logger.error(`Eastern preview publication failed (scoring unaffected): ${error.message}`);
+    }
   }
 
   await markScoringRunCompleted(db, seasonData.seasonUid, scoredDay, { opCount, batchCount });

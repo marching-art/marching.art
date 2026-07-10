@@ -312,6 +312,15 @@ const ShowRegistrationModal = ({
         </span>
         <span className="text-[10px] text-gray-500">Max {maxShows} shows per corps</span>
       </div>
+
+      {/* Two-night event notice (e.g. the Eastern Classic, days 41-42) */}
+      {show.multiNight?.nights?.length > 1 && (
+        <div className="mt-2 px-3 py-2 bg-[#c9a227]/10 border border-[#c9a227]/30 text-[10px] text-[#c9a227]">
+          Two-night event (Days {show.multiNight.nights.join(' & ')}): registering counts as ONE
+          show and covers both nights. Each corps performs once, on its assigned night — night
+          lineups are announced on Day {show.multiNight.nights[0] - 2}.
+        </div>
+      )}
     </>
   );
 
@@ -322,6 +331,21 @@ const ShowRegistrationModal = ({
       {show.lineup?.length > 0 && (
         <div className="px-4 pt-4">
           <RunningOrder show={show} />
+        </div>
+      )}
+
+      {/* marching.art Major banner (§5.11): exclusive day, full-field
+          convergence — the season's shared reference points */}
+      {show.eventTier === 'regional' && !isChampionship && (
+        <div className="mx-4 mt-4 flex items-start gap-3 p-3 bg-yellow-500/10 border border-yellow-500/30">
+          <Trophy className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-bold text-yellow-400 mb-0.5">marching.art Major</p>
+            <p className="text-xs text-gray-400">
+              The only event on this day — the whole field converges here, and every class is scored
+              on the same night at the same show.
+            </p>
+          </div>
         </div>
       )}
 

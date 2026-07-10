@@ -41,6 +41,11 @@ const CLASS_CONFIG = {
   // at each season's SoundSport International Music & Food Festival earns
   // "Best in Show" — surfaced here with the blue-ribbon award.
   soundSport: { name: 'SoundSport', short: 'Sound', icon: Music },
+  // Podium Class champions are written at season rollover by the Podium
+  // career archival (Phase 6.5). The division tab is data-driven: it only
+  // appears once at least one archived season has a Podium podium, so the
+  // Hall needs no feature flag and history survives any flag state.
+  podiumClass: { name: 'Podium Class', short: 'Podium', icon: Medal },
 };
 
 // SoundSport recognizes a "Best in Show" ensemble rather than a champion, so
@@ -494,6 +499,15 @@ const HallOfChampions = () => {
     };
   }, []);
 
+  // Divisions shown in the switcher. Podium only appears once real Podium
+  // champions exist in the archive (data-driven — no feature flag).
+  const visibleClasses = useMemo(() => {
+    const hasPodiumHistory = seasons.some((s) => (s.classes?.podiumClass?.length || 0) > 0);
+    return Object.entries(CLASS_CONFIG).filter(
+      ([classKey]) => classKey !== 'podiumClass' || hasPodiumHistory
+    );
+  }, [seasons]);
+
   // Only seasons that actually have a crowned champion in the active class
   const crownedSeasons = useMemo(() => {
     return seasons.filter((s) => (s.classes?.[selectedClass]?.length || 0) > 0);
@@ -625,7 +639,7 @@ const HallOfChampions = () => {
               Division
             </div>
             <div className="flex border-t border-[#333]">
-              {Object.entries(CLASS_CONFIG).map(([classKey, config]) => {
+              {visibleClasses.map(([classKey, config]) => {
                 const isSelected = selectedClass === classKey;
                 return (
                   <button

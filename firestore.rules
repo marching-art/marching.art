@@ -66,15 +66,36 @@ function corpsClassUntouched(corpsClass) {
      // Nightly class standing ("World Class · #14") — written only by the
      // scoring run; a client-forged rank would display on public profiles.
      request.resource.data.get(['corps', corpsClass, 'seasonRank'], null) == resource.data.get(['corps', corpsClass, 'seasonRank'], null) &&
-     request.resource.data.get(['corps', corpsClass, 'seasonRankOf'], null) == resource.data.get(['corps', corpsClass, 'seasonRankOf'], null));
+     request.resource.data.get(['corps', corpsClass, 'seasonRankOf'], null) == resource.data.get(['corps', corpsClass, 'seasonRankOf'], null) &&
+     // Archived season history feeds the public resume AND the lifetime
+     // Director Rating leaderboard (placements-only); medals feed the trophy
+     // case. Both are written only by season archival / the nightly
+     // processors — a client-forged placement would mint leaderboard rank.
+     request.resource.data.get(['corps', corpsClass, 'seasonHistory'], null) == resource.data.get(['corps', corpsClass, 'seasonHistory'], null) &&
+     request.resource.data.get(['corps', corpsClass, 'medals'], null) == resource.data.get(['corps', corpsClass, 'medals'], null));
+}
+
+// Podium Class competitive state (corps.podiumClass.podium.*) is written
+// exclusively by Cloud Functions: captions, condition, budget, staff and
+// reputation ARE the game, so a client write here would be score forgery
+// (PODIUM_CLASS_DESIGN.md §14.2.5). Inert until podiumClass entries exist
+// on profiles (Phase 2) — a missing entry passes untouched.
+function podiumStateUntouched() {
+  return request.resource.data.get(['corps', 'podiumClass'], null) == null ||
+    request.resource.data.get(['corps', 'podiumClass', 'podium'], null)
+      == resource.data.get(['corps', 'podiumClass', 'podium'], null);
 }
 
 // SoundSport lineups are created during client-side onboarding, so only its
 // score is guarded; the three competitive classes get the full guard.
+// podiumClass gets the standard class guard (name/score/rank) plus the
+// podium-state guard above.
 function touchesProtectedCorpsFields() {
   return !corpsClassUntouched('worldClass') ||
     !corpsClassUntouched('openClass') ||
     !corpsClassUntouched('aClass') ||
+    !corpsClassUntouched('podiumClass') ||
+    !podiumStateUntouched() ||
     request.resource.data.get(['corps', 'soundSport', 'totalSeasonScore'], null)
       != resource.data.get(['corps', 'soundSport', 'totalSeasonScore'], null);
 }
@@ -141,12 +162,22 @@ match /artifacts/{appId}/users/{userId} {
   // excluded too — without it, this catch-all silently granted owners
   // unrestricted writes to profile/data, bypassing the protected-field
   // guards above entirely (currency, XP, trophies, lineups, scores).
+  // Podium competitive state (podium/state) is server-only for writes —
+  // captions, condition, and reputation are the game — and OWNER-only for
+  // reads: challenge levels and caption progress are competitive intel
+  // (PODIUM_CLASS_DESIGN.md §14.2.5). Public identity lives on profile/data.
+  match /podium/{document=**} {
+    allow read: if isAdmin() || isOwner(userId);
+    allow write: if isAdmin();
+  }
+
   match /{subcollection}/{document=**} {
-    allow read: if isAuthenticated() && subcollection != 'private';
+    allow read: if isAuthenticated() && subcollection != 'private' && subcollection != 'podium';
     allow write: if isAdmin() ||
       (isOwner(userId) &&
         subcollection != 'corpsCoinHistory' &&
-        subcollection != 'profile');
+        subcollection != 'profile' &&
+        subcollection != 'podium');
   }
 }
 
@@ -206,6 +237,59 @@ match /fantasy_recaps/{docId} {
     allow read: if true;
     allow write: if false; // Backend only
   }
+}
+
+// Podium Class recap sheets — public like fantasy_recaps, backend-written by
+// the nightly Podium stage (helpers/podium/processor.js).
+match /podium-recaps/{seasonUid} {
+  allow read: if true;
+  allow write: if false; // Backend only
+
+  match /days/{dayId} {
+    allow read: if true;
+    allow write: if false; // Backend only
+  }
+
+  // The Podium Report — weekly power-rankings column (Phase 7.3).
+  match /power/{weekId} {
+    allow read: if true;
+    allow write: if false; // Backend only
+  }
+}
+
+// Podium season roster — processor iteration index, backend only. Not
+// readable by clients: standings/recaps are the public surfaces.
+match /podium-season/{seasonUid}/{document=**} {
+  allow read, write: if false; // Backend only
+}
+
+// Podium staff market — free agency is communal (who signed whom is public
+// drama); all mutations go through the hirePodiumStaff callable.
+match /podium-staff/{seasonUid} {
+  allow read: if true;
+  allow write: if false; // Backend only
+}
+
+// Director-hosted events (all classes) — public event pages/history; all
+// mutations go through the hostEvent callable and the nightly payout.
+match /hosted-events/{seasonUid}/{document=**} {
+  allow read: if true;
+  allow write: if false; // Backend only
+}
+
+// Eastern Classic two-night lineups (all classes) — the published "who got
+// Friday?" preview and the persisted final night assignment, written by the
+// nightly scorers (helpers/easternSplit.js).
+match /eastern-classic/{seasonUid} {
+  allow read: if true;
+  allow write: if false; // Backend only
+}
+
+// Podium joint-rehearsal proposals (design §5.12) — backend only; the
+// propose/respond/list callables are the API (the scrimmage report is
+// competitive intel and lives on the server-only podium state).
+match /podium-joint/{seasonUid}/{document=**} {
+  allow read, write: if false; // Backend only
 }
 
 match /season_champions/{docId} {
