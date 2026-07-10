@@ -22,12 +22,24 @@ describe('buildQuestions', () => {
   });
 
   it('builds score-based questions for competitive classes', () => {
-    const qs = buildQuestions(results([[72.5, 4], [70.1, 6]]), 'worldClass');
+    const qs = buildQuestions(
+      results([
+        [72.5, 4],
+        [70.1, 6],
+      ]),
+      'worldClass'
+    );
     expect(qs.map((q) => q.id)).toEqual(['over-under', 'beat-prev', 'podium']);
   });
 
   it('builds placement-only questions for SoundSport, with no score in any prompt', () => {
-    const qs = buildQuestions(results([[68.2, 4], [66.0, 5]]), 'soundSport');
+    const qs = buildQuestions(
+      results([
+        [68.2, 4],
+        [66.0, 5],
+      ]),
+      'soundSport'
+    );
     expect(qs.map((q) => q.id)).toEqual(['podium', 'ss-improve']);
     for (const q of qs) {
       expect(SCORE_FREE_QUESTION_IDS).toContain(q.id);
@@ -39,7 +51,13 @@ describe('buildQuestions', () => {
   });
 
   it('skips the improvement question when the corps already placed 1st', () => {
-    const qs = buildQuestions(results([[90, 1], [88, 2]]), 'soundSport');
+    const qs = buildQuestions(
+      results([
+        [90, 1],
+        [88, 2],
+      ]),
+      'soundSport'
+    );
     expect(qs.map((q) => q.id)).toEqual(['podium']);
   });
 });

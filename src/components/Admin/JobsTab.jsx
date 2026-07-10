@@ -43,8 +43,7 @@ const EconomyStatsPanel = ({ refreshKey }) => {
       <div className="p-3">
         {!stats ? (
           <p className="text-[11px] text-gray-500">
-            No stats yet — run “Refresh Economy Stats” below (also runs automatically every
-            Monday).
+            No stats yet — run “Refresh Economy Stats” below (also runs automatically every Monday).
           </p>
         ) : (
           <>

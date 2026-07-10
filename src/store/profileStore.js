@@ -225,9 +225,7 @@ export const useProfileStore = create((set, get) => ({
       toast.success(`${label} complete! +${data.xpAwarded} XP`);
       triggerXPFeedback(data.xpAwarded, 'xp');
       if (data.weeklyArcBonus) {
-        toast.success(
-          `Weekly arc complete — +${data.weeklyArcBonus.coin} CC bonus!`
-        );
+        toast.success(`Weekly arc complete — +${data.weeklyArcBonus.coin} CC bonus!`);
         triggerXPFeedback(data.weeklyArcBonus.coin, 'coin', 'Weekly arc');
       }
       return true;

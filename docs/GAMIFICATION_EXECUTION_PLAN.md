@@ -51,9 +51,10 @@ Each step lists **files**, **the change**, **edge cases**, and **verification**.
 
 ---
 
-### WS0 — Backend repairs (Decision 2 Phase A + deep-dive fixes). *No UI dependencies; do first.*
+### WS0 — Backend repairs (Decision 2 Phase A + deep-dive fixes). _No UI dependencies; do first._
 
-**0.1 Pay weekly-participation and league-win XP in the guarded scoring run** *(the #1 fix — the player-reported bug)*
+**0.1 Pay weekly-participation and league-win XP in the guarded scoring run** _(the #1 fix — the player-reported bug)_
+
 - **Files:** `functions/src/helpers/scoringAwards.js`, `functions/src/helpers/scoring.js:448-450, 610-612`, `functions/src/helpers/xpCalculations.js:72-99`.
 - **Change:** at the week boundary (`scoredDay % 7 === 0`), inside the already-guarded run:
   - League-win XP (+100): in `processWeeklyMatchups` (`scoringAwards.js:681-698`), alongside the existing `WEEKLY_LEAGUE_WIN_REWARD` CC increment, add `xp: FieldValue.increment(XP_SOURCES.leagueWin)`.
@@ -62,34 +63,40 @@ Each step lists **files**, **the change**, **edge cases**, and **verification**.
 - **Edge cases:** XP lands as a raw increment; `xpLevel`/title/unlock recompute lazily at next `claimDailyLogin` (`calculateXPUpdates` derives level from stored `xp`, and the `lastRewardedLevel` stipend logic at `dailyOps.js:171-217` settles level-up CC correctly regardless of how XP arrived — verified). Accept the documented `ChunkedWriter` re-run residual risk (`scoringRunGuard.js:20-24`), same as the CC it rides with. New class-keyed logic must handle both key forms (F7).
 - **Verify:** new node test for the weekly-participation selector; run a scoring day in the emulator across a week boundary; confirm coin-history/XP deltas; `cd functions && npm test`.
 
-**0.2 Delete the orphaned check-in + `awardXP`** *(F2, F5)*
+**0.2 Delete the orphaned check-in + `awardXP`** _(F2, F5)_
+
 - **Files:** `functions/src/callable/users.js:319-365, 375-418`; `functions/index.js:16-17, 250-251`; `src/api/functions.ts:239`; `src/api/client.ts:201`; `functions/src/callable/authGates.test.js:49-50`; stale comment `src/api/profile.ts:85`.
 - **Change:** remove `dailyXPCheckIn`, `awardXP`, the `dailyRehearsal` client binding + types, and test entries. `lastRehearsal` is write-only — no migration.
 - **Verify:** grep zero references; both test suites pass; deploy list diff shows the two functions removed.
 
-**0.3 Wire league-champion archival + prize-pool payout into rollover** *(F1, F13)*
+**0.3 Wire league-champion archival + prize-pool payout into rollover** _(F1, F13)_
+
 - **Files:** `functions/src/helpers/season.js:395-396, 504-505, 511-639`.
 - **Change:** call `archiveSeasonResultsLogic(db, oldSeasonUid)` from both `startNewLiveSeason` and `startNewOffSeason` (after `archiveAndResetProfiles`). Make it idempotent: skip a league whose `champions[]` already contains an entry for `oldSeasonUid`. Fix the achievement shape to `{id, title, description, icon, rarity: 'legendary', ccReward, earnedAt}` and pay its CC through the same batch.
 - **Edge cases:** the `artifacts/{ns}/leagues` namespace coupling warned at `season.js:528-529`; leagues with zero pool should still record champions.
 - **Verify:** node test with a fixture league; emulator rollover pays pool exactly once across a forced double-run.
 
-**0.4 Guard the rollover** *(F4)*
+**0.4 Guard the rollover** _(F4)_
+
 - **Files:** `functions/src/helpers/season.js`, new `functions/src/helpers/rolloverGuard.js` (or generalize `scoringRunGuard`).
 - **Change:** claim a `season_rollovers/{oldSeasonUid}` doc (transaction, same lease pattern as `scoringRunGuard.js:58-86`) before `archiveAndResetProfiles`; mark completed/failed after. Admin `force` passthrough like `admin.js:99-113`.
 - **Verify:** node test: second claim within lease returns `claimed:false`.
 
-**0.5 Align "participated in the season"** *(F3 — prerequisite for WS2)*
+**0.5 Align "participated in the season"** _(F3 — prerequisite for WS2)_
+
 - **Files:** `functions/src/helpers/season.js:118, 124-136, 196-200`.
 - **Change:** one definition, per the approved spec ("registered for and competed in shows across a season that then archives"): a corps **counts** iff `seasonShowCount > 0 || seasonPointsTotal > 0`. Corps with a lineup but zero activity are still archived/reset (data preservation) but earn no completion XP, no finish bonus, no recap line, and don't bump `totalSeasons`.
 - **Edge cases:** keep the recap modal graceful when a user has a mix of active and inactive corps.
 - **Verify:** node test: lineup-no-shows corps → no XP, no `totalSeasons` bump; shows-attended corps → both.
 
-**0.6 Fix the dead matchup push + reconcile matchup resolution** *(F9, F10)*
+**0.6 Fix the dead matchup push + reconcile matchup resolution** _(F9, F10)_
+
 - **Files:** `functions/src/scheduled/pushNotifications.js:128-260`; audit `scoringAwards.js:577-718` vs `leagues.js:524, 681` and `leagueAutomation.js:452`.
 - **Change:** compute current week from `schedule` dates (existing pattern elsewhere) instead of `season.currentWeek`. Then reconcile the two matchup paths: confirm what the automatic `processWeeklyMatchups` writes to `matchups/week-N` docs; make it set the fields the recap generator and standings UI read (`completed`, `scores`, winner), or schedule `updateMatchupResults`. Keep the commissioner callable as a manual override.
 - **Verify:** emulator: generate matchups Sunday, score a week, confirm matchup docs complete + standings update + push job selects users.
 
-**0.7 Small repairs** *(F17, F8, F6)*
+**0.7 Small repairs** _(F17, F8, F6)_
+
 - `QuickStats.jsx:73` → `Object.entries` (one line; panel retires in WS3 but the fix is free now).
 - `Shop.jsx:224,231` → use `freezeCost` from `getStreakStatus`.
 - Delete dead exports: `awardCorpsCoin`, `awardLeagueWinBonus`, `awardSeasonBonus`, `payLeagueEntryFee` (`economy.js`), the five dead dashboard panels + their exports, `sections/constants.js:27` dup constant, dead `XP_SOURCES.streakMilestone` table (point a comment at `STREAK_MILESTONES` as the single source).
@@ -98,59 +105,70 @@ Each step lists **files**, **the change**, **edge cases**, and **verification**.
 
 ---
 
-### WS1 — Make progression legible and felt (roadmap Step 2, Progression Phase A.3). *Independent of WS0; ship in parallel or after.*
+### WS1 — Make progression legible and felt (roadmap Step 2, Progression Phase A.3). _Independent of WS0; ship in parallel or after._
 
 **1.1 Surface the daily-login payoff**
+
 - **Files:** `src/App.jsx:183-196`; `functions/src/callable/dailyOps.js:228-277` (add `levelsGained`, `previousStreak` to the response — computed internally already).
 - **Change:** consume the `claimDailyLogin` response: `showXPGain(xpAwarded)` (`xpFeedbackTrigger.ts:16`), streak toast, milestone burst via the mounted-but-dead `Celebration` container (`useCelebration.js:10`), and `triggerLevelUp(newLevel, classUnlocked)` (`levelUpTrigger.ts:8`) when `levelsGained > 0`. Respect the `alreadyClaimed` branch (no juice).
 - **Verify:** vitest for the response-handling helper; manual: fresh day login shows float + flame; level-up crossing fires the full-screen moment.
 
-**1.2 XP-to-next-level bar** *(A1 — render-only)*
+**1.2 XP-to-next-level bar** _(A1 — render-only)_
+
 - **Files:** `src/components/Dashboard/sections/ControlBar.jsx:162-167`, `src/components/Profile/DirectorProfile.tsx:386-389`; helper `getXPProgress` (`captionPricing.js:261-274`).
 - **Change:** level pill becomes level + slim progress bar (`current/needed` tooltip); same readout on the profile hero.
 - **Verify:** existing helper tests already cover math; vitest snapshot for the pill.
 
 **1.3 Route every XP source through the floating feedback**
+
 - **Files:** `JourneyPanel.jsx:148-152`, `SeasonLadderPanel.jsx:56-59` (add `showXPGain`/`showCoinGain` beside the toasts); 1.1 covers login.
 - **Verify:** each claim action fires a float in dev.
 
 **1.4 One authoritative "How Progression Works" explainer**
+
 - **Files:** new `src/data/progressionGuide.js` (generated from real constants — import the mirrors, assert equality in a vitest against `functions/src/helpers/xpCalculations.js` values via a shared JSON or duplicated-with-test pattern like the challenge pool); surface in `HowToPlay.jsx:150-171` + `howToPlayData.js:90-92` + footer quick-ref `:551-554`.
 - **Change:** enumerate every live XP/CC source with amounts, the 1,000 XP/level rule, the level→title ladder, and **all class-unlock paths** (today: level/calendar/CC — updated again by WS2.7 when calendar → seasons). Fixes the undocumented-calendar-path confusion the player reported.
 - **Verify:** vitest mirror-equality test (this is the "can never drift" requirement); visual pass.
 
 **1.5 Achievement unlock pop**
+
 - **Files:** `useDashboardData.js:222-235` (already surfaces `newAchievement` → `AchievementModal`), add confetti/celebration juice in the modal.
 - **Verify:** trigger via emulator-awarded achievement.
 
 ---
 
-### WS2 — Seasons-completed class unlocks (Decision 1 — approved). *Requires 0.5.*
+### WS2 — Seasons-completed class unlocks (Decision 1 — approved). _Requires 0.5._
 
 **2.1 Server trigger swap**
+
 - **Files:** `functions/src/helpers/xpCalculations.js:20-26, 168-187`.
 - **Change:** replace `classUnlockWeeks` with `classUnlockSeasons: { aClass: 1, open: 2, world: 3 }`. Conditions become `level >= N || totalSeasons >= M || accountAgeWeeks >= 52` (the silent anti-frustration backstop, per the approved spec). `calculateXPUpdates` reads `profileData.lifetimeStats?.totalSeasons`. Return an `unlockPath` (`'xp' | 'seasons' | 'backstop'`) alongside `classUnlocked` for recognition asymmetry (2.5).
 - **Edge cases:** grandfathering is free — `unlockedClasses` is a stored additive array (server-only writable, `firestore.rules:32-40`); nothing recomputes-from-scratch or revokes, so calendar-era unlocks persist untouched. Both class-key forms (F7).
 
 **2.2 Evaluate at the moments that matter**
+
 - **Files:** `functions/src/helpers/season.js:195-220` (archival must increment `totalSeasons` **before** the `calculateXPUpdates` call in the same update so season-N completion unlocks immediately, with the graduation landing in the recap); `functions/src/callable/economy.js:394-431` (`syncClassUnlocks` keeps working unchanged as the login-time catch-up — now serving the backstop and any missed archival).
 - **Verify:** node test: profile with `totalSeasons: 0` completing season 1 → `aClass` unlocked in the same archival write.
 
 **2.3 Client calendar-path removal**
+
 - **Files:** `src/utils/classUnlockTime.ts` (retire; keep `normalizeUnlockedClasses`/`toCanonicalClassKey` — move to `src/utils/corps.ts` beside `isCorpsClassUnlocked:54-60`); `src/store/profileStore.js:105-118` (keep the once-per-session `syncClassUnlocks` call; drop the `mergeTimeUnlockedClasses` pre-check); `ControlBar.jsx:13, 19-39, 199-204` (chip shows "N seasons" from `lifetimeStats.totalSeasons`, not "Nw"); `Dashboard.jsx:91, 700` + `ClassPurchaseModal.tsx:23, 67, 181-205` (prop + copy: "unlocks free when you complete your Nth season — or reach Level X first").
 - **Edge cases:** demo/guest hard-coded arrays untouched (`demoCorps.js:155`); admin override untouched (`useDashboardData.js:40-45`).
 - **Verify:** grep-zero for `CLASS_UNLOCK_WEEKS`/`getWeeksUntilUnlock`; vitest for the new seasons-progress helper; `npm run build`.
 
-**2.4 Per-show XP + flat completion grant** *(approved §4 table)*
+**2.4 Per-show XP + flat completion grant** _(approved §4 table)_
+
 - **Files:** `scoring.js:214-234` (add `xp: +25` per show attended beside participation CC, cap 4/wk implicit in show-selection rules); `xpCalculations.js:208-222` (`getSeasonCompletionXP` → flat 200 for every participant + rank bonus 300/200/100 for top10/25/50 — keeping the ~200–500 total band of the approved table).
 - **Verify:** node tests for both tables; weekly XP telemetry sanity: active SoundSport ≈ 600–700/wk per the spec.
 
 **2.5 Graduation ceremonies + earned-early recognition**
+
 - **Files:** `ClassUnlockModal.jsx` (exists with confetti — add class-themed styling + the unlock's path); server: persist `classUnlockPaths: { aClass: 'xp' | 'seasons' | 'cc' | 'backstop' }` wherever the array is written (`xpCalculations.js`, `economy.js:354-357, 418`); grant a `grantOnly` cosmetic (new `shopCatalog.js` items, e.g. `title_earned_the_hard_way_a`) when `unlockPath === 'xp'`; backstop unlocks skip the modal (write class without setting `newlyUnlocked` fanfare — suppress via the same `unlockPath`).
 - **Existing plumbing:** detection diff `useDashboardData.js:116-140` → queue `useDashboardModals.js:96-102` → render `Dashboard.jsx:513-519` all work today for every path.
 - **Verify:** emulator: XP-path unlock → modal + cosmetic; seasons-path → modal, no cosmetic; backstop → silent.
 
-**2.6 SoundSport prediction variant** *(A2)*
+**2.6 SoundSport prediction variant** _(A2)_
+
 - **Files:** `functions/src/helpers/dailyPredictions.js` (SS question builders: "What rating tier tonight?" / "Podium medal?" resolving off recap `placement`/`medal` and a server-side rating-tier mapping mirroring `scoresUtils.ts:28-34`); `dailyOps.js:576-578` (allow `soundSport` for SS question ids only); `src/utils/dailyPredictions.js` + `PredictionGamePanel.jsx:26-40` (enable panel with SS questions).
 - **Edge cases:** never leak numeric scores in question text or resolution copy (the original exclusion reason, `dailyOps.js:575`).
 - **Verify:** node test resolving an SS bucket; vitest for SS question building; manual copy review for score leakage.
@@ -159,28 +177,33 @@ Each step lists **files**, **the change**, **edge cases**, and **verification**.
 
 ---
 
-### WS3 — Dashboard unification (`DASHBOARD_UNIFICATION.md`). *3.1/3.3 anytime; 3.2 best after WS1.*
+### WS3 — Dashboard unification (`DASHBOARD_UNIFICATION.md`). _3.1/3.3 anytime; 3.2 best after WS1._
 
-**3.1 Four-zone layout + mobile order** *(pure layout)*
+**3.1 Four-zone layout + mobile order** _(pure layout)_
+
 - **Files:** `src/pages/Dashboard.jsx:352-483`.
 - **Change:** restructure the grid into intention zones with DOM order = mobile order: A `SeasonScorecard` (+deadline) → B Today (placeholder container until 3.2: `DailyChallenges`, `PredictionGamePanel`, `JourneyPanel`, ladder-claim strip) → C `ActiveLineupTable` + `LineupSimulatorPanel` + `NextPerformancePanel` → D progression + `RivalsPanel` + `RecentResultsFeed`. Move Submit Article to the footer.
 - **Verify:** visual pass at 375px/768px/1280px; `data-tour` anchors still resolve for the onboarding tour.
 
-**3.2 The Director's Report card** *(the centerpiece)*
+**3.2 The Director's Report card** _(the centerpiece)_
+
 - **Files:** new `src/components/Dashboard/sections/DirectorsReport.jsx`; composes the §7 inventory (agent-verified data sources: challenges via `profileStore` + `getChallengesForGameDay`; predictions via `profile.predictions[gameDay]`; journey next-step via `profile.journey`; ladder claimable via `profile.seasonLadder` + `xpAtSeasonStart`; login/streak from `profile.engagement`).
 - **Change:** one checklist card, `Today · X of Y done` header; each row: action, reward, **spine label** ("+10 XP → Ladder Tier 7, 2 away" — computable from `LADDER_TIERS`, `seasonLadder.js:23-37`); completing the last row fires the celebration (`useCelebration`). The old standalone cards collapse into it (JourneyPanel keeps its self-retire behavior).
 - **Verify:** vitest for the row-assembly selector (given a profile fixture, correct rows/labels); manual full-day pass.
 
 **3.3 Zone-D progression hub + retirements**
+
 - **Files:** merge `SeasonLadderPanel` + `AchievementTrackerPanel` + the 1.2 XP bar into a tabbed `SeasonProgressHub`; retire `QuickStats` (fold one best-fact line into `SeasonScorecard`); delete the five dead panels (0.7 covers exports).
 - **Verify:** vitest; bundle-size sanity via `npm run build`.
 
-**3.4 Achievement reconciliation** *(F14 — do before the hub ships)*
+**3.4 Achievement reconciliation** _(F14 — do before the hub ships)_
+
 - **Files:** `functions/src/helpers/achievements.js:27-72`, `AchievementTrackerPanel.jsx:19-165`.
 - **Change:** single catalog: add server entries for the three client-only ideas worth keeping (`first_score`, `shows_5`, `league_join` — award via the existing `sweepProfileAchievements` at login) and delete the client-only definitions; panel derives its list from a shared mirror (same pattern as the challenge pool) with a vitest equality check; fix the `'open'`/`'openClass'` key mismatch; denominator = catalog length.
 - **Verify:** mirror-equality vitest; node test for the new predicates.
 
 **3.5 Task value: decisions, a weekly arc, celebration**
+
 - **Files:** `functions/src/helpers/dailyChallenges.js:18-26` + client mirror `src/utils/dailyChallenges.js:56-64`; `dailyOps.js:296-371`.
 - **Change:** replace the six zero-agency "visit page X" challenges with server-verifiable decisions: "make today's prediction" (predictions bucket exists), "register for a show this week" (`selectedShows` delta), "confirm or adjust your lineup" (lineup timestamp), "claim a ladder tier" (claimable check). Keep the deterministic rotation. Add the weekly meta-goal: complete the daily set 5 days in a week → bonus CC, paid at the week boundary inside the guarded run (state: `engagement.weeklyLoop = { weekKey, days: n }` maintained by `completeDailyChallenge`).
 - **Edge cases:** challenge completion must verify state server-side in `completeDailyChallenge` (it currently trusts the click); mirror-equality vitest for the pool.
@@ -188,11 +211,11 @@ Each step lists **files**, **the change**, **edge cases**, and **verification**.
 
 ---
 
-### WS4 — League heartbeat (roadmap Step 6; `LEAGUES_ENGAGEMENT_STRATEGY.md`). *After WS0.6.*
+### WS4 — League heartbeat (roadmap Step 6; `LEAGUES_ENGAGEMENT_STRATEGY.md`). _After WS0.6._
 
-- **4.1 Chat/feed repair** *(F11)*: render `SmackTalkInput` only inside `ChatTab` (`LeagueDetailView.jsx:687-712`); pipe system events (matchup created/resolved, member joined, champion crowned) into the `activity` feed so it's never empty; align the feed's chat filter with reality.
+- **4.1 Chat/feed repair** _(F11)_: render `SmackTalkInput` only inside `ChatTab` (`LeagueDetailView.jsx:687-712`); pipe system events (matchup created/resolved, member joined, champion crowned) into the `activity` feed so it's never empty; align the feed's chat filter with reality.
 - **4.2 Matchup as an event**: with 0.6's reconciliation done, surface pre-game (Monday push, F9 fix), live tracking (nightly deltas), and result ceremony states in `MatchupsTab`/`MatchupDetailView`.
-- **4.3 League Prediction Pools v1** *(the flagship)*: new callables `submitPoolPick`/`resolvePool` modeled directly on the existing prediction resolution (`dailyOps.js:558-794` + `dailyPredictions.js` resolve-against-recaps pattern); escrowed, capped (100 CC), zero-sum, league-scoped (`leagues/{id}/pools/{gameDay}`); resolution runs in the nightly guarded scoring window; results post to the feed. This is also the recurring CC-circulation sink.
+- **4.3 League Prediction Pools v1** _(the flagship)_: new callables `submitPoolPick`/`resolvePool` modeled directly on the existing prediction resolution (`dailyOps.js:558-794` + `dailyPredictions.js` resolve-against-recaps pattern); escrowed, capped (100 CC), zero-sum, league-scoped (`leagues/{id}/pools/{gameDay}`); resolution runs in the nightly guarded scoring window; results post to the feed. This is also the recurring CC-circulation sink.
 - **4.4 Rookie-league placement**: make the onboarding `joinRookieLeague` call (`Onboarding.jsx:366-375`) a visible opt-out default instead of fire-and-forget; surface failures.
 - **4.5 Cross-class normalized matchups**: design note only for now — `smartPairMembers` (`leagueAutomation.js:371-408`) pairs within class; normalization (percentile-of-class) is a scoring-fairness question to spec before building.
 
@@ -200,9 +223,9 @@ Each step lists **files**, **the change**, **edge cases**, and **verification**.
 
 ### WS5 — Career spine & legacy (roadmap Steps 1, 5, 9)
 
-- **5.1 Real Trophy Case** *(F12)*: rewrite `getCompetitionTrophies` to read `profile.trophies.*`; keep synthetic fallback for pre-trophy profiles; fix the dead "+X more" button (F17) with an expandable list; add a "records held" line reading `game-records/records` holders by uid.
-- **5.2 Make card themes real** *(F15)*: consume `getEquippedCosmetic(profile,'cardTheme')` where **others** see it — league standings rows and leaderboard entries — plus own `SeasonScorecard`. Unblocks honest shop sales.
-- **5.3 Milestones server-side** *(F16)*: move the `useDashboardData.js:239-323` bests-writer into the nightly scoring pipeline (bests are already computed near `updateRecordsFromRecap`, `gameRecords.js:89`); delete the client write.
+- **5.1 Real Trophy Case** _(F12)_: rewrite `getCompetitionTrophies` to read `profile.trophies.*`; keep synthetic fallback for pre-trophy profiles; fix the dead "+X more" button (F17) with an expandable list; add a "records held" line reading `game-records/records` holders by uid.
+- **5.2 Make card themes real** _(F15)_: consume `getEquippedCosmetic(profile,'cardTheme')` where **others** see it — league standings rows and leaderboard entries — plus own `SeasonScorecard`. Unblocks honest shop sales.
+- **5.3 Milestones server-side** _(F16)_: move the `useDashboardData.js:239-323` bests-writer into the nightly scoring pipeline (bests are already computed near `updateRecordsFromRecap`, `gameRecords.js:89`); delete the client write.
 - **5.4 Season report card (E3)**: extend `pendingSeasonRecap` (`season.js:227-236`) with PB comparisons (`lifetimeStats.bestSeasonScore/bestWeeklyScore` already maintained, `season.js:167-200`) — "you beat last season's best GE" in the recap modal.
 - **5.5 Caption mastery (Step 4, larger)**: accumulate per-caption lifetime points during nightly scoring into `profile.captionStats`; thresholds table + titles; surface in the 3.3 hub and profile. Spec the thresholds after one season of telemetry from 6.1.
 - **5.6 Prestige sinks round-out**: retirement ceremony tiers (bronze/silver/gold plaque on the existing `retiredCorps` gallery) and Hall of Champions banner — both follow the `sponsorShow` pattern (`shop.js:151-257`).
@@ -218,21 +241,21 @@ Each step lists **files**, **the change**, **edge cases**, and **verification**.
 
 Dependency spine: **0.5 → WS2** · **0.6 → WS4.2/4.3** · **WS1.4 → WS2.7** · **3.4 → 3.3-hub ship** · everything else parallel-safe.
 
-| # | PR | Contents | Size |
-| --- | --- | --- | --- |
-| 1 | `fix/weekly-xp-and-economy-repairs` | 0.1, 0.2, 0.7 | M |
-| 2 | `fix/season-rollover-integrity` | 0.3, 0.4, 0.5 | M |
-| 3 | `fix/league-matchup-resolution` | 0.6 | S–M |
-| 4 | `feat/progression-legibility` | 1.1–1.5 | M |
-| 5 | `feat/seasons-completed-unlocks` | 2.1–2.5, 2.7 | L |
-| 6 | `feat/soundsport-predictions` | 2.6 | S |
-| 7 | `feat/dashboard-zones` | 3.1, 3.3, 3.4 | M |
-| 8 | `feat/directors-report` | 3.2 | M |
-| 9 | `feat/daily-challenges-with-agency` | 3.5 | M |
-| 10 | `feat/league-heartbeat` | 4.1, 4.2, 4.4 | M |
-| 11 | `feat/league-prediction-pools` | 4.3 | L |
-| 12 | `feat/career-spine` | 5.1–5.4 | M |
-| 13+ | mastery, prestige sinks, live-ops | 5.5, 5.6, 6.1, 6.2 | ongoing |
+| #   | PR                                  | Contents           | Size    |
+| --- | ----------------------------------- | ------------------ | ------- |
+| 1   | `fix/weekly-xp-and-economy-repairs` | 0.1, 0.2, 0.7      | M       |
+| 2   | `fix/season-rollover-integrity`     | 0.3, 0.4, 0.5      | M       |
+| 3   | `fix/league-matchup-resolution`     | 0.6                | S–M     |
+| 4   | `feat/progression-legibility`       | 1.1–1.5            | M       |
+| 5   | `feat/seasons-completed-unlocks`    | 2.1–2.5, 2.7       | L       |
+| 6   | `feat/soundsport-predictions`       | 2.6                | S       |
+| 7   | `feat/dashboard-zones`              | 3.1, 3.3, 3.4      | M       |
+| 8   | `feat/directors-report`             | 3.2                | M       |
+| 9   | `feat/daily-challenges-with-agency` | 3.5                | M       |
+| 10  | `feat/league-heartbeat`             | 4.1, 4.2, 4.4      | M       |
+| 11  | `feat/league-prediction-pools`      | 4.3                | L       |
+| 12  | `feat/career-spine`                 | 5.1–5.4            | M       |
+| 13+ | mastery, prestige sinks, live-ops   | 5.5, 5.6, 6.1, 6.2 | ongoing |
 
 Each PR is independently shippable and leaves the game strictly better. PRs 1–2 are the highest-trust, lowest-risk work (activating promised rates, closing payout holes) and should land before anything user-visible changes.
 

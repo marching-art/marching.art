@@ -2,7 +2,7 @@
 // Championship record book — ESPN-style data terminal layout
 // Sidebar (Seasons) + Main Stage (Champion plaque + finalists table)
 import React, { useState, useEffect, useMemo } from 'react';
-import { m, AnimatePresence } from 'framer-motion';
+import { m } from 'framer-motion';
 import {
   Trophy,
   Award,
@@ -16,34 +16,18 @@ import {
   Music,
   Flag,
   Coins,
-  X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getSeasonChampionDocs } from '../api/season';
 import { purchaseHallBanner } from '../api/functions';
 import { getSoundSportRating, RATING_CONFIG } from '../utils/scoresUtils';
-import { HALL_BANNER_PRICE, HALL_BANNER_MAX_LENGTH } from '../utils/prestige';
+import { HALL_BANNER_PRICE } from '../utils/prestige';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import LoadingScreen from '../components/LoadingScreen';
-import Portal from '../components/Portal';
 import { TeamAvatar } from '../components/ui/TeamAvatar';
-
-// Blue Ribbon icon for SoundSport "Best in Show" recognition (matches the
-// award used on the Scores page). Local copy avoids importing the heavy
-// ScoresParts page module.
-const BlueRibbonIcon = ({ className = 'w-5 h-5' }) => (
-  <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
-    <circle cx="12" cy="9" r="7" fill="#0057B8" stroke="#003d82" strokeWidth="1" />
-    <circle cx="12" cy="9" r="4" fill="#0066d6" />
-    <path
-      d="M12 5.5l1.09 2.21 2.44.35-1.77 1.72.42 2.43L12 11.1l-2.18 1.15.42-2.43-1.77-1.72 2.44-.35L12 5.5z"
-      fill="#FFD700"
-    />
-    <path d="M8 15l-2 7 4-2.5V15H8z" fill="#0057B8" stroke="#003d82" strokeWidth="0.5" />
-    <path d="M16 15l2 7-4-2.5V15h2z" fill="#0057B8" stroke="#003d82" strokeWidth="0.5" />
-  </svg>
-);
+import { BlueRibbonIcon, BannerModal, NoChampionsPanel } from './HallOfChampionsParts';
+import { RANK_META } from './hallOfChampionsMeta';
 
 // =============================================================================
 // CONSTANTS
@@ -63,30 +47,6 @@ const CLASS_CONFIG = {
 // its plaque, table, and season rows swap the champion framing for the
 // blue-ribbon / rating presentation used elsewhere for SoundSport.
 const isSoundSportClass = (classKey) => classKey === 'soundSport';
-
-const RANK_META = {
-  1: {
-    label: 'CHAMPION',
-    badge: 'bg-yellow-500 text-black',
-    accent: 'text-yellow-500',
-    border: 'border-yellow-500/60',
-    medalColor: 'text-yellow-500',
-  },
-  2: {
-    label: 'RUNNER-UP',
-    badge: 'bg-gray-300 text-black',
-    accent: 'text-gray-300',
-    border: 'border-gray-400/40',
-    medalColor: 'text-gray-300',
-  },
-  3: {
-    label: 'THIRD',
-    badge: 'bg-orange-400 text-black',
-    accent: 'text-orange-400',
-    border: 'border-orange-500/40',
-    medalColor: 'text-orange-400',
-  },
-};
 
 // =============================================================================
 // HELPERS
@@ -482,20 +442,6 @@ const FinalistsTable = ({ champions, classKey }) => {
   );
 };
 
-const NoChampionsPanel = ({ classKey }) => (
-  <div className="bg-[#1a1a1a] border border-[#333] p-10 text-center max-w-md mx-auto my-8">
-    <div className="w-14 h-14 mx-auto mb-4 border border-[#333] flex items-center justify-center">
-      <Trophy className="w-7 h-7 text-gray-600" />
-    </div>
-    <h3 className="text-base font-bold text-white uppercase tracking-wider mb-2">
-      No {CLASS_CONFIG[classKey]?.name} Champions Yet
-    </h3>
-    <p className="text-sm text-gray-400 leading-relaxed">
-      Once a season concludes, its champions will be inducted here.
-    </p>
-  </div>
-);
-
 // =============================================================================
 // MAIN COMPONENT
 // =============================================================================
@@ -736,7 +682,7 @@ const HallOfChampions = () => {
         >
           {!displaySeason ? (
             <div className="flex-1 flex items-center justify-center px-4">
-              <NoChampionsPanel classKey={selectedClass} />
+              <NoChampionsPanel label={CLASS_CONFIG[selectedClass]?.name} />
             </div>
           ) : (
             <>
@@ -805,85 +751,15 @@ const HallOfChampions = () => {
         </div>
       </div>
 
-      {/* Hang-a-banner modal */}
-      <AnimatePresence>
-        {showBannerModal && (
-          <Portal>
-            <m.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
-              onClick={() => !purchasingBanner && setShowBannerModal(false)}
-            >
-              <m.div
-                initial={{ scale: 0.98, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.98, opacity: 0 }}
-                className="bg-[#1a1a1a] border border-[#333] rounded-sm max-w-md w-full overflow-hidden"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                    <Flag className="w-4 h-4 text-yellow-500" />
-                    Hang Your Banner
-                  </h3>
-                  <button
-                    onClick={() => setShowBannerModal(false)}
-                    disabled={purchasingBanner}
-                    className="text-gray-400 hover:text-white transition-colors"
-                    aria-label="Close"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <div className="p-4">
-                  <p className="text-xs text-gray-400 mb-3">
-                    Your message hangs on this championship plaque permanently, visible to every
-                    director who visits the Hall. One banner per championship — choose your words.
-                  </p>
-                  <textarea
-                    value={bannerMessage}
-                    onChange={(e) => setBannerMessage(e.target.value)}
-                    maxLength={HALL_BANNER_MAX_LENGTH}
-                    rows={2}
-                    placeholder="e.g. Forged in the summer of 2026."
-                    className="w-full bg-[#111] border border-[#333] rounded-sm px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] resize-none"
-                  />
-                  <div className="flex items-center justify-between mt-1 mb-4">
-                    <span className="text-[10px] text-gray-500 font-data tabular-nums">
-                      {bannerMessage.length}/{HALL_BANNER_MAX_LENGTH}
-                    </span>
-                    <span className="flex items-center gap-1 text-[11px] text-gray-400 font-data tabular-nums">
-                      <Coins className="w-3 h-3 text-yellow-500" />
-                      {HALL_BANNER_PRICE.toLocaleString()} CorpsCoin
-                    </span>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setShowBannerModal(false)}
-                      disabled={purchasingBanner}
-                      className="flex-1 py-2.5 px-4 bg-[#222] hover:bg-[#333] border border-[#333] text-white text-xs font-bold uppercase tracking-wider rounded-sm transition-colors disabled:opacity-50"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleHangBanner}
-                      disabled={purchasingBanner || !bannerMessage.trim()}
-                      className="flex-1 py-2.5 px-4 bg-yellow-500 hover:bg-yellow-400 text-black text-xs font-bold uppercase tracking-wider rounded-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                    >
-                      <Flag className="w-3.5 h-3.5" />
-                      {purchasingBanner ? 'Hanging…' : 'Hang Banner'}
-                    </button>
-                  </div>
-                </div>
-              </m.div>
-            </m.div>
-          </Portal>
-        )}
-      </AnimatePresence>
+      {/* Hang-a-banner modal (extracted to HallOfChampionsParts) */}
+      <BannerModal
+        open={showBannerModal}
+        message={bannerMessage}
+        purchasing={purchasingBanner}
+        onMessageChange={setBannerMessage}
+        onClose={() => setShowBannerModal(false)}
+        onConfirm={handleHangBanner}
+      />
     </div>
   );
 };

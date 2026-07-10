@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
-import { Trophy, Calendar, MapPin, Star, Archive, RefreshCw, X, Music, Award, Coins } from 'lucide-react';
+import {
+  Trophy,
+  Calendar,
+  MapPin,
+  Star,
+  Archive,
+  RefreshCw,
+  X,
+  Music,
+  Award,
+  Coins,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { subscribeToProfile } from '../api/profile';
 import { unretireCorps, purchaseRetirementPlaque } from '../api/functions';
@@ -428,9 +439,7 @@ const RetiredCorpsGallery = () => {
                           onClick={() => handlePurchasePlaque(tier.id)}
                           disabled={!affordable || !!purchasingTier}
                           className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-sm border transition-all ${style.bg} ${style.border} ${
-                            affordable
-                              ? 'hover:brightness-125'
-                              : 'opacity-50 cursor-not-allowed'
+                            affordable ? 'hover:brightness-125' : 'opacity-50 cursor-not-allowed'
                           }`}
                         >
                           <span

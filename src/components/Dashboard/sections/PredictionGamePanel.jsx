@@ -68,7 +68,9 @@ const PredictionGamePanel = memo(({ recentResults, corpsClass, embedded = false 
   const accuracy = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : null;
 
   return (
-    <div className={embedded ? 'overflow-hidden' : 'bg-[#1a1a1a] border border-[#333] overflow-hidden'}>
+    <div
+      className={embedded ? 'overflow-hidden' : 'bg-[#1a1a1a] border border-[#333] overflow-hidden'}
+    >
       {/* Header */}
       <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
         <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
