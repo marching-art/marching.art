@@ -512,6 +512,20 @@ async function archivePodiumSeason(db, previousSeason) {
     }
   }
 
+  // Fan Favorite (decision 30): crown the finals-ballot winner with the
+  // season record. Isolated + idempotent.
+  try {
+    const fanFavorite = require("./fanFavorite");
+    const winner = await fanFavorite.crownWinner(db, previousSeason.seasonUid);
+    if (winner) {
+      await db
+        .doc(`podium-recaps/${previousSeason.seasonUid}`)
+        .set({ fanFavorite: winner }, { merge: true });
+    }
+  } catch (error) {
+    logger.error(`[podium] Fan Favorite crowning failed (archival unaffected): ${error.message}`);
+  }
+
   logger.info(
     `[podium] archived season ${previousSeason.seasonUid} (index ${previousSeason.index}): ` +
       `${archived} careers, ${finalStandings.length} in final standings.`

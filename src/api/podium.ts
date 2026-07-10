@@ -142,6 +142,34 @@ export interface JointRehearsalsResponse {
   roster: Array<{ uid: string; corpsName: string | null }>;
 }
 
+// Fan Favorite (decision 30): two-level cosmetic ballot — prelims at each
+// major, finals in championship week. Any signed-in user votes.
+export interface FanFavoriteCandidate {
+  uid: string;
+  corpsName: string | null;
+  division: string;
+  prelimVotes?: number;
+  finalsVotes?: number;
+}
+
+export const getFanFavorite = createCallable<
+  void,
+  {
+    success: boolean;
+    stage: 'prelims' | 'finals' | 'decided' | null;
+    major: number | null;
+    candidates: FanFavoriteCandidate[];
+    myVote: string | null;
+    finalists: FanFavoriteCandidate[];
+    winner: FanFavoriteCandidate | null;
+  }
+>('getFanFavorite');
+
+export const castFanFavoriteVote = createCallable<
+  { corpsUid: string },
+  { success: boolean; stage: string; vote: string }
+>('castFanFavoriteVote');
+
 export const proposeJointRehearsal = createCallable<
   { toUid: string; day: number },
   { success: boolean; proposalId: string; day: number }

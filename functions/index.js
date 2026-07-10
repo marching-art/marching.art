@@ -55,6 +55,7 @@ const {
   respondJointRehearsal,
   getJointRehearsals,
 } = require("./src/callable/podiumJoint");
+const { getFanFavorite, castFanFavoriteVote } = require("./src/callable/podiumFan");
 const {
   processCorpsDecisions,
   retireCorps,
@@ -298,6 +299,8 @@ module.exports = {
   proposeJointRehearsal,
   respondJointRehearsal,
   getJointRehearsals,
+  getFanFavorite,
+  castFanFavoriteVote,
   processCorpsDecisions,
   retireCorps,
   unretireCorps,

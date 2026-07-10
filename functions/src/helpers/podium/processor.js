@@ -521,6 +521,19 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
       );
     }
 
+    // --- 4b. Fan Favorite finalists (decision 30) -----------------------------
+    // The last prelims window (Eastern, days 41-42 + 3) closes with the
+    // Day-44 processing run; finalists publish for the championship-week
+    // finals ballot. Isolated + idempotent.
+    if (competitionDay === 44) {
+      try {
+        const fanFavorite = require("./fanFavorite");
+        await fanFavorite.publishFinalists(db, seasonUid, store.balance);
+      } catch (error) {
+        logger.error(`[podium] Fan Favorite finalists failed: ${error.message}`);
+      }
+    }
+
     // --- 5. The Podium Report (Phase 7.3): weekly power-rankings column ------
     // Deterministic, data-driven, published at each week boundary. Isolated:
     // a column failure never fails the run.

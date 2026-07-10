@@ -299,6 +299,17 @@ match /podium-joint/{seasonUid}/{document=**} {
   allow read, write: if false; // Backend only
 }
 
+// Fan Favorite (decision 30): finalists + winner are public; individual
+// ballots are private (server-only — the vote callables are the API).
+match /podium-fan/{seasonUid} {
+  allow read: if true;
+  allow write: if false; // Backend only
+
+  match /ballots/{voterUid} {
+    allow read, write: if false; // Backend only — votes are private
+  }
+}
+
 match /season_champions/{docId} {
   allow read: if true;
   allow write: if false; // Backend only

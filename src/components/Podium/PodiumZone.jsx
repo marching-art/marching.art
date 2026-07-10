@@ -15,6 +15,7 @@ import CorpsConditionPanel from './CorpsConditionPanel';
 import PodiumStaffPanel from './PodiumStaffPanel';
 import JointRehearsalPanel from './JointRehearsalPanel';
 import PodiumJourneyPanel from './PodiumJourneyPanel';
+import FanFavoriteCard from './FanFavoriteCard';
 
 export default function PodiumZone() {
   const podium = usePodium(true);
@@ -42,6 +43,7 @@ export default function PodiumZone() {
   return (
     <div className="space-y-4">
       <PodiumJourneyPanel />
+      <FanFavoriteCard />
       <RehearsalPlanner podium={podium} />
       <PodiumCaptionPanel podium={podium} />
       <PodiumTrajectoryCard podium={podium} />

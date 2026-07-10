@@ -324,6 +324,11 @@
   "medals": {
     "minFieldSize": 4
   },
+  "fanFavorite": {
+    "voteWindowDays": 3,
+    "finalistsPerMajor": 3,
+    "finalsFromDay": 45
+  },
   "staff": {
     "tiers": {
       "apprentice": {
