@@ -10,7 +10,9 @@ that Podium is never locked out of week-1 events; v1.3 names the anchor calendar
 DCI majors and adds integrated World / Open / A divisions inside Podium; v1.4 specs the
 two-night Eastern Classic split; v1.5 hard-codes the branded majors in the schedule generator
 (implemented) and sets the counts-as-one / even-split / Podium-auto-registration rules; v1.6
-adds the Gap & Conflict Register (§14) — open design decisions live there
+adds the Gap & Conflict Register (§14) — open design decisions live there; v1.7 adds simple
+auditions, the no-competitive-donations rule, and the Reputation / Champion Status
+multi-season climb (§5.13)
 
 ---
 
@@ -219,8 +221,9 @@ Each Podium corps carries, per caption `c ∈ {GE1, GE2, VP, VA, CG, B, MA, P}`:
 
 ```
 raw(c, d)   = L(c) · logistic(d; k(c), d₀(c)) · content(c) · (0.72 + 0.28 · clean(c))
-score(c, d) = clamp(raw(c,d) + condition(d) + variance(d,c), band_p5(c,d), band_max(c,d))
-total(d)    = min(100, [GE1+GE2] + [VP+VA+CG]/2 + [B+MA+P]/2)
+ceiling(c,d)= band(repTier.percentile, c, d)          // reputation-gated top of the band (§5.13)
+score(c, d) = clamp(raw(c,d) + condition(d) + variance(d,c), band_p5(c,d), ceiling(c,d))
+total(d)    = min(99.9, [GE1+GE2] + [VP+VA+CG]/2 + [B+MA+P]/2)
 ```
 
 - The total formula is **identical to the existing fantasy formula** in `scoring.js` (GE full
@@ -232,7 +235,11 @@ total(d)    = min(100, [GE1+GE2] + [VP+VA+CG]/2 + [B+MA+P]/2)
   seed, magnitude ≈ ±0.05 per caption. It breaks ties and makes recaps breathe; it never changes a
   well-managed season's outcome. **No other randomness exists anywhere in the engine.**
 - The clamp against the historical band is the realism guarantee: a Day-10 brass score cannot be
-  18.4 because no Day-10 brass score in history was 18.4.
+  18.4 because no Day-10 brass score in history was 18.4. The *top* of each corps' band is gated
+  by its multi-season Reputation tier (§5.13) — a first-season corps peaks in the historical
+  mid-percentiles no matter how perfectly it is managed, and only Champion-Status corps can touch
+  the top of the envelope. **No corps ever scores 100**: the absolute ceiling is the best score
+  in the corpus (99.x), asserted by the simulation harness.
 
 ### 4.3 The season arc this produces
 
@@ -645,6 +652,89 @@ turned into the class's social mechanic. Fully mutual, capped, and deterministic
   the Sun Devils held a joint rehearsal in Allentown" — with the diagnostic kept private. Public
   smoke, private fire: it seeds forum speculation the way real corps' shared-site rumors do.
 
+### 5.13 Reputation — the multi-season climb to Champion Status
+
+The single-season engine alone has a flaw: a perfectly-managed first-season corps could ride the
+envelope to a 99 and there would be no dynasty arc. Real DCI doesn't work that way — Carolina
+Crown made finals in the 90s, sat 12th in the mid-2000s, broke the top 4 in 2008, and won its
+first title in 2013; the Bluecoats took four decades to their 2016 title; Boston slogged from
+1940 to elite status in the late 2010s. **Status is earned across seasons, and that climb is the
+deepest gameplay loop Podium has.**
+
+**Corps Reputation** is a per-corps value earned **only from competitive results** — finals
+placement, division titles, caption awards, majors podiums. Nothing else moves it: not activity,
+not CorpsCoin, not donations, not account age. It maps to seven named tiers, and the tier gates
+the **ceiling percentile** of the historical band the corps can score into:
+
+| Tier | Ceiling (percentile of historical day-band) | Feel at finals |
+|---|---|---|
+| 1 · Community Corps | p55 | mid-80s ceiling — a strong debut season |
+| 2 · Regional Contender | p65 | high 80s |
+| 3 · National Contender | p75 | low 90s |
+| 4 · Finalist | p85 | 93–95 |
+| 5 · Medalist | p92 | 95–97 |
+| 6 · Elite | p97 | 97–98.5 |
+| 7 · **Champion Status** | full envelope | the corpus maximum (99.x) — **never 100** |
+
+Design rules, each one a lesson from FMA or from the user's brief:
+
+- **Ceiling-only, never fuel.** Reputation never adds points, never accelerates growth, and is
+  invisible until a corps presses the top of its band late in the season. Through June and July a
+  low-rep corps that rehearses better *routinely* outscores a high-rep corps that manages badly.
+  Reputation decides how high your perfect season can peak — nothing else.
+- **Paced like the real climb.** Per-season reputation gain is capped so that a flawless director
+  reaches Champion Status in roughly **10–14 seasons** (calibrated in Phase 0 against real
+  multi-season climbs in the corpus — Crown's 2004→2013 arc is the reference curve). Strong but
+  imperfect play takes ~20. There are no shortcuts.
+- **Maintained, not owned.** Reputation decays slowly when a corps performs well below its tier
+  or sits out seasons. Dynasties that coast come back to the field; Champion Status is a lease
+  with performance clauses, exactly like real reputations.
+- **Not FMA influence.** Influence — the most resented stat in FMA — compounded from activity and
+  donations, secretly drove division placement, and made catch-up "generational." Reputation is
+  earned only by results, does exactly one published thing, decays, and its tier, effect, and
+  path-to-next-tier are displayed on every corps page.
+- **Attached to the corps, not the director.** Retiring a corps banks its legacy (Hall, prestige
+  plaques, trophy case preserved) and a new corps starts the climb at tier 1. This makes a
+  15-season-old corps genuinely precious — FMA's identity-permanence hook, now load-bearing.
+  Directors may retire or found corps freely at registration; renaming a corps keeps its
+  reputation (a rebrand is still the same organization).
+
+**How the Blue Devils lose (beatability by design).** A Champion-Status corps run well is the
+favorite, never a lock. The deterministic upset paths, all skill-expressed:
+
+1. **Ceiling ≠ floor.** The dynasty must still play the season. Missed rehearsal balance, bad
+   routing, burnout weeks — every one drops their realized score into the band where an Elite or
+   Medalist corps playing perfectly lives.
+2. **Tier gaps are small at the top.** Elite's p97 ceiling concedes roughly 0.5–1.2 finals points
+   to the full envelope, while decision quality across a season swings ±2 or more. The math makes
+   "hungry challenger out-executes complacent champion" not just possible but the *expected*
+   upset shape — which is precisely how it happens in real DCI.
+3. **Challenge-level asymmetry.** Touching 99 requires running maximum-challenge books, and
+   maximum-challenge books are the most punishing to condition mismanagement and the slowest to
+   come together. The dynasty carries the riskiest season plan on the field, every season. A
+   challenger with a cleaner, earlier-peaking design can take them at San Antonio or Atlanta —
+   and if the champion misplays Finals-week peaking, at Indy.
+4. **Peak-timing chess.** The rest-vs-clean decisions of days 43–49 create overlapping outcome
+   bands between adjacent tiers. Finals night is won in the week before it.
+5. **Decay.** A coasting champion's ceiling quietly sinks toward the field.
+6. **Information warfare.** Scrimmage reports, anchor-night assignments, routing, and clinician
+   timing are equally available to everyone — the challenger's toolkit.
+
+The §9 simulation harness gains a **multi-season mode** and asserts all of it: thousands of
+simulated 15-season careers across strategy archetypes; no run ever produces a 100; flawless play
+reaches Champion Status in 10–14 seasons; and a perfectly-played Elite challenger beats a
+well-but-imperfectly-played Champion in a healthy fraction of finals (tuning target: 30–45%).
+
+**Corps setup stays simple (the FMA flow, four steps).** Registration is: **1)** corps — keep
+yours, retire it, or found a new one; **2)** show concept — title, repertoire, theme (existing
+`showConcept`); **3)** design — the eight challenge-level sliders plus **Auditions**, a single
+screen allocating a fixed pool of audition points across the 8 captions to shift the *starting
+distribution* within the day-1 band (one-tap presets: Balanced / Music-forward / Visual-forward
+for directors who don't want to slide); **4)** rehearse. No step is gated by payment.
+**Donations never grant anything competitive** — no score, no reputation, no budget, no XP;
+supporters get a cosmetic badge and the game's gratitude, nothing else. (FMA sold support packs
+with money/influence/XP attached; we deliberately don't.)
+
 ---
 
 ## 6. UI — What Renders in Zone C
@@ -781,7 +871,10 @@ has no lineup) · `registerCorps.js` (registration lock: 5 weeks, matching Open)
 - **Simulation harness before launch:** a test script plays 1,000 archetypal seasons (greedy
   brass-spam, perfectly balanced, chronically absent, rest-optimizer) and asserts the resulting
   score distributions sit inside historical bands and that "balanced + present" strictly dominates
-  "spam + absent." This is the tuning loop and the regression suite in one.
+  "spam + absent." This is the tuning loop and the regression suite in one. **Multi-season mode**
+  (§5.13): thousands of simulated 15-season careers asserting no 100s ever, Champion Status in
+  10–14 flawless seasons, reputation decay pulling coasting dynasties back to the field, and a
+  30–45% upset rate for perfectly-played Elite challengers against imperfect Champions.
 
 ---
 
@@ -874,6 +967,18 @@ trajectory bands. Everything after deepens rather than gates.
     "does not consume a slot" rule). The `selectUserShows` validation and night-assignment
     scoring logic are specced (§5.11) and land with Phase 1.
 
+**Resolved in v1.7:**
+
+13. **Auditions are in, and simple** (§5.13): one screen inside a four-step FMA-style setup
+    (corps → show → design/auditions → rehearse), with one-tap presets. Resolves gap §14.1.1.
+14. **Donations never grant anything competitive** — no score, reputation, budget, or XP;
+    cosmetic supporter badge only. (In-game logistics — travel/food/staff — remain paid from the
+    per-season, results-earned Corps Budget of §14.2.1, which no real money can touch.)
+15. **Reputation and Champion Status** (§5.13): seven results-earned tiers gating the ceiling
+    percentile of the historical band; ceiling-only, decaying, fully published; flawless play
+    reaches Champion Status in 10–14 seasons; no corps ever scores 100; dynasty beatability is a
+    tuned, harness-asserted property (30–45% upset target).
+
 **Still open:**
 
 1. **Point-cap semantics** — Podium has no lineup and no cap; confirm nothing downstream assumes
@@ -896,15 +1001,10 @@ additions; conflicts are things that **must** be resolved before Phase 1 code.
 
 ### 14.1 Gaps — FMA elements not yet in the design
 
-1. **Auditions (the missing pre-season ritual).** FMA's pre-season had *two* knobs: challenge
-   levels AND audition point allocation (spend ~300 points across captions via sliders to set
-   starting stats). We kept challenge levels but initialize captions purely from corpus baselines
-   — no player agency in the starting *distribution*. Proposal: an *Auditions* step at
-   registration — a fixed budget of audition points allocated across the 8 captions, shifting the
-   day-1 starting position **within** the historical day-1 band for the chosen challenge profile
-   (identity: "we recruit brass talent"). Bounded by the envelope, so no power creep — pure
-   distribution choice. This was FMA's single most tactile pre-season moment; skipping it wastes
-   a beloved ritual that costs one screen.
+1. ~~**Auditions (the missing pre-season ritual).**~~ **Resolved in v1.7** — see §5.13: a single
+   audition screen (fixed point pool across the 8 captions, one-tap presets) inside the four-step
+   setup flow. Shifts the day-1 starting *distribution* within the historical band; no power
+   creep, no convolution.
 2. **Campaigns — the rehearse-vs-fundraise tradeoff.** FMA's passive campaigns (energy → money
    or influence) made income an *opportunity cost of rehearsal*. Our economy earns passively
    (participation rewards). Proposal: any rehearsal block may be converted to a **Fundraiser**
