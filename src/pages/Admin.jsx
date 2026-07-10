@@ -27,8 +27,9 @@ import {
   getScheduleCoverage,
 } from '../api/functions';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { db } from '../api';
+import { useSeasonStore } from '../store/seasonStore';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { usePodiumEnabled } from '../hooks/useFeatures';
@@ -153,6 +154,83 @@ const PodiumLaunchCard = () => {
   );
 };
 
+// Podium funnel telemetry (Phase 8.2): D1/D7 return, blocks-per-active-day,
+// rest-day usage, show-pick coverage — written nightly by the Podium stage
+// to podium-metrics/{seasonUid}/days/{calendarDay} (admin-read only).
+const PodiumFunnelCard = () => {
+  const seasonUid = useSeasonStore((state) => state.seasonUid);
+  const [rows, setRows] = useState(null);
+
+  useEffect(() => {
+    if (!seasonUid) return undefined;
+    let cancelled = false;
+    (async () => {
+      try {
+        const snapshot = await getDocs(
+          query(
+            collection(db, 'podium-metrics', seasonUid, 'days'),
+            orderBy('calendarDay', 'desc'),
+            limit(14)
+          )
+        );
+        if (!cancelled) setRows(snapshot.docs.map((d) => d.data()).reverse());
+      } catch {
+        if (!cancelled) setRows([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [seasonUid]);
+
+  if (!rows || rows.length === 0) return null;
+
+  const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
+  return (
+    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      <SectionHeader title="Podium Funnel (last 14 days)" icon={Play} />
+      <div className="overflow-x-auto">
+        <table className="w-full text-[10px] tabular-nums">
+          <thead>
+            <tr className="text-gray-500 uppercase text-left">
+              <th className="px-3 py-1.5">Day</th>
+              <th className="px-2 py-1.5">Corps</th>
+              <th className="px-2 py-1.5">Played</th>
+              <th className="px-2 py-1.5">Rested</th>
+              <th className="px-2 py-1.5">Blocks/active</th>
+              <th className="px-2 py-1.5">Pick coverage</th>
+              <th className="px-2 py-1.5">D1 return</th>
+              <th className="px-2 py-1.5">D7 return</th>
+            </tr>
+          </thead>
+          <tbody className="text-gray-300">
+            {rows.map((row) => (
+              <tr key={row.calendarDay} className="border-t border-[#242424]">
+                <td className="px-3 py-1">
+                  {row.competitionDay >= 1 ? `D${row.competitionDay}` : `ST${row.calendarDay}`}
+                </td>
+                <td className="px-2 py-1">{row.corps}</td>
+                <td className="px-2 py-1">{row.activeSelf}</td>
+                <td className="px-2 py-1">{row.restDays}</td>
+                <td className="px-2 py-1">{row.blocksPerActiveCorps}</td>
+                <td className="px-2 py-1">{pct(row.pickCoverage)}</td>
+                <td className="px-2 py-1">
+                  {pct(row.d1ReturnRate)}
+                  {row.d1Cohort ? ` (${row.d1Cohort})` : ''}
+                </td>
+                <td className="px-2 py-1">
+                  {pct(row.d7ReturnRate)}
+                  {row.d7Cohort ? ` (${row.d7Cohort})` : ''}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
 const SeasonOpsTab = ({ callAdminFunction }) => {
   const [loading, setLoading] = useState(null);
 
@@ -184,6 +262,7 @@ const SeasonOpsTab = ({ callAdminFunction }) => {
   return (
     <div className="space-y-4">
       <PodiumLaunchCard />
+      <PodiumFunnelCard />
       <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
         <SectionHeader title="Season Operations" icon={Calendar} />
         <div className="px-4 py-3 border-b border-[#333] bg-[#111]">

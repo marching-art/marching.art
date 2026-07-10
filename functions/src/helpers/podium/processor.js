@@ -88,6 +88,17 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
     const results = [];
     const jointToday = []; // corps whose joint rehearsal was today (§5.12)
     const coinAwards = []; // wallet CC per performance (shared economy faucet)
+    const funnel = {
+      corps: 0,
+      activeSelf: 0,
+      restDays: 0,
+      blocksAllocated: 0,
+      withUpcomingPicks: 0,
+      d1Cohort: 0,
+      d1Returned: 0,
+      d7Cohort: 0,
+      d7Returned: 0,
+    };
     let processed = 0;
 
     for (const rosterDoc of roster.docs) {
@@ -109,6 +120,37 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
       const isShowDay = store.isShowDayFor(state, uid, competitionDay, easternAssignments);
       const isSpringTraining = seasonData.status === "live-season" && competitionDay < 1;
       const maxBlocks = engine.blocksAvailable(state, { isShowDay, isSpringTraining }, store.balance);
+
+      // --- Funnel instrumentation (Phase 8.2): "simple like FMA" is
+      // measured, not asserted. Counted BEFORE assistant autoplay so
+      // self-played and autopiloted days never blur.
+      {
+        const playedSelf = (dayInfo.blocksUsed || 0) > 0;
+        funnel.corps += 1;
+        if (playedSelf) {
+          funnel.activeSelf += 1;
+          funnel.blocksAllocated += dayInfo.blocksUsed || 0;
+        } else if (dayInfo.restDay) {
+          funnel.restDays += 1;
+        }
+        const upcomingPicks = (state.selectedShowDays || []).filter(
+          (day) => day > competitionDay && day <= competitionDay + 7
+        ).length;
+        if (upcomingPicks > 0) funnel.withUpcomingPicks += 1;
+        if (state.createdAt) {
+          const ageDays = Math.floor(
+            (Date.now() - new Date(state.createdAt).getTime()) / 86400000
+          );
+          const engaged = playedSelf || dayInfo.restDay;
+          if (ageDays === 1) {
+            funnel.d1Cohort += 1;
+            if (engaged) funnel.d1Returned += 1;
+          } else if (ageDays === 7) {
+            funnel.d7Cohort += 1;
+            if (engaged) funnel.d7Returned += 1;
+          }
+        }
+      }
 
       // Assistant director (design §5.2): on a day the director never played,
       // the saved plan template runs at reduced yield. Active play strictly
@@ -519,6 +561,28 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         },
         { merge: true }
       );
+    }
+
+    // --- 4a2. Funnel metrics doc (Phase 8.2) ----------------------------------
+    // One doc per calendar day; the Admin panel charts the last weeks.
+    // Isolated: a metrics failure never fails the night.
+    try {
+      await db.doc(`podium-metrics/${seasonUid}/days/${calendarDay}`).set({
+        seasonUid,
+        calendarDay,
+        competitionDay,
+        ...funnel,
+        blocksPerActiveCorps:
+          funnel.activeSelf > 0
+            ? Math.round((funnel.blocksAllocated / funnel.activeSelf) * 100) / 100
+            : 0,
+        d1ReturnRate: funnel.d1Cohort > 0 ? funnel.d1Returned / funnel.d1Cohort : null,
+        d7ReturnRate: funnel.d7Cohort > 0 ? funnel.d7Returned / funnel.d7Cohort : null,
+        pickCoverage: funnel.corps > 0 ? funnel.withUpcomingPicks / funnel.corps : 0,
+        processedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      logger.error(`[podium] funnel metrics write failed: ${error.message}`);
     }
 
     // --- 4b. Fan Favorite finalists (decision 30) -----------------------------
