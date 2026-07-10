@@ -342,13 +342,14 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         const partnerSnapshot = entry.partnerUid
           ? await store.stateRef(db, entry.partnerUid).get()
           : null;
+        let scrimmage = null;
         if (
           partnerSnapshot &&
           partnerSnapshot.exists &&
           partnerSnapshot.data().seasonUid === seasonUid
         ) {
           const partnerState = store.hydrateState(partnerSnapshot.data());
-          myState.scrimmage = joint.scrimmageReport(
+          scrimmage = joint.scrimmageReport(
             myState, partnerState, competitionDay, seasonUid, store.curves, store.balance
           );
           const pairKey = [entry.uid, entry.partnerUid].sort().join("_");
@@ -361,8 +362,15 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
             });
           }
         }
-        delete myState.jointRehearsal;
-        await store.stateRef(db, entry.uid).set(store.dehydrateState(myState));
+        // Merge-write ONLY this pass's fields: a full-doc set here would
+        // clobber any block the director allocated between the main loop's
+        // write and this pass (players do play at 2 AM). jointRehearsal is
+        // nulled rather than deleted — every consumer already treats null as
+        // absent, and merge semantics can't delete.
+        await store.stateRef(db, entry.uid).set(
+          { ...(scrimmage ? { scrimmage } : {}), jointRehearsal: null },
+          { merge: true }
+        );
       } catch (error) {
         logger.error(`[podium] scrimmage pass failed for ${entry.uid}: ${error.message}`);
       }

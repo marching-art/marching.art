@@ -76,45 +76,54 @@ async function payoutHostedEvents(db, seasonData, competitionDay) {
 
   let paid = 0;
   for (const eventDoc of snapshot.docs) {
-    const event = eventDoc.data();
-    if (event.paidOut) continue;
-    const tier = balance.hostedEvents.venueTiers[event.venueTier];
-    if (!tier) continue;
+    // Per-event isolation: one bad event (deleted host profile, transient
+    // write error) must not abort payouts for the rest of the day — the
+    // payout branch only runs on the day's single completed stage run, so
+    // an aborted sweep would never be retried.
+    try {
+      const event = eventDoc.data();
+      if (event.paidOut) continue;
+      const tier = balance.hostedEvents.venueTiers[event.venueTier];
+      if (!tier) continue;
 
-    const show = recapShows.find((s) => s.eventName === event.eventName);
-    const uids = new Set();
-    for (const result of (show && show.results) || []) {
-      if (result.uid) uids.add(result.uid);
-    }
-    const attendance = Math.min(uids.size, tier.capacity);
-    const payout = attendance * tier.payoutPerCorpsCC;
+      const show = recapShows.find((s) => s.eventName === event.eventName);
+      const uids = new Set();
+      for (const result of (show && show.results) || []) {
+        if (result.uid) uids.add(result.uid);
+      }
+      const attendance = Math.min(uids.size, tier.capacity);
+      const payout = attendance * tier.payoutPerCorpsCC;
 
-    if (payout > 0) {
-      const profileRef = db.doc(
-        `artifacts/${dataNamespaceParam.value()}/users/${event.hostUid}/profile/data`
-      );
-      await db.runTransaction(async (transaction) => {
-        const profile = await transaction.get(profileRef);
-        const corpsCoin = profile.exists ? profile.data().corpsCoin || 0 : 0;
-        transaction.update(profileRef, { corpsCoin: corpsCoin + payout });
-        const historyRef = db
-          .collection(
-            `artifacts/${dataNamespaceParam.value()}/users/${event.hostUid}/corpsCoinHistory`
-          )
-          .doc();
-        transaction.set(historyRef, {
-          type: "hosted_event_payout",
-          amount: payout,
-          description: `Hosting payout: ${event.eventName} (${attendance} corps)`,
-          timestamp: new Date(),
+      if (payout > 0) {
+        const profileRef = db.doc(
+          `artifacts/${dataNamespaceParam.value()}/users/${event.hostUid}/profile/data`
+        );
+        await db.runTransaction(async (transaction) => {
+          const profile = await transaction.get(profileRef);
+          if (!profile.exists) return; // host profile gone — nothing to pay
+          const corpsCoin = profile.data().corpsCoin || 0;
+          transaction.update(profileRef, { corpsCoin: corpsCoin + payout });
+          const historyRef = db
+            .collection(
+              `artifacts/${dataNamespaceParam.value()}/users/${event.hostUid}/corpsCoinHistory`
+            )
+            .doc();
+          transaction.set(historyRef, {
+            type: "hosted_event_payout",
+            amount: payout,
+            description: `Hosting payout: ${event.eventName} (${attendance} corps)`,
+            timestamp: new Date(),
+          });
         });
-      });
+      }
+      await eventDoc.ref.set(
+        { paidOut: true, attendance, payout, paidAt: new Date().toISOString() },
+        { merge: true }
+      );
+      paid += payout;
+    } catch (error) {
+      logger.error(`[hosted-events] payout failed for event ${eventDoc.id}: ${error.message}`);
     }
-    await eventDoc.ref.set(
-      { paidOut: true, attendance, payout, paidAt: new Date().toISOString() },
-      { merge: true }
-    );
-    paid += payout;
   }
   logger.info(
     `[hosted-events] day ${competitionDay}: ${snapshot.size} event(s), ${paid} CC paid out.`
