@@ -26,12 +26,13 @@ describe("classRegistry derived shapes match the historical literals", () => {
     });
   });
 
-  test("REGISTRATION_LOCK_WEEKS matches registerCorps.js", () => {
+  test("REGISTRATION_LOCK_WEEKS matches registerCorps.js (+ always-open Podium)", () => {
     assert.deepEqual(reg.REGISTRATION_LOCK_WEEKS, {
       worldClass: 6,
       openClass: 5,
       aClass: 4,
       soundSport: 0,
+      podiumClass: 0,
     });
   });
 
@@ -45,7 +46,7 @@ describe("classRegistry derived shapes match the historical literals", () => {
     });
   });
 
-  test("SHOW_PARTICIPATION_REWARDS matches economy.js (alias-expanded)", () => {
+  test("SHOW_PARTICIPATION_REWARDS matches economy.js (alias-expanded, + Podium)", () => {
     assert.deepEqual(reg.SHOW_PARTICIPATION_REWARDS, {
       soundSport: 50,
       aClass: 100,
@@ -53,6 +54,8 @@ describe("classRegistry derived shapes match the historical literals", () => {
       openClass: 150,
       world: 200,
       worldClass: 200,
+      podium: 175,
+      podiumClass: 175,
     });
   });
 
@@ -60,15 +63,21 @@ describe("classRegistry derived shapes match the historical literals", () => {
     assert.deepEqual(reg.CLASS_UNLOCK_LEVELS, { aClass: 3, openClass: 5, worldClass: 10 });
   });
 
-  test("podiumClass is registered but inert while disabled", () => {
+  test("podiumClass is live: in shared lists, out of every lineup path", () => {
     const podium = reg.getClass("podiumClass");
     assert.ok(podium, "podiumClass must be registered");
-    assert.equal(podium.enabled, false);
-    assert.equal(reg.isClassEnabled("podiumClass"), false);
+    assert.equal(podium.enabled, true);
+    assert.equal(reg.isClassEnabled("podiumClass"), true);
+    // Shared-calendar/economy lists include it...
+    assert.ok(reg.ENABLED_CLASSES.includes("podiumClass"));
+    assert.ok(reg.MATCHUP_CLASSES.includes("podiumClass"));
+    // ...but hasLineup:false keeps it out of every lineup/point-cap path,
+    // and it is free and ungated (always-open, SoundSport model).
     assert.ok(!reg.FANTASY_CLASSES.includes("podiumClass"));
     assert.ok(!reg.RANKED_CLASSES.includes("podiumClass"));
-    assert.ok(!("podiumClass" in reg.SHOW_PARTICIPATION_REWARDS));
+    assert.ok(!("podiumClass" in reg.POINT_CAPS));
     assert.ok(!("podiumClass" in reg.CLASS_UNLOCK_COSTS));
+    assert.ok(!("podiumClass" in reg.CLASS_UNLOCK_LEVELS));
   });
 
   test("alias lookup resolves legacy short keys", () => {

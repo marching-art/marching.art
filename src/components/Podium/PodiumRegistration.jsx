@@ -213,7 +213,7 @@ export default function PodiumRegistration({ podium }) {
               <input
                 type="number"
                 min={0}
-                max={1000}
+                max={2500}
                 step={50}
                 value={budgetCommitment}
                 onChange={(e) =>
@@ -222,8 +222,9 @@ export default function PodiumRegistration({ podium }) {
                 className="w-28 bg-[#111] border border-[#333] rounded-sm px-3 py-2 text-sm text-white focus:border-[#0057B8] outline-none tabular-nums"
               />
               <span className="text-[10px] text-gray-500">
-                CorpsCoin into your Corps Budget — food, travel, staff. Never scores. You can top up
-                later; a 0-CC corps is always playable.
+                CorpsCoin into your Corps Budget — food, travel, staff. Never scores. ~1,000 CC
+                funds a comfortable season; you can top up later, and a 0-CC corps is always
+                playable.
               </span>
             </div>
           </div>

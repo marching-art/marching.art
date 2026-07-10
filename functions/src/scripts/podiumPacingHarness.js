@@ -35,7 +35,10 @@ const ROTATION = [
 /**
  * Play one season with a strong, simple policy: rotate all six caption
  * blocks, rest when stamina runs low, take the show-day load. `skipRate`
- * models an imperfect director (missed blocks, deterministic per seed).
+ * models an absent director: each DAY is skipped whole with probability
+ * skipRate (an absence is a day you never opened the app — the granularity
+ * absence actually happens at; per-block skipping would average out over a
+ * 12-block day and never dent a champion). Deterministic per seed.
  * Returns the finals score sheet.
  */
 function playSeason(repTier, challengeLevel, seed, skipRate = 0) {
@@ -45,15 +48,22 @@ function playSeason(repTier, challengeLevel, seed, skipRate = 0) {
   for (let day = 1; day <= 49; day++) {
     const isShowDay = SHOW_DAYS.includes(day);
     const maxBlocks = engine.blocksAvailable(state, { isShowDay, isSpringTraining: false }, balance);
-    const rest = !isShowDay && state.condition.stamina < 25;
+    const skippedDay = skipRate > 0 && engine.seededUnit(`${seed}|skip|${day}`) < skipRate;
+    const rest = !isShowDay && !skippedDay && state.condition.stamina < 25;
     let used = 0;
     const blocksSoFar = {};
     if (!rest) {
+      // On a skipped day the assistant director runs the plan template at
+      // reduced yield — exactly what the nightly processor does for a
+      // director who never opened the app (§5.2). Absence costs the yield
+      // gap, never a wrecked season.
+      const yieldMultiplier = skippedDay ? balance.rehearsal.assistantYield : 1;
       for (let i = 0; i < maxBlocks; i++) {
-        if (skipRate > 0 && engine.seededUnit(`${seed}|skip|${day}|${i}`) < skipRate) continue;
         const blockType = ROTATION[rotationIndex % ROTATION.length];
         rotationIndex++;
-        engine.allocateBlock(state, blockType, day, i, blocksSoFar, curves, balance, {});
+        engine.allocateBlock(state, blockType, day, i, blocksSoFar, curves, balance, {
+          yieldMultiplier,
+        });
         blocksSoFar[blockType] = (blocksSoFar[blockType] || 0) + 1;
         used++;
       }

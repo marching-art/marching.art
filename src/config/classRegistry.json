@@ -2,7 +2,7 @@
   "meta": {
     "version": 1,
     "note": "Class-capability registry (Phase 1.1, PODIUM_CLASS_DESIGN.md). Single source for the policy values that were previously mirrored across ~9 client/server sites: point caps, unlock gates, registration locks, participation rewards, ranking membership, and per-class capabilities. Presentation (labels/colors) stays in src/utils/corps.ts. This file MUST stay byte-identical to src/config/classRegistry.json — run scripts/checkClassRegistrySync.js --check (functions cannot import outside their deploy root, hence the copy).",
-    "podiumNote": "podiumClass ships disabled: derived lists (validClasses, rankings, rewards) exclude disabled classes, so registering it here changes no behavior until game-settings/features.podiumClass flips AND enabled becomes true."
+    "podiumNote": "podiumClass is LIVE (launched July 2026): enabled here adds it to derived lists (leagues/matchups, participation rewards, registration locks); game-settings/features.podiumClass remains the runtime kill switch. hasLineup:false keeps it out of every lineup/point-cap path."
   },
   "classes": {
     "worldClass": {
@@ -55,7 +55,7 @@
     },
     "podiumClass": {
       "order": 4,
-      "enabled": false,
+      "enabled": true,
       "aliases": ["podiumClass", "podium"],
       "capabilities": { "hasLineup": false, "fantasyRanked": false, "usesRehearsal": true, "hasDivisions": true },
       "pointCap": null,

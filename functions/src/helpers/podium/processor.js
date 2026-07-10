@@ -25,6 +25,9 @@ const store = require("./store");
 const venues = require("./venues");
 const staffMarket = require("./staffMarket");
 const joint = require("./joint");
+const { processCoinAwardsBatch } = require("../scoringAwards");
+const { SHOW_PARTICIPATION_REWARDS } = require("../classRegistry");
+const { ChunkedWriter } = require("../chunkedWriter");
 
 /**
  * Venue for a corps' show on `competitionDay`: the branded majors have fixed
@@ -81,6 +84,7 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
     const scheduleLocations = await loadScheduleLocations(db, seasonData);
     const results = [];
     const jointToday = []; // corps whose joint rehearsal was today (§5.12)
+    const coinAwards = []; // wallet CC per performance (shared economy faucet)
     let processed = 0;
 
     for (const rosterDoc of roster.docs) {
@@ -200,6 +204,19 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         }
         // Show payout: in-class Budget income for performing.
         store.creditBudget(state, store.balance.budget.showPayout, "showPayout", competitionDay);
+        // Participation CC (registry-derived, same faucet every class has):
+        // performing pays the shared wallet — the income that funds class
+        // unlocks and the hosting ladder. Paid once per performance night.
+        const participationCC = SHOW_PARTICIPATION_REWARDS.podiumClass || 0;
+        if (participationCC > 0) {
+          coinAwards.push({
+            uid,
+            corpsClass: "podiumClass",
+            showName: `Day ${competitionDay}`,
+            amount: participationCC,
+            description: `Podium performance — Day ${competitionDay}`,
+          });
+        }
         if (showVenue) {
           state.lastVenue = {
             venueId: showVenue.venueId,
@@ -373,6 +390,19 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         );
       } catch (error) {
         logger.error(`[podium] scrimmage pass failed for ${entry.uid}: ${error.message}`);
+      }
+    }
+
+    // --- 2c. Participation CC/XP pass ----------------------------------------
+    // Same batch path fantasy uses (increment + history subcollection).
+    // Isolated: a payout failure never fails the night's scoring.
+    if (coinAwards.length > 0) {
+      try {
+        const coinWriter = new ChunkedWriter(db);
+        processCoinAwardsBatch(coinAwards, coinWriter, db);
+        await coinWriter.commit();
+      } catch (error) {
+        logger.error(`[podium] participation coin pass failed: ${error.message}`);
       }
     }
 

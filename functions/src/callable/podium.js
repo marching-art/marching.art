@@ -22,7 +22,8 @@ const career = require("../helpers/podium/career");
 const hostedEvents = require("../helpers/podium/hostedEvents");
 
 const FOOD_TIERS = ["gasStation", "standard", "fullKitchen"];
-const MAX_TEMPLATE_BLOCKS = 5;
+// Template covers a full spring-training day (the largest block budget).
+const MAX_TEMPLATE_BLOCKS = 20;
 
 /**
  * Validate a CorpsCoin -> Corps Budget commitment amount against the

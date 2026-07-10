@@ -1,5 +1,5 @@
 // RehearsalPlanner — the Podium Class daily verb (Phase 2, design §6.1).
-// One screen, <=3 taps: pick today's rehearsal blocks, watch the Action
+// One screen, 12 clicks: pick today's rehearsal blocks, watch the Action
 // Complete panel, or declare a rest day. Condition strip included.
 
 import React, { useState } from 'react';

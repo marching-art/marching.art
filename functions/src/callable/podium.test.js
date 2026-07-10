@@ -109,15 +109,16 @@ describe("validateCommitment (Corps Budget, decision 24)", () => {
     assert.equal(validateCommitment(0, 0), 0);
   });
 
-  test("accepts up to the division-equal cap, cumulatively", () => {
+  test("accepts up to the cap, cumulatively (a 1,000-CC season is well inside it)", () => {
     assert.equal(validateCommitment(1000, 0), 1000);
-    assert.equal(validateCommitment(400, 600), 400);
+    assert.equal(validateCommitment(2500, 0), 2500);
+    assert.equal(validateCommitment(400, 2100), 400);
   });
 
   test("rejects negatives, non-integers, and over-cap totals", () => {
     assert.throws(() => validateCommitment(-1, 0));
     assert.throws(() => validateCommitment(10.5, 0));
-    assert.throws(() => validateCommitment(1001, 0));
-    assert.throws(() => validateCommitment(500, 600));
+    assert.throws(() => validateCommitment(2501, 0));
+    assert.throws(() => validateCommitment(500, 2100));
   });
 });
