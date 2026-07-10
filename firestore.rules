@@ -66,7 +66,13 @@ function corpsClassUntouched(corpsClass) {
      // Nightly class standing ("World Class · #14") — written only by the
      // scoring run; a client-forged rank would display on public profiles.
      request.resource.data.get(['corps', corpsClass, 'seasonRank'], null) == resource.data.get(['corps', corpsClass, 'seasonRank'], null) &&
-     request.resource.data.get(['corps', corpsClass, 'seasonRankOf'], null) == resource.data.get(['corps', corpsClass, 'seasonRankOf'], null));
+     request.resource.data.get(['corps', corpsClass, 'seasonRankOf'], null) == resource.data.get(['corps', corpsClass, 'seasonRankOf'], null) &&
+     // Archived season history feeds the public resume AND the lifetime
+     // Director Rating leaderboard (placements-only); medals feed the trophy
+     // case. Both are written only by season archival / the nightly
+     // processors — a client-forged placement would mint leaderboard rank.
+     request.resource.data.get(['corps', corpsClass, 'seasonHistory'], null) == resource.data.get(['corps', corpsClass, 'seasonHistory'], null) &&
+     request.resource.data.get(['corps', corpsClass, 'medals'], null) == resource.data.get(['corps', corpsClass, 'medals'], null));
 }
 
 // Podium Class competitive state (corps.podiumClass.podium.*) is written
