@@ -243,6 +243,12 @@ match /podium-recaps/{seasonUid} {
     allow read: if true;
     allow write: if false; // Backend only
   }
+
+  // The Podium Report — weekly power-rankings column (Phase 7.3).
+  match /power/{weekId} {
+    allow read: if true;
+    allow write: if false; // Backend only
+  }
 }
 
 // Podium season roster — processor iteration index, backend only. Not

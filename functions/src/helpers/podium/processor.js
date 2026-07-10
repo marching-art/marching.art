@@ -401,7 +401,13 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
       if (!snapshot.exists) continue;
       const data = snapshot.data();
       if (data.lastTotal != null) {
-        standings.push({ uid: rosterDoc.id, lastTotal: data.lastTotal, medals: data.medals });
+        standings.push({
+          uid: rosterDoc.id,
+          corpsName: data.corpsName || null,
+          repTier: data.repTier ?? null,
+          lastTotal: data.lastTotal,
+          medals: data.medals,
+        });
       }
     }
     standings.sort((a, b) => b.lastTotal - a.lastTotal);
@@ -428,6 +434,34 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         },
         { merge: true }
       );
+    }
+
+    // --- 5. The Podium Report (Phase 7.3): weekly power-rankings column ------
+    // Deterministic, data-driven, published at each week boundary. Isolated:
+    // a column failure never fails the run.
+    if (competitionDay >= 7 && competitionDay % 7 === 0 && standings.length > 0) {
+      try {
+        const { buildPowerRankings } = require("./powerRankings");
+        const week = competitionDay / 7;
+        const previousSnapshot =
+          week > 1
+            ? await db.doc(`podium-recaps/${seasonUid}/power/${week - 1}`).get()
+            : null;
+        const column = buildPowerRankings(
+          standings,
+          previousSnapshot && previousSnapshot.exists ? previousSnapshot.data() : null,
+          week
+        );
+        await db.doc(`podium-recaps/${seasonUid}/power/${week}`).set({
+          ...column,
+          seasonUid,
+          competitionDay,
+          publishedAt: new Date().toISOString(),
+        });
+        logger.info(`[podium] Podium Report week ${week}: ${column.entries.length} entries.`);
+      } catch (error) {
+        logger.error(`[podium] power rankings failed (run unaffected): ${error.message}`);
+      }
     }
 
     await markScoringRunCompleted(db, leaseKey, calendarDay, {

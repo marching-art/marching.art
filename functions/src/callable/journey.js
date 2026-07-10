@@ -40,7 +40,18 @@ const completeJourneyStep = onCall({ cors: true }, async (request) => {
         return { alreadyCompleted: true };
       }
 
-      if (!verifyJourneyStep(step, profileData)) {
+      // Podium Rookie Journey steps verify against the server-only podium
+      // state doc as well (helpers/journey.js PODIUM_JOURNEY_STEPS).
+      let podiumState = null;
+      if (step.id.startsWith("podium_")) {
+        const podiumStateRef = db.doc(
+          `artifacts/${dataNamespaceParam.value()}/users/${uid}/podium/state`
+        );
+        const podiumStateDoc = await transaction.get(podiumStateRef);
+        podiumState = podiumStateDoc.exists ? podiumStateDoc.data() : null;
+      }
+
+      if (!verifyJourneyStep(step, profileData, podiumState)) {
         throw new HttpsError(
           "failed-precondition",
           `Not there yet — ${step.description.toLowerCase()} first.`

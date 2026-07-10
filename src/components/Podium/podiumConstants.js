@@ -90,6 +90,55 @@ export const HOSTING_RULES = {
   nameMax: 60,
 };
 
+// Podium Rookie Journey — client mirror of PODIUM_JOURNEY_STEPS in
+// functions/src/helpers/journey.js (ids/rewards must stay in sync; the
+// server verifies and pays).
+export const PODIUM_JOURNEY = [
+  {
+    id: 'podium_found',
+    title: 'Found a Corps',
+    detail: 'Name, challenge, hometown',
+    xp: 50,
+    coin: 50,
+  },
+  {
+    id: 'podium_rehearse',
+    title: 'First Blocks',
+    detail: 'Allocate a rehearsal block',
+    xp: 50,
+    coin: 25,
+  },
+  {
+    id: 'podium_template',
+    title: 'Hire the Assistant',
+    detail: 'Save a plan template',
+    xp: 50,
+    coin: 25,
+  },
+  { id: 'podium_tour', title: 'Route the Tour', detail: 'Pick your first shows', xp: 50, coin: 25 },
+  {
+    id: 'podium_score',
+    title: 'First Box Score',
+    detail: 'Perform and read your recap',
+    xp: 75,
+    coin: 50,
+  },
+  {
+    id: 'podium_joint',
+    title: 'Shake Hands',
+    detail: 'Complete a joint rehearsal',
+    xp: 75,
+    coin: 50,
+  },
+  {
+    id: 'podium_season',
+    title: 'Survive the Grind',
+    detail: 'Finish a full season',
+    xp: 100,
+    coin: 100,
+  },
+];
+
 export const REP_TIER_NAMES = {
   1: 'Community Corps',
   2: 'Regional Contender',
