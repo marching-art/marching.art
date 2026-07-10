@@ -156,7 +156,15 @@ async function loadSeries(useFirestore) {
 
   const series = new Map();
   const includedYears = [];
+  const currentYear = new Date().getFullYear();
   for (const { year, data } of yearDocs) {
+    // COMPLETED years only (design §14.2.7): the live scraper writes the
+    // current year as the season progresses — including it would shift the
+    // envelope mid-season (and during finals week it can look complete).
+    if (useFirestore && Number(year) >= currentYear) {
+      console.warn(`Skipping year ${year}: current/live season (completed years only)`);
+      continue;
+    }
     const maxDay = Math.max(0, ...data.map((e) => e.offSeasonDay || 0));
     if (maxDay < 45) {
       console.warn(`Skipping year ${year}: max offSeasonDay ${maxDay} < 45 (incomplete season)`);
@@ -413,8 +421,14 @@ function clusterArchetypes(fits, k) {
     .sort((a, b) => a.L - b.L);
 }
 
-async function main() {
-  const useFirestore = process.argv.includes("--firestore");
+/**
+ * Build the full curve payload (pure of file I/O). Used by the CLI below
+ * and by the admin `rebuildPodiumCurves` job, which writes the result to
+ * Firestore `podium-config/curves` so production can rebuild from the FULL
+ * 2000-2026 archive without a deploy.
+ * @param {boolean} useFirestore
+ */
+async function buildCurves(useFirestore) {
   const { series, years } = await loadSeries(useFirestore);
   console.log(`Corps-seasons: ${series.size} across ${years.length} completed years`);
 
@@ -469,16 +483,21 @@ async function main() {
       console.log(`TOTAL: day49 band p50/p95/max = ${bands[48].p50}/${bands[48].p95}/${bands[48].max}`);
     }
   }
+  return output;
+}
 
+async function main() {
+  const useFirestore = process.argv.includes("--firestore");
+  const output = await buildCurves(useFirestore);
   fs.mkdirSync(path.dirname(OUTPUT_PATH), { recursive: true });
   fs.writeFileSync(OUTPUT_PATH, `${JSON.stringify(output, null, 2)}\n`);
   console.log(`Wrote ${OUTPUT_PATH}`);
 }
 
-// Exported for tests and for applySurvivorshipCorrection.js (re-applies the
+// Exported for tests, for applySurvivorshipCorrection.js (re-applies the
 // correction to the committed curveData.json without a full Firestore
-// rebuild).
-module.exports = { correctSurvivorship, fitLine, SURVIVORSHIP };
+// rebuild), and for the admin rebuildPodiumCurves job (buildCurves).
+module.exports = { correctSurvivorship, fitLine, SURVIVORSHIP, buildCurves };
 
 if (require.main === module) {
   main().catch((err) => {

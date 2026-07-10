@@ -9,7 +9,8 @@
       "centroid": 11,
       "unresolved": 0
     },
-    "geodata": "GeoNames cities1000 via all-the-cities (CC-BY 4.0)"
+    "geodata": "GeoNames cities1000 via all-the-cities (CC-BY 4.0)",
+    "centroidReview": "All 11 state-centroid placeholders hand-corrected 2026-07-10 (incl. wrong-state source typos: Ocean Springs MS, Ontario OR, Van Buren AR, Sioux Falls SD, Sevierville TN)."
   },
   "venues": {
     "akron, ohio": {
@@ -329,9 +330,9 @@
       "city": "Bensalem",
       "region": "PA",
       "country": "US",
-      "lat": 40.3939,
-      "lng": -76.8427,
-      "source": "centroid",
+      "lat": 40.1043,
+      "lng": -74.9513,
+      "source": "manual",
       "eventCount": 1,
       "rawVariants": [
         "Bensalem, Pennsylvania"
@@ -511,9 +512,9 @@
       "city": "Brick",
       "region": "NJ",
       "country": "US",
-      "lat": 40.4845,
-      "lng": -74.388,
-      "source": "centroid",
+      "lat": 40.0576,
+      "lng": -74.1097,
+      "source": "manual",
       "eventCount": 2,
       "rawVariants": [
         "Brick, New Jersey"
@@ -2501,9 +2502,9 @@
       "city": "Knox",
       "region": "OH",
       "country": "US",
-      "lat": 40.5204,
-      "lng": -82.7546,
-      "source": "centroid",
+      "lat": 40.3934,
+      "lng": -82.4857,
+      "source": "manual",
       "eventCount": 1,
       "rawVariants": [
         "Knox, Ohio"
@@ -3226,7 +3227,7 @@
     },
     "montreal, quebec": {
       "venueId": "montreal-qc",
-      "city": "Montréal",
+      "city": "Montr\u00e9al",
       "region": "QC",
       "country": "CA",
       "lat": 45.5088,
@@ -3385,9 +3386,9 @@
       "city": "Newbury Park",
       "region": "CA",
       "country": "US",
-      "lat": 35.3332,
-      "lng": -119.2959,
-      "source": "centroid",
+      "lat": 34.1848,
+      "lng": -118.9109,
+      "source": "manual",
       "eventCount": 2,
       "rawVariants": [
         "Newbury Park, California"
@@ -3461,11 +3462,11 @@
     "ocean springs, oklahoma": {
       "venueId": "ocean-springs-ok",
       "city": "Ocean Springs",
-      "region": "OK",
+      "region": "MS",
       "country": "US",
-      "lat": 35.6256,
-      "lng": -96.9657,
-      "source": "centroid",
+      "lat": 30.4113,
+      "lng": -88.8278,
+      "source": "manual",
       "eventCount": 1,
       "rawVariants": [
         "Ocean Springs, Oklahoma"
@@ -3617,11 +3618,11 @@
     "ontario, idaho": {
       "venueId": "ontario-id",
       "city": "Ontario",
-      "region": "ID",
+      "region": "OR",
       "country": "US",
-      "lat": 44.207,
-      "lng": -115.3439,
-      "source": "centroid",
+      "lat": 44.0266,
+      "lng": -116.9629,
+      "source": "manual",
       "eventCount": 1,
       "rawVariants": [
         "Ontario, Idaho"
@@ -4513,12 +4514,12 @@
     },
     "severieville, tennessee": {
       "venueId": "severieville-tn",
-      "city": "Severieville",
+      "city": "Sevierville",
       "region": "TN",
       "country": "US",
-      "lat": 35.6578,
-      "lng": -87.1638,
-      "source": "centroid",
+      "lat": 35.8681,
+      "lng": -83.5619,
+      "source": "manual",
       "eventCount": 1,
       "rawVariants": [
         "Severieville, Tennessee"
@@ -4579,11 +4580,11 @@
     "sioux falls, iowa": {
       "venueId": "sioux-falls-ia",
       "city": "Sioux Falls",
-      "region": "IA",
+      "region": "SD",
       "country": "US",
-      "lat": 41.9164,
-      "lng": -92.9848,
-      "source": "centroid",
+      "lat": 43.5446,
+      "lng": -96.7311,
+      "source": "manual",
       "eventCount": 1,
       "rawVariants": [
         "Sioux Falls, Iowa"
@@ -4867,9 +4868,9 @@
       "city": "Tri-Cities",
       "region": "WA",
       "country": "US",
-      "lat": 47.3356,
-      "lng": -121.6594,
-      "source": "centroid",
+      "lat": 46.2304,
+      "lng": -119.2752,
+      "source": "manual",
       "eventCount": 2,
       "rawVariants": [
         "Tri-Cities, Washington"
@@ -4969,11 +4970,11 @@
     "van buren, alabama": {
       "venueId": "van-buren-al",
       "city": "Van Buren",
-      "region": "AL",
+      "region": "AR",
       "country": "US",
-      "lat": 33.0152,
-      "lng": -86.7327,
-      "source": "centroid",
+      "lat": 35.4368,
+      "lng": -94.3483,
+      "source": "manual",
       "eventCount": 1,
       "rawVariants": [
         "Van Buren, Alabama"
@@ -5270,9 +5271,9 @@
       "city": "Wilmot",
       "region": "WI",
       "country": "US",
-      "lat": 43.5301,
-      "lng": -88.8159,
-      "source": "centroid",
+      "lat": 42.5117,
+      "lng": -88.1793,
+      "source": "manual",
       "eventCount": 1,
       "rawVariants": [
         "Wilmot, Wisconsin"

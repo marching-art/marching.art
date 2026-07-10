@@ -105,6 +105,29 @@ exports.manualTrigger = onCall({
         message: `Records Book rebuilt from ${result.daysProcessed} recap days across ${result.seasons} seasons.`,
       };
     }
+    case "rebuildPodiumCurves": {
+      // Rebuild the Podium realism envelope from the FULL historical_scores
+      // archive (completed years only, survivorship-corrected) and publish
+      // to podium-config/curves — the runtime override the engine swaps in
+      // (store.applyCurveOverrides). The committed curveData stays the
+      // fallback; delete the doc to revert.
+      const { buildCurves } = require("../scripts/buildPodiumCurves");
+      const store = require("../helpers/podium/store");
+      const payload = await buildCurves(true);
+      if (!store.curvesShapeValid(payload)) {
+        throw new HttpsError("internal", "Rebuilt curve payload failed the shape check — not published.");
+      }
+      payload.meta.publishedAt = new Date().toISOString();
+      await getDb().doc("podium-config/curves").set(payload);
+      const finals = payload.totalBands[48];
+      return {
+        success: true,
+        message:
+          `Podium curves rebuilt from ${payload.meta.years.length} completed years ` +
+          `(${payload.meta.corpsSeasons} corps-seasons). Finals band p5/p50/max = ` +
+          `${finals.p5}/${finals.p50}/${finals.max}. Published to podium-config/curves.`,
+      };
+    }
     case "updateEconomyStats": {
       const { updateEconomyStats } = require("../helpers/economyStats");
       const stats = await updateEconomyStats(getDb(), {

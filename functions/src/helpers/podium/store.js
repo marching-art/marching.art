@@ -74,6 +74,54 @@ async function applyBalanceOverrides(db, { force = false } = {}) {
   return balance;
 }
 
+// ---------------------------------------------------------------------------
+// Runtime curve overrides (podium-config/curves) — written by the admin
+// rebuildPodiumCurves job from the FULL Firestore historical archive
+// (2000-2026), replacing the committed 13-year curveData wholesale. Unlike
+// balance (tunable fields, deep-merged), curves are all-or-nothing: apply
+// only a payload that passes the shape check; anything else keeps the
+// committed data. Same TTL memo + in-place mutation of the shared export.
+// ---------------------------------------------------------------------------
+
+const CURVES_DEFAULTS = JSON.parse(JSON.stringify(curves));
+let curvesFetchedAt = 0;
+
+/** True when a curve payload is structurally usable by the engine. */
+function curvesShapeValid(payload) {
+  if (!payload || typeof payload !== "object") return false;
+  if (!Array.isArray(payload.totalBands) || payload.totalBands.length !== 49) return false;
+  if (!payload.bands || !payload.deltas || !payload.archetypes) return false;
+  for (const caption of engine.CAPTIONS) {
+    const band = payload.bands[caption];
+    if (!Array.isArray(band) || band.length !== 49) return false;
+    if (typeof band[48].p5 !== "number" || typeof band[48].max !== "number") return false;
+    if (!Array.isArray(payload.archetypes[caption]) || payload.archetypes[caption].length === 0) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Refresh the shared curves object from podium-config/curves. Never throws;
+ * an invalid or missing doc means the committed curveData stands.
+ */
+async function applyCurveOverrides(db, { force = false } = {}) {
+  const now = Date.now();
+  if (!force && now - curvesFetchedAt < BALANCE_TTL_MS) return curves;
+  curvesFetchedAt = now;
+  try {
+    const snapshot = await db.doc("podium-config/curves").get();
+    const payload = snapshot.exists ? snapshot.data() : null;
+    const next = curvesShapeValid(payload) ? payload : CURVES_DEFAULTS;
+    for (const key of Object.keys(curves)) delete curves[key];
+    Object.assign(curves, JSON.parse(JSON.stringify(next)));
+  } catch {
+    // Reads can fail transiently; keep whatever is currently applied.
+  }
+  return curves;
+}
+
 // The marching.art majors (competition days). Eastern Classic is one event
 // across days 41-42; each corps performs its single assigned night —
 // division-seeded snake once lineups publish on Day 39 (persisted in
@@ -287,6 +335,8 @@ module.exports = {
   creditBudget,
   debitBudget,
   applyBalanceOverrides,
+  applyCurveOverrides,
+  curvesShapeValid,
   curves,
   balance,
 };

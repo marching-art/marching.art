@@ -157,6 +157,13 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
       icon: RefreshCw,
     },
     {
+      id: 'rebuildPodiumCurves',
+      name: 'Rebuild Podium Curves',
+      description:
+        'Rebuild the Podium scoring envelope from the FULL historical archive (completed years only) and publish to podium-config/curves — no deploy needed; delete the doc to revert to committed data',
+      icon: RefreshCw,
+    },
+    {
       id: 'rebuildGameRecords',
       name: 'Rebuild Records Book',
       description:

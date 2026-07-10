@@ -71,8 +71,10 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
   }
 
   // Beta tuning path: merge podium-config/balance overrides over the
-  // committed defaults before any engine math runs tonight.
+  // committed defaults, and swap in the full-archive curve rebuild when
+  // available, before any engine math runs tonight.
   await store.applyBalanceOverrides(db);
+  await store.applyCurveOverrides(db);
 
   try {
     const roster = await store.rosterCollection(db, seasonUid).get();
