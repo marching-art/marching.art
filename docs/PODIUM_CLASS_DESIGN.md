@@ -16,7 +16,9 @@ multi-season climb (§5.13); v1.8 specs dormancy and comebacks; v1.9 replaces th
 purchase ladder with a living labor market (§5.6); v2.0 is the authoritative eight-phase build
 plan (§10); v2.1 folds in the final FMA sweep (§14.3); v2.2 places the sweep items (Scores-tab
 recap sheets with the caption-privacy rule, all-class profile résumés) and swaps Stretching /
-Physical Warmup in as the condition block — the design is complete and build-ready
+Physical Warmup in as the condition block; v2.3 anchors the onboarding economy to the 1,000-CC
+starting grant and sweeps stale CorpsCoin references to Corps Budget — the design is complete
+and build-ready
 
 ---
 
@@ -99,7 +101,7 @@ Ten years of Suggestions-board and Rework-thread sentiment, distilled:
 | Abandonment — no meaningful update in ~a decade | Shipping this class *is* the answer; it's the "FMA 3.0" the Rework thread tried to spec |
 | Dated UI (site still ships jQuery 1.8.3) | marching.art's existing React/Tailwind dashboard aesthetic |
 | Opaque division assignment (influence + bank secretly weighted; chronic misplacements) | Transparent, published formula; divisions seeded purely from prior Podium results (§5.7) |
-| Nothing to spend money on ("other than staff and comps, there's nothing to buy") | Travel, food, staff, clinicians are real recurring CorpsCoin sinks (§5.6) |
+| Nothing to spend money on ("other than staff and comps, there's nothing to buy") | Travel, food, staff, clinicians are real recurring Corps Budget sinks (§5.6, §14.2.1) |
 | Rich-get-richer influence compounding — catch-up is "generational" | No influence stat. Staff bonuses are capped and season-scoped; skill expression dominates account age |
 | Inactive groups keep scores; activity doesn't matter enough | Cleanliness decay for unrehearsed captions; condition system makes daily attention matter (§5.3, §5.4) |
 | No morale/wellness layer (top Rework request: "motivation mechanic requiring energy upkeep") | The condition system: rest, meals, travel fatigue (§5.3) |
@@ -156,7 +158,7 @@ called it right.
 ### Weekly loop (the strategy)
 
 - Select next week's shows (existing 4-per-week mechanic) — but now the *route matters*: distances
-  between venues cost stamina and CorpsCoin (§5.3).
+  between venues cost stamina and Corps Budget (§5.3).
 - Review the **Trajectory Panel**: your caption curves plotted against historical percentile bands
   for this day of the season ("your brass is tracking the 78th percentile of historical Day-24
   brass scores").
@@ -340,7 +342,7 @@ block yield; depleted condition subtracts the same and, below thresholds, costs 
 built — it modulates, never substitutes (the FMA-purist constraint from §2.1.2).
 
 **Travel:** show venues have locations (already in the schedule data). Each attended show charges a
-stamina + CorpsCoin cost from the distance to the previous location — the existing "pick 4 shows a
+stamina + Corps Budget cost from the distance to the previous location — the existing "pick 4 shows a
 week" mechanic silently becomes a routing puzzle. A Texas swing after a Florida weekend is a real
 decision with a real cost, exactly like the actual tour.
 
@@ -373,7 +375,7 @@ rolls: the index is a fixed function of geography and date (tunable table in
 `podium-config/balance`), so it adds routing texture without violating the determinism covenant.
 
 **Food:** a weekly food-budget setting (per week, three tiers): *Gas-station* (cheap, −stamina
-recovery, morale risk), *Standard* (baseline), *Full kitchen crew* (CorpsCoin cost, +recovery,
+recovery, morale risk), *Standard* (baseline), *Full kitchen crew* (Corps Budget cost, +recovery,
 +morale floor). One decision a week, compounding effect — not micromanagement.
 
 **Rest days:** declaring a full rest day forfeits all blocks, recovers big, and shields against
@@ -574,7 +576,7 @@ Podium runs in **both** season types on the same schedule system, with no schedu
   which the fantasy classes skip over entirely — become Podium's best content, not a problem to
   integrate:
   - **Move-in is a purchase decision.** Directors choose their move-in day (up to 21 days early).
-    Each spring-training day costs CorpsCoin (housing + food for a corps that isn't earning), so
+    Each spring-training day costs Corps Budget (housing + food for a corps that isn't earning), so
     a long camp is a real investment — exactly the economics that separate real corps. A late,
     cheap move-in is playable; it just arrives at the first show dirtier.
   - **All-days:** spring-training days grant 4–5 blocks (vs. 3 in-season), no travel costs, and
@@ -603,7 +605,8 @@ and neither needs a special rule:
 - In both season types, **opening-show timing is elective** anyway: show attendance is already
   "up to 4 per week," not mandatory. A director may skip week-1 shows and pour those days into
   rehearsal — the authentic "we don't open until DeKalb" strategy — trading early recorded scores
-  and CorpsCoin for a cleaner debut. Late-open vs. early-open is a strategic identity, not a rule.
+  and Budget earnings for a cleaner debut. Late-open vs. early-open is a strategic identity, not a
+  rule.
 - Mid-season registrants get the compressed catch-up baseline (§9): the corpus knows what a median
   day-N corps looks like. Playable, never advantaged.
 
@@ -660,7 +663,7 @@ name-match at ingest instead.
 
 - **Auto-registered for every active Podium corps, consuming one weekly slot:** in weeks 4, 5,
   and 6 a Podium director gets the major plus **3 free selections** (the standard weekly cap is
-  4). Majors are **travel-subsidized** (no CorpsCoin leg; stamina cost still applies, so routing
+  4). Majors are **travel-subsidized** (no Corps Budget leg; stamina cost still applies, so routing
   *around* an anchor still matters — Dallas in July is a real heat-index day). For the fantasy
   classes the majors are elective, but since the major is the only event on its day, attending
   week 4/5/6 shows means engaging with them.
@@ -955,7 +958,7 @@ lesson).
 |---|---|
 | `registerPodiumCorps` | Extends existing registration; validates challenge levels; initializes caption state from the corpus baselines for the chosen challenge profile |
 | `allocateRehearsalBlock` | The daily verb. Validates block budget for the day (server-derived from day type + condition), applies yields (staff/clinician/phase/diminishing-return multipliers), applies immediate state update, returns the itemized result panel. Idempotency: per-`(uid, seasonUid, day, blockIndex)` |
-| `setRestDay` / `setFoodPlan` / `hireStaff` / `hireClinician` | Setup verbs; CorpsCoin transactions via the existing economy helpers |
+| `setRestDay` / `setFoodPlan` / `hireStaff` / `hireClinician` | Setup verbs; Corps Budget transactions via the Podium ledger (§14.2.1) |
 | `savePlanTemplate` | Stores the assistant-director weekly plan (§5.2); the nightly processor executes it at ~85% yield on unplayed days |
 | `proposeJointRehearsal` / `respondJointRehearsal` | The §5.12 handshake; validates weekly cap, geography tier, repeat-pair decay; on acceptance both corps are flagged for the shared day and the diagnostic is generated at nightly processing |
 | `hostEvent` (all classes) | Creates a §5.10 hosted show in the schedule subcollection: validates date/venue-tier/CorpsCoin, stamps gazetteer venue data; attendance payouts settle in the nightly run |
@@ -1056,8 +1059,11 @@ Three governing principles, restated as build constraints:
     dominance; no 100s; Champion Status in 10–14 flawless seasons; 30–45% Elite-upset rate;
     return-weaker invariant; staff cap ≤ +15%; no Legend monopoly.
 0.5 `podium-config/balance` v1: every tunable (block yields, decay rates, condition
-    coefficients, travel tiers, heat index, salary curves, rep thresholds) hot-adjustable
-    without deploys.
+    coefficients, travel tiers, heat index, salary curves, rep thresholds, the Corps Budget
+    starting grant) hot-adjustable without deploys.
+0.6 **CC pricing audit** (decision 23): sweep every CorpsCoin price in the game against the
+    1,000-CC starting anchor, restate each in days-of-normal-play terms, and rebalance where a
+    price gates something a new player needs.
 
 ### Phase 1 — Invisible foundations *(zero behavior change; 2 wks)*
 
@@ -1305,6 +1311,29 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     blocks, slower grind fatigue, burnout resistance). Front ensemble training folds into
     **Percussion Sectionals**, which covers the full percussion program (battery + front).
 
+**Resolved in v2.3:**
+
+23. **The onboarding economy: 1,000 CC is the anchor, and everything prices against it.**
+    Guaranteeing a new user can play is managed on three layers:
+    - **The starting grant.** Every new profile is created with **1,000 CorpsCoin** (already in
+      code: `users.js` default fields, with a backfill for legacy profiles). The first-season
+      journey drips **+425 CC** across its steps, and show participation (50–200 CC/show),
+      daily login, and league play keep the faucet running. A day-one player can immediately
+      unlock A Class (1,000) or bank toward Open (2,500) — SoundSport and Podium cost nothing.
+    - **Podium requires zero CC to play, structurally.** It is always open (decision 20) and
+      every competitive input — travel, food, camp days, staff salaries, clinicians — is paid
+      from the **Corps Budget**, which every corps receives division-equal at season start and
+      earns in-class. The Phase 0 balance work sizes the starting Budget grant so a median corps
+      affords baseline travel + standard food + an apprentice staff with headroom; a brand-new
+      player always has a playable allocation on day one, and a bankrupt week degrades (cheaper
+      food, shorter routes) rather than blocks.
+    - **The pricing audit.** All CC prices game-wide (class unlocks, cosmetics, prestige sinks,
+      hosting rentals, event trophies) get one calibration pass expressed against the anchor:
+      each price is stated in *days of normal play* (e.g., "Open Class ≈ 2 weeks of casual
+      play"), tuned via `economyStatsJob` data, and recorded in `podium-config/balance` so
+      re-tuning never needs a deploy. The rule of thumb: nothing a player *needs* costs CC;
+      everything CC buys is identity, access to more sandboxes, or prestige.
+
 **Resolved in v1.9:**
 
 18. **Staff is a labor market, not a purchase ladder** (§5.6): generated persons with careers,
@@ -1344,7 +1373,7 @@ additions; conflicts are things that **must** be resolved before Phase 1 code.
 2. **Campaigns — the rehearse-vs-fundraise tradeoff.** FMA's passive campaigns (energy → money
    or influence) made income an *opportunity cost of rehearsal*. Our economy earns passively
    (participation rewards). Proposal: any rehearsal block may be converted to a **Fundraiser**
-   (CorpsCoin/budget instead of caption growth) — the guns-vs-butter choice, one line in the
+   (Corps Budget instead of caption growth) — the guns-vs-butter choice, one line in the
    allocator. Especially meaningful early season when cash for staff/travel is tight.
 3. **Per-show medals.** FMA profiles accumulate lifetime gold/silver/bronze medals for every
    regular-season event (veterans flaunt "70+ golds"). Cheap collector hook: top-3 at any Podium
