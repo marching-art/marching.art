@@ -512,6 +512,22 @@ async function archivePodiumSeason(db, previousSeason) {
     }
   }
 
+  // Records Book season-total mark (§14.1.6). Isolated; strictly-better
+  // merge makes re-sweeps harmless.
+  if (finalStandings.length > 0) {
+    try {
+      const { updateSeasonBestRecords } = require("../gameRecords");
+      const top = finalStandings[0];
+      await updateSeasonBestRecords(
+        db,
+        [{ corpsClass: "podiumClass", value: top.lastTotal, corpsName: top.corpsName, uid: top.uid }],
+        previousSeason.seasonUid
+      );
+    } catch (error) {
+      logger.error(`[podium] season-best record failed (archival unaffected): ${error.message}`);
+    }
+  }
+
   // Fan Favorite (decision 30): crown the finals-ballot winner with the
   // season record. Isolated + idempotent.
   try {

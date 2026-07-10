@@ -486,6 +486,12 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         // scrimmage numbers (§5.12).
         ...(jointFeed.length > 0 ? { jointRehearsals: jointFeed } : {}),
       });
+      // Records Book parity (§14.1.6): Podium marks ride the same all-time
+      // records doc as the fantasy classes. Never fails the night.
+      if (results.length > 0) {
+        const { updateRecordsFromPodiumRecap } = require("../gameRecords");
+        await updateRecordsFromPodiumRecap(db, { results }, seasonUid, competitionDay);
+      }
     }
 
     // --- 4. Rankings (latest total, DCI-style current score) ----------------

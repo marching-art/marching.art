@@ -15,7 +15,7 @@
 const { logger } = require("firebase-functions/v2");
 
 const RECORDS_DOC_PATH = "game-records/records";
-const RECORD_CLASSES = ["worldClass", "openClass", "aClass"];
+const RECORD_CLASSES = ["worldClass", "openClass", "aClass", "podiumClass"];
 const NIGHT_CATEGORIES = [
   ["highestScore", "totalScore"],
   ["highestGE", "geScore"],
@@ -96,6 +96,20 @@ async function updateRecordsFromRecap(db, dailyRecap, seasonName, scoredDay) {
 }
 
 /**
+ * Podium recap docs carry a flat `results` array (no shows). Same record
+ * categories; the Podium class rides the same records doc (stats-archive
+ * parity, design §14.1.6). Never throws.
+ */
+async function updateRecordsFromPodiumRecap(db, recap, seasonName, scoredDay) {
+  try {
+    const candidates = extractDayCandidates({ shows: [{ results: recap.results || [] }] });
+    await mergeRecordCandidates(db, candidates, { seasonName, day: scoredDay });
+  } catch (error) {
+    logger.error("Podium records update failed (scoring unaffected):", error);
+  }
+}
+
+/**
  * Season-total records, called from season archival with each class's
  * top finisher: [{ corpsClass, value, corpsName, displayName, uid }].
  */
@@ -148,13 +162,29 @@ async function rebuildGameRecords(db) {
     }
   }
 
+  // Podium recap days (flat results arrays) join the same records doc.
+  const podiumDocs = await db.collection("podium-recaps").listDocuments();
+  for (const podiumDocRef of podiumDocs) {
+    const daysSnapshot = await podiumDocRef.collection("days").get();
+    for (const dayDoc of daysSnapshot.docs) {
+      const recap = dayDoc.data();
+      const candidates = extractDayCandidates({ shows: [{ results: recap.results || [] }] });
+      await mergeRecordCandidates(db, candidates, {
+        seasonName: podiumDocRef.id,
+        day: recap.competitionDay || null,
+      });
+      daysProcessed++;
+    }
+  }
+
   logger.info(`Rebuilt game records from ${daysProcessed} recap days across ${recapDocs.length} seasons.`);
-  return { seasons: recapDocs.length, daysProcessed };
+  return { seasons: recapDocs.length + podiumDocs.length, daysProcessed };
 }
 
 module.exports = {
   RECORDS_DOC_PATH,
   updateRecordsFromRecap,
+  updateRecordsFromPodiumRecap,
   updateSeasonBestRecords,
   rebuildGameRecords,
 };

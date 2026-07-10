@@ -52,13 +52,53 @@ function useBoxToppers(results) {
   }, [results]);
 }
 
+const DIVISION_FILTERS = [
+  { id: 'all', label: 'All' },
+  { id: 'worldClass', label: 'World' },
+  { id: 'openClass', label: 'Open' },
+  { id: 'aClass', label: 'A' },
+];
+
 function SheetTable({ recap, userCorpsName }) {
-  const results = recap.results || [];
+  const allResults = recap.results || [];
+  const [division, setDivision] = useState('all');
+  const presentDivisions = useMemo(
+    () => new Set(allResults.map((row) => row.division || 'aClass')),
+    [allResults]
+  );
+  const results = useMemo(
+    () =>
+      division === 'all'
+        ? allResults
+        : allResults.filter((row) => (row.division || 'aClass') === division),
+    [allResults, division]
+  );
   const tops = useBoxToppers(results);
   const fmt = (v) => (typeof v === 'number' ? v.toFixed(2) : '—');
 
   return (
     <div className="overflow-x-auto">
+      {/* Division filter — appears once the field spans more than one */}
+      {presentDivisions.size > 1 && (
+        <div className="flex items-center gap-1 mb-2">
+          {DIVISION_FILTERS.filter((f) => f.id === 'all' || presentDivisions.has(f.id)).map(
+            (filter) => (
+              <button
+                key={filter.id}
+                onClick={() => setDivision(filter.id)}
+                aria-pressed={division === filter.id}
+                className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-sm transition-colors press-feedback ${
+                  division === filter.id
+                    ? 'bg-[#8a6d1a] text-white'
+                    : 'bg-[#222] text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                {filter.label}
+              </button>
+            )
+          )}
+        </div>
+      )}
       <table className="w-full text-[11px] tabular-nums whitespace-nowrap">
         <thead>
           <tr className="text-[9px] uppercase tracking-wider text-gray-500 border-b border-[#333]">
@@ -75,7 +115,7 @@ function SheetTable({ recap, userCorpsName }) {
           </tr>
         </thead>
         <tbody>
-          {results.map((row) => {
+          {results.map((row, idx) => {
             const isMine = userCorpsName && row.corpsName === userCorpsName;
             return (
               <tr
@@ -83,10 +123,17 @@ function SheetTable({ recap, userCorpsName }) {
                 className={`border-b border-[#242424] ${isMine ? 'bg-[#0057B8]/10' : ''}`}
               >
                 <td className="py-1.5 pr-2 sticky left-0 bg-[#1a1a1a]">
-                  <span className="text-gray-500 mr-1.5">{row.place}.</span>
+                  <span className="text-gray-500 mr-1.5">
+                    {division === 'all' ? row.place : idx + 1}.
+                  </span>
                   <span className={`font-bold ${isMine ? 'text-[#4d9fff]' : 'text-white'}`}>
                     {row.corpsName}
                   </span>
+                  {presentDivisions.size > 1 && division === 'all' && (
+                    <span className="ml-1.5 text-[8px] font-bold uppercase text-gray-600">
+                      {(row.division || 'aClass').replace('Class', '')}
+                    </span>
+                  )}
                 </td>
                 {PODIUM_CAPTIONS.map((caption) => {
                   const value = row.captions?.[caption];
