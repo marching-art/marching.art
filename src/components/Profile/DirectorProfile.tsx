@@ -34,7 +34,7 @@ import { CORPS_CLASS_ORDER, resolveCorpsForClass, isCorpsClassUnlocked } from '.
 import {
   StatusIndicator,
   StatPill,
-  TrophyMini,
+  TrophyCaseGrid,
   AchievementMini,
   Section,
   SocialLinks,
@@ -195,13 +195,9 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
   }, [profile.createdAt]);
 
   // Check if stats are empty
-  // Career Stats reads the fields the season pipeline actually maintains:
-  // lifetimeStats.* (bumped at season archival, season.js) and trophies.*
-  // (awarded nightly by scoringAwards.js). The legacy profile.stats.{
-  // seasonsPlayed, championships, topTenFinishes } counters are only ever
-  // initialized to 0 and never incremented, which is why those tiles read
-  // blank. stats.leagueWins is the exception — it IS incremented per matchup
-  // win — so that one still comes from stats.
+  // Reads the fields the season pipeline maintains (lifetimeStats.*, trophies.*),
+  // not the legacy profile.stats counters that are never incremented — except
+  // stats.leagueWins, which IS bumped per matchup win.
   const hasStats =
     (profile.trophies?.championships?.length || 0) > 0 ||
     (profile.lifetimeStats?.totalSeasons || 0) > 0 ||
@@ -632,15 +628,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
             )}
           </div>
 
-          {trophies.length > 0 ? (
-            <div className="p-2 grid grid-cols-3 gap-1.5">
-              {trophies.slice(0, 6).map((trophy) => (
-                <TrophyMini key={trophy.id} trophy={trophy} />
-              ))}
-            </div>
-          ) : (
-            <EmptyWithCTA icon={Trophy} title="No trophies yet" cta="Join a league" to="/leagues" />
-          )}
+          <TrophyCaseGrid trophies={trophies} />
         </div>
 
         {/* COLUMN 2: Achievements */}
@@ -656,8 +644,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
               {achievements.length > 0 && (
                 <span className="text-[9px] text-gray-500">{achievements.length} earned</span>
               )}
-              {/* Own profile: link to the full catalog (earned + locked). Other
-                  users' profiles omit it — that page shows the viewer's own list. */}
+              {/* Own profile only — the page shows the viewer's own list. */}
               {isOwnProfile && (
                 <Link to="/achievements" className="text-[9px] text-[#0057B8] hover:underline">
                   View all →
