@@ -236,6 +236,7 @@ async function archivePodiumSeason(db, previousSeason) {
   const roster = await store.rosterCollection(db, previousSeason.seasonUid).get();
   let archived = 0;
   const swept = [];
+  const staffResumeRows = [];
   for (const rosterDoc of roster.docs) {
     const uid = rosterDoc.id;
     try {
@@ -280,6 +281,20 @@ async function archivePodiumSeason(db, previousSeason) {
           division: divisions.normalizeDivision(state.division || career.division),
           underCutoffSeasons: career.underCutoffSeasons || 0,
         });
+        // Staff resume rows (decision 28): every employed person banks the
+        // season on their career record.
+        for (const member of Object.values(state.staff || {})) {
+          if (member && member.id) {
+            staffResumeRows.push({
+              staffId: member.id,
+              seasonUid: previousSeason.seasonUid,
+              seasonIndex: previousSeason.index,
+              corpsName: state.corpsName || null,
+              division: divisions.normalizeDivision(state.division),
+              placement: state.seasonRank ?? null,
+            });
+          }
+        }
       } else {
         // The state was already replaced (lazy self-archival at re-registration
         // for the new season) — recover the finished season from the career.
@@ -304,6 +319,44 @@ async function archivePodiumSeason(db, previousSeason) {
   }
 
   const finalStandings = buildFinalStandings(swept);
+
+  // --- Staff careers (decision 28) ------------------------------------------
+  // One read-modify-write of the registry banks every employed person's
+  // season on their resume. Isolated: a registry failure never fails archival.
+  if (staffResumeRows.length > 0) {
+    try {
+      const registryRef = store.staffRegistryRef(db);
+      const registrySnapshot = await registryRef.get();
+      if (registrySnapshot.exists) {
+        const registry = registrySnapshot.data();
+        const cap = store.balance.staff.career.resumeCap || 30;
+        let touched = false;
+        for (const row of staffResumeRows) {
+          const person = registry.people && registry.people[row.staffId];
+          if (!person) continue;
+          const resume = person.resume || [];
+          if (resume.some((r) => r && r.seasonUid === row.seasonUid)) continue; // idempotent re-sweep
+          person.resume = [
+            ...resume.slice(-(cap - 1)),
+            {
+              seasonUid: row.seasonUid,
+              seasonIndex: row.seasonIndex,
+              corpsName: row.corpsName,
+              division: row.division,
+              placement: row.placement,
+            },
+          ];
+          touched = true;
+        }
+        if (touched) {
+          registry.updatedAt = new Date().toISOString();
+          await registryRef.set(registry);
+        }
+      }
+    } catch (error) {
+      logger.error(`[podium] staff resume sweep failed (archival unaffected): ${error.message}`);
+    }
+  }
 
   // --- Division re-seat (design §5.7, decision 26) --------------------------
   // Assess the veteran pool against published percentile cutoffs and write

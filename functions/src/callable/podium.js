@@ -246,12 +246,33 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
   // division-equal, so it can only be validated once the seat is known.
   const division = divisions.divisionForRegistration(careerData, missedSeasons, store.balance);
   const budgetCommitment = validateCommitment(request.data?.budgetCommitment, 0, division);
+  // Multi-season staff contracts carry into the new season at the salary
+  // frozen at signing (decision 28); each carried season is paid from the
+  // NEW budget below — an unaffordable renewal lapses, never a debt.
+  const carriedContracts = [];
+  if (
+    !freshStart &&
+    staleStateSnapshot.exists &&
+    staleStateSnapshot.data().seasonUid !== seasonUid
+  ) {
+    for (const member of Object.values(staleStateSnapshot.data().staff || {})) {
+      if (member && member.contract && member.contract.remaining > 1 && member.salaryPerSeason) {
+        const carried = {
+          ...member,
+          contract: { ...member.contract, remaining: member.contract.remaining - 1 },
+        };
+        delete carried.retrain; // the learning curve ended with the old season
+        carriedContracts.push(carried);
+      }
+    }
+  }
   const trimmedName = corpsName.trim();
   const normalizedName = trimmedName.toLowerCase();
   // Same reservation namespace as fantasy registration: one corps name per
   // season across the whole game.
   const nameRef = db.doc(`corpsnames/${seasonUid}_${normalizedName}`);
   const sRef = store.stateRef(db, uid);
+  const signedCarryIds = []; // carried contracts to pre-sign in the market
 
   await db.runTransaction(async (transaction) => {
     const [existingState, existingName, profileSnapshot] = await Promise.all([
@@ -288,6 +309,27 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
     }
 
     const stored = store.dehydrateState(engineState);
+    // Budget first, then carried contracts draw their season's salary from
+    // it. debitBudget mutates a draft {budget} holder.
+    const draft = {
+      budget: (() => {
+        const budget = store.initBudget();
+        if (budgetCommitment > 0) {
+          budget.balance = budgetCommitment;
+          budget.committed = budgetCommitment;
+          budget.log = [{ day: 0, amount: budgetCommitment, reason: "commitment" }];
+        }
+        return budget;
+      })(),
+    };
+    const carriedStaff = {};
+    for (const member of carriedContracts) {
+      if (store.debitBudget(draft, member.salaryPerSeason, `staff:${member.specialty}`, 0)) {
+        carriedStaff[member.specialty] = member;
+        signedCarryIds.push(member.id);
+      }
+      // else: renewal unaffordable — the contract lapses quietly.
+    }
     transaction.set(sRef, {
       ...stored,
       seasonUid,
@@ -299,15 +341,8 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
       reputation: startingReputation,
       repTier: startingTier,
       division,
-      budget: (() => {
-        const budget = store.initBudget();
-        if (budgetCommitment > 0) {
-          budget.balance = budgetCommitment;
-          budget.committed = budgetCommitment;
-          budget.log = [{ day: 0, amount: budgetCommitment, reason: "commitment" }];
-        }
-        return budget;
-      })(),
+      budget: draft.budget,
+      ...(Object.keys(carriedStaff).length > 0 ? { staff: carriedStaff } : {}),
       selectedShowDays: [],
       today: { calendarDay, blocksUsed: 0, blocks: [], restDay: false, warmupUsed: false },
       lastScoredDay: null,
@@ -349,6 +384,33 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
       { merge: true }
     );
   });
+
+  // Carried contracts pre-sign in the new season's market so the person
+  // never shows as available (works whether the market doc exists yet or
+  // not; ensureSeasonMarket applies preSigned at generation).
+  if (signedCarryIds.length > 0) {
+    try {
+      const marketRef = store.staffMarketRef(db, seasonUid);
+      await marketRef.set(
+        { preSigned: Object.fromEntries(signedCarryIds.map((id) => [id, uid])) },
+        { merge: true }
+      );
+      const marketSnapshot = await marketRef.get();
+      if (marketSnapshot.exists && Array.isArray(marketSnapshot.data().staff)) {
+        const market = marketSnapshot.data();
+        let touched = false;
+        for (const person of market.staff) {
+          if (signedCarryIds.includes(person.id) && person.signedBy !== uid) {
+            person.signedBy = uid;
+            touched = true;
+          }
+        }
+        if (touched) await marketRef.set(market, { merge: true });
+      }
+    } catch (error) {
+      logger.warn(`[podium] carried-contract market stamp failed: ${error.message}`);
+    }
+  }
 
   logger.info(
     `Podium corps registered: ${trimmedName} (${uid}) season ${seasonUid} — ` +
@@ -657,79 +719,6 @@ exports.hostEvent = onCall({ cors: true }, async (request) => {
 
   logger.info(`Hosted event created: ${eventName} day ${day} by ${uid}`);
   return { success: true, eventId: eventRef.id, day, eventName };
-});
-
-exports.getPodiumStaffMarket = onCall({ cors: true }, async (request) => {
-  const { db, seasonData } = await podiumContext(request);
-  const marketRef = store.staffMarketRef(db, seasonData.seasonUid);
-  let snapshot = await marketRef.get();
-  if (!snapshot.exists) {
-    // Lazy, idempotent creation: generation is deterministic per season.
-    await marketRef.set({
-      seasonUid: seasonData.seasonUid,
-      generatedAt: new Date().toISOString(),
-      staff: staffMarket.generateMarket(seasonData.seasonUid),
-    });
-    snapshot = await marketRef.get();
-  }
-  return { success: true, market: snapshot.data().staff };
-});
-
-exports.hirePodiumStaff = onCall({ cors: true }, async (request) => {
-  const { uid, db, seasonData, competitionDay } = await podiumContext(request);
-  const { staffId } = request.data || {};
-  if (typeof staffId !== "string" || !staffId) {
-    throw new HttpsError("invalid-argument", "staffId is required.");
-  }
-  const marketRef = store.staffMarketRef(db, seasonData.seasonUid);
-  const sRef = store.stateRef(db, uid);
-
-  const result = await db.runTransaction(async (transaction) => {
-    const [marketSnapshot, stateSnapshot] = await Promise.all([
-      transaction.get(marketRef),
-      transaction.get(sRef),
-    ]);
-    if (!stateSnapshot.exists || stateSnapshot.data().seasonUid !== seasonData.seasonUid) {
-      throw new HttpsError("failed-precondition", "Register a Podium corps first.");
-    }
-    const market = marketSnapshot.exists
-      ? marketSnapshot.data()
-      : {
-        seasonUid: seasonData.seasonUid,
-        generatedAt: new Date().toISOString(),
-        staff: staffMarket.generateMarket(seasonData.seasonUid),
-      };
-    const person = market.staff.find((member) => member.id === staffId);
-    if (!person) throw new HttpsError("not-found", "That staff member is not in this season's market.");
-    if (person.signedBy && person.signedBy !== uid) {
-      throw new HttpsError("failed-precondition", `${person.name} has already signed elsewhere.`);
-    }
-    const state = stateSnapshot.data();
-    if (state.staff && state.staff[person.specialty]) {
-      throw new HttpsError("failed-precondition", `You already employ a ${person.specialty} staff member.`);
-    }
-    if (!store.debitBudget(state, person.salary, `staff:${person.specialty}`, Math.max(0, competitionDay))) {
-      throw new HttpsError("failed-precondition", `Not enough Corps Budget (salary ${person.salary}).`);
-    }
-    person.signedBy = uid;
-    state.staff = {
-      ...(state.staff || {}),
-      [person.specialty]: {
-        id: person.id,
-        name: person.name,
-        tier: person.tier,
-        boost: person.boost,
-        trait: person.trait,
-        hiredDay: Math.max(0, competitionDay),
-      },
-    };
-    state.updatedAt = new Date().toISOString();
-    transaction.set(marketRef, market);
-    transaction.set(sRef, state);
-    return { staff: state.staff, budget: state.budget, hired: person.name };
-  });
-
-  return { success: true, ...result };
 });
 
 exports.commitPodiumBudget = onCall({ cors: true }, async (request) => {

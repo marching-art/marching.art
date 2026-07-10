@@ -359,6 +359,21 @@
       "veteran": 1
     },
     "masterChance": 0.5,
-    "legendChance": 0.18
+    "legendChance": 0.18,
+    "career": {
+      "maxSeasons": 30,
+      "tenureSalaryPerSeason": 0.06,
+      "promotionSeasons": {
+        "journeyman": 3,
+        "veteran": 8,
+        "master": 15,
+        "legend": 22
+      },
+      "maxContractSeasons": 3,
+      "buyoutPremium": 0.25,
+      "retrainBoostMultiplier": 0.5,
+      "retrainCost": 60,
+      "resumeCap": 30
+    }
   }
 }
