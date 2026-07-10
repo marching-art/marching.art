@@ -44,6 +44,9 @@ const {
   hirePodiumStaff,
   hostEvent,
   getPodiumState,
+  proposeJointRehearsal,
+  respondJointRehearsal,
+  getJointRehearsals,
 } = require("./src/callable/podium");
 const {
   processCorpsDecisions,
@@ -283,6 +286,9 @@ module.exports = {
   hirePodiumStaff,
   hostEvent,
   getPodiumState,
+  proposeJointRehearsal,
+  respondJointRehearsal,
+  getJointRehearsals,
   processCorpsDecisions,
   retireCorps,
   unretireCorps,

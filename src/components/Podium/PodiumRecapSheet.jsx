@@ -90,6 +90,15 @@ function SheetTable({ recap, userCorpsName }) {
           })}
         </tbody>
       </table>
+
+      {/* Joint-rehearsal feed lines (§5.12): public smoke, private fire —
+          who shared a floor, never the scrimmage numbers. */}
+      {(recap.jointRehearsals || []).map((item, idx) => (
+        <div key={idx} className="mt-2 text-[10px] text-gray-500 italic">
+          {item.corpsA} and {item.corpsB} held a joint rehearsal
+          {item.city ? ` in ${item.city}` : ''}.
+        </div>
+      ))}
     </div>
   );
 }

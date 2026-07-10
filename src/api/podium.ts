@@ -102,6 +102,60 @@ export const hostEvent = createCallable<
   { success: boolean; eventId: string; day: number; eventName: string }
 >('hostEvent');
 
+// Joint rehearsals (design §5.12): the human handshake. Proposals expire
+// unanswered at the day's block allocation; accepting freezes the Full
+// Ensemble bonus (repeat-pair decayed) and books the scrimmage report.
+export interface JointProposal {
+  id: string;
+  fromUid: string;
+  toUid: string;
+  fromCorpsName: string | null;
+  toCorpsName: string | null;
+  day: number;
+  status: string;
+}
+
+export interface JointScrimmageSide {
+  total: number;
+  captions: Record<string, number>;
+}
+
+export interface JointRehearsalsResponse {
+  success: boolean;
+  incoming: JointProposal[];
+  outgoing: JointProposal[];
+  upcoming: {
+    day: number;
+    partnerUid: string;
+    partnerCorpsName: string | null;
+    bonusMult: number;
+    travelTier: string | null;
+    city: string | null;
+  } | null;
+  scrimmage: {
+    day: number;
+    partnerCorpsName: string | null;
+    mine: JointScrimmageSide;
+    theirs: JointScrimmageSide;
+  } | null;
+  history: Array<{ day: number; partnerUid: string; week: number }>;
+  roster: Array<{ uid: string; corpsName: string | null }>;
+}
+
+export const proposeJointRehearsal = createCallable<
+  { toUid: string; day: number },
+  { success: boolean; proposalId: string; day: number }
+>('proposeJointRehearsal');
+
+export const respondJointRehearsal = createCallable<
+  { proposalId: string; accept: boolean },
+  { success: boolean; status: string; day?: number; travelTier?: string | null }
+>('respondJointRehearsal');
+
+export const getJointRehearsals = createCallable<void, JointRehearsalsResponse>(
+  'getJointRehearsals'
+);
+
 export interface PodiumStaffPerson {
   id: string;
   name: string;

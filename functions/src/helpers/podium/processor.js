@@ -24,6 +24,7 @@ const engine = require("./engine");
 const store = require("./store");
 const venues = require("./venues");
 const staffMarket = require("./staffMarket");
+const joint = require("./joint");
 
 /**
  * Venue for a corps' show on `competitionDay`: the branded majors have fixed
@@ -75,6 +76,7 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
 
     const scheduleLocations = await loadScheduleLocations(db, seasonData);
     const results = [];
+    const jointToday = []; // corps whose joint rehearsal was today (§5.12)
     let processed = 0;
 
     for (const rosterDoc of roster.docs) {
@@ -111,6 +113,15 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         const applied = [];
         for (const blockType of state.planTemplate.slice(0, maxBlocks)) {
           if (!engine.BLOCK_TYPES.includes(blockType)) continue;
+          // An accepted joint rehearsal boosts Full Ensemble even on an
+          // assistant-run day — the handshake happened, the partner showed
+          // up (§5.12; only ACCEPTING is human-gated).
+          const jointMult =
+            blockType === "fullEnsemble" &&
+            state.jointRehearsal &&
+            state.jointRehearsal.day === competitionDay
+              ? state.jointRehearsal.bonusMult || 1
+              : 1;
           engine.allocateBlock(
             state,
             blockType,
@@ -122,7 +133,8 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
             {
               yieldMultiplier:
                 store.balance.rehearsal.assistantYield *
-                staffMarket.staffYieldMultiplier(state, blockType, store.balance),
+                staffMarket.staffYieldMultiplier(state, blockType, store.balance) *
+                jointMult,
             }
           );
           blocksSoFar[blockType] = (blocksSoFar[blockType] || 0) + 1;
@@ -217,6 +229,41 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         delete state.clinician;
       }
 
+      // Joint rehearsal day (design §5.12): morale bump (performing for an
+      // audience of peers), the proposer's travel gap charged like any leg
+      // (debit-or-surcharge, free floor), and the pair registered for the
+      // post-loop scrimmage pass. Stale entries (partner vanished, missed
+      // day) are cleared quietly.
+      if (state.jointRehearsal && state.jointRehearsal.day === competitionDay) {
+        state.condition.morale = Math.min(
+          store.balance.condition.moraleMax,
+          (state.condition.morale || 0) + store.balance.joint.moraleBonus
+        );
+        if (state.jointRehearsal.travelTier) {
+          const tierCfg = store.balance.travel.tiers.find(
+            (t) => t.key === state.jointRehearsal.travelTier
+          );
+          if (tierCfg && tierCfg.coinCost > 0) {
+            const paid = store.debitBudget(state, tierCfg.coinCost, "jointTravel", competitionDay);
+            if (!paid) {
+              state.condition.stamina = Math.max(
+                0,
+                state.condition.stamina - store.balance.travel.unaffordableStaminaSurcharge
+              );
+            }
+          }
+        }
+        jointToday.push({
+          uid,
+          partnerUid: state.jointRehearsal.partnerUid,
+          corpsName: state.corpsName,
+          partnerCorpsName: state.jointRehearsal.partnerCorpsName,
+          city: state.jointRehearsal.city || null,
+        });
+      } else if (state.jointRehearsal && state.jointRehearsal.day < competitionDay) {
+        delete state.jointRehearsal;
+      }
+
       // Family Day (design §5.9): the last spring-training day ends with an
       // unscored exhibition — a private diagnostic recap, invisible to the
       // leaderboard, scored against the day-1 band.
@@ -277,9 +324,49 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
       processed++;
     }
 
+    // --- 2b. Scrimmage pass (design §5.12) -----------------------------------
+    // For every pair whose joint rehearsal was today: each side gets the
+    // PRIVATE head-to-head diagnostic on its own state, the shared entry is
+    // consumed, and the pair emits one public feed line for the recap.
+    const jointFeed = [];
+    const scrimmagedPairs = new Set();
+    for (const entry of jointToday) {
+      try {
+        const mySnapshot = await store.stateRef(db, entry.uid).get();
+        if (!mySnapshot.exists) continue;
+        const myState = store.hydrateState(mySnapshot.data());
+        const partnerSnapshot = entry.partnerUid
+          ? await store.stateRef(db, entry.partnerUid).get()
+          : null;
+        if (
+          partnerSnapshot &&
+          partnerSnapshot.exists &&
+          partnerSnapshot.data().seasonUid === seasonUid
+        ) {
+          const partnerState = store.hydrateState(partnerSnapshot.data());
+          myState.scrimmage = joint.scrimmageReport(
+            myState, partnerState, competitionDay, seasonUid, store.curves, store.balance
+          );
+          const pairKey = [entry.uid, entry.partnerUid].sort().join("_");
+          if (!scrimmagedPairs.has(pairKey)) {
+            scrimmagedPairs.add(pairKey);
+            jointFeed.push({
+              corpsA: entry.corpsName || null,
+              corpsB: entry.partnerCorpsName || null,
+              city: entry.city,
+            });
+          }
+        }
+        delete myState.jointRehearsal;
+        await store.stateRef(db, entry.uid).set(store.dehydrateState(myState));
+      } catch (error) {
+        logger.error(`[podium] scrimmage pass failed for ${entry.uid}: ${error.message}`);
+      }
+    }
+
     // --- 3. Recap doc -------------------------------------------------------
     const medalByUid = {};
-    if (results.length > 0) {
+    if (results.length > 0 || jointFeed.length > 0) {
       results.sort((a, b) => b.totalScore - a.totalScore);
       results.forEach((entry, index) => {
         entry.place = index + 1;
@@ -300,6 +387,9 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         calendarDay,
         processedAt: new Date().toISOString(),
         results,
+        // Public smoke, private fire: who rehearsed together — never the
+        // scrimmage numbers (§5.12).
+        ...(jointFeed.length > 0 ? { jointRehearsals: jointFeed } : {}),
       });
     }
 
@@ -361,4 +451,4 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
   }
 }
 
-module.exports = { processPodiumDay };
+module.exports = { processPodiumDay, loadScheduleLocations };

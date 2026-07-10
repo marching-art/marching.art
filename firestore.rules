@@ -273,6 +273,13 @@ match /eastern-classic/{seasonUid} {
   allow write: if false; // Backend only
 }
 
+// Podium joint-rehearsal proposals (design §5.12) — backend only; the
+// propose/respond/list callables are the API (the scrimmage report is
+// competitive intel and lives on the server-only podium state).
+match /podium-joint/{seasonUid}/{document=**} {
+  allow read, write: if false; // Backend only
+}
+
 match /season_champions/{docId} {
   allow read: if true;
   allow write: if false; // Backend only
