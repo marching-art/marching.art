@@ -364,7 +364,7 @@ exports.manualTrigger = onCall({
       schedule.forEach(day => {
         const week = Math.ceil(day.offSeasonDay / 7);
         (day.shows || []).forEach((show, idx) => {
-          competitions.push({
+          const competition = {
             id: `${seasonId}_day${day.offSeasonDay}_${idx}`,
             name: show.eventName,
             location: show.location || "",
@@ -374,7 +374,11 @@ exports.manualTrigger = onCall({
             type: show.isChampionship ? "championship" : "regular",
             allowedClasses: show.eligibleClasses || ["World Class", "Open Class", "A Class", "SoundSport"],
             mandatory: show.mandatory || false,
-          });
+          };
+          // Major-event metadata (hard-coded marching.art majors).
+          if (show.eventTier) competition.eventTier = show.eventTier;
+          if (show.multiNight) competition.multiNight = show.multiNight;
+          competitions.push(competition);
         });
       });
 

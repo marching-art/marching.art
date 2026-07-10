@@ -169,6 +169,8 @@ async function getScheduleDay(seasonId, dayNumber) {
       isChampionship: comp.type === "championship",
       eligibleClasses: comp.allowedClasses,
       mandatory: comp.mandatory,
+      eventTier: comp.eventTier || null,
+      multiNight: comp.multiNight || null,
     }));
 
   if (dayShows.length === 0) {
@@ -251,6 +253,8 @@ async function getAllScheduleDays(seasonId) {
       isChampionship: comp.type === "championship",
       eligibleClasses: comp.allowedClasses,
       mandatory: comp.mandatory,
+      eventTier: comp.eventTier || null,
+      multiNight: comp.multiNight || null,
     });
   });
 
@@ -370,6 +374,9 @@ async function writeScheduleToCollection(seasonId, schedule) {
         allowedClasses: show.eligibleClasses || ["World Class", "Open Class", "A Class", "SoundSport"],
         mandatory: show.mandatory || false,
       };
+      // Major-event metadata (hard-coded marching.art majors).
+      if (show.eventTier) competition.eventTier = show.eventTier;
+      if (show.multiNight) competition.multiNight = show.multiNight;
       // Carry detail-page timing + running order when present (live-season shows).
       applyEnrichment(competition, show);
       competitions.push(competition);

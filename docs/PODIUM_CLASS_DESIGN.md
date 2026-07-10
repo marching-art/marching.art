@@ -8,7 +8,8 @@ v1.2 promotes the round-two backlog into committed design (regional anchors, joi
 assistant director, historical shadows, climate, Director Rating, named hardware) and clarifies
 that Podium is never locked out of week-1 events; v1.3 names the anchor calendar after the real
 DCI majors and adds integrated World / Open / A divisions inside Podium; v1.4 specs the
-two-night Eastern Classic split
+two-night Eastern Classic split; v1.5 hard-codes the branded majors in the schedule generator
+(implemented) and sets the counts-as-one / even-split / Podium-auto-registration rules
 
 ---
 
@@ -539,22 +540,33 @@ Podium:
 
 Because directors pick up to 4 shows a week, two rivals might not share a floor for weeks — a
 problem FMA never had, since its events were globally visible. The fix, straight from the real DCI
-tour: **all of Podium Class attends the three majors and Championships Week.** The anchor calendar
-mirrors DCI's, and all four anchors already exist in the data and (mostly) in the scheduler:
+tour: **all of Podium Class attends the three majors and Championships Week.** The majors are
+**hard-coded, branded, and exclusive** — like Championship Week, they are fixed events on fixed
+days at fixed sites, never sourced from the historical pool, and **no other event shares their
+day** (for any class):
 
-| Anchor | Historical event in corpus | Day | Scheduler status |
+| Major | Site | Day | Status |
 |---|---|---|---|
-| **DCI Southwestern** | `DCI Southwestern` — San Antonio, TX | 28 | Already pinned: `placeExclusiveShow(28, "DCI Southwestern Championship")` in `scheduleGeneration.js` |
-| **DCI Southeastern** | `DCI Southeastern` — Atlanta, GA | 35 | Already pinned: championship-named show placed at day 35 |
-| **DCI Eastern Classic** | `DCI East` — Allentown, PA (23 appearances; modern name via live scraper) | 41–42 | Already placed as a two-day stand: `generateOffSeasonSchedule` finds a "DCI Eastern Classic" event on days 41/42 and places the same event on **both** days |
-| **World Championships** | Prelims/Semis/Finals | 45–49 | Existing exclusive championship placement + auto-enrollment |
+| **marching.art Southwestern Championship** | Dallas, Texas | 28 | **Implemented** (`scheduleGeneration.js`, this branch) |
+| **marching.art Southeastern Championship** | Atlanta, Georgia | 35 | **Implemented** |
+| **marching.art Eastern Classic** | Allentown, Pennsylvania | 41–42 | **Implemented** — one event placed on both days with `multiNight: { nights: [41, 42] }` |
+| **marching.art World Championships** | Prelims/Semis/Finals | 45–49 | Existing exclusive placement + auto-enrollment |
 
-Implementation: events gain an `eventTier: 'regional' | 'championship' | 'tour'` field stamped at
-schedule-generation time (extends the existing `isChampionship` boolean rather than replacing it).
+Implemented alongside: events carry an `eventTier: 'regional'` field (extending, not replacing,
+the existing `isChampionship` boolean), threaded through every schedule persistence/read path
+(`writeScheduleToCollection`, `getScheduleDay(s)`, the admin `regenerateOffSeasonSchedule`
+transform, and the client `transformCompetitionToShow`), and the historical source majors
+(`DCI Southwestern` / `DCI Southeastern` / `DCI East` / `DCI Eastern Classic`) are excluded from
+the random pool so they can't reappear on neighboring days. Live seasons keep the real scraped
+events untouched (live score matching is by event name); they get `eventTier` designation by
+name-match at ingest instead.
 
-- **Auto-enrolled** for every active Podium corps (does not consume a weekly show slot) and
-  **travel-subsidized** (the anchor charges no CorpsCoin leg; stamina cost still applies, so
-  routing *around* an anchor still matters — San Antonio in July is a real heat-index day).
+- **Auto-registered for every active Podium corps, consuming one weekly slot:** in weeks 4, 5,
+  and 6 a Podium director gets the major plus **3 free selections** (the standard weekly cap is
+  4). Majors are **travel-subsidized** (no CorpsCoin leg; stamina cost still applies, so routing
+  *around* an anchor still matters — Dallas in July is a real heat-index day). For the fantasy
+  classes the majors are elective, but since the major is the only event on its day, attending
+  week 4/5/6 shows means engaging with them.
 - Full-field head-to-head meets: the guaranteed rivalry collisions, the recap everyone reads, and
   the community's shared reference points ("wait for San Antonio" is a real DCI sentence).
 - **Calibration benchmarks** — the explicit veteran request from the FMA Rework thread: with the
@@ -567,15 +579,21 @@ schedule-generation time (extends the existing `isChampionship` boolean rather t
   last full-field look before Indy.
 
 **The Eastern Classic is a two-night stand (days 41–42), exactly like the real event.** The
-schedule generator already places the same Eastern Classic event on both days; Podium adds the
-DCI-authentic even split of the field across Friday and Saturday:
+generator places one branded event on both days, and the registration rule applies to **every
+class**: *you register for one, you're registered for both* — the Eastern Classic counts as a
+**single show** against the weekly cap (auto-registered for Podium), each corps performs on
+exactly **one assigned night**, and attendees are **split evenly per class** across the two
+nights:
 
 - **Balanced snake split, published in advance.** After the day-38 nightly run (post-Atlanta
-  standings), corps are distributed across the two nights by a snake draft on current seeding
-  *within each division* (seeds 1, 4, 5, 8… one night; 2, 3, 6, 7… the other), so both nights
-  carry equal strength and every division appears both nights. The night lineups publish on
-  day 39 — a mid-week community moment that mirrors DCI's real lineup announcements and gives
-  the feed two days of "who got Friday?" chatter.
+  standings), each class's registrants are distributed across the two nights by a snake draft —
+  Podium on current seeding *within each division*, fantasy classes on current class rank
+  (seeds 1, 4, 5, 8… one night; 2, 3, 6, 7… the other) — so both nights carry equal strength
+  and every class and division appears both nights. The night lineups publish on day 39 — a
+  mid-week community moment that mirrors DCI's real lineup announcements and gives the feed two
+  days of "who got Friday?" chatter. `selectUserShows` needs the counts-as-one/no-double-select
+  validation for `multiNight` events; night assignment happens server-side at the day-41 nightly
+  run and persists so day 42 scores the complement.
 - **One performance, one residency.** Each corps performs on its assigned night only
   (auto-enrolled, no weekly slot, no travel coin). The *other* Allentown day is a full rehearsal
   day at the site with no travel leg — the corps is housed in the Lehigh Valley between nights,
@@ -839,6 +857,21 @@ trajectory bands. Everything after deepens rather than gates.
     days 41–42 balanced by seeding within each division, lineups published day 39, one
     performance + one on-site rehearsal day per corps, night parity alternating by season, split
     logic built event-agnostic (`multiNight` metadata).
+
+**Resolved in v1.5 (majors hard-coded — implemented on this branch):**
+
+11. **The three majors are hard-coded, branded, exclusive events** in
+    `generateOffSeasonSchedule`: marching.art Southwestern Championship (Dallas, day 28),
+    marching.art Southeastern Championship (Atlanta, day 35), marching.art Eastern Classic
+    (Allentown, days 41–42, `multiNight`). No other events on those days; historical source
+    majors excluded from the random pool; `eventTier` threaded through all schedule
+    write/read/transform paths (server + client). Verified with a dry run against the local
+    13-year corpus: correct placement, no leaks, no empty days.
+12. **Eastern registration counts as one show for every class** — register once, perform one
+    assigned night, even per-class split. **Podium is auto-registered at all majors and gets 3
+    other selections in weeks 4/5/6** (the major consumes a weekly slot; supersedes the earlier
+    "does not consume a slot" rule). The `selectUserShows` validation and night-assignment
+    scoring logic are specced (§5.11) and land with Phase 1.
 
 **Still open:**
 
