@@ -26,13 +26,13 @@ model — one currency, CC spendable in Podium up to a division-equal cap, free 
 ## 1. Executive Summary
 
 Podium Class is a fifth corps class that lives beside World / Open / A Class / SoundSport in the
-dashboard ControlBar. Where the four existing classes are *fantasy* classes — you draft historical
+dashboard ControlBar. Where the four existing classes are _fantasy_ classes — you draft historical
 caption performances and your score is derived from what those corps actually did — Podium Class is
-a *simulation* class: **you are the director of your own corps, and your score is built from
+a _simulation_ class: **you are the director of your own corps, and your score is built from
 scratch, every day, by how you rehearse, travel, feed, and rest your members across the season.**
 
 It occupies the exact screen real estate of the Active Lineup / Lineup Analyzer panels (Dashboard
-Zone C) when its tab is selected, rides the *same* 49-day season schedule, the same shows, the same
+Zone C) when its tab is selected, rides the _same_ 49-day season schedule, the same shows, the same
 nightly scoring window, the same recaps and leaderboard plumbing — but its scoring is fully
 separate, computed by a rehearsal-driven growth engine calibrated against the entire
 `historical_scores` database so that every score it emits is one that could plausibly have appeared
@@ -48,7 +48,7 @@ so that it feels like DCI instead of a spreadsheet.**
 The working name conveys what "e-sports" was gesturing at — competitive, skill-expressed,
 head-to-head — without the terminology clash:
 
-- **Podium Class** *(recommended)* — the double meaning is perfect: the podium is where the drum
+- **Podium Class** _(recommended)_ — the double meaning is perfect: the podium is where the drum
   major/director stands, and the podium is where medalists stand. It says "you conduct" and "you
   compete" in one word. Tab label: `Podium`. Class key: `podiumClass`.
 - Alternates considered: **The Circuit** (competitive-circuit connotation, slight esports echo, but
@@ -70,17 +70,17 @@ From a deep dive of fantasymarchingarts.com — guide, stats archive, player dir
 1. **The daily score drop.** Every event scores once daily at 8 PM Eastern. The entire community
    checks results simultaneously and argues about them in season megathreads. It is a shared,
    scheduled dopamine moment — the single strongest hook. marching.art already has a nightly
-   scoring job; Podium Class must present it as a *communal event*, not a background job.
+   scoring job; Podium Class must present it as a _communal event_, not a background job.
 2. **Deterministic optimization.** Rehearsal maps to caption growth with near-zero randomness (FMA's
    only variance is ±0.005-scale "judge perspective" jitter added in 2012 to break ties).
-   Placement feels *earned*. Veteran players explicitly warned the Rework effort not to add
+   Placement feels _earned_. Veteran players explicitly warned the Rework effort not to add
    creative/subjective scoring — "it would fundamentally alter the game's stat-focused design."
 3. **The challenge-level knob.** At season start you pick 1-of-8 difficulty per show section: low =
    early, safe, capped growth; high = late, risky, higher ceiling. This one slider generates the
    entire "peak timing" metagame and is the most-loved strategic mechanic. Podium Class keeps it.
 4. **Identity and permanence.** 15-year-old corps with names, hometowns, repertoire, trophy cases,
-   and rivalry history. Players return after 80-season absences because *their corps is still
-   there*. marching.art already has corps identity, `seasonHistory`, Hall of Champions — Podium
+   and rivalry history. Players return after 80-season absences because _their corps is still
+   there_. marching.art already has corps identity, `seasonHistory`, Hall of Champions — Podium
    Class inherits all of it.
 5. **The rehearsal verb.** FMA's guide: "you will probably spend the most time on the Rehearsal
    page." Spending energy on sectionals/ensemble actions and watching "+43 Music Ensemble" pop is
@@ -97,17 +97,17 @@ From a deep dive of fantasymarchingarts.com — guide, stats archive, player dir
 
 Ten years of Suggestions-board and Rework-thread sentiment, distilled:
 
-| Complaint | Podium Class answer |
-|---|---|
-| Abandonment — no meaningful update in ~a decade | Shipping this class *is* the answer; it's the "FMA 3.0" the Rework thread tried to spec |
-| Dated UI (site still ships jQuery 1.8.3) | marching.art's existing React/Tailwind dashboard aesthetic |
-| Opaque division assignment (influence + bank secretly weighted; chronic misplacements) | Transparent, published formula; divisions seeded purely from prior Podium results (§5.7) |
-| Nothing to spend money on ("other than staff and comps, there's nothing to buy") | Travel, food, staff, clinicians are real recurring Corps Budget sinks (§5.6, §14.2.1) |
-| Rich-get-richer influence compounding — catch-up is "generational" | No influence stat. Staff bonuses are capped and season-scoped; skill expression dominates account age |
-| Inactive groups keep scores; activity doesn't matter enough | Cleanliness decay for unrehearsed captions; condition system makes daily attention matter (§5.3, §5.4) |
-| No morale/wellness layer (top Rework request: "motivation mechanic requiring energy upkeep") | The condition system: rest, meals, travel fatigue (§5.3) |
-| No stat decay, no clinicians, no named staff (Rework requests) | All three included (§5.4, §5.6) |
-| No moderation, alt-account cheating | Idempotent server-side actions, per-day action budget, existing auth/admin tooling (§9) |
+| Complaint                                                                                    | Podium Class answer                                                                                    |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Abandonment — no meaningful update in ~a decade                                              | Shipping this class _is_ the answer; it's the "FMA 3.0" the Rework thread tried to spec                |
+| Dated UI (site still ships jQuery 1.8.3)                                                     | marching.art's existing React/Tailwind dashboard aesthetic                                             |
+| Opaque division assignment (influence + bank secretly weighted; chronic misplacements)       | Transparent, published formula; divisions seeded purely from prior Podium results (§5.7)               |
+| Nothing to spend money on ("other than staff and comps, there's nothing to buy")             | Travel, food, staff, clinicians are real recurring Corps Budget sinks (§5.6, §14.2.1)                  |
+| Rich-get-richer influence compounding — catch-up is "generational"                           | No influence stat. Staff bonuses are capped and season-scoped; skill expression dominates account age  |
+| Inactive groups keep scores; activity doesn't matter enough                                  | Cleanliness decay for unrehearsed captions; condition system makes daily attention matter (§5.3, §5.4) |
+| No morale/wellness layer (top Rework request: "motivation mechanic requiring energy upkeep") | The condition system: rest, meals, travel fatigue (§5.3)                                               |
+| No stat decay, no clinicians, no named staff (Rework requests)                               | All three included (§5.4, §5.6)                                                                        |
+| No moderation, alt-account cheating                                                          | Idempotent server-side actions, per-day action budget, existing auth/admin tooling (§9)                |
 
 ### 2.3 Codebase integration points (what already exists)
 
@@ -120,7 +120,7 @@ From the architecture survey — this class was designed against the actual code
   `null` for SoundSport — the conditional-render precedent exists.
 - **Separate scoring precedent:** SoundSport is excluded from `RANKED_CLASSES` in
   `functions/src/helpers/scoring.js` and gets ratings instead of placements. Podium Class uses the
-  same exclusion mechanism but gets its *own* ranking pass.
+  same exclusion mechanism but gets its _own_ ranking pass.
 - **Schedule:** `game-settings/season` defines the 49-day (off-season) / 70-day (live) calendar;
   shows live in a schedule subcollection with locations; championship auto-enrollment (days 45–49)
   already exists in `scoringAwards.js`. Podium corps ride this unchanged.
@@ -158,7 +158,7 @@ called it right.
 
 ### Weekly loop (the strategy)
 
-- Select next week's shows (existing 4-per-week mechanic) — but now the *route matters*: distances
+- Select next week's shows (existing 4-per-week mechanic) — but now the _route matters_: distances
   between venues cost stamina and Corps Budget (§5.3).
 - Review the **Trajectory Panel**: your caption curves plotted against historical percentile bands
   for this day of the season ("your brass is tracking the 78th percentile of historical Day-24
@@ -203,9 +203,9 @@ An offline analysis job (`functions/scripts/buildPodiumCurves.js`) processes eve
    can ever score outside what the historical record says is possible for that caption on that day.
 4. **Build delta distributions.** Distribution of day-over-day caption changes at each phase of the
    season (captures the truth that +0.4/day in brass is normal in June and absurd in August, and
-   that captions *do* go down — the p25 delta is negative in some late-season windows).
+   that captions _do_ go down — the p25 delta is negative in some late-season windows).
 5. **Cluster into archetypes.** k-means over `(L, k, d₀)` per caption yields 3–5 named growth
-   archetypes (e.g. *Early Installer*, *Steady Climber*, *August Surger*). These become the
+   archetypes (e.g. _Early Installer_, _Steady Climber_, _August Surger_). These become the
    observable shapes that Challenge Levels select between (§5.1) — so the risk/reward knob is
    literally parameterized by how real corps seasons unfolded.
 
@@ -217,12 +217,12 @@ parameters. Regenerated whenever a new season of live-scraped data lands in `his
 
 Each Podium corps carries, per caption `c ∈ {GE1, GE2, VP, VA, CG, B, MA, P}`:
 
-| Field | Range | Meaning |
-|---|---|---|
-| `challenge[c]` | 1–8 | Set at registration, locked for the season. Selects the growth archetype: ceiling `L(c)` and inflection timing. Higher = higher ceiling, later and less certain payoff |
-| `content[c]` | 0–100% | How much of the book/technique is *installed*. Grows from rehearsal, front-loaded value |
-| `clean[c]` | 0–100% | Execution quality of installed content. Grows from rehearsal, decays if neglected, is what converts potential into score |
-| `peak[c]` | derived | The effective ceiling today: `L(c) × f(content, clean)` |
+| Field          | Range   | Meaning                                                                                                                                                                |
+| -------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `challenge[c]` | 1–8     | Set at registration, locked for the season. Selects the growth archetype: ceiling `L(c)` and inflection timing. Higher = higher ceiling, later and less certain payoff |
+| `content[c]`   | 0–100%  | How much of the book/technique is _installed_. Grows from rehearsal, front-loaded value                                                                                |
+| `clean[c]`     | 0–100%  | Execution quality of installed content. Grows from rehearsal, decays if neglected, is what converts potential into score                                               |
+| `peak[c]`      | derived | The effective ceiling today: `L(c) × f(content, clean)`                                                                                                                |
 
 **Daily caption score:**
 
@@ -242,7 +242,7 @@ total(d)    = min(99.9, [GE1+GE2] + [VP+VA+CG]/2 + [B+MA+P]/2)
   seed, magnitude ≈ ±0.05 per caption. It breaks ties and makes recaps breathe; it never changes a
   well-managed season's outcome. **No other randomness exists anywhere in the engine.**
 - The clamp against the historical band is the realism guarantee: a Day-10 brass score cannot be
-  18.4 because no Day-10 brass score in history was 18.4. The *top* of each corps' band is gated
+  18.4 because no Day-10 brass score in history was 18.4. The _top_ of each corps' band is gated
   by its multi-season Reputation tier (§5.13) — a first-season corps peaks in the historical
   mid-percentiles no matter how perfectly it is managed, and only Champion-Status corps can touch
   the top of the envelope. **No corps ever scores 100**: the absolute ceiling is the best score
@@ -266,10 +266,10 @@ realistic caption profile a real corps with that rehearsal balance would show.
 At registration, eight sliders (1–8), one per caption. Level maps to archetype parameters mined in
 §4.1:
 
-- **Level 1–2:** *Early Installer* curve — low ceiling (`L` ≈ p40 of historical finals scores for
+- **Level 1–2:** _Early Installer_ curve — low ceiling (`L` ≈ p40 of historical finals scores for
   that caption), early inflection, high `content` gain per block. You will look great in June.
-- **Level 4–5:** *Steady Climber* — median ceiling, textbook logistic.
-- **Level 7–8:** *August Surger* — ceiling at p90–p97, late inflection, `content` installs slowly
+- **Level 4–5:** _Steady Climber_ — median ceiling, textbook logistic.
+- **Level 7–8:** _August Surger_ — ceiling at p90–p97, late inflection, `content` installs slowly
   and `clean` gains are back-loaded; skipping rehearsal days is punished hardest here.
 
 Total challenge across captions is **unconstrained** — running eight 8s is legal and historically
@@ -284,27 +284,27 @@ condition). Each block is assigned to one of seven rehearsal types. Caption effe
 (P = primary gain, S = secondary, in both `content` and `clean` with a season-phase-dependent
 split):
 
-| Block | GE1 | GE2 | VP | VA | CG | B | MA | P | Condition |
-|---|---|---|---|---|---|---|---|---|---|
-| **Stretching / Physical Warmup** | | | S | | | | | | **P** — cuts stamina drain of the day's remaining blocks, mitigates grind fatigue, raises burnout resistance |
-| **Visual Basics** | | | **P** | S | S | | | | |
-| **Visual Ensemble** | | **P** | S | **P** | S | | | | |
-| **Guard Sectionals** | | S | | S | **P** | | | | |
-| **Brass Sectionals** | S | | | | | **P** | S | | |
-| **Percussion Sectionals** (battery + front ensemble) | S | | | | | | S | **P** | |
-| **Full Ensemble** | **P** | **P** | | S | S | S | **P** | S | |
+| Block                                                | GE1   | GE2   | VP    | VA    | CG    | B     | MA    | P     | Condition                                                                                                    |
+| ---------------------------------------------------- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | ------------------------------------------------------------------------------------------------------------ |
+| **Stretching / Physical Warmup**                     |       |       | S     |       |       |       |       |       | **P** — cuts stamina drain of the day's remaining blocks, mitigates grind fatigue, raises burnout resistance |
+| **Visual Basics**                                    |       |       | **P** | S     | S     |       |       |       |                                                                                                              |
+| **Visual Ensemble**                                  |       | **P** | S     | **P** | S     |       |       |       |                                                                                                              |
+| **Guard Sectionals**                                 |       | S     |       | S     | **P** |       |       |       |                                                                                                              |
+| **Brass Sectionals**                                 | S     |       |       |       |       | **P** | S     |       |                                                                                                              |
+| **Percussion Sectionals** (battery + front ensemble) | S     |       |       |       |       |       | S     | **P** |                                                                                                              |
+| **Full Ensemble**                                    | **P** | **P** |       | S     | S     | S     | **P** | S     |                                                                                                              |
 
 Notes:
 
 - **Stretching / Physical Warmup is the condition block.** Its caption yield is nearly nil (a
-  small VP trickle — marching fitness); its real product is *efficiency*: the day's remaining
+  small VP trickle — marching fitness); its real product is _efficiency_: the day's remaining
   blocks drain less stamina, consecutive-max-day grind fatigue accrues slower, and burnout
   resistance rises. Every real corps day starts with the stretch block; here it's the classic
   "sharpen the axe" tradeoff — a block that makes the other blocks cheaper. Especially potent
   during spring-training all-days and brutal-travel weeks.
-- **Percussion Sectionals covers the whole percussion program** — battery *and* front ensemble —
+- **Percussion Sectionals covers the whole percussion program** — battery _and_ front ensemble —
   feeding `P` primary and `MA` secondary.
-- Color guard (`CG`) has its own sectional block (primary CG, secondary VA/GE2 — the guard *is*
+- Color guard (`CG`) has its own sectional block (primary CG, secondary VA/GE2 — the guard _is_
   a visual-effect engine) and still gains secondarily from Visual Ensemble and Full Ensemble, so
   a guard-forward build is viable and an ensemble-only guard stays merely adequate.
 - **Diminishing returns within a day:** the 2nd consecutive block of the same type yields ~60%, the
@@ -347,7 +347,7 @@ stamina + Corps Budget cost from the distance to the previous location — the e
 week" mechanic silently becomes a routing puzzle. A Texas swing after a Florida weekend is a real
 decision with a real cost, exactly like the actual tour.
 
-*How distances are known when schedules are regenerated every season:* the schedule is random per
+_How distances are known when schedules are regenerated every season:_ the schedule is random per
 season, but the **venue universe is not** — every generated schedule samples historical events, and
 every event (historical or live-scraped) carries a `location` string. Across the 13-year archive
 there are only ~414 distinct location strings, so travel resolves against a one-time
@@ -365,7 +365,7 @@ mileage, are the gameplay interface: legible to players, tunable in `podium-conf
 free of false precision. A corps' route is the chain of legs between its consecutive attended
 shows, and the season's first leg starts from the corps' **hometown** — the `location` field
 directors already set at registration finally matters mechanically (it's also where spring
-training is housed). Costs are shown in the weekly show picker *before* selections are confirmed,
+training is housed). Costs are shown in the weekly show picker _before_ selections are confirmed,
 so routing is played as an open-information puzzle, and hosted events (§5.10) slot in automatically
 because hosts choose their venue city from the same gazetteer.
 
@@ -375,13 +375,13 @@ week in Ohio, and a director can see it in the show picker before committing. No
 rolls: the index is a fixed function of geography and date (tunable table in
 `podium-config/balance`), so it adds routing texture without violating the determinism covenant.
 
-**Food:** a weekly food-budget setting (per week, three tiers): *Gas-station* (cheap, −stamina
-recovery, morale risk), *Standard* (baseline), *Full kitchen crew* (Corps Budget cost, +recovery,
+**Food:** a weekly food-budget setting (per week, three tiers): _Gas-station_ (cheap, −stamina
+recovery, morale risk), _Standard_ (baseline), _Full kitchen crew_ (Corps Budget cost, +recovery,
 +morale floor). One decision a week, compounding effect — not micromanagement.
 
 **Rest days:** declaring a full rest day forfeits all blocks, recovers big, and shields against
-decay for that day. The Finals-week question — *rest into Saturday or clean until the last
-minute?* — falls out of the mechanics with zero special-casing.
+decay for that day. The Finals-week question — _rest into Saturday or clean until the last
+minute?_ — falls out of the mechanics with zero special-casing.
 
 ### 5.4 Show days and the nightly drop
 
@@ -389,16 +389,16 @@ minute?* — falls out of the mechanics with zero special-casing.
   existing `selectUserShows` flow). Show days grant 1 rehearsal block (morning run-through), charge
   performance stamina, and are the only days a Podium corps receives an official score.
 - Scores post in the existing nightly pipeline. The recap entry carries the full caption breakdown,
-  placement *within Podium Class only*, and phase-appropriate color ("Brass +0.3 since
+  placement _within Podium Class only_, and phase-appropriate color ("Brass +0.3 since
   Tuesday — 2nd in class").
 - **The recap sheet is a first-class artifact, and it lives in the Scores tab.** FMA's
   most-screenshotted surface is the event box score — a per-division table with every caption
   column, total, and place. Every Podium show gets one, and the Scores page is redesigned around
-  it (see *The Scores tab redesign* below). The community's daily argument needs a daily exhibit.
+  it (see _The Scores tab redesign_ below). The community's daily argument needs a daily exhibit.
 
 **The Scores tab redesign (screenshot-worthy by design).** The existing Scores page already has
 the right bones — class sub-tabs, a condensed GE/VIS/MUS `RecapDataGrid`, archive, Hall of
-Champions. The redesign turns each event recap into a *sheet*, not a grid:
+Champions. The redesign turns each event recap into a _sheet_, not a grid:
 
 - **Masthead:** event name, venue city/state, season name + day, `eventTier` badge
   (Regional / Championship), and the Eastern Classic night badge (Night 1 / Night 2). The
@@ -446,13 +446,13 @@ Hard requirement, clean solution — the SoundSport precedent, extended:
 
 All existing currency; new recurring sinks (the FMA community's "nothing to spend money on" fix):
 
-| Sink | Cost shape | Effect |
-|---|---|---|
-| ~~Class unlock~~ | **None — Podium is always open, always playable (the SoundSport model)** | Available from account creation; no level gate, no CorpsCoin cost, no registration cutoff |
-| **Caption staff** (8 slots + Tour Manager + Program Coordinator) | Per-season salaries from Corps Budget — see *The staff economy* below | +yield% on mapped rehearsal blocks (capped); ops staff reduce travel/condition costs |
-| **Clinicians** (Rework request) | One-off, 3-day engagement | Temporary large yield boost on one block type; the "my brass is drowning" panic button |
-| **Travel** | Per-mile per show | The routing cost (§5.3) |
-| **Food plan** | Weekly tier | Recovery/morale (§5.3) |
+| Sink                                                             | Cost shape                                                               | Effect                                                                                    |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| ~~Class unlock~~                                                 | **None — Podium is always open, always playable (the SoundSport model)** | Available from account creation; no level gate, no CorpsCoin cost, no registration cutoff |
+| **Caption staff** (8 slots + Tour Manager + Program Coordinator) | Per-season salaries from Corps Budget — see _The staff economy_ below    | +yield% on mapped rehearsal blocks (capped); ops staff reduce travel/condition costs      |
+| **Clinicians** (Rework request)                                  | One-off, 3-day engagement                                                | Temporary large yield boost on one block type; the "my brass is drowning" panic button    |
+| **Travel**                                                       | Per-mile per show                                                        | The routing cost (§5.3)                                                                   |
+| **Food plan**                                                    | Weekly tier                                                              | Recovery/morale (§5.3)                                                                    |
 
 Earn side reuses existing hooks: show participation (Podium tier ≈ 175, between Open and World),
 league wins, season-finish bonuses. Staff persistence between seasons is the long-game attachment
@@ -470,7 +470,7 @@ replaces ownership with **employment** — and an employment market never maxes 
   (Apprentice → Journeyman → Veteran → Master → Legend), salary, and one published trait
   ("Basics-first: +8% Visual Basics, −3% ensemble"; "Peaker: clean gains +15% after day 40").
   New apprentices generate into the market every season; everyone ages; everyone eventually
-  retires. The pool cycles forever — the decade-scale economy is built into staff *mortality*.
+  retires. The pool cycles forever — the decade-scale economy is built into staff _mortality_.
 - **Salaries, not purchases.** Contracts are per-season, paid from the Corps Budget — funded
   each season from the director's CorpsCoin up to a **division-equal cap**, plus in-class
   earnings, resetting at archival (§14.2.1). Staffing is therefore a fresh allocation decision
@@ -480,7 +480,7 @@ replaces ownership with **employment** — and an employment market never maxes 
 - **Free agency — the between-seasons ritual.** During registration week, unsigned staff hit a
   shared market. Corps bid; staff choose by a **published, deterministic preference function**
   (salary offer, corps reputation, loyalty history, specialty fit — no RNG). Top staff are
-  scarce: when a Legend brass tech signs with your rival, they are *gone*. This is DCI's real
+  scarce: when a Legend brass tech signs with your rival, they are _gone_. This is DCI's real
   "silly season" — staff movement is offseason drama fans already track — turned into a game
   phase, and it gives the 1-day gap between seasons its own appointment content.
 - **Develop-your-own vs. buy-established.** Staff gain experience each season they work and tier
@@ -512,7 +512,7 @@ replaces ownership with **employment** — and an employment market never maxes 
   FMA's persistence split, minus influence.
 - **Divisions — World / Open / A, inside Podium (season 2+):** Podium divides into its own three
   DCI-named divisions, competing on the same engine but ranked, cut, and crowned separately:
-  - **Naming:** *World Class / Open Class / A Class* — deliberately the DCI names (and the game's
+  - **Naming:** _World Class / Open Class / A Class_ — deliberately the DCI names (and the game's
     existing vocabulary). UI always shows the compound to avoid collision with the fantasy tabs:
     "Podium · Open Class". The multi-season climb A → Open → World is the career arc, and it is
     the strongest possible answer to "what persists between seasons."
@@ -555,7 +555,7 @@ replaces ownership with **employment** — and an employment market never maxes 
 
 ### 5.8 The social layer (build in what FMA's community had to invent)
 
-Phase-4 scope, listed because it is *why* FMA survived abandonment:
+Phase-4 scope, listed because it is _why_ FMA survived abandonment:
 
 - **Season megathread, in-product:** a per-season Podium discussion feed anchored to the nightly
   drop (existing comments infrastructure).
@@ -597,7 +597,7 @@ Podium runs in **both** season types on the same schedule system, with no schedu
 and neither needs a special rule:
 
 - In **live seasons**, spring training occupies the existing 21 calendar days during which the
-  nightly processor already skips scoring entirely — there are no events for *any* class in that
+  nightly processor already skips scoring entirely — there are no events for _any_ class in that
   window. Podium's camp fills what is currently dead air in the player experience, and every
   class hits competition day 1 together.
 - In **off-seasons** there is no spring-training period at all (calendar day 1 is scored
@@ -634,7 +634,7 @@ Podium:
   writes a real achievement to the winners' trophy cases. Leagues can host from the league bank
   (FMA's league-championship culture, productized).
 - **Guardrails:** hosted-event cap per day (protects schedule legibility), host must field a corps
-  that season, payouts tuned so the average host roughly breaks even and a *good* host profits —
+  that season, payouts tuned so the average host roughly breaks even and a _good_ host profits —
   hosting is a skill sink, not a faucet. Scores at hosted events are computed identically to any
   other show; hosting confers zero competitive advantage.
 
@@ -647,12 +647,12 @@ tour: **all of Podium Class attends the three majors and Championships Week.** T
 days at fixed sites, never sourced from the historical pool, and **no other event shares their
 day** (for any class):
 
-| Major | Site | Day | Status |
-|---|---|---|---|
-| **marching.art Southwestern Championship** | Dallas, Texas | 28 | **Implemented** (`scheduleGeneration.js`, this branch) |
-| **marching.art Southeastern Championship** | Atlanta, Georgia | 35 | **Implemented** |
-| **marching.art Eastern Classic** | Allentown, Pennsylvania | 41–42 | **Implemented** — one event placed on both days with `multiNight: { nights: [41, 42] }` |
-| **marching.art World Championships** | Prelims/Semis/Finals | 45–49 | Existing exclusive placement + auto-enrollment |
+| Major                                      | Site                    | Day   | Status                                                                                  |
+| ------------------------------------------ | ----------------------- | ----- | --------------------------------------------------------------------------------------- |
+| **marching.art Southwestern Championship** | Dallas, Texas           | 28    | **Implemented** (`scheduleGeneration.js`, this branch)                                  |
+| **marching.art Southeastern Championship** | Atlanta, Georgia        | 35    | **Implemented**                                                                         |
+| **marching.art Eastern Classic**           | Allentown, Pennsylvania | 41–42 | **Implemented** — one event placed on both days with `multiNight: { nights: [41, 42] }` |
+| **marching.art World Championships**       | Prelims/Semis/Finals    | 45–49 | Existing exclusive placement + auto-enrollment                                          |
 
 Implemented alongside: events carry an `eventTier: 'regional'` field (extending, not replacing,
 the existing `isChampionship` boolean), threaded through every schedule persistence/read path
@@ -666,7 +666,7 @@ name-match at ingest instead.
 - **Auto-registered for every active Podium corps, consuming one weekly slot:** in weeks 4, 5,
   and 6 a Podium director gets the major plus **3 free selections** (the standard weekly cap is
   4). Majors are **travel-subsidized** (no Corps Budget leg; stamina cost still applies, so routing
-  *around* an anchor still matters — Dallas in July is a real heat-index day). For the fantasy
+  _around_ an anchor still matters — Dallas in July is a real heat-index day). For the fantasy
   classes the majors are elective, but since the major is the only event on its day, attending
   week 4/5/6 shows means engaging with them.
 - Full-field head-to-head meets: the guaranteed rivalry collisions, the recap everyone reads, and
@@ -682,14 +682,14 @@ name-match at ingest instead.
 
 **The Eastern Classic is a two-night stand (days 41–42), exactly like the real event.** The
 generator places one branded event on both days, and the registration rule applies to **every
-class**: *you register for one, you're registered for both* — the Eastern Classic counts as a
+class**: _you register for one, you're registered for both_ — the Eastern Classic counts as a
 **single show** against the weekly cap (auto-registered for Podium), each corps performs on
 exactly **one assigned night**, and attendees are **split evenly per class** across the two
 nights:
 
 - **Balanced snake split, published in advance.** After the day-38 nightly run (post-Atlanta
   standings), each class's registrants are distributed across the two nights by a snake draft —
-  Podium on current seeding *within each division*, fantasy classes on current class rank
+  Podium on current seeding _within each division_, fantasy classes on current class rank
   (seeds 1, 4, 5, 8… one night; 2, 3, 6, 7… the other) — so both nights carry equal strength
   and every class and division appears both nights. The night lineups publish on day 39 — a
   mid-week community moment that mirrors DCI's real lineup announcements and gives the feed two
@@ -697,7 +697,7 @@ nights:
   validation for `multiNight` events; night assignment happens server-side at the day-41 nightly
   run and persists so day 42 scores the complement.
 - **One performance, one residency.** Each corps performs on its assigned night only
-  (auto-enrolled, no weekly slot, no travel coin). The *other* Allentown day is a full rehearsal
+  (auto-enrolled, no weekly slot, no travel coin). The _other_ Allentown day is a full rehearsal
   day at the site with no travel leg — the corps is housed in the Lehigh Valley between nights,
   exactly like the real tour.
 - **The night-two effect is real, and we keep it.** A Saturday corps carries one extra day of
@@ -720,7 +720,7 @@ turned into the class's social mechanic. Fully mutual, capped, and deterministic
 - **The handshake.** Director A proposes a joint rehearsal to Director B for a specific upcoming
   day (both must be active Podium corps in the current season). B accepts or declines; the
   proposal expires unanswered at that day's block allocation. Assistant-director autoplay (§5.2)
-  never accepts on a director's behalf — this is a deliberately *human* handshake.
+  never accepts on a director's behalf — this is a deliberately _human_ handshake.
 - **Geography gates it.** Using the venue gazetteer, each corps has a "current location" at all
   times (hometown before its first show, otherwise its most recent venue). A joint rehearsal
   requires the two corps to be within the **Day Trip tier (≤250 mi)** of each other on that day —
@@ -733,7 +733,7 @@ turned into the class's social mechanic. Fully mutual, capped, and deterministic
 - **The scrimmage report (the real prize).** Both directors receive a **private head-to-head
   diagnostic**: a full caption-by-caption comparison scored as if tonight were a show — unofficial,
   invisible to leaderboards and recaps. It's scouting: the only way, outside a shared show or a
-  regional anchor, to see exactly where you stand against a specific corps. Choosing *whom* to
+  regional anchor, to see exactly where you stand against a specific corps. Choosing _whom_ to
   scrimmage (the rival you'll meet Saturday? the class leader, to calibrate?) is itself strategy.
 - **Caps and anti-collusion.** One joint rehearsal per corps per week, consumed by both parties.
   Repeat pairings decay: the second joint with the same partner in a season yields half the
@@ -760,21 +760,25 @@ placement, division titles, caption awards, majors podiums. Nothing else moves i
 not CorpsCoin, not donations, not account age. It maps to seven named tiers, and the tier gates
 the **ceiling percentile** of the historical band the corps can score into:
 
-| Tier | Ceiling (percentile of historical day-band) | Feel at finals |
-|---|---|---|
-| 1 · Community Corps | p55 | mid-80s ceiling — a strong debut season |
-| 2 · Regional Contender | p65 | high 80s |
-| 3 · National Contender | p75 | low 90s |
-| 4 · Finalist | p85 | 93–95 |
-| 5 · Medalist | p92 | 95–97 |
-| 6 · Elite | p97 | 97–98.5 |
-| 7 · **Champion Status** | full envelope | the corpus maximum (99.x) — **never 100** |
+| Tier                    | Ceiling (percentile of historical day-band) | Feel at finals                            |
+| ----------------------- | ------------------------------------------- | ----------------------------------------- |
+| 1 · Community Corps     | p55                                         | ~91 ceiling — a strong debut season       |
+| 2 · Regional Contender  | p65                                         | ~92.5                                     |
+| 3 · National Contender  | p75                                         | ~94                                       |
+| 4 · Finalist            | p82                                         | ~95.5                                     |
+| 5 · Medalist            | p88                                         | ~96.5                                     |
+| 6 · Elite               | p93                                         | ~97.5                                     |
+| 7 · **Champion Status** | full envelope                               | the corpus maximum (99.x) — **never 100** |
+
+_(Percentiles as tuned by the Phase 0 harness — `balanceConfig.json` is authoritative; the
+tier-6 value is what places the Elite-vs-Champion upset rate at 40%. See
+`PODIUM_PHASE0_NOTES.md`.)_
 
 Design rules, each one a lesson from FMA or from the user's brief:
 
 - **Ceiling-only, never fuel.** Reputation never adds points, never accelerates growth, and is
   invisible until a corps presses the top of its band late in the season. Through June and July a
-  low-rep corps that rehearses better *routinely* outscores a high-rep corps that manages badly.
+  low-rep corps that rehearses better _routinely_ outscores a high-rep corps that manages badly.
   Reputation decides how high your perfect season can peak — nothing else.
 - **Paced like the real climb.** Per-season reputation gain is capped so that a flawless director
   reaches Champion Status in roughly **10–14 seasons** (calibrated in Phase 0 against real
@@ -793,20 +797,20 @@ compounding stat, and marching.art has already removed its own influence system 
 reintroduce one. Instead, each of influence's jobs is handled by a separate, non-compounding
 mechanic:
 
-| Influence's job in FMA | Podium's answer |
-|---|---|
-| Sized the audition point pool (+10 pts per 100 influence over 3,000) — veterans literally started seasons stronger | **The audition pool is flat — identical for every corps, forever.** Auditions shift only the *distribution* of the day-1 start, never its level (§5.13 setup step 3) |
-| Scaled audition stat caps — veterans' ceilings grew with account age | **Reputation tier** gates the ceiling — earned only by results, ceiling-only, decaying, published |
-| Drove event acceptance and ticket economics — hosts declined low-influence groups | Open enrollment within venue capacity; hosted-event payouts scale with attendance, not attendee pedigree (§5.10) |
-| Secretly weighted division placement | Divisions seed from the published Podium-results formula alone (§5.7) |
+| Influence's job in FMA                                                                                             | Podium's answer                                                                                                                                                      |
+| ------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sized the audition point pool (+10 pts per 100 influence over 3,000) — veterans literally started seasons stronger | **The audition pool is flat — identical for every corps, forever.** Auditions shift only the _distribution_ of the day-1 start, never its level (§5.13 setup step 3) |
+| Scaled audition stat caps — veterans' ceilings grew with account age                                               | **Reputation tier** gates the ceiling — earned only by results, ceiling-only, decaying, published                                                                    |
+| Drove event acceptance and ticket economics — hosts declined low-influence groups                                  | Open enrollment within venue capacity; hosted-event payouts scale with attendance, not attendee pedigree (§5.10)                                                     |
+| Secretly weighted division placement                                                                               | Divisions seed from the published Podium-results formula alone (§5.7)                                                                                                |
 
-The pattern: influence bundled *identity, power, and access* into one number that compounded from
+The pattern: influence bundled _identity, power, and access_ into one number that compounded from
 activity. Podium unbundles them — identity is the trophy case, power ceiling is earned reputation,
 access is open — and nothing in the game compounds from simply being old.
 
 **Dormancy and comebacks.** A corps whose director doesn't register it for a season is
-**dormant**, and the governing invariant comes straight from real DCI: *a corps never returns
-from an absence stronger than it left.* Guaranteed by construction — nothing accrues while
+**dormant**, and the governing invariant comes straight from real DCI: _a corps never returns
+from an absence stronger than it left._ Guaranteed by construction — nothing accrues while
 dormant, and every dormant season applies a minimum decay:
 
 - **Graduated decay, tuned for marching.art's cadence.** Seasons here run ~7 weeks back-to-back
@@ -825,7 +829,7 @@ dormant, and every dormant season applies a minimum decay:
   gains run at +50% until one tier below that peak; the final tier back is earned at full price.
   Alumni networks and name recognition make the re-climb faster than the first climb — but the
   return point is always strictly lower than the departure point, and the summit is never free.
-  Mechanically this makes a comeback an *attractive storyline* (fast early wins, a visible
+  Mechanically this makes a comeback an _attractive storyline_ (fast early wins, a visible
   target) instead of pure punishment — and the feed marks it: "The Rohn Regiment returns after
   three seasons."
 - **Phase 0 calibration:** mine the corpus for real return-from-hiatus cases and fit the decay
@@ -846,7 +850,7 @@ favorite, never a lock. The deterministic upset paths, all skill-expressed:
    Medalist corps playing perfectly lives.
 2. **Tier gaps are small at the top.** Elite's p97 ceiling concedes roughly 0.5–1.2 finals points
    to the full envelope, while decision quality across a season swings ±2 or more. The math makes
-   "hungry challenger out-executes complacent champion" not just possible but the *expected*
+   "hungry challenger out-executes complacent champion" not just possible but the _expected_
    upset shape — which is precisely how it happens in real DCI.
 3. **Challenge-level asymmetry.** Touching 99 requires running maximum-challenge books, and
    maximum-challenge books are the most punishing to condition mismanagement and the slowest to
@@ -867,8 +871,8 @@ well-but-imperfectly-played Champion in a healthy fraction of finals (tuning tar
 **Corps setup stays simple (the FMA flow, four steps).** Registration is: **1)** corps — keep
 yours, retire it, or found a new one; **2)** show concept — title, repertoire, theme (existing
 `showConcept`); **3)** design — the eight challenge-level sliders plus **Auditions**, a single
-screen allocating a fixed pool of audition points across the 8 captions to shift the *starting
-distribution* within the day-1 band (one-tap presets: Balanced / Music-forward / Visual-forward
+screen allocating a fixed pool of audition points across the 8 captions to shift the _starting
+distribution_ within the day-1 band (one-tap presets: Balanced / Music-forward / Visual-forward
 for directors who don't want to slide); **4)** rehearse. No step is gated by payment.
 **Donations never grant anything competitive** — no score, no reputation, no budget, no XP;
 supporters get a cosmetic badge and the game's gratitude, nothing else. (FMA sold support packs
@@ -882,15 +886,15 @@ When `activeCorpsClass === 'podiumClass'`, `Dashboard.jsx` Zone C swaps
 `ActiveLineupTable` + `LineupSimulatorPanel` for three new components (same footprint, same
 `data-tour` region):
 
-1. **`RehearsalPlanner`** *(replaces ActiveLineupTable — the primary interactive surface)*
+1. **`RehearsalPlanner`** _(replaces ActiveLineupTable — the primary interactive surface)_
    Today's day type (rehearsal / show / travel), block allocator with the seven blocks as large
    tap-targets, live yield preview per block given current phase/condition/staff, the
    "Action Complete" result panel, and rest-day / light-day declarations. One-thumb mobile
    operation is a hard requirement — this is the daily habit surface.
-2. **`CorpsConditionPanel`** *(compact strip)*
+2. **`CorpsConditionPanel`** _(compact strip)_
    Stamina + morale meters, food-plan setting, this week's travel route with costs, decay warnings
    ("Percussion: 3 days unrehearsed").
-3. **`CaptionTrajectoryPanel`** *(replaces LineupSimulatorPanel — the analyzer analogue)*
+3. **`CaptionTrajectoryPanel`** _(replaces LineupSimulatorPanel — the analyzer analogue)_
    Eight sparkline curves of the season so far, each drawn over its historical percentile band
    (p25–p75 shaded, p95 dashed) for the current day — "your VA is 74th percentile for Day 31."
    Weak-spot callouts mirror the Lineup Analyzer's swap suggestions: "Visual Ensemble has the best
@@ -937,14 +941,14 @@ Podium populates identically).
 
 ### 7.2 New/changed documents
 
-| Path | Purpose |
-|---|---|
-| `podium-config/curves` | Percentile bands, delta bounds, archetype params from the corpus job (§4.1) |
-| `podium-config/venues` | Venue gazetteer: normalized location string → `{venueId, city, state, lat, lng}` (§5.3); appended-to when live scraping meets a new city |
-| `podium-config/balance` | Tunables: block yields, decay rates, condition coefficients — hot-adjustable without deploys |
-| `fantasy_recaps/{seasonUid}/days/{d}` | Existing docs; Podium results appear as entries with `corpsClass: 'podiumClass'` |
-| `game-settings/season` | Unchanged — Podium reads the same schedule |
-| `firestore.rules` | Podium fields writable only via functions (all mutations go through callables) |
+| Path                                  | Purpose                                                                                                                                  |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `podium-config/curves`                | Percentile bands, delta bounds, archetype params from the corpus job (§4.1)                                                              |
+| `podium-config/venues`                | Venue gazetteer: normalized location string → `{venueId, city, state, lat, lng}` (§5.3); appended-to when live scraping meets a new city |
+| `podium-config/balance`               | Tunables: block yields, decay rates, condition coefficients — hot-adjustable without deploys                                             |
+| `fantasy_recaps/{seasonUid}/days/{d}` | Existing docs; Podium results appear as entries with `corpsClass: 'podiumClass'`                                                         |
+| `game-settings/season`                | Unchanged — Podium reads the same schedule                                                                                               |
+| `firestore.rules`                     | Podium fields writable only via functions (all mutations go through callables)                                                           |
 
 Every game-state mutation is server-side (callable-validated) — client never writes caption or
 condition values. This is non-negotiable for a competitive class (FMA's alt-account cheating
@@ -956,14 +960,14 @@ lesson).
 
 ### New: `functions/src/callable/podium.js`
 
-| Callable | Does |
-|---|---|
-| `registerPodiumCorps` | Extends existing registration; validates challenge levels; initializes caption state from the corpus baselines for the chosen challenge profile |
-| `allocateRehearsalBlock` | The daily verb. Validates block budget for the day (server-derived from day type + condition), applies yields (staff/clinician/phase/diminishing-return multipliers), applies immediate state update, returns the itemized result panel. Idempotency: per-`(uid, seasonUid, day, blockIndex)` |
-| `setRestDay` / `setFoodPlan` / `hireStaff` / `hireClinician` | Setup verbs; Corps Budget transactions via the Podium ledger (§14.2.1) |
-| `savePlanTemplate` | Stores the assistant-director weekly plan (§5.2); the nightly processor executes it at ~85% yield on unplayed days |
-| `proposeJointRehearsal` / `respondJointRehearsal` | The §5.12 handshake; validates weekly cap, geography tier, repeat-pair decay; on acceptance both corps are flagged for the shared day and the diagnostic is generated at nightly processing |
-| `hostEvent` (all classes) | Creates a §5.10 hosted show in the schedule subcollection: validates date/venue-tier/CorpsCoin, stamps gazetteer venue data; attendance payouts settle in the nightly run |
+| Callable                                                     | Does                                                                                                                                                                                                                                                                                          |
+| ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `registerPodiumCorps`                                        | Extends existing registration; validates challenge levels; initializes caption state from the corpus baselines for the chosen challenge profile                                                                                                                                               |
+| `allocateRehearsalBlock`                                     | The daily verb. Validates block budget for the day (server-derived from day type + condition), applies yields (staff/clinician/phase/diminishing-return multipliers), applies immediate state update, returns the itemized result panel. Idempotency: per-`(uid, seasonUid, day, blockIndex)` |
+| `setRestDay` / `setFoodPlan` / `hireStaff` / `hireClinician` | Setup verbs; Corps Budget transactions via the Podium ledger (§14.2.1)                                                                                                                                                                                                                        |
+| `savePlanTemplate`                                           | Stores the assistant-director weekly plan (§5.2); the nightly processor executes it at ~85% yield on unplayed days                                                                                                                                                                            |
+| `proposeJointRehearsal` / `respondJointRehearsal`            | The §5.12 handshake; validates weekly cap, geography tier, repeat-pair decay; on acceptance both corps are flagged for the shared day and the diagnostic is generated at nightly processing                                                                                                   |
+| `hostEvent` (all classes)                                    | Creates a §5.10 hosted show in the schedule subcollection: validates date/venue-tier/CorpsCoin, stamps gazetteer venue data; attendance payouts settle in the nightly run                                                                                                                     |
 
 ### Extended: nightly pipeline (`dailyProcessors.js`)
 
@@ -989,7 +993,7 @@ New stage `processPodiumDay(seasonUid, day)` after fantasy scoring, inside the e
 `src/utils/corps.ts` (`CORPS_CLASS_ORDER`, labels, colors) · `src/config/index.ts`
 (`GAME_CONFIG.corpsClasses`) · `sections/constants.js` (unlock level/cost) ·
 `src/utils/captionPricing.js` (unlock mirrors; Podium has **no point cap** — flag it exempt) ·
-`functions/src/callable/lineups.js` `validClasses` (Podium must be *rejected* by `saveLineup` — it
+`functions/src/callable/lineups.js` `validClasses` (Podium must be _rejected_ by `saveLineup` — it
 has no lineup) · `registerCorps.js` (registration lock: 0 weeks, matching SoundSport — always joinable) ·
 `economy.js` (unlock cost, participation reward) · `scoring.js` (excluded from `RANKED_CLASSES`) ·
 `firestore.rules`.
@@ -1022,7 +1026,7 @@ has no lineup) · `registerCorps.js` (registration lock: 0 weeks, matching Sound
 Three governing principles, restated as build constraints:
 
 1. **Simple like FMA.** The daily surface is one screen and ≲3 taps. Every system added in any
-   phase must surface to the player as *at most one decision* — if a feature needs a tutorial
+   phase must surface to the player as _at most one decision_ — if a feature needs a tutorial
    paragraph, it ships with a one-tap default. A public FMA-style guide (short numbered sections)
    ships with the beta, not after it.
 2. **Return-worthy.** Every phase must strengthen a comeback loop (nightly recap → morning
@@ -1038,7 +1042,7 @@ Three governing principles, restated as build constraints:
   state is new fields/collections only.
 - **Feature-flagged.** `game-settings/features.podiumClass: false` gates the tab, the callables,
   and the nightly stage. Rollback at any point = flip the flag; dormant Podium data is inert.
-- **Fantasy pipeline untouched.** The nightly job is restructured into *stages* (Phase 1), but
+- **Fantasy pipeline untouched.** The nightly job is restructured into _stages_ (Phase 1), but
   the fantasy stage's inputs, outputs, and timing are byte-identical; the Podium stage runs after
   it, isolated, with its own run-guard lease — a Podium failure can never block fantasy scoring.
 - **Cohort rollout.** Flag → admin allowlist → beta cohort → open to everyone. Each widening is
@@ -1047,139 +1051,139 @@ Three governing principles, restated as build constraints:
 - **Harness before players.** No phase that changes scoring math ships without the simulation
   harness passing its assertions (§9, §5.13, §5.6).
 
-### Phase 0 — Data science & calibration *(no product code; 1–2 wks)*
+### Phase 0 — Data science & calibration _(no product code; 1–2 wks)_
 
 0.1 `functions/scripts/buildVenueGazetteer.js` — extract/normalize/geocode all distinct
-    `location` strings → `podium-config/venues` + bundled JSON (§5.3).
+`location` strings → `podium-config/venues` + bundled JSON (§5.3).
 0.2 `functions/scripts/buildPodiumCurves.js` — logistic fits, day-indexed percentile bands,
-    delta distributions, k-means archetypes → `podium-config/curves` + JSON (§4.1). Completed
-    years only (§14.2.7).
+delta distributions, k-means archetypes → `podium-config/curves` + JSON (§4.1). Completed
+years only (§14.2.7).
 0.3 Calibration notebook: reputation pacing vs real multi-season climbs (Crown 2004→2013 as
-    reference); dormancy decay vs real hiatus returns; challenge-level archetype mapping.
+reference); dormancy decay vs real hiatus returns; challenge-level archetype mapping.
 0.4 Simulation harness (plain Node, no Firebase): single-season strategy archetypes,
-    multi-season careers, staff-market dynamics. Assertions: envelope containment; balanced-play
-    dominance; no 100s; Champion Status in 10–14 flawless seasons; 30–45% Elite-upset rate;
-    return-weaker invariant; staff cap ≤ +15%; no Legend monopoly.
+multi-season careers, staff-market dynamics. Assertions: envelope containment; balanced-play
+dominance; no 100s; Champion Status in 10–14 flawless seasons; 30–45% Elite-upset rate;
+return-weaker invariant; staff cap ≤ +15%; no Legend monopoly.
 0.5 `podium-config/balance` v1: every tunable (block yields, decay rates, condition
-    coefficients, travel tiers, heat index, salary curves, rep thresholds, the Corps Budget
-    starting grant) hot-adjustable without deploys.
+coefficients, travel tiers, heat index, salary curves, rep thresholds, the Corps Budget
+starting grant) hot-adjustable without deploys.
 0.6 **CC pricing audit** (decision 23): sweep every CorpsCoin price in the game against the
-    1,000-CC starting anchor, restate each in days-of-normal-play terms, and rebalance where a
-    price gates something a new player needs.
+1,000-CC starting anchor, restate each in days-of-normal-play terms, and rebalance where a
+price gates something a new player needs.
 
-### Phase 1 — Invisible foundations *(zero behavior change; 2 wks)*
+### Phase 1 — Invisible foundations _(zero behavior change; 2 wks)_
 
 1.1 **Class-capability registry** — single shared module (consumed by `src/` and `functions/`)
-    declaring per-class `hasLineup / isRanked / hasDivisions / pointCap / usesRehearsal /
+declaring per-class `hasLineup / isRanked / hasDivisions / pointCap / usesRehearsal /
     unlockLevel / unlockCost / participationReward`. Migrate the ~9 mirrored constant sites to
-    read from it. Test: existing four classes behave identically (snapshot tests on validators).
+read from it. Test: existing four classes behave identically (snapshot tests on validators).
 1.2 **Nightly pipeline staging** — split `dailyOffSeasonProcessor` / `processDailyLiveScores`
-    into ordered stages with per-stage `scoringRunGuard` leases; fantasy stage unchanged; empty
-    flag-gated Podium stage. Live-season stage gates allow Podium work on calendar days 1–21
-    (§14.2.3).
+into ordered stages with per-stage `scoringRunGuard` leases; fantasy stage unchanged; empty
+flag-gated Podium stage. Live-season stage gates allow Podium work on calendar days 1–21
+(§14.2.3).
 1.3 **`seasonClock` day-boundary helpers** — server-validated ET day index for block allocation
-    (§14.2.4); client mirrors for countdown UI.
+(§14.2.4); client mirrors for countdown UI.
 1.4 **Firestore rules carve-out** — deny client writes to `corps.*.podium` subtree; Podium
-    competitive state additionally lives server-side (`.../podium/state` subcollection) with the
-    profile carrying only display copies (§14.2.5).
+competitive state additionally lives server-side (`.../podium/state` subcollection) with the
+profile carrying only display copies (§14.2.5).
 1.5 Feature flag plumbing + `podiumClass` registered in the capability registry
-    (`enabled: false`).
+(`enabled: false`).
 
-### Phase 2 — The core loop *(internal alpha; 3–4 wks)*
+### Phase 2 — The core loop _(internal alpha; 3–4 wks)_
 
 2.1 `registerPodiumCorps`: the 4-step setup — corps (keep/retire/found) → show concept →
-    design (challenge sliders + one-screen auditions with presets) → done (§5.13).
+design (challenge sliders + one-screen auditions with presets) → done (§5.13).
 2.2 Engine: `functions/src/helpers/podium/engine.js` — content/clean state, phase-dependent
-    yields, diminishing returns, neglect decay, envelope + reputation-ceiling scoring (§4.2,
-    §5.13). Pure functions, unit-tested against the harness.
+yields, diminishing returns, neglect decay, envelope + reputation-ceiling scoring (§4.2,
+§5.13). Pure functions, unit-tested against the harness.
 2.3 `allocateRehearsalBlock` callable — idempotent per (uid, season, day, blockIndex); returns
-    the itemized "Action Complete" panel.
+the itemized "Action Complete" panel.
 2.4 Nightly Podium stage v1: recovery/decay → score performing corps → recap entries
-    (`corpsClass: 'podiumClass'`) → `computePodiumRankings` → ranks on corps map.
+(`corpsClass: 'podiumClass'`) → `computePodiumRankings` → ranks on corps map.
 2.5 Zone C UI swap: `RehearsalPlanner` (block allocator, ≤3 taps), `CaptionTrajectoryPanel`
-    (curves over percentile bands + historical shadows). ControlBar tab, flag-gated. Podium
-    recap sheet (full 8-caption, division-sectioned, §5.4) added to the Scores tab.
+(curves over percentile bands + historical shadows). ControlBar tab, flag-gated. Podium
+recap sheet (full 8-caption, division-sectioned, §5.4) added to the Scores tab.
 2.6 `selectUserShows`: `multiNight` counts-as-one validation + server-injected major
-    auto-registrations for Podium (3 free picks in weeks 4/5/6) (§5.11, §14.2.6).
+auto-registrations for Podium (3 free picks in weeks 4/5/6) (§5.11, §14.2.6).
 2.7 Exit gate: two full simulated off-seasons on staging with admin accounts; recap/leaderboard/
-    rivals surfaces render Podium correctly; fantasy regression suite green.
+rivals surfaces render Podium correctly; fantasy regression suite green.
 
-### Phase 3 — Condition & logistics *(2–3 wks)*
+### Phase 3 — Condition & logistics _(2–3 wks)_
 
 3.1 Stamina/morale meters + effects (§5.3); rest days; grind fatigue.
 3.2 Travel legs from the gazetteer (tiered), hometown anchoring, weekly route preview in the
-    show picker; climate heat index.
+show picker; climate heat index.
 3.3 Food plans (weekly tier decision).
 3.4 Live-season spring training: move-in purchase, all-day blocks, Family Day diagnostic
-    (§5.9); requires the Phase 1.2 stage gates.
+(§5.9); requires the Phase 1.2 stage gates.
 3.5 `CorpsConditionPanel`; assistant-director plan template (85% autoplay) — the
-    retention-safety valve ships *with* condition, not after it.
+retention-safety valve ships _with_ condition, not after it.
 3.6 Exit gate: harness re-run with condition; "rest-optimizer" archetype places between
-    "balanced" and "spam" as designed.
+"balanced" and "spam" as designed.
 
-### Phase 4 — Corps Budget & the staff market *(2–3 wks)*
+### Phase 4 — Corps Budget & the staff market _(2–3 wks)_
 
 4.1 Corps Budget ledger: per-season, funded by an optional CorpsCoin commitment at registration
-    (hard-capped division-equal) + in-class earnings (show payouts, fundraiser blocks); resets
-    at archival; real money never converts into it (§14.2.1).
+(hard-capped division-equal) + in-class earnings (show payouts, fundraiser blocks); resets
+at archival; real money never converts into it (§14.2.1).
 4.2 Fundraiser block conversion (§14.1.2).
 4.3 `podium-staff` collection + season market generation (deterministic from season seed);
-    tiers, traits, salaries, aging.
+tiers, traits, salaries, aging.
 4.4 Free agency at registration close: bids → published preference function → contracts;
-    retention raises; loyalty; poaching (§5.6).
+retention raises; loyalty; poaching (§5.6).
 4.5 Clinicians; Tour Manager / Program Coordinator effects.
 4.6 Staff retirement at rollover; retired-Legend → clinician pool; trophy-namesake hooks.
 4.7 Exit gate: staff-market harness assertions; economy sim shows median corps solvent, careless
-    corps broke-but-playable.
+corps broke-but-playable.
 
-### Phase 5 — Reputation & the multi-season spine *(2 wks)*
+### Phase 5 — Reputation & the multi-season spine _(2 wks)_
 
 5.1 Reputation state + tier ceilings wired into the engine's clamp (already stubbed in 2.2).
 5.2 Season archival: rep gains (placement/awards, per-season cap), decay, dormancy detection,
-    heritage credit; staff-contract lapse rules (§5.13).
+heritage credit; staff-contract lapse rules (§5.13).
 5.3 Corps lifecycle: retire/found/rename flows with rep attachment rules.
 5.4 Division seeding: single division below population threshold; seeding-score formula
-    published on the standings page; promotion/relegation + petition-up (§5.7).
+published on the standings page; promotion/relegation + petition-up (§5.7).
 5.5 Exit gate: multi-season harness green (pacing, upsets, dormancy invariant).
 
-### Phase 6 — Shared-calendar features *(all classes; 2–3 wks)*
+### Phase 6 — Shared-calendar features _(all classes; 2–3 wks)_
 
 6.1 Eastern Classic two-night split for **fantasy classes too**: even per-class snake split,
-    day-39 lineup publication, combined standings view (§5.11).
+day-39 lineup publication, combined standings view (§5.11).
 6.2 Director-hosted events (all classes): `hostEvent` callable, venue tiers, open enrollment,
-    attendance payouts with alt-farm guards (distinct active corps only), event history pages
-    (§5.10, §14.1.8).
+attendance payouts with alt-farm guards (distinct active corps only), event history pages
+(§5.10, §14.1.8).
 6.3 Regional-anchor UX for fantasy classes (the majors as marquee days).
 6.4 Fan Favorite ballots at majors (reuse `dailyPredictions`); per-show medal counters.
 6.5 Podium into `dci-stats`, `gameRecords`, season archives, Hall of Champions (class-filtered).
 6.6 Scores-page redesign completed game-wide: shared sheet masthead/typography for the fantasy
-    classes (condensed columns), PNG/text share affordances, Caption Leaders view with the
-    class-appropriate caption sets (§5.4 privacy rule).
+classes (condensed columns), PNG/text share affordances, Caption Leaders view with the
+class-appropriate caption sets (§5.4 privacy rule).
 6.7 Profile résumé for **all classes**: season selector, per-season score tables, show-concept/
-    repertoire history, hosting history, trophy case on every corps a director fields (§14.3.b).
+repertoire history, hosting history, trophy case on every corps a director fields (§14.3.b).
 
-### Phase 7 — Social & the return loops *(2–3 wks)*
+### Phase 7 — Social & the return loops _(2–3 wks)_
 
 7.1 Joint rehearsals (§5.12): handshake callables, geography gate, scrimmage report, feed items.
 7.2 Podium rookie journey (guided first week, reusing `journey.js` pattern).
 7.3 Auto power-rankings column via the news pipeline; press-release posts; season feed anchored
-    to the nightly drop; player-columnist submissions through the existing `newsSubmissions`
-    pipeline (FMA's Staff Writers program, productized).
+to the nightly drop; player-columnist submissions through the existing `newsSubmissions`
+pipeline (FMA's Staff Writers program, productized).
 7.4 League integration: Podium corps in league matchups (class-filtered scoring).
 7.5 Director Rating (lifetime, placements-only, cross-class) in the lifetime leaderboard job.
 7.6 The public guide — FMA-style short numbered sections, written from this doc.
 
-### Phase 8 — Beta season → launch *(1 season + 1 week)*
+### Phase 8 — Beta season → launch _(1 season + 1 week)_
 
 8.1 Beta cohort (allowlist, ~50–100 directors incl. FMA veterans) runs one full 49-day
-    off-season; weekly balance tuning via `podium-config/balance`; no deploys for tuning.
+off-season; weekly balance tuning via `podium-config/balance`; no deploys for tuning.
 8.2 Instrument the funnel: D1/D7 return rate, blocks-allocated-per-day, rest-day usage,
-    show-selection latency — the "simple like FMA" principle is measured, not asserted.
+show-selection latency — the "simple like FMA" principle is measured, not asserted.
 8.3 Post-season: beta recap with the cohort (the FMA-Rework-thread constituency review),
-    final constants locked.
+final constants locked.
 8.4 General availability at the next season boundary — **no unlock gate**: Podium is always
-    open, always playable, like SoundSport; launch announcement; live-season support (spring
-    training) enabled the following live season.
+open, always playable, like SoundSport; launch announcement; live-season support (spring
+training) enabled the following live season.
 
 **Sequencing rationale:** 0–1 are risk-free and independently valuable (the registry pays down
 existing tech debt). 2 is the minimum lovable product — the daily habit with real scores. 3–5
@@ -1192,19 +1196,19 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
 
 ## 11. Why This Retains Players (the addiction audit, honestly)
 
-1. **A reason to open the app every single day** that takes two minutes and is a *decision*, not a
+1. **A reason to open the app every single day** that takes two minutes and is a _decision_, not a
    claim button — and whose consequence arrives at a communal nightly moment.
 2. **Streak-compatible, punishment-light:** missing a day costs growth (opportunity) and risks
    decay (mild), never a recorded loss. FMA's model, softened at the edges.
 3. **Seasons end.** 49 days, a championship, a recap, a trophy — then a fresh sheet with your name
    still on the door. The "one more season" loop is FMA's deepest hook and marching.art already
    runs the calendar for it.
-4. **Skill expression with receipts:** the trajectory-vs-percentile view lets a player *see* they
+4. **Skill expression with receipts:** the trajectory-vs-percentile view lets a player _see_ they
    out-directed the field, and the deterministic engine means it's true.
 5. **Identity accrual:** named staff, trophy shelves, caption-award banners, rivalry history —
    possessions that make quitting feel like abandoning something.
-6. **Two-game texture:** fantasy classes are *drafting* games (evaluation skill); Podium is a
-   *management* game (planning skill). Existing players get a second, orthogonal reason to log in;
+6. **Two-game texture:** fantasy classes are _drafting_ games (evaluation skill); Podium is a
+   _management_ game (planning skill). Existing players get a second, orthogonal reason to log in;
    the two share one schedule, one economy, one identity, one nightly moment.
 
 ---
@@ -1218,7 +1222,7 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
    the Family Day diagnostic exhibition (§5.9).
 3. **No evening recap reveal.** An 8 PM ET reveal would carve a dead no-rehearse window between
    reveal and the 02:00 processing run. Scores land in the existing nightly job and the recap is
-   waiting at breakfast — the communal moment is the *morning* Director's Sheet, and the daily
+   waiting at breakfast — the communal moment is the _morning_ Director's Sheet, and the daily
    rehearsal decision is made with fresh recap data in hand, which is better game design anyway.
 4. **Same schedule system, unchanged** — both season types, plus director-hosted events inserted
    into the same schedule subcollection (§5.10).
@@ -1327,22 +1331,22 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
       attendance always happens (an unaffordable travel leg auto-downgrades — the corps still
       arrives, at a higher stamina cost; the long bus ride on fumes), and the majors are
       travel-subsidized anyway. A near-0-CC director rehearses, performs, scores, and climbs
-      the reputation ladder from day one — they simply forgo the *condition-management edge*
+      the reputation ladder from day one — they simply forgo the _condition-management edge_
       that money buys (better food, camp days, staff, clinicians, comfortable routing), which
       is bounded by the funding cap and by condition's ±-modifier limits. Money in Podium buys
       margin, never access.
     - **The pricing audit.** All CC prices game-wide (class unlocks, cosmetics, prestige sinks,
       hosting rentals, event trophies) get one calibration pass expressed against the anchor:
-      each price is stated in *days of normal play* (e.g., "Open Class ≈ 2 weeks of casual
+      each price is stated in _days of normal play_ (e.g., "Open Class ≈ 2 weeks of casual
       play"), tuned via `economyStatsJob` data, and recorded in `podium-config/balance` so
-      re-tuning never needs a deploy. The rule of thumb: nothing a player *needs* costs CC;
-      everything CC buys is identity, access to more sandboxes, prestige — or Podium *margin*.
+      re-tuning never needs a deploy. The rule of thumb: nothing a player _needs_ costs CC;
+      everything CC buys is identity, access to more sandboxes, prestige — or Podium _margin_.
 
 **Resolved in v2.4:**
 
 24. **One currency; CC is spendable in Podium; the free floor is guaranteed.** A new player's
     1,000 CC can buy A Class **or** fund their first Podium tour — that either/or is the
-    intended day-one decision. The Corps Budget survives as the per-season operating *ledger*,
+    intended day-one decision. The Corps Budget survives as the per-season operating _ledger_,
     funded by an optional CC commitment at registration (**hard-capped at a division-equal
     maximum** — the anti-stockpile guard: a veteran's 50k wallet fills the cap effortlessly but
     never exceeds what a solvent rookie can field) plus in-class earnings; it resets at
@@ -1372,7 +1376,7 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
 
 ---
 
-*§13 (round-two backlog) was promoted into the body in v1.2 — see §12 for the mapping.*
+_§13 (round-two backlog) was promoted into the body in v1.2 — see §12 for the mapping._
 
 ---
 
@@ -1386,10 +1390,10 @@ additions; conflicts are things that **must** be resolved before Phase 1 code.
 
 1. ~~**Auditions (the missing pre-season ritual).**~~ **Resolved in v1.7** — see §5.13: a single
    audition screen (fixed point pool across the 8 captions, one-tap presets) inside the four-step
-   setup flow. Shifts the day-1 starting *distribution* within the historical band; no power
+   setup flow. Shifts the day-1 starting _distribution_ within the historical band; no power
    creep, no convolution.
 2. **Campaigns — the rehearse-vs-fundraise tradeoff.** FMA's passive campaigns (energy → money
-   or influence) made income an *opportunity cost of rehearsal*. Our economy earns passively
+   or influence) made income an _opportunity cost of rehearsal_. Our economy earns passively
    (participation rewards). Proposal: any rehearsal block may be converted to a **Fundraiser**
    (Corps Budget instead of caption growth) — the guns-vs-butter choice, one line in the
    allocator. Especially meaningful early season when cash for staff/travel is tight.
@@ -1412,21 +1416,21 @@ additions; conflicts are things that **must** be resolved before Phase 1 code.
    deeper loop needs its own guided first week (set challenge levels → first rehearsal → read the
    trajectory panel → first show). FMA was brutal to newcomers; we shouldn't be.
 8. **Hosted-event alt-farming guard.** FMA's endgame was alt-account cheating. Hosted-event
-   payouts scale with attendance — attendance must count only *distinct, active* corps (activity
+   payouts scale with attendance — attendance must count only _distinct, active_ corps (activity
    threshold: scored ≥1 show that season), with per-host and per-day caps, or alts farm payouts.
 
 ### 14.2 Conflicts — where Podium grinds against existing code/philosophy
 
 1. **[LOAD-BEARING] Money touching score breaks the site's core covenant.**
-   `scoring.js` states the existing invariant: *competitive score comes ONLY from historical
-   data — show concepts, coins, streaks never modify it.* Podium deliberately breaks this inside
+   `scoring.js` states the existing invariant: _competitive score comes ONLY from historical
+   data — show concepts, coins, streaks never modify it._ Podium deliberately breaks this inside
    its own class: CorpsCoin buys staff, clinicians, camp days, food, travel — all of which shape
    score. Because CorpsCoin is a **shared cross-class wallet**, a veteran with a 50k stockpile
    from years of fantasy play starts Podium with a purchased advantage — exactly FMA's influence
    compounding, reintroduced through the wallet. **RESOLVED (v2.4) — single currency with a
-   division-equal cap.** CorpsCoin *is* spendable in Podium (a new player's 1,000 CC can buy
-   A Class *or* fund their first Podium tour — that choice is the intended day-one decision).
-   The **Corps Budget** survives as the per-season operating *ledger*, funded two ways: an
+   division-equal cap.** CorpsCoin _is_ spendable in Podium (a new player's 1,000 CC can buy
+   A Class _or_ fund their first Podium tour — that choice is the intended day-one decision).
+   The **Corps Budget** survives as the per-season operating _ledger_, funded two ways: an
    optional CorpsCoin commitment made at registration, **hard-capped at a division-equal
    maximum**, plus in-class earnings (show payouts, fundraiser blocks, hosting). It resets at
    archival; commitments are non-refundable (the tour spends them). The cap is the anti-stockpile
@@ -1445,7 +1449,7 @@ additions; conflicts are things that **must** be resolved before Phase 1 code.
    pre-work and it pays for itself even if Podium never ships (the mirrored constants are an
    existing bug farm).
 3. **The nightly processor treats spring training as dead air.** `processDailyLiveScores`
-   early-returns on calendar days 1–21 ("No scoring today"). Podium needs those days *processed*
+   early-returns on calendar days 1–21 ("No scoring today"). Podium needs those days _processed_
    (recovery, decay, assistant-director autoplay, camp economics) without waking the fantasy
    pipeline. The daily job needs restructuring into per-system stages with their own day gates —
    touching the `scoringRunGuard` idempotency lease, which currently guards the whole run.
@@ -1466,7 +1470,7 @@ additions; conflicts are things that **must** be resolved before Phase 1 code.
    be server-injected (week rollover writes them, UI shows them locked, validation counts them
    against the cap) — or scoring treats majors as virtual attendance without touching
    `selectedShows`. Decide once, in Phase 1; retrofitting is painful.
-7. **Live-season envelope contamination.** The live scraper writes the *current* year into
+7. **Live-season envelope contamination.** The live scraper writes the _current_ year into
    `historical_scores/{year}` as the season progresses. Podium's realism envelope must be built
    from **completed** years only, or mid-season the envelope shifts under players' feet (and
    early-season live data would define absurdly tight day bands).
@@ -1504,8 +1508,8 @@ nice-to-have.
 
 ---
 
-*Sources: full crawl of fantasymarchingarts.com (guide sections 1–17, stats archive seasons 1–140,
+_Sources: full crawl of fantasymarchingarts.com (guide sections 1–17, stats archive seasons 1–140,
 player directory, forums incl. FMA Rework viewtopic/4475, division-assignment threads, World
 Championship proposals, Suggestions board) and a full architectural survey of this repository
 (dashboard, class system, scoring pipeline, schedule system, economy, and the unbuilt Staff/
-Equipment systems planned in `project_plan.txt`).*
+Equipment systems planned in `project_plan.txt`)._
