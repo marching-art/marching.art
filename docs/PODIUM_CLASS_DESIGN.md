@@ -693,6 +693,22 @@ Design rules, each one a lesson from FMA or from the user's brief:
   donations, secretly drove division placement, and made catch-up "generational." Reputation is
   earned only by results, does exactly one published thing, decays, and its tier, effect, and
   path-to-next-tier are displayed on every corps page.
+
+**Where FMA's influence went (deliberately not ported).** Influence was FMA's do-everything
+compounding stat, and marching.art has already removed its own influence system — Podium does not
+reintroduce one. Instead, each of influence's jobs is handled by a separate, non-compounding
+mechanic:
+
+| Influence's job in FMA | Podium's answer |
+|---|---|
+| Sized the audition point pool (+10 pts per 100 influence over 3,000) — veterans literally started seasons stronger | **The audition pool is flat — identical for every corps, forever.** Auditions shift only the *distribution* of the day-1 start, never its level (§5.13 setup step 3) |
+| Scaled audition stat caps — veterans' ceilings grew with account age | **Reputation tier** gates the ceiling — earned only by results, ceiling-only, decaying, published |
+| Drove event acceptance and ticket economics — hosts declined low-influence groups | Open enrollment within venue capacity; hosted-event payouts scale with attendance, not attendee pedigree (§5.10) |
+| Secretly weighted division placement | Divisions seed from the published Podium-results formula alone (§5.7) |
+
+The pattern: influence bundled *identity, power, and access* into one number that compounded from
+activity. Podium unbundles them — identity is the trophy case, power ceiling is earned reputation,
+access is open — and nothing in the game compounds from simply being old.
 - **Attached to the corps, not the director.** Retiring a corps banks its legacy (Hall, prestige
   plaques, trophy case preserved) and a new corps starts the climb at tier 1. This makes a
   15-season-old corps genuinely precious — FMA's identity-permanence hook, now load-bearing.
@@ -978,6 +994,10 @@ trajectory bands. Everything after deepens rather than gates.
     percentile of the historical band; ceiling-only, decaying, fully published; flawless play
     reaches Champion Status in 10–14 seasons; no corps ever scores 100; dynasty beatability is a
     tuned, harness-asserted property (30–45% upset target).
+16. **No influence stat, ever** (§5.13): marching.art already deleted its influence system and
+    Podium does not reintroduce one. Influence's FMA roles are unbundled — flat audition pool
+    (distribution-only), reputation for the earned ceiling, open enrollment for access,
+    published formulas for divisions. Nothing compounds from account age.
 
 **Still open:**
 
