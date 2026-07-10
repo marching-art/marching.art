@@ -17,8 +17,9 @@ purchase ladder with a living labor market (§5.6); v2.0 is the authoritative ei
 plan (§10); v2.1 folds in the final FMA sweep (§14.3); v2.2 places the sweep items (Scores-tab
 recap sheets with the caption-privacy rule, all-class profile résumés) and swaps Stretching /
 Physical Warmup in as the condition block; v2.3 anchors the onboarding economy to the 1,000-CC
-starting grant and sweeps stale CorpsCoin references to Corps Budget — the design is complete
-and build-ready
+starting grant and sweeps stale CorpsCoin references to Corps Budget; v2.4 settles the economy
+model — one currency, CC spendable in Podium up to a division-equal cap, free floor guaranteed
+— the design is complete and build-ready
 
 ---
 
@@ -470,9 +471,10 @@ replaces ownership with **employment** — and an employment market never maxes 
   ("Basics-first: +8% Visual Basics, −3% ensemble"; "Peaker: clean gains +15% after day 40").
   New apprentices generate into the market every season; everyone ages; everyone eventually
   retires. The pool cycles forever — the decade-scale economy is built into staff *mortality*.
-- **Salaries, not purchases.** Contracts are per-season, paid from the Corps Budget — which
-  starts equal per division and resets at archival. Staffing is therefore a fresh allocation
-  decision every single season (payroll vs. travel vs. food vs. clinicians), and because budget
+- **Salaries, not purchases.** Contracts are per-season, paid from the Corps Budget — funded
+  each season from the director's CorpsCoin up to a **division-equal cap**, plus in-class
+  earnings, resetting at archival (§14.2.1). Staffing is therefore a fresh allocation decision
+  every single season (payroll vs. travel vs. food vs. clinicians), and because the funding cap
   is division-equal, it doubles as a **hard salary cap**: a champion cannot simply outspend the
   field and hoard every Legend.
 - **Free agency — the between-seasons ritual.** During registration week, unsigned staff hit a
@@ -1117,9 +1119,9 @@ Three governing principles, restated as build constraints:
 
 ### Phase 4 — Corps Budget & the staff market *(2–3 wks)*
 
-4.1 Corps Budget ledger: per-season, division-equal grant + in-class earnings (show payouts,
-    fundraiser blocks); resets at archival; real money and CorpsCoin can never convert into it
-    (§14.2.1).
+4.1 Corps Budget ledger: per-season, funded by an optional CorpsCoin commitment at registration
+    (hard-capped division-equal) + in-class earnings (show payouts, fundraiser blocks); resets
+    at archival; real money never converts into it (§14.2.1).
 4.2 Fundraiser block conversion (§14.1.2).
 4.3 `podium-staff` collection + season market generation (deterministic from season seed);
     tiers, traits, salaries, aging.
@@ -1320,19 +1322,35 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
       journey drips **+425 CC** across its steps, and show participation (50–200 CC/show),
       daily login, and league play keep the faucet running. A day-one player can immediately
       unlock A Class (1,000) or bank toward Open (2,500) — SoundSport and Podium cost nothing.
-    - **Podium requires zero CC to play, structurally.** It is always open (decision 20) and
-      every competitive input — travel, food, camp days, staff salaries, clinicians — is paid
-      from the **Corps Budget**, which every corps receives division-equal at season start and
-      earns in-class. The Phase 0 balance work sizes the starting Budget grant so a median corps
-      affords baseline travel + standard food + an apprentice staff with headroom; a brand-new
-      player always has a playable allocation on day one, and a bankrupt week degrades (cheaper
-      food, shorter routes) rather than blocks.
+    - **Podium is fully playable at zero CC — the free floor.** The complete core loop costs
+      nothing: rehearsal blocks are free, rest days are free, gas-station food is free, show
+      attendance always happens (an unaffordable travel leg auto-downgrades — the corps still
+      arrives, at a higher stamina cost; the long bus ride on fumes), and the majors are
+      travel-subsidized anyway. A near-0-CC director rehearses, performs, scores, and climbs
+      the reputation ladder from day one — they simply forgo the *condition-management edge*
+      that money buys (better food, camp days, staff, clinicians, comfortable routing), which
+      is bounded by the funding cap and by condition's ±-modifier limits. Money in Podium buys
+      margin, never access.
     - **The pricing audit.** All CC prices game-wide (class unlocks, cosmetics, prestige sinks,
       hosting rentals, event trophies) get one calibration pass expressed against the anchor:
       each price is stated in *days of normal play* (e.g., "Open Class ≈ 2 weeks of casual
       play"), tuned via `economyStatsJob` data, and recorded in `podium-config/balance` so
       re-tuning never needs a deploy. The rule of thumb: nothing a player *needs* costs CC;
-      everything CC buys is identity, access to more sandboxes, or prestige.
+      everything CC buys is identity, access to more sandboxes, prestige — or Podium *margin*.
+
+**Resolved in v2.4:**
+
+24. **One currency; CC is spendable in Podium; the free floor is guaranteed.** A new player's
+    1,000 CC can buy A Class **or** fund their first Podium tour — that either/or is the
+    intended day-one decision. The Corps Budget survives as the per-season operating *ledger*,
+    funded by an optional CC commitment at registration (**hard-capped at a division-equal
+    maximum** — the anti-stockpile guard: a veteran's 50k wallet fills the cap effortlessly but
+    never exceeds what a solvent rookie can field) plus in-class earnings; it resets at
+    archival. **Near-0-CC players always play**: rehearsal, rest, baseline food, and show
+    attendance are free (unaffordable travel legs auto-downgrade to a stamina cost instead of
+    blocking); money buys the condition-management edge — food tiers, camp days, staff,
+    clinicians — never access, never caption points. Supersedes the dual-currency
+    recommendation of §14.2.1 with the simpler capped-single-currency model.
 
 **Resolved in v1.9:**
 
@@ -1405,13 +1423,17 @@ additions; conflicts are things that **must** be resolved before Phase 1 code.
    its own class: CorpsCoin buys staff, clinicians, camp days, food, travel — all of which shape
    score. Because CorpsCoin is a **shared cross-class wallet**, a veteran with a 50k stockpile
    from years of fantasy play starts Podium with a purchased advantage — exactly FMA's influence
-   compounding, reintroduced through the wallet. **Recommended resolution: a dual-currency
-   split.** CorpsCoin stays cosmetic/unlock currency game-wide (covenant intact); Podium's
-   competitive inputs are paid from a **Corps Budget** — a per-season, class-internal currency
-   that starts equal for every corps in a division, is earned only by in-class activity
-   (show payouts, fundraiser blocks, hosting), and resets at archival. Realistic (corps budgets
-   are annual), self-balancing, and it makes the §14.1.2 fundraiser blocks meaningful. The
-   alternative (shared CC with per-season spend caps) is simpler but leaves the optics problem.
+   compounding, reintroduced through the wallet. **RESOLVED (v2.4) — single currency with a
+   division-equal cap.** CorpsCoin *is* spendable in Podium (a new player's 1,000 CC can buy
+   A Class *or* fund their first Podium tour — that choice is the intended day-one decision).
+   The **Corps Budget** survives as the per-season operating *ledger*, funded two ways: an
+   optional CorpsCoin commitment made at registration, **hard-capped at a division-equal
+   maximum**, plus in-class earnings (show payouts, fundraiser blocks, hosting). It resets at
+   archival; commitments are non-refundable (the tour spends them). The cap is the anti-stockpile
+   guard: a veteran's 50k wallet can fill the cap effortlessly, but never exceed what any
+   solvent rookie can also field — earned in-game wealth buys convenience, not headroom. Real
+   money never converts into CC or Budget (decision 14), so the no-pay-for-score covenant holds
+   where it matters.
 2. **Lineup-assumption coupling.** Large parts of the code assume every class has a lineup and a
    point cap: `saveLineup`/`validateLineup` validClasses, `activeLineups` uniqueness,
    `weeklyTrades`, `captionWindows` deadlines, `LineupSimulatorPanel`, `CaptionSelectionModal`,
