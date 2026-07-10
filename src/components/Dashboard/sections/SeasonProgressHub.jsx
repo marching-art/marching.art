@@ -14,7 +14,7 @@ const TABS = [
   { id: 'achievements', label: 'Achievements', icon: Award },
 ];
 
-const SeasonProgressHub = memo(({ profile, seasonUid, lineupCount, resultCount, leagueCount }) => {
+const SeasonProgressHub = memo(({ profile, seasonUid }) => {
   const [activeTab, setActiveTab] = useState('ladder');
 
   return (
@@ -44,12 +44,10 @@ const SeasonProgressHub = memo(({ profile, seasonUid, lineupCount, resultCount, 
       {activeTab === 'ladder' ? (
         <SeasonLadderPanel profile={profile} seasonUid={seasonUid} />
       ) : (
-        <AchievementTrackerPanel
-          profile={profile}
-          lineupCount={lineupCount}
-          resultCount={resultCount}
-          leagueCount={leagueCount}
-        />
+        // AchievementTrackerPanel now reads corps from the profile store and
+        // derives all progress from the shared catalog, so it no longer needs
+        // the lineup/result/league counts threaded through.
+        <AchievementTrackerPanel profile={profile} />
       )}
     </div>
   );

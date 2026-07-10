@@ -320,27 +320,52 @@ function awardRegionalTrophies(batch, dailyRecap, scoredDay, seasonData, db) {
   const regionalTrophyDays = [28, 35, 41, 42];
   if (!regionalTrophyDays.includes(scoredDay)) return;
 
-  const metals = ['gold', 'silver', 'bronze'];
   logger.info(`Day ${scoredDay} is a regional trophy day. Awarding trophies...`);
 
-  dailyRecap.shows.forEach(show => {
-    show.results.sort((a, b) => b.totalScore - a.totalScore);
-    const top3 = show.results.slice(0, 3);
+  // Each competitive class crowns its own regional CHAMPION (1st in class),
+  // recorded with corpsClass so the trophy case can color it by class.
+  // SoundSport (non-competitive) earns a Regional Best in Show instead.
+  const competitiveClasses = ["worldClass", "openClass", "aClass"];
 
-    top3.forEach((winner, index) => {
-      const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${winner.uid}/profile/data`);
+  dailyRecap.shows.forEach(show => {
+    competitiveClasses.forEach(corpsClass => {
+      const classResults = show.results
+        .filter(r => r.corpsClass === corpsClass)
+        .sort((a, b) => b.totalScore - a.totalScore);
+      const champion = classResults[0];
+      if (!champion) return;
+
+      const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${champion.uid}/profile/data`);
       const trophy = {
-        type: 'regional',
-        metal: metals[index],
+        type: "regional",
+        corpsClass,
         seasonName: seasonData.name,
         eventName: show.eventName,
-        score: winner.totalScore,
-        rank: index + 1
+        score: champion.totalScore,
+        rank: 1
       };
       batch.update(userProfileRef, {
-        'trophies.regionals': admin.firestore.FieldValue.arrayUnion(trophy)
+        "trophies.regionals": admin.firestore.FieldValue.arrayUnion(trophy)
       });
     });
+
+    // SoundSport Regional Best in Show — top SoundSport corps in the show.
+    const soundSportResults = show.results
+      .filter(r => r.corpsClass === "soundSport")
+      .sort((a, b) => b.totalScore - a.totalScore);
+    const bestInShow = soundSportResults[0];
+    if (bestInShow) {
+      const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${bestInShow.uid}/profile/data`);
+      const award = {
+        type: "regional_best_in_show",
+        seasonName: seasonData.name,
+        eventName: show.eventName,
+        score: bestInShow.totalScore
+      };
+      batch.update(userProfileRef, {
+        "trophies.soundSportAwards": admin.firestore.FieldValue.arrayUnion(award)
+      });
+    }
   });
 }
 
@@ -353,7 +378,7 @@ function awardRegionalTrophies(batch, dailyRecap, scoredDay, seasonData, db) {
  * @param {Firestore} db - Firestore database instance
  */
 function awardClassChampionshipTrophies(batch, dailyRecap, seasonData, db) {
-  const metals = ['gold', 'silver', 'bronze'];
+  const metals = ["gold", "silver", "bronze"];
   logger.info("Day 46: Awarding Open and A Class Finals trophies...");
 
   dailyRecap.shows.forEach(show => {
@@ -367,8 +392,8 @@ function awardClassChampionshipTrophies(batch, dailyRecap, seasonData, db) {
     openClassResults.slice(0, 3).forEach((winner, index) => {
       const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${winner.uid}/profile/data`);
       const trophy = {
-        type: 'class_championship',
-        classType: 'openClass',
+        type: "class_championship",
+        classType: "openClass",
         metal: metals[index],
         seasonName: seasonData.name,
         eventName: show.eventName,
@@ -376,7 +401,7 @@ function awardClassChampionshipTrophies(batch, dailyRecap, seasonData, db) {
         rank: index + 1
       };
       batch.update(userProfileRef, {
-        'trophies.classChampionships': admin.firestore.FieldValue.arrayUnion(trophy)
+        "trophies.classChampionships": admin.firestore.FieldValue.arrayUnion(trophy)
       });
     });
 
@@ -384,8 +409,8 @@ function awardClassChampionshipTrophies(batch, dailyRecap, seasonData, db) {
     aClassResults.slice(0, 3).forEach((winner, index) => {
       const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${winner.uid}/profile/data`);
       const trophy = {
-        type: 'class_championship',
-        classType: 'aClass',
+        type: "class_championship",
+        classType: "aClass",
         metal: metals[index],
         seasonName: seasonData.name,
         eventName: show.eventName,
@@ -393,7 +418,7 @@ function awardClassChampionshipTrophies(batch, dailyRecap, seasonData, db) {
         rank: index + 1
       };
       batch.update(userProfileRef, {
-        'trophies.classChampionships': admin.firestore.FieldValue.arrayUnion(trophy)
+        "trophies.classChampionships": admin.firestore.FieldValue.arrayUnion(trophy)
       });
     });
 
@@ -401,13 +426,13 @@ function awardClassChampionshipTrophies(batch, dailyRecap, seasonData, db) {
     show.results.forEach((finalist) => {
       const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${finalist.uid}/profile/data`);
       const ribbon = {
-        type: 'class_finalist',
+        type: "class_finalist",
         classType: finalist.corpsClass,
         seasonName: seasonData.name,
         eventName: show.eventName
       };
       batch.update(userProfileRef, {
-        'trophies.classFinalistRibbons': admin.firestore.FieldValue.arrayUnion(ribbon)
+        "trophies.classFinalistRibbons": admin.firestore.FieldValue.arrayUnion(ribbon)
       });
     });
 
@@ -425,7 +450,7 @@ function awardClassChampionshipTrophies(batch, dailyRecap, seasonData, db) {
  * @returns {Promise<Object>} Season champions data for saving
  */
 async function awardFinalsAndSaveChampions(batch, dailyRecap, seasonData, db) {
-  const metals = ['gold', 'silver', 'bronze'];
+  const metals = ["gold", "silver", "bronze"];
   logger.info("Day 49 is Finals day. Awarding championship trophies and finalist medals...");
 
   const allResultsByClass = {};
@@ -434,42 +459,61 @@ async function awardFinalsAndSaveChampions(batch, dailyRecap, seasonData, db) {
     show.results.sort((a, b) => b.totalScore - a.totalScore);
 
     const isSoundSport = show.eventName.includes("SoundSport");
-    const trophyType = isSoundSport ? 'soundsport_championship' : 'championship';
 
-    // Award trophies to top 3
-    const top3 = show.results.slice(0, 3);
-    top3.forEach((winner, index) => {
-      const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${winner.uid}/profile/data`);
-      const trophy = {
-        type: trophyType,
-        metal: metals[index],
-        seasonName: seasonData.name,
-        eventName: show.eventName,
-        score: winner.totalScore,
-        rank: index + 1
-      };
-      batch.update(userProfileRef, {
-        'trophies.championships': admin.firestore.FieldValue.arrayUnion(trophy)
+    if (isSoundSport) {
+      // SoundSport is non-competitive: the Festival crowns a single
+      // International Festival Best in Show (top corps) — no medals, no
+      // finalist ribbons.
+      const bestInShow = show.results[0];
+      if (bestInShow) {
+        const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${bestInShow.uid}/profile/data`);
+        const award = {
+          type: "international_festival",
+          seasonName: seasonData.name,
+          eventName: show.eventName,
+          score: bestInShow.totalScore
+        };
+        batch.update(userProfileRef, {
+          "trophies.soundSportAwards": admin.firestore.FieldValue.arrayUnion(award)
+        });
+      }
+    } else {
+      // World Championship Finals: top-3 medals + finalist medals for all.
+      const top3 = show.results.slice(0, 3);
+      top3.forEach((winner, index) => {
+        const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${winner.uid}/profile/data`);
+        const trophy = {
+          type: "championship",
+          metal: metals[index],
+          corpsClass: winner.corpsClass || "worldClass",
+          seasonName: seasonData.name,
+          eventName: show.eventName,
+          score: winner.totalScore,
+          rank: index + 1
+        };
+        batch.update(userProfileRef, {
+          "trophies.championships": admin.firestore.FieldValue.arrayUnion(trophy)
+        });
       });
-    });
 
-    // Award finalist medals to all participants
-    show.results.forEach((finalist, index) => {
-      const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${finalist.uid}/profile/data`);
-      const medal = {
-        type: isSoundSport ? 'soundsport_finalist' : 'finalist',
-        seasonName: seasonData.name,
-        eventName: show.eventName,
-        rank: index + 1
-      };
-      batch.update(userProfileRef, {
-        'trophies.finalistMedals': admin.firestore.FieldValue.arrayUnion(medal)
+      // Award finalist medals to all participants
+      show.results.forEach((finalist, index) => {
+        const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${finalist.uid}/profile/data`);
+        const medal = {
+          type: "finalist",
+          seasonName: seasonData.name,
+          eventName: show.eventName,
+          rank: index + 1
+        };
+        batch.update(userProfileRef, {
+          "trophies.finalistMedals": admin.firestore.FieldValue.arrayUnion(medal)
+        });
       });
-    });
+    }
 
     // Collect results by class for season champions
     show.results.forEach(result => {
-      const corpsClass = result.corpsClass || 'worldClass';
+      const corpsClass = result.corpsClass || "worldClass";
       if (!allResultsByClass[corpsClass]) {
         allResultsByClass[corpsClass] = [];
       }
@@ -505,7 +549,7 @@ async function awardFinalsAndSaveChampions(batch, dailyRecap, seasonData, db) {
   const championUsernameMap = new Map();
   championProfileDocs.forEach(doc => {
     if (doc.exists) {
-      championUsernameMap.set(doc.ref.parent.parent.id, doc.data().username || 'Unknown');
+      championUsernameMap.set(doc.ref.parent.parent.id, doc.data().username || "Unknown");
     }
   });
 
@@ -514,7 +558,7 @@ async function awardFinalsAndSaveChampions(batch, dailyRecap, seasonData, db) {
     const championsWithUsernames = classTop3.map((result, index) => ({
       rank: index + 1,
       uid: result.uid,
-      username: championUsernameMap.get(result.uid) || 'Unknown',
+      username: championUsernameMap.get(result.uid) || "Unknown",
       corpsName: result.corpsName,
       score: result.totalScore
     }));
@@ -744,7 +788,7 @@ async function processWeeklyMatchups(week, seasonData, db) {
         const newMatchup = {
           ...matchup,
           scores: { [p1_uid]: p1_score, [p2_uid]: p2_score },
-          winner: winnerUid ?? 'tie',
+          winner: winnerUid ?? "tie",
           completed: true,
         };
         updatedMatchupsForClass.push(newMatchup);
@@ -754,7 +798,7 @@ async function processWeeklyMatchups(week, seasonData, db) {
           player2: p2_uid,
           player1Score: p1_score,
           player2Score: p2_score,
-          winner: winnerUid ?? 'tie',
+          winner: winnerUid ?? "tie",
           completed: true,
           corpsClass,
         });
@@ -785,9 +829,9 @@ async function processWeeklyMatchups(week, seasonData, db) {
       const decided = standingsPairs.filter((p) => p.player2 !== null).length;
       if (decided > 0) {
         await createLeagueActivity(db, leagueDoc.id, {
-          type: 'matchup_result',
+          type: "matchup_result",
           title: `Week ${week} Results`,
-          message: `${decided} matchup${decided > 1 ? 's' : ''} decided in week ${week}.`,
+          message: `${decided} matchup${decided > 1 ? "s" : ""} decided in week ${week}.`,
           metadata: { week, matchupsCompleted: decided },
         });
       }

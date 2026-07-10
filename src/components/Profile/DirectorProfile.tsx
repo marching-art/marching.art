@@ -5,6 +5,7 @@
 // Laws: No glow, no shadow, grid layout, minimal scrolling
 
 import React, { useState, useMemo, memo } from 'react';
+import { Link } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
 import {
   User,
@@ -33,7 +34,7 @@ import { CORPS_CLASS_ORDER, resolveCorpsForClass, isCorpsClassUnlocked } from '.
 import {
   StatusIndicator,
   StatPill,
-  TrophyMini,
+  TrophyCaseGrid,
   AchievementMini,
   Section,
   SocialLinks,
@@ -194,10 +195,14 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
   }, [profile.createdAt]);
 
   // Check if stats are empty
+  // Reads the fields the season pipeline maintains (lifetimeStats.*, trophies.*),
+  // not the legacy profile.stats counters that are never incremented — except
+  // stats.leagueWins, which IS bumped per matchup win.
   const hasStats =
-    (profile.stats?.championships || 0) > 0 ||
-    (profile.stats?.topTenFinishes || 0) > 0 ||
-    (profile.stats?.seasonsPlayed || 0) > 0;
+    (profile.trophies?.championships?.length || 0) > 0 ||
+    (profile.lifetimeStats?.totalSeasons || 0) > 0 ||
+    (profile.lifetimeStats?.totalShows || 0) > 0 ||
+    (profile.stats?.leagueWins || 0) > 0;
 
   return (
     <div className="bg-[#0a0a0a]">
@@ -436,7 +441,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
               />
               <StatPill
                 icon={Calendar}
-                value={profile.stats?.seasonsPlayed || 0}
+                value={profile.lifetimeStats?.totalSeasons || 0}
                 label="Seasons"
                 color="text-green-400"
               />
@@ -623,15 +628,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
             )}
           </div>
 
-          {trophies.length > 0 ? (
-            <div className="p-2 grid grid-cols-3 gap-1.5">
-              {trophies.slice(0, 6).map((trophy) => (
-                <TrophyMini key={trophy.id} trophy={trophy} />
-              ))}
-            </div>
-          ) : (
-            <EmptyWithCTA icon={Trophy} title="No trophies yet" cta="Join a league" to="/leagues" />
-          )}
+          <TrophyCaseGrid trophies={trophies} />
         </div>
 
         {/* COLUMN 2: Achievements */}
@@ -643,9 +640,17 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                 Achievements
               </span>
             </div>
-            {achievements.length > 0 && (
-              <span className="text-[9px] text-gray-500">{achievements.length} earned</span>
-            )}
+            <div className="flex items-center gap-2">
+              {achievements.length > 0 && (
+                <span className="text-[9px] text-gray-500">{achievements.length} earned</span>
+              )}
+              {/* Own profile only — the page shows the viewer's own list. */}
+              {isOwnProfile && (
+                <Link to="/achievements" className="text-[9px] text-[#0057B8] hover:underline">
+                  View all →
+                </Link>
+              )}
+            </div>
           </div>
 
           {achievements.length > 0 ? (
@@ -694,15 +699,19 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
               {[
                 {
                   label: 'Championships',
-                  value: profile.stats?.championships || 0,
+                  value: profile.trophies?.championships?.length || 0,
                   color: 'text-yellow-400',
                 },
                 {
-                  label: 'Top 10s',
-                  value: profile.stats?.topTenFinishes || 0,
+                  label: 'Career Shows',
+                  value: (profile.lifetimeStats?.totalShows || 0).toLocaleString(),
                   color: 'text-white',
                 },
-                { label: 'Seasons', value: profile.stats?.seasonsPlayed || 0, color: 'text-white' },
+                {
+                  label: 'Seasons',
+                  value: profile.lifetimeStats?.totalSeasons || 0,
+                  color: 'text-white',
+                },
                 {
                   label: 'League Wins',
                   value: profile.stats?.leagueWins || 0,

@@ -10,6 +10,7 @@ import {
   Calendar,
   MapPin,
   Award,
+  Trophy,
   ChevronRight,
   Music,
   Disc3,
@@ -35,7 +36,6 @@ import { describeConceptStyle, getConceptTitle } from '../../utils/showConcept';
 import { toCanonicalClassKey } from '../../utils/classUnlocks';
 import { getSoundSportRating } from '../../utils/scoresUtils';
 import {
-  TIER_STYLES,
   STATUS_INDICATORS,
   getClassDisplay,
   type SeasonHistoryEntry,
@@ -88,20 +88,17 @@ const StatPill = memo(
 );
 StatPill.displayName = 'StatPill';
 
-// Trophy mini card
+// A trophy is a single bare icon — no box, no label. Shape (class or award
+// family) and color are resolved in the data layer (getRealTrophies); this just
+// renders them. Full detail lives in the tooltip.
 const TrophyMini = memo(({ trophy }: { trophy: TrophyData }) => {
-  const styles = TIER_STYLES[trophy.tier];
-  const Icon = trophy.icon;
+  const Icon = trophy.icon || Award;
+  const tooltip = [trophy.title, trophy.description].filter(Boolean).join(' — ');
+
   return (
-    <div
-      className={`p-2 ${styles.bg} border ${styles.border} flex flex-col items-center text-center`}
-      title={trophy.description}
-    >
-      <Icon className={`w-5 h-5 ${styles.icon}`} />
-      <span className={`text-[9px] font-bold ${styles.text} mt-1 truncate w-full`}>
-        {trophy.title}
-      </span>
-    </div>
+    <span className="inline-flex" title={tooltip} role="img" aria-label={tooltip}>
+      <Icon className={`w-7 h-7 ${trophy.color}`} />
+    </span>
   );
 });
 TrophyMini.displayName = 'TrophyMini';
@@ -564,6 +561,23 @@ const EmptyWithCTA = memo(
 );
 EmptyWithCTA.displayName = 'EmptyWithCTA';
 
+// Trophy case — a scrollable field of bare trophy icons (see TrophyMini),
+// sorted by class hierarchy then award. No boxes, no labels; the shelf simply
+// fills and scrolls as hardware accumulates.
+const TrophyCaseGrid = memo(({ trophies }: { trophies: TrophyData[] }) => {
+  if (trophies.length === 0) {
+    return <EmptyWithCTA icon={Trophy} title="No trophies yet" cta="Join a league" to="/leagues" />;
+  }
+  return (
+    <div className="p-3 flex flex-wrap gap-x-2.5 gap-y-3 max-h-44 overflow-y-auto">
+      {trophies.map((trophy) => (
+        <TrophyMini key={trophy.id} trophy={trophy} />
+      ))}
+    </div>
+  );
+});
+TrophyCaseGrid.displayName = 'TrophyCaseGrid';
+
 // -----------------------------------------------------------------------------
 // AVATAR ACTIONS - Design / Regenerate / Change avatar
 // -----------------------------------------------------------------------------
@@ -633,6 +647,7 @@ export {
   StatusIndicator,
   StatPill,
   TrophyMini,
+  TrophyCaseGrid,
   AchievementMini,
   SeasonRow,
   Section,
