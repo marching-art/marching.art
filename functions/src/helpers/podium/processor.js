@@ -82,6 +82,9 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
     }
 
     const scheduleLocations = await loadScheduleLocations(db, seasonData);
+    // Published Day-39 Eastern night snake (null before publication — the
+    // uid-parity fallback stands until then).
+    const easternAssignments = await store.loadEasternAssignments(db, seasonUid);
     const results = [];
     const jointToday = []; // corps whose joint rehearsal was today (§5.12)
     const coinAwards = []; // wallet CC per performance (shared economy faucet)
@@ -103,7 +106,7 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
       } else if (state.today && state.today.calendarDay === calendarDay) {
         dayInfo = state.today;
       }
-      const isShowDay = store.isShowDayFor(state, uid, competitionDay);
+      const isShowDay = store.isShowDayFor(state, uid, competitionDay, easternAssignments);
       const isSpringTraining = seasonData.status === "live-season" && competitionDay < 1;
       const maxBlocks = engine.blocksAvailable(state, { isShowDay, isSpringTraining }, store.balance);
 
@@ -323,6 +326,7 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
           corpsName: state.corpsName,
           corpsClass: "podiumClass",
           repTier: state.repTier,
+          division: state.division || "aClass",
           totalScore: score.total,
           geScore: score.geScore,
           visualScore: score.visualScore,
@@ -447,14 +451,47 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
           uid: rosterDoc.id,
           corpsName: data.corpsName || null,
           repTier: data.repTier ?? null,
+          division: data.division || "aClass",
           lastTotal: data.lastTotal,
           medals: data.medals,
         });
       }
     }
     standings.sort((a, b) => b.lastTotal - a.lastTotal);
+
+    // --- 4a. Eastern Classic night snake (design §5.11) ----------------------
+    // Published once, at the end of Day 38 (players wake to lineups on Day
+    // 39): within each division, current standings snake across the two
+    // nights (1-4-5-8 / 2-3-6-7) so both nights carry equal strength. Corps
+    // outside the standings (never scored) keep the uid-parity fallback.
+    if (competitionDay === store.EASTERN_PUBLISH_DAY - 1 && standings.length > 0) {
+      try {
+        const assignments = {};
+        const divisionOrder = ["worldClass", "openClass", "aClass"];
+        for (const division of divisionOrder) {
+          const seeds = standings.filter((entry) => entry.division === division);
+          seeds.forEach((entry, index) => {
+            const snakePos = index % 4;
+            assignments[entry.uid] = snakePos === 0 || snakePos === 3 ? 41 : 42;
+          });
+        }
+        await db.doc(`eastern-classic/${seasonUid}`).set(
+          {
+            podium: {
+              assignments,
+              publishedAt: new Date().toISOString(),
+              publishedOnDay: competitionDay,
+            },
+          },
+          { merge: true }
+        );
+        logger.info(`[podium] Eastern night snake published: ${Object.keys(assignments).length} corps.`);
+      } catch (error) {
+        logger.error(`[podium] Eastern snake publication failed: ${error.message}`);
+      }
+    }
     for (let i = 0; i < standings.length; i++) {
-      const { uid, lastTotal, medals } = standings[i];
+      const { uid, lastTotal, medals, division } = standings[i];
       const medalWon = medalByUid[uid];
       const updatedMedals = medalWon
         ? { ...(medals || {}), [medalWon]: ((medals || {})[medalWon] || 0) + 1 }
@@ -470,6 +507,7 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
               totalSeasonScore: lastTotal,
               seasonRank: i + 1,
               seasonRankOf: standings.length,
+              division,
               medals: updatedMedals,
             },
           },

@@ -23,6 +23,7 @@ const { logger } = require("firebase-functions/v2");
 const { dataNamespaceParam } = require("../../config");
 const engine = require("./engine");
 const store = require("./store");
+const divisions = require("./divisions");
 
 const SEASONS_DOC = "podium-config/podiumSeasons";
 
@@ -276,6 +277,8 @@ async function archivePodiumSeason(db, previousSeason) {
           lastTotal: state.lastTotal ?? null,
           lastScoredDay: state.lastScoredDay ?? null,
           medals: state.medals || {},
+          division: divisions.normalizeDivision(state.division || career.division),
+          underCutoffSeasons: career.underCutoffSeasons || 0,
         });
       } else {
         // The state was already replaced (lazy self-archival at re-registration
@@ -290,6 +293,8 @@ async function archivePodiumSeason(db, previousSeason) {
             lastTotal: entry.finalsTotal ?? null,
             lastScoredDay: entry.finalsDay ?? null,
             medals: {},
+            division: divisions.normalizeDivision(career.division),
+            underCutoffSeasons: career.underCutoffSeasons || 0,
           });
         }
       }
@@ -299,12 +304,69 @@ async function archivePodiumSeason(db, previousSeason) {
   }
 
   const finalStandings = buildFinalStandings(swept);
+
+  // --- Division re-seat (design §5.7, decision 26) --------------------------
+  // Assess the veteran pool against published percentile cutoffs and write
+  // each corps' next-season seat into its career. If the corps already
+  // re-registered for the new season (rollover-night race), its live state
+  // and profile display are re-stamped with the assessed seat so nobody
+  // plays a whole season in yesterday's division.
+  const assessment = divisions.assessDivisions(
+    swept.map((entry) => ({
+      uid: entry.uid,
+      division: entry.division,
+      finalsTotal: entry.lastTotal,
+      underCutoffSeasons: entry.underCutoffSeasons,
+    })),
+    store.balance
+  );
+  for (const [uid, seat] of Object.entries(assessment.next)) {
+    try {
+      await careerRef(db, uid).set(
+        {
+          division: seat.division,
+          underCutoffSeasons: seat.underCutoffSeasons,
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
+      const liveState = await store.stateRef(db, uid).get();
+      if (liveState.exists && liveState.data().seasonUid !== previousSeason.seasonUid) {
+        await store.stateRef(db, uid).set({ division: seat.division }, { merge: true });
+        await store
+          .profileRef(db, uid)
+          .set({ corps: { podiumClass: { division: seat.division } } }, { merge: true });
+      }
+    } catch (error) {
+      logger.error(`[podium] division seat write failed for ${uid}: ${error.message}`);
+    }
+  }
+
+  // Champions per division — the FMA rise: every division crowns its own.
+  const divisionChampions = {};
+  for (const division of divisions.DIVISIONS) {
+    const top = finalStandings.find((entry) => entry.division === division);
+    if (top) {
+      divisionChampions[division] = {
+        uid: top.uid,
+        corpsName: top.corpsName,
+        score: top.lastTotal,
+        place: top.place,
+      };
+    }
+  }
+
   await db.doc(`podium-recaps/${previousSeason.seasonUid}`).set(
     {
       seasonUid: previousSeason.seasonUid,
       seasonIndex: previousSeason.index,
       champion: finalStandings[0] || null,
       finalStandings,
+      divisionChampions,
+      divisions: {
+        cutoffs: assessment.cutoffs,
+        nextSeasonCounts: assessment.counts,
+      },
       corpsCount: roster.size,
       archivedAt: new Date().toISOString(),
     },
@@ -321,54 +383,68 @@ async function archivePodiumSeason(db, previousSeason) {
   if (finalStandings.length > 0) {
     try {
       const metals = ["gold", "silver", "bronze"];
-      const champions = [];
-      for (const entry of finalStandings.slice(0, 3)) {
-        let username = "Unknown";
-        try {
-          const profileSnapshot = await store.profileRef(db, entry.uid).get();
-          const profile = profileSnapshot.exists ? profileSnapshot.data() : null;
-          if (profile) {
-            username = profile.username || profile.displayName || "Unknown";
-          }
-          // Finals medal — idempotent per season (re-sweeps skip the append).
-          const existing = (profile && profile.trophies && profile.trophies.championships) || [];
-          const alreadyAwarded = existing.some(
-            (trophy) =>
-              trophy &&
-              trophy.corpsClass === "podiumClass" &&
-              trophy.seasonName === previousSeason.seasonUid
-          );
-          if (!alreadyAwarded) {
-            await store.profileRef(db, entry.uid).set(
-              {
-                trophies: {
-                  championships: [
-                    ...existing,
-                    {
-                      type: "championship",
-                      metal: metals[entry.place - 1],
-                      corpsClass: "podiumClass",
-                      seasonName: previousSeason.seasonUid,
-                      eventName: "Podium Class Finals",
-                      score: entry.lastTotal,
-                      rank: entry.place,
-                    },
-                  ],
-                },
-              },
-              { merge: true }
+      // Finals hardware per DIVISION (the FMA rise: every division medals
+      // its own podium). A director fields one corps in one division, so the
+      // per-user corpsClass+seasonName dedupe still holds.
+      let hallChampions = [];
+      for (const division of [...divisions.DIVISIONS].reverse()) {
+        const divisionStandings = finalStandings.filter((entry) => entry.division === division);
+        if (divisionStandings.length === 0) continue;
+        const eventName = `Podium ${divisions.DIVISION_LABELS[division]} Finals`;
+        const champions = [];
+        for (let i = 0; i < Math.min(3, divisionStandings.length); i++) {
+          const entry = divisionStandings[i];
+          const medalRank = i + 1;
+          let username = "Unknown";
+          try {
+            const profileSnapshot = await store.profileRef(db, entry.uid).get();
+            const profile = profileSnapshot.exists ? profileSnapshot.data() : null;
+            if (profile) {
+              username = profile.username || profile.displayName || "Unknown";
+            }
+            // Finals medal — idempotent per season (re-sweeps skip the append).
+            const existing = (profile && profile.trophies && profile.trophies.championships) || [];
+            const alreadyAwarded = existing.some(
+              (trophy) =>
+                trophy &&
+                trophy.corpsClass === "podiumClass" &&
+                trophy.seasonName === previousSeason.seasonUid
             );
+            if (!alreadyAwarded) {
+              await store.profileRef(db, entry.uid).set(
+                {
+                  trophies: {
+                    championships: [
+                      ...existing,
+                      {
+                        type: "championship",
+                        metal: metals[medalRank - 1],
+                        corpsClass: "podiumClass",
+                        seasonName: previousSeason.seasonUid,
+                        eventName,
+                        score: entry.lastTotal,
+                        rank: medalRank,
+                      },
+                    ],
+                  },
+                },
+                { merge: true }
+              );
+            }
+          } catch (profileError) {
+            logger.warn(`[podium] medal/username write failed for ${entry.uid}: ${profileError.message}`);
           }
-        } catch (profileError) {
-          logger.warn(`[podium] medal/username write failed for ${entry.uid}: ${profileError.message}`);
+          champions.push({
+            rank: medalRank,
+            uid: entry.uid,
+            username,
+            corpsName: entry.corpsName,
+            score: entry.lastTotal,
+          });
         }
-        champions.push({
-          rank: entry.place,
-          uid: entry.uid,
-          username,
-          corpsName: entry.corpsName,
-          score: entry.lastTotal,
-        });
+        // The Hall of Champions shows the TOP active division's podium —
+        // World once it exists, the highest formed division until then.
+        if (hallChampions.length === 0) hallChampions = champions;
       }
       const championsRef = db.doc(`season_champions/${previousSeason.seasonUid}`);
       const championsSnapshot = await championsRef.get();
@@ -377,7 +453,7 @@ async function archivePodiumSeason(db, previousSeason) {
       const base = championsSnapshot.exists
         ? {}
         : { seasonName: previousSeason.seasonUid, archivedAt: new Date() };
-      await championsRef.set({ ...base, classes: { podiumClass: champions } }, { merge: true });
+      await championsRef.set({ ...base, classes: { podiumClass: hallChampions } }, { merge: true });
     } catch (error) {
       logger.error(`[podium] Hall of Champions merge failed (archival unaffected): ${error.message}`);
     }

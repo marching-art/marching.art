@@ -247,6 +247,16 @@
     "dormancyDecayFloorSeasons": 12,
     "heritageCreditMultiplier": 1.5
   },
+  "divisions": {
+    "cutoffPercentiles": {
+      "openClass": 34,
+      "worldClass": 67
+    },
+    "minPoolForOpen": 6,
+    "minPoolForWorld": 12,
+    "demotionGraceSeasons": 1,
+    "absenceResetSeasons": 2
+  },
   "budget": {
     "commitmentCap": 2500,
     "commitmentCapByDivision": {

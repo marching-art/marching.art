@@ -6,10 +6,12 @@ import React, { useState } from 'react';
 import { Bus, UtensilsCrossed, UserCog, Loader2, Sun, Coins, Sparkles } from 'lucide-react';
 import { BLOCKS } from './podiumConstants';
 
+// Costs mirror functions balanceConfig condition.foodTiers — charged from
+// the Corps Budget once per week (never your CorpsCoin wallet directly).
 const FOOD_TIERS = [
   { id: 'gasStation', label: 'Gas station', detail: 'Free · slower recovery, morale risk' },
-  { id: 'standard', label: 'Standard', detail: 'Baseline recovery' },
-  { id: 'fullKitchen', label: 'Full kitchen', detail: 'Best recovery + morale' },
+  { id: 'standard', label: 'Standard', detail: '60 Budget/week · baseline recovery' },
+  { id: 'fullKitchen', label: 'Full kitchen', detail: '150 Budget/week · best recovery + morale' },
 ];
 
 const TIER_LABELS = {
@@ -46,6 +48,7 @@ export default function CorpsConditionPanel({ podium }) {
 
   const template = state.planTemplate || [];
   const budget = state.budget || { balance: 0, committed: 0, earned: 0, spent: 0 };
+  const commitmentCap = podium.data?.commitmentCap || 2500;
 
   return (
     <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4 space-y-4">
@@ -61,15 +64,15 @@ export default function CorpsConditionPanel({ podium }) {
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] tabular-nums">
           <span className="text-white font-bold">{budget.balance}</span>
           <span className="text-gray-500">
-            committed {budget.committed || 0}/1,000 · earned {budget.earned || 0} · spent{' '}
-            {budget.spent || 0}
+            committed {budget.committed || 0}/{commitmentCap.toLocaleString()} · earned{' '}
+            {budget.earned || 0} · spent {budget.spent || 0}
           </span>
-          {(budget.committed || 0) < 1000 && (
+          {(budget.committed || 0) < commitmentCap && (
             <span className="flex items-center gap-1.5">
               <input
                 type="number"
                 min={50}
-                max={1000 - (budget.committed || 0)}
+                max={commitmentCap - (budget.committed || 0)}
                 step={50}
                 value={topUp}
                 onChange={(e) => setTopUp(Math.max(0, Number(e.target.value) || 0))}
@@ -191,7 +194,7 @@ export default function CorpsConditionPanel({ podium }) {
                 <button
                   key={block.id}
                   onClick={() =>
-                    setTemplateDraft((prev) => (prev.length < 5 ? [...prev, block.id] : prev))
+                    setTemplateDraft((prev) => (prev.length < 20 ? [...prev, block.id] : prev))
                   }
                   className="text-[10px] font-bold px-2 py-1 rounded-sm border border-[#333] text-gray-400 hover:text-white hover:border-[#0057B8] press-feedback"
                 >
@@ -244,8 +247,9 @@ export default function CorpsConditionPanel({ podium }) {
                 <span className="w-8 shrink-0 text-gray-500">D{leg.day}</span>
                 <span
                   className={`flex-1 truncate ${leg.isMajor ? 'text-[#c9a227] font-bold' : 'text-gray-300'}`}
+                  title={leg.label ? `${leg.label} — ${leg.city}` : leg.city}
                 >
-                  {leg.city}
+                  {leg.label ? `${leg.label} · ${leg.city}` : leg.city}
                 </span>
                 {leg.miles != null && leg.miles > 0 && (
                   <span className="text-gray-500">

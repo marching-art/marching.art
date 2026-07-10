@@ -15,6 +15,7 @@
 
 const { dataNamespaceParam } = require("../../config");
 const engine = require("./engine");
+const divisions = require("./divisions");
 const curves = require("./curveData.json");
 const balance = require("./balanceConfig.json");
 
@@ -74,11 +75,37 @@ async function applyBalanceOverrides(db, { force = false } = {}) {
 }
 
 // The marching.art majors (competition days). Eastern Classic is one event
-// across days 41-42; each corps performs its single assigned night (v1
-// assignment: deterministic uid-hash parity; seeding snake lands in Phase 6).
+// across days 41-42; each corps performs its single assigned night —
+// division-seeded snake once lineups publish on Day 39 (persisted in
+// eastern-classic/{seasonUid}.podium), uid-hash parity as the provisional
+// and fallback assignment.
 const MAJOR_DAYS = Object.freeze([28, 35, 41, 42]);
 const EASTERN_DAYS = Object.freeze([41, 42]);
+const EASTERN_PUBLISH_DAY = 39;
 const CHAMPIONSHIP_AUTO_DAYS = Object.freeze([47, 48, 49]);
+
+// Championship week in Indianapolis (§5.7 divisions): A and Open run
+// Prelims -> Class Finals on days 47-48; World runs Prelims -> Semifinals ->
+// Finals through day 49, DCI-shaped.
+const CHAMPIONSHIP_DAYS_BY_DIVISION = Object.freeze({
+  aClass: Object.freeze([47, 48]),
+  openClass: Object.freeze([47, 48]),
+  worldClass: CHAMPIONSHIP_AUTO_DAYS,
+});
+const CHAMPIONSHIP_LABELS_BY_DIVISION = Object.freeze({
+  aClass: Object.freeze({ 47: "A Class Prelims", 48: "A Class Finals" }),
+  openClass: Object.freeze({ 47: "Open Class Prelims", 48: "Open Class Finals" }),
+  worldClass: Object.freeze({
+    47: "World Class Prelims",
+    48: "World Class Semifinals",
+    49: "World Class Finals",
+  }),
+});
+
+/** Championship-week show days for a corps' division. */
+function championshipDaysFor(division) {
+  return CHAMPIONSHIP_DAYS_BY_DIVISION[divisions.normalizeDivision(division)];
+}
 
 /** Max self-selected shows per competition week (majors consume a slot). */
 function maxPicksForWeek(week) {
@@ -87,20 +114,46 @@ function maxPicksForWeek(week) {
   return 4;
 }
 
-/** The Eastern night (41 or 42) this corps performs, deterministic per uid+season. */
-function easternNightFor(uid, seasonUid) {
+/**
+ * The Eastern night (41 or 42) this corps performs. `easternAssignments`
+ * (the published Day-39 division-seeded snake, from loadEasternAssignments)
+ * wins when present; deterministic uid-hash parity otherwise.
+ */
+function easternNightFor(uid, seasonUid, easternAssignments) {
+  const assigned = easternAssignments && easternAssignments[uid];
+  if (assigned === 41 || assigned === 42) return assigned;
   return engine.seededUnit(`${seasonUid}|eastern|${uid}`) < 0.5 ? 41 : 42;
 }
 
+/** The published Podium Eastern night assignments ({uid: 41|42}), or null. */
+async function loadEasternAssignments(db, seasonUid) {
+  try {
+    const snapshot = await db.doc(`eastern-classic/${seasonUid}`).get();
+    const podium = snapshot.exists ? snapshot.data().podium : null;
+    return (podium && podium.assignments) || null;
+  } catch {
+    return null;
+  }
+}
+
 /** All auto-attended competition days for a corps (majors + championships). */
-function autoDaysFor(uid, seasonUid) {
-  return [28, 35, easternNightFor(uid, seasonUid), ...CHAMPIONSHIP_AUTO_DAYS];
+function autoDaysFor(uid, seasonUid, { division, easternAssignments } = {}) {
+  return [
+    28,
+    35,
+    easternNightFor(uid, seasonUid, easternAssignments),
+    ...championshipDaysFor(division),
+  ];
 }
 
 /** True when `competitionDay` is a show day for this corps. */
-function isShowDayFor(state, uid, competitionDay) {
+function isShowDayFor(state, uid, competitionDay, easternAssignments) {
   if (competitionDay < 1 || competitionDay > 49) return false;
-  if (autoDaysFor(uid, state.seasonUid).includes(competitionDay)) return true;
+  const auto = autoDaysFor(uid, state.seasonUid, {
+    division: state.division,
+    easternAssignments,
+  });
+  if (auto.includes(competitionDay)) return true;
   return (state.selectedShowDays || []).includes(competitionDay);
 }
 
@@ -202,9 +255,14 @@ function dehydrateState(state) {
 module.exports = {
   MAJOR_DAYS,
   EASTERN_DAYS,
+  EASTERN_PUBLISH_DAY,
   CHAMPIONSHIP_AUTO_DAYS,
+  CHAMPIONSHIP_DAYS_BY_DIVISION,
+  CHAMPIONSHIP_LABELS_BY_DIVISION,
+  championshipDaysFor,
   maxPicksForWeek,
   easternNightFor,
+  loadEasternAssignments,
   autoDaysFor,
   isShowDayFor,
   profileRef,

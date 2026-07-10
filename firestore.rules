@@ -72,7 +72,10 @@ function corpsClassUntouched(corpsClass) {
      // case. Both are written only by season archival / the nightly
      // processors — a client-forged placement would mint leaderboard rank.
      request.resource.data.get(['corps', corpsClass, 'seasonHistory'], null) == resource.data.get(['corps', corpsClass, 'seasonHistory'], null) &&
-     request.resource.data.get(['corps', corpsClass, 'medals'], null) == resource.data.get(['corps', corpsClass, 'medals'], null));
+     request.resource.data.get(['corps', corpsClass, 'medals'], null) == resource.data.get(['corps', corpsClass, 'medals'], null) &&
+     // Podium division seat (A/Open/World) — assessed at season boundaries
+     // by archival; a client-forged seat would display a stolen rise.
+     request.resource.data.get(['corps', corpsClass, 'division'], null) == resource.data.get(['corps', corpsClass, 'division'], null));
 }
 
 // Podium Class competitive state (corps.podiumClass.podium.*) is written
