@@ -56,6 +56,81 @@ function percentile(sorted, p) {
   return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
 }
 
+// ---------------------------------------------------------------------------
+// Survivorship correction (championship week).
+//
+// The raw bands are built from whoever PERFORMED each day. Through day ~44
+// the full field tours (Pioneer at p5, Surf/Genesis at p25), but real DCI
+// data thins out at championships: day 47 is prelims, day 48 semis (top 25),
+// day 49 finals (top 12 only). The lower percentiles of days 45-49 therefore
+// measure "the floor of the survivors", not the floor of the field — the raw
+// day-49 p5 is ~80, i.e. 12th place at finals, when a community-corps season
+// realistically ends in the 60s-70s (user calibration report, 2026-07).
+//
+// Podium scores EVERY corps on days 47-49 (no cuts), so the engine needs
+// full-field bands all the way to finals. Correction: for the lower
+// percentiles (p5/p25/p50), fit a linear trend over the stable full-field
+// window (days 30-44) and extend it through days 45-49, never above the
+// observed value (observed is inflated by selection, never deflated). The
+// upper percentiles (p75/p95/max) keep their observed values — the corps
+// that define them perform all week, and their championship peak is real.
+// ---------------------------------------------------------------------------
+
+const SURVIVORSHIP = {
+  trendFromDay: 30,
+  trendToDay: 44,
+  correctFromDay: 45,
+  lowerKeys: ["p5", "p25", "p50"],
+};
+
+/** Least-squares line over [{x, y}] -> {slope, intercept}. */
+function fitLine(points) {
+  const n = points.length;
+  const sx = points.reduce((s, p) => s + p.x, 0);
+  const sy = points.reduce((s, p) => s + p.y, 0);
+  const sxx = points.reduce((s, p) => s + p.x * p.x, 0);
+  const sxy = points.reduce((s, p) => s + p.x * p.y, 0);
+  const slope = (n * sxy - sx * sy) / (n * sxx - sx * sx || 1);
+  return { slope, intercept: (sy - slope * sx) / n };
+}
+
+/**
+ * Apply the survivorship correction to one band array (49 entries, day-1
+ * indexed) IN PLACE, returning it. Pure given its input; exported for tests
+ * and for the standalone re-apply runner.
+ */
+function correctSurvivorship(bandArray) {
+  const cfg = SURVIVORSHIP;
+  for (const key of cfg.lowerKeys) {
+    const points = [];
+    for (let day = cfg.trendFromDay; day <= cfg.trendToDay; day++) {
+      const entry = bandArray[day - 1];
+      if (entry && typeof entry[key] === "number") points.push({ x: day, y: entry[key] });
+    }
+    if (points.length < 5) continue; // not enough full-field data to trend
+    const { slope, intercept } = fitLine(points);
+    for (let day = cfg.correctFromDay; day <= SEASON_DAYS; day++) {
+      const entry = bandArray[day - 1];
+      if (!entry || typeof entry[key] !== "number") continue;
+      const trended = Number((intercept + slope * day).toFixed(3));
+      entry[key] = Math.min(entry[key], trended);
+    }
+  }
+  // Re-enforce the percentile ordering per day (the trend lines are fit
+  // independently and could cross in the corrected window).
+  const ordered = ["p5", "p25", "p50", "p75", "p95", "max"];
+  for (let day = cfg.correctFromDay; day <= SEASON_DAYS; day++) {
+    const entry = bandArray[day - 1];
+    if (!entry) continue;
+    for (let i = 1; i < ordered.length; i++) {
+      if (typeof entry[ordered[i]] === "number" && typeof entry[ordered[i - 1]] === "number") {
+        entry[ordered[i]] = Math.max(entry[ordered[i]], entry[ordered[i - 1]]);
+      }
+    }
+  }
+  return bandArray;
+}
+
 /**
  * Load event data grouped as corps-season caption series.
  * @param {boolean} useFirestore
@@ -366,7 +441,7 @@ async function main() {
       if (points && points.length > 0) allSeries.push(points);
     }
     const maxValue = caption === "TOTAL" ? 100 : 20;
-    const bands = buildBands(allSeries, maxValue);
+    const bands = correctSurvivorship(buildBands(allSeries, maxValue));
     const deltas = buildDeltas(allSeries);
     if (caption === "TOTAL") {
       output.totalBands = bands;
@@ -400,7 +475,14 @@ async function main() {
   console.log(`Wrote ${OUTPUT_PATH}`);
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+// Exported for tests and for applySurvivorshipCorrection.js (re-applies the
+// correction to the committed curveData.json without a full Firestore
+// rebuild).
+module.exports = { correctSurvivorship, fitLine, SURVIVORSHIP };
+
+if (require.main === module) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

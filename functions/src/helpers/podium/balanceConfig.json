@@ -73,7 +73,7 @@
     "attainmentFullRealization": 0.58,
     "judgeVarianceMax": 0.05,
     "totalCap": 99.7,
-    "repCeilingPercentileByTier": { "1": 55, "2": 65, "3": 75, "4": 82, "5": 88, "6": 93, "7": 100 },
+    "repCeilingPercentileByTier": { "1": 25, "2": 43, "3": 57, "4": 66, "5": 75, "6": 93, "7": 100 },
     "challengeCeilingPercentile": { "1": 42, "2": 50, "3": 58, "4": 66, "5": 74, "6": 84, "7": 93, "8": 100 }
   },
   "reputation": {

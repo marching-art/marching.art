@@ -162,6 +162,9 @@ async function podiumContext(request) {
   const seasonData = seasonDoc.data();
   const calendarDay = getActiveCalendarDay(seasonData.schedule.startDate.toDate());
   const competitionDay = toCompetitionDay(calendarDay, seasonData);
+  // Beta tuning path: merge podium-config/balance overrides over the
+  // committed defaults (memoized; committed values stand on any failure).
+  await store.applyBalanceOverrides(db);
   return { uid, db, seasonData, calendarDay, competitionDay };
 }
 

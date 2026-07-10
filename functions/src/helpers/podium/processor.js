@@ -67,6 +67,10 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
     return { status: "skipped", reason: claim.reason, calendarDay };
   }
 
+  // Beta tuning path: merge podium-config/balance overrides over the
+  // committed defaults before any engine math runs tonight.
+  await store.applyBalanceOverrides(db);
+
   try {
     const roster = await store.rosterCollection(db, seasonUid).get();
     if (roster.empty) {

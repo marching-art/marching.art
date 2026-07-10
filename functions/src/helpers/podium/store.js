@@ -18,6 +18,58 @@ const engine = require("./engine");
 const curves = require("./curveData.json");
 const balance = require("./balanceConfig.json");
 
+// ---------------------------------------------------------------------------
+// Runtime balance overrides (Phase 8 tuning path).
+//
+// The committed balanceConfig.json is the deploy-time seed; the Firestore doc
+// `podium-config/balance` holds beta-season overrides so re-tuning never
+// needs a deploy. applyBalanceOverrides deep-merges the doc over a pristine
+// copy of the committed defaults into the SAME exported `balance` object
+// (every module holds a reference to it), memoized for a minute. A missing
+// doc, an empty doc, or a read failure all mean "committed defaults" — the
+// safe state. To retire an override, set the field back to the committed
+// value (or delete it from the doc; the pristine-copy rebuild reverts it on
+// the next refresh).
+// ---------------------------------------------------------------------------
+
+const BALANCE_DEFAULTS = JSON.parse(JSON.stringify(balance));
+const BALANCE_TTL_MS = 60 * 1000;
+let balanceFetchedAt = 0;
+
+function deepMerge(target, source) {
+  for (const [key, value] of Object.entries(source || {})) {
+    const bothObjects =
+      value && typeof value === "object" && !Array.isArray(value) &&
+      target[key] && typeof target[key] === "object" && !Array.isArray(target[key]);
+    if (bothObjects) {
+      deepMerge(target[key], value);
+    } else {
+      target[key] = value;
+    }
+  }
+  return target;
+}
+
+/**
+ * Refresh the shared balance object from podium-config/balance overrides.
+ * Never throws — the committed defaults always stand on any failure.
+ */
+async function applyBalanceOverrides(db, { force = false } = {}) {
+  const now = Date.now();
+  if (!force && now - balanceFetchedAt < BALANCE_TTL_MS) return balance;
+  balanceFetchedAt = now;
+  try {
+    const snapshot = await db.doc("podium-config/balance").get();
+    const overrides = snapshot.exists ? snapshot.data() : null;
+    const merged = deepMerge(JSON.parse(JSON.stringify(BALANCE_DEFAULTS)), overrides || {});
+    for (const key of Object.keys(balance)) delete balance[key];
+    Object.assign(balance, merged);
+  } catch (error) {
+    // Reads can fail transiently; keep whatever is currently applied.
+  }
+  return balance;
+}
+
 // The marching.art majors (competition days). Eastern Classic is one event
 // across days 41-42; each corps performs its single assigned night (v1
 // assignment: deterministic uid-hash parity; seeding snake lands in Phase 6).
@@ -163,6 +215,7 @@ module.exports = {
   initBudget,
   creditBudget,
   debitBudget,
+  applyBalanceOverrides,
   curves,
   balance,
 };

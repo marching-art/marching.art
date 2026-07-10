@@ -770,15 +770,26 @@ placement, division titles, caption awards, majors podiums. Nothing else moves i
 not CorpsCoin, not donations, not account age. It maps to seven named tiers, and the tier gates
 the **ceiling percentile** of the historical band the corps can score into:
 
-| Tier                    | Ceiling (percentile of historical day-band) | Feel at finals                            |
-| ----------------------- | ------------------------------------------- | ----------------------------------------- |
-| 1 · Community Corps     | p55                                         | ~91 ceiling — a strong debut season       |
-| 2 · Regional Contender  | p65                                         | ~92.5                                     |
-| 3 · National Contender  | p75                                         | ~94                                       |
-| 4 · Finalist            | p82                                         | ~95.5                                     |
-| 5 · Medalist            | p88                                         | ~96.5                                     |
-| 6 · Elite               | p93                                         | ~97.5                                     |
-| 7 · **Champion Status** | full envelope                               | the corpus maximum (99.x) — **never 100** |
+| Tier                    | Ceiling (percentile of historical day-band) | Feel at finals                                                |
+| ----------------------- | ------------------------------------------- | ------------------------------------------------------------- |
+| 1 · Community Corps     | p25                                         | ~76 ceiling — a strong debut (Surf/Genesis/Cascades territory) |
+| 2 · Regional Contender  | p43                                         | ~82 — a top Open-class season                                  |
+| 3 · National Contender  | p57                                         | ~87 — semifinalist                                             |
+| 4 · Finalist            | p66                                         | ~91 — mid-pack Saturday night                                  |
+| 5 · Medalist            | p75                                         | ~94.5 — knocking on the medals                                 |
+| 6 · Elite               | p93                                         | ~97.5 — Bluecoats/Boston in a strong year                      |
+| 7 · **Champion Status** | full envelope                               | the corpus maximum (99.x) — **never 100**                      |
+
+The percentiles read against the **survivorship-corrected** day bands: raw historical data
+thins out at championships (day 49 contains only the twelve finalists), so the lower
+percentiles of days 45-49 are re-anchored to the full-field trend of days 30-44 by the curve
+builder (`correctSurvivorship`). Without the correction the finals floor sat at ~80 and a
+debut Community Corps season "maxed" at a finalist-level 91 — impossible against the real
+trajectories of Jersey Surf, Genesis, Seattle Cascades, or Pioneer, whose seasons end in the
+60s-70s (2026-07 calibration report, ChrisRohn). The committed
+`src/scripts/podiumPacingHarness.js` asserts the ladder every run: debut ≈ 76, Finalist ≈ 91,
+Elite ≈ 97.9, Champion ≈ 99.3, Champion Status at season ~13, and a flawless Elite beats a
+half-absent Champion ~20% of the time.
 
 _(Percentiles as tuned by the Phase 0 harness — `balanceConfig.json` is authoritative; the
 tier-6 value is what places the Elite-vs-Champion upset rate at 40%. See
@@ -1372,6 +1383,21 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     blocking); money buys the condition-management edge — food tiers, camp days, staff,
     clinicians — never access, never caption points. Supersedes the dual-currency
     recommendation of §14.2.1 with the simpler capped-single-currency model.
+
+25. **Survivorship-corrected calibration + the DCI-shaped tier ladder** (2026-07 pre-launch
+    calibration report, ChrisRohn): the raw championship-week bands measured only the corps
+    still competing (day 49 = the twelve finalists), inflating the finals floor to ~80 and
+    letting a debut Community Corps "max" at 91 — impossible against the real trajectories of
+    Jersey Surf, Genesis, Seattle Cascades, or Pioneer. Fixed at the source: the curve builder
+    re-anchors p5/p25/p50 of days 45-49 to the full-field trend of days 30-44
+    (`correctSurvivorship`, applied to the committed curveData), and the tier ceilings were
+    retuned against the repaired band to the DCI shape — debut ≈ 76, Regional ≈ 82,
+    Semifinalist ≈ 87, Finalist ≈ 91, Medalist ≈ 94.5, Elite ≈ 97.9, Champion ≈ 99.3 (§5.13
+    table). The pacing harness (`src/scripts/podiumPacingHarness.js`) is now COMMITTED and
+    asserts the ladder, the ~13-season climb, the no-100s cap, and the upset window on every
+    run. The same pass wired the long-promised runtime tuning path: `podium-config/balance`
+    overrides now actually merge over the committed defaults at runtime
+    (`store.applyBalanceOverrides`), so beta re-tuning needs a config write, not a deploy.
 
 **Resolved in v1.9:**
 
