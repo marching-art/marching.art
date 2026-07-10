@@ -321,6 +321,11 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         );
         state.lastScoredDay = competitionDay;
         state.lastTotal = score.total;
+        // Season trajectory for the shadows chart (idempotent per day).
+        state.scoreHistory = [
+          ...(state.scoreHistory || []).filter((entry) => entry.day !== competitionDay).slice(-59),
+          { day: competitionDay, total: score.total },
+        ];
         results.push({
           uid,
           corpsName: state.corpsName,
