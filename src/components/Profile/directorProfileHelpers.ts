@@ -64,6 +64,12 @@ export const CLASS_DISPLAY = {
   openClass: { name: 'Open Class', short: 'OC', color: 'text-blue-400', bg: 'bg-blue-500/10' },
   aClass: { name: 'A Class', short: 'A', color: 'text-green-400', bg: 'bg-green-500/10' },
   soundSport: { name: 'SoundSport', short: 'SS', color: 'text-orange-400', bg: 'bg-orange-500/10' },
+  podiumClass: {
+    name: 'Podium Class',
+    short: 'POD',
+    color: 'text-yellow-400',
+    bg: 'bg-yellow-500/10',
+  },
 } as const;
 
 export type ClassDisplayConfig = (typeof CLASS_DISPLAY)[keyof typeof CLASS_DISPLAY];
@@ -300,7 +306,7 @@ const trophyDescription = (t: CompetitionTrophy): string =>
   'Competition award';
 
 export function getCompetitionTrophies(profile: UserProfile): TrophyData[] {
-  const real = getRealTrophies(profile);
+  const real = [...getRealTrophies(profile), ...getPodiumMedalTrophies(profile)];
   return real.length > 0 ? real : getLegacySyntheticTrophies(profile);
 }
 
@@ -351,6 +357,55 @@ function getRealTrophies(profile: UserProfile): TrophyData[] {
   );
 
   return out;
+}
+
+// -----------------------------------------------------------------------------
+// Podium Class show medals — the FMA "70+ regular-season golds" collector hook.
+// Lifetime = archived seasons' medal counts (corps.podiumClass.seasonHistory,
+// written at each rollover) plus the current season's running counters
+// (corps.podiumClass.medals, written nightly). One trophy row per metal.
+// -----------------------------------------------------------------------------
+
+interface PodiumMedalCounts {
+  gold?: number;
+  silver?: number;
+  bronze?: number;
+}
+
+interface PodiumCorpsShape {
+  medals?: PodiumMedalCounts;
+  seasonHistory?: Array<{ medals?: PodiumMedalCounts }>;
+}
+
+export function getPodiumMedalTrophies(profile: UserProfile): TrophyData[] {
+  const podiumCorps = (profile.corps as Record<string, unknown> | undefined)?.podiumClass as
+    PodiumCorpsShape | undefined;
+  if (!podiumCorps) return [];
+
+  const lifetime: Required<PodiumMedalCounts> = { gold: 0, silver: 0, bronze: 0 };
+  const addCounts = (medals?: PodiumMedalCounts) => {
+    if (!medals) return;
+    lifetime.gold += medals.gold || 0;
+    lifetime.silver += medals.silver || 0;
+    lifetime.bronze += medals.bronze || 0;
+  };
+  (podiumCorps.seasonHistory || []).forEach((row) => addCounts(row?.medals));
+  addCounts(podiumCorps.medals);
+
+  const metals = [
+    { key: 'gold' as const, label: 'Gold' },
+    { key: 'silver' as const, label: 'Silver' },
+    { key: 'bronze' as const, label: 'Bronze' },
+  ];
+  return metals
+    .filter(({ key }) => lifetime[key] > 0)
+    .map(({ key, label }) => ({
+      id: `podium-medals-${key}`,
+      title: `Podium ${label} ×${lifetime[key]}`,
+      description: 'Podium Class show medals (lifetime)',
+      tier: key,
+      icon: Medal,
+    }));
 }
 
 // Legacy placeholder rows, shown only while a profile has no real hardware.

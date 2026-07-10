@@ -334,6 +334,21 @@ const ShowRegistrationModal = ({
         </div>
       )}
 
+      {/* marching.art Major banner (§5.11): exclusive day, full-field
+          convergence — the season's shared reference points */}
+      {show.eventTier === 'regional' && !isChampionship && (
+        <div className="mx-4 mt-4 flex items-start gap-3 p-3 bg-yellow-500/10 border border-yellow-500/30">
+          <Trophy className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-bold text-yellow-400 mb-0.5">marching.art Major</p>
+            <p className="text-xs text-gray-400">
+              The only event on this day — the whole field converges here, and every class is scored
+              on the same night at the same show.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Championship Auto-Enrollment Display */}
       {isChampionship ? (
         <div className="px-4 py-6">

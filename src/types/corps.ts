@@ -9,8 +9,10 @@ import type { EnsembleProfileInfo } from './user';
 // Canonical keys ('worldClass'/'openClass') are what the data layer actually
 // stores (registration, store normalization, season archives). The short keys
 // ('world'/'open') are accepted for backward compatibility with older data and
-// UI. Helpers in utils/corps.ts normalize between the two.
-export type CorpsClass = 'soundSport' | 'aClass' | 'open' | 'world' | 'openClass' | 'worldClass';
+// UI. Helpers in utils/corps.ts normalize between the two. podiumClass is the
+// director-simulation class (no fantasy lineup; scores earned, not drafted).
+export type CorpsClass =
+  'soundSport' | 'aClass' | 'open' | 'world' | 'openClass' | 'worldClass' | 'podiumClass';
 
 /**
  * Corps Uniform Design - Director-customizable appearance for fantasy corps

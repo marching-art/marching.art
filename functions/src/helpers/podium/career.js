@@ -149,6 +149,48 @@ function applyDormancy(career, missedSeasons, cfg) {
 // 1 MB doc cap; the slice only matters if Podium someday exceeds this.
 const FINAL_STANDINGS_CAP = 200;
 
+// Profile résumé rows kept per corps (matches the career history window).
+const PROFILE_HISTORY_CAP = 30;
+
+/**
+ * Append the just-archived season to the PUBLIC profile résumé —
+ * `corps.podiumClass.seasonHistory`, the same array shape the fantasy
+ * classes archive, so the profile's Season History section renders Podium
+ * rows with no special-casing (Phase 6.7, design §14.3.b). Registered-but-
+ * never-performed seasons leave no row. Idempotent per season (both the
+ * nightly sweep and lazy self-archival call this on their once-only branch,
+ * and a seasonId guard makes double-calls harmless).
+ */
+async function appendProfileSeasonHistory(db, uid, seasonUid, state) {
+  if (state.lastTotal == null) return false;
+  const ref = store.profileRef(db, uid);
+  const snapshot = await ref.get();
+  const corps = snapshot.exists ? snapshot.data().corps || {} : {};
+  const existing = (corps.podiumClass && corps.podiumClass.seasonHistory) || [];
+  if (existing.some((row) => row && row.seasonId === seasonUid)) return false;
+  const entry = {
+    seasonId: seasonUid,
+    seasonName: seasonUid,
+    corpsName: state.corpsName || null,
+    placement: state.seasonRank ?? null,
+    finalScore: state.lastTotal,
+    totalSeasonScore: state.lastTotal,
+    showConcept: state.showConcept || null,
+    medals: state.medals || {},
+  };
+  await ref.set(
+    {
+      corps: {
+        podiumClass: {
+          seasonHistory: [...existing.slice(-(PROFILE_HISTORY_CAP - 1)), entry],
+        },
+      },
+    },
+    { merge: true }
+  );
+  return true;
+}
+
 /**
  * Rank a season's swept entries into final standings (pure). Latest-total
  * ordering, matching the nightly rankings the players watched all season.
@@ -193,6 +235,7 @@ async function archivePodiumSeason(db, previousSeason) {
         );
         updated.updatedAt = new Date().toISOString();
         await careerRef(db, uid).set(updated);
+        await appendProfileSeasonHistory(db, uid, previousSeason.seasonUid, state);
         archived++;
       }
       if (state) {
@@ -293,5 +336,6 @@ module.exports = {
   applySeasonResult,
   applyDormancy,
   buildFinalStandings,
+  appendProfileSeasonHistory,
   archivePodiumSeason,
 };

@@ -217,6 +217,8 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
       { seasonUid: staleState.seasonUid, seasonIndex: oldIndex, state: staleState },
       store.balance
     );
+    // Profile résumé row for the finished season (idempotent with the sweep).
+    await career.appendProfileSeasonHistory(db, uid, staleState.seasonUid, staleState);
   }
   if (freshStart && careerData.seasonsPlayed > 0) {
     const banked = { ...careerData };
