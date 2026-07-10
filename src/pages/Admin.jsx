@@ -27,8 +27,11 @@ import {
   getScheduleCoverage,
 } from '../api/functions';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { doc, setDoc } from 'firebase/firestore';
+import { db } from '../api';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import { usePodiumEnabled } from '../hooks/useFeatures';
 import {
   ScoresSpreadsheet,
   ArticleManagement,
@@ -84,6 +87,72 @@ const OverviewTab = ({ seasonData }) => (
 // SEASON OPS TAB
 // =============================================================================
 
+// Podium Class launch control (Phase 8): the runtime flag lives in
+// game-settings/features.podiumClass (admin-writable by rules; a missing
+// field means OFF). Flipping it here opens/closes the class instantly — no
+// deploy. The class-registry `enabled` flag (leagues/economy inclusion) is a
+// code change and stays out of this panel by design.
+const PodiumLaunchCard = () => {
+  const podiumEnabled = usePodiumEnabled();
+  const [saving, setSaving] = useState(false);
+
+  const toggle = async () => {
+    const next = !podiumEnabled;
+    if (
+      !window.confirm(
+        next
+          ? 'Enable Podium Class for ALL users?\n\nThe Podium tab, hosting card, and Scores tab appear immediately; the nightly stage begins processing.'
+          : 'Disable Podium Class?\n\nThe UI hides and the nightly stage stops. All state is preserved — flipping back on resumes where it left off.'
+      )
+    )
+      return;
+    setSaving(true);
+    try {
+      await setDoc(doc(db, 'game-settings', 'features'), { podiumClass: next }, { merge: true });
+      toast.success(next ? 'Podium Class is LIVE.' : 'Podium Class disabled.');
+    } catch (error) {
+      toast.error(error.message || 'Failed to update the feature flag');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      <SectionHeader title="Podium Class Launch" icon={Play} />
+      <div className="px-4 py-3 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <span
+              className={`w-2 h-2 rounded-full ${podiumEnabled ? 'bg-green-500' : 'bg-gray-600'}`}
+            />
+            <span className="text-xs font-bold text-white">
+              game-settings/features.podiumClass ={' '}
+              <span className={podiumEnabled ? 'text-green-400' : 'text-gray-400'}>
+                {String(podiumEnabled)}
+              </span>
+            </span>
+          </div>
+          <p className="text-[11px] text-gray-500 mt-1">
+            Runtime flag — gates every Podium surface and the nightly stage. Beta tuning lives in
+            podium-config/balance (read at runtime; missing doc = committed defaults). Use the Jobs
+            tab&apos;s “Run Podium Stage” to process a day on demand.
+          </p>
+        </div>
+        <button
+          onClick={toggle}
+          disabled={saving}
+          className={`flex-shrink-0 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider rounded-sm disabled:opacity-50 ${
+            podiumEnabled ? 'bg-[#333] text-gray-300' : 'bg-green-600 text-white'
+          }`}
+        >
+          {saving ? 'Saving…' : podiumEnabled ? 'Disable' : 'Enable'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const SeasonOpsTab = ({ callAdminFunction }) => {
   const [loading, setLoading] = useState(null);
 
@@ -113,26 +182,30 @@ const SeasonOpsTab = ({ callAdminFunction }) => {
   ];
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
-      <SectionHeader title="Season Operations" icon={Calendar} />
-      <div className="px-4 py-3 border-b border-[#333] bg-[#111]">
-        <div className="flex items-start gap-2">
-          <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
-          <p className="text-[11px] text-yellow-500/80">
-            Starting a new season will archive all current user corps data and reset the game state.
-          </p>
+    <div className="space-y-4">
+      <PodiumLaunchCard />
+      <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+        <SectionHeader title="Season Operations" icon={Calendar} />
+        <div className="px-4 py-3 border-b border-[#333] bg-[#111]">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
+            <p className="text-[11px] text-yellow-500/80">
+              Starting a new season will archive all current user corps data and reset the game
+              state.
+            </p>
+          </div>
         </div>
+        {seasonOps.map((op) => (
+          <ProcessRow
+            key={op.id}
+            name={op.name}
+            description={op.description}
+            icon={op.icon}
+            loading={loading === op.id}
+            onExecute={() => handleAction(op.name, op.id)}
+          />
+        ))}
       </div>
-      {seasonOps.map((op) => (
-        <ProcessRow
-          key={op.id}
-          name={op.name}
-          description={op.description}
-          icon={op.icon}
-          loading={loading === op.id}
-          onExecute={() => handleAction(op.name, op.id)}
-        />
-      ))}
     </div>
   );
 };
