@@ -312,6 +312,15 @@ const ShowRegistrationModal = ({
         </span>
         <span className="text-[10px] text-gray-500">Max {maxShows} shows per corps</span>
       </div>
+
+      {/* Two-night event notice (e.g. the Eastern Classic, days 41-42) */}
+      {show.multiNight?.nights?.length > 1 && (
+        <div className="mt-2 px-3 py-2 bg-[#c9a227]/10 border border-[#c9a227]/30 text-[10px] text-[#c9a227]">
+          Two-night event (Days {show.multiNight.nights.join(' & ')}): registering counts as ONE
+          show and covers both nights. Each corps performs once, on its assigned night — night
+          lineups are announced on Day {show.multiNight.nights[0] - 2}.
+        </div>
+      )}
     </>
   );
 

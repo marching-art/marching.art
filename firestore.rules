@@ -265,6 +265,14 @@ match /hosted-events/{seasonUid}/{document=**} {
   allow write: if false; // Backend only
 }
 
+// Eastern Classic two-night lineups (all classes) — the published "who got
+// Friday?" preview and the persisted final night assignment, written by the
+// nightly scorers (helpers/easternSplit.js).
+match /eastern-classic/{seasonUid} {
+  allow read: if true;
+  allow write: if false; // Backend only
+}
+
 match /season_champions/{docId} {
   allow read: if true;
   allow write: if false; // Backend only

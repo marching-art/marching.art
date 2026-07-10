@@ -699,6 +699,13 @@ nights:
   days of "who got Friday?" chatter. `selectUserShows` needs the counts-as-one/no-double-select
   validation for `multiNight` events; night assignment happens server-side at the day-41 nightly
   run and persists so day 42 scores the complement.
+  _Implemented for the fantasy classes (Phase 6.1, `helpers/easternSplit.js`)_: snake split by
+  `totalSeasonScore` with per-season night parity, preview published to the public
+  `eastern-classic/{seasonUid}` doc after the day-38 run, final assignment persisted at the
+  day-41 run (day 42 scores the stored complement — the v0 alphabetical split recomputed
+  nightly, so an enrollment edit between the nights could double- or zero-score a corps), and
+  the counts-as-one validation in `selectUserShows`. Podium's own night assignment remains the
+  deterministic uid-hash parity (division-seeded snake lands with division seeding, §5.7).
 - **One performance, one residency.** Each corps performs on its assigned night only
   (auto-enrolled, no weekly slot, no travel coin). The _other_ Allentown day is a full rehearsal
   day at the site with no travel leg — the corps is housed in the Lehigh Valley between nights,

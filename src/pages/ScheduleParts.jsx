@@ -173,6 +173,12 @@ const ShowCard = ({
                 </span>
               )}
             </div>
+            {show.multiNight?.nights?.length > 1 && (
+              <div className="mt-1 text-[10px] text-[#c9a227]">
+                Two-night event — one registration covers both nights; you perform on your assigned
+                night (lineups announced Day {show.multiNight.nights[0] - 2})
+              </div>
+            )}
             {show.sponsor?.corpsName && (
               <div className="mt-1 text-[10px] text-yellow-500/90 truncate">
                 ★ Presented by {show.sponsor.corpsName}
