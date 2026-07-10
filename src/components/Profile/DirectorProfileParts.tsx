@@ -595,9 +595,7 @@ EmptyWithCTA.displayName = 'EmptyWithCTA';
 const TROPHY_CAP = 11;
 const TrophyCaseGrid = memo(({ trophies }: { trophies: TrophyData[] }) => {
   if (trophies.length === 0) {
-    return (
-      <EmptyWithCTA icon={Trophy} title="No trophies yet" cta="Join a league" to="/leagues" />
-    );
+    return <EmptyWithCTA icon={Trophy} title="No trophies yet" cta="Join a league" to="/leagues" />;
   }
   const overflow = trophies.length - TROPHY_CAP;
   return (

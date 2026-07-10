@@ -23,10 +23,30 @@ import {
 // Rarity styling — matches AchievementModal / AchievementMini so a badge looks
 // the same everywhere it appears.
 const RARITY_STYLES = {
-  legendary: { border: 'border-purple-500/40', bg: 'bg-purple-500/10', text: 'text-purple-400', badge: 'bg-purple-500/20 text-purple-400' },
-  epic: { border: 'border-purple-400/30', bg: 'bg-purple-400/10', text: 'text-purple-300', badge: 'bg-purple-400/20 text-purple-300' },
-  rare: { border: 'border-[#0057B8]/40', bg: 'bg-[#0057B8]/10', text: 'text-[#0057B8]', badge: 'bg-[#0057B8]/20 text-[#0057B8]' },
-  common: { border: 'border-gray-500/30', bg: 'bg-gray-500/10', text: 'text-gray-400', badge: 'bg-gray-500/20 text-gray-400' },
+  legendary: {
+    border: 'border-purple-500/40',
+    bg: 'bg-purple-500/10',
+    text: 'text-purple-400',
+    badge: 'bg-purple-500/20 text-purple-400',
+  },
+  epic: {
+    border: 'border-purple-400/30',
+    bg: 'bg-purple-400/10',
+    text: 'text-purple-300',
+    badge: 'bg-purple-400/20 text-purple-300',
+  },
+  rare: {
+    border: 'border-[#0057B8]/40',
+    bg: 'bg-[#0057B8]/10',
+    text: 'text-[#0057B8]',
+    badge: 'bg-[#0057B8]/20 text-[#0057B8]',
+  },
+  common: {
+    border: 'border-gray-500/30',
+    bg: 'bg-gray-500/10',
+    text: 'text-gray-400',
+    badge: 'bg-gray-500/20 text-gray-400',
+  },
 };
 
 const FILTERS = [
@@ -69,7 +89,9 @@ const AchievementCard = ({ a }) => {
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <h4 className={`font-bold text-sm truncate ${a.earned ? 'text-white' : 'text-gray-300'}`}>
+            <h4
+              className={`font-bold text-sm truncate ${a.earned ? 'text-white' : 'text-gray-300'}`}
+            >
               {a.title}
             </h4>
             <span className={`text-[9px] uppercase tracking-wider px-1.5 py-0.5 ${styles.badge}`}>
@@ -133,9 +155,7 @@ const Achievements = () => {
   const earnedCount = evaluated.filter((a) => a.earned).length;
   const totalCount = ACHIEVEMENTS.length;
   const overallPct = totalCount ? Math.round((earnedCount / totalCount) * 100) : 0;
-  const ccEarned = evaluated
-    .filter((a) => a.earned)
-    .reduce((sum, a) => sum + (a.ccReward || 0), 0);
+  const ccEarned = evaluated.filter((a) => a.earned).reduce((sum, a) => sum + (a.ccReward || 0), 0);
 
   const matchesFilter = (a) => {
     if (filter === 'earned') return a.earned;
@@ -196,7 +216,9 @@ const Achievements = () => {
         {ccEarned > 0 && (
           <div className="px-4 py-2 flex items-center gap-1.5 text-[11px] text-gray-500">
             <Coins className="w-3.5 h-3.5 text-yellow-600" />
-            <span className="text-yellow-600 font-bold font-data">{ccEarned.toLocaleString()} CC</span>
+            <span className="text-yellow-600 font-bold font-data">
+              {ccEarned.toLocaleString()} CC
+            </span>
             <span>earned from achievements</span>
           </div>
         )}
