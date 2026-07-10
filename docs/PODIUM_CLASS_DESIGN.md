@@ -12,7 +12,8 @@ two-night Eastern Classic split; v1.5 hard-codes the branded majors in the sched
 (implemented) and sets the counts-as-one / even-split / Podium-auto-registration rules; v1.6
 adds the Gap & Conflict Register (§14) — open design decisions live there; v1.7 adds simple
 auditions, the no-competitive-donations rule, and the Reputation / Champion Status
-multi-season climb (§5.13)
+multi-season climb (§5.13); v1.8 specs dormancy and comebacks; v1.9 replaces the staff
+purchase ladder with a living labor market (§5.6)
 
 ---
 
@@ -403,7 +404,7 @@ All existing currency; new recurring sinks (the FMA community's "nothing to spen
 | Sink | Cost shape | Effect |
 |---|---|---|
 | **Class unlock** | Level 8 or 4,000 CorpsCoin (between Open and World) | Access to Podium Class |
-| **Caption staff** (8 slots, named + persistent) | Hire + per-season retainer | +yield% on mapped rehearsal blocks; capped tiers (bronze/silver/gold) so veterans get identity, not runaway power |
+| **Caption staff** (8 slots + Tour Manager + Program Coordinator) | Per-season salaries from Corps Budget — see *The staff economy* below | +yield% on mapped rehearsal blocks (capped); ops staff reduce travel/condition costs |
 | **Clinicians** (Rework request) | One-off, 3-day engagement | Temporary large yield boost on one block type; the "my brass is drowning" panic button |
 | **Travel** | Per-mile per show | The routing cost (§5.3) |
 | **Food plan** | Weekly tier | Recovery/morale (§5.3) |
@@ -411,6 +412,52 @@ All existing currency; new recurring sinks (the FMA community's "nothing to spen
 Earn side reuses existing hooks: show participation (Podium tier ≈ 175, between Open and World),
 league wins, season-finish bonuses. Staff persistence between seasons is the long-game attachment
 (FMA's staff ladder) with hard caps to avoid the influence-compounding trap (§2.2).
+
+**The staff economy — a labor market, not a purchase ladder (v1.9).** FMA's staff system was an
+elongated buy-the-ranks program with a terminal state: once maxed, money had nothing left to do
+(the community said so verbatim: "other than staff and comps, there's nothing to buy"). Podium
+replaces ownership with **employment** — and an employment market never maxes out:
+
+- **Slots:** eight caption techs (one per caption, each boosting yield in their mapped rehearsal
+  blocks), a **Tour Manager** (reduces travel stamina/cost), and a **Program Coordinator**
+  (boosts Full Ensemble / GE blocks). Ten seats, never more.
+- **Staff are generated persons with careers**, not catalog rows: name, specialty, tier
+  (Apprentice → Journeyman → Veteran → Master → Legend), salary, and one published trait
+  ("Basics-first: +8% Visual Basics, −3% ensemble"; "Peaker: clean gains +15% after day 40").
+  New apprentices generate into the market every season; everyone ages; everyone eventually
+  retires. The pool cycles forever — the decade-scale economy is built into staff *mortality*.
+- **Salaries, not purchases.** Contracts are per-season, paid from the Corps Budget — which
+  starts equal per division and resets at archival. Staffing is therefore a fresh allocation
+  decision every single season (payroll vs. travel vs. food vs. clinicians), and because budget
+  is division-equal, it doubles as a **hard salary cap**: a champion cannot simply outspend the
+  field and hoard every Legend.
+- **Free agency — the between-seasons ritual.** During registration week, unsigned staff hit a
+  shared market. Corps bid; staff choose by a **published, deterministic preference function**
+  (salary offer, corps reputation, loyalty history, specialty fit — no RNG). Top staff are
+  scarce: when a Legend brass tech signs with your rival, they are *gone*. This is DCI's real
+  "silly season" — staff movement is offseason drama fans already track — turned into a game
+  phase, and it gives the 1-day gap between seasons its own appointment content.
+- **Develop-your-own vs. buy-established.** Staff gain experience each season they work and tier
+  up over multiple seasons. A new corps' viable path is hiring cheap apprentices and developing
+  them — then facing retention raises when their homegrown Master gets famous and rivals come
+  poaching. **Success inflates your payroll**: winning makes your staff more visible, more
+  expensive, and more poachable. This is a natural dynasty tax, a second structural beatability
+  mechanism (§5.13), and it produces the era-and-rebuild cycles real corps have.
+- **Loyalty, capped.** Consecutive seasons with one corps build loyalty (modest salary discount +
+  poach resistance), capped low enough that poaching a loyal Legend is expensive but never
+  impossible. Dormancy severs it (§5.13).
+- **Retirement feeds the mythology.** Retiring Legends become clinicians, and the most decorated
+  become **namesakes for the finals caption trophies** (§5.7's named hardware) — the game
+  generates its own history. "Legendary brass tech D. Alvarez retires after 41 seasons" is a feed
+  item, and next year's brass trophy carries the name.
+- **Power stays small.** Total staff yield bonus is hard-capped (~+15% across a corps' blocks);
+  a full-Legend staff over a solid-Journeyman staff is worth roughly 0.5–1.0 finals points —
+  deliberately below the ±2 decision-quality swing, preserving the §5.13 beatability math.
+  Harness assertions: budget equality prevents any corps monopolizing Legends; staff bonus never
+  exceeds the cap; a max-staff corps with poor rehearsal balance loses to a no-staff corps with
+  perfect balance.
+- **Storage:** a `podium-staff` collection (person docs with career history) + a per-season
+  market doc generated at rollover; free agency resolves deterministically at registration close.
 
 ### 5.7 Progression, divisions, and season persistence
 
@@ -1032,6 +1079,16 @@ trajectory bands. Everything after deepens rather than gates.
     contracts lapse after the one-season loyalty grace, 2+ season absences re-enter the bottom
     division, and heritage credit (+50% re-earn rate up to one tier below the old peak) turns
     comebacks into a storyline instead of a pure penalty.
+
+**Resolved in v1.9:**
+
+18. **Staff is a labor market, not a purchase ladder** (§5.6): generated persons with careers,
+    per-season salaries from the division-equal Corps Budget (a built-in salary cap),
+    deterministic free agency during registration week, develop-vs-poach dynamics with a
+    success-inflates-payroll dynasty tax, staff aging and retirement cycling the pool forever,
+    retired Legends becoming clinicians and trophy namesakes, and a hard +15% total yield cap
+    keeping staff worth less than decision quality. Supersedes the v1 bronze/silver/gold
+    retainer-tier sketch; there is no terminal "maxed staff" state, ever.
 
 **Still open:**
 
