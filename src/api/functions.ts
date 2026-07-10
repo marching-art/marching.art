@@ -12,6 +12,8 @@ export * from './articleSocial';
 // Admin article management, user news submissions and avatar generation
 // wrappers likewise live in their own module for the same reason.
 export * from './articleAdmin';
+// Podium Class callables (Phase 2).
+export * from './podium';
 
 // =============================================================================
 // USER MANAGEMENT

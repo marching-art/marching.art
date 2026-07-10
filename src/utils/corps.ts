@@ -118,6 +118,7 @@ export const CORPS_CLASS_LABELS: Record<string, string> = {
   openClass: 'Open Class',
   aClass: 'A Class',
   soundSport: 'SoundSport',
+  podiumClass: 'Podium Class',
 };
 
 /** Compact variants for tabs and tight chips. */
@@ -126,6 +127,7 @@ export const CORPS_CLASS_SHORT_LABELS: Record<string, string> = {
   openClass: 'Open',
   aClass: 'A Class',
   soundSport: 'SoundSport',
+  podiumClass: 'Podium',
 };
 
 // Supports both canonical names (open, world) and legacy names (openClass, worldClass)
@@ -134,6 +136,7 @@ const CLASS_NAMES: Record<string, string> = {
   aClass: 'A Class',
   open: 'Open Class',
   world: 'World Class',
+  podiumClass: 'Podium Class',
   // Legacy keys for backward compatibility
   openClass: 'Open Class',
   worldClass: 'World Class',

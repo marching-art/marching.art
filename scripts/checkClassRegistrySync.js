@@ -19,7 +19,7 @@ const b = fs.existsSync(mirror) ? fs.readFileSync(mirror, 'utf8') : '';
 if (a !== b) {
   console.error(
     'classRegistry.json copies differ. Edit functions/src/config/classRegistry.json, then run:\n' +
-    '  node scripts/checkClassRegistrySync.js --fix'
+      '  node scripts/checkClassRegistrySync.js --fix'
   );
   process.exit(1);
 }

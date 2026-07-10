@@ -14,3 +14,8 @@ public
 # repo's single-quote Prettier config. They are linted, not Prettier-managed.
 functions
 functions-scraper
+
+# Byte-identical mirror of functions/src/config/classRegistry.json (which is
+# prettier-ignored with the rest of functions/) — verified by
+# scripts/checkClassRegistrySync.js. Formatting it would break parity.
+src/config/classRegistry.json

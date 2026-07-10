@@ -246,7 +246,7 @@ total(d)    = min(99.70, [GE1+GE2] + [VP+VA+CG]/2 + [B+MA+P]/2)   // the unicorn
   by its multi-season Reputation tier (§5.13) — a first-season corps peaks in the historical
   mid-percentiles no matter how perfectly it is managed, and only Champion-Status corps can touch
   the top of the envelope. **No corps ever scores 100**: the hard cap is **99.70** — deliberately
-  just above DCI's real all-time best (99.65, Blue Devils 2014) so beating history is *possible*
+  just above DCI's real all-time best (99.65, Blue Devils 2014) so beating history is _possible_
   but requires a true unicorn: Champion Status, maximum challenge, a near-perfect season, peak
   condition, and the variance breaking your way, all at once. Asserted by the harness
   (decision 25).

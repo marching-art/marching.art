@@ -46,6 +46,9 @@ const RenameDuplicateCorpsModal = lazyWithRetry(
   () => import('../components/modals/RenameDuplicateCorpsModal'),
   'RenameDuplicateCorpsModal'
 );
+// Podium Class Zone C (flag-gated director sim — registration, rehearsal
+// planner, caption progress). Lazy: fantasy-only players never load it.
+const PodiumZone = lazyWithRetry(() => import('../components/Podium/PodiumZone'), 'PodiumZone');
 const StreakModal = lazyWithRetry(() => import('../components/modals/StreakModal'), 'StreakModal');
 const CorpsCoinModal = lazyWithRetry(
   () => import('../components/modals/CorpsCoinModal'),
@@ -95,6 +98,7 @@ import { useMyLeagues } from '../hooks/useLeagues';
 import { CORPS_CLASS_ORDER } from '../utils/corps';
 import { canEditCorpsThisSeason, corpsHasPendingWork } from '../utils/corps';
 import { useDashboardModals } from '../hooks/useDashboardModals';
+import { usePodiumEnabled } from '../hooks/useFeatures';
 import { useLineupScores, useRecentResults, useBestInShowCount } from '../hooks/useDashboardScores';
 import { useSeasonStore } from '../store/seasonStore';
 import { getEffectiveDay, getNextSelectedShow } from '../utils/dashboardScoring';
@@ -203,6 +207,11 @@ const Dashboard = () => {
     unlockedClasses, // Includes admin override - admins have all classes
     availableCorps, // Season pool (corpsValues) — supplies resultDays for pick highlights
   } = dashboardData;
+
+  // Podium Class (flag-gated): when its tab is selected, Zone C swaps to the
+  // director-sim surface and the no-corps state runs Podium registration.
+  const podiumEnabled = usePodiumEnabled();
+  const isPodiumSelected = podiumEnabled && activeCorpsClass === 'podiumClass';
 
   // Computed values
   const lineup = useMemo(() => activeCorps?.lineup || {}, [activeCorps?.lineup]);
@@ -347,7 +356,14 @@ const Dashboard = () => {
           />
         </div>
 
-        {activeCorps ? (
+        {isPodiumSelected && !activeCorps ? (
+          /* Podium tab, no corps yet — the four-step founding flow */
+          <div className="p-3 md:p-4 flex justify-center">
+            <Suspense fallback={<ModalLoadingFallback />}>
+              <PodiumZone />
+            </Suspense>
+          </div>
+        ) : activeCorps ? (
           <div className="p-3 md:p-4">
             {/* 2/3 + 1/3 Grid Layout - balanced columns. The scorecard is
                 first in the DOM so the headline score/rank leads the mobile
@@ -420,33 +436,45 @@ const Dashboard = () => {
                 <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-500 -mb-2 lg:sr-only">
                   My Corps
                 </h2>
-                <div data-tour="lineup">
-                  <ActiveLineupTable
-                    lineup={lineup}
-                    lineupScoreData={lineupScoreData}
-                    loading={lineupScoresLoading}
-                    onManageLineup={() => openCaptionSelection()}
-                    onSlotClick={(captionId) => openCaptionSelection(captionId)}
-                    scoresAvailable={scoresAvailable}
-                    nextShow={nextSelectedShow}
-                  />
-                </div>
+                {isPodiumSelected ? (
+                  /* Podium Class — director sim replaces the lineup surfaces
+                     (design §6): rehearsal planner + caption progress. */
+                  <Suspense fallback={<ModalLoadingFallback />}>
+                    <div data-tour="lineup">
+                      <PodiumZone />
+                    </div>
+                  </Suspense>
+                ) : (
+                  <>
+                    <div data-tour="lineup">
+                      <ActiveLineupTable
+                        lineup={lineup}
+                        lineupScoreData={lineupScoreData}
+                        loading={lineupScoresLoading}
+                        onManageLineup={() => openCaptionSelection()}
+                        onSlotClick={(captionId) => openCaptionSelection(captionId)}
+                        scoresAvailable={scoresAvailable}
+                        nextShow={nextSelectedShow}
+                      />
+                    </div>
 
-                {/* Lineup Analyzer - per-caption efficiency and weak-spot identification */}
-                <LineupSimulatorPanel
-                  lineup={lineup}
-                  lineupScoreData={lineupScoreData}
-                  activeCorpsClass={activeCorpsClass}
-                  onSwapCaption={openCaptionSelection}
-                />
+                    {/* Lineup Analyzer - per-caption efficiency and weak-spot identification */}
+                    <LineupSimulatorPanel
+                      lineup={lineup}
+                      lineupScoreData={lineupScoreData}
+                      activeCorpsClass={activeCorpsClass}
+                      onSwapCaption={openCaptionSelection}
+                    />
 
-                {/* Next Performance - real show timing + running order + your-picks-live spotlight */}
-                <NextPerformancePanel
-                  competitions={competitions}
-                  selectedShows={activeCorps?.selectedShows || {}}
-                  lineup={lineup}
-                  poolCorps={availableCorps}
-                />
+                    {/* Next Performance - real show timing + running order + your-picks-live spotlight */}
+                    <NextPerformancePanel
+                      competitions={competitions}
+                      selectedShows={activeCorps?.selectedShows || {}}
+                      lineup={lineup}
+                      poolCorps={availableCorps}
+                    />
+                  </>
+                )}
               </div>
 
               {/* ZONE D — THE SEASON: how am I advancing, who am I chasing,

@@ -12,6 +12,7 @@ import {
 } from './constants';
 import { getSeasonsUntilUnlock } from '../../../utils/classUnlocks';
 import { getXPProgress } from '../../../utils/captionPricing';
+import { usePodiumEnabled } from '../../../hooks/useFeatures';
 import NextDeadlineChip from './NextDeadlineChip';
 
 // Helper to get next class unlock info. Everything speaks canonical class
@@ -61,6 +62,10 @@ const ControlBar = memo(
     onStreakClick,
     onWalletClick,
   }) => {
+    // Podium Class tab is flag-gated and always open — no unlock, no corps
+    // required to click it (the zone handles the unregistered state).
+    const podiumEnabled = usePodiumEnabled();
+
     // Director stats from profile
     const streak = profile?.engagement?.loginStreak || 0;
     const corpsCoin = profile?.corpsCoin || 0;
@@ -118,6 +123,20 @@ const ControlBar = memo(
                 </button>
               );
             })}
+            {podiumEnabled && (
+              <button
+                onClick={() => onSwitch('podiumClass')}
+                className={`flex-shrink-0 whitespace-nowrap text-[10px] font-bold uppercase px-3 min-h-touch rounded-sm transition-colors press-feedback ${
+                  activeCorpsClass === 'podiumClass'
+                    ? 'bg-[#8a6d1a] text-white'
+                    : corps?.podiumClass
+                      ? 'text-gray-500 hover:text-white hover:bg-white/5'
+                      : 'text-[#c9a227]/70 hover:text-[#c9a227] border border-dashed border-[#8a6d1a]/50'
+                }`}
+              >
+                {CLASS_SHORT_LABELS.podiumClass}
+              </button>
+            )}
           </div>
 
           {/* CENTER: Next deadline countdown (scores drop / trade reset) */}
