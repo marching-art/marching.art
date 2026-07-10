@@ -13,7 +13,9 @@ two-night Eastern Classic split; v1.5 hard-codes the branded majors in the sched
 adds the Gap & Conflict Register (§14) — open design decisions live there; v1.7 adds simple
 auditions, the no-competitive-donations rule, and the Reputation / Champion Status
 multi-season climb (§5.13); v1.8 specs dormancy and comebacks; v1.9 replaces the staff
-purchase ladder with a living labor market (§5.6)
+purchase ladder with a living labor market (§5.6); v2.0 is the authoritative eight-phase build
+plan (§10); v2.1 folds in the final FMA sweep (§14.3) — the design is complete and
+build-ready
 
 ---
 
@@ -377,6 +379,10 @@ minute?* — falls out of the mechanics with zero special-casing.
 - Scores post in the existing nightly pipeline. The recap entry carries the full caption breakdown,
   placement *within Podium Class only*, and phase-appropriate color ("Brass +0.3 since
   Tuesday — 2nd in class").
+- **The recap sheet is a first-class artifact.** FMA's most-screenshotted surface is the event
+  box score — a per-division table with every caption column, total, and place. Every Podium
+  show gets one: the DCI-style recap sheet view, per division, shareable/screenshot-clean. The
+  community's daily argument needs a daily exhibit.
 - Non-show days still matter (that's when you out-rehearse the corps you'll meet on Saturday), but
   nothing is scored — so skipping a quiet Tuesday costs you growth, never a recorded result.
   Forgiving to miss, rewarding to show up: the retention-safe version of FMA's energy pressure.
@@ -1107,7 +1113,8 @@ Three governing principles, restated as build constraints:
 7.1 Joint rehearsals (§5.12): handshake callables, geography gate, scrimmage report, feed items.
 7.2 Podium rookie journey (guided first week, reusing `journey.js` pattern).
 7.3 Auto power-rankings column via the news pipeline; press-release posts; season feed anchored
-    to the nightly drop.
+    to the nightly drop; player-columnist submissions through the existing `newsSubmissions`
+    pipeline (FMA's Staff Writers program, productized).
 7.4 League integration: Podium corps in league matchups (class-filtered scoring).
 7.5 Director Rating (lifetime, placements-only, cross-class) in the lifetime leaderboard job.
 7.6 The public guide — FMA-style short numbered sections, written from this doc.
@@ -1295,9 +1302,10 @@ additions; conflicts are things that **must** be resolved before Phase 1 code.
    `dailyPredictions` infrastructure already exists — a Fan Favorite ballot at each major
    (cosmetic banner, no score impact) is nearly free and productizes another community ritual.
 6. **Stats-archive parity.** FMA's queryable all-seasons stats archive (/stats) is a documented
-   retention engine. Podium results must flow into `dci-stats`, the records book
-   (`gameRecords.js`), and season archives from day one — per-division, per-caption records
-   included. Currently unspecced.
+   retention engine — and richer than first noted: 12 filterable metrics including per-caption
+   leaderboards across all 140 seasons. Podium results must flow into `dci-stats`, the records
+   book (`gameRecords.js`), and season archives from day one — per-division and **per-caption
+   filterable leaderboards** included. Currently unspecced.
 7. **Rookie onboarding.** The existing `journey.js` first-season quest covers fantasy; Podium's
    deeper loop needs its own guided first week (set challenge levels → first rehearsal → read the
    trajectory panel → first show). FMA was brutal to newcomers; we shouldn't be.
@@ -1363,6 +1371,26 @@ additions; conflicts are things that **must** be resolved before Phase 1 code.
    faucet on top of a user's existing four classes. If conflict #1 resolves to dual currency,
    most of this pressure disappears (Podium activity pays Budget, not CC); the residual
    (unlock/participation CC) needs one `economyStatsJob` calibration pass.
+
+### 14.3 Final sweep (v2.1) — second FMA pass, adopted and confirmed
+
+A closing sweep of fantasymarchingarts.com surfaced a short list of genuinely new items.
+**Adopted into the design:** (a) the **recap sheet** as a first-class, screenshot-clean artifact
+for every show (§5.4) — FMA's per-caption event box score is its most-shared surface; (b) the
+**Podium corps page as permanent public résumé** — season selector over every season ever
+played, per-season score tables, repertoire history with composer credits, events-hosted
+history, trophy case (extends the existing profile/`seasonHistory` surfaces); (c)
+**player-columnist submissions** through the existing `newsSubmissions` pipeline (FMA's Staff
+Writers program as a sanctioned status role, Phase 7.3); (d) **per-caption filterable
+leaderboards** in the stats archive (§14.1.6). **Confirmed, no action needed:** FMA has no
+penalty/missed-show mechanics (validates elective attendance); support packs are mildly
+pay-to-progress (validates decision 14's hard no); the community hand-runs "schedule filler"
+event networks because event supply fails without coordination (our generated schedule makes
+hosted events additive, never load-bearing); uniform/artwork boards signal identity demand
+already served by `uniformDesign` + avatar generation; "Masters of FMA" invitationals suggest a
+future Champions Invitational hosted event, noted for post-launch. Also noted: FMA's forums are
+now visibly spam-overrun (July 2026) — moderation-by-default remains a launch requirement, not a
+nice-to-have.
 
 ---
 
