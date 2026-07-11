@@ -135,6 +135,11 @@ function allocateBlock(state, blockType, day, blockIndexToday, blocksSoFarToday,
   // Assistant-director autoplay runs template blocks at reduced yield
   // (design §5.2): active play strictly dominates.
   const yieldMultiplier = opts.yieldMultiplier ?? 1;
+  // Show days grant twice the blocks (a long morning run-through) but each
+  // click is worth half — the day nets the same growth and stamina as before,
+  // just with more to click. Applied to yield AND per-block stamina so the
+  // show day stays balance-neutral in both dimensions.
+  const showDayMult = opts.isShowDay ? cfg.rehearsal.showDayYieldMultiplier : 1;
 
   const repeats = blocksSoFarToday[blockType] || 0;
   const repeatMult =
@@ -166,7 +171,7 @@ function allocateBlock(state, blockType, day, blockIndexToday, blocksSoFarToday,
     // Higher challenge installs slower (harder book).
     const challengeMult = Math.pow(4 / cap.challenge, cfg.rehearsal.challengeGainExponent);
     const gain =
-      cfg.rehearsal.primaryGain * weight * repeatMult * challengeMult * conditionMult * yieldMultiplier;
+      cfg.rehearsal.primaryGain * weight * repeatMult * challengeMult * conditionMult * yieldMultiplier * showDayMult;
     const contentGain = gain * cShare * (1 - cap.content);
     const cleanGain = gain * clShare * (1 - cap.clean);
     cap.content = Math.min(1, cap.content + contentGain);
@@ -178,7 +183,7 @@ function allocateBlock(state, blockType, day, blockIndexToday, blocksSoFarToday,
   // Stamina: warmup reduces the cost of the day's REMAINING blocks.
   const warmupActive = (blocksSoFarToday.warmup || 0) > 0 && blockType !== "warmup";
   const costReduction = warmupActive ? cfg.blocks.warmup.conditionEffect.staminaCostReductionPct / 100 : 0;
-  const staminaCost = block.staminaCost * (1 - costReduction);
+  const staminaCost = block.staminaCost * (1 - costReduction) * showDayMult;
   state.condition.stamina = Math.max(0, state.condition.stamina - staminaCost);
 
   return { blockType, day, gains, staminaCost, repeatMult };

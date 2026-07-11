@@ -209,6 +209,7 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
                 store.balance.rehearsal.assistantYield *
                 staffMarket.staffYieldMultiplier(state, blockType, store.balance) *
                 jointMult,
+              isShowDay,
             }
           );
           blocksSoFar[blockType] = (blocksSoFar[blockType] || 0) + 1;

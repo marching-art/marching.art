@@ -71,7 +71,8 @@
   "rehearsal": {
     "blocksPerDay": 12,
     "blocksPerDaySpringTraining": 20,
-    "blocksOnShowDay": 4,
+    "blocksOnShowDay": 8,
+    "showDayYieldMultiplier": 0.5,
     "primaryGain": 0.025,
     "repeatBlockMultipliers": [
       1.0,
