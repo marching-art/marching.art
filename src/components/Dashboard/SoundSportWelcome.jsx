@@ -122,7 +122,7 @@ const SoundSportWelcome = ({ onDismiss, showCompact = false }) => {
               <div className="flex items-center justify-center gap-1.5">
                 <div className="flex items-center gap-1 px-2 py-1 bg-primary border border-black/30 rounded-none">
                   <Medal className="w-3 h-3 text-black" />
-                  <span className="text-[10px] font-bold text-black">Gold 90+</span>
+                  <span className="text-[10px] font-bold text-black">Gold 85+</span>
                 </div>
                 <div className="flex items-center gap-1 px-2 py-1 bg-stone-300 border border-black/30 rounded-none">
                   <Medal className="w-3 h-3 text-black" />
@@ -130,14 +130,14 @@ const SoundSportWelcome = ({ onDismiss, showCompact = false }) => {
                 </div>
                 <div className="flex items-center gap-1 px-2 py-1 bg-orange-300 border border-black/30 rounded-none">
                   <Medal className="w-3 h-3 text-black" />
-                  <span className="text-[10px] font-bold text-black">Bronze 60+</span>
+                  <span className="text-[10px] font-bold text-black">Bronze 65+</span>
                 </div>
               </div>
 
               {/* CTA Buttons */}
               <div className="flex gap-2">
                 <Link
-                  to="/soundsport"
+                  to="/guide"
                   className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-green-500 text-black font-bold text-xs rounded-none hover:bg-green-400 transition-colors"
                 >
                   <BookOpen className="w-3.5 h-3.5" />
@@ -160,7 +160,7 @@ const SoundSportWelcome = ({ onDismiss, showCompact = false }) => {
       {!isExpanded && (
         <div className="px-4 pb-3">
           <Link
-            to="/soundsport"
+            to="/guide"
             className="flex items-center justify-center gap-2 w-full py-2 bg-green-500/20 text-green-400 text-xs font-bold rounded-none hover:bg-green-500/30 transition-colors"
           >
             <Play className="w-3.5 h-3.5" />
@@ -179,7 +179,7 @@ const SoundSportWelcome = ({ onDismiss, showCompact = false }) => {
 
 export const SoundSportBanner = () => (
   <Link
-    to="/soundsport"
+    to="/guide"
     className="flex items-center justify-between p-3 bg-gradient-to-r from-green-900/30 to-transparent border border-green-500/30 rounded-none hover:border-green-500/50 transition-colors group"
   >
     <div className="flex items-center gap-3">
@@ -187,7 +187,7 @@ export const SoundSportBanner = () => (
         <Music className="w-4 h-4 text-green-500" />
       </div>
       <div>
-        <span className="font-bold text-white text-sm">SoundSport Guide</span>
+        <span className="font-bold text-white text-sm">Game Guide</span>
         <p className="text-gray-500 text-[10px]">Rules, ratings & tips</p>
       </div>
     </div>

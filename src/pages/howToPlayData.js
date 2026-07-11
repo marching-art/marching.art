@@ -22,7 +22,7 @@ export const CLASSES = [
     points: 90,
     unlock: 'Default',
     color: 'green',
-    desc: 'Entry level - perfect for learning',
+    desc: 'Entry level - earns medal ratings, never a rank',
   },
   {
     id: 'aClass',
@@ -48,6 +48,36 @@ export const CLASSES = [
     color: 'yellow',
     desc: 'Elite competition, maximum flexibility',
   },
+];
+
+// SoundSport is scored out of 100 and earns a medal RATING instead of a rank.
+// The tier boundaries are canonical in src/utils/scoresUtils.ts
+// getSoundSportRating (Gold >= 85 / Silver >= 75 / Bronze >= 65) — mirror them
+// here so the guide can never drift from the score the game actually awards.
+export const RATINGS = [
+  {
+    tier: 'Gold',
+    min: 85,
+    color: 'yellow',
+    blurb: 'An outstanding run — top marks across the board.',
+  },
+  { tier: 'Silver', min: 75, color: 'gray', blurb: 'A strong, polished performance.' },
+  { tier: 'Bronze', min: 65, color: 'orange', blurb: 'A solid showing that meets the standard.' },
+  {
+    tier: 'Participation',
+    min: 0,
+    color: 'white',
+    blurb: 'Every corps that competes is recognized.',
+  },
+];
+
+// How a nightly corps score is built — mirrors the engine in
+// functions/src/helpers/scoring.js (each caption capped at 20; GE at full
+// weight, Visual and Music summed then halved; total capped at 100).
+export const SCORING_MODEL = [
+  { group: 'General Effect', captions: 'GE1 + GE2', max: 40, note: 'Counts at full value' },
+  { group: 'Visual', captions: 'VP + VA + CG', max: 30, note: 'Summed, then halved' },
+  { group: 'Music', captions: 'B + MA + P', max: 30, note: 'Summed, then halved' },
 ];
 
 export const GLOSSARY = [
@@ -76,7 +106,11 @@ export const GLOSSARY = [
 export const FAQ = [
   {
     q: 'How are scores calculated?',
-    a: 'Your corps score is the sum of your 8 caption scores. Each caption score comes from the historical (or live) performance of the corps you selected for that caption.',
+    a: 'Each night your corps earns a score out of 100, using the same 40/30/30 split real DCI does. Your two General Effect captions (GE1, GE2) count at full value, up to 40 points. Your three Visual captions (VP, VA, CG) are added together and halved into a 30-point block, and your three Music captions (B, MA, P) the same. Every caption is capped, and the total can never exceed 100. Scores come straight from the historical (or live) performances you drafted — no purchase, streak, or show concept can change them.',
+  },
+  {
+    q: 'What score do I need for a Gold rating?',
+    a: 'SoundSport earns a medal rating instead of a rank: Gold at 85 and above, Silver at 75, Bronze at 65, and Participation for every corps that competes. Because SoundSport is scored out of 100 like every class, a clean, well-drafted lineup is what pushes you into the medals.',
   },
   {
     q: 'Can I change my lineup?',

@@ -600,7 +600,7 @@ const SoundSportMedalList = ({ shows }) => {
 
       {/* One scoring-explainer link for the whole page, not per show */}
       <Link
-        to="/soundsport"
+        to="/guide"
         className="flex items-center gap-2 text-[10px] text-green-400 hover:text-green-300 font-bold uppercase tracking-wider transition-colors px-1 pt-1"
       >
         About SoundSport scoring
