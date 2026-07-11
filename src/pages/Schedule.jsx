@@ -13,6 +13,8 @@ import { useProfileStore } from '../store/profileStore';
 import { ShowRegistrationModal, HostEventCard } from '../components/Schedule';
 import { formatCountdown } from '../utils/seasonClock';
 import { useSeasonDeadlines } from '../hooks/useSeasonClock';
+import { usePodiumEnabled } from '../hooks/useFeatures';
+import { usePodium } from '../hooks/usePodium';
 import { CHAMPIONSHIP_EVENTS } from './scheduleConstants';
 import { WeekPills, ShowsList, ChampionshipWeekDisplay } from './ScheduleParts';
 
@@ -42,6 +44,22 @@ const Schedule = () => {
   // Schedule store - pre-computed data from global listener
   const showsByWeek = useScheduleStore((state) => state.showsByWeek);
   const scheduleLoading = useScheduleStore((state) => state.loading);
+
+  // Podium attendance is day-based (podium/state.selectedShowDays + auto-attended
+  // majors/championship), not the fantasy corps.selectedShows a schedule card
+  // reads — so surface it separately to badge the days this corps competes.
+  const podiumEnabled = usePodiumEnabled();
+  const podium = usePodium(podiumEnabled);
+  const podiumAttendance = useMemo(() => {
+    const data = podium.data;
+    if (!data?.exists) return null;
+    const days = new Set([
+      ...(data.autoDays || []),
+      ...(data.state?.selectedShowDays || []),
+    ]);
+    if (days.size === 0) return null;
+    return { days, corpsName: data.state?.corpsName || 'Podium Corps' };
+  }, [podium.data]);
 
   // Initialize selected week to current week
   useEffect(() => {
@@ -244,6 +262,7 @@ const Schedule = () => {
             regularShows={showsByWeek[7] || []}
             formatDate={formatDate}
             onRegister={handleShowClick}
+            podiumAttendance={podiumAttendance}
           />
         ) : (
           <ShowsList
@@ -253,6 +272,7 @@ const Schedule = () => {
             getActualDate={getActualDate}
             onRegister={handleShowClick}
             seasonUid={seasonUid}
+            podiumAttendance={podiumAttendance}
           />
         )}
 

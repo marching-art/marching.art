@@ -29,6 +29,12 @@ export const CLASS_CONFIG = {
     bgColor: 'bg-green-500/10',
     borderColor: 'border-green-500/30',
   },
+  podiumClass: {
+    name: 'Podium',
+    color: 'text-yellow-400',
+    bgColor: 'bg-yellow-400/10',
+    borderColor: 'border-yellow-400/30',
+  },
 };
 
 // Championship Week (Week 7) event configuration
