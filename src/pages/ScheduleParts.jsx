@@ -84,7 +84,7 @@ const WeekPills = ({ weeks, currentWeek, selectedWeek, onSelect, getShowCount })
 const podiumAttendsShow = (podiumAttendance, show) =>
   Boolean(
     podiumAttendance &&
-      (podiumAttendance.events?.has(show.eventName) || podiumAttendance.autoDays?.has(show.day))
+    (podiumAttendance.events?.has(show.eventName) || podiumAttendance.autoDays?.has(show.day))
   );
 
 const RegistrationBadges = ({ show, userProfile, podiumAttendance }) => {

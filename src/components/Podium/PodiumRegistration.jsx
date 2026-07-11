@@ -55,8 +55,8 @@ export default function PodiumRegistration({ podium }) {
         <div className="text-lg font-bold text-white">{done.corpsName} is on tour.</div>
         <div className="text-xs text-gray-400">
           Competing in{' '}
-          <span className="text-yellow-400 font-bold">{done.divisionLabel || 'A Class'}</span>.
-          Your provisional Eastern Classic night:{' '}
+          <span className="text-yellow-400 font-bold">{done.divisionLabel || 'A Class'}</span>. Your
+          provisional Eastern Classic night:{' '}
           <span className="text-white font-bold">Day {done.easternNight}</span> (night lineups
           publish Day 39). First rehearsal block is waiting below.
         </div>

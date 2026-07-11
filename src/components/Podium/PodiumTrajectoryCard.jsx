@@ -43,10 +43,14 @@ export default function PodiumTrajectoryCard({ podium }) {
   for (let v = Math.ceil(yMin / 10) * 10; v <= 100; v += 10) gridValues.push(v);
 
   const shadowPath = (totals) =>
-    totals.map((t, i) => `${i === 0 ? 'M' : 'L'}${scaleX(i + 1).toFixed(1)},${scaleY(t).toFixed(1)}`).join('');
+    totals
+      .map((t, i) => `${i === 0 ? 'M' : 'L'}${scaleX(i + 1).toFixed(1)},${scaleY(t).toFixed(1)}`)
+      .join('');
 
   const myPath = history
-    .map((e, i) => `${i === 0 ? 'M' : 'L'}${scaleX(e.day).toFixed(1)},${scaleY(e.total).toFixed(1)}`)
+    .map(
+      (e, i) => `${i === 0 ? 'M' : 'L'}${scaleX(e.day).toFixed(1)},${scaleY(e.total).toFixed(1)}`
+    )
     .join('');
 
   // Collision-relaxed end labels: sort by finals, nudge apart by 11px.
@@ -97,14 +101,7 @@ export default function PodiumTrajectoryCard({ podium }) {
         ))}
         {/* Week ticks */}
         {[1, 7, 14, 21, 28, 35, 42, 49].map((d) => (
-          <text
-            key={d}
-            x={scaleX(d)}
-            y={H - 8}
-            textAnchor="middle"
-            fontSize="9"
-            fill="#6b7280"
-          >
+          <text key={d} x={scaleX(d)} y={H - 8} textAnchor="middle" fontSize="9" fill="#6b7280">
             D{d}
           </text>
         ))}

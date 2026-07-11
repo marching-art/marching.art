@@ -11,14 +11,10 @@ const podiumWith = (state) => ({ data: { state } });
 describe('PodiumTrajectoryCard', () => {
   it('renders every committed shadow with a direct end-label', () => {
     render(
-      <PodiumTrajectoryCard
-        podium={podiumWith({ corpsName: 'Test Corps', scoreHistory: [] })}
-      />
+      <PodiumTrajectoryCard podium={podiumWith({ corpsName: 'Test Corps', scoreHistory: [] })} />
     );
     for (const shadow of shadowData.shadows) {
-      expect(
-        screen.getByText(new RegExp(`${shadow.corps} '\\d{2}`))
-      ).toBeInTheDocument();
+      expect(screen.getByText(new RegExp(`${shadow.corps} '\\d{2}`))).toBeInTheDocument();
     }
     expect(screen.getByText(/Your line starts after your first scored show/)).toBeInTheDocument();
   });

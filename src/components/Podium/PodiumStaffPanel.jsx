@@ -117,7 +117,9 @@ export default function PodiumStaffPanel({ podium }) {
         <span className="flex items-center gap-2 text-[9px] uppercase tracking-wider text-gray-600">
           {!open && (
             <span className="hidden sm:inline">
-              {hiredCount === 10 ? 'roster full' : `${10 - hiredCount} seat${10 - hiredCount > 1 ? 's' : ''} open`}
+              {hiredCount === 10
+                ? 'roster full'
+                : `${10 - hiredCount} seat${10 - hiredCount > 1 ? 's' : ''} open`}
             </span>
           )}
           {open ? (
@@ -177,7 +179,9 @@ export default function PodiumStaffPanel({ podium }) {
             <div
               key={specialty}
               className={`rounded-sm border p-2.5 flex flex-col gap-1.5 ${
-                filled ? 'border-[#333] bg-[#161616]' : 'border-dashed border-[#2a2a2a] bg-[#141414]'
+                filled
+                  ? 'border-[#333] bg-[#161616]'
+                  : 'border-dashed border-[#2a2a2a] bg-[#141414]'
               }`}
             >
               <div className="flex items-center justify-between gap-2">
@@ -185,7 +189,9 @@ export default function PodiumStaffPanel({ podium }) {
                   {SPECIALTY_LABELS[specialty] || specialty}
                 </span>
                 {filled ? (
-                  <span className={`text-[10px] font-bold shrink-0 ${TIER_STYLES[member.tier] || 'text-white'}`}>
+                  <span
+                    className={`text-[10px] font-bold shrink-0 ${TIER_STYLES[member.tier] || 'text-white'}`}
+                  >
                     {TIER_LABELS[member.tier] || member.tier}
                   </span>
                 ) : (
@@ -214,7 +220,9 @@ export default function PodiumStaffPanel({ podium }) {
                           onClick={() => setRetraining((v) => (v === member.id ? null : member.id))}
                           title="Retrain into a new specialty (reduced boost this season)"
                           className={`press-feedback ${
-                            retraining === member.id ? 'text-[#4d9fff]' : 'text-gray-500 hover:text-white'
+                            retraining === member.id
+                              ? 'text-[#4d9fff]'
+                              : 'text-gray-500 hover:text-white'
                           }`}
                         >
                           <GraduationCap className="w-3 h-3" />
@@ -242,7 +250,9 @@ export default function PodiumStaffPanel({ podium }) {
                         Retrain to:
                       </span>
                       {openSpecialties.length === 0 ? (
-                        <span className="text-[9px] text-gray-600">No open seats to move into.</span>
+                        <span className="text-[9px] text-gray-600">
+                          No open seats to move into.
+                        </span>
                       ) : (
                         openSpecialties.map((target) => (
                           <button
@@ -304,9 +314,7 @@ export default function PodiumStaffPanel({ podium }) {
                     })}
                   </div>
                 ) : (
-                  catalog && (
-                    <span className="text-[9px] text-gray-700">No candidates listed.</span>
-                  )
+                  catalog && <span className="text-[9px] text-gray-700">No candidates listed.</span>
                 )
               ) : (
                 <span className="text-[9px] text-gray-700">Open seat — expand to hire.</span>

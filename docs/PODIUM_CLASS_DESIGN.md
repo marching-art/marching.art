@@ -778,8 +778,8 @@ placement, division titles, caption awards, majors podiums. Nothing else moves i
 not CorpsCoin, not donations, not account age. It maps to seven named tiers, and the tier gates
 the **ceiling percentile** of the historical band the corps can score into:
 
-| Tier                    | Ceiling (percentile of historical day-band) | Feel at finals                                                |
-| ----------------------- | ------------------------------------------- | ------------------------------------------------------------- |
+| Tier                    | Ceiling (percentile of historical day-band) | Feel at finals                                                 |
+| ----------------------- | ------------------------------------------- | -------------------------------------------------------------- |
 | 1 · Community Corps     | p25                                         | ~76 ceiling — a strong debut (Surf/Genesis/Cascades territory) |
 | 2 · Regional Contender  | p43                                         | ~82 — a top Open-class season                                  |
 | 3 · National Contender  | p57                                         | ~87 — semifinalist                                             |

@@ -308,7 +308,10 @@ export default function JointRehearsalPanel({ podium }) {
 
           {/* Propose form — pick a partner, then a day off the calendar */}
           {data && !upcoming && (
-            <form onSubmit={propose} className="space-y-3 border border-[#333] rounded-sm p-3 bg-[#161616]">
+            <form
+              onSubmit={propose}
+              className="space-y-3 border border-[#333] rounded-sm p-3 bg-[#161616]"
+            >
               <div className="space-y-1">
                 <label className="text-[9px] font-bold uppercase tracking-wider text-gray-500">
                   Partner corps

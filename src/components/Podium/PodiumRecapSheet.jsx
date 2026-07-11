@@ -47,8 +47,8 @@ function sortResults(results, sortBy) {
   if (sortBy === 'class') {
     return rows.sort(
       (a, b) =>
-        (DIVISION_ORDER[a.division || 'aClass'] - DIVISION_ORDER[b.division || 'aClass']) ||
-        (b.totalScore - a.totalScore)
+        DIVISION_ORDER[a.division || 'aClass'] - DIVISION_ORDER[b.division || 'aClass'] ||
+        b.totalScore - a.totalScore
     );
   }
   if (sortBy === 'total') return rows.sort((a, b) => b.totalScore - a.totalScore);
@@ -65,7 +65,9 @@ function formatRecapAsText(recap, day, seasonName) {
   const lines = [];
   for (const show of showsOf(recap)) {
     const head = fallbackMasthead(day);
-    lines.push(`${show.eventName || head.name}${show.location ? ` — ${show.location}` : ''} · Day ${day} of 49`);
+    lines.push(
+      `${show.eventName || head.name}${show.location ? ` — ${show.location}` : ''} · Day ${day} of 49`
+    );
     lines.push('');
     for (const row of [...(show.results || [])].sort((a, b) => a.place - b.place)) {
       lines.push(
@@ -133,7 +135,9 @@ function ShowTable({ show, day, sortBy, userCorpsName }) {
     <div className="space-y-2">
       {/* Per-show masthead */}
       <div className="flex items-baseline justify-between border-b border-[#2a2a2a] pb-1.5">
-        <div className="text-[13px] font-bold text-white truncate">{show.eventName || head.name}</div>
+        <div className="text-[13px] font-bold text-white truncate">
+          {show.eventName || head.name}
+        </div>
         {(show.location || head.site) && (
           <div className="text-[10px] uppercase tracking-wider text-gray-500 flex-shrink-0 pl-2">
             {show.location || head.site}
@@ -376,7 +380,11 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
               title="Copy the sheet as Discord-ready text"
               className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-sm border border-[#333] text-gray-400 hover:text-white hover:border-[#c9a227] press-feedback"
             >
-              {copied ? <Check className="w-3 h-3 text-green-400" /> : <Share2 className="w-3 h-3" />}
+              {copied ? (
+                <Check className="w-3 h-3 text-green-400" />
+              ) : (
+                <Share2 className="w-3 h-3" />
+              )}
               {copied ? 'Copied' : 'Share'}
             </button>
             <div className="text-[9px] uppercase tracking-wider text-[#c9a227] font-bold">
