@@ -369,82 +369,19 @@ const Dashboard = () => {
           </div>
         ) : activeCorps ? (
           <div className="p-3 md:p-4">
-            {/* 2/3 + 1/3 Grid Layout - balanced columns. The scorecard is
-                first in the DOM so the headline score/rank leads the mobile
-                stack; explicit lg placement keeps the desktop layout
-                (main left, scorecard atop the right sidebar) unchanged. */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {/* ZONE A — HEADLINE: last night's payoff leads the page on
-                  every device (top of mobile stack, top of right column) */}
-              <div className="lg:col-start-3 lg:row-start-1" data-tour="scorecard">
-                <SeasonScorecard
-                  themeClass={equippedCardTheme?.cardClass}
-                  bestRecent={bestRecent}
-                  onShowConcept={() => setShowConceptModal(true)}
-                  showConcept={activeCorps.showConcept}
-                  score={userCorpsScore}
-                  rank={userCorpsRank}
-                  rankChange={userRankChange}
-                  corpsName={activeCorps.corpsName || activeCorps.name}
-                  corpsClass={activeCorpsClass}
-                  loading={scoresLoading}
-                  avatarUrl={activeCorps.avatarUrl}
-                  onDesignUniform={() => setShowUniformDesign(true)}
-                  bestInShowCount={bestInShowCount}
-                  canManage={canEditCorpsThisSeason(activeCorps)}
-                  canMove={
-                    Object.values(corps || {}).filter(Boolean).length <
-                    (unlockedClasses?.length || 0)
-                  }
-                  lockReason={
-                    canEditCorpsThisSeason(activeCorps)
-                      ? null
-                      : 'Locked — this corps has already competed this season.'
-                  }
-                  onMoveCorps={() => setShowMoveCorps(true)}
-                  onRetireCorps={() => setShowRetireConfirm(true)}
-                />
-              </div>
-
-              {/* ZONE B — TODAY: the whole daily set in one card (second in
-                  the mobile stack so the to-do list is one scroll from the
-                  score) */}
-              <div className="lg:col-start-3 lg:row-start-2 space-y-4">
-                <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-500 -mb-2">
-                  Today
-                </h2>
-
-                {/* Director's Report — login + challenges + predictions +
-                    pending claims as one checklist with a single count */}
-                <DirectorsReport
-                  recentResults={recentResults}
-                  corpsClass={activeCorpsClass}
-                  seasonUid={seasonData?.seasonUid}
-                  onLineupClick={() => openCaptionSelection()}
-                  onConceptClick={() => setShowConceptModal(true)}
-                />
-
-                {/* First Season Journey - server-rewarded quest line for new
-                    directors; hides itself once all steps are claimed */}
-                {isPodiumSelected ? (
-                  /* Podium Rookie Journey — the director-sim equivalent quest
-                     line, kept in the right column like the fantasy journey */
-                  <Suspense fallback={null}>
-                    <PodiumJourneyPanel />
-                  </Suspense>
-                ) : (
-                  <JourneyPanel
-                    profile={profile}
-                    resultCount={recentResults.length}
-                    onEditLineup={() => openCaptionSelection()}
-                    onSetConcept={() => setShowConceptModal(true)}
-                  />
-                )}
-              </div>
-
+            {/* 2/3 + 1/3 grid. Zone C (My Corps) leads the DOM and holds the
+                left column; the right sidebar (scorecard, Today, The Season) is
+                grouped into a single grid cell so its row tracks aren't
+                stretched by the taller left column — that stretching used to pad
+                blank space between the scorecard, Today, and The Season on the
+                Podium tab. `order-*` restores the mobile stack order (scorecard
+                → today → my corps → season); `items-start` keeps each desktop
+                column top-aligned. */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:items-start">
               {/* ZONE C — MY CORPS (2/3): the strategic work — build, tune,
-                  and tonight's performances */}
-              <div className="lg:col-span-2 lg:col-start-1 lg:row-start-1 lg:row-span-3 space-y-4">
+                  and tonight's performances. `order-3` drops it into the
+                  My-Corps slot of the mobile stack. */}
+              <div className="order-3 lg:order-none lg:col-span-2 lg:col-start-1 lg:row-start-1 space-y-4">
                 <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-500 -mb-2 lg:sr-only">
                   My Corps
                 </h2>
@@ -489,31 +426,107 @@ const Dashboard = () => {
                 )}
               </div>
 
-              {/* ZONE D — THE SEASON: how am I advancing, who am I chasing,
-                  what just happened */}
-              <div className="lg:col-start-3 lg:row-start-3 space-y-4">
-                <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-500 -mb-2">
-                  The Season
-                </h2>
-
-                {/* Season progress hub — ladder + achievements as one surface */}
-                <SeasonProgressHub
-                  profile={profile}
-                  seasonUid={seasonData?.seasonUid}
-                  lineupCount={lineupCount}
-                  resultCount={recentResults.length}
-                  leagueCount={myLeagues?.length || 0}
-                />
-
-                {/* Rivals - closest competitors in the active corps's class */}
-                <RivalsPanel rivals={activeCorpsRivals} corpsClass={activeCorpsClass} />
-
-                <div data-tour="recent-results">
-                  <RecentResultsFeed
-                    results={recentResults}
-                    loading={scoresLoading}
+              {/* RIGHT SIDEBAR (1/3) — Zones A, B, and D as one grid cell. On
+                  mobile the wrapper is `contents`, so A/B/D stay independent
+                  grid items and the `order-*` classes preserve the
+                  scorecard-first stack; `lg:block` turns it into a real 1/3
+                  column, top-aligned by the grid's items-start so the taller
+                  left column no longer inflates these rows. */}
+              <div className="contents lg:block lg:col-start-3 lg:row-start-1 lg:space-y-4">
+                {/* ZONE A — HEADLINE: last night's payoff leads the page on
+                    every device (top of mobile stack, top of right column) */}
+                <div className="order-1 lg:order-none" data-tour="scorecard">
+                  <SeasonScorecard
+                    themeClass={equippedCardTheme?.cardClass}
+                    bestRecent={bestRecent}
+                    onShowConcept={() => setShowConceptModal(true)}
+                    showConcept={activeCorps.showConcept}
+                    score={userCorpsScore}
+                    rank={userCorpsRank}
+                    rankChange={userRankChange}
+                    corpsName={activeCorps.corpsName || activeCorps.name}
                     corpsClass={activeCorpsClass}
+                    loading={scoresLoading}
+                    avatarUrl={activeCorps.avatarUrl}
+                    onDesignUniform={() => setShowUniformDesign(true)}
+                    bestInShowCount={bestInShowCount}
+                    canManage={canEditCorpsThisSeason(activeCorps)}
+                    canMove={
+                      Object.values(corps || {}).filter(Boolean).length <
+                      (unlockedClasses?.length || 0)
+                    }
+                    lockReason={
+                      canEditCorpsThisSeason(activeCorps)
+                        ? null
+                        : 'Locked — this corps has already competed this season.'
+                    }
+                    onMoveCorps={() => setShowMoveCorps(true)}
+                    onRetireCorps={() => setShowRetireConfirm(true)}
                   />
+                </div>
+
+                {/* ZONE B — TODAY: the whole daily set in one card (second in
+                    the mobile stack so the to-do list is one scroll from the
+                    score) */}
+                <div className="order-2 lg:order-none space-y-4">
+                  <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-500 -mb-2">
+                    Today
+                  </h2>
+
+                  {/* Director's Report — login + challenges + predictions +
+                      pending claims as one checklist with a single count */}
+                  <DirectorsReport
+                    recentResults={recentResults}
+                    corpsClass={activeCorpsClass}
+                    seasonUid={seasonData?.seasonUid}
+                    onLineupClick={() => openCaptionSelection()}
+                    onConceptClick={() => setShowConceptModal(true)}
+                  />
+
+                  {/* First Season Journey - server-rewarded quest line for new
+                      directors; hides itself once all steps are claimed */}
+                  {isPodiumSelected ? (
+                    /* Podium Rookie Journey — the director-sim equivalent quest
+                       line, kept in the right column like the fantasy journey */
+                    <Suspense fallback={null}>
+                      <PodiumJourneyPanel />
+                    </Suspense>
+                  ) : (
+                    <JourneyPanel
+                      profile={profile}
+                      resultCount={recentResults.length}
+                      onEditLineup={() => openCaptionSelection()}
+                      onSetConcept={() => setShowConceptModal(true)}
+                    />
+                  )}
+                </div>
+
+                {/* ZONE D — THE SEASON: how am I advancing, who am I chasing,
+                    what just happened */}
+                <div className="order-4 lg:order-none space-y-4">
+                  <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-500 -mb-2">
+                    The Season
+                  </h2>
+
+                  {/* Season progress hub — ladder + achievements as one surface */}
+                  <SeasonProgressHub
+                    profile={profile}
+                    seasonUid={seasonData?.seasonUid}
+                    lineupCount={lineupCount}
+                    resultCount={recentResults.length}
+                    leagueCount={myLeagues?.length || 0}
+                  />
+
+                  {/* Rivals - closest competitors in the active corps's class */}
+                  <RivalsPanel rivals={activeCorpsRivals} corpsClass={activeCorpsClass} />
+
+                  <div data-tour="recent-results">
+                    <RecentResultsFeed
+                      results={recentResults}
+                      loading={scoresLoading}
+                      corpsClass={activeCorpsClass}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
