@@ -27,14 +27,27 @@ function normalizeKey(raw) {
     .replace(/,\s*$/, "");
 }
 
+// Secondary index keyed by each venue's canonical "City, ST" label (the exact
+// form stored on hosted-event rows and shown in the client picker). The
+// gazetteer keys come from historical data, which spells regions out
+// ("Canton, Ohio"), so an abbreviated "Canton, OH" would miss the primary
+// lookup. Built by re-normalizing each venue's own {city, region} so index and
+// lookup apply the same transform.
+const canonicalIndex = {};
+for (const venue of Object.values(gazetteer.venues)) {
+  canonicalIndex[normalizeKey(`${venue.city}, ${venue.region}`)] = venue;
+}
+
 /**
- * Resolve a location string to a gazetteer venue, or null.
- * @param {string} locationString e.g. "Allentown, Pennsylvania"
+ * Resolve a location string to a gazetteer venue, or null. Accepts both the
+ * historical full-name spelling ("Allentown, Pennsylvania") and the canonical
+ * "City, ST" label ("Allentown, PA").
+ * @param {string} locationString
  * @returns {{venueId, city, region, lat, lng}|null}
  */
 function venueFor(locationString) {
   const key = normalizeKey(locationString);
-  return gazetteer.venues[key] || null;
+  return gazetteer.venues[key] || canonicalIndex[key] || null;
 }
 
 /** Great-circle distance in miles. */
