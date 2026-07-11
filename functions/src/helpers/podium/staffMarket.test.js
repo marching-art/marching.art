@@ -1,35 +1,32 @@
-// Tests for the Podium staff market (Phase 4.3-4.6): deterministic
-// generation, the yield-boost cap, and Tour Manager travel reduction.
+// Tests for the Podium staff catalog: the always-available hiring catalog,
+// the yield-boost cap, and Tour Manager travel reduction.
 //
 // Uses Node's built-in test runner (node:test). Run with `npm test`.
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { generateMarket, staffYieldMultiplier, tourStaminaReduction, SPECIALTIES } =
+const { buildCatalog, staffYieldMultiplier, tourStaminaReduction, SPECIALTIES, HIRABLE_TIERS } =
   require("./staffMarket");
 const balance = require("./balanceConfig.json");
 
-describe("staff market generation", () => {
-  test("deterministic per season", () => {
-    assert.deepEqual(generateMarket("season_a"), generateMarket("season_a"));
-  });
-
-  test("different seasons produce different markets", () => {
-    const a = JSON.stringify(generateMarket("season_a"));
-    const b = JSON.stringify(generateMarket("season_b"));
-    assert.notEqual(a, b);
-  });
-
-  test("covers every specialty with unsigned staff and valid tiers", () => {
-    const market = generateMarket("season_c");
+describe("staff catalog", () => {
+  test("offers every specialty at every entry tier, always available", () => {
+    const catalog = buildCatalog(balance);
     for (const specialty of SPECIALTIES) {
-      const pool = market.filter((person) => person.specialty === specialty);
-      assert.ok(pool.length >= 5, `${specialty} pool too small (${pool.length})`);
-      for (const person of pool) {
-        assert.equal(person.signedBy, null);
-        assert.ok(balance.staff.tiers[person.tier], `unknown tier ${person.tier}`);
-        assert.equal(person.salary, balance.staff.tiers[person.tier].salary);
+      for (const tier of HIRABLE_TIERS) {
+        const option = catalog.find((o) => o.specialty === specialty && o.tier === tier);
+        assert.ok(option, `missing ${specialty} @ ${tier}`);
+        assert.equal(option.salary, balance.staff.tiers[tier].salary);
+        assert.equal(option.boost, balance.staff.tiers[tier].boost);
       }
+    }
+    assert.equal(catalog.length, SPECIALTIES.length * HIRABLE_TIERS.length);
+  });
+
+  test("never offers earned tiers (veteran and above) directly", () => {
+    const catalog = buildCatalog(balance);
+    for (const tier of ["veteran", "master", "legend"]) {
+      assert.ok(!catalog.some((o) => o.tier === tier), `${tier} must be earned, not hired`);
     }
   });
 });

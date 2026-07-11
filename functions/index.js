@@ -46,8 +46,7 @@ const {
 const {
   getPodiumStaffMarket,
   hirePodiumStaff,
-  postPodiumStaff,
-  buyPodiumStaffContract,
+  releasePodiumStaff,
   retrainPodiumStaff,
 } = require("./src/callable/podiumStaff");
 const {
@@ -291,8 +290,7 @@ module.exports = {
   hirePodiumClinician,
   getPodiumStaffMarket,
   hirePodiumStaff,
-  postPodiumStaff,
-  buyPodiumStaffContract,
+  releasePodiumStaff,
   retrainPodiumStaff,
   hostEvent,
   getPodiumState,
