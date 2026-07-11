@@ -35,10 +35,10 @@ const ArticleRow = ({ article, onEdit, onArchive, onDelete, formatDate, editLoad
   return (
     <div className="bg-[#1a1a1a] border border-[#333] rounded-none overflow-hidden">
       {/* Main row */}
-      <div className="p-4">
-        <div className="flex items-start gap-4">
+      <div className="p-3 sm:p-4">
+        <div className="flex items-start gap-3 sm:gap-4">
           {/* Image thumbnail */}
-          <div className="w-16 h-16 bg-[#222] rounded-none flex-shrink-0 overflow-hidden">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 bg-[#222] rounded-none flex-shrink-0 overflow-hidden">
             {article.imageUrl ? (
               <img src={article.imageUrl} alt="" className="w-full h-full object-cover" />
             ) : (
@@ -50,85 +50,95 @@ const ArticleRow = ({ article, onEdit, onArchive, onDelete, formatDate, editLoad
 
           {/* Content */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <h3 className="font-bold text-white text-sm truncate">{article.headline}</h3>
-                <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{article.summary}</p>
-              </div>
+            {/* Headline + action buttons share the top row so the buttons no
+                longer steal a full column and crush the content on mobile. */}
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="font-bold text-white text-sm line-clamp-2 sm:truncate">
+                {article.headline}
+              </h3>
 
-              {/* Status badges */}
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <span
-                  className={`px-2 py-0.5 rounded-none text-xs font-medium ${SOURCE_COLORS[article.source]}`}
+              {/* Action buttons */}
+              <div className="flex items-center gap-0.5 flex-shrink-0 -mr-1">
+                <button
+                  onClick={onEdit}
+                  disabled={editLoading}
+                  className="p-2 text-gray-400 hover:text-white hover:bg-[#333] rounded-none transition-colors"
+                  title="Edit article"
                 >
-                  {article.source === 'current_season' ? 'Season' : 'Legacy'}
-                </span>
-                {article.isArchived ? (
-                  <span className="px-2 py-0.5 bg-red-500/20 text-red-400 rounded-none text-xs font-medium flex items-center gap-1">
-                    <EyeOff className="w-3 h-3" />
-                    Archived
-                  </span>
-                ) : article.isPublished ? (
-                  <span className="px-2 py-0.5 bg-green-500/20 text-green-400 rounded-none text-xs font-medium flex items-center gap-1">
-                    <Eye className="w-3 h-3" />
-                    Published
-                  </span>
-                ) : (
-                  <span className="px-2 py-0.5 bg-yellow-500/20 text-yellow-400 rounded-none text-xs font-medium">
-                    Draft
-                  </span>
-                )}
+                  <Edit3 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={onArchive}
+                  className={`p-2 rounded-none transition-colors ${
+                    article.isArchived
+                      ? 'text-green-400 hover:text-green-300 hover:bg-green-500/10'
+                      : 'text-gray-400 hover:text-yellow-400 hover:bg-yellow-500/10'
+                  }`}
+                  title={article.isArchived ? 'Restore article' : 'Archive article'}
+                >
+                  {article.isArchived ? (
+                    <ArchiveRestore className="w-4 h-4" />
+                  ) : (
+                    <Archive className="w-4 h-4" />
+                  )}
+                </button>
+                <button
+                  onClick={() => setExpanded(!expanded)}
+                  className="p-2 text-gray-400 hover:text-white hover:bg-[#333] rounded-none transition-colors"
+                  title="Toggle details"
+                >
+                  {expanded ? (
+                    <ChevronUp className="w-4 h-4" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4" />
+                  )}
+                </button>
               </div>
             </div>
 
-            {/* Metadata row */}
-            <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+            {article.summary && (
+              <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{article.summary}</p>
+            )}
+
+            {/* Status badges - wrap under the headline instead of competing
+                for horizontal space beside it. */}
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              <span
+                className={`px-2 py-0.5 rounded-none text-xs font-medium ${SOURCE_COLORS[article.source]}`}
+              >
+                {article.source === 'current_season' ? 'Season' : 'Legacy'}
+              </span>
+              {article.isArchived ? (
+                <span className="px-2 py-0.5 bg-red-500/20 text-red-400 rounded-none text-xs font-medium flex items-center gap-1">
+                  <EyeOff className="w-3 h-3" />
+                  Archived
+                </span>
+              ) : article.isPublished ? (
+                <span className="px-2 py-0.5 bg-green-500/20 text-green-400 rounded-none text-xs font-medium flex items-center gap-1">
+                  <Eye className="w-3 h-3" />
+                  Published
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 bg-yellow-500/20 text-yellow-400 rounded-none text-xs font-medium">
+                  Draft
+                </span>
+              )}
+            </div>
+
+            {/* Metadata row - wraps gracefully on narrow screens */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-gray-500">
               {article.reportDay !== undefined && (
-                <span className="flex items-center gap-1">
-                  <Calendar className="w-3 h-3" />
+                <span className="flex items-center gap-1 whitespace-nowrap">
+                  <Calendar className="w-3 h-3 flex-shrink-0" />
                   Day {article.reportDay}
                 </span>
               )}
-              <span className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
+              <span className="flex items-center gap-1 whitespace-nowrap">
+                <Clock className="w-3 h-3 flex-shrink-0" />
                 {formatDate(article.createdAt)}
               </span>
-              <span className="text-gray-600">{article.category}</span>
+              {article.category && <span className="text-gray-600">{article.category}</span>}
             </div>
-          </div>
-
-          {/* Action buttons */}
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <button
-              onClick={onEdit}
-              disabled={editLoading}
-              className="p-2 text-gray-400 hover:text-white hover:bg-[#333] rounded-none transition-colors"
-              title="Edit article"
-            >
-              <Edit3 className="w-4 h-4" />
-            </button>
-            <button
-              onClick={onArchive}
-              className={`p-2 rounded-none transition-colors ${
-                article.isArchived
-                  ? 'text-green-400 hover:text-green-300 hover:bg-green-500/10'
-                  : 'text-gray-400 hover:text-yellow-400 hover:bg-yellow-500/10'
-              }`}
-              title={article.isArchived ? 'Restore article' : 'Archive article'}
-            >
-              {article.isArchived ? (
-                <ArchiveRestore className="w-4 h-4" />
-              ) : (
-                <Archive className="w-4 h-4" />
-              )}
-            </button>
-            <button
-              onClick={() => setExpanded(!expanded)}
-              className="p-2 text-gray-400 hover:text-white hover:bg-[#333] rounded-none transition-colors"
-              title="Toggle details"
-            >
-              {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </button>
           </div>
         </div>
       </div>
@@ -136,14 +146,14 @@ const ArticleRow = ({ article, onEdit, onArchive, onDelete, formatDate, editLoad
       {/* Expanded details */}
       {expanded && (
         <div className="border-t border-[#333] bg-[#0a0a0a] p-4 space-y-3">
-          <div className="grid grid-cols-2 gap-4 text-xs">
-            <div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-xs">
+            <div className="min-w-0">
               <span className="text-gray-500">Path:</span>
-              <span className="ml-2 text-gray-300 font-mono">{article.path}</span>
+              <span className="ml-2 text-gray-300 font-mono break-all">{article.path}</span>
             </div>
-            <div>
+            <div className="min-w-0">
               <span className="text-gray-500">ID:</span>
-              <span className="ml-2 text-gray-300 font-mono">{article.id}</span>
+              <span className="ml-2 text-gray-300 font-mono break-all">{article.id}</span>
             </div>
             {article.updatedAt && (
               <div>
