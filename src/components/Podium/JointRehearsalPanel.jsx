@@ -8,7 +8,16 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Handshake, Loader2, ChevronDown, ChevronUp, MapPin, Search, X, Trophy, Copy, Check,
+  Handshake,
+  Loader2,
+  ChevronDown,
+  ChevronUp,
+  MapPin,
+  Search,
+  X,
+  Trophy,
+  Copy,
+  Check,
 } from 'lucide-react';
 import {
   getJointRehearsals,
@@ -27,8 +36,7 @@ const TIER_LABELS = {
   crossCountry: 'Cross-Country',
 };
 
-const cityLine = (city, stadium) =>
-  stadium ? `${city} · ${stadium}` : city || 'TBA';
+const cityLine = (city, stadium) => (stadium ? `${city} · ${stadium}` : city || 'TBA');
 
 // One ranked overlap window — day, host city/stadium, distance, fit, cost.
 function WindowCard({ win, selected, onSelect }) {
@@ -57,15 +65,17 @@ function WindowCard({ win, selected, onSelect }) {
         <div className="flex flex-wrap gap-x-2.5 gap-y-0.5 mt-1 text-[9px] font-mono text-gray-500">
           {win.milesApart != null && <span>{win.milesApart} mi apart</span>}
           <span className={fitColor}>
-            {win.isFree ? 'fits route — free' : `detour · ${TIER_LABELS[win.travelTier] || win.travelTier}`}
+            {win.isFree
+              ? 'fits route — free'
+              : `detour · ${TIER_LABELS[win.travelTier] || win.travelTier}`}
           </span>
         </div>
       </div>
       <div className="text-right space-y-1">
-        <div className={`text-[11px] font-mono font-bold tabular-nums ${win.isFree ? 'text-green-400' : 'text-amber-400'}`}>
-          {win.isFree
-            ? 'Free'
-            : `−${win.coinCost} CC · −${win.staminaCost}`}
+        <div
+          className={`text-[11px] font-mono font-bold tabular-nums ${win.isFree ? 'text-green-400' : 'text-amber-400'}`}
+        >
+          {win.isFree ? 'Free' : `−${win.coinCost} CC · −${win.staminaCost}`}
         </div>
         <div className="text-[8px] font-mono uppercase tracking-wider text-[#c9a227] border border-[#8c7220] rounded-none px-1.5 py-0.5 inline-block">
           Ens +{win.ensembleBonusPct}%
@@ -86,7 +96,9 @@ function IncomingCard({ proposal, busy, blocked, onAccept, onDecline }) {
           <span className="font-bold text-white">{proposal.fromCorpsName}</span> wants a joint
           rehearsal
         </span>
-        <span className="text-[9px] font-mono text-gray-600 uppercase shrink-0">Day {proposal.day}</span>
+        <span className="text-[9px] font-mono text-gray-600 uppercase shrink-0">
+          Day {proposal.day}
+        </span>
       </div>
       <div className="px-3 py-2.5 space-y-2.5">
         <div className="text-[11px] text-gray-300 flex items-center gap-1.5">
@@ -110,7 +122,9 @@ function IncomingCard({ proposal, busy, blocked, onAccept, onDecline }) {
               Your gain
             </div>
             <div className="text-[13px] font-bold text-[#c9a227]">Ensemble +25%</div>
-            <div className="text-[9px] text-gray-600 mt-0.5">+ morale &amp; the scrimmage report.</div>
+            <div className="text-[9px] text-gray-600 mt-0.5">
+              + morale &amp; the scrimmage report.
+            </div>
           </div>
         </div>
         {blocked && (
@@ -200,7 +214,9 @@ function TaleOfTheTape({ scrimmage }) {
                   {mine?.toFixed(2) ?? '—'}
                 </span>
                 <span className="text-gray-300 text-right">{theirs?.toFixed(2) ?? '—'}</span>
-                <span className={`text-right ${d > 0 ? 'text-green-400' : d < 0 ? 'text-red-400' : 'text-gray-600'}`}>
+                <span
+                  className={`text-right ${d > 0 ? 'text-green-400' : d < 0 ? 'text-red-400' : 'text-gray-600'}`}
+                >
                   {d > 0 ? '+' : ''}
                   {d.toFixed(2)}
                 </span>
@@ -261,7 +277,9 @@ function HeadToHead({ headToHead }) {
                 {rec.partnerCorpsName || 'Unknown corps'}
               </span>
               <span className="flex items-center gap-2.5 shrink-0">
-                <span className="text-[9px] font-mono text-gray-600">{rec.joints} joint{rec.joints === 1 ? '' : 's'}</span>
+                <span className="text-[9px] font-mono text-gray-600">
+                  {rec.joints} joint{rec.joints === 1 ? '' : 's'}
+                </span>
                 <span className={`text-[11px] font-mono font-bold tabular-nums ${cls}`}>
                   {rec.wins}–{rec.losses}
                   {rec.ties ? `–${rec.ties}` : ''}

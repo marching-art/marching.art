@@ -162,6 +162,9 @@ const {
   showReminderPushJob,
   weeklyMatchupPushJob,
 } = require("./src/scheduled/pushNotifications");
+const {
+  autoPublishScheduledSubmissions,
+} = require("./src/scheduled/newsAutoPublish");
 
 // Trigger Functions
 const {
@@ -340,6 +343,9 @@ module.exports = {
   weeklyDigestEmailJob,
   winBackEmailJob,
   streakBrokenEmailJob,
+
+  // User-article auto-publish (2 PM ET, trusted authors)
+  autoPublishScheduledSubmissions,
 
   // Triggers
   processDciScores,

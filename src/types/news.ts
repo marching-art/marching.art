@@ -23,6 +23,11 @@ export interface NewsEntry {
   isPublished: boolean;
   imageUrl?: string;
   imageIsPlaceholder?: boolean;
+  // Author credit for community-submitted articles.
+  authorUid?: string | null;
+  authorName?: string | null;
+  authorUsername?: string | null;
+  authorLocation?: string | null;
   metadata?: {
     eventName?: string;
     location?: string;

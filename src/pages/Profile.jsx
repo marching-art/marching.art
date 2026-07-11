@@ -18,7 +18,7 @@ import { DirectorProfile } from '../components/Profile/DirectorProfile';
 import { ModalLoadingFallback } from '../components/ui';
 import PendingLeagueInvitations from '../components/Profile/PendingLeagueInvitations';
 import { generateCorpsAvatar } from '../api/functions';
-import { CORPS_CLASS_ORDER, resolveCorpsForClass } from '../utils/corps';
+import { PROFILE_CORPS_CLASS_ORDER, resolveCorpsForClass } from '../utils/corps';
 import { lazyWithRetry } from '../utils/lazyWithRetry';
 
 // OPTIMIZATION #9: Lazy-load UniformDesignModal (794 lines) to reduce initial bundle.
@@ -157,7 +157,7 @@ const Profile = () => {
   // resolve corps tolerating legacy short keys ('world'/'open').
   const allCorps = React.useMemo(() => {
     if (!profile?.corps) return [];
-    return CORPS_CLASS_ORDER.map((c) => ({
+    return PROFILE_CORPS_CLASS_ORDER.map((c) => ({
       classKey: c,
       corps: resolveCorpsForClass(profile.corps, c),
     }))
