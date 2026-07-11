@@ -123,9 +123,20 @@ function validateAuditions(auditions) {
 /**
  * Validate self-selected show days for one week against the pick budget
  * (majors and championship week are auto-attended and never selectable).
+ * `division`/`easternAssignments` make the auto-day set division-correct and
+ * match the client's locked days — without them a World corps' Championship
+ * day 49 and the published Eastern night would be computed with A Class /
+ * hash-parity fallbacks and reject picks the client shows as valid.
  * @returns {number[]} sorted, deduped days
  */
-function validateShowDays(week, days, uid, seasonUid, currentCompetitionDay) {
+function validateShowDays(
+  week,
+  days,
+  uid,
+  seasonUid,
+  currentCompetitionDay,
+  { division, easternAssignments } = {}
+) {
   if (!Number.isInteger(week) || week < 1 || week > 7) {
     throw new HttpsError("invalid-argument", "Week must be 1-7.");
   }
@@ -133,7 +144,7 @@ function validateShowDays(week, days, uid, seasonUid, currentCompetitionDay) {
     throw new HttpsError("invalid-argument", "Days must be an array.");
   }
   const maxPicks = store.maxPicksForWeek(week);
-  const autoDays = store.autoDaysFor(uid, seasonUid);
+  const autoDays = store.autoDaysFor(uid, seasonUid, { division, easternAssignments });
   const unique = [...new Set(days)].sort((a, b) => a - b);
   if (unique.length > maxPicks) {
     throw new HttpsError("invalid-argument", `Week ${week} allows at most ${maxPicks} selected shows.`);
@@ -572,6 +583,9 @@ exports.setPodiumShows = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData, competitionDay } = await podiumContext(request);
   const { week, days } = request.data || {};
   const sRef = store.stateRef(db, uid);
+  // Load the published Eastern-night assignments once (a read, so before the
+  // transaction) so auto-day validation matches what getPodiumState locks.
+  const easternAssignments = await store.loadEasternAssignments(db, seasonData.seasonUid);
 
   const selected = await db.runTransaction(async (transaction) => {
     const snapshot = await transaction.get(sRef);
@@ -579,7 +593,14 @@ exports.setPodiumShows = onCall({ cors: true }, async (request) => {
       throw new HttpsError("failed-precondition", "Register a Podium corps first.");
     }
     const state = snapshot.data();
-    const validated = validateShowDays(week, days, uid, seasonData.seasonUid, Math.max(0, competitionDay));
+    const validated = validateShowDays(
+      week,
+      days,
+      uid,
+      seasonData.seasonUid,
+      Math.max(0, competitionDay),
+      { division: state.division, easternAssignments }
+    );
     const keep = (state.selectedShowDays || []).filter((d) => Math.ceil(d / 7) !== week);
     state.selectedShowDays = [...keep, ...validated].sort((a, b) => a - b);
     state.updatedAt = new Date().toISOString();
