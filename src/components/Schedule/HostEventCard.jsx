@@ -18,6 +18,7 @@ import { VENUE_TIERS, HOSTING_RULES } from '../Podium/podiumConstants';
 export default function HostEventCard({ seasonUid }) {
   const enabled = usePodiumEnabled();
   const profile = useProfileStore((state) => state.profile);
+  const currentUid = useProfileStore((state) => state._currentUid);
   const currentDay = useSeasonStore((state) => state.currentDay);
 
   const [open, setOpen] = useState(false);
@@ -50,6 +51,11 @@ export default function HostEventCard({ seasonUid }) {
 
   const corpsCoin = profile?.corpsCoin || 0;
   const hasCorps = Object.values(profile?.corps || {}).filter(Boolean).length > 0;
+  // One show per director per season (server-enforced in the hostEvent
+  // callable; mirrored here so the form self-disables once you've hosted).
+  const myEventsThisSeason = (events || []).filter((e) => e.hostUid === currentUid).length;
+  const seasonLimitReached =
+    myEventsThisSeason >= HOSTING_RULES.maxEventsPerSeasonPerHost;
   const hostingByTier = profile?.hosting?.byTier || {};
   // Venue ladder: bigger stadiums are earned by running successful smaller
   // shows (server-enforced; this mirrors the gate for display).
@@ -113,11 +119,17 @@ export default function HostEventCard({ seasonUid }) {
             scored, so a well-drawn show profits. Run successful shows to unlock bigger stadiums:
             2 successful High School events open the College Bowl, 3 successful College Bowls open
             the NFL Stadium. Days {minDay}&ndash;{HOSTING_RULES.lastHostableDay}; the majors' days
-            ({HOSTING_RULES.majorDays.join(', ')}) are exclusive.
+            ({HOSTING_RULES.majorDays.join(', ')}) are exclusive. One show per director per season.
           </p>
 
           {!hasCorps && (
             <div className="text-[10px] text-amber-400">Field a corps before hosting events.</div>
+          )}
+
+          {hasCorps && seasonLimitReached && (
+            <div className="text-[10px] text-amber-400">
+              You&apos;ve already hosted a show this season — directors can host one show per season.
+            </div>
           )}
 
           {/* Venue tier picker */}
@@ -200,7 +212,7 @@ export default function HostEventCard({ seasonUid }) {
               </span>
               <button
                 type="submit"
-                disabled={busy || !hasCorps || corpsCoin < tier.rentalCC}
+                disabled={busy || !hasCorps || seasonLimitReached || corpsCoin < tier.rentalCC}
                 className="px-3 py-1.5 rounded-sm text-[10px] font-bold uppercase tracking-wider
                   bg-[#c9a227] text-black disabled:bg-[#333] disabled:text-gray-600 press-feedback"
               >
