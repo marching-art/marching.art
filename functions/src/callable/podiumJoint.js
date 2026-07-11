@@ -130,8 +130,7 @@ exports.respondJointRehearsal = onCall({ cors: true }, async (request) => {
   // Geography (design §5.12): free within the day-trip tier of both corps'
   // tour positions on that day; beyond it the PROPOSER pays the normal
   // travel cost of the gap (charged by the processor on the joint day).
-  const { loadScheduleLocations } = require("../helpers/podium/processor");
-  const scheduleLocations = await loadScheduleLocations(db, seasonData);
+  const scheduleLocations = await store.loadScheduleLocations(db, seasonData);
 
   const fromRef = store.stateRef(db, proposal.fromUid);
   const toRef = store.stateRef(db, uid);
