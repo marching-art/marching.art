@@ -1,6 +1,13 @@
-// Presentational sections for the Scores page: pill tabs, recap data grid,
-// SoundSport medal list, and class standings grid. Extracted verbatim from
-// Scores.jsx.
+// Presentational sections for the Scores page: pill tabs, recap box scores,
+// SoundSport medal list, and class standings. Styled to match the Podium Class
+// recap sheet (PodiumRecapSheet) — sheet cards, gold box-toppers, per-show
+// mastheads, Podium-style sort pills, and a wordmark footer — so every scoring
+// surface reads as one system.
+//
+// Rows use fit-to-width flex columns (not a horizontally-scrolling table): the
+// fantasy classes only surface GE/VIS/MUS + Total, which fits a phone without
+// horizontal scroll. Per the anti-lineup-harvesting rule (§5.4) the fantasy
+// sheets stay condensed to GE/VIS/MUS; full per-caption columns are Podium-only.
 
 import React, { useMemo, memo, useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
@@ -24,6 +31,22 @@ import {
   mergeTwoNightShows,
 } from '../utils/scoresUtils';
 
+// =============================================================================
+// SHARED PODIUM-SHEET STYLE TOKENS + PRIMITIVES
+// The Podium recap sheet is the reference: #1a1a1a card on a #333 border, gold
+// (#c9a227) box-toppers/accents, blue (#0057B8 / #4d9fff) for the viewer's own
+// corps, thin #242424 row dividers.
+// =============================================================================
+
+const SHEET_CARD = 'bg-[#1a1a1a] border border-[#333] rounded-none p-3 md:p-4';
+const GOLD = 'text-[#c9a227]';
+
+// Fixed numeric-column widths so caption values line up across every row and
+// card while the corps column flexes and truncates — the key to a box-score
+// look that never forces horizontal scroll on mobile.
+const CAP_W = 'w-[42px]';
+const TOTAL_W = 'w-[52px]';
+
 const BlueRibbonIcon = ({ className = 'w-5 h-5' }) => (
   <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
     {/* Ribbon circle/badge */}
@@ -41,8 +64,113 @@ const BlueRibbonIcon = ({ className = 'w-5 h-5' }) => (
   </svg>
 );
 
+// Per-sheet masthead — mirrors the Podium ShowTable header (event name left,
+// location/date right, hairline underline).
+const SheetMasthead = ({ title, location, date }) => (
+  <div className="flex items-baseline justify-between gap-2 border-b border-[#2a2a2a] pb-1.5">
+    <div className="text-[13px] font-bold text-white truncate min-w-0">{title}</div>
+    {(location || date) && (
+      <div className="flex items-center gap-2 flex-shrink-0 pl-2 text-[10px] uppercase tracking-wider text-gray-500">
+        {location && (
+          <span className="hidden sm:flex items-center gap-1 truncate max-w-[160px]">
+            <MapPin className="w-3 h-3" />
+            {location}
+          </span>
+        )}
+        {date && <span className="tabular-nums normal-case">{date}</span>}
+      </div>
+    )}
+  </div>
+);
+
+// Column-header row for the flex box scores. `active` gold-highlights the
+// caption currently being sorted on (parity with the Podium sheet).
+const BoxScoreHead = ({ active, totalLabel = 'Total', trailing = null }) => (
+  <div className="flex items-center gap-2 px-1 pb-1.5 border-b border-[#333] text-[9px] uppercase tracking-wider">
+    <span className="flex-1 min-w-0 text-gray-500">Pl · Corps</span>
+    <div className="flex items-center gap-1.5 flex-shrink-0">
+      {['GE', 'VIS', 'MUS'].map((cap) => (
+        <span
+          key={cap}
+          className={`${CAP_W} text-right ${active === cap ? GOLD : 'text-gray-500'}`}
+        >
+          {cap}
+        </span>
+      ))}
+      <span className={`${TOTAL_W} text-right text-white`}>{totalLabel}</span>
+      {trailing}
+    </div>
+  </div>
+);
+
+// Place · avatar · corps name · director credit (linked). The director line is
+// the secondary row the fantasy sheets already carried, now styled to match the
+// Podium sheet's understated credit.
+const CorpsIdentity = ({ place, name, isMine, displayName, uid, tag, avatarUrl }) => (
+  <div className="flex-1 min-w-0 flex items-center gap-2">
+    <span className="text-[11px] text-gray-500 tabular-nums flex-shrink-0">{place}.</span>
+    <TeamAvatar name={name} logoUrl={avatarUrl} size="xs" />
+    <div className="min-w-0">
+      <div className="flex items-baseline gap-1.5 min-w-0">
+        <span
+          className={`text-sm font-bold truncate ${isMine ? 'text-[#4d9fff]' : 'text-white'}`}
+        >
+          {name}
+        </span>
+        {tag}
+      </div>
+      {displayName &&
+        (uid ? (
+          <Link
+            to={`/profile/${uid}`}
+            className="block text-[10px] text-gray-500 hover:text-[#c9a227] truncate"
+          >
+            {displayName}
+          </Link>
+        ) : (
+          <span className="block text-[10px] text-gray-500 truncate">{displayName}</span>
+        ))}
+    </div>
+  </div>
+);
+
+// A single GE/VIS/MUS value — gold + bold when it's the box-topper for its
+// column, white when it's the active sort, muted otherwise.
+const CaptionValue = ({ value, isTop, active, width = CAP_W }) => (
+  <span
+    className={`${width} text-right tabular-nums font-data ${
+      isTop ? `font-bold ${GOLD}` : active ? 'text-white' : 'text-gray-300'
+    }`}
+  >
+    {value !== null && value !== undefined ? value.toFixed(2) : '—'}
+  </span>
+);
+
+// Wordmark / legend footer — echoes the Podium sheet's "screenshots are ads"
+// footer and quietly documents why the fantasy sheets are GE/VIS/MUS only.
+const SheetFooter = ({ note }) => (
+  <div className="flex justify-between items-center gap-2 pt-1 text-[9px] uppercase tracking-wider text-gray-600">
+    <span className="truncate">{note}</span>
+    <span className="font-bold text-gray-500 flex-shrink-0">marching.art</span>
+  </div>
+);
+
+// Highest GE/VIS/MUS across a set of caption breakdowns (box-toppers).
+const captionTops = (list) => {
+  const tops = { ge: null, vis: null, mus: null };
+  for (const caps of list) {
+    if (!caps) continue;
+    for (const key of ['ge', 'vis', 'mus']) {
+      if (caps[key] != null && (tops[key] == null || caps[key] > tops[key])) {
+        tops[key] = caps[key];
+      }
+    }
+  }
+  return tops;
+};
+
 // =============================================================================
-// PILL TAB CONTROL (Design System)
+// PILL TAB CONTROL (Design System) — unchanged shell chrome
 // =============================================================================
 
 const PillTabControl = ({ tabs, activeTab, onTabChange, haptic }) => {
@@ -106,123 +234,78 @@ const PillTabControl = ({ tabs, activeTab, onTabChange, haptic }) => {
 };
 
 // =============================================================================
-// CAPTION BREAKDOWN - GE / VIS / MUS secondary line
-// Rendered under the corps name so the numbers never push off the right edge
-// on mobile (the old wide-table layout clipped these columns).
+// SORT BAR — Podium-style gold pills (shared by the standings grid)
 // =============================================================================
 
-const CaptionBreakdown = ({ captions, highlight }) => {
-  if (!captions) return null;
-  const fmt = (v) => (v !== null && v !== undefined ? v.toFixed(2) : '-');
-  const items = [
-    ['GE', captions.ge],
-    ['VIS', captions.vis],
-    ['MUS', captions.mus],
-  ];
-  return (
-    <div className="flex items-center gap-x-3 gap-y-0.5 flex-wrap mt-0.5 text-[10px] font-data tabular-nums">
-      {items.map(([label, value]) => (
-        <span key={label} className={highlight === label ? 'text-[#0057B8]' : 'text-gray-500'}>
-          {label}{' '}
-          <span className={highlight === label ? 'text-white font-bold' : 'text-gray-300'}>
-            {fmt(value)}
-          </span>
-        </span>
-      ))}
-    </div>
-  );
-};
-
-// Director / display name shown next to the corps name. Truncates so a long
-// name can never break the row width.
-const DirectorTag = ({ displayName, uid }) => {
-  if (!displayName) return null;
-  const cls = 'text-[10px] text-gray-500 truncate flex-shrink-0 max-w-[45%]';
-  return uid ? (
-    <Link to={`/profile/${uid}`} className={`${cls} hover:text-[#0057B8]`}>
-      {displayName}
-    </Link>
-  ) : (
-    <span className={cls}>{displayName}</span>
-  );
-};
+const SortPills = ({ options, value, onChange }) => (
+  <div className="flex items-center gap-1 flex-shrink-0">
+    {options.map((opt) => (
+      <button
+        key={opt.id}
+        onClick={() => onChange(opt.id)}
+        aria-pressed={value === opt.id}
+        className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-none transition-colors ${
+          value === opt.id
+            ? 'bg-[#8a6d1a] text-white'
+            : 'bg-[#222] text-gray-500 hover:text-gray-300'
+        }`}
+      >
+        {opt.label}
+      </button>
+    ))}
+  </div>
+);
 
 // =============================================================================
-// RECAP DATA GRID - HIGH DENSITY, MOBILE-SAFE ROWS
-// OPTIMIZATION #3: Memoized to prevent re-renders when sibling recap grids update
+// RECAP BOX SCORE - one card per show (memoized: sibling recaps don't re-render)
 // =============================================================================
 
 const RecapDataGrid = memo(({ scores, eventName, location, date, userCorpsName }) => {
   // Pre-compute all caption breakdowns once (real data only, no synthetic values)
-  const captionMap = useMemo(() => {
-    if (!scores || scores.length === 0) return new Map();
-    return new Map(scores.map((score, idx) => [idx, getCaptionBreakdown(score)]));
+  const rows = useMemo(() => {
+    if (!scores || scores.length === 0) return [];
+    return scores.map((score) => ({ score, captions: getCaptionBreakdown(score) }));
   }, [scores]);
+  const tops = useMemo(() => captionTops(rows.map((r) => r.captions)), [rows]);
 
   if (!scores || scores.length === 0) return null;
 
   return (
-    <div className="border-b border-[#333]">
-      {/* Event Header - Super Row integrated with table */}
-      <div className="bg-[#222] px-4 py-2.5 flex items-center justify-between">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="font-bold text-white text-sm truncate">
-            {formatEventName(eventName)}
-          </span>
-          <span className="text-gray-500 text-xs hidden sm:flex items-center gap-1">
-            <MapPin className="w-3 h-3" />
-            {location}
-          </span>
-        </div>
-        <span className="text-[10px] text-gray-500 font-data tabular-nums flex-shrink-0">
-          {date}
-        </span>
-      </div>
-
-      {/* Data Grid - stacked rows so caption scores never clip off the right */}
-      <div className="border-t border-[#333]">
-        {scores.map((score, idx) => {
-          const captions = captionMap.get(idx);
+    <div className={`${SHEET_CARD} space-y-2.5`}>
+      <SheetMasthead title={formatEventName(eventName)} location={location} date={date} />
+      <BoxScoreHead />
+      <div>
+        {rows.map(({ score, captions }, idx) => {
           const isUserCorps =
             userCorpsName &&
             (score.corps?.toLowerCase() === userCorpsName.toLowerCase() ||
               score.corpsName?.toLowerCase() === userCorpsName.toLowerCase());
-          const rowBg = idx % 2 === 0 ? 'bg-[#1a1a1a]' : 'bg-[#111]';
 
           return (
             <div
               key={idx}
-              className={`${rowBg} flex items-center gap-2.5 px-3 py-2.5 ${
-                isUserCorps ? 'border-l-2 border-l-[#0057B8]' : ''
+              className={`flex items-center gap-2 px-1 py-1.5 border-b border-[#242424] last:border-b-0 ${
+                isUserCorps ? 'bg-[#0057B8]/10' : ''
               }`}
             >
-              {/* Rank */}
-              <span className="flex-shrink-0 w-6 h-6 bg-[#222] border border-[#333] flex items-center justify-center text-[10px] font-bold text-gray-400 tabular-nums">
-                {idx + 1}
-              </span>
-
-              {/* Avatar */}
-              <TeamAvatar
+              <CorpsIdentity
+                place={idx + 1}
                 name={score.corpsName || score.corps}
-                logoUrl={score.avatarUrl}
-                size="xs"
+                isMine={isUserCorps}
+                displayName={score.displayName}
+                uid={score.uid}
+                avatarUrl={score.avatarUrl}
               />
-
-              {/* Corps name + caption breakdown */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="font-bold text-white text-sm truncate">
-                    {score.corpsName || score.corps}
-                  </span>
-                  <DirectorTag displayName={score.displayName} uid={score.uid} />
-                </div>
-                <CaptionBreakdown captions={captions} />
+              <div className="flex items-center gap-1.5 flex-shrink-0 text-[11px]">
+                <CaptionValue value={captions?.ge} isTop={captions?.ge === tops.ge} />
+                <CaptionValue value={captions?.vis} isTop={captions?.vis === tops.vis} />
+                <CaptionValue value={captions?.mus} isTop={captions?.mus === tops.mus} />
+                <span
+                  className={`${TOTAL_W} text-right font-bold text-white font-data tabular-nums`}
+                >
+                  {(score.score || score.totalScore || 0).toFixed(3)}
+                </span>
               </div>
-
-              {/* Total */}
-              <span className="flex-shrink-0 font-bold text-white font-data tabular-nums text-base">
-                {(score.score || score.totalScore || 0).toFixed(3)}
-              </span>
             </div>
           );
         })}
@@ -249,90 +332,103 @@ const EasternCombinedSheet = memo(({ shows, userCorpsName }) => {
   if (!combined) return null;
 
   return (
-    <div className="border-b border-[#333]">
-      {/* Masthead */}
-      <div className="bg-gradient-to-r from-[#c9a227]/15 to-transparent px-4 py-3 border-b border-[#c9a227]/30">
-        <div className="flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#c9a227]">
-              Combined Standings · Both Nights
-            </div>
-            <div className="font-bold text-white text-sm truncate">
-              {formatEventName(combined.eventName)}
-            </div>
-            {combined.location && (
-              <div className="text-[10px] text-gray-500 flex items-center gap-1">
-                <MapPin className="w-3 h-3" />
-                {combined.location}
-              </div>
-            )}
+    <div className={`${SHEET_CARD} space-y-3`}>
+      {/* Masthead — gold-tinted to flag the marquee event */}
+      <div className="flex items-baseline justify-between gap-2 border-b border-[#c9a227]/40 pb-2">
+        <div className="min-w-0">
+          <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#c9a227]">
+            Combined Standings · Both Nights
           </div>
-          <span className="text-[10px] text-gray-500 font-data tabular-nums flex-shrink-0">
-            {combined.dateRange}
-          </span>
+          <div className="font-bold text-white text-[13px] truncate">
+            {formatEventName(combined.eventName)}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0 pl-2 text-[10px] uppercase tracking-wider text-gray-500">
+          {combined.location && (
+            <span className="hidden sm:flex items-center gap-1 truncate max-w-[140px]">
+              <MapPin className="w-3 h-3" />
+              {combined.location}
+            </span>
+          )}
+          {combined.dateRange && (
+            <span className="tabular-nums normal-case">{combined.dateRange}</span>
+          )}
         </div>
       </div>
 
       {/* Per-class sections */}
-      {combined.sections.map((section) => (
-        <div key={section.corpsClass}>
-          <div className="bg-[#161616] px-4 py-1.5 border-y border-[#2a2a2a] flex items-center justify-between">
-            <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">
-              {section.label}
-            </span>
-            <span className="text-[9px] text-gray-600 tabular-nums">
-              {section.rows.length} corps
-            </span>
-          </div>
-          {section.rows.map((row, idx) => {
-            const isUserCorps =
-              userCorpsName && row.corpsName?.toLowerCase() === userCorpsName.toLowerCase();
-            const rowBg = idx % 2 === 0 ? 'bg-[#1a1a1a]' : 'bg-[#111]';
-            return (
-              <div
-                key={`${row.corpsName}-${idx}`}
-                className={`${rowBg} flex items-center gap-2.5 px-3 py-2 ${
-                  isUserCorps ? 'border-l-2 border-l-[#0057B8]' : ''
-                }`}
-              >
-                <span className="flex-shrink-0 w-6 h-6 bg-[#222] border border-[#333] flex items-center justify-center text-[10px] font-bold text-gray-400 tabular-nums">
-                  {idx + 1}
-                </span>
-                <TeamAvatar name={row.corpsName || row.corps} logoUrl={row.avatarUrl} size="xs" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="font-bold text-white text-sm truncate">
-                      {row.corpsName || row.corps}
-                    </span>
-                    <DirectorTag displayName={row.displayName} uid={row.uid} />
+      {combined.sections.map((section) => {
+        const sectionTops = captionTops(section.rows.map((row) => getCaptionBreakdown(row)));
+        return (
+          <div key={section.corpsClass} className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">
+                {section.label}
+              </span>
+              <span className="text-[9px] text-gray-600 tabular-nums">
+                {section.rows.length} corps
+              </span>
+            </div>
+            <BoxScoreHead
+              trailing={<span className="w-7 text-right text-gray-500">Night</span>}
+            />
+            <div>
+              {section.rows.map((row, idx) => {
+                const isUserCorps =
+                  userCorpsName && row.corpsName?.toLowerCase() === userCorpsName.toLowerCase();
+                const captions = getCaptionBreakdown(row);
+                return (
+                  <div
+                    key={`${row.corpsName}-${idx}`}
+                    className={`flex items-center gap-2 px-1 py-1.5 border-b border-[#242424] last:border-b-0 ${
+                      isUserCorps ? 'bg-[#0057B8]/10' : ''
+                    }`}
+                  >
+                    <CorpsIdentity
+                      place={idx + 1}
+                      name={row.corpsName || row.corps}
+                      isMine={isUserCorps}
+                      displayName={row.displayName}
+                      uid={row.uid}
+                      avatarUrl={row.avatarUrl}
+                    />
+                    <div className="flex items-center gap-1.5 flex-shrink-0 text-[11px]">
+                      <CaptionValue value={captions?.ge} isTop={captions?.ge === sectionTops.ge} />
+                      <CaptionValue
+                        value={captions?.vis}
+                        isTop={captions?.vis === sectionTops.vis}
+                      />
+                      <CaptionValue
+                        value={captions?.mus}
+                        isTop={captions?.mus === sectionTops.mus}
+                      />
+                      <span
+                        className={`${TOTAL_W} text-right font-bold text-white font-data tabular-nums`}
+                      >
+                        {(row.score || row.totalScore || 0).toFixed(3)}
+                      </span>
+                      <span
+                        className={`w-7 flex-shrink-0 text-center text-[9px] font-bold uppercase rounded-none py-0.5 ${NIGHT_BADGE[row.night]}`}
+                      >
+                        N{row.night}
+                      </span>
+                    </div>
                   </div>
-                  <CaptionBreakdown captions={getCaptionBreakdown(row)} />
-                </div>
-                <span
-                  className={`flex-shrink-0 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-none ${NIGHT_BADGE[row.night]}`}
-                >
-                  N{row.night}
-                </span>
-                <span className="flex-shrink-0 font-bold text-white font-data tabular-nums text-base">
-                  {(row.score || row.totalScore || 0).toFixed(3)}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      ))}
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
 
-      {/* Footnote: the published night-two effect */}
-      <div className="px-4 py-2 bg-[#111] text-[9px] text-gray-600">
-        Night 2 corps carry one extra day of growth — the split is seeded evenly per class, and
-        night parity alternates each season.
-      </div>
+      <SheetFooter note="Night 2 carries one extra day of growth · box-toppers in gold" />
     </div>
   );
 });
 
 // =============================================================================
-// SOUNDSPORT MEDAL LIST - GROUPED BY EVENT
+// SOUNDSPORT MEDAL LIST - GROUPED BY EVENT (rating-based, no numeric scores)
+// Keeps its green medal identity but adopts the Podium sheet card + masthead.
 // =============================================================================
 
 // Mock event names for shows that may not have proper names
@@ -417,9 +513,9 @@ const SoundSportMedalList = ({ shows }) => {
   }
 
   return (
-    <div>
-      {/* Stats Bar */}
-      <div className="bg-[#1a1a1a] px-4 py-3 border-b border-[#333] flex items-center justify-between">
+    <div className="space-y-3">
+      {/* Stats summary card */}
+      <div className={`${SHEET_CARD} flex items-center justify-between`}>
         <div className="flex items-center gap-2">
           <Music className="w-4 h-4 text-green-500" />
           <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
@@ -446,38 +542,24 @@ const SoundSportMedalList = ({ shows }) => {
         </div>
       </div>
 
-      {/* Grouped Results by Event */}
+      {/* Grouped Results by Event — one sheet card per event */}
       {groupedResults.map((group, groupIdx) => (
-        <div key={groupIdx}>
-          {/* Event Header */}
-          <div className="bg-[#222] px-4 py-2.5 flex items-center justify-between">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="font-bold text-white text-sm truncate">
-                {formatEventName(group.eventName)}
-              </span>
-              <span className="text-gray-500 text-xs hidden sm:flex items-center gap-1">
-                <MapPin className="w-3 h-3" />
-                {group.location}
-              </span>
-            </div>
-            <span className="text-[10px] text-gray-500 font-data tabular-nums flex-shrink-0">
-              {group.date}
-            </span>
-          </div>
-
-          {/* Medal List - Compact Rows within Group */}
+        <div key={groupIdx} className={`${SHEET_CARD} space-y-2.5`}>
+          <SheetMasthead
+            title={formatEventName(group.eventName)}
+            location={group.location}
+            date={group.date}
+          />
           <div>
             {group.scores.map((result, idx) => {
               const config = RATING_CONFIG[result.rating];
-              const rowBg = idx % 2 === 0 ? 'bg-[#1a1a1a]' : 'bg-[#111]';
-
               return (
                 <div
                   key={idx}
-                  className={`${rowBg} px-4 py-2.5 flex items-center justify-between hover:bg-[#222] transition-colors`}
+                  className="px-1 py-1.5 flex items-center justify-between gap-2 border-b border-[#242424] last:border-b-0"
                 >
                   {/* Left: Medal Icon + Avatar + Ensemble Name + Director */}
-                  <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex items-center gap-2.5 min-w-0">
                     <div
                       className={`w-6 h-6 ${config.bg} flex items-center justify-center flex-shrink-0`}
                     >
@@ -496,7 +578,7 @@ const SoundSportMedalList = ({ shows }) => {
                         (result.uid ? (
                           <Link
                             to={`/profile/${result.uid}`}
-                            className="text-[10px] text-gray-500 hover:text-[#0057B8] block truncate"
+                            className="text-[10px] text-gray-500 hover:text-[#c9a227] block truncate"
                           >
                             {result.displayName}
                           </Link>
@@ -519,25 +601,22 @@ const SoundSportMedalList = ({ shows }) => {
               );
             })}
           </div>
+
+          <Link
+            to="/soundsport"
+            className="flex items-center gap-2 text-[10px] text-green-400 hover:text-green-300 font-bold uppercase tracking-wider transition-colors pt-1"
+          >
+            About SoundSport scoring
+            <ChevronRight className="w-3 h-3" />
+          </Link>
         </div>
       ))}
-
-      {/* Learn More Link */}
-      <div className="px-4 py-3 bg-[#111] border-t border-[#333]">
-        <Link
-          to="/soundsport"
-          className="flex items-center gap-2 text-xs text-green-400 hover:text-green-300 font-bold transition-colors"
-        >
-          Learn about SoundSport scoring
-          <ChevronRight className="w-3 h-3" />
-        </Link>
-      </div>
     </div>
   );
 };
 
 // =============================================================================
-// STANDINGS TABLE FOR CLASS TABS
+// STANDINGS SHEET FOR CLASS TABS
 // =============================================================================
 
 // Caption Leaders sorting (§5.4): the fantasy classes sort by the CONDENSED
@@ -566,6 +645,8 @@ const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
     return [...withCaptions].sort((a, b) => (b.captions[key] ?? -1) - (a.captions[key] ?? -1));
   }, [standings, sortBy]);
 
+  const tops = useMemo(() => captionTops(sorted.map((s) => s.captions)), [sorted]);
+
   if (!standings || standings.length === 0) {
     return (
       <div className="p-8 text-center">
@@ -575,72 +656,64 @@ const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
     );
   }
 
+  const activeCap = sortBy === 'total' ? null : sortBy;
+
   return (
-    <div>
-      {/* Section Header */}
-      <div className="bg-[#1a1a1a] px-4 py-3 border-b border-[#333] flex items-center justify-between gap-2">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 truncate">
-          {className} {sortBy === 'total' ? 'Season Standings' : `Caption Leaders · ${sortBy}`}
+    <div className={`${SHEET_CARD} space-y-2.5`}>
+      {/* Section header + Podium-style sort pills */}
+      <div className="flex items-center justify-between gap-2 border-b border-[#2a2a2a] pb-2">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-white truncate">
+          {sortBy === 'total' ? `${className} · Season Standings` : `${className} · ${sortBy} Leaders`}
         </span>
-        <div className="flex items-center gap-1 flex-shrink-0">
-          {STANDINGS_SORTS.map((sort) => (
-            <button
-              key={sort.id}
-              onClick={() => setSortBy(sort.id)}
-              aria-pressed={sortBy === sort.id}
-              className={`px-2 py-1 text-[9px] font-bold uppercase tracking-wider rounded-none transition-colors ${
-                sortBy === sort.id
-                  ? 'bg-[#0057B8] text-white'
-                  : 'bg-[#222] text-gray-500 hover:text-gray-300'
-              }`}
-            >
-              {sort.label}
-            </button>
-          ))}
-        </div>
+        <SortPills options={STANDINGS_SORTS} value={sortBy} onChange={setSortBy} />
       </div>
 
-      {/* Data Grid - stacked rows so caption scores never clip off the right */}
+      <BoxScoreHead
+        active={activeCap}
+        totalLabel="Score"
+        trailing={<span className="w-4" aria-hidden="true" />}
+      />
+
       <div>
         {sorted.map(({ entry, captions }, idx) => {
           const isUserCorps =
             userCorpsName && entry.corpsName?.toLowerCase() === userCorpsName.toLowerCase();
-          const rowBg = idx % 2 === 0 ? 'bg-[#1a1a1a]' : 'bg-[#111]';
           const trend = entry.trend?.direction || 0;
 
           return (
             <div
               key={entry.corpsName || idx}
-              className={`${rowBg} flex items-center gap-2.5 px-3 py-2.5 ${
-                isUserCorps ? 'border-l-2 border-l-[#0057B8]' : ''
+              className={`flex items-center gap-2 px-1 py-1.5 border-b border-[#242424] last:border-b-0 ${
+                isUserCorps ? 'bg-[#0057B8]/10' : ''
               }`}
             >
               {/* Rank — position under the active sort (caption rank when caption-sorted) */}
-              <span className="flex-shrink-0 w-6 h-6 bg-[#222] border border-[#333] flex items-center justify-center text-[10px] font-bold text-gray-400 tabular-nums">
-                {sortBy === 'total' ? entry.rank : idx + 1}
-              </span>
-
-              {/* Avatar */}
-              <TeamAvatar name={entry.corpsName} logoUrl={entry.avatarUrl} size="xs" />
-
-              {/* Corps name + caption breakdown */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="font-bold text-white text-sm truncate">{entry.corpsName}</span>
-                  <DirectorTag displayName={entry.displayName} uid={entry.uid} />
-                </div>
-                <CaptionBreakdown
-                  captions={captions}
-                  highlight={sortBy === 'total' ? undefined : sortBy}
+              <CorpsIdentity
+                place={sortBy === 'total' ? entry.rank : idx + 1}
+                name={entry.corpsName}
+                isMine={isUserCorps}
+                displayName={entry.displayName}
+                uid={entry.uid}
+                avatarUrl={entry.avatarUrl}
+              />
+              <div className="flex items-center gap-1.5 flex-shrink-0 text-[11px]">
+                <CaptionValue value={captions?.ge} isTop={captions?.ge === tops.ge} active={activeCap === 'GE'} />
+                <CaptionValue
+                  value={captions?.vis}
+                  isTop={captions?.vis === tops.vis}
+                  active={activeCap === 'VIS'}
                 />
-              </div>
-
-              {/* Avg score + trend */}
-              <div className="flex-shrink-0 flex items-center gap-2">
-                <span className="font-bold text-white font-data tabular-nums text-base">
+                <CaptionValue
+                  value={captions?.mus}
+                  isTop={captions?.mus === tops.mus}
+                  active={activeCap === 'MUS'}
+                />
+                <span
+                  className={`${TOTAL_W} text-right font-bold text-white font-data tabular-nums`}
+                >
                   {typeof entry.score === 'number' ? entry.score.toFixed(3) : '-'}
                 </span>
-                <span className="w-4 flex items-center justify-center">
+                <span className="w-4 flex items-center justify-center flex-shrink-0">
                   {trend > 0 ? (
                     <TrendingUp className="w-3.5 h-3.5 text-green-500" />
                   ) : trend < 0 ? (
@@ -654,6 +727,8 @@ const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
           );
         })}
       </div>
+
+      <SheetFooter note="GE/VIS/MUS shown · full captions are Podium Class only" />
     </div>
   );
 };

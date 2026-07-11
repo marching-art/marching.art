@@ -9,6 +9,7 @@
 // classes (which stay GE/Vis/Mus-only).
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { collection, getDocs } from 'firebase/firestore';
 import { Loader2, Share2, Check } from 'lucide-react';
 import { db } from '../../api';
@@ -197,6 +198,21 @@ function ShowTable({ show, day, sortBy, userCorpsName }) {
                         </span>
                       )}
                     </div>
+                    {/* Director credit + profile link — parity with the fantasy
+                        recap sheets, which name the director beside each corps. */}
+                    {row.displayName &&
+                      (row.uid ? (
+                        <Link
+                          to={`/profile/${row.uid}`}
+                          className="block pl-4 text-[9px] normal-case tracking-normal text-gray-500 hover:text-[#c9a227] truncate"
+                        >
+                          {row.displayName}
+                        </Link>
+                      ) : (
+                        <span className="block pl-4 text-[9px] normal-case tracking-normal text-gray-500 truncate">
+                          {row.displayName}
+                        </span>
+                      ))}
                   </td>
                   {PODIUM_CAPTIONS.map((caption) => {
                     const value = row.captions?.[caption];

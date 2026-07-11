@@ -109,13 +109,14 @@ const Records = () => {
             {RECORD_CLASSES.map((cls) => {
               const classRecords = records?.classes?.[cls.key] || {};
               return (
-                <div key={cls.key} className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
-                  <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-                    <h2 className="text-xs font-bold uppercase tracking-wider text-gray-300">
+                <div key={cls.key} className="bg-[#1a1a1a] border border-[#333] rounded-none">
+                  <div className="flex items-center gap-2 px-4 py-3 border-b border-[#2a2a2a]">
+                    <span className="w-1 h-3.5 bg-[#c9a227] flex-shrink-0" aria-hidden="true" />
+                    <h2 className="text-[13px] font-bold uppercase tracking-wider text-white">
                       {cls.label}
                     </h2>
                   </div>
-                  <div className="divide-y divide-[#222]">
+                  <div className="divide-y divide-[#242424]">
                     {CATEGORIES.map((category) => (
                       <RecordRow
                         key={category.key}
