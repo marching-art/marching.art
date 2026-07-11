@@ -1,7 +1,6 @@
 // Render tests for the Director's Report — the unified Zone-B daily card.
 // Pins the "Today · X of Y done" count assembly (login + challenges +
-// predictions), the pending ladder-claim row, and the once-per-day
-// completion celebration.
+// predictions) and the pending ladder-claim row.
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';

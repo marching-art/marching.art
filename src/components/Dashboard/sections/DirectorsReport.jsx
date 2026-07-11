@@ -9,9 +9,8 @@
 //   • the three daily challenges (embedded, server-authoritative)
 //   • today's predictions (embedded; placement-only set for SoundSport)
 //   • any Season Ladder tier ready to claim (the "pending claim" row)
-// Completing the whole set fires the celebration overlay once per game day.
 
-import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 import { ClipboardList, Check, Gift } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useProfileStore } from '../../../store/profileStore';
@@ -34,7 +33,6 @@ const DirectorsReport = memo(
   ({ recentResults, corpsClass, seasonUid, onLineupClick, onConceptClick }) => {
     const profile = useProfileStore((state) => state.profile);
     const [claimingTier, setClaimingTier] = useState(null);
-    const celebratedRef = useRef(null);
 
     const gameDay = getGameDay();
 
@@ -89,24 +87,6 @@ const DirectorsReport = memo(
     const doneCount = (loginDone ? 1 : 0) + challengesDone + predictionsDone;
     const totalCount = 1 + challenges.length + questions.length;
     const allDone = totalCount > 0 && doneCount >= totalCount;
-
-    // Celebrate finishing the whole daily set — once per game day.
-    useEffect(() => {
-      if (!allDone || celebratedRef.current === gameDay) return;
-      if (typeof window === 'undefined') return;
-      const storageKey = `dailySetCelebrated:${gameDay}`;
-      if (window.localStorage.getItem(storageKey)) {
-        celebratedRef.current = gameDay;
-        return;
-      }
-      window.localStorage.setItem(storageKey, '1');
-      celebratedRef.current = gameDay;
-      window.dispatchEvent(
-        new CustomEvent('celebration', {
-          detail: { message: "Director's Report complete — see you tomorrow!", type: 'default' },
-        })
-      );
-    }, [allDone, gameDay]);
 
     const handleClaimTier = async (tier) => {
       setClaimingTier(tier.tier);
