@@ -79,7 +79,7 @@ jobs:
           cd functions && npm ci
           cd ../functions-scraper && npm ci
 
-      - name: Deploy Firestore rules + all functions (batched)
+      - name: Deploy Firestore rules + all functions
         env:
           GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
@@ -96,16 +96,15 @@ jobs:
           #    firestore.indexes.json.
           firebase deploy --only firestore:rules --force --project marching-art
 
-          # 2) Deploy the functions in small batches with a cooldown between
-          #    them. Each 2nd-gen (Cloud Run) function deploy costs ~2
-          #    run.googleapis.com regional writes (UpdateFunction + SetIamPolicy),
-          #    so deploying all ~140 at once bursts past the "Write requests per
-          #    minute per region" quota (INSUFFICIENT_TOKENS) and leaves
-          #    functions half-deployed. deploy-functions.sh paces the burst under
-          #    the quota and skips the cooldown for batches that had no changes,
-          #    so incremental redeploys stay fast.
-          #    DELAY_SECONDS=0 removes the inter-batch cooldown for this job.
-          CI=true DELAY_SECONDS=0 ./deploy-functions.sh
+          # 2) Deploy all functions in a single operation. Firebase diffs the
+          #    source and only updates functions that actually changed, so an
+          #    incremental redeploy touches just the changed set. NOTE: a full
+          #    redeploy of every function (e.g. a runtime bump) fans out ~2
+          #    run.googleapis.com regional writes per function at once, which can
+          #    exceed the "Write requests per minute per region" quota
+          #    (INSUFFICIENT_TOKENS) and leave functions half-deployed; re-run
+          #    the workflow to finish any that failed.
+          firebase deploy --only functions --force --project marching-art
 
           echo "All functions and Firestore rules deployed successfully!"
 
