@@ -5,7 +5,8 @@
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { validateHostRequest } = require("./hostedEvents");
+const { validateHostRequest, scheduledVenueIds } = require("./hostedEvents");
+const venues = require("./venues");
 
 const good = {
   eventName: "The Rohn Invitational",
@@ -33,5 +34,27 @@ describe("validateHostRequest", () => {
     assert.throws(() => validateHostRequest({ ...good, day: 41 }, 10)); // Eastern N1
     assert.throws(() => validateHostRequest({ ...good, day: 11 }, 10)); // < 2 days ahead
     assert.throws(() => validateHostRequest({ ...good, day: 45 }, 10)); // champ week
+  });
+});
+
+describe("scheduledVenueIds", () => {
+  test("resolves scheduled locations to venueIds, ignoring unknown ones", () => {
+    const canton = venues.venueFor("Canton, Ohio");
+    const allentown = venues.venueFor("Allentown, Pennsylvania");
+    const taken = scheduledVenueIds([
+      { location: "Canton, OH" }, // abbreviation still resolves
+      { location: "Allentown, Pennsylvania" },
+      { location: "Atlantis, Ocean" }, // unknown -> skipped
+      { location: "" }, // empty -> skipped
+      {}, // no location -> skipped
+    ]);
+    assert.ok(taken.has(canton.venueId));
+    assert.ok(taken.has(allentown.venueId));
+    assert.equal(taken.size, 2);
+  });
+
+  test("handles empty/undefined input", () => {
+    assert.equal(scheduledVenueIds([]).size, 0);
+    assert.equal(scheduledVenueIds(undefined).size, 0);
   });
 });

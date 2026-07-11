@@ -5,31 +5,62 @@
 // the Podium rollout (game-settings/features.podiumClass) and self-hiding, so
 // the Schedule page renders it unconditionally.
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
-import { Landmark, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Landmark, Loader2, ChevronDown, ChevronUp, MapPin, Check } from 'lucide-react';
 import { db } from '../../api';
 import { hostEvent } from '../../api/podium';
 import { usePodiumEnabled } from '../../hooks/useFeatures';
 import { useProfileStore } from '../../store/profileStore';
 import { useSeasonStore } from '../../store/seasonStore';
+import { useScheduleStore } from '../../store/scheduleStore';
+import { HOSTABLE_VENUES, scheduledVenueIds } from '../../utils/venues';
 import { VENUE_TIERS, HOSTING_RULES } from '../Podium/podiumConstants';
+
+// Cap the rendered dropdown so a bare focus (empty query) doesn't paint all
+// ~390 cities. A real search narrows well below this.
+const VENUE_RESULTS_LIMIT = 40;
 
 export default function HostEventCard({ seasonUid }) {
   const enabled = usePodiumEnabled();
   const profile = useProfileStore((state) => state.profile);
   const currentUid = useProfileStore((state) => state._currentUid);
   const currentDay = useSeasonStore((state) => state.currentDay);
+  const competitions = useScheduleStore((state) => state.competitions);
 
   const [open, setOpen] = useState(false);
   const [events, setEvents] = useState(null);
   const [eventName, setEventName] = useState('');
-  const [location, setLocation] = useState('');
+  // The location picker keeps the confirmed venue separate from the search box
+  // text, so submit only ever sends a KNOWN, un-taken city.
+  const [selectedVenue, setSelectedVenue] = useState(null);
+  const [venueQuery, setVenueQuery] = useState('');
+  const [venueListOpen, setVenueListOpen] = useState(false);
   const [day, setDay] = useState('');
   const [venueTier, setVenueTier] = useState('highSchool');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+
+  // Cities already on the season schedule (scraped shows + other hosted events)
+  // can't be booked again — resolve each competition's location to a venueId.
+  const takenVenueIds = useMemo(() => scheduledVenueIds(competitions), [competitions]);
+
+  // Filter the hostable cities by the search box, taken cities last so the
+  // available ones surface first, then cap for render.
+  const venueResults = useMemo(() => {
+    const q = venueQuery.trim().toLowerCase();
+    const matches = q
+      ? HOSTABLE_VENUES.filter((v) => v.label.toLowerCase().includes(q))
+      : HOSTABLE_VENUES;
+    const available = [];
+    const taken = [];
+    for (const v of matches) {
+      (takenVenueIds.has(v.venueId) ? taken : available).push(v);
+      if (available.length >= VENUE_RESULTS_LIMIT) break;
+    }
+    return [...available, ...taken].slice(0, VENUE_RESULTS_LIMIT);
+  }, [venueQuery, takenVenueIds]);
 
   const loadEvents = useCallback(async () => {
     if (!seasonUid) return;
@@ -65,8 +96,18 @@ export default function HostEventCard({ seasonUid }) {
   const tier = VENUE_TIERS.find((t) => t.id === venueTier) || VENUE_TIERS[0];
   const minDay = Math.max(1, (currentDay || 1) + HOSTING_RULES.minDaysAhead);
 
+  const pickVenue = (venue) => {
+    setSelectedVenue(venue);
+    setVenueQuery(venue.label);
+    setVenueListOpen(false);
+  };
+
   const submit = async (e) => {
     e.preventDefault();
+    if (!selectedVenue) {
+      setError('Pick a host city from the list.');
+      return;
+    }
     setBusy(true);
     setError(null);
     setSuccess(null);
@@ -75,11 +116,12 @@ export default function HostEventCard({ seasonUid }) {
         eventName: eventName.trim(),
         venueTier,
         day: Number(day),
-        location: location.trim(),
+        location: selectedVenue.label,
       });
       setSuccess(`${result.data.eventName} is on the schedule for Day ${result.data.day}.`);
       setEventName('');
-      setLocation('');
+      setSelectedVenue(null);
+      setVenueQuery('');
       setDay('');
       setEvents(null); // refetch with the new event
       await loadEvents();
@@ -119,6 +161,8 @@ export default function HostEventCard({ seasonUid }) {
             successful High School events open the College Bowl, 3 successful College Bowls open the
             NFL Stadium. Days {minDay}&ndash;{HOSTING_RULES.lastHostableDay}; the majors' days (
             {HOSTING_RULES.majorDays.join(', ')}) are exclusive. One show per director per season.
+            Pick a host city from the tour map &mdash; cities already on the schedule are greyed out,
+            since each city hosts one show per season.
           </p>
 
           {!hasCorps && (
@@ -186,14 +230,70 @@ export default function HostEventCard({ seasonUid }) {
               className={inputClass}
             />
             <div className="grid grid-cols-2 gap-2">
-              <input
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="City, State (e.g. Canton, OH)"
-                required
-                className={inputClass}
-              />
+              {/* Host-city picker: only known cities that aren't already on the
+                  schedule. No free-text guessing, no double-booking a city. */}
+              <div className="relative">
+                <div className="relative">
+                  <MapPin className="w-3 h-3 text-gray-600 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={venueQuery}
+                    onChange={(e) => {
+                      setVenueQuery(e.target.value);
+                      setSelectedVenue(null);
+                      setVenueListOpen(true);
+                    }}
+                    onFocus={() => setVenueListOpen(true)}
+                    // Delay so a click on a result registers before the list closes.
+                    onBlur={() => setTimeout(() => setVenueListOpen(false), 150)}
+                    placeholder="Search host city"
+                    autoComplete="off"
+                    className={`${inputClass} pl-6 pr-6`}
+                    aria-label="Host city"
+                  />
+                  {selectedVenue && (
+                    <Check className="w-3 h-3 text-green-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  )}
+                </div>
+                {venueListOpen && (
+                  <div className="absolute z-20 mt-1 w-full max-h-44 overflow-y-auto bg-[#0f0f0f] border border-[#333] rounded-sm shadow-lg">
+                    {venueResults.length === 0 ? (
+                      <div className="px-2 py-1.5 text-[10px] text-gray-600">
+                        No matching city — try a nearby one.
+                      </div>
+                    ) : (
+                      venueResults.map((v) => {
+                        const taken = takenVenueIds.has(v.venueId);
+                        return (
+                          <button
+                            key={v.venueId}
+                            type="button"
+                            disabled={taken}
+                            // onMouseDown fires before the input's onBlur, so the
+                            // pick lands even though blur closes the list.
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              if (!taken) pickVenue(v);
+                            }}
+                            className={`w-full flex items-center justify-between px-2 py-1.5 text-[10px] text-left ${
+                              taken
+                                ? 'text-gray-600 cursor-not-allowed'
+                                : 'text-gray-300 hover:bg-[#1f1f1f]'
+                            }`}
+                          >
+                            <span className="truncate">{v.label}</span>
+                            {taken && (
+                              <span className="text-[8px] uppercase tracking-wider text-gray-600 flex-shrink-0 pl-2">
+                                On schedule
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+              </div>
               <input
                 type="number"
                 value={day}
@@ -212,7 +312,13 @@ export default function HostEventCard({ seasonUid }) {
               </span>
               <button
                 type="submit"
-                disabled={busy || !hasCorps || seasonLimitReached || corpsCoin < tier.rentalCC}
+                disabled={
+                  busy ||
+                  !hasCorps ||
+                  seasonLimitReached ||
+                  !selectedVenue ||
+                  corpsCoin < tier.rentalCC
+                }
                 className="px-3 py-1.5 rounded-sm text-[10px] font-bold uppercase tracking-wider
                   bg-[#c9a227] text-black disabled:bg-[#333] disabled:text-gray-600 press-feedback"
               >

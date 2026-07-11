@@ -89,6 +89,24 @@ function validateHostRequest({ eventName, venueTier, day, location }, currentCom
 }
 
 /**
+ * Resolve the set of venueIds already claimed by shows on a season schedule
+ * (pure). A city hosts at most one show per season, so booking is refused for
+ * any city already on the schedule — scraped majors/regionals or another
+ * director's hosted event alike. Unrecognized location strings resolve to null
+ * and are simply skipped.
+ * @param {Array<{location?: string}>} competitions schedule competitions
+ * @returns {Set<string>}
+ */
+function scheduledVenueIds(competitions) {
+  const taken = new Set();
+  for (const comp of competitions || []) {
+    const venue = venues.venueFor(comp && comp.location);
+    if (venue) taken.add(venue.venueId);
+  }
+  return taken;
+}
+
+/**
  * Pay hosts for events on the completed competition day. Attendance =
  * distinct directors with scored results at the event in the fantasy recap,
  * PLUS Podium corps that performed that day when this event was the day's
@@ -206,4 +224,10 @@ async function payoutHostedEvents(db, seasonData, competitionDay) {
   return { events: snapshot.size, paid };
 }
 
-module.exports = { eventsCollection, tierLockReason, validateHostRequest, payoutHostedEvents };
+module.exports = {
+  eventsCollection,
+  tierLockReason,
+  validateHostRequest,
+  scheduledVenueIds,
+  payoutHostedEvents,
+};
