@@ -213,10 +213,18 @@ const ShowRegistrationModal = ({
     PODIUM_EASTERN_DAYS.includes(podiumDay) && podiumInfo && !podiumIsMyAutoDay;
   const podiumIsPast = podiumInfo ? podiumDay <= podiumInfo.competitionDay : false;
   const podiumMaxPicks = podiumMaxPicksForWeek(show.week);
+  // Only FUTURE picks count and are re-submitted: setPodiumShows replaces the
+  // whole week, and the server rejects any already-passed day. Mirror
+  // PodiumShowPicker's `d > competitionDay` guard — without it, saving a new
+  // pick resends passed days and the entire registration fails with
+  // "Day N has already passed."
   const podiumOtherWeekPicks = useMemo(
     () =>
       (podiumInfo?.selectedShowDays || []).filter(
-        (d) => Math.ceil(d / 7) === show.week && d !== podiumDay
+        (d) =>
+          Math.ceil(d / 7) === show.week &&
+          d !== podiumDay &&
+          d > (podiumInfo?.competitionDay ?? 0)
       ),
     [podiumInfo, show.week, podiumDay]
   );
