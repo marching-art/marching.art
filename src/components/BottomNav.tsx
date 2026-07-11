@@ -4,11 +4,12 @@
 // Mobile bottom navigation bar matching desktop nav
 // News, Dashboard, Schedule, Scores, Profile
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Trophy, User, Newspaper, Calendar, LucideIcon } from 'lucide-react';
+import { LayoutDashboard, Trophy, User, Newspaper, Calendar, Shield, LucideIcon } from 'lucide-react';
 import { m } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { adminHelpers } from '../api';
 import { triggerHaptic } from '../hooks/useHaptic';
 import { prefetchRoute } from '../lib/prefetch';
 
@@ -40,7 +41,22 @@ const navItems: NavItem[] = [
 
 const BottomNav: React.FC = () => {
   const location = useLocation();
-  const { user: _user } = useAuth();
+  const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Check if user is admin (mirrors the desktop TopNav in GameShell)
+  useEffect(() => {
+    if (user) {
+      adminHelpers.isAdmin().then(setIsAdmin);
+    } else {
+      setIsAdmin(false);
+    }
+  }, [user]);
+
+  // Append the Admin tab only for users with admin permissions.
+  const items: NavItem[] = isAdmin
+    ? [...navItems, { path: '/admin', label: 'Admin', icon: Shield }]
+    : navItems;
 
   const isActive = (path: string) => {
     if (path === '/') {
@@ -54,6 +70,9 @@ const BottomNav: React.FC = () => {
     }
     if (path === '/schedule') {
       return location.pathname.startsWith('/schedule');
+    }
+    if (path === '/admin') {
+      return location.pathname.startsWith('/admin');
     }
     return location.pathname === path;
   };
@@ -69,7 +88,7 @@ const BottomNav: React.FC = () => {
       {/* Nav container - optimized for 6 items across all screen sizes */}
       <div className="bg-[#1A1A1A] border-t border-white/10">
         <div className="flex items-center justify-around px-0.5 xs:px-1 py-1.5">
-          {navItems.map((item) => {
+          {items.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
 
