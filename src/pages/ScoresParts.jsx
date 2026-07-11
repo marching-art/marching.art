@@ -21,6 +21,7 @@ import {
   Medal,
   Users,
 } from 'lucide-react';
+import { TeamAvatar } from '../components/ui/TeamAvatar';
 import { formatEventName } from '../utils/season';
 import {
   RATING_CONFIG,
@@ -102,29 +103,34 @@ const BoxScoreHead = ({ active, totalLabel = 'Total', trailing = null }) => (
   </div>
 );
 
-// Place · corps name · director credit (linked). The director line is the
-// secondary row the fantasy sheets already carried, now styled to match the
+// Place · avatar · corps name · director credit (linked). The director line is
+// the secondary row the fantasy sheets already carried, now styled to match the
 // Podium sheet's understated credit.
-const CorpsIdentity = ({ place, name, isMine, displayName, uid, tag }) => (
-  <div className="flex-1 min-w-0">
-    <div className="flex items-baseline gap-1.5 min-w-0">
-      <span className="text-gray-500 tabular-nums flex-shrink-0">{place}.</span>
-      <span className={`font-bold truncate ${isMine ? 'text-[#4d9fff]' : 'text-white'}`}>
-        {name}
-      </span>
-      {tag}
-    </div>
-    {displayName &&
-      (uid ? (
-        <Link
-          to={`/profile/${uid}`}
-          className="block pl-4 text-[10px] text-gray-500 hover:text-[#c9a227] truncate"
+const CorpsIdentity = ({ place, name, isMine, displayName, uid, tag, avatarUrl }) => (
+  <div className="flex-1 min-w-0 flex items-center gap-2">
+    <span className="text-[11px] text-gray-500 tabular-nums flex-shrink-0">{place}.</span>
+    <TeamAvatar name={name} logoUrl={avatarUrl} size="xs" />
+    <div className="min-w-0">
+      <div className="flex items-baseline gap-1.5 min-w-0">
+        <span
+          className={`text-sm font-bold truncate ${isMine ? 'text-[#4d9fff]' : 'text-white'}`}
         >
-          {displayName}
-        </Link>
-      ) : (
-        <span className="block pl-4 text-[10px] text-gray-500 truncate">{displayName}</span>
-      ))}
+          {name}
+        </span>
+        {tag}
+      </div>
+      {displayName &&
+        (uid ? (
+          <Link
+            to={`/profile/${uid}`}
+            className="block text-[10px] text-gray-500 hover:text-[#c9a227] truncate"
+          >
+            {displayName}
+          </Link>
+        ) : (
+          <span className="block text-[10px] text-gray-500 truncate">{displayName}</span>
+        ))}
+    </div>
   </div>
 );
 
@@ -288,6 +294,7 @@ const RecapDataGrid = memo(({ scores, eventName, location, date, userCorpsName }
                 isMine={isUserCorps}
                 displayName={score.displayName}
                 uid={score.uid}
+                avatarUrl={score.avatarUrl}
               />
               <div className="flex items-center gap-1.5 flex-shrink-0 text-[11px]">
                 <CaptionValue value={captions?.ge} isTop={captions?.ge === tops.ge} />
@@ -383,6 +390,7 @@ const EasternCombinedSheet = memo(({ shows, userCorpsName }) => {
                       isMine={isUserCorps}
                       displayName={row.displayName}
                       uid={row.uid}
+                      avatarUrl={row.avatarUrl}
                     />
                     <div className="flex items-center gap-1.5 flex-shrink-0 text-[11px]">
                       <CaptionValue value={captions?.ge} isTop={captions?.ge === sectionTops.ge} />
@@ -550,13 +558,18 @@ const SoundSportMedalList = ({ shows }) => {
                   key={idx}
                   className="px-1 py-1.5 flex items-center justify-between gap-2 border-b border-[#242424] last:border-b-0"
                 >
-                  {/* Left: Medal Icon + Ensemble Name + Director */}
+                  {/* Left: Medal Icon + Avatar + Ensemble Name + Director */}
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div
                       className={`w-6 h-6 ${config.bg} flex items-center justify-center flex-shrink-0`}
                     >
                       <Medal className={`w-4 h-4 ${config.text}`} />
                     </div>
+                    <TeamAvatar
+                      name={result.corps || result.corpsName}
+                      logoUrl={result.avatarUrl}
+                      size="xs"
+                    />
                     <div className="min-w-0">
                       <span className="font-bold text-white text-sm block truncate">
                         {result.corps || result.corpsName}
@@ -681,6 +694,7 @@ const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
                 isMine={isUserCorps}
                 displayName={entry.displayName}
                 uid={entry.uid}
+                avatarUrl={entry.avatarUrl}
               />
               <div className="flex items-center gap-1.5 flex-shrink-0 text-[11px]">
                 <CaptionValue value={captions?.ge} isTop={captions?.ge === tops.ge} active={activeCap === 'GE'} />
