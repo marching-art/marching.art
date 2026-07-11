@@ -43,12 +43,17 @@ export interface PodiumRouteLeg {
   day: number;
   eventName: string | null;
   city: string;
+  stadium?: string | null;
   tier: string | null;
   miles: number | null;
   coinCost: number;
   staminaCost: number;
   heat: number;
   isMajor: boolean;
+  // Set on a joint-rehearsal leg (design §5.12).
+  isJoint?: boolean;
+  partnerCorpsName?: string | null;
+  ensembleBonusPct?: number;
 }
 
 // Next-season payroll warning (design §5.6): when a corps' aged staff payroll
@@ -201,14 +206,33 @@ export interface JointRehearsalsResponse {
     travelTier: string | null;
     city: string | null;
   } | null;
-  scrimmage: {
-    day: number;
-    partnerCorpsName: string | null;
-    mine: JointScrimmageSide;
-    theirs: JointScrimmageSide;
-  } | null;
+  scrimmage: JointScrimmage | null;
+  headToHead: Record<string, JointHeadToHead>;
   history: Array<{ day: number; partnerUid: string; week: number }>;
   roster: Array<{ uid: string; corpsName: string | null }>;
+}
+
+// The Tale of the Tape: a scored head-to-head from the joint, with where it
+// happened and the outcome from this corps' perspective (design §5.12).
+export interface JointScrimmage {
+  day: number;
+  partnerUid?: string;
+  partnerCorpsName: string | null;
+  city?: string | null;
+  stadium?: string | null;
+  outcome?: 'win' | 'loss' | 'tie';
+  mine: JointScrimmageSide;
+  theirs: JointScrimmageSide;
+}
+
+// Season-long record vs one partner — the profile's rivalry log.
+export interface JointHeadToHead {
+  partnerCorpsName: string | null;
+  wins: number;
+  losses: number;
+  ties: number;
+  joints: number;
+  last?: { day: number; myTotal: number; theirTotal: number; outcome: 'win' | 'loss' | 'tie' };
 }
 
 // One ranked overlap window: a day both corps sit idle on tour, priced with its

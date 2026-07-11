@@ -315,6 +315,7 @@ exports.getJointRehearsals = onCall({ cors: true }, async (request) => {
     outgoing: live(outgoingSnapshot.docs),
     upcoming: state && state.jointRehearsal ? state.jointRehearsal : null,
     scrimmage: state && state.scrimmage ? state.scrimmage : null,
+    headToHead: state && state.headToHead ? state.headToHead : {},
     history: state ? state.jointHistory || [] : [],
     roster: rosterSnapshot.docs
       .filter((d) => d.id !== uid)
