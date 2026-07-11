@@ -48,7 +48,7 @@ export default function PodiumZone() {
       <PodiumTrajectoryCard podium={podium} />
       <CorpsConditionPanel podium={podium} />
       <PodiumStaffPanel podium={podium} />
-      <JointRehearsalPanel podium={podium} />
+      <JointRehearsalPanel />
     </div>
   );
 }

@@ -186,6 +186,11 @@ export interface JointProposal {
   fromCorpsName: string | null;
   toCorpsName: string | null;
   day: number;
+  // Informed-consent snapshot stamped at propose time (design §5.12).
+  city?: string | null;
+  stadium?: string | null;
+  proposerTravelTier?: string | null;
+  milesApart?: number | null;
   status: string;
 }
 
@@ -205,11 +210,12 @@ export interface JointRehearsalsResponse {
     bonusMult: number;
     travelTier: string | null;
     city: string | null;
+    stadium?: string | null;
   } | null;
   scrimmage: JointScrimmage | null;
   headToHead: Record<string, JointHeadToHead>;
   history: Array<{ day: number; partnerUid: string; week: number }>;
-  roster: Array<{ uid: string; corpsName: string | null }>;
+  roster: Array<{ uid: string; corpsName: string | null; city?: string | null }>;
 }
 
 // The Tale of the Tape: a scored head-to-head from the joint, with where it
