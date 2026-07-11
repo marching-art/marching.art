@@ -83,9 +83,19 @@ describe("validateShowPicks", () => {
     );
   });
 
-  test("championship week is auto-only", () => {
-    assert.throws(() => validateShowPicks(7, picks([43]), uid, seasonUid, 0, opts));
+  test("week 7 opens its two non-championship days (43-44) to picks", () => {
+    assert.equal(store.maxPicksForWeek(7), 2);
+    assert.deepEqual(
+      validateShowPicks(7, picks([43, 44]), uid, seasonUid, 0, opts),
+      expected([43, 44])
+    );
     assert.deepEqual(validateShowPicks(7, [], uid, seasonUid, 0, opts), {});
+  });
+
+  test("Championship Week days (45-49) are auto-attended, never selectable", () => {
+    for (const day of [45, 46, 47, 48, 49]) {
+      assert.throws(() => validateShowPicks(7, picks([day]), uid, seasonUid, 0, opts));
+    }
   });
 
   test("auto-attended days are not selectable", () => {

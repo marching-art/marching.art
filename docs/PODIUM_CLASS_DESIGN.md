@@ -542,9 +542,13 @@ replaces ownership with **employment** — and an employment market never maxes 
   - **Population-adaptive:** division count follows active Podium population (1 division below
     ~24 corps, 2 below ~48, 3 beyond; never a division under 8). This is the direct fix for
     FMA's hollow Division III — thin divisions merge upward instead of limping.
-  - **What divisions change:** rankings/leaderboards, championship-week brackets (World runs
-    Prelims → Semis → Finals on days 47–49; Open and A crown earlier in the week, mirroring real
-    DCI's Marion/Michigan City cadence), performance order and division blocks at the three
+  - **What divisions change:** rankings/leaderboards, championship-week brackets. The finals-week
+    schedule and advancement match the fantasy classes exactly (scored the Podium way): A Class
+    and Open Class run Prelims (day 45) → Class Finals (day 46, top corps advance — top 4 A, top 8
+    Open); World Class runs Prelims (47) → Semifinals (48, top 25) → Finals (49, top 12).
+    Podium A goes to A Class events, Open to Open events, World to World events — each division
+    runs its own self-contained bracket. Divisions also set performance order and division blocks
+    at the three
     regional anchors, show participation CorpsCoin (tiered by division, matching the existing
     class-reward pattern), and per-division caption awards.
   - **What divisions never change:** the scoring engine, the historical envelope, challenge-level
@@ -676,10 +680,11 @@ name-match at ingest instead.
 
 - **Auto-registered for every active Podium corps, consuming one weekly slot:** in weeks 4, 5,
   and 6 a Podium director gets the major plus **3 free selections** (the standard weekly cap is
-  4). Majors are **travel-subsidized** (no Corps Budget leg; stamina cost still applies, so routing
-  _around_ an anchor still matters — Dallas in July is a real heat-index day). For the fantasy
-  classes the majors are elective, but since the major is the only event on its day, attending
-  week 4/5/6 shows means engaging with them.
+  4). Week 7 auto-attends Championship Week (days 45–49) and opens its two non-championship days
+  (43–44) to **2 free selections**. Majors are **travel-subsidized** (no Corps Budget leg; stamina
+  cost still applies, so routing _around_ an anchor still matters — Dallas in July is a real
+  heat-index day). For the fantasy classes the majors are elective, but since the major is the only
+  event on its day, attending week 4/5/6 shows means engaging with them.
 - Full-field head-to-head meets: the guaranteed rivalry collisions, the recap everyone reads, and
   the community's shared reference points ("wait for San Antonio" is a real DCI sentence).
 - **Calibration benchmarks** — the explicit veteran request from the FMA Rework thread: with the
@@ -1427,8 +1432,11 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     One missed season holds the seat; two or more re-enter at A Class. Each division crowns its
     own Finals hardware; the Hall of Champions shows the top active division's podium. The
     Eastern Classic night snake is division-seeded from Day-38 standings (published Day 39;
-    uid-parity fallback until then). Championship Week is Indianapolis: A/Open run Prelims →
-    Class Finals (days 47-48), World runs Prelims → Semis → Finals (47-49). The commitment cap
+    uid-parity fallback until then). Championship Week is Indianapolis and follows the fantasy
+    classes' finals-week schedule and advancement (scored the Podium way): A/Open run Prelims
+    (day 45) → Class Finals (day 46, top 4 A / top 8 Open advance), World runs Prelims (47) →
+    Semis (48, top 25) → Finals (49, top 12). Week 7 also opens its two non-championship days
+    (43–44) to 2 self-picks. The commitment cap
     is division-equal for real now: 2,500 / 4,000 / 6,000 (see 32).
 27. **Hosting venue ladder replaces show sponsorship** (supersedes the shop's sponsorship
     purchase; resolves old open item 3): directors don't brand someone else's show — they RUN

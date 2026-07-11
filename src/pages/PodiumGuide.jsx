@@ -36,7 +36,7 @@ const SECTIONS = [
   {
     n: 6,
     title: 'The tour: shows, travel, majors',
-    body: `Pick up to 4 shows a week from the same schedule every class uses. Miles cost Corps Budget and stamina — routing matters, and southern venues in July drain more. Three majors anchor the season for everyone: the Southwestern Championship in Dallas (Day 28), the Southeastern in Atlanta (Day 35), and the two-night Eastern Classic in Allentown (Days 41–42, one registration covers both nights, you perform your assigned night). Podium corps attend all three automatically, plus Championship Week in Indianapolis: A Class and Open Class run Prelims and Class Finals on Days 47–48; World Class runs Prelims, Semifinals, and Finals through Day 49.`,
+    body: `Pick up to 4 shows a week from the same schedule every class uses (weeks with a major allow 3, and finals week allows 2 on its open days). Miles cost Corps Budget and stamina — routing matters, and southern venues in July drain more. Three majors anchor the season for everyone: the Southwestern Championship in Dallas (Day 28), the Southeastern in Atlanta (Day 35), and the two-night Eastern Classic in Allentown (Days 41–42, one registration covers both nights, you perform your assigned night). Podium corps attend all three automatically, plus Championship Week in Indianapolis — the same finals-week schedule and advancement the fantasy classes run, scored the Podium way: A Class and Open Class run Prelims (Day 45) and Class Finals (Day 46, top corps advance); World Class runs Prelims (Day 47), Semifinals (Day 48, top 25), and Finals (Day 49, top 12).`,
   },
   {
     n: 7,

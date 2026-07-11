@@ -156,6 +156,9 @@ function validateShowPicks(
     if (!Number.isInteger(day) || Math.ceil(day / 7) !== week) {
       throw new HttpsError("invalid-argument", `Day ${day} is not in week ${week}.`);
     }
+    if (store.CHAMPIONSHIP_WEEK_DAYS.includes(day)) {
+      throw new HttpsError("invalid-argument", `Day ${day} is Championship Week (auto-attended) and not selectable.`);
+    }
     if (autoDays.includes(day) || store.EASTERN_DAYS.includes(day)) {
       throw new HttpsError("invalid-argument", `Day ${day} is auto-attended (major/championship) and not selectable.`);
     }
