@@ -1,0 +1,3793 @@
+{
+  "meta": {
+    "source": "dci.org/scores/final-scores (competition sitemap enumeration)",
+    "yearRange": "2013-2026",
+    "eventsWithLocation": 1120,
+    "eventsSkipped": 4,
+    "distinctLocations": 274,
+    "note": "Location = the City, ST from each event page meta description. Fills the 2013+ gap the 2000-2012 fromthepressbox importer does not cover, so the venue gazetteer spans the full historical archive."
+  },
+  "locations": [
+    {
+      "location": "Abilene, TX",
+      "count": 2,
+      "years": [
+        "2023",
+        "2024"
+      ],
+      "sampleEvents": [
+        "2023-dci-abilene",
+        "2024-dci-abilene"
+      ]
+    },
+    {
+      "location": "Adrian, MI",
+      "count": 1,
+      "years": [
+        "2019"
+      ],
+      "sampleEvents": [
+        "2019-tbd"
+      ]
+    },
+    {
+      "location": "Akron, OH",
+      "count": 6,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2018",
+        "2019",
+        "2022"
+      ],
+      "sampleEvents": [
+        "2013-innovations-in-brass",
+        "2014-innovations-in-brass-akron-the-2014-dci-tour-premiere",
+        "2015-innovations-in-brass-akron"
+      ]
+    },
+    {
+      "location": "Albuquerque, NM",
+      "count": 1,
+      "years": [
+        "2025"
+      ],
+      "sampleEvents": [
+        "2025-dci-new-mexico"
+      ]
+    },
+    {
+      "location": "Alexandria, KY",
+      "count": 3,
+      "years": [
+        "2016",
+        "2017",
+        "2018"
+      ],
+      "sampleEvents": [
+        "2016-dci-kentucky-presented-by-demoulin-bros-and-co",
+        "2017-dci-northern-kentucky-presented-by-lone-star-percussion",
+        "2018-dci-northern-kentucky"
+      ]
+    },
+    {
+      "location": "Allendale, MI",
+      "count": 1,
+      "years": [
+        "2025"
+      ],
+      "sampleEvents": [
+        "2025-dci-michigan"
+      ]
+    },
+    {
+      "location": "Allentown, PA",
+      "count": 27,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2013-dci-eastern-classic-2",
+        "2013-dci-eastern-classic",
+        "2013-tour-of-champions"
+      ]
+    },
+    {
+      "location": "Ankeny, IA",
+      "count": 5,
+      "years": [
+        "2019",
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2019-celebration-in-brass",
+        "2022-celebration-in-brass",
+        "2023-celebration-in-brass"
+      ]
+    },
+    {
+      "location": "Annapolis, MD",
+      "count": 6,
+      "years": [
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2022",
+        "2023"
+      ],
+      "sampleEvents": [
+        "2015-drum-corps-an-american-tradition",
+        "2016-drum-corps-an-american-tradition",
+        "2017-drum-corps-an-american-tradition"
+      ]
+    },
+    {
+      "location": "Apple Valley, MN",
+      "count": 2,
+      "years": [
+        "2022",
+        "2023"
+      ],
+      "sampleEvents": [
+        "2022-march-on",
+        "2023-march-on"
+      ]
+    },
+    {
+      "location": "Ashland, OR",
+      "count": 1,
+      "years": [
+        "2019"
+      ],
+      "sampleEvents": [
+        "2019-rogue-dci"
+      ]
+    },
+    {
+      "location": "Atlanta, GA",
+      "count": 11,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2013-dci-atlanta-southeastern-championship",
+        "2014-dci-atlanta-southeastern-championship",
+        "2015-dci-atlanta-southeastern-championship"
+      ]
+    },
+    {
+      "location": "Auburn, WA",
+      "count": 1,
+      "years": [
+        "2016"
+      ],
+      "sampleEvents": [
+        "2016-seattle-summer-music-games"
+      ]
+    },
+    {
+      "location": "Augusta, NJ",
+      "count": 1,
+      "years": [
+        "2019"
+      ],
+      "sampleEvents": [
+        "2019-dci-new-jersey-classic"
+      ]
+    },
+    {
+      "location": "Austin, TX",
+      "count": 1,
+      "years": [
+        "2023"
+      ],
+      "sampleEvents": [
+        "2023-dci-austin"
+      ]
+    },
+    {
+      "location": "Avon Lake, OH",
+      "count": 8,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022"
+      ],
+      "sampleEvents": [
+        "2013-shoremen-brass-classic",
+        "2014-shoremen-brass-classic",
+        "2015-shoreman-brass-classic"
+      ]
+    },
+    {
+      "location": "Bakersfield, CA",
+      "count": 9,
+      "years": [
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2015-resound",
+        "2016-resound",
+        "2017-resound"
+      ]
+    },
+    {
+      "location": "Bedford, TX",
+      "count": 1,
+      "years": [
+        "2025"
+      ],
+      "sampleEvents": [
+        "2025-dci-dallas"
+      ]
+    },
+    {
+      "location": "Bellbrook, OH",
+      "count": 3,
+      "years": [
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2023-beats-in-the-brook",
+        "2024-beats-in-the-brook",
+        "2025-beats-in-the-brook"
+      ]
+    },
+    {
+      "location": "Belleville, IL",
+      "count": 2,
+      "years": [
+        "2019",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2019-dci-st-louis",
+        "2025-dci-st-louis"
+      ]
+    },
+    {
+      "location": "Bellflower, CA",
+      "count": 7,
+      "years": [
+        "2013",
+        "2015",
+        "2016",
+        "2017",
+        "2019",
+        "2022",
+        "2023"
+      ],
+      "sampleEvents": [
+        "2013-so-cal-classic-open-class-championships",
+        "2015-so-cal-classic-open-class-championship",
+        "2016-so-cal-classic-open-class-championship"
+      ]
+    },
+    {
+      "location": "Belton, TX",
+      "count": 5,
+      "years": [
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019"
+      ],
+      "sampleEvents": [
+        "2015-dci-central-texas-presented-by-band-shoppe",
+        "2016-dci-central-texas-presented-by-band-shoppe",
+        "2017-dci-central-texas"
+      ]
+    },
+    {
+      "location": "Belvidere, IL",
+      "count": 1,
+      "years": [
+        "2013"
+      ],
+      "sampleEvents": [
+        "2013-show-of-shows"
+      ]
+    },
+    {
+      "location": "Bentonville, AR",
+      "count": 7,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019"
+      ],
+      "sampleEvents": [
+        "2013-music-on-the-move",
+        "2014-music-on-the-move",
+        "2015-music-on-the-move"
+      ]
+    },
+    {
+      "location": "Biloxi, MS",
+      "count": 1,
+      "years": [
+        "2016"
+      ],
+      "sampleEvents": [
+        "2016-mississippi-sound-spectacular"
+      ]
+    },
+    {
+      "location": "Birmingham, AL",
+      "count": 5,
+      "years": [
+        "2016",
+        "2017",
+        "2018",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2016-dci-birmingham",
+        "2017-dci-birmingham-joe-lee-griffin-field-at-samford-university",
+        "2018-dci-birmingham"
+      ]
+    },
+    {
+      "location": "Boise, ID",
+      "count": 9,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2024"
+      ],
+      "sampleEvents": [
+        "2013-boise-summer-music-games",
+        "2014-boise-summer-music-games",
+        "2015-drums-along-the-rockies-boise-edition"
+      ]
+    },
+    {
+      "location": "Bowling Green, OH",
+      "count": 3,
+      "years": [
+        "2013",
+        "2014",
+        "2015"
+      ],
+      "sampleEvents": [
+        "2013-glassmen-all-star-review",
+        "2014-dci-all-star-review",
+        "2015-dci-all-star-review"
+      ]
+    },
+    {
+      "location": "Bristol, RI",
+      "count": 3,
+      "years": [
+        "2013",
+        "2014",
+        "2015"
+      ],
+      "sampleEvents": [
+        "2013-summer-music-preview",
+        "2014-summer-music-preview",
+        "2015-summer-music-preview"
+      ]
+    },
+    {
+      "location": "Broken Arrow, OK",
+      "count": 11,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2013-drums-of-summer",
+        "2014-drums-of-summer",
+        "2015-drums-of-summer"
+      ]
+    },
+    {
+      "location": "Brunswick, OH",
+      "count": 2,
+      "years": [
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2024-dci-northern-ohio",
+        "2025-dci-northern-ohio"
+      ]
+    },
+    {
+      "location": "Buena Park, CA",
+      "count": 1,
+      "years": [
+        "2025"
+      ],
+      "sampleEvents": [
+        "2025-so-cal-classic-open-class-pacific-championship-finals"
+      ]
+    },
+    {
+      "location": "Buffalo, NY",
+      "count": 7,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019"
+      ],
+      "sampleEvents": [
+        "2013-tour-of-champions-buffalo",
+        "2014-tour-of-champions-buffalo",
+        "2015-tour-of-champions-buffalo"
+      ]
+    },
+    {
+      "location": "Camas, WA",
+      "count": 2,
+      "years": [
+        "2019",
+        "2022"
+      ],
+      "sampleEvents": [
+        "2019-drums-of-fire",
+        "2022-drums-of-fire"
+      ]
+    },
+    {
+      "location": "Canton, OH",
+      "count": 3,
+      "years": [
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2023-innovations-in-brass",
+        "2024-innovations-in-brass",
+        "2025-innovations-in-brass"
+      ]
+    },
+    {
+      "location": "Canyon, TX",
+      "count": 4,
+      "years": [
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2022-west-texas-drums",
+        "2023-west-texas-drums",
+        "2024-west-texas-drums"
+      ]
+    },
+    {
+      "location": "Cape Girardeau, MO",
+      "count": 3,
+      "years": [
+        "2017",
+        "2018",
+        "2019"
+      ],
+      "sampleEvents": [
+        "2017-drums-along-the-mississippi-river",
+        "2018-drums-along-the-mississippi",
+        "2019-drums-along-the-mississippi"
+      ]
+    },
+    {
+      "location": "Casper, WY",
+      "count": 6,
+      "years": [
+        "2013",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019"
+      ],
+      "sampleEvents": [
+        "2013-drums-along-the-rockies-casper-edition",
+        "2015-drums-along-the-rockies-casper-edition",
+        "2016-drums-along-the-rockies-casper-edition"
+      ]
+    },
+    {
+      "location": "Cedar Rapids, IA",
+      "count": 6,
+      "years": [
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2022",
+        "2023"
+      ],
+      "sampleEvents": [
+        "2015-tournament-of-drums",
+        "2016-tournament-of-drums",
+        "2017-tournament-of-drums"
+      ]
+    },
+    {
+      "location": "Cedarburg, WI",
+      "count": 11,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2013-rotary-music-festival",
+        "2014-rotary-music-festival",
+        "2015-rotary-music-festival"
+      ]
+    },
+    {
+      "location": "Centerville, OH",
+      "count": 11,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2013-soaring-sounds-34",
+        "2014-soaring-sounds-35",
+        "2015-soaring-sounds-36"
+      ]
+    },
+    {
+      "location": "Cerritos, CA",
+      "count": 2,
+      "years": [
+        "2014",
+        "2024"
+      ],
+      "sampleEvents": [
+        "2014-so-cal-classic-open-class-championship",
+        "2024-so-cal-classic-open-class-pacific-championship-finals"
+      ]
+    },
+    {
+      "location": "Chambersburg, PA",
+      "count": 2,
+      "years": [
+        "2013",
+        "2014"
+      ],
+      "sampleEvents": [
+        "2013-drum-corps-an-american-tradition-2",
+        "2014-drum-corps-an-american-tradition-4"
+      ]
+    },
+    {
+      "location": "Champlin, MN",
+      "count": 2,
+      "years": [
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2024-march-on",
+        "2025-march-on"
+      ]
+    },
+    {
+      "location": "Charleston, IL",
+      "count": 1,
+      "years": [
+        "2022"
+      ],
+      "sampleEvents": [
+        "2022-dci-eastern-illinois"
+      ]
+    },
+    {
+      "location": "Charleston, WV",
+      "count": 7,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019"
+      ],
+      "sampleEvents": [
+        "2013-drums-across-the-tri-state",
+        "2014-drums-across-the-tri-state",
+        "2015-drums-across-the-tri-state"
+      ]
+    },
+    {
+      "location": "Charlotte, NC",
+      "count": 2,
+      "years": [
+        "2013",
+        "2014"
+      ],
+      "sampleEvents": [
+        "2013-nightbeat",
+        "2014-nightbeat-tour-of-champions"
+      ]
+    },
+    {
+      "location": "Chester, PA",
+      "count": 6,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018"
+      ],
+      "sampleEvents": [
+        "2013-drum-corps-an-american-tradition-3",
+        "2014-drum-corps-an-american-tradition-2",
+        "2015-tour-of-champions-ppl-park"
+      ]
+    },
+    {
+      "location": "Chestnut Hill, MA",
+      "count": 1,
+      "years": [
+        "2016"
+      ],
+      "sampleEvents": [
+        "2016-east-coast-classic"
+      ]
+    },
+    {
+      "location": "Cheyenne, WY",
+      "count": 4,
+      "years": [
+        "2014",
+        "2022",
+        "2023",
+        "2024"
+      ],
+      "sampleEvents": [
+        "2014-drums-along-the-rockies-cheyenne-edition",
+        "2022-drums-along-the-rockies-cheyenne-edition",
+        "2023-drums-along-the-rockies-cheyenne-edition"
+      ]
+    },
+    {
+      "location": "Chickasha, OK",
+      "count": 2,
+      "years": [
+        "2016",
+        "2017"
+      ],
+      "sampleEvents": [
+        "2016-dci-central-oklahoma",
+        "2017-live-in-chickasha"
+      ]
+    },
+    {
+      "location": "Cincinnati, OH",
+      "count": 2,
+      "years": [
+        "2022",
+        "2023"
+      ],
+      "sampleEvents": [
+        "2022-dci-cincinnati",
+        "2023-dci-cincinnati"
+      ]
+    },
+    {
+      "location": "Clifton, NJ",
+      "count": 7,
+      "years": [
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2015-drum-corps-an-american-tradition-2",
+        "2016-drum-corps-an-american-tradition-2",
+        "2017-drum-corps-an-american-tradition-2"
+      ]
+    },
+    {
+      "location": "Clovis, CA",
+      "count": 7,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2017",
+        "2018",
+        "2019",
+        "2024"
+      ],
+      "sampleEvents": [
+        "2013-midcal-champions-showcase",
+        "2014-midcal-champions-showcase",
+        "2015-midcal-champions-showcase"
+      ]
+    },
+    {
+      "location": "Columbia, SC",
+      "count": 1,
+      "years": [
+        "2017"
+      ],
+      "sampleEvents": [
+        "2017-crownbeat"
+      ]
+    },
+    {
+      "location": "Conway, SC",
+      "count": 1,
+      "years": [
+        "2024"
+      ],
+      "sampleEvents": [
+        "2024-brass-at-the-beach"
+      ]
+    },
+    {
+      "location": "Corpus Christi, TX",
+      "count": 1,
+      "years": [
+        "2022"
+      ],
+      "sampleEvents": [
+        "2022-dci-corpus-christi"
+      ]
+    },
+    {
+      "location": "Cranston, RI",
+      "count": 3,
+      "years": [
+        "2016",
+        "2017",
+        "2018"
+      ],
+      "sampleEvents": [
+        "2016-summer-music-preview",
+        "2017-summer-music-preview",
+        "2018-summer-music-preview"
+      ]
+    },
+    {
+      "location": "Dallas, TX",
+      "count": 5,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017"
+      ],
+      "sampleEvents": [
+        "2013-dci-dallas-presented-by-north-texas-festival-of-drums-and-bugles",
+        "2014-dci-dallas-presented-by-north-texas-festival-of-drums-and-bugles",
+        "2015-dci-dallas-presented-by-north-texas-festival-of-drums-and-bugles"
+      ]
+    },
+    {
+      "location": "Daphne, AL",
+      "count": 1,
+      "years": [
+        "2022"
+      ],
+      "sampleEvents": [
+        "2022-blast-by-the-bay"
+      ]
+    },
+    {
+      "location": "Daytona Beach, FL",
+      "count": 1,
+      "years": [
+        "2016"
+      ],
+      "sampleEvents": [
+        "2016-dci-daytona-beach"
+      ]
+    },
+    {
+      "location": "DeKalb, IL",
+      "count": 11,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2013-tour-of-champions-northern-illinois",
+        "2014-tour-of-champions-northern-illinois",
+        "2015-tour-of-champions-northern-illinois"
+      ]
+    },
+    {
+      "location": "Denton, TX",
+      "count": 11,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2013-dci-north-dallas-presented-by-coserv-electric-for-red-river-thunder",
+        "2014-dci-denton-presented-by-coserv-electric-for-red-river-thunder",
+        "2015-dci-denton-presented-by-the-cavaliers-for-red-river-thunder"
+      ]
+    },
+    {
+      "location": "Denver, CO",
+      "count": 9,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019"
+      ],
+      "sampleEvents": [
+        "2013-drums-along-the-rockies",
+        "2014-drums-along-the-rockies",
+        "2015-drums-along-the-rockies"
+      ]
+    },
+    {
+      "location": "Detroit, MI",
+      "count": 5,
+      "years": [
+        "2018",
+        "2019",
+        "2022"
+      ],
+      "sampleEvents": [
+        "2018-dci-tour-premiere",
+        "2019-dci-tour-premiere",
+        "2019-june-19th-test"
+      ]
+    },
+    {
+      "location": "Dixon - Rock Falls, IL",
+      "count": 1,
+      "years": [
+        "2018"
+      ],
+      "sampleEvents": [
+        "2018-petunia-city-brass"
+      ]
+    },
+    {
+      "location": "Dixon, IL",
+      "count": 3,
+      "years": [
+        "2014",
+        "2015",
+        "2016"
+      ],
+      "sampleEvents": [
+        "2014-dixon-petunia-festival",
+        "2015-petunia-city-brass",
+        "2016-petunia-city-brass"
+      ]
+    },
+    {
+      "location": "Dothan, AL",
+      "count": 3,
+      "years": [
+        "2017",
+        "2018",
+        "2019"
+      ],
+      "sampleEvents": [
+        "2017-dci-southern-alabama",
+        "2018-dci-southern-alabama",
+        "2019-dci-southern-alabama"
+      ]
+    },
+    {
+      "location": "Douglasville, GA",
+      "count": 1,
+      "years": [
+        "2023"
+      ],
+      "sampleEvents": [
+        "2023-drums-across-america"
+      ]
+    },
+    {
+      "location": "Dover, DE",
+      "count": 1,
+      "years": [
+        "2022"
+      ],
+      "sampleEvents": [
+        "2022-dci-dover"
+      ]
+    },
+    {
+      "location": "Dover, PA",
+      "count": 3,
+      "years": [
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2023-white-rose-classic",
+        "2024-white-rose-classic",
+        "2025-white-rose-classic"
+      ]
+    },
+    {
+      "location": "Downingtown, PA",
+      "count": 2,
+      "years": [
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2024-big-sounds-in-motion",
+        "2025-big-sounds-in-motion"
+      ]
+    },
+    {
+      "location": "Dublin, OH",
+      "count": 5,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017"
+      ],
+      "sampleEvents": [
+        "2013-emerald-city-music-games",
+        "2014-emerald-city-music-games",
+        "2015-emerald-city-music-games"
+      ]
+    },
+    {
+      "location": "Dubuque, IA",
+      "count": 11,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2023",
+        "2024",
+        "2026"
+      ],
+      "sampleEvents": [
+        "2013-music-on-the-march",
+        "2014-music-on-the-march",
+        "2015-music-on-the-march"
+      ]
+    },
+    {
+      "location": "East Peoria, IL",
+      "count": 1,
+      "years": [
+        "2018"
+      ],
+      "sampleEvents": [
+        "2018-metamora-music-in-motion"
+      ]
+    },
+    {
+      "location": "East Rutherford, NJ",
+      "count": 1,
+      "years": [
+        "2019"
+      ],
+      "sampleEvents": [
+        "2019-drum-corps-an-american-tradition-metlife-stadium"
+      ]
+    },
+    {
+      "location": "East Troy, WI",
+      "count": 1,
+      "years": [
+        "2018"
+      ],
+      "sampleEvents": [
+        "2018-east-troy-showcase"
+      ]
+    },
+    {
+      "location": "Eau Claire, WI",
+      "count": 2,
+      "years": [
+        "2022",
+        "2023"
+      ],
+      "sampleEvents": [
+        "2022-drums-on-the-chippewa",
+        "2023-drums-on-the-chippewa"
+      ]
+    },
+    {
+      "location": "Eden Prairie,  MN",
+      "count": 1,
+      "years": [
+        "2014"
+      ],
+      "sampleEvents": [
+        "2014-dci-eden-prairie"
+      ]
+    },
+    {
+      "location": "Edinboro, PA",
+      "count": 4,
+      "years": [
+        "2019",
+        "2022",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2019-lake-erie-fanfare",
+        "2022-lake-erie-fanfare",
+        "2024-dci-lake-erie"
+      ]
+    },
+    {
+      "location": "Egg Harbor Township, NJ",
+      "count": 1,
+      "years": [
+        "2024"
+      ],
+      "sampleEvents": [
+        "2024-dci-south-jersey"
+      ]
+    },
+    {
+      "location": "El Cajon, CA",
+      "count": 1,
+      "years": [
+        "2018"
+      ],
+      "sampleEvents": [
+        "2018-gold-showcase"
+      ]
+    },
+    {
+      "location": "El Dorado, KS",
+      "count": 4,
+      "years": [
+        "2016",
+        "2017",
+        "2018",
+        "2019"
+      ],
+      "sampleEvents": [
+        "2016-drums-across-kansas-presented-by-the-city-of-el-dorado-and-conventions-visitors",
+        "2017-drums-across-kansas",
+        "2018-drums-across-kansas"
+      ]
+    },
+    {
+      "location": "Erie, PA",
+      "count": 6,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018"
+      ],
+      "sampleEvents": [
+        "2013-lake-erie-fanfare",
+        "2014-lake-erie-fanfare",
+        "2015-lake-erie-fanfare"
+      ]
+    },
+    {
+      "location": "Escondido, CA",
+      "count": 1,
+      "years": [
+        "2017"
+      ],
+      "sampleEvents": [
+        "2017-drum-corps-at-the-glen"
+      ]
+    },
+    {
+      "location": "Evansville, IN",
+      "count": 10,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2013-drums-on-the-ohio",
+        "2014-drums-on-the-ohio",
+        "2015-drums-on-the-ohio"
+      ]
+    },
+    {
+      "location": "Everett, MA",
+      "count": 1,
+      "years": [
+        "2017"
+      ],
+      "sampleEvents": [
+        "2017-the-q-125th-city-of-everett-celebration"
+      ]
+    },
+    {
+      "location": "Fairfield, CT",
+      "count": 1,
+      "years": [
+        "2023"
+      ],
+      "sampleEvents": [
+        "2023-dci-connecticut"
+      ]
+    },
+    {
+      "location": "Fairfield, OH",
+      "count": 2,
+      "years": [
+        "2013",
+        "2014"
+      ],
+      "sampleEvents": [
+        "2013-summer-music-games-in-cincinnati",
+        "2014-summer-music-games-in-cincinnati"
+      ]
+    },
+    {
+      "location": "Farmington, MN",
+      "count": 3,
+      "years": [
+        "2016",
+        "2018",
+        "2019"
+      ],
+      "sampleEvents": [
+        "2016-march-on",
+        "2018-march-on",
+        "2019-march-on"
+      ]
+    },
+    {
+      "location": "Forest City, IA",
+      "count": 3,
+      "years": [
+        "2014",
+        "2015",
+        "2016"
+      ],
+      "sampleEvents": [
+        "2014-north-iowa-festival-of-brass",
+        "2015-north-iowa-festival-of-brass",
+        "2016-north-iowa-festival-of-brass"
+      ]
+    },
+    {
+      "location": "Fort Collins, CO",
+      "count": 5,
+      "years": [
+        "2022",
+        "2023",
+        "2024",
+        "2025",
+        "2026"
+      ],
+      "sampleEvents": [
+        "2022-drums-along-the-rockies",
+        "2023-drums-along-the-rockies",
+        "2024-drums-along-the-rockies"
+      ]
+    },
+    {
+      "location": "Foxboro, MA",
+      "count": 1,
+      "years": [
+        "2015"
+      ],
+      "sampleEvents": [
+        "2015-east-coast-classic"
+      ]
+    },
+    {
+      "location": "Freemont, NE",
+      "count": 1,
+      "years": [
+        "2015"
+      ],
+      "sampleEvents": [
+        "2015-drums-across-nebraska"
+      ]
+    },
+    {
+      "location": "Fresno, CA",
+      "count": 4,
+      "years": [
+        "2016",
+        "2022",
+        "2023"
+      ],
+      "sampleEvents": [
+        "2016-midcal-champions-showcase",
+        "2022-golden-state-showdown",
+        "2022-midcal-champions-showcase"
+      ]
+    },
+    {
+      "location": "Ft. Wayne, IN",
+      "count": 3,
+      "years": [
+        "2014",
+        "2015",
+        "2016"
+      ],
+      "sampleEvents": [
+        "2014-dci-ft-wayne",
+        "2015-dci-ft-wayne",
+        "2016-dci-ft-wayne"
+      ]
+    },
+    {
+      "location": "Glassboro, NJ",
+      "count": 3,
+      "years": [
+        "2022",
+        "2023",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2022-dci-glassboro",
+        "2023-dci-glassboro",
+        "2025-dci-glassboro"
+      ]
+    },
+    {
+      "location": "Glendora, CA",
+      "count": 1,
+      "years": [
+        "2014"
+      ],
+      "sampleEvents": [
+        "2014-corps-at-the-crest-los-angeles"
+      ]
+    },
+    {
+      "location": "Glens Falls, NY",
+      "count": 2,
+      "years": [
+        "2018",
+        "2019"
+      ],
+      "sampleEvents": [
+        "2018-the-glens-falls-music-academy-showcase",
+        "2019-the-glens-falls-music-academy-showcase"
+      ]
+    },
+    {
+      "location": "Gloversville, NY",
+      "count": 1,
+      "years": [
+        "2018"
+      ],
+      "sampleEvents": [
+        "2018-cavalcade-of-champions"
+      ]
+    },
+    {
+      "location": "Great Bend, KS",
+      "count": 1,
+      "years": [
+        "2015"
+      ],
+      "sampleEvents": [
+        "2015-march-of-champions-presented-by-drums-across-kansas"
+      ]
+    },
+    {
+      "location": "Greendale, WI",
+      "count": 1,
+      "years": [
+        "2014"
+      ],
+      "sampleEvents": [
+        "2014-greendale-drum-corps-show"
+      ]
+    },
+    {
+      "location": "Hamilton, OH",
+      "count": 5,
+      "years": [
+        "2015",
+        "2016",
+        "2017",
+        "2019"
+      ],
+      "sampleEvents": [
+        "2015-hamilton-drum-corps-classic",
+        "2015-summer-music-games-in-cincinnati",
+        "2016-summer-music-games-in-cincinnati"
+      ]
+    },
+    {
+      "location": "Hattiesburg, MS",
+      "count": 10,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2023",
+        "2024"
+      ],
+      "sampleEvents": [
+        "2013-dci-southern-mississippi",
+        "2014-dci-southern-mississippi",
+        "2015-dci-southern-mississippi"
+      ]
+    },
+    {
+      "location": "Hillsboro, OR",
+      "count": 1,
+      "years": [
+        "2017"
+      ],
+      "sampleEvents": [
+        "2017-drums-of-fire"
+      ]
+    },
+    {
+      "location": "Hiram, GA",
+      "count": 1,
+      "years": [
+        "2018"
+      ],
+      "sampleEvents": [
+        "2018-atlanta-brass-classic"
+      ]
+    },
+    {
+      "location": "Hoschton, GA",
+      "count": 2,
+      "years": [
+        "2018",
+        "2019"
+      ],
+      "sampleEvents": [
+        "2018-drums-across-america",
+        "2019-drums-across-america-atlanta"
+      ]
+    },
+    {
+      "location": "Houston, TX",
+      "count": 9,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2013-dci-houston-presented-by-the-exsightment-of-sound",
+        "2014-tour-of-champions-texas-presented-by-the-exsightment-of-sound",
+        "2015-tour-of-champions-texas-presented-by-the-exsightment-of-sound"
+      ]
+    },
+    {
+      "location": "Huntington, WV",
+      "count": 4,
+      "years": [
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2022-dci-huntington",
+        "2023-dci-huntington",
+        "2024-dci-huntington"
+      ]
+    },
+    {
+      "location": "Huntsville, AL",
+      "count": 4,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016"
+      ],
+      "sampleEvents": [
+        "2013-dci-north-alabama",
+        "2014-dci-north-alabama",
+        "2015-dci-north-alabama"
+      ]
+    },
+    {
+      "location": "Hutchinson, KS",
+      "count": 1,
+      "years": [
+        "2024"
+      ],
+      "sampleEvents": [
+        "2024-dci-hutchinson"
+      ]
+    },
+    {
+      "location": "Indianapolis, IN",
+      "count": 67,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2013-dci-world-championship-finals",
+        "2013-dci-world-championships-prelims",
+        "2013-dci-world-championships-semifinals"
+      ]
+    },
+    {
+      "location": "Jackson, NJ",
+      "count": 2,
+      "years": [
+        "2013",
+        "2014"
+      ],
+      "sampleEvents": [
+        "2013-drum-corps-an-american-tradition-4",
+        "2014-drum-corps-an-american-tradition-3"
+      ]
+    },
+    {
+      "location": "Johnsonburg, PA",
+      "count": 6,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018"
+      ],
+      "sampleEvents": [
+        "2013-a-blast-in-the-burg",
+        "2014-a-blast-in-the-burg",
+        "2015-a-blast-in-the-burg"
+      ]
+    },
+    {
+      "location": "Johnston, IA",
+      "count": 2,
+      "years": [
+        "2017",
+        "2018"
+      ],
+      "sampleEvents": [
+        "2017-celebration-in-brass",
+        "2018-celebration-in-brass"
+      ]
+    },
+    {
+      "location": "Jupiter, FL",
+      "count": 2,
+      "years": [
+        "2016",
+        "2017"
+      ],
+      "sampleEvents": [
+        "2016-dci-jupiter",
+        "2017-dci-south-florida"
+      ]
+    },
+    {
+      "location": "Kalamazoo, MI",
+      "count": 3,
+      "years": [
+        "2013",
+        "2015"
+      ],
+      "sampleEvents": [
+        "2013-legends-drum-corps-open",
+        "2013-legends-drum-corps-preview",
+        "2015-legends-drum-corps-open"
+      ]
+    },
+    {
+      "location": "Katy, TX",
+      "count": 2,
+      "years": [
+        "2018",
+        "2019"
+      ],
+      "sampleEvents": [
+        "2018-tour-of-champions-texas",
+        "2019-dci-katy"
+      ]
+    },
+    {
+      "location": "Kennewick, WA",
+      "count": 1,
+      "years": [
+        "2024"
+      ],
+      "sampleEvents": [
+        "2024-drums-along-the-columbia"
+      ]
+    },
+    {
+      "location": "Kent, OH",
+      "count": 1,
+      "years": [
+        "2022"
+      ],
+      "sampleEvents": [
+        "2022-innovations-in-brass-northeast-ohio"
+      ]
+    },
+    {
+      "location": "Knoxville, TN",
+      "count": 3,
+      "years": [
+        "2017",
+        "2018",
+        "2019"
+      ],
+      "sampleEvents": [
+        "2017-drums-across-the-smokies",
+        "2018-drums-across-the-smokies",
+        "2019-drums-across-the-smokies"
+      ]
+    },
+    {
+      "location": "La Crosse, WI",
+      "count": 11,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2022",
+        "2023",
+        "2024",
+        "2025",
+        "2026"
+      ],
+      "sampleEvents": [
+        "2013-river-city-rhapsody-la-crosse-wi",
+        "2014-dci-la-crosse",
+        "2015-river-city-rhapsody-la-crosse"
+      ]
+    },
+    {
+      "location": "Lafayette, LA",
+      "count": 7,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019"
+      ],
+      "sampleEvents": [
+        "2013-drums-across-cajun-field",
+        "2014-drums-across-cajun-field",
+        "2015-drums-across-cajun-field"
+      ]
+    },
+    {
+      "location": "Laguna Hills, CA",
+      "count": 1,
+      "years": [
+        "2013"
+      ],
+      "sampleEvents": [
+        "2013-laguna-hills"
+      ]
+    },
+    {
+      "location": "Lakeland, FL",
+      "count": 1,
+      "years": [
+        "2016"
+      ],
+      "sampleEvents": [
+        "2016-dci-central-florida"
+      ]
+    },
+    {
+      "location": "Landisville, PA",
+      "count": 2,
+      "years": [
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2024-the-buccaneer-classic",
+        "2025-the-buccaneer-classic"
+      ]
+    },
+    {
+      "location": "Laramie, WY",
+      "count": 1,
+      "years": [
+        "2015"
+      ],
+      "sampleEvents": [
+        "2015-drums-along-the-rockies-laramie-edition"
+      ]
+    },
+    {
+      "location": "Lawrence, MA",
+      "count": 9,
+      "years": [
+        "2013",
+        "2014",
+        "2017",
+        "2018",
+        "2019",
+        "2023",
+        "2024"
+      ],
+      "sampleEvents": [
+        "2013-east-coast-classic",
+        "2014-east-coast-classic",
+        "2017-east-coast-classic"
+      ]
+    },
+    {
+      "location": "Lawton, OK",
+      "count": 1,
+      "years": [
+        "2022"
+      ],
+      "sampleEvents": [
+        "2022-dci-lawton"
+      ]
+    },
+    {
+      "location": "Lebanon, IL",
+      "count": 4,
+      "years": [
+        "2013",
+        "2014",
+        "2016",
+        "2017"
+      ],
+      "sampleEvents": [
+        "2013-dci-st-louis",
+        "2014-dci-st-louis",
+        "2016-dci-st-louis"
+      ]
+    },
+    {
+      "location": "Lexington, KY",
+      "count": 2,
+      "years": [
+        "2013",
+        "2014"
+      ],
+      "sampleEvents": [
+        "2013-drums-in-the-bluegrass",
+        "2014-drum-in-the-bluegrass"
+      ]
+    },
+    {
+      "location": "Lexington, SC",
+      "count": 7,
+      "years": [
+        "2016",
+        "2018",
+        "2019",
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2016-crownbeat",
+        "2018-crownbeat",
+        "2019-crownbeat"
+      ]
+    },
+    {
+      "location": "Lima, OH",
+      "count": 1,
+      "years": [
+        "2022"
+      ],
+      "sampleEvents": [
+        "2022-spartan-thunder"
+      ]
+    },
+    {
+      "location": "Lisle, IL",
+      "count": 12,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2023",
+        "2024",
+        "2025",
+        "2026"
+      ],
+      "sampleEvents": [
+        "2013-cavalcade-of-brass",
+        "2014-cavalcade-of-brass",
+        "2015-cavalcade-of-brass"
+      ]
+    },
+    {
+      "location": "Little Rock, AR",
+      "count": 11,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2013-dci-arkansas",
+        "2014-dci-arkansas",
+        "2015-dci-arkansas"
+      ]
+    },
+    {
+      "location": "Louisville, KY",
+      "count": 1,
+      "years": [
+        "2015"
+      ],
+      "sampleEvents": [
+        "2015-dci-louisville-presented-by-demoulin-bros"
+      ]
+    },
+    {
+      "location": "Lynn, MA",
+      "count": 9,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2023"
+      ],
+      "sampleEvents": [
+        "2013-the-beanpot-invitational",
+        "2014-the-beanpot-invitational",
+        "2015-the-beanpot-invitational-a-dci-dca-split-event"
+      ]
+    },
+    {
+      "location": "Macomb, IL",
+      "count": 1,
+      "years": [
+        "2016"
+      ],
+      "sampleEvents": [
+        "2016-dci-western-illinois"
+      ]
+    },
+    {
+      "location": "Macon, GA",
+      "count": 1,
+      "years": [
+        "2023"
+      ],
+      "sampleEvents": [
+        "2023-dci-macon"
+      ]
+    },
+    {
+      "location": "Madison, WI",
+      "count": 11,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2019",
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2013-drums-on-parade",
+        "2014-drums-on-parade",
+        "2015-drums-on-parade"
+      ]
+    },
+    {
+      "location": "Manchester, NH",
+      "count": 5,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2023"
+      ],
+      "sampleEvents": [
+        "2013-fiesta-de-musica",
+        "2014-fiesta-de-musica",
+        "2015-fiesta-de-musica"
+      ]
+    },
+    {
+      "location": "Mankato, MN",
+      "count": 12,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2023",
+        "2024",
+        "2025",
+        "2026"
+      ],
+      "sampleEvents": [
+        "2013-the-thunder-of-drums",
+        "2014-the-thunder-of-drums",
+        "2015-the-thunder-of-drums"
+      ]
+    },
+    {
+      "location": "Marion, IA",
+      "count": 2,
+      "years": [
+        "2019",
+        "2024"
+      ],
+      "sampleEvents": [
+        "2019-tournament-of-drums",
+        "2024-tournament-of-drums"
+      ]
+    },
+    {
+      "location": "Marion, IN",
+      "count": 10,
+      "years": [
+        "2019",
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2019-dci-open-class-world-championship-finals",
+        "2019-dci-open-class-world-championship-prelims",
+        "2022-dci-open-class-world-championship-prelims"
+      ]
+    },
+    {
+      "location": "Marion, OH",
+      "count": 1,
+      "years": [
+        "2025"
+      ],
+      "sampleEvents": [
+        "2025-dci-central-ohio"
+      ]
+    },
+    {
+      "location": "Martin, TN",
+      "count": 1,
+      "years": [
+        "2017"
+      ],
+      "sampleEvents": [
+        "2017-dci-martin"
+      ]
+    },
+    {
+      "location": "Mason City, IA",
+      "count": 1,
+      "years": [
+        "2013"
+      ],
+      "sampleEvents": [
+        "2013-the-music-man-s-festival-of-brass"
+      ]
+    },
+    {
+      "location": "Mason, OH",
+      "count": 5,
+      "years": [
+        "2018",
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2018-summer-music-games-in-cincinnati",
+        "2022-summer-music-games-in-cincinnati",
+        "2023-summer-music-games-in-cincinnati"
+      ]
+    },
+    {
+      "location": "Massillon, OH",
+      "count": 8,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018"
+      ],
+      "sampleEvents": [
+        "2013-pro-football-hall-of-fame-enshrinement-festival-drum-corps-competition",
+        "2014-dci-tour-of-champions-presented-by-the-pro-football-hall-of-fame",
+        "2015-dci-tour-of-champions-presented-by-the-pro-football-hall-of-fame-enshrinement-festival"
+      ]
+    },
+    {
+      "location": "Mattoon, IL",
+      "count": 1,
+      "years": [
+        "2024"
+      ],
+      "sampleEvents": [
+        "2024-dci-eastern-illinois"
+      ]
+    },
+    {
+      "location": "McKinney, TX",
+      "count": 4,
+      "years": [
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2022-dci-mckinney",
+        "2023-dci-mckinney",
+        "2024-dci-mckinney"
+      ]
+    },
+    {
+      "location": "McMinnville, OR",
+      "count": 1,
+      "years": [
+        "2015"
+      ],
+      "sampleEvents": [
+        "2015-drums-of-fire"
+      ]
+    },
+    {
+      "location": "Medford, OR",
+      "count": 1,
+      "years": [
+        "2013"
+      ],
+      "sampleEvents": [
+        "2013-beat-of-the-rogue"
+      ]
+    },
+    {
+      "location": "Memphis, TN",
+      "count": 2,
+      "years": [
+        "2019",
+        "2022"
+      ],
+      "sampleEvents": [
+        "2019-dci-memphis",
+        "2022-dci-memphis"
+      ]
+    },
+    {
+      "location": "Menomonie, WI",
+      "count": 1,
+      "years": [
+        "2019"
+      ],
+      "sampleEvents": [
+        "2019-dci-menomonie"
+      ]
+    },
+    {
+      "location": "Merrillville, IN",
+      "count": 2,
+      "years": [
+        "2013",
+        "2014"
+      ],
+      "sampleEvents": [
+        "2013-merrillville-music-festival",
+        "2014-merrillville-music-festival"
+      ]
+    },
+    {
+      "location": "Mesa, AZ",
+      "count": 10,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2013-southwest-corps-connection",
+        "2014-southwest-corps-connection",
+        "2015-drums-across-the-desert"
+      ]
+    },
+    {
+      "location": "Mesquite, TX",
+      "count": 5,
+      "years": [
+        "2018",
+        "2019",
+        "2022",
+        "2023",
+        "2024"
+      ],
+      "sampleEvents": [
+        "2018-dci-mesquite",
+        "2019-dci-mesquite",
+        "2022-dci-mesquite"
+      ]
+    },
+    {
+      "location": "Metamora, IL",
+      "count": 5,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017"
+      ],
+      "sampleEvents": [
+        "2013-river-city-rhapsody-metamora",
+        "2014-show-of-shows",
+        "2015-show-of-shows-metamora"
+      ]
+    },
+    {
+      "location": "Michigan City, IN",
+      "count": 18,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018"
+      ],
+      "sampleEvents": [
+        "2013-dci-championships-open-class-championship-finals",
+        "2013-dci-world-championships-open-class-championship-prelims",
+        "2013-pageant-of-drums"
+      ]
+    },
+    {
+      "location": "Millbrook, AL",
+      "count": 4,
+      "years": [
+        "2017",
+        "2018",
+        "2019",
+        "2022"
+      ],
+      "sampleEvents": [
+        "2017-drums-across-the-river-region",
+        "2018-drums-across-the-river-region",
+        "2019-drums-across-the-river-region"
+      ]
+    },
+    {
+      "location": "Minneapolis, MN",
+      "count": 6,
+      "years": [
+        "2013",
+        "2015",
+        "2016",
+        "2017",
+        "2018"
+      ],
+      "sampleEvents": [
+        "2013-dci-minnesota",
+        "2015-dci-minnesota",
+        "2016-dci-minnesota"
+      ]
+    },
+    {
+      "location": "Monroe, LA",
+      "count": 2,
+      "years": [
+        "2023",
+        "2024"
+      ],
+      "sampleEvents": [
+        "2023-dci-monroe",
+        "2024-dci-monroe"
+      ]
+    },
+    {
+      "location": "Mountain House, CA",
+      "count": 1,
+      "years": [
+        "2016"
+      ],
+      "sampleEvents": [
+        "2016-loudest-show-on-earth"
+      ]
+    },
+    {
+      "location": "Mt. Olive, NJ",
+      "count": 1,
+      "years": [
+        "2024"
+      ],
+      "sampleEvents": [
+        "2024-bushwackers-invitational"
+      ]
+    },
+    {
+      "location": "Muncie, IN",
+      "count": 10,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2023",
+        "2024"
+      ],
+      "sampleEvents": [
+        "2013-dci-central-indiana",
+        "2014-dci-central-indiana",
+        "2015-dci-central-indiana"
+      ]
+    },
+    {
+      "location": "Murfreesboro, TN",
+      "count": 7,
+      "years": [
+        "2013",
+        "2015",
+        "2018",
+        "2019",
+        "2022",
+        "2023",
+        "2024"
+      ],
+      "sampleEvents": [
+        "2013-the-masters-of-the-summer-music-games",
+        "2015-the-masters-of-the-summer-music-games",
+        "2018-the-masters-of-the-summer-music-games"
+      ]
+    },
+    {
+      "location": "Muscatine, IA",
+      "count": 3,
+      "years": [
+        "2013",
+        "2014",
+        "2015"
+      ],
+      "sampleEvents": [
+        "2013-percussion-on-the-pearl",
+        "2014-percussion-on-the-pearl",
+        "2015-percussion-on-the-pearl"
+      ]
+    },
+    {
+      "location": "Muscle Shoals, AL",
+      "count": 2,
+      "years": [
+        "2024",
+        "2026"
+      ],
+      "sampleEvents": [
+        "2024-dci-northern-alabama",
+        "2026-dci-northern-alabama"
+      ]
+    },
+    {
+      "location": "Mustang, OK",
+      "count": 6,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018"
+      ],
+      "sampleEvents": [
+        "2013-dci-in-the-heartland",
+        "2014-dci-in-the-heartland",
+        "2015-dci-in-the-heartland"
+      ]
+    },
+    {
+      "location": "Myrtle Beach, SC",
+      "count": 1,
+      "years": [
+        "2025"
+      ],
+      "sampleEvents": [
+        "2025-brass-at-the-beach"
+      ]
+    },
+    {
+      "location": "Nashua, NH",
+      "count": 2,
+      "years": [
+        "2019",
+        "2022"
+      ],
+      "sampleEvents": [
+        "2019-dci-new-hampshire",
+        "2022-dci-new-hampshire"
+      ]
+    },
+    {
+      "location": "Nashville, TN",
+      "count": 4,
+      "years": [
+        "2014",
+        "2016",
+        "2017",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2014-the-masters-of-the-summer-music-games",
+        "2016-the-masters-of-the-summer-music-games-presented-by-jupiter-mapex-and-majestic",
+        "2017-the-masters-of-the-summer-music-games-presented-by-jupiter-mapex-and-majestic"
+      ]
+    },
+    {
+      "location": "New Haven, CT",
+      "count": 2,
+      "years": [
+        "2013",
+        "2014"
+      ],
+      "sampleEvents": [
+        "2013-connecticut-drums-southern-connecticut-state-university",
+        "2014-connecticut-drums-southern-connecticut-state-university"
+      ]
+    },
+    {
+      "location": "Newark, DE",
+      "count": 2,
+      "years": [
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2024-dci-delaware",
+        "2025-dci-delaware"
+      ]
+    },
+    {
+      "location": "Newnan, GA",
+      "count": 3,
+      "years": [
+        "2024",
+        "2025",
+        "2026"
+      ],
+      "sampleEvents": [
+        "2024-drums-across-america",
+        "2025-drums-across-america",
+        "2026-drums-across-america"
+      ]
+    },
+    {
+      "location": "Niagara, NY",
+      "count": 1,
+      "years": [
+        "2019"
+      ],
+      "sampleEvents": [
+        "2019-prelude-to-drums-along-the-waterfront"
+      ]
+    },
+    {
+      "location": "Niles, MI",
+      "count": 1,
+      "years": [
+        "2013"
+      ],
+      "sampleEvents": [
+        "2013-four-flags-spectacular"
+      ]
+    },
+    {
+      "location": "Normal, IL",
+      "count": 1,
+      "years": [
+        "2022"
+      ],
+      "sampleEvents": [
+        "2022-dci-central-illinois"
+      ]
+    },
+    {
+      "location": "North Canton, OH",
+      "count": 1,
+      "years": [
+        "2019"
+      ],
+      "sampleEvents": [
+        "2019-innovations-in-brass-north-canton"
+      ]
+    },
+    {
+      "location": "Norton, OH",
+      "count": 1,
+      "years": [
+        "2025"
+      ],
+      "sampleEvents": [
+        "2025-dci-in-motion"
+      ]
+    },
+    {
+      "location": "Norwalk, CA",
+      "count": 1,
+      "years": [
+        "2018"
+      ],
+      "sampleEvents": [
+        "2018-so-cal-classic"
+      ]
+    },
+    {
+      "location": "O'Fallon, IL",
+      "count": 1,
+      "years": [
+        "2015"
+      ],
+      "sampleEvents": [
+        "2015-dci-st-louis"
+      ]
+    },
+    {
+      "location": "Ocean Springs, MS",
+      "count": 3,
+      "years": [
+        "2013",
+        "2014",
+        "2015"
+      ],
+      "sampleEvents": [
+        "2013-mississippi-sound-spectacular",
+        "2014-mississippi-sound-spectacular",
+        "2015-mississippi-sound-spectacular"
+      ]
+    },
+    {
+      "location": "Oceanside, CA",
+      "count": 6,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018"
+      ],
+      "sampleEvents": [
+        "2013-corps-at-the-crest-san-diego",
+        "2014-corps-at-the-crest-san-diego",
+        "2015-corps-at-the-crest-san-diego"
+      ]
+    },
+    {
+      "location": "Ogden, UT",
+      "count": 11,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2024",
+        "2025",
+        "2026"
+      ],
+      "sampleEvents": [
+        "2013-corps-encore",
+        "2014-corps-encore",
+        "2015-corps-encore"
+      ]
+    },
+    {
+      "location": "Olathe, KS",
+      "count": 9,
+      "years": [
+        "2013",
+        "2015",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2013-brass-impact",
+        "2015-brass-impact",
+        "2017-brass-impact"
+      ]
+    },
+    {
+      "location": "Old Orchard Beach, ME",
+      "count": 1,
+      "years": [
+        "2018"
+      ],
+      "sampleEvents": [
+        "2018-dicarlo-invitational"
+      ]
+    },
+    {
+      "location": "Omaha, NE",
+      "count": 4,
+      "years": [
+        "2013",
+        "2014",
+        "2016",
+        "2026"
+      ],
+      "sampleEvents": [
+        "2013-drums-across-nebraska",
+        "2014-drums-across-nebraska",
+        "2016-drums-across-nebraska"
+      ]
+    },
+    {
+      "location": "Opelika, AL",
+      "count": 4,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016"
+      ],
+      "sampleEvents": [
+        "2013-alabama-sounds-of-summer",
+        "2014-alabama-sounds-of-summer",
+        "2015-alabama-sounds-of-summer"
+      ]
+    },
+    {
+      "location": "Oregon, IL",
+      "count": 1,
+      "years": [
+        "2017"
+      ],
+      "sampleEvents": [
+        "2017-petunia-city-brass"
+      ]
+    },
+    {
+      "location": "Oregon, WI",
+      "count": 3,
+      "years": [
+        "2015",
+        "2016",
+        "2017"
+      ],
+      "sampleEvents": [
+        "2015-shadow-showcase",
+        "2016-shadow-showcase",
+        "2017-shadow-showcase"
+      ]
+    },
+    {
+      "location": "Orlando, FL",
+      "count": 3,
+      "years": [
+        "2017",
+        "2018",
+        "2019"
+      ],
+      "sampleEvents": [
+        "2017-dci-orlando-presented-by-lone-star-percussion",
+        "2018-dci-orlando",
+        "2019-dci-orlando"
+      ]
+    },
+    {
+      "location": "Orrville, OH",
+      "count": 2,
+      "years": [
+        "2023",
+        "2024"
+      ],
+      "sampleEvents": [
+        "2023-drums-in-the-heartland",
+        "2024-drums-in-the-heartland"
+      ]
+    },
+    {
+      "location": "Oskaloosa, IA",
+      "count": 4,
+      "years": [
+        "2016",
+        "2017",
+        "2018",
+        "2019"
+      ],
+      "sampleEvents": [
+        "2016-drum-corps-mid-america",
+        "2017-drum-corps-mid-america",
+        "2018-drum-corps-mid-america"
+      ]
+    },
+    {
+      "location": "Overland Park, KS",
+      "count": 2,
+      "years": [
+        "2014",
+        "2016"
+      ],
+      "sampleEvents": [
+        "2014-brass-impact",
+        "2016-brass-impact"
+      ]
+    },
+    {
+      "location": "Pasadena, CA",
+      "count": 8,
+      "years": [
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2023",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2015-corps-at-the-crest-los-angeles-presented-by-pacific-crest-youth-arts-organization",
+        "2016-corps-at-the-crest-los-angeles-presented-by-pacific-crest-youth-arts-organization",
+        "2017-drum-corps-at-the-rose-bowl"
+      ]
+    },
+    {
+      "location": "Paw Paw, MI",
+      "count": 1,
+      "years": [
+        "2014"
+      ],
+      "sampleEvents": [
+        "2014-legends-drum-corps-open"
+      ]
+    },
+    {
+      "location": "Piscataway, NJ",
+      "count": 1,
+      "years": [
+        "2014"
+      ],
+      "sampleEvents": [
+        "2014-tour-of-champions-rutgers"
+      ]
+    },
+    {
+      "location": "Pittsburgh, PA",
+      "count": 18,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2013-innovations-in-brass-pittsburgh",
+        "2013-three-rivers-summer-music-games",
+        "2014-dci-pittsburgh-presented-by-three-rivers-summer-music-games"
+      ]
+    },
+    {
+      "location": "Plainwell, MI",
+      "count": 5,
+      "years": [
+        "2014",
+        "2015",
+        "2017",
+        "2018",
+        "2019"
+      ],
+      "sampleEvents": [
+        "2014-legends-drum-corps-preview",
+        "2015-legends-drum-corps-preview",
+        "2017-legends-drum-corps-open"
+      ]
+    },
+    {
+      "location": "Pleasant Hill, CA",
+      "count": 5,
+      "years": [
+        "2013",
+        "2014",
+        "2017",
+        "2018",
+        "2019"
+      ],
+      "sampleEvents": [
+        "2013-loudest-show-on-earth",
+        "2014-loudest-show-on-earth",
+        "2017-diablo-valley-classic"
+      ]
+    },
+    {
+      "location": "Plymouth, IN",
+      "count": 2,
+      "years": [
+        "2018",
+        "2019"
+      ],
+      "sampleEvents": [
+        "2018-dci-hoosier-heartland",
+        "2019-dci-hoosier-heartland"
+      ]
+    },
+    {
+      "location": "Portage, MI",
+      "count": 1,
+      "years": [
+        "2022"
+      ],
+      "sampleEvents": [
+        "2022-legends-drum-corps-open"
+      ]
+    },
+    {
+      "location": "Portland, OR",
+      "count": 4,
+      "years": [
+        "2014",
+        "2024",
+        "2025",
+        "2026"
+      ],
+      "sampleEvents": [
+        "2014-drums-of-fire",
+        "2024-northwest-youth-music-games-portland",
+        "2025-northwest-youth-music-games-portland"
+      ]
+    },
+    {
+      "location": "Powder Springs, GA",
+      "count": 2,
+      "years": [
+        "2017",
+        "2022"
+      ],
+      "sampleEvents": [
+        "2017-dci-southeastern-championship-presented-by-lone-star-percussion",
+        "2022-drums-across-america-atlanta"
+      ]
+    },
+    {
+      "location": "Powhatan, VA",
+      "count": 1,
+      "years": [
+        "2017"
+      ],
+      "sampleEvents": [
+        "2017-drums-along-the-james"
+      ]
+    },
+    {
+      "location": "Quincy, MA",
+      "count": 6,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2022",
+        "2023"
+      ],
+      "sampleEvents": [
+        "2013-cyo-nationals-tribute",
+        "2014-cyo-nationals-tribute",
+        "2015-cyo-nationals-tribute"
+      ]
+    },
+    {
+      "location": "Renton, WA",
+      "count": 6,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2018",
+        "2019",
+        "2022"
+      ],
+      "sampleEvents": [
+        "2013-seattle-summer-music-games",
+        "2014-seattle-summer-music-games",
+        "2015-seattle-summer-music-games"
+      ]
+    },
+    {
+      "location": "Rice Lake, WI",
+      "count": 2,
+      "years": [
+        "2013",
+        "2014"
+      ],
+      "sampleEvents": [
+        "2013-rhythm-across-rice-lake",
+        "2014-rhythm-across-rice-lake"
+      ]
+    },
+    {
+      "location": "Richmond, VA",
+      "count": 1,
+      "years": [
+        "2023"
+      ],
+      "sampleEvents": [
+        "2023-tbd-virginia"
+      ]
+    },
+    {
+      "location": "Riverside, CA",
+      "count": 10,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2023",
+        "2024"
+      ],
+      "sampleEvents": [
+        "2013-western-corps-connection",
+        "2014-western-corps-connection",
+        "2015-western-corps-connection"
+      ]
+    },
+    {
+      "location": "Rochester, MN",
+      "count": 7,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019"
+      ],
+      "sampleEvents": [
+        "2013-river-city-rhapsody-rochester",
+        "2014-river-city-rhapsody-rochester",
+        "2015-river-city-rhapsody-rochester"
+      ]
+    },
+    {
+      "location": "Rochester, NY",
+      "count": 2,
+      "years": [
+        "2024"
+      ],
+      "sampleEvents": [
+        "2024-dci-rochester",
+        "2024-soundsport-festival-rochester"
+      ]
+    },
+    {
+      "location": "Rockford, IL",
+      "count": 10,
+      "years": [
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2014-show-of-shows-2",
+        "2015-show-of-shows-2",
+        "2016-show-of-shows"
+      ]
+    },
+    {
+      "location": "Rockford, MI",
+      "count": 2,
+      "years": [
+        "2023",
+        "2024"
+      ],
+      "sampleEvents": [
+        "2023-midwest-premiere",
+        "2024-midwest-premiere"
+      ]
+    },
+    {
+      "location": "Rome, NY",
+      "count": 7,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019"
+      ],
+      "sampleEvents": [
+        "2013-drums-along-the-mohawk",
+        "2014-drums-along-the-mohawk",
+        "2015-drums-along-the-mohawk"
+      ]
+    },
+    {
+      "location": "Roseville, CA",
+      "count": 1,
+      "years": [
+        "2023"
+      ],
+      "sampleEvents": [
+        "2023-dci-capital-classic"
+      ]
+    },
+    {
+      "location": "Round Rock, TX",
+      "count": 3,
+      "years": [
+        "2013",
+        "2014",
+        "2022"
+      ],
+      "sampleEvents": [
+        "2013-tour-of-championships-texas",
+        "2014-dci-austin-presented-by-band-shoppe",
+        "2022-dci-austin"
+      ]
+    },
+    {
+      "location": "Sacramento, CA",
+      "count": 17,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2024",
+        "2025",
+        "2026"
+      ],
+      "sampleEvents": [
+        "2013-dci-capitol-classic-corps-show",
+        "2013-moonlight-classic",
+        "2014-dci-capital-classic-corps-show"
+      ]
+    },
+    {
+      "location": "Salem, VA",
+      "count": 9,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2023",
+        "2024"
+      ],
+      "sampleEvents": [
+        "2013-wdbj-7-summer-music-games-of-southwest-virginia",
+        "2014-wdbj-7-summer-music-games-of-southwest-virginia",
+        "2015-wdbj-7-summer-music-games-of-southwest-virginia"
+      ]
+    },
+    {
+      "location": "Salem, WI",
+      "count": 2,
+      "years": [
+        "2013",
+        "2014"
+      ],
+      "sampleEvents": [
+        "2013-music-on-the-border",
+        "2014-music-on-the-border"
+      ]
+    },
+    {
+      "location": "Salt Lake City, UT",
+      "count": 3,
+      "years": [
+        "2018",
+        "2019",
+        "2023"
+      ],
+      "sampleEvents": [
+        "2018-drums-along-the-wasatch",
+        "2019-drums-along-the-wasatch",
+        "2023-corps-encore"
+      ]
+    },
+    {
+      "location": "San Antonio, TX",
+      "count": 11,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2013-dci-southwestern-championships-the-alamodome",
+        "2014-dci-southwestern-championship-the-alamodome",
+        "2015-dci-southwestern-championship-presented-by-fred-j-miller-inc"
+      ]
+    },
+    {
+      "location": "San Bernardino, CA",
+      "count": 4,
+      "years": [
+        "2019",
+        "2022",
+        "2023",
+        "2024"
+      ],
+      "sampleEvents": [
+        "2019-western-corps-connection",
+        "2022-western-corps-connection",
+        "2023-western-corps-connection"
+      ]
+    },
+    {
+      "location": "San Marcos, CA",
+      "count": 2,
+      "years": [
+        "2015",
+        "2016"
+      ],
+      "sampleEvents": [
+        "2015-gold-showcase-at-the-ranch",
+        "2016-gold-showcase-at-the-ranch"
+      ]
+    },
+    {
+      "location": "Santa Barbara, CA",
+      "count": 1,
+      "years": [
+        "2017"
+      ],
+      "sampleEvents": [
+        "2017-dci-on-the-socal-coast"
+      ]
+    },
+    {
+      "location": "Santa Clara, CA",
+      "count": 3,
+      "years": [
+        "2013",
+        "2014",
+        "2015"
+      ],
+      "sampleEvents": [
+        "2013-pacific-procession",
+        "2014-pacific-procession",
+        "2015-pacific-proscession"
+      ]
+    },
+    {
+      "location": "Santa Clarita, CA",
+      "count": 2,
+      "years": [
+        "2025",
+        "2026"
+      ],
+      "sampleEvents": [
+        "2025-gold-showcase",
+        "2026-gold-showcase"
+      ]
+    },
+    {
+      "location": "Seattle, WA",
+      "count": 3,
+      "years": [
+        "2024",
+        "2025",
+        "2026"
+      ],
+      "sampleEvents": [
+        "2024-northwest-youth-music-games-seattle",
+        "2025-northwest-youth-music-games-seattle",
+        "2026-northwest-youth-music-games-seattle"
+      ]
+    },
+    {
+      "location": "Sevierville, TN",
+      "count": 5,
+      "years": [
+        "2022",
+        "2023",
+        "2024",
+        "2025",
+        "2026"
+      ],
+      "sampleEvents": [
+        "2022-drums-across-the-smokies",
+        "2023-drums-across-the-smokies",
+        "2024-drums-across-the-smokies"
+      ]
+    },
+    {
+      "location": "Sewell, NJ",
+      "count": 2,
+      "years": [
+        "2022",
+        "2023"
+      ],
+      "sampleEvents": [
+        "2022-summer-thunder",
+        "2023-summer-thunder"
+      ]
+    },
+    {
+      "location": "Sheffield, PA",
+      "count": 8,
+      "years": [
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2023",
+        "2024"
+      ],
+      "sampleEvents": [
+        "2015-music-on-the-mountain",
+        "2016-music-on-the-mountain",
+        "2017-music-on-the-mountain"
+      ]
+    },
+    {
+      "location": "Shelton, CT",
+      "count": 3,
+      "years": [
+        "2024",
+        "2025",
+        "2026"
+      ],
+      "sampleEvents": [
+        "2024-barnum-festival-champions-on-parade",
+        "2025-barnum-festival-champions-on-parade",
+        "2026-barnum-festival-champions-on-parade"
+      ]
+    },
+    {
+      "location": "Shoreline, WA",
+      "count": 1,
+      "years": [
+        "2017"
+      ],
+      "sampleEvents": [
+        "2017-seattle-summer-music-games"
+      ]
+    },
+    {
+      "location": "Sioux City, IA",
+      "count": 3,
+      "years": [
+        "2016",
+        "2018",
+        "2019"
+      ],
+      "sampleEvents": [
+        "2016-dci-morningside",
+        "2018-dci-morningside",
+        "2019-dci-morningside"
+      ]
+    },
+    {
+      "location": "Sioux Falls, SD",
+      "count": 1,
+      "years": [
+        "2013"
+      ],
+      "sampleEvents": [
+        "2013-sioux-empire-spectacular"
+      ]
+    },
+    {
+      "location": "Spring Valley, IL",
+      "count": 1,
+      "years": [
+        "2013"
+      ],
+      "sampleEvents": [
+        "2013-music-to-the-core"
+      ]
+    },
+    {
+      "location": "St. Louis, MO",
+      "count": 2,
+      "years": [
+        "2015",
+        "2018"
+      ],
+      "sampleEvents": [
+        "2015-dci-mid-america",
+        "2018-dci-midwestern-championship"
+      ]
+    },
+    {
+      "location": "St. Paul, MN",
+      "count": 2,
+      "years": [
+        "2014",
+        "2015"
+      ],
+      "sampleEvents": [
+        "2014-a-knight-of-music-and-motion",
+        "2015-a-knight-of-music-and-motion"
+      ]
+    },
+    {
+      "location": "Stanford, CA",
+      "count": 12,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2023",
+        "2024",
+        "2025",
+        "2026"
+      ],
+      "sampleEvents": [
+        "2013-dci-west",
+        "2014-dci-west",
+        "2015-dci-west"
+      ]
+    },
+    {
+      "location": "Statesboro, GA",
+      "count": 1,
+      "years": [
+        "2022"
+      ],
+      "sampleEvents": [
+        "2022-drums-across-america-statesboro"
+      ]
+    },
+    {
+      "location": "Storm Lake, IA",
+      "count": 1,
+      "years": [
+        "2019"
+      ],
+      "sampleEvents": [
+        "2019-dci-shoreline-classic"
+      ]
+    },
+    {
+      "location": "Succasunna, NJ",
+      "count": 1,
+      "years": [
+        "2025"
+      ],
+      "sampleEvents": [
+        "2025-bushwackers-invitational"
+      ]
+    },
+    {
+      "location": "Sun Prairie, WI",
+      "count": 1,
+      "years": [
+        "2022"
+      ],
+      "sampleEvents": [
+        "2022-dci-sun-prairie"
+      ]
+    },
+    {
+      "location": "Syracuse, NY",
+      "count": 2,
+      "years": [
+        "2023",
+        "2024"
+      ],
+      "sampleEvents": [
+        "2023-brigadier-s-pageant-of-drums",
+        "2024-spartan-syracuse-showdown"
+      ]
+    },
+    {
+      "location": "Tempe, AZ",
+      "count": 1,
+      "years": [
+        "2022"
+      ],
+      "sampleEvents": [
+        "2022-drums-across-the-desert"
+      ]
+    },
+    {
+      "location": "Three Rivers, MI",
+      "count": 1,
+      "years": [
+        "2016"
+      ],
+      "sampleEvents": [
+        "2016-legends-drum-corps-open"
+      ]
+    },
+    {
+      "location": "Tigard, OR",
+      "count": 1,
+      "years": [
+        "2016"
+      ],
+      "sampleEvents": [
+        "2016-drums-of-fire"
+      ]
+    },
+    {
+      "location": "Tri Cities, WA",
+      "count": 8,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022"
+      ],
+      "sampleEvents": [
+        "2013-drums-along-the-columbia",
+        "2014-drums-along-the-columbia",
+        "2015-drums-along-the-columbia"
+      ]
+    },
+    {
+      "location": "Troy, MI",
+      "count": 3,
+      "years": [
+        "2014",
+        "2015",
+        "2016"
+      ],
+      "sampleEvents": [
+        "2014-legends-drum-corps-invitational",
+        "2015-legends-drum-corps-invitational",
+        "2016-legends-drum-corps-invitational"
+      ]
+    },
+    {
+      "location": "Trussville, AL",
+      "count": 3,
+      "years": [
+        "2019",
+        "2022",
+        "2023"
+      ],
+      "sampleEvents": [
+        "2019-dci-birmingham",
+        "2022-dci-birmingham",
+        "2023-dci-birmingham"
+      ]
+    },
+    {
+      "location": "Tualatin, OR",
+      "count": 1,
+      "years": [
+        "2013"
+      ],
+      "sampleEvents": [
+        "2013-drums-of-fire"
+      ]
+    },
+    {
+      "location": "Tupelo, MS",
+      "count": 2,
+      "years": [
+        "2022",
+        "2023"
+      ],
+      "sampleEvents": [
+        "2022-dci-tupelo",
+        "2023-dci-tupelo"
+      ]
+    },
+    {
+      "location": "Union City, CA",
+      "count": 1,
+      "years": [
+        "2022"
+      ],
+      "sampleEvents": [
+        "2022-diablo-valley-classic-pacific-open-class-championship-finals"
+      ]
+    },
+    {
+      "location": "Valdosta, GA",
+      "count": 2,
+      "years": [
+        "2018",
+        "2019"
+      ],
+      "sampleEvents": [
+        "2018-drums-across-america-valdosta",
+        "2019-drums-across-america-valdosta"
+      ]
+    },
+    {
+      "location": "Vancouver, WA",
+      "count": 1,
+      "years": [
+        "2018"
+      ],
+      "sampleEvents": [
+        "2018-drums-of-fire"
+      ]
+    },
+    {
+      "location": "Vista, CA",
+      "count": 8,
+      "years": [
+        "2014",
+        "2019",
+        "2022",
+        "2023",
+        "2024"
+      ],
+      "sampleEvents": [
+        "2014-gold-showcase-at-the-ranch",
+        "2019-corps-at-the-crest-san-diego",
+        "2019-gold-showcase"
+      ]
+    },
+    {
+      "location": "Waco, TX",
+      "count": 2,
+      "years": [
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2024-dci-waco",
+        "2025-dci-waco"
+      ]
+    },
+    {
+      "location": "Walnut, CA",
+      "count": 5,
+      "years": [
+        "2013",
+        "2024",
+        "2025",
+        "2026"
+      ],
+      "sampleEvents": [
+        "2013-corps-at-the-crest-walnut",
+        "2024-corps-at-the-crest-student-edition",
+        "2024-corps-at-the-crest"
+      ]
+    },
+    {
+      "location": "Warrensburg, MO",
+      "count": 4,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016"
+      ],
+      "sampleEvents": [
+        "2013-tour-of-champions-central-missouri",
+        "2014-tour-of-champions-central-missouri",
+        "2015-tour-of-champions-central-missouri"
+      ]
+    },
+    {
+      "location": "Warrenton, VA",
+      "count": 1,
+      "years": [
+        "2013"
+      ],
+      "sampleEvents": [
+        "2013-drums-in-northern-virginia"
+      ]
+    },
+    {
+      "location": "Waukee, IA",
+      "count": 4,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016"
+      ],
+      "sampleEvents": [
+        "2013-celebration-in-brass",
+        "2014-celebration-in-brass",
+        "2015-celebration-in-brass"
+      ]
+    },
+    {
+      "location": "Waukesha, WI",
+      "count": 4,
+      "years": [
+        "2015",
+        "2016",
+        "2017",
+        "2018"
+      ],
+      "sampleEvents": [
+        "2015-show-of-shows",
+        "2016-show-of-shows-waukesha",
+        "2017-spring-city-showcase"
+      ]
+    },
+    {
+      "location": "Wausau, WI",
+      "count": 5,
+      "years": [
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019"
+      ],
+      "sampleEvents": [
+        "2015-river-city-rhapsody-wausau",
+        "2016-river-city-rhapsody-wausau",
+        "2017-the-northwoods-encore"
+      ]
+    },
+    {
+      "location": "West Chester, PA",
+      "count": 2,
+      "years": [
+        "2013",
+        "2014"
+      ],
+      "sampleEvents": [
+        "2013-drum-corps-an-american-tradition",
+        "2014-drum-corps-an-american-tradition"
+      ]
+    },
+    {
+      "location": "Wetumpka, AL",
+      "count": 1,
+      "years": [
+        "2023"
+      ],
+      "sampleEvents": [
+        "2023-drums-across-the-river-region"
+      ]
+    },
+    {
+      "location": "White Lake, MI",
+      "count": 4,
+      "years": [
+        "2017",
+        "2018",
+        "2019",
+        "2022"
+      ],
+      "sampleEvents": [
+        "2017-legends-drum-corps-invitational",
+        "2018-legends-drum-corps-invitational",
+        "2019-legends-drum-corps-invitational"
+      ]
+    },
+    {
+      "location": "Whitewater, WI",
+      "count": 10,
+      "years": [
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2023",
+        "2024"
+      ],
+      "sampleEvents": [
+        "2013-the-whitewater-classic",
+        "2014-the-whitewater-classic",
+        "2015-the-whitewater-classic"
+      ]
+    },
+    {
+      "location": "Wichita, KS",
+      "count": 2,
+      "years": [
+        "2013",
+        "2014"
+      ],
+      "sampleEvents": [
+        "2013-drums-across-kansas",
+        "2014-drums-across-kansas"
+      ]
+    },
+    {
+      "location": "Williamsport, PA",
+      "count": 1,
+      "years": [
+        "2025"
+      ],
+      "sampleEvents": [
+        "2025-dci-williamsport"
+      ]
+    },
+    {
+      "location": "Winston-Salem, NC",
+      "count": 9,
+      "years": [
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "sampleEvents": [
+        "2015-nightbeat-tour-of-champions",
+        "2016-nightbeat-tour-of-champions",
+        "2017-nightbeat-tour-of-champions"
+      ]
+    },
+    {
+      "location": "Woodstock, GA",
+      "count": 3,
+      "years": [
+        "2016",
+        "2017",
+        "2019"
+      ],
+      "sampleEvents": [
+        "2016-atlanta-brass-classic",
+        "2017-atlanta-brass-classic",
+        "2019-atlanta-brass-classic"
+      ]
+    },
+    {
+      "location": "Zionsville, IN",
+      "count": 3,
+      "years": [
+        "2018",
+        "2019"
+      ],
+      "sampleEvents": [
+        "2018-dci-crossroads",
+        "2019-dci-crossroads",
+        "2019-testing-dci-crossroads"
+      ]
+    }
+  ]
+}

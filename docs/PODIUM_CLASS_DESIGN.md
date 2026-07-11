@@ -357,12 +357,14 @@ decision with a real cost, exactly like the actual tour.
 
 _How distances are known when schedules are regenerated every season:_ the schedule is random per
 season, but the **venue universe is not** — every generated schedule samples historical events, and
-every event (historical or live-scraped) carries a `location` string. Across the 13-year archive
-there are only ~414 distinct location strings, so travel resolves against a one-time
+every event (historical or live-scraped) carries a `location` string. Across the full historical
+archive (2000-2012 from the fromthepressbox importer, 2013-present from the dci.org scores harvest)
+there are ~686 distinct normalized location strings, so travel resolves against a one-time
 **venue gazetteer** (`podium-config/venues`): a build script normalizes each distinct string
 (trim punctuation, canonicalize state names, fuzzy-match dirty entries like "Rockford Illinois")
 and geocodes it once to lat/lon from a bundled offline city dataset — a few hundred rows,
-hand-reviewable, zero runtime API dependency. Resolution happens at **schedule-generation time**:
+hand-reviewable, zero runtime API dependency. Source-typo and too-small-to-geocode venues are
+pinned by a durable `MANUAL_OVERRIDES` table in the build script so rebuilds never revert them. Resolution happens at **schedule-generation time**:
 when `generateOffSeasonSchedule` builds a season (or the scraper ingests a live event), each event
 is stamped with its resolved `venueId` + coordinates, so schedule docs are self-contained and all
 downstream distance math is trivial and deterministic. A never-seen live-season city falls back in
