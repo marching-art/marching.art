@@ -10,7 +10,7 @@
 // hireable, so supply scales with the playerbase.
 
 import React, { useEffect, useState } from 'react';
-import { Users, Loader2, ChevronDown, ChevronUp, UserMinus, GraduationCap } from 'lucide-react';
+import { Users, Loader2, UserMinus, GraduationCap } from 'lucide-react';
 import {
   getPodiumStaffMarket,
   hirePodiumStaff,
@@ -58,14 +58,13 @@ function resumeSummary(member) {
 export default function PodiumStaffPanel({ podium }) {
   const state = podium.data?.state;
   const [catalog, setCatalog] = useState(null);
-  const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(null);
   const [error, setError] = useState(null);
   const [contractSeasons, setContractSeasons] = useState(1);
   const [retraining, setRetraining] = useState(null); // staffId being retrained
 
   useEffect(() => {
-    if (!open || catalog) return;
+    if (catalog) return;
     let cancelled = false;
     (async () => {
       try {
@@ -78,7 +77,7 @@ export default function PodiumStaffPanel({ podium }) {
     return () => {
       cancelled = true;
     };
-  }, [open, catalog]);
+  }, [catalog]);
 
   if (!state) return null;
   const roster = state.staff || {};
@@ -107,67 +106,53 @@ export default function PodiumStaffPanel({ podium }) {
 
   return (
     <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4 space-y-3">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between press-feedback"
-      >
+      <div className="flex items-center justify-between">
         <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-500">
           <Users className="w-3 h-3" /> Staff ({hiredCount}/10)
         </span>
-        <span className="flex items-center gap-2 text-[9px] uppercase tracking-wider text-gray-600">
-          {!open && (
-            <span className="hidden sm:inline">
-              {hiredCount === 10 ? 'roster full' : `${10 - hiredCount} seat${10 - hiredCount > 1 ? 's' : ''} open`}
-            </span>
-          )}
-          {open ? (
-            <ChevronUp className="w-3.5 h-3.5 text-gray-500" />
-          ) : (
-            <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
-          )}
+        <span className="text-[9px] uppercase tracking-wider text-gray-600">
+          {hiredCount === 10 ? 'roster full' : `${10 - hiredCount} seat${10 - hiredCount > 1 ? 's' : ''} open`}
         </span>
-      </button>
+      </div>
 
       {/* Contract length — applies to every hire below */}
-      {open && (
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <span className="text-[9px] font-bold uppercase tracking-wider text-gray-600">
-            Contract
-          </span>
-          {CONTRACT_LENGTHS.map((seasons) => (
-            <button
-              key={seasons}
-              onClick={() => setContractSeasons(seasons)}
-              className={`text-[10px] font-bold px-2 py-0.5 rounded-sm border press-feedback ${
-                contractSeasons === seasons
-                  ? 'border-[#0057B8] bg-[#0057B8]/15 text-white'
-                  : 'border-[#333] text-gray-500 hover:text-white'
-              }`}
-            >
-              {seasons} season{seasons > 1 ? 's' : ''}
-            </button>
-          ))}
-          <span className="text-[9px] text-gray-600 basis-full sm:basis-auto sm:flex-1">
-            Longer contracts lock the salary against the raises tenure brings — retain a staffer and
-            they grow from Apprentice toward Legend.
-          </span>
-        </div>
-      )}
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span className="text-[9px] font-bold uppercase tracking-wider text-gray-600">
+          Contract
+        </span>
+        {CONTRACT_LENGTHS.map((seasons) => (
+          <button
+            key={seasons}
+            onClick={() => setContractSeasons(seasons)}
+            className={`text-[10px] font-bold px-2 py-0.5 rounded-sm border press-feedback ${
+              contractSeasons === seasons
+                ? 'border-[#0057B8] bg-[#0057B8]/15 text-white'
+                : 'border-[#333] text-gray-500 hover:text-white'
+            }`}
+          >
+            {seasons} season{seasons > 1 ? 's' : ''}
+          </button>
+        ))}
+        <span className="text-[9px] text-gray-600 basis-full sm:basis-auto sm:flex-1">
+          Longer contracts lock the salary against the raises tenure brings — retain a staffer and
+          they grow from Apprentice toward Legend.
+        </span>
+      </div>
 
-      {open && !catalog && !error && (
+      {!catalog && !error && (
         <div className="text-[9px] uppercase tracking-wider text-gray-600 flex items-center gap-1.5">
           <Loader2 className="w-3 h-3 animate-spin" /> Loading catalog…
         </div>
       )}
-      {open && catalog && catalog.length === 0 && !error && (
+      {catalog && catalog.length === 0 && !error && (
         <div className="text-[11px] text-gray-500 py-1">
           No staff catalog available right now. If this persists, the staff service may still be
           deploying — try again shortly.
         </div>
       )}
 
-      {/* Seat grid — one card per specialty; fills the panel width and doubles
-          as the roster (collapsed) and the hiring board (open). */}
+      {/* Seat grid — one card per specialty; the roster overview and the
+          hiring board in one. */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-2">
         {specialties.map((specialty) => {
           const member = roster[specialty];
@@ -207,36 +192,34 @@ export default function PodiumStaffPanel({ podium }) {
                         ` · ${member.contract.remaining}/${member.contract.seasons} locked`}
                       {member.retrain && ' · retraining'}
                     </span>
-                    {open && (
-                      <span className="flex items-center gap-1.5 shrink-0">
-                        <button
-                          disabled={busy !== null}
-                          onClick={() => setRetraining((v) => (v === member.id ? null : member.id))}
-                          title="Retrain into a new specialty (reduced boost this season)"
-                          className={`press-feedback ${
-                            retraining === member.id ? 'text-[#4d9fff]' : 'text-gray-500 hover:text-white'
-                          }`}
-                        >
-                          <GraduationCap className="w-3 h-3" />
-                        </button>
-                        <button
-                          disabled={busy !== null}
-                          onClick={() =>
-                            act(`release_${specialty}`, () => releasePodiumStaff({ specialty }))
-                          }
-                          title="Release this staffer — frees the seat, ends their tenure (no refund)"
-                          className="text-gray-500 hover:text-red-400 press-feedback"
-                        >
-                          {busy === `release_${specialty}` ? (
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                          ) : (
-                            <UserMinus className="w-3 h-3" />
-                          )}
-                        </button>
-                      </span>
-                    )}
+                    <span className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        disabled={busy !== null}
+                        onClick={() => setRetraining((v) => (v === member.id ? null : member.id))}
+                        title="Retrain into a new specialty (reduced boost this season)"
+                        className={`press-feedback ${
+                          retraining === member.id ? 'text-[#4d9fff]' : 'text-gray-500 hover:text-white'
+                        }`}
+                      >
+                        <GraduationCap className="w-3 h-3" />
+                      </button>
+                      <button
+                        disabled={busy !== null}
+                        onClick={() =>
+                          act(`release_${specialty}`, () => releasePodiumStaff({ specialty }))
+                        }
+                        title="Release this staffer — frees the seat, ends their tenure (no refund)"
+                        className="text-gray-500 hover:text-red-400 press-feedback"
+                      >
+                        {busy === `release_${specialty}` ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <UserMinus className="w-3 h-3" />
+                        )}
+                      </button>
+                    </span>
                   </div>
-                  {open && retraining === member.id && (
+                  {retraining === member.id && (
                     <div className="flex flex-wrap items-center gap-1 pt-0.5 border-t border-[#2a2a2a]">
                       <span className="text-[9px] uppercase font-bold text-gray-600 w-full">
                         Retrain to:
@@ -266,9 +249,8 @@ export default function PodiumStaffPanel({ podium }) {
                     </div>
                   )}
                 </>
-              ) : open ? (
-                options.length > 0 ? (
-                  <div className="flex flex-col gap-1">
+              ) : options.length > 0 ? (
+                <div className="flex flex-col gap-1">
                     {options.map((option) => {
                       const key = `hire_${specialty}_${option.tier}`;
                       return (
@@ -307,10 +289,7 @@ export default function PodiumStaffPanel({ podium }) {
                   catalog && (
                     <span className="text-[9px] text-gray-700">No candidates listed.</span>
                   )
-                )
-              ) : (
-                <span className="text-[9px] text-gray-700">Open seat — expand to hire.</span>
-              )}
+                )}
             </div>
           );
         })}
