@@ -42,7 +42,7 @@ const {
   hirePodiumClinician,
 } = require("./src/callable/podium");
 const { hostEvent } = require("./src/callable/podiumHost");
-const { getPodiumState } = require("./src/callable/podiumRoute");
+const { getPodiumState, getPodiumRegistrationPreview } = require("./src/callable/podiumRoute");
 const {
   getPodiumStaffMarket,
   hirePodiumStaff,
@@ -294,6 +294,7 @@ module.exports = {
   retrainPodiumStaff,
   hostEvent,
   getPodiumState,
+  getPodiumRegistrationPreview,
   proposeJointRehearsal,
   respondJointRehearsal,
   getJointRehearsals,

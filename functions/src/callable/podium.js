@@ -48,6 +48,30 @@ function validateCommitment(amount, alreadyCommitted, division) {
 }
 
 /**
+ * Validate an optional staff keep-priority list: the specialties the director
+ * wants to retain next season, in keep-first order (design §5.6, the funding
+ * decision). Deduped and filtered to real specialties. A staffer omitted from
+ * a provided list is a voluntary release; when the list is absent entirely the
+ * roster is kept priciest-first and a shortfall sheds the cheapest. Returns
+ * undefined when absent so downstream code can tell "keep all" from "keep none".
+ */
+function validateStaffPriority(value) {
+  if (value == null) return undefined;
+  if (!Array.isArray(value)) {
+    throw new HttpsError("invalid-argument", "staffPriority must be an array of specialties.");
+  }
+  const seen = new Set();
+  const order = [];
+  for (const specialty of value) {
+    if (typeof specialty === "string" && staffMarket.SPECIALTIES.includes(specialty) && !seen.has(specialty)) {
+      seen.add(specialty);
+      order.push(specialty);
+    }
+  }
+  return order;
+}
+
+/**
  * Inside a transaction: debit profile CorpsCoin for a budget commitment.
  * Reads MUST have happened already (Firestore txn rule) — pass the profile
  * snapshot in.
@@ -236,6 +260,7 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
   const challenge = validateChallenge(request.data?.challenge);
   const auditionShares = validateAuditions(request.data?.auditions);
   const freshStart = request.data?.freshStart === true;
+  const staffPriority = validateStaffPriority(request.data?.staffPriority);
 
   const seasonUid = seasonData.seasonUid;
   // Career continuity (Phase 5): carry reputation across seasons, applying
@@ -289,6 +314,12 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
   // contract, never a debt, and a 30-season career retires. The just-finished
   // season is banked on each staffer's resume as they carry over.
   const retainedStaff = [];
+  // The retention plan: which carried staff the fresh budget keeps, in the
+  // director's chosen keep-priority (design §5.6). projectRetention makes the
+  // same greedy decision the client previewed at commit time, so a director
+  // who saw "you'll lose your guard tech" loses exactly that one — never an
+  // arbitrary staffer the loop happened to reach last.
+  let staffPlan = null;
   if (
     !freshStart &&
     staleStateSnapshot.exists &&
@@ -305,6 +336,12 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
       const aged = staffMarket.ageStaff(member, store.balance, completed);
       if (aged) retainedStaff.push(aged); // null == retired, drops off the roster
     }
+    staffPlan = staffMarket.projectRetention(
+      stale.staff,
+      budgetCommitment,
+      store.balance,
+      staffPriority
+    );
   }
   const trimmedName = corpsName.trim();
   const normalizedName = trimmedName.toLowerCase();
@@ -362,11 +399,13 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
       })(),
     };
     const carriedStaff = {};
+    const keptSet = new Set(staffPlan ? staffPlan.kept : []);
     for (const member of retainedStaff) {
-      if (store.debitBudget(draft, member.salaryPerSeason, `staff:${member.specialty}`, 0)) {
-        carriedStaff[member.specialty] = member;
-      }
-      // else: this season's salary is unaffordable — the contract lapses quietly.
+      if (!keptSet.has(member.specialty)) continue; // lapsed: unaffordable or released
+      // projectRetention already proved the kept set fits the committed
+      // budget, so this debit always succeeds — the return value is ignored.
+      store.debitBudget(draft, member.salaryPerSeason, `staff:${member.specialty}`, 0);
+      carriedStaff[member.specialty] = member;
     }
     transaction.set(sRef, {
       ...stored,
@@ -435,6 +474,14 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
     division,
     divisionLabel: divisions.DIVISION_LABELS[division],
     easternNight: store.easternNightFor(uid, seasonUid, easternAssignments),
+    // Confirm the staffing outcome so the UI can say exactly who stayed and
+    // who left (and why: unaffordable, released, or retired after 30 seasons).
+    retainedStaff: staffPlan ? staffPlan.kept : [],
+    lapsedStaff: staffPlan
+      ? staffPlan.staff
+          .filter((s) => !s.kept)
+          .map((s) => ({ specialty: s.specialty, reason: s.lapseReason }))
+      : [],
   };
 });
 
@@ -743,5 +790,6 @@ module.exports.validateChallenge = validateChallenge;
 module.exports.validateCommitment = validateCommitment;
 module.exports.validateAuditions = validateAuditions;
 module.exports.validateShowPicks = validateShowPicks;
+module.exports.validateStaffPriority = validateStaffPriority;
 // Shared preamble for the split callable modules (podiumJoint.js).
 module.exports.podiumContext = podiumContext;

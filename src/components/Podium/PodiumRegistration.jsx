@@ -2,9 +2,15 @@
 // 1) corps identity, 2) show concept, 3) design (challenge sliders + one-tap
 // audition presets), 4) march. No payments anywhere.
 
-import React, { useMemo, useState } from 'react';
-import { ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
-import { PODIUM_CAPTIONS, CAPTION_LABELS, AUDITION_PRESETS } from './podiumConstants';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ChevronRight, ChevronLeft, Loader2, AlertTriangle } from 'lucide-react';
+import {
+  PODIUM_CAPTIONS,
+  CAPTION_LABELS,
+  AUDITION_PRESETS,
+  SPECIALTY_LABELS,
+  TIER_LABELS,
+} from './podiumConstants';
 
 const STEPS = ['Corps', 'Show', 'Design', 'March'];
 
@@ -22,17 +28,93 @@ export default function PodiumRegistration({ podium }) {
   const [error, setError] = useState(null);
   const [done, setDone] = useState(null);
 
+  // Between-seasons funding preview (design §5.6): carried staff and what they
+  // cost next season vs. the CC the director can commit. Absent for a
+  // first-time corps — the preview call reports hasCarriedStaff:false.
+  const [preview, setPreview] = useState(null);
+  // Specialties the director chooses to keep; unchecked = voluntarily released.
+  const [keptStaff, setKeptStaff] = useState(null); // Set, initialized from preview
+
+  const loadPreview = podium.loadRegistrationPreview;
+  useEffect(() => {
+    let cancelled = false;
+    if (!loadPreview) return undefined;
+    loadPreview()
+      .then((data) => {
+        if (cancelled || !data) return;
+        setPreview(data);
+        const active = (data.staff || []).filter((s) => !s.retiring);
+        setKeptStaff(new Set(active.map((s) => s.specialty)));
+        // Pre-fund to cover the whole payroll when the director can afford it,
+        // so an affordable roster needs no intervention; otherwise offer the
+        // most they could commit and let them choose who to shed.
+        const maxCommit = Math.min(data.commitmentCap || 0, data.corpsCoin || 0);
+        if (data.hasCarriedStaff) {
+          setBudgetCommitment(Math.min(maxCommit, data.payroll || 0));
+        }
+      })
+      .catch(() => {
+        /* preview is advisory — registration still works without it */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [loadPreview]);
+
   const auditions = useMemo(() => {
     const preset = AUDITION_PRESETS.find((p) => p.id === auditionPreset);
     return preset && Object.keys(preset.points).length > 0 ? preset.points : null;
   }, [auditionPreset]);
 
+  const hasCarried = Boolean(preview?.hasCarriedStaff);
+  const activeStaff = useMemo(
+    () => (preview?.staff || []).filter((s) => !s.retiring),
+    [preview]
+  );
+  const retiringStaff = useMemo(
+    () => (preview?.staff || []).filter((s) => s.retiring),
+    [preview]
+  );
+  const maxCommit = preview ? Math.min(preview.commitmentCap || 0, preview.corpsCoin || 0) : 2500;
+  // A carried-staff director can commit at most what they hold; a first-time
+  // corps is bounded only by the division cap (the wallet debit is enforced
+  // server-side either way).
+  const commitmentMax = hasCarried ? maxCommit : (preview?.commitmentCap ?? 2500);
+  // Payroll of the staff the director has chosen to keep — the number that
+  // must fit inside the commitment before the corps can be founded.
+  const keptPayroll = useMemo(() => {
+    if (!keptStaff) return 0;
+    return activeStaff
+      .filter((s) => keptStaff.has(s.specialty))
+      .reduce((sum, s) => sum + (s.nextSalary || 0), 0);
+  }, [activeStaff, keptStaff]);
+  const shortfall = Math.max(0, keptPayroll - budgetCommitment);
+  const overBudget = hasCarried && shortfall > 0;
+
   const canNext = step === 0 ? corpsName.trim().length >= 3 : true;
+
+  const toggleKeep = (specialty) => {
+    setKeptStaff((prev) => {
+      const next = new Set(prev);
+      if (next.has(specialty)) next.delete(specialty);
+      else next.add(specialty);
+      return next;
+    });
+  };
 
   const submit = async () => {
     setSubmitting(true);
     setError(null);
     try {
+      // Keep list in priciest-first order so, in the rare event the server's
+      // aged salaries differ from the preview, the cheapest is shed first.
+      const staffPriority =
+        hasCarried && keptStaff
+          ? activeStaff
+              .filter((s) => keptStaff.has(s.specialty))
+              .sort((a, b) => (b.nextSalary || 0) - (a.nextSalary || 0))
+              .map((s) => s.specialty)
+          : undefined;
       const result = await podium.register({
         corpsName: corpsName.trim(),
         location: location.trim(),
@@ -40,6 +122,7 @@ export default function PodiumRegistration({ podium }) {
         challenge,
         auditions,
         budgetCommitment: budgetCommitment > 0 ? budgetCommitment : undefined,
+        staffPriority,
       });
       setDone(result);
     } catch (err) {
@@ -50,6 +133,9 @@ export default function PodiumRegistration({ podium }) {
   };
 
   if (done) {
+    const retained = done.retainedStaff || [];
+    const lapsed = done.lapsedStaff || [];
+    const reasonWord = { unaffordable: 'unfunded', released: 'released', retired: 'retired' };
     return (
       <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-6 text-center space-y-2">
         <div className="text-lg font-bold text-white">{done.corpsName} is on tour.</div>
@@ -60,6 +146,28 @@ export default function PodiumRegistration({ podium }) {
           <span className="text-white font-bold">Day {done.easternNight}</span> (night lineups
           publish Day 39). First rehearsal block is waiting below.
         </div>
+        {(retained.length > 0 || lapsed.length > 0) && (
+          <div className="text-[11px] text-gray-400 pt-1">
+            {retained.length > 0 && (
+              <div>
+                Staff retained:{' '}
+                <span className="text-gray-200">
+                  {retained.map((s) => SPECIALTY_LABELS[s] || s).join(', ')}
+                </span>
+              </div>
+            )}
+            {lapsed.length > 0 && (
+              <div>
+                Left the corps:{' '}
+                <span className="text-gray-300">
+                  {lapsed
+                    .map((s) => `${SPECIALTY_LABELS[s.specialty] || s.specialty} (${reasonWord[s.reason] || s.reason})`)
+                    .join(', ')}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     );
   }
@@ -209,27 +317,122 @@ export default function PodiumRegistration({ podium }) {
               Server validates the cap; zero is always playable. */}
           <div className="pt-2 border-t border-[#333]">
             <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
-              Fund the season (optional)
+              Fund the season {hasCarried ? '' : '(optional)'}
             </label>
             <div className="flex items-center gap-2">
               <input
                 type="number"
                 min={0}
-                max={2500}
+                max={commitmentMax}
                 step={50}
                 value={budgetCommitment}
                 onChange={(e) =>
-                  setBudgetCommitment(Math.max(0, Math.floor(Number(e.target.value) || 0)))
+                  setBudgetCommitment(
+                    Math.max(0, Math.min(commitmentMax, Math.floor(Number(e.target.value) || 0)))
+                  )
                 }
                 className="w-28 bg-[#111] border border-[#333] rounded-none px-3 py-2 text-sm text-white focus:border-[#0057B8] outline-none tabular-nums"
               />
               <span className="text-[10px] text-gray-500">
-                CorpsCoin into your Corps Budget — food, travel, staff. Never scores. ~1,000 CC
-                funds a comfortable season; you can top up later, and a 0-CC corps is always
-                playable.
+                {hasCarried ? (
+                  <>
+                    CorpsCoin into this season&apos;s Corps Budget. You hold{' '}
+                    <span className="text-gray-300 tabular-nums">{preview.corpsCoin}</span> CC;{' '}
+                    {preview.divisionLabel} caps a commitment at{' '}
+                    <span className="text-gray-300 tabular-nums">{preview.commitmentCap}</span>.
+                  </>
+                ) : (
+                  <>
+                    CorpsCoin into your Corps Budget — food, travel, staff. Never scores. ~1,000 CC
+                    funds a comfortable season; you can top up later, and a 0-CC corps is always
+                    playable.
+                  </>
+                )}
               </span>
             </div>
           </div>
+
+          {/* Carried-staff payroll vs. the commitment (design §5.6). Staff only
+              lapse at the season boundary, so THIS is where a director decides
+              who to keep when the CC won't cover the whole aged payroll —
+              rather than discovering a silent lapse afterward. */}
+          {hasCarried && keptStaff && (
+            <div className="pt-3 border-t border-[#333] space-y-2">
+              <div className="flex items-baseline justify-between">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                  Staff payroll — who marches next season
+                </label>
+                <span
+                  className={`text-[11px] font-bold tabular-nums ${overBudget ? 'text-red-400' : 'text-green-400'}`}
+                >
+                  {keptPayroll} / {budgetCommitment} CC
+                </span>
+              </div>
+              <p className="text-[10px] text-gray-500">
+                Tenure raised your staff&apos;s salaries. Uncheck anyone you&apos;re letting go —
+                their seat reopens and their tenure ends. Whatever you keep must fit your commitment.
+              </p>
+
+              {activeStaff.map((s) => {
+                const kept = keptStaff.has(s.specialty);
+                const promoted = s.nextTier && s.nextTier !== s.tier;
+                return (
+                  <label
+                    key={s.specialty}
+                    className={`flex items-center gap-2 px-2 py-1.5 border rounded-none cursor-pointer press-feedback ${
+                      kept ? 'border-[#333] bg-[#111]' : 'border-[#2a1a1a] bg-[#160f0f] opacity-70'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={kept}
+                      onChange={() => toggleKeep(s.specialty)}
+                      className="accent-[#0057B8]"
+                    />
+                    <span className="flex-1 text-[11px] font-bold text-white">
+                      {SPECIALTY_LABELS[s.specialty] || s.specialty}
+                      <span className="ml-2 text-[9px] font-normal text-gray-500">
+                        {TIER_LABELS[s.nextTier] || TIER_LABELS[s.tier]}
+                        {promoted && (
+                          <span className="text-[#c9a227]"> · promoted from {TIER_LABELS[s.tier]}</span>
+                        )}
+                      </span>
+                    </span>
+                    <span className="text-[11px] tabular-nums text-gray-300">
+                      {s.nextSalary} CC
+                      {s.nextSalary > s.salary && (
+                        <span className="text-gray-600"> (was {s.salary})</span>
+                      )}
+                    </span>
+                  </label>
+                );
+              })}
+
+              {retiringStaff.map((s) => (
+                <div
+                  key={s.specialty}
+                  className="flex items-center gap-2 px-2 py-1.5 border border-[#222] rounded-none opacity-50"
+                >
+                  <span className="flex-1 text-[11px] text-gray-400">
+                    {SPECIALTY_LABELS[s.specialty] || s.specialty}
+                  </span>
+                  <span className="text-[9px] uppercase tracking-wider text-gray-500">
+                    Retiring · 30-season career
+                  </span>
+                </div>
+              ))}
+
+              {overBudget && (
+                <div className="flex items-start gap-2 text-[11px] text-red-400 pt-1">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  <span>
+                    You&apos;re <span className="font-bold tabular-nums">{shortfall}</span> CC short.
+                    Commit more (up to {maxCommit}) or release a staffer to found the corps.
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -254,7 +457,8 @@ export default function PodiumRegistration({ podium }) {
         ) : (
           <button
             onClick={submit}
-            disabled={submitting}
+            disabled={submitting || overBudget}
+            title={overBudget ? 'Your staff payroll exceeds your commitment.' : undefined}
             className="flex items-center gap-2 text-[10px] font-bold uppercase px-4 py-2 rounded-none bg-[#0057B8] text-white hover:bg-[#0066d6] disabled:opacity-60 press-feedback"
           >
             {submitting && <Loader2 className="w-3 h-3 animate-spin" />} Found the corps

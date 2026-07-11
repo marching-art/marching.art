@@ -9,6 +9,7 @@ const store = require("../helpers/podium/store");
 const venues = require("../helpers/podium/venues");
 const career = require("../helpers/podium/career");
 const divisions = require("../helpers/podium/divisions");
+const staffMarket = require("../helpers/podium/staffMarket");
 const { podiumContext } = require("./podium");
 
 // Branded names for the fixed majors on the route sheet.
@@ -87,6 +88,73 @@ async function buildRoutePreview(db, seasonData, state, uid, competitionDay, eas
   }
   return legs;
 }
+
+/**
+ * Between-seasons funding preview (design §5.6, the "guns vs. butter" commit
+ * decision). getPodiumState only speaks for the CURRENT season, so before a
+ * director re-registers there is no server surface that shows what NEXT
+ * season's staff will cost. This read fills that gap: it ages every carried
+ * staffer one season and reports their projected salary, the total payroll,
+ * the director's CorpsCoin balance, and the division commitment cap — the
+ * numbers the registration screen compares so a director can see a shortfall
+ * and choose who to keep BEFORE committing, never discovering a silent lapse
+ * after the fact.
+ *
+ * Read-only: it never advances the season index (that write belongs to
+ * registration), so the division is approximated from the career's current
+ * seat — validateCommitment stays authoritative on submit.
+ */
+exports.getPodiumRegistrationPreview = onCall({ cors: true }, async (request) => {
+  const { uid, db, seasonData } = await podiumContext(request);
+  const [staleSnapshot, careerSnapshot, profileSnapshot] = await Promise.all([
+    store.stateRef(db, uid).get(),
+    career.careerRef(db, uid).get(),
+    store.profileRef(db, uid).get(),
+  ]);
+
+  const careerData = careerSnapshot.exists ? careerSnapshot.data() : null;
+  const division = divisions.normalizeDivision(careerData && careerData.division);
+  const commitmentCap =
+    (store.balance.budget.commitmentCapByDivision || {})[division] ||
+    store.balance.budget.commitmentCap;
+  const corpsCoin = profileSnapshot.exists ? profileSnapshot.data().corpsCoin || 0 : 0;
+
+  // Carried staff exist only when last season's corps hasn't been re-founded
+  // yet (a different seasonUid). A fresh corps or a current-season doc has no
+  // payroll to preview.
+  const hasCarried =
+    staleSnapshot.exists && staleSnapshot.data().seasonUid !== seasonData.seasonUid;
+  const roster = hasCarried ? staleSnapshot.data().staff || {} : {};
+  // Project against the most a director could possibly commit (min of the cap
+  // and their wallet), so `affordable` answers "can I keep everyone even at
+  // max funding?" — the actual keep/drop math re-runs client-side as they
+  // dial the commitment.
+  const projection = staffMarket.projectRetention(
+    roster,
+    Math.min(commitmentCap, corpsCoin),
+    store.balance
+  );
+
+  return {
+    success: true,
+    hasCarriedStaff: projection.staff.length > 0,
+    division,
+    divisionLabel: divisions.DIVISION_LABELS[division],
+    commitmentCap,
+    corpsCoin,
+    payroll: projection.payroll,
+    affordable: projection.affordable,
+    staff: projection.staff.map((s) => ({
+      specialty: s.specialty,
+      id: s.id,
+      tier: s.tier,
+      nextTier: s.nextTier,
+      salary: s.salary,
+      nextSalary: s.nextSalary,
+      retiring: s.retiring,
+    })),
+  };
+});
 
 exports.getPodiumState = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData, calendarDay, competitionDay } = await podiumContext(request);

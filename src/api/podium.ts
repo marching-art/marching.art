@@ -13,6 +13,10 @@ export interface PodiumRegistration {
   challenge: Record<string, number>; // 8 captions, 1-8
   auditions?: Record<string, number> | null; // points per caption, pool 100
   budgetCommitment?: number; // CC -> Corps Budget, capped (decision 24)
+  // Carried staff to retain next season, in keep-first order (design §5.6).
+  // A staffer omitted from the list is voluntarily released; when absent, the
+  // roster is kept priciest-first and a shortfall sheds the cheapest.
+  staffPriority?: string[];
 }
 
 export interface PodiumBlockResult {
@@ -57,10 +61,52 @@ export interface PodiumStateResponse {
   state?: Record<string, unknown>;
 }
 
+export interface PodiumLapsedStaff {
+  specialty: string;
+  reason: 'unaffordable' | 'released' | 'retired';
+}
+
 export const registerPodiumCorps = createCallable<
   PodiumRegistration,
-  { success: boolean; corpsName: string; easternNight: number }
+  {
+    success: boolean;
+    corpsName: string;
+    division: string;
+    divisionLabel: string;
+    easternNight: number;
+    retainedStaff: string[];
+    lapsedStaff: PodiumLapsedStaff[];
+  }
 >('registerPodiumCorps');
+
+// A carried staffer's projected next-season cost, for the re-registration
+// funding preview (design §5.6). getPodiumRegistrationPreview ages each
+// staffer one season so the director can compare payroll against the CC they
+// plan to commit BEFORE founding the corps.
+export interface PodiumStaffProjection {
+  specialty: string;
+  id: string | null;
+  tier: string;
+  nextTier: string | null;
+  salary: number;
+  nextSalary: number;
+  retiring: boolean;
+}
+
+export const getPodiumRegistrationPreview = createCallable<
+  void,
+  {
+    success: boolean;
+    hasCarriedStaff: boolean;
+    division: string;
+    divisionLabel: string;
+    commitmentCap: number;
+    corpsCoin: number;
+    payroll: number;
+    affordable: boolean;
+    staff: PodiumStaffProjection[];
+  }
+>('getPodiumRegistrationPreview');
 
 export const allocateRehearsalBlock = createCallable<
   { blockType: string; blockIndex?: number },

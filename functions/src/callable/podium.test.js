@@ -12,6 +12,7 @@ const {
   validateAuditions,
   validateShowPicks,
   validateCommitment,
+  validateStaffPriority,
 } = require("./podium");
 const store = require("../helpers/podium/store");
 
@@ -159,5 +160,24 @@ describe("validateCommitment (Corps Budget, decision 24)", () => {
     assert.throws(() => validateCommitment(10.5, 0));
     assert.throws(() => validateCommitment(2501, 0));
     assert.throws(() => validateCommitment(500, 2100));
+  });
+});
+
+describe("validateStaffPriority", () => {
+  test("absent stays undefined (keep-all, priciest-first shed on a shortfall)", () => {
+    assert.equal(validateStaffPriority(undefined), undefined);
+    assert.equal(validateStaffPriority(null), undefined);
+  });
+
+  test("keeps real specialties in order, deduped; drops junk", () => {
+    assert.deepEqual(validateStaffPriority(["B", "CG", "tourManager"]), ["B", "CG", "tourManager"]);
+    assert.deepEqual(validateStaffPriority(["B", "B", "CG"]), ["B", "CG"]);
+    assert.deepEqual(validateStaffPriority(["B", "bogus", 7, null]), ["B"]);
+    assert.deepEqual(validateStaffPriority([]), []);
+  });
+
+  test("rejects a non-array", () => {
+    assert.throws(() => validateStaffPriority("B"));
+    assert.throws(() => validateStaffPriority({ B: 1 }));
   });
 });

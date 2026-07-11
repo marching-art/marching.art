@@ -158,6 +158,92 @@ function ageStaff(member, cfg, completed) {
   return aged;
 }
 
+/**
+ * Project next season's payroll for a stored roster and decide who a given
+ * budget can retain. Pure — mirrors the re-registration retention loop
+ * (ageStaff + greedy debit) WITHOUT mutating anything, so the client can show
+ * the "your CorpsCoin won't cover payroll — pick who to keep" preview before
+ * the director commits, and the register callable can reuse the SAME decision
+ * so the preview and the authoritative outcome never disagree (design §5.6).
+ *
+ * Each carried staffer is aged one season (tenure raises tier/boost; a lapsed
+ * salary lock floats the salary up to the current tenured rate). A 30-season
+ * career retires and drops off at zero cost — neither a keep nor a loss the
+ * director chose. Retention is greedy in `keepOrder`: the director's priority
+ * decides WHO lapses when the budget falls short. A roster specialty absent
+ * from a provided `keepOrder` is treated as a voluntary release (dropped to
+ * leave budget for food/travel), so the same list expresses both "keep these,
+ * in this order" and "let these go".
+ *
+ * @param {object} roster        state.staff — { specialty: member }
+ * @param {number} budget        CorpsCoin available for payroll (the commitment)
+ * @param {object} cfg           balance config
+ * @param {string[]} [keepOrder] specialties in keep-priority order; when
+ *                               omitted, every staffer is a keep candidate,
+ *                               ordered priciest-first so a shortfall sheds the
+ *                               cheapest staffer rather than an arbitrary one.
+ * @returns {{
+ *   staff: Array<{specialty:string, id:string|null, tier:string,
+ *                 nextTier:string|null, salary:number, nextSalary:number,
+ *                 retiring:boolean, kept:boolean, lapseReason:string|null}>,
+ *   payroll:number, kept:string[], lapsed:string[], affordable:boolean
+ * }}
+ */
+function projectRetention(roster, budget, cfg, keepOrder) {
+  const staff = Object.values(roster || {})
+    .filter((m) => m && m.specialty)
+    .map((member) => {
+      const next = ageStaff(member, cfg); // no `completed`: numbers only, no resume row
+      return {
+        specialty: member.specialty,
+        id: member.id || null,
+        tier: member.tier,
+        salary: member.salaryPerSeason || 0,
+        retiring: next === null,
+        nextTier: next ? next.tier : null,
+        nextSalary: next ? next.salaryPerSeason : 0,
+        kept: false,
+        lapseReason: null,
+      };
+    });
+
+  const bySpecialty = new Map(staff.map((s) => [s.specialty, s]));
+  const active = staff.filter((s) => !s.retiring);
+  // Candidate order: an explicit keepOrder in the director's order; otherwise
+  // every active staffer, priciest-first.
+  const ordered = Array.isArray(keepOrder)
+    ? keepOrder.map((sp) => bySpecialty.get(sp)).filter((s) => s && !s.retiring)
+    : [...active].sort((a, b) => b.nextSalary - a.nextSalary);
+  const candidates = new Set(ordered.map((s) => s.specialty));
+
+  let remaining = Math.max(0, budget || 0);
+  const kept = [];
+  const lapsed = [];
+  for (const s of ordered) {
+    if (s.nextSalary <= remaining) {
+      remaining -= s.nextSalary;
+      s.kept = true;
+      kept.push(s.specialty);
+    } else {
+      s.lapseReason = "unaffordable";
+      lapsed.push(s.specialty);
+    }
+  }
+  // Active roster staff the director left out of keepOrder: voluntary releases.
+  for (const s of active) {
+    if (!candidates.has(s.specialty)) {
+      s.lapseReason = "released";
+      lapsed.push(s.specialty);
+    }
+  }
+  for (const s of staff) {
+    if (s.retiring) s.lapseReason = "retired";
+  }
+
+  const payroll = active.reduce((sum, s) => sum + s.nextSalary, 0);
+  return { staff, payroll, kept, lapsed, affordable: payroll <= Math.max(0, budget || 0) };
+}
+
 // ---------------------------------------------------------------------------
 // Effects
 // ---------------------------------------------------------------------------
@@ -208,6 +294,7 @@ module.exports = {
   buildCatalog,
   mintStaff,
   ageStaff,
+  projectRetention,
   staffYieldMultiplier,
   tourStaminaReduction,
 };

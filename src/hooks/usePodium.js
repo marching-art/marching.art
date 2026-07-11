@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   getPodiumState,
+  getPodiumRegistrationPreview,
   allocateRehearsalBlock,
   setPodiumRestDay,
   registerPodiumCorps,
@@ -80,6 +81,14 @@ export function usePodium(enabled) {
     [reload]
   );
 
+  // Between-seasons funding preview: what next season's carried staff will
+  // cost vs. the CC the director can commit (design §5.6). Fetched on demand
+  // by the registration screen, not part of the main state load.
+  const loadRegistrationPreview = useCallback(async () => {
+    const result = await getPodiumRegistrationPreview();
+    return result.data;
+  }, []);
+
   const selectShows = useCallback(
     async (week, shows) => {
       const result = await setPodiumShows({ week, shows });
@@ -134,6 +143,7 @@ export function usePodium(enabled) {
     allocate,
     declareRestDay,
     register,
+    loadRegistrationPreview,
     selectShows,
     setFoodPlan,
     savePlanTemplate,

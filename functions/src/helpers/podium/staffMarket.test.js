@@ -5,9 +5,35 @@
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { buildCatalog, staffYieldMultiplier, tourStaminaReduction, SPECIALTIES, HIRABLE_TIERS } =
-  require("./staffMarket");
+const {
+  buildCatalog,
+  staffYieldMultiplier,
+  tourStaminaReduction,
+  projectRetention,
+  mintStaff,
+  ageStaff,
+  SPECIALTIES,
+  HIRABLE_TIERS,
+} = require("./staffMarket");
 const balance = require("./balanceConfig.json");
+
+// A carried staffer with a given tenure and lapsed salary lock (remaining 0),
+// so its NEXT-season salary is the floated tenured rate — the realistic input
+// to a between-seasons retention projection.
+function carried(specialty, careerSeasons) {
+  const hire = mintStaff(
+    { id: `${specialty}_x`, specialty, tier: "journeyman", seasons: 1, day: 0 },
+    balance
+  );
+  let m = hire;
+  for (let i = 0; i < careerSeasons; i++) m = ageStaff(m, balance);
+  return m;
+}
+
+// What `carried(specialty, n)` will cost NEXT season (one more aging step).
+function nextSalaryOf(member) {
+  return ageStaff(member, balance).salaryPerSeason;
+}
 
 describe("staff catalog", () => {
   test("offers every specialty at every entry tier, always available", () => {
@@ -63,5 +89,76 @@ describe("staff effects", () => {
       tourStaminaReduction({ staff: { tourManager: { tier: "legend" } } }, balance),
       0.3
     );
+  });
+});
+
+describe("projectRetention — the CC-vs-payroll funding preview", () => {
+  test("a budget that covers everyone keeps the whole roster", () => {
+    const roster = { B: carried("B", 4), CG: carried("CG", 1) };
+    const payroll = nextSalaryOf(roster.B) + nextSalaryOf(roster.CG);
+    const plan = projectRetention(roster, payroll, balance);
+    assert.equal(plan.payroll, payroll);
+    assert.equal(plan.affordable, true);
+    assert.deepEqual(plan.lapsed, []);
+    assert.equal(plan.kept.length, 2);
+  });
+
+  test("a shortfall flags unaffordable and lapses the director's low-priority pick", () => {
+    const roster = { B: carried("B", 6), CG: carried("CG", 1) };
+    const brass = nextSalaryOf(roster.B);
+    const guard = nextSalaryOf(roster.CG);
+    assert.ok(brass > guard, "tenured brass should out-cost the rookie guard");
+
+    // Budget covers only the cheaper staffer. Priority = keep brass first.
+    const keepBrass = projectRetention(roster, brass, balance, ["B", "CG"]);
+    assert.equal(keepBrass.affordable, false);
+    assert.deepEqual(keepBrass.kept, ["B"]);
+    assert.deepEqual(keepBrass.lapsed, ["CG"]);
+    assert.equal(keepBrass.staff.find((s) => s.specialty === "CG").lapseReason, "unaffordable");
+
+    // Same budget, reversed priority — the director keeps the guard instead.
+    const keepGuard = projectRetention(roster, guard, balance, ["CG", "B"]);
+    assert.deepEqual(keepGuard.kept, ["CG"]);
+    assert.deepEqual(keepGuard.lapsed, ["B"]);
+  });
+
+  test("omitting a staffer from keepOrder releases them even when affordable", () => {
+    const roster = { B: carried("B", 4), CG: carried("CG", 1) };
+    const fullPayroll = nextSalaryOf(roster.B) + nextSalaryOf(roster.CG);
+    // Plenty of budget, but the director chooses to keep only brass.
+    const plan = projectRetention(roster, fullPayroll, balance, ["B"]);
+    assert.deepEqual(plan.kept, ["B"]);
+    assert.deepEqual(plan.lapsed, ["CG"]);
+    assert.equal(plan.staff.find((s) => s.specialty === "CG").lapseReason, "released");
+    // Payroll still reports the full roster cost so the UI can show the total.
+    assert.equal(plan.payroll, fullPayroll);
+  });
+
+  test("a 30-season career retires: drops off at zero cost, not a chosen loss", () => {
+    const retiring = carried("MA", balance.staff.career.maxSeasons - 1);
+    const roster = { MA: retiring, VP: carried("VP", 1) };
+    const plan = projectRetention(roster, 0, balance, ["MA", "VP"]);
+    const ma = plan.staff.find((s) => s.specialty === "MA");
+    assert.equal(ma.retiring, true);
+    assert.equal(ma.nextSalary, 0);
+    assert.equal(ma.lapseReason, "retired");
+    assert.ok(!plan.kept.includes("MA") && !plan.lapsed.includes("MA"));
+    // Payroll counts only the still-active staffer.
+    assert.equal(plan.payroll, nextSalaryOf(roster.VP));
+  });
+
+  test("with no keepOrder a shortfall sheds the cheapest staffer first", () => {
+    const roster = { B: carried("B", 6), CG: carried("CG", 1) };
+    const brass = nextSalaryOf(roster.B);
+    const plan = projectRetention(roster, brass, balance); // covers brass alone
+    assert.deepEqual(plan.kept, ["B"]);
+    assert.deepEqual(plan.lapsed, ["CG"]);
+  });
+
+  test("an empty roster is trivially affordable", () => {
+    const plan = projectRetention({}, 0, balance);
+    assert.deepEqual(plan.staff, []);
+    assert.equal(plan.payroll, 0);
+    assert.equal(plan.affordable, true);
   });
 });
