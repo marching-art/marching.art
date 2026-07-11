@@ -104,7 +104,12 @@ import { CORPS_CLASS_ORDER } from '../utils/corps';
 import { canEditCorpsThisSeason, corpsHasPendingWork } from '../utils/corps';
 import { useDashboardModals } from '../hooks/useDashboardModals';
 import { usePodiumEnabled } from '../hooks/useFeatures';
-import { useLineupScores, useRecentResults, useBestInShowCount } from '../hooks/useDashboardScores';
+import {
+  useLineupScores,
+  useRecentResults,
+  usePodiumRecentResults,
+  useBestInShowCount,
+} from '../hooks/useDashboardScores';
 import { useSeasonStore } from '../store/seasonStore';
 import { getEffectiveDay, getNextSelectedShow } from '../utils/dashboardScoring';
 import { getEquippedCosmetic } from '../utils/cosmetics';
@@ -302,7 +307,23 @@ const Dashboard = () => {
     currentDay,
     activeCorpsClass
   );
-  const recentResults = useRecentResults(user, seasonData, activeCorpsClass, currentDay);
+  // Recent results: fantasy classes read fantasy_recaps; Podium reads its own
+  // podium-recaps pipeline. Only the active class's source is enabled, so the
+  // idle one costs no Firestore reads.
+  const fantasyRecentResults = useRecentResults(
+    user,
+    seasonData,
+    activeCorpsClass,
+    activeCorpsClass === 'podiumClass' ? null : currentDay
+  );
+  const podiumRecentResults = usePodiumRecentResults(
+    user,
+    seasonData,
+    currentDay,
+    activeCorpsClass === 'podiumClass'
+  );
+  const recentResults =
+    activeCorpsClass === 'podiumClass' ? podiumRecentResults : fantasyRecentResults;
 
   // Best recent result — the one fact kept from the retired QuickStats
   // widget, shown inline on the scorecard (Zone A).
