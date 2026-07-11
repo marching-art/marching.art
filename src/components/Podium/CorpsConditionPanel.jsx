@@ -3,7 +3,19 @@
 // with travel tiers + heat, and the Family Day diagnostic when present.
 
 import React, { useState } from 'react';
-import { Bus, UtensilsCrossed, UserCog, Loader2, Sun, Coins, Sparkles } from 'lucide-react';
+import {
+  Bus,
+  UtensilsCrossed,
+  UserCog,
+  Loader2,
+  Sun,
+  Coins,
+  Sparkles,
+  ChevronUp,
+  ChevronDown,
+  X,
+  Moon,
+} from 'lucide-react';
 import { BLOCKS } from './podiumConstants';
 
 // Costs mirror functions balanceConfig condition.foodTiers — charged from
@@ -64,6 +76,20 @@ export default function CorpsConditionPanel({ podium }) {
   const template = state.planTemplate || [];
   const budget = state.budget || { balance: 0, committed: 0, earned: 0, spent: 0 };
   const commitmentCap = podium.data?.commitmentCap || 2500;
+
+  const blockLabel = (id) => BLOCKS.find((x) => x.id === id)?.label || id;
+  const addBlock = (id) =>
+    setTemplateDraft((prev) => (prev.length < 20 ? [...prev, id] : prev));
+  const removeBlock = (index) =>
+    setTemplateDraft((prev) => prev.filter((_, i) => i !== index));
+  const moveBlock = (index, dir) =>
+    setTemplateDraft((prev) => {
+      const target = index + dir;
+      if (target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
 
   return (
     <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4 space-y-4">
@@ -179,7 +205,8 @@ export default function CorpsConditionPanel({ podium }) {
         </div>
       </div>
 
-      {/* Assistant director template */}
+      {/* Assistant director — the fallback plan for days you don't log in.
+          Mirrors the daily Rehearsal Planner: block palette + running order. */}
       <div>
         <div className="flex items-center justify-between mb-1.5">
           <SectionLabel icon={UserCog}>Assistant director</SectionLabel>
@@ -190,67 +217,147 @@ export default function CorpsConditionPanel({ podium }) {
             }}
             className="text-[10px] font-bold uppercase text-gray-500 hover:text-white press-feedback"
           >
-            {editingTemplate ? 'Cancel' : 'Edit'}
+            {editingTemplate ? 'Cancel' : template.length > 0 ? 'Edit plan' : 'Set a plan'}
           </button>
         </div>
+
         {!editingTemplate ? (
-          <p className="text-[10px] text-gray-500">
-            {template.length > 0 ? (
-              <>
-                Runs{' '}
-                <span className="text-gray-300">
-                  {template.map((b) => BLOCKS.find((x) => x.id === b)?.label || b).join(' → ')}
-                </span>{' '}
-                at 85% yield on days you don&apos;t log in.
-              </>
-            ) : (
-              'No plan set — days you miss are lost entirely. Set a default plan and the assistant rehearses at 85% yield.'
-            )}
-          </p>
+          template.length > 0 ? (
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap gap-1.5">
+                {template.map((b, i) => (
+                  <span
+                    key={`${b}-${i}`}
+                    className="flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-sm border border-[#333] bg-[#141414]"
+                  >
+                    <span className="text-gray-600 tabular-nums">{i + 1}</span>
+                    <span className="text-gray-200">{blockLabel(b)}</span>
+                  </span>
+                ))}
+              </div>
+              <p className="text-[9px] text-gray-500">
+                Runs this order at 85% yield on days you don&apos;t log in.
+              </p>
+            </div>
+          ) : (
+            <div className="flex items-start gap-2 rounded-sm border border-amber-500/30 bg-amber-500/5 px-3 py-2">
+              <Moon className="w-3.5 h-3.5 text-amber-400/80 shrink-0 mt-0.5" />
+              <p className="text-[10px] text-amber-200/70 leading-relaxed">
+                No plan set — days you miss are lost entirely. Set a default plan and the assistant
+                rehearses it at 85% yield while you&apos;re away.
+              </p>
+            </div>
+          )
         ) : (
           <div className="space-y-2">
-            <div className="flex flex-wrap gap-1.5">
-              {BLOCKS.map((block) => (
-                <button
-                  key={block.id}
-                  onClick={() =>
-                    setTemplateDraft((prev) => (prev.length < 20 ? [...prev, block.id] : prev))
-                  }
-                  className="text-[10px] font-bold px-2 py-1 rounded-sm border border-[#333] text-gray-400 hover:text-white hover:border-[#0057B8] press-feedback"
-                >
-                  + {block.label}
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center gap-2 min-h-[24px]">
-              <span className="text-[10px] text-gray-500">Plan:</span>
-              {templateDraft.length === 0 ? (
-                <span className="text-[10px] text-gray-600">empty</span>
-              ) : (
-                templateDraft.map((blockId, index) => (
+            <div className="flex flex-col lg:flex-row gap-3">
+              {/* Block palette — click to append, mirrors the daily planner */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 flex-1 content-start">
+                {BLOCKS.map((block) => {
+                  const count = templateDraft.filter((b) => b === block.id).length;
+                  return (
+                    <button
+                      key={block.id}
+                      onClick={() => addBlock(block.id)}
+                      className="text-left px-3 py-2 rounded-sm border border-[#333] hover:border-[#0057B8] hover:bg-[#0057B8]/10 transition-colors press-feedback"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[11px] font-bold text-white">{block.label}</span>
+                        {count > 0 && (
+                          <span className="text-[10px] font-bold text-[#4d9fff] tabular-nums shrink-0">
+                            ×{count}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[9px] text-gray-500 mt-0.5">{block.detail}</div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Running order — numbered, reorderable, removable */}
+              <div className="lg:w-56 shrink-0 flex flex-col rounded-sm border border-[#333] bg-[#141414] p-3">
+                <div className="flex items-baseline justify-between">
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-gray-500">
+                    Running order
+                  </span>
+                  <span className="text-lg font-bold text-white tabular-nums leading-none">
+                    {templateDraft.length}
+                  </span>
+                </div>
+
+                <div className="mt-2 flex-1 space-y-1 min-h-[3rem]">
+                  {templateDraft.length === 0 ? (
+                    <div className="text-[10px] text-gray-600 italic">
+                      Click blocks to build the plan
+                    </div>
+                  ) : (
+                    templateDraft.map((blockId, index) => (
+                      <div
+                        key={`${blockId}-${index}`}
+                        className="flex items-center gap-1 text-[10px] text-gray-300"
+                      >
+                        <span className="text-gray-600 tabular-nums w-4 text-right shrink-0">
+                          {index + 1}.
+                        </span>
+                        <span className="truncate flex-1">{blockLabel(blockId)}</span>
+                        <button
+                          onClick={() => moveBlock(index, -1)}
+                          disabled={index === 0}
+                          title="Move earlier"
+                          className="text-gray-600 hover:text-white disabled:opacity-30 disabled:hover:text-gray-600 press-feedback"
+                        >
+                          <ChevronUp className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => moveBlock(index, 1)}
+                          disabled={index === templateDraft.length - 1}
+                          title="Move later"
+                          className="text-gray-600 hover:text-white disabled:opacity-30 disabled:hover:text-gray-600 press-feedback"
+                        >
+                          <ChevronDown className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => removeBlock(index)}
+                          title="Remove"
+                          className="text-gray-600 hover:text-red-400 press-feedback"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="mt-3 flex gap-1.5">
                   <button
-                    key={`${blockId}-${index}`}
-                    onClick={() => setTemplateDraft((prev) => prev.filter((_, i) => i !== index))}
-                    title="Remove"
-                    className="text-[10px] font-bold px-2 py-0.5 rounded-sm bg-[#0057B8]/20 text-[#4d9fff] hover:bg-red-900/40 hover:text-red-300 press-feedback"
+                    disabled={busy !== null}
+                    onClick={() =>
+                      act('template', async () => {
+                        await podium.savePlanTemplate(templateDraft);
+                        setEditingTemplate(false);
+                      })
+                    }
+                    className="flex-1 flex items-center justify-center gap-1 text-[10px] font-bold uppercase px-3 py-1.5 rounded-sm bg-[#0057B8] text-white hover:bg-[#0066d6] disabled:opacity-60 press-feedback"
                   >
-                    {BLOCKS.find((x) => x.id === blockId)?.label || blockId} ×
+                    {busy === 'template' && <Loader2 className="w-3 h-3 animate-spin" />} Save plan
                   </button>
-                ))
-              )}
+                  {templateDraft.length > 0 && (
+                    <button
+                      onClick={() => setTemplateDraft([])}
+                      className="text-[10px] font-bold uppercase px-2.5 py-1.5 rounded-sm border border-[#333] text-gray-400 hover:text-white hover:border-gray-500 press-feedback"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
-            <button
-              disabled={busy !== null}
-              onClick={() =>
-                act('template', async () => {
-                  await podium.savePlanTemplate(templateDraft);
-                  setEditingTemplate(false);
-                })
-              }
-              className="flex items-center gap-1 text-[10px] font-bold uppercase px-3 py-1.5 rounded-sm bg-[#0057B8] text-white hover:bg-[#0066d6] disabled:opacity-60 press-feedback"
-            >
-              {busy === 'template' && <Loader2 className="w-3 h-3 animate-spin" />} Save plan
-            </button>
+
+            <p className="text-[9px] text-gray-600 leading-relaxed">
+              Lead with Stretch / PT to cut the stamina cost of the blocks that follow, and avoid
+              repeating a block back-to-back — repeats yield less.
+            </p>
           </div>
         )}
       </div>
