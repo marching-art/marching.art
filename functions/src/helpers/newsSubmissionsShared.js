@@ -135,11 +135,71 @@ function pickAuthorCorps(corps) {
 // =============================================================================
 
 /**
+ * Read the article and extract the concrete visual details it states or clearly
+ * implies — the specific uniform colors, the moment to depict, the featured
+ * section, and any props/staging mentioned. These drive the image so that, e.g.,
+ * "stormed the field in their black uniforms with bronze trim" yields a black
+ * uniform with bronze trim rather than a generic corps look.
+ *
+ * Returns null if extraction fails, so the caller can fall back to a
+ * corps/headline-themed image.
+ *
+ * @param {object} submission - The submission document data.
+ * @returns {Promise<object|null>}
+ */
+async function extractArticleVisualDetails(submission) {
+  const { Type } = require("@google/genai");
+  const { generateStructuredContent } = require("./geminiService");
+
+  const schema = {
+    type: Type.OBJECT,
+    properties: {
+      corpsName: { type: Type.STRING, description: "The specific corps/ensemble the image should feature, if the article names one. Blank otherwise." },
+      primaryColor: { type: Type.STRING, description: "Primary uniform color explicitly mentioned (e.g., 'black'). Blank if none." },
+      secondaryColor: { type: Type.STRING, description: "Secondary/trim uniform color explicitly mentioned (e.g., 'bronze'). Blank if none." },
+      accentColor: { type: Type.STRING, description: "A third accent color if mentioned. Blank if none." },
+      uniformDescription: { type: Type.STRING, description: "Short phrase describing the uniform exactly as the article frames it. Blank if none." },
+      sceneDescription: { type: Type.STRING, description: "The single most vivid moment or action to depict, in one sentence." },
+      section: { type: Type.STRING, description: "The featured section: one of 'brass', 'percussion', 'color guard', 'drum major', 'full ensemble'. Blank if unclear." },
+      mood: { type: Type.STRING, description: "The emotional tone of the moment. Blank if unclear." },
+      keyVisualDetails: {
+        type: Type.ARRAY,
+        items: { type: Type.STRING },
+        description: "2-6 concrete visual specifics the article states or implies: props, silks, weather, staging, instruments, expressions.",
+      },
+    },
+    required: ["sceneDescription", "keyVisualDetails"],
+  };
+
+  const body = (submission.fullStory || "").substring(0, 1800);
+  const prompt = `You are the art director for a marching arts (drum corps) publication, preparing a photorealistic image to illustrate a SPECIFIC article. Read the article and extract ONLY the concrete visual details it states or clearly implies. Do not invent specifics the article does not support — leave a field blank when the article gives no basis for it. Uniform colors, trim, and the described moment are the most important details to capture accurately.
+
+ARTICLE HEADLINE: ${submission.headline}
+ARTICLE SUMMARY: ${submission.summary || ""}
+ARTICLE BODY:
+${body}`;
+
+  try {
+    const result = await generateStructuredContent(prompt, schema);
+    return result || null;
+  } catch (err) {
+    logger.warn("Article visual-detail extraction failed; using fallback image theme:", err.message);
+    return null;
+  }
+}
+
+/** Trim + normalize an extracted field to a non-empty string or null. */
+function cleanField(v) {
+  return typeof v === "string" && v.trim() ? v.trim() : null;
+}
+
+/**
  * Generate a header image for an approved user submission using the same
  * builder that powers the nightly Fantasy Daily article (article #5): the
  * fantasy-performers prompt at article index 4, rendered on the paid image
- * model. The image is themed to the user's article and the author's own
- * fantasy corps identity when available.
+ * model. The article is read first so the image reflects the specific uniform
+ * colors and moment it describes; the author's own fantasy corps identity fills
+ * in anything the article leaves unspecified.
  *
  * @param {object} submission - The submission document data.
  * @param {number} reportDay - The current season day (drives scene rotation).
@@ -151,17 +211,39 @@ async function generateFantasyDailyImage(submission, reportDay, authorCorps) {
   const { generateImageWithImagen, PAID_IMAGE_MODEL } = require("./geminiService");
   const { uploadFromUrl } = require("./mediaService");
 
-  // The subject is the author's own fantasy ensemble when they have one, so the
-  // image reads as "their" corps; otherwise a neutral championship ensemble.
-  const corpsName = authorCorps?.corpsName || "Championship Corps";
-  const corpsLocation = authorCorps?.location || submission.authorLocation || null;
-  const uniformDesign = authorCorps?.uniformDesign || null;
+  // Read the article for concrete visual details before building the prompt.
+  const visual = await extractArticleVisualDetails(submission);
 
-  // Anchor the scene to what the article is actually about.
-  const theme = `${submission.headline}. ${(submission.summary || "").substring(0, 180)}`.trim();
+  // Subject: a corps the article names > the author's own ensemble > neutral.
+  const corpsName =
+    cleanField(visual?.corpsName) || authorCorps?.corpsName || "Championship Corps";
+  const corpsLocation = authorCorps?.location || submission.authorLocation || null;
+
+  // Uniform: article-specified colors win. Start from the author's design (so
+  // unspecified fields like style/helmet carry through) and override the colors
+  // with what the article actually describes; getFantasyUniformDetails renders
+  // these as the authoritative "director-specified" uniform.
+  const articlePrimary = cleanField(visual?.primaryColor);
+  let uniformDesign = authorCorps?.uniformDesign || null;
+  if (articlePrimary) {
+    uniformDesign = {
+      ...(uniformDesign || {}),
+      style: uniformDesign?.style || "contemporary",
+      helmetStyle: uniformDesign?.helmetStyle || "modern",
+      primaryColor: articlePrimary,
+      secondaryColor: cleanField(visual?.secondaryColor) || uniformDesign?.secondaryColor || "silver",
+      accentColor: cleanField(visual?.accentColor) || uniformDesign?.accentColor || null,
+      additionalNotes: cleanField(visual?.uniformDescription) || uniformDesign?.additionalNotes || null,
+    };
+  }
+
+  // Scene: the moment the article describes > headline/summary.
+  const theme =
+    cleanField(visual?.sceneDescription) ||
+    `${submission.headline}. ${(submission.summary || "").substring(0, 180)}`.trim();
 
   // articleIndex 4 == the Fantasy Daily slot (article #5).
-  const imagePrompt = buildFantasyPerformersImagePrompt(
+  let imagePrompt = buildFantasyPerformersImagePrompt(
     corpsName,
     theme,
     corpsLocation,
@@ -169,6 +251,34 @@ async function generateFantasyDailyImage(submission, reportDay, authorCorps) {
     reportDay || 0,
     4
   );
+
+  // Append an authoritative, article-derived block so the image model honors the
+  // specifics even where they'd otherwise conflict with the generic scene.
+  if (visual) {
+    const details = Array.isArray(visual.keyVisualDetails)
+      ? visual.keyVisualDetails.map(cleanField).filter(Boolean)
+      : [];
+    const lines = [
+      articlePrimary
+        ? `- Uniform: ${[articlePrimary, cleanField(visual.secondaryColor), cleanField(visual.accentColor)].filter(Boolean).join(", ")}${cleanField(visual.uniformDescription) ? ` (${cleanField(visual.uniformDescription)})` : ""}`
+        : null,
+      `- Moment to depict: ${theme}`,
+      cleanField(visual.section) ? `- Featured section: ${cleanField(visual.section)}` : null,
+      cleanField(visual.mood) ? `- Mood: ${cleanField(visual.mood)}` : null,
+      details.length ? `- Must include: ${details.join("; ")}` : null,
+    ].filter(Boolean);
+
+    if (lines.length) {
+      imagePrompt += `
+
+═══════════════════════════════════════════════════════════════
+ARTICLE-ACCURATE DETAILS — THESE DEPICT THE SPECIFIC STORY AND TAKE PRECEDENCE
+═══════════════════════════════════════════════════════════════
+This image illustrates one specific article. Depict exactly what it describes.
+Where these details conflict with any generic uniform or scene above, THESE WIN:
+${lines.join("\n")}`;
+    }
+  }
 
   try {
     // Pin the quality (paid) image model, matching the nightly Fantasy Daily article.
@@ -316,6 +426,7 @@ module.exports = {
   easternParts,
   resolveAuthorCredit,
   pickAuthorCorps,
+  extractArticleVisualDetails,
   generateFantasyDailyImage,
   publishSubmission,
 };
