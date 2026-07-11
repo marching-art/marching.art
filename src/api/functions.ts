@@ -317,7 +317,6 @@ export const claimLadderTier = createCallable<
   }
 >('claimLadderTier');
 
-
 export const purchaseRetirementPlaque = createCallable<
   { retiredIndex: number; corpsName: string; tier: string },
   { success: boolean; tier: string; newBalance: number; message: string }

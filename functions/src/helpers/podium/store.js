@@ -184,6 +184,27 @@ async function loadEasternAssignments(db, seasonUid) {
   }
 }
 
+/**
+ * { [day]: [{eventName, location}] } from the season's schedule doc — the
+ * per-day list of scheduled shows. Used to validate/resolve which show a
+ * Podium corps registers for and scores at (reads competition `name`).
+ */
+async function loadScheduleShowsByDay(db, seasonData) {
+  const scheduleId = seasonData.dataDocId || seasonData.name;
+  const byDay = {};
+  if (!scheduleId) return byDay;
+  const doc = await db.doc(`schedules/${scheduleId}`).get();
+  if (!doc.exists) return byDay;
+  for (const comp of doc.data().competitions || []) {
+    if (comp.day == null || !comp.name) continue;
+    (byDay[comp.day] = byDay[comp.day] || []).push({
+      eventName: comp.name,
+      location: comp.location || "",
+    });
+  }
+  return byDay;
+}
+
 /** All auto-attended competition days for a corps (majors + championships). */
 function autoDaysFor(uid, seasonUid, { division, easternAssignments } = {}) {
   return [
@@ -325,6 +346,7 @@ module.exports = {
   maxPicksForWeek,
   easternNightFor,
   loadEasternAssignments,
+  loadScheduleShowsByDay,
   autoDaysFor,
   isShowDayFor,
   selectedDaysOf,

@@ -110,8 +110,19 @@ export default function PodiumStaffPanel({ podium }) {
         <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-500">
           <Users className="w-3 h-3" /> Staff ({hiredCount}/10)
         </span>
-        <span className="text-[9px] uppercase tracking-wider text-gray-600">
-          {hiredCount === 10 ? 'roster full' : `${10 - hiredCount} seat${10 - hiredCount > 1 ? 's' : ''} open`}
+        <span className="flex items-center gap-2 text-[9px] uppercase tracking-wider text-gray-600">
+          {!open && (
+            <span className="hidden sm:inline">
+              {hiredCount === 10
+                ? 'roster full'
+                : `${10 - hiredCount} seat${10 - hiredCount > 1 ? 's' : ''} open`}
+            </span>
+          )}
+          {open ? (
+            <ChevronUp className="w-3.5 h-3.5 text-gray-500" />
+          ) : (
+            <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
+          )}
         </span>
       </div>
 
@@ -162,7 +173,9 @@ export default function PodiumStaffPanel({ podium }) {
             <div
               key={specialty}
               className={`rounded-sm border p-2.5 flex flex-col gap-1.5 ${
-                filled ? 'border-[#333] bg-[#161616]' : 'border-dashed border-[#2a2a2a] bg-[#141414]'
+                filled
+                  ? 'border-[#333] bg-[#161616]'
+                  : 'border-dashed border-[#2a2a2a] bg-[#141414]'
               }`}
             >
               <div className="flex items-center justify-between gap-2">
@@ -170,7 +183,9 @@ export default function PodiumStaffPanel({ podium }) {
                   {SPECIALTY_LABELS[specialty] || specialty}
                 </span>
                 {filled ? (
-                  <span className={`text-[10px] font-bold shrink-0 ${TIER_STYLES[member.tier] || 'text-white'}`}>
+                  <span
+                    className={`text-[10px] font-bold shrink-0 ${TIER_STYLES[member.tier] || 'text-white'}`}
+                  >
                     {TIER_LABELS[member.tier] || member.tier}
                   </span>
                 ) : (
@@ -192,32 +207,36 @@ export default function PodiumStaffPanel({ podium }) {
                         ` · ${member.contract.remaining}/${member.contract.seasons} locked`}
                       {member.retrain && ' · retraining'}
                     </span>
-                    <span className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        disabled={busy !== null}
-                        onClick={() => setRetraining((v) => (v === member.id ? null : member.id))}
-                        title="Retrain into a new specialty (reduced boost this season)"
-                        className={`press-feedback ${
-                          retraining === member.id ? 'text-[#4d9fff]' : 'text-gray-500 hover:text-white'
-                        }`}
-                      >
-                        <GraduationCap className="w-3 h-3" />
-                      </button>
-                      <button
-                        disabled={busy !== null}
-                        onClick={() =>
-                          act(`release_${specialty}`, () => releasePodiumStaff({ specialty }))
-                        }
-                        title="Release this staffer — frees the seat, ends their tenure (no refund)"
-                        className="text-gray-500 hover:text-red-400 press-feedback"
-                      >
-                        {busy === `release_${specialty}` ? (
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                        ) : (
-                          <UserMinus className="w-3 h-3" />
-                        )}
-                      </button>
-                    </span>
+                    {open && (
+                      <span className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          disabled={busy !== null}
+                          onClick={() => setRetraining((v) => (v === member.id ? null : member.id))}
+                          title="Retrain into a new specialty (reduced boost this season)"
+                          className={`press-feedback ${
+                            retraining === member.id
+                              ? 'text-[#4d9fff]'
+                              : 'text-gray-500 hover:text-white'
+                          }`}
+                        >
+                          <GraduationCap className="w-3 h-3" />
+                        </button>
+                        <button
+                          disabled={busy !== null}
+                          onClick={() =>
+                            act(`release_${specialty}`, () => releasePodiumStaff({ specialty }))
+                          }
+                          title="Release this staffer — frees the seat, ends their tenure (no refund)"
+                          className="text-gray-500 hover:text-red-400 press-feedback"
+                        >
+                          {busy === `release_${specialty}` ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <UserMinus className="w-3 h-3" />
+                          )}
+                        </button>
+                      </span>
+                    )}
                   </div>
                   {retraining === member.id && (
                     <div className="flex flex-wrap items-center gap-1 pt-0.5 border-t border-[#2a2a2a]">
@@ -225,7 +244,9 @@ export default function PodiumStaffPanel({ podium }) {
                         Retrain to:
                       </span>
                       {openSpecialties.length === 0 ? (
-                        <span className="text-[9px] text-gray-600">No open seats to move into.</span>
+                        <span className="text-[9px] text-gray-600">
+                          No open seats to move into.
+                        </span>
                       ) : (
                         openSpecialties.map((target) => (
                           <button
@@ -286,10 +307,11 @@ export default function PodiumStaffPanel({ podium }) {
                     })}
                   </div>
                 ) : (
-                  catalog && (
-                    <span className="text-[9px] text-gray-700">No candidates listed.</span>
-                  )
-                )}
+                  catalog && <span className="text-[9px] text-gray-700">No candidates listed.</span>
+                )
+              ) : (
+                <span className="text-[9px] text-gray-700">Open seat — expand to hire.</span>
+              )}
             </div>
           );
         })}

@@ -16,6 +16,7 @@ const { isPodiumEnabled } = require("../helpers/features");
 const { getActiveCalendarDay, toCompetitionDay } = require("../helpers/gameDay");
 const engine = require("../helpers/podium/engine");
 const store = require("../helpers/podium/store");
+const venues = require("../helpers/podium/venues");
 const staffMarket = require("../helpers/podium/staffMarket");
 const career = require("../helpers/podium/career");
 const divisions = require("../helpers/podium/divisions");
@@ -179,27 +180,6 @@ function validateShowPicks(
   }
   if (Object.keys(byDay).length > maxPicks) {
     throw new HttpsError("invalid-argument", `Week ${week} allows at most ${maxPicks} selected shows.`);
-  }
-  return byDay;
-}
-
-/**
- * Load { [day]: [{eventName, location}] } from the season's schedule doc, for
- * the days a caller needs to validate/score. Reads competition `name` (the
- * event) and `location`.
- */
-async function loadScheduleShowsByDay(db, seasonData) {
-  const scheduleId = seasonData.dataDocId || seasonData.name;
-  const byDay = {};
-  if (!scheduleId) return byDay;
-  const doc = await db.doc(`schedules/${scheduleId}`).get();
-  if (!doc.exists) return byDay;
-  for (const comp of doc.data().competitions || []) {
-    if (comp.day == null || !comp.name) continue;
-    (byDay[comp.day] = byDay[comp.day] || []).push({
-      eventName: comp.name,
-      location: comp.location || "",
-    });
   }
   return byDay;
 }
@@ -604,7 +584,7 @@ exports.setPodiumShows = onCall({ cors: true }, async (request) => {
   // each picked show exists that day and resolve its authoritative location).
   const [easternAssignments, scheduleShowsByDay] = await Promise.all([
     store.loadEasternAssignments(db, seasonData.seasonUid),
-    loadScheduleShowsByDay(db, seasonData),
+    store.loadScheduleShowsByDay(db, seasonData),
   ]);
 
   const result = await db.runTransaction(async (transaction) => {
@@ -855,6 +835,5 @@ module.exports.validateChallenge = validateChallenge;
 module.exports.validateCommitment = validateCommitment;
 module.exports.validateAuditions = validateAuditions;
 module.exports.validateShowPicks = validateShowPicks;
-module.exports.loadScheduleShowsByDay = loadScheduleShowsByDay;
 // Shared preamble for the split callable modules (podiumJoint.js).
 module.exports.podiumContext = podiumContext;

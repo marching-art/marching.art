@@ -24,10 +24,7 @@ export default function PodiumShowPicker({ podium }) {
 
   // Auto-attended days (majors + championship week) the director can't change.
   const autoRows = useMemo(
-    () =>
-      [...new Set(podium.data?.autoDays || [])]
-        .sort((a, b) => a - b)
-        .map((day) => ({ day })),
+    () => [...new Set(podium.data?.autoDays || [])].sort((a, b) => a - b).map((day) => ({ day })),
     [podium.data?.autoDays]
   );
 
@@ -51,8 +48,8 @@ export default function PodiumShowPicker({ podium }) {
 
       {picks.length === 0 ? (
         <p className="text-[11px] text-gray-500">
-          No shows chosen yet. Open the <span className="text-[#4d9fff]">Schedule</span> page,
-          pick a show, and add your Podium corps — same as any other class.
+          No shows chosen yet. Open the <span className="text-[#4d9fff]">Schedule</span> page, pick
+          a show, and add your Podium corps — same as any other class.
         </p>
       ) : (
         <ul className="space-y-1.5">

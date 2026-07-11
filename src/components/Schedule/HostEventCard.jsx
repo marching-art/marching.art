@@ -54,8 +54,7 @@ export default function HostEventCard({ seasonUid }) {
   // One show per director per season (server-enforced in the hostEvent
   // callable; mirrored here so the form self-disables once you've hosted).
   const myEventsThisSeason = (events || []).filter((e) => e.hostUid === currentUid).length;
-  const seasonLimitReached =
-    myEventsThisSeason >= HOSTING_RULES.maxEventsPerSeasonPerHost;
+  const seasonLimitReached = myEventsThisSeason >= HOSTING_RULES.maxEventsPerSeasonPerHost;
   const hostingByTier = profile?.hosting?.byTier || {};
   // Venue ladder: bigger stadiums are earned by running successful smaller
   // shows (server-enforced; this mirrors the gate for display).
@@ -115,11 +114,11 @@ export default function HostEventCard({ seasonUid }) {
         <>
           <p className="text-[10px] text-gray-500 leading-relaxed">
             Rent a venue with CorpsCoin and your event joins the season schedule — open enrollment
-            for every class. You earn CC per corps that performs, paid the night the show is
-            scored, so a well-drawn show profits. Run successful shows to unlock bigger stadiums:
-            2 successful High School events open the College Bowl, 3 successful College Bowls open
-            the NFL Stadium. Days {minDay}&ndash;{HOSTING_RULES.lastHostableDay}; the majors' days
-            ({HOSTING_RULES.majorDays.join(', ')}) are exclusive. One show per director per season.
+            for every class. You earn CC per corps that performs, paid the night the show is scored,
+            so a well-drawn show profits. Run successful shows to unlock bigger stadiums: 2
+            successful High School events open the College Bowl, 3 successful College Bowls open the
+            NFL Stadium. Days {minDay}&ndash;{HOSTING_RULES.lastHostableDay}; the majors' days (
+            {HOSTING_RULES.majorDays.join(', ')}) are exclusive. One show per director per season.
           </p>
 
           {!hasCorps && (
@@ -128,7 +127,8 @@ export default function HostEventCard({ seasonUid }) {
 
           {hasCorps && seasonLimitReached && (
             <div className="text-[10px] text-amber-400">
-              You&apos;ve already hosted a show this season — directors can host one show per season.
+              You&apos;ve already hosted a show this season — directors can host one show per
+              season.
             </div>
           )}
 
