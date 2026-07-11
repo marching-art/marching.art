@@ -84,10 +84,17 @@ const ShowRegistrationModal = ({
   const [podiumInfo, setPodiumInfo] = useState(null);
   const [podiumAttend, setPodiumAttend] = useState(false);
   const [podiumInitial, setPodiumInitial] = useState(false);
+  // True while getPodiumState() is in flight so the Podium row can reserve its
+  // space with a skeleton instead of popping in late and shoving the list down.
+  const [podiumLoading, setPodiumLoading] = useState(podiumEnabled && podiumDay !== null);
 
   useEffect(() => {
-    if (!podiumEnabled || podiumDay === null) return undefined;
+    if (!podiumEnabled || podiumDay === null) {
+      setPodiumLoading(false);
+      return undefined;
+    }
     let cancelled = false;
+    setPodiumLoading(true);
     getPodiumState()
       .then((res) => {
         // Callables resolve to an HttpsCallableResult — the payload is res.data,
@@ -112,6 +119,9 @@ const ShowRegistrationModal = ({
       })
       .catch(() => {
         // Feature off or transient failure — the Podium row simply doesn't render.
+      })
+      .finally(() => {
+        if (!cancelled) setPodiumLoading(false);
       });
     return () => {
       cancelled = true;
@@ -303,8 +313,10 @@ const ShowRegistrationModal = ({
     );
   }, [selectedCorps, userCorpsClasses, userProfile, show, podiumChanged]);
 
-  // Shared header content for both mobile and desktop
-  const HeaderContent = () => (
+  // Shared header content for both mobile and desktop.
+  // Rendered as a plain JSX value (not a nested component) so state changes
+  // re-render in place instead of remounting the subtree and resetting scroll.
+  const headerContent = (
     <>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
@@ -352,8 +364,8 @@ const ShowRegistrationModal = ({
     </>
   );
 
-  // Shared body content
-  const BodyContent = () => (
+  // Shared body content (plain JSX value — see headerContent note).
+  const bodyContent = (
     <>
       {/* Real running order (scraped from dci.org) — shown when available */}
       {show.lineup?.length > 0 && (
@@ -496,7 +508,7 @@ const ShowRegistrationModal = ({
             </div>
           </div>
         </div>
-      ) : userCorpsClasses.length === 0 && !podiumInfo ? (
+      ) : userCorpsClasses.length === 0 && !podiumInfo && !podiumLoading ? (
         <div className="text-center py-10 px-4">
           <AlertTriangle className="w-12 h-12 text-gray-600 mx-auto mb-3" />
           <p className="text-sm text-gray-400 font-medium">No Corps Registered</p>
@@ -543,26 +555,25 @@ const ShowRegistrationModal = ({
 
           {/* Corps List */}
           <div className="divide-y divide-[#333]">
-            {userCorpsClasses.map((corpsClass) => {
-              const corpsData = userProfile.corps[corpsClass];
-              const isSelected = selectedCorps.includes(corpsClass);
-
-              return (
-                <CorpsSelectionItem
-                  key={corpsClass}
-                  corpsClass={corpsClass}
-                  corpsData={corpsData}
-                  isSelected={isSelected}
-                  onToggle={toggleCorps}
-                  show={show}
-                  isDisabled={false}
-                  maxShows={maxShows}
-                />
-              );
-            })}
+            {/* Podium corps rendered FIRST — it's the marquee corps and users
+                shouldn't have to scroll past every fantasy corps to find it.
+                While its async state loads, a skeleton reserves the row height
+                so the list doesn't jump when the real row swaps in. */}
+            {podiumLoading && (
+              <div
+                className="flex items-center gap-3 p-4 w-full min-h-[60px] animate-pulse"
+                aria-hidden="true"
+              >
+                <div className="w-5 h-5 border-2 border-[#444] flex-shrink-0" />
+                <div className="flex-1 min-w-0 space-y-2">
+                  <div className="h-3.5 w-32 bg-[#333]" />
+                  <div className="h-2.5 w-24 bg-[#2a2a2a]" />
+                </div>
+              </div>
+            )}
 
             {/* Podium corps — day-based tour pick, separate rules from lineups */}
-            {podiumInfo && (
+            {!podiumLoading && podiumInfo && (
               <button
                 onClick={togglePodium}
                 disabled={podiumIsMyAutoDay || podiumIsEasternOffNight || podiumIsPast}
@@ -605,6 +616,25 @@ const ShowRegistrationModal = ({
                 </div>
               </button>
             )}
+
+            {/* Fantasy corps (lineup-based registration) */}
+            {userCorpsClasses.map((corpsClass) => {
+              const corpsData = userProfile.corps[corpsClass];
+              const isSelected = selectedCorps.includes(corpsClass);
+
+              return (
+                <CorpsSelectionItem
+                  key={corpsClass}
+                  corpsClass={corpsClass}
+                  corpsData={corpsData}
+                  isSelected={isSelected}
+                  onToggle={toggleCorps}
+                  show={show}
+                  isDisabled={false}
+                  maxShows={maxShows}
+                />
+              );
+            })}
           </div>
 
           {/* Info Section */}
@@ -660,56 +690,50 @@ const ShowRegistrationModal = ({
     </>
   );
 
-  // Shared footer content
-  const FooterContent = () => {
-    // Championship shows don't need Save/Cancel - just a Close button
-    if (isChampionship) {
-      return (
-        <button
-          onClick={() => {
-            haptic('light');
-            onClose();
-          }}
-          className="w-full h-12 bg-[#333] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#444] active:bg-[#222] press-feedback flex items-center justify-center gap-2"
-        >
-          <X className="w-4 h-4" />
-          Close
-        </button>
-      );
-    }
-
-    return userCorpsClasses.length > 0 || podiumInfo ? (
-      <div className="flex gap-3">
-        <button
-          onClick={() => {
-            haptic('light');
-            onClose();
-          }}
-          disabled={saving}
-          className="flex-1 h-12 border border-[#444] text-gray-300 text-sm font-bold uppercase tracking-wider hover:border-[#555] hover:text-white disabled:opacity-50 active:bg-[#333] press-feedback"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={handleSave}
-          disabled={saving || !hasChanges}
-          className="flex-1 h-12 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:bg-[#004494] press-feedback-strong"
-        >
-          {saving ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-none animate-spin" />
-              Saving...
-            </>
-          ) : (
-            <>
-              <Check className="w-4 h-4" />
-              {hasChanges ? 'Save Changes' : 'No Changes'}
-            </>
-          )}
-        </button>
-      </div>
-    ) : null;
-  };
+  // Shared footer content (plain JSX value — see headerContent note).
+  // Championship shows don't need Save/Cancel - just a Close button.
+  const footerContent = isChampionship ? (
+    <button
+      onClick={() => {
+        haptic('light');
+        onClose();
+      }}
+      className="w-full h-12 bg-[#333] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#444] active:bg-[#222] press-feedback flex items-center justify-center gap-2"
+    >
+      <X className="w-4 h-4" />
+      Close
+    </button>
+  ) : userCorpsClasses.length > 0 || podiumInfo || podiumLoading ? (
+    <div className="flex gap-3">
+      <button
+        onClick={() => {
+          haptic('light');
+          onClose();
+        }}
+        disabled={saving}
+        className="flex-1 h-12 border border-[#444] text-gray-300 text-sm font-bold uppercase tracking-wider hover:border-[#555] hover:text-white disabled:opacity-50 active:bg-[#333] press-feedback"
+      >
+        Cancel
+      </button>
+      <button
+        onClick={handleSave}
+        disabled={saving || !hasChanges}
+        className="flex-1 h-12 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:bg-[#004494] press-feedback-strong"
+      >
+        {saving ? (
+          <>
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-none animate-spin" />
+            Saving...
+          </>
+        ) : (
+          <>
+            <Check className="w-4 h-4" />
+            {hasChanges ? 'Save Changes' : 'No Changes'}
+          </>
+        )}
+      </button>
+    </div>
+  ) : null;
 
   // Mobile: Use BottomSheet with native swipe-to-dismiss
   if (isMobile) {
@@ -717,18 +741,18 @@ const ShowRegistrationModal = ({
       <BottomSheet isOpen={true} onClose={onClose} snapPoints={[85]} showCloseButton={true}>
         {/* Header */}
         <div className="px-4 pb-3 border-b border-[#333] flex-shrink-0">
-          <HeaderContent />
+          {headerContent}
         </div>
 
         {/* Body - Scrollable */}
         <div className="flex-1 min-h-0 overflow-y-auto scroll-momentum">
-          <BodyContent />
+          {bodyContent}
         </div>
 
         {/* Footer */}
-        {(isChampionship || userCorpsClasses.length > 0 || podiumInfo) && (
+        {(isChampionship || userCorpsClasses.length > 0 || podiumInfo || podiumLoading) && (
           <div className="px-4 py-4 border-t border-[#333] bg-[#1a1a1a] flex-shrink-0 safe-area-bottom">
-            <FooterContent />
+            {footerContent}
           </div>
         )}
       </BottomSheet>
@@ -748,18 +772,18 @@ const ShowRegistrationModal = ({
         >
           {/* Header */}
           <div className="px-4 py-4 border-b border-[#333] bg-[#222] flex-shrink-0">
-            <HeaderContent />
+            {headerContent}
           </div>
 
           {/* Body - Scrollable */}
           <div className="flex-1 overflow-y-auto">
-            <BodyContent />
+            {bodyContent}
           </div>
 
           {/* Footer */}
-          {(isChampionship || userCorpsClasses.length > 0 || podiumInfo) && (
+          {(isChampionship || userCorpsClasses.length > 0 || podiumInfo || podiumLoading) && (
             <div className="px-4 py-4 border-t border-[#333] bg-[#111] flex-shrink-0">
-              <FooterContent />
+              {footerContent}
             </div>
           )}
         </div>
