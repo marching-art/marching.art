@@ -69,7 +69,7 @@ const CommunityPulse = memo(() => {
   };
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden">
+    <div className="bg-[#1a1a1a] border border-[#333] rounded-none overflow-hidden">
       <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center gap-2">
         <Activity className="w-3.5 h-3.5 text-green-500" />
         <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">

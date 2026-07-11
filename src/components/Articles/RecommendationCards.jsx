@@ -65,7 +65,7 @@ const REC_CONFIG = {
 // Compact metric chip shown under a pick: cost, value (score/point), or 10-day gain.
 function MetricChip({ label, value, tone = 'text-gray-300' }) {
   return (
-    <span className="inline-flex items-baseline gap-1 px-1.5 py-0.5 bg-white/5 rounded-sm">
+    <span className="inline-flex items-baseline gap-1 px-1.5 py-0.5 bg-white/5 rounded-none">
       <span className="text-[9px] uppercase tracking-wider text-gray-500">{label}</span>
       <span className={`text-[11px] font-data font-bold tabular-nums ${tone}`}>{value}</span>
     </span>
@@ -85,7 +85,7 @@ function RecommendationItem({ rec, config }) {
   const showMetrics = hasCost || hasValue || hasGain;
 
   return (
-    <div className={`${config.cardBg} border ${config.cardBorder} p-3 rounded-sm`}>
+    <div className={`${config.cardBg} border ${config.cardBorder} p-3 rounded-none`}>
       <div className="flex items-start justify-between gap-2 mb-1">
         <div className="flex-1 min-w-0">
           <span className="text-sm font-bold text-white block truncate">{rec.corps}</span>
@@ -125,9 +125,9 @@ function RecommendationSection({ type, items }) {
   const Icon = config.icon;
 
   return (
-    <div className={`${config.bgClass} border ${config.borderClass} p-4 rounded-sm`}>
+    <div className={`${config.bgClass} border ${config.borderClass} p-4 rounded-none`}>
       <div className="flex items-center gap-2 mb-3">
-        <div className={`p-1.5 ${config.iconBgClass} rounded-sm`}>
+        <div className={`p-1.5 ${config.iconBgClass} rounded-none`}>
           <Icon className={`w-4 h-4 ${config.iconClass}`} />
         </div>
         <div>

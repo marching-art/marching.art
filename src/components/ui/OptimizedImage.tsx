@@ -218,7 +218,7 @@ export const AvatarImage: React.FC<AvatarImageProps> = ({
   return (
     <div
       className={`
-        relative rounded-sm overflow-hidden bg-[#333] flex items-center justify-center
+        relative rounded-none overflow-hidden bg-[#333] flex items-center justify-center
         ${avatarSizes[size]}
         ${className}
       `}
@@ -246,7 +246,9 @@ export const AvatarImage: React.FC<AvatarImageProps> = ({
       )}
 
       {/* Loading skeleton */}
-      {!showFallback && !isLoaded && <div className="absolute inset-0 skeleton-pulse rounded-sm" />}
+      {!showFallback && !isLoaded && (
+        <div className="absolute inset-0 skeleton-pulse rounded-none" />
+      )}
     </div>
   );
 };
@@ -298,7 +300,7 @@ export const CorpsLogo: React.FC<CorpsLogoProps> = ({
   return (
     <div
       className={`
-        relative rounded-sm overflow-hidden bg-[#222] border border-[#333]
+        relative rounded-none overflow-hidden bg-[#222] border border-[#333]
         flex items-center justify-center aspect-avatar
         ${logoSizes[size]}
         ${className}

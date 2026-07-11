@@ -50,7 +50,7 @@ const CorpsRegistrationModal = ({
         aria-labelledby="modal-title-corps-registration"
       >
         <div
-          className="w-full max-w-lg bg-[#1a1a1a] border border-[#333] rounded-sm"
+          className="w-full max-w-lg bg-[#1a1a1a] border border-[#333] rounded-none"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -81,7 +81,7 @@ const CorpsRegistrationModal = ({
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
                   maxLength={50}
-                  className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                  className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
                 />
               </div>
 
@@ -97,7 +97,7 @@ const CorpsRegistrationModal = ({
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                   required
                   maxLength={50}
-                  className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                  className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
                 />
               </div>
 
@@ -111,7 +111,7 @@ const CorpsRegistrationModal = ({
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   maxLength={500}
-                  className="w-full h-20 px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] resize-none"
+                  className="w-full h-20 px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] resize-none"
                 />
                 <p className="text-[10px] text-gray-600 mt-1">{formData.description.length}/500</p>
               </div>
@@ -138,7 +138,7 @@ const CorpsRegistrationModal = ({
                       >
                         <div className="flex items-center gap-3">
                           <div
-                            className={`w-4 h-4 rounded-sm border-2 flex items-center justify-center ${
+                            className={`w-4 h-4 rounded-none border-2 flex items-center justify-center ${
                               isSelected ? 'border-[#0057B8] bg-[#0057B8]' : 'border-[#444]'
                             }`}
                           >

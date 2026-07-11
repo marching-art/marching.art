@@ -350,7 +350,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
       aria-label="Settings"
     >
       <div
-        className="w-full sm:max-w-md bg-[#1a1a1a] border-t sm:border border-[#333] rounded-t-xl sm:rounded-sm safe-area-bottom max-h-[85dvh] flex flex-col"
+        className="w-full sm:max-w-md bg-[#1a1a1a] border-t sm:border border-[#333] rounded-none sm:rounded-none safe-area-bottom max-h-[85dvh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Drag handle - mobile only */}
@@ -454,7 +454,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                 <button
                   onClick={saveAccountSettings}
                   disabled={accountSaving}
-                  className="w-full py-3 min-h-[44px] bg-[#0057B8] text-white text-sm font-bold hover:bg-[#0066d6] active:bg-[#004999] disabled:opacity-50 transition-all press-feedback rounded-sm flex items-center justify-center gap-2"
+                  className="w-full py-3 min-h-[44px] bg-[#0057B8] text-white text-sm font-bold hover:bg-[#0066d6] active:bg-[#004999] disabled:opacity-50 transition-all press-feedback rounded-none flex items-center justify-center gap-2"
                 >
                   {accountSaving ? 'Saving...' : 'Save Changes'}
                 </button>
@@ -488,7 +488,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                   dead end after the transient prompt is dismissed. Hidden once
                   the app is running as an installed PWA. */}
               {isInstalled ? (
-                <div className="w-full py-3 min-h-[44px] bg-[#111] border border-[#333] text-gray-400 text-sm font-bold rounded-sm flex items-center justify-center gap-2">
+                <div className="w-full py-3 min-h-[44px] bg-[#111] border border-[#333] text-gray-400 text-sm font-bold rounded-none flex items-center justify-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-green-500" />
                   App Installed
                 </div>
@@ -496,14 +496,14 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                 <div className="space-y-2">
                   <button
                     onClick={handleInstallApp}
-                    className="w-full py-3 min-h-[44px] bg-[#0057B8]/15 border border-[#0057B8]/40 text-[#4d9fff] text-sm font-bold hover:bg-[#0057B8]/25 active:bg-[#0057B8]/35 transition-all press-feedback rounded-sm flex items-center justify-center gap-2"
+                    className="w-full py-3 min-h-[44px] bg-[#0057B8]/15 border border-[#0057B8]/40 text-[#4d9fff] text-sm font-bold hover:bg-[#0057B8]/25 active:bg-[#0057B8]/35 transition-all press-feedback rounded-none flex items-center justify-center gap-2"
                     aria-expanded={!canPromptInstall ? showInstallHelp : undefined}
                   >
                     <Download className="w-4 h-4" />
                     {canPromptInstall ? 'Install App' : 'How to Install App'}
                   </button>
                   {!canPromptInstall && showInstallHelp && (
-                    <div className="bg-[#111] border border-[#333] p-3 rounded-sm">
+                    <div className="bg-[#111] border border-[#333] p-3 rounded-none">
                       <PWAInstallInstructions platform={platform} />
                     </div>
                   )}
@@ -514,7 +514,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                 href="https://buymeacoffee.com/marching.art"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full py-3 min-h-[44px] bg-amber-500/10 border border-amber-500/30 text-amber-400 text-sm font-bold hover:bg-amber-500/20 active:bg-amber-500/30 transition-all press-feedback rounded-sm flex items-center justify-center gap-2"
+                className="w-full py-3 min-h-[44px] bg-amber-500/10 border border-amber-500/30 text-amber-400 text-sm font-bold hover:bg-amber-500/20 active:bg-amber-500/30 transition-all press-feedback rounded-none flex items-center justify-center gap-2"
               >
                 <Heart className="w-4 h-4" />
                 Support marching.art
@@ -522,7 +522,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
 
               <button
                 onClick={handleSignOut}
-                className="w-full py-3 min-h-[44px] bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-bold hover:bg-red-500/20 active:bg-red-500/30 transition-all press-feedback rounded-sm flex items-center justify-center gap-2"
+                className="w-full py-3 min-h-[44px] bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-bold hover:bg-red-500/20 active:bg-red-500/30 transition-all press-feedback rounded-none flex items-center justify-center gap-2"
               >
                 <LogOut className="w-4 h-4" />
                 Sign Out
@@ -533,13 +533,13 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                 {!showDeleteConfirm ? (
                   <button
                     onClick={() => setShowDeleteConfirm(true)}
-                    className="w-full py-3 min-h-[44px] bg-transparent border border-red-500/20 text-red-400/70 text-sm font-bold hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400 active:bg-red-500/20 transition-all press-feedback rounded-sm flex items-center justify-center gap-2"
+                    className="w-full py-3 min-h-[44px] bg-transparent border border-red-500/20 text-red-400/70 text-sm font-bold hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400 active:bg-red-500/20 transition-all press-feedback rounded-none flex items-center justify-center gap-2"
                   >
                     <Trash2 className="w-4 h-4" />
                     Delete Account
                   </button>
                 ) : (
-                  <div className="bg-red-500/5 border border-red-500/30 p-4 rounded-sm space-y-3">
+                  <div className="bg-red-500/5 border border-red-500/30 p-4 rounded-none space-y-3">
                     <div className="flex items-start gap-2">
                       <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
                       <div>
@@ -570,14 +570,14 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                           setDeleteConfirmText('');
                         }}
                         disabled={isDeleting}
-                        className="flex-1 py-2.5 min-h-[44px] bg-[#333] text-gray-300 text-sm font-bold hover:bg-[#444] disabled:opacity-50 transition-all rounded-sm"
+                        className="flex-1 py-2.5 min-h-[44px] bg-[#333] text-gray-300 text-sm font-bold hover:bg-[#444] disabled:opacity-50 transition-all rounded-none"
                       >
                         Cancel
                       </button>
                       <button
                         onClick={handleDeleteAccount}
                         disabled={isDeleting || deleteConfirmText !== 'DELETE'}
-                        className="flex-1 py-2.5 min-h-[44px] bg-red-600 text-white text-sm font-bold hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all rounded-sm flex items-center justify-center gap-2"
+                        className="flex-1 py-2.5 min-h-[44px] bg-red-600 text-white text-sm font-bold hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all rounded-none flex items-center justify-center gap-2"
                       >
                         {isDeleting ? (
                           <>
@@ -622,7 +622,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                 ) : !pushPrefs.allPush ? (
                   <button
                     onClick={handleEnablePush}
-                    className="w-full py-3 min-h-[44px] bg-[#0057B8]/20 border border-[#0057B8]/40 text-[#0057B8] text-sm font-bold hover:bg-[#0057B8]/30 transition-all rounded-sm flex items-center justify-center gap-2"
+                    className="w-full py-3 min-h-[44px] bg-[#0057B8]/20 border border-[#0057B8]/40 text-[#0057B8] text-sm font-bold hover:bg-[#0057B8]/30 transition-all rounded-none flex items-center justify-center gap-2"
                   >
                     <Bell className="w-4 h-4" />
                     Enable Push Notifications
@@ -717,7 +717,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                 <button
                   onClick={saveNotificationPrefs}
                   disabled={saving}
-                  className="w-full py-2.5 bg-[#0057B8] text-white text-sm font-bold rounded-sm hover:bg-[#0066d6] disabled:opacity-50 transition-colors"
+                  className="w-full py-2.5 bg-[#0057B8] text-white text-sm font-bold rounded-none hover:bg-[#0066d6] disabled:opacity-50 transition-colors"
                 >
                   {saving ? 'Saving...' : 'Save Preferences'}
                 </button>

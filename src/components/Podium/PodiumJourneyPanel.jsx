@@ -40,7 +40,7 @@ export default function PodiumJourneyPanel() {
   const doneCount = PODIUM_JOURNEY.length - remaining.length;
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4 space-y-2">
+    <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-4 space-y-2">
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-500">
           <Map className="w-3 h-3" /> Rookie Journey
@@ -56,7 +56,7 @@ export default function PodiumJourneyPanel() {
           return (
             <div
               key={step.id}
-              className={`flex items-center gap-2.5 px-2 py-1.5 rounded-sm ${
+              className={`flex items-center gap-2.5 px-2 py-1.5 rounded-none ${
                 done ? 'opacity-50' : ''
               }`}
             >
@@ -77,7 +77,7 @@ export default function PodiumJourneyPanel() {
                 <button
                   disabled={busy !== null}
                   onClick={() => claim(step)}
-                  className="flex-shrink-0 px-2 py-1 text-[9px] font-bold uppercase tracking-wider bg-[#222] border border-[#333] text-gray-300 rounded-sm hover:border-[#0057B8] hover:text-white press-feedback disabled:opacity-50 tabular-nums"
+                  className="flex-shrink-0 px-2 py-1 text-[9px] font-bold uppercase tracking-wider bg-[#222] border border-[#333] text-gray-300 rounded-none hover:border-[#0057B8] hover:text-white press-feedback disabled:opacity-50 tabular-nums"
                 >
                   {busy === step.id ? (
                     <Loader2 className="w-3 h-3 animate-spin inline" />

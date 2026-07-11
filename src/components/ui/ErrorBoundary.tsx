@@ -102,9 +102,9 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
     <m.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col items-center justify-center p-8 rounded-sm bg-[#1a1a1a] border border-[#333]"
+      className="flex flex-col items-center justify-center p-8 rounded-none bg-[#1a1a1a] border border-[#333]"
     >
-      <div className="bg-red-500/10 border border-red-500/30 p-4 rounded-sm mb-4">
+      <div className="bg-red-500/10 border border-red-500/30 p-4 rounded-none mb-4">
         <AlertTriangle className="w-8 h-8 text-red-400" />
       </div>
 
@@ -123,7 +123,7 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
           <summary className="text-sm text-gray-500 cursor-pointer hover:text-gray-300">
             Error details (dev only)
           </summary>
-          <pre className="mt-2 p-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-xs text-red-400 overflow-auto max-h-40">
+          <pre className="mt-2 p-3 bg-[#0a0a0a] border border-[#333] rounded-none text-xs text-red-400 overflow-auto max-h-40">
             {error.message}
             {'\n\n'}
             {error.stack}

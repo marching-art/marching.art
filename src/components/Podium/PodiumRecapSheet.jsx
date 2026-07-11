@@ -108,7 +108,7 @@ function SortBar({ sortBy, onChange }) {
           key={opt.id}
           onClick={() => onChange(opt.id)}
           aria-pressed={sortBy === opt.id}
-          className={`flex-shrink-0 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-sm transition-colors press-feedback ${
+          className={`flex-shrink-0 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-none transition-colors press-feedback ${
             sortBy === opt.id
               ? 'bg-[#8a6d1a] text-white'
               : 'bg-[#222] text-gray-500 hover:text-gray-300'
@@ -219,7 +219,7 @@ function ShowTable({ show, day, sortBy, userCorpsName }) {
 function PodiumReport({ column, userCorpsName }) {
   if (!column || !(column.entries || []).length) return null;
   return (
-    <div className="bg-[#1a1a1a] border border-[#c9a227]/30 rounded-sm p-4 space-y-2">
+    <div className="bg-[#1a1a1a] border border-[#c9a227]/30 rounded-none p-4 space-y-2">
       <div className="flex items-baseline justify-between border-b border-[#333] pb-2">
         <div>
           <div className="text-sm font-bold text-white">The Podium Report</div>
@@ -246,7 +246,7 @@ function PodiumReport({ column, userCorpsName }) {
             <div
               key={entry.uid}
               className={`flex items-center gap-2 text-[11px] tabular-nums ${
-                isMine ? 'bg-[#0057B8]/10 -mx-1 px-1 rounded-sm' : ''
+                isMine ? 'bg-[#0057B8]/10 -mx-1 px-1 rounded-none' : ''
               }`}
             >
               <span className="w-5 text-right text-gray-500 font-bold">{entry.rank}.</span>
@@ -346,7 +346,7 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
           <button
             key={day}
             onClick={() => setSelectedDay(day)}
-            className={`flex-shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-sm tabular-nums transition-colors press-feedback ${
+            className={`flex-shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-none tabular-nums transition-colors press-feedback ${
               day === selected.day
                 ? 'bg-[#8a6d1a] text-white'
                 : 'text-gray-500 hover:text-white hover:bg-white/5 border border-[#333]'
@@ -358,7 +358,7 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
       </div>
 
       {/* The sheet — one box score per show */}
-      <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4 space-y-4">
+      <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-4 space-y-4">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <SortBar sortBy={sortBy} onChange={setSortBy} />
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -378,7 +378,7 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
                 }
               }}
               title="Copy the sheet as Discord-ready text"
-              className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-sm border border-[#333] text-gray-400 hover:text-white hover:border-[#c9a227] press-feedback"
+              className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-none border border-[#333] text-gray-400 hover:text-white hover:border-[#c9a227] press-feedback"
             >
               {copied ? (
                 <Check className="w-3 h-3 text-green-400" />

@@ -42,7 +42,7 @@ const RecentResultsFeed = memo(({ results, loading, corpsClass }) => {
                   {isSoundSport && rating ? (
                     // SoundSport: Display medal badge
                     <div
-                      className={`inline-flex items-center gap-1 px-2 py-1 ${rating.color} rounded-sm`}
+                      className={`inline-flex items-center gap-1 px-2 py-1 ${rating.color} rounded-none`}
                     >
                       <Medal className={`w-3 h-3 ${rating.textColor}`} />
                       <span className={`text-xs font-bold ${rating.textColor}`}>

@@ -125,18 +125,18 @@ const ActivityItem = React.memo(({ activity, isNotification = false, onMarkRead,
       whileHover={{ scale: 1.01 }}
       onClick={handleClick}
       className={`
-        relative flex items-start gap-3 p-3 rounded-sm cursor-pointer transition-all
+        relative flex items-start gap-3 p-3 rounded-none cursor-pointer transition-all
         ${isNotification && !activity.read ? 'bg-[#222] border border-yellow-500/30' : 'bg-[#1a1a1a] border border-[#333]'}
         hover:border-[#555]
       `}
     >
       {/* Unread indicator */}
       {isNotification && !activity.read && (
-        <div className="absolute top-2 right-2 w-2 h-2 rounded-sm bg-yellow-500 animate-pulse" />
+        <div className="absolute top-2 right-2 w-2 h-2 rounded-none bg-yellow-500 animate-pulse" />
       )}
 
       {/* Icon */}
-      <div className={`p-2 rounded-sm ${colors.bg}`}>
+      <div className={`p-2 rounded-none ${colors.bg}`}>
         <Icon className={`w-4 h-4 ${colors.text}`} />
       </div>
 
@@ -155,7 +155,7 @@ const ActivityItem = React.memo(({ activity, isNotification = false, onMarkRead,
           <div className="flex flex-wrap gap-1 mt-2">
             {activity.metadata.won !== undefined && (
               <span
-                className={`text-xs px-2 py-0.5 rounded-sm ${
+                className={`text-xs px-2 py-0.5 rounded-none ${
                   activity.metadata.won
                     ? 'bg-green-500/10 text-green-500'
                     : 'bg-red-500/10 text-red-500'
@@ -165,28 +165,28 @@ const ActivityItem = React.memo(({ activity, isNotification = false, onMarkRead,
               </span>
             )}
             {activity.metadata.isRival && (
-              <span className="text-xs px-2 py-0.5 rounded-sm bg-red-500/10 text-red-500 flex items-center gap-1">
+              <span className="text-xs px-2 py-0.5 rounded-none bg-red-500/10 text-red-500 flex items-center gap-1">
                 <Flame className="w-3 h-3" /> Rivalry
               </span>
             )}
             {activity.metadata.week && (
-              <span className="text-xs px-2 py-0.5 rounded-sm bg-[#333] text-gray-400">
+              <span className="text-xs px-2 py-0.5 rounded-none bg-[#333] text-gray-400">
                 Week {activity.metadata.week}
               </span>
             )}
             {activity.metadata.score && (
-              <span className="text-xs px-2 py-0.5 rounded-sm bg-yellow-500/10 text-yellow-500 flex items-center gap-1">
+              <span className="text-xs px-2 py-0.5 rounded-none bg-yellow-500/10 text-yellow-500 flex items-center gap-1">
                 <Target className="w-3 h-3" />
                 {activity.metadata.score.toFixed(1)}
               </span>
             )}
             {activity.metadata.newRank && (
-              <span className="text-xs px-2 py-0.5 rounded-sm bg-blue-500/10 text-blue-500 flex items-center gap-1">
+              <span className="text-xs px-2 py-0.5 rounded-none bg-blue-500/10 text-blue-500 flex items-center gap-1">
                 <TrendingUp className="w-3 h-3" />#{activity.metadata.newRank}
               </span>
             )}
             {activity.metadata.seasonHigh && (
-              <span className="text-xs px-2 py-0.5 rounded-sm bg-amber-500/10 text-amber-500 flex items-center gap-1">
+              <span className="text-xs px-2 py-0.5 rounded-none bg-amber-500/10 text-amber-500 flex items-center gap-1">
                 <Star className="w-3 h-3" />
                 Season High!
               </span>
@@ -199,7 +199,7 @@ const ActivityItem = React.memo(({ activity, isNotification = false, onMarkRead,
       {isNotification && !activity.read && onMarkRead && (
         <button
           onClick={handleMarkRead}
-          className="p-1.5 rounded-sm hover:bg-[#333] transition-colors"
+          className="p-1.5 rounded-none hover:bg-[#333] transition-colors"
           title="Mark as read"
         >
           <CheckCircle className="w-4 h-4 text-gray-500 hover:text-green-500" />
@@ -220,7 +220,7 @@ const FilterTab = React.memo(({ active, onClick, children, count }) => (
   <button
     onClick={onClick}
     className={`
-      relative px-3 py-1.5 rounded-sm text-xs font-bold transition-all
+      relative px-3 py-1.5 rounded-none text-xs font-bold transition-all
       ${active ? 'bg-yellow-500 text-black' : 'bg-[#222] text-gray-400 hover:bg-[#333]'}
     `}
   >
@@ -228,7 +228,7 @@ const FilterTab = React.memo(({ active, onClick, children, count }) => (
     {count > 0 && (
       <span
         className={`
-        absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-sm text-[10px] flex items-center justify-center
+        absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-none text-[10px] flex items-center justify-center
         ${active ? 'bg-black text-yellow-500' : 'bg-yellow-500 text-black'}
       `}
       >
@@ -321,12 +321,12 @@ const LeagueActivityFeed = ({
 
   if (isLoading && filteredItems.length === 0) {
     return (
-      <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4">
+      <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-4">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-sm bg-[#333] animate-pulse" />
+          <div className="w-8 h-8 rounded-none bg-[#333] animate-pulse" />
           <div className="flex-1 space-y-2">
-            <div className="h-4 w-32 bg-[#333] rounded-sm animate-pulse" />
-            <div className="h-3 w-48 bg-[#333] rounded-sm animate-pulse" />
+            <div className="h-4 w-32 bg-[#333] rounded-none animate-pulse" />
+            <div className="h-3 w-48 bg-[#333] rounded-none animate-pulse" />
           </div>
         </div>
       </div>
@@ -334,14 +334,14 @@ const LeagueActivityFeed = ({
   }
 
   return (
-    <div className={`bg-[#1a1a1a] border border-[#333] rounded-sm ${compact ? 'p-3' : 'p-4'}`}>
+    <div className={`bg-[#1a1a1a] border border-[#333] rounded-none ${compact ? 'p-3' : 'p-4'}`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Bell className="w-4 h-4 text-yellow-500" />
           <h3 className="text-sm font-bold text-white">Activity Feed</h3>
           {leagueUnreadCount > 0 && (
-            <span className="px-2 py-0.5 rounded-sm bg-yellow-500/10 text-yellow-500 text-xs font-bold">
+            <span className="px-2 py-0.5 rounded-none bg-yellow-500/10 text-yellow-500 text-xs font-bold">
               {leagueUnreadCount} new
             </span>
           )}
@@ -455,7 +455,7 @@ export const NotificationDropdown = ({
       initial={{ opacity: 0, y: -10, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -10, scale: 0.95 }}
-      className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto bg-[#1a1a1a] border border-[#333] rounded-sm z-50"
+      className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto bg-[#1a1a1a] border border-[#333] rounded-none z-50"
     >
       {/* Header */}
       <div className="sticky top-0 bg-[#1a1a1a] p-3 border-b border-[#333] flex items-center justify-between">
@@ -463,7 +463,7 @@ export const NotificationDropdown = ({
           <Bell className="w-4 h-4 text-yellow-500" />
           <span className="font-bold text-white">Notifications</span>
           {unreadCount > 0 && (
-            <span className="px-1.5 py-0.5 rounded-sm bg-yellow-500 text-black text-xs font-bold">
+            <span className="px-1.5 py-0.5 rounded-none bg-yellow-500 text-black text-xs font-bold">
               {unreadCount}
             </span>
           )}
@@ -474,7 +474,7 @@ export const NotificationDropdown = ({
               Mark all read
             </button>
           )}
-          <button onClick={onClose} className="p-1 hover:bg-[#333] rounded-sm">
+          <button onClick={onClose} className="p-1 hover:bg-[#333] rounded-none">
             <X className="w-4 h-4 text-gray-500" />
           </button>
         </div>
@@ -515,7 +515,7 @@ export const RivalryBadge = ({ rivalry, compact = false }) => {
 
   if (compact) {
     return (
-      <div className="flex items-center gap-1 px-2 py-0.5 rounded-sm bg-red-500/10 text-red-500 text-xs">
+      <div className="flex items-center gap-1 px-2 py-0.5 rounded-none bg-red-500/10 text-red-500 text-xs">
         <Flame className="w-3 h-3" />
         <span>{rivalry.matchupCount}x</span>
       </div>
@@ -523,7 +523,7 @@ export const RivalryBadge = ({ rivalry, compact = false }) => {
   }
 
   return (
-    <div className="p-3 rounded-sm bg-red-500/10 border border-red-500/20">
+    <div className="p-3 rounded-none bg-red-500/10 border border-red-500/20">
       <div className="flex items-center gap-2 mb-2">
         <Flame className="w-4 h-4 text-red-500" />
         <span className="font-bold text-red-500 text-sm">Rivalry</span>
@@ -553,9 +553,9 @@ export const RivalryBadge = ({ rivalry, compact = false }) => {
         </div>
       </div>
 
-      <div className="mt-2 h-1 rounded-sm bg-[#222] overflow-hidden">
+      <div className="mt-2 h-1 rounded-none bg-[#222] overflow-hidden">
         <div
-          className={`h-full rounded-sm transition-all ${
+          className={`h-full rounded-none transition-all ${
             userLeading ? 'bg-green-500' : tied ? 'bg-gray-500' : 'bg-red-500'
           }`}
           style={{

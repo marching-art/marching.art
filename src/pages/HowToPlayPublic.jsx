@@ -48,7 +48,7 @@ const FAQ_SCHEMA = {
 
 const SectionHeading = ({ icon: Icon, children }) => (
   <h2 className="flex items-center gap-3 text-xl font-bold text-white mb-4">
-    <span className="w-8 h-8 bg-[#0057B8]/20 rounded-sm flex items-center justify-center flex-shrink-0">
+    <span className="w-8 h-8 bg-[#0057B8]/20 rounded-none flex items-center justify-center flex-shrink-0">
       <Icon className="w-4 h-4 text-[#0057B8]" />
     </span>
     {children}
@@ -86,7 +86,7 @@ const HowToPlayPublic = () => {
             </Link>
             <Link
               to="/register"
-              className="px-3 py-1.5 bg-[#0057B8] text-white font-bold text-xs uppercase tracking-wider rounded-sm hover:bg-[#0066d6] transition-colors"
+              className="px-3 py-1.5 bg-[#0057B8] text-white font-bold text-xs uppercase tracking-wider rounded-none hover:bg-[#0066d6] transition-colors"
             >
               Create Your Corps
             </Link>
@@ -155,7 +155,7 @@ const HowToPlayPublic = () => {
           </p>
           <div className="grid sm:grid-cols-2 gap-2">
             {CAPTIONS.map((cap) => (
-              <div key={cap.abbr} className="bg-[#111] border border-white/10 rounded-sm p-3">
+              <div key={cap.abbr} className="bg-[#111] border border-white/10 rounded-none p-3">
                 <p className="text-sm text-white">
                   <span className="font-bold text-[#0057B8] mr-2">{cap.abbr}</span>
                   {cap.name}
@@ -177,7 +177,7 @@ const HowToPlayPublic = () => {
             {CLASSES.map((cls) => (
               <div
                 key={cls.id}
-                className="bg-[#111] border border-white/10 rounded-sm p-3 flex items-center justify-between gap-3"
+                className="bg-[#111] border border-white/10 rounded-none p-3 flex items-center justify-between gap-3"
               >
                 <div>
                   <p className="text-sm font-bold text-white">{cls.name}</p>
@@ -196,7 +196,7 @@ const HowToPlayPublic = () => {
         <section className="mb-10">
           <SectionHeading icon={Calendar}>Seasons Run Year-Round</SectionHeading>
           <div className="space-y-3">
-            <div className="bg-[#111] border border-[#0057B8]/30 rounded-sm p-4">
+            <div className="bg-[#111] border border-[#0057B8]/30 rounded-none p-4">
               <p className="text-sm font-bold text-white mb-1">
                 Live Season{' '}
                 <span className="text-xs font-normal text-gray-500 ml-2">June – August</span>
@@ -206,7 +206,7 @@ const HowToPlayPublic = () => {
                 competition results night by night, through Finals in August.
               </p>
             </div>
-            <div className="bg-[#111] border border-purple-500/30 rounded-sm p-4">
+            <div className="bg-[#111] border border-purple-500/30 rounded-none p-4">
               <p className="text-sm font-bold text-white mb-1">
                 Off-Season{' '}
                 <span className="text-xs font-normal text-gray-500 ml-2">August – May</span>
@@ -260,7 +260,7 @@ const HowToPlayPublic = () => {
           <SectionHeading icon={Book}>New to Drum Corps? Key Terms</SectionHeading>
           <dl className="space-y-3">
             {GLOSSARY.map((item) => (
-              <div key={item.term} className="bg-[#111] border border-white/10 rounded-sm p-3">
+              <div key={item.term} className="bg-[#111] border border-white/10 rounded-none p-3">
                 <dt className="text-sm font-bold text-[#0057B8]">{item.term}</dt>
                 <dd className="text-sm text-gray-400 mt-1">{item.def}</dd>
               </div>
@@ -282,7 +282,7 @@ const HowToPlayPublic = () => {
         </section>
 
         {/* CTA */}
-        <section className="bg-[#0057B8]/10 border border-[#0057B8]/30 rounded-sm p-6 text-center">
+        <section className="bg-[#0057B8]/10 border border-[#0057B8]/30 rounded-none p-6 text-center">
           <h2 className="text-xl font-bold text-white mb-2">Ready to Direct Your Own Corps?</h2>
           <p className="text-sm text-gray-400 mb-4">
             Join directors worldwide playing fantasy drum corps — free, year-round, no downloads.
@@ -290,14 +290,14 @@ const HowToPlayPublic = () => {
           <div className="flex flex-wrap items-center justify-center gap-3">
             <Link
               to="/register"
-              className="inline-flex items-center gap-2 min-h-[44px] px-6 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider rounded-sm hover:bg-[#0066d6] transition-colors"
+              className="inline-flex items-center gap-2 min-h-[44px] px-6 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider rounded-none hover:bg-[#0066d6] transition-colors"
             >
               Create Your Corps
               <ChevronRight className="w-4 h-4" />
             </Link>
             <Link
               to="/preview"
-              className="inline-flex items-center gap-2 min-h-[44px] px-5 border border-yellow-500/50 text-yellow-500 font-bold text-sm uppercase tracking-wider rounded-sm hover:bg-yellow-500/10 transition-colors"
+              className="inline-flex items-center gap-2 min-h-[44px] px-5 border border-yellow-500/50 text-yellow-500 font-bold text-sm uppercase tracking-wider rounded-none hover:bg-yellow-500/10 transition-colors"
             >
               <Play className="w-4 h-4" />
               Try the Demo

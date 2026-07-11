@@ -51,7 +51,7 @@ export default function PodiumRegistration({ podium }) {
 
   if (done) {
     return (
-      <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-6 text-center space-y-2">
+      <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-6 text-center space-y-2">
         <div className="text-lg font-bold text-white">{done.corpsName} is on tour.</div>
         <div className="text-xs text-gray-400">
           Competing in{' '}
@@ -65,7 +65,7 @@ export default function PodiumRegistration({ podium }) {
   }
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4 md:p-6 space-y-5 max-w-2xl">
+    <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-4 md:p-6 space-y-5 max-w-2xl">
       {/* Stepper */}
       <div className="flex items-center gap-2">
         {STEPS.map((label, index) => (
@@ -100,14 +100,14 @@ export default function PodiumRegistration({ podium }) {
             onChange={(e) => setCorpsName(e.target.value)}
             maxLength={40}
             placeholder="Corps name"
-            className="w-full bg-[#111] border border-[#333] rounded-sm px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-[#0057B8] outline-none"
+            className="w-full bg-[#111] border border-[#333] rounded-none px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-[#0057B8] outline-none"
           />
           <input
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             maxLength={80}
             placeholder="Hometown (e.g., Canton, Ohio) — your tour starts here"
-            className="w-full bg-[#111] border border-[#333] rounded-sm px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-[#0057B8] outline-none"
+            className="w-full bg-[#111] border border-[#333] rounded-none px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-[#0057B8] outline-none"
           />
         </div>
       )}
@@ -124,7 +124,7 @@ export default function PodiumRegistration({ podium }) {
             maxLength={200}
             rows={3}
             placeholder={'e.g., "The Weight of Water" — Debussy, Glass, and a flooded stage'}
-            className="w-full bg-[#111] border border-[#333] rounded-sm px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-[#0057B8] outline-none resize-none"
+            className="w-full bg-[#111] border border-[#333] rounded-none px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-[#0057B8] outline-none resize-none"
           />
         </div>
       )}
@@ -174,7 +174,7 @@ export default function PodiumRegistration({ podium }) {
                 <button
                   key={preset.id}
                   onClick={() => setAuditionPreset(preset.id)}
-                  className={`text-[10px] font-bold uppercase px-3 py-1.5 rounded-sm border transition-colors press-feedback ${
+                  className={`text-[10px] font-bold uppercase px-3 py-1.5 rounded-none border transition-colors press-feedback ${
                     auditionPreset === preset.id
                       ? 'border-[#0057B8] bg-[#0057B8]/15 text-white'
                       : 'border-[#333] text-gray-400 hover:text-white'
@@ -221,7 +221,7 @@ export default function PodiumRegistration({ podium }) {
                 onChange={(e) =>
                   setBudgetCommitment(Math.max(0, Math.floor(Number(e.target.value) || 0)))
                 }
-                className="w-28 bg-[#111] border border-[#333] rounded-sm px-3 py-2 text-sm text-white focus:border-[#0057B8] outline-none tabular-nums"
+                className="w-28 bg-[#111] border border-[#333] rounded-none px-3 py-2 text-sm text-white focus:border-[#0057B8] outline-none tabular-nums"
               />
               <span className="text-[10px] text-gray-500">
                 CorpsCoin into your Corps Budget — food, travel, staff. Never scores. ~1,000 CC
@@ -239,7 +239,7 @@ export default function PodiumRegistration({ podium }) {
         <button
           onClick={() => setStep((s) => Math.max(0, s - 1))}
           disabled={step === 0 || submitting}
-          className="flex items-center gap-1 text-[10px] font-bold uppercase px-3 py-2 rounded-sm border border-[#333] text-gray-400 hover:text-white disabled:opacity-40 press-feedback"
+          className="flex items-center gap-1 text-[10px] font-bold uppercase px-3 py-2 rounded-none border border-[#333] text-gray-400 hover:text-white disabled:opacity-40 press-feedback"
         >
           <ChevronLeft className="w-3 h-3" /> Back
         </button>
@@ -247,7 +247,7 @@ export default function PodiumRegistration({ podium }) {
           <button
             onClick={() => setStep((s) => s + 1)}
             disabled={!canNext}
-            className="flex items-center gap-1 text-[10px] font-bold uppercase px-4 py-2 rounded-sm bg-[#0057B8] text-white hover:bg-[#0066d6] disabled:opacity-40 press-feedback"
+            className="flex items-center gap-1 text-[10px] font-bold uppercase px-4 py-2 rounded-none bg-[#0057B8] text-white hover:bg-[#0066d6] disabled:opacity-40 press-feedback"
           >
             Next <ChevronRight className="w-3 h-3" />
           </button>
@@ -255,7 +255,7 @@ export default function PodiumRegistration({ podium }) {
           <button
             onClick={submit}
             disabled={submitting}
-            className="flex items-center gap-2 text-[10px] font-bold uppercase px-4 py-2 rounded-sm bg-[#0057B8] text-white hover:bg-[#0066d6] disabled:opacity-60 press-feedback"
+            className="flex items-center gap-2 text-[10px] font-bold uppercase px-4 py-2 rounded-none bg-[#0057B8] text-white hover:bg-[#0066d6] disabled:opacity-60 press-feedback"
           >
             {submitting && <Loader2 className="w-3 h-3 animate-spin" />} Found the corps
           </button>

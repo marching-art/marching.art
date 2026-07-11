@@ -31,7 +31,7 @@ const ArticleSiteHeader = () => {
     <header className="flex-shrink-0 h-14 bg-[#1a1a1a] border-b border-[#333]">
       <div className="h-full flex items-center px-4 lg:px-6">
         <Link to="/" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-sm overflow-hidden">
+          <div className="w-8 h-8 rounded-none overflow-hidden">
             <img src="/logo192.svg" alt="marching.art" className="w-full h-full object-cover" />
           </div>
           <span className="text-base font-bold text-white tracking-wider">marching.art</span>
@@ -47,7 +47,7 @@ const ArticleSiteHeader = () => {
             <Link
               to="/dashboard"
               aria-label={`Dashboard — ${(profile.corpsCoin || 0).toLocaleString()} coins, level ${profile.xpLevel || 1}`}
-              className="lg:hidden flex items-center gap-2 min-h-[44px] pl-3 pr-2 rounded-lg bg-white/[0.04] border border-[#333] active:scale-95 transition-all duration-150 press-feedback"
+              className="lg:hidden flex items-center gap-2 min-h-[44px] pl-3 pr-2 rounded-none bg-white/[0.04] border border-[#333] active:scale-95 transition-all duration-150 press-feedback"
             >
               <span className="flex items-center gap-1 text-sm font-bold text-yellow-500 font-data tabular-nums">
                 <Coins className="w-3.5 h-3.5" />
@@ -77,7 +77,7 @@ const ArticleSiteHeader = () => {
                 href="https://discord.gg/YvFRJ97A5H"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 text-gray-400 hover:text-[#5865F2] hover:bg-white/10 rounded-sm transition-colors press-feedback flex items-center"
+                className="p-2 text-gray-400 hover:text-[#5865F2] hover:bg-white/10 rounded-none transition-colors press-feedback flex items-center"
                 title="Join our Discord"
                 aria-label="Join our Discord"
               >
@@ -105,7 +105,7 @@ const ArticleSiteHeader = () => {
               href="https://discord.gg/YvFRJ97A5H"
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 text-gray-400 hover:text-[#5865F2] hover:bg-white/10 rounded-sm transition-colors press-feedback flex items-center"
+              className="p-2 text-gray-400 hover:text-[#5865F2] hover:bg-white/10 rounded-none transition-colors press-feedback flex items-center"
               title="Join our Discord"
               aria-label="Join our Discord"
             >

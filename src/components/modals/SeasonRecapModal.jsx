@@ -47,7 +47,7 @@ const SeasonRecapModal = ({ recap, onClose }) => {
         aria-labelledby="modal-title-season-recap"
       >
         <div
-          className="w-full max-w-lg max-h-[85dvh] bg-[#1a1a1a] border border-yellow-500/30 rounded-sm flex flex-col"
+          className="w-full max-w-lg max-h-[85dvh] bg-[#1a1a1a] border border-yellow-500/30 rounded-none flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}

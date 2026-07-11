@@ -59,7 +59,7 @@ export const BannerModal = ({ open, message, purchasing, onMessageChange, onClos
             initial={{ scale: 0.98, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.98, opacity: 0 }}
-            className="bg-[#1a1a1a] border border-[#333] rounded-sm max-w-md w-full overflow-hidden"
+            className="bg-[#1a1a1a] border border-[#333] rounded-none max-w-md w-full overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
@@ -88,7 +88,7 @@ export const BannerModal = ({ open, message, purchasing, onMessageChange, onClos
                 maxLength={HALL_BANNER_MAX_LENGTH}
                 rows={2}
                 placeholder="e.g. Forged in the summer of 2026."
-                className="w-full bg-[#111] border border-[#333] rounded-sm px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] resize-none"
+                className="w-full bg-[#111] border border-[#333] rounded-none px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] resize-none"
               />
               <div className="flex items-center justify-between mt-1 mb-4">
                 <span className="text-[10px] text-gray-500 font-data tabular-nums">
@@ -104,14 +104,14 @@ export const BannerModal = ({ open, message, purchasing, onMessageChange, onClos
                 <button
                   onClick={onClose}
                   disabled={purchasing}
-                  className="flex-1 py-2.5 px-4 bg-[#222] hover:bg-[#333] border border-[#333] text-white text-xs font-bold uppercase tracking-wider rounded-sm transition-colors disabled:opacity-50"
+                  className="flex-1 py-2.5 px-4 bg-[#222] hover:bg-[#333] border border-[#333] text-white text-xs font-bold uppercase tracking-wider rounded-none transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={onConfirm}
                   disabled={purchasing || !message.trim()}
-                  className="flex-1 py-2.5 px-4 bg-yellow-500 hover:bg-yellow-400 text-black text-xs font-bold uppercase tracking-wider rounded-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 py-2.5 px-4 bg-yellow-500 hover:bg-yellow-400 text-black text-xs font-bold uppercase tracking-wider rounded-none transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <Flag className="w-3.5 h-3.5" />
                   {purchasing ? 'Hanging…' : 'Hang Banner'}

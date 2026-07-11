@@ -277,7 +277,7 @@ const ScoresSpreadsheet = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-yellow-500/20 rounded-sm">
+          <div className="p-1.5 bg-yellow-500/20 rounded-none">
             <Table className="w-4 h-4 text-yellow-500" />
           </div>
           <div>
@@ -297,13 +297,13 @@ const ScoresSpreadsheet = () => {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex flex-wrap gap-0.5 p-0.5 bg-charcoal-900/50 rounded-sm">
+      <div className="flex flex-wrap gap-0.5 p-0.5 bg-charcoal-900/50 rounded-none">
         {/* Individual Caption Tabs */}
         {INDIVIDUAL_CAPTIONS.map((caption) => (
           <button
             key={caption}
             onClick={() => setActiveTab(caption)}
-            className={`px-2 py-1 text-[10px] font-mono rounded transition-all ${
+            className={`px-2 py-1 text-[10px] font-mono rounded-none transition-all ${
               activeTab === caption
                 ? 'bg-amber-400 text-neutral-900 font-bold'
                 : 'text-gray-400 hover:text-white hover:bg-charcoal-800'
@@ -321,7 +321,7 @@ const ScoresSpreadsheet = () => {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-2 py-1 text-[10px] font-mono rounded transition-all ${
+            className={`px-2 py-1 text-[10px] font-mono rounded-none transition-all ${
               activeTab === tab.id
                 ? 'bg-amber-400 text-neutral-900 font-bold'
                 : 'text-gray-400 hover:text-white hover:bg-charcoal-800'
@@ -337,7 +337,7 @@ const ScoresSpreadsheet = () => {
         <button
           onClick={handleScrollLeft}
           disabled={!canScrollLeft}
-          className={`p-1 rounded transition-all ${
+          className={`p-1 rounded-none transition-all ${
             canScrollLeft
               ? 'bg-charcoal-800 text-gray-300 hover:bg-charcoal-700'
               : 'bg-charcoal-900/50 text-gray-500/30 cursor-not-allowed'
@@ -352,7 +352,7 @@ const ScoresSpreadsheet = () => {
         <button
           onClick={handleScrollRight}
           disabled={!canScrollRight}
-          className={`p-1 rounded transition-all ${
+          className={`p-1 rounded-none transition-all ${
             canScrollRight
               ? 'bg-charcoal-800 text-gray-300 hover:bg-charcoal-700'
               : 'bg-charcoal-900/50 text-gray-500/30 cursor-not-allowed'
@@ -363,7 +363,7 @@ const ScoresSpreadsheet = () => {
       </div>
 
       {/* Spreadsheet Table */}
-      <div className="overflow-x-auto border border-white/20 rounded">
+      <div className="overflow-x-auto border border-white/20 rounded-none">
         <table className="w-full border-collapse text-[10px]">
           {/* Header Row */}
           <thead>
@@ -474,16 +474,16 @@ const ScoresSpreadsheet = () => {
       <div className="flex items-center gap-3 text-[9px] text-gray-500/60">
         <span className="font-mono">Legend:</span>
         <span className="flex items-center gap-0.5">
-          <span className="w-2.5 h-2.5 rounded-sm bg-green-900/30" /> 90%+
+          <span className="w-2.5 h-2.5 rounded-none bg-green-900/30" /> 90%+
         </span>
         <span className="flex items-center gap-0.5">
-          <span className="w-2.5 h-2.5 rounded-sm bg-green-900/20" /> 80-90%
+          <span className="w-2.5 h-2.5 rounded-none bg-green-900/20" /> 80-90%
         </span>
         <span className="flex items-center gap-0.5">
-          <span className="w-2.5 h-2.5 rounded-sm bg-yellow-900/20" /> 70-80%
+          <span className="w-2.5 h-2.5 rounded-none bg-yellow-900/20" /> 70-80%
         </span>
         <span className="flex items-center gap-0.5">
-          <span className="w-2.5 h-2.5 rounded-sm bg-red-900/20" /> &lt;50%
+          <span className="w-2.5 h-2.5 rounded-none bg-red-900/20" /> &lt;50%
         </span>
       </div>
     </div>

@@ -61,7 +61,7 @@ const CorpsOptionRow = ({ corps, isSelected, onSelect, disabled, captionHotStatu
     >
       <div className="flex items-center gap-2 min-w-0 flex-1">
         <div
-          className={`w-5 h-5 border-2 flex items-center justify-center flex-shrink-0 rounded-sm ${
+          className={`w-5 h-5 border-2 flex items-center justify-center flex-shrink-0 rounded-none ${
             isSelected ? 'bg-[#0057B8] border-[#0057B8]' : 'border-[#444]'
           }`}
         >
@@ -73,7 +73,7 @@ const CorpsOptionRow = ({ corps, isSelected, onSelect, disabled, captionHotStatu
         </span>
         {captionHotStatus?.isHot && (
           <span
-            className="flex items-center gap-0.5 px-1 py-0.5 bg-orange-500/20 text-orange-400 text-[10px] rounded"
+            className="flex items-center gap-0.5 px-1 py-0.5 bg-orange-500/20 text-orange-400 text-[10px] rounded-none"
             title={
               captionHotStatus.improvement > 0
                 ? `Up ${captionHotStatus.improvement}% in this caption recently`
@@ -120,7 +120,7 @@ const CorpsSelectionList = ({
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Search corps or year..."
           aria-label="Search available corps"
-          className="w-full h-11 pl-9 pr-9 bg-[#0a0a0a] border border-[#333] rounded-sm text-base text-white placeholder-gray-500 focus:border-[#0057B8] focus:outline-none"
+          className="w-full h-11 pl-9 pr-9 bg-[#0a0a0a] border border-[#333] rounded-none text-base text-white placeholder-gray-500 focus:border-[#0057B8] focus:outline-none"
         />
         {searchValue && (
           <button
@@ -187,7 +187,7 @@ const TemplateModal = ({ isOpen, onClose, templates, onSave, onLoad, onDelete, c
       aria-label="Lineup templates"
     >
       <div
-        className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-sm"
+        className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-none"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
@@ -369,7 +369,7 @@ const DraftHelper = ({ suggestions, onSelectSuggestion, selections, activeCaptio
 const TradesRemainingIndicator = ({ tradesRemaining, isInitialSetup, changeInfo }) => {
   if (isInitialSetup) {
     return (
-      <div className="flex items-center gap-1.5 px-2 py-1 bg-green-500/10 border border-green-500/30 rounded">
+      <div className="flex items-center gap-1.5 px-2 py-1 bg-green-500/10 border border-green-500/30 rounded-none">
         <RefreshCw className="w-3 h-3 text-green-400" />
         <span className="text-[10px] font-bold text-green-400 uppercase tracking-wider">
           Initial Setup - Unlimited Changes
@@ -385,7 +385,7 @@ const TradesRemainingIndicator = ({ tradesRemaining, isInitialSetup, changeInfo 
   if (changeInfo.status === 'locked') {
     return (
       <div
-        className="flex items-center gap-1.5 px-2 py-1 bg-yellow-500/10 border border-yellow-500/30 rounded"
+        className="flex items-center gap-1.5 px-2 py-1 bg-yellow-500/10 border border-yellow-500/30 rounded-none"
         title={`Caption changes reopen once scores are processed (~${formatEtDayTime(changeInfo.reopensAt)})`}
       >
         <Lock className="w-3 h-3 text-yellow-400" />
@@ -403,7 +403,7 @@ const TradesRemainingIndicator = ({ tradesRemaining, isInitialSetup, changeInfo 
     const isBlackout = changeInfo.phase === 'blackout';
     return (
       <div
-        className="flex items-center gap-1.5 px-2 py-1 bg-red-500/10 border border-red-500/30 rounded"
+        className="flex items-center gap-1.5 px-2 py-1 bg-red-500/10 border border-red-500/30 rounded-none"
         title={
           isBlackout
             ? `No caption changes on Days 43-44. Championship changes (${changeInfo.nextLimit}) open ${formatEtDayTime(changeInfo.reopensAt)}`
@@ -426,7 +426,7 @@ const TradesRemainingIndicator = ({ tradesRemaining, isInitialSetup, changeInfo 
   if (changeInfo.phase === 'unlimited') {
     return (
       <div
-        className="flex items-center gap-1.5 px-2 py-1 bg-[#0057B8]/10 border border-[#0057B8]/30 rounded"
+        className="flex items-center gap-1.5 px-2 py-1 bg-[#0057B8]/10 border border-[#0057B8]/30 rounded-none"
         title={
           changeInfo.unlimitedEndsAt
             ? `Weekly limits begin ${formatEtDayTime(changeInfo.unlimitedEndsAt)}`
@@ -455,7 +455,7 @@ const TradesRemainingIndicator = ({ tradesRemaining, isInitialSetup, changeInfo 
   if (isChampionship) {
     return (
       <div
-        className={`flex items-center gap-1.5 px-2 py-1 border rounded ${colorClass}`}
+        className={`flex items-center gap-1.5 px-2 py-1 border rounded-none ${colorClass}`}
         title={`${changeInfo.tradeLimit} caption changes total for Championship Week (Days 45-49). Changes lock nightly at ${formatEtDayTime(changeInfo.locksAt)} until scores process.`}
       >
         <RefreshCw className="w-3 h-3" />
@@ -473,7 +473,7 @@ const TradesRemainingIndicator = ({ tradesRemaining, isInitialSetup, changeInfo 
 
   return (
     <div
-      className={`flex items-center gap-1.5 px-2 py-1 border rounded ${colorClass}`}
+      className={`flex items-center gap-1.5 px-2 py-1 border rounded-none ${colorClass}`}
       title={
         changeInfo.resetsAt
           ? `Change limit resets ${formatEtDayTime(changeInfo.resetsAt)}. Changes lock ${formatEtDayTime(changeInfo.locksAt)} until scores process.`
@@ -511,7 +511,7 @@ const CaptionButton = ({ caption, selected, isActive, onClick, categoryColor }) 
       }`}
     >
       <div className="flex items-center gap-2 min-w-0">
-        <div className={`w-1.5 h-4 rounded-sm ${categoryColor}`} />
+        <div className={`w-1.5 h-4 rounded-none ${categoryColor}`} />
         <div className="text-left min-w-0">
           <div className="text-xs font-bold text-white">{caption.id}</div>
           <div className="text-[10px] text-gray-500 truncate">{caption.name}</div>

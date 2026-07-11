@@ -85,7 +85,7 @@ const Login = () => {
             >
               {/* Logo & Title */}
               <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl overflow-hidden mb-4 bg-[#1a1a1a] border border-[#333] aspect-avatar">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-none overflow-hidden mb-4 bg-[#1a1a1a] border border-[#333] aspect-avatar">
                   <img
                     src="/logo192.svg"
                     alt="marching.art"
@@ -102,7 +102,7 @@ const Login = () => {
                 <m.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg"
+                  className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-none"
                 >
                   <div className="flex items-start gap-3">
                     <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
@@ -126,7 +126,7 @@ const Login = () => {
                     <input
                       id="login-email"
                       type="email"
-                      className="w-full h-12 pl-11 pr-4 bg-[#0a0a0a] border border-[#333] rounded-sm text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
+                      className="w-full h-12 pl-11 pr-4 bg-[#0a0a0a] border border-[#333] rounded-none text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
                       placeholder="director@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -150,7 +150,7 @@ const Login = () => {
                     <input
                       id="login-password"
                       type={showPassword ? 'text' : 'password'}
-                      className="w-full h-12 pl-11 pr-12 bg-[#0a0a0a] border border-[#333] rounded-sm text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
+                      className="w-full h-12 pl-11 pr-12 bg-[#0a0a0a] border border-[#333] rounded-none text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
                       placeholder="Enter your password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
@@ -174,7 +174,7 @@ const Login = () => {
                   <label className="flex items-center gap-3 cursor-pointer min-h-touch">
                     <input
                       type="checkbox"
-                      className="w-5 h-5 rounded border-[#333] bg-[#0a0a0a] text-[#0057B8] focus:ring-[#0057B8] focus:ring-offset-0"
+                      className="w-5 h-5 rounded-none border-[#333] bg-[#0a0a0a] text-[#0057B8] focus:ring-[#0057B8] focus:ring-offset-0"
                     />
                     <span className="text-base text-gray-400">Remember me</span>
                   </label>
@@ -189,7 +189,7 @@ const Login = () => {
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  className="w-full h-14 bg-[#0057B8] text-white font-bold text-base uppercase tracking-wider flex items-center justify-center hover:bg-[#0066d6] active:bg-[#004a9e] transition-all duration-150 press-feedback-strong disabled:opacity-50 disabled:cursor-not-allowed rounded-sm"
+                  className="w-full h-14 bg-[#0057B8] text-white font-bold text-base uppercase tracking-wider flex items-center justify-center hover:bg-[#0066d6] active:bg-[#004a9e] transition-all duration-150 press-feedback-strong disabled:opacity-50 disabled:cursor-not-allowed rounded-none"
                   disabled={loading}
                 >
                   {loading ? (

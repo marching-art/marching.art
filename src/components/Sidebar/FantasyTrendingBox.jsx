@@ -4,7 +4,7 @@ import { Flame, TrendingUp, TrendingDown, ChevronRight } from 'lucide-react';
 
 const FantasyTrendingBox = ({ trendingPlayers, loading, dayLabel }) => {
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
+    <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
       {/* Header */}
       <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
         <h3 className="text-[10px] font-bold text-orange-400 uppercase tracking-wider flex items-center gap-2">
@@ -22,10 +22,10 @@ const FantasyTrendingBox = ({ trendingPlayers, loading, dayLabel }) => {
             {[...Array(4)].map((_, idx) => (
               <div key={idx} className="flex items-center justify-between px-4 py-2.5">
                 <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 skeleton rounded-sm" />
-                  <div className="h-4 w-24 skeleton rounded-sm" />
+                  <div className="w-5 h-5 skeleton rounded-none" />
+                  <div className="h-4 w-24 skeleton rounded-none" />
                 </div>
-                <div className="h-4 w-12 skeleton rounded-sm" />
+                <div className="h-4 w-12 skeleton rounded-none" />
               </div>
             ))}
           </div>
@@ -68,7 +68,7 @@ const FantasyTrendingBox = ({ trendingPlayers, loading, dayLabel }) => {
       <div className="px-2 py-1.5 border-t border-[#333] bg-[#111]">
         <Link
           to="/scores"
-          className="min-h-[44px] px-2 text-xs text-orange-400 hover:text-orange-300 active:text-orange-500 font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 press-feedback rounded-sm"
+          className="min-h-[44px] px-2 text-xs text-orange-400 hover:text-orange-300 active:text-orange-500 font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 press-feedback rounded-none"
         >
           View All Trends
           <ChevronRight className="w-4 h-4" />

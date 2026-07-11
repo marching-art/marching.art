@@ -78,7 +78,7 @@ export const UrgencyBadge = ({ className = '' }) => {
     <m.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-sm border ${styles.container} ${className}`}
+      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-none border ${styles.container} ${className}`}
     >
       <div className={`${primary.pulse ? styles.pulse : ''}`}>
         <Icon className={`w-4 h-4 ${styles.icon.split(' ')[1]}`} />
@@ -112,11 +112,14 @@ const UrgencyBanner = ({ showCTA = true, maxTriggers = 2, className = '' }) => {
         const Icon = ICONS[trigger.icon] || Activity;
 
         return (
-          <div key={trigger.id} className={`rounded-sm border overflow-hidden ${styles.container}`}>
+          <div
+            key={trigger.id}
+            className={`rounded-none border overflow-hidden ${styles.container}`}
+          >
             <div className="px-3 py-2.5 flex items-center gap-3">
               {/* Icon */}
               <div
-                className={`flex-shrink-0 w-8 h-8 rounded-sm flex items-center justify-center ${styles.icon} ${trigger.pulse ? styles.pulse : ''}`}
+                className={`flex-shrink-0 w-8 h-8 rounded-none flex items-center justify-center ${styles.icon} ${trigger.pulse ? styles.pulse : ''}`}
               >
                 <Icon className="w-4 h-4" />
               </div>

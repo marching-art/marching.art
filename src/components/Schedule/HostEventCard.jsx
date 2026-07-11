@@ -133,11 +133,11 @@ export default function HostEventCard({ seasonUid }) {
   };
 
   const inputClass =
-    'w-full bg-[#0f0f0f] border border-[#333] rounded-sm px-2 py-1.5 text-xs text-white ' +
+    'w-full bg-[#0f0f0f] border border-[#333] rounded-none px-2 py-1.5 text-xs text-white ' +
     'placeholder-gray-600 focus:border-[#0057B8] focus:outline-none';
 
   return (
-    <div className="mx-3 my-4 bg-[#1a1a1a] border border-[#333] rounded-sm p-4 space-y-3">
+    <div className="mx-3 my-4 bg-[#1a1a1a] border border-[#333] rounded-none p-4 space-y-3">
       <button
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between press-feedback"
@@ -161,8 +161,8 @@ export default function HostEventCard({ seasonUid }) {
             successful High School events open the College Bowl, 3 successful College Bowls open the
             NFL Stadium. Days {minDay}&ndash;{HOSTING_RULES.lastHostableDay}; the majors' days (
             {HOSTING_RULES.majorDays.join(', ')}) are exclusive. One show per director per season.
-            Pick a host city from the tour map &mdash; cities already on the schedule are greyed out,
-            since each city hosts one show per season.
+            Pick a host city from the tour map &mdash; cities already on the schedule are greyed
+            out, since each city hosts one show per season.
           </p>
 
           {!hasCorps && (
@@ -196,7 +196,7 @@ export default function HostEventCard({ seasonUid }) {
                         } events (${progress})`
                       : `Success = ${t.successAttendance}+ corps attending`
                   }
-                  className={`text-left px-2 py-1.5 rounded-sm border press-feedback ${
+                  className={`text-left px-2 py-1.5 rounded-none border press-feedback ${
                     locked
                       ? 'border-[#2a2a2a] opacity-50 cursor-not-allowed'
                       : venueTier === t.id
@@ -256,7 +256,7 @@ export default function HostEventCard({ seasonUid }) {
                   )}
                 </div>
                 {venueListOpen && (
-                  <div className="absolute z-20 mt-1 w-full max-h-44 overflow-y-auto bg-[#0f0f0f] border border-[#333] rounded-sm shadow-lg">
+                  <div className="absolute z-20 mt-1 w-full max-h-44 overflow-y-auto bg-[#0f0f0f] border border-[#333] rounded-none shadow-lg">
                     {venueResults.length === 0 ? (
                       <div className="px-2 py-1.5 text-[10px] text-gray-600">
                         No matching city — try a nearby one.
@@ -319,7 +319,7 @@ export default function HostEventCard({ seasonUid }) {
                   !selectedVenue ||
                   corpsCoin < tier.rentalCC
                 }
-                className="px-3 py-1.5 rounded-sm text-[10px] font-bold uppercase tracking-wider
+                className="px-3 py-1.5 rounded-none text-[10px] font-bold uppercase tracking-wider
                   bg-[#c9a227] text-black disabled:bg-[#333] disabled:text-gray-600 press-feedback"
               >
                 {busy ? <Loader2 className="w-3 h-3 animate-spin inline" /> : 'Book Venue'}

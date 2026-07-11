@@ -102,7 +102,7 @@ const ControlBar = memo(
                   <button
                     key={classId}
                     onClick={() => onCreateCorps?.(classId)}
-                    className="flex-shrink-0 whitespace-nowrap text-[10px] font-bold uppercase px-3 min-h-touch rounded-sm text-gray-600 hover:text-gray-400 border border-dashed border-[#444] transition-colors press-feedback"
+                    className="flex-shrink-0 whitespace-nowrap text-[10px] font-bold uppercase px-3 min-h-touch rounded-none text-gray-600 hover:text-gray-400 border border-dashed border-[#444] transition-colors press-feedback"
                   >
                     {CLASS_SHORT_LABELS[classId]}
                   </button>
@@ -114,7 +114,7 @@ const ControlBar = memo(
                 <button
                   key={classId}
                   onClick={() => onSwitch(classId)}
-                  className={`flex-shrink-0 whitespace-nowrap text-[10px] font-bold uppercase px-3 min-h-touch rounded-sm transition-colors press-feedback ${
+                  className={`flex-shrink-0 whitespace-nowrap text-[10px] font-bold uppercase px-3 min-h-touch rounded-none transition-colors press-feedback ${
                     isActive
                       ? 'bg-[#0057B8] text-white'
                       : 'text-gray-500 hover:text-white hover:bg-white/5'
@@ -127,7 +127,7 @@ const ControlBar = memo(
             {podiumEnabled && (
               <button
                 onClick={() => onSwitch('podiumClass')}
-                className={`flex-shrink-0 whitespace-nowrap text-[10px] font-bold uppercase px-3 min-h-touch rounded-sm transition-colors press-feedback ${
+                className={`flex-shrink-0 whitespace-nowrap text-[10px] font-bold uppercase px-3 min-h-touch rounded-none transition-colors press-feedback ${
                   activeCorpsClass === 'podiumClass'
                     ? 'bg-[#8a6d1a] text-white'
                     : corps?.podiumClass
@@ -153,7 +153,7 @@ const ControlBar = memo(
             {streak > 0 && (
               <button
                 onClick={() => onStreakClick?.()}
-                className="flex items-center gap-1 press-feedback hover:bg-white/5 rounded-sm px-1 -mx-1"
+                className="flex items-center gap-1 press-feedback hover:bg-white/5 rounded-none px-1 -mx-1"
                 title={`${streak}-day login streak${getStreakMilestone(streak) ? ` — ${getStreakMilestone(streak)}` : ''} — tap for streak details`}
               >
                 <Flame
@@ -166,7 +166,7 @@ const ControlBar = memo(
                 </span>
                 {streak >= 7 && (
                   <span
-                    className={`text-[9px] font-bold px-1 py-0.5 rounded-sm ${
+                    className={`text-[9px] font-bold px-1 py-0.5 rounded-none ${
                       streak >= 100
                         ? 'bg-red-500/20 text-red-400'
                         : streak >= 30
@@ -191,10 +191,10 @@ const ControlBar = memo(
                 invisible) — opens the full Achievements page */}
             <button
               onClick={() => onLevelClick?.()}
-              className="flex items-center gap-1.5 press-feedback hover:bg-white/5 rounded-sm px-1 -mx-1"
+              className="flex items-center gap-1.5 press-feedback hover:bg-white/5 rounded-none px-1 -mx-1"
               title={`${xpProgress.current}/${xpProgress.needed} XP to Level ${xpProgress.nextLevel} — tap to view all achievements`}
             >
-              <span className="text-[10px] font-bold uppercase px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded-sm">
+              <span className="text-[10px] font-bold uppercase px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded-none">
                 Lvl {level}
               </span>
               <div
@@ -215,7 +215,7 @@ const ControlBar = memo(
             {/* CorpsCoin Wallet — opens transaction history + earning guide */}
             <button
               onClick={() => onWalletClick?.()}
-              className="flex items-center gap-1 press-feedback hover:bg-white/5 rounded-sm px-1 -mx-1"
+              className="flex items-center gap-1 press-feedback hover:bg-white/5 rounded-none px-1 -mx-1"
               title="CorpsCoin wallet — history and how to earn"
             >
               <Coins className="w-3.5 h-3.5 text-yellow-500" />

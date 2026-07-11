@@ -2,7 +2,7 @@
 // INPUT COMPONENTS - ESPN PRO DATA STYLE
 // =============================================================================
 // Dense, utilitarian form controls. No floating labels, no material design.
-// Laws: bg-[#0a0a0a], border-[#333], focus:border-espn-blue, rounded-sm
+// Laws: bg-[#0a0a0a], border-[#333], focus:border-espn-blue, rounded-none
 
 import React, { forwardRef, useId } from 'react';
 import { LucideIcon } from 'lucide-react';
@@ -76,7 +76,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={id}
             className={`
-              w-full rounded-sm
+              w-full rounded-none
               bg-[#111] border
               text-white text-base sm:text-sm placeholder-gray-400
               transition-colors
@@ -142,7 +142,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           ref={ref}
           id={id}
           className={`
-            w-full px-3 py-2 rounded-sm min-h-[80px] resize-none
+            w-full px-3 py-2 rounded-none min-h-[80px] resize-none
             bg-[#111] border
             text-white text-base sm:text-sm placeholder-gray-400
             transition-colors
@@ -221,7 +221,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           ref={ref}
           id={id}
           className={`
-            w-full rounded-sm appearance-none cursor-pointer
+            w-full rounded-none appearance-none cursor-pointer
             bg-[#111] border
             text-white text-base sm:text-sm
             transition-colors

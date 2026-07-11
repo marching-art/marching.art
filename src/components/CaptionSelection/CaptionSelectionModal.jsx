@@ -462,7 +462,7 @@ const CaptionSelectionModal = ({
         aria-labelledby="modal-title-caption-selection"
       >
         <div
-          className="w-full max-w-5xl max-h-[95dvh] bg-[#1a1a1a] border border-[#333] rounded-sm flex flex-col"
+          className="w-full max-w-5xl max-h-[95dvh] bg-[#1a1a1a] border border-[#333] rounded-none flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -543,18 +543,18 @@ const CaptionSelectionModal = ({
                   {selectionCount}/8 selected
                 </span>
                 {isOverLimit && (
-                  <span className="flex items-center gap-1 px-2 py-1 bg-red-500/20 text-red-400 text-xs font-bold rounded">
+                  <span className="flex items-center gap-1 px-2 py-1 bg-red-500/20 text-red-400 text-xs font-bold rounded-none">
                     <AlertCircle className="w-3 h-3" /> Over Budget
                   </span>
                 )}
                 {isComplete && !isOverLimit && (
-                  <span className="flex items-center gap-1 px-2 py-1 bg-green-500/20 text-green-400 text-xs font-bold rounded">
+                  <span className="flex items-center gap-1 px-2 py-1 bg-green-500/20 text-green-400 text-xs font-bold rounded-none">
                     <Check className="w-3 h-3" /> Ready
                   </span>
                 )}
               </div>
             </div>
-            <div className="h-2 bg-[#333] overflow-hidden rounded">
+            <div className="h-2 bg-[#333] overflow-hidden rounded-none">
               <div
                 className={`h-full transition-all ${isOverLimit ? 'bg-red-500' : 'bg-[#0057B8]'}`}
                 style={{ width: `${Math.min((totalPoints / pointLimit) * 100, 100)}%` }}
@@ -587,7 +587,7 @@ const CaptionSelectionModal = ({
           <div className="flex-1 flex flex-col overflow-hidden min-h-0">
             {loading ? (
               <div className="text-center py-12">
-                <div className="w-8 h-8 border-2 border-[#0057B8] border-t-transparent rounded-sm animate-spin mx-auto mb-3" />
+                <div className="w-8 h-8 border-2 border-[#0057B8] border-t-transparent rounded-none animate-spin mx-auto mb-3" />
                 <p className="text-xs text-gray-500 uppercase tracking-wider">Loading corps...</p>
               </div>
             ) : (
@@ -619,7 +619,7 @@ const CaptionSelectionModal = ({
                           <button
                             onClick={handleQuickFill}
                             disabled={loading}
-                            className="flex items-center gap-1 px-2 py-1 bg-green-600/20 hover:bg-green-600/30 text-green-400 text-[10px] font-bold uppercase rounded disabled:opacity-50"
+                            className="flex items-center gap-1 px-2 py-1 bg-green-600/20 hover:bg-green-600/30 text-green-400 text-[10px] font-bold uppercase rounded-none disabled:opacity-50"
                           >
                             <Wand2 className="w-3 h-3" /> Quick Fill
                           </button>
@@ -656,7 +656,7 @@ const CaptionSelectionModal = ({
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <div
-                              className={`w-1.5 h-6 rounded-sm ${categoryColors[activeCaptionData.category]}`}
+                              className={`w-1.5 h-6 rounded-none ${categoryColors[activeCaptionData.category]}`}
                             />
                             <div>
                               <h3 className="text-sm font-bold text-white">
@@ -670,7 +670,7 @@ const CaptionSelectionModal = ({
                           {activeCaptionSelection && (
                             <button
                               onClick={() => handleSelectionChange(activeCaption, null)}
-                              className="flex items-center gap-2 px-2 py-1 text-red-400 hover:bg-red-500/10 rounded text-xs"
+                              className="flex items-center gap-2 px-2 py-1 text-red-400 hover:bg-red-500/10 rounded-none text-xs"
                             >
                               <X className="w-3 h-3" /> Clear
                             </button>
@@ -736,7 +736,7 @@ const CaptionSelectionModal = ({
               >
                 {saving ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-sm animate-spin" />
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-none animate-spin" />
                     Saving...
                   </>
                 ) : changesBlocked ? (

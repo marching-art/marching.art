@@ -27,15 +27,15 @@ export interface SkeletonProps {
 // =============================================================================
 
 const variantClasses: Record<SkeletonVariant, string> = {
-  text: 'h-4 rounded',
-  title: 'h-6 rounded',
-  avatar: 'rounded-sm',
-  card: 'rounded-sm',
-  button: 'h-10 rounded-sm',
+  text: 'h-4 rounded-none',
+  title: 'h-6 rounded-none',
+  avatar: 'rounded-none',
+  card: 'rounded-none',
+  button: 'h-10 rounded-none',
 };
 
 const Skeleton: React.FC<SkeletonProps> = ({ className = '', variant = 'text', width, height }) => {
-  const baseClasses = 'animate-pulse bg-charcoal-800 rounded';
+  const baseClasses = 'animate-pulse bg-charcoal-800 rounded-none';
 
   const style: React.CSSProperties = {};
   if (width) style.width = width;
@@ -51,7 +51,7 @@ const Skeleton: React.FC<SkeletonProps> = ({ className = '', variant = 'text', w
 // =============================================================================
 
 export const CardSkeleton: React.FC = () => (
-  <div className="bg-charcoal-800 rounded-sm border border-white/10 p-6">
+  <div className="bg-charcoal-800 rounded-none border border-white/10 p-6">
     <div className="flex items-center gap-4 mb-4">
       <Skeleton variant="avatar" width="48px" height="48px" />
       <div className="flex-1">
@@ -92,7 +92,7 @@ export const TableRowSkeleton: React.FC<TableRowSkeletonProps> = ({ columns = 4 
 );
 
 export const StatCardSkeleton: React.FC = () => (
-  <div className="bg-charcoal-800 rounded-sm border border-white/10 p-4">
+  <div className="bg-charcoal-800 rounded-none border border-white/10 p-4">
     <Skeleton variant="text" className="w-1/2 mb-2" />
     <Skeleton variant="title" className="w-2/3" />
   </div>
@@ -106,7 +106,7 @@ export interface LeaderboardSkeletonProps {
 export const LeaderboardSkeleton: React.FC<LeaderboardSkeletonProps> = ({ rows = 5 }) => (
   <div className="space-y-2">
     {Array.from({ length: rows }).map((_, i) => (
-      <div key={i} className="flex items-center gap-4 p-3 bg-charcoal-800/50 rounded-sm">
+      <div key={i} className="flex items-center gap-4 p-3 bg-charcoal-800/50 rounded-none">
         <Skeleton variant="text" className="w-8" />
         <Skeleton variant="avatar" width="36px" height="36px" />
         <div className="flex-1">
@@ -121,7 +121,7 @@ export const LeaderboardSkeleton: React.FC<LeaderboardSkeletonProps> = ({ rows =
 export const ProfileSkeleton: React.FC = () => (
   <div className="space-y-6">
     {/* Header section */}
-    <div className="bg-charcoal-800 rounded-sm border border-white/10 p-6">
+    <div className="bg-charcoal-800 rounded-none border border-white/10 p-6">
       <div className="flex items-start gap-4">
         <Skeleton variant="avatar" width="80px" height="80px" />
         <div className="flex-1">
@@ -140,7 +140,7 @@ export const ProfileSkeleton: React.FC = () => (
     </div>
 
     {/* Content section */}
-    <div className="bg-charcoal-800 rounded-sm border border-white/10 p-6">
+    <div className="bg-charcoal-800 rounded-none border border-white/10 p-6">
       <Skeleton variant="title" className="w-1/4 mb-4" />
       <Skeleton variant="text" className="w-full mb-2" />
       <Skeleton variant="text" className="w-4/5 mb-2" />
@@ -155,13 +155,13 @@ export interface ScoresSkeletonProps {
 }
 
 export const ScoresSkeleton: React.FC<ScoresSkeletonProps> = ({ rows = 5 }) => (
-  <div className="bg-charcoal-800 rounded-sm border border-white/10 p-6">
+  <div className="bg-charcoal-800 rounded-none border border-white/10 p-6">
     <Skeleton variant="title" className="w-1/3 mb-4" />
     <div className="space-y-3">
       {Array.from({ length: rows }).map((_, i) => (
         <div
           key={i}
-          className="flex items-center justify-between p-3 bg-charcoal-700/30 rounded-sm"
+          className="flex items-center justify-between p-3 bg-charcoal-700/30 rounded-none"
         >
           <div className="flex items-center gap-3">
             <Skeleton variant="text" className="w-8" />
@@ -186,13 +186,13 @@ export interface TableSkeletonProps {
 }
 
 export const TableSkeleton: React.FC<TableSkeletonProps> = ({ rows = 5, columns = 4 }) => (
-  <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-sm overflow-hidden">
+  <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-none overflow-hidden">
     <table className="w-full">
       <thead className="bg-charcoal-900/95">
         <tr className="border-b border-white/10">
           {Array.from({ length: columns }).map((_, i) => (
             <th key={i} className="px-4 py-3">
-              <div className="animate-pulse bg-charcoal-800 h-3 w-16 rounded" />
+              <div className="animate-pulse bg-charcoal-800 h-3 w-16 rounded-none" />
             </th>
           ))}
         </tr>
@@ -202,7 +202,7 @@ export const TableSkeleton: React.FC<TableSkeletonProps> = ({ rows = 5, columns 
           <tr key={rowIndex} className="h-12 border-b border-white/5">
             {Array.from({ length: columns }).map((_, colIndex) => (
               <td key={colIndex} className="px-4 py-2">
-                <div className="animate-pulse bg-charcoal-800 h-4 w-4/5 rounded" />
+                <div className="animate-pulse bg-charcoal-800 h-4 w-4/5 rounded-none" />
               </td>
             ))}
           </tr>
@@ -224,7 +224,7 @@ export const TableSkeleton: React.FC<TableSkeletonProps> = ({ rows = 5, columns 
 export const DashboardSkeleton: React.FC = () => (
   <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4">
     {/* Stats Row */}
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-white/10 rounded-sm overflow-hidden mb-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-white/10 rounded-none overflow-hidden mb-4">
       {Array.from({ length: 4 }).map((_, i) => (
         <div key={i} className="bg-charcoal-900 p-4">
           <Skeleton variant="text" className="w-16 mb-2" />
@@ -234,7 +234,7 @@ export const DashboardSkeleton: React.FC = () => (
     </div>
 
     {/* Main Grid */}
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-px bg-white/10 rounded-sm overflow-hidden">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-px bg-white/10 rounded-none overflow-hidden">
       {/* Corps Table - 2 cols */}
       <div className="lg:col-span-2 bg-charcoal-900 p-4">
         <div className="flex items-center justify-between mb-4">
@@ -243,7 +243,7 @@ export const DashboardSkeleton: React.FC = () => (
         </div>
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-3 p-3 bg-charcoal-800/50 rounded">
+            <div key={i} className="flex items-center gap-3 p-3 bg-charcoal-800/50 rounded-none">
               <Skeleton variant="text" className="w-8" />
               <Skeleton variant="text" className="w-32 flex-1" />
               <Skeleton variant="text" className="w-16" />
@@ -256,7 +256,7 @@ export const DashboardSkeleton: React.FC = () => (
       <div className="bg-charcoal-900 p-4 space-y-4">
         <Skeleton variant="title" className="w-24 mb-3" />
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="p-3 bg-charcoal-800/50 rounded">
+          <div key={i} className="p-3 bg-charcoal-800/50 rounded-none">
             <Skeleton variant="text" className="w-full mb-2" />
             <Skeleton variant="text" className="w-2/3" />
           </div>
@@ -310,7 +310,7 @@ export const LeaguesPageSkeleton: React.FC = () => (
     {/* League Cards */}
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="bg-charcoal-900 rounded-sm border border-white/10 p-4">
+        <div key={i} className="bg-charcoal-900 rounded-none border border-white/10 p-4">
           <div className="flex items-center gap-3 mb-4">
             <Skeleton variant="avatar" width="48px" height="48px" />
             <div className="flex-1">
@@ -322,7 +322,7 @@ export const LeaguesPageSkeleton: React.FC = () => (
             {Array.from({ length: 4 }).map((_, j) => (
               <div
                 key={j}
-                className="flex items-center justify-between p-2 bg-charcoal-800/50 rounded"
+                className="flex items-center justify-between p-2 bg-charcoal-800/50 rounded-none"
               >
                 <Skeleton variant="text" className="w-24" />
                 <Skeleton variant="text" className="w-12" />
@@ -350,7 +350,7 @@ export const SchedulePageSkeleton: React.FC = () => (
     </div>
 
     {/* Calendar grid */}
-    <div className="bg-charcoal-900 rounded-sm border border-white/10 p-4">
+    <div className="bg-charcoal-900 rounded-none border border-white/10 p-4">
       {/* Day headers */}
       <div className="grid grid-cols-7 gap-2 mb-4">
         {Array.from({ length: 7 }).map((_, i) => (
@@ -360,7 +360,7 @@ export const SchedulePageSkeleton: React.FC = () => (
       {/* Calendar cells */}
       <div className="grid grid-cols-7 gap-2">
         {Array.from({ length: 35 }).map((_, i) => (
-          <div key={i} className="aspect-square bg-charcoal-800/50 rounded p-1">
+          <div key={i} className="aspect-square bg-charcoal-800/50 rounded-none p-1">
             <Skeleton variant="text" className="w-6 h-4 mb-1" />
             {i % 7 === 3 && <Skeleton variant="text" className="w-full h-3" />}
           </div>
@@ -378,7 +378,7 @@ export const SchedulePageSkeleton: React.FC = () => (
 export const ProfilePageSkeleton: React.FC = () => (
   <div className="max-w-4xl mx-auto px-2 sm:px-4 py-4">
     {/* Profile Header */}
-    <div className="bg-charcoal-900 rounded-sm border border-white/10 p-6 mb-4">
+    <div className="bg-charcoal-900 rounded-none border border-white/10 p-6 mb-4">
       <div className="flex items-start gap-4">
         <Skeleton variant="avatar" width="80px" height="80px" />
         <div className="flex-1">
@@ -396,7 +396,7 @@ export const ProfilePageSkeleton: React.FC = () => (
     {/* Stats Grid */}
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="bg-charcoal-900 rounded-sm border border-white/10 p-4">
+        <div key={i} className="bg-charcoal-900 rounded-none border border-white/10 p-4">
           <Skeleton variant="text" className="w-16 mb-2" />
           <Skeleton variant="title" className="w-12" />
         </div>
@@ -406,13 +406,13 @@ export const ProfilePageSkeleton: React.FC = () => (
     {/* Content Sections */}
     <div className="space-y-4">
       {Array.from({ length: 2 }).map((_, i) => (
-        <div key={i} className="bg-charcoal-900 rounded-sm border border-white/10 p-4">
+        <div key={i} className="bg-charcoal-900 rounded-none border border-white/10 p-4">
           <Skeleton variant="title" className="w-32 mb-4" />
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, j) => (
               <div
                 key={j}
-                className="flex items-center justify-between p-3 bg-charcoal-800/50 rounded"
+                className="flex items-center justify-between p-3 bg-charcoal-800/50 rounded-none"
               >
                 <Skeleton variant="text" className="w-32" />
                 <Skeleton variant="text" className="w-16" />

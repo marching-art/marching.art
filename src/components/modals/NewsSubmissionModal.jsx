@@ -90,7 +90,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
         aria-labelledby="modal-title-news-submission"
       >
         <div
-          className="w-full max-w-2xl bg-[#1a1a1a] border border-[#333] rounded-sm max-h-[90dvh] flex flex-col"
+          className="w-full max-w-2xl bg-[#1a1a1a] border border-[#333] rounded-none max-h-[90dvh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -118,7 +118,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
           <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
             <div className="p-4 space-y-4 overflow-y-auto flex-1">
               {/* Info Banner */}
-              <div className="bg-[#0057B8]/10 border border-[#0057B8]/30 rounded-sm px-3 py-2">
+              <div className="bg-[#0057B8]/10 border border-[#0057B8]/30 rounded-none px-3 py-2">
                 <p className="text-xs text-gray-300">
                   Your article will be reviewed by admins before publishing. Quality submissions
                   help our community!
@@ -137,7 +137,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
                       type="button"
                       onClick={() => handleChange('category', cat.id)}
                       className={`
-                        px-3 py-2 text-left rounded-sm border transition-all
+                        px-3 py-2 text-left rounded-none border transition-all
                         ${
                           formData.category === cat.id
                             ? 'bg-[#0057B8]/20 border-[#0057B8] text-white'
@@ -166,7 +166,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
                   onChange={(e) => handleChange('headline', e.target.value)}
                   maxLength={120}
                   className={`
-                    w-full h-10 px-3 bg-[#0a0a0a] border rounded-sm text-sm text-white
+                    w-full h-10 px-3 bg-[#0a0a0a] border rounded-none text-sm text-white
                     placeholder-gray-400 focus:outline-none transition-colors
                     ${errors.headline ? 'border-red-500 focus:border-red-500' : 'border-[#333] focus:border-[#0057B8]'}
                   `}
@@ -193,7 +193,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
                   maxLength={300}
                   rows={2}
                   className={`
-                    w-full px-3 py-2 bg-[#0a0a0a] border rounded-sm text-sm text-white
+                    w-full px-3 py-2 bg-[#0a0a0a] border rounded-none text-sm text-white
                     placeholder-gray-400 focus:outline-none resize-none transition-colors
                     ${errors.summary ? 'border-red-500 focus:border-red-500' : 'border-[#333] focus:border-[#0057B8]'}
                   `}
@@ -220,7 +220,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
                   maxLength={5000}
                   rows={6}
                   className={`
-                    w-full px-3 py-2 bg-[#0a0a0a] border rounded-sm text-sm text-white
+                    w-full px-3 py-2 bg-[#0a0a0a] border rounded-none text-sm text-white
                     placeholder-gray-400 focus:outline-none resize-none transition-colors
                     ${errors.fullStory ? 'border-red-500 focus:border-red-500' : 'border-[#333] focus:border-[#0057B8]'}
                   `}
@@ -246,7 +246,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
                   value={formData.imageUrl}
                   onChange={(e) => handleChange('imageUrl', e.target.value)}
                   className={`
-                    w-full h-10 px-3 bg-[#0a0a0a] border rounded-sm text-sm text-white
+                    w-full h-10 px-3 bg-[#0a0a0a] border rounded-none text-sm text-white
                     placeholder-gray-400 focus:outline-none transition-colors
                     ${errors.imageUrl ? 'border-red-500 focus:border-red-500' : 'border-[#333] focus:border-[#0057B8]'}
                   `}

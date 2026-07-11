@@ -35,7 +35,7 @@ const PageErrorFallback: React.FC<PageErrorFallbackProps> = ({ error, pageName, 
     >
       <div className="max-w-md w-full text-center">
         {/* Error Icon */}
-        <div className="bg-red-500/10 border border-red-500/30 p-6 rounded-sm w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+        <div className="bg-red-500/10 border border-red-500/30 p-6 rounded-none w-24 h-24 mx-auto mb-6 flex items-center justify-center">
           <AlertTriangle className="w-12 h-12 text-red-400" />
         </div>
 
@@ -52,7 +52,7 @@ const PageErrorFallback: React.FC<PageErrorFallbackProps> = ({ error, pageName, 
             <summary className="text-sm text-gray-500 cursor-pointer hover:text-gray-300 mb-2">
               Technical Details
             </summary>
-            <pre className="p-4 bg-[#0a0a0a] border border-[#333] rounded-sm text-xs text-red-400 overflow-auto max-h-40 whitespace-pre-wrap">
+            <pre className="p-4 bg-[#0a0a0a] border border-[#333] rounded-none text-xs text-red-400 overflow-auto max-h-40 whitespace-pre-wrap">
               {error.message}
               {error.stack && `\n\nStack trace:\n${error.stack}`}
             </pre>
@@ -64,7 +64,7 @@ const PageErrorFallback: React.FC<PageErrorFallbackProps> = ({ error, pageName, 
           {onReset && (
             <button
               onClick={onReset}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-sm font-semibold bg-[#0057B8] border border-[#0057B8] text-white hover:bg-[#0057B8]/90 transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-none font-semibold bg-[#0057B8] border border-[#0057B8] text-white hover:bg-[#0057B8]/90 transition-colors"
             >
               <RefreshCw className="w-5 h-5" />
               Try Again
@@ -72,14 +72,14 @@ const PageErrorFallback: React.FC<PageErrorFallbackProps> = ({ error, pageName, 
           )}
           <button
             onClick={() => startTransition(() => navigate(-1))}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-sm font-semibold bg-transparent border border-white/20 text-white hover:bg-white/5 hover:border-white/40 transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-none font-semibold bg-transparent border border-white/20 text-white hover:bg-white/5 hover:border-white/40 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
             Go Back
           </button>
           <button
             onClick={() => startTransition(() => navigate('/dashboard'))}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-sm font-semibold bg-transparent border border-[#333] text-gray-300 hover:bg-white/5 hover:border-[#555] transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-none font-semibold bg-transparent border border-[#333] text-gray-300 hover:bg-white/5 hover:border-[#555] transition-colors"
           >
             <Home className="w-5 h-5" />
             Dashboard

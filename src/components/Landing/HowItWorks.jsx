@@ -99,7 +99,7 @@ const AccordionItem = ({ step, isOpen, onToggle, isLast }) => {
       >
         {/* Step number + icon */}
         <div
-          className={`flex-shrink-0 w-10 h-10 rounded-sm ${step.iconBg} flex items-center justify-center`}
+          className={`flex-shrink-0 w-10 h-10 rounded-none ${step.iconBg} flex items-center justify-center`}
         >
           <Icon className={`w-5 h-5 ${step.iconColor}`} />
         </div>
@@ -187,7 +187,7 @@ const HowItWorks = () => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.1 }}
-      className="bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden"
+      className="bg-[#1a1a1a] border border-[#333] rounded-none overflow-hidden"
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-[#222] border-b border-[#333]">

@@ -65,7 +65,7 @@ const NotFound = () => {
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/30 rounded-sm mb-6"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/30 rounded-none mb-6"
         >
           <AlertTriangle className="w-4 h-4 text-red-400" />
           <span className="text-xs font-mono text-red-400 uppercase tracking-widest">
@@ -114,14 +114,14 @@ const NotFound = () => {
         >
           <button
             onClick={() => startTransition(() => navigate(-1))}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-transparent border border-white/20 rounded-sm text-white font-semibold hover:bg-white/5 hover:border-white/40 transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-transparent border border-white/20 rounded-none text-white font-semibold hover:bg-white/5 hover:border-white/40 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Go Back
           </button>
           <Link
             to="/"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#0057B8] border border-[#0057B8] text-white rounded-sm font-semibold uppercase hover:bg-[#0057B8]/90 transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#0057B8] border border-[#0057B8] text-white rounded-none font-semibold uppercase hover:bg-[#0057B8]/90 transition-colors"
           >
             <Home className="w-4 h-4" />
             Return Home
@@ -141,25 +141,25 @@ const NotFound = () => {
           <div className="flex flex-wrap gap-2 justify-center">
             <Link
               to="/dashboard"
-              className="px-3 py-1.5 text-xs text-gray-400 hover:text-white bg-[#1a1a1a] hover:bg-[#222] rounded-sm border border-[#333] hover:border-[#555] transition-colors"
+              className="px-3 py-1.5 text-xs text-gray-400 hover:text-white bg-[#1a1a1a] hover:bg-[#222] rounded-none border border-[#333] hover:border-[#555] transition-colors"
             >
               Dashboard
             </Link>
             <Link
               to="/schedule"
-              className="px-3 py-1.5 text-xs text-gray-400 hover:text-white bg-[#1a1a1a] hover:bg-[#222] rounded-sm border border-[#333] hover:border-[#555] transition-colors"
+              className="px-3 py-1.5 text-xs text-gray-400 hover:text-white bg-[#1a1a1a] hover:bg-[#222] rounded-none border border-[#333] hover:border-[#555] transition-colors"
             >
               Schedule
             </Link>
             <Link
               to="/scores"
-              className="px-3 py-1.5 text-xs text-gray-400 hover:text-white bg-[#1a1a1a] hover:bg-[#222] rounded-sm border border-[#333] hover:border-[#555] transition-colors"
+              className="px-3 py-1.5 text-xs text-gray-400 hover:text-white bg-[#1a1a1a] hover:bg-[#222] rounded-none border border-[#333] hover:border-[#555] transition-colors"
             >
               Scores
             </Link>
             <Link
               to="/leagues"
-              className="px-3 py-1.5 text-xs text-gray-400 hover:text-white bg-[#1a1a1a] hover:bg-[#222] rounded-sm border border-[#333] hover:border-[#555] transition-colors"
+              className="px-3 py-1.5 text-xs text-gray-400 hover:text-white bg-[#1a1a1a] hover:bg-[#222] rounded-none border border-[#333] hover:border-[#555] transition-colors"
             >
               Leagues
             </Link>

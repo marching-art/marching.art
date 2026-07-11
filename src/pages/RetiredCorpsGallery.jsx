@@ -185,7 +185,7 @@ const RetiredCorpsGallery = () => {
                 <button
                   key={filter.id}
                   onClick={() => setFilterClass(filter.id)}
-                  className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap rounded-sm transition-all ${
+                  className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap rounded-none transition-all ${
                     isActive
                       ? 'bg-[#0057B8] text-white'
                       : 'bg-[#1a1a1a] text-gray-500 hover:text-gray-300 hover:bg-white/5'
@@ -201,7 +201,7 @@ const RetiredCorpsGallery = () => {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-sm bg-[#1a1a1a] text-gray-300 border border-[#333] focus:outline-none focus:border-[#0057B8]"
+            className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-none bg-[#1a1a1a] text-gray-300 border border-[#333] focus:outline-none focus:border-[#0057B8]"
           >
             <option value="retiredAt">Recently Retired</option>
             <option value="totalSeasons">Most Seasons</option>
@@ -244,7 +244,7 @@ const RetiredCorpsGallery = () => {
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.98 }}
                     transition={{ delay: index * 0.03 }}
-                    className="bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden hover:border-[#444] transition-all cursor-pointer"
+                    className="bg-[#1a1a1a] border border-[#333] rounded-none overflow-hidden hover:border-[#444] transition-all cursor-pointer"
                     onClick={() => setSelectedCorps({ ...corps, index: corps.originalIndex })}
                   >
                     {/* Class Accent Line */}
@@ -258,14 +258,14 @@ const RetiredCorpsGallery = () => {
                           <div className="flex items-center gap-1.5">
                             {corps.plaque && PLAQUE_STYLES[corps.plaque.tier] && (
                               <span
-                                className={`flex items-center gap-1 px-2 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-wider border ${PLAQUE_STYLES[corps.plaque.tier].bg} ${PLAQUE_STYLES[corps.plaque.tier].text} ${PLAQUE_STYLES[corps.plaque.tier].border}`}
+                                className={`flex items-center gap-1 px-2 py-0.5 rounded-none text-[9px] font-bold uppercase tracking-wider border ${PLAQUE_STYLES[corps.plaque.tier].bg} ${PLAQUE_STYLES[corps.plaque.tier].text} ${PLAQUE_STYLES[corps.plaque.tier].border}`}
                               >
                                 <Award className="w-3 h-3" />
                                 {corps.plaque.tier}
                               </span>
                             )}
                             <span
-                              className={`px-2 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-wider ${config.bg} ${config.color}`}
+                              className={`px-2 py-0.5 rounded-none text-[9px] font-bold uppercase tracking-wider ${config.bg} ${config.color}`}
                             >
                               {config.name}
                             </span>
@@ -284,7 +284,7 @@ const RetiredCorpsGallery = () => {
 
                       {/* Stats Grid */}
                       <div className="grid grid-cols-2 gap-2 mb-4">
-                        <div className="bg-[#111] border border-[#333] rounded-sm p-3">
+                        <div className="bg-[#111] border border-[#333] rounded-none p-3">
                           <div className="flex items-center gap-1.5 mb-1">
                             <Calendar className="w-3.5 h-3.5 text-[#0057B8]" />
                             <span className="text-[10px] text-gray-500 uppercase tracking-wider">
@@ -296,7 +296,7 @@ const RetiredCorpsGallery = () => {
                           </div>
                         </div>
 
-                        <div className="bg-[#111] border border-[#333] rounded-sm p-3">
+                        <div className="bg-[#111] border border-[#333] rounded-none p-3">
                           <div className="flex items-center gap-1.5 mb-1">
                             <Trophy className="w-3.5 h-3.5 text-yellow-500" />
                             <span className="text-[10px] text-gray-500 uppercase tracking-wider">
@@ -305,7 +305,7 @@ const RetiredCorpsGallery = () => {
                           </div>
                           {isSoundSport ? (
                             <div
-                              className={`inline-block text-xs font-bold uppercase px-2 py-1 rounded-sm ${
+                              className={`inline-block text-xs font-bold uppercase px-2 py-1 rounded-none ${
                                 bestRating ? RATING_CONFIG[bestRating].badge : 'text-gray-500'
                               }`}
                             >
@@ -318,7 +318,7 @@ const RetiredCorpsGallery = () => {
                           )}
                         </div>
 
-                        <div className="bg-[#111] border border-[#333] rounded-sm p-3">
+                        <div className="bg-[#111] border border-[#333] rounded-none p-3">
                           <div className="flex items-center gap-1.5 mb-1">
                             <Star className="w-3.5 h-3.5 text-purple-400" />
                             <span className="text-[10px] text-gray-500 uppercase tracking-wider">
@@ -330,7 +330,7 @@ const RetiredCorpsGallery = () => {
                           </div>
                         </div>
 
-                        <div className="bg-[#111] border border-[#333] rounded-sm p-3">
+                        <div className="bg-[#111] border border-[#333] rounded-none p-3">
                           <div className="flex items-center gap-1.5 mb-1">
                             <Archive className="w-3.5 h-3.5 text-gray-400" />
                             <span className="text-[10px] text-gray-500 uppercase tracking-wider">
@@ -352,7 +352,7 @@ const RetiredCorpsGallery = () => {
                           setSelectedCorps({ ...corps, index: corps.originalIndex });
                           setShowUnretireModal(true);
                         }}
-                        className="w-full py-2 px-4 bg-[#0057B8] hover:bg-[#0066d6] text-white font-bold text-xs uppercase tracking-wider rounded-sm transition-all flex items-center justify-center gap-2"
+                        className="w-full py-2 px-4 bg-[#0057B8] hover:bg-[#0066d6] text-white font-bold text-xs uppercase tracking-wider rounded-none transition-all flex items-center justify-center gap-2"
                       >
                         <RefreshCw className="w-3.5 h-3.5" />
                         Bring Out of Retirement
@@ -366,7 +366,7 @@ const RetiredCorpsGallery = () => {
                             setSelectedCorps({ ...corps, index: corps.originalIndex });
                             setShowPlaqueModal(true);
                           }}
-                          className="w-full mt-2 py-2 px-4 bg-[#1a1a1a] hover:bg-[#222] border border-yellow-500/40 text-yellow-500 font-bold text-xs uppercase tracking-wider rounded-sm transition-all flex items-center justify-center gap-2"
+                          className="w-full mt-2 py-2 px-4 bg-[#1a1a1a] hover:bg-[#222] border border-yellow-500/40 text-yellow-500 font-bold text-xs uppercase tracking-wider rounded-none transition-all flex items-center justify-center gap-2"
                         >
                           <Award className="w-3.5 h-3.5" />
                           {corps.plaque ? 'Upgrade Plaque' : 'Commission Plaque'}
@@ -396,7 +396,7 @@ const RetiredCorpsGallery = () => {
                 initial={{ scale: 0.98, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.98, opacity: 0 }}
-                className="bg-[#1a1a1a] border border-[#333] rounded-sm max-w-md w-full overflow-hidden"
+                className="bg-[#1a1a1a] border border-[#333] rounded-none max-w-md w-full overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
@@ -438,7 +438,7 @@ const RetiredCorpsGallery = () => {
                           key={tier.id}
                           onClick={() => handlePurchasePlaque(tier.id)}
                           disabled={!affordable || !!purchasingTier}
-                          className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-sm border transition-all ${style.bg} ${style.border} ${
+                          className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-none border transition-all ${style.bg} ${style.border} ${
                             affordable ? 'hover:brightness-125' : 'opacity-50 cursor-not-allowed'
                           }`}
                         >
@@ -489,7 +489,7 @@ const RetiredCorpsGallery = () => {
                 initial={{ scale: 0.98, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.98, opacity: 0 }}
-                className="bg-[#1a1a1a] border border-[#333] rounded-sm max-w-md w-full overflow-hidden"
+                className="bg-[#1a1a1a] border border-[#333] rounded-none max-w-md w-full overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Modal Header */}
@@ -508,7 +508,7 @@ const RetiredCorpsGallery = () => {
                 </div>
 
                 <div className="p-4">
-                  <div className="bg-[#111] border border-[#333] rounded-sm p-4 mb-4">
+                  <div className="bg-[#111] border border-[#333] rounded-none p-4 mb-4">
                     <div className="flex items-center gap-3 mb-3">
                       <Music className="w-5 h-5 text-purple-400" />
                       <div>
@@ -556,7 +556,7 @@ const RetiredCorpsGallery = () => {
                     </div>
                   </div>
 
-                  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-sm p-3 mb-4">
+                  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-none p-3 mb-4">
                     <p className="text-xs text-yellow-200">
                       <strong>Note:</strong> This corps will become your active{' '}
                       {getClassConfig(selectedCorps.corpsClass).name} corps. All season history will
@@ -568,14 +568,14 @@ const RetiredCorpsGallery = () => {
                     <button
                       onClick={() => setShowUnretireModal(false)}
                       disabled={unretiring}
-                      className="flex-1 py-2.5 px-4 bg-[#222] hover:bg-[#333] border border-[#333] text-white text-xs font-bold uppercase tracking-wider rounded-sm transition-colors disabled:opacity-50"
+                      className="flex-1 py-2.5 px-4 bg-[#222] hover:bg-[#333] border border-[#333] text-white text-xs font-bold uppercase tracking-wider rounded-none transition-colors disabled:opacity-50"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={() => handleUnretire(selectedCorps.corpsClass, selectedCorps.index)}
                       disabled={unretiring}
-                      className="flex-1 py-2.5 px-4 bg-[#0057B8] hover:bg-[#0066d6] text-white text-xs font-bold uppercase tracking-wider rounded-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                      className="flex-1 py-2.5 px-4 bg-[#0057B8] hover:bg-[#0066d6] text-white text-xs font-bold uppercase tracking-wider rounded-none transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       {unretiring ? (
                         <>

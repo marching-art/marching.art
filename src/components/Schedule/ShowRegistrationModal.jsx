@@ -315,7 +315,7 @@ const ShowRegistrationModal = ({
         {!isMobile && (
           <button
             onClick={onClose}
-            className="p-2 -mr-2 -mt-1 text-gray-500 hover:text-white active:text-white rounded-sm hover:bg-white/10 min-w-touch min-h-touch flex items-center justify-center"
+            className="p-2 -mr-2 -mt-1 text-gray-500 hover:text-white active:text-white rounded-none hover:bg-white/10 min-w-touch min-h-touch flex items-center justify-center"
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />
@@ -514,7 +514,7 @@ const ShowRegistrationModal = ({
                   haptic('light');
                   selectAll();
                 }}
-                className="text-[#0057B8] hover:text-[#0066d6] font-bold py-2 px-2 -mx-2 rounded hover:bg-[#0057B8]/10 min-h-touch press-feedback"
+                className="text-[#0057B8] hover:text-[#0066d6] font-bold py-2 px-2 -mx-2 rounded-none hover:bg-[#0057B8]/10 min-h-touch press-feedback"
               >
                 Select All
               </button>
@@ -524,7 +524,7 @@ const ShowRegistrationModal = ({
                   haptic('light');
                   clearAll();
                 }}
-                className="text-gray-500 hover:text-white font-bold py-2 px-2 -mx-2 rounded hover:bg-white/5 min-h-touch press-feedback"
+                className="text-gray-500 hover:text-white font-bold py-2 px-2 -mx-2 rounded-none hover:bg-white/5 min-h-touch press-feedback"
               >
                 Clear
               </button>
@@ -687,7 +687,7 @@ const ShowRegistrationModal = ({
         >
           {saving ? (
             <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-sm animate-spin" />
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-none animate-spin" />
               Saving...
             </>
           ) : (
@@ -733,7 +733,7 @@ const ShowRegistrationModal = ({
         onClick={onClose}
       >
         <div
-          className="w-full max-w-lg bg-[#1a1a1a] border border-[#333] rounded-sm max-h-[90dvh] flex flex-col"
+          className="w-full max-w-lg bg-[#1a1a1a] border border-[#333] rounded-none max-h-[90dvh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}

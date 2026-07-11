@@ -326,7 +326,7 @@ const MatchupDetailView = ({
       <m.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass rounded-sm p-4"
+        className="glass rounded-none p-4"
       >
         <button
           onClick={onBack}
@@ -340,7 +340,7 @@ const MatchupDetailView = ({
           <Calendar className="w-4 h-4 text-gray-500/60" />
           <span className="text-sm text-gray-500/60">Week {matchup.week} Matchup</span>
           {rivalry && (
-            <span className="flex items-center gap-1 px-2 py-0.5 rounded-sm bg-red-500/20 text-red-400 text-xs font-semibold">
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-none bg-red-500/20 text-red-400 text-xs font-semibold">
               <Flame className="w-3 h-3" /> Rivalry
             </span>
           )}
@@ -365,7 +365,7 @@ const MatchupDetailView = ({
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.1 }}
-        className="glass rounded-sm p-6"
+        className="glass rounded-none p-6"
       >
         {/* Battle Points Display (when available) */}
         {battleBreakdown && (
@@ -389,7 +389,7 @@ const MatchupDetailView = ({
           {/* User 1 */}
           <div className="flex-1 text-center">
             <div
-              className={`w-16 h-16 mx-auto rounded-sm flex items-center justify-center mb-2 ${
+              className={`w-16 h-16 mx-auto rounded-none flex items-center justify-center mb-2 ${
                 battleBreakdown
                   ? battleBreakdown.winnerId === matchup.user1
                     ? 'bg-gradient-to-br from-green-500/30 to-green-600/20 border-2 border-green-500/50'
@@ -442,7 +442,7 @@ const MatchupDetailView = ({
 
           {/* VS Divider */}
           <div className="px-4 py-2 flex flex-col items-center">
-            <div className="w-14 h-14 rounded-sm bg-charcoal-900/50 border border-white/20 flex items-center justify-center">
+            <div className="w-14 h-14 rounded-none bg-charcoal-900/50 border border-white/20 flex items-center justify-center">
               <Swords className="w-6 h-6 text-purple-400" />
             </div>
             {!loading && scoreDiff > 0 && (
@@ -465,7 +465,7 @@ const MatchupDetailView = ({
           {/* User 2 */}
           <div className="flex-1 text-center">
             <div
-              className={`w-16 h-16 mx-auto rounded-sm flex items-center justify-center mb-2 ${
+              className={`w-16 h-16 mx-auto rounded-none flex items-center justify-center mb-2 ${
                 battleBreakdown
                   ? battleBreakdown.winnerId === matchup.user2
                     ? 'bg-gradient-to-br from-green-500/30 to-green-600/20 border-2 border-green-500/50'
@@ -550,7 +550,7 @@ const MatchupDetailView = ({
                 {(100 - winProbability).toFixed(0)}%
               </span>
             </div>
-            <div className="h-2 rounded-sm overflow-hidden flex bg-charcoal-800">
+            <div className="h-2 rounded-none overflow-hidden flex bg-charcoal-800">
               <m.div
                 initial={{ width: '50%' }}
                 animate={{ width: `${winProbability}%` }}
@@ -588,7 +588,7 @@ const MatchupDetailView = ({
             <button
               key={tab.id}
               onClick={() => setActiveView(tab.id)}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-sm font-semibold transition-all relative ${
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-none font-semibold transition-all relative ${
                 activeView === tab.id
                   ? 'bg-yellow-500 text-charcoal-900'
                   : 'glass text-gray-300 hover:text-white'

@@ -60,7 +60,7 @@ const GuestLineupPicker = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="bg-[#1a1a1a] border border-[#333] rounded-sm w-full max-w-md max-h-[85dvh] flex flex-col overflow-hidden"
+            className="bg-[#1a1a1a] border border-[#333] rounded-none w-full max-w-md max-h-[85dvh] flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
@@ -129,7 +129,7 @@ const GuestLineupPicker = ({
                       {isUsed && <span className="text-[10px] text-gray-500/70">(used)</span>}
                     </div>
                     <span
-                      className={`text-xs font-bold font-data px-2 py-1 rounded ${
+                      className={`text-xs font-bold font-data px-2 py-1 rounded-none ${
                         overBudget
                           ? 'bg-red-500/20 text-red-400'
                           : 'bg-yellow-500/20 text-yellow-400'
@@ -151,7 +151,7 @@ const GuestLineupPicker = ({
               {onComplete && (
                 <button
                   onClick={onComplete}
-                  className="mt-2 w-full h-10 border border-[#333] text-gray-400 text-xs font-bold uppercase tracking-wider hover:border-[#444] hover:text-white rounded-sm"
+                  className="mt-2 w-full h-10 border border-[#333] text-gray-400 text-xs font-bold uppercase tracking-wider hover:border-[#444] hover:text-white rounded-none"
                 >
                   Done Drafting
                 </button>

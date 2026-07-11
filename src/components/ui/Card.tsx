@@ -38,7 +38,7 @@ export interface CardFooterProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 // =============================================================================
-// CARD ROOT - bg-[#1a1a1a] border border-[#333] rounded-sm
+// CARD ROOT - bg-[#1a1a1a] border border-[#333] rounded-none
 // =============================================================================
 
 const CardRoot = forwardRef<HTMLDivElement, CardProps>(
@@ -58,7 +58,7 @@ const CardRoot = forwardRef<HTMLDivElement, CardProps>(
         onKeyDown={pressable ? handleKeyDown : undefined}
         onClick={onClick}
         className={`
-          bg-[#1a1a1a] border border-[#333] rounded-sm
+          bg-[#1a1a1a] border border-[#333] rounded-none
           ${hoverable ? 'cursor-pointer hover:border-[#555]' : ''}
           ${pressable ? 'cursor-pointer active:bg-[#222] focus:outline-none focus:border-[#0057B8]' : ''}
           ${className}

@@ -105,13 +105,13 @@ const RegistrationGate = ({ isOpen, onClose, gateType = 'default', hasEngaged = 
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="bg-[#1a1a1a] border border-[#333] rounded-sm w-full max-w-md overflow-hidden"
+            className="bg-[#1a1a1a] border border-[#333] rounded-none w-full max-w-md overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close button */}
             <button
               onClick={onClose}
-              className="absolute top-3 right-3 p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-sm transition-colors z-10"
+              className="absolute top-3 right-3 p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-none transition-colors z-10"
               aria-label="Close"
             >
               <X className="w-4 h-4" />
@@ -121,7 +121,7 @@ const RegistrationGate = ({ isOpen, onClose, gateType = 'default', hasEngaged = 
             <div className="p-6 text-center">
               {/* Icon */}
               <div
-                className={`inline-flex items-center justify-center w-16 h-16 rounded-sm ${config.iconBg} mb-4`}
+                className={`inline-flex items-center justify-center w-16 h-16 rounded-none ${config.iconBg} mb-4`}
               >
                 <GateIcon className={`w-8 h-8 ${config.iconColor}`} />
               </div>
@@ -133,7 +133,7 @@ const RegistrationGate = ({ isOpen, onClose, gateType = 'default', hasEngaged = 
               <p className="text-gray-400 mb-4">{config.description}</p>
 
               {/* Benefit highlight */}
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-sm mb-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-none mb-6">
                 <Star className="w-4 h-4 text-green-500" />
                 <span className="text-sm text-green-400">{config.benefit}</span>
               </div>
@@ -142,7 +142,7 @@ const RegistrationGate = ({ isOpen, onClose, gateType = 'default', hasEngaged = 
               <div className="space-y-3">
                 <Link
                   to="/register"
-                  className="flex items-center justify-center gap-2 w-full h-12 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider rounded-sm hover:bg-[#0066d6] active:bg-[#004a9e] transition-colors"
+                  className="flex items-center justify-center gap-2 w-full h-12 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider rounded-none hover:bg-[#0066d6] active:bg-[#004a9e] transition-colors"
                 >
                   <UserPlus className="w-4 h-4" />
                   {config.ctaText}
@@ -150,7 +150,7 @@ const RegistrationGate = ({ isOpen, onClose, gateType = 'default', hasEngaged = 
 
                 <Link
                   to="/login"
-                  className="flex items-center justify-center gap-2 w-full h-12 border border-[#333] text-gray-400 font-medium text-sm rounded-sm hover:border-[#444] hover:text-white transition-colors"
+                  className="flex items-center justify-center gap-2 w-full h-12 border border-[#333] text-gray-400 font-medium text-sm rounded-none hover:border-[#444] hover:text-white transition-colors"
                 >
                   Already have an account? Sign in
                   <ChevronRight className="w-4 h-4" />
@@ -167,7 +167,7 @@ const RegistrationGate = ({ isOpen, onClose, gateType = 'default', hasEngaged = 
             {/* Progress preservation message for engaged users */}
             {hasEngaged && (
               <div className="px-6 pb-4">
-                <div className="p-3 bg-[#0057B8]/10 border border-[#0057B8]/20 rounded-sm">
+                <div className="p-3 bg-[#0057B8]/10 border border-[#0057B8]/20 rounded-none">
                   <p className="text-xs text-[#0057B8] text-center">
                     Your preview progress will be saved when you register
                   </p>

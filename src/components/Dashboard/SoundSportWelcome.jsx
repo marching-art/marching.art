@@ -52,7 +52,7 @@ const SoundSportWelcome = ({ onDismiss, showCompact = false }) => {
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      className="relative bg-gradient-to-br from-green-900/30 via-[#1a1a1a] to-[#1a1a1a] border border-green-500/30 rounded-sm overflow-hidden mb-4"
+      className="relative bg-gradient-to-br from-green-900/30 via-[#1a1a1a] to-[#1a1a1a] border border-green-500/30 rounded-none overflow-hidden mb-4"
     >
       {/* Dismiss button */}
       {onDismiss && (
@@ -68,7 +68,7 @@ const SoundSportWelcome = ({ onDismiss, showCompact = false }) => {
       {/* Header - Always visible */}
       <button onClick={() => setIsExpanded(!isExpanded)} className="w-full text-left p-4 pr-10">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-green-500/20 rounded-sm border border-green-500/30">
+          <div className="p-2 bg-green-500/20 rounded-none border border-green-500/30">
             <Music className="w-5 h-5 text-green-500" />
           </div>
           <div className="flex-1 min-w-0">
@@ -101,7 +101,7 @@ const SoundSportWelcome = ({ onDismiss, showCompact = false }) => {
           >
             <div className="px-4 pb-4 space-y-3">
               {/* Key Stats - Horizontal Row */}
-              <div className="flex items-center justify-between p-2.5 bg-[#222] rounded border border-[#333]">
+              <div className="flex items-center justify-between p-2.5 bg-[#222] rounded-none border border-[#333]">
                 {KEY_STATS.map((stat, idx) => {
                   const Icon = stat.icon;
                   return (
@@ -120,15 +120,15 @@ const SoundSportWelcome = ({ onDismiss, showCompact = false }) => {
 
               {/* Rating Badges - Compact Horizontal */}
               <div className="flex items-center justify-center gap-1.5">
-                <div className="flex items-center gap-1 px-2 py-1 bg-primary border border-black/30 rounded-sm">
+                <div className="flex items-center gap-1 px-2 py-1 bg-primary border border-black/30 rounded-none">
                   <Medal className="w-3 h-3 text-black" />
                   <span className="text-[10px] font-bold text-black">Gold 90+</span>
                 </div>
-                <div className="flex items-center gap-1 px-2 py-1 bg-stone-300 border border-black/30 rounded-sm">
+                <div className="flex items-center gap-1 px-2 py-1 bg-stone-300 border border-black/30 rounded-none">
                   <Medal className="w-3 h-3 text-black" />
                   <span className="text-[10px] font-bold text-black">Silver 75+</span>
                 </div>
-                <div className="flex items-center gap-1 px-2 py-1 bg-orange-300 border border-black/30 rounded-sm">
+                <div className="flex items-center gap-1 px-2 py-1 bg-orange-300 border border-black/30 rounded-none">
                   <Medal className="w-3 h-3 text-black" />
                   <span className="text-[10px] font-bold text-black">Bronze 60+</span>
                 </div>
@@ -138,14 +138,14 @@ const SoundSportWelcome = ({ onDismiss, showCompact = false }) => {
               <div className="flex gap-2">
                 <Link
                   to="/soundsport"
-                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-green-500 text-black font-bold text-xs rounded hover:bg-green-400 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-green-500 text-black font-bold text-xs rounded-none hover:bg-green-400 transition-colors"
                 >
                   <BookOpen className="w-3.5 h-3.5" />
                   Learn Rules
                 </Link>
                 <Link
                   to="/scores?tab=soundsport"
-                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[#333] text-white font-bold text-xs rounded hover:bg-[#444] transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[#333] text-white font-bold text-xs rounded-none hover:bg-[#444] transition-colors"
                 >
                   <Trophy className="w-3.5 h-3.5" />
                   Results
@@ -161,7 +161,7 @@ const SoundSportWelcome = ({ onDismiss, showCompact = false }) => {
         <div className="px-4 pb-3">
           <Link
             to="/soundsport"
-            className="flex items-center justify-center gap-2 w-full py-2 bg-green-500/20 text-green-400 text-xs font-bold rounded hover:bg-green-500/30 transition-colors"
+            className="flex items-center justify-center gap-2 w-full py-2 bg-green-500/20 text-green-400 text-xs font-bold rounded-none hover:bg-green-500/30 transition-colors"
           >
             <Play className="w-3.5 h-3.5" />
             Get Started
@@ -180,10 +180,10 @@ const SoundSportWelcome = ({ onDismiss, showCompact = false }) => {
 export const SoundSportBanner = () => (
   <Link
     to="/soundsport"
-    className="flex items-center justify-between p-3 bg-gradient-to-r from-green-900/30 to-transparent border border-green-500/30 rounded-sm hover:border-green-500/50 transition-colors group"
+    className="flex items-center justify-between p-3 bg-gradient-to-r from-green-900/30 to-transparent border border-green-500/30 rounded-none hover:border-green-500/50 transition-colors group"
   >
     <div className="flex items-center gap-3">
-      <div className="p-1.5 bg-green-500/20 rounded">
+      <div className="p-1.5 bg-green-500/20 rounded-none">
         <Music className="w-4 h-4 text-green-500" />
       </div>
       <div>

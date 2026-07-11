@@ -34,7 +34,7 @@ const CaptionCompare = ({ label, score1, score2, color }) => {
           {score2.toFixed(1)}
         </span>
       </div>
-      <div className="flex h-2 rounded-sm overflow-hidden bg-charcoal-800">
+      <div className="flex h-2 rounded-none overflow-hidden bg-charcoal-800">
         <m.div
           initial={{ width: '50%' }}
           animate={{ width: `${percent1}%` }}
@@ -64,7 +64,7 @@ export const MatchupOverviewPanel = ({ scoreBreakdown, user1Stats, user2Stats, l
   >
     {/* Season Stats Comparison */}
     {user1Stats && user2Stats && (
-      <div className="glass rounded-sm p-4">
+      <div className="glass rounded-none p-4">
         <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
           <Award className="w-4 h-4 text-yellow-400" />
           Season Stats
@@ -147,7 +147,7 @@ export const MatchupOverviewPanel = ({ scoreBreakdown, user1Stats, user2Stats, l
     {/* Quick Caption Comparison */}
     {!loading &&
       (scoreBreakdown.user1?.shows.length > 0 || scoreBreakdown.user2?.shows.length > 0) && (
-        <div className="glass rounded-sm p-4">
+        <div className="glass rounded-none p-4">
           <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
             <Target className="w-4 h-4 text-yellow-500" />
             Caption Summary
@@ -187,7 +187,7 @@ export const MatchupShowsPanel = ({ matchup, scoreBreakdown, getDisplayName, loa
     {/* Detailed Caption Breakdown */}
     {!loading &&
       (scoreBreakdown.user1?.shows.length > 0 || scoreBreakdown.user2?.shows.length > 0) && (
-        <div className="glass rounded-sm p-4">
+        <div className="glass rounded-none p-4">
           <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
             <Target className="w-4 h-4 text-yellow-500" />
             Caption Breakdown
@@ -215,7 +215,7 @@ export const MatchupShowsPanel = ({ matchup, scoreBreakdown, getDisplayName, loa
       )}
 
     {/* Shows This Week */}
-    <div className="glass rounded-sm overflow-hidden">
+    <div className="glass rounded-none overflow-hidden">
       <div className="p-4 border-b border-white/10">
         <h3 className="text-sm font-bold text-white flex items-center gap-2">
           <Trophy className="w-4 h-4 text-yellow-500" />
@@ -228,7 +228,7 @@ export const MatchupShowsPanel = ({ matchup, scoreBreakdown, getDisplayName, loa
         {scoreBreakdown.user1?.shows.map((show, idx) => (
           <div key={`u1-${idx}`} className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-sm bg-charcoal-800 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-none bg-charcoal-800 flex items-center justify-center">
                 <span className="text-xs font-bold text-gray-500/60">
                   {getDisplayName(matchup.user1).charAt(0)}
                 </span>
@@ -246,7 +246,7 @@ export const MatchupShowsPanel = ({ matchup, scoreBreakdown, getDisplayName, loa
         {scoreBreakdown.user2?.shows.map((show, idx) => (
           <div key={`u2-${idx}`} className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-sm bg-charcoal-800 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-none bg-charcoal-800 flex items-center justify-center">
                 <span className="text-xs font-bold text-gray-500/60">
                   {getDisplayName(matchup.user2).charAt(0)}
                 </span>

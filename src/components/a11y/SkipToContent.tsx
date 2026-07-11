@@ -44,7 +44,7 @@ export const SkipToContent: React.FC<SkipToContentProps> = ({
         px-4 py-2
         bg-yellow-500 text-charcoal-900
         font-bold text-sm
-        rounded-sm
+        rounded-none
         focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-charcoal-950
         transition-all
       "

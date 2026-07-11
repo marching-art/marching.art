@@ -140,7 +140,7 @@ function ShareButton({ story, className = '' }) {
   return (
     <button
       onClick={handleShare}
-      className={`p-2 text-gray-500 hover:text-white hover:bg-white/10 transition-colors rounded-sm ${className}`}
+      className={`p-2 text-gray-500 hover:text-white hover:bg-white/10 transition-colors rounded-none ${className}`}
       title="Share article"
       aria-label="Share article"
     >

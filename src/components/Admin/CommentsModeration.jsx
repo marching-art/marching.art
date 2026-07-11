@@ -173,7 +173,7 @@ const CommentsModeration = () => {
             <button
               key={status}
               onClick={() => setStatusFilter(status)}
-              className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+              className={`px-3 py-1.5 text-xs font-medium rounded-none transition-colors ${
                 statusFilter === status
                   ? 'bg-[#0057B8] text-white'
                   : 'bg-[#222] text-gray-400 hover:text-white border border-[#333]'
@@ -204,7 +204,7 @@ const CommentsModeration = () => {
 
       {/* Bulk actions bar */}
       {selectedComments.size > 0 && (
-        <div className="bg-[#222] border border-[#333] rounded-sm p-3 flex items-center justify-between">
+        <div className="bg-[#222] border border-[#333] rounded-none p-3 flex items-center justify-between">
           <span className="text-xs text-gray-400">
             {selectedComments.size} comment{selectedComments.size > 1 ? 's' : ''} selected
           </span>
@@ -212,7 +212,7 @@ const CommentsModeration = () => {
             <button
               onClick={() => handleBulkModerate('approve')}
               disabled={bulkProcessing}
-              className="px-3 py-1.5 text-xs font-bold text-green-400 hover:bg-green-500/20 rounded transition-colors disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-bold text-green-400 hover:bg-green-500/20 rounded-none transition-colors disabled:opacity-50"
             >
               <Check className="w-3.5 h-3.5 inline mr-1" />
               Approve All
@@ -220,7 +220,7 @@ const CommentsModeration = () => {
             <button
               onClick={() => handleBulkModerate('reject')}
               disabled={bulkProcessing}
-              className="px-3 py-1.5 text-xs font-bold text-red-400 hover:bg-red-500/20 rounded transition-colors disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-bold text-red-400 hover:bg-red-500/20 rounded-none transition-colors disabled:opacity-50"
             >
               <X className="w-3.5 h-3.5 inline mr-1" />
               Reject All
@@ -228,7 +228,7 @@ const CommentsModeration = () => {
             <button
               onClick={() => handleBulkModerate('hide')}
               disabled={bulkProcessing}
-              className="px-3 py-1.5 text-xs font-bold text-gray-400 hover:bg-gray-500/20 rounded transition-colors disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-bold text-gray-400 hover:bg-gray-500/20 rounded-none transition-colors disabled:opacity-50"
             >
               <EyeOff className="w-3.5 h-3.5 inline mr-1" />
               Hide All
@@ -239,21 +239,21 @@ const CommentsModeration = () => {
 
       {/* Comments list */}
       {comments.length === 0 ? (
-        <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-8 text-center">
+        <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-8 text-center">
           <MessageSquare className="w-8 h-8 text-gray-600 mx-auto mb-2" />
           <p className="text-gray-500 text-sm">
             No {statusFilter !== 'all' ? statusFilter : ''} comments to moderate
           </p>
         </div>
       ) : (
-        <div className="bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden">
+        <div className="bg-[#1a1a1a] border border-[#333] rounded-none overflow-hidden">
           {/* Table header */}
           <div className="bg-[#222] border-b border-[#333] px-4 py-2 flex items-center gap-4">
             <input
               type="checkbox"
               checked={selectedComments.size === comments.length && comments.length > 0}
               onChange={toggleSelectAll}
-              className="w-4 h-4 bg-[#333] border-[#444] rounded focus:ring-[#0057B8]"
+              className="w-4 h-4 bg-[#333] border-[#444] rounded-none focus:ring-[#0057B8]"
             />
             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider flex-1">
               Comment
@@ -321,7 +321,7 @@ const CommentRow = ({
         type="checkbox"
         checked={isSelected}
         onChange={onToggleSelect}
-        className="w-4 h-4 bg-[#333] border-[#444] rounded focus:ring-[#0057B8]"
+        className="w-4 h-4 bg-[#333] border-[#444] rounded-none focus:ring-[#0057B8]"
       />
 
       <div className="flex-1 min-w-0">
@@ -347,7 +347,7 @@ const CommentRow = ({
       </div>
 
       <span
-        className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded w-20 text-center ${STATUS_COLORS[comment.status]}`}
+        className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded-none w-20 text-center ${STATUS_COLORS[comment.status]}`}
       >
         {comment.status}
       </span>
@@ -355,7 +355,7 @@ const CommentRow = ({
       <div className="flex items-center gap-1 w-32 justify-center">
         <button
           onClick={onPreview}
-          className="p-1.5 text-gray-400 hover:text-white hover:bg-[#333] rounded transition-colors"
+          className="p-1.5 text-gray-400 hover:text-white hover:bg-[#333] rounded-none transition-colors"
           title="Preview"
         >
           <Eye className="w-4 h-4" />
@@ -365,7 +365,7 @@ const CommentRow = ({
           <button
             onClick={onApprove}
             disabled={isProcessing}
-            className="p-1.5 text-green-400 hover:bg-green-500/20 rounded transition-colors disabled:opacity-50"
+            className="p-1.5 text-green-400 hover:bg-green-500/20 rounded-none transition-colors disabled:opacity-50"
             title="Approve"
           >
             <Check className="w-4 h-4" />
@@ -376,7 +376,7 @@ const CommentRow = ({
           <button
             onClick={onReject}
             disabled={isProcessing}
-            className="p-1.5 text-red-400 hover:bg-red-500/20 rounded transition-colors disabled:opacity-50"
+            className="p-1.5 text-red-400 hover:bg-red-500/20 rounded-none transition-colors disabled:opacity-50"
             title="Reject"
           >
             <X className="w-4 h-4" />
@@ -387,7 +387,7 @@ const CommentRow = ({
           <button
             onClick={onHide}
             disabled={isProcessing}
-            className="p-1.5 text-gray-400 hover:bg-gray-500/20 rounded transition-colors disabled:opacity-50"
+            className="p-1.5 text-gray-400 hover:bg-gray-500/20 rounded-none transition-colors disabled:opacity-50"
             title="Hide"
           >
             <EyeOff className="w-4 h-4" />
@@ -418,7 +418,7 @@ const CommentPreviewModal = ({ comment, onClose, onApprove, onReject, onHide, is
         onClick={onClose}
       >
         <div
-          className="w-full max-w-lg bg-[#1a1a1a] border border-[#333] rounded-sm max-h-[90dvh] flex flex-col"
+          className="w-full max-w-lg bg-[#1a1a1a] border border-[#333] rounded-none max-h-[90dvh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -442,7 +442,7 @@ const CommentPreviewModal = ({ comment, onClose, onApprove, onReject, onHide, is
             {/* Status and meta */}
             <div className="flex items-center gap-3 flex-wrap">
               <span
-                className={`px-2 py-1 text-[10px] font-bold uppercase rounded ${STATUS_COLORS[comment.status]}`}
+                className={`px-2 py-1 text-[10px] font-bold uppercase rounded-none ${STATUS_COLORS[comment.status]}`}
               >
                 {comment.status}
               </span>
@@ -469,7 +469,7 @@ const CommentPreviewModal = ({ comment, onClose, onApprove, onReject, onHide, is
             </div>
 
             {/* Comment content */}
-            <div className="bg-[#0a0a0a] border border-[#333] rounded p-3">
+            <div className="bg-[#0a0a0a] border border-[#333] rounded-none p-3">
               <p className="text-sm text-gray-300 whitespace-pre-wrap">{comment.content}</p>
             </div>
 
@@ -483,7 +483,7 @@ const CommentPreviewModal = ({ comment, onClose, onApprove, onReject, onHide, is
 
             {/* Report reasons */}
             {comment.reportReasons && comment.reportReasons.length > 0 && (
-              <div className="bg-red-500/10 border border-red-500/30 rounded p-3">
+              <div className="bg-red-500/10 border border-red-500/30 rounded-none p-3">
                 <p className="text-[10px] font-bold text-red-400 uppercase tracking-wider mb-2">
                   Report Reasons
                 </p>
@@ -499,7 +499,7 @@ const CommentPreviewModal = ({ comment, onClose, onApprove, onReject, onHide, is
 
             {/* Rejection form */}
             {showRejectForm && (
-              <div className="bg-red-500/10 border border-red-500/30 rounded p-3">
+              <div className="bg-red-500/10 border border-red-500/30 rounded-none p-3">
                 <label className="block text-[10px] font-bold text-red-400 uppercase tracking-wider mb-2">
                   Rejection Reason (optional)
                 </label>
@@ -508,7 +508,7 @@ const CommentPreviewModal = ({ comment, onClose, onApprove, onReject, onHide, is
                   onChange={(e) => setRejectReason(e.target.value)}
                   placeholder="Reason for rejection..."
                   rows={2}
-                  className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded text-sm text-white placeholder-gray-600 focus:outline-none focus:border-red-500"
+                  className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-red-500"
                 />
               </div>
             )}

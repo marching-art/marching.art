@@ -104,7 +104,7 @@ const NextDeadlineChip = ({ variant = 'chip' }) => {
 
   return (
     <div
-      className="flex items-center gap-1.5 px-2 py-1 border border-[#333] bg-[#111] rounded-sm"
+      className="flex items-center gap-1.5 px-2 py-1 border border-[#333] bg-[#111] rounded-none"
       title={tooltipLines.join('\n')}
     >
       {countdown}

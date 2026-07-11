@@ -78,7 +78,7 @@ const ArticleSidebarAuth = () => {
 
   return user ? (
     /* AUTHENTICATED USER WIDGET */
-    <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
+    <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
       {/* User Header */}
       <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
         <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
@@ -140,7 +140,7 @@ const ArticleSidebarAuth = () => {
       <div className="p-2">
         <Link
           to="/dashboard"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-sm hover:bg-white/[0.05] transition-colors group"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-none hover:bg-white/[0.05] transition-colors group"
         >
           <LayoutDashboard className="w-4 h-4 text-[#0057B8]" />
           <span className="text-sm text-white font-medium">Dashboard</span>
@@ -148,7 +148,7 @@ const ArticleSidebarAuth = () => {
         </Link>
         <Link
           to="/leagues"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-sm hover:bg-white/[0.05] transition-colors group"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-none hover:bg-white/[0.05] transition-colors group"
         >
           <Award className="w-4 h-4 text-orange-500" />
           <span className="text-sm text-white font-medium">My Leagues</span>
@@ -156,7 +156,7 @@ const ArticleSidebarAuth = () => {
         </Link>
         <Link
           to="/scores"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-sm hover:bg-white/[0.05] transition-colors group"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-none hover:bg-white/[0.05] transition-colors group"
         >
           <Activity className="w-4 h-4 text-green-500" />
           <span className="text-sm text-white font-medium">Live Scores</span>
@@ -164,7 +164,7 @@ const ArticleSidebarAuth = () => {
         </Link>
         <Link
           to="/profile"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-sm hover:bg-white/[0.05] transition-colors group"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-none hover:bg-white/[0.05] transition-colors group"
         >
           <Settings className="w-4 h-4 text-gray-400" />
           <span className="text-sm text-white font-medium">Profile & Settings</span>
@@ -185,7 +185,7 @@ const ArticleSidebarAuth = () => {
     </div>
   ) : (
     /* LOGIN/REGISTER WIDGET */
-    <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
+    <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
       {/* Card Header */}
       <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
         <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
@@ -198,7 +198,7 @@ const ArticleSidebarAuth = () => {
       <form onSubmit={handleAuthSubmit} className="p-4 space-y-3">
         {/* Error Message */}
         {authError && (
-          <div className="p-2.5 bg-red-500/10 border border-red-500/30 rounded-sm flex items-start gap-2">
+          <div className="p-2.5 bg-red-500/10 border border-red-500/30 rounded-none flex items-start gap-2">
             <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-red-300">{authError}</p>
           </div>
@@ -214,7 +214,7 @@ const ArticleSidebarAuth = () => {
             onChange={(e) => setEmail(e.target.value)}
             required
             disabled={authLoading}
-            className="w-full h-9 pl-9 pr-3 bg-[#111] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
+            className="w-full h-9 pl-9 pr-3 bg-[#111] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
           />
         </div>
 
@@ -228,7 +228,7 @@ const ArticleSidebarAuth = () => {
             onChange={(e) => setPassword(e.target.value)}
             required
             disabled={authLoading}
-            className="w-full h-9 pl-9 pr-3 bg-[#111] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
+            className="w-full h-9 pl-9 pr-3 bg-[#111] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
           />
         </div>
 
@@ -237,13 +237,13 @@ const ArticleSidebarAuth = () => {
           <button
             type="submit"
             disabled={authLoading}
-            className="flex-1 h-10 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:bg-[#0066d6] active:bg-[#004a9e] transition-all duration-150 press-feedback-strong disabled:opacity-50 disabled:cursor-not-allowed rounded-sm"
+            className="flex-1 h-10 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:bg-[#0066d6] active:bg-[#004a9e] transition-all duration-150 press-feedback-strong disabled:opacity-50 disabled:cursor-not-allowed rounded-none"
           >
             {authLoading ? '...' : 'Sign In'}
           </button>
           <Link
             to="/register"
-            className="flex-1 h-10 border border-[#333] text-gray-400 font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:border-[#444] hover:text-white transition-all rounded-sm"
+            className="flex-1 h-10 border border-[#333] text-gray-400 font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:border-[#444] hover:text-white transition-all rounded-none"
           >
             Register
           </Link>

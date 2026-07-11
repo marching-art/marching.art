@@ -41,7 +41,7 @@ const ClassStandings = ({ block }) => (
             className="grid grid-cols-[2.5rem_1fr_5rem] sm:grid-cols-[2.5rem_1fr_5rem_repeat(3,4rem)] gap-2 px-4 py-3 items-center"
           >
             <span
-              className={`w-7 h-7 flex items-center justify-center text-xs font-bold rounded-sm ${
+              className={`w-7 h-7 flex items-center justify-center text-xs font-bold rounded-none ${
                 s.rank <= 3 ? 'bg-[#0057B8] text-white' : 'bg-[#222] text-gray-500'
               }`}
             >
@@ -141,7 +141,7 @@ const SeasonSummaryCards = ({ seasonSummary }) => {
                 {soundSport.ratings.map((r) => (
                   <span
                     key={r.rating}
-                    className={`text-xs font-bold px-3 py-1.5 border rounded-sm ${
+                    className={`text-xs font-bold px-3 py-1.5 border rounded-none ${
                       RATING_STYLES[r.rating] || 'text-gray-300 border-[#333] bg-[#111]'
                     }`}
                   >

@@ -145,7 +145,7 @@ const SeasonScorecard = memo(
                 <button
                   type="button"
                   onClick={() => setMenuOpen((v) => !v)}
-                  className="min-w-touch min-h-touch flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/5 active:text-white transition-colors rounded-sm press-feedback"
+                  className="min-w-touch min-h-touch flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/5 active:text-white transition-colors rounded-none press-feedback"
                   aria-haspopup="menu"
                   aria-expanded={menuOpen}
                   aria-label="Manage corps"
@@ -251,7 +251,7 @@ const SeasonScorecard = memo(
               ) : isSoundSport && rating ? (
                 // SoundSport: Display medal badge
                 <div
-                  className={`inline-flex items-center gap-1.5 px-2 py-1 ${rating.color} rounded-sm`}
+                  className={`inline-flex items-center gap-1.5 px-2 py-1 ${rating.color} rounded-none`}
                 >
                   <Medal className={`w-4 h-4 ${rating.textColor}`} />
                   <span className={`text-lg font-bold ${rating.textColor}`}>{rating.rating}</span>

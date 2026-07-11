@@ -15,9 +15,9 @@ function ConditionBar({ label, value, icon: Icon, color }) {
           <span>{label}</span>
           <span className="tabular-nums">{Math.round(value)}</span>
         </div>
-        <div className="h-1.5 bg-[#2a2a2a] rounded-sm overflow-hidden">
+        <div className="h-1.5 bg-[#2a2a2a] rounded-none overflow-hidden">
           <div
-            className={`h-full rounded-sm ${value >= 50 ? 'bg-green-500' : value >= 30 ? 'bg-yellow-500' : 'bg-red-500'}`}
+            className={`h-full rounded-none ${value >= 50 ? 'bg-green-500' : value >= 30 ? 'bg-yellow-500' : 'bg-red-500'}`}
             style={{ width: `${Math.max(2, Math.min(100, value))}%` }}
           />
         </div>
@@ -77,7 +77,7 @@ export default function RehearsalPlanner({ podium }) {
   const exhausted = seasonOver || today.restDay;
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4 space-y-4">
+    <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-4 space-y-4">
       {/* Header: day type + condition strip */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
@@ -91,7 +91,7 @@ export default function RehearsalPlanner({ podium }) {
           <div className="text-sm font-bold text-white flex items-center gap-3">
             {dayType}
             {data.divisionLabel && (
-              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-sm bg-yellow-400/15 text-yellow-400">
+              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-none bg-yellow-400/15 text-yellow-400">
                 {data.divisionLabel}
               </span>
             )}
@@ -131,7 +131,7 @@ export default function RehearsalPlanner({ podium }) {
                   key={block.id}
                   disabled={busy !== null}
                   onClick={() => handleAllocate(block.id)}
-                  className="text-left px-3 py-2.5 rounded-sm border border-[#333] hover:border-[#0057B8] hover:bg-[#0057B8]/10 transition-colors press-feedback disabled:opacity-50"
+                  className="text-left px-3 py-2.5 rounded-none border border-[#333] hover:border-[#0057B8] hover:bg-[#0057B8]/10 transition-colors press-feedback disabled:opacity-50"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white">{block.label}</span>
@@ -153,7 +153,7 @@ export default function RehearsalPlanner({ podium }) {
             <button
               disabled={busy !== null}
               onClick={() => handleAllocate('fundraiser')}
-              className="text-left px-3 py-2.5 rounded-sm border border-[#5a4a12] hover:border-[#c9a227] hover:bg-[#c9a227]/10 transition-colors press-feedback disabled:opacity-50"
+              className="text-left px-3 py-2.5 rounded-none border border-[#5a4a12] hover:border-[#c9a227] hover:bg-[#c9a227]/10 transition-colors press-feedback disabled:opacity-50"
             >
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#c9a227]">Fundraiser</span>
@@ -169,7 +169,7 @@ export default function RehearsalPlanner({ podium }) {
         )}
 
         {/* Schedule panel: today's block count + running order */}
-        <div className="lg:w-56 shrink-0 flex flex-col rounded-sm border border-[#333] bg-[#141414] p-3">
+        <div className="lg:w-56 shrink-0 flex flex-col rounded-none border border-[#333] bg-[#141414] p-3">
           <div className="flex items-baseline justify-between">
             <span className="text-[10px] uppercase font-bold tracking-wider text-gray-500">
               Blocks today
@@ -206,7 +206,7 @@ export default function RehearsalPlanner({ podium }) {
             <button
               onClick={handleRest}
               disabled={busy !== null}
-              className="mt-3 flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase px-3 py-1.5 rounded-sm border border-[#333] text-gray-400 hover:text-white hover:border-gray-500 transition-colors press-feedback disabled:opacity-50"
+              className="mt-3 flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase px-3 py-1.5 rounded-none border border-[#333] text-gray-400 hover:text-white hover:border-gray-500 transition-colors press-feedback disabled:opacity-50"
             >
               <Moon className="w-3 h-3" /> Rest day
             </button>
@@ -221,7 +221,7 @@ export default function RehearsalPlanner({ podium }) {
 
       {/* Action Complete panel */}
       {lastPanel && (
-        <div className="border border-[#2f4f2f] bg-[#12240f] rounded-sm px-3 py-2">
+        <div className="border border-[#2f4f2f] bg-[#12240f] rounded-none px-3 py-2">
           <div className="text-[10px] font-bold uppercase tracking-wider text-green-400 mb-1">
             Action complete — {BLOCKS.find((b) => b.id === lastPanel.blockType)?.label}
             {lastPanel.repeatMult < 1 && (

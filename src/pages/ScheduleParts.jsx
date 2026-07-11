@@ -32,7 +32,7 @@ const WeekPills = ({ weeks, currentWeek, selectedWeek, onSelect, getShowCount })
       {/* Segmented Control Container */}
       <div
         ref={containerRef}
-        className="flex items-center gap-1 p-1 bg-[#111] border border-[#333] rounded-sm overflow-x-auto scrollbar-hide"
+        className="flex items-center gap-1 p-1 bg-[#111] border border-[#333] rounded-none overflow-x-auto scrollbar-hide"
       >
         {weeks.map((week) => {
           const isSelected = selectedWeek === week;
@@ -112,7 +112,7 @@ const RegistrationBadges = ({ show, userProfile, podiumAttendance }) => {
         return (
           <span
             key={corpsClass}
-            className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded ${config.bgColor} ${config.color}`}
+            className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-none ${config.bgColor} ${config.color}`}
           >
             <Check className="w-2.5 h-2.5" />
             {config.name}
@@ -121,7 +121,7 @@ const RegistrationBadges = ({ show, userProfile, podiumAttendance }) => {
       })}
       {podiumAttending && (
         <span
-          className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded ${CLASS_CONFIG.podiumClass.bgColor} ${CLASS_CONFIG.podiumClass.color}`}
+          className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-none ${CLASS_CONFIG.podiumClass.bgColor} ${CLASS_CONFIG.podiumClass.color}`}
         >
           <Check className="w-2.5 h-2.5" />
           {CLASS_CONFIG.podiumClass.name}
@@ -175,7 +175,7 @@ const ShowCard = ({
       tabIndex={isPast ? undefined : 0}
       aria-label={isPast ? undefined : `Open registration for ${show.eventName}`}
       className={`
-        bg-[#1a1a1a] border rounded-sm overflow-hidden
+        bg-[#1a1a1a] border rounded-none overflow-hidden
         ${isMajor ? 'border-yellow-500/40' : 'border-[#333]'}
         ${isPast ? 'opacity-60' : `${isMajor ? 'hover:border-yellow-500/70' : 'hover:border-[#444]'} cursor-pointer active:bg-[#222]`}
         ${isRegistered && !isPast ? 'border-l-2 border-l-green-500' : ''}
@@ -224,16 +224,16 @@ const ShowCard = ({
 
           {/* Status Badge */}
           {isPast ? (
-            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#333] text-gray-400 rounded-sm">
+            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#333] text-gray-400 rounded-none">
               {isCompleted ? 'Scored' : 'Done'}
             </span>
           ) : isRegistered ? (
-            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-green-500/10 text-green-400 rounded-sm flex items-center gap-1">
+            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-green-500/10 text-green-400 rounded-none flex items-center gap-1">
               <Check className="w-3 h-3" />
               Going
             </span>
           ) : (
-            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] rounded-sm">
+            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] rounded-none">
               Register
             </span>
           )}
@@ -288,7 +288,7 @@ const DayIndicator = ({ date, dayNumber, isMajorDay = false }) => {
     <div
       className={`
       flex-shrink-0 w-20 lg:w-24 flex flex-col items-center justify-center
-      py-3 px-2 rounded-sm border
+      py-3 px-2 rounded-none border
       ${
         isPast
           ? 'bg-[#1a1a1a] border-[#333] text-gray-500'
@@ -462,7 +462,7 @@ const ChampionshipEventCard = ({
   return (
     <div
       className={`
-        bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden
+        bg-[#1a1a1a] border border-[#333] rounded-none overflow-hidden
         ${isPast ? 'opacity-60' : ''}
         ${hasEligibleCorps && !isPast ? 'border-l-2 border-l-[#0057B8]' : ''}
       `}
@@ -492,16 +492,16 @@ const ChampionshipEventCard = ({
 
           {/* Auto-Enrolled Badge */}
           {hasEligibleCorps && !isPast ? (
-            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] rounded-sm flex items-center gap-1">
+            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] rounded-none flex items-center gap-1">
               <Check className="w-3 h-3" />
               Auto-Enrolled
             </span>
           ) : isPast ? (
-            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#333] text-gray-400 rounded-sm">
+            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#333] text-gray-400 rounded-none">
               Completed
             </span>
           ) : (
-            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#333] text-gray-500 rounded-sm">
+            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#333] text-gray-500 rounded-none">
               No Corps
             </span>
           )}
@@ -523,7 +523,7 @@ const ChampionshipEventCard = ({
                 return (
                   <span
                     key={corpsClass}
-                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded ${config.bgColor} ${config.color}`}
+                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-none ${config.bgColor} ${config.color}`}
                   >
                     <Check className="w-2.5 h-2.5" />
                     {config.name}
@@ -532,7 +532,7 @@ const ChampionshipEventCard = ({
               })}
               {podiumAttending && (
                 <span
-                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded ${CLASS_CONFIG.podiumClass.bgColor} ${CLASS_CONFIG.podiumClass.color}`}
+                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-none ${CLASS_CONFIG.podiumClass.bgColor} ${CLASS_CONFIG.podiumClass.color}`}
                 >
                   <Check className="w-2.5 h-2.5" />
                   {CLASS_CONFIG.podiumClass.name}
@@ -551,7 +551,7 @@ const ChampionshipEventCard = ({
               return (
                 <span
                   key={cls}
-                  className={`text-[9px] px-1 py-0.5 rounded ${config.bgColor} ${config.color} opacity-60`}
+                  className={`text-[9px] px-1 py-0.5 rounded-none ${config.bgColor} ${config.color} opacity-60`}
                 >
                   {config.name}
                 </span>
@@ -637,7 +637,7 @@ const ChampionshipWeekDisplay = ({
       )}
 
       {/* Championship Week Header */}
-      <div className="bg-gradient-to-r from-yellow-500/10 to-[#0057B8]/10 border border-yellow-500/20 rounded-sm px-4 py-3">
+      <div className="bg-gradient-to-r from-yellow-500/10 to-[#0057B8]/10 border border-yellow-500/20 rounded-none px-4 py-3">
         <div className="flex items-center gap-2 mb-2">
           <Trophy className="w-5 h-5 text-yellow-500" />
           <h3 className="text-[10px] font-bold text-white uppercase tracking-wider">

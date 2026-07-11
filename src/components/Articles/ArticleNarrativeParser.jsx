@@ -192,7 +192,10 @@ function RecommendationList({ recs }) {
           </div>
           <div className="space-y-2">
             {recs.buy.map((rec, idx) => (
-              <div key={idx} className="bg-green-500/10 border border-green-500/20 p-3 rounded-sm">
+              <div
+                key={idx}
+                className="bg-green-500/10 border border-green-500/20 p-3 rounded-none"
+              >
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-bold text-white">{rec.corps}</span>
                   {rec.score > 0 && (
@@ -222,7 +225,7 @@ function RecommendationList({ recs }) {
             {recs.hold.map((rec, idx) => (
               <div
                 key={idx}
-                className="bg-yellow-500/10 border border-yellow-500/20 p-3 rounded-sm"
+                className="bg-yellow-500/10 border border-yellow-500/20 p-3 rounded-none"
               >
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-bold text-white">{rec.corps}</span>
@@ -251,7 +254,7 @@ function RecommendationList({ recs }) {
           </div>
           <div className="space-y-2">
             {recs.sell.map((rec, idx) => (
-              <div key={idx} className="bg-red-500/10 border border-red-500/20 p-3 rounded-sm">
+              <div key={idx} className="bg-red-500/10 border border-red-500/20 p-3 rounded-none">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-bold text-white">{rec.corps}</span>
                   {rec.score > 0 && (

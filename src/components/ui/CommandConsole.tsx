@@ -82,24 +82,24 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
       <div className="text-center">
         <div className="flex items-center justify-center gap-2 mb-2">
           {shouldReduceMotion ? (
-            <div className="w-2 h-2 bg-yellow-500 rounded-sm" />
+            <div className="w-2 h-2 bg-yellow-500 rounded-none" />
           ) : (
             <m.div
               animate={{ opacity: [1, 0.3, 1] }}
               transition={{ duration: 0.8, repeat: Infinity }}
-              className="w-2 h-2 bg-yellow-500 rounded-sm"
+              className="w-2 h-2 bg-yellow-500 rounded-none"
             />
           )}
           <span className="font-mono text-[10px] text-yellow-500/80 uppercase tracking-[0.3em]">
             System Boot
           </span>
           {shouldReduceMotion ? (
-            <div className="w-2 h-2 bg-yellow-500 rounded-sm" />
+            <div className="w-2 h-2 bg-yellow-500 rounded-none" />
           ) : (
             <m.div
               animate={{ opacity: [1, 0.3, 1] }}
               transition={{ duration: 0.8, repeat: Infinity, delay: 0.4 }}
-              className="w-2 h-2 bg-yellow-500 rounded-sm"
+              className="w-2 h-2 bg-yellow-500 rounded-none"
             />
           )}
         </div>
@@ -491,7 +491,7 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
         className={`
         border-2 border-dashed border-warning/30
         bg-warning/5 backdrop-blur-sm
-        rounded-sm p-6 md:p-8
+        rounded-none p-6 md:p-8
         ${className}
       `}
       >
@@ -522,7 +522,7 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
       relative min-h-[320px] flex items-center justify-center
       border-2 border-dashed border-warning/30
       bg-gradient-to-b from-warning/[0.02] to-transparent
-      rounded-sm overflow-hidden
+      rounded-none overflow-hidden
       ${className}
     `}
     >
@@ -555,7 +555,7 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
 
         {/* Status Indicator - static on mobile */}
         <div className="flex items-center justify-center gap-2 mb-4">
-          <div className="w-2 h-2 bg-warning rounded-sm" />
+          <div className="w-2 h-2 bg-warning rounded-none" />
           <span className="font-mono text-[9px] text-warning/60 uppercase tracking-[0.2em]">
             Status: Awaiting Input
           </span>
@@ -601,7 +601,7 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
       <div className="absolute bottom-3 right-3 w-6 h-6 border-r-2 border-b-2 border-warning/30 pointer-events-none" />
 
       {/* Warning Icon */}
-      <div className="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-2 py-1 bg-warning/10 border border-warning/20 rounded">
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-2 py-1 bg-warning/10 border border-warning/20 rounded-none">
         <AlertTriangle className="w-3 h-3 text-warning/60" />
         <span className="font-mono text-[8px] text-warning/60 uppercase tracking-wider">
           No Data

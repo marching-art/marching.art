@@ -39,7 +39,7 @@ export const Badge: React.FC<BadgeProps> = ({
   return (
     <span
       className={`
-        inline-flex items-center font-medium rounded-sm
+        inline-flex items-center font-medium rounded-none
         ${variantStyles[variant]}
         ${sizeStyles[size]}
         ${className}
@@ -88,7 +88,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
       className={`
         inline-flex items-center gap-2 px-2.5 py-1
         text-xs font-medium text-white/80
-        rounded-sm bg-white/10 border border-white/15
+        rounded-none bg-white/10 border border-white/15
         ${className}
       `}
     >

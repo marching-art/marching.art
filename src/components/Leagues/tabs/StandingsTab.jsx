@@ -475,7 +475,7 @@ const StandingsTab = ({
 
               {enhancedStandings.length === 0 && (
                 <div className="p-8">
-                  <div className="w-12 h-12 mx-auto mb-4 bg-blue-500/10 border border-blue-500/30 flex items-center justify-center rounded-sm">
+                  <div className="w-12 h-12 mx-auto mb-4 bg-blue-500/10 border border-blue-500/30 flex items-center justify-center rounded-none">
                     <Trophy className="w-6 h-6 text-blue-400" />
                   </div>
                   <h3 className="text-center text-base font-bold text-white mb-2">
@@ -486,7 +486,7 @@ const StandingsTab = ({
                     matchups are resolved.
                   </p>
                   <div className="flex flex-col items-center gap-2">
-                    <div className="flex items-center gap-2 px-3 py-2 bg-[#222] border border-[#333] rounded-sm text-xs text-gray-400">
+                    <div className="flex items-center gap-2 px-3 py-2 bg-[#222] border border-[#333] rounded-none text-xs text-gray-400">
                       <Calendar className="w-4 h-4 text-blue-400" />
                       <span>Register for a show to start earning points</span>
                     </div>

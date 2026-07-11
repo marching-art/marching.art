@@ -94,9 +94,9 @@ const SocialProofBar = ({ className = '' }) => {
   if (loading) {
     return (
       <div className={`flex items-center justify-center gap-6 py-3 ${className}`}>
-        <div className="h-4 w-32 bg-[#222] rounded animate-pulse" />
-        <div className="h-4 w-28 bg-[#222] rounded animate-pulse" />
-        <div className="h-4 w-36 bg-[#222] rounded animate-pulse" />
+        <div className="h-4 w-32 bg-[#222] rounded-none animate-pulse" />
+        <div className="h-4 w-28 bg-[#222] rounded-none animate-pulse" />
+        <div className="h-4 w-36 bg-[#222] rounded-none animate-pulse" />
       </div>
     );
   }
@@ -116,7 +116,7 @@ const SocialProofBar = ({ className = '' }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3, delay: 0.2 }}
-      className={`flex flex-wrap items-center justify-center gap-x-6 gap-y-2 py-3 px-4 bg-[#111] border border-[#222] rounded-sm ${className}`}
+      className={`flex flex-wrap items-center justify-center gap-x-6 gap-y-2 py-3 px-4 bg-[#111] border border-[#222] rounded-none ${className}`}
     >
       {/* Directors count */}
       {stats.directors > 0 && (

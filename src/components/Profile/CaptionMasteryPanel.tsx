@@ -52,7 +52,7 @@ const CaptionMasteryPanel = memo(({ profile }: { profile: UserProfile }) => {
                     {mastery.tier ? mastery.tier.name : '—'}
                   </span>
                 </div>
-                <div className="h-1 bg-[#222] rounded-sm overflow-hidden mb-1">
+                <div className="h-1 bg-[#222] rounded-none overflow-hidden mb-1">
                   <div
                     className={`h-full ${style ? style.bar : 'bg-[#0057B8]'}`}
                     style={{ width: `${Math.round(mastery.progress * 100)}%` }}

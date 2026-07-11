@@ -153,7 +153,7 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
       >
         <m.div
           className={`
-            w-10 h-10 rounded-sm flex items-center justify-center
+            w-10 h-10 rounded-none flex items-center justify-center
             ${isRefreshing ? 'bg-[#0057B8]' : canRefresh ? 'bg-[#0057B8]' : 'bg-[#333]'}
             transition-colors duration-200
           `}
@@ -210,7 +210,7 @@ export const RefreshIndicator: React.FC<RefreshIndicatorProps> = ({
     >
       <m.div
         className={`
-          w-8 h-8 rounded-sm flex items-center justify-center
+          w-8 h-8 rounded-none flex items-center justify-center
           ${isRefreshing ? 'bg-[#0057B8]' : 'bg-[#333]'}
         `}
         animate={isRefreshing ? { rotate: 360 } : { rotate: progress * 180 }}

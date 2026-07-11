@@ -19,7 +19,7 @@ const ArticleDataSections = ({ article }) => (
             <div key={idx} className="flex items-center justify-between px-4 py-3">
               <div className="flex items-center gap-3">
                 <span
-                  className={`w-7 h-7 flex items-center justify-center text-xs font-bold rounded-sm ${
+                  className={`w-7 h-7 flex items-center justify-center text-xs font-bold rounded-none ${
                     item.rank <= 3 ? 'bg-[#0057B8] text-white' : 'bg-[#222] text-gray-500'
                   }`}
                 >

@@ -42,7 +42,7 @@ const RunningOrder = ({ show, highlights, highlightCorps, compact = false }) => 
   const nextOrder = next?.order ?? null;
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
+    <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
       <div className="bg-[#222] px-4 py-2.5 border-b border-[#333] flex items-center justify-between">
         <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
           <Clock className="w-3.5 h-3.5 text-[#0057B8]" />

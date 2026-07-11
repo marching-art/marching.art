@@ -75,7 +75,7 @@ const RankBadge = ({ rank, total }) => {
 const ActivityIndicator = ({ hasNewMessages, isLive }) => {
   if (isLive) {
     return (
-      <span className="flex items-center gap-1 px-1.5 py-0.5 bg-red-500/20 border border-red-500/30 rounded-sm">
+      <span className="flex items-center gap-1 px-1.5 py-0.5 bg-red-500/20 border border-red-500/30 rounded-none">
         <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
         <span className="text-[9px] font-bold text-red-400 uppercase">Live</span>
       </span>
@@ -118,7 +118,7 @@ const MyLeagueCard = ({ league, userProfile, onClick }) => {
       className="flex items-center gap-3 p-3 bg-[#1a1a1a] border border-[#333] hover:border-[#444] cursor-pointer transition-colors active:bg-[#222] press-feedback"
     >
       {/* League Avatar */}
-      <div className="w-12 h-12 bg-[#333] border border-[#444] rounded-sm flex-shrink-0 flex items-center justify-center">
+      <div className="w-12 h-12 bg-[#333] border border-[#444] rounded-none flex-shrink-0 flex items-center justify-center">
         <Trophy className="w-5 h-5 text-yellow-500" />
       </div>
 
@@ -169,7 +169,7 @@ const DiscoverLeagueCard = ({ league, onJoin, isJoining }) => {
       <div className="px-3 py-2.5 border-b border-[#333]">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 bg-[#333] border border-[#444] rounded-sm flex-shrink-0 flex items-center justify-center">
+            <div className="w-9 h-9 bg-[#333] border border-[#444] rounded-none flex-shrink-0 flex items-center justify-center">
               <Trophy className="w-4 h-4 text-yellow-500" />
             </div>
             <div className="min-w-0">
@@ -242,7 +242,7 @@ const QuickJoinModal = ({ inviteCode, setInviteCode, onJoin, onClose, isJoining 
       aria-label="Join league by invite code"
     >
       <div
-        className="w-full sm:max-w-sm bg-[#1a1a1a] border-t sm:border border-[#333] rounded-t-xl sm:rounded-sm"
+        className="w-full sm:max-w-sm bg-[#1a1a1a] border-t sm:border border-[#333] rounded-none sm:rounded-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Drag handle - mobile */}
@@ -297,7 +297,7 @@ const QuickJoinModal = ({ inviteCode, setInviteCode, onJoin, onClose, isJoining 
 
 const EmptyMyLeagues = ({ onCreate }) => (
   <div className="p-6 bg-[#1a1a1a] border-2 border-dashed border-[#333] text-center">
-    <div className="w-12 h-12 bg-[#222] border border-[#333] rounded-sm mx-auto mb-3 flex items-center justify-center">
+    <div className="w-12 h-12 bg-[#222] border border-[#333] rounded-none mx-auto mb-3 flex items-center justify-center">
       <Trophy className="w-6 h-6 text-gray-600" />
     </div>
     <h3 className="text-sm font-bold text-white mb-1">No Leagues Yet</h3>

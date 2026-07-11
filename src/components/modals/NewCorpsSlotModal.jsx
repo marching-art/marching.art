@@ -38,7 +38,7 @@ const NewCorpsSlotModal = ({
         aria-labelledby="modal-title-new-slot"
       >
         <div
-          className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-sm"
+          className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-none"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">

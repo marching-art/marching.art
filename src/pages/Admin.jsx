@@ -135,7 +135,7 @@ const PodiumLaunchCard = () => {
         <button
           onClick={toggle}
           disabled={saving}
-          className={`flex-shrink-0 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider rounded-sm disabled:opacity-50 ${
+          className={`flex-shrink-0 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider rounded-none disabled:opacity-50 ${
             podiumEnabled ? 'bg-[#333] text-gray-300' : 'bg-green-600 text-white'
           }`}
         >

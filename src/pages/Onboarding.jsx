@@ -382,7 +382,7 @@ const Onboarding = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-6 sm:p-8">
+          <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-6 sm:p-8">
             {/* Progress Bar */}
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
@@ -456,7 +456,7 @@ const Onboarding = () => {
                     className="space-y-4"
                   >
                     <div className="text-center mb-2">
-                      <div className="inline-flex items-center justify-center w-14 h-14 bg-[#0057B8]/20 rounded-sm mb-3">
+                      <div className="inline-flex items-center justify-center w-14 h-14 bg-[#0057B8]/20 rounded-none mb-3">
                         <Music className="w-7 h-7 text-[#0057B8]" />
                       </div>
                       <h2 className="text-xl font-bold text-white mb-1">Build Your Lineup</h2>
@@ -486,7 +486,7 @@ const Onboarding = () => {
                         </p>
                         <button
                           onClick={fetchSeasonData}
-                          className="h-10 px-5 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider rounded-sm hover:bg-[#0066d6]"
+                          className="h-10 px-5 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider rounded-none hover:bg-[#0066d6]"
                         >
                           Try Again
                         </button>
@@ -501,7 +501,7 @@ const Onboarding = () => {
                     )}
 
                     {/* Lineup summary */}
-                    <div className="p-3 rounded-sm bg-charcoal-800/70 border border-charcoal-700">
+                    <div className="p-3 rounded-none bg-charcoal-800/70 border border-charcoal-700">
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-400">Lineup Progress</span>
                         <span
@@ -532,7 +532,7 @@ const Onboarding = () => {
               {step > 1 && (
                 <button
                   onClick={handleBack}
-                  className="flex items-center gap-2 px-5 py-3 bg-[#2a2a2a] border border-[#333] text-white rounded-sm hover:bg-[#333] transition-colors font-semibold"
+                  className="flex items-center gap-2 px-5 py-3 bg-[#2a2a2a] border border-[#333] text-white rounded-none hover:bg-[#333] transition-colors font-semibold"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   Back
@@ -549,7 +549,7 @@ const Onboarding = () => {
                         usernameStatus.valid !== true)) ||
                     (step === 2 && !formData.corpsName.trim())
                   }
-                  className="flex-1 px-6 py-3 bg-[#0057B8] text-white rounded-sm hover:bg-[#0066d6] transition-colors font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 px-6 py-3 bg-[#0057B8] text-white rounded-none hover:bg-[#0066d6] transition-colors font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   Continue
                   <ArrowRight className="w-5 h-5" />
@@ -558,7 +558,7 @@ const Onboarding = () => {
                 <button
                   onClick={handleSubmit}
                   disabled={loading || !isLineupValid}
-                  className="flex-1 px-6 py-3 bg-[#0057B8] text-white rounded-sm hover:bg-[#0066d6] transition-colors font-bold uppercase tracking-wider flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-6 py-3 bg-[#0057B8] text-white rounded-none hover:bg-[#0066d6] transition-colors font-bold uppercase tracking-wider flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <>

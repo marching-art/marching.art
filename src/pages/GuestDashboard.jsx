@@ -85,14 +85,14 @@ const GuestHeader = () => {
 
         {/* Logo */}
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-sm overflow-hidden">
+          <div className="w-8 h-8 rounded-none overflow-hidden">
             <img src="/logo192.svg" alt="marching.art" className="w-full h-full object-cover" />
           </div>
           <span className="text-base font-bold text-white tracking-wider">marching.art</span>
         </div>
 
         {/* Preview Badge */}
-        <div className="ml-3 px-2.5 py-1 bg-yellow-500/20 border border-yellow-500/30 rounded-sm">
+        <div className="ml-3 px-2.5 py-1 bg-yellow-500/20 border border-yellow-500/30 rounded-none">
           <span className="text-xs font-bold text-yellow-500 uppercase tracking-wider">
             Preview Mode
           </span>
@@ -109,7 +109,7 @@ const GuestHeader = () => {
           </Link>
           <Link
             to="/register"
-            className="flex items-center gap-1.5 px-4 h-9 bg-[#0057B8] text-white text-sm font-bold rounded-sm hover:bg-[#0066d6] transition-colors"
+            className="flex items-center gap-1.5 px-4 h-9 bg-[#0057B8] text-white text-sm font-bold rounded-none hover:bg-[#0066d6] transition-colors"
           >
             <UserPlus className="w-4 h-4" />
             <span>Sign Up Free</span>
@@ -145,7 +145,7 @@ const LineupRow = ({ caption, value, pointsCost, isLast, isPlayable, onClick }) 
       <div
         title={captionLabel}
         aria-hidden="true"
-        className={`w-10 h-8 flex items-center justify-center rounded text-xs font-bold flex-shrink-0 ${
+        className={`w-10 h-8 flex items-center justify-center rounded-none text-xs font-bold flex-shrink-0 ${
           hasValue ? 'bg-[#0057B8]/20 text-[#0057B8]' : 'bg-[#333] text-gray-500'
         }`}
       >
@@ -279,7 +279,7 @@ const CLASS_PERKS = {
 };
 
 const ClassProgressionPanel = ({ unlockedClasses, activeCorpsClass, onGate }) => (
-  <div className="bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden">
+  <div className="bg-[#1a1a1a] border border-[#333] rounded-none overflow-hidden">
     <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
       <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
         <TrendingUp className="w-3.5 h-3.5 text-purple-500" />
@@ -303,7 +303,7 @@ const ClassProgressionPanel = ({ unlockedClasses, activeCorpsClass, onGate }) =>
             className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[#222] transition-colors"
           >
             <div
-              className={`w-9 h-9 rounded-sm flex items-center justify-center flex-shrink-0 text-[10px] font-bold ${
+              className={`w-9 h-9 rounded-none flex items-center justify-center flex-shrink-0 text-[10px] font-bold ${
                 isActive
                   ? 'bg-[#0057B8]/20 text-[#0057B8]'
                   : isUnlocked
@@ -319,11 +319,11 @@ const ClassProgressionPanel = ({ unlockedClasses, activeCorpsClass, onGate }) =>
                   {CORPS_CLASS_LABELS[classId]}
                 </span>
                 {isActive ? (
-                  <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-[#0057B8]/20 text-[#0057B8] rounded-sm">
+                  <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-[#0057B8]/20 text-[#0057B8] rounded-none">
                     Your Corps
                   </span>
                 ) : isUnlocked ? (
-                  <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-green-500/20 text-green-500 rounded-sm">
+                  <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-green-500/20 text-green-500 rounded-none">
                     Unlocked
                   </span>
                 ) : null}
@@ -524,7 +524,7 @@ const GuestDashboard = () => {
           <m.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-4 p-4 bg-gradient-to-r from-[#0057B8]/20 to-yellow-500/10 border border-[#0057B8]/30 rounded-sm"
+            className="mb-4 p-4 bg-gradient-to-r from-[#0057B8]/20 to-yellow-500/10 border border-[#0057B8]/30 rounded-none"
           >
             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
               <div className="flex items-center gap-3 flex-1">
@@ -541,7 +541,7 @@ const GuestDashboard = () => {
               </div>
               <Link
                 to="/register"
-                className="flex items-center justify-center gap-2 px-4 h-10 bg-[#0057B8] text-white text-sm font-bold rounded-sm hover:bg-[#0066d6] transition-colors whitespace-nowrap"
+                className="flex items-center justify-center gap-2 px-4 h-10 bg-[#0057B8] text-white text-sm font-bold rounded-none hover:bg-[#0066d6] transition-colors whitespace-nowrap"
               >
                 Create Your Corps
                 <ChevronRight className="w-4 h-4" />
@@ -576,7 +576,7 @@ const GuestDashboard = () => {
             {/* MAIN CONTENT (2/3) - Lineup + results */}
             <div className="lg:col-span-2 lg:col-start-1 lg:row-start-1 lg:row-span-2 space-y-4">
               {/* Lineup Panel (draftable) */}
-              <div className="bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden">
+              <div className="bg-[#1a1a1a] border border-[#333] rounded-none overflow-hidden">
                 <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
                   <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
                     <Target className="w-3.5 h-3.5 text-[#0057B8]" />
@@ -661,7 +661,7 @@ const GuestDashboard = () => {
               <DemoDailyChallenges onGate={handleGatedClick} />
 
               {/* Upcoming Shows */}
-              <div className="bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden">
+              <div className="bg-[#1a1a1a] border border-[#333] rounded-none overflow-hidden">
                 <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
                   <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
                     <Calendar className="w-3.5 h-3.5 text-green-500" />
@@ -683,7 +683,7 @@ const GuestDashboard = () => {
                       onClick={() => handleGatedClick('shows')}
                       className="w-full p-3 flex items-center gap-3 hover:bg-[#222] transition-colors text-left"
                     >
-                      <div className="w-10 h-10 rounded-sm bg-[#111] flex flex-col items-center justify-center flex-shrink-0">
+                      <div className="w-10 h-10 rounded-none bg-[#111] flex flex-col items-center justify-center flex-shrink-0">
                         <span className="text-xs text-gray-500">
                           {new Date(show.date)
                             .toLocaleDateString('en-US', { month: 'short' })
@@ -698,7 +698,7 @@ const GuestDashboard = () => {
                         <div className="text-xs text-gray-500 truncate">{show.location}</div>
                       </div>
                       {show.isSelected && (
-                        <div className="px-2 py-0.5 bg-green-500/20 rounded-sm">
+                        <div className="px-2 py-0.5 bg-green-500/20 rounded-none">
                           <span className="text-xs font-medium text-green-500">Selected</span>
                         </div>
                       )}
@@ -721,10 +721,10 @@ const GuestDashboard = () => {
               {/* Join League CTA */}
               <button
                 onClick={() => handleGatedClick('league')}
-                className="w-full bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 rounded-sm p-4 text-left hover:border-yellow-500/50 transition-colors group"
+                className="w-full bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 rounded-none p-4 text-left hover:border-yellow-500/50 transition-colors group"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-sm bg-yellow-500/20 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-none bg-yellow-500/20 flex items-center justify-center">
                     <Users className="w-5 h-5 text-yellow-500" />
                   </div>
                   <div className="flex-1">
@@ -738,7 +738,7 @@ const GuestDashboard = () => {
               </button>
 
               {/* Submit Article — community content (gated) */}
-              <div className="bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden">
+              <div className="bg-[#1a1a1a] border border-[#333] rounded-none overflow-hidden">
                 <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
                   <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
                     <FileText className="w-3.5 h-3.5 text-green-500" />
@@ -760,7 +760,7 @@ const GuestDashboard = () => {
               </div>
 
               {/* Register CTA */}
-              <div className="bg-gradient-to-br from-[#0057B8]/20 to-[#0057B8]/5 border border-[#0057B8]/30 rounded-sm p-4">
+              <div className="bg-gradient-to-br from-[#0057B8]/20 to-[#0057B8]/5 border border-[#0057B8]/30 rounded-none p-4">
                 <h3 className="text-sm font-bold text-white mb-2">Ready to compete?</h3>
                 <p className="text-xs text-gray-400 mb-4">
                   Create your free account to build your own corps, join leagues, and climb the
@@ -768,7 +768,7 @@ const GuestDashboard = () => {
                 </p>
                 <Link
                   to="/register"
-                  className="flex items-center justify-center gap-2 w-full h-11 bg-[#0057B8] text-white font-bold text-sm rounded-sm hover:bg-[#0066d6] transition-colors"
+                  className="flex items-center justify-center gap-2 w-full h-11 bg-[#0057B8] text-white font-bold text-sm rounded-none hover:bg-[#0066d6] transition-colors"
                 >
                   <UserPlus className="w-4 h-4" />
                   Create Free Account

@@ -174,7 +174,7 @@ const SkeletonRow = <T,>({ columns }: SkeletonRowProps<T>) => (
         `.trim()}
         style={column.width ? { width: column.width, minWidth: column.width } : undefined}
       >
-        <div className="h-4 bg-white/5 rounded animate-pulse" style={{ width: '70%' }} />
+        <div className="h-4 bg-white/5 rounded-none animate-pulse" style={{ width: '70%' }} />
       </td>
     ))}
   </tr>

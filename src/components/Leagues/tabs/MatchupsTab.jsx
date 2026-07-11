@@ -359,7 +359,7 @@ const MatchupsTab = ({
                     >
                       W{week}
                       {isCurrent && !isSelected && (
-                        <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-purple-500 rounded-sm animate-pulse" />
+                        <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-purple-500 rounded-none animate-pulse" />
                       )}
                     </button>
                   );
