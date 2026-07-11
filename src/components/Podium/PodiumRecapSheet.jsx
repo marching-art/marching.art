@@ -198,18 +198,18 @@ function ShowTable({ show, day, sortBy, userCorpsName }) {
                         </span>
                       )}
                     </div>
-                    {/* Director credit + profile link — parity with the fantasy
-                        recap sheets, which name the director beside each corps. */}
+                    {/* Director credit + profile link under the corps name —
+                        displayed the same way as the other classes. */}
                     {row.displayName &&
                       (row.uid ? (
                         <Link
                           to={`/profile/${row.uid}`}
-                          className="block pl-4 text-[9px] normal-case tracking-normal text-gray-500 hover:text-[#c9a227] truncate"
+                          className="block pl-4 text-[10px] text-gray-500 hover:text-[#c9a227] truncate"
                         >
                           {row.displayName}
                         </Link>
                       ) : (
-                        <span className="block pl-4 text-[9px] normal-case tracking-normal text-gray-500 truncate">
+                        <span className="block pl-4 text-[10px] text-gray-500 truncate">
                           {row.displayName}
                         </span>
                       ))}
