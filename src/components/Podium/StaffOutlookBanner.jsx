@@ -40,11 +40,12 @@ export default function StaffOutlookBanner({ podium }) {
             As your staff gain tenure their salaries rise. Next season your roster will cost{' '}
             <span className="font-bold text-white tabular-nums">{outlook.payroll} CC</span>, but{' '}
             {outlook.commitmentCap === 0 ? 'your division' : 'your division cap'} lets you commit at
-            most <span className="font-bold text-white tabular-nums">{outlook.commitmentCap} CC</span>{' '}
-            — a <span className="font-bold text-[#f0c060] tabular-nums">{outlook.shortfall} CC</span>{' '}
+            most{' '}
+            <span className="font-bold text-white tabular-nums">{outlook.commitmentCap} CC</span> —
+            a <span className="font-bold text-[#f0c060] tabular-nums">{outlook.shortfall} CC</span>{' '}
             shortfall. When you re-register you&apos;ll have to release or retrain someone; saving
-            CorpsCoin alone won&apos;t close the gap. Retrain a pricey staffer down or release a seat
-            now to choose who stays on your terms.
+            CorpsCoin alone won&apos;t close the gap. Retrain a pricey staffer down or release a
+            seat now to choose who stays on your terms.
           </p>
         </div>
       </div>

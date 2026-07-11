@@ -67,14 +67,8 @@ export default function PodiumRegistration({ podium }) {
   }, [auditionPreset]);
 
   const hasCarried = Boolean(preview?.hasCarriedStaff);
-  const activeStaff = useMemo(
-    () => (preview?.staff || []).filter((s) => !s.retiring),
-    [preview]
-  );
-  const retiringStaff = useMemo(
-    () => (preview?.staff || []).filter((s) => s.retiring),
-    [preview]
-  );
+  const activeStaff = useMemo(() => (preview?.staff || []).filter((s) => !s.retiring), [preview]);
+  const retiringStaff = useMemo(() => (preview?.staff || []).filter((s) => s.retiring), [preview]);
   const maxCommit = preview ? Math.min(preview.commitmentCap || 0, preview.corpsCoin || 0) : 2500;
   // A carried-staff director can commit at most what they hold; a first-time
   // corps is bounded only by the division cap (the wallet debit is enforced
@@ -161,7 +155,10 @@ export default function PodiumRegistration({ podium }) {
                 Left the corps:{' '}
                 <span className="text-gray-300">
                   {lapsed
-                    .map((s) => `${SPECIALTY_LABELS[s.specialty] || s.specialty} (${reasonWord[s.reason] || s.reason})`)
+                    .map(
+                      (s) =>
+                        `${SPECIALTY_LABELS[s.specialty] || s.specialty} (${reasonWord[s.reason] || s.reason})`
+                    )
                     .join(', ')}
                 </span>
               </div>
@@ -370,7 +367,8 @@ export default function PodiumRegistration({ podium }) {
               </div>
               <p className="text-[10px] text-gray-500">
                 Tenure raised your staff&apos;s salaries. Uncheck anyone you&apos;re letting go —
-                their seat reopens and their tenure ends. Whatever you keep must fit your commitment.
+                their seat reopens and their tenure ends. Whatever you keep must fit your
+                commitment.
               </p>
 
               {activeStaff.map((s) => {
@@ -394,7 +392,10 @@ export default function PodiumRegistration({ podium }) {
                       <span className="ml-2 text-[9px] font-normal text-gray-500">
                         {TIER_LABELS[s.nextTier] || TIER_LABELS[s.tier]}
                         {promoted && (
-                          <span className="text-[#c9a227]"> · promoted from {TIER_LABELS[s.tier]}</span>
+                          <span className="text-[#c9a227]">
+                            {' '}
+                            · promoted from {TIER_LABELS[s.tier]}
+                          </span>
                         )}
                       </span>
                     </span>
@@ -426,8 +427,8 @@ export default function PodiumRegistration({ podium }) {
                 <div className="flex items-start gap-2 text-[11px] text-red-400 pt-1">
                   <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                   <span>
-                    You&apos;re <span className="font-bold tabular-nums">{shortfall}</span> CC short.
-                    Commit more (up to {maxCommit}) or release a staffer to found the corps.
+                    You&apos;re <span className="font-bold tabular-nums">{shortfall}</span> CC
+                    short. Commit more (up to {maxCommit}) or release a staffer to found the corps.
                   </span>
                 </div>
               )}
