@@ -8,7 +8,7 @@ import React from 'react';
 import { Trophy, Crown, Medal, Shield, Star, Ribbon, Gem } from 'lucide-react';
 import type { UserProfile, CorpsClass, CompetitionTrophy } from '../../types';
 import {
-  CORPS_CLASS_ORDER,
+  PROFILE_CORPS_CLASS_ORDER,
   CORPS_CLASS_LABELS,
   resolveCorpsForClass,
   isCorpsClassUnlocked,
@@ -255,8 +255,8 @@ export function getCorpsAvatarUrl(profile: UserProfile): {
     }
   }
 
-  // Fallback: Priority order world > open > aClass > soundSport
-  for (const classKey of CORPS_CLASS_ORDER) {
+  // Fallback: Priority order world > open > aClass > soundSport > podium
+  for (const classKey of PROFILE_CORPS_CLASS_ORDER) {
     const corps = resolveCorpsForClass(profile.corps, classKey);
     if (corps?.avatarUrl) return { url: corps.avatarUrl, corpsClass: classKey as CorpsClass };
   }
@@ -270,7 +270,7 @@ export function getCorpsWithAvatars(
   if (!profile.corps) return [];
   const result: { corpsClass: CorpsClass; corpsName: string; avatarUrl: string }[] = [];
 
-  for (const classKey of CORPS_CLASS_ORDER) {
+  for (const classKey of PROFILE_CORPS_CLASS_ORDER) {
     const corps = resolveCorpsForClass(profile.corps, classKey);
     if (corps?.avatarUrl && corps?.corpsName) {
       result.push({
