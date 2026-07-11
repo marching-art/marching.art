@@ -220,6 +220,12 @@ export default function PodiumStaffPanel({ podium }) {
               <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
             </div>
           )}
+          {catalog && catalog.length === 0 && !error && (
+            <div className="text-[11px] text-gray-500 py-2">
+              No staff catalog available right now. If this persists, the staff service may still be
+              deploying — try again shortly.
+            </div>
+          )}
           {catalog &&
             Object.keys(SPECIALTY_LABELS).map((specialty) => {
               const options = catalog
