@@ -4,7 +4,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { getDb, dataNamespaceParam } = require("../config");
 const admin = require("firebase-admin");
 const { logger } = require("firebase-functions/v2");
-const { normalizeCorpsName, pickDuplicateWinner, VALID_CLASSES } = require("../helpers/corpsHelpers");
+const { normalizeCorpsName, pickDuplicateWinner, CORPS_NAME_CLASSES } = require("../helpers/corpsHelpers");
 const { assertAuth, assertAdmin } = require("../helpers/callableGuards");
 
 /**
@@ -26,7 +26,7 @@ exports.detectMyDuplicateCorps = onCall({ cors: true }, async (request) => {
   const corps = profileDoc.data().corps || {};
 
   const duplicates = [];
-  for (const cls of VALID_CLASSES) {
+  for (const cls of CORPS_NAME_CLASSES) {
     const c = corps[cls];
     if (c?.mustRename && c?.corpsName) {
       duplicates.push({
@@ -47,9 +47,10 @@ exports.detectMyDuplicateCorps = onCall({ cors: true }, async (request) => {
  * winning corps. Idempotent — re-running clears stale flags from corps that
  * no longer conflict.
  *
- * Winner rule: highest class tier (worldClass > openClass > aClass >
- * soundSport). Ties broken by oldest createdAt, then by presence of a
- * corpsnames reservation.
+ * Winner rule: highest class tier (podiumClass > worldClass > openClass >
+ * aClass > soundSport). Ties broken by oldest createdAt, then by presence of
+ * a corpsnames reservation. Podium ranks top because a Podium corps has no
+ * self-service rename flow, so the colliding fantasy corps must be the loser.
  */
 exports.sweepDuplicateCorps = onCall({ cors: true, timeoutSeconds: 540 }, async (request) => {
   assertAdmin(request);
@@ -66,7 +67,7 @@ exports.sweepDuplicateCorps = onCall({ cors: true, timeoutSeconds: 540 }, async 
       const profileUid = profileDoc.ref.parent.parent?.id;
       if (!profileUid) continue;
       const corps = data.corps || {};
-      for (const cls of VALID_CLASSES) {
+      for (const cls of CORPS_NAME_CLASSES) {
         const c = corps[cls];
         if (c?.corpsName) {
           allCorps.push({
