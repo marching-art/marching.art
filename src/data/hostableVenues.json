@@ -1,10 +1,20 @@
 {
   "meta": {
     "generatedFrom": "functions/src/helpers/podium/venueGazetteer.json",
-    "venues": 388,
-    "keys": 796
+    "venues": 516,
+    "keys": 932
   },
   "venues": [
+    {
+      "venueId": "abilene-tx",
+      "city": "Abilene",
+      "region": "TX"
+    },
+    {
+      "venueId": "adrian-mi",
+      "city": "Adrian",
+      "region": "MI"
+    },
     {
       "venueId": "akron-oh",
       "city": "Akron",
@@ -16,9 +26,19 @@
       "region": "NM"
     },
     {
+      "venueId": "alexandria-ky",
+      "city": "Alexandria",
+      "region": "KY"
+    },
+    {
       "venueId": "alexandria-mn",
       "city": "Alexandria",
       "region": "MN"
+    },
+    {
+      "venueId": "allendale-mi",
+      "city": "Allendale",
+      "region": "MI"
     },
     {
       "venueId": "allentown-pa",
@@ -56,6 +76,11 @@
       "region": "MD"
     },
     {
+      "venueId": "apple-valley-mn",
+      "city": "Apple Valley",
+      "region": "MN"
+    },
+    {
       "venueId": "arkadelphia-ar",
       "city": "Arkadelphia",
       "region": "AR"
@@ -64,6 +89,11 @@
       "venueId": "arlington-va",
       "city": "Arlington",
       "region": "VA"
+    },
+    {
+      "venueId": "ashland-or",
+      "city": "Ashland",
+      "region": "OR"
     },
     {
       "venueId": "atascadero-ca",
@@ -79,6 +109,11 @@
       "venueId": "auburn-wa",
       "city": "Auburn",
       "region": "WA"
+    },
+    {
+      "venueId": "augusta-nj",
+      "city": "Augusta",
+      "region": "NJ"
     },
     {
       "venueId": "austin-tx",
@@ -111,14 +146,39 @@
       "region": "VA"
     },
     {
+      "venueId": "bedford-tx",
+      "city": "Bedford",
+      "region": "TX"
+    },
+    {
       "venueId": "belding-mi",
       "city": "Belding",
       "region": "MI"
     },
     {
+      "venueId": "bellbrook-oh",
+      "city": "Bellbrook",
+      "region": "OH"
+    },
+    {
+      "venueId": "belleville-il",
+      "city": "Belleville",
+      "region": "IL"
+    },
+    {
       "venueId": "bellflower-ca",
       "city": "Bellflower",
       "region": "CA"
+    },
+    {
+      "venueId": "belton-tx",
+      "city": "Belton",
+      "region": "TX"
+    },
+    {
+      "venueId": "belvidere-il",
+      "city": "Belvidere",
+      "region": "IL"
     },
     {
       "venueId": "bensalem-pa",
@@ -139,6 +199,11 @@
       "venueId": "beverly-ma",
       "city": "Beverly",
       "region": "MA"
+    },
+    {
+      "venueId": "biloxi-ms",
+      "city": "Biloxi",
+      "region": "MS"
     },
     {
       "venueId": "birmingham-al",
@@ -216,6 +281,16 @@
       "region": "GA"
     },
     {
+      "venueId": "brunswick-oh",
+      "city": "Brunswick",
+      "region": "OH"
+    },
+    {
+      "venueId": "buena-park-ca",
+      "city": "Buena Park",
+      "region": "CA"
+    },
+    {
       "venueId": "buffalo-ny",
       "city": "Buffalo",
       "region": "NY"
@@ -236,6 +311,11 @@
       "region": "CA"
     },
     {
+      "venueId": "camas-wa",
+      "city": "Camas",
+      "region": "WA"
+    },
+    {
       "venueId": "canton-mi",
       "city": "Canton",
       "region": "MI"
@@ -249,6 +329,11 @@
       "venueId": "canyon-tx",
       "city": "Canyon",
       "region": "TX"
+    },
+    {
+      "venueId": "cape-girardeau-mo",
+      "city": "Cape Girardeau",
+      "region": "MO"
     },
     {
       "venueId": "carmel-in",
@@ -286,6 +371,11 @@
       "region": "MI"
     },
     {
+      "venueId": "cerritos-ca",
+      "city": "Cerritos",
+      "region": "CA"
+    },
+    {
       "venueId": "chambersburg-pa",
       "city": "Chambersburg",
       "region": "PA"
@@ -299,6 +389,11 @@
       "venueId": "charles-city-ia",
       "city": "Charles City",
       "region": "IA"
+    },
+    {
+      "venueId": "charleston-il",
+      "city": "Charleston",
+      "region": "IL"
     },
     {
       "venueId": "charleston-wv",
@@ -326,9 +421,24 @@
       "region": "VA"
     },
     {
+      "venueId": "chester-pa",
+      "city": "Chester",
+      "region": "PA"
+    },
+    {
+      "venueId": "chestnut-hill-ma",
+      "city": "Chestnut Hill",
+      "region": "MA"
+    },
+    {
       "venueId": "cheyenne-wy",
       "city": "Cheyenne",
       "region": "WY"
+    },
+    {
+      "venueId": "chickasha-ok",
+      "city": "Chickasha",
+      "region": "OK"
     },
     {
       "venueId": "chicopee-ma",
@@ -391,6 +501,11 @@
       "region": "TX"
     },
     {
+      "venueId": "conway-sc",
+      "city": "Conway",
+      "region": "SC"
+    },
+    {
       "venueId": "coon-rapids-mn",
       "city": "Coon Rapids",
       "region": "MN"
@@ -401,9 +516,19 @@
       "region": "CA"
     },
     {
+      "venueId": "corpus-christi-tx",
+      "city": "Corpus Christi",
+      "region": "TX"
+    },
+    {
       "venueId": "costa-mesa-ca",
       "city": "Costa Mesa",
       "region": "CA"
+    },
+    {
+      "venueId": "cranston-ri",
+      "city": "Cranston",
+      "region": "RI"
     },
     {
       "venueId": "crown-point-in",
@@ -421,6 +546,11 @@
       "region": "TX"
     },
     {
+      "venueId": "daphne-al",
+      "city": "Daphne",
+      "region": "AL"
+    },
+    {
       "venueId": "darby-pa",
       "city": "Darby",
       "region": "PA"
@@ -434,6 +564,11 @@
       "venueId": "dayton-oh",
       "city": "Dayton",
       "region": "OH"
+    },
+    {
+      "venueId": "daytona-beach-fl",
+      "city": "Daytona Beach",
+      "region": "FL"
     },
     {
       "venueId": "decatur-in",
@@ -466,6 +601,11 @@
       "region": "IL"
     },
     {
+      "venueId": "detroit-mi",
+      "city": "Detroit",
+      "region": "MI"
+    },
+    {
       "venueId": "dixon-il",
       "city": "Dixon",
       "region": "IL"
@@ -474,6 +614,26 @@
       "venueId": "dothan-al",
       "city": "Dothan",
       "region": "AL"
+    },
+    {
+      "venueId": "douglasville-ga",
+      "city": "Douglasville",
+      "region": "GA"
+    },
+    {
+      "venueId": "dover-de",
+      "city": "Dover",
+      "region": "DE"
+    },
+    {
+      "venueId": "dover-pa",
+      "city": "Dover",
+      "region": "PA"
+    },
+    {
+      "venueId": "downingtown-pa",
+      "city": "Downingtown",
+      "region": "PA"
     },
     {
       "venueId": "dublin-ca",
@@ -496,9 +656,19 @@
       "region": "SC"
     },
     {
+      "venueId": "east-peoria-il",
+      "city": "East Peoria",
+      "region": "IL"
+    },
+    {
       "venueId": "east-rutherford-nj",
       "city": "East Rutherford",
       "region": "NJ"
+    },
+    {
+      "venueId": "east-troy-wi",
+      "city": "East Troy",
+      "region": "WI"
     },
     {
       "venueId": "easton-pa",
@@ -511,9 +681,34 @@
       "region": "WI"
     },
     {
+      "venueId": "eden-prairie-mn",
+      "city": "Eden Prairie",
+      "region": "MN"
+    },
+    {
+      "venueId": "edinboro-pa",
+      "city": "Edinboro",
+      "region": "PA"
+    },
+    {
       "venueId": "edmond-ok",
       "city": "Edmond",
       "region": "OK"
+    },
+    {
+      "venueId": "egg-harbor-township-nj",
+      "city": "Egg Harbor Township",
+      "region": "NJ"
+    },
+    {
+      "venueId": "el-cajon-ca",
+      "city": "El Cajon",
+      "region": "CA"
+    },
+    {
+      "venueId": "el-dorado-ks",
+      "city": "El Dorado",
+      "region": "KS"
     },
     {
       "venueId": "el-paso-tx",
@@ -581,14 +776,34 @@
       "region": "VA"
     },
     {
+      "venueId": "fairfield-ct",
+      "city": "Fairfield",
+      "region": "CT"
+    },
+    {
       "venueId": "fairfield-oh",
       "city": "Fairfield",
       "region": "OH"
     },
     {
+      "venueId": "farmington-mn",
+      "city": "Farmington",
+      "region": "MN"
+    },
+    {
       "venueId": "fayetteville-ar",
       "city": "Fayetteville",
       "region": "AR"
+    },
+    {
+      "venueId": "forest-city-ia",
+      "city": "Forest City",
+      "region": "IA"
+    },
+    {
+      "venueId": "fort-collins-co",
+      "city": "Fort Collins",
+      "region": "CO"
     },
     {
       "venueId": "fort-edward-ny",
@@ -626,6 +841,16 @@
       "region": "CA"
     },
     {
+      "venueId": "fremont-ne",
+      "city": "Fremont",
+      "region": "NE"
+    },
+    {
+      "venueId": "fresno-ca",
+      "city": "Fresno",
+      "region": "CA"
+    },
+    {
       "venueId": "gadsden-al",
       "city": "Gadsden",
       "region": "AL"
@@ -646,6 +871,11 @@
       "region": "CA"
     },
     {
+      "venueId": "glassboro-nj",
+      "city": "Glassboro",
+      "region": "NJ"
+    },
+    {
       "venueId": "glendale-az",
       "city": "Glendale",
       "region": "AZ"
@@ -663,6 +893,11 @@
     {
       "venueId": "glens-falls-ny",
       "city": "Glens Falls",
+      "region": "NY"
+    },
+    {
+      "venueId": "gloversville-ny",
+      "city": "Gloversville",
       "region": "NY"
     },
     {
@@ -721,6 +956,11 @@
       "region": "MS"
     },
     {
+      "venueId": "hamilton-oh",
+      "city": "Hamilton",
+      "region": "OH"
+    },
+    {
       "venueId": "hamilton-on",
       "city": "Hamilton",
       "region": "ON"
@@ -776,6 +1016,11 @@
       "region": "SC"
     },
     {
+      "venueId": "hiram-ga",
+      "city": "Hiram",
+      "region": "GA"
+    },
+    {
       "venueId": "holmen-wi",
       "city": "Holmen",
       "region": "WI"
@@ -791,6 +1036,11 @@
       "region": "NY"
     },
     {
+      "venueId": "hoschton-ga",
+      "city": "Hoschton",
+      "region": "GA"
+    },
+    {
       "venueId": "houston-tx",
       "city": "Houston",
       "region": "TX"
@@ -804,6 +1054,11 @@
       "venueId": "huntington-wv",
       "city": "Huntington",
       "region": "WV"
+    },
+    {
+      "venueId": "huntsville-al",
+      "city": "Huntsville",
+      "region": "AL"
     },
     {
       "venueId": "hutchinson-ks",
@@ -856,9 +1111,19 @@
       "region": "PA"
     },
     {
+      "venueId": "johnston-ia",
+      "city": "Johnston",
+      "region": "IA"
+    },
+    {
       "venueId": "joplin-mo",
       "city": "Joplin",
       "region": "MO"
+    },
+    {
+      "venueId": "jupiter-fl",
+      "city": "Jupiter",
+      "region": "FL"
     },
     {
       "venueId": "kalamazoo-mi",
@@ -871,6 +1136,11 @@
       "region": "MO"
     },
     {
+      "venueId": "katy-tx",
+      "city": "Katy",
+      "region": "TX"
+    },
+    {
       "venueId": "kelso-wa",
       "city": "Kelso",
       "region": "WA"
@@ -879,6 +1149,16 @@
       "venueId": "kennesaw-ga",
       "city": "Kennesaw",
       "region": "GA"
+    },
+    {
+      "venueId": "kennewick-wa",
+      "city": "Kennewick",
+      "region": "WA"
+    },
+    {
+      "venueId": "kent-oh",
+      "city": "Kent",
+      "region": "OH"
     },
     {
       "venueId": "kingsport-tn",
@@ -896,6 +1176,11 @@
       "region": "OH"
     },
     {
+      "venueId": "knoxville-tn",
+      "city": "Knoxville",
+      "region": "TN"
+    },
+    {
       "venueId": "la-crosse-wi",
       "city": "La Crosse",
       "region": "WI"
@@ -911,6 +1196,11 @@
       "region": "LA"
     },
     {
+      "venueId": "laguna-hills-ca",
+      "city": "Laguna Hills",
+      "region": "CA"
+    },
+    {
       "venueId": "lake-geneva-wi",
       "city": "Lake Geneva",
       "region": "WI"
@@ -919,6 +1209,16 @@
       "venueId": "lake-havasu-city-az",
       "city": "Lake Havasu City",
       "region": "AZ"
+    },
+    {
+      "venueId": "lakeland-fl",
+      "city": "Lakeland",
+      "region": "FL"
+    },
+    {
+      "venueId": "landisville-pa",
+      "city": "Landisville",
+      "region": "PA"
     },
     {
       "venueId": "lansdale-pa",
@@ -931,6 +1231,11 @@
       "region": "IN"
     },
     {
+      "venueId": "laramie-wy",
+      "city": "Laramie",
+      "region": "WY"
+    },
+    {
       "venueId": "lawrence-ks",
       "city": "Lawrence",
       "region": "KS"
@@ -939,6 +1244,11 @@
       "venueId": "lawrence-ma",
       "city": "Lawrence",
       "region": "MA"
+    },
+    {
+      "venueId": "lawton-ok",
+      "city": "Lawton",
+      "region": "OK"
     },
     {
       "venueId": "leander-tx",
@@ -954,6 +1264,11 @@
       "venueId": "lexington-ky",
       "city": "Lexington",
       "region": "KY"
+    },
+    {
+      "venueId": "lexington-sc",
+      "city": "Lexington",
+      "region": "SC"
     },
     {
       "venueId": "lima-oh",
@@ -1026,6 +1341,16 @@
       "region": "MA"
     },
     {
+      "venueId": "macomb-il",
+      "city": "Macomb",
+      "region": "IL"
+    },
+    {
+      "venueId": "macon-ga",
+      "city": "Macon",
+      "region": "GA"
+    },
+    {
       "venueId": "madison-wi",
       "city": "Madison",
       "region": "WI"
@@ -1046,6 +1371,16 @@
       "region": "MN"
     },
     {
+      "venueId": "marion-ia",
+      "city": "Marion",
+      "region": "IA"
+    },
+    {
+      "venueId": "marion-in",
+      "city": "Marion",
+      "region": "IN"
+    },
+    {
       "venueId": "marion-oh",
       "city": "Marion",
       "region": "OH"
@@ -1056,14 +1391,39 @@
       "region": "TN"
     },
     {
+      "venueId": "mason-city-ia",
+      "city": "Mason City",
+      "region": "IA"
+    },
+    {
+      "venueId": "mason-oh",
+      "city": "Mason",
+      "region": "OH"
+    },
+    {
       "venueId": "massillon-oh",
       "city": "Massillon",
       "region": "OH"
     },
     {
+      "venueId": "mattoon-il",
+      "city": "Mattoon",
+      "region": "IL"
+    },
+    {
       "venueId": "mckenzie-tn",
       "city": "McKenzie",
       "region": "TN"
+    },
+    {
+      "venueId": "mckinney-tx",
+      "city": "McKinney",
+      "region": "TX"
+    },
+    {
+      "venueId": "mcminnville-or",
+      "city": "McMinnville",
+      "region": "OR"
     },
     {
       "venueId": "medford-or",
@@ -1084,6 +1444,11 @@
       "venueId": "menomonie-wi",
       "city": "Menomonie",
       "region": "WI"
+    },
+    {
+      "venueId": "merrillville-in",
+      "city": "Merrillville",
+      "region": "IN"
     },
     {
       "venueId": "mesa-az",
@@ -1114,6 +1479,11 @@
       "venueId": "midland-tx",
       "city": "Midland",
       "region": "TX"
+    },
+    {
+      "venueId": "millbrook-al",
+      "city": "Millbrook",
+      "region": "AL"
     },
     {
       "venueId": "milton-fl",
@@ -1166,6 +1536,16 @@
       "region": "QC"
     },
     {
+      "venueId": "mount-olive-nj",
+      "city": "Mount Olive",
+      "region": "NJ"
+    },
+    {
+      "venueId": "mountain-house-ca",
+      "city": "Mountain House",
+      "region": "CA"
+    },
+    {
       "venueId": "muncie-in",
       "city": "Muncie",
       "region": "IN"
@@ -1191,9 +1571,24 @@
       "region": "IA"
     },
     {
+      "venueId": "muscle-shoals-al",
+      "city": "Muscle Shoals",
+      "region": "AL"
+    },
+    {
       "venueId": "muskegon-mi",
       "city": "Muskegon",
       "region": "MI"
+    },
+    {
+      "venueId": "mustang-ok",
+      "city": "Mustang",
+      "region": "OK"
+    },
+    {
+      "venueId": "myrtle-beach-sc",
+      "city": "Myrtle Beach",
+      "region": "SC"
     },
     {
       "venueId": "naperville-il",
@@ -1204,6 +1599,11 @@
       "venueId": "nashua-nh",
       "city": "Nashua",
       "region": "NH"
+    },
+    {
+      "venueId": "nashville-tn",
+      "city": "Nashville",
+      "region": "TN"
     },
     {
       "venueId": "new-brunswick-nj",
@@ -1221,6 +1621,11 @@
       "region": "CT"
     },
     {
+      "venueId": "newark-de",
+      "city": "Newark",
+      "region": "DE"
+    },
+    {
       "venueId": "newbury-park-ca",
       "city": "Newbury Park",
       "region": "CA"
@@ -1229,6 +1634,11 @@
       "venueId": "newnan-ga",
       "city": "Newnan",
       "region": "GA"
+    },
+    {
+      "venueId": "niagara-falls-ny",
+      "city": "Niagara Falls",
+      "region": "NY"
     },
     {
       "venueId": "niles-mi",
@@ -1241,9 +1651,24 @@
       "region": "IL"
     },
     {
+      "venueId": "north-canton-oh",
+      "city": "North Canton",
+      "region": "OH"
+    },
+    {
+      "venueId": "norton-oh",
+      "city": "Norton",
+      "region": "OH"
+    },
+    {
       "venueId": "norwalk-ca",
       "city": "Norwalk",
       "region": "CA"
+    },
+    {
+      "venueId": "o-fallon-il",
+      "city": "O'Fallon",
+      "region": "IL"
     },
     {
       "venueId": "ocean-springs-ms",
@@ -1291,6 +1716,11 @@
       "region": "NJ"
     },
     {
+      "venueId": "old-orchard-beach-me",
+      "city": "Old Orchard Beach",
+      "region": "ME"
+    },
+    {
       "venueId": "omaha-ne",
       "city": "Omaha",
       "region": "NE"
@@ -1311,6 +1741,21 @@
       "region": "OR"
     },
     {
+      "venueId": "opelika-al",
+      "city": "Opelika",
+      "region": "AL"
+    },
+    {
+      "venueId": "oregon-il",
+      "city": "Oregon",
+      "region": "IL"
+    },
+    {
+      "venueId": "oregon-wi",
+      "city": "Oregon",
+      "region": "WI"
+    },
+    {
       "venueId": "orlando-fl",
       "city": "Orlando",
       "region": "FL"
@@ -1319,6 +1764,11 @@
       "venueId": "oro-valley-az",
       "city": "Oro Valley",
       "region": "AZ"
+    },
+    {
+      "venueId": "orrville-oh",
+      "city": "Orrville",
+      "region": "OH"
     },
     {
       "venueId": "oskaloosa-ia",
@@ -1334,6 +1784,11 @@
       "venueId": "ottawa-il",
       "city": "Ottawa",
       "region": "IL"
+    },
+    {
+      "venueId": "overland-park-ks",
+      "city": "Overland Park",
+      "region": "KS"
     },
     {
       "venueId": "palo-alto-ca",
@@ -1381,6 +1836,11 @@
       "region": "AZ"
     },
     {
+      "venueId": "piscataway-nj",
+      "city": "Piscataway",
+      "region": "NJ"
+    },
+    {
       "venueId": "pittsburg-ks",
       "city": "Pittsburg",
       "region": "KS"
@@ -1396,9 +1856,19 @@
       "region": "MA"
     },
     {
+      "venueId": "plainwell-mi",
+      "city": "Plainwell",
+      "region": "MI"
+    },
+    {
       "venueId": "pleasant-hill-ca",
       "city": "Pleasant Hill",
       "region": "CA"
+    },
+    {
+      "venueId": "plymouth-in",
+      "city": "Plymouth",
+      "region": "IN"
     },
     {
       "venueId": "port-huron-mi",
@@ -1424,6 +1894,11 @@
       "venueId": "powder-springs-ga",
       "city": "Powder Springs",
       "region": "GA"
+    },
+    {
+      "venueId": "powhatan-va",
+      "city": "Powhatan",
+      "region": "VA"
     },
     {
       "venueId": "prescott-az",
@@ -1456,6 +1931,11 @@
       "region": "WI"
     },
     {
+      "venueId": "renton-wa",
+      "city": "Renton",
+      "region": "WA"
+    },
+    {
       "venueId": "rexburg-id",
       "city": "Rexburg",
       "region": "ID"
@@ -1471,6 +1951,11 @@
       "region": "KY"
     },
     {
+      "venueId": "richmond-va",
+      "city": "Richmond",
+      "region": "VA"
+    },
+    {
       "venueId": "rio-rancho-nm",
       "city": "Rio Rancho",
       "region": "NM"
@@ -1479,6 +1964,11 @@
       "venueId": "riverside-ca",
       "city": "Riverside",
       "region": "CA"
+    },
+    {
+      "venueId": "rochester-mn",
+      "city": "Rochester",
+      "region": "MN"
     },
     {
       "venueId": "rochester-ny",
@@ -1494,6 +1984,11 @@
       "venueId": "rockford-il",
       "city": "Rockford",
       "region": "IL"
+    },
+    {
+      "venueId": "rockford-mi",
+      "city": "Rockford",
+      "region": "MI"
     },
     {
       "venueId": "rocklin-ca",
@@ -1514,6 +2009,11 @@
       "venueId": "rosemount-mn",
       "city": "Rosemount",
       "region": "MN"
+    },
+    {
+      "venueId": "roseville-ca",
+      "city": "Roseville",
+      "region": "CA"
     },
     {
       "venueId": "round-rock-tx",
@@ -1538,6 +2038,11 @@
     {
       "venueId": "saint-cloud-mn",
       "city": "Saint Cloud",
+      "region": "MN"
+    },
+    {
+      "venueId": "saint-paul-mn",
+      "city": "Saint Paul",
       "region": "MN"
     },
     {
@@ -1586,6 +2091,11 @@
       "region": "TX"
     },
     {
+      "venueId": "san-bernardino-ca",
+      "city": "San Bernardino",
+      "region": "CA"
+    },
+    {
       "venueId": "san-diego-ca",
       "city": "San Diego",
       "region": "CA"
@@ -1593,6 +2103,11 @@
     {
       "venueId": "san-jose-ca",
       "city": "San Jose",
+      "region": "CA"
+    },
+    {
+      "venueId": "san-marcos-ca",
+      "city": "San Marcos",
       "region": "CA"
     },
     {
@@ -1608,6 +2123,11 @@
     {
       "venueId": "santa-clara-ca",
       "city": "Santa Clara",
+      "region": "CA"
+    },
+    {
+      "venueId": "santa-clarita-ca",
+      "city": "Santa Clarita",
       "region": "CA"
     },
     {
@@ -1641,9 +2161,24 @@
       "region": "TN"
     },
     {
+      "venueId": "sewell-nj",
+      "city": "Sewell",
+      "region": "NJ"
+    },
+    {
+      "venueId": "sheffield-pa",
+      "city": "Sheffield",
+      "region": "PA"
+    },
+    {
       "venueId": "shelbyville-ky",
       "city": "Shelbyville",
       "region": "KY"
+    },
+    {
+      "venueId": "shelton-ct",
+      "city": "Shelton",
+      "region": "CT"
     },
     {
       "venueId": "sherbrooke-qc",
@@ -1651,9 +2186,19 @@
       "region": "QC"
     },
     {
+      "venueId": "shoreline-wa",
+      "city": "Shoreline",
+      "region": "WA"
+    },
+    {
       "venueId": "siloam-springs-ar",
       "city": "Siloam Springs",
       "region": "AR"
+    },
+    {
+      "venueId": "sioux-city-ia",
+      "city": "Sioux City",
+      "region": "IA"
     },
     {
       "venueId": "sioux-falls-ia",
@@ -1716,6 +2261,11 @@
       "region": "CA"
     },
     {
+      "venueId": "statesboro-ga",
+      "city": "Statesboro",
+      "region": "GA"
+    },
+    {
       "venueId": "stillwater-mn",
       "city": "Stillwater",
       "region": "MN"
@@ -1724,6 +2274,11 @@
       "venueId": "stockton-ca",
       "city": "Stockton",
       "region": "CA"
+    },
+    {
+      "venueId": "storm-lake-ia",
+      "city": "Storm Lake",
+      "region": "IA"
     },
     {
       "venueId": "streator-il",
@@ -1736,14 +2291,29 @@
       "region": "PA"
     },
     {
+      "venueId": "succasunna-nj",
+      "city": "Succasunna",
+      "region": "NJ"
+    },
+    {
       "venueId": "summerville-sc",
       "city": "Summerville",
       "region": "SC"
     },
     {
+      "venueId": "sun-prairie-wi",
+      "city": "Sun Prairie",
+      "region": "WI"
+    },
+    {
       "venueId": "sunnyvale-ca",
       "city": "Sunnyvale",
       "region": "CA"
+    },
+    {
+      "venueId": "syracuse-ny",
+      "city": "Syracuse",
+      "region": "NY"
     },
     {
       "venueId": "tarboro-nc",
@@ -1754,6 +2324,16 @@
       "venueId": "tempe-az",
       "city": "Tempe",
       "region": "AZ"
+    },
+    {
+      "venueId": "three-rivers-mi",
+      "city": "Three Rivers",
+      "region": "MI"
+    },
+    {
+      "venueId": "tigard-or",
+      "city": "Tigard",
+      "region": "OR"
     },
     {
       "venueId": "toledo-oh",
@@ -1776,6 +2356,21 @@
       "region": "AL"
     },
     {
+      "venueId": "troy-mi",
+      "city": "Troy",
+      "region": "MI"
+    },
+    {
+      "venueId": "trussville-al",
+      "city": "Trussville",
+      "region": "AL"
+    },
+    {
+      "venueId": "tualatin-or",
+      "city": "Tualatin",
+      "region": "OR"
+    },
+    {
       "venueId": "tulsa-ok",
       "city": "Tulsa",
       "region": "OK"
@@ -1784,6 +2379,11 @@
       "venueId": "tupelo-ms",
       "city": "Tupelo",
       "region": "MS"
+    },
+    {
+      "venueId": "union-city-ca",
+      "city": "Union City",
+      "region": "CA"
     },
     {
       "venueId": "utica-ny",
@@ -1816,9 +2416,24 @@
       "region": "MI"
     },
     {
+      "venueId": "vista-ca",
+      "city": "Vista",
+      "region": "CA"
+    },
+    {
+      "venueId": "waco-tx",
+      "city": "Waco",
+      "region": "TX"
+    },
+    {
       "venueId": "walnut-ca",
       "city": "Walnut",
       "region": "CA"
+    },
+    {
+      "venueId": "warrensburg-mo",
+      "city": "Warrensburg",
+      "region": "MO"
     },
     {
       "venueId": "warrenton-va",
@@ -1886,6 +2501,16 @@
       "region": "MD"
     },
     {
+      "venueId": "wetumpka-al",
+      "city": "Wetumpka",
+      "region": "AL"
+    },
+    {
+      "venueId": "white-lake-mi",
+      "city": "White Lake",
+      "region": "MI"
+    },
+    {
       "venueId": "whitewater-wi",
       "city": "Whitewater",
       "region": "WI"
@@ -1904,6 +2529,11 @@
       "venueId": "wildwood-nj",
       "city": "Wildwood",
       "region": "NJ"
+    },
+    {
+      "venueId": "williamsport-pa",
+      "city": "Williamsport",
+      "region": "PA"
     },
     {
       "venueId": "wilmot-wi",
@@ -1936,6 +2566,11 @@
       "region": "MN"
     },
     {
+      "venueId": "woodstock-ga",
+      "city": "Woodstock",
+      "region": "GA"
+    },
+    {
       "venueId": "woodstock-il",
       "city": "Woodstock",
       "region": "IL"
@@ -1944,15 +2579,24 @@
       "venueId": "yukon-ok",
       "city": "Yukon",
       "region": "OK"
+    },
+    {
+      "venueId": "zionsville-in",
+      "city": "Zionsville",
+      "region": "IN"
     }
   ],
   "keyToId": {
-    "akron, ohio": "akron-oh",
+    "abilene, tx": "abilene-tx",
+    "adrian, mi": "adrian-mi",
     "akron, oh": "akron-oh",
+    "akron, ohio": "akron-oh",
     "albuquerque, new mexico": "albuquerque-nm",
     "albuquerque, nm": "albuquerque-nm",
+    "alexandria, ky": "alexandria-ky",
     "alexandria, minnesota": "alexandria-mn",
     "alexandria, mn": "alexandria-mn",
+    "allendale, mi": "allendale-mi",
     "allentown pennsylvania": "allentown-pa",
     "allentown, pa": "allentown-pa",
     "allentown, pennsylvania": "allentown-pa",
@@ -1964,46 +2608,55 @@
     "altoona, pa": "altoona-pa",
     "amherst, ohio": "amherst-oh",
     "amherst, oh": "amherst-oh",
-    "ankeny, iowa": "ankeny-ia",
     "ankeny, ia": "ankeny-ia",
+    "ankeny, iowa": "ankeny-ia",
     "annapolis, maryland": "annapolis-md",
     "annapolis, md": "annapolis-md",
+    "apple valley, mn": "apple-valley-mn",
     "arkadelphia, arkansas": "arkadelphia-ar",
     "arkadelphia, ar": "arkadelphia-ar",
     "arlington, virginia": "arlington-va",
     "arlington, va": "arlington-va",
+    "ashland, or": "ashland-or",
     "atascadero, california": "atascadero-ca",
     "atascadero, ca": "atascadero-ca",
-    "atlanta, georgia": "atlanta-ga",
     "atlanta, ga": "atlanta-ga",
-    "auburn, washington": "auburn-wa",
+    "atlanta, georgia": "atlanta-ga",
     "auburn, wa": "auburn-wa",
+    "auburn, washington": "auburn-wa",
+    "augusta, nj": "augusta-nj",
     "austin, texas": "austin-tx",
     "austin, tx": "austin-tx",
-    "avon lake, ohio": "avon-lake-oh",
     "avon lake, oh": "avon-lake-oh",
-    "bakersfield, california": "bakersfield-ca",
+    "avon lake, ohio": "avon-lake-oh",
     "bakersfield, ca": "bakersfield-ca",
+    "bakersfield, california": "bakersfield-ca",
     "baton rouge, louisiana": "baton-rouge-la",
     "baton rouge, la": "baton-rouge-la",
     "battle creek, michigan": "battle-creek-mi",
     "battle creek, mi": "battle-creek-mi",
     "bealton, virginia": "bealeton-va",
     "bealeton, va": "bealeton-va",
+    "bedford, tx": "bedford-tx",
     "belding, michigan": "belding-mi",
     "belding, mi": "belding-mi",
-    "bellflower, california": "bellflower-ca",
+    "bellbrook, oh": "bellbrook-oh",
+    "belleville, il": "belleville-il",
     "bellflower, ca": "bellflower-ca",
+    "bellflower, california": "bellflower-ca",
+    "belton, tx": "belton-tx",
+    "belvidere, il": "belvidere-il",
     "bensalem, pennsylvania": "bensalem-pa",
     "bensalem, pa": "bensalem-pa",
     "benson, north carolina": "benson-nc",
     "benson, nc": "benson-nc",
-    "bentonville, arkansas": "bentonville-ar",
     "bentonville, ar": "bentonville-ar",
+    "bentonville, arkansas": "bentonville-ar",
     "beverly, massachusetts": "beverly-ma",
     "beverly, ma": "beverly-ma",
-    "birmingham, alabama": "birmingham-al",
+    "biloxi, ms": "biloxi-ms",
     "birmingham, al": "birmingham-al",
+    "birmingham, alabama": "birmingham-al",
     "blackwood, new jersey": "blackwood-nj",
     "blackwood, nj": "blackwood-nj",
     "bloomington normal, illinois": "bloomington-il",
@@ -2012,10 +2665,10 @@
     "bloomington, in": "bloomington-in",
     "bloomington-normal illinois": "bloomington-il",
     "bloomington-normal, illinois": "bloomington-il",
-    "boise, idaho": "boise-id",
     "boise, id": "boise-id",
-    "bowling green, ohio": "bowling-green-oh",
+    "boise, idaho": "boise-id",
     "bowling green, oh": "bowling-green-oh",
+    "bowling green, ohio": "bowling-green-oh",
     "bowling, ohio": "bowling-green-oh",
     "braintree, massachusetts": "braintree-ma",
     "braintree, ma": "braintree-ma",
@@ -2030,12 +2683,14 @@
     "bristol, rhode, island": "bristol-ri",
     "brockton, massachusetts": "brockton-ma",
     "brockton, ma": "brockton-ma",
-    "broken arrow, oklahoma": "broken-arrow-ok",
     "broken arrow, ok": "broken-arrow-ok",
+    "broken arrow, oklahoma": "broken-arrow-ok",
     "brooklyn, new york": "brooklyn-ny",
     "brooklyn, ny": "brooklyn-ny",
     "brunswick, georgia": "brunswick-ga",
     "brunswick, ga": "brunswick-ga",
+    "brunswick, oh": "brunswick-oh",
+    "buena park, ca": "buena-park-ca",
     "buffalo, new york": "buffalo-ny",
     "buffalo, ny": "buffalo-ny",
     "burlington, iowa": "burlington-ia",
@@ -2044,74 +2699,84 @@
     "butler, pa": "butler-pa",
     "calabasas, california": "calabasas-ca",
     "calabasas, ca": "calabasas-ca",
+    "camas, wa": "camas-wa",
     "canton, michigan": "canton-mi",
     "canton, mi": "canton-mi",
-    "canton, ohio": "canton-oh",
     "canton, oh": "canton-oh",
+    "canton, ohio": "canton-oh",
     "canyon, texas": "canyon-tx",
     "canyon, tx": "canyon-tx",
+    "cape girardeau, mo": "cape-girardeau-mo",
     "carmel, indiana": "carmel-in",
     "carmel, in": "carmel-in",
     "carson city, nevada": "carson-city-nv",
     "carson city, nv": "carson-city-nv",
-    "casper, wyoming": "casper-wy",
     "casper, wy": "casper-wy",
-    "cedar rapids, iowa": "cedar-rapids-ia",
+    "casper, wyoming": "casper-wy",
     "cedar rapids, ia": "cedar-rapids-ia",
-    "cedarburg, wisconsin": "cedarburg-wi",
+    "cedar rapids, iowa": "cedar-rapids-ia",
     "cedarburg, wi": "cedarburg-wi",
+    "cedarburg, wisconsin": "cedarburg-wi",
     "centerville, michigan": "centreville-mi",
     "centreville, mi": "centreville-mi",
-    "centerville, ohio": "centerville-oh",
     "centerville, oh": "centerville-oh",
-    "chambersburg, pennsylvania": "chambersburg-pa",
+    "centerville, ohio": "centerville-oh",
+    "cerritos, ca": "cerritos-ca",
     "chambersburg, pa": "chambersburg-pa",
+    "chambersburg, pennsylvania": "chambersburg-pa",
     "champlin, minnesota": "champlin-mn",
     "champlin, mn": "champlin-mn",
     "charles city, iowa": "charles-city-ia",
     "charles city, ia": "charles-city-ia",
+    "charleston, il": "charleston-il",
     "charleston, west virginia": "charleston-wv",
     "charleston, wv": "charleston-wv",
-    "charlotte, north carolina": "charlotte-nc",
     "charlotte, nc": "charlotte-nc",
+    "charlotte, north carolina": "charlotte-nc",
     "chattanooga, tennessee": "chattanooga-tn",
     "chattanooga, tn": "chattanooga-tn",
     "cheney, washington": "cheney-wa",
     "cheney, wa": "cheney-wa",
     "chesapeake, virginia": "chesapeake-va",
     "chesapeake, va": "chesapeake-va",
-    "cheyenne, wyoming": "cheyenne-wy",
+    "chester, pa": "chester-pa",
+    "chestnut hill, ma": "chestnut-hill-ma",
     "cheyenne, wy": "cheyenne-wy",
+    "cheyenne, wyoming": "cheyenne-wy",
+    "chickasha, ok": "chickasha-ok",
     "chicopee, massachusetts": "chicopee-ma",
     "chicopee, ma": "chicopee-ma",
     "chippewa falls, wisconsin": "chippewa-falls-wi",
     "chippewa falls, wi": "chippewa-falls-wi",
-    "cincinnati, ohio": "cincinnati-oh",
     "cincinnati, oh": "cincinnati-oh",
+    "cincinnati, ohio": "cincinnati-oh",
     "clarion, pennsylvania": "clarion-pa",
     "clarion, pa": "clarion-pa",
     "clifton, new jersey": "clifton-nj",
     "clifton, nj": "clifton-nj",
-    "clovis, california": "clovis-ca",
     "clovis, ca": "clovis-ca",
+    "clovis, california": "clovis-ca",
     "college park, maryland": "college-park-md",
     "college park, md": "college-park-md",
     "columbia, missouri": "columbia-mo",
     "columbia, mo": "columbia-mo",
-    "columbia, south carolina": "columbia-sc",
     "columbia, sc": "columbia-sc",
+    "columbia, south carolina": "columbia-sc",
     "columbus, ohio": "columbus-oh",
     "columbus, oh": "columbus-oh",
     "concord, california": "concord-ca",
     "concord, ca": "concord-ca",
     "converse, texas": "converse-tx",
     "converse, tx": "converse-tx",
+    "conway, sc": "conway-sc",
     "coon rapids, minnesota": "coon-rapids-mn",
     "coon rapids, mn": "coon-rapids-mn",
     "corona, california": "corona-ca",
     "corona, ca": "corona-ca",
+    "corpus christi, tx": "corpus-christi-tx",
     "costa, mesa, california": "costa-mesa-ca",
     "costa mesa, ca": "costa-mesa-ca",
+    "cranston, ri": "cranston-ri",
     "crown point, indiana": "crown-point-in",
     "crown point, in": "crown-point-in",
     "cupertino, california": "cupertino-ca",
@@ -2119,42 +2784,57 @@
     "dallas texas": "dallas-tx",
     "dallas, tx": "dallas-tx",
     "dallas, texas": "dallas-tx",
+    "daphne, al": "daphne-al",
     "davenport, iowa": "davenport-ia",
     "davenport, ia": "davenport-ia",
     "dayton, ohio": "dayton-oh",
     "dayton, oh": "dayton-oh",
+    "daytona beach, fl": "daytona-beach-fl",
     "decatur, indiana": "decatur-in",
     "decatur, in": "decatur-in",
     "decorah, iowa": "decorah-ia",
     "decorah, ia": "decorah-ia",
-    "dekalb, illinois": "dekalb-il",
     "dekalb, il": "dekalb-il",
+    "dekalb, illinois": "dekalb-il",
     "denton, texas": "denton-tx",
     "denton, tx": "denton-tx",
-    "denver, colorado": "denver-co",
     "denver, co": "denver-co",
+    "denver, colorado": "denver-co",
     "des plaines, illinois": "des-plaines-il",
     "des plaines, il": "des-plaines-il",
-    "dixon, illinois": "dixon-il",
+    "detroit, mi": "detroit-mi",
+    "dixon - rock falls, il": "dixon-il",
     "dixon, il": "dixon-il",
-    "dothan, alabama": "dothan-al",
+    "dixon, illinois": "dixon-il",
     "dothan, al": "dothan-al",
+    "dothan, alabama": "dothan-al",
+    "douglasville, ga": "douglasville-ga",
+    "dover, de": "dover-de",
+    "dover, pa": "dover-pa",
+    "downingtown, pa": "downingtown-pa",
     "dublin, california": "dublin-ca",
     "dublin, ca": "dublin-ca",
-    "dublin, ohio": "dublin-oh",
     "dublin, oh": "dublin-oh",
-    "dubuque, iowa": "dubuque-ia",
+    "dublin, ohio": "dublin-oh",
     "dubuque, ia": "dubuque-ia",
+    "dubuque, iowa": "dubuque-ia",
     "duncan, south carolina": "duncan-sc",
     "duncan, sc": "duncan-sc",
+    "east peoria, il": "east-peoria-il",
     "east rutherford, new jersey": "east-rutherford-nj",
     "east rutherford, nj": "east-rutherford-nj",
+    "east troy, wi": "east-troy-wi",
     "easton, pennsylvania": "easton-pa",
     "easton, pa": "easton-pa",
-    "eau claire, wisconsin": "eau-claire-wi",
     "eau claire, wi": "eau-claire-wi",
+    "eau claire, wisconsin": "eau-claire-wi",
+    "eden prairie, mn": "eden-prairie-mn",
+    "edinboro, pa": "edinboro-pa",
     "edmond, oklahoma": "edmond-ok",
     "edmond, ok": "edmond-ok",
+    "egg harbor township, nj": "egg-harbor-township-nj",
+    "el cajon, ca": "el-cajon-ca",
+    "el dorado, ks": "el-dorado-ks",
     "el paso, texas": "el-paso-tx",
     "el paso, tx": "el-paso-tx",
     "elizabeth, pennsylvania": "elizabeth-pa",
@@ -2171,22 +2851,26 @@
     "erie pennsylvania": "erie-pa",
     "erie, pa": "erie-pa",
     "erie, pennsylvania": "erie-pa",
-    "escondido, california": "escondido-ca",
     "escondido, ca": "escondido-ca",
-    "evansville, indiana": "evansville-in",
+    "escondido, california": "escondido-ca",
     "evansville, in": "evansville-in",
-    "everett, massachusetts": "everett-ma",
+    "evansville, indiana": "evansville-in",
     "everett, ma": "everett-ma",
+    "everett, massachusetts": "everett-ma",
     "everett, washington": "everett-wa",
     "everett, wa": "everett-wa",
     "ewing, new jersey": "ewing-nj",
     "ewing, nj": "ewing-nj",
     "fairfax, virginia": "fairfax-va",
     "fairfax, va": "fairfax-va",
-    "fairfield, ohio": "fairfield-oh",
+    "fairfield, ct": "fairfield-ct",
     "fairfield, oh": "fairfield-oh",
+    "fairfield, ohio": "fairfield-oh",
+    "farmington, mn": "farmington-mn",
     "fayetteville, arkansas": "fayetteville-ar",
     "fayetteville, ar": "fayetteville-ar",
+    "forest city, ia": "forest-city-ia",
+    "fort collins, co": "fort-collins-co",
     "fort edward, new york": "fort-edward-ny",
     "fort edward, ny": "fort-edward-ny",
     "fort edwards glens falls, new york": "glens-falls-ny",
@@ -2201,13 +2885,18 @@
     "fort walton, beach, florida": "fort-walton-beach-fl",
     "fort wayne, indiana": "fort-wayne-in",
     "fort wayne, in": "fort-wayne-in",
-    "foxboro, massachusetts": "foxborough-ma",
+    "foxboro, ma": "foxborough-ma",
     "foxborough, ma": "foxborough-ma",
+    "foxboro, massachusetts": "foxborough-ma",
     "frankfort, illinois": "frankfort-il",
     "frankfort, il": "frankfort-il",
     "frankfurt, illinois": "frankfort-il",
+    "freemont, ne": "fremont-ne",
+    "fremont, ne": "fremont-ne",
     "fremont, california": "fremont-ca",
     "fremont, ca": "fremont-ca",
+    "fresno, ca": "fresno-ca",
+    "ft wayne, in": "fort-wayne-in",
     "gadsden, alabama": "gadsden-al",
     "gadsden, al": "gadsden-al",
     "garden city, kansas": "garden-city-ks",
@@ -2218,12 +2907,14 @@
     "lake geneva, wi": "lake-geneva-wi",
     "gilroy, california": "gilroy-ca",
     "gilroy, ca": "gilroy-ca",
+    "glassboro, nj": "glassboro-nj",
     "glendale, arizona": "glendale-az",
     "glendale, az": "glendale-az",
     "glendale, california": "glendale-ca",
     "glendale, ca": "glendale-ca",
-    "glendora, california": "glendora-ca",
     "glendora, ca": "glendora-ca",
+    "glendora, california": "glendora-ca",
+    "gloversville, ny": "gloversville-ny",
     "grand haven, michigan": "grand-haven-mi",
     "grand haven, mi": "grand-haven-mi",
     "grandville, michigan": "grandville-mi",
@@ -2236,14 +2927,15 @@
     "greeley, co": "greeley-co",
     "green bay, wisconsin": "green-bay-wi",
     "green bay, wi": "green-bay-wi",
-    "greendale, wisconsin": "greendale-wi",
     "greendale, wi": "greendale-wi",
+    "greendale, wisconsin": "greendale-wi",
     "greenville, michigan": "greenville-mi",
     "greenville, mi": "greenville-mi",
     "groton, connecticut": "groton-ct",
     "groton, ct": "groton-ct",
     "gulfport, mississippi": "gulfport-ms",
     "gulfport, ms": "gulfport-ms",
+    "hamilton, oh": "hamilton-oh",
     "hamilton, ontario": "hamilton-on",
     "hamilton, on": "hamilton-on",
     "hampton, virginia": "hampton-va",
@@ -2260,28 +2952,31 @@
     "herndon, va": "herndon-va",
     "hershey, pennsylvania": "hershey-pa",
     "hershey, pa": "hershey-pa",
-    "hillsboro, oregon": "hillsboro-or",
     "hillsboro, or": "hillsboro-or",
+    "hillsboro, oregon": "hillsboro-or",
     "hilton head, south carolina": "hilton-head-sc",
     "hilton head, sc": "hilton-head-sc",
     "hilton, south carolina": "hilton-head-island-sc",
     "hilton head island, sc": "hilton-head-island-sc",
+    "hiram, ga": "hiram-ga",
     "holman, wisconsin": "holmen-wi",
     "holmen, wi": "holmen-wi",
     "hoover, alabama": "hoover-al",
     "hoover, al": "hoover-al",
     "hornell, new york": "hornell-ny",
     "hornell, ny": "hornell-ny",
+    "hoschton, ga": "hoschton-ga",
     "houston, texas": "houston-tx",
     "houston, tx": "houston-tx",
     "huntington, virginia": "huntington-va",
     "huntington, va": "huntington-va",
     "huntington, west virginia": "huntington-wv",
     "huntington, wv": "huntington-wv",
-    "hutchison, kansas": "hutchinson-ks",
+    "huntsville, al": "huntsville-al",
     "hutchinson, ks": "hutchinson-ks",
-    "indianapolis, indiana": "indianapolis-in",
+    "hutchison, kansas": "hutchinson-ks",
     "indianapolis, in": "indianapolis-in",
+    "indianapolis, indiana": "indianapolis-in",
     "jackson, michigan": "jackson-mi",
     "jackson, mi": "jackson-mi",
     "jackson, mississippi": "jackson-ms",
@@ -2297,18 +2992,23 @@
     "jenison, michigan": "jenison-mi",
     "jenison, mi": "jenison-mi",
     "jensen, michigan": "jenison-mi",
-    "johnsonburg, pennsylvania": "johnsonburg-pa",
     "johnsonburg, pa": "johnsonburg-pa",
+    "johnsonburg, pennsylvania": "johnsonburg-pa",
+    "johnston, ia": "johnston-ia",
     "joplin, missouri": "joplin-mo",
     "joplin, mo": "joplin-mo",
-    "kalamazoo, michigan": "kalamazoo-mi",
+    "jupiter, fl": "jupiter-fl",
     "kalamazoo, mi": "kalamazoo-mi",
+    "kalamazoo, michigan": "kalamazoo-mi",
     "kansas city, missouri": "kansas-city-mo",
     "kansas city, mo": "kansas-city-mo",
+    "katy, tx": "katy-tx",
     "kelso, washington": "kelso-wa",
     "kelso, wa": "kelso-wa",
     "kennesaw, georgia": "kennesaw-ga",
     "kennesaw, ga": "kennesaw-ga",
+    "kennewick, wa": "kennewick-wa",
+    "kent, oh": "kent-oh",
     "kingsport, tennessee": "kingsport-tn",
     "kingsport, tn": "kingsport-tn",
     "kitchener, ontario": "kitchener-on",
@@ -2316,37 +3016,44 @@
     "kitchner, ontario": "kitchener-on",
     "knox, ohio": "knox-oh",
     "knox, oh": "knox-oh",
-    "lacrosse, wisconsin": "la-crosse-wi",
+    "knoxville, tn": "knoxville-tn",
     "la crosse, wi": "la-crosse-wi",
-    "lafayette, louisiana": "lafayette-la",
+    "lacrosse, wisconsin": "la-crosse-wi",
     "lafayette, la": "lafayette-la",
+    "lafayette, louisiana": "lafayette-la",
+    "laguna hills, ca": "laguna-hills-ca",
     "lake havasu city, arizona": "lake-havasu-city-az",
     "lake havasu city, az": "lake-havasu-city-az",
+    "lakeland, fl": "lakeland-fl",
     "lamesa, california": "la-mesa-ca",
     "la mesa, ca": "la-mesa-ca",
+    "landisville, pa": "landisville-pa",
     "lansdale, pennsylvania": "lansdale-pa",
     "lansdale, pa": "lansdale-pa",
     "laporte, indiana": "laporte-in",
     "laporte, in": "laporte-in",
+    "laramie, wy": "laramie-wy",
     "lawrence, kansas": "lawrence-ks",
     "lawrence, ks": "lawrence-ks",
-    "lawrence, massachusetts": "lawrence-ma",
     "lawrence, ma": "lawrence-ma",
+    "lawrence, massachusetts": "lawrence-ma",
+    "lawton, ok": "lawton-ok",
     "leander, texas": "leander-tx",
     "leander, tx": "leander-tx",
-    "lebanon, illinois": "lebanon-il",
     "lebanon, il": "lebanon-il",
+    "lebanon, illinois": "lebanon-il",
     "lexington winchester, kentucky": "lexington-ky",
     "lexington, ky": "lexington-ky",
     "lexington, kentucky": "lexington-ky",
-    "lima, ohio": "lima-oh",
+    "lexington, sc": "lexington-sc",
     "lima, oh": "lima-oh",
+    "lima, ohio": "lima-oh",
     "lincoln, nebraska": "lincoln-ne",
     "lincoln, ne": "lincoln-ne",
-    "lisle, illinois": "lisle-il",
     "lisle, il": "lisle-il",
-    "little rock, arkansas": "little-rock-ar",
+    "lisle, illinois": "lisle-il",
     "little rock, ar": "little-rock-ar",
+    "little rock, arkansas": "little-rock-ar",
     "lodi, california": "lodi-ca",
     "lodi, ca": "lodi-ca",
     "long beach, california": "long-beach-ca",
@@ -2365,27 +3072,36 @@
     "ludlow, ma": "ludlow-ma",
     "lynchburg, virginia": "lynchburg-va",
     "lynchburg, va": "lynchburg-va",
-    "lynn, massachusetts": "lynn-ma",
     "lynn, ma": "lynn-ma",
-    "madison, wisconsin": "madison-wi",
+    "lynn, massachusetts": "lynn-ma",
+    "macomb, il": "macomb-il",
+    "macon, ga": "macon-ga",
     "madison, wi": "madison-wi",
+    "madison, wisconsin": "madison-wi",
     "malden, massachusetts": "malden-ma",
     "malden, ma": "malden-ma",
     "manchester, new hampshire": "manchester-nh",
     "manchester, nh": "manchester-nh",
     "mankato, minnesota": "mankato-mn",
     "mankato, mn": "mankato-mn",
-    "marion, ohio": "marion-oh",
+    "marion, ia": "marion-ia",
+    "marion, in": "marion-in",
     "marion, oh": "marion-oh",
+    "marion, ohio": "marion-oh",
     "martin, tennessee": "martin-tn",
     "martin, tn": "martin-tn",
+    "mason city, ia": "mason-city-ia",
+    "mason, oh": "mason-oh",
     "massillon ohio": "massillon-oh",
     "massillon, oh": "massillon-oh",
     "massillon, ohio": "massillon-oh",
+    "mattoon, il": "mattoon-il",
     "mckenzie, tennessee": "mckenzie-tn",
     "mckenzie, tn": "mckenzie-tn",
-    "medford, oregon": "medford-or",
+    "mckinney, tx": "mckinney-tx",
+    "mcminnville, or": "mcminnville-or",
     "medford, or": "medford-or",
+    "medford, oregon": "medford-or",
     "memphis, tennessee": "memphis-tn",
     "memphis, tn": "memphis-tn",
     "menasha, wisconsin": "menasha-wi",
@@ -2393,18 +3109,20 @@
     "menominee, wisconsin": "menomonie-wi",
     "menomonie, wi": "menomonie-wi",
     "menomonie, wisconsin": "menomonie-wi",
+    "merrillville, in": "merrillville-in",
     "mesa, arizona": "mesa-az",
     "mesa, az": "mesa-az",
     "mesquite, texas": "mesquite-tx",
     "mesquite, tx": "mesquite-tx",
-    "metamora, illinois": "metamora-il",
     "metamora, il": "metamora-il",
-    "michigan city, indiana": "michigan-city-in",
+    "metamora, illinois": "metamora-il",
     "michigan city, in": "michigan-city-in",
+    "michigan city, indiana": "michigan-city-in",
     "middleton, wisconsin": "middleton-wi",
     "middleton, wi": "middleton-wi",
     "midland, texas": "midland-tx",
     "midland, tx": "midland-tx",
+    "millbrook, al": "millbrook-al",
     "milton, florida": "milton-fl",
     "milton, fl": "milton-fl",
     "milton, georgia": "milton-ga",
@@ -2419,53 +3137,66 @@
     "mississauga, on": "mississauga-on",
     "modesto, california": "modesto-ca",
     "modesto, ca": "modesto-ca",
-    "monroe, louisiana": "monroe-la",
     "monroe, la": "monroe-la",
+    "monroe, louisiana": "monroe-la",
     "monterey park, california": "monterey-park-ca",
     "monterey park, ca": "monterey-park-ca",
     "montreal, quebec": "montreal-qc",
     "montr al, qc": "montreal-qc",
-    "muncie, indiana": "muncie-in",
+    "mountain house, ca": "mountain-house-ca",
+    "mt olive, nj": "mount-olive-nj",
+    "mount olive, nj": "mount-olive-nj",
     "muncie, in": "muncie-in",
+    "muncie, indiana": "muncie-in",
     "munfordville, kentucky": "munfordville-ky",
     "munfordville, ky": "munfordville-ky",
     "murfreesboro, tennessee": "murfreesboro-tn",
     "murfreesboro, tn": "murfreesboro-tn",
     "murray, kentucky": "murray-ky",
     "murray, ky": "murray-ky",
-    "muscatine, iowa": "muscatine-ia",
     "muscatine, ia": "muscatine-ia",
+    "muscatine, iowa": "muscatine-ia",
+    "muscle shoals, al": "muscle-shoals-al",
     "muskegon, michigan": "muskegon-mi",
     "muskegon, mi": "muskegon-mi",
+    "mustang, ok": "mustang-ok",
+    "myrtle beach, sc": "myrtle-beach-sc",
     "naperville, illinois": "naperville-il",
     "naperville, il": "naperville-il",
     "nashua, new hampshire": "nashua-nh",
     "nashua, nh": "nashua-nh",
+    "nashville, tn": "nashville-tn",
     "new brunswick, new jersey": "new-brunswick-nj",
     "new brunswick, nj": "new-brunswick-nj",
     "new haven, connecticut": "new-haven-ct",
     "new haven, ct": "new-haven-ct",
     "new london, connecticut": "new-london-ct",
     "new london, ct": "new-london-ct",
+    "newark, de": "newark-de",
     "newbury park, california": "newbury-park-ca",
     "newbury park, ca": "newbury-park-ca",
     "newman, georgia": "newnan-ga",
     "newnan, ga": "newnan-ga",
-    "niles, michigan": "niles-mi",
+    "niagara, ny": "niagara-falls-ny",
+    "niagara falls, ny": "niagara-falls-ny",
     "niles, mi": "niles-mi",
-    "normal, illinois": "normal-il",
+    "niles, michigan": "niles-mi",
     "normal, il": "normal-il",
-    "norwalk, california": "norwalk-ca",
+    "normal, illinois": "normal-il",
+    "north canton, oh": "north-canton-oh",
+    "norton, oh": "norton-oh",
     "norwalk, ca": "norwalk-ca",
+    "norwalk, california": "norwalk-ca",
+    "o'fallon, il": "o-fallon-il",
     "ocean springs, mississippi": "ocean-springs-ms",
     "ocean springs, ms": "ocean-springs-ok",
     "ocean springs, oklahoma": "ocean-springs-ok",
-    "oceanside, california": "oceanside-ca",
     "oceanside, ca": "oceanside-ca",
+    "oceanside, california": "oceanside-ca",
     "odessa, texas": "odessa-tx",
     "odessa, tx": "odessa-tx",
-    "ogden, utah": "ogden-ut",
     "ogden, ut": "ogden-ut",
+    "ogden, utah": "ogden-ut",
     "ogdensburg, new york": "ogdensburg-ny",
     "ogdensburg, ny": "ogdensburg-ny",
     "oklahoma city, oklahoma": "oklahoma-city-ok",
@@ -2475,82 +3206,95 @@
     "old bridge township, new jersey": "old-bridge-nj",
     "old bridge, nj": "old-bridge-nj",
     "old bridge, new jersey": "old-bridge-nj",
-    "omaha, nebraska": "omaha-ne",
+    "old orchard beach, me": "old-orchard-beach-me",
     "omaha, ne": "omaha-ne",
+    "omaha, nebraska": "omaha-ne",
     "oneida, wisconsin": "oneida-wi",
     "oneida, wi": "oneida-wi",
     "ontario, california": "ontario-ca",
     "ontario, ca": "ontario-ca",
     "ontario, idaho": "ontario-id",
     "ontario, or": "ontario-id",
-    "orlando, florida": "orlando-fl",
+    "opelika, al": "opelika-al",
+    "oregon, il": "oregon-il",
+    "oregon, wi": "oregon-wi",
     "orlando, fl": "orlando-fl",
+    "orlando, florida": "orlando-fl",
     "oro valley, arizona": "oro-valley-az",
     "oro valley, az": "oro-valley-az",
-    "oskaloosa, iowa": "oskaloosa-ia",
+    "orrville, oh": "orrville-oh",
     "oskaloosa, ia": "oskaloosa-ia",
+    "oskaloosa, iowa": "oskaloosa-ia",
     "oswego, illinois": "oswego-il",
     "oswego, il": "oswego-il",
     "ottawa, illinois": "ottawa-il",
     "ottawa, il": "ottawa-il",
+    "overland park, ks": "overland-park-ks",
     "palto alto, california": "palo-alto-ca",
     "palo alto, ca": "palo-alto-ca",
     "paramount, california": "paramount-ca",
     "paramount, ca": "paramount-ca",
-    "pasadena, california": "pasadena-ca",
     "pasadena, ca": "pasadena-ca",
+    "pasadena, california": "pasadena-ca",
     "pascagoula, mississippi": "pascagoula-ms",
     "pascagoula, ms": "pascagoula-ms",
     "pasco, washington": "pasco-wa",
     "pasco, wa": "pasco-wa",
     "paso robles, california": "paso-robles-ca",
     "paso robles, ca": "paso-robles-ca",
-    "paw paw, michigan": "paw-paw-mi",
     "paw paw, mi": "paw-paw-mi",
+    "paw paw, michigan": "paw-paw-mi",
     "philadelphia, pennsylvania": "philadelphia-pa",
     "philadelphia, pa": "philadelphia-pa",
     "phoenix, arizona": "phoenix-az",
     "phoenix, az": "phoenix-az",
+    "piscataway, nj": "piscataway-nj",
     "pittsburg, kansas": "pittsburg-ks",
     "pittsburg, ks": "pittsburg-ks",
-    "pittsburgh, pennsylvania": "pittsburgh-pa",
     "pittsburgh, pa": "pittsburgh-pa",
+    "pittsburgh, pennsylvania": "pittsburgh-pa",
     "pittsfield, massachusetts": "pittsfield-ma",
     "pittsfield, ma": "pittsfield-ma",
-    "pleasant hill, california": "pleasant-hill-ca",
+    "plainwell, mi": "plainwell-mi",
     "pleasant hill, ca": "pleasant-hill-ca",
+    "pleasant hill, california": "pleasant-hill-ca",
+    "plymouth, in": "plymouth-in",
     "port huron, michigan": "port-huron-mi",
     "port huron, mi": "port-huron-mi",
     "port washington, wisconsin": "port-washington-wi",
     "port washington, wi": "port-washington-wi",
-    "portage, michigan": "portage-mi",
     "portage, mi": "portage-mi",
-    "portland, oregon": "portland-or",
+    "portage, michigan": "portage-mi",
     "portland, or": "portland-or",
-    "powder springs, georgia": "powder-springs-ga",
+    "portland, oregon": "portland-or",
     "powder springs, ga": "powder-springs-ga",
+    "powder springs, georgia": "powder-springs-ga",
+    "powhatan, va": "powhatan-va",
     "prescott, arizona": "prescott-az",
     "prescott, az": "prescott-az",
     "pueblo, colorado": "pueblo-co",
     "pueblo, co": "pueblo-co",
-    "quincy, massachusetts": "quincy-ma",
     "quincy, ma": "quincy-ma",
+    "quincy, massachusetts": "quincy-ma",
     "racine, wisconsin": "racine-wi",
     "racine, wi": "racine-wi",
     "raleigh, north carolina": "raleigh-nc",
     "raleigh, nc": "raleigh-nc",
     "reedsburg, wisconsin": "reedsburg-wi",
     "reedsburg, wi": "reedsburg-wi",
+    "renton, wa": "renton-wa",
     "rexburg, idaho": "rexburg-id",
     "rexburg, id": "rexburg-id",
-    "rice lake, wisconsin": "rice-lake-wi",
     "rice lake, wi": "rice-lake-wi",
+    "rice lake, wisconsin": "rice-lake-wi",
     "richmond, kentucky": "richmond-ky",
     "richmond, ky": "richmond-ky",
+    "richmond, va": "richmond-va",
     "rio rancho, new mexico": "rio-rancho-nm",
     "rio rancho, nm": "rio-rancho-nm",
-    "riverside, california": "riverside-ca",
     "riverside, ca": "riverside-ca",
+    "riverside, california": "riverside-ca",
+    "rochester, mn": "rochester-mn",
     "rochester, new york": "rochester-ny",
     "rochester, ny": "rochester-ny",
     "rock hill south carolina": "rock-hill-sc",
@@ -2560,18 +3304,20 @@
     "rockford illinois": "rockford-il",
     "rockford, il": "rockford-il",
     "rockford, illinois": "rockford-il",
+    "rockford, mi": "rockford-mi",
     "rocklin, california": "rocklin-ca",
     "rocklin, ca": "rocklin-ca",
     "rome, new york": "rome-ny",
     "rome, ny": "rome-ny",
     "rosemount, minnesota": "rosemount-mn",
     "rosemount, mn": "rosemount-mn",
+    "roseville, ca": "roseville-ca",
     "round rock, texas": "round-rock-tx",
     "round rock, tx": "round-rock-tx",
     "russellville, alabama": "russellville-al",
     "russellville, al": "russellville-al",
-    "sacramento, california": "sacramento-ca",
     "sacramento, ca": "sacramento-ca",
+    "sacramento, california": "sacramento-ca",
     "saginaw, texas": "saginaw-tx",
     "saginaw, tx": "saginaw-tx",
     "saint cloud, minnesota": "saint-cloud-mn",
@@ -2587,26 +3333,29 @@
     "salem, nh": "salem-nh",
     "salem, oregon": "salem-or",
     "salem, or": "salem-or",
-    "salem, virginia": "salem-va",
     "salem, va": "salem-va",
-    "salem, wisconsin": "salem-wi",
+    "salem, virginia": "salem-va",
     "salem, wi": "salem-wi",
+    "salem, wisconsin": "salem-wi",
     "salina, kansas": "salina-ks",
     "salina, ks": "salina-ks",
-    "salt lake city, utah": "salt-lake-city-ut",
     "salt lake city, ut": "salt-lake-city-ut",
+    "salt lake city, utah": "salt-lake-city-ut",
     "san antonio, texas": "san-antonio-tx",
     "san antonio, tx": "san-antonio-tx",
+    "san bernardino, ca": "san-bernardino-ca",
     "san diego, california": "san-diego-ca",
     "san diego, ca": "san-diego-ca",
     "san jose, california": "san-jose-ca",
     "san jose, ca": "san-jose-ca",
+    "san marcos, ca": "san-marcos-ca",
     "santa ana, california": "santa-ana-ca",
     "santa ana, ca": "santa-ana-ca",
-    "santa barbara, california": "santa-barbara-ca",
     "santa barbara, ca": "santa-barbara-ca",
-    "santa clara, california": "santa-clara-ca",
+    "santa barbara, california": "santa-barbara-ca",
     "santa clara, ca": "santa-clara-ca",
+    "santa clara, california": "santa-clara-ca",
+    "santa clarita, ca": "santa-clarita-ca",
     "sarina, ontario": "sarnia-on",
     "sarnia, on": "sarnia-on",
     "sarnia, ontario": "sarnia-on",
@@ -2614,17 +3363,22 @@
     "sauk rapids, mn": "sauk-rapids-mn",
     "saul ste marie, ontario": "sault-ste-marie-on",
     "sault ste marie, on": "sault-ste-marie-on",
-    "seattle, washington": "seattle-wa",
     "seattle, wa": "seattle-wa",
+    "seattle, washington": "seattle-wa",
     "severieville, tennessee": "severieville-tn",
     "sevierville, tn": "sevierville-tn",
     "sevierville, tennessee": "sevierville-tn",
+    "sewell, nj": "sewell-nj",
+    "sheffield, pa": "sheffield-pa",
     "shelbyville, kentucky": "shelbyville-ky",
     "shelbyville, ky": "shelbyville-ky",
+    "shelton, ct": "shelton-ct",
     "sherbrooke, quebec": "sherbrooke-qc",
     "sherbrooke, qc": "sherbrooke-qc",
+    "shoreline, wa": "shoreline-wa",
     "siloam springs, arkansas": "siloam-springs-ar",
     "siloam springs, ar": "siloam-springs-ar",
+    "sioux city, ia": "sioux-city-ia",
     "sioux falls, iowa": "sioux-falls-ia",
     "sioux falls, sd": "sioux-falls-sd",
     "sioux falls, south dakota": "sioux-falls-sd",
@@ -2638,51 +3392,65 @@
     "spokane valley, wa": "spokane-valley-wa",
     "spokane, washington": "spokane-wa",
     "spokane, wa": "spokane-wa",
-    "spring valley, illinois": "spring-valley-il",
     "spring valley, il": "spring-valley-il",
+    "spring valley, illinois": "spring-valley-il",
     "springboro, ohio": "springboro-oh",
     "springboro, oh": "springboro-oh",
     "springfield, massachusetts": "springfield-ma",
     "springfield, ma": "springfield-ma",
-    "stanford, california": "stanford-ca",
+    "st paul, mn": "saint-paul-mn",
+    "saint paul, mn": "saint-paul-mn",
     "stanford, ca": "stanford-ca",
+    "stanford, california": "stanford-ca",
+    "statesboro, ga": "statesboro-ga",
     "stillwater, minnesota": "stillwater-mn",
     "stillwater, mn": "stillwater-mn",
     "stockton, california": "stockton-ca",
     "stockton, ca": "stockton-ca",
+    "storm lake, ia": "storm-lake-ia",
     "streator, illinois": "streator-il",
     "streator, il": "streator-il",
     "stroudsburg, pennsylvania": "stroudsburg-pa",
     "stroudsburg, pa": "stroudsburg-pa",
+    "succasunna, nj": "succasunna-nj",
     "sudbury, ontario": "greater-sudbury-on",
     "greater sudbury, on": "greater-sudbury-on",
     "summerville, south carolina": "summerville-sc",
     "summerville, sc": "summerville-sc",
+    "sun prairie, wi": "sun-prairie-wi",
     "sunnyvale, california": "sunnyvale-ca",
     "sunnyvale, ca": "sunnyvale-ca",
+    "syracuse, ny": "syracuse-ny",
     "tarboro, north carolina": "tarboro-nc",
     "tarboro, nc": "tarboro-nc",
     "tempe, arizona": "tempe-az",
     "tempe, az": "tempe-az",
+    "three rivers, mi": "three-rivers-mi",
+    "tigard, or": "tigard-or",
     "toledo, ohio": "toledo-oh",
     "toledo, oh": "toledo-oh",
     "traverse city, michigan": "traverse-city-mi",
     "traverse city, mi": "traverse-city-mi",
-    "tri-cities, washington": "tri-cities-wa",
+    "tri cities, wa": "tri-cities-wa",
     "tri-cities, wa": "tri-cities-wa",
+    "tri-cities, washington": "tri-cities-wa",
     "troy alabama": "troy-al",
     "troy, al": "troy-al",
     "troy, alabama": "troy-al",
+    "troy, mi": "troy-mi",
+    "trussville, al": "trussville-al",
+    "tualatin, or": "tualatin-or",
     "tulsa, oklahoma": "tulsa-ok",
     "tulsa, ok": "tulsa-ok",
     "tupelo, mississippi": "tupelo-ms",
     "tupelo, ms": "tupelo-ms",
+    "union city, ca": "union-city-ca",
     "upper darby, pennsylvania": "darby-pa",
     "darby, pa": "darby-pa",
     "utica, new york": "utica-ny",
     "utica, ny": "utica-ny",
-    "valdosta, georgia": "valdosta-ga",
     "valdosta, ga": "valdosta-ga",
+    "valdosta, georgia": "valdosta-ga",
     "van buren, alabama": "van-buren-al",
     "van buren, ar": "van-buren-ar",
     "van buren, arkansas": "van-buren-ar",
@@ -2691,22 +3459,25 @@
     "vancouver, washington": "vancouver-wa",
     "vicksburg, michigan": "vicksburg-mi",
     "vicksburg, mi": "vicksburg-mi",
-    "walnut, california": "walnut-ca",
+    "vista, ca": "vista-ca",
+    "waco, tx": "waco-tx",
     "walnut, ca": "walnut-ca",
-    "warrenton, virginia": "warrenton-va",
+    "walnut, california": "walnut-ca",
+    "warrensburg, mo": "warrensburg-mo",
     "warrenton, va": "warrenton-va",
-    "waukee, iowa": "waukee-ia",
+    "warrenton, virginia": "warrenton-va",
     "waukee, ia": "waukee-ia",
+    "waukee, iowa": "waukee-ia",
     "waukegan, illinois": "waukegan-il",
     "waukegan, il": "waukegan-il",
-    "waukesha, wisconsin": "waukesha-wi",
     "waukesha, wi": "waukesha-wi",
-    "wausau, wisconsin": "wausau-wi",
+    "waukesha, wisconsin": "waukesha-wi",
     "wausau, wi": "wausau-wi",
+    "wausau, wisconsin": "wausau-wi",
     "wayne, new jersey": "wayne-nj",
     "wayne, nj": "wayne-nj",
-    "west chester, pennsylvania": "west-chester-pa",
     "west chester, pa": "west-chester-pa",
+    "west chester, pennsylvania": "west-chester-pa",
     "west covina, california": "west-covina-ca",
     "west covina, ca": "west-covina-ca",
     "west des moines, iowa": "west-des-moines-ia",
@@ -2719,29 +3490,34 @@
     "westlake village, ca": "westlake-village-ca",
     "westminster, maryland": "westminster-md",
     "westminster, md": "westminster-md",
-    "whitewater, wisconsin": "whitewater-wi",
+    "wetumpka, al": "wetumpka-al",
+    "white lake, mi": "white-lake-mi",
     "whitewater, wi": "whitewater-wi",
+    "whitewater, wisconsin": "whitewater-wi",
     "wichita falls, texas": "wichita-falls-tx",
     "wichita falls, tx": "wichita-falls-tx",
     "wichita, kansas": "wichita-ks",
     "wichita, ks": "wichita-ks",
     "wildwood, new jersey": "wildwood-nj",
     "wildwood, nj": "wildwood-nj",
+    "williamsport, pa": "williamsport-pa",
     "wilmot, wisconsin": "wilmot-wi",
     "wilmot, wi": "wilmot-wi",
     "windsor, colorado": "windsor-co",
     "windsor, co": "windsor-co",
-    "winston-salem, north carolina": "winston-salem-nc",
     "winston-salem, nc": "winston-salem-nc",
+    "winston-salem, north carolina": "winston-salem-nc",
     "wisconsin rapids, wisconsin": "wisconsin-rapids-wi",
     "wisconsin rapids, wi": "wisconsin-rapids-wi",
     "woodburn, oregon": "woodburn-or",
     "woodburn, or": "woodburn-or",
     "woodbury, minnesota": "woodbury-mn",
     "woodbury, mn": "woodbury-mn",
+    "woodstock, ga": "woodstock-ga",
     "woodstock, illinois": "woodstock-il",
     "woodstock, il": "woodstock-il",
     "yukon, oklahoma": "yukon-ok",
-    "yukon, ok": "yukon-ok"
+    "yukon, ok": "yukon-ok",
+    "zionsville, in": "zionsville-in"
   }
 }

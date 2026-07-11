@@ -13,8 +13,11 @@
  * normalizer (see helpers/podium/venues.js). Every entry records how it was
  * resolved (exact | fuzzy | centroid) so approximate rows can be hand-reviewed.
  *
- * Data source: local pressboxImporter JSON by default; pass --firestore to
- * read the full historical_scores collection instead (requires credentials).
+ * Data sources (unioned): local pressboxImporter JSON (2000-2012) OR, with
+ * --firestore, the full historical_scores collection (needs credentials); PLUS
+ * the committed DCI.org-harvested 2013-2026 locations (dciDotOrgLocations.json),
+ * so even a credential-free local build spans the entire historical archive
+ * rather than just the 2000-2012 pressbox years.
  *
  * Run:
  *   cd functions
@@ -27,6 +30,12 @@ const path = require("node:path");
 
 const OUTPUT_PATH = path.join(__dirname, "../helpers/podium/venueGazetteer.json");
 const LOCAL_DATA_DIR = path.join(__dirname, "../../pressboxImporter/output");
+// DCI.org-harvested "City, ST" locations for 2013-2026 — the years the local
+// fromthepressbox importer (2000-2012 only) does not carry. Merged into every
+// build (local or --firestore) so the committed gazetteer spans the full
+// historical archive without needing Firestore credentials. Regenerate with
+// scripts/harvestDciLocations.js when new seasons land.
+const DCI_LOCATIONS_PATH = path.join(__dirname, "dciDotOrgLocations.json");
 
 const US_STATES = {
   AL: "Alabama",
@@ -108,6 +117,42 @@ const CA_GEONAMES_ADMIN = {
   PE: "09",
   QC: "10",
   SK: "11",
+};
+
+// Durable geocode corrections, keyed by normalized location. The offline
+// resolver falls back to a state centroid when a raw location can't be matched
+// (tiny/unincorporated venues absent from cities1000) or is geocoded to the
+// wrong place by a source typo. Those centroid placeholders used to be
+// hand-patched in the emitted JSON and silently reverted on the next rebuild;
+// baking them here makes the corrections survive every regeneration. Each entry
+// supplies the geo truth (and keeps the original typo-derived venueId so a
+// mid-season stored `lastVenue` still compares equal). Add a row whenever a new
+// build reports a `centroid` resolution — those are the ones worth reviewing.
+// Each value is [venueId, city, region, lat, lng] (country defaults to US).
+const MANUAL_OVERRIDES = {
+  // Source typos that geocoded to the wrong state, hand-verified to the real venue.
+  "ocean springs, oklahoma": ["ocean-springs-ok", "Ocean Springs", "MS", 30.4113, -88.8278],
+  "ontario, idaho": ["ontario-id", "Ontario", "OR", 44.0266, -116.9629],
+  "van buren, alabama": ["van-buren-al", "Van Buren", "AR", 35.4368, -94.3483],
+  "sioux falls, iowa": ["sioux-falls-ia", "Sioux Falls", "SD", 43.5446, -96.7311],
+  "severieville, tennessee": ["severieville-tn", "Sevierville", "TN", 35.8681, -83.5619],
+  // Real venues too small for cities1000 (population < 1000 / unincorporated).
+  "bensalem, pennsylvania": ["bensalem-pa", "Bensalem", "PA", 40.1043, -74.9513],
+  "brick, new jersey": ["brick-nj", "Brick", "NJ", 40.0576, -74.1097],
+  "knox, ohio": ["knox-oh", "Knox", "OH", 40.3934, -82.4857],
+  "newbury park, california": ["newbury-park-ca", "Newbury Park", "CA", 34.1848, -118.9109],
+  "wilmot, wisconsin": ["wilmot-wi", "Wilmot", "WI", 42.5117, -88.1793],
+  // Tri-Cities, WA appears spelled two ways; both share one venueId so a route
+  // between them never charges a phantom leg.
+  "tri-cities, washington": ["tri-cities-wa", "Tri-Cities", "WA", 46.2304, -119.2752],
+  "tri cities, wa": ["tri-cities-wa", "Tri-Cities", "WA", 46.2304, -119.2752],
+  // New 2013-2026 small venues from the dci.org harvest.
+  "augusta, nj": ["augusta-nj", "Augusta", "NJ", 41.1237, -74.7268],
+  "chestnut hill, ma": ["chestnut-hill-ma", "Chestnut Hill", "MA", 42.3251, -71.162],
+  "egg harbor township, nj": ["egg-harbor-township-nj", "Egg Harbor Township", "NJ", 39.3762, -74.6032],
+  "mt olive, nj": ["mount-olive-nj", "Mount Olive", "NJ", 40.8451, -74.7649],
+  "sewell, nj": ["sewell-nj", "Sewell", "NJ", 39.7562, -75.1157],
+  "white lake, mi": ["white-lake-mi", "White Lake", "MI", 42.652, -83.4966],
 };
 
 /** Fold accents and periods so "Montréal" matches "montreal" and "St. Louis" matches "st louis". */
@@ -250,6 +295,24 @@ async function collectLocations(useFirestore) {
       ingestYearData(parsed.data);
     }
   }
+
+  // Always fold in the DCI.org-harvested 2013-2026 locations. This is the range
+  // the local importer omits, and even a --firestore run benefits: any event
+  // dci.org lists that Firestore hasn't ingested still contributes its city, so
+  // the gazetteer never trails the live schedule. Deduped by normalized key
+  // downstream, so re-adding cities already present just bumps their counts.
+  if (fs.existsSync(DCI_LOCATIONS_PATH)) {
+    const dci = JSON.parse(fs.readFileSync(DCI_LOCATIONS_PATH, "utf8"));
+    let added = 0;
+    for (const { location, count } of dci.locations || []) {
+      if (!location) continue;
+      counts.set(location, (counts.get(location) || 0) + (count || 1));
+      added += count || 1;
+    }
+    console.log(
+      `Merged ${dci.locations.length} DCI.org locations (${added} events, ${dci.meta.yearRange}).`
+    );
+  }
   return counts;
 }
 
@@ -358,9 +421,31 @@ async function main() {
   console.log(`Distinct normalized keys: ${variantsByKey.size}`);
 
   const gazetteer = {};
-  const stats = { exact: 0, fuzzy: 0, centroid: 0, unresolved: 0 };
+  const stats = { exact: 0, fuzzy: 0, centroid: 0, manual: 0, unresolved: 0 };
+  const usedOverrides = new Set();
 
   for (const [key, { rawVariants, eventCount }] of [...variantsByKey.entries()].sort()) {
+    // Durable hand-corrections win outright — they replace whatever the
+    // resolver would produce (centroid placeholder, or a source-typo mismatch).
+    const override = MANUAL_OVERRIDES[key];
+    if (override) {
+      const [venueId, city, region, lat, lng] = override;
+      usedOverrides.add(key);
+      gazetteer[key] = {
+        venueId,
+        city,
+        region,
+        country: "US",
+        lat,
+        lng,
+        source: "manual",
+        eventCount,
+        rawVariants,
+      };
+      stats.manual++;
+      continue;
+    }
+
     const { city, region } = parseLocation(key);
     let resolved = null;
 
@@ -419,14 +504,26 @@ async function main() {
     stats[source]++;
   }
 
+  // Surface any override whose key no longer appears in the data (a source fix
+  // upstream, a renamed slug) so the table doesn't accumulate dead rows.
+  for (const key of Object.keys(MANUAL_OVERRIDES)) {
+    if (!usedOverrides.has(key)) console.warn(`STALE OVERRIDE (key not in data): "${key}"`);
+  }
+
   fs.mkdirSync(path.dirname(OUTPUT_PATH), { recursive: true });
   const output = {
     meta: {
-      generatedFrom: useFirestore ? "firestore:historical_scores" : "pressboxImporter/output",
+      generatedFrom: [
+        useFirestore ? "firestore:historical_scores" : "pressboxImporter/output (2000-2012)",
+        "dciDotOrgLocations.json (2013-2026)",
+      ],
       distinctRawLocations: locationCounts.size,
       entries: Object.keys(gazetteer).length,
       resolution: stats,
       geodata: "GeoNames cities1000 via all-the-cities (CC-BY 4.0)",
+      manualCorrections:
+        "The `manual` entries are durable geocode overrides baked into " +
+        "scripts/buildVenueGazetteer.js (MANUAL_OVERRIDES), applied on every rebuild.",
     },
     venues: gazetteer,
   };
