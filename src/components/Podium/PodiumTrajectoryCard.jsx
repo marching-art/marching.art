@@ -68,9 +68,13 @@ export default function PodiumTrajectoryCard({ podium }) {
         </span>
       </div>
 
+      {/* Cap the render size: with only a viewBox and w-full the SVG scales
+          to whatever the (up to 2/3-viewport) column gives it, ballooning the
+          9px labels to 18px on wide monitors. max-w keeps it near its native
+          640px and mx-auto centers the leftover space. */}
       <svg
         viewBox={`0 0 ${W} ${H}`}
-        className="w-full h-auto"
+        className="w-full h-auto max-w-3xl mx-auto"
         role="img"
         aria-label={`Your season scores against ${shadows.length} historical corps trajectories`}
       >
