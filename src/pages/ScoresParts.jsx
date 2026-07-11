@@ -601,16 +601,17 @@ const SoundSportMedalList = ({ shows }) => {
               );
             })}
           </div>
-
-          <Link
-            to="/soundsport"
-            className="flex items-center gap-2 text-[10px] text-green-400 hover:text-green-300 font-bold uppercase tracking-wider transition-colors pt-1"
-          >
-            About SoundSport scoring
-            <ChevronRight className="w-3 h-3" />
-          </Link>
         </div>
       ))}
+
+      {/* One scoring-explainer link for the whole page, not per show */}
+      <Link
+        to="/soundsport"
+        className="flex items-center gap-2 text-[10px] text-green-400 hover:text-green-300 font-bold uppercase tracking-wider transition-colors px-1 pt-1"
+      >
+        About SoundSport scoring
+        <ChevronRight className="w-3 h-3" />
+      </Link>
     </div>
   );
 };
