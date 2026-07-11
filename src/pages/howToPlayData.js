@@ -80,6 +80,42 @@ export const SCORING_MODEL = [
   { group: 'Music', captions: 'B + MA + P', max: 30, note: 'Summed, then halved' },
 ];
 
+// The player journey, in order — the spine of the guide's Overview section.
+export const JOURNEY = [
+  {
+    n: 1,
+    title: 'Start free in SoundSport',
+    desc: 'Every director begins here: a 90-point budget and low-pressure medal ratings.',
+  },
+  {
+    n: 2,
+    title: 'Draft & compete',
+    desc: 'Pick 8 caption performances, register for shows, and earn a nightly score out of 100.',
+  },
+  {
+    n: 3,
+    title: 'Unlock the ranked classes',
+    desc: 'Complete seasons, hit level milestones, or spend CorpsCoin to open A, Open, and World.',
+  },
+  {
+    n: 4,
+    title: 'Build a legacy',
+    desc: 'Climb from Rookie to Eternal, take finals medals, and fill your Trophy Case for good.',
+  },
+];
+
+// Podium reputation ladder — names are canonical in
+// src/components/Podium/podiumConstants.js REP_TIER_NAMES.
+export const REP_TIERS = [
+  'Community Corps',
+  'Regional Contender',
+  'National Contender',
+  'Finalist',
+  'Medalist',
+  'Elite',
+  'Champion Status',
+];
+
 export const GLOSSARY = [
   {
     term: 'DCI',

@@ -1,662 +1,217 @@
 // =============================================================================
-// GAME GUIDE - COMPREHENSIVE HELP SYSTEM
+// GAME GUIDE - THE COMPLETE, COHESIVE HOW-TO-PLAY DOCUMENT (/guide)
 // =============================================================================
-// Integrated help documentation matching the app's data terminal aesthetic
-// Laws: No glow, no shadow, dense data, ESPN style
+// One scrolling document that tells the whole story in order — what the game
+// is, how you start, how you score, how you progress, and the second way to
+// play (Podium Class), all in a single consistent format. A sticky section
+// navigator (left rail on desktop, chip bar on mobile) with scroll-spy keeps
+// it easy to jump around. Public mirror: /how-to-play (HowToPlayPublic.jsx).
+//
+// This file is the shell (header, navigator, scroll-spy, search). The section
+// bodies live in howToPlaySections.jsx.
+//
+// Design laws: no glow, no shadow, dense data, sharp corners (rounded-none),
+// ESPN data-terminal palette (#0057B8 blue, #c9a227 Podium gold).
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
-  Trophy,
-  Users,
-  Calendar,
+  Compass,
+  Rocket,
   Target,
+  Trophy,
+  Layers,
   TrendingUp,
-  Clock,
-  DollarSign,
-  Book,
-  ChevronDown,
-  ChevronRight,
-  HelpCircle,
-  Zap,
-  Search,
+  Calendar,
+  Coins,
+  Users,
   Medal,
+  Book,
+  HelpCircle,
+  Search,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { CAPTIONS, CLASSES, GLOSSARY, FAQ, RATINGS, SCORING_MODEL } from './howToPlayData';
-import {
-  XP_PER_LEVEL,
-  XP_SOURCE_GUIDE,
-  UNLOCK_PATH_GUIDE,
-  PROGRESSION_AXES,
-} from '../data/progressionGuide';
+import { GuideSection, SearchResults } from './howToPlaySections';
 
-// =============================================================================
-// CONSTANTS
-// =============================================================================
-
-const TABS = [
-  { id: 'basics', label: 'Basics' },
-  { id: 'classes', label: 'Classes' },
-  { id: 'captions', label: 'Captions' },
-  { id: 'seasons', label: 'Seasons' },
-  { id: 'glossary', label: 'Glossary' },
-  { id: 'faq', label: 'FAQ' },
+// Section order + labels + icons. Ids must match SECTION_CONTENT keys.
+const SECTIONS = [
+  { id: 'overview', label: 'Overview', icon: Compass },
+  { id: 'start', label: 'Getting Started', icon: Rocket },
+  { id: 'captions', label: 'The 8 Captions', icon: Target },
+  { id: 'scoring', label: 'How Scoring Works', icon: Trophy },
+  { id: 'classes', label: 'Classes & Ratings', icon: Layers },
+  { id: 'progression', label: 'Progression', icon: TrendingUp },
+  { id: 'season', label: 'Season Calendar', icon: Calendar },
+  { id: 'economy', label: 'CorpsCoin', icon: Coins },
+  { id: 'leagues', label: 'Leagues', icon: Users },
+  { id: 'podium', label: 'Podium Class', icon: Medal },
+  { id: 'glossary', label: 'Glossary', icon: Book },
+  { id: 'faq', label: 'FAQ', icon: HelpCircle },
 ];
-
-// =============================================================================
-// COMPONENTS
-// =============================================================================
-
-const TabButton = ({ tab, isActive, onClick }) => (
-  <button
-    onClick={onClick}
-    className={`px-3 py-2 text-xs font-bold uppercase tracking-wider transition-colors whitespace-nowrap ${
-      isActive
-        ? 'text-white border-b-2 border-[#0057B8]'
-        : 'text-gray-500 hover:text-gray-300 border-b-2 border-transparent'
-    }`}
-  >
-    {tab.label}
-  </button>
-);
-
-const SectionCard = ({ title, icon: Icon, children, defaultOpen = false }) => {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-
-  return (
-    <div className="bg-[#111] border border-white/10 rounded-none overflow-hidden">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/5 transition-colors"
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-[#0057B8]/20 rounded-none flex items-center justify-center">
-            <Icon className="w-4 h-4 text-[#0057B8]" />
-          </div>
-          <span className="text-sm font-bold text-white">{title}</span>
-        </div>
-        {isOpen ? (
-          <ChevronDown className="w-4 h-4 text-gray-500" />
-        ) : (
-          <ChevronRight className="w-4 h-4 text-gray-500" />
-        )}
-      </button>
-      {isOpen && <div className="px-4 pb-4 text-sm text-gray-300">{children}</div>}
-    </div>
-  );
-};
-
-const DataRow = ({ label, value, accent = false }) => (
-  <div className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
-    <span className="text-gray-400 text-xs">{label}</span>
-    <span className={`text-xs font-bold ${accent ? 'text-[#0057B8]' : 'text-white'}`}>{value}</span>
-  </div>
-);
-
-// =============================================================================
-// TAB CONTENT
-// =============================================================================
-
-const BasicsTab = () => (
-  <div className="space-y-4">
-    {/* Quick Start */}
-    <div className="bg-[#0057B8]/10 border border-[#0057B8]/30 rounded-none p-4">
-      <h3 className="text-xs font-bold uppercase tracking-wider text-[#0057B8] mb-3">
-        Quick Start
-      </h3>
-      <div className="space-y-3">
-        <div className="flex items-start gap-3">
-          <div className="w-6 h-6 bg-[#0057B8] text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
-            1
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-white">Create Your Corps</p>
-            <p className="text-xs text-gray-400">
-              Register with a unique name. Start in SoundSport class.
-            </p>
-          </div>
-        </div>
-        <div className="flex items-start gap-3">
-          <div className="w-6 h-6 bg-[#0057B8] text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
-            2
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-white">Draft Your Lineup</p>
-            <p className="text-xs text-gray-400">
-              Select 8 captions from historical DCI corps. Stay within budget.
-            </p>
-          </div>
-        </div>
-        <div className="flex items-start gap-3">
-          <div className="w-6 h-6 bg-[#0057B8] text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
-            3
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-white">Compete & Level Up</p>
-            <p className="text-xs text-gray-400">
-              Earn scores, gain XP, unlock higher classes, climb leaderboards.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    {/* How Scoring Works — mirrors functions/src/helpers/scoring.js */}
-    <SectionCard title="How Scoring Works" icon={Trophy} defaultOpen>
-      <p className="mb-3">
-        Every night your corps earns a score out of 100, built the way real DCI builds it: General
-        Effect counts at full weight, while Visual and Music are each summed and halved.
-      </p>
-      <div className="bg-black/30 rounded-none p-3 mb-3">
-        {SCORING_MODEL.map((g) => (
-          <div
-            key={g.group}
-            className="flex items-center justify-between py-2 border-b border-white/5 last:border-0"
-          >
-            <div>
-              <span className="text-xs font-bold text-white">{g.group}</span>
-              <span className="block text-[10px] text-gray-500">
-                {g.captions} · {g.note}
-              </span>
-            </div>
-            <span className="text-xs font-bold text-gray-400">up to {g.max}</span>
-          </div>
-        ))}
-        <div className="flex items-center justify-between pt-2 mt-1 border-t border-white/10">
-          <span className="text-xs font-bold text-white">Maximum score</span>
-          <span className="text-xs font-bold text-[#0057B8]">100</span>
-        </div>
-      </div>
-      <p className="text-xs text-gray-500">
-        Every caption is capped, and your score comes straight from the live (Live Season) or
-        historical (Off-Season) performances you drafted — nothing you buy or earn can change it.
-        Your class rank uses your most recent night&rsquo;s total.
-      </p>
-    </SectionCard>
-
-    {/* XP & Progression — generated from src/data/progressionGuide.js, which
-        is pinned by test to the backend pay tables so it can never drift */}
-    <SectionCard title="How Progression Works" icon={TrendingUp}>
-      <p className="mb-3">
-        Four numbers, four different questions — nothing overlaps, and each one tells you how to
-        raise it:
-      </p>
-      <div className="space-y-1.5 mb-4">
-        {PROGRESSION_AXES.map((axis) => (
-          <div key={axis.id} className="bg-black/30 rounded-none p-2">
-            <p className="text-xs font-bold text-gray-300">{axis.label}</p>
-            <p className="text-[11px] text-gray-500">{axis.meaning}</p>
-            <p className="text-[11px] text-gray-400 mt-0.5">
-              <span className="text-[#0057B8] font-bold">Raise it:</span> {axis.raise}
-            </p>
-          </div>
-        ))}
-      </div>
-      <p className="mb-3">
-        Every {XP_PER_LEVEL.toLocaleString()} XP is one director level. Levels never reset, and each
-        one brings a new title on the ladder from Rookie to Eternal. Here is every way to earn XP:
-      </p>
-      <div className="bg-black/30 rounded-none p-3 mb-3">
-        {XP_SOURCE_GUIDE.map((source) => (
-          <DataRow
-            key={source.id}
-            label={source.label}
-            value={typeof source.xp === 'number' ? `${source.xp} XP` : source.xp}
-          />
-        ))}
-      </div>
-      <p className="mb-2 text-xs text-gray-400">
-        <Zap className="w-3 h-3 inline mr-1 text-yellow-500" />
-        Classes unlock three different ways — any one of them is enough:
-      </p>
-      <div className="space-y-1.5">
-        {UNLOCK_PATH_GUIDE.map((path) => (
-          <div key={path.id} className="bg-black/30 rounded-none p-2">
-            <p className="text-xs font-bold text-gray-300">{path.label}</p>
-            <p className="text-[11px] text-gray-500">{path.detail}</p>
-          </div>
-        ))}
-      </div>
-    </SectionCard>
-
-    {/* CorpsCoin */}
-    <SectionCard title="CorpsCoin Economy" icon={DollarSign}>
-      <p className="mb-3">
-        Earn CorpsCoin (CC) through gameplay. Spend on class unlocks and streak protection.
-      </p>
-      <div className="bg-black/30 rounded-none p-3">
-        <DataRow label="A Class unlock" value="1,000 CC" />
-        <DataRow label="Open Class unlock" value="2,500 CC" />
-        <DataRow label="World Class unlock" value="5,000 CC" />
-        <DataRow label="Streak Freeze" value="300 CC" accent />
-      </div>
-    </SectionCard>
-
-    {/* Leagues */}
-    <SectionCard title="Leagues & Social" icon={Users}>
-      <p className="mb-3">Compete with friends in public or private leagues.</p>
-      <ul className="space-y-1 text-xs text-gray-400">
-        <li className="flex items-center gap-2">
-          <div className="w-1 h-1 bg-[#0057B8] rounded-full" />
-          Public or private leagues with join codes
-        </li>
-        <li className="flex items-center gap-2">
-          <div className="w-1 h-1 bg-[#0057B8] rounded-full" />
-          League standings and head-to-head matchups
-        </li>
-        <li className="flex items-center gap-2">
-          <div className="w-1 h-1 bg-[#0057B8] rounded-full" />
-          Global leaderboards per class
-        </li>
-      </ul>
-    </SectionCard>
-  </div>
-);
-
-const ClassesTab = () => (
-  <div className="space-y-4">
-    <p className="text-sm text-gray-300 mb-4">
-      Four competitive classes with different point budgets. Higher classes = more points to spend
-      on premium captions.
-    </p>
-
-    <div className="grid gap-3">
-      {CLASSES.map((cls) => (
-        <div
-          key={cls.id}
-          className={`bg-[#111] border rounded-none p-4 ${
-            cls.color === 'green'
-              ? 'border-green-500/30'
-              : cls.color === 'blue'
-                ? 'border-[#0057B8]/30'
-                : cls.color === 'purple'
-                  ? 'border-purple-500/30'
-                  : 'border-yellow-500/30'
-          }`}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <Trophy
-                className={`w-4 h-4 ${
-                  cls.color === 'green'
-                    ? 'text-green-500'
-                    : cls.color === 'blue'
-                      ? 'text-[#0057B8]'
-                      : cls.color === 'purple'
-                        ? 'text-purple-500'
-                        : 'text-yellow-500'
-                }`}
-              />
-              <span className="text-sm font-bold text-white">{cls.name}</span>
-            </div>
-            <span
-              className={`text-xs px-2 py-0.5 rounded-none ${
-                cls.color === 'green'
-                  ? 'bg-green-500/20 text-green-400'
-                  : cls.color === 'blue'
-                    ? 'bg-[#0057B8]/20 text-[#0057B8]'
-                    : cls.color === 'purple'
-                      ? 'bg-purple-500/20 text-purple-400'
-                      : 'bg-yellow-500/20 text-yellow-400'
-              }`}
-            >
-              {cls.unlock}
-            </span>
-          </div>
-          <p className="text-xs text-gray-400 mb-2">{cls.desc}</p>
-          <div className="flex items-center gap-2">
-            <Target className="w-3 h-3 text-gray-500" />
-            <span className="text-xs font-bold text-white">{cls.points} Point Budget</span>
-          </div>
-        </div>
-      ))}
-    </div>
-
-    <div className="bg-[#0057B8]/10 border border-[#0057B8]/30 rounded-none p-3">
-      <p className="text-xs text-gray-300">
-        <strong className="text-white">Tip:</strong> Unlock by completing seasons, by level, or with
-        CorpsCoin. A Class = 1 season, Lvl 3, or 1,000 CC. Open = 2 seasons, Lvl 5, or 2,500 CC.
-        World = 3 seasons, Lvl 10, or 5,000 CC.
-      </p>
-    </div>
-
-    {/* SoundSport ratings — the one class that never ranks */}
-    <div className="bg-[#111] border border-green-500/30 rounded-none p-4">
-      <div className="flex items-center gap-2 mb-2">
-        <Medal className="w-4 h-4 text-green-500" />
-        <span className="text-sm font-bold text-white">SoundSport Ratings</span>
-      </div>
-      <p className="text-xs text-gray-400 mb-3">
-        SoundSport is the one class that never ranks. Instead, your out-of-100 score earns a medal
-        rating — recognition, not a leaderboard slot.
-      </p>
-      <div className="bg-black/30 rounded-none p-3">
-        {RATINGS.map((r) => (
-          <DataRow
-            key={r.tier}
-            label={r.tier}
-            value={r.min === 0 ? 'Any score' : `${r.min}+`}
-            accent={r.tier === 'Gold'}
-          />
-        ))}
-      </div>
-    </div>
-
-    {/* Podium Class — the other way to play */}
-    <div className="bg-[#c9a227]/10 border border-[#c9a227]/30 rounded-none p-4">
-      <div className="flex items-center gap-2 mb-2">
-        <Medal className="w-4 h-4 text-[#c9a227]" />
-        <span className="text-sm font-bold text-white">Podium Class</span>
-      </div>
-      <p className="text-xs text-gray-400 mb-3">
-        Want to run a corps instead of drafting one? Podium Class flips the game: rather than
-        picking caption performances, you found your own corps and earn every point — running
-        rehearsals, routing a tour, and climbing from Community Corps to Champion. Always open,
-        always free.
-      </p>
-      <Link
-        to="/podium-guide"
-        className="inline-flex items-center gap-1 text-xs font-bold text-[#c9a227] hover:underline"
-      >
-        Read the Podium guide
-        <ChevronRight className="w-3 h-3" />
-      </Link>
-    </div>
-  </div>
-);
-
-const CaptionsTab = () => (
-  <div className="space-y-4">
-    <p className="text-sm text-gray-300 mb-4">
-      Your lineup = 8 captions, one from each DCI scoring category. Each comes from a historical
-      corps performance.
-    </p>
-
-    {/* Caption Grid */}
-    <div className="grid grid-cols-2 gap-2">
-      {CAPTIONS.map((cap) => (
-        <div key={cap.abbr} className="bg-[#111] border border-white/10 rounded-none p-3">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-bold text-[#0057B8]">{cap.abbr}</span>
-            <span className="text-xs text-white">{cap.name}</span>
-          </div>
-          <p className="text-[10px] text-gray-500">{cap.desc}</p>
-        </div>
-      ))}
-    </div>
-
-    {/* Point Costs */}
-    <SectionCard title="Point Costs" icon={Target} defaultOpen>
-      <p className="mb-3">
-        Each caption costs 1-25 points based on historical performance. Stay within your class
-        budget!
-      </p>
-      <div className="bg-black/30 rounded-none p-3">
-        <DataRow label="Min caption cost" value="1 pt" />
-        <DataRow label="Max caption cost" value="25 pts" />
-        <DataRow label="Captions per lineup" value="8" accent />
-      </div>
-    </SectionCard>
-
-    {/* Change Rules */}
-    <SectionCard title="Lineup Change Rules" icon={Calendar}>
-      <div className="bg-black/30 rounded-none p-3">
-        <DataRow label="Days 1-14" value="Unlimited" accent />
-        <DataRow label="Weeks 3-6 (Days 15-42)" value="3 per week" />
-        <DataRow label="Days 43-44" value="Closed" />
-        <DataRow label="Championships (Days 45-49)" value="2 total" />
-      </div>
-      <p className="mt-3 text-xs text-gray-500">
-        Changes lock every Saturday at 8:00 PM ET until scores are processed (~2:00 AM ET). During
-        Championship Week they lock at 8:00 PM ET each day. Weekly changes can be used one at a time
-        or all at once.
-      </p>
-    </SectionCard>
-  </div>
-);
-
-const SeasonsTab = () => (
-  <div className="space-y-4">
-    <p className="text-sm text-gray-300 mb-4">
-      Two alternating season types run throughout the year.
-    </p>
-
-    {/* Live Season */}
-    <div className="bg-[#111] border border-[#0057B8]/30 rounded-none p-4">
-      <div className="flex items-center gap-2 mb-2">
-        <Calendar className="w-4 h-4 text-[#0057B8]" />
-        <span className="text-sm font-bold text-white">Live Season</span>
-        <span className="text-xs text-gray-500">June - August</span>
-      </div>
-      <p className="text-xs text-gray-400 mb-3">
-        Runs alongside real DCI. Scores based on actual competition results.
-      </p>
-      <div className="bg-black/30 rounded-none p-2">
-        <DataRow label="Duration" value="~10 weeks" />
-        <DataRow label="Competition" value="49-day schedule" />
-        <DataRow label="Ends" value="DCI Finals (Aug)" />
-      </div>
-    </div>
-
-    {/* Off-Season */}
-    <div className="bg-[#111] border border-purple-500/30 rounded-none p-4">
-      <div className="flex items-center gap-2 mb-2">
-        <Clock className="w-4 h-4 text-purple-500" />
-        <span className="text-sm font-bold text-white">Off-Season</span>
-        <span className="text-xs text-gray-500">August - May</span>
-      </div>
-      <p className="text-xs text-gray-400 mb-3">
-        Uses historical DCI data. Six back-to-back 7-week seasons, each a full 49-day schedule.
-      </p>
-      <div className="bg-black/30 rounded-none p-2">
-        <DataRow label="Duration" value="~42 weeks" />
-        <DataRow label="Structure" value="6 × 49-day seasons" />
-      </div>
-    </div>
-
-    <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-none p-3">
-      <p className="text-xs text-gray-300">
-        <strong className="text-white">Season End:</strong> Leaderboards reset, XP/level/classes
-        carry over.
-      </p>
-    </div>
-  </div>
-);
-
-const GlossaryTab = () => (
-  <div className="space-y-2">
-    <p className="text-sm text-gray-300 mb-4">New to drum corps? Key terms explained.</p>
-    {GLOSSARY.map((item) => (
-      <div key={item.term} className="bg-[#111] border border-white/10 rounded-none p-3">
-        <span className="text-xs font-bold text-[#0057B8]">{item.term}</span>
-        <p className="text-xs text-gray-400 mt-1">{item.def}</p>
-      </div>
-    ))}
-  </div>
-);
-
-const FAQTab = () => (
-  <div className="space-y-3">
-    {FAQ.map((item, idx) => (
-      <SectionCard key={idx} title={item.q} icon={HelpCircle}>
-        <p>{item.a}</p>
-      </SectionCard>
-    ))}
-  </div>
-);
-
-// =============================================================================
-// SEARCH
-// =============================================================================
-// Flat index across the guide's data-driven sections so the header search box
-// actually filters content (title or body match, case-insensitive).
-
-const SEARCH_SOURCES = [
-  ...CAPTIONS.map((c) => ({
-    tabId: 'captions',
-    section: 'Captions',
-    title: `${c.abbr} — ${c.name}`,
-    text: c.desc,
-  })),
-  ...CLASSES.map((c) => ({
-    tabId: 'classes',
-    section: 'Classes',
-    title: c.name,
-    text: `${c.desc}. Budget: ${c.points} points. Unlock: ${c.unlock}.`,
-  })),
-  ...RATINGS.map((r) => ({
-    tabId: 'classes',
-    section: 'SoundSport Ratings',
-    title: `${r.tier} rating`,
-    text: `${r.min === 0 ? 'Any score' : `${r.min}+ points`}. ${r.blurb}`,
-  })),
-  ...GLOSSARY.map((g) => ({
-    tabId: 'glossary',
-    section: 'Glossary',
-    title: g.term,
-    text: g.def,
-  })),
-  ...FAQ.map((f) => ({ tabId: 'faq', section: 'FAQ', title: f.q, text: f.a })),
-];
-
-const SearchResults = ({ query, onNavigate }) => {
-  const q = query.toLowerCase();
-  const results = SEARCH_SOURCES.filter(
-    (entry) => entry.title.toLowerCase().includes(q) || entry.text.toLowerCase().includes(q)
-  );
-
-  if (results.length === 0) {
-    return (
-      <p className="text-sm text-gray-500 text-center py-8">
-        No results for &ldquo;{query}&rdquo; — try the tabs above.
-      </p>
-    );
-  }
-
-  return (
-    <div className="space-y-2">
-      {results.map((result) => (
-        <button
-          key={`${result.tabId}-${result.title}`}
-          onClick={() => onNavigate(result.tabId)}
-          className="w-full text-left bg-[#111] border border-white/10 rounded-none px-4 py-3 hover:bg-white/5 active:bg-white/5 transition-colors"
-        >
-          <span className="text-[10px] font-bold uppercase tracking-wider text-[#0057B8]">
-            {result.section}
-          </span>
-          <p className="text-sm font-bold text-white mt-0.5">{result.title}</p>
-          <p className="text-xs text-gray-400 mt-0.5">{result.text}</p>
-        </button>
-      ))}
-    </div>
-  );
-};
-
-// =============================================================================
-// MAIN COMPONENT
-// =============================================================================
 
 const HowToPlay = () => {
-  const [activeTab, setActiveTab] = useState('basics');
+  const scrollRef = useRef(null);
+  const sectionRefs = useRef({});
+  const [activeId, setActiveId] = useState(SECTIONS[0].id);
   const [searchQuery, setSearchQuery] = useState('');
   const query = searchQuery.trim();
+  const searching = query.length >= 2;
 
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'basics':
-        return <BasicsTab />;
-      case 'classes':
-        return <ClassesTab />;
-      case 'captions':
-        return <CaptionsTab />;
-      case 'seasons':
-        return <SeasonsTab />;
-      case 'glossary':
-        return <GlossaryTab />;
-      case 'faq':
-        return <FAQTab />;
-      default:
-        return <BasicsTab />;
-    }
+  const setSectionRef = (id) => (el) => {
+    if (el) sectionRefs.current[id] = el;
   };
+
+  // Scroll-spy: highlight whichever section is nearest the top of the viewport.
+  useEffect(() => {
+    const root = scrollRef.current;
+    if (!root || searching || typeof IntersectionObserver === 'undefined') return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible[0]) setActiveId(visible[0].target.id);
+      },
+      { root, rootMargin: '0px 0px -75% 0px', threshold: 0 }
+    );
+
+    SECTIONS.forEach((s) => {
+      const el = sectionRefs.current[s.id];
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, [searching]);
+
+  const scrollToSection = useCallback((id) => {
+    setSearchQuery('');
+    setActiveId(id);
+    // Defer so the section list is mounted again after leaving search mode.
+    requestAnimationFrame(() => {
+      const root = scrollRef.current;
+      const el = sectionRefs.current[id];
+      if (root && el) {
+        const top =
+          el.getBoundingClientRect().top - root.getBoundingClientRect().top + root.scrollTop;
+        root.scrollTo({ top: Math.max(0, top - 8), behavior: 'smooth' });
+      }
+    });
+  }, []);
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="flex-shrink-0 px-4 py-3 border-b border-white/10">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 bg-[#0057B8]/20 rounded-none flex items-center justify-center">
-            <Book className="w-4 h-4 text-[#0057B8]" />
+      {/* Header: title + search + mobile section nav */}
+      <div className="flex-shrink-0 border-b border-white/10">
+        <div className="px-4 py-3">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-8 h-8 bg-[#0057B8]/20 rounded-none flex items-center justify-center">
+              <Book className="w-4 h-4 text-[#0057B8]" />
+            </div>
+            <div>
+              <h1 className="text-sm font-bold text-white">Game Guide</h1>
+              <p className="text-[10px] text-gray-500">Everything you need to know, in order</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-sm font-bold text-white">Game Guide</h1>
-            <p className="text-[10px] text-gray-500">Everything you need to know</p>
-          </div>
-        </div>
-
-        {/* Search — 16px text so iOS doesn't zoom on focus */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
-          <input
-            type="search"
-            inputMode="search"
-            placeholder="Search the guide..."
-            aria-label="Search the game guide"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-11 pl-9 pr-3 bg-black/30 border border-white/10 rounded-none text-base text-white placeholder-gray-500 focus:outline-none focus:border-[#0057B8]/50"
-          />
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex-shrink-0 border-b border-white/10 overflow-x-auto">
-        <div className="flex px-2">
-          {TABS.map((tab) => (
-            <TabButton
-              key={tab.id}
-              tab={tab}
-              isActive={query.length < 2 && activeTab === tab.id}
-              onClick={() => {
-                setActiveTab(tab.id);
-                setSearchQuery('');
-              }}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+            <input
+              type="search"
+              inputMode="search"
+              placeholder="Search the guide..."
+              aria-label="Search the game guide"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full h-11 pl-9 pr-3 bg-black/30 border border-white/10 rounded-none text-base text-white placeholder-gray-500 focus:outline-none focus:border-[#0057B8]/50"
             />
-          ))}
+          </div>
         </div>
-      </div>
 
-      {/* Content — search results replace the tab body while a query is active */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {query.length >= 2 ? (
-          <SearchResults
-            query={query}
-            onNavigate={(tabId) => {
-              setActiveTab(tabId);
-              setSearchQuery('');
-            }}
-          />
-        ) : (
-          renderTabContent()
+        {/* Mobile section chips */}
+        {!searching && (
+          <div className="lg:hidden overflow-x-auto scrollbar-hide border-t border-white/10">
+            <div className="flex gap-1 px-2 py-1.5">
+              {SECTIONS.map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => scrollToSection(s.id)}
+                  className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap rounded-none transition-colors ${
+                    activeId === s.id
+                      ? 'text-white bg-[#0057B8]'
+                      : 'text-gray-500 hover:text-gray-300'
+                  }`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
         )}
       </div>
 
-      {/* Quick Reference Footer */}
-      <div className="flex-shrink-0 px-4 py-3 border-t border-white/10 bg-black/30">
-        <div className="grid grid-cols-3 gap-4 text-center">
-          <div>
-            <p className="text-[10px] text-gray-500 uppercase tracking-wider">Budgets</p>
-            <p className="text-xs text-white font-mono">90/60/120/150</p>
+      {/* Scrollable body */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto">
+        {searching ? (
+          <div className="max-w-5xl mx-auto px-4 py-6">
+            <SearchResults query={query} onNavigate={scrollToSection} />
           </div>
-          <div>
-            <p className="text-[10px] text-gray-500 uppercase tracking-wider">Unlocks</p>
-            <p className="text-xs text-white font-mono">1/2/3 seasons</p>
+        ) : (
+          <div className="max-w-5xl mx-auto px-4 flex gap-6">
+            {/* Desktop section rail */}
+            <nav className="hidden lg:block w-52 flex-shrink-0 sticky top-0 self-start pt-6">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-600 px-3 mb-2">
+                Sections
+              </p>
+              <ul className="space-y-0.5">
+                {SECTIONS.map((s) => {
+                  const Icon = s.icon;
+                  const active = activeId === s.id;
+                  return (
+                    <li key={s.id}>
+                      <button
+                        onClick={() => scrollToSection(s.id)}
+                        className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-none transition-colors ${
+                          active
+                            ? 'text-white bg-[#0057B8]/15 border-l-2 border-[#0057B8]'
+                            : 'text-gray-500 hover:text-gray-300 hover:bg-white/5 border-l-2 border-transparent'
+                        }`}
+                      >
+                        <Icon
+                          className={`w-4 h-4 flex-shrink-0 ${active ? 'text-[#0057B8]' : ''}`}
+                        />
+                        {s.label}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+
+            {/* Content */}
+            <div className="flex-1 min-w-0 py-6 space-y-12 pb-24">
+              {SECTIONS.map((s) => (
+                <section key={s.id} id={s.id} ref={setSectionRef(s.id)}>
+                  <GuideSection id={s.id} />
+                </section>
+              ))}
+
+              {/* Quick reference footer */}
+              <div className="border-t border-white/10 pt-4">
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wider">Budgets</p>
+                    <p className="text-xs text-white font-mono">90/60/120/150</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wider">Unlocks</p>
+                    <p className="text-xs text-white font-mono">1/2/3 seasons</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wider">Captions</p>
+                    <p className="text-xs text-white font-mono">8 per lineup</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div>
-            <p className="text-[10px] text-gray-500 uppercase tracking-wider">Captions</p>
-            <p className="text-xs text-white font-mono">8 per lineup</p>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
