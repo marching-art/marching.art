@@ -18,6 +18,7 @@ import {
   setPodiumPlanTemplate,
   commitPodiumBudget,
   hirePodiumClinician,
+  acknowledgePodiumStaffOutlook,
 } from '../api/podium';
 
 export function usePodium(enabled) {
@@ -134,6 +135,12 @@ export function usePodium(enabled) {
     [reload]
   );
 
+  const acknowledgeStaffOutlook = useCallback(async () => {
+    const result = await acknowledgePodiumStaffOutlook();
+    await reload();
+    return result.data;
+  }, [reload]);
+
   return {
     loading,
     error,
@@ -149,5 +156,6 @@ export function usePodium(enabled) {
     savePlanTemplate,
     commitBudget,
     hireClinician,
+    acknowledgeStaffOutlook,
   };
 }

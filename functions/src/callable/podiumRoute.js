@@ -171,6 +171,24 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
   const careerSnapshot = await career.careerRef(db, uid).get();
   const careerData = careerSnapshot.exists ? careerSnapshot.data() : null;
   const division = divisions.normalizeDivision(state.division);
+  const commitmentCap =
+    (store.balance.budget.commitmentCapByDivision || {})[division] ||
+    store.balance.budget.commitmentCap;
+  // Payroll outlook: what THIS corps' staff will cost next season once every
+  // staffer ages up. When that aged payroll can't fit the division cap, the
+  // director will have to release or retrain someone at re-registration no
+  // matter how much CorpsCoin they save — the season-boundary warning worth
+  // surfacing NOW, while there's still time to act (design §5.6).
+  const staffProjection = staffMarket.projectRetention(state.staff || {}, commitmentCap, store.balance);
+  const staffOutlook = {
+    payroll: staffProjection.payroll,
+    commitmentCap,
+    shortfall: Math.max(0, staffProjection.payroll - commitmentCap),
+    atRisk: !staffProjection.affordable && staffProjection.payroll > 0,
+    // The banner stays dismissed until the projected payroll changes (a hire,
+    // a release, or next season's aging), at which point it re-warns.
+    acknowledged: state.staffOutlookAck === staffProjection.payroll,
+  };
   return {
     exists: true,
     calendarDay,
@@ -178,9 +196,8 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
     isShowDay,
     division,
     divisionLabel: divisions.DIVISION_LABELS[division],
-    commitmentCap:
-      (store.balance.budget.commitmentCapByDivision || {})[division] ||
-      store.balance.budget.commitmentCap,
+    commitmentCap,
+    staffOutlook,
     easternNight: store.easternNightFor(uid, seasonData.seasonUid, easternAssignments),
     easternNightFinal: Boolean(easternAssignments && easternAssignments[uid]),
     autoDays: store.autoDaysFor(uid, seasonData.seasonUid, { division, easternAssignments }),

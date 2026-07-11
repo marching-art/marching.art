@@ -147,3 +147,28 @@ exports.retrainPodiumStaff = onCall({ cors: true }, async (request) => {
   logger.info(`[podium] staff ${staffId} retrained to ${toSpecialty} by ${uid}`);
   return { success: true, ...result };
 });
+
+/**
+ * Acknowledge the next-season payroll warning (design §5.6). getPodiumState
+ * flags the corps "at risk" when its aged staff payroll can't fit the division
+ * cap; this records the payroll figure the director has seen so the banner
+ * stays dismissed until that figure changes (a hire, a release, or next
+ * season's aging), at which point it re-warns. Stores only the acknowledged
+ * number — no separate collection, no nag.
+ */
+exports.acknowledgePodiumStaffOutlook = onCall({ cors: true }, async (request) => {
+  const { uid, db, seasonData } = await podiumContext(request);
+  const sRef = store.stateRef(db, uid);
+  const acknowledgedPayroll = await db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(sRef);
+    if (!snapshot.exists || snapshot.data().seasonUid !== seasonData.seasonUid) {
+      throw new HttpsError("failed-precondition", "Register a Podium corps first.");
+    }
+    const state = snapshot.data();
+    // Budget is irrelevant to the payroll total — pass 0 and read the total.
+    const payroll = staffMarket.projectRetention(state.staff || {}, 0, store.balance).payroll;
+    transaction.set(sRef, { staffOutlookAck: payroll, updatedAt: new Date().toISOString() }, { merge: true });
+    return payroll;
+  });
+  return { success: true, acknowledgedPayroll };
+});

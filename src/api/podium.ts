@@ -51,6 +51,17 @@ export interface PodiumRouteLeg {
   isMajor: boolean;
 }
 
+// Next-season payroll warning (design §5.6): when a corps' aged staff payroll
+// can't fit the division commitment cap, the director will have to release or
+// retrain someone at re-registration. Surfaced in-season so they can act early.
+export interface PodiumStaffOutlook {
+  payroll: number; // total aged salary next season
+  commitmentCap: number; // the most a director can commit (division-equal)
+  shortfall: number; // payroll - cap, floored at 0
+  atRisk: boolean; // payroll exceeds the cap
+  acknowledged: boolean; // director has dismissed this exact payroll figure
+}
+
 export interface PodiumStateResponse {
   exists: boolean;
   calendarDay: number;
@@ -58,6 +69,7 @@ export interface PodiumStateResponse {
   isShowDay?: boolean;
   autoDays?: number[];
   routePreview?: PodiumRouteLeg[];
+  staffOutlook?: PodiumStaffOutlook;
   state?: Record<string, unknown>;
 }
 
@@ -276,6 +288,13 @@ export const releasePodiumStaff = createCallable<
   { specialty: string },
   { success: boolean; released: string; staff: Record<string, unknown> }
 >('releasePodiumStaff');
+
+// Dismiss the in-season payroll warning for the current projected figure; it
+// re-warns if the roster (and thus the payroll) changes.
+export const acknowledgePodiumStaffOutlook = createCallable<
+  void,
+  { success: boolean; acknowledgedPayroll: number }
+>('acknowledgePodiumStaffOutlook');
 
 export const retrainPodiumStaff = createCallable<
   { staffId: string; toSpecialty: string },
