@@ -16,11 +16,9 @@ const { isPodiumEnabled } = require("../helpers/features");
 const { getActiveCalendarDay, toCompetitionDay } = require("../helpers/gameDay");
 const engine = require("../helpers/podium/engine");
 const store = require("../helpers/podium/store");
-const venues = require("../helpers/podium/venues");
 const staffMarket = require("../helpers/podium/staffMarket");
 const career = require("../helpers/podium/career");
 const divisions = require("../helpers/podium/divisions");
-const hostedEvents = require("../helpers/podium/hostedEvents");
 
 const FOOD_TIERS = ["gasStation", "standard", "fullKitchen"];
 // Template covers a full spring-training day (the largest block budget).
@@ -633,106 +631,6 @@ exports.setPodiumPlanTemplate = onCall({ cors: true }, async (request) => {
   return { success: true, planTemplate: blocks };
 });
 
-exports.hostEvent = onCall({ cors: true }, async (request) => {
-  const { uid, db, seasonData, competitionDay } = await podiumContext(request);
-  let validated;
-  try {
-    validated = hostedEvents.validateHostRequest(request.data || {}, Math.max(0, competitionDay));
-  } catch (error) {
-    throw new HttpsError("invalid-argument", error.message);
-  }
-  const { eventName, venueTier, tier, day, venue } = validated;
-
-  // Host must field a corps somewhere in the game (anti-alt guard).
-  const profileSnapshotPre = await store.profileRef(db, uid).get();
-  const corpsMap = profileSnapshotPre.exists ? profileSnapshotPre.data().corps || {} : {};
-  if (Object.values(corpsMap).filter(Boolean).length === 0) {
-    throw new HttpsError("failed-precondition", "Field a corps before hosting events.");
-  }
-  // Venue ladder (decision 27): bigger stadiums are earned by running
-  // successful smaller shows, never bought outright.
-  const lockReason = hostedEvents.tierLockReason(
-    profileSnapshotPre.exists ? profileSnapshotPre.data() : null,
-    venueTier,
-    store.balance
-  );
-  if (lockReason) {
-    throw new HttpsError("failed-precondition", lockReason);
-  }
-
-  const seasonUid = seasonData.seasonUid;
-  const dayEvents = await hostedEvents
-    .eventsCollection(db, seasonUid)
-    .where("day", "==", day)
-    .get();
-  if (dayEvents.size >= store.balance.hostedEvents.maxEventsPerDay) {
-    throw new HttpsError("failed-precondition", `Day ${day} already has the maximum hosted events.`);
-  }
-
-  const eventRef = hostedEvents.eventsCollection(db, seasonUid).doc();
-  // One show per director per season (read inside the transaction so a
-  // rapid double-submit can't slip two events past the check).
-  const maxPerSeason = store.balance.hostedEvents.maxEventsPerSeasonPerHost || 1;
-  const hostEventsQuery = hostedEvents.eventsCollection(db, seasonUid).where("hostUid", "==", uid);
-  await db.runTransaction(async (transaction) => {
-    const hostedThisSeason = await transaction.get(hostEventsQuery);
-    if (hostedThisSeason.size >= maxPerSeason) {
-      throw new HttpsError(
-        "failed-precondition",
-        "You've already hosted a show this season — directors can host one show per season."
-      );
-    }
-    const profileSnapshot = await transaction.get(store.profileRef(db, uid));
-    const corpsCoin = profileSnapshot.exists ? profileSnapshot.data().corpsCoin || 0 : 0;
-    if (corpsCoin < tier.rentalCC) {
-      throw new HttpsError(
-        "failed-precondition",
-        `Venue rental is ${tier.rentalCC} CC (you have ${corpsCoin}).`
-      );
-    }
-    transaction.update(store.profileRef(db, uid), { corpsCoin: corpsCoin - tier.rentalCC });
-    const historyRef = db
-      .collection(
-        `artifacts/${require("../config").dataNamespaceParam.value()}/users/${uid}/corpsCoinHistory`
-      )
-      .doc();
-    transaction.set(historyRef, {
-      type: "hosted_event_rental",
-      amount: -tier.rentalCC,
-      description: `Venue rental: ${eventName} (${tier.label})`,
-      timestamp: new Date(),
-    });
-    transaction.set(eventRef, {
-      hostUid: uid,
-      eventName,
-      venueTier,
-      day,
-      location: `${venue.city}, ${venue.region}`,
-      venueId: venue.venueId,
-      rentalCC: tier.rentalCC,
-      capacity: tier.capacity,
-      paidOut: false,
-      createdAt: new Date().toISOString(),
-    });
-  });
-
-  // Insert into the season schedule so every class can select it through
-  // the normal weekly picker (open enrollment — no host approval).
-  const { addShowToDay } = require("../helpers/seasonSchedule");
-  const scheduleId = seasonData.dataDocId || seasonData.name;
-  if (scheduleId) {
-    await addShowToDay(scheduleId, day, {
-      eventName,
-      location: `${venue.city}, ${venue.region}`,
-      eventTier: "hosted",
-      hostUid: uid,
-    });
-  }
-
-  logger.info(`Hosted event created: ${eventName} day ${day} by ${uid}`);
-  return { success: true, eventId: eventRef.id, day, eventName };
-});
-
 exports.commitPodiumBudget = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData } = await podiumContext(request);
   const { amount } = request.data || {};
@@ -787,114 +685,6 @@ exports.hirePodiumClinician = onCall({ cors: true }, async (request) => {
   });
   return { success: true, ...result };
 });
-
-// Branded names for the fixed majors on the route sheet.
-const MAJOR_ROUTE_LABELS = {
-  28: "marching.art Southwestern Championship",
-  35: "marching.art Southeastern Championship",
-  41: "marching.art Eastern Classic",
-  42: "marching.art Eastern Classic",
-};
-
-/**
- * Upcoming route preview: the chain of travel legs through the corps' next
- * show days (auto + selected), each with tier, miles, coin cost (majors
- * subsidized), heat surcharge, and — for the majors and Championship Week
- * in Indianapolis — the division-correct event label (an A Class corps sees
- * A Class Prelims/Finals, a World corps sees Prelims/Semis/Finals). Shown
- * in the tour picker BEFORE selections are confirmed (design §5.3
- * open-information routing).
- */
-async function buildRoutePreview(db, seasonData, state, uid, competitionDay, easternAssignments) {
-  const division = divisions.normalizeDivision(state.division);
-  const upcoming = [
-    ...new Set([
-      ...store.autoDaysFor(uid, seasonData.seasonUid, { division, easternAssignments }),
-      ...(state.selectedShowDays || []),
-    ]),
-  ]
-    .filter((day) => day > Math.max(0, competitionDay) && day <= 49)
-    .sort((a, b) => a - b)
-    .slice(0, 8);
-  if (upcoming.length === 0) return [];
-
-  const scheduleId = seasonData.dataDocId || seasonData.name;
-  let locations = {};
-  if (scheduleId) {
-    const doc = await db.doc(`schedules/${scheduleId}`).get();
-    if (doc.exists) {
-      for (const comp of doc.data().competitions || []) {
-        if (comp.day != null && comp.location && locations[comp.day] == null) {
-          locations[comp.day] = comp.location;
-        }
-      }
-    }
-  }
-
-  const championshipLabels = store.CHAMPIONSHIP_LABELS_BY_DIVISION[division];
-  const legs = [];
-  let cursor = state.lastVenue || venues.venueFor(state.location) || null;
-  for (const day of upcoming) {
-    const venue = venues.MAJOR_VENUES[day] || (locations[day] ? venues.venueFor(locations[day]) : null);
-    const leg = venues.travelLeg(cursor, venue, store.balance);
-    const isMajor = Boolean(venues.MAJOR_VENUES[day]);
-    legs.push({
-      day,
-      city: venue ? `${venue.city}, ${venue.region}` : "TBA",
-      label: championshipLabels[day] || MAJOR_ROUTE_LABELS[day] || null,
-      tier: leg ? leg.tier : null,
-      miles: leg ? leg.miles : null,
-      coinCost: leg && !isMajor ? leg.coinCost : 0,
-      staminaCost: leg ? leg.staminaCost : 0,
-      heat: venues.heatStamina(venue, store.balance),
-      isMajor,
-    });
-    if (venue) cursor = venue;
-  }
-  return legs;
-}
-
-exports.getPodiumState = onCall({ cors: true }, async (request) => {
-  const { uid, db, seasonData, calendarDay, competitionDay } = await podiumContext(request);
-  const snapshot = await store.stateRef(db, uid).get();
-  if (!snapshot.exists || snapshot.data().seasonUid !== seasonData.seasonUid) {
-    return { exists: false, calendarDay, competitionDay };
-  }
-  const state = snapshot.data();
-  const easternAssignments = await store.loadEasternAssignments(db, seasonData.seasonUid);
-  const isShowDay = store.isShowDayFor(state, uid, competitionDay, easternAssignments);
-  const routePreview = await buildRoutePreview(
-    db, seasonData, state, uid, competitionDay, easternAssignments
-  );
-  const careerSnapshot = await career.careerRef(db, uid).get();
-  const careerData = careerSnapshot.exists ? careerSnapshot.data() : null;
-  const division = divisions.normalizeDivision(state.division);
-  return {
-    exists: true,
-    calendarDay,
-    competitionDay,
-    isShowDay,
-    division,
-    divisionLabel: divisions.DIVISION_LABELS[division],
-    commitmentCap:
-      (store.balance.budget.commitmentCapByDivision || {})[division] ||
-      store.balance.budget.commitmentCap,
-    easternNight: store.easternNightFor(uid, seasonData.seasonUid, easternAssignments),
-    easternNightFinal: Boolean(easternAssignments && easternAssignments[uid]),
-    autoDays: store.autoDaysFor(uid, seasonData.seasonUid, { division, easternAssignments }),
-    routePreview,
-    career: careerData
-      ? {
-        reputation: careerData.reputation,
-        historicalPeak: careerData.historicalPeak,
-        seasonsPlayed: careerData.seasonsPlayed,
-        history: (careerData.history || []).slice(-5),
-      }
-      : null,
-    state,
-  };
-});
-
 
 module.exports.validateChallenge = validateChallenge;
 module.exports.validateCommitment = validateCommitment;

@@ -40,9 +40,9 @@ const {
   setPodiumPlanTemplate,
   commitPodiumBudget,
   hirePodiumClinician,
-  hostEvent,
-  getPodiumState,
 } = require("./src/callable/podium");
+const { hostEvent } = require("./src/callable/podiumHost");
+const { getPodiumState } = require("./src/callable/podiumRoute");
 const {
   getPodiumStaffMarket,
   hirePodiumStaff,
