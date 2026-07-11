@@ -10,7 +10,7 @@ const assert = require("node:assert/strict");
 const {
   validateChallenge,
   validateAuditions,
-  validateShowDays,
+  validateShowPicks,
   validateCommitment,
 } = require("./podium");
 const store = require("../helpers/podium/store");
@@ -52,62 +52,83 @@ describe("validateAuditions", () => {
   });
 });
 
-describe("validateShowDays", () => {
+describe("validateShowPicks", () => {
   const uid = "user1";
   const seasonUid = "test_season";
+  // A schedule with two shows on every day 1-49.
+  const scheduleShowsByDay = {};
+  for (let d = 1; d <= 49; d++) {
+    scheduleShowsByDay[d] = [
+      { eventName: `Show ${d}A`, location: `City ${d}A` },
+      { eventName: `Show ${d}B`, location: `City ${d}B` },
+    ];
+  }
+  const opts = { scheduleShowsByDay };
+  const picks = (days) => days.map((d) => ({ day: d, eventName: `Show ${d}A` }));
+  const expected = (days) =>
+    Object.fromEntries(days.map((d) => [d, { eventName: `Show ${d}A`, location: `City ${d}A` }]));
 
   test("accepts up to 4 picks in weeks 1-3", () => {
-    assert.deepEqual(validateShowDays(1, [3, 5, 6, 7], uid, seasonUid, 0), [3, 5, 6, 7]);
+    assert.deepEqual(
+      validateShowPicks(1, picks([3, 5, 6, 7]), uid, seasonUid, 0, opts),
+      expected([3, 5, 6, 7])
+    );
   });
 
   test("weeks with a major allow only 3 picks", () => {
-    assert.throws(() => validateShowDays(4, [22, 23, 24, 25], uid, seasonUid, 0));
-    assert.deepEqual(validateShowDays(4, [22, 23, 24], uid, seasonUid, 0), [22, 23, 24]);
+    assert.throws(() => validateShowPicks(4, picks([22, 23, 24, 25]), uid, seasonUid, 0, opts));
+    assert.deepEqual(
+      validateShowPicks(4, picks([22, 23, 24]), uid, seasonUid, 0, opts),
+      expected([22, 23, 24])
+    );
   });
 
   test("championship week is auto-only", () => {
-    assert.throws(() => validateShowDays(7, [43], uid, seasonUid, 0));
-    assert.deepEqual(validateShowDays(7, [], uid, seasonUid, 0), []);
+    assert.throws(() => validateShowPicks(7, picks([43]), uid, seasonUid, 0, opts));
+    assert.deepEqual(validateShowPicks(7, [], uid, seasonUid, 0, opts), {});
   });
 
   test("auto-attended days are not selectable", () => {
-    assert.throws(() => validateShowDays(4, [28], uid, seasonUid, 0)); // Southwestern
-    assert.throws(() => validateShowDays(5, [35], uid, seasonUid, 0)); // Southeastern
+    assert.throws(() => validateShowPicks(4, picks([28]), uid, seasonUid, 0, opts)); // Southwestern
+    assert.throws(() => validateShowPicks(5, picks([35]), uid, seasonUid, 0, opts)); // Southeastern
     const eastern = store.easternNightFor(uid, seasonUid);
-    assert.throws(() => validateShowDays(6, [eastern], uid, seasonUid, 0));
+    assert.throws(() => validateShowPicks(6, picks([eastern]), uid, seasonUid, 0, opts));
   });
 
-  test("the OTHER Eastern night is selectable is false too — both nights are one event", () => {
-    // Only the assigned night is auto; but the other night is day 41/42 of
-    // week 6 and must not be independently selectable either.
-    const assigned = store.easternNightFor(uid, seasonUid);
-    const other = assigned === 41 ? 42 : 41;
-    // Current rule: the unassigned night is not in autoDays, so it would
-    // validate as a pick — pin the intended behavior instead:
-    let threw = false;
-    try {
-      validateShowDays(6, [other], uid, seasonUid, 0);
-    } catch {
-      threw = true;
-    }
-    assert.equal(threw, true, "the unassigned Eastern night must not be selectable");
+  test("both Eastern nights are one event — neither is independently selectable", () => {
+    assert.throws(() => validateShowPicks(6, picks([41]), uid, seasonUid, 0, opts));
+    assert.throws(() => validateShowPicks(6, picks([42]), uid, seasonUid, 0, opts));
   });
 
   test("past days and wrong-week days rejected", () => {
-    assert.throws(() => validateShowDays(2, [9], uid, seasonUid, 10)); // already passed
-    assert.throws(() => validateShowDays(2, [3], uid, seasonUid, 0)); // day 3 is week 1
+    assert.throws(() => validateShowPicks(2, picks([9]), uid, seasonUid, 10, opts)); // passed
+    assert.throws(() => validateShowPicks(2, picks([3]), uid, seasonUid, 0, opts)); // day 3 is wk 1
   });
 
   test("the current competition day is still selectable (locks at the next score run)", () => {
-    // day === currentCompetitionDay must be allowed — parity with the fantasy
-    // registration deadline, which stays open through the show's own day.
-    assert.deepEqual(validateShowDays(2, [10], uid, seasonUid, 10), [10]);
-    // strictly-earlier days remain rejected
-    assert.throws(() => validateShowDays(2, [9], uid, seasonUid, 10));
+    assert.deepEqual(validateShowPicks(2, picks([10]), uid, seasonUid, 10, opts), expected([10]));
+    assert.throws(() => validateShowPicks(2, picks([9]), uid, seasonUid, 10, opts));
   });
 
-  test("dedupes and sorts", () => {
-    assert.deepEqual(validateShowDays(1, [6, 3, 6], uid, seasonUid, 0), [3, 6]);
+  test("one show per day — a later pick replaces the earlier", () => {
+    assert.deepEqual(
+      validateShowPicks(
+        1,
+        [{ day: 3, eventName: "Show 3A" }, { day: 3, eventName: "Show 3B" }],
+        uid, seasonUid, 0, opts
+      ),
+      { 3: { eventName: "Show 3B", location: "City 3B" } }
+    );
+  });
+
+  test("rejects a show that is not on the schedule that day", () => {
+    assert.throws(() =>
+      validateShowPicks(1, [{ day: 3, eventName: "Ghost Show" }], uid, seasonUid, 0, opts)
+    );
+  });
+
+  test("requires an event name for each pick", () => {
+    assert.throws(() => validateShowPicks(1, [{ day: 3 }], uid, seasonUid, 0, opts));
   });
 });
 

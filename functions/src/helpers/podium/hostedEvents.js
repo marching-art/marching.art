@@ -105,24 +105,32 @@ async function payoutHostedEvents(db, seasonData, competitionDay) {
   const recapSnapshot = await db.doc(`fantasy_recaps/${seasonUid}/days/${competitionDay}`).get();
   const recapShows = recapSnapshot.exists ? recapSnapshot.data().shows || [] : [];
 
-  // Podium corps travel to the day's first scheduled location — when that
-  // location is a hosted event's venue, its performers count for the host.
-  let podiumUids = [];
-  let podiumLocation = null;
+  // Podium corps now register for a specific show, so credit the host by
+  // eventName (mirroring the fantasy path below). Build eventName -> [uids]
+  // from the per-show podium recap. Legacy flat recaps fall back to matching
+  // the day's first scheduled location.
+  const podiumUidsByEvent = new Map();
+  let podiumLegacyUids = [];
+  let podiumLegacyLocation = null;
   try {
-    const scheduleId = seasonData.dataDocId || seasonData.name;
-    if (scheduleId) {
-      const scheduleDoc = await db.doc(`schedules/${scheduleId}`).get();
-      const todays = ((scheduleDoc.exists && scheduleDoc.data().competitions) || []).filter(
-        (comp) => comp.day === competitionDay && comp.location
-      );
-      podiumLocation = todays.length > 0 ? todays[0].location : null;
-    }
-    if (podiumLocation) {
-      const podiumRecap = await store.recapDayRef(db, seasonUid, competitionDay).get();
-      podiumUids = ((podiumRecap.exists && podiumRecap.data().results) || [])
-        .map((result) => result.uid)
-        .filter(Boolean);
+    const podiumRecap = await store.recapDayRef(db, seasonUid, competitionDay).get();
+    const podiumData = podiumRecap.exists ? podiumRecap.data() : null;
+    if (podiumData && podiumData.shows) {
+      for (const show of podiumData.shows) {
+        const uids = (show.results || []).map((r) => r.uid).filter(Boolean);
+        if (show.eventName) podiumUidsByEvent.set(show.eventName, uids);
+      }
+    } else if (podiumData && podiumData.results) {
+      // Legacy per-day recap: attribute to the day's first scheduled location.
+      const scheduleId = seasonData.dataDocId || seasonData.name;
+      if (scheduleId) {
+        const scheduleDoc = await db.doc(`schedules/${scheduleId}`).get();
+        const todays = ((scheduleDoc.exists && scheduleDoc.data().competitions) || []).filter(
+          (comp) => comp.day === competitionDay && comp.location
+        );
+        podiumLegacyLocation = todays.length > 0 ? todays[0].location : null;
+      }
+      podiumLegacyUids = podiumData.results.map((r) => r.uid).filter(Boolean);
     }
   } catch (error) {
     logger.warn(`[hosted-events] podium attendance lookup failed: ${error.message}`);
@@ -145,8 +153,10 @@ async function payoutHostedEvents(db, seasonData, competitionDay) {
       for (const result of (show && show.results) || []) {
         if (result.uid) uids.add(result.uid);
       }
-      if (podiumLocation && event.location === podiumLocation) {
-        for (const uid of podiumUids) uids.add(uid);
+      // Podium performers at this event (by eventName; legacy: by location).
+      for (const uid of podiumUidsByEvent.get(event.eventName) || []) uids.add(uid);
+      if (podiumLegacyLocation && event.location === podiumLegacyLocation) {
+        for (const uid of podiumLegacyUids) uids.add(uid);
       }
       const attendance = Math.min(uids.size, tier.capacity);
       const payout = attendance * tier.payoutPerCorpsCC;

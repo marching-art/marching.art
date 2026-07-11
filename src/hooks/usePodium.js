@@ -81,8 +81,8 @@ export function usePodium(enabled) {
   );
 
   const selectShows = useCallback(
-    async (week, days) => {
-      const result = await setPodiumShows({ week, days });
+    async (week, shows) => {
+      const result = await setPodiumShows({ week, shows });
       await reload();
       return result.data;
     },

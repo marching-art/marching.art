@@ -45,20 +45,24 @@ const Schedule = () => {
   const showsByWeek = useScheduleStore((state) => state.showsByWeek);
   const scheduleLoading = useScheduleStore((state) => state.loading);
 
-  // Podium attendance is day-based (podium/state.selectedShowDays + auto-attended
-  // majors/championship), not the fantasy corps.selectedShows a schedule card
-  // reads — so surface it separately to badge the days this corps competes.
+  // Podium attendance lives outside the fantasy corps.selectedShows a card
+  // reads, so surface it separately. Self-picks badge the SPECIFIC show (by
+  // eventName — one show per night); majors/championship are auto-attended and
+  // badge by day (single event that day).
   const podiumEnabled = usePodiumEnabled();
   const podium = usePodium(podiumEnabled);
   const podiumAttendance = useMemo(() => {
     const data = podium.data;
     if (!data?.exists) return null;
-    const days = new Set([
-      ...(data.autoDays || []),
-      ...(data.state?.selectedShowDays || []),
-    ]);
-    if (days.size === 0) return null;
-    return { days, corpsName: data.state?.corpsName || 'Podium Corps' };
+    const selectedShows = data.state?.selectedShows || {};
+    const events = new Set(
+      Object.values(selectedShows)
+        .map((pick) => pick?.eventName)
+        .filter(Boolean)
+    );
+    const autoDays = new Set(data.autoDays || []);
+    if (events.size === 0 && autoDays.size === 0) return null;
+    return { events, autoDays, corpsName: data.state?.corpsName || 'Podium Corps' };
   }, [podium.data]);
 
   // Initialize selected week to current week

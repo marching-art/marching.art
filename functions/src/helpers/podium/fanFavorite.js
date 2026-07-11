@@ -51,7 +51,13 @@ async function candidatesForMajor(db, seasonUid, majorDay) {
   const seen = new Map();
   for (const day of days) {
     const recap = await store.recapDayRef(db, seasonUid, day).get();
-    for (const result of (recap.exists && recap.data().results) || []) {
+    if (!recap.exists) continue;
+    const data = recap.data();
+    // Per-show recaps carry `shows: [{results}]`; legacy docs a flat `results`.
+    const results = data.shows
+      ? data.shows.flatMap((s) => s.results || [])
+      : data.results || [];
+    for (const result of results) {
       if (result.uid && !seen.has(result.uid)) {
         seen.set(result.uid, {
           uid: result.uid,
