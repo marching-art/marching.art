@@ -46,6 +46,21 @@ exports.hostEvent = onCall({ cors: true }, async (request) => {
     throw new HttpsError("failed-precondition", `Day ${day} already has the maximum hosted events.`);
   }
 
+  // A city hosts one show per season: refuse a location already on the
+  // schedule (scraped majors/regionals or another director's hosted event).
+  // Authoritative mirror of the greyed-out cities in the client picker.
+  const scheduleId = seasonData.dataDocId || seasonData.name;
+  if (scheduleId) {
+    const scheduleDoc = await db.doc(`schedules/${scheduleId}`).get();
+    const competitions = (scheduleDoc.exists && scheduleDoc.data().competitions) || [];
+    if (hostedEvents.scheduledVenueIds(competitions).has(venue.venueId)) {
+      throw new HttpsError(
+        "failed-precondition",
+        `${venue.city}, ${venue.region} is already on the schedule — pick a city that isn't hosting yet.`
+      );
+    }
+  }
+
   const eventRef = hostedEvents.eventsCollection(db, seasonUid).doc();
   // One show per director per season (read inside the transaction so a
   // rapid double-submit can't slip two events past the check).
@@ -96,7 +111,6 @@ exports.hostEvent = onCall({ cors: true }, async (request) => {
   // Insert into the season schedule so every class can select it through
   // the normal weekly picker (open enrollment — no host approval).
   const { addShowToDay } = require("../helpers/seasonSchedule");
-  const scheduleId = seasonData.dataDocId || seasonData.name;
   if (scheduleId) {
     await addShowToDay(scheduleId, day, {
       eventName,
