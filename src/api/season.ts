@@ -118,6 +118,33 @@ export async function getSeasonRecaps(seasonUid: string): Promise<DayRecap[]> {
 }
 
 // =============================================================================
+// PODIUM CLASS RECAPS
+//
+// Podium scores are computed by a separate nightly pipeline and stored in the
+// `podium-recaps` collection, NOT in fantasy_recaps. Each day doc is keyed by
+// competition day and carries `shows: [{ eventName, location, results }]`,
+// where each result is per-show ranked (result.place) with a full caption
+// breakdown. Public read, backend-written (see firestore.rules).
+// =============================================================================
+
+export interface PodiumDayRecap {
+  competitionDay: number;
+  calendarDay?: number;
+  shows: ShowWithResults[];
+}
+
+/**
+ * Get all daily Podium recap documents for a season. Returns [] when the
+ * season has no Podium results yet. Errors propagate to the caller unchanged
+ * (callers own their own fallback), mirroring getSeasonRecaps.
+ */
+export async function getPodiumSeasonRecaps(seasonUid: string): Promise<PodiumDayRecap[]> {
+  const daysRef = collection(db, paths.podiumRecapsDays(seasonUid));
+  const snapshot = await getDocs(daysRef);
+  return snapshot.docs.map((d) => d.data() as PodiumDayRecap);
+}
+
+// =============================================================================
 // REFERENCE GAME DATA (public read)
 //
 // Corps point values (dci-data) and scraped DCI results (historical_scores)

@@ -12,6 +12,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 vi.mock('../api/season', () => ({
   getSeasonRecaps: vi.fn(),
   getHistoricalScoresForYear: vi.fn(),
+  getPodiumSeasonRecaps: vi.fn(),
 }));
 
 vi.mock('../utils/dashboardScoring', () => ({
@@ -40,9 +41,18 @@ vi.mock('./useScoresData', () => ({
   formatRecapDate: vi.fn(() => 'Jan 1'),
 }));
 
-import { getSeasonRecaps, getHistoricalScoresForYear } from '../api/season';
+import {
+  getSeasonRecaps,
+  getHistoricalScoresForYear,
+  getPodiumSeasonRecaps,
+} from '../api/season';
 import { getEffectiveDay, processCaptionScores } from '../utils/dashboardScoring';
-import { useLineupScores, useRecentResults, useBestInShowCount } from './useDashboardScores';
+import {
+  useLineupScores,
+  useRecentResults,
+  usePodiumRecentResults,
+  useBestInShowCount,
+} from './useDashboardScores';
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -194,6 +204,58 @@ describe('useRecentResults', () => {
 
     await waitFor(() => expect(result.current.length).toBeGreaterThan(0));
     expect(result.current).toHaveLength(5);
+  });
+});
+
+describe('usePodiumRecentResults', () => {
+  const user = { uid: 'alice' };
+  const seasonData = { seasonUid: 'season-1', schedule: null };
+
+  // Podium recaps key by competitionDay and rank per show (result.place).
+  const recap = (day, results) => ({
+    competitionDay: day,
+    shows: [{ eventName: `Podium Show ${day}`, location: 'Somewhere, USA', results }],
+  });
+  const aliceResult = {
+    uid: 'alice',
+    corpsName: 'Rohn Regiment',
+    corpsClass: 'podiumClass',
+    totalScore: 82.5,
+    place: 3,
+  };
+
+  it('returns [] when disabled (non-Podium class active)', () => {
+    const { result } = renderHook(
+      () => usePodiumRecentResults(user, seasonData, 10, false),
+      { wrapper: createWrapper() }
+    );
+    expect(result.current).toEqual([]);
+    expect(getPodiumSeasonRecaps).not.toHaveBeenCalled();
+  });
+
+  it('returns the most recent processed Podium results for this director', async () => {
+    getEffectiveDay.mockReturnValue(5);
+    getPodiumSeasonRecaps.mockResolvedValue([
+      recap(4, [aliceResult]),
+      // Day 6 is beyond the effective day — filtered out
+      recap(6, [{ ...aliceResult, totalScore: 99 }]),
+      recap(5, [{ ...aliceResult, totalScore: 88 }]),
+      // Another director — ignored
+      recap(3, [{ uid: 'bob', corpsClass: 'podiumClass', totalScore: 70, place: 1 }]),
+    ]);
+
+    const { result } = renderHook(
+      () => usePodiumRecentResults(user, seasonData, 6, true),
+      { wrapper: createWrapper() }
+    );
+
+    await waitFor(() => expect(result.current.length).toBeGreaterThan(0));
+
+    // Most-recent first, capped to effective day, filtered to this uid.
+    expect(result.current.map((r) => r.score)).toEqual([88, 82.5]);
+    expect(result.current[0].eventName).toBe('Podium Show 5');
+    // Per-show placement maps from result.place.
+    expect(result.current[1].placement).toBe(3);
   });
 });
 
