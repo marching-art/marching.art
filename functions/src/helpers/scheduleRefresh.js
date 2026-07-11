@@ -11,6 +11,7 @@ const {
   SPRING_TRAINING_DAYS,
   scrapeUpcomingDciEvents,
   brandEventName,
+  regionalTierForEventName,
 } = require("./seasonSchedule");
 
 /**
@@ -88,6 +89,12 @@ function mergeScheduleRefresh(existing, scrapedEvents, seasonId, startDate, spri
         applyEnrichment(match, event);
         if (!match.location && event.location) match.location = event.location;
         if (!match.date && event.date) match.date = event.date;
+        // Backfill the regional-major tag onto majors already on the schedule
+        // (a season generated before tagging existed picks it up on refresh).
+        if (!match.eventTier) {
+          const tier = regionalTierForEventName(match.name);
+          if (tier) match.eventTier = tier;
+        }
         enrichedCount += 1;
       } else {
         const nextIdx = (maxIdxByDay.get(dayNumber) ?? -1) + 1;
@@ -103,6 +110,8 @@ function mergeScheduleRefresh(existing, scrapedEvents, seasonId, startDate, spri
           allowedClasses: ["World Class", "Open Class", "A Class", "SoundSport"],
           mandatory: false,
         };
+        const tier = regionalTierForEventName(event.eventName);
+        if (tier) competition.eventTier = tier;
         applyEnrichment(competition, event);
         byKey.set(key, competition);
         added.push(competition);

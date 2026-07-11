@@ -403,6 +403,25 @@ function brandEventName(name) {
   return typeof name === "string" ? name.replace(/DCI/g, "marching.art") : name;
 }
 
+// The three marching.art regional majors (design §5.11). In off-seasons they are
+// hard-coded exclusive events (scheduleGeneration.placeMajor). Live seasons keep
+// the real scraped events untouched, so their major status is assigned by
+// name-match at ingest instead — the (already-branded) name of the real DCI
+// Southwestern / Southeastern / Eastern Classic.
+const MAJOR_EVENT_NAME_RE = /(southwestern|southeastern) championship|eastern classic/i;
+
+/**
+ * The eventTier for an event name: "regional" for one of the branded majors,
+ * else null. Used at live-season ingest so scraped majors carry the same
+ * eventTier the off-season generator stamps — the marker downstream schedule
+ * UIs (and Podium auto-attendance) key off to identify the anchor.
+ * @param {string} name - The (branded) event name.
+ * @returns {("regional"|null)}
+ */
+function regionalTierForEventName(name) {
+  return MAJOR_EVENT_NAME_RE.test(String(name || "")) ? "regional" : null;
+}
+
 module.exports = {
   ENRICHMENT_FIELDS,
   applyEnrichment,
@@ -418,4 +437,5 @@ module.exports = {
   addShowToDay,
   shuffleArray,
   brandEventName,
+  regionalTierForEventName,
 };

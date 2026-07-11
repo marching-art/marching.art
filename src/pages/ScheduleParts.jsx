@@ -78,13 +78,36 @@ const WeekPills = ({ weeks, currentWeek, selectedWeek, onSelect, getShowCount })
 // REGISTRATION BADGES COMPONENT
 // =============================================================================
 
+// The branded majors keep their real scraped names in live seasons, where
+// eventTier isn't stamped until the schedule is regenerated/refreshed — so
+// recognize them by name as a fallback and identify the anchor either way.
+const MAJOR_NAME_RE = /(southwestern|southeastern) championship|eastern classic/i;
+
+// On a Podium auto-attended day the corps attends exactly ONE event — the
+// regional major or its division's championship — never a pool show that merely
+// shares the date, and never the day-49 SoundSport festival. This identifies
+// that anchor so the auto-day PODIUM badge lands only on it.
+const isPodiumAutoAnchor = (show) => {
+  const eligible = show.eligibleClasses;
+  const soundSportOnly =
+    Array.isArray(eligible) && eligible.length === 1 && eligible[0] === 'soundSport';
+  if (soundSportOnly) return false;
+  return (
+    show.eventTier === 'regional' ||
+    show.isChampionship === true ||
+    show.type === 'championship' ||
+    MAJOR_NAME_RE.test(show.eventName || '')
+  );
+};
+
 // Podium attends a SPECIFIC show: self-picks match by eventName (one show per
-// night — never every show that day); majors/championship are auto-attended and
-// are single-event days, matched by day.
+// night — never every show that day); majors/championship are auto-attended, so
+// on those days badge only the anchor event, not every co-located pool show.
 const podiumAttendsShow = (podiumAttendance, show) =>
   Boolean(
     podiumAttendance &&
-    (podiumAttendance.events?.has(show.eventName) || podiumAttendance.autoDays?.has(show.day))
+    (podiumAttendance.events?.has(show.eventName) ||
+      (podiumAttendance.autoDays?.has(show.day) && isPodiumAutoAnchor(show)))
   );
 
 const RegistrationBadges = ({ show, userProfile, podiumAttendance }) => {
@@ -455,8 +478,10 @@ const ChampionshipEventCard = ({
   }, [userProfile, event.eligibleClasses]);
 
   // The Podium corps auto-attends its division's championship days (from
-  // podium/state autoDays), which the fantasy eligibleClasses don't cover.
-  const podiumAttending = Boolean(podiumAttendance?.autoDays?.has(event.day));
+  // podium/state autoDays), which the fantasy eligibleClasses don't cover — but
+  // not the day-49 SoundSport festival, which merely shares Finals day.
+  const podiumAttending =
+    Boolean(podiumAttendance?.autoDays?.has(event.day)) && isPodiumAutoAnchor(event);
   const hasEligibleCorps = eligibleCorps.length > 0 || podiumAttending;
 
   return (
