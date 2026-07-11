@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Check, X, AlertTriangle, Trophy, Clock, Ticket } from 'lucide-react';
 import { selectUserShows } from '../../api/functions';
 import { getPodiumState, setPodiumShows } from '../../api/podium';
+import { usePodiumEnabled } from '../../hooks/useFeatures';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
 import { BottomSheet } from '../ui/BottomSheet';
@@ -178,24 +179,34 @@ const ShowRegistrationModal = ({
   // ---------------------------------------------------------------------------
   // Podium corps attendance (day-based tour picks)
   // ---------------------------------------------------------------------------
-  const podiumCorps = userProfile?.corps?.podiumClass || null;
+  const podiumEnabled = usePodiumEnabled();
   const podiumDay = Number.isInteger(show.day) ? show.day : null;
-  const [podiumInfo, setPodiumInfo] = useState(null); // {selectedShowDays, autoDays, competitionDay}
+  // {selectedShowDays, autoDays, competitionDay, corpsName} — the Podium row's
+  // single source of truth. getPodiumState (server day-context + subcollection)
+  // is authoritative; we no longer gate on the profile's corps.podiumClass copy,
+  // which can lag or be absent even when the corps is fielded this season.
+  const [podiumInfo, setPodiumInfo] = useState(null);
   const [podiumAttend, setPodiumAttend] = useState(false);
   const [podiumInitial, setPodiumInitial] = useState(false);
 
   useEffect(() => {
-    if (!podiumCorps || podiumDay === null) return undefined;
+    if (!podiumEnabled || podiumDay === null) return undefined;
     let cancelled = false;
     getPodiumState()
       .then((res) => {
-        if (cancelled || !res?.exists) return;
-        const selectedShowDays = res.state?.selectedShowDays || [];
+        // Callables resolve to an HttpsCallableResult — the payload is res.data,
+        // not res itself. Reading res.exists directly always saw undefined, so
+        // the row never rendered and Podium corps could only attend the
+        // auto-assigned majors/championship, never self-selected regular shows.
+        const state = res?.data;
+        if (cancelled || !state?.exists) return;
+        const selectedShowDays = state.state?.selectedShowDays || [];
         const attending = selectedShowDays.includes(podiumDay);
         setPodiumInfo({
           selectedShowDays,
-          autoDays: res.autoDays || [],
-          competitionDay: res.competitionDay ?? 0,
+          autoDays: state.autoDays || [],
+          competitionDay: state.competitionDay ?? 0,
+          corpsName: state.state?.corpsName || 'Podium Corps',
         });
         setPodiumAttend(attending);
         setPodiumInitial(attending);
@@ -206,7 +217,7 @@ const ShowRegistrationModal = ({
     return () => {
       cancelled = true;
     };
-  }, [podiumCorps, podiumDay]);
+  }, [podiumEnabled, podiumDay]);
 
   const podiumIsMyAutoDay = Boolean(podiumInfo?.autoDays?.includes(podiumDay));
   const podiumIsEasternOffNight =
@@ -566,7 +577,7 @@ const ShowRegistrationModal = ({
             </div>
           </div>
         </div>
-      ) : userCorpsClasses.length === 0 && !(podiumCorps && podiumInfo) ? (
+      ) : userCorpsClasses.length === 0 && !podiumInfo ? (
         <div className="text-center py-10 px-4">
           <AlertTriangle className="w-12 h-12 text-gray-600 mx-auto mb-3" />
           <p className="text-sm text-gray-400 font-medium">No Corps Registered</p>
@@ -632,7 +643,7 @@ const ShowRegistrationModal = ({
             })}
 
             {/* Podium corps — day-based tour pick, separate rules from lineups */}
-            {podiumCorps && podiumInfo && (
+            {podiumInfo && (
               <button
                 onClick={togglePodium}
                 disabled={podiumIsMyAutoDay || podiumIsEasternOffNight || podiumIsPast}
@@ -659,7 +670,7 @@ const ShowRegistrationModal = ({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-white text-sm truncate">
-                      {podiumCorps.corpsName || 'Podium Corps'}
+                      {podiumInfo.corpsName}
                     </span>
                     <span className="text-[10px] font-bold uppercase text-yellow-400">Podium</span>
                   </div>
@@ -748,7 +759,7 @@ const ShowRegistrationModal = ({
       );
     }
 
-    return userCorpsClasses.length > 0 || (podiumCorps && podiumInfo) ? (
+    return userCorpsClasses.length > 0 || podiumInfo ? (
       <div className="flex gap-3">
         <button
           onClick={() => {
@@ -796,7 +807,7 @@ const ShowRegistrationModal = ({
         </div>
 
         {/* Footer */}
-        {(isChampionship || userCorpsClasses.length > 0 || (podiumCorps && podiumInfo)) && (
+        {(isChampionship || userCorpsClasses.length > 0 || podiumInfo) && (
           <div className="px-4 py-4 border-t border-[#333] bg-[#1a1a1a] flex-shrink-0 safe-area-bottom">
             <FooterContent />
           </div>
@@ -827,7 +838,7 @@ const ShowRegistrationModal = ({
           </div>
 
           {/* Footer */}
-          {(isChampionship || userCorpsClasses.length > 0 || (podiumCorps && podiumInfo)) && (
+          {(isChampionship || userCorpsClasses.length > 0 || podiumInfo) && (
             <div className="px-4 py-4 border-t border-[#333] bg-[#111] flex-shrink-0">
               <FooterContent />
             </div>

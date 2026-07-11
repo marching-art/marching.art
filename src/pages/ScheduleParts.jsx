@@ -78,21 +78,25 @@ const WeekPills = ({ weeks, currentWeek, selectedWeek, onSelect, getShowCount })
 // REGISTRATION BADGES COMPONENT
 // =============================================================================
 
-const RegistrationBadges = ({ show, userProfile }) => {
-  if (!userProfile?.corps) return null;
+const RegistrationBadges = ({ show, userProfile, podiumAttendance }) => {
+  const registeredCorps = userProfile?.corps
+    ? Object.entries(userProfile.corps)
+        .filter(([_corpsClass, corpsData]) => {
+          if (!corpsData) return false;
+          const weekKey = `week${show.week}`;
+          const selectedShows = corpsData.selectedShows?.[weekKey] || [];
+          // Match by eventName only - dates can have type mismatches (Timestamp vs string)
+          // This matches the scoring.js logic which also only checks eventName
+          return selectedShows.some((s) => s.eventName === show.eventName);
+        })
+        .map(([corpsClass]) => corpsClass)
+    : [];
 
-  const registeredCorps = Object.entries(userProfile.corps)
-    .filter(([_corpsClass, corpsData]) => {
-      if (!corpsData) return false;
-      const weekKey = `week${show.week}`;
-      const selectedShows = corpsData.selectedShows?.[weekKey] || [];
-      // Match by eventName only - dates can have type mismatches (Timestamp vs string)
-      // This matches the scoring.js logic which also only checks eventName
-      return selectedShows.some((s) => s.eventName === show.eventName);
-    })
-    .map(([corpsClass]) => corpsClass);
+  // The Podium corps attends by day (majors/championship auto, plus its tour
+  // picks), so it badges any show on a day it competes.
+  const podiumAttending = Boolean(podiumAttendance?.days?.has(show.day));
 
-  if (registeredCorps.length === 0) return null;
+  if (registeredCorps.length === 0 && !podiumAttending) return null;
 
   return (
     <div className="flex items-center gap-1 flex-wrap">
@@ -108,6 +112,14 @@ const RegistrationBadges = ({ show, userProfile }) => {
           </span>
         );
       })}
+      {podiumAttending && (
+        <span
+          className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded ${CLASS_CONFIG.podiumClass.bgColor} ${CLASS_CONFIG.podiumClass.color}`}
+        >
+          <Check className="w-2.5 h-2.5" />
+          {CLASS_CONFIG.podiumClass.name}
+        </span>
+      )}
     </div>
   );
 };
@@ -124,8 +136,10 @@ const ShowCard = ({
   onRegister,
   isCompleted,
   seasonUid,
+  podiumAttendance,
 }) => {
   const isRegistered = useMemo(() => {
+    if (podiumAttendance?.days?.has(show.day)) return true;
     if (!userProfile?.corps) return false;
     return Object.values(userProfile.corps).some((corps) => {
       if (!corps) return false;
@@ -134,7 +148,7 @@ const ShowCard = ({
       // Match by eventName only - dates can have type mismatches (Timestamp vs string)
       return selectedShows.some((s) => s.eventName === show.eventName);
     });
-  }, [show, userProfile]);
+  }, [show, userProfile, podiumAttendance]);
 
   // The marching.art majors (§5.11) are the season's marquee days — the only
   // event on their day, full-field convergence. Gold treatment mirrors the
@@ -223,7 +237,11 @@ const ShowCard = ({
       <div className="px-4 py-2 bg-[#111]">
         <div className="flex items-center justify-between">
           {/* Registration Badges */}
-          <RegistrationBadges show={show} userProfile={userProfile} />
+          <RegistrationBadges
+            show={show}
+            userProfile={userProfile}
+            podiumAttendance={podiumAttendance}
+          />
 
           {/* Results Link for Completed Shows with actual results */}
           {isCompleted && (
@@ -292,7 +310,16 @@ const DayIndicator = ({ date, dayNumber: _dayNumber, isMajorDay = false }) => {
 // DAY ROW COMPONENT
 // =============================================================================
 
-const DayRow = ({ day, shows, userProfile, formatDate, getActualDate, onRegister, seasonUid }) => {
+const DayRow = ({
+  day,
+  shows,
+  userProfile,
+  formatDate,
+  getActualDate,
+  onRegister,
+  seasonUid,
+  podiumAttendance,
+}) => {
   const date = getActualDate(day);
   const isPast = isEventPast(date);
   const isMajorDay = shows.some((show) => show.eventTier === 'regional');
@@ -314,6 +341,7 @@ const DayRow = ({ day, shows, userProfile, formatDate, getActualDate, onRegister
             onRegister={onRegister}
             isCompleted={isPast && show.scores?.some((s) => s.score != null)}
             seasonUid={seasonUid}
+            podiumAttendance={podiumAttendance}
           />
         ))}
       </div>
@@ -325,7 +353,15 @@ const DayRow = ({ day, shows, userProfile, formatDate, getActualDate, onRegister
 // SHOWS LIST COMPONENT
 // =============================================================================
 
-const ShowsList = ({ shows, userProfile, formatDate, getActualDate, onRegister, seasonUid }) => {
+const ShowsList = ({
+  shows,
+  userProfile,
+  formatDate,
+  getActualDate,
+  onRegister,
+  seasonUid,
+  podiumAttendance,
+}) => {
   // Group shows by day
   const showsByDay = useMemo(() => {
     if (!shows || shows.length === 0) return {};
@@ -368,6 +404,7 @@ const ShowsList = ({ shows, userProfile, formatDate, getActualDate, onRegister, 
           getActualDate={getActualDate}
           onRegister={onRegister}
           seasonUid={seasonUid}
+          podiumAttendance={podiumAttendance}
         />
       ))}
     </div>
@@ -378,7 +415,13 @@ const ShowsList = ({ shows, userProfile, formatDate, getActualDate, onRegister, 
 // CHAMPIONSHIP WEEK DISPLAY COMPONENT
 // =============================================================================
 
-const ChampionshipEventCard = ({ event, userProfile, getActualDate, seasonUid: _seasonUid }) => {
+const ChampionshipEventCard = ({
+  event,
+  userProfile,
+  getActualDate,
+  seasonUid: _seasonUid,
+  podiumAttendance,
+}) => {
   const date = getActualDate(event.day);
   const isPast = isEventPast(date);
   const formattedDate = date
@@ -399,7 +442,10 @@ const ChampionshipEventCard = ({ event, userProfile, getActualDate, seasonUid: _
       }));
   }, [userProfile, event.eligibleClasses]);
 
-  const hasEligibleCorps = eligibleCorps.length > 0;
+  // The Podium corps auto-attends its division's championship days (from
+  // podium/state autoDays), which the fantasy eligibleClasses don't cover.
+  const podiumAttending = Boolean(podiumAttendance?.days?.has(event.day));
+  const hasEligibleCorps = eligibleCorps.length > 0 || podiumAttending;
 
   return (
     <div
@@ -472,6 +518,14 @@ const ChampionshipEventCard = ({ event, userProfile, getActualDate, seasonUid: _
                   </span>
                 );
               })}
+              {podiumAttending && (
+                <span
+                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded ${CLASS_CONFIG.podiumClass.bgColor} ${CLASS_CONFIG.podiumClass.color}`}
+                >
+                  <Check className="w-2.5 h-2.5" />
+                  {CLASS_CONFIG.podiumClass.name}
+                </span>
+              )}
             </div>
           ) : (
             <span className="text-[10px] text-gray-600">{event.description}</span>
@@ -505,6 +559,7 @@ const ChampionshipWeekDisplay = ({
   regularShows,
   formatDate,
   onRegister,
+  podiumAttendance,
 }) => {
   // Group championship events by day
   const eventsByDay = useMemo(() => {
@@ -559,6 +614,7 @@ const ChampionshipWeekDisplay = ({
                       onRegister={onRegister}
                       isCompleted={isPast && show.scores?.some((s) => s.score != null)}
                       seasonUid={seasonUid}
+                      podiumAttendance={podiumAttendance}
                     />
                   ))}
                 </div>
@@ -600,6 +656,7 @@ const ChampionshipWeekDisplay = ({
                   userProfile={userProfile}
                   getActualDate={getActualDate}
                   seasonUid={seasonUid}
+                  podiumAttendance={podiumAttendance}
                 />
               ))}
             </div>
