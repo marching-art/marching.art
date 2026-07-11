@@ -693,7 +693,18 @@ exports.hostEvent = onCall({ cors: true }, async (request) => {
   }
 
   const eventRef = hostedEvents.eventsCollection(db, seasonUid).doc();
+  // One show per director per season (read inside the transaction so a
+  // rapid double-submit can't slip two events past the check).
+  const maxPerSeason = store.balance.hostedEvents.maxEventsPerSeasonPerHost || 1;
+  const hostEventsQuery = hostedEvents.eventsCollection(db, seasonUid).where("hostUid", "==", uid);
   await db.runTransaction(async (transaction) => {
+    const hostedThisSeason = await transaction.get(hostEventsQuery);
+    if (hostedThisSeason.size >= maxPerSeason) {
+      throw new HttpsError(
+        "failed-precondition",
+        "You've already hosted a show this season — directors can host one show per season."
+      );
+    }
     const profileSnapshot = await transaction.get(store.profileRef(db, uid));
     const corpsCoin = profileSnapshot.exists ? profileSnapshot.data().corpsCoin || 0 : 0;
     if (corpsCoin < tier.rentalCC) {
