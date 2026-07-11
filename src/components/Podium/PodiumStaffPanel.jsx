@@ -1,10 +1,13 @@
 // PodiumStaffPanel — the staff labor market (Phase 4, design §5.6; careers
 // per decision 28): your roster of up to 10 seats (8 caption techs + Tour
 // Manager + Program Coordinator), the season's shared free-agency market,
-// and the mid-season transfer market. Staff are persistent people with
-// careers — tenure raises their tier floor and their price, contracts run
-// 1-3 seasons at the salary frozen at signing, and a 30-season career ends
-// in retirement.
+// and the mid-season transfer market.
+//
+// Staff are presented GENERICALLY — a director chooses a role (specialty)
+// at an experience level (tier), never a named person. The persistent-career
+// backend still tracks each hire, but its fabricated names, traits, and
+// resumes are deliberately kept out of the grid: the only things a director
+// decides on are what a staffer does and how experienced they are.
 
 import React, { useEffect, useState } from 'react';
 import { Users, Loader2, ChevronDown, ChevronUp, ArrowLeftRight, GraduationCap } from 'lucide-react';
@@ -31,17 +34,47 @@ const TIER_STYLES = {
   legend: 'text-[#c9a227]',
 };
 
+// Experience levels, least → most experienced. The label IS the staffer's
+// identity in the grid — no names.
+const TIER_ORDER = ['apprentice', 'journeyman', 'veteran', 'master', 'legend'];
+const TIER_LABELS = {
+  apprentice: 'Apprentice',
+  journeyman: 'Journeyman',
+  veteran: 'Veteran',
+  master: 'Master',
+  legend: 'Legend',
+};
+
 const CONTRACT_LENGTHS = [1, 2, 3];
 
-function resumeSummary(person) {
-  const rows = person.resume || [];
-  if (rows.length === 0) return 'Rookie — no prior seasons';
-  return rows
-    .map(
-      (row) =>
-        `${row.corpsName || 'Unknown'}${row.placement ? ` (#${row.placement})` : ''}`
-    )
-    .join(' → ');
+/**
+ * Collapse a specialty's market pool to one generic option per experience
+ * level. Directors pick a level, not a person, so identical-tier persons
+ * (career backend scarcity) show once; hiring targets the cheapest still-
+ * available staffer of that tier. Returns options ordered least → most
+ * experienced, each carrying whether the level is still hireable.
+ */
+function experienceLevels(pool) {
+  const byTier = new Map();
+  for (const person of pool) {
+    const bucket = byTier.get(person.tier) || [];
+    bucket.push(person);
+    byTier.set(person.tier, bucket);
+  }
+  return TIER_ORDER.filter((tier) => byTier.has(tier)).map((tier) => {
+    const candidates = byTier.get(tier);
+    const open = candidates
+      .filter((p) => !p.signedBy)
+      .sort((a, b) => a.salary - b.salary);
+    const cheapest = open[0] || [...candidates].sort((a, b) => a.salary - b.salary)[0];
+    return {
+      tier,
+      hire: open[0] || null, // the person we sign when this level is chosen
+      salary: cheapest.salary,
+      boost: cheapest.boost,
+      available: open.length > 0,
+    };
+  });
 }
 
 export default function PodiumStaffPanel({ podium }) {
@@ -118,14 +151,12 @@ export default function PodiumStaffPanel({ podium }) {
                 {SPECIALTY_LABELS[specialty] || specialty}:
               </span>
               <span className={`font-bold ${TIER_STYLES[member.tier] || 'text-white'}`}>
-                {member.name}
+                {TIER_LABELS[member.tier] || member.tier}
               </span>
               <span className="text-gray-600">
-                {member.tier}
-                {member.careerSeasons != null && ` · yr ${member.careerSeasons + 1}`}
                 {member.contract &&
-                  ` · ${member.contract.remaining}/${member.contract.seasons} season${member.contract.seasons > 1 ? 's' : ''} left`}
-                {member.retrain && ' · retraining'}
+                  `${member.contract.remaining}/${member.contract.seasons} season${member.contract.seasons > 1 ? 's' : ''} left`}
+                {member.retrain && (member.contract ? ' · retraining' : 'retraining')}
               </span>
               {open && (
                 <span className="ml-auto flex items-center gap-1">
@@ -230,11 +261,11 @@ export default function PodiumStaffPanel({ podium }) {
                     ) : (
                       <>
                         <span className={`font-bold ${TIER_STYLES[listing.member?.tier]}`}>
-                          {listing.member?.name}
+                          {TIER_LABELS[listing.member?.tier] || listing.member?.tier}
                         </span>
                         <span className="text-gray-600">
                           {' '}
-                          · {SPECIALTY_LABELS[listing.member?.specialty]} · buyout {listing.buyout}
+                          {SPECIALTY_LABELS[listing.member?.specialty]} · buyout {listing.buyout}
                         </span>
                       </>
                     )}
@@ -261,40 +292,39 @@ export default function PodiumStaffPanel({ podium }) {
                     {seatFilled && <span className="text-green-500"> · seat filled</span>}
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    {pool.map((person) => {
-                      const gone = person.signedBy && person.signedBy !== state.uid;
+                    {experienceLevels(pool).map((level) => {
+                      const busyKey = level.hire?.id;
                       return (
                         <button
-                          key={person.id}
-                          disabled={busy !== null || seatFilled || Boolean(person.signedBy)}
+                          key={`${specialty}_${level.tier}`}
+                          disabled={busy !== null || seatFilled || !level.available}
                           onClick={() =>
-                            act(person.id, () =>
-                              hirePodiumStaff({ staffId: person.id, seasons: contractSeasons })
+                            level.hire &&
+                            act(level.hire.id, () =>
+                              hirePodiumStaff({ staffId: level.hire.id, seasons: contractSeasons })
                             )
                           }
-                          title={`${person.trait} · +${Math.round(person.boost * 100)}% yield · year ${(person.careerSeasons || 0) + 1} of a 30-season career · ${resumeSummary(person)}`}
+                          title={`${TIER_LABELS[level.tier]} ${SPECIALTY_LABELS[specialty]} · +${Math.round(level.boost * 100)}% rehearsal yield · ${level.salary}/season`}
                           className={`text-[10px] px-2 py-1 rounded-sm border tabular-nums press-feedback ${
-                            person.signedBy
-                              ? 'border-[#242424] text-gray-700 line-through'
+                            !level.available
+                              ? 'border-[#242424] text-gray-700'
                               : seatFilled
                                 ? 'border-[#242424] text-gray-600'
                                 : 'border-[#333] text-gray-300 hover:border-[#0057B8] hover:text-white'
                           }`}
                         >
-                          {busy === person.id ? (
+                          {busyKey && busy === busyKey ? (
                             <Loader2 className="w-3 h-3 animate-spin inline" />
                           ) : (
                             <>
-                              <span className={`font-bold ${TIER_STYLES[person.tier]}`}>
-                                {person.name}
+                              <span className={`font-bold ${TIER_STYLES[level.tier]}`}>
+                                {TIER_LABELS[level.tier]}
                               </span>
                               <span className="text-gray-600">
                                 {' '}
-                                · {person.tier}
-                                {person.careerSeasons > 0 && ` · yr ${person.careerSeasons + 1}`} ·{' '}
-                                {person.salary}/season
+                                · +{Math.round(level.boost * 100)}% · {level.salary}/season
                               </span>
-                              {gone && <span className="text-gray-700"> · signed</span>}
+                              {!level.available && <span className="text-gray-700"> · taken</span>}
                             </>
                           )}
                         </button>
