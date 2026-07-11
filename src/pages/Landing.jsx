@@ -202,7 +202,7 @@ const Landing = () => {
       <header className="flex-shrink-0 h-14 bg-[#1a1a1a] border-b border-[#333]">
         <div className="h-full flex items-center px-4 lg:px-6">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-sm overflow-hidden">
+            <div className="w-8 h-8 rounded-none overflow-hidden">
               <img src="/logo192.svg" alt="marching.art" className="w-full h-full object-cover" />
             </div>
             <span className="text-base font-bold text-white tracking-wider">marching.art</span>
@@ -220,7 +220,7 @@ const Landing = () => {
               <Link
                 to="/dashboard"
                 aria-label={`Dashboard — ${(profile.corpsCoin || 0).toLocaleString()} coins, level ${profile.xpLevel || 1}`}
-                className="lg:hidden flex items-center gap-2 min-h-[44px] pl-3 pr-2 rounded-lg bg-white/[0.04] border border-[#333] active:scale-95 transition-all duration-150 press-feedback"
+                className="lg:hidden flex items-center gap-2 min-h-[44px] pl-3 pr-2 rounded-none bg-white/[0.04] border border-[#333] active:scale-95 transition-all duration-150 press-feedback"
               >
                 <span className="flex items-center gap-1 text-sm font-bold text-yellow-500 font-data tabular-nums">
                   <Coins className="w-3.5 h-3.5" />
@@ -254,7 +254,7 @@ const Landing = () => {
                   href="https://discord.gg/YvFRJ97A5H"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-2 text-gray-400 hover:text-[#5865F2] hover:bg-white/10 rounded-sm transition-colors press-feedback flex items-center"
+                  className="p-2 text-gray-400 hover:text-[#5865F2] hover:bg-white/10 rounded-none transition-colors press-feedback flex items-center"
                   title="Join our Discord"
                   aria-label="Join our Discord"
                 >
@@ -283,7 +283,7 @@ const Landing = () => {
                 href="https://discord.gg/YvFRJ97A5H"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 text-gray-400 hover:text-[#5865F2] hover:bg-white/10 rounded-sm transition-colors press-feedback flex items-center"
+                className="p-2 text-gray-400 hover:text-[#5865F2] hover:bg-white/10 rounded-none transition-colors press-feedback flex items-center"
                 title="Join our Discord"
                 aria-label="Join our Discord"
               >
@@ -296,7 +296,7 @@ const Landing = () => {
             {user && (
               <Link
                 to="/guide"
-                className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-sm transition-colors press-feedback flex items-center"
+                className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-none transition-colors press-feedback flex items-center"
                 title="Game Guide"
                 aria-label="Game Guide"
               >
@@ -339,7 +339,7 @@ const Landing = () => {
                 {/* ------------------------------------------------------- */}
                 {user ? (
                   /* AUTHENTICATED USER WIDGET */
-                  <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
+                  <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
                     {/* User Header */}
                     <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
                       <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
@@ -413,7 +413,7 @@ const Landing = () => {
                     <div className="hidden lg:block px-2 py-2 border-t border-[#333] bg-[#111]">
                       <button
                         onClick={handleSignOut}
-                        className="flex items-center gap-2 px-2 min-h-[44px] w-full text-sm text-gray-500 hover:text-red-400 active:text-red-500 transition-colors press-feedback rounded-sm"
+                        className="flex items-center gap-2 px-2 min-h-[44px] w-full text-sm text-gray-500 hover:text-red-400 active:text-red-500 transition-colors press-feedback rounded-none"
                       >
                         <LogOut className="w-4 h-4" />
                         Sign Out
@@ -422,7 +422,7 @@ const Landing = () => {
                   </div>
                 ) : (
                   /* LOGIN/REGISTER WIDGET */
-                  <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
+                  <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
                     {/* Card Header */}
                     <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
                       <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
@@ -435,7 +435,7 @@ const Landing = () => {
                     <form onSubmit={handleSubmit} className="p-4 space-y-3">
                       {/* Error Message */}
                       {error && (
-                        <div className="p-2.5 bg-red-500/10 border border-red-500/30 rounded-sm flex items-start gap-2">
+                        <div className="p-2.5 bg-red-500/10 border border-red-500/30 rounded-none flex items-start gap-2">
                           <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
                           <p className="text-xs text-red-300">{error}</p>
                         </div>
@@ -451,7 +451,7 @@ const Landing = () => {
                           onChange={(e) => setEmail(e.target.value)}
                           required
                           disabled={loading}
-                          className="w-full min-h-[44px] h-11 pl-10 pr-3 bg-[#111] border border-[#333] rounded-sm text-base text-white placeholder-gray-500 focus:outline-none focus:border-[#0057B8] disabled:opacity-50 transition-colors"
+                          className="w-full min-h-[44px] h-11 pl-10 pr-3 bg-[#111] border border-[#333] rounded-none text-base text-white placeholder-gray-500 focus:outline-none focus:border-[#0057B8] disabled:opacity-50 transition-colors"
                         />
                       </div>
 
@@ -465,7 +465,7 @@ const Landing = () => {
                           onChange={(e) => setPassword(e.target.value)}
                           required
                           disabled={loading}
-                          className="w-full min-h-[44px] h-11 pl-10 pr-3 bg-[#111] border border-[#333] rounded-sm text-base text-white placeholder-gray-500 focus:outline-none focus:border-[#0057B8] disabled:opacity-50 transition-colors"
+                          className="w-full min-h-[44px] h-11 pl-10 pr-3 bg-[#111] border border-[#333] rounded-none text-base text-white placeholder-gray-500 focus:outline-none focus:border-[#0057B8] disabled:opacity-50 transition-colors"
                         />
                       </div>
 
@@ -474,20 +474,20 @@ const Landing = () => {
                         <button
                           type="submit"
                           disabled={loading}
-                          className="flex-1 min-h-[44px] h-11 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:bg-[#0066d6] active:bg-[#004a9e] active:scale-[0.98] transition-all duration-150 press-feedback-strong disabled:opacity-50 disabled:cursor-not-allowed rounded-sm"
+                          className="flex-1 min-h-[44px] h-11 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:bg-[#0066d6] active:bg-[#004a9e] active:scale-[0.98] transition-all duration-150 press-feedback-strong disabled:opacity-50 disabled:cursor-not-allowed rounded-none"
                         >
                           {loading ? '...' : 'Sign In'}
                         </button>
                         <Link
                           to="/register"
-                          className="flex-1 min-h-[44px] h-11 border border-[#333] text-gray-400 font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:border-[#444] hover:text-white active:scale-[0.98] transition-all duration-150 press-feedback rounded-sm"
+                          className="flex-1 min-h-[44px] h-11 border border-[#333] text-gray-400 font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:border-[#444] hover:text-white active:scale-[0.98] transition-all duration-150 press-feedback rounded-none"
                         >
                           Register
                         </Link>
                       </div>
 
                       {/* Free to play badge - prominent placement */}
-                      <div className="flex items-center justify-center gap-2 py-2 bg-green-500/10 border border-green-500/20 rounded-sm">
+                      <div className="flex items-center justify-center gap-2 py-2 bg-green-500/10 border border-green-500/20 rounded-none">
                         <Zap className="w-4 h-4 text-green-500" />
                         <span className="text-sm font-semibold text-green-400">
                           100% Free to Play
@@ -497,7 +497,7 @@ const Landing = () => {
                       {/* Try Demo Link */}
                       <Link
                         to="/preview"
-                        className="flex items-center justify-center gap-2 py-2.5 border border-yellow-500/30 rounded-sm text-yellow-500 hover:bg-yellow-500/10 hover:border-yellow-500/50 transition-colors"
+                        className="flex items-center justify-center gap-2 py-2.5 border border-yellow-500/30 rounded-none text-yellow-500 hover:bg-yellow-500/10 hover:border-yellow-500/50 transition-colors"
                       >
                         <Play className="w-4 h-4" />
                         <span className="text-sm font-medium">Try Demo First</span>

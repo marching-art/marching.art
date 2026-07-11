@@ -90,7 +90,7 @@ export const GuidedCaptionSelection = ({
               key={cap.id}
               onClick={() => setCurrentCaptionIndex(idx)}
               aria-label={`${cap.fullName || cap.id}${isSelected ? ' (selected)' : ''}`}
-              className={`relative before:absolute before:-inset-1.5 before:content-[''] w-8 h-8 rounded-sm flex items-center justify-center text-xs font-bold transition-all ${
+              className={`relative before:absolute before:-inset-1.5 before:content-[''] w-8 h-8 rounded-none flex items-center justify-center text-xs font-bold transition-all ${
                 isCurrent
                   ? `${catColors.bg} ${catColors.border} border-2 ${catColors.text}`
                   : isSelected
@@ -105,10 +105,10 @@ export const GuidedCaptionSelection = ({
       </div>
 
       {/* Current caption info */}
-      <div className={`p-4 rounded-sm ${categoryInfo.bg} ${categoryInfo.border} border`}>
+      <div className={`p-4 rounded-none ${categoryInfo.bg} ${categoryInfo.border} border`}>
         <div className="flex items-center gap-3">
           <div
-            className={`w-10 h-10 rounded-sm flex items-center justify-center ${categoryInfo.bg}`}
+            className={`w-10 h-10 rounded-none flex items-center justify-center ${categoryInfo.bg}`}
           >
             <span className={`font-bold ${categoryInfo.text}`}>{currentCaption.id}</span>
           </div>
@@ -119,7 +119,7 @@ export const GuidedCaptionSelection = ({
         </div>
 
         {selectedCorps && (
-          <div className="mt-3 flex items-center justify-between p-2 bg-charcoal-900/50 rounded-sm">
+          <div className="mt-3 flex items-center justify-between p-2 bg-charcoal-900/50 rounded-none">
             <div className="flex items-center gap-2">
               <Check className="w-4 h-4 text-green-400" />
               <span className="text-sm text-white font-semibold">{selectedCorps.name}</span>
@@ -156,7 +156,7 @@ export const GuidedCaptionSelection = ({
                 transition={{ delay: idx * 0.03 }}
                 onClick={() => !disabled && handleSelect(corps)}
                 disabled={disabled}
-                className={`w-full flex items-center justify-between p-3 rounded-sm transition-all ${
+                className={`w-full flex items-center justify-between p-3 rounded-none transition-all ${
                   disabled
                     ? 'bg-charcoal-900/30 border border-charcoal-800 opacity-50 cursor-not-allowed'
                     : `bg-charcoal-800 border border-charcoal-700 hover:border-[#0057B8]/50 cursor-pointer`
@@ -170,7 +170,7 @@ export const GuidedCaptionSelection = ({
                   {isUsed && <span className="text-xs text-gray-500/60">(already used)</span>}
                 </div>
                 <div
-                  className={`px-2 py-1 rounded text-xs font-bold ${
+                  className={`px-2 py-1 rounded-none text-xs font-bold ${
                     wouldExceedBudget
                       ? 'bg-red-500/20 text-red-400'
                       : 'bg-yellow-500/20 text-yellow-400'

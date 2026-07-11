@@ -309,7 +309,7 @@ const EasternCombinedSheet = memo(({ shows, userCorpsName }) => {
                   <CaptionBreakdown captions={getCaptionBreakdown(row)} />
                 </div>
                 <span
-                  className={`flex-shrink-0 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-sm ${NIGHT_BADGE[row.night]}`}
+                  className={`flex-shrink-0 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-none ${NIGHT_BADGE[row.night]}`}
                 >
                   N{row.night}
                 </span>
@@ -588,7 +588,7 @@ const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
               key={sort.id}
               onClick={() => setSortBy(sort.id)}
               aria-pressed={sortBy === sort.id}
-              className={`px-2 py-1 text-[9px] font-bold uppercase tracking-wider rounded-sm transition-colors ${
+              className={`px-2 py-1 text-[9px] font-bold uppercase tracking-wider rounded-none transition-colors ${
                 sortBy === sort.id
                   ? 'bg-[#0057B8] text-white'
                   : 'bg-[#222] text-gray-500 hover:text-gray-300'

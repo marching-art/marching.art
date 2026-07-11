@@ -169,7 +169,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
         aria-labelledby="modal-title-uniform-design"
       >
         <div
-          className="w-full max-w-2xl bg-[#1a1a1a] border border-[#333] rounded-sm max-h-[90dvh] flex flex-col"
+          className="w-full max-w-2xl bg-[#1a1a1a] border border-[#333] rounded-none max-h-[90dvh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -203,7 +203,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                     <select
                       value={selectedCorpsClass}
                       onChange={(e) => setSelectedCorpsClass(e.target.value as CorpsClass)}
-                      className="w-full h-11 px-3 pr-10 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white focus:outline-none focus:border-[#0057B8] appearance-none cursor-pointer"
+                      className="w-full h-11 px-3 pr-10 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white focus:outline-none focus:border-[#0057B8] appearance-none cursor-pointer"
                     >
                       {allCorps.map((corps) => (
                         <option key={corps.classKey} value={corps.classKey}>
@@ -256,7 +256,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                       value={formData.primaryColor}
                       onChange={(e) => setFormData({ ...formData, primaryColor: e.target.value })}
                       maxLength={30}
-                      className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                      className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
                     />
                   </div>
 
@@ -271,7 +271,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                       value={formData.secondaryColor}
                       onChange={(e) => setFormData({ ...formData, secondaryColor: e.target.value })}
                       maxLength={30}
-                      className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                      className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
                     />
                   </div>
 
@@ -286,7 +286,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                       value={formData.accentColor || ''}
                       onChange={(e) => setFormData({ ...formData, accentColor: e.target.value })}
                       maxLength={30}
-                      className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                      className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
                     />
                   </div>
                 </div>
@@ -306,7 +306,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                           setFormData({ ...formData, accentColor: color });
                         }
                       }}
-                      className="px-2 py-0.5 text-[10px] bg-[#222] border border-[#333] text-gray-400 hover:text-white hover:border-[#0057B8] rounded-sm"
+                      className="px-2 py-0.5 text-[10px] bg-[#222] border border-[#333] text-gray-400 hover:text-white hover:border-[#0057B8] rounded-none"
                     >
                       {color}
                     </button>
@@ -334,7 +334,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                           style: e.target.value as CorpsUniformDesign['style'],
                         })
                       }
-                      className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white focus:outline-none focus:border-[#0057B8]"
+                      className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white focus:outline-none focus:border-[#0057B8]"
                     >
                       {UNIFORM_STYLES.map((style) => (
                         <option key={style.value} value={style.value}>
@@ -357,7 +357,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                           helmetStyle: e.target.value as CorpsUniformDesign['helmetStyle'],
                         })
                       }
-                      className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white focus:outline-none focus:border-[#0057B8]"
+                      className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white focus:outline-none focus:border-[#0057B8]"
                     >
                       {HELMET_STYLES.map((style) => (
                         <option key={style.value} value={style.value}>
@@ -382,7 +382,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                         setFormData({ ...formData, plumeDescription: e.target.value })
                       }
                       maxLength={100}
-                      className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                      className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
                     />
                   </div>
                 )}
@@ -408,7 +408,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                     value={formData.brassDescription || ''}
                     onChange={(e) => setFormData({ ...formData, brassDescription: e.target.value })}
                     maxLength={150}
-                    className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                    className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
                   />
                 </div>
 
@@ -425,7 +425,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                       setFormData({ ...formData, percussionDescription: e.target.value })
                     }
                     maxLength={150}
-                    className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                    className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
                   />
                 </div>
 
@@ -440,7 +440,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                     value={formData.guardDescription || ''}
                     onChange={(e) => setFormData({ ...formData, guardDescription: e.target.value })}
                     maxLength={150}
-                    className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                    className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
                   />
                 </div>
               </div>
@@ -463,7 +463,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                       value={formData.mascotOrEmblem || ''}
                       onChange={(e) => setFormData({ ...formData, mascotOrEmblem: e.target.value })}
                       maxLength={50}
-                      className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                      className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
                     />
                   </div>
 
@@ -480,7 +480,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                         setFormData({ ...formData, performanceStyle: e.target.value })
                       }
                       maxLength={50}
-                      className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                      className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
                     />
                   </div>
                 </div>
@@ -498,7 +498,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                       onChange={(e) => setKeywordInput(e.target.value)}
                       onKeyDown={handleKeywordKeyDown}
                       maxLength={20}
-                      className="flex-1 h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                      className="flex-1 h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
                     />
                     <button
                       type="button"
@@ -513,7 +513,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                       {formData.themeKeywords.map((keyword) => (
                         <span
                           key={keyword}
-                          className="px-2 py-1 text-xs bg-[#0057B8]/20 text-[#0057B8] border border-[#0057B8]/30 rounded-sm flex items-center gap-1"
+                          className="px-2 py-1 text-xs bg-[#0057B8]/20 text-[#0057B8] border border-[#0057B8]/30 rounded-none flex items-center gap-1"
                         >
                           {keyword}
                           <button
@@ -545,7 +545,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                         type="button"
                         onClick={() => setFormData({ ...formData, venuePreference: option.value })}
                         className={`
-                          px-4 py-2 text-xs font-bold uppercase tracking-wider border rounded-sm
+                          px-4 py-2 text-xs font-bold uppercase tracking-wider border rounded-none
                           ${
                             formData.venuePreference === option.value
                               ? 'bg-[#0057B8] border-[#0057B8] text-white'
@@ -575,7 +575,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                     value={formData.additionalNotes || ''}
                     onChange={(e) => setFormData({ ...formData, additionalNotes: e.target.value })}
                     maxLength={300}
-                    className="w-full h-24 px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] resize-none"
+                    className="w-full h-24 px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] resize-none"
                   />
                   <p className="text-[10px] text-gray-600 mt-1">
                     {(formData.additionalNotes || '').length}/300
@@ -603,7 +603,7 @@ const UniformDesignModal: React.FC<UniformDesignModalProps> = ({
                           type="checkbox"
                           checked={copyToClasses.includes(corps.classKey)}
                           onChange={() => toggleCopyToClass(corps.classKey)}
-                          className="w-4 h-4 bg-[#0a0a0a] border border-[#333] rounded-sm accent-[#0057B8]"
+                          className="w-4 h-4 bg-[#0a0a0a] border border-[#333] rounded-none accent-[#0057B8]"
                         />
                         <div className="flex-1">
                           <span className="text-sm text-white">{corps.corpsName}</span>

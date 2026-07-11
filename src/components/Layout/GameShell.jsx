@@ -51,7 +51,7 @@ const TopNav = () => {
       <div className="w-full h-full flex items-center px-4 lg:px-6">
         {/* Logo + Brand - OPTIMIZATION #7: Added eager loading for LCP */}
         <Link to="/dashboard" className="flex items-center gap-2.5 mr-4">
-          <div className="w-8 h-8 rounded-sm overflow-hidden">
+          <div className="w-8 h-8 rounded-none overflow-hidden">
             <img
               src="/logo192.svg"
               alt="marching.art"
@@ -83,7 +83,7 @@ const TopNav = () => {
           href="https://discord.gg/YvFRJ97A5H"
           target="_blank"
           rel="noopener noreferrer"
-          className="ml-2 p-2 text-gray-400 hover:text-[#5865F2] hover:bg-white/10 rounded-sm transition-colors"
+          className="ml-2 p-2 text-gray-400 hover:text-[#5865F2] hover:bg-white/10 rounded-none transition-colors"
           title="Join our Discord"
           aria-label="Join our Discord"
         >
@@ -93,7 +93,7 @@ const TopNav = () => {
         {/* Help Icon */}
         <Link
           to="/guide"
-          className="ml-1 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-sm transition-colors"
+          className="ml-1 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-none transition-colors"
           title="Game Guide"
         >
           <HelpCircle className="w-5 h-5" />
@@ -121,7 +121,7 @@ const NavItem = ({ to, icon: Icon, label }) => (
         <span>{label}</span>
         {/* Active indicator - bottom bar */}
         {isActive && (
-          <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-yellow-400 rounded-sm" />
+          <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-yellow-400 rounded-none" />
         )}
       </>
     )}
@@ -279,7 +279,7 @@ const TickerBar = () => {
         return (
           <>
             <div
-              className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-${colors.bg}-500/20 border border-${colors.bg}-500/30 rounded text-[11px] sm:text-[10px] font-bold uppercase tracking-wider`}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-${colors.bg}-500/20 border border-${colors.bg}-500/30 rounded-none text-[11px] sm:text-[10px] font-bold uppercase tracking-wider`}
             >
               <Trophy className={`w-3.5 h-3.5 sm:w-3 sm:h-3 text-${colors.text}-400`} />
               <span className={`text-${colors.text}-400 whitespace-nowrap`}>
@@ -309,7 +309,7 @@ const TickerBar = () => {
         // SoundSport medals
         return (
           <>
-            <div className="flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-purple-500/20 border border-purple-500/30 rounded text-[11px] sm:text-[10px] font-bold uppercase tracking-wider">
+            <div className="flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-purple-500/20 border border-purple-500/30 rounded-none text-[11px] sm:text-[10px] font-bold uppercase tracking-wider">
               <Trophy className="w-3.5 h-3.5 sm:w-3 sm:h-3 text-purple-400" />
               <span className="text-purple-400 whitespace-nowrap">SoundSport Medals</span>
             </div>
@@ -340,7 +340,7 @@ const TickerBar = () => {
         return (
           <>
             <div
-              className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-${colors.bg}-500/20 border border-${colors.bg}-500/30 rounded text-[11px] sm:text-[10px] font-bold uppercase tracking-wider`}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-${colors.bg}-500/20 border border-${colors.bg}-500/30 rounded-none text-[11px] sm:text-[10px] font-bold uppercase tracking-wider`}
             >
               <TrendingUp className={`w-3.5 h-3.5 sm:w-3 sm:h-3 text-${colors.text}-400`} />
               <span className={`text-${colors.text}-400 whitespace-nowrap`}>{label} Leaders</span>
@@ -381,7 +381,7 @@ const TickerBar = () => {
         // GE Caption Leaders (combined across all classes)
         return (
           <>
-            <div className="flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-amber-500/20 border border-amber-500/30 rounded text-[11px] sm:text-[10px] font-bold uppercase tracking-wider">
+            <div className="flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-amber-500/20 border border-amber-500/30 rounded-none text-[11px] sm:text-[10px] font-bold uppercase tracking-wider">
               <Sparkles className="w-3.5 h-3.5 sm:w-3 sm:h-3 text-amber-400" />
               <span className="text-amber-400 whitespace-nowrap">GE Leaders</span>
             </div>
@@ -410,7 +410,7 @@ const TickerBar = () => {
         // Visual Caption Leaders (combined across all classes)
         return (
           <>
-            <div className="flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-cyan-500/20 border border-cyan-500/30 rounded text-[11px] sm:text-[10px] font-bold uppercase tracking-wider">
+            <div className="flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-cyan-500/20 border border-cyan-500/30 rounded-none text-[11px] sm:text-[10px] font-bold uppercase tracking-wider">
               <Eye className="w-3.5 h-3.5 sm:w-3 sm:h-3 text-cyan-400" />
               <span className="text-cyan-400 whitespace-nowrap">Visual Leaders</span>
             </div>
@@ -439,7 +439,7 @@ const TickerBar = () => {
         // Music Caption Leaders (combined across all classes)
         return (
           <>
-            <div className="flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-pink-500/20 border border-pink-500/30 rounded text-[11px] sm:text-[10px] font-bold uppercase tracking-wider">
+            <div className="flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-pink-500/20 border border-pink-500/30 rounded-none text-[11px] sm:text-[10px] font-bold uppercase tracking-wider">
               <Music className="w-3.5 h-3.5 sm:w-3 sm:h-3 text-pink-400" />
               <span className="text-pink-400 whitespace-nowrap">Music Leaders</span>
             </div>
@@ -470,7 +470,7 @@ const TickerBar = () => {
           return (
             <>
               <div
-                className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-${colors.bg}-500/20 border border-${colors.bg}-500/30 rounded text-[11px] sm:text-[10px] font-bold uppercase tracking-wider`}
+                className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-${colors.bg}-500/20 border border-${colors.bg}-500/30 rounded-none text-[11px] sm:text-[10px] font-bold uppercase tracking-wider`}
               >
                 <TrendingUp className={`w-3.5 h-3.5 sm:w-3 sm:h-3 text-${colors.text}-400`} />
                 <span className={`text-${colors.text}-400 whitespace-nowrap`}>{label} Movers</span>
@@ -484,7 +484,7 @@ const TickerBar = () => {
         return (
           <>
             <div
-              className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-${colors.bg}-500/20 border border-${colors.bg}-500/30 rounded text-[11px] sm:text-[10px] font-bold uppercase tracking-wider`}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-${colors.bg}-500/20 border border-${colors.bg}-500/30 rounded-none text-[11px] sm:text-[10px] font-bold uppercase tracking-wider`}
             >
               <TrendingUp className={`w-3.5 h-3.5 sm:w-3 sm:h-3 text-${colors.text}-400`} />
               <span className={`text-${colors.text}-400 whitespace-nowrap`}>{label} Movers</span>

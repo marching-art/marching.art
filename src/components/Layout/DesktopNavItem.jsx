@@ -25,7 +25,7 @@ const DesktopNavItem = ({ to, icon: Icon, label, end = false }) => (
         />
         <span>{label}</span>
         {isActive && (
-          <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-yellow-400 rounded-sm" />
+          <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-yellow-400 rounded-none" />
         )}
       </>
     )}

@@ -74,7 +74,7 @@ const VersusCard = ({
         whileTap={{ scale: 0.99 }}
         onClick={onClick}
         className={`
-          p-3 rounded-sm cursor-pointer transition-all border
+          p-3 rounded-none cursor-pointer transition-all border
           ${
             isUserMatchup
               ? 'bg-purple-500/10 border-purple-500/30 hover:border-purple-500/50'
@@ -86,7 +86,7 @@ const VersusCard = ({
           {/* User 1 */}
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <div
-              className={`w-8 h-8 rounded-sm flex items-center justify-center text-sm font-bold ${
+              className={`w-8 h-8 rounded-none flex items-center justify-center text-sm font-bold ${
                 isUser1 ? 'bg-purple-500/20 text-purple-500' : 'bg-[#333] text-gray-400'
               }`}
             >
@@ -126,7 +126,7 @@ const VersusCard = ({
               {user2?.displayName || 'TBD'}
             </span>
             <div
-              className={`w-8 h-8 rounded-sm flex items-center justify-center text-sm font-bold ${
+              className={`w-8 h-8 rounded-none flex items-center justify-center text-sm font-bold ${
                 isUser2 ? 'bg-purple-500/20 text-purple-500' : 'bg-[#333] text-gray-400'
               }`}
             >
@@ -149,7 +149,7 @@ const VersusCard = ({
       whileTap={{ scale: 0.995 }}
       onClick={onClick}
       className={`
-        rounded-sm cursor-pointer transition-all overflow-hidden
+        rounded-none cursor-pointer transition-all overflow-hidden
         ${
           isRivalry
             ? 'bg-red-500/10 border-2 border-red-500/30 hover:border-red-500/50'
@@ -167,13 +167,13 @@ const VersusCard = ({
       >
         <div className="flex items-center gap-2">
           {isLive && (
-            <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-sm bg-red-500/20 text-red-500 text-xs font-bold">
+            <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-none bg-red-500/20 text-red-500 text-xs font-bold">
               <Radio className="w-3 h-3 animate-pulse" />
               LIVE
             </span>
           )}
           {isCompleted && (
-            <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-sm bg-[#333] text-gray-400 text-xs font-bold">
+            <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-none bg-[#333] text-gray-400 text-xs font-bold">
               <Trophy className="w-3 h-3" />
               FINAL
             </span>
@@ -182,7 +182,7 @@ const VersusCard = ({
             <span className="text-xs text-gray-500">Week {week} Matchup</span>
           )}
           {isRivalry && (
-            <span className="flex items-center gap-1 px-2 py-0.5 rounded-sm bg-red-500/20 text-red-500 text-xs font-bold">
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-none bg-red-500/20 text-red-500 text-xs font-bold">
               <Flame className="w-3 h-3" />
               RIVALRY
             </span>
@@ -199,7 +199,7 @@ const VersusCard = ({
             {/* Avatar */}
             <div
               className={`
-              w-14 h-14 mx-auto rounded-sm flex items-center justify-center mb-2 transition-all
+              w-14 h-14 mx-auto rounded-none flex items-center justify-center mb-2 transition-all
               ${
                 user1Won
                   ? 'bg-green-500/20 border-2 border-green-500/50 ring-2 ring-green-500/30'
@@ -219,7 +219,7 @@ const VersusCard = ({
                 {user1?.displayName?.charAt(0) || 'T'}
               </span>
               {user1Won && (
-                <div className="absolute -top-1 -right-1 w-5 h-5 rounded-sm bg-green-500 flex items-center justify-center">
+                <div className="absolute -top-1 -right-1 w-5 h-5 rounded-none bg-green-500 flex items-center justify-center">
                   <Crown className="w-3 h-3 text-black" />
                 </div>
               )}
@@ -264,7 +264,7 @@ const VersusCard = ({
           {/* VS Divider */}
           <div className="flex flex-col items-center">
             <div
-              className={`w-12 h-12 rounded-sm flex items-center justify-center ${
+              className={`w-12 h-12 rounded-none flex items-center justify-center ${
                 isRivalry
                   ? 'bg-red-500/20 border border-red-500/30'
                   : 'bg-[#222] border border-[#444]'
@@ -294,7 +294,7 @@ const VersusCard = ({
             {/* Avatar */}
             <div
               className={`
-              w-14 h-14 mx-auto rounded-sm flex items-center justify-center mb-2 relative transition-all
+              w-14 h-14 mx-auto rounded-none flex items-center justify-center mb-2 relative transition-all
               ${
                 user2Won
                   ? 'bg-green-500/20 border-2 border-green-500/50 ring-2 ring-green-500/30'
@@ -314,7 +314,7 @@ const VersusCard = ({
                 {user2?.displayName?.charAt(0) || 'T'}
               </span>
               {user2Won && (
-                <div className="absolute -top-1 -right-1 w-5 h-5 rounded-sm bg-green-500 flex items-center justify-center">
+                <div className="absolute -top-1 -right-1 w-5 h-5 rounded-none bg-green-500 flex items-center justify-center">
                   <Crown className="w-3 h-3 text-black" />
                 </div>
               )}
@@ -375,7 +375,7 @@ const VersusCard = ({
                 {(100 - winProbability).toFixed(0)}%
               </span>
             </div>
-            <div className="h-2 rounded-sm overflow-hidden flex bg-[#222]">
+            <div className="h-2 rounded-none overflow-hidden flex bg-[#222]">
               <m.div
                 initial={{ width: '50%' }}
                 animate={{ width: `${winProbability}%` }}

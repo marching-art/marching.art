@@ -462,7 +462,7 @@ const Scores = () => {
                                 haptic('medium');
                                 handleArchiveYearChange(year);
                               }}
-                              className={`px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide whitespace-nowrap rounded-sm border transition-all tabular-nums ${
+                              className={`px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide whitespace-nowrap rounded-none border transition-all tabular-nums ${
                                 selectedArchiveYear === year
                                   ? 'bg-yellow-500 text-black border-yellow-500'
                                   : 'bg-[#222] text-gray-300 border-[#444] hover:border-yellow-500/50 hover:text-white'
@@ -495,7 +495,7 @@ const Scores = () => {
                                   haptic('medium');
                                   handleArchiveSeasonChange(season.id);
                                 }}
-                                className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wide whitespace-nowrap rounded-sm border transition-all ${
+                                className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wide whitespace-nowrap rounded-none border transition-all ${
                                   selectedArchiveSeason === season.id
                                     ? 'bg-yellow-500 text-black border-yellow-500'
                                     : 'bg-[#222] text-gray-300 border-[#444] hover:border-yellow-500/50 hover:text-white'
@@ -532,7 +532,7 @@ const Scores = () => {
                               haptic('light');
                               setArchiveViewTab(tab.id);
                             }}
-                            className={`px-2.5 py-1.5 min-h-touch text-[10px] font-bold uppercase tracking-wider transition-all rounded-sm whitespace-nowrap flex-shrink-0 ${
+                            className={`px-2.5 py-1.5 min-h-touch text-[10px] font-bold uppercase tracking-wider transition-all rounded-none whitespace-nowrap flex-shrink-0 ${
                               archiveViewTab === tab.id
                                 ? 'bg-[#333] text-white'
                                 : 'text-gray-500 hover:text-gray-300'
@@ -661,7 +661,7 @@ const Scores = () => {
           aria-label={`Recap for ${formatEventName(selectedShow.eventName)}`}
         >
           <div className="absolute inset-0 bg-black/80" onClick={() => setSelectedShow(null)} />
-          <div className="relative w-full max-w-lg max-h-[80dvh] bg-[#1a1a1a] border border-[#333] sm:rounded-sm overflow-hidden flex flex-col">
+          <div className="relative w-full max-w-lg max-h-[80dvh] bg-[#1a1a1a] border border-[#333] sm:rounded-none overflow-hidden flex flex-col">
             {/* Modal Header */}
             <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between flex-shrink-0">
               <div>

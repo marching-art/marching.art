@@ -53,9 +53,9 @@ const WeeklyRecapCard = ({ leagueId, currentWeek, memberProfiles: _memberProfile
     return (
       <div className="bg-[#1a1a1a] border border-[#333] p-6">
         <div className="animate-pulse flex flex-col gap-3">
-          <div className="h-4 bg-[#333] rounded w-1/3" />
-          <div className="h-12 bg-[#333] rounded" />
-          <div className="h-12 bg-[#333] rounded" />
+          <div className="h-4 bg-[#333] rounded-none w-1/3" />
+          <div className="h-12 bg-[#333] rounded-none" />
+          <div className="h-12 bg-[#333] rounded-none" />
         </div>
       </div>
     );

@@ -300,7 +300,7 @@ const LiveScoresVerification = () => {
       {/* Header (mirrors ScoresSpreadsheet) */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-yellow-500/20 rounded-sm">
+          <div className="p-1.5 bg-yellow-500/20 rounded-none">
             <Table className="w-4 h-4 text-yellow-500" />
           </div>
           <div>
@@ -324,7 +324,7 @@ const LiveScoresVerification = () => {
           <button
             onClick={handleScrape}
             disabled={scraping}
-            className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-sm bg-amber-400 text-neutral-900 font-bold hover:bg-amber-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-none bg-amber-400 text-neutral-900 font-bold hover:bg-amber-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {scraping ? (
               <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -344,19 +344,19 @@ const LiveScoresVerification = () => {
       )}
 
       {events.length === 0 ? (
-        <div className="px-3 py-8 text-center text-sm text-gray-500 border border-white/20 rounded">
+        <div className="px-3 py-8 text-center text-sm text-gray-500 border border-white/20 rounded-none">
           No scraped scores found for {currentYear}.{' '}
           {isLiveSeason ? 'Use "Scrape DCI Scores Now" to pull the latest recap.' : ''}
         </div>
       ) : (
         <>
           {/* Tab Navigation (individual captions, then aggregates) */}
-          <div className="flex flex-wrap gap-0.5 p-0.5 bg-charcoal-900/50 rounded-sm">
+          <div className="flex flex-wrap gap-0.5 p-0.5 bg-charcoal-900/50 rounded-none">
             {INDIVIDUAL_CAPTIONS.map((caption) => (
               <button
                 key={caption}
                 onClick={() => setActiveTab(caption)}
-                className={`px-2 py-1 text-[10px] font-mono rounded transition-all ${
+                className={`px-2 py-1 text-[10px] font-mono rounded-none transition-all ${
                   activeTab === caption
                     ? 'bg-amber-400 text-neutral-900 font-bold'
                     : 'text-gray-400 hover:text-white hover:bg-charcoal-800'
@@ -370,7 +370,7 @@ const LiveScoresVerification = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-2 py-1 text-[10px] font-mono rounded transition-all ${
+                className={`px-2 py-1 text-[10px] font-mono rounded-none transition-all ${
                   activeTab === tab.id
                     ? 'bg-amber-400 text-neutral-900 font-bold'
                     : 'text-gray-400 hover:text-white hover:bg-charcoal-800'
@@ -386,7 +386,7 @@ const LiveScoresVerification = () => {
             <button
               onClick={handleScrollLeft}
               disabled={!canScrollLeft}
-              className={`p-1 rounded transition-all ${
+              className={`p-1 rounded-none transition-all ${
                 canScrollLeft
                   ? 'bg-charcoal-800 text-gray-300 hover:bg-charcoal-700'
                   : 'bg-charcoal-900/50 text-gray-500/30 cursor-not-allowed'
@@ -401,7 +401,7 @@ const LiveScoresVerification = () => {
             <button
               onClick={handleScrollRight}
               disabled={!canScrollRight}
-              className={`p-1 rounded transition-all ${
+              className={`p-1 rounded-none transition-all ${
                 canScrollRight
                   ? 'bg-charcoal-800 text-gray-300 hover:bg-charcoal-700'
                   : 'bg-charcoal-900/50 text-gray-500/30 cursor-not-allowed'
@@ -412,7 +412,7 @@ const LiveScoresVerification = () => {
           </div>
 
           {/* Spreadsheet Table */}
-          <div className="overflow-x-auto border border-white/20 rounded">
+          <div className="overflow-x-auto border border-white/20 rounded-none">
             <table className="w-full border-collapse text-[10px]">
               <thead>
                 <tr className="bg-charcoal-900/80 border-b border-white/20">
@@ -492,16 +492,16 @@ const LiveScoresVerification = () => {
           <div className="flex flex-wrap items-center gap-3 text-[9px] text-gray-500/60">
             <span className="font-mono">Heatmap:</span>
             <span className="flex items-center gap-0.5">
-              <span className="w-2.5 h-2.5 rounded-sm bg-green-900/30" /> 90%+
+              <span className="w-2.5 h-2.5 rounded-none bg-green-900/30" /> 90%+
             </span>
             <span className="flex items-center gap-0.5">
-              <span className="w-2.5 h-2.5 rounded-sm bg-green-900/20" /> 80-90%
+              <span className="w-2.5 h-2.5 rounded-none bg-green-900/20" /> 80-90%
             </span>
             <span className="flex items-center gap-0.5">
-              <span className="w-2.5 h-2.5 rounded-sm bg-yellow-900/20" /> 70-80%
+              <span className="w-2.5 h-2.5 rounded-none bg-yellow-900/20" /> 70-80%
             </span>
             <span className="flex items-center gap-0.5">
-              <span className="w-2.5 h-2.5 rounded-sm bg-red-900/20" /> &lt;50%
+              <span className="w-2.5 h-2.5 rounded-none bg-red-900/20" /> &lt;50%
             </span>
             <span className="font-mono ml-2">
               Column = competition day (same-day events merged);

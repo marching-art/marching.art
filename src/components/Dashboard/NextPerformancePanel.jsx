@@ -158,7 +158,7 @@ const NextPerformancePanel = ({
   const nextLive = nextCompetition && isShowLive(nextCompetition, now);
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
+    <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
       <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
         <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
           <CalendarClock className="w-3.5 h-3.5 text-[#F5A623]" />
@@ -236,7 +236,7 @@ const NextPerformancePanel = ({
       <div className="px-2 py-1.5 border-t border-[#333] bg-[#111]">
         <Link
           to="/schedule"
-          className="min-h-[40px] px-2 text-xs text-[#F5A623] hover:text-[#FFB84D] font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 rounded-sm"
+          className="min-h-[40px] px-2 text-xs text-[#F5A623] hover:text-[#FFB84D] font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 rounded-none"
         >
           Full Schedule
           <ChevronRight className="w-4 h-4" />

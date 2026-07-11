@@ -130,7 +130,7 @@ export const Modal: React.FC<ModalProps> = ({
       <div
         ref={modalRef}
         className={`
-          bg-[#1a1a1a] border-t sm:border border-[#333] rounded-t-xl sm:rounded-sm w-full
+          bg-[#1a1a1a] border-t sm:border border-[#333] rounded-none sm:rounded-none w-full
           overflow-hidden flex flex-col max-h-[85dvh] sm:max-h-[90dvh] safe-area-bottom
           transform transition-all duration-150
           ${sizeStyles[size]}
@@ -294,7 +294,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="min-h-touch px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white active:bg-white/5 transition-all press-feedback disabled:opacity-50 rounded-sm"
+            className="min-h-touch px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white active:bg-white/5 transition-all press-feedback disabled:opacity-50 rounded-none"
           >
             {cancelText}
           </button>
@@ -302,7 +302,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             onClick={onConfirm}
             disabled={isLoading}
             className={`
-              min-h-touch px-4 text-sm font-bold uppercase tracking-wider transition-all press-feedback-strong disabled:opacity-50 rounded-sm
+              min-h-touch px-4 text-sm font-bold uppercase tracking-wider transition-all press-feedback-strong disabled:opacity-50 rounded-none
               ${
                 variant === 'danger'
                   ? 'bg-red-600 text-white hover:bg-red-500 active:bg-red-700'

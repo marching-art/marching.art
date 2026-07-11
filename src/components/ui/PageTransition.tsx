@@ -175,7 +175,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
 }) => {
   const baseClass = 'skeleton';
   const variantClass =
-    variant === 'circular' ? 'rounded-sm' : variant === 'text' ? 'rounded' : 'rounded-sm';
+    variant === 'circular' ? 'rounded-none' : variant === 'text' ? 'rounded-none' : 'rounded-none';
 
   const style: React.CSSProperties = {
     width: width || (variant === 'text' ? '100%' : undefined),
@@ -204,7 +204,7 @@ export const SkeletonGroup: React.FC<SkeletonGroupProps> = ({ type, count = 1 })
       return (
         <div className="space-y-3">
           {items.map((i) => (
-            <div key={i} className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4">
+            <div key={i} className="bg-[#1a1a1a] border border-[#333] rounded-none p-4">
               <Skeleton height={20} width="60%" className="mb-3" />
               <Skeleton height={14} width="100%" className="mb-2" />
               <Skeleton height={14} width="80%" />

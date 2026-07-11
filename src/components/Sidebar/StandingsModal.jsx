@@ -19,7 +19,7 @@ const StandingsModal = ({ show, liveScores, displayDay, onClose, onYoutubeClick 
 
       {/* Modal Content */}
       <div
-        className="relative w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-sm max-h-[85dvh] flex flex-col"
+        className="relative w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-none max-h-[85dvh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -35,7 +35,7 @@ const StandingsModal = ({ show, liveScores, displayDay, onClose, onYoutubeClick 
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors"
+            className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-none transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -58,7 +58,7 @@ const StandingsModal = ({ show, liveScores, displayDay, onClose, onYoutubeClick 
                 >
                   <div className="flex items-center gap-3">
                     <span
-                      className={`w-6 h-6 flex items-center justify-center text-xs font-bold font-data tabular-nums rounded-sm ${
+                      className={`w-6 h-6 flex items-center justify-center text-xs font-bold font-data tabular-nums rounded-none ${
                         row.rank <= 3 ? 'bg-[#0057B8] text-white' : 'bg-[#222] text-gray-500'
                       }`}
                     >

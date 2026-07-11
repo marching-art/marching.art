@@ -252,7 +252,7 @@ function ReactionPickerWithDisplay({ counts, userReaction, onReact, reacting, di
       <button
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`flex items-center gap-2 px-3 py-2 rounded-sm border transition-all ${
+        className={`flex items-center gap-2 px-3 py-2 rounded-none border transition-all ${
           userReaction
             ? 'bg-[#0057B8]/20 border-[#0057B8]'
             : 'bg-[#1a1a1a] border-[#333] hover:border-[#444] hover:bg-[#222]'
@@ -288,7 +288,7 @@ function ReactionPickerWithDisplay({ counts, userReaction, onReact, reacting, di
       {/* Emoji picker popup */}
       {isOpen && (
         <div className="absolute left-0 bottom-full mb-2 z-50">
-          <div className="bg-[#222] border border-[#444] rounded-lg shadow-xl p-2 flex gap-1">
+          <div className="bg-[#222] border border-[#444] rounded-none shadow-xl p-2 flex gap-1">
             {REACTIONS.map((emoji) => {
               const count = counts[emoji] || 0;
               const isSelected = userReaction === emoji;
@@ -301,7 +301,7 @@ function ReactionPickerWithDisplay({ counts, userReaction, onReact, reacting, di
                   disabled={reacting}
                   title={`${REACTION_LABELS[emoji]}${count > 0 ? ` (${count})` : ''}`}
                   className={`
-                    w-10 h-10 flex flex-col items-center justify-center rounded-lg transition-all
+                    w-10 h-10 flex flex-col items-center justify-center rounded-none transition-all
                     ${isSelected ? 'bg-[#0057B8]/30 scale-110' : 'hover:bg-[#333] hover:scale-110'}
                     ${isReacting ? 'opacity-50' : ''}
                   `}

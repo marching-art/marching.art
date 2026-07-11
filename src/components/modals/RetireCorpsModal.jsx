@@ -35,7 +35,7 @@ const RetireCorpsModal = ({
         aria-labelledby="modal-title-retire-corps"
       >
         <div
-          className="w-full max-w-sm bg-[#1a1a1a] border border-[#333] rounded-sm"
+          className="w-full max-w-sm bg-[#1a1a1a] border border-[#333] rounded-none"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}

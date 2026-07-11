@@ -30,7 +30,7 @@ export const StepWelcome = ({ formData, setFormData, usernameStatus, onUsernameC
     className="space-y-5"
   >
     <div className="text-center mb-4">
-      <div className="inline-flex items-center justify-center w-16 h-16 bg-[#0057B8]/20 rounded-sm mb-4">
+      <div className="inline-flex items-center justify-center w-16 h-16 bg-[#0057B8]/20 rounded-none mb-4">
         <Star className="w-8 h-8 text-[#0057B8]" />
       </div>
       <h2 className="text-2xl font-bold text-white mb-2">Welcome to marching.art!</h2>
@@ -41,8 +41,8 @@ export const StepWelcome = ({ formData, setFormData, usernameStatus, onUsernameC
       {GAME_FEATURES.map((feature, idx) => {
         const Icon = feature.icon;
         return (
-          <div key={idx} className="flex items-start gap-3 p-3 rounded-sm bg-charcoal-800/50">
-            <div className="p-2 rounded-sm bg-[#0057B8]/20 flex-shrink-0">
+          <div key={idx} className="flex items-start gap-3 p-3 rounded-none bg-charcoal-800/50">
+            <div className="p-2 rounded-none bg-[#0057B8]/20 flex-shrink-0">
               <Icon className="w-4 h-4 text-[#0057B8]" />
             </div>
             <div>
@@ -62,7 +62,7 @@ export const StepWelcome = ({ formData, setFormData, usernameStatus, onUsernameC
         </label>
         <input
           type="text"
-          className="w-full h-12 px-4 bg-[#0a0a0a] border border-[#333] rounded-sm text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+          className="w-full h-12 px-4 bg-[#0a0a0a] border border-[#333] rounded-none text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
           name="name"
           autoComplete="name"
           placeholder="e.g., George Zingali"
@@ -81,7 +81,7 @@ export const StepWelcome = ({ formData, setFormData, usernameStatus, onUsernameC
         <div className="relative">
           <input
             type="text"
-            className={`w-full h-12 px-4 bg-[#0a0a0a] border border-[#333] rounded-sm text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] pr-10 ${
+            className={`w-full h-12 px-4 bg-[#0a0a0a] border border-[#333] rounded-none text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] pr-10 ${
               usernameStatus.valid === true
                 ? 'border-green-500/50 focus:border-green-500'
                 : usernameStatus.valid === false
@@ -124,7 +124,7 @@ export const StepWelcome = ({ formData, setFormData, usernameStatus, onUsernameC
       </div>
     </div>
 
-    <div className="p-3 rounded-sm bg-green-500/10 border border-green-500/20">
+    <div className="p-3 rounded-none bg-green-500/10 border border-green-500/20">
       <div className="flex items-center gap-2">
         <Zap className="w-4 h-4 text-green-400" />
         <p className="text-sm text-green-300">
@@ -144,7 +144,7 @@ export const StepCorps = ({ formData, setFormData }) => (
     className="space-y-6"
   >
     <div className="text-center mb-6">
-      <div className="inline-flex items-center justify-center w-16 h-16 bg-[#0057B8]/20 rounded-sm mb-4">
+      <div className="inline-flex items-center justify-center w-16 h-16 bg-[#0057B8]/20 rounded-none mb-4">
         <Flag className="w-8 h-8 text-[#0057B8]" />
       </div>
       <h2 className="text-2xl font-bold text-white mb-2">Create Your Corps</h2>
@@ -157,7 +157,7 @@ export const StepCorps = ({ formData, setFormData }) => (
       </label>
       <input
         type="text"
-        className="w-full h-12 px-4 bg-[#0a0a0a] border border-[#333] rounded-sm text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+        className="w-full h-12 px-4 bg-[#0a0a0a] border border-[#333] rounded-none text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
         name="corpsName"
         autoComplete="off"
         placeholder="e.g., The Cavaliers"
@@ -168,9 +168,9 @@ export const StepCorps = ({ formData, setFormData }) => (
       />
     </div>
 
-    <div className="p-4 rounded-sm bg-green-500/10 border border-green-500/20">
+    <div className="p-4 rounded-none bg-green-500/10 border border-green-500/20">
       <div className="flex items-center gap-3">
-        <div className="p-2 rounded-sm bg-green-500/20">
+        <div className="p-2 rounded-none bg-green-500/20">
           <Sparkles className="w-5 h-5 text-green-400" />
         </div>
         <div>
@@ -182,7 +182,7 @@ export const StepCorps = ({ formData, setFormData }) => (
       </div>
     </div>
 
-    <div className="p-4 bg-charcoal-800/50 rounded-sm">
+    <div className="p-4 bg-charcoal-800/50 rounded-none">
       <h4 className="font-semibold text-gray-200 mb-2">Next: Build Your Lineup</h4>
       <p className="text-xs text-gray-500">
         You'll pick historical corps performances to compete in 8 scoring captions. Think of it like
@@ -253,7 +253,7 @@ export const CelebrationModal = ({ show, displayName, corpsName, onComplete, onJ
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.9 }}
             onClick={onComplete}
-            className="px-8 py-4 bg-[#0057B8] text-white rounded-sm font-bold uppercase tracking-wide hover:bg-[#0066d6] transition-colors flex items-center gap-2 mx-auto"
+            className="px-8 py-4 bg-[#0057B8] text-white rounded-none font-bold uppercase tracking-wide hover:bg-[#0066d6] transition-colors flex items-center gap-2 mx-auto"
           >
             Go to Dashboard
             <ChevronRight className="w-5 h-5" />
@@ -266,7 +266,7 @@ export const CelebrationModal = ({ show, displayName, corpsName, onComplete, onJ
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 1.1 }}
               onClick={onJoinLeague}
-              className="mt-3 px-6 py-2.5 border border-[#0057B8]/50 text-[#0057B8] rounded-sm font-bold text-sm uppercase tracking-wide hover:bg-[#0057B8]/10 transition-colors mx-auto block"
+              className="mt-3 px-6 py-2.5 border border-[#0057B8]/50 text-[#0057B8] rounded-none font-bold text-sm uppercase tracking-wide hover:bg-[#0057B8]/10 transition-colors mx-auto block"
             >
               Join the Rookie Circuit — compete head-to-head weekly
             </m.button>

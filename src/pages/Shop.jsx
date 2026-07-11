@@ -50,7 +50,7 @@ const ItemPreview = ({ item }) => {
     return (
       <div className="h-14 flex items-center justify-center bg-[#0a0a0a] border border-[#2a2a2a]">
         <div
-          className={`w-9 h-9 rounded-sm bg-[#222] ${item.frameClass} flex items-center justify-center`}
+          className={`w-9 h-9 rounded-none bg-[#222] ${item.frameClass} flex items-center justify-center`}
         >
           <User className="w-4 h-4 text-gray-500" />
         </div>
@@ -59,7 +59,7 @@ const ItemPreview = ({ item }) => {
   }
   return (
     <div className="h-14 flex items-center justify-center bg-[#0a0a0a] border border-[#2a2a2a] p-2">
-      <div className={`w-full h-full rounded-sm ${item.swatchClass}`} />
+      <div className={`w-full h-full rounded-none ${item.swatchClass}`} />
     </div>
   );
 };

@@ -10,7 +10,7 @@ const LiveScoresBox = ({
   onShowStandings,
 }) => {
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
+    <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
       {/* Header */}
       <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
         <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
@@ -35,15 +35,15 @@ const LiveScoresBox = ({
             {[...Array(6)].map((_, idx) => (
               <div key={idx} className="flex items-center justify-between px-4 py-2">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-5 h-5 skeleton rounded-sm" />
+                  <div className="w-5 h-5 skeleton rounded-none" />
                   <div className="flex items-center gap-1.5">
-                    <div className="h-3 w-8 skeleton rounded-sm" />
-                    <div className="h-4 w-20 skeleton rounded-sm" />
+                    <div className="h-3 w-8 skeleton rounded-none" />
+                    <div className="h-4 w-20 skeleton rounded-none" />
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="h-4 w-14 skeleton rounded-sm" />
-                  <div className="h-4 w-10 skeleton rounded-sm" />
+                  <div className="h-4 w-14 skeleton rounded-none" />
+                  <div className="h-4 w-10 skeleton rounded-none" />
                 </div>
               </div>
             ))}
@@ -64,7 +64,7 @@ const LiveScoresBox = ({
                 }`}
               >
                 <div className="flex items-center gap-2.5">
-                  <span className="w-5 h-5 flex items-center justify-center bg-[#222] text-xs font-bold font-data text-gray-500 tabular-nums rounded-sm">
+                  <span className="w-5 h-5 flex items-center justify-center bg-[#222] text-xs font-bold font-data text-gray-500 tabular-nums rounded-none">
                     {row.rank}
                   </span>
                   <span className="text-sm text-white" title={`${row.sourceYear} ${row.corpsName}`}>
@@ -114,7 +114,7 @@ const LiveScoresBox = ({
       <div className="px-2 py-1.5 border-t border-[#333] bg-[#111]">
         <button
           onClick={onShowStandings}
-          className="min-h-[44px] px-2 text-xs text-[#0057B8] hover:text-[#0066d6] active:text-[#004a9e] font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 press-feedback rounded-sm"
+          className="min-h-[44px] px-2 text-xs text-[#0057B8] hover:text-[#0066d6] active:text-[#004a9e] font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 press-feedback rounded-none"
         >
           Full Standings
           <ChevronRight className="w-4 h-4" />

@@ -142,13 +142,13 @@ const UsernamePromptModal = () => {
         aria-labelledby="username-prompt-title"
       >
         <div
-          className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-lg overflow-hidden"
+          className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-none overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
           <div className="flex items-center px-5 py-4 border-b border-[#333] bg-[#222]">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-yellow-500/20">
+              <div className="p-2 rounded-none bg-yellow-500/20">
                 <AtSign className="w-5 h-5 text-yellow-400" />
               </div>
               <div>
@@ -174,7 +174,7 @@ const UsernamePromptModal = () => {
               <div className="relative">
                 <input
                   type="text"
-                  className={`w-full px-4 py-3 bg-charcoal-900 border rounded-lg text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 pr-10 ${
+                  className={`w-full px-4 py-3 bg-charcoal-900 border rounded-none text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 pr-10 ${
                     usernameStatus.valid === true
                       ? 'border-green-500/50'
                       : usernameStatus.valid === false
@@ -223,7 +223,7 @@ const UsernamePromptModal = () => {
             <button
               onClick={handleSubmit}
               disabled={usernameStatus.valid !== true || submitting}
-              className="w-full px-4 py-2.5 bg-yellow-500 text-charcoal-900 rounded-lg hover:bg-yellow-400 transition-colors text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full px-4 py-2.5 bg-yellow-500 text-charcoal-900 rounded-none hover:bg-yellow-400 transition-colors text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {submitting ? (
                 <>

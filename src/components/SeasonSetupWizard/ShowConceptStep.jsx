@@ -112,7 +112,7 @@ const ShowConceptStep = ({ localUserProfile, onContinue }) => {
   if (namedCorps.length === 0) return null;
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
+    <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
       <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
         <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-[#0057B8]" />
@@ -158,7 +158,7 @@ const ShowConceptStep = ({ localUserProfile, onContinue }) => {
             onChange={(e) => updateDraft({ showName: e.target.value })}
             placeholder={'e.g., "Beneath the Surface"'}
             maxLength={60}
-            className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+            className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
           />
         </div>
 

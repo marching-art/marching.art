@@ -353,7 +353,7 @@ const Article = () => {
                       {/* Share button */}
                       <button
                         onClick={handleShare}
-                        className="p-2 text-gray-500 hover:text-white hover:bg-white/10 transition-colors rounded-sm"
+                        className="p-2 text-gray-500 hover:text-white hover:bg-white/10 transition-colors rounded-none"
                         title="Share article"
                         aria-label="Share article"
                       >
@@ -368,7 +368,7 @@ const Article = () => {
                     {/* Comment count - scrolls to comments */}
                     <button
                       onClick={scrollToComments}
-                      className="flex items-center gap-1.5 px-2 py-1.5 text-gray-500 hover:text-white hover:bg-white/10 transition-colors rounded-sm"
+                      className="flex items-center gap-1.5 px-2 py-1.5 text-gray-500 hover:text-white hover:bg-white/10 transition-colors rounded-none"
                       title="Jump to comments"
                       aria-label="Jump to comments"
                     >

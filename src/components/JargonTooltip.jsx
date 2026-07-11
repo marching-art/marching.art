@@ -136,7 +136,7 @@ const JargonTooltip = ({ termKey, children, enabled = true, className = '' }) =>
               onMouseEnter={showTooltip}
               onMouseLeave={hideTooltip}
             >
-              <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-3 shadow-xl">
+              <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-3 shadow-xl">
                 <p className="text-xs font-bold text-[#0057B8] uppercase tracking-wider mb-1">
                   {definition.term}
                 </p>

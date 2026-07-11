@@ -122,7 +122,7 @@ const Register = () => {
             >
               {/* Logo & Title */}
               <div className="text-center mb-6">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl overflow-hidden mb-4 bg-[#1a1a1a] border border-[#333] aspect-avatar">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-none overflow-hidden mb-4 bg-[#1a1a1a] border border-[#333] aspect-avatar">
                   <img
                     src="/logo192.svg"
                     alt="marching.art"
@@ -141,7 +141,7 @@ const Register = () => {
                 <m.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg"
+                  className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-none"
                 >
                   <div className="flex items-start gap-3">
                     <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
@@ -165,7 +165,7 @@ const Register = () => {
                     <input
                       id="register-name"
                       type="text"
-                      className="w-full h-12 pl-11 pr-4 bg-[#0a0a0a] border border-[#333] rounded-sm text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
+                      className="w-full h-12 pl-11 pr-4 bg-[#0a0a0a] border border-[#333] rounded-none text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
                       placeholder="Your director name"
                       value={formData.displayName}
                       onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
@@ -189,7 +189,7 @@ const Register = () => {
                     <input
                       id="register-email"
                       type="email"
-                      className="w-full h-12 pl-11 pr-4 bg-[#0a0a0a] border border-[#333] rounded-sm text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
+                      className="w-full h-12 pl-11 pr-4 bg-[#0a0a0a] border border-[#333] rounded-none text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
                       placeholder="director@example.com"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -213,7 +213,7 @@ const Register = () => {
                     <input
                       id="register-password"
                       type={showPassword ? 'text' : 'password'}
-                      className="w-full h-12 pl-11 pr-12 bg-[#0a0a0a] border border-[#333] rounded-sm text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
+                      className="w-full h-12 pl-11 pr-12 bg-[#0a0a0a] border border-[#333] rounded-none text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
                       placeholder="Minimum 8 characters"
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -268,7 +268,7 @@ const Register = () => {
                   <input
                     type="checkbox"
                     id="terms"
-                    className="w-5 h-5 mt-0.5 rounded border-[#333] bg-[#0a0a0a] text-[#0057B8] focus:ring-[#0057B8] focus:ring-offset-0 flex-shrink-0"
+                    className="w-5 h-5 mt-0.5 rounded-none border-[#333] bg-[#0a0a0a] text-[#0057B8] focus:ring-[#0057B8] focus:ring-offset-0 flex-shrink-0"
                     checked={formData.acceptTerms}
                     onChange={(e) => setFormData({ ...formData, acceptTerms: e.target.checked })}
                   />
@@ -290,7 +290,7 @@ const Register = () => {
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  className="w-full h-14 bg-[#0057B8] text-white font-bold text-base uppercase tracking-wider flex items-center justify-center hover:bg-[#0066d6] active:bg-[#004a9e] transition-all duration-150 press-feedback-strong disabled:opacity-50 disabled:cursor-not-allowed rounded-sm mt-6"
+                  className="w-full h-14 bg-[#0057B8] text-white font-bold text-base uppercase tracking-wider flex items-center justify-center hover:bg-[#0066d6] active:bg-[#004a9e] transition-all duration-150 press-feedback-strong disabled:opacity-50 disabled:cursor-not-allowed rounded-none mt-6"
                   disabled={loading}
                 >
                   {loading ? (

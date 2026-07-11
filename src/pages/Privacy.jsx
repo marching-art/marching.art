@@ -24,7 +24,7 @@ const Privacy = () => {
           Back to Home
         </Link>
 
-        <div className="bg-[#1a1a1a] border border-[#333] rounded-2xl p-6 sm:p-8">
+        <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-6 sm:p-8">
           <h1 className="text-3xl font-bold text-gradient mb-6">Privacy Policy</h1>
 
           <p className="text-gray-400 text-sm mb-6">Last updated: January 2026</p>

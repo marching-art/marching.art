@@ -75,9 +75,9 @@ describe('Badge', () => {
   });
 
   describe('base styling', () => {
-    it('has rounded-sm class', () => {
+    it('has rounded-none class', () => {
       render(<Badge>Badge</Badge>);
-      expect(screen.getByText('Badge')).toHaveClass('rounded-sm');
+      expect(screen.getByText('Badge')).toHaveClass('rounded-none');
     });
 
     it('has border class', () => {

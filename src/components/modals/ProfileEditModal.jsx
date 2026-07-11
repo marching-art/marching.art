@@ -65,7 +65,7 @@ const Field = ({ label, hint, children, count }) => (
 const TextInput = (props) => (
   <input
     {...props}
-    className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+    className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
   />
 );
 
@@ -73,7 +73,7 @@ const TextArea = ({ rows = 3, ...props }) => (
   <textarea
     rows={rows}
     {...props}
-    className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] resize-none"
+    className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] resize-none"
   />
 );
 
@@ -225,7 +225,7 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
         aria-labelledby="modal-title-edit-profile"
       >
         <div
-          className="w-full sm:max-w-lg bg-[#1a1a1a] border-t sm:border border-[#333] rounded-t-xl sm:rounded-sm max-h-[92dvh] flex flex-col"
+          className="w-full sm:max-w-lg bg-[#1a1a1a] border-t sm:border border-[#333] rounded-none sm:rounded-none max-h-[92dvh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Drag handle - mobile only */}

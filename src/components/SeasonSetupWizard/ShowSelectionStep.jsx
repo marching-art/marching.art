@@ -140,7 +140,7 @@ const ShowSelectionStep = ({
 
   return (
     <>
-      <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
+      <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
         {/* Header with week info and registration count */}
         <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
           <div className="flex items-center justify-between">
@@ -166,7 +166,7 @@ const ShowSelectionStep = ({
           {/* Championship Week (Week 7) - Auto-enrollment message */}
           {currentWeek === 7 ? (
             <div className="text-center py-6">
-              <div className="w-16 h-16 mx-auto mb-4 bg-[#0057B8]/20 rounded-sm flex items-center justify-center">
+              <div className="w-16 h-16 mx-auto mb-4 bg-[#0057B8]/20 rounded-none flex items-center justify-center">
                 <Trophy className="w-8 h-8 text-[#0057B8]" />
               </div>
               <h3 className="text-lg font-bold text-white mb-2">
@@ -240,7 +240,7 @@ const ShowSelectionStep = ({
                     <div
                       className={`
                             flex-shrink-0 w-14 flex flex-col items-center justify-center
-                            py-2 px-1 rounded-sm border
+                            py-2 px-1 rounded-none border
                             ${
                               isPast
                                 ? 'bg-[#1a1a1a] border-[#333] text-gray-500'
@@ -271,7 +271,7 @@ const ShowSelectionStep = ({
                             key={`${show.eventName}-${idx}`}
                             onClick={() => !isPast && handleShowClick(show)}
                             className={`
-                                    bg-[#111] border rounded-sm overflow-hidden
+                                    bg-[#111] border rounded-none overflow-hidden
                                     ${isPast ? 'opacity-60 border-[#333]' : 'hover:border-[#444] cursor-pointer active:bg-[#1a1a1a] border-[#333]'}
                                     ${isRegistered && !isPast ? 'border-l-2 border-l-green-500' : ''}
                                   `}
@@ -292,16 +292,16 @@ const ShowSelectionStep = ({
 
                                 {/* Status Badge */}
                                 {isPast ? (
-                                  <span className="flex-shrink-0 px-1.5 py-0.5 text-[9px] font-bold uppercase bg-[#333] text-gray-400 rounded-sm">
+                                  <span className="flex-shrink-0 px-1.5 py-0.5 text-[9px] font-bold uppercase bg-[#333] text-gray-400 rounded-none">
                                     Done
                                   </span>
                                 ) : isRegistered ? (
-                                  <span className="flex-shrink-0 px-1.5 py-0.5 text-[9px] font-bold uppercase bg-green-500/10 text-green-400 rounded-sm flex items-center gap-0.5">
+                                  <span className="flex-shrink-0 px-1.5 py-0.5 text-[9px] font-bold uppercase bg-green-500/10 text-green-400 rounded-none flex items-center gap-0.5">
                                     <Check className="w-2.5 h-2.5" />
                                     Going
                                   </span>
                                 ) : (
-                                  <span className="flex-shrink-0 px-1.5 py-0.5 text-[9px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] rounded-sm">
+                                  <span className="flex-shrink-0 px-1.5 py-0.5 text-[9px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] rounded-none">
                                     Register
                                   </span>
                                 )}
@@ -319,7 +319,7 @@ const ShowSelectionStep = ({
                                     return (
                                       <span
                                         key={corpsClass}
-                                        className={`inline-flex items-center gap-0.5 px-1 py-0.5 text-[9px] font-bold uppercase rounded ${config.bgColor} ${config.color}`}
+                                        className={`inline-flex items-center gap-0.5 px-1 py-0.5 text-[9px] font-bold uppercase rounded-none ${config.bgColor} ${config.color}`}
                                       >
                                         <Check className="w-2 h-2" />
                                         {config.name}

@@ -57,7 +57,7 @@ const ClassUnlockModal = ({ unlockedClass, onSetup, onDecline }) => {
         aria-labelledby="modal-title-class-unlock"
       >
         <div
-          className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-sm"
+          className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-none"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}

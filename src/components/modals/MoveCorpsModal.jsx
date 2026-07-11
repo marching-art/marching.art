@@ -57,7 +57,7 @@ const MoveCorpsModal = ({
         aria-labelledby="modal-title-move-corps"
       >
         <div
-          className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-sm"
+          className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-none"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}

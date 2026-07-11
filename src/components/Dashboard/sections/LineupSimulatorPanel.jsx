@@ -194,7 +194,7 @@ const LineupSimulatorPanel = React.memo(
                 >
                   {/* Caption badge */}
                   <div
-                    className={`w-9 h-7 flex items-center justify-center text-[10px] font-bold flex-shrink-0 rounded-sm ${
+                    className={`w-9 h-7 flex items-center justify-center text-[10px] font-bold flex-shrink-0 rounded-none ${
                       isWeak
                         ? 'bg-red-500/20 text-red-400'
                         : (row.pct ?? 0) >= 80

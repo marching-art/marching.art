@@ -59,7 +59,7 @@ const StreakModal = ({ onClose, corpsCoin = 0 }) => {
         aria-labelledby="modal-title-streak"
       >
         <div
-          className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-sm flex flex-col"
+          className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-none flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}

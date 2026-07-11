@@ -186,7 +186,7 @@ const ArticleManagement = () => {
   return (
     <div className="space-y-4">
       {/* Header with search and refresh */}
-      <div className="bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden">
+      <div className="bg-[#1a1a1a] border border-[#333] rounded-none overflow-hidden">
         <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
           <div className="flex items-center gap-2">
             <FileText className="w-4 h-4 text-yellow-500" />
@@ -214,7 +214,7 @@ const ArticleManagement = () => {
               placeholder="Search articles by headline or summary..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-[#222] border border-[#333] rounded text-white text-sm focus:outline-none focus:border-[#0057B8]"
+              className="w-full pl-10 pr-4 py-2 bg-[#222] border border-[#333] rounded-none text-white text-sm focus:outline-none focus:border-[#0057B8]"
             />
           </div>
 
@@ -224,7 +224,7 @@ const ArticleManagement = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveFilter(tab.id)}
-                className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                className={`px-3 py-1.5 text-xs font-medium rounded-none transition-colors ${
                   activeFilter === tab.id
                     ? 'bg-[#0057B8] text-white'
                     : 'bg-[#222] text-gray-400 hover:text-white border border-[#333]'
@@ -240,7 +240,7 @@ const ArticleManagement = () => {
       {/* Articles list */}
       <div className="space-y-2">
         {filteredArticles.length === 0 ? (
-          <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-8 text-center">
+          <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-8 text-center">
             <FileText className="w-8 h-8 text-gray-600 mx-auto mb-2" />
             <p className="text-gray-500 text-sm">
               {searchTerm ? `No articles found matching "${searchTerm}"` : 'No articles found'}
@@ -265,7 +265,7 @@ const ArticleManagement = () => {
           <button
             onClick={handleLoadMore}
             disabled={loadingMore}
-            className="w-full py-3 bg-[#1a1a1a] border border-[#333] rounded-sm text-gray-400 hover:text-white hover:bg-[#222] transition-colors flex items-center justify-center gap-2"
+            className="w-full py-3 bg-[#1a1a1a] border border-[#333] rounded-none text-gray-400 hover:text-white hover:bg-[#222] transition-colors flex items-center justify-center gap-2"
           >
             {loadingMore ? (
               <>

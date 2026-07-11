@@ -65,13 +65,13 @@ export const BattleScoreHeader = ({
       {(isClutch || isBlowout) && (
         <div className="flex justify-center">
           {isClutch && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-yellow-500/20 text-yellow-400 text-xs font-bold">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-none bg-yellow-500/20 text-yellow-400 text-xs font-bold">
               <Flame className="w-3 h-3" />
               CLUTCH
             </span>
           )}
           {isBlowout && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-red-500/20 text-red-400 text-xs font-bold">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-none bg-red-500/20 text-red-400 text-xs font-bold">
               <Zap className="w-3 h-3" />
               BLOWOUT
             </span>
@@ -127,17 +127,17 @@ const BattleRow = ({
           {typeof homeValue === 'number' ? homeValue.toFixed(1) : homeValue}
         </span>
         {homeWins && (
-          <div className="w-5 h-5 rounded-sm bg-green-500/20 flex items-center justify-center">
+          <div className="w-5 h-5 rounded-none bg-green-500/20 flex items-center justify-center">
             <Check className="w-3 h-3 text-green-400" />
           </div>
         )}
         {!homeWins && !isTie && (
-          <div className="w-5 h-5 rounded-sm bg-red-500/10 flex items-center justify-center">
+          <div className="w-5 h-5 rounded-none bg-red-500/10 flex items-center justify-center">
             <X className="w-3 h-3 text-red-400/50" />
           </div>
         )}
         {isTie && (
-          <div className="w-5 h-5 rounded-sm bg-yellow-500/10 flex items-center justify-center">
+          <div className="w-5 h-5 rounded-none bg-yellow-500/10 flex items-center justify-center">
             <Minus className="w-3 h-3 text-yellow-400/50" />
           </div>
         )}
@@ -156,17 +156,17 @@ const BattleRow = ({
         }`}
       >
         {awayWins && (
-          <div className="w-5 h-5 rounded-sm bg-green-500/20 flex items-center justify-center">
+          <div className="w-5 h-5 rounded-none bg-green-500/20 flex items-center justify-center">
             <Check className="w-3 h-3 text-green-400" />
           </div>
         )}
         {!awayWins && !isTie && (
-          <div className="w-5 h-5 rounded-sm bg-red-500/10 flex items-center justify-center">
+          <div className="w-5 h-5 rounded-none bg-red-500/10 flex items-center justify-center">
             <X className="w-3 h-3 text-red-400/50" />
           </div>
         )}
         {isTie && (
-          <div className="w-5 h-5 rounded-sm bg-yellow-500/10 flex items-center justify-center">
+          <div className="w-5 h-5 rounded-none bg-yellow-500/10 flex items-center justify-center">
             <Minus className="w-3 h-3 text-yellow-400/50" />
           </div>
         )}
@@ -192,7 +192,7 @@ export const CaptionBattlesSection = ({
   awayUserId,
 }) => {
   return (
-    <div className="glass rounded-sm overflow-hidden">
+    <div className="glass rounded-none overflow-hidden">
       <div className="p-3 border-b border-white/10 bg-charcoal-900/50">
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-bold text-white flex items-center gap-2">
@@ -253,7 +253,7 @@ export const SpecialBattlesSection = ({
   ];
 
   return (
-    <div className="glass rounded-sm overflow-hidden">
+    <div className="glass rounded-none overflow-hidden">
       <div className="p-3 border-b border-white/10 bg-charcoal-900/50">
         <h3 className="text-xs font-bold text-white flex items-center gap-2">
           <Award className="w-3.5 h-3.5 text-yellow-400" />
@@ -301,7 +301,7 @@ export const BattleSummaryBar = ({
         <span className="text-gray-500/40">of {maxPoints} possible</span>
         <span className="text-gray-500/60">{awayBattlePoints} pts</span>
       </div>
-      <div className="flex h-3 rounded-sm overflow-hidden bg-charcoal-800">
+      <div className="flex h-3 rounded-none overflow-hidden bg-charcoal-800">
         <m.div
           initial={{ width: 0 }}
           animate={{ width: `${homePercent}%` }}
@@ -326,7 +326,7 @@ export const BattleSummaryBar = ({
 const BattleBreakdown = ({ battleBreakdown, homeDisplayName, awayDisplayName, currentUserId }) => {
   if (!battleBreakdown) {
     return (
-      <div className="glass rounded-sm p-8 text-center">
+      <div className="glass rounded-none p-8 text-center">
         <Target className="w-8 h-8 text-gray-500/30 mx-auto mb-2" />
         <p className="text-sm text-gray-500/40">Battle data not available</p>
       </div>
@@ -351,7 +351,7 @@ const BattleBreakdown = ({ battleBreakdown, homeDisplayName, awayDisplayName, cu
   return (
     <m.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
       {/* Main Battle Score */}
-      <div className="glass rounded-sm p-4">
+      <div className="glass rounded-none p-4">
         <BattleScoreHeader
           homeBattlePoints={homeBattlePoints}
           awayBattlePoints={awayBattlePoints}
@@ -392,7 +392,7 @@ const BattleBreakdown = ({ battleBreakdown, homeDisplayName, awayDisplayName, cu
       />
 
       {/* Legend */}
-      <div className="glass rounded-sm p-3">
+      <div className="glass rounded-none p-3">
         <p className="text-[10px] text-gray-500/40 text-center">
           Win 6+ battle points to win the matchup. Caption battles (8 pts) + Total Score (1 pt) +
           High Single (1 pt) + Momentum (1 pt) = 11 max

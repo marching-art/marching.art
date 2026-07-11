@@ -20,7 +20,7 @@ const YouTubeModal = ({ videoModal, onClose, onRetry }) => {
 
       {/* Modal Content - 720p aspect ratio (1280x720) */}
       <div
-        className="relative w-full max-w-4xl bg-[#0A0A0A] border border-[#333] rounded-sm"
+        className="relative w-full max-w-4xl bg-[#0A0A0A] border border-[#333] rounded-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -30,7 +30,7 @@ const YouTubeModal = ({ videoModal, onClose, onRetry }) => {
           </h2>
           <button
             onClick={onClose}
-            className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors flex-shrink-0 ml-2"
+            className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-none transition-colors flex-shrink-0 ml-2"
           >
             <X className="w-5 h-5" />
           </button>
@@ -51,7 +51,7 @@ const YouTubeModal = ({ videoModal, onClose, onRetry }) => {
                 href={`https://www.youtube.com/results?search_query=${encodeURIComponent(videoModal.searchQuery)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-xs font-bold uppercase tracking-wider rounded transition-colors"
+                className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-xs font-bold uppercase tracking-wider rounded-none transition-colors"
               >
                 Search on YouTube
               </a>

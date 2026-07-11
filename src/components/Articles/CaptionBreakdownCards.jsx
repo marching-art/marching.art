@@ -46,9 +46,9 @@ function BreakdownCard({ type, content }) {
   const Icon = config.icon;
 
   return (
-    <div className={`${config.bgClass} border ${config.borderClass} p-4 rounded-sm`}>
+    <div className={`${config.bgClass} border ${config.borderClass} p-4 rounded-none`}>
       <div className="flex items-start gap-3">
-        <div className={`p-2 ${config.bgClass} rounded-sm`}>
+        <div className={`p-2 ${config.bgClass} rounded-none`}>
           <Icon className={`w-5 h-5 ${config.iconClass}`} />
         </div>
         <div className="flex-1 min-w-0">

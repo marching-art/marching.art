@@ -161,13 +161,13 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
         exit={{ opacity: 0, scale: 0.9 }}
         style={tooltipPosition}
         onClick={(e) => e.stopPropagation()}
-        className="fixed z-50 w-80 bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden"
+        className="fixed z-50 w-80 bg-[#1a1a1a] border border-[#333] rounded-none overflow-hidden"
       >
         {/* Header */}
         <div className="p-4 bg-[#222] border-b border-[#333]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-sm bg-[#0057B8]/20 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-none bg-[#0057B8]/20 flex items-center justify-center">
                 <Icon className="w-5 h-5 text-[#0057B8]" />
               </div>
               <div>
@@ -179,7 +179,7 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
             </div>
             <button
               onClick={handleSkip}
-              className="p-1.5 hover:bg-white/10 rounded-sm transition-colors"
+              className="p-1.5 hover:bg-white/10 rounded-none transition-colors"
             >
               <X className="w-4 h-4 text-gray-400" />
             </button>
@@ -197,7 +197,7 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
             {TOUR_STEPS.map((_, idx) => (
               <div
                 key={idx}
-                className={`w-2 h-2 rounded-sm transition-colors ${
+                className={`w-2 h-2 rounded-none transition-colors ${
                   idx === currentStep
                     ? 'bg-[#0057B8]'
                     : idx < currentStep
@@ -220,7 +220,7 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
             )}
             <button
               onClick={handleNext}
-              className="flex items-center gap-1 px-4 py-1.5 bg-[#0057B8] text-white rounded-sm text-sm font-bold hover:bg-[#0066d6] transition-colors"
+              className="flex items-center gap-1 px-4 py-1.5 bg-[#0057B8] text-white rounded-none text-sm font-bold hover:bg-[#0066d6] transition-colors"
             >
               {currentStep < TOUR_STEPS.length - 1 ? (
                 <>

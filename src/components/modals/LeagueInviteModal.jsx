@@ -92,7 +92,7 @@ const LeagueInviteModal = ({ inviterUid, inviteeUid, inviteeName, onClose }) => 
         aria-labelledby="modal-title-league-invite"
       >
         <div
-          className="w-full sm:max-w-md bg-[#1a1a1a] border-t sm:border border-[#333] rounded-t-xl sm:rounded-sm max-h-[85dvh] flex flex-col"
+          className="w-full sm:max-w-md bg-[#1a1a1a] border-t sm:border border-[#333] rounded-none sm:rounded-none max-h-[85dvh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="sm:hidden flex justify-center py-2">
@@ -202,7 +202,7 @@ const LeagueInviteModal = ({ inviterUid, inviteeUid, inviteeName, onClose }) => 
                       onChange={(e) => setMessage(e.target.value.slice(0, 280))}
                       rows={3}
                       placeholder="Why do you want them in your league?"
-                      className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] resize-none"
+                      className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] resize-none"
                     />
                   </div>
                 </>

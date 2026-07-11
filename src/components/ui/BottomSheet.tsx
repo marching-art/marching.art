@@ -165,7 +165,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             className={`
               fixed bottom-0 left-0 right-0 z-[101]
               bg-[#1a1a1a] border-t border-[#333]
-              rounded-t-sm overflow-hidden
+              rounded-none overflow-hidden
               focus:outline-none
               safe-area-bottom
               flex flex-col
@@ -179,7 +179,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
                 className="flex justify-center py-3 cursor-grab active:cursor-grabbing touch-none flex-shrink-0"
                 onPointerDown={startDrag}
               >
-                <div className="w-10 h-1 bg-gray-600 rounded-sm" />
+                <div className="w-10 h-1 bg-gray-600 rounded-none" />
               </div>
             )}
 

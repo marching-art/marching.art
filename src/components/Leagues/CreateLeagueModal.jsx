@@ -105,7 +105,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
       >
         <div className="w-full max-w-md my-auto" onClick={(e) => e.stopPropagation()}>
           {step === 'create' ? (
-            <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
+            <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
               {/* Header */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
                 <div className="flex items-center gap-2">
@@ -138,7 +138,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
                       required
                       maxLength={40}
                       autoFocus
-                      className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                      className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
                     />
                   </div>
 
@@ -227,7 +227,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
                       onChange={(e) =>
                         setFormData({ ...formData, maxMembers: parseInt(e.target.value) })
                       }
-                      className="w-full h-2 bg-[#333] rounded-sm appearance-none cursor-pointer accent-[#0057B8]"
+                      className="w-full h-2 bg-[#333] rounded-none appearance-none cursor-pointer accent-[#0057B8]"
                     />
                     <div className="flex justify-between text-[10px] text-gray-600 mt-1">
                       <span>4</span>
@@ -258,7 +258,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
               </form>
             </div>
           ) : (
-            <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
+            <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
               {/* Header */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
                 <h2 className="text-xs font-bold uppercase tracking-wider text-green-400 flex items-center gap-2">

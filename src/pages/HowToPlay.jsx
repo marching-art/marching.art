@@ -62,13 +62,13 @@ const SectionCard = ({ title, icon: Icon, children, defaultOpen = false }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="bg-[#111] border border-white/10 rounded-sm overflow-hidden">
+    <div className="bg-[#111] border border-white/10 rounded-none overflow-hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/5 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-[#0057B8]/20 rounded-sm flex items-center justify-center">
+          <div className="w-8 h-8 bg-[#0057B8]/20 rounded-none flex items-center justify-center">
             <Icon className="w-4 h-4 text-[#0057B8]" />
           </div>
           <span className="text-sm font-bold text-white">{title}</span>
@@ -98,7 +98,7 @@ const DataRow = ({ label, value, accent = false }) => (
 const BasicsTab = () => (
   <div className="space-y-4">
     {/* Quick Start */}
-    <div className="bg-[#0057B8]/10 border border-[#0057B8]/30 rounded-sm p-4">
+    <div className="bg-[#0057B8]/10 border border-[#0057B8]/30 rounded-none p-4">
       <h3 className="text-xs font-bold uppercase tracking-wider text-[#0057B8] mb-3">
         Quick Start
       </h3>
@@ -144,7 +144,7 @@ const BasicsTab = () => (
       <p className="mb-3">
         Your corps score = sum of 8 caption scores from your selected historical performances.
       </p>
-      <div className="bg-black/30 rounded-sm p-3">
+      <div className="bg-black/30 rounded-none p-3">
         <DataRow label="Live Season" value="Real DCI scores" />
         <DataRow label="Off-Season" value="Historical data" />
         <DataRow label="Captions per lineup" value="8" accent />
@@ -160,7 +160,7 @@ const BasicsTab = () => (
       </p>
       <div className="space-y-1.5 mb-4">
         {PROGRESSION_AXES.map((axis) => (
-          <div key={axis.id} className="bg-black/30 rounded-sm p-2">
+          <div key={axis.id} className="bg-black/30 rounded-none p-2">
             <p className="text-xs font-bold text-gray-300">{axis.label}</p>
             <p className="text-[11px] text-gray-500">{axis.meaning}</p>
             <p className="text-[11px] text-gray-400 mt-0.5">
@@ -173,7 +173,7 @@ const BasicsTab = () => (
         Every {XP_PER_LEVEL.toLocaleString()} XP is one director level. Levels never reset, and each
         one brings a new title on the ladder from Rookie to Eternal. Here is every way to earn XP:
       </p>
-      <div className="bg-black/30 rounded-sm p-3 mb-3">
+      <div className="bg-black/30 rounded-none p-3 mb-3">
         {XP_SOURCE_GUIDE.map((source) => (
           <DataRow
             key={source.id}
@@ -188,7 +188,7 @@ const BasicsTab = () => (
       </p>
       <div className="space-y-1.5">
         {UNLOCK_PATH_GUIDE.map((path) => (
-          <div key={path.id} className="bg-black/30 rounded-sm p-2">
+          <div key={path.id} className="bg-black/30 rounded-none p-2">
             <p className="text-xs font-bold text-gray-300">{path.label}</p>
             <p className="text-[11px] text-gray-500">{path.detail}</p>
           </div>
@@ -201,7 +201,7 @@ const BasicsTab = () => (
       <p className="mb-3">
         Earn CorpsCoin (CC) through gameplay. Spend on class unlocks and streak protection.
       </p>
-      <div className="bg-black/30 rounded-sm p-3">
+      <div className="bg-black/30 rounded-none p-3">
         <DataRow label="A Class unlock" value="1,000 CC" />
         <DataRow label="Open Class unlock" value="2,500 CC" />
         <DataRow label="World Class unlock" value="5,000 CC" />
@@ -241,7 +241,7 @@ const ClassesTab = () => (
       {CLASSES.map((cls) => (
         <div
           key={cls.id}
-          className={`bg-[#111] border rounded-sm p-4 ${
+          className={`bg-[#111] border rounded-none p-4 ${
             cls.color === 'green'
               ? 'border-green-500/30'
               : cls.color === 'blue'
@@ -267,7 +267,7 @@ const ClassesTab = () => (
               <span className="text-sm font-bold text-white">{cls.name}</span>
             </div>
             <span
-              className={`text-xs px-2 py-0.5 rounded-sm ${
+              className={`text-xs px-2 py-0.5 rounded-none ${
                 cls.color === 'green'
                   ? 'bg-green-500/20 text-green-400'
                   : cls.color === 'blue'
@@ -289,7 +289,7 @@ const ClassesTab = () => (
       ))}
     </div>
 
-    <div className="bg-[#0057B8]/10 border border-[#0057B8]/30 rounded-sm p-3">
+    <div className="bg-[#0057B8]/10 border border-[#0057B8]/30 rounded-none p-3">
       <p className="text-xs text-gray-300">
         <strong className="text-white">Tip:</strong> Unlock by completing seasons, by level, or with
         CorpsCoin. A Class = 1 season, Lvl 3, or 1,000 CC. Open = 2 seasons, Lvl 5, or 2,500 CC.
@@ -309,7 +309,7 @@ const CaptionsTab = () => (
     {/* Caption Grid */}
     <div className="grid grid-cols-2 gap-2">
       {CAPTIONS.map((cap) => (
-        <div key={cap.abbr} className="bg-[#111] border border-white/10 rounded-sm p-3">
+        <div key={cap.abbr} className="bg-[#111] border border-white/10 rounded-none p-3">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-bold text-[#0057B8]">{cap.abbr}</span>
             <span className="text-xs text-white">{cap.name}</span>
@@ -325,7 +325,7 @@ const CaptionsTab = () => (
         Each caption costs 1-25 points based on historical performance. Stay within your class
         budget!
       </p>
-      <div className="bg-black/30 rounded-sm p-3">
+      <div className="bg-black/30 rounded-none p-3">
         <DataRow label="Min caption cost" value="1 pt" />
         <DataRow label="Max caption cost" value="25 pts" />
         <DataRow label="Captions per lineup" value="8" accent />
@@ -334,7 +334,7 @@ const CaptionsTab = () => (
 
     {/* Change Rules */}
     <SectionCard title="Lineup Change Rules" icon={Calendar}>
-      <div className="bg-black/30 rounded-sm p-3">
+      <div className="bg-black/30 rounded-none p-3">
         <DataRow label="Days 1-14" value="Unlimited" accent />
         <DataRow label="Weeks 3-6 (Days 15-42)" value="3 per week" />
         <DataRow label="Days 43-44" value="Closed" />
@@ -356,7 +356,7 @@ const SeasonsTab = () => (
     </p>
 
     {/* Live Season */}
-    <div className="bg-[#111] border border-[#0057B8]/30 rounded-sm p-4">
+    <div className="bg-[#111] border border-[#0057B8]/30 rounded-none p-4">
       <div className="flex items-center gap-2 mb-2">
         <Calendar className="w-4 h-4 text-[#0057B8]" />
         <span className="text-sm font-bold text-white">Live Season</span>
@@ -365,14 +365,14 @@ const SeasonsTab = () => (
       <p className="text-xs text-gray-400 mb-3">
         Runs alongside real DCI. Scores based on actual competition results.
       </p>
-      <div className="bg-black/30 rounded-sm p-2">
+      <div className="bg-black/30 rounded-none p-2">
         <DataRow label="Duration" value="~10 weeks" />
         <DataRow label="Ends" value="DCI Finals (Aug)" />
       </div>
     </div>
 
     {/* Off-Season */}
-    <div className="bg-[#111] border border-purple-500/30 rounded-sm p-4">
+    <div className="bg-[#111] border border-purple-500/30 rounded-none p-4">
       <div className="flex items-center gap-2 mb-2">
         <Clock className="w-4 h-4 text-purple-500" />
         <span className="text-sm font-bold text-white">Off-Season</span>
@@ -381,13 +381,13 @@ const SeasonsTab = () => (
       <p className="text-xs text-gray-400 mb-3">
         Uses historical DCI data. Six 7-week periods with 49-show schedule.
       </p>
-      <div className="bg-black/30 rounded-sm p-2">
+      <div className="bg-black/30 rounded-none p-2">
         <DataRow label="Duration" value="~42 weeks" />
         <DataRow label="Structure" value="6 × 7-week periods" />
       </div>
     </div>
 
-    <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-sm p-3">
+    <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-none p-3">
       <p className="text-xs text-gray-300">
         <strong className="text-white">Season End:</strong> Leaderboards reset, XP/level/classes
         carry over.
@@ -400,7 +400,7 @@ const GlossaryTab = () => (
   <div className="space-y-2">
     <p className="text-sm text-gray-300 mb-4">New to drum corps? Key terms explained.</p>
     {GLOSSARY.map((item) => (
-      <div key={item.term} className="bg-[#111] border border-white/10 rounded-sm p-3">
+      <div key={item.term} className="bg-[#111] border border-white/10 rounded-none p-3">
         <span className="text-xs font-bold text-[#0057B8]">{item.term}</span>
         <p className="text-xs text-gray-400 mt-1">{item.def}</p>
       </div>
@@ -466,7 +466,7 @@ const SearchResults = ({ query, onNavigate }) => {
         <button
           key={`${result.tabId}-${result.title}`}
           onClick={() => onNavigate(result.tabId)}
-          className="w-full text-left bg-[#111] border border-white/10 rounded-sm px-4 py-3 hover:bg-white/5 active:bg-white/5 transition-colors"
+          className="w-full text-left bg-[#111] border border-white/10 rounded-none px-4 py-3 hover:bg-white/5 active:bg-white/5 transition-colors"
         >
           <span className="text-[10px] font-bold uppercase tracking-wider text-[#0057B8]">
             {result.section}
@@ -512,7 +512,7 @@ const HowToPlay = () => {
       {/* Header */}
       <div className="flex-shrink-0 px-4 py-3 border-b border-white/10">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 bg-[#0057B8]/20 rounded-sm flex items-center justify-center">
+          <div className="w-8 h-8 bg-[#0057B8]/20 rounded-none flex items-center justify-center">
             <Book className="w-4 h-4 text-[#0057B8]" />
           </div>
           <div>
@@ -531,7 +531,7 @@ const HowToPlay = () => {
             aria-label="Search the game guide"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-11 pl-9 pr-3 bg-black/30 border border-white/10 rounded-sm text-base text-white placeholder-gray-500 focus:outline-none focus:border-[#0057B8]/50"
+            className="w-full h-11 pl-9 pr-3 bg-black/30 border border-white/10 rounded-none text-base text-white placeholder-gray-500 focus:outline-none focus:border-[#0057B8]/50"
           />
         </div>
       </div>

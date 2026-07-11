@@ -84,7 +84,7 @@ const ShowConceptModal = ({ onClose, corpsClass, corpsName, currentConcept }) =>
         aria-labelledby="modal-title-show-concept"
       >
         <div
-          className="w-full max-w-lg max-h-[85dvh] bg-[#1a1a1a] border border-[#333] rounded-sm flex flex-col"
+          className="w-full max-w-lg max-h-[85dvh] bg-[#1a1a1a] border border-[#333] rounded-none flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -124,7 +124,7 @@ const ShowConceptModal = ({ onClose, corpsClass, corpsName, currentConcept }) =>
                 onChange={(e) => setShowName(e.target.value)}
                 placeholder={'e.g., "Beneath the Surface"'}
                 maxLength={60}
-                className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
               />
               <p className="text-[10px] text-gray-600 mt-1">
                 The name of this season&apos;s program — it appears in recaps and press coverage.

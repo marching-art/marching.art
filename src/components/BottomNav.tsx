@@ -88,14 +88,14 @@ const BottomNav: React.FC = () => {
                 {active && (
                   <m.div
                     layoutId="bottomNavActive"
-                    className="absolute inset-0 bg-yellow-500/10 rounded-sm"
+                    className="absolute inset-0 bg-yellow-500/10 rounded-none"
                     transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                   />
                 )}
 
                 {/* Icon - larger on active */}
                 <div
-                  className={`relative z-10 p-1.5 rounded-sm transition-all duration-150 ${active ? 'bg-yellow-500/20' : ''}`}
+                  className={`relative z-10 p-1.5 rounded-none transition-all duration-150 ${active ? 'bg-yellow-500/20' : ''}`}
                 >
                   <Icon
                     className={`w-5 h-5 xs:w-[22px] xs:h-[22px] transition-all duration-150 ${

@@ -61,7 +61,7 @@ export const OfflineBanner: React.FC<OfflineBannerProps> = ({ className = '' }) 
                 </span>
                 <button
                   onClick={() => window.location.reload()}
-                  className="ml-2 flex items-center gap-1 px-2 py-1 text-xs bg-white/20 hover:bg-white/30 rounded transition-colors text-white"
+                  className="ml-2 flex items-center gap-1 px-2 py-1 text-xs bg-white/20 hover:bg-white/30 rounded-none transition-colors text-white"
                 >
                   <RefreshCw className="w-3 h-3" />
                   Retry
@@ -117,7 +117,7 @@ export const OfflineIndicator: React.FC<{ className?: string }> = ({ className =
 
   return (
     <div
-      className={`flex items-center gap-2 px-3 py-1.5 bg-red-500/20 border border-red-500/30 rounded-sm ${className}`}
+      className={`flex items-center gap-2 px-3 py-1.5 bg-red-500/20 border border-red-500/30 rounded-none ${className}`}
     >
       <WifiOff className="w-3 h-3 text-red-400" />
       <span className="text-xs text-red-400 font-mono uppercase tracking-wide">Offline</span>

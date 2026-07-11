@@ -321,7 +321,7 @@ const SeasonSetupWizard = ({
 
           {/* STEP 1: Identity */}
           {step === 1 && (
-            <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
+            <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
               <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
                 <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
                   Step 1: Corps Identity
@@ -337,7 +337,7 @@ const SeasonSetupWizard = ({
                     value={formData.corpsName}
                     onChange={(e) => setFormData({ ...formData, corpsName: e.target.value })}
                     placeholder="e.g., Phoenix Rising"
-                    className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                    className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
                   />
                 </div>
                 <div>
@@ -349,7 +349,7 @@ const SeasonSetupWizard = ({
                     value={formData.directorName}
                     onChange={(e) => setFormData({ ...formData, directorName: e.target.value })}
                     placeholder="Your name"
-                    className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                    className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
                   />
                 </div>
                 <div>
@@ -361,7 +361,7 @@ const SeasonSetupWizard = ({
                     value={formData.location}
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                     placeholder="e.g., Indianapolis, IN"
-                    className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                    className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
                   />
                 </div>
               </div>
@@ -380,7 +380,7 @@ const SeasonSetupWizard = ({
 
           {/* STEP 2: Class Selection Table */}
           {step === 2 && (
-            <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
+            <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
               <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
                 <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
                   Step 2: Select Competition Class
@@ -428,7 +428,7 @@ const SeasonSetupWizard = ({
                         >
                           <td className="px-4 py-2">
                             <div
-                              className={`w-4 h-4 rounded-sm border-2 ${
+                              className={`w-4 h-4 rounded-none border-2 ${
                                 isSelected ? 'border-[#0057B8] bg-[#0057B8]' : 'border-[#444]'
                               }`}
                             >
@@ -497,7 +497,7 @@ const SeasonSetupWizard = ({
 
           {/* STEP 3: Summary Ticket */}
           {step === 3 && (
-            <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
+            <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
               <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
                 <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
                   Step 3: Registration Summary
@@ -560,7 +560,7 @@ const SeasonSetupWizard = ({
                 >
                   {processing ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-sm animate-spin mr-2" />
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-none animate-spin mr-2" />
                       Processing...
                     </>
                   ) : (
@@ -593,7 +593,7 @@ const SeasonSetupWizard = ({
 
           {/* STEP 6: Complete */}
           {step === 6 && (
-            <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
+            <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
               <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
                 <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
                   <Check className="w-4 h-4 text-green-500" />
@@ -601,7 +601,7 @@ const SeasonSetupWizard = ({
                 </h2>
               </div>
               <div className="p-6 text-center">
-                <div className="w-16 h-16 mx-auto mb-4 bg-green-500/20 rounded-sm flex items-center justify-center">
+                <div className="w-16 h-16 mx-auto mb-4 bg-green-500/20 rounded-none flex items-center justify-center">
                   <Check className="w-8 h-8 text-green-500" />
                 </div>
                 <h3 className="text-lg font-bold text-white mb-2">Entry Confirmed</h3>

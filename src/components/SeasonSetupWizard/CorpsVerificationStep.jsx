@@ -30,7 +30,7 @@ const CorpsVerificationStep = ({
 }) => {
   return (
     <>
-      <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
+      <div className="bg-[#1a1a1a] border border-[#333] rounded-none">
         <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
           <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
             Step 1: Manage Your Corps
@@ -64,7 +64,7 @@ const CorpsVerificationStep = ({
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   <button
                     onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'continue' })}
-                    className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
+                    className={`p-2 rounded-none text-xs font-medium flex flex-col items-center gap-1 transition-all ${
                       decision === 'continue'
                         ? 'bg-green-500/20 border-2 border-green-500 text-green-400'
                         : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
@@ -75,7 +75,7 @@ const CorpsVerificationStep = ({
                   </button>
                   <button
                     onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'skip' })}
-                    className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
+                    className={`p-2 rounded-none text-xs font-medium flex flex-col items-center gap-1 transition-all ${
                       decision === 'skip'
                         ? 'bg-gray-500/20 border-2 border-gray-500 text-gray-300'
                         : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
@@ -86,7 +86,7 @@ const CorpsVerificationStep = ({
                   </button>
                   <button
                     onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'new' })}
-                    className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
+                    className={`p-2 rounded-none text-xs font-medium flex flex-col items-center gap-1 transition-all ${
                       decision === 'new'
                         ? 'bg-blue-500/20 border-2 border-blue-500 text-blue-400'
                         : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
@@ -98,7 +98,7 @@ const CorpsVerificationStep = ({
                   {getAvailableMoveTargets(classId).length > 0 && (
                     <button
                       onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'move' })}
-                      className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
+                      className={`p-2 rounded-none text-xs font-medium flex flex-col items-center gap-1 transition-all ${
                         decision === 'move'
                           ? 'bg-cyan-500/20 border-2 border-cyan-500 text-cyan-400'
                           : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
@@ -113,7 +113,7 @@ const CorpsVerificationStep = ({
                       onClick={() =>
                         setCorpsDecisions({ ...corpsDecisions, [classId]: 'unretire' })
                       }
-                      className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
+                      className={`p-2 rounded-none text-xs font-medium flex flex-col items-center gap-1 transition-all ${
                         decision === 'unretire'
                           ? 'bg-purple-500/20 border-2 border-purple-500 text-purple-400'
                           : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
@@ -141,7 +141,7 @@ const CorpsVerificationStep = ({
                       Move to Class
                     </label>
                     <select
-                      className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-sm text-sm text-white focus:outline-none focus:border-[#0057B8]"
+                      className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-none text-sm text-white focus:outline-none focus:border-[#0057B8]"
                       value={newCorpsData[classId]?.targetClass || ''}
                       onChange={(e) =>
                         setNewCorpsData({
@@ -176,7 +176,7 @@ const CorpsVerificationStep = ({
                           [classId]: { ...newCorpsData[classId], corpsName: e.target.value },
                         })
                       }
-                      className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                      className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
                     />
                     <input
                       type="text"
@@ -188,7 +188,7 @@ const CorpsVerificationStep = ({
                           [classId]: { ...newCorpsData[classId], location: e.target.value },
                         })
                       }
-                      className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                      className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
                     />
                   </div>
                 )}
@@ -197,7 +197,7 @@ const CorpsVerificationStep = ({
                 {decision === 'unretire' && classRetired.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-[#333]">
                     <select
-                      className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-sm text-sm text-white focus:outline-none focus:border-[#0057B8]"
+                      className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-none text-sm text-white focus:outline-none focus:border-[#0057B8]"
                       value={newCorpsData[classId]?.retiredIndex ?? ''}
                       onChange={(e) =>
                         setNewCorpsData({
@@ -250,7 +250,7 @@ const CorpsVerificationStep = ({
                           delete updated[classId];
                           setCorpsDecisions(updated);
                         }}
-                        className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
+                        className={`p-2 rounded-none text-xs font-medium flex flex-col items-center gap-1 transition-all ${
                           !decision
                             ? 'bg-[#1a1a1a] border-2 border-gray-500 text-gray-300'
                             : 'bg-[#1a1a1a] border-2 border-transparent text-gray-500 hover:border-gray-500'
@@ -260,7 +260,7 @@ const CorpsVerificationStep = ({
                       </button>
                       <button
                         onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'new' })}
-                        className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
+                        className={`p-2 rounded-none text-xs font-medium flex flex-col items-center gap-1 transition-all ${
                           decision === 'new'
                             ? 'bg-blue-500/20 border-2 border-blue-500 text-blue-400'
                             : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
@@ -274,7 +274,7 @@ const CorpsVerificationStep = ({
                           onClick={() =>
                             setCorpsDecisions({ ...corpsDecisions, [classId]: 'unretire' })
                           }
-                          className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
+                          className={`p-2 rounded-none text-xs font-medium flex flex-col items-center gap-1 transition-all ${
                             decision === 'unretire'
                               ? 'bg-purple-500/20 border-2 border-purple-500 text-purple-400'
                               : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
@@ -299,7 +299,7 @@ const CorpsVerificationStep = ({
                               [classId]: { ...newCorpsData[classId], corpsName: e.target.value },
                             })
                           }
-                          className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                          className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
                         />
                         <input
                           type="text"
@@ -311,7 +311,7 @@ const CorpsVerificationStep = ({
                               [classId]: { ...newCorpsData[classId], location: e.target.value },
                             })
                           }
-                          className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                          className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-none text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
                         />
                       </div>
                     )}
@@ -320,7 +320,7 @@ const CorpsVerificationStep = ({
                     {decision === 'unretire' && classRetired.length > 0 && (
                       <div className="mt-3 pt-3 border-t border-[#333]">
                         <select
-                          className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-sm text-sm text-white focus:outline-none focus:border-[#0057B8]"
+                          className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-none text-sm text-white focus:outline-none focus:border-[#0057B8]"
                           value={newCorpsData[classId]?.retiredIndex ?? ''}
                           onChange={(e) =>
                             setNewCorpsData({
@@ -352,7 +352,7 @@ const CorpsVerificationStep = ({
           >
             {processing ? (
               <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-sm animate-spin mr-2" />
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-none animate-spin mr-2" />
                 Processing...
               </>
             ) : (
