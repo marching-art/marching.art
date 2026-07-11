@@ -7,7 +7,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
-import { Landmark, Loader2, ChevronDown, ChevronUp, MapPin, Check } from 'lucide-react';
+import { Landmark, Loader2, MapPin, Check } from 'lucide-react';
 import { db } from '../../api';
 import { hostEvent } from '../../api/podium';
 import { usePodiumEnabled } from '../../hooks/useFeatures';
@@ -28,7 +28,6 @@ export default function HostEventCard({ seasonUid }) {
   const currentDay = useSeasonStore((state) => state.currentDay);
   const competitions = useScheduleStore((state) => state.competitions);
 
-  const [open, setOpen] = useState(false);
   const [events, setEvents] = useState(null);
   const [eventName, setEventName] = useState('');
   // The location picker keeps the confirmed venue separate from the search box
@@ -75,8 +74,8 @@ export default function HostEventCard({ seasonUid }) {
   }, [seasonUid]);
 
   useEffect(() => {
-    if (open && events === null) loadEvents();
-  }, [open, events, loadEvents]);
+    if (events === null) loadEvents();
+  }, [events, loadEvents]);
 
   if (!enabled || !seasonUid) return null;
 
@@ -138,219 +137,201 @@ export default function HostEventCard({ seasonUid }) {
 
   return (
     <div className="mx-3 my-4 bg-[#1a1a1a] border border-[#333] rounded-none p-4 space-y-3">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between press-feedback"
-      >
+      <div className="flex items-center justify-between">
         <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#c9a227]">
           <Landmark className="w-3 h-3" /> Host Your Own Show
         </span>
-        {open ? (
-          <ChevronUp className="w-3.5 h-3.5 text-gray-500" />
-        ) : (
-          <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
-        )}
-      </button>
+      </div>
 
-      {open && (
-        <>
-          <p className="text-[10px] text-gray-500 leading-relaxed">
-            Rent a venue with CorpsCoin and your event joins the season schedule — open enrollment
-            for every class. You earn CC per corps that performs, paid the night the show is scored,
-            so a well-drawn show profits. Run successful shows to unlock bigger stadiums: 2
-            successful High School events open the College Bowl, 3 successful College Bowls open the
-            NFL Stadium. Days {minDay}&ndash;{HOSTING_RULES.lastHostableDay}; the majors' days (
-            {HOSTING_RULES.majorDays.join(', ')}) are exclusive. One show per director per season.
-            Pick a host city from the tour map &mdash; cities already on the schedule are greyed
-            out, since each city hosts one show per season.
-          </p>
+      <p className="text-[10px] text-gray-500 leading-relaxed">
+        Rent a venue with CorpsCoin and your event joins the season schedule — open enrollment for
+        every class. You earn CC per corps that performs, paid the night the show is scored, so a
+        well-drawn show profits. Run successful shows to unlock bigger stadiums: 2 successful High
+        School events open the College Bowl, 3 successful College Bowls open the NFL Stadium. Days{' '}
+        {minDay}&ndash;{HOSTING_RULES.lastHostableDay}; the majors' days (
+        {HOSTING_RULES.majorDays.join(', ')}) are exclusive. One show per director per season. Pick
+        a host city from the tour map &mdash; cities already on the schedule are greyed out, since
+        each city hosts one show per season.
+      </p>
 
-          {!hasCorps && (
-            <div className="text-[10px] text-amber-400">Field a corps before hosting events.</div>
-          )}
+      {!hasCorps && (
+        <div className="text-[10px] text-amber-400">Field a corps before hosting events.</div>
+      )}
 
-          {hasCorps && seasonLimitReached && (
-            <div className="text-[10px] text-amber-400">
-              You&apos;ve already hosted a show this season — directors can host one show per
-              season.
-            </div>
-          )}
+      {hasCorps && seasonLimitReached && (
+        <div className="text-[10px] text-amber-400">
+          You&apos;ve already hosted a show this season — directors can host one show per season.
+        </div>
+      )}
 
-          {/* Venue tier picker */}
-          <div className="grid grid-cols-3 gap-1.5">
-            {VENUE_TIERS.map((t) => {
-              const locked = tierLocked(t);
-              const progress = t.unlock
-                ? `${hostingByTier[t.unlock.tier]?.successful || 0}/${t.unlock.successful}`
-                : null;
-              return (
-                <button
-                  key={t.id}
-                  type="button"
-                  disabled={locked}
-                  onClick={() => setVenueTier(t.id)}
-                  title={
-                    locked
-                      ? `Unlocks after ${t.unlock.successful} successful ${
-                          VENUE_TIERS.find((x) => x.id === t.unlock.tier)?.label
-                        } events (${progress})`
-                      : `Success = ${t.successAttendance}+ corps attending`
-                  }
-                  className={`text-left px-2 py-1.5 rounded-none border press-feedback ${
-                    locked
-                      ? 'border-[#2a2a2a] opacity-50 cursor-not-allowed'
-                      : venueTier === t.id
-                        ? 'border-[#c9a227] bg-[#c9a227]/10'
-                        : 'border-[#333] hover:border-[#555]'
-                  }`}
-                >
-                  <div className="text-[10px] font-bold text-white leading-tight">
-                    {locked && '🔒 '}
-                    {t.label}
-                  </div>
-                  <div className="text-[9px] text-gray-500 tabular-nums">
-                    {locked
-                      ? `${progress} successful ${VENUE_TIERS.find((x) => x.id === t.unlock.tier)?.label.split(' ')[0]} shows`
-                      : `${t.rentalCC} CC · cap ${t.capacity} · ${t.payoutPerCorpsCC}/corps`}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+      {/* Venue tier picker */}
+      <div className="grid grid-cols-3 gap-1.5">
+        {VENUE_TIERS.map((t) => {
+          const locked = tierLocked(t);
+          const progress = t.unlock
+            ? `${hostingByTier[t.unlock.tier]?.successful || 0}/${t.unlock.successful}`
+            : null;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              disabled={locked}
+              onClick={() => setVenueTier(t.id)}
+              title={
+                locked
+                  ? `Unlocks after ${t.unlock.successful} successful ${
+                      VENUE_TIERS.find((x) => x.id === t.unlock.tier)?.label
+                    } events (${progress})`
+                  : `Success = ${t.successAttendance}+ corps attending`
+              }
+              className={`text-left px-2 py-1.5 rounded-none border press-feedback ${
+                locked
+                  ? 'border-[#2a2a2a] opacity-50 cursor-not-allowed'
+                  : venueTier === t.id
+                    ? 'border-[#c9a227] bg-[#c9a227]/10'
+                    : 'border-[#333] hover:border-[#555]'
+              }`}
+            >
+              <div className="text-[10px] font-bold text-white leading-tight">
+                {locked && '🔒 '}
+                {t.label}
+              </div>
+              <div className="text-[9px] text-gray-500 tabular-nums">
+                {locked
+                  ? `${progress} successful ${VENUE_TIERS.find((x) => x.id === t.unlock.tier)?.label.split(' ')[0]} shows`
+                  : `${t.rentalCC} CC · cap ${t.capacity} · ${t.payoutPerCorpsCC}/corps`}
+              </div>
+            </button>
+          );
+        })}
+      </div>
 
-          <form onSubmit={submit} className="space-y-2">
-            <input
-              type="text"
-              value={eventName}
-              onChange={(e) => setEventName(e.target.value)}
-              placeholder="Event name (e.g. Riverside Invitational)"
-              minLength={HOSTING_RULES.nameMin}
-              maxLength={HOSTING_RULES.nameMax}
-              required
-              className={inputClass}
-            />
-            <div className="grid grid-cols-2 gap-2">
-              {/* Host-city picker: only known cities that aren't already on the
+      <form onSubmit={submit} className="space-y-2">
+        <input
+          type="text"
+          value={eventName}
+          onChange={(e) => setEventName(e.target.value)}
+          placeholder="Event name (e.g. Riverside Invitational)"
+          minLength={HOSTING_RULES.nameMin}
+          maxLength={HOSTING_RULES.nameMax}
+          required
+          className={inputClass}
+        />
+        <div className="grid grid-cols-2 gap-2">
+          {/* Host-city picker: only known cities that aren't already on the
                   schedule. No free-text guessing, no double-booking a city. */}
-              <div className="relative">
-                <div className="relative">
-                  <MapPin className="w-3 h-3 text-gray-600 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    type="text"
-                    value={venueQuery}
-                    onChange={(e) => {
-                      setVenueQuery(e.target.value);
-                      setSelectedVenue(null);
-                      setVenueListOpen(true);
-                    }}
-                    onFocus={() => setVenueListOpen(true)}
-                    // Delay so a click on a result registers before the list closes.
-                    onBlur={() => setTimeout(() => setVenueListOpen(false), 150)}
-                    placeholder="Search host city"
-                    autoComplete="off"
-                    className={`${inputClass} pl-6 pr-6`}
-                    aria-label="Host city"
-                  />
-                  {selectedVenue && (
-                    <Check className="w-3 h-3 text-green-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  )}
-                </div>
-                {venueListOpen && (
-                  <div className="absolute z-20 mt-1 w-full max-h-44 overflow-y-auto bg-[#0f0f0f] border border-[#333] rounded-none shadow-lg">
-                    {venueResults.length === 0 ? (
-                      <div className="px-2 py-1.5 text-[10px] text-gray-600">
-                        No matching city — try a nearby one.
-                      </div>
-                    ) : (
-                      venueResults.map((v) => {
-                        const taken = takenVenueIds.has(v.venueId);
-                        return (
-                          <button
-                            key={v.venueId}
-                            type="button"
-                            disabled={taken}
-                            // onMouseDown fires before the input's onBlur, so the
-                            // pick lands even though blur closes the list.
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              if (!taken) pickVenue(v);
-                            }}
-                            className={`w-full flex items-center justify-between px-2 py-1.5 text-[10px] text-left ${
-                              taken
-                                ? 'text-gray-600 cursor-not-allowed'
-                                : 'text-gray-300 hover:bg-[#1f1f1f]'
-                            }`}
-                          >
-                            <span className="truncate">{v.label}</span>
-                            {taken && (
-                              <span className="text-[8px] uppercase tracking-wider text-gray-600 flex-shrink-0 pl-2">
-                                On schedule
-                              </span>
-                            )}
-                          </button>
-                        );
-                      })
-                    )}
+          <div className="relative">
+            <div className="relative">
+              <MapPin className="w-3 h-3 text-gray-600 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={venueQuery}
+                onChange={(e) => {
+                  setVenueQuery(e.target.value);
+                  setSelectedVenue(null);
+                  setVenueListOpen(true);
+                }}
+                onFocus={() => setVenueListOpen(true)}
+                // Delay so a click on a result registers before the list closes.
+                onBlur={() => setTimeout(() => setVenueListOpen(false), 150)}
+                placeholder="Search host city"
+                autoComplete="off"
+                className={`${inputClass} pl-6 pr-6`}
+                aria-label="Host city"
+              />
+              {selectedVenue && (
+                <Check className="w-3 h-3 text-green-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+              )}
+            </div>
+            {venueListOpen && (
+              <div className="absolute z-20 mt-1 w-full max-h-44 overflow-y-auto bg-[#0f0f0f] border border-[#333] rounded-none shadow-lg">
+                {venueResults.length === 0 ? (
+                  <div className="px-2 py-1.5 text-[10px] text-gray-600">
+                    No matching city — try a nearby one.
                   </div>
+                ) : (
+                  venueResults.map((v) => {
+                    const taken = takenVenueIds.has(v.venueId);
+                    return (
+                      <button
+                        key={v.venueId}
+                        type="button"
+                        disabled={taken}
+                        // onMouseDown fires before the input's onBlur, so the
+                        // pick lands even though blur closes the list.
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          if (!taken) pickVenue(v);
+                        }}
+                        className={`w-full flex items-center justify-between px-2 py-1.5 text-[10px] text-left ${
+                          taken
+                            ? 'text-gray-600 cursor-not-allowed'
+                            : 'text-gray-300 hover:bg-[#1f1f1f]'
+                        }`}
+                      >
+                        <span className="truncate">{v.label}</span>
+                        {taken && (
+                          <span className="text-[8px] uppercase tracking-wider text-gray-600 flex-shrink-0 pl-2">
+                            On schedule
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })
                 )}
               </div>
-              <input
-                type="number"
-                value={day}
-                onChange={(e) => setDay(e.target.value)}
-                placeholder={`Day (${minDay}-${HOSTING_RULES.lastHostableDay})`}
-                min={minDay}
-                max={HOSTING_RULES.lastHostableDay}
-                required
-                className={inputClass}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] text-gray-500 tabular-nums">
-                Rental: <span className="text-white font-bold">{tier.rentalCC} CC</span>
-                <span className="text-gray-600"> · you have {corpsCoin.toLocaleString()} CC</span>
-              </span>
-              <button
-                type="submit"
-                disabled={
-                  busy ||
-                  !hasCorps ||
-                  seasonLimitReached ||
-                  !selectedVenue ||
-                  corpsCoin < tier.rentalCC
-                }
-                className="px-3 py-1.5 rounded-none text-[10px] font-bold uppercase tracking-wider
+            )}
+          </div>
+          <input
+            type="number"
+            value={day}
+            onChange={(e) => setDay(e.target.value)}
+            placeholder={`Day (${minDay}-${HOSTING_RULES.lastHostableDay})`}
+            min={minDay}
+            max={HOSTING_RULES.lastHostableDay}
+            required
+            className={inputClass}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] text-gray-500 tabular-nums">
+            Rental: <span className="text-white font-bold">{tier.rentalCC} CC</span>
+            <span className="text-gray-600"> · you have {corpsCoin.toLocaleString()} CC</span>
+          </span>
+          <button
+            type="submit"
+            disabled={
+              busy || !hasCorps || seasonLimitReached || !selectedVenue || corpsCoin < tier.rentalCC
+            }
+            className="px-3 py-1.5 rounded-none text-[10px] font-bold uppercase tracking-wider
                   bg-[#c9a227] text-black disabled:bg-[#333] disabled:text-gray-600 press-feedback"
-              >
-                {busy ? <Loader2 className="w-3 h-3 animate-spin inline" /> : 'Book Venue'}
-              </button>
-            </div>
-          </form>
+          >
+            {busy ? <Loader2 className="w-3 h-3 animate-spin inline" /> : 'Book Venue'}
+          </button>
+        </div>
+      </form>
 
-          {error && <div className="text-[11px] text-red-400">{error}</div>}
-          {success && <div className="text-[11px] text-green-400">{success}</div>}
+      {error && <div className="text-[11px] text-red-400">{error}</div>}
+      {success && <div className="text-[11px] text-green-400">{success}</div>}
 
-          {/* This season's hosted events */}
-          {events && events.length > 0 && (
-            <div className="pt-2 border-t border-[#242424] space-y-1">
-              <div className="text-[9px] font-bold uppercase tracking-wider text-gray-600">
-                Hosted This Season
-              </div>
-              {events.map((event) => (
-                <div key={event.id} className="flex items-center justify-between text-[10px]">
-                  <span className="text-gray-300 truncate pr-2">
-                    <span className="text-gray-600 tabular-nums">D{event.day}</span>{' '}
-                    {event.eventName}
-                    <span className="text-gray-600"> · {event.location}</span>
-                  </span>
-                  <span className="text-gray-500 tabular-nums flex-shrink-0">
-                    {event.paidOut ? `${event.attendance} corps · +${event.payout} CC` : 'upcoming'}
-                  </span>
-                </div>
-              ))}
+      {/* This season's hosted events */}
+      {events && events.length > 0 && (
+        <div className="pt-2 border-t border-[#242424] space-y-1">
+          <div className="text-[9px] font-bold uppercase tracking-wider text-gray-600">
+            Hosted This Season
+          </div>
+          {events.map((event) => (
+            <div key={event.id} className="flex items-center justify-between text-[10px]">
+              <span className="text-gray-300 truncate pr-2">
+                <span className="text-gray-600 tabular-nums">D{event.day}</span> {event.eventName}
+                <span className="text-gray-600"> · {event.location}</span>
+              </span>
+              <span className="text-gray-500 tabular-nums flex-shrink-0">
+                {event.paidOut ? `${event.attendance} corps · +${event.payout} CC` : 'upcoming'}
+              </span>
             </div>
-          )}
-        </>
+          ))}
+        </div>
       )}
     </div>
   );

@@ -10,7 +10,7 @@
 // hireable, so supply scales with the playerbase.
 
 import React, { useEffect, useState } from 'react';
-import { Users, Loader2, UserMinus, GraduationCap, ChevronUp, ChevronDown } from 'lucide-react';
+import { Users, Loader2, UserMinus, GraduationCap } from 'lucide-react';
 import {
   getPodiumStaffMarket,
   hirePodiumStaff,
@@ -98,18 +98,11 @@ export default function PodiumStaffPanel({ podium }) {
           <Users className="w-3 h-3" /> Staff ({hiredCount}/10)
         </span>
         <span className="flex items-center gap-2 text-[9px] uppercase tracking-wider text-gray-600">
-          {!open && (
-            <span className="hidden sm:inline">
-              {hiredCount === 10
-                ? 'roster full'
-                : `${10 - hiredCount} seat${10 - hiredCount > 1 ? 's' : ''} open`}
-            </span>
-          )}
-          {open ? (
-            <ChevronUp className="w-3.5 h-3.5 text-gray-500" />
-          ) : (
-            <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
-          )}
+          <span className="hidden sm:inline">
+            {hiredCount === 10
+              ? 'roster full'
+              : `${10 - hiredCount} seat${10 - hiredCount > 1 ? 's' : ''} open`}
+          </span>
         </span>
       </div>
 
@@ -194,36 +187,34 @@ export default function PodiumStaffPanel({ podium }) {
                         ` · ${member.contract.remaining}/${member.contract.seasons} locked`}
                       {member.retrain && ' · retraining'}
                     </span>
-                    {open && (
-                      <span className="flex items-center gap-1.5 shrink-0">
-                        <button
-                          disabled={busy !== null}
-                          onClick={() => setRetraining((v) => (v === member.id ? null : member.id))}
-                          title="Retrain into a new specialty (reduced boost this season)"
-                          className={`press-feedback ${
-                            retraining === member.id
-                              ? 'text-[#4d9fff]'
-                              : 'text-gray-500 hover:text-white'
-                          }`}
-                        >
-                          <GraduationCap className="w-3 h-3" />
-                        </button>
-                        <button
-                          disabled={busy !== null}
-                          onClick={() =>
-                            act(`release_${specialty}`, () => releasePodiumStaff({ specialty }))
-                          }
-                          title="Release this staffer — frees the seat, ends their tenure (no refund)"
-                          className="text-gray-500 hover:text-red-400 press-feedback"
-                        >
-                          {busy === `release_${specialty}` ? (
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                          ) : (
-                            <UserMinus className="w-3 h-3" />
-                          )}
-                        </button>
-                      </span>
-                    )}
+                    <span className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        disabled={busy !== null}
+                        onClick={() => setRetraining((v) => (v === member.id ? null : member.id))}
+                        title="Retrain into a new specialty (reduced boost this season)"
+                        className={`press-feedback ${
+                          retraining === member.id
+                            ? 'text-[#4d9fff]'
+                            : 'text-gray-500 hover:text-white'
+                        }`}
+                      >
+                        <GraduationCap className="w-3 h-3" />
+                      </button>
+                      <button
+                        disabled={busy !== null}
+                        onClick={() =>
+                          act(`release_${specialty}`, () => releasePodiumStaff({ specialty }))
+                        }
+                        title="Release this staffer — frees the seat, ends their tenure (no refund)"
+                        className="text-gray-500 hover:text-red-400 press-feedback"
+                      >
+                        {busy === `release_${specialty}` ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <UserMinus className="w-3 h-3" />
+                        )}
+                      </button>
+                    </span>
                   </div>
                   {retraining === member.id && (
                     <div className="flex flex-wrap items-center gap-1 pt-0.5 border-t border-[#2a2a2a]">
@@ -296,7 +287,7 @@ export default function PodiumStaffPanel({ podium }) {
               ) : catalog ? (
                 <span className="text-[9px] text-gray-700">No candidates listed.</span>
               ) : (
-                <span className="text-[9px] text-gray-700">Open seat — expand to hire.</span>
+                <span className="text-[9px] text-gray-700">Open seat — loading catalog…</span>
               )}
             </div>
           );
