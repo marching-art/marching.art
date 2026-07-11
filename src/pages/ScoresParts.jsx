@@ -113,7 +113,7 @@ const CorpsIdentity = ({ place, name, isMine, displayName, uid, tag, avatarUrl }
     <div className="min-w-0">
       <div className="flex items-baseline gap-1.5 min-w-0">
         <span
-          className={`text-sm font-bold truncate ${isMine ? 'text-[#4d9fff]' : 'text-white'}`}
+          className={`text-[11px] font-bold truncate ${isMine ? 'text-[#4d9fff]' : 'text-white'}`}
         >
           {name}
         </span>
@@ -571,7 +571,7 @@ const SoundSportMedalList = ({ shows }) => {
                       size="xs"
                     />
                     <div className="min-w-0">
-                      <span className="font-bold text-white text-sm block truncate">
+                      <span className="font-bold text-white text-[11px] block truncate">
                         {result.corps || result.corpsName}
                       </span>
                       {result.displayName &&
@@ -601,16 +601,17 @@ const SoundSportMedalList = ({ shows }) => {
               );
             })}
           </div>
-
-          <Link
-            to="/soundsport"
-            className="flex items-center gap-2 text-[10px] text-green-400 hover:text-green-300 font-bold uppercase tracking-wider transition-colors pt-1"
-          >
-            About SoundSport scoring
-            <ChevronRight className="w-3 h-3" />
-          </Link>
         </div>
       ))}
+
+      {/* One scoring-explainer link for the whole page, not per show */}
+      <Link
+        to="/soundsport"
+        className="flex items-center gap-2 text-[10px] text-green-400 hover:text-green-300 font-bold uppercase tracking-wider transition-colors px-1 pt-1"
+      >
+        About SoundSport scoring
+        <ChevronRight className="w-3 h-3" />
+      </Link>
     </div>
   );
 };
