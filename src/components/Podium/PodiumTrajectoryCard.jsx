@@ -62,7 +62,7 @@ export default function PodiumTrajectoryCard({ podium }) {
   }
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4 space-y-2">
+    <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-4 space-y-2">
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-500">
           <TrendingUp className="w-3 h-3" /> Trajectory vs. history

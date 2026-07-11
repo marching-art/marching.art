@@ -50,7 +50,7 @@ function DayCalendar({ competitionDay, showDays, value, onChange }) {
                     disabled={past}
                     onClick={() => onChange(day)}
                     title={show || (isToday ? 'Today' : undefined)}
-                    className={`relative flex items-center justify-center h-7 rounded-sm border text-[10px] tabular-nums transition-colors press-feedback ${
+                    className={`relative flex items-center justify-center h-7 rounded-none border text-[10px] tabular-nums transition-colors press-feedback ${
                       selected
                         ? 'border-[#0057B8] bg-[#0057B8] text-white font-bold'
                         : past
@@ -93,7 +93,7 @@ const ScrimmageSheet = ({ scrimmage }) => {
   };
   const total = diff(scrimmage.mine?.total, scrimmage.theirs?.total);
   return (
-    <div className="border border-[#333] rounded-sm overflow-hidden">
+    <div className="border border-[#333] rounded-none overflow-hidden">
       <div className="bg-[#222] px-3 py-2 flex items-center justify-between">
         <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-[#c9a227]">
           Scrimmage Report · Day {scrimmage.day}
@@ -207,7 +207,7 @@ export default function JointRehearsalPanel({ podium }) {
   const selectedShow = day ? showDays.get(Number(day)) : null;
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4 space-y-3">
+    <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-4 space-y-3">
       <button
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between press-feedback"
@@ -215,7 +215,7 @@ export default function JointRehearsalPanel({ podium }) {
         <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-500">
           <Handshake className="w-3 h-3" /> Joint Rehearsals
           {incomingCount > 0 && (
-            <span className="px-1.5 py-0.5 bg-[#c9a227] text-black rounded-sm text-[9px]">
+            <span className="px-1.5 py-0.5 bg-[#c9a227] text-black rounded-none text-[9px]">
               {incomingCount}
             </span>
           )}
@@ -266,7 +266,7 @@ export default function JointRehearsalPanel({ podium }) {
           {(data?.incoming || []).map((proposal) => (
             <div
               key={proposal.id}
-              className="flex items-center justify-between gap-2 px-3 py-2 border border-[#333] rounded-sm"
+              className="flex items-center justify-between gap-2 px-3 py-2 border border-[#333] rounded-none"
             >
               <span className="text-[11px] text-gray-300 min-w-0 truncate">
                 <span className="font-bold text-white">{proposal.fromCorpsName}</span> proposes Day{' '}
@@ -281,7 +281,7 @@ export default function JointRehearsalPanel({ podium }) {
                       'Joint rehearsal booked.'
                     )
                   }
-                  className="px-2 py-1 text-[10px] font-bold uppercase bg-green-600 text-white rounded-sm press-feedback disabled:opacity-50"
+                  className="px-2 py-1 text-[10px] font-bold uppercase bg-green-600 text-white rounded-none press-feedback disabled:opacity-50"
                 >
                   Accept
                 </button>
@@ -290,7 +290,7 @@ export default function JointRehearsalPanel({ podium }) {
                   onClick={() =>
                     act(() => respondJointRehearsal({ proposalId: proposal.id, accept: false }))
                   }
-                  className="px-2 py-1 text-[10px] font-bold uppercase bg-[#333] text-gray-300 rounded-sm press-feedback disabled:opacity-50"
+                  className="px-2 py-1 text-[10px] font-bold uppercase bg-[#333] text-gray-300 rounded-none press-feedback disabled:opacity-50"
                 >
                   Decline
                 </button>
@@ -310,7 +310,7 @@ export default function JointRehearsalPanel({ podium }) {
           {data && !upcoming && (
             <form
               onSubmit={propose}
-              className="space-y-3 border border-[#333] rounded-sm p-3 bg-[#161616]"
+              className="space-y-3 border border-[#333] rounded-none p-3 bg-[#161616]"
             >
               <div className="space-y-1">
                 <label className="text-[9px] font-bold uppercase tracking-wider text-gray-500">
@@ -320,7 +320,7 @@ export default function JointRehearsalPanel({ podium }) {
                   value={toUid}
                   onChange={(e) => setToUid(e.target.value)}
                   required
-                  className="w-full bg-[#0f0f0f] border border-[#333] rounded-sm px-2 py-1.5 text-xs text-white focus:border-[#0057B8] focus:outline-none"
+                  className="w-full bg-[#0f0f0f] border border-[#333] rounded-none px-2 py-1.5 text-xs text-white focus:border-[#0057B8] focus:outline-none"
                 >
                   <option value="">Propose to…</option>
                   {(data.roster || []).map((corps) => (
@@ -360,7 +360,7 @@ export default function JointRehearsalPanel({ podium }) {
                 <button
                   type="submit"
                   disabled={busy || !toUid || !day}
-                  className="shrink-0 px-3 py-1.5 rounded-sm text-[10px] font-bold uppercase tracking-wider bg-[#0057B8] text-white disabled:bg-[#333] disabled:text-gray-600 press-feedback"
+                  className="shrink-0 px-3 py-1.5 rounded-none text-[10px] font-bold uppercase tracking-wider bg-[#0057B8] text-white disabled:bg-[#333] disabled:text-gray-600 press-feedback"
                 >
                   {busy ? <Loader2 className="w-3 h-3 animate-spin inline" /> : 'Propose'}
                 </button>

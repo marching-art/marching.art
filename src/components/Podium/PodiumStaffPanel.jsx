@@ -105,7 +105,7 @@ export default function PodiumStaffPanel({ podium }) {
       .sort((a, b) => TIER_ORDER.indexOf(a.tier) - TIER_ORDER.indexOf(b.tier));
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4 space-y-3">
+    <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-4 space-y-3">
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-500">
           <Users className="w-3 h-3" /> Staff ({hiredCount}/10)
@@ -135,7 +135,7 @@ export default function PodiumStaffPanel({ podium }) {
           <button
             key={seasons}
             onClick={() => setContractSeasons(seasons)}
-            className={`text-[10px] font-bold px-2 py-0.5 rounded-sm border press-feedback ${
+            className={`text-[10px] font-bold px-2 py-0.5 rounded-none border press-feedback ${
               contractSeasons === seasons
                 ? 'border-[#0057B8] bg-[#0057B8]/15 text-white'
                 : 'border-[#333] text-gray-500 hover:text-white'
@@ -172,7 +172,7 @@ export default function PodiumStaffPanel({ podium }) {
           return (
             <div
               key={specialty}
-              className={`rounded-sm border p-2.5 flex flex-col gap-1.5 ${
+              className={`rounded-none border p-2.5 flex flex-col gap-1.5 ${
                 filled
                   ? 'border-[#333] bg-[#161616]'
                   : 'border-dashed border-[#2a2a2a] bg-[#141414]'
@@ -261,7 +261,7 @@ export default function PodiumStaffPanel({ podium }) {
                                 setRetraining(null);
                               })
                             }
-                            className="text-[9px] px-1.5 py-0.5 rounded-sm border border-[#333] text-gray-400 hover:text-white hover:border-[#0057B8] press-feedback"
+                            className="text-[9px] px-1.5 py-0.5 rounded-none border border-[#333] text-gray-400 hover:text-white hover:border-[#0057B8] press-feedback"
                           >
                             {SPECIALTY_LABELS[target]}
                           </button>
@@ -272,45 +272,45 @@ export default function PodiumStaffPanel({ podium }) {
                 </>
               ) : options.length > 0 ? (
                 <div className="flex flex-col gap-1">
-                    {options.map((option) => {
-                      const key = `hire_${specialty}_${option.tier}`;
-                      return (
-                        <button
-                          key={option.tier}
-                          disabled={busy !== null}
-                          onClick={() =>
-                            act(key, () =>
-                              hirePodiumStaff({
-                                specialty,
-                                tier: option.tier,
-                                seasons: contractSeasons,
-                              })
-                            )
-                          }
-                          title={`${TIER_LABELS[option.tier]} ${SPECIALTY_LABELS[specialty]} · +${Math.round(option.boost * 100)}% rehearsal yield · ${option.salary}/season`}
-                          className="flex items-center justify-between gap-2 text-[10px] px-2 py-1 rounded-sm border border-[#333] text-gray-300 hover:border-[#0057B8] hover:text-white tabular-nums press-feedback"
-                        >
-                          {busy === key ? (
-                            <Loader2 className="w-3 h-3 animate-spin mx-auto" />
-                          ) : (
-                            <>
-                              <span className={`font-bold ${TIER_STYLES[option.tier]}`}>
-                                {TIER_LABELS[option.tier]}
-                              </span>
-                              <span className="text-gray-600">
-                                +{Math.round(option.boost * 100)}% · {option.salary}/season
-                              </span>
-                            </>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : catalog ? (
-                  <span className="text-[9px] text-gray-700">No candidates listed.</span>
-                ) : (
-                  <span className="text-[9px] text-gray-700">Open seat — expand to hire.</span>
-                )}
+                  {options.map((option) => {
+                    const key = `hire_${specialty}_${option.tier}`;
+                    return (
+                      <button
+                        key={option.tier}
+                        disabled={busy !== null}
+                        onClick={() =>
+                          act(key, () =>
+                            hirePodiumStaff({
+                              specialty,
+                              tier: option.tier,
+                              seasons: contractSeasons,
+                            })
+                          )
+                        }
+                        title={`${TIER_LABELS[option.tier]} ${SPECIALTY_LABELS[specialty]} · +${Math.round(option.boost * 100)}% rehearsal yield · ${option.salary}/season`}
+                        className="flex items-center justify-between gap-2 text-[10px] px-2 py-1 rounded-none border border-[#333] text-gray-300 hover:border-[#0057B8] hover:text-white tabular-nums press-feedback"
+                      >
+                        {busy === key ? (
+                          <Loader2 className="w-3 h-3 animate-spin mx-auto" />
+                        ) : (
+                          <>
+                            <span className={`font-bold ${TIER_STYLES[option.tier]}`}>
+                              {TIER_LABELS[option.tier]}
+                            </span>
+                            <span className="text-gray-600">
+                              +{Math.round(option.boost * 100)}% · {option.salary}/season
+                            </span>
+                          </>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : catalog ? (
+                <span className="text-[9px] text-gray-700">No candidates listed.</span>
+              ) : (
+                <span className="text-[9px] text-gray-700">Open seat — expand to hire.</span>
+              )}
             </div>
           );
         })}

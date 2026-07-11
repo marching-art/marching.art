@@ -125,7 +125,7 @@ export default function PodiumGuide() {
           </span>
           <Link
             to="/dashboard"
-            className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider bg-[#c9a227] text-black rounded-sm"
+            className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider bg-[#c9a227] text-black rounded-none"
           >
             Play
           </Link>
