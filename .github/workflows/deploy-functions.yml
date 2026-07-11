@@ -104,7 +104,8 @@ jobs:
           #    functions half-deployed. deploy-functions.sh paces the burst under
           #    the quota and skips the cooldown for batches that had no changes,
           #    so incremental redeploys stay fast.
-          CI=true ./deploy-functions.sh
+          #    DELAY_SECONDS=0 removes the inter-batch cooldown for this job.
+          CI=true DELAY_SECONDS=0 ./deploy-functions.sh
 
           echo "All functions and Firestore rules deployed successfully!"
 

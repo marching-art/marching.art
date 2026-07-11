@@ -189,7 +189,8 @@ for batch in "${BATCHES[@]}"; do
 
     # Only pause when this batch actually deployed something (and it isn't the
     # last batch). No writes → no quota consumed → no reason to wait.
-    if [ $CURRENT_BATCH -lt $TOTAL_BATCHES ]; then
+    # DELAY_SECONDS=0 disables the cooldown entirely.
+    if [ $CURRENT_BATCH -lt $TOTAL_BATCHES ] && [ "$DELAY_SECONDS" -gt 0 ]; then
         if [ "$BATCH_WROTE" = "1" ]; then
             echo "  Waiting $DELAY_SECONDS seconds before next batch (staying under the Cloud Run write quota)..."
             sleep $DELAY_SECONDS
