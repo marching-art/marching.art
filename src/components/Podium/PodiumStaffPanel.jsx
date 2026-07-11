@@ -17,13 +17,7 @@ import {
   releasePodiumStaff,
   retrainPodiumStaff,
 } from '../../api/podium';
-import { CAPTION_LABELS } from './podiumConstants';
-
-const SPECIALTY_LABELS = {
-  ...CAPTION_LABELS,
-  tourManager: 'Tour Manager',
-  programCoordinator: 'Program Coordinator',
-};
+import { SPECIALTY_LABELS, TIER_LABELS } from './podiumConstants';
 
 const TIER_STYLES = {
   apprentice: 'text-gray-400',
@@ -36,13 +30,6 @@ const TIER_STYLES = {
 // Experience levels, least → most experienced. The label IS the staffer's
 // identity in the grid — no names.
 const TIER_ORDER = ['apprentice', 'journeyman', 'veteran', 'master', 'legend'];
-const TIER_LABELS = {
-  apprentice: 'Apprentice',
-  journeyman: 'Journeyman',
-  veteran: 'Veteran',
-  master: 'Master',
-  legend: 'Legend',
-};
 
 const CONTRACT_LENGTHS = [1, 2, 3];
 

@@ -13,6 +13,10 @@ export interface PodiumRegistration {
   challenge: Record<string, number>; // 8 captions, 1-8
   auditions?: Record<string, number> | null; // points per caption, pool 100
   budgetCommitment?: number; // CC -> Corps Budget, capped (decision 24)
+  // Carried staff to retain next season, in keep-first order (design §5.6).
+  // A staffer omitted from the list is voluntarily released; when absent, the
+  // roster is kept priciest-first and a shortfall sheds the cheapest.
+  staffPriority?: string[];
 }
 
 export interface PodiumBlockResult {
@@ -47,6 +51,17 @@ export interface PodiumRouteLeg {
   isMajor: boolean;
 }
 
+// Next-season payroll warning (design §5.6): when a corps' aged staff payroll
+// can't fit the division commitment cap, the director will have to release or
+// retrain someone at re-registration. Surfaced in-season so they can act early.
+export interface PodiumStaffOutlook {
+  payroll: number; // total aged salary next season
+  commitmentCap: number; // the most a director can commit (division-equal)
+  shortfall: number; // payroll - cap, floored at 0
+  atRisk: boolean; // payroll exceeds the cap
+  acknowledged: boolean; // director has dismissed this exact payroll figure
+}
+
 export interface PodiumStateResponse {
   exists: boolean;
   calendarDay: number;
@@ -54,13 +69,56 @@ export interface PodiumStateResponse {
   isShowDay?: boolean;
   autoDays?: number[];
   routePreview?: PodiumRouteLeg[];
+  staffOutlook?: PodiumStaffOutlook;
   state?: Record<string, unknown>;
+}
+
+export interface PodiumLapsedStaff {
+  specialty: string;
+  reason: 'unaffordable' | 'released' | 'retired';
 }
 
 export const registerPodiumCorps = createCallable<
   PodiumRegistration,
-  { success: boolean; corpsName: string; easternNight: number }
+  {
+    success: boolean;
+    corpsName: string;
+    division: string;
+    divisionLabel: string;
+    easternNight: number;
+    retainedStaff: string[];
+    lapsedStaff: PodiumLapsedStaff[];
+  }
 >('registerPodiumCorps');
+
+// A carried staffer's projected next-season cost, for the re-registration
+// funding preview (design §5.6). getPodiumRegistrationPreview ages each
+// staffer one season so the director can compare payroll against the CC they
+// plan to commit BEFORE founding the corps.
+export interface PodiumStaffProjection {
+  specialty: string;
+  id: string | null;
+  tier: string;
+  nextTier: string | null;
+  salary: number;
+  nextSalary: number;
+  retiring: boolean;
+}
+
+export const getPodiumRegistrationPreview = createCallable<
+  void,
+  {
+    success: boolean;
+    hasCarriedStaff: boolean;
+    division: string;
+    divisionLabel: string;
+    commitmentCap: number;
+    corpsCoin: number;
+    payroll: number;
+    affordable: boolean;
+    staff: PodiumStaffProjection[];
+  }
+>('getPodiumRegistrationPreview');
 
 export const allocateRehearsalBlock = createCallable<
   { blockType: string; blockIndex?: number },
@@ -230,6 +288,13 @@ export const releasePodiumStaff = createCallable<
   { specialty: string },
   { success: boolean; released: string; staff: Record<string, unknown> }
 >('releasePodiumStaff');
+
+// Dismiss the in-season payroll warning for the current projected figure; it
+// re-warns if the roster (and thus the payroll) changes.
+export const acknowledgePodiumStaffOutlook = createCallable<
+  void,
+  { success: boolean; acknowledgedPayroll: number }
+>('acknowledgePodiumStaffOutlook');
 
 export const retrainPodiumStaff = createCallable<
   { staffId: string; toSpecialty: string },

@@ -55,6 +55,23 @@ export const CAPTION_LABELS = {
   P: 'Percussion',
 };
 
+// Staff roles and experience tiers — shared by the staff panel and the
+// re-registration funding preview. Staff are generic: a role at a tier, no
+// names (design §5.6).
+export const SPECIALTY_LABELS = {
+  ...CAPTION_LABELS,
+  tourManager: 'Tour Manager',
+  programCoordinator: 'Program Coordinator',
+};
+
+export const TIER_LABELS = {
+  apprentice: 'Apprentice',
+  journeyman: 'Journeyman',
+  veteran: 'Veteran',
+  master: 'Master',
+  legend: 'Legend',
+};
+
 export const CHALLENGE_PRESETS = {
   balanced: { label: 'Balanced', levels: 5 },
   safe: { label: 'Early & Clean', levels: 3 },
