@@ -49,22 +49,6 @@ function showVenueFor(competitionDay, chosenShow, dayShows) {
   return location ? venues.venueFor(location) : null;
 }
 
-/** Preload {competitionDay -> [{eventName, location}]} from the schedule doc. */
-async function loadScheduleShows(db, seasonData) {
-  const scheduleId = seasonData.dataDocId || seasonData.name;
-  if (!scheduleId) return {};
-  const doc = await db.doc(`schedules/${scheduleId}`).get();
-  if (!doc.exists) return {};
-  const byDay = {};
-  for (const comp of doc.data().competitions || []) {
-    if (comp.day == null || !comp.name) continue;
-    (byDay[comp.day] = byDay[comp.day] || []).push({
-      eventName: comp.name,
-      location: comp.location || "",
-    });
-  }
-  return byDay;
-}
 
 /**
  * The specific show a corps competes at on `competitionDay` — {eventName,
@@ -115,7 +99,7 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
       return { status: "completed", corps: 0, scored: 0, calendarDay, competitionDay };
     }
 
-    const scheduleShows = await loadScheduleShows(db, seasonData);
+    const scheduleShows = await store.loadScheduleShowsByDay(db, seasonData);
     const dayShows = scheduleShows[competitionDay] || [];
     // Published Day-39 Eastern night snake (null before publication — the
     // uid-parity fallback stands until then).
@@ -715,4 +699,4 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
   }
 }
 
-module.exports = { processPodiumDay, loadScheduleShows, showVenueFor, resolveCorpsShow };
+module.exports = { processPodiumDay, showVenueFor, resolveCorpsShow };
