@@ -138,7 +138,7 @@ const CorpsIdentity = ({ place, name, isMine, displayName, uid, tag, avatarUrl }
 // column, white when it's the active sort, muted otherwise.
 const CaptionValue = ({ value, isTop, active, width = CAP_W }) => (
   <span
-    className={`${width} text-right tabular-nums font-data ${
+    className={`${width} text-right tabular-nums ${
       isTop ? `font-bold ${GOLD}` : active ? 'text-white' : 'text-gray-300'
     }`}
   >
@@ -301,7 +301,7 @@ const RecapDataGrid = memo(({ scores, eventName, location, date, userCorpsName }
                 <CaptionValue value={captions?.vis} isTop={captions?.vis === tops.vis} />
                 <CaptionValue value={captions?.mus} isTop={captions?.mus === tops.mus} />
                 <span
-                  className={`${TOTAL_W} text-right font-bold text-white font-data tabular-nums`}
+                  className={`${TOTAL_W} text-right font-bold text-white tabular-nums`}
                 >
                   {(score.score || score.totalScore || 0).toFixed(3)}
                 </span>
@@ -403,7 +403,7 @@ const EasternCombinedSheet = memo(({ shows, userCorpsName }) => {
                         isTop={captions?.mus === sectionTops.mus}
                       />
                       <span
-                        className={`${TOTAL_W} text-right font-bold text-white font-data tabular-nums`}
+                        className={`${TOTAL_W} text-right font-bold text-white tabular-nums`}
                       >
                         {(row.score || row.totalScore || 0).toFixed(3)}
                       </span>
@@ -710,7 +710,7 @@ const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
                   active={activeCap === 'MUS'}
                 />
                 <span
-                  className={`${TOTAL_W} text-right font-bold text-white font-data tabular-nums`}
+                  className={`${TOTAL_W} text-right font-bold text-white tabular-nums`}
                 >
                   {typeof entry.score === 'number' ? entry.score.toFixed(3) : '-'}
                 </span>
