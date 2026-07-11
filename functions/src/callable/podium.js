@@ -524,7 +524,7 @@ exports.allocateRehearsalBlock = onCall({ cors: true }, async (request) => {
         blocksSoFar,
         store.curves,
         store.balance,
-        { yieldMultiplier: staffMult * clinicianMult * jointMult }
+        { yieldMultiplier: staffMult * clinicianMult * jointMult, isShowDay }
       );
       if (clinicianActive) panel.clinicianBoost = store.balance.clinician.yieldBoost;
       if (staffMult > 1) panel.staffBoost = Number((staffMult - 1).toFixed(3));
@@ -575,7 +575,7 @@ exports.setPodiumRestDay = onCall({ cors: true }, async (request) => {
 });
 
 exports.setPodiumShows = onCall({ cors: true }, async (request) => {
-  const { uid, db, seasonData, competitionDay } = await podiumContext(request);
+  const { uid, db, seasonData, calendarDay, competitionDay } = await podiumContext(request);
   const { week, shows } = request.data || {};
   const sRef = store.stateRef(db, uid);
   // Reads before the transaction: the published Eastern-night assignments (so
@@ -606,6 +606,23 @@ exports.setPodiumShows = onCall({ cors: true }, async (request) => {
         ([d]) => Math.ceil(Number(d) / 7) !== week
       )
     );
+    // Over-rehearsal guard: a show day only allows blocksOnShowDay clicks (the
+    // morning run-through). If today has already been rehearsed as a full
+    // rehearsal day past that budget, it can't retroactively become a show day
+    // — the extra growth would be an exploit. Only today's usage is knowable
+    // (block counts are tracked per calendar day), so the guard applies to a
+    // pick FOR today; future days start at zero.
+    const showDayBudget = store.balance.rehearsal.blocksOnShowDay;
+    const usedToday =
+      state.today && state.today.calendarDay === calendarDay ? state.today.blocksUsed || 0 : 0;
+    if (competitionDay >= 1 && validated[competitionDay] && usedToday > showDayBudget) {
+      throw new HttpsError(
+        "failed-precondition",
+        `You've already rehearsed ${usedToday} blocks today — a show day allows only ${showDayBudget}. ` +
+          `You can't register for a show on a day you've already over-rehearsed. ` +
+          `Register this show before rehearsing next time, or pick a different day.`
+      );
+    }
     state.selectedShows = { ...keep, ...validated };
     // Derived day list, kept in sync for every day-based reader.
     state.selectedShowDays = Object.keys(state.selectedShows)

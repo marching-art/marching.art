@@ -153,7 +153,7 @@ function simulateSeason(strategy, repTier, seed) {
     let used = 0;
     if (!plan.restDay) {
       for (const blockType of plan.blocks.slice(0, maxBlocks)) {
-        engine.allocateBlock(state, blockType, day, used, blocksSoFar, curves, cfg);
+        engine.allocateBlock(state, blockType, day, used, blocksSoFar, curves, cfg, { isShowDay });
         blocksSoFar[blockType] = (blocksSoFar[blockType] || 0) + 1;
         used++;
       }

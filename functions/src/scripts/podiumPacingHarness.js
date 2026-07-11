@@ -63,6 +63,7 @@ function playSeason(repTier, challengeLevel, seed, skipRate = 0) {
         rotationIndex++;
         engine.allocateBlock(state, blockType, day, i, blocksSoFar, curves, balance, {
           yieldMultiplier,
+          isShowDay,
         });
         blocksSoFar[blockType] = (blocksSoFar[blockType] || 0) + 1;
         used++;

@@ -1,9 +1,10 @@
 // RehearsalPlanner — the Podium Class daily verb (Phase 2, design §6.1).
-// One screen, 12 clicks: pick today's rehearsal blocks, watch the Action
-// Complete panel, or declare a rest day. Condition strip included.
+// One screen: pick today's rehearsal blocks (12 on a normal day, 20 in spring
+// training, 8 on a show day at half value each), watch the Action Complete
+// panel, or declare a rest day. Condition strip included.
 
 import React, { useState } from 'react';
-import { Flame, BatteryCharging, Moon, Loader2, Coins } from 'lucide-react';
+import { Flame, BatteryCharging, Moon, Loader2, Coins, Trophy } from 'lucide-react';
 import { BLOCKS, CAPTION_LABELS } from './podiumConstants';
 
 function ConditionBar({ label, value, icon: Icon, color }) {
@@ -75,9 +76,30 @@ export default function RehearsalPlanner({ podium }) {
   };
 
   const exhausted = seasonOver || today.restDay;
+  const isShowDay = Boolean(data.isShowDay) && !seasonOver;
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] rounded-none p-4 space-y-4">
+    <div
+      className={`bg-[#1a1a1a] border rounded-none p-4 space-y-4 ${
+        isShowDay ? 'border-[#c9a227] shadow-[0_0_0_1px_#c9a227] ring-1 ring-[#c9a227]/40' : 'border-[#333]'
+      }`}
+    >
+      {/* Show day is the payoff — make it unmissable. Banner sits above the
+          whole planner so a returning FMA veteran never mistakes the lighter
+          8-block run-through for a normal 12-click rehearsal day. */}
+      {isShowDay && (
+        <div className="flex items-center gap-2 -mx-4 -mt-4 mb-0 px-4 py-2 bg-gradient-to-r from-[#c9a227]/25 to-transparent border-b border-[#c9a227]/60">
+          <Trophy className="w-4 h-4 text-[#c9a227] shrink-0" />
+          <span className="text-xs font-bold uppercase tracking-wider text-[#c9a227]">
+            Show day — you compete tonight
+          </span>
+          <span className="text-[10px] text-[#e0c25a] ml-auto text-right leading-tight">
+            {today.restDay
+              ? 'Resting — you still perform with today’s book'
+              : 'Light run-through: 8 blocks, half value each'}
+          </span>
+        </div>
+      )}
       {/* Header: day type + condition strip */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
@@ -88,7 +110,11 @@ export default function RehearsalPlanner({ podium }) {
                 ? 'Post-season'
                 : `Day ${competitionDay} of 49`}
           </div>
-          <div className="text-sm font-bold text-white flex items-center gap-3">
+          <div
+            className={`text-sm font-bold flex items-center gap-3 ${
+              isShowDay ? 'text-[#c9a227]' : 'text-white'
+            }`}
+          >
             {dayType}
             {data.divisionLabel && (
               <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-none bg-yellow-400/15 text-yellow-400">
