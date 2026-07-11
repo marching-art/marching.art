@@ -1,91 +1,61 @@
 /**
- * Podium staff labor market (Phase 4.3-4.4, design §5.6; careers per
- * decision 28).
+ * Podium staff — a generic, always-available labor catalog with per-hire
+ * careers. Supply scales with the playerbase instead of a scarce shared
+ * pool: a director never claims a pre-made person, the catalog offers a ROLE
+ * (specialty) at an ENTRY experience level, and hiring MINTS a staff instance
+ * owned by that corps. The instance keeps a stable id, its tenure, and its
+ * resume for the rest of its career.
  *
- * Staff are generated PERSONS with CAREERS, not catalog rows: name,
- * specialty (one of the 8 captions, Tour Manager, or Program Coordinator),
- * tier, salary, trait — and a persistent resume across seasons (the
- * `podium-staff/registry` doc). The season market is generated
- * DETERMINISTICALLY from the seasonUid, so lazy creation is idempotent and
- * every player sees the same pool. Scarcity is real: each person signs with
- * exactly one corps.
- *
- * THE CAREER ARC (decision 28):
- *   - Staff age one season per game season from their debut and RETIRE at
- *     `career.maxSeasons` (30) — a full career is Hall of Fame stuff, and
- *     retirement cycles the pool forever (no terminal maxed-staff state).
- *   - Tenure PROMOTES: a person's tier floor rises with seasons worked
- *     (promotionSeasons), and their salary escalates
- *     (base x (1 + tenureSalaryPerSeason x careerSeasons)) — a year-25
- *     legend costs multiples of a rookie while the boost stays capped, so
- *     veteran staff are prestige + reliability, never a power spiral.
- *   - CONTRACTS run 1-3 seasons at a salary frozen at signing (the hedge
- *     against tenure inflation); each new season's salary is charged from
- *     the fresh Corps Budget at re-registration, and an unaffordable
- *     renewal lapses the contract (released, never a debt).
- *   - Mid-season TRANSFERS: an employer can post a contract to the open
- *     market; a buyer pays the remaining pro-rata salary plus a buyout
- *     premium (the premium is a sink), the seller recoups the remainder.
- *   - RETRAINING: an employer can move a person to a new specialty — the
- *     person keeps tenure, works at reduced boost for the rest of the
- *     season (learning curve), and the new specialty sticks for life.
+ * EARN experience by RETAINING (the whole game):
+ *   - Only entry tiers (apprentice, journeyman) are hireable. Veteran ->
+ *     Master -> Legend are reached SOLELY by keeping a staffer across seasons
+ *     (promotionSeasons) — a Legend is proof you kept them ~22 seasons, never
+ *     something bought off the shelf.
+ *   - Each retained season ages the instance one year: the tenure floor
+ *     raises its tier (and boost), and its salary escalates
+ *     (base x (1 + tenureSalaryPerSeason x careerSeasons)).
+ *   - CONTRACTS lock the salary for their length (a hedge against tenure
+ *     inflation); once the lock lapses the salary floats to the current
+ *     tenured rate. A staffer is retained automatically each season the corps
+ *     can pay their salary from the fresh Corps Budget; an unaffordable season
+ *     lapses the contract (released, never a debt), and a 30-season career
+ *     ends in retirement.
  *
  * Effects (applied in the callable/processor, capped at maxTotalBoost):
- *   - Caption techs boost rehearsal yield on blocks where their caption is
- *     a PRIMARY effect.
+ *   - Caption techs boost rehearsal yield on blocks where their caption is a
+ *     PRIMARY effect.
  *   - Program Coordinator boosts the Full Ensemble block.
  *   - Tour Manager reduces travel stamina costs by their tier's percentage.
  */
 
 const engine = require("./engine");
-const balance = require("./balanceConfig.json");
 
 const TIER_ORDER = ["apprentice", "journeyman", "veteran", "master", "legend"];
 
 const SPECIALTIES = [...engine.CAPTIONS, "tourManager", "programCoordinator"];
 
-const FIRST_NAMES = [
-  "Alex", "Jordan", "Sam", "Riley", "Casey", "Devon", "Morgan", "Quinn",
-  "Taylor", "Avery", "Marcus", "Elena", "Sofia", "Andre", "Naomi", "Victor",
-  "Priya", "Diego", "Lena", "Theo", "Maya", "Owen", "Iris", "Hugo",
-];
-
-const LAST_NAMES = [
-  "Alvarez", "Brennan", "Chen", "Dubois", "Ellis", "Fitzgerald", "Garza",
-  "Hoffman", "Iwata", "Jacobs", "Kowalski", "Lindqvist", "Moreau", "Nakamura",
-  "Okafor", "Petrov", "Quintana", "Rossi", "Silva", "Thibodeaux", "Ueda",
-  "Vasquez", "Whitfield", "Zhang",
-];
-
-const TRAITS = [
-  "Basics-first", "Peaker", "Ensemble ear", "Drill doctor", "Tone farmer",
-  "Clean freak", "Old school", "Analytics nerd", "Motivator", "Quiet legend",
-];
-
-/** Deterministic pick from a list. */
-function pick(list, seed) {
-  return list[Math.floor(engine.seededUnit(seed) * list.length) % list.length];
-}
+// The tiers a director can hire DIRECTLY. Everything above is earned by
+// retention (tierForCareer floors the tier up as tenure accrues).
+const HIRABLE_TIERS = ["apprentice", "journeyman"];
 
 // ---------------------------------------------------------------------------
-// Careers (decision 28)
+// Careers — tenure, salary, retirement
 // ---------------------------------------------------------------------------
 
-/** Seasons a person has been in the game (never negative). */
-function careerSeasonsOf(person, seasonIndex) {
-  if (person.debutIndex == null) return 0;
-  return Math.max(0, seasonIndex - person.debutIndex);
+/** The boost fraction a tier yields (0 for an unknown tier). */
+function boostFor(tier, cfg) {
+  return (cfg.staff.tiers[tier] && cfg.staff.tiers[tier].boost) || 0;
 }
 
-/** The tier a person works at: their generated talent, floored by tenure. */
-function tierForCareer(generatedTier, careerSeasons, cfg) {
+/** The tier a staffer works at: their hired entry tier, floored by tenure. */
+function tierForCareer(hiredTier, careerSeasons, cfg) {
   let floor = "apprentice";
   for (const [tier, seasons] of Object.entries(cfg.staff.career.promotionSeasons)) {
     if (careerSeasons >= seasons) floor = tier;
   }
-  const generatedRank = TIER_ORDER.indexOf(generatedTier);
+  const hiredRank = TIER_ORDER.indexOf(hiredTier);
   const floorRank = TIER_ORDER.indexOf(floor);
-  return TIER_ORDER[Math.max(generatedRank, floorRank)];
+  return TIER_ORDER[Math.max(hiredRank < 0 ? 0 : hiredRank, floorRank)];
 }
 
 /** Tenure-escalated per-season salary (a year-25 legend costs multiples). */
@@ -94,114 +64,103 @@ function salaryFor(tier, careerSeasons, cfg) {
   return Math.round(base * (1 + cfg.staff.career.tenureSalaryPerSeason * careerSeasons));
 }
 
-/** Generate one deterministic rookie person. */
-function generateRookie(seasonUid, seasonIndex, specialty, tier, index) {
-  const seed = `${seasonUid}|staff|${specialty}|${tier}|${index}`;
-  const first = pick(FIRST_NAMES, `${seed}|first`);
-  const last = pick(LAST_NAMES, `${seed}|last`);
+/**
+ * The always-available hiring catalog: every specialty at every entry tier.
+ * Generic — a role and an experience level, no names. Salaries/boosts are the
+ * rookie (careerSeasons 0) rates; retention is what makes staff pricier and
+ * better over time.
+ * @returns {Array<{specialty:string, tier:string, salary:number, boost:number}>}
+ */
+function buildCatalog(cfg) {
+  const catalog = [];
+  for (const specialty of SPECIALTIES) {
+    for (const tier of HIRABLE_TIERS) {
+      catalog.push({
+        specialty,
+        tier,
+        salary: salaryFor(tier, 0, cfg),
+        boost: boostFor(tier, cfg),
+      });
+    }
+  }
+  return catalog;
+}
+
+/**
+ * Mint a fresh staff instance at hire. The id sticks with this staffer for
+ * the rest of their career (tenure + resume hang off it).
+ * @param {{id:string, specialty:string, tier:string, seasons:number, day:number}} args
+ * @returns {object} the instance stored at state.staff[specialty]
+ */
+function mintStaff({ id, specialty, tier, seasons, day }, cfg) {
   return {
-    id: `${specialty}_s${seasonIndex}_${tier}_${index}`,
-    name: `${first} ${last}`,
+    id,
     specialty,
-    generatedTier: tier,
-    trait: pick(TRAITS, `${seed}|trait`),
-    debutIndex: seasonIndex,
+    hiredTier: tier,
+    careerSeasons: 0,
+    tier,
+    boost: boostFor(tier, cfg),
+    salaryPerSeason: salaryFor(tier, 0, cfg),
+    contract: { seasons, remaining: seasons },
     resume: [],
-    retired: false,
+    hiredDay: day,
   };
 }
 
 /**
- * Build (or extend) the persistent registry and derive this season's market.
- * Ages every person, retires full careers (maxSeasons), carries available
- * veterans into the market, and generates deterministic rookies to keep
- * each specialty stocked. Mutates and returns `registry` alongside the
- * market staff array.
+ * Age a retained staffer into the next season (pure). Increments tenure,
+ * re-derives the tier/boost the tenure now earns, floats or holds the salary
+ * per the contract lock, decrements the lock, and appends the just-completed
+ * season to the resume. Returns null when a 30-season career retires.
  *
- * @param {object|null} registryData `podium-staff/registry` doc data or null
- * @param {string} seasonUid
- * @param {number} seasonIndex global Podium season index
+ * @param {object} member the instance carried from last season
  * @param {object} cfg balance config
- * @returns {{registry: object, staff: Array<object>}}
+ * @param {{seasonUid:string, corpsName:string|null, placement:number|null}} [completed]
+ *        the season being LEFT, banked onto the resume (omit to skip)
+ * @returns {object|null} the aged instance, or null if retired
  */
-function buildSeasonMarket(registryData, seasonUid, seasonIndex, cfg) {
-  const registry = registryData && registryData.people ? registryData : { people: {} };
+function ageStaff(member, cfg, completed) {
+  const hiredTier = member.hiredTier || member.tier;
+  const careerSeasons = (member.careerSeasons || 0) + 1;
+  if (careerSeasons >= cfg.staff.career.maxSeasons) return null; // retired
 
-  // Age + retire.
-  for (const person of Object.values(registry.people)) {
-    if (person.retired) continue;
-    if (careerSeasonsOf(person, seasonIndex) >= cfg.staff.career.maxSeasons) {
-      person.retired = true;
-      person.retiredIndex = seasonIndex;
-    }
-  }
+  const tier = tierForCareer(hiredTier, careerSeasons, cfg);
+  const prevContract = member.contract || { seasons: 1, remaining: 0 };
+  const remaining = Math.max(0, (prevContract.remaining || 0) - 1);
+  // Salary stays frozen while the contract lock still has seasons left; it
+  // floats up to the current tenured rate once the lock lapses.
+  const salaryPerSeason =
+    remaining > 0 ? member.salaryPerSeason : salaryFor(tier, careerSeasons, cfg);
 
-  const staff = [];
-  for (const specialty of SPECIALTIES) {
-    const veterans = Object.values(registry.people).filter(
-      (person) => !person.retired && person.specialty === specialty
-    );
+  const cap = cfg.staff.career.resumeCap || 30;
+  const resume = completed
+    ? [
+        ...(member.resume || []).slice(-(cap - 1)),
+        {
+          seasonUid: completed.seasonUid,
+          corpsName: completed.corpsName || null,
+          placement: completed.placement ?? null,
+        },
+      ]
+    : member.resume || [];
 
-    // Keep each specialty stocked to the configured counts with fresh blood;
-    // veterans always return to the market on top of the rookie floor.
-    const rookieTiers = [];
-    for (const [tier, count] of Object.entries(cfg.staff.marketPerSpecialty)) {
-      const veteransAtLeast = veterans.filter(
-        (person) =>
-          TIER_ORDER.indexOf(
-            tierForCareer(person.generatedTier, careerSeasonsOf(person, seasonIndex), cfg)
-          ) >= TIER_ORDER.indexOf(tier)
-      ).length;
-      for (let i = 0; i < Math.max(0, count - veteransAtLeast); i++) rookieTiers.push(tier);
-    }
-    if (
-      veterans.length === 0 &&
-      engine.seededUnit(`${seasonUid}|staff|${specialty}|master`) < cfg.staff.masterChance
-    ) {
-      rookieTiers.push("master");
-    }
-    if (
-      veterans.length === 0 &&
-      engine.seededUnit(`${seasonUid}|staff|${specialty}|legend`) < cfg.staff.legendChance
-    ) {
-      rookieTiers.push("legend");
-    }
-    const rookies = rookieTiers.map((tier, index) =>
-      generateRookie(seasonUid, seasonIndex, specialty, tier, index)
-    );
-    for (const rookie of rookies) registry.people[rookie.id] = rookie;
-
-    for (const person of [...veterans, ...rookies]) {
-      const careerSeasons = careerSeasonsOf(person, seasonIndex);
-      const tier = tierForCareer(person.generatedTier, careerSeasons, cfg);
-      staff.push({
-        id: person.id,
-        name: person.name,
-        specialty,
-        tier,
-        careerSeasons,
-        salary: salaryFor(tier, careerSeasons, cfg),
-        boost: cfg.staff.tiers[tier].boost,
-        trait: person.trait,
-        resume: (person.resume || []).slice(-3),
-        signedBy: null,
-      });
-    }
-  }
-  registry.updatedAt = new Date().toISOString();
-  return { registry, staff };
+  const aged = {
+    ...member,
+    hiredTier,
+    careerSeasons,
+    tier,
+    boost: boostFor(tier, cfg),
+    salaryPerSeason,
+    contract: { seasons: prevContract.seasons || 1, remaining },
+    resume,
+  };
+  delete aged.retrain; // the learning curve ended with the old season
+  return aged;
 }
 
-/**
- * Generate the full, deterministic staff market for a season (legacy
- * registry-less path — kept for tests and as the fallback when the
- * registry is unavailable).
- * @param {string} seasonUid
- * @returns {Array<object>} staff persons (signedBy: null)
- */
-function generateMarket(seasonUid) {
-  return buildSeasonMarket(null, seasonUid, 1, balance).staff;
-}
+// ---------------------------------------------------------------------------
+// Effects
+// ---------------------------------------------------------------------------
 
 /**
  * Total staff yield multiplier for a block type, capped at maxTotalBoost.
@@ -216,7 +175,7 @@ function staffYieldMultiplier(state, blockType, cfg) {
   for (const [specialty, member] of Object.entries(roster)) {
     if (!member) continue;
     // Retraining learning curve: reduced boost for the rest of the season
-    // the retrain happened in (decision 28).
+    // the retrain happened in.
     const retrainMult =
       member.retrain && member.retrain.seasonUid === state.seasonUid
         ? cfg.staff.career.retrainBoostMultiplier
@@ -242,11 +201,13 @@ function tourStaminaReduction(state, cfg) {
 module.exports = {
   SPECIALTIES,
   TIER_ORDER,
-  careerSeasonsOf,
+  HIRABLE_TIERS,
+  boostFor,
   tierForCareer,
   salaryFor,
-  buildSeasonMarket,
-  generateMarket,
+  buildCatalog,
+  mintStaff,
+  ageStaff,
   staffYieldMultiplier,
   tourStaminaReduction,
 };

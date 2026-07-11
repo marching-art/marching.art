@@ -6,6 +6,7 @@ const assert = require("node:assert/strict");
 const {
   CLASS_PRIORITY,
   VALID_CLASSES,
+  CORPS_NAME_CLASSES,
   normalizeCorpsName,
   isProfaneCorpsName,
   pickDuplicateWinner,
@@ -77,6 +78,30 @@ describe("pickDuplicateWinner", () => {
       assert.ok(Number.isInteger(CLASS_PRIORITY[cls]), cls);
     }
     assert.ok(CLASS_PRIORITY.worldClass < CLASS_PRIORITY.soundSport);
+  });
+
+  test("CLASS_PRIORITY defines every corps-name-bearing class (incl. podium)", () => {
+    for (const cls of CORPS_NAME_CLASSES) {
+      assert.ok(Number.isInteger(CLASS_PRIORITY[cls]), cls);
+    }
+  });
+
+  test("podiumClass wins over every fantasy class regardless of age", () => {
+    // Podium has no self-service rename, so the fantasy corps must be flagged.
+    const winner = pickDuplicateWinner([
+      { corpsClass: "worldClass", createdAt: ts(1) },
+      { corpsClass: "podiumClass", createdAt: ts(999) },
+    ]);
+    assert.equal(winner.corpsClass, "podiumClass");
+  });
+});
+
+describe("CORPS_NAME_CLASSES", () => {
+  test("includes podiumClass alongside the fantasy classes", () => {
+    assert.ok(CORPS_NAME_CLASSES.includes("podiumClass"));
+    for (const cls of VALID_CLASSES) {
+      assert.ok(CORPS_NAME_CLASSES.includes(cls), cls);
+    }
   });
 });
 

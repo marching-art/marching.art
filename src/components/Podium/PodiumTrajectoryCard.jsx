@@ -9,7 +9,7 @@ import React, { useMemo, useState } from 'react';
 import { TrendingUp } from 'lucide-react';
 import shadowData from '../../data/historicalShadows.json';
 
-const W = 640;
+const W = 960;
 const H = 240;
 const PAD = { top: 10, right: 128, bottom: 22, left: 34 };
 
@@ -68,9 +68,14 @@ export default function PodiumTrajectoryCard({ podium }) {
         </span>
       </div>
 
+      {/* Cap the render size: with only a viewBox and w-full the SVG scales
+          to whatever the (up to 2/3-viewport) column gives it, ballooning the
+          9px labels to 18px on wide monitors. The cap tracks the 960px viewBox
+          at the same 1.2x factor as the old 640/768 pair, so widening the plot
+          leaves text at its previous rendered size; mx-auto centers the slack. */}
       <svg
         viewBox={`0 0 ${W} ${H}`}
-        className="w-full h-auto"
+        className="w-full h-auto max-w-[1152px] mx-auto"
         role="img"
         aria-label={`Your season scores against ${shadows.length} historical corps trajectories`}
       >

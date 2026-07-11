@@ -245,20 +245,6 @@ function recapDayRef(db, seasonUid, competitionDay) {
   return db.doc(`podium-recaps/${seasonUid}/days/${competitionDay}`);
 }
 
-/** Season staff market — one public doc, lazily created (deterministic). */
-function staffMarketRef(db, seasonUid) {
-  return db.doc(`podium-staff/${seasonUid}`);
-}
-
-/**
- * The persistent staff registry — every generated person's career (tenure,
- * resume, retirement) across all seasons. Sibling of the season market docs;
- * "registry" can never collide with a seasonUid.
- */
-function staffRegistryRef(db) {
-  return db.doc("podium-staff/registry");
-}
-
 // ---------------------------------------------------------------------------
 // Corps Budget ledger (Phase 4, design §14.2.1 / decision 24)
 // ---------------------------------------------------------------------------
@@ -348,8 +334,6 @@ module.exports = {
   rosterRef,
   rosterCollection,
   recapDayRef,
-  staffMarketRef,
-  staffRegistryRef,
   hydrateState,
   dehydrateState,
   initBudget,

@@ -474,44 +474,47 @@ replaces ownership with **employment** — and an employment market never maxes 
 - **Slots:** eight caption techs (one per caption, each boosting yield in their mapped rehearsal
   blocks), a **Tour Manager** (reduces travel stamina/cost), and a **Program Coordinator**
   (boosts Full Ensemble / GE blocks). Ten seats, never more.
-- **Staff are generated persons with careers**, not catalog rows: name, specialty, tier
-  (Apprentice → Journeyman → Veteran → Master → Legend), salary, and one published trait
-  ("Basics-first: +8% Visual Basics, −3% ensemble"; "Peaker: clean gains +15% after day 40").
-  New apprentices generate into the market every season; everyone ages; everyone eventually
-  retires. The pool cycles forever — the decade-scale economy is built into staff _mortality_.
+- **Staff are generic — a role at an experience level, never a named person.** The eight caption
+  seats plus Tour Manager and Program Coordinator are hired from an always-available catalog at an
+  entry tier (Apprentice or Journeyman). Hiring MINTS a staffer owned by your corps with a stable
+  id that holds their tenure and history for the rest of their career (Apprentice → Journeyman →
+  Veteran → Master → Legend). There are no invented names, no traits, no résumés to read — a
+  director decides only what a staffer does and how experienced they are.
 - **Salaries, not purchases.** Contracts are per-season, paid from the Corps Budget — funded
   each season from the director's CorpsCoin up to a **division-equal cap**, plus in-class
   earnings, resetting at archival (§14.2.1). Staffing is therefore a fresh allocation decision
   every single season (payroll vs. travel vs. food vs. clinicians), and because the funding cap
   is division-equal, it doubles as a **hard salary cap**: a champion cannot simply outspend the
   field and hoard every Legend.
-- **Free agency — the between-seasons ritual.** During registration week, unsigned staff hit a
-  shared market. Corps bid; staff choose by a **published, deterministic preference function**
-  (salary offer, corps reputation, loyalty history, specialty fit — no RNG). Top staff are
-  scarce: when a Legend brass tech signs with your rival, they are _gone_. This is DCI's real
-  "silly season" — staff movement is offseason drama fans already track — turned into a game
-  phase, and it gives the 1-day gap between seasons its own appointment content.
-- **Develop-your-own vs. buy-established.** Staff gain experience each season they work and tier
-  up over multiple seasons. A new corps' viable path is hiring cheap apprentices and developing
-  them — then facing retention raises when their homegrown Master gets famous and rivals come
-  poaching. **Success inflates your payroll**: winning makes your staff more visible, more
-  expensive, and more poachable. This is a natural dynasty tax, a second structural beatability
-  mechanism (§5.13), and it produces the era-and-rebuild cycles real corps have.
-- **Loyalty, capped.** Consecutive seasons with one corps build loyalty (modest salary discount +
-  poach resistance), capped low enough that poaching a loyal Legend is expensive but never
-  impossible. Dormancy severs it (§5.13).
-- **Retirement feeds the mythology.** Retiring Legends become clinicians, and the most decorated
-  become **namesakes for the finals caption trophies** (§5.7's named hardware) — the game
-  generates its own history. "Legendary brass tech D. Alvarez retires after 41 seasons" is a feed
-  item, and next year's brass trophy carries the name.
+- **Always available — supply scales with the playerbase.** There is no scarce shared market to
+  bid on and no free-agency race: every role is hireable by everyone, every season, so the staffing
+  economy grows with the site instead of starving at a fixed pool of ~50 total hires. Scarcity was
+  the wrong lever for a growing game — the scarce resource is now the SEASONS it takes to develop
+  someone, not a limited supply of people.
+- **Earn the higher tiers by retaining.** Only Apprentice and Journeyman are hireable directly.
+  Veteran → Master → Legend are reached SOLELY by keeping a staffer season over season (promotion
+  at 3 / 8 / 15 / 22 seasons). A Legend is proof you developed and held someone for ~22 seasons,
+  never something bought off the shelf. Each retained season ages the instance: their tier and
+  boost rise, and their salary escalates with tenure.
+- **Contracts lock salary; retention is the default.** Contract length (1–3 seasons) locks the
+  salary against the raises tenure brings; once the lock lapses the salary floats to the current
+  tenured rate. A staffer is retained automatically each season the Corps Budget can pay them; an
+  unaffordable season lapses the contract (released, never a debt). **Success inflates your
+  payroll**: your homegrown Master ages into a pricier Legend — a natural dynasty tax and a second
+  structural beatability mechanism (§5.13) that produces the era-and-rebuild cycles real corps
+  have. You can RELEASE a staffer to free a seat, or RETRAIN one into a new specialty (tenure kept,
+  reduced boost for the rest of that season).
+- **Retirement cycles the pool.** A 30-season career retires and the seat reopens — the
+  decade-scale economy is built into staff _mortality_, so there is no terminal maxed-staff state.
 - **Power stays small.** Total staff yield bonus is hard-capped (~+15% across a corps' blocks);
   a full-Legend staff over a solid-Journeyman staff is worth roughly 0.5–1.0 finals points —
   deliberately below the ±2 decision-quality swing, preserving the §5.13 beatability math.
   Harness assertions: budget equality prevents any corps monopolizing Legends; staff bonus never
   exceeds the cap; a max-staff corps with poor rehearsal balance loses to a no-staff corps with
   perfect balance.
-- **Storage:** a `podium-staff` collection (person docs with career history) + a per-season
-  market doc generated at rollover; free agency resolves deterministically at registration close.
+- **Storage:** each staffer lives as an instance on the director's own `podium/state` doc
+  (server-only) and ages into the next season at re-registration — no shared collection, no
+  registry, and no per-season market doc, so there is no hot-doc write contention as the game grows.
 
 ### 5.7 Progression, divisions, and season persistence
 
@@ -1153,12 +1156,12 @@ retention-safety valve ships _with_ condition, not after it.
 (hard-capped division-equal) + in-class earnings (show payouts, fundraiser blocks); resets
 at archival; real money never converts into it (§14.2.1).
 4.2 Fundraiser block conversion (§14.1.2).
-4.3 `podium-staff` collection + season market generation (deterministic from season seed);
-tiers, traits, salaries, aging.
-4.4 Free agency at registration close: bids → published preference function → contracts;
-retention raises; loyalty; poaching (§5.6).
+4.3 Generic always-available hiring catalog (role × entry tier); hiring mints a per-corps staffer
+instance on `podium/state`; tiers, salaries, tenure aging.
+4.4 Retention at re-registration: staffers age up, tier/salary escalate, contract salary-lock,
+release + retrain; higher tiers earned only by retaining (§5.6).
 4.5 Clinicians; Tour Manager / Program Coordinator effects.
-4.6 Staff retirement at rollover; retired-Legend → clinician pool; trophy-namesake hooks.
+4.6 Staff retirement at 30 seasons; seat reopens.
 4.7 Exit gate: staff-market harness assertions; economy sim shows median corps solvent, careless
 corps broke-but-playable.
 

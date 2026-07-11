@@ -16,11 +16,9 @@ const { isPodiumEnabled } = require("../helpers/features");
 const { getActiveCalendarDay, toCompetitionDay } = require("../helpers/gameDay");
 const engine = require("../helpers/podium/engine");
 const store = require("../helpers/podium/store");
-const venues = require("../helpers/podium/venues");
 const staffMarket = require("../helpers/podium/staffMarket");
 const career = require("../helpers/podium/career");
 const divisions = require("../helpers/podium/divisions");
-const hostedEvents = require("../helpers/podium/hostedEvents");
 
 const FOOD_TIERS = ["gasStation", "standard", "fullKitchen"];
 // Template covers a full spring-training day (the largest block budget).
@@ -303,24 +301,27 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
   // division-equal, so it can only be validated once the seat is known.
   const division = divisions.divisionForRegistration(careerData, missedSeasons, store.balance);
   const budgetCommitment = validateCommitment(request.data?.budgetCommitment, 0, division);
-  // Multi-season staff contracts carry into the new season at the salary
-  // frozen at signing (decision 28); each carried season is paid from the
-  // NEW budget below — an unaffordable renewal lapses, never a debt.
-  const carriedContracts = [];
+  // Staff are RETAINED across seasons: every employed staffer ages up one
+  // year (tenure raises their tier, the salary lock floats once it lapses)
+  // and is paid from the NEW budget below — an unaffordable season lapses the
+  // contract, never a debt, and a 30-season career retires. The just-finished
+  // season is banked on each staffer's resume as they carry over.
+  const retainedStaff = [];
   if (
     !freshStart &&
     staleStateSnapshot.exists &&
     staleStateSnapshot.data().seasonUid !== seasonUid
   ) {
-    for (const member of Object.values(staleStateSnapshot.data().staff || {})) {
-      if (member && member.contract && member.contract.remaining > 1 && member.salaryPerSeason) {
-        const carried = {
-          ...member,
-          contract: { ...member.contract, remaining: member.contract.remaining - 1 },
-        };
-        delete carried.retrain; // the learning curve ended with the old season
-        carriedContracts.push(carried);
-      }
+    const stale = staleStateSnapshot.data();
+    const completed = {
+      seasonUid: stale.seasonUid,
+      corpsName: stale.corpsName || null,
+      placement: stale.seasonRank ?? null,
+    };
+    for (const member of Object.values(stale.staff || {})) {
+      if (!member || !member.specialty) continue;
+      const aged = staffMarket.ageStaff(member, store.balance, completed);
+      if (aged) retainedStaff.push(aged); // null == retired, drops off the roster
     }
   }
   const trimmedName = corpsName.trim();
@@ -329,7 +330,6 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
   // season across the whole game.
   const nameRef = db.doc(`corpsnames/${seasonUid}_${normalizedName}`);
   const sRef = store.stateRef(db, uid);
-  const signedCarryIds = []; // carried contracts to pre-sign in the market
 
   await db.runTransaction(async (transaction) => {
     const [existingState, existingName, profileSnapshot] = await Promise.all([
@@ -380,12 +380,11 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
       })(),
     };
     const carriedStaff = {};
-    for (const member of carriedContracts) {
+    for (const member of retainedStaff) {
       if (store.debitBudget(draft, member.salaryPerSeason, `staff:${member.specialty}`, 0)) {
         carriedStaff[member.specialty] = member;
-        signedCarryIds.push(member.id);
       }
-      // else: renewal unaffordable — the contract lapses quietly.
+      // else: this season's salary is unaffordable — the contract lapses quietly.
     }
     transaction.set(sRef, {
       ...stored,
@@ -442,33 +441,6 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
       { merge: true }
     );
   });
-
-  // Carried contracts pre-sign in the new season's market so the person
-  // never shows as available (works whether the market doc exists yet or
-  // not; ensureSeasonMarket applies preSigned at generation).
-  if (signedCarryIds.length > 0) {
-    try {
-      const marketRef = store.staffMarketRef(db, seasonUid);
-      await marketRef.set(
-        { preSigned: Object.fromEntries(signedCarryIds.map((id) => [id, uid])) },
-        { merge: true }
-      );
-      const marketSnapshot = await marketRef.get();
-      if (marketSnapshot.exists && Array.isArray(marketSnapshot.data().staff)) {
-        const market = marketSnapshot.data();
-        let touched = false;
-        for (const person of market.staff) {
-          if (signedCarryIds.includes(person.id) && person.signedBy !== uid) {
-            person.signedBy = uid;
-            touched = true;
-          }
-        }
-        if (touched) await marketRef.set(market, { merge: true });
-      }
-    } catch (error) {
-      logger.warn(`[podium] carried-contract market stamp failed: ${error.message}`);
-    }
-  }
 
   logger.info(
     `Podium corps registered: ${trimmedName} (${uid}) season ${seasonUid} — ` +
@@ -711,95 +683,6 @@ exports.setPodiumPlanTemplate = onCall({ cors: true }, async (request) => {
     );
   });
   return { success: true, planTemplate: blocks };
-});
-
-exports.hostEvent = onCall({ cors: true }, async (request) => {
-  const { uid, db, seasonData, competitionDay } = await podiumContext(request);
-  let validated;
-  try {
-    validated = hostedEvents.validateHostRequest(request.data || {}, Math.max(0, competitionDay));
-  } catch (error) {
-    throw new HttpsError("invalid-argument", error.message);
-  }
-  const { eventName, venueTier, tier, day, venue } = validated;
-
-  // Host must field a corps somewhere in the game (anti-alt guard).
-  const profileSnapshotPre = await store.profileRef(db, uid).get();
-  const corpsMap = profileSnapshotPre.exists ? profileSnapshotPre.data().corps || {} : {};
-  if (Object.values(corpsMap).filter(Boolean).length === 0) {
-    throw new HttpsError("failed-precondition", "Field a corps before hosting events.");
-  }
-  // Venue ladder (decision 27): bigger stadiums are earned by running
-  // successful smaller shows, never bought outright.
-  const lockReason = hostedEvents.tierLockReason(
-    profileSnapshotPre.exists ? profileSnapshotPre.data() : null,
-    venueTier,
-    store.balance
-  );
-  if (lockReason) {
-    throw new HttpsError("failed-precondition", lockReason);
-  }
-
-  const seasonUid = seasonData.seasonUid;
-  const dayEvents = await hostedEvents
-    .eventsCollection(db, seasonUid)
-    .where("day", "==", day)
-    .get();
-  if (dayEvents.size >= store.balance.hostedEvents.maxEventsPerDay) {
-    throw new HttpsError("failed-precondition", `Day ${day} already has the maximum hosted events.`);
-  }
-
-  const eventRef = hostedEvents.eventsCollection(db, seasonUid).doc();
-  await db.runTransaction(async (transaction) => {
-    const profileSnapshot = await transaction.get(store.profileRef(db, uid));
-    const corpsCoin = profileSnapshot.exists ? profileSnapshot.data().corpsCoin || 0 : 0;
-    if (corpsCoin < tier.rentalCC) {
-      throw new HttpsError(
-        "failed-precondition",
-        `Venue rental is ${tier.rentalCC} CC (you have ${corpsCoin}).`
-      );
-    }
-    transaction.update(store.profileRef(db, uid), { corpsCoin: corpsCoin - tier.rentalCC });
-    const historyRef = db
-      .collection(
-        `artifacts/${require("../config").dataNamespaceParam.value()}/users/${uid}/corpsCoinHistory`
-      )
-      .doc();
-    transaction.set(historyRef, {
-      type: "hosted_event_rental",
-      amount: -tier.rentalCC,
-      description: `Venue rental: ${eventName} (${tier.label})`,
-      timestamp: new Date(),
-    });
-    transaction.set(eventRef, {
-      hostUid: uid,
-      eventName,
-      venueTier,
-      day,
-      location: `${venue.city}, ${venue.region}`,
-      venueId: venue.venueId,
-      rentalCC: tier.rentalCC,
-      capacity: tier.capacity,
-      paidOut: false,
-      createdAt: new Date().toISOString(),
-    });
-  });
-
-  // Insert into the season schedule so every class can select it through
-  // the normal weekly picker (open enrollment — no host approval).
-  const { addShowToDay } = require("../helpers/seasonSchedule");
-  const scheduleId = seasonData.dataDocId || seasonData.name;
-  if (scheduleId) {
-    await addShowToDay(scheduleId, day, {
-      eventName,
-      location: `${venue.city}, ${venue.region}`,
-      eventTier: "hosted",
-      hostUid: uid,
-    });
-  }
-
-  logger.info(`Hosted event created: ${eventName} day ${day} by ${uid}`);
-  return { success: true, eventId: eventRef.id, day, eventName };
 });
 
 exports.commitPodiumBudget = onCall({ cors: true }, async (request) => {

@@ -106,6 +106,7 @@ export const HOSTING_RULES = {
   majorDays: [28, 35, 41, 42],
   nameMin: 3,
   nameMax: 60,
+  maxEventsPerSeasonPerHost: 1,
 };
 
 // Podium Rookie Journey — client mirror of PODIUM_JOURNEY_STEPS in

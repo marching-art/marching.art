@@ -40,14 +40,13 @@ const {
   setPodiumPlanTemplate,
   commitPodiumBudget,
   hirePodiumClinician,
-  hostEvent,
-  getPodiumState,
 } = require("./src/callable/podium");
+const { hostEvent } = require("./src/callable/podiumHost");
+const { getPodiumState } = require("./src/callable/podiumRoute");
 const {
   getPodiumStaffMarket,
   hirePodiumStaff,
-  postPodiumStaff,
-  buyPodiumStaffContract,
+  releasePodiumStaff,
   retrainPodiumStaff,
 } = require("./src/callable/podiumStaff");
 const {
@@ -291,8 +290,7 @@ module.exports = {
   hirePodiumClinician,
   getPodiumStaffMarket,
   hirePodiumStaff,
-  postPodiumStaff,
-  buyPodiumStaffContract,
+  releasePodiumStaff,
   retrainPodiumStaff,
   hostEvent,
   getPodiumState,

@@ -1,14 +1,31 @@
 #!/bin/bash
 # Deploy Cloud Functions in batches to avoid quota errors
 # Google Cloud Run has a limit on "Write requests per minute per region"
-# Deploying all ~110 functions at once exceeds this limit
-# This script deploys in batches with delays between batches
+# (run.googleapis.com/write_regional, WritePerMinutePerProjectRegion).
+# Every 2nd-gen (Cloud Run) function deploy costs ~2 regional writes: one
+# UpdateFunction on the underlying Cloud Run service plus one SetIamPolicy for
+# the public invoker binding. Deploying all ~140 functions at once bursts
+# ~280 writes and trips the per-minute quota (INSUFFICIENT_TOKENS), which
+# leaves functions half-deployed. This script deploys in small batches with a
+# delay between batches so the burst stays under the quota.
 #
 # The function list is derived from functions/index.js exports at run time,
 # so this script cannot drift from what the codebase actually deploys. (The
 # previous hand-maintained batch lists had drifted: ~30 exported functions
 # were missing and 4 removed ones were still listed, so anything not in a
 # batch only ever shipped via a full `firebase deploy --only functions`.)
+#
+# CI vs. local:
+#   - Locally it uses your interactive `firebase login` and installs anything
+#     that is missing (Firebase CLI, function deps).
+#   - In CI (CI=true, e.g. GitHub Actions) it authenticates with the service
+#     account in GOOGLE_APPLICATION_CREDENTIALS and skips the interactive
+#     login check and the global install steps the workflow already handled.
+#
+# Tunables (env-overridable):
+#   BATCH_SIZE       functions per `firebase deploy` invocation (default 5)
+#   DELAY_SECONDS    pause between batches that actually wrote (default 75)
+#   FIREBASE_PROJECT project to deploy to (default marching-art)
 #
 # SCORE PROCESSING TIMELINE (all times Eastern):
 #   1:30 AM - scrapeDciScores (scrapes DCI website)
@@ -22,28 +39,37 @@
 
 set -e
 
-DELAY_SECONDS=75  # Delay between batches to avoid quota errors (Cloud Run: 600 writes/min)
-BATCH_SIZE=5      # Functions per batch (each deploy = ~10 write requests)
+DELAY_SECONDS="${DELAY_SECONDS:-75}"  # Delay between batches to stay under the Cloud Run write quota
+BATCH_SIZE="${BATCH_SIZE:-5}"         # Functions per batch (each deploy = ~2 Cloud Run writes/function)
+FIREBASE_PROJECT="${FIREBASE_PROJECT:-marching-art}"
 
 echo "Deploying Cloud Functions to Firebase in batches..."
+echo "Project: $FIREBASE_PROJECT"
 echo "Batch size: $BATCH_SIZE functions"
-echo "Delay between batches: $DELAY_SECONDS seconds"
+echo "Delay between (changed) batches: $DELAY_SECONDS seconds"
 echo ""
 
-# Check if Firebase CLI is installed
-if ! command -v firebase &> /dev/null; then
-    echo "Firebase CLI not found. Installing..."
-    npm install -g firebase-tools
+# In CI the workflow already installed the CLI + deps and provides service
+# account credentials via GOOGLE_APPLICATION_CREDENTIALS, so skip the
+# interactive login check and the redundant installs.
+if [ "${CI:-}" = "true" ]; then
+    echo "CI detected: using service account credentials (skipping interactive login/install)."
+else
+    # Check if Firebase CLI is installed
+    if ! command -v firebase &> /dev/null; then
+        echo "Firebase CLI not found. Installing..."
+        npm install -g firebase-tools
+    fi
+
+    # Check if logged in
+    echo "Checking Firebase authentication..."
+    firebase login:list
+
+    # Install dependencies (also required to `require` index.js below)
+    echo ""
+    echo "Installing function dependencies..."
+    cd functions && npm install && cd ..
 fi
-
-# Check if logged in
-echo "Checking Firebase authentication..."
-firebase login:list
-
-# Install dependencies (also required to `require` index.js below)
-echo ""
-echo "Installing function dependencies..."
-cd functions && npm install && cd ..
 
 # =============================================================================
 # FUNCTION LIST: derived from functions/index.js exports
@@ -123,7 +149,7 @@ FAILED_BATCHES=()
 ESTIMATED_MINUTES=$(( (TOTAL_BATCHES - 1) * DELAY_SECONDS / 60 ))
 echo ""
 echo "Starting deployment of ${#ORDERED_FUNCTIONS[@]} functions in $TOTAL_BATCHES batches..."
-echo "Estimated time: ~$ESTIMATED_MINUTES minutes"
+echo "Estimated max time: ~$ESTIMATED_MINUTES minutes (batches with no changes skip the delay)"
 echo ""
 echo "NOTE: Score-critical functions are in the first batches (deployed first)"
 echo ""
@@ -136,17 +162,41 @@ for batch in "${BATCHES[@]}"; do
 
     echo "[$CURRENT_BATCH/$TOTAL_BATCHES] Deploying: $batch"
 
-    if firebase deploy --only "$FUNCTIONS_TO_DEPLOY" --force; then
+    # Capture output so we can tell whether the batch actually wrote anything.
+    # firebase-tools skips functions whose source hash is unchanged and only
+    # prints "Successful create/update/delete operation" for ones it truly
+    # deployed — so a batch with no such line consumed no Cloud Run write
+    # quota and needs no cooldown before the next batch.
+    BATCH_LOG=$(mktemp)
+    # Pipe through tee to keep streaming logs while capturing them. The pipe's
+    # exit status is tee's (always 0), so read firebase's real status from
+    # PIPESTATUS[0] on the very next line before any other command runs.
+    firebase deploy --only "$FUNCTIONS_TO_DEPLOY" --force --project "$FIREBASE_PROJECT" 2>&1 | tee "$BATCH_LOG"
+    DEPLOY_STATUS=${PIPESTATUS[0]}
+    if [ "$DEPLOY_STATUS" -eq 0 ]; then
         echo "  Batch $CURRENT_BATCH completed successfully"
     else
         echo "  Batch $CURRENT_BATCH failed"
         FAILED_BATCHES+=("$batch")
     fi
 
-    # Add delay between batches (except for the last one)
-    if [ $CURRENT_BATCH -lt $TOTAL_BATCHES ]; then
-        echo "  Waiting $DELAY_SECONDS seconds before next batch..."
-        sleep $DELAY_SECONDS
+    if grep -qE "Successful (create|update|delete) operation" "$BATCH_LOG"; then
+        BATCH_WROTE=1
+    else
+        BATCH_WROTE=0
+    fi
+    rm -f "$BATCH_LOG"
+
+    # Only pause when this batch actually deployed something (and it isn't the
+    # last batch). No writes → no quota consumed → no reason to wait.
+    # DELAY_SECONDS=0 disables the cooldown entirely.
+    if [ $CURRENT_BATCH -lt $TOTAL_BATCHES ] && [ "$DELAY_SECONDS" -gt 0 ]; then
+        if [ "$BATCH_WROTE" = "1" ]; then
+            echo "  Waiting $DELAY_SECONDS seconds before next batch (staying under the Cloud Run write quota)..."
+            sleep $DELAY_SECONDS
+        else
+            echo "  No changes in this batch; skipping the cooldown."
+        fi
     fi
 
     echo ""

@@ -119,76 +119,104 @@ export default function RehearsalPlanner({ podium }) {
         </div>
       </div>
 
-      {/* Block allocator */}
-      {!exhausted && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {BLOCKS.map((block) => {
-            const usedCount = (today.blocks || []).filter((b) => b === block.id).length;
-            return (
-              <button
-                key={block.id}
-                disabled={busy !== null}
-                onClick={() => handleAllocate(block.id)}
-                className="text-left px-3 py-2.5 rounded-sm border border-[#333] hover:border-[#0057B8] hover:bg-[#0057B8]/10 transition-colors press-feedback disabled:opacity-50"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-white">{block.label}</span>
-                  <span className="flex items-center gap-1">
-                    {usedCount > 0 && (
-                      <span className="text-[10px] font-bold text-[#4d9fff] tabular-nums">
-                        ×{usedCount}
-                      </span>
-                    )}
-                    {busy === block.id && (
-                      <Loader2 className="w-3 h-3 animate-spin text-gray-400" />
-                    )}
+      {/* Block allocator + schedule panel */}
+      <div className="flex flex-col lg:flex-row gap-3">
+        {/* Block grid (fundraiser lives inside the grid) */}
+        {!exhausted && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 flex-1 content-start">
+            {BLOCKS.map((block) => {
+              const usedCount = (today.blocks || []).filter((b) => b === block.id).length;
+              return (
+                <button
+                  key={block.id}
+                  disabled={busy !== null}
+                  onClick={() => handleAllocate(block.id)}
+                  className="text-left px-3 py-2.5 rounded-sm border border-[#333] hover:border-[#0057B8] hover:bg-[#0057B8]/10 transition-colors press-feedback disabled:opacity-50"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-white">{block.label}</span>
+                    <span className="flex items-center gap-1">
+                      {usedCount > 0 && (
+                        <span className="text-[10px] font-bold text-[#4d9fff] tabular-nums">
+                          ×{usedCount}
+                        </span>
+                      )}
+                      {busy === block.id && (
+                        <Loader2 className="w-3 h-3 animate-spin text-gray-400" />
+                      )}
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-gray-500 mt-0.5">{block.detail}</div>
+                </button>
+              );
+            })}
+            <button
+              disabled={busy !== null}
+              onClick={() => handleAllocate('fundraiser')}
+              className="text-left px-3 py-2.5 rounded-sm border border-[#5a4a12] hover:border-[#c9a227] hover:bg-[#c9a227]/10 transition-colors press-feedback disabled:opacity-50"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-[#c9a227]">Fundraiser</span>
+                {busy === 'fundraiser' && (
+                  <Loader2 className="w-3 h-3 animate-spin text-gray-400" />
+                )}
+              </div>
+              <div className="text-[10px] text-gray-500 mt-0.5">
+                Convert a block to Corps Budget income (+3 Budget per block) — no caption growth
+              </div>
+            </button>
+          </div>
+        )}
+
+        {/* Schedule panel: today's block count + running order */}
+        <div className="lg:w-56 shrink-0 flex flex-col rounded-sm border border-[#333] bg-[#141414] p-3">
+          <div className="flex items-baseline justify-between">
+            <span className="text-[10px] uppercase font-bold tracking-wider text-gray-500">
+              Blocks today
+            </span>
+            <span className="text-lg font-bold text-white tabular-nums leading-none">
+              {today.blocksUsed || 0}
+            </span>
+          </div>
+
+          <div className="mt-2 flex-1 space-y-1 min-h-[2rem]">
+            {today.blocks?.length > 0 ? (
+              today.blocks.map((b, i) => (
+                <div
+                  key={`${b}-${i}`}
+                  className="flex items-center gap-1.5 text-[10px] text-gray-300"
+                >
+                  <span className="text-gray-600 tabular-nums w-4 text-right shrink-0">
+                    {i + 1}.
+                  </span>
+                  <span className="truncate">
+                    {BLOCKS.find((x) => x.id === b)?.label ||
+                      (b === 'fundraiser' ? 'Fundraiser' : b)}
                   </span>
                 </div>
-                <div className="text-[10px] text-gray-500 mt-0.5">{block.detail}</div>
-              </button>
-            );
-          })}
-          <button
-            disabled={busy !== null}
-            onClick={() => handleAllocate('fundraiser')}
-            className="text-left px-3 py-2.5 rounded-sm border border-[#5a4a12] hover:border-[#c9a227] hover:bg-[#c9a227]/10 transition-colors press-feedback disabled:opacity-50 sm:col-span-2"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[#c9a227]">Fundraiser</span>
-              {busy === 'fundraiser' && <Loader2 className="w-3 h-3 animate-spin text-gray-400" />}
-            </div>
-            <div className="text-[10px] text-gray-500 mt-0.5">
-              Convert a block to Corps Budget income (+3 Budget per block) — no caption growth
-            </div>
-          </button>
-        </div>
-      )}
+              ))
+            ) : (
+              <div className="text-[10px] text-gray-600 italic">
+                {today.restDay ? 'Rest day declared' : 'No blocks yet'}
+              </div>
+            )}
+          </div>
 
-      {/* Blocks used + rest day */}
-      <div className="flex items-center justify-between">
-        <div className="text-[10px] uppercase font-bold text-gray-500">
-          Blocks today: <span className="text-white tabular-nums">{today.blocksUsed || 0}</span>
-          {today.blocks?.length > 0 && (
-            <span className="text-gray-600 normal-case font-normal">
-              {' '}
-              — {today.blocks.map((b) => BLOCKS.find((x) => x.id === b)?.label || b).join(', ')}
+          {!exhausted && (today.blocksUsed || 0) === 0 && (
+            <button
+              onClick={handleRest}
+              disabled={busy !== null}
+              className="mt-3 flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase px-3 py-1.5 rounded-sm border border-[#333] text-gray-400 hover:text-white hover:border-gray-500 transition-colors press-feedback disabled:opacity-50"
+            >
+              <Moon className="w-3 h-3" /> Rest day
+            </button>
+          )}
+          {today.restDay && (
+            <span className="mt-3 text-center text-[10px] font-bold uppercase text-blue-300">
+              Resting — recovery tonight
             </span>
           )}
         </div>
-        {!exhausted && (today.blocksUsed || 0) === 0 && (
-          <button
-            onClick={handleRest}
-            disabled={busy !== null}
-            className="flex items-center gap-1.5 text-[10px] font-bold uppercase px-3 py-1.5 rounded-sm border border-[#333] text-gray-400 hover:text-white hover:border-gray-500 transition-colors press-feedback disabled:opacity-50"
-          >
-            <Moon className="w-3 h-3" /> Rest day
-          </button>
-        )}
-        {today.restDay && (
-          <span className="text-[10px] font-bold uppercase text-blue-300">
-            Resting — recovery tonight
-          </span>
-        )}
       </div>
 
       {/* Action Complete panel */}

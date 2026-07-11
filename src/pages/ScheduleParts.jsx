@@ -277,7 +277,7 @@ const ShowCard = ({
 // DAY INDICATOR COMPONENT
 // =============================================================================
 
-const DayIndicator = ({ date, dayNumber: _dayNumber, isMajorDay = false }) => {
+const DayIndicator = ({ date, dayNumber, isMajorDay = false }) => {
   if (!date) return null;
 
   const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'short' });
@@ -308,6 +308,11 @@ const DayIndicator = ({ date, dayNumber: _dayNumber, isMajorDay = false }) => {
       <span className={`text-sm font-bold font-data ${isPast ? 'text-gray-400' : 'text-white'}`}>
         {monthDay}
       </span>
+      {dayNumber != null && (
+        <span className="text-[9px] font-bold uppercase tracking-wider text-gray-500 font-data">
+          Day {dayNumber}
+        </span>
+      )}
       {isMajorDay && !isPast && <Trophy className="w-3 h-3 text-yellow-500 mt-0.5" />}
     </div>
   );

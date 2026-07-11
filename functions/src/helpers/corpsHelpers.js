@@ -3,12 +3,18 @@
 // retired-record builders. Unit-tested in corpsHelpers.test.js.
 
 const admin = require("firebase-admin");
-const { FANTASY_CLASSES } = require("./classRegistry");
+const { FANTASY_CLASSES, ENABLED_CLASSES } = require("./classRegistry");
 
 // Class tier ordering for duplicate-name conflict resolution: lower index =
-// higher tier. When two corps share a name, the higher-tier corps wins and
+// higher tier. When two corps share a name, the higher-tier corps keeps it and
 // the loser is flagged for rename.
+//
+// podiumClass ranks highest so a Podium corps is never the one flagged: unlike
+// the fantasy classes (which resolve a conflict through renameCorps + the
+// dashboard rename modal), Podium corps have no self-service rename flow, so
+// the colliding fantasy corps must be the loser instead.
 const CLASS_PRIORITY = {
+  podiumClass: -1,
   worldClass: 0,
   openClass: 1,
   aClass: 2,
@@ -16,6 +22,12 @@ const CLASS_PRIORITY = {
 };
 
 const VALID_CLASSES = FANTASY_CLASSES;
+
+// Every enabled class stores a `corps.<class>` entry with a corpsName on the
+// profile and shares one season-wide name namespace (the `corpsnames`
+// reservations), so the duplicate-name checker must scan them all — including
+// podiumClass, which VALID_CLASSES (lineup-bearing classes only) excludes.
+const CORPS_NAME_CLASSES = ENABLED_CLASSES;
 
 const normalizeCorpsName = (name) => (name || "").toLowerCase().trim();
 
@@ -83,6 +95,7 @@ function buildRetiredRecord(corpsClass, corps) {
 module.exports = {
   CLASS_PRIORITY,
   VALID_CLASSES,
+  CORPS_NAME_CLASSES,
   normalizeCorpsName,
   isProfaneCorpsName,
   pickDuplicateWinner,

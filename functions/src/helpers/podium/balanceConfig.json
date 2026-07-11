@@ -316,6 +316,7 @@
       }
     },
     "maxEventsPerDay": 2,
+    "maxEventsPerSeasonPerHost": 1,
     "minDaysAhead": 2,
     "lastHostableDay": 44,
     "nameMin": 3,
