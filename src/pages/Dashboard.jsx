@@ -5,6 +5,7 @@
 // Laws: App Shell, 2/3 + 1/3 grid, data tables over cards, no glow
 
 import React, { useMemo, Suspense } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Trophy, FileText } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { lazyWithRetry } from '../utils/lazyWithRetry';
@@ -121,6 +122,7 @@ import { getEquippedCosmetic } from '../utils/cosmetics';
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const dashboardData = useDashboardData();
   const {
     aggregatedScores,
@@ -357,6 +359,7 @@ const Dashboard = () => {
             onUnlockClass={handleClassUnlock}
             onStreakClick={() => setShowStreakModal(true)}
             onWalletClick={() => setShowWalletModal(true)}
+            onLevelClick={() => navigate('/achievements')}
           />
         </div>
 

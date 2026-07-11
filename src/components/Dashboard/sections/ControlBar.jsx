@@ -61,6 +61,7 @@ const ControlBar = memo(
     onUnlockClass,
     onStreakClick,
     onWalletClick,
+    onLevelClick,
   }) => {
     // Podium Class tab is flag-gated and always open — no unlock, no corps
     // required to click it (the zone handles the unregistered state).
@@ -187,10 +188,11 @@ const ControlBar = memo(
 
             {/* Level + XP-to-next-level progress (the pill used to be a bare
                 number — the game's most basic progression readout was
-                invisible) */}
-            <div
-              className="flex items-center gap-1.5"
-              title={`${xpProgress.current}/${xpProgress.needed} XP to Level ${xpProgress.nextLevel}`}
+                invisible) — opens the full Achievements page */}
+            <button
+              onClick={() => onLevelClick?.()}
+              className="flex items-center gap-1.5 press-feedback hover:bg-white/5 rounded-sm px-1 -mx-1"
+              title={`${xpProgress.current}/${xpProgress.needed} XP to Level ${xpProgress.nextLevel} — tap to view all achievements`}
             >
               <span className="text-[10px] font-bold uppercase px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded-sm">
                 Lvl {level}
@@ -208,7 +210,7 @@ const ControlBar = memo(
                   style={{ width: `${xpProgress.percentage}%` }}
                 />
               </div>
-            </div>
+            </button>
 
             {/* CorpsCoin Wallet — opens transaction history + earning guide */}
             <button
