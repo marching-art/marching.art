@@ -81,10 +81,8 @@ export default function CorpsConditionPanel({ podium }) {
   const commitmentCap = podium.data?.commitmentCap || 2500;
 
   const blockLabel = (id) => BLOCKS.find((x) => x.id === id)?.label || id;
-  const addBlock = (id) =>
-    setTemplateDraft((prev) => (prev.length < 20 ? [...prev, id] : prev));
-  const removeBlock = (index) =>
-    setTemplateDraft((prev) => prev.filter((_, i) => i !== index));
+  const addBlock = (id) => setTemplateDraft((prev) => (prev.length < 20 ? [...prev, id] : prev));
+  const removeBlock = (index) => setTemplateDraft((prev) => prev.filter((_, i) => i !== index));
   const moveBlock = (index, dir) =>
     setTemplateDraft((prev) => {
       const target = index + dir;
@@ -383,8 +381,8 @@ export default function CorpsConditionPanel({ podium }) {
 
         {routePreview.length === 0 ? (
           <p className="text-[11px] text-gray-500">
-            No upcoming shows. Open the <span className="text-[#4d9fff]">Schedule</span> page, pick a
-            show, and add your Podium corps — each show you add is routed onto the tour below.
+            No upcoming shows. Open the <span className="text-[#4d9fff]">Schedule</span> page, pick
+            a show, and add your Podium corps — each show you add is routed onto the tour below.
           </p>
         ) : (
           <div className="rounded-sm border border-[#333] overflow-hidden">
