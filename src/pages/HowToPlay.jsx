@@ -19,8 +19,10 @@ import {
   HelpCircle,
   Zap,
   Search,
+  Medal,
 } from 'lucide-react';
-import { CAPTIONS, CLASSES, GLOSSARY, FAQ } from './howToPlayData';
+import { Link } from 'react-router-dom';
+import { CAPTIONS, CLASSES, GLOSSARY, FAQ, RATINGS, SCORING_MODEL } from './howToPlayData';
 import {
   XP_PER_LEVEL,
   XP_SOURCE_GUIDE,
@@ -139,16 +141,37 @@ const BasicsTab = () => (
       </div>
     </div>
 
-    {/* How Scoring Works */}
+    {/* How Scoring Works — mirrors functions/src/helpers/scoring.js */}
     <SectionCard title="How Scoring Works" icon={Trophy} defaultOpen>
       <p className="mb-3">
-        Your corps score = sum of 8 caption scores from your selected historical performances.
+        Every night your corps earns a score out of 100, built the way real DCI builds it: General
+        Effect counts at full weight, while Visual and Music are each summed and halved.
       </p>
-      <div className="bg-black/30 rounded-none p-3">
-        <DataRow label="Live Season" value="Real DCI scores" />
-        <DataRow label="Off-Season" value="Historical data" />
-        <DataRow label="Captions per lineup" value="8" accent />
+      <div className="bg-black/30 rounded-none p-3 mb-3">
+        {SCORING_MODEL.map((g) => (
+          <div
+            key={g.group}
+            className="flex items-center justify-between py-2 border-b border-white/5 last:border-0"
+          >
+            <div>
+              <span className="text-xs font-bold text-white">{g.group}</span>
+              <span className="block text-[10px] text-gray-500">
+                {g.captions} · {g.note}
+              </span>
+            </div>
+            <span className="text-xs font-bold text-gray-400">up to {g.max}</span>
+          </div>
+        ))}
+        <div className="flex items-center justify-between pt-2 mt-1 border-t border-white/10">
+          <span className="text-xs font-bold text-white">Maximum score</span>
+          <span className="text-xs font-bold text-[#0057B8]">100</span>
+        </div>
       </div>
+      <p className="text-xs text-gray-500">
+        Every caption is capped, and your score comes straight from the live (Live Season) or
+        historical (Off-Season) performances you drafted — nothing you buy or earn can change it.
+        Your class rank uses your most recent night&rsquo;s total.
+      </p>
     </SectionCard>
 
     {/* XP & Progression — generated from src/data/progressionGuide.js, which
@@ -296,6 +319,49 @@ const ClassesTab = () => (
         World = 3 seasons, Lvl 10, or 5,000 CC.
       </p>
     </div>
+
+    {/* SoundSport ratings — the one class that never ranks */}
+    <div className="bg-[#111] border border-green-500/30 rounded-none p-4">
+      <div className="flex items-center gap-2 mb-2">
+        <Medal className="w-4 h-4 text-green-500" />
+        <span className="text-sm font-bold text-white">SoundSport Ratings</span>
+      </div>
+      <p className="text-xs text-gray-400 mb-3">
+        SoundSport is the one class that never ranks. Instead, your out-of-100 score earns a medal
+        rating — recognition, not a leaderboard slot.
+      </p>
+      <div className="bg-black/30 rounded-none p-3">
+        {RATINGS.map((r) => (
+          <DataRow
+            key={r.tier}
+            label={r.tier}
+            value={r.min === 0 ? 'Any score' : `${r.min}+`}
+            accent={r.tier === 'Gold'}
+          />
+        ))}
+      </div>
+    </div>
+
+    {/* Podium Class — the other way to play */}
+    <div className="bg-[#c9a227]/10 border border-[#c9a227]/30 rounded-none p-4">
+      <div className="flex items-center gap-2 mb-2">
+        <Medal className="w-4 h-4 text-[#c9a227]" />
+        <span className="text-sm font-bold text-white">Podium Class</span>
+      </div>
+      <p className="text-xs text-gray-400 mb-3">
+        Want to run a corps instead of drafting one? Podium Class flips the game: rather than
+        picking caption performances, you found your own corps and earn every point — running
+        rehearsals, routing a tour, and climbing from Community Corps to Champion. Always open,
+        always free.
+      </p>
+      <Link
+        to="/podium-guide"
+        className="inline-flex items-center gap-1 text-xs font-bold text-[#c9a227] hover:underline"
+      >
+        Read the Podium guide
+        <ChevronRight className="w-3 h-3" />
+      </Link>
+    </div>
   </div>
 );
 
@@ -367,6 +433,7 @@ const SeasonsTab = () => (
       </p>
       <div className="bg-black/30 rounded-none p-2">
         <DataRow label="Duration" value="~10 weeks" />
+        <DataRow label="Competition" value="49-day schedule" />
         <DataRow label="Ends" value="DCI Finals (Aug)" />
       </div>
     </div>
@@ -379,11 +446,11 @@ const SeasonsTab = () => (
         <span className="text-xs text-gray-500">August - May</span>
       </div>
       <p className="text-xs text-gray-400 mb-3">
-        Uses historical DCI data. Six 7-week periods with 49-show schedule.
+        Uses historical DCI data. Six back-to-back 7-week seasons, each a full 49-day schedule.
       </p>
       <div className="bg-black/30 rounded-none p-2">
         <DataRow label="Duration" value="~42 weeks" />
-        <DataRow label="Structure" value="6 × 7-week periods" />
+        <DataRow label="Structure" value="6 × 49-day seasons" />
       </div>
     </div>
 
@@ -436,6 +503,12 @@ const SEARCH_SOURCES = [
     section: 'Classes',
     title: c.name,
     text: `${c.desc}. Budget: ${c.points} points. Unlock: ${c.unlock}.`,
+  })),
+  ...RATINGS.map((r) => ({
+    tabId: 'classes',
+    section: 'SoundSport Ratings',
+    title: `${r.tier} rating`,
+    text: `${r.min === 0 ? 'Any score' : `${r.min}+ points`}. ${r.blurb}`,
   })),
   ...GLOSSARY.map((g) => ({
     tabId: 'glossary',

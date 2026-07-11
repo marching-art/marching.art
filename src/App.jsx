@@ -59,7 +59,6 @@ const RetiredCorpsGallery = lazyWithRetry(
   'RetiredCorpsGallery'
 );
 const CorpsHistory = lazyWithRetry(() => import('./pages/CorpsHistory'), 'CorpsHistory');
-const SoundSport = lazyWithRetry(() => import('./pages/SoundSport'), 'SoundSport');
 const Privacy = lazyWithRetry(() => import('./pages/Privacy'), 'Privacy');
 const Terms = lazyWithRetry(() => import('./pages/Terms'), 'Terms');
 const ForgotPassword = lazyWithRetry(() => import('./pages/ForgotPassword'), 'ForgotPassword');
@@ -668,20 +667,9 @@ function App() {
                       }
                     />
 
-                    <Route
-                      path="/soundsport"
-                      element={
-                        <ProtectedRoute>
-                          <GameShell>
-                            <Suspense fallback={<GalleryPageSkeleton />}>
-                              <Page name="SoundSport">
-                                <SoundSport />
-                              </Page>
-                            </Suspense>
-                          </GameShell>
-                        </ProtectedRoute>
-                      }
-                    />
+                    {/* SoundSport rules were consolidated into the unified Game
+                        Guide — keep the old path working for existing links. */}
+                    <Route path="/soundsport" element={<Navigate to="/guide" replace />} />
 
                     {/* 404 Route */}
                     <Route

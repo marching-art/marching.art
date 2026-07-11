@@ -16,12 +16,12 @@ const SECTIONS = [
   {
     n: 2,
     title: 'Founding your corps',
-    body: `Pick a name, a hometown, and a show challenge for each of the 8 captions (1 = safe and clean early, 8 = a monster book that only pays off if you clean it). Optionally weight your audition pool toward brass, percussion, or visual talent. You start at the reputation tier your corps history has earned — a brand-new corps starts as a Community Corps.`,
+    body: `Pick a name, a hometown, and a show challenge for each of the 8 captions (1 = safe and clean early, 8 = a monster book that only pays off if you clean it). Optionally tilt your audition pool music-forward or visual-forward, or keep it balanced. You start at the reputation tier your corps history has earned — a brand-new corps starts as a Community Corps.`,
   },
   {
     n: 3,
     title: 'The daily loop',
-    body: `Every day you get 12 rehearsal blocks (20 in spring training, 4 on show days). Seven block types cover the ensemble: Stretching/PT, Visual Basics, Visual Ensemble, Guard Sectionals, Brass Sectionals, Percussion Sectionals (battery + front ensemble), and Full Ensemble. Each block installs CONTENT early and CLEANS it late — the balance shifts across the season, just like a real summer. Hammering the same block all day pays less per rep after the first four. A caption you ignore starts to decay after a few days.`,
+    body: `Every day you get 12 rehearsal blocks (20 in spring training; on show days you get 8, each worth half). Seven block types cover the ensemble: Stretching/PT, Visual Basics, Visual Ensemble, Guard Sectionals, Brass Sectionals, Percussion Sectionals (battery + front ensemble), and Full Ensemble. Each block installs CONTENT early and CLEANS it late — the balance shifts across the season, just like a real summer. Hammering the same block all day pays less per rep after the first four. A caption you ignore starts to decay after a few days.`,
   },
   {
     n: 4,
@@ -61,7 +61,7 @@ const SECTIONS = [
   {
     n: 11,
     title: 'Staff',
-    body: `Staff are persistent people with careers. Each season a shared market opens — caption techs, a tour manager, a program coordinator — and every person signs with exactly ONE corps. Contracts run 1–3 seasons at the salary locked at signing; tenure raises both a person's tier and their price, so a 25-year legend costs a fortune while the total staff boost stays capped — decisions beat payroll, always. You can post a contract to the mid-season transfer market (the buyer pays a premium, you recoup the rest), or retrain a person into a new caption (reduced boost while they learn). Careers end in retirement around season 30 — Hall of Fame stuff — and fresh talent enters every season, so the market never maxes out.`,
+    body: `Staff are persistent people with careers. Hire from an open market of caption techs, a tour manager, and a program coordinator. Contracts run 1–3 seasons at the salary locked at signing; tenure raises both a person's tier and their price, so a 25-year legend costs a fortune while the total staff boost stays capped — decisions beat payroll, always. You can retrain a person into a new caption (reduced boost while they learn). Careers end in retirement around season 30 — Hall of Fame stuff — and fresh talent keeps entering the market every season.`,
   },
   {
     n: 12,

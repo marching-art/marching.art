@@ -19,10 +19,11 @@ import {
   Book,
   ChevronRight,
   Play,
+  Medal,
 } from 'lucide-react';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useSEO } from '../hooks/useSEO';
-import { CAPTIONS, CLASSES, GLOSSARY, FAQ } from './howToPlayData';
+import { CAPTIONS, CLASSES, GLOSSARY, FAQ, RATINGS, SCORING_MODEL } from './howToPlayData';
 
 const PAGE_FAQ = [
   {
@@ -170,8 +171,9 @@ const HowToPlayPublic = () => {
         <section className="mb-10">
           <SectionHeading icon={TrendingUp}>Four Competitive Classes</SectionHeading>
           <p className="text-sm text-gray-300 mb-4">
-            Classes set your drafting budget. Everyone starts in SoundSport; reach the required
-            level (or spend CorpsCoin earned in-game) to unlock the rest — permanently.
+            Classes set your drafting budget. Everyone starts in SoundSport; unlock the rest —
+            permanently — three ways, any one is enough: complete seasons (1 / 2 / 3), reach the
+            required director level (3 / 5 / 10), or spend CorpsCoin earned in-game.
           </p>
           <div className="space-y-2">
             {CLASSES.map((cls) => (
@@ -222,16 +224,70 @@ const HowToPlayPublic = () => {
         {/* Scoring */}
         <section className="mb-10">
           <SectionHeading icon={Clock}>How Scoring Works</SectionHeading>
+          <p className="text-sm text-gray-300 mb-4">
+            Each night your corps earns a score out of 100 — built the same 40/30/30 way real DCI
+            builds it. Your two General Effect captions count at full value, while your Visual and
+            Music captions are each summed and halved into a 30-point block. The score comes
+            straight from the performances you drafted; nothing you buy or earn can change it.
+          </p>
+          <div className="grid sm:grid-cols-3 gap-2 mb-4">
+            {SCORING_MODEL.map((g) => (
+              <div key={g.group} className="bg-[#111] border border-white/10 rounded-none p-3">
+                <p className="text-sm font-bold text-white">{g.group}</p>
+                <p className="text-xs text-gray-500">{g.captions}</p>
+                <p className="text-sm font-bold text-[#0057B8] mt-1">up to {g.max} pts</p>
+                <p className="text-[11px] text-gray-500">{g.note}</p>
+              </div>
+            ))}
+          </div>
           <p className="text-sm text-gray-300 mb-3">
-            Your corps score is the sum of your 8 caption scores, taken from the real (or
-            historical) performances you drafted. Lineup changes are unlimited for the first two
-            weeks, then tighten as finals approach — 3 per week mid-season, none on Days 43-44, and
-            just 2 total during Championship Week — so timing your moves is part of the strategy.
+            Lineup changes are unlimited for the first two weeks, then tighten as finals approach —
+            3 per week mid-season, none on Days 43-44, and just 2 total during Championship Week —
+            so timing your moves is part of the strategy.
           </p>
           <p className="text-sm text-gray-300">
             Along the way you earn XP and CorpsCoin from daily check-ins, competition results,
             achievements, and streaks.
           </p>
+        </section>
+
+        {/* SoundSport ratings */}
+        <section className="mb-10">
+          <SectionHeading icon={Medal}>SoundSport Earns Ratings, Not Ranks</SectionHeading>
+          <p className="text-sm text-gray-300 mb-4">
+            SoundSport is the entry class, and the one class that never ranks. Instead of a
+            leaderboard slot, your out-of-100 score earns a medal rating — a low-pressure way to
+            learn the game while still being recognized for a great show.
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {RATINGS.map((r) => (
+              <div key={r.tier} className="bg-[#111] border border-white/10 rounded-none p-3">
+                <p className="text-sm font-bold text-white">{r.tier}</p>
+                <p className="text-sm font-bold text-[#0057B8]">
+                  {r.min === 0 ? 'Any score' : `${r.min}+`}
+                </p>
+                <p className="text-[11px] text-gray-500 mt-1">{r.blurb}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Podium Class */}
+        <section className="mb-10">
+          <SectionHeading icon={Trophy}>Prefer to Run a Corps? Try Podium Class</SectionHeading>
+          <p className="text-sm text-gray-300 mb-4">
+            Podium Class flips the game. Instead of drafting caption performances, you found your
+            own drum corps and earn every point — running rehearsals day by day, routing a summer
+            tour, managing money and morale, and climbing from Community Corps all the way to
+            Champion Status. It is always open and always free to play.
+          </p>
+          <Link
+            to="/podium-guide"
+            className="inline-flex items-center gap-2 min-h-[44px] px-5 border border-[#c9a227]/50 text-[#c9a227] font-bold text-sm uppercase tracking-wider rounded-none hover:bg-[#c9a227]/10 transition-colors"
+          >
+            Read the Podium Guide
+            <ChevronRight className="w-4 h-4" />
+          </Link>
         </section>
 
         {/* Leagues */}
