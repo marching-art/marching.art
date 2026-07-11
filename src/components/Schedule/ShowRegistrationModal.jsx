@@ -20,7 +20,12 @@ import { getShowRegistrationDeadline, formatEtDayTime } from '../../utils/season
 import { compareCorpsClasses } from '../../utils/corps';
 import RunningOrder from './RunningOrder';
 import CorpsSelectionItem from './ShowRegistrationModalParts';
-import { CLASS_CONFIG, PODIUM_EASTERN_DAYS, podiumMaxPicksForWeek } from './showRegistrationConfig';
+import {
+  CLASS_CONFIG,
+  PODIUM_EASTERN_DAYS,
+  PODIUM_CHAMPIONSHIP_WEEK_DAYS,
+  podiumMaxPicksForWeek,
+} from './showRegistrationConfig';
 
 // =============================================================================
 // MAIN MODAL COMPONENT
@@ -113,7 +118,12 @@ const ShowRegistrationModal = ({
     };
   }, [podiumEnabled, podiumDay, show.eventName]);
 
-  const podiumIsMyAutoDay = Boolean(podiumInfo?.autoDays?.includes(podiumDay));
+  // Championship Week (days 45-49) is auto-attended for every Podium corps —
+  // its own division bracket is a subset — and never self-selectable, matching
+  // the server's CHAMPIONSHIP_WEEK_DAYS guard. autoDays only lists the corps'
+  // OWN bracket days, so this also covers e.g. an A/Open corps on a World day.
+  const podiumIsChampWeek = PODIUM_CHAMPIONSHIP_WEEK_DAYS.includes(podiumDay);
+  const podiumIsMyAutoDay = Boolean(podiumInfo?.autoDays?.includes(podiumDay)) || podiumIsChampWeek;
   const podiumIsEasternOffNight =
     PODIUM_EASTERN_DAYS.includes(podiumDay) && podiumInfo && !podiumIsMyAutoDay;
   // A day is "passed" only once it is strictly before the current competition

@@ -62,7 +62,7 @@ function resolveCorpsShow(state, competitionDay, division, dayShows) {
   if (pick && pick.eventName) {
     return { eventName: pick.eventName, location: pick.location || firstLocation };
   }
-  const champ = (store.CHAMPIONSHIP_LABELS_BY_DIVISION[division] || {})[competitionDay];
+  const champ = store.championshipEventFor(competitionDay);
   if (champ) return { eventName: champ, location: firstLocation };
   if (MAJOR_EVENT_LABELS[competitionDay]) {
     return { eventName: MAJOR_EVENT_LABELS[competitionDay], location: firstLocation };
@@ -104,6 +104,22 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
     // Published Day-39 Eastern night snake (null before publication — the
     // uid-parity fallback stands until then).
     const easternAssignments = await store.loadEasternAssignments(db, seasonUid);
+    // Championship advancement (§5.7): on a cut day (finals/semis), only the
+    // top N per division of the prior round's Podium recap compete. Read once,
+    // before the roster loop. null = not a cut day (or no prior results, the
+    // fantasy "auto-enroll the whole field" safeguard) — no gating applied.
+    let advancingSet = null;
+    {
+      const spec = store.CHAMPIONSHIP_ADVANCEMENT[competitionDay];
+      if (spec) {
+        const priorSnap = await store.recapDayRef(db, seasonUid, spec.priorDay).get();
+        advancingSet = store.advancingUids(
+          priorSnap.exists ? priorSnap.data() : null,
+          competitionDay,
+          store.balance
+        );
+      }
+    }
     // Podium is scored PER SHOW: each corps' result lands in its chosen show's
     // group, ranked independently. Map keyed by eventName preserving insertion.
     const showGroups = new Map();
@@ -138,7 +154,12 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
       } else if (state.today && state.today.calendarDay === calendarDay) {
         dayInfo = state.today;
       }
-      const isShowDay = store.isShowDayFor(state, uid, competitionDay, easternAssignments);
+      let isShowDay = store.isShowDayFor(state, uid, competitionDay, easternAssignments);
+      // On a championship advancement day, a corps competes only if it made the
+      // cut in the prior round; the rest of the division is done for the season.
+      if (isShowDay && advancingSet && !advancingSet.has(uid)) {
+        isShowDay = false;
+      }
       const isSpringTraining = seasonData.status === "live-season" && competitionDay < 1;
       const maxBlocks = engine.blocksAvailable(state, { isShowDay, isSpringTraining }, store.balance);
 

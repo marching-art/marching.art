@@ -326,6 +326,14 @@
   "medals": {
     "minFieldSize": 4
   },
+  "championship": {
+    "advancement": {
+      "aClassFinals": 4,
+      "openClassFinals": 8,
+      "worldSemifinals": 25,
+      "worldFinals": 12
+    }
+  },
   "fanFavorite": {
     "voteWindowDays": 3,
     "finalistsPerMajor": 3,

@@ -39,4 +39,11 @@ export const CLASS_CONFIG = {
 // majors + championship week are auto-attended, the Eastern Classic spans two
 // nights, and self-picked shows are capped per week.
 export const PODIUM_EASTERN_DAYS = [41, 42];
-export const podiumMaxPicksForWeek = (week) => (week === 7 ? 0 : week >= 4 ? 3 : 4);
+// Championship Week (days 45-49) is auto-attended for every Podium corps and
+// never self-selectable — a corps' own division bracket is a subset of these
+// (A/Open days 45-46, World days 47-49), but the whole window is off-limits to
+// picks regardless of division (mirror of store.CHAMPIONSHIP_WEEK_DAYS).
+export const PODIUM_CHAMPIONSHIP_WEEK_DAYS = [45, 46, 47, 48, 49];
+// Week 7 opens its two non-championship days (43-44) to picks; days 45-49 are
+// auto-attended Championship Week. Weeks 4-6 spend one slot on a major.
+export const podiumMaxPicksForWeek = (week) => (week === 7 ? 2 : week >= 4 ? 3 : 4);

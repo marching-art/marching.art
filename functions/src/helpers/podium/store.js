@@ -130,34 +130,112 @@ async function applyCurveOverrides(db, { force = false } = {}) {
 const MAJOR_DAYS = Object.freeze([28, 35, 41, 42]);
 const EASTERN_DAYS = Object.freeze([41, 42]);
 const EASTERN_PUBLISH_DAY = 39;
-const CHAMPIONSHIP_AUTO_DAYS = Object.freeze([47, 48, 49]);
 
-// Championship week in Indianapolis (§5.7 divisions): A and Open run
-// Prelims -> Class Finals on days 47-48; World runs Prelims -> Semifinals ->
-// Finals through day 49, DCI-shaped.
+// Championship week in Indianapolis runs the EXACT fantasy finals-week bracket
+// (scoringAwards.buildChampionshipConfig) in parallel — the same schedule and
+// the same advancement, scored on the Podium system with its own results board
+// (podium-recaps, never cross-ranked with fantasy). Two identical tournaments
+// side by side:
+//   Day 45  Open and A Class Prelims        — all Open + A corps
+//   Day 46  Open and A Class Finals         — top 8 Open + top 4 A from day 45
+//   Day 47  World Championship Prelims      — EVERYONE (World + Open + A)
+//   Day 48  World Championship Semifinals   — top 25 overall from day 47
+//   Day 49  World Championship Finals       — top 12 overall from day 48
+// Days 46/48/49 are ADVANCEMENT days (see CHAMPIONSHIP_ADVANCEMENT): only the
+// cut survivors compete. Every division reaches the World rounds — A/Open corps
+// eliminated at day 46 still march day-47 Prelims, exactly like the fantasy
+// classes.
+const CHAMPIONSHIP_AUTO_DAYS = Object.freeze([47, 48, 49]);
+const CHAMPIONSHIP_WEEK_DAYS = Object.freeze([45, 46, 47, 48, 49]);
 const CHAMPIONSHIP_DAYS_BY_DIVISION = Object.freeze({
-  aClass: Object.freeze([47, 48]),
-  openClass: Object.freeze([47, 48]),
+  aClass: Object.freeze([45, 46, 47, 48, 49]),
+  openClass: Object.freeze([45, 46, 47, 48, 49]),
   worldClass: CHAMPIONSHIP_AUTO_DAYS,
 });
-const CHAMPIONSHIP_LABELS_BY_DIVISION = Object.freeze({
-  aClass: Object.freeze({ 47: "A Class Prelims", 48: "A Class Finals" }),
-  openClass: Object.freeze({ 47: "Open Class Prelims", 48: "Open Class Finals" }),
-  worldClass: Object.freeze({
-    47: "World Class Prelims",
-    48: "World Class Semifinals",
-    49: "World Class Finals",
-  }),
+// One event per championship day, shared across every division that competes
+// that day (mirrors the fantasy event names so the two boards read identically).
+const CHAMPIONSHIP_EVENT_BY_DAY = Object.freeze({
+  45: "Open and A Class Prelims",
+  46: "Open and A Class Finals",
+  47: "marching.art World Championship Prelims",
+  48: "marching.art World Championship Semifinals",
+  49: "marching.art World Championship Finals",
 });
 
-/** Championship-week show days for a corps' division. */
+// The advancement bracket, cut-for-cut identical to fantasy: day 46 cuts each
+// class separately (top 8 Open, top 4 A); days 48/49 cut the whole combined
+// field (top 25, then top 12). Tie-inclusive at the cut line. The keys index
+// balance.championship.advancement.
+const CHAMPIONSHIP_ADVANCEMENT = Object.freeze({
+  46: Object.freeze({
+    priorDay: 45,
+    perDivision: Object.freeze([
+      Object.freeze({ division: "aClass", advanceKey: "aClassFinals" }),
+      Object.freeze({ division: "openClass", advanceKey: "openClassFinals" }),
+    ]),
+  }),
+  48: Object.freeze({ priorDay: 47, overallKey: "worldSemifinals" }),
+  49: Object.freeze({ priorDay: 48, overallKey: "worldFinals" }),
+});
+
+/** Championship-week show days a corps' division is auto-enrolled into. */
 function championshipDaysFor(division) {
   return CHAMPIONSHIP_DAYS_BY_DIVISION[divisions.normalizeDivision(division)];
 }
 
-/** Max self-selected shows per competition week (majors consume a slot). */
+/** The Podium championship event name for a championship day (or undefined). */
+function championshipEventFor(competitionDay) {
+  return CHAMPIONSHIP_EVENT_BY_DAY[competitionDay];
+}
+
+/** Top N of `results` by total, tie-inclusive at the cut line, into `set`. */
+function addTopN(results, n, set) {
+  if (!(n > 0) || results.length === 0) return;
+  const ranked = [...results].sort((a, b) => b.totalScore - a.totalScore);
+  const cutoff = ranked[Math.min(n, ranked.length) - 1].totalScore;
+  for (const r of ranked) {
+    if (r.totalScore >= cutoff) set.add(r.uid);
+  }
+}
+
+/**
+ * The set of uids that advanced INTO `competitionDay`'s championship round,
+ * from the prior round's Podium recap. Day 46 cuts each division separately
+ * (top 8 Open, top 4 A); days 48/49 cut the whole combined field (top 25, then
+ * top 12) — the fantasy rule, tie-inclusive at the cut line. Returns null when
+ * the day is not an advancement day, or the prior recap has no usable results
+ * (the fantasy "no prior results -> auto-enroll the whole field" safeguard: no
+ * gating).
+ */
+function advancingUids(priorRecap, competitionDay, cfg) {
+  const spec = CHAMPIONSHIP_ADVANCEMENT[competitionDay];
+  if (!spec) return null;
+  const allResults = (priorRecap && Array.isArray(priorRecap.shows) ? priorRecap.shows : [])
+    .flatMap((show) => show.results || []);
+  if (allResults.length === 0) return null;
+  const sizes = (cfg && cfg.championship && cfg.championship.advancement) || {};
+  const advancing = new Set();
+  if (spec.overallKey) {
+    // World Semifinals / Finals: cut the whole combined field.
+    addTopN(allResults, sizes[spec.overallKey] || 0, advancing);
+  }
+  for (const cut of spec.perDivision || []) {
+    // Open/A Finals: each class cuts on its own prelims standing.
+    const classResults = allResults.filter(
+      (r) => divisions.normalizeDivision(r.division) === cut.division
+    );
+    addTopN(classResults, sizes[cut.advanceKey] || 0, advancing);
+  }
+  return advancing;
+}
+
+/**
+ * Max self-selected shows per competition week. Weeks 4-6 spend one of four
+ * slots on a major; week 7's championship days (45-49) are auto-attended, so
+ * only its two open days (43-44) are selectable.
+ */
 function maxPicksForWeek(week) {
-  if (week === 7) return 0; // championship week is auto-attendance only
+  if (week === 7) return 2; // days 43-44 are open; 45-49 are Championship Week
   if (week >= 4) return 3; // a major occupies one of the 4 weekly slots
   return 4;
 }
@@ -340,9 +418,13 @@ module.exports = {
   EASTERN_DAYS,
   EASTERN_PUBLISH_DAY,
   CHAMPIONSHIP_AUTO_DAYS,
+  CHAMPIONSHIP_WEEK_DAYS,
   CHAMPIONSHIP_DAYS_BY_DIVISION,
-  CHAMPIONSHIP_LABELS_BY_DIVISION,
+  CHAMPIONSHIP_EVENT_BY_DAY,
+  CHAMPIONSHIP_ADVANCEMENT,
   championshipDaysFor,
+  championshipEventFor,
+  advancingUids,
   maxPicksForWeek,
   easternNightFor,
   loadEasternAssignments,
