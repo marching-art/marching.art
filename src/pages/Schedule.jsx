@@ -293,8 +293,11 @@ const Schedule = () => {
           eventDate={getActualDate(selectedShow.day)}
           onClose={() => setRegistrationModal(false)}
           onSuccess={() => {
-            // Profile updates automatically via real-time listener in profileStore
-            // No manual reload needed - just close the modal
+            // Fantasy corps update via the profileStore real-time listener, but
+            // the Podium pick lives in the podium/state subcollection read
+            // through a one-shot callable — refetch it so its badge appears
+            // immediately without a full page reload.
+            if (podiumEnabled) podium.reload();
             setRegistrationModal(false);
           }}
         />
