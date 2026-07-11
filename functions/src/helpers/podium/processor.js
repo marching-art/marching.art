@@ -23,36 +23,68 @@ const { claimScoringRun, markScoringRunCompleted, markScoringRunFailed } = requi
 const engine = require("./engine");
 const store = require("./store");
 const venues = require("./venues");
+const divisions = require("./divisions");
 const staffMarket = require("./staffMarket");
 const joint = require("./joint");
 const { processCoinAwardsBatch } = require("../scoringAwards");
 const { SHOW_PARTICIPATION_REWARDS } = require("../classRegistry");
 const { ChunkedWriter } = require("../chunkedWriter");
 
+// Branded names for the fixed majors (mirror of podium.js MAJOR_ROUTE_LABELS).
+const MAJOR_EVENT_LABELS = {
+  28: "marching.art Southwestern Championship",
+  35: "marching.art Southeastern Championship",
+  41: "marching.art Eastern Classic",
+  42: "marching.art Eastern Classic",
+};
+
 /**
- * Venue for a corps' show on `competitionDay`: the branded majors have fixed
- * sites; self-selected days use the scheduled show's location (first show of
- * the day). `scheduleShows` is a day -> location map preloaded once per run.
+ * Venue for a corps' `chosenShow` on `competitionDay`: the branded majors have
+ * fixed sites; otherwise the chosen show's location (falling back to the day's
+ * first scheduled show for legacy picks with no stored location).
  */
-function showVenueFor(competitionDay, scheduleLocations) {
+function showVenueFor(competitionDay, chosenShow, dayShows) {
   if (venues.MAJOR_VENUES[competitionDay]) return venues.MAJOR_VENUES[competitionDay];
-  const location = scheduleLocations[competitionDay];
+  const location = (chosenShow && chosenShow.location) || (dayShows[0] && dayShows[0].location);
   return location ? venues.venueFor(location) : null;
 }
 
-/** Preload {competitionDay -> location} from the season's schedule doc. */
-async function loadScheduleLocations(db, seasonData) {
+/** Preload {competitionDay -> [{eventName, location}]} from the schedule doc. */
+async function loadScheduleShows(db, seasonData) {
   const scheduleId = seasonData.dataDocId || seasonData.name;
   if (!scheduleId) return {};
   const doc = await db.doc(`schedules/${scheduleId}`).get();
   if (!doc.exists) return {};
-  const locations = {};
+  const byDay = {};
   for (const comp of doc.data().competitions || []) {
-    if (comp.day != null && comp.location && locations[comp.day] == null) {
-      locations[comp.day] = comp.location;
-    }
+    if (comp.day == null || !comp.name) continue;
+    (byDay[comp.day] = byDay[comp.day] || []).push({
+      eventName: comp.name,
+      location: comp.location || "",
+    });
   }
-  return locations;
+  return byDay;
+}
+
+/**
+ * The specific show a corps competes at on `competitionDay` — {eventName,
+ * location}. Self-picks win; auto days resolve to their branded/division event;
+ * everything falls back to the day's first scheduled show.
+ */
+function resolveCorpsShow(state, competitionDay, division, dayShows) {
+  const first = dayShows[0] || null;
+  const firstLocation = first ? first.location : null;
+  const pick = store.showPickFor(state, competitionDay);
+  if (pick && pick.eventName) {
+    return { eventName: pick.eventName, location: pick.location || firstLocation };
+  }
+  const champ = (store.CHAMPIONSHIP_LABELS_BY_DIVISION[division] || {})[competitionDay];
+  if (champ) return { eventName: champ, location: firstLocation };
+  if (MAJOR_EVENT_LABELS[competitionDay]) {
+    return { eventName: MAJOR_EVENT_LABELS[competitionDay], location: firstLocation };
+  }
+  if (first) return { eventName: first.eventName, location: first.location };
+  return { eventName: `Day ${competitionDay}`, location: null };
 }
 
 /**
@@ -83,11 +115,14 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
       return { status: "completed", corps: 0, scored: 0, calendarDay, competitionDay };
     }
 
-    const scheduleLocations = await loadScheduleLocations(db, seasonData);
+    const scheduleShows = await loadScheduleShows(db, seasonData);
+    const dayShows = scheduleShows[competitionDay] || [];
     // Published Day-39 Eastern night snake (null before publication — the
     // uid-parity fallback stands until then).
     const easternAssignments = await store.loadEasternAssignments(db, seasonUid);
-    const results = [];
+    // Podium is scored PER SHOW: each corps' result lands in its chosen show's
+    // group, ranked independently. Map keyed by eventName preserving insertion.
+    const showGroups = new Map();
     const jointToday = []; // corps whose joint rehearsal was today (§5.12)
     const coinAwards = []; // wallet CC per performance (shared economy faucet)
     const funnel = {
@@ -135,7 +170,7 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         } else if (dayInfo.restDay) {
           funnel.restDays += 1;
         }
-        const upcomingPicks = (state.selectedShowDays || []).filter(
+        const upcomingPicks = store.selectedDaysOf(state).filter(
           (day) => day > competitionDay && day <= competitionDay + 7
         ).length;
         if (upcomingPicks > 0) funnel.withUpcomingPicks += 1;
@@ -206,11 +241,17 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         }
       }
 
+      // The specific show this corps competes at today (self-pick / auto /
+      // fallback) — drives the venue, the per-show recap grouping, and payouts.
+      const chosenShow = isShowDay
+        ? resolveCorpsShow(state, competitionDay, divisions.normalizeDivision(state.division), dayShows)
+        : null;
+
       if (isShowDay) {
         // Performance load + travel + climate (design §5.3). Majors are
         // coin-subsidized; stamina always applies. Coin costs are logged now
         // and charged when the Corps Budget ledger lands (Phase 4).
-        const showVenue = showVenueFor(competitionDay, scheduleLocations);
+        const showVenue = showVenueFor(competitionDay, chosenShow, dayShows);
         const fromVenue = state.lastVenue || venues.venueFor(state.location) || null;
         const leg = venues.travelLeg(fromVenue, showVenue, store.balance);
         const isMajor = Boolean(venues.MAJOR_VENUES[competitionDay]);
@@ -259,9 +300,9 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
           coinAwards.push({
             uid,
             corpsClass: "podiumClass",
-            showName: `Day ${competitionDay}`,
+            showName: chosenShow.eventName,
             amount: participationCC,
-            description: `Podium performance — Day ${competitionDay}`,
+            description: `Podium performance — ${chosenShow.eventName}`,
           });
         }
         if (showVenue) {
@@ -356,10 +397,12 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
       // --- 2. Score show days ----------------------------------------------
       let score = null;
       if (isShowDay) {
+        // Seed folds in the chosen show so two corps at different shows on the
+        // same day get independent luck draws.
         score = engine.scoreCorps(
           state,
           competitionDay,
-          `${seasonUid}|${competitionDay}|${uid}`,
+          `${seasonUid}|${competitionDay}|${chosenShow.eventName}|${uid}`,
           store.curves,
           store.balance
         );
@@ -370,7 +413,15 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
           ...(state.scoreHistory || []).filter((entry) => entry.day !== competitionDay).slice(-59),
           { day: competitionDay, total: score.total },
         ];
-        results.push({
+        // Bucket the result under its show — each show is ranked on its own.
+        if (!showGroups.has(chosenShow.eventName)) {
+          showGroups.set(chosenShow.eventName, {
+            eventName: chosenShow.eventName,
+            location: chosenShow.location || null,
+            results: [],
+          });
+        }
+        showGroups.get(chosenShow.eventName).results.push({
           uid,
           corpsName: state.corpsName,
           corpsClass: "podiumClass",
@@ -459,38 +510,46 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
       }
     }
 
-    // --- 3. Recap doc -------------------------------------------------------
+    // --- 3. Recap doc (per SHOW) --------------------------------------------
+    // Each show is ranked on its own — placement and medals reset per show, so
+    // two corps competing at different shows on the same night are never ranked
+    // against each other. The recap mirrors the fantasy `shows: [...]` shape.
     const medalByUid = {};
-    if (results.length > 0 || jointFeed.length > 0) {
-      results.sort((a, b) => b.totalScore - a.totalScore);
-      results.forEach((entry, index) => {
+    const recapShows = [];
+    for (const group of showGroups.values()) {
+      group.results.sort((a, b) => b.totalScore - a.totalScore);
+      group.results.forEach((entry, index) => {
         entry.place = index + 1;
       });
       // Per-show medals (design §14.1.3): top 3 at any meaningfully-sized
       // show bank a lifetime counter — the FMA "70+ regular-season golds"
       // collector hook.
-      if (results.length >= store.balance.medals.minFieldSize) {
+      if (group.results.length >= store.balance.medals.minFieldSize) {
         const medalNames = ["gold", "silver", "bronze"];
-        results.slice(0, 3).forEach((entry, index) => {
+        group.results.slice(0, 3).forEach((entry, index) => {
           medalByUid[entry.uid] = medalNames[index];
           entry.medal = medalNames[index];
         });
       }
+      recapShows.push(group);
+    }
+    if (recapShows.length > 0 || jointFeed.length > 0) {
       await store.recapDayRef(db, seasonUid, competitionDay).set({
         seasonUid,
         competitionDay,
         calendarDay,
         processedAt: new Date().toISOString(),
-        results,
+        shows: recapShows,
         // Public smoke, private fire: who rehearsed together — never the
         // scrimmage numbers (§5.12).
         ...(jointFeed.length > 0 ? { jointRehearsals: jointFeed } : {}),
       });
       // Records Book parity (§14.1.6): Podium marks ride the same all-time
-      // records doc as the fantasy classes. Never fails the night.
-      if (results.length > 0) {
+      // records doc as the fantasy classes. `updateRecordsFromPodiumRecap`
+      // already accepts a `shows` array. Never fails the night.
+      if (recapShows.length > 0) {
         const { updateRecordsFromPodiumRecap } = require("../gameRecords");
-        await updateRecordsFromPodiumRecap(db, { results }, seasonUid, competitionDay);
+        await updateRecordsFromPodiumRecap(db, { shows: recapShows }, seasonUid, competitionDay);
       }
     }
 
@@ -634,18 +693,19 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
       }
     }
 
+    const scoredCount = [...showGroups.values()].reduce((n, g) => n + g.results.length, 0);
     await markScoringRunCompleted(db, leaseKey, calendarDay, {
       corps: processed,
-      scored: results.length,
+      scored: scoredCount,
     });
     logger.info(
       `[podium] day ${calendarDay} (competition ${competitionDay}): ` +
-        `${processed} corps processed, ${results.length} scored.`
+        `${processed} corps processed, ${scoredCount} scored across ${showGroups.size} shows.`
     );
     return {
       status: "completed",
       corps: processed,
-      scored: results.length,
+      scored: scoredCount,
       calendarDay,
       competitionDay,
     };
@@ -655,4 +715,4 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
   }
 }
 
-module.exports = { processPodiumDay, loadScheduleLocations };
+module.exports = { processPodiumDay, loadScheduleShows, showVenueFor, resolveCorpsShow };

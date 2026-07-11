@@ -194,6 +194,25 @@ function autoDaysFor(uid, seasonUid, { division, easternAssignments } = {}) {
   ];
 }
 
+/**
+ * The competition days this corps has self-selected, as a number[]. Podium
+ * picks are per SHOW now (`state.selectedShows = { [day]: {eventName, location} }`),
+ * but `selectedShowDays` (a plain number[]) is still the currency of every
+ * day-based check. This unions the new map's day keys with the legacy field so
+ * both new and pre-migration states resolve identically.
+ */
+function selectedDaysOf(state) {
+  const fromShows = Object.keys(state.selectedShows || {}).map(Number);
+  const legacy = state.selectedShowDays || [];
+  return [...new Set([...fromShows, ...legacy])];
+}
+
+/** The show a corps picked for `day` (`{eventName, location}`), or null. */
+function showPickFor(state, day) {
+  const picks = state.selectedShows || {};
+  return picks[day] || picks[String(day)] || null;
+}
+
 /** True when `competitionDay` is a show day for this corps. */
 function isShowDayFor(state, uid, competitionDay, easternAssignments) {
   if (competitionDay < 1 || competitionDay > 49) return false;
@@ -202,7 +221,7 @@ function isShowDayFor(state, uid, competitionDay, easternAssignments) {
     easternAssignments,
   });
   if (auto.includes(competitionDay)) return true;
-  return (state.selectedShowDays || []).includes(competitionDay);
+  return selectedDaysOf(state).includes(competitionDay);
 }
 
 function profileRef(db, uid) {
@@ -308,6 +327,8 @@ module.exports = {
   loadEasternAssignments,
   autoDaysFor,
   isShowDayFor,
+  selectedDaysOf,
+  showPickFor,
   profileRef,
   stateRef,
   rosterRef,

@@ -96,13 +96,16 @@ async function updateRecordsFromRecap(db, dailyRecap, seasonName, scoredDay) {
 }
 
 /**
- * Podium recap docs carry a flat `results` array (no shows). Same record
- * categories; the Podium class rides the same records doc (stats-archive
- * parity, design §14.1.6). Never throws.
+ * Podium recap docs carry a per-show `shows: [{ results }]` array (legacy docs
+ * used a flat `results`). Same record categories; the Podium class rides the
+ * same records doc (stats-archive parity, design §14.1.6). Never throws.
  */
 async function updateRecordsFromPodiumRecap(db, recap, seasonName, scoredDay) {
   try {
-    const candidates = extractDayCandidates({ shows: [{ results: recap.results || [] }] });
+    const normalized = recap.shows
+      ? { shows: recap.shows }
+      : { shows: [{ results: recap.results || [] }] };
+    const candidates = extractDayCandidates(normalized);
     await mergeRecordCandidates(db, candidates, { seasonName, day: scoredDay });
   } catch (error) {
     logger.error("Podium records update failed (scoring unaffected):", error);
@@ -168,7 +171,10 @@ async function rebuildGameRecords(db) {
     const daysSnapshot = await podiumDocRef.collection("days").get();
     for (const dayDoc of daysSnapshot.docs) {
       const recap = dayDoc.data();
-      const candidates = extractDayCandidates({ shows: [{ results: recap.results || [] }] });
+      const normalized = recap.shows
+        ? { shows: recap.shows }
+        : { shows: [{ results: recap.results || [] }] };
+      const candidates = extractDayCandidates(normalized);
       await mergeRecordCandidates(db, candidates, {
         seasonName: podiumDocRef.id,
         day: recap.competitionDay || null,

@@ -78,6 +78,15 @@ const WeekPills = ({ weeks, currentWeek, selectedWeek, onSelect, getShowCount })
 // REGISTRATION BADGES COMPONENT
 // =============================================================================
 
+// Podium attends a SPECIFIC show: self-picks match by eventName (one show per
+// night — never every show that day); majors/championship are auto-attended and
+// are single-event days, matched by day.
+const podiumAttendsShow = (podiumAttendance, show) =>
+  Boolean(
+    podiumAttendance &&
+      (podiumAttendance.events?.has(show.eventName) || podiumAttendance.autoDays?.has(show.day))
+  );
+
 const RegistrationBadges = ({ show, userProfile, podiumAttendance }) => {
   const registeredCorps = userProfile?.corps
     ? Object.entries(userProfile.corps)
@@ -92,9 +101,7 @@ const RegistrationBadges = ({ show, userProfile, podiumAttendance }) => {
         .map(([corpsClass]) => corpsClass)
     : [];
 
-  // The Podium corps attends by day (majors/championship auto, plus its tour
-  // picks), so it badges any show on a day it competes.
-  const podiumAttending = Boolean(podiumAttendance?.days?.has(show.day));
+  const podiumAttending = podiumAttendsShow(podiumAttendance, show);
 
   if (registeredCorps.length === 0 && !podiumAttending) return null;
 
@@ -139,7 +146,7 @@ const ShowCard = ({
   podiumAttendance,
 }) => {
   const isRegistered = useMemo(() => {
-    if (podiumAttendance?.days?.has(show.day)) return true;
+    if (podiumAttendsShow(podiumAttendance, show)) return true;
     if (!userProfile?.corps) return false;
     return Object.values(userProfile.corps).some((corps) => {
       if (!corps) return false;
@@ -449,7 +456,7 @@ const ChampionshipEventCard = ({
 
   // The Podium corps auto-attends its division's championship days (from
   // podium/state autoDays), which the fantasy eligibleClasses don't cover.
-  const podiumAttending = Boolean(podiumAttendance?.days?.has(event.day));
+  const podiumAttending = Boolean(podiumAttendance?.autoDays?.has(event.day));
   const hasEligibleCorps = eligibleCorps.length > 0 || podiumAttending;
 
   return (

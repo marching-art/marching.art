@@ -119,35 +119,40 @@ function validateAuditions(auditions) {
 }
 
 /**
- * Validate self-selected show days for one week against the pick budget
- * (majors and championship week are auto-attended and never selectable).
+ * Validate a week's self-selected SHOW picks against the pick budget and the
+ * schedule. Podium now registers for a specific show (like fantasy), one per
+ * night; majors and championship week are auto-attended and never selectable.
+ *
  * `division`/`easternAssignments` make the auto-day set division-correct and
  * match the client's locked days — without them a World corps' Championship
  * day 49 and the published Eastern night would be computed with A Class /
  * hash-parity fallbacks and reject picks the client shows as valid.
- * @returns {number[]} sorted, deduped days
+ * `scheduleShowsByDay` ({ [day]: [{eventName, location}] }) lets the server
+ * confirm each picked eventName is actually on the schedule that day and
+ * resolve its authoritative location (the client's location is never trusted).
+ *
+ * @returns {{ [day:number]: { eventName: string, location: string } }} normalized picks
  */
-function validateShowDays(
+function validateShowPicks(
   week,
-  days,
+  shows,
   uid,
   seasonUid,
   currentCompetitionDay,
-  { division, easternAssignments } = {}
+  { division, easternAssignments, scheduleShowsByDay = {} } = {}
 ) {
   if (!Number.isInteger(week) || week < 1 || week > 7) {
     throw new HttpsError("invalid-argument", "Week must be 1-7.");
   }
-  if (!Array.isArray(days)) {
-    throw new HttpsError("invalid-argument", "Days must be an array.");
+  if (!Array.isArray(shows)) {
+    throw new HttpsError("invalid-argument", "Shows must be an array.");
   }
   const maxPicks = store.maxPicksForWeek(week);
   const autoDays = store.autoDaysFor(uid, seasonUid, { division, easternAssignments });
-  const unique = [...new Set(days)].sort((a, b) => a - b);
-  if (unique.length > maxPicks) {
-    throw new HttpsError("invalid-argument", `Week ${week} allows at most ${maxPicks} selected shows.`);
-  }
-  for (const day of unique) {
+  const byDay = {};
+  for (const pick of shows) {
+    const day = pick && pick.day;
+    const eventName = typeof (pick && pick.eventName) === "string" ? pick.eventName.trim() : "";
     if (!Number.isInteger(day) || Math.ceil(day / 7) !== week) {
       throw new HttpsError("invalid-argument", `Day ${day} is not in week ${week}.`);
     }
@@ -160,8 +165,43 @@ function validateShowDays(
     if (day < currentCompetitionDay) {
       throw new HttpsError("invalid-argument", `Day ${day} has already passed.`);
     }
+    if (!eventName) {
+      throw new HttpsError("invalid-argument", `A show must be chosen for day ${day}.`);
+    }
+    // The picked show must actually be on the schedule that day.
+    const dayList = scheduleShowsByDay[day] || [];
+    const match = dayList.find((s) => s.eventName === eventName);
+    if (!match) {
+      throw new HttpsError("invalid-argument", `"${eventName}" is not a scheduled show on day ${day}.`);
+    }
+    // One show per night — a later pick for the same day replaces the earlier.
+    byDay[day] = { eventName, location: match.location || "" };
   }
-  return unique;
+  if (Object.keys(byDay).length > maxPicks) {
+    throw new HttpsError("invalid-argument", `Week ${week} allows at most ${maxPicks} selected shows.`);
+  }
+  return byDay;
+}
+
+/**
+ * Load { [day]: [{eventName, location}] } from the season's schedule doc, for
+ * the days a caller needs to validate/score. Reads competition `name` (the
+ * event) and `location`.
+ */
+async function loadScheduleShowsByDay(db, seasonData) {
+  const scheduleId = seasonData.dataDocId || seasonData.name;
+  const byDay = {};
+  if (!scheduleId) return byDay;
+  const doc = await db.doc(`schedules/${scheduleId}`).get();
+  if (!doc.exists) return byDay;
+  for (const comp of doc.data().competitions || []) {
+    if (comp.day == null || !comp.name) continue;
+    (byDay[comp.day] = byDay[comp.day] || []).push({
+      eventName: comp.name,
+      location: comp.location || "",
+    });
+  }
+  return byDay;
 }
 
 /** Shared preamble: flag gate, auth, season, day context. */
@@ -359,6 +399,7 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
       division,
       budget: draft.budget,
       ...(Object.keys(carriedStaff).length > 0 ? { staff: carriedStaff } : {}),
+      selectedShows: {},
       selectedShowDays: [],
       today: { calendarDay, blocksUsed: 0, blocks: [], restDay: false, warmupUsed: false },
       lastScoredDay: null,
@@ -556,34 +597,47 @@ exports.setPodiumRestDay = onCall({ cors: true }, async (request) => {
 
 exports.setPodiumShows = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData, competitionDay } = await podiumContext(request);
-  const { week, days } = request.data || {};
+  const { week, shows } = request.data || {};
   const sRef = store.stateRef(db, uid);
-  // Load the published Eastern-night assignments once (a read, so before the
-  // transaction) so auto-day validation matches what getPodiumState locks.
-  const easternAssignments = await store.loadEasternAssignments(db, seasonData.seasonUid);
+  // Reads before the transaction: the published Eastern-night assignments (so
+  // auto-day validation matches getPodiumState) and the schedule (to confirm
+  // each picked show exists that day and resolve its authoritative location).
+  const [easternAssignments, scheduleShowsByDay] = await Promise.all([
+    store.loadEasternAssignments(db, seasonData.seasonUid),
+    loadScheduleShowsByDay(db, seasonData),
+  ]);
 
-  const selected = await db.runTransaction(async (transaction) => {
+  const result = await db.runTransaction(async (transaction) => {
     const snapshot = await transaction.get(sRef);
     if (!snapshot.exists || snapshot.data().seasonUid !== seasonData.seasonUid) {
       throw new HttpsError("failed-precondition", "Register a Podium corps first.");
     }
     const state = snapshot.data();
-    const validated = validateShowDays(
+    const validated = validateShowPicks(
       week,
-      days,
+      shows,
       uid,
       seasonData.seasonUid,
       Math.max(0, competitionDay),
-      { division: state.division, easternAssignments }
+      { division: state.division, easternAssignments, scheduleShowsByDay }
     );
-    const keep = (state.selectedShowDays || []).filter((d) => Math.ceil(d / 7) !== week);
-    state.selectedShowDays = [...keep, ...validated].sort((a, b) => a - b);
+    // Replace only this week's picks (mirrors fantasy selectUserShows).
+    const keep = Object.fromEntries(
+      Object.entries(state.selectedShows || {}).filter(
+        ([d]) => Math.ceil(Number(d) / 7) !== week
+      )
+    );
+    state.selectedShows = { ...keep, ...validated };
+    // Derived day list, kept in sync for every day-based reader.
+    state.selectedShowDays = Object.keys(state.selectedShows)
+      .map(Number)
+      .sort((a, b) => a - b);
     state.updatedAt = new Date().toISOString();
     transaction.set(sRef, state);
-    return state.selectedShowDays;
+    return { selectedShows: state.selectedShows, selectedShowDays: state.selectedShowDays };
   });
 
-  return { success: true, selectedShowDays: selected };
+  return { success: true, ...result };
 });
 
 exports.setPodiumFoodPlan = onCall({ cors: true }, async (request) => {
@@ -686,9 +740,121 @@ exports.hirePodiumClinician = onCall({ cors: true }, async (request) => {
   return { success: true, ...result };
 });
 
+// Branded names for the fixed majors on the route sheet.
+const MAJOR_ROUTE_LABELS = {
+  28: "marching.art Southwestern Championship",
+  35: "marching.art Southeastern Championship",
+  41: "marching.art Eastern Classic",
+  42: "marching.art Eastern Classic",
+};
+
+/**
+ * Upcoming route preview: the chain of travel legs through the corps' next
+ * show days (auto + selected), each with tier, miles, coin cost (majors
+ * subsidized), heat surcharge, and — for the majors and Championship Week
+ * in Indianapolis — the division-correct event label (an A Class corps sees
+ * A Class Prelims/Finals, a World corps sees Prelims/Semis/Finals). Shown
+ * in the tour picker BEFORE selections are confirmed (design §5.3
+ * open-information routing).
+ */
+async function buildRoutePreview(db, seasonData, state, uid, competitionDay, easternAssignments) {
+  const division = divisions.normalizeDivision(state.division);
+  const upcoming = [
+    ...new Set([
+      ...store.autoDaysFor(uid, seasonData.seasonUid, { division, easternAssignments }),
+      ...store.selectedDaysOf(state),
+    ]),
+  ]
+    .filter((day) => day > Math.max(0, competitionDay) && day <= 49)
+    .sort((a, b) => a - b)
+    .slice(0, 8);
+  if (upcoming.length === 0) return [];
+
+  const scheduleId = seasonData.dataDocId || seasonData.name;
+  let locations = {};
+  if (scheduleId) {
+    const doc = await db.doc(`schedules/${scheduleId}`).get();
+    if (doc.exists) {
+      for (const comp of doc.data().competitions || []) {
+        if (comp.day != null && comp.location && locations[comp.day] == null) {
+          locations[comp.day] = comp.location;
+        }
+      }
+    }
+  }
+
+  const championshipLabels = store.CHAMPIONSHIP_LABELS_BY_DIVISION[division];
+  const legs = [];
+  let cursor = state.lastVenue || venues.venueFor(state.location) || null;
+  for (const day of upcoming) {
+    // Route to the CHOSEN show's location on a self-pick day; majors have fixed
+    // venues; legacy picks (no stored location) fall back to the day's schedule.
+    const pickLocation = store.showPickFor(state, day)?.location || locations[day];
+    const venue = venues.MAJOR_VENUES[day] || (pickLocation ? venues.venueFor(pickLocation) : null);
+    const leg = venues.travelLeg(cursor, venue, store.balance);
+    const isMajor = Boolean(venues.MAJOR_VENUES[day]);
+    legs.push({
+      day,
+      city: venue ? `${venue.city}, ${venue.region}` : "TBA",
+      label: championshipLabels[day] || MAJOR_ROUTE_LABELS[day] || null,
+      tier: leg ? leg.tier : null,
+      miles: leg ? leg.miles : null,
+      coinCost: leg && !isMajor ? leg.coinCost : 0,
+      staminaCost: leg ? leg.staminaCost : 0,
+      heat: venues.heatStamina(venue, store.balance),
+      isMajor,
+    });
+    if (venue) cursor = venue;
+  }
+  return legs;
+}
+
+exports.getPodiumState = onCall({ cors: true }, async (request) => {
+  const { uid, db, seasonData, calendarDay, competitionDay } = await podiumContext(request);
+  const snapshot = await store.stateRef(db, uid).get();
+  if (!snapshot.exists || snapshot.data().seasonUid !== seasonData.seasonUid) {
+    return { exists: false, calendarDay, competitionDay };
+  }
+  const state = snapshot.data();
+  const easternAssignments = await store.loadEasternAssignments(db, seasonData.seasonUid);
+  const isShowDay = store.isShowDayFor(state, uid, competitionDay, easternAssignments);
+  const routePreview = await buildRoutePreview(
+    db, seasonData, state, uid, competitionDay, easternAssignments
+  );
+  const careerSnapshot = await career.careerRef(db, uid).get();
+  const careerData = careerSnapshot.exists ? careerSnapshot.data() : null;
+  const division = divisions.normalizeDivision(state.division);
+  return {
+    exists: true,
+    calendarDay,
+    competitionDay,
+    isShowDay,
+    division,
+    divisionLabel: divisions.DIVISION_LABELS[division],
+    commitmentCap:
+      (store.balance.budget.commitmentCapByDivision || {})[division] ||
+      store.balance.budget.commitmentCap,
+    easternNight: store.easternNightFor(uid, seasonData.seasonUid, easternAssignments),
+    easternNightFinal: Boolean(easternAssignments && easternAssignments[uid]),
+    autoDays: store.autoDaysFor(uid, seasonData.seasonUid, { division, easternAssignments }),
+    routePreview,
+    career: careerData
+      ? {
+        reputation: careerData.reputation,
+        historicalPeak: careerData.historicalPeak,
+        seasonsPlayed: careerData.seasonsPlayed,
+        history: (careerData.history || []).slice(-5),
+      }
+      : null,
+    state,
+  };
+});
+
+
 module.exports.validateChallenge = validateChallenge;
 module.exports.validateCommitment = validateCommitment;
 module.exports.validateAuditions = validateAuditions;
-module.exports.validateShowDays = validateShowDays;
+module.exports.validateShowPicks = validateShowPicks;
+module.exports.loadScheduleShowsByDay = loadScheduleShowsByDay;
 // Shared preamble for the split callable modules (podiumJoint.js).
 module.exports.podiumContext = podiumContext;

@@ -1,61 +1,37 @@
-// PodiumShowPicker — weekly tour routing (Phase 2, design §5.11): pick up to
-// 4 shows in open weeks / 3 in major weeks; the majors and championship week
-// are auto-attended and locked. Server validates everything again.
+// PodiumShowPicker — read-only tour summary (Phase 2, design §5.11).
+//
+// Podium now registers for a SPECIFIC show the same way fantasy corps do:
+// from the Schedule page, click a show and add the corps. This panel is no
+// longer an editable day-grid — it just summarizes the shows the corps is
+// committed to (self-picked plus the auto-attended majors & championship week)
+// and links to the Schedule page to change them.
 
-import React, { useMemo, useState } from 'react';
-import { Loader2, Lock } from 'lucide-react';
-
-const WEEKS = [1, 2, 3, 4, 5, 6, 7];
-const EASTERN_DAYS = [41, 42];
+import React, { useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import { CalendarDays, Lock, ChevronRight } from 'lucide-react';
 
 export default function PodiumShowPicker({ podium }) {
   const state = podium.data?.state;
-  const autoDays = podium.data?.autoDays || [];
   const competitionDay = podium.data?.competitionDay ?? 0;
-  const [draft, setDraft] = useState(null); // {week, days:Set} while editing
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState(null);
 
-  const selectedDays = useMemo(() => new Set(state?.selectedShowDays || []), [state]);
+  // Self-picked shows: { day: { eventName, location } } -> sorted rows.
+  const picks = useMemo(() => {
+    const selected = state?.selectedShows || {};
+    return Object.entries(selected)
+      .map(([day, pick]) => ({ day: Number(day), ...pick }))
+      .sort((a, b) => a.day - b.day);
+  }, [state]);
+
+  // Auto-attended days (majors + championship week) the director can't change.
+  const autoRows = useMemo(
+    () =>
+      [...new Set(podium.data?.autoDays || [])]
+        .sort((a, b) => a - b)
+        .map((day) => ({ day })),
+    [podium.data?.autoDays]
+  );
+
   if (!state) return null;
-
-  const maxPicksForWeek = (week) => (week === 7 ? 0 : week >= 4 ? 3 : 4);
-  const weekDays = (week) => Array.from({ length: 7 }, (_, i) => (week - 1) * 7 + i + 1);
-
-  const beginEdit = (week) => {
-    // >= competitionDay: the current day's show is still selectable (it locks at
-    // the next 2 AM ET score run), matching the schedule modal and server.
-    const days = new Set(
-      [...selectedDays].filter((d) => Math.ceil(d / 7) === week && d >= competitionDay)
-    );
-    setDraft({ week, days });
-    setError(null);
-  };
-
-  const toggleDay = (day) => {
-    setDraft((prev) => {
-      const days = new Set(prev.days);
-      if (days.has(day)) {
-        days.delete(day);
-      } else if (days.size < maxPicksForWeek(prev.week)) {
-        days.add(day);
-      }
-      return { ...prev, days };
-    });
-  };
-
-  const save = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      await podium.selectShows(draft.week, [...draft.days]);
-      setDraft(null);
-    } catch (err) {
-      setError(err?.message || 'Could not save shows.');
-    } finally {
-      setBusy(false);
-    }
-  };
 
   return (
     <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4 space-y-3">
@@ -63,91 +39,60 @@ export default function PodiumShowPicker({ podium }) {
         <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
           Tour Schedule
         </h3>
-        <span className="text-[9px] uppercase text-gray-600">
-          Majors &amp; championship week auto-attended
-        </span>
+        <Link
+          to="/schedule"
+          className="flex items-center gap-1 text-[10px] font-bold uppercase text-[#4d9fff] hover:text-white press-feedback"
+        >
+          <CalendarDays className="w-3 h-3" />
+          Add shows
+          <ChevronRight className="w-3 h-3" />
+        </Link>
       </div>
 
-      <div className="space-y-2">
-        {WEEKS.map((week) => {
-          const days = weekDays(week);
-          const editing = draft?.week === week;
-          const budget = maxPicksForWeek(week);
-          const pickedInWeek = editing
-            ? draft.days.size
-            : [...selectedDays].filter((d) => Math.ceil(d / 7) === week).length;
-          const weekPast = days[6] < competitionDay;
+      {picks.length === 0 ? (
+        <p className="text-[11px] text-gray-500">
+          No shows chosen yet. Open the <span className="text-[#4d9fff]">Schedule</span> page,
+          pick a show, and add your Podium corps — same as any other class.
+        </p>
+      ) : (
+        <ul className="space-y-1.5">
+          {picks.map((p) => (
+            <li
+              key={p.day}
+              className={`flex items-center gap-2 text-[11px] ${
+                p.day < competitionDay ? 'text-gray-600' : 'text-gray-300'
+              }`}
+            >
+              <span className="w-10 shrink-0 font-data tabular-nums text-gray-500">
+                Day {p.day}
+              </span>
+              <span className="font-bold text-white truncate">{p.eventName}</span>
+              {p.location && <span className="text-gray-500 truncate">· {p.location}</span>}
+            </li>
+          ))}
+        </ul>
+      )}
 
-          return (
-            <div key={week} className="flex items-center gap-2">
-              <button
-                onClick={() => (editing ? setDraft(null) : beginEdit(week))}
-                disabled={weekPast || budget === 0}
-                className={`w-20 shrink-0 text-left text-[10px] font-bold uppercase press-feedback ${
-                  weekPast || budget === 0
-                    ? 'text-gray-700'
-                    : editing
-                      ? 'text-[#4d9fff]'
-                      : 'text-gray-400 hover:text-white'
-                }`}
+      {autoRows.length > 0 && (
+        <div className="pt-2 border-t border-[#2a2a2a]">
+          <div className="flex items-center gap-1 text-[9px] font-bold uppercase text-[#c9a227] mb-1">
+            <Lock className="w-2.5 h-2.5" /> Auto-attended
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {autoRows.map((r) => (
+              <span
+                key={r.day}
+                className="px-1.5 py-0.5 rounded-sm bg-[#8a6d1a]/20 text-[#c9a227] text-[9px] font-bold tabular-nums"
               >
-                Week {week}
-                <span className="block text-[9px] font-normal text-gray-600 normal-case">
-                  {budget === 0 ? 'Champs' : `${pickedInWeek}/${budget} picks`}
-                </span>
-              </button>
-
-              <div className="flex gap-1 flex-1">
-                {days.map((day) => {
-                  const isAuto = autoDays.includes(day) || EASTERN_DAYS.includes(day);
-                  const isPast = day < competitionDay;
-                  const isPicked = editing ? draft.days.has(day) : selectedDays.has(day);
-                  const isMyEastern = autoDays.includes(day) && EASTERN_DAYS.includes(day);
-                  return (
-                    <button
-                      key={day}
-                      disabled={!editing || isAuto || isPast}
-                      onClick={() => toggleDay(day)}
-                      title={
-                        isMyEastern
-                          ? 'Eastern Classic — your assigned night'
-                          : isAuto
-                            ? 'Auto-attended'
-                            : `Day ${day}`
-                      }
-                      className={`flex-1 h-8 rounded-sm text-[10px] font-bold tabular-nums transition-colors ${
-                        isAuto
-                          ? 'bg-[#8a6d1a]/25 text-[#c9a227] cursor-default'
-                          : isPicked
-                            ? 'bg-[#0057B8] text-white'
-                            : isPast
-                              ? 'bg-[#141414] text-gray-700'
-                              : editing
-                                ? 'bg-[#222] text-gray-400 hover:bg-[#0057B8]/30 hover:text-white press-feedback'
-                                : 'bg-[#1f1f1f] text-gray-600'
-                      }`}
-                    >
-                      {isAuto ? <Lock className="w-3 h-3 mx-auto" /> : day}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {editing && (
-                <button
-                  onClick={save}
-                  disabled={busy}
-                  className="shrink-0 flex items-center gap-1 text-[10px] font-bold uppercase px-3 py-1.5 rounded-sm bg-[#0057B8] text-white hover:bg-[#0066d6] disabled:opacity-60 press-feedback"
-                >
-                  {busy && <Loader2 className="w-3 h-3 animate-spin" />} Save
-                </button>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {error && <div className="text-[11px] text-red-400">{error}</div>}
+                Day {r.day}
+              </span>
+            ))}
+          </div>
+          <p className="mt-1 text-[9px] text-gray-600">
+            Majors &amp; championship week are attended automatically.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

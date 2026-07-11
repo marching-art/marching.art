@@ -68,9 +68,19 @@ export const allocateRehearsalBlock = createCallable<
 
 export const setPodiumRestDay = createCallable<void, { success: boolean }>('setPodiumRestDay');
 
+export interface PodiumShowPick {
+  day: number;
+  eventName: string;
+  location?: string;
+}
+
 export const setPodiumShows = createCallable<
-  { week: number; days: number[] },
-  { success: boolean; selectedShowDays: number[] }
+  { week: number; shows: PodiumShowPick[] },
+  {
+    success: boolean;
+    selectedShows: Record<number, { eventName: string; location: string }>;
+    selectedShowDays: number[];
+  }
 >('setPodiumShows');
 
 export const getPodiumState = createCallable<void, PodiumStateResponse>('getPodiumState');

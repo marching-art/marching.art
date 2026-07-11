@@ -68,11 +68,11 @@ const ShowRegistrationModal = ({
   );
 
   // ---------------------------------------------------------------------------
-  // Podium corps attendance (day-based tour picks)
+  // Podium corps attendance (per-show, like fantasy — one show per night)
   // ---------------------------------------------------------------------------
   const podiumEnabled = usePodiumEnabled();
   const podiumDay = Number.isInteger(show.day) ? show.day : null;
-  // {selectedShowDays, autoDays, competitionDay, corpsName} — the Podium row's
+  // {selectedShows, autoDays, competitionDay, corpsName} — the Podium row's
   // single source of truth. getPodiumState (server day-context + subcollection)
   // is authoritative; we no longer gate on the profile's corps.podiumClass copy,
   // which can lag or be absent even when the corps is fielded this season.
@@ -91,10 +91,13 @@ const ShowRegistrationModal = ({
         // auto-assigned majors/championship, never self-selected regular shows.
         const state = res?.data;
         if (cancelled || !state?.exists) return;
-        const selectedShowDays = state.state?.selectedShowDays || [];
-        const attending = selectedShowDays.includes(podiumDay);
+        const selectedShows = state.state?.selectedShows || {};
+        // Attending THIS show only when the day's pick names this exact event
+        // (one show per night — a different pick that day means "not here").
+        const pick = selectedShows[podiumDay];
+        const attending = Boolean(pick && pick.eventName === show.eventName);
         setPodiumInfo({
-          selectedShowDays,
+          selectedShows,
           autoDays: state.autoDays || [],
           competitionDay: state.competitionDay ?? 0,
           corpsName: state.state?.corpsName || 'Podium Corps',
@@ -108,7 +111,7 @@ const ShowRegistrationModal = ({
     return () => {
       cancelled = true;
     };
-  }, [podiumEnabled, podiumDay]);
+  }, [podiumEnabled, podiumDay, show.eventName]);
 
   const podiumIsMyAutoDay = Boolean(podiumInfo?.autoDays?.includes(podiumDay));
   const podiumIsEasternOffNight =
@@ -121,18 +124,20 @@ const ShowRegistrationModal = ({
   // "This day has passed" for the Podium corps.
   const podiumIsPast = podiumInfo ? podiumDay < podiumInfo.competitionDay : false;
   const podiumMaxPicks = podiumMaxPicksForWeek(show.week);
-  // Only still-open picks are re-submitted: setPodiumShows replaces the whole
-  // week and the server rejects any strictly-past day. Keep this in sync with
-  // the podiumIsPast boundary above — without it, saving a new pick resends a
-  // passed day and the entire registration fails with "Day N has already passed."
+  // The week's OTHER still-open picks (as {day, eventName, location}), re-sent
+  // on save because setPodiumShows replaces the whole week. Excludes this day
+  // (one show per night — toggling this show replaces any other pick that day)
+  // and strictly-past days (which the server rejects).
   const podiumOtherWeekPicks = useMemo(
     () =>
-      (podiumInfo?.selectedShowDays || []).filter(
-        (d) =>
-          Math.ceil(d / 7) === show.week &&
-          d !== podiumDay &&
-          d >= (podiumInfo?.competitionDay ?? 0)
-      ),
+      Object.entries(podiumInfo?.selectedShows || {})
+        .map(([d, pick]) => ({ day: Number(d), ...pick }))
+        .filter(
+          (p) =>
+            Math.ceil(p.day / 7) === show.week &&
+            p.day !== podiumDay &&
+            p.day >= (podiumInfo?.competitionDay ?? 0)
+        ),
     [podiumInfo, show.week, podiumDay]
   );
   const podiumPicksThisWeek = podiumOtherWeekPicks.length + (podiumAttend ? 1 : 0);
@@ -245,8 +250,16 @@ const ShowRegistrationModal = ({
       });
 
       if (podiumChanged) {
-        const days = podiumAttend ? [...podiumOtherWeekPicks, podiumDay] : podiumOtherWeekPicks;
-        updatePromises.push(setPodiumShows({ week: show.week, days }));
+        // Per-show picks: keep the week's other shows, add/remove THIS show.
+        const otherPicks = podiumOtherWeekPicks.map((p) => ({
+          day: p.day,
+          eventName: p.eventName,
+          location: p.location,
+        }));
+        const shows = podiumAttend
+          ? [...otherPicks, { day: podiumDay, eventName: show.eventName, location: show.location }]
+          : otherPicks;
+        updatePromises.push(setPodiumShows({ week: show.week, shows }));
       }
 
       // Wait for all updates to complete
