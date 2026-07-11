@@ -20,20 +20,25 @@ const MAJOR_ROUTE_LABELS = {
 };
 
 /**
- * Upcoming route preview: the chain of travel legs through the corps' next
- * show days (auto + selected), each with tier, miles, coin cost (majors
- * subsidized), heat surcharge, and — for the majors and Championship Week
- * in Indianapolis — the division-correct event label (an A Class corps sees
- * A Class Prelims/Finals, a World corps sees Prelims/Semis/Finals). Shown
- * in the tour picker BEFORE selections are confirmed (design §5.3
- * open-information routing).
+ * Upcoming route: the single tour view (design §5.3). One ordered chain of
+ * travel legs through the corps' next show days — the self-picked shows the
+ * director has added to the schedule PLUS the auto-attended majors and
+ * Championship Week — each carrying the show name, tier, miles, coin cost
+ * (majors subsidized), heat surcharge, and (for the majors and Championship
+ * Week in Indianapolis) the division-correct event label (an A Class corps
+ * sees A Class Prelims/Finals, a World corps sees Prelims/Semis/Finals).
+ *
+ * Each self-pick routes through its OWN chosen venue, so shows added to the
+ * schedule are routed between each other leg-to-leg: the cursor advances to
+ * each show's location before pricing the next hop. Shown BEFORE selections
+ * are confirmed (open-information routing).
  */
 async function buildRoutePreview(db, seasonData, state, uid, competitionDay, easternAssignments) {
   const division = divisions.normalizeDivision(state.division);
   const upcoming = [
     ...new Set([
       ...store.autoDaysFor(uid, seasonData.seasonUid, { division, easternAssignments }),
-      ...(state.selectedShowDays || []),
+      ...store.selectedDaysOf(state),
     ]),
   ]
     .filter((day) => day > Math.max(0, competitionDay) && day <= 49)
@@ -58,11 +63,17 @@ async function buildRoutePreview(db, seasonData, state, uid, competitionDay, eas
   const legs = [];
   let cursor = state.lastVenue || venues.venueFor(state.location) || null;
   for (const day of upcoming) {
-    const venue = venues.MAJOR_VENUES[day] || (locations[day] ? venues.venueFor(locations[day]) : null);
-    const leg = venues.travelLeg(cursor, venue, store.balance);
     const isMajor = Boolean(venues.MAJOR_VENUES[day]);
+    // Route to the CHOSEN show's location on a self-pick day so consecutive
+    // picks chain leg-to-leg through their actual venues; majors have fixed
+    // venues; legacy picks (no stored location) fall back to the day's schedule.
+    const pick = isMajor ? null : store.showPickFor(state, day);
+    const pickLocation = pick?.location || locations[day];
+    const venue = venues.MAJOR_VENUES[day] || (pickLocation ? venues.venueFor(pickLocation) : null);
+    const leg = venues.travelLeg(cursor, venue, store.balance);
     legs.push({
       day,
+      eventName: pick?.eventName || null,
       city: venue ? `${venue.city}, ${venue.region}` : "TBA",
       label: championshipLabels[day] || MAJOR_ROUTE_LABELS[day] || null,
       tier: leg ? leg.tier : null,

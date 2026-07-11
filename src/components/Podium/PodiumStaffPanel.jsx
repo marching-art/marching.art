@@ -10,7 +10,7 @@
 // hireable, so supply scales with the playerbase.
 
 import React, { useEffect, useState } from 'react';
-import { Users, Loader2, UserMinus, GraduationCap } from 'lucide-react';
+import { Users, Loader2, UserMinus, GraduationCap, ChevronUp, ChevronDown } from 'lucide-react';
 import {
   getPodiumStaffMarket,
   hirePodiumStaff,
@@ -306,12 +306,11 @@ export default function PodiumStaffPanel({ podium }) {
                       );
                     })}
                   </div>
+                ) : catalog ? (
+                  <span className="text-[9px] text-gray-700">No candidates listed.</span>
                 ) : (
-                  catalog && <span className="text-[9px] text-gray-700">No candidates listed.</span>
-                )
-              ) : (
-                <span className="text-[9px] text-gray-700">Open seat — expand to hire.</span>
-              )}
+                  <span className="text-[9px] text-gray-700">Open seat — expand to hire.</span>
+                )}
             </div>
           );
         })}

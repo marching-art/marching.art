@@ -3,6 +3,7 @@
 // with travel tiers + heat, and the Family Day diagnostic when present.
 
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Bus,
   UtensilsCrossed,
@@ -15,6 +16,8 @@ import {
   ChevronDown,
   X,
   Moon,
+  CalendarDays,
+  ChevronRight,
 } from 'lucide-react';
 import { BLOCKS } from './podiumConstants';
 
@@ -362,12 +365,28 @@ export default function CorpsConditionPanel({ podium }) {
         )}
       </div>
 
-      {/* Route preview — aligned itinerary table */}
-      {routePreview.length > 0 && (
-        <div>
-          <SectionLabel icon={Bus} className="mb-1.5">
-            Upcoming route
-          </SectionLabel>
+      {/* Upcoming route — the merged tour view: the shows the corps has added
+          to the schedule (self-picks + auto-attended majors) as one ordered
+          itinerary, each leg routed from the previous show's venue. */}
+      <div>
+        <div className="flex items-center justify-between mb-1.5">
+          <SectionLabel icon={Bus}>Upcoming route</SectionLabel>
+          <Link
+            to="/schedule"
+            className="flex items-center gap-1 text-[10px] font-bold uppercase text-[#4d9fff] hover:text-white press-feedback"
+          >
+            <CalendarDays className="w-3 h-3" />
+            Add shows
+            <ChevronRight className="w-3 h-3" />
+          </Link>
+        </div>
+
+        {routePreview.length === 0 ? (
+          <p className="text-[11px] text-gray-500">
+            No upcoming shows. Open the <span className="text-[#4d9fff]">Schedule</span> page, pick a
+            show, and add your Podium corps — each show you add is routed onto the tour below.
+          </p>
+        ) : (
           <div className="rounded-sm border border-[#333] overflow-hidden">
             <div
               className={`${ROUTE_COLS} px-3 py-1 bg-[#161616] text-[8px] uppercase tracking-wider text-gray-600`}
@@ -382,40 +401,51 @@ export default function CorpsConditionPanel({ podium }) {
                 Stam
               </span>
             </div>
-            {routePreview.map((leg) => (
-              <div
-                key={leg.day}
-                className={`${ROUTE_COLS} px-3 py-1 border-t border-[#242424] text-[10px] tabular-nums`}
-              >
-                <span className="text-gray-500">D{leg.day}</span>
-                <span
-                  className={`truncate ${leg.isMajor ? 'text-[#c9a227] font-bold' : 'text-gray-300'}`}
-                  title={leg.label ? `${leg.label} — ${leg.city}` : leg.city}
+            {routePreview.map((leg) => {
+              // Name the stop: majors show their branded event label, self-picks
+              // show the show the director registered for, all with the venue city.
+              const name = leg.label || leg.eventName;
+              return (
+                <div
+                  key={leg.day}
+                  className={`${ROUTE_COLS} px-3 py-1 border-t border-[#242424] text-[10px] tabular-nums`}
                 >
-                  {leg.label ? `${leg.label} · ${leg.city}` : leg.city}
-                </span>
-                <span className="text-right text-gray-500">
-                  {leg.miles != null && leg.miles > 0
-                    ? `${TIER_LABELS[leg.tier] || leg.tier} · ${leg.miles} mi`
-                    : ''}
-                </span>
-                <span className="text-right text-orange-400">
-                  {leg.heat > 0 ? (
-                    <span className="inline-flex items-center gap-0.5">
-                      <Sun className="w-3 h-3" /> {leg.heat}
-                    </span>
-                  ) : (
-                    ''
-                  )}
-                </span>
-                <span className="text-right text-red-400/80">
-                  {leg.staminaCost > 0 ? `−${leg.staminaCost}` : ''}
-                </span>
-              </div>
-            ))}
+                  <span className="text-gray-500">D{leg.day}</span>
+                  <span
+                    className={`truncate ${leg.isMajor ? 'text-[#c9a227] font-bold' : 'text-gray-300'}`}
+                    title={name ? `${name} — ${leg.city}` : leg.city}
+                  >
+                    {name ? `${name} · ${leg.city}` : leg.city}
+                  </span>
+                  <span className="text-right text-gray-500">
+                    {leg.miles != null && leg.miles > 0
+                      ? `${TIER_LABELS[leg.tier] || leg.tier} · ${leg.miles} mi`
+                      : ''}
+                  </span>
+                  <span className="text-right text-orange-400">
+                    {leg.heat > 0 ? (
+                      <span className="inline-flex items-center gap-0.5">
+                        <Sun className="w-3 h-3" /> {leg.heat}
+                      </span>
+                    ) : (
+                      ''
+                    )}
+                  </span>
+                  <span className="text-right text-red-400/80">
+                    {leg.staminaCost > 0 ? `−${leg.staminaCost}` : ''}
+                  </span>
+                </div>
+              );
+            })}
           </div>
-        </div>
-      )}
+        )}
+
+        <p className="mt-1.5 text-[9px] text-gray-600 leading-relaxed">
+          <span className="text-[#c9a227] font-bold">Gold</span> stops — majors &amp; championship
+          week — are attended automatically. Every other stop is a show you added on the Schedule
+          page.
+        </p>
+      </div>
 
       {/* Family Day diagnostic */}
       {state.familyDay && (
