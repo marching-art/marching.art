@@ -57,7 +57,8 @@ exports.autoPublishScheduledSubmissions = onSchedule(
           submission,
           submissionId: doc.id,
           approvedBy: "system_auto_publish",
-          imageOption: "generate",
+          // Honor the author's image preference; default to generating one.
+          imageOption: submission.imageOption || "generate",
           autoPublished: true,
         });
         published++;

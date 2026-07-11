@@ -53,7 +53,7 @@ exports.submitNewsForApproval = onCall(
     assertAuth(request);
 
     const db = getDb();
-    const { headline, summary, fullStory, category, imageUrl } = request.data || {};
+    const { headline, summary, fullStory, category, imageUrl, imageOption } = request.data || {};
 
     // Validate required fields
     if (!headline || typeof headline !== "string" || headline.trim().length < 10) {
@@ -73,13 +73,23 @@ exports.submitNewsForApproval = onCall(
       throw new HttpsError("invalid-argument", "Invalid category");
     }
 
-    // Validate image URL if provided
-    if (imageUrl && typeof imageUrl === "string") {
+    // The author's image preference, respected on publish. Defaults to
+    // generating an image; "submitted" requires a URL, "none" carries no image.
+    const validImageOptions = ["generate", "submitted", "none"];
+    const authorImageOption = validImageOptions.includes(imageOption) ? imageOption : "generate";
+
+    // Only keep a URL when the author chose to supply their own image.
+    let submittedImageUrl = null;
+    if (authorImageOption === "submitted") {
+      if (!imageUrl || typeof imageUrl !== "string" || !imageUrl.trim()) {
+        throw new HttpsError("invalid-argument", "An image URL is required when supplying your own image");
+      }
       try {
         new URL(imageUrl);
       } catch {
         throw new HttpsError("invalid-argument", "Invalid image URL");
       }
+      submittedImageUrl = imageUrl.trim();
     }
 
     try {
@@ -97,7 +107,9 @@ exports.submitNewsForApproval = onCall(
         summary: summary.trim(),
         fullStory: fullStory.trim(),
         category,
-        imageUrl: imageUrl?.trim() || null,
+        imageUrl: submittedImageUrl,
+        // Author's image preference: "generate" | "submitted" | "none".
+        imageOption: authorImageOption,
         status: isTrustedAuthor ? "scheduled" : "pending", // pending | scheduled | approved | rejected
         authorUid: request.auth.uid,
         authorName: credit.authorName,
@@ -242,8 +254,9 @@ exports.approveSubmission = onCall(
         throw new HttpsError("failed-precondition", "This submission has already been approved");
       }
 
-      // Determine image handling based on imageOption or legacy generateImage flag.
-      // imageOption takes precedence if provided.
+      // Determine image handling. An explicit admin choice (imageOption) wins;
+      // otherwise fall back to the author's stored preference so a "no image" or
+      // "use my URL" flag is never silently overridden with an AI image.
       let effectiveOption = imageOption;
       if (!effectiveOption) {
         if (generateImage === true) {
@@ -251,7 +264,7 @@ exports.approveSubmission = onCall(
         } else if (generateImage === false) {
           effectiveOption = "none";
         } else {
-          effectiveOption = submission.imageUrl ? "submitted" : "generate";
+          effectiveOption = submission.imageOption || (submission.imageUrl ? "submitted" : "generate");
         }
       }
 

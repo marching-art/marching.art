@@ -75,12 +75,16 @@ const SubmissionsManagement = () => {
     toast.success('Submissions refreshed');
   };
 
-  const handleApprove = async (submission, imageOption = 'generate') => {
+  const handleApprove = async (submission, imageOption) => {
     setProcessingId(submission.id);
     try {
+      // Fall back to the author's stored image preference so a quick approve
+      // never overrides a "no image" or submitted-URL choice.
+      const effectiveOption =
+        imageOption || submission.imageOption || (submission.imageUrl ? 'submitted' : 'generate');
       const result = await approveSubmission({
         submissionId: submission.id,
-        imageOption,
+        imageOption: effectiveOption,
       });
       if (result.data.success) {
         toast.success('Article approved and published!');
@@ -299,9 +303,11 @@ const SubmissionRow = ({
 const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, formatDate }) => {
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectForm, setShowRejectForm] = useState(false);
-  // Default to generating a Fantasy Daily-style image on acceptance; the admin
-  // can still opt to keep a submitted image or publish with none.
-  const [imageOption, setImageOption] = useState('generate');
+  // Default to the author's stated image preference (respecting a "no image" or
+  // submitted-URL choice); the admin can still override before publishing.
+  const [imageOption, setImageOption] = useState(
+    submission.imageOption || (submission.imageUrl ? 'submitted' : 'generate')
+  );
 
   useEscapeKey(onClose);
 
