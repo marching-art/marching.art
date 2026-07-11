@@ -23,8 +23,10 @@ export default function PodiumShowPicker({ podium }) {
   const weekDays = (week) => Array.from({ length: 7 }, (_, i) => (week - 1) * 7 + i + 1);
 
   const beginEdit = (week) => {
+    // >= competitionDay: the current day's show is still selectable (it locks at
+    // the next 2 AM ET score run), matching the schedule modal and server.
     const days = new Set(
-      [...selectedDays].filter((d) => Math.ceil(d / 7) === week && d > competitionDay)
+      [...selectedDays].filter((d) => Math.ceil(d / 7) === week && d >= competitionDay)
     );
     setDraft({ week, days });
     setError(null);
@@ -74,7 +76,7 @@ export default function PodiumShowPicker({ podium }) {
           const pickedInWeek = editing
             ? draft.days.size
             : [...selectedDays].filter((d) => Math.ceil(d / 7) === week).length;
-          const weekPast = days[6] <= competitionDay;
+          const weekPast = days[6] < competitionDay;
 
           return (
             <div key={week} className="flex items-center gap-2">
@@ -98,7 +100,7 @@ export default function PodiumShowPicker({ podium }) {
               <div className="flex gap-1 flex-1">
                 {days.map((day) => {
                   const isAuto = autoDays.includes(day) || EASTERN_DAYS.includes(day);
-                  const isPast = day <= competitionDay;
+                  const isPast = day < competitionDay;
                   const isPicked = editing ? draft.days.has(day) : selectedDays.has(day);
                   const isMyEastern = autoDays.includes(day) && EASTERN_DAYS.includes(day);
                   return (

@@ -222,20 +222,25 @@ const ShowRegistrationModal = ({
   const podiumIsMyAutoDay = Boolean(podiumInfo?.autoDays?.includes(podiumDay));
   const podiumIsEasternOffNight =
     PODIUM_EASTERN_DAYS.includes(podiumDay) && podiumInfo && !podiumIsMyAutoDay;
-  const podiumIsPast = podiumInfo ? podiumDay <= podiumInfo.competitionDay : false;
+  // A day is "passed" only once it is strictly before the current competition
+  // day — the show's own competition day is still open (it locks at the 2 AM ET
+  // score processing the next day, exactly when competitionDay ticks forward),
+  // matching the fantasy registration deadline. Using <= locked Podium out a
+  // full day early, so a show fantasy corps could still register for read as
+  // "This day has passed" for the Podium corps.
+  const podiumIsPast = podiumInfo ? podiumDay < podiumInfo.competitionDay : false;
   const podiumMaxPicks = podiumMaxPicksForWeek(show.week);
-  // Only FUTURE picks count and are re-submitted: setPodiumShows replaces the
-  // whole week, and the server rejects any already-passed day. Mirror
-  // PodiumShowPicker's `d > competitionDay` guard — without it, saving a new
-  // pick resends passed days and the entire registration fails with
-  // "Day N has already passed."
+  // Only still-open picks are re-submitted: setPodiumShows replaces the whole
+  // week and the server rejects any strictly-past day. Keep this in sync with
+  // the podiumIsPast boundary above — without it, saving a new pick resends a
+  // passed day and the entire registration fails with "Day N has already passed."
   const podiumOtherWeekPicks = useMemo(
     () =>
       (podiumInfo?.selectedShowDays || []).filter(
         (d) =>
           Math.ceil(d / 7) === show.week &&
           d !== podiumDay &&
-          d > (podiumInfo?.competitionDay ?? 0)
+          d >= (podiumInfo?.competitionDay ?? 0)
       ),
     [podiumInfo, show.week, podiumDay]
   );
