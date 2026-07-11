@@ -11,6 +11,7 @@ const {
   scrapeUpcomingDciEvents,
   shuffleArray,
   brandEventName,
+  regionalTierForEventName,
 } = require("./seasonSchedule");
 
 async function generateLiveSeasonSchedule(seasonLength, startDay, finalsYear, startDate, _finalsDate) {
@@ -64,6 +65,11 @@ async function generateLiveSeasonSchedule(seasonLength, startDay, finalsYear, st
               date: event.date,
               isChampionship: false,
             };
+            // Tag the branded majors so live seasons mark them like the
+            // off-season generator does — the anchor Podium corps auto-attend
+            // and the only show that carries the "major" treatment on its day.
+            const eventTier = regionalTierForEventName(event.eventName);
+            if (eventTier) show.eventTier = eventTier;
             applyEnrichment(show, event);
             dayEntry.shows.push(show);
             logger.info(`Mapped "${event.eventName}" to day ${dayNumber}`);
