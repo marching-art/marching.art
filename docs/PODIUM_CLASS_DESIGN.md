@@ -542,13 +542,14 @@ replaces ownership with **employment** — and an employment market never maxes 
   - **Population-adaptive:** division count follows active Podium population (1 division below
     ~24 corps, 2 below ~48, 3 beyond; never a division under 8). This is the direct fix for
     FMA's hollow Division III — thin divisions merge upward instead of limping.
-  - **What divisions change:** rankings/leaderboards, championship-week brackets. The finals-week
-    schedule and advancement match the fantasy classes exactly (scored the Podium way): A Class
-    and Open Class run Prelims (day 45) → Class Finals (day 46, top corps advance — top 4 A, top 8
-    Open); World Class runs Prelims (47) → Semifinals (48, top 25) → Finals (49, top 12).
-    Podium A goes to A Class events, Open to Open events, World to World events — each division
-    runs its own self-contained bracket. Divisions also set performance order and division blocks
-    at the three
+  - **What divisions change:** rankings/leaderboards, championship-week brackets. Championship
+    Week runs the fantasy classes' finals-week bracket EXACTLY, in parallel — the same schedule,
+    the same advancement cuts, scored on the Podium system with its own results board (two
+    identical tournaments side by side): Open & A Class Prelims (day 45) → Open & A Class Finals
+    (day 46, top 8 Open + top 4 A) → World Championship Prelims (day 47, the whole field) →
+    Semifinals (48, top 25 overall) → Finals (49, top 12 overall). Divisions decide the day-45/46
+    Open/A track (World corps open at day-47 Prelims like real World Class), then the World rounds
+    cut the combined field. Divisions also set performance order and division blocks at the three
     regional anchors, show participation CorpsCoin (tiered by division, matching the existing
     class-reward pattern), and per-division caption awards.
   - **What divisions never change:** the scoring engine, the historical envelope, challenge-level
@@ -1432,11 +1433,11 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     One missed season holds the seat; two or more re-enter at A Class. Each division crowns its
     own Finals hardware; the Hall of Champions shows the top active division's podium. The
     Eastern Classic night snake is division-seeded from Day-38 standings (published Day 39;
-    uid-parity fallback until then). Championship Week is Indianapolis and follows the fantasy
-    classes' finals-week schedule and advancement (scored the Podium way): A/Open run Prelims
-    (day 45) → Class Finals (day 46, top 4 A / top 8 Open advance), World runs Prelims (47) →
-    Semis (48, top 25) → Finals (49, top 12). Week 7 also opens its two non-championship days
-    (43–44) to 2 self-picks. The commitment cap
+    uid-parity fallback until then). Championship Week is Indianapolis and runs the fantasy
+    classes' finals-week bracket EXACTLY, in parallel (scored the Podium way, own results board):
+    Open & A Prelims (day 45) → Open & A Finals (day 46, top 8 Open + top 4 A) → World Prelims
+    (47, the whole field) → Semis (48, top 25 overall) → Finals (49, top 12 overall). Week 7 also
+    opens its two non-championship days (43–44) to 2 self-picks. The commitment cap
     is division-equal for real now: 2,500 / 4,000 / 6,000 (see 32).
 27. **Hosting venue ladder replaces show sponsorship** (supersedes the shop's sponsorship
     purchase; resolves old open item 3): directors don't brand someone else's show — they RUN

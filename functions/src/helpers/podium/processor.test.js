@@ -30,13 +30,24 @@ describe("resolveCorpsShow", () => {
     });
   });
 
-  test("championship days resolve to the division-correct event", () => {
-    // Fantasy-aligned finals week: A/Open Prelims day 45, Finals day 46;
-    // World Prelims/Semifinals/Finals days 47/48/49.
-    assert.equal(resolveCorpsShow({}, 45, "aClass", dayShows).eventName, "A Class Prelims");
-    assert.equal(resolveCorpsShow({}, 46, "openClass", dayShows).eventName, "Open Class Finals");
-    assert.equal(resolveCorpsShow({}, 47, "worldClass", dayShows).eventName, "World Class Prelims");
-    assert.equal(resolveCorpsShow({}, 49, "worldClass", dayShows).eventName, "World Class Finals");
+  test("championship days resolve to the shared fantasy-bracket event", () => {
+    // One event per championship day, shared across divisions (the parallel
+    // fantasy bracket): Open/A Prelims (45), Open/A Finals (46), then World
+    // Prelims/Semifinals/Finals (47/48/49) for everyone who advances.
+    assert.equal(resolveCorpsShow({}, 45, "aClass", dayShows).eventName, "Open and A Class Prelims");
+    assert.equal(resolveCorpsShow({}, 46, "openClass", dayShows).eventName, "Open and A Class Finals");
+    assert.equal(
+      resolveCorpsShow({}, 47, "aClass", dayShows).eventName,
+      "marching.art World Championship Prelims"
+    );
+    assert.equal(
+      resolveCorpsShow({}, 48, "openClass", dayShows).eventName,
+      "marching.art World Championship Semifinals"
+    );
+    assert.equal(
+      resolveCorpsShow({}, 49, "worldClass", dayShows).eventName,
+      "marching.art World Championship Finals"
+    );
   });
 
   test("majors resolve to their branded event name", () => {
@@ -75,24 +86,48 @@ describe("championship advancement (store.advancingUids)", () => {
     ],
   });
 
+  // The World rounds (days 48/49) draw from the day-47 Prelims where EVERY
+  // division marches — so the cut is over the whole combined field.
+  const combinedPrelims = (counts) => ({
+    shows: [
+      {
+        eventName: "marching.art World Championship Prelims",
+        results: Object.entries(counts).flatMap(([division, count]) =>
+          Array.from({ length: count }, (_, i) => ({
+            uid: `${division}-${i}`,
+            division,
+            // interleave divisions so the top of the combined field is mixed
+            totalScore: 90 - i - { worldClass: 0, openClass: 0.3, aClass: 0.6 }[division],
+          }))
+        ),
+      },
+    ],
+  });
+
   test("non-advancement days apply no gating (null)", () => {
     assert.equal(store.advancingUids(recap("worldClass", 30), 47, cfg), null);
     assert.equal(store.advancingUids(recap("worldClass", 30), 44, cfg), null);
   });
 
-  test("World semifinals advance the top 25 from prelims", () => {
-    const set = store.advancingUids(recap("worldClass", 30), 48, cfg);
-    assert.equal(set.size, 25);
-    assert.ok(set.has("worldClass-0")); // 1st
-    assert.ok(set.has("worldClass-24")); // 25th
-    assert.ok(!set.has("worldClass-25")); // 26th cut
+  test("World semifinals advance the top 25 of the whole combined field", () => {
+    const set = store.advancingUids(
+      combinedPrelims({ worldClass: 15, openClass: 15, aClass: 15 }),
+      48,
+      cfg
+    );
+    assert.equal(set.size, 25); // top 25 across all three divisions
+    assert.ok(set.has("worldClass-0")); // overall leader
+    assert.ok(!set.has("aClass-14")); // tail of the field is cut
   });
 
-  test("World finals advance the top 12 from semifinals", () => {
-    const set = store.advancingUids(recap("worldClass", 20), 49, cfg);
+  test("World finals advance the top 12 of the whole combined field", () => {
+    const set = store.advancingUids(
+      combinedPrelims({ worldClass: 10, openClass: 8, aClass: 6 }),
+      49,
+      cfg
+    );
     assert.equal(set.size, 12);
-    assert.ok(set.has("worldClass-11"));
-    assert.ok(!set.has("worldClass-12"));
+    assert.ok(set.has("worldClass-0"));
   });
 
   test("day 46 finals advance top 4 A and top 8 Open from their prelims", () => {

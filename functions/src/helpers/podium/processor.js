@@ -62,7 +62,7 @@ function resolveCorpsShow(state, competitionDay, division, dayShows) {
   if (pick && pick.eventName) {
     return { eventName: pick.eventName, location: pick.location || firstLocation };
   }
-  const champ = (store.CHAMPIONSHIP_LABELS_BY_DIVISION[division] || {})[competitionDay];
+  const champ = store.championshipEventFor(competitionDay);
   if (champ) return { eventName: champ, location: firstLocation };
   if (MAJOR_EVENT_LABELS[competitionDay]) {
     return { eventName: MAJOR_EVENT_LABELS[competitionDay], location: firstLocation };

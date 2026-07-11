@@ -25,8 +25,9 @@ const MAJOR_ROUTE_LABELS = {
  * director has added to the schedule PLUS the auto-attended majors and
  * Championship Week — each carrying the show name, tier, miles, coin cost
  * (majors subsidized), heat surcharge, and (for the majors and Championship
- * Week in Indianapolis) the division-correct event label (an A Class corps
- * sees A Class Prelims/Finals, a World corps sees Prelims/Semis/Finals).
+ * Week in Indianapolis) the event label. Championship Week mirrors the fantasy
+ * bracket: Open/A corps see Open & A Prelims/Finals then the World rounds; a
+ * World corps sees the World Prelims/Semis/Finals.
  *
  * Each self-pick routes through its OWN chosen venue, so shows added to the
  * schedule are routed between each other leg-to-leg: the cursor advances to
@@ -59,7 +60,6 @@ async function buildRoutePreview(db, seasonData, state, uid, competitionDay, eas
     }
   }
 
-  const championshipLabels = store.CHAMPIONSHIP_LABELS_BY_DIVISION[division];
   const legs = [];
   let cursor = state.lastVenue || venues.venueFor(state.location) || null;
   for (const day of upcoming) {
@@ -75,7 +75,7 @@ async function buildRoutePreview(db, seasonData, state, uid, competitionDay, eas
       day,
       eventName: pick?.eventName || null,
       city: venue ? `${venue.city}, ${venue.region}` : "TBA",
-      label: championshipLabels[day] || MAJOR_ROUTE_LABELS[day] || null,
+      label: store.championshipEventFor(day) || MAJOR_ROUTE_LABELS[day] || null,
       tier: leg ? leg.tier : null,
       miles: leg ? leg.miles : null,
       coinCost: leg && !isMajor ? leg.coinCost : 0,

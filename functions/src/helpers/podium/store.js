@@ -131,64 +131,81 @@ const MAJOR_DAYS = Object.freeze([28, 35, 41, 42]);
 const EASTERN_DAYS = Object.freeze([41, 42]);
 const EASTERN_PUBLISH_DAY = 39;
 
-// Championship week in Indianapolis (§5.7 divisions) mirrors the fantasy
-// classes' finals-week schedule (scoringAwards.buildChampionshipConfig): A and
-// Open run Prelims -> Class Finals on days 45-46; World runs Prelims ->
-// Semifinals -> Finals across days 47-49. Podium A goes to A Class events,
-// Open to Open events, World to World events — each division runs its own
-// self-contained bracket, scored by the Podium engine. Days 46/48/49 are
-// ADVANCEMENT days (see CHAMPIONSHIP_ADVANCEMENT): only the top N of the prior
-// round compete.
+// Championship week in Indianapolis runs the EXACT fantasy finals-week bracket
+// (scoringAwards.buildChampionshipConfig) in parallel — the same schedule and
+// the same advancement, scored on the Podium system with its own results board
+// (podium-recaps, never cross-ranked with fantasy). Two identical tournaments
+// side by side:
+//   Day 45  Open and A Class Prelims        — all Open + A corps
+//   Day 46  Open and A Class Finals         — top 8 Open + top 4 A from day 45
+//   Day 47  World Championship Prelims      — EVERYONE (World + Open + A)
+//   Day 48  World Championship Semifinals   — top 25 overall from day 47
+//   Day 49  World Championship Finals       — top 12 overall from day 48
+// Days 46/48/49 are ADVANCEMENT days (see CHAMPIONSHIP_ADVANCEMENT): only the
+// cut survivors compete. Every division reaches the World rounds — A/Open corps
+// eliminated at day 46 still march day-47 Prelims, exactly like the fantasy
+// classes.
 const CHAMPIONSHIP_AUTO_DAYS = Object.freeze([47, 48, 49]);
 const CHAMPIONSHIP_WEEK_DAYS = Object.freeze([45, 46, 47, 48, 49]);
 const CHAMPIONSHIP_DAYS_BY_DIVISION = Object.freeze({
-  aClass: Object.freeze([45, 46]),
-  openClass: Object.freeze([45, 46]),
+  aClass: Object.freeze([45, 46, 47, 48, 49]),
+  openClass: Object.freeze([45, 46, 47, 48, 49]),
   worldClass: CHAMPIONSHIP_AUTO_DAYS,
 });
-const CHAMPIONSHIP_LABELS_BY_DIVISION = Object.freeze({
-  aClass: Object.freeze({ 45: "A Class Prelims", 46: "A Class Finals" }),
-  openClass: Object.freeze({ 45: "Open Class Prelims", 46: "Open Class Finals" }),
-  worldClass: Object.freeze({
-    47: "World Class Prelims",
-    48: "World Class Semifinals",
-    49: "World Class Finals",
-  }),
+// One event per championship day, shared across every division that competes
+// that day (mirrors the fantasy event names so the two boards read identically).
+const CHAMPIONSHIP_EVENT_BY_DAY = Object.freeze({
+  45: "Open and A Class Prelims",
+  46: "Open and A Class Finals",
+  47: "marching.art World Championship Prelims",
+  48: "marching.art World Championship Semifinals",
+  49: "marching.art World Championship Finals",
 });
 
-// The advancement bracket: on each cut day, only the top N (per division) of
-// the prior round's Podium recap compete — the fantasy cut sizes, tie-inclusive
-// at the cut line. `advanceKey` indexes balance.championship.advancement.
+// The advancement bracket, cut-for-cut identical to fantasy: day 46 cuts each
+// class separately (top 8 Open, top 4 A); days 48/49 cut the whole combined
+// field (top 25, then top 12). Tie-inclusive at the cut line. The keys index
+// balance.championship.advancement.
 const CHAMPIONSHIP_ADVANCEMENT = Object.freeze({
   46: Object.freeze({
     priorDay: 45,
-    cuts: Object.freeze([
+    perDivision: Object.freeze([
       Object.freeze({ division: "aClass", advanceKey: "aClassFinals" }),
       Object.freeze({ division: "openClass", advanceKey: "openClassFinals" }),
     ]),
   }),
-  48: Object.freeze({
-    priorDay: 47,
-    cuts: Object.freeze([Object.freeze({ division: "worldClass", advanceKey: "worldSemifinals" })]),
-  }),
-  49: Object.freeze({
-    priorDay: 48,
-    cuts: Object.freeze([Object.freeze({ division: "worldClass", advanceKey: "worldFinals" })]),
-  }),
+  48: Object.freeze({ priorDay: 47, overallKey: "worldSemifinals" }),
+  49: Object.freeze({ priorDay: 48, overallKey: "worldFinals" }),
 });
 
-/** Championship-week show days for a corps' division. */
+/** Championship-week show days a corps' division is auto-enrolled into. */
 function championshipDaysFor(division) {
   return CHAMPIONSHIP_DAYS_BY_DIVISION[divisions.normalizeDivision(division)];
 }
 
+/** The Podium championship event name for a championship day (or undefined). */
+function championshipEventFor(competitionDay) {
+  return CHAMPIONSHIP_EVENT_BY_DAY[competitionDay];
+}
+
+/** Top N of `results` by total, tie-inclusive at the cut line, into `set`. */
+function addTopN(results, n, set) {
+  if (!(n > 0) || results.length === 0) return;
+  const ranked = [...results].sort((a, b) => b.totalScore - a.totalScore);
+  const cutoff = ranked[Math.min(n, ranked.length) - 1].totalScore;
+  for (const r of ranked) {
+    if (r.totalScore >= cutoff) set.add(r.uid);
+  }
+}
+
 /**
  * The set of uids that advanced INTO `competitionDay`'s championship round,
- * from the prior round's Podium recap: top N per division by total, tie-
- * inclusive at the cut line (the fantasy rule). Returns null when the day is
- * not an advancement day, or the prior recap has no usable results — the
- * safeguard mirrors fantasy's "no prior results -> auto-enroll the whole
- * field" (no gating; the full division competes).
+ * from the prior round's Podium recap. Day 46 cuts each division separately
+ * (top 8 Open, top 4 A); days 48/49 cut the whole combined field (top 25, then
+ * top 12) — the fantasy rule, tie-inclusive at the cut line. Returns null when
+ * the day is not an advancement day, or the prior recap has no usable results
+ * (the fantasy "no prior results -> auto-enroll the whole field" safeguard: no
+ * gating).
  */
 function advancingUids(priorRecap, competitionDay, cfg) {
   const spec = CHAMPIONSHIP_ADVANCEMENT[competitionDay];
@@ -198,16 +215,16 @@ function advancingUids(priorRecap, competitionDay, cfg) {
   if (allResults.length === 0) return null;
   const sizes = (cfg && cfg.championship && cfg.championship.advancement) || {};
   const advancing = new Set();
-  for (const cut of spec.cuts) {
-    const ranked = allResults
-      .filter((r) => divisions.normalizeDivision(r.division) === cut.division)
-      .sort((a, b) => b.totalScore - a.totalScore);
-    const n = sizes[cut.advanceKey] || 0;
-    if (ranked.length === 0 || n <= 0) continue;
-    const cutoff = ranked[Math.min(n, ranked.length) - 1].totalScore;
-    for (const r of ranked) {
-      if (r.totalScore >= cutoff) advancing.add(r.uid);
-    }
+  if (spec.overallKey) {
+    // World Semifinals / Finals: cut the whole combined field.
+    addTopN(allResults, sizes[spec.overallKey] || 0, advancing);
+  }
+  for (const cut of spec.perDivision || []) {
+    // Open/A Finals: each class cuts on its own prelims standing.
+    const classResults = allResults.filter(
+      (r) => divisions.normalizeDivision(r.division) === cut.division
+    );
+    addTopN(classResults, sizes[cut.advanceKey] || 0, advancing);
   }
   return advancing;
 }
@@ -403,9 +420,10 @@ module.exports = {
   CHAMPIONSHIP_AUTO_DAYS,
   CHAMPIONSHIP_WEEK_DAYS,
   CHAMPIONSHIP_DAYS_BY_DIVISION,
-  CHAMPIONSHIP_LABELS_BY_DIVISION,
+  CHAMPIONSHIP_EVENT_BY_DAY,
   CHAMPIONSHIP_ADVANCEMENT,
   championshipDaysFor,
+  championshipEventFor,
   advancingUids,
   maxPicksForWeek,
   easternNightFor,
