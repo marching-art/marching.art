@@ -211,12 +211,11 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
           // An accepted joint rehearsal boosts Full Ensemble even on an
           // assistant-run day — the handshake happened, the partner showed
           // up (§5.12; only ACCEPTING is human-gated).
-          const jointMult =
-            blockType === "fullEnsemble" &&
-            state.jointRehearsal &&
-            state.jointRehearsal.day === competitionDay
-              ? state.jointRehearsal.bonusMult || 1
-              : 1;
+          const jointToday_ =
+            blockType === "fullEnsemble"
+              ? joint.pendingJoints(state).find((j) => j.day === competitionDay)
+              : null;
+          const jointMult = jointToday_ ? jointToday_.bonusMult || 1 : 1;
           engine.allocateBlock(
             state,
             blockType,
@@ -349,15 +348,14 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
       // (debit-or-surcharge, free floor), and the pair registered for the
       // post-loop scrimmage pass. Stale entries (partner vanished, missed
       // day) are cleared quietly.
-      if (state.jointRehearsal && state.jointRehearsal.day === competitionDay) {
+      const todayJoint = joint.pendingJoints(state).find((j) => j.day === competitionDay);
+      if (todayJoint) {
         state.condition.morale = Math.min(
           store.balance.condition.moraleMax,
           (state.condition.morale || 0) + store.balance.joint.moraleBonus
         );
-        if (state.jointRehearsal.travelTier) {
-          const tierCfg = store.balance.travel.tiers.find(
-            (t) => t.key === state.jointRehearsal.travelTier
-          );
+        if (todayJoint.travelTier) {
+          const tierCfg = store.balance.travel.tiers.find((t) => t.key === todayJoint.travelTier);
           if (tierCfg && tierCfg.coinCost > 0) {
             const paid = store.debitBudget(state, tierCfg.coinCost, "jointTravel", competitionDay);
             if (!paid) {
@@ -370,14 +368,16 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         }
         jointToday.push({
           uid,
-          partnerUid: state.jointRehearsal.partnerUid,
+          partnerUid: todayJoint.partnerUid,
           corpsName: state.corpsName,
-          partnerCorpsName: state.jointRehearsal.partnerCorpsName,
-          city: state.jointRehearsal.city || null,
+          partnerCorpsName: todayJoint.partnerCorpsName,
+          city: todayJoint.city || null,
         });
-      } else if (state.jointRehearsal && state.jointRehearsal.day < competitionDay) {
-        delete state.jointRehearsal;
       }
+      // Normalize onto the array and drop stale past joints (the scrimmage pass
+      // clears today's). Migrates off the legacy single slot in one write.
+      state.jointRehearsals = joint.pendingJoints(state).filter((j) => j.day >= competitionDay);
+      delete state.jointRehearsal;
 
       // Family Day (design §5.9): the last spring-training day ends with an
       // unscored exhibition — a private diagnostic recap, invisible to the
@@ -532,13 +532,16 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         }
         // Merge-write ONLY this pass's fields: a full-doc set here would
         // clobber any block the director allocated between the main loop's
-        // write and this pass (players do play at 2 AM). jointRehearsal is
-        // nulled rather than deleted — every consumer already treats null as
-        // absent, and merge semantics can't delete.
+        // write and this pass (players do play at 2 AM). Drop just today's
+        // joint from the pending list, leaving other weeks' joints intact.
+        const remainingJoints = joint
+          .pendingJoints(myState)
+          .filter((j) => j.day !== competitionDay);
         await store.stateRef(db, entry.uid).set(
           {
             ...(scrimmage ? { scrimmage } : {}),
             ...(headToHead ? { headToHead } : {}),
+            jointRehearsals: remainingJoints,
             jointRehearsal: null,
           },
           { merge: true }
