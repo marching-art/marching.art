@@ -145,7 +145,19 @@ function ShowTable({ show, day, sortBy, userCorpsName }) {
         )}
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-[11px] tabular-nums whitespace-nowrap">
+        {/* Fixed layout + shared colgroup so every show's caption columns line
+            up vertically regardless of corps-name length (names truncate). */}
+        <table className="w-full table-fixed text-[11px] tabular-nums whitespace-nowrap">
+          <colgroup>
+            <col style={{ width: '200px' }} />
+            {PODIUM_CAPTIONS.map((caption) => (
+              <col key={caption} style={{ width: '54px' }} />
+            ))}
+            <col style={{ width: '54px' }} />
+            <col style={{ width: '54px' }} />
+            <col style={{ width: '54px' }} />
+            <col style={{ width: '62px' }} />
+          </colgroup>
           <thead>
             <tr className="text-[9px] uppercase tracking-wider text-gray-500 border-b border-[#333]">
               <th className="text-left py-1.5 pr-2 sticky left-0 bg-[#1a1a1a]">Pl · Corps</th>
@@ -172,15 +184,19 @@ function ShowTable({ show, day, sortBy, userCorpsName }) {
                   className={`border-b border-[#242424] ${isMine ? 'bg-[#0057B8]/10' : ''}`}
                 >
                   <td className="py-1.5 pr-2 sticky left-0 bg-[#1a1a1a]">
-                    <span className="text-gray-500 mr-1.5">{row.place}.</span>
-                    <span className={`font-bold ${isMine ? 'text-[#4d9fff]' : 'text-white'}`}>
-                      {row.corpsName}
-                    </span>
-                    {showDivisionTag && (
-                      <span className="ml-1.5 text-[8px] font-bold uppercase text-gray-600">
-                        {(row.division || 'aClass').replace('Class', '')}
+                    <div className="flex items-baseline gap-1.5 min-w-0">
+                      <span className="text-gray-500 flex-shrink-0">{row.place}.</span>
+                      <span
+                        className={`font-bold truncate ${isMine ? 'text-[#4d9fff]' : 'text-white'}`}
+                      >
+                        {row.corpsName}
                       </span>
-                    )}
+                      {showDivisionTag && (
+                        <span className="text-[8px] font-bold uppercase text-gray-600 flex-shrink-0">
+                          {(row.division || 'aClass').replace('Class', '')}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   {PODIUM_CAPTIONS.map((caption) => {
                     const value = row.captions?.[caption];
