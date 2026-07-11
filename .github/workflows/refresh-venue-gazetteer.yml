@@ -1,0 +1,91 @@
+name: Refresh venue gazetteer
+
+# Keeps the Podium venue gazetteer current with the DCI show archive.
+#
+# WHY THIS IS CI AND NOT A CLOUD FUNCTION: the rebuild needs `all-the-cities`
+# (a ~28 MB dev-only GeoNames dataset that is not in the deployed functions
+# bundle), and the gazetteer is a COMMITTED repo file (`require`d at runtime and
+# shipped with each deploy) plus a client artifact under src/data/ — a running
+# function can neither geocode offline nor persist a rebuilt copy. So the refresh
+# belongs in CI, which reruns the three offline scripts and commits the result.
+#
+# CADENCE: annual, mid-September — after DCI World Championships, when the just-
+# finished season's final-scores pages (with their City, ST) are all published
+# on dci.org. Off-season resets never need this (their schedules sample
+# historical_scores, already fully geocoded); only a completed DCI year adds new
+# cities. Use the manual trigger for an ad-hoc top-up any time.
+#
+# NOTE: this pushes the refreshed files directly (the chosen hands-off mode). The
+# commit lands on the branch it runs on (the default branch for the schedule);
+# production picks it up on the next functions deploy. A brand-new city that
+# appears mid-live-season stays null-safe (no crash, no travel cost on that leg)
+# until the following refresh + deploy.
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: "0 8 15 9 *" # 08:00 UTC, September 15, annually
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-venue-gazetteer
+  cancel-in-progress: false
+
+jobs:
+  refresh-gazetteer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install function dependencies
+        run: cd functions && npm ci
+
+      - name: Install offline geocoder (dev-only, not committed)
+        run: cd functions && npm install --no-save all-the-cities
+
+      - name: Harvest DCI.org locations (2013-present)
+        run: cd functions && node src/scripts/harvestDciLocations.js
+
+      - name: Sanity-gate the harvest
+        # Guard against a flaky-network run silently regressing the committed
+        # data: bail before the rebuild if the harvest came back thin. Floors sit
+        # well below the normal ~274 locations / ~1120 events.
+        run: |
+          cd functions
+          node -e '
+            const d = require("./src/scripts/dciDotOrgLocations.json");
+            const { distinctLocations: loc, eventsWithLocation: ev } = d.meta;
+            console.log(`harvested ${loc} locations across ${ev} events`);
+            if (loc < 250 || ev < 1000) {
+              console.error(`Harvest too thin (loc=${loc}, ev=${ev}); refusing to rebuild.`);
+              process.exit(1);
+            }
+          '
+
+      - name: Rebuild venue gazetteer
+        run: cd functions && node src/scripts/buildVenueGazetteer.js
+
+      - name: Rebuild client hostable venues
+        run: cd functions && node src/scripts/buildClientVenues.js
+
+      - name: Commit and push if changed
+        run: |
+          FILES="functions/src/scripts/dciDotOrgLocations.json functions/src/helpers/podium/venueGazetteer.json src/data/hostableVenues.json"
+          if git diff --quiet -- $FILES; then
+            echo "No gazetteer changes — nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add $FILES
+          git commit -m "chore(podium): refresh venue gazetteer from dci.org archive [automated]"
+          git push origin HEAD:${{ github.ref_name }}
