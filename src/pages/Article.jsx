@@ -329,10 +329,10 @@ const Article = () => {
                         <span>{article.metadata.eventName}</span>
                       </>
                     )}
-                    {cleanLocation(article.metadata?.location) && (
+                    {cleanLocation(article.metadata?.location || article.authorLocation) && (
                       <>
                         <span className="text-gray-600">•</span>
-                        <span>{cleanLocation(article.metadata.location)}</span>
+                        <span>{cleanLocation(article.metadata?.location || article.authorLocation)}</span>
                       </>
                     )}
                   </div>
@@ -341,6 +341,26 @@ const Article = () => {
                   <h1 className="text-2xl md:text-3xl lg:text-4xl font-black text-white leading-tight mb-4">
                     {article.headline}
                   </h1>
+
+                  {/* Author byline — credits the submitting director; the username
+                      links to their profile, the same pattern used on the scores. */}
+                  {article.authorUid && (article.authorUsername || article.authorName) && (
+                    <div className="flex items-center gap-2 mb-4 text-sm text-gray-400">
+                      <span className="text-gray-500">By</span>
+                      <Link
+                        to={`/profile/${article.authorUid}`}
+                        className="font-bold text-[#4d9fff] hover:text-[#c9a227] transition-colors"
+                      >
+                        {article.authorUsername || article.authorName}
+                      </Link>
+                      {cleanLocation(article.authorLocation) && (
+                        <>
+                          <span className="text-gray-600">•</span>
+                          <span>{cleanLocation(article.authorLocation)}</span>
+                        </>
+                      )}
+                    </div>
+                  )}
 
                   {/* Summary */}
                   <p className="text-lg text-gray-400 leading-relaxed">{article.summary}</p>

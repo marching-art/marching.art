@@ -139,6 +139,11 @@ function HeroStory({ story, onClick, storyNumber, engagement }) {
               <BookOpen className="w-3 h-3" />
               {readingTime}
             </span>
+            {(story.authorUsername || story.authorName) && (
+              <span className="flex items-center gap-1 text-gray-400">
+                By {story.authorUsername || story.authorName}
+              </span>
+            )}
           </div>
         </div>
 
@@ -244,6 +249,9 @@ const TextStoryRow = memo(({ story, onClick, engagement }) => {
       <div className="flex items-center justify-between">
         <span className="text-[10px] text-gray-500 uppercase tracking-wide">
           {formatTimestamp(story.createdAt)}
+          {(story.authorUsername || story.authorName) && (
+            <span className="text-gray-400"> · By {story.authorUsername || story.authorName}</span>
+          )}
         </span>
         {engagement && (
           <EngagementSummary
