@@ -5,9 +5,85 @@
 // outside a shared floor. The assistant director never accepts for you.
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Handshake, Loader2, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
+import { Handshake, Loader2, ChevronDown, ChevronUp, MapPin, Flag } from 'lucide-react';
 import { getJointRehearsals, proposeJointRehearsal, respondJointRehearsal } from '../../api/podium';
 import { PODIUM_CAPTIONS, CAPTION_LABELS } from './podiumConstants';
+
+// A season runs 49 days — seven weeks of seven. Championship Week is Days
+// 45–49; the "one joint per week" rule maps cleanly onto these rows.
+const SEASON_DAYS = 49;
+const DAYS_PER_WEEK = 7;
+const CHAMPIONSHIP_START = 45;
+
+// Visual day picker — replaces guessing a day number. Selectable days are
+// tomorrow (competitionDay + 1) through the finals; past days dim out, show
+// days carry a gold marker, and each row is a tour week so the weekly cap
+// reads at a glance.
+function DayCalendar({ competitionDay, showDays, value, onChange }) {
+  const weeks = [];
+  for (let w = 0; w < SEASON_DAYS / DAYS_PER_WEEK; w += 1) {
+    weeks.push(Array.from({ length: DAYS_PER_WEEK }, (_, i) => w * DAYS_PER_WEEK + i + 1));
+  }
+  return (
+    <div className="space-y-1">
+      {weeks.map((days, i) => {
+        const isChampWeek = days[days.length - 1] >= CHAMPIONSHIP_START;
+        return (
+          <div key={i} className="flex items-center gap-2">
+            <span
+              className={`w-7 shrink-0 text-[8px] font-bold uppercase tracking-wider text-right ${
+                isChampWeek ? 'text-[#c9a227]' : 'text-gray-600'
+              }`}
+            >
+              {isChampWeek ? 'Wk7' : `Wk${i + 1}`}
+            </span>
+            <div className="grid grid-cols-7 gap-1 flex-1">
+              {days.map((day) => {
+                const past = day <= competitionDay;
+                const isToday = day === competitionDay;
+                const show = showDays.get(day);
+                const selected = value === day;
+                return (
+                  <button
+                    key={day}
+                    type="button"
+                    disabled={past}
+                    onClick={() => onChange(day)}
+                    title={show || (isToday ? 'Today' : undefined)}
+                    className={`relative flex items-center justify-center h-7 rounded-sm border text-[10px] tabular-nums transition-colors press-feedback ${
+                      selected
+                        ? 'border-[#0057B8] bg-[#0057B8] text-white font-bold'
+                        : past
+                          ? 'border-transparent text-gray-700 cursor-not-allowed'
+                          : isToday
+                            ? 'border-gray-500 text-gray-400'
+                            : show
+                              ? 'border-[#c9a227]/40 text-[#c9a227] hover:border-[#c9a227] hover:text-white'
+                              : 'border-[#333] text-gray-300 hover:border-[#0057B8] hover:text-white'
+                    }`}
+                  >
+                    {day}
+                    {show && !selected && (
+                      <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#c9a227]" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+      <div className="flex items-center gap-3 pl-9 pt-0.5 text-[8px] uppercase tracking-wider text-gray-600">
+        <span className="flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#c9a227]" /> Show day
+        </span>
+        <span className="flex items-center gap-1">
+          <Flag className="w-2.5 h-2.5 text-[#c9a227]" /> Championship
+        </span>
+      </div>
+    </div>
+  );
+}
 
 const ScrimmageSheet = ({ scrimmage }) => {
   if (!scrimmage) return null;
@@ -120,6 +196,16 @@ export default function JointRehearsalPanel({ podium }) {
   const scrimmage = data?.scrimmage;
   const incomingCount = data?.incoming?.length || 0;
 
+  // Mark scheduled shows on the calendar from the tour route.
+  const showDays = new Map();
+  (podium.data?.routePreview || []).forEach((leg) => {
+    if (leg?.day && leg.label) {
+      showDays.set(leg.day, leg.city ? `${leg.label} · ${leg.city}` : leg.label);
+    }
+  });
+
+  const selectedShow = day ? showDays.get(Number(day)) : null;
+
   return (
     <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4 space-y-3">
       <button
@@ -220,39 +306,62 @@ export default function JointRehearsalPanel({ podium }) {
             </div>
           ))}
 
-          {/* Propose form */}
+          {/* Propose form — pick a partner, then a day off the calendar */}
           {data && !upcoming && (
-            <form onSubmit={propose} className="flex items-center gap-2">
-              <select
-                value={toUid}
-                onChange={(e) => setToUid(e.target.value)}
-                required
-                className="flex-1 bg-[#0f0f0f] border border-[#333] rounded-sm px-2 py-1.5 text-xs text-white focus:border-[#0057B8] focus:outline-none"
-              >
-                <option value="">Propose to…</option>
-                {(data.roster || []).map((corps) => (
-                  <option key={corps.uid} value={corps.uid}>
-                    {corps.corpsName || corps.uid}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="number"
-                value={day}
-                onChange={(e) => setDay(e.target.value)}
-                placeholder={`Day (${Math.max(1, competitionDay + 1)}+)`}
-                min={Math.max(1, competitionDay + 1)}
-                max={49}
-                required
-                className="w-24 bg-[#0f0f0f] border border-[#333] rounded-sm px-2 py-1.5 text-xs text-white placeholder-gray-600 focus:border-[#0057B8] focus:outline-none"
-              />
-              <button
-                type="submit"
-                disabled={busy || !toUid}
-                className="px-3 py-1.5 rounded-sm text-[10px] font-bold uppercase tracking-wider bg-[#0057B8] text-white disabled:bg-[#333] disabled:text-gray-600 press-feedback"
-              >
-                {busy ? <Loader2 className="w-3 h-3 animate-spin inline" /> : 'Propose'}
-              </button>
+            <form onSubmit={propose} className="space-y-3 border border-[#333] rounded-sm p-3 bg-[#161616]">
+              <div className="space-y-1">
+                <label className="text-[9px] font-bold uppercase tracking-wider text-gray-500">
+                  Partner corps
+                </label>
+                <select
+                  value={toUid}
+                  onChange={(e) => setToUid(e.target.value)}
+                  required
+                  className="w-full bg-[#0f0f0f] border border-[#333] rounded-sm px-2 py-1.5 text-xs text-white focus:border-[#0057B8] focus:outline-none"
+                >
+                  <option value="">Propose to…</option>
+                  {(data.roster || []).map((corps) => (
+                    <option key={corps.uid} value={corps.uid}>
+                      {corps.corpsName || corps.uid}
+                      {corps.city ? ` · ${corps.city}` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-bold uppercase tracking-wider text-gray-500">
+                  Choose a day
+                </label>
+                <DayCalendar
+                  competitionDay={competitionDay}
+                  showDays={showDays}
+                  value={day ? Number(day) : null}
+                  onChange={(d) => setDay(d)}
+                />
+              </div>
+
+              <div className="flex items-center justify-between gap-2 pt-0.5 border-t border-[#2a2a2a]">
+                <span className="text-[10px] text-gray-500 min-w-0 truncate">
+                  {day ? (
+                    <>
+                      <span className="text-gray-300 font-bold">Day {day}</span>
+                      {selectedShow && (
+                        <span className="text-[#c9a227]"> · same day as {selectedShow}</span>
+                      )}
+                    </>
+                  ) : (
+                    'Select a partner and a day to propose.'
+                  )}
+                </span>
+                <button
+                  type="submit"
+                  disabled={busy || !toUid || !day}
+                  className="shrink-0 px-3 py-1.5 rounded-sm text-[10px] font-bold uppercase tracking-wider bg-[#0057B8] text-white disabled:bg-[#333] disabled:text-gray-600 press-feedback"
+                >
+                  {busy ? <Loader2 className="w-3 h-3 animate-spin inline" /> : 'Propose'}
+                </button>
+              </div>
             </form>
           )}
 
