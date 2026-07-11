@@ -30,7 +30,11 @@ import {
   Settings,
 } from 'lucide-react';
 import type { UserProfile, CorpsClass } from '../../types';
-import { CORPS_CLASS_ORDER, resolveCorpsForClass, isCorpsClassUnlocked } from '../../utils/corps';
+import {
+  PROFILE_CORPS_CLASS_ORDER,
+  resolveCorpsForClass,
+  isCorpsClassUnlocked,
+} from '../../utils/corps';
 import {
   StatusIndicator,
   StatPill,
@@ -555,9 +559,10 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
           ? profile.unlockedClasses
           : (['soundSport'] as CorpsClass[]);
 
-        // Iterate canonical class order and resolve both unlock status and the
-        // corps record tolerating legacy short keys ('world'/'open').
-        const entries = CORPS_CLASS_ORDER.filter((cls) =>
+        // Iterate the portfolio order (fantasy classes + always-open Podium) and
+        // resolve both unlock status and the corps record, tolerating legacy
+        // short keys ('world'/'open').
+        const entries = PROFILE_CORPS_CLASS_ORDER.filter((cls) =>
           isCorpsClassUnlocked(unlockedClasses, cls)
         ).map((cls) => ({
           classKey: cls as CorpsClass,

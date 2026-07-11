@@ -8,7 +8,11 @@ import React, { useState, useMemo } from 'react';
 import { X, User, Music, Link as LinkIcon } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
-import { CORPS_CLASS_ORDER, resolveCorpsForClass, isCorpsClassUnlocked } from '../../utils/corps';
+import {
+  PROFILE_CORPS_CLASS_ORDER,
+  resolveCorpsForClass,
+  isCorpsClassUnlocked,
+} from '../../utils/corps';
 
 // Keyed by canonical class keys, matching what the data layer stores.
 const CLASS_LABELS = {
@@ -16,9 +20,10 @@ const CLASS_LABELS = {
   openClass: 'Open Class',
   aClass: 'A Class',
   soundSport: 'SoundSport',
+  podiumClass: 'Podium Class',
 };
 
-const CLASS_ORDER = CORPS_CLASS_ORDER;
+const CLASS_ORDER = PROFILE_CORPS_CLASS_ORDER;
 
 const SPECIALTY_OPTIONS = [
   'General Effect',

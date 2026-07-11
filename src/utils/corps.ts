@@ -15,6 +15,18 @@ import type { CorpsClass } from '../types';
 export const CORPS_CLASS_ORDER = ['worldClass', 'openClass', 'aClass', 'soundSport'] as const;
 
 /**
+ * Portfolio ordering for profile surfaces — the canonical order plus Podium.
+ *
+ * `podiumClass` is intentionally kept OUT of `CORPS_CLASS_ORDER`: Podium is a
+ * separate director-simulation game with its own scoring pass, and the
+ * dashboard ControlBar renders it as a dedicated tab rather than iterating the
+ * canonical order. The profile, however, presents a director's whole
+ * portfolio — ensembles list, avatar picker, uniform design — so those surfaces
+ * iterate this order to show the Podium corps alongside the fantasy classes.
+ */
+export const PROFILE_CORPS_CLASS_ORDER = [...CORPS_CLASS_ORDER, 'podiumClass'] as const;
+
+/**
  * Equivalence groups for corps class keys. The data layer (registration, store
  * normalization, season archives) uses the canonical keys ('worldClass',
  * 'openClass'), but some older UI used the short keys ('world', 'open'). When
@@ -55,6 +67,9 @@ export function isCorpsClassUnlocked(
   unlockedClasses: string[] | undefined | null,
   canonicalKey: string
 ): boolean {
+  // Podium is always open — no XP/season/CorpsCoin gate (the SoundSport model),
+  // so it is available to every director regardless of `unlockedClasses`.
+  if (canonicalKey === 'podiumClass') return true;
   if (!unlockedClasses) return false;
   const aliases = CORPS_CLASS_ALIASES[canonicalKey] || [canonicalKey];
   return aliases.some((key) => unlockedClasses.includes(key));
