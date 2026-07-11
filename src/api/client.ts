@@ -249,6 +249,10 @@ export const paths = {
   fantasyRecapsDay: (seasonUid: string, day: number | string) =>
     `fantasy_recaps/${seasonUid}/days/${day}`,
 
+  // Podium Class recaps (separate pipeline — public, backend-written).
+  // One doc per competition day under the season's `days` subcollection.
+  podiumRecapsDays: (seasonUid: string) => `podium-recaps/${seasonUid}/days`,
+
   // Leaderboard paths
   leaderboard: (type: string, corpsClass: string) =>
     `artifacts/${DATA_NAMESPACE}/leaderboard/${type}/${corpsClass}`,

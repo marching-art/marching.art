@@ -4,7 +4,7 @@
 // Allows directors to submit news articles for admin approval
 
 import React, { useState } from 'react';
-import { X, Send, FileText } from 'lucide-react';
+import { X, Send, FileText, Sparkles, Image as ImageIcon } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 
@@ -14,12 +14,25 @@ const CATEGORIES = [
   { id: 'fantasy', name: 'Fantasy', description: 'Fantasy game updates, predictions' },
 ];
 
+// Author's image preference, respected on publish (admin approval and
+// auto-publish both honor this unless an admin explicitly overrides it).
+const IMAGE_OPTIONS = [
+  {
+    id: 'generate',
+    name: 'Generate an image for me',
+    description: 'We create a Fantasy Daily-style image on approval',
+  },
+  { id: 'submitted', name: 'Use my own image', description: 'Provide an image URL' },
+  { id: 'none', name: 'No image', description: 'Publish without a header image' },
+];
+
 const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
   const [formData, setFormData] = useState({
     headline: '',
     summary: '',
     fullStory: '',
     category: 'dci',
+    imageOption: 'generate',
     imageUrl: '',
   });
   const [errors, setErrors] = useState({});
@@ -43,8 +56,12 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
     } else if (formData.fullStory.length < 100) {
       newErrors.fullStory = 'Full story must be at least 100 characters';
     }
-    if (formData.imageUrl && !isValidUrl(formData.imageUrl)) {
-      newErrors.imageUrl = 'Please enter a valid URL';
+    if (formData.imageOption === 'submitted') {
+      if (!formData.imageUrl.trim()) {
+        newErrors.imageUrl = 'Enter an image URL, or choose another image option';
+      } else if (!isValidUrl(formData.imageUrl)) {
+        newErrors.imageUrl = 'Please enter a valid URL';
+      }
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -67,7 +84,9 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
         summary: formData.summary.trim(),
         fullStory: formData.fullStory.trim(),
         category: formData.category,
-        imageUrl: formData.imageUrl.trim() || null,
+        imageOption: formData.imageOption,
+        // Only send a URL when the author chose to supply their own image.
+        imageUrl: formData.imageOption === 'submitted' ? formData.imageUrl.trim() || null : null,
       });
     }
   };
@@ -235,24 +254,57 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
                 </div>
               </div>
 
-              {/* Image URL (Optional) */}
+              {/* Article Image */}
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
-                  Image URL <span className="text-gray-600">(Optional)</span>
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                  Article Image
                 </label>
-                <input
-                  type="url"
-                  placeholder="https://example.com/image.jpg"
-                  value={formData.imageUrl}
-                  onChange={(e) => handleChange('imageUrl', e.target.value)}
-                  className={`
-                    w-full h-10 px-3 bg-[#0a0a0a] border rounded-none text-sm text-white
-                    placeholder-gray-400 focus:outline-none transition-colors
-                    ${errors.imageUrl ? 'border-red-500 focus:border-red-500' : 'border-[#333] focus:border-[#0057B8]'}
-                  `}
-                />
-                {errors.imageUrl && (
-                  <p className="text-[10px] text-red-500 mt-1">{errors.imageUrl}</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {IMAGE_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => handleChange('imageOption', opt.id)}
+                      className={`
+                        px-3 py-2 text-left rounded-none border transition-all
+                        ${
+                          formData.imageOption === opt.id
+                            ? 'bg-[#0057B8]/20 border-[#0057B8] text-white'
+                            : 'bg-[#0a0a0a] border-[#333] text-gray-400 hover:border-[#444]'
+                        }
+                      `}
+                    >
+                      <div className="flex items-center gap-1.5 text-xs font-bold">
+                        {opt.id === 'generate' && <Sparkles className="w-3.5 h-3.5 text-yellow-500" />}
+                        {opt.id === 'submitted' && <ImageIcon className="w-3.5 h-3.5 text-blue-400" />}
+                        {opt.id === 'none' && <X className="w-3.5 h-3.5 text-gray-500" />}
+                        {opt.name}
+                      </div>
+                      <div className="text-[10px] text-gray-500 mt-0.5 hidden sm:block">
+                        {opt.description}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* URL input — only when the author supplies their own image */}
+                {formData.imageOption === 'submitted' && (
+                  <div className="mt-2">
+                    <input
+                      type="url"
+                      placeholder="https://example.com/image.jpg"
+                      value={formData.imageUrl}
+                      onChange={(e) => handleChange('imageUrl', e.target.value)}
+                      className={`
+                        w-full h-10 px-3 bg-[#0a0a0a] border rounded-none text-sm text-white
+                        placeholder-gray-400 focus:outline-none transition-colors
+                        ${errors.imageUrl ? 'border-red-500 focus:border-red-500' : 'border-[#333] focus:border-[#0057B8]'}
+                      `}
+                    />
+                    {errors.imageUrl && (
+                      <p className="text-[10px] text-red-500 mt-1">{errors.imageUrl}</p>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

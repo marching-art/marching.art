@@ -104,7 +104,12 @@ import { CORPS_CLASS_ORDER } from '../utils/corps';
 import { canEditCorpsThisSeason, corpsHasPendingWork } from '../utils/corps';
 import { useDashboardModals } from '../hooks/useDashboardModals';
 import { usePodiumEnabled } from '../hooks/useFeatures';
-import { useLineupScores, useRecentResults, useBestInShowCount } from '../hooks/useDashboardScores';
+import {
+  useLineupScores,
+  useRecentResults,
+  usePodiumRecentResults,
+  useBestInShowCount,
+} from '../hooks/useDashboardScores';
 import { useSeasonStore } from '../store/seasonStore';
 import { getEffectiveDay, getNextSelectedShow } from '../utils/dashboardScoring';
 import { getEquippedCosmetic } from '../utils/cosmetics';
@@ -253,17 +258,26 @@ const Dashboard = () => {
 
   const userCorpsScore = useMemo(() => {
     if (!activeCorps) return null;
+    // Podium Class scores never land in the fantasy recap aggregation: the
+    // nightly Podium processor writes to podium-recaps and mirrors the current
+    // total onto profile.corps.podiumClass (activeCorps here). Read that
+    // display copy instead of searching aggregatedScores, which is always
+    // empty for Podium.
+    if (activeCorpsClass === 'podiumClass') return activeCorps.totalSeasonScore ?? null;
     const corpsName = activeCorps.corpsName || activeCorps.name;
     const entry = aggregatedScores.find((s) => s.corpsName === corpsName);
     return entry?.score ?? null;
-  }, [aggregatedScores, activeCorps]);
+  }, [aggregatedScores, activeCorps, activeCorpsClass]);
 
   const userCorpsRank = useMemo(() => {
     if (!activeCorps) return null;
+    // Podium ranks come from the same profile display copy (seasonRank),
+    // written by computePodiumRankings in the nightly processor.
+    if (activeCorpsClass === 'podiumClass') return activeCorps.seasonRank ?? null;
     const corpsName = activeCorps.corpsName || activeCorps.name;
     const entry = aggregatedScores.find((s) => s.corpsName === corpsName);
     return entry?.rank ?? null;
-  }, [aggregatedScores, activeCorps]);
+  }, [aggregatedScores, activeCorps, activeCorpsClass]);
 
   // Places climbed (positive) or dropped since the last daily rank snapshot,
   // written by the rivals job (scheduled/rivalsComputation.js) at 2:30 AM ET.
@@ -293,7 +307,23 @@ const Dashboard = () => {
     currentDay,
     activeCorpsClass
   );
-  const recentResults = useRecentResults(user, seasonData, activeCorpsClass, currentDay);
+  // Recent results: fantasy classes read fantasy_recaps; Podium reads its own
+  // podium-recaps pipeline. Only the active class's source is enabled, so the
+  // idle one costs no Firestore reads.
+  const fantasyRecentResults = useRecentResults(
+    user,
+    seasonData,
+    activeCorpsClass,
+    activeCorpsClass === 'podiumClass' ? null : currentDay
+  );
+  const podiumRecentResults = usePodiumRecentResults(
+    user,
+    seasonData,
+    currentDay,
+    activeCorpsClass === 'podiumClass'
+  );
+  const recentResults =
+    activeCorpsClass === 'podiumClass' ? podiumRecentResults : fantasyRecentResults;
 
   // Best recent result — the one fact kept from the retired QuickStats
   // widget, shown inline on the scorecard (Zone A).

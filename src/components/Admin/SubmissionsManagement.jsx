@@ -23,6 +23,7 @@ import { listPendingSubmissions, approveSubmission, rejectSubmission } from '../
 // Status badge colors
 const STATUS_COLORS = {
   pending: 'bg-yellow-500/20 text-yellow-400',
+  scheduled: 'bg-purple-500/20 text-purple-400',
   approved: 'bg-green-500/20 text-green-400',
   rejected: 'bg-red-500/20 text-red-400',
 };
@@ -74,12 +75,16 @@ const SubmissionsManagement = () => {
     toast.success('Submissions refreshed');
   };
 
-  const handleApprove = async (submission, imageOption = 'generate') => {
+  const handleApprove = async (submission, imageOption) => {
     setProcessingId(submission.id);
     try {
+      // Fall back to the author's stored image preference so a quick approve
+      // never overrides a "no image" or submitted-URL choice.
+      const effectiveOption =
+        imageOption || submission.imageOption || (submission.imageUrl ? 'submitted' : 'generate');
       const result = await approveSubmission({
         submissionId: submission.id,
-        imageOption,
+        imageOption: effectiveOption,
       });
       if (result.data.success) {
         toast.success('Article approved and published!');
@@ -142,7 +147,7 @@ const SubmissionsManagement = () => {
       {/* Header with status tabs */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          {['pending', 'approved', 'rejected', 'all'].map((status) => (
+          {['pending', 'scheduled', 'approved', 'rejected', 'all'].map((status) => (
             <button
               key={status}
               onClick={() => setStatusFilter(status)}
@@ -251,6 +256,12 @@ const SubmissionRow = ({
               Has image
             </span>
           )}
+          {submission.autoPublish && submission.scheduledPublishAt && (
+            <span className="flex items-center gap-1 text-purple-400">
+              <Sparkles className="w-3 h-3" />
+              Auto-publishes {formatDate(submission.scheduledPublishAt)}
+            </span>
+          )}
         </div>
       </div>
 
@@ -263,7 +274,7 @@ const SubmissionRow = ({
           <Eye className="w-4 h-4" />
         </button>
 
-        {submission.status === 'pending' && (
+        {(submission.status === 'pending' || submission.status === 'scheduled') && (
           <>
             <button
               onClick={onApprove}
@@ -292,8 +303,11 @@ const SubmissionRow = ({
 const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, formatDate }) => {
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectForm, setShowRejectForm] = useState(false);
-  // Default: use submitted image if available, otherwise generate
-  const [imageOption, setImageOption] = useState(submission.imageUrl ? 'submitted' : 'generate');
+  // Default to the author's stated image preference (respecting a "no image" or
+  // submitted-URL choice); the admin can still override before publishing.
+  const [imageOption, setImageOption] = useState(
+    submission.imageOption || (submission.imageUrl ? 'submitted' : 'generate')
+  );
 
   useEscapeKey(onClose);
 
@@ -407,7 +421,7 @@ const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, 
           </div>
 
           {/* Footer */}
-          {submission.status === 'pending' && (
+          {(submission.status === 'pending' || submission.status === 'scheduled') && (
             <div className="px-4 py-3 border-t border-[#333] bg-[#111]">
               {!showRejectForm ? (
                 <div className="space-y-3">
@@ -444,7 +458,7 @@ const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, 
                           className="text-[#0057B8] focus:ring-[#0057B8] bg-[#222] border-[#444]"
                         />
                         <Sparkles className="w-4 h-4 text-yellow-500" />
-                        <span>Generate AI image</span>
+                        <span>Generate AI image (Fantasy Daily style)</span>
                       </label>
 
                       {/* Option: No image */}

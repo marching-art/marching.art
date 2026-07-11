@@ -300,9 +300,7 @@ const RecapDataGrid = memo(({ scores, eventName, location, date, userCorpsName }
                 <CaptionValue value={captions?.ge} isTop={captions?.ge === tops.ge} />
                 <CaptionValue value={captions?.vis} isTop={captions?.vis === tops.vis} />
                 <CaptionValue value={captions?.mus} isTop={captions?.mus === tops.mus} />
-                <span
-                  className={`${TOTAL_W} text-right font-bold text-white tabular-nums`}
-                >
+                <span className={`${TOTAL_W} text-right font-bold text-white tabular-nums`}>
                   {(score.score || score.totalScore || 0).toFixed(3)}
                 </span>
               </div>
@@ -369,9 +367,7 @@ const EasternCombinedSheet = memo(({ shows, userCorpsName }) => {
                 {section.rows.length} corps
               </span>
             </div>
-            <BoxScoreHead
-              trailing={<span className="w-7 text-right text-gray-500">Night</span>}
-            />
+            <BoxScoreHead trailing={<span className="w-7 text-right text-gray-500">Night</span>} />
             <div>
               {section.rows.map((row, idx) => {
                 const isUserCorps =
@@ -402,9 +398,7 @@ const EasternCombinedSheet = memo(({ shows, userCorpsName }) => {
                         value={captions?.mus}
                         isTop={captions?.mus === sectionTops.mus}
                       />
-                      <span
-                        className={`${TOTAL_W} text-right font-bold text-white tabular-nums`}
-                      >
+                      <span className={`${TOTAL_W} text-right font-bold text-white tabular-nums`}>
                         {(row.score || row.totalScore || 0).toFixed(3)}
                       </span>
                       <span
@@ -664,7 +658,9 @@ const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
       {/* Section header + Podium-style sort pills */}
       <div className="flex items-center justify-between gap-2 border-b border-[#2a2a2a] pb-2">
         <span className="text-[11px] font-bold uppercase tracking-wider text-white truncate">
-          {sortBy === 'total' ? `${className} · Season Standings` : `${className} · ${sortBy} Leaders`}
+          {sortBy === 'total'
+            ? `${className} · Season Standings`
+            : `${className} · ${sortBy} Leaders`}
         </span>
         <SortPills options={STANDINGS_SORTS} value={sortBy} onChange={setSortBy} />
       </div>
@@ -698,7 +694,11 @@ const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
                 avatarUrl={entry.avatarUrl}
               />
               <div className="flex items-center gap-1.5 flex-shrink-0 text-[11px]">
-                <CaptionValue value={captions?.ge} isTop={captions?.ge === tops.ge} active={activeCap === 'GE'} />
+                <CaptionValue
+                  value={captions?.ge}
+                  isTop={captions?.ge === tops.ge}
+                  active={activeCap === 'GE'}
+                />
                 <CaptionValue
                   value={captions?.vis}
                   isTop={captions?.vis === tops.vis}
@@ -709,9 +709,7 @@ const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
                   isTop={captions?.mus === tops.mus}
                   active={activeCap === 'MUS'}
                 />
-                <span
-                  className={`${TOTAL_W} text-right font-bold text-white tabular-nums`}
-                >
+                <span className={`${TOTAL_W} text-right font-bold text-white tabular-nums`}>
                   {typeof entry.score === 'number' ? entry.score.toFixed(3) : '-'}
                 </span>
                 <span className="w-4 flex items-center justify-center flex-shrink-0">

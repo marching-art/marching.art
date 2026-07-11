@@ -24,7 +24,7 @@ name: Refresh venue gazetteer
 on:
   workflow_dispatch: {}
   schedule:
-    - cron: "0 8 15 9 *" # 08:00 UTC, September 15, annually
+    - cron: '0 8 15 9 *' # 08:00 UTC, September 15, annually
 
 permissions:
   contents: write
@@ -42,8 +42,8 @@ jobs:
 
       - uses: actions/setup-node@v5
         with:
-          node-version: "22"
-          cache: "npm"
+          node-version: '22'
+          cache: 'npm'
           cache-dependency-path: functions/package-lock.json
 
       - name: Install function dependencies
